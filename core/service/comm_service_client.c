@@ -63,7 +63,7 @@ static inline BYTE *readFormFromSocket( Socket_t *s, ULONG *length )
 	char buffer[ MAX_SIZE ];
 	int readSize;
 	
-	readSize = SocketRead( s, buffer, MAX_SIZE );
+	readSize = SocketRead( s, buffer, MAX_SIZE, 0 );
 	DataForm *ldf = (DataForm *)buffer;
 	
 	// its our packet
@@ -83,7 +83,7 @@ static inline BYTE *readFormFromSocket( Socket_t *s, ULONG *length )
 			
 			while( readedBytes <= ldf->df_Size )
 			{
-				readSize = SocketRead( s, buffer, MAX_SIZE );
+				readSize = SocketRead( s, buffer, MAX_SIZE, 0 );
 				BufStringAddSize( bs, buffer, readSize );
 				readedBytes += readSize;
 			}
@@ -174,7 +174,7 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 					
 					//DataFormDelete( serverdf );
 					
-					//sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE );
+					//sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE, 0 );
 					DEBUG("Received information in bytes %ld\n", sockReadSize );
 					//int writeSize = write( service->s_recvPipe[ 1 ], buffer, sockReadSize );
 			
@@ -198,7 +198,7 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 						DEBUG("CommunicationServiceClient Sending message hello\n");
 						int sockReadSize = 0;
 
-						sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE );
+						sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE, 0 );
 						DEBUG("Received information in bytes %d\n", sockReadSize );
 						//int writeSize = write( service->s_recvPipe[ 1 ], buffer, sockReadSize );
 			
@@ -487,7 +487,7 @@ int CommServiceThreadClient( FThread *ptr )
 					DEBUG("CommunicationServiceClient Sending message hello\n");
 					int sockReadSize = 0;
 					
-					sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE );
+					sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE, 0 );
 					int writeSize = write( service->s_recvPipe[ 1 ], buffer, sockReadSize );
 					
 					DEBUG("Message received '%s'\n", buffer );
