@@ -1,0 +1,29 @@
+Setting up the Friend Unifying Platform
+---------------------------------------
+
+After you have compiled and installed FriendUP, you need to setup
+the configuration file. This is easy, and an example of a valid file
+is available in this directory.
+
+The configuration file must be placed like this:
+
+	build/cfg/cfg.ini
+
+If you are enabling HTTPS, you need to add your certificate in the
+folder:
+
+	build/cfg/crt/
+
+At the time of writing, take your PEM file, which is setup with
+certificate first, then public key, in the files:
+
+	build/cfg/crt/certificate.pem
+	build/cfg/crt/request.pem
+	build/cfg/crt/key.pem
+
+For more information, send an e-mail to: developers@friendos.com
+or visit:
+	
+	http://friendos.com/developers/
+
+
