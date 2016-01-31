@@ -460,7 +460,7 @@ int CommServiceThreadServer( FThread *ptr )
 							
 							SocketSetBlocking( incomming, TRUE ); 
 							//INFO("BEFDATAREADED\n");
-							count = SocketRead( incomming, (char *)&buffer, service->s_BufferSize );
+							count = SocketRead( incomming, (char *)&buffer, service->s_BufferSize, 0 );
 							// count = read( sock->fd, &buffer, BUFFER_READ_SIZE );
 							if( count > 0 )
 							{
@@ -550,7 +550,7 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							// Read the socket data into the buffer associated with the ring buffer entry.
 							// Set the entry's fd field to the current socket fd.
-							count = SocketRead( sock, (char *)&buffer, service->s_BufferSize );
+							count = SocketRead( sock, (char *)&buffer, service->s_BufferSize, 0 );
 							//count = read( sock->fd, &buffer, BUFFER_READ_SIZE );
 							//DEBUG("[COMMSERV]: got message from socket %d\n", (int)count );
 
