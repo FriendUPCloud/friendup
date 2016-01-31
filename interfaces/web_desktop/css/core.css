@@ -1,0 +1,870 @@
+/* Base setup */
+
+html
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+body
+{
+	font-family: $FontFaceNormal;
+	font-size: $FontSizeDefault;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	-webkit-transform: rotateZ(0deg);
+   -moz-transform: rotateZ(0deg);
+   -o-transform: rotateZ(0deg);
+   -ms-transform: rotateZ(0deg);
+ 	transform: rotateZ(0deg);
+ 	
+	transition: opacity 0.2s;
+	-moz-transition: opacity 0.2s;
+	-webkit-transition: opacity 0.2s;
+}
+
+/* Apps */
+body > iframe
+{
+	display: block;
+	float: left;
+	margin: 10px;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	background: black;
+	border: 2px solid white;
+	box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+	width: 144px;
+	height: 200px;
+}
+
+/* Loading animation */
+
+.LoadingAnimation
+{
+	background: $GuiImgWinLoading;
+}
+
+.GuiContainer with .BordersDefault
+{
+	background: $ColorBackground;
+}
+
+.VerticalRuler with .BordersDefault
+{
+	display: inline;
+	width: 1px;
+	background: $ColorBackground;
+	margin: $MarginVerticalRuler;
+	padding: 0;
+}
+
+/* Selects */
+
+select
+{
+	display: inline;
+	color: $ColorButton;
+	background-color: $ColorBgButton;
+	padding: $PaddingSelect;
+	margin: $MarginButton;
+	border-top: $BorderDefaultTop;
+	border-left: $BorderDefaultLeft;
+	border-right: $BorderDefaultRight;
+	border-bottom: $BorderDefaultBottom;
+	box-shadow: $BoxShadowButton;
+	-moz-box-shadow: $BoxShadowButton;
+	-webkit-box-shadow: $BoxShadowButton;
+	text-shadow: $TxtShdPositive;
+	border-radius: $ButtonBorderRadius;
+	-moz-border-radius: $ButtonBorderRadius;
+	-webkit-border-radius: $ButtonBorderRadius;
+	cursor: hand;
+	cursor: pointer;
+	position: relative;
+}
+
+/* Buttons */
+
+button::-moz-focus-inner
+{
+	border:0;
+	padding:0;
+}
+
+button, .Button
+{
+	display: inline;
+	color: $ColorButton;
+	background-color: $ColorBgButton;
+	padding: $PaddingButton;
+	margin: $MarginButton;
+	border-top: $BorderDefaultTop;
+	border-left: $BorderDefaultLeft;
+	border-right: $BorderDefaultRight;
+	border-bottom: $BorderDefaultBottom;
+	box-shadow: $BoxShadowButton;
+	-moz-box-shadow: $BoxShadowButton;
+	-webkit-box-shadow: $BoxShadowButton;
+	text-shadow: $TxtShdPositive;
+	border-radius: $ButtonBorderRadius;
+	-moz-border-radius: $ButtonBorderRadius;
+	-webkit-border-radius: $ButtonBorderRadius;
+	cursor: hand;
+	cursor: pointer;
+	position: relative;
+}
+
+button:hover, .Button:hover
+{
+	color: $ColorButtonHover;
+	background-color: $ColorBgButtonHover;
+}
+
+.ButtonSpacer
+{
+	display: inline;
+	position: relative;
+	padding: $MarginButton;
+	margin: $MarginButton;
+	border-left: $BorderDefaultRight;
+}
+
+
+/* Input fields ------------------------------------------------------------- */
+
+input:disabled
+{
+	opacity: 0.6;
+	filter:alpha(opacity=60);
+}
+
+input
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	border: $BorderInput;
+	padding: $PaddingInput;
+	margin: $MarginButton;
+	font-family: $FontFaceNormal;
+	line-height: $LineHeightInput;
+	background-color: $ColorBgInput;
+	color: $ColorInput;
+	font-size: $FontSizeButton;
+}
+
+/* Boxes -------------------------------------------------------------------- */
+
+.Disabled
+{
+	opacity: 0.8;
+	cursor: wait;
+}
+
+.Disabled *
+{
+	cursor: wait;
+}
+
+.Box, .BoxBlue
+{
+	border: $BorderBox;
+	border-radius: $BorderBoxRadius;
+	-moz-border-radius: $BorderBoxRadius;
+	-webkit-border-radius: $BorderBoxRadius;
+	padding: $PaddingBox;
+	background: $ColorBgBox;
+	color: $ColorBox;
+	margin; $MarginBox;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+.BoxBlue
+{
+	background: #C3CFD4;
+	border-color: #A9B3B8;
+	border-bottom: 1px solid #9BA4A8;
+}
+
+.FullWidth
+{
+	width: 100%;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+/* Gui content -------------------------------------------------------------- */
+
+.TextCenter  { text-align: center; }
+.TextLeft    { text-align: left; }
+.TextJustify { text-align: justify; }
+.TextRight   { text-align: right; }
+.Ellipsis    { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.HContent10, .HContent20, .HContent30, .HContent40,
+.HContent50, .HContent60, .HContent70, .HContent80,
+.HContent90, .HContent100
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.HContent1   { width:   1%; }
+.HContent2   { width:   2%; }
+.HContent3   { width:   3%; }
+.HContent4   { width:   4%; }
+.HContent5   { width:   5%; }
+.HContent6   { width:   6%; }
+.HContent7   { width:   7%; }
+.HContent8   { width:   8%; }
+.HContent9   { width:   9%; }
+
+.HContent10  { width:  10%; }
+.HContent15  { width:  15%; }
+.HContent20  { width:  20%; }
+.HContent25  { width:  25%; }
+.HContent30  { width:  30%; }
+.HContent35  { width:  35%; }
+.HContent40  { width:  40%; }
+.HContent45  { width:  45%; }
+.HContent50  { width:  50%; }
+.HContent55  { width:  55%; }
+.HContent60  { width:  60%; }
+.HContent65  { width:  65%; }
+.HContent70  { width:  70%; }
+.HContent75  { width:  75%; }
+.HContent80  { width:  80%; }
+.HContent85  { width:  85%; }
+.HContent90  { width:  90%; }
+.HContent95  { width:  95%; }
+.HContent100 { width: 100%; }
+
+.Relative
+{
+	position: relative;
+}
+
+.FloatLeft
+{
+	float: left;
+}
+
+.FloatRight
+{
+	float: right;
+}
+
+.Inline
+{
+	display: inline;
+}
+
+.HRow
+{
+	clear: both;
+}
+
+.HRow:after
+{
+	display: block;
+	content: " ";
+	clear: both;
+}
+
+hr.Divider
+{
+	border: 0;
+	border-top: 1px solid #c0c0c0;
+	margin: 5px 0 5px 0;
+	background: none;
+	height: 1px;
+}
+
+p.Layout
+{
+	margin: 0 0 4px 0;
+}
+
+.NoMargin
+{
+	margin: 0;
+}
+
+.VContentTop
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+}
+
+.VContentBottom
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.VContent5   { height:   5%; }
+.VContent10  { height:  10%; }
+.VContent15  { height:  15%; }
+.VContent20  { height:  20%; }
+.VContent25  { height:  25%; }
+.VContent30  { height:  30%; }
+.VContent35  { height:  35%; }
+.VContent40  { height:  40%; }
+.VContent45  { height:  45%; }
+.VContent50  { height:  50%; }
+.VContent55  { height:  55%; }
+.VContent60  { height:  60%; }
+.VContent65  { height:  65%; }
+.VContent70  { height:  70%; }
+.VContent75  { height:  75%; }
+.VContent80  { height:  80%; }
+.VContent85  { height:  85%; }
+.VContent90  { height:  90%; }
+.VContent95  { height:  95%; }
+.VContent100 { height: 100%; }
+
+.ContentFull
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.HContentRight
+{
+	position: absolute;
+	right: 0%;
+	top: 0;
+	bottom: 0px;
+}
+
+.HContentLeft
+{
+	position: absolute;
+	left: 0%;
+	top: 0;
+	bottom: 0px;
+}
+
+.ScrollArea
+{
+	position: absolute;
+	top: 0; left: 0;
+	overflow: auto;
+}
+
+.LineHeight2x
+{
+	line-height: 200%;
+}
+
+.ScrollableX
+{
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+.ScrollableY
+{
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.ScrollableXY
+{
+	overflow: auto;
+}
+
+.NonScroll
+{
+	overflow: hidden;
+}
+
+/*                                                                            */
+/*                                                                            */
+/*                                                                            */
+/* Legacy classes and rules ------------------------------------------------- */
+/*                                                                            */
+/*                                                                            */
+/*                                                                            */
+
+#Dialog
+{
+	position: fixed;
+	border: 1px solid #777777;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #c5c0c0;
+	z-index: 9999;
+}
+#Dialog .Box { background: #f8f8f8; border: 1px solid #c0c0c0; }
+
+/** Calendar field related -------------------------------------------------- */
+
+#CalendarOutput #MonthName { text-transform: uppercase; }
+#CalendarOutput .DateColtrols a
+{
+	display: block;
+	padding: 2px 4px;
+	background: #871433;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	width: 24px;
+	text-align: center;
+	color: #fff;
+}
+#CalendarOutput .DateColtrols a:hover
+{
+	background: #FF0046;
+}
+
+h2 .DateField, .DateField
+{
+	border: 1px solid #c0c0c0;
+	font-weight: normal;
+	background: #ffffff;
+	padding: 0px 4px;
+	float: left;
+	display: block;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	height: 22px;
+	vertical-align: middle;
+	margin: 7px 5px 0 -2px;
+}
+
+h2 td { font-size: 11px; }
+
+h2 .DateField img, .DateField img
+{
+	margin: 0 0 0 2px;
+	cursor: hand; cursor: pointer;
+}
+
+.DateField td { vertical-align: middle; }
+
+table.Form { width: 100%; }
+table.Form input, table.Form textarea
+{
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	width: 100%;
+}
+
+th > a.active { font-weight: bold; text-decoration: underline; }
+
+/* Gui popups --------------------------------------------------------------- */
+
+.GuiPopup
+{
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	background: #303030;
+	background: rgba(0,0,0,0.8);
+}
+
+.GuiPopup > .Center
+{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+
+.GuiPopup > .Center > div
+{
+	position: absolute;
+	border: 1px solid #777777;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	background: #c5c0c0;
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+}
+
+.GuiPopup > .Center > div > div
+{
+	margin: 5px;
+}
+
+/* Notes -------------------------------------------------------------------- */
+
+.Note
+{
+	border: 1px solid #BDBD63;
+	background: #FFFF96;
+	color: #555500;
+	margin: 0 0 5px 0;
+}
+
+.Note hr
+{
+	border: 0;
+	border-top: 1px solid #bdbd63;
+	background: none;
+	height: 1px;
+	margin: 5px 0 5px 0;
+}
+
+.Note .Edit
+{
+	font-size: 12px;
+}
+
+/* Slide lists -------------------------------------------------------------- */
+
+.CorvoSlideList > .SlideHeader
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+.CorvoSlideList > .SlideBox
+{
+	transition: all .3s;
+	-moz-transition: all .3s;
+	-webkit-transition: all .3s;
+	border-bottom: 2px solid #5c5c5c;
+}
+
+.CorvoSlideList > .SlideBox:last-child
+{
+	border-bottom: 0;
+}
+
+.CorvoSlideList > .SlideHeader:hover *,
+.CorvoSlideList > .On *
+{
+	background: #5C5C5C !important;
+	color: white;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+	border-bottom: 0;
+}
+
+/* Gui objects -------------------------------------------------------------- */
+
+.GuiColums { width: 100%; border-collapse: collapse; border-spacing: 0; }
+.GuiColums > tbody > tr > td { padding: 0 5px 5px 0; vertical-align: top; }
+.GuiColums > tbody > tr:last-child > td { padding: 0 5px 0 0; }
+.GuiColums > tbody > tr:last-child > td:last-child { padding: 0 0 0 0; }
+.GuiContainer 
+{ 
+	position: relative; 
+	border-top: 1px solid #ffffff;
+	border-left: 1px solid #ffffff;
+	background-color: #f0f0f0;
+	border-right: 1px solid #c0c0c0;
+	border-bottom: 1px solid #c0c0c0;
+	box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+.GuiContainer > div.GuiContent
+{
+	padding: 5px;
+}
+
+/* Select boxen ------------------------------------------------------------- */
+
+
+
+.Content .ComponentToolbar
+{
+	margin: 0;
+}
+
+/* Popup headers ------------------------------------------------------------ */
+
+body > .Popup h3
+{
+	text-transform: none;
+	font-size: 16px;
+}
+
+
+
+table.Gui
+{
+	width: 100%;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.Gui td, table.Gui th
+{
+	padding: 0 4px 4px 0;
+	text-align: left;
+}
+
+td.Vr { padding-left: 8px; border-left: 1px solid #aaaaaa; }
+td.Vrp { padding-right: 8px; border-right: 1px solid #dddddd; }
+
+table.Calendar tr th, table.Calendar tr td.Week { text-align: center; }
+table.Calendar td.Day1 { background: #fefefe; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td.Day2 { background: #f0f0f0; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td.CurrentDay { background: #224466; color: #ffffff; text-align: center; cursor: hand; cursor: pointer; }
+table.Calendar td:hover { background: #333333; color: #ffffff; }
+
+.ComponentBar
+{
+	position: relative;
+}
+
+.ComponentControls
+{	
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	font-size: 10px;
+	line-height: 34px;
+	margin-right: 10px;
+}
+
+.ButtonFiller
+{
+	display: block;
+	height: 21px;
+}
+
+/* Screen menu -------------------------------------------------------------- */
+
+#WorkbenchMenu
+{
+	position: absolute;
+	z-index: 16777271;
+	height: 32px;
+	background: white;
+	width: 100%;
+	left: 0;
+	top: 0;
+}
+
+#WorkbenchMenu .Menu
+{
+	float: left;
+	display: block;
+	line-height: 32px;
+	color: black;
+	text-shadow: 1px 1px 1px white;
+	margin: 0 10px 0 10px;
+	padding: 0 10px 0 10px;
+}
+#WorkbenchMenu .Menu ul, #WorkbenchMenu .Menu li
+{
+	list-style: none; margin: 0; padding: 0;
+}
+#WorkbenchMenu .Menu > ul
+{
+	display: none;
+}
+#WorkbenchMenu .Menu li > ul 
+{
+	display: none;
+}
+#WorkbenchMenu .Menu li.Open > ul > li > ul 
+{
+	display: block;
+}
+#WorkbenchMenu .Menu li.Open > ul 
+{
+	position: absolute;
+	right: 0px;
+	width: 155px;
+}
+#WorkbenchMenu .Open
+{
+	cursor: hand;
+	cursor: pointer;
+	background: black;
+	color: white;
+	position: relative;
+}
+#WorkbenchMenu .Open > ul
+{
+	position: absolute;
+	top: 32px;
+	left: 0px;
+	width: 155px;
+	background: white;
+	list-style: none;
+	margin: 0;
+	padding: 0;	
+	display: block;
+	color: black;
+	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-moz-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-webkit-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+}
+#WorkbenchMenu .Open ul > li
+{
+	display: block;
+	padding: 0px 5px 0px 10px;
+	background: white;
+	color: black;
+	position: relative;
+}
+#WorkbenchMenu .Open ul > li:hover
+{
+	background: #d0d0d0;
+	color: white;
+	text-shadow: 1px 1px 1px black;
+}
+
+#WorkbenchMenu .Open ul > li:hover > ul { text-shadow: none; }
+
+#WorkbenchMenu .Open ul > li.Open > ul
+{
+	position: absolute;
+	display: block;
+	left: 155px;
+	top: 0px;
+	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-moz-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+	-webkit-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
+}
+#WorkbenchMenu .Open ul > li.Open > ul > li
+{
+	position: relative;
+}
+
+#WorkbenchMenu .Open ul > li > span
+{
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#WorkbenchMenu li[divider=divider]
+{
+    border: 0;
+    border-top: 1px solid rgba(0,0,0,0.2);
+    margin: 0;
+    padding: 0;
+}
+
+.Popup
+{
+	position: absolute;
+	width: 320px;
+	min-height: 20px;
+	border: 1px solid #cfcfc0;
+	background: #ffffef;
+	color: #222222;
+	padding: 10px;
+	z-index: 90;
+	left: -1000px;
+	top: -1000px;
+	border-radius: 5px;
+	box-shadow: 0px 1px 7px rgba(0,0,0,0.2);
+}
+
+.MarginTop
+{
+	margin-top: $PaddingBox;
+}
+
+.MarginLeft
+{
+	margin-left: $PaddingBox;
+}
+
+.MarginRight
+{
+	margin-right: $PaddingBox;
+}
+
+.MarginBottom
+{
+	margin-bottom: $PaddingBox;
+}
+
+.Rounded
+{
+	border-radius: 3px;
+}
+
+/* Colors */
+
+.Negative
+{
+	color: $ColorNegative;
+}
+
+.Positive
+{
+	color: $ColorPositive;
+}
+
+.ColorDefault
+{
+	color: $ColorText;
+}
+
+.ColorLists
+{
+	color: $ColorNegative;
+}
+
+.ColorHighlight
+{
+	color: $ColorHighlight;
+}
+
+/* Backgrounds */
+
+.BackgroundLists
+{
+	background: $ColorLists;
+}
+
+.BackgroundDefault
+{
+	background: $ColorDefault;
+}
+
+.BackgroundNegative
+{
+	background: $ColorBgNegative;
+}
+
+.BackgroundPositive
+{
+	background: $ColorBgPositive;
+}
+
+.BackgroundHighlight
+{
+	background: $ColorBgHighlight;
+}
+
+

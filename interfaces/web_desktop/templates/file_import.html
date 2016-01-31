@@ -1,0 +1,25 @@
+
+	<div class="FullContent">
+		<div class="VContentTop Padding" style="height: 45px">
+			<h2>Files are available for import:</h2>
+		</div>
+		<div class="VContentBottom Padding BackgroundLists" id="import_files" style="top: 45px; bottom: 50px">
+		
+		</div>
+		<div class="VContentBottom" style="height: 50px">
+			<div class="Padding">
+				<select id="import_partitions">
+					{partitions}
+				</select>
+				<button type="button" class="IconSmall fa-check" onclick="Doors.executeFileImport()">
+					Import files now
+				</button>
+				<button type="button" class="IconSmall fa-trash">
+					Flush files
+				</button>
+				<button type="button" class="IconSmall fa-close" onclick="Doors.importWindow.close(); delete Doors.importWindow;">
+					Cancel
+				</button>
+			</div>
+		</div>
+	</div>

@@ -1,0 +1,44 @@
+
+
+	<div class="ContentFull">
+		<div class="VContentTop TopPart BorderBottom BackgroundWindow ScrollArea">
+			<div class="Padding">
+				<p class="Layout">
+					<strong>Please modify the permissions for {appname}:</strong>
+				</p>
+				<p class="Layout" id="Permissions">
+				</p>
+			</div>
+		</div>
+		<div class="VContentBottom BottomPart BackgroundToolbar">
+			<div class="Padding">
+				<button type="button" class="Button IconSmall fa-check" onclick="setPermissions( '{appname}' )">
+					Execute changes
+				</button>
+				<button type="button" class="Button IconSmall fa-plus" onclick="addPermission()">
+					Add permission
+				</button>
+				<button type="button" class="Button IconSmall fa-close" onclick="doCancel( '{appname}' )">
+					Cancel
+				</button>
+			</div>
+		</div>
+	</div>
+	
+	<input type="hidden" value="{appname}" id="Appname"/>
+	
+	<script src="Progdir:Scripts/setpermissions.js"></script>
+	
+	<style>
+		.TopPart
+		{
+			bottom: 50px;	
+		}
+		
+		.BottomPart
+		{
+			height: 50px;
+		}
+	</style>
+
+

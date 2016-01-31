@@ -1,0 +1,13 @@
+
+
+#ScreenList > .Padding
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+
+#ScreenList > .Padding.active
+{
+	font-weight: bold;
+}

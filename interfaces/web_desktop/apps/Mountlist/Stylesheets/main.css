@@ -1,0 +1,19 @@
+
+	#Mountlist .HRow .FloatLeft > div
+	{
+		overflow-x: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	#Mountlist .HRow .FloatLeft > div button,
+	#Mountlist .HRow .FloatLeft > div .Button
+	{
+		padding: 3px;
+		margin-top: 2px;
+	}
+
+	.Unmounted
+	{
+		box-shadow: inset 0px 0px 15px rgba(0,0,0,0.3);
+	}
+

@@ -1,0 +1,102 @@
+
+<!-- default window template
+windowId,
+background,
+viewTitle,
+contentString
+-->
+<script id="tmpl-gui-window" type="text/html">
+<div id="<%= windowId %>" class="Window Hidden">
+	<div class="Background-Content">
+		<%= background %>
+	</div>
+	<div class="Frame">
+		<div class="TitleBar">
+			<div class="Close WindowButton">
+				<i class="fa fa-remove"></i>
+			</div>
+			<div class="Title">
+				<%= viewTitle %>
+			</div>
+			<div class="Zoom WindowButton">
+				<i class="fa fa-sort"></i>
+			</div>
+		</div>
+		<div class="Content">
+			<%= content %>
+		</div>
+		<div class="BottomBar">
+			<div class="Resize WindowButton">
+				<i class="fa fa-arrows-v fa-special-needs-rotate45"></i>
+			</div>
+		</div>
+		<div class="MoveOverlay">
+		</div>
+	</div>
+</div>
+</script>
+
+
+<!-- container with a certain aspect ratio, based on width - WIP
+id,
+ratio,
+contentId,
+content
+-->
+<script id="tmpl-aspectratio" type="text/html">
+<div id="<%= id %>" class="AspectRatioContainer">
+	<div id="<%= id %>-ARS-Ratio" class="AspectRatioSetter">
+	</div>
+	<div id="<%= contentId %>"class="AspectRatioContent">
+		<%= content %>
+	</div>
+	<style>
+		#<%= id %>-ARS-Ratio {
+			padding-bottom: <%= ratio %>%;
+		}
+	</style>
+</div>
+</script>
+
+
+
+<!-- CONTENT FRAMES -->
+
+<!-- FrameClosure
+-->
+<script id="tmpl-component-frameclosure" type="text/html">
+<iframe
+	class="ContentFrame FrameClosure"
+	scrolling="no"
+	seamless="seamless"
+>
+</iframe>
+</script>
+
+<!-- NativeView
+-->
+<script id="tmpl-component-nativeview" type="text/html">
+<iframe
+	class="ContentFrame NativeView"
+	scrolling="no"
+	seamless="seamless"
+>
+</iframe>
+</script>
+
+<!-- ApplicationView
+-->
+<script id="tmpl-component-applicationview" type="text/html">
+<iframe
+	class="ContentFrame AplicationView"
+	scrolling="no"
+	seamless="seamless"
+	sandbox="allow-scripts"
+>
+</iframe>
+</script>
+
+<!-- ApplicationFrame
+-->
+
+<!-- COMPONENTS -->

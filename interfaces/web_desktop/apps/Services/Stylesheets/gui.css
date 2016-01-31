@@ -1,0 +1,19 @@
+.TopContainer
+{
+	bottom: 51px;
+}
+
+#Applications > .Box
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+#Applications > .Box .HRow > div + div
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	position: relative;
+	top: 12px;
+}
+

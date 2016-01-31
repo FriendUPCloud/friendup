@@ -1,0 +1,35 @@
+<div class="FullContent">
+	<div class="HRow Padding">
+		<strong>Choose file to upload:</strong>
+	</div>
+	<div class="BorderTop Padding">
+		<form method="post" id="fileUpload" target="uploadFrame" enctype="multipart/form-data" action="/system.library/file/upload">
+			<input type="hidden" name="sessionid"/>
+			<input type="hidden" name="module" value="files"/>
+			<input type="hidden" name="command" value="uploadfile"/>
+			<div class="HRow">
+				<div class="HContent35 FloatLeft">
+					<label for="path"><strong>Upload target:</strong></label>
+				</div>
+				<div class="HContent40 FloatLeft"><input class="FullWidth" type="text" name="path" value="Home:"/></div>
+				<div class="HContent25 FloatLeft">
+					<div class="HContent10 FloatLeft">&nbsp;</div>
+					<div class="HContent90 FloatLeft">
+						<button class="Button IconSmall fa-search" type="button" onclick="Doors.findUploadPath()">Find file</button>
+					</div>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="MarginLeft FloatLeft">
+					<input type="file" name="file"/>
+				</div>
+			</div>
+		</form>
+	</div>
+	<div class="HRow MarginTop BorderTop Padding">
+		<button type="button" class="IconSmall fa-upload" onclick="Doors.uploadFile('fileUpload')">
+			Upload the file
+		</button>
+	</div>
+	<iframe style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>
+</div>

@@ -1,0 +1,21 @@
+<script src="Progdir:Scripts/main.js"></script>
+<style>
+	#FriendVersionList table i,
+	#FriendVersionList table b { text-transform: uppercase; }
+	#FriendVersionList table i.error { color:#F00; }
+	#UpdateTaskResult { padding:5px; text-align: center; font-weight: 700; color:#F90; }
+</style>
+<div class="FullContent Padding">
+	
+	<h1>FriendUP version updates</h1>
+
+	<div id="UpdateTaskResult"></div>
+
+	<button id="FriendUpdateAll" type="button" class="IconSmall  fa-angle-double-up" onclick="UpdateAll()">
+		Update to latest version
+	</button>
+	
+
+	<div id="FriendVersionList" class=""></div>	
+
+</div>

@@ -1,0 +1,55 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Calculator</title>
+    <link href="page.css" rel="stylesheet" />
+    <link href="../style.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+</head>
+<body class="body">
+    <style>
+
+        
+    </style>
+
+    <header class="header">
+        <h1 class="h1"><span class="bold">CSS3</span>, <span class="bold">HTML5</span> & <span class="bold">JavaScript</span> Calculator</h1>
+    </header>
+    <article class="article">
+        <div class="calculator demo">
+            <div class="u4 display">
+                <div class="display-inner"><div class="display-text" data-bind="text: display"></div></div>
+            </div>
+            <button id="calculator-button-c" class="u1 button button-red" data-bind="click: clear">c</button>
+            <button id="calculator-button-backspace" class="u1 button button-backspace button-gray" data-bind="click: backspace">&#x21e4;</button>
+            <button id="calculator-button-negate" class="u1 button button-gray" data-bind="click: negate">&#xb1;</button>
+            <button id="calculator-button-÷" class="u1 button button-gray" data-bind="click: operator">÷</button>
+            <button id="calculator-button-7" class="u1 button button-gray" data-bind="click: number">7</button>
+            <button id="calculator-button-8" class="u1 button button-gray" data-bind="click: number">8</button>
+            <button id="calculator-button-9" class="u1 button button-gray" data-bind="click: number">9</button>
+            <button id="calculator-button-x" class="u1 button button-gray" data-bind="click: operator">x</button>
+            <button id="calculator-button-4" class="u1 button button-gray" data-bind="click: number">4</button>
+            <button id="calculator-button-5" class="u1 button button-gray" data-bind="click: number">5</button>
+            <button id="calculator-button-6" class="u1 button button-gray" data-bind="click: number">6</button>
+            <button id="calculator-button--" class="u1 button button-gray" data-bind="click: operator">-</button>
+            <button id="calculator-button-1" class="u1 button button-gray" data-bind="click: number">1</button>
+            <button id="calculator-button-2" class="u1 button button-gray" data-bind="click: number">2</button>
+            <button id="calculator-button-3" class="u1 button button-gray" data-bind="click: number">3</button>
+            <button id="calculator-button-+" class="u1 button button-gray" data-bind="click: operator">+</button>
+            <button id="calculator-button-0" class="u2 button button-gray" data-bind="click: number">0</button>
+            <button id="calculator-button-." class="u1 button button-gray" data-bind="click: number">.</button>
+            <button id="calculator-button-=" class="u1 button button-blue" data-bind="click: operator">=</button>            
+        </div>
+    </article>
+    <footer class="footer">
+        <p class="p">No images used. Cross browser support. With keyboard mapping.</p>
+        <p class="p">Crafted by <a class="link" target="_blank" href="http://www.ideaviate.com">Ideaviate</a> &middot; <a class="link" target="_blank" href="https://github.com/Ideaviate/html5-css3-js-calculator">GitHub</a></p>
+    </footer>
+
+    
+
+    <script src="../knockout-2.1.0.js"></script>
+    <script src="../calculator.min.js"></script>
+
+</body>
+</html>

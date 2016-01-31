@@ -1,0 +1,68 @@
+
+	<link rel="stylesheet" href="Progdir:Stylesheets/gui.css"/>
+	<div class="ContentFull">
+		<div class="VContentTop TopContainer" style="bottom: 50px">
+			<div class="HContentLeft HContent30 VContent100 BackgroundLists Padding ScrollableY" id="Applications">
+			
+			</div>
+			<div class="HContentRight HContent70 VContent100 BackgroundDefault Padding Disabled" id="Settings">
+				<div class="HRow">
+					<div class="HContent25 FloatLeft">
+						<strong id="ApplicationLabel">Application:</strong>
+					</div>
+					<div class="HContent75 FloatLeft">
+						<input type="text" class="FullWidth" id="Application"/>
+					</div>
+				</div>
+				<div class="HRow MarginTop">
+					<div class="HContent25 FloatLeft">
+						<strong id="ShortDescriptionLabel">Description:</strong>
+					</div>
+					<div class="HContent75 FloatLeft">
+						<input type="text" class="FullWidth" id="ShortDescription"/>
+					</div>
+				</div>
+				<div class="HRow MarginTop">
+					<div class="HContent25 FloatLeft">
+						<strong id="IconLabel">Icon:</strong>
+					</div>
+					<div class="HContent75 FloatLeft">
+						<div class="Box" id="Dropper">
+						
+						</div>
+					</div>
+				</div>
+				<div class="HRow MarginTop">
+					<div class="HContent25 FloatLeft">
+						<strong id="SortOrderLabel">SortOrder:</strong>
+					</div>
+					<div class="HContent75 FloatLeft">
+						<button type="button" class="IconSmall fa-arrow-up" onclick="Application.sendMessage( { command: 'updockitem' } )">
+							
+						</button>
+						<button type="button" class="IconSmall fa-arrow-down" onclick="Application.sendMessage( { command: 'downdockitem' } )">
+							
+						</button>
+						<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, shortdescription: ge('ShortDescription').value } )">
+							Save
+						</button>
+						<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
+							Delete
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom BackgroundDefault Padding BorderTop" style="height: 50px">
+			<button type="button" class="IconSmall fa-plus " id="BtnAddDockItem" onclick="Application.sendMessage( { command: 'newdockitem' } )">
+				Add dock item
+			</button>
+			<div class="ButtonSpacer"></div>
+			<button type="button" class="IconSmall fa-remove" id="BtnCancel" onclick="Application.sendMessage( { command: 'quit' } )">
+				Quit
+			</button>
+		</div>
+	</div>
+
+	<script src="Progdir:Scripts/gui.js"></script>
+

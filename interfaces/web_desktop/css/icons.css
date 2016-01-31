@@ -1,0 +1,46 @@
+/* Small icons -------------------------------------------------------------- */
+
+.IconSmall.FUIArrowUp
+{
+	background-image: $IconSmallArrowUp;
+}
+
+.IconSmall.FUIArrowDown
+{
+	background-image: $IconSmallArrowDown;
+}
+
+.IconSmall.FUIArrowLeft
+{
+	background-image: $IconSmallArrowLeft;
+}
+
+.IconSmall.FUIArrowRight
+{
+	background-image: $IconSmallArrowRight;
+}
+
+.IconSmall.FUISave
+{
+	background-image: $IconSmallSave;
+}
+
+.IconSmall.FUIUse
+{
+	background-image: $IconSmallUse;
+}
+
+.IconSmall.FUICancel
+{
+	background-image: $IconSmallCancel;
+}
+
+.IconSmall.FUIListAdd
+{
+	background-image: $IconSmallListAdd;
+}
+
+.IconSmall.FUIListRemove
+{
+	background-image: $IconSmallListRemove;
+}

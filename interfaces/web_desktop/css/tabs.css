@@ -1,0 +1,61 @@
+.Pages
+{
+	display: block;
+	position: relative;
+}
+.TabActive, .Tab
+{
+	display: block;
+	float: left;
+	padding: $PaddingTabs;
+	position: relative;
+	margin: $MarginTabs;
+	font-weight: $FontWeightTabs;
+	border-radius: $BorderRadiusTabs;
+	-moz-border-radius: $BorderRadiusTabs;
+	-webkit-border-radius: $BorderRadiusTabs;
+	cursor: pointer;
+	cursor: hand;
+	border: $BorderPageActive;
+	border-bottom: 0;
+}
+.Tab img, .TabActive img
+{
+	position: relative;
+	margin: 0;
+	top: 4px;
+}
+.Tab with .TabGradients
+{
+	background-color: #c7c7c7;
+}
+.Tab with .TabBorders
+{
+}
+.TabActive with .TabActiveBorders
+{
+	position: relative;
+	z-index: 2;
+}
+.TabActive with .TabActiveGradients
+{
+	background-color: $ColorBgTabActive;
+}
+.Page
+{
+	position: absolute;
+	left: -10000px;
+	top: -10000px;
+}
+.PageActive
+{
+	clear: both;
+	position: relative;
+	left: auto;
+	top: -1px;
+	display: block;
+	border: $BorderPageActive;
+	background: $ColorBgPageActive;
+	padding: 5px;
+}
+

@@ -1,0 +1,35 @@
+
+	<div class="VContentTop ScrollArea BackgroundWindow" style="bottom: 50px">
+		<div class="Padding">
+			<div class="Box MarginBottom" id="ConnectionGuiIntro">
+				<p class="Layout MarginBottom">
+					<strong>Please choose filesystem:</strong>
+				</p>
+				<p class="Layout Margin">
+					<select id="NetworkFilesystems" onchange="Doors.setFilesystemGUI(this.value)">
+						<option value="Website">Website</option>
+						<option value="DropboxDrive">Dropbox</option>
+					</select>
+				</p>
+				<hr class="Space" />
+				<p class="Layout MarginBottom">
+					<strong>Name your drive:</strong>
+				</p>
+				<p class="Layout">
+					<input type="text" placeholder="Mydrive:" class="FullWidth"/>
+				</p>
+			</div>
+			<div class="Box MarginBottom" id="ConnectionBoxGui">
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom BorderTop BackgroundToolbar" style="height: 50px">
+		<div class="Padding">
+			<button type="button" class="Button fa-check IconSmall" onclick="Workspace.connectFilesystem(1);">
+				Add network drive
+			</button>
+			<button type="button" class="Button fa-close IconSmall" onclick="Workspace.cfsview.close()">
+				Close
+			</button>
+		</div>
+	</div>

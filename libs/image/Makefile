@@ -1,0 +1,56 @@
+GCC		=	gcc
+OUTPUT	=	bin/image.library
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -I. -Wno-unused-parameters -I../../core/ -I../ -fPIC $(shell mysql_config --cflags)
+LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
+DFLAGS	=	-M $(CFLAGS)  
+FPATH	=	$(shell pwd)
+
+ifeq ($(DEBUG),1)
+CFLAGS	+=	-D__DEBUG
+endif
+
+C_FILES := $(wildcard imagelibrary.c )
+OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
+
+ALL:	$(OBJ_FILES) $(OUTPUT)
+
+
+$(OUTPUT): $(OBJ_FILES)
+	@echo "\033[34mLinking ...\033[0m"
+	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) ../../core/obj/buffered_string.o
+
+obj/%.o: %.c *.h %.d
+	@echo "\033[34mCompile ...\033[0m"
+	gcc $(CFLAGS) -c -o $@ $<
+
+#build system
+
+compile:	$(OBJ_FILES) $(OUTPUT)
+
+release:	$(OBJ_FILES) $(OUTPUT)
+
+clean:
+	@echo "\033[34mCleaning\033[0m"
+	@rm -f $(C_FILES:%.c=%.d)
+	@rm -rf obj/* $(OUTPUT) *.d
+
+install:
+	@echo "\033[34mInstalling library\033[0m"
+	cp $(OUTPUT) ../../build/libs/
+
+setup:
+	@echo "\033[34mPrepare enviroment\033[0m"
+	mkdir -p obj bin
+
+test:
+	$(GCC) $(CFLAGS) testlibrary.c ../../core/core/library.c -obin/TestLibrary -ldl -D__DEBUG -L/usr/lib/x86_64-linux-gnu/ 
+
+# dependency system
+	
+%.d: %.c
+	@set -e; rm -f $@; \
+	$(GCC) -M $(CFLAGS)  $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-include $(C_FILES:%.c=%.d) 

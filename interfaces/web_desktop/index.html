@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Friend UP</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+		<script src="js/3rdparty/hammer.js" type="text/javascript"></script>
+		<script src="js/namespace.js" type="text/javascript"></script>
+		<script src="js/utils/json.js"></script>
+		<script src="js/utils/engine.js"></script>
+		<script src="js/utils/touch.js"></script>
+		<script src="js/utils/cssparser.js"></script>
+		<!-- needs to be parsed <script src="js/utils/installapplication.js"></script>-->
+		<script src="js/utils/md5.js"></script>
+		<script src="js/utils/tool.js" type="text/javascript"></script>
+		<script src="js/utils/speech-input.js"></script>
+		<script src="js/io/cajax.js"></script>
+		<script src="js/io/request.js" type="text/javascript"></script>
+		<!-- not ready <script src="js/io/dbio.js"></script>-->
+		<script src="js/io/directive.js"></script>
+		<script src="js/io/websocket.js"></script>
+		<script src="js/io/door.js"></script>
+		<script src="js/io/dormant.js"></script>
+		<script src="js/io/door_system.js"></script>
+		<script src="js/io/module.js"></script>
+		<script src="js/io/friendlibrary.js"></script>
+		<script src="js/io/file.js"></script>
+		<script src="js/io/applicationstorage.js" type="text/javascript"></script>
+		<script src="js/gui/template.js" type="text/javascript"></script>
+		<script src="js/gui/guibase.js"></script>
+		<script src="js/gui/window.js"></script>
+		<script src="js/gui/screen.js"></script>
+		<script src="js/gui/listview.js"></script>
+		<script src="js/gui/directoryview.js"></script>
+		<script src="js/gui/filedialog.js"></script>
+		<script src="js/gui/desklet.js"></script>
+		<script src="js/media/audio.js"></script>
+		<script src="js/apiwrapper.js"></script>
+		<script src="js/frienddos.js"></script>
+		<script src="js/workspace.js"></script>
+		<link rel="stylesheet" href="css/friendup.css"/>
+		<link rel="stylesheet" href="theme/scrollbars.css"/>
+	</head>
+	<body onload="ParseCssFile('theme/theme.css'); setTimeout( function(){ Doors.init(); }, 500 )">
+		<div id="Screens">
+			<div id="DeepestField">
+				<div class="LocalElements">
+					<div id="TasksHeader">
+					</div>
+					<div id="Tasks">
+					</div>
+					<div id="ShellHeader">
+					</div>
+					<div id="ShellOutput">
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

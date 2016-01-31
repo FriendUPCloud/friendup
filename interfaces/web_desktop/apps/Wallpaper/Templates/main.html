@@ -1,0 +1,158 @@
+
+<div class="Dialog">
+	<div class="My DialogContent">
+		<div class="WPatternCont BorderRight">
+			<div class="Padding">
+				<p>
+					<strong>{wallpaper_for}:</strong>
+				</p>
+				<p>
+					<input type="radio" name="where" onclick="Application.mode = 'windows'" /> {windows}
+				</p>
+				<p>
+					<input type="radio" name="where" onclick="Application.mode = 'doors'" checked="checked"/> {workbench}
+				</p>
+				<p class="BorderTop"></p>
+				<p>
+					<strong>{add_image}:</strong>
+				</p>
+				<p>
+					{add_desc}
+				</p>
+				<p>
+					<button type="button" class="IconSmall fa-plus" onclick="Application.addImage()">
+						{add_image}
+					</button>
+				</p>
+			</div>
+		</div>
+		<div class="WPatternCont2 ScrollArea">
+			<div class="Padding">
+				<div class="ImageContainer" id="Images">
+					&nbsp;
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="DialogButtons">
+		<button type="button" class="IconSmall fa-eye UseButton" onclick="Application.operationUse()">
+			{use}
+		</button>
+		<button type="button" class="IconSmall fa-check SaveButton" onclick="Application.operationSave()">
+			{save}
+		</button>
+	</div>
+</div>
+<style>
+	.WPatternCont, .WPatternCont2
+	{	
+		width: 33%;
+		float: left;
+		height: 100%;
+		position: relative;
+		box-sizing: border-box;
+	}
+	.WPatternCont2
+	{
+		width: 67%;
+	}
+	.WPatternCont > div, .WPatternCont2 > div
+	{
+		position: absolute;
+		top: 4px;
+		left: 4px;
+		right: 4px;
+		bottom: 4px;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+	}
+	.WPatternCont2 > div
+	{
+		left: 0px;
+		padding-right: 0;
+	}
+	.WPImage
+	{
+		width: 185px; 
+		height: 104px; 
+		background-size: cover; 
+		background-repeat: no-repeat; 
+		background-position: center;
+		float: left;
+		display: block;
+		margin: 10px 10px 15px 0;
+		border: 1px solid rgba(0,0,0,0.2);
+		border-radius: 3px;
+		-moz-border-radius: 3px;
+		-webkit-border-radius: 3px;
+		background-color: black;
+		position: relative;
+	}
+	.WPImage > div
+	{
+		position: absolute;
+		top: 0; left: 0;
+		width: 100%;
+		height: 100%;
+		border-radius: 3px;
+		-moz-border-radius: 3px;
+		-webkit-border-radius: 3px;
+		background-size: cover; 
+		background-repeat: no-repeat; 
+		background-position: center;
+	}
+	.WPImage > div > div
+	{
+		position: absolute;
+		bottom: -21px;
+		width: 100%;
+		text-align: center;
+		text-shadow: 0px 1px 1px white;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.WPImage > div.Remove
+	{
+		width: 16px;
+		height: 18px;
+		left: auto;
+		right: 5px;
+		position: absolute;
+		top: 5px;
+		background: #000000;
+		color: #ffffff;
+		cursor: hand;
+		cursor: pointer;
+		z-index: 2;
+		margin: 0;
+	}
+	.WPImage > div.Remove:hover
+	{
+		color: #000000;
+		background: #ffffff;
+	}
+	.WPImage > div.Remove::before, .WPImage > div.Remove:before
+	{
+		display: block;
+		text-align: center;
+	}
+	.WPImage.Selected
+	{
+		margin: 8px 8px 13px -2px;
+		border: 3px dotted rgb(255,255,255);
+		color: black;
+	}
+	.WPImage.Selected > div > div
+	{
+		font-weight: bold;
+		color: black;
+	}
+	.My.DialogContent
+	{
+		overflow: hidden;
+	}
+</style>
+
+<script src="Progdir:Scripts/innerlogic.js"></script>
+

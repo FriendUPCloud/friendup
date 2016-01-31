@@ -1,0 +1,164 @@
+/* Themable nice'o css ------------------------------------------------------ */
+
+@import url(font-awesome.min.css);
+
+body
+{
+	font-family: sans serif;
+	font-size: 14px;
+	position: absolute;
+	top: 0; left: 0;
+	width: 100%; 
+	height: 100%;
+	overflow: hidden;
+	padding: 0;
+	margin: 0;
+	background: #1A3854;
+	visibility: hidden;
+}
+
+/* Helper classes ----------------------------------------------------------- */
+
+h1, h2, h3, h4
+{
+	font-weight: normal;
+	margin: 0 0 5px 0;
+	padding: 0;
+}
+
+h1
+{
+	font-size: 25px;
+	text-align: center;
+}
+
+hr
+{
+	border: 0;
+	border-bottom: 1px solid rgba(0,0,0,0.2);
+	margin: 0;
+	clear: both;
+	height: auto;
+}
+
+hr.Space
+{
+	clear: both;
+	margin-bottom: 15px;
+	height: 15px;
+	border: 0;
+	border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+
+.Row
+{
+	display: block;
+	clear: both;
+}
+.InputHeight
+{
+	padding: 0;
+	margin: 0;
+	line-height: 30px;
+	height: 30px;
+}
+.Col5, .Col10, .Col15, .Col20, .Col25, .Col30, .Col35,
+.Col40, .Col45, .Col50, .Col55, .Col60, .Col65, .Col70, 
+.Col75, .Col80, .Col85, .Col90, .Col95, .Col100
+{
+	position: relative;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+.Col5   { width:   5%; }
+.Col10  { width:  10%; } .Col15  { width:  15%; }
+.Col20  { width:  20%; } .Col25  { width:  25%; }
+.Col30  { width:  30%; } .Col35  { width:  35%; }
+.Col40  { width:  40%; } .Col45  { width:  45%; }
+.Col50  { width:  50%; } .Col55  { width:  55%; }
+.Col60  { width:  60%; } .Col65  { width:  65%; }
+.Col70  { width:  70%; } .Col75  { width:  75%; }
+.Col80  { width:  80%; } .Col85  { width:  85%; }
+.Col90  { width:  90%; } .Col95  { width:  95%; }
+.Col100 { width: 100%; }
+
+.Spacer
+{
+	display: block;
+	clear: both;
+	height: 5px;
+}
+
+iframe.Server
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+	opacity: 0;
+	transition-property: opacity;
+	transition-duration: 0.7s;
+	-webkit-transition-property: opacity;
+	-webkit-transition-duration: 0.7s;
+}
+
+/* Eula information --------------------------------------------------------- */
+
+body > .Eula
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 999999;
+	background: #ffffff;
+	color: black;
+	font-size: 16px;
+}
+
+body > .Eula > div.EulaText
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 75px;
+	width: 100%;
+	overflow: auto;
+	box-sizing: border-box;
+	padding: 20px;
+	border-bottom: 1px solid #e0e0e0;
+}
+
+body > .Eula > div.EulaText > div,
+body > .Eula > div.EulaInfo > div
+{
+	max-width: 600px;
+	margin: auto;
+}
+
+body > .Eula > div.EulaInfo
+{
+	position: absolute;
+	bottom: 0;
+	height: 75px;
+	padding: 20px;
+	box-sizing: border-box;
+	width: 100%;
+	overflow: hidden;
+}
+
+body > .Eula > div.EulaInfo button
+{
+	float: left;
+}
+
+body > .Eula > div.EulaInfo button + button
+{
+	float: right;
+}

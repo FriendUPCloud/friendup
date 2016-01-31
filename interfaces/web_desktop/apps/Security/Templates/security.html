@@ -1,0 +1,40 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop Padding" style="padding-bottom: 0; height: 50px">
+			<table width="100%">
+				<tr>
+					<th width="40%" align="left">
+						{Application}:
+					</th>
+					<th width="35%" align="left">
+						{Permissions}:
+					</th>
+					<th width="25%">
+						&nbsp;
+					</th>
+				</tr>
+			</table>
+		</div>
+		<div class="VContentBottom Padding ScrollArea" id="Applications" style="padding-top: 0; top: 50px">
+		</div>
+	</div>
+
+	<style>
+		td + td > em
+		{
+			display: block;
+			float: left;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			width: 90%;
+		}
+		td + td:after
+		{
+			content: " ";
+			display: block;
+			clear: both;
+		}
+	</style>
+
+	<script src="Progdir:Scripts/securitywindow.js"></script>

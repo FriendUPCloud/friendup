@@ -1,0 +1,403 @@
+@if $isMobile
+{	
+	/* Main screen */
+	
+	#Screens
+	{
+		position: absolute;
+		width: 100%;
+		height: 100%;
+	}
+	
+	#Screens > div > .TitleBar
+	{
+		display: none;
+	}
+	
+	#Statusbar { display:none; }
+	#DoorsScreen #Statusbar
+	{
+		font-family: fontawesome;
+		font-size: 40px;
+		display: block;
+		height: 56px;
+		line-height: 56px;
+		background: rgba(0,0,0,0.5);
+		margin: 12px 0 15px 15px;
+		color: #ffffff;
+		border-radius: 4px;
+		position: absolute;
+		bottom: -3px;
+		left: 66px;
+		right: 79px;
+		text-align: center;
+	}
+	
+	#DoorsScreen #Statusbar > #Taskbar
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 75%;
+		height: 100%;
+	}
+	
+	#DoorsScreen #Statusbar > #Taskbar > .Task
+	{
+		display: none;
+	}
+	#DoorsScreen #Statusbar > #Taskbar > .Task.Hidden
+	{
+		background-color: #ffffff;
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: contain;
+		position: relative;
+		float: left;
+		width: 22.5%;
+		margin: 0 0 0 2%;
+		line-height: 200px;
+		top: 5px;
+		height: 45px;
+		border-radius: 5px;
+		display: block;
+	}
+	#DoorsScreen #Statusbar > #Taskbar > .Task.Hidden + .Task.Hidden + .Task.Hidden + .Task.Hidden
+	{
+		margin: 0 2% 0 2%;
+	}
+	
+	#DoorsScreen #Statusbar > #Tray
+	{
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 25%;
+		height: 100%;
+	}
+	
+	#DoorsScreen #Statusbar > #Tray > div
+	{
+		width: 100%;
+		height: 100%;
+		line-height: 58px;
+	}
+	#DoorsScreen #Statusbar > #Tray > div:before
+	{
+		font-size: 32px;
+	}
+	
+	#DoorsScreen > .ScreenContent
+	{
+		top: 0 !important;
+	}
+	
+	#DoorsScreen > .ScreenContent > .Scroller
+	{
+		bottom: 0px;
+		position: absolute !important;
+		height: 105px;
+		left: 0;
+		right: 80px;
+	}
+	
+	#Screens .View
+	{
+		position: relative;
+		width: auto !important;
+		left: 0 !important;
+		top: auto !important;
+		height: 35px;
+		width: 100% !important;
+		max-width:100%;
+		overflow:hidden;
+		clear: both;
+		float: left;
+		overflow: hidden;
+		transition-property: height, min-height, max-height;
+		-moz-transition-property: height, min-height, max-height;
+		-webkit-transition-property: height, min-height, max-height;
+		transition-duration: 0.25s;
+		-moz-transition-duration: 0.25s;
+		-webkit-transition-duration: 0.25s;
+	}
+	
+
+	#Screens .View.Active
+	{
+		overflow: auto;
+		min-height: 175px; /* calc(100% - 200px); */
+	}
+	
+	#Screens .View.Active .PopupMenu
+	{
+		left: $MarginWindowLeft;
+		top: 35px;
+		right: $MarginWindowRight;
+		box-shadow: 0px 0px 1px 1px white;
+		height: 126px;
+		border-radius: 2px;
+		overflow: auto;
+		border: 0;
+	}
+	
+	#Screens .View.Active[maximized=true]
+	{
+		position: absolute;
+		top: 0 !important; 
+		left: 0 !important; 
+		width: 100% !important; 
+		height: 100% !important;
+		min-height: 100% !important;
+		z-index: 99999999 !important;
+	}
+	
+	#Screens .View.Active[maximized=true] .PopupMenu
+	{
+		height: 80vh;
+	}
+	
+	#Screens .View.Active .BottomBar
+	{
+		display: block;
+	}
+	
+	.View > .Title > div > .Depth
+	{
+		display: none;
+	}
+	
+	html .View > .Title > div > .Zoom
+	{
+		margin-right: -9px;
+	}
+	
+	#Screens .File
+	{
+		width: 56px;
+	}
+	
+	#Screens .File .Icon
+	{
+		width: 56px;
+		height: 56px;
+	}
+	
+	#Screens .File.Selected  .Title
+	{
+		margin-left:-35%;
+		width:160%;
+		white-space: normal;
+		padding:64px 2px 2px 2px;
+		line-height:16px;
+		height:32px;
+		bottom:-12px;
+		word-break: break-all;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		display:-webkit-box;
+	}
+	/* Desklet */
+	
+	.Desklet:before
+	{
+		content:"\f0c9";
+		font-family: fontawesome;
+		font-size: 40px;
+		display: block;
+		width: 56px;
+		height: 56px;
+		line-height: 56px;
+		background: rgba(0,0,0,0.5);
+		margin: 12px 0 15px 15px;
+		color: #ffffff;
+		border-radius: 4px;
+		position: absolute;
+		top: -80px;
+		left: -10px;
+		text-align: center;
+		transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+
+	}
+	
+	.Desklet
+	{
+		position: absolute;
+		bottom: 10px;
+		right: 10px;
+		width: 64px;
+		top: 100%;
+		height: auto;
+		margin:0px;
+		transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+		/*-moz-transition: top, left, bottom, right, width,height 0.5s,0.5s,0.5s,0.5s,0.5s,0.5s;
+		-webkit-transition: top, left, bottom, right, width,height 0.5s,0.5s,0.5s,0.5s,0.5s,0.5s;*/
+
+	}
+	
+	.Desklet .Launcher
+	{
+		overflow:hidden;
+		float:left; 
+		margin:5px;
+	}
+	.Desklet .Launcher + .Launcher { margin:5px; }
+	
+	.Desklet.Open
+	{
+		top: 76px;
+		bottom: 10px;
+		z-index: 9999999;
+		background: rgba(0,0,0,0.8);
+		transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+	}
+	
+	/* make it loook like a close button now.... */
+	.Desklet.Open:before
+	{
+		position: absolute;
+		top: -70px !important;
+		left:-15px !important;
+		height: 56px;
+		background: rgba(0,0,0,0.8);
+		bottom: auto !important;
+		/*content: "\f00d";*/
+	}
+
+	.Desklet.Open:after
+	{
+		position: absolute;
+		top: -70px !important;
+		height: 56px;
+		bottom: auto !important;
+		content: "\f00d";
+		font-family: fontawesome;
+		font-size: 40px;
+		display: block;
+		width: 56px;
+		line-height: 56px;
+		background: rgba(0,0,0,0.8);
+		margin: 12px 0 15px 15px;
+		color: #ffffff;
+		border-radius: 4px;
+		position: absolute;
+		text-align: center;
+		right:0px;
+		transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+
+	}
+	
+	/* Partition icons */
+	
+	#DoorsScreen > .ScreenContent > .Scroller:before
+	{
+		content:"\f07c";
+		font-family: fontawesome;
+		font-size: 40px;
+		display: block;
+		width: 56px;
+		height: 56px;
+		line-height: 56px;
+		background: rgba(0,0,0,0.5);
+		margin: 0;
+		color: #ffffff;
+		border-radius: 4px;
+		position: absolute;
+		top: -68px;
+		left: 15px;
+		text-align: center;
+	}
+	
+	#DoorsScreen > .ScreenContent > .Scroller
+	{
+		position: absolute;
+		bottom: 0px;
+		left: 0px;
+		width: 64px;
+		top: 100%;
+		height: auto;
+		background: rgba(0,0,0,0.5);
+		border-radius: 4px;
+		transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+	}
+	
+	#Screens > #DoorsScreen > .ScreenContent > .Scroller .File,
+	#Screens > #DoorsScreen > .ScreenContent > .Scroller .File > .Icon
+	{
+		width: 40px;
+	}
+	
+	#Screens > #DoorsScreen > .ScreenContent > .Scroller .File
+	{
+		position:relative !important;
+		top:0 !important;
+		left:0 !important;
+		margin: 0 10px;
+	}
+	
+	#DoorsScreen > .ScreenContent > .Scroller.Open
+	{
+		z-index: 9999999;
+		background: rgba(0,0,0,0.8);
+	}
+	
+	#DoorsScreen > .ScreenContent > .Scroller.Open:before
+	{
+		position: absolute;
+		top: -58px !important;
+		left:0;
+		height: 56px;
+		bottom: auto !important;
+		background: rgba(0,0,0,0.8);
+	}
+	#DoorsScreen > .ScreenContent > .Scroller.Open:after
+	{
+		position: absolute;
+		top: -58px !important;
+		right:0;
+		bottom: auto !important;
+		content: "\f00d";
+		font-family: fontawesome;
+		font-size: 40px;
+		display: block;
+		width: 56px;
+		height: 56px;
+		line-height: 56px;
+		background: rgba(0,0,0,0.8);
+		margin: 0;
+		color: #ffffff;
+		border-radius: 4px;
+		position: absolute;
+		text-align: center;	
+		
+	}
+	
+	/* Login */
+	
+	body.Login > .View
+	{
+		position: relative !important;
+		margin: 60px auto !important;
+		top: auto !important;
+		left: auto !important;
+	}
+	
+	#Screens .View[minimized=minimized]
+	{
+		display: none;
+	}
+	
+	/* mobile styles...  */
+
+		#Screens .View .BottomBar, #Screens .View .Resize
+		{
+			display: none;
+		}
+		#Screens .View.Active .BottomBar, #Screens .View.Active .Resize
+		{
+			display: block;
+		}
+		
+
+	
+}

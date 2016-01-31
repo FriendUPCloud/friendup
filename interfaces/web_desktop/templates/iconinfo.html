@@ -1,0 +1,97 @@
+
+	
+	<style>
+		/* TODO: Fix hack! */
+		.IconInfoSkewed > div
+		{
+			margin-left: -18px;
+		}
+	</style>
+	
+	<div class="ContentFull">
+		<div class="VContentTop ScrollArea" style="bottom: 50px">
+			<div class="Padding">
+				<div class="Pages" id="IconInfo_!!">
+					<div class="Tab">
+						<div class="IconSmall fa-file">
+							&nbsp; File information
+						</div>
+					</div>
+					<div class="Tab">
+						<div class="IconSmall fa-file-photo-o">
+							&nbsp; Icon information
+						</div>
+					</div>
+					<div class="Page">
+						<div class="Padding">
+							<div class="HRow">
+								<div class="FloatLeft HContent30">
+									<strong>Filename:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									<input type="text" value="{filename}" name="Filename" class="FullWidth"/>
+								</div>
+							</div>
+							<div class="HRow MarginTop FileInfo">
+								<div class="FloatLeft HContent30">
+									<strong>Filesize:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									{filesize}
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="FloatLeft HContent30">
+									<strong>{sharename}:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									<input type="text" class="FullWidth" value="" name="Sharename"/>
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="FloatLeft HContent30">
+									<strong>{sharewith}:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									<input type="text" class="FullWidth" value="" name="Sharewith" placeholder="Username1, Username2"/>
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="FloatLeft HContent30">
+									<strong>Protection:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									{protection}
+								</div>
+							</div>
+							<div class="HRow MarginTop">
+								<div class="FloatLeft HContent30">
+									<strong>{Notes}:</strong>
+								</div>
+								<div class="FloatLeft HContent5">&nbsp;</div>
+								<div class="FloatLeft HContent65">
+									<textarea class="FullWidth" style="height: 80px" name="Notes">{iconnotes}</textarea>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+						Page 2 contents
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BackgroundDefault BorderTop" style="height: 50px">
+			<button type="button" class="IconSmall fa-save" onclick="Doors.saveFileInfo(this)">
+				{Save}
+			</button>
+			<button type="button" class="IconSmall fa-check" onclick="Doors.closeFileInfo(this)">
+				{Cancel}
+			</button>
+		</div>
+	</div>

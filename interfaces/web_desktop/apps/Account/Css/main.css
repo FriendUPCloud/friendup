@@ -1,0 +1,38 @@
+.Gui label
+{
+	width: 40%;
+	float: left;
+	display: block;
+	box-sizing: border-box;
+	margin: 0 5px 5px 0;
+	font-weight: bold;
+}
+
+.Gui label + input
+{
+	width: calc(60% - 5px);
+	float: left;
+	display: block;
+	box-sizing: border-box;
+	margin: 0 0 5px 0;
+}
+
+.Gui .Box
+{
+	margin: 0 0 10px 0;
+}
+
+.Gui h3
+{
+	margin: 0 0 10px 0;
+}
+
+.Gui .Box:last-child
+{
+	margin: 0;
+}
+
+#UserAccImage
+{
+	border: 1px dashed #3B81C2;
+}

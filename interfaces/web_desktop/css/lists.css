@@ -1,0 +1,100 @@
+
+/** Tabeller ******************************************************************/
+.List
+{
+	width: 100%;
+	border-collapse: $TblListsBorderCollapse;
+	border-spacing: $TblListsBorderSpacing;
+	background-color: $ColorBgTdListTable;
+}
+.List tr th.Active
+{
+	background: #e4e4e4;
+}
+.List tr th
+{
+	padding: $PaddingListsTh;
+	background-color: $ColorBgThListSw1;
+	color: $ColorThListSw1;
+	font-weight: $FontWeightThList;
+	text-align: left;
+	text-transform: $FontTransformThList;
+	text-shadow: $TxtShdThList;
+}
+.List tr.sw2 th
+{
+	background-color: $ColorBgThListSw2;
+	color: $ColorThListSw2;
+}
+
+.List tr td
+{
+	padding: $PaddingListsTd;
+	text-shadow: $TxtShdTdList;
+}
+.List tr.sw1,
+.List div.sw1
+{
+	background-color: $ColorBgListSw1;
+	color: $ColorTdListSw1;
+}
+.List tr.sw2,
+.List .sw2
+{
+	background-color: $ColorBgListSw2;
+	color: $ColorTdListSw2;
+}
+.List td.Number, .List th.Number,
+.List div.Number
+{
+	text-align: right;
+}
+
+.List button
+{
+	margin: 0 2px 0 0;
+	padding: 4px 3px;
+}
+
+.List button > img
+{
+	position: relative;
+	top: 1px; left: 1px;
+}
+
+/* Alternating list divs ---------------------------------------------------- */
+
+.BackgroundLists .sw1
+{
+	background: $ColorBgListSw1;
+	color: $ColorListSw1;
+}
+
+.BackgroundLists .sw2
+{
+	background: $ColorBgListSw2;
+	color: $ColorListSw2;
+}
+
+/* .ZebraList */
+
+.ZebraList {}
+.ZebraList > tr,
+.ZebraList > div {
+	background: $ColorBgListSw1;
+	color: $ColorListSw1;
+}
+
+.ZebraList > tr:nth-child( 2n ),
+.ZebraList > div:nth-child( 2n )
+{
+	background: $ColorBgListSw2;
+	color: $ColorListSw2;
+}
+
+.ZebraList.Interactive > tr:hover,
+.ZebraList.Interactive > div:hover
+{
+	background-color : $ColorBgListSwHover;
+}
+

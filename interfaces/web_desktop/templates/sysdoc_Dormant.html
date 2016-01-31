@@ -1,0 +1,175 @@
+
+	<div style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; overflow: auto; background: #cccccc">
+	
+		<div class="Padding">
+			<h2>
+				Index:
+			</h2>
+			<ol>
+				<li><a href="#introduction">Introduction</a></li>
+				<ul>
+					<li><a href="#usecases">Use cases</a></li>
+				</ul>
+				<li><a href="#gettingstarted">Getting started</a></li>
+				<li><a href="#advancedusage">Advanced usage</a></li>
+				<ul>
+					<li><a href="#useapps">Using other apps</a></li>
+				</ul>
+				<li><a href="#moreinfo">Getting more information</a></li>
+			</ol>
+		</div>
+	
+	</div>
+	
+	<div style="position: absolute; top: 0; left: 30%; width: 70%; height: 100%; overflow: auto">
+
+		<div class="Padding BorderBottom">
+		
+			<h1>
+				Dormant
+			</h1>
+		</div>
+		<div class="Padding" style="text-align: justify">
+			
+			<h2>
+				<a name="introduction"></a>
+				Introduction
+			</h2>
+			<p>
+				Have you ever wished that your applications could talk together? Not 
+				literally, ofcourse, but passing messages to each other, using each 
+				other's functionality? Well, with Dormant, this is now possible in a
+				radical way.
+			</p>
+			<p>
+				According to Webster's dictionary, Dormant means:
+			</p>
+			<ul>
+				<li><em>not doing anything at this time : not active but able to become active</em></li>
+			</ul>
+			<p>
+				This is exactly what Dormant applications in FriendUP does. They idle, and wake up
+				when different events occur. Additionally, Dormant applications can leverage the 
+				functionality in other applications, as well as the inherent Workspace functions that
+				also expose Dormant functionality.
+			</p>
+			<h3>
+				<a name="usecases"></a>
+				Use cases
+			</h3>
+			<ul>
+				<li>
+					When using applications, there are often features that are missed
+					that are available in other applications. With Dormant, one can
+					access all application functions through a single, simple and
+					system wide interface.
+				</li>
+				<li>
+					When programming an application, the application itself can
+					access its own functionality through Dormant, thereby building
+					new functions at a high level - either through Javascript or
+					through FriendDOS scripting.
+				</li>
+				<li>
+					Applications that use Dormant can be remote controlled by 
+					authorized administrators in your network. This allows new
+					support schemes and opportunities.
+				</li>
+				<li>
+					Programmers can get easy access to unit testing, allowing
+					scripting of manual tasks.
+				</li>
+			</ul>
+			
+			<h2>
+				<a name="gettingstarted"></a>
+				Getting started
+			</h2>
+			<p>
+				To get started using Dormant, you can start by considering the
+				built-in system-wide Dormant functions available in the <strong>System:</strong>
+				volume. This volume is available to anyone using the <strong>FriendUP
+				Workspace</strong>.
+			</p>
+			<p>
+				In the <strong>System:</strong> volume, you will find a directory called 
+				<strong>Functions</strong>. This directory contains a set of functions
+				with which you can control the FriendUP desktop functionality, 
+				like mounting volumes, opening views and screen surfaces. You can
+				test these functions by doubleclicking on their icons.
+			</p>
+			
+			<h2>
+				<a name="advancedusage"></a>
+				Advanced usage
+			</h2>
+			<p>
+				To fully utilize the Dormant functionality available in FriendUP,
+				you need to use either a FriendUP Shell, or a programmers editor.
+				Thankfully, both are included in the <strong>FriendUP 
+				Workspace</strong>. Using the Dormant functions using a Shell or
+				a Shell script parser (one is built into our FriendDOS Shell),
+				you can program your own functionality.
+			</p>
+			<p>
+				Assuming you have started up the FriendDOS Shell application, 
+				use this example to test your first Dormant commands (written
+				one by one, with <em>enter</em> pressed after each line):
+			</p>
+			<p>
+				NB: The test screen that will pop up can be dragged by clicking
+				and holding the left mouse button pressed on the title bar (on top).
+				Also, you can click the cycle gadget on the right side, to switch
+				back to the Workspace screen.
+			</p>
+			<p>
+				<strong>enter System<br>
+				ScreenOpen test test<br>
+				ScreenClose test<br>
+				leave</strong><br>
+			</p>
+			<h3>
+				<a name="useapps"></a>
+				Using other apps
+			</h3>
+			<p>
+				To show you more interesting use cases, fire up Artisan, like this,
+				still using the FriendDOS Shell application:
+			</p>
+			<p>
+				<strong>launch Artisan<br>
+				enter Artisan<br>
+				SelectAll<br>
+				Insert Hello there!<br>
+				SelectAll<br>
+				Insert Some other text...<br>
+				leave</strong><br>
+			</p>
+			<p>
+				You have now used the Shell to write some lines in the Artisan
+				text editor. For even more advanced usage of Dormant and the
+				Shell, please take a look at the documentation of FriendDOS.
+			</p>
+			<h2>
+				<a name="moreinfo"></a>
+				Getting more information
+			</h2>
+			<p>
+				Each application that has exposed its functionality through
+				Dormant will have a dedicated chapter on the subject. Each 
+				application installed in your Workspace populates the central
+				documentation directory located here:
+			</p>
+			<p>
+				<strong>System:Documentation/Applications/</strong>
+			</p>
+			<p>
+				As for the system functions, please look under FriendDOS and
+				Workspace respectively, in the <strong>System:Documentation/</strong>
+				directories.
+			</p>
+		</div>
+	</div>
+
+	
+

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="/webclient/js/apps/api.js"></script>
+	</head>
+	<body style="display: none">
+		<div class="VContentTop">
+			<div class="Box">
+				<div class="HRow">
+					<div class="HContent30 FloatLeft">
+						<strong>Username:</strong>
+					</div>
+					<div class="HContent70 FloatLeft">
+						<input type="text" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+					</div>
+				</div>
+				<div class="HRow MarginTop">
+					<div class="HContent30 FloatLeft">
+						<strong>Password:</strong>
+					</div>
+					<div class="HContent70 FloatLeft">
+						<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+					</div>
+				</div>
+				<div class="HRow MarginTop">
+					<div class="HContent100">
+						<p class="Layout" style="float: right; position: relative; top: 5px">
+							Remember me
+						</p>
+						<p class="Layout" style="float: right; position: relative; top: 7px">
+							<input type="checkbox" id="remember"/>
+						</p>
+						<button type="button" class="IconSmall fa-unlock" onclick="Application.doLogin()">
+							Log in
+						</buttton>
+					</div>
+				</div>
+				<div id="invalidLogin" class="HRow MarginTop">
+					<p>&nbsp;</p>
+				</div>
+			</div>
+		</div>
+		<style>#invalidLogin { color:#F00; }</style>
+		<script>
+			Application = {
+				init: function( data )
+				{
+				},
+				doLogin: function()
+				{
+					document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...'
+					if( parent.Doors.login( ge( 'Username' ).value, ge( 'Password' ).value, ge( 'remember' ).checked ) === false )
+					{
+						showLoginError();
+					};
+				},
+				checkKeys: function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					if( k == 13 )
+					{
+						this.doLogin();
+					}
+				},
+				receiveMessage: function( msg )
+				{
+					if( msg.command && msg.command == "error" )
+					{
+						showLoginError();
+					}
+				}
+			};
+			
+			function showLoginError()
+			{
+				parent.Doors.loginPrompt.setFlag("height",140);
+				document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Invalid credentials. Please check you  input.'
+				document.getElementById('Username').focus();
+			}
+			
+			// Focus the username field
+			function loginNow()
+			{
+				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
+				document.getElementById('Username').focus(); 
+				if( GetCookie( 'loginUsername' ) && GetCookie( 'loginPassword' ) )
+				{
+					document.getElementById( 'Username' ).value = GetCookie( 'loginUsername' );
+					document.getElementById( 'Password' ).value = GetCookie( 'loginPassword' );
+					Application.doLogin();
+				}
+			}
+			setTimeout( loginNow, 150 );
+		</script>
+	</body>
+</html>

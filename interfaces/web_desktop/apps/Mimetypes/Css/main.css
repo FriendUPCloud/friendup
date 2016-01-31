@@ -1,0 +1,65 @@
+
+
+.BottomBar
+{
+	height: 50px;
+}
+
+.TopArea
+{
+	bottom: 50px;
+}
+
+
+p.Mimetype
+{
+	background: rgba(0,0,0,0.3);
+	border-radius: 3px;
+	padding: 8px;
+	position: relative;
+	box-sizing: border-box;
+}
+
+p.Mimetype:after
+{
+	display: block;
+	clear: both;
+	content: " ";
+}
+
+p.Mimetype input
+{
+	box-sizing: border-box;
+	width: 36%;
+	margin: 0 2% 0 0;
+	display: block;
+	float: left;
+}
+
+p.Mimetype em
+{
+	display: block;
+	float: left;
+	width: 16%;
+	margin: 0 2% 0 0;
+	text-align: center;
+}
+
+p.Mimetype select
+{
+	box-sizing: border-box;
+	width: 34%;
+	float: left;
+	display: block;
+}
+
+p.Mimetype button
+{
+	box-sizing: border-box;
+	width: 7%;
+	margin: 0 0 0 2%;
+	float: left;
+	display: block;
+}
+
+

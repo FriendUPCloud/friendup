@@ -1,0 +1,197 @@
+/*******************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+*                                                                              *
+* This program is free software: you can redistribute it and/or modify         *
+* it under the terms of the GNU Affero General Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* GNU Affero General Public License for more details.                          *
+*                                                                              *
+* You should have received a copy of the GNU Affero General Public License     *
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+*                                                                              *
+*******************************************************************************/
+
+// Parse a string / file and make compact, logical css
+function ParseCssFile ( string, path, callback )
+{
+	if( !path ) path = document.location.href.split( 'index.' )[0];
+	path = path.split( 'sandboxed.' )[0];
+	
+	if( typeof( cAjax ) == 'undefined' ) 
+		return setTimeout( function(){ ParseCssFile( string, path, callback ); }, 25 );	
+	
+	var j = new cAjax ();
+	j.open ( 'get', string, false );
+	j.onload = function ()
+	{
+		var string = Trim ( this.responseText () );
+		var jaxies = [];
+		var loading = 0;
+
+		// Import other included parsed css files with their own rules
+		while ( true )
+		{
+			var matches = string.match ( /\@append[^u]*?url[^(]*?\(([^)]*?)\)[^;]*?\;/ );
+			if ( matches )
+			{
+				string = string.split ( matches[0] ).join ( '' );
+				matches[1] = matches[1].split ( /["|']/ ).join ( '' );
+				
+				var jax = new cAjax ();
+				jax.open ( 'get', path + matches[1], true );
+				jax.loaded = false;
+				jax.jaxies = [];
+				jax.onload = function ()
+				{
+					this.loaded = true;
+					if( --loading == 0 )
+						AddParsedCSS( string, jaxies, callback );	
+				}
+				jaxies.push ( jax );
+			}
+			else break;
+		}
+		
+		// Make async (first object has string)
+		loading = jaxies.length;
+		for ( var a = 0; a < jaxies.length; a++ )
+		{
+			jaxies[a].jaxies = jaxies;
+			jaxies[a].send ();
+		}
+	}
+	j.send ();
+}
+
+function AddParsedCSS ( string , dataqueue, callback )
+{
+	// Add queued data
+	for ( var a = 0; a < dataqueue.length; a++ )
+	{
+		string += "\n" + Trim ( dataqueue[a].responseText () ) + "\n";
+	}
+	
+	// Check condition blocks
+	var mDat = false;
+	while( mDat = string.match( /(\@if.*?[\n|\r]+)/i ) )
+	{
+		var vari = mDat[1].match( /\@if\ ([^\r\n]+)/i );
+		if( vari[1] )
+		{
+			var v = vari[1].substr( 1, vari[1].length - 1 );
+			// True?
+			if( window[v] )
+			{
+				string = string.split( mDat[1] ).join( "@media (min-width: 0)" );
+			}
+			// Remove block!
+			else
+			{
+				string = string.split( mDat[1] ).join( "@media (min-width: 999999999)" );
+			}
+		}
+	}
+	
+	// Parse this css complete file, with these toplevel declarations
+	var theme = new Object ();
+	var replacements = [];
+	var matches = '';
+	while ( matches = string.match ( /\@declaration[^{]*?\{([^}]*?)\}/i ) )
+	{
+		string = string.split ( matches[0] ).join ( '!parsing_css_working_on_it!' );
+		var rules = matches[1].split ( "\n" );
+		if ( rules.length )
+		{
+			for ( var a in rules )
+			{
+				var rule = rules[a];
+				if ( !Trim ( rule ).length ) continue;
+				var mat = '';
+				while ( mat = rule.match ( /(\$[^:]*?)\:[\s]+([^;]*?)\;/i ) )
+				{
+					replacements.push ( [ mat[1], mat[2] ] );
+					var vkey = mat[1].substr ( 1, mat[1].length - 1 );
+					theme.vkey = mat[2];
+					rule = rule.split ( mat[0] ).join ( '' );
+				}
+			}
+			string = string.split ( '!parsing_css_working_on_it!' ).join ( '' );
+		}
+	}
+	// Code blocks
+	while ( matches = string.match ( /\@block\ (\$[^{]*?)\{([^}]*?)\}/i ) )
+	{
+		replacements.push ( [ Trim ( matches[1] ), Trim ( matches[2] ) ] );
+		string = string.split ( matches[0] ).join ( '' );
+	}
+	// Declaration of "with" rules
+	var rwith = [];
+	while ( matches = string.match ( /(.*?)\ with (\.[^\n|{| ]*?)[\n|{| ]/i ) )
+	{
+		if ( typeof ( rwith[matches[2]] ) == 'undefined' ) rwith[matches[2]] = [];
+		rwith[matches[2]].push ( matches[1] );
+		string = string.split ( matches[0] ).join ( matches[1] + "\n" );
+	}
+	// Execute replacements
+	if ( replacements.length )
+	{
+		for ( var a in replacements )
+		{
+			var replacement = replacements[a];
+			// Remove variable lines with the value delete
+			if ( replacement[1] == 'delete' )
+			{
+				// Add slashes
+				var rp = replacement[1];
+				var op = '';
+				for ( var a = 0; a < rp.length; a++ )
+				{
+					var c = rp.substr ( a, 1 );
+					if ( c.match ( /[^a-zA-Z0-9]/ ) )
+						op += '\'';
+					op += c;
+				}
+				var xp = new RegExp ( '/.*?\:.*?' + op + '\;[\n|\r]+/i' );
+				string = string.split ( xp ).join ( '' );
+			} 
+			else string = string.split ( replacement[0] + ';' ).join ( replacement[1] + ';' );
+		}
+	}
+	// Execute block replacements
+	if ( rwith.length )
+	{
+		for ( var cls in rwith )
+		{
+			var elements = rwith[cls];
+			cls = str_replace ( '.', '', cls );
+			var findex = new RegExp ( '/\.'+cls+'([\n|{])/i' );
+			var foundd = string.match ( findex );
+			if ( foundd )
+			{
+				string = string.split ( findex ).join ( foundd[1] );
+			}
+		}
+	}
+
+	/*// Strip comments
+	string = string.split ( /\/\*[^\/]*?\/[\n|\r]+/i ).join ( '' );
+	// Strip character returns|tabs and whitespace
+	string = string.split ( /[\n|\t|\r]+/i ).join ( '' );
+	string = string.split ( /[\s]{2,}/i ).join ( '' );*/
+
+	var style = document.createElement ( 'style' );
+	style.innerHTML = string;
+	document.getElementsByTagName( 'head' )[0].appendChild ( style );
+	
+	if( callback ) 
+	{
+		setTimeout( callback, 400 );
+	}
+}
+

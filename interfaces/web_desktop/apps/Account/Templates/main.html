@@ -1,0 +1,68 @@
+
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>
+	<script src="Progdir:Scripts/accountmain.js"></script>
+
+	<div class="Gui">
+		<div class="VContentTop ScrollArea BorderBottom BackgroundWindow" style="bottom: 50px">
+			<div class="Padding">
+				<h3>
+					Basic information:
+				</h3>
+				<div class="Box">
+					<div class="HRow">
+						<div id="UserImageRect">
+						
+						</div>
+						<div>
+							<p class="Layout">
+								<label>Your full name:</label>
+								<input type="text" value="" id="UserAccFullname"/>
+							</p>
+							<p class="Layout">
+								<label>Username:</label>
+								<input type="text" value="" disabled="disabled" id="UserAccUsername"/>
+							</p>
+							<p class="Layout">
+								<label>Password:</label>
+								<input type="password" value="" disabled="disabled" id="UserAccPassword"/>
+							</p>
+							<p class="Layout">
+								<label>Password (confirm):</label>
+								<input type="password" value="" disabled="disabled" id="UserAccPasswordConfirm"/>
+							</p>
+						</div>
+					</div>
+				</div>
+				<h3>
+					Extended information:
+				</h3>
+				<div class="Box">
+					<div class="HRow">
+						<div>
+							<p class="Layout">
+								<label>Telephone:</label>
+								<input type="text" value="" id="UserAccPhone"/>
+							</p>
+							<p class="Layout">
+								<label>E-mail address:</label>
+								<input type="text" value="" id="UserAccEmail"/>
+							</p>
+							<p class="Layout">
+								<label>Account image:</label>
+								<input type="text" value="" id="UserAccImage"/>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BackgroundToolbar" style="height: 50px">
+			<button type="button" class="Button IconSmall fa-check" onclick="saveDia()">
+				Save
+			</button>
+			<button type="button" class="Button IconSmall fa-times" onclick="cancelDia()">
+				Cancel
+			</button>
+		</div>
+	</div>
+

@@ -1,0 +1,38 @@
+
+	<script src="Progdir:Scripts/main.js"></script>
+	
+	<div class="FullContent">
+		<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 45px">
+			<div id="UserList" class="List"></div>
+		</div>
+		<div class="VContentBottom Padding" style="width: 35%; height: 45px">
+			<button type="button" class="IconSmall fa-user-plus" onclick="AddUser()">
+				Add user
+			</button>
+		</div>
+		<div class="HContentRight BorderLeft" style="width: 65%">
+			<div class="FullContent">
+				<div id="UserGui" class="Padding"></div>
+			</div>
+		</div>
+	</div>
+	
+	<style>
+		#UserList > div
+		{
+			cursor: hand;
+			cursor: pointer;
+		}
+		
+		#UserList > div > div
+		{
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+		#UserList > div > div + div
+		{
+			width: 80%;
+		}
+	</style>
+

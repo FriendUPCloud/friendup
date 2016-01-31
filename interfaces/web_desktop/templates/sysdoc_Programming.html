@@ -1,0 +1,379 @@
+
+	<div style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; overflow: auto; background: #cccccc">
+	
+		<div class="Padding">
+			<h2>
+				Index:
+			</h2>
+			<ol>
+				<li><a href="#introduction">Introduction</a></li>
+				<li><a href="#gettingstarted">Getting started</a></li>
+				<li><a href="#usingartisan">Using Artisan</a></li>
+				<li><a href="#runfunc">The run function</a></li>
+				<li><a href="#views">Using views</a></li>
+				<li><a href="#guicontent">Adding some GUI content</a></li>
+				<li><a href="#menus">Using pulldown menus</a></li>
+			</ol>
+		</div>
+	
+	</div>
+	
+	<div style="position: absolute; top: 0; left: 30%; width: 70%; height: 100%; overflow: auto">
+
+		<div class="Padding BorderBottom">
+		
+			<h1>
+				Start programming
+			</h1>
+		</div>
+		<div class="Padding" style="text-align: justify">
+			
+			<h2>
+				<a name="introduction"></a>
+				Introduction
+			</h2>
+			<p>
+				This is a short tutorial that can get you started with developing
+				software in FriendUP. We will go through all the main APIs by 
+				example. The rest of the knowledge you will need, is a basic
+				understanding of HTML5 and Javascript. Information about these topics
+				are scattered across the world wide web.
+			</p>
+			<p>
+				FriendUP applications are programmed both on the server side and
+				on the client side. This tutorial will only concentrate on the 
+				client side. The reason for this is that server side programming
+				gets complex very quickly, and the APIs that are included for the
+				client side programming is complete enough to give you all the 
+				tools required to make an application.
+			</p>
+			<p>
+				FriendUP can be programmed using FriendDOS scripting, Javascript
+				or both. In this tutorial we will only focus on Javascript - for
+				more on FriendDOS, please see the FriendDOS documentation located
+				in the same directory as this document.
+			</p>
+			<h2>
+				<a name="gettingstarted"></a>
+				Getting started
+			</h2>
+			<p>
+				<em>(Please read the documents <strong>FriendDOS</strong> and <strong>Workspace</strong>
+				before reading this next part, as it contains information you will need.)</em>
+			</p>
+			<p>
+				The first thing you should do once setting up your first FriendUP
+				application is to organize your files. This is done with the file
+				manager in Workspace. Double click your volume of choice, for 
+				example <strong>Home:</strong>, and make a new directory. Call
+				it, for the sake of this document, <strong>Project1.</strong>
+			</p>
+			<p>
+				So for this tutorial, we will place our files in this path, with
+				this directory structure:
+			</p>
+			<p>
+				<strong>Home:Project1/</strong>
+			</p>
+			<ul>
+				<li>
+					Templates/
+				</li>
+				<li>
+					Scripts/
+				</li>
+				<li>
+					Graphics/
+				</li>
+				<li>
+					Sounds/
+				</li>
+			</ul>
+			<p>
+				Once this structure is set up using the Workspace file manager,
+				we will continue to the next step, using Artisan.
+			</p>
+			<h2>
+				<a name="usingartisan"></a>
+				Using Artisan
+			</h2>
+			<p>
+				Artisan is the default programmers editor in FriendUP. It supports
+				many languages and has got features you would come to expect from
+				a programming tool. In FriendUP, we are working with "executable
+				Javascript", or .jsx for short. Normal Javascript files are not
+				executable, but .jsx ones are - as they are supposed to contain
+				a "main function".
+			</p>
+			<p>
+				But before we get into all that, fire up Artisan. If you want to
+				run it from the Shell, type "launch Artisan", and hit enter. If
+				it is the first time you are running it, it will ask you to activate
+				it. Just accept the activation form and Artisan will launch.
+			</p>
+			<p>
+				We will not go too much into how Artisan works. Artisan has its
+				own documentation, located in the System:Documentation/Applications
+				directory. But what you want to do, is to save the empty file
+				that opens up immediately after you have launched Artisan. Call
+				the file <strong>Project1.jsx</strong>, and save it in the directory 
+				<strong>Home:Project1/</Strong>.
+			</p>
+			<p>
+				Artisan can also load documents, either by using drag & drop from 
+				Workspace, or through the file dialog. You can play around a bit 
+				in Artisan to familiarize yourself. We will go on to the next step.
+			</p>
+			<h2>
+				<a name="runfunc"></a>
+				The run function
+			</h2>
+			<p>
+				<strong>Application.run()</strong> is FriendUP's "main function". 
+				Unless you are familiar with C (or other programming languages
+				of this nature), the "main function" is the function the OS, or
+				runtime environment calls when starting a program. It is the
+				starting point of your program.
+			</p>
+			<p>
+				In FriendUP, each Javascript executable is given an Application
+				object from the system. This contains some event handling and
+				message passing functionality, as well as some dynamic information,
+				like applicationId and authId (which we will cover later).
+			</p>
+			<p>
+				Your first application should look something like this:
+			</p>
+			<p>
+				Application.run = function( msg )<br>
+				{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;console.log( 'Hello world' );<br>
+				}<br>
+			</p>
+			<p>
+				At this point, it would be a good idea to get your Google Chrome
+				debug console up. You can do this with hitting F12. (TODO: Update
+				with using FriendDOS for log output...)
+			</p>
+			<p>
+				You can run the .jsx executable directly from Artisan. Click on
+				the "play" button on the bottom of the Artisan window. It will
+				output "Hello world" to the Google Chrome console.
+			</p>
+			<p>
+				When you have tested running your first .jsx program, you will
+				have to stop the program from running. You don't want to fill up
+				memory with pointless programs!
+			</p>
+			<p>
+				To check if your program is still running, you can check the 
+				Deepest Field by pulling on the Workspace screen bar on the top
+				of the screen. Here you will see all your running tasks, and you
+				will be able to quit the tasks by clicking on their box.
+			</p>
+			<p>
+				Of course, if you know that your program is running, just click
+				the "stop" button next to the "play" button. This will stop the
+				running program immediately.
+			</p>
+			<p>
+				The <strong>Application.run()</strong> function takes two arguments.
+				The first argument is <strong>msg</strong>, which is an object 
+				that holds information relevant to the application. The second
+				argument, <strong>iface</strong> will tell you which interface is 
+				asked for by the system. (At this time, this is not implemented).
+				This argument is a string.
+			</p>
+			<h2>
+				<a name="views"></a>
+				Using views
+			</h2>
+			<p>
+				In FriendUP, desktop windows are called <strong>views</strong>.
+				This is because a window in FriendUP can be displayed in different
+				ways, but it always is used to view graphical user interfaces.
+			</p>
+			<p>
+				To open up a view in your .jsx executable, type in this code in
+				your run function, after your console output.
+			</p>
+			<p>
+				var v = new View( {<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;title: "My Project Number One",<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;width: 640,<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;height: 480<br>
+				} );<br>
+				<br>
+				v.onClose = function()<br>
+				{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;Application.quit();<br>
+				}<br>
+				<br>
+				this.mainView = v;<br>
+			</p>
+			<p>
+				The first part of this code opens up a new view, with the title
+				"My Project Number One". The view will have a width of 640 pixels
+				and a height of 480 pixels.
+			</p>
+			<p>
+				The second part of this code tells the Application object to 
+				quit the program if the view is closed.
+			</p>
+			<p>
+				The last bit of the code assigns the view object to a variable 
+				anchored to the Application object, for safe keeping (assuming 
+				you now placed this piece of code inside the Application.run() function).
+			</p>
+			<p>
+				Now try executing your application with the "play" button again.
+				Then "stop" it. You have now opened and closed your first view
+				in FriendUP.
+			</p>
+			<h2>
+				<a name="guicontent"></a>
+				Adding some GUI content
+			</h2>
+			<p>
+				At this point, you would want to see something inside of your
+				view that would resemble some kind of GUI. For this, we will
+				introduce you to how we apply HTML5 templates as GUI in FriendUP.
+				Additionally, we need to teach you how to use the File class,
+				and how to use relative paths.
+			</p>
+			<p>
+				To start, make a new, empty file from the Artisan File menu.
+				Save the file in your Templates/ directory with the name,
+				<strong>"gui.html"</strong> (without the quotes of course).
+			</p>
+			<p>
+				Enter this piece of HTML inside the gui.html file:
+			</p>
+			<p>
+				&lt;div class="Padding"&gt;<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&lt;button onclick="Quit()" class="Button"&gt;Close&lt;/button&gt;<br>
+				&lt;/div&gt;<br>
+				<br>
+				&lt;script&gt;<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;function Quit()<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Application.sendMessage( { command: "quit" } );<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				&lt;/script&gt;<br>
+			</p>
+			<p>
+				Underneath the view code you just wrote in your code file Project1.jsx, 
+				type in this piece of code:
+			</p>
+			<p>
+				var f = new File( "Progdir:Templates/gui.html" );<br>
+				f.onLoad = function( data )<br>
+				{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;Application.mainView.setContent( data );<br>
+				}<br>
+				f.load();<br>
+			</p>
+			<p>
+				The gui.html code is the GUI for our view. Embedded in the GUI, 
+				we have a Quit() function that hooks up to the Application object, 
+				automatically created for the template scope. Quit()
+				uses a standard Application.send method, which sends an object
+				with the "quit" command to the Application object in <strong>Project1.jsx</strong>.
+				This "quit" command is automatically handled by the Application
+				object, and it immediately quits.
+			</p>
+			<p>
+				The GUI is fetched by opening up the gui.html file from <strong>Progdir:Templates/gui.html</strong>.
+				Progdir: is a relative path to where the executable is located. This
+				makes it easier to move your .jsx projects around, without having
+				to worry about volume and directory names changing.
+			</p>
+			<p>
+				Try to run the program now. It will open up a new view, with a
+				single button inside some padded margins, and will allow you to
+				quit the program by clicking the Close button as presented. You
+				have now written your first functional FiendUP program.
+			</p>
+			<h2>
+				<a name="menus"></a>
+				Using pulldown menus
+			</h2>
+			<p>
+				FriendUP is menu driven and uses pulldown menus wherever possible 
+				to unclutter the GUI. The pulldown menus work on all interface
+				modes (mobile, TV, WIMP), but are adapted in look and feel.
+			</p>
+			<p>
+				To add menus to your FriendUP application, add this code:
+			</p>
+			<p>
+				v.setMenuItems( [<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: 'File',<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;items: [<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: 'Quit',<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;command: 'quit'<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				] );<br>
+			</p>
+			<p>
+				This code adds a File menu with one menu item, Quit. The Quit menu
+				item sends a 'quit' command to the Application object. The 'quit'
+				command is built-in.
+			</p>
+			<p>
+				When adding your own commands, you catch them in a function called
+				Application.receiveMessage. This function takes one argument, msg,
+				which is an object holding information about the message. The
+				command itself is passed in msg.command, which is a string.
+			</p>
+			<p>
+				To show this, consider this menu, with our first custom menu item
+				that we need to build support for ourselves:
+			</p>
+			<p>
+				v.setMenuItems( [<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: 'File',<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;items: [<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: 'About our test',<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;command: 'about'<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: 'Quit',<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;command: 'quit'<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				] );<br>
+			</p>
+			<p>
+				We now add a new function outside the Application.run function:
+			</p>
+			<p>
+				Application.receiveMessage = function( msg )<br>
+				{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;if( !msg.command ) return false;<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;switch( msg.command )<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'about':<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showAboutWindow();<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+				}<br>
+			</p>
+			<p>
+				We have now handled our first custom menu item. 'about' gets
+				handled by the function, showAboutWindow(), which we have to
+				make. It should test if the about window is open, and if not,
+				then it should open it.
+			</p>
+		</div>
+	</div>
+
+	
+

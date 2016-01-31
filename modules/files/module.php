@@ -1,0 +1,79 @@
+<?php
+
+/*******************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+*                                                                              *
+* This program is free software: you can redistribute it and/or modify         *
+* it under the terms of the GNU Affero General Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* GNU Affero General Public License for more details.                          *
+*                                                                              *
+* You should have received a copy of the GNU Affero General Public License     *
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+*                                                                              *
+*******************************************************************************/
+
+global $args, $SqlDatabase, $User, $Config;
+
+include_once( 'php/friend.php' );
+include_once( 'php/classes/door.php' );
+include_once( 'php/classes/logger.php' );
+
+// Found it?
+if( $Filesystem = new Door( $args ) )
+{
+	// Could be we have an argument with a destination? Let's check
+	$DestFilesystem = false;
+	if( isset( $args->args ) && isset( $args->args->to ) )
+	{
+		$DestFilesystem = new Door( $args->args->to );
+	}
+	unset( $identifier );
+	
+	// TODO: Will be deprecated to be here
+	$test = 'modules/files/include/door_' . strtolower( $Filesystem->Type ) . '.php';
+	
+	// New way to include "driver" assets
+	if( !file_exists( $test ) )
+		$test = 'devices/DOSDrivers/' . $Filesystem->Type . '/door.php';
+	
+	if( file_exists( $test ) )
+	{
+		$door = false;
+		
+		// Get the path from arguments
+		// TODO: Make uniform
+		$path = false;
+		if( isset( $args->path ) )
+			$path = str_replace( '::', ':', $args->path );
+		else if ( isset( $args->fileInfo->Path ) )
+			$path = str_replace( '::', ':', $args->fileInfo->Path );
+		else if( isset( $args->args ) && isset( $args->args->path ) )
+			$path = str_replace( '::', ':', $args->args->path );
+		else if( isset( $args->args ) && isset( $args->args->Path ) )
+			$path = str_replace( '::', ':', $args->args->Path );
+		else if( isset( $args->args->from ) )
+			$path = str_replace( '::', ':', $args->args->from );
+		
+		// Include the correct door class and instantiate it
+		include( $test );
+
+		if( !$door ) die( 'fail<!--separate-->No door found' );
+		
+		// Execute dos action
+		if( $result = $door->dosAction( $args ) )
+		{
+			die( $result );
+		}
+	}
+}
+
+die( 'fail<!--separate-->' . print_r( $args, 1 ) );
+
+?>

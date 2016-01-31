@@ -1,0 +1,265 @@
+﻿
+/*  ################# 
+ *	### CSS Reset ###
+ *  ################# */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+/* End of CSS Reset */
+
+
+
+
+/*  ######################### 
+ *	### Calculator styles ###
+ *  ######################### */
+
+/* Grid units */
+.u1,
+.u2,
+.u3,
+.u4 {
+    float: left;
+    margin: 3px;
+}
+.u1 {
+    width: 40px;
+}
+.u2 {
+    width: 86px;
+}
+.u3 {
+    width: 132px;
+}
+.u4 {
+    width: 178px;
+}
+
+.calculator {
+	-moz-box-shadow: inset 0px 1px #7b839b;
+	-webkit-box-shadow: inset 0px 1px #7b839b;
+	box-shadow: inset 0px 1px #7b839b;
+	background-color: #3C4150;
+	border: 1px solid #181A20;
+	float: left;
+	padding: 6px;
+	width: 184px;
+}
+
+.display {
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	-moz-box-shadow: inset 0 1px 1px #0A0B0D, 0px 1px #5E6370;
+	-webkit-box-shadow: inset 0 1px 1px #0A0B0D, 0px 1px #5E6370;
+	box-shadow: inset 0 1px 1px #0A0B0D, 0px 1px #5E6370;
+	-webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+	background-color: #17181E;
+	border: 1px solid #181A20;
+	padding: 0 10px;
+	text-align: right;
+}
+.display-text {
+	color: #fff;
+	font-size: 22px;
+	line-height: 42px;
+	overflow: hidden;
+	unicode-bidi: embed;
+	width: 1000px;
+    float: right;
+}
+.display-inner {
+    width: 156px;
+    overflow: hidden;
+}
+.button {
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	border: 1px solid #181A20;
+	color: #fff;
+	cursor: pointer;
+	float: left;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-weight: bold;
+	line-height: 25px;
+	padding: 0 8px;
+	text-align: center;
+	text-decoration: none;
+	vertical-align: middle;
+}
+.button:active,
+.button-active {
+	position: relative;
+	top: 1px;
+}
+.button:active,
+.button:focus {
+	outline: 0;
+}
+/* Mozilla fix */
+button::-moz-focus-inner {
+	padding: 0;
+	border: 0;
+}
+
+/* Buttons styling exceptions */
+.button-backspace {
+	font-size: 17px;
+	font-weight: normal;
+}
+
+
+/* Button skins */
+.button-gray {
+	-moz-box-shadow: inset 0px 1px #9498A3, 0 1px 1px #323643;
+	-webkit-box-shadow: inset 0px 1px #9498A3, 0 1px 1px #323643;
+	box-shadow: inset 0px 1px #9498A3, 0 1px 1px #323643;
+	background-color: #595E6B;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#656976), to(#4B505E));
+	background-image: -webkit-linear-gradient(top, #656976, #4B505E);
+	background-image: -o-linear-gradient(top, #656976, #4B505E);
+	background-image: linear-gradient(to bottom, #656976, #4B505E);
+	background-image: -moz-linear-gradient(top, #656976, #4B505E);
+	background-repeat: repeat-x;
+	filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ff656976', endColorstr='#ff4B505E', GradientType=0);
+	text-shadow: 0px -1px #181A20;
+}
+	.button-gray:hover {
+		background-color: #666B78;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#757985), to(#545867));
+		background-image: -webkit-linear-gradient(top, #757985, #545867);
+		background-image: -o-linear-gradient(top, #757985, #545867);
+		background-image: linear-gradient(to bottom, #757985, #545867);
+		background-image: -moz-linear-gradient(top, #757985, #545867);
+		background-repeat: repeat-x;
+		filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ff757985', endColorstr='#ff545867', GradientType=0);
+	}
+	.button-gray.active, 
+	.button-gray:active {
+		-webkit-box-shadow: inset 0 1px 1px #14171E, 0px 1px #5E6370;
+		-moz-box-shadow: inset 0 1px 1px #14171E, 0px 1px #5E6370;
+		box-shadow: inset 0 1px 1px #14171E, 0px 1px #5E6370;
+		background-color: #292D3A;
+		background-image: none;
+		filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+	}
+.button-red {
+	-moz-box-shadow: inset 0px 1px #CA9883, 0 1px 1px #323643;
+	-webkit-box-shadow: inset 0px 1px #CA9883, 0 1px 1px #323643;
+	box-shadow: inset 0px 1px #CA9883, 0 1px 1px #323643;
+	background-color: #965F48;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#A46E57), to(#844D37));
+	background-image: -webkit-linear-gradient(top, #A46E57, #844D37);
+	background-image: -o-linear-gradient(top, #A46E57, #844D37);
+	background-image: linear-gradient(to bottom, #A46E57, #844D37);
+	background-image: -moz-linear-gradient(top, #A46E57, #844D37);
+	background-repeat: repeat-x;
+	filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ffA46E57', endColorstr='#ff844D37', GradientType=0);
+	text-shadow: 0px -1px #58372A;
+}
+	.button-red:hover {
+		background-color: #A26B55;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#B4806A), to(#915740));
+		background-image: -webkit-linear-gradient(top, #B4806A, #915740);
+		background-image: -o-linear-gradient(top, #B4806A, #915740);
+		background-image: linear-gradient(to bottom, #B4806A, #915740);
+		background-image: -moz-linear-gradient(top, #B4806A, #915740);
+		background-repeat: repeat-x;
+		filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ffB4806A', endColorstr='#ff915740', GradientType=0);
+	}
+	.button-red.active, 
+	.button-red:active {
+		-webkit-box-shadow: inset 0 1px 1px #2A130C, 0px 1px #5E6370;
+		-moz-box-shadow: inset 0 1px 1px #2A130C, 0px 1px #5E6370;
+		box-shadow: inset 0 1px 1px #2A130C, 0px 1px #5E6370;
+		background-color: #472619;
+		background-image: none;
+		filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+	}
+.button-blue {
+	-moz-box-shadow: inset 0px 1px #BCD6FF, 0 1px 1px #323643;
+	-webkit-box-shadow: inset 0px 1px #BCD6FF, 0 1px 1px #323643;
+	box-shadow: inset 0px 1px #BCD6FF, 0 1px 1px #323643;
+	background-color: #598FE9;
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#6DA1F8), to(#427BD8));
+	background-image: -webkit-linear-gradient(top, #6DA1F8, #427BD8);
+	background-image: -o-linear-gradient(top, #6DA1F8, #427BD8);
+	background-image: linear-gradient(to bottom, #6DA1F8, #427BD8);
+	background-image: -moz-linear-gradient(top, #6DA1F8, #427BD8);
+	background-repeat: repeat-x;
+	filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ff6DA1F8', endColorstr='#ff427BD8', GradientType=0);
+	text-shadow: 0px -1px #2C4E88;
+}
+	.button-blue:hover {
+		background-color: #6E9EED;
+		background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#83B0FC), to(#578ADE));
+		background-image: -webkit-linear-gradient(top, #83B0FC, #578ADE);
+		background-image: -o-linear-gradient(top, #83B0FC, #578ADE);
+		background-image: linear-gradient(to bottom, #83B0FC, #578ADE);
+		background-image: -moz-linear-gradient(top, #83B0FC, #578ADE);
+		background-repeat: repeat-x;
+		filter: progid:dximagetransform.microsoft.gradient(startColorstr='#ff83B0FC', endColorstr='#ff578ADE', GradientType=0);
+	}
+	.button-blue.active, 
+	.button-blue:active {
+		-webkit-box-shadow: inset 0 1px 1px #0E192E, 0px 1px #5E6370;
+		-moz-box-shadow: inset 0 1px 1px #0E192E, 0px 1px #5E6370;
+		box-shadow: inset 0 1px 1px #0E192E, 0px 1px #5E6370;
+		background-color: #1E3357;
+		background-image: none;
+		filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+	}
+
+
+

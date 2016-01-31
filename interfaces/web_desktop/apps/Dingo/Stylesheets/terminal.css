@@ -1,0 +1,69 @@
+
+body
+{
+	margin: 0;
+	padding: 0;
+	font-size: 12px;
+}
+.Terminal
+{
+	position: relative;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+	background: #202020;
+	color: #eeeeee;
+	font-family: Monospace, Liberation mono;
+	font-size: 12px;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.8);
+	padding: 8px;
+}
+.Terminal .Path
+{
+	color: #00CFA5;
+	margin: 0 5px 0 0;
+	display: inline;
+}
+.Terminal .Cli
+{
+	outline: none;
+	display: inline;
+}
+.Terminal .Error, .Terminal .Output
+{
+	display: block;
+	clear: both;
+	color: #ff0022;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	padding: 5px 0 10px 0;
+}
+.Terminal .Output
+{
+	color: white;
+}
+.Terminal .Container
+{
+	color: #4B9EC2;
+	font-size: 12px;
+}
+
+.Terminal .File
+{
+	color: #EDB85E;
+	font-size: 12px;
+	height: auto;
+	width: auto;
+	padding: auto;
+	margin: auto;
+	float: none;
+	clear: both;
+}
+
