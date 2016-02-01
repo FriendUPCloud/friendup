@@ -359,7 +359,7 @@ Workspace = {
 			{
 				if( json.ErrorMessage == '0' )
 				{
-					var m = new Module( 'system' );
+					/*var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e != 'ok' )
@@ -371,7 +371,7 @@ Workspace = {
 					m.addVar( 'sessionid', json.sessionid );
 					m.execute( 'getsetting', {
 						setting: 'accepteula'
-					} );
+					} );*/
 					
 					document.body.className = 'Loading';
 					t.sessionId = json.sessionid;
@@ -1962,7 +1962,7 @@ function ClearCache()
 
 // Shows eula
 
-function ShowEula( accept )
+/*function ShowEula( accept )
 {
 	if( accept )
 	{
@@ -1997,7 +1997,7 @@ function ShowEula( accept )
 		d.innerHTML = data;
 	}
 	f.load();
-}
+}*/
 
 // Login daemon
 function LoginDaemon()
