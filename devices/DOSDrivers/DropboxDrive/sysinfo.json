@@ -1,0 +1,9 @@
+{
+	"type":    "DropboxDrive",
+	"literal": "Dropbox Based Filesystem",
+	"api-key":
+	{
+		"key": "3godi79ls6uenbz",
+		"secret": "p6d5guoe3ac9pan"
+	}
+}
