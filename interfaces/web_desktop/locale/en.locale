@@ -1,0 +1,200 @@
+
+File_Date                            : Date
+
+i18n_Builtin_Label_Trash             : Trash
+i18n_Builtin_Label_Ram_disk          : Ram Door
+i18n_Builtin_Label_Home              : Home
+i18n_Builtin_Label_System            : System
+
+#Built-in preferences
+
+i18n_install_application             : Install program
+i18n_looknfeel                       : Look and feel
+i18n_screens                         : Screens
+i18n_wallpaper                       : Wallpaper
+i18n_printers                        : Printers
+i18n_network                         : Network
+i18n_language                        : Language
+i18n_bookmarks                       : Bookmarks
+i18n_bookmarks_add                   : Add
+i18n_bookmarks_cancel                : Cancel
+i18n_bookmarks_select                : Select
+i18n_desklets                        : Desklets
+i18n_sound                           : Sound
+i18n_keyboard                        : Keyboard
+i18n_input                           : Input
+i18n_hardware                        : Hardware
+i18n_useraccounts                    : Users
+i18n_datetime                        : Date and time
+i18n_docksettings                    : Dock
+i18n_security                        : Security
+i18n_mimetypes                       : Mimetypes
+i18n_account                         : Account settings
+
+
+#Tools
+i18n_processmgr                         : Process manager
+i18n_applicationmgr                     : Application manager
+i18n_sysdiag                            : System diagnosis
+
+i18n_continue                           : Continue
+i18n_couldnotinstallapp                 : Could not install application.
+
+i18n_choose_file                        : Choose file
+i18n_new_container                      : New directory
+i18n_create_container                   : Make directory
+i18n_name                               : Name
+i18n_make_a_new_container               : Make a new directory
+
+i18n_mountlist                          : Mountlist
+i18n_items_total                        : items, total
+
+i18n_Storage_Local_Read_desc            : Read access, local doors
+i18n_Storage_Local_Write_desc           : Write access, local doors
+i18n_Storage_Local_Read/Write_desc      : Read/write access, local doors
+i18n_Storage_Remote_Read_desc           : Read access, network doors
+i18n_Storage_Remote_Write_desc          : Write access, network doors
+i18n_Storage_Remote_Read/Write_desc     : Read/write access, network doors
+i18n_Storage_Ramdisk_Read_desc          : Read access, Ram Door
+i18n_Storage_Ramdisk_Write_desc         : Write access, Ram Door
+i18n_Storage_Ramdisk_Read/Write_desc    : Read/write access, Ram Door
+i18n_Module_System_desc                 : Access to basic functionality
+
+i18n_connect_network_drive              : Connect network drive
+
+i18n_your_command                       : Your command
+
+#Default doors
+i18n_door_home                          : Home
+
+please_choose_an_icon                   : Please choose icon(s).
+about_friendup                          : About FriendUP
+information                             : Information & updates
+clear_cache                             : Clear cache
+documentation_on                        : Documentation on
+i18n_sharewith                          : Share with
+i18n_sharename                          : Share name
+my_account                              : My account
+i18n_account_setup                      : My account - setup
+
+#Default directorys for applications
+i18n_directory_Games                    : Games
+i18n_directory_Office                   : Office
+i18n_directory_Graphics                 : Graphical
+i18n_directory_Internet                 : Internet
+i18n_directory_Media                    : Media
+i18n_directory_Programming              : Programming
+i18n_directory_System                   : System
+i18n_directory_Functions                : Functions
+i18n_directory_Triggers                 : Triggers
+
+i18n_directory_DocApps                  : Documentation/Applications
+
+i18n_directory_Documentation            : Documentation
+i18n_directory_Software             	: Software
+i18n_directory_Modules                  : Modules
+i18n_directory_Plugins                  : Plugins
+i18n_directory_Prefs                    : Settings
+i18n_directory_Tools                    : Tools
+i18n_directory_Devices                  : Devices
+i18n_directory_Libraries                : Libraries
+
+#Devices
+
+i18n_dosdrivers                         : DOSDrivers
+i18n_printers                           : Printers
+
+#Menu
+
+menu_workspace                          : Workspace
+menu_new_shell                          : New shell
+menu_about_friendup                     : About FriendUP
+menu_refresh_desktop                    : Refresh desktop
+menu_run_command                        : Run command
+menu_show_launcher                      : Show Launcher
+menu_hide_launcher                      : Hide Launcher
+menu_log_out                            : Log out
+menu_execute_command                    : Execute command
+menu_upload_file                        : Upload file
+menu_snapshot                           : Snapshot
+menu_snapshot_all                       : Snapshot all windows
+menu_bookmarks                          : Bookmarks
+menu_add_bookmark                       : Add bookmark
+menu_connect_filesystem                 : Connect drive
+
+cmd_execute                             : Execute
+
+menu_window                             : Window
+menu_refresh_directory                  : Refresh window
+menu_open_directory                     : Open directory
+menu_open_parent_directory              : Open parent directory
+menu_show_as                            : Show as
+menu_show_as_icons                      : Icons
+menu_show_as_list                       : List
+menu_close_window                       : Close window
+menu_fullscreen                         : Toggle fullscreen
+
+menu_icons                              : Icons
+menu_new_directory                      : Make directory
+menu_show_icon_information              : Icon information
+menu_edit_filename                      : Rename file
+menu_delete                             : Delete
+
+menu_tools                              : Tools
+
+#Applications ------------------------------------------------------------------
+install_question_mintitle               : Install application
+install_question_title                  : Application is found, but not installed
+install_question_desc                   : The application was found, but is not installed. Do you want to install it now?
+install_button                          : Install
+install_cancel                          : Not now
+application_permissions_change          : Alter application permissions
+activate_application                    : Activate application
+app_activation_head                     : Activate application
+app_activation_head_permissions         : Set permissions on application
+app_activation_desc                     : To use this application, you need to activate it. Please authorize the following permissions to get started.
+app_activation_desc_alter               : The system wants to alter the permissions of this application. Please check off the permissions to authorize the change.
+app_authorization_button                : Authorize changes
+app_activation_button                   : Activate now
+app_activation_abort                    : Cancel
+grant_door_access                       : Grant access to
+all_filesystems                         : all filesystems
+grant_module_access                     : Grant access to module
+grant_service_access                    : Grant access to service
+failed_application_activation           : Failed to activate application.
+no_activation_fields_checked            : You did not check any permissions. Please check your selection.
+application_not_found                   : Could not find application. Is it installed?
+
+#File dialogs ------------------------------------------------------------------
+
+file_load                               : Load
+file_abort                              : Close
+file_save                               : Save
+file_open_title                         : Load a file
+file_open_path                          : Select path
+file_save_title                         : Save a file
+file_unknown_title                      : Unknown file operation
+i18n_directory                          : Directory
+information_of_icon                     : Information about
+owner                                   : Owner
+group                                   : Group
+others                                  : Others
+readable                                : Read
+writable                                : Write
+deletable                               : Delete
+executable                              : Execute
+i18n_save                               : Save
+i18n_notes                              : Notes
+rename_file                             : Rename file
+new_name                                : New name
+
+#File operations ---------------------------------------------------------------
+
+i18n_cancel                             : Cancel
+i18n_moving_files                       : Moving files
+i18n_copying_files                      : Copying files
+
+#Misch -------------------------------------------------------------------------
+
+Shell output : Shell output
+Running tasks : Running tasks

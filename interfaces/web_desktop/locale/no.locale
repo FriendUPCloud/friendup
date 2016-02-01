@@ -1,0 +1,104 @@
+
+File_Date                            : Dato
+
+i18n_Builtin_Label_Trash             : Søppel
+i18n_Builtin_Label_Ram_disk          : Ramluke
+i18n_Builtin_Label_Home              : Hjem
+i18n_Builtin_Label_System            : System
+
+#Built-in preferences
+
+i18n_install_application             : Installerer programmet
+i18n_appearance                      : Utseende
+i18n_screens                         : Skjermer
+i18n_wallpaper                       : Skrivebordsbakgrunn
+i18n_printers                        : Printere
+i18n_network                         : Nettverk
+i18n_language                        : Språk
+i18n_bookmarks                       : Bokmerker
+i18n_desklets                        : Skrivebordselementer
+i18n_sound                           : Lyd
+i18n_keyboard                        : Tastatur
+i18n_input                           : Mus og styre-enheter
+i18n_drivers                         : Drivere
+i18n_useraccounts                    : Brukerkontoer
+i18n_datetime                        : Dato og tid
+i18n_docksettings                    : Dockmeny
+i18n_security                        : Sikkerhet
+
+i18n_continue                        : Fortsett
+i18n_couldnotinstallapp              : Kunne ikke installere programmet.
+
+i18n_choose_file                     : Velg fil
+i18n_new_container                   : Ny container
+i18n_create_container                : Lag container
+i18n_name                            : Navn
+i18n_make_a_new_container            : Lag en ny container
+
+i18n_mountlist                          : Monteringspunkt
+i18n_items_total                        : elementer
+
+i18n_Storage_Local_Read_desc            : Lesetilgang, lokale disker
+i18n_Storage_Local_Write_desc           : Skrivetilgang, lokale disker
+i18n_Storage_Local_Read/Write_desc      : Lese/skrive-tilgang, lokale disker
+i18n_Storage_Remote_Read_desc           : Lesetilgang, nettverksdisker
+i18n_Storage_Remote_Write_desc          : Skrivetilgang, nettverksdisker
+i18n_Storage_Remote_Read/Write_desc     : Lese/skrive-tilgang, nettverksdisker
+i18n_Storage_Ramdisk_Read_desc          : Lesetilgang, Ram Disk
+i18n_Storage_Ramdisk_Write_desc         : Skrivetilgang, Ram Disk
+i18n_Storage_Ramdisk_Read/Write_desc    : Lese/skrive-tilgang, Ram Disk
+i18n_Module_System_desc                 : Tilgang til basisfunksjoner
+
+i18n_your_command                       : Din kommando
+
+#Default doors
+i18n_door_home                          : Hjem
+
+please_choose_an_icon                   : Vennligst velg et ikon.
+about_friendup                          : Om FriendUP
+
+#Default directorys for applications
+i18n_directory_Games                    : Spill
+i18n_directory_Office                   : Kontor
+i18n_directory_Graphics                 : Grafisk
+i18n_directory_Internet                 : Internett
+i18n_directory_Media                    : Media
+i18n_directory_Programming              : Programmering
+i18n_directory_System                   : System
+i18n_directory_Functions                : Funksjoner
+i18n_directory_Triggers                 : Triggere
+
+i18n_directory_Documentation            : Dokumentasjon
+i18n_directory_Applications             : Applikasjoner
+i18n_directory_Modules                  : Moduler
+i18n_directory_Plugins                  : Plugins
+i18n_directory_Prefs                    : Innstillinger
+i18n_directory_Tools                    : Verktøy
+
+#Menu
+
+menu_doors                              : Doors
+menu_new_shell                          : Ny terminal
+menu_about_friendup                     : Om Friend UP
+menu_refresh_desktop                    : Frisk opp
+menu_run_command                        : Kjør kommando
+menu_show_launcher                      : Vis Launcher
+menu_hide_launcher                      : Gjem Launcher
+menu_log_out                            : Logg ut
+
+menu_window                             : Vindu
+menu_open_directory                     : Åpne mappe
+menu_show_as                            : Vis som
+menu_show_as_icons                      : Ikoner
+menu_show_as_list                       : Liste
+menu_close_window                       : Lukk
+menu_fullscreen                         : Toggle fullscreen
+
+menu_icons                              : Ikoner
+menu_new_directory                      : Ny mappe
+menu_show_icon_information              : Vis informasjon
+menu_edit_filename                      : Endre navn
+menu_delete                             : Slett
+
+menu_tools                              : Verktøy
+
