@@ -50,6 +50,18 @@ ideas on how to use FriendUP on a RPI, please contact us on:
 
  * developers@friendos.com
  
+Installing
+----------
+
+To install FriendUP, please read and execute the instructions
+found in "docs/Compiling.txt". After you have installed all the
+required software, run the installer: 
+
+ php5 install.php
+ 
+Fill in sane answers to the questions, and you should be all set.
+
+
 
 
 
