@@ -21,27 +21,35 @@
 // 0. Check dock!
 if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\'' ) ) )
 {
-	// 2. Setup standard dock items
-	$dockItems = array(
-		array( 'Dock', 'A simple dock desklet' ),
-		array( 'Dingo', 'A command line interface' ),
-		array( 'Hello', 'A chat client' ),
-		array( 'Artisan', 'A programmers editor' ),
-		array( 'Author', 'A word processor' ),
-		array( 'Wallpaper', 'Select a wallpaper' ),
-		array( 'Freeciv', 'Play a game' ),
-		array( 'BurningRubber', 'Burn some rubber' )
-	);
-	$i = 0;
-	foreach( $dockItems as $r )
+	// Possible other way
+	if( file_exists( 'modules/system/include/firstlogin_replacement.php' ) )
 	{
-		$d = new dbIO( 'DockItem' );
-		$d->Application = $r[0];
-		$d->ShortDescription = $r[1];
-		$d->UserID = $User->ID;
-		$d->SortOrder = $i++;
-		$d->Parent = 0;
-		$d->Save();
+		require( 'modules/system/include/firstlogin_replacement.php' );
+	}
+	else
+	{
+		// 2. Setup standard dock items
+		$dockItems = array(
+			array( 'Dock', 'A simple dock desklet' ),
+			array( 'Dingo', 'A command line interface' ),
+			array( 'Hello', 'A chat client' ),
+			array( 'Artisan', 'A programmers editor' ),
+			array( 'Author', 'A word processor' ),
+			array( 'Wallpaper', 'Select a wallpaper' ),
+			array( 'Freeciv', 'Play a game' ),
+			array( 'BurningRubber', 'Burn some rubber' )
+		);
+		$i = 0;
+		foreach( $dockItems as $r )
+		{
+			$d = new dbIO( 'DockItem' );
+			$d->Application = $r[0];
+			$d->ShortDescription = $r[1];
+			$d->UserID = $User->ID;
+			$d->SortOrder = $i++;
+			$d->Parent = 0;
+			$d->Save();
+		}
 	}
 }
 
