@@ -40,5 +40,16 @@ version. Please visit the following url to sign up:
  
 You will receive instructions by mail.
 
+Raspberry PI
+------------
+
+We hope you will try to deploy FriendUP on a Raspberry PI. The
+open source community version is specificly targeting this
+platform for tinkerers and developers alike. If you have any 
+ideas on how to use FriendUP on a RPI, please contact us on:
+
+ * developers@friendos.com
+ 
+
 
 
