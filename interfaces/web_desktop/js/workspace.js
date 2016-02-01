@@ -2002,7 +2002,7 @@ function ClearCache()
 // Login daemon
 function LoginDaemon()
 {
-	if( typeof( Workspace.sessionId ) != 'undefined' && !ge( 'EulaDialog' ) )
+	if( typeof( Workspace.sessionId ) != 'undefined' && document.body.className == 'Inside' )
 	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -2010,9 +2010,7 @@ function LoginDaemon()
 			// Log him out!
 			if( typeof( d ) == 'undefined' ) document.location.reload();
 		}
-		m.execute( 'getsetting', {
-			setting: 'accepteula'
-		} );
+		m.execute( 'mountlist' );
 	}
 }
 
