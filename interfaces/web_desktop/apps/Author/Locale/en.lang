@@ -1,0 +1,20 @@
+
+
+menu_new                          : New document
+menu_save                         : Save
+menu_load                         : Load
+menu_quit                         : Quit
+menu_preferences                  : Preferences
+menu_file                         : File
+menu_print                        : Print
+menu_document                     : Document
+menu_insert_image                 : Insert image
+menu_convert_images_inline        : Images to inline
+
+i18n_status_loading               : Loading...
+i18n_status_saving                : Saving...
+
+i18n_find                         : Find
+i18n_select                       : Select
+i18n_search                       : Search
+

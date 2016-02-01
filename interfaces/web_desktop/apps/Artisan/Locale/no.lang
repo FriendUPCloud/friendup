@@ -1,0 +1,31 @@
+#Language file for CodeEditor
+
+i18n_file                           : Fil
+i18n_edit                           : Rediger
+i18n_open                           : Åpne
+i18n_save                           : Lagre
+i18n_save_as                        : Lagre som
+i18n_close                          : Lukk
+i18n_quit                           : Avslutt
+i18n_cut                            : Klipp ut
+i18n_copy                           : Kopier
+i18n_paste                          : Lim inn
+i18n_new                            : Ny fil
+i18n_about_codeeditor               : Om Artisan
+
+#side bar functions
+i18n_view                           : Vis
+i18n_no_side_bar                    : Gjem høyrekolonne
+i18n_mindmap                        : Vis relasjonskart
+i18n_app_preview                    : Forhåndsvis applikasjon
+i18n_rtw_preview                    : Realtime Web preview
+
+i18n_preferences                    : Innstillinger
+i18n_application_settings           : Endre innstillinger
+i18n_save_settings                  : Lagre innstillinger
+i18n_load_settings                  : Åpne innstillinger
+i18n_reset_settings                 : Standardverdier
+
+i18n_new_filename                   : Ny fil
+i18n_empty_file                     : Tom fil
+
