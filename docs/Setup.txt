@@ -21,6 +21,11 @@ certificate first, then public key, in the files:
 	build/cfg/crt/request.pem
 	build/cfg/crt/key.pem
 
+After installing and running FriendCore, you will find your
+login prompt at:
+
+	http(s)://yourhost:port/webclient/index.html
+
 For more information, send an e-mail to: developers@friendos.com
 or visit:
 	

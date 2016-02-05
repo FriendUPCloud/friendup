@@ -214,5 +214,6 @@ mysql_close( $conn );
 echo( "Now go and start FriendCore. You are all set.\n" );
 echo( "Your username is: friendadmin\n" );
 echo( "Your password is: FriendlyBetaAdministrator\n" );
+echo( "You will find your login prompt at http(s):\/\/yourhost:port/webclient/index.html\n" );
 
 ?>
