@@ -55,12 +55,21 @@ Installing
 
 To install FriendUP, please read and execute the instructions
 found in "docs/Compiling.txt". After you have installed all the
-required software, run the installer: 
+required software, run the installer:
 
  php5 install.php
  
 Fill in sane answers to the questions, and you should be all set.
+Do not try to set up your config file manually, as this is 
+unnecessary and only for more experienced FriendUP developers.
+Additionally, make sure your password is encased in quotes when
+using non alpha numeric characters because of a limitation in
+the ini config parser.
 
+Make sure to find the url to your login screen in your web
+browser at:
+
+ http://yourhost:port/webclient/index.html
 
 
 
