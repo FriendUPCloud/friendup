@@ -540,6 +540,9 @@ function _ActivateWindow( div, nopoll, e )
 	
 	if ( !nopoll )
 		PollTaskbar ( div );
+
+	// Check window
+	CheckScreenTitle();
 }
 
 function _DeactivateWindows()
@@ -582,6 +585,9 @@ function _DeactivateWindows()
 	// Put focus somewhere else than where it is now..
 	Doors.mouseTrap.value = '';
 	Doors.mouseTrap.focus();
+	
+	// Check window
+	CheckScreenTitle();
 }
 
 // Ouch! Use with care!
@@ -1014,7 +1020,7 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			}
 		}
 		// Do resize events
-		if ( this.window.content.events )
+		if ( this.window.content && this.window.content.events )
 		{
 			if ( typeof(this.window.content.events['resize']) != 'undefined' )
 			{
@@ -1374,7 +1380,11 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 	{
 		if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
 		//not too small and not too high...
-		var newHeight = Math.min( Workspace.screenDiv.clientHeight - 72 - evt.target.offsetParent.offsetTop, Math.max(80,evt.pointers[0].clientY - evt.target.offsetParent.offsetTop ) );
+		var newHeight = Math.min( 
+			Workspace.screenDiv.clientHeight - 
+				72 - evt.target.offsetParent.offsetTop, 
+			Math.max(80,evt.pointers[0].clientY - evt.target.offsetParent.offsetTop ) 
+		);
 		
 		evt.target.offsetParent.style.height = newHeight + 'px';
 		evt.target.offsetParent.lastHeight = newHeight;
@@ -1399,10 +1409,6 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 		div.content.style.top = '0';
 		div.content.style.right = '0';
 	}
-
-
-
-
 
 	// Make it to front
 	_WindowToFront( div );
@@ -1491,16 +1497,34 @@ function GetWindowVariable( win, vari )
 	return false;
 }
 
+function HasClassname( div, classname )
+{
+	var classes = div.className ? div.className.split( ' ' ) : [];
+	for( var a in classes )
+	{
+		if( classes[a] == classname )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 // Close a movable window by pointing to the content div
 // Could one day be moved to the View class...
 function CloseView( win )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
-	if ( win )
+	if( win )
 	{
-		while ( win.className && win.className.indexOf ( ' View' ) < 0 && win != document.body )
+		var count = 0;
+		
+		
+		while( !HasClassname( win, 'View' ) && win != document.body )
+		{
 			win = win.parentNode;
+		}
 		
 		var div = win;
 			
@@ -1510,6 +1534,7 @@ function CloseView( win )
 	
 		if ( div.parentNode )
 			div.parentNode.removeChild( div );
+		
 		if ( div )
 		{
 			// Clean up ids
@@ -1522,17 +1547,17 @@ function CloseView( win )
 			movableWindows = o;
 		}
 		movableWindowCount--;
-		if ( movableWindowCount <= 0 )
+		if( movableWindowCount <= 0 )
 		{
 			movableWindowCount = 0;
 			movableHighestZindex = 99;
 		}
 		// Check events
-		if ( div.content.events )
+		if( div.content && div.content.events )
 		{
-			if ( typeof(div.content.events['close']) != 'undefined' )
+			if( typeof( div.content.events['close'] ) != 'undefined' )
 			{
-				for ( var a = 0; a < div.content.events['close'].length; a++ )
+				for( var a = 0; a < div.content.events['close'].length; a++ )
 				{
 					div.content.events['close'][a]();
 				}
@@ -1541,9 +1566,11 @@ function CloseView( win )
 		PollTaskbar();
 		
 		// Remove link to current movable
-		if( win == window.currentMovable )
-			window.currentMovable = false;
+		if( win == window.currentMovable ) window.currentMovable = false;
 	}
+	
+	// Check window
+	CheckScreenTitle();
 }
 // Obsolete!!!
 CloseWindow = CloseView;
@@ -1633,6 +1660,12 @@ var View = function ( args )
 			domain = document.location.href + '';
 			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
 		}
+		
+		// Make sure scripts can be run after all resources has loaded
+		var r;
+		while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
+			content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+			
 		var c = this._window;
 		if( c.content ) c = c.content;
 		c.innerHTML = '';
@@ -1642,6 +1675,7 @@ var View = function ( args )
 		ifr.applicationName = self.applicationName;
 		ifr.className = 'Content';
 		ifr.src = domain;
+		this.iframe = ifr;
 		
 		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
 		
@@ -1658,7 +1692,6 @@ var View = function ( args )
 			if( callback ) 
 				callback();
 		}
-		this.iframe = ifr;
 		c.appendChild( ifr );
 	}
 	// set sandboxed content - to be used with apps/app.js and apps/view.js
@@ -1888,7 +1921,6 @@ var View = function ( args )
 	{
 		if( !event ) event = window.event;
 		
-		//dataObject.command = 'message';
 		if( this.iframe && this.iframe.loaded && this.iframe.contentWindow )
 		{
 			var u = Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0];
@@ -1899,8 +1931,7 @@ var View = function ( args )
 				dataObject.authId = this.iframe.authId;
 				dataObject.applicationName = this.iframe.applicationName;
 			}
-			if( !dataObject.type )
-				dataObject.type = 'system';
+			if( !dataObject.type ) dataObject.type = 'system';
 			this.iframe.contentWindow.postMessage( JSON.stringify( dataObject ), origin );
 		}
 		else
