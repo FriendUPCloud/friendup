@@ -210,13 +210,13 @@ var mousePointer =
 			}
 			
 			var dropped = 0;
-			if ( dropper )
+			if( dropper )
 			{
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
-				if ( dropper.drop )
+				if( dropper.drop )
 				{
-					dropped = dropper.drop ( this.elements );
+					dropped = dropper.drop( this.elements );
 				}
 				else
 				{
@@ -236,92 +236,91 @@ var mousePointer =
 						dropper.windowObject.sendMessage( { command: 'drop', data: objs } );
 				}
 			}
-			for ( var a = 0; a < this.elements.length; a++ )
+			
+			for( var a = 0; a < this.elements.length; a++ )
 			{
-				this.dom.removeChild ( this.elements[a] );
+				this.dom.removeChild( this.elements[a] );
 			}
-			this.elements = new Array ();
+			this.elements = [];
 			this.dom.innerHTML = '';
 			
 			// We didn't drop anything, or there was an error..
 			if( dropped <= 0 )
 			{
-				if ( w.parentNode.id == 'DoorsScreen' )
-					Doors.refreshDesktop ();
+				if ( w.parentNode.id == 'DoorsScreen' ) Workspace.refreshDesktop();
 				if( window.currentMovable.content && window.currentMovable.content.refresh )
 					window.currentMovable.content.refresh();
 			}
 			
-			if ( w )
+			if( w )
 			{
-				if ( w.id == 'DoorsScreen' )
-					RefreshDesktop ();
-				else if ( w.refreshIcons )
+				if( w.id == 'DoorsScreen' ) Workspace.refreshDesktop();
+				else if( w.refreshIcons )
 				{
-					w.refreshIcons ();
+					w.refreshIcons();
 				}
 			}
 			else
 			{
-				RefreshDesktop ();
+				Workspace.refreshDesktop();
 			}
 		}
 	},
 	'clone': function ( ele )
-		{
-			this.testPointer ();
-		},
+	{
+		this.testPointer ();
+	},
 	'pickup': function ( ele )
+	{
+		this.testPointer ();
+		// Check multiple (pickup multiple)
+		var multiple = false;
+		if ( ele.window )
 		{
-			this.testPointer ();
-			// Check multiple (pickup multiple)
-			var multiple = false;
-			if ( ele.window )
+			_ActivateWindowOnly( ele.window.parentNode );
+			for ( var a = 0; a < ele.window.icons.length; a++ )
 			{
-				_ActivateWindowOnly( ele.window.parentNode );
-				for ( var a = 0; a < ele.window.icons.length; a++ )
+				var ic = ele.window.icons[a];
+				if ( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
 				{
-					var ic = ele.window.icons[a];
-					if ( ic.domNode.className.indexOf ( 'Selected' ) > 0 )
-					{
-						var el = ic.domNode;
-						multiple = true;
-						el.style.top = 'auto';
-						el.style.left = 'auto';
-						el.style.position = 'relative';
-						el.parentNode.removeChild ( el );
-						this.dom.appendChild ( el );
-						this.elements.push ( el );
-					}
+					var el = ic.domNode;
+					multiple = true;
+					el.style.top = 'auto';
+					el.style.left = 'auto';
+					el.style.position = 'relative';
+					el.parentNode.removeChild ( el );
+					this.dom.appendChild ( el );
+					this.elements.push ( el );
 				}
 			}
-			// Pickup single
-			if ( !multiple )
-			{
-				ele.style.top = 'auto';
-				ele.style.left = 'auto';
-				ele.style.position = 'relative';
-				ele.parentNode.removeChild ( ele );
-				this.dom.appendChild ( ele );
-				this.elements.push ( ele );
-			}
-		},
-	'poll': function ( e )
-		{
-			if ( !this.elements || !this.elements.length )
-			{
-				if ( this.dom )
-					this.dom.parentNode.removeChild ( this.dom );
-				this.dom = false;
-			}
-			else
-			{
-				this.dom.style.top = windowMouseY - Math.floor ( this.dom.firstChild.offsetHeight * 0.5 ) + 'px';
-				this.dom.style.left = windowMouseX - Math.floor ( this.dom.firstChild.offsetWidth * 0.5 ) + 'px';
-				window.mouseDown = 5;
-				ClearSelectRegion ();
-			}
 		}
+		// Pickup single
+		if ( !multiple )
+		{
+			ele.style.top = 'auto';
+			ele.style.left = 'auto';
+			ele.style.position = 'relative';
+			ele.parentNode.removeChild ( ele );
+			this.dom.appendChild ( ele );
+			this.elements.push ( ele );
+		}
+	},
+	'poll': function ( e )
+	{
+		if ( !this.elements || !this.elements.length )
+		{
+			if ( this.dom )
+				this.dom.parentNode.removeChild ( this.dom );
+			this.dom = false;
+		}
+		else
+		{
+			this.dom.style.top = windowMouseY - Math.floor ( this.dom.firstChild.offsetHeight * 0.5 ) + 'px';
+			this.dom.style.left = windowMouseX - Math.floor ( this.dom.firstChild.offsetWidth * 0.5 ) + 'px';
+			window.mouseDown = 5;
+			ClearSelectRegion ();
+		}
+	}
 };
 
 // Cover windows with overlay
@@ -329,7 +328,8 @@ function CoverWindows()
 {
 	for ( var a in movableWindows )
 	{
-		movableWindows[a].moveoverlay.style.height = '100%';
+		if( movableWindows[a].moveoverlay )
+			movableWindows[a].moveoverlay.style.height = '100%';
 	}
 }
 // Expose windows / remove overlay
@@ -337,84 +337,36 @@ function ExposeWindows()
 {
 	for ( var a in movableWindows )
 	{
-		movableWindows[a].moveoverlay.style.height = '0%';
+		if( movableWindows[a].moveoverlay )
+			movableWindows[a].moveoverlay.style.height = '0%';
 		movableWindows[a].memorize ();
 	}
 }
-
-// Initializes tab system on the subsequent divs one level under parent div
-function InitTabs ( pdiv )
+// Cover screens with overlay
+function CoverScreens()
 {
-	var divs = pdiv.getElementsByTagName ( 'div' );
-	var tabs = new Array ();
-	var pages = new Array ();
-	var active = 0;
-	for ( var a = 0; a < divs.length; a++ )
+	// Disable all screen overlays
+	var screenc = ge ( 'Screens' );
+	var screens = screenc.getElementsByTagName ( 'div' );
+	for( var a = 0; a < screens.length; a++ )
 	{
-		if ( divs[a].parentNode != pdiv ) continue;
-		if ( divs[a].className == 'Tab' )
-		{
-			tabs.push ( divs[a] );
-			divs[a].pdiv = pdiv;
-			divs[a].tabs = tabs; 
-			divs[a].pages = pages;
-			divs[a].index = tabs.length - 1;
-			divs[a].onclick = function ()
-			{
-				SetCookie ( 'Tabs'+this.pdiv.id, this.index );
-				this.className = 'TabActive';
-				var ind;
-				for ( var b = 0; b < this.tabs.length; b++ )
-				{
-					if ( this.tabs[b] != this )
-						this.tabs[b].className = 'Tab';
-					else ind = b;
-				}
-				for ( var b = 0; b < this.pages.length; b++ )
-				{
-					if ( b != ind )
-						this.pages[b].className = 'Page';
-					else 
-					{
-						this.pages[b].className = 'PageActive';
-						if ( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
-						{
-							this.pages[b].style.display = 'none';
-							var idz = 1;
-							if ( !this.pages[b].id )
-							{
-								var bs = 'page';
-								idz++;
-								while ( ge ( bs ) )
-									bs = [ bs, idz ].join ( '' );
-								this.pages[b].id = bs;
-							}
-							var bid = this.pages[b].id;
-							setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
-						}
-					}
-				}
-				if ( typeof ( AutoResizeWindow ) != 'undefined' )
-				{
-					var pdiv = this.pdiv;
-					while ( pdiv.className.indexOf ( ' View' ) < 0 && pdiv != document.body )
-						pdiv = pdiv.parentNode;
-					if ( pdiv != document.body && pdiv.autoResize == true )
-						AutoResizeWindow ( pdiv );
-				}
-			}
-			if ( GetCookie ( 'Tabs'+pdiv.id ) == divs[a].index )
-			{
-				active = divs[a].index;
-			}
-		}
-		else if ( divs[a].className.substr ( 0, 4 ) == 'Page' )
-		{
-			divs[a].className = 'Page';
-			pages.push ( divs[a] );
-		}
+		if( !screens[a].className ) continue;
+		if( screens[a].parentNode != screenc ) continue;
+		screens[a]._screenoverlay.style.display = '';
 	}
-	tabs[active].onclick();
+}
+// Expose screens / remove overlay
+function ExposeScreens()
+{
+	// Disable all screen overlays
+	var screenc = ge ( 'Screens' );
+	var screens = screenc.getElementsByTagName ( 'div' );
+	for( var a = 0; a < screens.length; a++ )
+	{
+		if( !screens[a].className ) continue;
+		if( screens[a].parentNode != screenc ) continue;
+		screens[a]._screenoverlay.style.display = 'none';
+	}
 }
 
 // Find a movable window by title string
@@ -917,8 +869,7 @@ movableListener = function ( e )
 			{
 				window.currentScreen.moveoverlay.style.display = '';
 				window.currentScreen.moveoverlay.style.height = '100%';
-			}
-				
+			}	
 			
 			var minY = w.parentWindow ? 0 : ( GetTitleBarG() ? GetTitleBarG().offsetHeight : 0 );
 			var maxY = w.parentWindow ? w.parentWindow.offsetHeight : ( ge ( 'Statusbar' ) && ge ( 'Statusbar' ).offsetTop ? ge ( 'Statusbar' ).offsetTop : wh );
@@ -1226,32 +1177,57 @@ function MakeTableList ( entries, headers )
 
 function showWorkbenchMenu ( popupElement )
 {
-	if ( !ge ( 'WorkbenchMenu' ) )
+	// Move it!
+	if( !window.isMobile )
 	{
-		var d = document.createElement ( 'div' );
-		d.id = 'WorkbenchMenu';
-		document.body.appendChild ( d );
-	}
+		if( ge( 'WorkbenchMenu' ) )
+		{
+			var m = ge( 'WorkbenchMenu' );
+			m.parentNode.removeChild( m );
+			currentScreen.appendChild( m );
+		}
+		// Make it!
+		else if ( !ge ( 'WorkbenchMenu' ) )
+		{
+			var d = document.createElement ( 'div' );
+			d.id = 'WorkbenchMenu';
+			currentScreen.appendChild( d );
+		}
 	
-	var wm = ge ( 'WorkbenchMenu' );
+		var wm = ge ( 'WorkbenchMenu' );
+	
+		// It's not a text document, don't allow drag/select
+		wm.ondragstart = function( e ){ return cancelBubble( e ); }
+		wm.onselectstart = function( e ){ return cancelBubble( e ); }
+	}
 	
 	// Special case! Make it pop up!
 	if( popupElement ) 
 	{
 		wm = popupElement;
 	}
-	else 
+	else if( !window.isMobile )
 	{
 		ge( 'WorkbenchMenu' ).style.display = '';
 	}
 	
 	// Make sure we don't have problems!
-	CoverWindows();
+	if( Workspace && Workspace.menuMode == 'miga' )
+	{
+		CoverWindows();
+	}
+	// Others (fensters and pares)
+	else if( Workspace && !window.isMobile )
+	{
+		var t = window.currentScreen.screenTitle.getElementsByClassName( 'Info' )[0];
+		ge( 'WorkbenchMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+		ge( 'WorkbenchMenu' ).className = 'Pear';
+	}
 	
 	var menuFound = 0;
 	
 	// Test if we have menu items 
-	if ( window.regionWindow && window.regionWindow.id != 'DoorsScreen' )
+	if ( wm && window.regionWindow && window.regionWindow.id != 'DoorsScreen' )
 	{
 		// Check window type
 		// TODO: Give option to make a custom menu for this window!
@@ -1265,80 +1241,141 @@ function showWorkbenchMenu ( popupElement )
 	}
 	
 	// Ok this is the fallback menu and the workbench menu
-	if ( !menuFound )
+	if ( !menuFound && wm )
 	{
-		if( popupElement ) return;
-		
+		// Blank menu
+		if( currentMovable && currentMovable.windowObject )
+		{
+			if( !( currentMovable.content && currentMovable.content.directoryview ) )
+			{
+				return GenerateMenu( wm, [] );
+			}
+		}
+		if( popupElement )
+			return;
 		if( window.currentScreen && window.currentScreen.menu )
 		{
-			//console.log( 'Screen menu: ' + ( menuFound ? 'found' : 'not found' ) );
 			GenerateMenu( wm, window.currentScreen.menu, false, window.currentScreen.screenObject._screen.applicationId );
 		}
-		else if ( ge ( 'DoorsScreen' ) )
+		else if ( ge ( 'DoorsScreen' ) && Workspace.menu )
 		{
-			//console.log( 'Main doors menu: ' + ( menuFound ? 'found' : 'not found' ) );
-			if ( Doors.menu )
-			{
-				GenerateMenu( wm, Doors.menu );
-			}
+			GenerateMenu( wm, Workspace.menu );
 		}
 		else
 		{
-			console.log( 'Window menu: ' + ( menuFound ? 'found' : 'not found' ) );
 			if ( window.menu )
 			{
 				GenerateMenu( wm, window.menu );
 			}
 		}
 	}
-	// Onmouseover on menus
-	var menus = wm.getElementsByTagName ( 'div' );
-	for ( var a = 0; a < menus.length; a++ )
+	// Onmouseover on menus (or click!)
+	var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
+	if( wm )
 	{
-		if ( menus[a].className != 'Menu' )
-			continue;
-		menus[a].menus = menus;
-		menus[a].onmouseover = function ()
+		var menus = wm.getElementsByTagName ( 'div' );
+		for ( var a = 0; a < menus.length; a++ )
 		{
-			for ( var c = 0; c < this.menus.length; c++ )
+			if ( menus[a].className != 'Menu' )
+				continue;
+			menus[a].menus = menus;
+			menus[a][mode] = function()
 			{
-				if ( this.menus[c] == this ) 
+				if( wm.isActivated ) return;
+				wm.isActivated = true; // This menu is activated!
+				console.log( 'this was triggered.' );
+				// Cover movable windows to avoid mouse collision
+				CoverWindows();
+			
+				for ( var c = 0; c < this.menus.length; c++ )
 				{
-					this.className = 'Menu Open';
+					if ( this.menus[c] == this ) 
+					{
+						this.className = 'Menu Open';
+					}
+					else this.menus[c].className = 'Menu';
 				}
-				else this.menus[c].className = 'Menu';
+			}
+			// When one menu is open, allow changing menu with mouseover
+			if( mode == 'onmousedown' )
+			{
+				menus[a].onmouseover = function()
+				{
+					if( wm.isActivated )
+					{
+						this.onmousedown();
+					}
+				}
 			}
 		}
-	}
-	var lis = wm.getElementsByTagName ( 'li' );
-	for ( var a = 0; a < lis.length; a++ )
-	{
-		lis[a].lis = lis;
-		lis[a].onmouseover = function ()
+		var lis = wm.getElementsByTagName ( 'li' );
+		for ( var a = 0; a < lis.length; a++ )
 		{
-			// Open menu
-			this.className = 'Open';
-			// close all others
-			for ( var a = 0; a < this.lis.length; a++ )
+			lis[a].lis = lis;
+			lis[a].onmouseover = function ()
 			{
-				if ( this.lis[a] != this ) this.lis[a].className = '';
+				// Open menu
+				this.className = 'Open';
+				// close all others
+				for ( var a = 0; a < this.lis.length; a++ )
+				{
+					if ( this.lis[a] != this ) this.lis[a].className = '';
+				}
+				// Open parents
+				var d = this;
+				while ( d.nodeName != 'DIV' )
+				{
+					d = d.parentNode;
+					if ( d.nodeName == 'LI' )
+						d.className = 'Open';
+				}
 			}
-			// Open parents
-			var d = this;
-			while ( d.nodeName != 'DIV' )
+			if( mode == 'onmousedown' )
 			{
-				d = d.parentNode;
-				if ( d.nodeName == 'LI' )
-					d.className = 'Open';
+				lis[a].onmousedown = lis[a].onmouseover;
 			}
 		}
 	}
 }
+// Close the open menus
+function closeWorkbenchMenu()
+{
+	if( !window.isMobile )
+	{
+		var e = ge( 'WorkbenchMenu' );
+		if( !e ) return;
+		e.isActivated = false;
+		var els = e.getElementsByTagName( 'div' );
+		for( var a = 0; a < els.length; a++ )
+		{
+			if( HasClass( els[a], 'Open' ) && HasClass( els[a], 'Menu' ) )
+			{
+				els[a].className = 'Menu';
+			}
+			else if(
+				( 
+					HasClass( els[a].parentNode, 'Menu' ) || 
+					HasClass( els[a].parentNode.parentNode, 'Menu' ) 
+				) 
+				&& els[a].className == 'Open'
+			)
+			{
+				els[a].className = '';
+			}
+		}
+	}
+	
+	// Remove them!
+	removeWindowPopupMenus();
+	
+	ExposeWindows();
+	ExposeScreens();
+}
 
 function hideWorkbenchMenu ( e )
 {
-	if ( !e ) e = window.event;
-	if ( ge ( 'WorkbenchMenu' ) )
+	if( !e ) e = window.event;
+	if( ge( 'WorkbenchMenu' ) )
 	{
 		var t = e.target ? e.target : e.srcElement;
 		if ( t && t.getAttribute ( 'onclick' ) )
@@ -1353,7 +1390,20 @@ function hideWorkbenchMenu ( e )
 			lis[a].className = '';
 		ge ( 'WorkbenchMenu' ).style.display = 'none';
 	}
+	
 	// Popup menu close
+	removeWindowPopupMenus();
+	
+	// Let it go
+	ExposeWindows();
+}
+
+function removeWindowPopupMenus()
+{
+	// Deactivate workbench menu
+	if( ge( 'WorkbenchMenu' ) )
+		ge( 'WorkbenchMenu' ).isActivated = false;
+
 	for( var a in movableWindows )
 	{
 		var cm = movableWindows[a];
@@ -1364,8 +1414,6 @@ function hideWorkbenchMenu ( e )
 			titl.popup = null;
 		}
 	}
-	// Let it go
-	ExposeWindows();
 }
 
 var workbenchMenus = new Array ();
@@ -1407,8 +1455,11 @@ movableMouseUp = function ( e )
 		window.currentScreen.moveoverlay.style.display = 'none';
 	}
 	
-	// Workbench menu is now hidden
-	hideWorkbenchMenu( e );
+	// Workbench menu is now hidden (only miga style)
+	if( Workspace && Workspace.menuMode == 'miga' )
+	{
+		hideWorkbenchMenu( e );
+	}
 	
 	// If we selected icons, clear the select region
 	ClearSelectRegion();
@@ -1416,6 +1467,33 @@ movableMouseUp = function ( e )
 	// Execute drop function on mousepointer (and stop moving!)
 	mousePointer.drop( e );	
 	mousePointer.stopMove( e );
+}
+
+// Check the screen title of active window
+function CheckScreenTitle()
+{
+	if( !window.currentScreen ) return;
+	
+	// Set screen title
+	var csc = currentScreen.screenObject;
+	var wo = currentMovable ? currentMovable.windowObject : false;
+	if( wo && wo.applicationName )
+	{
+		var wnd = wo.applicationName;
+		if( !csc.originalTitle )
+			csc.originalTitle = csc.getFlag( 'title' );
+		csc.setFlag( 'title', wnd );
+	}
+	else if( csc.originalTitle )
+	{
+		csc.setFlag( 'title', csc.originalTitle );
+	}
+	
+	// Enable the global menu
+	if( Workspace && Workspace.menuMode == 'pear' )
+	{
+		showWorkbenchMenu();
+	}
 }
 
 pollingTaskbar = false;
@@ -1523,8 +1601,8 @@ function PollTaskbar( curr )
 				}
 			}
 		}
-		// When activating on the window
 		
+		// When activating on the window
 		var isFull = ge( 'Taskbar' ).getAttribute( 'full' ) == 'full';
 		var divs = t.getElementsByTagName ( 'div' );
 		for ( var b = 0; b < divs.length; b++ )
@@ -1582,8 +1660,8 @@ function PollTray()
 			d.innerHTML = data;
 			document.body.insertBefore( d, document.body.firstChild );
 			Doors.handsFree = d;
+			
 			// For other browsers
-			Say( 'Voice mode started.', 'text' );
 			if ( !( 'webkitSpeechRecognition' in window ) )
 			{
 				var inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
@@ -1605,10 +1683,19 @@ function PollTray()
 				d.onclick = function()
 				{
 					mic.onclick();
+					var stopper = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
+					if( stopper.length ) stopper = stopper[0];
+					if( stopper )
+					{
+						stopper.className = 'Microphone IconSmall fa-microphone-slash';
+					}
 				}
 			}
 			// For google chrome
-			InitSpeechControls();
+			InitSpeechControls( function()
+			{
+				Say( 'Voice mode started.', false, 'both' );
+			} );
 		}
 		f.load();
 	}
@@ -1667,6 +1754,7 @@ movableMouseDown = function ( e )
 		window.regionY = windowMouseY;
 		window.regionWindow = tar;
 		FocusOnNothing();
+		removeWindowPopupMenus();
 		return cancelBubble ( e );
 	}
 	// Making selection on content window!
@@ -1677,6 +1765,7 @@ movableMouseDown = function ( e )
 		window.regionX = windowMouseX;
 		window.regionY = windowMouseY;
 		window.regionWindow = tar;
+		removeWindowPopupMenus();
 		return cancelBubble ( e );
 	}
 }
@@ -1802,6 +1891,9 @@ function GenerateMenu( menudiv, menuItems, depth, appid )
 	if ( !depth ) 
 		depth = 0;
 	
+	// Don't assign the same array twice!
+	if( menudiv.menu != menuItems ) menudiv.menu = menuItems; else return;
+	
 	if ( depth == 0 ) menudiv.innerHTML = '';
 	for ( var i in menuItems )
 	{
@@ -1816,6 +1908,7 @@ function GenerateMenu( menudiv, menuItems, depth, appid )
 		}
 		var ul = document.createElement ( 'ul' );
 		var depth2 = depth + 1;
+		
 		// Object members
 		if ( menuItems[i].items )
 		{
@@ -1824,29 +1917,40 @@ function GenerateMenu( menudiv, menuItems, depth, appid )
 				var li = document.createElement( 'li' );
 				var it = menuItems[i].items[j];
 				
-				if ( typeof ( it.command ) == 'string' )
+				// A postmessage command
+				if( typeof ( it.command ) == 'string' )
 				{
 					li.command = it.command;
-					// Sends command to application
 					
-					li.onmouseup = function() 
+					// Sends command to application
+					var mode = 'onmouseup';
+					li[mode] = function() 
 					{
+						// Set appid from current movable..
+						if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
+							appid = currentMovable.windowObject.applicationId;
+							
 						if( appid )
 						{
+							console.log( 'Even appid! ' + appid );
 							var app = findApplication( appid );
 							if( app )
 							{
+								console.log( 'Even app!', app );
 								app.contentWindow.postMessage( JSON.stringify( {
 									applicationId: appid,
 									command: this.command + ""
 								} ), '*' );
+								closeWorkbenchMenu();
 							}
 						}
 					};
 				}
-				else if ( it.command )
+				// A runnable function
+				else if( it.command )
 				{
-					li.onmouseup = it.command;
+					li.commandMethod = it.command;
+					li.onmouseup = function( e ){ this.commandMethod( e ); closeWorkbenchMenu(); }
 				}
 				if ( it.items )
 				{
