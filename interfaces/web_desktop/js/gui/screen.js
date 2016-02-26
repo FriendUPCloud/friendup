@@ -31,6 +31,33 @@ Screen = function ( flags, initObject )
 		}
 	}
 	
+	// Get the flag
+	this.getFlag = function( flag )
+	{
+		flag = flag.toLowerCase();
+		if( flag == 'title' )
+		{
+			var e = this.div.screenTitle.getElementsByClassName( 'Info' )[0]; 
+			return e.innerHTML;
+		}
+		if( this._flags[ 'flag' ] )
+		{
+			return this._flags[ 'flag' ];
+		}
+	}
+	
+	this.setFlag = function( flag, value )
+	{
+		switch( flag.toLowerCase() )
+		{
+			case 'title':
+				this._flags[ flag ] = value;
+				var e = this.div.screenTitle.getElementsByClassName( 'Info' )[0]; 
+				e.innerHTML = value;
+				break;
+		}
+	}
+	
 	if ( typeof ( this._flags['title'] ) == 'undefined' )
 	{
 		this._flags['title'] = 'Unknown screen';
@@ -43,7 +70,7 @@ Screen = function ( flags, initObject )
 		"	</div>" + 
 		"	<div id=\"StatusBox\">" +
 		"	</div>" +
-		"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone\"></div>" +
+		"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
 		"   </div>" +
 		"</div>";
 	
@@ -339,6 +366,12 @@ Screen = function ( flags, initObject )
 			domain = document.location.href + '';
 			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
 		}
+		
+		// Make sure scripts can be run after all resources has loaded
+		var r;
+		while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
+			content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+		
 		var c = this._screen;
 		if( c.content ) c = c.content;
 		c.innerHTML = '';
@@ -359,8 +392,7 @@ Screen = function ( flags, initObject )
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
-			if( callback ) 
-				callback();
+			if( callback ) callback();
 		}
 		this.iframe = ifr;
 		// TODO: Fixie - make ScreenContent automatically have top under the titlebar!
@@ -371,6 +403,103 @@ Screen = function ( flags, initObject )
 		ifr.style.left = '0';
 		ifr.style.top = this._titleBar.offsetHeight + 'px';
 		c.appendChild( ifr );
+	}
+	
+	// Sets rich content in a safe iframe
+	this.setRichContentUrl = function( url, base, appId, filePath, callback )
+	{
+		if( !base ) 
+			base = '/';
+		
+		var eles = this._screen.getElementsByTagName( 'iframe' );
+		var ifr = false;
+		var w = this;
+		if( eles[0] )
+		{
+			ifr = eles[0];
+		}
+		else
+		{
+			ifr = document.createElement( 'iframe' );
+			this._screen.appendChild( ifr );
+		}
+		
+		// Register the app id so we can talk
+		this._screen.applicationId = appId;
+		
+		ifr.applicationId = self.applicationId;
+		ifr.applicationName = self.applicationName;
+		ifr.authId = self.authId;
+		ifr.setAttribute( 'scrolling', 'no' );
+		ifr.setAttribute( 'seamless', 'true' );
+		ifr.style.border = '0';
+		ifr.style.position = 'absolute';
+		ifr.style.top = this._titleBar ? ( this._titleBar.offsetHeight + 'px' ) : '0'; 
+		ifr.style.left = '0';
+		ifr.style.width = '100%'; 
+		ifr.style.height = this._titleBar ? ( 'calc(100% - ' + ( this._titleBar.offsetHeight + 'px' ) + ')' ) : '100%';
+		
+		
+		// Find our friend
+		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
+		var targetP = url.match( /(http[s]{0,1}\:\/\/.*?)\//i );
+		var friendU = document.location.href.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+		var targetU =                    url.match( /http[s]{0,1}\:\/\/(.*?)\//i );
+		if( friendU && friendU.length > 1 ) friendU = friendU[1];
+		if( targetU && targetU.length > 1 ) 
+		{
+			targetP = targetP[1];
+			targetU = targetU[1];
+		}
+		
+		// We're on a road trip..
+		if( !( friendU && ( friendU == targetU || !targetU ) ) )
+		{
+			ifr.sandbox = 'allow-same-origin allow-forms allow-scripts';
+		}
+		
+		// Allow sandbox flags
+		var sbx = ifr.getAttribute('sandbox') ? ifr.getAttribute('sandbox') : '';
+		sbx = ('' + sbx).split( ' ' );
+		if( this.flags && this.flags.allowPopups )
+		{
+			var found = false;
+			for( var a = 0; a < sbx.length; a++ )
+			{
+				if( sbx[a] == 'allow-popups' )
+				{
+					found = true;
+				}
+			}
+			if( !found ) sbx.push( 'allow-popups' );
+			ifr.sandbox = sbx.join( ' ' );
+		}
+		
+		ifr.onload = function( e )
+		{
+			if( friendU && ( friendU == targetU || !targetU ) )
+			{
+				var msg = JSON.stringify( { 
+					command:       'initappframe', 
+					base:          base,
+					applicationId: appId,
+					filePath:      filePath,
+					origin:        document.location.href,
+					screenId:      w.externScreenId
+				} );
+				ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
+				ifr.loaded = true;
+				if( callback ) callback();
+			}
+			/*else
+			{
+				ifr.contentWindow.window.origin = targetP;
+			}*/
+		}
+		
+		ifr.src = url;
+		this.isRich = true;
+		this.iframe = ifr;
 	}
 	
 	// Set menu items on window

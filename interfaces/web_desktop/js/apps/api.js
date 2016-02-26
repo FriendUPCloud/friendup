@@ -21,12 +21,16 @@
 window.frameInitialized = false;
 window.loaded = false;
 window.applicationStarted = false;
-var __timeout = 90;
+var __timeout = 200;
 
 if ( this.apijsHasExecuted )
 	throw new Error( 'api.js has already run, aborting' );
 
 this.apijsHasExecuted = true;
+
+// Some global variables
+var globalConfig = {};
+globalConfig.language = 'en-US'; // Defaults to US english
 
 // Create application object with standard functions ---------------------------
 
@@ -39,6 +43,7 @@ var Application =
 	messageQueue: [],
 	receiveMessage: function( packet )
 	{
+		if( packet.checkDefaultMethod ) return 'yes';
 		if( !packet.type ) return;
 		switch( packet.type )
 		{
@@ -155,10 +160,14 @@ function generateUniqueId( arrayBuffer, postfix )
 	var uid = false;
 	do
 	{
-		uid = ( Math.random() * 999 ) + '' + ( Math.random() * 999 ) + '' + ( ( new Date() ).getTime() );
+		uid = uniqueIdString();
 	}
 	while( typeof( arrayBuffer[uid + postfix ] ) != 'undefined' );
 	return uid + postfix;
+}
+function uniqueIdString()
+{
+	return ( Math.random() * 999 ) + '' + ( Math.random() * 999 ) + '' + ( new Date() ).getTime();
 }
 
 // Extract a callback element and return it
@@ -232,12 +241,43 @@ function getUrlVar( vari )
 	}
 }
 
+// Ok, are we ready
+var __queuedEventInterval = false;
+function queuedEventTimer()
+{
+	if( window.Application.applicationId && window.loaded && window.eventQueue.length )
+	{
+		var recvList = [];
+		for( var a = 0; a < window.eventQueue.length; a++ )
+		{
+			recvList.push( window.eventQueue[a] );
+		}
+		window.eventQueue = [];
+		
+		// Check if we can run
+		for( var a = 0; a < recvList.length; a++ )
+		{
+			receiveEvent( recvList[a] );
+		}
+		
+		// Only clear if it's empty
+		if( window.eventQueue.length <= 0 )
+		{
+			clearInterval( __queuedEventInterval );
+			__queuedEventInterval = false;
+		}
+	}
+	//console.log( 'Ran timer. Has ' + window.eventQueue.length + ' events left.' );
+}
+
 // Receive messages from parent environment ------------------------------------
 
 function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
+	if( !window.eventQueue ) window.eventQueue = [];
+		
 	var dataPacket = JSON.parse( event.data );
 	
 	if ( !dataPacket.command ) 
@@ -247,24 +287,30 @@ function receiveEvent( event, queued )
 		return;
 	}
 	
-	// Queue until ready
-	if( dataPacket.command != 'register' && dataPacket.command != 'initappframe' && !queued && !window.Application.applicationId )
+	// If we have a response, the app has no custom receiveMessage()
+	// This in many cases means that the Application object was not loaded
+	var hasDefaultMethod = Application.receiveMessage( { checkDefaultMethod: 1 } ) == 'yes';
+	
+	// Queue events until ready
+	if( dataPacket.command != 'register' && 
+		dataPacket.command != 'initappframe' && 
+		dataPacket.command != 'setbodycontent' &&
+		( 
+			( !window.Application || !window.Application.applicationId ) || 
+			!window.loaded
+		) 
+	)
 	{
-		function o()
+		// Don't overkill!
+		if( window.eventQueue.length > 100 )
 		{
-			// We need to wait!
-			if( !window.loaded )
-			{
-				// We just need some simple stuff!
-				if( dataPacket.command == 'setbodycontent' )
-				{
-					initApplicationFrame( dataPacket, event.origin );
-				}
-				return setTimeout( o, __timeout );
-			}
-			return receiveEvent( event, true );
+			if( __queuedEventInterval )
+				clearInterval( __queuedEventInterval );
+			return false;
 		}
-		o();
+		window.eventQueue.push( event );
+		if( !__queuedEventInterval )
+			__queuedEventInterval = setInterval( queuedEventTimer, __timeout );
 		return;
 	}
 	
@@ -293,7 +339,6 @@ function receiveEvent( event, queued )
 				switch( dataPacket.method )
 				{
 					case 'refreshtheme':
-						console.log( 'Theme agogo!' );
 						console.log( dataPacket );
 						break;
 					case 'closewindow':
@@ -357,15 +402,9 @@ function receiveEvent( event, queued )
 		// Is often called on an already opened image
 		case 'setbodycontent':
 			
+			window.loaded = false;
 			document.body.className = 'Loading';
 			document.body.innerHTML = dataPacket.data;
-			
-			// Attach scripts to dom
-			if( ActivateScripts )
-			{
-				ActivateScripts( dataPacket.data );
-			}
-			else console.log( 'Could not activate scripts' );
 			
 			// We need to set these if possible
 			Application.authId        = dataPacket.authId;
@@ -373,20 +412,29 @@ function receiveEvent( event, queued )
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			
-			initApplicationFrame( dataPacket, event.origin );
-			
-			// Just call back
-			if( dataPacket.callback )
+			initApplicationFrame( dataPacket, event.origin, function()
 			{
-				parent.postMessage( JSON.stringify( {
-					type:          'callback',
-					callback:      dataPacket.callback,
-					applicationId: dataPacket.applicationId,
-					theme:         dataPacket.theme,
-					authId:        dataPacket.authId,
-					userId:        dataPacket.userId
-				} ), event.origin );
+				// Just call back
+				if( dataPacket.callback )
+				{
+					parent.postMessage( JSON.stringify( {
+						type:          'callback',
+						callback:      dataPacket.callback,
+						applicationId: dataPacket.applicationId,
+						theme:         dataPacket.theme,
+						authId:        dataPacket.authId,
+						userId:        dataPacket.userId
+					} ), event.origin );
+				}
+			} );
+			
+			// If we already have it, run it
+			if( window.delayedScriptLoading )
+			{
+				window.delayedScriptLoading();
+				delete window.delayedScriptLoading;
 			}
+			
 			break;
 		case 'setcontentbyid':
 			var el = document.getElementById( dataPacket.elementId );
@@ -502,9 +550,12 @@ function receiveEvent( event, queued )
 						if( Application.appPath )
 						{
 							var base = '/system.library/file/read?authid=' + ( Application.authId ? Application.authId : '' ) + '&mode=rb&path=';
-							f.data = f.data.split( /progdir\:/i ).join ( base + Application.appPath  );
-							f.data = f.data.split( /libs\:/i ).join ( Application.domain + '/webclient/' );
-							f.data = f.data.split( /system\:/i ).join ( Application.domain + '/webclient/' );
+							if( f.data )
+							{
+								f.data = f.data.split( /progdir\:/i ).join ( base + Application.appPath  );
+								f.data = f.data.split( /libs\:/i ).join ( Application.domain + '/webclient/' );
+								f.data = f.data.split( /system\:/i ).join ( Application.domain + '/webclient/' );
+							}
 						}
 						f.onLoad( f.data );
 					}
@@ -715,6 +766,20 @@ function receiveEvent( event, queued )
 			Application.quit(); // Tell to skip signaling back
 			break;
 		default:
+			// If we are running the default method, try a bit later..
+			if( hasDefaultMethod )
+			{
+				// We need some kind of safety *shrug*
+				if( window.eventQueue.length > 100 ) 
+				{
+					clearInterval( __queuedEventInterval );
+					return;
+				}
+				window.eventQueue.push( event );
+				if( !__queuedEventInterval )
+					__queuedEventInterval = setInterval( queuedEventTimer, __timeout );
+				return;
+			}
 			Application.receiveMessage( dataPacket );
 			break;
 	}
@@ -740,9 +805,14 @@ function receiveEvent( event, queued )
 			// Aha, we have a window to send to (see if it's at this level)
 			else if( dataPacket.windowId )
 			{
-				if( Application.windows && typeof( Application.windows[dataPacket.windowId] ) != 'undefined' )
+				// Search for our callback!
+				if( Application.windows )
 				{
-					return Application.windows[dataPacket.windowId].sendMessage( dataPacket );
+					for( var a in Application.windows )
+					{
+						Application.windows[a].sendMessage( dataPacket );
+					}
+					return;
 				}
 			}
 		}
@@ -858,14 +928,21 @@ function View( flags )
 		var cid = false;
 		if( callback )
 			cid = addCallback( callback );
-		Application.sendMessage( {
+		var o = {
 			type:     'view',
 			method:   'setContent',
 			windowId: windowId,
 			filePath: Application.filePath,
 			callback: cid,
 			data:     data
-		} );
+		};
+		// Language support
+		if( globalConfig.language )
+		{
+			o.spokenLanguage = globalConfig.language;
+			o.alternateLanguage = globalConfig.languageAlternate;
+		}
+		Application.sendMessage( o );
 	}
 	// Sets a property by id
 	this.setAttributeById = function( id, property, value, callback )
@@ -1135,13 +1212,46 @@ function Screen( flags )
 		// Add callback
 		var cid = false;
 		if( callback ) cid = addCallback( callback );
-		Application.sendMessage( {
+		
+		var o = {
 			type:     'screen',
 			method:   'setContent',
 			screenId: screenId,
 			filePath: Application.filePath,
 			callback: cid,
 			data:     data
+		};
+		
+		// Language support
+		if( globalConfig.language )
+		{
+			o.spokenLanguage = globalConfig.language;
+			o.alternateLanguage = globalConfig.languageAlternate;
+		}
+		
+		Application.sendMessage( o );
+	}
+	
+	this.loadTemplate = function( url )
+	{
+		url = url.split( /progdir\:/i ).join( Application.appPath ? Application.appPath : Application.filePath );
+		url = url.split( /libs\:/i ).join( Application.domain + '/webclient/' );
+		// System file
+		if( url.substr( 0, 11 ) == '/webclient/' ) return this.setRichContentUrl( url );
+		url = getImageUrl( url );
+		this.setRichContentUrl( url );
+	}
+	
+	this.setRichContentUrl = function( url )
+	{
+		Application.sendMessage( {
+			type:     'screen',
+			method:   'setRichContentUrl',
+			base:     Application.domain + '/webclient/',
+			domain:   'http://' + document.location.href.split( '//' )[1].split( '/' )[0],
+			filePath: Application.filePath,
+			screenId: screenId,
+			url:      url
 		} );
 	}
 	
@@ -1263,7 +1373,6 @@ Shell = function()
 			'mount', 'unmount', 'openscreen', 'closescreen',
 			'openview', 'closeview' /* More to come... */
 		];
-		
 	}
 	
 	this.execute = function( commandLine, callback )
@@ -1533,6 +1642,16 @@ function AudioObject( sample )
 function getImageUrl( path )
 {
 	// TODO: Determine from Doors!
+	var apath = Application.appPath ? Application.appPath : Application.filePath;
+	
+	if( path.toLowerCase().substr( 0, 8 ) == 'progdir:' )
+	{
+		return path.split( /progdir\:/i ).join( apath );
+	}
+	else if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
+	{
+		return path.split( /system\:/i ).join( '/webclient/' );
+	}
 	var u = '/system.library/file/read?authid=' + Application.authId + '&path=' + path + '&mode=rb';
 	return u;
 }
@@ -1990,9 +2109,13 @@ function OpenLibrary( path, id, div )
 
 // For application frames ------------------------------------------------------
 
-function initApplicationFrame( packet, eventOrigin )
+function initApplicationFrame( packet, eventOrigin, initcallback )
 {
-	if( window.frameInitialized ) return;
+	if( window.frameInitialized )
+	{
+		if( initcallback ) initcallback();
+		return;
+	}
 	
 	// Don't do this twice
 	window.frameInitialized = true;
@@ -2039,15 +2162,6 @@ function initApplicationFrame( packet, eventOrigin )
 	// On page load
 	function onLoaded()
 	{
-		function doneLoading()
-		{
-			setTimeout( function()
-			{
-				document.body.className = '';
-				document.body.style.visibility = 'visible';
-			}, 200 );
-		}
-		
 		// We need to wait for all functions to be available
 		if( typeof( ge ) == 'undefined' || typeof( Trim ) == 'undefined' || typeof( cAjax ) == 'undefined' )
 		{
@@ -2059,12 +2173,72 @@ function initApplicationFrame( packet, eventOrigin )
 		{
 			tpath = '/themes/' + packet.theme + '/theme.css';
 		}
+		
+		var loadingResources = 0;
+		var totalLoadingResources = 0;
 				
 		ParseCssFile( tpath, '/webclient/' );
 		var css = [
 			'font-awesome.min.css'
 		];
-		css.forEach( addCss );
+		
+		var activat = [];
+		
+		
+		// What to do when we are done loading..
+		function doneLoading( e )
+		{
+			loadingResources++;
+			
+			// Async is a bitch!
+			function waitToStart()
+			{
+				if( !window.applicationStarted )
+				{
+					if( Application.run && !window.applicationStarted )
+					{
+						window.applicationStarted = true;
+						Application.run( packet );
+						window.loaded = true;
+					}
+					for( var a = 0; a < activat.length; a++ )
+						ExecuteScript( activat[a] );
+					activat = [];
+					setTimeout( function()
+					{
+						if( Application.run && !window.applicationStarted )
+						{
+							window.applicationStarted = true;
+							Application.run( packet );
+						}
+						// Could be wr don't have any application, run scripts
+						for( var a = 0; a < activat.length; a++ )
+							ExecuteScript( activat[a] );
+						activat = [];
+						window.loaded = true;
+						
+						document.body.className = '';
+						
+						// If we still have this, run it
+						if( window.delayedScriptLoading )
+						{
+							window.delayedScriptLoading();
+							delete window.delayedScriptLoading;
+						}
+						
+						// Callback to parent and say we're done!
+						if( initcallback )
+							initcallback();
+					}, 100 );
+				}
+			}
+			
+			// Loading complete
+			if( loadingResources == totalLoadingResources )
+			{
+				waitToStart();
+			}
+		}
 		function addCss( cssPath )
 		{
 			var css = document.createElement( 'link' );
@@ -2073,23 +2247,63 @@ function initApplicationFrame( packet, eventOrigin )
 			css.onload = doneLoading;
 			document.head.appendChild( css );
 			css.href = '/webclient/css/' + cssPath;
+			totalLoadingResources++;
 		}
 		
+		// Add the css
+		css.forEach( addCss );
+		
+		
 		// For templates
-		if( packet.appPath )
-			Application.appPath = packet.appPath;
+		if( packet.appPath ) Application.appPath = packet.appPath;
 		
 		
 		// TODO: Take language var from config
 		if( packet && packet.filePath )
 		{
 			// Load translations and run locale
-			loadLocale( packet.filePath, function(){ if( Application.run ) { Application.run( packet ); window.applicationStarted = true; } } );
+			totalLoadingResources++;
+			loadLocale( packet.filePath, function()
+			{ 
+				// Set config
+				if( packet.spokenLanguage )
+					globalConfig.language = packet.spokenLanguage;
+				if( packet.spokenAlternate )
+					globalConfig.alternateLanguage = packet.spokenAlternate;
+				doneLoading();
+			} );
 		}
 		
-		// Try to run scripts
-		if( packet.data && packet.data.match( /\<script/i ) )
-			RunScripts( packet.data );
+		// Delayed loading of scripts
+		window.delayedScriptLoading = function()
+		{
+			totalLoadingResources++;
+			var scripts = document.getElementsByTagName( 'friendscript' );
+			var removes = [];
+			for( var a = 0; a < scripts.length; a++ )
+			{
+				if( scripts[a].getAttribute( 'src' ) )
+				{
+					var d = document.createElement( 'script' );
+					d.src = scripts[a].getAttribute( 'src' );
+					d.onload = doneLoading;
+					document.body.appendChild( d );
+					totalLoadingResources++;
+				}
+				else
+				{
+					activat.push( scripts[a].textContent );
+				}
+				removes.push( scripts[a] );
+			}
+			
+			// Clear friendscripts
+			for( var a = 0; a < removes.length; a++ ) 
+			{
+				removes[a].parentNode.removeChild( removes[a] );
+			}
+			doneLoading();
+		}
 		
 		// Tell we're registered	
 		Application.sendMessage( {
@@ -2126,24 +2340,48 @@ function initApplicationFrame( packet, eventOrigin )
 		'js/utils/json.js',
 		'js/utils/cssparser.js'
 	];
+	
+	var elez = [];
 	for ( var a = 0; a < js.length; a++ )
 	{
 		var s = document.createElement( 'script' );
 		// Set src with some rules whether it's an app or a Doors component
 		s.src = '/webclient/' + js[a];
+		elez.push( s );
 		
 		// When last javascript loads, parse css, setup translations and say:
 		// We are now registered..
 		if( a == js.length-1 )
 		{
+			function fl()
+			{
+				if( this ) this.isLoaded = true;
+				var allLoaded = true;
+				for( var b = 0; b < elez.length; b++ )
+				{
+					if( !elez[b].isLoaded ) allLoaded = false;
+				}
+				if( allLoaded )
+				{
+					if( typeof( Workspace ) == 'undefined' )
+					{
+						if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
+						if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
+					}
+					onLoaded();
+				}
+				else 
+				{
+					setTimeout( fl, 50 );
+				}
+			}
+			s.onload = fl;
+		}
+		else
+		{
 			s.onload = function()
 			{
-				if( typeof( Workspace ) == 'undefined' )
-				{
-					if( typeof( InitWindowEvents ) != 'undefined' ) InitWindowEvents();
-					if( typeof( InitGuibaseEvents ) != 'undefined' ) InitGuibaseEvents();
-				}
-				onLoaded();
+				this.isLoaded = true;
 			}
 		}
 		head.appendChild( s );
@@ -2163,25 +2401,120 @@ function initApplicationFrame( packet, eventOrigin )
 // TODO: Make configurable (click to focus behavious)
 function clickToActivate()
 {
-	Application.sendMessage( {
-		type:     'view',
-		method:   'activate'
-	} );
-	// Add class
-	document.body.className = document.body.className.split( ' activated' ).join ( '' ) + ' activated';
+	if( Application && Application.sendMessage )
+	{
+		Application.sendMessage( {
+			type:     'view',
+			method:   'activate'
+		} );
+		Application.sendMessage( {
+			type:     'screen',
+			method:   'activate'
+		} );
+		// Add class
+		document.body.className = document.body.className.split( ' activated' ).join ( '' ) + ' activated';
+	}
 }
+
+// Initializes tab system on the subsequent divs one level under parent div
+function InitTabs ( pdiv )
+{
+	if( typeof( pdiv ) == 'string' )
+		pdiv = ge( pdiv );
+		
+	var divs = pdiv.getElementsByTagName ( 'div' );
+	var tabs = new Array ();
+	var pages = new Array ();
+	var active = 0;
+	for ( var a = 0; a < divs.length; a++ )
+	{
+		if ( divs[a].parentNode != pdiv ) continue;
+		if ( divs[a].className == 'Tab' )
+		{
+			tabs.push ( divs[a] );
+			divs[a].pdiv = pdiv;
+			divs[a].tabs = tabs; 
+			divs[a].pages = pages;
+			divs[a].index = tabs.length - 1;
+			divs[a].onclick = function ()
+			{
+				SetCookie ( 'Tabs'+this.pdiv.id, this.index );
+				this.className = 'TabActive';
+				var ind;
+				for ( var b = 0; b < this.tabs.length; b++ )
+				{
+					if ( this.tabs[b] != this )
+						this.tabs[b].className = 'Tab';
+					else ind = b;
+				}
+				for ( var b = 0; b < this.pages.length; b++ )
+				{
+					if ( b != ind )
+					{
+						this.pages[b].className = 'Page';
+					}
+					else 
+					{
+						this.pages[b].className = 'PageActive';
+						if ( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
+						{
+							this.pages[b].style.display = 'none';
+							var idz = 1;
+							if ( !this.pages[b].id )
+							{
+								var bs = 'page';
+								idz++;
+								while ( ge ( bs ) )
+									bs = [ bs, idz ].join ( '' );
+								this.pages[b].id = bs;
+							}
+							var bid = this.pages[b].id;
+							setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
+						}
+					}
+				}
+				if ( typeof ( AutoResizeWindow ) != 'undefined' )
+				{
+					var pdiv = this.pdiv;
+					while ( pdiv.className.indexOf ( ' View' ) < 0 && pdiv != document.body )
+						pdiv = pdiv.parentNode;
+					if ( pdiv != document.body && pdiv.autoResize == true )
+						AutoResizeWindow ( pdiv );
+				}
+			}
+			if ( GetCookie ( 'Tabs'+pdiv.id ) == divs[a].index )
+			{
+				active = divs[a].index;
+			}
+		}
+		else if ( divs[a].className.substr ( 0, 4 ) == 'Page' )
+		{
+			divs[a].className = 'Page';
+			pages.push ( divs[a] );
+		}
+	}
+	tabs[active].onclick();
+}
+
+// Speech synthesis ------------------------------------------------------------
 
 // Say command
 if( typeof( Say ) == 'undefined' )
 {
-	function Say( string )
+	function Say( string, language )
 	{
 		var v = speechSynthesis.getVoices();
 		var u = new SpeechSynthesisUtterance( string );
-		u.lang = 'en-US';
+		u.lang = language ? language : globalConfig.language;
 		for( var a = 0; a < v.length; a++ )
 		{
-			if( v[a].name == 'Google US English' )
+			if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+			{
+				u.lang = v[a].lang;
+				u.voice = v[a].voiceURI;
+				break;
+			}
+			else if( v[a].name == u.lang )
 			{
 				u.lang = v[a].lang;
 				u.voice = v[a].voiceURI;
@@ -2292,9 +2625,7 @@ if( typeof( _kresponse ) == 'undefined' || !window._keysAdded )
 		window.attachEvent( 'onkeydown', _kresponse,   false );
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
 	}
-	
-	
-	
+		
 	window._keysAdded = true;
 }
 

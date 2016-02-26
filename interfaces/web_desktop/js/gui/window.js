@@ -809,6 +809,10 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 	// Moveoverlay
 	var molay = document.createElement ( 'div' );
 	molay.className = 'MoveOverlay';
+	molay.onmouseup = function()
+	{
+		closeWorkbenchMenu();
+	}
 
 	// Title
 	var title = document.createElement ( 'div' );
@@ -856,9 +860,9 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			return cancelBubble ( e );
 		}
 		
-		// Init workspace menu from title text (only active windows)
+		// Init workspace menu from title text (only active windows for mobile)
 		var t = e.target ? e.target : e.srcElement;
-		if( contn.menu && t == titleSpan && div.className.indexOf( ' Active' ) > 0 )
+		if( contn.menu && t == titleSpan && div.className.indexOf( ' Active' ) > 0 && window.isMobile )
 		{
 		    // Use correct button
     		if( e.button != 0 && !mode ) return cancelBubble( e );
@@ -1675,6 +1679,7 @@ var View = function ( args )
 		ifr.applicationName = self.applicationName;
 		ifr.className = 'Content';
 		ifr.src = domain;
+		
 		this.iframe = ifr;
 		
 		if( packet.applicationId ) this._window.applicationId = packet.applicationId;
@@ -1683,14 +1688,17 @@ var View = function ( args )
 		{
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.registerCallback = addWrapperCallback( function() { if( callback ) callback(); } );
 			if( packet.filePath )
 				msg.data = content.split( /progdir\:/i ).join( packet.filePath );
 			else msg.data = content;
 			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
-			if( callback ) 
-				callback();
+			// Remove window popup menus when clicking on the app
+			if( ifr.contentWindow.addEventListener )
+				ifr.contentWindow.addEventListener( 'mousedown', function(){ removeWindowPopupMenus(); }, false );
+			else ifr.contentWindow.attachEvent( 'onmousedown', function(){ removeWindowPopupMenus(); }, false );
 		}
 		c.appendChild( ifr );
 	}
@@ -1736,16 +1744,15 @@ var View = function ( args )
 		iframe.src = src;
 	}
 	// Sets content on a safe window (using postmessage), callback when completed
-	this.setContentById = function( content, packet )
+	this.setContentById = function( content, packet, callback )
 	{
-		var c = this._window;
-		if( c.content ) c = c.content;
-		var frame = c.getElementsByTagName( 'iframe' );
-		if( !frame.length ) return;
-		var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
-		msg.command = 'setcontentbyid';
-		frame[0].contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + frame[0].src.split( '//' )[1].split( '/' )[0] );
-		this.iframe = frame[0];
+		if( this.iframe )
+		{
+			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			msg.command = 'setcontentbyid';
+			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
+		}
+		if( callback ) callback();
 	}
 	// Sets rich content in a safe iframe
 	this.setRichContent = function( content )
@@ -1957,9 +1964,9 @@ var View = function ( args )
 	// Get content element
 	this.getContentElement = function()
 	{
-		if( this.isRich )
+		if( this.isRich && this.iframe )
 		{
-			return this._window.getElementsByTagName( 'iframe' )[0].contentWindow.document.body;
+			return this.iframe.contentWindow.document.body;
 		}
 		else return this._window;
 		return false;
@@ -2020,13 +2027,12 @@ var View = function ( args )
 	// Sets a property value
 	this.setAttributeById = function( packet )
 	{
-		var c = this._window;
-		if( c.content ) c = c.content;
-		var frame = c.getElementsByTagName( 'iframe' );
-		if( !frame.length ) return;
-		var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
-		msg.command = 'setattributebyid';
-		frame[0].contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + frame[0].src.split( '//' )[1].split( '/' )[0] );
+		if( this.iframe )
+		{
+			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
+			msg.command = 'setattributebyid';
+			this.iframe.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + this.iframe.src.split( '//' )[1].split( '/' )[0] );
+		}
 	}
 	// Activate window
 	this.activate = function ()
@@ -2087,6 +2093,13 @@ var View = function ( args )
 	this.setFlag = function ( flag, value )
 	{
 		SetWindowFlag ( this._window, flag, value );
+	}
+	this.getFlag = function( flag )
+	{
+		if( typeof( this._window.flags[flag] ) != 'undefined' )
+		{
+			return this._window.flags[flag];
+		}
 	}
 	// Add a child window to this window
 	this.addChildWindow = function ( ele )
@@ -2154,7 +2167,7 @@ var View = function ( args )
 	this.setMenuItems = function( obj, appid )
 	{
 		this._window.menu = obj;
-		if( appid )
+		if( appid && window.isMobile )
 		{
 			this._window.applicationId = appid;
 			this._window.parentNode.className += ' HasPopupMenu';

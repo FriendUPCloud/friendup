@@ -1281,7 +1281,8 @@ function showWorkbenchMenu ( popupElement )
 			menus[a].menus = menus;
 			menus[a][mode] = function()
 			{
-				if( wm.isActivated ) return;
+				if( Workspace.menuMode != 'miga' )
+					if( wm.isActivated ) return;
 				wm.isActivated = true; // This menu is activated!
 				console.log( 'this was triggered.' );
 				// Cover movable windows to avoid mouse collision
