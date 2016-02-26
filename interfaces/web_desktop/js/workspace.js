@@ -28,6 +28,7 @@ var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
 	icons: [],
+	menuMode: 'miga',
 	initialized: false,
 	protocol: _protocol,
 	menu: [],
