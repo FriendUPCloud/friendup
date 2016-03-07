@@ -236,6 +236,8 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 {
 	char tmpQuery[ 1024 ];
 	void *firstObject = NULL;
+	void *lastObject = NULL;
+	
 	DEBUG("[GetStructureFromJSON] Load\n");
 	
 	if( jsondata == NULL  )
@@ -256,6 +258,8 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 		return NULL;
 	}
 	
+	INFO("Start\n");
+	
 	int j = 0;
 	json_char* json;
 	json_value* value;
@@ -266,7 +270,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 
 	json = (json_char*)jsondata;
 	
-	DEBUG("[GetStructureFromJSON] Before parse  -> %s \n", json );
+	//DEBUG("[GetStructureFromJSON] Before parse  -> '%s' \n", json );
 
 	value = json_parse( json, strlen( json ) );
 
@@ -276,18 +280,138 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 		return NULL;
 	}
 	
-	if( value->type == json_object )			// ''main object"
+	if( value->type == json_object || value->type == json_array )			// ''main object"
 	{
-		DEBUG("OBJECT NAME = %s\n", value->u.object.values[0].name);
-				
-		json_value* arrval = value->u.object.values[0].value;
-		if( arrval->type == json_array )		// object contain our objects
+		//DEBUG("OBJECT NAME = %s value array length %d\n", value->u.object.values[0].name, value->array.length );
+		
+		json_value* arrval;
+		
+		
+		DEBUG("Parse arrval type %d value type %d \n", value->type, value->type );
+		
+		if( value->type == json_object )
 		{
-			int length = arrval->u.array.length;
+			void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+		
+			UBYTE *strptr = (UBYTE *)data;	// pointer to structure to which will will insert data
+			ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
+				
+			unsigned int i;
+			
+			lastObject = data;
+			
+			for( i=0 ; i < value->u.object.length ; i++ )
+			{
+				//printf("------%d ---- %s\n", i, value->u.object.values[ i ].name );
+			}
+			
+			//DEBUG("Found obejct\n");
+			
+			while( dptr[0] != SQLT_END )
+			{
+				switch( dptr[ 0 ] )
+				{
+					case SQLT_NODE:
+					{
+					}
+					break;
+					
+					case SQLT_IDINT:	// primary key
+					case SQLT_INT:
+					{
+						int retPos = -1;
+						//DEBUG("FIND INT!\n");
+						
+						for( i = 0; i <  value->u.object.length; i++) 
+						{
+							//DEBUG("aaaaaaaaaaobject[%d].name = %s\n", i, locaval->u.object.values[i].name);
+							if( strcmp( value->u.object.values[i].name, (char *) dptr[1] ) == 0 )
+							{
+								retPos = i;
+							}
+						}
+						
+						json_value*mval = NULL;
+						if( retPos >= 0 )
+						{
+							mval = value->u.object.values[retPos].value;
+						}
+						
+						if( retPos >= 0 && mval->type == json_integer )
+						{
+							//DEBUG("ENTRY FOUND %s  int val %d\n",(char *) dptr[ 1 ], mval->u.integer );
+							memcpy( strptr + dptr[ 2 ], &(mval->u.integer), sizeof( int ) );
+						}
+					}
+					break;
+						
+					case SQLT_STR:
+					case SQLT_TIMESTAMP:
+					{
+						int retPos = -1;
+						for( i = 0; i <  value->u.object.length; i++) 
+						{
+							//DEBUG("aaaaaaaaaaobject[%d].name = %s\n", i, value->u.object.values[i].name);
+							if( strcmp( value->u.object.values[i].name, (char *)dptr[1] ) == 0 )
+							{
+								retPos = i;
+							}
+						}
+						
+						json_value*mval = NULL;
+						
+						if( retPos >= 0 )
+						{
+							mval = value->u.object.values[retPos].value;
+						}
+						
+						if( retPos >= 0  && mval->type == json_string && mval->u.string.ptr != NULL )
+						{
+							//DEBUG("STRENTRY FOUND %s data %s\n", (char *)dptr[ 1 ], mval->u.string.ptr );
+							
+							// this is date
+							if( strlen( mval->u.string.ptr ) == 19 && mval->u.string.ptr[ 5 ] == '-' && mval->u.string.ptr[ 8 ] == '-' )
+							{
+								char *ptr = NULL;
+								struct tm ltm;
+							
+								//DEBUG("TIMESTAMP load\n");
+							
+								//ptr = strptime( row[ i ], "%C%y-%m-%d %H:%M:%S", &ltm );
+								if( ptr != NULL )
+								{
+									// REMEMBER, data fix
+								
+									ltm.tm_year += 1900;
+									ltm.tm_mon ++;
+								
+									memcpy( strptr+ dptr[ 2 ], &ltm, sizeof( struct tm) );
+								
+									//DEBUG("Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
+								}
+							}
+							else		// this is string
+							{
+								char *tmpval = StringDuplicate( mval->u.string.ptr );
+								memcpy( strptr+ dptr[ 2 ], &tmpval, sizeof( char *) );
+							}
+						}
+					}
+					break;
+				}
+				i++;
+				dptr += 3;
+			}
+		}
+		else if( value->type == json_array )		// object contain our objects
+		{
+			arrval = value;
+			
+			int length = value->u.array.length;
 			int x;
 			for (x = 0; x < length; x++) // get object from array
 			{
-				json_value*locaval = arrval->u.array.values[x]; 
+				json_value*locaval = value->u.array.values[x]; 
 				
 				void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
 				if( firstObject == NULL )
@@ -307,18 +431,11 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 					{
 						case SQLT_NODE:
 						{
-							DEBUG("Node found\n");
-							MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
-						
-							if( node != NULL )
-							{
-								node->mln_Succ = (MinNode *)data;
-								node = locnode;
-							}
-							else
-							{
-								node = locnode;
-							}
+							//DEBUG("Node found\n");
+							MinNode *locnode = (MinNode *)(data + dptr[ 2 ]);
+							locnode->mln_Succ = (MinNode *)lastObject;
+							
+							//DEBUG("\n\nlastObject %x currobject %x\n\n", lastObject, data );
 						}
 						break;
 					
@@ -338,7 +455,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 							
 							if( retPos >= 0 && mval->type == json_integer )
 							{
-								DEBUG("ENTRY FOUND %s  int val %d\n",(char *) dptr[ 1 ], mval->u.integer );
+								//DEBUG("ENTRY FOUND %s  int val %d\n",(char *) dptr[ 1 ], mval->u.integer );
 								memcpy( strptr + dptr[ 2 ], &(mval->u.integer), sizeof( int ) );
 							}
 						}
@@ -361,7 +478,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 							
 							if( retPos >= 0  && mval->type == json_string && mval->u.string.ptr != NULL )
 							{
-								DEBUG("STRENTRY FOUND %s data %s\n", (char *)dptr[ 1 ], mval->u.string.ptr );
+								//DEBUG("STRENTRY FOUND %s data %s\n", (char *)dptr[ 1 ], mval->u.string.ptr );
 								
 								// this is date
 								if( strlen( mval->u.string.ptr ) == 19 && mval->u.string.ptr[ 5 ] == '-' && mval->u.string.ptr[ 8 ] == '-' )
@@ -369,7 +486,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 									char *ptr = NULL;
 									struct tm ltm;
 							
-									DEBUG("TIMESTAMP load\n");
+									//DEBUG("TIMESTAMP load\n");
 							
 									//ptr = strptime( row[ i ], "%C%y-%m-%d %H:%M:%S", &ltm );
 									if( ptr != NULL )
@@ -381,7 +498,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 								
 										memcpy( strptr+ dptr[ 2 ], &ltm, sizeof( struct tm) );
 								
-										DEBUG("Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
+										//DEBUG("Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
 									}
 								}
 								else		// this is string
@@ -396,10 +513,14 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 					i++;
 					dptr += 3;
 				}
+				
+				lastObject = data;
 			}
 		}
 	}
+	firstObject = lastObject;
 
 	json_value_free( value );
+	
 	return firstObject;
 }

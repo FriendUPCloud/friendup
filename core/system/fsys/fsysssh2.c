@@ -350,6 +350,45 @@ shutdown:
 }
 
 //
+// Release device
+//
+
+int Release( struct FHandler *s, void *f )
+{
+	if( f != NULL )
+	{
+		File *lf = (File *)f;
+
+		if( lf->f_SpecialData )
+		{
+			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
+			
+			libssh2_sftp_shutdown( sdat->sftp_session);
+			
+			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
+			libssh2_session_free(sdat->session);
+
+			close( sdat->sock);
+			DEBUG("all done!\n");
+			libssh2_exit();
+			
+			if( sdat->sd_Host ){ free( sdat->sd_Host ); }
+			if( sdat->sd_LoginUser ){ free( sdat->sd_LoginUser ); }
+			if( sdat->sd_LoginPass ){ free( sdat->sd_LoginPass ); }
+			
+			free( lf->f_SpecialData );
+		}
+		
+		if( lf->f_Name ){ free( lf->f_Name ); }
+		if( lf->f_Path ){ free( lf->f_Path ); }
+		
+		//free( f );
+	}
+	
+	return 0;
+}
+
+//
 // Unmount device
 //
 

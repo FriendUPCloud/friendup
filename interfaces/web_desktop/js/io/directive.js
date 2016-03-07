@@ -183,11 +183,8 @@ function ExecuteApplication( app, args, callback )
 				{
 					if( callback )
 					{
-						console.log( 'We run the executable now!' );
 						callback( "\n", { response: 'Executable has run.' } );
 					}
-					
-					// TODO: Place to do something....
 				} );
 				
 				var o = {
@@ -201,6 +198,12 @@ function ExecuteApplication( app, args, callback )
 					domain:   Doors.runLevels[1].domain,
 					registerCallback: cid
 				};
+				// Language support
+				if( conf.language )
+				{
+					o.spokenLanguage = conf.language.spokenLanguage;
+					o.alternateLanguage = conf.language.spokenAlternate;
+				}
 				this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 			}
 			
@@ -209,6 +212,10 @@ function ExecuteApplication( app, args, callback )
 			
 			// Add application
 			Doors.applications.push( ifr );
+		}
+		else 
+		{
+			callback( "\n", { response: 'Executable has run.' } );
 		}
 	}
 	m.execute( 'friendapplication', { application: app } );
@@ -462,7 +469,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 }
 
 // Do it by path!
-function ExecuteJSXByPath( path, args )
+function ExecuteJSXByPath( path, args, callback )
 {
 	var f = new File( path );
 	f.onLoad = function( data )
@@ -475,13 +482,14 @@ function ExecuteJSXByPath( path, args )
 				app = app.split( '/' );
 				app = app[app.length-1]; 
 			}
-			ExecuteJSX( data, app, args, path );
+			return ExecuteJSX( data, app, args, path, callback );
 		}
+		callback( false );
 	}
 	f.load();
 }
 
-function ExecuteJSX( data, app, args, path )
+function ExecuteJSX( data, app, args, path, callback )
 {
 	//console.log( 'Here is the path: ' + path );
 	// Load application into a sandboxed iframe
@@ -496,6 +504,7 @@ function ExecuteJSX( data, app, args, path )
 	ifr.applicationId = app + '-' + (new Date()).getTime();
 	ifr.userId = Doors.userId;
 	ifr.applicationType = 'jsx';
+	ifr.sessionId = Workspace.sessionId; // JSX has sessionid
 	
 	// Quit the application
 	ifr.quit = function( level )
@@ -585,16 +594,26 @@ function ExecuteJSX( data, app, args, path )
 		jsx.innerHTML = data;
 		ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
 		
+		
+		var cid = addWrapperCallback( function()
+		{
+			if( callback )
+			{
+				callback( "\n", { response: 'Executable has run.' } );
+			}
+		} );
+		
 		var msg = JSON.stringify( { 
-			command:       'initappframe', 
-			base:          '/',
-			applicationId: ifr.applicationId,
-			userId:        ifr.userId,
-			theme:         Doors.theme,
-			filePath:      '/webclient/jsx/',
-			appPath:       dpath ? dpath : '',
-			origin:        document.location.href,
-			windowId:      false
+			command:          'initappframe', 
+			base:             '/',
+			applicationId:    ifr.applicationId,
+			userId:           ifr.userId,
+			theme:            Doors.theme,
+			filePath:         '/webclient/jsx/',
+			appPath:          dpath ? dpath : '',
+			origin:           document.location.href,
+			windowId:         false,
+			registerCallback: cid
 		} );
 		ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 	}

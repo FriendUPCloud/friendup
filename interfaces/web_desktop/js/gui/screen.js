@@ -282,8 +282,7 @@ Screen = function ( flags, initObject )
 		var t = e.target ? e.target : e.srcElement;
 		
 		// Only left button clicks!
-		if( e.button != 0 )
-			return false;
+		if( e.button != 0 ) return false;
 		
 		// Deactivate all windows when clicking on the desktop wallpaper
 		if ( 
@@ -572,6 +571,8 @@ Screen = function ( flags, initObject )
 	
 	// Init
 	this.screenToFront ();
+	
+
 	window.currentScreen = div;
 	this.ready = true;
 	
@@ -583,28 +584,32 @@ Screen = function ( flags, initObject )
 // Changing screens on swipe
 if( window.isMobile )
 {
+
+	var touchDowned = 0;
+	var touchStart = [];
+	var touchEnd = [];
+
 	setupScreenTouchEvents()
 }
 
+
 function setupScreenTouchEvents()
 {
-	if( ge('Screens') )
-	{
-		console.log('setup screen hammer');
-		hammertime = new Hammer( ge('Screens') );
-		hammertime.get('swipe').set({ direction:Hammer.DIRECTION_ALL  });
-		hammertime.on('swipe', function(evt) {
-			if( ( evt.direction == 2 || evt.direction == 4 ) && evt.target.className.indexOf('ScreenContent') > -1 )
-			{
-				currentScreen.screenObject.screenCycle();	
-			}	
-		});		
-	}
-	else
-	{
-		setTimeout('setupScreenTouchEvents()', 500);
-	}
-
- 
+	window.addEventListener('touchstart', function(evt) {
+		 touchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
+		 touchDowned = evt.timeStamp;
+	});
+	window.addEventListener('touchmove', function(evt) {
+		//we dont really do aniything here....
+		//console.log('we have registered a touch MOVE...',evt);
+	});
+	window.addEventListener('touchend', function(evt) { 
+		touchEnd =  [ evt.changedTouches[0].clientX, evt.changedTouches[0].clientY ];
+		if( evt.timeStamp - touchDowned > 10 && evt.timeStamp - touchDowned < 150 && Math.abs( touchStart[0] - touchEnd[0] ) > 100 && Math.abs( touchStart[0] - touchEnd[0] ) > Math.abs( touchStart[1] - touchEnd[1] ) )
+		{
+			// we have at least 100px horizontal and more horizonal than vertical... lets call it a screen swipe.
+			if( currentScreen && currentScreen.screenObject )  currentScreen.screenObject.screenCycle();	
+		}
+	});
 }
 

@@ -19,6 +19,11 @@
 
 /* Shell class for handling a DOS session */
 
+function SayWithText( text )
+{
+	Say( text, false, 'both' );
+}
+
 Shell = function( appObject )
 {	
 	this.cmdLog = [ '' ];
@@ -96,7 +101,8 @@ Shell = function( appObject )
 						{
 							if( callback ) callback( dirs );
 						} );
-						if( callback ) return callback( false );
+						// Once upon a time, we had this, I don't know why!
+						//if( callback ) return callback( false );
 						return;
 					}
 				}
@@ -261,20 +267,20 @@ Shell = function( appObject )
 		{
 			if( !this.exeIcon || ( this.exeIcon && !this.exeIcon.domNode ) )
 			{
-				Say( 'I lost the executable. Reverting to standard mode.' );
+				SayWithText( 'I lost the executable. Reverting to standard mode.' );
 				this.context = false;
 				this.exeIcon = false;
 				return false;
 			}
 			if( args[0] == 'run' )
 			{
-				Say( 'Running executable.' );
+				SayWithText( 'Running executable.' );
 				this.exeIcon.domNode.ondblclick();
 				return true;
 			}
 			else if( args[0] == 'help' )
 			{
-				Say( 'Can not find help information regarding this executable. Reverting to standard mode.' );
+				SayWithText( 'Can not find help information regarding this executable. Reverting to standard mode.' );
 				this.context = false;
 				this.exeIcon = false;
 				return false;
@@ -285,7 +291,7 @@ Shell = function( appObject )
 				{
 					this.context = false;
 					this.exeIcon = false;
-					Say( 'Reverting to standard mode.' );
+					SayWithText( 'Reverting to standard mode.' );
 					return false;
 				}
 				var t = this.exeIcon.Title ? this.exeIcon.Title : this.exeIcon.Filename;
@@ -303,12 +309,12 @@ Shell = function( appObject )
 				{
 					ExecuteApplication( this.exeIcon.Path + t, args );
 				}
-				Say( 'Executed. Say stop for standard mode.' );
+				SayWithText( 'Executed. Say stop for standard mode.' );
 				return true;
 			}
 			this.context = false;
 			this.exeIcon = false;
-			Say( 'Could not understand what you wanted to do with the executable. Reverting to standard mode.' );
+			SayWithText( 'Could not understand what you wanted to do with the executable. Reverting to standard mode.' );
 			return false;
 		}
 		
@@ -329,7 +335,7 @@ Shell = function( appObject )
 				case 'ninth': args[2] = '9'; break;
 				case 'tenth': args[2] = '10'; break;
 				default:
-					Say( 'Your number is not recognized. Sorry, try another.' );
+					SayWithText( 'Your number is not recognized. Sorry, try another.' );
 					return false;
 			}
 			args[1] = type;
@@ -349,10 +355,10 @@ Shell = function( appObject )
 				   {
 					   if( parseInt( args[2] ) > icons.length )
 					   {
-						   Say( 'Excuse me. Can you repeat that?' );
+						   SayWithText( 'Excuse me. Can you repeat that?' );
 						   return;
 					   }
-					   Say( 'You opened volume ' + icons[index].Volume.split(':')[0] );
+					   SayWithText( 'You opened volume ' + icons[index].Volume.split(':')[0] );
 					   return OpenWindowByFileinfo( icons[index] );
 				   }
 				   var tries = [ args[2].toLowerCase() ];
@@ -369,12 +375,12 @@ Shell = function( appObject )
 					   {
 						   if( icons[a].Volume.toLowerCase().split( ':' )[0] == tries[b] )
 						   {
-							   Say( 'You opened volume ' + icons[a].Volume.split( ':' )[0] );
+							   SayWithText( 'You opened volume ' + icons[a].Volume.split( ':' )[0] );
 							   return OpenWindowByFileinfo( icons[a] );
 						   }
 					   }
 				   }
-				   Say( 'Excuse me. Can you repeat that?' );
+				   SayWithText( 'Excuse me. Can you repeat that?' );
 				   return;
 				}
 				else if( args[1] == 'directory' )
@@ -383,7 +389,7 @@ Shell = function( appObject )
 					{
 						return true;
 					}
-					Say( 'I can not find the directory you are looking for. Are you sure ' + args[2] + ' is found in the active view?' );
+					SayWithText( 'I can not find the directory you are looking for. Are you sure ' + args[2] + ' is found in the active view?' );
 					return;
 				}
 				else if( args[1] == 'file' )
@@ -392,32 +398,32 @@ Shell = function( appObject )
 					{
 						return true;
 					}
-					Say( 'I can not find the file you are looking for. Are you sure ' + args[2] + ' is found in the active view?' );
+					SayWithText( 'I can not find the file you are looking for. Are you sure ' + args[2] + ' is found in the active view?' );
 					return;
 				}
 			case 'run':
 				if( arguments == 'programming application' )
 				{
 					ExecuteApplication( 'Artisan' );
-					Say( 'You opened the programming application, Artisan.' );
+					SayWithText( 'You opened the programming application, Artisan.' );
 					return;
 				}
 				else if( arguments == 'chat application' )
 				{
 					ExecuteApplication( 'Hello' );
-					Say( 'You open the chat application, Hello.' );
+					SayWithText( 'You open the chat application, Hello.' );
 					return;
 				}
 				else if( arguments == 'terminal application' )
 				{
 					ExecuteApplication( 'Shell' );
-					Say( 'You open the terminal, application.' );
+					SayWithText( 'You open the terminal, application.' );
 					return;
 				}
 				else if( arguments == 'document application' )
 				{
 					ExecuteApplication( 'Author' );
-					Say( 'You opened the document application, Author.' );
+					SayWithText( 'You opened the document application, Author.' );
 					return;
 				}
 				break;
@@ -426,20 +432,20 @@ Shell = function( appObject )
 				if( args[1] == 'close' )
 				{
 					window.currentScreen.screen.close();
-					Say( 'Screen closed.' );
+					SayWithText( 'Screen closed.' );
 					return true;
 				}
 				else if( args[1] == 'cycle' || args[1] == 'swap' )
 				{
 					window.currentScreen.screen.screenCycle();
-					Say( 'Screens swapped.' );
+					SayWithText( 'Screens swapped.' );
 					return true;
 				}
 				break;
 			case 'switch':
 				if( args.length <= 1 )
 				{
-					Say( 'I do not understand what you want to switch.' );
+					SayWithText( 'I do not understand what you want to switch.' );
 					return false;
 				}
 				if( args[1] == 'windows' || args[1] == 'window' )
@@ -450,59 +456,59 @@ Shell = function( appObject )
 			case 'move':
 				if( !window.currentMovable )
 				{
-					Say( 'I have no window or desklet to move.' );
+					SayWithText( 'I have no window or desklet to move.' );
 					return false;
 				}
 				if( args[1] == 'left' )
 				{
 					var nl = window.currentMovable.offsetLeft - 100;
 					ConstrainWindow( window.currentMovable, nl );
-					Say( 'Window moved left.' );
+					SayWithText( 'Window moved left.' );
 					return false;
 				}
 				else if( args[1] == 'right' )
 				{
 					var nl = window.currentMovable.offsetLeft + 100;
 					ConstrainWindow( window.currentMovable, nl );
-					Say( 'Window moved right.' );
+					SayWithText( 'Window moved right.' );
 					return false;
 				}
 				else if( args[1] == 'up' )
 				{
 					var nl = window.currentMovable.offsetTop - 100;
 					ConstrainWindow( window.currentMovable, false, nl );
-					Say( 'Window moved up.' );
+					SayWithText( 'Window moved up.' );
 					return false;
 				}
 				else if( args[1] == 'down' )
 				{
 					var nl = window.currentMovable.offsetTop + 100;
 					ConstrainWindow( window.currentMovable, false, nl );
-					Say( 'Window moved down.' );
+					SayWithText( 'Window moved down.' );
 					return false;
 				}
-				Say( 'How do I move?' );
+				SayWithText( 'How do I move?' );
 				return false;
 				break;
 			case 'scroll':
 				if( !window.currentMovable && !window.currentMovable.content )
 				{
-					Say( 'I have no window to scroll.' );
+					SayWithText( 'I have no window to scroll.' );
 					return false;
 				}
 				else if( args[1] == 'up' )
 				{
 					window.currentMovable.content.firstChild.scrollTop -= 100;
-					Say( 'Window scrolled up.' );
+					SayWithText( 'Window scrolled up.' );
 					return false;
 				}
 				else if( args[1] == 'down' )
 				{
 					window.currentMovable.content.firstChild.scrollTop += 100;
-					Say( 'Window scrolled down.' );
+					SayWithText( 'Window scrolled down.' );
 					return false;
 				}
-				Say( 'How do I scroll?' );
+				SayWithText( 'How do I scroll?' );
 				return false;
 				break;
 			case 'window':
@@ -510,7 +516,7 @@ Shell = function( appObject )
 				if( args[1] == 'close' )
 				{
 					CloseWindow( window.currentMovable );
-					Say( 'Window closed.' );
+					SayWithText( 'Window closed.' );
 					return true;
 				}
 				else if( args[1] == 'cycle' || args[1] == 'swap' )
@@ -527,11 +533,11 @@ Shell = function( appObject )
 							var b = ( a - 1 ); if( b < 0 ) b = ind.length - 1;
 							_WindowToFront( ind[b] );
 							_ActivateWindow( ind[b] );
-							Say( 'Windows swapped.' );
+							SayWithText( 'Windows swapped.' );
 							return true;
 						}
 					}
-					Say( 'Could not find any windows.' );
+					SayWithText( 'Could not find any windows.' );
 					return false;
 				}
 				break;
@@ -540,43 +546,43 @@ Shell = function( appObject )
 				 if( arguments == 'programming application' )
 				{
 					KillApplication( 'Artisan' );
-					Say( 'You quit the programming application, Artisan.' );
+					SayWithText( 'You quit the programming application, Artisan.' );
 					return;
 				}
 				else if( arguments == 'chat application' )
 				{
 					KillApplication( 'Hello' );
-					Say( 'You quit the chat application, Hello.' );
+					SayWithText( 'You quit the chat application, Hello.' );
 					return;
 				}
 				else if( arguments == 'terminal application' )
 				{
 					KillApplication( 'Shell' );
-					Say( 'You quit the termina application.' );
+					SayWithText( 'You quit the termina application.' );
 					return;
 				}
 				else if( arguments == 'document application' )
 				{
 					KillApplication( 'Author' );
-					Say( 'You quit the document application, Author.' );
+					SayWithText( 'You quit the document application, Author.' );
 					return;
 				}
 				else if( arguments == 'windows' )
 				{
 					CloseAllWindows();
-					Say( 'All the windows have been closed.' );
+					SayWithText( 'All the windows have been closed.' );
 					return;
 				}
 				// Only said close..
 				else if( ( args.length == 1 || args.length == 2 && args[1] == 'window' ) && window.currentMovable )
 				{
-					Say( 'Closed window, ' + window.currentMovable.titleString );
+					SayWithText( 'Closed window, ' + window.currentMovable.titleString );
 					CloseWindow( window.currentMovable );
 					return;
 				}
 				break;
 		}
-		Say( 'Excuse me. Can you repeat that?' );
+		SayWithText( 'Excuse me. Can you repeat that?' );
 	}
 	
 	this.parseVariables = function( pr )
@@ -678,7 +684,7 @@ Shell = function( appObject )
 			for( var a = 1; a < cmd.length; a++ )
 				args.push( cmd[a].split( '<!--space--!>' ).join( ' ' ) );
 			var str = args.join( ' ' );
-			Say( this.parseVariables( str ) );
+			SayWithText( this.parseVariables( str ) );
 			return dcallback( "\n" );
 		}
 		else if( cmd[0] == 'cd' || cmd[0] == 'enter' )
@@ -700,8 +706,6 @@ Shell = function( appObject )
 		
 			var fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ) );
 		
-			
-			
 			// Go to root
 			if( fullPath == ':' )
 			{
@@ -846,6 +850,29 @@ Shell = function( appObject )
 			}
 			return dcallback( "\n" );
 		}
+		else if( cmd[0] == 'makedir' )
+		{
+			var cdr = this.currentPath;
+			var chk = cdr.substr( cdr.length - 1, 1 );
+			if( chk != ':' && chk != '/' ) cdr += '/';
+			var npath = cdr;
+			var dir = cmd[1].split( '<!--space--!>' ).join( ' ' );
+			if( dir.indexOf( ':' ) > 0 )
+			{
+				npath = dir;
+				var chark = dir.substr( dir.length - 1, 1 );
+				if( chark != ':' && chark != '/' ) dir += '/';
+				cdr = dir;
+			}
+			else cdr += dir;
+			var d = ( new Door() ).get( npath );
+			
+			d.dosAction( 'makedir', { path: cdr }, function()
+			{
+				// TODO: Do some error handling
+				dcallback( "\n" );
+			} );
+		}
 		// Copy some files
 		else if( cmd[0] == 'copy' )
 		{
@@ -950,11 +977,12 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'kill' )
 		{
-			apiWrapper( { data: JSON.strintify( {
+			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId, 
 				type: 'system', command: 'kill', appName: cmd[1], callbackId: addWrapperCallback( dcallback ) 
 			} ) } );
+			return dcallback( false, 'Killed ' + cmd[1] + '.' );
 		}
 		else if( cmd[0] == 'install' )
 		{
@@ -1372,7 +1400,7 @@ Shell = function( appObject )
 		else
 		{
 			// If all else fails
-			var lastCallback = function()
+			function lastCallback()
 			{
 				/*// Signal to parent that we want to execute an application
 				var args = [];
@@ -1552,12 +1580,12 @@ Shell = function( appObject )
 				{
 					this.context = 'executable';
 					this.exeIcon = i;
-					Say( 'The file, ' + t + ', is an executable. What are your arguments?' );
+					SayWithText( 'The file, ' + t + ', is an executable. What are your arguments?' );
 					return true;
 				}
 				
 				i.domNode.ondblclick();
-				Say( 'File ' + t + ' opened.' );
+				SayWithText( 'File ' + t + ' opened.' );
 				return true;
 			}
 		}
@@ -1577,7 +1605,7 @@ Shell = function( appObject )
 			if( ( argn > 0 && b == argn ) || ( argn <= 0 && t.toLowerCase() == arg ) )
 			{
 				i.domNode.ondblclick();
-				Say( 'Directory ' + t + ' opened.' );
+				SayWithText( 'Directory ' + t + ' opened.' );
 				return true;
 			}
 		}
@@ -1631,8 +1659,10 @@ FriendDOS =
 		doorSrc.path = pthTest;
 		doorSrc.getIcons( false, function( data )
 		{
-			console.log( 'This was the result..' );
-			console.log( data  );
+			for( var a = 0; a < data.length; a++ )
+			{
+				
+			}
 		} );
 		
 		/*// Create a filecopy object

@@ -18,8 +18,7 @@
 *******************************************************************************/
 
 /*global webkitSpeechRecognition */
-
-function InitSpeechControls()
+function InitSpeechControls( callback )
 {
 	'use strict';
 
@@ -33,7 +32,12 @@ function InitSpeechControls()
 		return str.length ? str[0].toUpperCase() + str.slice(1) : str;
 	}
 
+	var microphoneIcon = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
+	if( microphoneIcon.length ) microphoneIcon = microphoneIcon[0];
+	
 	var speechInputWrappers = document.getElementsByClassName('si-wrapper');
+
+	var inited = false;
 
 	[].forEach.call(speechInputWrappers, function(speechInputWrapper) 
 	{
@@ -51,33 +55,34 @@ function InitSpeechControls()
 		var oldPlaceholder = null;
 		var recognition = new webkitSpeechRecognition();
 		micBtn.recognition = recognition;
+		microphoneIcon.recognition = recognition;
 		recognition.continuous = true;
 		recognition.speaking = false;
 
-		function restartTimer()
-		{
-		/*	timeout = setTimeout(function()
-			{
-				recognition.stop();
-			}, patience * 1000);*/
-		}
-
 		recognition.onstart = function()
 		{
+			this.hasStarted = true;
 			oldPlaceholder = inputEl.placeholder;
 			inputEl.placeholder = talkMsg;
 			recognizing = true;
-			micBtn.classList.add('listening');
-			restartTimer();
+			ge( 'Handsfree' ).classList.add('listening');
+			if( !inited && callback )
+			{
+				inited = true;
+				callback();
+			}
+			console.log( 'Recognizing started.' );
 		};
 
 		recognition.onend = function()
 		{
-			console.log( 'Ok, we got thrown out!' );
+			this.hasStarted = false;
 			recognizing = false;
-			//clearTimeout(timeout);
-			micBtn.classList.remove('listening');
-			if (oldPlaceholder !== null) inputEl.placeholder = oldPlaceholder;
+			ge( 'Handsfree' ).classList.remove( 'listening' );
+			
+			if( oldPlaceholder !== null )
+				inputEl.placeholder = oldPlaceholder;
+			console.log( 'Recognizing stopped.' );
 		};
 		
 		recognition.onerror = function( event )
@@ -100,26 +105,27 @@ function InitSpeechControls()
 		recognition.onresult = function( event )
 		{
 			//clearTimeout(timeout);
-			for (var i = event.resultIndex; i < event.results.length; ++i)
+			for( var i = event.resultIndex; i < event.results.length; ++i )
 			{
-				if (event.results[i].isFinal)
+				if( event.results[i].isFinal )
 				{
 					finalTranscript += event.results[i][0].transcript;
 				}
 			}
 			//finalTranscript = capitalize(finalTranscript);
 			//inputEl.value = finalTranscript;
+			
 			Doors.shell.voiceParse( finalTranscript );
 			console.log( 'Transcript: ' + finalTranscript );
 			finalTranscript = '';
+			
 			setTimeout( function(){ inputEl.focus(); }, 100 );
-			//restartTimer();
 		};
 
 		micBtn.addEventListener('click', function(event)
 		{
 			event.preventDefault();
-			if (recognizing) 
+			if( recognizing )
 			{
 				recognition.stop();
 				return;
@@ -131,26 +137,72 @@ function InitSpeechControls()
 }
 
 // Say something
-function Say( string, mode )
+function Say( string, language, mode )
 {	
-	if( !mode && typeof( speechSynthesis ) != 'undefined' )
+	if( !mode || ( mode && mode == 'both' ) )
 	{
 		var v = speechSynthesis.getVoices();
 		var u = new SpeechSynthesisUtterance( string );
-		u.lang = 'en-US';
+		u.lang = language ? language : globalConfig.language;
 		for( var a = 0; a < v.length; a++ )
 		{
-			if( v[a].name == 'Google US English' )
+			if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+			{
+				u.lang = v[a].lang;
+				u.voice = v[a].voiceURI;
+				break;
+			}
+			else if( v[a].name == u.lang )
 			{
 				u.lang = v[a].lang;
 				u.voice = v[a].voiceURI;
 				break;
 			}
 		}
+		var stopper = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
+		if( stopper.length ) stopper = stopper[0];
+		u.onend = function()
+		{
+			if( this.endTimeout ){ clearTimeout( this.endTimeout ); this.endTimeout = false; }
+			//console.log( 'Synthetic speech stopped.' );
+			if( stopper && stopper.recognition && !stopper.recognition.hasStarted )
+			{
+				try
+				{
+					//console.log( 'Trying to restart' );
+					stopper.recognition.start();
+					stopper.className = 'Microphone IconSmall fa-microphone';
+				}
+				catch( e )
+				{
+					//console.log( 'Could not do it', e );
+					InitSpeechControls();
+				}
+			}
+			else if( stopper && !stopper.recognition )
+			{
+				stopper.className = 'Microphone IconSmall fa-microphone-slash';
+				//console.log( 'Seems we were thrown out Reinitialize!!' );
+				InitSpeechControls();
+			}
+			else
+			{
+				//console.log( 'We stopped talking, but we don\'t know what\'s happening.', stopper, stopper.recognition );
+			}
+		}
+		if( stopper && stopper.recognition ) 
+		{
+			stopper.recognition.stop();
+			stopper.className = 'Microphone IconSmall fa-microphone-slash';
+		}
 		speechSynthesis.speak( u );
+		u.endTimeout = setTimeout( function(){ u.onend(); }, string.split( ' ' ).length * 800 );
+		
 	}
-	//else
-	//{
+	
+	if( mode && ( mode == 'text' || mode == 'both' ) )
+	{
+		// This one has some extra
 		var d = document.createElement( 'div' );
 		d.className = 'SpeechResponse';
 		var r = document.createElement( 'div' );
@@ -168,6 +220,6 @@ function Say( string, mode )
 				document.body.removeChild( d );
 			}, 600 );
 		}, 2500 );
-	//}
+	}
 }
 

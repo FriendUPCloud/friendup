@@ -5,14 +5,14 @@
 		</p>
 		<div class="HRow">
 			<div class="HContent65 FloatLeft">
-				<input type="text" class="InputHeight FullWidth" style="padding-left: 5px; padding-right: 5px;" id="WorkspaceRunCommand" onkeydown="var wh = event.which ? event.which : event.keyCode; if( wh == 13 ){ ExecuteApplication(ge('WorkspaceRunCommand').value); Workspace.hideLauncher(); }"/>
+				<input type="text" class="InputHeight FullWidth" style="padding-left: 5px; padding-right: 5px;" id="WorkspaceRunCommand" onkeydown="var wh = event.which ? event.which : event.keyCode; if( wh == 13 && ge('WorkspaceRunCommand').value.trim() != '' ){ ExecuteApplication(ge('WorkspaceRunCommand').value); Workspace.lastExecuted = ge('WorkspaceRunCommand').value; Workspace.hideLauncher(); }"/>
 			</div>
 			<div class="HContent35 FloatLeft">
 				<div class="HContent10 FloatLeft">
 					&nbsp;
 				</div>
 				<div class="HContent90 FloatLeft">
-					<button class="FullContent InputHeight IconSmall fa-check" style="padding: 0 5px 0 5px" onclick="ExecuteApplication(ge('WorkspaceRunCommand').value); Workspace.lastExecuted = ge('WorkspaceRunCommand').value; Workspace.hideLauncher();">
+					<button class="FullContent InputHeight IconSmall fa-check" style="padding: 0 5px 0 5px" onclick="if( ge('WorkspaceRunCommand').value.trim() != '' ) { ExecuteApplication(ge('WorkspaceRunCommand').value); Workspace.lastExecuted = ge('WorkspaceRunCommand').value; Workspace.hideLauncher(); }">
 						{execute}
 					</button>
 				</div>

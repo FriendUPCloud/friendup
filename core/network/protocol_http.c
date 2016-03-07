@@ -38,6 +38,7 @@
 #include <system/cache/cache_manager.h>
 #include <util/tagitem.h>
 #include <util/list_string.h>
+#include <network/protocol_webdav.h>
 
 #define HTTP_REQUEST_TIMEOUT 2 * 60
 
@@ -47,7 +48,7 @@ extern SystemBase *SLIB;
 	TODO: This should be moved
 	It is to help us with fallback PHP support
 */
-static inline ListString *RunPHPScript( const char *command )
+inline ListString *RunPHPScript( const char *command )
 {
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
@@ -90,6 +91,104 @@ static inline ListString *RunPHPScript( const char *command )
 }
 
 //
+// Read file
+//
+// we assume that mime is not neccessary for many files in one
+
+inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *result )
+{
+	Path *base = PathNew( "resources" );
+	
+	DEBUG("ReadServerFile path %s\n", locpath );
+	Path *convPath = PathNew( locpath );
+	if( convPath ) PathResolve( convPath ); 
+	
+	Path* completePath = PathJoin( base, convPath );
+	BOOL freeFile = FALSE;
+	
+	DEBUG("Read file %s\n", completePath->raw );
+					
+	LocFile* file = NULL;
+	if( pthread_mutex_lock( &SLIB->mutex ) == 0 )
+	{
+		file = CacheManagerFileGet( SLIB->cm, completePath->raw );
+		if( file == NULL )
+		{
+			file = LocFileNew( completePath->raw, FILE_READ_NOW | FILE_CACHEABLE );
+			if( file != NULL )
+			{
+				if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+				{
+					freeFile = TRUE;
+				}
+			}
+		}
+		pthread_mutex_unlock( &SLIB->mutex );
+	}
+
+	// Send reply
+	if( file != NULL )
+	{
+		if(  file->buffer == NULL )
+		{
+			ERROR("File is empty %s\n", completePath->raw );
+		}
+		
+		DEBUG("File readed %d\n", file->bufferSize );
+		
+		// TODO: This shouldn't be needed by the way
+		//       Make method to expand buffer size
+		BufStringAddSize( dstbs, file->buffer, file->bufferSize );
+		BufStringAdd( dstbs, "\n");
+
+		if( freeFile == TRUE )
+		{
+			LocFileFree( file );
+		}
+		DEBUG("File readed return 200\n");
+		
+		*result = 200;
+	}
+	else
+	{
+		DEBUG( "[ProtocolHttp] Going ahead with %s.\n", completePath->parts ? completePath->parts[0] : "No path part.." );
+		
+		// Try to fall back on module
+		// TODO: Make this behaviour configurable
+		char command[255];
+		sprintf( command, "php \"php/catch_all.php\" \"%s\";", locpath ); 
+		DEBUG( "[ProtocolHttp] Executing %s\n", command );
+		int phpRun = FALSE;
+		ListString *bs = RunPHPScript( command );
+		if( bs )
+		{
+			if( bs->ls_Size > 0 )
+			{
+				BufStringAddSize( dstbs, bs->ls_Data, bs->ls_Size );
+				BufStringAdd( dstbs, "\n");
+			}
+			
+			phpRun = TRUE;
+			*result = 200;
+
+			ListStringDelete( bs );
+		}
+		
+		if( !phpRun )
+		{
+			DEBUG("File do not exist\n");
+
+			*result = 404;
+		}
+	}
+	PathFree( base );
+	PathFree( completePath );
+	PathFree( convPath );
+	
+	return 0;
+}
+
+//
 //	Protocol callback function
 //
 
@@ -126,6 +225,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	//DEBUG("time %ld\nreqtimestamp %ld\nreqtimestamp %ld\n",
 	//	  time( NULL ), request->timestamp, HTTP_REQUEST_TIMEOUT );
 	// Timeout
+	
 	if( time( NULL ) > request->timestamp + HTTP_REQUEST_TIMEOUT )
 	{
 		struct TagItem tags[] = {
@@ -172,6 +272,21 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	else if( result == 1 )
 	{
 		Uri* uri = request->uri;
+		Path* path = NULL;
+		if( uri->path->raw )
+		{
+			int nlen = 0;
+			for( ; ; nlen++ )
+			{
+				if( !uri->path->raw[nlen] )
+				{
+					break;
+				}
+			}
+			DEBUG("Want to parse path: %s (%d)\n", uri->path->raw, nlen );
+			path = PathNew( uri->path->raw );
+			if( path ) PathResolve( path );  // Resolve checks for "../"'s, and removes as many as it can.
+		}
 		
 		// Disallow proxy requests
 		if( uri && ( uri->scheme || uri->authority ) )
@@ -185,9 +300,23 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	
 			result = 403;
 		}
+		
+		//
+		// WEBDAV
+		//
+		
+		else if( strcmp( "webdav", path->parts[ 0 ] ) == 0 ) //if( (request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_XML || request->h_ContentType == HTTP_CONTENT_TYPE_TEXT_XML ) &&
+		{
+			response = HandleWebDav( request, request->content, request->sizeOfContent );
+			
+			result = 200;
+		}
 
+		//
 		// Cross-domain requests uses a pre-flight OPTIONS call
-		if( !request->errorCode && request->method && strcmp( request->method, "OPTIONS" ) == 0 )
+		//
+		
+		else if( !request->errorCode && request->method && strcmp( request->method, "OPTIONS" ) == 0 )
 		{
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTROL_ALLOW_ORIGIN, (ULONG)StringDuplicateN( "*", 1 ) },
@@ -213,21 +342,11 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			response = HttpNewSimple(  HTTP_400_BAD_REQUEST, tags );
 	
 		}
+		
 		else
 		{
-			Path* path = NULL;
-			if( uri->path->raw )
-			{
-				int nlen = 0;
-				for( ; ; nlen++ )
-				{
-					if( !uri->path->raw[nlen] )
-						break;
-				}
-				DEBUG("Want to parse path: %s (%d)\n", uri->path->raw, nlen );
-				path = PathNew( uri->path->raw );
-				if( path ) PathResolve( path );  // Resolve checks for "../"'s, and removes as many as it can.
-			}
+			
+			
 			if( !path || !path->resolved ) // If it cannot remove all, path->resolved == false.
 			{
 				DEBUG( "We have no path..\n" );
@@ -244,37 +363,33 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			{
 				DEBUG( "We got through. %s\n", path->parts[ 0 ] );
 				
-				if( path->size >= 2 && StringCheckExtension( path->parts[0], "library" ) == 0 )
+				//
+				// we must check if thats WEBDAV call and provide data
+				//
+				/*
+				if( strcmp( "webdav", path->parts[ 0 ] ) == 0 )
 				{
-					// system.library is main library and should be use for most things
-					// we open it and close in main
-					//DEBUG("systemlib found\n");
-					DEBUG("Calling systemlib\n");
+					response = HandleWebDav( request, request->content, request->sizeOfContent );
+			
+					result = 200;
+				}*/
+				//
+				//
+				//
+				//else
+				{
+					if( path->size >= 2 && StringCheckExtension( path->parts[0], "library" ) == 0 )
+					{
+						// system.library is main library and should be use for most things
+						// we open it and close in main
+						//DEBUG("systemlib found\n");
+						DEBUG("Calling systemlib\n");
 					
-					if( strcmp( path->parts[ 0 ], "system.library" ) == 0 )
-					{
-						DEBUG( "%s\n", path->parts[1] );
-						response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), request );
+						if( strcmp( path->parts[ 0 ], "system.library" ) == 0 )
+						{
+							DEBUG( "%s\n", path->parts[1] );
+							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), request );
 						
-						if( response == NULL )
-						{
-							struct TagItem tags[] = {
-								{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-								{TAG_DONE, TAG_DONE}
-							};	
-		
-							response = HttpNewSimple(  HTTP_500_INTERNAL_SERVER_ERROR,  tags );
-	
-							result = 500;
-						}
-					}
-					else
-					{
-						FriendCoreInstance_t *fci = (FriendCoreInstance_t *) sock->s_Data;
-						Library* lib = FriendCoreGetLibrary( fci, path->parts[0], 1 );
-						if( lib && lib->WebRequest )
-						{
-							response =(Http *) lib->WebRequest( lib, path->parts[1], request );
 							if( response == NULL )
 							{
 								struct TagItem tags[] = {
@@ -282,148 +397,290 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									{TAG_DONE, TAG_DONE}
 								};	
 		
-								response = HttpNewSimple( HTTP_500_INTERNAL_SERVER_ERROR,  tags );
+								response = HttpNewSimple(  HTTP_500_INTERNAL_SERVER_ERROR,  tags );
 	
 								result = 500;
 							}
 						}
 						else
 						{
-							struct TagItem tags[] = {
-								{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-								{TAG_DONE, TAG_DONE}
-							};	
-		
-							response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
-	
-							result = 404;
-						}
-					}
-				}
-				// We're calling on a static file.
-				else
-				{
-					//DEBUG("Getting resources\n");
-					// Read the file
-					Path *base = PathNew( "resources" );
-					Path* complete = PathJoin( base, path );
-					BOOL freeFile = FALSE;
-					
-					LocFile* file = CacheManagerFileGet( SLIB->cm, complete->raw );
-					if( file == NULL )
-					{
-						file = LocFileNew( complete->raw, FILE_READ_NOW | FILE_CACHEABLE );
-						if( file != NULL )
-						{
-							if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+							FriendCoreInstance_t *fci = (FriendCoreInstance_t *) sock->s_Data;
+							Library* lib = FriendCoreGetLibrary( fci, path->parts[0], 1 );
+							if( lib && lib->WebRequest )
 							{
-								freeFile = TRUE;
-							}
-						}
-					}
-
-					// Send reply
-					if( file != NULL )
-					{
-						char* mime = NULL;
-						
-						if(  file->buffer == NULL )
-						{
-							ERROR("File is empty %s\n", complete->raw );
-						}
-
-						if( complete->extension )
-						{
-							mime = StringDuplicate( MimeFromExtension( complete->extension ) );
-						}
-						else
-						{
-							mime = StringDuplicate( "text/plain" );
-						}
-						
-						struct TagItem tags[] = {
-							{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  mime },
-							{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-							{TAG_DONE, TAG_DONE}
-						};
+								response =(Http *) lib->WebRequest( lib, path->parts[1], request );
+								if( response == NULL )
+								{
+									struct TagItem tags[] = {
+										{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+										{TAG_DONE, TAG_DONE}
+									};	
 		
-						response = HttpNewSimple( HTTP_200_OK, tags );
-
-						
-						//DEBUG("Before returning data\n");
-						
-						HttpSetContent( response, file->buffer, file->bufferSize );
-						
-						// write here and set data to NULL!!!!!
-						// retusn response
-						HttpWrite( response, sock );
-						result = 200;
-						
-						INFO("--------------------------------------------------------------%d\n", freeFile );
-						if( freeFile == TRUE )
-						{
-							//ERROR("\n\n\n\nFREEEEEEFILE\n");
-							LocFileFree( file );
-						}
-						response->content = NULL;
-						response->sizeOfContent = 0;
-						
-						response->h_WriteType = FREE_ONLY;
-					}
-					else
-					{
-						DEBUG( "[ProtocolHttp] Going ahead with %s.\n", path->parts ? path->parts[0] : "No path part.." );
-						
-						// Try to fall back on module
-						// TODO: Make this behaviour configurable
-						char command[255];
-						sprintf( command, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
-						DEBUG( "[ProtocolHttp] Executing %s\n", command );
-						ListString *bs = RunPHPScript( command );
-						int phpRun = FALSE;
-						if( bs )
-						{
-							if( bs->ls_Size > 0 )
+									response = HttpNewSimple( HTTP_500_INTERNAL_SERVER_ERROR,  tags );
+	
+									result = 500;
+								}
+							}
+							else
 							{
 								struct TagItem tags[] = {
-									{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
+									{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+									{TAG_DONE, TAG_DONE}
+								};	
+		
+								response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+	
+								result = 404;
+							}
+						}
+				//	}	// else "webdav"
+					}
+					// We're calling on a static file.
+					else
+					{
+						// Read the file
+						
+						unsigned int i;
+						int pos = -1;
+						
+						for( i=0 ; i < path->rawSize ; i++ )
+						{
+							if( path->raw[ i ] == ';' )
+							{
+								pos = i;
+								break;
+							}
+						}
+						
+						DEBUG("Found ; in position %d\n",  pos );
+						
+#define MAX_FILES_TO_LOAD 100
+						
+						if( pos > 0 )
+						{
+							char *multipath = NULL;
+							char *pathTable[ MAX_FILES_TO_LOAD ];
+							
+							memset( pathTable, 0, MAX_FILES_TO_LOAD );
+							int pathSize = path->rawSize + 1;
+							
+							// split path 
+							
+							if( ( multipath = FCalloc( pathSize, sizeof( char ) ) ) != NULL )
+							{
+								memcpy( multipath, path->raw, pathSize );
+								DEBUG("Multiplepath\n");
+								
+								int entry = 0;
+								pathTable[ entry ] = multipath;
+								
+								for( i=0 ; i < pathSize ; i++ )
+								{
+									if( multipath[ i ] == ';' )
+									{
+										multipath[ i ] = 0;
+										pathTable[ ++entry ] = &(multipath[ i+1 ] );
+									}
+								}
+								
+								DEBUG("Found entries %d\n", entry );
+								
+								BufString *bs = BufStringNewSize( 1000 );
+								if( bs != NULL )
+								{
+									int resError = 404;
+									
+									for( i = 0 ; i < entry + 1 ; i++ )
+									{
+										INFO("FIND file %s\n", pathTable[ i ] );
+									
+										int err = ReadServerFile( request->uri, pathTable[ i ], bs, &result );
+									
+										DEBUG("Read file result %d\n", result );
+									
+										if( result == 200 )
+										{
+											resError = 200;
+										}
+									}
+								
+									DEBUG("ERROR: %d\n", resError );
+								
+									if( resError == 200 )
+									{
+										struct TagItem tags[] = {
+											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate("text/html") },
+											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{TAG_DONE, TAG_DONE}
+										};
+		
+										response = HttpNewSimple( HTTP_200_OK, tags );
+
+										HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+						
+										bs->bs_Buffer = NULL;
+									
+										// write here and set data to NULL!!!!!
+										// retusn response
+										HttpWrite( response, sock );
+									
+										//BufStringDelete( bs );
+									
+										result = 200;
+									}
+									// error, cannot open any file
+									else
+									{
+										ERROR("File do not exist\n");
+							
+										struct TagItem tags[] = {
+											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{TAG_DONE, TAG_DONE}
+										};	
+		
+										response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+	
+										result = 404;
+									}
+								
+									//bs->bs_Buffer = NULL;
+									BufStringDelete( bs );
+								}
+								DEBUG("Before multipath free\n");
+								FFree( multipath );
+							}
+
+						}
+						else		// only one file
+						{
+							Path *base = PathNew( "resources" );
+							Path* completePath = PathJoin( base, path );
+							BOOL freeFile = FALSE;
+							
+							LocFile* file = NULL;
+							if( pthread_mutex_lock( &SLIB->mutex ) == 0 )
+							{
+								file = CacheManagerFileGet( SLIB->cm, completePath->raw );
+								if( file == NULL )
+								{
+									file = LocFileNew( completePath->raw, FILE_READ_NOW | FILE_CACHEABLE );
+									if( file != NULL )
+									{
+										if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+										{
+											freeFile = TRUE;
+										}
+									}
+								}
+								pthread_mutex_unlock( &SLIB->mutex );
+							}
+
+							// Send reply
+							if( file != NULL )
+							{
+								char* mime = NULL;
+						
+								if(  file->buffer == NULL )
+								{
+									ERROR("File is empty %s\n", completePath->raw );
+								}
+
+								if( completePath->extension )
+								{
+									mime = StringDuplicate( MimeFromExtension( completePath->extension ) );
+								}
+								else
+								{
+									mime = StringDuplicate( "text/plain" );
+								}
+						
+								struct TagItem tags[] = {
+									{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  mime },
 									{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 									{TAG_DONE, TAG_DONE}
 								};
 		
-								response = HttpNewSimple(  HTTP_200_OK,  tags );
+								response = HttpNewSimple( HTTP_200_OK, tags );
+
 						
-								HttpSetContent( response, bs->ls_Data, bs->ls_Size );
-								
+								//DEBUG("Before returning data\n");
+						
+								HttpSetContent( response, file->buffer, file->bufferSize );
+						
+								// write here and set data to NULL!!!!!
+								// retusn response
+								HttpWrite( response, sock );
 								result = 200;
-								phpRun = TRUE;
-								bs->ls_Data = NULL;
-							}
-							ListStringDelete( bs );
-						}
 						
-						if( !phpRun )
-						{
-							DEBUG("File do not exist\n");
-							
-							struct TagItem tags[] = {
-								{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-								{TAG_DONE, TAG_DONE}
-							};	
+								INFO("--------------------------------------------------------------%d\n", freeFile );
+								if( freeFile == TRUE )
+								{
+									//ERROR("\n\n\n\nFREEEEEEFILE\n");
+									LocFileFree( file );
+								}
+								response->content = NULL;
+								response->sizeOfContent = 0;
+						
+								response->h_WriteType = FREE_ONLY;
+							}
+							else
+							{
+								DEBUG( "[ProtocolHttp] Going ahead with %s.\n", path->parts ? path->parts[0] : "No path part.." );
+						
+								// Try to fall back on module
+								// TODO: Make this behaviour configurable
+								char command[255];
+								sprintf( command, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
+								DEBUG( "[ProtocolHttp] Executing %s\n", command );
+								int phpRun = FALSE;
+								ListString *bs = RunPHPScript( command );
+								if( bs )
+								{
+									if( bs->ls_Size > 0 )
+									{
+										struct TagItem tags[] = {
+											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
+											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{TAG_DONE, TAG_DONE}
+										};
 		
-							response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+										response = HttpNewSimple(  HTTP_200_OK,  tags );
+						
+										HttpSetContent( response, bs->ls_Data, bs->ls_Size );
+								
+										result = 200;
+										phpRun = TRUE;
+										bs->ls_Data = NULL;
+									}
+									ListStringDelete( bs );
+								}
+						
+								if( !phpRun )
+								{
+									DEBUG("File do not exist\n");
+							
+									struct TagItem tags[] = {
+										{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+										{TAG_DONE, TAG_DONE}
+									};	
+		
+									response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 	
-							result = 404;
-						}
-					}
+									result = 404;
+								}
+							}
+							PathFree( base );
+							PathFree( completePath );
+						}		// one-many files read
 					
-					PathFree( base );
-					PathFree( complete );
+						DEBUG("Files delivered\n");
+					}
 				}
-			}
-			PathFree( path );
+			} // else WEBDAV
+			
 		}
 
+		DEBUG("free requests\n");
 		// SPRING CLEANING!!! TIME TO CLEAN THE CASTLE!!! :) :) :)
 		HttpFreeRequest( request );
 		
@@ -431,10 +688,14 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		{
 			sock->data = NULL;
 		}
+		PathFree( path );
+		DEBUG("Return response\n");
+		
 		return response;
 	}
 	// Winter cleaning
 	HttpFreeRequest( request );
+	DEBUG("HTTP parsed, returning response\n");
 	return response;
 }
 

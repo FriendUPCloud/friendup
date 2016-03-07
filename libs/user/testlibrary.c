@@ -38,7 +38,7 @@ int main()
 		
 		if( u )
 		{
-			ulib->UserFree( ulib, u );
+			ulib->UserFree( u );
 		}
 		
 		LibraryClose( (struct Library *)ulib );

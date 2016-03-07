@@ -65,12 +65,13 @@ const char *GetSuffix()
 //
 //
 
-bool PathHasColon( unsigned char *string )
+BOOL PathHasColon( char *string )
 {
 	// No literal colon
-	char *dec = FCalloc( 1, strlen( string ) + 1 );
+	int size = strlen( string ) + 1;
+	char *dec = FCalloc( 1, size );
 	UrlDecode( dec, (const char *)string );
-	DEBUG( "Decoded string for path: %s\n", dec );
+	DEBUG( "[fsysphp] Decoded string for path: %s\n", dec );
 	if( strchr( dec, ':' ) != NULL )
 	{
 		return TRUE;
@@ -96,7 +97,7 @@ char* StringDup( const char* str )
 {
 	if( str == NULL)
 	{
-		DEBUG("Cannot copy string!\n");
+		DEBUG("[fsysphp] Cannot copy string!\n");
 		return NULL;
 	}
 	
@@ -136,7 +137,7 @@ char *GetFileName( const char *path )
 
 ListString *PHPCall( const char *command, int *length )
 {
-	DEBUG( "[PHPFsys] run app: '%s'\n", command );
+	INFO( "[PHPFsys] run app: '%s'\n", command );
 	
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
@@ -177,7 +178,7 @@ ListString *PHPCall( const char *command, int *length )
 		*length = data->ls_Size;
 	}
 	
-	DEBUG( "Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
+	DEBUG( "[fsysphp] Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
 	
 	return data;
 }
@@ -219,7 +220,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 		return NULL;
 	}
 	
-	DEBUG("Mounting PHPFS filesystem!\n");
+	DEBUG("[fsysphp] Mounting PHPFS filesystem!\n");
 	
 	if( ( dev = FCalloc( 1, sizeof( File ) ) ) != NULL )
 	{
@@ -285,7 +286,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 			{
 				dev->f_Path = StringDup( path );
 			}
-			DEBUG("PHPFS: localfs path is ok '%s' (ignore this message, unimplemented!)\n", dev->f_Path );
+			DEBUG("[fsysphp] phpfs path is ok '%s' (ignore this message, unimplemented!)\n", dev->f_Path );
 		}
 		
 		dev->f_FSys = s;
@@ -316,11 +317,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 			if( result && result->ls_Size >= 0 )
 			{
 
-				DEBUG( "phpfs: Return was \"%s\"\n", result->ls_Data );
+				DEBUG( "[fsysphp] Return was \"%s\"\n", result->ls_Data );
 				if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 				{
-					DEBUG( "phpfs: Failed to mount device %s..\n", name );
-					DEBUG( "phpfs: Output was: %s\n", result->ls_Data );
+					DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
+					DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
 					if( sd->module ) FFree( sd->module );
 					if( dev->f_SessionID ) FFree( dev->f_SessionID );
 					if( sd->type ) FFree( sd->type );
@@ -337,7 +338,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 			}
 			else
 			{
-				DEBUG( "phpfs: Error mounting device %s..\n", name );
+				DEBUG( "[fsysphp] Error mounting device %s..\n", name );
 				if( sd->module ) FFree( sd->module );
 				if( dev->f_SessionID ) FFree( dev->f_SessionID );
 				if( sd->type ) FFree( sd->type );
@@ -353,12 +354,41 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 		
 			if( result ) ListStringDelete( result );
 		}
-		DEBUG("PHPFS IS DIRECTORY data filled\n");
+		DEBUG("[fsysphp] IS DIRECTORY data filled\n");
 	}
 	
-	DEBUG("LOCALFS localfs mount ok\n");
+	DEBUG("[fsysphp] mount ok\n");
 	
 	return dev;
+}
+
+//
+// Only free device
+//
+
+int Release( struct FHandler *s, void *f )
+{
+	if( f != NULL )
+	{
+		DEBUG("[fsysphp] Release filesystem\n");
+		File *lf = (File*)f;
+		
+		if( lf->f_SpecialData )
+		{
+			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
+		
+			// Free up active device information
+			if( sd->module ) FFree( sd->module );
+			if( lf->f_SessionID ) FFree( lf->f_SessionID );
+			if( sd->type ) FFree( sd->type );
+			FFree( lf->f_SpecialData );
+		}
+		
+		// Free up active device information
+		if( lf->f_Name ){ FFree( lf->f_Name ); }
+		if( lf->f_Path ){ FFree( lf->f_Path ); }
+	}
+	return 0;
 }
 
 //
@@ -369,7 +399,7 @@ int UnMount( struct FHandler *s, void *f )
 {
 	if( f != NULL )
 	{
-		DEBUG("Unmount filesystem\n");
+		DEBUG("[fsysphp] Unmount filesystem\n");
 		File *lf = (File*)f;
 		
 		if( lf->f_SpecialData )
@@ -388,12 +418,12 @@ int UnMount( struct FHandler *s, void *f )
 			{
 				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 				{
-					DEBUG( "phpfs: Failed to unmount device %s..\n", lf->f_Name );
+					DEBUG( "[fsysphp] Failed to unmount device %s..\n", lf->f_Name );
 				}
 			}
 			else
 			{
-				DEBUG( "phpfs: Unknown error unmounting device %s..\n", lf->f_Name );
+				DEBUG( "[fsysphp] Unknown error unmounting device %s..\n", lf->f_Name );
 			}
 		
 			// we should parse result to get information about success
@@ -440,20 +470,20 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			do
 			{
 				sprintf( tmpfilename, "/tmp/%s_read_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-				DEBUG( "Trying to lock %s\n", tmpfilename );
+				DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
 				if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
 					break;
 				unlink( tmpfilename );
 				// Failed.. bailing
 				if( retries-- <= 0 )
 				{
-					ERROR( "[FileOpen] Failed to get exclusive lock on lockfile.\n" );
+					ERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
 					return NULL;
 				}
 			}
 			while( TRUE );
 			
-			DEBUG( "Success in locking %s\n", tmpfilename );
+			DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
 			
 			// Open the tmp file and get a file lock!
 			
@@ -465,8 +495,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				sd->type, s->f_SessionID, path, mode
 			);
 		
-			DEBUG( "Getting data for tempfile, seen below as command:\n" );
-			DEBUG( "%s\n", command );
+			DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
+			DEBUG( "[fsysphp] %s\n", command );
 			
 			int answerLength = 0;			
 			ListString *result = PHPCall( command, &answerLength );
@@ -507,7 +537,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 							locsd->path = StringDup( path );
 							locfil->f_SessionID = StringDup( s->f_SessionID );
 					
-							DEBUG("FileOpened, memory allocated for reading.\n" );
+							DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
 							return locfil;
 						}
 				
@@ -520,17 +550,17 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				else
 				{
-					ERROR("Cannot open temporary file %s\n", tmpfilename );
+					ERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
 				}
 			}
 			else
 			{
-				ERROR("Cannot create temporary file %s\n", tmpfilename );
+				ERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
 			}
 			// Close lock
 			if( lockf >= 0 ) 
 			{
-				DEBUG( "Closing lock..\n" );
+				DEBUG( "[fsysphp] Closing lock..\n" );
 				close( lockf );
 			}
 		}
@@ -546,7 +576,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			}
 			while( access( tmpfilename, F_OK ) != -1 );
 			
-			DEBUG("WRITE FILE %s\n", tmpfilename );
+			DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
 			
 			FILE *locfp;
 			if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
@@ -566,7 +596,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 						locsd->path = StringDup( path );
 						locfil->f_SessionID = StringDup( s->f_SessionID );
 
-						DEBUG("FileOpened, memory allocated\n");
+						DEBUG("[fsysphp] FileOpened, memory allocated\n");
 				
 						return locfil;
 					}
@@ -614,7 +644,7 @@ int FileClose( struct File *s, void *fp )
 				sd->fp = NULL;
 			}
 			
-			DEBUG("CLOSE, file path %s\n", sd->fname );
+			DEBUG("[fsysphp] CLOSE, file path %s\n", sd->fname );
 			
 			if( sd->mode == MODE_READ )
 			{
@@ -651,7 +681,7 @@ int FileClose( struct File *s, void *fp )
 				{
 					if( result->ls_Data && result->ls_Size > 0 )
 					{
-						DEBUG("CHECK PHPCLOSE %.*s\n", result->ls_Size, result->ls_Data );
+						DEBUG("[fsysphp] CHECK PHPCLOSE %.*s\n", result->ls_Size, result->ls_Data );
 					}
 					ListStringDelete( result );
 				}
@@ -672,7 +702,7 @@ int FileClose( struct File *s, void *fp )
 		// And the structure
 		FFree( lfp );
 		
-		DEBUG( "FileClose: Closing file pointer.\n" );
+		DEBUG( "[fsysphp] FileClose: Closing file pointer.\n" );
 		
 		return close;
 	}
@@ -700,16 +730,16 @@ int FileRead( struct File *f, char *buffer, int rsize )
 	//DEBUG( "FileRead: Starting to read file.\n" );
 	
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
-	DEBUG( "Trying to do some reading( %d )!\n", rsize );
+	DEBUG( "[fsysphp] Trying to do some reading( %d )!\n", rsize );
 	if( sd != NULL )
 	{
 		if( feof( sd->fp ) )
 		{
-			ERROR("EOF\n");
+			ERROR("[fsysphp] EOF\n");
 			return -1;
 		}
 		
-		DEBUG( "Ok, lets read %d bytes.\n", rsize );
+		DEBUG( "[fsysphp] Ok, lets read %d bytes.\n", rsize );
 		result = fread( buffer, 1, rsize, sd->fp );
 		printf( "[fsysphp] Read %d bytes\n", result );
 	}
@@ -735,12 +765,12 @@ int FileWrite( struct File *f, char *buffer, int size  )
 }
 
 //
-// make directory in local file system
+// make directory in php file system
 //
 
 int MakeDir( struct File *f, const char *path )
 {
-	DEBUG("makedir filesystem\n");
+	DEBUG("[fsysphp] makedir filesystem\n");
 	if( f != NULL && f->f_SpecialData != NULL )
 	{
 		SpecialData *sd = (SpecialData *)f->f_SpecialData;
@@ -753,7 +783,7 @@ int MakeDir( struct File *f, const char *path )
 			f->f_SessionID, path
 		);
 		
-		DEBUG("MAKEDIR %s\n", command );
+		DEBUG("[fsysphp] MAKEDIR %s\n", command );
 	
 		int answerLength = 0;
 		
@@ -763,12 +793,12 @@ int MakeDir( struct File *f, const char *path )
 		{
 			if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 			{
-				ERROR( "phpfs: Failed to execute makedir on device %s..\n", f->f_Name );
+				ERROR( "[fsysphp] phpfs: Failed to execute makedir on device %s..\n", f->f_Name );
 			}
 		}
 		else
 		{
-			ERROR( "phpfs: Unknown error unmounting device %s..\n", f->f_Name );
+			ERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
 		}
 	
 		// TODO: we should parse result to get information about success
@@ -784,7 +814,7 @@ int MakeDir( struct File *f, const char *path )
 
 int Delete( struct File *s, const char *path )
 {
-	DEBUG("Delete %s\n", path);
+	DEBUG("[fsysphp] Delete %s\n", path);
 	
 	if( s != NULL )
 	{
@@ -814,7 +844,7 @@ int Delete( struct File *s, const char *path )
 
 int Rename( struct File *s, const char *path, const char *nname )
 {
-	DEBUG("Rename %s to %s\n", path, nname );
+	DEBUG("[fsysphp] Rename %s to %s\n", path, nname );
 	
 	if( s != NULL )
 	{
@@ -846,10 +876,10 @@ int Rename( struct File *s, const char *path, const char *nname )
 int Copy( struct File *s, const char *dst, const char *src )
 {
 	int error = 0;
-	DEBUG("Copy!\n");
+	DEBUG("[fsysphp] Copy!\n");
 	
 	
-	DEBUG("Copy END\n");
+	DEBUG("[fsysphp] Copy END\n");
 	
 	return error;
 }
@@ -874,16 +904,16 @@ char *Execute( struct File *s, const char *path, const char *args )
 
 BufString *Info( File *s, const char *path )
 {
-	DEBUG("Info!\n");
+	DEBUG("[fsysphp] Info!\n");
 	
 	BufString *bs = BufStringNew();
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
 	
-	DEBUG("Info!\n");
+	DEBUG("[fsysphp] Info..!\n");
 	
 	// user is trying to get access to not his directory
-	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
+	DEBUG("[fsysphp] Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
 	
 	int doub = strlen( s->f_Name );
 	
@@ -898,7 +928,7 @@ BufString *Info( File *s, const char *path )
 		}
 		strcat( comm, &(path[ doub+2 ]) );
 		
-		DEBUG("PATH created %s\n", comm );
+		DEBUG("[fsysphp] PATH created %s\n", comm );
 	
 		struct stat ls;
 		
@@ -913,7 +943,7 @@ BufString *Info( File *s, const char *path )
 		
 		free( comm );
 	}
-	DEBUG("Info END\n");
+	DEBUG("[fsysphp] Info END\n");
 	
 	return bs;
 }

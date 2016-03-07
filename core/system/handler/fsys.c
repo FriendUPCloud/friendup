@@ -88,6 +88,7 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 			
 			fsys->Mount = dlsym( fsys->handle, "Mount");
 			fsys->UnMount = dlsym( fsys->handle, "UnMount");
+			fsys->Release = dlsym( fsys->handle, "Release");
 			
 			fsys->FileOpen = dlsym( fsys->handle, "FileOpen");
 			fsys->FileClose = dlsym( fsys->handle, "FileClose");
@@ -190,3 +191,4 @@ void FilesystemDelete( Filesystem *fs )
 		FFree( fs->fs_Password );
 	}
 }
+

@@ -48,6 +48,13 @@ body > iframe
 	height: 200px;
 }
 
+h1, h2, h3, h4
+{
+	font-weight: normal;
+	margin: 0 0 5px 0;
+	padding: 0;
+}
+
 /* Loading animation */
 
 .LoadingAnimation
@@ -138,6 +145,16 @@ button:hover, .Button:hover
 	padding: $MarginButton;
 	margin: $MarginButton;
 	border-left: $BorderDefaultRight;
+}
+
+.Button.Recessed
+{
+	border-top: $BorderDefaultBottom;
+    border-left: $BorderDefaultRight;
+    border-right: $BorderDefaultLeft;
+    border-bottom: $BorderDefaultTop;
+    background: $ColorBgRecessed;
+    color: $ColorRecessed;
 }
 
 
@@ -685,13 +702,27 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 #SessionBlock > .VContentTop
 {
     position: absolute;
-    top: calc(50% - 60px);
+    top: calc(50% - 20px);
     left: calc(50% - 200px);
     width: 400px;
-    height: 130px;
+    height: 165px;
     box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
     background: #ffffff;
     border-radius: 5px;
+}
+
+@media (max-width: 460px)
+{
+	#SessionBlock > .VContentTop
+	{
+		top: calc(50% - 125px);
+		left: calc(50% - 120px);
+		width: 240px;
+		height: 250px;
+		box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+		background: #ffffff;
+		border-radius: 5px;
+	}
 }
 
 

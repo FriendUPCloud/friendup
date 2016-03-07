@@ -486,7 +486,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						'Screens'      : i18n( 'i18n_screens' ),
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						//'Language'     : i18n( 'i18n_language' ),
+						'Language'     : i18n( 'i18n_language' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
 						//'Sound'        : i18n( 'i18n_sound' ),
 						//'Keyboard'     : i18n( 'i18n_keyboard' ),
@@ -501,7 +501,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
 						'Screens'      : 'devices/video-display.png',
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
-						//'Language'     : 'apps/lokalize.png',
+						'Language'     : 'apps/lokalize.png',
 						//'Desklets'     : 'apps/telepathy-kde.png',
 						//'Sound'        : 'devices/audio-headphones.png',
 						//'Keyboard'     : 'devices/input-keyboard.png',
@@ -521,7 +521,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						//'Printers'     : i18n( 'i18n_printers' ),
 						//'Network'      : i18n( 'i18n_network' ),
-						//'Language'     : i18n( 'i18n_language' ),
+						'Language'     : i18n( 'i18n_language' ),
 						'Mountlist'    : i18n( 'i18n_mountlist' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
 						//'Sound'        : i18n( 'i18n_sound' ),
@@ -542,7 +542,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
 						//'Printers'     : 'devices/printer-laser.png',
 						//'Network'      : 'places/network-workgroup.png',
-						//'Language'     : 'apps/lokalize.png',
+						'Language'     : 'apps/lokalize.png',
 						'Mountlist'    : 'mimetypes/x-office-address-book.png',
 						//'Desklets'     : 'apps/telepathy-kde.png',
 						//'Sound'        : 'devices/audio-headphones.png',
@@ -612,7 +612,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				if( r == 'ok' ) 
 				{
 					var list = JSON.parse( data );
-					console.log( list );
+					//console.log( list );
 					if( list.length )
 					{
 						var pth = list[0].Path.substr( 0, path.length );

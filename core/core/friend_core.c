@@ -114,7 +114,7 @@ FriendCoreInstance *FriendCoreNew( int port, int maxp, int bufsiz )
 	if( ssl_mutex_buf == NULL)
 	{ 
 		DEBUG( "[FriendCoreNew] Failed to allocate ssl mutex buffer.\n" );
-		return (-1); 
+		return NULL; 
 	} 
 	{
 		int i; for( i = 0; i < CRYPTO_num_locks(); i++ )
@@ -204,24 +204,45 @@ struct stringPart
 //
 //
 
+#define NO_WORKERS
+
+static int nothreads = 0;
+#define MAX_CALLHANDLER_THREADS 256
+
 void *SocketCallHandler( void *data )
 {	
-	DEBUG( "[SocketCallHandler] Starting to execute!\n" );
+	if( pthread_mutex_lock( &sslmut ) == 0 )
+	{
+		nothreads++;
+		pthread_mutex_unlock( &sslmut );
+		DEBUG( "[SocketCallHandler] %p Starting to execute, threads %d!\n", data, nothreads );
+	}
 	struct SocketThreadData *t = ( struct SocketThreadData *)data;
-	pthread_detach( t->thread ); // Detach
-	
+#ifdef NO_WORKERS
+	pthread_detach( t->thread ); // Detach only when using pthreads directly
+#endif
 	if( !t->sock )
 	{
-		pthread_exit( NULL );
+		if( t->doFree )
+		{
+			FFree( t );
+		}
+		DEBUG( "[SocketCallHandler] %p Premature abortion no socket!!\n", data );
+#ifdef NO_WORKERS
+		pthread_exit( NULL ); // Only on pthread_create
+#endif
 		return NULL;
 	}
 	
 	Socket *sock = t->sock;
 	
 	// First pass header, second, data
-	int pass = 0; int bodyLength = 0;
-	char *finalBuffer = NULL; int prevBufSize = 0;
-	int preroll = 0; int stopReading = 0;
+	int pass = 0; 
+	int bodyLength = 0;
+	char *finalBuffer = NULL; 
+	int prevBufSize = 0;
+	int preroll = 0; 
+	int stopReading = 0;
 
 	// Often used
 	char *dividerStr = "\r\n\r\n";
@@ -238,7 +259,10 @@ void *SocketCallHandler( void *data )
 	{
 		//DEBUG( "Pass %d ------------------------------------------------------\n", pass );
 		// No bodylength? Fuck it
-		if( pass == 1 && ( !bodyLength || stopReading ) ) break;
+		if( pass == 1 && ( !bodyLength || stopReading ) )
+		{
+			break;
+		}
 	
 		// Set up a linked list
 		struct stringPart *head = NULL;
@@ -254,14 +278,13 @@ void *SocketCallHandler( void *data )
 	
 		for( joints = 0; ; run++ )
 		{
-			//DEBUG( "[SocketCallHandler] Starting read. %p\n", &head );
 			buffer = FCalloc( BUFFER_READ_SIZE_ALLOC, sizeof( char ) );
 			
 			DEBUG( "[SocketCallHandler] Starting to read socket.\n" );
-			res = SocketRead( sock, buffer, BUFFER_READ_SIZE, pass );
 			
-			if( res > 0 )
+			if( ( res = SocketRead( sock, buffer, BUFFER_READ_SIZE, pass ) ) > 0 )
 			{
+				DEBUG( "[SocketCallHandler] We read:\n---\n%.*s\n---\n", res, buffer );
 				if( pass == 0 && partialDivider != 0 )
 				{
 					for( yy = 0; yy < res; yy++ )
@@ -462,6 +485,7 @@ void *SocketCallHandler( void *data )
 			DEBUG("HTTP callback called\n");
 			if( resp != NULL )
 			{
+				DEBUG("Send response %d\n", resp->h_WriteType  );
 				if( resp->h_WriteType == FREE_ONLY )
 				{
 					HttpFree( resp );
@@ -471,8 +495,10 @@ void *SocketCallHandler( void *data )
 					HttpWriteAndFree( resp, sock );
 				}
 			}
+			DEBUG("Send response end\n");
 		}
 		FFree( finalBuffer );	
+		DEBUG("FCore data sent to client\n");
 	}
 	else
 	{
@@ -485,9 +511,18 @@ void *SocketCallHandler( void *data )
 		SocketClose( sock );
 		FFree( t );
 	}
-	DEBUG( "[SocketCallHandler] End of call handler.\n" );
+	DEBUG( "[SocketCallHandler] %p End of call handler.\n", data );
+	if( pthread_mutex_lock( &sslmut ) == 0 )
+	{
+		nothreads--;
+		pthread_mutex_unlock( &sslmut );
+	}
 	
-	pthread_exit( NULL );
+#ifdef NO_WORKERS
+	pthread_exit( NULL ); // Only on pthread_create
+#endif
+	DEBUG("Sockhandler end\n");
+	
 	return NULL;
 }
 
@@ -500,7 +535,7 @@ struct FriendCoreInstance *fci;
 
 void SignalHandler( int signal )
 {
-	write( fci->fci_WriteCorePipe, "q", strlen( "q" ) );
+	write( fci->fci_WriteCorePipe, "q", 1 );
 }
 
 //
@@ -558,36 +593,11 @@ void *FriendCoreAccept( void *fcv )
 		
 		// Clear the pair (incoming is closed above)
 		free( p );
+		
+		// Clear the cfThreadInstance
+		free( th );
 		return NULL;
 	}
-
-	
-	
-	/*//EXTREME FD TESTING! :D
-	int numbytes = 0;
-	while( !numbytes && ioctl( p->fd, FIONREAD, &numbytes ) >= 0 )
-	{
-		usleep( 20000 );
-	}	
-	DEBUG( "We have %d bytes to be read!\n", numbytes );
-	
-	char *test = calloc( numbytes + 1, sizeof( char ) );
-	int read = recv( p->fd, test, numbytes, MSG_PEEK );
-	if( read < 0 ) 
-	{
-		DEBUG( "Could not read from file descriptor!\n" );
-		free( test );
-		SocketClose( incoming );
-		free( p );
-		return NULL;
-	}
-	else
-	{
-		DEBUG( "We read %d bytes. This is a good connection?\n", read );
-	}
-	free( test );
-	DEBUG( "Could read from file descriptor\n" );*/
-	
 
 	// Set the default protocol callback
 	incoming->protocolCallback = ( SocketProtocolCallback_t )&ProtocolHttp;
@@ -691,6 +701,53 @@ struct AcceptPair *DoAccept( Socket *sock )
 //
 //
 
+void *FriendCoreAcceptPhase1( void *d )
+{
+	struct fcThreadInstance *pre = ( struct fcThreadInstance *)d;
+	pthread_detach( pre->thread );
+	
+	// Ready our accept pair
+	struct AcceptPair *p = NULL;
+	
+	// Run accept() and return an accept pair
+	int acceptIng = 0;
+	for( ; ; acceptIng++ )
+	{
+		p = NULL;
+		if( pthread_mutex_lock( &pre->fc->listenMutex ) == 0 )
+		{
+			p = DoAccept( pre->fc->listenSocket );
+			pthread_mutex_unlock( &pre->fc->listenMutex );
+		}
+		if( !p ) break;
+		
+		// Add the new SSL accept thread:
+		// We have a notification on the listening socket, which means one or more incoming connections.
+		struct fcThreadInstance *idata = calloc( 1, sizeof( struct fcThreadInstance ) );
+		idata->fc = pre->fc;
+		idata->acceptPair = p;
+		memset( &idata->thread, 0, sizeof( pthread_t ) );
+		
+		// Multithread mode
+		if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+		{
+			free( idata );
+			// Clean up accept pair
+			shutdown( p->fd, SHUT_RDWR );
+			close( p->fd );
+			free( p );
+		}
+	}
+	
+	free( pre ); // <- remove thread instance
+	pthread_exit( NULL );
+}
+
+
+//
+//
+//
+
 inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
 	int eventCount = 0;
@@ -765,6 +822,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					epoll_ctl( fc->epollfd, EPOLL_CTL_DEL, sock->fd, currentEvent );
 					SocketClose( sock );
+					ERROR("Close socket, remove from epoll\n");
 				}
 				continue;
 			}
@@ -802,38 +860,12 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			}
 			// Accept incoming connections
 			else if( currentEvent->data.fd == fc->listenSocket->fd )
-			{
-				// Ready our accept pair
-				struct AcceptPair *p = NULL;
-				
-				// Run accept() and return an accept pair
-				int acceptIng = 0;
-				for( ; ; acceptIng++ )
+			{	
+				struct fcThreadInstance *pre = calloc( 1, sizeof( struct fcThreadInstance ) );
+				pre->fc = fc;
+				if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase1, ( void *)pre ) != 0 )
 				{
-					p = NULL;
-					if( pthread_mutex_lock( &fc->listenMutex ) == 0 )
-					{
-						p = DoAccept( fc->listenSocket );
-						pthread_mutex_unlock( &fc->listenMutex );
-					}
-					if( !p ) break;
-					
-					// Add the new SSL accept thread:
-					// We have a notification on the listening socket, which means one or more incoming connections.
-					struct fcThreadInstance *idata = calloc( 1, sizeof( struct fcThreadInstance ) );
-					idata->fc = fc;
-					idata->acceptPair = p;
-					memset( &idata->thread, 0, sizeof( pthread_t ) );
-					
-					// Multithread mode
-					if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
-					{
-						free( idata );
-						// Clean up accept pair
-						shutdown( p->fd, SHUT_RDWR );
-						close( p->fd );
-						free( p );
-					}
+					free( pre );
 				}
 			}
 			// We are responding to an established connection
@@ -856,32 +888,27 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					t->sock = sock; // Add incoming socket here
 					t->ce = currentEvent;
 					t->doFree = TRUE;
-			
+
+#ifndef NO_WORKERS
+					//if( pthread_mutex_lock( &fc->listenMutex ) == 0 )
+					{
+						WorkerManagerRun( fc->fci_WorkerManager, SocketCallHandler, ( void *)t );
+						//pthread_mutex_unlock( &fc->listenMutex );
+					}
+#else
 					memset( &t->thread, 0, sizeof( pthread_t ) );
 					if( pthread_create( &t->thread, NULL, &SocketCallHandler, ( void *)t ) != 0 )
 					{
-						SocketClose( t->sock );
-						free( t );
+						SocketClose( t->sock ); free( t );
 					}
+#endif
 				}
 				else
 				{
 					//DEBUG( "Deleting socket %d (memory: %p). ------------------------- STOP ---- ---------\n", sock->fd, &sock->fd );
+					ERROR("Epollin closing socket\n");
 					SocketClose( sock );
 				}
-			
-				//SocketCallHandler( ( void *)t );
-				
-				//SocketClose( t->sock );
-				//free( t );
-			
-				/*if( pthread_mutex_lock( &fc->listenMutex ) == 0 )
-				{
-					WorkerManagerRun( fc->fci_WorkerManager, SocketCallHandler, ( void *)t );
-					pthread_mutex_unlock( &fc->listenMutex );
-					DEBUG( "Worker manager has run.\n" );
-				}*/
-				
 			}
 		}
 		DEBUG("End of events loop\n");
@@ -932,7 +959,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	DEBUG("==========Starting FriendCore.===========\n");
 	DEBUG("=========================================\n");
 
-	fc->fci_WorkerManager = WorkerManagerNew( WORKERS );
+	fc->fci_WorkerManager = WorkerManagerNew( MAX_WORKERS );
 	DEBUG("[FriendCore] WorkerManager started\n");
 	
 	// Open new socket for lisenting

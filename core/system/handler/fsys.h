@@ -30,6 +30,15 @@
 #include <system/handler/file.h>
 
 //
+//
+//
+
+enum {
+	FSYS_OUTPUT_JSON = 0,
+	FSYS_OUTPUT_WEBDAV
+};
+
+//
 // 
 //
 
@@ -69,6 +78,7 @@ typedef struct FHandler
 	// ONLY USED BY system.library
 	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti );
 	int                     (*UnMount)( struct FHandler *s, void *f );
+	int                     (*Release)( struct FHandler *s, void *f );
 	
 	//
 	void                    *(*FileOpen)( struct File *s, const char *path, char *mode );
@@ -81,7 +91,7 @@ typedef struct FHandler
 	int                     (*MakeDir)( struct File *s, const char *path );
 	int                     (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
-	char                    *(*Execute)( struct File *s, const char *path, const char *args );
+	char                  *(*Execute)( struct File *s, const char *path, const char *args );
 	int                     (*Copy)( struct File *s, const char *dst, const char *src );
 	
 	BufString               *(*Info)( struct File *s, const char *path );
@@ -94,21 +104,22 @@ typedef struct FHandler
 
 typedef struct Filesystem
 {
-	MinNode			node;
-	ULONG				fs_ID;
-	ULONG 			fs_UserID;
-	char 				*fs_Name;
-	char 				*fs_Type;
-	char 				*fs_ShortDescription;
-	char 				*fs_Server;
-	ULONG 			fs_Port;
-	char 				*fs_Path;
-	char 				*fs_Username;
-	char 				*fs_Password;
-	ULONG 			fs_Moutned;
-	ULONG 			fs_GroupID;
-	ULONG 			fs_DeviceID;
-	ULONG				fs_Authorisation;
+	MinNode             node;
+	ULONG               fs_ID;
+	ULONG               fs_UserID;
+	char                *fs_Name;
+	char                *fs_Type;
+	char                *fs_ShortDescription;
+	char                *fs_Server;
+	ULONG               fs_Port;
+	char                *fs_Path;
+	char                *fs_Username;
+	char                *fs_Password;
+	char                *fs_Config;
+	ULONG               fs_Mounted;
+	ULONG               fs_GroupID;
+	ULONG               fs_DeviceID;
+	ULONG               fs_Authorisation;
 	
 }Filesystem;
 
@@ -126,7 +137,8 @@ static ULONG FilesystemDesc[] = {
 	SQLT_STR,     (ULONG)"Path",  offsetof( struct Filesystem, fs_Path ),
 	SQLT_STR,     (ULONG)"Username", offsetof( struct Filesystem, fs_Username ),
 	SQLT_STR,     (ULONG)"Password", offsetof( struct Filesystem, fs_Password ),
-	SQLT_INT,     (ULONG)"Mounted", offsetof( struct Filesystem, fs_Moutned ),
+	SQLT_INT,     (ULONG)"Config", offsetof( struct Filesystem, fs_Config ),
+	SQLT_INT,     (ULONG)"Mounted", offsetof( struct Filesystem, fs_Mounted ),
 	SQLT_INT,     (ULONG)"Authorisation", offsetof( struct Filesystem, fs_Authorisation ),
 	SQLT_NODE,    (ULONG)"node",        offsetof( struct Filesystem, node ),
 	SQLT_END 

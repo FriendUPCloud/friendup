@@ -105,8 +105,6 @@ void *libInit( void *sb )
 	
 
 	l->sb = sb;
-	l->globalGroups = NULL;
-	
 	l->globalGroups = LoadGroups( l );
 
 	return ( void *)l;
@@ -131,6 +129,11 @@ void libClose( struct UserLibrary *l )
 			free( rg );
 		}
 	}
+	
+	DEBUG( "Freeing users.\n" );
+	
+	
+	
 	DEBUG("Closing connections\n");
 	
 	DEBUG("User library close\n");
@@ -282,8 +285,9 @@ User *GetAllUsers( struct UserLibrary *l )
 	User *tmp = user;
 	while( tmp != NULL )
 	{
-		AssignGroupToUser( l, tmp );
-		AssignApplicationsToUser( l, tmp );
+		// TODO: Reenable application stuff when it works
+		//AssignGroupToUser( l, tmp );
+		//AssignApplicationsToUser( l, tmp );
 		
 		tmp = (User *)tmp->node.mln_Succ;
 	}
@@ -322,6 +326,11 @@ User *Authenticate( struct UserLibrary *l, struct User *loguser, const char *nam
 	
 	if( sessionId != NULL )
 	{
+		if( loguser == NULL )
+		{
+			ERROR("!!!!!!!!!!!!!!!!!!!\n\n\n\n\n\n\n");
+			l->UserFree( user );
+		}
 		DEBUG( "The session id is %s\n", sessionId );
 		user = UserGetBySession( l, sessionId );
 		
@@ -342,9 +351,9 @@ User *Authenticate( struct UserLibrary *l, struct User *loguser, const char *nam
 				return NULL;
 			}
 		
-		//
-		// session is valid
-		//
+			//
+			// session is valid
+			//
 		
 			// TODO: reenable timeout when it works!
 			if( 1 == 1 || ( timestamp - user->u_LoggedTime ) < LOGOUT_TIME )
@@ -394,7 +403,6 @@ User *Authenticate( struct UserLibrary *l, struct User *loguser, const char *nam
 		DEBUG("AUTHENTICATE session NULL...\n");
 		
 		if( CheckPassword( l, user, (char *)pass ) == FALSE )
-		//if( strcmp( pass, user->u_Password ) != 0 )
 		{
 			DEBUG( "Password does not match! %s != %s\n", pass, user->u_Password );
 			user->u_Error = FUP_AUTHERR_PASSWORD;
@@ -404,10 +412,12 @@ User *Authenticate( struct UserLibrary *l, struct User *loguser, const char *nam
 		DEBUG( "The password comparizon is: %s, %s\n", pass, user->u_Password );
 			
 		// Create new session hash
-		char *hashBase = MakeString ( 255 );
-		sprintf ( hashBase, "%ld%s%d", timestamp, user->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-		HashedString ( &hashBase );
+		char *hashBase = MakeString( 255 );
+		sprintf( hashBase, "%ld%s%d", timestamp, user->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
+		HashedString( &hashBase );
 			
+		// Remove old one and update
+		if( user->u_SessionID ) free( user->u_SessionID );
 		user->u_SessionID = hashBase;
 			
 		char tmpQuery[ 255 ];
@@ -426,12 +436,12 @@ User *Authenticate( struct UserLibrary *l, struct User *loguser, const char *nam
 				sb->LibraryMYSQLDrop( sb, sqlLib );
 				return user;
 			}
+			
 			sb->LibraryMYSQLDrop( sb, sqlLib );
-		
 			INFO("Auth return user %s with sessionid %s\n", user->u_Name, user->u_SessionID );
-		
 			return user;
 		}
+		free( hashBase );
 		return NULL;
 		
 	}
@@ -613,15 +623,11 @@ int UserCreate( struct UserLibrary *l, User *usr )
 
 User *UserFromSQL( MYSQL_ROW row )
 {
-	User *user;
-
-	user = calloc( sizeof( User ), 1 );
-	if( user == NULL )
-	{
-		return NULL;
-	}
+	User *user = calloc( 1, sizeof( User ) );
 	
-	printf("UpdateUserFields %s %s %s <\n", row[ 1 ], row[ 2 ], row[ 3 ] );
+	if( user == NULL ) return NULL;
+	
+	DEBUG("UpdateUserFields %s %s %s <\n", row[ 1 ], row[ 2 ], row[ 3 ] );
 
 	//| ID | Name    | Password | FullName | Email | SessionID                                | LoggedTime | CreatedTime |
 
@@ -629,7 +635,9 @@ User *UserFromSQL( MYSQL_ROW row )
 	user->u_ID = atol( row[ 0 ] );
 	
 	user->u_Name = StringDuplicate( row[ 1 ] );
+	
 	DEBUG("->name %s\n", user->u_Name );
+	
 	if( row[ 2 ] != NULL )
 	{
 		user->u_Password = StringDuplicate( row[ 2 ] );
@@ -665,26 +673,30 @@ User *UserFromSQL( MYSQL_ROW row )
 
 void UserFree( User *user )
 {
-	if( user->u_Groups != NULL )
+	// TODO: Reenable this when we're using it
+	/*if( user->u_Groups != NULL )
 	{
-		free( user->u_Groups );
+		FFree( user->u_Groups );
+		user->u_Groups = NULL;
 	}
 	
 	// Free up all!
 	if( user->u_Applications != NULL )
 	{
-		UserApplication *ap = user->u_Applications[0];
-		UserApplication *tmp = NULL;
-		do
+		UserApplication *data = user->u_Applications[0];
+		if( data )
 		{
-			tmp = ( UserApplication *)ap->ua_Next;
-			if( ap->ua_Permissions )
+			UserApplication *tmp = NULL;
+			do
 			{
-				free( ap->ua_Permissions );
+				tmp = ( UserApplication *)data->ua_Next;
+				//if( data->ua_Permissions ) free( data->ua_Permissions );
+				free( data );
 			}
-			free( ap );
+			while( ( data = tmp ) != NULL );
 		}
-		while( ( ap = tmp ) != NULL );
+		free( user->u_Applications );
+		
 		user->u_Applications = NULL;
 	}
 	
@@ -695,8 +707,10 @@ void UserFree( User *user )
 		wsrem = wsc;
 		wsc = (WebsocketClient *) wsc->node.mln_Succ;
 		FFree( wsrem );
-	}
+	}*/
 	
+	UserDelete( user );
+	/*
 	DEBUG("User free\n");
 	if( user->u_Name != NULL )
 	{
@@ -715,9 +729,9 @@ void UserFree( User *user )
 	{
 		free( user->u_SessionID ); user->u_SessionID = NULL;
 	}
-	DEBUG("User free END\n");
+	DEBUG("User free END\n");*/
 
-	free( user );
+	//free( user );
 }
 
 //
@@ -999,6 +1013,7 @@ int AssignGroupToUser( struct UserLibrary *l, User *usr )
 	int j = 0;
 	int actgroup = 0;
 	
+	if( usr->u_Groups ) FFree( usr->u_Groups );
 	usr->u_Groups = FCalloc( result->row_count, sizeof( UserGroup *) );
 	
 

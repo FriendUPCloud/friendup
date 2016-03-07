@@ -106,7 +106,7 @@ Socket* SocketOpen( unsigned short port, int type )
 				// Load the RSA CA certificate into the SSL_CTX structure 
 				if ( !SSL_CTX_load_verify_locations( sock->s_Ctx, RSA_SERVER_CA_CERT, RSA_SERVER_CA_PATH )) 
 				{
-					ERROR( "Could not verify cert.\n" );
+					ERROR( "Could not verify cert: %s\n", RSA_SERVER_CA_CERT );
 					close( fd );
 					SocketFree( sock );
 					return NULL;
@@ -152,7 +152,7 @@ Socket* SocketOpen( unsigned short port, int type )
 			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER );
 			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_AUTO_RETRY ); // <- why
 			SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
-			SSL_CTX_set_session_id_context( sock->s_Ctx, "friendcore", strlen( "friendcore" ) );
+			SSL_CTX_set_session_id_context( sock->s_Ctx, (const unsigned char *)"friendcore", 10 );
 		}
 		
 		if( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) < 0 )
@@ -233,7 +233,7 @@ int SocketListen( Socket *sock )
 		return 0;
 	}
 
-	if( listen( sock->fd, 128 ) < 0 )
+	if( listen( sock->fd, SOMAXCONN ) < 0 )
 	{
 		ERROR( "[SOCKET] ERROR listen failed\n" );
 		close( sock->fd );
@@ -253,7 +253,7 @@ int SocketConnect( Socket* sock, const char *host )
 {
 	if( sock == NULL )
 	{
-		ERROR("SocketConnect: socekt is null\n");
+		ERROR("[SocketConnect] Socket is NULL..\n");
 		return 0;
 	}
 
@@ -285,7 +285,6 @@ int SocketConnect( Socket* sock, const char *host )
 	}
 
 	// Get the address information for the server using getaddrinfo()
-
 	rc = getaddrinfo( host, servport, &hints, &res);
 	if (rc != 0)
 	{
@@ -298,7 +297,6 @@ int SocketConnect( Socket* sock, const char *host )
 	}
 
 	// Use the connect function to establish a connection
-
 	rc = connect( sock->fd, res->ai_addr, res->ai_addrlen );
 	if( rc == -1 )
 	{
@@ -384,7 +382,7 @@ Socket* SocketAccept( Socket* sock )
                
 	DEBUG( "[SocketAccept] Accepting on socket\n" );
 	int fd = accept( sock->fd, ( struct sockaddr* )&client, &clientLen );
-	DEBUG( "[SocketAccept] Done accepting file descriptor\n" );
+	DEBUG( "[SocketAccept] Done accepting file descriptor\n", fd );
 
 	Socket* incoming = (Socket*)FCalloc( 1, sizeof( Socket ) );
 	if( incoming != NULL )
@@ -663,7 +661,7 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 		
 		do
 		{
-			INFO( "[SocketRead] Start of the voyage.. %p\n", sock );
+			//INFO( "[SocketRead] Start of the voyage.. %p\n", sock );
 			if( pthread_mutex_lock( &sock->mutex ) == 0 )
 			{
 				if( read + buf > length ) buf = length - read;
@@ -673,12 +671,12 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 					read += res;
 				}
 				//INFO( "[SocketRead] Tried to read %d bytes (%d total read, %d pending).\n%.*s\n", res, read, SSL_pending( sock->s_Ssl ), read, data );
-				INFO( "[SocketRead] Read %d/%d\n", read, length );
+				//INFO( "[SocketRead] Read %d/%d\n", read, length );
 				pthread_mutex_unlock( &sock->mutex );	
 			}
 			else
 			{
-				DEBUG( "[SocketRead] Could not read mutex!\n" );
+				//DEBUG( "[SocketRead] Could not read mutex!\n" );
 				return 0;
 			}
 			
@@ -689,50 +687,56 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 				{
 					// The TLS/SSL I/O operation completed. 
 					case SSL_ERROR_NONE:
-						ERROR( "[SocketRead] Completed successfully.\n" );
+						//ERROR( "[SocketRead] Completed successfully.\n" );
 						running = 0;
 						break;
 					// The TLS/SSL connection has been closed. Goodbye!
 					case SSL_ERROR_ZERO_RETURN:
-						ERROR( "[SocketRead] The connection was closed.\n" );
+						//ERROR( "[SocketRead] The connection was closed.\n" );
 						return read;
 					// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
-						ERROR( "[SocketRead] Want read try to continue. %p\n", sock );
-						if( pass == 0 || retries++ > 150 )
+						//ERROR( "[SocketRead] Want read try to continue. %p\n", sock );
+						if( ( pass == 0 && retries > 10 ) || retries++ > 150 )
 						{
-							ERROR( "[SocketRead] %s on want read..\n", pass == 0 ? "finishing" : "bailing" );
+							//ERROR( "[SocketRead] %s on want read..\n", pass == 0 ? "finishing" : "bailing" );
 							return read;
 						}
 						usleep( 4000 );
 						continue;
 					// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_WRITE:
-						ERROR( "[SocketRead] Want write.\n" );
+						//ERROR( "[SocketRead] Want write.\n" );
 						return read;
 					case SSL_ERROR_SYSCALL:
-						ERROR( "[SocketRead] SSL_ERROR_SYSCALL - We read %d bytes. Returning\n", read );
-						return read;
+						//ERROR( "[SocketRead] SSL_ERROR_SYSCALL\n", read );
+						if( pass == 0 || retries++ > 150 )
+						{
+							//ERROR( "[SocketRead] %s on error syscall..\n", pass == 0 ? "finishing" : "bailing" );
+							return read;
+						}
+						usleep( 4000 );
+						continue;
 				}
 			}
 		}
 		while( running && read < length );
 		
-		INFO( "[SocketRead] Done reading (%d bytes of %d ).\n", read, length );
+		//INFO( "[SocketRead] Done reading (%d bytes of %d ).\n", read, length );
 		return read;
 	}
 	// Read in a non-SSL way
 	else
 	{
-	    unsigned int bufLength = 16384;
-	    int read = 0;
+	    unsigned int bufLength = length;
+	    int read = 0, res = 0;
 	    
-	    do
-	    {
-		    int res = recv( sock->fd, data + read, bufLength, MSG_DONTWAIT );
-			if( res > 0 ) read += res;
-		}
-		while( read <= 0 );
+	    while( ( res = recv( sock->fd, data + read, bufLength - read, MSG_DONTWAIT ) ) > 0 )
+	    { 
+	    	read += res;
+	    	if( read >= length ) break;
+	    	//DEBUG( "[SocketRead] Going strong!\n" );
+	    }
 		return read;
 	}
 }
@@ -747,7 +751,7 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 {
 	if( SSLEnabled == TRUE )
 	{
-		INFO( "SSL Write length: %d (sock: %p)\n", length, sock );
+		//INFO( "SSL Write length: %d (sock: %p)\n", length, sock );
 		
 		int left = length;
 		unsigned int written = 0;
@@ -757,29 +761,33 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 		//_writes++;
 		int retries = 0;
 		
-		if( pthread_mutex_lock( &sock->mutex ) == 0 )
+		
+		unsigned int bsize = length;
+		int err = 0;
+		
+		while( written < length )
 		{
-			unsigned int bsize = length;
-			while( written < length )
+			if( bsize + written > length ) bsize = length - written;
+			
+			if( pthread_mutex_lock( &sock->mutex ) == 0 )
 			{
-				if( bsize + written > length ) bsize = length - written;
 				res = SSL_write( sock->s_Ssl, data + written, bsize );
-				
+				err = SSL_get_error( sock->s_Ssl, res );
+				pthread_mutex_unlock( &sock->mutex );
+			
 				if( res < 0 )
 				{
-					int err = SSL_get_error( sock->s_Ssl, res );
 					switch( err )
 					{
 						// The TLS/SSL I/O operation completed. 
 						case SSL_ERROR_NONE:
 							retries = 0;
-							ERROR( "[SocketWrite] No errors.\n" );
+							//ERROR( "[SocketWrite] No errors.\n" );
 							break;
 						// The TLS/SSL connection has been closed.
 						case SSL_ERROR_ZERO_RETURN:
-							ERROR( "[SocketWrite] The connection was closed.\n" );
+							//ERROR( "[SocketWrite] The connection was closed.\n" );
 							//_writes--;
-							pthread_mutex_unlock( &sock->mutex );
 							return 0;
 						// The operation did not complete. Call again.
 						case SSL_ERROR_WANT_WRITE:
@@ -797,7 +805,7 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 							retries = 0;
 							break;*/
 						case SSL_ERROR_WANT_X509_LOOKUP:
-							ERROR( "[SocketWrite] The operation did not complete because an application callback set by SSL_CTX_set_client_cert_cb() has asked to be called again.\n" );
+							//ERROR( "[SocketWrite] The operation did not complete because an application callback set by SSL_CTX_set_client_cert_cb() has asked to be called again.\n" );
 							res = 0;
 							retries = 0;
 							break;
@@ -811,11 +819,10 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 						{
 							if( ++retries > 250 )
 							{
-								DEBUG( "[SocketWrite] Bailing on %d retries!\n", retries );
-								pthread_mutex_unlock( &sock->mutex );
+								//DEBUG( "[SocketWrite] Bailing on %d retries!\n", retries );
 								return 0;
 							}
-							DEBUG( "[SocketWrite] Try again.\n" );
+							//DEBUG( "[SocketWrite] Try again.\n" );
 							usleep( 2000 ); // Wait a little bit, could be the delay must be higher
 							continue;
 						}
@@ -832,47 +839,44 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 							usleep( 10000 ); // Wait a little bit
 							continue;*/
 					}
-				
+			
 					//ERROR( "Writing %d, err: %d\n", written, SSL_get_error( sock->s_Ssl, written ) );
-					INFO( "SSL Write  written %d bytes of %d\n", written, length );
+					//INFO( "SSL Write  written %d bytes of %d\n", written, length );
 					//return written;
 				}
 				else
 				{
 					retries = 0;
 				}
-			
+		
 				// Can't write?
 				if( res == 0 )
 				{
-					ERROR("Cannot write, res = 0\n");
+					//ERROR("Cannot write, res = 0\n");
 					//_writes--;
-					pthread_mutex_unlock( &sock->mutex );
 					return written;
 				}
-				
-				written += res;
 			
-				DEBUG( "[SocketWrite] Wrote %d/%d bytes\n", written, length );
+				written += res;
 			}
-			DEBUG( "[SocketWrite] Done writing.\n" );
-			//_writes--;
-			pthread_mutex_unlock( &sock->mutex );
+		
+			//DEBUG( "[SocketWrite] Wrote %d/%d bytes\n", written, length );
 		}
 		return written;
 	}
 	else
 	{
-	    unsigned int written = 0;
 	    int res = 0;
-	    unsigned int bufLength = 16000;
+	    unsigned int written = 0, bufLength = 16384 > length ? length : 16384;
+		
 	    while( written < length )
 	    {
-	        if( bufLength > length - written )
-	            bufLength = length - written;
+	        if( bufLength > length - written ) bufLength = length - written;
 		    res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
 		    if( res > 0 ) written += res;
+			else if( res < 0 ) break;
 		}
+		DEBUG("end write\n");
 		return written;
 	}
 }
@@ -974,7 +978,7 @@ void SocketClose( Socket* sock )
 	    }
 	    SocketFree( sock );
 	}
-	//DEBUG( "[SocketClose] Freed socket.\n" );
+	DEBUG( "[SocketClose] Freed socket.\n" );
 }
 
 //

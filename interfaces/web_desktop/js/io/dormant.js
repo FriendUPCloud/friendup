@@ -271,7 +271,7 @@ DormantMaster =
 			}
 			else
 			{
-				console.log( 'Removing one time event ' + object.applicationName );
+				//console.log( 'Removing one time event ' + object.applicationName );
 			}
 		}
 		// Remove ones that are one off events

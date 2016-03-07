@@ -63,17 +63,13 @@ pthread_mutex_t sslmut;
 
 void InterruptSignalHandler(int signum)
 {
-	printf("Caught signal %d\n",signum);
+	printf("\nCaught signal %d\n",signum);
 
 	// Cleanup and close up stuff here
-	//if( signum == SIGUSR1 )
-	//coreManager->fcm_FriendCores->fci_Shutdown = TRUE;
+	if( coreManager != NULL )
 	{
-		if( coreManager != NULL )
-		{
-			FriendCoreManagerDelete( coreManager );
-			coreManager = NULL;
-		}
+		FriendCoreManagerDelete( coreManager );
+		coreManager = NULL;
 	}
 
 	//exit( signum );
@@ -91,9 +87,9 @@ int main()
 	// Catch ctrl-c to gracefully shut down
 	signal( SIGINT, InterruptSignalHandler );
 	signal( SIGKILL, InterruptSignalHandler );
-	signal( SIGSTOP, InterruptSignalHandler );
+	/*signal( SIGSTOP, InterruptSignalHandler );
 	signal( SIGUSR1, InterruptSignalHandler );
-	signal( SIGABRT, InterruptSignalHandler );
+	signal( SIGABRT, InterruptSignalHandler );*/
 	
 	// Setup "Progdir:" in ENV
 	{

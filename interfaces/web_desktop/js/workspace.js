@@ -28,7 +28,7 @@ var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
 	icons: [],
-	menuMode: 'miga',
+	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
 	initialized: false,
 	protocol: _protocol,
 	menu: [],
@@ -50,6 +50,10 @@ Workspace = {
 	directoryView: false,
 	init: function()
 	{	
+		if( window.isMobile )
+		{
+			AddCSSByUrl( '/webclient/css/responsive.css' );
+		}
 		// First things first
 		if( !this.initialized )
 		{
@@ -110,7 +114,7 @@ Workspace = {
 		
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-				title: 'Workspace v1.0 b1',
+				title: 'Workspace v1.0 b2',
 				id:	'DoorsScreen',
 				extra: Workspace.fullName
 			}
@@ -123,31 +127,7 @@ Workspace = {
 		this.screenDiv = wbscreen.div;
 		
 		// Recall wallpaper from settings
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' && d )
-			{	
-				var dat = JSON.parse( d );
-				if( dat.wallpaperdoors )
-				{
-					Workspace.wallpaperImage = dat.wallpaperdoors;
-					Workspace.refreshDesktop();
-				}
-				// FaLLback
-				else
-				{
-					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-					Workspace.refreshDesktop();
-				}
-			}
-			else
-			{
-				Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-				Workspace.refreshDesktop();
-			}
-		}
-		m.execute( 'getsetting', { setting: 'wallpaperdoors' } );
+		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
 		
 		// Create desktop
 		this.directoryView = new DirectoryView( wbscreen.contentDiv );
@@ -179,6 +159,56 @@ Workspace = {
 		document.body.appendChild( input );
 		Workspace.mouseTrap = input;
 	},
+	refreshUserSettings: function( callback )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' && d )
+			{	
+				var dat = JSON.parse( d );
+				if( dat.wallpaperdoors )
+				{
+					if( dat.wallpaperdoors.substr(0,5) == 'color' )
+					{
+						Workspace.wallpaperImage = 'color';
+					}
+					else if( dat.wallpaperdoors.length )
+					{
+						Workspace.wallpaperImage = dat.wallpaperdoors;
+					}	
+					else Workspace.wallpaperImage = 
+						'/webclient/gfx/theme/default_login_screen.jpg';
+				}
+				// FaLLback
+				else
+				{
+					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+				}
+				
+				if( dat.wallpaperwindows )
+				{
+					Workspace.windowWallpaperImage = dat.wallpaperwindows;
+				}
+				if( dat.language )
+				{
+					globalConfig.language = dat.language.spokenLanguage;
+					globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
+				}
+				if( dat.menumode )
+				{
+					Workspace.menuMode = dat.menumode;
+				}
+			}
+			else
+			{
+				Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+				Workspace.windowWallpaperImage = '';
+			}
+			if( callback ) callback();
+		}
+		m.execute( 'getsetting', { settings: [ 'wallpaperdoors', 'wallpaperwindows', 'language', 'menumode' ] } );
+	},
 	reloadDocks: function()
 	{
 		var c = new Module( 'dock' );
@@ -200,11 +230,24 @@ Workspace = {
 				for( var a = 0; a < elements.length; a++ )
 				{
 					var ele = elements[a];
+					var icon = 'apps/' + ele.Name + '/icon.png';
+					if( ele.Name.indexOf( ':' ) > 0 )
+					{
+						ext = ele.Name.split( ':' )[1];
+						if( ext.indexOf( '/' ) > 0 )
+						{
+							ext = ext.split( '/' )[1];
+						}
+						ext = ext.split( '.' )[1];
+						icon = '.' + ( ext ? ext : 'txt' );
+					}
+					
 					Workspace.mainDock.addLauncher( { 
-						exe  : ele.Name,
-						src   : 'apps/' + ele.Name + '/icon.png',
-						click : getOnClickFn( ele.Name ), 
-						'title' : ele.Title
+						exe   : ele.Name,
+						type  : ele.Type,
+						src   : icon,
+						//click : getOnClickFn( ele.Name ), 
+						'title' : ele.Title ? ele.Title : ele.Name
 					} );
 				}
 			}
@@ -334,6 +377,25 @@ Workspace = {
 		// Show it
 		this.showDesktop();
 	},
+	// When session times out, use relogin
+	relogin: function()
+	{
+		var d = document.createElement( 'div' );
+		d.id = 'SessionBlock';
+		document.body.appendChild( d );
+		var f = new File( 'System:templates/login_relogin.html' );
+		f.onLoad = function( data )
+		{	
+			Workspace.sessionId = false;
+			d.innerHTML = data;
+		}
+		f.load();
+		
+	},
+	renewAllSessionIds: function()
+	{
+		
+	},
 	login: function( u, p, r )
 	{
 		// TODO: If we have sessionid - verify it through ajax.
@@ -346,7 +408,7 @@ Workspace = {
 		this.loginUsername = u;
 		this.loginPassword = p;
 		if( this.loginUsername && this.loginPassword )
-		{	
+		{
 			if( r )
 			{
 				SetCookie( 'loginUsername', u );
@@ -360,7 +422,23 @@ Workspace = {
 			{
 				if( json.ErrorMessage == '0' )
 				{
-					/*var m = new Module( 'system' );
+					t.sessionId = json.sessionid;
+					t.userId = json.userid;
+					t.fullName = json.fullName;
+					
+					// Only renew session..
+					if( ge( 'SessionBlock' ) )
+					{
+						// Could be many
+						while( ge( 'SessionBlock' ) )
+						{
+							document.body.removeChild( ge( 'SessionBlock' ) );
+						}
+						Workspace.renewAllSessionIds();
+						return;
+					}
+					
+					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e != 'ok' )
@@ -372,20 +450,18 @@ Workspace = {
 					m.addVar( 'sessionid', json.sessionid );
 					m.execute( 'getsetting', {
 						setting: 'accepteula'
-					} );*/
-					
+					} );
+				
 					document.body.className = 'Loading';
-					t.sessionId = json.sessionid;
-					t.userId = json.userid;
-					t.fullName = json.fullName;
-					
+				
+				
 					// Lets load the stored window positions!
 					LoadWindowStorage();
-					
+				
 					// Set up a shell instance for the workspace
 					var uid = FriendDOS.addSession( Doors );
 					Workspace.shell = FriendDOS.getSession( uid );
-					
+				
 					// As for body.Inside screens, use > 0.2secs
 					setTimeout( function()
 					{
@@ -395,8 +471,6 @@ Workspace = {
 						{
 							if( e == 'ok' )
 							{
-							    setInterval( LoginDaemon, 4000 );
-							
 								var s = JSON.parse( d );
 								if( s.Theme && s.Theme.length )
 								{
@@ -409,17 +483,17 @@ Workspace = {
 								Workspace.mimeTypes = s.Mimetypes;
 							}
 							else Workspace.refreshTheme( false, false );
-					
+				
 							if( t.loginPrompt )
 							{
 								t.loginPrompt.close();
 								t.loginPrompt = false;
 							}
-					
+				
 							t.init();
 						}
 						m.execute( 'usersettings' );
-					
+				
 					}, 400 );
 					return;
 				}
@@ -557,6 +631,8 @@ Workspace = {
 			return;
 		this.themeRefreshed = true;
 		
+		this.refreshUserSettings( function(){ CheckScreenTitle(); } );
+		
 		Workspace.theme = themeName ? themeName.toLowerCase() : '';
 		themeName = Workspace.theme;
 		
@@ -573,32 +649,22 @@ Workspace = {
 					break;
 				}
 			}
-			l = document.createElement( 'link' );
-			l.rel = 'stylesheet';
-			if( themeName )
-			{
-				l.href = '/themes/' + Workspace.theme + '/scrollbars.css';
-			}
-			else
-			{
-				l.href = '/webclient/theme/scrollbars.css';
-			}
-			h.appendChild( l );
-			var st = h.getElementsByTagName( 'style' );
-			if( st && st.length )
-			{
-				h.removeChild( st[0] );
-			}
 			
 			if( themeName )
 			{
-				ParseCssFile( '/themes/' + Workspace.theme + '/theme.css', false, function()
+				AddCSSByUrl( '/themes/' + Workspace.theme + '/scrollbars.css' );
+				AddCSSByUrl( '/themes/' + Workspace.theme + '/theme_compiled.css', function()
 				{ document.body.className = 'Inside'; } );
+				/*ParseCssFile( '/themes/' + Workspace.theme + '/theme.css', false, function()
+				{ document.body.className = 'Inside'; } );*/
 			}
 			else
 			{
-				ParseCssFile( '/webclient/theme/theme.css', false, function()
+				AddCSSByUrl( '/webclient/theme/scrollbars.css' );
+				AddCSSByUrl( '/webclient/theme/theme_compiled.css', function()
 				{ document.body.className = 'Inside'; } );
+				/*ParseCssFile( '/webclient/theme/theme.css', false, function()
+				{ document.body.className = 'Inside'; } );*/
 			}
 		}
 		
@@ -741,12 +807,10 @@ Workspace = {
 		
 		var items = Workspace.drivePanel.getElementsByClassName('File');
 		var itemWidth = Workspace.drivePanel.clientWidth; // - (this.margin*2);
-		var itemHeight = itemWidth; // squared items for now....
+		var itemHeight = itemWidth + 20; //squared icon + textline....
 		
-		var screenSpaceH = ge ( 'DoorsScreen' ).offsetWidth - 10;
-		var screenSpaceV = ge ( 'DoorsScreen' ).offsetHeight - 10 - 64;
-				
-		console.log( 'Data....', screenSpaceH, screenSpaceV, itemHeight, itemWidth,	'Items amount/list', items.length, items );		
+		var screenSpaceH = ge( 'DoorsScreen' ).offsetWidth - 10;
+		var screenSpaceV = ge( 'DoorsScreen' ).offsetHeight - 10 - 64;
 		
 		var colsAvailable = Math.floor( screenSpaceH / itemWidth ) - 1;
 		var rowsNeeded = Math.ceil( items.length / colsAvailable );
@@ -773,6 +837,15 @@ Workspace = {
 	},
 	refreshDesktop: function()
 	{
+		// Oh yeah, update windows
+		for( var a in movableWindows )
+		{
+			if( movableWindows[a].content.redrawBackdrop )
+			{
+				movableWindows[a].content.redrawBackdrop();
+			}
+		}
+		
 		var self = this;
 		this.getMountlist( function()
 		{
@@ -809,7 +882,7 @@ Workspace = {
 			}
 			
 			// Recall wallpaper
-			if( self.wallpaperImage )
+			if( self.wallpaperImage != 'color' )
 			{
 				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -824,25 +897,24 @@ Workspace = {
 					}
 					// Load image
 					var i = new Image();
-					if( found )
-						i.src = getImageUrl( self.wallpaperImage );
-					else i.src = '/webclient/gfx/theme/default_login_screen.jpg';
 					i.onload = function()
 					{
 						eles[0].style.backgroundSize = 'cover';
 						eles[0].style.backgroundImage = 'url(' + this.src + ')';
 						setupDriveClicks();
+						this.done = true;
 					}
+					if( found )
+						i.src = getImageUrl( self.wallpaperImage );
+					else i.src = '/webclient/gfx/theme/default_login_screen.jpg';
 					if( i.width > 0 && i.height > 0 ) i.onload();
 				
 					// If this borks up in 2 seconds, bail!
 					setTimeout( function()
 					{
-						if( !i.width && !i.height )
+						if( !i.done )
 						{
-							Workspace.wallpaperImage = false;
-							setupDriveClicks();
-							
+							i.onload();
 						}
 					}, 2000 );
 				}
@@ -853,12 +925,14 @@ Workspace = {
 				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
 				{
+					eles[0].style.backgroundImage = '';
 					setupDriveClicks();
 				}
 			}
 			
 			// Show deepest field now..
 			ge( 'DeepestField' ).style.opacity = '1';
+			
 		} );
 	},
 	// Get a door by path
@@ -960,6 +1034,7 @@ Workspace = {
 				
 					// We need volume information
 					d.Volume = o.Volume;
+					d.Type = typ;
 				
 					// Add to list
 					t.icons.push( o );
@@ -1033,6 +1108,7 @@ Workspace = {
 			return false;
 		return this.icons;
 	},
+	// TODO: DEPRECATED: REMOVE
 	unmountDrive: function ( driveid, callback )
 	{
 		var j = new cAjax ();
@@ -1047,6 +1123,7 @@ Workspace = {
 		}
 		j.send ();
 	},
+	// TODO: DEPRECATED: REMOVE
 	mountDrive: function ( driveid, callback )
 	{
 		var j = new cAjax ();
@@ -1285,7 +1362,6 @@ Workspace = {
 		// check if we have a selected icon
 		if( icon )
 		{
-			console.log( icon );
 			var w = new View( {
 				title: i18n( 'information_of_icon' ) + ': ' + icon.Filename,
 				width: 500,
@@ -1560,7 +1636,7 @@ Workspace = {
 					},
 					{
 						name:	i18n( 'menu_refresh_desktop' ),
-						command: 'RefreshDesktop()'
+						command: function(){ Workspace.refreshDesktop(); }
 					},
 					{
 						name:	i18n( 'menu_upload_file' ),
@@ -1575,7 +1651,7 @@ Workspace = {
 						command: function(){ Workspace.showLauncher(); }
 					},
 					{
-						name:   i18n( 'menu_connect_filesystem' ),
+						name:   i18n( 'menu_mount_filesystem' ),
 						command: function(){ Workspace.connectFilesystem(); }
 					},
 					/*{
@@ -1664,7 +1740,42 @@ Workspace = {
 					{
 						name:	i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile(); }
-					}
+					},
+					{
+						divider: true
+					},
+					{
+						name:   i18n( 'menu_unmount_filesystem' ),
+						command: function(){
+							var s = ge( 'DoorsScreen' );
+							var p = false;
+							if( s && s.screen && s.screen._screen.icons )
+							{
+								var ics = s.screen._screen.icons;
+								for( var a = 0; a < ics.length; a++ )
+								{
+									if( ics[a].domNode.className.indexOf( ' Selected' ) > 0 )
+									{
+										p = ics[a].Path;
+										break;
+									}
+								}
+							}
+							// For the path
+							if( p )
+							{
+								var f = new FriendLibrary( 'system.library' );
+								f.onExecuted = function( e, d )
+								{ Workspace.refreshDesktop(); }
+								var args = {
+									command: 'unmount',
+									devname: p.split( ':' ).join ( '' ),
+									path: p
+								};
+								f.execute( 'device', args );
+							}
+						}
+					},
 				]
 			},
 			{
@@ -1706,6 +1817,7 @@ Workspace = {
 			{
 				ge( 'WorkspaceRunCommand' ).value = Workspace.lastExecuted;
 			}
+			ge('WorkspaceRunCommand').select();
 			ge('WorkspaceRunCommand').focus();
 		}
 		f.load();
@@ -1938,12 +2050,12 @@ function ExecuteVoiceCommands( e )
 
 // -----------------------------------------------------------------------------
 
-// Popup an About FriendUP dialog..
+// Popup an About FriendUP dialog...
 function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.0 b1',
+		title: i18n( 'about_friendup' ) + ' v1.0 b2',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -1963,7 +2075,7 @@ function ClearCache()
 
 // Shows eula
 
-/*function ShowEula( accept )
+function ShowEula( accept )
 {
 	if( accept )
 	{
@@ -1998,20 +2110,5 @@ function ClearCache()
 		d.innerHTML = data;
 	}
 	f.load();
-}*/
-
-// Login daemon
-function LoginDaemon()
-{
-	if( typeof( Workspace.sessionId ) != 'undefined' && document.body.className == 'Inside' )
-	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			// Log him out!
-			if( typeof( d ) == 'undefined' ) document.location.reload();
-		}
-		m.execute( 'mountlist' );
-	}
 }
 

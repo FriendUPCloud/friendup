@@ -43,8 +43,8 @@ enum {
 
 typedef struct File
 {
-	ULONG											f_ID;               // ID in database
-	struct MinNode                              node;               // link to another files, used by Mount
+	ULONG										f_ID;               // ID in database
+	struct MinNode						node;               // link to another files, used by Mount
 	//struct MinNode	f_SubEntries;	// files inside directory
 	//struct File 	*parent;
 	
@@ -67,6 +67,8 @@ typedef struct File
 	
 	struct File								*f_SharedFile;		// points to shared device
 	void											*f_SpecialData;     // pointer to special data
+	
+	BOOL 											f_Mounted;			// if device is mounted use it
 }File;
 
 //

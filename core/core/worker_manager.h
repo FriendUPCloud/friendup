@@ -23,7 +23,10 @@
 #include "worker.h"
 #include "network/socket.h"
 
-#define WORKERS 	32
+//#define MAX_WORKERS 	64
+//#define MIN_WORKERS 5
+#define MAX_WORKERS 	1
+#define MIN_WORKERS 1
 
 struct SocketThreadData {
 	struct epoll_event *ce;

@@ -101,6 +101,14 @@ var Application =
 				break;
 		}
 	},
+	// Get the session state of an application
+	sessionStateGet: function()
+	{
+	},
+	// Set the session state on an object
+	sessionStateSet: function( sessionObject )
+	{
+	},
 	// Send quit up in hierarchy
 	quit: function( skipSendMessage )
 	{
@@ -2003,6 +2011,35 @@ function Library( libraryName )
 	}
 }
 
+// Resource functions ----------------------------------------------------------
+
+// Add Css by url
+function AddCSSByUrl( csspath, callback )
+{
+	if( !window.cssStyles ) window.cssStyles = [];
+	if( typeof( window.cssStyles[csspath] ) != 'undefined' )
+	{
+		// Remove existing and clean up
+		document.body.removeChild( window.cssStyles[csspath] );
+		var o = [];
+		for( var a in window.cssStyles )
+		{
+			if( a != csspath )
+			{
+				o[a] = window.cssStyles[a];
+			}
+		}
+		window.cssStyles = o;
+	}
+	// Add and register
+	var s = document.createElement( 'link' );
+	s.rel = 'stylesheet';
+	s.href = csspath;
+	if( callback ){ s.onload = function() { callback(); } }
+	document.body.appendChild( s );
+	window.cssStyles[csspath] = s;
+}
+
 // Message passing mechanism ---------------------------------------------------
 
 _sendMessage = function(){};
@@ -2176,14 +2213,20 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		
 		var loadingResources = 0;
 		var totalLoadingResources = 0;
-				
-		ParseCssFile( tpath, '/webclient/' );
-		var css = [
-			'font-awesome.min.css'
-		];
+		
+		// Let's save some time		
+		//ParseCssFile( tpath, '/webclient/' );
+		if( !document.themeCss )
+		{
+			var s = document.createElement( 'link' );
+			document.themeCss = s;
+			s.rel = 'stylesheet';
+			s.href = tpath.split( '.css' ).join( '_compiled.css' );
+			document.body.appendChild( s );
+		}
+		
 		
 		var activat = [];
-		
 		
 		// What to do when we are done loading..
 		function doneLoading( e )
@@ -2229,7 +2272,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 						// Callback to parent and say we're done!
 						if( initcallback )
 							initcallback();
-					}, 100 );
+					}, 50 );
 				}
 			}
 			
@@ -2239,20 +2282,6 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 				waitToStart();
 			}
 		}
-		function addCss( cssPath )
-		{
-			var css = document.createElement( 'link' );
-			css.type = 'text/css';
-			css.rel = 'stylesheet';
-			css.onload = doneLoading;
-			document.head.appendChild( css );
-			css.href = '/webclient/css/' + cssPath;
-			totalLoadingResources++;
-		}
-		
-		// Add the css
-		css.forEach( addCss );
-		
 		
 		// For templates
 		if( packet.appPath ) Application.appPath = packet.appPath;
@@ -2272,6 +2301,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 					globalConfig.alternateLanguage = packet.spokenAlternate;
 				doneLoading();
 			} );
+		}
+		else
+		{
+			totalLoadingResources++;
+			doneLoading();
 		}
 		
 		// Delayed loading of scripts
@@ -2313,6 +2347,21 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			windowId:         packet.windowId
 		} );
 		
+		window.sendEventToParent = function( e )
+		{
+			console.log('event for our parent....',e);
+			if(window.parent && window.parent.window )
+			{
+				ne = new e.constructor(e.type, e);
+				window.parent.window.dispatchEvent(ne);
+			}
+		}
+		
+		window.addEventListener('touchstart', sendEventToParent);
+		window.addEventListener('touchmove', sendEventToParent );
+		window.addEventListener('touchend', sendEventToParent );
+
+		
 		window.loaded = true;
 	}
 	
@@ -2321,24 +2370,13 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	// TODO: Figure out why we can't load scrollbars immediately
 	var head = document.getElementsByTagName( 'head' )[0];
 	
-	var spath = '/webclient/theme/scrollbars.css';
 	if( packet && packet.theme )
-		spath = '/themes/' + packet.theme + '/scrollbars.css';
-	
-	setTimeout( function(){
-		var basecss = document.createElement( 'link' );
-		basecss.rel = 'stylesheet';
-		basecss.href = spath;
-		head.appendChild( basecss );
-		document.body.style.display = '';
-	}, 0 );
+		AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
+	else AddCSSByUrl( '/webclient/theme/scrollbars.css' );
 	
 	var js = [ 
-		'js/utils/engine.js',
-		'js/io/cajax.js',
-		'js/io/friendlibrary.js',
-		'js/utils/json.js',
-		'js/utils/cssparser.js'
+		'js/utils/engine.js;js/io/cajax.js;' + 
+		'js/io/friendlibrary.js;js/utils/json.js;js/utils/cssparser.js' 
 	];
 	
 	var elez = [];
@@ -2346,7 +2384,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	{
 		var s = document.createElement( 'script' );
 		// Set src with some rules whether it's an app or a Doors component
-		s.src = '/webclient/' + js[a];
+		s.src = '/webclient/' + js[a].split( ';' ).join( ';/webclient/' );
 		elez.push( s );
 		
 		// When last javascript loads, parse css, setup translations and say:

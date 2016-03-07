@@ -4,7 +4,7 @@ CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -I. -I../../core/ -I..
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ 
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
-MODS	=	phpmod sysmod nodejsmod
+MODS	=	phpmod sysmod nodejsmod pythonmod javamod
 FSYS		=	fsyslocal fsysssh2 fsysphp
 
 
@@ -28,6 +28,14 @@ $(OUTPUT): $(OBJ_FILES)
 phpmod: moduledyn/phpmod.c moduledyn/phpmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
 	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/phpmod.c -o bin/emod/php.emod -shared -fPIC
+
+pythonmod: moduledyn/pythonmod.c moduledyn/pythonmod.d
+	@echo "\033[34mCompile php.emod ...\033[0m"
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/pythonmod.c -o bin/emod/python.emod -shared -fPIC
+	
+javamod: moduledyn/javamod.c moduledyn/javamod.d
+	@echo "\033[34mCompile java.emod ...\033[0m"
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/javamod.c -o bin/emod/java.emod -shared -fPIC
 
 sysmod: moduledyn/sysmod.c moduledyn/sysmod.d
 	@echo "\033[34mCompile sys.emod ...\033[0m"

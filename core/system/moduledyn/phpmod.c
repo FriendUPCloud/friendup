@@ -139,11 +139,12 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	
 	DEBUG("[PHPmod] command launched\n");
 	int errors = 0;
+	int lbufcall = LBUFFER_SIZE + 1;
 	
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
-		lnk->data = calloc( LBUFFER_SIZE + 1, sizeof( char ) );
+		lnk->data = calloc( lbufcall, sizeof( char ) );
 		if( !lnk->data )
 		{
 			lnk->next = NULL;
@@ -178,10 +179,13 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	struct linkedCharArray *tmp = NULL;
 	do
 	{
-		if( lnk->data && lnk->length )
+		if( lnk->data )
 		{
-			memcpy( final + offset, lnk->data, lnk->length );
-			offset += lnk->length;
+			if( lnk->length )
+			{
+				memcpy( final + offset, lnk->data, lnk->length );
+				offset += lnk->length;
+			}
 			free( lnk->data ); 
 		}
 		tmp = lnk->next;

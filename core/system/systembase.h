@@ -63,12 +63,13 @@
 
 typedef struct Device
 {
-	char 				*d_Type;
-	char 				*d_Handler;
-	char 				*d_Language;
-	ULONG 			d_Version;
-	File 					*d_FSys;
-}Device;
+	char                *d_Type;
+	char                *d_Handler;
+	char                *d_Language;
+	ULONG               d_Version;
+	File                *d_FSys;
+	pthread_mutex_t     mutex;
+} Device;
 
 //
 // Mount parameters
@@ -86,6 +87,7 @@ typedef struct Device
 #define FSys_Mount_Module				(FSys_Mount_Dummy+9)
 #define FSys_Mount_Owner					(FSys_Mount_Dummy+10)
 #define FSys_Mount_ID						(FSys_Mount_Dummy+11)
+#define FSys_Mount_Mount 				(FSys_Mount_Dummy+12)
 
 //
 // system.library errors
@@ -137,6 +139,8 @@ typedef struct SystemBase
 	DOSDriver                           *sl_DOSDrivers;         // avaiable DOSDrivers
 	
 	User                                *sl_Sessions;           // logged users with mounted devices
+	
+	pthread_mutex_t                     mutex;                  // Mutex for systembase
 	
 	struct UserLibrary                  *ulib;
 	//struct SQLConPool			        **sqllib;
@@ -205,6 +209,8 @@ typedef struct SystemBase
 	struct ImageLibrary *(*LibraryImageGet)( struct SystemBase *sb );
 
 	void (*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
+	
+	int (*UserDeviceMount)( struct SystemBase *l, MYSQLLibrary *sqllib, User *usr );
 
 //
 	#ifdef WEBSOCKETS

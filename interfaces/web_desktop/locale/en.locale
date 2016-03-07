@@ -120,7 +120,8 @@ menu_snapshot                           : Snapshot
 menu_snapshot_all                       : Snapshot all windows
 menu_bookmarks                          : Bookmarks
 menu_add_bookmark                       : Add bookmark
-menu_connect_filesystem                 : Connect drive
+menu_mount_filesystem                   : Connect drive
+menu_unmount_filesystem                 : Disconnect drive
 
 cmd_execute                             : Execute
 

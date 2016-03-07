@@ -79,11 +79,11 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		{
 			if( i == 0 )
 			{
-				sprintf( temp, "{ 'ID':'%d' ,'Port':'%d','Workers':", fc->fci_CoreID, fc->fci_Port );
+				sprintf( temp, "{ 'ID':'%32s' ,'Port':'%d','Workers':", fc->fci_CoreID, fc->fci_Port );
 			}
 			else
 			{
-				sprintf( temp, ", { 'ID':'%d' ,'Port':'%d','Workers':", fc->fci_CoreID, fc->fci_Port );
+				sprintf( temp, ", { 'ID':'%32s' ,'Port':'%d','Workers':", fc->fci_CoreID, fc->fci_Port );
 			}
 			BufStringAdd( bs, temp );
 		

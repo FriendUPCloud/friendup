@@ -21,6 +21,33 @@ var api = api || {};
 var friendUP = window.friendUP || {};
 var Doors = window.Doors || {};
 
+// Add Css by url
+function AddCSSByUrl( csspath, callback )
+{
+	if( !window.cssStyles ) window.cssStyles = [];
+	if( typeof( window.cssStyles[csspath] ) != 'undefined' )
+	{
+		// Remove existing and clean up
+		document.body.removeChild( window.cssStyles[csspath] );
+		var o = [];
+		for( var a in window.cssStyles )
+		{
+			if( a != csspath )
+			{
+				o[a] = window.cssStyles[a];
+			}
+		}
+		window.cssStyles = o;
+	}
+	// Add and register
+	var s = document.createElement( 'link' );
+	s.rel = 'stylesheet';
+	s.href = csspath;
+	if( callback ){ s.onload = function() { callback(); } }
+	document.body.appendChild( s );
+	window.cssStyles[csspath] = s;
+}
+
 // dummy View to collect .run() handler from application
 window.View = {};
 
@@ -271,8 +298,9 @@ window.View = {};
 		self.activate();
 		notify();
 		
-		var themeFile = window.viewConfig.themePath + '/theme.css';
-		ParseCssFile( themeFile, '/webclient/' );
+		//var themeFile = window.viewConfig.themePath + '/theme.css';
+		//ParseCssFile( themeFile, '/webclient/' );
+		AddCSSByUrl( window.viewConfig.themePath + '/theme_compiled.css' );
 		
 		function notify() {
 			self.send({
@@ -426,4 +454,22 @@ window.View = {};
 		*/
 	}
 	
+})( api );
+
+// Say
+(function( ns, undefined ) {
+	ns.Say = function( toSay, langCode ) {
+		var defaultLanguage = 'en-US';
+		var availableVoices = window.speechSynthesis.getVoices();
+		var utterance = new window.SpeechSynthesisUtterance( toSay );
+		//console.log( 'availableVoices', availableVoices );
+		availableVoices.forEach( matchPreference );
+		
+		utterance.lang = defaultLanguage;
+		window.speechSynthesis.speak( utterance );
+		
+		function matchPreference( voice, index ) {
+			//console.log( 'voice', { l: voice, i: index });
+		}
+	}
 })( api );

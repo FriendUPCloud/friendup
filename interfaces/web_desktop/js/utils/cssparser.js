@@ -18,65 +18,81 @@
 *******************************************************************************/
 
 // Parse a string / file and make compact, logical css
-function ParseCssFile ( string, path, callback )
+function ParseCssFile( string, path, callback )
 {
 	if( !path ) path = document.location.href.split( 'index.' )[0];
 	path = path.split( 'sandboxed.' )[0];
 	
-	if( typeof( cAjax ) == 'undefined' ) 
+	if( typeof( cAjax ) == 'undefined' )
 		return setTimeout( function(){ ParseCssFile( string, path, callback ); }, 25 );	
 	
 	var j = new cAjax ();
 	j.open ( 'get', string, false );
-	j.onload = function ()
+	j.sourcePath = string;
+	j.onload = function()
 	{
 		var string = Trim ( this.responseText () );
-		var jaxies = [];
 		var loading = 0;
+		var paths = []; // ones to concat
 
-		// Import other included parsed css files with their own rules
-		while ( true )
+		// Make relative path
+		var rpath = path.split( /http[^:]*?\:\/\/[^/]*?\// ).join( '' );
+		var dmain = '';
+		if( dmain = path.match( /(http[^:]*?\:\/\/[^/]*?\/)/ ) )
+			dmain = dmain[1];
+		else dmain = '';
+		
+		// Import other included parsed css files with their own rules		
+		while( true )
 		{
 			var matches = string.match ( /\@append[^u]*?url[^(]*?\(([^)]*?)\)[^;]*?\;/ );
 			if ( matches )
 			{
 				string = string.split ( matches[0] ).join ( '' );
-				matches[1] = matches[1].split ( /["|']/ ).join ( '' );
-				
-				var jax = new cAjax ();
-				jax.open ( 'get', path + matches[1], true );
-				jax.loaded = false;
-				jax.jaxies = [];
-				jax.onload = function ()
-				{
-					this.loaded = true;
-					if( --loading == 0 )
-						AddParsedCSS( string, jaxies, callback );	
-				}
-				jaxies.push ( jax );
+				matches[1] = rpath + matches[1].split ( /["|']/ ).join ( '' );
+				paths.push( matches[1] );
 			}
 			else break;
 		}
 		
-		// Make async (first object has string)
-		loading = jaxies.length;
-		for ( var a = 0; a < jaxies.length; a++ )
+		// Do it
+		var out = '';
+		for( var a = 0; a < paths.length; a++ )
 		{
-			jaxies[a].jaxies = jaxies;
-			jaxies[a].send ();
+			if( a > 0 ) out += ';';
+			out += paths[a];
 		}
+		
+		// Final path
+		out = dmain + out;
+		
+		// Load extracted paths at once and parse them
+		var jax = new cAjax();
+		jax.open( 'get', out, true );
+		jax.onload = function()
+		{
+			AddParsedCSS( string, this.responseText(), callback, path );	
+		}
+		jax.send();
 	}
 	j.send ();
 }
 
-function AddParsedCSS ( string , dataqueue, callback )
+function AddParsedCSS ( string, dataqueue, callback, originalPath )
 {
-	// Add queued data
-	for ( var a = 0; a < dataqueue.length; a++ )
+	// Add queued data (array)
+	if( typeof( dataqueue ) != 'string' )
 	{
-		string += "\n" + Trim ( dataqueue[a].responseText () ) + "\n";
+		for ( var a = 0; a < dataqueue.length; a++ )
+		{
+			string += "\n" + Trim ( dataqueue[a].responseText () ) + "\n";
+		}
 	}
-	
+	// String
+	else
+	{
+		string += "\n" + Trim( dataqueue );
+	}
 	// Check condition blocks
 	var mDat = false;
 	while( mDat = string.match( /(\@if.*?[\n|\r]+)/i ) )
@@ -97,7 +113,6 @@ function AddParsedCSS ( string , dataqueue, callback )
 			}
 		}
 	}
-	
 	// Parse this css complete file, with these toplevel declarations
 	var theme = new Object ();
 	var replacements = [];
@@ -132,11 +147,13 @@ function AddParsedCSS ( string , dataqueue, callback )
 	}
 	// Declaration of "with" rules
 	var rwith = [];
-	while ( matches = string.match ( /(.*?)\ with (\.[^\n|{| ]*?)[\n|{| ]/i ) )
+	//var t = ( new Date() ).getTime();
+	while( matches = string.match( /(.*?)\ with (\.[^\n|{| ]*?)[\n|{| ]/i ) )
 	{
-		if ( typeof ( rwith[matches[2]] ) == 'undefined' ) rwith[matches[2]] = [];
-		rwith[matches[2]].push ( matches[1] );
-		string = string.split ( matches[0] ).join ( matches[1] + "\n" );
+		if( typeof( rwith[matches[2]] ) == 'undefined' ) rwith[matches[2]] = [];
+		rwith[matches[2]].push( matches[1] );
+		//console.log( matches[2] + ' -> ' + matches[1] );
+		string = string.split( matches[0] ).join ( matches[1] + "\n" );
 	}
 	// Execute replacements
 	if ( replacements.length )
@@ -145,32 +162,32 @@ function AddParsedCSS ( string , dataqueue, callback )
 		{
 			var replacement = replacements[a];
 			// Remove variable lines with the value delete
-			if ( replacement[1] == 'delete' )
+			if( replacement[1] == 'delete' )
 			{
 				// Add slashes
 				var rp = replacement[1];
 				var op = '';
-				for ( var a = 0; a < rp.length; a++ )
+				for( var u = 0; u < rp.length; u++ )
 				{
-					var c = rp.substr ( a, 1 );
+					var c = rp.substr ( u, 1 );
 					if ( c.match ( /[^a-zA-Z0-9]/ ) )
 						op += '\'';
 					op += c;
 				}
-				var xp = new RegExp ( '/.*?\:.*?' + op + '\;[\n|\r]+/i' );
-				string = string.split ( xp ).join ( '' );
+				var xp = new RegExp( '/.*?\:.*?' + op + '\;[\n|\r]+/i' );
+				string = string.split( xp ).join ( '' );
 			} 
-			else string = string.split ( replacement[0] + ';' ).join ( replacement[1] + ';' );
+			else string = string.split( replacement[0] + ';' ).join ( replacement[1] + ';' );
 		}
 	}
 	// Execute block replacements
-	if ( rwith.length )
+	if( rwith.length )
 	{
 		for ( var cls in rwith )
 		{
 			var elements = rwith[cls];
 			cls = str_replace ( '.', '', cls );
-			var findex = new RegExp ( '/\.'+cls+'([\n|{])/i' );
+			var findex = new RegExp( '/\.'+cls+'([\n|{])/i' );
 			var foundd = string.match ( findex );
 			if ( foundd )
 			{
@@ -184,14 +201,9 @@ function AddParsedCSS ( string , dataqueue, callback )
 	// Strip character returns|tabs and whitespace
 	string = string.split ( /[\n|\t|\r]+/i ).join ( '' );
 	string = string.split ( /[\s]{2,}/i ).join ( '' );*/
-
 	var style = document.createElement ( 'style' );
 	style.innerHTML = string;
 	document.getElementsByTagName( 'head' )[0].appendChild ( style );
-	
-	if( callback ) 
-	{
-		setTimeout( callback, 400 );
-	}
+	if( callback ) setTimeout( callback, 0 );
 }
 

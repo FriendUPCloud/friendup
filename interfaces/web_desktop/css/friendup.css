@@ -1,7 +1,5 @@
 /* Themable nice'o css ------------------------------------------------------ */
 
-@import url(font-awesome.min.css);
-
 body
 {
 	font-family: sans serif;
@@ -62,6 +60,7 @@ hr.Space
 	line-height: 30px;
 	height: 30px;
 }
+
 .Col5, .Col10, .Col15, .Col20, .Col25, .Col30, .Col35,
 .Col40, .Col45, .Col50, .Col55, .Col60, .Col65, .Col70, 
 .Col75, .Col80, .Col85, .Col90, .Col95, .Col100
@@ -162,3 +161,4 @@ body > .Eula > div.EulaInfo button + button
 {
 	float: right;
 }
+

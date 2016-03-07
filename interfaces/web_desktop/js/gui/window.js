@@ -316,7 +316,22 @@ function ResizeWindow( div, wi, he )
 		}
 		else if( Workspace && Workspace.screenDiv )
 		{
-			div.style.height = Math.min( Workspace.screenDiv.clientHeight - div.offsetTop - 72, Math.max( 256, Workspace.screenDiv.clientHeight - 200 ) ) + 'px';
+
+			var count = -1;
+			if( typeof movableWindows != 'undefined' )
+			{
+				count = 0;
+				for( var i in movableWindows)
+				{
+					if( movableWindows[i].hasAttribute('mimized') )
+						continue;
+					else
+						count++
+				}				
+			}
+
+			var targetOffsetTopp = ( count > -1 ? count * 18 : div.offsetTop ); // we should have each window times 36 but as every windows is twice in the list we just make it 18 :)
+			div.style.height = Math.min( Workspace.screenDiv.clientHeight - targetOffsetTopp - 72, Math.max( 256, Workspace.screenDiv.clientHeight - 200 ) ) + 'px';
 		}
 	}
 	
@@ -1300,7 +1315,6 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 		// set up touch interaction
 		if( typeof Hammer != 'undefined' )
 		{
-			console.log('touchy touchy', title);
 			var wh = new Hammer( title );
 			wh.get('swipe').set({ direction:Hammer.DIRECTION_ALL  });
 			wh.on('swipe', function(evt) {
@@ -1342,7 +1356,9 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			
 			// resize us... only heightwise for now...
 			var hresize = new Hammer( resize );
-			hresize.on('tap', function(evt) { console.log('tappd', evt) });
+			hresize.on('tap', function(evt) {
+				//console.log('tappd', evt)
+			});
 			hresize.get('pan').set({ direction:Hammer.DIRECTION_ALL  });
 			hresize.on('press pan', function(evt) {
 				if( evt.type == 'press' )
@@ -1357,7 +1373,9 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			
 			// resize us... only heightwise for now...
 			var hbottombar = new Hammer( bottombar );
-			hbottombar.on('tap', function(evt) { console.log('tappd', evt) });
+			hbottombar.on('tap', function(evt) {
+				//we do nothing hre at the moment...
+			});
 			hbottombar.get('pan').set({ direction:Hammer.DIRECTION_ALL  });
 			hbottombar.on('press pan', function(evt) {
 				if( evt.type == 'press' )
@@ -1370,7 +1388,8 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 
 				}	
 			});
-		}		
+		}
+			
 	}
 	// Ok, center
 	else if( !wp )
@@ -1667,8 +1686,15 @@ var View = function ( args )
 		
 		// Make sure scripts can be run after all resources has loaded
 		var r;
-		while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
-			content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+		if( content )
+		{
+			while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
+				content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+		}
+		else
+		{
+			content = '';
+		}
 			
 		var c = this._window;
 		if( c.content ) c = c.content;

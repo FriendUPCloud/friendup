@@ -59,7 +59,7 @@ typedef struct User
 	time_t                           u_CreatedTime;
 	
 	File									*u_MountedDevs;     // root file]
-	//File 									*u_SharedDevs;		// shared resources from other users
+	File 									*u_WebDAVDevs;		// shared webdav resources 
 	
 	UserGroup                        **u_Groups;         // pointer to groups
 	UserApplication                  **u_Applications;   // pointer to application settings

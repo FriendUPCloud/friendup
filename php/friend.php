@@ -149,14 +149,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	require_once( 'classes/logger.php' );
 	$logger =& $GLOBALS['Logger'];
 	
+	// Set config object
 	$Config = new Object();
-	$Config->Hostname = $ar['host'];
-	$Config->Username = $ar['login'];
-	$Config->Password = $ar['password'];
-	$Config->DbName   = $ar['dbname'];
-	$Config->FCHost   = $ar['fchost'];
-	$Config->FCPort   = $ar['fcport'];
-	$Config->FCUpload = $ar['fcupload'];
+	$car = array( 'Hostname', 'Username', 'Password', 'DbName', 
+	              'FCHost', 'FCPort', 'FCUpload' );
+	foreach( array(
+		'host', 'login', 'password', 'dbname', 'fchost', 'fcport', 'fcupload'
+	) as $k=>$type )
+	{
+		if( isset( $ar[$type] ) )
+			$Config->{$car[$k]} = $ar[$type];
+	}
 	
 	// Temporary folder
 	$Config->FCTmp    = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';

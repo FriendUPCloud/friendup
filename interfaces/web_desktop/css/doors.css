@@ -13,7 +13,7 @@ body.Inside
 body #Screens
 {
 	transition: opacity 0.5s;
-	background-image: url(theme/loginimage.jpg);
+	background-image: url(../theme/loginimage.jpg);
 	background-position: center center;
 	background-size: cover;
 }
@@ -149,7 +149,7 @@ body #DeepestField
     border: 0;
     background-color: transparent;
     padding: 0;
-    background-image: url(gfx/system/VoiceIcon.png);
+    background-image: url(../gfx/system/VoiceIcon.png);
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -180,7 +180,7 @@ body #DeepestField
   100%   { color: #ffdd00; }
 }
 
-#Handsfree + #Screens #Tray > .Microphone:before
+#Handsfree.listening + #Screens #Tray > .Microphone:before
 {
 	color: #ff4444;
 	transition: color 0.2s;
@@ -291,7 +291,7 @@ body #DeepestField
 	box-shadow: 0px 0px 4px 1px rgba(0,0,0,0.5);
 	-moz-box-shadow: 0px 0px 4px 1px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0px 0px 4px 1px rgba(0,0,0,0.5);
-	background-image: url(gfx/theme/logo_20px.png);
+	background-image: url(../gfx/theme/logo_20px.png);
 	background-repeat: no-repeat;
 	background-position: 5px 5px;
 	padding-left: 30px;
@@ -428,8 +428,11 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 
 .File.Selected
 {
+	/*
 	opacity: 0.7;
 	filter:alpha(opacity=70);
+	why do we want to make them transparent?
+	*/
 }
 
 .File.Selected .Title
@@ -474,68 +477,68 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 
 .File .Icon .File
 {
-	background: url(gfx/icons/64x64/mimetypes/unknown.png);
+	background: url(../gfx/icons/64x64/mimetypes/unknown.png);
 	background-size: contain;
 }
 
 .File .Icon .Drive
 {
-	background: url(gfx/icons/64x64/devices/drive-harddisk.png);
+	background: url(../gfx/icons/64x64/devices/drive-harddisk.png);
 	background-size: contain;
 }
 
 .File .Icon .Directory
 {
-	background: url(gfx/icons/64x64/places/folder.png);
+	background: url(../gfx/icons/64x64/places/folder.png);
 	background-size: contain;
 }
 
 .File .Icon .Directory.Upload
 {
-	background: url(gfx/icons/64x64/places/folder-downloads.png);
+	background: url(../gfx/icons/64x64/places/folder-downloads.png);
 	background-size: contain;
 }
 
 .File .Icon .NetworkDirectory
 {
-	background: url(gfx/icons/64x64/places/folder-network.png);
+	background: url(../gfx/icons/64x64/places/folder-network.png);
 	background-size: contain;	
 }
 
 .File .Icon .Arena
 {
-	background: url(gfx/icons/64x64/apps/kjournal.png);
+	background: url(../gfx/icons/64x64/apps/kjournal.png);
 	background-size: contain;
 }
 
 .File .Icon .System
 {
-	background: url(gfx/icons/64x64/devices/computer.png);
+	background: url(../gfx/icons/64x64/devices/computer.png);
 	background-size: contain;
 }
 
 
 .File .Icon .Home
 {
-	background: url(gfx/icons/64x64/places/user-home.png);
+	background: url(../gfx/icons/64x64/places/user-home.png);
 	background-size: contain;
 }
 
 .File .Icon .Application
 {
-	background: url(gfx/icons/64x64/mimetypes/application-x-desktop.png);
+	background: url(../gfx/icons/64x64/mimetypes/application-x-desktop.png);
 	background-size: contain;
 }
 
 .File .Icon .Trashcan
 {
-	background: url(gfx/icons/64x64/status/user-trash-full.png);
+	background: url(../gfx/icons/64x64/status/user-trash-full.png);
 	background-size: contain;
 }
 
 .File .Icon .Ram
 {
-	background: url(gfx/icons/64x64/devices/media-flash.png);
+	background: url(../gfx/icons/64x64/devices/media-flash.png);
 	background-size: contain;
 }
 
@@ -546,38 +549,44 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 
 .File .Icon .Door
 {
-	background: url(gfx/icons/64x64/devices/drive-harddisk.png);
+	background: url(../gfx/icons/64x64/devices/drive-harddisk.png);
 	background-size: contain;
 }
 
 .File .Icon .article
 {
-	background: url(gfx/icons/64x64/apps/knewsticker.png);
+	background: url(../gfx/icons/64x64/apps/knewsticker.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
 .File .Icon .TypeGIF
 {
-	background: url(gfx/icons/64x64/mimetypes/image-x-generic.png);
+	background: url(../gfx/icons/64x64/mimetypes/image-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeDOC
 {
-	background: url(gfx/icons/64x64/mimetypes/application-msword.png);
+	background: url(../gfx/icons/64x64/mimetypes/application-msword.png);
 	background-size: contain;
 }
 
 .File .Icon .TypePDF
 {
-	background: url(gfx/icons/64x64/mimetypes/application-pdf.png);
+	background: url(../gfx/icons/64x64/mimetypes/application-pdf.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeTXT
 {
-	background: url(gfx/icons/64x64/mimetypes/text-plain.png);
+	background: url(../gfx/icons/64x64/mimetypes/text-plain.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeRUN
+{
+	background: url(../gfx/icons/64x64/mimetypes/application-x-executable-script.png);
 	background-size: contain;
 }
 
@@ -585,74 +594,82 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 .File .Icon .TypeOGG,
 .File .Icon .TypeWAV
 {
-	background: url(gfx/icons/64x64/mimetypes/audio-x-generic.png);
+	background: url(../gfx/icons/64x64/mimetypes/audio-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeHTML
 {
-	background: url(gfx/icons/64x64/mimetypes/text-html.png);
+	background: url(../gfx/icons/64x64/mimetypes/text-html.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeJS, .File .Icon .TypeJSX
 {
-	background: url(gfx/icons/64x64/mimetypes/application-x-javascript.png);
+	background: url(../gfx/icons/64x64/mimetypes/application-x-javascript.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeAVI
 {
-	background: url(gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background: url(../gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeMPG, .File .Icon .TypeMPEG
 {
-	background: url(gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background: url(../gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeMOV, .File .Icon .TypeMP4
 {
-	background: url(gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background: url(../gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Tools
 {
-	background: url(gfx/icons/64x64/categories/applications-utilities.png);
+	background: url(../gfx/icons/64x64/categories/applications-utilities.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Prefs
 {
-	background: url(gfx/icons/64x64/categories/preferences-system.png);
+	background: url(../gfx/icons/64x64/categories/preferences-system.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Plugins
 {
-	background: url(gfx/icons/64x64/categories/preferences-other.png);
+	background: url(../gfx/icons/64x64/categories/preferences-other.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Docs
 {
-	background: url(gfx/icons/64x64/categories/system-help.png);
+	background: url(../gfx/icons/64x64/categories/system-help.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Modules
 {
-	background: url(gfx/icons/64x64/categories/applications-system.png);
+	background: url(../gfx/icons/64x64/categories/applications-system.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Applications
 {
-	background: url(gfx/icons/64x64/categories/applications-other.png);
+	background: url(../gfx/icons/64x64/categories/applications-other.png);
 	background-size: contain;
+}
+
+.Launcher .File, 
+.Launcher .File div 
+{
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 /* Special case for the main doors screen */
@@ -665,7 +682,7 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 /* Progress bars ------------------------------------------------------------ */
 .Frame .Groove + .Bar
 {
-	background-image: url(gfx/system/progressbar.gif);
+	background-image: url(../gfx/system/progressbar.gif);
 	background-repeat: repeat-x;
 	background-size: auto;
 	background-position: 0 0;
@@ -1059,5 +1076,13 @@ html #Statusbar
 	visibility: hidden;
 	position: absolute;
 	top: -100px;
+}
+
+.InputHeight
+{
+	padding: 0;
+	margin: 0;
+	line-height: 30px;
+	height: 30px;
 }
 

@@ -33,15 +33,36 @@ if( !$o->LoadTable() )
 	$SqlDatabase->query( '
 		CREATE TABLE DockItem 
 		( 
-			ID bigint(20) NOT NULL auto_increment, 
+			`ID` bigint(20) NOT NULL auto_increment, 
 			`Parent` bigint(20) default \'0\', 
-			UserID bigint(20) default \'0\', 
+			`DockID` bigint(20) NOT NULL,
+			`UserID` bigint(20) default \'0\', 
+			`Type` varchar(255) default \'executable\',
 			`Application` varchar(255), 
-			ShortDescription varchar(255), 
-			SortOrder int(11) default \'0\',
+			`ShortDescription` varchar(255), 
+			`SortOrder` int(11) default \'0\',
 			PRIMARY KEY(ID)
 		)
 	' );
+}
+// Do the tango, add the fields
+else
+{
+	$DockID = false;
+	$Type = false;
+	foreach( $o->fieldnames as $fn )
+	{
+		if( $fn == 'DockID' ) $DockID = true;
+		if( $fn == 'Type' ) $Type = true;
+	}
+	if( !$DockID )
+	{
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DockID` bigint(20) NOT NULL AFTER `Parent`' );
+	}
+	if( !$Type )
+	{
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Type` varchar(255) default \'executable\' AFTER `UserID`' );
+	}
 }
 
 // End run things first time ---------------------------------------------------
@@ -63,9 +84,10 @@ if( isset( $args->command ) )
 						$o->Current = true;
 					else $o->Current = false;
 					$o->Id = $row->ID;
+					$o->Type = $row->Type;
 					$o->Name = trim( $row->Application ) ? $row->Application : i18n( 'Unnamed' );
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
-					$o->Image = trim( $row->Application ) ? '' : 'gfx/icons/128x128/status/weather-none-available.png';
+					$o->Image = ( trim( $row->Application ) && $row->Type == 'executable' ) ? '' : 'gfx/icons/128x128/status/weather-none-available.png';
 					$eles[] = $o;
 				}
 				die( 'ok<!--separate-->' . json_encode( $eles ) );
@@ -147,9 +169,19 @@ if( isset( $args->command ) )
 			{
 				$exe = mysql_real_escape_string( $args->args->application );
 				$desc = mysql_real_escape_string( $args->args->shortdescription );
+				$type = mysql_real_escape_string( $args->args->type );
 				$SqlDatabase->Query( '
-					INSERT INTO DockItem ( UserID, Application, ShortDescription, Parent, SortOrder ) 
-					VALUES ( \'' . $User->ID . '\', \'' . $exe . '\', \'' . $desc . '\', 0, \'' . $max['MX'] . '\' )
+					INSERT INTO DockItem 
+						( UserID, `Type`, Application, ShortDescription, Parent, SortOrder ) 
+					VALUES 
+						( 
+							\'' . $User->ID . '\', 
+							\'' . $type . '\', 
+							\'' . $exe . '\', 
+							\'' . $desc . '\', 
+							0, 
+							\'' . $max['MX'] . '\' 
+						)
 				' );
 			}
 			else

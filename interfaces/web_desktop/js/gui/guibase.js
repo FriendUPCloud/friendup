@@ -387,7 +387,6 @@ function FindWindowById ( id )
 // Set a flag
 function SetWindowFlag ( div, flag, value )
 {
-	console.log('setting flag',flag,value,div);
 	if ( !div.flags )
 		div.flags = new Object ();
 	div.flags[flag] = value;
@@ -1281,8 +1280,8 @@ function showWorkbenchMenu ( popupElement )
 			menus[a].menus = menus;
 			menus[a][mode] = function()
 			{
-				if( Workspace.menuMode != 'miga' )
-					if( wm.isActivated ) return;
+				//if( Workspace.menuMode != 'miga' )
+				//	if( wm.isActivated ) return;
 				wm.isActivated = true; // This menu is activated!
 				console.log( 'this was triggered.' );
 				// Cover movable windows to avoid mouse collision
@@ -1430,21 +1429,21 @@ function SetMenuEntries ( menu, entries )
 // Just register we left the building
 movableMouseUp = function ( e )
 {
-	if ( !e ) e = window.event;
+	if( !e ) e = window.event;
 	
 	window.mouseDown = false;
 	window.mouseMoveFunc = false;
 	document.body.style.cursor = 'default';
 	
 	// Execute the release function
-	if ( window.mouseReleaseFunc )
+	if( window.mouseReleaseFunc )
 	{
-		window.mouseReleaseFunc ();
+		window.mouseReleaseFunc();
 		window.mouseReleaseFunc = false;
 	}
 	
 	// If we have a current movable window, stop "moving"
-	if ( window.currentMovable )
+	if( window.currentMovable )
 	{
 		ExposeWindows();
 		window.currentMovable.removeAttribute( 'moving' );
@@ -1464,6 +1463,7 @@ movableMouseUp = function ( e )
 	
 	// If we selected icons, clear the select region
 	ClearSelectRegion();
+	closeWorkbenchMenu();
 	
 	// Execute drop function on mousepointer (and stop moving!)
 	mousePointer.drop( e );	
@@ -1933,11 +1933,9 @@ function GenerateMenu( menudiv, menuItems, depth, appid )
 							
 						if( appid )
 						{
-							console.log( 'Even appid! ' + appid );
 							var app = findApplication( appid );
 							if( app )
 							{
-								console.log( 'Even app!', app );
 								app.contentWindow.postMessage( JSON.stringify( {
 									applicationId: appid,
 									command: this.command + ""

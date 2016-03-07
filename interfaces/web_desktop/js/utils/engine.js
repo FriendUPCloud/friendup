@@ -598,15 +598,17 @@ function TriggerEvent ( eventName, object )
 	}
 }
 
-function AddEvent( type, func )
+// Add an event with type 'onmousemove', function, then dom element (or false)
+function AddEvent( type, func, ele )
 {	
 	if ( !_events[type] ) _events[type] = [];
 	
-	_events[type].push( func );
+	var obj = ele ? ele : window;
 	
-	if( window.attachEvent )
-		window.attachEvent( type, func, false );
-	else window.addEventListener( type.substr ( 2, type.length - 2 ), func, false );
+	_events[type].push( { func: func, ele: obj } );
+	
+	if( obj.attachEvent ) obj.attachEvent( type, func, false );
+	else obj.addEventListener( type.substr ( 2, type.length - 2 ), func, false );
 	return func;
 }
 // Removes an event from the event pool
@@ -618,21 +620,50 @@ function DelEvent( func )
 		var out = [];
 		for( b in _events[a] )
 		{
-			if( func != _events[a][b] )
+			if( func != _events[a][b].func )
 			{
 				out.push ( _events[a][b] );
 			}
 			else
 			{
-				if( window.detachEvent )
-					window.detachEvent ( a, func );
-				else window.removeEventListener ( a.substr ( 2, a.length - 2 ), func );
+				if( _events[a][b].ele.detachEvent )
+					_events[a][b].ele.detachEvent( a, func );
+				else _events[a][b].ele.removeEventListener ( a.substr ( 2, a.length - 2 ), func );
 				success = true;
 			}
 		}
 		_events[a] = out;
 	}
 	return success;
+}
+
+// Selection an option in a select element by value
+function SelectOption( selectElement, value )
+{
+	var opts = selectElement.getElementsByTagName( 'option' );
+	if( isNaN( value ) )
+	{
+		for( var a = 0; a < opts.length; a++ )
+		{
+			if( opts[a].value == value )
+			{
+				opts[a].selected = 'selected';
+			}
+			else opts[a].selected = '';
+		}
+	}
+	// Numeric
+	else
+	{
+		for( var a = 0; a < opts.length; a++ )
+		{
+			if( a == value )
+			{
+				opts[a].selected = 'selected';
+			}
+			else opts[a].selected = '';
+		}
+	}
 }
 
 function Trim ( string )
@@ -1177,6 +1208,63 @@ function CleanFileinfo( fi )
 var Base64 = {_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t } }
 
 
+/* Vertical tabs ------------------------------------------------------------ */
+
+//
+// Create a vertical tab list
+//
+VertTabContainer = function( domElement )
+{
+	this.dom = domElement;
+	this.dom.innerHTML = '';
+	this.dom.className = 'VertTabContainer';
+	this.tabs = [];
+	this.initialized = false;
+}
+//
+// tabObject = {
+//     name: "name",
+//     label: "Click me",
+//     pageDiv: domElement
+// };
+//
+VertTabContainer.prototype.addTab = function( tabObject )
+{
+	var d = document.createElement( 'div' );
+	this.tabs.push( d );
+	d.name = tabObject.name;
+	d.className = 'VertTab';
+	d.innerHTML = '<span>' + tabObject.label + '</span>';
+	d.tabs = this.tabs;
+	d.pageDiv = tabObject.pageDiv;
+	d.pageDiv.className = 'VertTabPage';
+	d.onclick = function()
+	{
+		for( var a = 0; a < this.tabs.length; a++ )
+		{
+			if( this.tabs[a] != this )
+			{
+				this.tabs[a].className = 'VertTab';
+				this.tabs[a].pageDiv.className = 'VertPage';
+			}
+		}
+		this.className = 'VertTab Active';
+		this.pageDiv.className = 'VertPage Active';
+	}
+	this.dom.appendChild( d );
+	if( !this.initialized )
+		this.initialize( d );
+	else this.initialize( this.initialized );
+}
+//
+// just initialize
+// 
+VertTabContainer.prototype.initialize = function( ele )
+{
+	this.initialized = ele ? ele : tabs[0];
+	if( ele ) ele.click();
+	else this.tabs[0].click();
+}
 
 
 // Are we on a mobile browser?
@@ -1193,5 +1281,4 @@ function checkMobileBrowser()
 }
 
 checkMobileBrowser();
-
 

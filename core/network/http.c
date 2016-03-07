@@ -276,7 +276,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	// https://www.ietf.org/rfc/rfc2616.txt
 	// http://tools.ietf.org/html/rfc7230 <- Better!
 
-	char* r = (char*)request;
+	char* r = (char *)request;
 
 	// Parse request header
 	char* ptr = r;
@@ -284,9 +284,9 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	int substep = 0;
 	bool emptyLine = false;
 	bool lookForFieldName = true;
-	char* currentToken = 0;
+	char* currentToken = NULL;
 	char* lineStartPtr = r;
-	char* fieldValuePtr = 0;
+	char* fieldValuePtr = NULL;
 	unsigned int i = 0;
 	
 	//INFO("REQUEST size %d %s\n", length, request );
@@ -414,6 +414,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					if( r[i] == ':' )
 					{
 						unsigned int tokenLength = ( r + i ) - lineStartPtr;
+						if( currentToken ) free( currentToken );
 						currentToken = StringDuplicateN( lineStartPtr, tokenLength );
 						
 						for( unsigned int j = 0; j < tokenLength; j++ )
@@ -435,63 +436,68 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			{
 				// Example value: "    \t lolwat,      hai,yep   "
 				unsigned int valLength = ( r + i ) - fieldValuePtr;
-				char* value = StringDuplicateN( fieldValuePtr, valLength );
-				List* list = CreateList();
+				//INFO("SIZE %d  NAME %s\n", valLength, fieldValuePtr );
+				if( valLength > 1 && fieldValuePtr != NULL )
+				{
+					char* value = StringDuplicateN( fieldValuePtr, valLength );
+					List* list = CreateList();
 
-				// Do not split Set-Cookie field
-				if( strcmp( currentToken, "set-cookie" ) == 0 )
-				{
-					AddToList( list, value );
-				}
-				// Split by comma
-				else
-				{
-					char* ptr = value;
-					unsigned int lastCharIndex = 0;
-					bool leadingWhitespace = true;
-					for( unsigned int i = 0; i < valLength; i++ )
+					// Do not split Set-Cookie field
+					if( strcmp( currentToken, "set-cookie" ) == 0 )
 					{
-						// Ignore leading whitespace
-						if( leadingWhitespace && HttpIsWhitespace( value[i] ) )
+						AddToList( list, value );
+					}
+					// Split by comma
+					else
+					{
+						char* ptr = value;
+						unsigned int lastCharIndex = 0;
+						BOOL leadingWhitespace = true;
+						for( unsigned int i = 0; i < valLength; i++ )
 						{
-							ptr = value + i + 1;
-							lastCharIndex++;
-						}
-						else
-						{
-							leadingWhitespace = false;
-
-							// Comma is the separator
-							if( value[i] == ',' )
+							// Ignore leading whitespace
+							if( leadingWhitespace && HttpIsWhitespace( value[i] ) )
 							{
-								char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
-								
-								AddToList( list, v );
-								
-								leadingWhitespace = true;
 								ptr = value + i + 1;
 								lastCharIndex++;
 							}
-							// Ignore trailing whitespace
-							else if( !HttpIsWhitespace( value[i] ) )
+							else
 							{
-								lastCharIndex++;
+								leadingWhitespace = false;
+
+								// Comma is the separator
+								if( value[i] == ',' )
+								{
+									char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
+								
+									AddToList( list, v );
+								
+									leadingWhitespace = true;
+									ptr = value + i + 1;
+									lastCharIndex++;
+								}
+								// Ignore trailing whitespace
+								else if( !HttpIsWhitespace( value[i] ) )
+								{
+									lastCharIndex++;
+								}
 							}
 						}
+						// Add the last value in the lift, if there are any left
+						if( !leadingWhitespace )
+						{
+							char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
+							AddToList( list, v );
+						}
+						free( value );
 					}
-					// Add the last value in the lift, if there are any left
-					if( !leadingWhitespace )
-					{
-						char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
-						AddToList( list, v );
-					}
-					free( value );
-				}
 
-				HashmapPut( http->headers, currentToken, list );
+					HashmapPut( http->headers, currentToken, list );
+					currentToken = NULL; // It's gone!
+				}
 			}
 		}
-
+		
 		// Check for line ending
 		// Even though the specs clearly say \r\n is the separator,
 		// let's forgive some broken implementations! It's not a big deal.
@@ -517,6 +523,10 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			fieldValuePtr = 0;
 		}
 	}
+	
+	// Free unused token!
+	if( currentToken ) free( currentToken );
+	
 	if( r[i] == '\r' )
 	{
 		i++; // In case we ended on a proper \r\n note, we need to adjust i by 1 to get to the beginning of the content (if any)
@@ -704,7 +714,7 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 	if( !http->partialRequest )
 	{
 		http->partialRequest = true;
-		//DEBUG( "\nINCOMING!-----\n\n%s|Has come in.....\n", data );
+		INFO( "\nINCOMING!-----\n\n%s|Has come in.....\n", data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -846,6 +856,36 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 						HashmapFree( http->parsedPostContent );
 					}
 					int ret = ParseMultipart( http );
+				}
+				
+				//
+				// application and text / xml
+				//
+				
+				else if( strcmp( a[0], "application/xml" ) == 0 )
+				{
+					http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_XML;
+					
+					DEBUG( "Ok, we\'re using application xml.\n" );
+					if( http->parsedPostContent )
+					{
+						HashmapFree( http->parsedPostContent );
+					}
+					
+					http->parsedPostContent = UriParseQuery( http->content );
+				}
+				
+				else if( strcmp( a[0], "text/xml" ) == 0 )
+				{
+					http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
+					
+					DEBUG( "Ok, we\'re using text xml\n" );
+					if( http->parsedPostContent )
+					{
+						HashmapFree( http->parsedPostContent );
+					}
+					
+					http->parsedPostContent = UriParseQuery( http->content );
 				}
 				
 				unsigned int i;
@@ -1397,6 +1437,7 @@ char * HttpBuild( Http* http )
 
 void HttpWriteAndFree( Http* http, Socket *sock )
 {
+	DEBUG("HTTPWRITEandFREE\n");
 	if( http == NULL )
 	{
 		ERROR("Http call was empty\n");
@@ -1417,6 +1458,8 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 		char *res = HttpBuild( http );
 		if( res != NULL )
 		{
+			//INFO("WRITE AND FREE %s\n", http->response );
+			
 			// Write to the socket!
 			SocketWrite( sock, http->response, http->responseLength );
 		}

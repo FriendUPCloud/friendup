@@ -54,7 +54,7 @@ Door.prototype.setPath = function( path )
 	this.path = path;
 };
 
-Door.prototype.getIcons = function( fileInfo, callback )
+Door.prototype.getIcons = function( fileInfo, callback, flags )
 {
 	var finfo = false;
 	
@@ -91,38 +91,120 @@ Door.prototype.getIcons = function( fileInfo, callback )
 
 	var t = this;
 
-	var j = new cAjax();
-	j.open( 'post', '/system.library/file/dir', true, true );
-	j.addVar( 'sessionid', Doors.sessionId );
-	j.addVar( 'path', this.fileInfo.Path );
-	j.onload = function( e, d )
+	// Check dormant first!
+	this.checkDormantDoors( t.fileInfo.Path, function( dirs )
 	{
-		if( e )
+		var fname = t.fileInfo.Path.split( ':' )[1];
+		if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
+
+		// If we end up here, we're not using dormant - which is OK! :)
+		if( !dirs || ( !dirs && !dirs.length ) )
 		{
-			if( e != 'ok' )
+			// Use standard Friend Core doors
+			var j = new cAjax();
+			j.open( 'post', '/system.library/file/dir', true, true );
+			j.addVar( 'sessionid', Workspace.sessionId );
+			j.addVar( 'path', t.fileInfo.Path );
+			j.onload = function( e, d )
 			{
-				return callback( false, t.fileInfo.Path, false );
+				if( e )
+				{
+					if( e != 'ok' )
+					{
+						// Try to remount
+						if( e == 'fail' && d && ( !flags || ( flags && flags.retry ) ) )
+						{
+							var j = JSON.parse( d );
+							if( j.ErrorMessage && j.ErrorMessage == 'Device not mounted' )
+							{
+								return t.Mount( function()
+								{
+									t.getIcons( fileInfo, callback, { retry: false } );
+								} );
+							}
+						}
+						return callback( false, t.fileInfo.Path, false );
+					}
+				
+					var list = JSON.parse( d );
+					if( typeof( list ) == 'object' && list.length )
+					{
+						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
+						callback( list, t.fileInfo.Path, pth );
+					}
+					else
+					{
+						// Empty directory
+						callback( [], t.fileInfo.Path, false );
+					}
+				}
+				else
+				{
+					// Illegal directory
+					callback( false, t.fileInfo.Path, false );
+				}
 			}
-			var list = JSON.parse( d );
-			if( typeof( list ) == 'object' && list.length )
+			j.send();
+		}
+		else if( callback )
+		{
+			// We need this as an array!
+			if( dirs && typeof( dirs ) == 'object' )
 			{
-				var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
-				callback( list, t.fileInfo.Path, pth );
+				var o = [];
+				for( var a in dirs ) o.push( dirs[a] );
+				dirs = o;
 			}
-			else
+			var pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length ); 
+			callback( dirs, t.fileInfo.Path, pth );
+		}
+	} );
+};
+
+// Check if we're trying to access a dormant drive
+Door.prototype.checkDormantDoors = function( path, callback )
+{
+	if( !path ) path = this.fileInfo.Path;
+	if( !path ) 
+	{
+		return callback( false );
+	}
+	if( path.indexOf( ':' ) <= 0 )
+		return callback( false );
+
+	var p = path.split( ':' )[0] + ':';
+	if( typeof( DormantMaster ) != 'undefined' )
+	{
+		var doors = DormantMaster.getDoors();
+		if( doors )
+		{
+			for ( var a in doors )
 			{
-				// Empty directory
-				callback( [], t.fileInfo.Path, false );
+				if( doors[a].Title.toLowerCase() == p.toLowerCase() )
+				{
+					doors[a].Dormant.getDirectory( path, function( dirs )
+					{
+						if( callback ) callback( dirs );
+					} );
+					// Once upon a time, we had this, I don't know why!
+					//if( callback ) return callback( false );
+					return;
+				}
 			}
 		}
-		else
+		if( callback )
 		{
-			// Illegal directory
-			callback( false, t.fileInfo.Path, false );
+			return callback( false );
 		}
 	}
-	j.send();
-};
+	if( callback )
+	{
+		return callback( false );
+	}
+	return;
+}
+
+
 Door.prototype.instantiate = function()
 {
 	return new Door();
@@ -134,7 +216,7 @@ Door.prototype.write = function( filename, data )
 	var dr = this;
 	var j = new cAjax();
 	j.open( 'post', '/system.library/file/write', true, true );
-	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'sessionid', Workspace.sessionId );
 	j.addVar( 'path', filename );
 	j.addVar( 'data', data );
 	if( this.vars && this.vars.encoding )
@@ -171,7 +253,7 @@ Door.prototype.read = function( filename )
 	var dr = this;
 	var j = new cAjax();
 	j.open( 'post', '/system.library/file/read', true, true );
-	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'sessionid', Workspace.sessionId );
 	j.addVar( 'path', filename );
 	j.addVar( 'mode', 'r' );
 	if( this.vars )
@@ -185,8 +267,6 @@ Door.prototype.read = function( filename )
 	{
 		if( dr.onRead )
 		{
-			console.log( 'R: ' + r );
-			console.log( 'D: ' + d );
 			// Here we test both on separator or without (can vary from fs to fs)
 			if( !d || ( this.rawData + "" ).indexOf( '<!--' ) > 10 )
 				return dr.onRead( this.rawData );
@@ -219,7 +299,7 @@ Door.prototype.dosAction = function( func, args, callback )
 	var dr = this;
 	var j = new cAjax();
 	j.open( 'post', '/system.library/' + func, true, true );
-	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'sessionid', Workspace.sessionId );
 	j.addVar( 'args', JSON.stringify( args ) );
 	// Since FC doesn't have full JSON support yet, let's do this too
 	if( args && typeof( args ) == 'object' )
@@ -248,14 +328,15 @@ Door.prototype.dosAction = function( func, args, callback )
 // Mount a device
 Door.prototype.Mount = function( callback )
 {
-	var f = new Library( 'system.library' );
+	var f = new FriendLibrary( 'system.library' );
 	f.onExecuted = function( e, d )
 	{
 		Application.refreshDoors();
 	}
 	var args = {
 		command: 'mount',
-		devname: this.path.split( ':' )[0] + ':'
+		devname: this.path.split( ':' )[0] + ':',
+		type: this.Type ? this.Type : false
 	};
 	f.onExecuted = function( e, data )
 	{

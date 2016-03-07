@@ -21,10 +21,10 @@
 #define __CORE_FUNCTIONS_H__
 
 #define LIST_FOR_EACH( LIST, ENTRY ) \
-	for( ENTRY = LIST; ENTRY == NULL ; ENTRY = ENTRY->node.mln_Succ )
+	for( ENTRY = LIST; ENTRY != NULL ; ENTRY = ENTRY->node.mln_Succ )
 
 #define LIST_ADD_HEAD( LIST, ENTRY ) \
-		ENTRY->node.mln_Succ = LIST; \
+		ENTRY->node.mln_Succ =(MinNode *) LIST; \
 		LIST = ENTRY;
 		
 #endif //__CORE_FUNCTIONS_H__

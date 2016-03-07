@@ -44,6 +44,10 @@ enum {
 	HTTP_HEADER_CONTROL_ALLOW_HEADERS,
 	HTTP_HEADER_CONTROL_ALLOW_METHODS,
 	HTTP_HEADER_CONTENT_LENGTH,
+	HTTP_HEADER_ACCEPT_RANGES,
+	HTTP_HEADER_ALLOW,
+	HTTP_HEADER_CACHE_CONTROL,
+	HTTP_HEADER_DAV,
 	HTTP_HEADER_END
 };
 
@@ -54,7 +58,11 @@ static const char *HEADERS[] = {
 	"access-control-allow-origin",
 	"access-control-allow-headers",
 	"access-control-allow-methods",
-	"content-length"
+	"content-length",
+	"accept-ranges",
+	"allow",
+	"cache-control",
+	"DAV"
 };
 
 //
@@ -183,7 +191,9 @@ typedef struct HttpFile
 
 enum {
 	HTTP_CONTENT_TYPE_DEFAULT = 0,
-	HTTP_CONTENT_TYPE_MULTIPART
+	HTTP_CONTENT_TYPE_MULTIPART,
+	HTTP_CONTENT_TYPE_APPLICATION_XML,
+	HTTP_CONTENT_TYPE_TEXT_XML
 };
 
 //

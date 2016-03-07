@@ -22,6 +22,7 @@
 
 CacheManager *CacheManagerNew( ULONG size )
 {
+	DEBUG( "[CacheManagerNew] Setting up cache manager.\n" );
 	CacheManager *cm = FCalloc( 1, sizeof( CacheManager ) );
 	if( cm != NULL )
 	{

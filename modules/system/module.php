@@ -130,6 +130,7 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 			break;
+			
 		case 'userlevel':
 			if( $o = $SqlDatabase->FetchObject( 'SELECT g.Name FROM FUserGroup g, FUserToGroup ug WHERE ug.UserID=\'' . $User->ID . '\' AND ug.UserGroupID = g.ID' ) )
 			{
@@ -551,6 +552,7 @@ if( isset( $args->command ) )
 		// TODO: Permissions!!! Only list out when you have users below your
 		//                      level, unless you are Admin
 		case 'listusers':
+			if( $level != 'Admin' ) die('fail');
 			
 			if( $users = $SqlDatabase->FetchObjects( '
 				SELECT u.*, g.Name AS `Level` FROM 
@@ -577,10 +579,15 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 			break;
+		
 		// Get detailed info about a user
 		// TODO: Permissions!!! Only access users if you are admin!
 		case 'userinfoget':
-			if( $level == 'Admin' || $args->args->id == $User->ID )
+			if( isset($args->args->id) )
+				$uid = $args->args->id;
+			else
+				$uid = $User->ID;
+			if( $level == 'Admin' || $uid == $User->ID )
 			{
 				if( $userinfo = $SqlDatabase->FetchObject( '
 					SELECT u.*, g.Name AS `Level` FROM 
@@ -588,7 +595,7 @@ if( isset( $args->command ) )
 					WHERE
 							u.ID = ug.UserID
 						AND g.ID = ug.UserGroupID
-						AND u.ID = \'' . $args->args->id . '\'
+						AND u.ID = \'' . $uid . '\'
 				' ) )
 				{
 					die( 'ok<!--separate-->' . json_encode( $userinfo ) );
@@ -658,6 +665,31 @@ if( isset( $args->command ) )
 				}
 			}
 			die( 'fail' );
+			
+		case 'checkuserbyname':
+			if( $level == 'Admin' || $args->args->id == $User->ID )
+			{
+				if( $userinfo = $SqlDatabase->FetchObject( '
+					SELECT `ID` FROM `FUser` WHERE Name = \'' . $args->args->username . '\'
+				' ) )
+				{
+					die( 'ok<!--separate-->userexists' );
+				}
+				else
+				{
+					die( 'ok<!--separate-->userdoesnotexist' );
+				}
+			}
+			die( 'fail' );
+			break;	
+
+		case 'userbetamail':		
+		case 'listbetausers':
+			require( 'modules/system/include/betaimport.php' );
+			break;
+			
+
+			
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;
@@ -768,6 +800,53 @@ if( isset( $args->command ) )
 			$s->Mimetypes = $types;
 			
 			die( 'ok<!--separate-->' . json_encode( $s ) );
+			
+			
+		case 'listsystemsettings':
+			if( $rows = $SqlDatabase->FetchObjects( '
+				SELECT * FROM FSetting s
+				WHERE
+					s.UserID = \'-1\'
+				ORDER BY s.Key ASC
+			' ) )
+			{
+				die( 'ok<!--separate-->' . json_encode( $rows ) );
+			}
+			else
+			{
+				die('ok<!--separate-->nosettingsfound');	
+			}
+			
+			break;
+		
+		case 'getsystemsetting':	
+			if( $args->args->type && $args->args->key && $rows = $SqlDatabase->FetchObjects( '
+				SELECT * FROM FSetting s
+				WHERE
+					s.UserID = \'-1\'
+				AND s.Type = \''. $args->args->type .'\'
+				AND s.Key = \''. $args->args->key .'\'
+				ORDER BY s.Key ASC
+			' ) )
+			{
+				die( 'ok<!--separate-->' . json_encode( $rows ) );
+			}
+			else
+			{
+				die('ok<!--separate-->settingnotfouns');	
+			}
+			break;
+			
+		case 'saveserversetting':
+			if( $level == 'Admin' && $args->args->settingsid && $args->args->settings )
+			{
+				$SqlDatabase->query( 'UPDATE `FSetting` SET Data=\''. $args->args->settings .'\' WHERE ID=\'' . $args->args->settingsid . '\'' );
+				die('ok<!--separate-->' .$args->args->settingsid );
+			}
+			break;
+			
+			
+			
 		// Launch an app...
 		case 'launch':
 			require( 'modules/system/include/launch.php' );

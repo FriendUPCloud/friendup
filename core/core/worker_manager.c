@@ -30,8 +30,10 @@ WorkerManager *WorkerManagerNew( int number )
 	DEBUG( "[WorkerManager] Starting worker manager!\n" );
 	
 	// Fallback to default...
-	if( number < 1 )
-		number = WORKERS;
+	if( number < MIN_WORKERS )
+	{
+		number = MIN_WORKERS;		// default numbe of workers
+	}
 	
 	if( ( wm = FCalloc( 1, sizeof( WorkerManager ) ) ) != NULL )
 	{
@@ -95,6 +97,8 @@ void WorkerManagerDelete( WorkerManager *wm )
 // add worker to list
 //
 
+static int testquit = 0;
+
 void usleep( int );
 
 int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
@@ -111,7 +115,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 	{
 		Worker *wrk = NULL;
 		
-		DEBUG("[WorkManagerRun] WORKER %d\n", wm->wm_LastWorker );
+		DEBUG("[WorkManagerRun] WORKER %d MAX workers %d\n", wm->wm_LastWorker, wm->wm_MaxWorkers );
 		
 		max++; wm->wm_LastWorker++;
 		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
@@ -119,15 +123,22 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 			wm->wm_LastWorker = 0; 
 		}
 		
-		if( wm->wm_Workers[ wm->wm_LastWorker ]->w_State == W_STATE_WAITING )
+		DEBUG("WorkerManager: trying to setup lock\n");
+		// Safely test the state of the worker
+		if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
-			wrk = wm->wm_Workers[ wm->wm_LastWorker ];
+			DEBUG("workerManager: locked\n");
+			if( wm->wm_Workers[ wm->wm_LastWorker ]->w_State == W_STATE_WAITING )
+			{
+				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
 			
-			// Register worker index..
-			DEBUG( "[WorkManagerRun] Registering thread data\n" );
-			struct SocketThreadData *td = ( struct SocketThreadData *)d;
-			td->workerIndex = wm->wm_LastWorker;
-			DEBUG( "[WorkManagerRun] Done registering.\n" );
+				// Register worker index..
+				DEBUG( "[WorkManagerRun] Registering thread data\n" );
+				struct SocketThreadData *td = ( struct SocketThreadData *)d;
+				td->workerIndex = wm->wm_LastWorker;
+				DEBUG( "[WorkManagerRun] Done registering.\n" );
+			}
+			pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
 		}
 	
 		if( wrk != NULL )
@@ -143,18 +154,25 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 				wm->w_AverageWorkSeconds /= 2;
 			}
 			WorkerRunCommand( wrk, foo, d );
+			
 			break;
 		}
 		else
 		{
 			INFO("[WorkManagerRun] Worker is busy, waiting\n");
-			usleep( 1000 );
+			usleep( 100 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
 		{
 			INFO("[WorkManagerRun] All workers are busy, waiting\n");
-			usleep( 50000 );
+			testquit++;
+			if( testquit > 25 )
+			{
+				exit( 0 ); // <- die! only for debug
+			}
+			usleep( 15000 );
+			max = 0;
 		}
 	}
 	

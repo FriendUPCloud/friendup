@@ -48,6 +48,21 @@ cAjax = function()
 				jax.returnCode = false;
 				jax.returnData = this.responseText;
 			}
+			
+			// TODO: This error is general
+			if( JSON && jax.rawData.charAt( 0 ) == '{' )
+			{
+				var t = JSON.parse( jax.rawData );
+				// Deprecate from 1.0 beta 2 "no user!"
+				if( t && ( t.ErrorMessage == 'no user!' || t.ErrorMessage == 'user not found' ) )
+				{
+					if( Workspace )
+					{
+						return Workspace.relogin();
+					}
+				}
+			}
+			
 			// Execute onload action with appropriate data
 			if( jax.onload )
 				jax.onload( jax.returnCode, jax.returnData );

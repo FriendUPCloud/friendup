@@ -192,8 +192,6 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			{
 				
 				
-				$Logger->log('Write to dropbox '  . print_r( $args,1 ));
-				
 				if( $this->state != self::UNAUTHORIZED && isset( $args->tmpfile ) && $this->connectClient()) 
 				{
 					$dropboxpath = end( explode(':', $args->path) );
@@ -204,9 +202,9 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					//$md = $this->dbx->getMetaData( '/' . $dropboxpath );
 					$fp = fopen( $args->tmpfile, 'rb' );
 					
-					if( is_array($fm) && $fm['revision'] )
+					if( is_array($fm) && $fm['rev'] )
 					{
-						$newmeta = $this->dbx->uploadFile( $dropboxpath, Dropbox\WriteMode::update( $fm['revision'] ), $fp );
+						$newmeta = $this->dbx->uploadFile( $dropboxpath, Dropbox\WriteMode::update( $fm['rev'] ), $fp );
 					}
 					else
 					{

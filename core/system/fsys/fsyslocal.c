@@ -208,6 +208,37 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 }
 
 //
+// Only free device
+//
+
+int Release( struct FHandler *s, void *f )
+{
+	if( f != NULL )
+	{
+		DEBUG("Release filesystem\n");
+		File *lf = (File*)f;
+		
+		if( lf->f_SpecialData )
+		{
+			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
+			
+			free( lf->f_SpecialData );
+		}
+		
+		if( lf->f_Name ){ free( lf->f_Name ); }
+		if( lf->f_Path ){ free( lf->f_Path ); }
+		
+		//if( lf->d_Host ){ free( lf->d_Host ); }
+		//if( lf->d_LoginUser ){ free( lf->d_LoginUser ); }
+		//if( lf->d_LoginPass ){ free( lf->d_LoginPass ); }
+		
+		//free( f );
+		return 0;
+	}
+	return -1;
+}
+
+//
 // Unmount device
 //
 
@@ -945,7 +976,8 @@ BufString *Info( File *s, const char *path )
 		{
 			strcat( comm, "/" );
 		}
-		strcat( comm, &(path[ doub+2 ]) );
+		//strcat( comm, &(path[ doub+2 ]) );
+		strcat( comm, path );
 		
 		DEBUG("PATH created %s\n", comm );
 	
@@ -953,15 +985,18 @@ BufString *Info( File *s, const char *path )
 		
 		if( stat( comm, &ls ) == 0 )
 		{
+			DEBUG("LOCAL file stat %s\n", comm );
 			FillStat( bs, &ls, s, comm );
 		}
 		else
 		{
+			DEBUG("LOCAL file stat FAIL %s\n", comm );
 			BufStringAdd( bs, "{ \"ErrorMessage\": \"File or directory do not exist\"}" );
 		}
 		
 		free( comm );
 	}
+	
 	DEBUG("Info END\n");
 	
 	return bs;
@@ -994,8 +1029,12 @@ BufString *Dir( File *s, const char *path )
 			DEBUG("Added '/\n");
 			strcat( comm, "/" );
 		}
- 		strcat( comm, path ); //&(path[ doub+1 ]) );
-
+		
+		if( path != NULL )
+		{
+			strcat( comm, path ); //&(path[ doub+1 ]) );
+		}
+		
  		if( comm[ strlen( comm ) -1 ] != '/' )
 		{
 			DEBUG("end was not endeed /\n");

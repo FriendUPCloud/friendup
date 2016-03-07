@@ -57,7 +57,8 @@ typedef struct FriendCoreInstance
 	Socket	 					* listenSocket; // Socket for incomming connections (TODO: Make this "socketS": We must be able to listen on multiple interfaces!)
 
 	// "Private"
-	char                        *fci_Shutdown;        // Ends all event loops
+	//char                        *fci_Shutdown;        // Ends all event loops
+	BOOL                        fci_Shutdown;        // Ends all event loops
 	BOOL 						fci_Closed;				// if FC quits, then its set to TRUE
 
 	Hashmap* 				libraries;   // Contains all loaded libraries. Key: library name.

@@ -25,6 +25,11 @@
 *                                                                              *
 *******************************************************************************/
 
+// Some global variables
+var globalConfig = {};
+globalConfig.language = 'en-US'; // Defaults to US english
+
+
 // Handle callbacks
 var apiWrapperCallbacks = [];
 function addWrapperCallback( f )
@@ -57,14 +62,9 @@ function makeAppCallbackFunction( app, data )
 {
 	if( !app || !data ) return false;
 	var nmsg = {};
-	for( var b in data )
-		nmsg[b] = data[b];
-	nmsg.type = 'callback';
-	nmsg = JSON.stringify( nmsg );
-	return function()
-	{
-		if( app ) app.contentWindow.postMessage( nmsg, '*' );
-	}
+	for( var b in data ) nmsg[b] = data[b];
+	nmsg.type = 'callback'; nmsg = JSON.stringify( nmsg );
+	return function(){ app.contentWindow.postMessage( nmsg, '*' ); }
 }
 
 // Native windows
@@ -91,10 +91,10 @@ function apiWrapper( event, force )
 			// Dormant ---------------------------------------------------------
 			case 'dormantmaster':
 				
-				console.log( 'Dormantmaster entered.' );
 				switch( msg.method )
 				{
 					case 'execute':
+						
 						//find our door
 						var door = false;
 						for( var a = 0; a < DormantMaster.appDoors.length; a++ )
@@ -134,7 +134,15 @@ function apiWrapper( event, force )
 									method: 'callback',
 									data: data
 								};
+								
+								if( msg.callback )
+									runWrapperCallback( msg.callback, data );
 							} );
+						}
+						else
+						{
+							if( msg.callback )
+								runWrapperCallback( msg.callback, false );
 						}
 						break;
 					case 'callback':
@@ -392,8 +400,15 @@ function apiWrapper( event, force )
 								msg.callback = false;
 							}
 							break;
+						case 'setRichContentUrl':
+							if( scr ) scr.setRichContentUrl( msg.url, msg.base, msg.applicationId, msg.filePath );	
+							break;
 						case 'setMenuItems':
-							if( scr ) scr.setMenuItems( msg.data, msg.applicationId );
+							if( scr )
+							{
+								scr.setMenuItems( msg.data, msg.applicationId );
+							}
+							CheckScreenTitle();
 							break;
 						// Receive a close request from below
 						case 'close':
@@ -406,6 +421,9 @@ function apiWrapper( event, force )
 										out[c] = app.screens[c];
 								app.screen = out;
 							}
+							break;
+						case 'activate':
+							closeWorkbenchMenu();
 							break;
 					}
 				}
@@ -508,7 +526,9 @@ function apiWrapper( event, force )
 								// Create a new callback dispatch here..
 								var cb = false;
 								if( msg.callback )
+								{
 									cb = makeAppCallbackFunction( app, msg );
+								}
 								
 								// Do the setting!
 								win.setContentIframed( msg.data, false, msg, cb );
@@ -525,7 +545,17 @@ function apiWrapper( event, force )
 							if ( win ) win.setSandboxedUrl( msg );
 							break;
 						case 'setContentById':
-							if( win ) win.setContentById( msg.data, msg );
+							if( win ) 
+							{
+								// Remember callback
+								var cb = false;
+								if( msg.callback )
+									cb = makeAppCallbackFunction( app, msg );
+								
+								win.setContentById( msg.data, msg, cb );
+								
+								msg.callback = false;
+							}
 							break;
 						case 'setAttributeById':
 							if( win ) win.setAttributeById( msg );
@@ -583,6 +613,7 @@ function apiWrapper( event, force )
 							break;
 						case 'setMenuItems':
 							if( win ) win.setMenuItems( msg.data, msg.applicationId );
+							CheckScreenTitle();
 						case 'focus':
 							if( win ) win.focus();
 							break;
@@ -591,6 +622,7 @@ function apiWrapper( event, force )
 							{
 								win.activate();
 							}
+							closeWorkbenchMenu();
 							break;
 					}
 				}
@@ -867,16 +899,20 @@ function apiWrapper( event, force )
 				// Respond with file contents (uses raw data..)
 				f.onExecuted = function( cod, dat )
 				{
-					if( app && app.contentWindow )
+					if( app )
 					{
 						var nmsg = { command: 'fileload', fileId: fileId, data: dat, returnCode: cod };
+						var cw = app;
 						// Pass window id down
 						if( msg.windowId )
 						{
 							nmsg.windowId = msg.windowId;
 							nmsg.type = 'callback';
+							cw = app.windows[msg.windowId].iframe;
 						}
-						app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						if( cw.contentWindow )
+							cw.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						else console.log( 'App has no content window yet..' );
 					}
 				}
 				f.execute( msg.method, msg.args );
@@ -932,6 +968,10 @@ function apiWrapper( event, force )
 				// TODO: Premissions!!!
 				switch( msg.command )
 				{
+					case 'reload_user_settings':
+						Workspace.refreshUserSettings();
+						break;
+						
 					case 'change_application_permissions':
 						// TODO: This will bring up the user authentication window first!!!!
 						// TODO: The user must allow, because the app does not have this permission!
@@ -947,6 +987,7 @@ function apiWrapper( event, force )
 						}
 						m.execute( 'updateapppermissions', { application: msg.application, permissions: JSON.stringify( msg.permissions ) } );
 						break;
+						
 					case 'updatelogin':
 						Workspace.login( msg.username, msg.password, true );
 						break;
@@ -1036,13 +1077,13 @@ function apiWrapper( event, force )
 								{
 									Doors.windowWallpaperImage = msg.image;
 								}
-								Doors.refreshDesktop();
+								Workspace.refreshDesktop();
 							}
 						}
 						m.execute( 'setsetting', { setting: 'wallpaper' + msg.mode, data: msg.image } );
 						break;
 					case 'refreshtheme':
-						Doors.refreshTheme( msg.theme, true );
+						Workspace.refreshTheme( msg.theme, true );
 						break;
 					case 'quit':
 						if( app ) app.quit( msg.force ? msg.force : false );
@@ -1110,9 +1151,9 @@ function apiWrapper( event, force )
 								nmsg.method = response ? 'applicationexecuted' : 'applicationnotexecuted';
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 								
-								if( msg.callback )
+								if( nmsg.callback )
 								{
-									runWrapperCallback( msg.callback, response );
+									runWrapperCallback( nmsg.callback, response );
 								}
 							}
 							// Special case
@@ -1315,3 +1356,29 @@ function checkAppPermission( authid, permission, value )
 	return false;
 }
 
+// Add Css by url
+function AddCSSByUrl( csspath, callback )
+{
+	if( !window.cssStyles ) window.cssStyles = [];
+	if( typeof( window.cssStyles[csspath] ) != 'undefined' )
+	{
+		// Remove existing and clean up
+		document.body.removeChild( window.cssStyles[csspath] );
+		var o = [];
+		for( var a in window.cssStyles )
+		{
+			if( a != csspath )
+			{
+				o[a] = window.cssStyles[a];
+			}
+		}
+		window.cssStyles = o;
+	}
+	// Add and register
+	var s = document.createElement( 'link' );
+	s.rel = 'stylesheet';
+	s.href = csspath;
+	if( callback ){ s.onload = function() { callback(); } }
+	document.body.appendChild( s );
+	window.cssStyles[csspath] = s;
+}

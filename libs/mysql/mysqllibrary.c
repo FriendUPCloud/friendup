@@ -249,7 +249,7 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 		DEBUG("[MYSQLLibrary] Parsing rows %d\n", j );
 		(*entries)++;
 		
-		void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
+		void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
 		int dataUsed = 0; // Tell if we need to free data..
 		
 		// Link the first object (which holds the start of the data)
@@ -298,9 +298,10 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 							{
 								int len = strlen( row[i] );
 								char *tmpval = calloc( len + 1, sizeof( char ) );
-								memcpy( tmpval, row[i], len );
 								if( tmpval )
 								{
+									// Copy mysql data
+									memcpy( tmpval, row[i], len );
 									// Add tmpval to string pointer list..
 									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
 								}
@@ -340,7 +341,12 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 		}
 		j++;
 		// We allocated memory without using it..
-		if( dataUsed == 0 ) free( data );
+		if( dataUsed == 0 ) 
+		{
+			if( data == firstObject )
+				firstObject = NULL;
+			free( data );
+		}
 	}
 
 	mysql_free_result( result );

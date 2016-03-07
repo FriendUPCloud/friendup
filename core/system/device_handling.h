@@ -30,7 +30,7 @@ int RescanDOSDrivers( SystemBase *l );
 
 int UnMountFS( struct SystemBase *l, struct TagItem *tl );
 
-int MountFS( struct SystemBase *l, struct TagItem *tl );
+int MountFS( struct SystemBase *l, struct TagItem *tl, File **mfile );
 
 File *GetFileByPath( User *usr, char **dstpath, const char *path );
 
@@ -62,18 +62,23 @@ inline int doublePosition( const char *c )
 
 inline File *GetRootDeviceByName( User *usr, char *devname )
 {
-//
-// Check mounted devices for user
+	//
+	// Check mounted devices for user
 
 	File *lDev = usr->u_MountedDevs;
 	File *actDev = NULL;
 	
+	if( !usr->u_MountedDevs )
+	{
+		ERROR( "Looks like we have NO mounted devs..\n" );
+	}
+	
 	while( lDev != NULL )
 	{
 		//DEBUG("Checking dev act ptr %p next ptr %p\n", lDev, lDev->node.mln_Succ ); 
-		DEBUG("devname %s  ldevname %s lfile \n", devname, lDev->f_Name );
+		INFO("devname %s  ldevname %s lfile (%s)\n", devname, lDev->f_Name, lDev->f_Mounted ? "mounted" : "not mounted" );
 		
-		if( strcmp( devname, lDev->f_Name ) == 0 )
+		if( strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
 		{
 			if( lDev->f_SharedFile == NULL )
 			//if( usr == lDev->f_User )		// if its our current user then we compare name
@@ -84,7 +89,7 @@ inline File *GetRootDeviceByName( User *usr, char *devname )
 			{
 				actDev = lDev->f_SharedFile;
 			}
-			DEBUG("Found file name '%s' path '%s' (%s)\n", 	actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
+			INFO("Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
 			break;
 		}
 		
@@ -93,7 +98,7 @@ inline File *GetRootDeviceByName( User *usr, char *devname )
 	
 	if( actDev == NULL )
 	{
-		ERROR("Cannot find device by name : %s\n", devname );
+		ERROR("Cannot find mounted device by name: %s\n", devname );
 	}
 	
 	return actDev;

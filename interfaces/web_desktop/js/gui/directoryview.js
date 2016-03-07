@@ -35,6 +35,20 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 	winobj.directoryview = this;
 	winobj.parentNode.className = winobj.parentNode.className.split ( ' IconWindow' ).join ( '' ) + ' IconWindow';
 	winobj.redrawtimeouts = [];
+	winobj.redrawBackdrop = function()
+	{
+		if( Workspace.windowWallpaperImage )
+		{
+			this.style.backgroundImage = 'url(\'' + getImageUrl( Workspace.windowWallpaperImage ) + '\')';
+			this.style.backgroundPosition = 'top left';
+			this.style.backgroundRepeat = 'repeat';
+		}
+		else
+		{
+			this.style.backgroundImage = '';
+		}
+	}
+	winobj.redrawBackdrop();
 	winobj.redrawIcons = function ( icons, direction )
 	{
 		self = this;
@@ -121,8 +135,8 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 	
 	
 	//if host support drag&drop we want to use that.
-	if (window.File && window.FileReader && window.FileList && window.Blob) {
-		
+	if( window.File && window.FileReader && window.FileList && window.Blob )
+	{
 		function handleHostDragOver( e )
 		{
 			e.stopPropagation();
@@ -138,10 +152,14 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		
 		function handleHostFileSelect( e )
 		{
-			e.stopPropagation();
-			e.preventDefault();
+			
 			
 			var files = e.dataTransfer.files||e.target.files;
+			
+			if( files.length < 1 ) return;
+
+			e.stopPropagation();
+			e.preventDefault();
 			
 			if( files && this.content && this.content.fileInfo && this.content.fileInfo.Volume )
 			{
@@ -301,8 +319,13 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 				}
 				
 				uprogress.load();
-				uworker.postMessage( {'session':Doors.sessionId,'targetPath':this.content.fileInfo.Path, 'targetVolume':this.content.fileInfo.Volume, 'files':files } );
 				
+				uworker.postMessage( {
+					'session': Workspace.sessionId,
+					'targetPath': this.content.fileInfo.Path, 
+					'targetVolume': this.content.fileInfo.Volume, 
+					'files': files 
+				} );
 			}
 		}
 		
@@ -318,6 +341,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 	{
 		// Check some events
 		if( !e ) e = window.event;
+		
 		var ctrl = ( typeof( e ) != 'undefined' && e.ctrlKey ) ? e.ctrlKey : false;
 		
 		// Window is the target
@@ -371,12 +395,17 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		//console.log( movableWindows );
 		//console.log('END movable windows ## ## ## ## ## ## ## ## ## ## ## ');
 		
-		for(var i=0; i < eles.length; i++)
+		for( var i = 0; i < eles.length; i++ )
 		{
+			if( !cfo.Path || !eles[i].window.fileInfo || !eles[i].window.fileInfo.Path )
+			{
+				clean.push( eles[i] )
+				continue;
+			}
 			if( ( ''+cfo.Path ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) == -1 )
 			{
 				clean.push( eles[i] );
-				for(var j in movableWindows )
+				for( var j in movableWindows )
 				{
 					//console.log('do some checks on our item here... ' + i + '/' + j);
 					//console.log( ('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) );
@@ -389,21 +418,40 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 					//console.log( 'Our moved element      :' + eles[i].window.fileInfo.Path + eles[i].Title);
 					//console.log( 'Source window title    :' + this.content.fileInfo.Path );
 
-					if( movableWindows[j] && movableWindows[j].titleString && ('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1 )
+					if( 
+						movableWindows[j] && movableWindows[j].titleString && 
+						('' + movableWindows[j].titleString ).indexOf( eles[i].window.fileInfo.Path + eles[i].Title ) != -1 
+					)
 					{
 						movableWindows[j].windowObject.close();
 					}
-					console.log('________________________________________________');
 				}
 			}
 		}
 		if( clean.length == 0 ) return;
 		
 		eles = clean;
+		var sPath = this.content.fileInfo.Path;
+		var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false;
 		
 		// Always copy when on different volumes
-		if( this.content.fileInfo.Path.split( ':' )[0] != eles[0].window.fileInfo.Path.split( ':' )[0] )
+		if( 
+			sPath && dPath &&
+			this.content.fileInfo && eles[0].window.fileInfo &&
+			this.content.fileInfo.Path.split( ':' )[0] != eles[0].window.fileInfo.Path.split( ':' )[0] 
+		)
+		{
 			ctrl = true;
+		}
+		
+		if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 )
+		{
+			if( eles[0].window && eles[0].window.refresh )
+				eles[0].window.refresh();
+			else Workspace.refreshDesktop();
+			this.content.refresh();
+			return;
+		}
 		
 		// Open window
 		var w = new View( { 
@@ -1143,6 +1191,9 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'js':
 				iconInner.className = 'TypeJS';
 				break;
+			case 'run':
+				iconInner.className = 'TypeRUN';
+				break;
 			case 'html':
 				iconInner.className = 'TypeHTML';
 				break;
@@ -1176,13 +1227,81 @@ FileIcon.prototype.Init = function( fileInfo )
 	title.title = title.innerHTML;
 	file.title = title.title;
 
+
+	
+
+
+
 	// Cook at 225°C for 45 minutes
 	icon.appendChild( iconInner );
 	file.appendChild( icon );
 	file.appendChild( title );
+	
 	file.fileInfo = fileInfo;
 	file.extension = extension;
 	file.Title = title.innerText;
+
+	if(extension && fileInfo.Filename)
+	{
+		download = document.createElement('a');		
+		download.className = 'Download';
+		download.innerHTML = ''; //fileInfo.Filename;
+		download.title = 'Drag icon to download file';
+		download.setAttribute('data-filename', fileInfo.Filename);
+		
+		download.setAttribute('data-downloadurl', 'application/octec-stream:'+ fileInfo.Filename +':'+ document.location.protocol +'//'+ document.location.host +'/system.library/file/read?mode=rb&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ) +'');		
+		download.setAttribute('draggable','true');
+		download.setAttribute('href',document.location.protocol +'//'+ document.location.host +'/system.library/file/read?mode=rb&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ))
+		download.setAttribute('onclick', 'return false;');
+		
+		//console.log('Download attribute set to ' + download.getAttribute('data-downloadurl'));
+		
+		file.appendChild( download );
+		download.addEventListener("mousedown", function(e) {
+			//nothing to be done here...
+			//e.target.className = e.target.className + ' Clicked';
+			e.stopPropagation();
+		});
+
+		download.addEventListener("dragstart",function(e){
+			
+				e.stopPropagation();
+			
+				e.target.className = 'Download Active';
+				console.log('OUr new className is ' + e.target.className );
+				e.target.innerHTML = e.target.getAttribute('data-filename');
+				
+				var fd = false;
+				if(e.target.dataset == 'undefined')
+					fd = this.getAttribute('data-downloadurl');
+				else
+					fd = this.dataset.downloadurl;
+	
+				if(fd && e && e.dataTransfer)
+				{
+					//e.dataTransfer.effectAllowed = 'copy';
+					//e.dataTransfer.dropEffect = 'copy';
+					e.dataTransfer.setData('DownloadURL', fd);
+				}			
+		},true);
+		download.addEventListener("dragend", function(e) {
+			//console.log('drag ended');
+			e.target.className = 'Download';
+			e.target.innerHTML = '';
+			e.stopPropagation();
+		});	
+		download.addEventListener("mouseup", function(e) {
+			e.target.className = 'Download';
+			e.target.innerHTML = '';
+			e.stopPropagation();
+		});			
+	}
+	else
+	{
+		//console.log('no extension and filename? ',extension,fileInfo.Filename);
+	}
+	
+
 
 	file.rollOver = function ( eles )
 	{
@@ -1193,10 +1312,13 @@ FileIcon.prototype.Init = function( fileInfo )
 	{
 		this.classList.remove('DragTarget');
 	}
-
+	
 	// Attach events
 	file.onmousedown = function( e )
 	{
+		if(e.target.className == 'Download') return;
+		
+		console.log('file mousedown trggered',e.target.className);
 		if( !e ) e = window.event;
 		if( this.window )
 		{
@@ -1216,11 +1338,15 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Activate screen on click
 		SetScreenByWindowElement( this );
 		
-		return cancelBubble( e );
+		e.stopPropagation();
+
 	}
+
 	// This one driggers dropping icons! (believe it or not)
 	file.onmouseup = function( e )
 	{
+		if(e.target.className == 'Download') return;
+		
 		if( mousePointer && mousePointer.elements.length )
 		{
 			// Drop on an icon on a workbench icon
@@ -1254,6 +1380,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	{
 		return cancelBubble( e );
 	}
+	
 	file.onmouseout = function( e )
 	{
 		if ( !e ) e = window.event;
@@ -1442,7 +1569,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 		// TODO: This will be the only way
 		//if( typeof( DoorLocal ) != 'undefined' && this.fileInfo.Door && this.fileInfo.Door.get == DoorLocal.prototype.get )
 		//{
-			win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="/system.library/file/read?mode=rb&sessionid=' + Doors.sessionId + '&path=' + fileInfo.Path + '"></iframe></div>' );
+			win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="/system.library/file/read?mode=rb&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '"></iframe></div>' );
 	}
 	else if( iconObject.extension == 'jpg' || iconObject.extension == 'png' || iconObject.extension == 'gif' )
 	{
@@ -1461,7 +1588,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 		//console.log( this.fileInfo.Door.prototype == DoorLocal.prototype ? 'yes' : 'no' );
 		/*if( typeof( DoorLocal ) != 'undefined' && this.fileInfo.Door && this.fileInfo.Door.get == DoorLocal.prototype.get )
 		{*/
-			win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rb&sessionid=' + Doors.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );
+			win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rb&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );
 	}
 	else if( iconObject.extension == 'mov' || iconObject.extension == 'avi' || iconObject.extension == 'mp4' || iconObject.extension == 'mpg' )
 	{
@@ -1476,7 +1603,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 		
 		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
 		
-		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: auto;" src="/system.library/file/read?sessionid=' + Doors.sessionId + '&path=' + fileInfo.Path + '&mode=rb" autoplay="autoplay"></video></div>' );
+		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: auto;" src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rb" autoplay="autoplay"></video></div>' );
 	}
 	// Executing executable javascript
 	else if( iconObject.extension == 'jsx' )
@@ -1685,7 +1812,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 			win.parentFile = iconObject;
 			win.setContent ( '<iframe style="background: #e0e0e0; position: absolute; top: 0; \
 				left: 0; width: 100%; height: 100%; border: 0" \
-				src="/system.library/file/read?sessionid=' + Doors.sessionId + '&path=' + fileInfo.Path + '&mode=rb"></iframe>' );
+				src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rb"></iframe>' );
 			win.parentWindow = iconObject.window;
 		}
 	}

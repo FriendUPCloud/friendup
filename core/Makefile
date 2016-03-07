@@ -1,9 +1,13 @@
 GCC		=	gcc
 OUTPUT	=	FriendCore
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/  $(shell mysql_config --cflags)  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL
-LFLAGS	=	-Lsystem/bin/ -Wl,--export-dynamic -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/  $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL
+LFLAGS	=	-Lsystem/bin/ -Wl,--export-dynamic -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
+
+ifeq ($(DEBUG),1)
+CFLAGS  +=      -D__DEBUG
+endif
 
 ifeq ($(WEBSOCKETS),1)
 LFLAGS +) -lwebsockets

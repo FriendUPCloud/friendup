@@ -79,7 +79,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.style.top = '100%';
 		this.dom.style.width = '64px';
 		this.dom.style.height = 'auto';
-		console.log('mobile desklet styles applied !', this.dom.id);
 		
 	}
 	
@@ -131,7 +130,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		else
 		{
-			console.log( navigator.userAgent );
 		}
 	}
 	this.dom.onmouseup = function ( e )
@@ -186,7 +184,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		this.dom.style.height = Math.ceil(rowsNeeded * itemHeight + this.margin*2) + 'px';
 		this.dom.style.top = Math.floor( ( screenSpaceV - rowsNeeded * itemHeight) / 2) + 64 + 'px';
 			
-		var myWidth = Math.min( Math.floor( screenSpaceH ), Math.floor( itemWidth * colsAvailable ) + (this.margin*2) );
+		var myWidth = Math.min( Math.floor( screenSpaceH ), ( Math.floor( itemWidth * colsAvailable ) + (this.margin*2) + 12 ) );
 		
 		this.dom.style.width = myWidth + 'px';
 		this.dom.style.left = Math.floor( ( screenSpaceH - myWidth ) / 2 ) + 'px';
@@ -249,17 +247,56 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		{
 			var div = document.createElement ( 'div' );
 			div.className = 'Launcher';
-			div.style.width = this.width - (this.margin*2) + 'px';
-			div.style.height = this.width - (this.margin*2) + 'px';
-			div.style.backgroundImage = 'url(' + o.src + ')';
-			if( o.click )
-				div.onclick = o.click;
-			else div.onclick = function()
+			div.style.width = this.width - ( this.margin * 2 ) + 'px';
+			div.style.height = this.width - ( this.margin * 2 ) + 'px';
+			if( o.src.substr( 0, 1 ) == '.' )
 			{
+				div.style.backgroundImage = '';
+				var d = document.createElement( 'div' );
+				var t = o.src.substr( 1, o.src.length - 1 ).toUpperCase();
+				d.className = 'File';
+				d.innerHTML = '<div class="Icon"><div class="Type' + t + '"></div></div>';
+				div.appendChild( d );
+			}
+			else
+			{
+				div.style.backgroundImage = 'url(' + o.src + ')';
+			}
+			if( o.click ) div.onclick = o.click;
+			else div.onclick = function( e )
+			{
+				// Extension
+				if( o.exe.indexOf( ':' ) > 0 )
+				{
+					var l = o.exe.split( ':' )[1];
+					if( l.indexOf( '/' ) > 0 )
+					{
+						l = l.split( '/' );
+						l = l[l.length-1];
+					}
+					if( l.length > 1 )
+					{
+						var ext = l;
+						ext = '.' + ext[ext.length-1].toLowerCase();
+		
+						// Check mimetypes
+						for( var a in Workspace.mimeTypes )
+						{
+							var mt = Workspace.mimeTypes[a];
+							for( var b in mt.types )
+							{
+								if( ext == mt.types[b].toLowerCase() )
+								{
+									return ExecuteApplication( mt.executable, o.exe );
+								}
+							}
+						}
+					}
+				}
 				ExecuteApplication( o.exe );
 			}
 			if ( o.title )
-				div.setAttribute ( 'title', o.title );
+				div.setAttribute ( 'title', o.title ? o.title : o.src );
 			this.dom.appendChild ( div );
 			this.refresh ();
 			return true;
@@ -281,7 +318,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		var dropped = 0;
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( eles[a].fileInfo && eles[a].Title && eles[a].fileInfo.Type == 'Executable' )
+			var el = eles[a];
+			
+			if( el.fileInfo && el.Title && el.fileInfo.Type == 'Executable' )
 			{
 				var fi = eles[a].fileInfo;
 				var o = {
@@ -297,7 +336,28 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					{
 						//
 					}
-					m.execute( 'additem', { application: o.exe, shortdescription: '' } );
+					m.execute( 'additem', { type: 'executable', application: o.exe, shortdescription: '' } );
+					dropped++;
+				}
+			}
+			// Add a normal file
+			if( el.fileInfo && el.Title && el.fileInfo.Type == 'File' )
+			{
+				var fi = eles[a].fileInfo;
+				var o = {
+					title: fi.Title ? fi.Title : fi.Filename,
+					exe: el.fileInfo.Path,
+					src: fi.Title ? fi.Title : fi.Filename
+				};
+				if( self.addLauncher( o ) )
+				{				
+					var m = new Module( 'dock' );
+					var w = this.view;
+					m.onExecuted = function( r, dat )
+					{
+						//
+					}
+					m.execute( 'additem', { type: 'file', application: el.fileInfo.Path, shortdescription: '' } );
 					dropped++;
 				}
 			}

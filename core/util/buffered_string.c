@@ -1,4 +1,21 @@
-
+/*******************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+*                                                                              *
+* This program is free software: you can redistribute it and/or modify         *
+* it under the terms of the GNU Affero General Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* GNU Affero General Public License for more details.                          *
+*                                                                              *
+* You should have received a copy of the GNU Affero General Public License     *
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+*                                                                              *
+*******************************************************************************/
 
 #include "buffered_string.h"
 #include <util/log/log.h>
@@ -40,10 +57,11 @@ BufString *BufStringNewSize( int bufsize )
 		str->bs_Bufsize = bufsize;
 		str->bs_MAX_SIZE = bufsize;
 		
-		str->bs_Buffer = FCalloc( str->bs_Bufsize+1, sizeof(char) );
-		
-		//printf("BufStr allocated\n");
-		return str;
+		if( ( str->bs_Buffer = FCalloc( str->bs_Bufsize + 1, sizeof( char ) ) ) != NULL )
+		{
+			return str;
+		}
+		FFree( str );
 	}
 		
 	return NULL;
@@ -165,11 +183,14 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 			int allsize = ( (len / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
 			char *tmp;
 			
-			if( ( tmp = FCalloc( allsize+1, sizeof(char) ) ) != NULL )
+			if( ( tmp = FCalloc( allsize + 1, sizeof(char) ) ) != NULL )
 			{
 				memcpy( tmp, ntext, len );
 				bs->bs_Bufsize = allsize;
 				bs->bs_Size = len;
+				
+				FFree( bs->bs_Buffer );
+				bs->bs_Buffer = tmp;
 			}
 			else
 			{

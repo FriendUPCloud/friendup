@@ -59,3 +59,38 @@
 	padding: 5px;
 }
 
+/* Vertical tabs ------------------------------------------------------------ */
+
+.VertTab
+{
+	box-sizing: border-box;
+	padding: 10px;
+	background: #f8f8f8;
+	color: #040404;
+	cursor: hand; cursor: pointer;
+}
+.VertTab:hover
+{
+	background: white;
+}
+.VertTab.Active
+{
+	background: #fefefe;
+	color: black;
+	font-weight: bold;
+}
+.VertTab + .VertTab
+{
+	border-top: 1px solid #c0c0c0;
+}
+
+.VertPage
+{
+	display: none;
+}
+
+.VertPage.Active
+{
+	display: block;
+}
+

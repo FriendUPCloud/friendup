@@ -618,6 +618,42 @@
 	box-shadow:inset 0px 0px 30px 5px rgba(0,0,0,0.9);
 }
 
+.File > a.Download
+{
+	display:block;
+	position:absolute;
+	top:-2000px;
+	right:4px;
+	width:24px;
+	height:24px;
+	overflow:hidden;
+	z-index:100;
+	background:#FFF;
+	border-radius:5px;
+	padding:5;
+	line-height:20px;
+	white-space: nowrap;
+	box-shadow:0px 1px 6px rgba(0,0,0,0.4);
+	background:#FFF url(../gfx/icons/16x16/actions/download.png) center center no-repeat;	
+}
+
+.File.Selected > a.Download
+{
+	top:-5px;
+	right:-5px;
+}
+
+
+.File > a.Download.Active
+{
+	/*width:auto;*/
+	display:block;
+	overflow:show;
+	text-align:center;
+	background:rgba(255,255,255,0.8);
+	border-radius:10px;
+}
+
 /* Friend graphics elements ------------------------------------------------- */
 
 .FriendGraphic

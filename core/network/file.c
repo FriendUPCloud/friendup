@@ -74,7 +74,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	}
 	
 	LocFile* fo = (LocFile*) calloc( 1, sizeof(LocFile) );
-	if( fp != NULL )
+	if( fo != NULL )
 	{
 		int len = strlen( path );
 		fo->lf_Path = StringDuplicateN( path, len );

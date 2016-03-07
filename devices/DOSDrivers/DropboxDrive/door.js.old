@@ -1,0 +1,211 @@
+/*
+
+	As of now this is a renamed copy of the same file for the SQLDrive!
+
+	
+
+*/
+DoorDropboxDrive = function( path )
+{
+	this.path = path;
+	this.handler = 'void';
+	this.init();
+}
+DoorDropboxDrive.prototype = new Door();
+
+DoorDropboxDrive.prototype.get = function( path )
+{
+	var vol = path.split( ':' )[0] + ':';
+	for( var a = 0; a < Doors.icons.length; a++ )
+	{
+		if( Doors.icons[a].Volume == vol )
+		{
+			return Doors.icons[a].Door;
+		}
+	}
+	return new DoorDropboxDrive( path );
+};
+
+DoorDropboxDrive.prototype.getIcons = function( fileInfo, callback )
+{
+	var finfo = false;
+	
+	if( fileInfo )
+	{
+		finfo = fileInfo;
+		this.fileInfo = {
+			ID:       fileInfo.ID,
+			MetaType: fileInfo.MetaType,
+			Path:     fileInfo.Path,
+			Title:    fileInfo.Title,
+			Type:     fileInfo.Type,
+			Volume:   fileInfo.Volume
+		};
+		if( !this.fileInfo.path )
+		{
+			this.fileInfo.path = this.path;
+		}
+	}
+	else if( !this.path )
+	{
+		if( callback ) callback( false );
+		return false;
+	}
+	else
+	{
+		this.fileInfo = {
+			ID:       false,
+			MetaType: 'Meta',
+			Path:     this.path,
+			Title:    this.path.split( ':' )[0] + ':',
+			Type:     'DropboxDrive',
+			Volume:   this.path.split( ':' )[0]
+		};
+	}
+
+	var j = new cAjax();
+	j.open( 'post', '/system.library/file/dir', true, true );
+	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'path', this.fileInfo.Path );
+	j.onload = function( e, d )
+	{
+		if( e )
+			callback( JSON.parse( d ) );
+	}
+	j.send();
+};
+DoorDropboxDrive.prototype.instantiate = function()
+{
+	return new DoorDropboxDrive();
+}
+
+// Writes to file
+DoorDropboxDrive.prototype.write = function( filename, data )
+{
+	var dr = this;
+	var j = new cAjax();
+	j.open( 'post', '/system.library/file/write', true, true );
+	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'path', filename );
+	j.addVar( 'data', data );
+	j.addVar( 'encoding', 'url' );
+	j.addVar( 'mode', 'w' );
+	j.onload = function( r, d )
+	{
+		console.log( filename + ' has been written' );
+		var dat = 0;
+		if( r == 'ok' )
+		{
+			dat = ( JSON.parse( d ) ).FileDataStored;
+		}
+		
+		if( dr.onWrite )
+			dr.onWrite( dat );
+	}
+	j.send();
+}
+
+// Reads a file
+DoorDropboxDrive.prototype.read = function( filename )
+{
+	var dr = this;
+	var j = new cAjax();
+	j.open( 'post', '/system.library/file/read', true, true );
+	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'path', filename );
+	j.addVar( 'mode', 'r' );
+	j.onload = function( r, d )
+	{
+		if( dr.onRead )
+		{
+			dr.onRead( r == 'ok' ? d : false );
+		}
+	}
+	j.send();
+}
+
+// Execute a dos action now..
+DoorDropboxDrive.prototype.dosAction = function( func, args, callback )
+{	
+	// Alterations depending on command format
+	switch( func )
+	{
+		case 'delete':
+		case 'copy':
+		case 'rename':
+		case 'stat':
+		case 'protect':
+		case 'makedir':
+			func = 'file/' + func;
+			break;
+	}
+	
+	// We need a path
+	if( !args.path ) args.path = this.path;
+	
+	// Do the request
+	var dr = this;
+	var j = new cAjax();
+	j.open( 'post', '/system.library/' + func, true, true );
+	j.addVar( 'sessionid', Doors.sessionId );
+	j.addVar( 'args', JSON.stringify( args ) );
+	// Since FC doesn't have full JSON support yet, let's do this too
+	if( args && typeof( args ) == 'object' )
+	{
+		for( var a in args )
+		{
+			j.addVar( a, args[a] );
+		}
+	}
+	else
+	{
+		j.addVar( 'path', this.path );
+	}
+	j.onload = function()
+	{
+		if( callback ) callback( this.responseText() );
+	}
+	j.send();
+}
+
+// Mount a device
+DoorDropboxDrive.prototype.Mount = function( callback )
+{
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		Application.refreshDoors();
+	}
+	var args = {
+		command: 'mount',
+		devname: this.path.split( ':' )[0] + ':'
+	};
+	f.onExecuted = function( e, data )
+	{
+		if( callback ) callback( data );
+	}
+	f.execute( 'device', args );
+}
+
+// Unmount a device
+DoorDropboxDrive.prototype.Unmount = function( callback )
+{
+	var f = new Library( 'system.library' );
+	f.onExecuted = function( e, d )
+	{
+		Application.refreshDoors();
+	}
+	var args = {
+		command: 'unmount',
+		devname: this.path.split( ':' )[0] + ':'
+	};
+	f.onExecuted = function( e, data )
+	{
+		if( callback ) callback( data );
+	}
+	f.execute( 'device', args );
+}
+
+
+
+

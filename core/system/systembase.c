@@ -101,7 +101,10 @@ SystemBase *SystemInit( void )
 	l->PropLibCounter = 0;
 	l->ZLibCounter = 0;
 	
-	User	 			*sl_Sessions;				// logged users with mounted devices
+	// Set mutex
+	pthread_mutex_init( &l->mutex, NULL );
+	
+	//User	 			*sl_Sessions;				// logged users with mounted devices
 	
 	struct UserLibrary	*ulib   = NULL;
 	//struct MYSQLLibrary *sqllib = NULL;
@@ -138,6 +141,7 @@ SystemBase *SystemInit( void )
 	l->LibraryZDrop = dlsym( l->handle, "LibraryZDrop");
 	l->LibraryImageGet = dlsym( l->handle, "LibraryImageGet");
 	l->LibraryImageDrop = dlsym( l->handle, "LibraryImageDrop");
+	l->UserDeviceMount = dlsym( l->handle, "UserDeviceMount" );
 	
 	#ifdef WEBSOCKETS
 	l->AddWebSocketConnection = dlsym( l->handle, "AddWebSocketConnection");
@@ -287,7 +291,7 @@ SystemBase *SystemInit( void )
 			while( tmpUser != NULL )
 			{
 				
-				DEBUG("Logged user----------------------------> %ld\n", tmpUser->u_ID );
+				ERROR("\n\n\nAUTOLogged user----------------------------> %ld name %s\n", tmpUser->u_ID, tmpUser->u_Name );
 			
 				UserDeviceMount( l, sqllib, tmpUser );
 			
@@ -327,7 +331,6 @@ SystemBase *SystemInit( void )
 
 void SystemClose( struct SystemBase *l )
 {
-
 	if( l->cm != NULL )
 	{
 		CacheManagerDelete( l->cm );
@@ -351,28 +354,6 @@ void SystemClose( struct SystemBase *l )
 	
 	// Close image library
 	l->LibraryImageDrop( l, l->ilib );
-	// Close user library
-	l->LibraryUserDrop( l, l->ulib );
-	
-	// Application lib
-	if( l->alib )
-	{
-		LibraryClose( l->alib );
-	}
-	
-	// Close mysql library
-	DEBUG( "Closing and looking into mysql pool\n" );
-	if( l->sqlpool != NULL )
-	{
-		int i;
-		for( i=0 ; i < SQLLIB_POOL_NUMBER ; i++ )
-		{
-			DEBUG( "Closed mysql library slot %d\n", i );
-			 LibraryClose( l->sqlpool[i ].sqllib );
-		}
-		
-		free( l->sqlpool );
-	}
 	
 	// release and free all modules
 	EModule *lmod = l->sl_Modules;
@@ -383,6 +364,60 @@ void SystemClose( struct SystemBase *l )
 		DEBUG("Remove module %s\n", remm->Name );
 		EModuleDelete( remm );
 	}
+	
+	
+	User *usr = l->sl_Sessions;
+	User *remusr = usr;
+	while( usr != NULL )
+	{
+		remusr = usr;
+		usr = (User *)usr->node.mln_Succ;
+		
+		if( remusr != NULL )
+		{
+			File *lf = remusr->u_MountedDevs;
+			File *remdev = lf;
+			while( lf != NULL )
+			{
+				remdev = lf;
+				lf = (File *)lf->node.mln_Succ;
+				
+				FHandler *fsys = (FHandler *)remdev->f_FSys;
+
+				if( fsys != NULL && fsys->UnMount != NULL )
+				{
+					// Only release
+					if( fsys->Release( fsys, remdev ) != 0 )
+					{
+					
+					}
+				}
+				else
+				{
+					ERROR("Cannot free FSYS (null)\n");
+				}
+				
+				if( remdev->f_SessionID )
+				{
+					free( remdev->f_SessionID );
+				}
+				
+				if( remdev->f_FSysName )
+				{
+					free( remdev->f_FSysName );
+				}
+				free( remdev );
+			}
+			
+			DEBUG("Freeuser %s\n", remusr->u_Name );
+			
+			l->ulib->UserFree( remusr );
+			remusr = NULL;
+			DEBUG("=====================\n\n\n=================");
+		}
+	}
+	
+	l->sl_Sessions = NULL;
 	
 	// release dosdrivers
 	DOSDriver *ldd = l->sl_DOSDrivers;
@@ -404,6 +439,72 @@ void SystemClose( struct SystemBase *l )
 		FHandlerDelete( rems );
 	}
 	
+	// Free all users!
+	// TODO: Enable this when we're actually ready to free users
+	/*User *usr = l->sl_Sessions;
+	User *tmp = usr;
+	int maxusers = 4096;
+	int run = 1, im = 0;
+	int userinstance = 0;
+	void *FreeUsers[maxusers]; // Backlog
+	memset( &FreeUsers, 0, maxusers );
+	while( tmp )
+	{
+		for( im = 0; im < maxusers; im++ )
+		{
+			if( FreeUsers[im] == tmp )
+			{
+				ERROR( "Trying to make me double free a user eh?\n" );
+				run = 0;
+			}
+		}
+		// Only free when we're allowed
+		if( run == 1 )
+		{
+			l->ulib->UserFree(  tmp );
+			FreeUsers[userinstance] = tmp;
+			if( tmp == usr->node.mln_Succ )
+			{
+				ERROR( "We're linking to ourselves! Infinite loop error!\n" );
+				break;
+			}
+			tmp = usr->node.mln_Succ;
+			
+			// Also, only allow max
+			if( userinstance++ >= maxusers ) break;
+		}
+		// Temporary fix, because users haven't been properly cleaned..
+		else
+		{
+			break;
+		}
+	}*/
+	
+
+	
+	// Close user library
+	l->LibraryUserDrop( l, l->ulib );
+	
+	// Application lib
+	if( l->alib )
+	{
+		LibraryClose( l->alib );
+	}
+	
+	// Close mysql library
+	DEBUG( "Closing and looking into mysql pool\n" );
+	if( l->sqlpool != NULL )
+	{
+		int i;
+		for( i=0 ; i < SQLLIB_POOL_NUMBER ; i++ )
+		{
+			DEBUG( "Closed mysql library slot %d\n", i );
+			LibraryClose( l->sqlpool[i ].sqllib );
+		}
+		
+		free( l->sqlpool );
+	}
+	
 	// release them all strings ;)
 	if( l->sl_ModPath )
 	{
@@ -423,6 +524,9 @@ void SystemClose( struct SystemBase *l )
 		LibraryClose( l->plib );
 	}
 	
+	// Destroy mutex
+	pthread_mutex_destroy( &l->mutex );
+	
 	DEBUG("System library closed.\n");
 }
 
@@ -433,14 +537,28 @@ void SystemClose( struct SystemBase *l )
 int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 {
 	char temptext[ 512 ];
-	sprintf( temptext, "SELECT Name, Type, Server, Port, Path, Mounted, UserID FROM `Filesystem` f WHERE f.UserID = '%ld' AND f.Mounted = '1'", usr->u_ID );
+
+	//sprintf( temptext, "SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID` FROM `Filesystem` f WHERE f.UserID = '%ld'", usr->u_ID );
+	sprintf( temptext, "SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID` FROM `Filesystem` f WHERE f.UserID = '%ld' and f.Mounted = '1'", usr->u_ID );
 	MYSQL_RES *res = sqllib->Select( sqllib, temptext );
+	if( res == NULL ) return 0;
+	
 	MYSQL_ROW row;
 
+	// check if device is already on list
+	INFO("Mount user device from Database\n");
+	
 	int j=0;
 	if( usr->u_MountedDevs != NULL )
 	{
+		/*
+		File *f;
 		
+		LIST_FOR_EACH( usr->u_MountedDevs, f )
+		{
+			
+		}
+		*/
 	}
 	
 	while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -449,7 +567,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 		//row = res->row[ j ];
 		DEBUG("Database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
-		DEBUG( "%s is %s", row[ 0 ], atoi( row[ 5 ] ) == 1 ? "mounted" : "not mounted" );
+		DEBUG( "%s is %s\n", row[ 0 ], atoi( row[ 5 ] ) == 1 ? "mounted" : "not mounted" );
 		int mount = atoi( row[ 5 ] );
 		int id = 0;
 		User *owner = NULL;
@@ -487,7 +605,8 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 			}
 		}*/
 		
-		if( mount == 1 )
+		// Only mount it if it's required!
+		//if( mount == 1 )
 		{
 			struct TagItem tags[] = {
 				{FSys_Mount_Path, (ULONG)row[ 4 ]},
@@ -496,24 +615,39 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 				{FSys_Mount_Type, (ULONG)row[ 1 ]},
 				{FSys_Mount_Name, (ULONG)row[ 0 ]},
 				{FSys_Mount_User, (ULONG)usr },
-				{FSys_Mount_Owner, (ULONG) owner },
+				{FSys_Mount_Owner, (ULONG)owner },
 				{FSys_Mount_ID, (ULONG)id },
+				{FSys_Mount_Mount, (ULONG)mount },
 				{TAG_DONE, TAG_DONE}
 			};
 
-			int err = l->MountFS( l, (struct TagItem *)&tags );
+			File *device = NULL;
+			int err = MountFS( l, (struct TagItem *)&tags, &device );
 			if( err != 0 )
 			{
 				ERROR("Cannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				sprintf( temptext, "UPDATE Filesystem SET `Mounted` = '0' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", 
-				usr->u_ID, (char *)row[ 0 ] );
-				MYSQL_RES *resx = sqllib->Select( sqllib, temptext );
+				if( mount == 1 )
+				{
+					sprintf( temptext, "UPDATE Filesystem SET `Mounted` = '0' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", 
+					usr->u_ID, (char *)row[ 0 ] );
+					MYSQL_RES *resx = sqllib->Select( sqllib, temptext );
+				}
+			}
+			else if( device )
+			{
+				device->f_Mounted = TRUE;
+			}
+			else
+			{
+				ERROR( "Cannot set device mounted state. Device = NULL (%s).\n", row[0] );
 			}
 		}	
 	}	// going through all rows
-	DEBUG("Device mounted for user %s\n", usr->u_Name );
+	DEBUG( "Device mounted for user %s\n", usr->u_Name );
 
 	sqllib->FreeResult( sqllib, res );
+	
+	DEBUG( "Successfully freed.\n" );
 	
 	usr->u_InitialDevMount = TRUE;
 	
@@ -628,6 +762,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 	int result = 0;
 	Http *response = NULL;
 	User *loggedUser = NULL;
+	BOOL userAdded = FALSE;
 	
 	INFO("Webreq func: %s\n", urlpath[ 0 ] );
 	
@@ -732,6 +867,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 						curusr->u_LoggedTime = timestamp;
 					}*/
 					loggedUser = curusr;
+					userAdded = TRUE;		// there is no need to free resources
 					break;
 				}
 				
@@ -754,7 +890,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			response = HttpNewSimple(  HTTP_200_OK,  tags );
 			
 			DEBUG("Set text\n");
-			char *data = "{ \"ErrorMessage\": \"no user!\"}";
+			char *data = "{ \"ErrorMessage\": \"user not found\"}";
 			HttpAddTextContent( response, data );
 			DEBUG("Write and quit\n");
 				
@@ -770,6 +906,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			char tmpQuery[ 255 ];
 			sprintf( tmpQuery, "UPDATE FUser SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
 			MYSQL_RES *res = sqllib->Select( sqllib, tmpQuery );
+			UserDeviceMount( l, sqllib, loggedUser );
 			sqllib->FreeResult( sqllib, res );
 		}
 		l->LibraryMYSQLDrop( l, sqllib );
@@ -822,9 +959,6 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 		
 		if( response != NULL ) ERROR("RESPONSE \n");
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-	
-		//User *loggedUser = NULL;
-		//
 	
 		DEBUG("Login function\n");
 					
@@ -881,87 +1015,37 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 						DEBUG("Authenticate\n");
 						loggedUser = l->ulib->Authenticate( l->ulib, NULL, usrname, pass, NULL );
 						
+						//
+						// user not logged in previously, we must add it to list
+						// 
+						if( loggedUser != NULL )
+						{
+							if( l->sl_Sessions == NULL )	// list is empty
+							{
+								l->sl_Sessions = loggedUser;
+							}
+							else
+							{
+								ERROR("\n\n\nSECOND USER\nsessid %s\n\n\n", loggedUser->u_SessionID );
+				
+								//lastuser->node.mln_Succ = (struct MinNode *)loggedUser;
+								//loggedUser->node.mln_Pred = (struct MinNode *)lastuser;
+								loggedUser->node.mln_Succ = (struct MinNode *)l->sl_Sessions;
+								l->sl_Sessions = loggedUser;
+							}
+							/*
+							else
+							{	// user logged in, update information
+								time_t timestamp = time ( NULL );
+								loggedUser->u_LoggedTime = timestamp;
+							}*/
+			
+							MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+							UserDeviceMount( l, sqllib, loggedUser );
+							userAdded = TRUE;
+							l->LibraryMYSQLDrop( l, sqllib );
 						
-	
-		//
-		// user not logged in, we must add it to list
-		// 
-		if( loggedUser != NULL )
-		{
-			if( l->sl_Sessions == NULL )	// list is empty
-			{
-				l->sl_Sessions = loggedUser;
-			}
-			else
-			{
-				ERROR("\n\n\nSECOND USER\nsessid %s\n\n\n", loggedUser->u_SessionID );
-				
-				//lastuser->node.mln_Succ = (struct MinNode *)loggedUser;
-				//loggedUser->node.mln_Pred = (struct MinNode *)lastuser;
-				loggedUser->node.mln_Succ = (struct MinNode *)l->sl_Sessions;
-				l->sl_Sessions = loggedUser;
-			}
-			/*
-			else
-			{	// user logged in, update information
-				time_t timestamp = time ( NULL );
-				loggedUser->u_LoggedTime = timestamp;
-			}*/
-			
-			MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
-			UserDeviceMount( l, sqllib, loggedUser );
-			l->LibraryMYSQLDrop( l, sqllib );
-			/*char temptext[ 512 ];
-			
-			DEBUG("Logged user----------------------------> %ld\n", loggedUser->u_ID );
-			
-			
-			
-			sprintf( temptext, "SELECT * FROM `Filesystem` WHERE `UserID` = %ld", loggedUser->u_ID );
-			MYSQL_RES *res = sqllib->Select( sqllib, temptext );
-			MYSQL_ROW row;
-				
-			//DEBUG("User logged, rows count %ld\n", res->row_count );
-			
-			int j=0;
-			loggedUser->u_MountedDevs = NULL;
-			
-			//for( j=0 ;j < res->row_count ; j++ )
-			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
-			{
-				// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
-				//row = res->row[ j ];
-				DEBUG("Database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 2 ], row[ 3 ], row[ 4 ], row[ 6 ], row[ 7 ], row[ 10 ] );
-				
-				int mount = atoi( row[ 10 ] );
-				
-				if( mount == 1 )
-				{
-					struct TagItem tags[] = {
-						{FSys_Mount_Path, (ULONG)row[ 7 ]},
-						{FSys_Mount_Host, (ULONG)NULL},
-						{FSys_Mount_Port, (ULONG)NULL},
-						{FSys_Mount_Type, (ULONG)row[ 3 ]},
-						{FSys_Mount_Name, (ULONG)row[ 2 ]},
-						{FSys_Mount_User, (ULONG)loggedUser },
-						{TAG_DONE, TAG_DONE}
-					};
-
-					int err = MountFS( l, (struct TagItem *)&tags );
-					if( err != 0 )
-					{
-						sprintf( temptext, "UPDATE `Filesystem` SET `Mounted` = '0' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", loggedUser->u_ID, (char *)row[ 2 ] );
-								MYSQL_RES *res = sqllib->Select( sqllib, temptext );
-					}
-				}
-			}
-			DEBUG("Device mounted\n");
-			
-			sqllib->FreeResult( sqllib, res );
-			
-			l->LibraryMYSQLDrop( l, sqllib );
-			*/
-		}
+						}
 		
 					}
 					else
@@ -1049,9 +1133,9 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			if( l->ulib == NULL )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
-				//HttpWriteAndFree( response );
+				goto error;
 
-				return response;
+				//return response;
 			}
 		
 			HashmapElement *el = HttpGetPOSTParameter( request, "username" );
@@ -1164,6 +1248,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 						}
 						
 						l->ulib->UserDelete( l->ulib, remusr );
+						remusr = NULL;
 					}
 				}
 				if( l->ulib != NULL )
@@ -1236,6 +1321,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 									if( hasExt > 0 )
 									{
 										int extlen = dlen - 7;
+										if( modType ) free( modType );
 										modType = calloc( extlen + 1, sizeof( char ) );
 										ie = 0; int md = 0, typec = 0;
 										for( ; ie < dlen; ie++ )
@@ -1263,9 +1349,17 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 							//DEBUG( "[MODULE] Executing %s module!", modType );
 							char *modulePath = calloc( 256, sizeof( char ) );
 							sprintf( modulePath, "%s/module.%s", path, modType );
-							if( strcmp( modType, "php" ) == 0 )
+							if( 
+								strcmp( modType, "php" ) == 0 || 
+								strcmp( modType, "jar" ) == 0 ||
+								strcmp( modType, "py" ) == 0
+							)
 							{
-								data = RunMod( SLIB, "php", modulePath, request->content != NULL ? request->content : request->uri->queryRaw, &dataLength );
+								data = RunMod( 
+									SLIB, modType, modulePath, 
+									request->content != NULL ? request->content : request->uri->queryRaw, 
+									&dataLength 
+								);
 								
 								if( data != NULL )
 								{
@@ -1275,9 +1369,9 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 									char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
 									char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
 			
-									DEBUG("TYPE %s  LENGTH %s\n", ltype, length );
+									DEBUG("TYPE %s LENGTH %s\n", ltype, length );
 									
-									char *datastart = strstr( data,  "---http-headers-end---" );
+									char *datastart = strstr( data, "---http-headers-end---" );
 									if( datastart != NULL )
 									{
 										datastart += 23;
@@ -1297,8 +1391,6 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 				
 									if( ltype != NULL && length != NULL )
 									{
-										DEBUG("Adding leaking memory\n" );
-
 										struct TagItem tags[] = {
 											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)StringDuplicateN( ltype, strlen( ltype ) ) },
 											{	HTTP_HEADER_CONTENT_LENGTH, (ULONG)StringDuplicateN( length, strlen( length ) ) },
@@ -1306,8 +1398,12 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 											{TAG_DONE, TAG_DONE}
 										};
 		
-										if( response != NULL ) ERROR("RESPONSE \n");
-										response = HttpNewSimple( HTTP_200_OK,  tags );
+										if( response != NULL )
+										{
+											ERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
+											HttpFree( response );
+										}
+										response = HttpNewSimple( HTTP_200_OK, tags );
 										
 										if( response )
 										{
@@ -1333,7 +1429,11 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 											{TAG_DONE, TAG_DONE}
 										};
 		
-										if( response != NULL ) ERROR("RESPONSE \n");
+										if( response != NULL )
+										{
+											ERROR("RESPONSE ERROR ALREADY SET (freeing)\n");
+											HttpFree( response );
+										}
 										response = HttpNewSimple( HTTP_200_OK,  tags );
 										
 										if( response != NULL )
@@ -1409,8 +1509,9 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			if( l->ulib == NULL )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
-				//HttpWriteAndFree( response );
-				return response;
+
+				goto error;
+				//return response;
 			}
 		
 			HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
@@ -1446,7 +1547,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			
 			int mountError = 0;
 		
-			if( sessionid == NULL || devname == NULL || type == NULL )//|| path == NULL )
+			if( sessionid == NULL || devname == NULL || type == NULL )
 			{
 				ERROR("One of required arguments is missing: sessionid, devname, type\n");
 				// required arguments missing
@@ -1454,68 +1555,78 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			}
 			else
 			{
-					//
-					// user is logged in, we can mount device for him
+				//
+				// user is logged in, we can mount device for him
+				//
+				
+				char *module = NULL;
+				el = HttpGetPOSTParameter( request, "module" );
+				if( el != NULL )
+				{
+					module = (char *)el->data;
+				}
+				
+				if( loggedUser != NULL )
+				{
+					struct TagItem tags[] = {
+						{FSys_Mount_Path, (ULONG)path},
+						{FSys_Mount_Host, (ULONG)NULL},
+						{FSys_Mount_Port, (ULONG)NULL},
+						{FSys_Mount_Type, (ULONG)type},
+						{FSys_Mount_Name, (ULONG)devname},
+						{FSys_Mount_User, (ULONG)loggedUser},
+						{FSys_Mount_Module,(ULONG)module},
+						{FSys_Mount_Owner,(ULONG)loggedUser},
+						{FSys_Mount_Mount, (ULONG)TRUE },
+						{TAG_DONE, TAG_DONE}
+					};
+					
+					File *mountedDev = NULL;
+					
+					int mountError = MountFS( l, (struct TagItem *)&tags, &mountedDev );
+			
+					// This is ok!
+					if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
 					{
+						DEBUG("Cannot mount already mounted filesystem!\n");
+						HttpAddTextContent( response, "ok<!--separate-->ErrorMessage: Device already mounted." );
+						
+						mountError = 1;
+					}
+					else
 					{
-						char *module = NULL;
-						el = HttpGetPOSTParameter( request, "module" );
-						if( el != NULL )
+						if( mountError == FSys_Error_DeviceAlreadyMounted )
 						{
-							module = (char *)el->data;
+							DEBUG( "We will mount this bastard, even if it's already mounted!\n" );
 						}
 						
-						if( loggedUser != NULL )
+						char tmp[ 100 ];
+						sprintf( tmp, "ok<!--separate-->Mouting error: %d (already mounted)\n", l->GetError( l ) );
+						HttpAddTextContent( response, tmp );
+					}	// mount failed
+					
+					//TODO
+					// we must check if dvice should be moutned
+					// NB: ALWAYS mount when asked to and allowed to
+					if( mountedDev != NULL )
+					{
+						char temptext[ 512 ];
+						sprintf( temptext, "UPDATE `Filesystem` SET `Mounted` = '1' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", loggedUser->u_ID, devname );
+						MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+						if( sqllib )
 						{
-							struct TagItem tags[] = {
-								{FSys_Mount_Path, (ULONG)path},
-								{FSys_Mount_Host, (ULONG)NULL},
-								{FSys_Mount_Port, (ULONG)NULL},
-								{FSys_Mount_Type, (ULONG)type},
-								{FSys_Mount_Name, (ULONG)devname},
-								{FSys_Mount_User, (ULONG)loggedUser},
-								{FSys_Mount_Module,(ULONG)module},
-								{FSys_Mount_Owner,(ULONG)loggedUser},
-//								{FSys_Mount_ID, (ULONG)id },
-								{TAG_DONE, TAG_DONE}
-							};
-							
-							int mountError = MountFS( l, (struct TagItem *)&tags );
-					
-							// This is ok!
-							if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
-							{
-								DEBUG("Cannot mount already mounted filesystem!\n");
-								HttpAddTextContent( response, "ok<!--separate-->ErrorMessage: Device already mounted." );
-								
-								mountError = 1;
-							}
-							else
-							{
-								if( mountError == FSys_Error_DeviceAlreadyMounted )
-								{
-									DEBUG( "We will mount this bastard, even if it's already mounted!\n" );
-								}
-								
-								char tmp[ 100 ];
-								char temptext[ 512 ];
-								sprintf( tmp, "ok<!--separate-->Mouting error: %d (already mounted)\n", l->GetError( l ) );
-					
-								HttpAddTextContent( response, tmp );
-								
-								sprintf( temptext, "UPDATE `Filesystem` SET `Mounted` = '1' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", loggedUser->u_ID, devname );
-								
-								MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
-								MYSQL_RES *res = sqllib->Select( sqllib, temptext );
-								l->LibraryMYSQLDrop( l, sqllib );
-							}	// mount failed
+							MYSQL_RES *res = sqllib->Select( sqllib, temptext );
+							l->LibraryMYSQLDrop( l, sqllib );
 						}
-						else
-						{	// user not found , he is not logged in
-							DEBUG("Cannot mount device for not logged in user\n");
-							HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"Cannot mount device for not logged user\"}" );
-						}
-					}	// checking if device is mounted
+						
+						mountedDev->f_Mounted = TRUE;
+					}
+					
+				}
+				else
+				{	// user not found , he is not logged in
+					DEBUG("Cannot mount device for not logged in user\n");
+					HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"Cannot mount device for not logged user\"}" );
 				}
 			}		// check mount parameters
 		
@@ -1544,7 +1655,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
 
-				return response;
+				goto error;
+				//return response;
 			}
 		
 			HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
@@ -1566,8 +1678,19 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 						{FSys_Mount_User, (ULONG)loggedUser },
 						{TAG_DONE, TAG_DONE }
 					};
+					mountError = -1;
 				
-					mountError = UnMountFS( l, (struct TagItem *)&tags );
+					File *f = NULL;
+					LIST_FOR_EACH( loggedUser->u_MountedDevs, f )
+					{
+						if( strcmp( devname, f->f_Name ) == 0 )
+						{
+							mountError = 0;
+							f->f_Mounted = FALSE;
+						}
+					}
+					
+					//mountError = UnMountFS( l, (struct TagItem *)&tags );
 					
 					// default handle
 					if( mountError != 0 )
@@ -1641,7 +1764,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
 
-				return response;
+				goto error;
+				//return response;
 			}
 		
 			HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
@@ -1660,7 +1784,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			{
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or Username are empty\"}" );
 				ERROR("Devname or username are empty! Cannot share device\n");
-				return response;
+				goto error;
+				//return response;
 			}
 			else
 			{
@@ -1689,7 +1814,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 					{
 						ERROR("Cannot find user with name %s in database\n", username );
 						HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"User account do not exists\"}" );
-						return response;
+						goto error;
+						//return response;
 					}
 				}
 				
@@ -1745,7 +1871,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 				{
 					ERROR("User account do not exist!Sharing device option is not possible\n");
 					HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"User account do not exists\"}" );
-					return response;
+					goto error;
+					//return response;
 				}
 
 				
@@ -1783,7 +1910,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 				HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
 				//HttpWriteAndFree( response );
 
-				return response;
+				goto error;
+				//return response;
 			}
 		
 			if( sessionid == NULL )
@@ -1795,7 +1923,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			
 				User *logusr = l->ulib->IsSessionValid( l->ulib, sessionid );
 				User *curusr = l->sl_Sessions;
-				int found = 0;
+				//int found = 0;
 				
 				DEBUG("user found, listing devices\n");
 				
@@ -1804,13 +1932,13 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 					DEBUG("Checking user logged in list %s\n", curusr->u_Name );
 					if( strcmp( curusr->u_Name, logusr->u_Name ) == 0 )		// user is logged in
 					{
-						found = 1;
+						//found = 1;
 						break;
 					}
 					curusr = (User *)curusr->node.mln_Succ;
 				}
 
-				if( found == 1 )
+				if( curusr != NULL )
 				{
 					File *dev = curusr->u_MountedDevs;
 					BufString *bs = BufStringNew();
@@ -1878,7 +2006,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 					PathFree( urlpath );
 					urlpath = NULL;
 				}*/
-				return response;
+				goto error;
+//				return response;
 			}
 		
 			if( sessionid == NULL )
@@ -1973,7 +2102,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			DEBUG( "User library is NULL!\n" );
 			HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"user.library is not opened!\"}" );
 
-			return response;
+			goto error;
+			//return response;
 		}
 		
 		if( urlpath[ 1 ] == NULL )
@@ -1981,7 +2111,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			DEBUG( "URL path is NULL!\n" );
 			HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"second part of url is null!\"}" );
 
-			return response;
+			goto error;
+			//return response;
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "path" );
@@ -2089,6 +2220,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 					}
 					DEBUG( "Local filesystem wanted this path: \'%s\'\n", path );
 					FFree( lpath );
+					lpath = NULL;
 				}
 		
 				DEBUG( "File found pointer %p DEVNAME %s\n", actDev, devname );
@@ -2205,7 +2337,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 					
 					char tmp[ 100 ];
 					
-					char *lpath =UrlDecodeToMem( path );
+					char *lpath = UrlDecodeToMem( path );
 					if( lpath != NULL )
 					{
 						int error = actFS->MakeDir( actDev, lpath );
@@ -2778,7 +2910,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			DEBUG( "URL path is NULL!\n" );
 			HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"second part of url is null!\"}" );
 
-			return response;
+			goto error;
+			//return response;
 		}
 		
 		if( strcmp( urlpath[ 1 ], "info" ) == 0 )
@@ -2858,14 +2991,12 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 		HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nFunction not found\" }" );
 	
-		//HttpWriteAndFree( response );
-
-		return response;
+		goto error;
 	}
 	
-	DEBUG("WebRequest end OK result: %d  loggeduser %p\n", result, loggedUser );
 	if( loggedUser )
 	{
+		DEBUG("WebRequest end OK result: %d  loggeduser %p\n", result, loggedUser );
 		if( l->sl_Sessions )
 		{
 			//INFO("USER %s SESSIONS %p\n", loggedUser->u_Name, l->sl_Sessions );
@@ -2891,12 +3022,24 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 		//HttpWriteAndFree( response );
 	}
 	DEBUG("Response pointer %p\n", response );
+	if( userAdded == FALSE && loggedUser != NULL )
+	{
+		//UserLibrary *ulib = l->LibraryUserGet( l );
+		//ulib->UserFree( loggedUser );
+		//loggedUser = NULL;
+	}
 	
 	return response;
 	
 error:
 	
 	DEBUG("WebRequest end ERROR\n");
+	if( userAdded == FALSE && loggedUser != NULL )
+	{
+		//UserLibrary *ulib = l->LibraryUserGet( l );
+		//ulib->UserFree( loggedUser );
+		//loggedUser = NULL;
+	}
 	
 	return response;
 }
