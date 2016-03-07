@@ -50,6 +50,23 @@ ideas on how to use FriendUP on a RPI, please contact us on:
 
  * developers@friendos.com
  
+Upgrading
+---------
+
+If you have already downloaded an earlier version of FriendUP 
+through git, just run:
+
+ * git pull
+
+...to fetch the latest files. If you downloaded the .zip archive,
+just extract the current beta over the old files. After this, just
+run:
+
+ * make clean && make setup && make compile && make install
+ 
+This will compile the latest version of Friend Core and install 
+the newest version of Friend Workspace.
+ 
 Installing
 ----------
 
