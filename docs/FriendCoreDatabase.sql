@@ -293,11 +293,10 @@ ALTER TABLE `Filesystem` ADD `Owner` bigint(20);
 -- 29/01/2016 add standard admin user
 
 
-INSERT INTO `FUser` ( `Name`, `Password` ) VALUES ( 'friendadmin', 'FriendlyBetaAdministrator' );
+INSERT INTO `FUser` (`Name`,`Password`) VALUES ("friendadmin","FriendlyBetaAdministrator" );
 
-INSERT INTO `FUserGroup` ( `Name` ) VALUES ( 'Admin' );
+INSERT INTO `FUserGroup` (`Name`) VALUES ("Admin");
 
-INSERT INTO `FUserGroup` ( `Name` ) VALUES ( 'User' );
+INSERT INTO `FUserGroup` (`Name`) VALUES ("User");
 
-INSERT INTO `FUserToGroup` ( `UserId`, `UserGroupId` ) VALUES ( ( SELECT `ID` FROM `FUser` LIMIT 1 ) , ( SELECT `ID` FROM `FUserGroup` WHERE `Name`='Admin' ) );
-
+INSERT INTO `FUserToGroup` (`UserId`,`UserGroupId`) VALUES ( ( SELECT `ID` FROM `FUser` LIMIT 1 ) , ( SELECT `ID` FROM `FUserGroup` WHERE `Name`="Admin" ) );

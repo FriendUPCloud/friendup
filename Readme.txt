@@ -88,6 +88,15 @@ browser at:
 
  http://yourhost:port/webclient/index.html
 
+Caveats
+-------
+
+If there were small changes done to the database structure that
+we didn't catch, you can compare your current database structure
+with the one found in:
+
+ * docs/FriendCoreDatabase.sql
+
 
 
 
