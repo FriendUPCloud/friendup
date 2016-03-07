@@ -1,9 +1,78 @@
 
-	<div class="ContentFull ScrollArea">
+	<div id="FUPUpdateList" class="ContentFull ScrollArea">
+
 		<div class="Padding">
+
+
 			<h1>
 				Welcome to the Friend Unifying Platform!
 			</h1>
+			<hr/>
+			<h2>
+				Version 1.0 beta2 - 29.02.2016
+			</h2>
+			
+			<p>Welcome to our second public beta. We have worked hard behind the scenes and tried to increase the usefulness of FriendUP with this release. We will start with the most improved and nice new added apps:</p>
+			
+			<h3>App updates (click app name or icon to start the app)</h3>
+
+			<p><a href="javascript:ExecuteApplication('Author')"><img src="apps/Author/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Author</strong></a> has received a lot of new features. Our goal is to have a fully fledged writing tool by version 1.0. For now we have a better GUI, centered, page-like canvas for writing, as well as more editing options.</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+
+			<p><a href="javascript:ExecuteApplication('Wallpaper')"><img src="apps/Wallpaper/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Wallpaper</strong></a> - Fallback on background color, better control over wallpaper and icon window background.</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+			
+			<p><a href="javascript:ExecuteApplication('Dingo')"><img src="apps/Dingo/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Shell</strong></a> - our Dingo shell gets its focus back after operations.</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+
+			<p><a href="javascript:ExecuteApplication('Calculator')"><img src="apps/Calculator/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Calculator</strong></a> - a very simple calculator ported to FriendUP :)</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+
+
+			
+			<p>
+				<strong>New features:</strong>
+			</p>
+			
+			<ol>
+				<li>Friend Core: New core with more caching features and css/js load speed increase.</li>
+				<li>Workspace: When logging in from another location (b), you get the option of renewing your session at location (a).</li>
+				<li>Workspace: Defaults to an "Apple style" global menu.</li>
+				<li>Workspace: Better async loading of applications.</li>
+				<li>Workspace: Faster loading of css and Javascript for less latency impact.</li>
+				<li>Wallpaper: Fallback on background color, better control over wallpaper and icon window background.</li>
+				<li>Workspace: Improvements on touch interface (switch screens with swipe).</li>
+				<li>Workspace: New preferences applications; Language, Security, Mimetypes, Account settings.</li>
+				<li>API: Screens and Views behave more the same on an API level.</li>
+				<li>Author: Better GUI, centered, page-like canvas for writing.</li>
+				<li>Author: More editing options.</li>
+				<li>Dormant: System now has more functions to play with using DOS scripting.</li>
+				<li>API: Added vertical tabs.</li>
+				<li>Hello: Lots of UI fixed.</li>
+				<li>Hello: Much easier to setup new accounts.</li>
+				<li>Hello: IRC client improved with support for perform and history.</li>
+				<li>Hello: Frameskipping on video chat.</li>
+				<li>Hello: Better live invite requesters.</li>
+				<li>Hello: Speech synthesis added for notifications and private chat.</li>
+			</ol>
+			
+			<p>
+				<strong>Bug fixes:</strong>
+			</p>
+			
+			<ol>
+				<li>Author: Fixed broken save functionality when cancelling save.</li>
+				<li>Login prompt: Don't show message if there was no failed attempt.</li>
+				<li>Friend DOS: 'kill' command works again (spelling mistake).</li>
+				<li>Friend DOS: Added support for makedir command.</li>
+				<li>Friend DOS: Fixed broken save functionality when cancelling save.</li>
+				<li>Friend DOS: Properly performs callbacks on some commands.</li>
+				<li>Workspace: Fixed bug with wallpaper not always loading.</li>
+				<li>Workspace: Run command now remembers last command run properly.</li>
+				<li>Workspace: Fixed bug with slow network and async postmessage.</li>
+			</ol>
+			
+			<hr class="Space"/>
 			
 			<h2>
 				Version 1.0 beta1
@@ -20,6 +89,7 @@
 			</p>
 			
 			<ol>
+				<li>Language: Added language preferences for voice language.</li>
 				<li>Shell: Basic tab autocompletion implemented.</li>
 				<li>DoIt!: Can load and run scripts.</li>
 				<li>DOS Drivers: All dos drivers use the same javascript class.</li>

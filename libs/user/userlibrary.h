@@ -85,7 +85,7 @@ typedef struct UserLibrary
 	// create user in database
 	int                             (*UserCreate)( struct UserLibrary *l, User *usr );
 	// remove user structure
-	void                            (*UserFree)( struct UserLibrary *l, User *u );
+	void                            (*UserFree)( User *u );
 	// set user full name
 	void                            (*SetFullName)( struct UserLibrary *l, struct User *u, const char *fname );
 	// set user e-mail
