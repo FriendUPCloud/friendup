@@ -26,6 +26,8 @@
 *                                                                              *
 *******************************************************************************/
 
+document.title = 'The dock base app.';
+
 // Loads the applications available to put into the dock
 function LoadApplications( win, currentItemId )
 {
@@ -44,6 +46,7 @@ function LoadApplications( win, currentItemId )
 			}
 		}
 		Application.currentItemId = currentItemId;
+		
 		for( var a = 0; a < eles.length; a++ )
 		{
 			var cl = '';
@@ -67,6 +70,7 @@ function LoadApplications( win, currentItemId )
 			win.setAttributeById( 'Settings', 'disabled', '1' );
 		else win.setAttributeById( 'Settings', 'disabled', '0' );
 		
+		console.log( 'Refreshing apps!' );
 		Application.view.sendMessage( { command: 'refreshapps', data: ele } );
 		Application.sendMessage( { type: 'system', command: 'refreshdocks' } );
 	}
@@ -111,7 +115,10 @@ Application.run = function( packet )
 	var f = new File( 'Progdir:Templates/gui.html' );
 	f.onLoad = function( data )
 	{
-		w.setContent( data, function(){ LoadApplications( w ); } );
+		w.setContent( data, function()
+		{ 
+			LoadApplications( w );
+		} );
 	}
 	f.load();
 	

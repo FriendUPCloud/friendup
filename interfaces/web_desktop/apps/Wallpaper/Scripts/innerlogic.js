@@ -24,7 +24,7 @@ Application.run = function( msg, iface )
 	this.sendMessage( { command: 'getimages' } );
 }
 
-Application.selectedImage = 0;
+Application.selectedImage = -3;
 Application.mode = 'doors';
 
 Application.wallpaperImages = [];
@@ -34,16 +34,19 @@ Application.addImages = function( images )
 {
 	if( !images || !images.length ) return;
 	
+	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+			Application.windowImages;
+	
 	for( var a = 0; a < images.length; a++ )
 	{
 		var found = false;
-		for( var b = 0; b < this.wallpaperImages.length; b++ )
+		for( var b = 0; b < arr.length; b++ )
 		{
-			if( this.wallpaperImages[b] == images[a] )
+			if( arr[b] == images[a] )
 				found = true;
 		}
 		if( !found )
-			this.wallpaperImages.push( images[a] );
+			arr.push( images[a] );
 	}
 	this.showImages();
 }
@@ -54,42 +57,76 @@ Application.showImages = function()
 	var sm = new Module( 'system' );
 	sm.onExecuted = function( e, d ) 
 	{
-		var ml = '';
-		for( var a = 0; a < Application.wallpaperImages.length; a++ )
+		var current = false;
+		if( e == 'ok' )
+		{
+			if( d )
+			{
+				d = JSON.parse( d );
+				current = d['wallpaper'+Application.mode];
+			}
+		}
+		
+		var si = Application.selectedImage;
+		
+		var ml = ''; var found = false;
+		
+		var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+			Application.windowImages;
+		
+		for( var a = 0; a < arr.length; a++ )
 		{
 			cl = '';
 			
-			console.log( d + '.....' );
-			
-			if( Application.selectedImage <= 0 && Application.wallpaperImages[a] == d )
-				Application.selectedImage = a+1;
-				
-			if( Application.selectedImage - 1 == a )
+			if( si - 1 == a || ( si < -2 && arr[a] == current ) )
 			{
+				Application.selectedImage = a + 1;
 				cl = ' Selected';
+				found = true;
 			}
-			var fname = Application.wallpaperImages[a].split(':')[1];
+			var fname = arr[a].split(':')[1];
 			if( typeof( fname ) != 'undefined' )
 			{
 				if( fname.indexOf( '/' ) > 0 )
-					fname = fname.split( '/' )[1];
+				{
+					fname = fname.split( '/' );
+					fname = fname[fname.length - 1];
+				}
 				ml += '<div class="WPImage' + cl + '"><div class="Remove IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
 					(a+1) + ');" style="background-image: url(' + 
-					getImageUrl( Application.wallpaperImages[a] ) + ');"><div>' + fname + '</div></div></div>';
+					getImageUrl( arr[a] ) + ');"><div>' + fname + '</div></div></div>';
 			}
 		}
+		
+		// Uninitialized, set to system default
+		if( Application.selectedImage == -3 )
+		{
+			if( d && d['wallpaper'+Application.mode] == 'color' )
+				Application.selectedImage = -1;
+			else Application.selectedImage = -2;
+		}
+		
+		cl = '';
+		if( !found && Application.selectedImage == -1 )
+			cl = ' Selected';
+		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: #444444);"><div>Use background color.</div></div></div>';
+		
+		cl = '';
+		if( !found && Application.selectedImage == -2 )
+			cl = ' Selected';
+		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-color: #444444);"><div>Use system default.</div></div></div>';
+		
 		ge( 'Images' ).innerHTML = ml;
 	
 		// Store these
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			console.log( e );
+			//console.log( e );
 		}
-		m.execute( 'setsetting', { setting: 'images' + Application.mode, data: Application.wallpaperImages } );
+		m.execute( 'setsetting', { setting: 'images' + Application.mode, data: arr } );
 	}
 	sm.execute( 'getsetting', { setting: 'wallpaper' + this.mode } );
-	console.log( '.....' );
 	
 }
 
@@ -103,22 +140,28 @@ Application.setImage = function( image )
 // Remove an image
 Application.removeImage = function( image )
 {
+	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+			Application.windowImages;
 	var out = [];
-	for( var a = 0; a < this.wallpaperImages.length; a++ )
+	for( var a = 0; a < arr.length; a++ )
 	{
-		if( image-1 == a )
+		if( image - 1 == a )
 			continue;
-		else out.push( this.wallpaperImages[a] );
+		else out.push( arr[a] );
 	}
-	this.wallpaperImages = out;
-	if( this.selectedImage < this.wallpaperImages.length ) this.selectedImage = this.wallpaperImages.length;
+	arr = out;
+	if( this.selectedImage < arr.length ) this.selectedImage = arr.length;
 	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
 		Application.showImages();
 	}
-	m.execute( 'setsetting', { setting: 'images' + Application.Mode, data: Application.wallpaperImages } );
+	m.execute( 'setsetting', { setting: 'images' + Application.Mode, data: arr } );
+	
+	if( Application.mode == 'doors' )
+		Application.wallpaperImages = arr;
+	else Application.windowImages = arr;
 }
 
 // Add image to list!
@@ -131,22 +174,42 @@ Application.addImage = function()
 // Use current setting
 Application.operationUse = function()
 {
+	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+			Application.windowImages;
+	
+	// Weird stuff!
+	var i = '';
+	if( this.selectedImage >= 0 )
+		i = arr[this.selectedImage - 1];
+	else if( this.selectedImage === -1 )
+		i = 'color';
+	
 	this.sendMessage( {
 		type: 'system',
 		command: 'wallpaperimage',
 		mode: this.mode,
-		image: this.wallpaperImages[this.selectedImage-1]
+		image: i
 	} );
 }
 
 // Use current setting
 Application.operationSave = function()
 {
+	var arr = Application.mode == 'doors' ? Application.wallpaperImages : 
+			Application.windowImages;
+	
+	// Weird stuff!
+	var i = '';
+	if( this.selectedImage >= 0 )
+		i = arr[this.selectedImage - 1];
+	else if( this.selectedImage == -1 )
+		i = 'color';
+	
 	this.sendMessage( {
 		type: 'system',
 		command: 'savewallpaperimage',
 		mode: this.mode,
-		image: this.wallpaperImages[this.selectedImage-1]
+		image: i
 	} );
 }
 
@@ -160,7 +223,6 @@ Application.receiveMessage = function( msg )
 			this.addImages( msg.images );
 			break;
 		case 'setimages':
-			console.log( 'Setting images' );
 			this.mode = msg.mode;
 			if( msg.mode == 'doors' )
 			{

@@ -17,22 +17,25 @@
 *                                                                              *
 *******************************************************************************/
 
+document.title = 'Dock gui.';
+
 Application.run = function( msg, iface )
 {
+	console.log( 'We ran.' );
 }
 
 Application.receiveMessage = function( msg )
 {
+	console.log( 'We are receiving:', msg );
 	if( !msg.command )
 		return;
 
-	console.log( msg );
+	console.log( 'We passed on command..' );
 
 	switch( msg.command )
 	{
 		case 'refreshapps':
 			ge( 'Applications' ).innerHTML = msg.data;
-			console.log( msg.data + ' is the data' );
 			break;
 	}
 }

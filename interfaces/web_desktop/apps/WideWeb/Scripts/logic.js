@@ -19,6 +19,7 @@
 
 Application.run = function( msg )
 {
+	
 }
 
 Application.receiveMessage = function( msg )
@@ -26,6 +27,10 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'setproxy':
+			setProxy( msg.proxy );
+			setFriendSession( msg.friendsession );
+			break;
 		case 'loadfile':
 			setUrl( msg.filename );
 			break;
@@ -54,14 +59,25 @@ function forward()
 		setUrl( historyLog[index] );
 }
 
+function setProxy( puri )
+{
+	this.proxy = puri;
+	if( puri.substr(-1) != '/' ) this.proxy += '/';
+}
+function setFriendSession( sessionid )
+{
+	this.friendsession = sessionid;
+}
 function setUrl( uri )
 {
+
 	var skipLoading = false;
-	
+
 	if( uri.indexOf( ':' ) > 0 && uri.indexOf( ':/' ) < 0 )
 	{
 		skipLoading = true;
-		var f = new File( uri );
+		
+		f = new File( uri );
 		f.onLoad = function( data )
 		{
 			var fr = document.createElement( 'iframe' );
@@ -92,7 +108,7 @@ function setUrl( uri )
 	// Update iframe
 	if( !skipLoading )
 	{
-		ge( 'BrowserBox' ).src = uri;
+		ge( 'BrowserBox' ).src = this.proxy + uri + '&friendsession=' + this.friendsession;
 	}
 	
 	if( historyLog[ index ] != uri )
@@ -108,6 +124,7 @@ ge( 'BrowserBox' ).src = 'about:blank';
 ge( 'BrowserBox' ).onload = function()
 {
 	var src = ge( 'BrowserBox' ).src;
-	Application.sendMessage( { command: 'seturl', url: src } );
+	Application.sendMessage( { command: 'seturl', url: (src.split( Application.proxy ).join('')) } );
+	Application.sendMessage( { command: 'updateproxy' } );
 }
 

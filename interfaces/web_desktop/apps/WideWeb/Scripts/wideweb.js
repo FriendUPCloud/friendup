@@ -16,7 +16,8 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *******************************************************************************/
-
+Application.proxy = '';
+Application.friendsession = '';
 Application.run = function( msg )
 {
 	var v = new View( {
@@ -33,9 +34,52 @@ Application.run = function( msg )
 	}
 	
 	var f = new File( 'Progdir:Templates/webinterface.html' );
+	
+	// a couple of lines to set current host as default proxy for wideweb if no other setting isgiven for this user
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'fail' )
+		{
+			m = new Module( 'system' );
+			m.onExecuted = function( e, d ) {
+				console.log('prxy setting saved',e,d);
+			}
+			m.execute( 'setsetting', { setting: 'widewebproxy', data: location.protocol + '//proxy.' + location.host } );
+		}
+		else
+		{
+			tmp = JSON.parse( d );
+			Application.proxy = tmp.widewebproxy;
+			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
+			console.log(Application.proxy + ' will be our proxy');
+		}
+
+	}
+	m.execute( 'getsetting', { setting: 'widewebproxy' } );
+	
+	m2 = new Module('system')
+	m2.onExecuted = function( e, d )
+	{
+		if( e == 'fail' )
+		{
+			console.log('User info get ERROR ', d);
+		}
+		else
+		{
+			tmp = JSON.parse( d );
+			Application.friendsession = tmp.SessionID;
+			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
+			console.log('we got ousr sessionn here... didnt we?',tmp.SessionID,d,e);
+		}
+	}
+	m2.execute('userinfoget' );
+	
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
+		v.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
+
 	}
 	f.load();
 	
@@ -60,6 +104,9 @@ Application.receiveMessage = function( msg )
 	{
 		case 'seturl':
 			Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' : ' + msg.url );
+			break;
+		case 'updateproxy':
+			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
 			break;
 	}
 }

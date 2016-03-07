@@ -1,0 +1,35 @@
+
+	<div class="VContentTop ScrollArea" style="bottom: 50px">
+		<div class="Padding">
+			<h3 style="margin-top: 0">
+				Speech settings:
+			</h3>
+			<div class="Box Padding">
+				<p class="Layout"><strong>Preferred speech language</strong></p>
+				<p class="Layout">Please be adviced that the voices available may vary from device to device.</p>
+				<p>
+					<select id="voices">
+						<option>Loading voices...</option>
+					</select>
+				</p>
+				<p class="Layout"><strong>Alternate speech language</strong></p>
+				<p class="Layout">This is the fallback if the one you selected above does not exist on your current device.</p>
+				<p>
+					<select id="voices_alternate">
+						<option>Loading voices...</option>
+					</select>
+				</p>
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom BackgroundToolbar BorderTop" style="height: 50px">
+		<div class="Padding">
+			<button type="button" class="Button IconSmall fa-check" onclick="saveSettings()">
+				Save
+			</button>
+			<button type="button" class="Button IconSmall fa-close" onclick="quitApp()">
+				Cancel
+			</button>
+		</div>
+	</div>
+	<script src="Progdir:Scripts/guilogic.js"></script>

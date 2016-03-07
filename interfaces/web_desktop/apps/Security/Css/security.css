@@ -1,0 +1,35 @@
+
+.HRow > div
+{
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+#SecurityTabs
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.Tab, .TabActive
+{
+	position: relative;
+	height: 30px;
+	line-height: 30px;
+	box-sizing: border-box;
+	padding: 0 10px;
+}
+
+.PageActive
+{
+	position: absolute;
+	top: 30px;
+	width: 100%;
+	bottom: 0;
+	box-sizing: border-box;
+}
+

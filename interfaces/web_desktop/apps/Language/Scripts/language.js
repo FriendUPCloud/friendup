@@ -31,8 +31,25 @@ Application.run = function( msg, iface )
 	{
 		Application.quit();
 	}
+	
+	var f = new File( 'Progdir:Templates/main.html' );
+	f.onLoad = function( data )
+	{
+		v.setContent( data );
+	}
+	f.load();
 }
 
 
-
-
+Application.receiveMessage = function( msg )
+{
+	if( !msg.command ) return;
+	if( msg.command == 'saving' )
+	{
+		this.mainView.setTitle( i18n( 'gui_language' ) + ' - Saving settings...' );
+	}
+	else if( msg.command == 'saved' )
+	{
+		this.mainView.setTitle( i18n( 'gui_language' ) );
+	}
+}

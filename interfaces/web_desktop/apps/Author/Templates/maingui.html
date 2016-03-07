@@ -1,7 +1,7 @@
 
 	<script src="Progdir:Scripts/ckeditor/ckeditor.js" onload="console.log('test');"></script>
 
-	<div class="ContentFull">
+	<div class="ContentFull BackgroundLists ColorLists">
 		<div class="HContentLeft HContent100">
 			<div id="Editor">
 			</div>
@@ -44,52 +44,6 @@
 	</div>
 	
 	<script src="Progdir:Scripts/maingui.js"></script>
+	<link rel="stylesheet" href="Progdir:Css/editor.css"/>
 	
-	<style>
-		#Status
-		{
-			position: absolute;
-			bottom: 2px;
-			right: 10px;
-			text-align: right;
-		}
-		#Status * { padding: 0; margin: 0; }
-		
-		/* Bottom status bar */
-		#cke_1_bottom
-		{
-			position: absolute !important;
-			top: auto;
-			bottom: 0;
-			width: 100%;
-			height: 41px;
-			box-sizing: border-box;
-			background: none;
-			box-shadow: none;
-			border-top: 1px solid #e0e0e0;
-		}	
-		
-		/* Document contents */
-		#cke_1_contents
-		{
-			position: absolute !important;
-			top: 77px;
-			left: 0;
-			width: 100%;
-			height: auto !important;
-			bottom: 41px;
-			box-sizing: border-box;
-		}
-		
-		/* Remove resizer */
-		#cke_1_resizer
-		{
-			display: none;
-		}
-		
-		/* Bottom status bar text */
-		a.cke_path_item, span.cke_path_empty
-		{
-			padding: 10px 4px;
-		}
-	</style>
+

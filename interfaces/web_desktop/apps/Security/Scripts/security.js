@@ -35,7 +35,8 @@ Application.run = function( msg, iface )
 	var f = new File( 'Progdir:Templates/security.html' );
 	f.replacements = {
 		Application: i18n( 'i18n_application' ),
-		Permissions: i18n( 'i18n_permissions' )
+		Permissions: i18n( 'i18n_permissions' ),
+		Cancel:      i18n('i18n_cancel')
 	};
 	f.onLoad = function( data )
 	{

@@ -480,7 +480,34 @@ Application.receiveMessage = function( msg )
 		case 'presskey':
 			pollEvent( 'PressKey', msg.keycode );
 			break;
+		case 'preferences':
+			this.showPrefs();
+			break;
 	}
+};
+
+Application.showPrefs = function()
+{
+	if( this.pwin ) return;
+	
+	this.pwin = new View( {
+		title: 'Preferences',
+		width: 800,
+		height: 500,
+		id: 'artisanprefswin'
+	} );
+	
+	this.pwin.onClose = function()
+	{
+		Application.pwin = false;
+	}
+	
+	var f = new File( 'Progdir:Templates/prefs.html' );
+	f.onLoad = function( data )
+	{
+		Application.pwin.setContent( data );
+	}
+	f.load();
 };
 
 // Set menu items on window
@@ -602,8 +629,8 @@ Application.setMenuItems = function( w )
 		items : [
 			{
 				name    : i18n ( 'i18n_application_settings' ),
-				command : function(){}
-			},
+				command : 'preferences'
+			}/*,
 			{
 				name    : i18n( 'i18n_save_settings' ),
 				command : function(){}
@@ -615,7 +642,7 @@ Application.setMenuItems = function( w )
 			{
 				name    : i18n( 'i18n_reset_settings' ),
 				command : function(){}
-			}
+			}*/
 		]
 	}
 	] );

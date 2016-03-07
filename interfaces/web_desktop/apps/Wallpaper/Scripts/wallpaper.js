@@ -23,8 +23,7 @@ Application.run = function( msg )
 		'title'      : i18n('Wallpaper'), 
 		'width'      : 640, 
 		'height'     : 380, 
-		'id'         : 'wallpaper',
-		'max-height' : 380
+		'id'         : 'wallpaper'
 	} );
 	
 	this.mainView = w;
@@ -107,8 +106,12 @@ Application.receiveMessage = function( msg )
 		case 'save':
 		case 'abort':
 			break;
+		// This one "boots up", and starts with backdrop images
 		case 'getimages':
-			this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: Application.settings.imagesdoors } );
+			if( this.settings )
+			{
+				this.mainView.sendMessage ( { command: 'setimages', mode: 'doors', images: Application.settings.imagesdoors } );
+			}
 			break;
 	}
 }

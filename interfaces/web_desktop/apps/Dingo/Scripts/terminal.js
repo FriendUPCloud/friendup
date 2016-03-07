@@ -124,7 +124,10 @@ Application.addNL = function( focus )
 	cli.spellcheck = false;
 	
 	// Hack, please check if window is active..
-	if( focus || document.body.className.indexOf( 'activated' ) > 0 ) setTimeout( function(){ cli.focus(); }, 150 );
+	if( focus || document.body.className.indexOf( 'activated' ) > 0 )
+	{
+		setTimeout( function(){ Application.focusCLI(); }, 150 );
+	}
 	
 	var path = GeByClass( 'Path', n );
 	path.innerHTML = this.shell.number + '. ' + this.currentPath + '>';
@@ -522,7 +525,6 @@ Application.evaluateInput = function( input, index, key )
 			// Ok we have what we need, now find out if we have a long list!
 			else
 			{
-				console.log( 'Lets find terminator..' );
 				// Find the terminator
 				var terminator = false;
 				var depth = 0;
@@ -945,6 +947,7 @@ Application.evaluateInput = function( input, index, key )
 			this.addNL();
 			ignoreOutput = true;
 		}
+		
 		// Send it to our man!
 		this.shell.execute( cmd.join( ' ' ), function( packet )
 		{
@@ -969,7 +972,7 @@ Application.evaluateInput = function( input, index, key )
 						Application.currentPath = packet.returnMessage.path;
 					}
 				}
-			
+				
 				if( typeof( packet.data ) == 'object' )
 				{
 					var out = Application.generateOutputFromObjects( packet.data );
@@ -1010,6 +1013,14 @@ Application.sayCommandNotFound = function( c )
 Application.generateOutputFromObjects = function( objects )
 {
 	var acount = objects.length;
+	// Fix objects to array
+	if( isNaN( acount ) )
+	{
+		var o = [];
+		for( var a in objects ) o.push( objects[a] );
+		objects = o;
+		acount = o.length;
+	}
 	var third  = Math.floor( acount / 3 );
 	var output = [];
 	var count  = 0;

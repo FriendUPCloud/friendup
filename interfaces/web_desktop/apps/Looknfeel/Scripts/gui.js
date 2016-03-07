@@ -21,7 +21,28 @@ Application.run = function( msg )
 {
 	this.theme = Application.theme; // Current theme
 	
+	this.mode = 'pear';
+	
 	refreshThemes();	
+	
+}
+
+function getMenuMode()
+{
+	if( ge( 'menuPear' ).checked )
+		return 'pear';
+	//if( ge( 'menuFenster' ).checked ) 
+	//	return 'fenster';
+	if( ge( 'menuMiga' ).checked )
+		return 'miga';
+	return 'pear';
+}
+
+function setMenuMode( mode )
+{
+	mode = mode.substr( 0, 1 ).toUpperCase() + mode.substr( 1, mode.length - 1 );
+	if( ge( 'menu' + mode ) )
+		ge( 'menu' + mode ).click();
 }
 
 function refreshThemes()
@@ -76,6 +97,20 @@ function refreshThemes()
 		}
 	}
 	m.execute( 'listthemes' );
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			var dd = JSON.parse( d );
+			setMenuMode( dd.menumode );
+			return;
+		}
+		setMenuMode( 'pear' );
+	}
+	m.execute( 'getsetting', { setting: 'menumode' } );
+	
 }
 
 function setActive( num )
@@ -104,5 +139,13 @@ function applyTheme()
 		}
 	}
 	m.execute( 'settheme', { theme: Application.themePath ? Application.theme : '' } );
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		console.log( e, d );
+	}
+	m.execute( 'setsetting', { setting: 'menumode', data: getMenuMode() } );
+	
 }
 

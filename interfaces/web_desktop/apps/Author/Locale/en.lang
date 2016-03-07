@@ -10,6 +10,7 @@ menu_print                        : Print
 menu_document                     : Document
 menu_insert_image                 : Insert image
 menu_convert_images_inline        : Images to inline
+menu_vr_features                  : Toggle VR features
 
 i18n_status_loading               : Loading...
 i18n_status_saving                : Saving...
@@ -17,4 +18,8 @@ i18n_status_saving                : Saving...
 i18n_find                         : Find
 i18n_select                       : Select
 i18n_search                       : Search
+
+edit_image                        : Edit image
+insert_image                      : Insert image
+
 

@@ -1,4 +1,52 @@
 
-	<div class="ContentFull">
-		
+	<script src="Progdir:Scripts/logic.js"></script>
+
+	<div class="VContentTop BorderBottom" id="TopBar">
+		<div class="Padding">
+			<div class="FloatLeft">
+				<button type="button" class="Button IconSmall fa-plus" onclick="saveProject()">
+					New project
+				</button>
+			</div>
+			<div class="FloatLeft">
+				<button type="button" class="Button IconSmall fa-file-zip-o">
+					Generate package
+				</button>
+			</div>
+		</div>
 	</div>
+	<div class="ContentFull" id="TopArea">
+		<div class="HContentLeft HContent35"" id="LeftBar">
+		</div>
+		<div class="HContentLeft HContent65 BorderLeft" id="RightBar">
+		</div>
+	</div>
+	<div class="VContentBottom BorderTop" id="BottomBar">
+	</div>
+	
+	<style>
+		#TopBar
+		{
+			height: 50px;
+		}
+		
+		#LeftBar
+		{
+			position: absolute;
+			left: 0;
+			top: 50px;
+			bottom: 50px;
+		}
+		#RightBar
+		{
+			position: absolute;
+			left: 35%;
+			top: 50px;
+			bottom: 50px;
+		}
+		
+		#BottomBar
+		{
+			height: 50px;
+		}
+	</style>

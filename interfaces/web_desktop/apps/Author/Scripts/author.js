@@ -23,8 +23,8 @@ Application.run = function( msg, iface )
 		'title'     : 'Author',
 		'width'     : 960,
 		'height'    : 600,
-		'min-width' : 960,
-		'min-height': 600,
+		'min-width' : 640,
+		'min-height': 400,
 	} );
 	
 	this.mainView = w;
@@ -79,6 +79,10 @@ Application.run = function( msg, iface )
 				{
 					name: i18n( 'menu_preferences' ),
 					command: 'showprefs'
+				},
+				{
+					name: i18n( 'menu_vr_features' ),
+					command: 'togglevr'
 				}
 			]
 		}
@@ -99,6 +103,14 @@ Application.run = function( msg, iface )
 		}
 	}
 	f.load();
+	
+	var noti = new View( { title: 'Notice', width: 300, height: 300 } );
+	var cf = new File( 'Progdir:Templates/notice.html' );
+	cf.onLoad = function( data )
+	{
+		noti.setContent( data );
+	}
+	cf.load();
 }
 
 Application.handleKeys = function( k, e )
@@ -135,6 +147,12 @@ Application.handleKeys = function( k, e )
 		console.log( k );
 	}
 	return false;
+}
+
+// Toggle VR gui features
+Application.toggleVR = function()
+{
+	
 }
 
 Application.newDocument = function()
@@ -195,6 +213,11 @@ Application.save = function()
 	{
 		var f = new Filedialog( this.mainView, function( fname )
 		{
+			if( !fname || !fname.length )
+				return;
+				
+			if( fname.indexOf( '.' ) < 0 )
+				fname += '.html';
 			Application.mainView.sendMessage( {
 				command: 'savefile',
 				path: fname
@@ -241,6 +264,9 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'togglevr':
+			this.toggleVR();
+			break;
 		case 'closeprefs':
 			this.pwin.close();
 			this.pwin = false;

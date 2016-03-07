@@ -22,6 +22,9 @@ Application.run = function( msg, iface )
 	this.popWindows = {};
 	
 	reloadApps();
+	
+	// Setup the tab system
+	InitTabs( 'SecurityTabs' );
 }
 
 function reloadApps()
@@ -44,7 +47,7 @@ function reloadApps()
 
 function redrawApps()
 {
-	var str = '<table class="List">';
+	var str = '';
 	var apps = Application.apps;
 	var sw = 1;
 	for( var a = 0; a < apps.length; a++ )
@@ -57,13 +60,12 @@ function redrawApps()
 		}
 		var btn = '<button type="button" class="FullWidth Button IconSmall fa-pencil" onclick="SecurityEdit( \'' + apps[a].Name + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button>';
 		sw = sw == 2 ? 1 : 2;
-		str += '<tr class="sw' + sw + '">';
-		str += '<td width="40%">' + apps[a].Name + '</td>';
-		str += '<td width="35%"><em>' + pout + '</em></td>';
-		str += '<td width="25%">' + btn + '</td>';
-		str += '</tr>';
+		str += '<div class="GuiContainer"><div class="HRow BackgroundDefault sw' + sw + '">';
+		str += '<div class="HContent25 FloatLeft Padding LineHeight2x"><strong>' + apps[a].Name + '</strong></div>';
+		str += '<div class="HContent50 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
+		str += '<div class="HContent25 FloatLeft Padding">' + btn + '</div>';
+		str += '</div></div>';
 	}
-	str += '</table>';
 	ge( 'Applications' ).innerHTML = str;
 }
 
@@ -142,4 +144,7 @@ function SecurityEdit( app )
 	f.load();	
 }
 
-
+function closeWin()
+{
+	Application.sendMessage( { command: 'quit' } );
+}

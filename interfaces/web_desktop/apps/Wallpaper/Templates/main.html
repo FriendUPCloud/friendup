@@ -7,7 +7,10 @@
 					<strong>{wallpaper_for}:</strong>
 				</p>
 				<p>
-					<input type="radio" name="where" onclick="Application.mode = 'doors'" checked="checked"/> {workbench}
+					<input type="radio" name="where" onclick="Application.mode = 'windows'; Application.showImages();" /> {windows}
+				</p>
+				<p>
+					<input type="radio" name="where" onclick="Application.mode = 'doors'; Application.showImages();" checked="checked"/> {workbench}
 				</p>
 				<p class="BorderTop"></p>
 				<p>
@@ -48,10 +51,13 @@
 		height: 100%;
 		position: relative;
 		box-sizing: border-box;
+		top: auto !important;
+		left: auto !important;
 	}
 	.WPatternCont2
 	{
 		width: 67%;
+		margin-left: 33%;
 	}
 	.WPatternCont > div, .WPatternCont2 > div
 	{

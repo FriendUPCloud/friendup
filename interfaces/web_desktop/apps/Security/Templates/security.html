@@ -1,40 +1,46 @@
 
-	<div class="ContentFull">
-		<div class="VContentTop Padding" style="padding-bottom: 0; height: 50px">
-			<table width="100%">
-				<tr>
-					<th width="40%" align="left">
-						{Application}:
-					</th>
-					<th width="35%" align="left">
-						{Permissions}:
-					</th>
-					<th width="25%">
-						&nbsp;
-					</th>
-				</tr>
-			</table>
-		</div>
-		<div class="VContentBottom Padding ScrollArea" id="Applications" style="padding-top: 0; top: 50px">
+	<link rel="stylesheet" href="Progdir:Css/security.css"/>
+	
+	<div class="VContentTop" style="bottom: 50px">
+		<div class="Tabs" id="SecurityTabs">
+			<div class="Tab">
+				Applications
+			</div>
+			<div class="Tab">
+				Domains
+			</div>
+			<div class="Tab">
+				System
+			</div>
+			<div class="Page">
+				<div class="VContentBottom Padding ScrollArea BackgroundLists" id="Applications">
+				</div>
+			</div>
+			<div class="Page">
+				<div class="VContentBottom Padding ScrollArea BackgroundLists" id="Domains">
+					<div class="GuiContainer Padding MarginBottom">
+						<p class="Layout"><strong>Allowed domains</strong></p>
+						<hr/>
+						<div id="AllowedDomains">
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="Page">
+				<div class="VContentBottom Padding ScrollArea BackgroundLists" id="System">
+					<div class="GuiContainer Padding MarginBottom">
+						<p class="Layout"><strong>General system security settings</strong></p>
+					</div>
+					<div class="GuiContainer Padding">
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
-
-	<style>
-		td + td > em
-		{
-			display: block;
-			float: left;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-			width: 90%;
-		}
-		td + td:after
-		{
-			content: " ";
-			display: block;
-			clear: both;
-		}
-	</style>
+	<div class="VContentBottom Padding BackgroundToolbar BorderTop" id="Bottom" style="height: 50px">
+		<button type="button" class="Button fa-close IconSmall" onclick="closeWin()">
+			{Cancel}
+		</button>
+	</div>
 
 	<script src="Progdir:Scripts/securitywindow.js"></script>
