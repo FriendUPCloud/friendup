@@ -438,7 +438,7 @@ Workspace = {
 						return;
 					}
 					
-					var m = new Module( 'system' );
+					/*var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
 						if( e != 'ok' )
@@ -450,7 +450,7 @@ Workspace = {
 					m.addVar( 'sessionid', json.sessionid );
 					m.execute( 'getsetting', {
 						setting: 'accepteula'
-					} );
+					} );*/
 				
 					document.body.className = 'Loading';
 				
@@ -2075,7 +2075,7 @@ function ClearCache()
 
 // Shows eula
 
-function ShowEula( accept )
+/*function ShowEula( accept )
 {
 	if( accept )
 	{
@@ -2110,5 +2110,5 @@ function ShowEula( accept )
 		d.innerHTML = data;
 	}
 	f.load();
-}
+}*/
 
