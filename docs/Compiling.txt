@@ -25,13 +25,15 @@ based Linux distributions:
 	rsync
 	valgrind-dbg
 	libwebsockets-dev
+	libxml2-dev
 
 To install these, copy and paste the following in a terminal:
 
 	sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
 	php5-cli php5-curl php5-mysql php5-gd php5-imap mysql-server \
 	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
-	libgd-dev libwebsockets-dev rsync php5-readline valgrind-dbg
+	libgd-dev libwebsockets-dev rsync php5-readline valgrind-dbg \
+	libxml2-dev
 
 Once you have installed the dependencies, the way to compile and install
 FriendUP is as follows:
