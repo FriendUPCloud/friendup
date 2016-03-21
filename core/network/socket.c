@@ -730,13 +730,36 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 	{
 	    unsigned int bufLength = length;
 	    int read = 0, res = 0;
+	    int retries = 0;
 	    
-	    while( ( res = recv( sock->fd, data + read, bufLength - read, MSG_DONTWAIT ) ) > 0 )
-	    { 
-	    	read += res;
-	    	if( read >= length ) break;
-	    	//DEBUG( "[SocketRead] Going strong!\n" );
-	    }
+	    while( 1 )
+	    {
+			res = recv( sock->fd, data + read, bufLength - read, MSG_DONTWAIT );
+			
+			if( res > 0 )
+			{ 
+				read += res;
+				retries = 0;
+				if( read >= length ) 
+					return read;
+			}
+			else if( res == 0 ) return read;
+			// Error
+			else if( res < 0 )
+			{
+				// Resource temporarily unavailable...
+				if( errno == 11 && retries++ < 50 )
+				{
+					// Approx successful header
+					usleep( 0 );
+					ERROR( "[SocketRead] Resource temporarily unavailable.. Read %d/%d\n", read, length );
+					continue;
+				}
+				return read;
+			}
+			DEBUG( "[SocketRead] Read %d/%d\n", read, length );
+		}
+	    DEBUG( "[SocketRead] Done reading %d/%d (errno: %d)\n", read, length, errno );
 		return read;
 	}
 }
@@ -868,15 +891,30 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 	{
 	    int res = 0;
 	    unsigned int written = 0, bufLength = 16384 > length ? length : 16384;
+	    int retries = 0;
 		
 	    while( written < length )
 	    {
 	        if( bufLength > length - written ) bufLength = length - written;
 		    res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
-		    if( res > 0 ) written += res;
-			else if( res < 0 ) break;
+		    if( res > 0 ) 
+		    {
+		    	written += res;
+		    	retries = 0;
+		    }
+			else if( res < 0 )
+			{
+				// Error, temporarily unavailable..
+				if( errno == 11 )
+				{
+					usleep(0); // Perhaps allow full throttle?
+					continue;
+				}
+				DEBUG( "Failed to write: %d, %s\n", errno, strerror( errno ) );
+				break;
+			}
 		}
-		DEBUG("end write\n");
+		DEBUG("end write %d/%d (had %d retries)\n", written, length, retries );
 		return written;
 	}
 }
