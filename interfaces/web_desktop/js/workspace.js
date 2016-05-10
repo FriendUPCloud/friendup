@@ -114,7 +114,7 @@ Workspace = {
 		
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-				title: 'Workspace v1.0 b4',
+				title: 'Workspace v1.0 b3b',
 				id:	'DoorsScreen',
 				extra: Workspace.fullName,
 				taskbar: true
@@ -2094,7 +2094,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.0 b4',
+		title: i18n( 'about_friendup' ) + ' v1.0 b3b',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
