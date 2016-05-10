@@ -1,0 +1,60 @@
+{
+	"Games": [
+	],
+	"Office": [
+	],
+	"Libraries": [
+		{
+			"Name": "Kiwi.js",
+			"Version": "1.4",
+			"Package": "repository/packages/kiwijs_1.4.tgz",
+			"Location": "repository/packages/kiwi1_1.4/",
+			"Icon": "repository/packages/kiwi1_1.4/logo.jpg",
+			"Init": "kiwi.min.js",
+			"Category": "Gaming"
+		},
+		{
+			"Name": "JQuery",
+			"Version": "1.12.2",
+			"Package": "repository/packages/jquery_1.12.2.tgz",
+			"Location": "repository/packages/jquery_1.12.2/",
+			"Icon": "repository/packages/jquery_1.12.2/logo.jpg",
+			"Init": "jquery-1.12.2.min.js",
+			"Category": "Framework"
+		},
+		{
+			"Name": "Mootools",
+			"Version": "1.6.0",
+			"Package": "repository/packages/mootools_1.6.0.tgz",
+			"Location": "repository/packages/mootools_1.6.0/",
+			"Icon": "repository/packages/mootools_1.6.0/logo.jpg",
+			"Category": "Framework"
+		},
+		{
+			"Name": "Prototype",
+			"Version": "1.7.3",
+			"Package": "repository/packages/prototype_1.7.3.tgz",
+			"Location": "repository/packages/prototype_1.7.3/",
+			"Icon": "repository/packages/prototype_1.7.3/logo.jpg",
+			"Category": "Framework"
+		},
+		{
+			"Name": "Three.js",
+			"Version": "r75",
+			"Package": "repository/packages/three_r75.tgz",
+			"Location": "repository/packages/three_r75/",
+			"Icon": "repository/packages/three_r75/logo.jpg",
+			"Init": "three.min.js",
+			"Category": "Graphics"
+		},
+		{
+			"Name": "Paper.js",
+			"Version": "0.9.25",
+			"Package": "repository/packages/paperjs_0925.tgz",
+			"Location": "repository/packages/paperjs_0925/",
+			"Icon": "repository/packages/paperjs_0925/logo.jpg",
+			"Category": "Graphics"
+		}
+	]
+}
+
