@@ -7,19 +7,18 @@
 
 	<div class="ToolbarInner">
 		<div class="HRow">
-			<div class="ToolButton IconSmall fa-bold" id="tBold" onclick="editorCommand('bold')">
+			<div class="ToolButton IconSmall fa-bold" id="tBold" title="Set bold" onclick="editorCommand('bold')">
 				<em>B</em>
 			</div>
-			<div class="ToolButton IconSmall fa-italic" id="tItalic" onclick="editorCommand('italic')">
+			<div class="ToolButton IconSmall fa-italic" id="tItalic" title="Set italic" onclick="editorCommand('italic')">
 				<em>I</em>
 			</div>
-			<div class="ToolButton IconSmall fa-underline" id="tUnderline" onclick="editorCommand('underline')">
+			<div class="ToolButton IconSmall fa-underline" id="tUnderline" title="Set underline" onclick="editorCommand('underline')">
 				<em>U</em>
 			</div>
-			<div class="ToolDivider"></div>
-			<select id="ToolFormat" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
-				<option value="default">Select format</option>
-				<option value="">--------------------</option>
+			<div class="ToolDivider Divider1"></div>
+			<select id="ToolFormat" title="Set block format" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
+				<option value="default" selected="selected">Default style</option>
 				<option value="h1">Header 1</option>
 				<option value="h2">Header 2</option>
 				<option value="h3">Header 3</option>
@@ -28,8 +27,8 @@
 				<option value="h6">Header 6</option>
 				<option value="p">Paragraph</option>
 			</select>
-			<div class="ToolDivider"></div>
-			<select class="ToolSelect" onchange="editorCommand( 'zoom' + this.value )">
+			<div class="ToolDivider Divider2"></div>
+			<select class="ToolSelect" title="Set document zoom" onchange="editorCommand( 'zoom' + this.value, 'store' )">
 				<option value="100%">Select zoom</option>
 				<option value="">--------------------</option>
 				<option value="100%">100%</option>
@@ -37,11 +36,9 @@
 				<option value="150%">150%</option>
 				<option value="200%">200%</option>
 			</select>
-			<div class="ToolDivider"></div>
-			<select class="ToolSelect" id="FontSelector" onchange="editorCommand( 'fontType', this.value )">
-				<option value="">Select font</option>
-				<option value="">--------------------</option>
-				<option value="sans serif">Sans serif</option>
+			<div class="ToolDivider Divider3"></div>
+			<select class="ToolSelect" id="FontSelector" title="Select font" onchange="editorCommand( 'fontType', this.value )">
+				<option selected="selected" value="sans serif">Sans serif</option>
 				<option value="sans">Sans</option>
 				<option value="monospace">Monospace</option>
 				<option value="lato">Lato</option>
@@ -49,16 +46,14 @@
 				<option value="verdana">Verdana</option>
 				<option value="courier">Courier</option>
 			</select>
-			<select class="ToolSelect" id="FontSize" onchange="editorCommand( 'fontSize', this.value )">
-				<option value="">Select font size</option>
-				<option value="">--------------------</option>
+			<select class="ToolSelect" id="FontSize" title="Font size" onchange="editorCommand( 'fontSize', this.value )">
 				<option value="6pt">6pt</option>
 				<option value="7pt">7pt</option>
 				<option value="8pt">8pt</option>
 				<option value="9pt">9pt</option>
 				<option value="10pt">10pt</option>
 				<option value="11pt">11pt</option>
-				<option value="12pt">12pt</option>
+				<option value="12pt" selected="selected">12pt</option>
 				<option value="14pt">14pt</option>
 				<option value="16pt">16pt</option>
 				<option value="18pt">18pt</option>
@@ -71,10 +66,33 @@
 				<option value="48pt">48pt</option>
 				<option value="56pt">56pt</option>
 			</select>
-			<div class="ToolDivider"></div>
-			<div class="ToolButton IconSmall fa-file-image-o" id="tImage" onclick="editorCommand('image')">
+			<div class="ToolDivider Divider4"></div>
+			<div class="ToolButton IconSmall fa-file-image-o" id="tImage" title="Insert image" onclick="editorCommand('image')">
 				<em>IMG</em>
 			</div>
+			<br style="clear: both"/>
+			<div class="ToolButton IconSmall fa-align-left" id="tAlignLeft" title="Align left" onclick="editorCommand('align-left')">
+				<em>IMG</em>
+			</div>
+			<div class="ToolButton IconSmall fa-align-center" id="tAlignCenter" title="Align center" onclick="editorCommand('align-center')">
+				<em>IMG</em>
+			</div>
+			<div class="ToolButton IconSmall fa-align-right" id="tAlignRight" title="Align right" onclick="editorCommand('align-right')">
+				<em>IMG</em>
+			</div>
+			<div class="ToolButton IconSmall fa-align-justify" id="tAlignJustify" title="Align justify" onclick="editorCommand('align-justify')">
+				<em>IMG</em>
+			</div>
+			<!--<div class="ToolDivider Divider5"></div>
+			<div class="ToolButtonLabel IconSmall fa-text-height" id="tTextHeight" title="Line height" onclick="ge('tTextHeight').focus()">
+				<em>IMG</em>
+			</div>
+			<select class="ToolSelect" id="tTextHeight" title="Line height" onchange="editorCommand('line-height', this.value)">
+				<option value="1pt">1pt</option>
+				<option value="1.5pt">1.5pt</option>
+				<option value="2pt">2pt</option>
+				<option value="2.5pt">2.5pt</option>
+			</select>-->
 			<!--<div class="ToolButton" id="tStrikethrough">
 				<em>S</em>
 			</div>-->

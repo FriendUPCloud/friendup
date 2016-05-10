@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/image.library
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -I. -Wno-unused-parameters -I../../core/ -I../ -fPIC $(shell mysql_config --cflags)
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameters -I../../core/ -I../ -fPIC $(shell mysql_config --cflags)
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

@@ -109,12 +109,15 @@ Application.showImages = function()
 		cl = '';
 		if( !found && Application.selectedImage == -1 )
 			cl = ' Selected';
-		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: #444444);"><div>Use background color.</div></div></div>';
+		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
 		
-		cl = '';
-		if( !found && Application.selectedImage == -2 )
-			cl = ' Selected';
-		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-color: #444444);"><div>Use system default.</div></div></div>';
+		if( Application.mode == 'doors' )
+		{
+			cl = '';
+			if( !found && Application.selectedImage == -2 )
+				cl = ' Selected';
+			ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
+		}
 		
 		ge( 'Images' ).innerHTML = ml;
 	

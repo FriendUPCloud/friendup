@@ -27,6 +27,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <core/thread.h>
 
 //
 //
@@ -39,7 +40,7 @@ typedef enum EventPriority
 	PRIORITY_NORMAL,  // Will be placed after high and before low in the event queue
 	PRIORITY_HIGH,    // Will be prepended to the event queue
 	PRIORITY_CRITICAL // This skips the entire event loop, and executes immediatly. Use sparingly.
-} EventPriority_t;
+} EventPriority;
 
 //
 // OO event
@@ -65,24 +66,12 @@ typedef struct Event
 typedef struct CoreEvent
 {
 	struct MinNode	node;
-	ULONG			eventId;	// special ID, there will be possibility to find it and remove from queue for example
-	struct Hook 	hook;		// by hook we can pass many values and pointers, even call OO objects
+	time_t					ce_Time;
+	int 						ce_RepeatTime;		// -1 repeat everytime, 0 - last repeat, n - number of repeats
+	UQUAD 				ce_ID;
+	FThread 				*ce_Thread;
 }CoreEvent;
 
-//
-// Long time events (cron)
-//
-
-typedef struct CoreLTEvent
-{
-	struct MinNode	node;
-	ULONG			eventId;	// special ID, there will be possibility to find it and remove from queue for example
-	struct Hook 	hook;		// by hook we can pass many values and pointers, even call OO objects
-	struct timeval			time;
-	struct timeval			waitTime;
-	FThread			*thread;
-	BOOL			repeat;
-}CoreLTEvent;
 
 
 #endif

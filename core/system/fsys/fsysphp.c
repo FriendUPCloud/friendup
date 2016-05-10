@@ -118,16 +118,13 @@ char *GetFileName( const char *path )
 {
 	char *p = (char *)path;
 	int i = strlen( path );
-
-	for(  ; i >= 0 ; i-- )
+	for( ; i >= 0 ; i-- )
 	{
 		if( path[ i ] == '/' )
 		{
-			p = (char *)&path[ i+1 ];
-			return p;
+			return (char *)&path[ i + 1 ];
 		}
 	}
-	
 	return p;
 }
 
@@ -137,7 +134,7 @@ char *GetFileName( const char *path )
 
 ListString *PHPCall( const char *command, int *length )
 {
-	INFO( "[PHPFsys] run app: '%s'\n", command );
+	DEBUG( "[PHPFsys] run app: '%s'\n", command );
 	
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
@@ -147,16 +144,12 @@ ListString *PHPCall( const char *command, int *length )
 		return NULL;
 	}
 	
-	char *temp = NULL;
-	char *result = NULL;
-	char *gptr = NULL;
-	ULONG size = 0;
-	ULONG res = 0;
+	char *temp = NULL, result = NULL, gptr = NULL;
+	ULONG size = 0, res = 0, sch = sizeof( char );
 
-	
 #define PHP_READ_SIZE 131072
 	
-	DEBUG("[PHPFsys] command launched\n");
+	//DEBUG("[PHPFsys] command launched\n");
 
 	char buf[ PHP_READ_SIZE ]; memset( buf, '\0', PHP_READ_SIZE );
 	ListString *data = ListStringNew();
@@ -164,7 +157,7 @@ ListString *PHPCall( const char *command, int *length )
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
-		size = fread( buf, sizeof(char), PHP_READ_SIZE, pipe );
+		size = fread( buf, sch, PHP_READ_SIZE, pipe );
 		ListStringAdd( data, buf, size );
 	}
 	
@@ -172,14 +165,11 @@ ListString *PHPCall( const char *command, int *length )
 	pclose( pipe );
 	
 	ListStringJoin( data );		//we join all string into one buffer
+	
 	// Set the length
-	if( length != NULL )
-	{
-		*length = data->ls_Size;
-	}
+	if( length != NULL ) *length = data->ls_Size;
 	
-	DEBUG( "[fsysphp] Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
-	
+	//DEBUG( "[fsysphp] Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
 	return data;
 }
 
@@ -378,9 +368,9 @@ int Release( struct FHandler *s, void *f )
 			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
 		
 			// Free up active device information
-			if( sd->module ) FFree( sd->module );
-			if( lf->f_SessionID ) FFree( lf->f_SessionID );
-			if( sd->type ) FFree( sd->type );
+			if( sd->module ){ FFree( sd->module ); sd->module = NULL; }
+			//if( lf->f_SessionID ){ FFree( lf->f_SessionID ); lf->f_SessionID = NULL; }
+			if( sd->type ){ FFree( sd->type ); sd->type = NULL; }
 			FFree( lf->f_SpecialData );
 		}
 		
@@ -458,90 +448,163 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	SpecialData *sd = (SpecialData *)s->f_SpecialData;
 	
-	if( sd != NULL )
+	char *comm = NULL;
+	
+	if( ( comm = calloc( strlen( path ) +512, sizeof(char) ) ) != NULL )
 	{
-		if( mode[0] == 'r' || strcmp( mode, "rb" ) == 0 )
+		strcpy( comm, s->f_Name );
+		strcat( comm, ":" );
+		
+		if( path != NULL )
 		{
-			char tmpfilename[ 712 ];
-			int lockf;
-			
-			// Make sure we can make the tmp file unique with lock!
-			int retries = 100;
-			do
+			strcat( comm, path ); 
+		}
+		
+		if( sd != NULL )
+		{
+			if( mode[0] == 'r' || strcmp( mode, "rb" ) == 0 )
 			{
-				sprintf( tmpfilename, "/tmp/%s_read_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-				DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
-				if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
-					break;
-				unlink( tmpfilename );
-				// Failed.. bailing
-				if( retries-- <= 0 )
+				char tmpfilename[ 712 ];
+				int lockf;
+			
+				// Make sure we can make the tmp file unique with lock!
+				int retries = 100;
+				do
 				{
-					ERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
-					return NULL;
+					sprintf( tmpfilename, "/tmp/%s_read_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+					DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
+					if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
+					{
+						break;
+					}
+					unlink( tmpfilename );
+					// Failed.. bailing
+					if( retries-- <= 0 )
+					{
+						ERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+						return NULL;
+					}
+				}
+				while( TRUE );
+			
+				DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
+			
+				// Open the tmp file and get a file lock!
+			
+				// Get the data
+				char command[ 1024 ];	// maybe we should count that...
+
+				sprintf( command, 
+					"php \"modules/system/module.php\" \"type=%s&module=files&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s\";",
+					sd->type, s->f_SessionID, comm, mode
+				);
+		
+				DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
+				DEBUG( "[fsysphp] %s\n", command );
+			
+				int answerLength = 0;			
+				ListString *result = PHPCall( command, &answerLength );
+			
+				// Open a file pointer
+				if( result && result->ls_Data )
+				{
+					// Write the buffer to the file
+					int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
+				
+					// Clean out result
+					ListStringDelete( result ); result = NULL;
+		
+					// Remove lock!
+					FILE *locfp = NULL;
+					fcntl( lockf, F_SETLKW, F_UNLCK );
+					fchmod( lockf, 0755 );
+					close( lockf ); lockf = -1;
+				
+					if( ( locfp = fopen( tmpfilename, mode ) ) != NULL )
+					{
+						// Flick the lock off!
+						fseek ( locfp, 0, SEEK_SET );
+					
+						// Ready the file structure
+						File *locfil = NULL;
+						if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
+						{
+							locfil->f_Path = StringDup( path );
+						
+							if( (locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+							{
+								sd->fp = locfp;
+								SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
+								locsd->fp = locfp;
+								locsd->mode = MODE_READ;
+								locsd->fname = StringDup( tmpfilename );
+								locsd->path = StringDup( path );
+								locfil->f_SessionID = StringDup( s->f_SessionID );
+					
+								DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+								return locfil;
+							}
+				
+							// Free this one
+							FFree( locfil->f_Path );
+							FFree( locfil );
+						}
+						// Close the dangling fp
+						fclose( locfp );
+					}
+					else
+					{
+						ERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
+					}
+				}
+				else
+				{
+					ERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
+				}
+				// Close lock
+				if( lockf >= 0 ) 
+				{
+					DEBUG( "[fsysphp] Closing lock..\n" );
+					close( lockf );
 				}
 			}
-			while( TRUE );
-			
-			DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
-			
-			// Open the tmp file and get a file lock!
-			
-			// Get the data
-			char command[ 1024 ];	// maybe we should count that...
-
-			sprintf( command, 
-				"php \"modules/system/module.php\" \"type=%s&module=files&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s\";",
-				sd->type, s->f_SessionID, path, mode
-			);
-		
-			DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
-			DEBUG( "[fsysphp] %s\n", command );
-			
-			int answerLength = 0;			
-			ListString *result = PHPCall( command, &answerLength );
-			
-			// Open a file pointer
-			if( result && result->ls_Data )
+			else if( mode[0] == 'w' )
 			{
-				// Write the buffer to the file
-				int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
-				
-				// Clean out result
-				ListStringDelete( result ); result = NULL;
-		
-				// Remove lock!
-				FILE *locfp = NULL;
-				fcntl( lockf, F_SETLKW, F_UNLCK );
-				fchmod( lockf, 0755 );
-				close( lockf ); lockf = -1;
-				
-				if( ( locfp = fopen( tmpfilename, mode ) ) != NULL )
+				char tmpfilename[ 712 ];
+			
+				// Make sure we can make the tmp file unique
+				do
 				{
-					// Flick the lock off!
-					fseek ( locfp, 0, SEEK_SET );
-					
-					// Ready the file structure
+					sprintf( tmpfilename, "/tmp/%s_write_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+				}
+				while( access( tmpfilename, F_OK ) != -1 );
+			
+				DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
+			
+				FILE *locfp;
+				if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
+				{
 					File *locfil = NULL;
-					if( ( locfil = FCalloc( 1, sizeof( File ) ) ) != NULL )
+	
+					if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
 					{
 						locfil->f_Path = StringDup( path );
-						
-						if( (locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
+				
+						if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
 						{
-							sd->fp = locfp;
 							SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
 							locsd->fp = locfp;
-							locsd->mode = MODE_READ;
+							locsd->mode = MODE_WRITE;
 							locsd->fname = StringDup( tmpfilename );
 							locsd->path = StringDup( path );
 							locfil->f_SessionID = StringDup( s->f_SessionID );
-					
-							DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+
+							DEBUG("[fsysphp] FileOpened, memory allocated\n");
+				
 							return locfil;
 						}
-				
-						// Free this one
+					
+						// Free it
 						FFree( locfil->f_Path );
 						FFree( locfil );
 					}
@@ -550,74 +613,16 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				else
 				{
-					ERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
+					ERROR("Cannot create temporary file %s\n", tmpfilename );
 				}
 			}
 			else
 			{
-				ERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
-			}
-			// Close lock
-			if( lockf >= 0 ) 
-			{
-				DEBUG( "[fsysphp] Closing lock..\n" );
-				close( lockf );
+				ERROR("Mode not supported\n");
 			}
 		}
-		else if( mode[0] == 'w' )
-		{
-			char tmpfilename[ 712 ];
-			
-			
-			// Make sure we can make the tmp file unique
-			do
-			{
-				sprintf( tmpfilename, "/tmp/%s_write_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-			}
-			while( access( tmpfilename, F_OK ) != -1 );
-			
-			DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
-			
-			FILE *locfp;
-			if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
-			{
-				File *locfil = NULL;
-	
-				if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
-				{
-					locfil->f_Path = StringDup( path );
-				
-					if( ( locfil->f_SpecialData = FCalloc( 1, sizeof( SpecialData ) ) ) != NULL )
-					{
-						SpecialData *locsd = (SpecialData *)locfil->f_SpecialData;
-						locsd->fp = locfp;
-						locsd->mode = MODE_WRITE;
-						locsd->fname = StringDup( tmpfilename );
-						locsd->path = StringDup( path );
-						locfil->f_SessionID = StringDup( s->f_SessionID );
-
-						DEBUG("[fsysphp] FileOpened, memory allocated\n");
-				
-						return locfil;
-					}
-					
-					// Free it
-					FFree( locfil->f_Path );
-					FFree( locfil );
-				}
-				// Close the dangling fp
-				fclose( locfp );
-			}
-			else
-			{
-				ERROR("Cannot create temporary file %s\n", tmpfilename );
-			}
-		}
-		else
-		{
-			ERROR("Mode not supported\n");
-		}
-	}
+		free( comm );
+	}	// comm
 	
 	return NULL;
 }
@@ -628,7 +633,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 int FileClose( struct File *s, void *fp )
 {
-	if( fp )
+	if( fp != NULL )
 	{
 		int close = 0;
 		
@@ -773,39 +778,66 @@ int MakeDir( struct File *f, const char *path )
 	DEBUG("[fsysphp] makedir filesystem\n");
 	if( f != NULL && f->f_SpecialData != NULL )
 	{
-		SpecialData *sd = (SpecialData *)f->f_SpecialData;
+		char *comm = NULL;
 	
-		char command[ 2048 ];	// maybe we should count that...
-		
-		///system.library/module?module=files&command=dosaction&action=makedir&sessionid=2ffg3987t093843948&path=some:directory/newdir
-		
-		sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=makedir&sessionid=%s&path=%s\";",
-			f->f_SessionID, path
-		);
-		
-		DEBUG("[fsysphp] MAKEDIR %s\n", command );
-	
-		int answerLength = 0;
-		
-		ListString *result = PHPCall( command, &answerLength );
-		
-		if( result && result->ls_Size >= 0 )
+		// If we don't have a path or we have a path without colon, allocate
+		// for a base path 
+		if( strstr( path, ":" ) == NULL || !path )
 		{
-			if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+			comm = calloc( ( path ? strlen( path ) : 0 ) + 512, sizeof(char) );
+			if( comm == NULL ) return -1;
+		}
+		// If we have comm or a path
+		if( comm || path )
+		{
+			// If we have a comm
+			if( comm )
 			{
-				ERROR( "[fsysphp] phpfs: Failed to execute makedir on device %s..\n", f->f_Name );
+				strcpy( comm, f->f_Name );
+				strcat( comm, ":" );
 			}
-		}
-		else
-		{
-			ERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
-		}
+			// A path and a comm, concat
+			if( path != NULL && comm )
+				strcat( comm, path ); 
+				
+			// No comm, just use path!
+			if( !comm ) comm = StringDuplicate( path );
+		
+			SpecialData *sd = (SpecialData *)f->f_SpecialData;
 	
-		// TODO: we should parse result to get information about success
-		if( result ) ListStringDelete( result );
+			char command[ 2048 ];	// maybe we should count that...
+		
+			sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=makedir&sessionid=%s&path=%s\";",
+				f->f_SessionID, comm
+			);
+		
+			DEBUG("[fsysphp] MAKEDIR %s\n", command );
+	
+			int answerLength = 0;
+		
+			ListString *result = PHPCall( command, &answerLength );
+		
+			if( result && result->ls_Size >= 0 )
+			{
+				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				{
+					ERROR( "[fsysphp] phpfs: Failed to execute makedir on device %s..\n", f->f_Name );
+				}
+			}
+			else
+			{
+				ERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
+			}
+	
+			// TODO: we should parse result to get information about success
+			if( result ) ListStringDelete( result );
+		}
 	}
-
-	return -1;
+	else
+	{
+		return -1;
+	}
+	return 1;
 }
 
 //
@@ -816,26 +848,43 @@ int Delete( struct File *s, const char *path )
 {
 	DEBUG("[fsysphp] Delete %s\n", path);
 	
-	if( s != NULL )
-	{
-		SpecialData *sd = (SpecialData *)s->f_SpecialData;
+	char *comm = NULL;
 	
-		char command[ 1024 ];	// maybe we should count that...
+	if( ( comm = calloc( strlen( path ) +512, sizeof(char) ) ) != NULL )
+	{
+		strcpy( comm, s->f_Name );
+		strcat( comm, ":" );
 		
-		sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=delete&sessionid=%s&path=%s\";",
-			s->f_SessionID, path
-		);
+		if( path != NULL )
+		{
+			strcat( comm, path ); 
+		}
 		
-		int answerLength;
-		ListString *result = PHPCall( command, &answerLength );
+		if( s != NULL )
+		{
+			SpecialData *sd = (SpecialData *)s->f_SpecialData;
+	
+			char command[ 1024 ];	// maybe we should count that...
 		
-		// TODO: we should parse result to get information about success
-		if( result ) ListStringDelete( result );
+			sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=delete&sessionid=%s&path=%s\";",
+				s->f_SessionID, comm
+			);
 		
-		// Success
-		return 1;
+			int answerLength;
+			ListString *result = PHPCall( command, &answerLength );
+		
+			// TODO: we should parse result to get information about success
+			if( result ) ListStringDelete( result );
+		
+			// Success
+		}
+		free( comm );
 	}
-	return -1;
+	else
+	{
+		return -1;
+	}
+	return 1;
 }
 
 //
@@ -846,26 +895,43 @@ int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("[fsysphp] Rename %s to %s\n", path, nname );
 	
-	if( s != NULL )
-	{
-		SpecialData *sd = (SpecialData *)s->f_SpecialData;
+	char *comm = NULL;
 	
-		char command[ 1024 ];	// maybe we should count that...
+	if( ( comm = calloc( strlen( path ) +512, sizeof(char) ) ) != NULL )
+	{
+		strcpy( comm, s->f_Name );
+		strcat( comm, ":" );
 		
-		sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s\";",
-			s->f_SessionID, path, nname
-		);
+		if( path != NULL )
+		{
+			strcat( comm, path ); 
+		}
 		
-		int answerLength = 0;
-		ListString *result = PHPCall( command, &answerLength );
+		if( s != NULL )
+		{
+			SpecialData *sd = (SpecialData *)s->f_SpecialData;
+	
+			char command[ 1024 ];	// maybe we should count that...
 		
-		// TODO: we should parse result to get information about success
-		if( result ) ListStringDelete( result );
+			sprintf( command, "php \"modules/system/module.php\" \"module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s\";",
+				s->f_SessionID, comm, nname
+			);
 		
-		// Success
-		return 1;
+			int answerLength = 0;
+			ListString *result = PHPCall( command, &answerLength );
+		
+			// TODO: we should parse result to get information about success
+			if( result ) ListStringDelete( result );
+		
+			free( comm );
+		}
+		free( comm );
 	}
-	return -1;
+	else
+	{
+		return -1;
+	}
+	return 1;
 }
 
 
@@ -904,48 +970,49 @@ char *Execute( struct File *s, const char *path, const char *args )
 
 BufString *Info( File *s, const char *path )
 {
-	DEBUG("[fsysphp] Info!\n");
-	
-	BufString *bs = BufStringNew();
-	int spath = strlen( path );
-	int rspath = strlen( s->f_Path );
-	
-	DEBUG("[fsysphp] Info..!\n");
-	
-	// user is trying to get access to not his directory
-	DEBUG("[fsysphp] Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
-	
-	int doub = strlen( s->f_Name );
-	
 	char *comm = NULL;
 	
-	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = calloc( strlen( path ) + 512, sizeof(char) ) ) != NULL )
 	{
-		strcpy( comm, s->f_Path );
-		if( comm[ strlen( comm ) -1 ] != '/' )
-		{
-			strcat( comm, "/" );
-		}
-		strcat( comm, &(path[ doub+2 ]) );
+		strcpy( comm, s->f_Name );
+		strcat( comm, ":" );
 		
-		DEBUG("[fsysphp] PATH created %s\n", comm );
+		if( path != NULL )
+		{
+			strcat( comm, path ); 
+		}
+		
+		if( s != NULL )
+		{
+			SpecialData *sd = (SpecialData *)s->f_SpecialData;
 	
-		struct stat ls;
+			char command[ 1024 ];	// maybe we should count that...
 		
-		if( stat( comm, &ls ) == 0 )
-		{
-			//FillStat( bs, &ls, s, comm );
-		}
-		else
-		{
-			BufStringAdd( bs, "{ \"ErrorMessage\": \"File or directory do not exist\"}" );
+			sprintf( command, "php \"modules/system/module.php\" \"type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=\";",
+				sd->type, s->f_SessionID, comm//path
+			);
+		
+			int answerLength;
+			BufString *bs = NULL;
+			ListString *result = PHPCall( command, &answerLength );
+			if( result != NULL )
+			{
+				bs =BufStringNewSize( result->ls_Size );
+				if( bs != NULL )
+				{
+					BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+				}
+				ListStringDelete( result );
+			}
+			// we should parse result to get information about success
+	
+			free( comm );
+			return bs;
 		}
 		
 		free( comm );
 	}
-	DEBUG("[fsysphp] Info END\n");
-	
-	return bs;
+	return NULL;
 }
 
 //
@@ -954,25 +1021,48 @@ BufString *Info( File *s, const char *path )
 	
 BufString *Dir( File *s, const char *path )
 {
-	if( s != NULL )
+	char *comm = NULL;
+	
+	if( ( comm = calloc( strlen( path ) +512, sizeof(char) ) ) != NULL )
 	{
-		SpecialData *sd = (SpecialData *)s->f_SpecialData;
+		strcpy( comm, s->f_Name );
+		strcat( comm, ":" );
+		
+		if( path != NULL )
+		{
+			strcat( comm, path ); 
+		}
+		
+		if( s != NULL )
+		{
+			SpecialData *sd = (SpecialData *)s->f_SpecialData;
 	
-		char command[ 1024 ];	// maybe we should count that...
+			char command[ 1024 ];	// maybe we should count that...
 		
-		sprintf( command, "php \"modules/system/module.php\" \"type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=\";",
-			sd->type, s->f_SessionID, path
-		);
+			sprintf( command, "php \"modules/system/module.php\" \"type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=\";",
+				sd->type, s->f_SessionID, comm//path
+			);
 		
-		int answerLength;
-		ListString *result = PHPCall( command, &answerLength );
-		BufString *bs =BufStringNewSize( result->ls_Size );
-		BufStringAddSize( bs, result->ls_Data, result->ls_Size );
-		ListStringDelete( result );
+			int answerLength;
+			BufString *bs  = NULL;
+			ListString *result = PHPCall( command, &answerLength );
+			if( result != NULL )
+			{
+				bs =BufStringNewSize( result->ls_Size );
+				if( bs != NULL )
+				{
+					BufStringAddSize( bs, result->ls_Data, result->ls_Size );
+				}
+				ListStringDelete( result );
+			}
 		
-		// we should parse result to get information about success
+			// we should parse result to get information about success
 	
-		return bs;
+			free( comm );
+			return bs;
+		}
+		
+		free( comm );
 	}
 	return NULL;
 }

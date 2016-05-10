@@ -97,6 +97,14 @@ with the one found in:
 
  * docs/FriendCoreDatabase.sql
 
+Upgrade Password
+----------------
 
+If upgrading from a previous version of FriendUP, please update
+your current password with this one in your database:
 
+{S6}e4bf51f71c136d46e222b15b350f7f7d170841edbb13ce9dc73a1c241b393aac
 
+It reads: friendpassword
+
+You can update your password later on with the Users application.

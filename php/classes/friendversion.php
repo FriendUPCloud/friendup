@@ -63,6 +63,18 @@ class FriendVersion
 			' );
 		}
 		
+		//check that all users have hashed passwords....
+		$rows = $SqlDatabase->FetchObjects( "SELECT * FROM FUser WHERE Password NOT LIKE '{S6}%'");
+        if( $rows )
+        {
+			for($i = 0; $i < count($rows); $i++)
+			{
+				$h0 = $rows[$i]->Password . '';
+				$h1 = hash('sha256', $h0 );
+				$h2 = hash('sha256','HASHED'.$h1);
+				$SqlDatabase->Query( "UPDATE FUser SET Password = '{S6}" . $h2 ."' WHERE ID = " . $rows[$i]->ID);
+			}
+        }		
 	} 
 	
 	/** ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 

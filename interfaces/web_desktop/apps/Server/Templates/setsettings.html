@@ -1,0 +1,45 @@
+
+
+	<div class="ContentFull">
+		<div class="VContentTop TopPart BorderBottom BackgroundWindow ScrollArea">
+			<div class="Padding">
+				<p class="Layout">
+					<strong>Settings {settingsname}:</strong>
+				</p>
+				<p class="Layout" id="Settings">
+				</p>
+			</div>
+		</div>
+		<div class="VContentBottom BottomPart BackgroundToolbar">
+			<div class="Padding">
+				<button type="button" class="Button IconSmall fa-check" onclick="setSettings( '{settingsid}' )">
+					Save changes
+				</button>
+				<button type="button" class="Button IconSmall fa-plus" onclick="addSetting()">
+					Add property
+				</button>
+				<button type="button" class="Button IconSmall fa-close" onclick="doCancel( '{settingsid}' )">
+					Cancel
+				</button>
+			</div>
+		</div>
+	</div>
+	
+	<input type="hidden" value="{settingsid}" id="settingsid" />
+	
+	<script src="Progdir:Scripts/setsettings.js"></script>
+	
+	<style>
+		.TopPart
+		{
+			bottom: 50px;	
+		}
+		
+		.BottomPart
+		{
+			height: 50px;
+		}
+		label { display:inline-block; padding-top:16px; font-weight: 700; }
+	</style>
+
+

@@ -76,6 +76,8 @@ typedef struct UserLibrary
 	User                            *(*Authenticate)( struct UserLibrary *l, struct User *loguser, const char *name, const char *pass, const char *sessionId );
 	// check password
 	BOOL 							(*CheckPassword)( struct UserLibrary *l, User *usr, char *pass );
+	// check password MD5
+	BOOL 							(*CheckPasswordMD5)( struct UserLibrary *l, User *usr, char *pass );
 	// logout user
 	void                            (*Logout)( struct UserLibrary *l, const char *name );
 	// check if user serssion is still valid, return filled user structure
@@ -102,7 +104,6 @@ typedef struct UserLibrary
 	void                            (*UserUpdateDb)( struct UserLibrary *l, User *usr );
 	// delete user, 0 = ok
 	int                             (*UserDelete)( struct UserLibrary *l, User *usr );
-	
 	// test textual application user permission
 	int                             (*UserAppPermission)( struct UserLibrary *l, int userId, int applicationId, const char *permission ); 
 	

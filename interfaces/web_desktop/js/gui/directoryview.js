@@ -17,7 +17,9 @@
 *                                                                              *
 *******************************************************************************/
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // DirectoryView class ------------------------------------------------------------
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 
 DirectoryView = function ( winobj )
 {
@@ -30,11 +32,15 @@ DirectoryView = function ( winobj )
 		winobj.parentNode.className = winobj.parentNode.className.split ( ' IconWindow' ).join ( '' ) + ' IconWindow';
 	}
 }
+
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 DirectoryView.prototype.InitWindow = function ( winobj )
 {
 	winobj.directoryview = this;
 	winobj.parentNode.className = winobj.parentNode.className.split ( ' IconWindow' ).join ( '' ) + ' IconWindow';
 	winobj.redrawtimeouts = [];
+	
+
 	winobj.redrawBackdrop = function()
 	{
 		if( Workspace.windowWallpaperImage )
@@ -49,6 +55,8 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		}
 	}
 	winobj.redrawBackdrop();
+	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	winobj.redrawIcons = function ( icons, direction )
 	{
 		self = this;
@@ -120,6 +128,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		return false;
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	winobj.parentNode.rollOver = function ( eles )
 	{
 		//SetOpacity ( this, 0.8 );
@@ -127,13 +136,14 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		window.targetMovable = this;
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	winobj.parentNode.rollOut = function ( eles )
 	{
 		this.classList.remove('DragTarget');
 		//SetOpacity ( this, 1 );
 	}
 	
-	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	//if host support drag&drop we want to use that.
 	if( window.File && window.FileReader && window.FileList && window.Blob )
 	{
@@ -152,8 +162,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		
 		function handleHostFileSelect( e )
 		{
-			
-			
+
 			var files = e.dataTransfer.files||e.target.files;
 			
 			if( files.length < 1 ) return;
@@ -336,11 +345,18 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 	} // end of check for html5 file upload capabilities
 	
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	// Dropping an icon on a window!
 	winobj.parentNode.drop = function ( eles, e )
 	{
 		// Check some events
 		if( !e ) e = window.event;
+		
+		if( !this.fileoperations )
+		{
+			this.fileoperations = [];
+			this.operationcounter = 0;
+		}
 		
 		var ctrl = ( typeof( e ) != 'undefined' && e.ctrlKey ) ? e.ctrlKey : false;
 		
@@ -434,6 +450,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 		var sPath = this.content.fileInfo.Path;
 		var dPath = eles[0].window.fileInfo ? eles[0].window.fileInfo.Path : false;
 		
+		
 		// Always copy when on different volumes
 		if( 
 			sPath && dPath &&
@@ -444,7 +461,8 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 			ctrl = true;
 		}
 		
-		if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 )
+		// make sure we have valid source and destination and neither of them is on System: volume and we have no ape using us....
+		if( !sPath || !dPath || sPath.indexOf( 'System:' ) == 0 || dPath.indexOf( 'System:' ) == 0 || this.ongoingdropprepare )
 		{
 			if( eles[0].window && eles[0].window.refresh )
 				eles[0].window.refresh();
@@ -453,23 +471,44 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 			return;
 		}
 		
+		// we are all set...
+		// change 2016-04 - allow multiple operations at once....
+		this.ongoingdropprepare = true;
+
+		this.operationcounter++;
+		this.fileoperations[ this.operationcounter ] = {};
+		this.fileoperations[ this.operationcounter ].sPath = sPath;
+		this.fileoperations[ this.operationcounter ].dPath = dPath;
+		
+
 		// Open window
-		var w = new View( { 
+		this.fileoperations[ this.operationcounter ].view = new View( { 
 			title:  ctrl ? i18n( 'i18n_copying_files' ) : i18n('i18n_moving_files'), 
 			width:  320, 
 			height: 100, 
-			id:     'fileops'
+			id:     'fileops_' + this.operationcounter
 		} );
 		
+		this.fileoperations[ this.operationcounter ].view.myid = this.operationcounter;
+		this.fileoperations[ this.operationcounter ].view.master = this;
+		
 		// Load template
-		var progress = new File( 'templates/file_operation.html' );
-		progress.onLoad = function( data )
+		this.fileoperations[ this.operationcounter ].progress = new File( 'templates/file_operation.html' );
+		this.fileoperations[ this.operationcounter ].progress.master = this;
+		this.fileoperations[ this.operationcounter ].progress.myid = this.operationcounter;
+		
+		this.fileoperations[ this.operationcounter ].progress.onLoad = function( data )
 		{
+			
+			var w = this.master.fileoperations[ this.myid ].view;
+			var windowArray = this.master.fileoperations;
+			var windowArrayKey = this.myid;
+			
 			data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
 			w.setContent( data );
 		
 			// Setup progress bar
-			var eled = w.getWindowElement().getElementsByTagName( 'div' );
+			var eled = this.master.fileoperations[ this.myid ].view.getWindowElement().getElementsByTagName( 'div' );
 			var groove = false, bar = false, frame = false, progressbar = false;
 			for( var a = 0; a < eled.length; a++ )
 			{
@@ -516,6 +555,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 				
 				// Create a filecopy object
 				var fileCopyObject = {
+					
 					files: [],
 					processing: 0,
 					fileInfoCheck: function( ele )
@@ -705,7 +745,7 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 									// Refresh source and target
 									Doors.diskNotification( [ winobj, eles[0].window ], 'refresh' );
 								}
-							
+								windowArray.splice( windowArrayKey, 1);
 							}
 						} );
 						
@@ -731,14 +771,24 @@ DirectoryView.prototype.InitWindow = function ( winobj )
 			// Didn't work..
 			else
 			{
-				w.close();
+				this.master.fileoperations[ this.myid ].view.close();
 			}
 		}
-		progress.load();
+		this.fileoperations[ this.operationcounter ].progress.load();
+		
+		this.ongoingdropprepare = false;
 		
 		return eles.length;
 	}
+	
+	
+	
+	// Just update in case we're the active view!
+	if( winobj.parentNode == currentMovable )
+		showWorkbenchMenu();
 }
+
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 DirectoryView.prototype.GetTitleBar = function ()
 {
 	if ( window.currentScreen )
@@ -747,6 +797,8 @@ DirectoryView.prototype.GetTitleBar = function ()
 	}
 	return false;
 }
+
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 {
 	// Remember scroll top
@@ -937,6 +989,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 	obj.scroller.scrollLeft = slef;
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Makes a listview
 DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 {
@@ -1089,6 +1142,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Create a directoryview on a div / Window (shortcut func (deprecated?))
 function CreateDirectoryView( winobj )
 {
@@ -1096,13 +1150,21 @@ function CreateDirectoryView( winobj )
 	return w;
 }
 
+
+
+
+
+
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Icon class ------------------------------------------------------------------
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 
 FileIcon = function( fileInfo )
 {
 	this.Init ( fileInfo );
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 FileIcon.prototype.Init = function( fileInfo )
 {
 	// Create the file icon div
@@ -1302,17 +1364,19 @@ FileIcon.prototype.Init = function( fileInfo )
 	}
 	
 
-
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.rollOver = function ( eles )
 	{
 		this.classList.add('DragTarget');
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.rollOut = function ( eles )
 	{
 		this.classList.remove('DragTarget');
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	// Attach events
 	file.onmousedown = function( e )
 	{
@@ -1342,6 +1406,7 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	}
 
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	// This one driggers dropping icons! (believe it or not)
 	file.onmouseup = function( e )
 	{
@@ -1362,6 +1427,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		}
 		window.targetMovable = false;
 	}
+	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.onclick = function( e )
 	{
 		if( !e ) e = window.event;
@@ -1376,11 +1443,14 @@ FileIcon.prototype.Init = function( fileInfo )
 		}
 		this.className = this.className.indexOf ( ' Selected' ) >= 0 ? ( this.className.split ( ' Selected' ).join ( '' ) ) : ( this.className + ' Selected' );
 	}
+	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.onselectstart = function( e )
 	{
 		return cancelBubble( e );
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.onmouseout = function( e )
 	{
 		if ( !e ) e = window.event;
@@ -1391,6 +1461,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			return cancelBubble ( e );
 		}
 	}
+	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.ondblclick = function( event )
 	{
 		if( !event ) event = window.event;
@@ -1421,6 +1493,8 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Do the default
 		OpenWindowByFileinfo( this.fileInfo, event );
 	}
+	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	file.associateWithElement = function ( div )
 	{
 		var t = this;
@@ -1432,6 +1506,7 @@ FileIcon.prototype.Init = function( fileInfo )
 		div.ondblclick = function () { t.ondblclick () };
 	}
 	
+	// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 	// Let's make it possible also for touch interfaqces
 	if( file.addEventListener )
 	{
@@ -1471,6 +1546,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 function RefreshWindowGauge( win, finfo )
 {
 	if( win.content ) win = win.content
@@ -1494,6 +1570,7 @@ function RefreshWindowGauge( win, finfo )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Opens a window based on the fileInfo (type etc)
 function OpenWindowByFileinfo( fileInfo, event, iconObject )
 {
@@ -1603,7 +1680,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 		
 		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
 		
-		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: auto;" src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rb" autoplay="autoplay"></video></div>' );
+		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: auto;" src="/system.library/file/read?sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '&mode=rb" autoplay="autoplay" ondblclick="Workspace.fullscreen( this )" ontouchstart="touchDoubleClick( this, function( ele ){ Workspace.fullscreen( ele ); } )"></video></div>' );
 	}
 	// Executing executable javascript
 	else if( iconObject.extension == 'jsx' )
@@ -1820,6 +1897,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject )
 	cancelBubble( event );
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Create an icon (fast way) and return the dom element
 function CreateIcon( fileInfo )
 {
@@ -1827,8 +1905,14 @@ function CreateIcon( fileInfo )
 	return c.file;
 }
 
-// Helper functions ------------------------------------------------------------
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
+// Helper functions ------------------------------------------------------------
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
+
+
+
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Some global keys for directoryviews
 function CheckDoorsKeys ( e )
 {
@@ -1842,6 +1926,7 @@ function CheckDoorsKeys ( e )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Delete files in a file view (from selected icons)
 function DoorsDeleteFiles ( )
 {
@@ -1891,6 +1976,7 @@ function DoorsDeleteFiles ( )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Refresh a directoryview (window)
 function RefreshDirectoryView ( win )
 {
@@ -1913,6 +1999,7 @@ function RefreshDirectoryView ( win )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Loads data using a frame instead...
 Frameloader = function( auth, pelement )
 {
@@ -1947,6 +2034,7 @@ Frameloader = function( auth, pelement )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 // Load image
 Imageloader = function( auth, pelement )
 {
@@ -1981,6 +2069,7 @@ Imageloader = function( auth, pelement )
 	}
 }
 
+// ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### ---  ### --- 
 if ( window.addEventListener )
 	window.addEventListener ( 'keydown', CheckDoorsKeys );
 else window.attachEvent ( 'onkeydown', CheckDoorsKeys );

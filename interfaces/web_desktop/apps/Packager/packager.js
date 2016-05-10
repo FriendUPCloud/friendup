@@ -22,7 +22,9 @@ Application.run = function( msg, iface )
 	var v = new View( {
 		title: 'Packager',
 		width: 700,
-		height: 500
+		height: 500,
+		'min-width': 400,
+		'min-height': 150
 	} );
 	
 	v.onClose = function()

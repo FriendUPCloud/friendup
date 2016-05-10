@@ -77,7 +77,7 @@ struct linkedCharArray
 	void *next;
 };
 
-char *Run( struct EModule *mod, const char *path, const char *args, int *length )
+char *Run( struct EModule *mod, const char *path, const char *args, unsigned long int *length )
 {
 	DEBUG("[PHPmod] call run\n");
 
@@ -170,7 +170,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	pclose( pipe );
 	
 	// Set the length
-	if( length != NULL ) *length = res;
+	if( length != NULL ) *length = ( unsigned long int )res;
 	
 	// Put the new string together
 	char *final = calloc( res + 1, sizeof( char ) );

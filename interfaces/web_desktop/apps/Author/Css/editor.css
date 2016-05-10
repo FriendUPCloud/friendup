@@ -4,6 +4,7 @@
 	bottom: 2px;
 	right: 10px;
 	text-align: right;
+	color: black;
 }
 #Status * { padding: 0; margin: 0; }
 
@@ -14,7 +15,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	height: 76px;
+	height: 96px;
 	right: 0;
 }
 
@@ -22,6 +23,18 @@
 {
 	float: left;
 	display: flex;
+}
+
+.ToolbarInner
+{
+	padding-right: 54px;
+}
+
+
+.ToolbarInner select, .ToolbarInner button, .ToolbarInner .ToolButtonLabel,
+.ToolbarInner .ToolButton
+{
+	margin-bottom: 2px;
 }
 
 /* Top */
@@ -52,7 +65,7 @@
 #cke_1_contents
 {
 	position: absolute !important;
-	top: 77px;
+	top: 97px;
 	width: 100% !important;
 	height: auto !important;
 	bottom: 41px;
@@ -73,7 +86,7 @@
 /* Bottom status bar text */
 a.cke_path_item, span.cke_path_empty
 {
-	padding: 10px 4px;
+	padding: 15px 4px;
 }
 
 /* Speech input */
@@ -109,7 +122,7 @@ a.cke_path_item, span.cke_path_empty
 	position: absolute;
 }
 
-.ToolButton, .ToolSelect
+.ToolButton, .ToolSelect, .ToolButtonLabel
 {
 	float: left;
 	width: 32px;
@@ -127,6 +140,12 @@ a.cke_path_item, span.cke_path_empty
 	background: white;
 	box-sizing: border-box;
 	outline: none;
+}
+
+.ToolButtonLabel
+{
+	border-color: white;
+	cursor: default;
 }
 
 .ToolButton em, .ToolSelect em
@@ -162,4 +181,54 @@ a.cke_path_item, span.cke_path_empty
 	margin: 10px 0 0 5px;
 }
 
+/* Responsive design -------------------------------------------------------- */
+
+@media (max-width: 660px)
+{
+	.Divider4 + .ToolButton + br
+	{
+		display: none;
+	}
+}
+
+@media (max-width: 556px)
+{
+	#AuthorToolbar
+	{
+		height: 140px;
+	}
+	#cke_1_contents
+	{
+		top: 140px;
+	}
+}
+
+/*
+For now, we don't use this, we don't have enough tools...
+@media (max-width: 400px)
+{
+	.Divider4 + .ToolButton + br
+	{
+		display: none;
+	}
+	#AuthorToolbar
+	{
+		height: 185px;
+	}
+	#cke_1_contents
+	{
+		top: 185px;
+	}
+}*/
+
+#AuthorToolbar.Hidden
+{
+	height: 0;
+	overflow: hidden;
+}
+
+#cke_1_contents.Hidden
+{
+	top: 0;
+}
 

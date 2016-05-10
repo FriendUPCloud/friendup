@@ -38,6 +38,13 @@ $r = AuthenticateApplication( $args->args->application, $User->ID );
 if( $r && substr( $r, 0, 4 ) == 'fail' )
 	die( $r );
 
+list( $retCode, $retData ) = explode( '<!--separate-->', $r );
+$retObject = false;
+if( $retData )
+{
+	$retObject = json_decode( $retData );
+}
+
 // Some settings
 $sets = array( 'language' );
 $opts = new stdClass();
@@ -66,7 +73,41 @@ foreach( $sets as $set )
 	}
 }
 
-if( $row = $SqlDatabase->FetchObject( '
+// Do we already have an object? An app project!
+if( $retObject && isset( $retObject->ProjectName ) )
+{
+	$conf = new stdClass();
+	$conf->Name = $retObject->ProjectName;
+	$conf->Author = $retObject->Author;
+	$conf->Version = $retObject->Version;
+	$conf->API = 'v1';
+	$conf->Permissions = [];
+	if( isset( $retObject->Permissions ) )
+	{
+		foreach( $retObject->Permissions as $k=>$v )
+		{
+			$conf->Permissions[] = $v->Permission . ' ' . $v->Name . ( $v->Options ? ( ' ' . $v->Options ) : '' );
+		}
+	}
+	$conf->Libraries = $retObject->Libraries;
+	
+	$init = '';
+	foreach( $retObject->Files as $k=>$v )
+	{
+		if( strtolower( substr( $v->Filename, -4, 4 ) ) == '.jsx' )
+		{ 
+			$init = $v->Path;
+		}
+	}
+	if( $init )
+	{
+		$conf->Init = $init;
+		die( 'ok<!--separate-->' . json_encode( $conf ) );
+	}
+	die( 'fail' );
+}
+// Installed application..
+else if( $row = $SqlDatabase->FetchObject( '
 	SELECT * FROM FApplication WHERE UserID=\'' . $User->ID . '\' AND `Name` = "' . $args->args->application . '"
 ' ) )
 {
@@ -74,16 +115,18 @@ if( $row = $SqlDatabase->FetchObject( '
 		SELECT * FROM FUserApplication WHERE UserID=\'' . $User->ID . '\' AND ApplicationID=\'' . $row->ID . '\'
 	' ) )
 	{
+		$fn = $retObject ? $retObject->ConfFilename : false;
 		$conf = json_decode( $row->Config );
 		$conf->Permissions = json_decode( $ur->Permissions );
 		$conf->AuthID = $ur->AuthID;
+		$conf->State = $ur->Data;
+		$conf->ConfFilename = $fn;
 		
 		// Set user settings
 		foreach( $opts as $ko=>$vo )
 		{
 			$conf->$ko = $vo;
 		}
-		
 		
 		if( $path = findInSearchPaths( $args->args->application ) )
 			$conf->Path = str_replace( '../resources', '', $path ) . '/';

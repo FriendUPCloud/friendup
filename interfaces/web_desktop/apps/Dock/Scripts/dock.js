@@ -51,7 +51,7 @@ function LoadApplications( win, currentItemId )
 		{
 			var cl = '';
 			if( a > 0 ) cl = ' MarginTop';
-			var img = eles[a].Image ? eles[a].Image : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
+			var img = eles[a].Image ? ( '/webclient/' + eles[a].Image ) : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
 			
 			// Activate the current selected
 			if( eles[a].Id == currentItemId ) cl += ' BackgroundNegative Negative';

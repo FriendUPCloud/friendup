@@ -268,10 +268,6 @@ ULONG GetRevision(void)
 	return 1;
 }
 
-// Linux do not have usleep in headers
-
-int usleep(ULONG usec);
-       
 //
 // Creste new service
 //
@@ -336,7 +332,7 @@ void ServiceDelete( Service *s )
 int ServiceStart( Service *service )
 {
 	/*
-	service->s_Thread = ThreadNew( service->ServiceThread, service );
+	service->s_Thread = ThreadNew( service->ServiceThread, service, TRUE );
 	if( service->s_Thread == NULL )
 	{
 		service->s_State = SERVICE_STOPPED;

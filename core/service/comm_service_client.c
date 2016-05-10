@@ -349,50 +349,60 @@ int CommServiceThreadClient( FThread *ptr )
 			{
 				DEBUG("Outgoing connection mem allocated\n");
 				
-				newcon->cfcc_Socket = SocketOpen( FRIEND_COMMUNICATION_PORT, SOCKET_TYPE_CLIENT );
-				
-				DEBUG("Outgoing connection created\n");
-				
-				if( SocketConnect( newcon->cfcc_Socket, address ) == 0 )
+				newcon->cfcc_Socket = SocketOpen( FALSE, FRIEND_COMMUNICATION_PORT, SOCKET_TYPE_CLIENT );
+				if( newcon->cfcc_Socket != NULL )
 				{
-					DEBUG("Connection setup with server : %s\n", token );
-					if( service->s_FCConnections == NULL )
+				
+					DEBUG("Outgoing connection created\n");
+				
+					if( SocketConnect( newcon->cfcc_Socket, address ) == 0 )
 					{
-						service->s_FCConnections = newcon;
+						DEBUG("Connection setup with server : %s\n", token );
+						if( service->s_FCConnections == NULL )
+						{
+							service->s_FCConnections = newcon;
+						}
+						else
+						{	// we already have connections, we must add them to the end of list
+							CommFCConnection *lc = service->s_FCConnections;
+							while( lc->node.mln_Succ != NULL )
+							{
+								lc = (CommFCConnection *)lc->node.mln_Succ;
+							}
+							lc->node.mln_Succ = (MinNode *) newcon;
+						}
+					
+						//
+						// sockets connected, we create now special message where we sent ID of our host
+						//
+					
+						DEBUG("Generate Data Form\n");
+						DataForm * df = DataFormNew( NULL );
+						DEBUG("DataForm Created\n");
+						FriendCoreManager *fcm = (FriendCoreManager *) service->s_FCM;
+						DataFormAdd( &df, (BYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+						//INFO("Message created name byte %c%c%c%c\n", fcm->fcm_ID[32], fcm->fcm_ID[33], fcm->fcm_ID[34], fcm->fcm_ID[35]	);
+					
+						SocketWrite( newcon->cfcc_Socket, (char *)df, df->df_Size );
+					
+						DEBUG("Message sent\n");
+						DataFormDelete( df );
+					
 					}
 					else
-					{	// we already have connections, we must add them to the end of list
-						CommFCConnection *lc = service->s_FCConnections;
-						while( lc->node.mln_Succ != NULL )
+					{
+						if( newcon->cfcc_Socket != NULL )
 						{
-							lc = (CommFCConnection *)lc->node.mln_Succ;
+							close( newcon->cfcc_Socket->fd );
+							FFree( newcon->cfcc_Socket );
 						}
-						lc->node.mln_Succ = (MinNode *) newcon;
+						FFree( newcon );
+						ERROR("Cannot setup socket connection!\n");
 					}
-					
-					//
-					// sockets connected, we create now special message where we sent ID of our host
-					//
-					
-					DEBUG("Generate Data Form\n");
-					DataForm * df = DataFormNew( NULL );
-					DEBUG("DataForm Created\n");
-					FriendCoreManager *fcm = (FriendCoreManager *) service->s_FCM;
-					DataFormAdd( &df, (BYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
-					//INFO("Message created name byte %c%c%c%c\n", fcm->fcm_ID[32], fcm->fcm_ID[33], fcm->fcm_ID[34], fcm->fcm_ID[35]	);
-					
-					SocketWrite( newcon->cfcc_Socket, (char *)df, df->df_Size );
-					
-					DEBUG("Message sent\n");
-					DataFormDelete( df );
-					
 				}
 				else
 				{
-					close( newcon->cfcc_Socket->fd );
-					FFree( newcon->cfcc_Socket );
-					FFree( newcon );
-					ERROR("Cannot setup socket connection!\n");
+					ERROR("Cannot open socket\n");
 				}
 			}
 				
@@ -431,7 +441,7 @@ int CommServiceThreadClient( FThread *ptr )
 	fd_set writeToServ;
 	fd_set readFromServ;
 	
-	ULONG idMax = 0;
+	LONG idMax = 0;
 	if( service->s_sendPipe[ 0 ] > idMax ) idMax = service->s_sendPipe[ 0 ];
 	if( service->s_sendPipe[ 1 ] > idMax ) idMax = service->s_sendPipe[ 1 ];
 	if( service->s_recvPipe[ 0 ] > idMax ) idMax = service->s_recvPipe[ 0 ];
@@ -441,7 +451,7 @@ int CommServiceThreadClient( FThread *ptr )
 		CommFCConnection *lc = service->s_FCConnections;
 		while( lc != NULL )
 		{
-			if( lc->cfcc_Socket > idMax )
+			if( lc->cfcc_Socket->fd > idMax )
 			{
 				idMax = lc->cfcc_Socket->fd;
 			}

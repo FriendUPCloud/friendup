@@ -64,6 +64,11 @@ char * Httpsprintf( char * format, ... )
 Http* HttpNew(  )
 {
 	Http* h = FCalloc( 1, sizeof( Http ) );
+	if( h == NULL )
+	{
+		ERROR("Cannot allocate memory for Http\n");
+		return NULL;
+	}
 	h->headers = HashmapNew();
 
 	// Set default version to HTTP/1.1
@@ -282,8 +287,8 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	char* ptr = r;
 	int step = -1;
 	int substep = 0;
-	bool emptyLine = false;
-	bool lookForFieldName = true;
+	BOOL emptyLine = FALSE;
+	BOOL lookForFieldName = TRUE;
 	char* currentToken = NULL;
 	char* lineStartPtr = r;
 	char* fieldValuePtr = NULL;
@@ -292,7 +297,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	//INFO("REQUEST size %d %s\n", length, request );
 
 	// Ignore any CRLF's that may precede the request-line
-	while( true )
+	while( TRUE )
 	{
 		if( r[i] != '\r' && r[i] != '\n' )
 		{
@@ -303,7 +308,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	}
 
 	// Parse
-	for( ; true; i++ )
+	for( ; TRUE; i++ )
 	{
 		// Sanity check
 		if( i > length )
@@ -329,6 +334,9 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					case 1:
 					{
 						http->rawRequestPath = StringDuplicateN( ptr, ( r + i ) - ptr );
+						
+						DEBUG("HttpParserHeader: rawrequest: %s\n", http->rawRequestPath );
+						
 						http->uri = UriParse( http->rawRequestPath );
 						if( http->uri && http->uri->query )
 						{
@@ -358,7 +366,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 
 						unsigned int pOffset = p - http->version;
 						unsigned int v = 0;
-						bool major = true;
+						BOOL major = TRUE;
 						for( unsigned int j = 0; pOffset + j < strLen; j++ )
 						{
 							// Parse number
@@ -377,7 +385,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 								{
 									return 400;
 								}
-								major = false;
+								major = FALSE;
 								v = 0;
 							}
 							// Invalid version numbering!
@@ -402,7 +410,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 		{
 			if( r[i] != '\r' && r[i] != '\n' )
 			{
-				emptyLine = false;
+				emptyLine = FALSE;
 
 				if( lookForFieldName )
 				{
@@ -421,7 +429,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						{
 							currentToken[j] = HttpAlphaToLow( currentToken[j] );
 						}
-						lookForFieldName = false;
+						lookForFieldName = FALSE;
 					}
 				}
 				else
@@ -452,7 +460,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					{
 						char* ptr = value;
 						unsigned int lastCharIndex = 0;
-						BOOL leadingWhitespace = true;
+						BOOL leadingWhitespace = TRUE;
 						for( unsigned int i = 0; i < valLength; i++ )
 						{
 							// Ignore leading whitespace
@@ -463,16 +471,25 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 							}
 							else
 							{
-								leadingWhitespace = false;
+								leadingWhitespace = FALSE;
 
 								// Comma is the separator
 								if( value[i] == ',' )
 								{
-									char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
+									char* v = NULL;
+
+									if( value[ lastCharIndex ] == '"' )
+									{
+										v = StringDuplicateN( ptr, (lastCharIndex) - ( ptr - value ) );
+									}
+									else
+									{
+										v = StringDuplicateN( ptr, (lastCharIndex+1) - ( ptr - value ) );
+									}
 								
 									AddToList( list, v );
 								
-									leadingWhitespace = true;
+									leadingWhitespace = TRUE;
 									ptr = value + i + 1;
 									lastCharIndex++;
 								}
@@ -486,7 +503,17 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						// Add the last value in the lift, if there are any left
 						if( !leadingWhitespace )
 						{
-							char* v = StringDuplicateN( ptr, lastCharIndex - ( ptr - value ) );
+							char* v = NULL;
+
+							if( value[ lastCharIndex ] == '"' )
+							{
+								v = StringDuplicateN( ptr, (lastCharIndex) - ( ptr - value ) );
+							}
+							else
+							{
+								v = StringDuplicateN( ptr, (lastCharIndex+1) - ( ptr - value ) );
+							}
+							//char* v = StringDuplicateN( ptr, (1+lastCharIndex) - ( ptr - value ) );
 							AddToList( list, v );
 						}
 						free( value );
@@ -518,8 +545,8 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			{
 				break;
 			}
-			emptyLine = true;
-			lookForFieldName = true;
+			emptyLine = TRUE;
+			lookForFieldName = TRUE;
 			fieldValuePtr = 0;
 		}
 	}
@@ -624,7 +651,11 @@ Content-Type: application/octet-stream
 				char *startOfFile = strstr( nextlineStart, "\r\n\r\n" ) + 4;
 				if( startOfFile != NULL )
 				{
-					int  res = FindInBinaryPOS( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent ) - 2;
+					QUAD res;
+					res = FindInBinaryPOS( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent ) - 2;
+					
+					//res = (QUAD )FindInBinarySimple( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent )-2;
+					
 					char *endOfFile = startOfFile + res;
 					
 					INFO("Found the end of the file, file size %d\n", res );
@@ -702,6 +733,8 @@ Content-Type: application/octet-stream
 //
 //
 		
+static const char *headerEnd = "\r\n\r\n";
+		
 extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 {
 	if( data == NULL || http == NULL )
@@ -713,7 +746,7 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 	// Setting it up
 	if( !http->partialRequest )
 	{
-		http->partialRequest = true;
+		http->partialRequest = TRUE;
 		INFO( "\nINCOMING!-----\n\n%s|Has come in.....\n", data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
@@ -721,8 +754,7 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 
 		// Search for \r\n\r\n in the recieved header
 		// Needle in a haystack
-		char* headerEnd = "\r\n\r\n";
-		char* found = strstr( (char*)data, headerEnd );
+		char* found = strstr( ( char* )data, headerEnd );
 
 		if( found )
 		{
@@ -737,7 +769,8 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 			}
 			if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
 			{
-				size = HttpParseInt( content );
+				size = atol( content );
+				//size = HttpParseInt( content );
 
 				// If we have content, then parse it
 				DEBUG( "[HttpParsePartialRequest] Size of content is %d\n", size );
@@ -751,8 +784,7 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 					http->sizeOfContent = size;
 				
 					// Add some extra data for content..
-					int dataOffset = ( found - data + 4 );
-					int dataLength = length - dataOffset;
+					int dataOffset = ( found - data + 4 ), dataLength = length - dataOffset;
 					if( dataLength <= 0 )
 					{
 						// ERROR!
@@ -888,17 +920,12 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 					http->parsedPostContent = UriParseQuery( http->content );
 				}
 				
-				unsigned int i;
-				for( i = 0; i < l; i++ )
-				{
-					free( a[i] );
-				}
+				// Clear mem
+				unsigned int i = 0;
+				for( ; i < l; i++ ) free( a[i] );
 				free( a );
-			}
-			
-			
+			}	
 		}
-
 		return 1;
 	}
 	else
@@ -941,6 +968,7 @@ char* HttpGetHeader( Http* http, const char* name, unsigned int index )
 		{
 			l = l->next;
 			f = l->data;
+			DEBUG("GETHEADER %s\n", l->data );
 		}
 		return f;
 	}
@@ -1010,16 +1038,16 @@ BOOL HttpHeaderContains( Http* http, const char* name, const char* value, BOOL c
 			}
 			if( i == size )
 			{
-				return true;
+				return TRUE;
 			}
 		}
 		while( ( l = l->next ) != NULL );
 
-		return false;
+		return FALSE;
 	}
 	else
 	{
-		return false;
+		return FALSE;
 	}
 }
 
@@ -1327,7 +1355,8 @@ void HttpSetContent( Http* http, char* data, unsigned int length )
 {
 	http->content = data;
 	http->sizeOfContent = length;
-	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%d", http->sizeOfContent ) );
+	//DEBUG( "Setting content length! %ld\n", (unsigned long int )length );
+	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%ld", (unsigned long int )http->sizeOfContent ) );
 }
 
 //
@@ -1340,7 +1369,7 @@ void HttpAddTextContent( Http* http, char* content )
 	http->content = StringDuplicateN( content, http->sizeOfContent );
 	http->sizeOfContent--;
 	//http->sizeOfContent = strlen( content );
-	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%d", http->sizeOfContent ) );
+	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%ld", (unsigned long int)http->sizeOfContent ) );
 }
 
 //
@@ -1455,11 +1484,8 @@ void HttpWriteAndFree( Http* http, Socket *sock )
 	
 	//if( http->h_Socket->s_WSock == NULL )
 	{
-		char *res = HttpBuild( http );
-		if( res != NULL )
+		if( HttpBuild( http ) != NULL )
 		{
-			//INFO("WRITE AND FREE %s\n", http->response );
-			
 			// Write to the socket!
 			SocketWrite( sock, http->response, http->responseLength );
 		}
@@ -1495,8 +1521,7 @@ void HttpWrite( Http* http, Socket *sock )
 	//if( http->h_Socket->s_WSock == NULL )
 	{
 		HttpBuild( http );
-		int left = http->responseLength;
-		
+		//int left = http->responseLength;
 		SocketWrite( sock, http->response, http->responseLength );
 	}
 }
@@ -1557,10 +1582,14 @@ void HttpAssertUnsignedIntValue( unsigned int value, unsigned int expected, cons
 
 void HttpAssertStr( char* value, const char* expected, const char* field )
 {
-	if( !value )
+	if( value == NULL )
+	{
 		printf( "Failed: Field \"%s\" is NULL, not \"%s\".\n", field, expected );
+	}
 	else if( strcmp( value, expected ) != 0 )
+	{
 		printf( "Failed: Field \"%s\" is not \"%s\". Is \"%s\".\n", field, expected, value );
+	}
 }
 
 //

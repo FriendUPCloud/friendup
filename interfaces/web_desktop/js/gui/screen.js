@@ -21,7 +21,6 @@
 Screen = function ( flags, initObject )
 {
 	this._flags = new Object ();
-	this._flags.taskbar = true;
 	
 	if ( typeof ( flags ) == 'object' )
 	{
@@ -55,6 +54,9 @@ Screen = function ( flags, initObject )
 				var e = this.div.screenTitle.getElementsByClassName( 'Info' )[0]; 
 				e.innerHTML = value;
 				break;
+			case 'background':
+				this._flags[ flag ] = value;
+				break;
 		}
 	}
 	
@@ -64,16 +66,19 @@ Screen = function ( flags, initObject )
 	}
 	
 	// TODO: Make dynamic!
-	var statusbar = "" +
-		"<div class=\"Box\" id=\"Statusbar\">" +
-		"	<div id=\"Taskbar\">" +
-		"	</div>" + 
-		"	<div id=\"StatusBox\">" +
-		"	</div>" +
-		"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
-		"   </div>" +
-		"</div>";
-	
+	var statusbar = '';
+	if( this._flags.taskbar )
+	{
+		statusbar = "" +
+			"<div class=\"Box\" id=\"Statusbar\">" +
+			"	<div id=\"Taskbar\">" +
+			"	</div>" + 
+			"	<div id=\"StatusBox\">" +
+			"	</div>" +
+			"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
+			"   </div>" +
+			"</div>";
+	}
 	// Fullscreen mode has no statusbar (as well as those who are specific)
 	if ( !this._flags.taskbar || this._flags.fullscreen ) 
 	{
@@ -93,6 +98,10 @@ Screen = function ( flags, initObject )
 		if( typeof( this._flags['extra'] ) == 'undefined' )
 			this._flags['extra'] = '';
 		
+		// Background support
+		if( typeof( this._flags['background'] ) != 'undefined' )
+			div.style.backgroundColor = this._flags['background'];
+			
 		div.style.webkitTransform = 'translate3d(0, 0, 0)';
 		div.innerHTML = "" +
 		"<div class=\"TitleBar\">" +
@@ -168,7 +177,16 @@ Screen = function ( flags, initObject )
 		if( !e ) e = window.event;
 		if( e.button != 0 ) return;
 		window.currentScreen = this;
+		CheckScreenTitle();
 	}
+	if( this.iframe )
+	{
+		this.iframe.addEventListener( 'click', function( e )
+		{
+			div.onmousedown( e );
+		} );
+	}
+	// Done registering clicks
 	
 	// Moveoverlay
 	var molay = document.createElement ( 'div' );
@@ -229,6 +247,10 @@ Screen = function ( flags, initObject )
 		
 		if( e.button != 0 ) return;
 		
+		// Set current screen
+		window.currentScreen = this.parentNode;
+		CheckScreenTitle();
+		
 		var y = e.clientY ? e.clientY : e.pageYOffset;
 		var x = e.clientX ? e.clientX : e.pageXOffset;
 		
@@ -274,6 +296,7 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.display = '';
 			}
 		}
+		
 		return cancelBubble ( e );
 	}
 	// Alias clicking the screen
@@ -326,6 +349,7 @@ Screen = function ( flags, initObject )
 		}
 		maxz++;
 		this.div.style.zIndex = maxz;
+		window.currentScreen = this.div;
 	}
 	
 	// Next screen please
@@ -333,26 +357,42 @@ Screen = function ( flags, initObject )
 	{
 		var screens = ge ( 'Screens' );
 		var divz = screens.getElementsByTagName ( 'div' );
-		var subs = [];
-		for ( var a = 0; a < divz.length; a++ )
+		
+		// Make sure we get the screen divs in the correct order
+		var rdiv = [];
+		var indexes = [];
+		for( var a = 0; a < divz.length; a++ )
 		{
-			if( !divz[a].className ) continue;
-			if( divz[a].parentNode != screens ) continue;
-			subs.push ( divz[a] );
-		}
-		for ( var a = 0; a < subs.length; a++ )
-		{
-			var swapScreen = (a+1)%subs.length;
-			if ( subs[a].screen == this )
+			if( divz[a].className && divz[a].parentNode == screens )
 			{
-				var tmp = this.div.style.zIndex;
-				this.div.style.zIndex = subs[swapScreen].style.zIndex;
-				subs[swapScreen].style.zIndex = tmp;
-				window.currentScreen = subs[swapScreen];
-				return true;
+				rdiv.push( divz[a] );
+				indexes.push( divz[a].style.zIndex );
 			}
 		}
-		return false;
+		indexes.sort();
+		var subs = [];
+		for( var z = 0; z < indexes.length; z++ )
+		{
+			for ( var a = 0; a < rdiv.length; a++ )
+			{
+				if( rdiv[a].style.zIndex == indexes[z] )
+				{
+					subs.push( rdiv[a] );
+				}
+			}
+		}
+		// Normalize z-indexes
+		var max = 1;
+		for( var z = 0; z < subs.length; z++ )
+		{
+			subs[z].style.zIndex = z+1;
+			max = z+1;
+		}
+		// Flip to front
+		if( this.div.style.zIndex != 0 && this.div.style.zIndex != max )
+			this.div.style.zIndex = max+1; 
+		// Flip to back
+		else this.div.style.zIndex = 0;
 	}
 	
 	// Set content (securely!) in a sandbox, callback when completed
@@ -364,18 +404,30 @@ Screen = function ( flags, initObject )
 			//domain = document.location.href.split( Workspace.protocol + '://' ).join ( Workspace.protocol + '://utilities.' ); // <- please connect it again
 			domain = document.location.href + '';
 			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
+			
+			// Oh we have a conf?
+			if( this.conf )
+			{
+				domain = '/system.library/module/?module=system&command=sandbox' +
+					'&sessionid=' + Workspace.sessionId +
+					'&conf=' + JSON.stringify( this.conf );
+			}
 		}
 		
 		// Make sure scripts can be run after all resources has loaded
-		var r;
-		while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
-			content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+		if( content && content.match )
+		{
+			var r;
+			while( r = content.match( /\<script([^>]*?)\>([\w\W]*?)\<\/script\>/i ) )
+				content = content.split( r[0] ).join( '<friendscript' + r[1] + '>' + r[2] + '</friendscript>' );
+		}
 		
 		var c = this._screen;
 		if( c.content ) c = c.content;
 		c.innerHTML = '';
 		var ifr = document.createElement( 'iframe' );
 		ifr.className = 'Content';
+		ifr.setAttribute('allowfullscreen', 'true')
 		ifr.src = domain;
 		if( packet.applicationId )
 			this._screen.applicationId = packet.applicationId;
@@ -388,7 +440,8 @@ Screen = function ( flags, initObject )
 			if( packet.filePath )
 				msg.data = content.split( /progdir\:/i ).join( packet.filePath );
 			else msg.data = content;
-			msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
+			if( msg.data && msg.data.splut )
+				msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 			if( callback ) callback();
@@ -431,6 +484,7 @@ Screen = function ( flags, initObject )
 		ifr.authId = self.authId;
 		ifr.setAttribute( 'scrolling', 'no' );
 		ifr.setAttribute( 'seamless', 'true' );
+		ifr.setAttribute( 'allowfullscreen', 'true' );
 		ifr.style.border = '0';
 		ifr.style.position = 'absolute';
 		ifr.style.top = this._titleBar ? ( this._titleBar.offsetHeight + 'px' ) : '0'; 
@@ -496,7 +550,14 @@ Screen = function ( flags, initObject )
 			}*/
 		}
 		
-		ifr.src = url;
+		// Oh we have a conf?
+		if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
+		{
+			ifr.src = '/system.library/module/?module=system&command=sandbox' +
+				'&sessionid=' + Workspace.sessionId +
+				'&url=' + encodeURIComponent( url ) + '&conf=' + this.conf;
+		}
+		else ifr.src = url;
 		this.isRich = true;
 		this.iframe = ifr;
 	}
@@ -571,9 +632,8 @@ Screen = function ( flags, initObject )
 	
 	// Init
 	this.screenToFront ();
+	_DeactivateWindows();
 	
-
-	window.currentScreen = div;
 	this.ready = true;
 	
     // Let's poll the tray!

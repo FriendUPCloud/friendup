@@ -9,7 +9,61 @@ chrome_extension:
 
 webclient:
 	mkdir -p resources/webclient
+	mkdir -p resources/repository
 	rsync -ravl interfaces/web_desktop/* resources/webclient/
+	rsync -ravl repository/* resources/repository/
+	
+	#optimized - REMEMBER TO UPDATE - DEPRECATED! REMOVE
+	cd interfaces/web_desktop; \
+	cat js/3rdparty/hammer.js\
+		templates/newline.txt\
+		js/namespace.js\
+		js/utils/json.js\
+		js/utils/engine.js\
+		js/utils/touch.js\
+		js/utils/cssparser.js\
+		js/utils/md5.js\
+		js/utils/tool.js\
+		js/utils/speech-input.js\
+		js/io/cajax.js\
+		js/io/request.js\
+		js/io/directive.js\
+		js/io/websocket.js\
+		js/io/door.js\
+		js/io/dormant.js\
+		js/io/door_system.js\
+		js/io/module.js\
+		js/io/friendlibrary.js\
+		js/io/file.js\
+		js/io/applicationstorage.js\
+		js/gui/template.js\
+		js/gui/guibase.js\
+		js/gui/window.js\
+		js/gui/screen.js\
+		js/gui/listview.js\
+		js/gui/directoryview.js\
+		js/gui/filedialog.js\
+		js/gui/desklet.js\
+		js/media/audio.js\
+		js/apiwrapper.js\
+		js/frienddos.js\
+		js/workspace.js > ../../resources/webclient/js/compiled_index.js; \
+	cd ../../
+	
+	cd interfaces/web_desktop; \
+	cat js/utils/engine.js\
+		js/io/cajax.js\
+		js/io/friendlibrary.js\
+		js/utils/json.js\
+		js/utils/cssparser.js > ../../resources/webclient/js/compiled_apibase.js; \
+	cd ../../
+	
+	cd interfaces/web_desktop; \
+	cat css/friendup.css\
+		theme/scrollbars.css > ../../resources/webclient/css/compiled_index.css;\
+	cd ../../
+	#done optimizing
+	
 	cp interfaces/web_desktop/favicon.ico resources/
 	cp -R devices build/
 
@@ -23,10 +77,6 @@ libs:
 friendcore:
 	cd core; make FriendCore
 	cp core/FriendCore ./
-
-website_friendstudios:
-	mkdir -p resources/studios
-	rsync -ravl interfaces/website_friendstudios/* resources/studios/
 
 webserver:
 

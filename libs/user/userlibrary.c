@@ -102,6 +102,7 @@ void *libInit( void *sb )
 	l->WebRequest = dlsym( l->l_Handle, "WebRequest" );
 	l->GetAllUsers = dlsym( l->l_Handle, "GetAllUsers" );
 	l->UserGetByID = dlsym( l->l_Handle, "UserGetByID" );
+	l->CheckPasswordMD5 = dlsym( l->l_Handle, "CheckPasswordMD5" );
 	
 
 	l->sb = sb;
@@ -176,7 +177,7 @@ UserGroup *LoadGroups( struct UserLibrary *l )
 }
 
 //
-//
+// check if user exist in database
 //
 
 	// user.library structure
@@ -214,6 +215,58 @@ BOOL UserExistByName( struct UserLibrary *l, const char *name )
 //
 
 BOOL CheckPassword( struct UserLibrary *l, User *usr, char *pass )
+{
+	if( usr->u_Password[ 0 ] == '{' &&
+		usr->u_Password[ 1 ] == 'S' &&
+		usr->u_Password[ 2 ] == '6' &&
+		usr->u_Password[ 3 ] == '}' )
+	{
+		FCSHA256_CTX ctx;
+		char hash[ 32 ];
+		char hashTarget[ 64 ];
+		
+		DEBUG("Checkpassword, password is in SHA256 format\n");
+		
+		Sha256Init( &ctx );
+		Sha256Update( &ctx, pass, (unsigned int)strlen( pass ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
+		Sha256Final( &ctx, hash );
+		
+		int i;
+		int j=0;
+		/*
+		for( i=0 ; i < 32 ; i++ )
+		{
+			printf( "%d - %02x\n", (char)(hash[ i ]), (char) hash[ i ] & 0xff );
+		}*/
+		
+		for( i=0 ; i < 64 ; i+= 2 )
+		{
+			sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
+			j++;
+		}
+		
+		DEBUG("Checking %s versus %s\n", hashTarget, usr->u_Password );
+		
+		if( strncmp( &(hashTarget[0]), &(usr->u_Password[4]), 64 ) == 0 )
+		{
+			return TRUE;
+		}
+	}
+	else
+	{
+		if( strcmp( usr->u_Password, pass ) == 0 )
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+//
+// check password
+//
+
+BOOL CheckPasswordMD5( struct UserLibrary *l, User *usr, char *pass )
 {
 	if( usr->u_Password[ 0 ] == '{' &&
 		usr->u_Password[ 1 ] == 'S' &&
@@ -674,7 +727,7 @@ User *UserFromSQL( MYSQL_ROW row )
 void UserFree( User *user )
 {
 	// TODO: Reenable this when we're using it
-	/*if( user->u_Groups != NULL )
+	if( user->u_Groups != NULL )
 	{
 		FFree( user->u_Groups );
 		user->u_Groups = NULL;
@@ -699,7 +752,7 @@ void UserFree( User *user )
 		
 		user->u_Applications = NULL;
 	}
-	
+	/*
 	WebsocketClient *wsc = user->u_WSConnections;
 	WebsocketClient *wsrem = wsc;
 	while( wsc != NULL )
@@ -1013,7 +1066,10 @@ int AssignGroupToUser( struct UserLibrary *l, User *usr )
 	int j = 0;
 	int actgroup = 0;
 	
-	if( usr->u_Groups ) FFree( usr->u_Groups );
+	if( usr->u_Groups )
+	{
+		FFree( usr->u_Groups );
+	}
 	usr->u_Groups = FCalloc( result->row_count, sizeof( UserGroup *) );
 	
 

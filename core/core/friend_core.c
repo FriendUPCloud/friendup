@@ -19,6 +19,7 @@
 
 #define _POSIX_SOURCE
 
+#include <core/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -34,6 +35,7 @@
 #include <util/log/log.h>
 #include <service/service_manager.h>
 #include <util/buffered_string.h>
+ #include <openssl/rand.h>
 
 #include <hardware/network.h>
 /*#include <util/sha256.h>*/
@@ -63,11 +65,24 @@ int fdPool[ 1024 ];
 
 extern pthread_mutex_t sslmut;
 
+#define BUFFER_DATA_SIZE 8192
+#define BUFFER_DATA_SIZE_ALLOC 8193
+
 //
 // Mutex buffer for ssl locking
 //
 
 static pthread_mutex_t *ssl_mutex_buf = NULL;
+
+struct SocketThreadData {
+	struct epoll_event *ce;
+	Socket                *sock;
+	pthread_t             thread;
+	bool                  doFree;
+	int                   workerIndex;
+		// Used to read stuff
+	char 				std_Buffer[ BUFFER_DATA_SIZE_ALLOC ];
+};
 
 //
 // Static locking function
@@ -98,14 +113,14 @@ static unsigned long ssl_id_function( void )
 //
 //
 
-FriendCoreInstance *FriendCoreNew( int port, int maxp, int bufsiz )
+FriendCoreInstance *FriendCoreNew( BOOL ssl, int port, int maxp, int bufsiz )
 {
 	DEBUG( "[FriendCoreNew] Starting friend core\n" );
 	// this probably can be done globally for every SSL socket
 	
 	// Our pool
 	memset( fdPool, 0, 1024 );
-			
+	
 	// Static locks callbacks
 	SSL_library_init();
 	
@@ -150,6 +165,12 @@ FriendCoreInstance *FriendCoreNew( int port, int maxp, int bufsiz )
 		fc->fci_Port = port;
 		fc->fci_MaxPoll = maxp;
 		fc->fci_BufferSize = bufsiz;
+		fc->fci_SSLEnabled = ssl;
+	}
+	else
+	{
+		ERROR("Cannot allocate memory for FriendCore instance\n");
+		return NULL;
 	}
 	
 	// Init listen mutex
@@ -189,9 +210,8 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 //
 //
 
-#define BUFFER_READ_SIZE 16384
-#define BUFFER_READ_SIZE_ALLOC 16385
 
+static char *dividerStr = "\r\n\r\n";
 
 struct stringPart 
 { 
@@ -210,24 +230,55 @@ static int nothreads = 0;
 #define MAX_CALLHANDLER_THREADS 256
 
 void *SocketCallHandler( void *data )
-{	
-	if( pthread_mutex_lock( &sslmut ) == 0 )
+{
+	if( data == NULL )
 	{
-		nothreads++;
-		pthread_mutex_unlock( &sslmut );
-		DEBUG( "[SocketCallHandler] %p Starting to execute, threads %d!\n", data, nothreads );
+		ERROR("SocketHandler got null message!!\n");
+		return NULL;
 	}
+	
 	struct SocketThreadData *t = ( struct SocketThreadData *)data;
 #ifdef NO_WORKERS
 	pthread_detach( t->thread ); // Detach only when using pthreads directly
 #endif
-	if( !t->sock )
+	
+	if( pthread_mutex_lock( &sslmut ) == 0 )
+	{
+#ifdef NO_WORKERS
+		// Make sure we keep the number of threads under the limit
+		while( nothreads > MAX_CALLHANDLER_THREADS )
+		{
+			//DEBUG( "Too many threads, waiting for other threads to stop. %d/%d.\n", nothreads, MAX_CALLHANDLER_THREADS );
+			pthread_mutex_unlock( &sslmut ); usleep( 200 );
+			// We got destroyed
+			if( pthread_mutex_lock( &sslmut ) != 0 ) 
+			{
+				//ERROR( "Could not lock mutex!\n" );
+				pthread_exit( NULL );
+				return NULL;
+			}
+		}
+#endif
+		//DEBUG( "[SocketCallHandler] Done.\n" );
+		nothreads++;
+		//DEBUG( "[SocketCallHandler] %p Starting to execute, threads %d!\n", data, nothreads );
+		pthread_mutex_unlock( &sslmut );
+	}
+	if( t->sock == NULL )
 	{
 		if( t->doFree )
 		{
 			FFree( t );
 		}
-		DEBUG( "[SocketCallHandler] %p Premature abortion no socket!!\n", data );
+		//ERROR( "[SocketCallHandler] %p Premature abortion no socket!!\n", data );
+
+		if( pthread_mutex_lock( &sslmut ) == 0 )
+		{
+			nothreads--;
+			//DEBUG( "[SocketCallHandler] Now we are running %d threads.\n", nothreads );
+			pthread_mutex_unlock( &sslmut );
+		}
+		
 #ifdef NO_WORKERS
 		pthread_exit( NULL ); // Only on pthread_create
 #endif
@@ -237,23 +288,13 @@ void *SocketCallHandler( void *data )
 	Socket *sock = t->sock;
 	
 	// First pass header, second, data
-	int pass = 0; 
-	int bodyLength = 0;
 	char *finalBuffer = NULL; 
-	int prevBufSize = 0;
-	int preroll = 0; 
-	int stopReading = 0;
+	int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, stopReading = 0;
 
 	// Often used
-	char *dividerStr = "\r\n\r\n";
-	int partialDivider = 0;
-	int foundDivider = 0;
-	int y = 0;
-	int x = 0;
-	int yc = 0; int yy = 0;
-
-	// Used to read stuff
-	char *buffer = NULL;
+	int partialDivider = 0, foundDivider = 0, y = 0, x = 0, yc = 0, yy = 0;
+	
+	BufString *resultString = BufStringNewSize( 8192*32 );
 
 	for( ; pass < 2; pass++ )
 	{
@@ -268,31 +309,33 @@ void *SocketCallHandler( void *data )
 		struct stringPart *head = NULL;
 		struct stringPart *curr = NULL;
 	
-		int count = preroll, res = 0, joints = 0;
-		int methodGet = 0, run = 0;
+		int count = preroll, res = 0, joints = 0, methodGet = 0, run = 0;
 		struct stat statbuf;
 	
 		// We must find divider!
-		char *findDivider[5];
+		//TODO before there was table of pointers and sign was placed there
+		//char *findDivider[5];
+		char findDivider[20];
 		partialDivider = 0; foundDivider = 0; y = res - 1; x = 0; yc = 0; yy = 0;
+		//unsigned int retries = 0;
 	
 		for( joints = 0; ; run++ )
 		{
-			buffer = FCalloc( BUFFER_READ_SIZE_ALLOC, sizeof( char ) );
-			
-			DEBUG( "[SocketCallHandler] Starting to read socket.\n" );
-			
-			if( ( res = SocketRead( sock, buffer, BUFFER_READ_SIZE, pass ) ) > 0 )
+			//DEBUG( "[SocketCallHandler] Starting to read socket.\n" );
+			if( ( res = SocketRead( sock, (char *)(t->std_Buffer), BUFFER_DATA_SIZE, pass ) ) > 0 )
 			{
-				DEBUG( "[SocketCallHandler] We read:\n---\n%.*s\n---\n", res, buffer );
+				//retries = 0;
+				BufStringAddSize( resultString, (char *)(t->std_Buffer), res );
+				
+				//DEBUG( "[SocketCallHandler] We read:\n---\n%.*s\n---\n", res,  t->std_Buffer );
 				if( pass == 0 && partialDivider != 0 )
 				{
 					for( yy = 0; yy < res; yy++ )
 					{
-						if( buffer[yy] == '\r' || buffer[yy] == '\n' )
+						if(  t->std_Buffer[yy] == '\r' ||  t->std_Buffer[yy] == '\n' )
 						{
 							//DEBUG( "Trying to find partial divider!\n" );
-							findDivider[ partialDivider++] = buffer[yy];
+							findDivider[ partialDivider++] = t->std_Buffer[yy];
 							if( partialDivider > 3 )
 							{
 								//DEBUG( "We found a partial divider!\n" );
@@ -308,13 +351,14 @@ void *SocketCallHandler( void *data )
 						}
 					}
 				}
-			
+				
 				// Create a list joint
 				struct stringPart *prt = calloc( 1, sizeof( struct stringPart ) );
-				prt->string = buffer;
+				prt->string =  t->std_Buffer;
 				prt->length = res;
 				prt->next = NULL;
-		
+				
+				
 				// Add first joint
 				if( head == NULL )
 				{
@@ -331,7 +375,6 @@ void *SocketCallHandler( void *data )
 				count += res;
 			
 				//DEBUG( "[SocketCallHandler] Read %d (bodyLength %d) Joint: %d\n", res, bodyLength, joints );
-			
 				joints++;
 		
 				// Break get posts after header
@@ -339,23 +382,17 @@ void *SocketCallHandler( void *data )
 				{
 					// If we found a divider!
 					//DEBUG( "Partial divider is %d\n", partialDivider );
-					if( partialDivider >= 4 || strstr( buffer, dividerStr ) )
+					if( partialDivider >= 4 || strstr(  t->std_Buffer, dividerStr ) )
 					{
 						//DEBUG( "We have a divider! Great!\n" );
 						break;
 					}
 					// Does it end with this? Perhaps it's a partial divider
-					else if( buffer[res-1] == '\r' || buffer[res-1] == '\n' )
+					else if(  t->std_Buffer[res-1] == '\r' ||  t->std_Buffer[res-1] == '\n' )
 					{
-						//DEBUG( "We found a partial divider!\n" );
-						for( y = 0; y > 0; y-- )
+						for( y = 0; y < res; y++, x++ )
 						{
-							if( buffer[y] != '\r' && buffer[y] != '\n' )
-								break;
-						}
-						for( ; y < res; y++, x++ )
-						{
-							findDivider[x] = buffer[y];
+							findDivider[x] =  t->std_Buffer[y];
 						}
 						partialDivider = x;
 						//DEBUG( "Ok, partial divider now at x: %d\n", x );
@@ -366,14 +403,25 @@ void *SocketCallHandler( void *data )
 				{
 					// remove preroll to get correct read bytes
 					count -= preroll;
-					//DEBUG( "Fixing preroll %d\n", preroll );
+					DEBUG( "Fixing preroll %d\n", preroll );
 					break;
 				}
 			}
-			else 
+			else if( pass == 0 )
 			{
+				
 				// KILL KILL
-				free( buffer );
+				//free( buffer );
+				/*if( retries++ > 25 )
+				{
+					DEBUG( "[SocketRead] Giving up to read!\n" );
+					break;
+				}
+				else 
+				{
+					DEBUG( "[SocketRead] Retrying to read %d\n", retries );
+					usleep( 4000 );
+				}*/
 				break;
 			}
 		}
@@ -381,13 +429,16 @@ void *SocketCallHandler( void *data )
 		// Ok we have the joints
 		//DEBUG("Read %d in %d joints\n", count, joints );
 
-		if( count > 0 && head )
+		if( head && count > 0 )
 		{
 			//DEBUG( "Ok, in we go!\n" );
 		
 			// Join pass 0 finalBuffer later
 			char *tmp = NULL; 
-			if( finalBuffer ) tmp = finalBuffer;
+			if( finalBuffer )
+			{
+				tmp = finalBuffer;
+			}
 		
 			// Join in one string
 			finalBuffer = calloc( count + 1, sizeof( char ) );
@@ -397,8 +448,14 @@ void *SocketCallHandler( void *data )
 			{
 				if( curr->string )
 				{
+					//DEBUG("<<<<<<<<<<<<<<<<<<<<<<<\n\nSocket readed %d <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< %10s\n", offset, curr->string );
+		
+					/*
 					memcpy( finalBuffer + offset, curr->string, curr->length );
-					free( curr->string );
+					if( curr->string != t->std_Buffer )
+					{
+						free( curr->string );
+					}*/
 					//DEBUG( "HOGNE - Freeing %d (%d) %d left (joint %d).\n", curr->length + 1, offset+curr->length+1, (count+1)-(offset+curr->length+1), joints-- );
 					offset += curr->length;
 				}
@@ -419,14 +476,14 @@ void *SocketCallHandler( void *data )
 					sock->data = (void*)request;
 				}
 		
-				int result = HttpParseHeader( request, finalBuffer, count );
-				request->gotHeader = true;
+				int result = HttpParseHeader( request, resultString->bs_Buffer, resultString->bs_Size+1 );
+				request->gotHeader = TRUE;
 		
 				// If we have content, then parse it
 				char* content = HttpGetHeader( request, "content-length", 0 );
 				if( content )
 				{
-					char *divider = strstr( finalBuffer, dividerStr );
+					char *divider = strstr( resultString->bs_Buffer, dividerStr );
 					if( !divider )
 					{
 						//DEBUG( "No divider!\n" );
@@ -436,7 +493,7 @@ void *SocketCallHandler( void *data )
 					bodyLength = atoi( content );
 				
 					// We have enough data and are ready for reading the body
-					int headerLength = divider - finalBuffer + 4;
+					int headerLength = divider - resultString->bs_Buffer + 4;
 					//DEBUG( "We have a header data length of %d.\n", headerLength );
 					//DEBUG( "The body length is: %d\n", bodyLength );
 					if( count > headerLength )
@@ -461,31 +518,42 @@ void *SocketCallHandler( void *data )
 			else if( tmp && pass == 1 && prevBufSize > 0 )
 			{
 				//DEBUG( "Second pass (adding %d to %d = %d)\n", count, prevBufSize, count + prevBufSize );
+				
+				/*
 				char *theFin = calloc( prevBufSize + count + 1, sizeof( char ) );
 				memcpy( theFin, tmp, prevBufSize );
 				memcpy( theFin + prevBufSize, finalBuffer, count );
-				FFree( tmp );
-				FFree( finalBuffer );
-				finalBuffer = theFin;
+				FFree( tmp );*/
+
+				//FFree( finalBuffer );
+				//finalBuffer = theFin;
 			}
 		
 			// For next pass
 			prevBufSize += count;
 		}
-		else if( !finalBuffer ) break;
+		//else if( !finalBuffer ) break;
 	}
+	
+	if( finalBuffer != NULL )
+				{
+					FFree( finalBuffer );
+					finalBuffer = NULL;
+				}
 
 	// Free up
-	if( finalBuffer )
+	//if( finalBuffer )
+	if( resultString->bs_Buffer != NULL )
 	{
+//		finalBuffer = resultString->bs_Buffer;
+		
 		// Process data
 		if( sock->protocolCallback )
 		{
-			Http *resp = sock->protocolCallback( sock, finalBuffer, prevBufSize );
-			DEBUG("HTTP callback called\n");
+			Http *resp = sock->protocolCallback( sock, resultString->bs_Buffer, resultString->bs_Size );
+			
 			if( resp != NULL )
 			{
-				DEBUG("Send response %d\n", resp->h_WriteType  );
 				if( resp->h_WriteType == FREE_ONLY )
 				{
 					HttpFree( resp );
@@ -495,26 +563,27 @@ void *SocketCallHandler( void *data )
 					HttpWriteAndFree( resp, sock );
 				}
 			}
-			DEBUG("Send response end\n");
 		}
-		FFree( finalBuffer );	
-		DEBUG("FCore data sent to client\n");
+		BufStringDelete( resultString );
+		//FFree( finalBuffer );
 	}
 	else
 	{
-		DEBUG( "[SocketCallHandler] No buffer to write!\n" );
+		ERROR( "[SocketCallHandler] No buffer to write!\n" );
 	}
 	
 	if( t->doFree )
 	{
 		t->sock = NULL;
 		SocketClose( sock );
+		sock = NULL;
 		FFree( t );
 	}
-	DEBUG( "[SocketCallHandler] %p End of call handler.\n", data );
+	//DEBUG( "[SocketCallHandler] %p End of call handler.\n", data );
 	if( pthread_mutex_lock( &sslmut ) == 0 )
 	{
 		nothreads--;
+		//DEBUG( "[SocketCallHandler] Now we are running %d threads.\n", nothreads );
 		pthread_mutex_unlock( &sslmut );
 	}
 	
@@ -522,6 +591,11 @@ void *SocketCallHandler( void *data )
 	pthread_exit( NULL ); // Only on pthread_create
 #endif
 	DEBUG("Sockhandler end\n");
+	
+	if( sock != NULL )
+	{
+		//SocketClose( sock );
+	}
 	
 	return NULL;
 }
@@ -566,7 +640,7 @@ void *FriendCoreAccept( void *fcv )
 	struct AcceptPair *p = th->acceptPair;
 	
 	//DEBUG( "[FriendCoreAccept] Trying to lock listenmutex\n" );
-	struct epoll_event event = {}; // Element to pass args
+	struct epoll_event event = { 0 }; // Element to pass args
 
 	Socket *incoming = NULL;
 	int incomingC = 0;
@@ -609,7 +683,7 @@ void *FriendCoreAccept( void *fcv )
 	//       again be handled on the same place (adding to the queue incrementally)
 	// Register for read events, disconnection events and enable edge triggered behavior
 	event.data.ptr = incoming; // Add incoming socket
-	event.events = EPOLLIN | EPOLLET;
+	event.events = EPOLLIN;
 	int retval = epoll_ctl( fc->epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
 	if( retval == -1 )
 	{
@@ -691,9 +765,12 @@ struct AcceptPair *DoAccept( Socket *sock )
 
 	// Return copy
 	struct AcceptPair *p = calloc( 1, sizeof( struct AcceptPair ) );
-	p->fd = fd;
-	memcpy( &p->client, &client, sizeof( struct sockaddr_in6 ) );
-	//DEBUG( "[AcceptPair] Done accepting file descriptor %d\n", fd );
+	if( p != NULL )
+	{
+		p->fd = fd;
+	
+		memcpy( &p->client, &client, sizeof( struct sockaddr_in6 ) );
+	}
 	return p;
 }
 
@@ -714,28 +791,38 @@ void *FriendCoreAcceptPhase1( void *d )
 	for( ; ; acceptIng++ )
 	{
 		p = NULL;
+		/*
+		We don't need to lock here.. accept() should be thread safe
 		if( pthread_mutex_lock( &pre->fc->listenMutex ) == 0 )
 		{
 			p = DoAccept( pre->fc->listenSocket );
 			pthread_mutex_unlock( &pre->fc->listenMutex );
-		}
+		}*/
+		p = DoAccept( pre->fc->listenSocket );
 		if( !p ) break;
 		
 		// Add the new SSL accept thread:
 		// We have a notification on the listening socket, which means one or more incoming connections.
 		struct fcThreadInstance *idata = calloc( 1, sizeof( struct fcThreadInstance ) );
-		idata->fc = pre->fc;
-		idata->acceptPair = p;
-		memset( &idata->thread, 0, sizeof( pthread_t ) );
-		
-		// Multithread mode
-		if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+		if( idata != NULL )
 		{
-			free( idata );
-			// Clean up accept pair
-			shutdown( p->fd, SHUT_RDWR );
-			close( p->fd );
-			free( p );
+			idata->fc = pre->fc;
+			idata->acceptPair = p;
+			memset( &idata->thread, 0, sizeof( pthread_t ) );
+		
+			// Multithread mode
+			if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+			{
+				free( idata );
+				// Clean up accept pair
+				shutdown( p->fd, SHUT_RDWR );
+				close( p->fd );
+				free( p );
+			}
+		}
+		else
+		{
+			ERROR("Cannot allocate memory for Thread\n");
 		}
 	}
 	
@@ -766,7 +853,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	pipe( pipefds );	
 	fc->fci_ReadCorePipe = pipefds[ 0 ]; fc->fci_WriteCorePipe = pipefds[ 1 ];
 	// add the read end to the epoll
-	piev.events = EPOLLIN | EPOLLET; piev.data.fd = fc->fci_ReadCorePipe;
+	piev.events = EPOLLIN; piev.data.fd = fc->fci_ReadCorePipe;
 	int err = epoll_ctl( fc->epollfd, EPOLL_CTL_ADD, fc->fci_ReadCorePipe, &piev );
 	if( err != 0 )
 	{
@@ -790,12 +877,12 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
-		DEBUG("Before Epoll wait FC\n");
+		DEBUG("[FriendCoreEpoll] Before Epoll wait FC\n");
 		// Wait for something to happen on any of the sockets we're listening on
 		
 		eventCount = epoll_pwait( fc->epollfd, events, fc->fci_MaxPoll, -1, &curmask );
 		
-		DEBUG("After Epoll wait FC\n");
+		DEBUG("[FriendCoreEpoll] After Epoll wait FC\n");
 
 		for( i = 0; i < eventCount; i++ )
 		{	
@@ -822,7 +909,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					epoll_ctl( fc->epollfd, EPOLL_CTL_DEL, sock->fd, currentEvent );
 					SocketClose( sock );
-					ERROR("Close socket, remove from epoll\n");
+					ERROR("[FriendCoreEpoll] Close socket, remove from epoll\n");
 				}
 				continue;
 			}
@@ -870,6 +957,10 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			}
 			// We are responding to an established connection
 			// We must read whatever data is available completely
+			else if( currentEvent->events & EPOLLOUT )
+			{
+				DEBUG( "EPOLLOUT!\n" );
+			}
 			else if( currentEvent->events & EPOLLIN )
 			{
 				int rem = epoll_ctl( fc->epollfd, EPOLL_CTL_DEL, sock->fd, currentEvent );
@@ -892,9 +983,31 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #ifndef NO_WORKERS
 					//if( pthread_mutex_lock( &fc->listenMutex ) == 0 )
 					{
+						INFO("[FriendCoreEpoll] CallWorkerManager socket ptr %p\n", t->sock );
 						WorkerManagerRun( fc->fci_WorkerManager, SocketCallHandler, ( void *)t );
 						//pthread_mutex_unlock( &fc->listenMutex );
 					}
+					/*
+					DEBUG( "[WorkerThread] We got QUIT signal.\n" );
+				if( wrk->w_Data )
+				{
+					
+					// Abort and free up
+					struct SocketThreadData *t = ( struct SocketThreadData *)wrk->w_Data;
+					if( t )
+					{
+						if( t->sock )
+						{
+							*/
+							//SocketClose( ( struct Socket * )t->sock );
+/*						}
+						FFree( t );
+					}
+					
+					DEBUG( "[WorkerThread] Closed socket on quit.\n" );
+				}
+				//pthread_mutex_unlock( &(wrk->w_Mut) );
+				break;*/
 #else
 					memset( &t->thread, 0, sizeof( pthread_t ) );
 					if( pthread_create( &t->thread, NULL, &SocketCallHandler, ( void *)t ) != 0 )
@@ -906,18 +1019,18 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				else
 				{
 					//DEBUG( "Deleting socket %d (memory: %p). ------------------------- STOP ---- ---------\n", sock->fd, &sock->fd );
-					ERROR("Epollin closing socket\n");
+					ERROR("[FriendCoreEpoll] Epollin closing socket\n");
 					SocketClose( sock );
 				}
 			}
 		}
-		DEBUG("End of events loop\n");
+		DEBUG("[FriendCoreEpoll] End of events loop\n");
 	}
 	
 	// Free epoll events
 	FFree( events );
 	
-	DEBUG( "[CORE] Done freeing events" );
+	DEBUG( "[FriendCoreEpoll] Done freeing events" );
 	events = NULL;
 	
 	// Free pipes!
@@ -963,7 +1076,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	DEBUG("[FriendCore] WorkerManager started\n");
 	
 	// Open new socket for lisenting
-	fc->listenSocket = SocketOpen( fc->fci_Port, SOCKET_TYPE_SERVER );
+	fc->listenSocket = SocketOpen( fc->fci_SSLEnabled, fc->fci_Port, SOCKET_TYPE_SERVER );
 	
 	if( fc->listenSocket == NULL )
 	{
@@ -999,7 +1112,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	struct epoll_event event;
 	memset( &event, 0, sizeof( event ) );
 	event.data.fd = fc->listenSocket->fd;
-	event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+	event.events = EPOLLIN | EPOLLRDHUP;
 	
 	if( epoll_ctl( fc->epollfd, EPOLL_CTL_ADD, fc->listenSocket->fd, &event ) == -1 )
 	{

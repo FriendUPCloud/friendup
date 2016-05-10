@@ -1,29 +1,22 @@
-/*******************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+
+
+/*
+ * 
+ * 
+ * 
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <util/log/log.h>
 #include "util/base64.h"
+
+
 //                   0000000000000000111111111111111122222222222222223333333333333333
 //                   0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+
+
 const char* CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static char encoding_table[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -123,7 +116,11 @@ char* Base64Decode( const unsigned char* data, int length, int *finalLength )
 {
 	if( decoding_table == NULL ) build_decoding_table();
 
-	if( length % 4 != 0 ) return NULL;
+	if( length % 4 != 0 )
+	{
+		ERROR("Cannot decode entry, beacouse size is incorect\n");
+		return NULL;
+	}
 
 	int output_length = length / 4 * 3;
     

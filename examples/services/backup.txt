@@ -1,0 +1,365 @@
+#include <unistd.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <string.h>
+#include <sys/mman.h>
+ 
+/* since pipes are unidirectional, we need two pipes.
+   one for data to flow from parent's stdout to child's
+   stdin and the other for child's stdout to flow to
+   parent's stdin */
+
+
+#define PARENT_WRITE_PIPE	0
+#define PARENT_READ_PIPE	1
+#define PARENT_MAX_PIPES	2
+
+ 
+/* always in a pipe[], pipe[0] is for read and 
+   pipe[1] is for write */
+#define READ_FD  0
+#define WRITE_FD 1
+ 
+//#define PARENT_READ_FD  ( pipes[PARENT_READ_PIPE][READ_FD]   )
+//#define PARENT_WRITE_FD ( pipes[PARENT_WRITE_PIPE][WRITE_FD] )
+
+//#define CHILD_READ_FD   ( pipes[PARENT_WRITE_PIPE][READ_FD]  )
+//#define CHILD_WRITE_FD  ( pipes[PARENT_READ_PIPE][WRITE_FD]  )
+
+typedef struct App
+{
+	int pipes[ PARENT_MAX_PIPES ][ 2 ];
+	int appPid;
+	
+	int outfd[2];
+	int infd[2];
+	fd_set readfd, writefd;
+	
+	int quit;
+}App;
+
+void eApp( App *app, char *command )
+{
+	pipe( app->outfd ); /* Where the parent is going to write to */
+	pipe( app->infd ); /* From where parent is going to read */
+	
+	if(( app->appPid = fork() ) )
+	{
+		close( STDOUT_FILENO );
+		close( STDIN_FILENO );
+		dup2( app->outfd[0], STDIN_FILENO );
+		dup2( app->infd[1], STDOUT_FILENO );
+		close( app->outfd[0]); /* Not required for the child */
+		close( app->outfd[1]);
+		close( app->infd[0]);
+		close( app->infd[1]);
+		
+		//printf("Call command\n");
+		
+		system( command );
+	}
+	else
+	{
+		char input[ 100 ];
+		struct timeval tv;
+		
+		//app->quit = 0;
+		int ret = 0;
+		
+		close( app->outfd[0] ); /* These are being used by the child */
+		close( app->infd[1] );
+		
+		while( app->quit != 1 )
+		{
+			FD_ZERO( &app->readfd );
+			FD_ZERO( &app->writefd );
+			FD_SET( app->infd[0] , &(app->readfd) );
+			FD_SET( app->outfd[1] , &(app->writefd) );
+			
+			int maxfd = 0;
+			
+   FD_SET(myfds[j], &readset);
+   maxfd = (maxfd>myfds[j])?maxfd:myfds[j];
+}
+
+			
+			tv.tv_sec = 0;
+			tv.tv_usec = 500000;
+			
+			//printf("Thread: waiting for select  in %d  out %d\n", app->infd[0], app->outfd[1] );
+			ret = select( app->infd[0]+1, &(app->readfd), &(app->writefd), NULL, &tv );
+			//ret = select( app->infd[1]+1, &(app->readfd), &(app->writefd), NULL, &tv );
+			//printf("Thread: after select res: %d\n", ret );
+			if(ret < 0)
+			{
+				printf("----------------select() failed \n");
+			}
+			else if( ret == 0 )
+			{
+				printf("----------------select() timeout quit %d\n", app->quit );
+				//break;
+			}
+			else
+			{
+				if( FD_ISSET( app->infd[0] , &(app->readfd) ) )
+				{
+					int readsize = read( app->infd[0],input,100);
+					input[ readsize ] = 0; // Read from child’s stdout 
+					if( readsize > 0 )
+					{
+						printf("\n\neapp got message\n: '%s'", input );
+					}
+				}
+				
+				if( FD_ISSET( app->outfd[1] , &(app->readfd) ) )
+				{
+					//int readsize = read( app->infd[0],input,100);
+					//input[ readsize ] = 0; // Read from child’s stdout 
+					//if( readsize > 0 )
+					{
+						printf("command passed\n");
+					}
+				}
+			}
+			/*
+			write( app->outfd[1],"2^32\n",5); // Write to child’s stdin 
+			input[ read( app->infd[0],input,100) ] = 0; // Read from child’s stdout 
+			printf("eapp: %s",input );
+			*/
+		}
+		close( app->outfd[1] );
+		close( app->infd[0] );
+		printf("Closing busniess\n");
+	}
+}
+
+void ExecuteApplication( struct App *app, char *command )
+{
+ // pipes for parent to write and read
+    pipe( app->pipes[ PARENT_READ_PIPE ] );
+    pipe( app->pipes[ PARENT_WRITE_PIPE ] );
+	
+	printf("Execute Application\n");
+     
+    if( !( app->appPid = fork() ) ) 
+	{
+        char *argv[]={ command, "-ltr", 0 };
+ 
+        dup2( app->pipes[ PARENT_WRITE_PIPE ][ READ_FD ], STDIN_FILENO );
+        dup2( app->pipes[ PARENT_READ_PIPE ][ WRITE_FD ], STDOUT_FILENO );
+ 
+        /* Close fds not required by child. Also, we don't
+           want the exec'ed program to know these existed */
+        close( app->pipes[ PARENT_WRITE_PIPE ][ READ_FD ] );
+        close( app->pipes[ PARENT_READ_PIPE ][ WRITE_FD ] );
+        close( app->pipes[ PARENT_READ_PIPE ][ READ_FD ] );
+        close( app->pipes[ PARENT_WRITE_PIPE ][ WRITE_FD ] );
+		//printf("Before execution %s\n", command );
+          
+        execv(argv[0], argv);
+    } else {
+        char buffer[ 100 ];
+        int count;
+ 
+        /* close fds not required by parent */       
+        close( app->pipes[ PARENT_WRITE_PIPE][ READ_FD ] );
+        close( app->pipes[ PARENT_READ_PIPE][ WRITE_FD ] );
+ 
+		//printf("Write data\n");
+        // Write to child’s stdin
+        //write( app->pipes[PARENT_WRITE_PIPE][WRITE_FD], "2^32\n", 5);
+		
+		//printf("Before read data\n");
+  
+        // Read from child’s stdout
+        count = read( app->pipes[ PARENT_READ_PIPE ][ READ_FD ], buffer, sizeof(buffer)-1);
+		printf("Data readed %d\n", count );
+        if (count >= 0) {
+            buffer[count] = 0;
+            printf("buffer %s", buffer);
+        } else {
+            printf("IO Error\n");
+        }
+    }
+}
+
+void main() 
+{
+    //App myapp;
+	App *app = (App*)mmap( NULL, sizeof(App), PROT_READ|PROT_WRITE, MAP_ANON|MAP_SHARED, -1, 0 );
+	char buf[ 100 ];
+	strcpy( buf, "ls -ltr" );
+	
+	//ExecuteApplication( &myapp, "/usr/bin/ls" );
+	
+	//system("./testapp" );
+	eApp( app, "./testapp" );
+//	eApp( app, "ls -ltr" );
+	
+	write( app->outfd[1], buf, strlen( buf ) );
+	app->quit = 1;
+	
+	usleep( 1000000 );
+	printf("End\n");
+   
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* NEW
+ * 
+ * 
+ */
+
+
+#define PARENT_WRITE_PIPE	0
+#define PARENT_READ_PIPE	1
+#define PARENT_MAX_PIPES	2
+
+ 
+typedef struct App
+{
+	int appPid;
+	pthread_t	t_Thread;
+	
+	int pipes[2][2];
+	int outfd[2];
+	int infd[2];
+	fd_set readfd, writefd;
+	
+	int quit;
+}App;
+
+
+void eApp( App *app, char *command )
+{
+	pipe( app->outfd ); // Where the parent is going to write to 
+	pipe( app->infd ); // From where parent is going to read 
+	
+	if( (app->appPid = fork()) < 0 )
+	{	
+		printf("Cannot FORK!\n");
+	}else if( app->appPid == 0 )
+	{
+		printf("Child is working\n");
+		
+		//close( STDOUT_FILENO );
+		//close( STDIN_FILENO );
+		dup2( app->outfd[0], STDIN_FILENO );
+		dup2( app->infd[1], STDOUT_FILENO );
+		//close( app->outfd[0]); // Not required for the child 
+		close( app->outfd[1]);
+		//close( app->infd[0]);
+		close( app->infd[1]);
+		
+		//printf("Call command\n");
+		
+		//system( command );
+		if( execlp( command, command, "-b", (const char *)0) < 0) {
+			printf("exec top");
+			//exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		printf("Host\n");
+		
+		char input[ 100 ];
+		struct timeval tv;
+		
+		//app->quit = 0;
+		int ret = 0;
+		
+		close( app->outfd[0] ); // These are being used by the child 
+		close( app->infd[1] );
+		
+		while( app->quit != 1 )
+		{
+			FD_ZERO( &app->readfd );
+			FD_ZERO( &app->writefd );
+			FD_SET( app->infd[0] , &(app->readfd) );
+			FD_SET( app->outfd[1] , &(app->writefd) );
+			
+			int maxfd = 0;
+			
+  // FD_SET(myfds[j], &readset);
+   //maxfd = (maxfd>myfds[j])?maxfd:myfds[j];
+//}
+
+			
+			tv.tv_sec = 0;
+			tv.tv_usec = 1000000;
+			
+			//printf("Thread: waiting for select  in %d  out %d\n", app->infd[0], app->outfd[1] );
+			ret = select( app->infd[0]+1, &(app->readfd), NULL, NULL, &tv );
+			//ret = select( app->infd[1]+1, &(app->readfd), &(app->writefd), NULL, &tv );
+			//printf("Thread: after select res: %d\n", ret );
+			if(ret < 0)
+			{
+				printf("----------------select() failed \n");
+			}
+			else if( ret == 0 )
+			{
+				printf("----------------select() timeout quit %d\n", app->quit );
+				//break;
+				write( app->outfd[1], "a\n", strlen( "a\n" ) );
+				usleep( 10000 );
+			}
+			else
+			{
+				printf("getmsg\n");
+				if( FD_ISSET( app->infd[0] , &(app->readfd) ) )
+				{
+					
+#define BUF_SIZE 100
+					
+					int readsize = read( app->infd[0],input,BUF_SIZE );
+					input[ readsize ] = 0; // Read from child’s stdout 
+					if( readsize > 0 )
+					{
+						printf("\n\neapp got message\n: '%s'", input );
+					}
+				}
+				
+				if( FD_ISSET( app->outfd[1] , &(app->readfd) ) )
+				{
+					//int readsize = read( app->infd[0],input,100);
+					//input[ readsize ] = 0; // Read from child’s stdout 
+					//if( readsize > 0 )
+					{
+						printf("command passed\n");
+					}
+				}
+			}
+			
+			//write( app->outfd[1],"2^32\n",5); // Write to child’s stdin 
+			//input[ read( app->infd[0],input,100) ] = 0; // Read from child’s stdout 
+			//printf("eapp: %s",input );
+			
+		}
+		close( app->outfd[1] );
+		close( app->infd[0] );
+		printf("Closing busniess\n");
+	}
+}
+

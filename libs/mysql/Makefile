@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/mysql.library
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -I. -Wno-unused-parameter -I../../core/ -I/usr/include/mysql/ -I../ -fPIC -I../properties/
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter -I../../core/ -I/usr/include/mysql/ -I../ -fPIC -I../properties/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lstdc++ -lz -lpthread -laio -lrt -lcrypt
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

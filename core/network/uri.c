@@ -439,7 +439,7 @@ Uri* UriParse( char* str )
 	remainingLen = strLen - ( next - str );
 	if( scheme )
 	{
-		printf( "Scheme:    %s\n", scheme );
+		DEBUG( "Scheme:    %s\n", scheme );
 		uri->scheme = scheme;
 	}
 	if( next >= end )
@@ -451,11 +451,13 @@ Uri* UriParse( char* str )
 	if( authority )
 	{
 		uri->authority = UriParseAuthority( authority );
-		printf( "Authority: %s\n", authority );
+		DEBUG( "Authority: %s\n", authority );
 		free( authority );
 	}
 	if( next >= end )
+	{
 		return uri;
+	}
 	
 	// Get path ---------------------------------------------------------------
 	char* pathRaw = UriGetPath( next, remainingLen, &next );

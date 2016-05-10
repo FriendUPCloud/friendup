@@ -23,6 +23,7 @@ var __desklets = [];
 GuiDesklet = function ( pobj, width, height, pos, px, py )
 {
 	this.margin = 4;
+	this.iconrows = 1;
 	
 	// Make a unique div id
 	this.makeUniqueId = function ()
@@ -210,6 +211,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	this.render = function ()
 	{
 		var h = this.margin;
+		var iconheight = false;
 		for ( var a = 0; a < this.dom.childNodes.length; a++ )
 		{
 			var cn = this.dom.childNodes[a];
@@ -219,6 +221,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				{
 					case 'right':
 					case 'left':
+						if( !iconheight )iconheight = cn.offsetHeight;
 						h += cn.offsetHeight;
 						h += this.margin
 						break;
@@ -229,17 +232,28 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 		}
 		
+		
 		if( window.isMobile )
 		{
 			this.closeDesklet();
 		}		
 		else
 		{
-			this.dom.style.top = Math.floor ( ( ge ( 'DoorsScreen' ).offsetHeight * 0.5 ) - ( h * 0.5 ) ) + 'px';
-			this.dom.style.height = h + 'px';			
+			//all icons have the same dimensions... so we just 
+			h = Math.ceil( this.dom.childNodes.length / this.iconrows ) * iconheight + Math.ceil( this.dom.childNodes.length * this.margin / this.iconrows ) + this.margin;	
+			
+			if( h < window.innerHeight - 60 )
+			{
+				this.dom.style.top = Math.floor ( ( ge ( 'DoorsScreen' ).offsetHeight * 0.5 ) - ( h * 0.5 ) ) + 'px';
+				this.dom.style.height = h + 'px';				
+			} 
+			else
+			{
+				this.iconrows++;
+				this.dom.style.width = (this.iconrows * this.width) + 'px';
+				this.render(); 		
+			}
 		}
-				
-
 	}
 	this.addLauncher = function ( o )
 	{

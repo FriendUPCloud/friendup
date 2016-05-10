@@ -62,18 +62,19 @@ table {
 .u4 {
     float: left;
     margin: 3px;
+    height: calc(16% - 5px);
 }
 .u1 {
-    width: 40px;
+    width: calc(25% - 6px);
 }
 .u2 {
-    width: 86px;
+    width: calc(50% - 6px);
 }
 .u3 {
-    width: 132px;
+    width: calc(75% - 6px);
 }
 .u4 {
-    width: 178px;
+    width: calc(100% - 6px);
 }
 
 .calculator {
@@ -84,7 +85,9 @@ table {
 	border: 1px solid #181A20;
 	float: left;
 	padding: 6px;
-	width: 184px;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
 }
 
 .display {
@@ -102,17 +105,22 @@ table {
 	padding: 0 10px;
 	text-align: right;
 }
-.display-text {
+.display-text 
+{
+	position: absolute;
+	right: 6px;
+	top: calc(50% - 13px);
 	color: #fff;
 	font-size: 22px;
-	line-height: 42px;
+	line-height: 24px;
 	overflow: hidden;
 	unicode-bidi: embed;
-	width: 1000px;
-    float: right;
+	width: 100%;
 }
 .display-inner {
-    width: 156px;
+    width: 100%;
+    height: 100%;
+    position: relative;
     overflow: hidden;
 }
 .button {

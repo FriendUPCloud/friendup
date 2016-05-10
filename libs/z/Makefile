@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/z.library
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -DHAVE_AES -Iaes/ 
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -DHAVE_AES -Iaes/ 
 LFLAGS	=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -laio -lrt  -Laes
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

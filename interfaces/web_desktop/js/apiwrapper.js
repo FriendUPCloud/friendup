@@ -384,6 +384,12 @@ function apiWrapper( event, force )
 								scr.sendMessage( msg.data );
 							}
 							break;
+						case 'screentofront':
+							if( scr )
+							{
+								scr.screenToFront();
+							}
+							break;
 						case 'setContent':
 							if( scr ) 
 							{
@@ -441,6 +447,9 @@ function apiWrapper( event, force )
 						if( !app.screens )
 							app.screens = [];
 						app.screens[screenId] = v;
+						
+						// Assign conf if it exists on app object
+						if( app.conf ) v.conf = app.conf;
 						
 						// This is the external id
 						v.externScreenId = screenId;
@@ -615,7 +624,10 @@ function apiWrapper( event, force )
 							if( win ) win.setMenuItems( msg.data, msg.applicationId );
 							CheckScreenTitle();
 						case 'focus':
-							if( win ) win.focus();
+							if( win )
+							{
+								win.focus();
+							}
 							break;
 						case 'activate':
 							if( win ) 
@@ -651,6 +663,9 @@ function apiWrapper( event, force )
 						if( !app.windows )
 							app.windows = [];
 						app.windows[windowId] = v;
+						
+						// Assign conf if it exists on app object
+						if( app.conf ) v.conf = app.conf;
 						
 						// This is the external id
 						v.externWindowId = windowId;
@@ -723,7 +738,9 @@ function apiWrapper( event, force )
 						if( !data && this.rawdata )
 							data = this.rawdata;
 							
-						if( app && app.contentWindow )
+						var cw = GetContentWindowByAppMessage( app, msg );
+							
+						if( app && cw )
 						{
 							var nmsg = { command: 'fileload', fileId: fileId, data: data };
 							// Pass window id down
@@ -737,18 +754,20 @@ function apiWrapper( event, force )
 								nmsg.screenId = msg.screenId;
 								nmsg.type = 'callback';
 							}
-							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
 					f.load();
 				}
 				else if( msg.method == 'post' )
 				{
-					f.onPost = function()
+					f.onPost = function( result )
 					{
-						if( app && app.contentWindow )
+						var cw = GetContentWindowByAppMessage( app, msg );
+						
+						if( app && cw )
 						{
-							var nmsg = { command: 'filepost', fileId: fileId };
+							var nmsg = { command: 'filepost', fileId: fileId, result: result };
 							// Pass window id down
 							if( msg.windowId )
 							{
@@ -760,7 +779,7 @@ function apiWrapper( event, force )
 								nmsg.screenId = msg.screenId;
 								nmsg.type = 'callback';
 							}
-							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
 					// Assume base64 encoded data string
@@ -779,7 +798,8 @@ function apiWrapper( event, force )
 					// Respond with save data notification
 					f.onSave = function()
 					{
-						if( app && app.contentWindow )
+						var cw = GetContentWindowByAppMessage( app, msg );
+						if( app && cw )
 						{
 							var nmsg = { command: 'filesave', fileId: fileId };
 							// Pass window id down
@@ -793,7 +813,7 @@ function apiWrapper( event, force )
 								nmsg.screenId = msg.screenId;
 								nmsg.type = 'callback';
 							}
-							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
 					f.save( msg.data.path, msg.data.data );
@@ -818,6 +838,7 @@ function apiWrapper( event, force )
 						case 'execute':
 							shell.execute( msg.commandLine, function( rmsg, returnMessage )
 							{
+								// TODO: Finish the test if rmsg has become safe!
 								if( app && app.contentWindow )
 								{
 									var nmsg = { 
@@ -828,7 +849,7 @@ function apiWrapper( event, force )
 										applicationId: msg.applicationId,
 										authId: msg.authId,
 										callbackId: msg.callbackId,
-										data: rmsg
+										data: jsonSafeObject( rmsg ) // Make it safe!
 									};
 									if( returnMessage ) nmsg.returnMessage = returnMessage;
 									// Pass window id down
@@ -902,17 +923,17 @@ function apiWrapper( event, force )
 					if( app )
 					{
 						var nmsg = { command: 'fileload', fileId: fileId, data: dat, returnCode: cod };
-						var cw = app;
+						
+						var cw = GetContentWindowByAppMessage( app, msg );
+						
 						// Pass window id down
 						if( msg.windowId )
 						{
 							nmsg.windowId = msg.windowId;
 							nmsg.type = 'callback';
-							cw = app.windows[msg.windowId].iframe;
 						}
-						if( cw.contentWindow )
-							cw.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-						else console.log( 'App has no content window yet..' );
+						if( cw )
+							cw.postMessage( JSON.stringify( nmsg ), '*' );
 					}
 				}
 				f.execute( msg.method, msg.args );
@@ -956,7 +977,6 @@ function apiWrapper( event, force )
 				break;
 			// ApplicationStorage ----------------------------------------------
 			case 'applicationstorage':
-				console.log( 'apiwrapper.applicationstorage', msg );
 				ApplicationStorage.receiveMsg( msg, app );
 				break;
 			// System calls!
@@ -1055,13 +1075,13 @@ function apiWrapper( event, force )
 					case 'wallpaperimage':
 						if( msg.mode == 'doors' )
 						{
-							Doors.wallpaperImage = msg.image;
+							Workspace.wallpaperImage = msg.image;
 						}
 						else
 						{
-							Doors.windowWallpaperImage = msg.image;
+							Workspace.windowWallpaperImage = msg.image;
 						}
-						Doors.refreshDesktop();
+						Workspace.refreshDesktop();
 						break;
 					case 'savewallpaperimage':
 						var m = new Module( 'system' );
@@ -1071,11 +1091,11 @@ function apiWrapper( event, force )
 							{
 								if( msg.mode == 'doors' )
 								{
-									Doors.wallpaperImage = msg.image;
+									Workspace.wallpaperImage = msg.image;
 								}
 								else
 								{
-									Doors.windowWallpaperImage = msg.image;
+									Workspace.windowWallpaperImage = msg.image;
 								}
 								Workspace.refreshDesktop();
 							}
@@ -1084,6 +1104,13 @@ function apiWrapper( event, force )
 						break;
 					case 'refreshtheme':
 						Workspace.refreshTheme( msg.theme, true );
+						break;
+					// Save application state
+					case 'savestate':
+						console.log( 'State saving: ', msg );
+						var m = new Module( 'system' );
+						m.onExecuted = function( e, d ) { } // <- callback or so?? probably not..
+						m.execute( 'savestate', { state: msg.state, authId: msg.authId } );
 						break;
 					case 'quit':
 						if( app ) app.quit( msg.force ? msg.force : false );
@@ -1109,9 +1136,9 @@ function apiWrapper( event, force )
 							// TODO: Make this happen on num
 							if( msg.appNum )
 							{
-								for( var a = 0; a < Doors.applications.length; a++ )
+								for( var a = 0; a < Workspace.applications.length; a++ )
 								{
-									var app = Doors.applications[a];
+									var app = Workspace.applications[a];
 									if( app.applicationNumber == msg.appNum )
 									{
 										app.contentWindow.postMessage( JSON.stringify( {
@@ -1132,14 +1159,14 @@ function apiWrapper( event, force )
 					// TODO: Permissions, not all should be able to do this!
 					case 'listapplications':
 						var nmsg = msg;
-						nmsg.data = Doors.listApplications();
+						nmsg.data = Workspace.listApplications();
 						app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						break;
 					case 'refreshdocks':
-						Doors.reloadDocks();
+						Workspace.reloadDocks();
 						break;
 					case 'refreshdoors':
-						Doors.refreshDesktop();
+						Workspace.refreshDesktop();
 						break;
 					case 'executeapplication':
 						// TODO: Make "can run applications" permission
@@ -1207,7 +1234,7 @@ function apiWrapper( event, force )
 							}
 						}
 						j.open( 'post', '/' + msg.library + '/' + ex, true, true );
-						j.addVar( 'sessionid', Doors.sessionId );
+						j.addVar( 'sessionid', Workspace.sessionId );
 						j.onload = function()
 						{
 							var nmsg = msg;
@@ -1231,7 +1258,7 @@ function apiWrapper( event, force )
 									var nmsg = msg;
 									nmsg.data = data;
 									app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-								}, msg.path, msg.dialogType );
+								}, msg.path, msg.dialogType, msg.filename, msg.title );
 							}
 						}
 						break;
@@ -1263,10 +1290,10 @@ function apiWrapper( event, force )
 // Find application storage object
 function findApplication( applicationId )
 {
-	for( var a = 0; a < Doors.applications.length; a++ )
+	for( var a = 0; a < Workspace.applications.length; a++ )
 	{
-		if( Doors.applications[a].applicationId == applicationId )
-			return Doors.applications[a];
+		if( Workspace.applications[a].applicationId == applicationId )
+			return Workspace.applications[a];
 	}
 	return false;
 }
@@ -1353,6 +1380,17 @@ function checkAppPermission( authid, permission, value )
 			}
 		}
 	}
+	return false;
+}
+
+function GetContentWindowByAppMessage( app, msg )
+{
+	var cw = app;
+	// Pass window id down
+	if( msg.windowId )
+		cw = app.windows[msg.windowId].iframe;
+	if( cw.contentWindow )
+		return cw.contentWindow;
 	return false;
 }
 

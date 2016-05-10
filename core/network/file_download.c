@@ -38,22 +38,6 @@
 //
 //
 
-struct addrinfo
-{
-  int ai_flags;			/* Input flags.  */
-  int ai_family;		/* Protocol family for socket.  */
-  int ai_socktype;		/* Socket type.  */
-  int ai_protocol;		/* Protocol for socket.  */
-  socklen_t ai_addrlen;		/* Length of socket address.  */
-  struct sockaddr *ai_addr;	/* Socket address for socket.  */
-  char *ai_canonname;		/* Canonical name for service location.  */
-  struct addrinfo *ai_next;	/* Pointer to next in list.  */
-};
-
-//
-//
-//
-
 int DownloadFile( const char *file, char *webpath )
 {
 	int sock;
@@ -104,7 +88,7 @@ int DownloadFile( const char *file, char *webpath )
 
 	freeaddrinfo(ai);
 	i = send(sock, buf, strlen(buf), 0);
-	if ( i < strlen(buf) || (i == -1) )
+	if ( i < (int) strlen(buf) || (i == -1) )
 	{
 		ERROR("Error. Failed to send GET request!\n");
 		return -3;

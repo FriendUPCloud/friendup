@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/libfcsystem.a
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Os -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/ -Wno-unused-variable -Wno-unused-parameter `pkg-config --cflags --libs MagickWand`
+CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/ -Wno-unused-variable -Wno-unused-parameter `pkg-config --cflags --libs MagickWand`
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ 
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
@@ -27,23 +27,23 @@ $(OUTPUT): $(OBJ_FILES)
 	
 phpmod: moduledyn/phpmod.c moduledyn/phpmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/phpmod.c -o bin/emod/php.emod -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I.  moduledyn/phpmod.c -o bin/emod/php.emod -shared -fPIC
 
 pythonmod: moduledyn/pythonmod.c moduledyn/pythonmod.d
 	@echo "\033[34mCompile php.emod ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/pythonmod.c -o bin/emod/python.emod -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I.  moduledyn/pythonmod.c -o bin/emod/python.emod -shared -fPIC
 	
 javamod: moduledyn/javamod.c moduledyn/javamod.d
 	@echo "\033[34mCompile java.emod ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/javamod.c -o bin/emod/java.emod -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I.  moduledyn/javamod.c -o bin/emod/java.emod -shared -fPIC
 
 sysmod: moduledyn/sysmod.c moduledyn/sysmod.d
 	@echo "\033[34mCompile sys.emod ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/sysmod.c -o bin/emod/sys.emod -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I.  moduledyn/sysmod.c -o bin/emod/sys.emod -shared -fPIC
 
 nodejsmod: moduledyn/nodejsmod.c moduledyn/nodejsmod.d
 	@echo "\033[34mCompile nodejs.emod ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I.  moduledyn/nodejsmod.c -o bin/emod/nodejs.emod -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I.  moduledyn/nodejsmod.c -o bin/emod/nodejs.emod -shared -fPIC
 	
 #
 #	FILESYSTEMS

@@ -64,6 +64,12 @@ inline File *GetRootDeviceByName( User *usr, char *devname )
 {
 	//
 	// Check mounted devices for user
+	
+	if( usr == NULL )
+	{
+		ERROR("GetRootDEviceByName: user == NULL\n");
+		return NULL;
+	}
 
 	File *lDev = usr->u_MountedDevs;
 	File *actDev = NULL;
@@ -98,7 +104,7 @@ inline File *GetRootDeviceByName( User *usr, char *devname )
 	
 	if( actDev == NULL )
 	{
-		ERROR("Cannot find mounted device by name: %s\n", devname );
+		ERROR( "Cannot find mounted device by name: %s\n", devname );
 	}
 	
 	return actDev;

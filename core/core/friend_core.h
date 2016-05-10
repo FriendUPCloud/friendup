@@ -31,6 +31,7 @@
 #include <core/library.h>
 #include <network/http.h>
 #include <signal.h>
+#include <sys/epoll.h>
 #include <poll.h>
 
 #define CERT_PATH_SIZE 2048
@@ -60,6 +61,7 @@ typedef struct FriendCoreInstance
 	//char                        *fci_Shutdown;        // Ends all event loops
 	BOOL                        fci_Shutdown;        // Ends all event loops
 	BOOL 						fci_Closed;				// if FC quits, then its set to TRUE
+	BOOL 						fci_SSLEnabled;		// if ssl is enabled
 
 	Hashmap* 				libraries;   // Contains all loaded libraries. Key: library name.
 	
@@ -83,7 +85,7 @@ typedef struct FriendCoreInstance
  * 
  */
 
-FriendCoreInstance *FriendCoreNew( int port, int maxp, int bufsiz );
+FriendCoreInstance *FriendCoreNew( BOOL ssl, int port, int maxp, int bufsiz );
 
 /**
  * Closes all sockets, signals shutdown to all subsystems

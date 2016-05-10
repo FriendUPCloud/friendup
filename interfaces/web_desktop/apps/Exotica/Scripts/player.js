@@ -49,6 +49,7 @@ Application.receiveMessage = function( msg )
 			this.song.onload = function()
 			{
 				this.play();
+				Application.initVisualizer();
 			}
 			this.song.onfinished = function()
 			{
@@ -60,7 +61,6 @@ Application.receiveMessage = function( msg )
 				ge( 'progress' ).style.opacity = 1;
 			}
 			ge( 'scroll' ).innerHTML = msg.item.Filename;
-			this.initEqualizer();
 			pausebtn.className = pausebtn.className.split( 
 				' active' ).join( '' );
 			playbtn.className  = playbtn.className.split( 
@@ -76,13 +76,11 @@ Application.receiveMessage = function( msg )
 					' active' ).join( '' ) + ' active';
 				playbtn.className  = playbtn.className.split( 
 					' active' ).join( '' ) + ' active';
-				console.log( 'We are pausing!' );
 			}
 			else
 			{
 				pausebtn.className = pausebtn.className.split( 
 					' active' ).join( '' );
-				console.log( 'Not pausing' );
 			}
 			break;
 		case 'stop':
@@ -94,6 +92,16 @@ Application.receiveMessage = function( msg )
 			playbtn.className  = playbtn.className.split( 
 				' active' ).join( '' );
 			ge( 'progress' ).style.opacity = 1;
+			
+			// Remove eq rect..
+			setTimeout( function()
+			{
+				var eq = ge( 'visualizer' );
+				var w = eq.offsetWidth, h = eq.offsetHeight;
+				var ctx = eq.getContext( '2d' );
+				ctx.fillStyle = 'rgb(0,0,68)';
+				ctx.fillRect( 0, 0, w, h );
+			}, 250 );
 			break;
 		case 'drop':
 			if( msg.data )
@@ -116,16 +124,58 @@ Application.receiveMessage = function( msg )
 }
 
 // Initialize player!!!
-Application.initEqualizer = function()
+Application.initVisualizer = function()
 {
-	var eq = ge( 'equalizer' );
-	eq.setAttribute( 'width', eq.offsetWidth );
-	eq.setAttribute( 'height', eq.ffsetHeight );
+	var eq = ge( 'visualizer' ); var w = eq.offsetWidth, h = eq.offsetHeight;
+	eq.setAttribute( 'width', w ); eq.setAttribute( 'height', h );
 	
-	var anal = this.song.getContext().createAnalyser();
+	var act = this.song.getContext();
+	var ana = act.createAnalyser(); ana.fftSize = 2048;
+	var bufLength = ana.frequencyBinCount;
+	var dataArray = new Uint8Array( bufLength );
+	var px = 0, py = 0, bx = 0, sw = 0;
 	
 	var ctx = eq.getContext( '2d' );
 	
+	// Connect to the source
+	var agr = this.song.loader.audioGraph
+	var src = agr.source;
+	src.connect( ana );
+	ana.connect( agr.context.destination );
+	
+	// Run it!
+	function dr()
+	{
+		ana.getByteTimeDomainData( dataArray );
+		ctx.fillStyle = 'rgb(0,0,68)';
+		ctx.fillRect( 0, 0, w, h );
+		ctx.strokeStyle = 'rgb(255,255,255)';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		var hh = h / 2;
+		var sw = 1 / bufLength * w;
+		for( bx = 0, px = 0; bx < bufLength; bx++, px += sw )
+		{
+			py = dataArray[ bx ] / 128.0 * hh;
+			if( px == 0 )
+			{
+				ctx.moveTo( px, py );
+			}
+			else
+			{
+				ctx.lineTo( px, py );
+			}
+		}
+		ctx.lineTo( w, h * 0.5 );
+		ctx.stroke();
+		
+		// Only do this when not stopped..
+		if( agr.started )
+		{
+			requestAnimationFrame( dr );
+		}
+	};
+	requestAnimationFrame( dr );
 	
 }
 

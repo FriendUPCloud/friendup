@@ -317,6 +317,7 @@ Application.loadFile = function( data, path )
 		this.files = [ {} ];
 		this.currentFile = 0;
 	}
+	// Ok, we have the first file
 	if( this.files[this.currentFile].content.length <= 0 && this.files[this.currentFile].touched == false )
 	{
 		var f = this.files[this.currentFile];
@@ -326,8 +327,16 @@ Application.loadFile = function( data, path )
 		f.content = data;
 		this.editor.setValue( data );
 	}
+	// Add a new file
 	else
 	{
+		// Make sure it is not already loaded
+		for( var a = 0; a < this.files.length; a++ )
+		{
+			// It already exists..
+			if( this.files[a].filename == path )
+				return;
+		}
 		// Set it
 		this.files.push( { content: data, filename: path, touched: true } );
 		this.setCurrentFile( this.files.length - 1 );
@@ -548,7 +557,8 @@ Application.setCurrentFile = function( curr )
 	
 	// Enable word wrapping
 	var sess = this.editor.getSession();
-	sess.setWrapLimitRange( 80, 80 );
+	var ww = isMobile ? 30 : 80;
+	sess.setWrapLimitRange( ww, ww );
 	sess.setUseWrapMode( true );
 	sess.setUseSoftTabs( false );
 	
@@ -646,6 +656,18 @@ Application.receiveMessage = function( msg )
 					this.editor.replaceAll( msg.replacement );
 				else this.editor.replace( msg.replacement );
 				break;
+			// Get project info
+			case 'projectinfo':
+				// Copy project information
+				this.project = {};
+				for( var a in msg.data ) this.project[a] = msg.data[a];
+				this.projectFilename = msg.filename;
+				if( msg.data.ProjectName )
+				{
+					ge( 'Filelist' ).innerHTML = 'Files in ' + msg.data.ProjectName + ':';
+				}
+				else ge( 'Filelist' ).innerHTML = 'Files:';
+				break;
 			// Make a new file slot in the list
 			case 'newfile':
 				this.newFile();
@@ -725,12 +747,16 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'drop':
 				var paths = [];
+				var project = false;
 				for( var a = 0; a < msg.data.length; a++ )
 				{
 					// Filter
 					var path = msg.data[a].Path;
 					if( this.checkFileType( path ) )
 						paths.push( path );
+					else if( path.substr( path.length - 1 - 4, 4 ).toLowerCase() == '.apf' )
+						project = path;
+					
 				}
 				if( paths.length )
 				{
@@ -738,6 +764,12 @@ Application.receiveMessage = function( msg )
 						command: 'loadfiles',
 						paths: paths
 					} );
+					return;
+				}
+				if( project )
+				{
+					// TODO:
+					// Load project
 				}
 				break;
 			case 'updateStatus':

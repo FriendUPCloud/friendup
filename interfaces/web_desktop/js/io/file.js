@@ -92,7 +92,7 @@ File = function ( filename )
 				}
 				if( typeof ( t.onLoad ) != 'undefined' )
 				{
-					t.onLoad ( data );
+					t.onLoad( data );
 				}
 			}
 			theDoor.read( filename );
@@ -129,10 +129,12 @@ File = function ( filename )
 							t.data = t.data.split ( '{'+a+'}' ).join ( t.replacements[a] );
 					}
 					if( typeof ( t.onLoad ) != 'undefined' )
-						t.onLoad ( t.data );
+					{
+						t.onLoad( t.data );
+					}
 				}
 				// Load the raw data
-				else if( ( !this.returnCode || this.returnCode.length > 3 ) && this.responseText ().length )
+				else if( ( !this.returnCode || this.returnCode.length > 3 ) && this.responseText().length )
 				{
 					t.rawdata = this.responseText();
 					if ( typeof( t.onLoad ) != 'undefined' )
@@ -310,7 +312,10 @@ File = function ( filename )
 					{
 						w.close();
 						Workspace.refreshWindowByPath( filePath );
-						if( t.onPost ) t.onPost( true );
+						if( t.onPost )
+						{
+							t.onPost( true );
+						}
 						return true;
 					}
 					else if( e.data['progress'] )
@@ -321,13 +326,11 @@ File = function ( filename )
 							uprogress.setUnderTransport();
 						}
 					}
-					
 				}
 				else if( e.data['error'] == 1 )
 				{
 					uprogress.displayError(e.data['errormessage']);
 				}
-				if( t.onPost ) t.onPost( false );
 			}
 			
 			uprogress.load();
@@ -338,7 +341,7 @@ File = function ( filename )
 			uworker.postMessage( {
 				'session': Workspace.sessionId,
 				'targetPath': path, 
-				'targetVolume': vol, 
+				'targetVolume': vol,
 				'objectdata': Base64.encode( content )
 			} );
 			console.log( 'Execute: ' );

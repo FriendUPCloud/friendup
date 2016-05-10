@@ -23,7 +23,8 @@ global $User, $SqlDatabase;
 // 1. Check if we're looking for software.......................................
 $len = strlen('System:Software/');
 $subpath = $subpathJoin = false;
-if( substr( $args->args->path, 0, $len ) == 'System:Software/' )
+
+if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Software/' )
 {
 	$subpath = substr( $args->args->path, $len, strlen( $args->args->path ) - $len );
 	if( substr( $subpath, -1, 1 ) == '/' )
@@ -127,7 +128,7 @@ if( substr( $args->args->path, 0, $len ) == 'System:Software/' )
 	}
 }
 // DOS Drivers
-else if( strtolower( trim( $args->args->path ) ) == 'system:devices/dosdrivers/' )
+else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'system:devices/dosdrivers/' )
 {
 	if( $dr = opendir( 'devices/DOSDrivers' ) )
 	{
@@ -140,7 +141,7 @@ else if( strtolower( trim( $args->args->path ) ) == 'system:devices/dosdrivers/'
 			$o->Type = 'File';
 			$o->MetaType = 'File';
 			$o->IconFile = 'gfx/icons/128x128/mimetypes/application-vnd.oasis.opendocument.database.png';
-			$o->Path = 'System:Devices/DOSDrivers/';
+			$o->Path = 'System:Devices/DOSDrivers/' . $o->Filename;
 			$o->Permissions = '';
 			$o->DateModified = date( 'Y-m-d H:i:s' );
 			$o->DateCreated = '1970-01-01 00:00:00';
@@ -156,8 +157,22 @@ else if( strtolower( trim( $args->args->path ) ) == 'system:devices/dosdrivers/'
 		
 	}
 }
+// Subs
+else if( isset( $args->path ) && strtolower( substr( $args->path, 0, strlen( 'system:devices/dosdrivers/' ) ) ) == 'system:devices/dosdrivers/' )
+{
+	$extra = preg_replace( '/system\:devices\/dosdrivers\//i', '', $args->path );
+	if( isset( $extra ) )
+	{
+		if( file_exists( $f = ( 'devices/DOSDrivers/' . $extra . '/info.html' ) ) )
+		{
+			$info = file_get_contents( $f );
+			die( '<!DOCTYPE html><html><head><link rel="stylesheet" href="/webclient/theme/theme_compiled.css"/></head><body style="overflow: auto; background: gray"><div class="Padding BorderRight BackgroundDefault"><p><strong>' . $extra . ', DOS driver</strong></p>' . $info . '</div></body></html>' );
+		}
+	}
+	die( '<!DOCTYPE html><html><head><link rel="stylesheet" href="/webclient/theme/theme_compiled.css"/></head><body style="overflow: auto; background: gray"><div class="Padding BorderRight BackgroundDefault"><p><strong>DOS driver information</strong></p><p>DOS driver for FriendUP.</p><p>No information available.</p></div></body></html>' );
+}
 // Unimplemented
-else if( strtolower( trim( $args->args->path ) ) == 'system:devices/printers/' )
+else if( isset( $args->args) && strtolower( trim( $args->args->path ) ) == 'system:devices/printers/' )
 {
 	die( 'fail<!--separate-->' );
 }

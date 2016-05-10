@@ -57,17 +57,28 @@
 				doLogin: function()
 				{
 					if( this.failedAttempt )
+					{
 						document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...';
-						
-					var rs = parent.Doors.login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked );
-					if( rs === false )
-					{
-						showLoginError();
 					}
-					else if( rs == 0 )
+					
+					//track users login..
+					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );	
+					parent.Workspace.login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result )
 					{
-						setTimeout('showLoginError()', 1000 );
-					};
+						if( result == false )
+						{
+							showLoginError();
+						}
+						else if( result == 0 )
+						{
+							setTimeout( showLoginError, 1000 );
+						}
+						// Success!
+						else{
+							//track users login..
+							if(typeof ga == "function" ) ga('send', 'event', 'userloginsuccess', Trim( ge( 'Username' ).value ) );	
+						}
+					} );
 				},
 				checkKeys: function( e )
 				{

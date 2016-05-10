@@ -91,12 +91,12 @@ FriendCoreManager *FriendCoreManagerNew()
 		int maxpcom =  EPOLL_MAX_EVENTS_COMM;
 		int bufsizecom = BUFFER_READ_SIZE_COMM;
 
+		BOOL SSLEnabled = FALSE;
+		BOOL WSSSLEnabled = FALSE;
 		
 		{
 			struct PropertiesLibrary *plib = NULL;
 			Props *prop = NULL;
-			
-			SSLEnabled = FALSE;
 	
 			if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
 			{
@@ -128,6 +128,7 @@ FriendCoreManager *FriendCoreManagerNew()
 					websocketPort = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
 					
 					SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
+					WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
 					
 					char *tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
 					if( tptr != NULL )
@@ -136,14 +137,14 @@ FriendCoreManager *FriendCoreManagerNew()
 						{
 							sprintf( RSA_SERVER_CERT, "%s%s", tptr, "certificate.pem" );
 							sprintf( RSA_SERVER_KEY, "%s%s", tptr, "key.pem" );
-							sprintf( RSA_SERVER_CA_CERT, "%s%s", tptr, "request.pem" );
+							sprintf( RSA_SERVER_CA_CERT, "%s%s", tptr, "certificate.pem" );
 							sprintf( RSA_SERVER_CA_PATH, "%s%s", tptr, "/" );
 						}
 						else
 						{
 							sprintf( RSA_SERVER_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
 							sprintf( RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
-							sprintf( RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "request.pem" );
+							sprintf( RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
 							sprintf( RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
 						}
 					}
@@ -158,7 +159,7 @@ FriendCoreManager *FriendCoreManagerNew()
 				LibraryClose( ( struct Library *)plib );
 			}
 			
-			fcm->fcm_FriendCores = FriendCoreNew( port, maxp, bufsize );
+			fcm->fcm_FriendCores = FriendCoreNew( SSLEnabled, port, maxp, bufsize );
 		}
 		
 		if( fcm->fcm_FriendCores == NULL )
@@ -168,8 +169,8 @@ FriendCoreManager *FriendCoreManagerNew()
 			return NULL;
 		}
 		
-		#ifdef WEBSOCKETS
-		if( ( fcm->fcm_WebSocket = WebSocketNew( fcm,  websocketPort, FALSE ) ) != NULL )
+		#ifdef ENABLE_WEBSOCKETS
+		if( ( fcm->fcm_WebSocket = WebSocketNew( fcm,  websocketPort, WSSSLEnabled ) ) != NULL )
 		{
 			WebSocketStart( fcm->fcm_WebSocket );
 		}
@@ -183,6 +184,8 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_CommServiceClient = CommServiceNew( SERVICE_TYPE_CLIENT, fcm, maxpcom, bufsizecom );
 		
 		fcm->fcm_SSHServer = SSHServerNew();
+		
+		//fcm->fcm_EventManager = EventManagerNew();
 		
 		fcm->fcm_Shutdown = FALSE;
 	}
@@ -199,27 +202,34 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 {
 	DEBUG("FriendCoreManager END - start\n");
 	if( fcm != NULL )
-	{	
-		DEBUG("FriendCore Shutdown\n");
+	{
+		
+		DEBUG("FriendCoreManager: close event\n");
+		if( fcm->fcm_EventManager != NULL )
+		{
+			EventManagerDelete( fcm->fcm_EventManager );
+		}
+		
+		DEBUG("FriendCoreManager Shutdown\n");
 		FriendCoreShutdown( fcm->fcm_FriendCores );
-		DEBUG("FriendCore shutdown finished\n");
-				
-		#ifdef WEBSOCKETS
+		DEBUG("FriendCoreManager shutdown finished\n");
+
+		DEBUG("FriendCoreManager Close client\n");
+		CommServiceDelete( fcm->fcm_CommServiceClient );
+		DEBUG("FriendCoreManager Close server\n");
+		CommServiceDelete( fcm->fcm_CommServiceServer );
+		
+		#ifdef ENABLE_WEBSOCKETS
 		WebSocketFree( fcm->fcm_WebSocket );
 		#endif
 		
-		DEBUG("FCM Close client\n");
-		CommServiceDelete( fcm->fcm_CommServiceClient );
-		DEBUG("FCM Close server\n");
-		CommServiceDelete( fcm->fcm_CommServiceServer );
-		
-		DEBUG("FCM Close services\n");
+		DEBUG("FriendCoreManager Close services\n");
 		if( fcm->fcm_ServiceManager != NULL )
 		{
 			ServiceManagerDelete( fcm->fcm_ServiceManager );
 		}
 		
-		DEBUG("FCM Close SSH Server\n");
+		DEBUG("FriendCoreManager Close SSH Server\n");
 		SSHServerDelete( fcm->fcm_SSHServer );
 		
 		FFree( fcm );

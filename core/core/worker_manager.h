@@ -28,14 +28,6 @@
 #define MAX_WORKERS 	1
 #define MIN_WORKERS 1
 
-struct SocketThreadData {
-	struct epoll_event *ce;
-	Socket                *sock;
-	pthread_t             thread;
-	bool                  doFree;
-	int                   workerIndex;
-};
-
 typedef struct WorkerManager
 {
 	

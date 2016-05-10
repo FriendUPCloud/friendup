@@ -20,8 +20,12 @@
 #ifndef __CORE_FUNCTIONS_H__
 #define __CORE_FUNCTIONS_H__
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wincompatible-pointer-types -Wformat -Wall -Wpedantic"
+          
 #define LIST_FOR_EACH( LIST, ENTRY ) \
 	for( ENTRY = LIST; ENTRY != NULL ; ENTRY = ENTRY->node.mln_Succ )
+#pragma GCC diagnostic pop
 
 #define LIST_ADD_HEAD( LIST, ENTRY ) \
 		ENTRY->node.mln_Succ =(MinNode *) LIST; \

@@ -292,6 +292,8 @@ Door.prototype.dosAction = function( func, args, callback )
 			break;
 	}
 	
+	console.log('we do this here...');
+	
 	// We need a path
 	if( !args.path ) args.path = this.path;
 	
@@ -317,9 +319,19 @@ Door.prototype.dosAction = function( func, args, callback )
 	{
 		// Do the refreshing
 		var possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
-		for( var b = 0; b < possibilities.length; b++ ) if( args[possibilities[b]] )
-			Doors.refreshWindowByPath( args[possibilities[b]] );
-		
+		for( var b = 0; b < possibilities.length; b++ )
+		{
+			if( args[possibilities[b]] )
+			{
+				if( func.indexOf('delete') > -1 )
+					Workspace.closeWindowByPath( args[possibilities[b]] );
+				else
+					Workspace.refreshWindowByPath( args[possibilities[b]] );
+				
+				console.log('we refresh....',func,args,args[possibilities[b]]);
+				
+			}
+		}
 		if( callback ) callback( this.responseText() );
 	}
 	j.send();

@@ -29,7 +29,7 @@ CacheManager *CacheManagerNew( ULONG size )
 		int i = 0;
 		cm->cm_CacheMax = size;
 		
-		for( i=0 ; i < 256 ; i++ )
+		for( i = 0; i < 256; i++ )
 		{
 			cm->cm_CacheFileGroup[ i ].cg_EntryId = i;
 			cm->cm_CacheFileGroup[ i ].cg_File = NULL;
@@ -52,14 +52,13 @@ void CacheManagerDelete( CacheManager *cm )
 	{
 		int i = 0;
 		
-		for( i=0 ; i < 256 ; i++ )
+		for( ; i < 256; i++ )
 		{
 			LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
 			while( lf != NULL )
 			{
 				LocFile *rf = lf;
 				lf = (LocFile *)lf->node.mln_Succ;
-				
 				LocFileFree( rf );
 			}
 		}
@@ -80,7 +79,7 @@ void CacheManagerClearCache( CacheManager *cm )
 	{
 		int i = 0;
 		
-		for( i=0 ; i < 256 ; i++ )
+		for( ; i < 256; i++ )
 		{
 			LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
 			while( lf != NULL )
@@ -174,7 +173,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path )
 			if( strcmp( lf->lf_Path, path ) == 0 )
 			{
 				lf->lf_FileUsed++;
-				INFO("File found in cache : %s\n", lf->lf_Path );
+				//INFO("File found in cache : %s\n", lf->lf_Path );
 				return lf;
 			}
 			

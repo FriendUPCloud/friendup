@@ -56,13 +56,6 @@ pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
 //
-// Linux do not have usleep in headers
-//
-
-int usleep(ULONG usec);
-void pipe2( int *a, int b );
-       
-//
 // Creste new service
 //
 
@@ -145,13 +138,15 @@ int CommServiceStart( CommService *s )
 			
 			pthread_mutex_init( &InitMutex, NULL );
 			
-			s->s_Thread = ThreadNew( CommServiceThreadServer, s );
+			s->s_Thread = ThreadNew( CommServiceThreadServer, s, TRUE );
 		}else{		// SERVICE_TYPE_SEND
 			
 			INFO("Communication service CLIENT start\n");
 			
-			s->s_Thread = ThreadNew( CommServiceThreadClient, s );
+			s->s_Thread = ThreadNew( CommServiceThreadClient, s, TRUE );
 		}
+		
+		DEBUG("CommServiceStart, pointer to thread %p\n", s->s_Thread );
 		
 		if( s->s_Thread == NULL )
 		{
@@ -319,16 +314,16 @@ DataForm *ParseMessage( CommService *serv, BYTE *data, int *len )
 
 int CommServiceThreadServer( FThread *ptr )
 {
-	return 0;
+	//return 0;
 	CommService *service = (CommService *)ptr->t_Data;
 	
 	DEBUG("CommunicationServiceReceive Start\n");
 	
-	service->s_Socket = SocketOpen( FRIEND_COMMUNICATION_PORT, SOCKET_TYPE_SERVER );
+	service->s_Socket = SocketOpen( FALSE, FRIEND_COMMUNICATION_PORT, SOCKET_TYPE_SERVER );
 	
 	if( service->s_Socket != NULL )
 	{
-		SocketSetBlocking( service->s_Socket, false );
+		SocketSetBlocking( service->s_Socket, FALSE );
 		if( !SocketListen( service->s_Socket ) )
 		{
 			SocketClose( service->s_Socket );
@@ -388,6 +383,8 @@ int CommServiceThreadServer( FThread *ptr )
 			piev.data.fd = service->s_ReadCommPipe;
 			epoll_ctl( service->s_Epollfd, EPOLL_CTL_ADD, service->s_ReadCommPipe, &piev );
 			
+			DEBUG("CommunicationService, before main loop\n");
+			
 			while( service && service->s_Cam.cam_Quit != TRUE )
 			{
 				//usleep( 10000000 );
@@ -429,8 +426,8 @@ int CommServiceThreadServer( FThread *ptr )
 							//ERROR
 							//TODO
 							// FIX!
-//							incomming = SocketAccept( service->s_Socket );//->fd );
-							if( !incomming )
+							incomming = SocketAccept( service->s_Socket );
+							if( incomming == NULL )
 							{
 								// We have processed all incoming connections.
 								if( (errno == EAGAIN ) || ( errno == EWOULDBLOCK) )
@@ -458,7 +455,7 @@ int CommServiceThreadServer( FThread *ptr )
 							// we must check first if its FC communication
 							//
 							
-							SocketSetBlocking( incomming, TRUE ); 
+							//SocketSetBlocking( incomming, FALSE ); 
 							//INFO("BEFDATAREADED\n");
 							count = SocketRead( incomming, (char *)&buffer, service->s_BufferSize, 0 );
 							// count = read( sock->fd, &buffer, BUFFER_READ_SIZE );
@@ -483,9 +480,10 @@ int CommServiceThreadServer( FThread *ptr )
 							}
 							else
 							{
-								ERROR("C1New connection is not FC connection!\n");
-								FriendCoreManagerDelete( incomming->s_Data );
+								ERROR("Cannot read from socket!\n");
+								//FriendCoreManagerDelete( incomming->s_Data );
 								SocketClose( incomming );
+								//exit(0);
 								
 								continue;
 							}
@@ -498,7 +496,7 @@ int CommServiceThreadServer( FThread *ptr )
 							retval = epoll_ctl( service->s_Epollfd, EPOLL_CTL_ADD, incomming->fd, &event );
 							if( retval == -1 )
 							{
-								ERROR("epoll_ctl\n");
+								ERROR("EPOLLctrl error\n");
 								
 								SocketClose( service->s_Socket );
 								abort();
@@ -527,6 +525,7 @@ int CommServiceThreadServer( FThread *ptr )
 							DEBUG("Read from pipe %c\n", ch );
 							if( ch == 'q' )
 							{
+								//goto service_exit;
 								service->s_Cam.cam_Quit = TRUE;
 								DEBUG("Closing!\n");
 								break;
@@ -561,7 +560,7 @@ int CommServiceThreadServer( FThread *ptr )
 								if( !( errno == EAGAIN || errno == EWOULDBLOCK ) )
 								{
 									DEBUG( "[COMMSERV] closing socket" );
-									FriendCoreManagerDelete( sock->s_Data );
+									//FriendCoreManagerDelete( sock->s_Data );
 									SocketClose( sock );
 									connections--;
 								}
@@ -571,7 +570,7 @@ int CommServiceThreadServer( FThread *ptr )
 							{
 								// Technically we don't need to handle this here, since we wait for EPOLLRDHUP. We handle it just to be sure.
 								DEBUG( "[COMMSERV] closing socket 2" );
-								FriendCoreManagerDelete( sock->s_Data );
+								//FriendCoreManagerDelete( sock->s_Data );
 								SocketClose( sock );
 								connections--;
 								break;

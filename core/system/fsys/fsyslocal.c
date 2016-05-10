@@ -222,15 +222,12 @@ int Release( struct FHandler *s, void *f )
 		{
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			
-			free( lf->f_SpecialData );
+			FFree( lf->f_SpecialData );
 		}
 		
 		if( lf->f_Name ){ free( lf->f_Name ); }
 		if( lf->f_Path ){ free( lf->f_Path ); }
-		
-		//if( lf->d_Host ){ free( lf->d_Host ); }
-		//if( lf->d_LoginUser ){ free( lf->d_LoginUser ); }
-		//if( lf->d_LoginPass ){ free( lf->d_LoginPass ); }
+
 		
 		//free( f );
 		return 0;
@@ -383,7 +380,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 int FileClose( struct File *s, void *fp )
 {	
-	if( fp )
+	if( fp != NULL )
 	{
 		int close = 0;
 		
@@ -466,10 +463,25 @@ int FileSeek( struct File *s, int pos )
 
 int MakeDir( struct File *s, const char *path )
 {
-	DEBUG("MakeDir!\n");
+	INFO("MakeDir!\n");
 	
 	int rspath = strlen( s->f_Path );
-	int spath = strlen( path );
+	int spath = strlen( path )+1;
+	char *newPath;
+	
+	if( ( newPath = calloc( rspath+10, sizeof(char) ) ) == NULL )
+	{
+		ERROR("Cannot allocate memory for new path\n");
+		return -2;
+	}
+	
+	strcpy( newPath, s->f_Path );
+	if( s->f_Path[ rspath-1 ] != '/' )
+	{
+		strcat( newPath, "/" );
+	}
+	
+	DEBUG("----------------------> %s\n", path );
 	
 	// Create a string that has the real file path of the file
 	if( path != NULL )
@@ -478,7 +490,9 @@ int MakeDir( struct File *s, const char *path )
 		int slashes = 0, i = 0; for( ; i < spath; i++ )
 		{
 			if( path[i] == '/' )
+			{
 				slashes++;
+			}
 		}
 
 		if( slashes > 0 )
@@ -486,25 +500,32 @@ int MakeDir( struct File *s, const char *path )
 			int off = 0, slash = 0;
 			for( i = 0; i < spath; i++ )
 			{
+				ERROR("POSITION %d\n", i );
+				
 				if( path[i] == '/' )
 				{
-					char *directory = calloc( rspath + i + 1, sizeof( char *) );
-					sprintf( directory, "%s%.*s", s->f_Path, i, path );
-				
-					struct stat filest;
-				
-					// Create if not exist!
-					if( stat( directory, &filest ) == -1 )
+					char *directory = calloc( rspath + i , sizeof( char *) );
+					if( directory != NULL )
 					{
-						mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
-						DEBUG( "Making directory %s\n", directory );
-					}
-					else
-					{
-						DEBUG( "Not making dir %s\n", directory );
-					}
+						sprintf( directory, "%s%.*s", newPath, i, path );
+						
+						ERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
 				
-					free( directory );
+						struct stat filest;
+				
+						// Create if not exist!
+						if( stat( directory, &filest ) == -1 )
+						{
+							mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+							DEBUG( "Making directory %s\n", directory );
+						}
+						else
+						{
+							DEBUG( "Not making dir %s\n", directory );
+						}
+				
+						free( directory );
+					}
 					slash++;
 				}
 			}
@@ -512,13 +533,21 @@ int MakeDir( struct File *s, const char *path )
 		// Ok, no slashes
 		else
 		{
-			char *directory = calloc( rspath + spath + 1, sizeof( char *) );
-					sprintf( directory, "%s%s", s->f_Path, path );
-			mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+			char *directory = calloc( rspath + spath, sizeof( char *) );
+			if( directory != NULL )
+			{
+				sprintf( directory, "%s%s", newPath, path );
+				mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+				
+				ERROR("JUST SIMLPE PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
+			}
 			free( directory ); 
 		}
+		
+		free( newPath );
 		return 0;
 	}
+	free( newPath );
 	
 	return -1;
 }
@@ -955,7 +984,11 @@ BufString *Info( File *s, const char *path )
 	DEBUG("Info!\n");
 	
 	BufString *bs = BufStringNew();
-	int spath = strlen( path );
+	int spath = 0;
+	if( path != NULL )
+	{
+		spath = strlen( path );
+	}
 	int rspath = strlen( s->f_Path );
 	
 	BufStringAdd( bs, "ok<!--separate-->");
@@ -972,13 +1005,17 @@ BufString *Info( File *s, const char *path )
 	if( ( comm = calloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
+
 		if( comm[ strlen( comm ) -1 ] != '/' )
 		{
 			strcat( comm, "/" );
 		}
 		//strcat( comm, &(path[ doub+2 ]) );
-		strcat( comm, path );
-		
+		if( path != NULL )
+		{
+			strcat( comm, path );
+		}
+			
 		DEBUG("PATH created %s\n", comm );
 	
 		struct stat ls;

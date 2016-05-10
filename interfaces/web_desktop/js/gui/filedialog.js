@@ -18,12 +18,13 @@
 *******************************************************************************/
 
 // Opens a file dialog connected to an application
-Filedialog = function ( mainwindow, triggerfunction, path, type )
+Filedialog = function ( mainwindow, triggerfunction, path, type, filename, title )
 {
 	if ( !triggerfunction ) return;
 	if ( !type ) type = 'open';
 	
 	var dialog = this;
+	if( !filename ) filename = '';
 	
 	var ftitle = '';
 	switch ( type )
@@ -35,6 +36,8 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 		default:      ftitle = i18n( 'file_unknown_title' ); break;
 	}
 	this.type = type;
+	
+	if( title ) ftitle = title;
 	
 	var w = new View ( {
 		'title' : i18n ( ftitle ),
@@ -126,7 +129,9 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 			else if ( p.substr ( p.length - 1, 1 ) != '/' )
 				p += '/' + fname;
 			else p += fname;
-			triggerfunction ( p );
+			triggerfunction( p );
+			w.close();
+			return;
 		}
 		if ( ele )
 		{
@@ -354,9 +359,29 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 			{
 				if( inps[a].getAttribute ( 'name' ) == 'filename' )
 				{
-					if( typeof( path ) == 'object' )
+					if( filename )
+					{
+						inps[a].value = filename;
+					}
+					else if( typeof( path ) == 'object' )
 						inps[a].value = path.filename;
-					else inps[a].value = path;
+					else 
+					{
+						if( path.indexOf( ':' ) > 0 )
+						{
+							path = path.split( ':' );
+							if( path[1] && path[1].length )
+							{
+								if( path.indexOf( '/' ) > 0 )
+								{
+									path = path.split( '/' );
+									path = path[path.length-1];
+								}
+							}
+							else path = '';
+						}
+						inps[a].value = path;
+					}
 					dialog.saveinput = inps[a];
 					inps[a].onkeydown = function( e )
 					{
@@ -518,6 +543,7 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 			w.book = book;
 			book.onclick = function()
 			{
+				var bookmarkArea = false;
 				// TODO: Make bookmarks pop to front
 				if( w.books ) return;
 				var bw = new View( {
@@ -551,6 +577,14 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 						else if( buttons[a].getAttribute( 'name' ) == 'select' )
 							select = buttons[a];
 					}
+					var divs = bw.getElementsByTagName( 'div' );
+					for( var a = 0; a < divs.length; a++ )
+					{
+						if( divs[a].classList.contains( 'BookmarkArea' ) )
+						{
+							bookmarkArea = divs[a];
+						}
+					}
 					
 					// Add the current file dialog path as a bookmark!
 					add.onclick = function()
@@ -566,6 +600,26 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 						m.execute( 'addbookmark', { path: rl, name: nm } );
 					}
 					
+					select.onclick = function()
+					{
+						if( !bookmarkArea ) return;
+						var eles = bookmarkArea.getElementsByTagName( 'div' );
+						for( var a = 0; a < eles.length; a++ )
+						{
+							if( eles[a].getAttribute( 'active' ) == 'active' )
+							{
+								eles[a].ondblclick();
+								return;
+							}
+						}
+					}
+					
+					canc.onclick = function()
+					{
+						bw.close();
+					}
+					
+					bw.refresh();
 				}
 				f.load();
 				
@@ -583,10 +637,14 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 						{
 							// Do it!
 							var eles = JSON.parse( d );
+							var html = '<div class="List">';
 							for( var b = 0; b < eles.length; b++ )
 							{
-								
+								var sw = b % 2 + 1;
+								html += '<div class="BorderBottom Padding HRow Padding sw' + sw + '" path="' + eles[b].path + '">' + eles[b].name + ' (' + eles[b].path + ')</div>';
 							}
+							html += '</div>';
+							bw.setBookmarkContents( html );
 						}
 					}
 					m.execute( 'getbookmarks' );
@@ -595,7 +653,47 @@ Filedialog = function ( mainwindow, triggerfunction, path, type )
 				// Set content on bookmark window
 				bw.setBookmarkContents = function( content )
 				{
-					
+					if( !bookmarkArea ) return;
+					bookmarkArea.innerHTML = content;
+					var eles = bookmarkArea.getElementsByTagName( 'div' );
+					for( var a = 0; a < eles.length; a++ )
+					{
+						if( eles[a].getAttribute( 'path' ) )
+						{
+							eles[a].ondblclick = function()
+							{
+								var url = this.getAttribute( 'path' );
+								bw.close();
+								dialog.path = url;
+								w.refreshView();
+							}
+							eles[a].onclick = function()
+							{
+								var e = 0;
+								for( var c = 0; c < eles.length; c++ )
+								{
+									if( !eles[c].getAttribute( 'path' ) ) continue;
+									var sw = 'sw' + ( e++ % 2 + 1 );
+									if( eles[c] == this )
+									{
+										eles[c].classList.remove( sw );
+										eles[c].setAttribute( 'active', 'active' );
+										eles[c].classList.add( 'BackgroundLists' );
+										eles[c].classList.add( 'ColorLists' );
+									}
+									else 
+									{
+										eles[c].classList.add( sw );
+										eles[c].setAttribute( 'active', '' );
+										eles[c].classList.remove( 'BackgroundLists' );
+										eles[c].classList.remove( 'ColorLists' );
+									}
+									d++;
+								}
+							}
+							eles[a].style.cursor = 'pointer';
+						}
+					}
 				}
 			}
 		}

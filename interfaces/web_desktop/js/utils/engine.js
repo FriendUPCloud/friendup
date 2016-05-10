@@ -1266,17 +1266,119 @@ VertTabContainer.prototype.initialize = function( ele )
 	else this.tabs[0].click();
 }
 
+/* Standard tabs ------------------------------------------------------------ */
+
+// Initializes tab system on the subsequent divs one level under parent div
+function InitTabs ( pdiv )
+{
+	if( typeof( pdiv ) == 'string' )
+		pdiv = ge( pdiv );
+		
+	var divs = pdiv.getElementsByTagName ( 'div' );
+	var tabs = new Array ();
+	var pages = new Array ();
+	var active = 0;
+	for ( var a = 0; a < divs.length; a++ )
+	{
+		if ( divs[a].parentNode != pdiv ) continue;
+		if ( divs[a].className == 'Tab' )
+		{
+			tabs.push ( divs[a] );
+			divs[a].pdiv = pdiv;
+			divs[a].tabs = tabs; 
+			divs[a].pages = pages;
+			divs[a].index = tabs.length - 1;
+			divs[a].onclick = function ()
+			{
+				SetCookie ( 'Tabs'+this.pdiv.id, this.index );
+				this.className = 'TabActive';
+				var ind;
+				for ( var b = 0; b < this.tabs.length; b++ )
+				{
+					if ( this.tabs[b] != this )
+						this.tabs[b].className = 'Tab';
+					else ind = b;
+				}
+				for ( var b = 0; b < this.pages.length; b++ )
+				{
+					if ( b != ind )
+					{
+						this.pages[b].className = 'Page';
+					}
+					else 
+					{
+						this.pages[b].className = 'PageActive';
+						if ( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
+						{
+							this.pages[b].style.display = 'none';
+							var idz = 1;
+							if ( !this.pages[b].id )
+							{
+								var bs = 'page';
+								idz++;
+								while ( ge ( bs ) )
+									bs = [ bs, idz ].join ( '' );
+								this.pages[b].id = bs;
+							}
+							var bid = this.pages[b].id;
+							setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
+						}
+					}
+				}
+				if ( typeof ( AutoResizeWindow ) != 'undefined' )
+				{
+					var pdiv = this.pdiv;
+					while ( pdiv.className.indexOf ( ' View' ) < 0 && pdiv != document.body )
+						pdiv = pdiv.parentNode;
+					if ( pdiv != document.body && pdiv.autoResize == true )
+						AutoResizeWindow ( pdiv );
+				}
+			}
+			if ( GetCookie ( 'Tabs'+pdiv.id ) == divs[a].index )
+			{
+				active = divs[a].index;
+			}
+		}
+		else if ( divs[a].className.substr ( 0, 4 ) == 'Page' )
+		{
+			divs[a].className = 'Page';
+			pages.push ( divs[a] );
+		}
+	}
+	tabs[active].onclick();
+}
+
+// Double click simulator for youch
+function touchDoubleClick( element, callback, e )
+{
+	if( !element.touchClickCount )
+	{
+		element.touchClickCount = 1;
+	}
+	else
+	{
+		element.touchClickCount = false;
+		callback( element, e );
+	}
+	// Simulate timeout between clicks
+	setTimeout( function()
+	{
+		element.touchClickCount = false;
+	}, 500 );
+}
 
 // Are we on a mobile browser?
 function checkMobileBrowser()
 {
-	window.isMobile = window.innerWidth <= 760 ||
-		navigator.userAgent.toLowerCase().indexOf( 'android' ) > 0 ||
-		navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
-		navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
-		navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0;
-		
-		
+	if( !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
+	{
+		window.isMobile = window.innerWidth <= 760 ||
+			navigator.userAgent.toLowerCase().indexOf( 'android' ) > 0 ||
+			navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
+			navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
+			navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0;
+	}
+	else window.isMobile = false;
 	window.isTouch = !!('ontouchstart' in window);
 }
 

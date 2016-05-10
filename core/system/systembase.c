@@ -40,7 +40,7 @@
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
-#ifdef WEBSOCKETS
+#ifdef ENABLE_WEBSOCKETS
 #include <network/websocket_client.h>
 #endif
 #include <system/device_handling.h>
@@ -143,7 +143,7 @@ SystemBase *SystemInit( void )
 	l->LibraryImageDrop = dlsym( l->handle, "LibraryImageDrop");
 	l->UserDeviceMount = dlsym( l->handle, "UserDeviceMount" );
 	
-	#ifdef WEBSOCKETS
+	#ifdef ENABLE_WEBSOCKETS
 	l->AddWebSocketConnection = dlsym( l->handle, "AddWebSocketConnection");
 	#endif
 	
@@ -397,12 +397,12 @@ void SystemClose( struct SystemBase *l )
 					ERROR("Cannot free FSYS (null)\n");
 				}
 				
-				if( remdev->f_SessionID )
+				if( remdev->f_SessionID != NULL)
 				{
 					free( remdev->f_SessionID );
 				}
 				
-				if( remdev->f_FSysName )
+				if( remdev->f_FSysName != NULL )
 				{
 					free( remdev->f_FSysName );
 				}
@@ -688,7 +688,7 @@ int deinit( struct SystemBase *l )			// unmount FS
 // run/execute command
 //
 
-char *RunMod( struct SystemBase *l, const char *mime, const char *path, const char *args, int *length )
+char *RunMod( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long int *length )
 {
 	char tmpQuery[ 255 ];
 	int pathlen = strlen( path );
@@ -881,7 +881,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-				{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+				{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 				{TAG_DONE, TAG_DONE}
 			};
 		
@@ -916,7 +916,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -953,8 +953,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		if( response != NULL ) ERROR("RESPONSE \n");
@@ -1067,7 +1067,6 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 							loggedUser->u_Error, loggedUser->u_SessionID, loggedUser->u_ID, loggedUser->u_FullName
 						);	// check user.library to display errors
 						HttpAddTextContent( response, tmp );
-						//HttpWriteAndFree( response );
 
 						return response;*/
 					}
@@ -1275,7 +1274,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 		// Now go ahead
 		struct stat f;
 		char *data = NULL;
-		int dataLength = 0;
+		unsigned long int dataLength = 0;
 		DEBUG( "[MODULE] Trying modules folder..." );
 		if( stat( "modules", &f ) != -1 )
 		{
@@ -1371,14 +1370,41 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			
 									DEBUG("TYPE %s LENGTH %s\n", ltype, length );
 									
+									//
+									// TODO
+									// there are some problems here with getting 'length' string correctly
+									//==6660==    at 0x4C2D9C0: memcpy@@GLIBC_2.14 (vg_replace_strmem.c:915)
+//==6660==    by 0x41D99E: StringDuplicateN (string.c:103)
+//==6660==    by 0x42EC1C: SysWebRequest (systembase.c:1396)
+//==6660==    by 0x410E75: ProtocolHttp (protocol_http.c:412)
+//==6660==    by 0x4084A5: SocketCallHandler (friend_core.c:534)
+//==6660==    by 0x55390A3: start_thread (pthread_create.c:309)
+//==6660==    by 0x687604C: clone (clone.S:111)
+//==6660==  Address 0x11b94b92 is 0 bytes after a block of size 2 alloc'd
+///==6660==    at 0x4C2AD10: calloc (vg_replace_malloc.c:623)
+//==6660==    by 0x42EB68: SysWebRequest (systembase.c:1374)
+//==6660==    by 0x410E75: ProtocolHttp (protocol_http.c:412)
+//==6660==    by 0x4084A5: SocketCallHandler (friend_core.c:534)
+//==6660==    by 0x55390A3: start_thread (pthread_create.c:309)
+//==6660==    by 0x687604C: clone (clone.S:111)
+
+									
 									char *datastart = strstr( data, "---http-headers-end---" );
 									if( datastart != NULL )
 									{
 										datastart += 23;
-										DEBUG("HEADEREND FOUND\n");
+										if( length == NULL )
+										{	
+											length = calloc( 64, 1 );
+											sprintf( length, "%ld", dataLength - ( datastart - data ) );
+											char *trimmed = calloc( strlen( length ), 1 );
+											sprintf( trimmed, "%s", length );
+											free( length );
+											length = trimmed;
+										}
 									}
 			
-									//INFO("Length : %s\n", length );
+									DEBUG("Length : %s\n", length );
 			
 									if( ltype != NULL )
 									{
@@ -1388,14 +1414,14 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 									{
 										DEBUG( "[System.library] We found no Content-Type header in data.\n" );
 									}
-				
+									
 									if( ltype != NULL && length != NULL )
 									{
 										struct TagItem tags[] = {
 											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)StringDuplicateN( ltype, strlen( ltype ) ) },
-											{	HTTP_HEADER_CONTENT_LENGTH, (ULONG)StringDuplicateN( length, strlen( length ) ) },
-											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-											{TAG_DONE, TAG_DONE}
+											{ HTTP_HEADER_CONTENT_LENGTH, (ULONG)StringDuplicateN( length, strlen( length ) ) },
+											{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{ TAG_DONE, TAG_DONE }
 										};
 		
 										if( response != NULL )
@@ -1407,20 +1433,29 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 										
 										if( response )
 										{
-											int calSize = atoi( length );
-											DEBUG("file size counted %d\n", calSize );
-											char *returnData = calloc( calSize, sizeof( BYTE ) );
-											if( returnData != NULL )
+											char *next;
+											int calSize = strtol (length, &next, 10);
+											if ((next == length) || (*next != '\0')) 
 											{
-												DEBUG("MEMAlocated %s\n", datastart );
-												memcpy( returnData, datastart, calSize*sizeof(BYTE) );
-												HttpSetContent( response, returnData, calSize );
+												ERROR("Lenght of message == 0\n");
+											}
+											else
+											{
+												//int calSize = atoi( length );
+												DEBUG("file size counted %d\n", calSize );
+												char *returnData = calloc( calSize, sizeof( BYTE ) );
+												if( returnData != NULL )
+												{
+													//DEBUG("MEMAlocated %s\n", datastart );
+													memcpy( returnData, datastart, calSize*sizeof(BYTE) );
+													HttpSetContent( response, returnData, calSize );
+												}
 											}
 										}
 										free( data );
 									}
 									else
-									{	
+									{
 										DEBUG("Create default response\n");
 										
 										struct TagItem tags[] = {
@@ -1746,6 +1781,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			//
 			
 		}
+		//TODO
+		// rewrite code to use db not sl_Sessions
 		else if( strcmp( urlpath[ 1 ], "share" ) == 0 )
 		{
 			char *devname = NULL;
@@ -2075,6 +2112,13 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 		}
 		else
 		{
+			// TODO: This makes the system crash!
+			struct TagItem tags[] = {
+				{ HTTP_HEADER_CONTENT_TYPE, (ULONG)StringDuplicate( "text/html" ) },
+				{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+				{ TAG_DONE, TAG_DONE }
+			};
+			response = HttpNewSimple( HTTP_200_OK, tags );
 			HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"Device function do not exist\"}" );
 		}
 		
@@ -2182,701 +2226,731 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 			
 			DEBUG( "Check if device is mounted for user\n" );
 			
-			//
-			// Check mounted devices for user
-			actDev = GetRootDeviceByName( loggedUser, devname );
-			/*
-			while( lDev != NULL )
+			// Special case! System reverts to mod calls
+			int specialCase = 0;
+			if( strcmp( devname, "System" ) == 0 )
 			{
-				//DEBUG("Checking dev act ptr %p next ptr %p\n", lDev, lDev->node.mln_Succ ); 
-				DEBUG("devname %s  ldevname %s lfile \n", devname, lDev->f_Name );
+				unsigned long int resultLength = 0;
+				char *request = calloc( 1, 512 );
+				sprintf( request, "module=system&command=systempath&sessionid=%s&path=%s", loggedUser->u_SessionID, path );
 				
-				if( strcmp( devname, lDev->f_Name ) == 0 )
+				char *returnData = RunMod( 
+					SLIB, "php", "modules/system/module.php", 
+					request, 
+					&resultLength
+				);
+				
+				free( request );
+				
+				if( returnData )
 				{
-					actDev = lDev;
-					DEBUG("Found file name '%s' path '%s' (%s)\n", 
-						actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
-					break;
+					specialCase = 1;
+					HttpAddTextContent( response, returnData );
+					result = 200;
+					DEBUG( "Ok, we added: %s\n", returnData );
+					free( returnData );
 				}
-				lDev = (File *)lDev->node.mln_Succ;
-			}*/
+			}
 			
-			
-			// TODO: Custom stuff (should probably be in the actual FS)
-			// TODO: devname is 0 in length. Why strlen it?
-			if( actDev != NULL )
+			if( specialCase == 0 )
 			{
-				DEBUG( "ok, next up is to see if the filesystem wants special treatment... PATH %\n" );
-				if( ( lpath = FCalloc( strlen( path ) + 255, sizeof(char) ) ) != NULL )
+				//
+				// Check mounted devices for user
+				actDev = GetRootDeviceByName( loggedUser, devname );
+				/*
+				while( lDev != NULL )
 				{
-					UrlDecode( lpath, path );
-		
-					int dpos = doublePosition( lpath );
-			
-					// Local filesystem wants a unix path string
-					if( strcmp( actDev->f_FSysName, "local" ) == 0 )
+					//DEBUG("Checking dev act ptr %p next ptr %p\n", lDev, lDev->node.mln_Succ ); 
+					DEBUG("devname %s  ldevname %s lfile \n", devname, lDev->f_Name );
+				
+					if( strcmp( devname, lDev->f_Name ) == 0 )
 					{
-						strcpy( path, &lpath[ dpos + 1 ] ); // TODO: Remove this, we're not fucking with the path
+						actDev = lDev;
+						DEBUG("Found file name '%s' path '%s' (%s)\n", 
+							actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
+						break;
 					}
-					DEBUG( "Local filesystem wanted this path: \'%s\'\n", path );
-					FFree( lpath );
-					lpath = NULL;
-				}
-		
-				DEBUG( "File found pointer %p DEVNAME %s\n", actDev, devname );
+					lDev = (File *)lDev->node.mln_Succ;
+				}*/
 			
-				//
-				// checking file commands
-				//
-				
-				DEBUG( "Checking 3rd part from path '%s' - path '%s'\n", urlpath[ 0 ], path );
-				
-				//
-				// INFO
-				//
-				
-				if( strcmp( urlpath[ 1 ], "info" ) == 0 )
+			
+				// TODO: Custom stuff (should probably be in the actual FS)
+				// TODO: devname is 0 in length. Why strlen it?
+				if( actDev != NULL )
 				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					DEBUG("Filesystem taken from file\n");
-					BufString *resp = actFS->Info( actDev, path );
-					DEBUG("info command on FSYS: %s called\n", actFS->GetPrefix() );
-					
-					if( resp != NULL )
+					DEBUG( "ok, next up is to see if the filesystem wants special treatment... PATH %\n" );
+					if( ( lpath = FCalloc( strlen( path ) + 255, sizeof(char) ) ) != NULL )
 					{
-						HttpAddTextContent( response, resp->bs_Buffer );
-						
-						BufStringDelete( resp );
-					}
-					
-					//
-					// DIR
-					//
-					
-				}
-				else if( strcmp( urlpath[ 1 ], "dir" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					DEBUG( "[system.library] Filesystem taken from file, doing dir on %s\n", path );
-					BufString *resp = actFS->Dir( actDev, path );
-					DEBUG("[system.library] info command on FSYS: %s called\n", actFS->GetPrefix() );
-					
-					if( resp != NULL)
-					{
-						if( resp->bs_Buffer )
+						UrlDecode( lpath, path );
+		
+						int dpos = doublePosition( lpath );
+			
+						// Local filesystem wants a unix path string
+						//if( strcmp( actDev->f_FSysName, "local" ) == 0 )
 						{
-							DEBUG("Return from FS %s\n", resp->bs_Buffer );
-							HttpAddTextContent( response, resp->bs_Buffer );
+							strcpy( path, &lpath[ dpos + 1 ] ); // TODO: Remove this, we're not fucking with the path
 						}
-						BufStringDelete( resp );
+						DEBUG( "Local filesystem wanted this path: \'%s\'\n", path );
+						FFree( lpath );
+						lpath = NULL;
 					}
-					
-					DEBUG( "There was no answer...\n" );
+		
+					DEBUG( "File found pointer %p DEVNAME %s\n", actDev, devname );
+			
+					//
+					// checking file commands
+					//
+				
+					DEBUG( "Checking 3rd part from path '%s' - path '%s'\n", urlpath[ 0 ], path );
 				
 					//
-					// Rename
+					// INFO
 					//
 				
-				}
-				else if( strcmp( urlpath[ 1 ], "rename" ) == 0 )
-				{
-					char *nname = NULL;
-					el = HttpGetPOSTParameter( request, "newname" );
-					if( el == NULL ) el = HashmapGet( request->query, "newname" );
-					if( el != NULL )
-					{
-						nname = (char *)el->data;
-					}
-					
-					if( nname != NULL )
+					if( strcmp( urlpath[ 1 ], "info" ) == 0 )
 					{
 						FHandler *actFS = (FHandler *)actDev->f_FSys;
-						DEBUG("Filesystem RENAME\n");
+						DEBUG("Filesystem taken from file\n");
+						BufString *resp = actFS->Info( actDev, path );
+						DEBUG("info command on FSYS: %s called\n", actFS->GetPrefix() );
+					
+						if( resp != NULL )
+						{
+							HttpAddTextContent( response, resp->bs_Buffer );
 						
+							BufStringDelete( resp );
+						}
+					
+						//
+						// DIR
+						//
+					
+					}
+					else if( strcmp( urlpath[ 1 ], "dir" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+						DEBUG( "[system.library] Filesystem taken from file, doing dir on %s\n", path );
+						BufString *resp = actFS->Dir( actDev, path );
+						DEBUG("[system.library] info command on FSYS: %s called\n", actFS->GetPrefix() );
+					
+						if( resp != NULL)
+						{
+							if( resp->bs_Buffer )
+							{
+								DEBUG("Return from FS %s\n", resp->bs_Buffer );
+								HttpAddTextContent( response, resp->bs_Buffer );
+							}
+							BufStringDelete( resp );
+						}
+					
+						DEBUG( "There was no answer...\n" );
+				
+						//
+						// Rename
+						//
+				
+					}
+					else if( strcmp( urlpath[ 1 ], "rename" ) == 0 )
+					{
+						char *nname = NULL;
+						el = HttpGetPOSTParameter( request, "newname" );
+						if( el == NULL ) el = HashmapGet( request->query, "newname" );
+						if( el != NULL )
+						{
+							nname = (char *)el->data;
+						}
+					
+						if( nname != NULL )
+						{
+							FHandler *actFS = (FHandler *)actDev->f_FSys;
+							DEBUG("Filesystem RENAME\n");
+						
+							char tmp[ 100 ];
+						
+							int error = actFS->Rename( actDev, path, nname );
+							sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
+						
+							DEBUG("info command on FSYS: %s RENAME\n", actFS->GetPrefix() );
+					
+							HttpAddTextContent( response, tmp );
+						}
+						else
+						{
+							HttpAddTextContent( response, "{ \"ErrorMessage\": \"nname parameter is missing\" }" );
+						}
+					
+						//
+						// Delete
+						//
+					
+					}
+					else if( strcmp( urlpath[ 1 ], "delete" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+						DEBUG("Filesystem DELETE\n");
+					
 						char tmp[ 100 ];
 						
-						int error = actFS->Rename( actDev, path, nname );
+						int error = actFS->Delete( actDev, path );
 						sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
-						
-						DEBUG("info command on FSYS: %s RENAME\n", actFS->GetPrefix() );
+						DEBUG("info command on FSYS: %s DELETE\n", actFS->GetPrefix() );
 					
 						HttpAddTextContent( response, tmp );
+					
+						//
+						// MakeDir
+						//
+					
 					}
-					else
+					else if( strcmp( urlpath[ 1 ], "makedir" ) == 0 )
 					{
-						HttpAddTextContent( response, "{ \"ErrorMessage\": \"nname parameter is missing\" }" );
-					}
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+						DEBUG("Filesystem MAKEDIR\n");
 					
-					//
-					// Delete
-					//
+						char tmp[ 100 ];
 					
-				}
-				else if( strcmp( urlpath[ 1 ], "delete" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					DEBUG("Filesystem DELETE\n");
-					
-					char tmp[ 100 ];
-						
-					int error = actFS->Delete( actDev, path );
-					sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
-					DEBUG("info command on FSYS: %s DELETE\n", actFS->GetPrefix() );
-					
-					HttpAddTextContent( response, tmp );
-					
-					//
-					// MakeDir
-					//
-					
-				}
-				else if( strcmp( urlpath[ 1 ], "makedir" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					DEBUG("Filesystem MAKEDIR\n");
-					
-					char tmp[ 100 ];
-					
-					char *lpath = UrlDecodeToMem( path );
-					if( lpath != NULL )
-					{
-						int error = actFS->MakeDir( actDev, lpath );
-						sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
-						DEBUG("info command on FSYS: %s MAKEDIR\n", actFS->GetPrefix() );
-					
-						HttpAddTextContent( response, tmp );
-						
-						free( lpath );
-					}
-					else
-					{
-						HttpAddTextContent( response, "Cannot allocate memory for decoded path\n" );
-					}
-					//
-					// Execute
-					//
-					
-				}
-				else if( strcmp( urlpath[ 1 ], "exec" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					DEBUG("Filesystem EXEC\n");
-					char *resp = (char *)actFS->Execute( actDev, path, NULL );	// last parameter is arguments
-					DEBUG("info command on FSYS: %s EXEC\n", actFS->GetPrefix() );
-					
-					if( resp != NULL )
-					{
-						HttpAddTextContent( response, resp );
-						
-						free( resp );
-					}
-				}
-				
-				//
-				// file read
-				//
-				
-				else if( strcmp( urlpath[ 1 ], "read" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					
-					char *mode = NULL;
-					char *offset = NULL;
-					char *bytes = NULL;
-					
-					DEBUG("Filesystem taken from file\n");
-					
-					el = HttpGetPOSTParameter( request, "mode" );
-					if( el == NULL ) el = HashmapGet( request->query, "mode" );
-					if( el != NULL )
-					{
-						mode = (char *)el->data;
-					}
-					
-					el = HttpGetPOSTParameter( request, "offset" );
-					if( el == NULL ) el = HashmapGet( request->query, "offset" );
-					if( el != NULL )
-					{
-						offset = (char *)el->data;
-					}
-					
-					el = HttpGetPOSTParameter( request, "bytes" );
-					if( el == NULL ) el = HashmapGet( request->query, "bytes" );
-					if( el != NULL )
-					{
-						bytes = (char *)el->data;
-					}
-					
-					if( mode != NULL && mode[0] == 'r' )
-					{
-						File *fp = (File *)actFS->FileOpen( actDev, path, mode );
-						
-						// Success?
-						if( fp != NULL )
+						char *lpath = UrlDecodeToMem( path );
+						if( lpath != NULL )
 						{
-							int dataread = 0;
-							
-							struct stringPart *head = NULL;
-							struct stringPart *curr = NULL;
-							
-							fp->f_Raw = 0;
-							if( strcmp( mode, "rb" ) == 0 )
+							int error = actFS->MakeDir( actDev, lpath );
+							sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
+							DEBUG("info command on FSYS: %s MAKEDIR\n", actFS->GetPrefix() );
+					
+							HttpAddTextContent( response, tmp );
+						
+							free( lpath );
+						}
+						else
+						{
+							HttpAddTextContent( response, "Cannot allocate memory for decoded path\n" );
+						}
+						//
+						// Execute
+						//
+					
+					}
+					else if( strcmp( urlpath[ 1 ], "exec" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+						DEBUG("Filesystem EXEC\n");
+						char *resp = (char *)actFS->Execute( actDev, path, NULL );	// last parameter is arguments
+						DEBUG("info command on FSYS: %s EXEC\n", actFS->GetPrefix() );
+					
+						if( resp != NULL )
+						{
+							HttpAddTextContent( response, resp );
+						
+							free( resp );
+						}
+					}
+				
+					//
+					// file read
+					//
+				
+					else if( strcmp( urlpath[ 1 ], "read" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+					
+						char *mode = NULL;
+						char *offset = NULL;
+						char *bytes = NULL;
+					
+						DEBUG("Filesystem taken from file\n");
+					
+						el = HttpGetPOSTParameter( request, "mode" );
+						if( el == NULL ) el = HashmapGet( request->query, "mode" );
+						if( el != NULL )
+						{
+							mode = (char *)el->data;
+						}
+					
+						el = HttpGetPOSTParameter( request, "offset" );
+						if( el == NULL ) el = HashmapGet( request->query, "offset" );
+						if( el != NULL )
+						{
+							offset = (char *)el->data;
+						}
+					
+						el = HttpGetPOSTParameter( request, "bytes" );
+						if( el == NULL ) el = HashmapGet( request->query, "bytes" );
+						if( el != NULL )
+						{
+							bytes = (char *)el->data;
+						}
+					
+						if( mode != NULL && mode[0] == 'r' )
+						{
+							File *fp = (File *)actFS->FileOpen( actDev, path, mode );
+						
+							// Success?
+							if( fp != NULL )
 							{
-								fp->f_Raw = 1;
-							}
+								int dataread = 0;
 							
-							//we want to read only part of data
-							#define FS_READ_BUFFER 81920
-							int totalBytes = 0;
+								struct stringPart *head = NULL;
+								struct stringPart *curr = NULL;
 							
-							if( offset != NULL && bytes != NULL )
-							{
-								int offsetint = atoi( offset );
-								int bytesint = atoi( bytes );
+								fp->f_Raw = 0;
+								if( strcmp( mode, "rb" ) == 0 )
+								{
+									fp->f_Raw = 1;
+								}
+							
+								//we want to read only part of data
+								#define FS_READ_BUFFER 262144
+								int totalBytes = 0;
+							
+								if( offset != NULL && bytes != NULL )
+								{
+									int offsetint = atoi( offset );
+									int bytesint = atoi( bytes );
 								
-								if( -1 != actFS->FileSeek( fp, offsetint ) )
+									if( actFS->FileSeek( fp, offsetint ) != -1 )
+									{
+										if( !head )
+										{
+											head = FCalloc( 1, sizeof( struct stringPart ) );
+											curr = NULL;
+										}
+										int readbytes = FS_READ_BUFFER;
+										if( bytesint < readbytes )
+										{
+											readbytes = bytesint;
+										}
+									
+										char *dataBuffer = FCalloc( readbytes, sizeof( char ) );
+									
+										while( ( dataread = actFS->FileRead( fp, dataBuffer, readbytes ) ) != -1 )
+										{
+											if( dataread == 0 ) continue;
+										
+											// Mind our list
+											if( curr == NULL )
+											{
+												curr = head;
+											}
+											else
+											{
+												curr->next = FCalloc( 1, sizeof( struct stringPart ) );
+												curr = curr->next;
+											}
+										
+											// Add data
+											curr->string = dataBuffer;
+											dataBuffer = NULL;
+										
+											// Make sure we only read as much as we need
+											bytesint -= dataread;
+											if( bytesint > 0 ) 
+											{
+												break;
+											}
+											if( bytesint < readbytes )
+											{
+												readbytes = bytesint;
+											}
+											curr->length = readbytes;
+											totalBytes += readbytes;
+											dataBuffer = calloc( readbytes, sizeof( char ) );
+										}
+										if( dataBuffer ) free( dataBuffer );
+									}
+								}
+								else // we want to read whole file
 								{
 									if( !head )
 									{
 										head = FCalloc( 1, sizeof( struct stringPart ) );
 										curr = NULL;
 									}
+								
 									int readbytes = FS_READ_BUFFER;
-									if( bytesint < readbytes )
-									{
-										readbytes = bytesint;
-									}
-									
-									char *dataBuffer = FCalloc( readbytes, sizeof( char ) );
-									
-									while( ( dataread = actFS->FileRead( fp, dataBuffer, readbytes ) ) != -1 )
+									char *dataBuffer = FCalloc( readbytes, sizeof( char ) ); 
+								
+									while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
 									{
 										if( dataread == 0 ) continue;
-										
+									
 										// Mind our list
-										if( curr == NULL )
-										{
-											curr = head;
-										}
+										if( curr == NULL ) curr = head;
 										else
 										{
 											curr->next = FCalloc( 1, sizeof( struct stringPart ) );
 											curr = curr->next;
 										}
-										
+									
 										// Add data
 										curr->string = dataBuffer;
-										dataBuffer = NULL;
-										
-										// Make sure we only read as much as we need
-										bytesint -= dataread;
-										if( bytesint > 0 ) 
-										{
-											break;
-										}
-										if( bytesint < readbytes )
-										{
-											readbytes = bytesint;
-										}
-										curr->length = readbytes;
-										totalBytes += readbytes;
-										dataBuffer = calloc( readbytes, sizeof( char ) );
-									}
-									if( dataBuffer ) free( dataBuffer );
-								}
-							}
-							else // we want to read whole file
-							{
-								if( !head )
-								{
-									head = FCalloc( 1, sizeof( struct stringPart ) );
-									curr = NULL;
-								}
-								
-								int readbytes = FS_READ_BUFFER;
-								char *dataBuffer = FCalloc( readbytes, sizeof( char ) ); 
-								
-								while( ( dataread = actFS->FileRead( fp, dataBuffer, FS_READ_BUFFER ) ) != -1 )
-								{
-									if( dataread == 0 ) continue;
+										curr->length = dataread;
+										totalBytes += dataread;
 									
-									// Mind our list
-									if( curr == NULL ) curr = head;
-									else
+										dataBuffer = FCalloc( readbytes, sizeof( char ) );
+									}
+									if( dataBuffer )
 									{
-										curr->next = FCalloc( 1, sizeof( struct stringPart ) );
-										curr = curr->next;
+										FFree( dataBuffer );
 									}
-									
-									// Add data
-									curr->string = dataBuffer;
-									curr->length = dataread;
-									totalBytes += dataread;
-									
-									dataBuffer = FCalloc( readbytes, sizeof( char ) );
-								}
-								if( dataBuffer )
-								{
-									FFree( dataBuffer );
-								}
 							
-							}	// end of reading part or whole file
+								}	// end of reading part or whole file
 							
-							// Close the file
-							actFS->FileClose( actDev, fp );
+								// Close the file
+								actFS->FileClose( actDev, fp );
 							
-							if( head && totalBytes > 0 )
-							{	
-								// Combine all parts into one buffer
-								curr = head;
-								char *finalBuffer = FCalloc( totalBytes + 1, sizeof( char ) );
-								char *outputBuf = finalBuffer;
-								int offBuf = 0;
-								struct stringPart *tmp = NULL;
+								if( head && totalBytes > 0 )
+								{	
+									// Combine all parts into one buffer
+									curr = head;
+									char *finalBuffer = FCalloc( totalBytes + 1, sizeof( char ) );
+									char *outputBuf = finalBuffer;
+									int offBuf = 0;
+									struct stringPart *tmp = NULL;
 								
-								while( curr != NULL )
-								{
-									memcpy( finalBuffer + offBuf, curr->string, curr->length );
-									free( curr->string );
-									tmp = curr->next;
-									offBuf += curr->length;
-									free( curr );
-									curr = tmp;
-								}
+									while( curr != NULL )
+									{
+										memcpy( finalBuffer + offBuf, curr->string, curr->length );
+										free( curr->string );
+										tmp = curr->next;
+										offBuf += curr->length;
+										free( curr );
+										curr = tmp;
+									}
 								
-								// Try to skip embedded headers
-								char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
-								if( ptr != NULL )
-								{
-									// With the diff, move offset and set correct size
-									int diff = ( ptr - finalBuffer ) + 23;
-									totalBytes = (int)( finalBuffer - diff) + 1;
-									outputBuf = FCalloc( totalBytes, sizeof( char ) );
-									memcpy( outputBuf, ptr + 23, totalBytes );
-									free( finalBuffer );
-								}
+									// Try to skip embedded headers
+									char *ptr = strstr( finalBuffer, "---http-headers-end---\n" );
+									if( ptr != NULL )
+									{
+										// With the diff, move offset and set correct size
+										int diff = ( ptr - finalBuffer ) + 23;
+										totalBytes = ( (int)finalBuffer - diff) + 1;
+										outputBuf = FCalloc( totalBytes, sizeof( char ) );
+										memcpy( outputBuf, ptr + 23, totalBytes );
+										free( finalBuffer );
+									}
 								
-								// Correct mime from data
-								const char *mime = NULL;
-								char *fallbackMime = NULL;
-								if( l->sl_Magic != NULL && outputBuf != NULL )
-								{
-									//INFO("FILE READ BYTE %c %c %c %c\n", outputBuf[ 0 ], outputBuf[ 1 ], outputBuf[ 2 ], outputBuf[ 3 ] );
-									int bytes = totalBytes;
-									if( bytes > 16 ){ bytes = 16; }
-									mime = magic_buffer( l->sl_Magic, outputBuf, bytes );
-									DEBUG( "Ok, reading file as %s\n", mime == NULL ? "text/plain" : mime );
-								}
-								// Just in case!
-								if( mime == NULL )
-								{
-									if( strstr( path, ".pdf" ) || strstr( path, ".PDF" ) )
-										fallbackMime = StringDuplicate( "application/pdf" );
-									else if( strstr( path, ".wav" ) || strstr( path, ".WAV" ) )
-										fallbackMime = StringDuplicate( "audio/wav" );
-									else if( strstr( path, ".mp3" ) || strstr( path, ".MP3" ) )
-										fallbackMime = StringDuplicate( "audio/mp3" );
-									else if( strstr( path, ".ogg" ) || strstr( path, ".OGG" ) )
-										fallbackMime = StringDuplicate( "audio/ogg" );
-									else if( strstr( path, ".ogv" ) || strstr( path, ".OGV" ) )
-										fallbackMime = StringDuplicate( "video/ogg" );
-									else if( strstr( path, ".jpg" ) || strstr( path, ".JPG" ) )
-										fallbackMime = StringDuplicate( "image/jpeg" );
-									else if( strstr( path, ".jpeg" ) || strstr( path, ".JPEG" ) )
-										fallbackMime = StringDuplicate( "image/jpeg" );
-									else if( strstr( path, ".avi" ) || strstr( path, ".AVI" ) )
-										fallbackMime = StringDuplicate( "video/avi" );
-									else if( strstr( path, ".mp4" ) || strstr( path, ".MP4" ) )
-										fallbackMime = StringDuplicate( "video/mp4" );
-									else if( strstr( path, ".mov" ) || strstr( path, ".MOV" ) )
-										fallbackMime = StringDuplicate( "video/quicktime" );
-									else if( strstr( path, ".wmv" ) || strstr( path, ".WMV" ) )
-										fallbackMime = StringDuplicate( "video/ms-video" );
-									else if( strstr( path, ".html" ) || strstr( path, ".HTML" ) )
-										fallbackMime = StringDuplicate( "text/html" );
-									else
-										fallbackMime = StringDuplicate( "text/plain" );
-								}
+									// Correct mime from data
+									const char *mime = NULL;
+									char *fallbackMime = NULL;
+									if( l->sl_Magic != NULL && outputBuf != NULL )
+									{
+										//INFO("FILE READ BYTE %c %c %c %c\n", outputBuf[ 0 ], outputBuf[ 1 ], outputBuf[ 2 ], outputBuf[ 3 ] );
+										int bytes = totalBytes;
+										if( bytes > 16 ){ bytes = 16; }
+										mime = magic_buffer( l->sl_Magic, outputBuf, bytes );
+										DEBUG( "Ok, reading file as %s\n", mime == NULL ? "text/plain" : mime );
+									}
+									// Just in case!
+									if( mime == NULL )
+									{
+										if( strstr( path, ".pdf" ) || strstr( path, ".PDF" ) )
+											fallbackMime = StringDuplicate( "application/pdf" );
+										else if( strstr( path, ".wav" ) || strstr( path, ".WAV" ) )
+											fallbackMime = StringDuplicate( "audio/wav" );
+										else if( strstr( path, ".mp3" ) || strstr( path, ".MP3" ) )
+											fallbackMime = StringDuplicate( "audio/mp3" );
+										else if( strstr( path, ".ogg" ) || strstr( path, ".OGG" ) )
+											fallbackMime = StringDuplicate( "audio/ogg" );
+										else if( strstr( path, ".ogv" ) || strstr( path, ".OGV" ) )
+											fallbackMime = StringDuplicate( "video/ogg" );
+										else if( strstr( path, ".jpg" ) || strstr( path, ".JPG" ) )
+											fallbackMime = StringDuplicate( "image/jpeg" );
+										else if( strstr( path, ".jpeg" ) || strstr( path, ".JPEG" ) )
+											fallbackMime = StringDuplicate( "image/jpeg" );
+										else if( strstr( path, ".avi" ) || strstr( path, ".AVI" ) )
+											fallbackMime = StringDuplicate( "video/avi" );
+										else if( strstr( path, ".mp4" ) || strstr( path, ".MP4" ) )
+											fallbackMime = StringDuplicate( "video/mp4" );
+										else if( strstr( path, ".mov" ) || strstr( path, ".MOV" ) )
+											fallbackMime = StringDuplicate( "video/quicktime" );
+										else if( strstr( path, ".wmv" ) || strstr( path, ".WMV" ) )
+											fallbackMime = StringDuplicate( "video/ms-video" );
+										else if( strstr( path, ".html" ) || strstr( path, ".HTML" ) )
+											fallbackMime = StringDuplicate( "text/html" );
+										else
+											fallbackMime = StringDuplicate( "text/plain" );
+									}
 								
-								HttpFree( response );
-								response = NULL;
+									HttpFree( response );
+									response = NULL;
 								
-								struct TagItem tags[] = {
-									{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  (fallbackMime ?  fallbackMime: StringDuplicate( mime )) },
-									{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-									{TAG_DONE, TAG_DONE}
-								};
+									struct TagItem tags[] = {
+										{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  (fallbackMime ?  fallbackMime: StringDuplicate( mime )) },
+										{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+										{TAG_DONE, TAG_DONE}
+									};
 		
-								if( response != NULL ) ERROR("RESPONSE \n");
-								response = HttpNewSimple( HTTP_200_OK,  tags );
-								/*
-								// Free the fallback
-								if( fallbackMime ) 
-								{
-									free( fallbackMime );
-									fallbackMime = NULL;
-								}*/
-								
-								INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
-								HttpSetContent( response, outputBuf, totalBytes );
-							}
-							else
-							{
-								HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nCannot allocate memory for File\" }" );
-							}
-						}
-						else
-						{
-							HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nCannot open file\" }" );
-						}
-						
-						DEBUG("Open command on FSYS: %s called\n", actFS->GetPrefix() );
-					}
-					else
-					{
-						HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nmode parameter is missing\" }" );
-					}
-				
-				}
-				
-				//
-				// file write
-				//
-				
-				else if( strcmp( urlpath[ 1 ], "write" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					char *mode = NULL;
-					char *fdata = NULL;
-					
-					el = HashmapGet( request->parsedPostContent, "mode" );
-					if( el == NULL ) el = HashmapGet( request->query, "mode" );
-					if( el != NULL )
-					{
-						mode = (char *)el->data;
-					}
-					
-					el =  HashmapGet( request->parsedPostContent, "data" );
-					if( el == NULL ) el = HashmapGet( request->query, "data" );
-					if( el != NULL )
-					{
-						fdata = (char *)el->data;
-					}
-					
-					// Urldecode if need 
-					el = HashmapGet( request->parsedPostContent, "encoding" );
-					int flength = 0;
-					if( !el ) el = HashmapGet( request->query, "encoding" );
-					if( el && strcmp( el->data, "url" ) == 0 )
-					{
-						char *destf = calloc( strlen( fdata ) + 1, sizeof( char ) );
-						int l = UrlDecode( destf, fdata );
-						fdata = destf;
-					}
-					// TODO: Test UNSTABLE CODE
-					/*// Base64 instead
-					else if( el && strcmp( el->data, "base64" ) == 0 )
-					{
-						fdata = Base64Decode( fdata, strlen( fdata ), &flength );
-					}
-					int dataSize = flength > 0 ? flength : strlen( fdata );
-					*/
-					int dataSize = strlen( fdata );
-					
-					if( mode != NULL && fdata != NULL )
-					{
-						char tmp[ 100 ];
-						
-						File *fp = (File *)actFS->FileOpen( actDev, path, mode );
-						
-						if( fp != NULL )
-						{
-							int size = actFS->FileWrite( fp, fdata, dataSize );
-							if( size > 0 )
-							{
-								sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
-								HttpAddTextContent( response, tmp );
-							}
-							else
-							{
-								HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nCannot allocate memory for File\" }" );
-							}
-							actFS->FileClose( actDev, fp );
-						}
-						else
-						{
-							HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nCannot open file\" }" );
-						}
-						
-						DEBUG("Open command on FSYS: %s called\n", actFS->GetPrefix() );
-					}
-					else
-					{
-						HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nmode parameter is missing\" }" );
-					}
-				
-					//
-					// copy
-					//
-				
-				}
-				else if( strcmp( urlpath[ 1 ], "copy" ) == 0 )
-				{
-					char *topath = NULL;
-					el = HashmapGet( request->parsedPostContent, "to" );
-					if( el == NULL ) el = HashmapGet( request->query, "to" );
-					if( el != NULL )
-					{
-						topath = (char *)el->data;
-						
-						char *tpath;
-						if( ( tpath = calloc( strlen( topath ) + 10 + 256, sizeof(char) ) ) != NULL )
-						{
-							UrlDecode( tpath, topath );
-							strcpy( topath, tpath );
-							free( tpath );
-						}
-						
-						INFO("COPY!\n");
-
-						FHandler *dsthand;
-						char *srcpath, *dstpath;
-					
-						File *copyFile;
-					
-						//srchand = GetHandlerByPath( dbusr, &dstpath, path );
-						DEBUG( "Getting file by path: %s\n", path );
-						File *dstrootf = GetFileByPath( loggedUser, &dstpath, topath );
-
-						DEBUG("COPY from %s TO %s\n", path, topath );
-						
-						if( dstrootf != NULL )
-						{
-							dsthand = dstrootf->f_FSys;
-							FHandler *actFS = (FHandler *)actDev->f_FSys;
-							
-							int rsize = 0;
-							
-							DEBUG("COPY from %s TO %s 1\n", path, topath );
-							
-							if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
-							{
-								File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
-								File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
-								if( rfp != NULL && wfp != NULL )
-								{
-									// Using a big buffer!
-									char dataBuffer[ 524288 ];
-									int dataread = 0, written = 0;
-									char *bs = calloc( 524289, sizeof( char ) );
-
-									while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
+									if( response != NULL ) ERROR("RESPONSE \n");
+									response = HttpNewSimple( HTTP_200_OK,  tags );
+									/*
+									// Free the fallback
+									if( fallbackMime ) 
 									{
-										if( dataread > 0 )
-										{
-											written += dsthand->FileWrite( wfp, dataBuffer, dataread );
-										}
-									}
+										free( fallbackMime );
+										fallbackMime = NULL;
+									}*/
 								
-									// Free up temp buffer
-									free( bs );
-								
-									DEBUG( "Wrote %d bytes.\n", written );
-									DEBUG("File Opened\n");
-								
+									INFO("READ RETURN BYTES %d  - %s\n", totalBytes, mime );
+									HttpSetContent( response, outputBuf, totalBytes );
 								}
 								else
 								{
-									DEBUG( "We could not do anything with the bad file pointers..\n" );
+									HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nCannot allocate memory for File\" }" );
 								}
-								if( rfp )
-								{
-									actFS->FileClose( actDev, rfp );
-								}
-								if( wfp )
-								{
-									dsthand->FileClose( dstrootf, wfp );
-								}
-							}
-							else		// make directory
-							{
-								FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
-								DEBUG("Filesystem MAKEDIR (%s)\n", topath);
-					
-								char tmp[ 100 ];
-					
-								int error = dsthand->MakeDir( dstrootf, topath );
-								sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
-								DEBUG("info command on FSYS: %s MAKEDIR\n", dsthand->GetPrefix() );
-					
-								HttpAddTextContent( response, tmp );
-							}
-						}
-					}
-				}	// "file" copy
-				
-				//
-				// file upload
-				//
-				
-				else if( strcmp( urlpath[ 1 ], "upload" ) == 0 )
-				{
-					FHandler *actFS = (FHandler *)actDev->f_FSys;
-					
-					INFO("Uploading file\n");
-					int uploadedFiles = 0;
-					char *tmpPath;
-					if( path == NULL )
-					{
-						ERROR("PATH == NULL\n");
-					}
-					if( ( tmpPath = (char *) calloc( strlen(path)+2048, sizeof(char) ) ) != NULL )
-					{
-						HttpFile *file = request->h_FileList;
-						while( file != NULL )
-						{
-							sprintf( tmpPath, "%s%s", path, file->hf_FileName );
-							DEBUG("Trying to save file %s\n", tmpPath );
-						
-							File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
-							if( fp != NULL )
-							{
-								actFS->FileWrite( fp, file->hf_Data, file->hf_FileSize );
-								actFS->FileClose( actDev, fp );
-								
-								uploadedFiles++;
 							}
 							else
 							{
-								ERROR("Cannot open file to store %s\n", path );
+								HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nCannot open file\" }" );
 							}
 						
-							file = (HttpFile *) file->node.mln_Succ;
-						} // while, goging through files
-						
-						DEBUG("Free path\n");
-						free( tmpPath );
+							DEBUG("Open command on FSYS: %s called\n", actFS->GetPrefix() );
+						}
+						else
+						{
+							HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"nmode parameter is missing\" }" );
+						}
+				
 					}
+				
+					//
+					// file write
+					//
+				
+					else if( strcmp( urlpath[ 1 ], "write" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+						char *mode = NULL;
+						char *fdata = NULL;
+					
+						el = HashmapGet( request->parsedPostContent, "mode" );
+						if( el == NULL ) el = HashmapGet( request->query, "mode" );
+						if( el != NULL )
+						{
+							mode = (char *)el->data;
+						}
+					
+						el =  HashmapGet( request->parsedPostContent, "data" );
+						if( el == NULL ) el = HashmapGet( request->query, "data" );
+						if( el != NULL )
+						{
+							fdata = (char *)el->data;
+						}
+					
+						// Urldecode if need 
+						el = HashmapGet( request->parsedPostContent, "encoding" );
+						int flength = 0;
+						if( !el ) el = HashmapGet( request->query, "encoding" );
+						if( el && strcmp( el->data, "url" ) == 0 )
+						{
+							char *destf = calloc( strlen( fdata ) + 1, sizeof( char ) );
+							int l = UrlDecode( destf, fdata );
+							fdata = destf;
+						}
+						// TODO: Test UNSTABLE CODE
+						/*// Base64 instead
+						else if( el && strcmp( el->data, "base64" ) == 0 )
+						{
+							fdata = Base64Decode( fdata, strlen( fdata ), &flength );
+						}
+						int dataSize = flength > 0 ? flength : strlen( fdata );
+						*/
+						int dataSize = strlen( fdata );
+					
+						if( mode != NULL && fdata != NULL )
+						{
+							char tmp[ 100 ];
+						
+							File *fp = (File *)actFS->FileOpen( actDev, path, mode );
+						
+							if( fp != NULL )
+							{
+								int size = actFS->FileWrite( fp, fdata, dataSize );
+								if( size > 0 )
+								{
+									sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
+									HttpAddTextContent( response, tmp );
+								}
+								else
+								{
+									HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nCannot allocate memory for File\" }" );
+								}
+								actFS->FileClose( actDev, fp );
+							}
+							else
+							{
+								HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nCannot open file\" }" );
+							}
+						
+							DEBUG("Open command on FSYS: %s called\n", actFS->GetPrefix() );
+						}
+						else
+						{
+							HttpAddTextContent( response, "ok<!--separate-->{ \"ErrorMessage\": \"nmode parameter is missing\" }" );
+						}
+				
+						//
+						// copy
+						//
+				
+					}
+					else if( strcmp( urlpath[ 1 ], "copy" ) == 0 )
+					{
+						char *topath = NULL;
+						el = HashmapGet( request->parsedPostContent, "to" );
+						if( el == NULL ) el = HashmapGet( request->query, "to" );
+						if( el != NULL )
+						{
+							topath = (char *)el->data;
+						
+							char *tpath;
+							if( ( tpath = calloc( strlen( topath ) + 10 + 256, sizeof(char) ) ) != NULL )
+							{
+								UrlDecode( tpath, topath );
+								strcpy( topath, tpath );
+								free( tpath );
+							}
+						
+							INFO("COPY!\n");
+
+							FHandler *dsthand;
+							char *srcpath, *dstpath;
+					
+							File *copyFile;
+					
+							//srchand = GetHandlerByPath( dbusr, &dstpath, path );
+							DEBUG( "Getting file by path: %s\n", path );
+							File *dstrootf = GetFileByPath( loggedUser, &dstpath, topath );
+
+							DEBUG("COPY from %s TO %s\n", path, topath );
+						
+							if( dstrootf != NULL )
+							{
+								dsthand = dstrootf->f_FSys;
+								FHandler *actFS = (FHandler *)actDev->f_FSys;
+							
+								int rsize = 0;
+							
+								DEBUG("COPY from %s TO %s 1\n", path, topath );
+							
+								if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
+								{
+									File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
+									File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
+									if( rfp != NULL && wfp != NULL )
+									{
+										// Using a big buffer!
+										char dataBuffer[ 524288 ];
+										int dataread = 0, written = 0;
+										char *bs = calloc( 524289, sizeof( char ) );
+
+										while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
+										{
+											if( dataread > 0 )
+											{
+												written += dsthand->FileWrite( wfp, dataBuffer, dataread );
+											}
+										}
+								
+										// Free up temp buffer
+										free( bs );
+								
+										DEBUG( "Wrote %d bytes.\n", written );
+										DEBUG("File Opened\n");
+								
+									}
+									else
+									{
+										DEBUG( "We could not do anything with the bad file pointers..\n" );
+									}
+									if( rfp )
+									{
+										actFS->FileClose( actDev, rfp );
+									}
+									if( wfp )
+									{
+										dsthand->FileClose( dstrootf, wfp );
+									}
+								}
+								else		// make directory
+								{
+									FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
+									DEBUG("Filesystem MAKEDIR (%s)\n", topath);
+					
+									char tmp[ 100 ];
+					
+									int error = dsthand->MakeDir( dstrootf, topath );
+									sprintf( tmp, "ok<!--separate-->{ \"ErrorMessage\": \"%d\"}", error );
+									DEBUG("info command on FSYS: %s MAKEDIR\n", dsthand->GetPrefix() );
+					
+									HttpAddTextContent( response, tmp );
+								}
+							}
+						}
+					}	// "file" copy
+				
+					//
+					// file upload
+					//
+				
+					else if( strcmp( urlpath[ 1 ], "upload" ) == 0 )
+					{
+						FHandler *actFS = (FHandler *)actDev->f_FSys;
+					
+						INFO("Uploading file\n");
+						int uploadedFiles = 0;
+						char *tmpPath;
+						if( path == NULL )
+						{
+							ERROR("PATH == NULL\n");
+						}
+						if( ( tmpPath = (char *) calloc( strlen(path)+2048, sizeof(char) ) ) != NULL )
+						{
+							HttpFile *file = request->h_FileList;
+							while( file != NULL )
+							{
+								sprintf( tmpPath, "%s%s", path, file->hf_FileName );
+								DEBUG("Trying to save file %s\n", tmpPath );
+						
+								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
+								if( fp != NULL )
+								{
+									actFS->FileWrite( fp, file->hf_Data, file->hf_FileSize );
+									actFS->FileClose( actDev, fp );
+								
+									uploadedFiles++;
+								}
+								else
+								{
+									ERROR("Cannot open file to store %s\n", path );
+								}
+						
+								file = (HttpFile *) file->node.mln_Succ;
+							} // while, goging through files
+						
+							DEBUG("Free path\n");
+							free( tmpPath );
+						}
+						else
+						{
+							ERROR("Cannot allocate memory for path buffer\n");
+						}
+						
+						{
+							char tmp[ 1024 ];
+						
+							sprintf( tmp, "ok<!--separate-->{ \"Uploaded files\": \"%d\"}", uploadedFiles );
+					
+							HttpAddTextContent( response, tmp );
+							result = 200;
+						}
+						DEBUG("Upload done\n");
+					}		// file/upload
+				
 					else
 					{
-						ERROR("Cannot allocate memory for path buffer\n");
+						DEBUG("NOT MOUNTED!\n");
+						HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"Device not mounted\" }" );
 					}
-						
-					{
-						char tmp[ 1024 ];
-						
-						sprintf( tmp, "ok<!--separate-->{ \"Uploaded files\": \"%d\"}", uploadedFiles );
-					
-						HttpAddTextContent( response, tmp );
-						result = 200;
-					}
-					DEBUG("Upload done\n");
-				}		// file/upload
-			}
-			else
-			{
-				DEBUG("NOT MOUNTED!\n");
-				HttpAddTextContent( response, "fail<!--separate-->{ \"ErrorMessage\": \"Device not mounted\" }" );
+				}
 			}
 		}
 		
@@ -3023,6 +3097,7 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http* request )
 	}
 	DEBUG("Response pointer %p\n", response );
 	if( userAdded == FALSE && loggedUser != NULL )
+	//if( loggedUser != NULL )
 	{
 		//UserLibrary *ulib = l->LibraryUserGet( l );
 		//ulib->UserFree( loggedUser );
@@ -3035,6 +3110,7 @@ error:
 	
 	DEBUG("WebRequest end ERROR\n");
 	if( userAdded == FALSE && loggedUser != NULL )
+	//if( loggedUser != NULL )
 	{
 		//UserLibrary *ulib = l->LibraryUserGet( l );
 		//ulib->UserFree( loggedUser );
@@ -3100,8 +3176,6 @@ void LibraryUserDrop( struct SystemBase *l, UserLibrary *uclose )
 //
 // Open Library
 //
-
-void usleep( int );
 
 struct MYSQLLibrary *LibraryMYSQLGet( struct SystemBase *l )
 {
@@ -3357,7 +3431,7 @@ void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib )
 // send message to user websockets
 //
 
-#ifdef WEBSOCKETS
+#ifdef ENABLE_WEBSOCKETS
 
 int WebSocketSendMessage( struct SystemBase *l, User *user, char *msg, int len )
 {

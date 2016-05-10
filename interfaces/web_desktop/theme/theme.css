@@ -35,6 +35,10 @@
 	$ColorBgButton:          #3B81C2;
 	$ColorButtonHover:       #ffffff;
 	$ColorBgButtonHover:     #5EC6ED;
+	$ColorSelect:            #000000;
+	$ColorBgSelect:          #D0D0D0;
+	$ColorSelectHover:       #404040;
+	$ColorBgSelectHover:     #f8f8f8;
 	$ColorBgTdListTable:     #f8f8f8;
 	$ColorLists:             #3f3f3f;
 	$ColorListsAlternate:    #303030;
@@ -96,7 +100,7 @@
 	$MarginButton:           0 4px 0 0;
 	$MarginButtonTd:         0;
 	$MarginVerticalRuler:    0 8px 0 0;
-	$MarginTabs:             0 2px 0 0;
+	$MarginTabs:             0 4px 0 0;
 	$MarginBox:              0;
 	$MarginWindowTop:        35px;
 	$MarginWindowTopVBars:   34px;
@@ -133,7 +137,7 @@
 	$WinBorderBottomBlur:    1px solid #707070;
 	$WinBottomBarHeight:     17px;
 	$WinContentBottom:       18px;
-	$BorderRadiusTabs:       2px 2px 0 0;
+	$BorderRadiusTabs:       8px 8px 0 0;
 	$BorderPageActive:       1px solid #e0e0e0;
 	$BorderRuler:            1px solid #e0e0e0;
 	
@@ -367,6 +371,21 @@
 	background-image: linear-gradient(to bottom, #9BD6F2 12%, #FFFFFF 15%, #FDFDFD 100%);
 }
 
+/* Buttons */
+
+button, .Button
+{
+	background-image: url(/webclient/gfx/system/window_topgradient.png);
+	background-repeat: repeat-x;
+	background-position: top left;
+}
+
+button:hover, .Button:hover
+{
+	background-position: bottom left;
+}
+
+
 /* Dialog boxes */
 
 .Dialog
@@ -541,6 +560,18 @@ table.List > tbody > tr.sw2 > th
 {
 	border-top: 1px solid #f0f0f0;
 	border-bottom: 1px solid #d0d0d0;
+}
+
+.View > .Content:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 1px;
+	top: 0;
+	width: 100%;
+	background: rgba(0,0,0,0.2);
+	z-index: 2147483647;
 }
 
 /* Some links --------------------------------------------------------------- */

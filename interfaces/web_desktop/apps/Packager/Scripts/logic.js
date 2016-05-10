@@ -1,25 +1,38 @@
-/*******************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
 
 Application.run = function( msg, iface )
 {
-	
+	refreshPackages();
 }
 
+function refreshPackages()
+{
+	var j = new cAjax();
+	j.open( 'get', '/repository/index.json', true, false );
+	j.onload = function()
+	{
+		Application.packages = JSON.parse( this.responseText() );
+		redrawPackages();
+	}
+	j.send();
+}
 
+function redrawPackages()
+{
+	if( !Application.packages )
+	{
+		ge( 'Packagelist' ).innerHTML = '';
+	}
+	// Get categories
+	var m = '';
+	for( var a in Application.packages )
+	{
+		m += '<h2 class="BorderBottom">' + a + '</h2>';
+		var cat = Application.packages[a];
+		for( var b in cat )
+		{
+			var pk = cat[b];
+			m += '<p class="BorderBottom BackgroundList ColorList">' + pk.Name + '</p>';
+		}
+	}
+	ge( 'Packagelist' ).innerHTML = m;
+}

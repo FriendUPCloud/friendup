@@ -17,8 +17,9 @@
 *                                                                              *
 *******************************************************************************/
 
-#define _XOPEN_SOURCE 600
-
+#include <core/types.h>
+#include <netdb.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -46,7 +47,7 @@ extern char RSA_SERVER_CA_PATH[  ];
 
 // Enable/disabled SSL
 
-BOOL SSLEnabled;
+//BOOL SSLEnabled;
 
 extern pthread_mutex_t sslmut;
 
@@ -55,7 +56,10 @@ extern pthread_mutex_t sslmut;
 // Returns structure on success and NULL on failure.
 //
 
-Socket* SocketOpen( unsigned short port, int type )
+static int ssl_session_ctx_id = 1;
+static int ssl_sockopt_on = 1;
+
+Socket* SocketOpen( BOOL ssl, unsigned short port, int type )
 {
 	Socket *sock = NULL;
 	int fd = socket( AF_INET6, SOCK_STREAM | SOCK_NONBLOCK, 0 );
@@ -67,9 +71,7 @@ Socket* SocketOpen( unsigned short port, int type )
 	
 	if( type == SOCKET_TYPE_SERVER )
 	{
-		int on = 1;
-		
-		if( ( sock = (Socket *) calloc( 1, sizeof( Socket ) ) ) != NULL )
+		if( ( sock = (Socket *) FCalloc( 1, sizeof( Socket ) ) ) != NULL )
 		{
 			sock->port = port;
 		}
@@ -79,9 +81,10 @@ Socket* SocketOpen( unsigned short port, int type )
 			ERROR("Cannot allocate memory for socket!\n");
 			return NULL;
 		}
+		sock->s_SSLEnabled = ssl;
 		
-		if( SSLEnabled == TRUE )
-		{
+		if( sock->s_SSLEnabled == TRUE )
+		{	
 			sock->s_VerifyClient = TRUE;
 			
 			INFO("SSL Connection enabled\n");
@@ -106,7 +109,7 @@ Socket* SocketOpen( unsigned short port, int type )
 				// Load the RSA CA certificate into the SSL_CTX structure 
 				if ( !SSL_CTX_load_verify_locations( sock->s_Ctx, RSA_SERVER_CA_CERT, RSA_SERVER_CA_PATH )) 
 				{
-					ERROR( "Could not verify cert: %s\n", RSA_SERVER_CA_CERT );
+					ERROR( "Could not verify cert CA: %s CA_PATH: %s", RSA_SERVER_CA_CERT, RSA_SERVER_CA_PATH );
 					close( fd );
 					SocketFree( sock );
 					return NULL;
@@ -148,14 +151,13 @@ Socket* SocketOpen( unsigned short port, int type )
 			}
 			
 			// Lets not block and lets allow retries!
-			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE );
-			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER );
-			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_AUTO_RETRY ); // <- why
+			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY );
 			SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
-			SSL_CTX_set_session_id_context( sock->s_Ctx, (const unsigned char *)"friendcore", 10 );
+			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET );
+		    SSL_CTX_set_session_id_context( sock->s_Ctx, (void *)&ssl_session_ctx_id, sizeof(ssl_session_ctx_id) );
 		}
 		
-		if( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on) ) < 0 )
+		if( setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (char*)&ssl_sockopt_on, sizeof(ssl_sockopt_on) ) < 0 )
 		{
 			ERROR( "[SOCKET] ERROR setsockopt(SO_REUSEADDR) failed\n");
 			close( fd );
@@ -163,7 +165,7 @@ Socket* SocketOpen( unsigned short port, int type )
 			return NULL;
 		}
 		
-		struct timeval t = { 10, 0 };
+		struct timeval t = { 60, 0 };
 		
 		if( setsockopt( fd, SOL_SOCKET, SO_SNDTIMEO, ( void *)&t, sizeof( t ) ) < 0 )
 		{
@@ -185,7 +187,7 @@ Socket* SocketOpen( unsigned short port, int type )
 		memset( &server, 0, sizeof( server ) );
 		//server.sin6_len = sizeof( server );
 		server.sin6_family = AF_INET6;
-		server.sin6_addr = in6addr_any;
+		server.sin6_addr = in6addr_any;//inet_addr("0.0.0.0");//inet_pton("0.0.0.0");//in6addr_any;
 		server.sin6_port = ntohs( port );
 
 		if( bind( fd, (struct sockaddr*)&server, sizeof( server ) ) == -1 )
@@ -212,10 +214,58 @@ Socket* SocketOpen( unsigned short port, int type )
 			ERROR("Cannot allocate memory for socket!\n");
 			return NULL;
 		}
-
+		
+		if( sock->s_SSLEnabled == TRUE )
+		{
+			sock->s_Meth = SSLv23_client_method();
+			if( sock->s_Meth  == NULL )
+			{
+				ERROR("Cannot create SSL client method!\n");
+				SocketClose( sock );
+				return NULL;
+			}
+ 
+			// Create a SSL_CTX structure 
+			sock->s_Ctx = SSL_CTX_new( sock->s_Meth );
+			if( sock->s_Ctx  == NULL )
+			{
+				ERROR("Cannot create SSL context!\n");
+				SocketClose( sock );
+				return NULL;
+			}
+			
+			SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY );
+			SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
+			SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET );
+		    SSL_CTX_set_session_id_context( sock->s_Ctx, (void *)&ssl_session_ctx_id, sizeof(ssl_session_ctx_id) );
+						
+			sock->s_Ssl = SSL_new( sock->s_Ctx );
+			SSL_set_fd( sock->s_Ssl, sock->fd );
+			
+			//SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH );
+			int cache = SSL_CTX_get_session_cache_mode( sock->s_Ctx );
+			INFO("Cache mode set to: ");
+			switch( cache )
+			{
+				case SSL_SESS_CACHE_OFF:
+					INFO("off\n");
+					break;
+				case SSL_SESS_CACHE_CLIENT:
+					INFO("client only\n");
+					break;
+				case SSL_SESS_CACHE_SERVER:
+					INFO("server only\n" );
+					break;
+				case SSL_SESS_CACHE_BOTH:
+					INFO("server and client\n");
+					break;
+				default:
+					INFO("undefined\n");
+			}
+		}
 	}
 
-	DEBUG( "Destroy mutex\n" );
+	DEBUG( "Create mutex\n" );
 	pthread_mutex_init( &sock->mutex, NULL );
 
 	return sock;
@@ -244,6 +294,33 @@ int SocketListen( Socket *sock )
 }
 
 //
+//
+//
+
+inline int LoadCertificates(SSL_CTX* ctx, char* CertFile, char* KeyFile)
+{
+ /* set the local certificate from CertFile */
+    if ( SSL_CTX_use_certificate_file(ctx, CertFile, SSL_FILETYPE_PEM) <= 0 )
+    {
+        ERR_print_errors_fp(stderr);
+        return 1;
+    }
+    /* set the private key from KeyFile (may be the same as CertFile) */
+    if ( SSL_CTX_use_PrivateKey_file(ctx, KeyFile, SSL_FILETYPE_PEM) <= 0 )
+    {
+        ERR_print_errors_fp(stderr);
+        return 2;
+    }
+    /* verify private key */
+    if ( !SSL_CTX_check_private_key(ctx) )
+    {
+        DEBUG( "Private key does not match the public certificate\n");
+		return 3;
+    }
+    return 0;
+}
+
+//
 // connect to server
 //
 
@@ -256,9 +333,14 @@ int SocketConnect( Socket* sock, const char *host )
 		ERROR("[SocketConnect] Socket is NULL..\n");
 		return 0;
 	}
+	
+	if( sock->s_SSLEnabled == TRUE )
+	{
+		LoadCertificates( sock->s_Ctx, RSA_SERVER_CERT, RSA_SERVER_KEY );
+	}
 
 	int    sd=-1, rc, bytesReceived=0;
-	char   servport[] = "6054";
+	char   servport[ 10 ] = "0";
 	struct in6_addr serveraddr;
 	struct addrinfo hints, *res=NULL;
 
@@ -267,6 +349,7 @@ int SocketConnect( Socket* sock, const char *host )
 	hints.ai_family   = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
 
+	sprintf( servport, "%d", sock->port );
 
 	rc = inet_pton(AF_INET, host, &serveraddr);
 	if (rc == 1)    /* valid IPv4 text address? */
@@ -283,6 +366,8 @@ int SocketConnect( Socket* sock, const char *host )
 			hints.ai_flags |= AI_NUMERICHOST;
 		}
 	}
+	
+	DEBUG("ServiceClient: connect to %s on port %s\n", host, servport );
 
 	// Get the address information for the server using getaddrinfo()
 	rc = getaddrinfo( host, servport, &hints, &res);
@@ -300,10 +385,43 @@ int SocketConnect( Socket* sock, const char *host )
 	rc = connect( sock->fd, res->ai_addr, res->ai_addrlen );
 	if( rc == -1 )
 	{
-		ERROR("connect() failed\n");
+		ERROR("connect() to host '%s' failed\n", host );
 		return -1;
 	}
+	
+	if( sock->s_SSLEnabled == TRUE )
+	{
+		X509                *cert = NULL;
+		X509_NAME       *certname = NULL;
+		
+		if ( SSL_connect( sock->s_Ssl ) != 1 )
+		{
+			ERROR("Cannot create SSL connection!\n");
+			return -1;
+		}
+		
+		cert = SSL_get_peer_certificate( sock->s_Ssl );
+		if (cert == NULL)
+		{
+			printf( "Error: Could not get a certificate from: \n" );
+		}
+		else
+		{
+			printf( "Retrieved the server's certificate from: .\n");
+		}
+		// ---------------------------------------------------------- *
+		// extract various certificate information                    *
+		// -----------------------------------------------------------
+		certname = X509_NAME_new( );
+		certname = X509_get_subject_name( cert );
 
+		// ---------------------------------------------------------- *
+		// display the cert subject here                              *
+		// -----------------------------------------------------------
+		printf( "Displaying the certificate subject data:\n");
+		//X509_NAME_print_ex(outbio, certname, 0, 0);
+		printf( "\n" );
+	}
 	
 	return 0;
 }
@@ -367,7 +485,7 @@ Socket* SocketAccept( Socket* sock )
 		return NULL;
 	}
 	
-	if( SSLEnabled )
+	if( sock->s_SSLEnabled )
 	{
 		if( !sock->s_Ctx )
 		{
@@ -382,7 +500,7 @@ Socket* SocketAccept( Socket* sock )
                
 	DEBUG( "[SocketAccept] Accepting on socket\n" );
 	int fd = accept( sock->fd, ( struct sockaddr* )&client, &clientLen );
-	DEBUG( "[SocketAccept] Done accepting file descriptor\n", fd );
+	DEBUG( "[SocketAccept] Done accepting file descriptor (%d, %s)\n", errno, strerror( errno ) );
 
 	Socket* incoming = (Socket*)FCalloc( 1, sizeof( Socket ) );
 	if( incoming != NULL )
@@ -390,14 +508,15 @@ Socket* SocketAccept( Socket* sock )
 		incoming->fd = fd;
 		incoming->port = ntohs( client.sin6_port );
 		incoming->ip = client.sin6_addr;
-
+		incoming->s_SSLEnabled = sock->s_SSLEnabled;
 	}
 	else
 	{
 		ERROR("[SocketAccept] Cannot allocate memory for socket!\n");
+		return NULL;
 	}
 	
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		//DEBUG( "Going into SSL\n" );
 		incoming->s_Ssl = SSL_new( sock->s_Ctx ); 
@@ -412,10 +531,10 @@ Socket* SocketAccept( Socket* sock )
 		}
 
 		// Make a unique session id here
-		char *unique = FCalloc( 255, sizeof( char ) );
+		/*const unsigned char *unique = FCalloc( 255, sizeof( const unsigned char ) );
 		sprintf( unique, "friendcore_%p%d", incoming, rand()%999+rand()%999 );
 		SSL_set_session_id_context( sock->s_Ssl, unique, strlen( unique ) );
-		FFree( unique );
+		FFree( unique );*/
 
 		//DEBUG( "Further\n" );
 		int srl = SSL_set_fd( incoming->s_Ssl, incoming->fd );
@@ -429,72 +548,68 @@ Socket* SocketAccept( Socket* sock )
 			return NULL;
 		}
 		
-		//DEBUG("SSL_Accept\n");
-		
-		 // setup SSL session 
-		
-		BOOL repeat = TRUE;
 		int err = 0;
-		SSL_set_accept_state( incoming->s_Ssl );
-		
-		do
+		while( 1 )
 		{
-			err = SSL_accept( incoming->s_Ssl );
+			if( pthread_mutex_lock( &incoming->mutex ) == 0 )
+			{
+				err = SSL_accept( incoming->s_Ssl );
+				pthread_mutex_unlock( &incoming->mutex );
 			
-			if( err <= 0 )
-			{
-				int error = SSL_get_error( incoming->s_Ssl, err );
-				
-				ERROR( "[SocketAccept] We experienced an error %d.\n", error );
-				
-				switch( error )
+				if( err <= 0 )
 				{
-					case SSL_ERROR_NONE:
-						// NO error..
-						ERROR( "[SocketAccept] No error\n" );
-						repeat = FALSE;
-						break;
-					case SSL_ERROR_ZERO_RETURN:
-						ERROR("[SocketAccept] SSL_ACCEPT error: Socket closed.\n" );
-						close( fd );
-						SSL_free( incoming->s_Ssl );
-						free( incoming );
-						return NULL;
-					case SSL_ERROR_WANT_READ:
-						ERROR( "[SocketAccept] Error want read, retrying\n" );
-						close( fd );
-						SSL_free( incoming->s_Ssl );
-						free( incoming );
-						return NULL;
-					case SSL_ERROR_WANT_WRITE:
-						ERROR( "[SocketAccept] Error want write, retrying\n" );
-						break;
-					case SSL_ERROR_WANT_ACCEPT:
-						ERROR( "[SocketAccept] Want accept\n" );
-						break;
-					case SSL_ERROR_WANT_X509_LOOKUP:
-						ERROR( "[SocketAccept] Want 509 lookup\n" );
-						break;
-					case SSL_ERROR_SYSCALL:
-						ERROR( "[SocketAccept] Error syscall!\n" );
-						close( fd );
-						SSL_free( incoming->s_Ssl );
-						free( incoming );
-						return NULL;
-					default:
-						ERROR( "[SocketAccept] Other error.\n" );
-						close( fd );
-						SSL_free( incoming->s_Ssl );
-						free( incoming );
-						return NULL;
+					int error = SSL_get_error( incoming->s_Ssl, err );
+				
+					ERROR( "[SocketAccept] We experienced an error %d.\n", error );
+				
+					switch( error )
+					{
+						case SSL_ERROR_NONE:
+							// NO error..
+							ERROR( "[SocketAccept] No error\n" );
+							return incoming;
+						case SSL_ERROR_ZERO_RETURN:
+							ERROR("[SocketAccept] SSL_ACCEPT error: Socket closed.\n" );
+							shutdown( fd, SHUT_RDWR );
+							close( fd );
+							SSL_free( incoming->s_Ssl );
+							free( incoming );
+							return NULL;
+						case SSL_ERROR_WANT_READ:
+							ERROR( "[SocketAccept] Error want read, retrying\n" );
+							shutdown( fd, SHUT_RDWR );
+							close( fd );
+							SSL_free( incoming->s_Ssl );
+							free( incoming );
+							return NULL;
+						case SSL_ERROR_WANT_WRITE:
+							ERROR( "[SocketAccept] Error want write, retrying\n" );
+							break;
+						case SSL_ERROR_WANT_ACCEPT:
+							ERROR( "[SocketAccept] Want accept\n" );
+							break;
+						case SSL_ERROR_WANT_X509_LOOKUP:
+							ERROR( "[SocketAccept] Want 509 lookup\n" );
+							break;
+						case SSL_ERROR_SYSCALL:
+							ERROR( "[SocketAccept] Error syscall!\n" );
+							shutdown( fd, SHUT_RDWR );
+							close( fd );
+							SSL_free( incoming->s_Ssl );
+							free( incoming );
+							return NULL;
+						default:
+							ERROR( "[SocketAccept] Other error.\n" );
+							shutdown( fd, SHUT_RDWR );
+							close( fd );
+							SSL_free( incoming->s_Ssl );
+							free( incoming );
+							return NULL;
+					}
 				}
-			}
-			else
-			{
-				repeat = FALSE;
+				else break;
 			}
 		}
-		while( repeat );
 	}
 
 	DEBUG( "[SocketAccept] Accepting incoming!\n" );
@@ -516,7 +631,7 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 		return NULL;
 	}
 	
-	if( SSLEnabled )
+	if( sock->s_SSLEnabled )
 	{
 		if( !sock->s_Ctx )
 		{
@@ -533,13 +648,14 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 		incoming->fd = fd;
 		incoming->port = ntohs( p->client.sin6_port );
 		incoming->ip = p->client.sin6_addr;
+		incoming->s_SSLEnabled = sock->s_SSLEnabled;
 	}
 	else
 	{
 		ERROR("[SocketAcceptPair] Cannot allocate memory for socket!\n");
 	}
 	
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		incoming->s_Ssl = SSL_new( sock->s_Ctx );
 		 
@@ -564,17 +680,14 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 			return NULL;
 		}
 		
-		//DEBUG("SSL_Accept\n");
-		
 		 // setup SSL session 
-		
-		BOOL repeat = TRUE;
 		int err = 0;
-		do
+		while( 1 )
 		{
 			//DEBUG( "Readying ssl incoming\n" );
 			if( pthread_mutex_lock( &incoming->mutex ) == 0 )
 			{
+				SSL_set_accept_state( incoming->s_Ssl );
 				err = SSL_accept( incoming->s_Ssl );
 				pthread_mutex_unlock( &incoming->mutex );
 			}
@@ -596,7 +709,6 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 					case SSL_ERROR_NONE:
 						// NO error..
 						ERROR( "[SocketAcceptPair] No error\n" );
-						repeat = FALSE;
 						break;
 					case SSL_ERROR_ZERO_RETURN:
 						ERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
@@ -612,7 +724,7 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 					case SSL_ERROR_WANT_ACCEPT:
 						ERROR( "[SocketAcceptPair] Want accept\n" );
 						SocketClose( incoming );
-						break;
+						return NULL;
 					case SSL_ERROR_WANT_X509_LOOKUP:
 						ERROR( "[SocketAcceptPair] Want 509 lookup\n" );
 						break;
@@ -621,20 +733,16 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 						SocketClose( incoming );
 						return NULL;
 					case SSL_ERROR_SSL:
-						ERROR( "[SocketAcceptPair] SSL_ERROR_SSL\n" ); //: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+						ERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
 						SocketClose( incoming );
 						return NULL;
 				}
 			}
-			else
-			{
-				repeat = FALSE;
-			}
+			else break;
 		}
-		while( repeat );
 	}
 
-	DEBUG( "[SocketAccept] Accepting incoming!\n" );
+	DEBUG( "[SocketAcceptPair] Accepting incoming!\n" );
 	return incoming;
 }
 
@@ -651,13 +759,10 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 		return 0;
 	}
 
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		unsigned int read = 0;
-		int res = 0, err = 0;
-		int running = 1;
-		int retries = 0;
-		int buf = length;
+		int res = 0, err = 0, buf = length;
 		
 		do
 		{
@@ -665,9 +770,8 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 			if( pthread_mutex_lock( &sock->mutex ) == 0 )
 			{
 				if( read + buf > length ) buf = length - read;
-				if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) > 0 )
+				if( ( res = SSL_read( sock->s_Ssl, data + read, buf ) ) >= 0 )
 				{
-					retries = 0;
 					read += res;
 				}
 				//INFO( "[SocketRead] Tried to read %d bytes (%d total read, %d pending).\n%.*s\n", res, read, SSL_pending( sock->s_Ssl ), read, data );
@@ -688,39 +792,29 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 					// The TLS/SSL I/O operation completed. 
 					case SSL_ERROR_NONE:
 						//ERROR( "[SocketRead] Completed successfully.\n" );
-						running = 0;
-						break;
+						return read;
 					// The TLS/SSL connection has been closed. Goodbye!
 					case SSL_ERROR_ZERO_RETURN:
 						//ERROR( "[SocketRead] The connection was closed.\n" );
 						return read;
 					// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_READ:
-						//ERROR( "[SocketRead] Want read try to continue. %p\n", sock );
-						if( ( pass == 0 && retries > 10 ) || retries++ > 150 )
-						{
-							//ERROR( "[SocketRead] %s on want read..\n", pass == 0 ? "finishing" : "bailing" );
-							return read;
-						}
-						usleep( 4000 );
+						if( read > 0 ) return read;
+						usleep( 0 );
 						continue;
 					// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_WRITE:
 						//ERROR( "[SocketRead] Want write.\n" );
 						return read;
 					case SSL_ERROR_SYSCALL:
-						//ERROR( "[SocketRead] SSL_ERROR_SYSCALL\n", read );
-						if( pass == 0 || retries++ > 150 )
-						{
-							//ERROR( "[SocketRead] %s on error syscall..\n", pass == 0 ? "finishing" : "bailing" );
-							return read;
-						}
-						usleep( 4000 );
+						return read;
+					default:
+						usleep( 0 );
 						continue;
 				}
 			}
 		}
-		while( running && read < length );
+		while( read < length );
 		
 		//INFO( "[SocketRead] Done reading (%d bytes of %d ).\n", read, length );
 		return read;
@@ -728,9 +822,8 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 	// Read in a non-SSL way
 	else
 	{
-	    unsigned int bufLength = length;
-	    int read = 0, res = 0;
-	    int retries = 0;
+	    unsigned int bufLength = length, read = 0;
+	    int retries = 0, res = 0;
 	    
 	    while( 1 )
 	    {
@@ -740,21 +833,25 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 			{ 
 				read += res;
 				retries = 0;
-				if( read >= length ) 
+				if( read >= length )
+				{
+					DEBUG( "[SocketRead] Done reading %d/%d\n", read, length );
 					return read;
+				}
 			}
 			else if( res == 0 ) return read;
 			// Error
 			else if( res < 0 )
 			{
 				// Resource temporarily unavailable...
-				if( errno == 11 && retries++ < 50 )
+				if( errno == 11 && retries++ < 25 )
 				{
 					// Approx successful header
 					usleep( 0 );
-					ERROR( "[SocketRead] Resource temporarily unavailable.. Read %d/%d\n", read, length );
+					ERROR( "[SocketRead] Resource temporarily unavailable.. Read %d/%d (retries %d)\n", read, length, retries );
 					continue;
 				}
+				DEBUG( "[SocketRead] Read %d/%d\n", read, length );
 				return read;
 			}
 			DEBUG( "[SocketRead] Read %d/%d\n", read, length );
@@ -768,11 +865,10 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 // Write data to the socket
 // Returns true on success and false on failure.
 //
-#define BUFFER_WRITE_SIZE 16384
 
 int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 {
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		//INFO( "SSL Write length: %d (sock: %p)\n", length, sock );
 		
@@ -781,12 +877,15 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 		int res = 0;
 		int errors = 0;
 		
-		//_writes++;
 		int retries = 0;
 		
+		unsigned int bsize = 1024;
 		
-		unsigned int bsize = length;
-		int err = 0;
+		int err = 0;		
+		// Prepare to get fd state
+		struct timeval timeoutValue = { 1, 0 };
+		int sResult = 0; 
+		fd_set fdstate;
 		
 		while( written < length )
 		{
@@ -795,125 +894,67 @@ int SocketWrite( Socket_t* sock, char* data, unsigned int length )
 			if( pthread_mutex_lock( &sock->mutex ) == 0 )
 			{
 				res = SSL_write( sock->s_Ssl, data + written, bsize );
-				err = SSL_get_error( sock->s_Ssl, res );
 				pthread_mutex_unlock( &sock->mutex );
-			
+				
 				if( res < 0 )
 				{
+					FD_ZERO( &fdstate );
+					FD_SET( sock->fd, &fdstate );
+					
+					err = SSL_get_error( sock->s_Ssl, res );
 					switch( err )
 					{
-						// The TLS/SSL I/O operation completed. 
-						case SSL_ERROR_NONE:
-							retries = 0;
-							//ERROR( "[SocketWrite] No errors.\n" );
-							break;
-						// The TLS/SSL connection has been closed.
-						case SSL_ERROR_ZERO_RETURN:
-							//ERROR( "[SocketWrite] The connection was closed.\n" );
-							//_writes--;
-							return 0;
 						// The operation did not complete. Call again.
 						case SSL_ERROR_WANT_WRITE:
 						{
-							//ERROR( "[SocketWrite] We couldn't write everyting. Try again. W/L: %d/%d, FD: %d\n", written, length, sock->fd );
-							retries = 0;
-							//ERROR( "[SocketWrite] Want write. Reloading\n" );
-							continue;
-						}
-						// The operation did not complete, the same TLS/SSL I/O function should be called again later.
-						/*case SSL_ERROR_WANT_CONNECT:
-						case SSL_ERROR_WANT_ACCEPT:
-							ERROR( "[SocketWrite] Could not complete. Call again later.\n" );
-							res = 0;
-							retries = 0;
-							break;*/
-						case SSL_ERROR_WANT_X509_LOOKUP:
-							//ERROR( "[SocketWrite] The operation did not complete because an application callback set by SSL_CTX_set_client_cert_cb() has asked to be called again.\n" );
-							res = 0;
-							retries = 0;
+							sResult = select( sock->fd + 1, NULL, &fdstate, NULL, &timeoutValue );
+							int ch = FD_ISSET( sock->fd, &fdstate );
+							// We're not gonna write now..
+							if( ch == 0 ) usleep( 20000 );
 							break;
-						/*case SSL_ERROR_WANT_ASYNC:
-							ERROR( "[SocketWrite] The operation did not complete because an asynchronous engine is still processing data.\n" );
-							//SSL_get_async_wait_fd( sock->s_Ssl );
-							written = 0; res = 0;
-							retries = 0;
-							break;*/
-						case SSL_ERROR_SYSCALL:
-						{
-							if( ++retries > 250 )
-							{
-								//DEBUG( "[SocketWrite] Bailing on %d retries!\n", retries );
-								return 0;
-							}
-							//DEBUG( "[SocketWrite] Try again.\n" );
-							usleep( 2000 ); // Wait a little bit, could be the delay must be higher
-							continue;
 						}
-						/*case SSL_ERROR_SSL:
-							if( ++retriesWrite > 1000 )
-							{
-								DEBUG( "[SocketWrite] Bailing on %d retries error ssl!\n", retriesWrite );
-								return 0;
-							}
-							if( ERR_reason_error_string( err ) == NULL )
-								return 0;
-							DEBUG( "[SocketWrite] Try again error ssl. %s\n", ERR_reason_error_string( err ) );
-							retries = 0;
-							usleep( 10000 ); // Wait a little bit
-							continue;*/
+						default: return 0;
 					}
-			
-					//ERROR( "Writing %d, err: %d\n", written, SSL_get_error( sock->s_Ssl, written ) );
-					//INFO( "SSL Write  written %d bytes of %d\n", written, length );
-					//return written;
 				}
 				else
 				{
 					retries = 0;
-				}
-		
-				// Can't write?
-				if( res == 0 )
-				{
-					//ERROR("Cannot write, res = 0\n");
-					//_writes--;
-					return written;
-				}
-			
-				written += res;
+					written += res;
+					DEBUG( "[SocketWrite] Wrote %d/%d\n", written, length );
+				}	
 			}
-		
-			//DEBUG( "[SocketWrite] Wrote %d/%d bytes\n", written, length );
 		}
 		return written;
 	}
 	else
 	{
-	    int res = 0;
-	    unsigned int written = 0, bufLength = 16384 > length ? length : 16384;
-	    int retries = 0;
-		
-	    while( written < length )
-	    {
-	        if( bufLength > length - written ) bufLength = length - written;
-		    res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
-		    if( res > 0 ) 
-		    {
-		    	written += res;
-		    	retries = 0;
-		    }
+		unsigned int written = 0, bufLength = length;
+		int retries = 0, res = 0;
+
+		do
+		{
+			if( bufLength > length - written ) bufLength = length - written;
+			res = send( sock->fd, data + written, bufLength, MSG_DONTWAIT );
+			if( res > 0 ) 
+			{
+				written += res;
+				retries = 0;
+			}
 			else if( res < 0 )
 			{
 				// Error, temporarily unavailable..
 				if( errno == 11 )
 				{
-					usleep(0); // Perhaps allow full throttle?
+					usleep( 400 ); // Perhaps allow full throttle?
+					if( ++retries > 10 ) usleep( 20000 );
 					continue;
 				}
 				DEBUG( "Failed to write: %d, %s\n", errno, strerror( errno ) );
 				break;
 			}
 		}
+		while( written < length );
+		
 		DEBUG("end write %d/%d (had %d retries)\n", written, length, retries );
 		return written;
 	}
@@ -943,7 +984,7 @@ void SocketFree( Socket *sock )
 		ERROR("Passed socket structure is empty\n");
 		return;
 	}
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		if( sock->s_Ssl )
 		{
@@ -977,22 +1018,19 @@ void SocketClose( Socket* sock )
 		return;
 	}
 
-	if( SSLEnabled == TRUE )
+	if( sock->s_SSLEnabled == TRUE )
 	{
 		if( pthread_mutex_lock( &sock->mutex ) == 0 )
 		{
 			if( sock->s_Ssl )
 			{
 				int err;
-				do
+				while( SSL_shutdown( sock->s_Ssl ) == 0 )
 				{
-					err = SSL_shutdown( sock->s_Ssl );
-					DEBUG( "[SocketClose] Shut down: %d\n", err );
+					usleep( 0 );
 				}
-				while( err == 0 );
 				SSL_clear( sock->s_Ssl );
 			}
-			//SocketCloseDEBUG( "[SocketClose] Shut down properly.\n" );
 
 			if( sock->fd ) 
 			{

@@ -17,7 +17,6 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifdef WEBSOCKETS
 
 #ifndef __NETWORK_WEBSOCKET_H__
 #define __NETWORK_WEBSOCKET_H__
@@ -30,6 +29,9 @@
 #include <sys/time.h>
 #include <poll.h>
 #include <core/types.h>
+
+#ifdef ENABLE_WEBSOCKETS
+
 #include <libwebsockets.h>
 #include <core/thread.h>
 
@@ -37,6 +39,10 @@
 
 #define MAX_POLL_ELEMENTS 256
 
+extern char RSA_SERVER_CERT[  ];
+extern char RSA_SERVER_KEY[  ];
+extern char RSA_SERVER_CA_CERT[  ];
+extern char RSA_SERVER_CA_PATH[  ];
 
 //
 //
@@ -48,6 +54,8 @@ typedef struct WebSocket
 	char 											*ws_KeyPath;
 	int 												ws_Port;
 	BOOL 											ws_UseSSL;
+	BOOL 											ws_AllowNonSSL;
+	
 	struct libwebsocket_context 		*ws_Context;
 	char 											ws_InterfaceName[128];
 	char 											*ws_Interface;

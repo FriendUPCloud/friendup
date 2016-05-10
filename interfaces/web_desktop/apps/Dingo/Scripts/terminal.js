@@ -65,6 +65,16 @@ Application.run = function()
 		Application.enableCLI();
 		Application.addNL( true );
 	}
+	
+	// Enable cli on click
+	AddEvent( 'onmousedown', function()
+	{
+		if( !Application.input )
+		{
+			Application.enableCLI();
+			Application.addNL();
+		}
+	} );
 }
 
 // Add error line
@@ -90,7 +100,9 @@ Application.disableCLI = function()
 {
 	this.input = false;
 	if( this.currentCLI ) 
+	{
 		this.currentCLI.contentEditable = false;
+	}
 }
 
 // Remove old editing possibility
@@ -152,6 +164,7 @@ Application.addNL = function( focus )
 // Put focus on cli
 Application.focusCLI = function()
 {
+	if( !this.input ) return;
 	this.sendMessage( { command: 'activate' } );
 	if( !this.currentCLI ) return;
 	this.currentCLI.focus();
@@ -937,9 +950,13 @@ Application.evaluateInput = function( input, index, key )
 		if( cmd.length == 2 && cmd[0] == 'input' )
 		{
 			if( cmd[1] == 'off' )
-				this.input = false;
+			{
+				Application.disableCLI();
+			}
 			else if( cmd[1] == 'on' )
-				this.input = true;
+			{
+				Application.enableCLI();
+			}
 		}
 		else if( cmd.length == 1 && cmd[0] == 'clear' )
 		{
@@ -1246,12 +1263,10 @@ function addOnEventTrigger( app, trigger, variable, newList )
 {
 	function callback( data )
 	{
-		Application.input = false;
-		var script = "";
+		var script = "input off\n";
 		for( var a in newList ) script += newList[a] + "\n";
 		Application.variables[ variable ] = data;
 		parseShellScript( script );
-		Application.input = true;
 	}
 	
 	var cid = addPermanentCallback( callback );

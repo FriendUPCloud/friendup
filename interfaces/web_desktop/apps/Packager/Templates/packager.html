@@ -2,23 +2,28 @@
 	<script src="Progdir:Scripts/logic.js"></script>
 
 	<div class="VContentTop BorderBottom" id="TopBar">
-		<div class="Padding">
-			<div class="FloatLeft">
-				<button type="button" class="Button IconSmall fa-plus" onclick="saveProject()">
-					New project
-				</button>
-			</div>
-			<div class="FloatLeft">
-				<button type="button" class="Button IconSmall fa-file-zip-o">
-					Generate package
-				</button>
-			</div>
-		</div>
+		...
 	</div>
 	<div class="ContentFull" id="TopArea">
-		<div class="HContentLeft HContent35"" id="LeftBar">
+		<div class="BorderRight" id="LeftBar">
+			<div class="LeftSide">
+				<div class="Padding">
+					<div class="FloatLeft">
+						<button type="button" class="Button IconSmall fa-plus" onclick="saveProject()">
+							New project
+						</button>
+					</div>
+					<div class="FloatLeft">
+						<button type="button" class="Button IconSmall fa-file-zip-o">
+							Generate package
+						</button>
+					</div>
+				</div>
+			</div>
 		</div>
-		<div class="HContentLeft HContent65 BorderLeft" id="RightBar">
+		<div id="RightBar">
+			<div class="Padding" id="Packagelist">
+			</div>
 		</div>
 	</div>
 	<div class="VContentBottom BorderTop" id="BottomBar">
@@ -33,14 +38,17 @@
 		#LeftBar
 		{
 			position: absolute;
+			width: 200px;
 			left: 0;
 			top: 50px;
 			bottom: 50px;
 		}
+		
 		#RightBar
 		{
 			position: absolute;
-			left: 35%;
+			left: 200px;
+			width: calc(100% - 200px);
 			top: 50px;
 			bottom: 50px;
 		}

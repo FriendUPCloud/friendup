@@ -239,12 +239,12 @@ Shell = function( appObject )
 		// Make sure we pop out the interface each time
 		if( !( 'webkitSpeechRecognition' in window ) )
 		{
-			if( Doors.handsFree )
+			if( Workspace.handsFree )
             {
                 var inp = ge( 'Handsfree' ).getElementsByTagName( 'input' )[0];
                 inp.blur();
                 document.body.removeChild( ge( 'Handsfree' ) );
-                Doors.handsFree = false;
+                Workspace.handsFree = false;
                 // TODO: Don't set the color - it's up to the theme.
                 //       This is a workaround for Samsung Internet for Gear VR
                 ge( 'Tray' ).getElementsByTagName( 'div' )[0].style.color = 'white';
@@ -350,7 +350,7 @@ Shell = function( appObject )
 				{
 					// Same sorting as doors desktop
 					var index = parseInt( args[2] ) - 1;
-				   var icons = sortArray( Doors.icons, [ 'Title', 'Filename' ] );
+				   var icons = sortArray( Workspace.icons, [ 'Title', 'Filename' ] );
 				   if( parseInt( args[2] ) > 0 )
 				   {
 					   if( parseInt( args[2] ) > icons.length )
@@ -889,7 +889,7 @@ Shell = function( appObject )
 				var recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
 				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result )
 				{
-					dcallback( "\n" );
+					dcallback( result + "\n" );
 				} );
 			}
 		}
@@ -950,6 +950,12 @@ Shell = function( appObject )
 				}
 				return dcallback( "\n", { path: path } );
 			} );
+		}
+		// Flush variables
+		else if( cmd[0] == 'flush' )
+		{
+			this.variables = [];
+			dcallback( "\n" );
 		}
 		else if( cmd[0] == 'endcli' || cmd[0] == 'exit' )
 		{
@@ -1074,9 +1080,11 @@ Shell = function( appObject )
 		{
 			if( cmd.length < 2 )
 			{
+				console.log( 'Not possible to decrease' );
 				return dcallback( false );
 			}
 			this.variables[cmd[1]]--;
+			console.log( cmd[1] + ' is now decreased to ' + this.variables[cmd[1]] );
 			return dcallback( true, { variable: cmd[1], variableValue: this.variables[cmd[1]] } );
 		}
 		else if( cmd[0] == 'add' )
@@ -1659,9 +1667,32 @@ FriendDOS =
 		doorSrc.path = pthTest;
 		doorSrc.getIcons( false, function( data )
 		{
+			var lastChar = src.substr( 0, src.length - 1 );
+			var useRecursion = lastChar == '/' || lastChar == ':';
+			var recursion = false;
+			
 			for( var a = 0; a < data.length; a++ )
 			{
-				
+				// Copy a single file
+				if( !useRecursion && data[a].Path == src )
+				{
+					var destination = dest + data[a].Filename;
+					doorSrc.dosAction( 'copy', { from: src, to: destination }, function( result )
+					{
+						callback( 'Copied ' + src + ' to ' + destination + '..' );
+						console.log( result );
+					} );
+				}
+				// We are doing a recursive copy of volume / directory
+				else if( useRecursion )
+				{
+					if( !recursion ) recursion = [];	
+				}
+			}
+			// 
+			if( recursion && recursion.length )
+			{
+				console.log( 'Do the copy!' );
 			}
 		} );
 		

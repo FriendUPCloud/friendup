@@ -51,24 +51,31 @@ typedef struct FThread
 {
 
 //#ifdef __LINUX__
-	pthread_t	t_Thread;
+	pthread_t		t_Thread;
 //#endif
-	BOOL 		t_Quit;
-	void 		( *t_Function)( void * );
-	void 		*t_Data;
+	BOOL 			t_Quit;
+	void 				*( *t_Function)( void * );
+	void 				*t_Data;
+	BOOL			t_Launched;
 }FThread;
 
 //
 //
 //
 
-FThread *ThreadNew( void *func, void *data );
+FThread *ThreadNew( void *func, void *data, BOOL autos );
 
 //
 //
 //
 
 void ThreadDelete( FThread *t );
+
+//
+//
+//
+
+FThread *ThreadStart( FThread *ft );
 
 #endif // __CORE_THREAD_H__
 

@@ -136,6 +136,11 @@ function GetScreenList()
 								sl.elements[b].className = 'Padding List sw' + sw + ' active';
 							else sl.elements[b].className = 'Padding List sw' + sw;
 							sw = sw == 1 ? 2 : 1;
+							
+							if( sl.elements[b] == Application.currentScreen )
+							{
+								sl.elements[b].classList.add( 'active' );
+							}
 						}
 					}
 					sl.elements = out;
@@ -201,8 +206,17 @@ function selectScreen( scr )
 	for( var a = 0; a < dv.length; a++ )
 	{
 		if( dv[a] == scr )
-			dv[a].className = dv[a].className.split( ' active' ).join ( '' ) + ' active';
-		else dv[a].className = dv[a].className.split( ' active' ).join ( '' );
+		{
+			dv[a].classList.add( 'active' );
+			setScreenGui( dv[a] );
+		}
+		else dv[a].classList.remove( 'active' );
 	}
 }
+
+function setScreenGui( ele )
+{
+	
+}
+
 

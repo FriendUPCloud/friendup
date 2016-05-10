@@ -259,7 +259,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		{
 			DEBUG("DATAFORM Received %ld\n", recvdf->df_Size );
 			
-			int i=0;
+			unsigned int i=0;
 			char *d = (char *)recvdf;
 			for( i = 0 ; i < recvdf->df_Size ; i++ )
 			{
@@ -446,7 +446,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		}
 	}
 	
-	if( selService == NULL || serviceName < 0 )
+	if( selService == NULL || strlen(serviceName) <= 0 )
 	{
 		ERROR( "ServiceStatus not passed!\n" );
 		HttpAddTextContent( response, "{ \"ErrorMessage\": \"ServiceName argument missing or Service not found!\"}" );

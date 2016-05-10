@@ -23,18 +23,29 @@
 #include <stdlib.h>
 #include <util/log/log.h>
 #include <unistd.h>
+#include <core/thread.h>
+#include <time.h>
+#include <unistd.h>
+
+void f( FThread *ptr );
 
 //
 // EventManager constructor
 //
 
-
 EventManager *EventManagerNew()
 {
-	EventManager *em = calloc( sizeof( EventManager) , 1 );
-	em->lastID = 0xf;
-
-	em->eventTList = ListNew();
+	EventManager *em = FCalloc( sizeof( EventManager) , 1 );
+	DEBUG("EventManager start\n");
+	if( em != NULL )
+	{
+		em->lastID = 0xf;
+		em->em_EventThread = ThreadNew( f, em, TRUE );
+	}
+	else
+	{
+		ERROR("Cannot allocate memory for EventManager!\n");
+	}
 
 	return em;
 }
@@ -45,135 +56,178 @@ EventManager *EventManagerNew()
 
 void EventManagerDelete( EventManager *em )
 {
-	// remove simple events
-
-	List *tmp = em->eventTList;
-	while( tmp != NULL )
-	{
-		CoreEvent *locce = (CoreEvent *) tmp->data;
-
-		while( locce != NULL )
-		{
-
-			locce = (CoreEvent *)locce->node.mln_Succ;
-		}
-
-		tmp = tmp->next;
-	}
-
+	DEBUG("EventManagerDelete\n");
 	// remove long time events
-
-	CoreLTEvent *locnce = em->eventLT;
-	while( locnce->node.mln_Succ != NULL )
-	{
-		CoreLTEvent *rem = locnce;
-		locnce = (CoreLTEvent *)locnce->node.mln_Succ;
-
-		free( rem );
-	}
-
-
-	ListFree( em->eventTList );
-
 	if( em != NULL )
 	{
-		free( em );
+		if( em->em_EventThread )
+		{
+			ThreadDelete( em->em_EventThread );
+		}
+		DEBUG("EventManager thread removed\n");
+		
+		CoreEvent *locnce = em->em_EventList;
+		while( locnce != NULL )
+		{
+			CoreEvent *rem = locnce;
+			locnce = (CoreEvent *)locnce->node.mln_Succ;
+
+			FFree( rem );
+		}
+		
+		FFree( em );
 	}
+	DEBUG("EventManagerDelete end\n");
 }
 
 //
 // get new ID for event
 //
 
-ULONG EventGetNewID( EventManager *em )
+UQUAD EventGetNewID( EventManager *em )
 {
 	DEBUG("EVENT: new event created %ld\n", em->lastID+1 );
 	return em->lastID++;
 }
 
 //
-// add new event
+//
 //
 
-CoreEvent *EventAdd( EventManager *em, ULONG id, ULONG *h_Function )
+void EventLaunch( FThread *ptr )
 {
-	List *tmp = em->eventTList;
-
-	// first we must check list if kind of event already exist
-	// if yes, then our new event should be added on the end
-	// if no, then we create new entry in list
-
-	CoreEvent *nce = calloc( sizeof( CoreEvent ), 1 );
-	CoreEvent *retEv = NULL;
-	nce->hook.h_Function = (void *)h_Function;
-	nce->eventId = id;
-
-	DEBUG("ADD NEW EVENT %ld\n", id );
-
-	while( tmp != NULL )
+	ptr->t_Launched = TRUE;
+	CoreEvent *ce = (CoreEvent *) ptr->t_Data;
+	if( ce != NULL )
 	{
-		CoreEvent *locce = (CoreEvent *) tmp->data;
-		if( locce != NULL && locce->eventId == id )
-		{
-			// we found interested position for us
-			retEv = locce;
-			DEBUG("EVET: id found!\n");
-
-			break;
-		}
-
-		tmp = tmp->next;
+		//ce->ce_Thread->t_Function
 	}
-
-	if( retEv == NULL )
-	{
-		DEBUG("EVENT didnt found root event %ld adding it to list\n", id );
-
-		ListAdd( em->eventTList, (void *)nce );
-	}else{
-		// put our event on the end
-		while( retEv->node.mln_Succ != NULL )
-		{
-			retEv = (CoreEvent *)retEv->node.mln_Succ;
-		}
-
-		retEv->node.mln_Succ = (struct MinNode *)nce;
-		nce->node.mln_Pred = (struct MinNode *)retEv;
-	}
-
-	return nce;
+	
+	ptr->t_Launched = FALSE;
+	pthread_exit( 0 );
 }
 
 //
-// add new long time event
+// wait thread
 //
 
-CoreLTEvent *EventLTEAdd( EventManager *em, ULONG id, struct timeval t, BOOL repeat, ULONG *h_Function )
+#define WAIT_SECOND 10
+
+void f( FThread *ptr )
 {
-	CoreLTEvent *nce = calloc( sizeof( CoreLTEvent ), 1 );
-	nce->eventId = id;
-	nce->repeat = repeat;
-	nce->hook.h_Function = (void *)h_Function;
-	nce->hook.h_Entry = (APTR)nce;
+	EventManager *ce = (EventManager *)ptr->t_Data;
+	//const unsigned long long nano = 1000000000;
+	//unsigned long long t1, t2, lasttime;
+	//struct timespec tm;
+	
+	time_t stime = time( NULL );
+	time_t etime = stime;
 
-	nce->time.tv_sec = t.tv_sec;
-	nce->time.tv_usec = t.tv_sec;
-
-	nce->thread = ThreadNew( h_Function, nce );
-	CoreLTEvent *locnce = em->eventLT;
-
-	if( em->eventLT == NULL )
+	do
 	{
-		em->eventLT = nce;
-	}else{
-
+		time_t dtime = etime - stime;
+		
+		CoreEvent *locnce = ce->em_EventList;
 		while( locnce != NULL )
 		{
-			locnce = (CoreLTEvent *)locnce->node.mln_Succ;
+			if( locnce->ce_Time >= stime && locnce->ce_Time < ( stime + dtime ) )
+			{
+				if( locnce->ce_RepeatTime == -1 )		// never ending loop
+				{
+					
+				}
+				else if( locnce->ce_RepeatTime == 0 )	// last call, must be removed
+				{
+					
+					
+				}
+				else
+				{
+					locnce->ce_RepeatTime--;
+				}
+			}
+			
+			locnce = (CoreEvent *) locnce->node.mln_Succ;
+		}
+		
+		time_t end_time = (WAIT_SECOND * 1000000  ) - dtime;
+		usleep( end_time );
+		//printf("witing..... %d\n", end_time );
+		
+		stime = etime;
+		etime = time( NULL );
+	}while( ptr->t_Quit != TRUE );
+	
+	ptr->t_Launched = FALSE;
+	/*
+	clock_t time = clock();
+
+	while( ptr->t_Quit != TRUE )
+	{
+		clock_t dtime = clock() - time;
+		
+		CoreEvent *locnce = em->em_EventList;
+		while( locnce != NULL )
+		{
+//			if( locnce->ce_Time.
+			
+			locnce = (CoreEvent *) locnce->node.mln_Succ;
+		}
+		
+		clock_t end_time = (WAIT_SECOND * CLOCKS_PER_SEC  ) - dtime;
+		usleep( end_time );
+		//printf("witing..... %d\n", end_time );
+		
+		time = clock();
+	}*/
+		
+		/*
+	{
+		//clock_gettime( CLOCK_REALTIME, &tm );
+		t1 = tm.tv_nsec + tm.tv_sec * nano;
+
+		long long tmp = lasttime+20000-now;
+		if( tmp > 0 )
+		{
+			usleep( tmp );
 		}
 
-		locnce->node.mln_Succ = (struct MinNode *)nce;
-		nce->node.mln_Pred = (struct MinNode *)locnce;
+		//clock_gettime( CLOCK_REALTIME, &tm );
+		t2 = tm.tv_nsec + tm.tv_sec * nano;
+		
+		clock_t start_time = clock();
+	clock_t end_time = sec * 1000 + start_time;
+
+		printf( "delay: %ld\n", ( t2 - t1 ) / 1000 );
+
+	}*/
+}
+
+//
+// add new event
+//
+
+CoreEvent *EventAdd( EventManager *em, UQUAD id, FThread *thread, time_t nextCall, int repeat )
+{
+
+
+	CoreEvent *nce = FCalloc( sizeof( CoreEvent ), 1 );
+	if( nce != NULL )
+	{
+		//CoreEvent *retEv = NULL;
+		nce->ce_Thread = thread;
+		nce->ce_ID = id;
+		nce->ce_Time = nextCall;
+		nce->ce_RepeatTime = repeat;
+
+		DEBUG("ADD NEW EVENT %ld\n", id );
+
+		nce->node.mln_Succ = (MinNode *) em->em_EventList;
+		em->em_EventList = nce;
+	}
+	else
+	{
+		ERROR("Cannot allocate memory for new Event\n");
 	}
 
 	return nce;
@@ -185,6 +239,7 @@ CoreLTEvent *EventLTEAdd( EventManager *em, ULONG id, struct timeval t, BOOL rep
 
 CoreEvent *EventCheck( EventManager *em, ULONG id )
 {
+	/*
 	List *tmp = em->eventTList;
 	CoreEvent *retEv = NULL;
 
@@ -216,37 +271,8 @@ CoreEvent *EventCheck( EventManager *em, ULONG id )
 			retEv = (CoreEvent *)retEv->node.mln_Succ;
 		}
 	}
-	return retEv;
+	*/
+	//return retEv;
+	return NULL;
 }
 
-//
-// wait thread
-//
-
-// declaration
-void usleep( long );
-
-void f( void *args )
-{
-	struct FThread *ft = (FThread *)args;
-	CoreLTEvent *ce = (CoreLTEvent *)ft->t_Data;
-
-	while( ft->t_Quit != TRUE )
-	{
-		//...do something
-		gettimeofday( &(ce->time), NULL);
-
-		long seconds  = ce->time.tv_sec  - ce->waitTime.tv_sec;
-	    long useconds = ce->time.tv_usec - ce->waitTime.tv_usec;
-
-	    long mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-
-	    DEBUG( "Eventmanager: wait thread %ld\n", mtime );
-
-	    usleep( mtime );
-
-	    ce->hook.h_Function( ce->hook.h_Entry, ce->hook.h_SubEntry, ce->hook.h_Data );
-
-	}
-
-}

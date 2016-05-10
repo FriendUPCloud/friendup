@@ -17,8 +17,6 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifdef WEBSOCKETS
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -26,6 +24,9 @@
 #include <string.h>
 #include <sys/time.h>
 #include <poll.h>
+#include <core/types.h>
+
+#ifdef ENABLE_WEBSOCKETS
 
 #include <libwebsockets.h>
 #include <network/websocket.h>
@@ -140,7 +141,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 			else if( stream[ j ] == '>' )
 			{
 				realMessage = &(stream[ j ] );
-				DEBUG("Message found\n");
+				DEBUG("[WS]:Message found\n");
 				break;
 			}
 			else if( stream[ j ] == '/' && url != NULL )
@@ -149,11 +150,11 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 			}
 		}
 		
-		DEBUG("Allocate memory for parts %d\n", pathParts );
+		DEBUG("[WS]:Allocate memory for parts %d\n", pathParts );
 		*parts = FCalloc( pathParts+1, sizeof( char *) );
 		*parts[ 0 ] = url;
 		
-		DEBUG("First string in parts %s\n", *parts[ 0 ] );
+		DEBUG("[WS]:First string in parts %s\n", *parts[ 0 ] );
 		
 		int selPar = 1;
 		if( url != NULL )
@@ -174,7 +175,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 			}
 		}
 
-		DEBUG("WEBSOCKET CALL size %d found type %3s\n", dataSize, type );
+		DEBUG("[WS]:WEBSOCKET CALL size %d found type %3s\n", dataSize, type );
 		
 		http->parsedPostContent = HashmapNew();
 		
@@ -189,10 +190,10 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 				http->uri = UriParse( url );
 				if( http->uri == NULL )
 				{
-					ERROR("URI Parse problem\n");
+					ERROR("[WS]:URI Parse problem\n");
 				}
 				
-				DEBUG("WS message size %d   --- url: %s\n", sizeOfMessage, url );
+				DEBUG("[WS]: message size %d   --- url: %s\n", sizeOfMessage, url );
 				
 				// we found our data, we must check parameters
 				
@@ -215,7 +216,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 							{
 								//DEBUG("Found first part\n");
 								dStarted = i+1;
-								DEBUG("DSTARTED %d\n", dStarted );
+								DEBUG("[WS]:DSTARTED %d\n", dStarted );
 							}
 						}
 						else
@@ -230,13 +231,13 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 								{
 									value = &realMessage[ dStarted ];
 									valueSize = i - dStarted;
-									DEBUG("KEY %s VALUE %s\n", key, value );
+									DEBUG("[WS]:KEY %s VALUE %s\n", key, value );
 									
 									if( value != NULL )
 									{
 										if( HashmapPut( http->parsedPostContent, StringDuplicateN( key, keySize ), StringDuplicateN( value, valueSize ) ) )
 										{
-											DEBUG("New values passed to POST %s %s\n", key, value );
+											DEBUG("[WS]:New values passed to POST %s %s\n", key, value );
 										}
 										
 										key = NULL;
@@ -249,7 +250,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 									{
 										key = &realMessage[ dStarted ];
 										keySize = i - dStarted;
-										DEBUG("KEY FOUND %s\n", key );
+										DEBUG("[WS]:KEY FOUND %s\n", key );
 									}
 								}
 								
@@ -260,14 +261,14 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 				}
 				else
 				{
-					ERROR("Message size < 0 or message not found\n");
+					ERROR("[WS]:Message size < 0 or message not found\n");
 					goto error;
 				}
 			}
 			
 			if( type == NULL || url == NULL || size == NULL || realMessage == NULL )
 			{
-				DEBUG("Request do not contain required data\n");
+				DEBUG("[WS]:Request do not contain required data\n");
 				goto error;
 			}
 			
@@ -283,7 +284,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 		}
 		else
 		{
-			ERROR("Message do not contain TYPE or do not contain message\n");
+			ERROR("[WS]:Message do not contain TYPE or do not contain message\n");
 			if( http != NULL )
 			{
 				HttpFree( http );
@@ -293,7 +294,7 @@ Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
 	}
 	else
 	{
-		ERROR("Cannot allocate memory for HTTP structure\n");
+		ERROR("[WS]:Cannot allocate memory for HTTP structure\n");
 		if( http != NULL )
 		{
 			HttpFree( http );
@@ -314,12 +315,15 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 	int n;
 	struct FC_Data *pss = user;
 	WebSocket *ws =  (WebSocket *) libwebsocket_context_user ( this );
+	
+	DEBUG("[WS]: FC_Callback reason: %d\n", reason );
 
 	switch( reason )
 	{
 
 		case LWS_CALLBACK_ESTABLISHED:
 			pss->fcd_Number = 0;
+			DEBUG("[WS]: Callback estabilished\n");
 		break;
 
 		//
@@ -338,11 +342,14 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 				fprintf(stderr, "ERROR writing to socket");
 				return 1;
 			}
-		break;*/
+		break;
+		*/
 
 		case LWS_CALLBACK_RECEIVE:
 			{
 //				Socket *sock = SocketWSOpen( wsi );
+				
+				DEBUG("[WS]: Callback receive\n");
 				
 				char *tmp = "<!--\"MSG\"--\"20\"--\"system.library/file\"-->BYTES<--!>";
 				
@@ -354,7 +361,7 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 					
 					if( strncmp( cptr, "<!--\"CON\"--\"0\"--", 16 ) == 0 )		// First Connection
 					{
-						int i = 0;
+						unsigned int i = 0;
 						char *session = NULL;
 						char *endsess = cptr;
 						
@@ -372,7 +379,7 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 						{
 							if( SLIB->AddWebSocketConnection( SLIB, wsi, session ) >= 0 )
 							{
-								INFO("Webscoket communication set with user (sessionid) %s\n", session );
+								INFO("[WS]:Webscoket communication set with user (sessionid) %s\n", session );
 							}
 						}
 					}
@@ -384,13 +391,13 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 						{
 							if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
 							{
-								DEBUG("Call syswebrequest\n");
+								DEBUG("[WS]:Call syswebrequest\n");
 								Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), request );
 						
 								char header[ 128 ];
-								sprintf( header, "<!--\"MSG\"--\"%d\"-->", response->sizeOfContent );
+								sprintf( header, "<!--\"MSG\"--\"%lld\"-->", response->sizeOfContent );
 						
-								DEBUG("Request called, response ptr %p\n", response );
+								DEBUG("[WS]:Request called, response ptr %p\n", response );
 								if( response != NULL )
 								{
 									unsigned char *buf;
@@ -401,28 +408,28 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 										memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, response->content,  response->sizeOfContent );
 							
-										DEBUG("Wrote to websockets %d, string %s size %d\n", n, response->content, strlen( response->content ) );
+										DEBUG("[WS]:Wrote to websockets %d, string %s size %d\n", n, response->content, strlen( response->content ) );
 										//n = libwebsocket_write( wsi,  response->content, response->sizeOfContent, LWS_WRITE_TEXT);
 										n = libwebsocket_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent, LWS_WRITE_TEXT);
 								
 										FFree( buf );
 									}
 								}
-								DEBUG("SysWebRequest return %d\n", n  );
+								DEBUG("[WS]:SysWebRequest return %d\n", n  );
 							}
 							HttpFree( request );
 						}
 						else
 						{
-							DEBUG("Send Error response\n");
+							DEBUG("[WS]:Send Error response\n");
 							int size = LWS_SEND_BUFFER_PRE_PADDING + 256 +LWS_SEND_BUFFER_POST_PADDING;
 							char buf[ size ];
 							char *msg = " { \"ErrorMessage\":\"Request do not contain required data\" }";
 							strcpy( (char *)(buf+LWS_SEND_BUFFER_PRE_PADDING), msg );
-							ERROR("Cannot parse websocket message: %s\n", (char *)in );
-							n = libwebsocket_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , strlen( msg ), LWS_WRITE_TEXT);
+							ERROR("[WS]:Cannot parse websocket message: %s\n", (char *)in );
+							n = libwebsocket_write( wsi, (unsigned char *)(buf + LWS_SEND_BUFFER_PRE_PADDING) , strlen( msg ), LWS_WRITE_TEXT);
 						}
-						DEBUG("FreeParts\n");
+						DEBUG("[WS]:FreeParts\n");
 					}
 					
 					if( pathParts != NULL )
@@ -431,6 +438,22 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 					}
 				}
 			}
+		break;
+		
+		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+			DEBUG("[WS]: LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
+			break;
+		
+		case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
+			DEBUG("[WS]: LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
+			break;
+		
+		case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
+			DEBUG("[WS]: LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
+			break;
+		
+		case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
+			DEBUG("[WS]: LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
 		break;
 
 	//
@@ -442,9 +465,15 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
 		dump_handshake_info((struct lws_tokens *)(long)user);
 		// you could return non-zero here and kill the connection 
+		DEBUG("[WS]: Filter protocol\n");
+		break;
+		
+	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
+		DEBUG("[WS]: LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
 		break;
 
 	default:
+		DEBUG("[WS]: Default Call\n");
 		break;
 	}
 
@@ -466,15 +495,19 @@ struct a_message {
 	size_t len;
 };
 
-static struct a_message ringbuffer[MAX_MESSAGE_QUEUE];
+static struct a_message ringbuffer[ MAX_MESSAGE_QUEUE ];
 static int ringbuffer_head;
 
+//
+//
+//
 
-static int
-callback_lws_mirror(struct libwebsocket_context * this,	struct libwebsocket *wsi,	enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+static int callback_lws_mirror(struct libwebsocket_context * this,	struct libwebsocket *wsi,	enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len )
 {
 	int n;
 	struct per_session_data__lws_mirror *pss = user;
+	
+	DEBUG("[WS]: callback lws mirror\n");
 
 	switch (reason) 
 	{
@@ -483,31 +516,38 @@ callback_lws_mirror(struct libwebsocket_context * this,	struct libwebsocket *wsi
 		pss->ringbuffer_tail = ringbuffer_head;
 		pss->wsi = wsi;
 		libwebsocket_callback_on_writable(this, wsi);
+		DEBUG("[WS]:Callback estabilished\n");
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
 
 		if (pss->ringbuffer_tail != ringbuffer_head) {
 
-			n = libwebsocket_write(wsi, (unsigned char *)
+			n = libwebsocket_write( wsi, (unsigned char *)
 				   ringbuffer[pss->ringbuffer_tail].payload +
 				   LWS_SEND_BUFFER_PRE_PADDING,
-				   ringbuffer[pss->ringbuffer_tail].len,
-								LWS_WRITE_TEXT);
+				   ringbuffer[pss->ringbuffer_tail].len, LWS_WRITE_TEXT);
 
-			if (n < 0) {
-				fprintf(stderr, "ERROR writing to socket");
-				exit(1);
+			if (n < 0) 
+			{
+				ERROR( "ERROR writing to socket\n");
+				//exit(1);
 			}
 
 			if (pss->ringbuffer_tail == (MAX_MESSAGE_QUEUE - 1))
+			{
 				pss->ringbuffer_tail = 0;
+			}
 			else
+			{
 				pss->ringbuffer_tail++;
+			}
 
 			if (((ringbuffer_head - pss->ringbuffer_tail) %
 				  MAX_MESSAGE_QUEUE) < (MAX_MESSAGE_QUEUE - 15))
+			{
 				libwebsocket_rx_flow_control(wsi, 1);
+			}
 
 			libwebsocket_callback_on_writable(this, wsi);
 
@@ -523,39 +563,38 @@ callback_lws_mirror(struct libwebsocket_context * this,	struct libwebsocket *wsi
 	case LWS_CALLBACK_RECEIVE:
 
 		if (ringbuffer[ringbuffer_head].payload)
+		{
 			free(ringbuffer[ringbuffer_head].payload);
+		}
 
-		ringbuffer[ringbuffer_head].payload =
-				malloc(LWS_SEND_BUFFER_PRE_PADDING + len +
-						  LWS_SEND_BUFFER_POST_PADDING);
+		ringbuffer[ringbuffer_head].payload =calloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING, sizeof(char) );
+				
 		ringbuffer[ringbuffer_head].len = len;
-		memcpy((char *)ringbuffer[ringbuffer_head].payload +
-					  LWS_SEND_BUFFER_PRE_PADDING, in, len);
+		memcpy((char *)ringbuffer[ringbuffer_head].payload + LWS_SEND_BUFFER_PRE_PADDING, in, len);
+		
 		if (ringbuffer_head == (MAX_MESSAGE_QUEUE - 1))
+		{
 			ringbuffer_head = 0;
-		else
+		}
+		else 
+		{
 			ringbuffer_head++;
+		}
 
 		if (((ringbuffer_head - pss->ringbuffer_tail) %
 				  MAX_MESSAGE_QUEUE) > (MAX_MESSAGE_QUEUE - 10))
+		{
 			libwebsocket_rx_flow_control(wsi, 0);
+		}
 
 		libwebsocket_callback_on_writable_all_protocol(
 					       libwebsockets_get_protocol(wsi));
 		break;
+		
 
-	//
-	// this just demonstrates how to use the protocol filter. If you won't
-	// study and reject connections based on header content, you don't need
-	// to handle this callback
-	//
-
-	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
-		dump_handshake_info((struct lws_tokens *)(long)user);
-		// you could return non-zero here and kill the connection 
-		break;
 
 	default:
+		DEBUG("[WS]:Callback default\n");
 		break;
 	}
 
@@ -594,7 +633,9 @@ static struct libwebsocket_protocols protocols[] = {
 
 int WebsocketThread( FThread *data )
 {
-	WebSocket *ws = data->t_Data;
+	WebSocket *ws = (WebSocket *)data->t_Data;
+	
+	DEBUG("[WS]:Websocket thread started\n");
 	
 	//
 	// This is an example of an existing application's explicit poll()
@@ -675,7 +716,8 @@ done:
 
 int WebSocketStart( WebSocket *ws )
 {
-	ws->ws_Thread = ThreadNew( WebsocketThread, ws );
+	DEBUG("[WS]:Starting websocket thread\n");
+	ws->ws_Thread = ThreadNew( WebsocketThread, ws, TRUE );
 	
 	return 0;
 }
@@ -688,13 +730,15 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 {
 	WebSocket *ws = NULL;
 	
+	DEBUG("[WS]: New websocket\n");
+	
 	if( ( ws = FCalloc( 1, sizeof(WebSocket) ) ) != NULL )
 	{
 		char *fhome = getenv("FRIEND_HOME");
 		ws->ws_FCM = fcm;
 		
 		ws->ws_Port = port;
-		ws->ws_UseSSL = FALSE;
+		ws->ws_UseSSL = sslOn;
 		ws->ws_OldTime = 0;
 		ws->ws_InterfaceName[ 0 ] = 0;
 		memset( &(ws->ws_Info), 0, sizeof ws->ws_Info );
@@ -702,13 +746,35 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 		
 		if( ws->ws_UseSSL == TRUE )
 		{
-			ws->ws_CertPath = FCalloc( 1512, sizeof(char) );
-			ws->ws_KeyPath = FCalloc( 1512, sizeof(char) );
+			INFO("[WS]:WebSocket: SSL Enabled\n");
+			
+			ws->ws_CertPath = RSA_SERVER_CERT;
+			ws->ws_KeyPath = RSA_SERVER_KEY;
 		
-			sprintf( ws->ws_CertPath, "%s%s", fhome, "/libwebsockets-test-server.pem" );
-			sprintf( ws->ws_KeyPath, "%s%s", fhome, "/libwebsockets-test-server.key.pem" );
+			//sprintf( ws->ws_CertPath, "%s%s", fhome, "/libwebsockets-test-server.pem" );
+			//sprintf( ws->ws_KeyPath, "%s%s", fhome, "/libwebsockets-test-server.key.pem" );
+			/*
+					ws->ws_Info.ssl_cipher_list = "ECDHE-ECDSA-AES256-GCM-SHA384:"
+			       "ECDHE-RSA-AES256-GCM-SHA384:"
+			       "DHE-RSA-AES256-GCM-SHA384:"
+			       "ECDHE-RSA-AES256-SHA384:"
+			       "HIGH:!aNULL:!eNULL:!EXPORT:"
+			       "!DES:!MD5:!PSK:!RC4:!HMAC_SHA1:"
+			       "!SHA1:!DHE-RSA-AES128-GCM-SHA256:"
+			       "!DHE-RSA-AES128-SHA256:"
+			       "!AES128-GCM-SHA256:"
+			       "!AES128-SHA256:"
+			       "!DHE-RSA-AES256-SHA256:"
+			       "!AES256-GCM-SHA384:"
+			       "!AES256-SHA256";*/
+			//ws->ws_Opts |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
-
+		
+		if( ws->ws_AllowNonSSL == TRUE )
+		{
+			 //ws->ws_Opts |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
+		}
+		
 			/*
 		case 'k':
 			opts = LWS_SERVER_OPTION_DEFEAT_CLIENT_MASK;
@@ -719,7 +785,7 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 		ws->ws_Info.iface = ws->ws_Interface;
 		ws->ws_Info.ssl_cert_filepath = ws->ws_CertPath;
 		ws->ws_Info.ssl_private_key_filepath = ws->ws_KeyPath;
-		ws->ws_Info.options = ws->ws_Opts;
+		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 		ws->ws_Info.user = ws;
 		ws->ws_Info.extensions = libwebsocket_get_internal_extensions();
 //		ws->ws_Info.extensions->per_context_private_data = ws;
@@ -730,23 +796,19 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 		if (ws->ws_Context == NULL) 
 		{
 			ERROR( "libwebsocket init failed\n");
-			if( ws->ws_CertPath != NULL )
-			{
-				FFree( ws->ws_CertPath );
-				FFree( ws->ws_KeyPath );
-			}
+
 			FFree( ws );
 			return NULL;
 		}
 		
-		INFO("WEBSOCKET NEW Websockets ptr %p context %p\n", ws, ws->ws_Context);
+		INFO("[WS]: NEW Websockets ptr %p context %p\n", ws, ws->ws_Context);
 
 		ws->ws_Buf[ LWS_SEND_BUFFER_PRE_PADDING ] = 'x';
 			
 	}
 	else
 	{
-		ERROR("Cannot allocate memory for WebSocket\n");
+		ERROR("[WS]:Cannot allocate memory for WebSocket\n");
 	}
 	
 	return ws;
@@ -793,19 +855,19 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 	
 	WebSocket *ws =  (WebSocket *) libwebsocket_context_user ( this );
 	
-	INFO("CALLBACKHTTP get context user WS %p context %p  USER %p\n", ws, this, user );
+	INFO("[WS]:CALLBACKHTTP get context user WS %p context %p  USER %p reason %d\n", ws, this, user, reason );
 
 	switch( reason ) 
 	{
 		case LWS_CALLBACK_HTTP:
-			DEBUG( "serving HTTP URI %s\n", (char *)in );
+			DEBUG( "[WS]:serving HTTP URI %s\n", (char *)in );
 
 		if ( in && strcmp(in, "/favicon.ico") == 0 ) 
 		{
 			if (libwebsockets_serve_http_file( this, wsi,
 			     LOCAL_RESOURCE_PATH"/favicon.ico", "image/x-icon") )
 			{
-				DEBUG( "Failed to send favicon\n");
+				DEBUG( "[WS]:Failed to send favicon\n");
 			}
 			break;
 		}
@@ -814,7 +876,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 
 		if ( libwebsockets_serve_http_file( this, wsi, LOCAL_RESOURCE_PATH"/test.html", "text/html") )
 		{
-			DEBUG( "Failed to send HTTP file\n");
+			ERROR( "[WS]:Failed to send HTTP file\n");
 		}
 		break;
 
@@ -830,7 +892,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 
 		libwebsockets_get_peer_addresses( this, wsi, (int)(long)user, client_name, sizeof(client_name), client_ip, sizeof(client_ip) );
 
-		INFO( "Received network connect from %s (%s)\n", client_name, client_ip );
+		INFO( "[WS]:Received network connect from %s (%s)\n", client_name, client_ip );
 
 		// if we returned non-zero from here, we kill the connection 
 		break;
@@ -840,11 +902,11 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 	// protocol 0 callback
 	//
 		
-	DEBUG("USEPTR %p\n", user );
+	//DEBUG("[WS]:USEPTR %p\n", user );
 
 	case LWS_CALLBACK_ADD_POLL_FD:
 		
-		DEBUG("ADDPOLLFD %ld  events %d\n", (long)user , ws->ws_CountPollfds );
+		DEBUG("[WS]:ADDPOLLFD %ld  events %d\n", (long)user , ws->ws_CountPollfds );
 		
 		ws->ws_Pollfds[ ws->ws_CountPollfds ].fd = (int)(long)user;
 		ws->ws_Pollfds[ ws->ws_CountPollfds ].events = (int)len;
@@ -852,7 +914,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 	break;
 
 	case LWS_CALLBACK_DEL_POLL_FD:
-		DEBUG("LWS_CALLBACK_DEL_POLL_FD\n");
+		DEBUG("[WS]:LWS_CALLBACK_DEL_POLL_FD\n");
 		for (n = 0; n < ws->ws_CountPollfds; n++)
 		{
 			if (ws->ws_Pollfds[n].fd == (int)(long)user)
@@ -868,7 +930,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 		break;
 
 	case LWS_CALLBACK_SET_MODE_POLL_FD:
-		DEBUG("LWS_CALLBACK_SET_MODE_POLL_FD\n");
+		DEBUG("[WS]:LWS_CALLBACK_SET_MODE_POLL_FD\n");
 		for (n = 0; n < ws->ws_CountPollfds; n++)
 		{
 			if (ws->ws_Pollfds[n].fd == (int)(long)user)
@@ -879,7 +941,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 		break;
 
 	case LWS_CALLBACK_CLEAR_MODE_POLL_FD:
-		DEBUG("LWS_CALLBACK_CLEAR_MODE_POLL_FD\n");
+		DEBUG("[WS]:LWS_CALLBACK_CLEAR_MODE_POLL_FD\n");
 		for (n = 0; n < ws->ws_CountPollfds; n++)
 		{
 			if (ws->ws_Pollfds[n].fd == (int)(long)user)
@@ -890,7 +952,7 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 		break;
 
 	default:
-		DEBUG("Default\n");
+		DEBUG("[WS]:Default\n");
 		break;
 	}
 

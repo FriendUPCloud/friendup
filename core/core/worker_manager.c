@@ -99,8 +99,6 @@ void WorkerManagerDelete( WorkerManager *wm )
 
 static int testquit = 0;
 
-void usleep( int );
-
 int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 {
 	int i = 0;
@@ -134,8 +132,8 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 			
 				// Register worker index..
 				DEBUG( "[WorkManagerRun] Registering thread data\n" );
-				struct SocketThreadData *td = ( struct SocketThreadData *)d;
-				td->workerIndex = wm->wm_LastWorker;
+				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
+				//td->workerIndex = wm->wm_LastWorker;
 				DEBUG( "[WorkManagerRun] Done registering.\n" );
 			}
 			pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
@@ -155,7 +153,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 			}
 			WorkerRunCommand( wrk, foo, d );
 			
-			break;
+			//break;
 		}
 		else
 		{
@@ -169,9 +167,12 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 			testquit++;
 			if( testquit > 25 )
 			{
+				//
+				ERROR("Worker testquit > 25 \n");
 				exit( 0 ); // <- die! only for debug
+				testquit = 0;
 			}
-			usleep( 15000 );
+			usleep( 1500 );
 			max = 0;
 		}
 	}

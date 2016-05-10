@@ -98,12 +98,32 @@ inline ListString *RunPHPScript( const char *command )
 inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *result )
 {
 	Path *base = PathNew( "resources" );
+	if( base == NULL )
+	{
+		ERROR("Cannot create base path!\n");
+		return -1;
+	}
 	
 	DEBUG("ReadServerFile path %s\n", locpath );
 	Path *convPath = PathNew( locpath );
-	if( convPath ) PathResolve( convPath ); 
+	if( convPath == NULL )
+	{
+		PathFree( base );
+		ERROR("Cannot read file from server\n");
+		return -2;
+	}
+		
+	PathResolve( convPath ); 
 	
 	Path* completePath = PathJoin( base, convPath );
+	if( completePath == NULL )
+	{
+		ERROR("Cannot create completePath!\n");
+		PathFree( base );
+		PathFree( convPath );
+		return -3;
+	}
+	
 	BOOL freeFile = FALSE;
 	
 	DEBUG("Read file %s\n", completePath->raw );
@@ -112,18 +132,24 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 	if( pthread_mutex_lock( &SLIB->mutex ) == 0 )
 	{
 		file = CacheManagerFileGet( SLIB->cm, completePath->raw );
+		
+		pthread_mutex_unlock( &SLIB->mutex );
+		
 		if( file == NULL )
 		{
 			file = LocFileNew( completePath->raw, FILE_READ_NOW | FILE_CACHEABLE );
 			if( file != NULL )
 			{
-				if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+				if( pthread_mutex_lock( &SLIB->mutex ) == 0 )
 				{
-					freeFile = TRUE;
+					if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+					{
+						freeFile = TRUE;
+					}
+					pthread_mutex_unlock( &SLIB->mutex );
 				}
 			}
 		}
-		pthread_mutex_unlock( &SLIB->mutex );
 	}
 
 	// Send reply
@@ -225,7 +251,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	//DEBUG("time %ld\nreqtimestamp %ld\nreqtimestamp %ld\n",
 	//	  time( NULL ), request->timestamp, HTTP_REQUEST_TIMEOUT );
 	// Timeout
-	
+	/*
 	if( time( NULL ) > request->timestamp + HTTP_REQUEST_TIMEOUT )
 	{
 		struct TagItem tags[] = {
@@ -242,7 +268,9 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		sock->data = NULL;
 		DEBUG("HTTP TIMER\n");
 		return response;
-	}
+	}*/
+	
+	//INFO("\n\n\n\n\n\n==============================================\n\n\n\n");
 	
 
 	// Continue parsing the request
@@ -393,7 +421,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							if( response == NULL )
 							{
 								struct TagItem tags[] = {
-									{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+									{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 									{TAG_DONE, TAG_DONE}
 								};	
 		
@@ -412,7 +440,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								if( response == NULL )
 								{
 									struct TagItem tags[] = {
-										{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+										{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 										{TAG_DONE, TAG_DONE}
 									};	
 		
@@ -440,10 +468,10 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 					{
 						// Read the file
 						
-						unsigned int i;
+						unsigned int i = 0;
 						int pos = -1;
 						
-						for( i=0 ; i < path->rawSize ; i++ )
+						for( ; i < path->rawSize; i++ )
 						{
 							if( path->raw[ i ] == ';' )
 							{
@@ -458,8 +486,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						
 						if( pos > 0 )
 						{
-							char *multipath = NULL;
-							char *pathTable[ MAX_FILES_TO_LOAD ];
+							char *multipath = NULL, *pathTable[ MAX_FILES_TO_LOAD ];
 							
 							memset( pathTable, 0, MAX_FILES_TO_LOAD );
 							int pathSize = path->rawSize + 1;
@@ -474,7 +501,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								int entry = 0;
 								pathTable[ entry ] = multipath;
 								
-								for( i=0 ; i < pathSize ; i++ )
+								for( i = 0; i < pathSize; i++ )
 								{
 									if( multipath[ i ] == ';' )
 									{
@@ -489,12 +516,13 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								if( bs != NULL )
 								{
 									int resError = 404;
+									int ent1 = entry + 1, err = 0;
 									
-									for( i = 0 ; i < entry + 1 ; i++ )
+									for( i = 0; i < ent1; i++ )
 									{
 										INFO("FIND file %s\n", pathTable[ i ] );
 									
-										int err = ReadServerFile( request->uri, pathTable[ i ], bs, &result );
+										err = ReadServerFile( request->uri, pathTable[ i ], bs, &result );
 									
 										DEBUG("Read file result %d\n", result );
 									
@@ -510,7 +538,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									{
 										struct TagItem tags[] = {
 											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate("text/html") },
-											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CACHE_CONTROL, (ULONG )StringDuplicate( "public, max-age=3600" ) },
 											{TAG_DONE, TAG_DONE}
 										};
 		
@@ -534,7 +563,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										ERROR("File do not exist\n");
 							
 										struct TagItem tags[] = {
-											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 											{TAG_DONE, TAG_DONE}
 										};	
 		
@@ -596,7 +625,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						
 								struct TagItem tags[] = {
 									{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  mime },
-									{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+									{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+									{ HTTP_HEADER_CACHE_CONTROL, (ULONG )StringDuplicate( "max-age = 3600" ) },
 									{TAG_DONE, TAG_DONE}
 								};
 		
@@ -612,7 +642,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								HttpWrite( response, sock );
 								result = 200;
 						
-								INFO("--------------------------------------------------------------%d\n", freeFile );
+								//INFO("--------------------------------------------------------------%d\n", freeFile );
 								if( freeFile == TRUE )
 								{
 									//ERROR("\n\n\n\nFREEEEEEFILE\n");
@@ -640,7 +670,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									{
 										struct TagItem tags[] = {
 											{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-											{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+											{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
 											{TAG_DONE, TAG_DONE}
 										};
 		
@@ -660,8 +690,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									DEBUG("File do not exist\n");
 							
 									struct TagItem tags[] = {
-										{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-										{TAG_DONE, TAG_DONE}
+										{ HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+										{ TAG_DONE, TAG_DONE}
 									};	
 		
 									response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );

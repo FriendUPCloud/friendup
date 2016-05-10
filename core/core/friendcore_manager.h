@@ -30,7 +30,7 @@
 #include <service/service_manager.h>
 #include <network/websocket.h>
 #include <core/friendcore_info.h>
-
+#include <core/event_manager.h>
 
 //
 // FriendCoreManager structure
@@ -55,11 +55,12 @@ typedef struct FriendCoreManager
 	BOOL 									fcm_Shutdown;											// Shutdown FCM
 	
 	ServiceManager					*fcm_ServiceManager;								// Service Manager
-	#ifdef WEBSOCKETS
+	#ifdef ENABLE_WEBSOCKETS
 	WebSocket 							*fcm_WebSocket;
 	#endif
 	
 	FriendcoreInfo						*fcm_FCI;													// Friend Core Information
+	EventManager						*fcm_EventManager;									// Manager of events
 	
 }FriendCoreManager;
 

@@ -95,10 +95,21 @@ function ExecuteApplication( app, args, callback )
 			var ifr = document.createElement( 'iframe' );
 			ifr.setAttribute( 'sandbox', 'allow-forms allow-scripts' );
 			ifr.path = conf.Path;
+			
+			// Set the conf
+			ifr.conf = conf.ConfFilename;
+			
 			// Proper way
 			if( conf.Init )
 			{
-				ifr.src = Doors.runLevels[1].domain + '/system.library/module?module=system&sessionid=' + Doors.sessionId + '&command=launch&app=' + app + '&friendup=' + Doors.runLevels[0].domain;
+				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
+				{
+					return ExecuteJSXByPath( conf.Init, args, callback, app );
+				}
+				else
+				{
+					ifr.src = Doors.runLevels[1].domain + '/system.library/module?module=system&sessionid=' + Doors.sessionId + '&command=launch&app=' + app + '&friendup=' + Doors.runLevels[0].domain;
+				}
 			}
 			else
 			{
@@ -169,8 +180,7 @@ function ExecuteApplication( app, args, callback )
 			ifr.close = function()
 			{
 				// Check if iframe has a close event
-				if( ifr.onClose )
-					ifr.onClose();
+				if( ifr.onClose )ifr.onClose();
 				
 				// Just remove the application
 				ifr.parentNode.removeChild( ifr );
@@ -198,6 +208,8 @@ function ExecuteApplication( app, args, callback )
 					domain:   Doors.runLevels[1].domain,
 					registerCallback: cid
 				};
+				if( conf.State ) o.state = conf.State;
+				
 				// Language support
 				if( conf.language )
 				{
@@ -469,7 +481,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 }
 
 // Do it by path!
-function ExecuteJSXByPath( path, args, callback )
+function ExecuteJSXByPath( path, args, callback, conf )
 {
 	var f = new File( path );
 	f.onLoad = function( data )
@@ -482,21 +494,35 @@ function ExecuteJSXByPath( path, args, callback )
 				app = app.split( '/' );
 				app = app[app.length-1]; 
 			}
-			return ExecuteJSX( data, app, args, path, callback );
+			var r = ExecuteJSX( data, app, args, path, callback, conf );
+			if( callback )
+				callback( true );
+			return r;
+			
 		}
 		callback( false );
 	}
 	f.load();
 }
 
-function ExecuteJSX( data, app, args, path, callback )
+function ExecuteJSX( data, app, args, path, callback, conf )
 {
 	//console.log( 'Here is the path: ' + path );
 	// Load application into a sandboxed iframe
 	var ifr = document.createElement( 'iframe' );
 	ifr.setAttribute( 'sandbox', 'allow-same-origin allow-forms allow-scripts' );
 	ifr.path = '/webclient/jsx/';
-	ifr.src = 'sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
+	// Special case, we have a conf
+	if( conf )
+	{
+		ifr.src = '/system.library/module/?module=system&command=sandbox' +
+			'&sessionid=' + Workspace.sessionId +
+			'&conf=' + conf + 
+			( args ? ( '&args=' + args ) : '' );
+		ifr.conf = conf;
+	}
+	// Just give a dumb sandbox
+	else ifr.src = 'sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
 	
 	// Register name and ID
 	ifr.applicationName = app;
@@ -588,12 +614,10 @@ function ExecuteJSX( data, app, args, path, callback )
 			data = data.split( /progdir\:/i ).join ( dpath );
 			data = data.split( /libs\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
 			data = data.split( /system\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
-			// TODO: Also trap System: and Libs:
 		}
 		
 		jsx.innerHTML = data;
 		ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
-		
 		
 		var cid = addWrapperCallback( function()
 		{
@@ -611,10 +635,12 @@ function ExecuteJSX( data, app, args, path, callback )
 			theme:            Doors.theme,
 			filePath:         '/webclient/jsx/',
 			appPath:          dpath ? dpath : '',
+			sessionId:        ifr.sessionId, // JSX has sessionid
 			origin:           document.location.href,
 			windowId:         false,
 			registerCallback: cid
 		} );
+		
 		ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 	}
 	

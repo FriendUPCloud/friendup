@@ -17,12 +17,67 @@
 *                                                                              *
 *******************************************************************************/
 
+var Config = {
+};
+
 Application.run = function( msg, iface )
 {
 	// To tell about ck
 	this.ckinitialized = false;
 	this.newLine = true;
 	this.initCKE();
+	
+	this.sessionObject.currentZoom = '100%';
+	
+	AddEvent( 'onresize', function( e )
+	{
+		Application.checkWidth();
+	} );
+	
+	// Remember content on scroll!
+	document.body.onScroll = function( e )
+	{
+		if( Application.contentTimeout )
+			clearTimeout( Application.contentTimeout );
+		Application.contentTimeout = setTimeout( function()
+		{
+			Application.sendMessage( { 
+				command: 'remembercontent', 
+				data: CKEDITOR.instances.Editor.getData(),
+				scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+			} );
+			Application.contentTimeout = false;
+		}, 250 );
+	}
+}
+
+Application.checkWidth = function()
+{
+	var ww = window.innerWidth;
+	//console.log( ww );
+	/*if( ww <= 540 )
+	{
+		editorCommand( 'keepWidth' );
+	}
+	else if( ww < 640 )
+	{
+		editorCommand( 'zoom60%' );
+	}
+	else if( ww < 740 )
+	{
+		editorCommand( 'zoom70%' );
+	}
+	else*/ if( ww < 840 )
+	{
+		//editorCommand( 'zoom80%' );
+		editorCommand( 'staticWidth' );
+		//console.log( 'Static width!' );
+	}
+	else
+	{
+		editorCommand( 'dynamicWidth' );
+		//console.log( 'Dynamic width' );
+	}
 }
 
 Application.initCKE = function()
@@ -38,12 +93,42 @@ Application.initCKE = function()
 			{ 
 				//evt.editor.execCommand( 'maximize' ); 
 				Application.initializeToolbar();
+				
+				if( isMobile )
+				{
+					var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
+					d.body.onmousedown = function( e )
+					{
+						if( this == d.activeElement )
+						{
+							ge( 'AuthorToolbar' ).className = 'Hidden';
+							ge( 'cke_1_contents' ).className = 'Hidden';
+						}
+						else
+						{
+							ge( 'AuthorToolbar' ).className = '';
+							ge( 'cke_1_contents' ).className = '';
+						}
+					}
+					d.body.onthouchdown = d.body.onmousedown;
+				}
 			},
 			contentDom: function( e )
 			{
 				var editable = e.editor.editable();
 				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
 				{
+					if( Application.contentTimeout )
+						clearTimeout( Application.contentTimeout );
+					Application.contentTimeout = setTimeout( function()
+					{
+						Application.sendMessage( { 
+							command: 'remembercontent', 
+							data: CKEDITOR.instances.Editor.getData(),
+							scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+						} );
+						Application.contentTimeout = false;
+					}, 250 );
 					// Pass it back
 					if( evt.data.$.ctrlKey )
 					{
@@ -78,6 +163,7 @@ Application.initCKE = function()
 		}
 	} );
 	CKEDITOR.config.height = '100%';
+	CKEDITOR.config.extraAllowedContent = 'img[src,alt,width,height];h1;h2;h3;h4;h5;h6;p';
 }
 
 Application.resetToolbar = function()
@@ -88,6 +174,8 @@ Application.resetToolbar = function()
 
 function MyMouseListener( e )
 {
+	Application.elementHasLineHeight = false;
+	
 	var ele = e.target;
 	if( !ele )
 	{
@@ -143,7 +231,6 @@ function MyMouseListener( e )
 		
 		// Check font style ----------------------------------------------------
 		var fs = e.target;
-		
 		while( fs.parentNode && !fs.style.fontFamily )
 		{
 			fs = fs.parentNode;
@@ -172,6 +259,17 @@ function MyMouseListener( e )
 		else
 		{
 			SelectOption( ge( 'FontSelector' ), 0 );
+		}
+		
+		// Check for lineheight
+		var fs = e.target;
+		while( fs.parentNode && !fs.style.lineHeight )
+		{
+			fs = fs.parentNode;
+		}
+		if( fs.parentNode && fs.style.lineHeight )
+		{
+			Application.elementHasLineHeight = true;
 		}
 		
 		// Check font size -----------------------------------------------------
@@ -211,6 +309,18 @@ function MyMouseListener( e )
 			SelectOption( ge( 'FontSize' ), '12pt' );
 		}
 	}
+	
+	// Set the content!
+	if( Application.contentTimeout ) clearTimeout( Application.contentTimeout );
+	Application.contentTimeout = setTimeout( function()
+	{
+		Application.sendMessage( { 
+			command: 'remembercontent', 
+			data: CKEDITOR.instances.Editor.getData(),
+			scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+		} );
+		Application.contentTimeout = false;
+	}, 250 );
 }
 
 Application.parseText = function( str )
@@ -325,30 +435,42 @@ Application.initializeToolbar = function()
 			bt.className = d.className;
 		}
 		
-		var pageUrl = getImageUrl( 'Progdir:Gfx/page.png' );
-		
-		// On click events for our toolbar
-		var f = document.getElementsByTagName( 'iframe' )[0];
-		f = f.contentWindow;
-		f.document.body.parentNode.style.background = '#444444';
-		f.document.body.parentNode.style.padding = '0';
-		f.document.body.parentNode.style.margin = '0';
-		f.document.body.style.position = 'relative';
-		f.document.body.style.backgroundColor = '#ffffff';
-		f.document.body.style.backgroundImage = 'url(' + pageUrl + ')';
-		f.document.body.style.backgroundSize = '595pt 842pt';
-		f.document.body.style.backgroundPosition = 'top left';
-		f.document.body.style.backgroundRepeat = 'repeat';
-		f.document.body.style.padding = '20pt 20pt';
-		f.document.body.style.borderRadius = '15px';
-		f.document.body.style.width = '595pt';
-		f.document.body.style.minHeight = '842pt';
-		f.document.body.style.boxSizing = 'border-box';
-		f.document.body.style.margin = '20pt 0 20pt 0';
-		f.document.body.style.fontSize = '12pt';
-		editorCommand( 'zoom100%' );
-		AddEvent( 'onmouseup', MyMouseListener, f );
-		AddEvent( 'onkeyup', MyKeyListener, f );
+		this.initializeBody();
+	}
+}
+
+Application.initializeBody = function()
+{
+	var pageUrl = getImageUrl( 'Progdir:Gfx/page.png' );
+	// On click events for our toolbar
+	var f = document.getElementsByTagName( 'iframe' )[0];
+	f = f.contentWindow;
+	f.document.body.parentNode.style.background = '#444444';
+	f.document.body.parentNode.style.padding = '0';
+	f.document.body.parentNode.style.margin = '0';
+	f.document.body.style.position = 'relative';
+	f.document.body.style.backgroundColor = '#ffffff';
+	f.document.body.style.backgroundImage = 'url(' + pageUrl + ')';
+	f.document.body.style.backgroundSize = '595pt 842pt';
+	f.document.body.style.backgroundPosition = 'top left';
+	f.document.body.style.backgroundRepeat = 'repeat';
+	f.document.body.style.padding = '20pt 20pt';
+	f.document.body.style.borderRadius = '15px';
+	f.document.body.style.width = '595pt';
+	f.document.body.style.minHeight = '842pt';
+	f.document.body.style.boxSizing = 'border-box';
+	f.document.body.style.margin = '20pt 0 20pt 0';
+	f.document.body.style.fontSize = '12pt';
+	editorCommand( 'zoom100%', 'store' );
+	AddEvent( 'onmouseup', MyMouseListener, f );
+	AddEvent( 'onkeyup', MyKeyListener, f );
+	if( isMobile )
+	{
+		AddEvent( 'onblur', function( e )
+		{
+			ge( 'AuthorToolbar' ).className = 'BackgroundDefault ColorDefault BorderTop';
+			ge( 'cke_1_contents' ).className = '';
+		}, f );
 	}
 }
 
@@ -358,6 +480,10 @@ var _pageCount = 0;
 var _a4pageHeightPx = 1122.66;
 function MyKeyListener( e )
 {
+	if( !Config.usePagination )
+	{
+		return;
+	}
 	if( _repag ) return;
 	_repag = true;
 	
@@ -484,6 +610,7 @@ Application.loadFile = function( path )
 		case 'doc':
 		case 'docx':
 		case 'odt':
+		case 'rtf':
 			var m = new Module( 'files' );
 			m.onExecuted = function( e, data )
 			{
@@ -492,7 +619,21 @@ Application.loadFile = function( path )
 					Application.setCurrentDocument( path );
 					
 					ge( 'Status' ).innerHTML = 'Loaded';
-					CKEDITOR.instances.Editor.setData( data );
+					CKEDITOR.instances.Editor.setData( data,
+						function()
+						{
+							Application.initializeBody();
+						}
+					);
+					
+					// Remember content and top scroll
+					Application.sendMessage( { 
+						command: 'remembercontent', 
+						data: data,
+						path: path,
+						scrollTop: 0
+					} );
+					
 					setTimeout( function()
 					{
 						ge( 'Status' ).innerHTML = '';
@@ -502,7 +643,6 @@ Application.loadFile = function( path )
 				else
 				{
 					ge( 'Status' ).innerHTML = 'Failed to load document...';
-					console.log( e, data );
 					
 					setTimeout( function()
 					{
@@ -533,11 +673,28 @@ Application.loadFile = function( path )
 				{
 					var f = document.getElementsByTagName( 'iframe' )[0];
 					f = f.contentWindow.document.body.innerHTML = bdata[1];
+					
+					// Remember content and top scroll
+					Application.sendMessage( { 
+						command: 'remembercontent', 
+						data: bdata[1],
+						path: path,
+						scrollTop: 0
+					} );
+					
 				}
 				// This is not a compliant HTML document
 				else
 				{
 					CKEDITOR.instances.Editor.setData( data );
+					
+					// Remember content and top scroll
+					Application.sendMessage( { 
+						command: 'remembercontent', 
+						path: path,
+						data: data,
+						scrollTop: 0
+					} );
 				}
 			}
 			f.load();
@@ -556,52 +713,47 @@ Application.saveFile = function( path, content )
 		case 'doc':
 		case 'docx':
 		case 'odt':
-			
+		case 'rtf':
 			var f = new File();
 			f.onPost = function( res )
 			{
 				if( res )
 				{
-					ge( 'Status' ).innerHTML = 'Written';
-					setTimeout( function()
+					ge( 'Status' ).innerHTML = 'Converting...';
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, data )
 					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
+						if( e == 'ok' )
+						{
+							ge( 'Status' ).innerHTML = 'Written';
+							setTimeout( function()
+							{
+								ge( 'Status' ).innerHTML = '';
+							}, 500 );
+						}
+						// We got an error...
+						else
+						{
+							ge( 'Status' ).innerHTML = data;
+							setTimeout( function()
+							{
+								ge( 'Status' ).innerHTML = '';
+							}, 1000 );
+						}
+					}
+					m.execute( 'convertfile', { path: path } );
 				}
 				else
 				{
 					ge( 'Status' ).innerHTML = 'Error writing...';
 					setTimeout( function()
 					{
-						ge( 'Status' ).innerHTML = '';
+						ge( 'Status' ).innerHTML = res;
 					}, 1000 );
 				}
 			}
 			f.post( path, content );
-			
-			var m = new Module( 'files' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{
-					ge( 'Status' ).innerHTML = 'Written';
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 500 );
-				}
-				// We got an error...
-				else
-				{
-					ge( 'Status' ).innerHTML = data;
-					setTimeout( function()
-					{
-						ge( 'Status' ).innerHTML = '';
-					}, 1000 );
-				}
-			}
-			m.execute( 'writedocumentformat', { path: path, data: content } );
-			
 			break;
 		default:
 			var f = new File();
@@ -616,6 +768,13 @@ Application.saveFile = function( path, content )
 			f.save( path, content );
 			break;
 	}
+	
+	// Save state
+	Application.sendMessage( { 
+		command: 'remembercontent', 
+		data: CKEDITOR.instances.Editor.getData(),
+		scrollTop: document.getElementsByTagName( 'iframe' )[0].contentWindow.document.body.scrollTop
+	} );
 }
 
 Application.print = function( path, content, callback )
@@ -646,9 +805,49 @@ Application.print = function( path, content, callback )
 	m.execute( 'gendocumentpdf', { path: path, data: content } );
 }
 
-Application.newDocument = function()
+Application.newDocument = function( args )
 {
-	CKEDITOR.instances.Editor.setData( '' );
+	if( typeof( CKEDITOR ) == 'undefined' )
+	{
+		return setTimeout( function()
+		{
+			Application.newDocument( args );
+		}, 50 );
+	}
+	
+	// No content? Forget session..
+	// TODO: May not be what we want!
+	if( !args || !args.content )
+	{
+		Application.sendMessage( { 
+			command: 'remembercontent', 
+			data: '',
+			scrollTop: 0
+		} );
+	}
+	
+	if( args.content )
+	{
+		CKEDITOR.instances.Editor.setData( args.content, function()
+		{
+			if( args.scrollTop )
+			{
+				setTimeout( function()
+				{
+					var i = document.getElementsByTagName( 'iframe' )[0];
+					i.contentWindow.document.body.scrollTop = args.scrollTop;
+					Application.initializeBody();
+				}, 50 );
+			}
+		} );
+	}
+	else
+	{
+		CKEDITOR.instances.Editor.setData( '', function()
+		{
+			Application.initializeBody();
+		} );
+	}
 }
 
 // TODO: This won't work
@@ -694,7 +893,8 @@ Application.receiveMessage = function( msg )
 				CKEDITOR.instances.Editor.insertHtml( i );
 			}
 			f.load();*/
-			var i = '<img src="' + getImageUrl( msg.path ) + '"/>';
+			var i = '<img src="' + getImageUrl( msg.path ) + '" width="100%" height="auto"/>';
+			//console.log( i );
 			CKEDITOR.instances.Editor.insertHtml( i );
 			break;
 		case 'loadfiles':
@@ -718,7 +918,12 @@ Application.receiveMessage = function( msg )
 			this.saveFile( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>' );
 			break;
 		case 'newdocument':
-			this.newDocument();
+			var o = {
+				content: msg.content ? msg.content : '', 
+				scrollTop: msg.scrollTop >= 0 ? msg.scrollTop : 0,
+				path: msg.path ? msg.path : ''
+			};
+			this.newDocument( o );
 			break;
 		case 'drop':
 			for( var a = 0; a < msg.data.length; a++ )
@@ -734,6 +939,8 @@ Application.receiveMessage = function( msg )
 	}
 }
 
+// FROM DOCU: FCKeditorAPI.GetInstance('data').Commands.GetCommand('Bold').GetState()
+
 // Set some styles
 function editorCommand( command, value )
 {
@@ -742,6 +949,12 @@ function editorCommand( command, value )
 	var editor = CKEDITOR.instances.Editor;
 	var defWidth = 640;
 	var ed = ge( 'cke_1_contents' );
+	
+	if( command.substr( 0, 4 ) == 'zoom' )
+	{
+		if( value == 'store' ) Application.sessionObject.currentZoom = command.split('zoom').join('');
+	}
+	
 	if( command == 'bold' )
 	{
 		f.execCommand( 'bold', false, false );
@@ -757,6 +970,28 @@ function editorCommand( command, value )
 	else if( command == 'image' )
 	{
 		imageWindow();
+	}
+	else if( command == 'align-left' )
+	{
+		f.execCommand( 'justifyLeft', false, false );
+	}
+	else if( command == 'align-right' )
+	{
+		f.execCommand( 'justifyRight', false, false );
+	}
+	else if( command == 'align-center' )
+	{
+		f.execCommand( 'justifyCenter', false, false );
+	}
+	else if( command == 'align-justify' )
+	{
+		f.execCommand( 'justifyFull', false, false );
+	}
+	else if( command == 'line-height' )
+	{
+		var st = !Application.elementHasLineHeight ? '2em' : '';
+		var s = new CKEDITOR.style( { attributes: { style: 'line-height: ' + st } } );
+		editor.applyStyle( s );
 	}
 	else if( command == 'formath1' )
 	{
@@ -797,6 +1032,48 @@ function editorCommand( command, value )
 	{
 		f.execCommand( 'removeformat', false, false );
 	}
+	/*else if( command == 'zoom30%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.3;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom40%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.4;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom50%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.5;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom60%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.6;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom70%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.7;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom80%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.8;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}
+	else if( command == 'zoom90%' )
+	{
+		ed.style.width = Math.floor( defWidth ) + 'px';
+		f.body.style.zoom = 0.9;
+		f.body.style.left = 'calc(50% - 297.5pt)';
+	}*/
 	else if( command == 'zoom100%' )
 	{
 		ed.style.width = Math.floor( defWidth ) + 'px';
@@ -824,6 +1101,22 @@ function editorCommand( command, value )
 		var c = Math.floor( defWidth * 2 * 0.5 );
 		f.body.style.left = 'calc(50% - 297.5pt)';
 	}
+	else if( command == 'staticWidth' )
+	{
+		ed.style.width = '100%';
+		f.body.style.width = 'calc(100% - 40px)';
+		f.body.style.left = '20px';
+		//console.log( 'We are using static width!' );
+	}
+	else if( command == 'dynamicWidth' )
+	{
+		var z = Application.sessionObject.currentZoom;
+		ed.style.width = Math.floor( defWidth * z ) + 'px';
+		f.body.style.zoom = z;
+		var c = Math.floor( defWidth * z * 0.5 );
+		f.body.style.left = 'calc(50% - 297.5pt)';
+		f.body.style.width = '595pt'; // default
+	}
 	else if( command == 'fontType' )
 	{
 		var s = new CKEDITOR.style( { attributes: { 'style': 'font-family: ' + value } } );
@@ -839,7 +1132,7 @@ function editorCommand( command, value )
 // 
 function imageWindow( currentImage )
 {
-	var v = new View( {
+	/*var v = new View( {
 		title: currentImage ? i18n('edit_image') : i18n('insert_image'),
 		width: 500,
 		height: 400,
@@ -851,7 +1144,9 @@ function imageWindow( currentImage )
 	{
 		v.setContent( data );
 	}
-	f.load();
+	f.load();*/
+	
+	Application.sendMessage( { command: 'insertimage' } );
 }
 
 

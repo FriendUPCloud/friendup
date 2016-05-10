@@ -43,7 +43,7 @@ var Module = function( mod )
 		
 		j.open ( 'post', '/system.library/module/', true, true );
 		
-		j.addVar( 'sessionid', Doors.sessionId              );
+		j.addVar( 'sessionid', Workspace.sessionId          );
 		j.addVar( 'module',    this.module                  );
 		j.addVar( 'args',      JSON.stringify ( this.args ) );
 		j.addVar( 'command',   this.command                 );
@@ -75,7 +75,7 @@ var Module = function( mod )
 
 (function( ns, undefined )
 {
-	ns.Module = function( conf )
+	ns.Module = function( conf, callback )
 	{
 		if ( !( this instanceof ns.Module ))
 			return new ns.Module( conf, callback );
@@ -95,8 +95,8 @@ var Module = function( mod )
 		if ( !self.callback )
 			throw new Error( 'friendUP.io.Module - no callback' );
 		
-		self.args[ 'module' ] = self.module;
-		self.args[ 'command' ] = self.command;
+		self.args[ 'module' ] = self.module;
+		self.args[ 'command' ] = self.command;
 		
 		var reqConf = {
 			method : 'POST',

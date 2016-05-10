@@ -37,10 +37,6 @@
 #define VERSION 		1
 #define REVISION		0
 
-// Linux do not have usleep in headers
-
-int usleep(ULONG usec);
-       
 //
 // Creste new service
 //

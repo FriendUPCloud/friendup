@@ -36,6 +36,13 @@ inline void PathSplit( Path* p )
 	char* pathStart = path;
 	p->resolved = TRUE;
 	
+	if( pathStart == NULL )
+	{
+		ERROR("Cannot split path, pathstart = NULL\n");
+		return;
+	}
+	
+	DEBUG("STRLENPATH %s\n", pathStart );
 	unsigned int strLen = strlen( pathStart );
 	unsigned int i = 0;
 	int part = 0;
@@ -67,7 +74,11 @@ inline void PathSplit( Path* p )
 
 Path* PathNew( const char* path )
 {
-	if( !path ) return NULL;
+	if( path == NULL )
+	{
+		ERROR("PathNew path = NULL!\n");
+		return NULL;
+	}
 	
 	Path* p = (Path*) calloc( 1, sizeof( Path ) );
 	if( p == NULL )
@@ -80,8 +91,8 @@ Path* PathNew( const char* path )
 	if( len > 0 )
 	{
 		//DEBUG( "[PathNew] Here it is: %d\n", len );
-		p->raw = calloc( len + 1, sizeof( char ) );
-		p->p_CopyRaw = calloc( len + 1, sizeof( char ) );
+		p->raw = calloc( len + 10, sizeof( char ) );
+		p->p_CopyRaw = calloc( len + 10, sizeof( char ) );
 		memcpy( p->raw, path, len );
 		memcpy( p->p_CopyRaw, path, len );
 		p->rawSize = len;
@@ -120,7 +131,12 @@ Path* PathNew( const char* path )
 Path* PathJoin( Path* path1, Path* path2 )
 {
 	unsigned int size = path1->rawSize + path2->rawSize + 1;
-	char* newPath = FCalloc( (size + 1), sizeof(char) );
+	char* newPath = FCalloc( (size + 10), sizeof(char) );
+	if( newPath == NULL )
+	{
+		ERROR("PathJoin, cannot allocate memory for newpath\n");
+		return NULL;
+	}
 	memcpy( newPath, path1->raw, path1->rawSize );
 	memcpy( newPath + path1->rawSize + 1, path2->raw, path2->rawSize );
 	newPath[path1->rawSize] = '/'; // Doesn't matter if path1 already has this. It'll just be ignored, then :)

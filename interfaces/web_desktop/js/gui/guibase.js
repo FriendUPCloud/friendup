@@ -1174,8 +1174,13 @@ function MakeTableList ( entries, headers )
 	return str;
 }
 
-function showWorkbenchMenu ( popupElement )
+function showWorkbenchMenu( popupElement )
 {
+	// We need a screen!
+	if( !window.currentScreen )
+		return;
+	
+	var wm = false;
 	// Move it!
 	if( !window.isMobile )
 	{
@@ -1193,7 +1198,7 @@ function showWorkbenchMenu ( popupElement )
 			currentScreen.appendChild( d );
 		}
 	
-		var wm = ge ( 'WorkbenchMenu' );
+		wm = ge ( 'WorkbenchMenu' );
 	
 		// It's not a text document, don't allow drag/select
 		wm.ondragstart = function( e ){ return cancelBubble( e ); }
@@ -1223,51 +1228,77 @@ function showWorkbenchMenu ( popupElement )
 		ge( 'WorkbenchMenu' ).className = 'Pear';
 	}
 	
-	var menuFound = 0;
-	
+	var menuFound = false;
 	// Test if we have menu items 
-	if ( wm && window.regionWindow && window.regionWindow.id != 'DoorsScreen' )
+	if ( window.currentMovable && wm == popupElement )
 	{
-		// Check window type
-		// TODO: Give option to make a custom menu for this window!
-		if ( window.regionWindow.menu )
-		{
-			GenerateMenu( wm, window.regionWindow.menu, false, window.regionWindow.applicationId );
-			if( popupElement )
-				popupElement.className = 'PopupMenu';
-			menuFound = 1;
-		}
+		GenerateMenu( wm, window.regionWindow.menu, false, window.regionWindow.applicationId );
+		popupElement.className = 'PopupMenu';
+		menuFound = 1;
 	}
 	
 	// Ok this is the fallback menu and the workbench menu
 	if ( !menuFound && wm )
 	{
-		// Blank menu
-		if( currentMovable && currentMovable.windowObject )
+		// Blank menu on windows without any directory view or menu
+		if( currentMovable )
 		{
-			if( !( currentMovable.content && currentMovable.content.directoryview ) )
+			if( currentMovable.content && currentMovable.content.menu && currentMovable.parentNode == currentScreen )
 			{
-				return GenerateMenu( wm, [] );
+				GenerateMenu( wm, currentMovable.content.menu, false, currentMovable.content.applicationId );
+				menuFound = true;
+			}
+			else if( !( currentMovable.content && currentMovable.content.directoryview ) )
+			{
+				// If this is an application owned window, check if it has an application
+				// screen, and if not, let it be
+				if( currentMovable.content.applicationId )
+				{
+					var screenAppId = currentScreen.screen._screen.applicationId;
+					if( currentMovable.content.applicationId != screenAppId )
+					{
+						GenerateMenu( wm, [] );
+						menuFound = true;
+					}
+				}
+				// Other case for empty menu
+				else
+				{
+					GenerateMenu( wm, [] );
+					menuFound = true;
+				}
 			}
 		}
-		if( popupElement )
-			return;
-		if( window.currentScreen && window.currentScreen.menu )
+		if( !menuFound )
 		{
-			GenerateMenu( wm, window.currentScreen.menu, false, window.currentScreen.screenObject._screen.applicationId );
-		}
-		else if ( ge ( 'DoorsScreen' ) && Workspace.menu )
-		{
-			GenerateMenu( wm, Workspace.menu );
-		}
-		else
-		{
-			if ( window.menu )
+			// We are using the popup element instead
+			if( popupElement ) return;
+		
+			// We have a screen menu!
+			if( window.currentScreen && window.currentScreen.menu )
 			{
-				GenerateMenu( wm, window.menu );
+				GenerateMenu( wm, window.currentScreen.menu, false, window.currentScreen.screenObject._screen.applicationId );
+			}
+			else if( window.currentScreen != ge( 'DoorsScreen' ) && !window.currentScreen.menu )
+			{
+				GenerateMenu( wm, [] );
+				return;
+			}
+			else if ( ge ( 'DoorsScreen' ) && Workspace.menu )
+			{
+				GenerateMenu( wm, Workspace.menu );
+			}
+			else
+			{
+				// TODO: This might not be needed..
+				if ( window.menu )
+				{
+					return GenerateMenu( wm, window.menu );
+				}
 			}
 		}
 	}
+	
 	// Onmouseover on menus (or click!)
 	var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
 	if( wm )
@@ -1283,7 +1314,6 @@ function showWorkbenchMenu ( popupElement )
 				//if( Workspace.menuMode != 'miga' )
 				//	if( wm.isActivated ) return;
 				wm.isActivated = true; // This menu is activated!
-				console.log( 'this was triggered.' );
 				// Cover movable windows to avoid mouse collision
 				CoverWindows();
 			
@@ -1470,26 +1500,36 @@ movableMouseUp = function ( e )
 	mousePointer.stopMove( e );
 }
 
-// Check the screen title of active window
-function CheckScreenTitle()
+// Check the screen title of active window/screen and check menu
+function CheckScreenTitle( screen )
 {
-	if( !window.currentScreen ) return;
+	var testObject = screen ? screen : window.currentScreen;
+	if( !testObject ) return;
 	
 	// Set screen title
-	var csc = currentScreen.screenObject;
-	var wo = currentMovable ? currentMovable.windowObject : false;
-	if( wo && wo.applicationName )
+	var csc = testObject.screenObject;
+	
+	// Set the screen title if we have a window with application name
+	var wo = window.currentMovable ? window.currentMovable.windowObject : false;
+	if( wo && wo.screen && wo.screen != csc ) wo = false; // Only movables on current screen
+	
+	var isDoorsScreen = testObject.id == 'DoorsScreen';
+	
+	if( wo && wo.applicationName && ( !csc || testObject == wo.screen || ( !wo.screen && isDoorsScreen ) ) )
 	{
 		var wnd = wo.applicationName;
 		if( !csc.originalTitle )
+		{
 			csc.originalTitle = csc.getFlag( 'title' );
+		}
 		csc.setFlag( 'title', wnd );
 	}
+	// Just use the screen
 	else if( csc.originalTitle )
 	{
 		csc.setFlag( 'title', csc.originalTitle );
 	}
-	
+
 	// Enable the global menu
 	if( Workspace && Workspace.menuMode == 'pear' )
 	{
@@ -1997,38 +2037,20 @@ function ClearMenuItemStyling( par )
 
 function FocusOnNothing()
 {
+	if( !window.currentMovable ) return;
+	
 	_DeactivateWindows();
 	
-	setTimeout(	function()
+	// Put focus somewhere else than where it is now..
+	// Blur like hell! :)
+	for( var a in movableWindows )
 	{
-		var field = ge( 'FocusRelease' );
-		if( !field )
-		{
-			field = document.createElement( 'input' );
-			field.id = 'FocusRelease';
-			field.setAttribute( 'type', 'text' );
-			field.setAttribute( 'style', 'position: absolute; top: -40px; opacity: 1; visibility: visible; -webkit-user-modify: read-write-plaintext-only; left: 0px;' );
-			document.body.appendChild( field );
-		}
-		field.onfocus = function()
-		{
-			//this timeout of 200ms is nessasary for Android 2.3.x
-			setTimeout( function()
-			{
-				field.blur();
-				field.setAttribute( 'style', 'display: none;' );
-				setTimeout( function()
-				{
-					document.body.removeChild( field );
-					document.body.focus();
-				}, 14 );
-			}, 200 );
-		};
-		setTimeout( function()
-		{
-			field.focus();
-		}, 14 );
-	}, 50);
+		if( movableWindows[a].windowObject )
+			movableWindows[a].windowObject.sendMessage( { command: 'blur' } );
+	}
+	var eles = document.getElementsByTagName( '*' );
+	for( var a = 0; a < eles.length; a++ )
+		eles[a].blur();
 }
 
 // Alert box, blocking a window

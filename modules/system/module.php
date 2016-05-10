@@ -22,6 +22,7 @@
 // Intermediary module to abstract some system stuff!
 
 include_once( 'php/friend.php' );
+include_once( 'php/classes/file.php' );
 
 // We might come here by mistage (direct calling of file by phpfs)
 if( $args->module != 'system' && $args->module != '(null)' )
@@ -110,6 +111,9 @@ if( isset( $args->command ) )
 {
 	switch( $args->command )
 	{
+		case 'systempath':
+			require( 'modules/system/include/systempath.php' );
+			break;
 		// Gives a proxu connection
 		case 'proxyget':
 			$c = curl_init( $args->args->url );
@@ -138,9 +142,12 @@ if( isset( $args->command ) )
 			}
 			die( 'fail' );
 			break;
+		case 'convertfile':
+			require( 'modules/system/include/convertfile.php' );
+			break;
 		// Install / upgrade application from central Friend Store repo
 		case 'install':
-			include( 'modules/system/include/install.php' );
+			require( 'modules/system/include/install.php' );
 			break;
 		case 'assign':
 			$mode = $args->args->mode;
@@ -417,6 +424,10 @@ if( isset( $args->command ) )
 					die( 'ok<!--separate-->' );
 				}
 			}
+			break;
+		// Populate a sandbox
+		case 'sandbox':
+			require( 'modules/system/include/sandbox.php' );
 			break;
 		// Try to lauch friend application
 		case 'friendapplication':
@@ -819,7 +830,12 @@ if( isset( $args->command ) )
 			
 			break;
 		
-		case 'getsystemsetting':	
+		// Save the application state
+		case 'savestate':
+			require( 'modules/system/include/savestate.php' );
+			break;
+		
+		case 'getsystemsetting':
 			if( $args->args->type && $args->args->key && $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM FSetting s
 				WHERE

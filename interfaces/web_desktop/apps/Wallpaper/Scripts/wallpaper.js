@@ -53,6 +53,7 @@ Application.run = function( msg )
 
 		f.replacements = {
 			'cancel'           : i18n('i18n_cancel'),
+			'close'            : i18n('i18n_close'),
 			'use'              : i18n('i18n_use'),
 			'save'             : i18n('i18n_save'),
 			'windows'          : i18n('i18n_windows'),

@@ -125,8 +125,8 @@
 
 .Selected
 {
-	background-color: #3B81C2;
-	color:            #ffffff;
+	background-color: #D0D0D0;
+	color:            #000000;
 }
 
 .ToolbarBackground
@@ -207,6 +207,21 @@
 	background-image: -ms-linear-gradient(bottom, #9BD6F2 12%, #FFFFFF 15%, #FDFDFD 100%);
 	background-image: linear-gradient(to bottom, #9BD6F2 12%, #FFFFFF 15%, #FDFDFD 100%);
 }
+
+/* Buttons */
+
+button, .Button
+{
+	background-image: url(/webclient/gfx/system/window_topgradient.png);
+	background-repeat: repeat-x;
+	background-position: top left;
+}
+
+button:hover, .Button:hover
+{
+	background-position: bottom left;
+}
+
 
 /* Dialog boxes */
 
@@ -384,6 +399,18 @@ table.List > tbody > tr.sw2 > th
 	border-bottom: 1px solid #d0d0d0;
 }
 
+.View > .Content:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 1px;
+	top: 0;
+	width: 100%;
+	background: rgba(0,0,0,0.2);
+	z-index: 2147483647;
+}
+
 /* Some links --------------------------------------------------------------- */
 
 a
@@ -483,8 +510,8 @@ h1, h2, h3, h4
 select
 {
 	display: inline;
-	color: #ffffff;
-	background-color: #3B81C2;
+	color: #000000;
+	background-color: #D0D0D0;
 	padding: 4px 5px 5px 5px;
 	margin: 0 4px 0 0;
 	border-top: 1px solid rgba(255,255,255,0.5);
@@ -494,7 +521,7 @@ select
 	box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
 	-webkit-box-shadow: 0px 2px 2px rgba(0,0,0,0.2);
-	text-shadow: 1px 1px 1px black;
+	text-shadow: none;
 	border-radius: 3px;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
@@ -2202,11 +2229,11 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	float: left;
 	padding: 4px 7px 5px 7px;
 	position: relative;
-	margin: 0 2px 0 0;
+	margin: 0 4px 0 0;
 	font-weight: normal;
-	border-radius: 2px 2px 0 0;
-	-moz-border-radius: 2px 2px 0 0;
-	-webkit-border-radius: 2px 2px 0 0;
+	border-radius: 8px 8px 0 0;
+	-moz-border-radius: 8px 8px 0 0;
+	-webkit-border-radius: 8px 8px 0 0;
 	cursor: pointer;
 	cursor: hand;
 	border: 1px solid #e0e0e0;
@@ -2497,7 +2524,7 @@ body #DeepestField
 .Desklet .Launcher
 {
 	float: left;
-	margin: 4px 0 4px 4px;
+	margin: 4px 0 0px 4px;
 	cursor: hand;
 	cursor: pointer;
 	background-position: center center;
@@ -2511,7 +2538,7 @@ body #DeepestField
 }
 .Desklet .Launcher + .Launcher
 {
-	margin: 0 0 4px 4px;
+
 }
 
 .Desklet .Launcher:hover
@@ -2954,7 +2981,8 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	background-size: contain;
 }
 
-.Launcher .File, .Launcher .File * 
+.Launcher .File, 
+.Launcher .File div 
 {
     width: 100%;
     margin: 0;

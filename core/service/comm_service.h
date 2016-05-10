@@ -48,7 +48,7 @@
 #define MSG_STOP    "exit"
 
 
-#define FRIEND_COMMUNICATION_PORT	6054
+#define FRIEND_COMMUNICATION_PORT	6100
 
 //
 // Service Type

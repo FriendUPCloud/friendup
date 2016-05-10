@@ -45,7 +45,6 @@ body.activated ::-webkit-scrollbar-track
 	background-clip: padding-box;
 	background: #808080;
 	border: 1px solid rgba(0,0,0,0.3);
-	border-radius: 3px;
 	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
 	background-position: center center;
 	background-repeat: no-repeat;
@@ -56,7 +55,6 @@ body.activated ::-webkit-scrollbar-thumb
 {
 	background: #d0d0d0;
 	border: 1px solid rgba(0,0,0,0.3);
-	border-radius: 3px;
 	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
 	background-position: center center;
 	background-repeat: no-repeat;
@@ -66,7 +64,6 @@ body.activated ::-webkit-scrollbar-thumb
 {
 	background: #3B81C2;
 	border: 1px solid rgba(0,0,0,0.3);
-	border-radius: 3px;
 	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
 	background-position: center center;
 	background-repeat: no-repeat;

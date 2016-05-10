@@ -17,10 +17,8 @@
 *                                                                              *
 *******************************************************************************/
 
-#define _POSIX_SOURCE
 #include <sys/types.h>
 #include <signal.h>
-
 #include <core/types.h>
 #include <service/service.h>
 #include <stdio.h>
@@ -42,10 +40,6 @@
 #define NAME "hello"
 #define VERSION 		1
 #define REVISION		0
-
-// Linux do not have usleep in headers
-
-int usleep(ULONG usec);
 
 typedef struct HelloService
 {

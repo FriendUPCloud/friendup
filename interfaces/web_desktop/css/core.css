@@ -81,8 +81,8 @@ h1, h2, h3, h4
 select
 {
 	display: inline;
-	color: $ColorButton;
-	background-color: $ColorBgButton;
+	color: $ColorSelect;
+	background-color: $ColorBgSelect;
 	padding: $PaddingSelect;
 	margin: $MarginButton;
 	border-top: $BorderDefaultTop;
@@ -92,7 +92,7 @@ select
 	box-shadow: $BoxShadowButton;
 	-moz-box-shadow: $BoxShadowButton;
 	-webkit-box-shadow: $BoxShadowButton;
-	text-shadow: $TxtShdPositive;
+	text-shadow: none;
 	border-radius: $ButtonBorderRadius;
 	-moz-border-radius: $ButtonBorderRadius;
 	-webkit-border-radius: $ButtonBorderRadius;

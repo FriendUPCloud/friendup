@@ -29,7 +29,8 @@ enum {
 	W_STATE_CREATED   = 1,
 	W_STATE_RUNNING   = 2,
 	W_STATE_WAITING   = 3,
-	W_STATE_TO_REMOVE = 3
+	W_STATE_TO_REMOVE = 4,
+	W_STATE_COMMAND_CALLED
 };
 
 typedef struct Worker

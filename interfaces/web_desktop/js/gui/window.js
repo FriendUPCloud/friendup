@@ -590,6 +590,7 @@ function _DeactivateWindows()
 			}
 			windowsDeactivated++;
 		}
+		CheckScreenTitle( movableWindows[a].screen );
 	}
 	
 	window.currentMovable = false;
@@ -598,8 +599,16 @@ function _DeactivateWindows()
 		PollTaskbar ();
 	
 	// Put focus somewhere else than where it is now..
-	Doors.mouseTrap.value = '';
-	Doors.mouseTrap.focus();
+	for( var a in movableWindows )
+	{
+		if( movableWindows[a].windowObject )
+		{
+			movableWindows[a].windowObject.sendMessage( {
+				command: 'blur'
+			} );
+		}
+	}
+	document.body.focus();
 	
 	// Check window
 	CheckScreenTitle();
@@ -660,7 +669,7 @@ function _WindowToFront( div )
 }
 
 // Make a movable window (the hard way)
-function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
+function MakeWindow( div, titleStr, width, height, id, flags, applicationId )
 {
 	if ( !div ) return false;
 	if ( !width ) width = 480;
@@ -687,6 +696,22 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			parentWindow = flags.parentView;
 	}
 	
+	// We must always define a screen for our view
+	if( !flags || !flags.screen )
+	{
+		if( !flags )
+			flags = {};
+		if( ge( 'DoorsScreen' ) )
+		{
+			flags.screen = ge( 'DoorsScreen' ).screenObject;
+		}
+		else 
+		{
+			flags.screen = { div: document.body };
+		}
+		screen = flags.screen;
+	}
+	
 	if( !id )
 	{
 		id = titleStr.split ( ' ' ).join ( '_' );
@@ -700,7 +725,7 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 	}
 	
 	// Make a unique id
-	var uniqueId = titleStr ? titleStr : id;
+	var uniqueId = titleStr ? titleStr + id : id;
 	uniqueId = uniqueId.split( /[ |:]/i ).join ( '_' );
 	
 	// Where to add div..
@@ -798,6 +823,8 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 		}
 	}
 	else flags = new Object ();
+	
+	contn.applicationId = applicationId;
 	
 	if ( div.className.indexOf ( ' View' ) < 0 )
 		div.className += ' View';
@@ -1133,54 +1160,15 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			}
 			wo.close();
 		}
-		// Deprecated (let's see if it's ever triggered)
-		else if( 1 == 2 )
-		{
-			console.log( 'Fatal! Deprecated! Should never happen!' );
-			// Clear reference
-			if ( window.regionWindow == div.content )
-				window.regionWindow = false;
-		
-			if ( div.parentNode )
-				div.parentNode.removeChild ( div );
-			if ( div )
-			{
-				// Clean up ids
-				var o = new Array ();
-				for ( var b in movableWindows )
-				{
-					if ( movableWindows[b] != div )
-						o[b] = movableWindows[b];
-				}
-				movableWindows = o;
-			}
-			movableWindowCount--;
-			if ( movableWindowCount <= 0 )
-			{
-				movableWindowCount = 0;
-				movableHighestZindex = 99;
-			}
-			// Check events
-			if ( div.content.events )
-			{
-				if ( typeof(div.content.events['close']) != 'undefined' )
-				{
-					for ( var a = 0; a < div.content.events['close'].length; a++ )
-					{
-						div.content.events['close'][a]();
-					}
-				}
-			}
-			PollTaskbar ();
-		}
 	}
+	
 
 	// Add all
 	inDiv.appendChild( depth );
 	inDiv.appendChild( minimize );
 	inDiv.appendChild( zoom );
 	inDiv.appendChild( close );
-	inDiv.appendChild ( titleSpan );
+	inDiv.appendChild( titleSpan );
 
 	div.depth     = depth;
 	div.zoom      = zoom;
@@ -1222,8 +1210,8 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 		}
 	}
 	
-	div.appendChild ( contn );
-	div.appendChild ( molay );
+	div.appendChild( contn );
+	div.appendChild( molay );
 	
 	div.content = contn;
 	
@@ -1280,6 +1268,10 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 			{
 				if( d.top < hh ) div.style.top = d.top + 'px';
 				if( d.left < ww ) div.style.left = d.left + 'px';
+				
+				//unique id should be more then just the title+++??? TODO!
+				//console.log('we place us here...', d.top, d.left, div.uniqueId);
+				
 				if ( div.content.flags && div.content.flags.memorize )
 				{
 					height = d.height;
@@ -1312,84 +1304,165 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 	
 	if( window.isMobile )
 	{
-		// set up touch interaction
-		if( typeof Hammer != 'undefined' )
-		{
-			var wh = new Hammer( title );
-			wh.get('swipe').set({ direction:Hammer.DIRECTION_ALL  });
-			wh.on('swipe', function(evt) {
-				
-				if(evt.direction == Hammer.DIRECTION_DOWN )
-				{
-					//find my windowelement
-					found = false;
-					var tmp = evt.target;
-					counter = 10;
-					while(found == false)
-					{
-						
-						if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
-						{
-							found = true;
-							//console.log('found our title node...', tmp);
-						}
-						tmp = tmp.parentNode;
-						
-						
-						//console.log('trying to find our active window... div');
-						counter--;
-						if( counter < 0 ) found = true;
-					}
-					//console.log('Title swipted.22..', evt);	
-	
-					var tb = ge( 'Taskbar' );
-					for( var tel = 0; tel < tb.childNodes.length; tel++ )
-					{
-						//console.log('compare.2..',tb.childNodes[tel].window,tmp );
-						if( tb.childNodes[tel].window == tmp )
-						{
-							tb.childNodes[tel].onmouseup( evt, tb.childNodes[tel] );
-						}
-					}
-				}
-			});
+		
+		var winTouchStart = [0,0];
+		var winTouchEnd = [0,0];
+		var winTouchDowned;
+		var winTouchTarget;
+		
+		//resize touch ecvents.... --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
+		resize.addEventListener('touchstart', function(evt) {
+			cancelBubble( evt );
 			
-			// resize us... only heightwise for now...
-			var hresize = new Hammer( resize );
-			hresize.on('tap', function(evt) {
-				//console.log('tappd', evt)
-			});
-			hresize.get('pan').set({ direction:Hammer.DIRECTION_ALL  });
-			hresize.on('press pan', function(evt) {
-				if( evt.type == 'press' )
-				{
-					evt.target.offH = evt.target.offsetParent.clientHeight;
-				}
-				else
-				{
-					touchResizeWindow(evt);
-				}	
-			});
-			
-			// resize us... only heightwise for now...
-			var hbottombar = new Hammer( bottombar );
-			hbottombar.on('tap', function(evt) {
-				//we do nothing hre at the moment...
-			});
-			hbottombar.get('pan').set({ direction:Hammer.DIRECTION_ALL  });
-			hbottombar.on('press pan', function(evt) {
-				if( evt.type == 'press' )
-				{
-					evt.target.offH = evt.target.offsetParent.clientHeight;
-				}
-				else
-				{
-					touchResizeWindow(evt);
+			winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
+			winTouchDowned = evt.timeStamp;
 
-				}	
-			});
-		}
 			
+
+		});
+		resize.addEventListener('touchmove', function(evt) {
+			cancelBubble( evt );
+						
+			if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+			touchResizeWindow(evt);
+			
+		});
+		resize.addEventListener('touchend', function(evt) { 
+			cancelBubble( evt );
+		});
+		
+		bottombar.addEventListener('touchstart', function(evt) {
+			cancelBubble( evt );
+			
+			winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
+			winTouchDowned = evt.timeStamp;
+			
+
+		});
+		bottombar.addEventListener('touchmove', function(evt) {
+			cancelBubble( evt );
+			
+			if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+			touchResizeWindow(evt);
+			
+		});
+		bottombar.addEventListener('touchend', function(evt) { 
+			cancelBubble( evt );
+		});		
+		
+		
+		//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
+		close.addEventListener('touchstart', function(evt) {
+			cancelBubble( evt );
+			winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
+			winTouchEnd = winTouchStart;
+			winTouchDowned = evt.timeStamp;
+		});		
+
+		close.addEventListener('touchend', function(evt) { 
+			cancelBubble( evt );
+			
+			evt.target.onclick();
+		});
+		//title swipe to minimize --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
+		title.addEventListener('touchstart', function(evt) {
+			if( this.popup ) return;
+			
+			
+			if( !evt.target.classList.contains('Zoom') ) { console.log('not zoom hit'); cancelBubble( evt ); }
+						
+			winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
+			winTouchEnd = winTouchStart;
+			winTouchDowned = evt.timeStamp;
+
+		});
+		title.addEventListener('touchmove', function(evt) {
+			if( this.popup ) return;
+			cancelBubble( evt );
+			//if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+			//touchResizeWindow(evt);
+			winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+			
+			var found = false;
+			var tmp = evt.target;
+			var counter = 10;
+
+
+			while(found == false)
+			{
+				
+				if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+				{
+					found = true;
+				}
+				tmp = tmp.parentNode;
+				counter--;
+				if( counter < 0 ) found = true;
+			}
+			tmp.style.transition = 'transform 0.25s';
+			tmp.style.transform = 'rotate('+ Math.max(0,Math.min( 2, ( (winTouchEnd[1] - winTouchStart[1])  / 50 ) ) ) +'deg)';			
+			
+		});
+		title.addEventListener('touchend', function(evt) { 
+			if( this.popup ) return;
+			
+			
+			if( !evt.target.classList.contains('Zoom') ) { console.log('not zoom hit'); cancelBubble( evt ); }
+			
+			if( evt.touches[0] ) winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
+
+			var found = false;
+			var tmp = evt.target;
+			var counter = 10;
+
+
+			while(found == false)
+			{
+				
+				if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+				{
+					found = true;
+				}
+				tmp = tmp.parentNode;
+				counter--;
+				if( counter < 0 ) found = true;
+			}
+			tmp.style.transform = 'rotate(0deg)';
+			
+			//swiped down.....
+			if( evt.timeStamp - winTouchDowned > 100 && evt.timeStamp - winTouchDowned < 1000 && Math.round( winTouchEnd[1] - winTouchStart[1] ) > 100 && Math.abs( winTouchEnd[0] - winTouchStart[0] ) < Math.abs( winTouchEnd[1] - winTouchStart[1] ) )
+			{
+				cancelBubble( evt );
+
+				
+				var tb = ge( 'Taskbar' );
+				for( var tel = 0; tel < tb.childNodes.length; tel++ )
+				{
+					if( tb.childNodes[tel].window == tmp )
+					{
+						tb.childNodes[tel].onmouseup( evt, tb.childNodes[tel] );
+					}
+				}	
+			}
+			else
+			{
+				while(found == false)
+				{
+					if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+					{
+						found = true;
+					}
+					tmp = tmp.parentNode;
+					counter--;
+					if( counter < 0 ) found = true;
+				}
+
+				//just focus on us...
+				_ActivateWindow ( tmp );
+				
+			}
+			
+		});			
 	}
 	// Ok, center
 	else if( !wp )
@@ -1406,7 +1479,7 @@ function MakeWindow ( div, titleStr, width, height, id, flags, applicationId )
 		var newHeight = Math.min( 
 			Workspace.screenDiv.clientHeight - 
 				72 - evt.target.offsetParent.offsetTop, 
-			Math.max(80,evt.pointers[0].clientY - evt.target.offsetParent.offsetTop ) 
+			Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop ) 
 		);
 		
 		evt.target.offsetParent.style.height = newHeight + 'px';
@@ -1550,6 +1623,8 @@ function CloseView( win )
 		}
 		
 		var div = win;
+		
+		var appId = win.windowObject ? win.windowObject.applicationId : false;	
 			
 		// Clear reference
 		if ( window.regionWindow == div.content )
@@ -1561,11 +1636,25 @@ function CloseView( win )
 		if ( div )
 		{
 			// Clean up ids
-			var o = new Array ();
+			var o = [];
+			var activated = false;
 			for ( var b in movableWindows )
 			{
 				if ( movableWindows[b] != div )
+				{
 					o[b] = movableWindows[b];
+					
+					// Activate next window on app
+					// TODO: Use parent window if it's registered
+					if( !activated )
+					{
+						if( o[b].windowObject && o[b].windowObject.applicationId == appId )
+						{
+							o[b].windowObject.activate();
+							activated = true;
+						}
+					}
+				}
 			}
 			movableWindows = o;
 		}
@@ -1682,6 +1771,14 @@ var View = function ( args )
 			// domain = document.location.href.split( 'http://' ).join ( 'http://utilities.' ); // reenable
 			domain = document.location.href + '';
 			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
+			
+			// Oh we have a conf?
+			if( this.conf )
+			{
+				domain = '/system.library/module/?module=system&command=sandbox' +
+					'&sessionid=' + Workspace.sessionId +
+					'&conf=' + JSON.stringify( this.conf );
+			}
 		}
 		
 		// Make sure scripts can be run after all resources has loaded
@@ -1752,7 +1849,7 @@ var View = function ( args )
 		iframe.applicationId = self.applicationId;
 		iframe.authId = self.authId;
 		iframe.applicationName = self.applicationName;
-		iframe.sandbox = "allow-forms allow-scripts allow-same-origin"; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
+		iframe.sandbox = "allow-forms allow-scripts allow-same-origin allow-popups"; // allow same origin is probably not a good idea, but a bunch other stuff breaks, so for now..
 		
 		self._window.applicationId = conf.applicationId; // needed for View.close to work
 		self._window.authId = conf.authId;
@@ -1820,7 +1917,14 @@ var View = function ( args )
 		}
 		
 		// Load the sandbox
-		ifr.src = 'sandboxed.html';
+		if( this.conf )
+		{
+			ifr.src = '/system.library/module/?module=system&command=sandbox' +
+				'&sessionid=' + Workspace.sessionId +
+				'&conf=' + JSON.stringify( this.conf );
+		}
+		// Just give a dumb sandbox
+		else ifr.src = 'sandboxed.html';
 		
 		// Register name and ID
 		ifr.applicationName = appName;
@@ -1945,7 +2049,14 @@ var View = function ( args )
 			}*/
 		}
 		
-		ifr.src = url;
+		if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
+		{
+			ifr.src = '/system.library/module/?module=system&command=sandbox' +
+				'&sessionid=' + Workspace.sessionId +
+				'&url=' + encodeURIComponent( url ) + '&conf=' + this.conf;
+		}
+		else ifr.src = url;
+		
 		this.isRich = true;
 		this.iframe = ifr;
 	}
@@ -2085,13 +2196,15 @@ var View = function ( args )
 		{		
 			var app = findApplication( this._window.applicationId );
 			
+			var twindow = this;
+			
 			// Notify application
 			var msg = {
 				type: 'system',
 				command: 'notify',
 				method: 'closeview',
 				applicationId: this._window.applicationId,
-				windowId : self.windowId 
+				windowId : self.windowId
 			};
 			// Post directly to the app
 			if( app )
@@ -2357,6 +2470,10 @@ function _kresponse( e )
 		}
 		if( e.ctrlKey )
 		{
+			// Send the message to the window, giving it an opportunity to
+			// respond
+			var k = e.which ? e.which : e.keyCode;
+			win.sendMessage( { command: 'handlekeys', key: k, ctrlKey: true, shiftKey: e.shiftKey } );
 			return cancelBubble( e );
 		}
 	}

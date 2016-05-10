@@ -1,9 +1,101 @@
 
-	<div id="FUPUpdateList" class="ContentFull ScrollArea">
+	<div id="FUPUpdateList" class="ContentFull ScrollArea"">
 
 		<div class="Padding">
 
+			<div style="border-radius: 10px; float:right; width:25%; margin:0 0 16px 16px; min-width:280px; max-width: 100%; box-sizing: border-box; padding:16px; box-shadow:0px 1px 6px rgba(0,0,0,0.4); background:#1B3B57; color: white; margin-bottom:32px;">
+				<h2 style="text-transform:uppercase; line-height: 26px">Message to our users outside of Norway</h2>
+				<p style="line-height: 145%">
+					Hi everybody, FriendUP beta slows down in certain locations because of latency issues. 
+					To fix this we have created local access points for you.
+					Just click on one of the following links and login using your normal credentials:<br>
+				</p>
+				<h3 style="text-align:center; text-transform:uppercase; font-size:1.5em;">
+					<a title="USA" href="https://us.openfriendup.net/webclient/index.html" style="color: white" target="_top">USA</a> -
+					<a title="EU" href="https://eu.openfriendup.net/webclient/index.html" style="color: white" >UK/Europe</a> -
+					<a title="Australia" href="https://au.openfriendup.net/webclient/index.html" style="color: white" >Australia</a>
+				</h3>
+			</div>
 
+			<h1>
+				Welcome to the Friend Unifying Platform!
+			</h1>
+			<hr/>
+			
+			<h2>
+				Version 1.0 beta3b - 10.05.2016
+			</h2>
+			
+			<p>
+				<h2>New features:</h2>
+			</p>
+			
+			<ol>
+				<li>DOS Driver documentation through the System device.</li>
+				<li>Exotica music player now has a oscilliscope visualizer.</li>
+			</ol>
+			
+			<p>
+				<strong>Bug fixes:</strong>
+			</p>
+			
+			<ol>
+				<li>Fixed file conversions. Author now writes to .odt and .doc again.</li>
+			</ol>
+			
+			<hr/>
+			
+			<h2>
+				Version 1.0 beta3 - 08.04.2016
+			</h2>
+			
+			<p>
+				This is the third beta in our public beta programme. In this version, we are focusing on 
+				improving the user applications and moving our APIs further to allow for third party
+				libraries to be used by our application developers.
+			</p>
+			
+			<p>
+				<h2>New features:</h2>
+			</p>
+			
+			<p><a href="javascript:ExecuteApplication('Artisan')"><img src="apps/Artisan/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Artisan</strong></a> now can save and load projects with permissions, files list and libraries. Projects can now run with third party javascript libraries. Artisan projects now runs javascript assets at run time like $( document ).ready. We are working on a video tutorial to get you started with Artisan project management. Stay tuned :)</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>			
+
+			<p><a href="javascript:ExecuteApplication('Author')"><img src="apps/Author/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Author</strong></a> is now responsive and "remembers" its state. You can start editing a document on your PC. Just log off and continue where you left off on your tablet or mobile.</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+			
+			<p><a href="javascript:ExecuteApplication('Wallpaper')"><img src="apps/Wallpaper/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Wallpaper</strong></a> - polished off to allow you to set background for both your desktop and windows.</p>
+			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
+			
+			<p>
+				<h2>Other new features:</h2>
+			</p>
+			<ol>
+				<li>Added support for Application sessions.</li>
+				<li>Calculator is now responsive.</li>
+				<li>Workspace: Added gamepad class for VR.</li>
+				<li>Friend Core: got many speedups overall.</li>
+				<li>Friend Core: experimental WebDAV support enabled.</li>
+				<li>Documentation: More info on Workspace file management.</li>
+				<li>Wallpaper: Final functionality completed.</li>
+			</ol>
+			
+			<p>
+				<strong>Bug fixes:</strong>
+			</p>
+			
+			<ol>
+				<li>Fixed screen title bug when clicking from views on different screens.</li>
+				<li>Fixed HTTP non-blocking read/writes not completing.</li>
+				<li>.jsx scripts will use sessionid, not empty, non working authid.</li>
+				<li>Gear VR sessions won't be confused with clicks and the soft-keyboard.</li>
+				<li>Artisan won't load a file that is already loaded in the same editor instance.</li>
+				<li>File dialog buttons were badly positioned.</li>
+			</ol>
+			
+			<hr/>
+			
 			<h1>
 				Welcome to the Friend Unifying Platform!
 			</h1>
@@ -48,12 +140,6 @@
 				<li>Author: More editing options.</li>
 				<li>Dormant: System now has more functions to play with using DOS scripting.</li>
 				<li>API: Added vertical tabs.</li>
-				<li>Hello: Lots of UI fixed.</li>
-				<li>Hello: Much easier to setup new accounts.</li>
-				<li>Hello: IRC client improved with support for perform and history.</li>
-				<li>Hello: Frameskipping on video chat.</li>
-				<li>Hello: Better live invite requesters.</li>
-				<li>Hello: Speech synthesis added for notifications and private chat.</li>
 			</ol>
 			
 			<p>
@@ -208,11 +294,6 @@
 				<li>Deepest field: Global shell output log.</li>
 				<li>Workspace: Voice recognition and voice synthesis added.</li>
 				<li>Documentation: Voice recognition tutorial and information.</li>
-				<li>Hello: Event notification and log.</li>
-				<li>Hello: Register new account.</li>
-				<li>Hello: Better live chat controls.</li>
-				<li>Hello: UI fixes (IRC, sorted contact lists and more).</li>
-				<li>Hello: Network reconnection on websocket loss.</li>
 				<li>WideWeb: Limited web-browser.</li>
 				<li>Artisan: Search and replace/all now implemented.</li>
 				<li>Shell: Added say command.</li>
@@ -271,7 +352,6 @@
 				<li>DoIt!: Can load and save lists.</li>
 				<li>DoIt!: Can set arguments on commands.</li>
 				<li>Author: You can now insert images in the document.</li>
-				<li>HelloWorld: Uses FriendUP menu system instead of it's own, plus minor layout changes.</li>
 				<li>Workspace: Window dimensions and positions stored on server.</li>
 				<li>Workspace: Websocket engine activated.</li>
 				<li>Workspace: Double clicking images doesn't give "undefined" title.</li>
@@ -357,8 +437,6 @@
 				<li>Doors: Window close gadget now is red on hover.</li>
 				<li>Artisan: Support for Friend DOS scripts (as plan text now).</li>
 				<li>Shell: Support for running Friend DOS scripts.</li>
-				<li>Hello: Supports multiple TREEROOT accounts.</li>
-				<li>TREEROOT app: Supports login management and registration (still need to be whitelisted).</li>
 				<li>Friend Core: Rewritten network code for a good performance boost.</li>
 				<li>Friend Core: Basic support for encrypted passwords.</li>
 				<li>Friend Core: Web sockets now accepted.</li>
@@ -396,8 +474,6 @@
 			</p>
 			<ol>
 				<li>Doors: Windows now open with the correct size.</li>
-				<li>Hello: IRC server issues fixed (crash fix).</li>
-				<li>Hello: IRC configuration fixed.</li>
 				<li>Build: Storage is now protected and backed up for all users.</li>
 			</ol>
 			<p>

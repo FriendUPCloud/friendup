@@ -176,7 +176,7 @@ typedef struct SystemBase
 	int (*InitSystem)( struct SystemBase *l );
 
 	// user.library structure
-	char *(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, int *length );
+	char *(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long int *length );
 
 	unsigned int (*RunHM)( struct SystemBase *l, const char *mime, const char *path, struct Hashmap *hm );
 
@@ -213,7 +213,7 @@ typedef struct SystemBase
 	int (*UserDeviceMount)( struct SystemBase *l, MYSQLLibrary *sqllib, User *usr );
 
 //
-	#ifdef WEBSOCKETS
+	#ifdef ENABLE_WEBSOCKETS
 	int (*AddWebSocketConnection)(  struct SystemBase *l, struct libwebsocket *wsi, const char *sessionid );
 	
 	int (*WebSocketSendMessage)( struct SystemBase *l, User *user, char *msg, int len );

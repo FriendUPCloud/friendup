@@ -16,6 +16,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *******************************************************************************/
+
 /*
  * 
  * System/Command
@@ -23,9 +24,9 @@
  * 
  */
 
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <sys/wait.h>
@@ -68,7 +69,7 @@ FILE * CommandRun( char *command, char *type, int *pid )
 	}
 	else
 	{
-		if( type == "r" )
+		if( type == 'r' )
 		{
 			close( fd[ WRITE ] ); //Close the WRITE end of the pipe since parent's fd is read-only
 		}
@@ -82,10 +83,10 @@ FILE * CommandRun( char *command, char *type, int *pid )
 
 	if( type == "r" )
 	{
-		return fdopen( fd[ READ ], "r" );
+		return (FILE*) fdopen( fd[ READ ], "r" );
 	}
 
-	return fdopen( fd[ WRITE ], "w" );
+	return (FILE*)fdopen( fd[ WRITE ], "w" );
 }
 
 //

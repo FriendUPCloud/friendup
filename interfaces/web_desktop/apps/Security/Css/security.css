@@ -18,16 +18,21 @@
 .Tab, .TabActive
 {
 	position: relative;
-	height: 30px;
+	height: 40px;
 	line-height: 30px;
 	box-sizing: border-box;
 	padding: 0 10px;
 }
 
-.PageActive
+.Tabs > div:first-child
+{
+	margin-left: 10px;
+}
+
+html .PageActive
 {
 	position: absolute;
-	top: 30px;
+	top: 40px;
 	width: 100%;
 	bottom: 0;
 	box-sizing: border-box;

@@ -18,9 +18,21 @@
 *******************************************************************************/
 
 document.title = 'Artisan v1.0';
+
 Application.run = function( msg )
 {
 	// Some variables
+	this.project = {
+		ProjectName: '',
+		Author: '',
+		Email: '',
+		Version: '',
+		API: 'v1',
+		Description: '',
+		Files: [],
+		Permissions: [],
+		Libraries: []
+	};
 	this.files = false;
 	this.currentFile = 0;
 	this.currentPath = 'Mountlist:';
@@ -206,6 +218,15 @@ Application.closeFile = function()
 	Application.masterView.sendMessage( { command: 'closefile' } );
 };
 
+Application.setProjectTitle = function()
+{
+	this.masterView.sendMessage( {
+		command: 'projectinfo',
+		data: this.project,
+		filename: Application.projectFilename
+	} );
+}
+
 Application.setPathFromFilename = function( path )
 {
 	if( path.indexOf( '/' ) > 0 )
@@ -365,6 +386,8 @@ Application.saveFile = function( filename, content )
 			command: 'updateStatus',
 			data: ''
 		} );
+		
+		Application.setProjectTitle();
 	};
 	f.save( filename, ( content.length === 0 ? ' ' : content ) );
 };
@@ -483,7 +506,220 @@ Application.receiveMessage = function( msg )
 		case 'preferences':
 			this.showPrefs();
 			break;
+		// Project
+		case 'project_properties':
+			this.showProjectProperties();
+			break;
+		case 'open_project_files':
+			for( var a in this.project.Files )
+			{
+				Application.loadFile( this.project.Files[a] );
+			}
+			break;
+		case 'project_addfiles':
+			this.projectAddFiles( function()
+			{
+				if( !Application.prwin ) return;
+				Application.prwin.sendMessage( {
+					command: 'setprojectfiles',
+					files: Application.project.Files
+				} );
+			} );
+			break;
+		case 'project_closewin':
+			if( Application.prwin )
+				Application.prwin.close();
+			Application.prwin = false;
+			break;
+		case 'project_open':
+			var f = new Filedialog( Application.masterView, function( files )
+			{
+				if( !files || !files.length || !files[0].Path )
+					return;
+				Application.prevFilename = Application.projectFilename;
+				Application.projectFilename = files[0].Path;
+				var f = new File( files[0].Path );
+				f.onLoad = function( data )
+				{
+					var proj = JSON.parse( data );
+					for( var a in proj ) Application.project[a] = proj[a];
+					Application.setProjectTitle();
+					Application.sendMessage( { command: 'open_project_files' } );
+				}
+				f.load();
+			}, 'Mountlist:', 'load', false, i18n( 'i18n_load_project' ) );
+			break;
+		// Runs a project with the project parameters
+		case 'project_run':
+			if( Application.projectFilename )
+			{
+				Application.sendMessage( {
+					type: 'system',
+					command: 'executeapplication',
+					executable: Application.projectFilename,
+					arguments: ''
+				} );
+			}
+			break;
+		case 'setpermission':
+			if( !this.project.Permissions ) this.project.Permissions = [];
+			
+			// New permission!
+			if( msg.index < 0 )
+			{
+				this.project.Permissions.push( {
+					Permission: msg.permission,
+					Name:       msg.permname,
+					Options:    msg.options
+				} );
+			}
+			// Edit permission
+			else
+			{
+				this.project.Permissions[msg.index] = {
+					Permission: msg.permission,
+					Name:       msg.permname,
+					Options:    msg.options
+				};
+			}		
+			if( Application.prwin )
+			{
+				Application.prwin.sendMessage( msg );
+			}
+			break;
+		case 'project_new':
+			this.projectFilename = false;
+			this.project = {
+				ProjectName: '',
+				Author: '',
+				Email: '',
+				Version: '',
+				API: 'v1',
+				Description: '',
+				Files: [],
+				Permissions: [],
+				Libraries: []
+			};
+			this.setProjectTitle();
+			break;
+		case 'project_save_as':
+			if( Application.projectFilename )
+				Application.prevFilename = Application.projectFilename;
+			Application.projectFilename = false;
+		case 'project_save':
+			var project = {};
+			if( msg.data )
+			{
+				for( var a in msg.data )
+				{
+					project[a] = msg.data[a];
+					Application.project[a] = msg.data[a];
+				}
+			}
+			else project = Application.project;
+			
+			if( msg.filename && msg.filename.length )
+				Application.projectFilename = msg.filename;
+			
+			if( !Application.projectFilename )
+			{
+				var pfn = project.ProjectName.split( /\s/i ).join( '_' );
+				pfn = pfn.split( '__' ).join( '_' ) + '.apf';
+				var f = new Filedialog( Application.prwin ? Application.prwin : Application.masterView, function( savefile )
+				{	
+					if( !savefile && Application.prevFilename )
+					{
+						Application.projectFilename = Application.prevFilename;
+						Application.prevFilename = false;
+						return;
+					}
+					Application.prevFilename = Application.projectFilename;
+					Application.projectFilename = savefile;
+					var of = new File( savefile );
+					of.onSave = function( e, d )
+					{
+						Application.receiveMessage( { command: 'project_closewin' } );
+					}
+					of.save( savefile, JSON.stringify( project ) );
+					
+					Application.setProjectTitle();
+					
+				}, 'Mountlist:', 'save', pfn ? pfn : 'unnamed_project.apf', 'Save project' );
+			}
+			// Update it!
+			else
+			{
+				var f = new File();
+				f.save( Application.projectFilename, JSON.stringify( project ) );
+				Application.receiveMessage( { command: 'project_closewin' } );
+			}
+			break;
 	}
+};
+
+// Show project properties
+Application.showProjectProperties = function()
+{
+	if( this.prwin ) return;
+	
+	this.prwin = new View( {
+		title: 'Project properties',
+		width: 800,
+		height: 500
+	} );
+	
+	this.prwin.onClose = function()
+	{
+		Application.prwin = false;
+	}
+	
+	var f = new File( 'Progdir:Templates/project.html' );
+	f.onLoad = function( data )
+	{
+		Application.prwin.setContent( data, function()
+		{
+			Application.prwin.sendMessage( {
+				command: 'projectinfo',
+				data: Application.project,
+				filename: Application.projectFilename
+			} );
+		} );
+	}
+	f.load();
+};
+
+// Add project files
+Application.projectAddFiles = function( callback )
+{
+	if( this.pfdlg ) return;
+	
+	this.pfdlg = new Filedialog( this.prwin, function( files )
+	{
+		Application.pfdlg = false;
+		
+		if( !Application.project.Files )
+			Application.project.Files = [];
+		
+		// Add them
+		for( var a in files )
+		{
+			var found = false;
+			for( var b in Application.project.Files )
+			{
+				var fl = Application.project.Files[b];
+				if( files[a].Path == fl.Path )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				Application.project.Files.push( files[a] );
+			}
+		}
+		if( callback ) callback();
+	}, 'Mountlist:', 'load' );
 };
 
 Application.showPrefs = function()
@@ -552,16 +788,38 @@ Application.setMenuItems = function( w )
 		name  : i18n( 'i18n_project' ),
 		items : [
 			{
+				name:    i18n( 'i18n_project_new' ),
+				command: 'project_new'
+			},
+			{
+				name:    i18n( 'i18n_project_properties' ),
+				command: 'project_properties'
+			},
+			{
+				name:    i18n( 'i18n_open_project_files' ),
+				command: 'open_project_files'
+			},
+			{
+				divider: true
+			},
+			{
 				name:    i18n( 'i18n_load_project' ),
-				command: 'load_project'
+				command: 'project_open'
 			},
 			{
 				name:    i18n( 'i18n_save_project' ),
-				command: 'save_project'
+				command: 'project_save'
 			},
 			{
 				name:    i18n( 'i18n_save_project_as' ),
-				command: 'save_project_as'
+				command: 'project_save_as'
+			},
+			{
+				divider: true
+			},
+			{
+				name:    i18n( 'i18n_run_project' ),
+				command: 'project_run'
 			}
 		]
 	},
@@ -569,12 +827,24 @@ Application.setMenuItems = function( w )
 		name : i18n( 'i18n_macros' ),
 		items : [
 			{
+				name:    i18n( 'i18n_clear_macro' ),
+				command: 'macro_clear'
+			},
+			{
 				name:    i18n( 'i18n_record_macro' ),
 				command: 'macro_record'
 			},
 			{
 				name:    i18n( 'i18n_stop_macro' ),
 				command: 'macro_stop'
+			},
+			{
+				name:    i18n( 'i18n_load_macro' ),
+				command: 'macro_load'
+			},
+			{
+				name:    i18n( 'i18n_save_macro' ),
+				command: 'macro_save'
 			}
 		]
 	},

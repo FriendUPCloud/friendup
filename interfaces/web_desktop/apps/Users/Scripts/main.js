@@ -123,11 +123,22 @@ function SaveUser( id )
 	// Setup input values
 	var args = {};
 	var inps = [ 'Name', 'Email', 'Password', 'FullName', 'Level' ];
+	var t = '';
 	for( var a = 0; a < inps.length; a++ )
 	{
 		if( inps[a] == 'Password' && ge(inps[a]).value ==  '********' )
+		{
 			continue;
-		args[inps[a]] = ge(inps[a]).value;
+		}
+		else if ( inps[a] == 'Password' )
+		{
+			args[inps[a]] = '{S6}' + Sha256.hash ( 'HASHED' + Sha256.hash(ge(inps[a]).value) );
+		}
+		else
+		{
+			args[inps[a]] = ge(inps[a]).value;	
+		}
+		
 	}
 	args.id = id;
 		
@@ -167,5 +178,3 @@ function AddUser()
 	}
 	m.execute( 'useradd' );
 }
-
-

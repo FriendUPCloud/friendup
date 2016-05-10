@@ -72,26 +72,45 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 		if( !$groups ) return 'fail<!--separate-->User with no group can not use apps.';
 		$searchGroups = array(); foreach( $groups as $g ) $searchGroups[] = $g->Name;
 	}
-	$fn = FindAppInSearchPaths( $appName );
-	if( !file_exists( $fn . '/Config.conf' ) )
-		return 'fail<!--separate-->{"Error":"No config for this app."}';
-	if( !( $conf = json_decode( file_get_contents( $fn . '/Config.conf' ) ) ) )
-		return 'fail<!--separate-->{"Error":"Bad config for this app."}';
-	// Can we run it?
-	$found = false;
-	if( isset( $conf->UserGroups ) )
+	
+	// Do we have a project?
+	if( strtolower( substr( $appName, -4, 4 ) ) == '.apf' )
 	{
-		foreach( $conf->UserGroups as $ug )
-		{
-			if( in_array( $ug, $searchGroups ) )
-			{
-				$found = true;
-				break;
-			}
-		}
-		if( !$found ) return 'fail<!--separate-->{"Error":"Has no permission for this app."}';
+		include_once( 'php/classes/file.php' );
+		$f = new File( $appName );
+		$f->Load();
+		$content = $f->GetContent();
+		return 'ok<!--separate-->' . $content;
 	}
-	return 'ok';
+	else
+	{
+		$fn = FindAppInSearchPaths( $appName );
+		if( !file_exists( $fn . '/Config.conf' ) )
+		{
+			return 'fail<!--separate-->{"Error":"No config for this app."}';
+		}
+		if( !( $conf = json_decode( file_get_contents( $fn . '/Config.conf' ) ) ) )
+			return 'fail<!--separate-->{"Error":"Bad config for this app."}';
+		// Can we run it?
+		
+		$conf->ConfFilename = $fn . '/Config.conf';
+		
+		$found = false;
+		if( isset( $conf->UserGroups ) )
+		{
+			foreach( $conf->UserGroups as $ug )
+			{
+				if( in_array( $ug, $searchGroups ) )
+				{
+					$found = true;
+					break;
+				}
+			}
+			if( !$found ) return 'fail<!--separate-->{"Error":"Has no permission for this app."}';
+		}
+		return 'ok<!--separate-->' . json_encode( $conf );
+	}
+	return 'fail<!--separate-->{"Error":"Can not understand query."}';
 }
 
 // Find apps and search path..
@@ -152,9 +171,10 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	// Set config object
 	$Config = new Object();
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName', 
-	              'FCHost', 'FCPort', 'FCUpload' );
+	              'FCHost', 'FCPort', 'FCUpload', 'SSLEnable' );
 	foreach( array(
-		'host', 'login', 'password', 'dbname', 'fchost', 'fcport', 'fcupload'
+		'host', 'login', 'password', 'dbname', 'fchost', 'fcport', 'fcupload',
+		'SSLEnable'
 	) as $k=>$type )
 	{
 		if( isset( $ar[$type] ) )

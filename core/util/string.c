@@ -1,22 +1,3 @@
-/*******************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -614,9 +595,10 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-int FindInBinaryPOS(char *x, int m, char *y, int n) 
+QUAD FindInBinaryPOS(char *x, int m, char *y, UQUAD n) 
 {
-	int i, j, kmpNext[ m ];
+	QUAD i, j;
+	int kmpNext[ m ];
 
 	// Preprocessing 
 	preKmp(x, m, kmpNext);
@@ -625,16 +607,37 @@ int FindInBinaryPOS(char *x, int m, char *y, int n)
 	i = j = 0;
 	while (j < n) 
 	{
+		//printf("find %d\n", j );
 		while (i > -1 && x[i] != y[j])
 		{
-			i = kmpNext[i];
+			i = kmpNext[ i ];
 		}
 		i++;
 		j++;
 		if (i >= m) 
 		{
+			DEBUG("Found entry in text\n");
 			return j-i;
 		}
+	}
+	return -1;
+}
+
+QUAD FindInBinarySimple( char *x, int m, char *y, UQUAD n )
+{
+	UQUAD i;
+	
+	INFO("\n\n\nFIND TEXT %s\n", x );
+	
+	for( i=0 ; i < n ; i++ )
+	{
+		//printf("find %lld\n", i );
+		if( memcmp( x, y, m ) == 0 )
+		{
+			//ERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
+			return (QUAD)i;
+		}
+		y++;
 	}
 	return -1;
 }

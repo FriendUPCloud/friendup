@@ -293,7 +293,7 @@ ALTER TABLE `Filesystem` ADD `Owner` bigint(20);
 -- 29/01/2016 add standard admin user
 
 
-INSERT INTO `FUser` (`Name`,`Password`) VALUES ("friendadmin","FriendlyBetaAdministrator" );
+INSERT INTO `FUser` (`Name`,`Password`) VALUES ("friendadmin","{S6}b29b144b83ef205daec4292500dc5f0a3277e455bebe671bfaccb2623e80e5db" );
 
 INSERT INTO `FUserGroup` (`Name`) VALUES ("Admin");
 

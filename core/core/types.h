@@ -17,13 +17,12 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef __TYPES_H__
-#define __TYPES_H__
-
-//#define __USE_BSD
+#ifndef __CORE_TYPES_H__
+#define __CORE_TYPES_H__
 
 #include <stdio.h>
 #include <util/log/log.h>
+#include "missing_defs.h"
 
 #ifndef BOOL
 typedef int BOOL;
@@ -80,15 +79,6 @@ typedef void * APTR;
 #ifndef FALSE
 #define FALSE 0
 #endif
-
-//
-// Definitions
-//
-
-FILE *popen( const char *c, const char *v );
-
-//void pclose( FILE *f );
-
 
 //
 // Our Calloc and Malloc 

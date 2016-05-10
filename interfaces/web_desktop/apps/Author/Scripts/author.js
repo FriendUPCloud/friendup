@@ -51,6 +51,10 @@ Application.run = function( msg, iface )
 					command: 'save'
 				},
 				{
+					name: i18n( 'menu_save_as' ),
+					command: 'save_as'
+				},
+				{
 					name: i18n( 'menu_print' ),
 					command: 'print'
 				},
@@ -96,11 +100,31 @@ Application.run = function( msg, iface )
 	};
 	f.onLoad = function( data )
 	{
-		w.setContent( data );
-		if( msg.args )
+		w.setContent( data, function()
 		{
-			w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
-		}
+			if( msg.args && typeof( msg.args ) != 'undefined' )
+			{
+				//console.log( 'What happens: ', msg.args );
+				w.sendMessage( { command: 'loadfiles', files: [ { Path: msg.args } ] } );
+			}
+			else if( Application.sessionObject && Application.sessionObject.content )
+			{
+				w.sendMessage( { 
+					command: 'newdocument',
+					content: Application.sessionObject.content, 
+					path: Application.sessionObject.currentDocument,
+					scrollTop: Application.sessionObject.scrollTop 
+				} );
+				
+				if( Application.sessionObject.currentDocument )
+					Application.wholeFilename = Application.sessionObject.currentDocument;
+				
+				if( Application.sessionObject.currentDocument )
+				{
+					Application.mainView.setFlag( 'title', 'Author - ' + Application.sessionObject.currentDocument );
+				}
+			}
+		} );
 	}
 	f.load();
 	
@@ -111,6 +135,20 @@ Application.run = function( msg, iface )
 		noti.setContent( data );
 	}
 	cf.load();
+}
+
+// Return the current state of the application
+Application.sessionStateGet = function()
+{
+	if( this.sessionObject && this.sessionObject.content )
+	{
+		return JSON.stringify( {
+			currentDocument: this.wholeFilename,
+			content: this.sessionObject.content,
+			scrollTop: this.sessionObject.scrollTop
+		} );
+	}
+	return JSON.stringify( { content: '', scrollTop: 0 } );
 }
 
 Application.handleKeys = function( k, e )
@@ -144,7 +182,7 @@ Application.handleKeys = function( k, e )
 			this.closeFile();
 			return true;
 		}
-		console.log( k );
+		//console.log( k );
 	}
 	return false;
 }
@@ -157,6 +195,7 @@ Application.toggleVR = function()
 
 Application.newDocument = function()
 {
+	this.sessionObject = {};
 	this.wholeFilename = '';
 	this.mainView.setFlag( 'title', 'Author' );
 	this.mainView.sendMessage( {
@@ -188,15 +227,25 @@ Application.load = function()
 	if( this.fileDialog ) return;
 	var f = new Filedialog( this.mainView, function( arr )
 	{
-		Application.mainView.sendMessage( {
-			command: 'loadfiles',
-			files: arr
-		} );
-		Application.wholeFilename = arr[0].Path;
-		Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+		if( arr )
+		{
+			Application.mainView.sendMessage( {
+				command: 'loadfiles',
+				files: arr
+			} );
+			Application.wholeFilename = arr[0].Path;
+			Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+		}
 		Application.fileDialog = false;
 	}, false, 'load' );
 	this.fileDialog = f;
+}
+
+Application.saveAs = function(_)
+{
+	this.prevFilename = this.wholeFilename;
+	this.wholeFilename = false;
+	this.save();
 }
 
 // Saves current file
@@ -214,7 +263,14 @@ Application.save = function()
 		var f = new Filedialog( this.mainView, function( fname )
 		{
 			if( !fname || !fname.length )
+			{
+				if( Application.prevFilename )
+				{
+					Application.wholeFilename = Application.prevFilename;
+					Application.prevFilename = false;
+				}
 				return;
+			}
 				
 			if( fname.indexOf( '.' ) < 0 )
 				fname += '.html';
@@ -292,6 +348,15 @@ Application.receiveMessage = function( msg )
 		case 'print':
 			this.print();
 			break;
+		case 'remembercontent':
+			this.sessionObject.content = msg.data;
+			this.sessionObject.scrollTop = msg.scrollTop;
+			if( msg.path )
+			{
+				this.wholeFilename = msg.path;
+				this.mainView.setFlag( 'title', 'Author - ' + msg.path );
+			}
+			break;
 		case 'syncload':
 			if( msg.filename )
 			{
@@ -304,6 +369,9 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'save':
 			this.save();
+			break;
+		case 'save_as':
+			this.saveAs();
 			break;
 		// Make sure we can activate window
 		case 'activate':

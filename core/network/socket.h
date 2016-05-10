@@ -31,6 +31,8 @@
 #include <openssl/err.h>
 #include <sys/ioctl.h>
 #include <libwebsockets.h>
+#include <sys/epoll.h>
+#include <poll.h>
 
 #include <sys/select.h>
 #include <fcntl.h>
@@ -99,6 +101,7 @@ typedef struct Socket
 	SocketProtocolCallback_t protocolCallback; // Socket protocol callback (Defaults to HTTP, use Upgrade: header to change protocol)
 	SocketShutdownCallback_t shutdownCallback; // This is called when the socket is shut down, so that the protocol can free their memory
 
+	BOOL s_SSLEnabled;
 	BOOL nonBlocking;    // If true, writes to this socket won't block
 
 	void* s_Data;
@@ -111,7 +114,7 @@ typedef struct Socket
 	BOOL                s_VerifyClient;
 	SSL_CTX             *s_Ctx;
 	SSL                 *s_Ssl;
-	SSL_METHOD          *s_Meth;
+	const SSL_METHOD          *s_Meth;
 	X509                *s_Client_cert;
 	BIO                 *s_BIO;
 
@@ -119,7 +122,7 @@ typedef struct Socket
 } Socket;
 
 // Open a new socket
-Socket* SocketOpen( unsigned short port, int type );  // TODO: Bind address
+Socket* SocketOpen( BOOL ssl, unsigned short port, int type );  // TODO: Bind address
 
 //Socket *SocketWSOpen( struct libwebsocket *wSock );
 

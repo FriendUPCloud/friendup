@@ -369,16 +369,16 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 						break;
 					case 'delete':
 					
-						//$Logger->log('Delete from dropbox \n\n' . print_r( $args, 1 ));
 						$dropboxpath = end( explode(':', $args->path ) );
 						if( substr($dropboxpath,0,1) != '/' ) $dropboxpath = '/' . $dropboxpath; //sometimes the leading trail is missing; like in sometimes when a folder is created at root level
+						if( substr($dropboxpath,-1) == '/' ) $dropboxpath = rtrim($dropboxpath,'/');
+
 
 						if( strlen( $dropboxpath ) && $this->connectClient() )
 						{
 							$result = $this->dbx->delete( $dropboxpath );
 							
 							//$Logger->log( 'Result of delete operation on '. $dropboxpath .' was this: \n\n' . print_r($result,1) );
-							
 							$this->updateAccountInfo();
 							
 							if( is_array($result) && $result['is_deleted'] == 1 ) return 'ok';
@@ -821,7 +821,7 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			if( $this->state != self::UNAUTHORIZED && $this->connectClient() )
 			{
 				$this->accountinfo = $this->dbx->getAccountInfo();
-				$Logger->log( 'Our Dropbox accountinfo ' . print_r( $this->accountinfo, 1 ) );
+				//$Logger->log( 'Our Dropbox accountinfo ' . print_r( $this->accountinfo, 1 ) );
 			}
 		}
 		

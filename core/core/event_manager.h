@@ -30,9 +30,10 @@
 
 typedef struct EventManager
 {
-	ULONG lastID;
-	struct List *eventTList;	// list of events , by types
-	CoreLTEvent *eventLT;
+	UQUAD lastID;
+	//struct List 			*eventTList;	// list of events , by types
+	CoreEvent				*em_EventList;
+	FThread 				*em_EventThread;
 }EventManager;
 
 //
@@ -52,19 +53,13 @@ void EventManagerDelete( EventManager *e );
 // get new ID for event
 //
 
-ULONG EventGetNewID( EventManager *em );
+UQUAD EventGetNewID( EventManager *em );
 
 //
 // add new event
 //
 
-CoreEvent *EventAdd( EventManager *em, ULONG id, ULONG *h_Function );
-
-//
-// Long Time Event Add
-//
-
-CoreLTEvent *EventLTEAdd( EventManager *em, ULONG id, struct timeval t, BOOL repeat, ULONG *h_Function );
+CoreEvent *EventAdd( EventManager *em, UQUAD id, FThread *thread, time_t nextCall, int repeat );
 
 //
 // check event

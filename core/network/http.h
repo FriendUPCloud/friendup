@@ -48,6 +48,8 @@ enum {
 	HTTP_HEADER_ALLOW,
 	HTTP_HEADER_CACHE_CONTROL,
 	HTTP_HEADER_DAV,
+	HTTP_HEADER_AUTHORIZATION,
+	HTTP_HEADER_WWW_AUTHENTICATE,
 	HTTP_HEADER_END
 };
 
@@ -62,7 +64,9 @@ static const char *HEADERS[] = {
 	"accept-ranges",
 	"allow",
 	"cache-control",
-	"DAV"
+	"DAV",
+	"authorization",
+	"WWW-Authenticate"
 };
 
 //
@@ -251,7 +255,7 @@ typedef struct Http
 
 	// This is a blob (But most likely text)
 	char* content;
-	unsigned int sizeOfContent;
+	UQUAD sizeOfContent;
 
 	// Additional headers
 	Hashmap* headers;

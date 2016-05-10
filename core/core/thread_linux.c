@@ -25,7 +25,7 @@
 // create new thread
 //
 
-FThread *ThreadNew( void *func, void *data )
+FThread *ThreadNew( void *func, void *data, BOOL autos )
 {
 	if( !func || !data ) return NULL;
 	
@@ -37,15 +37,19 @@ FThread *ThreadNew( void *func, void *data )
 	}
 	int error = 0;
 
-	if( nt != NULL )
-	{
-		nt->t_Function = func;
-		nt->t_Data = data;
-		
-		//DEBUG("ThreadNew create thread func ptr %x\n", func );
+	nt->t_Function = func;
+	nt->t_Data = data;
+	nt->t_Launched = FALSE;
+	
+	//DEBUG("ThreadNew create thread func ptr %x\n", func );
 
+	if( autos == TRUE )
+	{
+		nt->t_Quit = FALSE;
+		
 		if( ( error = pthread_create( &(nt->t_Thread), NULL, func, nt ) ) == 0 )
 		{
+			nt->t_Launched = TRUE;
 			// WE ALWAYS PASS POINTER TO THREAD AND ALLOW DEVELOPER TO HANDLE  quit
 			//DEBUG("[ThreadNew] STARTED\n" );
 		}
@@ -58,9 +62,38 @@ FThread *ThreadNew( void *func, void *data )
 	}
 	else
 	{
-		return NULL;
+		INFO("Thread start delayed\n");
 	}
+
 	return nt;
+}
+
+//
+//
+//
+
+FThread *ThreadStart( FThread *ft )
+{
+	if( ft != NULL && ft->t_Launched == FALSE )
+	{
+		int error;
+		
+		ft->t_Quit = FALSE;
+		
+		if( ( error = pthread_create( &(ft->t_Thread), NULL, ft->t_Function, ft->t_Data ) ) == 0 )
+		{
+			ft->t_Launched = TRUE;
+			// WE ALWAYS PASS POINTER TO THREAD AND ALLOW DEVELOPER TO HANDLE  quit
+			//DEBUG("[ThreadNew] STARTED\n" );
+		}
+		else
+		{
+			//free( ft );
+			DEBUG("[ThreadNew] error: %d\n", error );
+			return NULL;
+		}
+	}
+	return ft;
 }
 
 //

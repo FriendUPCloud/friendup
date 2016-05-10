@@ -1,21 +1,4 @@
-/*******************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+
 
 #include "protocol_webdav.h"
 #include <core/functions.h>
@@ -26,6 +9,9 @@
 #include <mysql/mysqllibrary.h>
 #include <user/userlibrary.h>
 #include <system/device_handling.h>
+#include <openssl/md5.h>
+#include <util/md5.h>
+#include <network/digcalc.h>
 
 extern SystemBase *SLIB;
 
@@ -51,13 +37,21 @@ void PrintNode( xmlNode *root )
 // convert json
 //
 
-int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs )
+int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs, BOOL *directory, BOOL info )
 {
 	int i = 0;
 	
 	FriendFile *ffroot = NULL, *ff = NULL;
 	
 	DEBUG("Convert to WEBDAV '%s'\n", &(sbs->bs_Buffer[17]));
+	
+	if( strcmp( "[]",  &(sbs->bs_Buffer[17])) == 0 )
+	{
+		char buf[ 2048 ];
+		//sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s</D:href>\n<D:propstat>\n</D:prop></D:propstat></D:response>\n", url );
+		//BufStringAdd( dbs, buf );
+		return 0;
+	}
 	
 	// [17] -> skip <!--ok --->
 	if( ( ffroot = GetStructureFromJSON( FriendFileDesc, &(sbs->bs_Buffer[17]) ) ) != NULL )
@@ -72,47 +66,88 @@ int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs )
 		{
 			char buf[ 2048 ];
 
-			sprintf( buf, "<D:response>\n<D:href>%s%s</D:href>\n", url, lf->ff_Filename );
+			
+			/* works change urls
+			if( url[ strlen( url )-1 ] == '/' )
+			{
+				sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s%s</D:href>\n<D:propstat>\n<D:prop xmlns:R=\"http://localhost:6502%s%s\">\n", url, lf->ff_Filename, url, lf->ff_Filename );
+			}else{
+				sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s/%s</D:href>\n<D:propstat>\n<D:prop xmlns:R=\"http://localhost:6502%s/%s\">\n", url, lf->ff_Filename, url, lf->ff_Filename );
+			}
+			*/
+			
+			if( info == TRUE )
+			{
+				sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s</D:href>\n<D:propstat>\n<D:prop>\n", url );
+			}
+			else
+			{
+				if( url[ strlen( url )-1 ] == '/' )
+				{
+					sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s%s</D:href>\n<D:propstat>\n<D:prop>\n", url, lf->ff_Filename );
+				}else{
+					sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s/%s</D:href>\n<D:propstat>\n<D:prop>\n", url, lf->ff_Filename );
+				}
+			}
+			
+			/*
+			if( url[ strlen( url )-1 ] == '/' )
+			{
+				sprintf( buf, "<D:response>\n\t\t<D:href>%s%s</D:href>\n", url, lf->ff_Filename );
+			}else{
+				sprintf( buf, "<D:response>\n\t\t<D:href>%s/%s</D:href>\n", url, lf->ff_Filename );
+			}*/
+			DEBUG("-----------------> url %s       filename %s\n",  url, lf->ff_Filename );
+			//sprintf( buf, "<D:response>\n<D:href>%s</D:href>\n", url );
 			BufStringAdd( dbs, buf );
 			
-			sprintf( buf, "<D:propstat>\n<D:prop xmlns:R=\"%s%s\">\n", url, lf->ff_Filename );
+			/*
+			sprintf( buf, "<D:propstat>\n\t\t<D:prop xmlns:R=\"%s\">\n", url );
+//			sprintf( buf, "<D:propstat>\n<D:prop xmlns:R=\"%s/%s\">\n", url, lf->ff_Filename );
 			BufStringAdd( dbs, buf );
+			*/
 			BufStringAdd( dbs, "           \
-				<R:bigbox>\n \
-					<R:BoxType>Box type A</R:BoxType>\n \
-				</R:bigbox>\n \
-				<R:author>\n \
-					<R:Name>Hadrian</R:Name>\n \
-				</R:author>\n \
-				<D:creationdate>\n \
-					1997-12-01T17:42:21-08:00\n \
-				</D:creationdate>\n" );
+<bigbox>\n \
+<BoxType>Box type A</BoxType>\n \
+</bigbox>\n \
+<author>\n \
+<Name>Hadrian</Name>\n \
+</author>\n \
+<D:creationdate>1997-12-01T17:42:21-08:00\n</D:creationdate>\n" );
 
-			sprintf( buf, "<D:displayname>%s</D:displayname>\n", lf->ff_Filename );
-			BufStringAdd( dbs, buf );
+			if( lf->ff_Filename[ 0 ] != 0 )
+			{
+				sprintf( buf, "<D:displayname>%s</D:displayname>\n", lf->ff_Filename );
+				BufStringAdd( dbs, buf );
+			}
                    
 			if( lf->ff_Type != NULL && lf->ff_Type[ 0 ] == 'D' )
 			{
-				BufStringAdd( dbs, "<D:resourcetype><D:collection/></D:resourcetype>\n");
+				BufStringAdd( dbs, "\t<D:resourcetype><D:collection/></D:resourcetype>\n");
+				*directory = TRUE;
+			}
+			else
+			{
+				*directory = FALSE;
 			}
 			
 			sprintf( buf, "<D:getcontentlength>%lld</D:getcontentlength>\n", lf->ff_Size );
 			BufStringAdd( dbs, buf );
 			
 			BufStringAdd( dbs, \
-                    "<D:supportedlock>\n \
-                         <D:lockentry>\n \
-                              <D:lockscope><D:exclusive/></D:lockscope>\n \
-                              <D:locktype><D:write/></D:locktype>\n \
-                         </D:lockentry>\n \
-                         <D:lockentry>\n \
-                              <D:lockscope><D:shared/></D:lockscope>\n \
-                              <D:locktype><D:write/></D:locktype>\n \
-                         </D:lockentry>\n \
-                    </D:supportedlock>\n \
-               </D:prop>\n \
-               <D:status>HTTP/1.1 200 OK</D:status>\n \
-          </D:propstat>\n </D:response> " );
+"<D:supportedlock>\n \
+<D:lockentry>\n \
+<D:lockscope><D:exclusive/></D:lockscope>\n \
+<D:locktype><D:write/></D:locktype>\n \
+</D:lockentry>\n \
+<D:lockentry>\n \
+<D:lockscope><D:shared/></D:lockscope>\n \
+<D:locktype><D:write/></D:locktype>\n \
+</D:lockentry>\n \
+</D:supportedlock>\n \
+</D:prop>\n \
+<D:status>HTTP/1.1 200 OK</D:status>\n \
+</D:propstat>\n </D:response> " );
 
 			FriendFile *rfile = lf;
 			lf = (FriendFile *)lf->node.mln_Succ;
@@ -132,11 +167,49 @@ int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs )
 		ERROR("Cannot convert from JSON\n");
 	}
 	
-	INFO("OUTPUT FROM WEBDAVCONV %s\n", dbs->bs_Buffer );
+	//INFO("OUTPUT FROM WEBDAVCONV %s\n", dbs->bs_Buffer );
 	
 	return 0;
 }
 
+
+
+enum
+{
+	ERROR_DEFAULT = 1,
+	ERROR_FILE_DO_NOT_EXIST
+};
+
+//
+// return file error
+// 
+
+BufString *ReturnFileError( char *url, int err )
+{
+	BufString *bs = BufStringNew();
+	int i = 0;
+	char buf[ 1024 ];
+	
+	sprintf( buf, "<D:response>\n\t\t<D:href>http://localhost:6502%s</D:href>\n<D:propstat>\n<D:prop>\n</D:prop>\n \
+<D:status>", url );
+
+	BufStringAdd( bs, buf );
+	
+	switch( err )
+	{
+		case ERROR_FILE_DO_NOT_EXIST:
+			BufStringAdd( bs,"HTTP/1.1 404 Not Found" );
+			//BufStringAdd( bs, "HTTP/1.1 200 OK" );
+		break;
+		default:
+			BufStringAdd( bs,"HTTP/1.1 404 Not Found" );
+		break;
+	}
+	
+	BufStringAdd( bs, "</D:status>\n</D:propstat>\n </D:response> " );
+
+	return bs;
+}
 
 /*
  * WEBDAV get file
@@ -170,22 +243,37 @@ Translate: f
 // path
 //  SHARE_PATH / USER / DEVNAME / PATH
 
-BOOL isError( char *val )
+
+
+int isError( char *val )
 {
 	unsigned int i;
 	char *tval = val;
+	
+	INFO("CHECKERROR---------------------------------------%s\n", val );
+	
+	//{ "ErrorMessage": "File or directory do not exist"}
+	
 	for( i=0 ; i < strlen( val ) ; i++ )
 	{
 		if( strncmp( "Error", tval++, 5 ) == 0 )
 		{
-			return TRUE;
+			ERROR("WEBDAV: response contain error word   +15: %s\n", tval+15 );
+			
+			if( strcmp( "File or directory do not exist", tval+15 ) == 0 )
+			{
+				return ERROR_FILE_DO_NOT_EXIST;
+			}
+			
+			return ERROR_DEFAULT;
 		}
 	}
-	return FALSE;
+	return 0;
 }
 
 //#define DISABLE_WEBDAV
-
+//#define AUTH_DIGEST
+#define AUTH_BASIC
 //
 //
 //
@@ -195,59 +283,88 @@ Http *HandleWebDav( Http *req, char *data, int len )
 	Http *resp = NULL;
 	char *path = NULL;
 	char *fpath = NULL;
-	BOOL pathDir = FALSE;
+	//BOOL pathDir = FALSE;
+	char *auth = NULL;
+	char *module = NULL;
 	
 	LIBXML_TEST_VERSION
-	
+	/*
 	struct TagItem tags[] = {
-				{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
-				{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
-				{TAG_DONE, TAG_DONE}
-			};
+		{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+		{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+		{TAG_DONE, TAG_DONE}
+	};
+	*/
+	
+	DEBUG("WEBDAV OPERATION-----------------------------------------------------------------------------------\n");
 			
 #ifndef DISABLE_WEBDAV
-			
+/*	
 	HashmapElement *he = HttpGetPOSTParameter( req, "module" );
 	if( he == NULL ) he = HashmapGet( req->query, "module" );
-			
-	INFO("\n\n---------------------------\n\n---------------------\n\n\n--------------------\n%s\n", data );
-	
-	// FIRST CALL
-	/*
-	 * <?xml version="1.0" encoding="utf-8"?>
-<propfind xmlns="DAV:"><allprop/></propfind>
+	if( he != NULL )
+	{
+		module = (char *)he->data;
+	}*/
 
-	 */
-	DEBUG("\n\n\nPATH %s RAWPATH %s\n", req->uri->path, req->rawRequestPath );
-	int pathSize = strlen( req->rawRequestPath );
+	if( strncmp( req->rawRequestPath, WEBDAV_SHARE_PATH, WEBDAV_SHARE_PATH_LEN ) != 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );
+		ERROR("WEBDAV Call is not proper\n");
+		
+		HttpAddTextContent( resp, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or sessionID are empty\"}" );
+
+		return resp;
+	}
+
+
+	User *usr = SLIB->sl_Sessions;
+	//User *foundUsr = NULL;
+	File *rootDev = NULL;
+	char *devname = NULL;
+	char *filePath = NULL;
+	char *userName = NULL;
+	char *userPassword = NULL;
+	char *decodedUser = NULL;
 	
+	int pathSize = strlen( req->rawRequestPath );
+	/*
 	if( req->rawRequestPath[ pathSize-1 ] == '/' )
 	{
 		pathDir = TRUE;
-	}
+	}*/
 	
-	path = FCalloc( pathSize+10, sizeof(char) );
-	memcpy( path, req->rawRequestPath, pathSize );
+	//path = FCalloc( pathSize+10, sizeof(char) );
+	//memcpy( path, req->rawRequestPath, pathSize );
+	path = UrlDecodeToMem( req->rawRequestPath );
 	
 	fpath = FCalloc( pathSize+10, sizeof(char) );
 	memcpy( fpath, req->rawRequestPath, pathSize );
 	
-	char *devname = NULL;
-	char *filePath = NULL;
-	char *userName = NULL;
 	int i;
 	int pos = 0;
+	
+	// get devicename and path from URL
 	
 	for( i = WEBDAV_SHARE_PATH_LEN-1 ; i < pathSize ; i++ )
 	{
 		if( path[ i ] =='/' )
 		{
+			/*
 			if( pos == 0 )	//USER
 			{
 				userName = &(path[ i+1 ]);
 				ERROR("userName %s\n", userName );
 			}
-			else if( pos == 1 )
+			else
+			*/
+			if( pos == 0 )
 			{
 				path[ i ] = 0;
 				devname = &(path[ i+1 ]);
@@ -265,46 +382,244 @@ Http *HandleWebDav( Http *req, char *data, int len )
 			{
 				
 				//PROPFIND /webdav/devices/jacek/stefkoshome/container/Programs/ HTTP/1.1
-
-				
 				path[ i ] = 0;
 				filePath =&(path[ i+1 ]);
 				ERROR("DEBPATH %s\n", filePath );
-				//printf("device %s\n", devname );
-				//printf("filepath %s\n", filePath );
-				//path[ pathSize-10 ] = 0;		// remove 'container' name
-				//fpath[ pathSize-10 ] = 0;
-				
 				break;
 			}
 
 			pos++;
 		}
 	}
+
+	auth = HttpGetHeader( req, "authorization", 0 );
+
+	DEBUG("\n\n\nPATH %s RAWPATH %s\n", req->uri->path, req->rawRequestPath );
+
+#ifdef AUTH_BASIC
 	
+	if( auth == NULL )
+	{
+		struct TagItem tagsauth[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{	HTTP_HEADER_WWW_AUTHENTICATE, (ULONG)StringDuplicate( "Basic realm=\"FriendUp\"" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		//#define HTTP_401_UNAUTHORIZED 
+		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+		ERROR("WEBDAV Call is not proper\n");
+		
+		HttpAddTextContent( resp, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or sessionID are empty\"}" );
+		
+		if( path != NULL )FFree( path );
+		if( fpath != NULL )FFree( fpath );
+		return resp;
+	}
+
+	int decodedUserLen;
+	decodedUser = Base64Decode( &(auth[ 6 ]), strlen( &(auth[ 6 ]) ), &decodedUserLen );
+	DEBUG("-------->>>>LOGIN PASSWORD %s  -- auth %s   ---- size %d\n", decodedUser, &(auth[ 6 ]), strlen( &(auth[ 6 ]) )  );
+	
+	userName = decodedUser;
+	for( i=0 ; i < strlen( decodedUser ) ; i++ )
+	{
+		if( decodedUser[ i ] == ':' )
+		{
+			decodedUser[ i ] = 0;
+			userPassword = &(decodedUser[ i+1 ] );
+			break;
+		}
+	}
+
+#else if define (AUTH_DIGEST)
+	/*
+	 * WWW-Authenticate: Digest realm="Members only", 
+	nonce="LHOKe1l2BAA=5c373ae0d933a0bb6321125a56a2fcdb6fd7c93b", algorithm=MD5, qop="auth"
+	 */
+
+	if( auth == NULL )
+	{
+		struct TagItem tagsauth[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{	HTTP_HEADER_WWW_AUTHENTICATE, (ULONG)StringDuplicate( "Digest realm=\"testrealm@host.com\", nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\", opaque=\"5ccc069c403ebaf9f0171e9517f40e41\", algorithm=\"MD5\", qop=\"auth,auth-int\"" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		//qop="auth,auth-int",
+        //         nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",
+        //         opaque="5ccc069c403ebaf9f0171e9517f40e41"
+		
+		//#define HTTP_401_UNAUTHORIZED 
+		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+		ERROR("WEBDAV Call is not proper\n");
+		
+		HttpAddTextContent( resp, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or sessionID are empty\"}" );
+
+		if( path != NULL )FFree( path );
+		if( fpath != NULL )FFree( fpath );
+		return resp;
+	}
+	
+	/*
+	 * first reponse
+	 * 
+	 * Authorization: Digest username="jacek", realm="FriendUp", nonce="LHOKe1l2BAA=5c373ae0d933a0bb6321125a56a2fcdb6fd7c93b", uri="/webdav/devices/Home/", response="1d5633867a4c458db104f94323b83a7b", algorithm="MD5", cnonce="e80f1973decd27977249b0887ef564da", nc=00000001, qop="auth"
+
+	 MD5(MD5(<password> + ":" + <nouce> + ":" + MD5(<method> + ";" + <uri>)
+	 */
+	
+	char *amethod = NULL;
+	char *arealm = NULL;
+	char *anonce = NULL, *acnonce = NULL;
+	char *auri = NULL;
+	char *aresponse = NULL;
+	char *aalgo = NULL;
+	char *aqop = NULL;
+	char *anc = NULL;
+	char *lauth = auth;
+	int authlen = strlen( auth );
+	
+	List *l = HttpGetHeaderList( req, "authorization" );
+	
+	do
+	{
+		
+		char *data = (char *) l->data;
+		//printf("-%s<--%c %c %c %c %c-\n", data, data[ 0], data[1], data[2], data[3], data[4] );
+		
+		if( strncmp( data, "Digest", 6 ) == 0 )  // Digest
+		{
+			printf("name\n");
+			while( TRUE )
+			{
+				if( strncmp( data, "username", 8 ) == 0 )
+				{
+					data += 2 + 8;		//  skip   =" and username
+					userName = data;
+				}
+				
+				if( *data == 0 ) break;
+				data++;
+			}
+			
+		}else if( strncmp( data, "realm", 5 ) == 0 )
+		{
+			data += 2 + 5;		//  skip   =" and username
+			arealm = data;
+			
+		}else if( strncmp( data, "nonce", 5 ) == 0 )
+		{
+			data += 2 + 5;		//  skip   =" and username
+			anonce = data;
+		}else if( strncmp( data, "uri", 3 ) == 0 )
+		{
+			data += 2 + 3;		//  skip   =" and username
+			auri = data;
+		}else if( strncmp( data, "response", 8 ) == 0 )
+		{
+			data += 2 + 8;		//  skip   =" and username
+			aresponse = data;
+		}else if( strncmp( data, "algorithm", 9 ) == 0 )
+		{
+			data += 2 + 9;		//  skip   =" and username
+			aalgo = data;
+			printf("algorithm %s\n", aalgo );
+		}else if( strncmp( data, "cnonce", 6 ) == 0 )
+		{
+			data += 2 + 6;		//  skip   =" and username
+			acnonce = data;
+
+			printf("cnonce %s\n", acnonce );
+		}else if( strncmp( data, "qop", 3 ) == 0 )
+		{
+			data += 2 + 3;		//  skip   =" and username
+			aqop = data;
+			printf("qop %s\n", aqop );
+		}else if( strncmp( data, "nc", 2 ) == 0 )
+		{
+			data += 2 + 2;		//  skip   =" and username
+			anc = data;
+			printf("anc %s\n", anc );
+		}
+		
+	}while( ( l = l->next ) != NULL );
+	
+	printf("------------------------------> username %s, realm %s, nonce %s, uri %s, response %s, algo %s conce %s quop %s nc %s\n", userName, arealm, anonce, auri, aresponse, aalgo, acnonce, aqop, anc );
+	
+// jacek 6db041ae192a4d193db9fdaf44db7a68
+// placek 227ffb2a9cd6d36d63096f45afeb09a3
+	
+	char tmp[ 512 ], tmp1[ 512 ], tmp2[ 512 ], tmp3[ 512 ];
+	/*
+//	MD5(MD5(<password> + ":" + <nouce> + ":" + MD5(<method> + ";" + <uri>)
+	
+	sprintf( tmp, "%s;%s", amethod, auri );
+	StrToMD5Str( tmp1, 512, tmp, strlen( tmp ) );
+	
+	sprintf( tmp2, "%s:%s:%s", "placek", anonce, tmp1 );
+	StrToMD5Str( tmp, 512, tmp2, strlen( tmp2 ) );
+	
+	//HA1 = MD5(username:realm:password)
+	
+	DEBUG("================================================================%s\n", tmp );
+	
+	sprintf( tmp2, "%s:%s:%s", userName, arealm, "placek" );
+	StrToMD5Str( tmp, 512, tmp2, strlen( tmp2 ) );
+	DEBUG("================================================================%s\n", tmp );
+	*/
+	/*
+	 * ```php A1 = md5(username:realm:password) A2 = md5(request-method:uri) // request method = GET, POST, etc. Hash = md5(A1:nonce:nc:cnonce:qop:A2) if (Hash == response) //success! else //failure! ```
+	 */
+	
+	ERROR("================================================================\n", " ");
+	sprintf( tmp, "%s:%s:%s", userName, arealm, "placek" );
+	printf("A1 : '%s'\n", tmp );
+	StrToMD5Str( tmp1, 512, tmp, strlen( tmp ) );
+	
+//	sprintf( tmp, "%s:%s", "POST", auri );
+	sprintf( tmp, "%s:%s", req->method, auri );
+	printf("A2 : '%s'\n", tmp );
+	StrToMD5Str( tmp2, 512, tmp, strlen( tmp ) );
+	
+	sprintf( tmp, "%s:%s:%s:%s:%s:%s", tmp1, anonce, anc, acnonce, aqop, tmp2 );
+	printf("EXTRA : '%s'\n", tmp );
+	StrToMD5Str( tmp3, 512, tmp, strlen( tmp ) );
+	
+	   char * pszNonce = "dcd98b7102dd2f0e8b11d0f600bfb0c093";
+      char * pszCNonce = "0a4f113b";
+      char * pszUser = "Mufasa";
+      char * pszRealm = "testrealm@host.com";
+      char * pszPass = "Circle Of Life";
+      char * pszAlg = "md5";
+      char szNonceCount[9] = "00000001";
+      char * pszMethod = "GET";
+      char * pszQop = "auth";
+      char * pszURI = "/dir/index.html";
+      HASHHEX HA1;
+      HASHHEX HA2 = "";
+      HASHHEX Response;
+
+      DigestCalcHA1( aalgo, "jacek", arealm, "placek", anonce,acnonce, HA1);
+      DigestCalcResponse( HA1, anonce, anc, acnonce, aqop,  req->method, auri, HA2, Response);
+      printf("Response = %s\n", Response);
+	
+	ERROR("================================================================%s\n", tmp3 );
+	DEBUG(" METHOD %s\n", req->method );
+	
+#endif
+	
+
 	// we must split path, to have access to device name, user name
 	
 	
 	//printf("-------->%s PATH\n", req->rawRequestPath );
 	//printf("USER %s DEVNAME %s PATH %s\n", user, devname, filePath );
 	
-	if( strncmp( req->rawRequestPath, WEBDAV_SHARE_PATH, WEBDAV_SHARE_PATH_LEN ) != 0 )
-	{
-		resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );
-		ERROR("WEBDAV Call is not proper\n");
-		
-		HttpAddTextContent( resp, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or sessionID are empty\"}" );
-		
-		FFree( path );
-		FFree( fpath );
-		return resp;
-	}
-	
-	User *usr = SLIB->sl_Sessions;
-	User *foundUsr = NULL;
-	File *rootDev = NULL;
-	
 	// trying to find logged user to check his devices
+	
+	UserLibrary *ulib = SLIB->LibraryUserGet( SLIB );
 	
 	LIST_FOR_EACH( SLIB->sl_Sessions, usr )
 	{
@@ -314,6 +629,8 @@ Http *HandleWebDav( Http *req, char *data, int len )
 		}
 	}
 	
+	//SLIB->LibraryUserDrop( SLIB, ulib );
+	
 	// user not logged in, we must add it to session
 	// and mount shared device
 	
@@ -322,7 +639,7 @@ Http *HandleWebDav( Http *req, char *data, int len )
 		ERROR("User '%s' not found\n", userName );
 		//TODO get user from database and mount devices
 		MYSQLLibrary *sqll = SLIB->LibraryMYSQLGet( SLIB );
-		UserLibrary *ulib = SLIB->LibraryUserGet( SLIB );
+		//UserLibrary *ulib = SLIB->LibraryUserGet( SLIB );
 		
 		usr = ulib->UserGet( ulib, userName );
 		if( usr != NULL )
@@ -340,6 +657,7 @@ Http *HandleWebDav( Http *req, char *data, int len )
 
 			FFree( path );
 			FFree( fpath );
+			if( decodedUser != NULL ){ free( decodedUser ); }
 			
 			return resp;
 		}
@@ -351,7 +669,31 @@ Http *HandleWebDav( Http *req, char *data, int len )
 	if( usr == NULL )
 	{
 		ERROR("Cannot find user\n");
+		//if( decodedUser != NULL ){ free( decodedUser ); }
 	}
+	
+	if( ( ulib->CheckPassword( ulib, usr, userPassword ) ) == FALSE )
+	{
+		struct TagItem tagsauth[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{	HTTP_HEADER_WWW_AUTHENTICATE, (ULONG)StringDuplicate( "Basic realm=\"FriendUp\"" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		//#define HTTP_401_UNAUTHORIZED 
+		resp = HttpNewSimple( HTTP_401_UNAUTHORIZED,  tagsauth );
+		ERROR("WEBDAV Call is not proper\n");
+		
+		HttpAddTextContent( resp, "ok<!--separate-->{ \"ErrorMessage\": \"Device name or sessionID are empty\"}" );
+		
+		if( decodedUser != NULL ){ free( decodedUser ); }
+		FFree( path );
+		FFree( fpath );
+		return resp;
+	}
+	
+	if( decodedUser != NULL ){ free( decodedUser ); }
 	
 	// we should use flag or u_WebDAVDevs
 	
@@ -378,7 +720,13 @@ Http *HandleWebDav( Http *req, char *data, int len )
 	
 	if( strcmp( req->method, "GET" ) == 0 )
 	{
-		resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		resp = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		FHandler *actFS = (FHandler *)rootDev->f_FSys;
 		File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
@@ -403,11 +751,22 @@ Http *HandleWebDav( Http *req, char *data, int len )
 			actFS->FileClose( rootDev, fp );
 		}
 	}
+	
+	//
+	//
+	//
+	
 	else if( strcmp( req->method, "PUT" ) == 0 )
 	{
-		resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+	
+		resp = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		INFO("\n\n\nCONTENTSIZE %d\n\n", req->sizeOfContent );
+		INFO("\n\n\nCONTENTSIZE %lld\n\n", req->sizeOfContent );
 		
 		FHandler *actFS = (FHandler *)rootDev->f_FSys;
 		File *fp = (File *)actFS->FileOpen( rootDev, filePath, "wb" );
@@ -418,6 +777,71 @@ Http *HandleWebDav( Http *req, char *data, int len )
 			actFS->FileClose( rootDev, fp );
 		}
 	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( req->method, "MKCOL" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+	
+		resp = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		INFO("\n\n\nCONTENTSIZE %lld\n\n", req->sizeOfContent );
+		
+		FHandler *actFS = (FHandler *)rootDev->f_FSys;
+		actFS->MakeDir( rootDev, filePath );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( req->method, "DELETE" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+	
+		resp = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		INFO("\n\n\nCONTENTSIZE %lld\n\n", req->sizeOfContent );
+		
+		FHandler *actFS = (FHandler *)rootDev->f_FSys;
+		actFS->Delete( rootDev, filePath );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( req->method, "COPY" ) == 0 )
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+	
+		resp = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		INFO("\n\n\nCONTENTSIZE %lld\n\n", req->sizeOfContent );
+		
+		FHandler *actFS = (FHandler *)rootDev->f_FSys;
+		actFS->Delete( rootDev, filePath );
+	}
+	
+	//
+	//
+	//
+	
 	else if( strcmp( req->method, "OPTIONS" ) == 0 )
 	{
 		struct TagItem ltags[] = {
@@ -434,6 +858,9 @@ Http *HandleWebDav( Http *req, char *data, int len )
 		resp = HttpNewSimple( HTTP_200_OK,  ltags );
 		HttpAddTextContent( resp, " " );
 		BufStringDelete( strResp );
+		
+		FFree( path );
+		FFree( fpath );
 		return resp;
 	}
 	/*
@@ -501,7 +928,13 @@ request.xml:1: parser error : Start tag expected, '<' not found
 	
 	else
 	{
-		resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/xml" ) },
+			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		//HTTP_200_OK
+		//resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
 		
 		xmlDocPtr doc;
 	
@@ -518,15 +951,17 @@ request.xml:1: parser error : Start tag expected, '<' not found
 				
 					if( n->type == XML_ELEMENT_NODE )
 					{
-					
+					BOOL directory = FALSE;
+						
 						printf("----------->node type: Element, name %s\n", n->name );
 					
 						for( pfind = n->children ; pfind ; pfind = pfind->next )
 						{
 							// <allprop/>
 							printf("\t----------->node type: Element, name %s\n", pfind->name );
-						
-							if( strcmp( (char *)pfind->name, "allprop" ) == 0 )
+						/*
+							if( strcmp( (char *)pfind->name, "allprop" ) == 0  )
+							//if( strcmp( (char *)pfind->name, "allprop" ) == 0 || strcmp( (char *)pfind->name, "prop" ) == 0 )
 							{
 								FHandler *actFS = (FHandler *)rootDev->f_FSys;
 								
@@ -537,7 +972,7 @@ request.xml:1: parser error : Start tag expected, '<' not found
 									BufString *dirresp = actFS->Dir( rootDev, filePath );
 									BufStringAdd( strResp, "<?xml version=\"1.0\" ?> \n <D:multistatus xmlns:D=\"DAV:\">\n" );
 							
-									if( ConvertToWebdav( fpath, strResp, dirresp ) == 0 )
+									if( ConvertToWebdav( fpath, strResp, dirresp, &directory ) == 0 )
 									{
 										BufStringAdd( strResp, "</D:multistatus>\r\n" );
 										//HttpAddTextContent( resp, strResp->bs_Buffer );
@@ -547,6 +982,7 @@ request.xml:1: parser error : Start tag expected, '<' not found
 										BufStringDelete( dirresp );
 									}
 								} // file
+								
 								else
 								{
 									BufString *dirresp = actFS->Info( rootDev, filePath );
@@ -555,7 +991,7 @@ request.xml:1: parser error : Start tag expected, '<' not found
 									{
 										BufStringAdd( strResp, "<?xml version=\"1.0\" ?> \n <D:multistatus xmlns:D=\"DAV:\">\n" );
 										
-										if( ConvertToWebdav( fpath, strResp, dirresp ) == 0 )
+										if( ConvertToWebdav( fpath, strResp, dirresp, &directory ) == 0 )
 										{
 											BufStringAdd( strResp, "</D:multistatus>\r\n" );
 											//HttpAddTextContent( resp, strResp->bs_Buffer );
@@ -574,6 +1010,8 @@ request.xml:1: parser error : Start tag expected, '<' not found
 								}
 							}
 							else if( strcmp( (char *)pfind->name, "prop" ) == 0 )
+								*/
+							if( strcmp( (char *)pfind->name, "allprop" ) == 0 || strcmp( (char *)pfind->name, "prop" ) == 0 )
 							{
 								xmlNode *prop = NULL;
 								if( pfind->type == XML_ELEMENT_NODE )
@@ -604,12 +1042,19 @@ request.xml:1: parser error : Start tag expected, '<' not found
 										dirresp = actFS->Info( rootDev, filePath );
 									}
 									
-									if( isError(  &( dirresp->bs_Buffer[ 5 ] )  ) == FALSE )
-									//if( strcmp( &( dirresp->bs_Buffer[ 5 ] ), "Error" ) != 0 )	//correct response
+									int lerror;
+									
+									if( ( lerror =  isError(  &( dirresp->bs_Buffer[ 5 ] )  ) ) == 0 )
 									{
+										resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
+										
 										DEBUG("GetINFO Converting from JSON  %s\n", dirresp->bs_Buffer );
 										BufStringAdd( strResp, "<?xml version=\"1.0\" ?> \n <D:multistatus xmlns:D=\"DAV:\">\n" );
-										if( ConvertToWebdav( fpath, strResp, dirresp ) == 0 )
+										
+										//BufString *tempbs = BufStringNew();
+										
+										//if( ConvertToWebdav( fpath, tempbs, dirresp, &directory ) == 0 && directory == TRUE )
+										if( ConvertToWebdav( fpath, strResp, dirresp, &directory, TRUE ) == 0 && directory == TRUE )
 										{
 											BufString *locdirresp;
 											
@@ -622,7 +1067,7 @@ request.xml:1: parser error : Start tag expected, '<' not found
 												locdirresp = actFS->Dir( rootDev, filePath );
 											}
 											
-											if( ConvertToWebdav( fpath, strResp, locdirresp ) == 0 )
+											if( ConvertToWebdav( fpath, strResp, locdirresp, &directory, FALSE ) == 0 )
 											{
 											
 												BufStringDelete( locdirresp );
@@ -631,6 +1076,8 @@ request.xml:1: parser error : Start tag expected, '<' not found
 											BufStringAdd( strResp, "</D:multistatus>\r\n" );
 											//HttpAddTextContent( resp, strResp->bs_Buffer );
 											HttpSetContent( resp, strResp->bs_Buffer, strResp->bs_Size );
+											
+											ERROR("---------------------------------------------------------------------------------------------\n%s\n", strResp->bs_Buffer );
 											strResp->bs_Buffer = NULL;
 								
 											BufStringDelete( dirresp );
@@ -638,7 +1085,17 @@ request.xml:1: parser error : Start tag expected, '<' not found
 									}
 									else
 									{
-										HttpAddTextContent( resp, " " );
+										resp = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+										BufString *bs = ReturnFileError( fpath, lerror );
+										
+										if( bs != NULL )
+										{
+											HttpAddTextContent( resp, bs->bs_Buffer );
+											
+											BufStringDelete( bs );
+										}
+										
+										ERROR("WEBDAV: Problem appear %s\n", resp->content );
 										
 										BufStringDelete( dirresp );
 									}
@@ -729,7 +1186,7 @@ Content-Length: xxxx
 	
 	FFree( path );
 	FFree( fpath );
-	DEBUG("Webdav response returned\n");
+	//DEBUG("Webdav response returned  :  %s\n", resp->content );
 	
 #else
 	resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );

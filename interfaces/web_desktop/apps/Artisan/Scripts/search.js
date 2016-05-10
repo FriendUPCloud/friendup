@@ -16,6 +16,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *******************************************************************************/
+
 function searchFor()
 {
 	var keys = ge( 'SearchId' ).value;

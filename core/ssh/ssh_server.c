@@ -67,7 +67,7 @@ SSHServer *SSHServerNew()
 		ssh_threads_set_callbacks( ssh_threads_get_pthread() );
 		ssh_init();
 	
-		ts->sshs_Thread = ThreadNew( SSHThread, ts );
+		ts->sshs_Thread = ThreadNew( SSHThread, ts, TRUE );
 #endif
 	}
 	return ts;
