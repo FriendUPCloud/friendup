@@ -1,5 +1,5 @@
-Readme
-------
+Readme for version beta 3b
+--------------------------
 
 Welcome to the Friend Unifying Platform for the open source
 community. This version includes all the components that are
