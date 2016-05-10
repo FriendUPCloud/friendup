@@ -17,12 +17,19 @@ i18n_about_codeeditor               : About Artisan
 
 #project menu
 i18n_project                        : Project
+i18n_project_new                    : New project
+i18n_project_properties             : Project properties
+i18n_open_project_files             : Open all project files
 i18n_load_project                   : Load project
 i18n_save_project                   : Save project
 i18n_save_project_as                : Save project as
+i18n_run_project                    : Run project
 
 #macro menu
 i18n_macros                         : Macros
+i18n_clear_macro                    : Clear macro
+i18n_load_macro                     : Load macro
+i18n_save_macro                     : Save macro
 i18n_record_macro                   : Record macro
 i18n_stop_macro                     : Stop recording
 
