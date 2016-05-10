@@ -448,18 +448,6 @@ Workspace = {
 						Workspace.renewAllSessionIds();
 						return;
 					}
-					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e != 'ok' )
-						{
-							if( !json.acceptedEula ) ShowEula();
-						}
-					}
-					m.execute( 'getsetting', {
-						setting: 'accepteula'
-					} );
 				
 					document.body.className = 'Loading';
 				
@@ -2123,47 +2111,6 @@ function ClearCache()
 }
 
 // -----------------------------------------------------------------------------
-
-// Shows eula
-
-function ShowEula( accept )
-{
-	if( accept )
-	{
-		var m = new Module( 'system' );
-		m.addVar( 'sessionid', Workspace.sessionId );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				var eles = document.getElementsByTagName( 'div' );
-				for( var a = 0; a < eles.length; a++ )
-				{
-					if( eles[a].className == 'Eula' )
-						eles[a].parentNode.removeChild( eles[a] );
-				}
-			}
-		}
-		m.execute( 'setsetting', { 
-			setting: 'accepteula',
-			data:    'true'
-		} );
-		return;
-	}
-	var d = document.createElement( 'div' );
-	d.className = 'Eula';
-	d.id = 'EulaDialog';
-	document.body.appendChild( d );
-	
-	var f = new File( 'System:templates/eula.html' );
-	f.onLoad = function( data )
-	{
-		d.innerHTML = data;
-	}
-	f.load();
-}
-
-
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 /*  SHA-256 implementation in JavaScript                (c) Chris Veness 2002-2014 / MIT Licence  */
