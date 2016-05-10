@@ -25,11 +25,9 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 	$dockItems = array(
 		array( 'Dock', 'A simple dock desklet' ),
 		array( 'Dingo', 'A command line interface' ),
-		array( 'Hello', 'A chat client' ),
 		array( 'Artisan', 'A programmers editor' ),
 		array( 'Author', 'A word processor' ),
 		array( 'Wallpaper', 'Select a wallpaper' ),
-		array( 'Astray', 'Play a game' ),
 		array( 'Calculator', 'Do some math' ),
 	);
 	$i = 0;
