@@ -18,7 +18,7 @@ in a separate document in this directory.
 
 For more information about the project, please visit:
 
- * https://friendos.com/
+ * https://friendup.cloud/
 
 And visit this link for our GitHub project page:
 
@@ -46,7 +46,7 @@ to access a permanent system. Each beta tester gets access to
 file storage and several apps not available in the open source
 version. Please visit the following url to sign up:
 
- * https://friendos.com/beta/index.html
+ * https://friendup.cloud/about-the-friend-unifying-platform/acess-the-demo/
  
 You will receive instructions by mail.
 
