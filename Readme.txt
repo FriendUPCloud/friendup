@@ -1,3 +1,13 @@
+Message from Friend Software Labs:
+==================================
+
+Please note that we have had not had time to update our open source version for too long time. We have been working hard behind the scenes and are planning to publish it together with our release candidate 2 in hte next couple of weeks.
+
+Until then we urge people considering a commercial installation to get in touch with us via https://friendup.cloud.
+
+=============================================================
+
+
 Readme for version beta 3b
 --------------------------
 
