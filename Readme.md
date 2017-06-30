@@ -27,6 +27,11 @@ Default login
 
 Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: *fadmin*/*securefassword*.
 
+Documentation
+-------------
+
+You can find the developer documentation in the docs folder. An administration guide will be added soon.
+
 Licensing
 =========
 

@@ -1,0 +1,176 @@
+
+#1 DOSDriver documentation####
+
+## 1. What are DOSDrivers?####
+Any filesystem need to include data storage. Friend has improved the concept and
+allows, with the use of specific libraries of code, the implementation of any kind
+of "drive" on a Friend Workspace, drive being either hosted on a mySQL data base
+(such as the System and Home drives of your Workspace), or directly linked to
+external NAS systems such as Dropbox or Google Drive.
+Once mounted on the Workspace, a new icon will appear as an access point to the
+drive... Then, depending on the DOSDriver itself, operations like upload, download,
+listing directories etc. can be performed.
+
+## 2. Program in the language you prefer####
+DOSDrivers then be written in PHP or C. Friend will  look at the language indicator
+contained in the DOSDriver.ini file and will adapt accordingly. Please note that
+for the moment, this documentation will focus on the PHP versions.
+
+### 3. File names and function#####
+
+#### 2.1. The directory of the DOSDriver#
+
+To be integrated in the Friend Core system, DOSDriver directories must be
+sub-directories of the \devices\DOSDriver directory.
+When writing a Friend Core DOS driver, first create a directory. The name of the
+directory must match the name of the DOS driver. So for example, if the DOS
+driver is called "CowboyNeilDrive", then the directory name must be exactly the
+same, case sensitive.
+
+#### 2.2. Directory structure#
+The directory structure is as follows (languages are examples, and optional):
+
+ DOSDrivers/
+ 	CowboyNeilDrive/        >>> the name of the DOSDriver
+ 		Locale/             >>> various language supported
+ 			en.lang
+ 			no.lang
+ 			pl.lang
+ 		door.php            >>> the main source code
+ 		dosdriver.ini       >>> Friend Code information file
+ 		gui.html            >>> Interface in HTML used for an eventual connexion dialog box
+ 		info.html           >>> The HTML file that will display information about the drive
+ 		sysinfo.json        >>> Information for Friend Core
+
+#### 2.3. dosdriver.ini#
+The ini format is a handy format created in Windows 3.0 that is still used for it's simplicity.
+Here is the example of the mySQL drive dosdriver.ini
+
+[DOSDriver]                 >>> Mandatory indicator
+type = SQLDrive;            >>> Type of DOSDrive, <PS: NEED HELP HERE, WHAT TYPES ARE POSSIBLE ?>
+handler = php;              >>> Language which is being used to write the DOSDriver <PS: WHAT CAN BE USED HERE?>
+version = 1;                >>> The current version of the DOSDriver
+
+#### 2.4. gui.html#
+<PS: WHAT IS EXACT ROLE OF THIS FILE, WHEN IS IT DISPLAYED?>
+
+#### 2.5. info.html#
+<PS: WHAT IS EXACT ROLE OF THIS FILE, WHEN IS IT DISPLAYED?>
+
+#### 2.6. sysinfo.json#
+This json formatted file contains further information for Friend Core.
+Here is as an example the sysinfo.json file of the mySQL drive :
+
+{
+	"type":    "SQLDrive",                  >>> Short name of the drive (PS?)
+	"literal": "MySQL Based Filesystem",    >>> Long name of the drive
+	"group":   "Admin",                     >>> Group it belongs to (PS?)
+	"sharing": "1"                          >>> Indicates if the drive can be shared
+}
+
+#### 2.7. door.php#
+This is the actual code of the DOSDriver. It contains the class that contains the
+mandatory primitive functions that must be present, and are called when the drive is accessed.
+You will find the list of functions and their description in the file section of this
+documentation.
+
+The functions are :
+onConstruct( )
+getSubFolder( $subPath )
+dosAction( $args )
+getFile( $path )
+openFile( $path, $mode )
+closeFile( $filePointer )
+readFile( $fp, $bytes )
+writeFile( $filePointer, $data, $bytes )
+getTmpFile( $path )
+putFile( $path, $fileObject )
+createFolder( $folderName, $where )
+deleteFolder( $path, $recursive = true )
+getFileByPath( $path )
+deleteFile( $path, $recursive = false )
+
+#4. How the system works#
+FriendCore is written in C. To perform PHP actions, the core sends HTTP formatted
+messages to the PHP interpretor of the machine that are transmitted to the door.php
+functions.
+The messages receiveed by those function are in the form of :
+
+
+#5. List of commands to support#
+
+## 3.1. List of commands#
+The list of commands is defined in the dosAction function of the class.
+Here we list the commands of the mySQL drive, which the most advanced driver of
+all the current version.
+"dir", "info", "write", "read", "import", "volumeinfo".
+"dosaction" which contains sub-function such as "mount", "unmount", "rename",
+"makedir", "delete", "copy". Dos actions are sent by the system from the user input
+and can be ommited from your code. You can create DOSDrivers
+which do not respond to some command.
+You are the one defining in this function the syntax that the user will use
+in a CLI. If your drive is to be displayed in an explorer window, the above list
+is mandatory for the explorer window to offer all its options. <PS: PLEASE CONFIRM>
+
+onConstruct
+Sets the dosdriver fileinfo structure from the one already created or creates an
+empty one if none if this is hte first call.
+
+getSubFolder
+Extract the folder from a pathname, removing the name of the file if included
+in the path. For example home:download/movies/titanic.mp4 would return
+home:download/movies
+
+dosAction
+Performs the action contained in the $args command. Can be dir, info, write,
+read (what is the difference with the function readFile?), import, volumeinfo,
+dosaction with futher parameters like mount (why put it here?), unmount (same question)
+rename, makedir, delete, copy
+
+getFile
+Load a file and return a object containing all the information and the data
+of the file.
+
+openFile
+Opens a file and returns a file pointer with information on the file itself.
+
+closeFile
+Closes an already opened file.
+
+readFile
+Reads X bytes from the current file pointer.
+
+writeFile
+Write X byte at the current position of the file pointer
+
+getTmpFile
+Creates a temporary file in the given folder. The filename is garanteed to have
+never been used before and the file is unique.
+
+putFile
+Copy the content of an existing file (contained iin the path parameter) to a
+temporary file in the given path.
+
+createFolder
+Creates a new folder at a given location.
+
+deleteFolder
+Recursively (or not) deletes a folder and its subfolders.
+
+getFileByPath
+Not sure about this one. What is a "FriendUP path". I thought all pathnames in
+dosdrivers were in the form xxxx:yyy/zzz.ext. What is the difference with this function?
+
+deleteFile
+Deletes a file or a folder. Difference with the deleteFolder is that it can delete
+both.
+
+3. C
+3.1. Structure of a DOSDriver
+3.2. List of mandatory functions
+3.3. List of commands to support
+
+4. DOSDriver PHP Template
+
+5. DOSDriver C template
+
