@@ -1,32 +1,45 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Module body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <dlfcn.h>
 #include <core/library.h>
 #include "module.h"
 
-
-//
-//
-//
-
-EModule *EModuleCreate( const char *path, const char *name )
+/**
+ * Load and create module
+ *
+ * @param path path to module on disk
+ * @param name name which will be used to recognize module
+ * @return new EModule structure when success, otherwise NULL
+ */
+EModule *EModuleCreate( void *sb, const char *path, const char *name )
 {
 	EModule *mod = NULL;
 	char *suffix = NULL;
@@ -46,45 +59,46 @@ EModule *EModuleCreate( const char *path, const char *name )
 		return NULL;
 	}
 
-	if( ( mod = calloc( sizeof(EModule), 1 ) ) != NULL )
+	if( ( mod = FCalloc( sizeof(EModule), 1 ) ) != NULL )
 	{
-		if( ( mod->Name = calloc( strlen( name )+1, sizeof(char) ) ) != NULL )
+		if( ( mod->Name = FCalloc( strlen( name )+1, sizeof(char) ) ) != NULL )
 		{
 			strcpy( mod->Name, name );
 		}
 
-		if( ( mod->Path = calloc( strlen( path )+1, sizeof(char) ) ) != NULL )
+		if( ( mod->Path = FCalloc( strlen( path )+1, sizeof(char) ) ) != NULL )
 		{
 			strcpy( mod->Path, path );
 		}
 
 		if( ( mod->handle = dlopen ( path, RTLD_NOW ) ) != NULL )
 		{
-			DEBUG("SYSTEMLIB EMODULECREATE, getting pointer to libs\n");
 			mod->Run = dlsym( mod->handle, "Run");
 			mod->GetSuffix = dlsym ( mod->handle, "GetSuffix");
 		}
+		
+		mod->em_SB = sb;
 	}
 	return mod;
 }
 
-//
-// delete module
-//
-
-
+/**
+ * Delete module
+ *
+ * @param mod pointer to EModule which will be deleted
+ */
 void EModuleDelete( EModule *mod )
 {
 	if( mod != NULL )
 	{
 		if( mod->Name )
 		{
-			free( mod->Name );
+			FFree( mod->Name );
 		}
 
 		if( mod->Path )
 		{
-			free( mod->Path );
+			FFree( mod->Path );
 		}
 
 		if( mod->handle )
@@ -92,7 +106,7 @@ void EModuleDelete( EModule *mod )
 			dlclose ( mod->handle );
 		}
 
-		free( mod );
+		FFree( mod );
 	}
 
 }

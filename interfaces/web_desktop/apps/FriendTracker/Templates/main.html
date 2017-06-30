@@ -1,0 +1,395 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop BorderBottom TopPanel BackgroundDefault">
+			<div id="PlayerButtons" class="BorderRight">
+				<div id="ControlPlay" onclick="playPattern( 1 )">
+					{i18n_play_pattern}
+				</div>
+				<div id="ControlPlaySong" onclick="playSong( 1 )">
+					{i18n_play_song}
+				</div>
+				<div id="InfoTable">
+					
+				</div>
+				<div id="ControlStop">
+				</div>
+				<div id="ControlTrackNext">
+				</div>
+				<div id="ControlTrackPrev">
+				</div>
+			</div>
+			<div id="Instruments" class="BorderRight BorderLeft">
+				<div id="InstrumentHeader" class="BorderBottom">
+					<strong>{i18n_instruments}</strong>
+				</div>
+				<div id="InstrumentList" class="BackgroundLists ColorLists">
+				</div>
+				<div id="InstrumentButtons" class="BorderTop Padding">
+					<button class="Button AddInstrument IconSmall fa-plus" onclick="addInstrument()">
+						
+					</button>
+					<button class="Button DeleteInstrument IconSmall fa-minus" onclick="deleteInstrument(currentInstrument)">
+						
+					</button>
+				</div>
+			</div>
+			<div id="Patterns" class="BorderLeft">
+				<div id="PatternsHeader" class="BorderBottom">
+					<strong>{i18n_patterns}</strong>
+				</div>
+				<div id="PatternsList" class="BackgroundLists ColorLists">
+				</div>
+				<div id="PatternsButtons" class="BorderTop Padding">
+					<button class="Button AddPattern IconSmall fa-plus" onclick="newPattern()">
+						
+					</button>
+					<button class="Button DeletePattern IconSmall fa-minus" onclick="deletePattern(songs[currentSong].currentPattern)">
+						
+					</button>
+				</div>
+			</div>
+		</div>
+		<div id="Equalizers">
+			<div class="Equalizer"><div class="Eq"></div></div>
+			<div class="Equalizer"><div class="Eq"></div></div>
+			<div class="Equalizer"><div class="Eq"></div></div>
+			<div class="Equalizer"><div class="Eq"></div></div>
+		</div>
+		<div class="VContentBottom BottomPanel BackgroundLists">
+			<div class="Column1">
+				<div class="TrackerList">
+				</div>
+			</div>
+			<div class="Column2">
+				<div class="TrackerList">
+				</div>
+			</div>
+			<div class="Column3">
+				<div class="TrackerList">
+				</div>
+			</div>
+			<div class="Column4">
+				<div class="TrackerList">
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<script src="Progdir:tracker.js"></script>
+	
+	<style>
+	
+		.TopPanel
+		{
+			height: 150px;
+		}
+		
+		.BottomPanel
+		{
+			top: 150px;
+			overflow: auto;
+		}
+		
+		.Column1, .Column2, .Column3, .Column4
+		{
+			width: 25%;
+			box-sizing: border-box;
+			position: absolute;
+			height: 100%;
+		}
+		
+		.Entry
+		{
+			border-left: 2px solid rgba(0,0,0,0.5);
+		}
+		.Entry:after
+		{
+			content: " ";
+			display: block;
+			clear: both;
+		}
+		
+		.Entry > div
+		{
+			float: left;
+			width: 33%;
+			box-sizing: border-box;
+		}
+		
+		.Column1
+		{
+			left: 0;
+			border-left: 0;
+		}
+		
+		.Column2
+		{
+			left: 25%;
+		}
+		
+		.Column3
+		{
+			left: 50%;
+		}
+		
+		.Column4
+		{
+			left: 75%;
+		}
+		
+		.Entry
+		{
+			font-family: courier, courier new;
+			font-size: 26px;
+			color: #44ff00;
+			padding: 5px;
+			box-sizing: border-box;
+			text-align: center;
+			width: 100%;
+			position: relative;
+			white-space: nowrap;
+		}
+		
+		@media (max-width: 720px)
+		{
+			.Entry
+			{
+				font-size: 18px;
+			}
+		}
+		
+		@media (max-width: 480px)
+		{
+			.Entry
+			{
+				font-size: 11px;
+				padding: 0;
+			}
+		}
+		
+		.Entry.Active
+		{
+			box-shadow: inset 0px 0px 0px 3px orange;
+		}
+		
+		.TrackerList
+		{
+			position: relative;
+			top: 0px;
+			left: 0px;
+			bottom: 0px;
+			right: 0px;
+			background: #444444;
+		}
+		
+		.Equalizer
+		{
+			position: absolute;
+			bottom: 0;
+			width: 25%; /* todo! */
+			height: 0;
+			z-index: 10;
+		}
+		
+		.Equalizer > .Eq
+		{
+			position: absolute;
+			border-radius: 5px 5px 0 0;
+			bottom: 0;
+			left: 20px;
+			right: 20px;
+			height: 0;
+			transition: height, background 0.15s, 0.15s;
+		}
+		
+		#PlayerButtons
+		{
+			position: absolute;
+			top: 0;
+			width: 25%;
+			height: 100%;
+		}
+		
+		#PlayerButtons #ControlPlaySong
+		{
+			line-height: 50px;
+			font-weight: bold;
+			cursor: hand;
+			cursor: pointer;
+			position: absolute;
+			background: #006600;
+			box-sizing: border-box;
+			color: white;
+			border-top: 1px solid rgba(255,255,255,0.7);
+			border-left: 1px solid rgba(255,255,255,0.7);
+			border-right: 1px solid rgba(0,0,0,0.7);
+			border-bottom: 1px solid rgba(0,0,0,0.7);
+			width: 50%;
+			height: 50px;
+			text-align: center;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+		#PlayerButtons #ControlPlaySong:active
+		{
+			background: #004400;
+			line-height: 52px;
+			border-right: 1px solid rgba(255,255,255,0.7);
+			border-bottom: 1px solid rgba(255,255,255,0.7);
+			border-top: 1px solid rgba(0,0,0,0.7);
+			border-left: 1px solid rgba(0,0,0,0.7);
+		}
+		#PlayerButtons #ControlPlay
+		{
+			line-height: 50px;
+			font-weight: bold;
+			cursor: hand;
+			cursor: pointer;
+			position: absolute;
+			background: #666666;
+			box-sizing: border-box;
+			color: white;
+			border-top: 1px solid rgba(255,255,255,0.7);
+			border-left: 1px solid rgba(255,255,255,0.7);
+			border-right: 1px solid rgba(0,0,0,0.7);
+			border-bottom: 1px solid rgba(0,0,0,0.7);
+			width: 50%;
+			left: 50%;
+			height: 50px;
+			text-align: center;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
+		#PlayerButtons #ControlPlay:active
+		{
+			background: #555555;
+			line-height: 52px;
+			border-right: 1px solid rgba(255,255,255,0.7);
+			border-bottom: 1px solid rgba(255,255,255,0.7);
+			border-top: 1px solid rgba(0,0,0,0.7);
+			border-left: 1px solid rgba(0,0,0,0.7);
+		}
+		
+		#Instruments
+		{
+			position: absolute;
+			left: 50%;
+			top: 0px;
+			width: 25%;
+			height: 100%;
+		}
+		
+		#InstrumentHeader
+		{
+			position: absolute;
+			left: 0;
+			top: 0px;
+			width: 100%;
+			height: 25px;
+			box-sizing: border-box;
+			padding: 5px;
+			font-size: 13px;
+		}
+		
+		#InstrumentButtons
+		{
+			position: absolute;
+			bottom: 0px;
+			height: 50px;
+			width: 100%;
+		}
+		
+		#InstrumentList
+		{
+			position: absolute;
+			overflow: auto;
+			overflow-x: hidden;
+			bottom: 50px;
+			top: 25px;
+			width: 100%;
+		}
+		
+		#InstrumentList > .Instrument
+		{
+			padding: 5px;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			cursor: hand;
+			cursor: pointer;
+		}
+		
+		#InstrumentList > .Instrument:hover
+		{
+			background: #222222;
+			color: white;
+		}
+		
+		#InstrumentList > .Instrument.Active
+		{
+			background: #557700;
+			color: white;
+		}
+		
+		#Patterns
+		{
+			position: absolute;
+			left: 75%;
+			top: 0;
+			width: 25%;
+			height: 100%;
+		}
+		
+		#PatternsHeader
+		{
+			position: absolute;
+			left: 0;
+			top: 0px;
+			width: 100%;
+			height: 25px;
+			box-sizing: border-box;
+			padding: 5px;
+			font-size: 13px;
+		}
+		
+		#PatternsButtons
+		{
+			position: absolute;
+			bottom: 0px;
+			height: 50px;
+			width: 100%;
+		}
+		
+		#PatternsList
+		{
+			position: absolute;
+			overflow: auto;
+			overflow-x: hidden;
+			bottom: 50px;
+			top: 25px;
+			width: 100%;
+		}
+		
+		#PatternsList > .Pattern
+		{
+			padding: 5px;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			cursor: hand;
+			cursor: pointer;
+		}
+		
+		#PatternsList > .Pattern:hover
+		{
+			background: #222222;
+			color: white;
+		}
+		
+		#PatternsList > .Pattern.Active
+		{
+			background: #557700;
+			color: white;
+		}
+	
+		
+	</style>
+	

@@ -1,70 +1,138 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<style>
-			html { color: #f8f8f8; background: #f8f8f8; }
-			html body.Loading * { visibility: hidden; }
-			html body.Loading { background-color: #f8f8f8; }
-		</style>
-		<script src="/webclient/js/apps/api.js"></script>
+		<script onload="" src="/webclient/js/apps/api.js"></script>
 	</head>
-	<body class="Loading" onload="document.getElementById('LoginElement').style.visible = 'visible'">
-		<div id="LoginElement" style="visible: hidden">
+	<body class="Loading" onload="">
+		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
 				<div class="Box">
-					<div class="HRow">
-						<div class="HContent30 FloatLeft">
-							<strong>Username:</strong>
+					<h1>
+						Please log in with your account
+					</h1>
+					<form method="post" onsubmit="return false">
+						<div class="HRow">
+							<div class="HContent45 FloatLeft">
+								<label id="UsernameLabel" for="Username">Your username:</label>
+							</div>
+							<div class="HContent55 FloatLeft">
+								<input type="text" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+							</div>
 						</div>
-						<div class="HContent70 FloatLeft">
-							<input type="text" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+						<div class="HRow MarginTop HideForPass">
+							<div class="HContent45 FloatLeft">
+								<label id="PasswordLabel" for="Password">Password:</label>
+							</div>
+							<div class="HContent55 FloatLeft">
+								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
+							</div>
 						</div>
-					</div>
-					<div class="HRow MarginTop">
-						<div class="HContent30 FloatLeft">
-							<strong>Password:</strong>
+						<div class="HRow MarginTop">
+							<div class="HContent100">
+								<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
+									<label id="rememberLabel" for="remember">Remember me</label>
+								</p>
+								<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
+									<input type="checkbox" id="remember"/>
+								</p>
+								<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
+									Log in
+								</button>
+								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
+								<p>
+									<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
+								</p>
+							</div>
 						</div>
-						<div class="HContent70 FloatLeft">
-							<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
-						</div>
-					</div>
-					<div class="HRow MarginTop">
-						<div class="HContent100">
-							<p class="Layout" style="float: right; position: relative; top: 5px">
-								Remember me
-							</p>
-							<p class="Layout" style="float: right; position: relative; top: 7px">
-								<input type="checkbox" id="remember"/>
-							</p>
-							<button type="button" class="IconSmall fa-unlock" onclick="Application.doLogin()">
-								Log in
-							</buttton>
-						</div>
-					</div>
-					<div id="invalidLogin" class="HRow MarginTop">
-						<p>&nbsp;</p>
+						<input type="hidden" id="publickey" value=""/>
+					</form>
+					<hr/>
+					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
+						<p><strong>Compatibility information:</strong></p>
+						<p>Please use Google Chrome or Samsung Internet. Experimental support for Firefox and MS Edge.</p>
 					</div>
 				</div>
 			</div>
 		</div>
-		<style>#invalidLogin { color:#F00; }</style>
+		<style>
+			label { font-weight:bold; }
+			#invalidLogin { color:#F00; padding-top:6px; }
+			#invalidLogin p { margin:0 0 6px 0; }
+			button, .Button { margin:0; }
+		</style>
 		<script>
 			Application = {
 				failedAttempt: false,
+				passwordRecoveryMode: false,
 				init: function( data )
 				{
 				},
-				doLogin: function()
+				doLogin: function( e )
 				{
+					
+					/*
+						in password recivery mode we do stuff a bit differently...
+					*/
+					if( this.passwordRecoveryMode )
+					{
+						
+						if( Trim( ge( 'Username' ).value ) == '')
+						{
+							ge( 'Username' ).focus();
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = 'Enter your username!';
+							return;
+						}
+						document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+						parent.Workspace.resetPassword( htmlentities( Trim( ge( 'Username' ).value ) ), function( result ){
+							Application.forgotPassword();
+							if( document.getElementById('Username').value.indexOf('@') > 1 ) document.getElementById('Username').value = '';
+							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
+						});
+						return;
+					}
+					
+					// Don't do it many times while working!
+					if( this.busy ) return;
+					this.busy = true;
+					
 					if( this.failedAttempt )
 					{
 						document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Logging in...';
 					}
 					
 					//track users login..
-					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );	
-					parent.Workspace.login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result )
+					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', htmlentities( Trim( ge( 'Username' ).value ) ) );
+					parent.Workspace.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
+					parent.Workspace.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
+						var tmp;
+						if( answer )
+						{
+							//try to parse it...
+							try
+							{
+								tmp = JSON.parse( answer );
+							}
+							catch(e)
+							{
+								console.log('answer was not json --- ',answer);
+							}
+							if( tmp && tmp.response )
+							{								//check for block....
+								if( tmp.response.indexOf('account blocked until:') > -1 )
+								{
+									var ts = tmp.response.replace('account blocked until:','');
+									if( parseInt( ts ) > 0 )
+									{
+										Application.errorMessage = 'Account blocked (try again after ' + new Date( ts * 1000 ).toLocaleString() + ')';
+										showLoginError();  
+										return;
+									}
+
+								}
+							}
+						}
+						
 						if( result == false )
 						{
 							showLoginError();
@@ -74,46 +142,134 @@
 							setTimeout( showLoginError, 1000 );
 						}
 						// Success!
-						else{
+						else
+						{
 							//track users login..
-							if(typeof ga == "function" ) ga('send', 'event', 'userloginsuccess', Trim( ge( 'Username' ).value ) );	
+							if( typeof ga == "function" )
+							{
+								ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( ge( 'Username' ).value ) ) );	
+							}
+							Application.busy = false;
 						}
-					} );
+					}, e );
 				},
 				checkKeys: function( e )
 				{
 					var k = e.which ? e.which : e.keyCode;
 					if( k == 13 )
 					{
-						this.doLogin();
+						this.doLogin( e );
 					}
 				},
 				receiveMessage: function( msg )
 				{
-					if( msg.command && msg.command == "error" )
+					//console.log( 'receiveMessage(login_prompt.html) ', msg );
+					
+					// TODO: Login with external service
+					if( msg.command && msg.command == 'login' )
+					{
+						// store either keys with for now username/password until switched to only keypairs in localstorage and then login or move the handler outside the iframe and only forward to server using this service
+						
+						// Perhaps it's not a security risk when using the onmessage event sending messages local inside the browser, unless it is sent out from the local client it is a security risk, TODO find out, implement insecure method for now.
+						
+						if( msg.data && msg.data.username && msg.data.password )
+						{
+							console.log( 'receiveMessage [login data]: ', msg.data );
+							
+							parent.Workspace.login( htmlentities( Trim( msg.data.username ) ), Trim( msg.data.password ), true, function( result )
+							{
+								if( result == false )
+								{
+									showLoginError();
+								}
+								else if( result == 0 )
+								{
+									setTimeout( showLoginError, 1000 );
+								}
+								// Success!
+								else
+								{
+									//track users login..
+									if( typeof ga == "function" )
+									{
+										ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( msg.data.username ) ) );	
+									}
+									Application.busy = false;
+								}
+							} );
+						}
+					}
+					else if( msg.command && msg.command == 'error' )
 					{
 						showLoginError();
 					}
+					else if( msg.cmd && msg.cmd == 'login' )
+					{
+						ge( 'Username' ).value = msg.username;
+						ge( 'Password' ).value = msg.password;
+						
+					
+						Application.loginUser();
+					}
+				},
+				forgotPassword : function()
+				{
+					document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
+					if( Application.passwordRecoveryMode )
+					{
+						Application.passwordRecoveryMode = false;
+						document.getElementById('loginButton').classList.remove('FloatRight');
+						document.getElementById('loginButton').innerHTML = ' &nbsp; Log in';
+						document.getElementById('UsernameLabel').innerHTML = 'Your username:';
+						document.getElementById('forgotPassword').innerHTML = 'Forgot password';
+						document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+							thisNode.style.display = thisNode.dataset.oldDisplay;
+						});	
+						
+						return;
+					}
+					
+					Application.passwordRecoveryMode = true;
+					//document.getElementsByClassName('HideForPass')..style.display = 'none';
+					document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
+						thisNode.dataset.oldDisplay = thisNode.style.display;
+						thisNode.style.display = 'none';
+					});	
+					document.getElementById('loginButton').classList.add('FloatRight');
+					document.getElementById('loginButton').innerHTML = ' &nbsp; Request new password';
+					document.getElementById('UsernameLabel').innerHTML = 'Username / e-mail:';
+					document.getElementById('forgotPassword').innerHTML = 'Return to login form';
 				}
 			};
 			
 			function showLoginError()
 			{
-				parent.Doors.loginPrompt.setFlag( "height", 140 );
-				document.getElementById("invalidLogin").getElementsByTagName("p")[0].innerHTML = 'Invalid credentials. Please check you  input.'
-				document.getElementById('Username').focus();
+				parent.Workspace.loginPrompt.setFlag( 'height', 263 );
+				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( Application.errorMessage ? Application.errorMessage : 'Invalid credentials. Please check your input.');
+				document.getElementById( 'Username' ).focus();
 				Application.failedAttempt = true;
+				Application.busy = false;
 			}
 			
 			// Focus the username field
-			function loginNow()
+			function loginNow( e )
 			{
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
-				if( GetCookie( 'loginUsername' ) && GetCookie( 'loginPassword' ) )
+				
+				var j = new cAjax();
+				j.open( 'get', '/publickey/' );
+				j.onload = function()
 				{
-					document.getElementById( 'Username' ).value = GetCookie( 'loginUsername' );
-					document.getElementById( 'Password' ).value = GetCookie( 'loginPassword' );
-					Application.doLogin();
+					ge( 'publickey' ).value = this.responseText();
+				}
+				j.send();
+				
+				Application.applicationId = 'loginprompt';
+				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
+				{
+					document.getElementById( 'Username' ).value = parent.GetCookie( 'loginUsername' );
+					document.getElementById( 'Password' ).value = parent.GetCookie( 'loginPassword' );
+					Application.doLogin( e );
 				}
 				else if( document.body.className == 'Loading' )
 				{
@@ -121,21 +277,21 @@
 				}
 				else
 				{
+					document.getElementById('LoginElement').style.visibility = 'visible'
 					document.getElementById('Username').focus(); 
 				}
 			}
 			setTimeout( loginNow, 150 );
 		</script>
-		<script>
-		  if( ( 'a' + document.location ).indexOf( 'beta.openfriendup.net' ) > 0 )
-		  {
+		<!--<script>
+		  
 			  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 			  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 			  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
 			  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 			  ga('create', 'UA-64441212-5', 'auto');
 			  ga('send', 'pageview');			  
-		  }
-		</script>
+		  
+		</script>--
 	</body>
 </html>

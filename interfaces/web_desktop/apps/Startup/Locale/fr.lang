@@ -1,0 +1,10 @@
+
+
+i18n_startup_appname                   : Séquence de démarrage
+i18n_save                              : Sauver
+i18n_close                             : Fermer
+i18n_add_item                          : Ajouter élément
+i18n_edit_item                         : Editer élément
+i18n_command_line                      : Commandes
+
+i18n_no_items_in_list                  : La liste est vide. Ajoutez de nouveaux éléments avec "Ajouter élément".

@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  SSH server body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include "ssh_server.h"
 
@@ -35,7 +46,7 @@ clients must be made or how a client should react.
 
 #include <libssh/libssh.h>
 #include <libssh/server.h>
-#include <user/userlibrary.h>
+#include <system/auth/authmodule.h>
 #include <system/systembase.h>
 
 #ifdef HAVE_ARGP_H
@@ -50,46 +61,60 @@ clients must be made or how a client should react.
 #include <sys/select.h>
 #include <libssh/callbacks.h>
 #include <signal.h>
+#include <core/friend_core.h>
+#include <util/sha256.h>
+#include <sys/resource.h>
+
+#define ENABLE_SSH 1
 
 extern struct SystemBase *SLIB;
 
-//
-// New SSH Server
-//
+/**
+ * Create new SSHServer
+ *
+ * @param lsb pointer to SystemBase
+ * @return SSHServer structure or NULL when error appear
+ */
 
-SSHServer *SSHServerNew()
+SSHServer *SSHServerNew( void *lsb )
 {
 	SSHServer *ts = NULL;
 
-	if( ( ts = calloc( 1, sizeof( SSHServer ) ) ) != NULL )
+	if( ( ts = FCalloc( 1, sizeof( SSHServer ) ) ) != NULL )
 	{
-#ifdef ENABLE_SSH	
+	/*
 		ssh_threads_set_callbacks( ssh_threads_get_pthread() );
 		ssh_init();
+		
+		ts->sshs_SB = lsb;
+		
+		DEBUG("Starting SSH thread\n");
 	
 		ts->sshs_Thread = ThreadNew( SSHThread, ts, TRUE );
-#endif
+		*/
 	}
 	return ts;
 }
 
-//
-// Destructor
-//
+/**
+ * Delete SSHServer
+ *
+ * @param ts pointer to SSHServer structure
+ */
 
 void SSHServerDelete( SSHServer *ts )
 {
 	if( ts != NULL )
 	{
 		ts->sshs_Quit = TRUE;
-		
-#ifdef ENABLE_SSH	
+		/*
 		if( ts->sshs_Thread )
 		{
 			ThreadDelete( ts->sshs_Thread );
 		}
 		ssh_finalize();
-#endif		
+		*/
+		
 		FFree( ts );
 	}
 }
@@ -121,30 +146,92 @@ void cleanup_pcap(){
 #endif
 #endif
 
-//
-// Checking password
-//
+/**
+ * SSH authentication checking function
+ *
+ * @param session ssh_session
+ * @param uname user name
+ * @param password user password
+ * @param userdata pointer to user session data
+ * @return SSH_AUTH_SUCCESS when succedd, otherwise error number
+ */
 
 static int auth_password( ssh_session session, const char *uname, const char *password, void *userdata )
 {
-#ifdef ENABLE_SSH	
 	SSHSession *s = (SSHSession *)userdata;
-    
+	SystemBase *sb = (SystemBase *)s->sshs_SB;
+	
 	DEBUG("Authenticating user %s pwd %s\n", uname, password );
 	
-	struct UserLibrary *ulib = SLIB->LibraryUserGet( SLIB );
-							
+	AuthMod *ulib = sb->AuthModuleGet( sb );
+	
 	DEBUG("Gettings message login/pass\n");
-							
+	
 	if( uname != NULL && password != NULL )
 	{
-		s->sshs_Usr = ulib->UserGet( ulib, uname );
-		if( strcmp( password, s->sshs_Usr->u_Password ) == 0  )
+		DEBUG("uname %s password %s ulib %p\n", uname, password, ulib );
+		s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
+		
+		DEBUG("User %p\n", s->sshs_Usr );
+		if( s->sshs_Usr != NULL )
+			//&& strcmp( password, s->sshs_Usr->u_Password ) == 0  )
 		{
-			s->sshs_Authenticated = 1;
-			DEBUG("Authenticated\n");
-			return SSH_AUTH_SUCCESS;
+			if( s->sshs_Usr->u_Password[ 0 ] == '{' &&
+				s->sshs_Usr->u_Password[ 1 ] == 'S' &&
+				s->sshs_Usr->u_Password[ 2 ] == '6' &&
+				s->sshs_Usr->u_Password[ 3 ] == '}' )
+			{
+				FCSHA256_CTX ctx;
+				unsigned char hash[ 32 ];
+				char hashTarget[ 64 ];
+				char newPassword[ 128 ];
+				
+				strcpy( newPassword, "HASHED" );
+		
+				DEBUG("Checkpassword, password is in SHA256 format for user %s\n", s->sshs_Usr->u_Name );
+		
+				Sha256Init( &ctx );
+				Sha256Update( &ctx, (unsigned char *) password, (unsigned int)strlen( password ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
+				Sha256Final( &ctx, hash );
+		
+				int i;
+				int j=0;
+		
+				for( i=0 ; i < 64 ; i+= 2 )
+				{
+					sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
+					j++;
+				}
+				DEBUG("Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
+				
+				strcat( newPassword, hashTarget );
+				
+				DEBUG("new password '%s' \n", newPassword );
+				
+				Sha256Init( &ctx );
+				Sha256Update( &ctx, (unsigned char *) newPassword, (unsigned int)strlen( newPassword ) );
+				Sha256Final( &ctx, hash );
+				
+				j=0;
+				for( i=0 ; i < 64 ; i+= 2 )
+				{
+					sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
+					j++;
+				}
+		
+				DEBUG("Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
+		
+				if( strncmp( &(hashTarget[0]), &(s->sshs_Usr->u_Password[4]), 64 ) == 0 )
+				{
+					s->sshs_Authenticated = 1;
+					DEBUG("Authenticated\n");
+					
+					sb->AuthModuleDrop( sb, ulib );
+					return SSH_AUTH_SUCCESS;
+				}
+			}
 		}
+		DEBUG("Not authenticated\n");
 	}
 
 	if( s->sshs_Tries >= 3 )
@@ -152,10 +239,12 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 		DEBUG("Too many authentication tries\n");
 		ssh_disconnect(session);
 		s->sshs_Error = 1;
+		sb->AuthModuleDrop( sb, ulib );
 		return SSH_AUTH_DENIED;
 	}
 	s->sshs_Tries++;
-#endif	
+	sb->AuthModuleDrop( sb, ulib );
+//#endif	
 	return SSH_AUTH_DENIED;
 }
 
@@ -260,7 +349,7 @@ static ssh_channel new_session_channel( ssh_session session, void *userdata )
 	
 	if( s->sshs_Chan != NULL)
 	{
-		ERROR("New session channel\n");
+		FERROR("New session channel\n");
 		return NULL;
 	}
 	printf("Allocated session channel\n");
@@ -271,9 +360,14 @@ static ssh_channel new_session_channel( ssh_session session, void *userdata )
 	return s->sshs_Chan;
 }
 
-//
-// Handle commands
-//
+/**
+ * handle all Friend SSH commands
+ *
+ * @param sess pointer to SSHSession
+ * @param buf received data
+ * @param size of received data
+ * @return 0 when success, otherwise error number
+ */
 
 int handleSSHCommands( SSHSession *sess, const char *buf, const int len )
 {	
@@ -284,6 +378,7 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len )
 		strcpy( outbuf, 	"Main commands:\n" \
 			" logout - logout user from current session\n" \
 			" cd - change current directory\n" \
+			" shutdown - shutdown FriendCore\n" \
 			);
 		
 		ssh_channel_write( sess->sshs_Chan, outbuf, strlen( buf ) );
@@ -294,13 +389,25 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len )
 	}else if( strncmp( buf, "cd", 2 ) == 0 )
 	{
 			
+	}else if( strncmp( buf, "shutdown", 8 ) == 0 )
+	{
+		if( UMUserIsAdmin( SLIB->sl_UM, NULL, sess->sshs_Usr )  == TRUE )
+		{
+			ssh_channel_write( sess->sshs_Chan, "Server will shutdown shortly\n", 29 );
+			FriendCoreManagerShutdown( SLIB->fcm );
+		}
+		else
+		{
+			ssh_channel_write( sess->sshs_Chan, "You are not authorized to shutdown server\n", 45 );
+		}
+		
 	}else{	// command not found
 		ssh_channel_write( sess->sshs_Chan, "Command not found\n", 18 );
 		
 		//ssh_channel_write( chan, buf, i );
 		//if( write( 1, buf, i ) < 0 )
 		//{
-		//	ERROR("error writing to buffer\n");
+		//	FERROR("error writing to buffer\n");
 		//	break;
 		//}
 	}
@@ -309,14 +416,40 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len )
 }
 
 //
-// SSH Thread
+//
 //
 
-int SSHThread( void *data )
+static int cleanup( void )
 {
-	// TODO: Hogne was here, disabling this problem child.. :)
+	int status;
+	int pid;
+	
+	pid_t wait3( int *statusp, int options, struct rusage *rusage );
+	
+	while( ( pid = wait3( &status, WNOHANG, NULL ) ) > 0 )
+	{
+		DEBUG("Process reaped\n",  pid );
+	}
+	signal(SIGCHLD, (void (*)())cleanup );
+	
 	return 0;
-#ifdef ENABLE_SSH	
+}
+
+static void wrapup(void)
+{
+	DEBUG("wrapup\n");
+	//exit(0);
+}
+
+/**
+ * Main SSHServer thread function
+ *
+ * @param ptr pointer to FThread structure
+ * @return 0 when success, otherwise error number
+ */
+
+int SSHThread( FThread *ptr )
+{
 	ssh_session session = NULL;
 	ssh_bind sshbind = NULL;
 	
@@ -334,26 +467,33 @@ int SSHThread( void *data )
 	
 	DEBUG("Starting SSH Process\n");
 	
-	SSHServer *ts = (SSHServer *)data;
-	if( !ts ) return 0;
+	SSHServer *ts = (SSHServer *)ptr->t_Data;
+	if( !ts )
+	{
+		FERROR("TS = NULL\n");
+		return 0;
+	}
 
 	ts->sshs_FriendHome = getenv( "FRIEND_HOME" );
 		
 	int len = strlen( ts->sshs_FriendHome );
-	ts->sshs_RSAKeyHome = calloc( len+64, sizeof(char) );
-	ts->sshs_DSAKeyHome = calloc( len+64, sizeof(char) );
-		
-	strcpy( ts->sshs_RSAKeyHome, ts->sshs_FriendHome );
-	strcpy( ts->sshs_DSAKeyHome, ts->sshs_FriendHome );
-	strcat( ts->sshs_RSAKeyHome, "keys/ssh_host_rsa_key" );
-	strcat( ts->sshs_DSAKeyHome, "keys/ssh_host_dsa_key" );
+	ts->sshs_RSAKeyHome = FCalloc( len+64, sizeof(char) );
+	ts->sshs_DSAKeyHome = FCalloc( len+64, sizeof(char) );
 	
+
+	//strcpy( ts->sshs_RSAKeyHome, ts->sshs_FriendHome );
+	//strcpy( ts->sshs_DSAKeyHome, ts->sshs_FriendHome );
+	//strcat( ts->sshs_RSAKeyHome, "keys/ssh_host_rsa_key" );
+	//strcat( ts->sshs_DSAKeyHome, "keys/ssh_host_dsa_key" );
+	
+	strcpy( ts->sshs_RSAKeyHome, "/etc/ssh/ssh_host_rsa_key" );
+	strcpy( ts->sshs_DSAKeyHome, "/etc/ssh/ssh_host_dsa_key" );
 	//DEBUG("SSH sshs_RSAKeyHome set to %s\n", ts->sshs_RSAKeyHome );
 		
 	sshbind = ssh_bind_new();
 		
-	BOOL welcomeMessage = FALSE;
-		
+	FBOOL welcomeMessage = FALSE;
+	
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_DSAKEY, ts->sshs_DSAKeyHome );
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_RSAKEY, ts->sshs_RSAKeyHome );
 	//ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_HOSTKEY, arg);
@@ -368,6 +508,8 @@ int SSHThread( void *data )
 	if( ts->sshs_RSAKeyHome ) free( ts->sshs_RSAKeyHome );
 	if( ts->sshs_DSAKeyHome ) free( ts->sshs_DSAKeyHome );
 	
+	DEBUG("Before SSH loop\n");
+	
 	// TODO: ts->sshs_Quit sometimes can not be read!
 	while( ts != NULL && !ts->sshs_Quit )
 	{
@@ -380,31 +522,37 @@ int SSHThread( void *data )
 		DEBUG("Server before bind\n");
 		if( ssh_bind_listen( sshbind )<0 )
 		{
-			ERROR("Error listening to socket: %s\n",ssh_get_error(sshbind) );
+			FERROR("Error listening to socket: %s\n",ssh_get_error(sshbind) );
 			break;
 		}
 		
 		DEBUG("Server before accept\n");
 
+		signal( SIGCHLD, (void (*)())cleanup);
+		signal(SIGINT, (void (*)())wrapup);
 		session=ssh_new();
 		r = ssh_bind_accept( sshbind , session );
 		if( r==SSH_ERROR )
 		{
-			ERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
+			FERROR("error accepting a connection : %s\n",ssh_get_error(sshbind));
 			break;
 		}
 		
 		ssh_callbacks_init( &cb );
-		SSHSession *sess = calloc( 1, sizeof( SSHSession ) );
-		sess->sshs_Session = session;
-		cb.userdata = sess;
+		SSHSession *sess = FCalloc( 1, sizeof( SSHSession ) );
+		if( sess != NULL )
+		{
+			sess->sshs_Session = session;
+			sess->sshs_SB = ts->sshs_SB;
+			cb.userdata = sess;
+		}
 		
 		DEBUG("User data set\n");
 		ssh_set_server_callbacks( session, &cb );
     
 		if ( ssh_handle_key_exchange( session ) ) 
 		{
-			ERROR("ssh_handle_key_exchange: %s\n", ssh_get_error(session));
+			FERROR("ssh_handle_key_exchange: %s\n", ssh_get_error(session));
 			continue;
 			//goto disconnect;
 		}
@@ -412,6 +560,8 @@ int SSHThread( void *data )
 		DEBUG("Connection accepted\n");
 	
 		ssh_set_auth_methods( session,SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_GSSAPI_MIC );
+		
+		DEBUG("loop\n");
 		
 		//
 		// New session/connection put it into thread
@@ -421,7 +571,7 @@ int SSHThread( void *data )
 		{
 			case 0:
 				// Remove the SIGCHLD handler inherited from parent 
-				signal(SIGCHLD, SIG_DFL);
+				//signal(SIGCHLD, SIG_DFL);
 			
 				mainloop = ssh_event_new();
 				ssh_event_add_session( mainloop, session );
@@ -430,14 +580,14 @@ int SSHThread( void *data )
 				{
 					if( sess->sshs_Error )
 					{
-						ERROR("SSHSession error %d\n", sess->sshs_Error );
+						FERROR("SSHSession error %d\n", sess->sshs_Error );
 						break;
 					}
 			
 					r = ssh_event_dopoll( mainloop, -1 );
 					if( r == SSH_ERROR )
 					{
-						ERROR("Error : %s\n",ssh_get_error( session ) );
+						FERROR("Error : %s\n",ssh_get_error( session ) );
 						ssh_disconnect( session );
 						return 1;
 					}
@@ -477,16 +627,19 @@ int SSHThread( void *data )
 							handleSSHCommands( sess, buf, i );
 						}
 					
-						if( sess->sshs_Quit )
+						if( sess->sshs_Quit == TRUE || ts->sshs_Quit == TRUE )
 						{
+							DEBUG("Session quit\n");
 							break;
 						}
-					
 					}
 					while( i>0 );
 				
 					if( sess->sshs_Quit )
+					{
+						DEBUG("Quit\n");
 						break;
+					}
 				}
 				DEBUG("Closing ssh connection\n");
 			
@@ -508,12 +661,12 @@ int SSHThread( void *data )
 
 				FFree( sess );
 			
-				abort();
+				//abort();
 			
 				DEBUG("AUTH\n");
 				break;
 			case -1:
-				ERROR("Cannot create fork!\n");
+				FERROR("Cannot create fork!\n");
 				break;
 		}
 		
@@ -524,8 +677,12 @@ int SSHThread( void *data )
 		
 	}	// main loop
 	disconnect:
+	
+	ssh_bind_free( sshbind );
+	
 	DEBUG("DISCONNECTED\n");
-#endif // ENABLE_SSH	
+	
+	ptr->t_Launched = FALSE;
     return 0;
 }
 

@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Http structures and functions definitions
+ *
+ *  @author HT
+ *  @date created 2015
+ */
 
 #ifndef __NETWORK_HTTP_H__
 #define __NETWORK_HTTP_H__
@@ -32,6 +43,14 @@
 #include "network/socket.h"
 #include <util/tagitem.h>
 #include <libwebsockets.h>
+
+#define DEFAULT_CONTENT_TYPE "text/html; charset=utf-8"
+
+#ifndef DOXYGEN
+#define HTTP_READ_BUFFER_DATA_SIZE 32768
+#define HTTP_READ_BUFFER_DATA_SIZE_ALLOC 32768+32
+#endif
+
 
 //
 // HEADERS
@@ -50,6 +69,13 @@ enum {
 	HTTP_HEADER_DAV,
 	HTTP_HEADER_AUTHORIZATION,
 	HTTP_HEADER_WWW_AUTHENTICATE,
+	HTTP_HEADER_CONTENT_DISPOSITION,
+	HTTP_HEADER_USER_AGENT,
+	HTTP_HEADER_HOST,
+	HTTP_HEADER_ORIGIN,
+	HTTP_HEADER_ACCEPT,
+	HTTP_HEADER_METHOD,
+	HTTP_HEADER_REFERER,
 	HTTP_HEADER_END
 };
 
@@ -64,9 +90,16 @@ static const char *HEADERS[] = {
 	"accept-ranges",
 	"allow",
 	"cache-control",
-	"DAV",
+	"dav",
 	"authorization",
-	"WWW-Authenticate"
+	"www-authenticate",
+	"content-disposition",
+	"user-agent",
+	"host",
+	"origin",
+	"accept",
+	"method",
+	"referer"
 };
 
 //
@@ -185,7 +218,8 @@ typedef struct HttpFile
 {
 	char			hf_FileName[ 512 ];
 	char 		*hf_Data;
-	QUAD		hf_FileSize;
+	FQUAD		hf_FileSize;		// file size
+	FILE			*hf_FP;			// when file is stored on server disk
 	struct MinNode node;
 }HttpFile;
 
@@ -201,21 +235,23 @@ enum {
 };
 
 //
-// Caller Type
-//
-
-enum {
-	HTTP_CALLER_SOCKET = 0,
-	HTTP_CALLER_WEBSOCKET
-};
-
-//
 //
 //
 
 enum {
 	WRITE_AND_FREE = 0,
 	FREE_ONLY
+};
+
+//
+// Source
+//
+
+enum {
+	HTTP_SOURCE_HTTP = 0,
+	HTTP_SOURCE_WS,
+	HTTP_SOURCE_HTTP_TO_WS,
+	HTTP_SOURCE_FC
 };
 
 //
@@ -230,149 +266,241 @@ typedef struct Http
 	// These fields only applies to requests.
 	//
 	// Raw null-terminated strings
-	char*   method;
-	Uri*  uri;
-	char*   rawRequestPath;
-	char*   version;
+	char                   *method;
+	Uri                     *uri;
+	char                   *rawRequestPath;
+	char                   *version;
 
-	// Hasmap of the query, for convinience (Is null when no query, or invalid key/value query)
-	Hashmap* query;
+	Hashmap            *query;   // Hasmap of the query, for convinience (Is null when no query, or invalid key/value query)
 
-	// If any of these are non-null, an error has occured and a fitting response should be generated
-	unsigned int errorCode;
-	unsigned int errorLine; // Useful for debugging, otherwise ignore
+	unsigned int       errorCode;  // If any of these are non-null, an error has occured and a fitting response should be generated
+	unsigned int       errorLine;   // Useful for debugging, otherwise ignore
 
-	// x-www-form-urlencoded
-	Hashmap* parsedPostContent;
+	Hashmap            *parsedPostContent; // x-www-form-urlencoded
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// Fields for both requests and responses.
 	//
 	// HTTP x.x
-	int versionMajor; // Pretty much always 1
-	int versionMinor; // Also pretty much always 1 or 0
+	int                      versionMajor; // Pretty much always 1
+	int                      versionMinor; // Also pretty much always 1 or 0
 
 	// This is a blob (But most likely text)
-	char* content;
-	UQUAD sizeOfContent;
-
-	// Additional headers
-	Hashmap* headers;
-	// response header
-	char *h_RespHeaders[ HTTP_HEADER_END ];
-	
-	int	h_CallerType;			// depends who is calling response should go to the target
-
-	// Optional timestamp
-	time_t timestamp;
+	char                   *content;
+	FUQUAD            sizeOfContent;
+	Hashmap           *headers; // Additional headers
+	char                   *h_RespHeaders[ HTTP_HEADER_END ]; // response header
+	FBOOL                h_HeadersAlloc[ HTTP_HEADER_END ]; // memory was allocated?
+	FBOOL               h_ResponseHeadersRelease;		// if response headers points to allocated memory, they should not be released
+	int                      h_RequestSource;			// depends who is calling response should go to the target
+	time_t                timestamp;  // Optional timestamp
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// These fields only applies to responses.
 	//
-	unsigned int responseCode;
-	char* responseReason;
+	unsigned int   responseCode;
+	char               *responseReason;
 
 	// -----------------------------------------------------------------------------------------------------------------
 	//
 	// Do not write to these. They are "private"
 	//
-	char* response;
-	unsigned int responseLength;
+	char                *response;
+	unsigned int   responseLength;
 
-	BOOL partialRequest;
-	char* partialData;
-	unsigned int partialDataIndex;
-	BOOL expectBody;
-	int expectSize;
-	BOOL			gotHeader;
-	BOOL			gotBody;
+	FBOOL           partialRequest;
+	char               *partialData;
+	unsigned int   partialDataIndex;
+	FBOOL           expectBody;
+	int                  expectSize;
+	FBOOL           gotHeader;
+	FBOOL           gotBody;
 	
-	char 										h_PartDivider[ 256 ];
-	BOOL 										h_ContentType;
-	HttpFile 									*h_FileList;
+	char               h_PartDivider[ 256 ];
+	FBOOL           h_ContentType;
+	int                  h_ContentLength;
+	HttpFile         *h_FileList;
 	
-	//Socket 										*h_Socket;			// if socket != NULL, we are using it, not WS
+	FBOOL           h_Stream;			// stream
+	void                *h_WSocket;				// websocket context, if provided data should be delivered here
+	Socket            *h_Socket;		// socket,  if != NULL  data should be delivered here
 	
-	int 											h_WriteType;
+	int                  h_WriteType;
+	
+	FBOOL           h_WriteOnlyContent;		// set to TRUE if you want to stream content
+	
+	void                *h_ActiveSession;	// pointer to UserSession
+	FULONG         h_ResponseID;		// number used to compare http calls (unique number)
+	
+	FILE               *h_ContentFile;		// http content in FILE
+	void                *h_PIDThread;    // PIDThread
+	void                *h_UserSession;  // user session
+	void                *h_SB; // SystemBase
+	
+	FBOOL           *h_ShutdownPtr;		// pointer to quit flag
+	char                h_UserActionInfo[ 512 ];
 } Http;
+
+//
+//
+//
 
 int HttpParseHeader( Http* http, const char* request, unsigned int length );
 
+//
 // Create a generic HttpObject
+//
+
 Http* HttpNew( );
 
 // Create a generic HttpObject, set the code and add headers
 // vararg = "header1", "value1", "header2", "value2", ...
 //Http_t* HttpNewSimple( unsigned int code, unsigned int numHeaders, ... );
+
 Http* HttpNewSimple( unsigned int code, struct TagItem * );
 
+Http* HttpNewSimpleBaseOnRequest( unsigned int code, Http *request, struct TagItem *tag );
+
+#define HttpNewSimpleANOREQ( CODE, ... ) \
+	({Http *ret; FULONG tags[] = { __VA_ARGS__ }; \
+	ret = HttpNewSimple( CODE, (struct TagItem *)tags ); \
+	ret; })
+
+#define HttpNewSimpleA( CODE, request, ... ) \
+	({Http *ret; FULONG tags[] = { __VA_ARGS__ }; \
+	ret = HttpNewSimpleBaseOnRequest( CODE, request, (struct TagItem *)tags ); \
+	ret; })
+   
+//
 // Always returns an HttpObject element.
 // Error fields are set on error.
+//
+
 Http* HttpParseRequest( const char* request, unsigned int length );
 
+//
 // Parse a request in chunks. Useful for data recived over the network
-//extern inline 
-int HttpParsePartialRequest( Http* http, char* data, unsigned int length );
+//
 
+int HttpParsePartialRequest( Http* http, char* data, unsigned int length );
+//
 // Frees an HttpObject element (Only call this for HttpObjects returned from HttpParseRequest!!!)
+//
+
 void HttpFreeRequest( Http* http );
 
+//
 // Set the response code
+//
+
 void HttpSetCode( Http* http, unsigned int code );
 
+//
 // Add a response header
-//int HttpAddHeader( Http* http, const char* name, char* value );
+//
+
 int HttpAddHeader(Http* http, int id, char* value );
 
 // Shortcuts: --------------------------------------------------------------------------------------------------------------
-
+//
 // Get the raw header list
+//
+
 List* HttpGetHeaderList( Http* http, const char* name );
 
+//
 // Get a header field value from a list at the index, or NULL if there is no values at the given index
+//
+
 char* HttpGetHeader( Http* http, const char* name, unsigned int index );
 
+//
+// Get a header field value from table of headers, or NULL if there is no values at the given index
+//
+
+char* HttpGetHeaderFromTable( Http* http, int pos );
+
+//
 // TODO: Get a single header field value from the list, or NULL if there no values, or NULL is there is more than 1 value
 // (Useful for failing when only 1 value is expected)
+//
+
 char* HttpGetSingleHeader( Http* http, const char* name );
 
+//
 // Get the number of values this header contains
+//
+
 unsigned int HttpNumHeader( Http* http, const char* name );
 
+//
 // Check if the request contains a header with the given value
-BOOL HttpHeaderContains( Http* http, const char* name, const char* value, BOOL caseSensitive );
+//
+
+FBOOL HttpHeaderContains( Http* http, const char* name, const char* value, FBOOL caseSensitive );
 
 // --------------------------------------------------------------------------------------------------------------------
 
+//
 // Add a null-terminated text response (Content-Length is added automatically from strlen)
+//
+
 void HttpAddTextContent( Http* http, char* content );
 
+//
 // Set the content
+//
+
 void HttpSetContent( Http*, char* data, unsigned int length );
 
+//
 // Build the HTTP response
+//
+
 char* HttpBuild( Http* http );
 
+//
 // Frees a generic HttpObject (Caller is responsible for freeing other fields before calling this)
+//
+
 void HttpFree( Http* http );
 
+//
 // For testing purposes
+//
+
 void HttpTest();
+
+//
+//
+//
 
 HashmapElement *HttpGetPOSTParameter( Http *request,  char *param );
 
-// --------------------------------------------------------------------------------------------------------------------
+//
+//
+//
 
 void HttpWriteAndFree( Http* http, Socket *sock );
 
+//
+//
+//
+
 void HttpWrite( Http* http, Socket *sock );
 
+//
 // upload file
+//
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, QUAD size );
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size );
+
+//
+//
+//
 
 void HttpFileDelete( HttpFile *f );
 
-#endif
+#endif // __NETWORK_HTTP_H__

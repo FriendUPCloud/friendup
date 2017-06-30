@@ -1,11 +1,11 @@
 <?php
 
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,19 +14,20 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 $sumReplace = '<!-- FRIEND MAIL REPLACE -->';
 
 if( $account = $SqlDatabase->FetchObject( '
-	SELECT * FROM FMail WHERE UserID=\'' . $User->ID . '\' AND `Address`=\'' . mysql_real_escape_string( $args->args->account ) . '\'
+	SELECT * FROM FMail WHERE UserID=\'' . $User->ID . '\' AND `Address`=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->account ) . '\'
 ' ) )
 {
 	if( $row = $SqlDatabase->FetchObject( $q = ( '
-		SELECT * FROM FMailHeader WHERE UserID=\'' . $User->ID . '\' AND ExternalMessageID=\'' . mysql_real_escape_string( $args->args->id ) . '\' AND `Folder`=\'' . mysql_real_escape_string( $args->args->folder ) . '\' AND `Address`=\'' . mysql_real_escape_string( $args->args->account ) . '\'
+		SELECT * FROM FMailHeader WHERE UserID=\'' . $User->ID . '\' AND ExternalMessageID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->id ) . '\' AND `Folder`=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->folder ) . '\' AND `Address`=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->account ) . '\'
 	' ) ) )
 	{
 		if( $imap = imap_open( '{' . $account->Server . ':' . $account->Port . '/imap/ssl}INBOX', $account->Username, $account->Password ) )

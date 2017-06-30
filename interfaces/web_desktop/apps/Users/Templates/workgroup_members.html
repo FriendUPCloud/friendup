@@ -1,0 +1,30 @@
+
+	<input type="hidden" id="parentViewId" value="{parentViewId}"/>
+	
+	<div id="TopForm" class="Padding ScrollArea VContentTop">
+		
+		<div id="Users"></div>
+		
+	</div>
+	
+	<div id="BottomButtons" class="BorderTop Padding VContentBottom">
+		<button type="button" class="Button IconSmall fa-remove FloatRight" onclick="cancelWorkgroup()">
+			{i18n_cancel}
+		</button>
+		<button type="button" class="Button IconSmall fa-user" onclick="addSelected()">
+			{i18n_add_selected_members}
+		</button>
+	</div>
+	
+	<style>
+		#TopForm
+		{
+			bottom: 50px;
+		}
+		#BottomButtons
+		{
+			height: 50px;
+		}
+	</style>
+	
+	<script src="Progdir:Scripts/workgroup_members.js"></script>

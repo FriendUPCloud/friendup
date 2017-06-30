@@ -1,34 +1,29 @@
-<div class="FullContent">
-	<div class="HRow Padding">
-		<strong>Choose file to upload:</strong>
-	</div>
+<div class="ContentFull ScrollArea">
 	<div class="BorderTop Padding">
 		<form method="post" id="fileUpload" target="uploadFrame" enctype="multipart/form-data" action="/system.library/file/upload">
 			<input type="hidden" name="sessionid"/>
 			<input type="hidden" name="module" value="files"/>
 			<input type="hidden" name="command" value="uploadfile"/>
-			<div class="HRow">
-				<div class="HContent35 FloatLeft">
-					<label for="path"><strong>Upload target:</strong></label>
+			<div class="HRow MarginBottom">
+				<div class="HContent33 FloatLeft">
+					<p class="InputHeight"><label for="path"><strong>{i18n_upload_target}:</strong></label></p>
 				</div>
-				<div class="HContent40 FloatLeft"><input class="FullWidth" type="text" name="path" value="Home:"/></div>
-				<div class="HContent25 FloatLeft">
-					<div class="HContent10 FloatLeft">&nbsp;</div>
-					<div class="HContent90 FloatLeft">
-						<button class="Button IconSmall fa-search" type="button" onclick="Doors.findUploadPath()">Find file</button>
+				<div class="HContent33 FloatLeft"><input class="InputHeight FullWidth" type="text" name="path" value="Home:"/></div>
+				<div class="HContent33 FloatLeft">
+					<div class="HContent5 FloatLeft">&nbsp;</div>
+					<div class="HContent95 FloatLeft">
+						<button class="Button FullWidth IconSmall fa-search" type="button" onclick="Doors.findUploadPath()">&nbsp;{i18n_browse}</button>
 					</div>
 				</div>
 			</div>
 			<div class="HRow">
-				<div class="MarginLeft FloatLeft">
-					<input type="file" name="file"/>
-				</div>
+				<input type="file" class="FullWidth" name="file"/>
 			</div>
 		</form>
 	</div>
 	<div class="HRow MarginTop BorderTop Padding">
 		<button type="button" class="IconSmall fa-upload" onclick="Doors.uploadFile('fileUpload')">
-			Upload the file
+			&nbsp;{i18n_upload_the_file}
 		</button>
 	</div>
 	<iframe style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>

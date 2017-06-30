@@ -1,45 +1,65 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ *
+ *  Core PHP class handling
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @author JMN (John Michael Nilsen)
+ *  @date pushed 06/02/2015
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
 #include <core/types.h>
 #include <class/rootclass.h>
 #include "phpproxyclass.h"
 
+#ifndef DOXYGEN
 extern FILE *popen( const char *command, const char *modes);
 extern int pclose(FILE *stream);
+#endif
 
 struct Data
 {
-	ULONG 	test;
+	FULONG 	test;
 	char 		*params;
 	char 		*result;
 };
 
-//
-// one set function for all:)
-//
-
+#ifndef DOXPUBLIC  // Internal documentation only
+/**
+ * Transfers data zones from all messaged to object data params
+ *
+ * One function sets all
+ *
+ * @param c pointer to class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ *
+ */
 void setForAll( Class *c, Object *o, struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
@@ -66,7 +86,7 @@ void setForAll( Class *c, Object *o, struct Msg *msg )
 				{
 					memcpy( data->params, (void *)lt->ti_Data, size );
 				}
-				//printf("PHPPROXY FUIA_PHPProxy_Parameters %x '%s'\n", (ULONG)lt->ti_Tag, (STRPTR)lt->ti_Data );
+	
 			}
 			break;
 		}
@@ -74,12 +94,19 @@ void setForAll( Class *c, Object *o, struct Msg *msg )
 		lt++;
 	}
 }
+#endif          // DOXPUBLIC
 
-//
-// new method
-//
-
-ULONG phpproxyNew( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_NEW message for PHP Proxy class instances
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return pointer to the new object
+ * @return NULL if error
+ *
+ */
+FULONG phpproxyNew( Class *c, Object *o, struct Msg *msg )
 {
 	Object *newObject = NULL;
 
@@ -95,16 +122,24 @@ ULONG phpproxyNew( Class *c, Object *o, struct Msg *msg )
 
 	DEBUG("PHPPROXY return new object at ptr %p\n", newObject );
 
-	return (ULONG)newObject;
+	return (FULONG)newObject;
 }
 
-//
-// dispose method
-//
-
-ULONG phpproxyDispose( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_DISPOSE message for PHP Proxy class
+ *
+ * Release all associated memory assiciated with this instance of the class
+ * then calls the super class with the same message structure
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ *
+ */
+FULONG phpproxyDispose( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	struct Data *data = (struct Data *)o->o_UserData;
 
 	DEBUG("PHPPROXY start\n");
@@ -128,13 +163,21 @@ ULONG phpproxyDispose( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// set method
-//
-
-ULONG phpproxySet( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_SET message for PHP Proxy class
+ *
+ * Transfers the message structure data zones into the instance
+ * Calls the super class for execution
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ *
+ */
+FULONG phpproxySet( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 
 	DEBUG("PHPPROXY set\n");
 
@@ -150,13 +193,22 @@ ULONG phpproxySet( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// get method
-//
-
-ULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_GET message for PHP Proxy class
+ *
+ * Sub-messages suported:
+ * FA_PHPProxy_Parameters: proxy parameters
+ * FA_PHPProxy_Results: results of the last proxy action
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ *
+ */
+FULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	DEBUG("PHPPROXY get\n");
 
 	struct opGet *get = (struct opGet *)msg;
@@ -165,11 +217,11 @@ ULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
 	switch( get->opg_AttrID )
 	{
 		case FA_PHPProxy_Parameters:
-			*(get->opg_Storage)	=	(ULONG*)data->params;
+			*(get->opg_Storage)	=	(FULONG*)data->params;
 			DEBUG("PHPPROXY FUIA_PHPProxy_Parameters get root value %s\n", (char *)data->params );
 		break;
 		case FA_PHPProxy_Results:
-			*(get->opg_Storage)	=	(ULONG *)data->result;
+			*(get->opg_Storage)	=	(FULONG *)data->result;
 			DEBUG("PHPPROXY FUIA_PHPProxy_Results get value %s\n", (char *)data->result );
 		break;
 	}
@@ -177,15 +229,23 @@ ULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// run process
-//
-
 #define BUFFER_SIZE	512
-
-ULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_PHPProxy_Process message for PHP Proxy class instances
+ *
+ * Creates a pipe with popen
+ * Stores the appended results in o_UserData of the instance
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return length of the data in o_UserData
+ * @return 0 in case of error
+ *
+ */
+FULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	char command[ BUFFER_SIZE ];
 	char *temp = NULL;
 	DEBUG("PHPPROXY phpproxyProcess\n");
@@ -200,7 +260,7 @@ ULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
     	return 0;
     }
 
-    if( data->result != NULL ){ free( data->result ); data->result = NULL; }
+    if( data->result != NULL ){ FFree( data->result ); data->result = NULL; }
 
     char buffer[ BUFFER_SIZE ];
     
@@ -210,27 +270,27 @@ ULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
     	{
     		if( data->result == NULL )
     		{
-    			if( ( data->result = calloc( BUFFER_SIZE+1, sizeof(char) ) ) != NULL ){
+    			if( ( data->result = FCalloc( BUFFER_SIZE+1, sizeof(char) ) ) != NULL ){
     				memcpy( data->result, buffer, BUFFER_SIZE );
     				res += BUFFER_SIZE;
     			}else{
     				
-    				if( ( temp = calloc( res, sizeof(char) ) ) != NULL )
+    				if( ( temp = FCalloc( res, sizeof(char) ) ) != NULL )
     				{
     					memcpy( temp, data->result, res );
-    					if( data->result != NULL ){ free( data->result ); data->result = NULL; }
-    					if( ( data->result = calloc( res+BUFFER_SIZE+1, sizeof(char) ) ) != NULL ){
+    					if( data->result != NULL ){ FFree( data->result ); data->result = NULL; }
+    					if( ( data->result = FCalloc( res+BUFFER_SIZE+1, sizeof(char) ) ) != NULL ){
     						memcpy( data->result, temp, res );
     						memcpy( &(data->result[ res ]), buffer, BUFFER_SIZE );
     						res += BUFFER_SIZE;
     					}
 
-    					free( temp );
+    					FFree( temp );
     					temp = NULL;
     				}
     			}
     		}
-    		res += (ULONG)buffer;
+    		res += (FULONG)buffer;
     	}
     }
     pclose( pipe );
@@ -238,13 +298,18 @@ ULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// DoMethod 
-//
-
-ULONG phpproxyDispatcher( struct Class *c, Object *o, struct Msg *m )
+/**
+ * Handles messages sent to an instance of the PHP Proxy class
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return return value provided by message handlers
+ * @todo FL>PS this function is not used anywhere
+ */
+FULONG phpproxyDispatcher( struct Class *c, Object *o, struct Msg *m )
 {
-	ULONG retVal = (ULONG)NULL;
+	FULONG retVal = (FULONG)NULL;
 	// we dont call super methods beacouse this method is done on root
 	DEBUG("PHPPROXY dispatcher MID %ld \n", m->MethodID );
 

@@ -1,0 +1,74 @@
+/* flex */
+
+.group,
+.bar {
+	display: flex !important;
+	align-items:center;
+	align-content: center;
+	justify-content : space-between;
+}
+
+.bar { align-items : stretch; }
+
+.group.row,
+.bar.row { flex-direction : row; }
+
+.group.column,
+.bar.column { flex-direction : column; }
+
+.group.tighten,
+.bar.tighten { justify-content : space-around; }
+
+.group.center,
+.bar.center { justify-content : center; }
+
+.group.start,
+.bar.start { justify-content : flex-start; }
+
+.group.end,
+.bar.end { justify-content : flex-end; }
+
+.group.left,
+.bar.left { align-items : flex-start; }
+
+.group.right,
+.bar.right { align-items : flex-end; }
+
+.group.cover,
+.bar.cover { align-items : stretch; }
+
+.group > .expand,
+.bar > .expand { flex : 1 1 auto; }
+
+.group > .fortify,
+.bar > .fortify { flex : 0 0 auto; }
+
+.center-child {
+	display : flex !important;
+	flex-direction: row;
+	justify-content : center;
+	align-items : center;
+}
+
+.flex-reset {
+	position: relative;
+}
+
+.flex-reset > div {
+	position: absolute;
+	top : 0;
+	left : 0;
+	bottom : 0;
+	right : 0;
+	overflow: hidden;
+	text-overflow : ellipsis;
+}
+
+/* not actually flex, but yolo */
+.horizontal-center {
+	position: absolute;
+	top : 0;
+	left: 50%;
+	transform : translateX( -50% );
+}
+

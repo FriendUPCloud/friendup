@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = friendUP || {};
 friendUP.component = friendUP.component || {};
@@ -34,8 +34,9 @@ friendUP.gui = friendUP.gui || {};
 	{
 		var self = this;
 		
-		// beware: single quotes ( ' ) will crash the parser.
-		// http://ejohn.org/blog/javascript-micro-templating/
+		// beware: single quotes in your html ( ' ) will crash the parser.
+		// Single quotes in variables passed to the tempalte is okay
+		// Source : http://ejohn.org/blog/javascript-micro-templating/
 		self.cache[ id ] = self.cache[ id ] ||
 		new Function('obj',
 			"var p = [], print = function() {p.push.apply(p,arguments);};" + 
@@ -133,7 +134,7 @@ friendUP.gui = friendUP.gui || {};
 		if ( !fragments )
 			return;
 		
-		if ( typeof( fragments ) == 'string' ) {
+		if ( 'string' === typeof( fragments )) {
 			var container = document.createElement( 'div' );
 			container.innerHTML = fragments;
 			fragments = container;
@@ -153,6 +154,9 @@ friendUP.gui = friendUP.gui || {};
 			
 			var id = element.id;
 			var fragment = element.textContent;
+			if ( !fragment || !fragment.length )
+				return;
+			
 			self.fragments[ id ] = fragment.trim();
 		}
 	}

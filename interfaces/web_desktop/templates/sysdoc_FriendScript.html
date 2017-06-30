@@ -1,0 +1,122 @@
+
+	<div style="position: absolute; top: 0; left: 0; width: 30%; height: 100%; overflow: auto; background: #cccccc">
+	
+		<div class="Padding">
+			<h2>
+				Contents:
+			</h2>
+			<ol>
+				<li><a href="#introduction">Introduction</a></li>
+				<li><a href="#simple">A simple Friend Script</a></li>
+			</ol>
+			<!--<h2>
+				Command index:
+			</h2>
+			<ol>
+				<li><a href="#cmd_break">break</a></li>
+				<li><a href="#cmd_cd">cd</a></li>
+				<li><a href="#cmd_dir">dir</a></li>
+				<li><a href="#cmd_echo">echo</a></li>
+				<li><a href="#cmd_status">status</a></li>
+			</ol>-->
+		</div>
+	
+	</div>
+	
+	<div style="position: absolute; top: 0; left: 30%; width: 70%; height: 100%; overflow: auto">
+
+		<div class="Padding BorderBottom">
+		
+			<h1>
+				Friend Script (Under construction)
+			</h1>
+		</div>
+		<div class="Padding" style="text-align: justify">
+			
+			<h2>
+				<a name="introduction"></a>
+				Introduction
+			</h2>
+			<p>
+				Friend Script is the scripting language in FriendUP. It was
+				developed so that you could script FriendUP applications. The
+				syntax is simple and straight forward. This document holds all
+				you need to know to start using it.
+			</p>
+			<p>
+				Friend DOS scripting is a bit different from many other scripting languages.
+				We thought long and hard on risking a departure from what people are used to
+				in the Unix world (or Windows world for that matter), but we came to the 
+				conclusion that - since FriendUP is so different in how it connects to 
+				resources, we ought to reflect this in our scripting language.
+			</p>
+			<p>
+				Friend Script is primarily created for automating tasks using 
+				the DOS layer in FriendUP. As this layer is very powerful in 
+				FriendUP, it can be used for other tasks as well. Be creative
+				and see what you can do.
+			</p>
+			
+			<h2>
+				<a name="simple"></a>
+				A simple Friend Script
+			</h2>
+			<p>
+				At a basic level, you can do normal things like:
+				<blockquote class="Code">
+					cd Home:<br>
+					dir<br>
+					output Readme.txt<br>
+				</blockquote>
+			</p>
+			<p>
+				This would enter the Home: volume, give you a directory listing and output the
+				contents of a file with the name Readme.txt. But we can do more!
+			</p>
+			<p>
+				<blockquote class="Code">
+					cd Home:<br>
+					repeat 5 times: output Readme.txt
+				</blockquote>
+			</p>
+			<p>
+				This would output the contents of the Readme.txt file five times.
+			</p>
+			<p>
+				But we can do still more.
+			</p>
+			<p>
+				In FriendUP, applications have their own filesystems. So here, we can use our
+				Friend Create programmers editor. We'll use it dormantly - using our Dormant 
+				technology (for more on Dormant and Friend Create, see their own chapters).
+			</p>
+			<p>
+				Written in the easiest shorthand way:
+			</p>
+			<p>
+				<blockquote class="Code">
+					enter FriendCreate<br>
+					&nbsp;&nbsp;&nbsp;FileLoad Home:Readme.txt<br>
+					&nbsp;&nbsp;&nbsp;on FileLoad: repeat 5 times n: ReadLine n<br>
+					leave<br>
+				</blockquote>
+			</p>
+			<p>
+				Written in a way that programmers can comprehend:
+			</p>
+			<p>
+				<blockquote class="Code">
+					cd FriendCreate:Functions/<br>
+					LoadFile Home:Readme.txt<br>
+					on FileLoad:<br>
+					&nbsp;&nbsp;&nbsp;repeat 5 times n:<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ReadLine n<br>
+					&nbsp;&nbsp;&nbsp;stop<br>
+					stop<br>
+				</blockquote>
+			</p>
+		</div>
+	</div>
+
+	
+

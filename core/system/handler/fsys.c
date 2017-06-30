@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Filesystem body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 23 March 2017
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -30,28 +41,31 @@
 #include <util/hashmap.h>
 #include <util/tagitem.h>
 #include <util/string.h>
-#include <user/userlibrary.h>
+#include <system/auth/authmodule.h>
 #include "fsys.h"
 #include <dlfcn.h>
 
-//
-// Filesystems
-//
-
+/**
+ * Function create FHandler handler
+ *
+ * @param path path to filesystem file on disk
+ * @param name name which will represent filesystem handler
+ * @return new FHandler structure when success, otherwise NULL
+ */
 FHandler *FHandlerCreate( const char *path, const char *name )
 {
 	FHandler *fsys = NULL;
 
 	if( name == NULL )
 	{
-		ERROR("Name parameter is NULL!\n");
+		FERROR("Name parameter is NULL!\n");
 		return NULL;
 	}
 	
 	int nameLen = strlen( name );
 	if( nameLen < 4 )
 	{
-		ERROR("Name size < 4  '%s'\n", name );
+		FERROR("Name size < 4  '%s'\n", name );
 		return NULL;
 	}
 
@@ -68,11 +82,15 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 	if( ( fsys = FCalloc( sizeof(FHandler), 1 ) ) != NULL )
 	{
 		if( ( fsys->Name = FCalloc( nameLen + 1, sizeof(char) ) ) != NULL )
+		{
 			memcpy( fsys->Name, name, nameLen );
+		}
 	
 		int len = strlen( path );
 		if( ( fsys->Path = FCalloc( len + 1, sizeof(char) ) ) != NULL )
+		{
 			memcpy( fsys->Path, path, len );
+		}
 
 		if( ( fsys->handle = dlopen ( path, RTLD_NOW ) ) != NULL )
 		{
@@ -97,11 +115,15 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 			fsys->FileSeek = dlsym( fsys->handle, "FileSeek");
 			
 			fsys->Info = dlsym( fsys->handle, "Info");
+			fsys->Call = dlsym( fsys->handle, "Call");
 			fsys->MakeDir = dlsym( fsys->handle, "MakeDir");
 			fsys->Delete = dlsym( fsys->handle, "Delete");
 			fsys->Rename = dlsym( fsys->handle, "Rename");
 			fsys->Execute = dlsym( fsys->handle, "Execute");
 			fsys->Copy = dlsym( fsys->handle, "Copy" );
+			
+			fsys->InfoGet = dlsym( fsys->handle, "InfoGet" );
+			fsys->InfoSet = dlsym( fsys->handle, "InfoSet" );
 			
 			fsys->Dir = dlsym( fsys->handle, "Dir");
 			
@@ -111,20 +133,21 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 		{
 			char* error = dlerror();
 			
-			ERROR("[ERROR]: Cannot open filesystem %s - error %s\n", path, error );
-			if( fsys->Path ) free( fsys->Path );
-			if( fsys->Name ) free( fsys->Name );
-			free( fsys );
+			FERROR("[ERROR]: Cannot open filesystem %s - error %s\n", path, error );
+			if( fsys->Path ) FFree( fsys->Path );
+			if( fsys->Name ) FFree( fsys->Name );
+			FFree( fsys );
  			return NULL;
 		}
 	}
 	return fsys;
 }
 
-//
-// delete fsys
-//
-
+/**
+ * Function delete FHandler handler
+ *
+ * @param fsys pointer to FHandler structure which will be deleted
+ */
 void FHandlerDelete( FHandler *fsys )
 {
 	if( fsys != NULL )
@@ -133,12 +156,12 @@ void FHandlerDelete( FHandler *fsys )
 		
 		if( fsys->Name )
 		{
-			free( fsys->Name );
+			FFree( fsys->Name );
 		}
 
 		if( fsys->Path )
 		{
-			free( fsys->Path );
+			FFree( fsys->Path );
 		}
 
 		if( fsys->handle )
@@ -146,14 +169,15 @@ void FHandlerDelete( FHandler *fsys )
 			dlclose ( fsys->handle );
 		}
 
-		free( fsys );
+		FFree( fsys );
 	}
 }
 
-//
-// Free Filesystem structure
-//
-
+/**
+ * Function delete Filesystem structure
+ *
+ * @param fs pointer to Filesystem structure which will be deleted
+ */
 void FilesystemDelete( Filesystem *fs )
 {
 	if( fs->fs_Name != NULL )

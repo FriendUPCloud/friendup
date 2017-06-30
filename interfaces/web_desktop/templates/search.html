@@ -1,0 +1,28 @@
+
+	<div class="FullContent" id="SearchFullContent">
+		<div class="Padding">
+			<div id="SearchGuiContainer">
+				<div class="HRow MarginBottom">
+					<div class="HContent100">
+						<input type="text" class="FullWidth InputHeight" id="WorkspaceSearchKeywords" placeholder="{i18n_search_keywords}"/>
+					</div>
+				</div>
+				<div class="HRow MarginBottom">
+					<div class="HContent100">
+						<button class="Button IconSmall fa-search" onclick="Workspace.searchExecute()" id="WorkspaceSearchGo">
+							{i18n_search_do}
+						</button>
+						<button class="Button IconSmall fa-remove" onclick="Workspace.searchStop();" style="visibility: hidden; width: 0px; overflow: hidden" id="WorkspaceSearchStop">
+							{i18n_search_stop}
+						</button>
+						<div class="InputHeight FloatRight">
+							<input type="checkbox" id="SearchCaseSensitive"/> {i18n_case_sensitive} 
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="WorkspaceSearchResults">
+			</div>
+		</div>
+	</div>
+

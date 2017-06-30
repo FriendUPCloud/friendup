@@ -16,15 +16,21 @@
 				<div id="Permissions">
 					{permissions}
 				</div>
+				<p class="Layout PaddingTop MarginTop BorderTop">
+					<strong>{i18n_security_domain}:</strong>
+				</p>
+				<p class="Layout"{securityDomainStyle}>
+					<select id="SecurityDomains"></select>
+				</p>
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop BackgroundDefault" style="height: 48px">
 			<div class="Padding">
-				<button class="activation">
-					{app_activation_button}
-				</button>
-				<button class="cancel">
+				<button class="cancel IconSmall Button fa-remove FloatRight" onclick="CloseWindow()">
 					{app_activation_abort}
+				</button>
+				<button class="activation IconSmall Button fa-check">
+					{app_activation_button}
 				</button>
 			</div>
 		</div>

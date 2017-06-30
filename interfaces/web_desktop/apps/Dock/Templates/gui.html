@@ -5,64 +5,152 @@
 			<div class="HContentLeft HContent30 VContent100 BackgroundLists Padding ScrollableY" id="Applications">
 			
 			</div>
-			<div class="HContentRight HContent70 VContent100 BackgroundDefault Padding Disabled" id="Settings">
-				<div class="HRow">
-					<div class="HContent25 FloatLeft">
-						<strong id="ApplicationLabel">Application:</strong>
+			<div class="HContentRight HContent70">
+				<div class="BackgroundDefault Padding Disabled BorderBottom ScrollableY" id="Settings">
+					<div class="HRow">
+						<div class="HContent25 FloatLeft">
+							<strong id="ApplicationLabel">{i18n_application}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="text" class="FullWidth" id="Application"/>
+						</div>
 					</div>
-					<div class="HContent75 FloatLeft">
-						<input type="text" class="FullWidth" id="Application"/>
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
+							<strong id="ShortDescriptionLabel">{i18n_description}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="text" class="FullWidth" id="ShortDescription"/>
+						</div>
 					</div>
-				</div>
-				<div class="HRow MarginTop">
-					<div class="HContent25 FloatLeft">
-						<strong id="ShortDescriptionLabel">Description:</strong>
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
+							<strong id="IconLabel">{i18n_icon}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="text" class="FullWidth" id="Icon" placeholder="Example: Home:Icons/icon.png"/>
+						</div>
 					</div>
-					<div class="HContent75 FloatLeft">
-						<input type="text" class="FullWidth" id="ShortDescription"/>
-					</div>
-				</div>
-				<div class="HRow MarginTop">
-					<div class="HContent25 FloatLeft">
-						<strong id="IconLabel">Icon:</strong>
-					</div>
-					<div class="HContent75 FloatLeft">
-						<div class="Box" id="Dropper">
-						
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
+							<strong id="SortOrderLabel">{i18n_sort_order}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<button type="button" class="IconSmall fa-arrow-up" onclick="Application.sendMessage( { command: 'updockitem' } )">
+							
+							</button>
+							<button type="button" class="IconSmall fa-arrow-down" onclick="Application.sendMessage( { command: 'downdockitem' } )">
+							
+							</button>
+							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value } )">
+								{i18n_save}
+							</button>
+							<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
+								{i18n_remove}
+							</button>
 						</div>
 					</div>
 				</div>
-				<div class="HRow MarginTop">
-					<div class="HContent25 FloatLeft">
-						<strong id="SortOrderLabel">SortOrder:</strong>
+				<div class="BackgroundDefault Padding ScrollableY" id="Options">
+					<div class="HRow MarginBottom">
+						<div class="HContent35 FloatLeft">
+							<p class="InputHeight">
+								<strong>{i18n_dock_list}:</strong>
+							</p>
+						</div>
+						<div class="HContent65 FloatLeft">
+							<select class="InputHeight FullWidth" id="Docks">
+							</select>
+						</div>
 					</div>
-					<div class="HContent75 FloatLeft">
-						<button type="button" class="IconSmall fa-arrow-up" onclick="Application.sendMessage( { command: 'updockitem' } )">
-							
-						</button>
-						<button type="button" class="IconSmall fa-arrow-down" onclick="Application.sendMessage( { command: 'downdockitem' } )">
-							
-						</button>
-						<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, shortdescription: ge('ShortDescription').value } )">
-							Save
-						</button>
-						<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
-							Delete
-						</button>
+					<div class="HRow MarginBottom">
+						<div class="HContent35 FloatLeft">
+							<p class="InputHeight">
+								<strong>{i18n_dock_size}:</strong>
+							</p>
+						</div>
+						<div class="HContent65 FloatLeft">
+							<select class="InputHeight FullWidth" id="DockSize">
+							</select>
+						</div>
+					</div>
+					<div class="HRow MarginBottom">
+						<div class="HContent35 FloatLeft">
+							<p class="InputHeight">
+								<strong>{i18n_dock_position}:</strong>
+							</p>
+						</div>
+						<div class="HContent65 FloatLeft">
+							<select class="InputHeight FullWidth" id="DockPlacement">
+							</select>
+						</div>
+					</div>
+					<div class="HRow MarginBottom">
+						<div class="HContent35 FloatLeft">
+							<p class="InputHeight">
+								<strong>{i18n_dock_layout}:</strong>
+							</p>
+						</div>
+						<div class="HContent65 FloatLeft">
+							<select class="InputHeight FullWidth" id="DockLayout">
+							</select>
+						</div>
+					</div>
+					<div class="HRow">
+						<div class="HContent35 FloatLeft">
+							<p class="InputHeight">
+								<strong>{i18n_dock_coords}:</strong>
+							</p>
+						</div>
+						<div class="HContent30 FloatLeft">
+							<input type="number" class="FullWidth InputHeight" id="DockX"/>
+						</div>
+						<div class="HContent5 FloatLeft">
+							&nbsp;
+						</div>
+						<div class="HContent30 FloatLeft">
+							<input type="number" class="FullWidth InputHeight" id="DockY"/>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class="VContentBottom BackgroundDefault Padding BorderTop" style="height: 50px">
 			<button type="button" class="IconSmall fa-plus " id="BtnAddDockItem" onclick="Application.sendMessage( { command: 'newdockitem' } )">
-				Add dock item
+				{i18n_add_dock_item}
 			</button>
-			<div class="ButtonSpacer"></div>
-			<button type="button" class="IconSmall fa-remove" id="BtnCancel" onclick="Application.sendMessage( { command: 'quit' } )">
-				Quit
+			<button type="button" class="IconSmall fa-save" id="BtnSaveDock" onclick="SaveCurrentDock()">
+				{i18n_save_dock}
+			</button>
+			<!--<button type="button" class="IconSmall fa-table" id="BtnAddDock" onclick="NewDock()">
+				{i18n_add_dock}
+			</button>-->
+			<button type="button" class="FloatRight IconSmall fa-remove" id="BtnCancel" onclick="Application.sendMessage( { command: 'quit' } )">
+				{i18n_quit}
 			</button>
 		</div>
 	</div>
 
 	<script src="Progdir:Scripts/gui.js"></script>
+	
+	<style>
+		#Settings
+		{
+			height: 40%;
+		}
+		#Settings.Disabled
+		{
+			display: none;
+			height: 0;
+		}
+		#Options
+		{
+			top: 40%;
+			bottom: 0px;
+		}
+		#Settings.Disabled + #Options
+		{
+			top: 0;
+		}
+	</style>
 

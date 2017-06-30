@@ -1,0 +1,9 @@
+#Language file for FriendVersions
+
+i18n_file                           : Fichier
+i18n_edit                           : Editer
+i18n_open                           : Charger
+i18n_save                           : Sauver
+i18n_save_as                        : Sauver comme
+i18n_close                          : Fermer
+i18n_quit                           : Quitter

@@ -1,0 +1,67 @@
+
+	<input type="hidden" value="{ID}" id="pID"/>
+	<input type="hidden" value="{parentId}" id="pTopicID"/>
+	<div class="ContentFull">
+		<div id="Cover"></div>
+		<div class="VContentTop ScrollArea TopArea">
+			<div class="Padding Box" id="FormBox">
+				<p class="Layout">
+					<strong>{i18n_topic}<span id="CommentCount"></span>:</strong>
+				</p>
+				<p class="Layout">
+					<input type="text" class="FullWidth" id="pSubject"/>
+				</p>
+				<p class="Layout">
+					<strong>{i18n_short_description}:</strong>
+				</p>
+				<p class="Layout">
+					<textarea class="FullWidth" id="pShortDesc"></textarea>
+				</p>
+				<p class="Layout">
+					<strong>{i18n_full_description}:</strong>
+				</p>
+				<p class="Layout">
+					<textarea class="FullWidth" id="pDescription"></textarea>
+				</p>
+				<p class="Layout">
+					<strong>{i18n_examples}:</strong>
+				</p>
+				<p class="Layout">
+					<textarea class="FullWidth" id="pExamples"></textarea>
+				</p>
+			</div>
+			<div id="Comments"></div>
+		</div>
+		<div class="VContentBottom BottomArea Padding BorderTop">
+			<button id="AddComment" type="button" class="Button IconSmall fa-comment FloatRight" onclick="addComment()">
+				{i18n_add_comment}
+			</button>
+			<button type="button" class="Button IconSmall fa-check" onclick="saveTopic()">
+				{i18n_save_topic}
+			</button>
+			<button type="button" class="Button IconSmall fa-trash deleted" id="Delete" onclick="deleteTopic( ge( 'pID' ).value )">
+				{i18n_delete}
+			</button>
+		</div>
+	</div>
+
+	<style>
+		.TopArea { bottom: 50px; }
+		.BottomArea { height: 50px; }
+		#pDescription
+		{
+			height: 250px;
+		}
+		#pExamples
+		{
+			height: 200px;
+		}
+		#Delete.deleted
+		{
+			position: absolute;
+			top: -1000000px;
+		}
+		#AddComment{ position: absolute; left: -4000px; }
+	</style>
+	<script src="Progdir:topic.js"></script>
+

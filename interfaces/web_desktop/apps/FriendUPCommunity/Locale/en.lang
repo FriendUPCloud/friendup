@@ -1,0 +1,16 @@
+
+i18n_logout                          : Log out
+i18n_quit                            : Quit
+i18n_file                            : File
+i18n_missing_data                    : missing data
+i18n_missing_user                    : missing user / pass, check your inputs
+i18n_failed_to_get                   : failed to get uniqueId
+i18n_fetching_temp_pass              : fetching temp pass failed
+i18n_failed_to_decrypt               : failed to decrypt temp pass
+i18n_friendup_community              : FriendUP Community
+i18n_fcrypto_component               : FCrypto component not found
+i18n_window_fcrypt_not               : window.fcrypt is not defined
+i18n_fcrypt_init                     : FCrypt.init - required data not found
+
+
+

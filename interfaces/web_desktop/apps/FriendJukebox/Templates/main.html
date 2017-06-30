@@ -1,0 +1,110 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop BackgroundLists BorderBottom" style="bottom: 47px" id="Equalizer">
+			<canvas id="visualizer"></canvas>
+			<!--<iframe id="player" class="FullContent" style="border: 0"></iframe>-->
+			<audio id="player" class="ContentFull"></audio>
+			<div id="scroll"></div>
+			<div id="progress"></div>
+		</div>
+		<div class="VContentTop ScrollArea BackgroundLists BorderBottom BorderTop" id="MiniPlaylist"></div>
+		<div class="VContentBottom BackgroundLists" style="height: 47px">
+			<div class="HContent30 FloatRight Padding TextRight">
+				<button type="button" class="IconSmall fa-list BtnPlaylist" onclick="EditPlaylist()">
+					{i18n_playlist}
+				</button>
+			</div>
+			<div class="HContent70 FloatLeft Padding">
+				<button type="button" class="IconSmall fa-backward BtnPrevious" onclick="Seek(-1)">
+					
+				</button>
+				<button type="button" class="IconSmall fa-stop BtnStop" onclick="StopSong()">
+					
+				</button>
+				<button id="playbutton" type="button" class="IconSmall fa-play BtnPlay" onclick="PlaySong()">
+					
+				</button>
+				<button id="pausebutton" type="button" class="IconSmall fa-pause BtnPause" onclick="PauseSong()">
+					
+				</button>
+				<button type="button" class="IconSmall fa-forward BtnNext" onclick="Seek(+1)">
+					
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="Progdir:Scripts/player.js"></script>
+
+	<style>
+		#miniplaylist
+		{
+			visibility: hidden;
+			input-events: none;
+			font-size: 13px;
+			font-family: monospace, courier new, courier;
+		}
+		#visualizer
+		{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 77px;
+			background: #0F2336;
+		}
+		#scroll, #progress
+		{
+			position: absolute;
+			bottom: 0;
+			background: #505050;
+			color: white;
+			text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+			box-shadow: inset 0px 0px 10px rgba(0,0,0,0.5);
+			height: 35px;
+			line-height: 25px;
+			left: 0;
+			width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			padding: 5px 8px;
+			box-sizing: border-box;
+		}
+		#progress
+		{
+			background: rgba(255,255,255,0.2);
+			width: 0;
+			transition: width,opacity 0.25s,0.5s;
+			opacity: 0;
+		}
+		#playbutton.active, #pausebutton.active
+		{
+			-webkit-animation: flash 2s infinite;
+			-moz-animation:    flash 2s infinite;
+			-o-animation:      flash 2s infinite;
+			animation:         flash 2s infinite;
+			text-shadow: 0 0 3px rgba(255,255,255,0.5);
+		}
+		@-webkit-keyframes flash {
+		  0%   { color: #666666; }
+		  50%  { color: #ffffff; }
+		  100% { color: #666666; }
+		}
+		@-moz-keyframes flash {
+		  0%   { color: #666666; }
+		  50%  { color: #ffffff; }
+		  100% { color: #666666; }
+		}
+		@-o-keyframes flash {
+		  0%   { color: #666666; }
+		  50%  { color: #ffffff; }
+		  100% { color: #666666; }
+		}
+		@keyframes flash {
+		  0%   { color: #666666; }
+		  50%  { color: #ffffff; }
+		  100% { color: #666666; }
+		}
+		
+	</style>

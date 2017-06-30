@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <service/service_manager.h>
 #include <network/protocol_http.h>
@@ -26,28 +30,29 @@
 #include <util/buffered_string.h>
 #include <service/comm_msg.h>
 
-
-//
-// Create new ServiceManager
-//
+/**
+ * Create new ServiceManager
+ *
+ * @param fcm pointer to  FriendCoreManager
+ * @return new pointer to ServiceManager structure
+ */
 
 ServiceManager *ServiceManagerNew( void *fcm )
 {
-	ServiceManager *smgr = calloc( sizeof( ServiceManager ), 1 );
+	ServiceManager *smgr = FCalloc( 1, sizeof( ServiceManager ) );
 	if( smgr != NULL )
 	{
 		char tempString[ 1024 ];
-		
-		//DEBUG("Service Manager created\n");
+
 		smgr->sm_FCM = fcm;
 		
 		getcwd( tempString, sizeof ( tempString ) );
 
-		smgr->sm_ServicesPath = calloc( 1025, sizeof( char ) );
+		smgr->sm_ServicesPath = FCalloc( 1025, sizeof( char ) );
 		if( smgr->sm_ServicesPath == NULL )
 		{
-			free( smgr );
-			ERROR("Cannot allocate memory for ServiceManager!\n");
+			FFree( smgr );
+			FERROR("Cannot allocate memory for ServiceManager!\n");
 			return NULL;
 		}
 
@@ -64,7 +69,6 @@ ServiceManager *ServiceManagerNew( void *fcm )
 			// try to open files from libs/ directory
 			strcpy( smgr->sm_ServicesPath, tempString );
 			strcat( smgr->sm_ServicesPath, "/services/");
-			//DEBUG(" Trying to find services in %s\n", smgr->sm_ServicesPath );
 			d = opendir( smgr->sm_ServicesPath );
 		}
 	
@@ -77,87 +81,87 @@ ServiceManager *ServiceManagerNew( void *fcm )
 				{
 					continue;
 				}
-				
-				sprintf( tempString, "%s%s", smgr->sm_ServicesPath, dir->d_name );
 
-				DEBUG(" %s fullmodpath %s\n", dir->d_name, tempString );
-
-				Service *locserv = ServiceOpen( tempString, 0, (void *)smgr, (void *)CommServiceSendMsg );
+				snprintf( tempString, sizeof(tempString), "%s%s", smgr->sm_ServicesPath, dir->d_name );
 				
-				if( locserv != NULL )
+				struct stat statbuf;
+				if ( stat( tempString, &statbuf ) == 0 )
 				{
-					//locserv->ServiceNew( tempString );
-					
-					DEBUG("SERVICE created, service %s added to system\n", locserv->GetName() );
-					if( smgr->sm_Services == NULL )
+					if( S_ISDIR( statbuf.st_mode ) )
 					{
-						smgr->sm_Services = locserv;
+						
 					}
 					else
 					{
-						Service *lserv = smgr->sm_Services;
-
-						while( lserv->node.mln_Succ != NULL )
+						Service *locserv = ServiceOpen( SLIB, tempString, 0, (void *)smgr, (void *)CommServiceSendMsg );
+				
+						if( locserv != NULL )
 						{
-							lserv = (Service *)lserv->node.mln_Succ;
-							//DEBUG("Parsing modules\n");
+							//locserv->ServiceNew( tempString );
+
+							DEBUG("SERVICE created, service %s added to system\n", locserv->GetName() );
+					
+							locserv ->node.mln_Succ = (MinNode *)smgr->sm_Services;
+							smgr->sm_Services = locserv;
 						}
-						lserv->node.mln_Succ = (struct MinNode *)locserv;	// add new module to list
+						else
+						{
+							Log( FLOG_ERROR,"Cannot load service %s\n", dir->d_name );
+						}
 					}
 				}
-				else
-				{
-					ERROR("Cannot load service %s\n", dir->d_name );
-				}		
 			}
 			closedir( d );
 		}
 	}
 	
-	
 	return smgr;
 }
 
-//
-// delete ServiceManager
-//
-
+/**
+ * Delete ServiceManager
+ *
+ * @param smgr pointer to ServiceManager which will be deleted
+ */
 void ServiceManagerDelete( ServiceManager *smgr )
 {
-	Service *lserv = smgr->sm_Services;
-	Service *rserv = smgr->sm_Services;
-	// release and free all modules
+	if( smgr != NULL )
+	{
+		Service *lserv = smgr->sm_Services;
+		Service *rserv = smgr->sm_Services;
+		// release and free all modules
 
-	while( lserv != NULL )
-	{
-		rserv = lserv;
-		lserv = (Service *)lserv->node.mln_Succ;
-		DEBUG("Remove Service %s\n", rserv->GetName() );
-		ServiceClose( rserv );
-		DEBUG("Remove Service Closed\n" );
-	}
-	
-	DEBUG("Freeing path\n" );
+		while( lserv != NULL )
+		{
+			rserv = lserv;
+			lserv = (Service *)lserv->node.mln_Succ;
+			DEBUG("Remove Service %s\n", rserv->GetName() );
+			ServiceClose( rserv );
+		}
 
-	if( smgr->sm_ServicesPath )
+		if( smgr->sm_ServicesPath )
+		{
+			FFree( smgr->sm_ServicesPath );
+			smgr->sm_ServicesPath = NULL;
+		}
+	
+		FFree( smgr );
+	}
+	else
 	{
-		free( smgr->sm_ServicesPath );
-		smgr->sm_ServicesPath = NULL;
+		DEBUG("ServerManager = NULL\n");
 	}
 	
-	DEBUG("ServiceManager delete\n");
-	
-	if( smgr )
-	{
-		free( smgr );
-	}
-	
-	DEBUG("ServiceManager delete END\n");
+	Log( FLOG_INFO,"ServiceManager delete END\n");
 }
 
-//
-// find Service by name
-//
+/**
+ * Find service by the name
+ *
+ * @param smgr pointer to ServiceManager
+ * @param name of the service
+ * @return pointer to Service structure or NULL when it couldnt be found
+ */
 
 Service *ServiceManagerGetByName( ServiceManager *smgr, char *name )
 {
@@ -183,9 +187,14 @@ Service *ServiceManagerGetByName( ServiceManager *smgr, char *name )
 	return NULL;
 }
 
-//
-// change state of Service
-//
+/**
+ * Change service state
+ *
+ * @param smgr pointer to ServiceManager
+ * @param srv pointer to Service on which change will be done
+ * @param state new service state
+ * @return 0 when success, otherwise error number
+ */
 
 int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int state )
 {
@@ -199,13 +208,18 @@ int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int st
 typedef struct SServ
 {
 	struct MinNode node;
-	BYTE id[ FRIEND_CORE_MANAGER_ID_SIZE ];		// id of the device
-	BYTE *sinfo;														// pointer to services information
+	FBYTE id[ FRIEND_CORE_MANAGER_ID_SIZE ];		// id of the device
+	FBYTE *sinfo;														// pointer to services information
 }SServ;
 
-//
-// Services Manage WebReqest
-//
+/**
+ * ServiceManager web handler
+ *
+ * @param lfcm pointer to FriendCoreManager
+ * @param urlpath pointer to memory where table with path is stored
+ * @param request pointer to request sent by client
+ * @return reponse in Http structure
+ */
 
 Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 {
@@ -214,15 +228,15 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 	int newStatus = -1;
 	Service *selService = NULL;
 	
+	DEBUG("ServiceManagerWebRequest\n");
+	
 	struct TagItem tags[] = {
-		{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-		{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+		{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 		{TAG_DONE, TAG_DONE}
 	};
 		
 	Http *response = HttpNewSimple( HTTP_200_OK,  tags );
-	
-	DEBUG("ServiceManager: list all services avaiable path \n" );
 	
 	//
 	// list all avaiable services
@@ -232,33 +246,35 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 	{
 		int pos = 0;
 		BufString *nbs = BufStringNew();
-		char tmp[ 1024 ];
+		char tmp[ 8112 ];
 		
-		DEBUG("list\n");
+		DEBUG("list all avaiable  services\n");
 		
 		//
 		// checking services on ALL Friends servers
 		//
 		
-		int allsize = (strlen("ALL")+1);
 		MsgItem tags[] = {
-			{ ID_FCRE, 0, NULL },
-			{ ID_QUER, (ULONG)allsize, (ULONG)"ALL" },
-			{ ID_SVIN, 0, NULL },
-			{ TAG_DONE, TAG_DONE, TAG_DONE }
+			{ ID_FCRE, 0, MSG_GROUP_START },
+			{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+			{ ID_QUER, (FULONG)4, (FULONG)"ALL" },
+			{ ID_SVIN, 0, (FULONG)NULL },
+			{ MSG_GROUP_END, MSG_GROUP_END, MSG_GROUP_END },
+			{ MSG_END, MSG_END, MSG_END }
 		};
-		
-		DEBUG("Before creating DataForm\n");
+
+		SServ *servInfo = NULL;
 		
 		DataForm *df = DataFormNew( tags );
 		
+		DEBUG2("Get services from all servers\n");
 				//const char *t = "hello";
-		DataForm *recvdf = CommServiceSendMsg( fcm->fcm_CommServiceClient, df );
+		DataForm *recvdf = CommServiceSendMsg( fcm->fcm_CommService, df );
 		
 		if( recvdf != NULL)
 		{
-			DEBUG("DATAFORM Received %ld\n", recvdf->df_Size );
-			
+			DEBUG2("DATAFORM Received %ld\n", recvdf->df_Size );
+			/*
 			unsigned int i=0;
 			char *d = (char *)recvdf;
 			for( i = 0 ; i < recvdf->df_Size ; i++ )
@@ -266,52 +282,64 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 				printf("%c", d[ i ] );
 			}
 			printf("end\n");
+			*/
 		}
+		
+		DataFormDelete( df );
 		
 		//
 		// we must hold information about servers and services on them
+		//
+		// prepare request to all servers
 		
-		SServ *servInfo = NULL;
-		BYTE *ld = DataFormFind( recvdf, ID_RESP );
+		
+		FBYTE *ld = DataFormFind( recvdf, ID_RESP );
 		if( ld != NULL )
 		{
 			DataForm *respdf = (DataForm *)ld;
 			SServ *lss = servInfo;
 			
+			DEBUG("Found information about services\n");
+			
 			while( respdf->df_ID == ID_RESP )
 			{
 				DEBUG("ServiceManager add entry '%s'\n",  ld+COMM_MSG_HEADER_SIZE + 32 );
-				SServ * li = calloc( 1, sizeof( SServ ) );
-				
-				// we should copy whole string, but atm we are doing copy of name
-				//memcpy( li->id, ld+COMM_MSG_HEADER_SIZE , FRIEND_CORE_MANAGER_ID_SIZE );
-				memcpy( li->id, ld+COMM_MSG_HEADER_SIZE, 64 );
-				
-				li->sinfo = ld+COMM_MSG_HEADER_SIZE + FRIEND_CORE_MANAGER_ID_SIZE;
-				
-				if( lss != NULL )
+				SServ * li = FCalloc( 1, sizeof( SServ ) );
+				if( li != NULL )
 				{
-					lss->node.mln_Succ = (struct MinNode *) li;
+				
+					// we should copy whole string, but atm we are doing copy of name
+					//memcpy( li->id, ld+COMM_MSG_HEADER_SIZE , FRIEND_CORE_MANAGER_ID_SIZE );
+					memcpy( li->id, ld+COMM_MSG_HEADER_SIZE, FRIEND_CORE_MANAGER_ID_SIZE );
+				
+					li->sinfo = ld+COMM_MSG_HEADER_SIZE + FRIEND_CORE_MANAGER_ID_SIZE;
+				
+					if( lss != NULL )
+					{
+						lss->node.mln_Succ = (struct MinNode *) li;
+					}
+					else
+					{
+						if( servInfo == NULL )
+						{
+							servInfo = li;
+							lss = li;
+						}
+					}
+					lss = li;
+				
+					ld += respdf->df_Size;
+					respdf = (DataForm *)ld;
 				}
 				else
 				{
-					if( servInfo == NULL )
-					{
-						servInfo = li;
-						lss = li;
-					}
+					FERROR("Cannot allocate memory for service\n");
 				}
-				lss = li;
-				
-				ld += respdf->df_Size;
-				respdf = (DataForm *)ld;
 			}
 			DEBUG("No more server entries\n");
-			// copy ID and point to data
-			
-			
-			//ERROR("RESPONSE FOUND\n");
 		}
+		
+		DEBUG("Create list of services\n");
 		
 		//BufStringAdd( nbs, "[ " );
 		BufStringAdd( nbs, "{ \"Services\": [" );
@@ -323,17 +351,25 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		//
 		while( ls != NULL )
 		{
+			int len;
+			char *stat = ls->ServiceGetStatus( ls, &len );
+			
 			if( pos == 0 )
 			{
-				sprintf( tmp, " { \"Service\": \"%s\" , \"Status\": \"%d\" , ", ls->GetName(), ls->ServiceGetStatus( ls ) );
+				sprintf( tmp, " { \"Name\": \"%s\" , \"Status\": \"%s\" , ", ls->GetName(), stat );
 			}else{
-				sprintf( tmp, ",{ \"Service\": \"%s\" , \"Status\": \"%d\" , ", ls->GetName(), ls->ServiceGetStatus( ls ) );
+				sprintf( tmp, ",{ \"Name\": \"%s\" , \"Status\": \"%s\" , ", ls->GetName(), stat );
 			}
 			BufStringAdd( nbs, tmp );
 			
+			if( stat != NULL )
+			{
+				FFree( stat );
+			}
+			
 			DEBUG("Service added , server info %p\n", servInfo );
 			
-			BufStringAdd( nbs, " \"Hosts\" : \"" );
+			BufStringAdd( nbs, " \"Hosts\" : \"My computer" );
 			
 			// we add here server on which same service is working
 			
@@ -343,7 +379,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 			{
 				DataForm *cdf = (DataForm *)checkedServer->sinfo;
 				DEBUG("Services size %ld for server '%s'\n", cdf->df_Size, &(checkedServer->id[ 32 ] ) ); 
-				BYTE *curserv = checkedServer->sinfo + COMM_MSG_HEADER_SIZE;
+				FBYTE *curserv = checkedServer->sinfo + COMM_MSG_HEADER_SIZE;
 				
 				cdf = (DataForm *)curserv;
 				while( cdf->df_ID == ID_SNAM )
@@ -351,15 +387,8 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 					DEBUG("Service found %s  entry size %ld\n", curserv + COMM_MSG_HEADER_SIZE, cdf->df_Size );
 					if( strcmp( ls->GetName(), (char *)(curserv + COMM_MSG_HEADER_SIZE) ) == 0 )
 					{
-						if( servicesAdded == 0 )
-						{
-							BufStringAdd( nbs,  (const char *)checkedServer->id );
-						}
-						else
-						{
-							BufStringAdd( nbs, "," );
-							BufStringAdd( nbs, (const char *)checkedServer->id );
-						}
+						BufStringAdd( nbs, "," );
+						BufStringAdd( nbs, (const char *)checkedServer->id );
 						servicesAdded++;
 						break;
 					}
@@ -378,7 +407,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		
 		BufStringAdd( nbs, "] }" );
 		
-		//DEBUG("BEFORE SENDING %s\n", nbs->bs_Buffer );
+		DEBUG("BEFORE SENDING %s\n", nbs->bs_Buffer );
 		
 		//
 		// send data and release temporary used memory
@@ -398,22 +427,28 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		}
 		
 		//free( nbs );
-		
+		DataFormDelete( recvdf );
 		//HttpWriteAndFree( response );
+		DEBUG("Return services list!\n");
 		return response;
 	}	// list services
 	
-	HashmapElement *el =  HashmapGet( request->parsedPostContent, "serviceName" );
-	if( el != NULL )
+#define ELEMENT_NAME 0
+#define ELEMENT_COMMAND 1
+	
+	//HashmapElement *el =  HashmapGet( request->parsedPostContent, "Name" );
+	//if( el != NULL )
 	{
-		serviceName = (char *)el->data;
+		serviceName = urlpath[ ELEMENT_NAME ]; //el->data;
 		
 		Service *ls = fcm->fcm_ServiceManager->sm_Services;
 		while( ls != NULL )
 		{
+			DEBUG("Checking avaiable services %s pointer %x\n", ls->GetName(), ls );
 			if( strcmp( ls->GetName(), serviceName ) == 0 )
 			{
 				selService = ls;
+				INFO("ServiceFound\n");
 				break;
 			}
 			ls = (Service *)ls->node.mln_Succ;
@@ -422,12 +457,12 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 	
 	if( serviceName == NULL )
 	{
-		ERROR( "ServiceName not passed!\n" );
-		HttpAddTextContent( response, "{ \"ErrorMessage\": \"ServiceName argument missing!\"}" );
+		FERROR( "ServiceName not passed!\n" );
+		HttpAddTextContent( response, "{ \"response\": \"Name argument missing!\"}" );
 		//HttpWriteAndFree( response );
 		return response;
 	}
-	
+	/*
 	el =  HashmapGet( request->parsedPostContent, "status" );
 	if( el != NULL )
 	{
@@ -444,18 +479,29 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 				newStatus = SERVICE_PAUSED;
 			}
 		}
-	}
+	}*/
 	
 	if( selService == NULL || strlen(serviceName) <= 0 )
 	{
-		ERROR( "ServiceStatus not passed!\n" );
-		HttpAddTextContent( response, "{ \"ErrorMessage\": \"ServiceName argument missing or Service not found!\"}" );
+		FERROR( "ServiceStatus not passed!\n" );
+		HttpAddTextContent( response, "{ \"response\": \"Name argument missing or Service not found!\"}" );
 		//HttpWriteAndFree( response );
 		return response;
 	}
+	
 	int error = 0;
 	
-	if( strcmp( urlpath[ 0 ], "start" ) == 0 )
+	DEBUG("ServiceManager---------------------------------%s----servicename %s servicename from service %s\n", urlpath[0], serviceName, selService->GetName() );
+	
+	selService->s_WSI = request->h_WSocket;
+	
+	DEBUG( "Service Command OK %s !\n", urlpath[ ELEMENT_COMMAND ] );
+	
+	//
+	//
+	//
+	
+	if( strcmp( urlpath[ ELEMENT_COMMAND ], "start" ) == 0 )
 	{
 		if( selService->ServiceStart != NULL )
 		{
@@ -464,18 +510,49 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		}else{
 			error = 1;
 		}
-	}else if( strcmp( urlpath[ 0 ], "stop" ) == 0 )
+		
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "stop" ) == 0 )
 	{
 		if( selService->ServiceStop != NULL )
 		{
-			selService->ServiceStop( selService );	
+			HashmapElement *el;
+			char *data = NULL;
+			
+			el =  HashmapGet( request->parsedPostContent, "data" );
+			if( el != NULL )
+			{
+				data = el->data;
+			}
+			
+			selService->ServiceStop( selService, data );	
 		}else{
 			error = 1;
 		}
-	}else if( strcmp( urlpath[ 0 ], "pause" ) == 0 )
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "pause" ) == 0 )
 	{
 		error = 2;
-	}else if( strcmp( urlpath[ 0 ], "install" ) == 0 )
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "install" ) == 0 )
 	{
 		if( selService->ServiceInstall != NULL )
 		{
@@ -483,7 +560,15 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		}else{
 			error = 1;
 		}
-	}else if( strcmp( urlpath[ 0 ], "uninstall" ) == 0 )
+		
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "uninstall" ) == 0 )
 	{
 		if( selService->ServiceUninstall != NULL )
 		{
@@ -491,44 +576,79 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		}else{
 			error = 1;
 		}
-	}else if( strcmp( urlpath[ 0 ], "status" ) == 0 )
+		
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "status" ) == 0 )
 	{
+		int len;
+		
 		if( selService->ServiceGetStatus != NULL )
 		{
-			selService->ServiceGetStatus( selService );
+			selService->ServiceGetStatus( selService, &len );
 		}else{
 			error = 1;
 		}
-	}else if( strcmp( urlpath[ 0 ], "command" ) == 0 )
+		
+		HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "command" ) == 0 )
 	{
+		HashmapElement *el;
+		char *ret = NULL;
+		
 		el =  HashmapGet( request->parsedPostContent, "cmd" );
-		if( el != NULL )
+		if( el != NULL && el->data != NULL )
 		{
-			if( el->data != NULL )
+			char *cmd = el->data;
+			char *serv  = NULL;
+			
+			el =  HashmapGet( request->parsedPostContent, "servers" );
+			if( el != NULL && el->data != NULL )
 			{
-				//
-				// Check if service support command function
-				//
-				el =  HashmapGet( request->parsedPostContent, "cmd" );
-				
-				//if( selService->ServiceCommand != NULL && el != NULL )
-				{
-					// temporary call
-					selService->ServiceCommand( selService, "localhost", request->parsedPostContent );
-					//selService->ServiceCommand( selService, (char *)el->data );
-				}
-				/*
-				else
-				{
-					ERROR("Service do not support 'command' option or 'cmd' parameter is missing\n");
-				}*/
+				serv  = el->data;
+			}
+
+			if( serv == NULL )
+			{
+				// temporary call
+				ret = selService->ServiceCommand( selService, "ALL", cmd, request->parsedPostContent );
+			}
+			else
+			{
+				ret = selService->ServiceCommand( selService, serv, cmd, request->parsedPostContent );
+			}
+
+			if( ret != NULL )
+			{
+				HttpSetContent( response, ret, strlen( ret ) );
+			}
+			else
+			{
+				HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
 			}
 		}
 		else
 		{
 			error = 2;
 		}
-	}else if( strcmp( urlpath[ 0 ], "getwebgui" ) == 0 )
+	}
+	
+	//
+	//
+	//
+	
+	else if( strcmp( urlpath[ ELEMENT_COMMAND ], "getwebguii" ) == 0 )
 	{
 		DEBUG("GetWebGUI\n");
 		char *lresp = selService->ServiceGetWebGUI( selService );
@@ -541,47 +661,8 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		{
 			HttpAddTextContent( response, "<div> </div>" );
 		}
-		//HttpWriteAndFree( response );
-		return response;
 	}
-	
-	DEBUG( "Service Command OK %s !\n", urlpath[ 0 ] );
-	HttpAddTextContent( response, "{ \"Status\": \"ok\"}" );
-	//HttpWriteAndFree( response );
-	return response;
-	
-	/*
-	 * Http_t* response = HttpNewSimple( 
-			HTTP_200_OK, 4,
-			"Content-Type", StringDuplicate( "text/plain" ),
-			"Connection", StringDuplicate( "close" )
-		);
-		
-		HttpAddTextContent( response, "{ \"HELP\": \"commands: \n" 
-				"- user: \n" 
-				"\tcreate - create user in database\n" 
-				"\tlogin - login user to system\n"
-				"\tlogout - logout user from system\n\n"
-				"- module - run module\n\n"
-				"- device:\n"
-				"\tmount - mount device\n"
-				"\tunmount - unmount device\n\n"
-				"\tlist - list all mounted devices\n"
-				"\tlistsys - take all avaiable file systems\n"
-				"- file:\n"
-				"\tinfo - get information about file/directory\n"
-				"\tdir - get all files in directory\n"
-				"\trename - rename file or directory\n"
-				"\tdelete - delete all files or directory (and all data in directory)\n"
-				"\tmakedir - make new directory\n"
-				"\texec - run command\n"
-				"\tread - read bytes from file\n"
-				"\twrite - write files to file\n"
-				"\"}" );
-		
-		HttpWriteAndFree( response, sock );
-		result = 200;
-	 */
 
+	return response;
 }
 

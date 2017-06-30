@@ -1,21 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/**
+ * @file
+ *
+ * Body of  DOSDriver
+ *
+ * @author PS (Pawel Stefansky)
+ * @date created PS 2015
+ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -30,7 +42,7 @@
 #include <util/hashmap.h>
 #include <util/tagitem.h>
 #include <util/string.h>
-#include <user/userlibrary.h>
+#include <system/auth/authmodule.h>
 
 #include <system/handler/fsys.h>
 #include <util/buffered_string.h>
@@ -42,15 +54,19 @@
 
 void DOSDriverDelete( DOSDriver *ddrive );
 
-//
-// DOSDrive create
-//
-
+/**
+ * Function reads DOSDriver file from filesystem and create C representation
+ *
+ * @param sl pointer to SystemBase
+ * @param path path to file which represent DOSDriver
+ * @param name name of DOSDriver
+ * @return new DOSDriver structure when success, otherwise NULL
+ */
 DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 {
-	if( !sl || name == NULL || ( name != NULL && strlen( name ) < 4 ) )
+	if( !sl || name == NULL || ( name != NULL && strlen( name ) < 3 ) )
 	{
-		ERROR("Cannot create DOSDriver\n");
+		FERROR("Cannot create DOSDriver %s\n", name );
 		return NULL;
 	}
 	
@@ -111,7 +127,7 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 	
 		if( ddrive->dd_Handler == NULL )
 		{
-			//ERROR("[ERROR]: Handler not found %s, cannot create DOSDriver!\n");
+			//FERROR("[FERROR]: Handler not found %s, cannot create DOSDriver!\n");
 			sl->sl_Error = FSys_Error_NOFSAvaiable;
 			DOSDriverDelete( ddrive );
 			return NULL;
@@ -121,11 +137,11 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 	return ddrive;
 }
 
-//
-// delete DOSDriver
-//
-
-
+/**
+ * Function delete DOSDriver
+ *
+ * @param ddrive pointer to DOSDriver
+ */
 void DOSDriverDelete( DOSDriver *ddrive )
 {
 	if( ddrive != NULL )

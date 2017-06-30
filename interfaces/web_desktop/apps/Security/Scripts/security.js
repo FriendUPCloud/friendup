@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -26,6 +26,19 @@ Application.run = function( msg, iface )
 	} );
 	
 	this.mv = v;
+	
+	// Set menu items
+	v.setMenuItems( [
+		{
+			name: i18n( 'i18n_file' ),
+			items: [
+				{
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				}
+			]
+		}
+	] );
 	
 	v.onClose = function()
 	{
@@ -38,6 +51,7 @@ Application.run = function( msg, iface )
 		Permissions: i18n( 'i18n_permissions' ),
 		Cancel:      i18n('i18n_cancel')
 	};
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		v.setContent( data );

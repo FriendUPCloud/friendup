@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/mylibrary.library
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -I../ -I/usr/include/mysql/ -fPIC 
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -I../ -I/usr/include/mysql/ -fPIC 
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lmysqld -lstdc++ -lz -lpthread -laio -lrt -lcrypt
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

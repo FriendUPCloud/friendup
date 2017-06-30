@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/types.h>
 #include <service/service.h>
@@ -37,11 +41,17 @@
 #define VERSION 		1
 #define REVISION		0
 
+typedef struct ApacheService
+{
+	int					hs_PID;
+	FThread			*hs_Thread;
+}ApacheService;
+
 //
 // Creste new service
 //
 
-Service *ServiceNew( char *command )
+Service *ServiceNew( void *sysbase, char *command )
 {
 	Service *service = NULL;
 	
@@ -58,7 +68,12 @@ Service *ServiceNew( char *command )
 			}
 		}
 		
-		//service->s_Buffer = calloc( SERVICE_BUFFER_MAX, sizeof(BYTE) );
+		ApacheService *hs = calloc( 1, sizeof( ApacheService ) );
+		if( hs != NULL )
+		{
+			service->s_SpecialData = hs;
+		}
+		
 		service->s_State = SERVICE_STOPPED;
 	}
 	
@@ -73,9 +88,13 @@ void ServiceDelete( Service *s )
 {
 	if( s )
 	{
-		
 		if( s->s_Command )
 		{
+			if( s->s_SpecialData != NULL )
+			{
+				free( s->s_SpecialData );
+			}
+			
 			free( s->s_Command );
 			s->s_Command = NULL;
 		}
@@ -84,15 +103,75 @@ void ServiceDelete( Service *s )
 	}
 }
 
+
+//
+// Start Service
+//
+
+int thread( FThread *t )
+{
+	char data[ 2048 ];
+	
+	Service *s = (Service *)t->t_Data;
+	ApacheService *hs = (ApacheService *)s->s_SpecialData;
+	//pthread_t ptid = pthread_self();
+	hs->hs_PID = (int) getpid();
+	
+	DEBUG("Before launch THREAD PID %d\n", hs->hs_PID );
+	FILE* file = popen("/etc/init.d/apache2 start 2>&1", "r");
+	if( file )
+	{
+		unsigned char *buf;
+		
+		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + 2048 +LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+		if( buf != NULL )
+		{
+			
+			//DEBUG1("[WS]:Wrote to websockets %d, string %s size %d\n", n, response->content, strlen( response->content ) );
+			//n = lws_write( wsi,  response->content, response->sizeOfContent, LWS_WRITE_TEXT);
+
+			while( ( fgets( data, 2048, file ) ) != NULL )
+			{
+				
+				printf("100%s \n", data );
+				if( s->s_WSI != NULL )
+				{
+					int len = strlen( data );
+					
+					DEBUG1( "Apache service WS pointer %p\n", s->s_WSI ); 
+					
+					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, data,  len );
+					int n = lws_write( s->s_WSI, buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT);
+					
+					DEBUG1("Wrote to websockets %d bytes\n", n );
+				}
+				else
+				{
+					DEBUG1("Websockets context not provided to NodeJS service, output is going to null\n");
+				}
+			}
+			FFree( buf );
+		}
+		pclose( file );
+	}
+	
+	t->t_Launched = FALSE;
+	
+	return 0;
+}
+
 //
 // Start Service
 //
 
 int ServiceStart( Service *service )
 {
-	system( "/etc/init.d/apache2 start" );
-
-	service->s_State = SERVICE_STARTED;
+	ApacheService *hs = (ApacheService *)service->s_SpecialData;
+	//if( hs->hs_PID == 0 )
+ 	DEBUG("Start apache service\n");
+	{
+		hs->hs_Thread = ThreadNew( thread, service, TRUE );
+	}
 	
 	return 0;
 }
@@ -101,9 +180,13 @@ int ServiceStart( Service *service )
 // Stop Service
 //
 
-int ServiceStop( Service *service )
+int ServiceStop( Service *service, char *data )
 {
+	ApacheService *hs = (ApacheService *)service->s_SpecialData;
+	
 	system( "/etc/init.d/apache2 stop" );
+	
+	ThreadCancel( hs->hs_Thread, TRUE );
 	
 	service->s_State = SERVICE_STOPPED;
 	
@@ -116,7 +199,7 @@ int ServiceStop( Service *service )
 
 #define DATA_SIZE 1024
 
-int ServiceGetStatus( Service *service )
+char *ServiceGetStatus( Service *service, int *len )
 {
 	FILE *pf;
 	char data[ DATA_SIZE ];
@@ -128,8 +211,8 @@ int ServiceGetStatus( Service *service )
  
 	if( !pf )
 	{
-		ERROR( "Could not open pipe for output.\n");
-		return 0;
+		FERROR( "Could not open pipe for output.\n");
+		return NULL;
 	}
  
 	// Grab data from process execution
@@ -144,11 +227,27 @@ int ServiceGetStatus( Service *service )
 
     if( pclose(pf) != 0 )
 	{
-		ERROR(" Error: Failed to close command stream \n");
-		return 0;
+		FERROR(" Error: Failed to close command stream \n");
+		return NULL;
 	}
+	
+	char *status = FCalloc( 256, sizeof( char ) );
+	
+	switch( service->s_State )
+	{
+		case SERVICE_STOPPED:
+			strcpy( status, "stopped" );
+			break;
+		case SERVICE_STARTED:
+			strcpy( status, "started" );
+			break;
+		case SERVICE_PAUSED:
+			strcpy( status, "paused" );
+			break;
+	}
+	*len = strlen( status );
     
-	return service->s_State;
+	return status;
 }
 
 //
@@ -184,7 +283,7 @@ char *ServiceRun( struct Service *s )
 // Service command
 //
 
-char *ServiceCommand( struct Service *s, const char *cmd )
+char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hashmap *params )
 {
 
 	return NULL;
@@ -212,12 +311,12 @@ char *ServiceGetWebGUI( struct Service *s )
 // version/revision/name
 //
 
-ULONG GetVersion(void)
+FULONG GetVersion(void)
 {
 	return VERSION;
 }
 
-ULONG GetRevision(void)
+FULONG GetRevision(void)
 {
 	return REVISION;
 }

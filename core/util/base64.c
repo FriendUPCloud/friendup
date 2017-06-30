@@ -1,16 +1,34 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 
 
-/*
- * 
- * 
- * 
- */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <util/log/log.h>
 #include "util/base64.h"
+#include <core/types.h>
+#include <string.h>
 
 
 //                   0000000000000000111111111111111122222222222222223333333333333333
@@ -36,7 +54,7 @@ static int mod_table[] = { 0, 2, 1 };
 
 void build_decoding_table()
 {
-	decoding_table = calloc( 1, 256 );
+	decoding_table = FCalloc( 1, 256 );
 	
     for( int i = 0; i < 64; i++ )
 	{
@@ -50,7 +68,7 @@ void build_decoding_table()
 
 void base64_cleanup()
 {
-    free( decoding_table );
+    FFree( decoding_table );
     decoding_table = NULL;
 }
 
@@ -58,21 +76,20 @@ void base64_cleanup()
 //
 //
 
-char* Base64Encode( const unsigned char* data, int length )
+char *Base64Encode( const unsigned char* data, int length )
 {
-	int outSize = ceil( (float)length / 3.0f ) * 4;
+	int outSize = (int)ceil( (float)length / 3.0f ) << 2;
 	int reminder = length % 3;
 	int padding = reminder ? 3 - reminder : 0;
 	int encSize = outSize - padding;
 
-	unsigned char c1, c2, c3;
-	c1 = c2 = c3 = 0;
+	unsigned char c1 = 0, c2 = 0, c3 = 0;
 	int j = 0, i;
 
-	char* encoded = calloc( outSize + 1, sizeof(char) );
+	char* encoded = FCalloc( outSize + 1, sizeof( char ) );
 	if( encoded == NULL )
 	{
-		ERROR("Cannot allocate memory in Base64Encode\n");
+		FERROR("Cannot allocate memory in Base64Encode\n");
 		return NULL;
 	}
 
@@ -107,29 +124,54 @@ char* Base64Encode( const unsigned char* data, int length )
 	return encoded;
 }
 
+// Single argument version
+char *Base64EncodeString( const unsigned char *chr )
+{
+	return Base64Encode( chr, strlen( chr ) );
+}
+
+// Mark the base64 encoded string and return it
+char *MarkAndBase64EncodeString( const char *chr )
+{
+	char *str = Base64EncodeString( (const unsigned char *)chr );
+	// 13 length <!--base64-->, +1 for terminator
+	char *fin = FCalloc( strlen( str ) + 14, sizeof( char ) );
+	if( fin != NULL )
+	{
+		sprintf( fin, "%s%s", "<!--base64-->", str );
+		FFree( str );
+		return fin;
+	}
+	FFree( str );
+	return NULL;
+}
+
 //
 //
 //
 
 /* Unstable code! Please test! */
-char* Base64Decode( const unsigned char* data, int length, int *finalLength )
+char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 {
 	if( decoding_table == NULL ) build_decoding_table();
 
 	if( length % 4 != 0 )
 	{
-		ERROR("Cannot decode entry, beacouse size is incorect\n");
+		FERROR("Cannot decode entry, beacouse size is incorect\n");
 		return NULL;
 	}
 
-	int output_length = length / 4 * 3;
+	// Length / 4 * 3
+	int output_length = ( ( ( length >> 4 ) + ( length >> 4 ) ) );
+	output_length += output_length << 1;
     
 	if( data[ length - 1 ] == '=' ) ( output_length )--;
 	if( data[ length - 2 ] == '=' ) ( output_length )--;
 
-	unsigned char *decoded_data = calloc( 1, output_length + 1 );
+	unsigned char *decoded_data = FCalloc( output_length + 1, sizeof( char ) );
     
 	if( decoded_data == NULL ) return NULL;
+
 
 	for( int i = 0, j = 0; i < length; )
 	{
@@ -138,14 +180,14 @@ char* Base64Decode( const unsigned char* data, int length, int *finalLength )
 		unsigned long long sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
 		unsigned long long sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
 
-		unsigned long long triple =   ( sextet_a << 3 * 6 )
-									+ ( sextet_b << 2 * 6 )
-									+ ( sextet_c << 1 * 6 )
-									+ ( sextet_d << 0 * 6 );
+		unsigned long long triple =   ( sextet_a << 18 )  // 3 * 6
+									+ ( sextet_b << 12 )  // 2 * 6
+									+ ( sextet_c << 6  )  // 1 * 6
+									+ ( sextet_d       ); // 0 * 6
 
-		if( j < output_length) decoded_data[j++] = (triple >> 2 * 8 ) & 0xFF;
-		if( j < output_length) decoded_data[j++] = (triple >> 1 * 8 ) & 0xFF;
-		if( j < output_length) decoded_data[j++] = (triple >> 0 * 8 ) & 0xFF;
+		if( j < output_length) decoded_data[j++] = (triple >> 16 ) & 0xFF; // 2 * 8
+		if( j < output_length) decoded_data[j++] = (triple >> 8  ) & 0xFF; // 1 * 8
+		if( j < output_length) decoded_data[j++] = (triple       ) & 0xFF; // 0 * 8
 	}
 	
 	*finalLength = output_length;

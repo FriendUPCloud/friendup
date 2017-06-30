@@ -6,9 +6,12 @@ i18n_Builtin_Label_Ram_disk          : Ramluke
 i18n_Builtin_Label_Home              : Hjem
 i18n_Builtin_Label_System            : System
 
+i18n_leave_question                  : Du er i ferd med å forlate FriendUP Workspace. Dette vil avslutte din økt for nå.
+
 #Built-in preferences
 
 i18n_install_application             : Installerer programmet
+i18n_security_domain                 : Sikkerhetsdomene
 i18n_appearance                      : Utseende
 i18n_screens                         : Skjermer
 i18n_wallpaper                       : Skrivebordsbakgrunn
@@ -16,7 +19,14 @@ i18n_printers                        : Printere
 i18n_network                         : Nettverk
 i18n_language                        : Språk
 i18n_bookmarks                       : Bokmerker
+i18n_bookmarks_add                   : Legg til
+i18n_bookmarks_close                 : Lukk
+i18n_bookmarks_select                : Velg
+i18n_bookmarks_remove                : Fjern
+i18n_empty_view                      : Tom liste
+i18n_no_bookmarks                    : Du har ingen bokmerker.
 i18n_desklets                        : Skrivebordselementer
+i18n_software                        : Programvare
 i18n_sound                           : Lyd
 i18n_keyboard                        : Tastatur
 i18n_input                           : Mus og styre-enheter
@@ -25,6 +35,38 @@ i18n_useraccounts                    : Brukerkontoer
 i18n_datetime                        : Dato og tid
 i18n_docksettings                    : Dockmeny
 i18n_security                        : Sikkerhet
+i18n_datetime                        : Dato og tid
+i18n_docksettings                    : Program meny
+i18n_security                        : Sikkerhet
+i18n_mimetypes                       : Mimetyper
+i18n_account                         : Kontoinstillinger
+i18n_affirmative                     : Aksepter
+i18n_yes                             : Ja
+i18n_negative                        : Nei
+i18n_looknfeel                       : Utseende
+i18n_startup_sequence                : Oppstartsekvens
+i18n_cancel                          : Avbryt
+i18n_accept                          : Aksepter
+i18n_understood                      : Forstått
+
+i18n_disk_icon                       : Diskikon
+i18n_choose_disk                     : Velg disk
+i18n_run_application                 : Start app
+
+i18n_driver_handled                  : DOS driver håndtert
+
+i18n_system_version                  : System versjon
+i18n_system_version_num              : Release candidate 1
+
+i18n_notification_archive               : Varselsarkiv
+i18n_sure_remove_notification           : Ønsker du virkelig å gjerne varsel?
+i18n_sure_remove_notification_desc      : Dette er arkiverte varsler. Når du fjerner dem, fjernes de også fra minnet.
+i18n_system_message                     : Systemmelding
+
+#Tools
+i18n_processmgr                         : Prosesser
+i18n_applicationmgr                     : Applikasjoner
+i18n_sysdiag                            : Systemdiagnostikk
 
 i18n_continue                        : Fortsett
 i18n_couldnotinstallapp              : Kunne ikke installere programmet.
@@ -34,9 +76,22 @@ i18n_new_container                   : Ny container
 i18n_create_container                : Lag container
 i18n_name                            : Navn
 i18n_make_a_new_container            : Lag en ny container
+i18n_error_could_not_list_directory  : Kunne ikke laste inn innholdet
 
-i18n_mountlist                          : Monteringspunkt
+i18n_error                              : Feil
+i18n_could_not_run_jsx                  : Kunne ikke kjøre JSX.
+
+i18n_disk_catalog                          : Disk katalog
 i18n_items_total                        : elementer
+
+i18n_port                               : Port
+i18n_key                                : Nøkkel
+
+i18n_package_installed                  : Pakken ble installert
+i18n_package                            : Pakken
+i18n_was_installed                      : ble installert
+i18n_failed_install_package             : Kunne ikke installere
+i18n_package_failed                     : Denne pakken kunne ikke installeres
 
 i18n_Storage_Local_Read_desc            : Lesetilgang, lokale disker
 i18n_Storage_Local_Write_desc           : Skrivetilgang, lokale disker
@@ -49,6 +104,8 @@ i18n_Storage_Ramdisk_Write_desc         : Skrivetilgang, Ram Disk
 i18n_Storage_Ramdisk_Read/Write_desc    : Lese/skrive-tilgang, Ram Disk
 i18n_Module_System_desc                 : Tilgang til basisfunksjoner
 
+i18n_connect_network_drive              : Koble til nettverksdisk
+
 i18n_your_command                       : Din kommando
 
 #Default doors
@@ -56,6 +113,15 @@ i18n_door_home                          : Hjem
 
 please_choose_an_icon                   : Vennligst velg et ikon.
 about_friendup                          : Om FriendUP
+information                             : Info og oppdateringer
+documentation_central                   : Dokumentasjonssentralen
+software_catalog                        : Programvarekatalog
+clear_cache                             : Tøm mellomlager
+documentation_on                        : Dokumentasjon om
+i18n_sharewith                          : Del med
+i18n_sharename                          : Del navn
+my_account                              : Min konto
+i18n_account_setup                      : Min konto - oppsett
 
 #Default directorys for applications
 i18n_directory_Games                    : Spill
@@ -68,16 +134,30 @@ i18n_directory_System                   : System
 i18n_directory_Functions                : Funksjoner
 i18n_directory_Triggers                 : Triggere
 
+i18n_directory_DocApps                  : Dokumentasjon/Programmer
+
 i18n_directory_Documentation            : Dokumentasjon
-i18n_directory_Applications             : Applikasjoner
+i18n_directory_Software                 : Programmer
 i18n_directory_Modules                  : Moduler
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Innstillinger
 i18n_directory_Tools                    : Verktøy
+i18n_directory_Devices                  : Enheter
+i18n_directory_Libraries                : Bibloteker
+
+#Devices
+
+i18n_dosdrivers                         : DOS Drivere
+i18n_cores                              : Kjerner
+i18n_clients                            : Økter
+i18n_printers                           : Printere
 
 #Menu
 
-menu_doors                              : Doors
+i18n_close_menu                         : Lukk meny
+
+menu_workspace                          : Workspace
+menu_system                             : System
 menu_new_shell                          : Ny terminal
 menu_about_friendup                     : Om Friend UP
 menu_refresh_desktop                    : Frisk opp
@@ -85,20 +165,364 @@ menu_run_command                        : Kjør kommando
 menu_show_launcher                      : Vis Launcher
 menu_hide_launcher                      : Gjem Launcher
 menu_log_out                            : Logg ut
+menu_exit								: Avslutt FriendUP
+menu_execute_command                    : Kjør kommando
+menu_upload_file                        : Last opp fil
+menu_snapshot                           : Memoriser
+menu_snapshot_all                       : Memoriser alle vindu
+menu_bookmarks                          : Bokmerker
+menu_add_bookmark                       : Nytt bokmerke
+menu_mount_filesystem                   : Disk katalog
+menu_unmount_filesystem                 : Koble fra disk
+menu_hide_active_view                   : Gjem aktivt vindu
+menu_hide_all_views                  	: Gjem alle vindu
+menu_hide_inactive_views                : Gjem inaktive vindu
+menu_zip                                : Komprimer fil(er)
+menu_unzip                              : Dekomprimer fil(er)
+menu_looknfeel                          : Utseende
+menu_backdrop                           : Vis oversikt
+
+menu_edit_wallpaper                     : Endre skrivebordsbakgrunn
+i18n_edit_dock                          : Rediger docken
+
+i18n_choose_file_to_upload              : Velg fil for opplastning
+i18n_upload_target                      : Målsti
+i18n_browse                             : Utforsk
+i18n_upload_the_file                    : Start opplasting
+i18n_file_upload                        : Filopplasting
+
+i18n_unzip_completed                    : Ferdig å pakke ut.
+i18n_unzip_comdesc                      : Systemet fullførte utpakkingen av filen(e)
+i18n_unzip_failed                       : Kunne ikke pakke ut.
+i18n_unzip_failed_desc                  : Systemet kunne ikke fullføre utpakking av filen(e)
+i18n_zip_not_completed                  : Pakking feilet.
+i18n_zip_not_comdesc                    : Systemet kunne ikke fullføre pakkingen av filen(e)
+
+i18n_zip_completed                      : Pakkingen fullført.
+i18n_zip_comdesc                        : Systemet fullførte pakkingen av filen(e).
+
+i18n_unzip_start                        : Starter utpakking.
+i18n_unzip_startdesc                    : Systemet pakker ut filen(e).
+
+i18n_zip_start                          : Pakker filer.
+i18n_zip_startdesc                      : Systemet pakker filen(e).
+
+cmd_execute                             : Kjør
 
 menu_window                             : Vindu
+menu_refresh_directory                  : Frisk opp
 menu_open_directory                     : Åpne mappe
+menu_open_parent_directory              : Åpne overliggende vindu
 menu_show_as                            : Vis som
 menu_show_as_icons                      : Ikoner
 menu_show_as_list                       : Liste
+menu_show_as_columns                    : Kolonner
 menu_close_window                       : Lukk
-menu_fullscreen                         : Toggle fullscreen
+menu_fullscreen                         : Fullskjerm
 
-menu_icons                              : Ikoner
+i18n_create_web_link                    : Create a new web link
+i18n_link                               : Lenke
+i18n_broken_link                        : Ødelagt lenke
+i18n_broken_link_desc                   : Lenken i .url filen er ødelagt, eller filen er korrupt.
+i18n_follow_link                        : Åpne web lenke
+i18n_open_link                          : Gå til
+i18n_follow_link_desc                   : Klikk på lenken under for å gå til lenken
+
+menu_icons                              : Handlinger
 menu_new_directory                      : Ny mappe
+menu_new_weblink                        : Ny web lenke
 menu_show_icon_information              : Vis informasjon
 menu_edit_filename                      : Endre navn
 menu_delete                             : Slett
+i18n_sure_delete                        : Er du sikker på at du ønsker å slette filene?
+i18n_sure_deldesc                       : Filene eller mappene du ønsker å slette gjenopprettes ikke uten videre. Ønsker du fortsatt å slette disse?
 
 menu_tools                              : Verktøy
+menu_edit                               : Rediger
+menu_clear_clipboard                    : Tøm utklippstable
+
+menu_file								: Fil
+menu_copy								: Kopier
+menu_cut								: Klipp ut
+menu_paste								: Lim inn
+
+menu_manage_disks                       : Rediger disker
+
+menu_workspheres                        : Work Spheres
+i18n_worksphere_all                     : All Work Spheres
+i18n_worksphere_add                     : Add Work Sphere
+
+#Applications ------------------------------------------------------------------
+install_question_mintitle               : Installer program
+install_question_title                  : Program funnet, men ikke installert
+install_question_desc                   : Programmet ble funnet, men er ikke installert. Ønsker du å installere nå?
+install_button                          : Installer
+install_cancel                          : Ikke nå
+application_permissions_change          : Endre program rettigheter
+activate_application                    : Aktiver program
+activate_disk                           : Aktiver enhetstillatelser
+disk_activation_head                    : Aktiver enhetstillatelser
+disk_activation_desc                    : For å bruke denne disken til å kjøre programmer må den aktiveres. Vennligst godkjenn de følgende rettighetene for å gå videre.
+app_activation_head                     : Aktiver program
+app_activation_head_permissions         : Sett program rettigheter
+app_activation_desc                     : For å bruke denne applikasjonen må du aktivere det. Vennligst godkjenn de følgende rettighetene for å gå videre.
+app_activation_desc_alter               : Systemet ønsker å endre rettighetene for dette programmet. Vennligst kryss av rettighetene for å godkjenne endringene.
+app_authorization_button                : Godkjenn endringene
+app_activation_button                   : Aktiver nå
+app_activation_abort                    : Avbryt
+grant_door_access                       : Gi tilgang nå
+all_filesystems                         : alle filsystemer
+grant_module_access                     : Gi tilgang til modul
+grant_service_access                    : Gi tilgang til tjeneste
+failed_application_activation           : Kunne ikke aktivere program.
+no_activation_fields_checked            : Du godkjente ikke rettighetene. Vennligst sjekk rettighetslisten.
+application_not_found                   : Kunne ikke finne programmet. Er det installert?
+application_not_signed                  : Programmet er ikke signert. Vennligst reinstaller programmet.
+application_not_validated               : Programmet er ikke godkjent. Vennligst fjern pakken og reinstaller den riktige pakken.
+
+#Icon info ---------------------------------------------------------------------
+
+i18n_icon_information                   : Ikoninformasjon
+i18n_volumeicon_information             : Enhetsinformasjon
+i18n_volume_name                        : Disknavn
+i18n_volume_size                        : Diskstørrelse
+i18n_protection                         : Rettigheter
+i18n_used_space                         : brukt
+i18n_filename                           : Filnavn
+i18n_permissions                        : Rettigheter
+i18n_filesize                           : Filstørrelse
+i18n_public_file                        : Public file
+i18n_public_link                        : Public url
+i18n_close                              : Lukk
+i18n_file_information                   : Generelt
+i18n_file_permissions                   : Filrettigheter
+i18n_meta_information                   : Filinformasjon
+i18n_click_to_copy                      : Klikk for å kopiere til utklippstavle
+i18n_total_listed                       : ikoner listet med totalt 
+i18n_add_attribute                      : Nytt attributt
+i18n_field_info                         : Feltdata
+i18n_info_fields                        : Datafelter
+i18n_edit_attribute                     : Rediger attributt
+i18n_icon_image                         : Ikonbilde
+i18n_no_field_information               : Ingen attributtdata tilgjengelig.
+i18n_non_compatible_field_information   : Kan ikke vise forhåndsvisning.
+
+#File dialogs ------------------------------------------------------------------
+
+file_load                               : Last inn
+file_abort                              : Lukk
+file_save                               : Lagre
+file_open_title                         : Last inn en fil
+file_open_path                          : Velg sti
+file_save_title                         : Lagre en fil
+file_unknown_title                      : Ukjent filoperasjon
+i18n_directory                          : Mappe
+information_of_icon                     : Informasjon om
+owner                                   : Eier
+group                                   : Gruppe
+others                                  : Andre
+readable                                : Les
+writable                                : Skriv
+deletable                               : Slett
+executable                              : Kjør
+i18n_save                               : Lagre
+i18n_notes                              : Notater
+rename_file                             : Endre filnavn
+new_name                                : Nytt navn
+i18n_read_only_filesystem               : Kan ikke skrive til filsystemet
+i18n_read_only_fs_desc                  : Filsystemet du prøver å skrive til er skrivebeskyttet eller støtter ikke skriving.
+
+#File operations ---------------------------------------------------------------
+
+i18n_cancel                             : Avbryt
+i18n_moving_files                       : Flytt filer
+i18n_copying_files                      : Kopier filer
+
+i18n_delete_operation                   : Sletting av fil(er)
+i18n_could_not_delete_files             : Kunne ikke slette fil(er).
+i18n_copy_operation                     : Copiering av fil(er)
+i18n_could_not_copy_files               : Kunne ikke kopiere fil(er).
+i18n_rename_operation                   : Navnendring av fil
+i18n_could_not_rename_file              : Kunne ikke endre navnet på filen
+i18n_stat_operation                     : Informasjon om fil(er)
+i18n_could_not_stat_file                : Kunne ikke få informasjon om fil(er).
+i18n_protect_operation                  : Endring av filrettighet(er)
+i18n_could_not_protect_files            : Kunne ikke endre filrettighet(ene).
+i18n_makedir_operation                  : Oppretting av mappe
+i18n_could_not_make_dir                 : Kunne ikke opprette mappen.
+i18n_volume_information                 : Enhetsinformasjon
+i18n_volume_permissions                 : Enhetsrettigheter
+i18n_drag_to_download_file              : Clikk eller dra og slipp på din desktop.
+
+#Misc --------------------------------------------------------------------------
+
+Shell output : Terminal utskrift
+Running tasks : Kjørende prosesser
+i18n_read_only                          : Kun lese
+i18n_task_running                       : oppgave kjører
+i18n_tasks_running                      : oppgaver kjører
+i18n_visible                            : Visible
+i18n_network_activity                   : Network activity
+i18n_today                              : I dag
+i18n_notifications                      : varsler
+i18n_notification                       : varsel
+i18n_devices_and_capabilities           : Enheter og kapabilitet
+i18n_webcam_disabled                    : Frakoblet
+i18n_webcam_enabled                     : Tilkoblet
+i18n_testing_camera                     : Webkamera test
+i18n_testing_camera_desc                : Tester om kameraet er tilgjengelig og tilkoblet.
+
+i18n_active_network_connections         : Aktive tilkoblinger
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norsk
+i18n_locale_en                          : Engelsk
+i18n_locale_de                          : Tysk
+i18n_locale_nl                          : Nederlandsk
+
+#Search ------------------------------------------------------------------------
+
+i18n_case_sensitive                     : Versalsensitiv
+i18n_search_do                          : Søk
+i18n_search_path_button                 : Velg sti
+i18n_search_files                       : Søk etter filer
+i18n_search_keywords                    : Søkeord...
+i18n_search_path                        : Søkesti...
+i18n_select_path_to_search              : Velg søkesti
+i18n_search_stop                        : Stopp søk
+i18n_search_type_Door                   : enhet
+i18n_search_type_Directory              : mappe
+i18n_search_type_File                   : fil
+
+#Directory view ----------------------------------------------------------------
+
+i18n_dir_btn_root                       : Rotsti
+i18n_dir_btn_up                         : Opp
+i18n_dir_btn_back                       : Tilbake
+i18n_dir_btn_forward                    : Forover
+i18n_dir_btn_reload                     : Frisk opp
+i18n_dir_btn_search                     : Søk
+
+#Sessions ----------------------------------------------------------------------
+
+i18n_no_other_sessions_available        : Ingen andre økter tilgjengelige
+i18n_no_sessions_available              : Ingen økter tilgjengelige
+i18n_active_session_list                : Andre aktive enheter
+i18n_are_you_sure                       : Er du sikker?
+i18n_sure_you_want_terminate_session    : Er du sikker på at du ønsker å avslutte denne økten?
+
+#Calendar ----------------------------------------------------------------------
+
+i18n_event_overview                     : Kalender oversikt
+i18n_calendar_events                    : Hendelser for dato
+i18n_no_events_on_day                   : Ingen hendelser på denne datoen.
+i18n_no_events_day_description          : Du har ingen hendelser registrert på denne datoen. Legg til en eller synkroniser med dine eksisterende kalender kilder.
+
+i18n_cal_evt_title                      : Hendelse tittel
+i18n_cal_evt_title_what                 : Din tittel
+i18n_cal_evt_time_to                    : Tid til
+i18n_cal_evt_time_from                  : Tid fra
+i18n_cal_evt_description                : Beskriv hendelsen
+i18n_cal_btn_add                        : Lagre hendelse
+i18n_from                               : Fra
+i18n_to                                 : Til
+
+i18n_evt_added                          : Kalender oppdatert
+i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.
+i18n_evt_delete_desc                    : Dette vil slette kalender hendelsen.
+i18n_evt_delete_failed                  : Kunne ikke slette
+i18n_evt_delete_failed_desc             : Kunne ikke slette din kalender hendelse.
+
+month_january                           : januar
+month_february                          : februar
+month_march                             : mars
+month_april                             : april
+month_may                               : mai
+month_june                              : juni
+month_july                              : juli
+month_august                            : august
+month_september                         : september
+month_october                           : oktober
+month_november                          : november
+month_december                          : desember
+
+i18n_day_mon                            : man
+i18n_day_tue                            : tir
+i18n_day_wed                            : ons
+i18n_day_thu                            : tor
+i18n_day_fri                            : fre
+i18n_day_sat                            : lør
+i18n_day_sun                            : søn
+
+i18n_server_disconnected                : Frakoblet
+i18n_copy_to_system_clipboard           : Vil du overføre din Friend utklippstavle til systemet ditt?
+i18n_copy_to_system_clipboard_headline  : Overfør utklippstavle til systemet
+
+#File types --------------------------------------------------------------------
+
+i18n_filename                           : Filnavn
+i18n_size                               : Størrelse
+i18n_date                               : Dato
+i18n_type                               : Type
+
+i18n_directory                          : Mappe
+i18n_filetype_jpg                       : JPEG bilde
+i18n_filetype_png                       : PNG bilde
+i18n_filetype_gif                       : GIF bilde
+i18n_filetype_bmp                       : BMP bilde
+i18n_filetype_avi                       : AVI film
+i18n_filetype_flv                       : FLV film
+i18n_filetype_mov                       : MOV film
+i18n_filetype_mpg                       : MPG film
+i18n_filetype_webm                      : Webm film
+i18n_filetype_ogg                       : OGG film
+i18n_filetype_odt                       : Open office dokument
+i18n_filetype_rtf                       : Rich text dokument
+i18n_filetype_doc                       : Word dokument
+i18n_filetype_docx                      : Word dokument
+i18n_filetype_ppt                       : Power point
+i18n_filetype_mod                       : Protracker modul
+i18n_filetype_s3m                       : Screamtracker modul
+i18n_filetype_zip                       : Zip arkiv
+i18n_filetype_tgz                       : Gzippet tar arkiv
+i18n_filetype_gz                        : Gzip arkiv
+i18n_filetype_sit                       : Sit Mac arkiv
+i18n_filetype_rar                       : Rar arkiv
+i18n_filetype_dmg                       : DMG disk arkiv
+i18n_filetype_adf                       : Amiga disk fil
+i18n_filetype_dms                       : Disk masher fil
+i18n_filetype_gitignore                 : Git ignorer fil
+i18n_filetype_jsx                       : Kjørbar javascript
+i18n_filetype_js                        : Javascript
+i18n_filetype_php                       : PHP skript
+i18n_filetype_h                         : C pragma fil
+i18n_filetype_c                         : C kode
+i18n_filetype_md                        : Markdown tekst
+i18n_filetype_manifest                  : Manifest fil
+i18n_filetype_txt                       : Ren tekst
+i18n_filetype_html                      : Hypertekst dokument
+i18n_filetype_css                       : Stilark
+i18n_filetype_readme                    : Dokumentasjon
+i18n_filetype_mid                       : Midi musikk
+i18n_filetype_py                        : Python skript
+i18n_filetype_library                   : Friend bibliotek
+i18n_filetype_module                    : Friend modul
+i18n_filetype_file                      : Binær fil
+i18n_filetype_executable                : Kjørbar fil 
+i18n_filetype_meta                      : Metafil
+i18n_filetype_pov                       : POV-Ray prosjekt
+i18n_filetype_pdf                       : PDF dokument
+i18n_filetype_otf                       : Open type font
+i18n_filetype_woff                      : Web font
+i18n_filetype_ttf                       : True type font
+i18n_filetype_odp                       : Open office presentasjon
+i18n_filetype_mp3                       : MP3 lydfil
+i18n_filetype_flac                      : FLAC lydfil
+i18n_filetype_wav                       : WAV lydfil
+i18n_filetype_mp4                       : MP4 film
+i18n_filetype_svg                       : Skalerbar vektor grafikk
+i18n_filetype_ogv                       : Ogg Vorbis video
+i18n_filetype_run                       : Friend script
+
 

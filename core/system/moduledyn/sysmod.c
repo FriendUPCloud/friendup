@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/library.h>
 #include <stdio.h>
@@ -32,12 +36,12 @@
 FILE *popen( const char *c, const char *v );
 //void pclose( FILE *f );
 
-char *Run( struct EModule *mod, const char *path, const char *args )
+char *Run( struct EModule *mod, const char *path, const char *args, FULONG *length )
 {
 
 	DEBUG("SYS mod run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 	int siz = strlen( args ) + strlen( path ) + 128;
 	char *command = (char *)MakeString( siz );
 	char *temp = NULL;
@@ -108,7 +112,7 @@ char *Run( struct EModule *mod, const char *path, const char *args )
     				temp = NULL;
     			}
     		}
-    		//res += (ULONG)size;
+    		//res += (FULONG)size;
     	}
     }
     pclose( pipe );

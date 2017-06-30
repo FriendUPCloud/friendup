@@ -1,21 +1,173 @@
-
-	<script src="/webclient/js/io/cajax.js"></script>
-	<script src="Progdir:Scripts/mygui.js"></script>
-
-	<link rel="stylesheet" href="Progdir:Stylesheets/gui.css"/>
-	<div class="ContentFull">
-		<div class="VContentTop TopContainer">
-			<div class="HContentLeft HContent30 VContent100 BackgroundLists Padding ScrollableY" id="Services">
-			
-			</div>
-			<div class="HContentRight HContent70 VContent100 BackgroundDefault Padding" id="Settings">
+<html>
+<head>
+	<script src="/webclient/js/apps/api.js"></script>
+	<script src="/webclient/js/gui/template.js"></script>
+	<script src="Progdir:Scripts/mainView.js"></script>
+	<link rel="stylesheet" href="Progdir:CSS/flex.css"/>
+	<link rel="stylesheet" href="Progdir:CSS/main.css"/>
+</head>
+<body>
+	<div id="content" class="bar column">
+		<div id="services" class="expand">
+			<div id="list" class="ZebraList Interactive">
 				
 			</div>
 		</div>
-		
+		<div id="info" class="fortify">
+			<div class="service-info">
+			</div>
+		</div>
+		<div id="actions" class="hidden">
+			
+		</div>
+		<!--
+			stuff for manually sending events over ws
+		-->
+		<div id="send-event" class="hidden fortify">
+			<form id="input-form" class="fortify">
+				<div id="inputs">
+					<div id="type">
+						<div class="top-pad">
+							Type
+						</div>
+						<div id="type-radios" class="top-pad bar column">
+							<div class="radio">
+								<input type="radio" name="type" id="event" value="event" checked="true"/>
+								<label for="event">
+									Event
+								</label>
+							</div>
+							<div class="radio">
+								<input type="radio" name="type" id="request" value="request"/>
+								<label for="request">
+									Request
+								</label>
+							</div>
+						</div>
+					</div>
+					<div class="top-pad group row">
+						<label class="fortify">
+							Path
+						</label>
+						<div class="input-wrap expand">
+							<input id="path" type="text" name="path">
+						</div>
+					</div>
+					<div class="top-pad group row">
+						<label class="fortify">
+							Data
+						</label>
+						<div class="input-wrap expand">
+							<input id="data" type="text" name="data">
+						</div>
+					</div>
+				</div>
+				<div id="buttons" class="top-pad">
+					<button type="submit" class="button">
+						Send
+					</button>
+					<button type="reset" class="button">
+						Clear
+					</button>
+				</div>
+			</form>
+			<div id="output-container" class="top-pad expand flex-reset">
+				<div id="output">
+					things go here
+				</div>
+			</div>
+		</div>
 	</div>
-	
-	<script src="Progdir:Scripts/mygui.js"></script>
+	<div id="fragments" class="hidden">
 
+<!-- service-item
+id,
+name,
+-->
+<script id="service-item-tmpl" type="text/html">
+<div id="<%= id %>" class="service-item group row Box">
+	<div class="service-name expand">
+		<%= name %>
+	</div>
+	<div class="service-run-state LED fortify center-child">
+		<div class="indicator">
+		</div>
+	</div>
+	<button type="button" class="button service-start fortify hidden">
+		<i class="fa fa-fw fa-bolt"></i>
+		start
+	</button>
+	<button type="button" class="button service-stop fortify hidden">
+		<i class="fa fa-fw fa-stop"></i>
+		Stop
+	</button>
+</div>
+</script>
 
+<!-- service detals
+id,
+name,
+Status,
+hosts,
+-->
+<script id="service-details-tmpl" type="text/html">
+<div id="<%= id %>" class="service-details Box bar column">
+	<div class="details-head fortify group row BorderBottom">
+		<div class="details-name expand">
+			<%= name %>
+		</div>
+		<div class="details-status fortify">
+			Status : <%= status %>
+		</div>
+	</div>
+	<div class="details-content expand">
+		<div class="command Box">
+			<div>
+				Execute a command on service:
+			</div>
+			<form class="command-form">
+				<div class="command-input input-wrap">
+					<input type="text" name="cmd" placeholder="command..">
+				</div>
+				<div class="command-hosts">
+					<%= hosts %>
+				</div>
+				<div class="command-buttons group start row">
+					<button type="submit" class="button">
+						send
+					</button>
+					<button type="reset" class="button">
+						reset
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+</script>
 
+<!-- details-host-item
+id,
+name,
+-->
+<script id="details-host-item-tmpl" type="text/html">
+<div id="<%= id %>" class="host-item group row start">
+	<input type="checkbox" class="check">
+	<div>
+		<%= name %>
+	</div>
+	<input type="hidden" class="host" value="<%= name %>">
+</div>
+</script>
+
+<!-- return dump
+returnMsg
+-->
+<script id="dump-tmpl" type="text/html">
+<div class="dump">
+	<%= returnMsg %>
+</div>
+</script>
+
+	</div>
+</body>

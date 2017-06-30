@@ -1,0 +1,351 @@
+<link rel="Stylesheet" href="Progdir:Css/friendstore.css">
+<link rel="Stylesheet" href="Progdir:Css/menu.css">
+<!--<link rel="Stylesheet" href="../temp.css">-->
+
+<div class="ContentFull storeTextColor">
+	<div class="HContentLeft HContent20">
+		<div class="VContentTop" id="Menu">
+
+			<section class="menuSection">
+				<a id="menuApplicationsLink" onclick="toggle();" class="menuVertical">
+					<span>{menu_applications}</span>
+					<span class="iconRight IconSmall fa-chevron-down"></span>
+				</a>
+				<div id="menuApplications" style="display:block;">
+					<a class="menuVertical">
+						<span class="submenu">{menu_myapps}</span>
+						<span class="iconRight IconSmall fa-bookmark"></span>
+					</a>
+					<a class="menuVertical">
+						<span class="submenu">{menu_store}</span>
+						<span class="iconRight IconSmall fa-shopping-cart"></span>
+					</a>
+				</div>
+				<a class="menuVertical">
+					<span>{menu_games}</span>
+					<span class="iconRight IconSmall fa-space-shuttle"></span>
+				</a>
+				<a class="menuVertical">
+					<span>{menu_themes}</span>
+					<span class="iconRight IconSmall fa-picture-o"></span>
+				</a>
+			</section>
+
+		</div>
+		<div class="VContentBottom" id="BottomMenu">
+			<section class="menuSection">
+				<a class="menuVertical">
+					<span>{menu_updates}</span>
+					<span class="iconRight IconSmall fa-refresh"></span>
+				</a>
+				<a class="menuVertical">
+					<span>{menu_storesettings}</span>
+					<span class="iconRight IconSmall fa-cogs"></span>
+				</a>
+			</section>
+		</div>
+	</div>
+		<div class="VContentTop BorderBottom" id="TopPanel">
+		</div>	
+	<div class="HContentRight HContent80">
+		<div class="VContentBottom ScrollArea" id="MainView">
+			<div class="HContent100">
+				<img class="imageFeatured imgResponsive" src="Progdir:Images/featured_app.png" />
+			</div>
+			<div class="HContent25 FloatLeft">
+				<div class="HContent100 storeTitle FloatLeft">New apps</div>
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Wallpaper/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Wallpaper system os</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/DrillBunny/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Drill Bunny</a>
+							<br>
+							<small>Games/Arcade</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Minipaint/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Mini Paint</a>
+							<br>
+							<small>Games</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-trash"></span>
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SysDiag/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Sys Diag</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SVGEdit/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">SVG Editor</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+			</div>
+			<div class="HContent25 FloatLeft">
+				<div class="storeTitle">New themes</div>
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Wallpaper/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Wallpaper system os</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/DrillBunny/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Drill Bunny</a>
+							<br>
+							<small>Games/Arcade</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Minipaint/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Mini Paint</a>
+							<br>
+							<small>Games</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-trash"></span>
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SysDiag/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Sys Diag</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SVGEdit/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">SVG Editor</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->				
+			</div>
+			<div class="HContent25 FloatLeft">
+				<div class="storeTitle">New games</div>
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Wallpaper/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Wallpaper system os</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/DrillBunny/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Drill Bunny</a>
+							<br>
+							<small>Games/Arcade</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/Minipaint/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Mini Paint</a>
+							<br>
+							<small>Games</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-trash"></span>
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SysDiag/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Sys Diag</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->
+			
+			</div>
+			<div class="HContent25 FloatLeft">
+				<div class="storeTitle">My apps</div>
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/SVGEdit/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">SVG Editor</a>
+							<br>
+							<small>System</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-download"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- // application box -->	
+				<!-- application box -->
+				<div class="HContent100 FloatLeft appBoxMini">
+					<div class="HContent40 FloatLeft"><img src="/webclient/apps/DrillBunny/icon.png" class="imgResponsive imgIcon Center" /></div>
+					<div class="HContent60 FloatLeft">
+						<div class="HContent100">
+							<a class="title" href="#">Drill Bunny</a>
+							<br>
+							<small>Games/Arcade</small>
+						</div>
+						<div class="HContent100">
+							<a href="#" class="btn FloatRight">
+								<span class=" IconSmall IconExtraSmall fa-play"></span>
+							</a>
+						</div>
+					</div>
+				</div>	
+			</div>
+		</div>
+<!--
+		<div class="VContentBottom" id="BottomPanel">
+			stopka
+		</div>
+-->
+	</div>
+</div>
+
+<script src="Progdir:Scripts/logic.js"></script>

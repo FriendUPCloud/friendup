@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -90,12 +91,12 @@ void libClose( struct ImageLibrary *l )
 //
 //
 
-ULONG GetVersion(void)
+FULONG GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
-ULONG GetRevision(void)
+FULONG GetRevision(void)
 {
 	return LIB_REVISION;
 }
@@ -132,7 +133,7 @@ Image *ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
 		
 		if( img == NULL )
 		{
-			ERROR("Cannot convert file data to image\n");
+			FERROR("Cannot convert file data to image\n");
 		}
 		
 		DestroyExceptionInfo( ei );
@@ -144,7 +145,7 @@ Image *ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
 	}
 	else
 	{
-		ERROR("Cannot open file: %s to read\n", path );
+		FERROR("Cannot open file: %s to read\n", path );
 	}
 }
 	
@@ -169,7 +170,7 @@ int ImageWrite( struct ImageLibrary *im, Image *img, File *rootDev, const char *
 		
 		if( buffer == NULL )
 		{
-			ERROR("Cannot image to data\n");
+			FERROR("Cannot image to data\n");
 			DestroyExceptionInfo( ei );
 			DestroyImageInfo( ii );
 			fh->FileClose( rootDev, rfp );
@@ -189,7 +190,7 @@ int ImageWrite( struct ImageLibrary *im, Image *img, File *rootDev, const char *
 	}
 	else
 	{
-		ERROR("Cannot open file: %s to write\n", path );
+		FERROR("Cannot open file: %s to write\n", path );
 		return 1;
 	}
 	return 0;
@@ -217,7 +218,7 @@ int FResizeImage( struct ImageLibrary *im, Image **image, int w, int h )
 	}
 	else
 	{
-		ERROR("Cannot resize empty image\n");
+		FERROR("Cannot resize empty image\n");
 	}
 	
 	return 0;
@@ -281,7 +282,7 @@ gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
 		
 		if( img == NULL )
 		{
-			ERROR("Graphics format not recognized\n");
+			FERROR("Graphics format not recognized\n");
 		}
 		
 		BufStringDelete( bs );
@@ -290,7 +291,7 @@ gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
 	}
 	else
 	{
-		ERROR("Cannot open file: %s to read\n", path );
+		FERROR("Cannot open file: %s to read\n", path );
 	}
 	return img;
 }
@@ -338,7 +339,7 @@ int ImageWrite( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const ch
 			if( buffer == NULL )
 			{
 				fh->FileClose( rootDev, rfp );
-				ERROR("Cannot save picture, GD couldnt create buffer from image\n");
+				FERROR("Cannot save picture, GD couldnt create buffer from image\n");
 			
 				return 2;
 			}
@@ -349,14 +350,14 @@ int ImageWrite( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const ch
 		}
 		else
 		{
-			ERROR("Extension name is too short, file format not recognized\n");
+			FERROR("Extension name is too short, file format not recognized\n");
 		}
 
 		fh->FileClose( rootDev, rfp );
 	}
 	else
 	{
-		ERROR("Cannot open file: %s to write\n", path );
+		FERROR("Cannot open file: %s to write\n", path );
 		return 1;
 	}
 	return 0;
@@ -381,7 +382,7 @@ int FResizeImage( struct ImageLibrary *im, gdImagePtr *image, int w, int h )
 	}
 	else
 	{
-		ERROR("Cannot resize empty image\n");
+		FERROR("Cannot resize empty image\n");
 		return 1;
 	}
 	
@@ -392,7 +393,7 @@ int FResizeImage( struct ImageLibrary *im, gdImagePtr *image, int w, int h )
 // find comma and return position
 //
 
-int doublePosition( const char *c )
+int colonPosition( const char *c )
 {
 	int res = 0;
 	
@@ -416,7 +417,7 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 	File *fhand = NULL;
 	char ddrivename[ 256 ];
 	
-	int dpos = doublePosition( path );
+	int dpos = colonPosition( path );
 	strncpy( ddrivename, path, dpos );
 	ddrivename[ dpos ] = 0;
 	
@@ -433,7 +434,7 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 	}
 	if( success <= 0 )
 	{
-		ERROR("Path is not correct\n");
+		FERROR("Path is not correct\n");
 		return NULL;
 	}
 	
@@ -460,7 +461,7 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 // Handle webrequest calls
 //
 
-Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* request, Socket* sock )
+Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Http* request, Socket* sock )
 {
 	Http* response = NULL;
 	
@@ -470,8 +471,8 @@ Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* requ
 	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -491,8 +492,8 @@ Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* requ
 	else if( strcmp( urlpath[ 0 ], "resize" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -500,7 +501,7 @@ Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* requ
 		
 		char *path = NULL, *oPath = NULL;
 		File *pathRoot = NULL;
-		char toPath = NULL, *otoPath = NULL;
+		char *toPath = NULL, *otoPath = NULL;
 		File *toRoot = NULL;
 		int width = 0, height = 0;
 		char *error = NULL;
@@ -576,19 +577,19 @@ Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* requ
 				}
 				else
 				{
-					ERROR("Cannot resize image\n");
+					FERROR("Cannot resize image\n");
 					error = "ok<!--separate-->{ \"ErrorMessage\": \"Cannot resize image\"}";
 				}
 			}
 			else
 			{
-				ERROR("Cannot read image from path %s\n", path );
+				FERROR("Cannot read image from path %s\n", path );
 				error = "ok<!--separate-->{ \"ErrorMessage\": \"Cannot read image\"}";
 			}
 		}
 		else
 		{
-			ERROR("'path' parameter was not passed or width|height <= 0 \n");
+			FERROR("'path' parameter was not passed or width|height <= 0 \n");
 			error = "ok<!--separate-->{ \"ErrorMessage\": \"'path' parameter was not passed or width|height <= 0\"}";
 		}
 		
@@ -611,7 +612,7 @@ Http*  WebRequest( struct ImageLibrary *l, User *usr, char **urlpath, Http* requ
 	else
 	{
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		

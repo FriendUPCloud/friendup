@@ -1,41 +1,84 @@
 
 	<div class="ContentFull">
-		<div class="VContentTop" style="bottom: 47px">
-			<div class="HContentLeft HContent40">
-				<div class="VContentTop Padding BorderBottom" style="height: 36px">
-					<strong>Themes:</strong>
+		<div class="Padding VContentTop">
+			<div id="MainTabs">
+				<div class="IconSmall fa-list-ul Tab">
+					{i18n_themes}
 				</div>
-				<div class="VContentBottom BackgroundLists ColorLists ScrollArea" style="top: 37px; bottom: 200px" id="ThemeList">
+				<div class="IconSmall fa-mouse-pointer Tab">
+					{i18n_behavior}
 				</div>
-				<div class="VContentBottom Padding BorderTop BorderBottom" style="bottom: 164px; height: 36px">
-					<strong>Behaviour:</strong>
+				<div class="Page">
+					<div class="PageScroll">
+						<div class="HRow">
+							<div class="HContent40 FloatLeft Relative Padding">
+								<p>
+									<strong>{i18n_available_themes}:</strong>
+								</p>
+								<div class="BackgroundLists ColorLists" style="min-height: 400px" id="ThemeList">
+								</div>
+							</div>
+							<div class="HContent60 FloatLeft Relative Padding">
+								<p>
+									<strong>{i18n_preview}:</strong>
+								</p>
+								<div style="position: relative; width: 100%; min-height:400px; border-radius: 7px; background: black; border: 1px solid rgba(0,0,0,0.5)" id="ThemePreview">
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
-				<div class="VContentBottom Padding ScrollArea" style="height: 163px; bottom: 0px; top: auto;" id="Behaviour">
-					<p class="Layout">
-						Menu mode:
-					</p>
-					<p>
-						<form>
-							<input type="radio" name="menuMode" value="pear" id="menuPear"> Pear
-							<!--<input type="radio" name="menuMode" value="fenster" id="menuFenster"> Fenster-->
-							<input type="radio" name="menuMode" value="miga" id="menuMiga"> Miga
-						</form>
-					</p>
-				</div>
-			</div>
-			<div class="HContentRight HContent60 BorderLeft">
-				<div class="VContentTop Padding BorderBottom" style="height: 36px">
-					<strong>Preview:</strong>
-				</div>
-				<div class="VContentBottom" style="top: 47px">
-					<div style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; border-radius: 7px; background: black; border: 1px solid rgba(0,0,0,0.5)" id="ThemePreview">
+				<div class="Page">
+					<div class="PageScroll">
+						<div class="Padding" id="Behaviour">
+							<!--<p>
+								<strong>{i18n_menu_mode}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="radio" name="menuMode" value="pear" id="menuPear"/> Pear
+									<input type="radio" name="menuMode" value="miga" id="menuMiga"/> Miga
+								</form>
+							</p>-->
+							<input type="hidden" name="menuMode" value="pear" id="menuPear"/>
+							<p class="Layout">
+								<strong>{i18n_directory_model}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="radio" name="navigationMode" value="browser" id="navigationBrowser"> {i18n_browser}
+									<input type="radio" name="navigationMode" value="spacial" id="navigationSpacial"> {i18n_spacial}
+								</form>
+							</p>
+							<p class="Layout">
+								<strong>{i18n_window_clicks}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="radio" name="windowClicks" value="clicktofront" id="focusmodeClicktofront"> {i18n_click_to_front}
+									<input type="radio" name="windowClicks" value="clicktofocus" id="focusmodeClicktofocus"> {i18n_click_to_focus}
+								</form>
+							</p>
+							<p class="Layout">
+								<strong>{i18n_window_list_mode}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="radio" name="windowList" value="separate" id="windowlistSeparate"> {i18n_separated}
+									<input type="radio" name="windowList" value="docked" id="windowlistDocked"> {i18n_docked}
+								</form>
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-		<div class="VContentBottom BorderTop Padding" style="height: 46px">
-			<button class="IconSmall fa-check" type="button" onclick="applyTheme()">
-				Save
+		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
+			<button class="IconSmall fa-remove FloatRight" type="button" onclick="Application.sendMessage( { command: 'quit' } )">
+				{i18n_cancel}
+			</button>
+			<button class="IconSmall fa-save" type="button" onclick="applyTheme()">
+				{i18n_save}
 			</button>
 		</div>
 	</div>

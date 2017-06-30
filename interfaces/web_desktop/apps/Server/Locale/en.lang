@@ -1,0 +1,39 @@
+
+
+# Server locale, english
+
+i18n_Server		                        : Server settings
+i18n_settings                           : Settings
+i18n_application                        : Application
+i18n_edit                               : Edit
+i18n_cancel                             : Cancel
+i18n_add_property                       : Add property
+i18n_save_changes                       : Save changes
+
+i18n_additem                            : Add item
+
+i18n_type                               : Type
+i18n_key                                : Key
+i18n_your_key                           : Type in a key name
+i18n_your_type                          : Type in a key type
+i18n_save                               : Save
+i18n_delete                             : Slett
+
+i18n_add_new_value_set                  : Add a new value set
+
+i18n_failed_title                       : Failed to save value set
+i18n_failed_desc                        : Could not save the value set to the server. Please check your network connection and try again.
+i18n_success_title                      : Your values were saved
+i18n_success_desc                       : Your value set was stored in the server database.
+i18n_delete_title                       : Delete value set
+i18n_delete_desc                        : Are you sure you want to delete this data set?
+
+i18n_settings_attributes                : Settings & attributes
+i18n_software                           : Software
+
+i18n_validate                           : Validate
+i18n_revalidate                         : Re-validate
+
+
+i18n_no_software_to_verify              : No software to verify.
+

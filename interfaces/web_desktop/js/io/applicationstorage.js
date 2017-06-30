@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = window.friendUP || {};
 
@@ -38,6 +38,9 @@ var lib = {}; // temp obj
 			'get' : getItem,
 			'remove' : removeItem,
 		};
+		
+		//console.log( '--- localStorage ---' );
+		//console.log( window.localStorage );
 		
 		function setItem( msg, app ) { self.setItem( msg, app ); }
 		function getItem( msg, app ) { self.getItem( msg, app ); }

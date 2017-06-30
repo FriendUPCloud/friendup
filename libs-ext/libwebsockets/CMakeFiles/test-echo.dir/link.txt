@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Werror -fvisibility=hidden  -pthread -O3 -DNDEBUG   CMakeFiles/test-echo.dir/test-server/test-echo.c.o  -o bin/libwebsockets-test-echo -rdynamic lib/libwebsockets.a -lz -lssl -lcrypto -lm 

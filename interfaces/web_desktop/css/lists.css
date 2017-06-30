@@ -1,5 +1,5 @@
 
-/** Tabeller ******************************************************************/
+/** Tables ********************************************************************/
 .List
 {
 	width: 100%;
@@ -43,6 +43,18 @@
 {
 	background-color: $ColorBgListSw2;
 	color: $ColorTdListSw2;
+}
+.List tr.sw1.Selected,
+.List div.sw1.Selected
+{
+	background-color: $ColorAcceptButtonBg;
+	color: $ColorAcceptButton;
+}
+.List tr.sw2.Selected,
+.List .sw2.Selected
+{
+	background-color: $ColorAcceptButtonBg;
+	color: $ColorAcceptButton;
 }
 .List td.Number, .List th.Number,
 .List div.Number
@@ -96,5 +108,76 @@
 .ZebraList.Interactive > div:hover
 {
 	background-color : $ColorBgListSwHover;
+}
+
+.ZebraList > div, .BackgroundLists > div
+{
+	padding: $PaddingListsTd;
+	box-sizing: border-box;
+}
+
+.ZebraList > div.Columns, .BackgroundLists > div.Columns
+{
+	padding: 0;
+}
+
+.ZebraList > div.Columns > div, .BackgroundLists > div.Columns > div
+{
+	padding: $PaddingListsTd;
+	box-sizing: border-box;
+}
+
+/* Ul list */
+
+ul.List
+{
+	list-style: none;
+	box-sizing: border-box;
+	background-color: none;
+	margin: 0;
+	padding: 0;
+}
+
+ul.List > li
+{
+	list-style: none;
+	display: block;
+	padding: $PaddingListsTd;
+	padding-left: $PaddingBox;
+	box-sizing: border-box;
+}
+
+/*ul.List > li:first-child
+{
+	border-radius: 5px 5px 0 0;
+}
+
+ul.List > li:last-child
+{
+	border-radius: 0 0 5px 5px;
+}*/
+
+ul.List > li:nth-child(odd)
+{
+	background: $ColorBgListSw1;
+	color: $ColorListSw1;
+}
+
+ul.List > li:nth-child(even)
+{
+	background: $ColorBgListSw2;
+	color: $ColorListSw2;
+}
+
+ul.Negative.List > li:nth-child(odd)
+{
+	background: $ColorBgNegativeListSw1;
+	color: $ColorNegativeListSw1;
+}
+
+ul.Negative.List > li:nth-child(even)
+{
+	background: $ColorBgNegativeListSw2;
+	color: $ColorNegativeListSw2;
 }
 

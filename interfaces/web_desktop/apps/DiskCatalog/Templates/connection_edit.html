@@ -1,0 +1,98 @@
+
+	<script src="Progdir:Scripts/connection.js"></script>
+
+	<input type="hidden" id="FileSystemID" value="0"/>
+
+	<style>
+		.TopForm { bottom: 50px; }
+		.BottomForm { height: 50px; }
+	</style>
+
+	<div class="VContentTop BackgroundDefault ScrollArea TopForm">
+		<div class="Padding">
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_device_name}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="text" id="Name" class="FullWidth" value="" placeholder="{i18n_placeholder_connection}"/>
+						<input type="hidden" id="OriginalName" value="" />
+					</p>
+				</div>
+			</div>
+			<div id="GUI">{GUI}</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_pollable}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="checkbox" id="conf.Pollable" value=""/>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_visible}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="checkbox" id="conf.Visible" checked="checked"/>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_executable}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="text" class="InputHeight" id="conf.Executable" value=""/>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_disk_cover}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<button type="button" class="Button IconSmall fa-image" onclick="setCover()">
+							{i18n_browse}
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom BottomForm Padding BorderTop BackgroundDefault">
+		<div class="HRow">
+			<button type="button" class="FloatRight IconSmall fa-close" onclick="Application.cancel()">
+				{i18n_cancel}
+			</button>
+			<button type="button" class="IconSmall fa-save" onclick="Application.save()">
+				{i18n_save}
+			</button>
+		</div>
+	</div>

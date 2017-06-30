@@ -409,10 +409,13 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_fi
     else
         us.z_filefunc = *pzlib_filefunc64_32_def;
 
-    us.filestream = ZOPEN64(us.z_filefunc, path, ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_EXISTING);
+	us.filestream = ZOPEN64(us.z_filefunc, path, ZLIB_FILEFUNC_MODE_READ | ZLIB_FILEFUNC_MODE_EXISTING);
 
-    if (us.filestream == NULL)
-        return NULL;
+	if (us.filestream == NULL)
+	{
+		DEBUG("Filestream NULL\n");
+		return NULL;
+	}
 
     us.filestream_with_CD = us.filestream;
     us.isZip64 = 0;
@@ -1434,6 +1437,9 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
 
             pfile_in_zip_read_info->total_out_64 = pfile_in_zip_read_info->total_out_64 + copy;
             pfile_in_zip_read_info->rest_read_uncompressed -= copy;
+			
+			DEBUG("ptr 1 %p  crc ptr %p\n", pfile_in_zip_read_info->crc32, crc32 );
+			
             pfile_in_zip_read_info->crc32 = crc32(pfile_in_zip_read_info->crc32,
                                 pfile_in_zip_read_info->stream.next_out, copy);
 
@@ -1513,6 +1519,10 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
 
             pfile_in_zip_read_info->total_out_64 += out_bytes;
             pfile_in_zip_read_info->rest_read_uncompressed -= out_bytes;
+			//DEBUG("function %p crc function %p\n", pfile_in_zip_read_info->crc32, crc32 );
+			
+			//DEBUG("Buf before %p bytes %d\n", buf_before, out_bytes );
+			
             pfile_in_zip_read_info->crc32 =
                 crc32(pfile_in_zip_read_info->crc32,buf_before, (uInt)(out_bytes));
 
@@ -1526,7 +1536,9 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
     }
 
     if (err == Z_OK)
+	{
         return read;
+	}
     return err;
 }
 

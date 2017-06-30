@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 /* This file is to be used by the webworker for file upload */
 
@@ -56,7 +56,7 @@ self.checkVolume = function()
 				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used );
 				var uploadsize = 0;
 				
-				for(var f in self.files )
+				for( var f in self.files )
 				{
 					if( self.files[ f ][ 'size' ] )
 					{
@@ -80,15 +80,17 @@ self.checkVolume = function()
 		{
 			//console.log( 'Error: ' + this.readyState + ' ' + this.status );
 			//console.log( this );
-			console.log( 'Could not retrieve volume information. Queuing abort upload' );
+			//console.log( 'Could not retrieve volume information. Queuing abort upload' );
+			if( self.delayedAbort )
+				clearTimeout( self.delayedAbort );
 			self.delayedAbort = setTimeout( function()
 			{
 				self.postMessage('fail<!--separate-->Could not retrieve volume information. Aborting upload;')
-			}, 250 );
+			}, 500 );
 		}
 	}
 	
-	// NOt really sure why we have to set POST and URL twice... but thats the way it works.
+	// Not really sure why we have to set POST and URL twice... but thats the way it works.
 	xhr.open( 'POST', '/system.library/module', true );
 	xhr.setRequestHeader( 'Method', 'POST /system.library/module HTTP/1.1' );
 	xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
@@ -121,7 +123,8 @@ self.uploadFiles = function()
 		xhrs[f] = new XMLHttpRequest();
 		xhrs[f].upload.uploadfileindex = xhrs[f].uploadfileindex = f;
 		
-		xhrs[f].upload.addEventListener( 'progress', function ( e ) {
+		xhrs[f].upload.addEventListener( 'progress', function ( e )
+		{
 			if ( e.lengthComputable )
 			{
 				self.filecounter[this.uploadfileindex][0] = e.loaded;
@@ -174,7 +177,7 @@ self.uploadFiles = function()
 		fd.append('sessionid',self.session);
 		fd.append('module','files');
 		fd.append('command','uploadfile');
-		fd.append('path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/') );
+		fd.append('path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
 		fd.append('file', file);
 		
 		//get the party started
@@ -190,7 +193,7 @@ self.onmessage = function( e )
 	{
 		self.files = e.data.files;
 		self.volume = e.data.targetVolume;
-		self.path = e.data.targetPath;
+		self.path = e.data.targetPath.split( ':/' ).join( ':' );
 		self.session = e.data.session;
 		self.checkVolume();
 	}
@@ -206,7 +209,7 @@ self.onmessage = function( e )
 		fname = fname[ fname.length - 1 ];
 		
 		// fix path
-		self.path = self.path.substr( 0, self.path.length - fname.length );
+		self.path = self.path.substr( 0, self.path.length - fname.length ).split( ':/' ).join( ':' );
 		
 		self.files = [ new File( [ Base64.decode( e.data.objectdata ) ], fname ) ];
 		self.checkVolume();

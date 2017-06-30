@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,13 +15,44 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var _appNum = 1;
 
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {	
+	// Check if the app called is found in the singleInstanceApps array
+	if( friend.singleInstanceApps[ app ] )
+	{
+		var msg = {
+			command: 'cliarguments',
+			args: args
+		};
+		if( callback ) 
+		{
+			msg.cid = addWrapperCallback( callback );
+			msg.type = 'callback';
+		}
+		// If it is found, send the message directly to the app instead of relaunching
+		friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
+		return;
+	}
+	
+	// Common ones
+	switch( app.toLowerCase() )
+	{
+		case 'shell':
+		case 'newshell':
+		case 'new shell':
+		case 'cli':
+			app = 'FriendShell';
+			break;
+	}
+	
+	// Args should be arguments to application in string form! for example filename
+	if( typeof( args ) != 'string' ) args = '';
+	
 	// TODO: Make this safe!
 	if( app.indexOf( ':' ) > 0 && app.indexOf( '.jsx' ) > 0 )
 	{
@@ -35,9 +66,17 @@ function ExecuteApplication( app, args, callback )
 	// 1. Ask about application.................................................
 	var m = new Module( 'system' );
 	m.onExecuted = function( r, d )
-	{
+	{	
 		// Get data from Friend Core
-		var conf = JSON.parse( d );
+		var conf = false;
+		try
+		{
+			conf = JSON.parse( d );
+		}
+		catch( e )
+		{
+			//
+		}
 		
 		if( r == 'activate' )
 		{
@@ -49,13 +88,21 @@ function ExecuteApplication( app, args, callback )
 		{
 			if( r == 'notinstalled' || ( conf && conf.response == 'not installed' ) )
 			{
+				var hideView = false;
+				if( d.toLowerCase().indexOf('"trusted":"yes"') > 0 )
+				{
+					hideView = true;
+				}
+
 				var title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				var w = new View( {
 					title:  title,
 					width:  480,
 					height: 140,
-					id:     'system_install_' + app
+					id:     'system_install_' + app,
+					hidden: hideView
 				} );
+				
 				var f = new File( 'System:templates/install.html' );
 				f.onLoad = function( data )
 				{
@@ -64,8 +111,22 @@ function ExecuteApplication( app, args, callback )
 					for( var a in repl ) data = data.split( '{' + repl[a] + '}' ).join ( i18n( repl[a] ) );
 					data = data.split( '{app}' ).join ( app );
 					w.setContent( data );
+					if( hideView )
+					{
+						console.log('view is hidden == trusted app == click install');
+						InstallApplication(app);
+						
+					}
 				}
 				f.load();
+			}
+			else if( r == 'fail' && conf && conf.response == 'application not signed' )
+			{
+				Ac2Alert( i18n( 'application_not_signed' ) );
+			}
+			else if( r == 'fail' && conf && conf.response == 'application not validated' )
+			{
+				Ac2Alert( i18n( 'application_not_validated' ) );
 			}
 			else
 			{
@@ -91,35 +152,54 @@ function ExecuteApplication( app, args, callback )
 				return str;
 			}
 			
+			// Correct filepath can be a resource file (i.e. in a repository) or a local file
+			var filepath = '/system.library/module/?module=system&command=resource&authid=' + conf.AuthID + '&file=' + app + '/';
+			// Here's the local file..
+			if( conf && conf.ConfFilename && conf.ConfFilename.indexOf( 'resources/webclient/apps' ) >= 0 )
+				filepath = '/webclient/apps/' + app + '/';
+			
 			// Load application into a sandboxed iframe
 			var ifr = document.createElement( 'iframe' );
 			ifr.setAttribute( 'sandbox', 'allow-forms allow-scripts' );
 			ifr.path = conf.Path;
 			
 			// Set the conf
-			ifr.conf = conf.ConfFilename;
+			ifr.conf = conf && conf.ConfFilename ? conf.ConfFilename : false;
+			ifr.config = conf ? conf : false; // Whole object
 			
-			// Proper way
+			// Security domain
+			var sdomain = GetDomainFromConf( conf );
+			
+			// Proper way to run by conf.init
 			if( conf.Init )
 			{
 				if( conf.Init.indexOf( ':' ) > 0 && conf.Init.indexOf( '.jsx' ) > 0 )
 				{
-					return ExecuteJSXByPath( conf.Init, args, callback, app );
+					return ExecuteJSXByPath( conf.Init, args, callback, conf );
 				}
+				// TODO: Check privileges of one app to launch another!
 				else
 				{
-					ifr.src = Doors.runLevels[1].domain + '/system.library/module?module=system&sessionid=' + Doors.sessionId + '&command=launch&app=' + app + '&friendup=' + Doors.runLevels[0].domain;
+					var sid = Workspace.sessionId && Workspace.sessionId != 'undefined' ? 
+						Workspace.sessionId : Workspace.conf.authId;
+					var svalu = sid ? Workspace.sessionId : Workspace.conf.authId;
+					var stype = sid ? 'sessionid' : 'authid';
+					ifr.src = sdomain + '/system.library/module?module=system&' + 
+						stype + '=' + svalu + '&command=launch&app=' + 
+						app + '&friendup=' + Doors.runLevels[0].domain;
 				}
 			}
 			else
 			{
-				ifr.src = Doors.runLevels[1].domain + '/webclient/apps/' + app + '/index.html?friendup=' + Doors.runLevels[0].domain;
+				ifr.src = sdomain + filepath + 'index.html?friendup=' + sdomain;
 			}
 			
 			// Register name and ID
-			ifr.applicationName = app;
-			ifr.userId = Doors.userId;
+			ifr.applicationName = app.indexOf( ' ' ) > 0 ? app.split( ' ' )[0] : app;
+			ifr.userId = Workspace.userId;
+			ifr.username = Workspace.loginUsername;
 			ifr.applicationId = md5( app + '-' + (new Date()).getTime() );
+			ifr.id = 'sandbox_' + ifr.applicationId;
 			ifr.authId = conf.AuthID;
 			ifr.applicationNumber = _appNum++;
 			ifr.permissions = conf.Permissions;
@@ -141,6 +221,15 @@ function ExecuteApplication( app, args, callback )
 						this.screens[a].close( level );
 					}
 				}
+				if( this.widgets )
+				{
+					for( var a in this.widgets )
+					{
+						this.widgets[a].close( level );
+					}
+				}
+				
+				FlushSingleApplicationLock( this.applicationName );
 				
 				// On level, destroy app immediately
 				if( level )
@@ -158,8 +247,8 @@ function ExecuteApplication( app, args, callback )
 					var d = this.div;
 					if( d ) d.parentNode.removeChild( d );
 					this.parentNode.removeChild( this );
-					Doors.applications = out;
-					Doors.updateTasks();	
+					Workspace.applications = out;
+					Workspace.updateTasks();	
 				}
 				// Tell the application to clean up first
 				else
@@ -169,8 +258,8 @@ function ExecuteApplication( app, args, callback )
 						applicationId: this.applicationId,
 						userId: this.userId,
 						authId: this.authId,
-						filePath: Doors.runLevels[1].domain + '/webclient/apps/' + app + '/',
-						domain:   Doors.runLevels[1].domain
+						filePath: sdomain + filepath,
+						domain:   sdomain
 					};
 					this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 				}
@@ -180,7 +269,7 @@ function ExecuteApplication( app, args, callback )
 			ifr.close = function()
 			{
 				// Check if iframe has a close event
-				if( ifr.onClose )ifr.onClose();
+				if( ifr.onClose ) ifr.onClose();
 				
 				// Just remove the application
 				ifr.parentNode.removeChild( ifr );
@@ -197,18 +286,35 @@ function ExecuteApplication( app, args, callback )
 					}
 				} );
 				
+				// Args could be sent in JSON format, then try to give this on.
+				var oargs = args;
+				try
+				{
+					oargs = JSON.parse( decodeURIComponent( args ) );
+				}
+				catch( e )
+				{
+					oargs = args;
+				}
+				
 				var o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
 					userId: ifr.userId,
+					username: ifr.username,
 					authId: ifr.authId,
-					args: args,
-					theme: Doors.theme,
-					filePath: Doors.runLevels[1].domain + '/webclient/apps/' + app + '/',
-					domain:   Doors.runLevels[1].domain,
-					registerCallback: cid
+					args: oargs,
+					locale: Workspace.locale,
+					theme: Workspace.theme,
+					filePath: sdomain + filepath,
+					domain:   sdomain,
+					registerCallback: cid,
+					clipboard: friend.clipboard
 				};
 				if( conf.State ) o.state = conf.State;
+				
+				// Get JSON data from url
+				var vdata = GetUrlVar( 'data' ); if( vdata ) o.data = vdata;
 				
 				// Language support
 				if( conf.language )
@@ -220,17 +326,30 @@ function ExecuteApplication( app, args, callback )
 			}
 			
 			// Add application iframe to body
-			AttachAppSandbox( ifr, Doors.runLevels[1].domain + '/webclient/apps/' + app );
+			AttachAppSandbox( ifr, sdomain + filepath );
 			
 			// Add application
-			Doors.applications.push( ifr );
+			Workspace.applications.push( ifr );
 		}
 		else 
 		{
-			callback( "\n", { response: 'Executable has run.' } );
+			if( callback ) callback( "\n", { response: 'Executable has run.' } );
 		}
 	}
-	m.execute( 'friendapplication', { application: app } );
+	var eo = { application: app, args: args };
+	if( Workspace.conf && Workspace.conf.authid )
+		eo.authid = Workspace.conf.authid;
+	m.execute( 'friendapplication', eo );
+}
+
+function FlushSingleApplicationLock( app )
+{
+	// Flush single instance app!
+	var out = [];
+	for( var a in friend.singleInstanceApps )
+		if( a != app )
+			out[a] = friend.singleInstanceApps[a];
+	friend.singleInstanceApps = out;
 }
 
 // Kill an app by name or PID
@@ -240,21 +359,24 @@ KillApplication = function ( n, level )
 	if( !level ) level = 1;
 	if( typeof( n ) == 'number' )
 	{
-		if( Doors.applications[n] )
+		if( Workspace.applications[n] )
 		{
-			Doors.applications[n].quit( level );
+			FlushSingleApplicationLock( Workspace.applications[n].applicationName );
+			Workspace.applications[n].quit( level );
+			if( !ge( 'TasksHeader' ) ) return false;
 			ge( 'TasksHeader' ).innerHTML = '<h2>' + i18n( 'Running tasks (' + ge( 'Tasks' ).childNodes.length + ')' ) + '</h2>';
 			return true;
 		}
 	}
 	else if ( typeof( n ) == 'object' )
 	{
-		for( var a = 0; a < Doors.applications.length; a++ )
+		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
-			var d = Doors.applications[a];
+			var d = Workspace.applications[a];
 			if( d == n )
 			{
-				console.log( "Killed one application by name ("+d.applicationName+")." );
+				FlushSingleApplicationLock( d.applicationName );
+				//console.log( "Killed one application by name ("+d.applicationName+")." );
 				d.quit( level );
 				break;
 			}
@@ -266,12 +388,13 @@ KillApplication = function ( n, level )
 		while( found )
 		{
 			var sk = 0;
-			for( var a = 0; a < Doors.applications.length; a++ )
+			for( var a = 0; a < Workspace.applications.length; a++ )
 			{
-				var d = Doors.applications[a];
+				var d = Workspace.applications[a];
 				if( d.applicationName == n )
 				{
-					console.log( "Killed one application ("+d.applicationName+")." );
+					FlushSingleApplicationLock( n );
+					//console.log( "Killed one application ("+d.applicationName+")." );
 					d.quit( level );
 					killed++;
 					sk = 1;
@@ -281,18 +404,21 @@ KillApplication = function ( n, level )
 			if( sk == 0 ) found = false;
 		}
 	}
-	ge( 'TasksHeader' ).innerHTML = '<h2>' + i18n( 'Running tasks (' + ge( 'Tasks' ).childNodes.length + ')' ) + '</h2>';
+	if( ge( 'TasksHeader' ) )
+		ge( 'TasksHeader' ).innerHTML = '<h2>' + i18n( 'Running tasks (' + ge( 'Tasks' ).childNodes.length + ')' ) + '</h2>';
 	return killed;
 }
 
 function KillApplicationById( appid, level )
 {
-	for( var a = 0; a < Doors.applications.length; a++ )
+	var killed = 0;
+	for( var a = 0; a < Workspace.applications.length; a++ )
 	{
-		var d = Doors.applications[a];
+		var d = Workspace.applications[a];
 		if( d.applicationId == appid )
 		{
-			console.log( "Killed one application by id ("+d.applicationName+")." );
+			FlushSingleApplicationLock( d.applicationName );
+			//console.log( "Killed one application by id ("+d.applicationName+")." );
 			d.quit( level );
 			killed++;
 		}
@@ -302,83 +428,128 @@ function KillApplicationById( appid, level )
 // Activate the application for the user
 function ActivateApplication( app, conf )
 {
+	var type = 'app';
+		
+	if( conf && conf.type == 'disk' )
+	{
+		type = 'disk';
+		// Defaults
+		conf.Permissions = [
+			'Module System',
+			'Module Files',
+			'Door All'
+		];
+	}
+	
+	var hideView = false;
+	if( conf && conf.Trusted && conf.Trusted.toLowerCase() == 'yes' )
+	{
+		hideView = true;	
+	}
+	
 	var w = new View( {
-		title: i18n( 'activate_application' ),
+		title: i18n( type == 'app' ? 'activate_application' : 'activate_disk' ),
 		width: 400,
 		height: 500,
-		id: 'activate_' + app
+		id: 'activate_' + app,
+		hidden: hideView
 	} );
 	
 	var f = new File( 'System:templates/activate.html' );
 	f.replacements = {
-		'app_activation_head'   : i18n( 'app_activation_head' ),
-		'app_activation_desc'   : i18n( 'app_activation_desc' ),
 		'app_activation_button' : i18n( 'app_activation_button' ),
 		'app_activation_abort'  : i18n( 'app_activation_abort' ),
-		'application'           : app
 	};
-	
+	f.i18n();
+	f.replacements.app_activation_head = i18n( type == 'app' ? 'app_activation_head' : 'disk_activation_head' );
+	f.replacements.app_activation_desc = i18n( type == 'app' ? 'app_activation_desc' : 'disk_activation_desc' );
+	f.replacements.application         = type == 'app' ? app : ( app.split( ':' )[0] );
 	f.onLoad = function( d )
 	{
-		var perms = '';
-		var filesystemoptions = '';
-		if( conf.Permissions )
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, da )
 		{
-			for( var a = 0; a < conf.Permissions.length; a++ )
+			var perms = '';
+			var filesystemoptions = '';
+			if( conf.Permissions )
 			{
-				var row = Trim( conf.Permissions[a] ).split( ' ' );
-				switch( row[0].toLowerCase() )
+				for( var a = 0; a < conf.Permissions.length; a++ )
 				{
-					case 'door':
-						perms += '<p>';
-						perms += '<input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
-						perms += '<label>' + i18n('grant_door_access' ) + '</label> ';
-						perms += '<select><option value="all">' + 
-							i18n( 'all_filesystems' ) + '</option>' + filesystemoptions + '</select>';
-						perms += '.</p>';
-						break;
-					case 'module':
-						perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
-						perms += '<label>' + i18n('grant_module_access' ) + '</label> ';
-						perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
-						perms += '</p>';
-						break;
-					case 'service':
-						perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
-						perms += '<label>' + i18n('grant_service_access' ) + '</label> ';
-						perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
-						perms += '</p>';
-						break;
-					default:
-						continue;
+					var row = Trim( conf.Permissions[a] ).split( ' ' );
+					switch( row[0].toLowerCase() )
+					{
+						case 'door':
+							perms += '<p>';
+							perms += '<input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
+							perms += '<label>' + i18n('grant_door_access' ) + '</label> ';
+							perms += '<select><option value="all">' + 
+								i18n( 'all_filesystems' ) + '</option>' + filesystemoptions + '</select>';
+							perms += '.</p>';
+							break;
+						case 'module':
+							perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
+							perms += '<label>' + i18n('grant_module_access' ) + '</label> ';
+							perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
+							perms += '</p>';
+							break;
+						case 'service':
+							perms += '<p><input type="checkbox" class="permission_' + (a+1) + '" checked="checked"/> ';
+							perms += '<label>' + i18n('grant_service_access' ) + '</label> ';
+							perms += '<strong>' + row[1].toLowerCase() + '</strong>.';
+							perms += '</p>';
+							break;
+						default:
+							continue;
+					}
 				}
 			}
-		}
-		w.setContent( d.split( '{permissions}' ).join ( perms ) );
-		var eles = w.getWindowElement().getElementsByTagName( 'button' );
-		var abtn = false, cbtn = false;
-		for( var a = 0; a < eles.length; a++ )
-		{
-			if( eles[a].className == 'activation' )
+		
+			w.setContent( d.split( '{permissions}' ).join ( perms ) );
+			
+			// Check the security domains
+			var domains = [];
+			if( e == 'ok' )
 			{
-				abtn = eles[a];
+				try{
+					var data = JSON.parse( da );
+					domains = data.domains;
+				} catch( e ) { console.log('Security Domains could not be set!'); }
 			}
-			else if( eles[a].className == 'cancel' )
+			if( ge( 'SecurityDomains' ) )
 			{
-				cbtn = eles[a];
+				ge( 'SecurityDomains' ).innerHTML = '';
+				for( var a = 0; a < domains.length; a++ )
+				{
+					var o = document.createElement( 'option' );
+					o.innerHTML = Trim( domains[a] );
+					o.value = Trim( domains[a] );
+					ge( 'SecurityDomains' ).appendChild( o );
+				}
 			}
-		}
-		if( abtn && cbtn )
-		{
-			abtn.onclick = function()
+			
+			var eles = w.getWindowElement().getElementsByTagName( 'button' );
+			var abtn = false;
+			for( var a = 0; a < eles.length; a++ )
 			{
+				if( eles[a].classList.contains( 'activation' ) )
+				{
+					abtn = eles[a];
+				}
+			}
+			if( abtn )
+			{
+				abtn.onclick = function()
+				{
+					ExecuteApplicationActivation( app, w, conf.Permissions );
+				}
+			}
+			if( hideView )
+			{
+				//console.log('view is hidden... == trusted app == auto activate')
 				ExecuteApplicationActivation( app, w, conf.Permissions );
 			}
-			cbtn.onclick = function()
-			{
-				w.close();
-			}
 		}
+		m.execute( 'securitydomains' );
 	}
 	f.load();
 }
@@ -388,7 +559,7 @@ function InstallApplication( app )
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		console.log( e + ' -> ' + d );
+		//console.log( e + ' -> ' + d );
 		if( e == 'ok' )
 		{
 			var w = FindWindowById( 'system_install_' + app );
@@ -453,6 +624,12 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 		}
 	}
 	
+	var securityDomain = '';
+	if( ge( 'SecurityDomains' ) )
+	{
+		securityDomain = ge( 'SecurityDomains' ).value;
+	}
+	
 	// Only do this if we have entries
 	if( out.length || hasOptions == 0 )
 	{
@@ -462,7 +639,12 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 			if( r == 'ok' )
 			{
 				win.close();
-				ExecuteApplication( app );
+				
+				// Refresh mountlist (async)
+				Workspace.refreshDesktop( function()
+				{
+					ExecuteApplication( app );
+				} );
 			}
 			else
 			{
@@ -470,7 +652,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 				win.close();
 			}
 		}
-		var argz = { application: app, permissions: out };
+		var argz = { application: app, permissions: out, domain: securityDomain };
 		if( reactivation ) argz.reactivation = '1';
 		m.execute( 'activateapplication', argz );
 	}
@@ -482,7 +664,7 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 
 // Do it by path!
 function ExecuteJSXByPath( path, args, callback, conf )
-{
+{	
 	var f = new File( path );
 	f.onLoad = function( data )
 	{
@@ -494,161 +676,240 @@ function ExecuteJSXByPath( path, args, callback, conf )
 				app = app.split( '/' );
 				app = app[app.length-1]; 
 			}
-			var r = ExecuteJSX( data, app, args, path, callback, conf );
-			if( callback )
-				callback( true );
+			var r = ExecuteJSX( data, app, args, path, callback, conf ? conf.ConfFilename : false );
+			if( callback ) callback( true );
 			return r;
 			
 		}
-		callback( false );
+		if( callback ) callback( false );
 	}
 	f.load();
 }
 
 function ExecuteJSX( data, app, args, path, callback, conf )
 {
-	//console.log( 'Here is the path: ' + path );
-	// Load application into a sandboxed iframe
-	var ifr = document.createElement( 'iframe' );
-	ifr.setAttribute( 'sandbox', 'allow-same-origin allow-forms allow-scripts' );
-	ifr.path = '/webclient/jsx/';
-	// Special case, we have a conf
-	if( conf )
-	{
-		ifr.src = '/system.library/module/?module=system&command=sandbox' +
-			'&sessionid=' + Workspace.sessionId +
-			'&conf=' + conf + 
-			( args ? ( '&args=' + args ) : '' );
-		ifr.conf = conf;
-	}
-	// Just give a dumb sandbox
-	else ifr.src = 'sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
+	if( data.indexOf( '{' ) < 0 ) return;
 	
-	// Register name and ID
-	ifr.applicationName = app;
-	ifr.applicationNumber = _appNum++;
-	ifr.applicationId = app + '-' + (new Date()).getTime();
-	ifr.userId = Doors.userId;
-	ifr.applicationType = 'jsx';
-	ifr.sessionId = Workspace.sessionId; // JSX has sessionid
-	
-	// Quit the application
-	ifr.quit = function( level )
+	// Only run jsx after refreshing desktop to get mounted drives
+	Workspace.refreshDesktop( function()
 	{
-		if( this.windows )
+		var drive = path.split( ':' )[0] + ':';
+		var d = ( new Door( drive ) ).get( drive );
+	
+		// Running system with a drive config..
+		if( d )
 		{
-			for( var a in this.windows )
+			// Check if d.Config is empty or not set
+			if( !d.Config || ( d.Config && d.Config == '{}' ) || JSON.stringify( d.Config ) == '{}' )
 			{
-				this.windows[a].close( level );
+				return ActivateApplication( path, { type: 'disk' } );
 			}
-		}
-		if( this.screens )
-		{
-			for( var a in this.screens )
+			else
 			{
-				this.screens[a].close( level );
+				conf = d.Config;
 			}
 		}
 		
-		// If this is a forced kill, just fck the thing
-		if( level )
+		// Load application into a sandboxed iframe
+		var ifr = document.createElement( 'iframe' );
+		ifr.setAttribute( 'sandbox', 'allow-same-origin allow-forms allow-scripts' );
+		ifr.path = '/webclient/jsx/';
+	
+		args = typeof( args ) != 'string' ? '' : args;
+	
+		// Special case, we have a conf
+		var sid = false;
+		var confObject = false;
+		if( conf )
 		{
-			var out = [];
-			for( var a = 0; a < Doors.applications.length; a++ )
+			var dom = GetDomainFromConf( conf );
+
+			if( args ) conf.args = args;
+		
+			if( typeof( conf ) == 'object' )
 			{
-				if( Doors.applications[a] != this )
-					out.push( Doors.applications[a] );
+				confObject = conf;
+				conf = JSON.stringify( conf );
 			}
+			else if( conf.indexOf && conf.indexOf( '{' ) >= 0 )
+			{
+				confObject = JSON.parse( conf );
+			}
+			sid = confObject && confObject.authid ? true : false;
+			var svalu = sid ? confObject.authid : Workspace.sessionId;
+			var stype = sid ? 'authid' : 'sessionid';
+			if( stype == 'sessionid' ) ifr.sessionId = svalu;
 			
-			// Remove dormant doors!
-			if( this.applicationId )
-				DormantMaster.delAppDoorByAppId( this.applicationId );
+			// Use path to figure out config
+			if( conf.indexOf( '{' ) >= 0 )
+				conf = encodeURIComponent( path.split( ':' )[0] + ':' );
+		
+			ifr.src = dom + '/system.library/module/?module=system&command=sandbox' +
+				'&' + stype + '=' + svalu +
+				'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' );
+			ifr.conf = confObject;
+		}
+		// Just give a dumb sandbox
+		else ifr.src = '/webclient/sandboxed.html?' + ( args ? ( 'args=' + args ) : '' );
+	
+		// Register name and ID
+		ifr.applicationName = app;
+		ifr.applicationNumber = _appNum++;
+		ifr.applicationId = app + '-' + (new Date()).getTime();
+		ifr.userId = Workspace.userId;
+		ifr.username = Workspace.loginUsername;
+		ifr.applicationType = 'jsx';
+		if( sid ) ifr.sessionId = Workspace.sessionId; // JSX has sessionid
+		else ifr.authId = conf.authid;
+	
+		// Quit the application
+		ifr.quit = function( level )
+		{
+			if( this.windows )
+			{
+				for( var a in this.windows )
+				{
+					this.windows[a].close( level );
+				}
+			}
+			if( this.screens )
+			{
+				for( var a in this.screens )
+				{
+					this.screens[a].close( level );
+				}
+			}
+			if( this.widgets )
+			{
+				for( var a in this.widgets )
+				{
+					this.widgets[a].close( level );
+				}
+			}
+		
+			// If this is a forced kill, just fck the thing
+			if( level )
+			{
+				var out = [];
+				for( var a = 0; a < Workspace.applications.length; a++ )
+				{
+					if( Workspace.applications[a] != this )
+						out.push( Workspace.applications[a] );
+				}
 			
-			if( this.div && this.div.parentNode )
-			{
-				this.div.parentNode.removeChild( this.div );
+				// Remove dormant doors!
+				if( this.applicationId )
+					DormantMaster.delAppDoorByAppId( this.applicationId );
+			
+				if( this.div && this.div.parentNode )
+				{
+					this.div.parentNode.removeChild( this.div );
+				}
+				if( this.parentNode )
+				{
+					this.parentNode.removeChild( this );
+				}
+				Workspace.applications = out;
+				Workspace.updateTasks();
 			}
-			if( this.parentNode )
+			else
 			{
-				this.parentNode.removeChild( this );
+				// Tell the jsx application to clean up first
+				var o = {
+					command: 'quit',
+					filePath: '/webclient/jsx/',
+					domain:   sdomain
+				};
+				this.contentWindow.postMessage( JSON.stringify( o ), '*' );
 			}
-			Doors.applications = out;
-			Doors.updateTasks();
 		}
-		else
-		{
-			// Tell the jsx application to clean up first
-			var o = {
-				command: 'quit',
-				filePath: '/webclient/jsx/',
-				domain:   Doors.runLevels[1].domain
-			};
-			this.contentWindow.postMessage( JSON.stringify( o ), '*' );
-		}
-	}
 	
-	// Close method
-	ifr.close = function()
-	{
-		// Check if iframe has a close event
-		if( ifr.onClose )
-			ifr.onClose();
-		
-		// Just remove the application
-		ifr.parentNode.removeChild( ifr );
-	}
-	
-	// Register application
-	ifr.onload = function()
-	{
-		// Get document
-		var doc = ifr.contentWindow.document;
-		
-		var jsx = doc.createElement( 'script' );
-		
-		// Path replacements
-		var dpath = '';
-		if( path )
+		// Close method
+		ifr.close = function()
 		{
-			dpath = path.split( /[^\/\:]+\.jsx/i ).join ( '' );
-			data = data.split( /progdir\:/i ).join ( dpath );
-			data = data.split( /libs\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
-			data = data.split( /system\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
+			// Check if iframe has a close event
+			if( ifr.onClose )
+				ifr.onClose();
+		
+			// Just remove the application
+			ifr.parentNode.removeChild( ifr );
 		}
-		
-		jsx.innerHTML = data;
-		ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
-		
-		var cid = addWrapperCallback( function()
+	
+		// Register application
+		ifr.onload = function()
 		{
-			if( callback )
+			try
 			{
-				callback( "\n", { response: 'Executable has run.' } );
+				// Get document
+				var doc = ifr.contentWindow.document;
+			
+				var jsx = doc.createElement( 'script' );
+			
+				// Path replacements
+				var dpath = '';
+
+				if( path )
+				{
+					dpath = path.split( /[^\/\:]+\.jsx/i ).join ( '' );
+					data = data.split( /progdir\:/i ).join ( dpath );
+					data = data.split( /libs\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
+					data = data.split( /system\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
+				}
+			
+				jsx.innerHTML = data;
+			
+				ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
+			
+			
+				var cid = addWrapperCallback( function()
+				{
+					if( callback )
+					{
+						callback( "\n", { response: 'Executable has run.' } );
+					}
+				} );
+			
+				var msg = { 
+					command:          'initappframe', 
+					base:             '/',
+					applicationId:    ifr.applicationId,
+					userId:           ifr.userId,
+					username:         ifr.username,
+					theme:            Workspace.theme,
+					locale:           Workspace.locale,
+					filePath:         '/webclient/jsx/',
+					appPath:          dpath ? dpath : '',
+					authId:           ifr.authId, // JSX may have authid
+					sessionId:        ifr.sessionId, // or JSX has sessionid
+					origin:           document.location.href,
+					viewId:         false,
+					registerCallback: cid,
+					clipboard:        friend.clipboard,
+					args:			  args
+				};
+			
+				if( !msg.authId && ifr.conf.authid ) msg.authId = ifr.conf.authid;
+				if( !msg.sessionId && ifr.conf.sessionid ) msg.sessionId = ifr.conf.sessionid;
+			
+				msg = JSON.stringify( msg );
+			
+				// Get JSON data from url
+				var vdata = GetUrlVar( 'data' ); if( vdata ) msg.data = vdata;
+			
+				ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 			}
-		} );
-		
-		var msg = JSON.stringify( { 
-			command:          'initappframe', 
-			base:             '/',
-			applicationId:    ifr.applicationId,
-			userId:           ifr.userId,
-			theme:            Doors.theme,
-			filePath:         '/webclient/jsx/',
-			appPath:          dpath ? dpath : '',
-			sessionId:        ifr.sessionId, // JSX has sessionid
-			origin:           document.location.href,
-			windowId:         false,
-			registerCallback: cid
-		} );
-		
-		ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
-	}
+			catch( e )
+			{
+				Notify({'title':i18n('i18n_error'),'description':i18n('i18n_could_not_run_jsx')});
+			}
+		}
 	
-	// Add application iframe to body
-	AttachAppSandbox( ifr );
+		// Add application iframe to body
+		AttachAppSandbox( ifr );
 	
-	// Add application
-	Doors.applications.push( ifr );
+		// Add application
+		Workspace.applications.push( ifr );
+	}, true );
 }
 
 // Attach a sandbox
@@ -669,10 +930,17 @@ function AttachAppSandbox( ifr, path )
 	if( !path ) path = ifr.src.split( /\/[^/.]*\.html/ )[0];
 	
 	var x = document.createElement( 'div' );
-	var icon = path + '/icon.png';
+	var icon = path.indexOf( '?' ) < 0 ? ( path + '/icon.png' ) : '/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png';
 	ifr.icon = icon;
 	x.style.backgroundImage = 'url(' + ifr.icon + ')';
 	x.className = 'Close';
+	var img = document.createElement( 'img' );
+	img.src = ifr.icon;
+	img.onload = function()
+	{
+		// TODO: Do something on load?
+	}
+	x.appendChild( img );
 	d.appendChild( x );
 	
 	// On click, quit with force!
@@ -741,29 +1009,32 @@ function AuthorizePermission( app, permissions )
 		}
 		w.setContent( d.split( '{permissions}' ).join ( perms ) );
 		var eles = w.getWindowElement().getElementsByTagName( 'button' );
-		var abtn = false, cbtn = false;
+		var abtn = false;
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if( eles[a].className == 'activation' )
+			if( eles[a].classList.contains( 'activation' ) )
 			{
 				abtn = eles[a];
 			}
-			else if( eles[a].className == 'cancel' )
-			{
-				cbtn = eles[a];
-			}
 		}
-		if( abtn && cbtn )
+		if( abtn )
 		{
 			abtn.onclick = function()
 			{
 				ExecuteApplicationActivation( app, w, conf.Permissions, 'reactivate' );
 			}
-			cbtn.onclick = function()
-			{
-				w.close();
-			}
 		}
 	}
 	f.load();
 }
+
+// Extract the security domain from conf object
+function GetDomainFromConf( conf )
+{
+	if( !conf ) return Workspace.runLevels[1].domain;
+	var port = document.location.href.match( /h[^:]*?\:\/\/[^:]+([^/]+)/i );
+	if( port.length < 2 ) port = ''; else port = port[1];
+	var sdomain = conf.State && conf.State.domain ? ( _protocol + '://' + conf.State.domain + port ) : Workspace.runLevels[1].domain;
+	return sdomain;
+}
+

@@ -1,0 +1,21 @@
+
+i18n_fullscreen                      : Plein écran
+i18n_window                     	 : Fenètre
+i18n_logout                          : Déconnexion
+i18n_quit                            : Quitter
+i18n_file                            : Fichier
+i18n_bookmarks                       : Marque pages
+i18n_bm_add                          : Ajouter
+
+i18n_account                         : Compte
+i18n_edit_profile                    : Editer le profil
+i18n_account_settings                : Préférences du compte
+i18n_global_settings                 : Préférences globales
+
+i18n_navigation                      : Navigation
+i18n_nav_newsfeed                    : Flux de nouvelles
+i18n_nav_messages                    : Messages
+i18n_nav_calendar                    : Calendrier
+i18n_nav_library                     : Librarie
+i18n_nav_browse                      : Choisir
+i18n_nav_bookmarks                   : Marque pages

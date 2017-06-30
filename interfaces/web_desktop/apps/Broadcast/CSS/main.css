@@ -1,0 +1,75 @@
+/*©*****************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              * 
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+*****************************************************************************©*/
+#group-chat {
+	position: relative;
+}
+
+#messages-users {
+	position: relative;
+}
+
+#message-container {
+	overflow: auto;
+}
+
+.user {
+	padding : 0.3em 0.5em;
+}
+
+.user .name {
+	padding : 0.2em 0.4em;
+}
+
+.user-remove {
+	opacity : 0.2;
+}
+
+.user:hover .user-remove {
+	opacity : 1;
+}
+
+.message {
+	margin-top : 0.2em;
+	padding : 0.3em;
+}
+
+.message .content {;
+	font-size: 120%;
+}
+
+.message .msg-meta {
+	opacity : 0.8;
+}
+
+#session-closed {
+	position: absolute;
+	top : 0;
+	right : 0;
+	bottom : 0;
+	left : 0;
+	padding : 2em;
+}
+
+#close-session-closed {
+	position: absolute;
+	top: 0.2em;
+	right: 0.2em;
+	width: 2em;
+	height: 2em;
+	opacity: 0.6;
+	transition : opacity 0.2s;
+}
+
+#close-session-closed:hover {
+	opacity: 1;
+	transition : opacity 0.2s;
+}

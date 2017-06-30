@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/thread.h>
 #include <util/log/log.h>
@@ -25,14 +29,14 @@
 // create new thread
 //
 
-FThread *ThreadNew( void *func, void *data, BOOL autos )
+FThread *ThreadNew( void *func, void *data, FBOOL autos )
 {
 	if( !func || !data ) return NULL;
 	
-	FThread *nt = (FThread *)calloc( 1, sizeof( FThread ) );
+	FThread *nt = (FThread *)FCalloc( 1, sizeof( FThread ) );
 	if( nt == NULL )
 	{
-		ERROR("[ThreadNew] Cannot allocate memory for Thread\n");
+		FERROR("[ThreadNew] Cannot allocate memory for Thread\n");
 		return NULL;
 	}
 	int error = 0;
@@ -40,6 +44,9 @@ FThread *ThreadNew( void *func, void *data, BOOL autos )
 	nt->t_Function = func;
 	nt->t_Data = data;
 	nt->t_Launched = FALSE;
+	
+	//uuid_generate( nt->t_uuid );
+	nt->t_pid = (FUQUAD)nt;
 	
 	//DEBUG("ThreadNew create thread func ptr %x\n", func );
 
@@ -55,21 +62,21 @@ FThread *ThreadNew( void *func, void *data, BOOL autos )
 		}
 		else
 		{
-			free( nt );
+			FFree( nt );
 			DEBUG("[ThreadNew] error: %d\n", error );
 			return NULL;
 		}
 	}
 	else
 	{
-		INFO("Thread start delayed\n");
+		Log( FLOG_INFO, "Thread start delayed\n");
 	}
 
 	return nt;
 }
 
 //
-//
+// start thread
 //
 
 FThread *ThreadStart( FThread *ft )
@@ -83,8 +90,6 @@ FThread *ThreadStart( FThread *ft )
 		if( ( error = pthread_create( &(ft->t_Thread), NULL, ft->t_Function, ft->t_Data ) ) == 0 )
 		{
 			ft->t_Launched = TRUE;
-			// WE ALWAYS PASS POINTER TO THREAD AND ALLOW DEVELOPER TO HANDLE  quit
-			//DEBUG("[ThreadNew] STARTED\n" );
 		}
 		else
 		{
@@ -94,6 +99,20 @@ FThread *ThreadStart( FThread *ft )
 		}
 	}
 	return ft;
+}
+
+//
+// Stop currently working thread
+//
+
+void ThreadCancel( FThread *ft, FBOOL wait )
+{
+	pthread_cancel( ft->t_Thread );
+	
+	if( wait == TRUE && ft->t_Launched != FALSE )
+	{
+		pthread_join( ft->t_Thread, NULL);
+	}
 }
 
 //
@@ -107,6 +126,8 @@ FThread *ThreadStart( FThread *ft )
 	{
 		//...do something
 	}
+	
+	ft = t_Ended = TRUE;
 
 	}
 */
@@ -124,11 +145,14 @@ void ThreadDelete( FThread *t )
 		
 		DEBUG("[ThreadDelete] Asking thread %p to quit.\n", t );
 		
-		pthread_join( t->t_Thread, NULL );
+		//if( t->t_Launched == TRUE )
+		{
+			pthread_join( t->t_Thread, NULL );
+		}
 		
 		DEBUG("[ThreadDelete] Thread finished work (%p)..\n", t );
 		
-		free( t );
+		FFree( t );
 	}
 }
 

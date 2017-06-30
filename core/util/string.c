@@ -1,13 +1,36 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
+#include <core/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
-#include <strings.h>
 #include <ctype.h>
 #include <assert.h>
 #include <stddef.h>
 #include "util/string.h"
 #include "util/list.h"
+#include <openssl/sha.h>
 
 //
 //
@@ -29,13 +52,18 @@ inline char *MakeString ( int length )
 
 int SubStrCmp ( char *str, char *compare )
 {
+	char* res;
 	if ( str == NULL || compare == NULL ) return -1;
 
-	char* res = strstr(str, compare);
-	if(!res)
+	res = strstr(str, compare);
+	if (!res)
+	{
 		return -1;
+	}
 	else
+	{
 		return res - str;
+	}
 }
 
 //
@@ -87,17 +115,18 @@ int SafeStrlen ( char **string, int maxlen )
 // Warning: Does not check that str contains at least len characters!
 //
 
-char* StringDuplicateN( char* str, unsigned int len )
+char* StringDuplicateN( char* str, int len )
 {
-	if( len == 0 )
+	char* copy;
+	if( len <= 0 )
 	{
-		ERROR("Cannot duplicate string in size 0\n");
+		FERROR("Cannot duplicate string in size 0\n");
 		return NULL;
 	}
-	char* copy = FCalloc( len + 1, sizeof(char) );
-	if( !copy )
+	copy = FCalloc( len + 1, sizeof(char) );
+	if( copy == NULL )
 	{
-		ERROR("Cannot allocate memory in StringDuplicateN\n");
+		FERROR("Cannot allocate memory in StringDuplicateN\n");
 		return NULL;
 	}
 	memcpy( copy, str, len );
@@ -111,16 +140,55 @@ char* StringDuplicateN( char* str, unsigned int len )
 
 char* StringDuplicate( const char* str )
 {
+	int len;
+	char *newStr;
 	if( !str )
 	{
-		ERROR("Cannot duplicate string in size 0\n");
+		FERROR("Cannot duplicate string in size 0\n");
 		return NULL;
 	}
-	int len = strlen( str );
-	char* newStr = calloc( len + 1, sizeof( char ) );
+	len = strlen( str );
+	newStr = calloc( len + 1, sizeof( char ) );
 	if( !newStr )
 	{
-		ERROR("Cannot allocate memory in StringDuplicateN\n");
+		FERROR("Cannot allocate memory in StringDuplicateN\n");
+		return NULL;
+	}
+	memcpy( newStr, str, len );
+	return newStr;
+}
+
+//
+//
+//
+
+char* StringDuplicateEOL( const char* str )
+{
+	int len = 0;
+	char *newStr;
+	char *p = (char *)str;
+	if( str == NULL )
+	{
+		FERROR("Cannot duplicate string in size 0\n");
+		return NULL;
+	}
+	
+	while( *p != 0 )
+	{
+		if( *p == '\n' || *p == '\r' )
+		{
+			break;
+		}
+		//printf("%c\n", *p );
+		
+		len++;
+		p++;
+	}
+	
+	newStr = FCalloc( len + 1, sizeof( char ) );
+	if( newStr == NULL )
+	{
+		FERROR("Cannot allocate memory in StringDuplicateN\n");
 		return NULL;
 	}
 	memcpy( newStr, str, len );
@@ -133,11 +201,12 @@ char* StringDuplicate( const char* str )
 
 void StringSecureFree( char* str )
 {
+	char *ptr;
 	if( !str )
 	{
 		return;
 	}
-	char* ptr = str;
+	ptr = str;
 	while( *ptr )
 	{
 		*(ptr++) = 0;
@@ -168,7 +237,8 @@ void AddEscapeChars( char *str )
 {
 	int len = strlen( str );
 	char *tmp = MakeString( len );
-	int i = 0, ii = 0; for ( ; i < len; i++ )
+	int i = 0, ii = 0; 
+	for ( ; i < len; i++ )
 	{
 		if( str[i] == ' ' )
 		{
@@ -183,14 +253,20 @@ void AddEscapeChars( char *str )
 // Decode string
 //
 
-ULONG UrlDecode( char* dst, const char* src )
+FULONG UrlDecode( char* dst, const char* src )
 {
 	char* org_dst = dst;
 	char ch, a, b;
+	DEBUG( "Decoding: %s\n", src );
 	do 
 	{
 		ch = *src++;
-		if( ch == '%' && isxdigit( a = src[0] ) && isxdigit( b = src[1] ) ) 
+		// Interpreting + as spaces!
+		if( ch == '+' )
+		{
+			ch = ' ';
+		}
+		else if( ch == '%' && isxdigit( a = src[0] ) && isxdigit( b = src[1] ) ) 
 		{
 			if( a < 'A' ) a -= '0';
 			else if( a < 'a' ) a -= 'A' - 10;
@@ -213,10 +289,15 @@ ULONG UrlDecode( char* dst, const char* src )
 
 char *UrlDecodeToMem( const char* src )
 {
-	char *dst = calloc( strlen( src ) + 1, sizeof(char ) );
+	if( src == NULL )
+	{
+		return NULL;
+	}
+	int size = strlen( src );
+	char *dst = calloc( size + 1, sizeof(char ) );
 	if( dst == NULL )
 	{
-		ERROR("Cannot alloc memory for decoded url\n");
+		FERROR("Cannot alloc memory for decoded url\n");
 		return NULL;
 	}
 	char* org_dst = dst;
@@ -224,7 +305,12 @@ char *UrlDecodeToMem( const char* src )
 	do 
 	{
 		ch = *src++;
-		if( ch == '%' && isxdigit( a = src[0] ) && isxdigit( b = src[1] ) ) 
+		// Interpreting + as spaces!
+		if( ch == '+' )
+		{
+			ch = ' ';
+		}
+		else if( ch == '%' && isxdigit( a = src[0] ) && isxdigit( b = src[1] ) ) 
 		{
 			if( a < 'A' ) a -= '0';
 			else if( a < 'a' ) a -= 'A' - 10;
@@ -241,6 +327,35 @@ char *UrlDecodeToMem( const char* src )
 	return org_dst;
 }
 
+char _rfc3986[ 256 ] = { 0 };
+void _UrlEncodeInitTables()
+{
+	int i = 0; for( ; i < 256; i++ )
+		_rfc3986[ i ] = isalnum( i ) || i == '~' || i == '-' || i == '.' || i == '_' ? i : 0;
+}
+char *UrlEncodeToMem( const char *src )
+{
+	if( _rfc3986[0] == 0 ) _UrlEncodeInitTables();
+	
+	char *enc = FCalloc( ( strlen( src ) << 2 ), sizeof( char ) );
+	char *res = enc;
+	for( ; *src; src++ )
+	{
+		// if we don't have an index on the current character in the 
+		// table, then add it pure, else, encode it
+		if( _rfc3986[ *src ] ) 
+		{
+			sprintf( enc, "%c", _rfc3986[ *src ] );
+		}
+		else 
+		{
+			sprintf( enc, "%%%02X", ( unsigned char)*src );
+		}
+		while( *( ++enc ) != NULL ){};
+	}
+    return res;
+}
+
 // Note: If the number is too large to fit in an uint, this function will simply overflow.
 //       It's safe, but can be unexpected.
 //       Returns 0 if a non-digit character was found
@@ -253,7 +368,7 @@ unsigned int StringParseUInt( char* str )
 	{
 		if( str[i] >= '0' && str[i] <= '9' )
 		{
-			v = ( v * 10 ) + ( str[i] - '0' );
+			v = ( ( v << 3 ) + ( v << 1 ) ) + ( str[i] - '0' );
 		}
 		else
 		{
@@ -276,7 +391,7 @@ char* StringAppend( const char* str1, const char* str2 )
 	// Out of memory?
 	if( !combined )
 	{
-		ERROR("Cannot allocate memory in StringAppend\n");
+		FERROR("Cannot allocate memory in StringAppend\n");
 		return NULL;
 	}
 
@@ -290,27 +405,27 @@ char* StringAppend( const char* str1, const char* str2 )
 //
 //
 
-inline BOOL CharIsDigit( char c )
+inline FBOOL CharIsDigit( char c )
 {
 	return c >= '0' && c <= '9';
 }
 
-inline BOOL CharIsUpAlpha( char c )
+inline FBOOL CharIsUpAlpha( char c )
 {
 	return c >= 'A' && c <= 'Z';
 }
 
-inline BOOL CharIsLoAlpha( char c )
+inline FBOOL CharIsLoAlpha( char c )
 {
 	return c >= 'a' && c <= 'z';
 }
 
-inline BOOL CharIsAlpha( char c )
+inline FBOOL CharIsAlpha( char c )
 {
 	return CharIsUpAlpha( c ) || CharIsLoAlpha( c );
 }
 
-inline BOOL CharIsAlphanumeric( char c )
+inline FBOOL CharIsAlphanumeric( char c )
 {
 	return CharIsAlpha( c ) || CharIsDigit( c );	
 }
@@ -341,7 +456,7 @@ char CharAlphaToLow( char c )
 //
 //
 
-BOOL CharIsCTL( char c )
+FBOOL CharIsCTL( char c )
 {
 	return c < 0x20 || c == 0x7F;
 }
@@ -410,7 +525,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 		char** a = calloc( 1, sizeof( char* ) );
 		if( a == NULL )
 		{
-			ERROR("Cannot allocate memory in StringSplit\n");
+			FERROR("Cannot allocate memory in StringSplit\n");
 			return NULL;
 		}
 		a[0] = StringDuplicate( str );
@@ -454,7 +569,7 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 	char** a = calloc( c, sizeof( char *) );
 	if( a == NULL )
 	{
-		ERROR("Cannot allocate memory in String Split\n");
+		FERROR("Cannot allocate memory in String Split\n");
 		return NULL;
 	}
 	lptr = l->next;
@@ -479,6 +594,8 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 
 char* StringShellEscape( const char* str )
 {
+	//DEBUG("StringShellEscape %s\n", str );
+	
 	unsigned int strLen = str ? strlen( str ) : 0;
 	unsigned int estrLen = 0;
 
@@ -501,7 +618,7 @@ char* StringShellEscape( const char* str )
 	char* estr = calloc( estrLen + 1, sizeof(char) );
 	if( estr == NULL )
 	{
-		ERROR("Cannot allocate memory in StringShellEscape\n");
+		FERROR("Cannot allocate memory in StringShellEscape\n");
 		return NULL;
 	}
 	unsigned int j = 0;
@@ -521,6 +638,61 @@ char* StringShellEscape( const char* str )
 			estr[j++] = str[i];
 	}
 	estr[ estrLen ] = 0;
+
+	return estr;
+}
+
+//
+// same as Escape + return len
+//
+
+char* StringShellEscapeSize( const char* str, int *len )
+{
+	DEBUG("StringShellEscape %s\n", str );
+	
+	unsigned int strLen = str ? strlen( str ) : 0;
+	unsigned int estrLen = 0;
+
+	// We must escape \'s and "'s from the args!
+	for( unsigned int i = 0; i < strLen; i++ )
+	{
+		if(str[i] == '\\')
+		{
+			estrLen += 2;
+		}
+		else if(str[i] == '"')
+		{
+			estrLen += 2;
+		}
+		else
+		{
+			estrLen++;
+		}
+	}
+	char* estr = calloc( estrLen + 1, sizeof(char) );
+	if( estr == NULL )
+	{
+		FERROR("Cannot allocate memory in StringShellEscape\n");
+		return NULL;
+	}
+	unsigned int j = 0;
+	for( unsigned int i = 0; i < strLen; i++ )
+	{
+		if(str[i] == '\\')
+		{
+			estr[j++] = '\\';
+			estr[j++] = str[i];
+		}
+		else if(str[i] == '"')
+		{
+			estr[j++] = '\\';
+			estr[j++] = str[i];
+		}
+		else
+			estr[j++] = str[i];
+	}
+	estr[ estrLen ] = 0;
+	*len = estrLen;
 
 	return estr;
 }
@@ -595,9 +767,9 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-QUAD FindInBinaryPOS(char *x, int m, char *y, UQUAD n) 
+FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n) 
 {
-	QUAD i, j;
+	FQUAD i, j;
 	int kmpNext[ m ];
 
 	// Preprocessing 
@@ -605,7 +777,7 @@ QUAD FindInBinaryPOS(char *x, int m, char *y, UQUAD n)
 
 	// Searching 
 	i = j = 0;
-	while (j < n) 
+	while (j < (FQUAD)n) 
 	{
 		//printf("find %d\n", j );
 		while (i > -1 && x[i] != y[j])
@@ -623,21 +795,101 @@ QUAD FindInBinaryPOS(char *x, int m, char *y, UQUAD n)
 	return -1;
 }
 
-QUAD FindInBinarySimple( char *x, int m, char *y, UQUAD n )
+//
+//
+//
+
+FQUAD FindInBinarySimple( char *x, int m, char *y, FUQUAD n )
 {
-	UQUAD i;
+	FUQUAD i;
 	
-	INFO("\n\n\nFIND TEXT %s\n", x );
+	//INFO("\n\n\nFIND TEXT %s\n", x );
 	
 	for( i=0 ; i < n ; i++ )
 	{
 		//printf("find %lld\n", i );
 		if( memcmp( x, y, m ) == 0 )
 		{
-			//ERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
-			return (QUAD)i;
+			//FERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
+			return (FQUAD)i;
 		}
 		y++;
 	}
 	return -1;
 }
+
+
+void HashedString ( char **str )
+{
+	unsigned char temp[SHA_DIGEST_LENGTH];
+	memset( temp, 0x0, SHA_DIGEST_LENGTH );
+	
+	char *buf = FCalloc( ( SHA_DIGEST_LENGTH << 1 ) + 1, sizeof( char ) );
+
+	if( buf != NULL )
+	{
+		SHA1( ( unsigned char *)*str, strlen( *str ), temp);
+
+		int i = 0;
+		for ( ; i < SHA_DIGEST_LENGTH; i++ )
+		{
+			sprintf( (char*)&(buf[ i << 1 ]), "%02x", temp[i] );
+		}
+
+		if ( *str ) 
+		{
+			FFree ( *str );
+		}
+		DEBUG ( "[HashedString] Hashing\n" );
+		*str = buf;
+		DEBUG ( "[HashedString] Hashed\n" );
+	}
+	else
+	{
+		FERROR("Cannot allocate memory for hashed string\n");
+	}
+}
+
+//
+//
+//
+
+char *GetStringFromJSON( char *text, char *token )
+{
+	char *valPtr = NULL;
+	
+	if( ( valPtr = strstr( text, token ) ) != NULL )
+	{
+		char *retValue;
+		char *allocPath = NULL;
+	
+		valPtr += strlen( token )+4;	// we move to the end of "TOKEN":"
+		retValue = valPtr;
+		int index = 0;
+		// we want to end string by putting 0 on the end
+		
+		while( *valPtr != 0 )
+		{
+			char *oldChar = valPtr;
+		
+			valPtr++;
+		
+			if( *oldChar != '\\' && *valPtr == '\"' )
+			{
+				allocPath = StringDuplicateN( retValue, (oldChar+1)-retValue );
+				if( allocPath != NULL )
+				{
+					int len = strlen( allocPath );
+					if( allocPath[ len-1 ] == '\\' )
+					{
+						allocPath[ len-1 ] = 0;
+					}
+					return allocPath;
+				}
+				break;
+			}
+		}
+	}
+	return NULL;
+}
+

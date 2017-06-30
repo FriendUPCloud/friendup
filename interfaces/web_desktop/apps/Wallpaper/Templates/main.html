@@ -34,10 +34,12 @@
 			</div>
 		</div>
 	</div>
-	<div class="DialogButtons PaddingRight">
-		<button type="button" class="IconSmall fa-eye CloseButton FloatRight" onclick="Application.quit()">
-			{close}
-		</button>
+	<div class="DialogButtons Padding">
+		<div class="FloatRight">
+			<button type="button" class="IconSmall fa-eye CloseButton" onclick="Application.quit()">
+				{close}
+			</button>
+		</div>
 		<button type="button" class="IconSmall fa-eye UseButton" onclick="Application.operationUse()">
 			{use}
 		</button>
@@ -60,7 +62,14 @@
 	.WPatternCont2
 	{
 		width: 67%;
-		margin-left: 33%;
+		/*margin-left: 33%;*/
+	}
+	.ImageContainer:after
+	{
+		display: block;
+		content: " ";
+		clear: both;
+		height: 20px;
 	}
 	.WPatternCont > div, .WPatternCont2 > div
 	{
@@ -113,7 +122,6 @@
 		bottom: -21px;
 		width: 100%;
 		text-align: center;
-		text-shadow: 0px 1px 1px white;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -128,8 +136,6 @@
 		top: 5px;
 		background: #000000;
 		color: #ffffff;
-		cursor: hand;
-		cursor: pointer;
 		z-index: 2;
 		margin: 0;
 	}
@@ -147,12 +153,10 @@
 	{
 		margin: 8px 8px 13px -2px;
 		border: 3px dotted rgb(255,255,255);
-		color: black;
 	}
 	.WPImage.Selected > div > div
 	{
 		font-weight: bold;
-		color: black;
 	}
 	.My.DialogContent
 	{

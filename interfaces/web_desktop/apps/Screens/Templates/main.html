@@ -5,7 +5,7 @@
 				<div style="position: absolute; top: 0; left: 0; width: 100%; height: 37px">
 					<div class="Padding">
 						<p class="Layout"><strong>
-							Available screens
+							Available screens:
 						</strong></p>
 					</div>
 				</div>
@@ -15,9 +15,34 @@
 			<div class="HContent70 HContentRight VContent100">
 				<div class="Padding">
 					<p class="Layout"><strong>
-						Screen settings
+						Screen information:
 					</strong></p>
-					<div class="Box" style="height: 100%"></div>
+					<div class="Box" style="height: 100%" id="ScreenInfo">
+					<form>
+						<div class="HRow">
+							<div class="FloatLeft HContent40">
+								<p class="Layout">
+									<strong>Screen id:</strong>
+								</p>
+							</div>
+							<div class="FloatLeft HContent60">
+								<p class="Layout">
+									<input type="text" class="FullWidth" id="screen_id" placeholder="id_of_screen"/>
+								</p>
+							</div>
+						</div>
+						<div class="HRow">
+							<div class="FloatLeft HContent40">
+								<p class="Layout">
+									<strong>Flags:</strong>
+								</p>
+							</div>
+							<div class="FloatLeft HContent60">
+								<div id="ScreenFlags"></div>
+							</div>
+						</div>
+					</form>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -31,7 +56,7 @@
 				</button>
 			</div>
 			<div class="HContent50 HContentRight VContent100 Padding TextRight">
-				<button type="button" class="IconSmall fa-close">
+				<button type="button" class="IconSmall fa-close" id="CloseBtn" onclick="Application.sendMessage( { command: 'quit' } );">
 					Close
 				</button>
 			</div>

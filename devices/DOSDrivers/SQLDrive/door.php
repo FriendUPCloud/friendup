@@ -1,11 +1,11 @@
 <?php
 
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,10 +14,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 global $args, $SqlDatabase, $User, $Config;
 
@@ -33,75 +34,31 @@ if( !class_exists( 'DoorSQLDrive' ) )
 {
 	class DoorSQLDrive extends Door
 	{	
+		/**
+		 * Constructor
+		*/
 		function onConstruct()
 		{
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 			
 		}
-
-		// Gets the subfolder by path on this filesystem door
-		// Path should be like this: SomePath:Here/ or Here/ (relating to Filesystem in $this)
-		function getSubFolder( $subPath )
-		{
-			global $Logger;
-			
-			//$inputPath = $subPath;
-			
-			if( $subPath == '/' ) return false;
-			
-			//$Logger->log( 'Ok, we have subpath: ' . print_r( $subPath, 1 ) );
-			
-			$fo = false;
-			// If we got a filename, strip the last joint
-			if( strstr( $subPath, ':' ) )
-			{
-				list( , $subPath ) = explode( ':', $subPath );
-			}
 		
-			// Watch out for wrong formatting! (just for validation)
-			if( substr( $subPath, -1, 1 ) != '/' )
-				return false;
-			
-			// But we don't need the trailing slash here
-			$subPath = substr( $subPath, 0, strlen( $subPath ) - 1 );
+		// Public functions ----------------------------------------------------
 		
-			// Get all parts
-			$finalPath = explode( '/', $subPath );
-	
-			//$Logger->log( 'We found final path: ' . implode( '/', $finalPath ) );
-	
-			$parID = '0';
-			while( count( $finalPath ) > 0 )
-			{
-				//$Logger->log('We do now check this path: ' . implode( '/', $finalPath ) . ' with Parent Folder ID of ' . $parID );
-				$fo = new dbIO( 'FSFolder' );
-				$fo->FilesystemID = $this->ID;
-				$fo->Name = $finalPath[0];
-				$fo->FolderID = $parID;
-				if( $fo->Load() )
-				{
-					$out = [];
-					for( $a = 1; $a < count( $finalPath ); $a++ )
-					{
-						$out[] = $finalPath[$a];
-					}
-					$finalPath = $out;
-					$parID = $fo->ID;
-				}
-				else
-				{
-					$Logger->log('#### COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
-					return false;
-				}
-				//$Logger->log('Our current folder ID is '. $fo->ID);
-			} 
-			//$Logger->log('We return the folder ID ' . $fo->ID . ' for the original input ' . $inputPath );
-			return $fo;
-		}
-
-		// Execute a dos command
-		function dosAction( $args )
+		/**
+		 * @brief Execute a dos command
+		 * 
+		 * Executes a dormant command on this Door object which is passed on to
+		 * Friend Core. The function is very low level in that it takes a url
+		 * encoded string of vars.
+		 * The function does not return any data, but exits with its result
+		 * in the format of returncode<!--separate-->{jsondata...}
+		 *
+		 * @param $args arguments for dos action
+		 * @return none
+		 */
+		public function dosAction( $args )
 		{
 			global $SqlDatabase, $User, $Config, $Logger;
 		
@@ -111,7 +68,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			// TODO: This is a workaround, please fix in Friend Core!
 			//       Too much code for getting a real working path..
 			if( isset( $args->path ) )
+			{
 				$path = $args->path;
+			}
 			else if( isset( $args->args ) )
 			{
 				if( isset( $args->args->path ) )
@@ -122,10 +81,20 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$path = str_replace( '::', ':', $path );
 				$path = explode( ':', $path );
 				if( count( $path ) > 2 )
+				{
 					$args->path = $path[1] . ':' . $path[2];
-				else $args->path = implode( ':', $path );
+				}
+				else
+				{
+					$args->path = implode( ':', $path );
+				}
+				
+				$path = $args->path;
+				
 				if( isset( $args->args ) && isset( $args->args->path ) )
+				{
 					unset( $args->args->path );
+				}
 			}
 		
 			// Do a directory listing
@@ -152,18 +121,67 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					SELECT * FROM
 					(
 						(
-							SELECT "Directory" AS `Type`, ID, `Name`, Permissions, DateModified, DateCreated, "0" AS Filesize FROM FSFolder
+							SELECT "Directory" AS `Type`, ID, `Name`, Permissions, DateModified, DateCreated, "0" AS Filesize, UserID FROM FSFolder
 							WHERE FilesystemID=\'' . $this->ID . '\' AND UserID=\'' . $User->ID . '\' AND FolderID=\'' . ( $fo ? $fo->ID : '' ) . '\'
 						)
 						UNION
 						(
-							SELECT "File" AS `Type`, ID, Filename AS `Name`, Permissions, DateModified, DateCreated, Filesize FROM FSFile
+							SELECT "File" AS `Type`, ID, Filename AS `Name`, Permissions, DateModified, DateCreated, Filesize, UserID FROM FSFile
 							WHERE FilesystemID=\'' . $this->ID . '\' AND UserID=\'' . $User->ID . '\' AND FolderID=\'' . ( $fo ? $fo->ID : '' ) . '\'
 						)
 					) z
 					ORDER BY `Name` ASC
 				' ) )
 				{
+					// Get shared files
+					$files = [];
+					$paths = [];
+					$userids = [];
+					foreach( $entries as $k=>$entry )
+					{
+						if( $entry->Type == 'File' )
+						{
+							$entries[$k]->Path = $thePath . $entry->Name . ( $entry->Type == 'Directory' ? '/' : '' );
+							$paths[] = $entry->Path;
+							$files[] = $entry->ID;
+							$f = false;
+							foreach( $userids as $kk=>$v )
+							{
+								if( $v == $entry->UserID )
+								{
+									$f = true;
+									break;
+								}
+							}
+							if( !$f )
+								$userids[] = $entry->UserID;
+							$entries[$k]->Shared = 'Private';
+						}
+					}
+					if( $shared = $SqlDatabase->FetchObjects( $q = '
+						SELECT Path, UserID, ID, `Name`, `Hash` FROM FFileShared s
+						WHERE
+							s.DstUserSID = "Public" AND s.Path IN ( "' . implode( '", "', $paths ) . '" ) AND
+							s.UserID IN ( ' . implode( ', ', $userids ) . ' )
+					' ) )
+					{
+						foreach( $entries as $k=>$entry )
+						{
+							foreach( $shared as $sh )
+							{
+								if( isset( $entry->Path ) && isset( $sh->Path ) && $entry->Path == $sh->Path && $entry->UserID == $sh->UserID )
+								{
+									$entries[$k]->Shared = 'Public';
+									
+									$link = ( $Config->SSLEnable == 1 ? 'https' : 'http' ) . '://';
+									$link .= $Config->FCHost . ':' . $Config->FCPort . '/sharedfile/' . $sh->Hash . '/' . $sh->Name;
+									$entries[$k]->SharedLink = $link;
+								}
+							}
+						}
+					}
+					
+					// List files
 					foreach( $entries as $entry )
 					{
 						$o = new stdClass();
@@ -175,7 +193,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$o->DateModified = $entry->DateModified;
 						$o->DateCreated = $entry->DateCreated;
 						$o->Filesize = $entry->Filesize;
-						$o->Path = $thePath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' );
+						$o->Path = end( explode( ':', $thePath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' ) ) );
+						$o->Shared = isset( $entry->Shared ) ? $entry->Shared : '';
+						$o->SharedLink = isset( $entry->SharedLink ) ? $entry->SharedLink : '';
 						$out[] = $o;
 					}
 					return 'ok<!--separate-->' . json_encode( $out );
@@ -183,33 +203,112 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				// No entries
 				return 'ok<!--separate-->[]';
 			}
-			else if( $args->command == 'write' )
+			else if( $args->command == 'info' && is_string( $path ) && isset( $path ) && strlen( $path ) )
 			{
+				// Is it a folder?
+				if( substr( $path, -1, 1 ) == '/' )
+				{
+					if( $sp = $this->getSubFolder( $path ) )
+					{
+						$fldInfo = new stdClass();
+						$fldInfo->Type = 'Directory';
+						$fldInfo->MetaType = $fldInfo->Type;
+						$fldInfo->Path = end( explode( ':', $path ) );
+						$fldInfo->Filesize = 0;
+						$fldInfo->Filename = $sp->Name;
+						$fldInfo->DateCreated = $sp->DateCreated;
+						$fldInfo->DateModified = $sp->DateModified;
+						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+					}
+				}
+				// Ok, it's a file
+				else
+				{
+					// Create a file object
+					$f = new dbIO( 'FSFile' );
+					$f->FilesystemID = $this->ID;
+					$fname = end( explode( ':', $args->path ) );
+					$fname = end( explode( '/', $fname ) );
+					$f->Filename = $fname;
+					//$f->UserID = $User->ID; // TODO: Add for security!
+					$f->FolderID = '0';
+					$fn = '';
+	
+					// Can we get sub folder?
+					if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+					{	
+						// Remove filename
+						if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
+						{
+							$subPath = explode( '/', $subPath );
+							array_pop( $subPath );
+							$subPath = implode( '/', $subPath ) . '/';
+						}
+						if( $fo = $this->getSubFolder( $subPath ) )
+							$f->FolderID = $fo->ID;	
+					}
+	
+					// Try to load database object
+					if( $f->Load() )
+					{
+						$fldInfo = new stdClass();
+						$fldInfo->Type = 'File';
+						$fldInfo->MetaType = $fldInfo->Type;
+						$fldInfo->Path = $path;
+						$fldInfo->Filesize = $f->Filesize;
+						$fldInfo->Filename = $f->Filename;
+						$fldInfo->DateCreated = $f->DateCreated;
+						$fldInfo->DateModified = $f->DateModified;
+						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+					}
+					// We added a directory after all..
+					else
+					{
+						if( $sp = $this->getSubFolder( $path . '/' ) )
+						{
+							$fldInfo = new stdClass();
+							$fldInfo->Type = 'Directory';
+							$fldInfo->MetaType = $fldInfo->Type;
+							$fldInfo->Path = end( explode( ':', $path ) );
+							$fldInfo->Filesize = 0;
+							$fldInfo->Filename = $sp->Name;
+							$fldInfo->DateCreated = $sp->DateCreated;
+							$fldInfo->DateModified = $sp->DateModified;
+							die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+						}
+					}
+				}
+				die( 'fail<!--separate-->Could not find file!' );
+			}
+			else if( $args->command == 'write' )
+			{	
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
-				if( $sum = $SqlDatabase->FetchObject( 'SELECT SUM(u.Filesize) z FROM FSFile u WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'' ) )
+				if( $sum = $SqlDatabase->FetchObject( '
+					SELECT SUM(u.Filesize) z FROM FSFile u 
+					WHERE u.UserID=\'' . $User->ID . '\' AND FilesystemID = \'' . $this->ID . '\'
+				' ) )
+				{
 					$total = $sum->z;
-				
-				$Logger->log( 'starting to write... ' . $args->path );
+				}
 				
 				// Create a file object
 				$f = new dbIO( 'FSFile' );
 				$f->FilesystemID = $this->ID;
-				$f->DiskFilename = '';
 				$fname = end( explode( ':', $args->path ) );
 				$fname = end( explode( '/', $fname ) );
 				$f->Filename = $fname;
 				$f->UserID = $User->ID;
 				$f->FolderID = '0';
 				
-	
 				// Can we get sub folder?
 				$fo = false;
+				
+				$args->path = str_replace( ':/', ':', $args->path );
+				
 				if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
 				{
-					//$Logger->log( 'Trying to find existing file in path -> ' . $subPath . ' (' . $args->path . ')' );
-					
 					// Remove filename
 					if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
 					{
@@ -218,27 +317,43 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$subPath = implode( '/', $subPath ) . '/';
 					}
 					
-					$Logger->log('We will try to find the folder ID for this path now ' . $subPath );
+					//$Logger->log( 'We will try to find the folder ID for this path now ' . $subPath );
 					if( $fo = $this->getSubFolder( $subPath ) )
 					{
-						//$Logger->log( 'We found folder wth ID '. $fo->ID .' in ' . $subPath . ' (' . $args->path . ')' );
 						$f->FolderID = $fo->ID;	
 					}
-					//$Logger->log( 'Tried to find folderid ' . $f->FolderID . ' from ' . ( $fo ? $fo->Name : 'root folder' ) . ' (' . $args->path . ')' );
 				}
 				
 				// Overwrite existing and catch object
 				if( $f->Load() )
 				{
 					$deletable = $Config->FCUpload . $f->DiskFilename;
-					$Logger->log( 'Yay, overwriting existing file -> ' . $f->DiskFilename . '!: ' . $f->FolderID );
+					//$Logger->log( 'Yay, overwriting existing file -> ' . $f->DiskFilename . '!: ' . $f->FolderID );
+					$fn = $f->DiskFilename;
+				}
+				else
+				{
+					$fn = $f->Filename;
+					$f->DiskFilename = '';
 				}
 	
 				// Write the file
-				$fn = $f->Filename;
+				
+				// The file is new, make sure we don't overwrite any existing file
 				if( $f->ID <= 0 )
 				{
-					while( file_exists( $Config->FCUpload . $fn ) ){ $fn .= rand( 0, 99999 ); }
+					$ofn = $fn;
+					$fna = end( explode( '.', $ofn ) );
+					while( file_exists( $Config->FCUpload . $fn ) )
+					{
+						// Keep extension last
+						if( $fna )
+						{
+							$fn = substr( $ofn, 0, strlen( $ofn ) - 1 - strlen( $fna ) ) . rand(0,9999) . rand(0,9999) . rand(0,9999) . '.' . $fna;
+						}
+						// Has no extension
+						else $fn .= rand(0,99999); 
+					}
 				}
 				if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
 				{
@@ -276,13 +391,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
-								$Logger->log( 'Write: Limit broken' );
+								//$Logger->log( 'Write: Limit broken' );
 								die( 'fail<!--separate-->Limit broken' );
 							}
 						}
 						else
 						{
-							$Logger->log( 'Write: Tempfile does not exist.' );
+							//$Logger->log( 'Write: Tempfile does not exist.' );
 							die( 'fail<!--separate-->Tempfile does not exist!' );
 						}
 					}
@@ -296,7 +411,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						else
 						{
 							fclose( $file );
-							$Logger->log( 'Write: Limit broken' );
+							//$Logger->log( 'Write: Limit broken' );
 							die( 'fail<!--separate-->Limit broken' );
 						}
 					}
@@ -309,7 +424,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					//$Logger->log( 'Write: wrote new file with id: ' . $f->ID );
 					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 				}
-				$Logger->log( 'Write: could not write file..' );
+				//$Logger->log( 'Write: could not write file..' );
 				return 'fail<!--separate-->Could not write file: ' . $Config->FCUpload . $fn;
 			}
 			else if( $args->command == 'read' )
@@ -320,7 +435,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$fname = end( explode( ':', $args->path ) );
 				$fname = end( explode( '/', $fname ) );
 				$f->Filename = $fname;
-				$f->UserID = $User->ID;
+				//$f->UserID = $User->ID; // TODO: Add for security!
 				$f->FolderID = '0';
 				$fn = '';
 	
@@ -343,8 +458,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				{
 					// Read the file
 					$fn = $f->DiskFilename;
+					
 					$fname = $Config->FCUpload . $fn;
-					if( file_exists( $fname ) && $data = file_get_contents( $fname ) )
+					if( file_exists( $fname ) )
 					{
 						$info = @getimagesize( $fname );
 					
@@ -371,9 +487,18 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					
 						// Some data is raw
-						if( isset( $args->mode ) && $args->mode == "rb" )
+						if( isset( $args->mode ) && ( $args->mode == 'rb' || $args->mode == 'rs' ) )
 						{
-							return $data;
+							if( $df = fopen( $fname, 'r' ) )
+							{
+								$buffer = 64000;
+								while( $str = fread( $df, $buffer ) )
+								{
+									echo( $str );
+								}
+								fclose( $df );
+								die();
+							}
 						}
 					
 						// Return ok
@@ -382,14 +507,14 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						if( isset( $info[0] ) && $info[0] > 0 && $info[1] > 0 )
 						{
 							friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
-							return $okRet . base64_encode( $data );
+							return $okRet . base64_encode( file_get_contents( $fname ) );
 						}
 					
 						friendHeader( 'Content-Length: ' . filesize( $fname ) + strlen( $okRet ) );
-						return $okRet . trim( $data );
+						return $okRet . trim( file_get_contents( $fname ) );
 					}
 				}
-				return 'fail<!--separate-->Could not read file: ' . $Config->FCUpload . $fn;
+				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
 			}
 			// Import sent files!
 			else if( $args->command == 'import' )
@@ -444,132 +569,6 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				}
 				die( 'fail<!--separare-->Could not open dir.' );
 			}
-			else if( $args->command == 'loaddocumentformat' )
-			{
-				// Loads a document depending on format				
-				$path = $args->path;
-				if( $f = $this->getFile( $path ) )
-				{
-					// TODO: Atomic file locking!!
-					$fna = $f->FileInfo->DiskFilename;
-					$lastExt = explode( '.', $fna ); $lastExt = $lastExt[count($lastExt)-1];
-					$outFile = substr( $fna, 0, strlen( $fna ) - strlen( $lastExt ) - 1 ) . '.html';
-					if( $output = exec( $foo = ( 'libreoffice -env:UserInstallation=file:///tmp --headless --convert-to html \'' . 
-						getcwd() . '/' . $Config->FCUpload . $f->FileInfo->DiskFilename . '\' --outdir /tmp/' ) ) )
-					{
-						if( $outData = file_get_contents( '/tmp/' . $outFile ) )
-						{
-							unlink( '/tmp/' . $outFile );
-							die( 'ok<!--separate-->' . $outData );
-						}
-						die( 'fail<!--separate-->Could not convert file ' . $outFile );
-					}
-					die( 'fail<!--separate-->' );
-				}
-				die( 'fail<!--separate-->No temp file for ' . $path );
-			}
-			else if( $args->command == 'gendocumentpdf' )
-			{
-				$path = $args->path;
-				if( $f = $this->getFile( $path ) )
-				{
-					$fi = $f->FileInfo;
-					
-					// TODO: Atomic file locking!!
-					$outFile = 'print_' . $User->ID . '.html';
-					$outPDF  = 'print_' . $User->ID . '.pdf';
-				
-					// Write temporary html file
-					if( $fl = fopen( '/tmp/' . $outFile, 'w+' ) )
-					{
-						fwrite( $fl, $args->args->data );
-						fclose( $fl );
-					}
-					else die( 'fail<!--separate-->Error writing temporary file.' );
-				
-					if( $output = exec( $foo = ( 'libreoffice -env:UserInstallation=file:///tmp --headless --convert-to pdf \'' . 
-						'/tmp/' . $outFile . '\' --outdir /tmp/' ) ) )
-					{
-						if( file_exists( '/tmp/' . $outPDF ) )
-						{
-							$ext = 'pdf';
-							$fex = end( explode( '.', $fi->Filename ) );
-							$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $fex ) + 1 ) );
-							$filename = $fname . '.pdf';		
-							while( file_exists( $Config->FCUpload . $filename ) )
-								$filename = $fname . rand(0,999) . '.' . $ext;
-							
-							$l = new dbIO( 'FSFile' );
-							$l->FilesystemID = $fi->FilesystemID;
-							$l->UserID = $fi->UserID;
-							$l->FolderID = $fi->FolderID;
-							$l->Filename = $fname . '.pdf';
-							// Try to update it, if not, it's new
-							if( !$l->Load() ) $l->DiskFilename = $filename;
-							// Move in the file
-							rename( '/tmp/' . $outPDF, $Config->FCUpload . $l->DiskFilename ); // <- clean up
-							// Rest..
-							$l->Filesize = filesize( $Config->FCUpload . $l->DiskFilename );
-							$l->DateCreated = date( 'Y-m-d H:i:s' );
-							$l->DateModified = $l->DateCreated;
-							$l->Save();
-							
-							$newPath = explode( ':', $path ); 
-							$newPath = $newPath[1];
-							
-							if( strstr( $newPath, '/' ) )
-							{
-								$newPath = explode( '/', $newPath );
-								$newPath = $newPath[count($newPath)-1];
-							}
-							$newPath = substr( $path, 0, strlen( $path ) - strlen( $newPath ) ) . $l->Filename;
-							
-							unlink( '/tmp/' . $outFile ); // <- clean up
-							
-							die( 'ok<!--separate-->' . $newPath );
-						}
-						die( 'fail<!--separate-->Could not convert file ' . $outPDF );
-					}
-					die( 'fail<!--separate-->' );
-				}
-				die( 'fail<!--separate-->Could not find file.' );
-			}
-			else if( $args->command == 'writedocumentformat' )
-			{
-				// Loads a document depending on format				
-				$path = $args->path;
-				if( $f = $this->getFile( $path ) )
-				{
-					// TODO: Atomic file locking!!
-					$fna = $f->FileInfo->DiskFilename;
-										
-					$lastExt = end( explode( '.', $fna ) );
-					$outFile = substr( $fna, 0, strlen( $fna ) - strlen( $lastExt ) - 1 ) . '.html';
-					
-					// Write temporary html file
-					if( $fl = fopen( '/tmp/' . $outFile, 'w+' ) )
-					{
-						fwrite( $fl, $args->args->data );
-						fclose( $fl );
-					}
-					else die( 'fail<!--separate-->Error writing temporary file.' );
-					
-					if( $output = exec( $foo = ( 'libreoffice -env:UserInstallation=file:///tmp --headless --convert-to ' . $lastExt . ' \'' . 
-						'/tmp/' . $outFile . '\' --outdir /tmp/' ) ) )
-					{
-						if( file_exists( '/tmp/' . $outFile ) )
-						{
-							unlink( $Config->FCUpload . $f->FileInfo->DiskFilename );
-							unlink( '/tmp/' . $outFile );
-							rename( '/tmp/' . $fna, $Config->FCUpload . $f->FileInfo->DiskFilename );
-							die( 'ok<!--separate-->Written properly (' . filesize( $Config->FCUpload . $f->FileInfo->DiskFilename ) . ')' );
-						}
-						die( 'fail<!--separate-->Could not convert file ' . $outFile );
-					}
-					die( 'fail<!--separate-->' );
-				}
-				die( 'fail<!--separate-->No temp file for ' . $path );
-			}
 			// Read some important info about a volume!
 			else if( $args->command == 'volumeinfo' )
 			{
@@ -579,11 +578,14 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						SELECT * FROM `Filesystem` WHERE `UserID`=\'' . $User->ID . '\' AND LOWER(`Name`)=LOWER("' . reset( explode( ':', $args->path ) ) . '")
 					' ) )
 					{
-						foreach( $d as $k=>$v )
-						$this->$k = $v;
+						foreach( $d as $k=>$v ) $this->$k = $v;
 					}
 				}
-				if( $row = $SqlDatabase->FetchObject( 'SELECT SUM(Filesize) AS FZ FROM FSFile WHERE FilesystemID = \'' . $this->ID . '\' AND UserID=\'' . $User->ID . '\'' ) )
+				if( $row = $SqlDatabase->FetchObject( '
+					SELECT SUM(Filesize) AS FZ FROM FSFile 
+					WHERE 
+						FilesystemID = \'' . $this->ID . '\' AND UserID=\'' . $User->ID . '\'
+				' ) )
 				{
 					$o = new stdClass();
 					$o->Volume = $this->Name . ':';
@@ -600,16 +602,17 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				switch( $action )
 				{
 					case 'mount':
-						$Logger->log( 'Mounting not needed here.. Always succeed.' );
+						//$Logger->log( 'Mounting not needed here.. Always succeed.' );
 						die( 'ok' );
 					case 'unmount':
-						$Logger->log( 'Unmounting not needed here.. Always succeed.' );
+						//$Logger->log( 'Unmounting not needed here.. Always succeed.' );
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
+							$Logger->log( '[Rename] Trying to find: ' . $path );
 							$sp = $this->getSubFolder( $path );
 							if( $sp )
 							{
@@ -709,11 +712,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								$f->DateModified = date( 'Y-m-d H:i:s' );
 								$f->DateCreated = $f->DateModified;
 								$f->Save();
-								$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
+								//$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
 								return 'ok<!--separate-->' . $f->ID;
 							}
 						}
-						die( 'fail<!--separate-->why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
+						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
 						if( isset( $path ) )
@@ -729,9 +732,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					case 'copy':
 						$from = isset( $args->from ) ? $args->from : ( isset( $args->args->from ) ? $args->args->from : false );
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
+						//$Logger->log( "Attempting to copy from $from to $to.." );
 						if( isset( $from ) && isset( $to ) )
 						{
-							$Logger->log( 'Trying from ' . $from . ' to ' . $to );
+							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );
 							if( $this->copyFile( $from, $to ) )
 							{
 								return 'ok';
@@ -741,11 +745,16 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						return 'fail';
 				}
 			}
-			return 'fail<!--separate-->' . print_r( $args, 1 );
+			return 'fail<!--separate-->'; // . print_r( $args, 1 );
 		}
 		
-		// Gets a file by path!
-		function getFile( $path )
+		/**
+		 * @brief Gets a file by path!
+		 *
+		 * @param $path a Friend DOS path
+		 * @return a dbIO file object or false
+		 */
+		public function getFile( $path )
 		{
 			global $User, $Logger;
 		
@@ -754,9 +763,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			array_pop( $subPath );
 			$subPath = implode( '/', $subPath ) . '/';
 		
-			$Logger->log( 'Trying to get file.. ------------------->' );
+			/*$Logger->log( 'Trying to get file.. ------------------->' );
 			$Logger->log( 'Path was: ' . $path );
-			$Logger->log( 'Sub path is therefore: ' . $subPath );
+			$Logger->log( 'Sub path is therefore: ' . $subPath );*/
 		
 			$fo = $this->getSubFolder( $subPath );
 			$fi = new dbIO( 'FSFile' );
@@ -770,7 +779,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			if( $fi->Load() )
 			{
 				$fobject = new Object();
-				$fobject->Path = $path;
+				$fobject->Path = end( explode( ':', $path ) );
 				$fobject->Filename = $fi->Filename;
 				$fobject->Filesize = $fi->Filesize;
 				$fobject->Type = 'SQLDrive';
@@ -782,8 +791,14 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return false;
 		}
 		
-		// Will open and return a file pointer set with options
-		function openFile( $path, $mode )
+		/**
+		 * @brief Will open and return a file pointer set with options
+		 * 
+		 * @param $path Friend DOS path
+		 * @param $mode is 'r', 'rw', 'rs'
+		 * @return false or file object
+		*/
+		public function openFile( $path, $mode )
 		{
 			global $Config, $User;
 			
@@ -840,8 +855,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return false;
 		}
 		
-		// Close file pointer!
-		function closeFile( $filePointer )
+		/**
+		 * @brief Close file pointer!
+		 *
+		 * @param $filePointer a file object
+		 * @return string or false
+		**/
+		public function closeFile( $filePointer )
 		{
 			$filePointer->offset = 0;
 			$filePointer->tmpPath = NULL;
@@ -849,8 +869,14 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return false;
 		}
 		
-		// Will read from file pointer x bytes
-		function readFile( $fp, $bytes )
+		/**
+		 * @brief Will read from file pointer x bytes
+		 *
+		 * @param $fp file object
+		 * @param $bytes number of bytes to read
+		 * return string or null
+		**/
+		public function readFile( $fp, $bytes )
 		{
 			if( !isset( $fp->offset ) || !isset( $fp->mode ) || !file_exists( $fp->tmpPath ) )
 				return NULL;
@@ -869,8 +895,16 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return NULL;
 		}
 	
-		// Will write to pointer, data, x bytes
-		function writeFile( $filePointer, $data, $bytes )
+		/**
+		 * @brief Will write to pointer, data, x bytes
+		 *
+		 * @param $filePointer file object
+		 * @param $data string/binary data
+		 * @param $bytes how many bytes to write
+		 * 
+		 * @return value is number of bytes written
+		*/
+		public function writeFile( $filePointer, $data, $bytes )
 		{
 			if( !isset( $fp->offset ) || !isset( $fp->mode ) || !file_exists( $fp->tmpPath ) )
 				return NULL;
@@ -890,44 +924,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return 0;
 		}
 	
-		// Get the location of a tmp file
-		function getTmpFile( $path )
-		{
-			global $Config, $User;
-		
-			// Remove file from path
-			$subPath = explode( '/', end( explode( ':', $path ) ) );
-			array_pop( $subPath );
-			$subPath = implode( '/', $subPath ) . '/';
-		
-			$fo = $this->getSubFolder( $subPath );
-			$fi = new dbIO( 'FSFile' );
-			$fi->UserID = $User->ID;
-			$fi->FilesystemID = $this->ID;
-			$fi->FolderID = $fo ? $fo->ID : '0';
-			if( strstr( $path, '/' ) )
-				$fi->Filename = end( explode( '/', $path ) );
-			else $fi->Filename = end( explode( ':', $path ) );
-		
-			if( $fi->Load() )
-			{
-				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
-				{
-					$ext = end( explode( '.', $fi->DiskFilename ) );
-					$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
-					$filename = $fname . '.' . $ext;		
-					while( file_exists( $Config->FCTmp . $filename ) )
-						$filename = $fname . rand(0,999) . '.' . $ext;
-					// Make tmp file
-					copy( $Config->FCUpload . $fi->DiskFilename, $Config->FCTmp . $filename );
-					return $Config->FCTmp . $filename;
-				}
-			}
-			return false;
-		}
-	
-		// Put a file
-		function putFile( $path, $fileObject )
+		/**
+		 * @brief Put a file into a path
+		 * 
+		 * @param $path a Friend DOS path
+		 * @param $fileObject a file object
+		 *
+		 * @return value is true or false
+		*/
+		public function putFile( $path, $fileObject )
 		{
 			global $Config, $User;
 		
@@ -971,8 +976,15 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return false;
 		}
 	
-		// Create a folder
-		function createFolder( $folderName, $where )
+		/**
+		 * @brief Create a folder
+		 *
+		 * @param $folderName name of directory
+		 * @param $where Friend DOS path
+		 *
+		 * @return true false
+		**/
+		public function createFolder( $folderName, $where )
 		{
 			global $Config, $User, $Logger;
 
@@ -1015,8 +1027,233 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			return false;
 		}
 	
+		/**
+		 * @brief Deletes a folder, all sub folders and files (optionally)
+		 *
+		 * @param $path Path do directory
+		 * @param $recursive do a recursive deletion or not
+		 *
+		 * @return value true false
+		*/
+		public function deleteFolder( $path, $recursive = true )
+		{
+			global $Config, $User, $Logger;
+		
+			// By ID
+			if( preg_match( '/.*?\#\?([0-9]+)/i', $path, $m ) )
+			{
+				$fo = new dbIO( 'FSFolder' );
+				if( $fo->Load( $m[1] ) )
+				{
+					// Security - make sure it's the right fs!
+					if( $fo->FilesystemID != $this->ID ) return false;
+					return $this->_deleteFolder( $fo, $recursive );
+				}
+				return false;
+			}
+			
+			// Remove file from path
+			$subPath = explode( '/', end( explode( ':', $path ) ) );
+			array_pop( $subPath );
+			$subPath = implode( '/', $subPath ) . '/';
+	
+			if( $fo = $this->getSubFolder( $subPath ) )
+			{
+				//$Logger->log( 'Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
+				return $this->_deleteFolder( $fo, $recursive );
+			}
+		
+			return false;
+		}
+	
+		/**
+		 * @brief Delete a file
+		 *
+		 * @param $path FriendDOS path string
+		 * @param $recursive delete recursively
+		 *
+		 * @return true or false
+		*/
+		public function deleteFile( $path, $recursive = false )
+		{
+			global $Config, $User, $Logger;
+		
+			// If it's a folder
+			if( substr( $path, -1, 1 ) == '/' )
+				return $this->deleteFolder( $path, $recursive );
+		
+			$fi = $this->getFileByPath( $path );
+		
+			if( $fi->ID > 0 )
+			{
+				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
+				{
+					//$Logger->log( 'Deleting file in folder ' . ( $fo ? $fo->Name : '' ) . '/ (' . $fi->FolderID . ')' );
+					unlink( $Config->FCUpload . $fi->DiskFilename );
+					$fi->Delete();
+					return true;
+				}
+				else 
+				{
+					//$Logger->log( 'Deleting db only (corrupt) file in folder ' . $fi->Name . '/ (' . $fi->FolderID . ')' );
+					$fi->Delete();
+				}
+			}
+			return false;
+		}
+		
+		// Private functions
+		
+		/**
+		 * Gets a file by FriendUP path
+		 * @param path the FriendUP full path
+		 */ 
+		private function getFileByPath( $path )
+		{
+			global $Config, $User, $Logger;
+			$fi = new dbIO( 'FSFile' );
+			
+			// Check if the id is given
+			if( preg_match( '/.*?\#\?([0-9]+)/i', $path, $m ) )
+			{
+				$fi->Load( $m[1] );
+			}
+			else
+			{
+				// Remove file from path
+				$subPath = explode( '/', end( explode( ':', $path ) ) );
+				array_pop( $subPath );
+				$subPath = implode( '/', $subPath ) . '/';
+	
+				$fo = $this->getSubFolder( $subPath );
+		
+				$fi->UserID = $User->ID;
+				$fi->FilesystemID = $this->ID;
+				$fi->FolderID = $fo ? $fo->ID : '0';
+				if( strstr( $path, '/' ) )
+					$fi->Filename = end( explode( '/', $path ) );
+				else $fi->Filename = end( explode( ':', $path ) );
+				$fi->Load();
+			}
+			
+			// Security measure! In case we loaded somebody elses file
+			if( $fi->FilesystemID != $this->ID ) return false;
+			
+			return $fi;
+		}
+		
+		/**
+		 * @brief Gets the subfolder by path on this filesystem door
+		 * Path should be like this: SomePath:Here/ or Here/ (relating to Filesystem in $this)
+		 *
+		 * @param $subPath subpath to directory
+		 * @return the dbIO directory object or false on fail
+		*/
+		private function getSubFolder( $subPath )
+		{
+			global $Logger, $SqlDatabase;
+			
+			//$inputPath = $subPath;
+			
+			if( $subPath == '/' ) return false;
+			
+			//$Logger->log( 'Ok, we have subpath: ' . print_r( $subPath, 1 ) );
+			
+			$fo = false;
+			// If we got a filename, strip the last joint
+			if( strstr( $subPath, ':' ) )
+			{
+				list( , $subPath ) = explode( ':', $subPath );
+			}
+		
+			// Watch out for wrong formatting! (just for validation)
+			if( substr( $subPath, -1, 1 ) != '/' )
+				return false;
+			
+			// But we don't need the trailing slash here
+			$subPath = substr( $subPath, 0, strlen( $subPath ) - 1 );
+		
+			// Get all parts
+			$finalPath = explode( '/', $subPath );
+	
+			$fo = false;
+			$parID = '0';
+			$pfo = false;
+			
+			while( count( $finalPath ) > 0 )
+			{
+				//$Logger->log('We do now check this path: ' . implode( '/', $finalPath ) . ' with Parent Folder ID of ' . $parID );
+				if( $fo ) $pfo = $fo; // Previous folder
+				$do = $SqlDatabase->FetchObject( '
+					SELECT * FROM `FSFolder` 
+					WHERE 
+						`FilesystemID`=\'' . $this->ID . '\' AND 
+						`Name`=\'' . $finalPath[0] . '\' AND 
+						`FolderID`=\'' . $parID . '\'' );
+				if( $do && $do->ID > 0 )
+				{
+					// Create a usable object
+					$fo = new DbIO( 'FSFolder' );
+					$fo->SetFromObject( $do );
+					
+					// New array
+					$out = [];
+					$ac = count( $finalPath );
+					for( $a = 1; $a < $ac; $a++ )
+						$out[] = $finalPath[$a];
+					$finalPath = $out;
+					$parID = $fo->ID;
+				}
+				else
+				{
+					// If this last joint might be a file, return parent id
+					//$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD SQLDrive Folder // FilesystemID: ' . $fo->FilesystemID .  ' // FolderID ' . $fo->FolderID . ' // Name ' . $fo->Name );
+					return false;
+				}
+				//$Logger->log('Our current folder ID is '. $fo->ID);
+			} 
+			//$Logger->log('We return the folder ID ' . $fo->ID . ' for the original input ' . $inputPath );
+			return $fo;
+		}
+		
+		// Get the location of a tmp file
+		private function getTmpFile( $path )
+		{
+			global $Config, $User;
+		
+			// Remove file from path
+			$subPath = explode( '/', end( explode( ':', $path ) ) );
+			array_pop( $subPath );
+			$subPath = implode( '/', $subPath ) . '/';
+		
+			$fo = $this->getSubFolder( $subPath );
+			$fi = new dbIO( 'FSFile' );
+			$fi->UserID = $User->ID;
+			$fi->FilesystemID = $this->ID;
+			$fi->FolderID = $fo ? $fo->ID : '0';
+			if( strstr( $path, '/' ) )
+				$fi->Filename = end( explode( '/', $path ) );
+			else $fi->Filename = end( explode( ':', $path ) );
+		
+			if( $fi->Load() )
+			{
+				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
+				{
+					$ext = end( explode( '.', $fi->DiskFilename ) );
+					$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
+					$filename = $fname . '.' . $ext;		
+					while( file_exists( $Config->FCTmp . $filename ) )
+						$filename = $fname . rand(0,999) . '.' . $ext;
+					// Make tmp file
+					copy( $Config->FCUpload . $fi->DiskFilename, $Config->FCTmp . $filename );
+					return $Config->FCTmp . $filename;
+				}
+			}
+			return false;
+		}
+		
 		// Not to be used outside! Not public!
-		function _deleteFolder( $fo, $recursive = true )
+		private function _deleteFolder( $fo, $recursive = true )
 		{
 			global $Config, $User, $Logger;
 		
@@ -1031,7 +1268,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				{
 					foreach( $fop as $fopp )
 					{
-						$Logger->log( 'Attempting to delete sub folder -> ' . $fopp->Name . '/ (' . $fopp->ID . ')' );
+						//$Logger->log( 'Attempting to delete sub folder -> ' . $fopp->Name . '/ (' . $fopp->ID . ')' );
 						$this->_deleteFolder( $fopp, $recursive );
 					}
 				}
@@ -1046,7 +1283,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			{
 				foreach( $files as $file )
 				{
-					$Logger->log( 'Attempting to delete file ' . $file->Filename . ' in ' . $fo->Name . '/ (' . $fo->ID . ')' );
+					//$Logger->log( 'Attempting to delete file ' . $file->Filename . ' in ' . $fo->Name . '/ (' . $fo->ID . ')' );
 					if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 					{
 						unlink( $Config->FCUpload . $file->DiskFilename );
@@ -1054,72 +1291,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$file->Delete();
 				}
 			}
-			$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
+			//$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
 			$fo->Delete();
 			return true;
-		}
-	
-		// Deletes a folder, all sub folders and files (optionally)
-		function deleteFolder( $path, $recursive = true )
-		{
-			global $Config, $User, $Logger;
-		
-			// Remove file from path
-			$subPath = explode( '/', end( explode( ':', $path ) ) );
-			array_pop( $subPath );
-			$subPath = implode( '/', $subPath ) . '/';
-	
-			if( $fo = $this->getSubFolder( $subPath ) )
-			{
-				$Logger->log( 'Delete folder in subpath ' . $subPath . ' in fs ' . $this->Name . ': ---' );
-				return $this->_deleteFolder( $fo, $recursive );
-			}
-		
-			return false;
-		}
-	
-		// Delete a file
-		function deleteFile( $path, $recursive = false )
-		{
-			global $Config, $User, $Logger;
-		
-			// If it's a folder
-			if( substr( $path, -1, 1 ) == '/' )
-				return $this->deleteFolder( $path, $recursive );
-		
-			// Remove file from path
-			$subPath = explode( '/', end( explode( ':', $path ) ) );
-			array_pop( $subPath );
-			$subPath = implode( '/', $subPath ) . '/';
-	
-			$fo = $this->getSubFolder( $subPath );
-		
-			$Logger->log( 'Trying to delete a file in folder: ' . ( $fo ? $fo->Name : ( '(don\'t know, but in subfolder ' . $subPath . ')' ) ) );
-		
-			$fi = new dbIO( 'FSFile' );
-			$fi->UserID = $User->ID;
-			$fi->FilesystemID = $this->ID;
-			$fi->FolderID = $fo ? $fo->ID : '0';
-			if( strstr( $path, '/' ) )
-				$fi->Filename = end( explode( '/', $path ) );
-			else $fi->Filename = end( explode( ':', $path ) );
-		
-			if( $fi->Load() )
-			{
-				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
-				{
-					$Logger->log( 'Deleting file in folder ' . ( $fo ? $fo->Name : '' ) . '/ (' . $fi->FolderID . ')' );
-					unlink( $Config->FCUpload . $fi->DiskFilename );
-					$fi->Delete();
-					return true;
-				}
-				else 
-				{
-					$Logger->log( 'Deleting db only (corrupt) file in folder ' . $fi->Name . '/ (' . $fi->FolderID . ')' );
-					$fi->Delete();
-				}
-			}
-			return false;
 		}
 	}
 }

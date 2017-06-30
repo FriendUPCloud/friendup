@@ -1,0 +1,527 @@
+
+File_Date                            : Date
+
+i18n_Builtin_Label_Trash             : Corbeille
+i18n_Builtin_Label_Ram_disk          : Ram Disque
+i18n_Builtin_Label_Home              : Home
+i18n_Builtin_Label_System            : Système
+
+i18n_leave_question                  : Vous allez quitter le Workspace FriendUP. Ceci va terminer la session actuelle.
+
+#Built-in preferences
+
+i18n_install_application             : Installer application
+i18n_security_domain                 : Domaine de sécurité
+i18n_looknfeel                       : Préférences visuelles
+i18n_startup_sequence                : Séquence de démarrage
+i18n_screens                         : Ecrans
+i18n_wallpaper                       : Papier-peint
+i18n_printers                        : Imprimantes
+i18n_network                         : Réseau
+i18n_language                        : Langage
+i18n_bookmarks                       : Marque pages
+i18n_bookmarks_add                   : Ajouter
+i18n_bookmarks_close                 : Fermer
+i18n_bookmarks_select                : Selectionner
+i18n_bookmarks_remove                : Suprimer
+i18n_empty_view                      : Vue vide
+i18n_no_bookmarks                    : Vous n'avez pas de marque pages.
+i18n_desklets                        : Desklets
+i18n_software                        : Gestion des applications
+i18n_sound                           : Son
+i18n_keyboard                        : Clavier
+i18n_input                           : Entrée données
+i18n_hardware                        : Matériel
+i18n_useraccounts                    : Utilisateurs
+i18n_datetime                        : Date et heure
+i18n_docksettings                    : Dock
+i18n_security                        : Securité
+i18n_mimetypes                       : Types Mime
+i18n_account                         : Mon compte
+i18n_affirmative                     : Ok
+i18n_negative                        : Non
+i18n_yes                             : Oui
+i18n_cancel                          : Annuler
+i18n_accept                          : Accepter
+i18n_understood                      : Compris
+
+i18n_disk_icon                       : Icône disque
+i18n_choose_disk                     : Choisir un disque
+i18n_run_application                 : Lancer application
+
+i18n_driver_handled                  : Pilote DOS utilisé
+
+i18n_system_version                  : Version du système
+i18n_system_version_num              : Release candidate 1
+
+
+i18n_notification_archive               : Archive des notifications
+i18n_sure_remove_notification           : Etes-vous sûr de vouloir effacer cette notification?
+i18n_sure_remove_notification_desc      : Il s'agit de notifications archivées. Si vous les effacez, elles seront effacées de la mémoire.
+i18n_system_message                     : Message système
+
+#Tools
+i18n_processmgr                         : Gestion de processus
+i18n_applicationmgr                     : Gestion des tâches
+i18n_sysdiag                            : Diagnostique système
+
+i18n_continue                           : Continuer
+i18n_couldnotinstallapp                 : Impossible d'installer l'application.
+
+i18n_choose_file                        : Choisir un fichier
+i18n_new_container                      : Nouveau répertoire
+i18n_create_container                   : Créer répertoire
+i18n_name                               : Nom
+i18n_make_a_new_container               : Créer un nouveau répertoire
+i18n_error_could_not_list_directory     : Impossible de trouver la liste de fichiers
+
+i18n_error                              : Erreur
+i18n_could_not_run_jsx                  : Impossible d'executer le JSX.
+
+i18n_disk_catalog                       : Catalogue des disques
+i18n_items_total                        : éléments, total
+
+i18n_port                               : Port
+i18n_key                                : Clé
+
+i18n_package_installed                  : Paquet installé
+i18n_package                            : Le paquet
+i18n_was_installed                      : a été installé
+i18n_failed_install_package             : Installation impossible
+i18n_package_failed                     : Ce paquet n'a pas pu être installé
+
+i18n_Storage_Local_Read_desc            : Accès en lecture, porte locale
+i18n_Storage_Local_Write_desc           : Accès en écriture, porte locale
+i18n_Storage_Local_Read/Write_desc      : Accès en lecture/écriture, porte locale
+i18n_Storage_Remote_Read_desc           : Accès en lecture, porte réseau
+i18n_Storage_Remote_Write_desc          : Accès en écriture, porte réseau
+i18n_Storage_Remote_Read/Write_desc     : Accès en lecture/écriture, porte réseau
+i18n_Storage_Ramdisk_Read_desc          : Accès en lecture, porte Ram
+i18n_Storage_Ramdisk_Write_desc         : Accès en écriture, porte Ram
+i18n_Storage_Ramdisk_Read/Write_desc    : Accès en lecture/écriture, porte Ram
+i18n_Module_System_desc                 : Accès au fonctionnalités basiques
+
+i18n_connect_network_drive              : Connecter un disque réseau
+
+i18n_your_command                       : Votre commande
+
+#Default doors
+i18n_door_home                          : Home
+
+please_choose_an_icon                   : Veuillez choisir le(s) icône(s).
+about_friendup                          : A propos de FriendUP
+information                             : Infos et mises à jour
+documentation_central                   : Centre de documentation
+software_catalog                        : Gestion des applications
+clear_cache                             : Vider le cache
+documentation_on                        : Documentation sur
+i18n_sharewith                          : Partager avec
+i18n_sharename                          : Nom de partage
+my_account                              : Mon compte
+i18n_account_setup                      : Mon compte - installation
+
+#Default directorys for applications
+i18n_directory_Games                    : Jeux
+i18n_directory_Office                   : Bureau
+i18n_directory_Graphics                 : Graphiques
+i18n_directory_Internet                 : Internet
+i18n_directory_Media                    : Média
+i18n_directory_Programming              : Programmation
+i18n_directory_System                   : Système
+i18n_directory_Functions                : Fonctions
+i18n_directory_Triggers                 : Déclancheurs
+
+i18n_directory_DocApps                  : Documentation/Applications
+
+i18n_directory_Documentation            : Documentation
+i18n_directory_Software             	: Logiciels
+i18n_directory_Modules                  : Modules
+i18n_directory_Plugins                  : Plugins
+i18n_directory_Prefs                    : Préférences
+i18n_directory_Tools                    : Outils
+i18n_directory_Devices                  : Matériel
+i18n_directory_Libraries                : Librairies
+
+#Devices
+
+i18n_dosdrivers                         : Pilotes DOS
+i18n_cores                              : Coeurs
+i18n_sessions                           : Sessions
+i18n_printers                           : Imprimantes
+
+#Menu
+
+i18n_close_menu                         : Fermer menu
+
+menu_workspace                          : Workspace
+menu_system                             : Système
+menu_new_shell                          : Nouveau terminal
+menu_about_friendup                     : A propos de FriendUP
+menu_refresh_desktop                    : Rafraichir le bureau
+menu_run_command                        : Executer une commande
+menu_show_launcher                      : Montrer le lanceur
+menu_hide_launcher                      : Cacher le lanceur
+menu_log_out                            : Déconnexion
+menu_exit								: Quitter FriendUP
+menu_execute_command                    : Executer une commande
+menu_upload_file                        : Importer un fichier
+menu_snapshot                           : Capture d'écran
+menu_snapshot_all                       : Capturer fenètres
+menu_bookmarks                          : Marque pages
+menu_add_bookmark                       : Ajouter marque pages
+menu_mount_filesystem                   : Catalogue des disques
+menu_unmount_filesystem                 : Déconnecter disque
+menu_hide_active_view                   : Cacher active
+menu_hide_all_views                     : Cacher toutes
+menu_hide_inactive_views                : Cacher inactives
+menu_zip                                : Compresser fichier(s)
+menu_unzip                              : Décompresser fichier(s)
+menu_looknfeel                          : Préférences visuelles
+menu_backdrop                           : Montrer vue d'ensemble
+
+menu_edit_wallpaper                     : Editer le papier-peint
+i18n_edit_dock                          : Editer le dock
+
+i18n_choose_file_to_upload              : Choisissez le fichier à importer
+i18n_upload_target                      : Cible
+i18n_browse                             : Choisir
+i18n_upload_the_file                    : Lancer l'importation
+i18n_file_upload                        : Importation de fichier
+
+i18n_unzip_completed                    : Décompression terminée.
+i18n_unzip_comdesc                      : Les fichiers ont été décompressés avec succès
+i18n_unzip_failed                       : Erreur de décompression.
+i18n_unzip_failed_desc                  : La décompression des fichiers n'a pas abouti
+
+i18n_zip_completed                      : Compression termiinée.
+i18n_zip_comdesc                        : Les fichiers ont été compressé
+i18n_zip_not_completed                  : Erreur de compression.
+i18n_zip_not_comdesc                    : La compression des fichiers n'a pas abouti
+
+i18n_unzip_start                        : Décompression de fichiers.
+i18n_unzip_startdesc                    : Décompression des fichiers sélectionnés.
+
+i18n_zip_start                          : Compression de fichiers.
+i18n_zip_startdesc                      : Compression des fichiers sélectionnés.
+
+cmd_execute                             : Executer
+
+i18n_create_web_link                    : Créer un nouveau lien Web
+i18n_link                               : Lien
+i18n_broken_link                        : Lien rompu
+i18n_broken_link_desc                   : Le lien dans le fichier .url est rompu, ou le fichier est endommagé.
+i18n_follow_link                        : Suivre le lien Web
+i18n_open_link                          : Aller
+i18n_follow_link_desc                   : Cliquez sur le lien ci-dessous pour vous y rendre
+
+
+menu_window                             : Fenètres
+menu_refresh_directory                  : Rafraichir
+menu_open_directory                     : Ouvrir répertoire
+menu_open_parent_directory              : Ouvrir répertoire parent
+menu_show_as                            : Montrer commme
+menu_show_as_icons                      : Icônes
+menu_show_as_list                       : Liste
+menu_show_as_columns                    : Colonnes
+menu_close_window                       : Fermer
+menu_fullscreen                         : Plein écran / fenètre
+
+menu_icons                              : Actions
+menu_new_directory                      : Créer un répertoire
+menu_new_weblink                        : Créer un lien Web
+menu_show_icon_information              : Informations sur l'icône
+menu_edit_filename                      : Renommer le fichier
+menu_delete                             : Supprimer
+i18n_sure_delete                        : Etes vous sûr de vouloir supprimer?
+i18n_sure_deldesc                       : Les fichiers ou répertoires que vous voulez supprimer peuvent ne pas être récupérables. Voulez-vous vraiment les supprimer?
+
+menu_tools                              : Outils
+menu_edit                               : Edition
+menu_clear_clipboard                    : Vider le presse-papiers
+
+menu_file								: Fichiers
+menu_copy								: Copier
+menu_cut								: Couper
+menu_paste								: Coller
+
+menu_manage_disks                       : Gestion des disques
+
+menu_workspheres                        : Sphères de travail
+i18n_worksphere_all                     : Toutes les sphères
+i18n_worksphere_add                     : Ajouter une sphère
+
+#Applications ------------------------------------------------------------------
+install_question_mintitle               : Installer une application
+install_question_title                  : L'application est présente mais non installée
+install_question_desc                   : L'application a été trouvée, mais n'est pas installée. Voulez-vous l'installer maintenant?
+install_button                          : Installer
+install_cancel                          : Pas maintenant
+application_permissions_change          : Changer les permissions
+activate_application                    : Activer l'application
+activate_disk                           : Activer les permissions disque
+disk_activation_head                    : Activer les permissions disque
+disk_activation_desc                    : Pour utiliser ce disque pour des executables, vous devez activer ses permissions. Veuillez autoriser les permissions suivantes.
+app_activation_head                     : Activer application
+app_activation_head_permissions         : Changer les permissions de l'application
+app_activation_desc                     : Pour utiliser cette application, vous devez l'activer. Veuiller autoriser les permissions suivantee.
+app_activation_desc_alter               : Le système veut changer les permissions de cette application. Veuillez désactiver les permissions pour autoriser le changement.
+app_authorization_button                : Autoriser changements
+app_activation_button                   : Activer maintenant
+app_activation_abort                    : Annuler
+grant_door_access                       : Autoriser accès à
+all_filesystems                         : tous les systèmes de fichier
+grant_module_access                     : Autoriser accès au module
+grant_service_access                    : Autoriser accès au service
+failed_application_activation           : Activation impossible.
+no_activation_fields_checked            : Vous n'avez pas coché de permissions. Vérifiez votre sélection.
+application_not_found                   : Application non trouvée. Est-elle installée?
+application_not_signed                  : L'application n'est pas signée. Veuillez la ré-installer.
+application_not_validated               : L'application n'a pu être validée. Veuillez la désinstaller et réinstaller.
+
+#Icon info ---------------------------------------------------------------------
+
+i18n_icon_information                   : Informations sur l'icône
+i18n_volumeicon_information             : Informations sur le volume
+i18n_volume_name                        : Info volume
+i18n_volume_size                        : Taille du volume
+i18n_protection                         : Protection
+i18n_used_space                         : utilisé
+i18n_filename                           : Nom de fichier
+i18n_permissions                        : Permissions
+i18n_filesize                           : Taille du fichier
+i18n_public_file                        : Fichier publique
+i18n_public_link                        : Url publique
+i18n_close                              : Fermer
+i18n_file_information                   : Informations générales
+i18n_file_permissions                   : Permissions du fichier
+i18n_meta_information                   : Informations du fichier
+i18n_click_to_copy                      : Copier dans le presse-papiers
+i18n_total_listed                       : icônes listés sur un total de
+i18n_add_attribute                      : Ajouter attribut
+i18n_field_info                         : Données du champ
+i18n_info_fields                        : Champs de données
+i18n_edit_attribute                     : Editer attribut
+i18n_icon_image                         : Image de l'icône
+i18n_no_field_information               : Pas de donnée attribut disponible.
+i18n_non_compatible_field_information   : Impossible de montrer les données du champ.
+
+
+#File dialogs ------------------------------------------------------------------
+
+file_load                               : Charger
+file_abort                              : Fermer
+file_save                               : Sauver
+file_open_title                         : Charger un fichier
+file_open_path                          : Sélectionner chemin
+file_save_title                         : Sauver un fichier
+file_unknown_title                      : Opération sur fichier inconnue
+i18n_directory                          : Répertoire
+information_of_icon                     : Information sur
+owner                                   : Propriétaire
+group                                   : Groupe
+others                                  : Autres
+readable                                : Lecture
+writable                                : Ecriture
+deletable                               : Supprimer
+executable                              : Executer
+i18n_save                               : Sauver
+i18n_notes                              : Notes
+rename_file                             : Renommer fichier
+new_name                                : Nouveau nom
+i18n_read_only_filesystem               : Système de fichier en lecture seule
+i18n_read_only_fs_desc                  : Vous essayez d'écrire sur un système de fichiers protégé en écriture.
+
+#File operations ---------------------------------------------------------------
+
+i18n_cancel                             : Annuler
+i18n_moving_files                       : Déplacement fichiers
+i18n_copying_files                      : Copie des fichiers
+
+i18n_delete_operation                   : Suppression de fichier(s)
+i18n_could_not_delete_files             : Fichier(s) impossible à supprimer.
+i18n_copy_operation                     : Copie de fichier(s)
+i18n_could_not_copy_files               : Fichier(s) impossible à copier.
+i18n_rename_operation                   : Changement du nom du fichier
+i18n_could_not_rename_file              : Impossible de changer le nom.
+i18n_stat_operation                     : Informations fichier
+i18n_could_not_stat_file                : Statistiques indisponibles.
+i18n_protect_operation                  : Protection de fichier(s)
+i18n_could_not_protect_files            : Impossible de protéger le(s) fichier(s).
+i18n_makedir_operation                  : Nouveau répertoire
+i18n_could_not_make_dir                 : Impossible de créer le nouveau répertoire.
+i18n_volume_information                 : Informations disque
+i18n_volume_permissions                 : Permissions disque
+i18n_drag_to_download_file              : Cliquez ou déposer sur le bureau pour télécharger.
+
+#Misc --------------------------------------------------------------------------
+
+Shell output : Sortie terminal
+Running tasks : Tâches en cours
+i18n_read_only                          : Lecture seule
+i18n_task_running                       : tâche en cours
+i18n_tasks_running                      : tâches en cours
+i18n_visible                            : Visible
+i18n_network_activity                   : Activité réseau
+i18n_today                              : Aujourd'hui
+i18n_notifications                      : notifications
+i18n_notification                       : notification
+i18n_devices_and_capabilities           : Matériel et capacités
+i18n_webcam_disabled                    : Désactivé
+i18n_webcam_enabled                     : Activé
+i18n_testing_camera                     : Test caméra Web
+i18n_testing_camera_desc                : Caméra Web en cours de test : est-elle connectée et disponible?
+
+i18n_active_network_connections         : Connexions actives
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norvégien
+i18n_locale_en                          : Anglais
+i18n_locale_de                          : Allemand
+i18n_locale_nl                          : Hollandais
+i18n_locale_fr                          : Français
+
+#Search ------------------------------------------------------------------------
+
+i18n_case_sensitive                     : Insensible à la casse
+i18n_search_do                          : Chercher
+i18n_search_path_button                 : Choisir le chemin
+i18n_search_files                       : Rechercher des fichiers
+i18n_search_keywords                    : Mots clé...
+i18n_search_path                        : Rechercher chemin...
+i18n_select_path_to_search              : Choisissez chemin de recherche
+i18n_search_stop                        : Arréter recherche
+i18n_search_type_Door                   : appareil
+i18n_search_type_Directory              : répertoire
+i18n_search_type_File                   : fichier
+
+#Directory view ----------------------------------------------------------------
+
+i18n_dir_btn_root                       : Racine
+i18n_dir_btn_up                         : Parent
+i18n_dir_btn_back                       : Retour
+i18n_dir_btn_forward                    : Avant
+i18n_dir_btn_reload                     : Recharger
+i18n_dir_btn_search                     : Chercher
+
+#Sessions ----------------------------------------------------------------------
+
+i18n_no_sessions_available              : Pas de session disponible
+i18n_active_session_list                : Sessions actives
+i18n_are_you_sure                       : Etes-vous sûr?
+i18n_sure_you_want_terminate_session    : Etes-vous sûr de vouloir terminer cette session?
+
+#Calendar ----------------------------------------------------------------------
+
+i18n_event_overview                     : Vue des événements
+i18n_calendar_events                    : Evénements pour une date
+i18n_no_events_on_day                   : Pas d'événement à cette date.
+i18n_no_events_day_description          : Vous n'avez aucun événement associé à cette date. Veuillez en ajouter un ou synchronisez vous avec votre fournisseur.
+
+i18n_cal_evt_title                      : Titre de l'événement
+i18n_cal_evt_title_what                 : Votre événement
+i18n_cal_evt_time_to                    : Fin
+i18n_cal_evt_time_from                  : Début
+i18n_cal_evt_description                : Description de l'événement
+i18n_cal_btn_add                        : Sauver événement
+i18n_from                               : De
+i18n_to                                 : A
+
+i18n_evt_added                          : Calendrier mis a jour
+i18n_evt_addeddesc                      : L'événement a été ajouté à votre calendrier.
+i18n_evt_delete_desc                    : Ceci va détruire l'événement de votre calendrier.
+i18n_evt_delete_failed                  : Destruction impossible
+i18n_evt_delete_failed_desc             : La destruction de l'événement a échoué.
+
+month_january                           : janvier
+month_february                          : février
+month_march                             : mars
+month_april                             : avril
+month_may                               : mai
+month_june                              : juin
+month_july                              : juillet
+month_august                            : août
+month_september                         : septembre
+month_october                           : octobre
+month_november                          : novembre
+month_december                          : décembre
+
+i18n_day_mon                            : lun
+i18n_day_tue                            : mar
+i18n_day_wed                            : mer
+i18n_day_thu                            : jeu
+i18n_day_fri                            : ven
+i18n_day_sat                            : sam
+i18n_day_sun                            : dim
+
+
+i18n_server_disconnected                : Déconnecté
+i18n_copy_to_system_clipboard           : Voulez vous copier votre presse-papiers Friend vers votre système?
+i18n_copy_to_system_clipboard_headline  : Transfer du presse-papiers vers le système
+
+#File types --------------------------------------------------------------------
+
+i18n_filename                           : Nom de fichier
+i18n_size                               : Taille
+i18n_date                               : Date
+i18n_type                               : Type
+
+i18n_directory                          : Répertoire
+i18n_filetype_jpg                       : Image JPEG
+i18n_filetype_png                       : Image PNG
+i18n_filetype_gif                       : Image GIF
+i18n_filetype_bmp                       : Image BMP
+i18n_filetype_avi                       : Vidéo AVI
+i18n_filetype_flv                       : Vidéo FLV
+i18n_filetype_mov                       : Vidéo MOV
+i18n_filetype_mpg                       : Vidéo MPG
+i18n_filetype_webm                      : Vidéo Webm
+i18n_filetype_ogg                       : Vidéo OGG
+i18n_filetype_odt                       : Document Open Office
+i18n_filetype_rtf                       : Document Rich Text
+i18n_filetype_doc                       : Document Word
+i18n_filetype_docx                      : Document Word
+i18n_filetype_ppt                       : Power Point
+i18n_filetype_mod                       : Module Protracker
+i18n_filetype_s3m                       : Module Screamtracker
+i18n_filetype_zip                       : Archive Zip
+i18n_filetype_tgz                       : Archive Gzip tar
+i18n_filetype_gz                        : Archive Gzip
+i18n_filetype_sit                       : Archive Sit Mac
+i18n_filetype_rar                       : Archive Rar
+i18n_filetype_dmg                       : Archive disque DMG
+i18n_filetype_adf                       : Fichier disque Amiga
+i18n_filetype_dms                       : Fichier Disk Masher
+i18n_filetype_gitignore                 : Fichier Git ignore
+i18n_filetype_jsx                       : Executable Javascript
+i18n_filetype_js                        : Javascript
+i18n_filetype_php                       : Script PHP
+i18n_filetype_h                         : Fichier définitions C
+i18n_filetype_c                         : Fichier C
+i18n_filetype_md                        : Texte Markdown
+i18n_filetype_manifest                  : Fichier manifeste
+i18n_filetype_txt                       : Texte
+i18n_filetype_html                      : Document Hypertext markup
+i18n_filetype_css                       : Feuille de style
+i18n_filetype_readme                    : Documentation
+i18n_filetype_mid                       : Fichier musique Midi
+i18n_filetype_py                        : Script Python
+i18n_filetype_library                   : Librairie Friend
+i18n_filetype_module                    : Module Friend
+i18n_filetype_file                      : Fichier binaire
+i18n_filetype_executable                : Executable
+i18n_filetype_meta                      : Fichier Meta
+i18n_filetype_pov                       : Projet POV-Ray
+i18n_filetype_pdf                       : Document PDF
+i18n_filetype_otf                       : Police Open type
+i18n_filetype_woff                      : Police Web
+i18n_filetype_ttf                       : Police True type
+i18n_filetype_odp                       : Présentation Open office
+i18n_filetype_mp3                       : Audio MP3
+i18n_filetype_flac                      : Audio FLAC
+i18n_filetype_wav                       : WAV audio
+i18n_filetype_mp4                       : Video MP4
+i18n_filetype_svg                       : Graphiques vectoriels
+i18n_filetype_ogv                       : Vidéo Ogg Vorbis
+i18n_filetype_run                       : Friend script
+

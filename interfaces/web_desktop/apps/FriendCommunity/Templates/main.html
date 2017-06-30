@@ -1,0 +1,80 @@
+
+<div class="ContentFull">
+	<!--
+		Main view, friend community gets loaded here
+	-->
+	<iframe id="main" style="" src="" class="hidden">
+		
+	</iframe>
+	
+	<!--
+		input for adding hosts, shown when useful
+	-->
+	<form id="add-host" action="">
+		<div class="add-content">
+			<div class="input-wrap">
+				<input id="add-input">
+			</div>
+			<button id="add-btn" type="submit" class="button">
+				<i class="fa fa-fw fa-cubes"></i>
+				Add
+			</button>
+			<button id="add-close" type="button" class="button">
+				<i class="fa fa-fw fa-close"></i>
+				Close
+			</button>
+		</div>
+	</form>
+
+</div>
+
+<script src="Progdir:Scripts/mainView.js"></script>
+
+<style>
+	.ContentFull {
+		position: relative;
+	}
+	
+	#main {
+		height : 100%;
+		width: 100%;
+		border: none;
+	}
+	
+	.hidden {
+		display : none;
+	}
+	
+	#add-host {
+		box-sizing : border-box;
+		position: absolute;
+		top : 0;
+		right : 0;
+		bottom : 0;
+		left : 0;
+		padding : 4em 1em 0.75em 0.5em;
+	}
+	
+	.add-content {
+		display : flex;
+		flex-direction : row;
+		align-content : center;
+		align-items : center;
+	}
+	
+	.input-wrap {
+		flex : 1 1 auto;
+	}
+	
+	.input-wrap input {
+		width: 100%;
+	}
+	
+	#add-btn {
+		flex : 0 0 auto;
+	}
+	
+	#close-add {
+		flex : 0 0 auto;
+	}
+</style>

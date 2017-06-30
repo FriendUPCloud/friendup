@@ -1,21 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/**
+ * @file
+ *
+ * File Download
+ *
+ * @author PS (Pawel Stefanski)
+ * @date 
+ */
 
 #include <core/types.h>
 
@@ -50,12 +62,13 @@ int DownloadFile( const char *file, char *webpath )
 	struct addrinfo hints;
 	char buf[512];
 
-	DEBUG("openfile\n");
+	DEBUG("[DownloadFile] openfile: %s\n", file );
 
 	if (!(f = fopen(file, "w")))
 	{
 		return -1;
 	}
+	
 	if (strstr( webpath, "http://") == webpath)
 	{
 		host += 7;
@@ -66,7 +79,7 @@ int DownloadFile( const char *file, char *webpath )
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
-	DEBUG("sprintf done connecting to host: %s\n", host );
+	DEBUG("[DownloadFile] sprintf done connecting to host: %s\n", host );
 
 	char *sp = strchr(host, '/');
 	sprintf(buf, "GET %s HTTP/1.1\r\n", sp );	
@@ -74,23 +87,22 @@ int DownloadFile( const char *file, char *webpath )
 
 	if ( (i = getaddrinfo(host, "80", &hints, &ai) ) != 0 )
 	{
-		ERROR("Cannot find site : %s\n", webpath );
+		FERROR("Cannot find site : %s\n", webpath );
 		return -2;
 	}
 
 	sprintf(buf + strlen(buf), "Host: %s\r\n\r\n", host);
-	DEBUG("check whats sent %s\n", buf );
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 	if (connect(sock, ai->ai_addr, ai->ai_addrlen))
 	{
-		ERROR("Error. Failed to connect to host.\n");
+		FERROR("Error. Failed to connect to host.\n");
 	}
 
 	freeaddrinfo(ai);
 	i = send(sock, buf, strlen(buf), 0);
 	if ( i < (int) strlen(buf) || (i == -1) )
 	{
-		ERROR("Error. Failed to send GET request!\n");
+		FERROR("Error. Failed to send GET request!\n");
 		return -3;
 	}
 	
@@ -105,11 +117,8 @@ int DownloadFile( const char *file, char *webpath )
 		{
 			fputs(strchr(buf, ' ') + 1, stdout);
 			if( ( strncmp( buf, "200 OK", 6 ) ) != 0 )
-			//if (strcmp(strchr(buf, ' ') + 1, "200 OK\r\n"))
 			{
-				DEBUG("FOUND\n");
 				break;
-				//return -4;
 			}
 		}
 		
@@ -119,7 +128,6 @@ int DownloadFile( const char *file, char *webpath )
 			j = atoi(strchr(buf, ' ') + 1);
 			l = j / 100;
 		}
-		DEBUG("checking response\n");
 	}
 	
 #define BUF_SIZE 2048

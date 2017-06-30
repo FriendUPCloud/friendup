@@ -9,6 +9,8 @@ html
 	height: 100%;
 	margin: 0;
 	padding: 0;
+	user-select: none;
+	-webkit-user-select: none;
 }
 
 body
@@ -24,10 +26,10 @@ body
    -o-transform: rotateZ(0deg);
    -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);
- 	
 	transition: opacity 0.2s;
 	-moz-transition: opacity 0.2s;
 	-webkit-transition: opacity 0.2s;
+	overflow: hidden;
 }
 
 /* Apps */
@@ -53,6 +55,41 @@ h1, h2, h3, h4
 	font-weight: normal;
 	margin: 0 0 5px 0;
 	padding: 0;
+}
+
+/* Some backgrounds and colors */
+
+.BackgroundStError
+{
+	background-color: $ColorBgStError;
+}
+.ColorStError
+{
+	color: $ColorStError;
+}
+.BackgroundStGreenLight
+{
+	background-color: $ColorBgStGreenLight;
+}
+.ColorStGreenLight
+{
+	color: $ColorStGreenLight;
+}
+.BackgroundStBlueLight
+{
+	background-color: $ColorBgStBlueLight;
+}
+.ColorStBlueLight
+{
+	color: $ColorStBlueLight;
+}
+.BackgroundStGrayLight
+{
+	background-color: $ColorBgStGrayLight;
+}
+.ColorStGrayLight
+{
+	color: $ColorStGrayLight;
 }
 
 /* Loading animation */
@@ -101,7 +138,69 @@ select
 	position: relative;
 }
 
-/* Buttons */
+/* Mouse states ------------------------------------------------------------- */
+
+#MousePointer /* For holding icons */
+{
+	pointer-events: none;
+}
+
+#MousePointer *
+{
+	pointer-events: none;
+}
+
+.MousePointer
+{
+	cursor: hand;
+	cursor: pointer;
+}
+
+.MouseCrosshair
+{
+	cursor: crosshair;
+}
+
+.MouseMove
+{
+	cursor: move;
+}
+
+.MouseBusy
+{
+	cursor: wait;
+}
+
+.MouseRestricted
+{
+	cursor: not-allowed;
+}
+
+.MouseCursor
+{
+	cursor: text;
+}
+
+.MouseDefault
+{
+	cursor: default;
+}
+
+/* Text classes and other */
+
+.TextareaRich
+{
+	display: block;
+}
+
+.Ellipsis
+{
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Buttons ------------------------------------------------------------------ */
 
 button::-moz-focus-inner
 {
@@ -138,6 +237,12 @@ button:hover, .Button:hover
 	background-color: $ColorBgButtonHover;
 }
 
+button.Recessed, .Button.Recessed
+{
+	background-color: #505050;
+	background-image: none;
+}
+
 .ButtonSpacer
 {
 	display: inline;
@@ -157,6 +262,42 @@ button:hover, .Button:hover
     color: $ColorRecessed;
 }
 
+.Dialog > .DialogButtons > button
+{
+	margin: 0;
+	margin-right: $PaddingButton;
+}
+
+.Dialog > .DialogButtons > button:first-child
+{
+	margin: 0;
+}
+
+/* Stuff that is selectable */
+
+html *
+{
+	user-select: inherit;
+	-webkit-user-select: inherit;
+}
+
+html .Selectable
+{
+	-moz-user-select: -moz-all !important;
+	-khtml-user-select: all !important;
+	-webkit-user-select: all !important;
+	user-select: all !important;
+}
+
+html .SelectableText,
+html textarea,
+html input
+{
+	-moz-user-select: -moz-text !important;
+	-khtml-user-select: text !important;
+	-webkit-user-select: text !important;
+	user-select: text !important;
+}
 
 /* Input fields ------------------------------------------------------------- */
 
@@ -198,7 +339,7 @@ textarea
 
 .Disabled
 {
-	opacity: 0.8;
+	opacity: 0.5;
 	cursor: wait;
 }
 
@@ -225,6 +366,20 @@ textarea
 	background: #C3CFD4;
 	border-color: #A9B3B8;
 	border-bottom: 1px solid #9BA4A8;
+}
+
+.Recessed
+{
+	box-shadow: $BoxShadowRecessed;
+	border: $BorderRecessed;
+	box-sizing: border-box;
+}
+
+.Elevated
+{
+	box-shadow: $BoxShadowElevated;
+	border: $BorderElevated;
+	box-sizing: border-box;
 }
 
 .FullWidth
@@ -265,6 +420,7 @@ textarea
 .HContent20  { width:  20%; }
 .HContent25  { width:  25%; }
 .HContent30  { width:  30%; }
+.HContent33  { width:  33%; }
 .HContent35  { width:  35%; }
 .HContent40  { width:  40%; }
 .HContent45  { width:  45%; }
@@ -272,6 +428,7 @@ textarea
 .HContent55  { width:  55%; }
 .HContent60  { width:  60%; }
 .HContent65  { width:  65%; }
+.HContent66  { width:  66%; }
 .HContent70  { width:  70%; }
 .HContent75  { width:  75%; }
 .HContent80  { width:  80%; }
@@ -315,7 +472,7 @@ textarea
 hr.Divider
 {
 	border: 0;
-	border-top: 1px solid #c0c0c0;
+	border-top: 1px solid rgba(0,0,0,0.5);
 	margin: 5px 0 5px 0;
 	background: none;
 	height: 1px;
@@ -353,6 +510,7 @@ p.Layout
 .VContent20  { height:  20%; }
 .VContent25  { height:  25%; }
 .VContent30  { height:  30%; }
+.VContent33  { height:  33%; }
 .VContent35  { height:  35%; }
 .VContent40  { height:  40%; }
 .VContent45  { height:  45%; }
@@ -360,6 +518,7 @@ p.Layout
 .VContent55  { height:  55%; }
 .VContent60  { height:  60%; }
 .VContent65  { height:  65%; }
+.VContent66  { height:  66%; }
 .VContent70  { height:  70%; }
 .VContent75  { height:  75%; }
 .VContent80  { height:  80%; }
@@ -375,6 +534,16 @@ p.Layout
 	left: 0;
 	width: 100%;
 	height: 100%;
+}
+
+.LayoutButtonbarBottom > .VContentTop
+{
+	bottom: 50px;
+}
+
+.LayoutButtonbarBottom > .VContentBottom
+{
+	height: 50px;
 }
 
 .HContentRight
@@ -396,7 +565,6 @@ p.Layout
 .ScrollArea
 {
 	position: absolute;
-	top: 0; left: 0;
 	overflow: auto;
 }
 
@@ -425,6 +593,17 @@ p.Layout
 .NonScroll
 {
 	overflow: hidden;
+}
+
+.NoPadding
+{
+	padding: 0 !important;
+}
+
+.PaddingSmall
+{
+	padding: 4px;
+	box-sizing: border-box;
 }
 
 /*                                                                            */
@@ -603,14 +782,9 @@ th > a.active { font-weight: bold; text-decoration: underline; }
 .GuiColums > tbody > tr > td { padding: 0 5px 5px 0; vertical-align: top; }
 .GuiColums > tbody > tr:last-child > td { padding: 0 5px 0 0; }
 .GuiColums > tbody > tr:last-child > td:last-child { padding: 0 0 0 0; }
-.GuiContainer 
+.GuiContainer  with .BordersDefault
 { 
-	position: relative; 
-	border-top: 1px solid #ffffff;
-	border-left: 1px solid #ffffff;
-	background-color: #f0f0f0;
-	border-right: 1px solid #c0c0c0;
-	border-bottom: 1px solid #c0c0c0;
+	position: relative;
 	box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
 	-moz-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0px 0px 3px rgba(0,0,0,0.5);
@@ -751,6 +925,28 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	cursor: hand; cursor: pointer;
 }
 
+#WorkbenchMenu .Menu li.Submenu:after
+{
+	font-family: FontAwesome;
+	content: "\f061";
+	display: block;
+	float: right;
+	color: black;
+	text-shadow: none;
+}
+
+#WorkbenchMenu .Menu .Open li.Submenu:after,
+#WorkbenchMenu .Menu li.Open.Submenu:after
+{
+	color: white;
+}
+
+#WorkbenchMenu .Menu li.Submenu:hover:after
+{
+	color: white;
+	text-shadow: inherit;
+}
+
 #WorkbenchMenu .Menu ul, #WorkbenchMenu .Menu li
 {
 	list-style: none; margin: 0; padding: 0;
@@ -771,7 +967,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 {
 	position: absolute;
 	right: 0px;
-	width: 155px;
+	width: 185px;
 }
 #WorkbenchMenu .Open, #WorkbenchMenu .Menu:hover
 {
@@ -796,7 +992,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	position: absolute;
 	top: 32px;
 	left: 0px;
-	width: 155px;
+	width: 185px;
 	background: white;
 	list-style: none;
 	margin: 0;
@@ -818,7 +1014,6 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 #WorkbenchMenu .Open ul > li:hover,
 #WorkbenchMenu .Open ul > li.Open
 {
-	background: #d0d0d0;
 	color: white;
 	text-shadow: 1px 1px 1px black;
 }
@@ -830,7 +1025,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 {
 	position: absolute;
 	display: block;
-	left: 155px;
+	left: 185px;
 	top: 0px;
 	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
 	-moz-box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.2);
@@ -839,6 +1034,15 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 #WorkbenchMenu .Open ul > li.Open > ul > li
 {
 	position: relative;
+}
+
+html #WorkbenchMenu .Menu li.Disabled,
+html #WorkbenchMenu .Menu li.Disabled:hover,
+html #WorkbenchMenu .Menu li.Disabled *
+{
+	opacity: 0.5;
+	font-style: oblique;
+	cursor: default;
 }
 
 #WorkbenchMenu .Open ul > li > span
@@ -911,6 +1115,11 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	color: $ColorNegative;
 }
 
+a.Negative:hover, a.Negative:active, a.Negative:visited
+{
+	color: $ColorNegative;
+}
+
 .Positive
 {
 	color: $ColorPositive;
@@ -923,7 +1132,7 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 .ColorLists
 {
-	color: $ColorNegative;
+	color: $ColorLists;
 }
 
 .ColorHighlight
@@ -935,12 +1144,12 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 
 .BackgroundLists
 {
-	background: $ColorLists;
+	background: $ColorBgListSw1;
 }
 
 .BackgroundDefault
 {
-	background: $ColorDefault;
+	background: $ColorBackground;
 }
 
 .BackgroundNegative
@@ -958,4 +1167,2034 @@ table.Calendar td:hover { background: #333333; color: #ffffff; }
 	background: $ColorBgHighlight;
 }
 
+/* Context Color --------------------------------------------------------- */
+
+/* basic ( put on divs ) */
+
+.Available {
+	color : $ColorAvailable;
+	background-color : $ColorAvailableBg;
+}
+
+.Accept {
+	color : $ColorAccept;
+	background-color : $ColorAcceptBg;
+}
+
+.Danger {
+	color : $ColorDanger;
+	background-color : $ColorDangerBg;
+}
+
+.Warning {
+	color : $ColorWarning;
+	background-color : $ColorWarningBg;
+}
+
+.Action {
+	color : $ColorAction;
+	background-color : $ColorActionBg;
+}
+
+.Highlight {
+	color : $ColorHighlight;
+	background-color : $ColorBgHighlight;
+}
+
+.Notify {
+	color : $ColorNotify;
+	background-color : $ColorNotifyBg;
+}
+
+/* put on buttons */
+
+.Button.Accept {
+	color : $ColorAcceptButton;
+	background-color : $ColorAcceptButtonBg;
+}
+.Button.Accept:hover {
+	color : $ColorAcceptButtonHover;
+	background-color : $ColorAcceptButtonHoverBg;
+}
+
+.Button.Danger {
+	color : $ColorDangerButton;
+	background-color : $ColorDangerButtonBg;
+}
+.Button.Danger:hover {
+	color : $ColorDangerButtonHover;
+	background-color : $ColorDangerButtonHoverBg;
+}
+
+/* put on text inputs */
+
+/* for font awesome icons */
+.BlinkIcon > i {
+	-webkit-animation : iconblink 2s ease-in-out infinite alternate;
+	animation : iconblink 0.4s ease-in-out infinite alternate;
+}
+
+@-webkit-keyframes iconblink {
+	from { color : $ColorIconBlinkStart }
+	to { color : $ColorIconBlinkEnd }
+}
+
+@keyframes iconblink {
+	from { color : $ColorIconBlinkStart }
+	to { color : $ColorIconBlinkEnd }
+}
+
+/* extend lists */
+
+.sw1.Highlight,
+.sw2.Highlight {
+	
+}
+
+
+/* LED ------------------------------------------------------------------- */
+
+.LED
+{
+	
+}
+
+.LED > div
+{
+	color: $ColorLEDText;
+}
+
+.LED > i {
+	/* text-shadow : 0 0 1px rgba( 0, 0, 0, 1 ); */
+}
+
+/* led style, feel free to make more - works for div, not i */
+.LED.Narrow
+{
+	border-radius: 0px;
+	width: 0.5em;
+	height:2em;
+	padding: 2px 0;
+	margin : 0 2px;
+}
+
+.LED.Narrow > div
+{
+	height:100%;
+	width:100%;
+	box-shadow: inset 0 0 0.3em rgba( 0, 0, 0, 0.2 );
+	border : 1px solid rgba( 0, 0, 0, 0.20 ) ;
+}
+
+/* led states */
+
+.LED div.On { background-color: $ColorLEDOn; }
+.LED i.On { color: $ColorLEDOn; }
+
+.LED div.Available {
+	background-color: $ColorLEDAvailable;
+	color : transparent;
+}
+.LED i.Available {
+	color : $ColorLEDAvailable;
+	background-color: transparent;
+}
+
+.LED div.Warning {
+	color : transparent;
+	background-color: $ColorLEDWarning;
+}
+.LED i.Warning {
+	color: $ColorLEDWarning;
+	background-color: transparent;
+}
+
+.LED div.Notify
+{
+	background-color: $ColorLEDNotify;
+	-webkit-animation: notify-blink 0.5s ease-in-out infinite alternate;
+	animation: notify-blink 0.5s ease-in-out infinite alternate;
+}
+.LED i.Notify {
+	color: $ColorLEDNotify;
+	background-color: transparent;
+	-webkit-animation: notify-fg-blink 0.5s ease-in-out infinite alternate;
+	animation: notify-fg-blink 0.5s ease-in-out infinite alternate;
+}
+
+@-webkit-keyframes notify-blink
+{
+	from { background-color: $ColorLEDNotifyFrom }
+	to { background-color: $ColorLEDNotifyTo; }
+}
+
+@-webkit-keyframes notify-fg-blink
+{
+	from { color: $ColorLEDNotifyFrom }
+	to { color: $ColorLEDNotifyTo; }
+}
+
+@keyframes notify-blink
+{
+	from { background-color: $ColorLEDNotifyFrom }
+	to { background-color: $ColorLEDNotifyTo; }
+}
+
+@keyframes notify-fg-blink
+{
+	from { color: $ColorLEDNotifyFrom }
+	to { color: $ColorLEDNotifyTo; }
+}
+
+.LED div.Alert { background-color: $ColorLEDAlert; }
+.LED i.Alert { color: $ColorLEDAlert; }
+
+.LED div.Off { background-color: $ColorLEDOff; }
+.LED i.Off { color: $ColorLEDOff; }
+
+/* Log ---------------------------------------------------------------------- */
+
+.LogText
+{
+	font-style: italic;
+	opacity: 0.8;
+}
+
+
+/* Overlay ------------------------------------------------------------------ */
+
+.Overlay
+{
+	background-color : $ColorOverlayBg;
+}
+
+.Overlay .Item:hover
+{
+	color : $ColorHighlight;
+	background-color : $ColorBgHighlight;
+}
+
+/* Treeview ----------------------------------------------------------------- */
+
+.TreeListNode
+{
+	display: block;
+	padding: 0;
+	margin: 0;
+}
+
+.TreeListItem
+{
+	padding: 0;
+	margin: 0 0 5px 0;
+	cursor: pointer;
+}
+
+.TreeListItem.Current
+{
+	font-weight: bold;
+}
+
+.TreeListItem.Children:before
+{
+	box-shadow: inset 0px 0px 6px 4px rgba(0,0,0,0.5);
+	content: "+";
+	display: inline-block;
+	background: #808080;
+	border-radius: 100%;
+	border: 1px solid rgba(0,0,0,0.3);
+	margin: 0 5px 0 0;
+	color: white;
+	padding: 0px 4px;
+	width: 8px;
+	text-align: center;
+}
+
+.TreeListItem > .TreeListNode
+{
+	display: none;
+}
+
+.TreeListItem.Open > .TreeListNode
+{
+	display: block;
+}
+
+.TreeListItem.Open.Children:before
+{
+	content: "-";
+}
+
+.TreeListItem .TreeListItem
+{
+	margin: 0 0 5px 21px;
+	font-weight: normal;
+	padding: 5px 0 0 0;
+}
+
+.TreeListItem .TreeListItem.Current
+{
+	font-weight: bold;
+}
+
+.TreeListItem .TreeListItem + .TreeListItem
+{
+	border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Calendar ----------------------------------------------------------------- */
+
+.Calendar.MonthName
+{
+	padding: 8px;
+	font-weight: bold;
+}
+.Calendar.MonthName:first-letter
+{
+	text-transform: uppercase;
+}
+
+.Calendar.MonthName .Navigation
+{
+	float: right;
+}
+
+.Calendar.MonthName .Navigation span
+{
+	margin: 0 0 0 10px;
+}
+
+.Calendar .Day
+{
+	width: 14.285%;
+	float: left;
+	display: block;
+	height: 30px;
+	box-sizing: border-box;
+	position: relative;
+}
+
+html .Calendar div.HRow > .Current.Day:nth-child(odd),
+html .Calendar div.HRow > .Current.Day:nth-child(even),
+html .Calendar div.HRow > .Current.Day:nth-child(odd):hover,
+html .Calendar div.HRow > .Current.Day:nth-child(even):hover
+{
+	font-weight: bold;
+	background: $ColorBgStBlueLight;
+}
+
+.Calendar .Day > .Number
+{
+	position: absolute;
+	right: 6px;
+	top: 6px;
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+}
+
+.Calendar .Day.Label
+{
+	height: 30px;
+	line-height: 30px;
+}
+
+.Calendar .Day.Label .LabelText
+{
+	width: 100%;
+	color: white;
+	text-align: center;
+	color: black;
+}
+
+.Calendar .HRow:nth-child(odd) .Day:nth-child(even),
+.Calendar .HRow:nth-child(even) .Day:nth-child(odd)
+{
+	background-color: rgba(0,0,0,0.8);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(odd),
+.Calendar .HRow:nth-child(even) .Day:nth-child(even)
+{
+	background-color: rgba(0,0,0,0.7);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(even):hover,
+.Calendar .HRow:nth-child(even) .Day:nth-child(odd):hover
+{
+	background-color: rgba(0,0,0,0.9);
+}
+.Calendar .HRow:nth-child(odd) .Day:nth-child(odd):hover,
+.Calendar .HRow:nth-child(even) .Day:nth-child(even):hover
+{
+	background-color: rgba(0,0,0,0.8);
+}
+
+.Calendar .HRow:nth-child(odd) .Day.Label:nth-child(even),
+.Calendar .HRow:nth-child(even) .Day.Label:nth-child(odd)
+{
+	background: #e0e0e0;
+	border-bottom: 1px solid #363636;
+}
+.Calendar .HRow:nth-child(odd) .Day.Label:nth-child(odd),
+.Calendar .HRow:nth-child(even) .Day.Label:nth-child(even)
+{
+	background: #EFEFEF;
+	border-bottom: 1px solid #303030;
+}
+
+.Calendar .Events
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+}
+
+.Calendar .Event
+{
+	width: 10px;
+	height: 10px;
+	border-radius: 10px;
+	box-sizing: border-box;
+	background-color: #f09020;
+	float: right;
+	margin: 0 5px 0 0;
+	position: relative;
+}
+
+.Calendar .Day:hover .Event > .CalPopup
+{
+	opacity: 1;
+}
+
+.Calendar .Event[nth-child:0n6]
+{
+	clear: both;
+}
+
+.ActiveSessions .Divider
+{
+	margin-top: 0;
+}
+
+.Calendar em
+{
+	color: $ColorLEDOn;
+}
+
+.Calendar .Event > .CalPopup
+{
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s;
+	display: block;
+	position: absolute;
+	z-index: 1;
+	top: 10px;
+	left: 0px;
+	background: rgba(255,255,255,0.8);
+	color: black;
+	border-radius: 8px;
+	padding: 8px;
+	white-space: no-wrap;
+	box-shadow: 0px 2px rgba(0,0,0,0.5);
+}
+
+.CalendarDetailEvent:last-child 
+{
+    margin: 0;
+}
+
+.CalendarDetailEvent p
+{
+	margin: 0 0 8px 0;
+}
+
+.CalendarDetailEvent em
+{
+	display: inline-block;
+	width: 45px;
+	margin: 0 5px 0 0;
+	font-style: normal;
+}
+
+.CalendarDetailEvent 
+{
+    background: rgba(0,0,0,0.3);
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 4px;
+    margin: 0 0 5px 0;
+}
+
+.ActiveSessions ul, .ActiveSessions.li
+{
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* Context Menu items ------------------------------------------------------- */
+
+.Widget
+{
+	position: absolute;
+	min-width: 10px;
+	min-height: 10px;
+	background-color: rgba(0,0,0,0.7);
+	box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+	color: white;
+	border-radius: 3px;
+}
+html body .Widget.Raised
+{
+	z-index: 2147483640;
+}
+
+.Widget > iframe
+{
+	border: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.Widget .MenuItems .MenuItem
+{
+	display: block;
+	padding: 10px 10px 5px 10px;
+	color: white;
+	margin: 0;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuItem:hover
+{
+	background: rgba(255,255,255,0.2);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuHeader
+{
+	font-weight: bold;
+	display: block;
+	margin: 0;
+	padding: 10px 10px 5px 10px;
+	border-bottom: 1px solid rgba(255,255,255,0.5);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+}
+
+.Widget .MenuItems .MenuItem:last-child
+{
+	padding-bottom: 10px;
+	border-radius: 0 0 3px 3px;
+}
+
+/* Formerly doors.css ------------------------------------------------------- */
+
+/* Non logged in state */
+
+body.Inside
+{
+	background: #222222;
+}
+
+body #Screens
+{
+	transition: opacity 1s;
+	-webkit-transition: opacity 1s;
+	background-image: url(/webclient/theme/loginimage.jpg);
+	background-position: center center;
+	background-size: cover;
+}
+
+body.Login #Screens
+{
+	opacity: 0.3;
+}
+
+body.Loading
+{
+	opacity: 0;
+}
+
+body.Loading #Screens
+{
+	opacity: 0;
+}
+
+
+body.Loading:after
+{
+	content: ' ';
+	background: url(/themes/friendup/gfx/loading.gif) no-repeat center center #222222;
+	position: absolute;
+	top: calc(50% - 30px);
+	left: calc(50% - 40px);
+	height: 60px;
+	width: 80px;
+	color: white;
+	padding: 0 10px;
+	text-align: center;
+	border-radius: 10px;
+	animation: bodyLoading 0.5s;
+	-webkit-animation: bodyLoading 0.5s;
+}
+
+@-webkit-keyframes bodyLoading
+{
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+@keyframes bodyLoading
+{
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+body.Inside #Screens
+{
+	background-image: none;
+}
+
+body.Loaded #Screens
+{
+	opacity: 1;
+}
+
+/* Hide this in the beginning */
+body #DeepestField
+{
+	opacity: 0;
+}
+
+/* Actiontray --------------------------------------------------------------- */
+
+#ActionTray
+{
+	position: fixed;
+	right: 5px;
+	bottom: 5px;
+}
+
+#ActionTray input
+{
+	position: absolute;
+	right: 0;
+	height: 17px;
+	line-height: 17px;
+	padding: 3px 8px;
+	bottom: -3px;
+	width: 110px;
+	border: 0;
+	opacity: 0.7;
+	background: white;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#ActionTray input:focus
+{
+	opacity: 1;
+}
+
+#Tray
+{
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    min-width: 0px;
+    max-width: 300px;
+    height: 32px;
+    z-index: 999
+}
+
+#Tray > div
+{
+    width: 32px;
+    height: 32px;
+    float: right;
+    color: white;
+    text-align: center;
+    line-height: 32px;
+    text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+    position: relative;
+}
+#Tray > div:hover
+{
+    color: #ffee00;
+    text-shadow: 0px 0px 5px rgba(255,255,255,0.5);
+}
+
+.SpeechResponse
+{
+	position: absolute;
+	top: 40%;
+	left: 5%;
+	width: 90%;
+	transition: opacity 0.5s;
+}
+
+.SpeechResponse > .Response
+{
+	min-height: 60px;
+	font-size: 30px;
+	background-color: rgba(0,0,0,0.7);
+	color: white;
+	font-weight: bold;
+	text-align: center;
+	line-height: 60px;
+	border-radius: 20px;
+	padding: 20px;
+}
+
+/* Some info from the tray */
+
+.BubbleInfo
+{
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	height: 0px;
+	opacity: 0.8;
+}
+
+.BubbleInfo > div
+{
+	position: absolute;
+	right: 0px;
+	bottom: 8px;
+	min-width: 100px;
+	max-height: 0px;
+	border-radius: 5px;
+	background: white;
+	color: black;
+	padding: 0 8px;
+	box-sizing: border-box;
+	font-size: 95%;
+	transition: max-height,padding 0.25s,0.25s;
+	overflow: hidden;
+	line-height: 20px
+}
+
+.TrayElement.Notification .BubbleInfo
+{
+	transition: opacity 0.25s;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.TrayElement:hover .BubbleInfo > div,
+.TrayElement.Notification .BubbleInfo > div
+{
+	max-height: initial;
+	padding: 8px;
+}
+
+.BubbleInfo:before
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	bottom: 7px;
+	width: 0px;
+	height: 0px;
+	right: 15px;
+	background: white;
+	transform: rotate(45deg);
+	transition: width,height,bottom,right 0.20s;
+	text-overflow: hidden;
+}
+
+.TrayElement:hover .BubbleInfo:before, 
+.TrayElement.Notification .BubbleInfo:before
+{
+	height: 10px;
+	width: 10px;
+	bottom: 3px;
+	right: 10px;
+}
+
+.TrayElement:before
+{
+	content: " ";
+	position: absolute;
+	display: block;
+	width: 24px;
+	height: 24px;
+	top: 4px;
+	left: 4px;
+	background-repeat: none;
+}
+
+/* Various built-in icons */
+
+.TrayElement.Tasks:before
+{
+	background-image: url(/iconthemes/friendup/24/tray/tasks.png);
+}
+
+.TrayElement.Notification:before
+{
+	background-image: url(/iconthemes/friendup/24/tray/notifications.png);
+}
+
+.TrayElement.Disks:before
+{
+	background-image: url(/iconthemes/friendup/24/tray/disks.png);
+}
+
+.TrayElement:hover .BubbleInfo.List > div 
+{
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.TrayElement .BubbleInfo.List > div > div
+{
+	padding: 4px;
+	box-sizing: border-box;
+}
+
+.TrayElement .BubbleInfo.List > div > div:first-child
+{
+	border-radius: 5px 5px 0 0;
+}
+
+.TrayElement .BubbleInfo.List > div > div:last-child
+{
+	border-radius: 0 0 5px 5px;
+}
+
+.TrayElement .BubbleInfo.List > div > div:only-child
+{
+	border-radius: 5px;
+}
+
+/* Voice overlay handsfree mode --------------------------------------------- */
+
+#Handsfree
+{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /*background: rgba(255,255,255,0.5);*/
+    background: rgba(255,255,255,0.0);
+    text-align: center;
+    z-index: 9999999;
+}
+#Handsfree div > button
+{
+	position: absolute;
+	top: -100000px;
+    /*visibility: visible;
+    position: absolute;
+    top: 25%;
+    height: 50%;
+    left: 25%;
+    width: 50%;
+    border: 0;
+    background-color: transparent;
+    padding: 0;
+    background-image: url(/webclient/gfx/system/VoiceIcon.png);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-shadow: none;
+    outline: none;*/
+}
+#Handsfree div > button:active, 
+#Handsfree div > button:focus
+{
+    border: 0;
+    outline: 0;
+}
+#Handsfree div > button > button
+{
+    display: none;
+}
+
+#Handsfree input
+{
+    position: absolute;
+    top: -10000px;
+}
+
+@-webkit-keyframes micblink
+{
+  0%   { color: #ffdd00; }
+  50% { color: #ff4444; }
+  100%   { color: #ffdd00; }
+}
+
+#Handsfree.listening + #Screens #Tray > .Microphone:before
+{
+	color: #ff4444;
+	transition: color 0.2s;
+	-webkit-animation: micblink 2s infinite;
+	-moz-animation:    micblink 2s infinite;
+	-o-animation:      micblink 2s infinite; 
+	animation:         micblink 2s infinite;
+}
+
+/* Desklets ----------------------------------------------------------------- */
+
+.Desklet
+{
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	background: rgba(0,0,0,0.5);
+	transition: top,left,width,height 0.25s;
+}
+
+.Desklet .Launcher
+{
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	transition: filter 0.15s;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	-webkit-filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
+	filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
+	border: 0;
+}
+
+.Desklet .Launcher:hover
+{
+	-webkit-filter: drop-shadow(0 0 12px rgba(255,244,200,0.3));
+	filter: drop-shadow(0 0 6px rgba(255,244,200,0.3));
+}
+
+.Desklet .Launcher.Minimized
+{
+	filter: grayscale(100%);
+	-webkit-filter: grayscale(100%);
+	opacity: 0.6;
+}
+
+/* running apps */
+.Desklet[position=bottom_left] .Launcher.Running:after,
+.Desklet[position=bottom_center] .Launcher.Running:after,
+.Desklet[position=bottom_right] .Launcher.Running:after
+{
+	position: absolute;
+	content: ' ';
+	width: 80%;
+	left: 10%;
+	top: -4px;
+	height: 3px;
+	border-radius: 5px;
+	background: rgba(255,255,255,0.8);
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=top_left] .Launcher.Running:after,
+.Desklet[position=top_center] .Launcher.Running:after,
+.Desklet[position=top_right] .Launcher.Running:after
+{
+	position: absolute;
+	content: ' ';
+	width: 80%;
+	left: 10%;
+	bottom: -4px;
+	height: 3px;
+	border-radius: 5px;
+	background: rgba(255,255,255,0.8);
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=left_top] .Launcher.Running:after,
+.Desklet[position=left_center] .Launcher.Running:after,
+.Desklet[position=left_bottom] .Launcher.Running:after
+{
+	position: absolute;
+	content: ' ';
+	height: 80%;
+	top: 10%;
+	right: -4px;
+	width: 3px;
+	border-radius: 5px;
+	background: rgba(255,255,255,0.8);
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+.Desklet[position=right_top] .Launcher.Running:after,
+.Desklet[position=right_center] .Launcher.Running:after,
+.Desklet[position=right_bottom] .Launcher.Running:after
+{
+	position: absolute;
+	content: ' ';
+	height: 80%;
+	top: 10%;
+	left: -4px;
+	width: 3px;
+	border-radius: 5px;
+	background: rgba(255,255,255,0.8);
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+}
+
+.Desklet .Launcher .LabelIcon
+{
+	position: absolute;
+	top: calc(50% - 12px);
+	left: calc(50% - 12px);
+	width: 24px;
+	height: 24px;
+	background-size: contain;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+/* Desklet widget end ------------------------------------------------------- */
+
+#DoorsScreen
+{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	background: #3f3f3f;
+	overflow: hidden;
+	transition: background-color 0.5s;
+	-moz-transition: background-color 0.5s;
+	-webkit-transition: background-color 0.5s;
+	-ms-transition: background-color 0.5s;
+	-o-transition: background-color 0.5s;
+}
+
+#DoorsScreen > .ScreenContent
+{
+	position: absolute;
+	top: 32px !important;
+	width: 100%;
+	bottom: 0px;
+	overflow: auto;
+	background-size: cover;
+	background-position: center;
+}
+
+#DoorsScreen > .Offline
+{
+	position: absolute;
+	top: calc(50% - 50px);
+	left: 10%;
+	width: 80%;
+	text-align: center;
+	height: 72px;
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 72px;
+	color: #F00;
+	opacity: 0.5;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.Screen > .TitleBar
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 32px;
+	background: white;
+	z-index: 2147483647;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 0px 8px 1px rgba(0,0,0,0.5);
+	background-image: url(/webclient/gfx/theme/logo_20px.png);
+	background-repeat: no-repeat;
+	background-position: 5px 5px;
+	padding-left: 30px;
+}
+
+.Screen > .TitleBar > .Left *
+{
+	float: left;
+	margin: 0 5px 0 0;
+}
+
+.Screen > .TitleBar > .Left > .Extra
+{
+	float: right;
+}
+
+.Screen > .TitleBar > .Left
+{
+	padding: 8px 35px 6px 5px;
+	margin-left: 3px;
+	border-left: 1px solid #f0f0f0;
+	height: 32px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.Screen > .TitleBar > .Left .Extra
+{
+	position: absolute;
+	right: 32px;
+	padding: 0 10px 0 10px;
+	margin: 0;
+	top: 0;
+	height: 32px;
+	line-height: 32px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+}
+
+.Screen > .TitleBar > .Left .Extra hr
+{
+	border: 0;
+	border-top: 1px solid rgba(255,255,255,0.2);
+	height: 1px;
+	background: none;
+}
+
+.Screen > .TitleBar > .Left .Extra.Hover
+{
+	background: rgba(0,0,0,0.6);
+	color: white;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	font-weight: bold;
+}
+
+.Screen > .TitleBar > .Left .Extra .Offline
+{
+	color: #aa0000;
+	background-image: url(/webclient/gfx/system/offline_16px.png);
+	background-repeat: no-repeat;
+	background-position: center left;
+	padding-left: 20px;
+	display: inline-block;
+}
+
+.Screen > .TitleBar > .Right
+{
+	float: right;
+}
+
+.Screen > .TitleBar > .Right > .Clock
+{
+	position: absolute;
+	width: 50px;
+	height: 32px;
+	right: 33px;
+	top: 0;
+	line-height: 32px;
+	text-align: center;	
+}
+
+.Screen > .TitleBar .ScreenList
+{
+	width: 32px;
+	height: 32px;
+	border-left: 1px solid #f0f0f0;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+.Screen > .TitleBar .ScreenList:active
+{
+	opacity: 0.5;
+}
+
+.Screen > .TitleBar .ScreenList > img
+{
+	position: absolute;
+	top: 4px;
+	left: 4px;
+}
+
+.Screen > .TitleBar .ScreenList:Active img
+{
+	opacity: 0.5;
+	filter:opacity(alpha=50);
+}
+
+.Screen > .TitleBar .Hover
+{
+	color: 
+}
+
+.Frameloader, .Imageloader
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	outline: 0;
+}
+
+.Imageloader
+{
+	height: auto;
+}
+
+/* Progress bars ------------------------------------------------------------ */
+.Frame .Groove + .Bar
+{
+	background-image: url(/webclient/gfx/system/progressbar.gif);
+	background-repeat: repeat-x;
+	background-size: auto;
+	background-position: 0 0;
+	height: 16px;
+}
+
+/* Directory view toolbar --------------------------------------------------- */
+
+.DirectoryToolbar
+{
+	z-index: 3;
+	position: absolute;
+	height: 56px;
+	background: #4c4c4c;
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+	padding: 8px;
+	border-bottom: 3px solid;
+	border-bottom-color: $WinFrameBgBlur;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-shadow: inset 0px 2px 8px rgba(0,0,0,0.3);
+	overflow: hidden;
+}
+
+.Active .DirectoryToolbar
+{
+	border-bottom-color: $WinFrameBgActive;
+}
+
+.DirectoryToolbar button
+{
+	outline: none;
+	border: 0px !important;
+	background: none;
+	line-height: 20px;
+	text-align: center;
+	padding: 0 8px 20px 8px;
+	margin: 0 4px 0 0;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+	box-shadow: none;
+	border-radius: 5px;
+}
+
+.DirectoryToolbar button:hover
+{
+	background-color: transparent;
+}
+
+.DirectoryToolbar button:after
+{
+	content: " ";
+	background-color: rgba(100,100,100,0.0);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 39px;
+	border-radius: 3px;
+	input-events: none;
+	transition: background-color 0.25s;
+	-moz-transition: background-color 0.25s;
+	-webkit-transition: background-color 0.25s;
+}
+
+.DirectoryToolbar button:hover:after
+{
+	background-color: rgba(100,100,100,0.2);
+}
+
+.Active .DirectoryToolbar button:hover:after
+{
+	background-color: rgba(36, 129, 215, 0.2);
+}
+
+.DirectoryToolbar button:before
+{
+	display: block;
+	clear: both;
+}
+
+@media (max-width: 346px)
+{
+	.DirectoryToolbar button
+	{
+		font-size: 90%;
+		padding: 0 4px;
+	}
+}
+
+/* Listview directory view -------------------------------------------------- */
+
+div.Listview
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div.Listview > .Headers
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 30px;
+	background: $ColorBgNegative;
+	box-shadow: inset 0px 0px 5px rgba(0,0,0,0.5);
+}
+
+div.Listview > .Headers > .Header
+{
+	float: left;
+	position: relative;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 6px;
+	font-weight: bold;
+	border-top: 1px solid rgba(255,255,255,0.3);
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+div.Listview > .Headers > .Header:nth-child(odd)
+{
+	background-color: $ColorBgThListSw1;
+	color: $ColorThListSw1;
+}
+
+div.Listview > .Headers > .Header:nth-child(even)
+{
+	background-color: $ColorBgThListSw2;
+	color: $ColorThListSw2;
+}
+
+div.Listview > .Headers > .Header:active
+{
+	border-top: 1px solid rgba(0,0,0,0.3);
+	border-left: 1px solid rgba(0,0,0,0.3);
+	border-right: 1px solid rgba(255,255,255,0.3);
+	border-bottom: 1px solid rgba(255,255,255,0.3);
+	background-color: $ColorBgNegative;
+	color: $ColorNegative;
+}
+
+div.Listview > .Icons
+{
+	position: absolute;
+	top: 30px;
+	left: 0px;
+	width: 100%;
+	bottom: 30px;
+	background: $ColorBgNegative;
+}
+
+div.Listview > .Icons > .Scroller
+{
+	position: relative;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+
+div.Listview .Row,
+div.ColumnView .Row,
+#MousePointer .Row
+{
+	position: absolute;
+	height: 30px;
+	width: 100%;
+	clear: both;
+}
+
+html div.Listview .Row.MousePointer,
+html div.ColumnView .Row.MousePointer
+{
+	transform: rotate(0def);
+	-moz-transform: rotate(0def);
+	-webkit-transform: rotate(0def);
+}
+
+#MousePointer .Row
+{
+	width: 400px;
+	white-space: nowrap;
+}
+
+div.Listview > .Icons > .Scroller > .Row .Column,
+div.ColumnView .Row .Column,
+#MousePointer .Row .Column
+{
+	background: $ColorBgThListSw2;
+}
+
+div.Listview > .Icons > .Scroller > .Row.Odd .Column,
+div.ColumnView .Row.Odd .Column,
+#MousePointer .Row.Odd .Column
+{
+	background: $ColorBgThListSw1;
+}
+
+div.Listview > .Icons > .Scroller > .Row:hover > .Column,
+div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
+div.ColumnView .Row:hover > .Column,
+div.ColumnView .Row.Selected > .Column,
+#MousePointer .Row.Selected .Column
+{
+	background: $ColorBgNegative;
+	color: $ColorNegative;
+}
+
+div.ColumnView .Row:hover > .Column,
+div.ColumnView .Row.Selected > .Column
+{
+	background: $ColorBgNegative;
+	color: $ColorNegative;
+}
+
+div.Listview > .Footer
+{
+	position: absolute;
+	bottom: 0;
+	height: 30px;
+	left: 0;
+	right: 0;
+	border-top: 1px solid rgba(255,255,255,0.3);
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+	background: $ColorBackground;
+	color: $ColorText;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: $PaddingButton;
+}
+
+/* Columns in listview: */
+
+div.Listview > .Icons > .Scroller > .Row > .Column,
+div.ColumnView .Row > .Column,
+#MousePointer .Row > .Column
+{
+	float: left;
+	position: relative;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	padding: 6px;
+	font-weight: normal;
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(0,0,0,0.3);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	height: 30px;
+	box-sizing: border-box;
+}
+
+div.Listview > .Icons > .Scroller > .Row:last-child > .Column,
+div.ColumnView .Row:last-child > .Column,
+#MousePointer .Row:last-child > .Column
+{
+	border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+div.Listview > .Icons > .Scroller > .Row > .Column:first-child,
+div.ColumnView .Row > .Column:first-child,
+#MousePointer .Row > .Column:first-child
+{
+	padding-left: 36px;
+}
+
+div.ColumnView .Row > .Column
+{
+	width: 250px;
+}
+
+div.Listview .File,
+div.ColumnView .File,
+#MousePointer .Row.File
+{
+	padding: 0;
+	margin: 0;
+}
+
+div.Listview .File > .Icon,
+div.ColumnView .File > .Icon,
+#MousePointer .Row.File > .Icon
+{
+    width: 24px;
+    height: auto;
+    position: absolute;
+    top: 3px;
+    left: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+div.Listview .File > .Icon > div,
+div.ColumnView .File > .Icon > div,
+#MousePointer .Row.File > .Icon > div
+{
+    width: 100%;
+    height: 24px;
+    background-size: contain;
+}
+
+/* Columns in listview done */
+
+html #Statusbar
+{
+	position: absolute;
+	height: 30px;
+	bottom: 0px;
+	left: 5px;
+	right: 5px;
+	background: transparent;
+	opacity: 1;
+	border: 0;
+	border-radius: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+	padding: 0;
+	z-index: 2147483640;
+}
+
+html body[viewlist=docked] #Statusbar
+{
+	height: 0;
+}
+
+html body[viewlist=docked] #Statusbar > #Taskbar
+{
+	height: 0;
+}
+
+html #Statusbar > #Taskbar
+{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	bottom: 0px;
+	right: 305px;
+}
+
+#Statusbar .Task
+{
+	position: relative;
+	float: left;
+	display: block;
+	height: 30px;
+	box-sizing: border-box;
+	margin: 0 5px 0 5px;
+	bottom: 0px;
+	padding: 7px 8px 7px 38px;
+	background-color: #878787;
+	border-radius: 5px 5px 0 0;
+	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
+	color: white;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+	transition-property: bottom, opacity, box-shadow, background;
+	transition-duration: 0.2s, 0.2s, 0.2s, 0.2s;
+	max-width: 250px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background-size: 25px 25px;
+	background-position: 8px 3px;
+	background-image: url(/webclient/gfx/icons/128x128/categories/applications-utilities.png);
+	background-repeat: no-repeat;
+}
+
+#Taskbar[full=full] .Task
+{
+	max-width: 50px;
+}
+
+#Statusbar .Task.Active
+{
+	background-color: #4A9DC2;
+}
+
+#Statusbar .Task.Hidden
+{
+	opacity: 0.5;
+	bottom: -5px;
+}
+
+#Statusbar .Task:hover
+{
+	box-shadow: 0px 0px 10px 0px rgba(255,245,100,0.5);
+	opacity: 1;
+}
+
+/* Screens */
+
+#Screens
+{
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 100%;
+}
+
+#Screens > div
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	overflow: hidden;
+	background: #2F669F;
+}
+
+#Screens .View
+{
+	position: absolute;
+}
+
+#Screens .View > .Content > iframe
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	margin: 0;
+	outline: none;
+}
+
+.Screen > div
+{
+	z-index: 1;
+}
+
+.Screen > .VideoBackground
+{
+	position: absolute;
+	top: 50%; 
+	left: 50%;
+	-webkit-transform: translateX(-50%) translateY(-50%);
+	transform: translateX(-50%) translateY(-50%);
+	min-width: 100%; 
+	min-height: 100%; 
+	width: auto; 
+	height: auto;
+	overflow: hidden;
+	z-index: 0;
+	pointer-events: none;
+}
+
+/* Regions */
+
+#RegionSelector
+{
+	background: rgba(0,0,0,0.30);;
+	border: 1px solid rgba(0,0,0,0.30);
+	border-radius: 3px;
+	box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-webkit-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-moz-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-ms-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	-o-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
+	position: absolute;
+	z-index: 0;
+}
+
+/* Deepest field ------------------------------------------------------------ */
+
+/* Loggedin state */
+
+.Inside #DeepestField
+{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	bottom: 0px;
+	right: 0px;
+	background: #404040;
+	z-index: 0;
+}
+
+.Inside #DeepestField .LocalElements
+{
+	position: absolute;
+	width: 100%;
+	z-index: 2;
+	height: 100%;
+	top: 0;
+	left: 0;
+}
+
+#DeepestField > div > #Identity
+{
+	position: absolute;
+	background: rgba(0,0,0,0.3);
+	top: 20px;
+	left: 20px;
+	width: 185px;
+	height: 222px;
+	border-radius: 5px;
+}
+
+body[mobile=mobile] #DeepestField > div > #Identity
+{
+	width: 122px;
+	height: 180px;
+}
+
+#DeepestField > div > #NotificationHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	right: 20px;
+	top: 260px;
+	display: block;
+	color: white;
+	left: calc(50% + 10px);
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+
+#DeepestField > div > #CapabilityHeader,
+#DeepestField > div > #NetconnectionsHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	right: calc(50% + 10px);
+	top: 260px;
+	display: block;
+	color: white;
+	left: 20px;
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+
+#DeepestField > div > #CapabilityHeader,
+#DeepestField > div > #Capabilities
+{
+	right: calc(75% + 10px);
+}
+
+#DeepestField > div > #NetconnectionsHeader,
+#DeepestField > div > #Netconnections
+{
+	right: calc(50% + 10px);
+	left: calc( 25% + 10px);
+}
+
+#DeepestField > div > #TasksHeader
+{
+	background: rgba(0,0,0,0.8);
+	position: absolute;
+	right: 20px;
+	top: 20px;
+	display: block;
+	color: white;
+	left: 225px;
+	border-radius: 2px 2px 0 0;
+	height: 30px;
+	line-height: 30px;
+	z-index: 2;
+	padding: 0 10px 0 10px;
+	font-weight: bold;
+}
+
+#DeepestField > div > #Notifications,
+#DeepestField > div > #Tasks,
+#DeepestField > div > #Capabilities,
+#DeepestField > div > #Netconnections
+{
+	background: rgba(0,0,0,0.3);
+	overflow: auto;
+	border-radius: 5px;
+	padding: 45px 20px 20px 20px;
+	box-sizing: border-box;
+	color: white;
+}
+
+#DeepestField > div > #Notifications
+{
+	position: absolute;
+	left: calc(50% + 10px);
+    font-family: monospace, courier, courier new;
+    font-size: 13px;
+    top: 261px;
+    height: 246px;
+    right: 20px;
+    padding: 45px 20px 12px 20px;
+}
+
+#DeepestField > div > #Capabilities,
+#DeepestField > div > #Netconnections
+{
+	position: absolute;
+	right: calc(75% + 10px);
+    font-family: monospace, courier, courier new;
+    font-size: 13px;
+    top: 261px;
+    height: 246px;
+    left: 20px;
+}
+
+#DeepestField > div > #Netconnections
+{
+	left: calc(25% + 10px);
+	right: calc(50% + 10px);
+}
+
+#DeepestField > div > #Capabilities div
+{
+	float: left;
+	margin: 0 10px 25px 0;
+	width: 64px;
+	height: 64px;
+	background: rgba(255,255,255,0.2);
+	border-radius: 10px;
+	font-size: 40px;
+    font-family: FontAwesome;
+    text-align: center;
+    position: relative;
+}
+
+#Capabilities > div:before
+{
+	top: 13px;
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+#DeepestField > div > #Capabilities div > span
+{
+	position: absolute;
+	left: 0px;
+	top: 69px;
+	text-overflow: ellipsis;
+	font-size: 12px;
+	width: 100%;
+	text-shadow: 0px 1px 1px black;
+	color: white;
+	font-family: monospace, courier, courier new;
+    overflow-x: hidden;
+    white-space: nowrap;
+}
+
+#DeepestField > div > #Capabilities div.Webcam.Disabled
+{
+	background: rgba(255,0,0,0.5);
+}
+
+
+#DeepestField > div > #Tasks
+{
+	position: absolute;
+	top: 20px;
+	left: 225px;
+	right: 20px;
+	height: 222px;	
+	overflow-x: hidden;
+}
+
+#DeepestField > div > #Tasks .Close img
+{
+	display: none;
+}
+
+
+/* Mobile specific */
+body[mobile=mobile] #DeepestField #Notifications,
+body[mobile=mobile] #DeepestField #NotificationHeader
+{
+	display: none;
+}
+
+body[mobile=mobile] #DeepestField #Tasks,
+body[mobile=mobile] #DeepestField #TasksHeader
+{
+	left: 162px;
+}
+
+body[mobile=mobile] #DeepestField #Tasks
+{
+	height: 180px;
+}
+
+body[mobile=mobile] #DeepestField #Capabilities,
+body[mobile=mobile] #DeepestField #CapabilityHeader
+{
+	right: 20px;
+	top: 220px;
+}
+
+/* Done mobile specific */
+
+#DeepestField .AppSandbox
+{
+	float: left;
+	margin: 0 20px 20px 0;
+	width: 48px;
+	height: 48px;
+	position: relative;
+	z-index: 1;
+	background: black;
+	border-radius: 3px;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+
+#DeepestField .AppSandbox > .Close
+{
+	position: absolute;
+	top: 5px;
+	left: 5px;
+	right: 5px;
+	bottom: 5px;
+	background-color: #333333;
+	background-position: center;
+	background-size: contain;
+	border-radius: 2px;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	transition: background 0.3s;
+}
+
+#DeepestField .AppSandbox > iframe
+{
+	visibility: hidden;
+	top: 0px;
+	width: 1px;
+	height: 1px;
+}
+
+#DeepestField .AppSandbox > .Close:hover
+{
+	background-color: #cc4433;
+}
+
+#DeepestField .AppSandbox > .Taskname
+{
+	position: absolute;
+	bottom: -22px;
+	font-size: 11px;
+	left: -10px;
+	right: -10px;
+	height: 20px;
+	text-align: center;
+	color: white;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+}
+
+#DeepestField #UserProfilePicture
+{
+	width: 160px;
+	left: 30px;
+	top: 30px;
+	position: absolute;
+}
+
+#DeepestField #UserProfilePicture > img
+{
+	border-radius: 100%;
+	width: 100%;
+	border: 2px solid #cccccc;
+	height: auto;
+}
+
+#DeepestField #UserProfilePicture > p.Fullname
+{
+	margin: 5px 20px;
+	text-align: center;
+	line-height: 20px;
+}
+
+
+.Inside > input
+{
+	visibility: hidden;
+	position: absolute;
+	top: -100px;
+}
+
+.InputHeight
+{
+	padding: 0;
+	margin: 0;
+	line-height: 30px;
+	height: 30px;
+}
+
+textarea.InputHeight, input.InputHeight
+{
+	padding: 6px;
+}
+
+/* Ho hoe ------------------------------------------------------------------- */
+
+blockquote.Code
+{
+	background: #222222;
+	color: #e0e0e0;
+	padding: 20px;
+	border: 1px dotted #000000;
+	border-radius: 3px;
+}
+
+/* Hardware accelerated ----------------------------------------------------- */
+
+.Accelerated, .View, .Screen, #RegionSelector, #MousePointer, .Desklet
+{
+	webkit-transform: translateZ(0);
+	-moz-transform: translateZ(0);
+	-ms-transform: translateZ(0);
+	-o-transform: translateZ(0);
+	transform: translateZ(0);
+	-webkit-backface-visibility: hidden;
+	-moz-backface-visibility: hidden;
+	-ms-backface-visibility: hidden;
+	-webkit-perspective: 1000;
+	backface-visibility: hidden;
+	perspective: 1000;
+}
+
+.Accelerated > *, .View > *, .Screen > *, #RegionSelector > *, #MousePointer > *, .Desklet > *
+{
+	webkit-transform: none;
+	-moz-transform: none;
+	-ms-transform: none;
+	-o-transform: none;
+	transform: none;
+	-webkit-backface-visibility: none;
+	-moz-backface-visibility: none;
+	-ms-backface-visibility: none;
+	-webkit-perspective: none;
+	backface-visibility: none;
+	perspective: none;
+}
 

@@ -1,0 +1,106 @@
+/* For scrollbars ----------------------------------------------------------- */
+
+/* addresses the background of the bar itself. It is usually covered by the other elements */
+::-webkit-scrollbar
+{
+	width: 16px;
+	height: 16px;
+}
+::-webkit-scrollbar:vertical
+{
+	border-width: 0 2px;
+}
+/* addresses the directional buttons on the scrollbar */
+::-webkit-scrollbar-button
+{
+}
+/* addresses the empty space “below” the progress bar */
+::-webkit-scrollbar-track
+{
+	background: #606060;
+	box-shadow: inset 0px 0px 3px rgba(0,0,0,0.6);
+}
+.View.Active ::-webkit-scrollbar-track,
+body.activated ::-webkit-scrollbar-track
+{
+	background: #606060;
+	box-shadow: inset 0px 0px 3px rgba(0,0,0,0.6);
+}
+.View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background: #2D618B;
+	box-shadow: inset 0px 0px 3px rgba(0,0,0,0.6);
+}
+/* is the top-most layer of the the progress bar not covered by the draggable scrolling element (thumb) */
+::-webkit-scrollbar-track-piece
+{
+	padding-left: 2px;
+	margin-right: 2px;
+}
+/* addresses the draggable scrolling element that resizes depending on the size of the scrollable element */
+::-webkit-scrollbar-thumb
+{
+	left: 1px;
+	right: 1px;
+	background-clip: padding-box;
+	background: #808080;
+	border: 1px solid rgba(0,0,0,0.3);
+	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
+	background-position: center center;
+	background-repeat: no-repeat;
+	box-shadow: inset 0px 1px 1px rgba(255,255,255,0.25);
+}
+.View.Active ::-webkit-scrollbar-thumb,
+body.activated ::-webkit-scrollbar-thumb
+{
+	background: #d0d0d0;
+	border: 1px solid rgba(0,0,0,0.3);
+	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
+	background-position: center center;
+	background-repeat: no-repeat;
+	box-shadow: inset 0px 1px 1px rgba(255,255,255,0.25);
+}
+.View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background: #3B81C2;
+	border: 1px solid rgba(0,0,0,0.3);
+	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_off.png);
+	background-position: center center;
+	background-repeat: no-repeat;
+	box-shadow: inset 0px 1px 1px rgba(255,255,255,0.25);
+}
+.View ::-webkit-scrollbar-thumb:active,
+.View.Active ::-webkit-scrollbar-thumb:active,
+body.activated ::-webkit-scrollbar-thumb:active
+{
+	background-image: url(/webclient/gfx/theme/default_scrollbar_knob_on.png);
+}
+
+/* addresses the (usually) bottom corner of the scrollable element, where two scrollbars might meet */
+::-webkit-scrollbar-corner
+{
+}
+/* addresses the draggable resizing handle that appears above the scrollbar-corner at the bottom */
+::-webkit-resizer
+{
+}
+
+@media only screen and (max-device-width: 768px)
+{
+	::-webkit-scrollbar
+	{
+		width: 4px;
+		height: 4px;
+	}
+	::-webkit-scrollbar-thumb, .View.Active.IconWindow ::-webkit-scrollbar-thumb,
+	body.activated ::-webkit-scrollbar-thumb, .View.Active ::-webkit-scrollbar-thumb
+	{
+		background-image: none;
+		border: 1px solid rgba(0,0,0,0.1);
+	}
+	.View.Active ::-webkit-scrollbar-track,
+	body.activated ::-webkit-scrollbar-track
+	{
+		background: #444444;
+	}
+}

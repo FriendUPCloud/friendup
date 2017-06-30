@@ -1,0 +1,18 @@
+
+i18n_logout                          : Déconnexion
+i18n_quit                            : Quitter
+i18n_file                            : Fichier
+i18n_missing_data                    : données manquantes
+i18n_missing_user                    : nom d'utilisateur / mot de passe manquant, vérifiez vos informations
+i18n_failed_to_get                   : recherche d'un Id unique échouée
+i18n_fetching_temp_pass              : la récupération du mot de passe temporaire a échoué
+i18n_failed_to_decrypt               : la décryption du mot de passe temporaire a échoué
+i18n_friendup_community              : Communauté FriendUP
+i18n_fcrypto_component               : composant FCrypto introuvable
+i18n_window_fcrypt_not               : window.fcrypt non défini
+i18n_fcrypt_init                     : FCrypt.init - données requises introuvables
+
+
+
+
+

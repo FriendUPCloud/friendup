@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/library.h>
 #include <stdio.h>
@@ -31,6 +35,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <system/datatypes/images/image.h>
+#include <system/datatypes/images/png.h>
 
 #define SUFFIX "fsys"
 #define PREFIX "local"
@@ -41,8 +47,9 @@
 
 typedef struct SpecialData
 {
-	FILE *fp;
-}SpecialData;
+	FILE                                        *fp;
+	SystemBase                                  *sb;
+} SpecialData;
 
 
 const char *GetSuffix()
@@ -64,7 +71,7 @@ char* StringDup( const char* str )
 {
 	if( str == NULL)
 	{
-		DEBUG("Cannot copy string!\n");
+		//DEBUG("Cannot copy string!\n");
 		return NULL;
 	}
 	
@@ -121,12 +128,14 @@ void deinit( struct FHandler *s )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti )
+void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
 {
 	File *dev = NULL;
 	char *path = NULL;
 	char *name = NULL;
-	User *usr = NULL;
+	SystemBase *sb = NULL;
+	//FBOOL isAdmin = FALSE;
+	char *usersPath = "/home/friendusers/";
 	
 	if( s == NULL )
 	{
@@ -135,7 +144,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 	
 	DEBUG("Mounting local filesystem!\n");
 	
-	if( ( dev = calloc( 1, sizeof( File ) ) ) != NULL )
+	if( ( dev = FCalloc( 1, sizeof( File ) ) ) != NULL )
 	{
 		struct TagItem *lptr = ti;
 		
@@ -150,16 +159,24 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 					path = (char *)lptr->ti_Data;
 					DEBUG("Mount FS path set '%s'\n", path );
 					break;
-				case FSys_Mount_Host:
+				case FSys_Mount_Server:
 					break;
 				case FSys_Mount_Port:
 					break;
 				case FSys_Mount_Name:
 					name = (char *)lptr->ti_Data;
 					break;
+				case FSys_Mount_SysBase:
+					sb = (SystemBase *)lptr->ti_Data;
+					break;
+				case FSys_Mount_AdminRights:
+					//isAdmin = (FBOOL)lptr->ti_Data;
+					break;
+					/*
 				case FSys_Mount_User:
 					usr = (User *)lptr->ti_Data;
 					break;
+					*/
 			}
 		
 			lptr++;
@@ -167,29 +184,18 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 		
 		//
 		
-		if( path == NULL )
+		if( path == NULL || strlen( path ) == 0 )
 		{
-			ERROR("[ERROR]: Path option not found!\n");
-			free( dev );
+			FERROR("[ERROR]: Path option not found!\n");
+			FFree( dev );
 			return NULL;
 		}
-		
-		init( s );
-		
-		// we are trying to open folder/connection
-		
-		dev->f_Path = StringDup( path );
-		DEBUG("LOCALFS: localfs path is ok '%s'\n", dev->f_Path );
-		dev->f_FSys = s;
-		dev->f_Position = 0;
-		dev->f_User = usr;
-		dev->f_Name = StringDup( name );
 		
 		struct stat st;
 		if( stat( path, &st ) == 0 && S_ISDIR( st.st_mode ) )
 		{
 			DEBUG("Mounting localfsys, Its directory FSYS: %s!\n", s->GetPrefix() );
-
+			
 			dev->f_Type = FType_Directory;
 			dev->f_Size = 0;
 			
@@ -197,8 +203,48 @@ void *Mount( struct FHandler *s, struct TagItem *ti )
 		}
 		else
 		{
-			dev->f_Type = FType_File;
+			FFree( dev );
+			return NULL;
 		}
+		/*
+		if( isAdmin == TRUE )
+		{
+			
+		}
+		else
+		{
+			if( strncmp( path, usersPath, strlen( usersPath ) ) == 0 )
+			{
+				// path is correct, user can use it
+			}
+			else
+			{
+				path = usersPath;
+			}
+		}
+		*/
+		
+		// we are trying to open folder/connection
+		
+		unsigned int pathlen = strlen( path );
+		dev->f_Path = FCalloc( pathlen + 10, sizeof(char) );
+		strcpy( dev->f_Path, path );
+		if( path[ pathlen-1 ] != '/' )
+		{
+			strcat( dev->f_Path, "/" );
+		}
+		//dev->f_Path = StringDup( path );
+		DEBUG("LOCALFS: localfs path is ok '%s'\n", dev->f_Path );
+		dev->f_FSys = s;
+		dev->f_Position = 0;
+		dev->f_User = usrs->us_User;
+		dev->f_Name = StringDup( name );
+		dev->f_SpecialData = FCalloc( 1, sizeof(SpecialData) );
+		
+		SpecialData *locsd = (SpecialData *)dev->f_SpecialData;
+		locsd->sb = sb;
+		
+		
 		
 	}
 	
@@ -225,11 +271,9 @@ int Release( struct FHandler *s, void *f )
 			FFree( lf->f_SpecialData );
 		}
 		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
+		if( lf->f_Name ){ FFree( lf->f_Name ); }
+		if( lf->f_Path ){ FFree( lf->f_Path ); }
 
-		
-		//free( f );
 		return 0;
 	}
 	return -1;
@@ -250,11 +294,11 @@ int UnMount( struct FHandler *s, void *f )
 		{
 			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
 			
-			free( lf->f_SpecialData );
+			FFree( lf->f_SpecialData );
 		}
 		
-		if( lf->f_Name ){ free( lf->f_Name ); }
-		if( lf->f_Path ){ free( lf->f_Path ); }
+		if( lf->f_Name ){ FFree( lf->f_Name ); lf->f_Name = NULL;}
+		if( lf->f_Path ){ FFree( lf->f_Path ); lf->f_Path = NULL; }
 		
 		//if( lf->d_Host ){ free( lf->d_Host ); }
 		//if( lf->d_LoginUser ){ free( lf->d_LoginUser ); }
@@ -275,12 +319,51 @@ int lstat(const char *path, struct stat *buf);
 
 void *FileOpen( struct File *s, const char *path, char *mode )
 {
-	int spath = strlen( path );
+	// Make relative path
+	int pathsize = strlen( path );
+	char *commClean = FCalloc( pathsize+10, sizeof( char ) );
+	int il = pathsize, imode = 0, in = 0;
+	int ii = 0; for( ; ii < il; ii++ )
+	{
+		if( imode == 0 && path[ii] == ':' )
+		{
+			imode = 1; continue;
+		}
+		else if( imode == 1 )
+		{
+			commClean[in++] = path[ii];
+		}
+	}
+	// ---- DEBUG( "Fixing the path to be a relative one: %s\n", commClean );
+	if( imode != 1 )
+	{
+		// ---- DEBUG( "Just using the path. No colon was found.\n" );
+		//sprintf( commClean, "%s", path );
+		strcpy( commClean, path );
+	}
+
+	int spath = strlen( commClean );
 	int rspath = strlen( s->f_Path );
 	File *locfil = NULL;
-	char *comm = calloc( rspath + spath + 5, sizeof( char ) );
+	char *comm = FCalloc( rspath + spath + 5, sizeof( char ) );
 	
-	DEBUG("FileOpen new: %s %s\n", s->f_Path, path );
+	DEBUG(" comm---size %d\n", rspath + spath + 5 );
+	
+	// ---- DEBUG( "FileOpen new: %s %s\n", s->f_Path, commClean );
+	
+	// Remove the filename from commclean in a clean path
+	char *cleanPath = NULL;
+	il = strlen( commClean ); imode = 0, ii = il;
+	for( ; il > 0; il-- )
+	{
+		if( imode == 0 && ( commClean[il] == '/' || commClean[il] == ':' ) )
+		{
+			imode = 1;
+			cleanPath = FCalloc( il+10, sizeof( char ) );
+			break;
+		}
+	}
+	if( imode == 1 ) sprintf( cleanPath, "%.*s", il, commClean );
 	
 	// Create a string that has the real file path of the file
 	if( comm != NULL )
@@ -289,87 +372,123 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		
 		if( s->f_Path[ rspath-1 ] == '/' )
 		{
-			sprintf( comm, "%s%s", s->f_Path, path );
+			sprintf( comm, "%s%s", s->f_Path, commClean );
 		}
 		else
 		{
-			sprintf( comm, "%s/%s", s->f_Path, path );
+			sprintf( comm, "%s/%s", s->f_Path, commClean );
 		}
 	
 		// Make the directories that do not exist
 		int slashes = 0, i = 0; for( ; i < spath; i++ )
 		{
-			if( path[i] == '/' )
+			if( commClean[i] == '/' )
 				slashes++;
 		}
 
+		// ---- DEBUG( "New filepath: %s\n", cleanPath );
+		
 		int off = 0, slash = 0;
 		for( i = 0; i < spath; i++ )
 		{
 			if( path[i] == '/' )
 			{
-				char *directory = calloc( rspath + i + 1, sizeof( char *) );
-				sprintf( directory, "%s%.*s", s->f_Path, i, path );
+				int alsize = rspath + i + 1;
+				DEBUG("Allocate %d\n", alsize );
+				char *directory = FCalloc( alsize , sizeof( char ) );
+				if( directory != NULL )
+				{
+					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, cleanPath );
 				
-				struct stat filest;
+					struct stat filest;
 				
-				// Create if not exist!
-				if( stat( directory, &filest ) == -1 )
-					mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+					// Create if not exist!
+					//DEBUG( "Testing if directory exists: %s\n", directory );
+					if( stat( directory, &filest ) == -1 )
+					{
+						//DEBUG( "Didn't exist: creating dir: %s\n", directory );
+						mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+					}
 				
-				free( directory );
+					FFree( directory );
+				}
 				slash++;
 			}
 		}
 		
+		FFree( commClean );
+		if( cleanPath != NULL )
+		{
+			FFree( cleanPath );
+		}
+		commClean = NULL;
+		cleanPath = NULL;
+		
 		DEBUG("FileOpen in progress\n");
 		
-	
+		//
 		// Only go on if we can find the file and open it 
-		if( ( f = fopen( comm, mode ) ) != NULL )
+		//
+		
+		//
+		// read stream
+		//
+			
+		if( strcmp( mode, "rs" ) == 0 )
+		{
+			f = fopen( comm, "rb" );
+		}
+		else
+		{
+			f = fopen( comm, mode );
+		}
+		
+		if( f != NULL )
 		{
 			// Ready the file structure
-			if( ( locfil = calloc( sizeof( File ), 1 ) ) != NULL )
+			if( ( locfil = FCalloc( sizeof( File ), 1 ) ) != NULL )
 			{
 				locfil->f_Path = StringDup( path );
+			
+				locfil->f_SpecialData = FCalloc( sizeof( SpecialData ), 1 );
 				
-				locfil->f_SpecialData = calloc( sizeof( SpecialData ), 1 );
-				
+				locfil->f_Stream = s->f_Stream;
+			
 				SpecialData *sd = (SpecialData *)locfil->f_SpecialData;
-				
-				if( sd ) sd->fp = f;
-				/*
-				struct stat myStat;
-				if( lstat( comm, &myStat ) != -1 )
+			
+				if( sd )
 				{
-					locfil->f_Buffer = (char *)MakeString( myStat.st_size );
-					locfil->f_DataPassed = myStat.st_size;
+					SpecialData *locsd = (SpecialData *)s->f_SpecialData;
+					sd->sb = locsd->sb;
+					sd->fp = f;
 				}
-				else
-				{
-					locfil->f_Buffer = NULL; //calloc( FILE_MAX_BUFFER, sizeof(char) );
-					locfil->f_DataPassed = 0;
-				}
-				*/
 				DEBUG("FileOpened, memory allocated for localfs\n");
-				
+			
 				// Free temp string
-				free( comm );
-				
+				FFree( comm );
+			
 				return locfil;
 			}
-	
-			free( comm );
+			FFree( comm );
 			return NULL;
 		}
 		else
 		{
-			ERROR("Cannot open file: %s  mode %s\n", comm, mode );
+			FERROR("Cannot open file: %s  mode %s\n", comm, mode );
 		}
-		
-		free( comm );
+		FFree( comm );
 	}
-	ERROR("Cannot open file %s\n", path );
+	
+	// Free commClean
+	if( commClean )
+	{
+		FFree( commClean );
+	}
+	if( cleanPath )
+	{
+		FFree( cleanPath );
+	}
+	FERROR("Cannot open file %s\n", path );
 	
 	return NULL;
 }
@@ -421,6 +540,11 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			return -1;
 		}
 		result = fread( buffer, 1, rsize, sd->fp );
+		
+		if( f->f_Stream == TRUE )
+		{
+			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, result );
+		}
 	}
 	
 	return result;
@@ -464,14 +588,15 @@ int FileSeek( struct File *s, int pos )
 int MakeDir( struct File *s, const char *path )
 {
 	INFO("MakeDir!\n");
+	int error = 0;
 	
 	int rspath = strlen( s->f_Path );
 	int spath = strlen( path )+1;
 	char *newPath;
 	
-	if( ( newPath = calloc( rspath+10, sizeof(char) ) ) == NULL )
+	if( ( newPath = FCalloc( rspath+10, sizeof(char) ) ) == NULL )
 	{
-		ERROR("Cannot allocate memory for new path\n");
+		FERROR("Cannot allocate memory for new path\n");
 		return -2;
 	}
 	
@@ -486,30 +611,31 @@ int MakeDir( struct File *s, const char *path )
 	// Create a string that has the real file path of the file
 	if( path != NULL )
 	{
-		// Make the directories that do not exist
-		int slashes = 0, i = 0; for( ; i < spath; i++ )
+		char *directory = FCalloc( rspath + spath, sizeof( char ) );
+		if( directory != NULL )
 		{
-			if( path[i] == '/' )
+			// Make the directories that do not exist
+			int slashes = 0, i = 0; for( ; i < spath; i++ )
 			{
-				slashes++;
-			}
-		}
-
-		if( slashes > 0 )
-		{
-			int off = 0, slash = 0;
-			for( i = 0; i < spath; i++ )
-			{
-				ERROR("POSITION %d\n", i );
-				
 				if( path[i] == '/' )
 				{
-					char *directory = calloc( rspath + i , sizeof( char *) );
-					if( directory != NULL )
+					slashes++;
+				}
+			}
+
+			if( slashes > 0 )
+			{
+				int off = 0, slash = 0;
+				for( i = 0; i < spath; i++ )
+				{
+					if( path[i] == '/' )
 					{
+						//char *directory = calloc( rspath + i , sizeof( char *) );
+						//if( directory != NULL )
+						//{
 						sprintf( directory, "%s%.*s", newPath, i, path );
 						
-						ERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
+						FERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
 				
 						struct stat filest;
 				
@@ -521,33 +647,41 @@ int MakeDir( struct File *s, const char *path )
 						}
 						else
 						{
-							DEBUG( "Not making dir %s\n", directory );
+							FERROR( "Cannot create directory: %s\n", directory );
+							error = 1;
 						}
-				
-						free( directory );
 					}
 					slash++;
 				}
 			}
-		}
-		// Ok, no slashes
-		else
-		{
-			char *directory = calloc( rspath + spath, sizeof( char *) );
-			if( directory != NULL )
-			{
-				sprintf( directory, "%s%s", newPath, path );
-				mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+			//
+			// We created directories to sign '/'
+			// Now we create directory for fullpath
+			//else
+			//{
+
+			struct stat filest;
 				
-				ERROR("JUST SIMLPE PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
+			sprintf( directory, "%s%s", newPath, path );
+			mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+				
+			// Create if not exist!
+			if( stat( directory, &filest ) == -1 )
+			{
+				mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+				DEBUG( "Making directory %s\n", directory );
 			}
-			free( directory ); 
+			else
+			{
+				FERROR( "Cannot create directory: %s , fullpath\n", directory );
+				error = 1;
+			}
+			FFree( directory );
 		}
-		
-		free( newPath );
-		return 0;
+		FFree( newPath );
+		return error;
 	}
-	free( newPath );
+	FFree( newPath );
 	
 	return -1;
 }
@@ -562,12 +696,12 @@ int RemoveDirectory(const char *path)
 	size_t path_len = strlen( path );
 	int r = -1;
 
-	if (d)
+	if( d )
 	{
 		struct dirent *p;
 		r = 0;
 
-		while (!r && (p=readdir(d)))
+		while( !r && ( p = readdir( d ) ) )
 		{
 			int r2 = -1;
 			char *buf;
@@ -580,7 +714,7 @@ int RemoveDirectory(const char *path)
 			}
 
 			len = path_len + strlen(p->d_name) + 2; 
-			buf = calloc(len , sizeof(char));
+			buf = FCalloc(len , sizeof(char));
 
 			if (buf)
 			{
@@ -600,21 +734,21 @@ int RemoveDirectory(const char *path)
 						remove( buf );
 					}
 				}
-				free(buf);
+				FFree(buf);
 			}
 			r = r2;
 		}
 		closedir(d);
+		
+		if( r == 0 )
+		{
+			r = rmdir(path);
+		}
 	}
 	else // file
 	{
 		DEBUG("Remove file %s\n", path );
-		remove( path );
-	}
-
-	if (!r)
-	{
-		r = rmdir(path);
+		r = remove( path );
 	}
 
 	return r;
@@ -637,7 +771,7 @@ int Delete( struct File *s, const char *path )
 	
 	DEBUG("Delete new path size %d\n", rspath + spath );
 	
-	if( ( comm = calloc( rspath + spath + 10, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( rspath + spath + 10, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 		
@@ -651,7 +785,7 @@ int Delete( struct File *s, const char *path )
 	
 		int ret = RemoveDirectory( comm );
 
-		free( comm );
+		FFree( comm );
 		return ret;
 	}
 	
@@ -676,12 +810,12 @@ int Rename( struct File *s, const char *path, const char *nname )
 	
 	if( path[spath-1] == '/' )
 	{
-		targetPath = calloc( spath, sizeof( char ) );
+		targetPath = FCalloc( spath, sizeof( char ) );
 		sprintf( targetPath, "%.*s", spath - 1, path );
 	}
 	else
 	{
-		targetPath = calloc( spath + 1, sizeof( char ) ); 
+		targetPath = FCalloc( spath + 1, sizeof( char ) ); 
 		sprintf( targetPath, "%.*s", spath, path );
 	}
 	
@@ -698,21 +832,21 @@ int Rename( struct File *s, const char *path, const char *nname )
 	}
 	
 	// 2. Full path of source
-	char *source = calloc( rspath + spath + 1, sizeof( char ) );
+	char *source = FCalloc( rspath + spath + 1, sizeof( char ) );
 	sprintf( source, "%s%s", s->f_Path, targetPath );
 	
 	// 3. Ok if we have sub folder or not, add it to our destination
 	char *dest = NULL;
 	if( hasSubFolder > 0 )
 	{
-		dest = calloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
+		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
 		sprintf( dest, "%.*s", rspath, s->f_Path );
 		sprintf( dest + rspath, "%.*s", off, targetPath );
 		sprintf( dest + rspath + off, "%s", nname );
 	}
 	else 
 	{
-		dest = calloc( rspath + strlen( nname ) + 1, sizeof( char ) );
+		dest = FCalloc( rspath + strlen( nname ) + 1, sizeof( char ) );
 		sprintf( dest, "%s", s->f_Path );
 		sprintf( dest + rspath, "%s", nname );
 	}
@@ -722,9 +856,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 	int res = rename( source, dest );
 	
 	// 5. Free up
-	free( source );
-	free( dest );
-	free( targetPath );
+	FFree( source );
+	FFree( dest );
+	FFree( targetPath );
 	
 	return res;
 }
@@ -776,9 +910,9 @@ int Copy( struct File *s, const char *dst, const char *src )
 				
 				if( ( fsrc = fopen( fnamesrc, "rb" ) ) !=  NULL )
 				{
-					while( (size = fread( buffer, BUF_MAX, sizeof( BYTE ), fsrc ) ) > 0 )
+					while( (size = fread( buffer, BUF_MAX, sizeof( FBYTE ), fsrc ) ) > 0 )
 					{
-						if( fwrite( buffer, sizeof(BYTE), size, fdst ) != size )
+						if( fwrite( buffer, sizeof(FBYTE), size, fdst ) != size )
 						{
 							//oops("Write error to ", destination);
 						}
@@ -825,7 +959,7 @@ char *Execute( struct File *s, const char *path, const char *args )
 {
 	DEBUG("SYS mod run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 	char command[ BUFFER_SIZE ];
 	char *temp = NULL;
 	char *result = NULL;
@@ -883,7 +1017,7 @@ char *Execute( struct File *s, const char *path, const char *args )
 					}
 					else
 					{
-						printf("Cannot alloc mem result.\n");
+						DEBUG("Cannot alloc mem result.\n");
 					}
 				}
 				else
@@ -908,7 +1042,7 @@ char *Execute( struct File *s, const char *path, const char *args )
 						temp = NULL;
 					}
 				}
-				//res += (ULONG)size;
+				//res += (FULONG)size;
 			}
 		}
 		pclose( pipe );
@@ -943,11 +1077,11 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 	{
 		if( S_ISDIR( s->st_mode ) )
 		{
-			sprintf( tmp, "\"Path\":\"%s:%s/\",", d->f_Name, &path[ strlen( d->f_Path ) ] );
+			sprintf( tmp, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
 		}
 		else
 		{
-			sprintf( tmp, "\"Path\":\"%s:%s\",", d->f_Name, &path[ strlen( d->f_Path ) ] );
+			sprintf( tmp, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
 		}
 	}
 	else
@@ -960,6 +1094,12 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 	BufStringAdd( bs, tmp );
 	sprintf( tmp, "\"Filesize\": %d,",(int) s->st_size );
 	BufStringAdd( bs, tmp );
+	
+	char *timeStr = FCalloc( 40, sizeof( char ) );
+	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
+	sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
+	BufStringAdd( bs, tmp );
+	FFree( timeStr );
 	
 	//DEBUG( "FILLSTAT filesize set\n");
 	
@@ -1002,7 +1142,7 @@ BufString *Info( File *s, const char *path )
 	
 	char *comm = NULL;
 	
-	if( ( comm = calloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 
@@ -1028,14 +1168,27 @@ BufString *Info( File *s, const char *path )
 		else
 		{
 			DEBUG("LOCAL file stat FAIL %s\n", comm );
-			BufStringAdd( bs, "{ \"ErrorMessage\": \"File or directory do not exist\"}" );
+			BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		
-		free( comm );
+		FFree( comm );
 	}
 	
 	DEBUG("Info END\n");
 	
+	return bs;
+}
+
+//
+// Call a library
+//
+
+BufString *Call( File *s, const char *path, char *args )
+{
+	DEBUG("Info!\n");
+	BufString *bs = BufStringNew();
+	BufStringAdd( bs, "fail<!--separate-->");	
+	DEBUG("Info END\n");
 	return bs;
 }
 
@@ -1057,8 +1210,9 @@ BufString *Dir( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
+	char *tempString = FCalloc( rspath +512, sizeof(char) );
 	
-	if( ( comm = calloc( rspath +512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 		if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
@@ -1078,8 +1232,7 @@ BufString *Dir( File *s, const char *path )
 			strcat( comm, "/" );
 		}
 	
-		char tempString[ 1024 ];
-		DIR           *d;
+		DIR *d;
 		struct dirent *dir;
 		
 		DEBUG("DIR -> directory '%s' for path '%s' devname '%s' double %d devpath '%s'\n", comm, path, s->f_Name, doub, s->f_Path );
@@ -1132,11 +1285,255 @@ BufString *Dir( File *s, const char *path )
 			BufStringAdd( bs, "fail<!--separate-->Could not open directory.");
 		}
 		
-		free( comm );
+		FFree( comm );
 	}
+	FFree( tempString );
 	DEBUG("Dir END\n");
 	
 	return bs;
 }
 
+//
+// Get metadata
+//
 
+char *InfoGet( struct File *f, const char *path, const char *key )
+{
+	DEBUG("MetaGet!\n");
+	char *deviceEndPtr = (char *)path;
+	
+	BufString *bs = BufStringNew();
+	int spath = 0;
+	if( path != NULL )
+	{
+		spath = strlen( path );
+	}
+	int rspath = strlen( f->f_Path );
+	char *retval = NULL;
+	
+	while( *deviceEndPtr != ':' )
+	{
+		deviceEndPtr++;
+		if( *deviceEndPtr == 0 )
+		{
+			break;
+		}
+	}
+	deviceEndPtr++;
+	
+	DEBUG("MetaGet!\n");
+	
+	// user is trying to get access to not his directory
+	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, f->f_Path, f->f_Name );
+	
+	int doub = strlen( f->f_Name );
+	
+	char *comm = NULL;
+	
+	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	{
+		strcpy( comm, f->f_Path );
+		
+		if( comm[ strlen( comm ) -1 ] != '/' )
+		{
+			strcat( comm, "/" );
+		}
+		//strcat( comm, &(path[ doub+2 ]) );
+		if( deviceEndPtr != NULL )
+		{
+			strcat( comm, deviceEndPtr );
+		}
+		
+		strcat( comm, ".info" );
+		
+		DEBUG("PATH created %s\n", comm );
+		
+		FImage *img = ImageLoadPNG( comm );
+		if( img != NULL )
+		{
+			BufStringAdd( bs, "ok<!--separate-->");
+			
+			KeyValueList *comment = img->fi_Comments;
+			while( comment != NULL )
+			{
+				int size = 64;
+				char *entry = NULL;
+				
+				if( comment->key != NULL )
+				{
+					size += strlen( comment->key );
+				}
+				if( comment->value != NULL )
+				{
+					size += strlen( comment->value );
+				}
+				
+				DEBUG("Compare %s - %s\n", key, comment->key );
+				if( strcmp( key, comment->key ) == 0 )
+				{
+					BufStringAdd( bs, comment->value );
+					DEBUG("Added %s\n", bs->bs_Buffer );
+					break;
+				}
+				// return ALL values
+				/*
+				if( ( entry = FCalloc( size, sizeof(char) ) ) != NULL )
+				{
+					int ssize = 0;
+					
+					if( img->fi_Comments == comment )
+					{
+						ssize = sprintf( entry, "%s=%s", comment->key, comment->value );
+					}
+					else
+					{
+						ssize = sprintf( entry, ",%s=%s", comment->key, comment->value );
+					}
+					BufStringAddSize( bs, entry, ssize );
+					FFree( entry );
+				}*/
+				
+				comment = (KeyValueList *) comment->node.mln_Succ;
+			}
+			
+			ImageDelete( img );
+		}
+		else
+		{
+			BufStringAdd( bs, "fail<!--separate-->");
+		}
+		
+		FFree( comm );
+	}
+	else
+	{
+		BufStringAdd( bs, "fail<!--separate-->");
+	}
+	
+	DEBUG("Info END\n");
+	
+	char *ret = bs->bs_Buffer;
+	bs->bs_Buffer = NULL;
+	BufStringDelete( bs );
+	
+	return ret;
+}
+
+//
+// set metadata
+//
+
+int InfoSet( File *f, const char *path, const char *key, const char *value )
+{
+	char *deviceEndPtr = (char *)path;
+	DEBUG("MetaGet!\n");
+
+	int spath = 0;
+	if( path != NULL )
+	{
+		spath = strlen( path );
+	}
+	int rspath = strlen( f->f_Path );
+	
+	DEBUG("MetaSet!\n");
+	while( *deviceEndPtr != ':' )
+	{
+		deviceEndPtr++;
+		if( *deviceEndPtr == 0 )
+		{
+			break;
+		}
+	}
+	deviceEndPtr++;
+	
+	// user is trying to get access to not his directory
+	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, f->f_Path, f->f_Name );
+	
+	int doub = strlen( f->f_Name );
+	
+	char *comm = NULL;
+	
+	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	{
+		strcpy( comm, f->f_Path );
+		
+		if( comm[ strlen( comm ) -1 ] != '/' )
+		{
+			strcat( comm, "/" );
+		}
+		//strcat( comm, &(path[ doub+2 ]) );
+		if( deviceEndPtr != NULL )
+		{
+			strcat( comm, deviceEndPtr );
+		}
+		
+		strcat( comm, ".info" );
+		
+		DEBUG("PATH created %s\n", comm );
+		
+		char *parameters = NULL;
+		unsigned int msgsize = strlen( key );
+		
+		if( ( parameters = StringDuplicateN( (char *)key, msgsize ) ) != NULL )
+		{
+			FImage *img = ImageLoadPNG( comm );
+			// icon not found, loading default one
+			if( img == NULL )
+			{
+				img = ImageLoadPNG( "resources/iconthemes/friendup/40/doc_unknown.png" );
+			}
+		
+			if( img != NULL )
+			{
+				unsigned int i;
+				char *attr = parameters;
+				char *val = NULL;
+			
+				// when first parameter contain data in format   key=
+				/*
+				for( i=1 ; i < msgsize ; i++ )
+				{
+					if( parameters[ i ] == '=' )
+					{
+						parameters[ i ] = 0;
+						val = &(parameters[ i+1 ]);
+					}
+					else if( parameters[ i ] == ';' )
+					{
+						parameters[ i ] = 0;
+						attr = &parameters[ i+1 ];
+					
+						if( attr != NULL && val != NULL )
+						{
+							ImageAddComment( img, attr, val );
+						}
+					}
+				}
+
+				if( attr != NULL && val != NULL )
+				{
+					ImageAddComment( img, attr, val );
+				}
+				*/
+				DEBUG("Image add comment key %s value %s\n", key, value );
+				
+				//if( attr != NULL && val != NULL )
+				if( key != NULL && value != NULL )
+				{
+					ImageAddComment( img, (char *)key, (char *)value );
+				}
+
+				ImageSavePNG( img, comm );
+			
+				ImageDelete( img );
+			}
+			FFree( parameters );
+		}
+		
+		FFree( comm );
+	}
+	
+	DEBUG("Info END\n");
+	
+	return 0;
+}

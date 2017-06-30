@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,15 +15,20 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
 	doRefresh();
+	this.activeApplication = false;
 }
 
 /* Helper functions --------------------------------------------------------- */
 
+/**
+ * @brief Gets all applications registered / activated for the user
+ * @param callback callback function run with result
+ */
 function getApplications( callback )
 {
 	var m = new Module( 'system' );
@@ -38,180 +43,314 @@ function getApplications( callback )
 	m.execute( 'listuserapplications' );
 }
 
-function doAdd( ele )
+// Do a full refresh
+function doRefresh()
 {
-	if( ele )
+	// Add applications
+	getApplications( function( apps )
 	{
-		var eles = ele.parentNode.getElementsByTagName( '*' );
-		var inp, option;
-		for( var a = 0; a < eles.length; a++ )
+		Application.apps = apps;
+		
+		ge( 'apps' ).innerHTML = '';
+		var f = document.createElement( 'form' );
+		f.className = 'List';
+		ge( 'apps' ).appendChild( f );
+		var swi = 2;
+		var exists = [];
+		for( var a = 0; a < apps.length; a++ )
 		{
-			if( eles[a].nodeName == 'INPUT' )
-				inp = eles[a].value;
-			else if( eles[a].nodeName == 'SELECT' )
-				option = eles[a].value;
-		}
-		if( !inp.length || !option.length )
-		{
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
+			var found = false;
+			for( var b = 0; b < exists.length; b++ )
 			{
-				if( e == 'ok' )
+				if( exists[b] == apps[a].Name )
 				{
-					// Do anything special?
+					found = true;
+					break;
 				}
-				doRefresh();
 			}
-			m.execute( 'deletemimetypes', { executable: option } );
-			return;
+			if( found ) continue;
+			exists.push( apps[a].Name );
+			
+			swi = swi == 1 ? 2 : 1;
+			var n = document.createElement( 'div' );
+			n.className = 'Padding sw' + swi;
+			var i = document.createElement( 'input' );
+			i.type = 'radio';
+			i.name = 'application';
+			i.id = 'input_' + apps[a].Name.split( /[\s]/ ).join( '_' );
+			i.application = apps[a];
+			i.onclick = function()
+			{
+				SelectApplication( this.application );
+			}
+			var s = document.createElement( 'label' );
+			s.setAttribute( 'for', i.id );
+			s.className = 'MousePointer';
+			s.innerHTML = apps[a].Name;
+			
+			// Add to apps list
+			n.appendChild( i );
+			n.appendChild( s );
+			f.appendChild( n );
 		}
+		delete exists;
+		
+		// Add mimetypes
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			if( e == 'ok' )
 			{
-				// Do anything special?
-			}
-			doRefresh();
-		}
-		m.execute( 'setmimetypes', { types: inp, executable: option } );
-	}
-	else
-	{
-		doRefresh( function()
-		{
-			var eles = ge( 'apps' ).getElementsByTagName( 'p' );
-			if( !eles.length ) ge( 'apps' ).innerHTML = '';
-			else if( eles[0].className != 'Layout Mimetype' )
-			{
-				ge( 'apps' ).innerHTML = '';
+				// Add form to mimetypes
+				ge( 'mimetypes' ).innerHTML = '';
+				var mimes = JSON.parse( d );
+				var fo = document.createElement( 'form' );
+				fo.className = 'List';
+				ge( 'mimetypes' ).appendChild( fo );
+				
+				var outMimes = [];
+				for( var a = 0; a < mimes.length; a++ )
+				{
+					// Link to applications
+					for( var z = 0; z < Application.apps.length; z++ )
+					{
+						if( Application.apps[z].Name == mimes[a].executable )
+						{
+							Application.apps[z].mimes = mimes[a].types;
+							break;
+						}
+					}
+					// Add to out! We need unique mimes!
+					for( var z = 0; z < mimes[a].types.length; z++ )
+					{
+						var found = false;
+						for( var u = 0; u < outMimes.length; u++ )
+						{
+							if( outMimes[u] == mimes[a].types[z] )
+								found = true;
+						}
+						if( !found )
+							outMimes.push( mimes[a].types[z] );
+					}
+				}
+				
+				var sw = 2;
+				for( var a = 0; a < outMimes.length; a++ )
+				{
+					sw = sw == 1 ? 2 : 1;
+					var mime = outMimes[a];
+				
+					var d = document.createElement( 'div' );
+					d.className = 'Padding Mimetype sw' + sw;
+					
+					var i = document.createElement( 'input' );
+					i.type = 'checkbox';
+					i.name = 'mimetype';
+					i.id = 'input_' + mime.split( /[\s]/ ).join( '_' );
+					i.mime = mime;
+					
+					var s = document.createElement( 'label' );
+					s.setAttribute( 'for', i.id );
+					s.className = 'MousePointer';
+					s.innerHTML = mime;
+			
+					// Add to apps list
+					d.appendChild( i );
+					d.appendChild( s );
+					fo.appendChild( d );
+				}
 			}
 			else
 			{
-				focusOnInput( eles );
+				ge( 'mimetypes' ).innerHTML = '<h2>No mimetypes defined.</h2><p>Please add your first mimetypes to the database.</p>';			
 			}
-			var d = document.createElement( 'p' );
-			d.className = 'Layout Mimetype';
-			d.innerHTML = '<input value="" placeholder=".jpg, .png"/>\
-				<em>opens with:</em>\
-				<select><option value="">nothing</option></select>\
-				<button type="button" onclick="doAdd(this)" class="Button IconSmall fa-check"></button>';
-			ge( 'apps' ).appendChild( d );
-		
-			getApplications( function( list )
-			{
-				var s = document.getElementsByTagName( 'select' );
-				if( !s.length ) return false;
-				var opts = '';
-				for( var a in list )
-				{
-					if( list[a].Title ) list[a].Name = list[a].Title;
-					opts += '<option value="' + list[a].Name + '">' + list[a].Name + '</option>';
-				}
-				s[0].innerHTML = opts;
-			} );
-	
-			focusOnInput( [ d ] );
-		} );
-	}
+			
+			// Activate application mimetypes in selection list
+			SelectApplication( apps[0] );
+		}
+		m.execute( 'getmimetypes' );
+	} );
 }
 
-function focusOnInput( eles )
+function AddMimetype()
 {
-	for( var a = 0; a < eles.length; a++ )
+	if( ge( 'NewMimetype' ) )
 	{
-		if( eles[a].getElementsByTagName( 'input' ).length )
+		return ge( 'NewMimetype' ).getElementsByTagName( 'input' )[0].focus();
+	}
+	var inpd = document.createElement( 'div' );
+	inpd.className = 'Padding';
+	inpd.id = 'NewMimetype';
+	var inp = document.createElement( 'input' );
+	inp.type = 'text';
+	inp.className = 'InputHeight FullWidth';
+	inpd.appendChild( inp );
+	inp.onkeydown = function( e )
+	{
+		var wh = e.which ? e.which : e.keyCode;
+		if( wh == 13 )
 		{
-			eles[a].getElementsByTagName( 'input' )[0].focus();
-			return;
+			SaveMimetype();
+		}
+		else if( wh == 27 )
+		{
+			inpd.parentNode.removeChild( inpd );
 		}
 	}
+	ge( 'mimetypes' ).appendChild( inpd );
+	inp.focus();
 }
 
-function doRefresh( callback )
+function SaveMimetype()
 {
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		if( e == 'ok' )
+		ge( 'NewMimetype' ).parentNode.removeChild( ge( 'NewMimetype' ) );
+		doRefresh();
+	}
+	m.execute( 'setmimetypes', { types: ge( 'NewMimetype' ).getElementsByTagName( 'input' )[0].value } );
+}
+
+function SelectApplication( app )
+{
+	var eles = ge( 'apps' ).getElementsByTagName( 'input' );
+	for( var a = 0; a < eles.length; a++ )
+	{
+		if( eles[a].application == app )
 		{
-			ge( 'apps' ).innerHTML = '';
-			var mimes = JSON.parse( d );
-			for( var a = 0; a < mimes.length; a++ )
+			Application.activeApplication = app;
+			eles[a].parentNode.classList.add( 'BackgroundNegative' );
+			if( eles[a].parentNode.classList.contains( 'sw1' ) )
+				eles[a].parentNode.oldsw = 'sw1';
+			else eles[a].parentNode.oldsw = 'sw2';
+			eles[a].parentNode.classList.remove( eles[a].parentNode.oldsw );
+			eles[a].parentNode.classList.add( 'Negative' );
+			var mimes = ge( 'mimetypes' ).getElementsByTagName( 'input' );
+			for( var c = 0; c < mimes.length; c++ )
 			{
-				var d = document.createElement( 'p' );
-				d.className = 'Layout Mimetype';
-				d.innerHTML = '<label>' + mimes[a].types.join( ', ' ) + '</label><em>' + mimes[a].executable + '</em>';
-				d.executable = mimes[a].executable;
-				d.types = mimes[a].types;
-				d.onclick = function()
+				var found = false;
+				if( app.mimes )
 				{
-					modifyMimetype( this );
+					for( var b = 0; b < app.mimes.length; b++ )
+					{
+						if( mimes[c].mime == app.mimes[b] )
+						{
+							found = true;
+						}
+					}
 				}
-				ge( 'apps' ).appendChild( d );
+				if( found )
+				{
+					if( mimes[c].parentNode.classList.contains( 'sw2' ) )
+						mimes[c].sw = 'sw2';
+					else mimes[c].sw = 'sw1';
+					mimes[c].parentNode.classList.remove( mimes[c].sw );
+					mimes[c].parentNode.classList.add( 'BackgroundNegative' );
+					mimes[c].parentNode.classList.add( 'Negative' );
+					mimes[c].checked = 'checked';
+				}
+				else
+				{
+					mimes[c].checked = '';
+					mimes[c].parentNode.classList.add( mimes[c].sw );
+				}
 			}
 		}
 		else
 		{
-			ge( 'apps' ).innerHTML = '<h2>No mimetypes defined.</h2><p>Please add your first mimetypes to the database.</p>';			
+			eles[a].parentNode.classList.remove( 'BackgroundNegative' );
+			eles[a].parentNode.classList.remove( 'Negative' );
+			eles[a].parentNode.classList.add( eles[a].parentNode.oldsw );
 		}
+	}
+}
+
+// Adds a new mimetype
+function doAdd()
+{
+	var v = new View( {
+		title: i18n( 'i18n_new_mimetype' ),
+		width: 200,
+		height: 150
+	} );
+}
+
+// Link types to application
+function doLink()
+{
+	if( !Application.activeApplication ) return;
+	var app = Application.activeApplication;
+	if( !app.mimes )
+		app.mimes = [];
+	var mimes = ge( 'mimetypes' ).getElementsByTagName( 'input' );
+	for( var c = 0; c < mimes.length; c++ )
+	{
+		var found = false;
+		if( app.mimes )
+		{
+			for( var b = 0; b < app.mimes.length; b++ )
+			{
+				if( mimes[c].mime == app.mimes[b] )
+				{
+					found = true;
+				}
+			}
+			if( !found && mimes[c].checked )
+				app.mimes.push( mimes[c].mime );
+		}
+	}
+	
+	var m = new Module( 'system' );
+	m.onExecuted = function()
+	{
+		// Remove types from apps that have these elsewhere
+		var apps = Application.apps;
+		for( var a = 0; a < apps.length; a++ )
+		{
+			if( apps[a].Name == app.Name ) continue;
+			
+			var res = []; // <- resulting mimes cleaned
+			var changed = false;
+			if( apps[a].mimes )
+			{
+				for( var b = 0; b < apps[a].mimes.length; b++ )
+				{
+					var found = false;
+					for( var c = 0; c < app.mimes.length; c++ )
+					{
+						if( app.mimes[c] == apps[a].mimes[b] )
+						{
+							found = true;
+							break;
+						}
+					}
+					if( found ) changed = true;
+					if( !found ) res.push( apps[a].mimes[b] );
+				}
+				apps[a].mimes = res;
+			}
+		}
+		
+		Application.sendMessage( {
+			type: 'system',
+			command: 'reloadmimetypes'
+		} );
+	}
+	m.execute( 'setmimetypes', { types: app.mimes.join( ',' ), executable: app.Name } );
+}
+
+function saveMimes( app, callback )
+{
+	var nm = new Module( 'system' )
+	nm.onExecuted = function()
+	{
+		Application.sendMessage( {
+			type: 'system',
+			command: 'reloadmimetypes'
+		} );
 		if( callback ) callback();
 	}
-	m.execute( 'getmimetypes' );
-	
-	// Notify system
-	Application.sendMessage( {
-		type: 'system',
-		command: 'reloadmimetypes'
-	} );
+	nm.execute( 'setmimetypes', { types: implode( ',', app.mimes ), executable: app.Name } );
 }
-
-function modifyMimetype( d )
-{
-	var ex = d.executable;
-	var ty = d.types;
-	
-	doRefresh( function()
-	{
-		var eles = document.getElementsByTagName( 'p' );
-		d = -1;
-		for( var a = 0; a < eles.length; a++ )
-		{
-			if( eles[a].executable && eles[a].executable == ex )
-			{
-				d = eles[a];
-				break;
-			}
-		}
-		if( d == -1 ) return;
-		
-		d.types = ty;
-		d.executable = ex;
-		
-		d.innerHTML = '<input value="' + d.types.join( ', ' ) + '" placeholder=".jpg, .png"/>\
-			<em>opens with:</em>\
-			<select><option value="">nothing</option></select>\
-			<button type="button" onclick="doAdd(this)" class="Button IconSmall fa-check"></button>';
-	
-		getApplications( function( list )
-		{
-			var s = d.getElementsByTagName( 'select' );
-			if( !s.length ) return false;
-			var opts = '';
-			for( var a in list )
-			{
-				if( list[a].Title ) list[a].Name = list[a].Title;
-				opts += '<option value="' + list[a].Name + '"' + ( list[a].Name == d.executable ? ' selected="selected"' : '' ) + '>' + list[a].Name + '</option>';
-			}
-			s[0].innerHTML = opts;
-			focusOnInput( [ d ] );
-		} );		
-	} );
-
-}
-
-function doCancel()
-{
-}
-
 

@@ -1,11 +1,11 @@
 <?php
 
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,10 +14,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 global $SqlDatabase, $args, $User;
 
@@ -67,7 +68,7 @@ switch( $args->command )
 				Subject ASC
 		' ) )
 		{
-			die( 'ok<!--separate-->' . json_encode( $rows ) );
+			die( 'ok<!--separate-->' . friend_json_encode( $rows ) );
 		}
 		die( 'fail' );
 		break;
@@ -91,7 +92,7 @@ switch( $args->command )
 		{
 			$o = new DbIO( 'FIssue' );
 			$o->Load( $args->args->id );
-			die( 'ok<!--separate-->' . json_encode( $o ) );
+			die( 'ok<!--separate-->' . friend_json_encode( $o ) );
 		}
 		die( 'fail<!--separate-->' );
 		break;
@@ -147,14 +148,14 @@ switch( $args->command )
 		break;
 	case 'removecomment':
 		if( !isset( $args->args->commentid ) ) die( 'fail' );
-		$SqlDatabase->query( 'DELETE FROM FIssue WHERE ID=\'' . mysql_real_escape_string( $args->args->commentid ) . '\' AND UserID=\'' . $User->ID . '\'' );
+		$SqlDatabase->query( 'DELETE FROM FIssue WHERE ID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->commentid ) . '\' AND UserID=\'' . $User->ID . '\'' );
 		die( 'ok' );
 	case 'getcomments':
 		if( !isset( $args->args->issueid ) ) die( 'fail' );
 		if( $rows = $SqlDatabase->fetchObjects( '
 			SELECT i.*, u.Name FROM FIssue i, FUser u
 			WHERE
-			i.IssueID = \'' . mysql_real_escape_string( $args->args->issueid ) . '\'
+			i.IssueID = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->issueid ) . '\'
 			AND u.ID = i.UserID
 			ORDER BY DateCreated ASC
 		' ) )
@@ -170,7 +171,7 @@ switch( $args->command )
 				$o->Date = $row->DateCreated;
 				$out[] = $o;
 			}
-			die( 'ok<!--separate-->' . json_encode( $out ) );
+			die( 'ok<!--separate-->' . friend_json_encode( $out ) );
 		}
 		die( 'fail' );
 		break;
@@ -184,8 +185,8 @@ switch( $args->command )
 				( i.IssueID <= 0 OR ( i.IssueID = ie.ID AND ie.UserID <= 0 ) )
 			AND i.IsDeleted <= 0
 			AND u.Name IS NOT NULL
-			' . ( $args->args->filter ? ( ' AND i.Status IN ' . mysql_real_escape_string( $args->args->filter ) ) : '' ) . '
-			' . ( $args->args->search ? ( ' AND i.Subject LIKE "%' . mysql_real_escape_string( $args->args->search ) . '%"' ) : '' ) . '
+			' . ( $args->args->filter ? ( ' AND i.Status IN ' . stripslashes( mysqli_real_escape_string( $SqlDatabase->_link, $args->args->filter ) ) ) : '' ) . '
+			' . ( $args->args->search ? ( ' AND i.Subject LIKE "%' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->search ) . '%"' ) : '' ) . '
 			ORDER BY
 				i.Status ASC, i.DateModified DESC
 		' ) )
@@ -199,9 +200,9 @@ switch( $args->command )
 						$rows[$k]->Subject .= ' (' . $cnt->CNT . ' ' . ( $cnt->CNT == 1 ? 'comment' : 'comments' ) . ')';
 				}
 			}
-			die( 'ok<!--separate-->' . json_encode( $rows ) );
+			die( 'ok<!--separate-->' . friend_json_encode( $rows ) );
 		}
-		die( 'fail<!--separate-->' . $q );
+		die( 'fail<!--separate-->' . $q . ' ' . mysql_error() );
 		break;
 	case 'loadissue':
 		$o = new DbIO( 'FIssue' );
@@ -213,7 +214,7 @@ switch( $args->command )
 				$std = new stdClass();
 				$fields = array( 'ID', 'IssueID', 'Subject', 'ShortDesc', 'Description', 'Reproduce', 'Status' );
 				foreach( $fields as $fl ) $std->$fl = $o->$fl;
-				die( 'ok<!--separate-->' . json_encode( $std ) );
+				die( 'ok<!--separate-->' . friend_json_encode( $std ) );
 			}
 		}
 		break;
@@ -227,7 +228,7 @@ switch( $args->command )
 				if( $o->UserID == $User->ID )
 				{
 					$o->Delete();
-					die( 'ok<!--separate-->' . json_encode( $std ) );
+					die( 'ok<!--separate-->' . friend_json_encode( $std ) );
 				}
 			}
 		}

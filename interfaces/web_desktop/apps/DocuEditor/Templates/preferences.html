@@ -1,0 +1,46 @@
+
+	<div class="VContentTop ScrollArea Padding" style="bottom: 50px">
+		<div class="HRow MarginBottom">
+			<p class="FloatLeft HContent35 InputHeight">
+				<strong>Mysql server, port:</strong>
+			</p>
+			<p class="FloatLeft HContent65 InputHeight">
+				<input id="mhostname" type="text" class="InputHeight FullWidth" placeholder="host.name.com:3306"/>
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<p class="FloatLeft HContent35 InputHeight">
+				<strong>Username:</strong>
+			</p>
+			<p class="FloatLeft HContent65 InputHeight">
+				<input id="musername" type="text" class="InputHeight FullWidth" placeholder="username"/>
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<p class="FloatLeft HContent35 InputHeight">
+				<strong>Password:</strong>
+			</p>
+			<p class="FloatLeft HContent65 InputHeight">
+				<input id="mpassword" type="password" class="InputHeight FullWidth" placeholder="******"/>
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<p class="FloatLeft HContent35 InputHeight">
+				<strong>Database:</strong>
+			</p>
+			<p class="FloatLeft HContent65 InputHeight">
+				<input id="mdatabase" type="text" class="InputHeight FullWidth" placeholder="mybase"/>
+			</p>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BorderTop" style="height: 50px">
+		<button class="Button IconSmall fa-close FloatRight" onclick="close()">
+			{i18n_cancel}
+		</button>
+		<button class="Button IconSmall fa-save" onclick="savePreferences()">
+			{i18n_save_preferences}
+		</button>
+	</div>
+	
+	<script src="Progdir:preferences.js"></script>
+

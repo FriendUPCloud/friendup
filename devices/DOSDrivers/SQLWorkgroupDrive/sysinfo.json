@@ -1,0 +1,7 @@
+{
+	"type":    "SQLWorkgroupDrive",
+	"literal": "MySQL Based Filesystem for workgroups",
+	"group":   "Admin",
+	"sharing": "1",
+	"icon": "logo.png"
+}

@@ -1,0 +1,35 @@
+
+<div class="VContentTop TP ScrollArea BorderBottom BackgroundDefault Padding">
+	<div class="HRow">
+		<div class="FloatLeft HContent30">
+			<p class="InputHeight">
+				<strong>Invite user:</strong>
+			</p>
+		</div>
+		<div class="FloatLeft HContent70">
+			<input type="text" value="" id="User" class="InputHeight" placeholder="John Doe..."/>
+		</div>
+	</div>
+</div>
+
+<div class="VContentBottom BP Padding">
+	<button type="button" class="Button IconSmall fa-comment" onclick="SendInvite()">
+		Send invite
+	</button>
+	<button type="button" class="Button IconSmall fa-remove" onclick="CloseInvite()">
+		Close
+	</button>
+</div>
+
+<style>
+	.TP
+	{
+		bottom: 50px;
+	}
+	.BP
+	{
+		height: 50px;
+	}
+</style>
+
+<script src="Progdir:Scripts/invite.js"></script>

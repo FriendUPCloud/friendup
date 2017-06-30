@@ -70,6 +70,8 @@
 #include <dirent.h>
 
 #include <util/log/log.h>
+#include <system/user/user_session.h>
+#include <system/systembase.h>
 
 uLong filetime(const char *filename, tm_zip *tmzip, uLong *dostime)
 {
@@ -186,7 +188,7 @@ int get_file_crc(const char* filenameinzip, void *buf, unsigned long size_buf, u
 //
 //
 
-int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_compress_level )
+int PackFileToZIP( FILE *zf, const char *filenameinzip, int cutfilename, char *password, int opt_compress_level )
 {
 	void* buf = NULL;
 	int size_buf = WRITEBUFFERSIZE;
@@ -194,7 +196,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 	 buf = (void*)malloc(size_buf);
 	 if (buf == NULL)
 	{
-		ERROR("Error allocating memory\n");
+		FERROR("Error allocating memory\n");
 		return ZIP_INTERNALERROR;
 	}
 
@@ -221,6 +223,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 	//   If it did, windows/xp and dynazip couldn't read the zip file. 
 
 	savefilenameinzip = filenameinzip;
+	//savefilenameinzip += cutfilename;
 	while (savefilenameinzip[0] == '\\' || savefilenameinzip[0] == '/')
 	{
 		savefilenameinzip++;
@@ -244,7 +247,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
         }*/
 
 	// Add to zip file 
-	err = zipOpenNewFileInZip3_64(zf, savefilenameinzip, &zi,
+	err = zipOpenNewFileInZip3_64(zf, &savefilenameinzip[cutfilename], &zi,
 			NULL, 0, NULL, 0, NULL /* comment*/,
 			(opt_compress_level != 0) ? Z_DEFLATED : 0,
 			opt_compress_level,0,
@@ -273,7 +276,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 			size_read = (int)fread(buf, 1, size_buf, fin);
 			if ( (size_read < size_buf) && (feof(fin) == 0) )
 			{
-				ERROR("error in reading %s\n",filenameinzip);
+				FERROR("error in reading %s\n",filenameinzip);
 				err = ZIP_ERRNO;
 			}
 			
@@ -282,7 +285,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 				err = zipWriteInFileInZip(zf, buf, size_read);
 				if (err < 0)
 				{
-					ERROR("error in writing %s in the zipfile (%d)\n", filenameinzip, err);
+					FERROR("error in writing %s in the zipfile (%d)\n", filenameinzip, err);
 				}
 			}
 		}
@@ -303,7 +306,7 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 		err = zipCloseFileInZip(zf);
 		if (err != ZIP_OK)
 		{
-			ERROR("error in closing %s in the zipfile (%d)\n", filenameinzip, err);
+			FERROR("error in closing %s in the zipfile (%d)\n", filenameinzip, err);
 		}
 	}
 	
@@ -316,12 +319,12 @@ int PackFileToZIP( FILE *zf, const char *filenameinzip, char *password, int opt_
 //
 //
 
-int PackDirectory( FILE *zipf, char *path, char *password, int opt_compress_level )
+int PackDirectory( FILE *zipf, char *path, int cutfilename, char *password, int opt_compress_level, Http *request, int *fileNumber, int numberOfFiles )
 {
 	char *newpath = calloc( strlen(path) + 512, sizeof(char) );
 	if( newpath == NULL )
 	{
-		ERROR("Cannot allocate memory for directory path\n");
+		FERROR("Cannot allocate memory for directory path\n");
 		return -1;
 	}
 	DIR *d;
@@ -333,7 +336,7 @@ int PackDirectory( FILE *zipf, char *path, char *password, int opt_compress_leve
 		while( (dir = readdir(d)) != NULL )
 		{
 			DEBUG("Checking : %s\n", dir->d_name );
-			if( strncmp( dir->d_name, ".", 1 ) == 0 || strncmp( dir->d_name, "..", 2 ) == 0 )
+			if( strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 )
 			{
 				continue;
 			}
@@ -351,7 +354,7 @@ int PackDirectory( FILE *zipf, char *path, char *password, int opt_compress_leve
 			status = stat (newpath, &st_buf);
 			if ( status != 0 ) 
 			{
-				ERROR ("Error, errno = %d\n", errno );
+				FERROR ("Error, errno = %d\n", errno );
 				return 1;
 			}
 /*
@@ -365,13 +368,38 @@ int PackDirectory( FILE *zipf, char *path, char *password, int opt_compress_leve
 			{
 				DEBUG ("%s is a directory.\n", newpath );
 				
-				PackDirectory( zipf, newpath, password, opt_compress_level );
+				PackDirectory( zipf, newpath, cutfilename, password, opt_compress_level, request, fileNumber, numberOfFiles );
 			}
 			else
 			{
 				DEBUG ("%s is a regular file.\n", newpath );
 				
-				PackFileToZIP( zipf, newpath, password, opt_compress_level );
+				PackFileToZIP( zipf, newpath, cutfilename, password, opt_compress_level );
+				
+				(*fileNumber)++;
+				
+				if( request != NULL )
+				{
+					SystemBase *sb = (SystemBase *)request->h_SB;
+					char *filename = newpath;
+					int newpathlen = strlen( newpath );
+					if( newpathlen > 255 )
+					{
+						filename = newpath + (newpathlen-255);
+					}
+					
+					char message[ 1024 ];
+					
+					int per = (int)( (float)(*fileNumber)/(float)numberOfFiles * 100.0f );
+					
+					DEBUG("Percentage %d count %d current %d fname %s\n", per, numberOfFiles, (*fileNumber), filename );
+
+					int size = snprintf( message, sizeof(message), "\"action\":\"compress\",\"filename\":\"%s\",\"progress\":%d", filename, per );
+					
+					DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
+					
+					sb->SendProcessMessage( request, message, size );
+				}
 			}
 		}
 		closedir(d);
@@ -385,7 +413,7 @@ int PackDirectory( FILE *zipf, char *path, char *password, int opt_compress_leve
 //
 //
 
-int PackZip( char *zipfilename, char *compresspath, char *password )
+int PackZip( char *zipfilename, char *compresspath, int cutfilename, char *password, Http *request, int numberOfFiles )
 {
     zipFile zf = NULL;
 #ifdef USEWIN32IOAPI
@@ -407,9 +435,9 @@ int PackZip( char *zipfilename, char *compresspath, char *password )
 
 	if (zf == NULL)
 	{
-		ERROR("error creating %s\n", zipfilename);
+		FERROR("error creating %s\n", zipfilename);
 		err = ZIP_ERRNO;
-		return err;
+		return -1;
 	}
 	else
 	{
@@ -422,7 +450,7 @@ int PackZip( char *zipfilename, char *compresspath, char *password )
 	status = stat (compresspath, &st_buf);
 	if ( status != 0 ) 
 	{
-		ERROR ("Error, errno = %d\n", errno );
+		FERROR ("Error, errno = %d\n", errno );
 		return 1;
 	}
 
@@ -430,20 +458,23 @@ int PackZip( char *zipfilename, char *compresspath, char *password )
 	{
 		DEBUG ("%s is a regular file.\n", compresspath );
 		
-		PackFileToZIP( zf, compresspath, password, opt_compress_level );
+		err = PackFileToZIP( zf, compresspath, cutfilename, password, opt_compress_level );
 	}
 	if (S_ISDIR (st_buf.st_mode) ) 
 	{
 		DEBUG ("%s is a directory.\n", compresspath );
 		
-		PackDirectory( zf, compresspath, password, opt_compress_level );
+		int compressedFiles = 0;
+		
+		err = PackDirectory( zf, compresspath, cutfilename, password, opt_compress_level, request, &compressedFiles, numberOfFiles );
+		
+		err = compressedFiles;
 	}
-
 
 	errclose = zipClose(zf, NULL);
 	if (errclose != ZIP_OK)
 	{
-		ERROR("error in closing %s (%d)\n", zipfilename, errclose);
+		FERROR("error in closing %s (%d)\n", zipfilename, errclose);
 	}
 	
 	return err;

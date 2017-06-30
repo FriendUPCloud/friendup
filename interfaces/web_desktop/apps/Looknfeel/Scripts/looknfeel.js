@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,19 +15,20 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 // Start her up!
 Application.run = function( msg, iface )
 {
 	var w = new View( {
-		title: "Look and feel",
+		title: i18n( 'i18n_look_and_feel_title' ),
 		width: 700,
 		height: 600
 	} );
 	this.mainView = w;
 	
 	var f = new File( 'Progdir:Templates/gui.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		w.setContent( data );

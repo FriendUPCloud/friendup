@@ -11,7 +11,6 @@
 #ifndef __UTIL_HASHMAP_H__
 #define __UTIL_HASHMAP_H__
  
-#include <stdbool.h>
 #include <core/types.h>
 
 //
@@ -24,7 +23,7 @@
 
 typedef struct HashmapElement{
 	char* key;
-	BOOL inUse;
+	FBOOL inUse;
 	void* data;
 } HashmapElement;
 
@@ -38,21 +37,53 @@ typedef struct Hashmap{
 	HashmapElement *data;
 } Hashmap;
 
+//
 // Return an empty hashmap. Returns NULL on faliure
+//
+
 Hashmap* HashmapNew();
 
+//
 // Takes the iterator value and runs with it.
 // Any change to the hashmap (adding/removing) will invalidate the iterator.
+
 HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator );
 
+//
 // Add an element to the hashmap. Returns false on faliure
-BOOL HashmapPut( Hashmap* in, char* key, void* value );
+//
 
+FBOOL HashmapPut( Hashmap* in, char* key, void* value );
+
+//
 // Get an element from the hashmap. Return NULL if none found
+//
+
 HashmapElement* HashmapGet( Hashmap* in, char* key );
 
+//
+// Get pointer to data from Hashmap
+//
+
+void* HashmapGetData( Hashmap* in, char* key );
+
+//
+// Hashmap clone
+//
+
+Hashmap *HashmapClone( Hashmap *hm );
+
+//
+// Hashmap add
+//
+
+int HashmapAdd( Hashmap *src, Hashmap *hm );
+
+//
 // UNIMPLEMENTED!!!
-BOOL HashmapRemove( Hashmap* in, char* key );
+//
+
+FBOOL HashmapRemove( Hashmap* in, char* key );
 
 // Free the hashmap
 void HashmapFree( Hashmap* in );

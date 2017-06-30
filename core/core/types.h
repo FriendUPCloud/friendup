@@ -1,59 +1,89 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/**
+ * @file
+ *
+ * Definition of various types
+ *
+ * @author PS (Pawel Stefansky)
+ * @author HT (Hogne Tildstad)
+ * @date first push by PS (10/02/2015)
+ */
 
 #ifndef __CORE_TYPES_H__
 #define __CORE_TYPES_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <util/log/log.h>
 #include "missing_defs.h"
 
-#ifndef BOOL
-typedef int BOOL;
+#ifndef FBOOL
+typedef int FBOOL;
 #endif
 
-#ifndef ULONG
-typedef unsigned long ULONG;
+#ifndef FULONG
+typedef unsigned long FULONG;
 #endif
 
-#ifndef LONG
-typedef long LONG;
+#ifndef FLONG
+typedef long FLONG;
 #endif
 
 #ifndef IPTR
 typedef unsigned long * IPTR;
 #endif
 
-#ifndef BYTE
-typedef unsigned char BYTE;
+#ifndef FBYTE
+typedef unsigned char FBYTE;
 #endif
 
-#ifndef UBYTE
-typedef unsigned char UBYTE;
+#ifndef FUBYTE
+typedef unsigned char FUBYTE;
 #endif
 
-#ifndef QUAD
-typedef long long QUAD;
+#ifndef FWORD
+typedef short FWORD;
 #endif
 
-#ifndef UQUAD
-typedef unsigned long long UQUAD;
+#ifndef FUWORD
+typedef unsigned short FUWORD;
+#endif
+
+#ifndef FINT
+typedef int FINT;
+#endif
+
+#ifndef FUINT
+typedef unsigned int FUINT;
+#endif
+
+#ifndef FQUAD
+typedef long long FQUAD;
+#endif
+
+#ifndef FUQUAD
+typedef unsigned long long FUQUAD;
 #endif
 
 //#ifndef STRPTR
@@ -91,11 +121,33 @@ typedef void * APTR;
 
 #ifndef FMalloc
 #define FMalloc( MSIZE ) \
-	aligned_alloc( 16, MSIZE )
+	malloc( MSIZE )
 #endif
 	
 #ifndef FFree
 #define FFree( PTR ) free( PTR )
+#endif
+
+#if ((__GNUC__ * 100) + __GNUC_MINOR__) >= 402
+#define GCC_DIAG_STR(s) #s
+#define GCC_DIAG_JOINSTR(x,y) GCC_DIAG_STR(x ## y)
+# define GCC_DIAG_DO_PRAGMA(x) _Pragma (#x)
+# define GCC_DIAG_PRAGMA(x) GCC_DIAG_DO_PRAGMA(GCC diagnostic x)
+# if ((__GNUC__ * 100) + __GNUC_MINOR__) >= 406
+#  define GCC_DIAG_OFF(x) GCC_DIAG_PRAGMA(push) \
+	GCC_DIAG_PRAGMA(ignored GCC_DIAG_JOINSTR(-W,x))
+#  define GCC_DIAG_ON(x) GCC_DIAG_PRAGMA(pop)
+# else
+#  define GCC_DIAG_OFF(x) GCC_DIAG_PRAGMA(ignored GCC_DIAG_JOINSTR(-W,x))
+#  define GCC_DIAG_ON(x)  GCC_DIAG_PRAGMA(warning GCC_DIAG_JOINSTR(-W,x))
+# endif
+#else
+# define GCC_DIAG_OFF(x)
+# define GCC_DIAG_ON(x)
+#endif
+
+#ifndef FRIEND_CORE_MANAGER_ID_SIZE
+#define FRIEND_CORE_MANAGER_ID_SIZE	128
 #endif
 
 #endif		// __TYPES_H__

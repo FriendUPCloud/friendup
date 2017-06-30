@@ -1,13 +1,37 @@
-
-	<link rel="stylesheet" href="Progdir:Css/server.css"/>
 	
-	<div id="SystemSettings" class="Padding" style="bottom: 60px">
-		<h1>Server settings</h1>
+	<div class="ContentFull LayoutButtonbarBottom">
+		<div class="VContentTop">
+			<div id="STabs" class="ContentFull Padding">
+				<div class="Tab IconSmall fa-wrench">
+					{i18n_settings_attributes}
+				</div>
+				<div class="Tab IconSmall fa-archive">
+					{i18n_software}
+				</div>
+				<div class="Page">
+					<div id="SystemSettings" class="PageScroll ContentFull Padding ScrollArea">
+					</div>
+				</div>
+				<div class="Page">
+					<div id="Software" class="PageScroll ContentFull Padding ScrollArea">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BackgroundDefault BorderTop" id="Bottom">
+			<button type="button" class="Button fa-plus IconSmall" onclick="addItem()">
+				{i18n_additem}
+			</button>
+			<button type="button" class="Button FloatRight fa-close IconSmall" onclick="closeWin()">
+				{i18n_cancel}
+			</button>
+		</div>
 	</div>
-	<div class="VContentBottom Padding BackgroundToolbar BorderTop" id="Bottom" style="height: 50px">
-		<button type="button" class="Button fa-close IconSmall" onclick="closeWin()">
-			{Cancel}
-		</button>
-	</div>
-
+	
+	<link rel="stylesheet" href="Progdir:Css/server.css"/>
 	<script src="Progdir:Scripts/serverwindow.js"></script>
+	<script>
+		InitTabs( 'STabs' );
+	</script>
+

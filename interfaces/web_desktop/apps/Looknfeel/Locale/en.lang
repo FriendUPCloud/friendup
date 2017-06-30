@@ -1,2 +1,22 @@
 
+i18n_look_and_feel_title                : Look and feel
+
+i18n_themes                             : Themes
+i18n_behavior                           : Behavior
+i18n_menu_mode                          : Menu mode
+i18n_preview                            : Preview
+i18n_cancel                             : Close
+i18n_save                               : Save
+
+i18n_available_themes                   : Available themes
+i18n_directory_model                    : Directory model
+i18n_window_clicks                      : Click on window mode
+i18n_click_to_front                     : Click to front
+i18n_click_to_focus                     : Click to focus
+i18n_browser                            : Browser
+i18n_spacial                            : Spacial
+
+i18n_window_list_mode                   : Window list mode
+i18n_separated                          : Separated
+i18n_docked                             : Docked
 

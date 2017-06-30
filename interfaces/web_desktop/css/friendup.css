@@ -2,17 +2,20 @@
 
 body
 {
-	font-family: sans serif;
+	/*
+	font-family: Lato, sans-serif;
+	*/
 	font-size: 14px;
 	position: absolute;
 	top: 0; left: 0;
 	width: 100%; 
 	height: 100%;
-	overflow: hidden;
 	padding: 0;
 	margin: 0;
 	background: #1A3854;
 	visibility: hidden;
+	transition: opacity 0.25s;
+	-webkit-transition: opacity 0.25s;
 }
 
 /* Helper classes ----------------------------------------------------------- */
@@ -160,5 +163,84 @@ body > .Eula > div.EulaInfo button
 body > .Eula > div.EulaInfo button + button
 {
 	float: right;
+}
+
+/* Login stuff -------------------------------------------------------------- */
+
+html body.Login #Login .Resize, 
+html body.Login #Login .LeftBar, html body.Login #Login .RightBar,
+html body.Login #Login .BottomBar
+{
+	visibility: hidden;
+}
+
+html body.Login #Login
+{
+	max-width: 96% !important;
+	min-width: 400px !important;
+	height: 500px !important;
+	top: calc(50% - 250px) !important;
+	left: calc(50% - 200px) !important;
+	background: #3c7db8;
+	transition: opacity !important;
+	-webkit-transition: opacity !important;
+	-moz-transition: opacity !important;
+	animation: fadeIn 4s;
+	-webkit-animation: fadeIn 4s;
+}
+
+@media (max-width: 420px)
+{
+	html body.Login #Login
+	{
+		max-width: 100% !important;
+		min-width: 100% !important;
+		height: 100% !important;
+		top: 0 !important;
+		left: 0 !important;
+	}
+	html body.Login #Login.LeftBar,
+	html body.Login #Login.RightBar,
+	html body.Login #Login.BottomBar,
+	html body.Login #Login.Resize
+	{
+		display: none;
+	}
+	html body.Login #Login .Content
+	{
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	html body.Login #Login .Content:before
+	{
+		display: none;
+	}
+}
+
+@keyframes fadeIn
+{
+	from{ opacity: 0; }
+	to{ opacity: 1; }
+}
+
+@-webkit-keyframes fadeIn
+{
+	from{ opacity: 0; }
+	to{ opacity: 1; }
+}
+
+html body.Login #Login .Title
+{
+	display: none;
+}
+
+html body.Login .View > .Content
+{
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0px;
 }
 

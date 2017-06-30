@@ -1,0 +1,49 @@
+	<div class="ContentFull">
+		<div id="Cover"></div>
+		<div class="VContentTop ScrollArea TopArea">
+			<div class="Padding Box">
+				<p class="Layout">
+					<strong>{i18n_topic}:</strong><span id="CommentCount"></span>
+				</p>
+				<p class="Layout" id="pSubject"></p>
+				<p class="Layout">
+					<strong>{i18n_status}:</strong></span>
+				</p>
+				<p class="Layout" id="pStatus"></p>
+				<p class="Layout">
+					<strong>{i18n_short_description}:</strong>
+				</p>
+				<p class="Layout" id="pShortDesc"></p>
+				<p class="Layout">
+					<strong>{i18n_full_description}:</strong>
+				</p>
+				<p class="Layout" id="pDescription"></p>
+				<p class="Layout">
+					<strong>{i18n_examples}:</strong>
+				</p>
+				<p class="Layout" id="pExamples"></p>
+			</div>
+			<div id="Comments">
+			</div>
+		</div>
+		<div class="VContentBottom BottomArea Padding BorderTop">
+			<button type="button" class="Button IconSmall fa-close" onclick="closeView()">
+				{i18n_close}
+			</button>
+		</div>
+	</div>
+
+	<style>
+		.TopArea { bottom: 50px; }
+		.BottomArea { height: 50px; }
+		#pDescription
+		{
+			min-height: 50px;
+		}
+		#pReproduce
+		{
+			min-height: 50px;
+		}
+	</style>
+	<script src="Progdir:view.js"></script>
+

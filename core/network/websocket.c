@@ -1,21 +1,34 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Websockets
+ *
+ * file contain functitons related to websockets
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +38,7 @@
 #include <sys/time.h>
 #include <poll.h>
 #include <core/types.h>
-
-#ifdef ENABLE_WEBSOCKETS
+#include <core/functions.h>
 
 #include <libwebsockets.h>
 #include <network/websocket.h>
@@ -37,293 +49,572 @@
 #include <network/http.h>
 #include <util/string.h>
 #include <system/systembase.h>
+#include <system/json/jsmn.h>
+#include <private-libwebsockets.h>
+#include <system/user/user_session.h>
 
 extern SystemBase *SLIB;
 
 static void dump_handshake_info(struct lws_tokens *lwst);
 
-static int callback_http(struct libwebsocket_context * this, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
+static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-//
- // This demo server shows how to use libwebsockets for one or more
- // websocket protocols in the same server
- //
- // It defines the following websocket protocols:
- //
- //  dumb-increment-protocol:  once the socket is opened, an incrementing
- //				ascii string is sent down it every 50ms.
- //				If you send "reset\n" on the websocket, then
- //				the incrementing number is reset to 0.
- //
- //  lws-mirror-protocol: copies any received packet to every connection also
- //				using this protocol, including the sender
- //
 
+struct a_message {
+	void *payload;
+	size_t len;
+};
+
+#define WS_PROTOCOL_BUFFER_SIZE 0xffff
 
 enum FriendProtocols {
 	// always first 
 	PROTOCOL_HTTP = 0,
-
-	PROTOCOL_DUMB_INCREMENT,
 	PROTOCOL_LWS_MIRROR,
 
 	// always last 
-	FRIEND_PROTOCOL_COUNT
+	FRIEND_PROTOCOL
 };
 
 
 #define LOCAL_RESOURCE_PATH "libwebsockets-test-server"
 
-// Friend Call protocol 
+struct per_session_data__http {
+	lws_filefd_type fd;
+#ifdef LWS_WITH_CGI
+	struct lws_cgi_args args;
+#endif
+#if defined(LWS_WITH_CGI) || !defined(LWS_NO_CLIENT)
+	int reason_bf;
+#endif
+	unsigned int client_finished:1;
 
-//
-// one of these is auto-created for each connection and a pointer to the
-// appropriate instance is passed to the callback in the user parameter
-//
-// for this example protocol we use it to individualize the count for each
-// connection.
-//
 
-struct FC_Data 
-{
-	int fcd_Number;
+	struct lws_spa *spa;
+	char result[500 + LWS_PRE];
+	int result_len;
+
+	char filename[256];
+	long file_length;
+	lws_filefd_type post_fd;
 };
 
-Http *WebSocketMsgParse( void *in, size_t len, char ***parts )
+/**
+ * Compare json token name to provided string
+ *
+ * @param json pointer to json memory where json is placed
+ * @param tok pointer to json token
+ * @param s name which will be used to compare with token name
+ * @return 0 when success, otherwise error number
+ */
+static int jsoneq( const char *json, jsmntok_t *tok, const char *s ) 
 {
-	Http *http = HttpNew( );
-	if( http != NULL )
+	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
+			strncmp(json + tok->start, s, tok->end - tok->start) == 0) 
 	{
-		//
-		//
-		//   <!--"<TYPE>"--"<LENGTH>"--"<URL>"-->BYTES<--!>
-		//
-		//   TYPE - MSG - message, STR - stream   CON - new connection
-		//   LENGTH - size of message, without headers
-		//   URL - url with host name inside, for
-		//
-		//  inside bytes if MSG
-		//  "param":"value" , "param":"value",.....
-		//
-		
-		unsigned int dataSize =(unsigned int) len;
-		char *stream = (char *) in;
-		unsigned int j = 0;
-		
-		char *type = NULL;
-		char *size = NULL;
-		char *url = NULL;
-		char *realMessage = NULL;
-		int found = 0;
-		int pathParts = 1;
-		
-		for( j = 0 ; j < len ; j++ )
+		return 0;
+	}
+	return -1;
+}
+
+//
+#define ENABLE_WEBSOCKETS_THREADS
+
+#ifdef ENABLE_WEBSOCKETS_THREADS
+
+pthread_mutex_t nothreadsmutex;
+static int nothreads = 0;
+
+typedef struct WSThreadData
+{
+	Http *http;
+	char *pathParts[ 1024 ];
+	BufString *queryrawbs;
+	FCWSData *fcd;
+	struct lws *wsi;
+	char *requestid;
+	char *path;
+	char *request;
+	int requestLen;
+}WSThreadData;
+
+void WSThread( WSThreadData *data )
+{
+	pthread_detach( pthread_self() );
+	
+	pthread_mutex_lock( &nothreadsmutex );
+	nothreads++;
+	pthread_mutex_unlock( &nothreadsmutex );
+	
+	Http *http = data->http;
+	char **pathParts = data->pathParts;
+	int error = 0;
+	BufString *queryrawbs = data->queryrawbs;
+	FCWSData *fcd = data->fcd;
+	struct lws *wsi = data->wsi;
+	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+	
+	if( fcd == NULL || ses == NULL )
+	{
+		FERROR("Error session is NULL\n");
+		DEBUG("http %p URI \n", http );
+		if( http != NULL )
 		{
-			//DEBUG("CHAR %c\n", stream[ j ] );
+			DEBUG("http %p URI \n", http->uri );
+			UriFree( http->uri );
 			
-			if( stream[ j ] == '"' )
+			if( http->rawRequestPath != NULL )
 			{
-				if( found == 0 )
-				{
-					type = &(stream[ j+1 ]);
-				}else if( found == 2 )
-				{
-					size = &(stream[ j+1 ]);
-				}else if( found == 4 )
-				{
-					url = &(stream[ j+1 ]);
-				}else
-				{
-					stream[ j ] = 0;
-				}
-				found++;
-			}
-			else if( stream[ j ] == '>' )
-			{
-				realMessage = &(stream[ j ] );
-				DEBUG("[WS]:Message found\n");
-				break;
-			}
-			else if( stream[ j ] == '/' && url != NULL )
-			{
-				pathParts++;
+				FFree( http->rawRequestPath );
+				http->rawRequestPath = NULL;
 			}
 		}
 		
-		DEBUG("[WS]:Allocate memory for parts %d\n", pathParts );
-		*parts = FCalloc( pathParts+1, sizeof( char *) );
-		*parts[ 0 ] = url;
+		FFree( data->requestid );
+		FFree( data->path );
 		
-		DEBUG("[WS]:First string in parts %s\n", *parts[ 0 ] );
+		DEBUG("Before http\n");
+		HttpFree( http );
+		DEBUG("Before bufstring del\n");
+		BufStringDelete( queryrawbs );
+		DEBUG("After bufstring del\n");
 		
-		int selPar = 1;
-		if( url != NULL )
+		FFree( data );
+		
+		pthread_mutex_lock( &nothreadsmutex );
+		nothreads--;
+		pthread_mutex_unlock( &nothreadsmutex );
+		pthread_exit( 0 );
+		return;
+	}
+	
+	ses->us_NRConnections++;
+	
+	int returnError = 0; //this value must be returned to WSI!
+	int n = 0;
+	
+	if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
+	{
+		http->h_WSocket = fcd->fcd_WSClient;
+		
+		struct timeval start, stop;
+		gettimeofday(&start, NULL);
+		
+		http->content = queryrawbs->bs_Buffer;
+		queryrawbs->bs_Buffer = NULL;
+		
+		http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+		
+		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, ses );
+		
+		gettimeofday(&stop, NULL);
+		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+		
+		DEBUG("WS ->SysWebRequest took %f seconds\n", secs );
+		
+		if( response != NULL )
 		{
-			for( j=1 ; j < strlen( url ) ; j++ )
+			unsigned char *buf;
+			char jsontemp[ 2048 ];
+			
+			// If it is not JSON!
+			if( response->content != NULL && ( response->content[ 0 ] != '[' && response->content[ 0 ] != '{' ) )
 			{
-				if( url[ j ] == '/' )
+				if( strcmp( response->content, "fail<!--separate-->{\"response\":\"user session not found\"}" )  == 0 )
 				{
-					url[ j ] = 0;
-				
-					//DEBUG("Parsing position %d  ---- selpar %d\n", j, selPar );
-					//DEBUG("PARTS %s\n", (*parts)[ selPar-1 ] );
-				
-					(*parts)[ selPar++ ] = &url[ j+1 ];
-				
-					j++;
-				}
-			}
-		}
-
-		DEBUG("[WS]:WEBSOCKET CALL size %d found type %3s\n", dataSize, type );
-		
-		http->parsedPostContent = HashmapNew();
-		
-		if( type != NULL && realMessage != NULL )
-		{
-			if( strncmp( "MSG", type, 3 ) == 0 )
-			{
-				int sizeOfMessage = 0;
-
-				sizeOfMessage = atoi( size );
-				
-				http->uri = UriParse( url );
-				if( http->uri == NULL )
-				{
-					ERROR("[WS]:URI Parse problem\n");
+					returnError = -1;
 				}
 				
-				DEBUG("[WS]: message size %d   --- url: %s\n", sizeOfMessage, url );
+				static int END_CHAR_SIGNS = 3;
+				char *end = "\"}}";
 				
-				// we found our data, we must check parameters
+				int jsonsize = sprintf( jsontemp, 
+										"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%s\",\"data\":\"",
+							data->requestid 
+				);
 				
-				if( sizeOfMessage > 0 && realMessage != NULL )
+				buf = (unsigned char *)FCalloc( 
+				LWS_SEND_BUFFER_PRE_PADDING + jsonsize + (response->sizeOfContent << 1) + 1 + 
+				END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
+				);
+				if( buf != NULL )
 				{
-					int i;
-					int dStarted = -1;
-					char *key = NULL;
-					char *value = NULL;
-					int keySize = 0;
-					int valueSize = 0;
+					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp, jsonsize );
 					
-					for( i=0 ; i < sizeOfMessage ; i++ )
+					char *locptr = (char *) buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize;
+					int z = 0;
+					int znew = 0;
+					int len = (int)response->sizeOfContent;
+					unsigned char car;
+					
+					// Add escape characters to single and double quotes!
+					for( ; z < len; z++ )
 					{
-						//DEBUG(": %c\n", realMessage[ i ] );
+						car = response->content[ z ];
+						switch( car )
+						{
+							case '\\':
+								locptr[ znew++ ] = '\\';
+								break;
+								// Always add escape chars on unescaped double quotes
+							case '"':
+								locptr[ znew++ ] = '\\';
+								locptr[ znew++ ] = '\\';
+								break;
+								// New line
+							case 10:
+								locptr[ znew++ ] = '\\';
+								car = 'n';
+								break;
+								// Line feed
+							case 13:
+								locptr[ znew++ ] = '\\'; 
+								car = 'r';
+								break;
+								// Tab
+							case 9:
+								locptr[ znew++ ] = '\\';
+								car = 't';
+								break;
+						}
+						locptr[ znew++ ] = car;
+					}
+					
+					if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
+					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING + jsonsize + znew, end, END_CHAR_SIGNS );
+					//DEBUG("--->  strlen %d  znew + jsonsize %d\n",  strlen( buf+LWS_SEND_BUFFER_PRE_PADDING ), znew + jsonsize );
+					
+					pthread_mutex_lock( &(ses->us_WSMutex) );
+					n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+					pthread_mutex_unlock( &(ses->us_WSMutex) );
+					
+					Log( FLOG_INFO, "Websocket call: '%s'\n",  buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+					//FERROR("\n\n\nWS\n\n'%s'\n ----------------------------------------------------------\HTTP %s\n\n\n", buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+					
+					FFree( buf );
+				}
+			}
+			else
+			{
+				// TODO: This should never happen.
+				if( response->content != NULL )
+				{
+					//DEBUG("\n\n\nJSON\n\n\n");
+					
+					if( strcmp( response->content, "{\"response\":\"user session not found\"}" )  == 0 )
+					{
+						returnError = -1;
+					}
+					
+					int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+					char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
+					
+					buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + response->sizeOfContent + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+					if( buf != NULL )
+					{
+						//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response->content,  response->sizeOfContent );
+						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+response->sizeOfContent, end,  END_CHAR_SIGNS );
 						
-						if( dStarted < 0 )
-						{
-							if( realMessage[ i ] == '"' )
-							{
-								//DEBUG("Found first part\n");
-								dStarted = i+1;
-								DEBUG("[WS]:DSTARTED %d\n", dStarted );
-							}
-						}
-						else
-						{
-							if( realMessage[ i ] == '"' )
-							{
-								DEBUG("Found end of message %d\n", i );
-								
-								realMessage[ i ] = 0; 
-								
-								if( key != NULL && value == NULL )
-								{
-									value = &realMessage[ dStarted ];
-									valueSize = i - dStarted;
-									DEBUG("[WS]:KEY %s VALUE %s\n", key, value );
-									
-									if( value != NULL )
-									{
-										if( HashmapPut( http->parsedPostContent, StringDuplicateN( key, keySize ), StringDuplicateN( value, valueSize ) ) )
-										{
-											DEBUG("[WS]:New values passed to POST %s %s\n", key, value );
-										}
-										
-										key = NULL;
-										value = NULL;
-									}
-								}
-								else
-								{
-									if( key == NULL )
-									{
-										key = &realMessage[ dStarted ];
-										keySize = i - dStarted;
-										DEBUG("[WS]:KEY FOUND %s\n", key );
-									}
-								}
-								
-								dStarted = -1;
-							}
-						}
+						pthread_mutex_lock( &(ses->us_WSMutex) );
+						n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+						pthread_mutex_unlock( &(ses->us_WSMutex) );
+						
+						FFree( buf );
 					}
 				}
-				else
+				else		// content == NULL
 				{
-					ERROR("[WS]:Message size < 0 or message not found\n");
-					goto error;
+					int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+					char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+					int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
+					
+					buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+					if( buf != NULL )
+					{
+						//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, end,  END_CHAR_SIGNS );
+						
+						pthread_mutex_lock( &(ses->us_WSMutex) );
+						n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+						pthread_mutex_unlock( &(ses->us_WSMutex) );
+						
+						FFree( buf );
+					}
 				}
 			}
 			
-			if( type == NULL || url == NULL || size == NULL || realMessage == NULL )
-			{
-				DEBUG("[WS]:Request do not contain required data\n");
-				goto error;
-			}
-			
-			return http;
-			
-			error:
-			
-			if( http != NULL )
-			{
-				HttpFree( http );
-			}
-			return NULL;
+			HttpFree( response );
 		}
-		else
-		{
-			ERROR("[WS]:Message do not contain TYPE or do not contain message\n");
-			if( http != NULL )
-			{
-				HttpFree( http );
-			}
-			return NULL;
-		}
+		DEBUG1("[WS]:SysWebRequest return %d\n", n  );
 	}
 	else
 	{
-		ERROR("[WS]:Cannot allocate memory for HTTP structure\n");
-		if( http != NULL )
+		char response[ 1024 ];
+		int resplen = sprintf( response, "{\"response\":\"cannot parse command or bad library was called : %s\"}", pathParts[ 0 ] );
+		
+		char jsontemp[ 1024 ];
+		static int END_CHAR_SIGNS = 2;
+		char *end = "}}";
+		int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%s\",\"data\":", data->requestid );
+		
+		unsigned char * buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + resplen + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+		if( buf != NULL )
 		{
-			HttpFree( http );
+			memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+			memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response,  resplen );
+			memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+resplen, end,  END_CHAR_SIGNS );
+			
+			pthread_mutex_lock( &(ses->us_WSMutex) );
+			n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+			pthread_mutex_unlock( &(ses->us_WSMutex) );
+			
+			FFree( buf );
 		}
-		return NULL;
 	}
 	
-	return http;
+	DEBUG("http %p URI \n", http );
+	if( http != NULL )
+	{
+		DEBUG("http %p URI \n", http->uri );
+		UriFree( http->uri );
+		
+		if( http->rawRequestPath != NULL )
+		{
+			FFree( http->rawRequestPath );
+			http->rawRequestPath = NULL;
+		}
+	}
+	
+	FFree( data->requestid );
+	FFree( data->path );
+	
+	DEBUG("Before http\n");
+	HttpFree( http );
+	DEBUG("Before bufstring del\n");
+	BufStringDelete( queryrawbs );
+	DEBUG("After bufstring del\n");
+	
+	FFree( data );
+	
+	ses->us_NRConnections--;
+	pthread_mutex_lock( &nothreadsmutex );
+	nothreads--;
+	pthread_mutex_unlock( &nothreadsmutex );
+	
+	pthread_exit( 0 );
 }
 
 //
 //
 //
 
-int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
-			enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+void WSThreadPing( WSThreadData *data )
 {
-	int n;
-	struct FC_Data *pss = user;
-	WebSocket *ws =  (WebSocket *) libwebsocket_context_user ( this );
+	pthread_detach( pthread_self() );
 	
-	DEBUG("[WS]: FC_Callback reason: %d\n", reason );
+	pthread_mutex_lock( &nothreadsmutex );
+	nothreads++;
+	pthread_mutex_unlock( &nothreadsmutex );
+	
+	int n = 0;
+	int error = 0;
+	FCWSData *fcd = data->fcd;
+	struct lws *wsi = data->wsi;
+	
+	char *answer = FCalloc( 1024, sizeof(char) );
+	snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->requestid );
+	
+	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+	if( ses != NULL )
+	{
+		ses->us_LoggedTime = time( NULL );
+	
+		unsigned char *buf;
+		int len = strlen( answer );
+		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+		if( buf != NULL )
+		{
+			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+		
+			pthread_mutex_lock( &(ses->us_WSMutex) );
+			n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+			pthread_mutex_unlock( &(ses->us_WSMutex) );
+			FFree( buf );
+		}
+	
+		/*
+		MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+		if( sqllib != NULL )
+		{
+			char *tmpQuery = FCalloc( 1024, 1 );
+			if( tmpQuery )
+			{
+				if( fcd->fcd_ActiveSession != NULL )
+				{
+					UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
+					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
+					sqllib->QueryWithoutResults( sqllib, tmpQuery );
+				}
+			
+				//FERROR("Logged time updated: %lu\n", time(NULL) );
+			
+				FFree( tmpQuery );
+			}
+			SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+		}
+		*/
+	}
+	
+	FFree( answer );
+	FFree( data->requestid );
+	FFree( data );
+	
+	pthread_mutex_lock( &nothreadsmutex );
+	nothreads--;
+	pthread_mutex_unlock( &nothreadsmutex );
+	
+	pthread_exit( 0 );
+}
 
+#endif
+
+
+/**
+ * Main FriendCore websocket callback
+ *
+ * @param wsi pointer to main Websockets structure
+ * @param reason type of received message (lws_callback_reasons type)
+ * @param user user data (FC_Data)
+ * @param in message in table of chars
+ * @param len size of provided message
+ * @return 0 when success, otherwise error number
+ */
+int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+{
+	int n = 0;
+	FCWSData *fcd =  (FCWSData *) user;// lws_context_user ( this );
+	int returnError = 0;
+	nothreads++;
+
+	DEBUG("WS Call, reason: %d\n", reason );
+	
 	switch( reason )
 	{
-
 		case LWS_CALLBACK_ESTABLISHED:
-			pss->fcd_Number = 0;
-			DEBUG("[WS]: Callback estabilished\n");
+			//pss->fcd_Number = 0;
+			FERROR("[WS]: Callback estabilished\n");
+		break;
+		
+		case LWS_CALLBACK_CLOSED:
+			FERROR("[WS]: Callback session closed\n");
+			
+			UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
+			User *u = NULL;
+			if( us == NULL )
+			{
+				FERROR("User session dissapeard\n");
+				nothreads--;
+				return -1;
+			}
+			else
+			{
+				u = us->us_User;
+			}
+			
+			DEBUG("WSI %p FCD %p USER %p\n", wsi, fcd, u );
+			if( wsi == NULL || fcd == NULL || u == NULL )
+			{
+				nothreads--;
+				return 0;
+			}
+			
+#ifdef ENABLE_WEBSOCKETS_THREADS
+			while( TRUE )
+			{
+				if( us->us_NRConnections <= 0 )
+				{
+					DEBUG("There are no more connections, we can remove session\n");
+					break;
+				}
+				usleep( 10000 );
+			}
+#endif
+			
+			pthread_mutex_lock( &us->us_WSMutex );
+			SystemBase *sb = NULL;
+			
+			if( u != NULL )
+			{
+				WebsocketClient *nwsc = us->us_WSConnections;
+				WebsocketClient *owsc = nwsc;
+				
+				DEBUG("[WS]: Getting connections %p for user %s\n", nwsc, u->u_Name );
+				
+				if( nwsc != NULL )
+				{
+					// remove first entry!
+					DEBUG("[WS]: NWSCPOINTER %p POINTER %p\n" , nwsc->wc_Wsi, wsi );
+					sb = (SystemBase *)fcd->fcd_SystemBase;
+					
+					if( nwsc->wc_Wsi == wsi )
+					{
+						us->us_WSConnections = (WebsocketClient *)us->us_WSConnections->node.mln_Succ;
+						DEBUG("[WS]: Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSConnections );
+						
+						AppSessionRemByWebSocket( sb->sl_AppSessionManager->sl_AppSessions, owsc );
+						
+						owsc->wc_UserSession = NULL;
+						owsc->wc_Wsi = NULL;
+						FFree( owsc );
+						owsc = NULL;
+						DEBUG("[WS]: WS connection removed\n");
+					}
+					// remove entry from the list
+					else
+					{
+						DEBUG("[WS]: Remove connection from list\n");
+						while( nwsc != NULL )
+						{
+							DEBUG("[WS]: WS Entry\n");
+							owsc = nwsc;
+							nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
+							
+							if( nwsc != NULL && nwsc->wc_Wsi == wsi )
+							{
+								DEBUG("Found connection %p\n", owsc );
+								owsc->node.mln_Succ = nwsc->node.mln_Succ;
+								
+								AppSessionRemByWebSocket( sb->sl_AppSessionManager->sl_AppSessions, nwsc );
+								
+								DEBUG("WS connection will be removed\n");
+								nwsc->wc_UserSession = NULL;
+								nwsc->wc_Wsi = NULL;
+								FFree( nwsc );
+								nwsc = NULL;
+								
+								//fcd->fcd_ActiveSession = NULL;
+								//fcd->fcd_SystemBase = NULL;
+								//fcd->fcd_WSClient = NULL;
+								break;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				FERROR("Cannot remove connection: Pointer to user is NULL\n");
+			}
+			DEBUG("[WS]: mutex will be unlocked\n");
+			pthread_mutex_unlock(  &us->us_WSMutex );
+			
+			//u  =  u->node.mln_Succ;
+			//}
+			
 		break;
 
 		//
@@ -336,10 +627,10 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 		/*
 		case LWS_CALLBACK_BROADCAST:
 			n = sprintf((char *)p, "%d", pss->number++);
-			n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
+			n = INVARGroup(wsi, p, n, LWS_WRITE_TEXT);
 			if (n < 0) 
 			{
-				fprintf(stderr, "ERROR writing to socket");
+				fprintf(stderr, "FERROR writing to socket");
 				return 1;
 			}
 		break;
@@ -347,113 +638,924 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 
 		case LWS_CALLBACK_RECEIVE:
 			{
+				// if we want to move full calls to WS threads
+				/*
+				WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
+				// threads
+				pthread_t thread;
+				memset( &thread, 0, sizeof( pthread_t ) );
+				
+				wstdata->wsi = wsi;
+				wstdata->fcd = fcd;
+				wstdata->request = StringDuplicateN( in, len );
+				wstdata->requestLen = len;
+				
+				// Multithread mode
+				if( pthread_create( &thread, NULL, &WSThread, ( void *)wstdata ) != 0 )
+				{
+				}
+				*/
+				
 //				Socket *sock = SocketWSOpen( wsi );
-				
-				DEBUG("[WS]: Callback receive\n");
-				
+ 				/*
+				type : msg
+				data:
+					type: event
+					data:
+						path: event_path
+						authid : string
+						data:   event data
+						
+				type: con
+				data: {
+					type : session
+					data : string
+				*/
+				//DEBUG1("[WS]: Callback receive\n");
+
+				/*
 				char *tmp = "<!--\"MSG\"--\"20\"--\"system.library/file\"-->BYTES<--!>";
 				
 				char **pathParts = NULL;
 				
 				if( len >= 16 )
+*/
+				
 				{
-					char *cptr = (char *)in;
-					
-					if( strncmp( cptr, "<!--\"CON\"--\"0\"--", 16 ) == 0 )		// First Connection
+					int i, i1;
+					int r;
+					jsmn_parser p;
+					jsmntok_t t[128]; // We expect no more than 128 tokens 
+
+					jsmn_init(&p);
+					r = jsmn_parse(&p, in, len, t, sizeof(t)/sizeof(t[0]));
+					if (r < 0) 
 					{
-						unsigned int i = 0;
-						char *session = NULL;
-						char *endsess = cptr;
-						
-						for( i=18 ; i < len ; i++ )
-						{
-							if( endsess[ i ] == '\"' )
-							{
-								endsess[ i ] = 0;
-								session = &cptr[ 17];
-								break;
-							}
-						}
-						
-						if( session != NULL )
-						{
-							if( SLIB->AddWebSocketConnection( SLIB, wsi, session ) >= 0 )
-							{
-								INFO("[WS]:Webscoket communication set with user (sessionid) %s\n", session );
-							}
-						}
+						FERROR("Failed to parse JSON: %d\n", r);
+						return 1;
 					}
-					else	// other calls
+
+					// Assume the top-level element is an object 
+					if (r > 1 && t[0].type == JSMN_OBJECT) 
 					{
-				//
-						Http *request = WebSocketMsgParse( in, len, &pathParts );
-						if( request != NULL )
+						if (jsoneq( in, &t[1], "type") == 0) 
 						{
-							if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
+							//DEBUG1("Type found\n");
+							
+							//
+							// connection message - somebody wants to connect!
+							//
+							
+							if( strncmp( "con",  in + t[ 2 ].start, t[ 2 ].end-t[ 2 ].start ) == 0 )
 							{
-								DEBUG("[WS]:Call syswebrequest\n");
-								Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), request );
-						
-								char header[ 128 ];
-								sprintf( header, "<!--\"MSG\"--\"%lld\"-->", response->sizeOfContent );
-						
-								DEBUG("[WS]:Request called, response ptr %p\n", response );
-								if( response != NULL )
+								//DEBUG1("Connection  r %d\n", r );
+								// We're connecting with a JSON object!
+								if( t[4].type == JSMN_OBJECT )
 								{
-									unsigned char *buf;
-							
-									buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
-									if( buf != NULL )
+									// we are trying to find now session or authid
+									for( i = 0; i < r ; i++ )
 									{
-										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
-										memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, response->content,  response->sizeOfContent );
-							
-										DEBUG("[WS]:Wrote to websockets %d, string %s size %d\n", n, response->content, strlen( response->content ) );
-										//n = libwebsocket_write( wsi,  response->content, response->sizeOfContent, LWS_WRITE_TEXT);
-										n = libwebsocket_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent, LWS_WRITE_TEXT);
-								
-										FFree( buf );
+										i1 = i + 1;
+										
+										// Incoming connection is authenticating with sessionid (the Workspace probably)
+										if( strncmp( "sessionId",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+										{
+											DEBUG("Session id found Websockets\n");
+											char session[ DEFAULT_SESSION_ID_SIZE ];
+											memset( session, 0, DEFAULT_SESSION_ID_SIZE );
+										
+											strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
+											
+											// We could connect? If so, then just send back a pong..
+											if( SLIB->AddWebSocketConnection( SLIB, wsi, session, NULL, fcd ) >= 0 )
+											{
+												INFO("[WS]:Websocket communication set with user (sessionid) %s\n", session );
+												
+												char answer[ 1024 ];
+												snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+												
+												unsigned char *buf;
+												int len = strlen( answer );
+												buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+												if( buf != NULL )
+												{
+													//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+													memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+													
+													UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+
+													if( ses != NULL )
+													{
+														pthread_mutex_lock( &(ses->us_WSMutex) );
+														n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+														pthread_mutex_unlock( &(ses->us_WSMutex) );
+													}
+													FFree( buf );
+												}
+											}
+										}
+										// Incoming connection is authenticating with authid (from an application or an FS)
+										else if( strncmp( "authid",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+										{
+											DEBUG("Auth id found in Websockets\n");
+											char authid[ DEFAULT_SESSION_ID_SIZE ];
+											memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
+										
+											strncpy( authid, in + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start );
+											{
+												// We could connect? If so, then just send back a pong..
+												if( SLIB->AddWebSocketConnection( SLIB, wsi, NULL, authid, fcd ) >= 0 )
+												{
+													INFO("[WS]:Websocket communication set with user (authid) %s\n", authid );
+												
+													char answer[ 2048 ];
+													snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+												
+													unsigned char *buf;
+													int len = strlen( answer );
+													buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len+LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+													if( buf != NULL )
+													{
+														//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+														memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+
+														UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+														if( ses != NULL )
+														{
+															pthread_mutex_lock( &(ses->us_WSMutex) );
+															//n = INVARGroup( wsi,  response->content, response->sizeOfContent, LWS_WRITE_TEXT);
+															n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
+															//DEBUG1("[WS]:Wrote to websockets %d, string %s size %d\n", n, answer, strlen( answer ) );
+															pthread_mutex_unlock( &(ses->us_WSMutex) );
+														}
+														FFree( buf );
+													}
+												}
+											}
+										}
+									}	// for through parameters
+									
+									if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+									{
+										// simple PING
+										if( strncmp( "ping",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 && r > 8 )
+										{
+#ifdef ENABLE_WEBSOCKETS_THREADS
+											WSThreadData *wstdata = FCalloc( 1, sizeof( WSThreadData ) );
+											// threads
+											pthread_t thread;
+											memset( &thread, 0, sizeof( pthread_t ) );
+
+											wstdata->wsi = wsi;
+											wstdata->fcd = fcd;
+											wstdata->requestid = StringDuplicateN( (char *)(in + t[ 8 ].start), t[ 8 ].end-t[ 8 ].start );
+
+											// Multithread mode
+											if( pthread_create( &thread, NULL, &WSThreadPing, ( void *)wstdata ) != 0 )
+											{
+											}
+											
+#else
+											char answer[ 2048 ];
+											snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ 8 ].end-t[ 8 ].start, (char *)(in + t[ 8 ].start) );
+											
+											UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+											if( ses != NULL )
+											{
+												ses->us_LoggedTime = time( NULL );
+												
+												unsigned char *buf;
+												int len = strlen( answer );
+												buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+												if( buf != NULL )
+												{
+													memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+	
+													n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+													FFree( buf );
+												}
+											
+												MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+												if( sqllib != NULL )
+												{
+													char *tmpQuery = FCalloc( 1024, 1 );
+													if( tmpQuery )
+													{
+														if( fcd->fcd_ActiveSession != NULL )
+														{
+															UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
+															sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
+															sqllib->SelectWithoutResults( sqllib, tmpQuery );
+														}
+														SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+													
+														//FERROR("Logged time updated: %lu\n", time(NULL) );
+													
+														FFree( tmpQuery );
+													}
+												}
+											} // if( ses != NULL
+#endif
+										}
 									}
 								}
-								DEBUG("[WS]:SysWebRequest return %d\n", n  );
 							}
-							HttpFree( request );
+							
+							//
+							// regular message - just passing information on an already established connection
+							//
+							
+							else if( strncmp( "msg",  in + t[ 2 ].start, 3 ) == 0 )
+							{
+								//char **pathParts = NULL;
+								
+								// type object
+								if( t[4].type == JSMN_OBJECT)
+								{
+									if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+									{
+										if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
+										{
+#ifdef ENABLE_WEBSOCKETS_THREADS
+											WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
+#endif
+											
+											//if( t[8].type == JSMN_OBJECT)
+											{
+												char *requestid = NULL;
+												int requestis = 0;
+												char *path = NULL;
+												int paths = 0;
+												char *authid = NULL;
+												int authids = 0;
+												
+												Http *http = HttpNew( );
+												if( http != NULL )
+												{
+													http->h_RequestSource = HTTP_SOURCE_WS;
+													http->parsedPostContent = HashmapNew();
+													http->uri = UriNew();
+
+													UserSession *s = fcd->fcd_ActiveSession;
+													DEBUG("Session ptr %p\n", s );
+													if( s != NULL )
+													{
+														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+														{
+															DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+														}
+														
+														if( s->us_UserActionInfo[ 0 ] == 0 )
+														{
+															int fd = lws_get_socket_fd( wsi );
+															char add[ 256 ];
+															char rip[ 256 ];
+															
+															lws_get_peer_addresses( wsi, fd, add, sizeof(add), rip, sizeof(rip) );
+															INFO("-----------------------------------------------call %s - %s\n", add, rip );
+															
+															snprintf( s->us_UserActionInfo, sizeof( s->us_UserActionInfo ), "%s / %s", add, rip );
+														}
+													}
+													
+													int i, i1;
+													
+#ifdef ENABLE_WEBSOCKETS_THREADS
+													//thread
+													char **pathParts = wstdata->pathParts;
+#else
+													//no thread
+													char *pathParts[ 1024 ];		// could be allocated in future
+													memset( pathParts, 0, 1024 );
+#endif
+													
+													int error = 0;
+													BufString *queryrawbs = BufStringNewSize( 2048 );
+													
+													for( i = 7 ; i < r ; i++ )
+													{
+														i1 = i + 1;
+														
+														if (jsoneq( in, &t[i], "requestid") == 0) 
+														{
+#ifdef ENABLE_WEBSOCKETS_THREADS
+															// threads
+															wstdata->requestid = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+															requestid = wstdata->requestid;
+#else
+															requestid = in + t[i1].start;
+															requestis =  t[i1].end-t[i1].start;
+#endif
+															
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															{
+																DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+															}
+															i++;
+														}
+														// We got path!
+														else if (jsoneq( in, &t[i], "path") == 0) 
+														{
+															// this is first path, URI
+															
+															if( path == NULL )
+															{
+#ifdef ENABLE_WEBSOCKETS_THREADS
+																// threads
+																wstdata->path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+																path = wstdata->path;//in + t[i1].start;
+																paths = t[i1].end-t[i1].start;
+#else
+																//no threads
+																path = in + t[i1].start;
+																paths = t[i1].end-t[i1].start;
+#endif
+																
+																if( http->uri != NULL )
+																{
+																	http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+																}
+															
+																//http->rawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+															
+																DEBUG1("Parsing path %s\n", path );
+															
+																path[ paths ] = 0;
+																int j = 1;
+															
+																// Don't overwrite first path if it is set!														
+																pathParts[ 0 ] = path;
+															
+																int selpart = 1;
+															
+																for( j = 1 ; j < paths ; j++ )
+																{
+																	if( path[ j ] == '/' )
+																	{
+																		DEBUG1("New path part created %s  path %s\n", pathParts[ selpart ], &(path[j]) );
+																		   
+																		pathParts[ selpart++ ] = &path[ j + 1 ];
+																		path[ j ] = 0;
+																	}
+																}
+																i++;
+															}
+															
+															else
+															{
+																// this is path parameter
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																{
+																	DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+																}
+																i++;
+															}
+														}
+														else if (jsoneq( in, &t[i], "authid") == 0) 
+														{
+															authid = in + t[i1].start;
+															authids = t[i1].end-t[i1].start;
+															
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															{
+																//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+															}
+															
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															{
+																//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
+															}
+															i++;
+														}
+														else
+														{
+															
+														//	  	JSMN_PRIMITIVE = 0,
+														//		JSMN_OBJECT = 1,
+														//		JSMN_ARRAY = 2,
+														//		JSMN_STRING = 3
+														//
+
+															DEBUG("%d i   type %d\n", i, t[ i ].type );
+															if(( i1) < r && t[ i ].type != JSMN_ARRAY )
+															{
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																{
+																	DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), in + t[i].start, (int)(t[i1].end-t[i1].start), in + t[i1].start );
+																}
+																
+																if( t[ i1 ].type == JSMN_ARRAY || t[ i1 ].type == JSMN_OBJECT )
+																{
+																	int z=0;
+																	
+																	//for( z=i+1; z < i+t[ nextEntry ].size ; z++ )
+																	//{
+																	//	DEBUG("skip entry  %.*s\n", t[z].end-t[z].start, in + t[z].start );
+																	//}
+																	
+																	if( t[ i1 ].type == JSMN_ARRAY )
+																	{
+																		DEBUG("Next  entry is array %d\n", t[ i1 ].size );
+																		i += t[ i1 ].size;
+																	}
+																		
+																	i++;
+																	//
+																	DEBUG1("current %d skip %d next %d\n", t[ i ].size-1, t[ i1 ].size-1, t[ i1+1 ].size );
+																}
+																else
+																{
+																	if( queryrawbs->bs_Size != 0 )
+																	{
+																		BufStringAddSize( queryrawbs, "&", 1 );
+																	}
+																	BufStringAddSize( queryrawbs, in + t[ i ].start, t[i].end-t[i].start );
+																	BufStringAddSize( queryrawbs, "=", 1 );
+																	BufStringAddSize( queryrawbs, in + t[i1].start, t[i1].end-t[i1].start );
+																		
+																	i++;
+																}
+															}
+															else
+															{
+																DEBUG("Cannot add value: %.*s\n", t[i].end-t[i].start, in + t[i].start );
+																i++;
+															}
+														}
+													} // end of going through json
+													DEBUG("Checking path '%s'\n", pathParts[ 0 ] );
+													
+#ifdef ENABLE_WEBSOCKETS_THREADS
+													// threads
+													pthread_t thread;
+													memset( &thread, 0, sizeof( pthread_t ) );
+													wstdata->http = http;
+													wstdata->wsi = wsi;
+													wstdata->fcd = fcd;
+													wstdata->queryrawbs = queryrawbs;
+													// Multithread mode
+													if( pthread_create( &thread, NULL, &WSThread, ( void *)wstdata ) != 0 )
+													{
+													}
+													
+#else
+													
+													if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
+													{
+														http->h_WSocket = wsi;
+														
+														struct timeval start, stop;
+														gettimeofday(&start, NULL);
+														
+														http->content = queryrawbs->bs_Buffer;
+														queryrawbs->bs_Buffer = NULL;
+														
+														http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+														
+														Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession );
+														
+														gettimeofday(&stop, NULL);
+														double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+														
+														DEBUG("WS ->SysWebRequest took %f seconds\n", secs );
+						
+														if( response != NULL )
+														{
+															unsigned char *buf;
+															char jsontemp[ 2048 ];
+															int n;
+															
+															// If it is not JSON!
+															if( response->content != NULL && ( response->content[ 0 ] != '[' && response->content[ 0 ] != '{' ) )
+															{
+																if( strcmp( response->content, "fail<!--separate-->{\"response\":\"user session not found\"}" )  == 0 )
+																{
+																	returnError = -1;
+																}
+																
+																static int END_CHAR_SIGNS = 3;
+																char *end = "\"}}";
+															
+																int jsonsize = sprintf( jsontemp, 
+																	"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%.*s\",\"data\":\"",
+																	requestis,
+																	requestid 
+																);
+																
+																buf = (unsigned char *)FCalloc( 
+																	LWS_SEND_BUFFER_PRE_PADDING + jsonsize + (response->sizeOfContent << 1) + 1 + 
+																	END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
+																);
+																if( buf != NULL )
+																{
+																	memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp, jsonsize );
+																	
+																	char *locptr = (char *) buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize;
+																	int z = 0;
+																	int znew = 0;
+																	int len = (int)response->sizeOfContent;
+																	unsigned char car;
+																	
+																	// Add escape characters to single and double quotes!
+																	for( ; z < len; z++ )
+																	{
+																		car = response->content[ z ];
+																		switch( car )
+																		{
+																			case '\\':
+																				locptr[ znew++ ] = '\\';
+																				break;
+																			// Always add escape chars on unescaped double quotes
+																			case '"':
+																				locptr[ znew++ ] = '\\';
+																				locptr[ znew++ ] = '\\';
+																				break;
+																			// New line
+																			case 10:
+																				locptr[ znew++ ] = '\\';
+																				car = 'n';
+																				break;
+																			// Line feed
+																			case 13:
+																				locptr[ znew++ ] = '\\'; 
+																				car = 'r';
+																				break;
+																			// Tab
+																			case 9:
+																				locptr[ znew++ ] = '\\';
+																				car = 't';
+																				break;
+																		}
+																		locptr[ znew++ ] = car;
+																	}
+
+																	if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
+																	memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING + jsonsize + znew, end, END_CHAR_SIGNS );
+																	//DEBUG("--->  strlen %d  znew + jsonsize %d\n",  strlen( buf+LWS_SEND_BUFFER_PRE_PADDING ), znew + jsonsize );
+
+																	n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+																	
+																	Log( FLOG_INFO, "Websocket call: '%s'\n",  buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+																	//FERROR("\n\n\nWS\n\n'%s'\n ----------------------------------------------------------\HTTP %s\n\n\n", buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+																	
+																	FFree( buf );
+																}
+															}
+															else
+															{
+																// TODO: This should never happen.
+																if( response->content != NULL )
+																{
+																	//DEBUG("\n\n\nJSON\n\n\n");
+																
+																	if( strcmp( response->content, "{\"response\":\"user session not found\"}" )  == 0 )
+																	{
+																		returnError = -1;
+																	}
+																
+																	int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+																	char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+																	int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+															
+																	buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + response->sizeOfContent + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+																	if( buf != NULL )
+																	{
+																		//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+																		memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+																		memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response->content,  response->sizeOfContent );
+																		memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+response->sizeOfContent, end,  END_CHAR_SIGNS );
+							
+																		n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+
+																		FFree( buf );
+																	}
+																}
+																else		// content == NULL
+																{
+																	int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+																	char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+																	int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+																	
+																	buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+																	if( buf != NULL )
+																	{
+																		//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+																		memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+																		memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, end,  END_CHAR_SIGNS );
+																		
+																		n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+																		
+																		FFree( buf );
+																	}
+																}
+															}
+															
+															HttpFree( response );
+														}
+														DEBUG1("[WS]:SysWebRequest return %d\n", n  );
+													}
+													else
+													{
+														char response[ 1024 ];
+														int resplen = sprintf( response, "{\"response\":\"cannot parse command or bad library was called : %s\"}", pathParts[ 0 ] );
+														
+														char jsontemp[ 1024 ];
+														static int END_CHAR_SIGNS = 2;
+														char *end = "}}";
+														int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+															
+														unsigned char * buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + resplen + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+														if( buf != NULL )
+														{
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response,  resplen );
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+resplen, end,  END_CHAR_SIGNS );
+							
+															n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+														
+															FFree( buf );
+														}
+													}
+													
+													DEBUG("http %p URI \n", http );
+													if( http != NULL )
+													{
+														DEBUG("http %p URI \n", http->uri );
+														UriFree( http->uri );
+														
+														if( http->rawRequestPath != NULL )
+														{
+															FFree( http->rawRequestPath );
+															http->rawRequestPath = NULL;
+														}
+													}
+
+													DEBUG("Before http\n");
+													HttpFree( http );
+													DEBUG("Before bufstring del\n");
+													BufStringDelete( queryrawbs );
+													DEBUG("After bufstring del\n");
+													
+#endif
+												}
+											}
+										}
+										
+										//
+										// events, no need to respoe
+										//
+										
+										else if( strncmp( "event",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
+										{
+											//DEBUG1("Event type\n");
+											
+											//if( t[8].type == JSMN_OBJECT)
+											{
+												char *requestid = NULL;
+												int requestis = 0;
+												char *path = NULL;
+												int paths = 0;
+												char *authid = NULL;
+												int authids = 0;
+												
+												Http *http = HttpNew( );
+												if( http != NULL )
+												{
+													http->h_RequestSource = HTTP_SOURCE_WS;
+													http->parsedPostContent = HashmapNew();
+													http->uri = UriNew();
+													
+													UserSession *s = fcd->fcd_ActiveSession;
+													if( s != NULL )
+													{
+														DEBUG("Session ptr %p  session %p\n", s, s->us_SessionID );
+														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+														{
+															DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+														}
+													
+														int i, i1;
+														char *pathParts[ 1024 ];		// could be allocated in future
+														memset( pathParts, 0, 1024 );
+													
+														BufString *queryrawbs = BufStringNewSize( 2048 );
+													
+														for( i = 7 ; i < r ; i++ )
+														{
+															i1 = i + 1;
+															if (jsoneq( in, &t[i], "requestid") == 0) 
+															{
+																requestid = in + t[i1].start;
+																requestis =  t[i1].end-t[i1].start;
+															
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																{
+																	//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+																}
+																i++;
+															}
+															else if (jsoneq( in, &t[i], "path") == 0) 
+															{
+																// this is first path, URI
+															
+																if( path == NULL )
+																{
+																	path = in + t[i1].start;
+																	paths = t[i1].end-t[i1].start;
+																
+																	if( http->uri != NULL )
+																	{
+																		http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+																	}
+																
+																	http->rawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+																
+																	DEBUG1("Parsing path %s\n", path );
+																
+																	path[ paths ] = 0;
+																	int j = 1;
+																
+																	// Don't overwrite first path if it is set!
+																	//if( !pathParts[ 0 ] )
+																	{
+																		pathParts[ 0 ] = path;
+																	}
+																
+																	int selpart = 1;
+																
+																	for( j = 1 ; j < paths ; j++ )
+																	{
+																		if( path[ j ] == '/' )
+																		{
+																			DEBUG1("New path part created %s  path %s\n", pathParts[ selpart ], &(path[j]) );
+																		
+																			pathParts[ selpart++ ] = &path[ j + 1 ];
+																			path[ j ] = 0;
+																		}
+																	}
+																	i++;
+																}
+																else
+																{
+																	// this is path parameter
+																	if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																	{
+																		//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+																	}
+																	i++;
+																}
+															}
+															else if (jsoneq( in, &t[i], "authId") == 0) 
+															{
+																authid = in + t[i1].start;
+																authids = t[i1].end-t[i1].start;
+															
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																{
+																	//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+																}
+															
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																{
+																	//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
+																}
+																i++;
+															}
+															else
+															{
+																{
+																	DEBUG("%d i   type %d\n", i, t[ i ].type );
+																	if(( i1) < r && t[ i ].type != JSMN_ARRAY )
+																	{
+																		if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																		{
+																			DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i1].end-t[i1].start, in + t[ i1 ].start );
+																		}
+																
+																		if( t[ i1 ].type == JSMN_ARRAY || t[ i1 ].type == JSMN_OBJECT )
+																		{
+																			int z=0;
+																			
+																			//for( z=i+1; z < i+t[ nextEntry ].size ; z++ )
+																			//{
+																			//	DEBUG("skip entry  %.*s\n", t[z].end-t[z].start, in + t[z].start );
+																			//}
+																		
+																			if( t[ i1 ].type == JSMN_ARRAY )
+																			{
+																				DEBUG("Next  entry is array %d\n", t[ i1 ].size );
+																				i += t[ i1 ].size;
+																			}
+																		
+																			i++;
+																			//
+																			DEBUG1("current %d skip %d next %d\n", t[ i ].size-1, t[ i1 ].size-1, t[ i1+1 ].size );
+																		}
+																		else
+																		{
+																			if( queryrawbs->bs_Size != 0 )
+																			{
+																				BufStringAddSize( queryrawbs, "&", 1 );
+																			}
+																			BufStringAddSize( queryrawbs, in + t[ i ].start, t[i].end-t[i].start );
+																			BufStringAddSize( queryrawbs, "=", 1 );
+																			BufStringAddSize( queryrawbs, in + t[i1].start, t[i1].end-t[i1].start );
+																		
+																			i++;
+																		}
+																	}
+																	else
+																	{
+																		DEBUG("Cannot add value: %.*s\n", t[i].end-t[i].start, in + t[i].start );
+																			i++;
+																	}
+																}
+															}
+														} // end of going through json
+													
+														if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
+														{
+															http->h_WSocket = wsi;
+														
+															struct timeval start, stop;
+															gettimeofday(&start, NULL);
+														
+															http->content = queryrawbs->bs_Buffer;
+															queryrawbs->bs_Buffer = NULL;
+															
+															http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+															
+															Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession );
+														
+															gettimeofday(&stop, NULL);
+															double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+														
+															DEBUG("\n\nWS ->SysWebRequest took %f seconds\n", secs );
+														
+															if( response != NULL )
+															{
+																if( response->content != NULL && strcmp( response->content, "fail<!--separate-->{\"response\":\"user session not found\"}" )  == 0 )
+																{
+																	returnError = -1;
+																}
+																
+																HttpFree( response );
+															
+																BufStringDelete( queryrawbs );
+															}
+														}
+
+														if( http != NULL )
+														{
+															UriFree( http->uri );
+															if( http->rawRequestPath != NULL )
+															{
+																FFree( http->rawRequestPath );
+																http->rawRequestPath = NULL;
+															}
+														}
+
+														HttpFree( http );
+													}
+												} // session != NULL
+												else
+												{
+													FERROR("User session is NULL\n");
+												}
+											}
+										}
+									}
+								}
+							}
+							else
+							{
+								FERROR("Found type %10s \n %10s\n", (char *)(in + t[ 2 ].start), (char *)(in + t[ 1 ].start) );
+							}
 						}
-						else
-						{
-							DEBUG("[WS]:Send Error response\n");
-							int size = LWS_SEND_BUFFER_PRE_PADDING + 256 +LWS_SEND_BUFFER_POST_PADDING;
-							char buf[ size ];
-							char *msg = " { \"ErrorMessage\":\"Request do not contain required data\" }";
-							strcpy( (char *)(buf+LWS_SEND_BUFFER_PRE_PADDING), msg );
-							ERROR("[WS]:Cannot parse websocket message: %s\n", (char *)in );
-							n = libwebsocket_write( wsi, (unsigned char *)(buf + LWS_SEND_BUFFER_PRE_PADDING) , strlen( msg ), LWS_WRITE_TEXT);
-						}
-						DEBUG("[WS]:FreeParts\n");
 					}
-					
-					if( pathParts != NULL )
+					else
 					{
-						FFree( pathParts );
+						FERROR("Object expected\n");
 					}
 				}
 			}
+			
 		break;
 		
 		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
-			DEBUG("[WS]: LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
+			DEBUG1("[WS]: LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
 			break;
 		
 		case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
-			DEBUG("[WS]: LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
+			DEBUG1("[WS]: LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
 			break;
 		
 		case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
-			DEBUG("[WS]: LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
+			DEBUG1("[WS]: LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
 			break;
 		
 		case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
-			DEBUG("[WS]: LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
+			DEBUG1("[WS]: LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
 		break;
 
 	//
@@ -465,277 +1567,126 @@ int FC_Callback( struct libwebsocket_context * this, 	struct libwebsocket *wsi,
 	case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
 		dump_handshake_info((struct lws_tokens *)(long)user);
 		// you could return non-zero here and kill the connection 
-		DEBUG("[WS]: Filter protocol\n");
+		DEBUG1("[WS]: Filter protocol\n");
 		break;
 		
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
-		DEBUG("[WS]: LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
+		DEBUG1("[WS]: LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
 		break;
 
 	default:
-		DEBUG("[WS]: Default Call\n");
+		DEBUG1("[WS]: Default Call, size %d\n", (int)len );
+		if( len > 0 && len < 500 && in != NULL )
+		{
+			//DEBUG1("[WS]: Default Call, message size %d : %.*s \n", len, len, in );
+		}
 		break;
 	}
+	nothreads--;
 
-	return 0;
+	return returnError;
 }
 
+// list of supported protocols and callbacks 
 
-// lws-mirror_protocol 
-
-
-
-struct per_session_data__lws_mirror {
-	struct libwebsocket *wsi;
-	int ringbuffer_tail;
-};
-
-struct a_message {
-	void *payload;
-	size_t len;
-};
-
-static struct a_message ringbuffer[ MAX_MESSAGE_QUEUE ];
-static int ringbuffer_head;
-
-//
-//
-//
-
-static int callback_lws_mirror(struct libwebsocket_context * this,	struct libwebsocket *wsi,	enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len )
-{
-	int n;
-	struct per_session_data__lws_mirror *pss = user;
-	
-	DEBUG("[WS]: callback lws mirror\n");
-
-	switch (reason) 
-	{
-
-	case LWS_CALLBACK_ESTABLISHED:
-		pss->ringbuffer_tail = ringbuffer_head;
-		pss->wsi = wsi;
-		libwebsocket_callback_on_writable(this, wsi);
-		DEBUG("[WS]:Callback estabilished\n");
-		break;
-
-	case LWS_CALLBACK_SERVER_WRITEABLE:
-
-		if (pss->ringbuffer_tail != ringbuffer_head) {
-
-			n = libwebsocket_write( wsi, (unsigned char *)
-				   ringbuffer[pss->ringbuffer_tail].payload +
-				   LWS_SEND_BUFFER_PRE_PADDING,
-				   ringbuffer[pss->ringbuffer_tail].len, LWS_WRITE_TEXT);
-
-			if (n < 0) 
-			{
-				ERROR( "ERROR writing to socket\n");
-				//exit(1);
-			}
-
-			if (pss->ringbuffer_tail == (MAX_MESSAGE_QUEUE - 1))
-			{
-				pss->ringbuffer_tail = 0;
-			}
-			else
-			{
-				pss->ringbuffer_tail++;
-			}
-
-			if (((ringbuffer_head - pss->ringbuffer_tail) %
-				  MAX_MESSAGE_QUEUE) < (MAX_MESSAGE_QUEUE - 15))
-			{
-				libwebsocket_rx_flow_control(wsi, 1);
-			}
-
-			libwebsocket_callback_on_writable(this, wsi);
-
-		}
-		break;
-/*
-	case LWS_CALLBACK_BROADCAST:
-		n = libwebsocket_write(wsi, in, len, LWS_WRITE_TEXT);
-		if (n < 0)
-			fprintf(stderr, "mirror write failed\n");
-		break;
-*/
-	case LWS_CALLBACK_RECEIVE:
-
-		if (ringbuffer[ringbuffer_head].payload)
-		{
-			free(ringbuffer[ringbuffer_head].payload);
-		}
-
-		ringbuffer[ringbuffer_head].payload =calloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING, sizeof(char) );
-				
-		ringbuffer[ringbuffer_head].len = len;
-		memcpy((char *)ringbuffer[ringbuffer_head].payload + LWS_SEND_BUFFER_PRE_PADDING, in, len);
-		
-		if (ringbuffer_head == (MAX_MESSAGE_QUEUE - 1))
-		{
-			ringbuffer_head = 0;
-		}
-		else 
-		{
-			ringbuffer_head++;
-		}
-
-		if (((ringbuffer_head - pss->ringbuffer_tail) %
-				  MAX_MESSAGE_QUEUE) > (MAX_MESSAGE_QUEUE - 10))
-		{
-			libwebsocket_rx_flow_control(wsi, 0);
-		}
-
-		libwebsocket_callback_on_writable_all_protocol(
-					       libwebsockets_get_protocol(wsi));
-		break;
-		
-
-
-	default:
-		DEBUG("[WS]:Callback default\n");
-		break;
-	}
-
-	return 0;
-}
-
-
-/* list of supported protocols and callbacks */
-
-static struct libwebsocket_protocols protocols[] = {
-	/* first protocol must always be HTTP handler */
-
+static struct lws_protocols protocols[] = {
+	// first protocol must always be HTTP handler 
 	{
 		"http-only",		/* name */
 		callback_http,		/* callback */
-		0			/* per_session_data_size */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL
 	},
 	{
 		"FC-protocol",
 		FC_Callback,
-		sizeof( struct FC_Data ),
+		sizeof( struct FCWSData ),
+		WS_PROTOCOL_BUFFER_SIZE,
+		2,
+		NULL
 	},
 	{
-		"lws-mirror-protocol",
-		callback_lws_mirror,
-		sizeof(struct per_session_data__lws_mirror)
-	},
-	{
-		NULL, NULL, 0		/* End of list */
+		NULL, NULL, 0, 0, 0, NULL 		// End of list 
 	}
 };
 
-//
-//
-//
+void hand(int s )
+{
+	DEBUG("Signal\n");
+}
 
+/**
+ * Main Websockets thread
+ *
+ * @param data pointer to Websockets thread
+ * @return 0 when success, otherwise error number
+ */
 int WebsocketThread( FThread *data )
 {
 	WebSocket *ws = (WebSocket *)data->t_Data;
-	
-	DEBUG("[WS]:Websocket thread started\n");
-	
-	//
-	// This is an example of an existing application's explicit poll()
-	// loop that libwebsockets can integrate with.
-	//
-	
-	int n = 0;
-
-	while( ws->ws_Quit != TRUE )
+	if( ws->ws_Context == NULL )
 	{
-		struct timeval tv;
+		FERROR("WsContext is empty\n");
+		return 0;
+	}
+	
+	DEBUG1("[WS]:Websocket thread started\n");
+	
+	//signal( SIGPIPE, SIG_IGN );
+	//signal( SIGPIPE, hand );
 
-		//
-		// this represents an existing server's single poll action
-		// which also includes libwebsocket sockets
-		//
-
-		n = poll( ws->ws_Pollfds, ws->ws_CountPollfds, MAX_POLL_ELEMENTS );
-		if (n < 0)
+	while( TRUE )
+	{
+		//pthread_yield();
+		int n = lws_service( ws->ws_Context, 500 );
+		
+		if( ws->ws_Quit == TRUE && nothreads <= 0 )
 		{
-			goto done;
-		}
-
-		if ( n )
-		{
-			for ( n = 0; n < ws->ws_CountPollfds; n++ )
-			{
-				if ( ws->ws_Pollfds[n].revents )
-				{
-					//
-					// returns immediately if the fd does not
-					// match anything under libwebsockets
-					// control
-					//
-					libwebsocket_service_fd( ws->ws_Context, &(ws->ws_Pollfds[n]) );
-				}
-			}
-		}
-
-		// do our broadcast periodically 
-
-		gettimeofday(&tv, NULL);
-
-		//
-		// This broadcasts to all dumb-increment-protocol connections
-		// at 20Hz.
-		//
-		// We're just sending a character 'x', in these examples the
-		// callbacks send their own per-connection content.
-		//
-		// You have to send something with nonzero length to get the
-		// callback actions delivered.
-		//
-		// We take care of pre-and-post padding allocation.
-		//
-
-		if ( ((unsigned int) tv.tv_usec - (unsigned int)ws->ws_OldTime ) > 500000 ) 
-		{
-			/*
-			libwebsockets_broadcast(
-					&protocols[PROTOCOL_DUMB_INCREMENT],
-					&buf[LWS_SEND_BUFFER_PRE_PADDING], 1);
-			oldus = tv.tv_usec;
-			*/
-			ws->ws_OldTime =  tv.tv_usec;
+			break;
 		}
 	}
 
 done:
-	
-
+	data->t_Launched = FALSE;
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Websocket start thread function
+ *
+ * @param ws pointer to WebSocket structure
+ * @return 0 when success, otherwise error number
+ */
 int WebSocketStart( WebSocket *ws )
 {
-	DEBUG("[WS]:Starting websocket thread\n");
+	DEBUG1("[WS]:Starting websocket thread\n");
 	ws->ws_Thread = ThreadNew( WebsocketThread, ws, TRUE );
-	
 	return 0;
 }
 
-//
-//
-//
-
-WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
+/**
+ * Create WebSocket structure
+ *
+ * @param sb pointer to SystemBase
+ * @param port port on which WS will work
+ * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
+ * @return pointer to new WebSocket structure, otherwise NULL
+ */
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 {
 	WebSocket *ws = NULL;
+	SystemBase *lsb = (SystemBase *)sb;
 	
-	DEBUG("[WS]: New websocket\n");
+	DEBUG1("[WS]: New websocket\n");
 	
-	if( ( ws = FCalloc( 1, sizeof(WebSocket) ) ) != NULL )
+	pthread_mutex_init( &nothreadsmutex, NULL );
+	
+	if( ( ws = FCalloc( 1, sizeof( WebSocket ) ) ) != NULL )
 	{
-		char *fhome = getenv("FRIEND_HOME");
-		ws->ws_FCM = fcm;
+		char *fhome = getenv( "FRIEND_HOME" );
+		ws->ws_FCM = lsb->fcm;
 		
 		ws->ws_Port = port;
 		ws->ws_UseSSL = sslOn;
@@ -748,25 +1699,13 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 		{
 			INFO("[WS]:WebSocket: SSL Enabled\n");
 			
-			ws->ws_CertPath = RSA_SERVER_CERT;
-			ws->ws_KeyPath = RSA_SERVER_KEY;
+			ws->ws_CertPath = lsb->RSA_SERVER_CERT;
+			ws->ws_KeyPath = lsb->RSA_SERVER_KEY;
+			
+			DEBUG1("[WS]: server cert %s keycert %s\n", ws->ws_CertPath, ws->ws_KeyPath );
 		
 			//sprintf( ws->ws_CertPath, "%s%s", fhome, "/libwebsockets-test-server.pem" );
 			//sprintf( ws->ws_KeyPath, "%s%s", fhome, "/libwebsockets-test-server.key.pem" );
-			/*
-					ws->ws_Info.ssl_cipher_list = "ECDHE-ECDSA-AES256-GCM-SHA384:"
-			       "ECDHE-RSA-AES256-GCM-SHA384:"
-			       "DHE-RSA-AES256-GCM-SHA384:"
-			       "ECDHE-RSA-AES256-SHA384:"
-			       "HIGH:!aNULL:!eNULL:!EXPORT:"
-			       "!DES:!MD5:!PSK:!RC4:!HMAC_SHA1:"
-			       "!SHA1:!DHE-RSA-AES128-GCM-SHA256:"
-			       "!DHE-RSA-AES128-SHA256:"
-			       "!AES128-GCM-SHA256:"
-			       "!AES128-SHA256:"
-			       "!DHE-RSA-AES256-SHA256:"
-			       "!AES256-GCM-SHA384:"
-			       "!AES256-SHA256";*/
 			//ws->ws_Opts |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
 		}
 		
@@ -786,16 +1725,36 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 		ws->ws_Info.ssl_cert_filepath = ws->ws_CertPath;
 		ws->ws_Info.ssl_private_key_filepath = ws->ws_KeyPath;
 		ws->ws_Info.options = ws->ws_Opts;// | LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
+		if( ws->ws_UseSSL == TRUE ) 
+		{
+			ws->ws_Info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS|LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+		}
+		
 		ws->ws_Info.user = ws;
-		ws->ws_Info.extensions = libwebsocket_get_internal_extensions();
+		//ws->ws_Info.extensions = lws_get_internal_extensions();
 //		ws->ws_Info.extensions->per_context_private_data = ws;
+		ws->ws_Info.ssl_cipher_list = "ECDHE-ECDSA-AES256-GCM-SHA384:"
+			       "ECDHE-RSA-AES256-GCM-SHA384:"
+			       "DHE-RSA-AES256-GCM-SHA384:"
+			       "ECDHE-RSA-AES256-SHA384:"
+			       "HIGH:!aNULL:!eNULL:!EXPORT:"
+			       "!DES:!MD5:!PSK:!RC4:!HMAC_SHA1:"
+			       "!SHA1:!DHE-RSA-AES128-GCM-SHA256:"
+			       "!DHE-RSA-AES128-SHA256:"
+			       "!AES128-GCM-SHA256:"
+			       "!AES128-SHA256:"
+			       "!DHE-RSA-AES256-SHA256:"
+			       "!AES256-GCM-SHA384:"
+			       "!AES256-SHA256";
 		
 		ws->ws_CountPollfds = 0;
+		
+		//lws_set_log_level( 0, lwsl_emit_syslog);
 
-		ws->ws_Context = libwebsocket_create_context( &(ws->ws_Info) );
+		ws->ws_Context = lws_create_context( &(ws->ws_Info) );
 		if (ws->ws_Context == NULL) 
 		{
-			ERROR( "libwebsocket init failed\n");
+			FERROR( "[WS]: libwebsocket init failed, cannot create context\n");
 
 			FFree( ws );
 			return NULL;
@@ -808,37 +1767,55 @@ WebSocket *WebSocketNew( void *fcm,  int port, BOOL sslOn )
 	}
 	else
 	{
-		ERROR("[WS]:Cannot allocate memory for WebSocket\n");
+		FERROR("[WS]:Cannot allocate memory for WebSocket\n");
 	}
+	
+	DEBUG1("[WS]: Websocket created\n");
 	
 	return ws;
 }
 
-//
-//
-//
-
-void WebSocketFree( WebSocket* ws )
+/**
+ * Websocket delete function
+ *
+ * @param ws pointer to WebSocket structure which will be deleted
+ */
+void WebSocketDelete( WebSocket* ws )
 {
 	if( ws != NULL )
 	{
 		ws->ws_Quit = TRUE;
+		DEBUG("Websocket close in progress\n");
+		
+#ifdef ENABLE_WEBSOCKETS_THREADS
+		while( TRUE )
+		{
+			if( nothreads <= 0 && ws->ws_Thread->t_Launched == FALSE )
+			{
+				break;
+			}
+			DEBUG("Threads %d\n", nothreads );
+			usleep( 100000 );
+		}
+#endif
 		
 		if( ws->ws_Thread )
 		{
 			ThreadDelete( ws->ws_Thread );
 		}
 		
-		libwebsocket_context_destroy( ws->ws_Context );
+		lws_context_destroy( ws->ws_Context );
 		
 		if( ws->ws_CertPath != NULL )
 		{
-			FFree( ws->ws_CertPath );
-			FFree( ws->ws_KeyPath );
+			//FFree( ws->ws_CertPath );
+			//FFree( ws->ws_KeyPath );
 		}
 			
 		FFree( ws );
 	}
+	
+	pthread_mutex_destroy( &nothreadsmutex );
 }
 
 
@@ -846,38 +1823,42 @@ void WebSocketFree( WebSocket* ws )
 // this protocol server (always the first one) just knows how to do HTTP 
 //
 
-static int callback_http(struct libwebsocket_context * this, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	
 	int n;
 	char client_name[ 128 ];
 	char client_ip[ 128 ];
 	
-	WebSocket *ws =  (WebSocket *) libwebsocket_context_user ( this );
+	WebSocket *ws =  (WebSocket *)in;//  lws_wsi_user(lws_get_parent(wsi));
+	//struct lws_pollargs *pa = (struct lws_pollargs *)in;
+	//lws_context_user ( wsi );
 	
-	INFO("[WS]:CALLBACKHTTP get context user WS %p context %p  USER %p reason %d\n", ws, this, user, reason );
+	//DEBUG1("[WS]:CALLBACKHTTP get context user WS %p context %p  USER %p reason %d\n", ws, this, user, reason );
 
 	switch( reason ) 
 	{
 		case LWS_CALLBACK_HTTP:
-			DEBUG( "[WS]:serving HTTP URI %s\n", (char *)in );
-
+			DEBUG1( "[WS]:serving HTTP URI %s\n", (char *)in );
+/*
 		if ( in && strcmp(in, "/favicon.ico") == 0 ) 
 		{
-			if (libwebsockets_serve_http_file( this, wsi,
-			     LOCAL_RESOURCE_PATH"/favicon.ico", "image/x-icon") )
+			if (lws_serve_http_file( wsi,
+			     LOCAL_RESOURCE_PATH"/favicon.ico", "image/x-icon", 4) )
 			{
-				DEBUG( "[WS]:Failed to send favicon\n");
+				DEBUG1( "[WS]:Failed to send favicon\n");
 			}
 			break;
 		}
 
-		/* send the script... when it runs it'll start websockets */
+		// send the script... when it runs it'll start websockets 
 
-		if ( libwebsockets_serve_http_file( this, wsi, LOCAL_RESOURCE_PATH"/test.html", "text/html") )
+		//n = lws_serve_http_file(wsi, buf, mimetype, other_headers, n);
+		if ( lws_serve_http_file( wsi, LOCAL_RESOURCE_PATH"/test.html", "text/html", 4) )
 		{
-			ERROR( "[WS]:Failed to send HTTP file\n");
+			FERROR( "[WS]:Failed to send HTTP file\n");
 		}
+		*/
 		break;
 
 	//
@@ -890,71 +1871,15 @@ static int callback_http(struct libwebsocket_context * this, struct libwebsocket
 
 	case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
 
-		libwebsockets_get_peer_addresses( this, wsi, (int)(long)user, client_name, sizeof(client_name), client_ip, sizeof(client_ip) );
-
-		INFO( "[WS]:Received network connect from %s (%s)\n", client_name, client_ip );
-
+		//lws_get_peer_addresses( this, wsi, (int)(long)user, client_name, sizeof(client_name), client_ip, sizeof(client_ip) );
 		// if we returned non-zero from here, we kill the connection 
 		break;
 
-	//
-	// callbacks for managing the external poll() array appear in
-	// protocol 0 callback
-	//
-		
-	//DEBUG("[WS]:USEPTR %p\n", user );
-
-	case LWS_CALLBACK_ADD_POLL_FD:
-		
-		DEBUG("[WS]:ADDPOLLFD %ld  events %d\n", (long)user , ws->ws_CountPollfds );
-		
-		ws->ws_Pollfds[ ws->ws_CountPollfds ].fd = (int)(long)user;
-		ws->ws_Pollfds[ ws->ws_CountPollfds ].events = (int)len;
-		ws->ws_Pollfds[ ws->ws_CountPollfds++ ].revents = 0;
-	break;
-
-	case LWS_CALLBACK_DEL_POLL_FD:
-		DEBUG("[WS]:LWS_CALLBACK_DEL_POLL_FD\n");
-		for (n = 0; n < ws->ws_CountPollfds; n++)
-		{
-			if (ws->ws_Pollfds[n].fd == (int)(long)user)
-			{
-				while (n < ws->ws_CountPollfds) 
-				{
-					ws->ws_Pollfds[n] = ws->ws_Pollfds[n + 1];
-					n++;
-				}
-			}
-		}
-		ws->ws_CountPollfds--;
-		break;
-
-	case LWS_CALLBACK_SET_MODE_POLL_FD:
-		DEBUG("[WS]:LWS_CALLBACK_SET_MODE_POLL_FD\n");
-		for (n = 0; n < ws->ws_CountPollfds; n++)
-		{
-			if (ws->ws_Pollfds[n].fd == (int)(long)user)
-			{
-				ws->ws_Pollfds[n].events |= (int)(long)len;
-			}
-		}
-		break;
-
-	case LWS_CALLBACK_CLEAR_MODE_POLL_FD:
-		DEBUG("[WS]:LWS_CALLBACK_CLEAR_MODE_POLL_FD\n");
-		for (n = 0; n < ws->ws_CountPollfds; n++)
-		{
-			if (ws->ws_Pollfds[n].fd == (int)(long)user)
-			{
-				ws->ws_Pollfds[n].events &= ~(int)(long)len;
-			}
-		}
-		break;
-
 	default:
-		DEBUG("[WS]:Default\n");
+		//DEBUG1("[WS]:Default\n");
 		break;
 	}
+	
 
 	return 0;
 }
@@ -991,8 +1916,8 @@ static void dump_handshake_info(struct lws_tokens *lwst)
 		// client receives these 
 		[WSI_TOKEN_ACCEPT] = "Accept",
 		[WSI_TOKEN_NONCE] = "Nonce",
-		[WSI_TOKEN_HTTP] = "Http",
-		[WSI_TOKEN_MUXURL]	= "MuxURL",
+		[WSI_TOKEN_HTTP] = "Http"
+	//	[WSI_TOKEN_MUXURL]	= "MuxURL",
 	};
 	
 	for (n = 0; n < WSI_TOKEN_COUNT; n++) 
@@ -1001,11 +1926,867 @@ static void dump_handshake_info(struct lws_tokens *lwst)
 		{
 			continue;
 		}
-
-		//DEBUG( "    %s = %s\n", token_names[n], lwst[n].token);
 	}
 }
 
 
-#endif
+//
+// when we want to move full calls to WS
+//
+
+
+//
+//
+//
+
+/*
+void WSThread( WSThreadData *data )
+{
+	pthread_detach( pthread_self() );
+	nothreads++;
+	
+	int n = 0;
+	int error = 0;
+	FCWSData *fcd = data->fcd;
+	struct lws *wsi = data->wsi;
+	int returnError = 0;
+	
+	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+	
+	if( fcd == NULL || ses == NULL )
+	{
+		FERROR("Error session is NULL\n");
+		nothreads--;
+		pthread_exit( 0 );
+		return;
+	}
+	
+	char *in = data->request;
+	int len = data->requestLen;
+	{
+		int i, i1;
+		int r;
+		jsmn_parser p;
+		jsmntok_t t[128]; // We expect no more than 128 tokens 
+		
+		jsmn_init(&p);
+		r = jsmn_parse(&p, in, len, t, sizeof(t)/sizeof(t[0]));
+		if (r < 0) 
+		{
+			FERROR("Failed to parse JSON: %d\n", r);
+			return 1;
+		}
+		
+		// Assume the top-level element is an object 
+		if (r > 1 && t[0].type == JSMN_OBJECT) 
+		{
+			if (jsoneq( in, &t[1], "type") == 0) 
+			{
+				DEBUG1("Type found\n");
+				
+				//
+				// connection message - somebody wants to connect!
+				//
+				
+				if( strncmp( "con",  in + t[ 2 ].start, t[ 2 ].end-t[ 2 ].start ) == 0 )
+				{
+					//DEBUG1("Connection  r %d\n", r );
+					// We're connecting with a JSON object!
+					if( t[4].type == JSMN_OBJECT )
+					{
+						// we are trying to find now session or authid
+						for( i = 0; i < r ; i++ )
+						{
+							i1 = i + 1;
+							
+							// Incoming connection is authenticating with sessionid (the Workspace probably)
+							if( strncmp( "sessionId",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+							{
+								DEBUG("Session id found Websockets\n");
+								char session[ DEFAULT_SESSION_ID_SIZE ];
+								memset( session, 0, DEFAULT_SESSION_ID_SIZE );
+								
+								strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
+								
+								// We could connect? If so, then just send back a pong..
+								if( SLIB->AddWebSocketConnection( SLIB, wsi, session, NULL, fcd ) >= 0 )
+								{
+									INFO("[WS]:Websocket communication set with user (sessionid) %s\n", session );
+									
+									char answer[ 1024 ];
+									snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+									
+									unsigned char *buf;
+									int len = strlen( answer );
+									buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+									if( buf != NULL )
+									{
+										//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+										memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+										
+										pthread_mutex_lock( &(ses->us_WSMutex) );
+										n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+										pthread_mutex_unlock( &(ses->us_WSMutex) );
+										
+										FFree( buf );
+									}
+								}
+							}
+							// Incoming connection is authenticating with authid (from an application or an FS)
+							else if( strncmp( "authid",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+							{
+								DEBUG("Auth id found in Websockets\n");
+								char authid[ DEFAULT_SESSION_ID_SIZE ];
+								memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
+								
+								strncpy( authid, in + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start );
+								{
+									// We could connect? If so, then just send back a pong..
+									if( SLIB->AddWebSocketConnection( SLIB, wsi, NULL, authid, fcd ) >= 0 )
+									{
+										INFO("[WS]:Websocket communication set with user (authid) %s\n", authid );
+										
+										char answer[ 2048 ];
+										snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+										
+										unsigned char *buf;
+										int len = strlen( answer );
+										buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len+LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+										if( buf != NULL )
+										{
+											//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+											memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+											
+											pthread_mutex_lock( &(ses->us_WSMutex) );
+											n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
+											pthread_mutex_unlock( &(ses->us_WSMutex) );
+											
+											FFree( buf );
+										}
+									}
+								}
+							}
+						}	// for through parameters
+						
+						if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+						{
+							// simple PING
+							if( strncmp( "ping",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 && r > 8 )
+							{
+								char answer[ 2048 ];
+								snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ 8 ].end-t[ 8 ].start, (char *)(in + t[ 8 ].start) );
+								
+								UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+								if( ses != NULL )
+								{
+									ses->us_LoggedTime = time( NULL );
+									
+									unsigned char *buf;
+									int len = strlen( answer );
+									buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+									if( buf != NULL )
+									{
+										memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+										
+										pthread_mutex_lock( &(ses->us_WSMutex) );
+										n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT);
+										pthread_mutex_unlock( &(ses->us_WSMutex) );
+										FFree( buf );
+									}
+									
+									MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+									if( sqllib != NULL )
+									{
+										char *tmpQuery = FCalloc( 1024, 1 );
+										if( tmpQuery )
+										{
+											if( fcd->fcd_ActiveSession != NULL )
+											{
+												UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
+												sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
+												sqllib->SelectWithoutResults( sqllib, tmpQuery );
+											}
+											SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+											
+											//FERROR("Logged time updated: %lu\n", time(NULL) );
+											
+											FFree( tmpQuery );
+										}
+									}
+								} // if( ses != NULL
+							}
+						}
+					}
+				}
+				
+				//
+				// regular message - just passing information on an already established connection
+				//
+				
+				else if( strncmp( "msg",  in + t[ 2 ].start, 3 ) == 0 )
+				{
+					// type object
+					if( t[4].type == JSMN_OBJECT)
+					{
+						if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+						{
+							if( strncmp( "request",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
+							{
+							#ifdef ENABLE_WEBSOCKETS_THREADS
+								WSThreadData *wstdata = FCalloc( 1, sizeof(WSThreadData) );
+								#endif
+								
+								//if( t[8].type == JSMN_OBJECT)
+								{
+									char *requestid = NULL;
+									int requestis = 0;
+									char *path = NULL;
+									int paths = 0;
+									char *authid = NULL;
+									int authids = 0;
+									
+									Http *http = HttpNew( );
+									if( http != NULL )
+									{
+										http->h_RequestSource = HTTP_SOURCE_WS;
+										http->parsedPostContent = HashmapNew();
+										http->uri = UriNew();
+										
+										UserSession *s = fcd->fcd_ActiveSession;
+										DEBUG("Session ptr %p\n", s );
+										if( s != NULL )
+										{
+											if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+											{
+												DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+											}
+											
+											if( s->us_UserActionInfo[ 0 ] == 0 )
+											{
+												int fd = lws_get_socket_fd( wsi );
+												char add[ 256 ];
+												char rip[ 256 ];
+												
+												lws_get_peer_addresses( wsi, fd, add, sizeof(add), rip, sizeof(rip) );
+												INFO("-----------------------------------------------call %s - %s\n", add, rip );
+												
+												snprintf( s->us_UserActionInfo, sizeof( s->us_UserActionInfo ), "%s / %s", add, rip );
+											}
+										}
+										
+										int i, i1;
+										
+										#ifdef ENABLE_WEBSOCKETS_THREADS
+										//thread
+										char **pathParts = wstdata->pathParts;
+										#else
+										//no thread
+										char *pathParts[ 1024 ];		// could be allocated in future
+										memset( pathParts, 0, 1024 );
+										#endif
+										
+										int error = 0;
+										BufString *queryrawbs = BufStringNewSize( 2048 );
+										
+										for( i = 7 ; i < r ; i++ )
+										{
+											i1 = i + 1;
+											
+											if (jsoneq( in, &t[i], "requestid") == 0) 
+											{
+											#ifdef ENABLE_WEBSOCKETS_THREADS
+												// threads
+												wstdata->requestid = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+												requestid = wstdata->requestid;
+												#else
+												requestid = in + t[i1].start;
+												requestis =  t[i1].end-t[i1].start;
+												#endif
+												
+												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+												{
+													DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+												}
+												i++;
+											}
+											// We got path!
+											else if (jsoneq( in, &t[i], "path") == 0) 
+											{
+												// this is first path, URI
+												
+												if( path == NULL )
+												{
+													#ifdef WS_THREADS
+													// threads
+													wstdata->path = StringDuplicateN(  in + t[i1].start,t[i1].end-t[i1].start );
+													path = wstdata->path;//in + t[i1].start;
+													paths = t[i1].end-t[i1].start;
+													#else
+													//no threads
+													path = in + t[i1].start;
+													paths = t[i1].end-t[i1].start;
+													#endif
+													
+													if( http->uri != NULL )
+													{
+														http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													}
+													
+													//http->rawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+													
+													DEBUG1("Parsing path %s\n", path );
+													
+													path[ paths ] = 0;
+													int j = 1;
+													
+													// Don't overwrite first path if it is set!														
+													pathParts[ 0 ] = path;
+													
+													int selpart = 1;
+													
+													for( j = 1 ; j < paths ; j++ )
+													{
+														if( path[ j ] == '/' )
+														{
+															DEBUG1("New path part created %s  path %s\n", pathParts[ selpart ], &(path[j]) );
+															
+															pathParts[ selpart++ ] = &path[ j + 1 ];
+															path[ j ] = 0;
+														}
+													}
+													i++;
+												}
+												
+												else
+												{
+													// this is path parameter
+													if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+													{
+														DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+													}
+													i++;
+												}
+											}
+											else if (jsoneq( in, &t[i], "authid") == 0) 
+											{
+												authid = in + t[i1].start;
+												authids = t[i1].end-t[i1].start;
+												
+												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+												{
+													//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+												}
+												
+												if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+												{
+													//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
+												}
+												i++;
+											}
+											else
+											{
+												
+												 // 	JSMN_PRIMITIVE = 0,
+												 //												JSMN_OBJECT = 1,
+												 //												JSMN_ARRAY = 2,
+												 //												JSMN_STRING = 3
+												 //
+												
+												DEBUG("%d i   type %d\n", i, t[ i ].type );
+												if(( i1) < r && t[ i ].type != JSMN_ARRAY )
+												{
+													if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+													{
+														DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), in + t[i].start, (int)(t[i1].end-t[i1].start), in + t[i1].start );
+													}
+													
+													if( t[ i1 ].type == JSMN_ARRAY || t[ i1 ].type == JSMN_OBJECT )
+													{
+														int z=0;
+
+														
+														if( t[ i1 ].type == JSMN_ARRAY )
+														{
+															DEBUG("Next  entry is array %d\n", t[ i1 ].size );
+															i += t[ i1 ].size;
+														}
+														
+														i++;
+														//
+														DEBUG1("current %d skip %d next %d\n", t[ i ].size-1, t[ i1 ].size-1, t[ i1+1 ].size );
+													}
+													else
+													{
+														if( queryrawbs->bs_Size != 0 )
+														{
+															BufStringAddSize( queryrawbs, "&", 1 );
+														}
+														BufStringAddSize( queryrawbs, in + t[ i ].start, t[i].end-t[i].start );
+														BufStringAddSize( queryrawbs, "=", 1 );
+														BufStringAddSize( queryrawbs, in + t[i1].start, t[i1].end-t[i1].start );
+														
+														i++;
+													}
+												}
+												else
+												{
+													DEBUG("Cannot add value: %.*s\n", t[i].end-t[i].start, in + t[i].start );
+													i++;
+												}
+											}
+										} // end of going through json
+										DEBUG("Checking path '%s'\n", pathParts[ 0 ] );
+										
+										if( strcmp( pathParts[ 0 ], "system.library" ) == 0 && error == 0 )
+										{
+											http->h_WSocket = wsi;
+											
+											struct timeval start, stop;
+											gettimeofday(&start, NULL);
+											
+											http->content = queryrawbs->bs_Buffer;
+											queryrawbs->bs_Buffer = NULL;
+											
+											http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+											
+											Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession );
+											
+											gettimeofday(&stop, NULL);
+											double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+											
+											DEBUG("WS ->SysWebRequest took %f seconds\n", secs );
+											
+											if( response != NULL )
+											{
+												unsigned char *buf;
+												char jsontemp[ 2048 ];
+												int n;
+												
+												// If it is not JSON!
+												if( response->content != NULL && ( response->content[ 0 ] != '[' && response->content[ 0 ] != '{' ) )
+												{
+													if( strcmp( response->content, "fail<!--separate-->{\"response\":\"user session not found\"}" )  == 0 )
+													{
+														returnError = -1;
+													}
+													
+													static int END_CHAR_SIGNS = 3;
+													char *end = "\"}}";
+													
+													int jsonsize = sprintf( jsontemp, 
+																			"{\"type\":\"msg\",\"data\":{\"type\":\"response\",\"requestid\":\"%.*s\",\"data\":\"",
+									 requestis,
+									 requestid 
+													);
+													
+													buf = (unsigned char *)FCalloc( 
+													LWS_SEND_BUFFER_PRE_PADDING + jsonsize + (response->sizeOfContent << 1) + 1 + 
+													END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) 
+													);
+													if( buf != NULL )
+													{
+														memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp, jsonsize );
+														
+														char *locptr = (char *) buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize;
+														int z = 0;
+														int znew = 0;
+														int len = (int)response->sizeOfContent;
+														unsigned char car;
+														
+														// Add escape characters to single and double quotes!
+														for( ; z < len; z++ )
+														{
+															car = response->content[ z ];
+															switch( car )
+															{
+																case '\\':
+																	locptr[ znew++ ] = '\\';
+																	break;
+																	// Always add escape chars on unescaped double quotes
+																case '"':
+																	locptr[ znew++ ] = '\\';
+																	locptr[ znew++ ] = '\\';
+																	break;
+																	// New line
+																case 10:
+																	locptr[ znew++ ] = '\\';
+																	car = 'n';
+																	break;
+																	// Line feed
+																case 13:
+																	locptr[ znew++ ] = '\\'; 
+																	car = 'r';
+																	break;
+																	// Tab
+																case 9:
+																	locptr[ znew++ ] = '\\';
+																	car = 't';
+																	break;
+															}
+															locptr[ znew++ ] = car;
+														}
+														
+														if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
+														memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING + jsonsize + znew, end, END_CHAR_SIGNS );
+														//DEBUG("--->  strlen %d  znew + jsonsize %d\n",  strlen( buf+LWS_SEND_BUFFER_PRE_PADDING ), znew + jsonsize );
+														
+														pthread_mutex_lock( &(ses->us_WSMutex) );
+														n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
+														pthread_mutex_unlock( &(ses->us_WSMutex) );
+														
+														Log( FLOG_INFO, "Websocket call: '%s'\n",  buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+														//FERROR("\n\n\nWS\n\n'%s'\n ----------------------------------------------------------\HTTP %s\n\n\n", buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
+														
+														FFree( buf );
+													}
+												}
+												else
+												{
+													// TODO: This should never happen.
+													if( response->content != NULL )
+													{
+														//DEBUG("\n\n\nJSON\n\n\n");
+														
+														if( strcmp( response->content, "{\"response\":\"user session not found\"}" )  == 0 )
+														{
+															returnError = -1;
+														}
+														
+														int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+														char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+														int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+														
+														buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + response->sizeOfContent + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+														if( buf != NULL )
+														{
+															//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response->content,  response->sizeOfContent );
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+response->sizeOfContent, end,  END_CHAR_SIGNS );
+															
+															pthread_mutex_lock( &(ses->us_WSMutex) );
+															n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+															pthread_mutex_unlock( &(ses->us_WSMutex) );
+															
+															FFree( buf );
+														}
+													}
+													else		// content == NULL
+													{
+														int END_CHAR_SIGNS = response->sizeOfContent > 0 ? 2 : 4;
+														char *end = response->sizeOfContent > 0 ? "}}" : "\"\"}}";
+														int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+														
+														buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+														if( buf != NULL )
+														{
+															//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+															memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, end,  END_CHAR_SIGNS );
+															
+															pthread_mutex_lock( &(ses->us_WSMutex) );
+															n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+															pthread_mutex_unlock( &(ses->us_WSMutex) );
+															
+															FFree( buf );
+														}
+													}
+												}
+												
+												HttpFree( response );
+											}
+											DEBUG1("[WS]:SysWebRequest return %d\n", n  );
+										}
+										else
+										{
+											char response[ 1024 ];
+											int resplen = sprintf( response, "{\"response\":\"cannot parse command or bad library was called : %s\"}", pathParts[ 0 ] );
+											
+											char jsontemp[ 1024 ];
+											static int END_CHAR_SIGNS = 2;
+											char *end = "}}";
+											int jsonsize = sprintf( jsontemp, "{ \"type\":\"msg\", \"data\":{ \"type\":\"response\", \"requestid\":\"%.*s\",\"data\":", requestis,  requestid );
+											
+											unsigned char * buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + jsonsize + resplen + END_CHAR_SIGNS + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+											if( buf != NULL )
+											{
+												memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
+												memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response,  resplen );
+												memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+resplen, end,  END_CHAR_SIGNS );
+												
+												pthread_mutex_lock( &(ses->us_WSMutex) );
+												n = lws_write( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT);
+												pthread_mutex_unlock( &(ses->us_WSMutex) );
+												
+												FFree( buf );
+											}
+										}
+										
+										DEBUG("http %p URI \n", http );
+										if( http != NULL )
+										{
+											DEBUG("http %p URI \n", http->uri );
+											UriFree( http->uri );
+											
+											if( http->rawRequestPath != NULL )
+											{
+												FFree( http->rawRequestPath );
+												http->rawRequestPath = NULL;
+											}
+										}
+										
+										DEBUG("Before http\n");
+										HttpFree( http );
+										DEBUG("Before bufstring del\n");
+										BufStringDelete( queryrawbs );
+										DEBUG("After bufstring del\n");
+									}
+								}
+							}
+							
+							//
+							// events, no need to respoe
+							//
+							
+							else if( strncmp( "event",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
+							{
+								//DEBUG1("Event type\n");
+								
+								//if( t[8].type == JSMN_OBJECT)
+								{
+									char *requestid = NULL;
+									int requestis = 0;
+									char *path = NULL;
+									int paths = 0;
+									char *authid = NULL;
+									int authids = 0;
+									
+									Http *http = HttpNew( );
+									if( http != NULL )
+									{
+										http->h_RequestSource = HTTP_SOURCE_WS;
+										http->parsedPostContent = HashmapNew();
+										http->uri = UriNew();
+										
+										UserSession *s = fcd->fcd_ActiveSession;
+										if( s != NULL )
+										{
+											DEBUG("Session ptr %p  session %p\n", s, s->us_SessionID );
+											if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+											{
+												DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
+											}
+											
+											int i, i1;
+											char *pathParts[ 1024 ];		// could be allocated in future
+											memset( pathParts, 0, 1024 );
+											
+											BufString *queryrawbs = BufStringNewSize( 2048 );
+											
+											for( i = 7 ; i < r ; i++ )
+											{
+												i1 = i + 1;
+												if (jsoneq( in, &t[i], "requestid") == 0) 
+												{
+													requestid = in + t[i1].start;
+													requestis =  t[i1].end-t[i1].start;
+													
+													if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+													{
+														//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+													}
+													i++;
+												}
+												else if (jsoneq( in, &t[i], "path") == 0) 
+												{
+													// this is first path, URI
+													
+													if( path == NULL )
+													{
+														path = in + t[i1].start;
+														paths = t[i1].end-t[i1].start;
+														
+														if( http->uri != NULL )
+														{
+															http->uri->queryRaw = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+														}
+														
+														http->rawRequestPath = StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start );
+														
+														DEBUG1("Parsing path %s\n", path );
+														
+														path[ paths ] = 0;
+														int j = 1;
+														
+														// Don't overwrite first path if it is set!
+														//if( !pathParts[ 0 ] )
+														{
+															pathParts[ 0 ] = path;
+														}
+														
+														int selpart = 1;
+														
+														for( j = 1 ; j < paths ; j++ )
+														{
+															if( path[ j ] == '/' )
+															{
+																DEBUG1("New path part created %s  path %s\n", pathParts[ selpart ], &(path[j]) );
+																
+																pathParts[ selpart++ ] = &path[ j + 1 ];
+																path[ j ] = 0;
+															}
+														}
+														i++;
+													}
+													else
+													{
+														// this is path parameter
+														if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+														{
+															//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
+														}
+														i++;
+													}
+												}
+												else if (jsoneq( in, &t[i], "authId") == 0) 
+												{
+													authid = in + t[i1].start;
+													authids = t[i1].end-t[i1].start;
+													
+													if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+													{
+														//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
+													}
+													
+													if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+													{
+														//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
+													}
+													i++;
+												}
+												else
+												{
+													{
+														DEBUG("%d i   type %d\n", i, t[ i ].type );
+														if(( i1) < r && t[ i ].type != JSMN_ARRAY )
+														{
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															{
+																DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i1].end-t[i1].start, in + t[ i1 ].start );
+															}
+															
+															if( t[ i1 ].type == JSMN_ARRAY || t[ i1 ].type == JSMN_OBJECT )
+															{
+																int z=0;
+
+																
+																if( t[ i1 ].type == JSMN_ARRAY )
+																{
+																	DEBUG("Next  entry is array %d\n", t[ i1 ].size );
+																	i += t[ i1 ].size;
+																}
+																
+																i++;
+																//
+																DEBUG1("current %d skip %d next %d\n", t[ i ].size-1, t[ i1 ].size-1, t[ i1+1 ].size );
+															}
+															else
+															{
+																if( queryrawbs->bs_Size != 0 )
+																{
+																	BufStringAddSize( queryrawbs, "&", 1 );
+																}
+																BufStringAddSize( queryrawbs, in + t[ i ].start, t[i].end-t[i].start );
+																BufStringAddSize( queryrawbs, "=", 1 );
+																BufStringAddSize( queryrawbs, in + t[i1].start, t[i1].end-t[i1].start );
+																
+																i++;
+															}
+														}
+														else
+														{
+															DEBUG("Cannot add value: %.*s\n", t[i].end-t[i].start, in + t[i].start );
+															i++;
+														}
+													}
+												}
+											} // end of going through json
+											
+											if( strcmp( pathParts[ 0 ], "system.library" ) == 0)
+											{
+												http->h_WSocket = wsi;
+												
+												struct timeval start, stop;
+												gettimeofday(&start, NULL);
+												
+												http->content = queryrawbs->bs_Buffer;
+												queryrawbs->bs_Buffer = NULL;
+												
+												http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
+												
+												Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession );
+												
+												gettimeofday(&stop, NULL);
+												double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
+												
+												DEBUG("\n\nWS ->SysWebRequest took %f seconds\n", secs );
+												
+												if( response != NULL )
+												{
+													if( response->content != NULL && strcmp( response->content, "fail<!--separate-->{\"response\":\"user session not found\"}" )  == 0 )
+													{
+														returnError = -1;
+													}
+													
+													HttpFree( response );
+													
+													BufStringDelete( queryrawbs );
+												}
+											}
+											
+											if( http != NULL )
+											{
+												UriFree( http->uri );
+												if( http->rawRequestPath != NULL )
+												{
+													FFree( http->rawRequestPath );
+													http->rawRequestPath = NULL;
+												}
+											}
+											
+											HttpFree( http );
+										}
+									} // session != NULL
+									else
+									{
+										FERROR("User session is NULL\n");
+									}
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					FERROR("Found type %10s \n %10s\n", (char *)(in + t[ 2 ].start), (char *)(in + t[ 1 ].start) );
+				}
+			}
+		}
+		else
+		{
+			FERROR("Object expected\n");
+		}
+	}
+	
+	if( data->request != NULL )
+	{
+		FFree( data->request );
+	}
+	FFree( data );
+	
+	nothreads--;
+	pthread_exit( 0 );
+}
+
+*/
 

@@ -1,0 +1,110 @@
+i18n_mountlist                    : Mountlist
+i18n_disk_catalog                 : Disk catalog
+edit_connection                   : Edit connection
+i18n_edit_connection              : Edit connection
+i18n_new_connection               : New connection
+new_connection                    : New connection
+i18n_shared_drive                 : Shared drive
+i18n_pollable                     : Network visible
+i18n_short_desc                   : Short description
+i18n_publisher                    : Publisher
+i18n_visible                      : Show on desktop
+
+i18n_storage_disks                : Storage disks
+i18n_software_disks               : Software disks
+
+i18n_disk_cover                   : Disk cover
+i18n_choose_disk_cover            : Choose disk cover
+i18n_browse                       : Browse...
+i18n_cant_show_disk_cover         : Can not set disk cover
+i18n_cant_show_disk_desc          : The disk cover could not be loaded into the database.
+
+i18n_sure_delete                  : Are you sure?
+i18n_sure_delete_desc             : Deleting a disk will remove it from your catalog.
+
+i18n_select_dos_driver            : Select DOS driver
+i18n_placeholder_connection       : My device
+i18n_choose_type                  : Choose type
+i18n_loading                      : Loading
+i18n_device_name                  : Device name
+
+i18n_mounting                     : Mounting
+i18n_unmounting                   : Unmounting
+i18n_executable                   : JSX executable
+i18n_successfully_mounted         : Your device was successfully mounted.
+i18n_successfully_unmounted       : Your device was successfully unmounted.
+i18n_fail_mount                   : Failed to mount device
+i18n_fail_mount_more              : Could not mount device.
+i18n_fail_unmount                 : Failed to unmount device
+i18n_fail_unmount_more            : Could not unmount device.
+
+i18n_save                         : Save
+i18n_cancel                       : Cancel
+
+i18n_connection_details           : Connection details
+i18n_notes                        : Notes
+i18n_directory                    : Remote directory
+i18n_login_info                   : Login info
+i18n_your_notes                   : Your notes
+i18n_username                     : Username
+i18n_password                     : Password
+i18n_host_port                    : Server port
+i18n_host_ip                      : Server address or IP
+i18n_workgroup_name               : Your workgroup
+i18n_workgroup                    : Workgroup
+
+i18n_key                   		  : Key
+
+i18n_MySQL Based Filesystem       : SQL drive
+i18n_SQLDrive                     : SQL drive
+
+i18n_Server filesystem            : Server filesystem
+i18n_Local                        : Server filesystem
+
+i18n_Friend Store                 : Friend Store
+i18n_FriendStore                  : Friend Store
+
+i18n_Dropbox Based Filesystem     : Dropbox drive
+i18n_DropboxDrive                 : Dropbox drive
+
+i18n_GoogleDrive                  : Google drive
+i18n_Google Drive Based Filesystem: Google drive
+
+
+i18n_Mount Wordpress sites as doors : Wordpress drive
+i18n_Wordpress                    : WordPress drive
+
+i18n_MySQL Based Filesystem for workgroups : MySQL Based Filesystem for workgroups
+i18n_SQLWorkgroupDrive            : MySQL Based Filesystem for workgroups
+
+
+i18n_Mount Treeroot servers as doors : Treeroot drive
+i18n_Treeroot                     : Treeroot drive
+
+i18n_Mount ARENA sites as doors   : Arena CM drive
+i18n_ArenaCM                      : Arena CM drive
+
+i18n_Mount websites as doors      : Website drive
+i18n_Website                      : Website drive
+
+i18n_Assign                       : Assign drive
+i18n_AssignDOSDriver              : Aggregated virtual file system
+
+i18n_INRam                        : INRam Drive
+i18n_INRamDOSdriver               : INRam DOS driver for multiuser purposes
+
+i18n_FriendStoreDrive             : FriendStore Drive
+i18n_FriendStoreDOSdriver         : FriendStore driver for vendors
+
+i18n_Remote                       : Remote Drive
+i18n_RemoteDOSdriver              : Remote DOS driver
+
+i18n_Node                         : Node network
+i18n_NodeDOSDriver                : Node network database based disk driver
+
+i18n_SFTP                         : SFTP
+
+i18n_successfully_unmounted       : Successfully unmounted device
+i18n_your_device_was              : Your device was successfully mounted.
+i18n_failed_to_unmount            : Failed to unmount device
+i18n_could_not_unmount            : Could not unmount device. Changes <b>NOT saved</b>

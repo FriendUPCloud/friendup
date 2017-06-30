@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -31,18 +31,14 @@ Application.run = function( msg, iface )
 	{
 		Application.quit();
 	}
-
+	
 	var f = new File( 'Progdir:Templates/server.html' );
-	f.replacements = {
-		Application: i18n( 'i18n_application' ),
-		Permissions: i18n( 'i18n_permissions' ),
-		Cancel:      i18n('i18n_cancel')
-	};
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
 	}
-	f.load();	
+	f.load();
 }
 
 Application.receiveMessage = function( msg )
@@ -57,10 +53,15 @@ Application.receiveMessage = function( msg )
 		{
 			this.mv.sendMessage( msg );
 		}
+		if( msg.command == 'updatesettings' )
+		{
+			this.mv.sendMessage( msg );
+		}
 		if( msg.command == 'saveserversetting' )
 		{
 			this.mv.sendMessage( msg );
 		}
 	}
 }
+
 

@@ -1,21 +1,75 @@
 
 	<div class="ContentFull">
-		<div class="VContentTop ScrollArea TopArea BackgroundNegative Negative">
-			<div class="Padding" id="apps">
-				
+		<div class="VContentTop TopArea">
+			<div id="appsheader" class="Padding BorderRight BorderBottom">
+				<p class="Layout">
+					<strong>{i18n_select_application}:</strong>
+				</p>
+			</div>
+			<div id="mimeheader" class="Padding BorderBottom">
+				<p class="Layout">
+					<strong>{i18n_mimetypes_for_app}</strong>
+				</p>
+			</div>
+			<div id="apps" class="BorderRight">
+			</div>
+			<div id="mimetypes" class="BorderLeft">
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop BackgroundToolbar BottomBar">
 			<div class="Padding">
-				<button type="button" class="Button fa-plus IconSmall" onclick="doAdd()">
-					Add
+				<!--<button type="button" class="Button fa-plus IconSmall" onclick="doAdd()">
+					{i18n_add_mimetype}
+				</button>-->
+				<button type="button" class="Button fa-link IconSmall" onclick="doLink()">
+					{i18n_link_types}
 				</button>
-				<button type="button" class="Button fa-times IconSmall" onclick="doCancel()">
-					Cancel
+				<button type="button" class="Button fa-plus IconSmall" onclick="AddMimetype()">
+					{i18n_add_mimetype}
+				</button>
+				<button type="button" class="FloatRight Button fa-times IconSmall" onclick="doCancel()">
+					{i18n_cancel}
 				</button>
 			</div>
 		</div>
 	</div>
 	<link rel="stylesheet" href="Progdir:Css/main.css"/>
 	<script src="Progdir:Scripts/main.js"></script>
+	<style>
+		#mimetypes, #apps
+		{
+			position: absolute;
+			width: 50%;
+			bottom: 0;
+			overflow: auto;
+		}
+		#mimeheader
+		{
+			position: absolute;
+			top: 0;
+			left: 50%;
+			width: 50%;
+			height: 35px;
+			box-sizing: border-box;
+		}
+		#appsheader
+		{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 50%;
+			height: 35px;
+			box-sizing: border-box;
+		}
+		#mimetypes
+		{
+			top: 35px;
+			left: 50%; 
+		}
+		#apps
+		{
+			left: 0;
+			top: 35px;
+		}
+	</style>
 

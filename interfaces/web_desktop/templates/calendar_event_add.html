@@ -1,0 +1,42 @@
+<div class="ContentFull Padding ScrollArea">
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_title}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input class="FullWidth InputHeight" value="" placeholder="{i18n_cal_evt_title_what}..." id="calTitle"/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_time_from}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input class="InputHeight" size="5" placeholder="08:00" value="08:00" id="calTimeFrom"/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_time_to}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input class="InputHeight" size="5" placeholder="16:00" value="16:00" id="calTimeTo"/>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_description}:</strong></p>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<textarea class="FullWidth" style="height: 200px" id="calDescription"></textarea>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="HContent100 FloatLeft">
+			<p class="InputHeight"><button type="button" class="Button IconSmall fa-calendar-plus-o" onclick="Workspace.addCalendarEvent()">{i18n_cal_btn_add}</button></p>
+		</div>
+	</div>
+	<input type="hidden" value="{date}" id="calDateField"/>
+</div>

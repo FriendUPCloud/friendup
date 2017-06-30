@@ -4,6 +4,8 @@
 	"api-key":
 	{
 		"key": "3godi79ls6uenbz",
-		"secret": "p6d5guoe3ac9pan"
-	}
+		"secret": "p6d5guoe3ac9pan",
+		"dropboxhandler":"https://friendup.cloud/dropbox/dropbox.php"
+	},
+	"group":   "User"
 }

@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Filesystem definition
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 23 March 2017
+ */
 
 #ifndef __SYSTEM_FSYS_H__
 #define __SYSTEM_FSYS_H__
@@ -26,8 +37,11 @@
 #include <util/hashmap.h>
 #include <util/tagitem.h>
 //#include <user/userlibrary.h>
+#include <util/base64.h>
 #include <util/buffered_string.h>
 #include <system/handler/file.h>
+#include <network/websocket_client.h>
+#include <system/user/user_session.h>
 
 //
 //
@@ -76,8 +90,8 @@ typedef struct FHandler
 	char                    *(*GetPrefix)();
 	
 	// ONLY USED BY system.library
-	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti );
-	int                     (*UnMount)( struct FHandler *s, void *f );
+	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us );
+	int                     (*UnMount)( struct FHandler *s, void *f, User *usr );
 	int                     (*Release)( struct FHandler *s, void *f );
 	
 	//
@@ -91,11 +105,17 @@ typedef struct FHandler
 	int                     (*MakeDir)( struct File *s, const char *path );
 	int                     (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
-	char                  *(*Execute)( struct File *s, const char *path, const char *args );
+	char                  *(*Execute)( struct File *s, const char *path, const char *args, WebsocketClient *wsc );
 	int                     (*Copy)( struct File *s, const char *dst, const char *src );
 	
+	char                   *(*InfoGet)( struct File *s, const char *path, const char *key );
+	int                     (*InfoSet)( struct File *s, const char *path, const char *key, const char *value );
+	
 	BufString               *(*Info)( struct File *s, const char *path );
+	BufString               *(*Call)( struct File *s, const char *path, char *args );
 	BufString               *(*Dir)( struct File *s, const char *path );
+	
+	void                     *fh_SpecialData;
 }FHandler;
 
 //
@@ -105,42 +125,43 @@ typedef struct FHandler
 typedef struct Filesystem
 {
 	MinNode             node;
-	ULONG               fs_ID;
-	ULONG               fs_UserID;
+	FULONG               fs_ID;
+	FULONG               fs_UserID;
 	char                *fs_Name;
 	char                *fs_Type;
 	char                *fs_ShortDescription;
 	char                *fs_Server;
-	ULONG               fs_Port;
+	FULONG               fs_Port;
 	char                *fs_Path;
 	char                *fs_Username;
 	char                *fs_Password;
 	char                *fs_Config;
-	ULONG               fs_Mounted;
-	ULONG               fs_GroupID;
-	ULONG               fs_DeviceID;
-	ULONG               fs_Authorisation;
-	
-}Filesystem;
+	FULONG               fs_Mounted;
+	FULONG               fs_GroupID;
+	FULONG               fs_DeviceID;
+	FULONG               fs_Authorized;
+	FULONG               fs_Owner;
+} Filesystem;
 
-static ULONG FilesystemDesc[] = { 
-    SQLT_TABNAME, (ULONG)"Filesystem",       SQLT_STRUCTSIZE, sizeof( struct Filesystem ), 
-	SQLT_IDINT,   (ULONG)"ID",          offsetof( struct Filesystem, fs_ID ), 
-	SQLT_INT,     (ULONG)"UserID",          offsetof( struct Filesystem, fs_UserID ), 
-	SQLT_INT,     (ULONG)"GroupID", offsetof( struct Filesystem, fs_GroupID ),
-	SQLT_INT,     (ULONG)"DeviceID", offsetof( struct Filesystem, fs_DeviceID ),
-	SQLT_STR,     (ULONG)"Name",        offsetof( struct Filesystem, fs_Name ),
-	SQLT_STR,     (ULONG)"Type",    offsetof( struct Filesystem, fs_Type ),
-	SQLT_STR,     (ULONG)"ShortDescription",    offsetof( struct Filesystem, fs_ShortDescription ),
-	SQLT_STR,     (ULONG)"Server",       offsetof( struct Filesystem, fs_Server ),
-	SQLT_INT,     (ULONG)"Port",   offsetof( struct Filesystem, fs_Port ),
-	SQLT_STR,     (ULONG)"Path",  offsetof( struct Filesystem, fs_Path ),
-	SQLT_STR,     (ULONG)"Username", offsetof( struct Filesystem, fs_Username ),
-	SQLT_STR,     (ULONG)"Password", offsetof( struct Filesystem, fs_Password ),
-	SQLT_INT,     (ULONG)"Config", offsetof( struct Filesystem, fs_Config ),
-	SQLT_INT,     (ULONG)"Mounted", offsetof( struct Filesystem, fs_Mounted ),
-	SQLT_INT,     (ULONG)"Authorisation", offsetof( struct Filesystem, fs_Authorisation ),
-	SQLT_NODE,    (ULONG)"node",        offsetof( struct Filesystem, node ),
+static const FULONG FilesystemDesc[] = { 
+    SQLT_TABNAME, (FULONG)"Filesystem",       SQLT_STRUCTSIZE, sizeof( struct Filesystem ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct Filesystem, fs_ID ), 
+	SQLT_INT,     (FULONG)"UserID",          offsetof( struct Filesystem, fs_UserID ), 
+	SQLT_INT,     (FULONG)"GroupID", offsetof( struct Filesystem, fs_GroupID ),
+	SQLT_INT,     (FULONG)"DeviceID", offsetof( struct Filesystem, fs_DeviceID ),
+	SQLT_STR,     (FULONG)"Name",        offsetof( struct Filesystem, fs_Name ),
+	SQLT_STR,     (FULONG)"Type",    offsetof( struct Filesystem, fs_Type ),
+	SQLT_STR,     (FULONG)"ShortDescription",    offsetof( struct Filesystem, fs_ShortDescription ),
+	SQLT_STR,     (FULONG)"Server",       offsetof( struct Filesystem, fs_Server ),
+	SQLT_INT,     (FULONG)"Port",   offsetof( struct Filesystem, fs_Port ),
+	SQLT_STR,     (FULONG)"Path",  offsetof( struct Filesystem, fs_Path ),
+	SQLT_STR,     (FULONG)"Username", offsetof( struct Filesystem, fs_Username ),
+	SQLT_STR,     (FULONG)"Password", offsetof( struct Filesystem, fs_Password ),
+	SQLT_STR,     (FULONG)"Config", offsetof( struct Filesystem, fs_Config ),
+	SQLT_INT,     (FULONG)"Mounted", offsetof( struct Filesystem, fs_Mounted ),
+	SQLT_INT,     (FULONG)"Authorized", offsetof( struct Filesystem, fs_Authorized ),
+	SQLT_INT,     (FULONG)"Owner", offsetof( struct Filesystem, fs_Owner ),
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct Filesystem, node ),
 	SQLT_END 
 };
 
@@ -156,13 +177,11 @@ FHandler *FHandlerCreate( const char *path, const char *name );
 
 void FHandlerDelete( FHandler *fsys );
 
+//
 // remove filesystem structure from memory
+//
 
 void FilesystemDelete( Filesystem *fs );
-
-//int UnMountFS( void *l, struct TagItem *tl );
-
-//int MountFS(void *l, struct TagItem *tl );
 
 #endif // __SYSTEM_FSYS_H_
 

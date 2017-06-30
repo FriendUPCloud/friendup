@@ -1,3 +1,25 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 #ifndef __UTIL_JSON_H__
 #define __UTIL_JSON_H__
 
@@ -6,7 +28,7 @@
 #define JSON_TYPE_OBJECT     0x00000002
 #define JSON_TYPE_VALUE      0x00000004
 
-#define JSON_TYPE_BOOL       0x00000008
+#define JSON_TYPE_FBOOL       0x00000008
 #define JSON_TYPE_NULL       0x00000010
 #define JSON_TYPE_NUMBER     0x00000020
 #define JSON_TYPE_STRING     0x00000040

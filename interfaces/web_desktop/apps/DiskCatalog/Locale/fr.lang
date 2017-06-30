@@ -1,0 +1,110 @@
+i18n_mountlist                    : Mountlist
+i18n_disk_catalog                 : Catalogue des disques
+edit_connection                   : Editer la connexion
+i18n_edit_connection              : Editer la connexion
+i18n_new_connection               : Nouvelle connexion
+new_connection                    : Nouvelle connexion
+i18n_shared_drive                 : Disque partagé
+i18n_pollable                     : Visible sur le réseau
+i18n_short_desc                   : Description brève
+i18n_publisher                    : Editeur
+i18n_visible                      : Montrer
+
+i18n_storage_disks                : Disques de stockage
+i18n_software_disks               : Disques logiciels
+
+i18n_disk_cover                   : Couverture
+i18n_choose_disk_cover            : Choisissez la couverture
+i18n_browse                       : Choisir...
+i18n_cant_show_disk_cover         : Impossible de changer la couverture du disque
+i18n_cant_show_disk_desc          : La couverture du disque n'a pas pu être chargée dans la base de données.
+
+i18n_sure_delete                  : Etes-vous sur?
+i18n_sure_delete_desc             : Supprimer un disque va l'enlever de votre catalogue.
+
+i18n_select_dos_driver            : Choisissez un pilote DOS
+i18n_placeholder_connection       : Mon disque
+i18n_choose_type                  : Choisissez le type
+i18n_loading                      : Chargement
+i18n_device_name                  : Nom du disque
+
+i18n_mounting                     : Montage
+i18n_unmounting                   : Démontage
+i18n_executable                   : Executable JSX
+i18n_successfully_mounted         : This needs a translation 1.
+i18n_successfully_unmounted       : This needs a translation 2.
+i18n_fail_mount                   : This needs a translation 3.
+i18n_fail_mount_more              : This needs a translation 4.
+i18n_fail_unmount                 : This needs a translation 5.
+i18n_fail_unmount_more            : This needs a translation 6.
+
+i18n_save                         : Sauver
+i18n_cancel                       : Annuler
+
+i18n_connection_details           : Détails de connexion
+i18n_notes                        : Notes
+i18n_directory                    : Répertoire distant
+i18n_login_info                   : Infos de login
+i18n_your_notes                   : Vos notes
+i18n_username                     : Nom d'utilisateur
+i18n_password                     : Mot de passe
+i18n_host_port                    : Port du serveur
+i18n_host_ip                      : Adresse du serveur ou IP
+i18n_workgroup_name               : Votre groupe de travail
+i18n_workgroup                    : Workgroup
+
+i18n_key                   		  : Clé
+
+i18n_MySQL Based Filesystem       : Disque SQL
+i18n_SQLDrive                     : Disque SQL
+
+i18n_Server filesystem            : Système de fichier serveur
+i18n_Local                        : Système de fichier serveur
+
+i18n_Friend Store                 : Friend Store
+i18n_FriendStore                  : Friend Store
+
+i18n_Dropbox Based Filesystem     : Disque Dropbox
+i18n_DropboxDrive                 : Disque Dropbox
+
+i18n_GoogleDrive                  : Google drive
+i18n_Google Drive Based Filesystem: Google drive
+
+
+i18n_Mount Wordpress sites as doors : Wordpress drive
+i18n_Wordpress                    : Disque WordPress
+
+i18n_MySQL Based Filesystem for workgroups : MySQL Based Filesystem for workgroups
+i18n_SQLWorkgroupDrive            : Système de fichier MySQL pour groupes de travail
+
+
+i18n_Mount Treeroot servers as doors : Treeroot drive
+i18n_Treeroot                     : Disque Treeroot
+
+i18n_Mount ARENA sites as doors   : Disque Arena CM
+i18n_ArenaCM                      : Disque Arena CM
+
+i18n_Mount websites as doors      : Disque SiteWeb
+i18n_Website                      : Disque SiteWeb
+
+i18n_Assign                       : Assigner un disque
+i18n_AssignDOSDriver              : Système de fichier virtuel agrégé
+
+i18n_INRam                        : Disque INRam
+i18n_INRamDOSdriver               : Pilote DOS INRam pour travail multi-utilisateurs
+
+i18n_FriendStoreDrive             : Disque FriendStore
+i18n_FriendStoreDOSdriver         : Disque FriendStore pour revendeurs
+
+i18n_Remote                       : Disque distant
+i18n_RemoteDOSdriver              : Pilote DOS distant
+
+i18n_Node                         : Noeud de réseau
+i18n_NodeDOSDriver                : Pilote de disque noeud de réseau base de données
+
+i18n_SFTP                         : SFTP
+
+i18n_successfully_unmounted       : Disque démonté
+i18n_your_device_was              : Votre disque a été démonté avec succès.
+i18n_failed_to_unmount            : Echec
+i18n_could_not_unmount            : Impossible de démonter le disque. Les changements de <b>sont PAS</b> sauvés.

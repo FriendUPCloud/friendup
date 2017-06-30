@@ -1,0 +1,23 @@
+
+i18n_fullscreen                      : Fullskjerm
+i18n_window                     	 : Vindu
+i18n_logout                          : Logg ut
+i18n_quit                            : Avslutt
+i18n_file                            : Fil
+i18n_bookmarks                       : Bokmerker
+i18n_bm_add                          : Legg til
+
+i18n_account                         : Konto
+i18n_edit_profile                    : Endre profil
+i18n_account_settings                : Kontoinnstillinger
+i18n_global_settings                 : Globale innstillinger
+
+i18n_navigation                      : Navigasjon
+i18n_nav_newsfeed                    : Nyheter
+i18n_nav_messages                    : Beskjeder
+i18n_nav_calendar                    : Kalender
+i18n_nav_library                     : Bibliotek
+i18n_nav_browse                      : Utforsk
+i18n_nav_bookmarks                   : Bokmerker
+
+

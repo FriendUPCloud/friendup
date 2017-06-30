@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -26,7 +26,11 @@ Application.receiveMessage = function( msg )
 {
 	if( msg.command == 'settings' )
 	{
-		this.settings = JSON.parse(  ('' + msg.settings).replace(/\r/g,'\\r').replace(/\n/g,'\\n')  );
+		if( msg.settings && msg.settings.length )
+		{
+			this.settings = JSON.parse(  ('' + msg.settings).replace(/\r/g,'\\r').replace(/\n/g,'\\n')  );
+		}
+		else this.settings = null;
 		this.refreshSettings();
 	}
 }
@@ -36,10 +40,13 @@ Application.refreshSettings = function()
 	var settings = this.settings;
 	var ml = '';
 	
-	for(var key in settings)
+	if( settings )
 	{
-		ml += '<p class="Layout"><label for="#'+ key +'">Key: '+ key +'</label><br /><textarea id="'+ key +'" class="FullWidth serverinput">' + settings[key]  + '</textarea></p>';
-		this.propertycount++;
+		for( var key in settings )
+		{
+			ml += '<p class="Layout"><label class="MarginBottom" for="#'+ key +'">Key: '+ key +'</label><br /><textarea id="'+ key +'" class="FullWidth serverinput">' + settings[key]  + '</textarea></p>';
+			this.propertycount++;
+		}
 	}
 	ge( 'Settings' ).innerHTML = ml;
 }
@@ -84,7 +91,7 @@ function setSettings( sid )
 	var settkeys = Object.keys(setts);
 	for( var i = 0; i < settkeys.length; i++)
 	{
-		setts[settkeys[i]] = setts[settkeys[i]].replace(/\r/g,'\\r').replace(/\n/g,'\\n').replace(/"/g,'\\"');
+		setts[settkeys[i]] = setts[settkeys[i]].replace(/\\/g,'\\\\').replace(/\r/g,'\\r').replace(/\n/g,'\\n').replace(/"/g,'\\"');
 	}
 
 	Application.sendMessage( { 

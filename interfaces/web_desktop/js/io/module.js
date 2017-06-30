@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = window.friendUP || {};
 friendUP.io = friendUP.io || {};
@@ -31,21 +31,34 @@ var Module = function( mod )
 	this.addVar = function( k, value )
 	{
 		this.vars[k] = value;
-	} 
+	}
 
 	// Execute a command to a Friend UP module
 	this.execute = function( cmd, args )
 	{
-		if ( cmd )  this.command = cmd;
-		if ( args ) this.args = args;
+		if( cmd  ) this.command = cmd;
+		if( args ) this.args = args;
 		
 		var j = new cAjax ();
 		
-		j.open ( 'post', '/system.library/module/', true, true );
+		j.open( 'post', '/system.library/module/', true, true );
 		
-		j.addVar( 'sessionid', Workspace.sessionId          );
+		// Make sure we can read args (from the myriad of places )
+		var authId = false;
+		if( args )
+		{
+			if( args.authid ) authId = args.authid;
+			else if( args.args ) if( args.args.authid ) authId = args.args.authid;
+		}
+		if( !authId && Workspace.authId ) authId = Workspace.authId;
+		// Done with authid here
+		
+		// authid
+		if( authId ) j.addVar( 'authid', authId   );
+		// session id
+		else if( Workspace.sessionId ) j.addVar( 'sessionid', Workspace.sessionId );
 		j.addVar( 'module',    this.module                  );
-		j.addVar( 'args',      JSON.stringify ( this.args ) );
+		j.addVar( 'args',      JSON.stringify( this.args )  );
 		j.addVar( 'command',   this.command                 );
 		
 		for( var a in this.vars ) j.addVar( a, this.vars[a] );
@@ -54,25 +67,24 @@ var Module = function( mod )
 		{
 			var t = this;
 			
-			j.onload = function()
+			j.onload = function( rc, rd )
 			{
-				var data = this.returnData;
+				var data = rd;
 				if( data && data.length )
 				{
 					for( var z in t.replacements )
 					{
-						data = data.split ( '{'+z+'}' ).join ( t.replacements[z] );
+						data = data.split( '{'+z+'}' ).join ( t.replacements[z] );
 					}
 				}
-				t.onExecuted( this.returnCode, data );
-			}
+				t.onExecuted( rc, data );
+			};
 		}
-		j.send ();
+		j.send();
 	}
 };
 
 // Module
-
 (function( ns, undefined )
 {
 	ns.Module = function( conf, callback )

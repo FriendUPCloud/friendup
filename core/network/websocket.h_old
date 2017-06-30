@@ -1,0 +1,54 @@
+/*©*****************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              * 
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+*****************************************************************************©*/
+
+#ifndef _WEBSOCKET_H_
+#define _WEBSOCKET_H_
+
+#include "network/socket.h"
+#include "network/http.h"
+#include "util/hashmap.h"
+
+#define WEBSOCKET_CONNECTING = 0
+#define WEBSOCKET_OPEN       = 1
+#define WEBSOCKET_CLOSING    = 2
+#define WEBSOCKET_CLOSED     = 3
+
+// RFC:
+// https://tools.ietf.org/html/rfc6455
+//
+
+typedef struct Websocket
+{
+	unsigned short readyState;
+	unsigned char  header[14];
+	unsigned char  maskBytes[4];
+	unsigned char  headerSize; // Not all headers are 14 bytes; They can be: 2, 4, 8, 8, 10 and 14 bytes long.
+	unsigned long  bufferedAmount;
+	unsigned int   parseState;
+
+	bool             fin; // Final fragment?
+	unsigned char opcode; //
+	bool            mask; // Payload is maksed
+	unsigned int    size; // Size of payload
+
+	unsigned char* payload;
+} Websocket_t;
+
+Websocket_t* WebsocketNew();
+bool WebsocketAccept( Socket_t* sock, Http_t* request );
+bool WebsocketAddListener();
+int WebsocketParsePartial( Websocket_t* ws, char* data, unsigned int length );
+void WebsocketFree( Websocket_t* ws );
+
+char* WebsocketBuild( char* raw, unsigned int size, unsigned int* messageSize );
+
+#endif

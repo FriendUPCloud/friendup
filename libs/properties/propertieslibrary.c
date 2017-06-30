@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -83,12 +84,12 @@ void libClose( struct PropertiesLibrary *l )
 //
 //
 
-ULONG GetVersion(void)
+FULONG GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
-ULONG GetRevision(void)
+FULONG GetRevision(void)
 {
 	return LIB_REVISION;
 }
@@ -129,7 +130,7 @@ Props *Open( const char *path )
 	
 	DEBUG("[PropertiesLibrary] openfile %s\n", path );
 
-	if( ( prop = calloc( 1, sizeof( Props ) ) ) != NULL )
+	if( ( prop = FCalloc( 1, sizeof( Props ) ) ) != NULL )
 	{
 		prop->p_Dict = iniparser_load( path );
 		
@@ -137,7 +138,7 @@ Props *Open( const char *path )
 		
 		if( prop->p_Dict == NULL )
 		{
-			free( prop );
+			FFree( prop );
 			return NULL;
 		}
 	}
@@ -158,7 +159,7 @@ void Close( Props *p )
 			iniparser_freedict( p->p_Dict );
 			p->p_Dict = NULL;
 		}
-		free( p );
+		FFree( p );
 	}
 }
 

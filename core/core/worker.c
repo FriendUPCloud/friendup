@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include "worker.h"
 #include "worker_manager.h"
@@ -43,7 +47,7 @@ Worker *WorkerNew( int nr )
 	}
 	else
 	{
-		ERROR("Cannot allocate memory for worker\n");
+		FERROR("Cannot allocate memory for worker\n");
 		return NULL;
 	}
 	
@@ -199,7 +203,7 @@ void WorkerThread( void *w )
 				}
 				else
 				{
-					ERROR("[WorkerThread] Cannot launch task via worker, function is empty!\n");
+					FERROR("[WorkerThread] Cannot launch task via worker, function is empty!\n");
 				}
 			}
 			
@@ -226,7 +230,7 @@ int WorkerRun( Worker *wrk )
 {
 	if( wrk == NULL )
 	{
-		ERROR("[WorkerRun] Cannot run worker, worker is NULL\n");
+		FERROR("[WorkerRun] Cannot run worker, worker is NULL\n");
 		return 1;
 	}
 	
@@ -238,7 +242,7 @@ int WorkerRun( Worker *wrk )
 	wrk->w_Thread = ThreadNew( WorkerThread, wrk );
 	if( wrk->w_Thread == NULL )
 	{
-		ERROR("[WorkerRun] Cannot create thread!\n");
+		FERROR("[WorkerRun] Cannot create thread!\n");
 		WorkerDelete( wrk );
 		return -1;
 	}
@@ -278,7 +282,7 @@ int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 			else
 			{
 				//pthread_mutex_unlock( &(w->w_Mut) );
-				ERROR("[WorkerRunCommand] Thread not initalized\n");
+				FERROR("[WorkerRunCommand] Thread not initalized\n");
 				return 1;
 			}
 		}
@@ -300,7 +304,7 @@ int WorkerRun( Worker *wrk )
 {
 	if( wrk == NULL )
 	{
-		ERROR("[WorkerRun] Cannot run worker, worker is NULL\n");
+		FERROR("[WorkerRun] Cannot run worker, worker is NULL\n");
 		return 1;
 	}
 	
@@ -312,7 +316,7 @@ int WorkerRun( Worker *wrk )
 	wrk->w_Thread = ThreadNew( WorkerThread, wrk, TRUE );
 	if( wrk->w_Thread == NULL )
 	{
-		ERROR("[WorkerRun] Cannot create thread!\n");
+		FERROR("[WorkerRun] Cannot create thread!\n");
 		WorkerDelete( wrk );
 		return -1;
 	}
@@ -323,8 +327,6 @@ int WorkerRun( Worker *wrk )
 	
 	return 0;
 }
-
-void usleep( long );
 
 //
 // Thread
@@ -383,13 +385,13 @@ void WorkerThread( void *w )
 			}
 			else
 			{
-				ERROR("Function 0\n");
+				FERROR("Function 0\n");
 			}
 			DEBUG("[WorkerThread] everything done\n");
 		}
 		else
 		{
-			ERROR("[WorkerThread] Cannot lock!\n");
+			FERROR("[WorkerThread] Cannot lock!\n");
 		}
 			
 		DEBUG("[WorkerThread] Worker %d has waited\n", wrk->w_Nr );
@@ -413,6 +415,7 @@ void WorkerThread( void *w )
 	wrk->w_Function = NULL;
 	wrk->w_Data = NULL;
 	wrk->w_State = W_STATE_TO_REMOVE;
+	thread->t_Launched = FALSE;
 	DEBUG( "We (%d) left the building\n", wrk->w_Nr );
 }
 
@@ -455,7 +458,7 @@ int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 						//pthread_mutex_lock( &(w->w_Mut) );
 						if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
 						{
-							ERROR("State break");
+							FERROR("State break");
 							//pthread_mutex_unlock( &(w->w_Mut) );
 							break;
 						}
@@ -470,7 +473,7 @@ int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 			else
 			{
 				//pthread_mutex_unlock( &(w->w_Mut) );
-				ERROR("[WorkerRunCommand] Thread not initalized\n");
+				FERROR("[WorkerRunCommand] Thread not initalized\n");
 				return 1;
 			}
 		}

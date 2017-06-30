@@ -15,15 +15,6 @@
 	height: 100%;
 }
 
-.Tab, .TabActive
-{
-	position: relative;
-	height: 40px;
-	line-height: 30px;
-	box-sizing: border-box;
-	padding: 0 10px;
-}
-
 .Tabs > div:first-child
 {
 	margin-left: 10px;
@@ -32,7 +23,7 @@
 html .PageActive
 {
 	position: absolute;
-	top: 40px;
+	top: 30px;
 	width: 100%;
 	bottom: 0;
 	box-sizing: border-box;

@@ -1,0 +1,115 @@
+i18n_mountlist                    : Lagringsenheter
+i18n_disk_catalog                 : Enhetskatalog
+edit_connection                   : Endre enhet
+i18n_edit_connection              : Endre enhet
+new_connection                    : Tilknytt enhet
+i18n_new_connection               : Tilknytt enhet
+i18n_shared_drive                 : Delt enhet
+i18n_pollable                     : Synlig på nettverk
+i18n_short_desc                   : Kort beskrivelse
+i18n_publisher                    : Utgiver
+i18n_visible                      : Vis på skrivebord
+
+i18n_storage_disks                : Data disker
+i18n_software_disks               : Programvare disker
+
+i18n_disk_cover                   : Forsidebilde
+i18n_choose_disk_cover            : Velg forsidebilde til disken
+i18n_browse                       : Bla gjennom...
+i18n_cant_show_disk_cover         : Kan ikke sette forsidebilde
+i18n_cant_show_disk_desc          : Forsidebildet kunne ikke settes i databasen.
+
+i18n_sure_delete                  : Er du sikker?
+i18n_sure_delete_desc             : Sletting av disk vil fjerne den fra katalogen din.
+
+i18n_select_dos_driver            : Velg DOS driver
+i18n_placeholder_connection       : Min enhet
+i18n_choose_type                  : Velg type
+i18n_loading                      : Laster
+i18n_device_name                  : Enhetsnavn
+
+i18n_mounting                     : Monterer
+i18n_unmounting                   : Avmonterer
+i18n_executable                   : JSX exefil
+i18n_successfully_mounted         : Din disk ble montert.
+i18n_successfully_unmounted       : Din disk ble avmontert.
+i18n_fail_mount                   : Kunne ikke montere
+i18n_fail_mount_more              : Kunne ikke montere disken.
+i18n_fail_unmount                 : Kunne ikke avmontere
+i18n_fail_unmount_more            : Kunne ikke avmontere disken.
+
+i18n_save                         : Lagre
+i18n_cancel                       : Avbryt
+
+i18n_connection_details           : Nettverskdetaljer
+i18n_notes                        : Notater
+i18n_directory                    : Filsti på server
+i18n_login_info                   : Innloggingsinfo
+i18n_your_notes                   : Dine notater
+i18n_username                     : Brukernavn
+i18n_password                     : Passord
+i18n_host_port                    : Server port
+i18n_host_ip                      : Server adresse eller IP
+i18n_workgroup_name               : Din arbeidsgruppe
+i18n_workgroup                    : Arbeidsgruppe
+
+i18n_key                   		  : Nøkkel
+
+#File systems 
+#TODO: Later no, just read from the DOS drivers themselves
+
+i18n_MySQL Based Filesystem       : SQL enhet
+i18n_SQLDrive                     : SQL enhet
+
+i18n_Server filesystem            : Server filsystem
+i18n_Local                        : Server filsystem
+
+i18n_Friend Store                 : Friend Store
+i18n_FriendStore                  : Friend Store
+
+i18n_Dropbox Based Filesystem     : Dropbox enhet
+i18n_DropboxDrive                 : Dropbox enhet
+
+i18n_GoogleDrive                  : Google drive enhet
+i18n_Google Drive Based Filesystem: Google drive enhet
+
+
+
+i18n_Mount Wordpress sites as doors : Wordpress enhet
+i18n_Wordpress                    : WordPress enhet
+
+i18n_MySQL Based Filesystem for workgroups : MySQL basert filsystem for arbeidsgrupper
+i18n_SQLWorkgroupDrive            : MySQL basert filsystem for arbeidsgrupper
+
+
+i18n_Mount Treeroot servers as doors : Treeroot enhet
+i18n_Treeroot                     : Treeroot enhet
+
+i18n_Mount ARENA sites as doors   : Arena CM enhet
+i18n_ArenaCM                      : Arena CM enhet
+
+i18n_Mount websites as doors      : Website enhet
+i18n_Website                      : Website enhet
+
+i18n_Assign                       : Assign disk
+i18n_AssignDOSDriver              : Aggregert virtuell filsystem
+
+i18n_INRam                        : INRam Disk
+i18n_INRamDOSdriver               : INRam DOS driver for flere brukere
+
+i18n_FriendStoreDrive             : FriendStore disk
+i18n_FriendStoreDOSdriver         : FriendStore disk driver
+
+i18n_Remote                       : Nettverksbasert Friend disk
+i18n_RemoteDOSdriver              : Nettverksbasert Friend DOS driver
+
+i18n_Node                         : Node nettverk
+i18n_NodeDOSDriver                : Node nettverk disk driver
+
+i18n_SFTP                         : SFTP
+
+i18n_successfully_unmounted       : Vellykket umontert enhet
+i18n_your_device_was              : Enheten din var vellykket avmontert.
+i18n_failed_to_unmount            : Kunne ikke demontere enheten
+i18n_could_not_unmount            : Kunne ikke avmontere enheten. Endringer <b>IKKE lagret</b>
+

@@ -1,0 +1,6 @@
+{
+	"type":    "Local",
+	"literal": "Server filesystem",
+	"group":   "Admin",
+	"sharing":  "0"
+}

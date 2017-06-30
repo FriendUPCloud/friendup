@@ -1,0 +1,89 @@
+html * {
+	box-sizing : border-box;
+}
+
+#services {
+	overflow : auto;
+}
+
+.service-item {
+	padding : 0 0.5em;
+	height : 2.5em;
+	margin-bottom : 0.2em;
+}
+
+.service-item.focus {
+	outline : none;
+	border-color : #555;
+}
+
+.service-item:focus {
+	outline : none;
+}
+
+
+.service-run-state {
+	padding : 0 0.5em;
+}
+
+.service-run-state .indicator {
+	width : 1em;
+	height : 1em;
+	border-radius: 1em;
+	border : 1px solid rgba( 0, 0, 0, 0.5 );
+}
+
+.service-details {
+	
+}
+
+.details-head {
+	padding-bottom : 0.2em;
+}
+
+.details-name {
+	padding : 0 0.4em;
+}
+
+.details-content {
+	padding : 0.5em;
+}
+
+/* */
+
+#content {
+	padding : 0.5em;
+	height : 100%;
+	width : 100%;
+}
+
+#head {
+	padding : 0.5em;
+}
+
+#output {
+}
+
+.top-pad {
+	padding-top : 0.5em;
+}
+
+#inputs label {
+	padding-right : 0.5em;
+}
+
+.input-wrap {
+	
+}
+
+.input-wrap > input {
+	width : 100%;
+}
+
+.dump {
+	margin-top : 1em;
+	padding : 0.5em;
+	border : 2px solid #888;
+}
+
+.hidden { display : none !important; }

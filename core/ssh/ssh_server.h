@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  SSH server definition
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #ifndef __SSH_SSH_SERVER_H__
 #define __SSH_SSH_SERVER_H__
@@ -33,7 +44,7 @@
 
 #include <libssh/libssh.h>
 #include <system/systembase.h>
-#include <user/userlibrary.h>
+#include <system/auth/authmodule.h>
 
 typedef struct SSHServer
 {
@@ -42,7 +53,8 @@ typedef struct SSHServer
 	char 			*sshs_RSAKeyHome;
 	char				*sshs_DSAKeyHome;
 
-	BOOL 			sshs_Quit;
+	FBOOL 		sshs_Quit;
+	void				*sshs_SB;
 	//SSHSocket		*sshs_Socket;		// socket
 	//int 			sshs_Epollfd;		// EPOLL - file descriptor
 }SSHServer;
@@ -61,7 +73,8 @@ typedef struct SSHSession		// single session structure
 	User 				*sshs_Usr;				// logged user
 	char 				*sshs_DispText;			// display text for user
 	char 				*sshs_Path;				// user path
-	BOOL 				sshs_Quit;				// session quit
+	FBOOL 			sshs_Quit;				// session quit
+	void					*sshs_SB;			//SystemBase
 }SSHSession;
 
 
@@ -71,10 +84,18 @@ typedef struct SSHSession		// single session structure
 //
 //
 
-SSHServer *SSHServerNew();
+SSHServer *SSHServerNew( void *sb );
+
+//
+//
+//
 
 void SSHServerDelete( SSHServer *ts );
 
-int SSHThread( void *data );
+//
+//
+//
+
+int SSHThread( FThread *ptr );
 
 #endif //__SSH_SSH_SERVER_H__

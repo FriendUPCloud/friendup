@@ -359,13 +359,13 @@ uLong ZCALLBACK win32_write_file_func (voidpf opaque,voidpf stream,const void* b
     return ret;
 }
 
-static BOOL win32_setfilepointer_internal(HANDLE hFile, LARGE_INTEGER pos, LARGE_INTEGER *newPos, DWORD dwMoveMethod)
+static FBOOL win32_setfilepointer_internal(HANDLE hFile, LARGE_INTEGER pos, LARGE_INTEGER *newPos, DWORD dwMoveMethod)
 {
 #ifdef IOWIN32_USING_WINRT_API
     return SetFilePointerEx(hFile, pos, newPos, dwMoveMethod);
 #else
     LONG lHigh = pos.HighPart;
-    BOOL ret = TRUE;
+    FBOOL ret = TRUE;
     DWORD dwNewPos = SetFilePointer(hFile, pos.LowPart, &lHigh, dwMoveMethod);
     if ((dwNewPos == INVALID_SET_FILE_POINTER) && (GetLastError() != NO_ERROR))
         ret = FALSE;

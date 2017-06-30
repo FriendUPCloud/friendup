@@ -1,3 +1,25 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 
 /*
     
@@ -11,15 +33,15 @@
 #include <core/types.h>
 
 
-typedef ULONG Tag;
+typedef FULONG Tag;
 
 #pragma pack(4)
 
-struct TagItem
+typedef struct TagItem
 {
     Tag		ti_Tag;	// description
-    ULONG	ti_Data;	// data
-};
+    FULONG	ti_Data;	// data
+}TagItem;
 
 #pragma pack()
 
@@ -32,7 +54,7 @@ struct TagItem
 #define TAG_SKIP   (3L)   // SKIP TAG
 
 // USER TAG
-#define TAG_USER    ((ULONG)(1L<<31))
+#define TAG_USER    ((FULONG)(1L<<31))
 #define TAG_OS	    (16L)   // TAG USED BY OS
 
 
@@ -45,7 +67,7 @@ struct TagItem
 #define MAP_KEEP_NOT_FOUND   1	// keep this one if they arent
 
 // MARCRO FOR TAGLIST
-#define TAGLIST(args...) ((struct TagItem *)(IPTR []){ args, TAG_DONE })
+//#define TAGLIST(args...) ((struct TagItem *)(IPTR []){ args, TAG_DONE })
 
 #endif //TAGITEM_H__
 

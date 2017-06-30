@@ -1,0 +1,25 @@
+
+	<input type="hidden" id="ID" value=""/>
+
+	<div class="VContentTop ScrollArea Padding" style="bottom: 50px">
+		<p class="Layout">
+			<strong>{i18n_commenting_on}:</strong><br/>
+			<em id="Comment">...</em>
+		</p>
+		<hr/>
+		<p class="Layout"><strong>{i18n_your_comment}:</strong></p>
+		<p class="Layout">
+			<textarea class="FullWidth" id="CommentContent" style="min-height: 150px"></textarea>
+		</p>
+	</div>
+	<div class="VContentBottom Padding BorderTop" style="height: 50px">
+		<button class="Button IconSmall fa-close FloatRight" onclick="cancelComment()">
+			{i18n_cancel}
+		</button>
+		<button class="Button IconSmall fa-save" onclick="saveComment()">
+			{i18n_save_comment}
+		</button>
+	</div>
+	
+	<script src="Progdir:comment.js"></script>
+

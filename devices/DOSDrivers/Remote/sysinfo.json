@@ -1,0 +1,7 @@
+{
+	"type":    "Remote",
+	"literal": "Remote filesystem",
+	"group":   "User",
+	"sharing":  "0",
+	"icon": "logo.png"
+}

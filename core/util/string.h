@@ -1,12 +1,30 @@
-/*
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 
-<LICENSE TEMPLATE>
 
-*/
 #ifndef STRING_H_
 #define STRING_H_
 
-#include <stdbool.h>
+#include <core/types.h>
 #include <core/types.h>
 
 char* MakeString( int length );
@@ -27,7 +45,10 @@ int SafeStrlen( char* *string, int maxlen );
 char* StringDuplicate( const char* str );
 
 // Duplicate a string given N chars
-char* StringDuplicateN( char* str, unsigned int len );
+char* StringDuplicateN( char* str, int len );
+
+// calloc a const string (function reads till EOL
+char* StringDuplicateEOL( const char* str );
 
 // Show string length, but with " " becoming "\x20"
 int StrLenSafeSpaces( char* str );
@@ -39,9 +60,11 @@ void CleanPathString( char* str );
 void AddEscapeChars( char* str );
 
 // Decode string
-ULONG UrlDecode( char* dst, const char* src );
+FULONG UrlDecode( char* dst, const char* src );
 
 char *UrlDecodeToMem( const char* src );
+
+char *UrlEncodeToMem( const char *src );
 
 char** StringSplit( char* str, char delimiter, unsigned int* length ); // Length of returned char array is placed in length
 
@@ -49,19 +72,19 @@ char *StringAppend( const char *src, const char *add );
 
 unsigned int StringParseUInt( char* str );
 
-BOOL CharIsDigit( char c );
+FBOOL CharIsDigit( char c );
 
-BOOL CharIsUpAlpha( char c );
+FBOOL CharIsUpAlpha( char c );
 
-BOOL CharIsLoAlpha( char c );
+FBOOL CharIsLoAlpha( char c );
 
-BOOL CharIsAlpha( char c );
+FBOOL CharIsAlpha( char c );
 
-BOOL CharIsAlphanumeric( char c );
+FBOOL CharIsAlphanumeric( char c );
 
 char CharAlphaToLow( char c );
 
-BOOL CharIsCTL( char c );
+FBOOL CharIsCTL( char c );
 
 void StringToLowercase( char* str );
 
@@ -73,10 +96,16 @@ void StringSecureFree( char* str );
 
 char* StringShellEscape( const char* str );
 
+char* StringShellEscapeSize( const char* str, int *len );
+
 char *FindInBinary(char *x, int m, char *y, int n) ;
 
-QUAD FindInBinaryPOS(char *x, int m, char *y, UQUAD n);
+FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n);
 
-QUAD FindInBinarySimple( char *x, int m, char *y, UQUAD n );
+FQUAD FindInBinarySimple( char *x, int m, char *y, FUQUAD n );
+
+void HashedString ( char **str );
+
+char *GetStringFromJSON( char *text, char *token );
 
 #endif

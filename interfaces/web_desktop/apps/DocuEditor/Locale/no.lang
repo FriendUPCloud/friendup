@@ -1,0 +1,83 @@
+#Norwegian translation
+
+i18n_import                         : Import topic FL>HT!
+i18n_add_topic                      : Nytt emne
+i18n_published                      : Publisert
+i18n_pending                        : Godkjennes
+i18n_new                            : Nye
+i18n_find                           : Finn
+i18n_edit_topic                     : Endre emne
+i18n_quit                           : Avslutt
+i18n_topic_lower                    : emne
+i18n_refresh_topics                 : Frisk opp emner
+i18n_register_topic                 : Registrer emne
+i18n_edit                           : Endre
+i18n_view                           : Les
+i18n_cancel                         : Avbryt
+i18n_save                           : Lagre
+i18n_enter_into                     : Utforsk tema
+i18n_parent_level                   : Opp et nivå
+i18n_help                           : Hjelp
+i18n_file                           : Fil
+i18n_status                         : Status
+i18n_close                          : Lukk
+i18n_read_mode                      : Vis/frisk opp leseren
+
+i18n_toc                            : Indeks
+
+i18n_documentation_editor           : Dokumentasjonsredigering
+i18n_documentation_reader           : Dokumentasjon
+
+i18n_preferences                    : Innstillinger
+i18n_edit_preferences               : Rediger innstillinger
+i18n_cancel                         : Lukk
+i18n_save_preferences               : Lagre innstillinger
+
+i18n_failed_saving_prefs            : Kunne ikke lagre innstillingene
+i18n_failed_saving_prefs_desc       : En server feil oppsto ved lagring av innstillingene.
+
+i18n_commenting_on                  : Kommenterer på
+i18n_your_comment                   : Din kommentar
+
+i18n_lower_comment                  : kommentar
+i18n_lower_comments                 : kommentarer
+i18n_lower_topic                    : emne
+i18n_lower_topics                   : emner
+
+#Topic
+
+i18n_edit                           : Rediger
+i18n_register_image                 : Registrer bilde
+i18n_add_image                      : Legg til bilde i tekst
+i18n_are_you_sure                   : Er du sikker?
+i18n_are_you_sure_delimg            : Dette vil slette bildet.
+i18n_delete_image                   : Slett bildet
+
+i18n_topic                          : Emne
+i18n_category                       : Kategori
+i18n_loading                        : Laster inn
+i18n_short_description              : Kort beskrivelse
+i18n_full_description               : Full beskrivelse
+i18n_examples                       : Eksempler
+i18n_add_comment                    : Tilføy kommentar
+i18n_save_topic                     : Lagre emne
+i18n_delete                         : Slett
+i18n_topic_categories               : Kategorier for emner
+i18n_add_category                   : Tilføy kategori
+i18n_viewing_topic                  : Leser emne
+
+#Menu
+
+i18n_help_index                     : Hjelp, indeks
+i18n_edit_categories                : Endre kategorier
+
+#Comments
+
+i18n_commenting_on                  : Kommenterer på
+i18n_your_comment                   : Din kommentar
+i18n_save_comment                   : Lagre kommentar
+
+i18n_please_leave_a_comment         : Legg til en kommentar
+i18n_add_comment                    : Lagre kommentar
+i18n_commented                      : kommenterte
+i18n_comments                       : Kommentarer

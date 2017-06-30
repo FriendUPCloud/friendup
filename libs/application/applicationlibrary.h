@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -45,18 +46,18 @@
 
 typedef struct ApplicationLibrary
 {
-	char 		*l_Name;	// library name
-	double 		l_Version;		// version information
-	void 		*handle;
-	void		*sb; // system base
-	void 		*(*libInit)( void * );
+	char 		*l_Name;			// library name
+	FULONG 		l_Version;			// version information
+	void 		*l_Handle;
+	void						*sb; // system base
+	void *		(*libInit)( void *sb );
 	void 		(*libClose)( struct Library *l );
-	long 		(*GetVersion)(void);
-	long 		(*GetRevision)(void);
+	FULONG 		(*GetVersion)(void);
+	FULONG 		(*GetRevision)(void);
 	
 /*
 	// user.library structure
-	BOOL		(*UserExist)( struct ApplicationLibrary *l, const char *name );
+	FBOOL		(*UserExist)( struct ApplicationLibrary *l, const char *name );
 	User 		*(*Authenticate)( struct ApplicationLibrary *l, const char *name, const char *pass, const char *sessionId );
 	void 		(*Logout)( struct ApplicationLibrary *l, const char *name );
 	User		*(*IsSessionValid)( struct ApplicationLibrary *l, const char *sessionId );
@@ -80,7 +81,7 @@ typedef struct ApplicationLibrary
 
 // internal functions
 
-void HashedString ( char **str );
+//void HashedString ( char **str );
 
 Application *GetApplicationFromDB( struct ApplicationLibrary *l, const char *where );
 

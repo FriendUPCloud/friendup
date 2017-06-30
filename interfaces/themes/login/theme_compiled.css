@@ -1,0 +1,205 @@
+@font-family
+{
+	font-face: 'Raleway';
+	font-weight: normal;
+	src: url(themes/friendup/fonts/Raleway-Regular.ttf);
+}
+@font-family
+{
+	font-face: 'Raleway';
+	font-weight: bold;
+	src: url(themes/friendup/fonts/Raleway-SemiBold.ttf);
+}
+
+/* Tags */
+
+html
+{
+	margin: 0;
+	padding: 0;
+	background: #efefef;
+}
+
+body
+{
+	margin: 0;
+	padding: 0;
+	color: #000000;
+	font-family: 'Raleway', sans-serif;
+	font-size: 15px;
+}
+
+h1
+{
+	background-image: url(/webclient/gfx/system/logo_480.png);
+	background-size: 80% auto;
+	background-position: top;
+	background-repeat: no-repeat;
+	height: 110px;
+	box-sizing: border-box;
+	padding-top: 90px;
+	font-size: 18px;
+	margin: 10px 0 25px 0;
+	text-align: center;
+}
+
+hr
+{
+	height: 5px;
+	border: 0;
+	border-top: 1px solid rgba(0,0,0,0.2);
+	clear: both;
+}
+
+p
+{
+	margin: 0 0 19px 0;
+}
+
+a, a:hover, a:visited, a:focus, a:active
+{
+	color: #3C7DB8;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+button
+{
+	display: block;
+	font-size: 15px;
+	width: 100%;
+	background: #4B9CE6;
+	border-radius: 5px;
+	padding: 0px 10px;
+	height: 30px;
+	line-height: 28px;
+	color: #ffffff;
+	border: 2px solid rgba(0,0,0,0.2);
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+input[type=checkbox]
+{
+	margin-top: 6px;
+    margin-right: 5px;
+}
+
+input[type=text], input[type=password]
+{
+	height: 30px;
+	padding: 0 10px;
+	line-height: 30px;
+	margin: 0;
+	width: 100%;
+	box-sizing: border-box;
+	border: 0;
+	border-radius: 5px;
+	font-size: 15px;
+	font-family: 'Raleway', sans-serif;
+	font-weight: bold;
+	color: #4B9CE6;
+	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.1);
+}
+
+input[type=text]:focus, input[type=password]:focus
+{
+	box-shadow: 0px 0px 1px 2px rgba(75,156,230,1);
+}
+
+
+label
+{
+	display: block;
+	height: 30px;
+	line-height: 30px;
+}
+
+/* Classes */
+
+.HRow
+{
+	min-height: 40px;
+	clear: both;
+}
+
+.HContent5 { width: 5%; }
+.HContent10 { width: 10%; }
+.HContent15 { width: 15%; }
+.HContent20 { width: 20%; }
+.HContent25 { width: 25%; }
+.HContent30 { width: 30%; }
+.HContent35 { width: 35%; }
+.HContent40 { width: 40%; }
+.HContent45 { width: 45%; }
+.HContent50 { width: 50%; }
+.HContent55 { width: 55%; }
+.HContent60 { width: 60%; }
+.HContent65 { width: 65%; }
+.HContent70 { width: 70%; }
+.HContent75 { width: 75%; }
+.HContent80 { width: 80%; }
+.HContent85 { width: 85%; }
+.HContent90 { width: 90%; }
+.HContent95 { width: 95%; }
+.HContent100 { width: 100%; }
+
+.FloatLeft { float: left; }
+
+/* Media queries and elements */
+
+#LoginElement
+{
+	padding: 20px;
+}
+
+@media screen and (max-device-width: 420px)
+{
+	#LoginElement
+	{
+		position: absolute;
+		width: 100%;
+		top: 0;
+		bottom: 0;
+		box-sizing: border-box;
+		overflow: auto;
+	}
+	
+	input[type=text], input[type=password], button, label
+	{
+		height: 40px;
+		line-height: 40px;
+	}
+	
+	input[type=checkbox]
+	{
+		margin-top: 11px;
+	}
+	
+	p
+	{
+		margin: 0 0 10px 0;
+	}
+
+	.HContent5 { width: 100%; }
+	.HContent10 { width: 100%; }
+	.HContent15 { width: 100%; }
+	.HContent20 { width: 100%; }
+	.HContent25 { width: 100%; }
+	.HContent30 { width: 100%; }
+	.HContent35 { width: 100%; }
+	.HContent40 { width: 100%; }
+	.HContent45 { width: 100%; }
+	.HContent50 { width: 100%; }
+	.HContent55 { width: 100%; }
+	.HContent60 { width: 100%; }
+	.HContent65 { width: 100%; }
+	.HContent70 { width: 100%; }
+	.HContent75 { width: 100%; }
+	.HContent80 { width: 100%; }
+	.HContent85 { width: 100%; }
+	.HContent90 { width: 100%; }
+	.HContent95 { width: 100%; }
+	.HContent100 { width: 100%; }
+}
+

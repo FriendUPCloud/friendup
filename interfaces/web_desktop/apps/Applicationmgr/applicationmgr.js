@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,18 +15,19 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
 	var w = new View( {
-		title: 'Application Manager',
+		title: i18n('i18n_application_manager'),
 		width: 500,
 		height: 500,
 		id: 'appmgr'
 	} );
 	
 	var f = new File( 'Progdir:Templates/main.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		w.setContent( data, function(){ Application.showApps(); } );

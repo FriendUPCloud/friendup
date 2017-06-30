@@ -1,0 +1,39 @@
+	
+	<div class="ContentFull Padding">
+		
+		<div class="Cnt ColorStGrayLight">
+			<div class="Row Padding">
+				<h1>{i18n_trello_login}</h1>
+				<p>{i18n_trello_login_desc}</p>
+			</div>
+			
+			<div class="Row Padding">
+				<div class="Col40">
+					<strong>{i18n_email}:</strong>
+				</div>			
+				<div class="Col60">
+					<input type="text" class="FullWidth" id="fEmail" value="{uname}" placeholder="{i18n_email_placeholder}"/>
+				</div>
+			</div>
+			
+			<div class="Row Padding">
+				<div class="Col40">
+					<strong>{i18n_password}:</strong>
+				</div>			
+				<div class="Col60">
+					<input type="password" class="FullWidth" id="fPassword" value="" placeholder="{i18n_password_placeholder}"/>
+				</div>
+			</div>	
+			
+			<div style="display:none;" id="wrongCreds" class="Padding">
+				<h3 style="color:F00">{i18n_wrong_creds}</h3>
+			</div>
+			<p class="Padding">
+				<button type="button" class="Button IconSmall fa-check" onclick="saveCredentials()">
+					{i18n_save}
+				</button>
+			</p>
+			
+		</div>
+	</div>
+	<script src="Progdir:Scripts/settings.js"></script>

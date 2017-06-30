@@ -1,4 +1,9 @@
 
+WEBSOCKETS_THREADS	=	1
+USE_SELECT			=	0
+NO_VALGRIND			=	0
+CYGWIN_BUILD		=	0
+DEBUG				=	1
 
 all: compile
 	@echo "Making all releases."
@@ -7,72 +12,27 @@ chrome_extension:
 	@echo "Making the Chrome Extension."
 	cd interfaces/chrome_extension; make
 
+updatefiles:
+	rsync -ravl php/* build/php/
+	rsync -ravl modules/* build/modules/
+	rsync -ravl interfaces/web_desktop/* build/resources/webclient/
+#	rsync -ravl docs/userdocs build/resources/
+	rsync -ravl interfaces/themes/* build/resources/themes/
+	rsync -ravl interfaces/iconthemes/* build/resources/iconthemes/
+	rsync -ravl devices/* build/devices/
+	rsync -ravl repository/* build/resources/repository/
+	rsync -ravl services/* build/services/
+
 webclient:
-	mkdir -p resources/webclient
-	mkdir -p resources/repository
-	rsync -ravl interfaces/web_desktop/* resources/webclient/
-	rsync -ravl repository/* resources/repository/
-	
-	#optimized - REMEMBER TO UPDATE - DEPRECATED! REMOVE
-	cd interfaces/web_desktop; \
-	cat js/3rdparty/hammer.js\
-		templates/newline.txt\
-		js/namespace.js\
-		js/utils/json.js\
-		js/utils/engine.js\
-		js/utils/touch.js\
-		js/utils/cssparser.js\
-		js/utils/md5.js\
-		js/utils/tool.js\
-		js/utils/speech-input.js\
-		js/io/cajax.js\
-		js/io/request.js\
-		js/io/directive.js\
-		js/io/websocket.js\
-		js/io/door.js\
-		js/io/dormant.js\
-		js/io/door_system.js\
-		js/io/module.js\
-		js/io/friendlibrary.js\
-		js/io/file.js\
-		js/io/applicationstorage.js\
-		js/gui/template.js\
-		js/gui/guibase.js\
-		js/gui/window.js\
-		js/gui/screen.js\
-		js/gui/listview.js\
-		js/gui/directoryview.js\
-		js/gui/filedialog.js\
-		js/gui/desklet.js\
-		js/media/audio.js\
-		js/apiwrapper.js\
-		js/frienddos.js\
-		js/workspace.js > ../../resources/webclient/js/compiled_index.js; \
-	cd ../../
-	
-	cd interfaces/web_desktop; \
-	cat js/utils/engine.js\
-		js/io/cajax.js\
-		js/io/friendlibrary.js\
-		js/utils/json.js\
-		js/utils/cssparser.js > ../../resources/webclient/js/compiled_apibase.js; \
-	cd ../../
-	
-	cd interfaces/web_desktop; \
-	cat css/friendup.css\
-		theme/scrollbars.css > ../../resources/webclient/css/compiled_index.css;\
-	cd ../../
-	#done optimizing
-	
-	cp interfaces/web_desktop/favicon.ico resources/
-	cp -R devices build/
+	@echo "Deprecated. Use make updatefiles"
 
 iphone_launcher:
 	
 android_launcher:
 
 libs:
-	cd libs; make
+	cd libs; make WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	cd libs-ext; make WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 friendcore:
 	cd core; make FriendCore
@@ -84,6 +44,11 @@ clean:
 #	make clean
 	make -C core clean
 	make -C libs clean
+	make -C authmods clean
+	rm -fr build/libs/*
+	rm -fr build/fsys/*
+	rm -fr build/emod/*
+	rm -fr build/authmods/*
 
 flush:
 	@echo "Cleaning up."
@@ -93,33 +58,57 @@ flush:
 	rm -fr build
 
 setup:
-	make -C core setup
-	make -C libs setup
+	mkdir -p build build/resources build/resources/webclient build/resources/repository build/sqlupdatescripts
+	make -C libs-ext setup CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs-ext DEBUG=1 CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs-ext install CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C core setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs-ext setup
+	make -C authmods setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 compile:
-	make -C core DEBUG=1
-	make -C libs DEBUG=1
+	make -C core DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs-ext DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C authmods DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 release:
-	make -C core DEBUG=0 release
-	make -C libs DEBUG=0 release
+	make -C core DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C authmods DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 install:
 	mkdir -p build
 	mkdir -p storage
 	mkdir -p build/libs build/cfg
+	mkdir -p build/authmods
+	mkdir -p build/resources
+	mkdir -p build/resources/webclient
+		
 	#ifneq ("$(wildcard $(PATH_TO_FILE))","") \ 
 	#	CLEAN_SRC = \
 	#else  \
 	#	CLEAN_SRC = *.h file3
 	#endif
-	make webclient
-	rsync -ravl resources build/
+
+
+	rsync -ravl interfaces/web_desktop/* build/resources/webclient/
+	rsync -ravl interfaces/themes build/resources/
+	rsync -ravl interfaces/iconthemes/* build/resources/iconthemes/
+
 	rsync -ravl php build/
 	rsync -ravl modules build/
 	rsync -ravl storage build/
-	make -C core install
-	make -C libs install
+	rsync -ravl db/sqlupdatescripts build/
+	rsync -ravl devices/* build/devices/
+	rsync -ravl services/* build/services/
+	
+	make -C core install CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs install CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD)
+	cp docs/GDBFriendCore.sh build/
+	cp docs/ValgrindFriendCore.sh build/
 	#rsync -ravl core/bin/* build/
 
 sync:

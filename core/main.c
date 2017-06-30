@@ -1,27 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-/*
-
-	Start point
-
-*/
+/**
+ *  @file
+ *  Server entry point
+ *
+ *  @author HT (Hogne Tildstad)
+ *  @author PS (Pawel Stefansky)
+ *  @date pushed on 22/9/16
+ */
 
 #include "core/friend_core.h"
 #include "core/friendcore_manager.h"
@@ -32,8 +38,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <class/rootclass.h>
+//#include <class/rootclass.h>
 #include <class/phpproxyclass.h>
+#include <time.h>
 
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
@@ -41,29 +48,24 @@
 #include <properties/propertieslibrary.h>
 
 //
-// there is no definition of putenv on linux
-//
-
-void putenv( const char *c );
-
-//
 //
 //
 
-FriendCoreManager *coreManager;
+SystemBase *SLIB;                       ///< Global SystemBase structure
 
-// system.library to rule them all
-SystemBase *SLIB;
+FriendCoreManager *coreManager;         ///< Global FriendCoreManager structure
 
-pthread_mutex_t sslmut;
-
-//
-// ctrl-c interrupt signal
-//
-
+/**
+ * Handles ctrl-c interruption signals.
+ *
+ * Called when a system interruption happens. This function cleans everything
+ * and exits with an error number.
+ *
+ * @return system error number
+ */
 void InterruptSignalHandler(int signum)
 {
-	printf("\nCaught signal %d\n",signum);
+	INFO("\nCaught signal %d\n",signum);
 
 	// Cleanup and close up stuff here
 	if( coreManager != NULL )
@@ -71,25 +73,34 @@ void InterruptSignalHandler(int signum)
 		FriendCoreManagerDelete( coreManager );
 		coreManager = NULL;
 	}
-
-	//exit( signum );
 }
 
-//
-// main function
-//
-
-int main()
+/**
+ * Friend Server entry.
+ *
+ * Runs the server on the machine. This function performs the following tasks:
+ * - sets-up interrupt handler
+ * - creates "Progdir:" in the ENV environement variable
+ * - create a log file named "friend_core_log" appended with the date
+ * - performs a SystemInit
+ * - creates a FriendCoreManager and assigns it to the SLIB object
+ * - initialise external libraries
+ * - launches the FriendCoreManager in which the main loop is located
+ * - exits gracefully when RunFriendCoreManager returns
+ * .
+ * @param[in]argc not used in this version
+ * @param[in]argv not used in this version
+ * @return always returns 0
+ * @sa SystemInit, FriendCoreManagerNew, SetFriendCoreManager, FriendCoreManagerRun
+ * @todo FL>HT - no error numbers returned in case of panic
+ */
+int main( int argc, char *argv[] )
 {
-	//UriTest();
-	//return 0;
-
 	// Catch ctrl-c to gracefully shut down
 	signal( SIGINT, InterruptSignalHandler );
 	signal( SIGKILL, InterruptSignalHandler );
-	/*signal( SIGSTOP, InterruptSignalHandler );
-	signal( SIGUSR1, InterruptSignalHandler );
-	signal( SIGABRT, InterruptSignalHandler );*/
+	
+	srand( time( NULL ) );
 	
 	// Setup "Progdir:" in ENV
 	{
@@ -108,41 +119,45 @@ int main()
 			}
 			
 			putenv( envvar );
-			printf("FRIEND_HOME set to: %s\n", cwd );
+			INFO("FRIEND_HOME set to: %s\n", cwd );
 		}
 	}
+	
+	// 500 MB log
+	LogNew("friend_core_log", "log.cfg", 1, FLOG_LIVE, FLOG_LIVE, 524288000 );
+	
+	LOG( FLOG_INFO, "Core started log\n" );
 	
 	if( ( SLIB =  SystemInit() ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
 	{
 		// we cannot open libs inside another init
 		
-		pthread_mutex_init( &sslmut, NULL );
-		
-		// Keep it simple!
 		coreManager = FriendCoreManagerNew();
 		if( coreManager != NULL )
 		{
 			SLIB->SetFriendCoreManager( SLIB, coreManager );
+			SLIB->SystemInitExternal( SLIB );
 			FriendCoreManagerRun( coreManager );
 		}
 		else
 		{
-			ERROR("Cannot Run FriendCoreManager!\n");
+			Log( FLOG_PANIC, "Cannot Run FriendCoreManager!\n");
 		}
 		
-		// Double check if we're killed in some other way
 		if( coreManager != NULL )
 		{
 			FriendCoreManagerDelete( coreManager );
 		}
 		
-		pthread_mutex_destroy( &sslmut );
+		//pthread_mutex_destroy( &sslmut );
 		
 		SLIB->SystemClose( SLIB );
+		
+		LogDelete();
 	}
 	else
 	{
-		ERROR("Cannot open 'system.library'\n");
+		Log( FLOG_PANIC, "Cannot open 'system.library'\n");
 	}
 
 	return 0;

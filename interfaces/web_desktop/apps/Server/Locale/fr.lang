@@ -1,0 +1,37 @@
+
+
+# Server locale, english
+
+i18n_Server		                        : Préférences serveur
+i18n_settings                           : Préférences
+i18n_application                        : Application
+i18n_edit                               : Editer
+i18n_cancel                             : Annuler
+i18n_add_property                       : Ajouter propriété
+i18n_save_changes                       : Sauver changements
+
+i18n_additem                            : Ajouter élément
+
+i18n_type                               : Type
+i18n_key                                : Clé
+i18n_your_key                           : Entrez un nom de clé
+i18n_your_type                          : Entrez un type de clé
+i18n_save                               : Sauver
+i18n_delete                             : Supprimer
+
+i18n_add_new_value_set                  : Ajouter de nouvelles valeurs
+
+i18n_failed_title                       : Impossible de sauver les valeurs
+i18n_failed_desc                        : L'ensemble de valeurs n'a pas pu être sauvé sur le serveur. Veuillez vérifier votre connexion réseau et ré-essayez.
+i18n_success_title                      : Vos valeurs ont été sauvegardées
+i18n_success_desc                       : L'ensemble de vos valeurs a été sauvé dans le base de données du serveur.
+i18n_delete_title                       : Supprimer valeurs
+i18n_delete_desc                        : Etes-vous sûr de vouloir supprimer cet ensemble de valeurs?
+
+i18n_settings_attributes                : Attributs et paramètres
+i18n_software                           : Logiciel
+i18n_validate                           : Valider
+i18n_revalidate                         : Revalider
+
+
+i18n_no_software_to_verify              : Aucun logiciel à vérifier.

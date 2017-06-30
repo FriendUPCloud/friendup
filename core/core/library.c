@@ -1,21 +1,35 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/**
+ * @file
+ *
+ * Library opening and closing
+ *
+ * @author PS (Pawel Stefansky)
+ * @author HT (Hogne Tildstad)
+ * @author JMN (John Michael Nilsen)
+ * @date first pushed on 06/02/2015
+ */
 
 #include <core/types.h>
 #include "library.h"
@@ -28,19 +42,32 @@
 #include <system/systembase.h>
 
 
-//
-// Open a library
-//
-
+/**
+ * Opens a library
+ *
+ * @param sb pointer to a already opened Sysbase.library
+ * @param name pointer to the name of the library to open
+ * @param version version number of the library to choose
+ * @return void pointer to the newly opened library
+ * @return NULL if case of error (library name not found, version not found
+ * 		or other errors)
+ */
 void *LibraryOpen( void *sb, const char *name, long version )
 {
-	if( !sb || !name )
+	if( !name )
 	{
-		ERROR("Cannot open library with empty name!\n");
+		FERROR("Cannot open library with empty name!\n");
 		return NULL;
 	}
+	DEBUG("Lib open\n");
+	
+	if( !sb )
+	{
+		FERROR("Cannot open library with SysBase.library pointer! for %s\n", name );
+		//return NULL;
+	}
 		
-	BOOL loaded = FALSE;
+	FBOOL loaded = FALSE;
 	char currentDirectory[ 255 ];
 	char loadLibraryPath[ 512 ];
 	memset( &currentDirectory, 0, 255 );
@@ -60,7 +87,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 
 	// there is no need to multiply by sizeof(char)
 	getcwd( currentDirectory, sizeof ( currentDirectory ) );
-	DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
+	//DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
 
 	// we should check and get lib from current dirrectory first (compatybility)
 	
@@ -91,23 +118,19 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	}
 	else
 	{
-		//ERROR( "[LibraryOpen] Cannot open file\n" );
+		//FERROR( "[LibraryOpen] Cannot open file\n" );
 	}
 
 	char* error = dlerror();
-	if( error )
-	{
-		//ERROR ( "[LibraryOpen] Library error: %s\n", error );
-	}
-
+	
 	//
 	// checking library in libs/
+	//
 
 	if( loaded == FALSE )
 	{
 		// there is no need to multiply by sizeof(char)
 		getcwd( currentDirectory, sizeof ( currentDirectory ) );
-		DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
 
 		// we should check and get lib from "current dirrectory"/libs/
 	
@@ -142,7 +165,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		char* error = dlerror();
 		if( error )
 		{
-			ERROR( "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
+			FERROR( "[LibraryOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
 		}
 	}
 
@@ -170,7 +193,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 		}
 		else
 		{
-			DEBUG ( "[LibraryOpen] Library was not possible to open: %s\n", dlerror () );
+			DEBUG ( "[LibraryOpen] Library was not possible to open: %s file %s\n", dlerror (), name );
 			return NULL;
 		}
 	}
@@ -195,7 +218,7 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	
 	if( library != NULL )
 	{
-		library->sb = sb;
+		//library->sb = sb;
 		
 		DEBUG( "[LibraryOpen] After init\n" );
 
@@ -214,8 +237,11 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	return library;
 }
 
-// Close a library
-
+/**
+ * Closes an opened library
+ *
+ * @param lib pointer to the library to close
+ */
 void LibraryClose( void *lib )
 {
 	if( lib == NULL ) return;
@@ -231,7 +257,7 @@ void LibraryClose( void *lib )
 		dlclose( library->handle );
 		library->handle = NULL;
 	}
-	free( library );
+	FFree( library );
 	DEBUG( "[LibraryOpen] Lib closed memory free\n" );
 }
 

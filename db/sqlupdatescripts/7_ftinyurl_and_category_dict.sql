@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `FTinyUrl` (
+ `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+ `UserID` bigint(20) NOT NULL,
+ `Source` varchar(255) NOT NULL,
+ `Hash` varchar(16) NOT NULL,
+ `Expire` tinyint(1) NOT NULL,
+ `DateCreated` int(11) NOT NULL,
+ PRIMARY KEY (`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+CREATE TABLE IF NOT EXISTS `FDictionary` ( 
+`ID` bigint(20) NOT NULL AUTO_INCREMENT,
+`CategoryID` bigint(20),
+`Message` text DEFAULT NULL,
+`Language` varchar(10) DEFAULT NULL,
+PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+CREATE TABLE IF NOT EXISTS  `FCategory` (
+`ID` bigint(20) NOT NULL AUTO_INCREMENT,
+`Name` varchar(255) DEFAULT NULL,
+PRIMARY KEY (`ID`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;
+

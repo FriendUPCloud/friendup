@@ -1,0 +1,21 @@
+
+i18n_fullscreen                      : Fullscreen
+i18n_window                     	 : Window
+i18n_logout                          : Log out
+i18n_quit                            : Quit
+i18n_file                            : File
+i18n_bookmarks                       : Booksmarks
+i18n_bm_add                          : Add
+
+i18n_account                         : Account
+i18n_edit_profile                    : Edit profile
+i18n_account_settings                : Account settings
+i18n_global_settings                 : Global settings
+
+i18n_navigation                      : Navigation
+i18n_nav_newsfeed                    : News feed
+i18n_nav_messages                    : Messages
+i18n_nav_calendar                    : Calendar
+i18n_nav_library                     : Library
+i18n_nav_browse                      : Browse
+i18n_nav_bookmarks                   : Bookmarks

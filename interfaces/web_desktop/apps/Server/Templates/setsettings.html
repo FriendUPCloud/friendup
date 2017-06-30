@@ -4,7 +4,7 @@
 		<div class="VContentTop TopPart BorderBottom BackgroundWindow ScrollArea">
 			<div class="Padding">
 				<p class="Layout">
-					<strong>Settings {settingsname}:</strong>
+					<strong>{i18n_settings} {settingsname}:</strong>
 				</p>
 				<p class="Layout" id="Settings">
 				</p>
@@ -13,13 +13,13 @@
 		<div class="VContentBottom BottomPart BackgroundToolbar">
 			<div class="Padding">
 				<button type="button" class="Button IconSmall fa-check" onclick="setSettings( '{settingsid}' )">
-					Save changes
+					{i18n_save_changes}
 				</button>
 				<button type="button" class="Button IconSmall fa-plus" onclick="addSetting()">
-					Add property
+					{i18n_add_property}
 				</button>
 				<button type="button" class="Button IconSmall fa-close" onclick="doCancel( '{settingsid}' )">
-					Cancel
+					{i18n_cancel}
 				</button>
 			</div>
 		</div>
@@ -40,6 +40,11 @@
 			height: 50px;
 		}
 		label { display:inline-block; padding-top:16px; font-weight: 700; }
+		.serverinput
+		{
+			line-height: 20px;
+			min-height: 28px;
+		}
 	</style>
 
 

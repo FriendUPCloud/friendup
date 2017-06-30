@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  User application permissions definition
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #ifndef __USER_APP_PERMISSION_H__
 #define __USER_APP_PERMISSION_H__
@@ -23,10 +34,7 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <dictionary/dictionary.h>
-#include <permission/app_permission.h>
-
-/*
- 
+//#include <permission/app_permission.h>
 
 /*
  
@@ -44,10 +52,10 @@
 typedef struct UserAppPermission
 {
 	struct MinNode			node;
-	ULONG 						uap_ID;
-	ULONG 						uap_UserApplicationID;
-	ULONG 						uap_UserPermissionID;
-	ULONG 						uap_UserAcccesTypeID;
+	FULONG 						uap_ID;
+	FULONG 						uap_UserApplicationID;
+	FULONG 						uap_UserPermissionID;
+	FULONG 						uap_UserAcccesTypeID;
 }UserAppPermission;
 
 #endif // __USER_APP_PERMISSION_H__

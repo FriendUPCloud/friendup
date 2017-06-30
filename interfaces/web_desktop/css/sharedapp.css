@@ -1,0 +1,9 @@
+#WorkbenchMenu
+{
+	display: none;
+}
+
+#Screens .View .BottomBar, #Screens .View .Resize
+{
+	display: block;
+}

@@ -36,3 +36,16 @@
 {
 	border: 1px dashed #3B81C2;
 }
+
+@media (max-device-width: 512px)
+{
+	html #MainContainer
+	{
+		width: 100%;
+	}	
+	html #AppsContainer
+	{
+		display: none;
+	}
+}
+

@@ -1,27 +1,36 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
+/** @file
+ *
+ *  Core ROOT class handling
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date pushed 10/15/2015
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #include <core/types.h>
 #include <class/rootclass.h>
@@ -32,25 +41,28 @@
 //
 //
 
-ULONG DoMethodS( Class *c, Object *o, struct Msg *m );
+FULONG DoMethodS( Class *c, Object *o, struct Msg *m );
 
-//
-// Special class data
-//
+/**
+ * Special class data
+ */
 
 struct Data
 {
-	ULONG value;
+	FULONG value;
 };
 
-//
-//
-//
 
-//
-// one set function for all:)
-//
-
+#ifndef DOXPUBLIC  // Internal documentation only
+/**
+ * Transfers data zones from all messaged to object data params
+ *
+ * One function sets all
+ *
+ * @param c pointer to class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ */
 void rootSetForAll( Class *c, Object *o, struct Msg *msg )
 {
 	DEBUG("ROOTNEW: SET FOR ALL\n");
@@ -68,7 +80,7 @@ void rootSetForAll( Class *c, Object *o, struct Msg *msg )
 		switch( lt->ti_Tag )
 		{
 			case FA_SetValue:
-				data->value = (ULONG)lt->ti_Data;
+				data->value = (FULONG)lt->ti_Data;
 				DEBUG("ROOTNEW FUIA_SetValue set root value %lu\n", lt->ti_Data );
 			break;
 		}
@@ -77,13 +89,20 @@ void rootSetForAll( Class *c, Object *o, struct Msg *msg )
 	}
 }
 
-//
-// New method
-//
+#endif          // DOXPUBLIC
 
-ULONG rootNew( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_NEW message for ROOT class
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return pointer to the new object
+ * @return NULL if error
+ */
+FULONG rootNew( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	DEBUG("ROOTNEW START\n");
 
 	struct opSet *set = (struct opSet *)msg;//->data;
@@ -99,7 +118,7 @@ ULONG rootNew( Class *c, Object *o, struct Msg *msg )
 		c->cl_ObjectCount++;
 		DEBUG("ROOTNEW object created %ld\n", c->cl_ObjectCount );
 	}else{
-		return (ULONG)NULL;
+		return (FULONG)NULL;
 	}
 
 	struct Data *data = (struct Data *)newObject->o_UserData;
@@ -108,16 +127,23 @@ ULONG rootNew( Class *c, Object *o, struct Msg *msg )
 
 	DEBUG("ROOTNEW return new object at ptr %p\n", newObject );
 
-	return (ULONG)newObject;
+	return (FULONG)newObject;
 }
 
-//
-// Dispose method
-//
-
-ULONG rootDispose( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_DISPOSE message for ROOT class
+ *
+ * Release all associated memory assiciated with this instance of the class
+ * then calls the super class with the same message structure
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ */
+FULONG rootDispose( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 
 	DEBUG("ROOTDISPOSE start\n");
 
@@ -147,13 +173,20 @@ ULONG rootDispose( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// set method
-//
-
-ULONG rootSet( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_SET message for ROOT class
+ *
+ * Transfers the message structure data zones into the instance
+ * Calls the super class for execution
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ */
+FULONG rootSet( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	DEBUG("ROOTSET\n");
 
 	struct opSet *set = (struct opSet *)msg;
@@ -165,13 +198,21 @@ ULONG rootSet( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-// get method
-//
-
-ULONG rootGet( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_GET message for ROOT class
+ *
+ * Sub-messages suported:
+ * FA_PHPProxy_Parameters: proxy parameters
+ * FA_PHPProxy_Results: results of the last proxy action
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ */
+FULONG rootGet( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	DEBUG("ROOTGET\n");
 
 	struct opGet *get = (struct opGet *)msg;
@@ -180,7 +221,7 @@ ULONG rootGet( Class *c, Object *o, struct Msg *msg )
 	switch( get->opg_AttrID )
 	{
 		case FA_SetValue:
-			*(get->opg_Storage)	=	(ULONG *)data->value;
+			*(get->opg_Storage)	=	(FULONG *)data->value;
 			DEBUG("ROOTGET FUIA_GetValue get root value %lu\n", data->value );
 		break;
 	}
@@ -189,14 +230,19 @@ ULONG rootGet( Class *c, Object *o, struct Msg *msg )
 }
 
 
-//
-// notify
-//
-
-ULONG rootNotify( Class *c, Object *o, struct Msg *msg )
+/**
+ * Handling of the FM_NOTIFY message for ROOT class
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return 0
+ * @return 1 in case of memory allocation error
+ */
+FULONG rootNotify( Class *c, Object *o, struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
-	ULONG *lt = (ULONG *)(set->ops_AttrList);
+	FULONG *lt = (FULONG *)(set->ops_AttrList);
 	Event *event = (Event *)msg;
 	Event *lastEvent = o->o_Event;
 	struct Data *data = (struct Data *)o->o_UserData;
@@ -205,9 +251,9 @@ ULONG rootNotify( Class *c, Object *o, struct Msg *msg )
 
 	if( ( event = calloc( sizeof( Event ), 1 ) ) != NULL )
 	{
-		event->e_Src = o;                // pointer to source object
- 		event->e_AttributeCheck = lt[ 0 ];       // check argument set
-    	event->e_Value = lt[ 1 ];                // if value is set do something
+		event->e_Src = o;                	// pointer to source object
+ 		event->e_AttributeCheck = lt[ 0 ];  // check argument set
+    	event->e_Value = lt[ 1 ];           // if value is set do something
 
 		event->e_Dst = (void *)lt[ 2 ];
 		event->e_DstMethodID = lt[ 3 ];
@@ -238,21 +284,25 @@ ULONG rootNotify( Class *c, Object *o, struct Msg *msg )
 //
 // TEST
 //
-
-ULONG rootTest( Class *c, Object *o, struct Msg *msg )
+FULONG rootTest( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG *data = (ULONG *)(msg->data);
+	FULONG *data = (FULONG *)(msg->data);
 
 	DEBUG("ROOTTEST with parameter pointer %ld\n", *data );
 
 	return 0;
 }
 
-//
-// DoMethod 
-//
-
-ULONG rootDispatcher( struct Class *c, Object *o, struct Msg *m )
+/**
+ * Message dispatching for ROOT class
+ *
+ * @param c pointer to parent class
+ * @param o pointer to object
+ * @param msg pointer to message structure
+ * @return value returned by the object methods
+ * @return 0 if message ID not found
+ */
+FULONG rootDispatcher( struct Class *c, Object *o, struct Msg *m )
 {
 	// we dont call super methods beacouse this method is done on root
 	DEBUG("ROOTCLASS dispatcher MID %ld \n", m->MethodID );
@@ -287,7 +337,7 @@ ULONG rootDispatcher( struct Class *c, Object *o, struct Msg *m )
 						{
 							DEBUG("Event call: Every Time call\n");
 							DoMethod( event->e_Dst, event->e_DstMethodID, event->e_Data );
-						}else if( event->e_Value == (LONG)lt->ti_Data )
+						}else if( event->e_Value == (FLONG)lt->ti_Data )
 						{
 							DEBUG("Event call: for value %ld\n", event->e_Value );
 							DoMethod( event->e_Dst, event->e_DstMethodID, event->e_Data );

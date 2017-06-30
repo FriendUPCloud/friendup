@@ -1,0 +1,23 @@
+
+i18n_software_administration       : Gestion des applications
+
+
+#Menu
+i18n_file                          : Fichier
+i18n_quit                          : Quitter
+i18n_no_desc                       : Pas de description disponible pour ce titre.
+i18n_no_software                   : Pas d'application disponible.
+i18n_install                       : Installer
+i18n_uninstall                     : Désinstaller
+
+i18n_page_name                     : Alphabétiquement
+i18n_page_category                 : Par catégories
+i18n_page_rating                   : Par évaluation
+
+i18n_are_you_sure_uninstall        : Confirmation de la désinstallation
+i18n_are_you_sure_uninstall_ds     : Si vous désinstallez cette application, elle sera enlevée de votre compte. Vous pourrez la ré-installer plus tard ici-même.
+i18n_are_you_sure_install          : Confirmation de l'installation
+i18n_are_you_sure_install_ds       : Si vous installez cette application, elle sera ajoutée à votre compte.
+
+
+

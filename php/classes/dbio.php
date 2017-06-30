@@ -1,22 +1,26 @@
 <?php
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 // Dummy object ------------------------------------------------------------
 class Object {}
@@ -39,7 +43,7 @@ class SqlDatabase
 	var $_cacheArrArray;
 	
 	// Instantiation - type is unimplemented
-	function SqlDatabase ( $type = false )
+	function SqlDatabase( $type = false )
 	{
 		$this->_type = 'mysql';
 	}
@@ -54,42 +58,48 @@ class SqlDatabase
 	}
 	
 	// Open a connection to a database
-	function Open ( $host, $user, $pass )
+	function Open( $host, $user, $pass )
 	{
-		if ( @( $this->_link = mysql_connect ( $host, $user, $pass, true ) ) )
+		if( $this->_link = mysqli_connect( $host, $user, $pass ) )
 		{
+			mysqli_set_charset( $this->_link, 'utf8' );
 			return true;
 		}
 		return false;
 	}
-	
-	function Close ( )
+
+	// Close a connection
+	function Close()
 	{
-		if ( $this->_link )
+		if( $this->_link )
 		{
 			$this->Flush();
-			mysql_close ( $this->_link );
+			return mysqli_close( $this->_link );
 		}
 	}
-	
-	function SelectDatabase ( $database )
+
+	// Select a database
+	function SelectDatabase( $database )
 	{
-		if ( !$this->_link ) return false;
-		mysql_query ( 'USE `' . $database . '`', $this->_link );
-		return true;
+		if( !$this->_link ) return false;
+		return mysqli_select_db( $this->_link, $database);
 	}
+	// Select done
 	
-	function Flush ( )
+	// Flush debug vars
+	function Flush()
 	{
-		unset ( $this->_lastQuery );
-		unset ( $this->_lastResult );
-		unset ( $this->_lastError );
+		unset( $this->_lastQuery );
+		unset( $this->_lastResult );
+		unset( $this->_lastError );
 		$this->InitCache();
 	}
+	// Flush done
 	
-	function Query ( $query )
+	// Query the database
+	function Query( $query )
 	{
-		if ( !$this->_link ) return false;
+		if( !$this->_link ) return false;
 		
 		// Delete cache when writing to database
 		$part = strtoupper( substr( $query, 0, 6 ) );
@@ -98,34 +108,31 @@ class SqlDatabase
 		
 		$this->_queryCount++;
 		$this->_lastQuery = $query;
-		if ( !( $this->_lastResult === false || $this->_lastResult === true || $this->_lastResult == null ) )
-		{
-			mysql_free_result ( $this->_lastResult );
-			$this->_lastResult = false;
-		}
-		if ( $res = mysql_query ( $query, $this->_link ) )
+		
+		if( $res = mysqli_query( $this->_link, $query ) )
 		{
 			$this->_lastResult = $res;
 			return $res;
 		}
-		$this->_lastError = mysql_error ();
+		$this->_lastError = mysqli_error( $this->_link );
 		return false;
 	}
+	// Query done
 	
-	function FetchArray ( $query )
+	// Fetch an array of rows
+	function FetchArray( $query )
 	{
 		// Recall cache
 		if( isset( $this->_cacheArrArray[$query] ) )
 			return $this->_cacheArrArray[$query];
-		
-		if ( $res = $this->Query ( $query ) )
+			
+		if( $res = $this->Query( $query ) )
 		{
-			$result = array ( );
-			while ( $ar = mysql_fetch_array ( $res, MYSQL_ASSOC ) )
+			$result = array();
+			while( $ar = mysqli_fetch_array( $res, MYSQLI_ASSOC) )
 			{
 				$result[] = $ar;
 			}
-			
 			// Write cache
 			$this->_cacheArrArray[$query] = $result;
 			
@@ -135,73 +142,61 @@ class SqlDatabase
 		return false;
 	}
 	
-	function FetchRow ( $query )
+	function FetchRow( $query )
 	{
 		// Recall cache
 		if( isset( $this->_cacheArr[$query] ) )
 			return $this->_cacheArr[$query];
 		
-		if ( $res = $this->Query ( $query ) )
+		if( $res = $this->Query( $query ) )
 		{
-			if ( $result = mysql_fetch_array ( $res, MYSQL_ASSOC ) )
+			$result = false;
+			if( $result = mysqli_fetch_assoc( $res  ) )
 			{
 				// Write cache
 				$this->_cacheArr[$query] = $result;
 			}
-			
-			// Return result
 			return $result;
 		}
 		return false;
 	}
 	
-	function FetchObjects ( $query )
+	function FetchObjects( $query )
 	{
 		// Recall cache
 		if( isset( $this->_cacheObjArray[$query] ) )
 			return $this->_cacheObjArray[$query];
-		
-		if ( $array = $this->FetchArray ( $query ) )
+
+
+		if( $res = $this->Query( $query ) )
 		{
-			$oarray = array ( );
-			foreach ( $array as $row )
+			$result = array();
+			while( $rowo = mysqli_fetch_object( $res ) )
 			{
-				$o = new Object ( );
-				foreach ( $row as $k=>$v )
-					$o->$k = $v;
-				$oarray[] = $o;
+				$result[] = $rowo;
 			}
-			
-			// Write cache
-			$this->_cacheObjArray[$query] = $oarray;
-			
-			// Return result
-			return $oarray;
+			$this->_cacheObjArray[$query] = $result;
+			return $result;
 		}
 		return false;
 	}
 	
-	function FetchObject ( $query )
+	function FetchObject( $query )
 	{
 		// Recall cache
 		if( isset( $this->_cacheObj[$query] ) )
 			return $this->_cacheObj[$query];
 		
-		if ( $row = $this->FetchRow ( $query ) )
+		if( $res = $this->Query( $query ) )
 		{
-			$o = new Object ( );
-			foreach ( $row as $k=>$v )
-				$o->$k = $v;
-			
-			// Write cache
-			$this->_cacheObj[$query] = $o;
-			
-			return $o;
+			$result = mysqli_fetch_object( $res );
+			$this->_cacheObj[$query] = $result;
+			return $result;
 		}
 		return false;
 	}
 	
-	function MakeGlobal ( )
+	function MakeGlobal()
 	{
 		$GLOBALS[ 'SqlDatabase' ] =& $this;
 	}
@@ -215,85 +210,87 @@ class DbTable
 	var $_fieldnames;
 	var $_autofields; // fields that automatically gets a value
 	
-	function DbTable ( $name = false, $database = false )
+	function DbTable( $name = false, $database = false )
 	{
-		if ( $database )
+		if( $database )
 			$this->_database = &$database;
 		else $this->_database = &$GLOBALS[ 'SqlDatabase' ];
+		
 		$this->_name = $name;
-		$this->LoadTable ();
+		$this->LoadTable();
 	}
 	
 	// Support anonymous functions
-	function __call ( $method, $args )
+	function __call( $method, $args )
 	{
-		if ( isset ( $this->$method ) )
+		if( isset( $this->$method ) )
 		{
 			$func = $this->$method;
-			call_user_func_array ( $func, $args );
+			call_user_func_array( $func, $args );
 		}
 	}
 	
 	// Load information about a table
-	function LoadTable ( $name = false )
+	function LoadTable( $name = false )
 	{
-		if ( !$this->_database ) return false;
-		if ( !$name && !$this->_name ) return false;
-		else if ( $name ) $this->_name = $name;
+		if( !$this->_database ) return false;
+		if( !$name && !$this->_name ) return false;
+		else if( $name ) $this->_name = $name;
 		
-		if ( method_exists ( $this, 'OnLoad' ) )
-			$this->OnLoad ();
+		if( method_exists( $this, 'OnLoad' ) )
+			$this->OnLoad();
 			
-		if ( $result = $this->_database->FetchArray ( "DESCRIBE `{$this->_name}`" ) )
+		if( $result = $this->_database->FetchArray( "DESCRIBE `{$this->_name}`" ) )
 		{
-			$this->_primarykeys = array ( );
-			$this->_fieldnames = array ( );
-			$this->_fieldtypes = array ( );
-			$this->_autofields = array ( );
-			foreach ( $result as $row )
+			$this->_primarykeys = array();
+			$this->_fieldnames = array();
+			$this->_fieldtypes = array();
+			$this->_autofields = array();
+			foreach( $result as $row )
 			{
 				$this->_fieldnames[] = $row[ 'Field' ];
-				$this->_fieldtypes[] = preg_replace ( '/\(.*\)/', '', $row[ 'Type' ] );
+				$this->_fieldtypes[] = preg_replace( '/\(.*\)/', '', $row[ 'Type' ] );
 				$this->{$row['Field']} = null;
-				if ( $row[ 'Key' ] == 'PRI' )
+				if( $row[ 'Key' ] == 'PRI' )
 				{
-					if ( $row['Extra'] == 'auto_increment' )
+					if( $row['Extra'] == 'auto_increment' )
 						$this->_autofields[] = $row[ 'Field' ];
 					$this->_primarykeys[] = $row[ 'Field' ];
 				}
 			}
-			if ( method_exists ( $this, 'OnLoaded' ) )
-				$this->OnLoaded ();
+			if( method_exists( $this, 'OnLoaded' ) )
+				$this->OnLoaded();
 			return true;
 		}
 		return false;
 	}
 	
-	function EncapsulateField ( $fieldname, $value )
+	function EncapsulateField( $fieldname, $value )
 	{
-		$c = count ( $this->_fieldnames );
+		$c = count( $this->_fieldnames );
 		
 		// Illegal value!
 		if( is_object( $value ) )
 			$value = '';
 			
-		for ( $b = 0; $b < $c; $b++ )
+		for( $b = 0; $b < $c; $b++ )
 		{
-			if ( $this->_fieldnames[ $b ] == $fieldname )
+			if( $this->_fieldnames[ $b ] == $fieldname )
 			{
-				switch ( strtolower ( $this->_fieldtypes[ $b ] ) )
+				switch( strtolower( $this->_fieldtypes[ $b ] ) )
 				{
 					case 'int':
 					case 'bigint':
 					case 'double':
 					case 'tinyint':
-						$value = str_replace ( "'", "", $value );
+						$value = str_replace( "'", "", $value );
+						if( $value == '' ) $value = 0;
 						return "'$value'";
 					case 'datetime':
 					default:
-						$value = stripslashes ( $value );
-						$value = str_replace ( '\"', '"', $value );
-						$value = str_replace ( '"', '\"', $value );
+						$value = stripslashes( $value );
+						$value = str_replace( '\"', '"', $value );
+						$value = str_replace( '"', '\"', $value );
 						return '"' . $value . '"';
 				}
 			}
@@ -302,7 +299,7 @@ class DbTable
 	}
 	
 	// Add a field to a table
-	function AddField ( $fieldname, $type, $options = false )
+	function AddField( $fieldname, $type, $options = false )
 	{
 		$size = false;
 		$auto_increment = false;
@@ -310,29 +307,29 @@ class DbTable
 		$null = false;
 		$after = false;
 	
-		switch ( strtolower ( $type ) )
+		switch( strtolower( $type ) )
 		{
 			case 'varchar':
-				if ( !$options['size'] )
+				if( !$options['size'] )
 					$size = 255;
 				break;
 			case 'tinyint':
-				if ( !$options['size'] )
+				if( !$options['size'] )
 					$size = 4;
 				break;
 			case 'int':
-				if ( !$options['size'] )
+				if( !$options['size'] )
 					$size = 11;
 				break;
 			case 'datetime':
-				if ( !$options['size'] )
+				if( !$options['size'] )
 				{
 					$size = 0;
 					$default_value = '';
 				}
 				break;
 			case 'bigint':
-				if ( !$options['size'] )
+				if( !$options['size'] )
 				{
 					$size = 20;
 					$default_value = '';
@@ -340,23 +337,23 @@ class DbTable
 				break;
 		}
 		
-		if ( isset ( $options[ 'after' ] ) )
+		if( isset( $options[ 'after' ] ) )
 			$after = $options[ 'after' ];
-		if ( isset ( $options[ 'null' ] ) )
+		if( isset( $options[ 'null' ] ) )
 			$null = $options[ 'null' ];
-		if ( isset ( $options[ 'auto_increment' ] ) )
+		if( isset( $options[ 'auto_increment' ] ) )
 			$auto_increment = $options[ 'auto_increment' ];
-		if ( isset ( $options[ 'default_value' ] ) )
+		if( isset( $options[ 'default_value' ] ) )
 			$default_value = $options[ 'default_value' ];
 		
-		return $this->_database->query ( '
+		return $this->_database->Query( '
 			ALTER TABLE `' . $this->_name . '`
-			ADD `' . $fieldname . '` ' . strtoupper ( $type ) . 
-				( $size > 0 ? ( '(' . $size . ')' ) : '' ) . 
-				( $default_value ? ( ' DEFAULT ' . $default_value ) : '' ) .
+			ADD `' . $fieldname . '` ' . strtoupper( $type ) . 
+				( $size > 0 ?( '(' . $size . ')' ) : '' ) . 
+				( $default_value ?( ' DEFAULT ' . $default_value ) : '' ) .
 				( $auto_increment ? ' auto_increment' : '' ) .
 				( $null ? '' : ' NOT NULL' ) . 
-				( $after ? ( ' AFTER `' . $after . '`' ) : '' ) . '
+				( $after ?( ' AFTER `' . $after . '`' ) : '' ) . '
 		' );
 	}
 }
@@ -370,71 +367,88 @@ class DbIO extends DbTable
 	var $_limit;
 	var $_position;
 	
-	function DbIO ( $TableName = false )
+	function DbIO( $TableName = false, $database = false )
 	{
-		$this->dbTable ( $TableName );
+		if( $database )
+			$this->_database = $database;
+		else $this->_database = false;
+		$this->dbTable( $TableName, $this->_database );
 		$this->_debug = false;
 	}
 	
 	// Function to get last inserted id 
-	function GetLastInsertId ()
+	function GetLastInsertId()
 	{
-		$r = $this->_database->FetchRow ( 'SELECT LAST_INSERT_ID() ID' );
+		$r = $this->_database->FetchRow( 'SELECT LAST_INSERT_ID() ID' );
 		return $r['ID'];
 	}
 
-	// Loads with vararg (primary keys)
-	function Load ()
+	// Loads with vararg(primary keys)
+	function Load()
 	{
-		if ( !$this->_primarykeys )
+		global $Logger;
+		
+		if( !$this->_primarykeys )
 			return false;
 		
-		if ( method_exists ( $this, 'OnLoad' ) ) $this->OnLoad ( );
+		if( method_exists( $this, 'OnLoad' ) ) $this->OnLoad();
 			
 		// Set primary keys
-		$num = func_num_args ( );
-		if ( $num > 0 )
+		$num = func_num_args();
+		if( $num > 0 )
 		{
 			// Clear up all fields
 			foreach( $this->_fieldnames as $v )
 				$this->$v = null;
 				
-			$keys = array ( );
-			for ( $a = 0; $a < $num; $a++ )
+			$keys = array();
+			for( $a = 0; $a < $num; $a++ )
 			{
-				$keys[] = func_get_arg ( $a );
+				$keys[] = func_get_arg( $a );
 			}
 			$a = 0;
-			foreach ( $this->_primarykeys as $k )
+			foreach( $this->_primarykeys as $k )
 				$this->$k = $keys[ $a++ ];
 			// Check that we have all primary keys
-			foreach ( $this->_primarykeys as $k )
+			foreach( $this->_primarykeys as $k )
 			{
-				if ( $this->$k <= 0 ) 
+				if( $this->$k <= 0 ) 
 				{
-					$this->_lastError = 'Primary key (' . $k . ') empty.';
+					$this->_lastError = 'Primary key(' . $k . ') empty.';
 					return false;
 				}
 			}
 		}
 		$query = '';
-		$where = array ( );
-		foreach ( $this->_fieldnames as $v )
+		$where = array();
+		foreach( $this->_fieldnames as $k=>$v )
 		{
-			if ( $this->$v != null )
+			// Skip some types
+			$type = $this->_fieldtypes[$k];
+			$skip = false;
+			switch( $type )
 			{
-				$where[] = "`$v` = " . $this->EncapsulateField ( $v, $this->$v );
+				case 'blob':
+				case 'longblob':
+				case 'mediumblob':
+					$skip = true;
+					break;
+			}
+			
+			if( !$skip && $this->$v != null )
+			{
+				$where[] = "`$v` = " . $this->EncapsulateField( $v, $this->$v );
 			}
 		}
-		$query = "SELECT * FROM `$this->_name` WHERE " . implode ( " AND ", $where );
+		$query = "SELECT * FROM `$this->_name` WHERE " . implode( " AND ", $where );
 		
-		if ( $row = $this->_database->FetchRow ( $query ) )
+		if( $row = $this->_database->FetchRow( $query ) )
 		{
-			foreach ( $row as $k=>$v )
+			foreach( $row as $k=>$v )
 			{
-				$this->$k = stripslashes ( $v );
+				$this->$k = stripslashes( $v );
 			}
-			if ( method_exists ( $this, 'OnLoaded' ) ) $this->OnLoaded ( );
+			if( method_exists( $this, 'OnLoaded' ) ) $this->OnLoaded();
 			return true;
 		}
 		
@@ -442,111 +456,112 @@ class DbIO extends DbTable
 	}
 	
 	// Save data back into object
-	function Save ( )
+	function Save()
 	{
-		if ( !$this->_database )
+		if( !$this->_database )
 		{
 			$this->_lastError = 'No database connection.';
 			return false;
 		}
-		if ( !$this->_primarykeys )
+		if( !$this->_primarykeys )
 		{
 			$this->_lastError = 'No primary key(s).';
 			return false;
 		}
 		// Hook
-		if ( method_exists ( $this, 'OnSave' ) ) $this->OnSave ();
+		if( method_exists( $this, 'OnSave' ) ) $this->OnSave();
 		
 		// Save mode
 		$mode = 0;
 		$query = '';
 		
 		// Check if keys == fields
-		if ( count ( $this->_primarykeys ) == count ( $this->_fieldnames ) )
+		if( count( $this->_primarykeys ) == count( $this->_fieldnames ) )
 		{
 			$mode = 1;
 		}
 		else
 		{
 			// Needs all primary keys to update
-			foreach ( $this->_primarykeys as $k )
+			foreach( $this->_primarykeys as $k )
 			{
-				if ( $this->$k == null )
+				if( $this->$k == null )
 				{
 					$mode = 1; break;
 				}
 			}
 		}
-		
+
 		// Insert
-		if ( $mode == 1 )
+		if( $mode == 1 )
 		{
-			$query .= 'INSERT INTO `' . $this->_name . '` ( ';
-			$filds = array ( ); $fildz = array ( );
-			foreach ( $this->_fieldnames as $f )
+			$query .= 'INSERT INTO `' . $this->_name . '`( ';
+			$filds = array(); $fildz = array();
+			foreach( $this->_fieldnames as $f )
 			{
-				if ( in_array ( $f, $this->_autofields ) )
+				if( in_array( $f, $this->_autofields ) )
 					continue;
 				$filds[] = "`$f`";
 				$fildz[] = $f;
 			}
-			$query .= implode ( ', ', $filds ) . ' ) VALUES ( ';
-			$vals = array ( );
-			foreach ( $fildz as $v )
+			$query .= implode( ', ', $filds ) . ' ) VALUES( ';
+			$vals = array();
+			foreach( $fildz as $v )
 			{
-				$vals[] = $this->EncapsulateField ( $v, $this->$v );
+				$vals[] = $this->EncapsulateField( $v, $this->$v );
 			}
-			$query .= implode ( ', ', $vals ) . ' )';
+			$query .= implode( ', ', $vals ) . ' )';
 		}
 		else
 		{
 			$query .= 'UPDATE `' . $this->_name . '`';
-			$sets = array ( );
-			foreach ( $this->_fieldnames as $f )
+			$sets = array();
+			foreach( $this->_fieldnames as $f )
 			{
-				if ( in_array ( $f, $this->_primarykeys ) )
+				if( in_array( $f, $this->_primarykeys ) )
 					continue;
-				$sets[] = "`$f`=" . $this->EncapsulateField ( $f, $this->$f );
+				
+				$sets[] = "`$f`=" . $this->EncapsulateField( $f, $this->$f );
 			}
-			$query .= ' SET ' . implode ( ', ', $sets ) . ' WHERE ';
-			$ands = array ( );
-			foreach ( $this->_primarykeys as $k )
+			$query .= ' SET ' . implode( ', ', $sets ) . ' WHERE ';
+			$ands = array();
+			foreach( $this->_primarykeys as $k )
 			{
-				$ands[] = "`$k`=" . $this->EncapsulateField ( $k, $this->$k );
+				$ands[] = "`$k`=" . $this->EncapsulateField( $k, $this->$k );
 			}
-			$query .= implode ( ' AND ', $ands );
+			$query .= implode( ' AND ', $ands );
 		}
-		
+	
 		// Execute
-		if ( $result = $this->_database->Query ( $query ) )
+		if( $result = $this->_database->Query( $query ) )
 		{
 			// Hook
-			if ( method_exists ( $this, 'OnSaved' ) ) $this->OnSaved ();
+			if( method_exists( $this, 'OnSaved' ) ) $this->OnSaved();
 		}
 		$this->_lastQuery = $query;
 		
 		// Update with right ID --------------------------------------------
-		if ( count ( $this->_primarykeys ) == 1 )
+		if( count( $this->_primarykeys ) == 1 )
 		{
 			$v = $this->_primarykeys[0];
 			$id = $mode == 1 ? $this->GetLastInsertId() : $this->$v;
 			$this->$v = $id;
-			$this->Load ();
+			$this->Load();
 		}
 		// Support multiple primary keys
-		else if ( count ( $this->_primarykeys ) > 1 )
+		else if( count( $this->_primarykeys ) > 1 )
 		{
 			$error = false;
-			foreach ( $this->_primarykeys as $k=>$v )
+			foreach( $this->_primarykeys as $k=>$v )
 			{
-				if ( !isset ( $this->$v ) )
+				if( !isset( $this->$v ) )
 				{
 					$this->_lastError = 'Failed to run query.';
 					$error = true;
 				}
 			}
-			if ( !$error )
-				$this->Load ();
+			if( !$error )
+				$this->Load();
 		}
 		else $this->_lastError = 'Failed to run query.';
 		
@@ -554,83 +569,83 @@ class DbIO extends DbTable
 	}
 	
 	// Get an object by single key
-	function GetById ( $tableName, $singleKey )
+	function GetById( $tableName, $singleKey )
 	{
-		$o = new dbIO ( $tableName );
-		if ( count ( $o->_primarykeys ) > 1 )
+		$o = new dbIO( $tableName );
+		if( count( $o->_primarykeys ) > 1 )
 			return false;
 		$o->{$o->_primarykeys[0]} = $singleKey;
-		if ( $o->Load () )
+		if( $o->Load() )
 			return $o;
 		return false;
 	}
 	
 	// Get an object by all primary keys
-	function GetByIds ( $tableName, $keyAr )
+	function GetByIds( $tableName, $keyAr )
 	{
-		$o = new dbIO ( $tableName );
-		if ( count ( $keyAr ) < count ( $o->_primarykeys ) )
+		$o = new dbIO( $tableName );
+		if( count( $keyAr ) < count( $o->_primarykeys ) )
 			return false;
 		$i = 0;
-		foreach ( $o->_primarykeys as $p )
+		foreach( $o->_primarykeys as $p )
 		{
 			$o->{$p} = $keyAr[$i++];
 		}
-		if ( $o->Load () )
+		if( $o->Load() )
 			return $o;
 		return false;
 	}
 	
 	// Delete by primary keys
-	function Delete ( )
+	function Delete()
 	{
-		if ( !$this->_database || !$this->_primarykeys )
+		if( !$this->_database || !$this->_primarykeys )
 			return;
 			
-		$wheres = array ( );
-		foreach ( $this->_primarykeys as $k )
+		$wheres = array();
+		foreach( $this->_primarykeys as $k )
 		{
-			$wheres[] = "`$k`=" . $this->EncapsulateField ( $k, $this->$k );
+			$wheres[] = "`$k`=" . $this->EncapsulateField( $k, $this->$k );
 		}
-		$query = 'DELETE FROM `' . $this->_name . '` WHERE ' . implode ( ' AND ', $wheres );
-		return $this->_database->Query ( $query );
+		$query = 'DELETE FROM `' . $this->_name . '` WHERE ' . implode( ' AND ', $wheres );
+		return $this->_database->Query( $query );
 	}
 	
-	function SetFromArray ( $array )
+	function SetFromArray( $array )
 	{
-		foreach ( $array as $k=>$v )
+		foreach( $array as $k=>$v )
 		{
 			$this->$k = $v;
 		}
 	}
 	
-	function OrderBy ( $field, $mode )
+	function OrderBy( $field, $mode )
 	{
-		$this->_orderBy[] = array ( $field, $mode );
+		$this->_orderBy[] = array( $field, $mode );
 	}
 	
-	function Where ( $field, $string )
+	function Where( $field, $string )
 	{
-		$this->_where[] = array ( $field, $string );
+		$this->_where[] = array( $field, $string );
 	}
 	
-	function Limit ( $pos, $limit )
+	function Limit( $pos, $limit )
 	{
 		$this->_position = $pos;
 		$this->_limit = $limit;
 	}
 	
-	function FindSingle ( $query = false )
+	function FindSingle( $query = false )
 	{
 		// Get only one
 		$lim = false;
 		$pos = false;
-		if ( isset ( $this->_limit ) )
+		if( isset( $this->_limit ) )
 			$lim = $this->_limit;
-		if ( isset ( $this->_position ) )
+		if( isset( $this->_position ) )
 			$pos = $this->_position;
-		$this->Limit ( 0, 1 );
-		if ( $a = $this->Find ( $query ) )
+		$this->Limit( 0, 1 );
+		if( $a = $this->Find( $query ) )
 		{
 			// Reset
 			$this->_limit = $lim;
@@ -644,68 +659,68 @@ class DbIO extends DbTable
 		return $a;
 	}
 	
-	function Find ( $query = false )
+	function Find( $query = false )
 	{
 		global $Logger;
-		if ( !is_object ( $this->_database ) )
-			die ( 'Error: no database in object.' );
-		if ( !$query )
+		if( !is_object( $this->_database ) )
+			die( 'Error: no database in object.' );
+		if( !$query )
 		{
 			$wheres = array();
-			$orderby = array ( );
-			if ( !isset ( $this->_fieldnames ) ) return false;
-			foreach ( $this->_fieldnames as $v )
+			$orderby = array();
+			if( !isset( $this->_fieldnames ) ) return false;
+			foreach( $this->_fieldnames as $v )
 			{
-				if ( trim ( $v ) && trim ( $this->$v ) )
+				if( trim( $v ) && trim( $this->$v ) )
 				{
-					$wheres[] = "`$v`=" . $this->EncapsulateField ( $v, $this->$v );
+					$wheres[] = "`$v`=" . $this->EncapsulateField( $v, $this->$v );
 				}
 			}
-			if ( count ( $this->_where ) )
+			if( count( $this->_where ) )
 			{
-				foreach ( $this->_where as $ar )
+				foreach( $this->_where as $ar )
 				{
-					if ( strstr ( $ar[1], '%' ) )
+					if( strstr( $ar[1], '%' ) )
 						$wheres[] = "`$ar[0]` LIKE \"$ar[1]\"";
-					else $wheres[] = "`$ar[0]`=" . $this->EncapsulateField ( $ar[0], $ar[1] );
+					else $wheres[] = "`$ar[0]`=" . $this->EncapsulateField( $ar[0], $ar[1] );
 				}
 			}
-			if ( count ( $this->_orderBy ) )
+			if( count( $this->_orderBy ) )
 			{
-				foreach ( $this->_orderBy as $ar )
+				foreach( $this->_orderBy as $ar )
 					$orderby[] = "`$ar[0]` $ar[1]";
 			}
 			$query = "SELECT * FROM `{$this->_name}`";
-			if ( count ( $wheres ) )
-				$query .= "WHERE " . implode ( ' AND ', $wheres );
-			if ( count ( $orderby ) )
-				$query .= ' ORDER BY ' . implode ( ', ', $orderby );
+			if( count( $wheres ) )
+				$query .= "WHERE " . implode( ' AND ', $wheres );
+			if( count( $orderby ) )
+				$query .= ' ORDER BY ' . implode( ', ', $orderby );
 			// Limit syntax
-			if ( ( isset ( $this->_limit ) && $this->_limit >= 0 ) || ( isset ( $this->_position ) && $this->_position >= 0 ) )
-				$query .= ' LIMIT ' . ( $this->_position >= 0 ? (string)$this->_position : '0' ) . ',' . 
-					( $this->_limit >= 0 ? (string)$this->_limit : '0' );
+			if(( isset( $this->_limit ) && $this->_limit >= 0 ) ||( isset( $this->_position ) && $this->_position >= 0 ) )
+				$query .= ' LIMIT ' .( $this->_position >= 0 ?(string)$this->_position : '0' ) . ',' . 
+					( $this->_limit >= 0 ?(string)$this->_limit : '0' );
 		}
 		$this->_lastQuery = $query;
-		if ( $objs = $this->_database->FetchObjects ( $query ) )
+		if( $objs = $this->_database->FetchObjects( $query ) )
 		{
-			$res = array ( );
-			foreach ( $objs as $o )
+			$res = array();
+			foreach( $objs as $o )
 			{
-				$class = get_class ( $this );
-				if ( $class != 'DbIO' )
-					$d = new $class ();
-				else $d = new DbIO ( $this->_name );
-				if ( method_exists ( $d, 'OnLoad' ) )
-					$d->OnLoad ();
-				if ( isset ( $this->_fieldnames ) )
+				$class = get_class( $this );
+				if( $class != 'DbIO' )
+					$d = new $class();
+				else $d = new DbIO( $this->_name );
+				if( method_exists( $d, 'OnLoad' ) )
+					$d->OnLoad();
+				if( isset( $this->_fieldnames ) )
 				{
-					foreach ( $this->_fieldnames as $v )
-						$d->$v = stripslashes ( $o->$v );
-					if ( $class == 'File' )
-						$d->GetImageDimensions ();
+					foreach( $this->_fieldnames as $v )
+						$d->$v = stripslashes( $o->$v );
+					if( $class == 'File' )
+						$d->GetImageDimensions();
 				}
-				if ( method_exists ( $d, 'OnLoaded' ) )
-					$d->OnLoaded ();
+				if( method_exists( $d, 'OnLoaded' ) )
+					$d->OnLoaded();
 				$res[] = $d;
 			}
 			return $res;
@@ -714,13 +729,13 @@ class DbIO extends DbTable
 	}
 	
 	// Set data from an object
-	function SetFromObject ( $o )
+	function SetFromObject( $o )
 	{
-		if ( $this->_fieldnames )
+		if( $this->_fieldnames )
 		{
-			foreach ( $this->_fieldnames as $k )
+			foreach( $this->_fieldnames as $k )
 			{
-				if ( isset ( $o->$k ) ) $this->$k = $o->$k;
+				if( isset( $o->$k ) ) $this->$k = $o->$k;
 			}
 			return true;
 		}

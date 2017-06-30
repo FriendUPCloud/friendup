@@ -1,0 +1,112 @@
+<input type="hidden" id="vid" value="{vid}"/>
+
+<div class="ContentFull LayoutButtonbarBottom">
+	<div class="VContentTop">
+		<div class="VContentTop VContent25 BorderBottom BackgroundDefault Padding">
+			<p class="Layout"><strong>{i18n_descheading}</strong></p>
+			<p>{i18n_description}</p>
+		</div>
+		<div class="VContentBottom VContent75 ScrollArea" id="Types">
+		</div>
+		<div class="VContentBottom VContent75 ScrollArea BackgroundNegative Negative BorderLeft Padding" id="Form">
+			<div id="FormHeading"></div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_device_name}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="text" id="Name" class="FullWidth" value="" placeholder="{i18n_placeholder_connection}"/>
+					</p>
+				</div>
+			</div>
+			<div id="GUI">
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BackgroundDefault BorderTop">
+		<button id="AddButton" onclick="verifyForm()" type="button" class="Disabled IconSmall fa-check FloatRight" disabled="disabled">
+			&nbsp;{i18n_add_storage}
+		</button>
+		<button id="CButton" type="button" class="IconSmall fa-remove FloatLeft" onclick="doTheClose()">
+			&nbsp;{i18n_cancel}
+		</button>
+	</div>
+</div>
+
+<script src="Progdir:Scripts/newstorage.js"></script>
+
+<style>
+
+	#Types
+	{
+		padding-left: 20px;
+		padding-bottom: 20px;
+		box-sizing: border-box;
+		overflow-x: hidden;
+		width: 100%;
+		transition: width 0.5s;
+	}
+	
+	#Form
+	{
+		box-sizing: border-box;
+		right: 0%;
+		left: 100%;
+		overflow-x: hidden;
+		z-index: 2;
+		transition: left 0.5s;
+	}
+	
+	#Form.open
+	{
+		left: 0%;
+	}
+	
+	#Types.closed
+	{
+		width: 0%;
+	}
+
+	.DosDriverContainer
+	{
+		position: relative;
+		float: left;
+		margin: 20px 20px 15px 0px;
+		width: 120px;
+		height: 120px;
+	}
+	
+	.DosDriverContainer:hover .DosDriver
+	{
+		background-color: #a0a0a0;
+		font-weight: bold;
+	}
+	
+	.DosDriver
+	{
+		position: absolute;
+		top: 0;
+		left: 0px;
+		width: 120px;
+		height: 120px;
+		background-color: #c0c0c0;
+		background-size: contain; 
+		background-position: center;
+		background-repeat: no-repeat;
+	}
+	
+	.DosDriver > .Label
+	{
+		position: absolute;
+		top: 129px;
+		width: 120px;
+		text-align: center;
+		overflow-x: hidden;
+	}
+</style>
+

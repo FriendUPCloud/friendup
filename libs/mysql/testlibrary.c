@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
  * 
@@ -54,7 +55,7 @@ typedef struct UserT
 // this structure must be in same order as it is in DB!
 //
 
-static ULONG UserTDesc[] = { SQLT_TABNAME, "Test", SQLT_STRUCTSIZE, sizeof( UserT ), 
+static FULONG UserTDesc[] = { SQLT_TABNAME, "Test", SQLT_STRUCTSIZE, sizeof( UserT ), 
 	SQLT_STR, "name", offsetof( struct UserT, name ),
 	SQLT_STR, "surname", offsetof( struct UserT, surname ),
 	SQLT_IDINT, "id", offsetof( struct UserT, id ), 
@@ -66,7 +67,7 @@ int main()
 {
 	struct MYSQLLibrary *sqllib;
 
-	if( ( sqllib = (struct UserLibrary *)LibraryOpen( "mysql.library", 0 ) ) != NULL )
+	if( ( sqllib = (struct UserLibrary *)LibraryOpen( UserTDesc,  "mysql.library", 0 ) ) != NULL )
 	{
 
 		DEBUG("Library opened! version %d revision %d\n", sqllib->GetVersion(), sqllib->GetRevision() );
@@ -74,8 +75,8 @@ int main()
 		struct UserT *ut, *su;
 		
 		//DEBUG("Test pointers %p  %p  %p\n", &(ut->id), &(ut->name), &(ut->pass) );
-		
-		if( ( ut = sqllib->Load( sqllib, UserTDesc, "name = 'wweew'" ) ) != NULL )
+		int size = 0;
+		if( ( ut = sqllib->Load( sqllib, UserTDesc, "name = 'wweew'", &size ) ) != NULL )
 		{
 			su = ut;
 			while( ut != NULL )
@@ -104,7 +105,7 @@ int main()
 		}
 		else
 		{
-			ERROR("User not found!\n");
+			FERROR("User not found!\n");
 			
 			UserT luser;
 			luser.name = "wwew";
@@ -124,7 +125,7 @@ int main()
 			}
 			else
 			{
-				ERROR("Cannot store data!\n");
+				FERROR("Cannot store data!\n");
 			}
 		}
 		

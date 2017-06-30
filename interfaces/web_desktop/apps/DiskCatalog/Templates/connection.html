@@ -1,0 +1,55 @@
+
+	<script src="Progdir:Scripts/connection.js"></script>
+
+	<input type="hidden" id="FileSystemID" value="0"/>
+
+	<style>
+		.TopForm { bottom: 50px; }
+		.BottomForm { height: 50px; }
+	</style>
+
+	<div class="VContentTop BackgroundDefault ScrollArea TopForm">
+		<div class="Padding">
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_choose_type}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout">
+						<div id="Types">
+							<select id="Type" class="FullWidth"><option value="0">{i18n_loading}...</option></select>
+						</div>
+					</p>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_device_name}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="text" id="Name" class="FullWidth" value="" placeholder="{i18n_placeholder_connection}"/>
+					</p>
+				</div>
+			</div>
+			<div id="GUI"></div>
+		</div>
+	</div>
+	<div class="VContentBottom BottomForm Padding BorderTop BackgroundDefault">
+		<div class="HRow">
+			<button type="button" class="FloatRight IconSmall fa-close" onclick="Application.cancel()">
+				{i18n_cancel}
+			</button>
+			<button type="button" class="IconSmall fa-save" onclick="Application.save()">
+				{i18n_save}
+			</button>
+		</div>
+	</div>

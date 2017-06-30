@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg )
 {
@@ -34,11 +34,14 @@ Application.receiveMessage = function( msg )
 		{
 			s.execute( 'enter System', function()
 			{
-				s.execute( 'ScreenOpen "Unnamed screen" ' + ( msg.name ? msg.name : 'unnamed' ), function()
+				var sname = ( msg.name ? msg.name : 'unnamed' ).split( ' ' ).join( '_' );
+				s.execute( 'ScreenOpen "Unnamed screen" ' + sname, function()
 				{
 					s.execute( 'ScreenActivate DoorsScreen', function()
 					{
 						s.close();
+						GetScreenList();
+						console.log( 'Done and now getting screen list.' );
 					} );
 				} );
 			} );
@@ -61,93 +64,41 @@ function GetScreenList()
 			s.execute( 'ScreenList', function( data2 )
 			{
 				var sl = ge( 'ScreenList' );
-				
-				// First run!
-				if( !sl.inited )
+								
+				var eles = data2.data;
+				var sw = 2;
+				if( !sl.elements ) sl.elements = [];
+				for( var a in eles )
 				{
-					sl.innerHTML = '';
-					var eles = data2.data;
-					var sw = 2;
-					var elements = [];
-					for( var a = 0; a < eles.length; a++ )
-					{
-						var d = document.createElement( 'div' );
-						d.className = 'Padding List sw' + sw;
-						d.innerHTML = eles[a].ID;
-						d.sid = eles[a].ID;
-						sl.appendChild( d );
-						d.onclick = function(){ selectScreen( this ); };
-						elements.push( d );
-						sw = sw == 1 ? 2 : 1;
-					}
-					sl.inited = true;
-					sl.elements = elements;
-				}
-				// Update list
-				else
-				{
-					// Reset touch
+					// Don't add already existing
+					var found = false;
 					for( var b = 0; b < sl.elements.length; b++ )
 					{
-						sl.elements[b].touched = false;
+						if( sl.elements[b].sid == eles[a].ID )
+						{
+							found = true;
+							break;
+						}
 					}
+					if( found ) continue;
 					
-					// check if there is one to add
-					for( var a = 0; a < data2.data.length; a++ )
-					{
-						data2.data[a].found = false;
-						var sw = 2;
-						for( var b = 0; b < sl.elements.length; b++ )
-						{
-							if( sl.elements[b].sid == data2.data[a].ID )
-							{
-								data2.data[a].found = true;
-								sl.elements[b].touched = true;
-								break;
-							}
-							sw = sw == 1 ? 2 : 1;
-						}
-						// Add new elements!
-						if( !data2.data[a].found )
-						{
-							var d = document.createElement( 'div' );
-							d.className = 'Padding List sw' + sw;
-							d.innerHTML = data2.data[a].ID;
-							d.touched = true;
-							d.onclick = function(){ selectScreen( this ); };
-							sl.appendChild( d );
-							sl.elements.push( d );
-						}
-					}
-					
-					// Remove obsolete and make correct sw class
-					var out = [];
-					sw = 2;
-					for( var b = 0; b < sl.elements.length; b++ )
-					{
-						if( !sl.elements[b].touched )
-						{
-							sl.removeChild( sl.elements[b] );
-						}
-						else 
-						{
-							out.push( sl.elements[b] );
-							if( sl.elements[b].className.indexOf( ' active' ) > 0 )
-								sl.elements[b].className = 'Padding List sw' + sw + ' active';
-							else sl.elements[b].className = 'Padding List sw' + sw;
-							sw = sw == 1 ? 2 : 1;
-							
-							if( sl.elements[b] == Application.currentScreen )
-							{
-								sl.elements[b].classList.add( 'active' );
-							}
-						}
-					}
-					sl.elements = out;
+					var d = document.createElement( 'div' );
+					sl.elements.push( d );
+					d.className = 'Padding MousePointer List sw' + sw;
+					d.innerHTML = eles[a].ID;
+					d.sid = eles[a].ID;
+					sl.appendChild( d );
+					d.onclick = function(){ selectScreen( this ); };
 				}
-				// We're done updating
-				updating = false;
+				// Switch classes in right order
+				var sw = 2;
+				for( var a = 0; a < sl.elements.length; a++ )
+				{
+					sw = sw == 1 ? 2 : 1;
+					sl.elements[a].className = 'Padding MousePointer List sw' + sw;
+				}
 				s.close();
+				updating = false;
 			} );
 		} );
 	}
@@ -179,7 +130,7 @@ function closeScreen()
 	{
 		if( Application.currentScreen == 'DoorsScreen' || Application.currentScreen == 'WorkspaceScreen' )
 		{
-			console.log( 'This screen is protected from closing.' );
+			Alert( 'Protected screen', 'A protected screen can not be closed.' );
 			return false;
 		}
 		var s = new Shell();
@@ -189,9 +140,20 @@ function closeScreen()
 			{
 				s.execute( 'ScreenClose ' + Application.currentScreen, function()
 				{
-					Application.currentScreen = false;
-					GetScreenList();
 					s.close();
+					var sl = ge( 'ScreenList' );
+					var out = [];
+					for( var a = 0; a < sl.elements.length; a++ )
+					{
+						if( sl.elements[a].sid == Application.currentScreen )
+						{
+							sl.removeChild( sl.elements[a] );
+						}
+						else out.push( sl.elements[a] );
+					}
+					Application.currentScreen = false;
+					sl.elements = out;
+					GetScreenList();
 				} );
 			} );
 		}
@@ -202,10 +164,10 @@ function selectScreen( scr )
 {
 	Application.currentScreen = scr.innerText;
 	var sl = ge( 'ScreenList' );
-	var dv = sl.getElementsByTagName( 'div' );
+	var dv = sl.elements;
 	for( var a = 0; a < dv.length; a++ )
 	{
-		if( dv[a] == scr )
+		if( dv[a].sid == scr.innerText )
 		{
 			dv[a].classList.add( 'active' );
 			setScreenGui( dv[a] );
@@ -216,7 +178,7 @@ function selectScreen( scr )
 
 function setScreenGui( ele )
 {
-	
+	ge( 'screen_id' ).value = ele.sid;
 }
 
 

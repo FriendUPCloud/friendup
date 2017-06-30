@@ -1,21 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ *
+ *  Friend Core definitions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @author HT (Hogne Tildstad)
+ *  @date pushed 29/01/2016
+ */
 
 #ifndef _FRIENDCORE_H_
 #define _FRIENDCORE_H_
@@ -31,61 +43,58 @@
 #include <core/library.h>
 #include <network/http.h>
 #include <signal.h>
+#ifdef USE_SELECT
+
+#else
 #include <sys/epoll.h>
+#endif
 #include <poll.h>
 
-#define CERT_PATH_SIZE 2048
-
-extern char RSA_SERVER_CERT[  ];
-extern char RSA_SERVER_KEY[  ];
-extern char RSA_SERVER_CA_CERT[  ];
-extern char RSA_SERVER_CA_PATH[  ];
-
-//
-// FriendCore instance data
-// 
-// Preferably, the contents of this struct should
-// never be modified after the server has been started
-//
-
+/**
+ * FriendCore instance data
+ *
+ * Preferably, the contents of this struct should
+ * never be modified after the server has been started
+ */
 typedef struct FriendCoreInstance
 {
-	MinNode					node;	// list of cores
+	MinNode					node;				///< list of cores
 	
-	char 						fci_CoreID[ 32 ];
+	char 						fci_CoreID[ 32 ];	///< id of the core
+	char							fci_IP[ 256 ]; // ip or hostname of FriendCoreInstance
 	
-	int 							epollfd;            // File descriptor for epoll
-	Socket	 					* listenSocket; // Socket for incomming connections (TODO: Make this "socketS": We must be able to listen on multiple interfaces!)
+	int 							fci_Epollfd;            ///< File descriptor for epoll
+	Socket	 					*fci_Sockets; 	///< Socket for incomming connections (TODO: Make this "socketS": We must be able to listen on multiple interfaces!)
 
 	// "Private"
-	//char                        *fci_Shutdown;        // Ends all event loops
-	BOOL                        fci_Shutdown;        // Ends all event loops
-	BOOL 						fci_Closed;				// if FC quits, then its set to TRUE
-	BOOL 						fci_SSLEnabled;		// if ssl is enabled
+	//char                  *fci_Shutdown;      ///< Ends all event loops
+	FBOOL						 fci_Shutdown;       ///< Ends all event loops
+	FBOOL 					fci_Closed;			///< if FC quits, then its set to TRUE
+	FBOOL 					fci_SSLEnabled;		///< if ssl is enabled
 
-	Hashmap* 				libraries;   // Contains all loaded libraries. Key: library name.
+	Hashmap* 				fci_Libraries;   		///< Contains all loaded libraries. Key: library name.
 	
-	int 							fci_Port;
-	int 							fci_MaxPoll;
-	int 							fci_BufferSize;
+	int 							fci_Port;			/// port on which FC will be launched
+	int 							fci_MaxPoll;		/// number of maximum sockets connections
+	int 							fci_BufferSize;		/// internal FC buffer to hold messages
 	
-	int 							fci_SendPipe[ 2 ];
-	int 							fci_RecvPipe[ 2 ];
-	int							fci_ReadCorePipe, fci_WriteCorePipe;
+	int 							fci_SendPipe[ 2 ];	/// pipes used to send messages to FC
+	int 							fci_RecvPipe[ 2 ];	/// pipes used to received messages from FC
+	int							fci_ReadCorePipe, fci_WriteCorePipe; // pointers to read/write pipes
 	
-	FThread				*fci_Thread;
-	pthread_mutex_t      listenMutex;
+	FThread					*fci_Thread;		/// FC instance internal thread
+	pthread_mutex_t		fci_ListenMutex;
 	
-	WorkerManager		*fci_WorkerManager;								// Worker Manager
+	WorkerManager		*fci_WorkerManager; ///< Worker Manager
+	void 							*fci_SB;							//pointer to systembase
 	
 } FriendCoreInstance;
 
 /**
  * Create instance of FC
- * 
  */
 
-FriendCoreInstance *FriendCoreNew( BOOL ssl, int port, int maxp, int bufsiz );
+FriendCoreInstance *FriendCoreNew( void *sb, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname );
 
 /**
  * Closes all sockets, signals shutdown to all subsystems
@@ -106,7 +115,7 @@ int  FriendCoreRun( FriendCoreInstance* instance );
  * then enters the even loop pattern until shutdown.
  */
 
-Library* FriendCoreGetLibrary( FriendCoreInstance* instance, char* libname, ULONG version );
+Library* FriendCoreGetLibrary( FriendCoreInstance* instance, char* libname, FULONG version );
 
 /**
  * The event loop pattern.
@@ -114,5 +123,11 @@ Library* FriendCoreGetLibrary( FriendCoreInstance* instance, char* libname, ULON
  */
 
 void FriendCoreEpoll( FriendCoreInstance* instance );
+
+/**
+ * The event loop pattern.
+ * This waits for stuff to happen on sockets
+ */
+void FriendCoreSelect( FriendCoreInstance* fc );
 
 #endif

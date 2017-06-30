@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 /*******************************************************************************
 *                                                                              *
@@ -28,8 +28,25 @@
 
 document.title = 'The dock base app.';
 
+function LoadDocks()
+{
+	var m = new Module( 'dock' );
+	m.onExecuted = function( cod, dat )
+	{
+		if( cod == 'fail' || dat == 'fail' )
+		{
+			Application.view.sendMessage( { command: 'setdocks', docks: false } );
+		}
+		else
+		{
+			
+		}
+	}
+	m.execute( 'docks' );
+}
+
 // Loads the applications available to put into the dock
-function LoadApplications( win, currentItemId )
+function LoadApplications( win, currentItemId, callback )
 {
 	// Load resources
 	var m = new Module( 'dock' );
@@ -39,10 +56,12 @@ function LoadApplications( win, currentItemId )
 		var ele = '';
 		if( !currentItemId )
 		{
-			currentItemId = eles[0].Id;
 			for( var a = 0; a < eles.length; a++ )
 			{
-				if( eles[a].Current ) currentItemId = eles[a].Id;
+				if( eles[a].Current )
+				{
+					currentItemId = eles[a].Id;
+				}
 			}
 		}
 		Application.currentItemId = currentItemId;
@@ -51,7 +70,14 @@ function LoadApplications( win, currentItemId )
 		{
 			var cl = '';
 			if( a > 0 ) cl = ' MarginTop';
+			//console.log( eles[a] );
 			var img = eles[a].Image ? ( '/webclient/' + eles[a].Image ) : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
+			if( eles[a].Icon )
+			{
+				if( eles[a].Icon.indexOf( ':' ) > 0 )
+					img = getImageUrl( eles[a].Icon );
+				else img = '/webclient/' + eles[a].Icon;
+			}
 			
 			// Activate the current selected
 			if( eles[a].Id == currentItemId ) cl += ' BackgroundNegative Negative';
@@ -70,9 +96,12 @@ function LoadApplications( win, currentItemId )
 			win.setAttributeById( 'Settings', 'disabled', '1' );
 		else win.setAttributeById( 'Settings', 'disabled', '0' );
 		
-		console.log( 'Refreshing apps!' );
+		Application.appCache = eles;
+		
 		Application.view.sendMessage( { command: 'refreshapps', data: ele } );
 		Application.sendMessage( { type: 'system', command: 'refreshdocks' } );
+		
+		if( callback ) callback();
 	}
 	m.execute( 'items', { itemId: !currentItemId ? 0 : currentItemId } );
 }
@@ -80,8 +109,10 @@ function LoadApplications( win, currentItemId )
 // Extend the applicatino object with a run function
 Application.run = function( packet ) 
 {
+	this.setSingleInstance( true );
+
 	var w = new View( {
-		title:  'Dock editor', 
+		title:  i18n('i18n_dock_editor'),
 		width:  520, 
 		height: 480,
 		id:     'dock_editor'
@@ -113,11 +144,13 @@ Application.run = function( packet )
 	] );
 
 	var f = new File( 'Progdir:Templates/gui.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		w.setContent( data, function()
 		{ 
 			LoadApplications( w );
+			LoadDocks();
 		} );
 	}
 	f.load();
@@ -142,33 +175,37 @@ Application.newDockItem = function()
 Application.activateDockItem = function( id )
 {
 	var w = this.view;
-	LoadApplications( w, id );
-	
-	var m = new Module( 'dock' );
-	m.onExecuted = function( r, d )
+	LoadApplications( w, id, function()
 	{
-		var item = JSON.parse( d );
-		w.setAttributeById( 'Application',      'value', item.Application );
-		w.setAttributeById( 'ShortDescription', 'value', item.ShortDescription );
-		w.setAttributeById( 'SortOrder',        'value', item.SortOrder );
-		w.setAttributeById( 'Settings',         'class',
-			'HContentRight HContent70 VContent100 BackgroundDefault Padding' );
-		Application.disabled = false;
-	}
-	m.execute( 'getitem', { itemId: id } );
+		var m = new Module( 'dock' );
+		m.onExecuted = function( r, d )
+		{
+			w.sendMessage( {
+				command: 'updateitem',
+				item: JSON.parse( d )
+			} );
+			Application.disabled = false;
+		}
+		m.execute( 'getitem', { itemId: id } );
+	} );
 }
 
 // Activate a dock item
 Application.deleteDockItem = function( id )
 {
 	var w = this.view;
-	
-	var m = new Module( 'dock' );
-	m.onExecuted = function( r, d )
+	Confirm( i18n( 'i18n_you_sure' ), i18n( 'i18n_you_sure_text' ), function( truefalse )
 	{
-		LoadApplications( w );
-	}
-	m.execute( 'deleteitem', { itemId: id } );
+		if( truefalse.data == true )
+		{
+			var m = new Module( 'dock' );
+			m.onExecuted = function( r, d )
+			{
+				LoadApplications( w );
+			}
+			m.execute( 'deleteitem', { itemId: id } );
+		}
+	} );
 }
 
 Application.blur = function()
@@ -183,12 +220,24 @@ Application.saveItem = function( id, application, shortdescription, icon )
 {
 	var w = this.view;
 
+	/*
+	TODO: Reenable when sensitive for arguments
+	for( var a = 0; a < Application.appCache.length; a++ )
+	{
+		if( Application.appCache[a].Name == application )
+		{
+			Alert( i18n( 'i18n_item_exists' ), i18n( 'i18n_item_exists_desc' ) );
+			return;
+		}
+	}
+	*/
+	
 	var m = new Module( 'dock' );
 	m.onExecuted = function( r, d )
 	{
 		LoadApplications( w, id );
 	}
-	m.execute( 'saveitem', { itemId: id, application: application, shortdescription: shortdescription } );
+	m.execute( 'saveitem', { itemId: id, application: application, shortdescription: shortdescription, icon: icon } );
 }
 
 Application.sortOrder = function( direction )
@@ -212,6 +261,10 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'cliarguments':
+				console.log( 'Cli arguments incoming:' );
+				console.log( msg );
+				break;
 			case 'newdockitem':	
 				Application.newDockItem();
 				break;
@@ -237,9 +290,21 @@ Application.receiveMessage = function( msg )
 					Application.saveItem( 
 						Application.currentItemId,
 						msg.application,
-						msg.shortdescription
+						msg.shortdescription,
+						msg.icon
 					);
 				}
+				break;
+			case 'savecurrentdock':
+				var m = new Module( 'dock' );
+				m.onExecuted = function( e, d )
+				{
+					Application.sendMessage( {
+						type: 'system',
+						command: 'refreshdocks'
+					} );
+				}
+				m.execute( 'savedock', { options: msg.options, dockid: msg.dockid } );
 				break;
 			case 'quit':
 				Application.quit();

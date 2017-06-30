@@ -1,22 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
+/** @file
+ *
+ *  Core classes    definitions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 6 Feb 2015
+ *  @date pushed 06/02/2015
+ */
 #ifndef __CLASS_CLASS_H__
 #define __CLASS_CLASS_H__
 
@@ -32,71 +43,70 @@
     typedef const char *ClassID;
 #endif
 
+/**
+ * Message handling structure
+ */
 typedef struct Msg
 {
-	ULONG MethodID;
-	void *data;
+	FULONG MethodID;                         ///< message ID
+	void *data;                             ///< pointer to data zone to transmit along with the message
 } Msg;
 
 
-// ClassID
+#define FC_RootClass     "Rootclass"        ///< name of the root class
+#define FC_MainClass     "Mainclass"        ///< name of the main class
 
-#define FC_RootClass     "Rootclass"
-#define FC_MainClass     "Mainclass"
-
-
-#define FM_Dummy        0x0100
-#define FM_NEW          (FM_Dummy + 1)
-#define FM_DISPOSE      (FM_Dummy + 2)
-#define FM_SET          (FM_Dummy + 3)      // Call set function
-#define FM_GET          (FM_Dummy + 4)
-#define FM_ADDTAIL      (FM_Dummy + 5)
-#define FM_REMOVE       (FM_Dummy + 6)
-#define FM_NOTIFY       (FM_Dummy + 7)
-#define FM_UPDATE       (FM_Dummy + 8)
-#define FM_ADDMEMBER    (FM_Dummy + 9)
-#define FM_REMMEMBER    (FM_Dummy + 10)
-#define FM_SETNN        (FM_Dummy + 11)     // call set function but without notification
+#define FM_Dummy        0x0100              ///< base of message numbering
+#define FM_NEW          (FM_Dummy + 1)      ///< creates a new object
+#define FM_DISPOSE      (FM_Dummy + 2)      ///< destroys an object
+#define FM_SET          (FM_Dummy + 3)      ///< set function
+#define FM_GET          (FM_Dummy + 4)      ///< query for information
+#define FM_ADDTAIL      (FM_Dummy + 5)      ///< @todo FL>PS not used, what does it do?
+#define FM_REMOVE       (FM_Dummy + 6)      ///< @todo FL>PS not used, what does it do?
+#define FM_NOTIFY       (FM_Dummy + 7)      ///< sends a notification
+#define FM_UPDATE       (FM_Dummy + 8)      ///< @todo FL>PS not used, what does it do?
+#define FM_ADDMEMBER    (FM_Dummy + 9)      ///< @todo FL>PS not used, what does it do?
+#define FM_REMMEMBER    (FM_Dummy + 10)     ///< @todo FL>PS not used, what does it do?
+#define FM_SETNN        (FM_Dummy + 11)     ///< call set function but without notification
 
 
-//
-//
-//
-
-
-// Class structure
-
+/**
+ * Class struture definition
+ */
 typedef struct Class
 {
-	struct Hook	cl_Dispatcher;
-	ULONG		cl_Reserved;
-	struct		Class *cl_Super;         // root class 
-	ClassID		cl_ID;
-	ULONG		cl_InstOffset;      // 
-	ULONG		cl_InstSize;        // 
-	IPTR		cl_UserData;      // user data specific
-	ULONG		cl_SubclassCount; // number of subclasses
-	ULONG		cl_ObjectCount;   // object count, 0 if we want to delete it
-	ULONG		cl_Flags;         //
-	ULONG		cl_ObjectSize;    // cl_InstOffset + cl_InstSize + sizeof(struct _Object) 
-	APTR		cl_MemoryPool;
+	struct Hook	cl_Dispatcher;      ///< dispatcher
+	FULONG		cl_Reserved;        ///< reserved for future use
+	struct		Class *cl_Super;    ///< pointer to super class
+	ClassID		cl_ID;              ///< class identifier
+	FULONG		cl_InstOffset;      ///< offset to data
+	FULONG		cl_InstSize;        ///< size of the data zone
+	IPTR		cl_UserData;        ///< user data specific
+	FULONG		cl_SubclassCount;   ///< number of subclasses
+	FULONG		cl_ObjectCount;     ///< object count, 0 if we want to delete it
+	FULONG		cl_Flags;           ///< internal flags
+	FULONG		cl_ObjectSize;      ///< cl_InstOffset + cl_InstSize + sizeof(struct _Object)
+	APTR		cl_MemoryPool;      ///< pointer to memory pool
 } Class;
 
 // cl_Flags 
 
 #define CLF_INLIST (1L<<0)
 
-// This structure is situated before the pointer. It may grow in future,
-//   but o_Class will always stay at the end, so that you can subtract
-//   the size of a pointer from the object-pointer to get a pointer to the
-//   pointer to the class of the object. 
-
+/**
+ * Object instances handling structure
+ *
+ * This structure is situated before the pointer. It may grow in future,
+ * but o_Class will always stay at the end, so that you can subtract
+ * the size of a pointer from the object-pointer to get a pointer to the
+ * pointer to the class of the object.
+ */
 typedef struct _Object
 {
     Event *o_Event;
     struct MinNode  o_Node;  // PRIVATE 
     struct Class * o_Class;     // we must have pointer to class
-    ULONG   o_CurrMethodID;     // current Method called for object
+    FULONG   o_CurrMethodID;     // current Method called for object
     void *o_UserData;            // pointer to user data
 }Object;
 
@@ -104,28 +114,26 @@ typedef struct _Object
 //  some may be unusuable or should be changed
 //
 
-#define _OBJ(obj) ((struct _Object *)(obj))
+#define _OBJ(obj) ((struct _Object *)(obj))             ///< macro for casting to Object structure
 
-#define BASEOBJECT(obj) ((Object *)(_OBJ(obj) + 1))
+#define BASEOBJECT(obj) ((Object *)(_OBJ(obj) + 1))     ///< macro for casting to previous object
 
-#define _OBJECT(obj) (_OBJ(obj) - 1)
+#define _OBJECT(obj) (_OBJ(obj) - 1)                    ///< macro for casting to previous object
 
-#define OCLASS(obj) ((_OBJECT(obj))->o_Class)
+#define OCLASS(obj) ((_OBJECT(obj))->o_Class)           ///< macro to get the class of an object
 
-#define INST_DATA(class, obj) ((APTR)(((UBYTE *)(obj)) + (class)->cl_InstOffset))
+#define INST_DATA(class, obj) ((APTR)(((FUBYTE *)(obj)) + (class)->cl_InstOffset))   ///< macro to get the data zone of an object
 
-#define SIZEOF_INSTANCE(class) ((class)->cl_InstOffset + (class)->cl_InstSize \
-                               + sizeof(struct _Object))
+#define SIZEOF_INSTANCE(class) ((class)->cl_InstOffset + (class)->cl_InstSize+ sizeof(struct _Object))   ///< macro to get the size of an object
 
 
-//
-//  set structure
-//
-
+/**
+ * Set method structure
+ */
 struct opSet
 {
-    ULONG       MethodID;       // id of method
-    struct TagItem  *ops_AttrList;      // list of arguments
+    FULONG       MethodID;               ///< id of method
+    struct TagItem  *ops_AttrList;      ///< list of arguments
 };
 
 //
@@ -140,22 +148,21 @@ Object *ObjectNewF( Class *c, Object *o, struct Msg *msg );
 
 void ObjectDelete( Object *o );
 
-//
-// new object macro
-//
+/**
+ * New object macro
+ */
 
 #define ObjectNew( c, ... ) \
-    ({ ULONG tags[] = { __VA_ARGS__ };   \
+    ({ FULONG tags[] = { __VA_ARGS__ };   \
     struct opSet set;   \
     set.MethodID = FM_NEW;  \
     set.ops_AttrList = (struct TagItem *)tags;    \
     ObjectNewF( c, NULL, (struct Msg *)&set );   \
 } )
 
-//
-// New object marco for higher class
-//
-//
+/**
+ * New object macro for higher class
+ */
 
 #define ObjectSuperNew( CLASS, MSG ) \
     ({  Object *nObj, *sObj;   \
@@ -176,13 +183,12 @@ void ObjectDelete( Object *o );
         nObj;\
     })
 
-//
-// set params and functions
-//
-
+/**
+ * Set params and functions macro
+ */
 #ifndef FSet
 #define set( OBJ, FUIA, VAL ) \
-        ({ ULONG tags[] = { FUIA, VAL, TAG_END, TAG_END };  \
+        ({ FULONG tags[] = { FUIA, VAL, TAG_END, TAG_END };  \
         struct Msg message; \
         message.MethodID = OM_SET;   \
         message.data = (struct TagItem *)tags; \
@@ -191,11 +197,12 @@ void ObjectDelete( Object *o );
          })
 #endif
 
-// set without notification
-
+/**
+ * Set without notification macro
+ */
 #ifndef FSetnn
 #define setnn( OBJ, FUIA, VAL ) \
-        ({ ULONG tags[] = { FUIA, VAL, TAG_END, TAG_END };  \
+        ({ FULONG tags[] = { FUIA, VAL, TAG_END, TAG_END };  \
         struct Msg message; \
         message.MethodID = OM_SETNN;   \
         message.data = (struct TagItem *)tags; \
@@ -204,17 +211,19 @@ void ObjectDelete( Object *o );
          })
 #endif
 
-//
-// get attribute to object
-//
-
+/**
+ * Get attribute to object macro
+ */
 struct opGet
 {
-    ULONG       MethodID;
+    FULONG       MethodID;
     Tag             opg_AttrID;
     IPTR        *opg_Storage;
 };
 
+/**
+ * Get data macro
+ */
 #ifndef FGet
 #define FGet( OBJ, FUIA, VAL ) \
     { \
@@ -231,12 +240,11 @@ struct opGet
 //
 //
 
-ULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg );
+FULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg );
 
-//
-// call super method
-//
-
+/**
+ * Call super method macro
+ */
 #define DoSuperMethodA( CLASS, OBJ, MSG ) \
     {   \
     if( CLASS->cl_Super ){ \
@@ -245,10 +253,13 @@ ULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg );
         lc->cl_Dispatcher.h_Function( (APTR)lc, (APTR)lo, (APTR) MSG ); \
     }
 
+/**
+ * Call a method macrto
+ */
 #ifndef DoMethod
 #define DoMethod( OBJ, MID, ... ) \
     { \
-    ULONG tags[] = { __VA_ARGS__ }; \
+    FULONG tags[] = { __VA_ARGS__ }; \
     Class *lc = OBJ->o_Class; \
     struct Msg message; \
     message.MethodID = MID;  \
@@ -258,44 +269,51 @@ ULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg );
 #endif
 
 
-
+/**
+ * @todo FL>PS what is this one?
+ */
 struct opAddTail
 {
-    ULONG       MethodID;
+    FULONG       MethodID;
     struct      List *opat_List;
 };
 
-//
-// update structure parameters
-//
-
+/**
+ * Update structure parameters
+ */
 struct opUpdate
 {
-    ULONG       MethodID;
+    FULONG       MethodID;
     struct TagItem  *opu_AttrList;
-    ULONG       opu_Flags;    // see below 
+    FULONG       opu_Flags;    // see below 
 };
 
 // opu_Flags 
 
-#define OPUF_INTERIM (1L<<0)
+#define OPUF_INTERIM (1L<<0)        ///< FL>PS What is this?
 
+/**
+ * @todo FL>PS What is it?
+ */
 struct opMember
 {
-    ULONG       MethodID;
+    FULONG       MethodID;
     Object      *opam_Object;
 };
 
-#define FNotify_Everytime   0xfa000000
+#define FNotify_Everytime   0xfa000000      ///< Indicates constant notification
 
 #define opAddMember opMember
 
-// maybe we can put classes inside .so object and add them dinamicly
+/**
+ * Maybe we can put classes inside .so object and add them dinamicly
+ * @todo FL>PS please explain
+ */
 
 struct ClassLibrary
 {
     struct Library  cl_Lib;
-    ULONG   	    cl_Pad;
+    FULONG   	    cl_Pad;
     Class    	    *cl_Class;
 };
 
@@ -305,7 +323,7 @@ struct ClassLibrary
 
 Class *ClassCreate( ClassID cid, Class *rc, struct Hook *disp );
 
-ULONG ClassDelete( struct Class *c );
+FULONG ClassDelete( struct Class *c );
 
 
 #endif // __CLASS_CLASS_H__

@@ -64,7 +64,6 @@
 	$ColorNegative:          #ffffff;
 	$ColorBgPositive:        #cfcfcf;
 	$ColorBgNegative:        #3f3f3f;
-	$ColorBgSelect:          #3B81C2; 
 	$ColorBgHighlight:       #818181;
 	$ColorHighlight:         #e0e0e0;
 	$ColorSelect:            #ffffff;
@@ -73,6 +72,51 @@
 	$ColorBgInput:           #ffffff;
 	$ColorBgRecessed:        #666666;
 	$ColorRecessed:          #ffffff;
+	$ColorOverlayBg:         rgba(239,239,239,0.7);
+	$ColorLEDOn:             #87ca33;
+	$ColorLEDAvailable:      #4fb3e6;
+	$ColorLEDWarning:        #f5f141;
+	$ColorLEDNotify:         #f4a01f;
+	$ColorLEDNotifyFrom:     #f4a01f;
+	$ColorLEDNotifyTo:       #ffd055;
+	$ColorLEDAlert:          #ff5308;
+	$ColorLEDOff:            #e2e2e2;
+	$ColorLEDText:           #000000;
+	
+	/* Special colors */
+	$ColorBgStError:         #990000;
+	$ColorStError:           #ff6666;
+	$ColorBgStGreenLight:    #dddd00;
+	$ColorStGreenLight:      #222200;
+	$ColorBgStBlueLight:     #004488;
+	$ColorStBlueLight:       #000000;
+	$ColorBgGray:            #888888;
+	$ColorGray:              #000000;
+	
+	/* Context colors */
+	$ColorAccept:              #000000;
+	$ColorAcceptBg:            #92b376;
+	$ColorAcceptButton:        #e0e0e0;
+	$ColorAcceptButtonBg:      #519039;
+	$ColorAcceptButtonHover:   #ffffff;
+	$ColorAcceptButtonHoverBg: #97d137;
+	$ColorDanger:              #000000;
+	$ColorDangerBg:            #b37676;
+	$ColorDangerButton:        #e0e0e0;
+	$ColorDangerButtonBg:      #983b25;
+	$ColorDangerButtonHover:   #ffffff;
+	$ColorDangerButtonHoverBg: #ef653b;
+	$ColorAvailable:           #000000;
+	$ColorAvailableBg:         #94c6e0;
+	$ColorAction:              purple;
+	$ColorActionBg:            transparent;
+	$ColorWarning:             yellow;
+	$ColorWarningBg:           transparent;
+	$ColorNotify:              orange;
+	$ColorNotifyBg:            transparent;
+	
+	$ColorIconBlinkStart:      black;
+	$ColorIconBlinkEnd:        grey;
 	
 	/* Font sizes */
 	$FontSizeButton:         14px;
@@ -149,18 +193,22 @@
 	
 	/* Box shadow */
 	$BoxShadowButton:        0px 2px 2px rgba(0,0,0,0.2);
+	$BoxShadowRecessed:      inset 0px 1px 3px rgba(0,0,0,0.2);
+	$BoxShadowElevated:      0px 1px 3px rgba(0,0,0,0.2);
+	$BorderRecessed:         none;
+	$BorderElevated:         1px solid rgba(0,0,0,0.1);
 	
 	/* Window gadgets */
-	$WinGadResizeImg:        url(../gfx/theme/default_window_resize.png);
-	$WinGadResizeImgA:       url(../gfx/theme/default_window_resize.png);
-	$WinGadZoomImg:          url(../gfx/system/window_zoom.png);
-	$WinGadZoomImgA:         url(../gfx/system/window_zoom.png);
-	$WinGadCloseImg:         url(../gfx/system/window_close.png);
-	$WinGadCloseImgA:        url(../gfx/system/window_close_on.png);
-	$WinGadDepthImg:         url(../gfx/system/window_depth.png);
-	$WinGadDepthImgA:        url(../gfx/system/window_depth.png);
-	$WinGadMinimizeImg:      url(../gfx/system/window_minimize.png);
-	$WinGadMinimizeImgA:     url(../gfx/system/window_minimize.png);
+	$WinGadResizeImg:        url(/webclient/gfx/theme/default_window_resize.png);
+	$WinGadResizeImgA:       url(/webclient/gfx/theme/default_window_resize.png);
+	$WinGadZoomImg:          url(/webclient/gfx/system/window_zoom.png);
+	$WinGadZoomImgA:         url(/webclient/gfx/system/window_zoom.png);
+	$WinGadCloseImg:         url(/webclient/gfx/system/window_close.png);
+	$WinGadCloseImgA:        url(/webclient/gfx/system/window_close_on.png);
+	$WinGadDepthImg:         url(/webclient/gfx/system/window_depth.png);
+	$WinGadDepthImgA:        url(/webclient/gfx/system/window_depth.png);
+	$WinGadMinimizeImg:      url(/webclient/gfx/system/window_minimize.png);
+	$WinGadMinimizeImgA:     url(/webclient/gfx/system/window_minimize.png);
 	$WinGadResizeColActive:  #3B81C2;
 	$WinGadResizeCol:        #808080;
 	$WinFrameBgBlur:         #808080;
@@ -169,22 +217,22 @@
 	$WinFrameBgDarkActive:   #2D618B;
 	
 	/* Gui image elements */
-	$GuiImgWinTitle:         url(../gfx/system/window_topgradient_off.png);
-	$GuiImgWinTitleActive:   url(../gfx/system/window_topgradient.png);
-	$GuiImgWinLoading:       #505050 url(../gfx/system/busycube.gif) no-repeat center center;
+	$GuiImgWinTitle:         url(/webclient/gfx/system/window_topgradient_off.png);
+	$GuiImgWinTitleActive:   url(/webclient/gfx/system/window_topgradient.png);
+	$GuiImgWinLoading:       #505050 url(/webclient/gfx/system/busycube.gif) no-repeat center center;
 	
 	/* Icon set */
-	$IconSmallArrowUp:       url(../gfx/icons/16x16/actions/arrow-up.png);
-	$IconSmallArrowDown:     url(../gfx/icons/16x16/actions/arrow-down.png);
-	$IconSmallArrowLeft:     url(../gfx/icons/16x16/actions/arrow-left.png);
-	$IconSmallArrowRight:    url(../gfx/icons/16x16/actions/arrow-right.png);
+	$IconSmallArrowUp:       url(/webclient/gfx/icons/16x16/actions/arrow-up.png);
+	$IconSmallArrowDown:     url(/webclient/gfx/icons/16x16/actions/arrow-down.png);
+	$IconSmallArrowLeft:     url(/webclient/gfx/icons/16x16/actions/arrow-left.png);
+	$IconSmallArrowRight:    url(/webclient/gfx/icons/16x16/actions/arrow-right.png);
 	
-	$IconSmallSave:          url(../gfx/icons/16x16/actions/dialog-ok.png);
-	$IconSmallUse:           url(../gfx/icons/16x16/actions/dialog-ok-apply.png);
-	$IconSmallCancel:        url(../gfx/icons/16x16/actions/dialog-cancel.png);
+	$IconSmallSave:          url(/webclient/gfx/icons/16x16/actions/dialog-ok.png);
+	$IconSmallUse:           url(/webclient/gfx/icons/16x16/actions/dialog-ok-apply.png);
+	$IconSmallCancel:        url(/webclient/gfx/icons/16x16/actions/dialog-cancel.png);
 	
-	$IconSmallListAdd:       url(../gfx/icons/16x16/actions/list-add.png);
-	$IconSmallListRemove:    url(../gfx/icons/16x16/actions/list-remove.png);
+	$IconSmallListAdd:       url(/webclient/gfx/icons/16x16/actions/list-add.png);
+	$IconSmallListRemove:    url(/webclient/gfx/icons/16x16/actions/list-remove.png);
 	
 	/* Other */
 	$LineHeightInput:        14px;
@@ -590,5 +638,3 @@ a:active, a:hover
 {
 	color: #26537D;
 }
-
-

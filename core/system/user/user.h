@@ -1,33 +1,105 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-#ifndef __USER_USER_H__
-#define __USER_USER_H__
+
+#ifndef __SYSTEM_USER_USER_H__
+#define __SYSTEM_USER_USER_H__
 
 #include <core/types.h>
 #include <core/nodes.h>
+
 #include <mysql/sql_defs.h>
 #include <system/user/user_application.h>
 #include "user_group.h"
 #include <system/handler/file.h>
 #include <libwebsockets.h>
 #include <network/websocket_client.h>
+#include <service/service.h>
+#include <hardware/printer/printer.h>
+#include <time.h>
+#include "remote_user.h"
+/** @file
+ * 
+ *  User definitions
+ *
+ * All functions related to User structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 11/2016
+ */
+
+/*
+ CREATE TABLE IF NOT EXISTS `FUserLogin` ( 
+	`ID` bigint(20) NOT NULL AUTO_INCREMENT,
+	`UserID` bigint(32) NOT NULL,
+	`Login` varchar(255) NOT NULL,
+	`Failed` varchar(255) DEFAULT NULL,
+	`Information` TEXT DEFAULT NULL,
+	`LoginTime` bigint(32) NOT NULL,
+	PRIMARY KEY (`ID`)
+ ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+	 */
+
+//
+// user structure
+//
+
+typedef struct UserLogin
+{
+	MinNode						node;
+	FULONG						ul_ID;
+	FULONG						ul_UserID;
+	char								*ul_Login;
+	char								*ul_Failed;
+	char								*ul_Information;
+	time_t							ul_LoginTime;
+}UserLogin;
+
+//
+//
+//
+
+static FULONG UserLoginDesc[] = { 
+	SQLT_TABNAME, (FULONG)"FUserLogin",       
+	SQLT_STRUCTSIZE, sizeof( struct UserLogin ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserLogin, ul_ID ), 
+	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserLogin, ul_UserID ),
+	SQLT_STR,     (FULONG)"Login",        offsetof( struct UserLogin, ul_Login ),
+	SQLT_STR,     (FULONG)"Failed",    offsetof( struct UserLogin, ul_Failed ),
+	SQLT_STR,     (FULONG)"Information",    offsetof( struct UserLogin, ul_Information ),
+	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct UserLogin, ul_LoginTime ),
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserLogin, node ),
+	SQLT_END 
+};
+
+//
+//
+//
+
+typedef struct UserGroupLink
+{
+	MinNode				node;
+	UserGroup 			*ugl_Group;
+}UserGroupLink;
 
 /*
 CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
@@ -39,48 +111,134 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
   `SessionID` varchar(255) DEFAULT NULL,
   `LoggedTime` bigint(32) NOT NULL,
   `CreatedTime` bigint(32) NOT NULL,
+  `LoginTime` bigint(32) NOT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 */
 
+typedef struct UserSessList
+{
+	void 					*us;
+	MinNode			node;
+}UserSessList;
+
+//
+// user structure
+//
+
 typedef struct User
 {
-	struct MinNode                   node;
-	ULONG                            u_ID;
-	char                             *u_Name;
-	char                             *u_Password;
-	char                             *u_FullName;
-	char                             *u_Email;
-	int                              u_Error;            // if error
+	MinNode						node;
+	FULONG						u_ID;
+	char								*u_Name;
+	char								*u_Password;
+	char								*u_FullName;
+	char								*u_Email;
+	int								u_Error;            // if error
 
-	char                             *u_SessionID;       // session id
-	time_t                           u_LoggedTime;       // last login/auth time
-	time_t                           u_CreatedTime;
+	char								*u_MainSessionID;       // session id ,  generated only when user is taken from db
+	time_t							u_LoggedTime;       // last action time
+	time_t							u_CreatedTime;
+	time_t							u_LoginTime;			// last login time
 	
-	File									*u_MountedDevs;     // root file]
-	File 									*u_WebDAVDevs;		// shared webdav resources 
+	File								*u_MountedDevs;     // root file]
+	int								u_MountedDevsNr;		// number of mounted devices
+	File								*u_WebDAVDevs;		// shared webdav resources 
+	int								u_WebDAVDevsNr;		// number of mounted webdav drives
 	
-	UserGroup                        **u_Groups;         // pointer to groups
-	UserApplication                  **u_Applications;   // pointer to application settings
+	UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
+	int								u_GroupsNr;		// number of assigned groups
+	UserApplication			*u_Applications;   // pointer to application settings
+	FPrinter						*u_Printers;		// user printers
 	
-	WebsocketClient				*u_WSConnections;
+	FBOOL							u_InitialDevMount;
+	FBOOL							u_Anonymous;		// if user is anonymous
 	
-	BOOL								u_InitialDevMount;
+	UserSessList					*u_SessionsList;
+	int								u_SessionsNr;		// number of sessions
+	int								u_NumberOfBadLogins;	// number of bad logins
+	
+	RemoteUser					*u_RemoteUsers; //user which use this account to have access to resources
+	FBOOL							u_IsAdmin;		//is user administrator
 } User;
 
-static ULONG UserDesc[] = { 
-    SQLT_TABNAME, (ULONG)"FUser",       SQLT_STRUCTSIZE, sizeof( struct User ), 
-	SQLT_IDINT,   (ULONG)"ID",          offsetof( struct User, u_ID ), 
-	SQLT_STR,     (ULONG)"Name",        offsetof( struct User, u_Name ),
-	SQLT_STR,     (ULONG)"Password",    offsetof( struct User, u_Password ),
-	SQLT_STR,     (ULONG)"Fullname",    offsetof( struct User, u_FullName ),
-	SQLT_STR,     (ULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (ULONG)"SessionID",   offsetof( struct User, u_SessionID ),
-	SQLT_INT,     (ULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
-	SQLT_INT,     (ULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
-	SQLT_NODE,    (ULONG)"node",        offsetof( struct User, node ),
+static FULONG UserDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FUser",       
+    SQLT_STRUCTSIZE, sizeof( struct User ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct User, u_ID ), 
+	SQLT_STR,     (FULONG)"Name",        offsetof( struct User, u_Name ),
+	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
+	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
+	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
+	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
+	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
+	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
+	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
 	SQLT_END 
 };
 
-#endif // __USER_USER_H__
+//
+//
+//
+
+User *UserNew( );
+
+//
+//
+//
+
+int UserCheckExists( User *u );
+
+//
+//
+//
+
+int UserInit( User **u );
+
+//
+//
+//
+
+void UserDelete( User *usr );
+
+//
+//
+//
+
+int UserDeleteAll( User *usr );
+
+//
+//
+//
+
+void UserRemoveSession( User *usr, void *s );
+
+//
+//
+//
+
+int UserAddSession( User *usr, void *s );
+
+//
+//
+//
+
+int UserAddDevice( User *usr, File *file );
+
+//
+//
+//
+
+File *UserRemDeviceByName( User *usr, const char *name, int *error );
+
+//
+//
+//
+
+int UserRegenerateSessionID( User *usr, char *newsess );
+
+
+
+#endif // __SYSTEM_USER_USER_H__

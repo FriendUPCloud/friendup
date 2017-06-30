@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -34,7 +34,7 @@ function reloadApps()
 	{
 		if( e == 'ok' )
 		{
-			Application.apps = JSON.parse( d ); 
+			Application.apps = JSON.parse( d );
 			redrawApps();
 		}
 		else
@@ -52,7 +52,10 @@ function redrawApps()
 	var sw = 1;
 	for( var a = 0; a < apps.length; a++ )
 	{
-		var perms = JSON.parse( apps[a].Permissions );
+		var perms = '';
+		var other = '';
+		try{ perms = JSON.parse( apps[a].Permissions ); } catch( e ){ perms = ''; }
+		try{ other = JSON.parse( apps[a].Data ); } catch( e ){ other = ''; }
 		var pout = '';
 		for( var c = 0; c < perms.length; c++ )
 		{
@@ -114,7 +117,7 @@ function SecurityEdit( app )
 	var v = new View( {
 		title: i18n( 'i18n_app_permissions' ),
 		width: 400,
-		height: 200,
+		height: 300,
 		'min-width': 400
 	} );
 	
@@ -126,11 +129,20 @@ function SecurityEdit( app )
 	}
 	
 	var perms = '';
+	var domain = false;
 	for( var a = 0; a < Application.apps.length; a++ )
 	{
 		if( Application.apps[a].Name == app )
 		{
-			perms = Application.apps[a].Permissions
+			perms = Application.apps[a].Permissions;
+			try
+			{
+				domain = JSON.parse( Application.apps[a].Data ).domain;
+			}
+			catch( e )
+			{
+				domain = false;
+			}
 		}
 	}
 	
@@ -139,7 +151,11 @@ function SecurityEdit( app )
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
-		v.sendMessage( { command: 'permissions', permissions: perms } );
+		v.sendMessage( { 
+			command: 'permissions', 
+			permissions: perms, 
+			domain: domain ? domain : '' 
+		} );
 	}
 	f.load();	
 }

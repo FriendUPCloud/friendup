@@ -1,22 +1,26 @@
 <?php
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /******************************************************************************\
 *                                                                              *
@@ -28,9 +32,58 @@
 
 ob_start();
 
+set_time_limit( 10 ); // Replace this one later in the script if you need to!
+
+// Separator aware json encode/decode
+function friend_json_encode( $object )
+{
+	$s = json_encode( $object );
+	$s = str_replace( '<!--separate-->', '<!--alien_separator-->', $s );
+	return $s;
+}
+
+function friend_json_decode( $string )
+{
+	$string = str_replace( '<!--alien_separator-->', '<!--separate-->', $string );
+	return json_decode( $string );
+}
+
+function jsUrlEncode( $in )
+{ 
+	$out = '';
+	for( $i = 0; $i < strlen( $in ); $i++ )
+	{
+		$hex = dechex( ord( $in[ $i ] ) );
+		if( $hex == '' ) $out = $out . urlencode( $in[ $i ] );
+		else $out = $out . '%' . ( ( strlen( $hex ) == 1 ) ? ( '0' . strtoupper( $hex ) ) : ( strtoupper( $hex ) ) );
+	}
+	return str_replace(
+		array( '+', '_', '.', '-' ),
+		array( '%20', '%5F', '%2E', '%2D' ),
+		$out
+	);
+}
+
+// Connects to friend core! You must build the whole query after the fc path
+function FriendCall( $queryString )
+{
+	global $Config;
+	$ch = curl_init();
+	curl_setopt( $ch, CURLOPT_URL, ($Config->SSLEnable?'https://':'http://') . ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	if( $Config->SSLEnable == 1 )
+	{
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, false );
+		curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, false );
+	}
+	$result = curl_exec( $ch );
+	curl_close( $ch );
+	return $result;
+}
+
 // Output headers in a readable format
 $friendHeaders = [];
-function friendHeader( $header )
+function FriendHeader( $header )
 {
 	global $friendHeaders;
 	
@@ -64,7 +117,7 @@ function friendHeader( $header )
 // Authenticate applications on users
 function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 {
-	global $SqlDatabase;
+	global $SqlDatabase, $User, $level, $Config;
 	
 	if( !$searchGroups )
 	{
@@ -117,6 +170,7 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 function FindAppInSearchPaths( $app )
 {
 	$ar = array(
+		'repository/',
 		'resources/webclient/apps/'
 	);
 	foreach ( $ar as $apath )
@@ -137,14 +191,24 @@ if( isset( $argv ) && isset( $argv[1] ) )
 		$kvdata = new stdClass();
 		foreach ( $args as $arg )
 		{
-			if( trim( $arg ) )
+			if( trim( $arg ) && strstr( $arg, '=' ) )
 			{
-				list( $key, $value ) = explode( "=", $arg );
+				list( $key, $value ) = explode( '=', $arg );
 				if( isset( $key ) && isset( $value ) )
 				{
-					$kvdata->$key = urldecode( $value );
-					if( $data = json_decode( $kvdata->$key ) )
-						$kvdata->$key = $data;
+					if( substr( $value, 0, 13 ) == '<!--base64-->' )
+						$value = base64_decode( substr( $value, 13, strlen( $value ) - 13 ) );
+					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
+						$value = rawurldecode( $value );
+					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
+					{
+						if( $data = json_decode( $value) )
+						{
+							$kvdata->$key = $data;
+							continue;
+						}
+					}
+					$kvdata->$key = $value;
 				}
 			}
 		}
@@ -152,33 +216,73 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	$GLOBALS['args'] = $kvdata;
 }
 
+$UserAccount = false;
+if( defined( 'FRIEND_USERNAME' ) && defined( 'FRIEND_PASSWORD' ) )
+{
+	$UserAccount = new stdClass();
+	$UserAccount->Username = FRIEND_USERNAME;
+	$UserAccount->Password = FRIEND_PASSWORD;
+}
+
 // No sessionid!!
-if( !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
+if( !$UserAccount && !isset( $groupSession ) && !isset( $GLOBALS[ 'args' ]->sessionid ) && !isset( $GLOBALS[ 'args' ]->authid ) )
 {
 	die( '404' );
 }
+if( !$UserAccount && isset( $GLOBALS[ 'args' ]->sessionid ) && $GLOBALS[ 'args' ]->sessionid == '(null)' )
+	die( '404' );
 
 // Setup mysql abstraction
 if( file_exists( 'cfg/cfg.ini' ) )
 {
-	$ar = parse_ini_file( 'cfg/cfg.ini' );
-	require_once( 'classes/dbio.php' );
-	require_once( 'include/i18n.php' );
+	$configfilesettings = parse_ini_file( 'cfg/cfg.ini', true );
+	include_once( 'classes/dbio.php' );
+	include_once( 'include/i18n.php' );
 	// For debugging
-	require_once( 'classes/logger.php' );
+	include_once( 'classes/logger.php' );
 	$logger =& $GLOBALS['Logger'];
 	
 	// Set config object
 	$Config = new Object();
-	$car = array( 'Hostname', 'Username', 'Password', 'DbName', 
-	              'FCHost', 'FCPort', 'FCUpload', 'SSLEnable' );
+	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
+	              'FCHost', 'FCPort', 'FCUpload', 
+	              'SSLEnable', 'FCOnLocalhost', 'Domains' );
+
 	foreach( array(
-		'host', 'login', 'password', 'dbname', 'fchost', 'fcport', 'fcupload',
-		'SSLEnable'
+		'host', 'login', 'password', 'dbname', 
+		'fchost', 'fcport', 'fcupload',
+		'SSLEnable', 'fconlocalhost', 'domains'
 	) as $k=>$type )
 	{
-		if( isset( $ar[$type] ) )
-			$Config->{$car[$k]} = $ar[$type];
+		$val = '';
+		switch( $type )
+		{
+			case 'host':
+			case 'login':
+			case 'password':
+			case 'dbname':
+				$val = isset( $configfilesettings['DatabaseUser'][$type] ) ? $configfilesettings['DatabaseUser'][$type] : '';
+				break;	
+			
+			case 'fchost':
+			case 'fcport':
+			case 'fcupload':
+			case 'fconlocalhost':
+				$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
+				break;
+				
+			case 'SSLEnable':	
+				$val = isset( $configfilesettings['Core'][$type] ) ? $configfilesettings['Core'][$type] : '';
+				break;
+				
+			case 'domains':
+				$val = isset( $configfilesettings['Security'][$type] ) ? $configfilesettings['Security'][$type] : '';
+				break;		
+			default:
+				$val = '';
+				break;	
+		}
+		$Config->{$car[$k]} = $val;
 	}
 	
 	// Temporary folder
@@ -189,49 +293,114 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$GLOBALS['Config'] =& $Config;
 	
 	$SqlDatabase = new SqlDatabase();
-	$SqlDatabase->Open( $ar['host'], $ar['login'], $ar['password'] );
-	$SqlDatabase->SelectDatabase( $ar['dbname'] );
+	if( !$SqlDatabase->Open( $Config->Hostname, $Config->Username, $Config->Password ) )
+		die( 'fail<!--separate-->Could not connect to database.' );
+	$SqlDatabase->SelectDatabase( $Config->DbName );
+	
 	$GLOBALS['SqlDatabase'] =& $SqlDatabase;
 	
 	// User application info
 	$UserApplication = false;
 	
-	// Get user information
+	// Get user information, trying first on FUserSession SessionID
 	$User = new dbIO( 'FUser' );
 	
-	if( isset( $GLOBALS['args']->sessionid ) )
+	$sudm = false;
+	
+	// TODO: Implement authentication modules!
+	if( $UserAccount )
 	{
-		$User->SessionID = $GLOBALS['args']->sessionid;
-		$User = $User->FindSingle();
-		//$logger->log( 'User logged in with sessionid:' . ( $User ? ( $User->ID . ' ' . print_r( $args, 1 ) ) : ( 'No user id!' . print_r( $args, 1 ) ) ) );
+		if( $mu = $SqlDatabase->fetchObject( '
+			SELECT * FROM FUser u
+			WHERE
+				u.Name = \'' . $UserAccount->Username . '\' AND
+				u.Password = \'' . '{S6}' . hash( 'sha256', 'HASHED' . hash( 'sha256', $UserAccount->Password ) ) . '\'
+		' ) )
+		{
+			$User = $mu;
+		}
 	}
-	if( isset( $User->SessionID ) && trim( $User->SessionID ) && $User->Load() )
+	
+	// Get the sessionid
+	$sidm = mysqli_real_escape_string( $SqlDatabase->_link, 
+		isset( $User->SessionID ) ? $User->SessionID :
+		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
+	);
+	
+	//die( $sidm .'..' . $User->ID . '..');
+	
+	/*die( '
+			SELECT u.* FROM FUser u, FUserSession us
+			WHERE
+				us.UserID = u.ID AND
+				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
+		' );*/
+	
+	// Here we need a union because we are looking for sessionid in both the
+	// FUserSession and FUser tables..
+	if( isset( $User->ID ) && $User->ID > 0 )
 	{
-		//$logger->log( 'fop' );
-		$GLOBALS['User'] =& $User;
+		$GLOBALS[ 'User' ] =& $User;
+	}
+	// Here we're trying to load it
+	else if(
+		$sidm && 
+		( $User = $SqlDatabase->fetchObject( '
+			SELECT u.* FROM FUser u, FUserSession us
+			WHERE
+				us.UserID = u.ID AND
+				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
+		' ) )
+	)
+	{
+		// Login success
+		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		$GLOBALS[ 'User' ] =& $User;
+	}
+	else if(
+		isset( $User->SessionID ) && trim( $User->SessionID ) && 
+		( $User = $SqlDatabase->FetchObject( '
+			SELECT u.* FROM FUser u
+			WHERE u.SessionID=\'' . $User->SessionID . '\'
+		' ) ) 
+	)
+	{
+		//$logger->log( 'User logged in using registered User->SessionID..' );
+		$GLOBALS[ 'User' ] =& $User;
 	}
 	else
 	{
-		//$logger->log( 'lop' );
-		
 		// Ok, did we have auth id?
 		if( isset( $GLOBALS['args']->authid ) )
 		{
-			$UserApplication = new dbIO( 'FUserApplication' );
-			$UserApplication->AuthID = $GLOBALS['args']->authid;
-			$UserApplication->Load();
-			if( $UserApplication->ID > 0 ) 
+			$asid = mysqli_real_escape_string( $SqlDatabase->_link, $GLOBALS['args']->authid );
+			if( $row = $SqlDatabase->FetchObject( $q = '
+				SELECT * FROM ( 
+					( 
+						SELECT u.ID FROM FUser u, FUserApplication a 
+						WHERE 
+							a.AuthID="' . $asid . '" AND a.UserID = u.ID LIMIT 1 
+					) 
+					UNION 
+					( 
+						SELECT u2.ID FROM FUser u2, Filesystem f 
+						WHERE 
+							f.Config LIKE "%' . $asid . '%" AND u2.ID = f.UserID LIMIT 1 
+					) 
+				) z LIMIT 1
+			' ) )
 			{
-				$User->Load( $UserApplication->UserID );
+				$User->Load( $row->ID );
+				
 				if( $User->ID > 0 )
-					$GLOBALS['User'] =& $User;
+					$GLOBALS[ 'User' ] =& $User;
 			}
 		}
 		
 		//$logger->log( 'ok: ' . ( isset( $User ) ? ' has user' : ' no user' ) );
 		
 		// Failed to authenticate
-		if( isset( $User->ID ) && $User->ID <= 0 )
+		if( !isset( $groupSession ) && isset( $User->ID ) && $User->ID <= 0 )
 			die( '404' );
 	}
 	
@@ -264,6 +433,5 @@ else
 {
 	die( 'Failed to initialize cfg.ini...' );
 }
-
 
 ?>

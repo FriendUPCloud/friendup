@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg )
 {
@@ -23,18 +23,17 @@ Application.run = function( msg )
 	
 	this.mode = 'pear';
 	
+	InitTabs( 'MainTabs' );
+	
 	refreshThemes();	
 	
 }
 
 function getMenuMode()
 {
-	if( ge( 'menuPear' ).checked )
-		return 'pear';
-	//if( ge( 'menuFenster' ).checked ) 
-	//	return 'fenster';
-	if( ge( 'menuMiga' ).checked )
-		return 'miga';
+	// TODO: Will reenable later
+	//if( ge( 'menuMiga' ).checked )
+	//	return 'miga';
 	return 'pear';
 }
 
@@ -43,6 +42,52 @@ function setMenuMode( mode )
 	mode = mode.substr( 0, 1 ).toUpperCase() + mode.substr( 1, mode.length - 1 );
 	if( ge( 'menu' + mode ) )
 		ge( 'menu' + mode ).click();
+}
+
+function getNavigationMode()
+{
+	if( ge( 'navigationSpacial' ).checked )
+		return 'spacial';
+	return 'browser';
+}
+
+function setNavigationMode( mode )
+{
+	mode = mode.substr( 0, 1 ).toUpperCase() + mode.substr( 1, mode.length - 1 );
+	if( ge( 'navigation' + mode ) )
+		ge( 'navigation' + mode ).click(); 
+}
+
+function getFocusMode()
+{
+	if( ge( 'focusmodeClicktofocus' ).checked )
+	{
+		return 'clicktofocus';
+	}
+	return 'clicktofront';
+}
+
+function setFocusMode( mode )
+{
+	mode = mode.substr( 0, 1 ).toUpperCase() + mode.substr( 1, mode.length - 1 );
+	if( ge( 'focusmode' + mode ) )
+		ge( 'focusmode' + mode ).click();
+}
+
+function getWindowListMode()
+{
+	if( ge( 'windowlistDocked' ).checked )
+	{
+		return 'docked';
+	}
+	return 'separate';
+}
+
+function setWindowListMode( mode )
+{
+	mode = mode.substr( 0, 1 ).toUpperCase() + mode.substr( 1, mode.length - 1 );
+	if( ge( 'windowlist' + mode ) )
+		ge( 'windowlist' + mode ).click();
 }
 
 function refreshThemes()
@@ -54,10 +99,6 @@ function refreshThemes()
 		{
 			var j = JSON.parse( d );
 			Application.themes = j;
-			Application.themes.push( {
-				WebPath: '',
-				Name: 'FriendUP default'
-			} );
 			var ml = '<div class="List">';
 			var sw = 2;
 			
@@ -79,6 +120,14 @@ function refreshThemes()
 			{
 				sw = sw == 2 ? 1 : 2;
 				var cl = '';
+				
+				switch( j[a].Name.toLowerCase() )
+				{
+					case 'borderless':
+					case 'login':
+						continue;
+				}
+				
 				if( a == def )
 				{
 					cl = ' Active';
@@ -105,11 +154,17 @@ function refreshThemes()
 		{
 			var dd = JSON.parse( d );
 			setMenuMode( dd.menumode );
+			setNavigationMode( dd.navigationmode ? dd.navigationmode : 'browser' );
+			setFocusMode( dd.focusmode ? dd.focusmode : 'clicktofront' );
+			setWindowListMode( dd.windowlist ? dd.windowlist : 'separate' );
 			return;
 		}
 		setMenuMode( 'pear' );
+		setNavigationMode( 'browser' );
+		setFocusMode( 'clicktofront' );
+		setWindowListMode( 'separate' );
 	}
-	m.execute( 'getsetting', { setting: 'menumode' } );
+	m.execute( 'getsetting', { settings: [ 'menumode', 'navigationmode', 'focusmode', 'windowlist' ] } );
 	
 }
 
@@ -123,29 +178,41 @@ function setActive( num )
 function applyTheme()
 {
 	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+	m.onExecuted = function()
 	{
-		if( e == 'ok' )
+		var m2 = new Module( 'system' );
+		m2.onExecuted = function()
 		{
-			Application.sendMessage( {
-				type: 'system',
-				command: 'refreshtheme',
-				theme: Application.themePath ? Application.theme : ''
-			} );
+			var m4 = new Module( 'system' );
+			m4.onExecuted = function()
+			{
+				var m5 = new Module( 'system' );
+				m5.onExecuted = function()
+				{
+					var m3 = new Module( 'system' );
+					m3.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( {
+								type: 'system',
+								command: 'refreshtheme',
+								theme: Application.themePath ? Application.theme : 'friendup'
+							} );
+						}
+						else
+						{
+							console.log( 'Could not set system theme!' );
+						}
+					}
+					m3.execute( 'settheme', { theme: Application.themePath ? Application.theme : 'friendup' } );
+				}
+				m5.execute( 'setsetting', { setting: 'windowlist', data: getWindowListMode() } );
+			}
+			m4.execute( 'setsetting', { setting: 'focusmode', data: getFocusMode() } );
 		}
-		else
-		{
-			console.log( 'Could not set system theme!' );
-		}
-	}
-	m.execute( 'settheme', { theme: Application.themePath ? Application.theme : '' } );
-	
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		console.log( e, d );
+		m2.execute( 'setsetting', { setting: 'navigationmode', data: getNavigationMode() } );
 	}
 	m.execute( 'setsetting', { setting: 'menumode', data: getMenuMode() } );
-	
 }
 

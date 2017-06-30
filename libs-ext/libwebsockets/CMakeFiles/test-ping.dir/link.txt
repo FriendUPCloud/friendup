@@ -1,0 +1,1 @@
+/usr/bin/cc  -Wall -Werror -fvisibility=hidden  -pthread -O3 -DNDEBUG   CMakeFiles/test-ping.dir/test-server/test-ping.c.o  -o bin/libwebsockets-test-ping -rdynamic lib/libwebsockets.a -lz -lssl -lcrypto -lm 

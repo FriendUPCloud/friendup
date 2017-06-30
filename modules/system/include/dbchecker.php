@@ -1,10 +1,10 @@
 <?php
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -13,10 +13,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 // Create FSFile table for managing doors
 $t = new DbTable( 'Filesystem' );
@@ -74,6 +75,43 @@ if( !$t->load() )
 	 `Permissions` varchar(255) NOT NULL,
 	 `DateModified` datetime NOT NULL,
 	 `DateCreated` datetime NOT NULL,
+	 PRIMARY KEY (`ID`)
+	) 
+	' );
+}
+
+// Create FSFile table for MySQL doors
+/*$t = new dbTable( 'FRelation' );
+if( !$t->load() )
+{
+	$SqlDatabase->Query( '
+	CREATE TABLE `FRelation` (
+	 `RowID` bigint(20) NOT NULL AUTO_INCREMENT,
+	 `RowType` varchar(255) NOT NULL,
+	 `RelationID` bigint(20) NOT NULL AUTO_INCREMENT,
+	 `RelationType` varchar(255) NOT NULL,
+	 PRIMARY KEY (`ID`)
+	) 
+	' );
+}*/
+
+// Create FSKeys table for MySQL doors
+$t = new dbTable( 'FKeys' );
+if( !$t->load() )
+{
+	$SqlDatabase->Query( '
+	CREATE TABLE `FKeys` (
+	 `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+	 `UserID` bigint(20) NOT NULL,
+	 `UniqueID` varchar(255) NOT NULL,
+	 `RowID` bigint(20) NOT NULL,
+	 `RowType` varchar(255) NOT NULL,
+	 `Type` varchar(255) NOT NULL,
+	 `Data` longblob,
+	 `PublicKey` blob,
+	 `DateModified` datetime NOT NULL,
+	 `DateCreated` datetime NOT NULL,
+	 `IsDeleted` tinyint(4) NOT NULL,
 	 PRIMARY KEY (`ID`)
 	) 
 	' );

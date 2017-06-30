@@ -1,3 +1,25 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 
 /*
 
@@ -20,7 +42,7 @@ List* CreateList()
 	List *l = FCalloc( 1, sizeof( List ) );
 	if( l == NULL )
 	{
-		ERROR("Cannot allocate memory in CreateList\n");
+		FERROR("Cannot allocate memory in CreateList\n");
 		return NULL;
 	}
 	//l->data = NULL;
@@ -34,6 +56,11 @@ List* CreateList()
 
 void AddToList( List *list, void *data )
 {
+	if( data == NULL )
+	{
+		return;
+	}
+	
 	// First data
 	if( list->data == NULL )
 	{
@@ -55,7 +82,7 @@ void AddToList( List *list, void *data )
 		tmp->next = FCalloc( 1, sizeof( List ) );
 		if( tmp->next == NULL )
 		{
-			ERROR("Cannot allocate memory in Addtolist\n");
+			FERROR("Cannot allocate memory in Addtolist\n");
 			return;
 		}
 	
@@ -76,7 +103,7 @@ void FreeList( List *list )
 	{
 		tmp = list;
 		list = list->next;
-		free ( tmp );
+		FFree ( tmp );
 	}
 	while ( list != NULL );
 }
@@ -90,7 +117,7 @@ List* ListNew()
 	List *l = FCalloc( 1, sizeof( List ) );
 	if( l == NULL )
 	{
-		ERROR("Cannot allocate memory in ListNew\n");
+		FERROR("Cannot allocate memory in ListNew\n");
 		return NULL;
 	}
 	l->data = NULL;

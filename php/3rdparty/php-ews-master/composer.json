@@ -1,0 +1,35 @@
+{
+  "name": "php-ews/php-ews",
+  "description": "Library for communicating with Exchange Web Services.",
+  "homepage": "http://jamesarmes.com/php-ews/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "James Armes",
+      "email": "jamesiarmes@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=5.3.9",
+    "ext-soap": "*",
+    "jamesiarmes/php-ntlm": "~1.0.0"
+  },
+  "require-dev": {
+    "mustache/mustache": "~2.0"
+  },
+  "config": {
+    "bin-dir": "bin"
+  },
+  "autoload": {
+    "psr-4": {
+      "jamesiarmes\\PhpEws\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0.x-dev"
+    }
+  }
+}

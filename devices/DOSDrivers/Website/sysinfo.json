@@ -1,4 +1,5 @@
 {
 	"type":    "Website",
-	"literal": "Mount websites as doors"
+	"literal": "Mount websites as doors",
+	"group":   "User"
 }

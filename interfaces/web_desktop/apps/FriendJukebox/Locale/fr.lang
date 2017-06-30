@@ -1,0 +1,19 @@
+
+i18n_file                        : Fichier
+i18n_add_to_playlist             : Ajouter à la playlist
+i18n_load_playlist               : Charger une playlist
+i18n_save_playlist               : Sauver la playlist
+i18n_save_playlist_as            : Sauver la playlist comme
+i18n_about_exotica               : A propos de Friend Jukebox
+i18n_quit                        : Quitter
+i18n_playlist                    : Playlist
+i18n_edit_playlist               : Editer la playlist
+i18n_clear_playlist              : Effacer la playlist
+i18n_close                       : Fermer l'éditeur de playlist
+i18n_up                          : Haut
+i18n_down                        : Bas
+i18n_toggle_mini_playlist_show   : Montrer mini playlist
+i18n_toggle_mini_playlist_hide   : Cacher mini playlist
+i18n_about1                      : Friend Jukebox est une application simple pour jouer de la musique qui sait se faire discrète pour augmenter votre productivité. Il contient un oscilloscope et est très simple d'utilisation, ainsi qu'une interface minimaliste.
+i18n_about2                      : Si vous avez des idées ou des demandes - ou voulez simplement discuter, faites un tour sur le canal #friendup sur rc.freenode.net. Les développeurs et les utilisateurs s'y retrouvent pour discuter et échanger tous les jours de la semaine.
+

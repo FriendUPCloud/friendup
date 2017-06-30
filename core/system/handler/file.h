@@ -1,30 +1,48 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ *
+ *  File and FileShared    definitions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 6 Feb 2015
+ */
 
 #ifndef __HANDLER_FILE_H__
 #define __HANDLER_FILE_H__
 
-//#include "fsys.h"
 #include <core/types.h>
 #include <util/tagitem.h>
 #include <mysql/mysqllibrary.h>
-//#include <handler/dosdriver.h>
+#include <util/list_string.h>
+#include "file_permissions.h"
+
+//
+//
+//
+
+#define MODE_READ 1
+#define MODE_WRITE 2
 
 //
 //
@@ -43,74 +61,137 @@ enum {
 
 typedef struct File
 {
-	ULONG										f_ID;               // ID in database
-	struct MinNode						node;               // link to another files, used by Mount
-	//struct MinNode	f_SubEntries;	// files inside directory
-	//struct File 	*parent;
+	FULONG											f_ID;               // ID in database
+	struct MinNode								node;               // link to another files, used by Mount
 	
-	char											*f_Name;            // name of file
-	//char 										*f_SharedName;		// when device is shared then name = mail+devname
-	char											*f_Path;            // path
-	char 										*f_SessionID;
-	//char 										*f_AuthID;
-	int											f_Type;             // type
-	int											f_Raw;              // Do read in raw mode?
-	char											*f_FSysName;        // filesystem name required by database
-	void											*f_DOSDriver;
-	void											*f_FSys;            // filesystem type
-	void											*f_User;            // user which mounted device / or file (or owner)
+	char													*f_Name;            // name of file
+	//char												*f_SharedName;		// when device is shared then name = mail+devname
+	char													*f_Path;            // path
+	char													*f_SessionID;
+	char													*f_Config;          // The config of the file system
+	int													f_Visible;         // Visible?
+	char													*f_Execute;         // Execute something?
+	int													f_Type;             // type
+	int													f_Raw;              // Do read in raw mode?
+	char													*f_FSysName;        // filesystem name required by database
+	void													*f_DOSDriver;
+	void													*f_FSys;            // filesystem type
+	void													*f_User;            // user which mounted device / or file (or owner)
 																			// if user != current user device is shared
-	UQUAD									f_Size;             // file size
-	UQUAD									f_Position;         // position where user stopped to read/write
-	ULONG										f_DataPassed;       // size in bytes, to read or write (inside buffer)
-	char											*f_Buffer;          // [ FILE_MAX_BUFFER ];
+	FUQUAD											f_Size;             // file size
+	FUQUAD											f_Position;         // position where user stopped to read/write
+	FULONG											f_DataPassed;       // size in bytes, to read or write (inside buffer)
+	char													*f_Buffer;          // [ FILE_MAX_BUFFER ];
 	
-	struct File								*f_SharedFile;		// points to shared device
-	void											*f_SpecialData;     // pointer to special data
+	struct File										*f_SharedFile;		// points to shared device
+	struct File										*f_RootDevice;
+	void													*f_SpecialData;     // pointer to special data
 	
-	BOOL 											f_Mounted;			// if device is mounted use it
-}File;
+	FBOOL												f_Mounted;			// if device is mounted use it
+	FULONG											f_Pointer;			// pointer to file
+	
+	FBOOL												f_Stream;			// is file streamed
+	Socket												*f_Socket;					// != NULL then data should be streamed
+	void													*f_WSocket;				// websocket context, if provided data should be delivered here
+	int													f_Operations;				// operation counter
+	
+	int													f_OperationMode; // read, write, etc.
+} File;
 
-//
-// Device structure
-//
-/*
-typedef struct Device
-{
-	struct File d_File;
-	//struct File *d_FileHandlers;	// opened files by users, we should also create lock table to
-									// set access to files
-	
-	
-	
-	//void		*d_SpecialData;		// special data, different device can hold different data
-}Device;*/
 
-/*
- 
- Mounted devices list in database
- 
-CREATE TABLE `FDevice` (
- `ID` bigint(20) NOT NULL AUTO_INCREMENT,
- `Name` varchar(255) DEFAULT NULL,
- PRIMARY KEY (`ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
-
-*/
-
-static const ULONG DeviceTDesc[] = {
-	SQLT_TABNAME, (ULONG)"FDevice", 
-	SQLT_STRUCTSIZE, (ULONG)sizeof( File ), 
-	SQLT_IDINT, (ULONG)"ID", 
-	SQLT_NODE, (ULONG)NULL, 
-	SQLT_STR, (ULONG)"NAME", 
-	SQLT_STR, (ULONG)"PATH",
-	SQLT_INT, (ULONG)"TYPE",
-	SQLT_STR, (ULONG)"FSYSTYPE_NAME",
-	SQLT_SKIPBYTES,4,
+static const FULONG DeviceTDesc[] = {
+	SQLT_TABNAME, (FULONG)"FDevice", SQLT_STRUCTSIZE, (FULONG)sizeof( File ), 
+	SQLT_IDINT, (FULONG)"ID",           offsetof( struct File, f_ID ), 
+	SQLT_NODE, (FULONG)NULL,           offsetof( struct File, node ), 
+	SQLT_STR, (FULONG)"NAME",           offsetof( struct File, f_Name ), 
+	SQLT_STR, (FULONG)"PATH",          offsetof( struct File, f_Path ), 
+	SQLT_INT, (FULONG)"TYPE",          offsetof( struct File, f_Type ), 
+	SQLT_STR, (FULONG)"FSYSTYPE_NAME",          offsetof( struct File, f_FSysName ), 
 	SQLT_END 
 };
 
+//
+// File
+//
+
+File *FileNew();
+
+//
+//
+//
+
+void FileDelete( File *);
+
+//
+// Shared file
+//
+
+typedef struct FileShared
+{
+	FULONG										fs_ID;               // ID in database
+	struct MinNode						node;               // link to another files, used by Mount
+	
+	char 										*fs_Name;		// file name
+	char 										*fs_DeviceName;		// device which file belongs to
+	char 										*fs_Path;		// full path
+	
+	FULONG										fs_IDUser;		// user which share his device (User *)
+	char 										*fs_DstUsers;
+	
+	char 										*fs_Hash;
+	time_t                           			fs_CreatedTime;
+	
+	ListString									*fs_Data;		// pointer to liststring which represents file data, list must be finalised before it will be atached here
+	FULONG 									fs_AppID;		// application ID
+} FileShared;
+
+
+
+static const FULONG FileSharedTDesc[] = {
+	SQLT_TABNAME, (FULONG)"FFileShared", SQLT_STRUCTSIZE, (FULONG) sizeof( struct FileShared ), 
+	SQLT_IDINT, (FULONG)"ID",            offsetof( struct FileShared, fs_ID ), 
+	SQLT_STR, (FULONG)"Name",            offsetof( struct FileShared, fs_Name ), 
+	SQLT_STR, (FULONG)"Devname",         offsetof( struct FileShared, fs_DeviceName ), 
+	SQLT_STR, (FULONG)"Path",            offsetof( struct FileShared, fs_Path ), 
+	SQLT_INT, (FULONG)"UserID",          offsetof( struct FileShared, fs_IDUser ), 
+	SQLT_STR, (FULONG)"DstUserSID",      offsetof( struct FileShared, fs_DstUsers ), 
+	SQLT_INT, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreatedTime ),
+	SQLT_STR, (FULONG)"Hash",            offsetof( struct FileShared, fs_Hash ), 
+	SQLT_INT, (FULONG)"AppID",           offsetof( struct FileShared, fs_AppID ), 
+	SQLT_BLOB, (FULONG)"FileData",       offsetof( struct FileShared, fs_Data ), 
+	SQLT_NODE, (FULONG)NULL,             offsetof( struct FileShared, node ), 
+	SQLT_END 
+};
+
+//
+// File Shared
+//
+
+FileShared *FileSharedNew( char *path, char *name );
+
+//
+//
+//
+
+void FileSharedDelete( FileShared *f );
+
+//
+//
+//
+
+void FileSharedDeleteAll( FileShared *f );
+
+//
+//
+//
+
+int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const char *src, int numberFiles );
+
+//
+//
+//
+
+int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *src, int *numberFiles );
 
 
 #endif // __HANDLER_FILE_H__

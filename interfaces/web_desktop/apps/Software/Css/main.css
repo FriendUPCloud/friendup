@@ -1,0 +1,49 @@
+
+
+.HBox
+{
+	float: left;
+	margin: 2px;
+	width: calc(33% - 4px);
+	height: 160px;
+	position: relative;
+}
+
+.HCont:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+
+.HBox .TheButton
+{
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	text-align: center;
+	box-sizing: border-box;
+	border-radius: 0 0 5px 5px;
+}
+
+.HBox .TheButton *
+{
+	display: inline;
+}
+
+
+#SortAlphaNumeric,
+#SortCategory
+{
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+#SortAlphaNumeric button,
+#SortCategory button
+{
+	margin-bottom: 5px;
+}

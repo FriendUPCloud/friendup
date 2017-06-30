@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <stdio.h>
 #include <core/types.h>
@@ -34,7 +38,9 @@
 #include <sys/mman.h>
 #include <util/log/log.h>
 #include <dlfcn.h>
+#ifdef __linux__ 
 #include <matheval.h>
+#endif
 #include <util/hashmap.h>
 
 #define NAME "math"
@@ -51,7 +57,7 @@ typedef struct MathServ
 // Creste new service
 //
 
-Service *ServiceNew( char *command )
+Service *ServiceNew( void *sysbase, char *command )
 {
 	Service *service = NULL;
 	
@@ -116,7 +122,7 @@ int ServiceStart( Service *service )
 // Stop Service
 //
 
-int ServiceStop( Service *service )
+int ServiceStop( Service *service, char *data )
 {
 	//system( "/etc/init.d/apache2 stop" );
 	
@@ -131,11 +137,27 @@ int ServiceStop( Service *service )
 
 #define DATA_SIZE 1024
 
-int ServiceGetStatus( Service *service )
+char *ServiceGetStatus( Service *service, int *len )
 {
 	service->s_State = SERVICE_STARTED;
 
-	return service->s_State;
+	char *status = FCalloc( 256, sizeof( char ) );
+	
+	switch( service->s_State )
+	{
+		case SERVICE_STOPPED:
+			strcpy( status, "stopped" );
+			break;
+		case SERVICE_STARTED:
+			strcpy( status, "started" );
+			break;
+		case SERVICE_PAUSED:
+			strcpy( status, "paused" );
+			break;
+	}
+	*len = strlen( status );
+    
+	return status;
 }
 
 //
@@ -164,10 +186,11 @@ int ServiceUninstall( Service *s )
 
 char *ServiceRun( struct Service *s )
 {
+#ifdef __linux__
 	MathServ *ms = ( MathServ * ) s->s_SpecialData;
 	
 	// autochange size
-	char *retBuffer = calloc( 1024, sizeof(BYTE ) );
+	char *retBuffer = calloc( 1024, sizeof(FBYTE ) );
 	
 	//int length; /* Length of above buffer. */
 	
@@ -179,6 +202,7 @@ char *ServiceRun( struct Service *s )
 	strncpy( retBuffer, evaluator_get_string( ms->f ), 1024 );
 	
 	evaluator_destroy( ms->f );
+#endif
 	return NULL;
 }
 
@@ -189,7 +213,9 @@ char *ServiceRun( struct Service *s )
 typedef struct EQPart
 {
 	MinNode				node;				// children
+#ifdef __linux__
 	struct EQPart		*child;
+#endif
 	int 						id, size, childSize;
 	char						data[ 100 ];		// equation
 }EQPart;
@@ -201,6 +227,7 @@ typedef struct EQPart
 
 char  *splitEQString(char *cptr, EQPart * curr)
 {
+#ifdef __linux__
 	int size = 0;
 	int id = 0;
 	EQPart *last = curr->child;
@@ -237,12 +264,14 @@ char  *splitEQString(char *cptr, EQPart * curr)
 	}
 
 	return cptr;
+#endif
 }
 
 
 
 char *datajoin( char *ptr, EQPart *curr)
 {
+#ifdef __linux__
 	int i = 0;
 
 	DEBUG("===%s size %d\n", curr->data, curr->size);
@@ -285,14 +314,16 @@ char *datajoin( char *ptr, EQPart *curr)
 		i++;
 	}
 	return ptr;
+#endif
 }
 	
 //
 // Service command
 //
 
-char *ServiceCommand( struct Service *s, const char *cmd, Hashmap *params )
+char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hashmap *params )
 {
+#ifdef __linux__
 	DEBUG("Math service, input %s\n", cmd );
 	char *retBuffer = NULL;
 	MathServ *ms = ( MathServ * ) s->s_SpecialData;
@@ -314,6 +345,7 @@ char *ServiceCommand( struct Service *s, const char *cmd, Hashmap *params )
 	free( eqroot );
 	
 	return retBuffer;;
+#endif
 }
 
 //
@@ -359,12 +391,12 @@ run = function( id, data ){ \
 // version/revision/name
 //
 
-ULONG GetVersion(void)
+FULONG GetVersion(void)
 {
 	return VERSION;
 }
 
-ULONG GetRevision(void)
+FULONG GetRevision(void)
 {
 	return REVISION;
 }

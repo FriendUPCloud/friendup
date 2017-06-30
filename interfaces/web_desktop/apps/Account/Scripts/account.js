@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,14 +15,14 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
 	var v = new View( {
 		title: i18n( 'i18n_account' ),
-		width: 400,
-		height: 390
+		width: 700,
+		height: 490
 	} );
 	
 	v.onClose = function()
@@ -37,17 +37,29 @@ Application.run = function( msg, iface )
 	{
 		var s = JSON.parse( d );
 		var f = new File( 'Progdir:Templates/main.html' );
+		//f.replacements = {
+		//	'username' : s.Name,
+		//	'fullname' : s.FullName,
+		//	'email'    : s.Email
+		//};
+		f.i18n();
 		f.onLoad = function( data )
 		{
 			v.setContent( data );
 			s.command = 'userinfo';
 			v.sendMessage( s );
+			
+			Authenticate.load( 'publickey', displayPublicKey );
 		}
 		f.load();
 	}
 	m.execute( 'userinfoget', { id: msg.userId } );	
 }
 
+function displayPublicKey( data )
+{
+	Application.mainView.sendMessage( { command : 'setkey', data : data } );
+}
 
 Application.receiveMessage = function( msg )
 {
@@ -64,6 +76,7 @@ Application.receiveMessage = function( msg )
 		// Update login in Workspace!
 		if( msg.result == 'ok' )
 		{
+			Notify({'title':i18n('i18_account2'),'text':i18n('i18n_settings_saved')});
 			Application.sendMessage( {
 				type: 'system',
 				command: 'updatelogin',
@@ -71,5 +84,63 @@ Application.receiveMessage = function( msg )
 				password: msg.data.Password
 			} );
 		}
+	}
+	
+	switch( msg.command )
+	{
+		case 'encrypt':
+			if( msg.key )
+			{
+				console.log( 'encrypt msg: ', msg );
+				
+				Authenticate.encrypt( {
+					
+					destinationViewId: msg.viewId,
+					data: msg.key 
+					
+				}, function( item ){
+					
+					console.log( 'encrypt item: ', item );
+					
+					Application.sendMessage( {
+						
+						command: 'updatekey', 
+						destinationViewId: item.destinationViewId, 
+						data: item.data 
+						
+					} );
+					
+				} );
+			}
+			break;
+		
+		case 'decrypt':
+			if( msg.key )
+			{
+				console.log( 'decrypt msg: ', msg );
+				
+				Authenticate.decrypt( {
+					
+					destinationViewId: msg.viewId,
+					data: msg.key 
+					
+				}, function( item ){
+					
+					console.log( 'decrypt item: ', item );
+					
+					Application.sendMessage( {
+						
+						command: 'updatekey', 
+						destinationViewId: item.destinationViewId, 
+						data: item.data 
+						
+					} );
+					
+				} );
+			}
+			break;
+		
+		default:
+			return;
 	}
 }

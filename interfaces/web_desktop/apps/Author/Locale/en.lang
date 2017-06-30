@@ -2,6 +2,7 @@
 
 menu_new                          : New document
 menu_save                         : Save
+menu_save_as                      : Save as
 menu_load                         : Load
 menu_quit                         : Quit
 menu_preferences                  : Preferences
@@ -22,4 +23,46 @@ i18n_search                       : Search
 edit_image                        : Edit image
 insert_image                      : Insert image
 
+i18n_print_alert                  : Print alert
+i18n_not_saved_cant_print         : The document is not saved. Please save it first, then retry.
+
+i18n_set_bold                     : Set bold
+i18n_set_italic                   : Set italic
+i18n_set_underline                : Set underline
+i18n_default_style                : Default style
+i18n_header_1                     : Header 1
+i18n_header_2                     : Header 2
+i18n_header_3                     : Header 3
+i18n_header_4                     : Header 4
+i18n_header_5                     : Header 5
+i18n_header_6                     : Header 6
+i18n_paragraph                    : Paragraph
+i18n_select_zoom                  : Select zoom
+i18n_select_font                  : Select font
+i18n_font_size                    : Font size
+i18n_insert_image                 : Insert image
+i18n_align_left                   : Align left
+i18n_align_center                 : Align center
+i18n_align_right                  : Align right
+i18n_align_justify                : Align justify
+i18n_unordered_bullet_points      : Unordered bullet points
+i18n_ordered_bullet_point         : Ordered bullet points
+i18n_set_document_zoom            : Set document zoom
+i18n_set_block_format             : Set block format
+
+i18n_cancel : Cancel
+i18n_keywords : keywords...
+i18n_path : path...
+i18n_preferences : Preferences
+i18n_failed_to_load_document : Failed to load document...
+i18n_loaded : Loaded
+i18n_converting : Converting...
+i18n_written : Written
+i18n_print_preview : Print preview
+i18n_generating_print_preview : Generating print preview...
+i18n_print_ready : Print ready
+i18n_language : Language
+i18n_language_settings : Language settings
+i18n_features : Features
+i18n_feature_settings : Feature settings
 

@@ -10,3 +10,8 @@
 	{
 		font-weight: bold;
 	}
+	
+	.Padding.VContentTop
+	{
+		bottom: 50px;
+	}

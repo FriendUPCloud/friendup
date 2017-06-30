@@ -1,11 +1,11 @@
 <?php
 
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,10 +14,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 global $args, $SqlDatabase, $User, $Config;
 
@@ -40,6 +41,7 @@ if( $Filesystem = new Door( $args ) )
 	$test = 'modules/files/include/door_' . strtolower( $Filesystem->Type ) . '.php';
 	
 	// New way to include "driver" assets
+	
 	if( !file_exists( $test ) )
 		$test = 'devices/DOSDrivers/' . $Filesystem->Type . '/door.php';
 	
@@ -64,16 +66,25 @@ if( $Filesystem = new Door( $args ) )
 		// Include the correct door class and instantiate it
 		include( $test );
 
-		if( !$door ) die( 'fail<!--separate-->No door found' );
+		if( !$door ) die( 'fail<!--separate-->{"response":"no door found"}' );
+		
+		// Set sessionid
+		if( $args->sessionid )
+			$door->sessionid = $args->sessionid;
 		
 		// Execute dos action
 		if( $result = $door->dosAction( $args ) )
 		{
 			die( $result );
 		}
+		else
+		{
+			die( 'fail<!--separate-->{"response":"dosaction yielded no response"}' );
+		}
 	}
+	else die( 'fail<!--separate-->{"response":"filesystem does not exist"}' );
 }
 
-die( 'fail<!--separate-->' . print_r( $args, 1 ) );
+die( 'fail<!--separate-->{"response":"no filesystem response available"}' );
 
 ?>

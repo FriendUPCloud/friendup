@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -34,7 +35,7 @@
 #include <util/string.h>
 #include <openssl/sha.h>
 #include <propertieslibrary.h>
-#include <user/userlibrary.h>
+#include <system/auth/authmodule.h>
 #include <system/application/application.h>
 #include <util/buffered_string.h>
 #include <system/json/json_converter.h>
@@ -61,26 +62,14 @@ void *libInit( void *sb )
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
 	//l->libInit//no need
-	l->libClose = dlsym ( l->handle, "libClose");
-	l->GetVersion = dlsym ( l->handle, "GetVersion");
-	l->GetRevision = dlsym( l->handle, "GetRevision");
-	l->GetApplicationFromDB  = dlsym( l->handle, "GetApplicationFromDB" );
-/*
-	// application.library structure
-	l->UserExist = dlsym ( l->handle, "UserExist");
-	l->Authenticate = dlsym ( l->handle, "Authenticate");
-	l->IsSessionValid = dlsym ( l->handle, "IsSessionValid");
-	l->UserCreate = dlsym ( l->handle, "UserCreate");
-	l->UserFree = dlsym( l->handle, "UserFree");
-	l->UserGetBySession = dlsym ( l->handle, "UserGetBySession");
-	l->UserGet = dlsym ( l->handle, "UserGet");
-	l->SetFullName = dlsym ( l->handle, "SetFullName");
-	l->SetEmail = dlsym ( l->handle, "SetEmail");
-	l->UserUpdateDb = dlsym( l->handle, "UserUpdateDb");
-	*/
+	l->libClose = dlsym ( l->l_Handle, "libClose");
+	l->GetVersion = dlsym ( l->l_Handle, "GetVersion");
+	l->GetRevision = dlsym( l->l_Handle, "GetRevision");
+	l->GetApplicationFromDB  = dlsym( l->l_Handle, "GetApplicationFromDB" );
+
 	l->sb = sb;
 
-	l->AppWebRequest = dlsym( l->handle, "AppWebRequest" );
+	l->AppWebRequest = dlsym( l->l_Handle, "AppWebRequest" );
 
 	l->al_sqllib = (struct MYSQLLibrary *)LibraryOpen( sb, "mysql.library", 0 );
 	
@@ -210,8 +199,8 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -235,8 +224,8 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 	else if( strcmp( urlpath[ 0 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -267,18 +256,10 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 				
 				if( lbs != NULL )
 				{
-					//DEBUG("Parse application entry %s !\n" , lbs->bs_Buffer );
-					
 					int msg = BufStringAddSize( bs, lbs->bs_Buffer, lbs->bs_Size );
-					//INFO("JSON LBS: %s\n", bs->bs_Buffer );
-					//DEBUG("PARSE INFO %d size %d\n", msg, lbs->bs_Size );
-				
 					BufStringDelete( lbs );
 				}
-				
-				//INFO("JSON INFO: 1 %s\n", bs->bs_Buffer );
-				//BufStringAdd( bs, "}" );
-				
+
 				al = (Application *)al->node.mln_Succ;
 				pos++;
 			}
@@ -287,20 +268,14 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 			BufStringAdd( bs, "  ]}" );
 			
 			INFO("JSON INFO: %s\n", bs->bs_Buffer );
-			
-			// test purpose
-			
-			//Application *app =	GetStructureFromJSON( ApplicationDesc, bs->bs_Buffer );
-			
-			//DEBUG("----> %s\n" , app->a_Name );
-			
+
 			HttpAddTextContent( response, bs->bs_Buffer );
 			
 			BufStringDelete( bs );
 		}
 		else
 		{
-			ERROR("ERROR: Cannot allocate memory for BufferString\n");
+			FERROR("ERROR: Cannot allocate memory for BufferString\n");
 		}
 		
 		//HttpWriteAndFree( response );
@@ -310,8 +285,8 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 		char *url = NULL;
 		
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (ULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -338,7 +313,7 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 	else
 	{
 		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (ULONG)StringDuplicate( "close" ) },
+			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 		
@@ -443,6 +418,7 @@ char *MakeString ( int length )
 // TODO: Use stronger key!
 //
 
+/*
 void HashedString ( char **str )
 {
 	printf ( "[HashedString] Hashing\n" );
@@ -461,6 +437,7 @@ void HashedString ( char **str )
 	*str = buf;
 	printf ( "[HashedString] Hashed\n" );
 }
+*/
 
 
 

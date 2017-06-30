@@ -1,68 +1,173 @@
 
-	<link rel="stylesheet" href="Progdir:Css/main.css"/>
-	<script src="Progdir:Scripts/accountmain.js"></script>
 
-	<div class="Gui">
-		<div class="VContentTop ScrollArea BorderBottom BackgroundWindow" style="bottom: 50px">
-			<div class="Padding">
-				<h3>
-					Basic information:
-				</h3>
-				<div class="Box">
-					<div class="HRow">
-						<div id="UserImageRect">
-						
+
+	<div class="Gui LayoutButtonbarBottom">
+		<div class="VContentTop">
+			<div class="HContentLeft HContent60 ScrollArea BorderBottom BackgroundWindow" id="MainContainer">
+				<div class="Padding">
+					<div id="MTabs" class="Tabs">
+						<div class="Tab">
+							{i18n_basic_information}
 						</div>
-						<div>
-							<p class="Layout">
-								<label>Your full name:</label>
-								<input type="text" value="" id="UserAccFullname"/>
-							</p>
-							<p class="Layout">
-								<label>Username:</label>
-								<input type="text" value="" disabled="disabled" id="UserAccUsername"/>
-							</p>
-							<p class="Layout">
-								<label>Password:</label>
-								<input type="password" value="" disabled="disabled" id="UserAccPassword"/>
-							</p>
-							<p class="Layout">
-								<label>Password (confirm):</label>
-								<input type="password" value="" disabled="disabled" id="UserAccPasswordConfirm"/>
-							</p>
+						<div class="Tab">
+							{i18n_extended_information}
+						</div>
+						<div class="Page">
+							<div class="HRow Padding">
+								<div id="UserImageRect">
+
+								</div>
+								<div>
+									<p class="Layout">
+										<label class="InputHeight">{i18n_full_name}:</label>
+										<input type="text" class="InputHeight" value="" id="UserAccFullname" value="{fullname}"/>
+									</p>
+									<p class="Layout">
+										<label class="InputHeight">{i18n_username}:</label>
+										<input type="text" class="InputHeight" value="" disabled="disabled" id="UserAccUsername" value="{username}"/>
+									</p>
+									<p class="Layout" id="PublicKeyContainer" style="display:none;">
+										<label>{i18n_publickey}:</label>
+										<button type="button" class="IconSmall fa-certificate Button" onclick="var p = Ge('UserAccPublicKey'); if( p.style.visibility != 'visible' ){ p.style.visibility = 'visible'; p.style.height = '60px'; p.style.pointerEvents = ''; } else { p.style.height = '1px'; p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }">
+											{i18n_toggle_public_key_visibility}
+										</button>
+										<textarea class="FullWidth" value="" readonly="readonly" id="UserAccPublicKey" placeholder="{publickey}" onclick="this.focus();this.select();" style="visibility: hidden; pointer-events: none; height: 1px"></textarea>
+									</p>
+
+									<div id="ChangePassTrigger">
+										<button type="button" class="Button IconSmall fa-lock" onclick="toggleChangePass()">
+											{i18n_change_password}
+										</button>
+									</div>
+
+									<div id="ChangePassContainer">
+										<div id="PassError"></div>
+										<p class="Layout">
+											<label>{i18n_current_password}:</label>
+											<input type="password" value="" id="UserCurrentPassword"/>
+										</p>
+										<p class="Layout">
+											<label>{i18n_new_password}:</label>
+											<input type="password" value="" placeholder="*****" id="UserAccPassword"/>
+										</p>
+										<p class="Layout">
+											<label>{i18n_new_password} ({i18n_confirm}):</label>
+											<input type="password" value="" placeholder="*****" id="UserAccPasswordConfirm"/>
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="Page">
+							<div class="HRow Padding">
+								<div>
+									<p class="Layout" style="display:none;">
+										<label>{i18n_telephone}:</label>
+										<input type="text" value="" id="UserAccPhone"/>
+									</p>
+									<p class="Layout">
+										<label>{i18n_email_address}:</label>
+										<input type="text" value="" id="UserAccEmail" value="{email}"/>
+									</p>
+									<!--<p class="Layout">
+										<label>{i18n_account_image}:</label>
+										<input type="text" value="" id="UserAccImage"/>
+									</p>-->
+								</div>
+							</div>
+							<div id="KeyStorage" style="display:none;">
+								<h3>
+									{i18n_key_information}:
+								</h3>
+								<div class="Box" id="Keys"></div>
+							</div>
 						</div>
 					</div>
+					<script> InitTabs( 'MTabs' ); </script>
+					<div class="BorderTop MarginTop Padding">
+						<h3 class="InputHeight">
+							{i18n_available_storage}:
+						</h3>
+						<div id="StorageList"></div>
+					</div>
 				</div>
-				<h3>
-					Extended information:
-				</h3>
-				<div class="Box">
-					<div class="HRow">
-						<div>
-							<p class="Layout">
-								<label>Telephone:</label>
-								<input type="text" value="" id="UserAccPhone"/>
-							</p>
-							<p class="Layout">
-								<label>E-mail address:</label>
-								<input type="text" value="" id="UserAccEmail"/>
-							</p>
-							<p class="Layout">
-								<label>Account image:</label>
-								<input type="text" value="" id="UserAccImage"/>
-							</p>
-						</div>
+			</div>
+			<div class="HContentRight HContent40 BorderBottom BorderLeft BackgroundWindow" id="AppsContainer">
+				<div class="VContentTop" style="height: 50px">
+					<div class="Padding">
+						<button type="button" class="IconSmall fa-cloud-download Button FloatRight" onclick="getAppsNow()">
+							{i18n_get_apps}
+						</button>
+						<h3 class="InputHeight">
+							{i18n_your_apps}:
+						</h3>
+					</div>
+				</div>
+				<div class="VContentBottom ScrollArea BorderTop" style="top: 50px; bottom: 0px">
+					<div class="ZebraList FullWidth" id="Applist">
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class="VContentBottom Padding BackgroundToolbar" style="height: 50px">
-			<button type="button" class="Button IconSmall fa-check" onclick="saveDia()">
-				Save
+			<button type="button" class="FloatRight Button IconSmall fa-times" onclick="cancelDia()">
+				{i18n_cancel}
 			</button>
-			<button type="button" class="Button IconSmall fa-times" onclick="cancelDia()">
-				Cancel
+			<button type="button" class="Button IconSmall fa-check" onclick="saveDia()">
+				{i18n_save}
 			</button>
 		</div>
 	</div>
+	
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>
+
+	<script src="Progdir:Scripts/accountmain.js"></script>
+	<style>
+		#PassError span { display:block; font-weight:bold; padding:6px; border:3px solid #F00; background:#FFF; margin:6px 0; }
+		#ChangePassContainer { display:none; }
+		#ChangePassContainer.opened { display:block; }
+		
+		.Disk, .BigButton
+		{
+			width: 40px;
+			height: 40px;
+			background: url(/iconthemes/friendup/40/disk.png);
+			position: relative;
+			margin: 0 20px 30px 20px;
+		}
+		
+		.BigButton
+		{
+			background: #585858;
+			border-radius: 5px;
+			box-sizing: border-box;
+			padding: 5px;
+			text-align: center;
+		}
+		
+		.BigButton:hover
+		{
+			background: #a0a0a0;
+		}
+		
+		.IconSmall.BigButton.fa-plus:before
+		{
+			line-height: calc(40px - 8px);
+			display: block;
+			font-size: 36px;
+			color: #80d724;
+			text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+		}
+		
+		.Disk > .Label, .BigButton > .Label
+		{
+			position: absolute;
+			top: 45px;
+			left: -20px;
+			width: calc(100% + 40px);
+			text-align: center;
+			text-overflow: ellipsis;
+		}
+		
+	</style>
 

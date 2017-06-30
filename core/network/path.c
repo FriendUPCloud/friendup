@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,11 +42,11 @@ inline void PathSplit( Path* p )
 	
 	if( pathStart == NULL )
 	{
-		ERROR("Cannot split path, pathstart = NULL\n");
+		FERROR("Cannot split path, pathstart = NULL\n");
 		return;
 	}
 	
-	DEBUG("STRLENPATH %s\n", pathStart );
+	//DEBUG("STRLENPATH %s\n", pathStart );
 	unsigned int strLen = strlen( pathStart );
 	unsigned int i = 0;
 	int part = 0;
@@ -76,14 +80,14 @@ Path* PathNew( const char* path )
 {
 	if( path == NULL )
 	{
-		ERROR("PathNew path = NULL!\n");
+		FERROR("PathNew path = NULL!\n");
 		return NULL;
 	}
 	
 	Path* p = (Path*) calloc( 1, sizeof( Path ) );
 	if( p == NULL )
 	{
-		ERROR("[PathNew] Cannot allocate memory for path\n");
+		FERROR("[PathNew] Cannot allocate memory for path\n");
 		return NULL;
 	}
 
@@ -134,7 +138,7 @@ Path* PathJoin( Path* path1, Path* path2 )
 	char* newPath = FCalloc( (size + 10), sizeof(char) );
 	if( newPath == NULL )
 	{
-		ERROR("PathJoin, cannot allocate memory for newpath\n");
+		FERROR("PathJoin, cannot allocate memory for newpath\n");
 		return NULL;
 	}
 	memcpy( newPath, path1->raw, path1->rawSize );

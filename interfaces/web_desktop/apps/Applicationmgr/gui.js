@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.receiveMessage = function( msg )
 {
@@ -48,9 +48,10 @@ Application.refreshApps = function( data )
 		}
 		if( found ) continue;
 		var d = document.createElement( 'div' );
-		d.className = 'Box Padding MarginBottom';
+		d.className = '';
 		d.setAttribute( 'name', data[a].id );
-		d.innerHTML = '<button onclick="Application.sendMessage( { type: \'system\', command: \'kill\', appId: \'' + data[a].id + '\' } )" class="FloatRight MarginTop IconSmall fa-close"></button><h4>' + data[a].name + '</h4>';
+		d.innerHTML = '<button onclick="Application.sendMessage( { type: \'system\', command: \'kill\', appId: \'' + data[a].id + '\' } )" class="FloatRight IconSmall fa-close"></button><h4 class="Padding">' + data[a].name + '</h4><div style="clear: both"></div>';
+		
 		tasks.appendChild( d );
 	}
 	

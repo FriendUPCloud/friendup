@@ -1,28 +1,31 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-/*
- * 
- * System/Command
- * 
- * 
- */
+
+//
+// 
+// System/Command
+// 
+//
 
 #include <stdio.h>
 #include <unistd.h>
@@ -38,22 +41,31 @@
 #define READ   0
 #define WRITE  1
 
+/**
+ * Call system dos program
+ *
+ * @param command command line which will be executed by the system
+ * @param type mode, read or write
+ * @param pid pointer to place where PID will be stored
+ * @return pointer to file descriptor
+ */
+
 FILE * CommandRun( char *command, char *type, int *pid )
 {
-	unsigned int child_pid;
+	int child_pid;
 	int fd[2];
 	pipe(fd);
 
 	if( ( child_pid = fork() ) == -1 )
 	{
-		ERROR( "Fork error" );
+		FERROR( "Fork error" );
 		return NULL;
 	}
 
 	// child process 
 	if( child_pid == 0 )
 	{
-		if( type == "r" )
+		if( type[0] == 'r' )
 		{
 			close( fd[ READ ]  );    //Close the READ end of the pipe since the child's fd is write-only
 			dup2( fd[ WRITE ], 1 ); //Redirect stdout to pipe
@@ -69,7 +81,7 @@ FILE * CommandRun( char *command, char *type, int *pid )
 	}
 	else
 	{
-		if( type == 'r' )
+		if( type[0] == 'r' )
 		{
 			close( fd[ WRITE ] ); //Close the WRITE end of the pipe since parent's fd is read-only
 		}
@@ -79,23 +91,26 @@ FILE * CommandRun( char *command, char *type, int *pid )
 		}
 	}
 
-	pid = child_pid;
+	*pid = child_pid;
 
-	if( type == "r" )
+	if( type[0] == 'r' )
 	{
-		return (FILE*) fdopen( fd[ READ ], "r" );
+		return  fdopen( fd[ READ ], "r" );
 	}
 
-	return (FILE*)fdopen( fd[ WRITE ], "w" );
+	return fdopen( fd[ WRITE ], "w" );
 }
 
-//
-//
-//
-
+/**
+ * Close Command call 
+ *
+ * @param fp pointer to file descriptor
+ * @param pid pid which will be used to check if program was closed
+ * @return success (0) or fail value (-1)
+ */
 int CommandClose( FILE * fp, unsigned int pid )
 {
-	int stat;
+	int stat = 0;
 
 	fclose( fp );
 	while( waitpid( pid, &stat, 0 ) == -1 )
@@ -125,7 +140,7 @@ int main()
     //Using read() so that I have the option of using select() if I want non-blocking flow
     while (read(fileno(fp), command_out, sizeof(command_out)-1) != 0)
     {
-        printf( " %d: %s\n", j++, command_out );
+        DEBUG( " %d: %s\n", j++, command_out );
         kill(pid, 9);
         memset(&command_out, 0, sizeof(command_out));
     }
@@ -139,7 +154,7 @@ int main()
 		buffer[ i ] = (char) getc( fp );
 		if( buffer[ i ] == '\n' )
 		{
-			printf("OUT: %s\n", buffer );
+		DEBUG("OUT: %s\n", buffer );
 			break;
 		}
 		i++;
@@ -148,7 +163,7 @@ int main()
 	
     //string token;
     //while (getline(output, token, '\n'))
-    //    printf("OUT: %s\n", token.c_str());
+    //    DEBUG("OUT: %s\n", token.c_str());
 
     CommandClose(fp, pid);
 

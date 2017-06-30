@@ -85,3 +85,13 @@ body.activated ::-webkit-scrollbar-thumb:active
 {
 }
 
+
+@media (max-width: 768px)
+{
+	::-webkit-scrollbar
+	{
+		width: 4px;
+		height: 4px;
+	}
+}
+

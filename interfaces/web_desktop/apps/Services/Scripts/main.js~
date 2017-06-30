@@ -1,0 +1,57 @@
+
+
+// Launch application here -----------------------------------------------------
+Application.run = function( msg )
+{
+	var w = new View( {
+		title:  'Services Prefs',
+		width:  500,
+		height: 400,
+		id:     'mainWindow'
+	} );
+	
+	this.mainView = w;
+	
+	var f = new File( 'Progdir:Templates/main.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data );
+	}
+	f.load();
+/*
+	// Opening a call to Friend Core using POST
+	var c = new cAjax();
+	// POST mode, path, asyncronous, return code and data
+	c.open( 'post', '/system.library/services/list', true, true );
+	// What happens on load?
+	c.onload = function( rcode, rdata )
+	{
+		if( rcode == 'ok' )
+			console.log( rdata );
+	}
+	c.send();*/
+
+}
+
+
+// Receive messages from Doors -------------------------------------------------
+Application.receiveMessage = function( msg )
+{
+	console.log( 'Got message' );
+	console.log( msg );
+	
+	if( !msg.command ) return;
+	
+	switch( msg.command )
+	{
+		case 'test':
+			this.mainView.setContentById( 'Testing', '<button type="button" onclick="doIt(); Application.sendMessage( { command: \'remove\' } )">Hello</button>' );
+			
+			console.log( 'Testing, eh?' );
+			break;
+		case 'remove':
+			this.mainView.setContentById( 'Testing', '' );
+			break;
+	}
+}
+

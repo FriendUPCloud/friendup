@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 // Class to abstract exposed functions in an application
 Dormant = function( path )
@@ -54,7 +54,7 @@ Dormant = function( path )
 								var resource = new Object();
 								resource.loaded = false;
 								var ms = new Module( 'System' );
-								ms.onExecuted = function()
+								ms.onExecuted = function( e, d )
 								{
 									resource.loaded = true;
 									resource.data = JSON.parse( ms.data );
@@ -80,6 +80,22 @@ DormantMaster =
 {
 	appDoors: [],
 	events: {}, // Events from all applications, based on type
+	// Connect application to Friend Network
+	connectFriendNetworkTo: function( msg )
+	{
+		if( msg.callback )
+		{
+			msg.callback( { command: 'connect', response: 'ok'} );
+		}
+	},
+	// Disconnect application from Friend Network
+	disconnectFriendNetworkFrom: function( msg )
+	{
+		if( msg.callback )
+		{
+			msg.callback( { command: 'disconnect', response: 'ok' } );
+		}
+	},
 	// Add an application to the dormant master
 	addAppDoor: function( dormantDoorObject )
 	{
@@ -109,7 +125,7 @@ DormantMaster =
 		// Add door object with unique volume name
 		dormantDoorObject.title = namnum;
 		this.appDoors.push( dormantDoorObject );
-		if( typeof( Workspace ) != 'undefined' ) Workspace.refreshDesktop();
+		if( typeof( Workspace ) != 'undefined' ) Workspace.refreshDormantDisks();
 	},
 	// Get all doors
 	getDoors: function( callback )
@@ -143,7 +159,7 @@ DormantMaster =
 			newd.push( this.appDoors[a] );
 		}
 		this.appDoors = newd;
-		if( typeof( Doors ) != 'undefined' ) Workspace.refreshDesktop();
+		if( typeof( Doors ) != 'undefined' ) Workspace.refreshDormantDisks();
 		return true;
 	},
 	delAppDoorByAppId: function( appid )
@@ -202,7 +218,7 @@ DormantMaster =
 			eventName:
 			applicationName:
 			applicationId:
-			windowId:
+			viewId:
 			callbackId:
 		}
 	*/

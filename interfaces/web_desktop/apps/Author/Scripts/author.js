@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -128,13 +128,13 @@ Application.run = function( msg, iface )
 	}
 	f.load();
 	
-	var noti = new View( { title: 'Notice', width: 300, height: 300 } );
+	/*var noti = new View( { title: 'Notice', width: 300, height: 300 } );
 	var cf = new File( 'Progdir:Templates/notice.html' );
 	cf.onLoad = function( data )
 	{
 		noti.setContent( data );
 	}
-	cf.load();
+	cf.load();*/
 }
 
 // Return the current state of the application
@@ -206,7 +206,11 @@ Application.newDocument = function()
 // Prints a file
 Application.print = function()
 {
-	if( !Application.filename ) return;
+	if( !Application.wholeFilename )
+	{
+		Alert( i18n( 'i18n_print_alert' ), i18n( 'i18n_not_saved_cant_print' ) );
+		return;
+	}
 	/*if( this.printDialog ) return;
 	var w = new View( {
 		title: 'Print preview',
@@ -217,7 +221,7 @@ Application.print = function()
 	*/
 	Application.mainView.sendMessage( {
 		command: 'print',
-		path: Application.filename
+		path: Application.wholeFilename
 	} );
 }
 
@@ -296,7 +300,7 @@ Application.showPrefs = function()
 {
 	if( this.pwin ) return;
 	this.pwin = new View( {
-		title: 'Preferences',
+		title: i18n('i18n_preferences'),
 		width: 800,
 		height: 500,
 		id: 'authorprefswin'
@@ -312,6 +316,7 @@ Application.showPrefs = function()
 	{
 		Application.pwin.setContent( data );
 	}
+	f.i18n();
 	f.load();
 }
 

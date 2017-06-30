@@ -1,28 +1,48 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/**
+ * @file
+ *
+ * Worker-Manager: handles a set of workers
+ *
+ * @author TW (Thomas Wollburg)
+ * @author HT (Hogne Tildstad)
+ * @author PS (Pawel Stefansky)
+ * @date first push by PS (10/02/2015)
+ * @sa worker.c worker.h
+ */
 
 #include "worker_manager.h"
 
-//
-// Create worker manager
-//
-
+/**
+ * Creates a new Worker-Manager
+ *
+ * This function does all the initialization and launches the workers.
+ *
+ * @param number maximum number of t workers handled byt the Worker-Manager
+ * @return pointer to the Friend Worker-Manager structure
+ * @return NULL in case of errors
+ */
 WorkerManager *WorkerManagerNew( int number )
 {
 	WorkerManager *wm = NULL;
@@ -53,26 +73,27 @@ WorkerManager *WorkerManagerNew( int number )
 		}
 		else
 		{
- 			ERROR( "[WorkerManager] Cannot allocate memory for workers\n" );
+ 			FERROR( "[WorkerManager] Cannot allocate memory for workers\n" );
 			FFree( wm );
 			return NULL;
 		}
 	}
 	else
 	{
-		ERROR( "[WorkerManager] Cannot allocate memory for WorkerManager\n" );
+		FERROR( "[WorkerManager] Cannot allocate memory for WorkerManager\n" );
 		return NULL;
 	}
 	
-	INFO("Worker manager started %d threads\n", wm->wm_MaxWorkers );
+	Log( FLOG_INFO, "Worker manager started %d threads\n", wm->wm_MaxWorkers );
 	
 	return wm;
 }
 
-//
-// Delete worker manager
-//
-
+/**
+ * Destroys a Worker-Manager and all associated workers.
+ *
+ * @param wm pointer to the WorkerManager structure to destroy
+ */
 void WorkerManagerDelete( WorkerManager *wm )
 {
 	if( wm != NULL )
@@ -93,12 +114,24 @@ void WorkerManagerDelete( WorkerManager *wm )
 	}
 }
 
-//
-// add worker to list
-//
 
 static int testquit = 0;
 
+/**
+ * Adds a new worker to the list of workers and sends a first initial call
+ *
+ * If the average workers-manager w_AverageWorkSeconds filed is not defined,
+ * the new worker will be added with its own frequency.
+ * This function waits for all the workers in the list to be completed
+ * or exits after a 25*1500 milliseconds.
+ *
+ * @param wm pointer to the Worker-Manager structure
+ * @param foo pointer to the message-handler
+ * @param d pointer to the data associated with the call
+ * @return 0
+ * @todo FL>PS debug code still present here, exits Friend Core if some workers
+ * 		are stuck!
+ */
 int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 {
 	int i = 0;
@@ -106,7 +139,7 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 	
 	if( wm == NULL )
 	{
-		ERROR("Work manager is NULL!\n");
+		FERROR("Work manager is NULL!\n");
 	}
 	
 	while( TRUE )
@@ -157,18 +190,18 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d )
 		}
 		else
 		{
-			INFO("[WorkManagerRun] Worker is busy, waiting\n");
+			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
 			usleep( 100 );
 		}
 		
 		if( max > wm->wm_MaxWorkers )
 		{
-			INFO("[WorkManagerRun] All workers are busy, waiting\n");
+			Log( FLOG_INFO, "[WorkManagerRun] All workers are busy, waiting\n");
 			testquit++;
 			if( testquit > 25 )
 			{
 				//
-				ERROR("Worker testquit > 25 \n");
+				FERROR("Worker testquit > 25 \n");
 				exit( 0 ); // <- die! only for debug
 				testquit = 0;
 			}

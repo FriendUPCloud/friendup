@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = window.friendUP || {};
 friendUP.native = friendUP.native || {};
@@ -45,7 +45,7 @@ friendUP.native = friendUP.native || {};
 	ns.FTheory.prototype.init = function()
 	{
 		var self = this;
-		console.log( 'native.ftheory.init' );
+		//console.log( 'native.ftheory.init' );
 		self.bindEvents();
 		self.setupScene();
 		self.setupParticles();
@@ -175,7 +175,7 @@ friendUP.native = friendUP.native || {};
 	ns.FTheory.prototype.stopRenderLoop = function()
 	{
 		var self = this;
-		console.log( 'fTheory.stopRenderLoop()');
+		//console.log( 'fTheory.stopRenderLoop()');
 		window.cancelAnimationFrame( self.animationId );
 		self.animationId = null;
 	}
@@ -204,11 +204,44 @@ friendUP.native = friendUP.native || {};
 	
 })( friendUP.native );
 
-window.addEventListener( 'load', initFTheory, false );
-function initFTheory()
-{
-	console.log( 'initFTheory' );
+
+/*
+(function( ns, undefined ) {
+	ns.FCInfo = function() {
+
+		var f = new window.Library( 'system.library' );
+		f.onExecuted = function( e, d )
+		{
+			console.log('got sysinfo...');
+			var rs = false;
+			try
+			{
+				rs = eval(e); //JSON.parse(e);
+				
+			}
+			catch(e) { console.log('unexpected response from server',e); }
+
+			
+			console.log('got it???',rs);
+		}
+		f.execute( 'admin', {command:'info'} );	
+		console.log('sent it? or what?',f);		
+
+		var getInfo = new window.Module( 'system.library' );
+		getInfo.onExecuted = function( err, res ) {
+			console.log( 'FCInfo - lib on executed', { err : err, res : res });
+		}
+		getInfo.execute( 'admin/info' );
+		console.log( 'FCInfo get Ingo,..', getInfo );
+
+	}
+})( friendUP.native );
+*/
+window.Application.run = fun;
+function fun( fupConf ) {
+	//console.log( 'About.app.fun', fupConf);
 	var container = document.getElementById( 'FTheoryCanvasContainer' );
+	//window.about = new friendUP.native.FCInfo();
 	window.fTheory = new friendUP.native.FTheory( container );
 	
 }

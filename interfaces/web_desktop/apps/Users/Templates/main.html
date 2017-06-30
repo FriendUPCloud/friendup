@@ -1,36 +1,116 @@
 
+	<input type="hidden" id="viewId" value="{viewId}"/>
+	
 	<script src="Progdir:Scripts/main.js"></script>
 	
-	<div class="FullContent">
-		<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 45px">
-			<div id="UserList" class="List"></div>
+	<div class="ContentFull Pages BackgroundLists" id="UserPages">
+		
+		<div class="Tab IconSmall fa-user" id="UsersTab">
+			{i18n_users}
 		</div>
-		<div class="VContentBottom Padding" style="width: 35%; height: 45px">
-			<button type="button" class="IconSmall fa-user-plus" onclick="AddUser()">
-				Add user
-			</button>
+		
+		<div class="Tab IconSmall fa-setup" style="display:none;">
+			{i18n_templates}
 		</div>
-		<div class="HContentRight BorderLeft" style="width: 65%">
-			<div class="FullContent">
-				<div id="UserGui" class="Padding"></div>
+		
+		<div class="Tab IconSmall fa-group">
+			{i18n_workgroups}
+		</div>
+		
+		<div class="Tab IconSmall fa-sign-in">
+			{i18n_sessions}
+		</div>
+		
+		<div class="Page VContentBottom">
+			<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 60px">
+				<div id="UserFilter" class="Padding BorderBottom">
+					<input type="text" id="UserFilterInput" class="InputHeight FullWidth" placeholder="{i18n_filter}" onkeyup="FilterUsers()"/>
+				</div>
+				<div id="UserList" class="List"></div>
+			</div>
+			<div class="VContentBottom Padding" style="width: 35%; height: 60px">
+				<button type="button" class="IconSmall fa-user-plus" onclick="AddUser()">
+					{i18n_add_user}
+				</button>
+			</div>
+			<div class="HContentRight BorderLeft ScrollArea" style="width: 65%; left: 35%">
+				<div class="FullContent">
+					<div id="UserGui" class="Padding"></div>
+				</div>
 			</div>
 		</div>
+		
+		<div class="Page VContentBottom" style="display:none;">
+			<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 60px">
+				<div id="SetupList" class="List"></div>
+			</div>
+			<div class="VContentBottom Padding" style="width: 35%; height: 60px">
+				<button type="button" class="IconSmall fa-user-plus" onclick="AddSetup()">
+					{i18n_add_template}
+				</button>
+			</div>
+			<div class="HContentRight BorderLeft ScrollArea" style="width: 65%; left: 35%">
+				<div class="FullContent">
+					<div id="SetupGui" class="Padding"></div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="Page VContentBottom">
+			<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 60px">
+				<div id="WorkgroupList" class="List"></div>
+			</div>
+			<div class="VContentBottom Padding" style="width: 35%; height: 60px">
+				<button type="button" class="IconSmall fa-user-plus" onclick="AddWorkgroup()">
+					{i18n_add_workgroup}
+				</button>
+			</div>
+			<div class="HContentRight BorderLeft ScrollArea" style="width: 65%; left: 35%">
+				<div class="FullContent">
+					<div id="WorkgroupGui" class="Padding"></div>
+				</div>
+			</div>
+		</div>
+		
+		<div class="Page VContentBottom">
+			<div class="VContentTop HContentLeft ScrollArea BackgroundLists List" id="Sessions">
+				{i18n_loading}...
+			</div>
+		</div>
+		
 	</div>
 	
+	<script>
+		InitTabs( ge( 'UserPages' ) );
+		ge( 'UsersTab' ).onclick();
+	</script>
+	
 	<style>
-		#UserList > div
+		.Pages > .Tab, .Pages > .TabActive
+		{
+			margin: 10px 0 0 10px;
+		}
+		.Pages > .Page.VContentBottom, .Pages > .PageActive.VContentBottom
+		{
+			height: calc(100% - 47px);
+		}
+		html .Pages > .Page
+		{
+			display: none;
+		}
+		#UserList > div, #WorkgroupList > div, #UserList > div, #SetupList > div
 		{
 			cursor: hand;
 			cursor: pointer;
 		}
 		
-		#UserList > div > div
+		#UserList > div > div, #WorkgroupList > div > div
 		{
 			white-space: nowrap;
 			text-overflow: ellipsis;
 			overflow: hidden;
 		}
-		#UserList > div > div + div
+		#UserList > div > div + div, #WorkgroupList > div > div + div
 		{
 			width: 80%;
 		}

@@ -14,8 +14,6 @@
 	border-radius: $BorderRadiusTabs;
 	-moz-border-radius: $BorderRadiusTabs;
 	-webkit-border-radius: $BorderRadiusTabs;
-	cursor: pointer;
-	cursor: hand;
 	border: $BorderPageActive;
 	border-bottom: 0;
 }
@@ -67,7 +65,6 @@
 	padding: 10px;
 	background: #f8f8f8;
 	color: #040404;
-	cursor: hand; cursor: pointer;
 }
 .VertTab:hover
 {

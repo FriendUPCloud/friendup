@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,12 +15,13 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 // Simple abstraction for FriendUP modules
-var FriendLibrary = function ( library )
+var FriendLibrary = function ( library, encryption )
 {
 	// Get cleaned library
+	this.encryption = encryption ? true : false;
 	this.library = library.split( '.library' ).join ( '' ).toLowerCase();
 	this.args = false;
 	this.method = false;
@@ -35,7 +36,9 @@ var FriendLibrary = function ( library )
 	this.execute = function( method, args )
 	{
 		if ( method )  this.method = method;
-
+		
+		var data = '';
+		
 		var j = new cAjax ();		
 		
 		var ex = '';
@@ -58,8 +61,10 @@ var FriendLibrary = function ( library )
 					else 
 					{
 						if( typeof( args[a] ) == 'object' )
-							j.addVar( a, JSON.stringify( args[a] ) );
-						else j.addVar( a, args[a] );
+						{
+							this.addVar( a, JSON.stringify( args[a] ) );
+						}
+						else this.addVar( a, args[a] );
 					}
 				}
 			}
@@ -67,41 +72,101 @@ var FriendLibrary = function ( library )
 		
 		j.open ( 'post', '/' + this.library + '.library/' + this.method + ex, true, true );
 		
-		j.addVar( 'sessionid', Doors.sessionId );
+		if( typeof( Workspace ) != 'undefined' && Workspace.sessionId )
+		{
+			this.addVar( 'sessionid', Workspace.sessionId );
+		}
 		
-		// Add vars
-		for ( var a in this.vars ) 
-			j.addVar( a, this.vars[a] );
+		if( this.encryption )
+		{
+			// If ssl is enabled add vars encrypted data string to send as post raw data with cAjax
+			if( this.vars && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.keys.server && Workspace.keys.client )
+			{
+				var json = JSON.stringify( this.vars );
+				
+				if( json )
+				{
+					// TODO: This will probably not work in C code only made for js/php since encryptString is a RSA+AES combination to support large blocks of data outside of RSA limitations, make encryptRSA() support stacking of blocks split by block limit
+					//var encrypted = fcrypt.encryptString( json, Workspace.keys.server.publickey );
+					
+					//if( encrypted && encrypted.cipher )
+					//{
+					//	data = encrypted.cipher;
+					//}
+					
+					//data = fcrypt.encryptRSA( json, Workspace.keys.server.publickey );
+					var encrypted = fcrypt.encryptRSA( json, Workspace.keys.server.publickey );
+					
+					j.addVar( 'encryptedblob', encrypted );
+					
+					console.log( 'data', { vars: this.vars, data: ( data ? data : encrypted ) } );
+				}
+			}
+		}
+		else
+		{
+			// Add vars
+			for( var a in this.vars )
+			{
+				j.addVar( a, this.vars[a] );
+			}
+		}
 		
-		if ( this.onExecuted )
+		if( this.onExecuted )
 		{
 			var t = this;
-			j.onload = function ()
+			j.onload = function( rc, d )
 			{
+				// First try to parse a pure JSON string
 				try
 				{
-					var json = JSON.parse( this.responseText() );
+					
+					if( t.encryption )
+					{
+						// If ssl is enabled decrypt the data returned by cAjax
+						if( rc && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.keys.server && Workspace.keys.client )
+						{
+							// TODO: This will probably not work in C code only made for js/php since decryptString is a RSA+AES combination to support large blocks of data outside of RSA limitations, make decryptRSA() support stacking of blocks split by block limit
+							//var decrypted = fcrypt.decryptString( rc, Workspace.keys.client.privatekey );
+							
+							//if( decrypted && decrypted.plaintext )
+							//{
+							//	rc = decrypted.plaintext;
+							//}
+							
+							rc = fcrypt.decryptRSA( rc, Workspace.keys.client.privatekey );
+						}
+					}
+					
+					var json = JSON.parse( rc );
 					if( json )
 					{
 						return t.onExecuted( json );
 					}
+					// No json then..
+					t.onExecuted( rc, d );
 				}
+				// No, it's not that
 				catch( e )
 				{
-					var data = this.returnData;
-					if ( data && data.length )
+					// Used for localization of responses etc
+					if( d && d.length && t.replacements )
 					{
-						for ( var z in t.replacements )
+						for( var z in t.replacements )
 						{
-							data = data.split ( '{'+z+'}' ).join ( t.replacements[z] );
+							d = d.split ( '{'+z+'}' ).join ( t.replacements[z] );
 						}
 					}
-					t.onExecuted ( this.returnCode, data );
+					t.onExecuted( rc, d );
 				}
 			}
 		}
 		
-		j.send ();
+		j.send ( data );
 	}
 }
+
+// Eventually move to new Library()
+var Library = FriendLibrary;
+
 

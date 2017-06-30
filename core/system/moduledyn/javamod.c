@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/library.h>
 #include <stdio.h>
@@ -77,11 +81,11 @@ struct linkedCharArray
 	void *next;
 };
 
-char *Run( struct EModule *mod, const char *path, const char *args, int *length )
+char *Run( struct EModule *mod, const char *path, const char *args, FULONG *length )
 {
 	DEBUG("[Javamod] call run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 
 	// Escape the input, so that remove code injection is not possible.
 	char *earg = StringShellEscape( args );
@@ -95,7 +99,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	char *command = NULL;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
 	{
-		ERROR("Cannot allocate memory for data\n");
+		FERROR("Cannot allocate memory for data\n");
 		free( epath ); free( earg );
 		return NULL;
 	}
@@ -122,7 +126,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
-		ERROR( "[Javamod] snprintf\n" );
+		FERROR( "[Javamod] snprintf\n" );
 		free( command ); free( epath ); free( earg );
 		return NULL;
 	}
@@ -132,7 +136,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, int *length 
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
-		ERROR("[Javamod] cannot open pipe\n");
+		FERROR("[Javamod] cannot open pipe\n");
 		free( command ); free( epath ); free( earg );
 		return NULL;
 	}
@@ -227,7 +231,7 @@ const char *GetSuffix()
 
 	DEBUG("[Java mod] mod run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 
 	// Escape the input, so that remove code injection is not possible.
 	char* earg = StringShellEscape( args );
@@ -239,7 +243,7 @@ const char *GetSuffix()
 	int siz = eargLen + epathLen+ 128;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
 	{
-		ERROR("Cannot allocate memory for data\n");
+		FERROR("Cannot allocate memory for data\n");
 		free( earg );
 		free( epath );
 		return NULL;
@@ -263,7 +267,7 @@ const char *GetSuffix()
 	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\";", epath, earg );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
-		ERROR( "[PHP mod] snprintf\n" );
+		FERROR( "[PHP mod] snprintf\n" );
 		return NULL;
 	}
 	*/
@@ -274,7 +278,7 @@ const char *GetSuffix()
 	if( !pipe )
 	{
 		//free( command );
-		ERROR("[PHP mod] cannot open pipe\n");
+		FERROR("[PHP mod] cannot open pipe\n");
 		return 0;
 	}
 */
@@ -284,7 +288,7 @@ const char *GetSuffix()
 	char *temp = NULL;
 	char *result = NULL;
 	char *gptr = NULL;
-	ULONG size = 0;
+	FULONG size = 0;
 	
 	DEBUG("[PHP mod] command launched\n");
 */
@@ -378,11 +382,11 @@ const char *GetSuffix()
 			printf("[PHPmod] Thread: after select res: %d\n", ret );
 			if(ret < 0)
 			{
-				printf("[PHPmod] ERROR select() failed \n");
+				printf("[PHPmod] FERROR select() failed \n");
 			}
 			//else if( ret == 0 )
 			//{
-			//	printf("[PHPmod] ERROR! timeout \n");
+			//	printf("[PHPmod] FERROR! timeout \n");
 			//	break;
 			//}
 			else

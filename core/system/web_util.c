@@ -1,28 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-/*
+/** @file
  * 
- * 
- * 
- * 
- * */
+ *  Additional web functionality
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 14/10/2015
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,42 +34,54 @@
 #include <util/string.h>
 #include "web_util.h"
 
-// 
-// Some helper functions on http data
-//
+/**
+ * Find headers in data
+ *
+ * @param data pointer to data where request is
+ * @param dataLength length of source message
+ * @return position where header begin
+ */
+
+const char *hsearchs = "---http-headers-begin---\n";
+const int  hsearchLens = 25;
+const char *hsearche = "---http-headers-end---\n";
+const int hsearchLene = 23;
 
 // Find where the headers start -1 on fail >= 0 on success
 int FindEmbeddedHeaders( char *data, int dataLength )
 {
-	int len = dataLength ? dataLength : (int)strlen( data );
-	const char *search = "---http-headers-begin---\n";
-	const char *tmpsearch = "---";
-	int slen = sizeof( search );
-	if( slen > len ) return -1;
+	if( !data ) return -1;
 	
-	DEBUG("find headers %d\n", dataLength );
+	int len = ( dataLength ? dataLength : (int)strlen( data ) ) - hsearchLene;
+	if( len < 0 ) return -1;
 	
-	int i = 0; for( ; i < len-3; i++ )
+	char *tmp = NULL;
+	
+	int i = 0; for( ; i < len; i++ )
 	{
-		int found = 1;
-		int k = 0; 
-		
-		if( strncmp( tmpsearch, &data[ i ], 3 ) == 0 )
+		if( strncmp( hsearchs, data + i, hsearchLens ) == 0 )
 		{
-			if( strncmp( search, &data[ i ], 24 ) == 0 )
-			{
-				return i;
-			}
+			return i;
 		}
 	}
 	return -1;
 }
 
-// Check a header
+/**
+ * Check embedded headers in data
+ *
+ * @param data pointer to data where request is
+ * @param dataLength length of source message
+ * @param header pointer to http header which we want to get
+ * @return pointer to content of requested header
+ */
+
 char *CheckEmbeddedHeaders( char *data, int dataLength, const char *header )
 {
-	// Setup the data
-	unsigned int len = dataLength ? dataLength : (int)strlen( data );
+	// Setup the data - length minus end of headers
+	int len = dataLength ? dataLength : (int)strlen( data ) - hsearchLene;
+	if( len < 0 ) return NULL;
+	
 	int pos = FindEmbeddedHeaders( data, dataLength );
 	
 	// Error.. no headers
@@ -73,83 +89,85 @@ char *CheckEmbeddedHeaders( char *data, int dataLength, const char *header )
 	
 	// Find the header and return the data
 	unsigned int hlen = strlen( header );
-	unsigned int i = pos; 
+	
+	int i = pos; 
 	for( ; i < len; i++ )
 	{
-		if( i + hlen < len )
+		// Found our header
+		if( strncmp( header, data + i, hlen ) == 0 )
 		{
-			int found = 1;
-			unsigned int k = 0; 
-			for( ; k < hlen; k++ )
+			i += hlen + 1;
+			int mode = 0;
+			int charPos = 0;
+			int charLength = 0;
+			int e = i;
+			
+			// Scan till newline to get our header value
+			for( ; e < len; e++ )
 			{
-				if( header[k] != data[k+i] )
+				if( mode == 0 && data[e] != ' ' )
 				{
-					found = 0;
+					mode = 1;
+					charPos = e;
+				}
+				if( mode == 1 && data[e] != '\n' )
+				{
+					charLength++;
+				}
+				else if( mode == 1 && data[e] == '\n' )
+				{
 					break;
 				}
 			}
-			// We found the header! Now find the content
-			if( found == 1 )
+			
+			if( charPos > 0 && charLength )
 			{
-				// Advance i past header name
-				i += hlen + 1;
-				
-				// Find the length of the content
-				int p = hlen;
-				unsigned int contentLen = 0;
-				unsigned int u = i; 
-				for( ; u < len; u++ )
-				{
-					if( data[u] == '\n' )
-					{
-						contentLen = u - i;
-						break;
-					}
-				}
-				// Create a string with the content
-				if( contentLen != 0 )
-				{
-					//DEBUG( "We found %s..\n", header );
-					char *content = calloc( contentLen + 1, sizeof( char ) );
-					int cu = 0;
-					int mode = 0;
-					for( u = 0; u < contentLen; u++ )
-					{
-						if( mode == 0 && data[i+u] != ' ' )
-							mode++;
-						if( mode > 0 )
-							content[cu++] = data[i+u];
-					}
-					return content;
-				}
+				int block = charLength;
+				char *value = FCalloc( block + 1, 1 );
+				memcpy( value, data + charPos, block );
+				return value;
 			}
+		}
+		// Found header end
+		if( strncmp( hsearche, data + i, hsearchLene ) == 0 ) 
+		{
+			return NULL;
 		}
 	}
 	return NULL;
 }
 
-// Strip headers
+/**
+ * Strip embedded headers from http request
+ *
+ * @param data pointer to 
+ * @param dataLength length of source message
+ * @return 0 if message was sent otherwise error number
+ */
+
 int StripEmbeddedHeaders( char **data, unsigned int dataLength )
 {
 	// Setup the data
 	char *pdata = *data;
-	int len = dataLength ? dataLength : strlen( pdata );
-	int pos = FindEmbeddedHeaders( pdata, dataLength );
 	
-	// Error.. no headers
-	if( pos == -1 ) return -1;
+	int len = (int) ( dataLength ? dataLength : strlen( pdata ) ) - hsearchLene;
+	int flen = (int) (dataLength ? dataLength : strlen( pdata ) );
+	if( len < 0 ) return -2;
 	
-	// Make a new string and copy relevant info
-	char *output = MakeString( pos );
-	memcpy( output, pdata, pos );
-
-	// Free original data	
-	free( *data );
+	char *tmp = NULL;
 	
-	// New pointer to char array without the headers
-	*data = output;
-	
-	return pos;
+	int i = 0; for( ; i < len; i++ )
+	{
+		// Finding end
+		if( strncmp( hsearche, pdata + i, hsearchLene ) == 0 )
+		{
+			int dataLength = flen - ( i + hsearchLene );
+			
+			char *result = FCalloc( dataLength + 1, 1 );
+			memcpy( result, pdata + i + hsearchLene, dataLength );
+			free( *data ); *data = result;
+			return dataLength;
+		}
+	}
+	return -1;
 }
-
-

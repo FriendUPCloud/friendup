@@ -1,0 +1,66 @@
+
+<div class="VContentTop TP ScrollArea BorderBottom BackgroundDefault Padding">
+	<div class="HRow">
+		<div class="FullWidth">
+		<h3>Manually invite user:</h3>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="FloatLeft HContent40">
+			<p class="InputHeight">
+				<strong>Invite username:</strong>
+			</p>
+		</div>
+		<div class="FloatLeft HContent60">
+			<input type="text" value="" id="User" class="FullWidth InputHeight" placeholder="John Doe..."/>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="FullWidth">
+		<h3>Select user(s) from list:</h3>
+		</div>
+	</div>
+	<div class="HRow">
+		<div class="FullWidth" id="Userlist">
+		loading available users...
+		</div>
+	</div>
+</div>
+
+<div class="VContentBottom BP Padding">
+	<button type="button" class="Button IconSmall fa-comment" onclick="SendInvite()">
+		Send invite(s)
+	</button>
+	<button type="button" class="Button IconSmall fa-remove" onclick="CloseInvite()">
+		Close
+	</button>
+</div>
+
+<style>
+	#Userlist
+	{
+		padding:16px 0;
+	}
+	#Userlist div
+	{
+		display:inline-block;
+		padding:0 16px 0 0;
+	}
+	#Userlist div input
+	{
+		display: inline-block;
+		margin:0 4px 0 0;
+	}
+	
+	
+	.TP
+	{
+		bottom: 50px;
+	}
+	.BP
+	{
+		height: 50px;
+	}
+</style>
+
+<script src="Progdir:Scripts/invite.js"></script>

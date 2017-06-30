@@ -1,27 +1,94 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  JSON converter body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created March 2016
+ */
 
 #include "json_converter.h"
 #include <time.h>
 #include "json.h"
 #include <core/nodes.h>
 #include <util/string.h>
+#include "jsmn.h"
+
+//
+//
+//
+
+#define JSON_TOKENS 256
+
+jsmntok_t * JSONTokenise(char *js, unsigned int *entr )
+{
+	jsmn_parser parser;
+	jsmn_init(&parser);
+	
+	unsigned int n = JSON_TOKENS;
+	jsmntok_t *tokens = FCalloc( n, sizeof(jsmntok_t) );
+	
+	int jssize = strlen(js);
+	//r = jsmn_parse(&p, buffer, bsdir->bs_Size - 18, t, 1024*18 );
+	int ret = jsmn_parse(&parser, js, jssize, tokens, n);
+	
+	while (ret == JSMN_ERROR_NOMEM)
+	{
+		n = ( n << 1 ) + 1;
+		tokens = realloc(tokens, sizeof(jsmntok_t) * n);
+		//log_null(tokens);
+		ret = jsmn_parse(&parser, js, jssize, tokens, n);
+	}
+	
+	if (ret == JSMN_ERROR_INVAL)
+	{
+		*entr = 0;
+		DEBUG("jsmn_parse: invalid JSON string");
+	}
+	if (ret == JSMN_ERROR_PART)
+	{
+		*entr = 0;
+		DEBUG("jsmn_parse: truncated JSON string");
+	}
+	
+	*entr = ret;
+	
+	return tokens;
+}
+
+int json_token_streq(char *js, jsmntok_t *t, char *s)
+{
+	return (strncmp(js + t->start, s, t->end - t->start) == 0
+	&& strlen(s) == (size_t) (t->end - t->start));
+}
+
+char * json_token_tostr(char *js, jsmntok_t *t)
+{
+	js[t->end] = '\0';
+	return js + t->start;
+}
+
 
 //
 // DEBUG
@@ -104,20 +171,19 @@ static void process_value(json_value* value, int depth)
         }
 }
 
-//
-// DEBUG END
-//
-
-//
-// get JSON structure from data
-//
-
-BufString *GetJSONFromStructure( ULONG *descr, void *data )
+/**
+ * Function convert C structure to JSON (char *)
+ *
+ * @param desc pointer to taglist which describe "to C conversion"
+ * @param jsondata json data in string
+ * @return new "C" structure or NULL when error will happen
+ */
+BufString *GetJSONFromStructure( FULONG *descr, void *data )
 {
 	BufString *bs = BufStringNew();
 	if( bs == NULL )
 	{
-		ERROR("ERROR: bufstring is null\n");
+		FERROR("ERROR: bufstring is null\n");
 		return NULL;
 	}
 	
@@ -126,20 +192,20 @@ BufString *GetJSONFromStructure( ULONG *descr, void *data )
 	if( descr == NULL || data == NULL )
 	{
 		BufStringDelete( bs );
-		ERROR("Data structure or description was not provided!\n");
+		FERROR("Data structure or description was not provided!\n");
 		return 0;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
 		BufStringDelete( bs );
-		ERROR("SQLT_TABNAME was not provided!\n");
+		FERROR("SQLT_TABNAME was not provided!\n");
 		return 0;
 	}
 	
 	DEBUG("JSONParse\n");
 
-	ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
+	FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
 	unsigned char *strptr = (unsigned char *)data;	// pointer to structure to which will will insert data
 	int opt = 0;
 	
@@ -228,11 +294,14 @@ BufString *GetJSONFromStructure( ULONG *descr, void *data )
 	return bs;
 }
 
-//
-//
-//
-
-void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
+/**
+ * Function convert JSON to C structure
+ *
+ * @param desc pointer to taglist which describe "to C conversion"
+ * @param jsondata json data in string
+ * @return new "C" structure or NULL when error will happen
+ */
+void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 {
 	char tmpQuery[ 1024 ];
 	void *firstObject = NULL;
@@ -242,19 +311,19 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 	
 	if( jsondata == NULL  )
 	{
-		ERROR("Cannot parse NULL!\n");
+		FERROR("Cannot parse NULL!\n");
 		return NULL;
 	}
 	
 	if( descr == NULL  )
 	{
-		ERROR("Data description was not provided!\n");
+		FERROR("Data description was not provided!\n");
 		return NULL;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
-		ERROR("SQLT_TABNAME was not provided!\n");
+		FERROR("SQLT_TABNAME was not provided!\n");
 		return NULL;
 	}
 	
@@ -276,7 +345,7 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 
 	if (value == NULL) 
 	{
-		ERROR("Cannot parse string to object\n");
+		FERROR("Cannot parse string to object\n");
 		return NULL;
 	}
 	
@@ -293,8 +362,8 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 		{
 			void *data = calloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
 		
-			UBYTE *strptr = (UBYTE *)data;	// pointer to structure to which will will insert data
-			ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
+			FUBYTE *strptr = (FUBYTE *)data;	// pointer to structure to which will will insert data
+			FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
 				
 			unsigned int i;
 			
@@ -419,8 +488,8 @@ void *GetStructureFromJSON( ULONG *descr, const char *jsondata )
 					firstObject = data;
 				}
 		
-				UBYTE *strptr = (UBYTE *)data;	// pointer to structure to which will will insert data
-				ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
+				FUBYTE *strptr = (FUBYTE *)data;	// pointer to structure to which will will insert data
+				FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table and size, rest information provided is about columns
 				
 				int intlength = locaval->u.object.length;
 				int i;

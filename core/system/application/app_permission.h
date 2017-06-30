@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #ifndef __APP_PERMISSION_H__
 #define __APP_PERMISSION_H__
@@ -38,17 +42,17 @@
 typedef struct AppPermission
 {
 	struct MinNode 		node;
-	ULONG 					p_ID;					// id of permission
-	ULONG 					p_DictID;				// ID from dictionary ID
+	FULONG 					p_ID;					// id of permission
+	FULONG 					p_DictID;				// ID from dictionary ID
 	Dictionary				*p_Dict;				// pointer to dictionary entry
 	char 	 					*p_Name;			// pointer to string from dictionary
 }AppPermission;
 
-static ULONG AppPermissionDesc[] = { SQLT_TABNAME, (ULONG)"FAppPermission", SQLT_STRUCTSIZE, sizeof( struct AppPermission ), 
-	SQLT_IDINT, (ULONG)"ID", offsetof( struct AppPermission, p_ID ), 
-	SQLT_INT,(ULONG) "DictID", offsetof( struct AppPermission, p_DictID ),
-	SQLT_STR, (ULONG)"Name", offsetof( struct AppPermission, p_Name ),
-	SQLT_NODE, (ULONG)"node", offsetof( struct AppPermission, node ),
+static FULONG AppPermissionDesc[] = { SQLT_TABNAME, (FULONG)"FAppPermission", SQLT_STRUCTSIZE, sizeof( struct AppPermission ), 
+	SQLT_IDINT, (FULONG)"ID", offsetof( struct AppPermission, p_ID ), 
+	SQLT_INT,(FULONG) "DictID", offsetof( struct AppPermission, p_DictID ),
+	SQLT_STR, (FULONG)"Name", offsetof( struct AppPermission, p_Name ),
+	SQLT_NODE, (FULONG)"node", offsetof( struct AppPermission, node ),
 	SQLT_END };
 
 

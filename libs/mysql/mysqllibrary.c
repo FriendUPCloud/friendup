@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,16 +12,18 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-/*
-
-	MySQLLibrary code
-
-*/
+/** @file
+ * 
+ *  mysql.library code
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <stdio.h>
 #include <core/types.h>
@@ -37,195 +39,115 @@
 #include <core/nodes.h>
 #include <time.h>
 #include <system/systembase.h>
+#include <ctype.h>
 
 #define LIB_NAME "mysql.library"
-#define LIB_VERSION 0
-#define LIB_REVISION 1
+#define LIB_VERSION 1
+#define LIB_REVISION 0
 
-//
-// init library
-//
-
-void *libInit( void *sb )
-{
-	struct MYSQLLibrary *l = NULL;
-	DEBUG("libinit\n");
-
-	if( ( l = calloc( 1, sizeof( struct MYSQLLibrary ) ) ) == NULL )
-	{
-		return NULL;
-	}
-
-
-	l->l_Name = LIB_NAME;
-	l->l_Version = LIB_VERSION;
-	//l->libInit//no need
-	l->libClose = dlsym ( l->l_Handle, "libClose");
-	l->GetVersion = dlsym ( l->l_Handle, "GetVersion");
-
-	// mysql.library structure
-	l->Load = dlsym ( l->l_Handle, "Load");
-	l->Save = dlsym ( l->l_Handle, "Save");
-	l->Update = dlsym ( l->l_Handle, "Update");
-	l->Delete = dlsym ( l->l_Handle, "Delete");
-	l->Select = dlsym ( l->l_Handle, "Select");
-	l->NumberOfRecords = dlsym( l->l_Handle, "NumberOfRecords");
-	l->FetchRow = dlsym ( l->l_Handle, "FetchRow");
-	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
-
-	
-	char *host = "localhost";
-	char *login = "root";
-	char *pass = "root";
-	char *dbname = "FriendMaster";
-	int port = 3306;
-	Props *prop = NULL;
-	
-	SystemBase *lsb = (SystemBase *)sb;
-	
-	// Get a copy of the properties.library
-	struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)lsb->LibraryPropertiesGet( lsb );
-	
-	DEBUG("Plibcheck %p lsb %p\n", plib, lsb );
-	if( plib != NULL && plib->Open != NULL )
-	{
-		char *ptr = getenv("FRIEND_HOME");
-		char *path = calloc( 1000, sizeof( char ) );
-	
-		if( ptr != NULL )
-			sprintf( path, "%scfg/cfg.ini", ptr );
-	
-		DEBUG( "Opening config file: %s\n", path );
-		
-		prop = plib->Open( path );
-		free( path );
-		
-		if( prop != NULL)
-		{
-			DEBUG("[MYSQLLibrary] reading login\n");
-			login = plib->ReadString( prop, "DatabaseUser:login", "root" );
-			DEBUG("[MYSQLLibrary] user %s\n", login );
-			pass = plib->ReadString( prop, "DatabaseUser:password", "root" );
-			DEBUG("[MYSQLLibrary] password %s\n", pass );
-			host = plib->ReadString( prop, "DatabaseUser:host", "localhost" );
-			DEBUG("[MYSQLLibrary] host %s\n", host );
-			dbname = plib->ReadString( prop, "DatabaseUser:dbname", "FriendMaster" );
-			DEBUG("[MYSQLLibrary] dbname %s\n",dbname );
-			port = plib->ReadInt( prop, "DatabaseUser:port", 3306 );
-			DEBUG("[MYSQLLibrary] port read %d\n", port );
-		}
-		else
-		{
-			ERROR( "Prop is just NULL!\n" );
-		}
-		//DEBUG("PROPERTIES LIBRARY OPENED, poitner to props %p!   %s  %s  %s  %s  %d\n", prop, login, pass, host, dbname, port );
-	}
-	
-	DEBUG("[MYSQLLibrary] before connecting to database host %s dbname %s\n", host, dbname );
-	
-	l->sb = sb;
-	
-	// Initialize mysql connection
-	l->con.sql_Con = mysql_init(NULL);
-	void *connection = mysql_real_connect( l->con.sql_Con, host, login, pass, dbname, port, NULL, 0 );
-	if( connection == NULL )
-	{
-		if( prop ) plib->Close( prop );
-		lsb->LibraryPropertiesDrop( lsb, plib );
-		return NULL;
-	}
-	
-	// Make sure connection is maintained
-	int reconnect = 1;
-	mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
-	
-	if( plib != NULL )
-	{
-		if( prop ) plib->Close( prop );
-		DEBUG("[MYSQLLibrary] propertyLIBRARY close!\n");
-		lsb->LibraryPropertiesDrop( lsb, plib );
-	}
-	
-	return ( void *)l;
-}
-
-//
-//
-//
-
-void libClose( struct MYSQLLibrary *l )
-{
-
-	if( l->con.sql_Con )
-	{
-		DEBUG( "MYSQL library closed connection.\n" );
-		mysql_close( l->con.sql_Con );
-		l->con.sql_Con = NULL;
-	}
-	DEBUG("MYSQL library close\n");
-}
-
-//
-//
-//
-
+/**
+ * return version of library
+ *
+ * @return library version
+ */
 long GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
+/**
+ * return revision of library
+ *
+ * @return library revision
+ */
 long GetRevision(void)
 {
 	return LIB_REVISION;
 }
 
-
-//
-// load data from database and put into structure
-//
-// data - pointer to allocated memory by structure
-// 
-//
-
-void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
+/**
+ * Load data from database
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param where pointer to string which represent "where" part of query. If value is equal to NULL all data are taken from db.
+ * @param entries pointer to interger where number of loaded entries will be returned
+ * @return pointer to new structure or list of structures.
+ */
+void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 {
-	char tmpQuery[ 1024 ];
+	//char tmpQuery[ 1024 ];
+	BufString *tmpQuerybs = BufStringNew();
 	void *firstObject = NULL;
 	DEBUG("[MYSQLLibrary] Load\n");
 	
+	// Check if there was a description structure for the table
 	if( descr == NULL  )
 	{
-		ERROR("Data description was not provided!\n");
+		FERROR("Data description was not provided!\n");
 		return NULL;
 	}
 	
+	// Check if a table name is specified
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
-		ERROR("SQLT_TABNAME was not provided!\n");
+		FERROR("SQLT_TABNAME was not provided!\n");
 		return NULL;
 	}
 
-	if( where != NULL )
+	char tmpvar[ 512 ];
+	int pos = 0;
+	int size = 0;
+	BufStringAdd( tmpQuerybs, "SELECT " );
+	FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ]; 
+	
+	while( dptr[0] != SQLT_END )
 	{
-		sprintf( tmpQuery, "SELECT * FROM %s WHERE %s", (char *)descr[ 1 ], where );
-	}
-	else
-	{
-		sprintf( tmpQuery, "SELECT * FROM %s", (char *)descr[ 1 ] );
+		if( dptr[0] != SQLT_NODE )
+		{
+			if( pos == 0 )
+			{
+				size = snprintf( tmpvar, sizeof(tmpvar),"`%s`", (char *)dptr[ 1 ] );
+			}
+			else
+			{
+				size = snprintf( tmpvar, sizeof(tmpvar),",`%s`", (char *)dptr[ 1 ] );
+			}
+			pos++;
+			
+			BufStringAddSize( tmpQuerybs, tmpvar, size );
+		}
+		dptr += 3;
 	}
 	
-	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	// Check that there is a where query
+
+	if( where != NULL )
 	{
-		DEBUG("Cannot run query: '%s'\n", tmpQuery );
+		size = snprintf( tmpvar, sizeof(tmpvar), " FROM %s WHERE %s", (char *)descr[ 1 ], where );
+	}
+	// Just select all
+	else
+	{
+		size = snprintf( tmpvar, sizeof(tmpvar), " FROM %s", (char *)descr[ 1 ] );
+	}
+	
+	BufStringAddSize( tmpQuerybs, tmpvar, size );
+	
+	if( mysql_query( l->con.sql_Con, tmpQuerybs->bs_Buffer ) )
+	{
+		FERROR("Cannot run query: '%s'\n", tmpQuerybs->bs_Buffer );
+		BufStringDelete( tmpQuerybs );
 		DEBUG( "%s\n", mysql_error( l->con.sql_Con ) );
 		return NULL;
 	}
 	
-	DEBUG("SQL SELECt QUERY '%s\n", tmpQuery );
+	DEBUG("SQL SELECT QUERY '%s\n", tmpQuerybs->bs_Buffer );
+	BufStringDelete( tmpQuerybs );
 
 	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
-	if (result == NULL) 
+	if( result == NULL )
 	{
 		DEBUG("Query return empty results\n");
 		return NULL;
@@ -242,11 +164,10 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 	//
 	// Receiving data as linked list of objects
 	//
-	DEBUG("[MYSQLLibrary] Before results\n" );
 
 	while( ( row = mysql_fetch_row( result ) ) != NULL )
 	{
-		DEBUG("[MYSQLLibrary] Parsing rows %d\n", j );
+		unsigned long *lengths = mysql_fetch_lengths(result);
 		(*entries)++;
 		
 		void *data = FCalloc( 1, descr[ SQL_DATA_STRUCTURE_SIZE ] );
@@ -255,15 +176,15 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 		// Link the first object (which holds the start of the data)
 		if( firstObject == NULL ) firstObject = data;
 		
-		UBYTE *strptr = (UBYTE *)data;	// pointer to structure to which will will insert data
+		FUBYTE *strptr = (FUBYTE *)data;	// pointer to structure to which will will insert data
 		
 		// first 2 entries inform about table and size, rest information provided is about columns
-		ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ]; 
+		dptr = &descr[ SQL_DATA_STRUCT_START ]; 
 		
 		int i = 0;
 			
-		DEBUG("[MYSQLLibrary] Found column one, parsing\n");
-			
+		// While the column is not the last
+		//DEBUG("[MYSQLLibrary] Found column one, parsing\n");	
 		while( dptr[0] != SQLT_END )
 		{
 			//printf("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
@@ -273,8 +194,8 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 				case SQLT_NODE:
 					{
 						dataUsed = 1;
-						DEBUG("Node found\n");
-						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];						
+						//DEBUG( "Node found\n" );
+						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
 						if( node != NULL )
 						{
 							node->mln_Succ = (MinNode *)data;
@@ -286,9 +207,14 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 					case SQLT_IDINT:	// primary key
 					case SQLT_INT:
 						{
-							int tmp = (int)atol( row[ i ] );
-							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
 							//DEBUG("[MYSQLLibrary] parsing  sizeofint %d  col %s = data %s\n", (int)sizeof( int ), dptr[1], row[ i ] );
+							int tmp = 0;
+							if( row[ i ] != NULL )
+							{
+								tmp = (int)atol( row[ i ] );
+							}
+							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
+							//
 							
 						}
 						break;
@@ -304,6 +230,8 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 									memcpy( tmpval, row[i], len );
 									// Add tmpval to string pointer list..
 									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
+									
+									//DEBUG("Field %s data %s\n", dptr[ 1 ], (strptr + dptr[ 2 ]) );
 								}
 							}
 							else
@@ -316,7 +244,7 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 					case SQLT_TIMESTAMP:
 						{
 							struct tm ltm;
-							DEBUG("TIMESTAMP load\n");
+							//DEBUG("TIMESTAMP load\n");
 							
 							// REMEMBER, data fix
 							ltm.tm_year += 1900;
@@ -334,6 +262,27 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 							
 						}
 					break;
+					
+					case SQLT_BLOB:
+						{
+							DEBUG("READBLOB\n");
+							ListString *ls = ListStringNew();
+							if( ls != NULL )
+							{
+								ListStringAdd( ls, row[i], lengths[i] );
+								
+								ListStringJoin( ls );
+							}
+							else
+							{
+								FERROR("Cannot allocate memory for BLOB\n");
+							}
+							
+							// copy pointer to this list
+							memcpy( strptr + dptr[2], &ls, sizeof( ListString * ) );
+							//ListStringDelete( ls );
+						}
+					break;
 				}
 				
 				i++;
@@ -344,8 +293,10 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 		if( dataUsed == 0 ) 
 		{
 			if( data == firstObject )
+			{
 				firstObject = NULL;
-			free( data );
+			}
+			FFree( data );
 		}
 	}
 
@@ -355,12 +306,17 @@ void *Load( struct MYSQLLibrary *l, ULONG *descr, char *where, int *entries )
 	return firstObject;
 }
 
-//
-//
-//
-
-int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
+/**
+ * Update data in database. Structure must contain primaryID key.
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param data pointer to object which will be updated in DB
+ * @return 0 when success, otherwise error number
+ */
+int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 {
+	BufString *querybs = BufStringNew();
 	char tmpQuery[ 2048 ];
 	int primaryId = -1;
 	char *primaryIdName = NULL;
@@ -368,19 +324,21 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 	
 	if( descr == NULL || data == NULL )
 	{
+		BufStringDelete( querybs );
 		DEBUG("Data structure or description was not provided!\n");
 		return 0;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
+		BufStringDelete( querybs );
 		DEBUG("SQLT_TABNAME was not provided!\n");
 		return 0;
 	}
 	
 	char *whereColName = NULL;
 	int whereColValue = -1;
-	ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];
+	FULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];
 	unsigned char *strptr = (unsigned char *)data;	// pointer to structure to which will will insert data
 	
 	while( dptr[0] != SQLT_END )
@@ -404,9 +362,9 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 
 	//"UPDATE %s set SessionID = '%s', LoggedTime = '%lld' where Name = '%s'"
 	
-	sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
-	//sprintf( tmpQuery, "UPDATE %s set where %s = %d", (char *)descr[ 1 ], whereColName, whereColValue );
-	
+	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
+	BufStringAddSize( querybs, tmpQuery, lsize );
+
 	DEBUG("Update SQL: %s\n", tmpQuery );
 	
 	dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
@@ -415,9 +373,7 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 	
 	while( dptr[0] != SQLT_END )
 	{
-		//DEBUG("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
 		DEBUG("Update POINTER %p\n", strptr );
-		
 		
 		switch( dptr[ 0 ] )
 		{
@@ -438,16 +394,20 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 				{
 					char tmp[ 256 ];
 					int tmpint;
+					int sprintfsize = 0;
+					
 					memcpy( &tmpint, strptr + dptr[ 2 ], sizeof( int ) );
 					if( cols == 0 )
 					{
-						sprintf( tmp, " %s = %d", (char *)dptr[ 1 ], tmpint );
+						sprintfsize = sprintf( tmp, " %s = %d", (char *)dptr[ 1 ], tmpint );
 					}
 					else
 					{
-						sprintf( tmp, ", %s = %d", (char *)dptr[ 1 ], tmpint );
+						sprintfsize = sprintf( tmp, ", %s = %d", (char *)dptr[ 1 ], tmpint );
 					}
-					strcat( tmpQuery, tmp );
+					//strcat( tmpQuery, tmp );
+					BufStringAddSize( querybs, tmp, sprintfsize );
+					cols++;
 
 					DEBUG("[MYSQLLibrary] update set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
 				}
@@ -459,36 +419,63 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 					char *tmpchar;
 					memcpy( &tmpchar, strptr + dptr[ 2 ], sizeof( char *) );
 					DEBUG("[MYSQLLibrary] update, pointer %p\n", tmpchar );
+					int sprintfsize = 0;
+					
 					if( tmpchar != NULL )
 					{
-						if( cols == 0 )
+						char *ttext = NULL;
+						char *esctext = NULL;
+						
+						int tmpcharsize = strlen( tmpchar );
+						int ttextsize = strlen( (char *)dptr[ 1 ] ) + ( tmpcharsize << 1 ) + 256;
+						
+						if( ( ttext = FCalloc( ttextsize, sizeof(char) ) ) != NULL )
 						{
-							sprintf( tmp, " %s = '%s'", (char *)dptr[ 1 ], tmpchar );
+							if( ( esctext = FCalloc( (tmpcharsize << 1 ) + 1, sizeof(char) ) ) != NULL )
+							{
+								mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
+								
+								if( cols == 0 )
+								{
+									sprintfsize = sprintf( ttext, " %s = '%s'", (char *)dptr[ 1 ], esctext );
+								}
+								else
+								{
+									sprintfsize = sprintf( ttext, ", %s = '%s'", (char *)dptr[ 1 ], esctext );
+								}
+								//strcat( tmpQuery, tmp );
+								BufStringAddSize( querybs, ttext, sprintfsize );
+								FFree( esctext );
+							}
+							FFree( ttext );
 						}
-						else
-						{
-							sprintf( tmp, ", %s = '%s'", (char *)dptr[ 1 ], tmpchar );
-						}
-						strcat( tmpQuery, tmp );
 						
 						DEBUG("[MYSQLLibrary] update set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+						
+						cols++;
 					}
 					else	// string was set to NULL
 					{
 						if( cols == 0 )
-							{
-								sprintf( tmpQuery, " %s = NULL", (char *)dptr[ 1 ] );
-							}
-							else
-							{
-								sprintf( tmpQuery, ", %s = NULL", (char *)dptr[ 1 ] );
-							}
+						{
+							sprintfsize = sprintf( tmp, " %s = NULL", (char *)dptr[ 1 ] );
 						}
+						else
+						{
+							sprintfsize = sprintf( tmp, ", %s = NULL", (char *)dptr[ 1 ] );
+						}
+						BufStringAddSize( querybs, tmp, sprintfsize );
+						//strcat( tmpQuery, tmp );
+						
+						cols++;
 					}
+						
+				}
 				break;
 				
 				case SQLT_TIMESTAMP:
 				{
+					int sprintfsize = 0;
 					// '2015-08-10 16:28:31'
 					char date[ 64 ];
 					char tmp[ 256 ];
@@ -510,13 +497,15 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 					
 						if( cols == 0 )
 						{
-							sprintf( tmp, " %s = '%s'", (char *)dptr[ 1 ], date );
+							sprintfsize = sprintf( tmp, " %s = '%s'", (char *)dptr[ 1 ], date );
 						}
 						else
 						{
-							sprintf( tmp, ", %s = '%s'", (char *)dptr[ 1 ], date );
+							sprintfsize = sprintf( tmp, ", %s = '%s'", (char *)dptr[ 1 ], date );
 						}
-						strcat( tmpQuery, tmp );
+						BufStringAddSize( querybs, tmp, sprintfsize );
+						//strcat( tmpQuery, tmp );
+						cols++;
 					}
 					
 					/*
@@ -542,7 +531,7 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 			break;
 		}
 		
-		cols++;
+		//cols++;
 		dptr += 3;
 	}
 	
@@ -551,146 +540,163 @@ int Update( struct MYSQLLibrary *l, ULONG *descr, void *data )
 	if( primaryIdName != NULL )
 	{
 		char tmpvar[ 256 ];
-		sprintf( tmpvar, " where %s = %d", primaryIdName, primaryId );
+		int sprintfsize = sprintf( tmpvar, " where %s = %d", primaryIdName, primaryId );
 		//DEBUG("SQL update %s\n", tmpQuery );
-		strcat( tmpQuery, tmpvar );
+		//strcat( tmpQuery, tmpvar );
+		BufStringAddSize( querybs, tmpvar, sprintfsize );
 	}
 	DEBUG("UPDATE QUERY '%s'\n", tmpQuery );
 	
-	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
-		ERROR("Query error!\n");
+		FERROR("Query error!\n");
+		BufStringDelete( querybs );
+		
 		return 2;
 	}
+	BufStringDelete( querybs );
 	
 	return 0;
 }
 
-//
-//
-//
+#define FRIEND_MAX_BIND 256
 
-int Save( struct MYSQLLibrary *l, ULONG *descr, void *data )
+/**
+ * Save data in database. Primary ID will be stored in structure
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param data pointer to object which will be updated in DB
+ * @return 0 when success, otherwise error number
+ */
+int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 {
-	char finalQuery[ 4048 ];
-	char tableQuery[ 2048 ];
-	char dataQuery[ 2048 ];
-	
-	finalQuery[ 0 ] = 0;
-	tableQuery[ 0 ] = 0;
-	dataQuery[ 0 ] = 0;
+	char *finalQuery = NULL;
+	BufString *tablequerybs = BufStringNew();
+	BufString *dataquerybs = BufStringNew();
 	
 	DEBUG("[MYSQLLibrary] Save\n");
 	
 	if( descr == NULL || data == NULL )
 	{
-		ERROR("Data structure or description was not provided!\n");
+		BufStringDelete( tablequerybs );
+		BufStringDelete( dataquerybs );
+		FERROR("Data structure or description was not provided!\n");
 		return 0;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
-		ERROR("SQLT_TABNAME was not provided!\n");
+		BufStringDelete( tablequerybs );
+		BufStringDelete( dataquerybs );
+		FERROR("SQLT_TABNAME was not provided!\n");
 		return 0;
 	}
 
-	ULONG *dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
+	FULONG *dptr = (FULONG *)&descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
 	unsigned char *strptr = (unsigned char *)data;	// pointer to structure to which will will insert data
 	int opt = 0;
 	int *primaryid = NULL;
+	//int entries = 0;
+	int statementEntry = 0;
 	
-	while( dptr[0] != SQLT_END )
+	MYSQL_STMT *stmt;
+	MYSQL_BIND bindTable[ FRIEND_MAX_BIND ];
+	long bindLength[ FRIEND_MAX_BIND ];
+	ListString *bindData[ FRIEND_MAX_BIND ];
+	
+	memset( bindTable, 0, sizeof(bindTable) );
+	
+	stmt = mysql_stmt_init( l->con.sql_Con );
+	if( stmt != NULL )
 	{
-		//DEBUG("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
-		//DEBUG("Update POINTER %p\n", strptr );
-		switch( dptr[ 0 ] )
+		// we calculate how many entries we will have
+	
+		while( dptr[0] != SQLT_END )
 		{
-			case SQLT_IDINT:	// primary key
+			//DEBUG("Size %d column name %s\n", dptr[2] ,  (char *)dptr[ 1 ] );
+			
+			//DEBUG("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
+			switch( dptr[ 0 ] )
+			{
+				case SQLT_IDINT:	// primary key
 				{
 					// we just skip that in save
 					//strptr += 8;
-					DEBUG("[MYSQLLibrary] : we dont save\n");
+					//DEBUG("[MYSQLLibrary] : we dont save\n");
 					
 					primaryid = (int *)(strptr + dptr[ 2 ]);
-/*					
-					char tmp[ 256 ];
-					int tmpint;
-					memcpy( &tmpint, strptr + dptr[2], sizeof( int ) );
-					sprintf( tmp, " %d", tmpint );
-					
-					if( opt > 0 )
-					{
-						strcat( tableQuery, "," );
-						strcat( dataQuery, "," );
-					}
-					strcat( tableQuery, (char *)dptr[ 1 ] );
-					strcat( dataQuery, tmp );
-					
-					DEBUG("[MYSQLLibrary] save set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
-					
-					opt++;
-	*/				
-					opt++;
+					//opt++;
 				}
 				break;
 				
-			case SQLT_INT:
+				case SQLT_INT:
 				{
 					char tmp[ 256 ];
 					int tmpint;
 					memcpy( &tmpint, strptr + dptr[2], sizeof( int ) );
-					sprintf( tmp, " %d", tmpint );
+					int locsize = sprintf( tmp, " %d", tmpint );
 					
 					if( opt > 0 )
 					{
-						strcat( tableQuery, "," );
-						strcat( dataQuery, "," );
+						BufStringAddSize( tablequerybs, ",", 1 );
+						BufStringAddSize( dataquerybs, ",", 1 );
 					}
-					strcat( tableQuery, (char *)dptr[ 1 ] );
-					strcat( dataQuery, tmp );
+					BufStringAdd( tablequerybs, (char *)dptr[ 1 ]  );
+					BufStringAddSize( dataquerybs, tmp, locsize );
 					
-					DEBUG("[MYSQLLibrary] save set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
+					//DEBUG("[MYSQLLibrary] save set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
 					
 					opt++;
-					
 				}
 				break;
 				
-			case SQLT_STR:
+				case SQLT_STR:
 				{
 					char *tmpchar;
+					
+					//DEBUG("Size %d tABNAME %s\n", dptr[2] ,  (char *)dptr[ 1 ] );
 					memcpy( &tmpchar, strptr+dptr[2], sizeof( char *) );
 					
-					DEBUG("[MYSQLLibrary] save  pointer to text %p\n", tmpchar );
+					//DEBUG("[MYSQLLibrary] save  pointer to text %p - tabname %s\n", tmpchar, (char *)dptr[ 1 ] );
 					
 					if( tmpchar != NULL )
 					{
 						if( opt > 0 )
 						{
-							strcat( tableQuery, "," );
-							strcat( dataQuery, "," );
+							BufStringAddSize( tablequerybs, ",", 1 );
+							BufStringAddSize( dataquerybs, ",", 1 );
 						}
-						//strcat( tableQuery, "'" );
-						strcat( dataQuery, "'" );
-						strcat( tableQuery, (char *)dptr[ 1 ] );
-						DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
-						strcat( dataQuery, tmpchar );
-						//strcat( tableQuery, "'" );
-						strcat( dataQuery, "'" );
+
+						BufStringAddSize( dataquerybs, "'", 1 );
+						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
+						//DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
+
+						char *esctext;
+						int tmpcharsize = strlen( tmpchar );
+						if( ( esctext = FCalloc( (tmpcharsize << 1 ) + 1, sizeof(char) ) ) != NULL )
+						{
+							mysql_real_escape_string( l->con.sql_Con, esctext, tmpchar, tmpcharsize );
+							//BufStringAdd( dataquerybs, tmpchar );
+							BufStringAdd( dataquerybs, esctext );
+							
+							FFree( esctext );
+						}
+						BufStringAddSize( dataquerybs, "'", 1 );
 						
-						DEBUG("[MYSQLLibrary] save set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+						//DEBUG("[MYSQLLibrary] save set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
 					}
 					
 					opt++;
 				}
 				break;
 				
-			case SQLT_TIMESTAMP:
+				case SQLT_TIMESTAMP:
 				{
 					// '2015-08-10 16:28:31'
 					char date[ 64 ];
 					
-					DEBUG("SQLTimestamp SAVE\n");
+					//DEBUG("SQLTimestamp SAVE\n");
 				
 					struct tm *tp = (struct tm *)( strptr+dptr[2]);
 					//memcpy( &tp, strptr+dptr[2], sizeof( MYSQL_TIME *) );	// copy timestamp pointer
@@ -702,73 +708,146 @@ int Save( struct MYSQLLibrary *l, ULONG *descr, void *data )
 					
 						if( opt > 0 )
 						{
-							strcat( tableQuery, "," );
-							strcat( dataQuery, "," );
+							BufStringAddSize( tablequerybs, ",", 1 );
+							BufStringAddSize( dataquerybs, ",", 1 );
 						}
-						//strcat( tableQuery, "'" );
-						strcat( dataQuery, "'" );
-						strcat( tableQuery, (char *)dptr[ 1 ] );
-						DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
-						strcat( dataQuery, date );
-						//strcat( tableQuery, "'" );
-						strcat( dataQuery, "'" );
-						
-						//DEBUG("[MYSQLLibrary] save set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
+
+						BufStringAddSize( dataquerybs, "'", 1 );
+						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
+						//DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
+
+						BufStringAdd( dataquerybs, date );
+						BufStringAddSize( dataquerybs, "'", 1 );
+
 					}
 					opt++;
 				}
-			break;
-		}
+				break;
+				
+				case SQLT_BLOB:
+				{
+					ListString *ls = NULL;
+
+					memcpy( &ls, strptr+dptr[2], sizeof( ListString *) );
+					
+					if( ls != NULL && ls->ls_Data != NULL )
+					{
+						if( opt > 0 )
+						{
+							BufStringAddSize( tablequerybs, ",", 1 );
+							BufStringAddSize( dataquerybs, ",", 1 );
+						}
+					
+						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
+						BufStringAddSize( dataquerybs, "?", 1 );
+					
+						bindData[ statementEntry ] = ls;
+						bindTable[ statementEntry ].buffer_type = MYSQL_TYPE_STRING;
+						bindTable[ statementEntry ].buffer         = (void *) &(bindData[ statementEntry ]->ls_Data);
+						bindTable[ statementEntry ].is_unsigned    = 1;
+						bindTable[ statementEntry ].length= (long unsigned int *) bindLength[ statementEntry ];
+						bindTable[ statementEntry ].is_null= 0;
+					
+						//DEBUG("--------STORE----%ld\n", bindData[ statementEntry ]->ls_Size );
+					
+						statementEntry++;
+					}
+					else
+					{
+						FERROR("Cannot store blob, buffer is empty!\n");
+					}
+					opt++;
+				}
+				break;
+			}	// end switch
 		
-		dptr += 3;
-	}
+			dptr += 3;
+		}	// end of while, end of table
+		// end of if( statement init)
 	
+		int finalqsize = tablequerybs->bs_Size + dataquerybs->bs_Size + 256;
+		
+		if( ( finalQuery = FCalloc( finalqsize, sizeof(char) ) ) != NULL )
+		{
+			
+			sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tablequerybs->bs_Buffer, dataquerybs->bs_Buffer );
+			DEBUG("SQL: %s  entries %d\n", finalQuery, statementEntry );
+	
+			if (mysql_stmt_prepare(stmt, finalQuery, strlen(finalQuery)))
+			{
+				FERROR( "\n mysql_stmt_prepare(), INSERT failed");
+				FERROR( "\n %s", mysql_stmt_error(stmt));
+				mysql_stmt_close( stmt ); // Free
+				BufStringDelete( tablequerybs );
+				BufStringDelete( dataquerybs );
+				FFree( finalQuery );
+				return 3;
+			}
+	
+			// Bind the buffers 
+			if (mysql_stmt_bind_param( stmt, bindTable ) )
+			{
+				FERROR("param bind failed! ");
+				FERROR(" %s\n", mysql_stmt_error(stmt) );
+				mysql_stmt_close( stmt ); // Free
+				BufStringDelete( tablequerybs );
+				BufStringDelete( dataquerybs );
+				FFree( finalQuery );
+				return 1;
+			}
 
-	sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tableQuery, dataQuery );
-	DEBUG("SQL: %s\n", finalQuery );
-	
-	MYSQL_RES *result = NULL;
-	
-	if( mysql_query( l->con.sql_Con, finalQuery ) )
-	{
-		ERROR( "%s\n", mysql_error( l->con.sql_Con ) );
-		ERROR("Cannot run query!\n");
-		return 2;
-	}
-	
-	
-	if( primaryid != NULL )
-	{
-		/*
-		if( ( result = mysql_store_result( l->con.sql_Con) ) == 0 &&
-			mysql_field_count( l->con.sql_Con ) == 0 &&
-			mysql_insert_id( l->con.sql_Con ) != 0 )
-		{*/
-			int uid = mysql_insert_id( l->con.sql_Con );
-			memcpy( primaryid, &uid, sizeof( int ) );
-			DEBUG("NEW ENTRY ID %d\n", uid );
-		//}
-	}
-	
+			if( statementEntry > 0 )
+			{
+				int i;
+		
+				for( i=0; i < statementEntry ; i++ )
+				{
+					DEBUG("STORE FILE / SIZE %ld\n", bindData[ i ]->ls_Size );
+					// Supply data in chunks to server 
+					if (mysql_stmt_send_long_data(stmt, i, bindData[ i ]->ls_Data , bindData[ i ]->ls_Size ) )
+					{
+						FERROR( " send_long_data failed %s\n", mysql_stmt_error(stmt));
+					}
+				}
+			}
 
-	DEBUG("[MYSQLLibrary]: insert %s\n", finalQuery );
-	
-	if( result != NULL )
-	{
-		mysql_free_result( result );
+			// Now, execute the query 
+			if ( mysql_stmt_execute(stmt) )
+			{
+				FERROR("mysql_stmt_execute failed %s\n", mysql_stmt_error(stmt));
+			}
+		
+			// Free up!
+			mysql_stmt_close( stmt );
+			
+			FFree( finalQuery );
+		}
+
+		if( primaryid != NULL )
+		{
+			FULONG uid = mysql_insert_id( l->con.sql_Con );
+			memcpy( primaryid, &uid, sizeof( FULONG ) );
+			DEBUG("NEW ENTRY ID %lu\n", uid );
+		}
+
+		//DEBUG("[MYSQLLibrary]: insert %s\n", finalQuery );
 	}
+	BufStringDelete( tablequerybs );
+	BufStringDelete( dataquerybs );
 	
 	return 0;
 }
 
-//
-// remove object from database
-//
-
-void Delete( struct MYSQLLibrary *l, ULONG *descr, void *data )
+/**
+ * Delete data in database. Structure must contain primaryID key.
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param data pointer to object which will be updated in DB
+ */
+void Delete( struct MYSQLLibrary *l, FULONG *descr, void *data )
 {
 	char tmpQuery[ 1024 ];
-	//ULONG *dptr = &descr[ 2 ];		// first 2 entries inform about table, rest information provided is about columns
 	int *strptr = (int *)data;		// we are sure that first element in a structure is our SQLT_IDINT
 
 	// we should go trough for structure to find SQLT_IDINT
@@ -790,12 +869,44 @@ void Delete( struct MYSQLLibrary *l, ULONG *descr, void *data )
 	mysql_free_result( result );
 }
 
+/**
+ * Delete data in database. Call is using custom "where"
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param where pointer to custom "where" part of query
+ */
+void DeleteWhere( struct MYSQLLibrary *l, FULONG *descr, char *where )
+{
+	char tmpQuery[ 2048 ];
+	// we should go trough for structure to find SQLT_IDINT
 
-//
-// get number of records in database
-//
+	sprintf( tmpQuery, "delete from %s WHERE %s", (char *)descr[1], where );
 
-int NumberOfRecords( struct MYSQLLibrary *l, ULONG *descr, char *where )
+	if( mysql_query( l->con.sql_Con, tmpQuery ) )
+	{
+		return;
+	}
+
+	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+  
+	if (result == NULL) 
+	{
+		return;
+ 	}
+
+	mysql_free_result( result );
+}
+
+/**
+ * Return number of entries in database
+ *
+ * @param l pointer to mysql.library structure
+ * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param where pointer to custom "where" part of query
+ * @return number of entries found in database
+ */
+int NumberOfRecords( struct MYSQLLibrary *l, FULONG *descr, char *where )
 {
 	char tmpQuery[ 1024 ];
 	int intRet = -1;
@@ -803,19 +914,19 @@ int NumberOfRecords( struct MYSQLLibrary *l, ULONG *descr, char *where )
 	
 	if( descr == NULL  )
 	{
-		ERROR("Data description was not provided!\n");
+		FERROR("Data description was not provided!\n");
 		return -1;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
-		ERROR("SQLT_TABNAME was not provided!\n");
+		FERROR("SQLT_TABNAME was not provided!\n");
 		return -2;
 	}
 
 	if( where != NULL )
 	{
-		sprintf( tmpQuery, "select count(*) from %s where %s", (char *)descr[ 1 ], where );
+		sprintf( tmpQuery, "select count(*) from %s", where );
 	}
 	else
 	{
@@ -824,8 +935,8 @@ int NumberOfRecords( struct MYSQLLibrary *l, ULONG *descr, char *where )
 	
 	if( mysql_query( l->con.sql_Con, tmpQuery ) )
 	{
-		DEBUG("Cannot run query: '%s'\n", tmpQuery );
-		DEBUG( "%s\n", mysql_error( l->con.sql_Con ) );
+		FERROR("Cannot run query: '%s'\n", tmpQuery );
+		FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
 		return -3;
 	}
 
@@ -854,51 +965,978 @@ int NumberOfRecords( struct MYSQLLibrary *l, ULONG *descr, char *where )
 	return intRet;
 }
 
-//
-//
-//
-
-MYSQL_RES *Select( struct MYSQLLibrary *l, const char *sel )
+/**
+ * Return number of entries in database. Function is using custom query
+ *
+ * @param l pointer to mysql.library structure
+ * @param where pointer to custom query
+ * @return number of entries found in database
+ */
+int NumberOfRecordsCustomQuery( struct MYSQLLibrary *l, const char *query )
 {
+	int intRet = -1;
+	DEBUG("[MYSQLLibrary] NumberOfRecordsCustomQuery\n");
+	
+	if( mysql_query( l->con.sql_Con, query ) )
+	{
+		FERROR("Cannot run query: '%s'\n", query );
+		FERROR( "%s\n", mysql_error( l->con.sql_Con ) );
+		return -3;
+	}
+
+	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
+  
+	if (result == NULL) 
+	{
+		DEBUG("Query return empty results\n");
+		return -4;
+ 	}
+ 	
+ 	intRet = (int)mysql_num_rows( result );
+
+	mysql_free_result( result );
+	DEBUG("[MYSQLLibrary] NumberOfRecordsCustomQuery END\n");
+	
+	return intRet;
+}
+
+/**
+ * Select function
+ *
+ * @param l pointer to mysql.library structure
+ * @param sel pointer to custom query
+ * @return pointer to MYSQL_RES structure
+ */
+MYSQL_RES *Query( struct MYSQLLibrary *l, const char *sel )
+{
+	MYSQL_RES *result = NULL;
+	
 	if( mysql_query( l->con.sql_Con, sel ) )
 	{
-		ERROR("Cannot run query: '%s'\n", sel );
-		ERROR( "%s\n", mysql_error( l->con.sql_Con ) );
+		FERROR("Cannot run query: '%s'\n", sel );
+		const char *err = mysql_error( l->con.sql_Con );
+		FERROR( "%s\n", err );
+		
+		if( strstr( err, "List connection to MySQL server" ) != NULL )
+		{
+			l->con.sql_Recconect = TRUE;
+		}
+		
 		return NULL;
 	}
 	
 	DEBUG("SELECT QUERY %s\n", sel );
 
-	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
-	
+	result = mysql_store_result( l->con.sql_Con );
+
 	return result;
 }
 
-//
-//
-//
+/**
+ * Call SQL query like insert, update
+ *
+ * @param l pointer to mysql.library structure
+ * @param sel pointer to string with full sql query
+ * @return 0 when success, otherwise error number
+ */
+int QueryWithoutResults( struct MYSQLLibrary *l, const char *sel )
+{
+	if( l != NULL )
+	{
+		if( l->con.sql_Con != NULL )
+		{
+			int err = mysql_query( l->con.sql_Con, sel );
 
+			if( err != 0 )
+			{
+				const char *errstr = mysql_error( l->con.sql_Con );
+				
+				FERROR("mysql_execute failed  SQL: %s error: %s\n", sel, errstr );
+				if( strstr( errstr, "List connection to MySQL server" ) != NULL )
+				{
+					l->con.sql_Recconect = TRUE;
+				}
+			}
+			else
+			{
+				MYSQL_RES *results;
+				results = mysql_store_result( l->con.sql_Con );
+				if( results != NULL )
+				{
+					mysql_free_result( results );
+				}
+			}
+
+			return err;
+		}
+		else
+		{
+			FERROR("Connection is equal to NULL\n");
+		}
+	}
+	else
+	{
+		FERROR("Mysql.library is NULL\n");
+	}
+	return -2;
+}
+
+/**
+ * Return number of rows from sql results
+ *
+ * @param l pointer to mysql.library structure
+ * @param res pointer to SQL response
+ * @return 0 number of rows
+ */
+int NumberOfRows( struct MYSQLLibrary *l, MYSQL_RES *res )
+{
+	return (int)mysql_num_rows( res );
+}
+
+/**
+ * Fetch MYSQL_ROW from result
+ *
+ * @param l pointer to mysql.library structure
+ * @param res pointer to MYSQL_RES
+ * @return MYSQL_ROW when success, otherwise NULL
+ */
 MYSQL_ROW FetchRow( struct MYSQLLibrary *l, MYSQL_RES *res )
 {
 	return mysql_fetch_row( res );
 }
 
-//
-//
-//
-
+/**
+ * Free sql result (MYSQL_RES)
+ *
+ * @param l pointer to mysql.library structure
+ * @param res pointer to MYSQL_RES
+ */
 void FreeResult( struct MYSQLLibrary *l, MYSQL_RES *res )
 {
 	mysql_free_result( res );
 }
 
 //
-// dupstring
+//
 //
 
-char* StringDuplicate( const char* str )
+#ifndef breakeven_point
+#  define breakeven_point   6	// reasonable value one-size-fits-all value 
+#endif
+
+#define FastMemcpy( a, b, c ) \
+	{ \
+		register size_t nn = (size_t)( c ); \
+		if( nn >= breakeven_point ) \
+		{ \
+			memcpy( ( a ), ( b ), nn); \
+		}\
+		else if( nn > 0 ) \
+		{ \
+			register char *dd; \
+			register const char *ss; \
+			for( ss=( b ), dd=( a ); nn>0; nn--) \
+			{ \
+				*dd++ = *ss++;\
+			} \
+		} \
+	}
+
+#define FastMemset( a, b, c) \
+	{ \
+		register size_t nn = (size_t)( c ); \
+		if (nn >= breakeven_point ) \
+		{ \
+			memset( ( a ), (int)( b ), nn); \
+		} \
+		else if( nn > 0 ) \
+		{ \
+			register char *dd; \
+			register const int cc=(int)( b ); \
+			for( dd=( a ); nn>0; nn-- ) \
+			{ \
+				*dd++ = cc; \
+			} \
+		} \
+	}
+	
+/**
+ * SNPrintf function which escape bad signs from strings
+ *
+ * @param l pointer to mysql.library structure
+ * @param str pointer to char table where string will be stored
+ * @param stringSize size of allocated memory for destination string
+ * @param fmt format string (like printf)
+ * @param ... additional parameters
+ * @return length of created string
+ */
+int SNPrintF( struct MYSQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... )
 {
-	return strcpy( calloc( strlen( str ) + 1, sizeof( char ) ), str );
+	va_list ap;
+	size_t retStringSize = 0;
+	const char *ptr = fmt;
+	char *escapedString = NULL;
+
+	if( ptr == NULL )
+	{
+		ptr = "";
+	}
+	
+	va_start( ap, fmt );
+
+	while( *ptr )
+	{
+		if( *ptr != '%' )
+		{
+			const char *q = strchr( ptr+1,'%' );
+			size_t n = !q ? (size_t)strlen( ptr ) : ( q-ptr );
+			
+			if( retStringSize < stringSize )
+			{
+				size_t avail = stringSize-retStringSize;
+				FastMemcpy( str+retStringSize, ptr, ( n>avail ? avail : n ) );
+			}
+			
+			ptr += n;
+			retStringSize += n;
+		}
+		else
+		{
+			const char *startPointer;
+			size_t minWidthField = 0, precision = 0;
+			int zeroPadding = 0, specifiedPrecision = 0, justifyLeft = 0;
+			int alternateForm = 0, forceSign = 0;
+			int spaceForPositive = 1; 
+			char lengthModifier = '\0'; 
+			char tmp[ 32 ];
+			
+			const char *stringArg;
+			size_t stringArgSize;
+			
+			unsigned char unscharArg;
+			size_t numOfZerosToPad = 0;
+			size_t zeroPaddingInsertionInd = 0;
+			char fmtSpec = '\0';
+			
+			stringArg = NULL;
+			startPointer = ptr; ptr++; 
+			
+			while (*ptr == '0' || *ptr == '-' || *ptr == '+' ||
+				*ptr == ' ' || *ptr == '#' || *ptr == '\'')
+			{
+				switch( *ptr )
+				{
+					case '0':
+						zeroPadding = 1;
+						break;
+					case '-':
+						justifyLeft = 1;
+						break;
+					case '+':
+						forceSign = 1;
+						spaceForPositive = 0;
+						break;
+					case ' ':
+						forceSign = 1;
+						break;
+					case '#':
+						alternateForm = 1;
+						break;
+					case '\'':
+						break;
+				}
+				ptr++;
+			}
+			
+			// parse field width
+			if( *ptr == '*' )
+			{
+				int j;
+				ptr++; j = va_arg(ap, int);
+				
+				if( j >= 0 )
+				{
+					minWidthField = j;
+				}
+				else
+				{
+					minWidthField = -j;
+					justifyLeft = 1;
+				}
+			}
+			else if( isdigit( (int)(*ptr)) )
+			{
+				unsigned int uj = *ptr++ - '0';
+				while( isdigit((int)( *ptr )) )
+				{
+					uj = 10*uj + (unsigned int)(*ptr++ - '0');
+				}
+				minWidthField = uj;
+			}
+			
+			if(*ptr == '.' )
+			{
+				ptr++;
+				specifiedPrecision = 1;
+				
+				if( *ptr == '*' )
+				{
+					int j = va_arg(ap, int);
+					ptr++;
+					
+					if( j >= 0 )
+					{
+						precision = j;
+					}
+					else
+					{
+						specifiedPrecision = 0; precision = 0;
+					}
+				}
+				else if( isdigit((int)( *ptr )) )
+				{
+					unsigned int val = *ptr++ - '0';
+					while( isdigit( (int)( *ptr )) )
+					{
+						val = 10* val + (unsigned int)(*ptr++ - '0');
+					}
+					precision = val;
+				}
+			}
+			
+			if( *ptr == 'h' || *ptr == 'l' )
+			{
+				lengthModifier = *ptr;
+				ptr++;
+				
+				if( lengthModifier == 'l' && *ptr == 'l' )
+				{
+					lengthModifier = '2';
+					ptr++;
+				}
+			}
+			
+			fmtSpec = *ptr;
+			
+			switch( fmtSpec )
+			{
+				case 'i':
+					fmtSpec = 'd';
+					break;
+					
+				case 'D':
+					fmtSpec = 'd';
+					lengthModifier = 'l';
+					break;
+					
+				case 'U':
+					fmtSpec = 'u';
+					lengthModifier = 'l';
+					break;
+					
+				case 'O':
+					fmtSpec = 'o';
+					lengthModifier = 'l';
+					break;
+					
+				default:
+					break;
+			}
+			
+			switch( fmtSpec )
+			{
+				case '%': 
+				case 'c': 
+				case 's':
+					lengthModifier = '\0';
+					
+					//zeroPadding = 0;    // turn zero padding off for string conversions
+					
+					stringArgSize = 1;
+					
+					switch( fmtSpec )
+					{
+						case '%':
+							stringArg = ptr;
+							break;
+						case 'c':
+						{
+							int j = va_arg( ap, int );
+							unscharArg = (unsigned char) j;
+							stringArg = (const char *) &unscharArg;
+							break;
+						}
+						case 's':
+							stringArg = va_arg( ap, const char * );
+							if( !stringArg )
+							{
+								stringArgSize = 0;
+							}
+							else if( !specifiedPrecision )
+							{
+								stringArgSize = strlen( stringArg );
+							}
+							else if( precision == 0 )
+							{
+								stringArgSize = 0;
+							}
+							else
+							{
+								const char *q = memchr( stringArg, '\0', precision <= 0x7fffffff ? precision : 0x7fffffff );
+								stringArgSize = !q ? precision : (q-stringArg);
+							}
+							
+							if( stringArg != NULL )
+							{
+								if( escapedString != NULL )
+								{
+									FFree( escapedString );
+									escapedString = NULL;
+								}
+								
+								if( ( escapedString = FCalloc( (stringArgSize << 1 ) + 1, sizeof(char) ) ) != NULL )
+								{
+									stringArgSize = mysql_real_escape_string( l->con.sql_Con, escapedString, stringArg, stringArgSize );
+									stringArg = escapedString;
+								}
+							}
+							
+							break;
+						default:
+							break;
+					}
+					break;
+					
+						case 'd':
+						case 'u':
+						case 'o':
+						case 'x':
+						case 'X':
+						case 'p':
+						{
+							int argumentSign = 0;
+							int intArg = 0;  
+							unsigned int uintArg = 0;
+							long int longArg = 0;  
+							unsigned long int ulongArg = 0;
+							
+							long long int longLongArg = 0;
+							unsigned long long int ulongLongArg = 0;
+							void *ptrArg = NULL;
+							
+							if ( fmtSpec == 'p' )
+							{
+								lengthModifier = '\0';
+								
+								ptrArg = va_arg(ap, void *);
+								if( ptrArg != NULL )
+								{
+									argumentSign = 1;
+								}
+							}
+							else if( fmtSpec == 'd' )
+							{
+								switch( lengthModifier )
+								{
+									case '\0':
+									case 'h':
+										intArg = va_arg(ap, int);
+										if( intArg > 0 )
+										{
+											argumentSign =  1;
+										}
+										else if( intArg < 0 )
+										{
+											argumentSign = -1;
+										}
+										break;
+									case 'l':
+										longArg = va_arg(ap, long int);
+										if( longArg > 0 )
+										{
+											argumentSign =  1;
+										}
+										else if( longArg < 0 )
+										{
+											argumentSign = -1;
+										}
+										break;
+										
+									case '2':
+										longLongArg = va_arg(ap, long long int);
+										if( longLongArg > 0 )
+										{
+											argumentSign =  1;
+										}
+										else if( longLongArg < 0 )
+										{
+											argumentSign = -1;
+										}
+										break;
+								}
+							}
+							else
+							{
+								switch( lengthModifier )
+								{
+									case '\0':
+									case 'h':
+										uintArg = va_arg(ap, unsigned int);
+										if( uintArg )
+										{
+											argumentSign = 1;
+										}
+										break;
+										
+									case 'l':
+										ulongArg = va_arg(ap, unsigned long int);
+										if( ulongArg )
+										{
+											argumentSign = 1;
+										}
+										break;
+										
+									case '2':
+										ulongLongArg = va_arg(ap, unsigned long long int);
+										if( ulongLongArg )
+										{
+											argumentSign = 1;
+										}
+										break;
+								}
+							}
+							stringArg = tmp; stringArgSize = 0;
+							
+							if( specifiedPrecision )
+							{
+								zeroPadding = 0;
+							}
+							if( fmtSpec == 'd' )
+							{
+								if( forceSign && argumentSign >= 0 )
+								{
+									tmp[stringArgSize++] = spaceForPositive ? ' ' : '+';
+								}
+							}
+							else if( fmtSpec == 'p' && forceSign && argumentSign > 0 )
+							{
+								tmp[stringArgSize++] = spaceForPositive ? ' ' : '+';
+							}
+							else if( alternateForm )
+							{
+								if( argumentSign != 0 && ( fmtSpec == 'x' || fmtSpec == 'X') )
+								{
+									tmp[stringArgSize++] = '0'; tmp[stringArgSize++] = fmtSpec;
+								}
+							}
+							zeroPaddingInsertionInd = stringArgSize;
+							if( !specifiedPrecision )
+							{
+								precision = 1;   /* default precision is 1 */
+							}
+							if( precision == 0 && argumentSign == 0 && fmtSpec != 'p' )
+							{
+								
+							}
+							else
+							{
+								char ftab[5];
+								int flen = 0;
+								
+								ftab[ flen++ ] = '%';
+								
+								if( !lengthModifier )
+								{
+								}
+								else if( lengthModifier=='2' )
+								{
+									ftab[ flen++ ] = 'l';
+									ftab[ flen++ ] = 'l';
+								}
+								else
+								{
+									ftab[ flen++ ] = lengthModifier;
+								}
+								
+								ftab[ flen++ ] = fmtSpec;
+								ftab[ flen++ ] = '\0';
+								
+								if( fmtSpec == 'p' )
+								{
+									stringArgSize += sprintf( tmp+stringArgSize, ftab, ptrArg );
+								}
+								else if( fmtSpec == 'd' )
+								{
+									switch( lengthModifier )
+									{
+										case '\0':
+										case 'h':
+											stringArgSize+=sprintf( tmp+stringArgSize, ftab, intArg );
+											break;
+										case 'l':
+											stringArgSize+=sprintf( tmp+stringArgSize, ftab, longArg );
+											break;
+											//case '2': stringArgSize+=sprintf(tmp+stringArgSize,f,long_long_arg); break;
+									}
+								}
+								else
+								{
+									switch( lengthModifier )
+									{
+										case '\0':
+										case 'h':
+											stringArgSize+=sprintf( tmp+stringArgSize, ftab, uintArg );
+											break;
+										case 'l':
+											stringArgSize+=sprintf( tmp+stringArgSize, ftab, ulongArg );
+											break;
+										case '2':
+											stringArgSize+=sprintf( tmp+stringArgSize, ftab,ulongLongArg );
+											break;
+									}
+								}
+								
+								if( zeroPaddingInsertionInd < stringArgSize && tmp[ zeroPaddingInsertionInd ] == '-' )
+								{
+									zeroPaddingInsertionInd++;
+								}
+								
+								if( zeroPaddingInsertionInd+1 < stringArgSize &&
+									tmp[ zeroPaddingInsertionInd ]   == '0' &&
+									(tmp[ zeroPaddingInsertionInd+1 ] == 'x' ||
+									tmp[ zeroPaddingInsertionInd+1] == 'X') )
+								{
+									zeroPaddingInsertionInd += 2;
+								}
+							}
+							
+							{
+								size_t num_of_digits = stringArgSize - zeroPaddingInsertionInd;
+								
+								if( alternateForm && fmtSpec == 'o' && !(zeroPaddingInsertionInd < stringArgSize
+									&& tmp[zeroPaddingInsertionInd] == '0') )
+								{      
+									
+									if( !specifiedPrecision || precision < num_of_digits+1 )
+									{
+										precision = num_of_digits+1; specifiedPrecision = 1;
+									}
+								}
+								
+								if( num_of_digits < precision )
+								{
+									numOfZerosToPad = precision - num_of_digits;
+								}
+							}
+							
+							if( !justifyLeft && zeroPadding )
+							{
+								int n = minWidthField - (stringArgSize+numOfZerosToPad);
+								if( n > 0 )
+								{
+									numOfZerosToPad += n;
+								}
+							}
+							break;
+						}
+						default:
+							zeroPadding = 0;
+							justifyLeft = 1;
+							minWidthField = 0;
+							
+							stringArg = startPointer;
+							stringArgSize = ptr - startPointer;
+
+							if( *ptr )
+							{
+								stringArgSize++;
+							}
+						break;
+			}
+			if( *ptr )
+			{
+				ptr++;
+			}
+			
+			if( !justifyLeft )
+			{
+				int n = minWidthField - (stringArgSize+numOfZerosToPad);
+				if( n > 0 )
+				{
+					if( retStringSize < stringSize )
+					{
+						int avail = stringSize-retStringSize;
+						FastMemset( str+retStringSize, (zeroPadding?'0':' '), ( n>avail ? avail : n ) );
+					}
+					retStringSize += n;
+				}
+			}
+			
+			if( numOfZerosToPad <= 0 )
+			{
+				zeroPaddingInsertionInd = 0;
+			}
+			else
+			{
+				int n = zeroPaddingInsertionInd;
+				if( n > 0 )
+				{
+					if( retStringSize < stringSize )
+					{
+						int avail = stringSize-retStringSize;
+						FastMemcpy( str+retStringSize, stringArg, ( n>avail ? avail : n) );
+					}
+					retStringSize += n;
+				}
+				
+				n = numOfZerosToPad;
+				if( n > 0 )
+				{
+					if( retStringSize < stringSize )
+					{
+						int avail = stringSize-retStringSize;
+						FastMemset( str+retStringSize, '0', ( n>avail ? avail : n ) );
+					}
+					retStringSize += n;
+				}
+			}
+			
+			{
+				int n = stringArgSize - zeroPaddingInsertionInd;
+				if( n > 0 )
+				{
+					if( retStringSize < stringSize )
+					{
+						int avail = stringSize-retStringSize;
+						FastMemcpy( str+retStringSize, stringArg+zeroPaddingInsertionInd,
+									(n>avail?avail:n) );
+					}
+					retStringSize += n;
+				}
+			}
+			
+			if( justifyLeft )
+			{
+				int n = minWidthField - (stringArgSize+numOfZerosToPad);
+				if (n > 0)
+				{
+					if( retStringSize < stringSize )
+					{
+						int avail = stringSize-retStringSize;
+						FastMemset( str+retStringSize, ' ', ( n>avail ? avail : n ) );
+					}
+					retStringSize += n;
+				}
+			}
+		}
+	}
+	
+	if (stringSize > 0)
+	{ 
+		str[ retStringSize <= stringSize-1 ? retStringSize : stringSize-1] = '\0';
+		
+		//DEBUG("SNPrintf: new string : %s\n", str );
+	}
+	
+	va_end(ap);
+	
+	if( escapedString != NULL )
+	{
+		FFree( escapedString );
+		escapedString = NULL;
+	}
+	
+	return (int) retStringSize;
 }
 
+/**
+ * Internal function to copy string
+ *
+ * @param str pointer to string which copy will be made
+ * @return pointer to new created string
+ */
+char* StringDuplicate( const char* str )
+{
+	if( str == NULL )
+	{
+		return NULL;
+	}
+	return strcpy( FCalloc( strlen( str ) + 1, sizeof( char ) ), str );
+}
 
+/**
+ * Connect mysql.library to database function
+ *
+ * @param l pointer to mysql.library structure
+ * @return 0 when connection will be set, otherwise error number
+ */
+int Reconnect( struct MYSQLLibrary *l )
+{
+	void *connection = mysql_real_connect( l->con.sql_Con, l->con.sql_Host, l->con.sql_DBName, l->con.sql_User, l->con.sql_Pass, l->con.sql_Port, NULL, 0 );
+	if( connection == NULL )
+	{
+		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
+		return -1;
+	}
+	int reconnect = 1;
+	mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
+	
+	return 0;
+}
+
+/**
+ * Connect mysql.library to database function
+ *
+ * @param l pointer to mysql.library structure
+ * @param host host string
+ * @param dbname database name string
+ * @param usr database user login string
+ * @param pass database user password string
+ * @param port database internet port
+ * @return 0 when connection will be set, otherwise error number
+ */
+int Connect( struct MYSQLLibrary *l, const char *host, const char *dbname, const char *usr, const char *pass, int port )
+{
+	DEBUG("Connect\n");
+	
+	// Initialize mysql connection
+	if( l->con.sql_Con == NULL )
+	{
+		l->con.sql_Con = mysql_init(NULL);
+	}
+	
+	mysql_options( l->con.sql_Con, MYSQL_SET_CHARSET_NAME, "utf8" );
+	mysql_options( l->con.sql_Con, MYSQL_INIT_COMMAND, "SET NAMES utf8");
+	
+	void *connection = mysql_real_connect( l->con.sql_Con, host, usr, pass, dbname, port, NULL, 0 );
+	if( connection == NULL )
+	{
+		FERROR( "[MYSQLLibrary] Failed to connect to database: '%s'.\n", mysql_error(l->con.sql_Con) );
+		return -1;
+	}
+	
+	l->con.sql_Host = StringDuplicate( host );
+	l->con.sql_DBName = StringDuplicate( dbname );
+	l->con.sql_User = StringDuplicate( usr );
+	l->con.sql_Pass = StringDuplicate( pass );
+	l->con.sql_Port = port;
+	
+	// Make sure connection is maintained
+	int reconnect = 1;
+	mysql_options( connection, MYSQL_OPT_RECONNECT, &reconnect );
+	
+	return 0;
+}
+
+/**
+ * Function disconnect mysql.library from database
+ *
+ * @param l pointer to mysql.library structure
+ * @return 0 when success, otherwise error number
+ */
+int Disconnect( struct MYSQLLibrary *l )
+{
+	DEBUG("Closeing mysql connection\n");
+	
+	if( l->con.sql_Host != NULL ){ FFree( l->con.sql_Host ); l->con.sql_Host = NULL; }
+	if( l->con.sql_DBName != NULL ){ FFree( l->con.sql_DBName );  l->con.sql_DBName = NULL; }
+	if( l->con.sql_User != NULL ){ FFree( l->con.sql_User );  l->con.sql_User = NULL; }
+	if( l->con.sql_Pass != NULL ){ FFree( l->con.sql_Pass );  l->con.sql_Pass = NULL; }
+	
+	mysql_close( l->con.sql_Con );
+	return 0;
+}
+
+/**
+ * Create new escaped string
+ *
+ * @param l pointer to mysql.library structure
+ * @param str pointer to char table which will be copyed and escaped
+ * @return pointer to new string if success, otherwise NULL
+ */
+char *MakeEscapedString( struct MYSQLLibrary *l, char *str )
+{
+	if( str  == NULL )
+	{
+		return NULL;
+	}
+	char *esctext;
+	int size = strlen( str );
+	
+	if( ( esctext = FCalloc( ( size << 1 ) + 1, sizeof(char) ) ) != NULL )
+	{
+		mysql_real_escape_string( l->con.sql_Con, esctext, str, size );
+		
+		return esctext;
+	}
+	return NULL;
+}
+
+/**
+ * Initial library function
+ *
+ * @param sb pointer to SystemBase
+ * @return pointer to new Mysql.library structure
+ */
+void *libInit( void *sb )
+{
+	struct MYSQLLibrary *l = NULL;
+	DEBUG("libinit\n");
+	
+	if( ( l = FCalloc( 1, sizeof( struct MYSQLLibrary ) ) ) == NULL )
+	{
+		return NULL;
+	}
+	DEBUG("Before assigning functions\n");
+	
+	l->l_Name = LIB_NAME;
+	l->l_Version = LIB_VERSION;
+	
+	DEBUG("versions assigned\n");
+	l->libClose = dlsym ( l->l_Handle, "libClose");
+	l->GetVersion = dlsym ( l->l_Handle, "GetVersion");
+	DEBUG("Before libget libclosed assigned\n");
+	
+	// mysql.library structure
+	l->Load = dlsym ( l->l_Handle, "Load");
+	l->Save = dlsym ( l->l_Handle, "Save");
+	l->Update = dlsym ( l->l_Handle, "Update");
+	l->Delete = dlsym ( l->l_Handle, "Delete");
+	l->Query = dlsym ( l->l_Handle, "Query");
+	l->NumberOfRecords = dlsym( l->l_Handle, "NumberOfRecords");
+	l->NumberOfRecordsCustomQuery = dlsym( l->l_Handle, "NumberOfRecordsCustomQuery");
+	l->NumberOfRows = dlsym( l->l_Handle, "NumberOfRows");
+	l->FetchRow = dlsym ( l->l_Handle, "FetchRow");
+	l->FreeResult = dlsym ( l->l_Handle, "FreeResult");
+	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
+	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
+	l->SNPrintF = SNPrintF;
+	l->Connect = Connect;
+	l->Disconnect = Disconnect;
+	l->Reconnect = Reconnect;
+	
+	SystemBase *lsb = (SystemBase *)sb;
+
+	return ( void *)l;
+}
+
+/**
+ * Close mysql.library function
+ *
+ * @param l pointer to mysql.library structure
+ */
+void libClose( struct MYSQLLibrary *l )
+{
+	if( l->con.sql_Con )
+	{
+		if( l->con.sql_Host != NULL ){ FFree( l->con.sql_Host );  l->con.sql_Host = NULL; }
+		if( l->con.sql_DBName != NULL ){ FFree( l->con.sql_DBName );  l->con.sql_DBName = NULL; }
+		if( l->con.sql_User != NULL ){ FFree( l->con.sql_User ); l->con.sql_User = NULL; }
+		if( l->con.sql_Pass != NULL ){ FFree( l->con.sql_Pass );  l->con.sql_Pass = NULL; }
+		
+		DEBUG( "MYSQL library closed connection.\n" );
+		mysql_close( l->con.sql_Con );
+		l->con.sql_Con = NULL;
+	}
+	DEBUG("MYSQL library close\n");
+}

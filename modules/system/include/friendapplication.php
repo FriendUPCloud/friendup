@@ -1,10 +1,10 @@
 <?php
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -13,15 +13,17 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 function findInSearchPaths( $app )
 {
 	$ar = array(
-		'../resources/webclient/apps/'
+		'repository/',
+		'resources/webclient/apps/'
 	);
 	foreach ( $ar as $apath )
 	{
@@ -76,6 +78,19 @@ foreach( $sets as $set )
 // Do we already have an object? An app project!
 if( $retObject && isset( $retObject->ProjectName ) )
 {
+	// Project path
+	$ppath = $args->args->application;
+	if( strstr( $ppath, '/' ) )
+	{
+		$ppath = explode( '/', $ppath );
+		array_pop( $ppath );
+		$ppath = implode( '/', $ppath ) . '/';
+	}
+	else if( strstr( $ppath, ':' ) )
+	{
+		$ppath = reset( explode( ':', $ppath ) ) . ':';
+	}
+
 	$conf = new stdClass();
 	$conf->Name = $retObject->ProjectName;
 	$conf->Author = $retObject->Author;
@@ -89,13 +104,17 @@ if( $retObject && isset( $retObject->ProjectName ) )
 			$conf->Permissions[] = $v->Permission . ' ' . $v->Name . ( $v->Options ? ( ' ' . $v->Options ) : '' );
 		}
 	}
-	$conf->Libraries = $retObject->Libraries;
 	
+	$conf->Libraries = $retObject->Libraries;
+	$conf->Domain = $retObject->Domain; // Security domain
+
 	$init = '';
 	foreach( $retObject->Files as $k=>$v )
 	{
 		if( strtolower( substr( $v->Filename, -4, 4 ) ) == '.jsx' )
-		{ 
+		{
+			if( !strstr( $v->Path, ':' ) )
+				$v->Path = $ppath . $v->Path;
 			$init = $v->Path;
 		}
 	}
@@ -105,6 +124,37 @@ if( $retObject && isset( $retObject->ProjectName ) )
 		die( 'ok<!--separate-->' . json_encode( $conf ) );
 	}
 	die( 'fail' );
+}
+// API app goes straight on!
+else if( $level == 'API' )
+{
+	$conf = json_decode( $retData );
+	
+	// Create fapplication and fuser application if they do not exist..
+	$o = new DbIO( 'FApplication' );
+	$o->UserID = $User->ID;
+	$o->Name = $args->args->application;
+	$o->Config = $retData;
+	if( !$o->Load() )
+	{
+		$o->DateInstalled = date( 'Y-m-d H:i:s' );
+		$o->DateModified = $o->DateInstalled;
+		$o->Save();
+	}
+	if( !$o->ID ) die( 'fail<!--separate-->No application object!' );
+	
+	$fa = new DbIO( 'FUserApplication' );
+	$fa->UserID = $User->ID;
+	$fa->ApplicationID = $o->ID;
+	if( !$fa->Load() )
+	{
+		$fa->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . microtime() );
+		$fa->Save();
+	}
+	// TODO: Update authid sometime for guests..? No?
+	$conf->AuthID = $fa->AuthID;
+		
+	die( 'ok<!--separate-->' . json_encode( $conf ) );
 }
 // Installed application..
 else if( $row = $SqlDatabase->FetchObject( '
@@ -119,7 +169,7 @@ else if( $row = $SqlDatabase->FetchObject( '
 		$conf = json_decode( $row->Config );
 		$conf->Permissions = json_decode( $ur->Permissions );
 		$conf->AuthID = $ur->AuthID;
-		$conf->State = $ur->Data;
+		$conf->State = json_decode( $ur->Data );
 		$conf->ConfFilename = $fn;
 		
 		// Set user settings
@@ -132,13 +182,48 @@ else if( $row = $SqlDatabase->FetchObject( '
 			$conf->Path = str_replace( '../resources', '', $path ) . '/';
 		else $conf->Path = str_replace( '../resources', '', $conf->Path );
 		
-		die( 'ok<!--separate-->' . json_encode( $conf ) . '<!--separate-->' . $ur->Data );
+		// Icons, normal app icon, icon for dormant disk, dock icon
+		if( file_exists( 'resources/' . $conf->Path . 'icon.png' ) )
+			$conf->Icon = $conf->Path . 'icon.png';
+		if( file_exists( 'resources/' . $conf->Path . 'icon_door.png' ) )
+			$conf->IconDoor = $conf->Path . 'icon_door.png';
+		if( file_exists( 'resources/' . $conf->Path . 'icon_dock.png' ) )
+			$conf->IconDock = $conf->Path . 'icon_dock.png';
+		
+		$conf->UserConfig = $ur->Data;
+		
+		die( 'ok<!--separate-->' . json_encode( $conf ) );
 	}
 	die( 'activate<!--separate-->' . $row->Config );
 }
 else if ( $path = findInSearchPaths( $args->args->application ) )
 {
-	die( 'notinstalled<!--separate-->{"path":"' . $path . '"}' );
+	$trusted = 'n/a';
+	if( file_exists( $path . '/Config.conf') )
+	{
+		$trusted = 'nope';
+		try
+		{
+			$tmp = json_decode( file_get_contents( $path . '/Config.conf') );
+			if( $tmp && isset( $tmp->Trusted ) && strtolower( $tmp->Trusted ) == 'yes' ) $trusted = 'yes';
+		}
+		catch( Exception $e )
+		{
+			//dont do anything here....
+		}
+		if( substr( $path, 0, 11 ) == 'repository/' )
+		{
+			if( !file_exists( 'repository/' . $args->args->application . '/Signature.sig' ) )
+				die( 'fail<!--separate-->{"response":"application not signed"}' );
+			$s = file_get_contents( 'repository/' . $args->args->application . '/Signature.sig' );
+			$s = json_decode( $s );
+			if( $s && ( !$s->validated || $s->validated != $s->signature ) )
+			{
+				die( 'fail<!--separate-->{"response":"application not validated"}' );
+			}
+		}
+	}
+	die( 'notinstalled<!--separate-->{"path":"' . $path . '","trusted":"'. $trusted .'"}' );
 }
 die( 'fail<!--separate-->{"response": "not installed"}' );
 

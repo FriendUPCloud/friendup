@@ -13,30 +13,19 @@
 	-khtml-user-select: none;
 	-webkit-user-select: none;
 	user-select: none;
-
-	-webkit-transform: translateZ(0);
-	-moz-transform: translateZ(0);
-	-ms-transform: translateZ(0);
-	-o-transform: translateZ(0);
-	transform: translateZ(0);
 	
-	/*-webkit-perspective: 1000px;
-	-moz-perspective: 1000px;
-	-ms-perspective: 1000px;
-	-o-perspective: 1000px;
-	perspective: 1000px;*/
+	transition-property: top, left, opacity, transform;
+	-transition-property: top, left, opacity, transform;
+	-webkit-transition-property: top, left, opacity, transform;
+	transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
+	-moz-transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
+	-webkit-transition-duration: 0.3s, 0.3s, 0.3s, 0.3s;
+}
 
-	-webkit-backface-visibility: hidden;
-	-moz-backface-visibility: hidden;
-	-ms-backface-visibility: hidden;
-	backface-visibility: hidden;
-	
-	transition-property: top, opacity, transform;
-	-transition-property: top, opacity, transform;
-	-webkit-transition-property: top, opacity, transform;
-	transition-duration: 0.3s, 0.3s, 0.3s;
-	-moz-transition-duration: 0.3s, 0.3s, 0.3s;
-	-webkit-transition-duration: 0.3s, 0.3s, 0.3s;
+/* Always on top */
+.View[sticky=sticky]
+{
+	z-index: 2147483647 !important;
 }
 
 /* Don't animate moving of windows! */
@@ -47,15 +36,23 @@
 	-webkit-transition: none;
 }
 
-.View[minimized=minimized]
+/* Don't animate but the opacity when fading in a window */
+.View[created=created]
+{
+	transition: opacity 0.3s;
+	-moz-transition: opacity 0.3s;
+	-webkit-transition: opacity 0.3s;
+}
+
+.View[minimized=minimized], .View[hidden=hidden]
 {
 	top: 100% !important;
 	opacity: 0;
-	-webkit-transform: scale(0.2,0.2) !important;
-	-moz-transform: scale(0.2,0.2) !important;
-	-ms-transform: scale(0.2,0.2) !important;
-	-o-transform: scale(0.2,0.2) !important;
-	transform: scale(0.2,0.2) !important;
+	-webkit-transform: scale(1,0.1) !important;
+	-moz-transform: scale(1,0.1) !important;
+	-ms-transform: scale(1,0.1) !important;
+	-o-transform: scale(1,0.1) !important;
+	transform: scale(1,0.1) !important;
 }
 
 .View > .Toolbar
@@ -132,8 +129,8 @@
 	border-radius: 3px 3px 0 0;
 	-moz-border-radius: 3px 3px 0 0;
 	-webkit-border-radius: 3px 3px 0 0;
-	
 }
+_:-ms-fullscreen, :root .View > .Title { border-top-width: 1px; } /* IE11 */
 
 .View > .Title *
 {
@@ -148,7 +145,6 @@
 	top: 0;
 	height: 35px;
 	box-sizing: border-box;
-	max-width: 60%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	line-height: 34px;
@@ -182,6 +178,7 @@
 	background-color: $WinFrameBgActive;
 	border-top: $WinBorderTopActive;
 }
+_:-ms-fullscreen, :root .View.Active > .BottomBar { border-top-width: 1px; } /* IE11 */
 
 .View > .LeftBar
 {
@@ -219,7 +216,8 @@
 	width: 100%;
 	height: 0%;
 	cursor: hand;
-	cursor: move;	
+	cursor: move;
+	z-index: 999999999;
 }
 
 .View > .Resize
@@ -247,6 +245,7 @@
 	-moz-border-radius: 3px 3px 0 0;
 	-webkit-border-radius: 3px 3px 0 0;
 }
+_:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11 */
 
 .View.Active > .Resize
 {
@@ -370,18 +369,13 @@
 
 .View.HasPopupMenu > .Title > div > span:after
 {
-	content: '\2630';
-	margin: 0 0 0 5px;
-	position: relative;
-	top: 1px;
-	background: rgba(0,0,0,0.3);
-	padding: 2px;
-	border-radius: 4px;
+	content: "\f0c9";
+	position: absolute;
+	right: 12px;
 	text-align: center;
-	border-bottom: 1px solid rgba(255,255,255,0.4);
-	border-top: 1px solid rgba(0,0,0,0.4);
-	font-weight: bold;
+	font-weight: normal;
 	color: white;
+	font-family: fontawesome;
 }
 .View.HasPopupMenu > .Title > div > span:hover:after
 {
@@ -446,6 +440,17 @@
 	cursor: pointer;
 }
 
+.loadError
+{
+	color:#DBB;
+	width:calc(100% - 40px);
+	height:calc(100% - 40px);
+	padding:20px;
+	background:#DDD;
+	font-size:2rem;
+	text-align: center;
+}
+
 .VolumeGauge 
 {
     border-right: 3px solid $WinFrameBgBlur;
@@ -466,6 +471,7 @@
 
 .VolumeGauge > .Inner
 {
+	transition: height 0.5s;
     box-shadow: 0px 1px 3px rgba(0,0,0,0.5);
     position: absolute;
     bottom: 1px;
@@ -473,7 +479,7 @@
     right: 1px;
     box-sizing: border-box;
     height: 0%;
-    max-height: 100%;
+    max-height: calc(100% - 2px);
     background: $WinFrameBgBlur;
     border-top: 1px solid rgba(255,255,255,0.25);
     border-left: 1px solid rgba(255,255,255,0.0);
@@ -585,6 +591,13 @@
 	-webkit-box-shadow: inset 0px 0px 2px 2px #2F6699;
 }
 
+html .Screen > .TitleBar.Busy:after
+{
+	background-image: url(/themes/friendup/gfx/loading_corner.gif);
+	clip-path: ellipse(12px 12px at 12px 12px);
+	-webkit-clip-path: ellipse(12px 12px at 12px 12px);
+}
+
 /* Popup view --------------------------------------------------------------- */
 
 .PopupView
@@ -605,53 +618,17 @@
 /* Drag target CSS ---------------------------------------------------------- */
 .View.DragTarget
 {
-	box-shadow:2px 2px 10px 3px rgba(0,0,0,0.9);
+	box-shadow: 0 0 30px 1px rgba(255,255,255,0.8);
 }
 
 .File.DragTarget
 {
-	box-shadow:2px 2px 10px 3px rgba(0,0,0,0.9);
+	box-shadow: 0 0 30px 1px rgba(255,255,255,0.8);
 }
 
 #DoorsScreen.DragTarget .ScreenContent
 {
-	box-shadow:inset 0px 0px 30px 5px rgba(0,0,0,0.9);
-}
-
-.File > a.Download
-{
-	display:block;
-	position:absolute;
-	top:-2000px;
-	right:4px;
-	width:24px;
-	height:24px;
-	overflow:hidden;
-	z-index:100;
-	background:#FFF;
-	border-radius:5px;
-	padding:5;
-	line-height:20px;
-	white-space: nowrap;
-	box-shadow:0px 1px 6px rgba(0,0,0,0.4);
-	background:#FFF url(../gfx/icons/16x16/actions/download.png) center center no-repeat;	
-}
-
-.File.Selected > a.Download
-{
-	top:-5px;
-	right:-5px;
-}
-
-
-.File > a.Download.Active
-{
-	/*width:auto;*/
-	display:block;
-	overflow:show;
-	text-align:center;
-	background:rgba(255,255,255,0.8);
-	border-radius:10px;
+	box-shadow: inset 0px 0px 30px 1px rgba(0,0,0,0.9);
 }
 
 /* Friend graphics elements ------------------------------------------------- */
@@ -677,4 +654,195 @@
 {
 }
 
+/* Mobile menu -------------------------------------------------------------- */
+
+#MobileMenu
+{
+	display: none;
+}
+
+body[mobile=mobile] > #MobileMenu
+{
+	display: block;
+	position: fixed;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    bottom: 0;
+    transition: top,height 0.25s,0.25s;
+    -moz-transition: top,height 0.25s,0.25s;
+    -webkit-transition: top,height 0.25s,0.25s;
+}
+
+body[mobile=mobile] > #MobileMenu.Visible
+{
+	overflow-y: scroll;
+    box-sizing: border-box;
+    z-index: 2147483647;
+    left: 0;
+    width: 100%;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    padding: 20px;
+    top: 50px;
+}
+
+body[mobile=mobile] > #MobileMenu > div
+{
+    position: relative;
+    text-align: left;
+    padding: 0;
+    border-radius: 10px;
+    font-size: 150%;
+    z-index: 2;
+    margin: 0 0 20px 0;
+}
+
+body[mobile=mobile] > #MobileMenu > div:first-line
+{
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 105%;
+}
+
+body[mobile=mobile] > #MobileMenu > div li[divider=divider]
+{
+	display: none;
+}
+
+body > #MobileMenu > div > ul
+{
+	padding-top: 5px;
+}
+
+body[mobile=mobile] > #MobileMenu > div li, body > #MobileMenu > div ul
+{
+	list-style: none;
+	margin: 0; padding: 0;
+}
+
+body[mobile=mobile] > #MobileMenu > div li
+{
+	padding: 10px 0 0 0;
+	margin: 10px 0 0 0;
+	position: relative;
+}
+
+body[mobile=mobile] > #MobileMenu > div li.Disabled *
+{
+	opacity: 0.5;
+}
+
+body[mobile=mobile] > #MobileMenu > div li.Divider
+{
+	border-top: 2px solid rgba(255,255,255,0.5);
+	height: 2px;
+	padding: 0;
+	line-height: 0;
+}
+
+body[mobile=mobile] > #MobileMenu > div li.Divider + li
+{
+	margin: 0;
+}
+
+body[mobile=mobile] > #MobileMenu > div li.Divider + li:after
+{
+	display: none;
+}
+
+/* Line above li */
+body[mobile=mobile] > #MobileMenu > div li:after
+{
+	content: " ";
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 1px;
+	background: rgba(0,0,0,0.2);
+}
+
+body[mobile=mobile] > #MobileMenu > div li span.IconText
+{
+	margin: 0 0 0 8px;
+}
+
+body[mobile=mobile] > #MobileMenu div li span + .File
+{
+	top: -6px !important;
+	left: 0 !important;
+	margin: 0 !important;
+}
+
+/* Support icons */
+body[mobile=mobile] > #MobileMenu div li span + .File,
+body[mobile=mobile] > #MobileMenu div li span + .File *
+{
+    width: 32px !important;
+    height: 32px !important;
+    background-size: contain !important;
+    overflow: hidden;
+}
+body[mobile=mobile] > #MobileMenu div li span + .File .Title
+{
+	display: none;
+}
+
+body[mobile=mobile] > #MobileMenu.Visible > span.Close,
+body #MobileMenuClose
+{
+	position: fixed;
+	border-bottom: 2px solid rgba(0,0,0,0.2);
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 48px;
+	line-height: 48px;
+	background: white;
+    text-align: left;
+    padding: 0 20px;
+    display: block;
+    z-index: 2147483647;
+    font-size: 150%;
+    transition: top 0.25s,0.25s;
+    -moz-transition: top 0.25s,0.25s;
+    -webkit-transition: top 0.25s,0.25s;
+    color: black;
+}
+
+body[mobile=mobile] > #MobileMenuClose:before
+{
+	position: relative;
+    top: -1px;
+    margin: 0 10px 0 0;
+	
+}
+
+/* NativeViewContainer ------------------------------------------------------ */
+
+html .NativeViewContainer > .View
+{
+	top: 0px !important;
+	left: 0px !important;
+	width: 100% !important;
+	height: 100% !important;
+}
+
+html .NativeViewContainer > .View > .Title, 
+html .NativeViewContainer > .View > .LeftBar,
+html .NativeViewContainer > .View > .RightBar, 
+html .NativeViewContainer > .View > .BottomBar,
+html .NativeViewContainer > .View > .Resize
+{
+	display: none;
+}
+
+html .NativeViewContainer > .View > .Content
+{
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100%;
+}
 

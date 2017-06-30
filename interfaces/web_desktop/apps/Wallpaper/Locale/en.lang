@@ -4,8 +4,9 @@ Wallpaper                              : Wallpaper preferences
 i18n_cancel                            : Abort
 i18n_use                               : Use
 i18n_save                              : Save
-i18n_workbench                         : workspace backdrop
-i18n_windows                           : window backgrounds
+i18n_close                             : Close
+i18n_workbench                         : Workspace background
+i18n_windows                           : View Window backgrounds
 i18n_add_image                         : Add image
 i18n_available_images                  : Image archive
 i18n_no_images_in_folder               : No images available. Please create a Wallpaper directory in your Home door.

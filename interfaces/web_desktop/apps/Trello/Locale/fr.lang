@@ -1,0 +1,10 @@
+i18n_trello_menutitle : Trello
+i18n_trello_title : Trello
+i18n_file : Fichier
+i18n_trello_login : Connectez-vous à votre compte Trello
+i18n_trello_login_desc : Connectez-vous ici avec vos identifiants Trello. Ils seront automatiquement stockés dans FriendUP et vous vous connecterez automatiquement par la suite..
+i18n_email : Email
+i18n_password : Mot de passe
+i18n_wrong_creds : Identifiants incorrects. Merci d'essayer encore.
+i18n_save : Sauver
+menu_quit : Quitter

@@ -7,29 +7,29 @@
 
 	<div class="ToolbarInner">
 		<div class="HRow">
-			<div class="ToolButton IconSmall fa-bold" id="tBold" title="Set bold" onclick="editorCommand('bold')">
+			<div class="ToolButton IconSmall fa-bold" id="tBold" title="{i18n_set_bold}" onclick="editorCommand('bold')">
 				<em>B</em>
 			</div>
-			<div class="ToolButton IconSmall fa-italic" id="tItalic" title="Set italic" onclick="editorCommand('italic')">
+			<div class="ToolButton IconSmall fa-italic" id="tItalic" title="{i18n_set_italic}" onclick="editorCommand('italic')">
 				<em>I</em>
 			</div>
-			<div class="ToolButton IconSmall fa-underline" id="tUnderline" title="Set underline" onclick="editorCommand('underline')">
+			<div class="ToolButton IconSmall fa-underline" id="tUnderline" title="{i18n_set_underline}" onclick="editorCommand('underline')">
 				<em>U</em>
 			</div>
 			<div class="ToolDivider Divider1"></div>
-			<select id="ToolFormat" title="Set block format" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
-				<option value="default" selected="selected">Default style</option>
-				<option value="h1">Header 1</option>
-				<option value="h2">Header 2</option>
-				<option value="h3">Header 3</option>
-				<option value="h4">Header 4</option>
-				<option value="h5">Header 5</option>
-				<option value="h6">Header 6</option>
-				<option value="p">Paragraph</option>
+			<select id="ToolFormat" title="{i18n_set_block_format}" class="ToolSelect" onchange="editorCommand( 'format' + this.value )">
+				<option value="default" selected="selected">{i18n_default_style}</option>
+				<option value="h1">{i18n_header_1}</option>
+				<option value="h2">{i18n_header_2}</option>
+				<option value="h3">{i18n_header_3}</option>
+				<option value="h4">{i18n_header_4}</option>
+				<option value="h5">{i18n_header_5}</option>
+				<option value="h6">{i18n_header_6}</option>
+				<option value="p">{i18n_paragraph}</option>
 			</select>
 			<div class="ToolDivider Divider2"></div>
-			<select class="ToolSelect" title="Set document zoom" onchange="editorCommand( 'zoom' + this.value, 'store' )">
-				<option value="100%">Select zoom</option>
+			<select class="ToolSelect" title="{i18n_set_document_zoom}" onchange="editorCommand( 'zoom' + this.value, 'store' )">
+				<option value="100%">{i18n_select_zoom}</option>
 				<option value="">--------------------</option>
 				<option value="100%">100%</option>
 				<option value="125%">125%</option>
@@ -37,7 +37,7 @@
 				<option value="200%">200%</option>
 			</select>
 			<div class="ToolDivider Divider3"></div>
-			<select class="ToolSelect" id="FontSelector" title="Select font" onchange="editorCommand( 'fontType', this.value )">
+			<select class="ToolSelect" id="FontSelector" title="{i18n_select_font}" onchange="editorCommand( 'fontType', this.value )">
 				<option selected="selected" value="sans serif">Sans serif</option>
 				<option value="sans">Sans</option>
 				<option value="monospace">Monospace</option>
@@ -46,7 +46,7 @@
 				<option value="verdana">Verdana</option>
 				<option value="courier">Courier</option>
 			</select>
-			<select class="ToolSelect" id="FontSize" title="Font size" onchange="editorCommand( 'fontSize', this.value )">
+			<select class="ToolSelect" id="FontSize" title="{i18n_font_size}" onchange="editorCommand( 'fontSize', this.value )">
 				<option value="6pt">6pt</option>
 				<option value="7pt">7pt</option>
 				<option value="8pt">8pt</option>
@@ -67,20 +67,26 @@
 				<option value="56pt">56pt</option>
 			</select>
 			<div class="ToolDivider Divider4"></div>
-			<div class="ToolButton IconSmall fa-file-image-o" id="tImage" title="Insert image" onclick="editorCommand('image')">
+			<div class="ToolButton IconSmall fa-file-image-o" id="tImage" title="{i18n_insert_image}" onclick="editorCommand('image')">
 				<em>IMG</em>
 			</div>
 			<br style="clear: both"/>
-			<div class="ToolButton IconSmall fa-align-left" id="tAlignLeft" title="Align left" onclick="editorCommand('align-left')">
+			<div class="ToolButton IconSmall fa-align-left" id="tAlignLeft" title="{i18n_align_left}" onclick="editorCommand('align-left')">
 				<em>IMG</em>
 			</div>
-			<div class="ToolButton IconSmall fa-align-center" id="tAlignCenter" title="Align center" onclick="editorCommand('align-center')">
+			<div class="ToolButton IconSmall fa-align-center" id="tAlignCenter" title="{i18n_align_center}" onclick="editorCommand('align-center')">
 				<em>IMG</em>
 			</div>
-			<div class="ToolButton IconSmall fa-align-right" id="tAlignRight" title="Align right" onclick="editorCommand('align-right')">
+			<div class="ToolButton IconSmall fa-align-right" id="tAlignRight" title="{i18n_align_right}" onclick="editorCommand('align-right')">
 				<em>IMG</em>
 			</div>
-			<div class="ToolButton IconSmall fa-align-justify" id="tAlignJustify" title="Align justify" onclick="editorCommand('align-justify')">
+			<div class="ToolButton IconSmall fa-align-justify" id="tAlignJustify" title="{i18n_align_justify}" onclick="editorCommand('align-justify')">
+				<em>IMG</em>
+			</div>
+			<div class="ToolButton IconSmall fa-list-ul" id="tUnorderedBulletList" title="{i18n_unordered_bullet_points}" onclick="editorCommand('ulbullets')">
+				<em>IMG</em>
+			</div>
+			<div class="ToolButton IconSmall fa-list-ol" id="tOrderedBulletList" title="{i18n_ordered_bullet_point}" onclick="editorCommand('olbullets')">
 				<em>IMG</em>
 			</div>
 			<!--<div class="ToolDivider Divider5"></div>

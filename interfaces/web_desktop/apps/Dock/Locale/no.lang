@@ -1,0 +1,43 @@
+i18n_file                             : Fil
+i18n_quit                             : Avslutt
+i18n_application                      : Applikasjon
+i18n_description                      : Beskrivelse
+i18n_icon                             : Ikon
+i18n_sort_order                       : Sortering
+i18n_add_dock_item                    : Nytt dock ikon
+i18n_quit                             : Avslutt
+i18n_save                             : Lagre
+i18n_remove                           : Fjern
+i18n_you_sure                         : Er du sikker?
+i18n_you_sure_text                    : Ønsker du virkelig å fjerne dette elementet?
+i18n_item_exists                      : Dock ikonet eksisterer
+i18n_item_exists_desc                 : Dette ikonet eksisterer allerede i dock'en. Du kan kun legge til ett ikon én gang.
+i18n_standard_dock                    : Standard dock
+i18n_dock_list                        : Dock liste
+i18n_dock_layout                      : Layout
+i18n_dock_position                    : Posisjon
+i18n_dock_coords                      : X/Y koordinater
+i18n_save_dock                        : Lagre dock
+i18n_add_dock                         : Ny dock
+i18n_dock_size                        : Størrelse
+i18n_standard_dock                    : Standard dock
+i18n_left_top                         : Venstre topp
+i18n_left_center                      : Venstre senter
+i18n_left_bottom                      : Venstre bunn
+i18n_right_top                        : Høyre topp
+i18n_right_center                     : Høyre senter
+i18n_right_bottom                     : Høyre bunn
+i18n_top_left                         : Topp venstre
+i18n_top_center                       : Topp senter
+i18n_top_right                        : Topp høyre
+i18n_bottom_left                      : Bunn venstre
+i18n_bottom_center                    : Bunn senter
+i18n_bottom_right                     : Bunn høyre
+i18n_aligned                          : Justert
+i18n_fixed                            : Fast
+i18n_extra_large                      : Ekstra stor
+i18n_large                            : Stor
+i18n_medium                           : Medium
+i18n_small                            : Liten
+i18n_dock_editor                      : Dock editor
+

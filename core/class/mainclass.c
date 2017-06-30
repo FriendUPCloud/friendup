@@ -1,41 +1,62 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ *
+ *  Core MAIN class handling
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @author JMN (John Michael Nilsen)
+ *  @date pushed 06/02/2015
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
 #include <core/types.h>
 #include <class/rootclass.h>
 
-
+#ifndef DOXYGEN
+// TODO FL>PS Remove this?
 struct Data
 {
-	ULONG test;
+	FULONG test;
 };
+#endif
 
-//
-//
-//
-
-ULONG mainNew( Class *c, Object *o, struct Msg *msg )
+/**
+ * Creates a new MAIN class object
+ *
+ * This function is not used in the system
+ *
+ * @param c pointer to class
+ * @param o not used in this version (FL>PS what is its use?)
+ * @param msg pointer to message structure
+ * @return the created class
+ * @return NULL is failed
+ *
+ * @todo FL>PS exploration of the list of message should be removed in release version
+ */
+FULONG mainNew( Class *c, Object *o, struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
 	struct TagItem *lt = (set->ops_AttrList);
@@ -56,16 +77,20 @@ ULONG mainNew( Class *c, Object *o, struct Msg *msg )
 
 	DEBUG("MAINNEW return new object at ptr %p\n", newObject );
 
-	return (ULONG)newObject;
+	return (FULONG)newObject;
 }
 
-//
-//
-//
-
-ULONG mainDispose( Class *c, Object *o, struct Msg *msg )
+/**
+ * Destroys a MAIN class object
+ *
+ * @param c pointer to class
+ * @param o pointer to object o detroy
+ * @param msg pointer to message structure
+ * @return 0
+ */
+FULONG mainDispose( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 
 	DEBUG("MAINDISPOSE start\n");
 
@@ -84,18 +109,24 @@ ULONG mainDispose( Class *c, Object *o, struct Msg *msg )
 	return res;
 }
 
-//
-//
-//
-
-ULONG mainSet( Class *c, Object *o, struct Msg *msg )
+/**
+ * Destroys a MAIN class object
+ *
+ * @param c class to destroy
+ * @param o object associated with the class (FL>PS what is its use?)
+ * @param msg pointer to message structure
+ * @return 0
+ *
+ * @todo FL>PS exploration of the list of message should be removed in release version
+ *
+ */
+FULONG mainSet( Class *c, Object *o, struct Msg *msg )
 {
-	ULONG res = 0;
-
-	DEBUG("MAINNEW set\n");
+	FULONG res = 0;
 
 	struct opSet *set = (struct opSet *)msg;
 	struct TagItem *lt = (set->ops_AttrList);
+	DEBUG("MAINNEW set\n");
 
 	while( lt->ti_Tag != TAG_END )
 	{
@@ -109,11 +140,20 @@ ULONG mainSet( Class *c, Object *o, struct Msg *msg )
 }
 
 
-// DoMethod 
-
-ULONG mainDispatcher( struct Class *c, Object *o, struct Msg *m )
+/**
+ * Dispatchs messages within a MAIN class
+ *
+ * @param c class to dispatch to
+ * @param o object associated with the class (FL>PS what is its use?)
+ * @param msg pointer to message structure
+ * @return value returned by the message handling routines of the class
+ * @return NULL if message don't exist
+ *
+ * @todo FL>PS many messages not implemented
+ */
+FULONG mainDispatcher( struct Class *c, Object *o, struct Msg *m )
 {
-	ULONG retVal = (ULONG)NULL;
+	FULONG retVal = (FULONG)NULL;
 	// we dont call super methods beacouse this method is done on root
 	DEBUG("MAINNEW dispatcher MID %ld \n", m->MethodID );
 	//o->curr_MethodID = m->MethodID;

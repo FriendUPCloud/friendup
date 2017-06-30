@@ -9,4 +9,7 @@ i18n_windows                           : Individuelle vinduer
 i18n_add_image                         : Legg til bilde
 i18n_available_images                  : Bildearkiv
 i18n_no_images_in_folder               : Det finnes ikke bilder å bruke. Du må opprette en mappe med navn "Wallpaper" i Home luken din.
+i18n_add_desc                          : Velg bilder fra disk til bakgrunnsakrivet.
+i18n_wp_for                            : Bakgrunn for
+i18n_close                             : Lukk
 

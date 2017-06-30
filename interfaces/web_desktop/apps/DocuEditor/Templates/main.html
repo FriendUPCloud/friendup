@@ -1,0 +1,68 @@
+
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>
+	<script src="Progdir:main.js"></script>
+	
+	<div class="ContentFull">
+		<div class="VContentTop BackgroundDefault ColorDefault BorderBottom TopArea Padding">
+			<div class="HRow">
+				<div class="HContent40 FloatLeft">
+					<div class="HContent30 FloatLeft">
+						<p class="InputHeight">
+							<strong>{i18n_find}:</strong>
+						</p>
+					</div>
+					<div class="HContent65 FloatLeft">
+						<p class="Layout">
+							<input class="InputHeight FullWidth" type="text" placeholder="{i18n_topic_lower}..." onkeydown="catchSearch(event, this.value)"/>
+						</p>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+				</div>
+				<div class="HContent60 FloatLeft">
+					<div class="HContent30 FloatLeft">
+						<button id="btnnew" class="Button FullWidth IconSmall fa-bug" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							{i18n_new}
+						</button>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+					<div class="HContent30 FloatLeft">
+						<button id="btnver" class="Button FullWidth IconSmall fa-thumbs-up" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							{i18n_pending}
+						</button>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+					<div class="HContent30 FloatLeft">
+						<button id="btnfix" class="Button FullWidth IconSmall fa-check" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							{i18n_published}
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentTopBorderBottom">
+			<div class="HRow">
+				<div class="HContent65 FloatLeft BackgroundLists ScrollArea Right TopScroller Padding" id="Topics">
+				</div>
+				<div class="HContent35 BorderRight FloatLeft BackgroundLists TopScroller ScrollArea Padding" id="Structure">
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom BackgroundToolbar BottomPart">
+			<div class="Padding">
+				<button type="button" class="Button IconSmall fa-plus" onclick="topicWin()">
+					{i18n_add_topic}
+				</button>
+				<button type="button" class="Button IconSmall fa-plus" onclick="importTopic()">
+					{i18n_import}
+				</button>
+			</div>
+		</div>
+		
+	</div>
+

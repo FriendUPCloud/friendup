@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 // Screen class to support multiple screens
 Screen = function ( flags, initObject )
@@ -24,7 +24,7 @@ Screen = function ( flags, initObject )
 	
 	if ( typeof ( flags ) == 'object' )
 	{
-		for ( var a in flags )
+		for( var a in flags )
 		{
 			this._flags[a] = flags[a];
 		}
@@ -54,6 +54,14 @@ Screen = function ( flags, initObject )
 				var e = this.div.screenTitle.getElementsByClassName( 'Info' )[0]; 
 				e.innerHTML = value;
 				break;
+			
+			case 'extra':
+				this._flags[ flag ] = value;
+				var e = this.div.screenTitle.getElementsByClassName( 'Extra' )[0]; 
+				e.innerHTML = value;
+				break;	
+			
+			case 'theme':	
 			case 'background':
 				this._flags[ flag ] = value;
 				break;
@@ -65,7 +73,7 @@ Screen = function ( flags, initObject )
 		this._flags['title'] = 'Unknown screen';
 	}
 	
-	// TODO: Make dynamic!
+	// TODO: Make dynamic! And it's only for the doors menu!!
 	var statusbar = '';
 	if( this._flags.taskbar )
 	{
@@ -75,7 +83,8 @@ Screen = function ( flags, initObject )
 			"	</div>" + 
 			"	<div id=\"StatusBox\">" +
 			"	</div>" +
-			"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
+			//"   <div id=\"Tray\"><div class=\"Microphone IconSmall fa-microphone-slash\"></div>" +
+			"   <div id=\"Tray\"></div>" +
 			"   </div>" +
 			"</div>";
 	}
@@ -106,7 +115,7 @@ Screen = function ( flags, initObject )
 		div.innerHTML = "" +
 		"<div class=\"TitleBar\">" +
 		"	<div class=\"Right\">" +
-		"		<div class=\"ScreenList\"><img src=\"gfx/system/window_depth.png\"/></div>" +
+		"		<div class=\"ScreenList MousePointer\"><img src=\"gfx/system/window_depth.png\"/></div>" +
 		"	</div>" +
 		"	<div class=\"Left\">" +
 		"		<div class=\"Info\">" + this._flags['title'] + "</div>" +
@@ -174,10 +183,20 @@ Screen = function ( flags, initObject )
 	// Register clicks
 	div.onmousedown = function( e )
 	{
+		var t = e.target ? e.target : e.srcElement;
 		if( !e ) e = window.event;
 		if( e.button != 0 ) return;
 		window.currentScreen = this;
 		CheckScreenTitle();
+		
+		// Deactivate all windows when clicking on the desktop wallpaper
+		if ( 
+			( t.id && t.id == 'DoorsScreen' ) || 
+			( !t.id && t.parentNode.id == 'DoorsScreen' && t.className == 'ScreenContent' ) 
+		)
+		{
+			_DeactivateWindows();
+		}
 	}
 	if( this.iframe )
 	{
@@ -204,11 +223,11 @@ Screen = function ( flags, initObject )
 	var scroverl = false;
 	for ( var a = 0; a < divs.length; a++ )
 	{
-		if ( divs[a].className && divs[a].className == 'ScreenList' )
+		if ( divs[a].className && divs[a].classList.contains( 'ScreenList' ) )
 			btncycle = divs[a];
-		else if ( divs[a].className && divs[a].className == 'ScreenOverlay' )
+		else if ( divs[a].className && divs[a].classList.contains( 'ScreenOverlay' ) )
 			scroverl = divs[a];
-		else if( divs[a].className && divs[a].className == 'ScreenContent' )
+		else if( divs[a].className && divs[a].classList.contains( 'ScreenContent' ) )
 			this.contentDiv = divs[a];
 	}
 	if ( btncycle )
@@ -216,7 +235,7 @@ Screen = function ( flags, initObject )
 		var o = this;
 		btncycle.onclick = function ()
 		{
-			o.screenCycle ();
+			o.screenCycle();
 		}
 	}
 	
@@ -241,6 +260,10 @@ Screen = function ( flags, initObject )
 	{
 		return cancelBubble( e );
 	}
+	div.screenTitle.onselectstart = function( e )
+	{
+		return cancelBubble( e );
+	}
 	div.screenTitle.onmousedown = function ( e )
 	{
 		if ( !e ) e = window.event;
@@ -249,6 +272,8 @@ Screen = function ( flags, initObject )
 		
 		// Set current screen
 		window.currentScreen = this.parentNode;
+		
+		// Check menu and stuff
 		CheckScreenTitle();
 		
 		var y = e.clientY ? e.clientY : e.pageYOffset;
@@ -260,9 +285,8 @@ Screen = function ( flags, initObject )
 		this.parentNode.offx = x - offl;
 		this.parentNode.offy = y - offt;
 		
-		window.currentScreen = div;
 		window.mouseDown = FUI_MOUSEDOWN_SCREEN;
-		window.mouseReleaseFunc = function ( e )
+		window.mouseReleaseFunc = function( e )
 		{
 			// Disable all screen overlays
 			var screenc = ge ( 'Screens' );
@@ -284,8 +308,6 @@ Screen = function ( flags, initObject )
 			
 			div.style.top = ty + 'px';
 			
-			document.body.style.cursor = 'pointer';
-			
 			// Enable all screen overlays
 			var screenc = ge ( 'Screens' );
 			var screens = screenc.getElementsByTagName ( 'div' );
@@ -296,26 +318,142 @@ Screen = function ( flags, initObject )
 				screens[a]._screenoverlay.style.display = '';
 			}
 		}
-		
 		return cancelBubble ( e );
 	}
 	// Alias clicking the screen
-	div.onmouseup = function ( e ) 
+	div.onmouseup = function( e )
 	{ 
-		var t = e.target ? e.target : e.srcElement;
-		
 		// Only left button clicks!
 		if( e.button != 0 ) return false;
+	}
+	
+	var scrn = this;
+	
+	// Check if we have content with no overflow
+	if( this._flags.scrolling === false )
+	{
+		this.contentDiv.style.overflow = 'hidden';
+	}
+	
+	// Touch start show menu!
+	scrn.contentDiv.parentNode.addEventListener( 'touchstart', function( e )
+	{
+		// Set the screen quickly..
+		window.currentScreen = div;
+		CheckScreenTitle();
 		
-		// Deactivate all windows when clicking on the desktop wallpaper
-		if ( 
-			t.id && t.id == 'DoorsScreen' || 
-			( !t.id && t.parentNode.id == 'DoorsScreen' && t.className == 'ScreenContent' ) 
-		)
+		// check for other touch start action
+		if( scrn.contentDiv.onTouchStartAction )
+			if( scrn.contentDiv.onTouchStartAction( e ) )
+				return cancelBubble( e );
+				
+		var t = e.target ? e.target : e.srcElement;
+		
+		// We are registering a click inside
+		if( !( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) )
 		{
 			_DeactivateWindows();
+			var tp = e.changedTouches[0];
+			if( !scrn.touch ) scrn.touch = {};
+			scrn.touch.ox = scrn.contentDiv.parentNode.offsetLeft;
+			scrn.touch.oy = scrn.contentDiv.parentNode.offsetTop;
+		
+			scrn.touch.tx = scrn.touch.ox - tp.clientX;
+			scrn.touch.ty = scrn.touch.oy - tp.clientY;
+		
+			scrn.clickTimeout = setTimeout( function()
+			{
+				workspaceMenu.show();
+				ge( 'MobileMenu' ).classList.add( 'Visible' );
+				ge( 'MobileMenu' ).scrollTop = 0;
+				_addMobileMenuClose();
+			}, 1000 );
+		
+			// Click in the corner, or the gadget when pulling screens
+			if( tp.clientX > scrn.contentDiv.parentNode.offsetWidth - 32 && scrn.touch.ty > -32 )
+			{
+				scrn.screenCycle();
+				scrn.touchCycled = true; // << prevent the touchmove to occur
+				scrn.touchMoving = true; // 
+				return cancelBubble( e );
+			}
+		
+			// We own this domain..
+			if( t.classList && ( t.classList.contains( 'ScreenContent' ) || t.classList.contains( 'TitleBar' ) ) )
+				return cancelBubble( e );
 		}
-	}
+		
+		// Make clicking work!
+		if( t.onclick )
+		{
+			t.onclick( e );
+			return cancelBubble( e );
+		}
+		
+	}, true );
+	
+	scrn.touchCycled = false; // we didn't cycle before
+	scrn.touchMoving = false;
+	
+	scrn.contentDiv.parentNode.addEventListener( 'touchmove', function( e )
+	{
+		var t = e.target ? e.target : e.srcElement;
+		if( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) return;
+		
+		var tp = e.changedTouches[0];
+		scrn.touch.mx = tp.clientX;
+		scrn.touch.my = tp.clientY;
+		var diffy = scrn.touch.ty + ( scrn.touch.my - scrn.touch.oy );
+		var diffx = scrn.touch.tx + ( scrn.touch.mx - scrn.touch.ox );
+		if( !scrn.touchCycled && Math.abs( diffx ) > ( window.innerWidth * 0.8 ) )
+		{
+			scrn.touchCycled = true;
+			scrn.screenCycle();
+		}
+		else if( Math.abs( diffy ) > 5 ) 
+		{
+			var top = scrn.touch.oy + diffy;
+			if( top < 0 ) top = 0;
+			if( top + 40 > scrn.contentDiv.parentNode.offsetHeight )
+				top = scrn.contentDiv.parentNode.offsetHeight - 40;
+			if( top != 0 )
+			{
+				scrn.contentDiv.parentNode.setAttribute( 'moved', 'moved' );
+			}
+			else scrn.contentDiv.parentNode.setAttribute( 'moved', '' );
+			scrn.contentDiv.parentNode.style.top = top + 'px';
+			
+			// No need for menu here
+			if( scrn.clickTimeout )
+			{
+				clearTimeout( scrn.clickTimeout );
+				scrn.clickTimeout = false;
+			}
+		}
+		if( !scrn.touchMoving )
+		{
+			scrn.touchMoving = true;
+			// You have 0.5 secs to switch screens!
+			scrn.touchCycleTimeout = setTimeout( function()
+			{
+				scrn.touchCycled = true;
+			}, 500 );
+		}
+		return cancelBubble( e );
+	} );
+	
+	scrn.contentDiv.parentNode.addEventListener( 'touchend', function( e )
+	{
+		if( scrn.clickTimeout )
+			clearTimeout( scrn.clickTimeout );
+		if( scrn.touchCycleTimeout )
+			clearTimeout( scrn.touchCycleTimeout );
+		if( scrn.menuTimeout )
+			clearTimeout( scrn.menuTimeout );
+		scrn.touchCycled = false; // reset
+		scrn.touchMoving = false;
+	} );
+	
 	
 	this.div = div;
 	div.screenObject = this;
@@ -325,6 +463,14 @@ Screen = function ( flags, initObject )
 	if( div.addEventListener )
 		div.addEventListener( 'scroll', function(){ div.scrollTop = 0; } );
 	else div.attachEvent( 'onscroll', function(){ div.scrollTop = 0; } );
+	
+	// Clear on release
+	function clearOverlay()
+	{
+		div._screenoverlay.style.display = 'none';
+	}
+	div.addEventListener( 'touchend', clearOverlay, true );
+	div.addEventListener( 'mouseup', clearOverlay, true );
 	
 	// Gets all divs here
 	this.getElementsByTagName = function ( ele )
@@ -383,9 +529,11 @@ Screen = function ( flags, initObject )
 		}
 		// Normalize z-indexes
 		var max = 1;
+		var highest = false;
 		for( var z = 0; z < subs.length; z++ )
 		{
 			subs[z].style.zIndex = z+1;
+			highest = subs[z];
 			max = z+1;
 		}
 		// Flip to front
@@ -393,25 +541,31 @@ Screen = function ( flags, initObject )
 			this.div.style.zIndex = max+1; 
 		// Flip to back
 		else this.div.style.zIndex = 0;
+		return highest; // Highest order!
 	}
 	
 	// Set content (securely!) in a sandbox, callback when completed
 	this.setContentIframed = function( content, domain, packet, callback )
 	{
+		var scrn = this;
+		
 		if( !domain )
 		{
-			// TODO: Figure out the correct url (not utilities - that's hard coded )
-			//domain = document.location.href.split( Workspace.protocol + '://' ).join ( Workspace.protocol + '://utilities.' ); // <- please connect it again
 			domain = document.location.href + '';
 			domain = domain.split( 'index.html' ).join ( 'sandboxed.html' );
+			domain = domain.split( 'app.html' ).join( 'sandboxed.html' );
+		}	
 			
-			// Oh we have a conf?
-			if( this.conf )
-			{
-				domain = '/system.library/module/?module=system&command=sandbox' +
-					'&sessionid=' + Workspace.sessionId +
-					'&conf=' + JSON.stringify( this.conf );
-			}
+		// Oh we have a conf?
+		if( this.conf )
+		{
+			domain += '/system.library/module/?module=system&command=sandbox' +
+				'&sessionid=' + Workspace.sessionId +
+				'&conf=' + JSON.stringify( this.conf );
+		}
+		else if( domain.indexOf( 'sandboxed.html' ) <= 0 )
+		{
+			domain += '/webclient/sandboxed.html';
 		}
 		
 		// Make sure scripts can be run after all resources has loaded
@@ -427,27 +581,42 @@ Screen = function ( flags, initObject )
 		c.innerHTML = '';
 		var ifr = document.createElement( 'iframe' );
 		ifr.className = 'Content';
-		ifr.setAttribute('allowfullscreen', 'true')
+		ifr.setAttribute( 'allowfullscreen', 'true' )
 		ifr.src = domain;
 		if( packet.applicationId )
 			this._screen.applicationId = packet.applicationId;
 		if( packet.authId ) this._screen.authId = packet.authId;
 		if( packet.applicationName ) this._screen.applicationName = packet.applicationName;
+		packet.screenId = this.externScreenId; // Register screen id
 		ifr.onload = function()
 		{
 			var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 			msg.command = 'setbodycontent';
+			msg.locale = Workspace.locale;
+			// Authid is important, should not be left out if it is available
+			if( !msg.authId )
+			{
+				if( ifr.authId ) msg.authId = ifr.authId;
+				else if( GetUrlVar( 'authid' ) ) msg.authId = GetUrlVar( 'authid' );
+			}
+			// Override the theme
+			if( scrn.getFlag( 'theme' ) ) msg.theme = scrn.getFlag( 'theme' );
+			// Use this if the packet has it
+			if( !msg.sessionId )
+			{
+				if( packet.sessionId ) msg.sessionId = packet.sessionId;
+			}
 			if( packet.filePath )
 				msg.data = content.split( /progdir\:/i ).join( packet.filePath );
 			else msg.data = content;
-			if( msg.data && msg.data.splut )
+			if( msg.data && msg.data.split )
 				msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 			if( !msg.origin ) msg.origin = document.location.href;
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 			if( callback ) callback();
 		}
 		this.iframe = ifr;
-		// TODO: Fixie - make ScreenContent automatically have top under the titlebar!
+		// Position content
 		ifr.style.position = 'absolute';
 		ifr.style.border = 'none';
 		ifr.style.height = document.body.offsetHeight - this._titleBar.offsetHeight + 'px';
@@ -491,7 +660,6 @@ Screen = function ( flags, initObject )
 		ifr.style.left = '0';
 		ifr.style.width = '100%'; 
 		ifr.style.height = this._titleBar ? ( 'calc(100% - ' + ( this._titleBar.offsetHeight + 'px' ) + ')' ) : '100%';
-		
 		
 		// Find our friend
 		// TODO: Only send postmessage to friend targets (from our known origin list (security app))
@@ -538,7 +706,9 @@ Screen = function ( flags, initObject )
 					applicationId: appId,
 					filePath:      filePath,
 					origin:        document.location.href,
-					screenId:      w.externScreenId
+					screenId:      w.externScreenId,
+					theme:         Workspace.theme,
+					clipboard:     friend.clipboard
 				} );
 				ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				ifr.loaded = true;
@@ -553,9 +723,11 @@ Screen = function ( flags, initObject )
 		// Oh we have a conf?
 		if( this.conf && url.indexOf( Workspace.protocol + '://' ) != 0 )
 		{
+			var cnf = this.conf;
+			if( typeof( this.conf ) == 'object' ) cnf = '';
 			ifr.src = '/system.library/module/?module=system&command=sandbox' +
 				'&sessionid=' + Workspace.sessionId +
-				'&url=' + encodeURIComponent( url ) + '&conf=' + this.conf;
+				'&url=' + encodeURIComponent( url ) + '&conf=' + cnt;
 		}
 		else ifr.src = url;
 		this.isRich = true;
@@ -563,8 +735,11 @@ Screen = function ( flags, initObject )
 	}
 	
 	// Set menu items on window
-	this.setMenuItems = function( obj, appid )
+	this.setMenuItems = function( obj, appid, screenId )
 	{
+		// Set destination
+		if( screenId ) div.menuScreenId = screenId;
+		// Set items
 		div.menu = obj;
 		if( appid )
 		{
@@ -574,12 +749,11 @@ Screen = function ( flags, initObject )
 	
 	this.close = function ()
 	{
-		this.screenCycle ();
+		currentScreen = this.screenCycle();
 		if( this.div.parentNode )
-		{
-			this.div.parentNode.removeChild ( this.div );
-		}
+			this.div.parentNode.removeChild( this.div );
 		delete this;
+		CheckScreenTitle();
 	}
 	
 	// Send a message
@@ -606,6 +780,31 @@ Screen = function ( flags, initObject )
 				this.sendQueue = [];
 			this.sendQueue.push( dataObject );
 		}
+	}
+	
+	this.displayOfflineMessage = function()
+	{
+		//console.log('show htat we are offline...');
+		var offline = this.div.getElementsByClassName( 'Offline' )[0];
+		if( offline )
+		{
+			offline.style.display = 'block';
+		}
+		else
+		{
+
+			offline = document.createElement( 'div' );
+			offline.className = 'Offline';
+			offline.innerHTML = i18n('i18n_server_disconnected');
+			this.div.appendChild( offline );
+			
+		}
+	}
+	
+	this.hideOfflineMessage = function()
+	{
+		var offline = this.div.getElementsByClassName( 'Offline' )[0];
+		if( offline ) offline.style.display = 'none';
 	}
 	
 	// Go through flags
@@ -639,37 +838,8 @@ Screen = function ( flags, initObject )
     // Let's poll the tray!
 	if( statusbar.length )
         PollTray();
+        
+      
 }
 
-// Changing screens on swipe
-if( window.isMobile )
-{
-
-	var touchDowned = 0;
-	var touchStart = [];
-	var touchEnd = [];
-
-	setupScreenTouchEvents()
-}
-
-
-function setupScreenTouchEvents()
-{
-	window.addEventListener('touchstart', function(evt) {
-		 touchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
-		 touchDowned = evt.timeStamp;
-	});
-	window.addEventListener('touchmove', function(evt) {
-		//we dont really do aniything here....
-		//console.log('we have registered a touch MOVE...',evt);
-	});
-	window.addEventListener('touchend', function(evt) { 
-		touchEnd =  [ evt.changedTouches[0].clientX, evt.changedTouches[0].clientY ];
-		if( evt.timeStamp - touchDowned > 10 && evt.timeStamp - touchDowned < 150 && Math.abs( touchStart[0] - touchEnd[0] ) > 100 && Math.abs( touchStart[0] - touchEnd[0] ) > Math.abs( touchStart[1] - touchEnd[1] ) )
-		{
-			// we have at least 100px horizontal and more horizonal than vertical... lets call it a screen swipe.
-			if( currentScreen && currentScreen.screenObject )  currentScreen.screenObject.screenCycle();	
-		}
-	});
-}
 

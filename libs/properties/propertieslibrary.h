@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -49,13 +50,13 @@ typedef struct Props
 typedef struct PropertiesLibrary
 {
 	char                 *l_Name;	// library name
-	ULONG                l_Version;		// version information
+	FULONG                l_Version;		// version information
 	void                 *l_Handle;
 	void				  *sb; // system base
 	void                 *(*libInit)( void * );
 	void                 (*libClose)( struct Library *l );
-	ULONG                (*GetVersion)(void);
-	ULONG                (*GetRevision)(void);
+	FULONG                (*GetVersion)(void);
+	FULONG                (*GetRevision)(void);
 
 	// properties.library structure
 	// open property file

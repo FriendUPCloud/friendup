@@ -1,41 +1,468 @@
-/*
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
+/** @file
  * 
- * 
- * 
- * 
- * 
- * 
- * 
+ *  log body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 18/01/2016
  */
 
 #include "log.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <errno.h>
 #include <time.h>
+#include <core/library.h>
+#include <properties/propertieslibrary.h>
 
-FILE *fp;
+// Max size of string 
+#define MAXMSG 8196
 
-//
-// init log
-//
+FlogFlags slg;
 
-int LogNew( char *fname )
+/**
+ * Init logging
+ *
+ * @param fname log file name
+ * @param conf path to configuration file
+ * @param toFile 1 if we want store logs inside files
+ * @param lvl level of logs which will be displayed on console
+ * @param flvl level of logs which will be stored inside log file
+ * @param maxSize number of maxiumum chars which will be stored in one log file
+ */
+
+int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, int maxSize )
 {
-	time_t t = time(NULL);
-struct tm tm = *localtime(&t);
+	int status = 0;
+
+	slg.ff_Level = lvl;
+	slg.ff_FileLevel = flvl;
+	slg.ff_ToFile = toFile;
+	slg.ff_Pretty = 0;
+	slg.ff_Time = -1;
+	slg.ff_TdSafe = 1;
+	slg.ff_FP = NULL;
+	slg.ff_Fname = NULL;
+	slg.ff_MaxSize = 0;
+	slg.ff_LogNumber = 0;
+	slg.ff_Size = 0;
+	slg.ff_MaxSize = 0;
+	slg.ff_ArchiveFiles = 0;
+	
+	if( maxSize >= 100000 )
+	{
+		slg.ff_MaxSize =  (FUQUAD)maxSize;
+	}
+
+	PropertiesLibrary *plib = (struct PropertiesLibrary *)LibraryOpen( NULL, "properties.library", 0 );
+	if( plib != NULL )
+	{
+		Props *prop = NULL;
+		char *ptr, path[ 1024 ];
+		path[ 0 ] = 0;
+	
+		ptr = getenv("FRIEND_HOME");
+		if( ptr != NULL )
+		{
+			sprintf( path, "%scfg/cfg.ini", ptr );
+		}
+
+		prop = plib->Open( path );
+		if( prop != NULL)
+		{
+			slg.ff_Level = plib->ReadInt( prop, "Log:level", 1 );
+			slg.ff_ArchiveFiles =  plib->ReadInt( prop, "Log:archiveFiles", 0 );
+			
+			slg.ff_FileLevel  = plib->ReadInt( prop, "Log:fileLevel", 1 );
+			slg.ff_Fname = plib->ReadString( prop, "Log:fileName", (char *)fname );
+			
+			plib->Close( prop );
+		}
+	
+		LibraryClose( plib );
+	}
+
+	if ( pthread_mutex_init(&slg.logMutex, NULL) )
+	{
+		printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
+	}
+
+	if ( conf != NULL && slg.ff_Fname != NULL ) 
+	{
+		slg.ff_Fname = fname;
+		//status = LogParseConfig(conf);
+	}
+	
+	if( slg.ff_ArchiveFiles > 0 )
+	{
+		if( ( slg.ff_FileNames = FCalloc( slg.ff_ArchiveFiles, sizeof( char *) ) ) != NULL )
+		{
+			int i;
+			int size = strlen( slg.ff_Fname );
+			
+			for( i=0 ; i < slg.ff_ArchiveFiles ; i++ )
+			{
+				if( ( slg.ff_FileNames[ i ] = FCalloc( size*2, sizeof(char) ) ) != NULL )
+				{
+					
+				}
+			}
+		}
+	}
 	
 	return 0;
 }
 
-//
-// release log
-//
+/**
+ * Release logging
+ */
 
 void LogDelete( )
 {
-	if( fp != NULL )
+	if( slg.ff_FileNames != NULL )
 	{
-		fclose( fp );
-		fp = NULL;
+		int i = 0;
+		for( ; i < slg.ff_ArchiveFiles; i++ )
+		{
+			if( slg.ff_FileNames[ i ] != NULL )
+			{
+				FFree( slg.ff_FileNames[ i ] );
+			}
+			FFree( slg.ff_FileNames );
+		}
+	}
+	
+	if( slg.ff_FP != NULL )
+	{
+		fclose( slg.ff_FP );
+		slg.ff_FP = NULL;
+	}
+	
+	pthread_mutex_destroy( &slg.logMutex );
+}
+
+/**
+ * Move information to log. Use LOG() macro to store name of file + line number
+ *
+ * @param lev level of logged message
+ * @param fmt format of message (same like in printf)
+ * @param ... other parameters
+ */
+
+void Log( int lev, char* fmt, ...) 
+{
+	if( slg.ff_ToFile == TRUE )
+	{
+		time_t rawtime;
+		struct tm timeinfo;
+		rawtime = time(NULL);
+		localtime_r(&rawtime, &timeinfo);
+
+		// Get System Date 
+		slg.ff_FD.fd_Year = timeinfo.tm_year+1900;
+		slg.ff_FD.fd_Mon = timeinfo.tm_mon+1;
+		slg.ff_FD.fd_Day = timeinfo.tm_mday;
+		slg.ff_FD.fd_Hour = timeinfo.tm_hour;
+		slg.ff_FD.fd_Min = timeinfo.tm_min;
+		slg.ff_FD.fd_Sec = timeinfo.tm_sec;
+		
+		FBOOL changeFileName = FALSE;
+		
+		if( slg.ff_MaxSize != 0 )
+		{
+			if( slg.ff_FD.fd_Day != slg.ff_Time || slg.ff_Size >= slg.ff_MaxSize )
+			{
+				slg.ff_Size = 0;
+				slg.ff_LogNumber++;
+				changeFileName = TRUE;
+			}
+		}
+		else
+		{
+			if( slg.ff_FD.fd_Day != slg.ff_Time )
+			{
+				changeFileName = TRUE;
+			}
+		}
+	
+		if( changeFileName == TRUE )
+		{
+			char fname[ 512 ];
+			
+			if( slg.ff_MaxSize != 0 )
+			{
+				snprintf( fname, sizeof(fname), "%s-%d-%02d-%02d-%02d.log",slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+			}
+			else
+			{
+				snprintf( fname, sizeof(fname), "%s-%02d-%02d-%02d.log",slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+			}
+			
+			if( slg.ff_FP != NULL )
+			{
+				fclose( slg.ff_FP );
+				slg.ff_FP = NULL;
+			}
+			slg.ff_FP = fopen( fname, "a");
+			if( slg.ff_FP == NULL )
+			{
+				return;
+			}
+		
+			slg.ff_Time = slg.ff_FD.fd_Day;
+			
+			if( slg.ff_ArchiveFiles > 0 )
+			{
+				// list have reverse order, on the top we have oldest entries
+				if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
+				{
+					DEBUG("Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
+				}
+				
+				int i=0;
+				for( i = 0 ; i < slg.ff_ArchiveFiles-1 ; i++ )
+				{
+					strcpy( slg.ff_FileNames[ i ], slg.ff_FileNames[ i+1 ] );
+				}
+				strcpy( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ], fname );
+			}
+		}
+	
+		if (lev >= slg.ff_FileLevel)
+		{
+			if (pthread_mutex_lock(&slg.logMutex) == 0)
+			{
+				char date[ 256 ];
+				
+				slg.ff_Size  += fprintf( slg.ff_FP, "%ld: %02d.%02d.%02d-%02d:%02d:%02d: ", pthread_self(),
+					slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon , slg.ff_FD.fd_Day , 
+					slg.ff_FD.fd_Hour , slg.ff_FD.fd_Min , slg.ff_FD.fd_Sec );
+				
+				//fprintf( slg.ff_FP, "%s", out);
+				va_list args;
+				va_start(args, fmt);
+				//fprintf( slg.ff_FP, fmt, args);
+				vfprintf( slg.ff_FP, fmt, args);
+				va_end(args);
+				pthread_mutex_unlock(&slg.logMutex);
+			}
+		}
+	}
+	
+	// console output will be used for debug
+	if (lev >= slg.ff_Level)
+	{
+		printf("%ld: ", pthread_self() );
+		va_list args;
+		va_start(args, fmt);
+		//printf(fmt, args);
+		vprintf( fmt, args);
+		va_end(args);
 	}
 }
+
+
+//
+// parse_config - Parse config file. Argument cfg_name is path 
+// of config file name to be parsed. Function opens config file 
+// and parses LOGLEVEL and LOGTOFILE flags from it.
+//
+
+
+/*
+char* strclr(const char* clr, char* str, ...) 
+{
+    // String buffers 
+    static char output[MAXMSG];
+    char string[MAXMSG];
+
+    // Read args 
+    va_list args;
+    va_start(args, str);
+    vsprintf(string, str, args);
+    va_end(args);
+
+    // Colorize string 
+    sprintf(output, "%s%s%s", clr, string, CLR_RESET);
+
+    return output;
+}
+
+
+int LogParseConfig(const char *cfg_name)
+{
+	FILE *file;
+	char line[ 1024 ];
+	size_t len = 0;
+	ssize_t read;
+	int ret = 0;
+
+	file = fopen(cfg_name, "r");
+	if(file == NULL) return 0;
+
+	while ((read = getline(&line, &len, file)) != -1)
+	{
+		if(strstr(line, "LOGLEVEL") != NULL)
+		{
+			slg.ff_Level = atoi(line+8);
+			ret = 1;
+		}
+		if(strstr(line, "LOGFILELEVEL") != NULL)
+		{
+			slg.ff_Level = atoi(line+12);
+			ret = 1;
+		}
+		else if(strstr(line, "LOGTOFILE") != NULL)
+		{
+			slg.ff_ToFile = atoi(line+9);
+			ret = 1;
+		}
+		else if(strstr(line, "PRETTYLOG") != NULL)
+		{
+			slg.ff_Pretty = atoi(line+9);
+			ret = 1;
+		}
+	}
+	fclose(file);
+	return ret;
+}*/
+
+
+
+
+//
+// slog - Log exiting process. Function takes arguments and saves
+// log in file if LOGTOFILE flag is enabled from config. Otherwise
+// it just prints log without saveing in file. Argument level is
+// logging level and flag is slog flags defined in slog.h header.
+//
+
+/*
+void slog(int level, int flag, const char *msg, ...)
+{
+    if (slg.td_safe) 
+    {
+        if (pthread_mutex_lock(&slog_mutex))
+        {
+            printf("<%s:%d> %s: [ERROR] Can not lock mutex: %d\n", 
+                __FILE__, __LINE__, __FUNCTION__, errno);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    
+    SlogDate mdate;
+    char string[MAXMSG];
+    char prints[MAXMSG];
+    char color[32], alarm[32];
+    char *output;
+
+    slog_get_date(&mdate);
+    bzero(string, sizeof(string));
+    bzero(prints, sizeof(prints));
+    bzero(color, sizeof(color));
+    bzero(alarm, sizeof(alarm));
+
+ 
+    va_list args;
+    va_start(args, msg);
+    vsprintf(string, msg, args);
+    va_end(args);
+
+    if(!level || level <= slg.level || level <= slg.file_level)
+    {
+        switch(flag) 
+        {
+            case SLOG_LIVE:
+                strncpy(color, CLR_NORMAL, sizeof(color));
+                strncpy(alarm, "LIVE", sizeof(alarm));
+                break;
+            case SLOG_INFO:
+                strncpy(color, CLR_GREEN, sizeof(color));
+                strncpy(alarm, "INFO", sizeof(alarm));
+                break;
+            case SLOG_WARN:
+                strncpy(color, CLR_YELLOW, sizeof(color));
+                strncpy(alarm, "WARN", sizeof(alarm));
+                break;
+            case SLOG_DEBUG:
+                strncpy(color, CLR_BLUE, sizeof(color));
+                strncpy(alarm, "DEBUG", sizeof(alarm));
+                break;
+            case SLOG_ERROR:
+                strncpy(color, CLR_RED, sizeof(color));
+                strncpy(alarm, "ERROR", sizeof(alarm));
+                break;
+            case SLOG_FATAL:
+                strncpy(color, CLR_RED, sizeof(color));
+                strncpy(alarm, "FATAL", sizeof(alarm));
+                break;
+            case SLOG_PANIC:
+                strncpy(color, CLR_WHITE, sizeof(color));
+                strncpy(alarm, "PANIC", sizeof(alarm));
+                break;
+            case SLOG_NONE:
+                strncpy(prints, string, sizeof(string));
+                break;
+            default:
+                strncpy(prints, string, sizeof(string));
+                flag = SLOG_NONE;
+                break;
+        }
+
+        if (level <= slg.level || slg.pretty)
+        {
+            if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", strclr(color, alarm), string);
+            if (level <= slg.level) printf("%s", slog_get(&mdate, "%s\n", prints));
+        }
+
+        if (slg.to_file && level <= slg.file_level)
+        {
+            if (slg.pretty) output = slog_get(&mdate, "%s\n", prints);
+            else 
+            {
+                if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", alarm, string);
+                output = slog_get(&mdate, "%s\n", prints);
+            } 
+
+            slog_to_file(output, slg.fname, &mdate);
+        }
+    }
+
+    if (slg.td_safe) 
+    {
+        if (pthread_mutex_unlock(&slog_mutex)) 
+        {
+            printf("<%s:%d> %s: [ERROR] Can not deinitialize mutex: %d\n", 
+                __FILE__, __LINE__, __FUNCTION__, errno);
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+*/
+

@@ -1,11 +1,10 @@
 <?php
-
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,9 +13,20 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
+*****************************************************************************©*/
+
+
+/*******************************************************************************
+* This file generates a html document  that an application can launch into. It *
+* has two basic modes. The default mode is to open a file, sandbox.html (found *
+* in  the templates/  directory)  which  includes the  api.js  and  supporting *
+* javascript  as well as Friend CSS files for  our theme. The other mode is to *
+* open  a  different  html  document  with only the api.js  and no  additional *
+* stylesheets.  The first mode is native = true. The second is native = false. *
+* The native flag is read by api.js from the document.location.href            *
 *******************************************************************************/
 
 if( isset( $args->conf ) )
@@ -28,13 +38,31 @@ if( isset( $args->conf ) )
 	{
 		if( strstr( $conf, ':' ) )
 		{
-			$confFilename = $conf;
-			$conf = new File( $conf );
-			if( $conf->Load() )
-				$conf = json_decode( $conf->GetContent() );
-			else die( 'fail' );
+			// Is it a disk conf? (conf is a disk volume name)
+			$vol = explode( ':', $conf );
+			if( $vol && ( !isset( $vol[1] ) || !trim( $vol[1] ) ) )
+			{
+				$f = new dbIO( 'Filesystem' );
+				$f->Name = $vol[0];
+				$f->UserID = $User->ID;
+				if( $f->Load() )
+				{
+					$conf = json_decode( $f->Config );
+				}
+				else die( 'fail' );
+			}
+			// No it's actually a path
+			else
+			{
+				$confFilename = $conf;
+				$conf = new File( $conf );
+				if( $conf->Load() )
+					$conf = json_decode( $conf->GetContent() );
+				else die( 'fail' );
+			}
 		}
-		else if( $conf = file_get_contents( $conf ) )
+		// It's a local (server) path
+		else if( file_exists( $conf ) && $conf = file_get_contents( $conf ) )
 		{
 			if( !( $conf = json_decode( $conf ) ) )
 				die( 'fail' );
@@ -56,109 +84,177 @@ if( isset( $args->conf ) )
 		$burl .= ':';
 	}
 	
-	if( file_exists( 'resources/webclient/sandboxed.html' ) )
-	{
-		$f = file_get_contents( 'resources/webclient/sandboxed.html' );
 
-		$s = '';
-		$u = $Config->SSLEnable ? 'https://' : 'http://';
-		$u .= $Config->Hostname . ':' . $Config->FCPort;
+	$s = '';
+	$u = $Config->SSLEnable ? 'https://' : 'http://';
+	$u .= ( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort;
 	
-		if( isset( $conf->Libraries ) )
+	$bu = $Config->SSLEnable ? 'https://' : 'http://';
+	$bu .= $Config->FCHost . ':' . $Config->FCPort;
+
+	if( isset( $conf->Libraries ) )
+	{
+		foreach( $conf->Libraries as $file )
 		{
-			foreach( $conf->Libraries as $file )
+			if( isset( $file->Folder ) && file_exists( 'resources/' . $file->Folder ) && !is_dir( 'resources/' . $file->Folder ) )
 			{
-				if( isset( $file->Folder ) && file_exists( 'resources/' . $file->Folder ) && !is_dir( 'resources/' . $file->Folder ) )
+				$s .= "\t\t" . '<script src="/' . $file->Folder . $file->Init . '"></script>' . "\n";
+			}
+		}
+	}
+	
+	// Includes!
+	if( isset( $args->url ) )
+	{
+		if( file_exists( $flz = ( 'resources' . urldecode( $args->url ) ) ) )
+		{
+			if( $ud = file_get_contents( $flz ) )
+			{
+				// We have our own
+				if( strstr( strtolower( $ud ), '<body' ) )
 				{
-					$s .= "\t\t" . '<script src="/' . $file->Folder . $file->Init . '"></script>' . "\n";
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
+				}
+				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
+				{
+					$f = file_get_contents( 'resources/webclient/sandboxed.html' );
+					$f = preg_replace( '/\<\/body[^>]*?>/i', $ud . '</body>', $f );
 				}
 			}
 		}
+		else if( file_exists( $flz = ( 'repository/' . $conf->Name . '/' . urldecode( $args->url ) ) ) )
+		{
+			if( $ud = file_get_contents( $flz ) )
+			{
+				// We have our own
+				if( strstr( strtolower( $ud ), '<body' ) )
+				{
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
+				}
+				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
+				{
+					$f = file_get_contents( 'resources/webclient/sandboxed.html' );
+					$f = preg_replace( '/\<\/body[^>]*?>/i', $ud . '</body>', $f );
+				}
+			}
+		}
+		// Get it!
+		else
+		{
+			$c = curl_init();
+			curl_setopt( $c, CURLOPT_URL, $u . urldecode( $args->url ) );
+			curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
+			if( $Config->SSLEnable )
+			{
+				curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
+				curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
+			}
+			$ud = curl_exec( $c );
+			if( $ud )
+			{
+				if( strstr( strtolower( $ud ), '<body' ) )
+					$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
+				else if( file_exists( 'resources/webclient/sandboxed.html' ) )
+				{
+					$f = file_get_contents( 'resources/webclient/sandboxed.html' );
+					$f = preg_replace( '/\<\/body[^>]*?>/i', $ud . '</body>', $f );
+				}
+			}
+			// close up!
+			curl_close( $c );
+		}
 		
-		// Includes!
+		// Add base href to load resources correctly
+		$options = new stdClass();
 		if( isset( $args->url ) )
 		{
-			if( file_exists( 'resources' . urldecode( $args->url ) ) )
+			$url = explode( '&', end( explode( '?', $args->url ) ) );
+			foreach( $url as $u )
 			{
-				if( $ud = file_get_contents( 'resources' . urldecode( $args->url ) ) )
-				{
-					// We have our own
-					if( strstr( strtolower( $ud ), '<body' ) )
-					{
-						$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
-					}
-					else $f = preg_replace( '/\<\/body[^>]*?>/i', $ud . '</body>', $f );
-				}
+				list( $key, $value ) = explode( '=', $u );
+				$options->$key = $value;
 			}
-			// Get it!
-			else
+		}
+		
+		// Virtual base url 
+		if( $options->path && $options->sessionid )
+		{
+			$nt = "\n\t\t";
+			$path = $options->path;
+			if( strstr( $options->path, '/' ) )
 			{
-				$c = curl_init();
-				curl_setopt( $c, CURLOPT_URL, $u . urldecode( $args->url ) );
-				curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
-				if( $Config->SSLEnable )
-				{
-					curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
-					curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
-				}
-				$ud = curl_exec( $c );
-				if( $ud )
-				{
-					if( strstr( strtolower( $ud ), '<body' ) )
-						$f = preg_replace( '/(\s{0,})\<\/head[^>]*?\>/i', '$1<script src="/webclient/js/apps/api.js"></script>' . "\n" . '$1</head>', $ud );
-					else $f = preg_replace( '/\<\/body[^>]*?>/i', $ud . '</body>', $f );
-				}
+				$path = explode( '/', $path );
+				array_pop( $path );
+				$path = implode( '/', $path );
+				if( substr( $path, -1, 1 ) != '/' ) $path .= '/';
 			}
+			else $path = reset( explode( ':', $path ) ) . ':';
 			
-			// Add base href to load resources correctly
-			if( !strstr( $args->url, ':' ) )
-			{
-				$bh = $u . urldecode( $args->url );
-				$nt = "\n\t\t";
-				$f = preg_replace( '/\<base[^>]*?\>/i', '', $f );
-				$f = preg_replace( '/(\<head[^>]*?\>)/i', '$1' . $nt . '<base href="' . $bh . '"/>', $f );
-			}
+			$f = preg_replace( '/\<base[^>]*?\>/i', '', $f );
+			$f = preg_replace( '/(\<head[^>]*?\>)/i', '$1' . $nt . '<base href="' . $bu . '/' . urlencode( $path ) . '/sid' . $options->sessionid . '/"/>', $f );
 		}
-
-		// Check if we must add scripts
-		if( isset( $args->scripts ) && $scripts = json_decode( $args->scripts ) )
+		// If we don't have base dir yet..
+		if( !isset( $options->path ) && !isset( $options->sessionid ) && !strstr( $args->url, ':' ) )
 		{
-			foreach( $scripts as $script )
-			{
-				$s .= "\t\t" . '<script src="' . $script . '"></script>' . "\n";
-			}
+			$bh = $bu . urldecode( $args->url );
+			$nt = "\n\t\t";
+			$f = preg_replace( '/\<base[^>]*?\>/i', '', $f );
+			$f = preg_replace( '/(\<head[^>]*?\>)/i', '$1' . $nt . '<base href="' . $bh . '"/>', $f );
 		}
-		// Add new data in header
-		if( $s ) $f = str_replace( "\t" . '</head>', $s . "\t</head>", $f );
-
-		// Progdirs..
-		$brl = $burl;
-		if( substr( $brl, 0, 10 ) == 'resources/' )
-			$brl = str_replace( 'resources/', '/', $burl );
-		$f = preg_replace( '/progdir\:/i', $brl, $f );
-		
-		// Fix all remaining links
-		preg_match_all( '/src=["\']{0,1}([^"\']+)["\']{0,1}/i', $f, $srs );
-		if( count( $srs ) )
-		{
-			foreach( $srs[1] as $k=>$sz )
-			{
-				if( strstr( $sz, ':' ) )
-				{
-					$f = str_replace( $srs[0][$k], 
-						'src="/system.library/file/read/?sessionid=' . 
-							$args->sessionid . '&path=' . $sz . '&mode=rb"', 
-						$f );
-				}
-			}
-		}
-		
-		friendHeader( 'Content-Type: text/html' );
-		
-		// Fallback
-		die( $f );
 	}
-	die( '404 - No sandbox found' );
+	else
+	{
+		if( file_exists( 'resources/webclient/sandboxed.html' ) )
+		{
+			$f = file_get_contents( 'resources/webclient/sandboxed.html' );
+		}
+		else die( '404' );
+	}
+
+	// Check if we must add scripts
+	if( isset( $args->scripts ) && $scripts = json_decode( $args->scripts ) )
+	{
+		foreach( $scripts as $script )
+		{
+			$s .= "\t\t" . '<script src="' . $script . '"></script>' . "\n";
+		}
+	}
+	// Add new data in header
+	if( $s ) $f = str_replace( "\t" . '</head>', $s . "\t</head>", $f );
+
+	// Progdirs..
+	$brl = $burl;
+	if( substr( $brl, 0, 10 ) == 'resources/' )
+		$brl = str_replace( 'resources/', '/', $burl );
+	else if( substr( $brl, 0, 13 ) == 'apprepository/' )
+	{
+		$d = substr( $brl, 13, strlen( $brl ) - 11 );
+		$auth = isset( $args->args->authid ) ? ( 'authid=' . $args->args->authid ) : (  isset( $args->args->sessionid ) ? ( 'sessionid=' + $args->args->sessionid ) : '' );
+		$brl = '/system.library/module/?module=system&' . $auth . '&command=resource&file=' . rawurlencode( $d );
+	}
+	$f = preg_replace( '/progdir\:/i', $brl, $f );
+	
+	// Fix all remaining links
+	preg_match_all( '/src=["\']{0,1}^http([^"\']+)["\']{0,1}/i', $f, $srs );
+	$prt = 'authid=' . ( isset( $args->args->authid ) ? $args->args->authid : '' );
+	if( isset( $args->args->sessionid ) ) $prt = 'sessionid=' + $args->args->sessionid;
+	if( count( $srs ) )
+	{
+		foreach( $srs[1] as $k=>$sz )
+		{
+			if( strstr( $sz, ':' ) )
+			{
+				$f = str_replace( $srs[0][$k], 
+					'src="/system.library/file/read/?' . $prt . '&path=' . $sz . '&mode=rs"', 
+					$f );
+			}
+		}
+	}
+	
+	friendHeader( 'Content-Type: text/html' );
+	
+	// Fallback
+	die( $f );
 	
 }
 die( '404 - No conf found' );

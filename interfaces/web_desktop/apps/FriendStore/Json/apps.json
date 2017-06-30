@@ -1,0 +1,26 @@
+[
+	{
+		"name" 		: "George",
+		"gender" 	: "male",
+		"color" 	: "white-mustard",
+		"age" 		: "5 years"
+	},
+	{
+		"name" 		: "Pety",
+		"gender" 	: "female",
+		"color" 	: "white-black-mustard",
+		"age" 		: "3 years"
+	},
+	{
+		"name" 		: "Alex",
+		"gender" 	: "male",
+		"color" 	: "white-grey-black",
+		"age" 		: "3 years"
+	},
+	{
+		"name" 		: "Rex",
+		"gender" 	: "male",
+		"color" 	: "white-mustard",
+		"age" 		: "2 years"
+	}
+]

@@ -1,21 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
+/** @file
+ * 
+ *  Uri body
+ *
+ *  @author HT
+ *  @date created 2014
+ */
 
 #include <core/types.h>
 #include <stdbool.h>
@@ -26,9 +37,11 @@
 #include "util/string.h"
 #include "util/list.h"
 
-//
-//
-//
+/**
+ * Create new Uri structure
+ *
+ * @return new Uri structure when success, otherwise NULL
+ */
 
 Uri* UriNew()
 {
@@ -36,10 +49,14 @@ Uri* UriNew()
 	return uri;
 }
 
-//
-//
-//
-
+/**
+ * Get uri scheme from string
+ *
+ * @param str string with url
+ * @param strLen length of provided string
+ * @param next pointer to string after url scheme
+ * @return new string with uri scheme
+ */
 char* UriGetScheme( char* str, unsigned int strLen, char** next )
 {
 	/*
@@ -69,7 +86,7 @@ char* UriGetScheme( char* str, unsigned int strLen, char** next )
 		}
 	}
 	unsigned int len = ptrEnd - str;
-	char* out = calloc( len + 1,sizeof(char) );
+	char* out = FCalloc( len + 1,sizeof(char) );
 	if( out != NULL )
 	{
 		memcpy( out, str, len );
@@ -78,17 +95,21 @@ char* UriGetScheme( char* str, unsigned int strLen, char** next )
 	}
 	else
 	{
-		ERROR("Cannot alloc memory for URI\n");
+		FERROR("Cannot alloc memory for URI\n");
 	}
 	*next = ptrEnd + 1;
 
 	return out;
 }
 
-//
-//
-//
-
+/**
+ * Get authority from string
+ *
+ * @param str string with url
+ * @param strLen length of provided string
+ * @param next pointer to string after authority
+ * @return new string with authority part
+ */
 char* UriGetAuthority( char* str, unsigned int strLen, char** next )
 {
 	/*
@@ -98,7 +119,7 @@ char* UriGetAuthority( char* str, unsigned int strLen, char** next )
 	*/
 	if( strLen < 3 || str[0] != '/' || str[1] != '/' )
 	{
-		//printf("No authority.\n");
+		//DEBUG("No authority.\n");
 		return 0;
 	}
 
@@ -120,10 +141,10 @@ char* UriGetAuthority( char* str, unsigned int strLen, char** next )
 	unsigned int len = ptrEnd - str;
 	if( !len )
 	{
-		ERROR("URI getauthority fail\n");
+		FERROR("URI getauthority fail\n");
 		return 0;
 	}
-	char* out = calloc( len + 1, sizeof(char) );
+	char* out = FCalloc( len + 1, sizeof(char) );
 	if( out != NULL )
 	{
 		memcpy( out, str, len );
@@ -131,18 +152,20 @@ char* UriGetAuthority( char* str, unsigned int strLen, char** next )
 	}
 	else
 	{
-		ERROR("Authority fail\n");
+		FERROR("Authority fail\n");
 	}
 	*next = ptrEnd;
 
 	return out;
 }
 
-//
-//
-//
-
-Authority_t* UriParseAuthority( char* str )
+/**
+ * Get authority from string
+ *
+ * @param str string with url
+ * @return new Authority structure when succes, otherwise NULL
+ */
+Authority *UriParseAuthority( char* str )
 {
 	/*
 	http://user@domain.com:port/path?query=true#fragment
@@ -152,7 +175,7 @@ Authority_t* UriParseAuthority( char* str )
 	unsigned int strLen = strlen( str );
 	unsigned int userLen = 0;
 
-	Authority_t* authority = (Authority_t*) calloc( 1, sizeof( Authority_t ) );
+	Authority *authority = (Authority*) FCalloc( 1, sizeof( Authority ) );
 
 	// Get user (Ignore empty strings)
 	char* userEnd = memchr( str, '@', strLen );
@@ -161,17 +184,16 @@ Authority_t* UriParseAuthority( char* str )
 		userLen = userEnd - str;
 		if( userLen )
 		{
-			char* userStr = calloc( userLen + 1, sizeof(char) );
+			char* userStr = FCalloc( userLen + 1, sizeof(char) );
 			if( userStr != NULL )
 			{
 				memcpy( userStr, str, userLen );
 				userStr[userLen] = 0;
-				DEBUG("User:      %s (%d)\n", userStr, userLen);
 				authority->user = userStr;
 			}
 			else
 			{
-				ERROR("UriParseAuthority calloc fail\n");
+				FERROR("UriParseAuthority calloc fail\n");
 			}
 		}
 		userEnd++;
@@ -200,17 +222,16 @@ Authority_t* UriParseAuthority( char* str )
 	unsigned int hostLen = hostEnd - userEnd;
 	if( hostLen )
 	{
-		char* hostStr = calloc( hostLen + 1, sizeof(char) );
+		char* hostStr = FCalloc( hostLen + 1, sizeof(char) );
 		if( hostStr != NULL )
 		{
 			memcpy( hostStr, userEnd, hostLen );
 			hostStr[hostLen] = 0;
-			DEBUG("Host:      %s (%d)\n", hostStr, hostLen);
 			authority->host = hostStr;
 		}
 		else
 		{
-			ERROR("Cannot allocate memory in Uriauth\n");
+			FERROR("Cannot allocate memory in Uriauth\n");
 			return NULL;
 		}
 	}
@@ -223,29 +244,33 @@ Authority_t* UriParseAuthority( char* str )
 		{
 			// We could possible avoid a calloc here by passing the str and strlen.
 			// Could save a cycle or two if we're desperate...
-			char* portStr = calloc( portLen + 1, sizeof(char) );
+			char* portStr = FCalloc( portLen + 1, sizeof(char) );
 			if( portStr != NULL )
 			{
 				memcpy( portStr, hostEnd + 1, portLen );
 				portStr[portLen] = 0;
 				unsigned int port = StringParseUInt( portStr );
-				DEBUG("Port:      %d (%s (%d))\n", port, portStr, portLen);
+
 				authority->port = port;
-				free( portStr ); // We don't need this anymore...
+				FFree( portStr ); // We don't need this anymore...
 			}
 			else
 			{
-				ERROR("Cannot allocate memory for string\n");
+				FERROR("Cannot allocate memory for string\n");
 			}
 		}
 	}
 	return authority;
 }
 
-//
-//
-//
-
+/**
+ * Get path from string
+ *
+ * @param str string with url
+ * @param strLen length of provided string
+ * @param next pointer to string after authority
+ * @return new string with authority part
+ */
 char* UriGetPath( char* str, unsigned int strLen, char** next )
 {
 	/*
@@ -263,10 +288,12 @@ char* UriGetPath( char* str, unsigned int strLen, char** next )
 		}
 	}
 	if( ptrEnd == str )
+	{
 		return 0;
+	}
 
 	unsigned int len = ptrEnd - str;
-	char* out = calloc( len + 1, sizeof(char) );
+	char* out = FCalloc( len + 1, sizeof(char) );
 	if( out != NULL )
 	{
 		memcpy( out, str, len );
@@ -274,17 +301,21 @@ char* UriGetPath( char* str, unsigned int strLen, char** next )
 	}
 	else
 	{
-		ERROR("Get Uri Path memory alloc error\n");
+		FERROR("Get Uri Path memory alloc error\n");
 	}
 	*next = ptrEnd;
 
 	return out;
 }
 
-//
-//
-//
-
+/**
+ * Get query  from string
+ *
+ * @param str string with url
+ * @param strLen length of provided string
+ * @param next pointer to string after authority
+ * @return new string with query part
+ */
 char* UriGetQuery( char* str, unsigned int strLen, char** next )
 {
 	/*
@@ -294,7 +325,7 @@ char* UriGetQuery( char* str, unsigned int strLen, char** next )
 	*/
 	if( str[0] != '?' )
 	{
-		ERROR("First sign is not equal to '?'\n");
+		FERROR("First sign is not equal to '?'\n");
 		return 0;
 	}
 
@@ -306,7 +337,7 @@ char* UriGetQuery( char* str, unsigned int strLen, char** next )
 	str++;
 
 	unsigned int len = strEnd - str;
-	char* out = calloc( len + 1, sizeof(char) );
+	char* out = FCalloc( len + 1, sizeof(char) );
 	if( out != NULL )
 	{
 		memcpy( out, str, len );
@@ -314,16 +345,18 @@ char* UriGetQuery( char* str, unsigned int strLen, char** next )
 	}
 	else
 	{
-		ERROR("Cannot allocate memory in UriGetQuery\n");
+		FERROR("Cannot allocate memory in UriGetQuery\n");
 	}
 	*next = strEnd;
 	return out;
 }
 
-//
-//
-//
-
+/**
+ * Get query in Hashmap form
+ *
+ * @param query string with query
+ * @return new Hashmap structure when success, otherwise NULL
+ */
 Hashmap* UriParseQuery( char* query )
 {
 	/*
@@ -334,7 +367,7 @@ Hashmap* UriParseQuery( char* query )
 	Hashmap* map = HashmapNew();
 	if( map == NULL )
 	{
-		ERROR("Map was not created\n");
+		FERROR("Map was not created\n");
 		return NULL;
 	}
 	
@@ -377,9 +410,14 @@ Hashmap* UriParseQuery( char* query )
 					// TODO: Add support for ?arr[]=something&arr[]=more
 					if( HashmapPut( map, key, value ) )
 					{
-						DEBUG( "[UriParseQuery] Key:       %s => %s\n", key, value ? value : "" );
+						//DEBUG( "[UriParseQuery] Key:       %s => %s\n", key, value ? value : "" );
 					}
-					else free( key );
+					// Couldn't add hto hashmap sadly..
+					else 
+					{
+						if( value ) free( value );
+						free( key );
+					}
 				}
 			}
 			key = NULL;
@@ -393,10 +431,14 @@ Hashmap* UriParseQuery( char* query )
 	return map;
 }
 
-//
-// So simple :)
-//
-
+/**
+ * Get last part of path
+ *
+ * @param str string with url
+ * @param strLen length of provided string
+ * @param next pointer to string after path
+ * @return new string with last path part
+ */
 char* UriGetFragment( char* str, unsigned int strLen, char** next )
 {
 	/*
@@ -407,7 +449,7 @@ char* UriGetFragment( char* str, unsigned int strLen, char** next )
 	if( strLen == 1 || *str++ != '#' )
 		return 0;
 
-	char* out = calloc( strLen + 1 , sizeof(char));
+	char* out = FCalloc( strLen + 1 , sizeof(char));
 	if( out != NULL )
 	{
 		memcpy( out, str, strLen );
@@ -415,17 +457,19 @@ char* UriGetFragment( char* str, unsigned int strLen, char** next )
 	}
 	else
 	{
-		ERROR("Cannot alloc memory in UriGetFragment\n");
+		FERROR("Cannot alloc memory in UriGetFragment\n");
 	}
 
 	*next = str + strLen;
 	return out;
 }
 
-//
-//
-//
-
+/**
+ * Parse url and return it as Uri structure
+ *
+ * @param str string with url
+ * @return new Uri structure when success, otherwise NULL
+ */
 Uri* UriParse( char* str )
 {
 	Uri* uri = UriNew();
@@ -439,11 +483,13 @@ Uri* UriParse( char* str )
 	remainingLen = strLen - ( next - str );
 	if( scheme )
 	{
-		DEBUG( "Scheme:    %s\n", scheme );
 		uri->scheme = scheme;
 	}
+	
 	if( next >= end )
+	{
 		return uri;
+	}
 
 	// Get authority ----------------------------------------------------------
 	char* authority = UriGetAuthority( next, remainingLen, &next );
@@ -451,9 +497,10 @@ Uri* UriParse( char* str )
 	if( authority )
 	{
 		uri->authority = UriParseAuthority( authority );
-		DEBUG( "Authority: %s\n", authority );
+		//DEBUG( "Authority: %s\n", authority );
 		free( authority );
 	}
+	
 	if( next >= end )
 	{
 		return uri;
@@ -469,7 +516,9 @@ Uri* UriParse( char* str )
 	}
 
 	if( next >= end )
+	{
 		return uri;
+	}
 
 	// Get query --------------------------------------------------------------
 	char* query = UriGetQuery( next, remainingLen, &next );
@@ -478,18 +527,19 @@ Uri* UriParse( char* str )
 	{
 		uri->query = UriParseQuery( query );
 		uri->queryRaw = query;
-		printf( "Query:     %s\n", query);
-		//free( query );
+		DEBUG( "Query:     %s\n", query);
 	}
 
 	if( next >= end )
+	{
 		return uri;
+	}
 
 	// Get fragment -----------------------------------------------------------
 	char* fragment = UriGetFragment( next, remainingLen, &next );
 	if( fragment )
 	{
-		printf( "Fragment:  %s\n", fragment);
+		DEBUG( "Fragment:  %s\n", fragment);
 		uri->fragment = fragment;
 	}
 
@@ -498,10 +548,9 @@ Uri* UriParse( char* str )
 	return uri;
 }
 
-//
-//
-//
-
+/**
+ * Internal UriTest routine
+ */
 void UriTest()
 {
 	char* testUris[] = {
@@ -559,32 +608,39 @@ void UriTest()
 	}
 }
 
-//
-//
-//
-
+/**
+ * Delete Uri
+ *
+ * @param uri pointer to Uri structure which will be deleted
+ */
 void UriFree( Uri* uri )
 {
 	if( !uri )
+	{
 		return;
+	}
 
 	if( uri->scheme )
 	{
-		free( uri->scheme );
+		FFree( uri->scheme );
 		uri->scheme = NULL;
 	}
 
 	if( uri->authority )
 	{
 		if( uri->authority->user )
-			free( uri->authority->user );
-		uri->authority->user = NULL;
+		{
+			FFree( uri->authority->user );
+			uri->authority->user = NULL;
+		}
 
 		if( uri->authority->host )
-			free( uri->authority->host );
-		uri->authority->host = NULL;
+		{
+			FFree( uri->authority->host );
+			uri->authority->host = NULL;
+		}
 
-		free( uri->authority );
+		FFree( uri->authority );
 		uri->authority = NULL;
 	}
 
@@ -601,9 +657,11 @@ void UriFree( Uri* uri )
 		while( ( e = HashmapIterate( uri->query, &iterator ) ) != NULL )
 		{
 			if( e->data != NULL )
-				free( e->data );
-			e->data = NULL;
-			free( e->key );
+			{
+				FFree( e->data );
+				e->data = NULL;
+			}
+			FFree( e->key );
 			e->key = NULL;
 		}
 		HashmapFree( uri->query );
@@ -612,15 +670,16 @@ void UriFree( Uri* uri )
 
 	if( uri->queryRaw )
 	{
-		free( uri->queryRaw );
+		FFree( uri->queryRaw );
 		uri->queryRaw = NULL;
 	}
 	
 	if( uri->fragment )
 	{
-		free( uri->fragment );
+		FFree( uri->fragment );
 		uri->fragment = NULL;
 	}
 
-	free( uri );
+	FFree( uri );
 }
+

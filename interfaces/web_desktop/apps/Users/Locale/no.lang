@@ -1,0 +1,87 @@
+i18n_idle_title                      : Vennligst legg til eller endre en brukerkonto
+i18n_idle_desc : Velg brukeren fra listen til venstre eller velg å lage en ny bruker med knappen nederst til venstre.
+
+i18n_users_title                     : Brukeradministrasjon
+i18n_users                           : Brukere
+i18n_setup                      	 : Oppsett
+i18n_template                        : Mal
+i18n_language                        : Språk
+i18n_theme                        	 : Tema
+i18n_templates                       : Maler
+i18n_workgroups                      : Arbeidsgrupper
+i18n_workgroup                     	 : Arbeidsgruppe
+i18n_sessions                        : Økter
+i18n_regenerate                      : Regenerer
+i18n_add                        	 : Legg til
+i18n_add_user                        : Legg til bruker
+i18n_add_setup                       : Legg til oppsett
+i18n_add_template                    : Legg til mal
+i18n_add_workgroup                   : Legg til arbeidsgruppe
+i18n_add_to_dock                  	 : Legg til i dock
+i18n_remove              		     : Fjern
+i18n_renew_session                   : Forny bruker økt
+i18n_user_updated                    : Brukeren er oppdatert.
+i18n_user_created                    : Brukeren er aktivert.
+
+i18n_filter                 		 : Filtrer
+
+i18n_preinstall                      : forhåndsinstaller
+
+i18n_startup-sequence                : Oppstart-sekvens
+
+i18n_add_applications                : Legg til applikasjoner
+i18n_add_apps        		         : Legg til applikasjoner
+i18n_add_selected_apps        		 : Legg til valgte apps
+i18n_add_commands                	 : Legg til kommandoer
+i18n_add_command                	 : Legg til kommando
+i18n_add_startup                	 : Legg til kommando
+i18n_edit_startup                	 : Endre kommando
+i18n_command_line                	 : Kommandoer
+
+i18n_loading                		 : Laster...
+
+#User edit
+i18n_full_name                       : Fullt navn
+i18n_email                           : E-post
+i18n_username                        : Brukernavn
+i18n_password                        : Passord
+i18n_level                           : Nivå
+
+i18n_level_admin                     : Administrator
+i18n_level_user                      : Normal bruker
+i18n_level_guest                     : Gjestekonto
+i18n_level_api                       : API konto
+
+i18n_save_user                       : Lagre bruker
+i18n_delete_user                     : Slett bruker
+i18n_unblock_user                    : Opphev blokkering
+i18n_cancel                          : Avbryt
+i18n_save                            : Lagre
+i18n_add_members                     : Tilføy brukere
+i18n_workgroup_name                  : Arbeidsgruppens navn
+i18n_setup_name                	     : Oppsett navn
+i18n_template_name                   : Mal name
+i18n_named_workgroup                 : Skriv et navn
+i18n_members                         : Medlemsbrukere
+i18n_add_selected_members            : Tilføy valgte brukere
+i18n_add_workgroup_members           : Tilføy brukere
+i18n_no_users_available              : Ingen brukere tilgjengelig
+i18n_remove_users_from_group         : Fjern valgte
+i18n_delete                          : Slett
+
+i18n_apply_template                  : Opprett mal
+
+i18n_applications                	 : Applikasjoner
+i18n_disks                			 : Disker
+i18n_folders                		 : Mapper
+i18n_files                		 	 : Filer
+i18n_wallpapers                		 : Bakgrunnsbilder
+i18n_settings                		 : Instillinger
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norsk
+i18n_locale_en                          : Engelsk
+i18n_locale_de                          : Tysk
+i18n_locale_nl                          : Nederlandsk
+i18n_locale_fr                          : Fransk

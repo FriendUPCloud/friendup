@@ -1,0 +1,61 @@
+
+	
+	<style>
+		/* TODO: Fix hack! */
+		.IconInfoSkewed > div
+		{
+			margin-left: -18px;
+		}
+	</style>
+	
+	<div class="ContentFull">
+		<div class="VContentTop ScrollArea" style="bottom: 50px">
+			<div class="Padding">
+				<div class="Pages" id="IconInfo_!!">
+					<div class="Tab">
+						<div class="IconSmall fa-file">
+							&nbsp; {i18n_volume_information}
+						</div>
+					</div>
+					<div class="Page">
+						<div class="PageScroll">
+							<div class="Padding">
+								<div class="HRow">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_volume_name}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<input type="text" value="{filename}" name="Filename" class="FullWidth"/>
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_volume_size}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										{filesize}
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
+										<strong>{i18n_system_version}:</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										{i18n_system_version_num}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BackgroundDefault BorderTop" style="height: 50px">
+			<button type="button" class="FloatRight IconSmall fa-remove" onclick="Workspace.closeFileInfo(this)">
+				{i18n_close}
+			</button>
+		</div>
+	</div>

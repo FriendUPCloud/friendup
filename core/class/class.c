@@ -1,32 +1,51 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
+/** @file
+ *
+ *  Core class handling
+ *
+ *  Core classes provide a C++ like system for object oriented programming
+ *  in C and a message dispatch mechanism.
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @author JMN (John Michael Nilsen)
+ *  @date pushed 06/02/2015
+ */
 #include <class/class.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <util/log/log.h>
 
-//
-// create class
-//
-
+/**
+ * Creates a new class
+ *
+ * @param[in]cid class identifier
+ * @param[in]rc FLTODO
+ * @param[in]disp FLTODO
+ * @return the created class itself
+ * @todo FL>PS Please give me information on this function, it is not called anywhere
+ */
 Class *ClassCreate( ClassID cid, Class *rc, struct Hook *disp )
 {
 	Class *c;
@@ -69,24 +88,29 @@ class_error:
 	return NULL;
 }
 
-//
-// remove created class
-//
-
-ULONG ClassDelete( struct Class *c )
+/**
+ * Checks if an object can be destroyed
+ *
+ * @param c class structure
+ * @return 0 if deletion was fine
+ * @return 1 if objects are still used in the class
+ * @return 2 if sub-objects are in use
+ * @todo FL>PS Please give me information on this function, it is not called anywhere
+ */
+FULONG ClassDelete( struct Class *c )
 {
-	ULONG res = 0;
+	FULONG res = 0;
 	DEBUG("Remove class %s , instances %ld\n", c->cl_ID, c->cl_ObjectCount  );
 
 	if( c->cl_ObjectCount > 0 )
 	{
-		printf("Cannot remove class, %ld already objects use it", c->cl_ObjectCount );
+		FERROR("Cannot remove class, %ld already objects use it", c->cl_ObjectCount );
 		return 1;
 	}
 
 	if( c->cl_SubclassCount > 0 )
 	{
-		printf("Cannot remove class, %ld already objects use it", c->cl_ObjectCount );
+		FERROR("Cannot remove class, %ld already objects use it", c->cl_ObjectCount );
 		return 2;
 	}
 
@@ -100,13 +124,18 @@ ULONG ClassDelete( struct Class *c )
 	return res;
 }
 
-//
-//
-//
-
-
 //#define  DoMethodA( obj, ((struct TagItem **)tags) ); }
 
+/**
+ * Creates a new object
+ *
+ * Called from the ObjectNew macro
+ *
+ * @param c pointer the parent class
+ * @param o pointer to sibling object FLTODO no sure
+ * @param msg pointer to the message handling structure
+ * @return the newly created object
+ */
 Object *ObjectNewF( Class *c, Object *o, struct Msg *msg )
 {
 	Object *retObject = NULL;
@@ -123,10 +152,16 @@ Object *ObjectNewF( Class *c, Object *o, struct Msg *msg )
 	return retObject;
 }
 
-//
-//
-//
-
+/**
+ * Destroys an object
+ *
+ * Decreases the total object count in the parent class struture
+ * Skips the unused objects
+ * Transmits the message to the dispatcher of the class
+ *
+ * @param o the object to delete
+ * @todo FL>PS Please give me information on this function, it is not called anywhere
+ */
 void ObjectDelete( Object *o )
 {
 	DEBUG( "Delete Object of class '%s'\n", o->o_Class->cl_ID );
@@ -134,11 +169,14 @@ void ObjectDelete( Object *o )
 	if( o != NULL )
 	{
 		struct Msg message;
+		Class *c;
+		Class *lc;
+
 		message.MethodID = FM_DISPOSE;
 		message.data = NULL;
 
-		Class *c = o->o_Class;
-		Class *lc = o->o_Class;
+		c = o->o_Class;
+		lc = o->o_Class;
 
 		// lets substract used objects
 		while( lc != NULL )
@@ -152,17 +190,24 @@ void ObjectDelete( Object *o )
 	}
 }
 
-//
-//
-//
-
-ULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg )
+/**
+ * Calls a function of the super instance of an object
+ *
+ * The actual call is done via dispatcher of the super object class
+ *
+ * @param c pointer to the class
+ * @param o pointer to the object
+ * @param msg pointer to the message handliing structure
+ * @return the value returned by the message handling cascade
+ * @return NULL if the object has no super instance
+ */
+FULONG DoSuperMethod( Class *c, Object *o, struct Msg *msg )
 {
     if( c->cl_Super ){ 
         Object *lo = (Object *)o->o_Node.mln_Pred; 
         Class *lc = lo->o_Class;  
-        return (ULONG)lc->cl_Dispatcher.h_Function( (APTR)lc, (APTR)lo, (APTR) msg ); 
+        return (FULONG)lc->cl_Dispatcher.h_Function( (APTR)lc, (APTR)lo, (APTR) msg ); 
     }else{
-    	return (ULONG)NULL;
+    	return (FULONG)NULL;
     }
 }

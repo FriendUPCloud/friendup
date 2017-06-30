@@ -1,10 +1,10 @@
 <?php
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -13,21 +13,99 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
-// 0. Check dock!
+
+// 0. Check if mountlist is installed and user have access!
+if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $User->ID . '\'' ) ) )
+{
+	if( !function_exists( 'findInSearchPaths' ) )
+	{
+		function findInSearchPaths( $app )
+		{
+			$ar = array(
+				'resources/webclient/apps/'
+			);
+			foreach ( $ar as $apath )
+			{
+				if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
+				{
+					return $apath . $app;
+				}
+			}
+			return false;
+		}
+	}
+	
+	if( $path = findInSearchPaths( 'Mountlist' ) )
+	{
+		if( file_exists( $path . '/Config.conf' ) )
+		{
+			$f = file_get_contents( $path . '/Config.conf' );
+			// Path is dynamic!
+			$f = preg_replace( '/\"Path[^,]*?\,/i', '"Path": "' . $path . '/",', $f );
+			
+			// Store application!
+			$a = new dbIO( 'FApplication' );
+			$a->UserID = $User->ID;
+			$a->Name = 'Mountlist';
+			if( !$a->Load() )
+			{
+				$a->DateInstalled = date( 'Y-m-d H:i:s' );
+			}
+			
+			$a->Config = $f;
+			$a->Permissions = 'UGO';
+			$a->DateModified = $a->DateInstalled;
+			$a->Save();
+			
+			// Application activation
+			if( $a->ID > 0 )
+			{
+				if( $a->Config && ( $cf = json_decode( $a->Config ) ) )
+				{
+					if( isset( $cf->Permissions ) && $cf->Permissions )
+					{
+						$perms = [];
+						foreach( $cf->Permissions as $p )
+						{
+							$perms[] = [$p,(strtolower($p)=='door all'?'all':'')];
+						}
+						
+						// TODO: Get this from Config.ini in the future, atm set nothing
+						$da = new stdClass();
+						$da->domain = '';
+						
+						// Collect permissions in a string
+						$app = new dbIO( 'FUserApplication' );
+						$app->ApplicationID = $a->ID;
+						$app->UserID = $a->UserID;
+						$app->Load();
+						$app->AuthID = md5( rand( 0, 9999 ) . rand( 0, 9999 ) . rand( 0, 9999 ) . $a->ID );
+						$app->Permissions = json_encode( $perms );
+						$app->Data = json_encode( $da );
+						$app->Save();
+					}
+				}
+			}
+		}
+	}
+}
+
+// 1. Check dock!
 if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\'' ) ) )
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
 		array( 'Dock', 'A simple dock desklet' ),
-		array( 'Dingo', 'A command line interface' ),
-		array( 'Artisan', 'A programmers editor' ),
+		array( 'FriendShell', 'A command line interface' ),
+		array( 'FriendCreate', 'A programmers editor' ),
 		array( 'Author', 'A word processor' ),
 		array( 'Wallpaper', 'Select a wallpaper' ),
+		array( 'Astray', 'Play a game' ),
 		array( 'Calculator', 'Do some math' ),
 	);
 	$i = 0;
@@ -43,13 +121,14 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 	}
 }
 
-// 1. Check if we never logged in before..
-if( !( $disk = $SqlDatabase->FetchObject( 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
+// 2. Check if we never logged in before..
+if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE UserID=\'' . $User->ID . '\'' ) ) )
 {
 	// 3. Setup a standard disk
 	$o = new dbIO( 'Filesystem' );
 	$o->UserID = $User->ID;
 	$o->Name = 'Home';
+	$o->Load();
 	$o->Type = 'SQLDrive';
 	$o->ShortDescription = 'My data volume';
 	$o->Server = 'localhost';
@@ -62,50 +141,86 @@ if( !( $disk = $SqlDatabase->FetchObject( 'SELECT * FROM Filesystem WHERE UserID
 		$f2->FilesystemID = $o->ID;
 		$f2->UserID = $User->ID;
 		$f2->Name = 'Wallpaper';
-		$f2->DateCreated = date( 'Y-m-d H:i:s' );
-		$f2->DateModified = $f2->DateCreated;
-		$f2->Save();
+		if( !$f2->Load() )
+		{
+			$f2->DateCreated = date( 'Y-m-d H:i:s' );
+			$f2->DateModified = $f2->DateCreated;
+			$f2->Save();
+		}
 		
 		// 5. Some example documents
 		$f = new dbIO( 'FSFolder' );
 		$f->FilesystemID = $o->ID;
 		$f->UserID = $User->ID;
 		$f->Name = 'Documents';
-		$f->DateCreated = date( 'Y-m-d H:i:s' );
-		$f->DateModified = $f->DateCreated;
-		$f->Save();
+		if( !$f->Load() )
+		{
+			$f->DateCreated = date( 'Y-m-d H:i:s' );
+			$f->DateModified = $f->DateCreated;
+			$f->Save();
+		}
 		
 		$f1 = new dbIO( 'FSFolder' );
 		$f1->FilesystemID = $o->ID;
 		$f1->UserID = $User->ID;
 		$f1->Name = 'Code examples';
-		$f1->DateCreated = date( 'Y-m-d H:i:s' );
-		$f1->DateModified = $f1->DateCreated;
-		$f1->Save();
-
+		if( !$f1->Load() )
+		{
+			$f1->DateCreated = date( 'Y-m-d H:i:s' );
+			$f1->DateModified = $f1->DateCreated;
+			$f1->Save();
+		}
+		
 		// 6. Copy some wallpapers
-		$prefix = "resources/webclient/theme/";
+		$prefix = "resources/webclient/theme/wallpaper/";
 		$files = array(
-			"wp_beach", "wp_microscope",
-			"wp_morerocks", "wp_mountains",
-			"wp_omnious", "wp_rocks"
+			"Autumn",
+			"CalmSea",     
+			"Domestic",     
+			"Field",  
+			"Fire",        
+			"Freedom",         
+			"NightClouds",			
+			"RedLeaf",     
+			"TechRoad",
+			"TreeBranch",
+			"Bug",
+			"CityLights",
+			"EveningCalm",
+			"FireCones", 
+			"FjordCoast", 
+			"GroundedLeaves",  
+			"Omen",         
+			"SummerLeaf",  
+			"TrailBlazing",  
+			"WindyOcean"
 		);
+		
+		$wallpaperstring = '';
+		$wallpaperseperator = '';
 		foreach( $files as $file )
 		{
-			$newname = $file;
-			while( file_exists( 'storage/' . $newname . '.jpg' ) )
-				$newname = $file . rand( 0, 999999 );
-			copy( $prefix . $file . '.jpg', 'storage/' . $newname . '.jpg' );
 			$fl = new dbIO( 'FSFile' );
-			$fl->DiskFilename = $newname . '.jpg';
 			$fl->Filename = $file . '.jpg';
 			$fl->FolderID = $f2->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->Filesize = filesize( $prefix . $file . '.jpg' );
-			$fl->DateCreated = date( 'Y-m-d H:i:s' );
-			$fl->DateModified = $fl->DateCreated;
 			$fl->UserID = $User->ID;
-			$fl->Save();
+			if( !$fl->Load() )
+			{
+				$newname = $file;
+				while( file_exists( 'storage/' . $newname . '.jpg' ) )
+					$newname = $file . rand( 0, 999999 );
+				copy( $prefix . $file . '.jpg', 'storage/' . $newname . '.jpg' );
+				
+				$fl->DiskFilename = $newname . '.jpg';
+				$fl->Filesize = filesize( $prefix . $file . '.jpg' );
+				$fl->DateCreated = date( 'Y-m-d H:i:s' );
+				$fl->DateModified = $fl->DateCreated;
+				$fl->Save();
+				
+				$wallpaperstring .= $wallpaperseperator . '"Home:Wallpaper/' . $file . '.jpg"';
+				$wallpaperseperator = ',';
+			}
 		}
 		
 		// 7. Copy some other files
@@ -113,24 +228,51 @@ if( !( $disk = $SqlDatabase->FetchObject( 'SELECT * FROM Filesystem WHERE UserID
 		$files = array(
 			"ExampleWindow.jsx", "Template.html"
 		);
+		
 		foreach( $files as $filen )
 		{
 			list( $file, $ext ) = explode( '.', $filen );
-			$newname = $file;
-			while( file_exists( 'storage/' . $newname . '.' . $ext ) )
-				$newname = $file . rand( 0, 999999 );
-			copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
+			
 			$fl = new dbIO( 'FSFile' );
-			$fl->DiskFilename = $newname . '.' . $ext;
 			$fl->Filename = $file . '.' . $ext;
 			$fl->FolderID = $f1->ID;
 			$fl->FilesystemID = $o->ID;
-			$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
-			$fl->DateCreated = date( 'Y-m-d H:i:s' );
-			$fl->DateModified = $fl->DateCreated;
 			$fl->UserID = $User->ID;
-			$fl->Save();
+			if( !$fl->Load() )
+			{
+				$newname = $file;
+				while( file_exists( 'storage/' . $newname . '.' . $ext ) )
+					$newname = $file . rand( 0, 999999 );
+				copy( $prefix . $file . '.' . $ext, 'storage/' . $newname . '.' . $ext );
+				
+				$fl->DiskFilename = $newname . '.' . $ext;
+				$fl->Filesize = filesize( $prefix . $file . '.' . $ext );
+				$fl->DateCreated = date( 'Y-m-d H:i:s' );
+				$fl->DateModified = $fl->DateCreated;
+				$fl->Save();
+			}
 		}
+		
+		// 8. Fill Wallpaper app with settings and set default wallpaper
+		$wp = new dbIO( 'FSetting' );
+		$wp->UserID = $User->ID;
+		$wp->Type = 'system';
+		$wp->Key = 'imagesdoors';
+		if( !$wp->Load() )
+		{
+			$wp->Data = '['. $wallpaperstring .']';
+			$wp->Save();
+		}
+		
+		$wp = new dbIO( 'FSetting' );
+		$wp->UserID = $User->ID;
+		$wp->Type = 'system';
+		$wp->Key = 'wallpaperdoors';
+		if( !$wp->Load() )
+		{
+			$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
+			$wp->Save();
+		}		
 		
 	}
 }

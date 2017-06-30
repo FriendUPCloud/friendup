@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,18 +15,47 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = window.friendUP;
 friendUP.io = friendUP.io || {};
 
 // Simple file class
-File = function ( filename )
+File = function( filename )
 {
+	this.path = filename;
+	
 	this.data = false;
 	this.rawdata = false;
 	this.replacements = false;
 	this.vars = {};
+	
+	// Execute translations
+	this.i18n = function()
+	{
+		if( !this.replacements ) this.replacements = {};
+		if( window.i18n_translations )
+		{
+			for( var a in window.i18n_translations )
+			{
+				this.replacements[a] = window.i18n_translations[a];
+			}
+		}
+	}
+	
+	// Execute replacements
+	this.doReplacements = function( data )
+	{
+		var str = data ? data : this.data;
+		if( !str ) return '';
+		for( var a in this.replacements )
+		{
+			str = str.split( '{' + a + '}' ).join( this.replacements[a] );
+		}
+		if( !data )
+			this.data = str;
+		return str;
+	}
 	
 	// Add a var
 	this.addVar = function( k, v )
@@ -42,13 +71,13 @@ File = function ( filename )
 			if( this.application && this.application.filePath )
 				filename = this.application.filePath + filename;
 		}
-		// TODO: Remove system: here (we're rollin with Libs:)
 		else if( 
 			filename.toLowerCase().substr( 0, 7 ) == 'system:' ||
-			filename.toLowerCase().substr( 0, 4 ) == 'libs:' 
+			filename.toLowerCase().substr( 0, 5 ) == 'libs:' 
 		)
 		{
-			filename = filename.substr( 7, filename.length - 7 );
+			// not the prettiest solution... but works :)
+			filename = filename.toLowerCase().substr( 0, 5 ) == 'libs:' ? filename.substr( 5, filename.length - 5 ) : filename.substr( 7, filename.length - 7 );
 			filename = '/webclient/' + filename;
 		}
 		// Fix broken paths
@@ -56,6 +85,53 @@ File = function ( filename )
 			filename = filename.substr( 20, filename.length - 20 );
 			
 		return filename;
+	}
+	
+	// Call functions
+	this.call = function( func, args )
+	{
+		if( !filename ) return;
+		
+		if( !args ) args = {};
+		
+		var t = this;
+		var jax = new cAjax ();
+		
+		for( var a in this.vars )
+			jax.addVar( a, this.vars[a] );
+		
+		// Check progdir on path
+		if( filename )
+		{
+			filename = this.resolvePath( filename );
+		}
+		
+		// Get the correct door and load data
+		var theDoor = Workspace.getDoorByPath( filename );
+		if( theDoor )
+		{
+			// Copy vars
+			for( var a in this.vars )
+			{
+				if( a == 'sessionid' && Workspace.conf.authId )
+					continue;
+				theDoor.addVar( a, this.vars[a] );
+			}
+			if( Workspace.conf && Workspace.conf.authId )
+				theDoor.addVar( 'authid', Workspace.conf.authId );
+			if( args && !args.path ) args.path = filename;
+			theDoor.dosAction( 'call', args, function( data )
+			{
+				if( typeof ( t.onCall ) != 'undefined' )
+				{
+					t.onCall( data );
+				}
+			} );
+		}
+		else
+		{
+			console.log( 'This should never happen.' );
+		}
 	}
 	
 	// Load data
@@ -74,17 +150,27 @@ File = function ( filename )
 		}
 		
 		// Get the correct door and load data
-		var theDoor = Doors.getDoorByPath( filename );
+		var theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
 			// Copy vars
 			for( var a in this.vars )
 			{
+				if( a == 'sessionid' && Workspace.conf.authId )
+					continue;
 				theDoor.addVar( a, this.vars[a] );
 			}
-			
+			if( Workspace.conf && Workspace.conf.authId )
+				theDoor.addVar( 'authid', Workspace.conf.authId );
 			theDoor.onRead = function( data )
 			{
+				if( data && data.length )
+				{
+					// TODO: Is this wise? We don't want to show the ok stuff..
+					if( data.substr( 0, 17 ) == 'ok<!--separate-->' )
+						data = "";
+				} else data = "";
+					
 				if( t.replacements )
 				{
 					for( var a in t.replacements )
@@ -96,6 +182,7 @@ File = function ( filename )
 				}
 			}
 			theDoor.read( filename );
+			//console.log( 'Read filename: ' + filename );
 		}
 		// Old fallback (should never happen)
 		else
@@ -162,7 +249,7 @@ File = function ( filename )
 					}
 				}
 			}
-			jax.send ();
+			jax.send();
 		}
 	}
 	
@@ -170,8 +257,10 @@ File = function ( filename )
 	// filePath = the name of the file (full path)
 	// content = the data stream
 	// callback = the function to call when we finished up
-	this.post = function( filePath, content )
+	this.post = function( content, filePath )
 	{
+		if( !filePath ) filePath = this.path;
+		
 		var t = this;
 		if( filePath && content )
 		{
@@ -351,11 +440,16 @@ File = function ( filename )
 	}
 	
 	// Save data to a file
-	this.save = function ( filename, content )
+	this.save = function ( content, filename )
 	{
+		if( !filename ) filename = this.path;
+		
+		// Make sure this is correct
+		filename = this.resolvePath( filename );
+		
 		t = this;
 		// Get the correct door and load data
-		var theDoor = Doors.getDoorByPath( filename );
+		var theDoor = Workspace.getDoorByPath( filename );
 		if( theDoor )
 		{
 			// Copy vars
@@ -374,14 +468,14 @@ File = function ( filename )
 		{
 			var jax = new cAjax();
 			
-			jax.open ( 'post', '/system.library', true, true );
+			jax.open( 'post', '/system.library', true, true );
 			
 			for( var a in this.vars )
 			{
-				console.log( 'Adding extra var ' + a, this.vars[a] );
+				//console.log( 'Adding extra var ' + a, this.vars[a] );
 				jax.addVar( a, this.vars[a] );
 			}
-				
+			
 			jax.addVar( 'sessionId', Doors.sessionId );
 			jax.addVar( 'module', 'system' );
 			jax.addVar( 'command', 'filesave' );
@@ -459,7 +553,18 @@ File = function ( filename )
 // TODO: Use Door to resolve proper path
 function getImageUrl( path )
 {
-	var u = '/system.library/file/read?sessionid=' + Doors.sessionId + '&path=' + path + '&mode=rb';
+	if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
+		return path.split( /system\:/i ).join( '/webclient/' );
+
+	if( path.toLowerCase().substr( 0, 5 ) == 'libs:' )
+		return path.split( /libs\:/i ).join( '/webclient/' );
+
+
+	var sid = Workspace.sessionId && Workspace.sessionId != 'undefined';
+	var type = sid ? 'sessionid' : 'authid';
+	var valu = sid ? Workspace.sessionId : ( Workspace.conf ? Workspace.conf.authid : '' );
+	var auth = type + '=' + valu;
+	var u = '/system.library/file/read?' + auth + '&path=' + path + '&mode=rs';
 	return u;
 }
 

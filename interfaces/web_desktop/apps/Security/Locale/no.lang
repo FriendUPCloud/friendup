@@ -1,0 +1,23 @@
+
+
+# Security locale, norsk
+
+i18n_Security                           : Sikkerhet
+i18n_permissions                        : Rettigheter
+i18n_application                        : Programmer
+i18n_edit                               : Endre
+i18n_app_permissions                    : Program rettigheter
+i18n_cancel                             : Lukk
+i18n_close                              : Lukk
+
+i18n_applications                       : Programmer
+i18n_allowed_domains                    : Tillatte domener
+i18n_domains                            : Domener
+i18n_system                             : System
+i18n_gen_system_settings                : Generelle systeminnstillinger
+
+#Menu
+
+i18n_file                               : Fil
+i18n_quit                               : Avslutt
+

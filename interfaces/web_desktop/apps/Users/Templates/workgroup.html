@@ -1,0 +1,68 @@
+
+	<input type="hidden" id="pWorkgroupID" value="{id}"/>
+	<input type="hidden" id="viewId" value="{viewId}"/>
+	<input id="parentViewId" type="hidden" value="{parentViewId}"/>
+	<input type="hidden" id="pMembers" value="{members}"/>
+
+	<div id="TopForm" class="Padding ScrollArea VContentTop">
+		
+		<p class="Layout">
+			<strong>{i18n_workgroup_name}:</strong>
+		</p>
+		<p class="Layout">
+			<input id="pWorkgroupName" type="text" class="FullWidth" placeholder="{i18n_named_workgroup}" value="{name}"/>
+		</p>
+		
+		<hr/>
+		
+		<!--<div id="SetupContainer">
+			
+			<p class="Layout">
+				<strong>{i18n_template}:</strong>
+			</p>
+			
+			<select id="pWorkgroupSetup" class="FullWidth">{setup}</select>
+			
+		</div>-->
+		
+		<p class="Layout">
+			<strong>{i18n_members}:</strong>
+		</p>
+		
+		<select multiple="multiple" id="pMembersListed" class="FullWidth" style="height: 80px"></select>
+		
+		<p>
+			<button type="button" class="Button IconSmall fa-remove FloatRight" onclick="removeFromGroup()">
+				{i18n_remove_users_from_group}
+			</button>
+		</p>
+		
+	</div>
+	<div id="BottomButtons" class="BorderTop Padding VContentBottom">
+		<button type="button" class="Button IconSmall fa-remove FloatRight" onclick="cancelWorkgroup()">
+			{i18n_cancel}
+		</button>
+		<button type="button" class="Button IconSmall fa-save" onclick="saveWorkgroup()">
+			{i18n_save}
+		</button>
+		<button type="button" class="Button IconSmall fa-trash" onclick="deleteWorkgroup()" id="deleteButton">
+			{i18n_delete}
+		</button>
+		<button type="button" class="Button IconSmall fa-user" onclick="addMembers()">
+			{i18n_add_members}
+		</button>
+	</div>
+	
+	<style>
+		#TopForm
+		{
+			bottom: 60px;
+		}
+		#BottomButtons
+		{
+			height: 60px;
+		}
+		{delCss}
+	</style>
+	
+	<script src="Progdir:Scripts/workgroup.js"></script>

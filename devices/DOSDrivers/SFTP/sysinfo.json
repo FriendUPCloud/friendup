@@ -1,0 +1,6 @@
+{
+	"type":    "SFTP",
+	"literal": "Server filesystem",
+	"group":   "User",
+	"sharing":  "0"
+}

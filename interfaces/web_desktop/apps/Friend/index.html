@@ -1,0 +1,48 @@
+<div id="Top BorderBottom" class="VContentTop Padding">
+	<button type="button" id="tool_move" class="Button IconSmall fa-arrows" onclick="SetTool('move')">
+		Move
+	</button>
+	<button type="button" id="tool_node" class="Active Button IconSmall fa-square" onclick="SetTool('node')">
+		Node
+	</button>
+	<button type="button" id="tool_link" class="Button IconSmall fa-arrows-h" onclick="SetTool('link')">
+		Link
+	</button>
+</div>
+<div id="Mid" class="VContentTop">
+	<canvas id="Canvas"></div>
+</div>
+<div id="Bottom BorderTop" class="VContentBottom Padding">
+</div>
+
+<body>
+<script src="Scripts/friend.js"></script>
+<script>
+	window.addEventListener("load", windowLoaded, false);
+	function windowLoaded()
+	{
+		new Friend();
+	}
+</script>
+</body>
+
+<style>
+	#Top
+	{
+		height: 50px;
+	}
+	#Mid
+	{
+		top: 50px;
+		bottom: 50px;
+	}
+	#Bottom
+	{
+		height: 50px;
+	}
+	button.Active
+	{
+		-webkit-filter: grayscale(1);
+	    filter: grayscale(1);
+	}
+</style>

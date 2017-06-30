@@ -1,0 +1,51 @@
+ul {
+	padding-left: 5%;
+	list-style: none;
+	color: #333;
+}
+
+li {
+	border-bottom: solid 0px black;
+	padding:12px;
+}
+
+li.menu {
+	margin-left:0px;
+}
+
+li.submenu {
+	margin-left:15px
+}
+
+li:before {
+	font-family: 'FontAwesome';	
+	margin: 0 5px 0 -15px;	
+}
+
+.updates:before {
+	content: '\f021';
+}
+
+.storesettings:before {
+	content: '\f013';
+}
+
+.myapps:before {
+	content: '\f015';
+}
+
+.store:before {
+	content: '\f0f2';
+}
+
+.games:before {
+	content: '\f197';
+}
+
+.themes:before {
+	content: '\f03e';
+}
+
+.applications:before {
+	content: '\f07b';
+}

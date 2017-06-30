@@ -1,0 +1,56 @@
+
+menu_file                             : Fil
+menu_quit                             : Slutte
+menu_settings                         : Innstillinger
+menu_sources                          : Kalenderkilder
+menu_refresh_calendar                 : Synkroniser fra kilder
+
+i18n_close                            : Lukk
+i18n_add_source                       : Legg til en kilde
+i18n_desc                             : Beskrivelse
+i18n_save                             : Lagre
+i18n_cancel                           : Avbryt
+
+i18n_find_events                      : Finn hendelser
+i18n_search                           : Søk
+i18n_search_keywords                  : Søkeord...
+
+i18n_your_calendar                    : Your calendar
+
+# Month names
+
+month_january                         : Januar
+month_february                        : Februar
+month_march                           : Mars
+month_april                           : April
+month_may                             : Kan
+month_june                            : Juni
+month_july                            : Juli
+month_august                          : August
+month_september                       : September
+month_october                         : Oktober
+month_november                        : November
+month_december                        : Desember
+
+i18n_event_name                       : Hendelsesnavn:
+i18n_leadin                           : Beskrivelse:
+i18n_save                             : Lagre
+i18n_name                             : Navn:
+i18n_description                      : Beskrivelse:
+i18n_type                             : Type:
+i18n_server                           : Server:
+i18n_user_pass                        : Bruker/passord:
+i18n_your_root                        : Din rote
+i18n_calendar_sources                 : Kalenderkilder
+i18n_reject                           : manglende bruker / pass, kontroller dine innganger
+i18n_failed_to_get_unique_id          : klarte ikke å bli unik
+i18n_fetching_temp_pass               : henting av temp-pass mislyktes
+i18n_failed_to_decrypt                : klarte ikke å dekryptere temp-pass
+i18n_mon                              : man
+i18n_tue                              : tir
+i18n_wed                              : ons
+i18n_thu                              : tor
+i18n_fri                              : fre
+i18n_sat                              : lør
+i18n_sun                              : søn
+

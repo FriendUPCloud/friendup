@@ -1,0 +1,87 @@
+i18n_idle_title                      : Ajoutez ou editez un utilisateur
+i18n_idle_desc : Choisissez un utilisateur dans la liste de gauche, ou cliquez "Ajouter utilisateur" en bas de cette liste.
+
+i18n_users_title                     : Gestion utilisateurs
+i18n_users                           : Utilisateurs
+i18n_setup                      	 : Installation
+i18n_language                        : Langage
+i18n_theme                        	 : Thème
+i18n_template                        : Modèle
+i18n_templates                       : Modèles
+i18n_workgroups                      : Groupes de travail
+i18n_workgroup                     	 : Workgroup
+i18n_sessions                        : Sessions
+i18n_regenerate                      : Régénérer
+i18n_add                        	 : Ajouter
+i18n_add_user                        : Ajouter utilisateur
+i18n_add_setup                       : Ajouter installation
+i18n_add_template                    : Ajouter modèle
+i18n_add_workgroup                   : Ajouter groupe de travail
+i18n_add_to_dock                  	 : Ajouter au dock
+i18n_remove              		     : Enlever
+i18n_renew_session                   : Relancer la session utilisateur
+i18n_user_updated                    : Utilisateur mis à jour.
+i18n_user_created                    : Le nouvel utilisateur est maintenant activé.
+
+i18n_filter                 		 : Filtre
+
+i18n_preinstall                      : préinstaller
+
+i18n_startup-sequence                : Séquence de démarrage
+
+i18n_add_applications                : Ajouter applications
+i18n_add_apps        		         : Ajouter applications
+i18n_add_selected_apps        		 : Ajouter apps sélectionnées
+i18n_add_commands                	 : Ajouter commandes
+i18n_add_command                	 : Ajouter commande
+i18n_add_startup                	 : Ajouter commande
+i18n_edit_startup                	 : Editer commande
+i18n_command_line                	 : Commandes
+
+i18n_loading                		 : Chargement...
+
+#User edit
+i18n_full_name                       : Nom complet
+i18n_email                           : Email
+i18n_username                        : Nom d'utilisateur
+i18n_password                        : Mot de passe
+i18n_level                           : Niveau
+
+i18n_level_admin                     : Administrateur
+i18n_level_user                      : Utilisateur normal
+i18n_level_guest                     : Invité
+i18n_level_api                       : Utilisateur API
+
+i18n_save_user                       : Sauver utilisateur
+i18n_delete_user                     : Supprimer utilisateur
+i18n_unblock_user                    : Débloquer utilisateur
+i18n_cancel                          : Annuler
+i18n_save                            : Sauver
+i18n_add_members                     : Ajouter
+i18n_setup_name                	     : Nom d'installation
+i18n_template_name                   : Modèle nom
+i18n_workgroup_name                  : Nom groupe de travail
+i18n_named_workgroup                 : Ecrivez un nom
+i18n_members                         : Membres groupe de travail
+i18n_add_selected_members            : Ajouter utilisateurs sélectionnés
+i18n_add_workgroup_members           : Ajouter utilisateurs
+i18n_no_users_available              : Pas d'utilisateur disponible.
+i18n_remove_users_from_group         : Enlever sélection
+i18n_delete                          : Supprimer
+
+i18n_apply_template                  : Appliquer modèle
+
+i18n_applications                	 : Applications
+i18n_disks                			 : Disques
+i18n_folders                		 : Répertoires
+i18n_files                		 	 : Fichiers
+i18n_wallpapers                		 : Papier-peints
+i18n_settings                		 : Préférences
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norvégien
+i18n_locale_en                          : Anglais
+i18n_locale_de                          : Allemand
+i18n_locale_nl                          : Hollandais
+i18n_locale_fr                          : Français

@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var Config = {
 };
@@ -91,12 +91,27 @@ Application.initCKE = function()
 		on: { 
 			instanceReady: function( evt )
 			{ 
+				var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
 				//evt.editor.execCommand( 'maximize' ); 
+				var eles = document.getElementsByTagName( 'link' );
+				for( var a = 0; a < eles.length; a++ )
+				{
+					var n = d.createElement( 'link' );
+					n.rel = eles[a].rel;
+					n.href = eles[a].href;
+					d.getElementsByTagName( 'head' )[0].appendChild( n );
+				}
+				d.body.classList.add( 'MouseCursor' );
+				d.body.classList.add( 'ScrollArea' );
+				
+				// We want our cursor!
+				var computed = window.getComputedStyle( document.body, null );
+				d.body.parentNode.style.cursor = computed.cursor;
+				
 				Application.initializeToolbar();
 				
-				if( isMobile )
+				/*if( isMobile )
 				{
-					var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
 					d.body.onmousedown = function( e )
 					{
 						if( this == d.activeElement )
@@ -111,11 +126,74 @@ Application.initCKE = function()
 						}
 					}
 					d.body.onthouchdown = d.body.onmousedown;
-				}
+				}*/
 			},
 			contentDom: function( e )
 			{
 				var editable = e.editor.editable();
+				editable.$.addEventListener( 'keydown', function( e )
+				{
+					var wh = e.which ? e.which : e.keyCode;
+					var ctrl = e.ctrlKey;
+					if( !ctrl ) return;
+					// Don't trap irrelevant keys
+					switch( wh )
+					{
+						case 73:
+							editorCommand( 'italic' );
+							break;
+						case 66:
+							editorCommand( 'bold' );
+							break;
+						case 85:
+							editorCommand( 'underline' );
+							break;
+						case 83:
+						case 78:
+						case 79:
+						case 80:
+							Application.sendMessage( {
+								command: 'keydown',
+								key: wh,
+								ctrlKey: ctrl
+							} );
+							cancelBubble( e );
+							return false;
+					}
+					return false;
+				}, false );
+				/*editable.attachListener( e.editor.document, 'keyup', function( evt ) 
+				{
+					if( evt.data.$.ctrlKey )
+					{
+						// Don't trap irrelevant keys
+						switch( evt.data.$.which )
+						{
+							case 73:
+								editorCommand( 'italic' );
+								break;
+							case 66:
+								editorCommand( 'bold' );
+								break;
+							case 85:
+								editorCommand( 'underline' );
+								break;
+							case 83:
+							case 78:
+							case 79:
+							case 80:
+								Application.sendMessage( {
+									command: 'keydown',
+									key: evt.data.$.which,
+									ctrlKey: evt.data.$.ctrlKey
+								} );
+								cancelBubble( evt );
+								return false;
+						}
+						return false;
+					}
+					else console.log( evt.data.$.which );
+				} );*/
 				editable.attachListener( e.editor.document, 'keydown', function( evt ) 
 				{
 					if( Application.contentTimeout )
@@ -129,29 +207,6 @@ Application.initCKE = function()
 						} );
 						Application.contentTimeout = false;
 					}, 250 );
-					// Pass it back
-					if( evt.data.$.ctrlKey )
-					{
-						// Don't trap irrelevant keys
-						switch( evt.data.$.which )
-						{
-							case 79:
-							case 83:
-							case 78:
-							case 81:
-							case 73:
-								Application.sendMessage( {
-									command: 'keydown',
-									key: evt.data.$.which,
-									ctrlKey: evt.data.$.ctrlKey
-								} );
-								cancelBubble ( evt.data.$ );
-								return false;
-							default:
-								break;
-						}
-						return false;
-					}
 				} );
 				editable.attachListener( e.editor.document, 'mousedown', function( evt )
 				{
@@ -428,6 +483,7 @@ Application.initializeToolbar = function()
 		{
 			d.innerHTML = data;
 		}
+		f.i18n();
 		f.load();
 		var bt = ge( 'cke_1_bottom' );
 		if( bt )
@@ -461,6 +517,7 @@ Application.initializeBody = function()
 	f.document.body.style.boxSizing = 'border-box';
 	f.document.body.style.margin = '20pt 0 20pt 0';
 	f.document.body.style.fontSize = '12pt';
+	f.document.body.style.color = 'black';
 	editorCommand( 'zoom100%', 'store' );
 	AddEvent( 'onmouseup', MyMouseListener, f );
 	AddEvent( 'onkeyup', MyKeyListener, f );
@@ -611,7 +668,7 @@ Application.loadFile = function( path )
 		case 'docx':
 		case 'odt':
 		case 'rtf':
-			var m = new Module( 'files' );
+			var m = new Module( 'system' );
 			m.onExecuted = function( e, data )
 			{
 				if( e == 'ok' )
@@ -642,7 +699,7 @@ Application.loadFile = function( path )
 				// We got an error...
 				else
 				{
-					ge( 'Status' ).innerHTML = 'Failed to load document...';
+					ge( 'Status' ).innerHTML = i18n('i18n_failed_to_load_document');
 					
 					setTimeout( function()
 					{
@@ -650,13 +707,13 @@ Application.loadFile = function( path )
 					}, 1000 );
 				}	
 			}
-			m.execute( 'loaddocumentformat', { path: path } );
+			m.execute( 'convertfile', { path: path, format: 'html', returnData: true } );
 			break;
 		default:
 			var f = new File( path );
 			f.onLoad = function( data )
 			{
-				ge( 'Status' ).innerHTML = 'Loaded';
+				ge( 'Status' ).innerHTML = i18n('i18n_loaded');
 				
 				// Let's fix authid paths and sessionid paths
 				var m = false;
@@ -671,22 +728,37 @@ Application.loadFile = function( path )
 				var bdata = data.match( /\<body[^>]*?\>([\w\W]*?)\<\/body[^>]*?\>/i );
 				if( bdata && bdata[1] )
 				{
-					var f = document.getElementsByTagName( 'iframe' )[0];
-					f = f.contentWindow.document.body.innerHTML = bdata[1];
+					function loader( num )
+					{
+						if( !num ) num = 0;
+						if( num > 2 ) return; // <- failed
+						var f = document.getElementsByTagName( 'iframe' )[0];
+						
+						// retry
+						if( !f || ( f && !f.contentWindow.document.body ) )
+						{
+							return setTimeout( function(){ loader( num+1 ); }, 150 );
+						}
+						f.contentWindow.document.body.innerHTML = bdata[1];
+						f.contentWindow.document.body.style.overflow = 'auto';
 					
-					// Remember content and top scroll
-					Application.sendMessage( { 
-						command: 'remembercontent', 
-						data: bdata[1],
-						path: path,
-						scrollTop: 0
-					} );
+						// Remember content and top scroll
+						Application.sendMessage( { 
+							command: 'remembercontent', 
+							data: bdata[1],
+							path: path,
+							scrollTop: 0
+						} );
+					}
+					loader();
 					
 				}
 				// This is not a compliant HTML document
 				else
 				{
-					CKEDITOR.instances.Editor.setData( data );
+					var f = document.getElementsByTagName( 'iframe' )[0];
+					f.contentWindow.document.body.innerHTML = data;
+					f.contentWindow.document.body.style.overflow = 'auto';
 					
 					// Remember content and top scroll
 					Application.sendMessage( { 
@@ -714,58 +786,42 @@ Application.saveFile = function( path, content )
 		case 'docx':
 		case 'odt':
 		case 'rtf':
-			var f = new File();
-			f.onPost = function( res )
-			{
-				if( res )
-				{
-					ge( 'Status' ).innerHTML = 'Converting...';
+			ge( 'Status' ).innerHTML = i18n('i18n_converting');
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, data )
-					{
-						if( e == 'ok' )
-						{
-							ge( 'Status' ).innerHTML = 'Written';
-							setTimeout( function()
-							{
-								ge( 'Status' ).innerHTML = '';
-							}, 500 );
-						}
-						// We got an error...
-						else
-						{
-							ge( 'Status' ).innerHTML = data;
-							setTimeout( function()
-							{
-								ge( 'Status' ).innerHTML = '';
-							}, 1000 );
-						}
-					}
-					m.execute( 'convertfile', { path: path } );
-				}
-				else
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, data )
+			{
+				if( e == 'ok' )
 				{
-					ge( 'Status' ).innerHTML = 'Error writing...';
+					ge( 'Status' ).innerHTML = i18n('i18n_written');
 					setTimeout( function()
 					{
-						ge( 'Status' ).innerHTML = res;
+						ge( 'Status' ).innerHTML = '';
+					}, 500 );
+				}
+				// We got an error...
+				else
+				{
+					ge( 'Status' ).innerHTML = data;
+					setTimeout( function()
+					{
+						ge( 'Status' ).innerHTML = '';
 					}, 1000 );
 				}
 			}
-			f.post( path, content );
+			m.execute( 'convertfile', { path: path, data: content, dataFormat: 'html', format: extension } );
 			break;
 		default:
 			var f = new File();
 			f.onSave = function()
 			{
-				ge( 'Status' ).innerHTML = 'Written';
+				ge( 'Status' ).innerHTML = i18n('i18n_written');
 				setTimeout( function()
 				{
 					ge( 'Status' ).innerHTML = '';
 				}, 500 );
 			}
-			f.save( path, content );
+			f.save( content, path );
 			break;
 	}
 	
@@ -779,18 +835,25 @@ Application.saveFile = function( path, content )
 
 Application.print = function( path, content, callback )
 {
-	var m = new Module( 'files' );
+	var v = new View( { title: i18n('i18n_print_preview'), width: 200, height: 100 } );
+	v.setContent( '<div class="Padding"><p><strong>' + i18n('i18n_generating_print_preview') + '</strong></p></div>' );
+	var m = new Module( 'system' );
 	m.onExecuted = function( e, data )
 	{
 		if( e == 'ok' )
 		{
-			ge( 'Status' ).innerHTML = 'Printed';
-			if( callback )
-				callback( data );
+			ge( 'Status' ).innerHTML = i18n('i18n_print_ready');
 			setTimeout( function()
 			{
 				ge( 'Status' ).innerHTML = '';
 			}, 500 );
+			
+			v.close();
+			
+			if( callback )
+			{
+				callback( data );
+			}
 		}
 		// We got an error...
 		else
@@ -802,12 +865,20 @@ Application.print = function( path, content, callback )
 			}, 1000 );
 		}
 	}
-	m.execute( 'gendocumentpdf', { path: path, data: content } );
+	m.execute( 'convertfile', { path: path, format: 'pdf' } );
 }
 
 Application.newDocument = function( args )
 {
-	if( typeof( CKEDITOR ) == 'undefined' )
+	// So async!
+	var hasBodyOnFrame = document.getElementsByTagName( 'iframe' );
+	hasBodyOnFrame = hasBodyOnFrame.length ? hasBodyOnFrame[0] : false;
+	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.contentWindow;
+	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.document;
+	if( hasBodyOnFrame ) hasBodyOnFrame = hasBodyOnFrame.body;
+
+	// Wait till ready
+	if( typeof( CKEDITOR ) == 'undefined' || !hasBodyOnFrame )
 	{
 		return setTimeout( function()
 		{
@@ -828,18 +899,17 @@ Application.newDocument = function( args )
 	
 	if( args.content )
 	{
-		CKEDITOR.instances.Editor.setData( args.content, function()
+		var f = document.getElementsByTagName( 'iframe' )[0];
+		f.contentWindow.document.body.innerHTML = args.content;
+		if( args.scrollTop )
 		{
-			if( args.scrollTop )
+			setTimeout( function()
 			{
-				setTimeout( function()
-				{
-					var i = document.getElementsByTagName( 'iframe' )[0];
-					i.contentWindow.document.body.scrollTop = args.scrollTop;
-					Application.initializeBody();
-				}, 50 );
-			}
-		} );
+				var i = document.getElementsByTagName( 'iframe' )[0];
+				i.contentWindow.document.body.scrollTop = args.scrollTop;
+				Application.initializeBody();
+			}, 50 );
+		}
 	}
 	else
 	{
@@ -907,7 +977,7 @@ Application.receiveMessage = function( msg )
 			this.print( msg.path, '<!doctype html><html><head><title></title></head><body>' + CKEDITOR.instances.Editor.getData() + '</body></html>', function( data )
 			{
 				var w = new View( {
-					title: 'Print preview ' + msg.path,
+					title: i18n('i18n_print_preview') + ' ' + msg.path,
 					width: 700,
 					height: 800
 				} );
@@ -970,6 +1040,14 @@ function editorCommand( command, value )
 	else if( command == 'image' )
 	{
 		imageWindow();
+	}
+	else if( command == 'olbullets' )
+	{
+		f.execCommand( 'insertOrderedList', false, false );
+	}
+	else if( command == 'ulbullets' )
+	{
+		f.execCommand( 'insertUnorderedList', false, false );
 	}
 	else if( command == 'align-left' )
 	{

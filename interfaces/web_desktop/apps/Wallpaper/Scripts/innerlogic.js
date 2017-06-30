@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.currentPath = 'Mountlist:';
 
@@ -92,7 +92,7 @@ Application.showImages = function()
 					fname = fname.split( '/' );
 					fname = fname[fname.length - 1];
 				}
-				ml += '<div class="WPImage' + cl + '"><div class="Remove IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
+				ml += '<div class="MousePointer WPImage' + cl + '"><div class="Remove MousePointer IconSmall fa-remove" onclick="Application.removeImage(' + (a+1) + ')">&nbsp;</div><div class="Thumb" onclick="Application.setImage(' + 
 					(a+1) + ');" style="background-image: url(' + 
 					getImageUrl( arr[a] ) + ');"><div>' + fname + '</div></div></div>';
 			}
@@ -109,14 +109,14 @@ Application.showImages = function()
 		cl = '';
 		if( !found && Application.selectedImage == -1 )
 			cl = ' Selected';
-		ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
+		ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-1);" style="background-color: ' + ( Application.mode == 'doors' ? '#2F669F' : '#ffffff' ) + ';"><div>Use background color.</div></div></div>';
 		
 		if( Application.mode == 'doors' )
 		{
 			cl = '';
 			if( !found && Application.selectedImage == -2 )
 				cl = ' Selected';
-			ml += '<div class="WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
+			ml += '<div class="MousePointer WPImage' + cl + '"><div class="Thumb" onclick="Application.setImage(-2);" style="background-image: url(/webclient/gfx/theme/default_login_screen.jpg); background-size: cover"><div>Use system default.</div></div></div>';
 		}
 		
 		ge( 'Images' ).innerHTML = ml;

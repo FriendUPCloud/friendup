@@ -1,10 +1,10 @@
 <?php
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -13,10 +13,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 if( $dir = opendir( 'modules' ) )
 {
@@ -25,14 +26,14 @@ if( $dir = opendir( 'modules' ) )
 	{
 		if( $file{0} == '.' ) continue;
 		$o = new stdClass();
-		$o->Filename = ucfirst( $file );
-		$o->Path = 'System:Modules/';
+		$o->Filename = ucfirst( $file ) . '.module';
+		$o->Path = 'System:Modules/' . ucfirst( $file ) . '.module';
 		$o->Permissions = '';
 		$o->DateModified = date( 'Y-m-d H:i:s' );
 		$o->DateCreated = '1970-01-01 00:00:00';
 		$o->Filesize = 1024;
 		$o->MetaType = 'File';
-		$o->IconFile = 'gfx/icons/128x128/categories/applications-utilities.png';
+		$o->IconClass = 'Module';
 		$o->Type = 'File';
 		$mods[] = $o;
 	}

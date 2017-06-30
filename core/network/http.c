@@ -1,22 +1,32 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
+/** @file
+ * 
+ *  Http structures and functions
+ *
+ *  @author HT
+ *  @date pushed 14/10/2015
+ */
 
 #include <core/types.h>
 #include <stdbool.h>
@@ -28,18 +38,20 @@
 #include "network/http.h"
 #include "util/string.h"
 #include <util/log/log.h>
+#include <util/tagitem.h>
+#include <service/comm_msg.h>
+#include <system/systembase.h>
+#include <arpa/inet.h>
 
-//void HttpAddHeaderStatic( Http_t* http, char* key, const char* value )
-//{
-//	char* dvalue = calloc( strlen( value ) + 1 );
-//
-//}
+/**
+ * sprintf function used by Http messages. (Pretty inefficient, but what the heck...)
+ *
+ * @param format same which is used by printf
+ * @param ... other parameters
+ * @return arguments in string
+ */
 
-// From main.c
-extern pthread_mutex_t sslmut;
-
-// Pretty inefficient, but what the heck...
-char * Httpsprintf( char * format, ... )
+char *Httpsprintf( char * format, ... )
 {
 	va_list argList;
 	va_start( argList, format );
@@ -47,7 +59,7 @@ char * Httpsprintf( char * format, ... )
 
 	if( str == NULL )
 	{
-		ERROR("Cannot allocate memory in Httpsprintf\n");
+		Log( FLOG_FATAL,"Cannot allocate memory in Httpsprintf\n");
 		return NULL;
 	}
 	va_end( argList );
@@ -57,16 +69,19 @@ char * Httpsprintf( char * format, ... )
 	return str;
 }
 
-//
-//
-//
 
-Http* HttpNew(  )
+/**
+ * Create new Http
+ *
+ * @return Http structure
+ */
+
+Http *HttpNew( )
 {
 	Http* h = FCalloc( 1, sizeof( Http ) );
 	if( h == NULL )
 	{
-		ERROR("Cannot allocate memory for Http\n");
+		Log( FLOG_FATAL,"Cannot allocate memory for Http\n");
 		return NULL;
 	}
 	h->headers = HashmapNew();
@@ -74,18 +89,21 @@ Http* HttpNew(  )
 	// Set default version to HTTP/1.1
 	h->versionMajor = 1;
 	h->versionMinor = 1;
-	//h->h_Socket = socket;
-	
-	DEBUG("HTTP_NEW SOCKET SET %p\n", socket );
+	h->h_ResponseHeadersRelease = TRUE;
+	h->h_ContentLength = 0;
 	
 	return h;
 }
 
-//
-//
-//
+/**
+ * create simple Http structure based on provided tags
+ *
+ * @param code http code
+ * @param tag pointer to tag list
+ * @return Http structure
+ */
 
-Http* HttpNewSimple( unsigned int code, struct TagItem *tag )
+Http *HttpNewSimple( unsigned int code, struct TagItem *tag )
 {
 	Http* h = HttpNew( );
 	if( h != NULL )
@@ -98,66 +116,120 @@ Http* HttpNewSimple( unsigned int code, struct TagItem *tag )
 		{
 			if( HttpAddHeader( h, tag->ti_Tag , (char *)tag->ti_Data )  != 0 )
 			{
-				ERROR("Cannot add key: %s\n", HEADERS[ tag->ti_Tag ] );
+				FERROR("Cannot add key: %s\n", HEADERS[ tag->ti_Tag ] );
 			}
 			else
 			{
-				INFO("Added %s\n", (char *) tag->ti_Data );
+				//INFO("Added %s\n", (char *) tag->ti_Data );
 			}
-		
+
 			tag++;
 		}
 	}
 	else
 	{
-		ERROR("Cannot allocate memory for HTTP\n");
+		FERROR("Cannot allocate memory for HTTP\n");
 	}
-
 	return h;
 }
 
-//
-// Helper function to add some error codes to an object
-//
+/**
+ * create simple Http structure based on provided tags and request
+ *
+ * @param code http code
+ * @param tag pointer to tag list
+ * @return Http structure
+ */
 
-Http* HttpError( unsigned int code, Http* http, unsigned int line )
+Http *HttpNewSimpleBaseOnRequest( unsigned int code, Http *request, struct TagItem *tag )
+{
+	Http* h = HttpNew( );
+	if( h != NULL )
+	{
+		HttpSetCode( h, code );
+		
+		//INFO("==================================\n");
+		
+		while( tag->ti_Tag != TAG_DONE )
+		{
+			if( HttpAddHeader( h, tag->ti_Tag , (char *)tag->ti_Data )  != 0 )
+			{
+				FERROR("Cannot add key: %s\n", HEADERS[ tag->ti_Tag ] );
+			}
+			else
+			{
+				//INFO("Added %s\n", (char *) tag->ti_Data );
+			}
+			
+			tag++;
+		}
+		
+		h->h_RequestSource = request->h_RequestSource; 
+		h->h_ResponseID = request->h_ResponseID; 
+	}
+	else
+	{
+		FERROR("Cannot allocate memory for HTTP\n");
+	}
+	return h;
+}
+
+/**
+ * Helper function to add some error codes to an object
+ *
+ * @param code http code
+ * @param http pointer to http structure on which code will be set
+ * @param line number of line where error appeard
+ * @return Http structure
+ */
+
+Http *HttpError( unsigned int code, Http* http, unsigned int line )
 {
 	http->errorCode = code;
 	http->errorLine = line;
 	switch( code )
 	{
 		case 400:
-			INFO( "400 Bad Request (%u)\n", line );
+			Log( FLOG_INFO, "400 Bad Request (%u)\n", line );
 			break;
 		default:
-			INFO( "%u (%u)\n", code, line );
+			Log( FLOG_INFO, "%u (%u)\n", code, line );
 	}
 	return http;
 }
 
-//
-// any US-ASCII character (octets 0 - 127)
-//
+/**
+ * any US-ASCII character (octets 0 - 127)
+ *
+ * @param c character which will be checked
+ * @return TRUE when character is US-ASCII
+ */
 
-BOOL HttpIsChar( char c )
+FBOOL HttpIsChar( char c )
 {
 	return (unsigned char)c < 0x80;
 }
 
-//
-// any US-ASCII control character (octets 0 - 31) and DEL (127)
-//
+/**
+ * any US-ASCII control character (octets 0 - 31) and DEL (127)
+ *
+ * @param c character which will be checked
+ * @return TRUE when char is US-ASCII control character
+ */
 
-BOOL HttpIsCTL( char c )
+FBOOL HttpIsCTL( char c )
 {
 	return c < 0x20 || c == 0x7F;
 }
 
-//
-//
-//
+/**
+ * Check if char is separator
+ *
+ * @param c character which will be checked
+ * @return TRUE if char is separator, otherwise FALSE
+ */
 
-BOOL HttpIsSeparator( char c )
+FBOOL HttpIsSeparator( char c )
 {
 	return 
 	/* .--------------------------------------------. */
@@ -172,36 +244,48 @@ BOOL HttpIsSeparator( char c )
 	/* '--------------------------------------------' */ 
 }
 
-//
-//
-//
+/**
+ * Check if characer is high 
+ *
+ * @param c character which will be checked
+ * @return TRUE if character is high and alphanumeric, otherwise FALSE
+ */
 
-inline BOOL HttpIsUpAlpha( char c )
+inline FBOOL HttpIsUpAlpha( char c )
 {
 	return c >= 'A' && c <= 'Z';
 }
 
-//
-//
-//
+/**
+ * Check if characer is low 
+ *
+ * @param c character which will be checked
+ * @return TRUE if character is low and alphanumeric, otherwise FALSE
+ */
 
-inline BOOL HttpIsLoAlpha( char c )
+inline FBOOL HttpIsLoAlpha( char c )
 {
 	return c >= 'a' && c <= 'z';
 }
 
-//
-//
-//
+/**
+ * Check if provided char is alpha
+ *
+ * @param c character which will be checked
+ * @return TRUE if charater is alpha, otherwise FALSE
+ */
 
-inline BOOL  HttpIsAlpha( char c )
+inline FBOOL  HttpIsAlpha( char c )
 {
 	return HttpIsUpAlpha( c ) || HttpIsLoAlpha( c );
 }
 
-//
-//
-//
+/**
+ * Change char to lower
+ *
+ * @param c character which will be converted
+ * @return changed or original character
+ */
 
 char HttpAlphaToLow( char c )
 {
@@ -212,27 +296,36 @@ char HttpAlphaToLow( char c )
 	return c;
 }
 
-//
-//
-//
+/**
+ * Check if character is token
+ *
+ * @param c character which will be checked
+ * @return TRUE if char is token, otherwise FALSE
+ */
 
-inline BOOL HttpIsToken( char c )
+inline FBOOL HttpIsToken( char c )
 {
 	return !( HttpIsCTL( c ) || HttpIsSeparator( c ) ) && HttpIsChar( c );
 }
 
-//
-//
-//
+/**
+ * Check if character is whitespace
+ *
+ * @param c character which will be checked
+ * @return TRUE or FALSE
+ */
 
-inline BOOL HttpIsWhitespace( char c )
+inline FBOOL HttpIsWhitespace( char c )
 {
 	return c == ' ' || c == '\t';
 }
 
-//
-// parse integer value
-//
+/**
+ * parse integer value
+ *
+ * @param str string which will be converted to int
+ * @return str parameter represented by integer value
+ */
 
 int HttpParseInt( char* str )
 {
@@ -249,11 +342,12 @@ int HttpParseInt( char* str )
 	{
 		i++;
 	}
-	for( unsigned int i = 0; i < len; i++ )
+	for( i = 0; i < len; i++ )
 	{	
-		if( str[i] >= '0' && str[i] <= '9' )
+		if( str[ i ] >= '0' && str[ i ] <= '9' )
 		{
-			v = ( v * 10 ) + ( str[i] - '0' );
+			// bit shift: v * 10
+			v = ( ( v << 3 ) + ( v << 1 ) ) + ( str[ i ] - '0' );
 		}
 		else
 		{
@@ -270,9 +364,14 @@ int HttpParseInt( char* str )
 	}
 }
 
-//
-//
-//
+/**
+ * Parse Http header
+ *
+ * @param http pointer to Http where results will be stored.
+ * @param request http request represented by string
+ * @param length length of provided request
+ * @return http error code
+ */
 
 int HttpParseHeader( Http* http, const char* request, unsigned int length )
 {
@@ -284,17 +383,18 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	char* r = (char *)request;
 
 	// Parse request header
-	char* ptr = r;
+	char *ptr = r;
 	int step = -1;
 	int substep = 0;
-	BOOL emptyLine = FALSE;
-	BOOL lookForFieldName = TRUE;
-	char* currentToken = NULL;
-	char* lineStartPtr = r;
-	char* fieldValuePtr = NULL;
-	unsigned int i = 0;
+	FBOOL emptyLine = FALSE;
+	FBOOL lookForFieldName = TRUE;
+	char *currentToken = NULL;
+	char *lineStartPtr = r;
+	char *fieldValuePtr = NULL;
+	unsigned int i = 0, i1 = 0;
+	FBOOL copyValue = TRUE;
 	
-	//INFO("REQUEST size %d %s\n", length, request );
+	http->h_ResponseHeadersRelease = FALSE;
 
 	// Ignore any CRLF's that may precede the request-line
 	while( TRUE )
@@ -305,16 +405,22 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			break;
 		}
 		i++;
+		pthread_yield();
 	}
 
 	// Parse
 	for( ; TRUE; i++ )
 	{
+		i1 = i + 1; // save time
+		
 		// Sanity check
 		if( i > length )
 		{
 			return 400;
 		}
+		
+		// Yield
+		pthread_yield();
 
 		// Request-Line
 		if( step == 0 )
@@ -334,9 +440,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					case 1:
 					{
 						http->rawRequestPath = StringDuplicateN( ptr, ( r + i ) - ptr );
-						
-						DEBUG("HttpParserHeader: rawrequest: %s\n", http->rawRequestPath );
-						
+
 						http->uri = UriParse( http->rawRequestPath );
 						if( http->uri && http->uri->query )
 						{
@@ -347,54 +451,62 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					// Version ----------------------------------------------------------------------------------------
 					case 2:
 						http->version = StringDuplicateN( ptr, ( r + i ) - ptr );
-						unsigned int strLen = strlen( http->version );
-
-						// Do we have AT LEAST "HTTPxxxx"?
-						// TODO: What if we have HTTPaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1/1?
-						if( strLen < 8 || memcmp( http->version, "HTTP", 4 ) )
+						if( http->version != NULL )
 						{
-							return 400;
-						}
+							unsigned int strLen = strlen( http->version );
 
-						// Find the version separator
-						char* p = strchr( http->version, '/' );
-						if( !p )
-						{
-							return 400;
-						}
-						p++;
-
-						unsigned int pOffset = p - http->version;
-						unsigned int v = 0;
-						BOOL major = TRUE;
-						for( unsigned int j = 0; pOffset + j < strLen; j++ )
-						{
-							// Parse number
-							if( p[j] >= '0' && p[j] <= '9' )
+							// Do we have AT LEAST "HTTPxxxx"?
+							// TODO: What if we have HTTP1/1?
+							if( strLen < 8 || memcmp( http->version, "HTTP", 4 ) )
 							{
-								v = ( v * 10 ) + ( p[j] - '0' );
+								return 400;
 							}
-							// Save major version
-							else if( p[j] == '.' )
+
+							// Find the version separator
+							char* p = strchr( http->version, '/' );
+							if( !p )
 							{
-								if( major )
+								return 400;
+							}
+							p++;
+
+							unsigned int pOffset = p - http->version;
+							unsigned int v = 0;
+							FBOOL major = TRUE;
+							for( unsigned int j = 0; pOffset + j < strLen; j++ )
+							{
+								// Parse number
+								if( p[j] >= '0' && p[j] <= '9' )
 								{
-									http->versionMajor = v;
+									// Bit shift v * 10
+									v = ( ( v << 3 ) + ( v << 1 ) ) + ( p[j] - '0' );
 								}
+								// Save major version
+								else if( p[j] == '.' )
+								{
+									if( major )
+									{
+										http->versionMajor = v;
+									}
+									else
+									{
+										return 400;
+									}
+									major = FALSE;
+									v = 0;
+								}
+								// Invalid version numbering!
 								else
 								{
 									return 400;
 								}
-								major = FALSE;
-								v = 0;
 							}
-							// Invalid version numbering!
-							else
-							{
-								return 400;
-							}
+							http->versionMinor = v;
 						}
-						http->versionMinor = v;
+						else
+						{
+							return 400;
+						}
 						break;
 					// ------------------------------------------------------------------------------------------------
 					default:
@@ -402,7 +514,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						return 400;
 				}
 				substep++;
-				ptr = r + i + 1;
+				ptr = r + i1;
 			}
 		}
 		// Additional header lines
@@ -422,14 +534,152 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					if( r[i] == ':' )
 					{
 						unsigned int tokenLength = ( r + i ) - lineStartPtr;
-						if( currentToken ) free( currentToken );
+						if( currentToken != NULL )
+						{
+							FFree( currentToken );
+						}
 						currentToken = StringDuplicateN( lineStartPtr, tokenLength );
-						
+
 						for( unsigned int j = 0; j < tokenLength; j++ )
 						{
 							currentToken[j] = HttpAlphaToLow( currentToken[j] );
 						}
 						lookForFieldName = FALSE;
+
+						if( strcmp( currentToken, "content-type" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
+							
+							char *eptr = strstr( lineStartPtr + tokenLength, ";" );
+							if( eptr != NULL )
+							{
+								int toksize = eptr - (lineStartPtr + tokenLength);
+								char *app = NULL;
+								
+								if( toksize > 0 )
+								{
+									app = StringDuplicateN( lineStartPtr + tokenLength + 2, toksize - 2 );
+								}
+								
+
+								//
+								// getting content type
+								//
+
+								if( app != NULL )
+								{
+									if( strcmp( app, "application/x-www-form-urlencoded" ) == 0 ||  strcmp( app, "application/json" )  == 0 )
+									{
+										http->h_ContentType = HTTP_CONTENT_TYPE_DEFAULT;
+									}
+
+									else if( strcmp( app, "multipart/form-data" ) == 0 )
+									{
+										http->h_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
+									}
+
+									else if( strcmp( app, "application/xml" ) == 0 )
+									{
+										http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_XML;
+									}
+
+									else if( strcmp( app, "text/xml" ) == 0 )
+									{
+										http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
+									}
+									
+									DEBUG( "[HttpParseHeader] Found type: '%s' type id:%d\n", app, http->h_ContentType );
+
+									FFree( app );
+								} // app != NULL
+							} //eptr != NULL
+							copyValue = TRUE;
+						} // if content-type
+						else if( strcmp( currentToken, "user-agent" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ] = lineStartPtr+12;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+							
+							char *ptr = http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ];
+							while( *ptr != 0 )
+							{
+								if( *ptr == '\r' )
+								{
+									break;
+								}
+								ptr++;
+							}
+							
+							char ipstr[INET6_ADDRSTRLEN];
+							ipstr[ 0 ] = 0;
+							inet_ntop( AF_INET6, &( http->h_Socket->ip ), ipstr, sizeof ipstr );
+							
+							snprintf( http->h_UserActionInfo, sizeof(http->h_UserActionInfo), "AGENT: %.*s, IP: %s", (int)(ptr - http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ]), http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ], ipstr );
+						}
+						else if( strcmp( currentToken, "content-length" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_CONTENT_LENGTH ] = lineStartPtr+16;
+							
+							char *val = StringDuplicateEOL( lineStartPtr+16 );
+							if( val != NULL )
+							{
+								http->h_ContentLength = atoi( val );
+								FFree( val );
+							}
+
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "authorization" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_AUTHORIZATION ] = lineStartPtr+15;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "host" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+6;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						
+						else if( strcmp( currentToken, "origin" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_ORIGIN ] = lineStartPtr+8;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "accept" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "method" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "referer" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+9;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else
+						{
+							copyValue = TRUE;
+						}
 					}
 				}
 				else
@@ -440,11 +690,11 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					}
 				}
 			}
-			else if( !lookForFieldName )
+			else if( !lookForFieldName && copyValue == TRUE )
 			{
 				// Example value: "    \t lolwat,      hai,yep   "
 				unsigned int valLength = ( r + i ) - fieldValuePtr;
-				//INFO("SIZE %d  NAME %s\n", valLength, fieldValuePtr );
+
 				if( valLength > 1 && fieldValuePtr != NULL )
 				{
 					char* value = StringDuplicateN( fieldValuePtr, valLength );
@@ -458,15 +708,15 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 					// Split by comma
 					else
 					{
-						char* ptr = value;
+						char *ptr = value;
 						unsigned int lastCharIndex = 0;
-						BOOL leadingWhitespace = TRUE;
-						for( unsigned int i = 0; i < valLength; i++ )
+						FBOOL leadingWhitespace = TRUE;
+						for( unsigned int iz = 0; iz < valLength; iz++ )
 						{
 							// Ignore leading whitespace
-							if( leadingWhitespace && HttpIsWhitespace( value[i] ) )
+							if( leadingWhitespace && HttpIsWhitespace( value[ iz ] ) )
 							{
-								ptr = value + i + 1;
+								ptr = value + iz + 1;
 								lastCharIndex++;
 							}
 							else
@@ -474,27 +724,27 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 								leadingWhitespace = FALSE;
 
 								// Comma is the separator
-								if( value[i] == ',' )
+								if( value[ iz ] == ',' )
 								{
 									char* v = NULL;
 
 									if( value[ lastCharIndex ] == '"' )
 									{
-										v = StringDuplicateN( ptr, (lastCharIndex) - ( ptr - value ) );
+										v = StringDuplicateN( ptr, ( lastCharIndex ) - ( ptr - value ) );
 									}
 									else
 									{
-										v = StringDuplicateN( ptr, (lastCharIndex+1) - ( ptr - value ) );
+										v = StringDuplicateN( ptr, ( lastCharIndex + 1 ) - ( ptr - value ) );
 									}
 								
 									AddToList( list, v );
 								
 									leadingWhitespace = TRUE;
-									ptr = value + i + 1;
+									ptr = value + iz + 1;
 									lastCharIndex++;
 								}
 								// Ignore trailing whitespace
-								else if( !HttpIsWhitespace( value[i] ) )
+								else if( !HttpIsWhitespace( value[ iz ] ) )
 								{
 									lastCharIndex++;
 								}
@@ -511,12 +761,12 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 							}
 							else
 							{
-								v = StringDuplicateN( ptr, (lastCharIndex+1) - ( ptr - value ) );
+								v = StringDuplicateN( ptr, (lastCharIndex + 1) - ( ptr - value ) );
 							}
-							//char* v = StringDuplicateN( ptr, (1+lastCharIndex) - ( ptr - value ) );
+							
 							AddToList( list, v );
 						}
-						free( value );
+						FFree( value );
 					}
 
 					HashmapPut( http->headers, currentToken, list );
@@ -524,7 +774,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 				}
 			}
 		}
-		
+
 		// Check for line ending
 		// Even though the specs clearly say \r\n is the separator,
 		// let's forgive some broken implementations! It's not a big deal.
@@ -533,7 +783,7 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			// Reset and update some vars
 			step++;
 			substep = 0;
-			if( r[i+1] == '\n' )
+			if( r[ i1 ] == '\n' )
 			{
 				i++;
 			}
@@ -552,7 +802,10 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	}
 	
 	// Free unused token!
-	if( currentToken ) free( currentToken );
+	if( currentToken )
+	{
+		FFree( currentToken );
+	}
 	
 	if( r[i] == '\r' )
 	{
@@ -562,10 +815,14 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 	return 1;
 }
 
-
-//
-// Find string in data
-//
+/**
+ * Find string in data
+ *
+ * @param str string which will be searched
+ * @param data pointer to table of chars where str will be searched
+ * @param length length of provided data
+ * @return pointer to string where it is, otherwise NULL
+ */
 
 char *FindStrInData( char *str, char *data, int length)
 {
@@ -576,7 +833,6 @@ char *FindStrInData( char *str, char *data, int length)
 		int i = 0;
 		while( i < slen && str[ i ] == data[ pos + i ] )
 		{
-			//printf("%d\n", i );
 			i++;
 		}
 		
@@ -589,17 +845,19 @@ char *FindStrInData( char *str, char *data, int length)
 	return NULL;
 }
 
-
-//
-//
-//
+/**
+ * Parse Http header (Multipart)
+ *
+ * @param http pointer to Http which will be parsed
+ * @return 0 when request will be parsed without problems, otherwise error number
+ */
 
 int ParseMultipart( Http* http )
 {
 	http->parsedPostContent = HashmapNew();
 	if( http->parsedPostContent == NULL )
 	{
-		ERROR("Map was not created\n");
+		Log( FLOG_ERROR,"Map was not created\n");
 		return -1;
 	}
 
@@ -637,7 +895,7 @@ Content-Type: application/octet-stream
 	char *dataPtr = http->content;
 	while( TRUE )
 	{
-		if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"") ) != NULL )
+	    if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"") ) != NULL )
 		{
 			char *nameEnd = strchr( contentDisp + 38, '"' );
 			char *nextlineStart = strstr( nameEnd, "\r\n" ) + 2;
@@ -649,16 +907,18 @@ Content-Type: application/octet-stream
 									
 				//if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"file") ) != NULL )
 				char *startOfFile = strstr( nextlineStart, "\r\n\r\n" ) + 4;
+				FQUAD size = 0;
+				
 				if( startOfFile != NULL )
 				{
-					QUAD res;
+					FQUAD res;
 					res = FindInBinaryPOS( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent ) - 2;
 					
 					//res = (QUAD )FindInBinarySimple( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent )-2;
 					
 					char *endOfFile = startOfFile + res;
 					
-					INFO("Found the end of the file, file size %d\n", res );
+					INFO("Found the end of the file, file size %lld\n", res );
 					
 					if( endOfFile != NULL )
 					{
@@ -666,13 +926,13 @@ Content-Type: application/octet-stream
 						if( fname != NULL )
 						{
 							char *fnameend = strchr( fname, '"' );
-							QUAD size = (endOfFile - startOfFile);
+							size = (endOfFile - startOfFile);
 							int fnamesize = (int)(fnameend - fname);
 						
 							HttpFile *newFile = HttpFileNew( fname, fnamesize, startOfFile, size );
 							if( newFile != NULL )
 							{
-								//ERROR("TEMP POS %p END POS %p   size %d\n", startOfFile, endOfFile, (int)( endOfFile-startOfFile ) );
+								//FERROR("TEMP POS %p END POS %p   size %d\n", startOfFile, endOfFile, (int)( endOfFile-startOfFile ) );
 								//INFO("PARSING FOR FILES %40s =============== %p  filesize %ld\n", startOfFile, startOfFile, size );
 								if( http->h_FileList == NULL )
 								{
@@ -688,6 +948,16 @@ Content-Type: application/octet-stream
 						}
 					}
 				}
+				
+				int pos = size;
+				if( size > 0 )
+				{
+					dataPtr += pos;
+				}
+				else
+				{
+					dataPtr += pos + 20;
+				}
 			}
 			
 			//
@@ -696,7 +966,7 @@ Content-Type: application/octet-stream
 			
 			else
 			{
-				//ERROR("Data found\n");
+				//FERROR("Data found\n");
 				char *nameStart = contentDisp + 38;
 				char *nameEnd = strchr( nameStart, '"' );
 				char *key = StringDuplicateN( nameStart, (int)(nameEnd - nameStart) );
@@ -705,23 +975,23 @@ Content-Type: application/octet-stream
 				char *endParameter = strstr( startParameter, "\r\n" );
 				char *value = StringDuplicateN( startParameter, (int)(endParameter - startParameter) );
 				
+				//Content-Disposition: form-data; name="command"
 				/*
 				TODO: Enable this when it does something..
 				*/
+				
 				if( HashmapPut( http->parsedPostContent, key, value ) )
 				{
 					
 				}
 				/**/
-				//INFO("============================---KEY: %s  VALUE %s---s<<----------\n", key, value );
+				INFO("============================---KEY: %s  VALUE %s---s<<----------\n", key, value );
+				
+				int pos = ( int )( contentDisp - dataPtr ); 
+				dataPtr += pos + 20;
 			}
-			
-
 		}
 		else break;
-		
-		int pos = ( int )( contentDisp - dataPtr ); 
-		dataPtr += pos + 20;
 	}
 	
 	INFO("Number of files in http request %d\n", numOfFiles );
@@ -729,17 +999,22 @@ Content-Type: application/octet-stream
 	return 0;
 }
 
-//
-//
-//
-		
+/**
+ * Parse first part of the request
+ *
+ * @param http http request
+ * @param data which represent request as string
+ * @param length data length
+ * @return 0 when success, otherwise error number
+ */
+
 static const char *headerEnd = "\r\n\r\n";
 		
-extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
+inline int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 {
 	if( data == NULL || http == NULL )
 	{
-		ERROR("Cannot parse NULL requiest\n");
+		Log( FLOG_ERROR,"Cannot parse NULL requiest\n");
 		return -1;
 	}
 	
@@ -747,7 +1022,8 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 	if( !http->partialRequest )
 	{
 		http->partialRequest = TRUE;
-		INFO( "\nINCOMING!-----\n\n%s|Has come in.....\n", data );
+		Log( FLOG_INFO,"\nINCOMING Length: %d Request %512s\n", length, data );
+		//DEBUG("INCOMING REQUEST!\n\n\n\n\n");
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -760,26 +1036,27 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 		{
 			int result = 0;
 			int size = 0;
-			char *content = NULL;
 			
-			if( !http->gotHeader )
+			if( http->gotHeader == FALSE )
 			{
-				http->gotHeader = true;
+				http->gotHeader = TRUE;
 				HttpParseHeader( http, data, length );
 			}
-			if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
+			
+			//if( (content = HttpGetHeaderFromTable( http, HTTP_HEADER_CONTENT_LENGTH ) ) )
+			//if( ( content = HttpGetHeader( http, "content-length", 0 ) ) )
+			if( http->h_ContentLength > 0 )
 			{
-				size = atol( content );
-				//size = HttpParseInt( content );
+				size = http->h_ContentLength;
 
-				// If we have content, then parse it
-				DEBUG( "[HttpParsePartialRequest] Size of content is %d\n", size );
-				if( size )
+				if( size > 0 )
 				{
-					DEBUG("Expecting BODY with a length of %d\n", size );
 					http->expectBody = TRUE;
 				
-					if( http->content ) free( http->content );
+					if( http->content )
+					{
+						FFree( http->content );
+					}
 					http->content = FCalloc( (size + 5), sizeof( char ) );
 					http->sizeOfContent = size;
 				
@@ -787,10 +1064,7 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 					int dataOffset = ( found - data + 4 ), dataLength = length - dataOffset;
 					if( dataLength <= 0 )
 					{
-						// ERROR!
-						DEBUG( "Data length is less or equal to than 0 (%d) Missing data in post.\n", dataLength );
-						//DEBUG( "Adding content (offset %d with dataLength %d of total %d) Content body size was: %d.\n", dataOffset, dataLength, length, size );
-						free( http->content );
+						FFree( http->content );
 						http->content = NULL;
 						http->sizeOfContent = 0;
 						http->expectBody = FALSE;
@@ -798,15 +1072,13 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 					}
 					else if( dataLength != size )
 					{
-						DEBUG( "Datalength != Size %d != %d\n", dataLength, size );
-						free( http->content );
+						FFree( http->content );
 						http->content = NULL;
 						http->sizeOfContent = 0;
 						http->expectBody = FALSE;
 						return result != 400;
 					}
-					DEBUG( "We have: %s\n", found + 4 );
-					DEBUG( "Adding content (of total size %d of total %d) Content size was: %d.\n", dataLength, length, size );
+
 					int r = HttpParsePartialRequest( http, found + 4, size );
 					return r;
 				}
@@ -825,14 +1097,14 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 		}
 		else
 		{
-			DEBUG("RET 0!\n");
+			DEBUG("Header not found!\n");
 			return 0;
 		}
 	}
 	
 	if( http->gotHeader && http->expectBody && http->content )
 	{
-		DEBUG("RECEIVE DATA, length %d\n", length );
+		DEBUG("[HttpParsePartialRequest] RECEIVE DATA, length %d\n", length );
 		
 		// If we have null data, just purge!
 		if( length > 0 )
@@ -849,98 +1121,53 @@ extern inline int HttpParsePartialRequest( Http* http, char* data, unsigned int 
 			{
 				strcpy( http->h_PartDivider, "\n");
 			}
-			DEBUG("Divider: %s\n", http->h_PartDivider );
+			DEBUG("[HttpParsePartialRequest] Purge... Divider: %s\n", http->h_PartDivider );
 		}
 	
 		if( length == http->sizeOfContent )
 		{
-			char* type = HttpGetHeader( http, "content-type", 0 );
-			if( type )
+			if( http->h_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
 			{
-				// Some browser send "content-type; charset=x"
-				unsigned int l = 0;
-				char** a = StringSplit( type, ';', &l );
-
-				if( strcmp( a[0], "application/x-www-form-urlencoded" ) == 0 )
+				DEBUG( "[HttpParsePartialRequest] Parsing multipart data!\n" );
+			
+				if( http->parsedPostContent )
 				{
-					http->h_ContentType = HTTP_CONTENT_TYPE_DEFAULT;
-					
-					DEBUG( "Ok, we\'re using post content..\n" );
-					if( http->parsedPostContent )
-					{
-						HashmapFree( http->parsedPostContent );
-					}
-					
-					http->parsedPostContent = UriParseQuery( http->content );
-					
+					HashmapFree( http->parsedPostContent );
+				}
+				int ret = ParseMultipart( http );
+				
+				DEBUG("MULTIPART\n");
+			}
+			else
+			{
+				DEBUG( "[HttpParsePartialRequest] Parsing post content!\n" );
+				if( http->parsedPostContent )
+				{
+					HashmapFree( http->parsedPostContent );
 				}
 				
-				//
-				// multipart
-				//
-				
-				else if( strcmp( a[0], "multipart/form-data" ) == 0 )
-				{
-					http->h_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
-					
-					if( http->parsedPostContent )
-					{
-						HashmapFree( http->parsedPostContent );
-					}
-					int ret = ParseMultipart( http );
-				}
-				
-				//
-				// application and text / xml
-				//
-				
-				else if( strcmp( a[0], "application/xml" ) == 0 )
-				{
-					http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_XML;
-					
-					DEBUG( "Ok, we\'re using application xml.\n" );
-					if( http->parsedPostContent )
-					{
-						HashmapFree( http->parsedPostContent );
-					}
-					
-					http->parsedPostContent = UriParseQuery( http->content );
-				}
-				
-				else if( strcmp( a[0], "text/xml" ) == 0 )
-				{
-					http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
-					
-					DEBUG( "Ok, we\'re using text xml\n" );
-					if( http->parsedPostContent )
-					{
-						HashmapFree( http->parsedPostContent );
-					}
-					
-					http->parsedPostContent = UriParseQuery( http->content );
-				}
-				
-				// Clear mem
-				unsigned int i = 0;
-				for( ; i < l; i++ ) free( a[i] );
-				free( a );
-			}	
+				http->parsedPostContent = UriParseQuery( http->content );
+			}
 		}
 		return 1;
 	}
 	else
 	{
-		ERROR("Could not find data\n");
+		FERROR("Could not find data\n");
 	}
 	
 	return 0;
 }
 	
-//
-// Get the raw header list
-//
+/**
+ * Get headers list from Http request
+ *
+ * @param http http request
+ * @param name header name
+ * @return List witch headers
+ */
 
-List* HttpGetHeaderList( Http* http, const char* name )
+List *HttpGetHeaderList( Http* http, const char* name )
 {
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
@@ -953,11 +1180,16 @@ List* HttpGetHeaderList( Http* http, const char* name )
 	}
 }
 
-//
-// Get a header field value from a list at the index, or NULL if there is no values at the given index
-//
+/**
+ * Get a header field value from a list at the index, or NULL if there is no values at the given index
+ *
+ * @param http http request
+ * @param name header name
+ * @param index number of entry which will be taken from list
+ * @return header as string
+ */
 
-char* HttpGetHeader( Http* http, const char* name, unsigned int index )
+char *HttpGetHeader( Http* http, const char* name, unsigned int index )
 {
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
@@ -968,7 +1200,6 @@ char* HttpGetHeader( Http* http, const char* name, unsigned int index )
 		{
 			l = l->next;
 			f = l->data;
-			DEBUG("GETHEADER %s\n", l->data );
 		}
 		return f;
 	}
@@ -978,9 +1209,28 @@ char* HttpGetHeader( Http* http, const char* name, unsigned int index )
 	}
 }
 
-//
-// Get the number of values this header contains
-//
+/**
+ * Get a header field value fromtable, or NULL if there is no values
+ *
+ * @param http http request
+ * @param name header name
+ * @param index number of entry which will be taken from list
+ * @return header as string
+ */
+
+
+char* HttpGetHeaderFromTable( Http* http, int pos )
+{
+	return http->h_RespHeaders[ pos ];
+}
+
+/**
+ * Get the number of values this header contains
+ *
+ * @param http http request
+ * @param name header name
+ * @return number of header entries
+ */
 
 unsigned int HttpNumHeader( Http* http, const char* name )
 {
@@ -1003,11 +1253,18 @@ unsigned int HttpNumHeader( Http* http, const char* name )
 	}
 }
 
-//
-// Check if the request contains a header with the given value
-//
+/**
+ * Check if the request contains a header with the given value
+ *
+ * @param http http request
+ * @param name of header which will be checked
+ * @param value which will be checked
+ * @param caseSensitive is value case sensitive
+ * @return TRUE if value is same, otherwise FALSE
+ * 
+ */
 
-BOOL HttpHeaderContains( Http* http, const char* name, const char* value, BOOL caseSensitive )
+FBOOL HttpHeaderContains( Http* http, const char* name, const char* value, FBOOL caseSensitive )
 {
 	HashmapElement* e = HashmapGet( http->headers, (char*)name );
 	if( e )
@@ -1017,7 +1274,7 @@ BOOL HttpHeaderContains( Http* http, const char* name, const char* value, BOOL c
 		
 		// Precalc lowercase value
 		char valueLowcase[ size ];
-		for( ; i < size; i++ ) valueLowcase[ i ] = HttpAlphaToLow( value[i] );
+		for( ; i < size; i++ ) valueLowcase[ i ] = HttpAlphaToLow( value[ i ] );
 		
 		List* l = e->data;
 		do
@@ -1051,15 +1308,21 @@ BOOL HttpHeaderContains( Http* http, const char* name, const char* value, BOOL c
 	}
 }
 
-//
-//
-//
+/**
+ * Release Http request from memory
+ *
+ * @param http http request
+ */
 
 void HttpFree( Http* http )
 {
+	if( http == NULL )
+	{
+		return;
+	}
 	//DEBUG("Free HashMap\n");
 	int i;
-	for( i = 0 ; i < HTTP_HEADER_END ; i++ )
+	for( i = 0; i < HTTP_HEADER_END ; i++ )
 	{
 		if( http->h_RespHeaders[ i ] != NULL )
 		{
@@ -1077,11 +1340,11 @@ void HttpFree( Http* http )
 	
 	if( http->response )
 	{
-		free( http->response );
+		FFree( http->response );
 	}
 	if( http->content )
 	{
-		free( http->content );
+		FFree( http->content );
 	}
 	if( http->parsedPostContent != NULL )
 	{
@@ -1099,21 +1362,25 @@ void HttpFree( Http* http )
 		HttpFileDelete( remFile );
 	}
 	//DEBUG("Free http\n");
-	
-	// Suicide
-	free( http );
+
+	FFree( http );
 }
 
-//
-//
-//
-
+/**
+ * Release Http request
+ *
+ * @param http http request
+ */
 void HttpFreeRequest( Http* http )
 {
+	if( http == NULL )
+	{
+		return;
+	}
 	// Free the raw data we got from the request
 	if( http->method != NULL )
 	{
-		free( http->method );
+		FFree( http->method );
 		http->method = NULL;
 	}
 	if( http->uri != NULL )
@@ -1123,39 +1390,20 @@ void HttpFreeRequest( Http* http )
 	}
 	if( http->rawRequestPath != NULL )
 	{
-		free( http->rawRequestPath );
+		FFree( http->rawRequestPath );
 		http->rawRequestPath = NULL;
 	}
 	if( http->version != NULL )
 	{
-		free( http->version );
+		FFree( http->version );
 		http->version = NULL;
 	}
 	if( http->content != NULL && http->sizeOfContent != 0 )
 	{
-		free( http->content );
+		FFree( http->content );
 		http->content = NULL;
 		http->sizeOfContent = 0;
 	}
-
-	// Free the query hashmap
-	/*
-	if( http->query )
-	{
-		unsigned int iterator = 0;
-		HashmapElement_t* e = NULL;
-		while( ( e = HashmapIterate( http->query, &iterator ) ) != NULL )
-		{
-			if( e->data != NULL )
-				free( e->data );
-			e->data = NULL;
-			free( e->key );
-			e->key = NULL;
-		}
-		HashmapFree( http->query );
-		http->query = NULL;
-	}
-	*/
 
 	// Free the headers hashmap
 	unsigned int iterator = 0;
@@ -1170,22 +1418,22 @@ void HttpFreeRequest( Http* http )
 			{
 				if( l->data )
 				{
-					free( l->data );
+					FFree( l->data );
 					l->data = NULL;
 				}
 				n = l->next;
-				free( l );
+				FFree( l );
 				l = n;
 			} while( l );
 			e->data = NULL;
 		}
-		free( e->key );
+		FFree( e->key );
 		e->key = NULL;
 	}
 	
 	HashmapFree( http->headers );
 
-	if( http->partialData ) free( http->partialData );
+	if( http->partialData ) FFree( http->partialData );
 
 	if( http->parsedPostContent ) HashmapFree( http->parsedPostContent );
 
@@ -1198,15 +1446,18 @@ void HttpFreeRequest( Http* http )
 		curFile = (HttpFile *)curFile->node.mln_Succ;
 		HttpFileDelete( remFile );
 	}
-	DEBUG("Free http\n");
+	//DEBUG("Free http\n");
 
 	// Suicide
-	free( http );
+	FFree( http );
 }
 
-//
-//
-//
+/**
+ * Set error code on request
+ *
+ * @param http http request
+ * @param code error code as number
+ */
 
 void HttpSetCode( Http* http, unsigned int code )
 {
@@ -1280,15 +1531,20 @@ void HttpSetCode( Http* http, unsigned int code )
 	}
 }
 
-//
-// Copies key, sets valus
-//
+/**
+ * Add Http header
+ *
+ * @param http http request
+ * @param id id of header
+ * @param value vaule of the header entry
+ * @return 0 when value will be set, otherwise error number
+ */
 
 int HttpAddHeader(Http* http, int id, char* value )
 {
 	if( value == NULL )
 	{
-		ERROR("Cannot add empty header\n");
+		FERROR("Cannot add empty header\n");
 		return -1;
 	}
 	
@@ -1329,7 +1585,7 @@ int HttpAddHeader( Http* http, const char* key, char* value )
 		// If this fails!
 		if( HashmapPut( http->headers, bkey, value ) == FALSE )
 		{
-			ERROR("Cannot push data into hashmap %s\n", value );
+			FERROR("Cannot push data into hashmap %s\n", value );
 			FFree( bkey ); 
 			FFree( value );
 			return -2;
@@ -1345,11 +1601,13 @@ int HttpAddHeader( Http* http, const char* key, char* value )
 	return 0;
 }*/
 
-
-
-//
-// Sets char *data on http structure (no copy, reference!)
-//
+/**
+ * Sets char *data on http structure (no copy, reference!)
+ *
+ * @param http http request
+ * @param data pointer to data which will represent http content
+ * @param length data length
+ */
 
 void HttpSetContent( Http* http, char* data, unsigned int length )
 {
@@ -1359,9 +1617,12 @@ void HttpSetContent( Http* http, char* data, unsigned int length )
 	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%ld", (unsigned long int )http->sizeOfContent ) );
 }
 
-//
-// Adds text content to http (real copy, no reference!)
-//
+/**
+ * Adds text content to http (real copy, no reference!)
+ *
+ * @param http http request
+ * @param content data which will represent Http content
+ */
 
 void HttpAddTextContent( Http* http, char* content )
 {
@@ -1372,13 +1633,16 @@ void HttpAddTextContent( Http* http, char* content )
 	HttpAddHeader( http, HTTP_HEADER_CONTENT_LENGTH, Httpsprintf( "%ld", (unsigned long int)http->sizeOfContent ) );
 }
 
-//
-//
-//
+/**
+ * build Http request string from Http request
+ *
+ * @param http http request
+ * @return header as string
+ */
 
 #define HTTP_MAX_ELEMENTS 512
 
-char * HttpBuild( Http* http )
+char *HttpBuild( Http* http )
 {
 	char *strings[ HTTP_MAX_ELEMENTS ];
 	int stringsSize[ HTTP_MAX_ELEMENTS ];
@@ -1387,47 +1651,84 @@ char * HttpBuild( Http* http )
 	// TODO: This is a nasty hack and should be fixed!
 	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); // TODO: FIX ME!!
 	
-	char *tmpdat = FCalloc( 512, sizeof( char ) );
-	sprintf( tmpdat , "HTTP/%u.%u %u %s\r\n", http->versionMajor, http->versionMinor, http->responseCode, http->responseReason );
-	strings[ stringPos++ ] = tmpdat;
-
-	// Add all the custom headers
-	unsigned int iterator = 0;
+	int rrlen = strlen( http->responseReason );
 	int i = 0;
+	int tmpl = 512 + rrlen;
 	
-	for( i = 0 ; i < HTTP_HEADER_END ; i++ )
+	char *tmpdat = FCalloc( tmpl, sizeof( char ) );
+	if( tmpdat != NULL )
 	{
-		if( http->h_RespHeaders[ i ] != NULL )
+		snprintf( tmpdat , tmpl, "HTTP/%u.%u %u %s\r\n", http->versionMajor, http->versionMinor, http->responseCode, http->responseReason );
+		strings[ stringPos++ ] = tmpdat;
+
+		// Add all the custom headers
+		int iterator = 0;
+		i = 0;
+	
+		if( http->h_ResponseHeadersRelease == TRUE )
 		{
-			char *tmp = FCalloc( 512, sizeof( char ) );
-			if( tmp != NULL )
+			for( i = 0 ; i < HTTP_HEADER_END ; i++ )
 			{
-				sprintf( tmp, "%s: %s\r\n", HEADERS[ i ], http->h_RespHeaders[ i ] );
-				strings[ stringPos++ ] = tmp;
-				//INFO("ADDDDDDDDDDDD %s   AND FREE %s\n", tmp, http->h_RespHeaders[ i ] );
-				
-				FFree( http->h_RespHeaders[ i ] );
-				http->h_RespHeaders[ i ] = NULL;
-			}
-			else
-			{
-				ERROR("respheader = NULL\n");
-				FFree( tmp );
+				if( http->h_RespHeaders[ i ] != NULL )
+				{
+					char *tmp = FCalloc( 512, sizeof( char ) );
+					if( tmp != NULL )
+					{
+						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->h_RespHeaders[ i ] );
+						strings[ stringPos++ ] = tmp;
+						//INFO("ADDDDDDDDDDDD %s   AND FREE %s\n", tmp, http->h_RespHeaders[ i ] );
+						FFree( http->h_RespHeaders[ i ] );
+						http->h_RespHeaders[ i ] = NULL;
+					}
+					else
+					{
+						FERROR("respheader = NULL\n");
+						FFree( tmp );
+					}
+				}
 			}
 		}
+		else
+		{
+			for( i = 0; i < HTTP_HEADER_END; i++ )
+			{
+				if( http->h_RespHeaders[ i ] != NULL )
+				{
+					char *tmp = FCalloc( 512, sizeof( char ) );
+					if( tmp != NULL )
+					{
+						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->h_RespHeaders[ i ] );
+						strings[ stringPos++ ] = tmp;
+					}
+					else
+					{
+						FERROR("respheader = NULL\n");
+						FFree( tmp );
+					}
+				}
+			}
+		}
+
+		strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
+	}
+	else
+	{
+		FERROR("HTTPBuild: Cannot allocate memory\n");
 	}
 
-	strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
-
 	// Find the total size of the response
-	unsigned int size = http->sizeOfContent ? http->sizeOfContent : 0 ;
+	int size = 0;
 	
-	for( i = 0 ; i < stringPos; i++ )
+	if( http->h_Stream == FALSE )
+	{
+		size += http->sizeOfContent ? http->sizeOfContent : 0 ;
+	}
+	
+	for( i = 0; i < stringPos; i++ )
 	{
 		stringsSize[ i ] = strlen( strings[ i ] );
 		size += stringsSize[ i ];
 	}
-
 
 	// Concat all the strings into one mega reply!!
 	char* response = FCalloc( (size + 1), sizeof( char ) );
@@ -1441,7 +1742,7 @@ char * HttpBuild( Http* http )
 		FFree( strings[ i ] );
 	}
 
-	if( http->sizeOfContent )
+	if( http->h_Stream == FALSE && http->content )
 	{
 		memcpy( response + ( size - http->sizeOfContent ), http->content, http->sizeOfContent );
 	}
@@ -1449,7 +1750,10 @@ char * HttpBuild( Http* http )
 	//DEBUG("RESPONSE %s <<<\n", response );
 
 	// Old response is gone
-	if( http->response ) FFree( http->response );
+	if( http->response )
+	{
+		FFree( http->response );
+	}
 		
 	// Store the response pointer, so that we can free it later
 	http->response = response;
@@ -1458,52 +1762,151 @@ char * HttpBuild( Http* http )
 	return response;
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//
-// Shorthands 
-//
-//
+/**
+ * build Http header from Http request
+ *
+ * @param http http request
+ * @return header as string
+ */
+
+char *HttpBuildHeader( Http* http )
+{
+	char *strings[ HTTP_MAX_ELEMENTS ];
+	int stringsSize[ HTTP_MAX_ELEMENTS ];
+	int stringPos = 0;
+	int i = 0;
+
+	// TODO: This is a nasty hack and should be fixed!
+	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); // TODO: FIX ME!!
+	
+	int rrlen = strlen( http->responseReason );
+	char *tmpdat = FCalloc( 512 + rrlen, sizeof( char ) );
+	if( tmpdat != NULL )
+	{
+		snprintf( tmpdat , rrlen, "HTTP/%u.%u %u %s\r\n", http->versionMajor, http->versionMinor, http->responseCode, http->responseReason );
+		strings[ stringPos++ ] = tmpdat;
+
+		// Add all the custom headers
+		int iterator = 0;
+	
+		for( i = 0; i < HTTP_HEADER_END ; i++ )
+		{
+			if( http->h_RespHeaders[ i ] != NULL )
+			{
+				char *tmp = FCalloc( 512, sizeof( char ) );
+				if( tmp != NULL )
+				{
+					snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->h_RespHeaders[ i ] );
+					strings[ stringPos++ ] = tmp;
+					//INFO("ADDDDDDDDDDDD %s   AND FREE %s\n", tmp, http->h_RespHeaders[ i ] );
+				
+					FFree( http->h_RespHeaders[ i ] );
+					http->h_RespHeaders[ i ] = NULL;
+				}
+				else
+				{
+					FERROR("respheader = NULL\n");
+					FFree( tmp );
+				}
+			}
+		}
+
+		strings[ stringPos++ ] = StringDuplicateN( "\r\n", 2 );
+	}
+	else
+	{
+		FERROR("Cannot allocate memory\n");
+	}
+
+	// Find the total size of the response
+	int size = 0;
+	
+	for( i = 0; i < stringPos; i++ )
+	{
+		stringsSize[ i ] = strlen( strings[ i ] );
+		size += stringsSize[ i ];
+	}
+
+	// Concat all the strings into one mega reply!!
+	char* response = FCalloc( (size + 1), sizeof( char ) );
+	char* ptr = response;
+	
+	for( i = 0; i < stringPos; i++ )
+	{
+		memcpy( ptr, strings[ i ], stringsSize[ i ] );
+		ptr += stringsSize[ i ];
+		FFree( strings[ i ] );
+	}
+	
+	//DEBUG("RESPONSE %s <<<\n", response );
+
+	// Old response is gone
+	if( http->response )
+	{
+		FFree( http->response );
+	}
+		
+	// Store the response pointer, so that we can free it later
+	http->response = response;
+	http->responseLength = size;
+
+	return response;
+}
+
+/**
+ * write Http request to socket and release it
+ *
+ * @param http http request
+ * @param sock pointer to socket
+ */
 
 void HttpWriteAndFree( Http* http, Socket *sock )
 {
-	DEBUG("HTTPWRITEandFREE\n");
 	if( http == NULL )
 	{
-		ERROR("Http call was empty\n");
+		FERROR("Http call was empty\n");
 		return;
 	}
 	
 	if( sock == NULL )
 	{
-		ERROR("[HttpWriteAndFree] HTTP WRITE sock is null\n");
+		FERROR("[HttpWriteAndFree] HTTP WRITE sock is null\n");
 		HttpFree( http );
 		return;
 	}
 	
-	DEBUG("HTTP AND FREE\n");
+	//DEBUG("HTTP AND FREE\n");
 	
-	//if( http->h_Socket->s_WSock == NULL )
+	if( http->h_WriteOnlyContent == TRUE )
 	{
-		if( HttpBuild( http ) != NULL )
+		SocketWrite( sock, http->content, http->sizeOfContent );
+	}
+	else
+	{
+		if( http->h_Stream == FALSE )
 		{
-			// Write to the socket!
-			SocketWrite( sock, http->response, http->responseLength );
-		}
-		else
-		{
-			HttpFree( http );
-			return;
+			if( HttpBuild( http ) != NULL )
+			{
+				// Write to the socket!
+				SocketWrite( sock, http->response, http->responseLength );
+			}
+			else
+			{
+				HttpFree( http );
+				return;
+			}
 		}
 	}
 	
 	HttpFree( http );
-	
-	INFO("HTTP FREE END\n");
 }
 
-//
-// write, but do not free data
-//
+/**
+ * write Http request to socket
+ *
+ * @param http http request
+ * @param sock pointer to socket
+ */
 
 void HttpWrite( Http* http, Socket *sock )
 {
@@ -1514,15 +1917,32 @@ void HttpWrite( Http* http, Socket *sock )
 	
 	if( sock == NULL )
 	{
-		ERROR("[HttpWrite] HTTP WRITE sock is null\n");
+		FERROR("[HttpWrite] HTTP WRITE sock is null\n");
 		return;
 	}
-	
-	//if( http->h_Socket->s_WSock == NULL )
+
+	if( http->h_RequestSource == HTTP_SOURCE_FC )
+	{
+		MsgItem tags[] = {
+			{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
+			{ ID_FRID, (FULONG) http->h_ResponseID , MSG_INTEGER_VALUE },
+			{ ID_RESP, (FULONG)0, (FULONG)0 }
+		};
+		
+		SocketWrite( sock, (char *) tags, sizeof(tags) );
+	}
+	else
 	{
 		HttpBuild( http );
-		//int left = http->responseLength;
-		SocketWrite( sock, http->response, http->responseLength );
+		
+		if( http->h_WriteOnlyContent == TRUE )
+		{
+			SocketWrite( sock, http->content, http->sizeOfContent );
+		}
+		else
+		{
+			SocketWrite( sock, http->response, http->responseLength );
+		}
 	}
 }
 
@@ -1530,7 +1950,13 @@ void HttpWrite( Http* http, Socket *sock )
 //
 // Testing 
 //
-//
+
+/**
+ * assert if value is not NULL
+ *
+ * @param val value which will be checked
+ * @param field field name
+ */
 
 void HttpAssertNotNullPtr( void* val, const char* field )
 {
@@ -1540,9 +1966,12 @@ void HttpAssertNotNullPtr( void* val, const char* field )
 	}
 }
 
-//
-//
-//
+/**
+ * assert NULL pointer
+ *
+ * @param val value which will be checked
+ * @param field field name
+ */
 
 void HttpAssertNullPtr( void* val, const char* field )
 {
@@ -1552,9 +1981,13 @@ void HttpAssertNullPtr( void* val, const char* field )
 	}
 }
 
-//
-//
-//
+/**
+ * assert int value
+ *
+ * @param value int value
+ * @param expected int value
+ * @param field field name
+ */
 
 void HttpAssertIntValue( int value, int expected, const char* field )
 {
@@ -1564,9 +1997,13 @@ void HttpAssertIntValue( int value, int expected, const char* field )
 	}
 }
 
-//
-//
-//
+/**
+ * assert unsigned int value
+ *
+ * @param value unsigned int value
+ * @param expected unsigned int value
+ * @param field field name
+ */
 
 void HttpAssertUnsignedIntValue( unsigned int value, unsigned int expected, const char* field )
 {
@@ -1576,9 +2013,13 @@ void HttpAssertUnsignedIntValue( unsigned int value, unsigned int expected, cons
 	}
 }
 
-//
-//
-//
+/**
+ * assert string
+ *
+ * @param value string value
+ * @param expected expected string value
+ * @param field field name
+ */
 
 void HttpAssertStr( char* value, const char* expected, const char* field )
 {
@@ -1698,30 +2139,36 @@ void HttpTest()
 	return;
 }
 
-//
-//
-//
+/**
+ * Create new HttpFile
+ *
+ * @param filename file name of new file
+ * @param fnamesize file name string length
+ * @param data pointer to file data
+ * @param size size of provided data
+ * @return HttpFile or NULL when error appear
+ */
 
-HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, QUAD size )
+HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, FQUAD size )
 {
 	if( size <= 0 )
 	{
-		ERROR("Cannot upload empty file\n");
+		FERROR("Cannot upload empty file\n");
 		return NULL;
 	}
 	
 	char *locdata = FCalloc( size, sizeof( char ) );
 	if( locdata == NULL )
 	{
-		ERROR("Cannot allocate memory for HTTP file data\n");
+		FERROR("Cannot allocate memory for HTTP file data\n");
 		return NULL;
 	}
 	
 	HttpFile *file = FCalloc( 1, sizeof( HttpFile ) );
 	if( file == NULL )
 	{
-		ERROR("Cannot allocate memory for HTTP file\n");
-		free( locdata );
+		FERROR("Cannot allocate memory for HTTP file\n");
+		FFree( locdata );
 		return NULL;
 	}
 	
@@ -1735,23 +2182,32 @@ HttpFile *HttpFileNew( char *filename, int fnamesize, char *data, QUAD size )
 	return file;
 }
 
-//
-// remove file from memory
-//
+/**
+ * Delete Http File
+ *
+ * @param f pointer to HttpFile
+ */
 
 void HttpFileDelete( HttpFile *f )
 {
 	if( f != NULL )
 	{
-		free( f->hf_Data );
+		if( f->hf_Data != NULL )
+		{
+			FFree( f->hf_Data );
+		}
 		
-		free( f );
+		FFree( f );
 	}
 }
 
-//
-//
-//
+/**
+ * Get POST parameter
+ *
+ * @param request pointer to Http from which parameter will be taken
+ * @param param variable name
+ * @return pointer to HashMapElement which contain parameter or NULL
+ */
 
 HashmapElement* HttpGetPOSTParameter( Http *request,  char* param)
 {

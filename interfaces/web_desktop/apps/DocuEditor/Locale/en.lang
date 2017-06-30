@@ -1,0 +1,84 @@
+#English translation
+
+i18n_add_topic                      : Add topic
+i18n_import                         : Import topics
+i18n_published                      : Published
+i18n_pending                        : Pending
+i18n_new                            : New
+i18n_find                           : Find
+i18n_edit_topic                     : Edit topic
+i18n_quit                           : Quit
+i18n_topic_lower                    : topic
+i18n_refresh_topics                 : Refresh topics
+i18n_register_topic                 : Register topic
+i18n_edit                           : Edit
+i18n_view                           : View
+i18n_cancel                         : Cancel
+i18n_save                           : Save
+i18n_enter_into                     : Examine topic
+i18n_parent_level                   : Go to parent
+i18n_help                           : Help
+i18n_file                           : File
+i18n_status                         : Status
+i18n_close                          : Close
+i18n_read_mode                      : Show/refresh reader
+
+i18n_toc                            : Index
+
+i18n_documentation_editor           : Documentation Editor
+i18n_documentation_reader           : Documentation
+
+i18n_preferences                    : Preferences
+i18n_edit_preferences               : Edit preferences
+i18n_cancel                         : Cancel
+i18n_save_preferences               : Save preferences
+
+i18n_failed_saving_prefs            : Failed to save preferences
+i18n_failed_saving_prefs_desc       : An error occurred when saving the preferences.
+
+i18n_commenting_on                  : Commenting on
+i18n_your_comment                   : Your comment
+
+i18n_lower_comment                  : comment
+i18n_lower_comments                 : comments
+i18n_lower_topic                    : topic
+i18n_lower_topics                   : topics
+
+#Topic
+
+i18n_edit                           : Edit
+i18n_register_image                 : Register image
+i18n_add_image                      : Add image to text
+i18n_are_you_sure                   : Are you sure?
+i18n_are_you_sure_delimg            : This will permanently delete this image.
+i18n_delete_image                   : Delete image
+
+i18n_topic                          : Topic
+i18n_category                       : Category
+i18n_loading                        : Loading
+i18n_short_description              : Short description
+i18n_full_description               : Full description
+i18n_examples                       : Examples
+i18n_add_comment                    : Add comment
+i18n_save_topic                     : Save topic
+i18n_delete                         : Delete
+i18n_topic_categories               : Topic categories
+i18n_add_category                   : Add category
+i18n_viewing_topic                  : Viewing topic
+
+#Menu
+
+i18n_help_index                     : Help index
+i18n_edit_categories                : Edit categories
+
+#Comments
+
+i18n_commenting_on                  : Commenting on
+i18n_your_comment                   : Your comment
+i18n_save_comment                   : Save comment
+
+i18n_please_leave_a_comment         : Please leave a comment
+i18n_add_comment                    : Add comment
+i18n_commented                      : commented
+i18n_comments                       : Comments
+

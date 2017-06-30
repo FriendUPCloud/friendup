@@ -1,0 +1,43 @@
+i18n_file                             : Fichier
+i18n_quit                             : Quitter
+i18n_application                      : Application
+i18n_description                      : Description
+i18n_icon                             : Icône
+i18n_sort_order                       : Classement
+i18n_add_dock_item                    : Ajouter un élément
+i18n_quit                             : Quitter
+i18n_save                             : Sauver
+i18n_remove                           : Enlever
+i18n_you_sure                         : Etes-vous sûr?
+i18n_you_sure_text                    : Etes vous sûr de vouloir supprimer cet élément du dock?
+i18n_item_exists                      : L'icône dock existe déjà
+i18n_item_exists_desc                 : Cet icône existe déjà. Les icônes du dock ne peuvent être ajoutés plusieurs fois
+i18n_standard_dock                    : Dock standard
+i18n_dock_list                        : Liste du dock
+i18n_dock_layout                      : Présentation
+i18n_dock_position                    : Position
+i18n_dock_coords                      : Coordonnées
+i18n_save_dock                        : Sauver le dock
+i18n_add_dock                         : Ajouter un dock
+i18n_dock_size                        : Taille du dock
+i18n_standard_dock                    : Dock standard
+i18n_left_top                         : Gauche haut
+i18n_left_center                      : Gauche centré
+i18n_left_bottom                      : Gauche bas
+i18n_right_top                        : Droite haut
+i18n_right_center                     : Droite centré
+i18n_right_bottom                     : Droite bas
+i18n_top_left                         : Haut gauche
+i18n_top_center                       : Haut centré
+i18n_top_right                        : Haut droit
+i18n_bottom_left                      : Bas gauche
+i18n_bottom_center                    : Bas centré
+i18n_bottom_right                     : Bas droite
+i18n_aligned                          : Aligné
+i18n_fixed                            : Fixe
+i18n_extra_large                      : Extra large
+i18n_large                            : Large
+i18n_medium                           : Medium
+i18n_small                            : Petit
+i18n_dock_editor                      : Editeur Dock
+

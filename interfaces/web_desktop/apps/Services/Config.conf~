@@ -1,0 +1,16 @@
+{
+	"Name": "ServicesPrefs",
+	"API": "v1",
+	"Version": "0.1",
+	"Author": "Paweł Stefański",
+	"Category": "System",
+	"Path": "apps/Services/",
+	"E-mail": "stefanski@ideverket.no",
+	"MimeTypes": { "termlog": "open %f" },
+	"Permissions": [
+		"Door Local",
+		"Module System",
+		"Module Files"
+	]
+}
+

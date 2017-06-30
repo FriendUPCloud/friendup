@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 var friendUP = friendUP || {};
 friendUP.tool = friendUP.tool || {};
@@ -60,12 +60,57 @@ friendUP.tool = friendUP.tool || {};
 		return string.slice( 0, length );
 	}
 	
+	ns.getChatTime = function( timestamp ) {
+		var time = new Date( timestamp );
+		var timeString = '';
+		if ( moreThanADayAgo( timestamp ))
+			return justDate();
+		
+		return clockStamp();
+		
+		function clockStamp() {
+			var timeStr = pad( time.getHours() )
+			+ ':' + pad( time.getMinutes() )
+			+ ':' + pad( time.getSeconds() );
+			
+			if ( isYesterday())
+				timeStr = 'yesterday ' + timeStr;
+			
+			return timeStr;
+			
+			function pad( time ) {
+				var str = time.toString();
+				return str.length !== 1 ? str : '0' + str;
+			}
+			
+			function isYesterday() {
+				var now = new Date();
+				var today = now.getDate();
+				var date = time.getDate();
+				return today !== date;
+			}
+		}
+		
+		function justDate( timestamp ) {
+			var date = time.toLocaleDateString();
+			return date;
+		}
+		
+		
+		function moreThanADayAgo( timestamp ) {
+			var now = Date.now();
+			var aDay = 1000 * 60 * 60 * 24;
+			return !!(( now - aDay ) > timestamp );
+		}
+	}
+	
 	idCache = {}; // the best solution? possibly not.. >.>
 	ns.getId = function( prefix, length )
 	{
 		var prefix = startWithAlpha( prefix ) || 'id';
 		length = length || 36;
 		length = Math.max( length, 11 );
+		prefix = limit( prefix, ( length / 3 ));
 		var partLength = 8;
 		
 		do
@@ -107,6 +152,12 @@ friendUP.tool = friendUP.tool || {};
 				return 'id-' + prefix;
 			return prefix;
 		}
+		
+		function limit( str, max ) {
+			var len = str.length;
+			var end = Math.min( len, max );
+			return str.slice( 0, end );
+		}
 	}
 	ns.uid = ns.getId;
 	
@@ -134,10 +185,18 @@ friendUP.tool = friendUP.tool || {};
 		try
 		{
 			return JSON.parse( string );
-		} catch (e)
+		} 
+		catch ( e )
 		{
-			console.log( 'could not objectify:', string );
-			return null;
+			try
+			{
+				return JSON.parse( string.split( '\\"' ).join( '"' ) );
+			}
+			catch( e )
+			{
+				console.log( 'could not objectify:', string );
+				return null;
+			}
 		}
 	}
 	ns.objectify = ns.parse;

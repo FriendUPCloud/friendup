@@ -1,9 +1,13 @@
 
-LIB_DIR = user properties application mysql z image
+LIB_DIR = properties mysql 
+
+ifeq ($(CYGWIN_BUILD),0)
+LIB_DIR  +=      z image application
+endif
 
 ALL:
 	for dir in $(LIB_DIR); do \
-		make -C $$dir; \
+		make -C $$dir WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD); \
 	done
 
 install:
@@ -13,7 +17,7 @@ install:
 
 setup:
 	for dir in $(LIB_DIR); do \
-		make -C $$dir setup; \
+		make -C $$dir setup WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD); \
 	done
 
 clean:
@@ -23,12 +27,12 @@ clean:
 
 compile:
 	for dir in $(LIB_DIR); do \
-		make -C $$dir DEBUG=1; \
+		make -C $$dir compile DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD); \
 	done
 
 release:
 	for dir in $(LIB_DIR); do \
-                make -C $$dir release; \
+		make -C $$dir WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD); \
         done
 
 

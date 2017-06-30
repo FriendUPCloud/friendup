@@ -1,0 +1,67 @@
+
+
+i18n_account                         : Min konto
+
+i18n_basic_information               : Hovedinformasjon
+i18n_full_name                       : Fullt navn
+i18n_username                        : Brukernavn
+i18n_change_password                 : Endre passord
+i18n_current_password                : Nåværende passord
+i18n_new_password                    : Nytt passord
+i18n_confirm                         : bekreftelse
+
+i18n_extended_information            : Utvidet informasjon
+i18n_telephone                       : Telefon nummer
+i18n_email_address                   : E-mail adresse
+i18n_account_image                   : Passbilde
+i18n_save                            : Lagre
+i18n_cancel                          : Lukk
+i18n_back                            : Tilbake
+
+i18n_publickey                       : Fellesnøkkel
+
+i18n_key_information                 : Nøkkel informasjon
+
+i18n_available_storage               : Available storage
+i18n_your_apps                       : Dine applikasjoner
+
+i18n_no_apps                         : Status
+i18n_no_apps_desc                    : Ingen installert.
+
+i18n_add_storage                     : Mer lagringsplass
+
+i18n_no_storage                      : Du har ikke lagringsplass.
+
+i18n_get_storage                     : Mer lagringsplass
+
+i18n_toggle_public_key_visibility    : Vis/gjem offentlig nøkkel
+
+i18n_get_apps                        : Flere apper
+
+i18n_descheading                     : Legg til mer lagring 
+i18n_description                     : Vennligst velg hvilken type disk du ønsker å legge til. Noen tilbydere kan komme til å kreve en registrering.
+
+i18n_disk                         : disk
+i18n_add_a                        : Tilføy en
+
+
+i18n_connection_details           : Nettverskdetaljer
+i18n_notes                        : Notater
+i18n_directory                    : Filsti på server
+i18n_login_info                   : Innloggingsinfo
+i18n_your_notes                   : Dine notater
+i18n_username                     : Brukernavn
+i18n_password                     : Passord
+i18n_host_port                    : Server port
+i18n_host_ip                      : Server adresse eller IP
+i18n_hostname                     : Server adresse
+i18n_workgroup_name               : Din arbeidsgruppe
+i18n_workgroup                    : Arbeidsgruppe
+i18n_device_name                  : Disk navn
+i18n_placeholder_connection       : Mindisk
+
+i18n_add_storage                  : Tilføy disk
+i18_account2                      : Konto
+i18n_settings_saved               : Instillinger lagret
+
+

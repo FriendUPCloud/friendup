@@ -1,0 +1,125 @@
+
+#Disks .HRow .FloatLeft > div
+{
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+}
+
+#Disks .HRow .FloatLeft > div button,
+#Disks .HRow .FloatLeft > div .Button
+{
+	padding: 3px;
+	margin-top: 2px;
+}
+
+.Infobtn
+{
+	padding: 3px;
+	border-radius: 3px;
+	width: 71px;
+	white-space: nowrap;
+	margin: 3px 4px 0 0;
+	font-size: 90%;
+}
+
+.HBox
+{
+	float: left;
+	width: calc(33% - 4px);
+	height: 200px;
+	margin: 2px;
+	border-radius: 5px;
+	box-shadow: inset 0px 0px 15px rgba(0,0,0,0.4);
+	position: relative;
+}
+
+.HBox.Software
+{
+	height: 300px;
+}
+
+.Disk .Image
+{
+	display: block;
+	width: 100%;
+	height: 100px;
+	background-size: 80px;
+	background-position: center;
+	background-repeat: no-repeat;
+	box-sizing: border-box;
+	padding: 8px;
+	border-radius: 4px;
+	margin: 5px 0 5px 0;
+	background-color: rgba(0,0,0,0.15);
+	mix-blend-mode: darken;
+	background-size: cover;
+}
+
+.HBox.Software .Image
+{
+	height: 200px;
+}
+
+@media (max-width: 480px)
+{
+	.HBox
+	{
+		width: calc(100% - 4px);
+	}
+}
+
+@media (min-width: 480px and max-width: 640px)
+{
+	.HBox
+	{
+		width: calc(50% - 4px);
+	}
+}
+
+@media (min-width: 1024px)
+{
+	.HBox
+	{
+		width: calc(25% - 4px);
+	}
+}
+
+@media (min-width: 1640px)
+{
+	.HBox
+	{
+		width: calc(20% - 4px);
+	}
+}
+
+.HBox .Buttons
+{
+	text-align: center;
+	position: absolute;
+	bottom: 10px;
+	left: auto;
+	right: 6px;
+	white-space: nowrap;
+}
+
+.HBox .Buttons button
+{
+	border-radius: 5px;
+}
+
+.HBox .Buttons > *
+{
+	display: inline;
+}
+
+.Unmounted
+{
+	box-shadow: inset 0px 0px 15px rgba(0,0,0,0.2);
+}
+
+.Mountlist:after, .Software:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}

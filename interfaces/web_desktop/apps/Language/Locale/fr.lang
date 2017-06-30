@@ -1,0 +1,22 @@
+
+i18n_locale                             : Langage
+gui_language                            : Préférences de langue
+i18n_locale_language                    : Langue locale
+i18n_loading_languages                  : Chargement des langues
+i18n_speech_settings                    : Préférences de voix
+i18n_preferred_speech                   : Langue de voix préférée
+i18n_speech_advice : Veuillez noter que les voix disponibles peuvent varier d'une machine à l'autre.
+i18n_loading_voices                     : Chargement des voix
+i18n_alternative_speech                 : Langue de voix alternative
+i18n_fallback_advice: Cette voix sera utilisée si celle que vous avez sélectionnée n'existe pas sur votre machine.
+i18n_cancel                             : Annuler
+i18n_save                               : Sauver
+
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norvégien
+i18n_locale_en                          : Anglais
+i18n_locale_de                          : Allemand
+i18n_locale_nl                          : Hollandais
+i18n_locale_fr                          : Français

@@ -1,0 +1,50 @@
+<div class="ContentFull LayoutButtonbarBottom">
+	<div class="VContentTop Padding ScrollArea">
+		<input type="hidden" name="path" value="{val_path}"/>
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft">
+				<p class="InputHeight">
+					<strong>{i18n_name}:</strong>
+				</p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="InputHeight">
+					<input name="name" class="FullWidth InputHeight" type="text" value="{val_name}"/>
+				</p>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft">
+				<p class="InputHeight">
+					<strong>{i18n_link}:</strong>
+				</p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="InputHeight">
+					<input name="link" class="FullWidth InputHeight" type="text" value="{val_link}"/>
+				</p>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="HContent30 FloatLeft">
+				<p class="InputHeight">
+					<strong>{i18n_notes}:</strong>
+				</p>
+			</div>
+			<div class="HContent70 FloatLeft">
+				<p class="InputHeight">
+					<textarea name="notes" class="FullWidth" style="height: 100px">{val_notes}</textarea>
+				</p>
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BackgroundDefault BorderTop">
+		<button type="button" class="IconSmall fa-save" onclick="Workspace.saveWebLink(this.parentNode.parentNode, currentMovable)">
+			{i18n_save}
+		</button>
+		<button type="button" class="IconSmall fa-close" onclick="CloseView()">
+			{i18n_cancel}
+		</button>
+	</div>
+</div>
+

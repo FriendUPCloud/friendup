@@ -8,3 +8,14 @@ i18n_application                        : Application
 i18n_edit                               : Edit
 i18n_app_permissions                    : Application permissions
 i18n_cancel                             : Cancel
+i18n_close                              : Close
+
+i18n_applications                       : Applications
+i18n_allowed_domains                    : Allowed domains
+i18n_domains                            : Domains
+i18n_system                             : System
+i18n_gen_system_settings                : General system security settings
+
+i18n_file                               : File
+i18n_quit                               : Quit
+

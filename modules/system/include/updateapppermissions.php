@@ -1,10 +1,10 @@
 <?php
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -13,10 +13,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 if( $row = $SqlDatabase->FetchObject( '
 	SELECT * FROM FApplication WHERE `Name` = "' . $args->args->application . '" AND UserID=\'' . $User->ID . '\' 
@@ -32,8 +33,9 @@ if( $row = $SqlDatabase->FetchObject( '
 		if( $app->ID > 0 )
 		{
 			$app->Permissions = $args->args->permissions;
+			$app->Data = $args->args->data;
 			$app->Save();
-			die( 'ok<!--separate-->' );
+			die( 'ok<!--separate-->' . $args->args->data );
 		}
 	}
 }

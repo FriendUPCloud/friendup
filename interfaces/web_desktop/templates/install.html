@@ -7,12 +7,11 @@
 			{install_question_desc}
 		</p>
 		<p>
-			<button type="button" onclick="InstallApplication('{app}');">
-				{install_button}
-			</button>
-			
-			<button type="button" onclick="CloseWindow(FindWindowById('system_install_{app}'))">
+			<button type="button" class="IconSmall Button fa-remove FloatRight" onclick="CloseWindow()">
 				{install_cancel}
+			</button>
+			<button type="button" class="IconSmall Button fa-check" onclick="InstallApplication('{app}');">
+				{install_button}
 			</button>
 		</p>
 	</div>

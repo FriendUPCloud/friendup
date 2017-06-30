@@ -7,9 +7,12 @@
 						<strong>Url:</strong>
 					</td>
 					<td>
-						<input class="FullWidth" type="text" id="uri" placeholder="http://" value="about:blank" onchange="setUrl(this.value)"/>
+						<input class="FullWidth" type="text" id="uri" placeholder="friend://" value="about:blank" onchange="setUrl(this.value)"/>
 					</td>
 					<td width="32px" style="padding-left: 8px">
+						<button type="button" class="IconSmall fa-refresh" onclick="reload()"></button>
+					</td>
+					<td width="32px">
 						<button type="button" class="IconSmall fa-arrow-left" onclick="back()"></button>
 					</td>
 					<td width="32px">
@@ -19,7 +22,7 @@
 			</table>
 		</div>
 		<div class="VContentTop" style="top: 50px; bottom: 0px" id="SiteContent">
-			<iframe src="sandbox.html" id="BrowserBox" class="Browser" sandbox="allow-scripts allow-forms"></iframe>
+			<iframe src="" id="BrowserBox" class="Browser" sandbox="allow-scripts allow-forms"></iframe>
 		</div>
 	</div>
 	

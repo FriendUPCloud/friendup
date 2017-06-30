@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 // Global event system
 /* 
@@ -194,18 +194,32 @@ var WorkspaceDormant = {
 				return false;
 			// TODO: Case insensitive?
 			default:
-				// Hard code for now
-				var docs = [ 'FriendDOS', 'Dormant', 'Workspace', 'Programming', 'VoiceCommand' ];
-				for( var b in docs )
+				
+				if( func.indexOf( '.pdf' ) > 0 )
 				{
-					if( func == docs[b] )
-					{
-						SystemDocumentViewer( func );
-						return true;
-					}
+					var v = new View( {
+						title: func.split( '.pdf' )[0],
+						width: 600,
+						height: 800
+					} );
+					v.setRichContentUrl( '/webclient/templates/userdocs/' + func );
 				}
-				// Try..
-				SystemDocumentViewer( func, 'system' );
+				else
+				{
+				
+					// Hard code for now
+					/*var docs = [ 'FriendDOS', 'FriendScript', 'Dormant', 'Workspace', 'Programming', 'VoiceCommand' ];
+					for( var b in docs )
+					{
+						if( func == docs[b] )
+						{
+							SystemDocumentViewer( func );
+							return true;
+						}
+					}*/
+					// Try..
+					SystemDocumentViewer( func, 'system' );
+				}
 				return false;
 		}
 	}
@@ -214,7 +228,6 @@ DormantMaster.addAppDoor( WorkspaceDormant );
 
 DoorSystem = function( path )
 {
-	this.path = path;
 	this.icons = [];
 	var door = this;
 	this.handler = 'system';
@@ -224,6 +237,7 @@ DoorSystem = function( path )
 	
 	// Run superfunction init
 	this.init();
+	this.setPath( path );
 	this.ready = true;
 }
 
@@ -249,10 +263,14 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	if( !fileInfo )
 	{
 		fileInfo = {
-			Path: this.path,
+			Path: this.getPath(),
 			Type: 'unknown'
 		};
 	}
+	
+	// Fix path
+	if( fileInfo.Path.indexOf( ':' ) < 0 )
+		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
 	
 	var dirPrefs         = 'System:' + i18n('i18n_directory_Prefs') + '/';
 	var dirTools         = 'System:' + i18n('i18n_directory_Tools') + '/';
@@ -264,8 +282,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	var dirDocumentation = 'System:' + i18n('i18n_directory_Documentation' ) + '/';
 	var dirDocApps       = 'System:' + i18n('i18n_directory_DocApps' ) + '/';
 	
-	if( !this.path && fileInfo.Path ) this.path = fileInfo.Path;
-	var path = fileInfo.Path ? fileInfo.Path : this.path;
+	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
+	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
+	var dateh = new Date();
+	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
+		StrPad( dateh.getDate(), 2, '0' ) + ' ' +StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
+		':' + StrPad( dateh.getSeconds(), 2, '0' );
 
 	switch( path )
 	{
@@ -274,76 +296,108 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Prefs' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Prefs' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/categories/preferences-system.png',
+					IconClass: 'System_Settings',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Tools' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Tools' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/categories/applications-utilities.png',
+					IconClass: 'System_Tools',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Tools' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Command  : 'Modules',
 					Title    : i18n( 'i18n_directory_Modules' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Modules' ) + '/',
 					Type     : 'Directory',
 					Module   : 'files',
 					IconFile : 'gfx/icons/128x128/places/folder-activities.png',
+					IconClass: 'System_Modules',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Modules' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Command  : 'Devices',
 					Title    : i18n( 'i18n_directory_Devices' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
 					Type     : 'Directory',
 					Module   : 'files',
 					IconFile : 'gfx/icons/128x128/places/folder-print.png',
+					IconClass: 'System_Devices',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Devices' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Libraries' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/places/folder-favorites.png',
+					IconClass: 'System_Libraries',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Libraries' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Software' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Software' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/places/folder-green.png',
+					IconClass: 'System_Software',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Software' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Documentation' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/categories/system-help.png',
+					IconClass: 'System_Documentation',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
 					Title    : i18n( 'i18n_directory_Functions' ),
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Functions' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/places/folder-development.png',
+					IconClass: 'System_Functions',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Functions' ) + '/' )
 				}
 			], 'System:' );
-			break;
 		case dirDocumentation:
-			var files = [ 'Workspace', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
-			var dirs = [ 'Applications', 'Modules', 'Libraries', 'Tools', 'Devices' ];
+			var files = [ 'Developer\'s manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
+			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Tools', 'Devices' ];
 			var eles = [];
 			for( var a = 0; a < files.length; a++ )
 			{
@@ -351,13 +405,17 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					MetaType: 'Meta',
 					Filename: files[a],
 					Title: files[a],
-					IconFile: 'gfx/icons/128x128/mimetypes/text-enriched.png',
+					Permissions: '-r---,-r---,-r---',
+					DateModified: dateh,
+					/*IconFile: 'gfx/icons/128x128/mimetypes/text-enriched.png',*/
 					Path: path,
 					Position: 'left',
 					Module: 'files',
 					Command: 'dormant',
 					Filesize: 16,
 					Type: 'DormantFunction',
+					//IconClass: 'System_File_Meta',
+					IconClass: 'TypePDF',
 					Dormant: WorkspaceDormant
 				} );
 			}
@@ -366,7 +424,9 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				eles.push( {
 					MetaType: 'Directory',
 					Title: dirs[a],
-					IconFile: 'gfx/icons/128x128/places/folder-grey.png',
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
 					Position: 'left',
 					Type: 'Directory',
 					Path: path + dirs[a] + '/',
@@ -382,12 +442,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				{
 					var files = JSON.parse( data );
 					for( var a = 0; a < files.length; a++ )
+					{
 						files[a].Dormant = WorkspaceDormant;
-					callback( files );
+						files[a].Permissions = '-r-e-,-r-e-,-r-e-';
+					}
+					callback( files, dirDocApps );
 				}
 			}
 			m.execute( 'listapplicationdocs' );
-			break;
+			return;
 		case dirFunctions:
 			var funcs = [ 
 				'ViewOpen', 'ViewClose', 'FullScreen', 'ScreenOpen', 'ScreenActivate', 'ScreenClose', 'ScreenList', 'SetMenu', 
@@ -400,6 +463,8 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					MetaType: 'Meta',
 					Filename: funcs[a],
 					Title: funcs[a],
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
 					IconFile: 'gfx/icons/128x128/mimetypes/application-octet-stream.png',
 					Path: path,
 					Position: 'left',
@@ -407,22 +472,21 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Command: 'dormant',
 					Filesize: 16,
 					Type: 'DormantFunction',
+					IconClass: 'System_Dormant_Function',
 					Dormant: WorkspaceDormant
 				} );
 			}
 			return callback( eles, dirFunctions );
-			break;
 		case dirTools:
 			// Available tools applications
 			var tools = {
 				/*'Processmgr'     : i18n( 'i18n_processmgr' ),*/
-				'Applicationmgr' : i18n( 'i18n_applicationmgr' ),
-				'SysDiag'        : i18n( 'i18n_sysdiag' )
+				'Applicationmgr' : i18n( 'i18n_applicationmgr' )
 			};
 			var icons = {
 				/*'Processmgr'     : 'apps/utilities-system-monitor.png',*/
-				'Applicationmgr' : 'apps/utilities-log-viewer.png',
-				'SysDiag'        : 'apps/Charm.png'
+				'Applicationmgr' : 'Tool_ApplicationManager',
+				'SysDiag'        : 'Tool_SystemDiagnostics'
 			};
 			var output = [];
 			
@@ -433,9 +497,11 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				output.push( {
 					MetaType: 'File',
 					Title: tools[tool],
+					DateModified: dateh,
 					Filename: tool,
+					Permissions: '-r-e-,-r-e-,-r-e-',
 					Path: 'System:Tools/',
-					IconFile: 'gfx/icons/128x128/' + icon,
+					IconClass: icon,
 					Position: 'left',
 					Type: 'Executable'
 				} );
@@ -445,16 +511,27 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			return output;
 		case dirDevices:
 			var devs = {
-				dosdrivers     : i18n( 'i18n_dosdrivers' )/*,
+				dosdrivers     : i18n( 'i18n_dosdrivers' ),
+				cores        : i18n( 'i18n_cores' ),
+				sessions       : i18n( 'i18n_sessions' )/*,
 				printers       : i18n( 'i18n_printers' )*/
 			};
 			var icons = {
-				dosdrivers     : 'places/folder-grey.png'/*,
+				dosdrivers     : 'places/folder-grey.png',
+				cores        : 'places/folder-grey.png',
+				sessions       : 'places/folder-grey.png'/*,
 				printers       : 'places/folder-print.png'*/
 			};
+			var types = [
+				'DOSDrivers',
+				'Cores',
+				'Sessions',
+				'Printers'
+			];
 			
 			// Output array
 			var output = [];
+			var u = 0;
 
 			// Loop through and make icons
 			for( var dev in devs )
@@ -463,8 +540,11 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				output.push( {
 					MetaType: 'Directory',
 					Title: devs[dev],
-					Path: 'System:Devices/' + devs[dev] + '/',
-					IconFile: 'gfx/icons/128x128/' + icon,
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
+					Path: 'System:Devices/' + types[u] + '/',
+					IconClass: 'Devs_Drawer_' + types[u++],
 					Position: 'left',
 					Type: 'Directory'
 				} );
@@ -485,6 +565,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						'Screens'      : i18n( 'i18n_screens' ),
+						'Software'     : i18n( 'i18n_software' ),
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						'Language'     : i18n( 'i18n_language' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
@@ -492,6 +573,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						//'Keyboard'     : i18n( 'i18n_keyboard' ),
 						//'Input'        : i18n( 'i18n_input' ),
 						//'Datetime'     : i18n( 'i18n_datetime' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
 						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
 						'Dock'         : i18n( 'i18n_docksettings' ),
 						'Account'      : i18n( 'i18n_account' )
@@ -500,6 +582,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					icons = {
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
 						'Screens'      : 'devices/video-display.png',
+						'Software'     : 'categories/applications-accessories.png',
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
 						'Language'     : 'apps/lokalize.png',
 						//'Desklets'     : 'apps/telepathy-kde.png',
@@ -507,6 +590,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						//'Keyboard'     : 'devices/input-keyboard.png',
 						//'Input'        : 'devices/input-mouse.png',
 						//'Datetime'     : 'apps/clock.png',
+						'Startup'      : '',
 						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
 						'Dock'         : 'apps/picmi.png',
 						'Account'      : 'apps/preferences-desktop-user.png'
@@ -518,11 +602,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					prefs = {
 						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
 						'Screens'      : i18n( 'i18n_screens' ),
+						'Software'     : i18n( 'i18n_software' ),
 						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						//'Printers'     : i18n( 'i18n_printers' ),
 						//'Network'      : i18n( 'i18n_network' ),
 						'Language'     : i18n( 'i18n_language' ),
-						'Mountlist'    : i18n( 'i18n_mountlist' ),
+						'DiskCatalog'    : i18n( 'i18n_disk_catalog' ),
 						//'Desklets'     : i18n( 'i18n_desklets' ),
 						//'Sound'        : i18n( 'i18n_sound' ),
 						//'Keyboard'     : i18n( 'i18n_keyboard' ),
@@ -531,6 +616,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Users'        : i18n( 'i18n_useraccounts' ),
 						//'Datetime'     : i18n( 'i18n_datetime' ),
 						'Dock'         : i18n( 'i18n_docksettings' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
 						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
 						'Security'     : i18n( 'i18n_security' ),
 						'Account'      : i18n( 'i18n_account' )
@@ -539,11 +625,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					icons = {
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
 						'Screens'      : 'devices/video-display.png',
+						'Software'     : 'categories/applications-accessories.png',
 						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
 						//'Printers'     : 'devices/printer-laser.png',
 						//'Network'      : 'places/network-workgroup.png',
 						'Language'     : 'apps/lokalize.png',
-						'Mountlist'    : 'mimetypes/x-office-address-book.png',
+						'DiskCatalog'    : 'mimetypes/x-office-address-book.png',
 						//'Desklets'     : 'apps/telepathy-kde.png',
 						//'Sound'        : 'devices/audio-headphones.png',
 						//'Keyboard'     : 'devices/input-keyboard.png',
@@ -552,6 +639,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Users'        : 'apps/system-users.png',
 						//'Datetime'     : 'apps/clock.png',
 						'Dock'         : 'apps/picmi.png',
+						'Startup'      : '',
 						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
 						'Security'     : 'devices/secure-card.png',
 						'Account'      : 'apps/preferences-desktop-user.png'
@@ -568,8 +656,12 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					output.push( {
 						MetaType: 'File',
 						Title: prefs[pref],
+						DateModified: dateh,
 						Filename: pref,
-						IconFile: 'gfx/icons/128x128/' + icon,
+						Permissions: '-r-e-,-r-e-,-r-e-',
+						Filesize: 16,
+						//IconFile: icon.length ? ( 'gfx/icons/128x128/' + icon ) : 'apps/' + pref + '/icon.png',
+						IconClass: 'Prefs_' + pref,
 						Position: 'left',
 						Type: 'Executable'
 					} );
@@ -577,21 +669,13 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				if( callback ) callback( output, dirPrefs );
 			}
 			m.execute( 'userlevel' );
-			break;
-		case dirSoftware:
-			var m = new Module( 'system' );
-			m.onExecuted = function( r, data )
-			{
-				callback( JSON.parse( data, dirSoftware ) );
-			}
-			m.execute( 'listappcategories' );
 			return;
 		// Get all modules listed out
 		case dirModules:
 			var m = new Module( 'system' );
 			m.onExecuted = function( r, data )
 			{
-				callback( JSON.parse( data, dirModules ) );
+				callback( JSON.parse( data ), dirModules );
 			}
 			m.execute( 'listmodules' );
 			return;
@@ -599,10 +683,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			var m = new Module( 'system' );
 			m.onExecuted = function( r, data )
 			{
-				callback( JSON.parse( data, dirLibraries ) );
+				callback( JSON.parse( data ), dirLibraries );
 			}
 			m.execute( 'listlibraries' );
-			break;
+			return;
 		// TODO: Replace most of the others (if possible) with this one!!
 		// Try system path
 		default:
@@ -612,7 +696,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				if( r == 'ok' ) 
 				{
 					var list = JSON.parse( data );
-					//console.log( list );
 					if( list.length )
 					{
 						var pth = list[0].Path.substr( 0, path.length );

@@ -1,546 +1,920 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head>
+		<meta charset="UTF-8">
+		{baseStyle}
+		<style>
+	
+			body
+			{
+				font-family: verdana, helvetica, "sans serif";
+				font-size: 14px;
+				color: black;
+				background: #F6F6F6;
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				width: 100%;
+				height: 100%;
+			}
 
-	<div id="FUPUpdateList" class="ContentFull ScrollArea"">
+			h1
+			{
+				font-size: 23px;
+			}
+		
+			a
+			{
+				color: #3B81C2;
+				font-weight: bold;
+				text-decoration: none;
+			}
+		
+			a:hover
+			{
+				color: #17334E;
+			}
+		
+			#Servers
+			{
+				z-index: 4;
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				height: 50px;
+				line-height: 50px;
+				background: #F1F1F1;
+				box-shadow: 3px 3px 30px 1px #aaaaaa; 
+			}
+		
+			#FUPUpdateList
+			{
+				position: absolute;
+				top: 0;
+				left: 0%;
+				bottom: 50px !important;
+				width: 100%;
+				overflow: auto;
+				white-space: nowrap;
+				overflow: hidden;
+			}
+		
+			.NavNext,
+			.NavPrev,
+			.Hamenu
+			{
+				position: absolute;
+				left: 5px;
+				top: calc(50% - 45px);
+				height: 26px;
+				width: 26px;
+				text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+				line-height: 25px;
+				font-size: 20px;
+				text-align: center;
+				z-index: 5;
+				opacity: 0.8;
+				background: rgba(0,0,0,0.8);
+				border-radius: 26px;
+				padding: 5px;
+				margin: 7px;
+				color: white;
+			}
+		
+			.NavNext:hover,
+			.NavPrev:hover,
+			.Hamenu:hover
+			{
+				background: rgba(0,0,0,0.9);
+				color: white;
+			}
+		
+			.Hamenu
+			{
+				top: 10px;
+			}
+		
+			.NavNext
+			{
+				left: auto;
+				right: 5px;
+			}
+		
+			.Hamenu > .TOC
+			{
+				width: 230px;
+				height: 0px;
+				overflow: hidden;
+				transition: opacity,background,box-shadow 0.3s,0.3s,0.3s;
+				background: rgba(0,0,0,0.7);
+				color: white;
+				box-sizing: border-box;
+				color: white;
+				font-size: 12px;
+				position: absolute;
+				left: 0px;
+				top: 0px;
+				line-height: 20px;
+				text-align: left;
+				box-shadow: 0;
+				border-top-left-radius: 26px;
+				opacity : 0;
+			}
+		
+			.Hamenu > .TOC ul
+			{
+				display: block;
+				margin: 0;
+				padding: 0;
+				list-style: none;
+			}
+		
+			.Hamenu > .TOC ul li
+			{
+				padding: 10px 15px;
+				border-bottom: 1px solid rgba(0,0,0,0.8);
+				list-style: none;
+			}
+		
+			.Hamenu > .TOC ul li:hover
+			{
+				background: rgba(0,0,0,0.8);
+			}
+		
+			
+			.Hamenu.Hover
+			{
+				opacity: 1;
+				z-index: 10;
+			}
+		
+			.Hamenu.Hover > .TOC
+			{
+				top: 0;
+				height : auto;
+				opacity : 1;
+				/*
+				width: 230px;
+				height: 368px;
+				overflow: hidden;
+				*/
+				background: rgba(0,0,0,0.8);
+				box-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+			}
+		
+			.onpagetoc li
+			{
+				padding-bottom:16px;
+			
+			}
+		
+			@media(max-width: 640px)
+			{
+				.Hamenu > .TOC
+				{
+					font-size: 16px;
+					text-align: center;
+				}
+			
+				.Hamenu.Hover
+				{
+					width: 100%;
+					height: 100%;
+					color: rgba(0,0,0,0.0);
+				}
+			
+				.Hamenu.Hover > .TOC
+				{
+					width: 100%;
+					height: 100%;
+					color: white;
+				} 
+			
+				html img 
+				{
+					float: none !important;
+					display: block !important;
+					margin: 0 0 10px 0 !important;
+					max-width: 100% !important;
+					min-width: 100%;
+					height: auto !important;
+				}
+			
+				html h3 
+				{
+					font-size: 12px !important;
+				}
+			}
+		
+			.Box
+			{
+				left: 0;
+				top: 0;
+				position: absolute;
+				width: calc(100% - 120px);
+				height: 100%;
+				overflow: auto;
+				white-space: normal;
+				box-sizing: border-box;
+				padding: 20px;
+				margin: 0 60px;
+				background: white;
+				box-shadow: 3px 3px 30px 1px #D6D6D6; 
+			}
+		
+			#Mover
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				transition: left 0.5s;
+				width: 100%;
+				height: 100%;
+			}
+		
+			/* Index pages in the right order */
+			.Box + .Box { left: 100%; }
+			.Box + .Box + .Box { left: 200%; }
+			.Box + .Box + .Box + .Box { left: 300%; }
+			.Box + .Box + .Box + .Box + .Box { left: 400%; }
+			.Box + .Box + .Box + .Box + .Box + .Box { left: 500%; }
+			.Box + .Box + .Box + .Box + .Box + .Box + .Box { left: 600%; }
+			/*
+			.Box + .Box + .Box + .Box + .Box + .Box + .Box + .Box { left: 700%; }
+			.Box + .Box + .Box + .Box + .Box + .Box + .Box + .Box + .Box { left: 800%; }
+			*/
+		
+			h1, h2, h3, h4
+			{
+				margin: 0 0 8px 0;
+				font-weight:normal;
+			}
+		
+			::-webkit-scrollbar{
+				width: 5px;
+			}
 
-		<div class="Padding">
+			::-webkit-scrollbar-track-piece{
+				background-color: #eeeeee;
+			}
 
-			<div style="border-radius: 10px; float:right; width:25%; margin:0 0 16px 16px; min-width:280px; max-width: 100%; box-sizing: border-box; padding:16px; box-shadow:0px 1px 6px rgba(0,0,0,0.4); background:#1B3B57; color: white; margin-bottom:32px;">
-				<h2 style="text-transform:uppercase; line-height: 26px">Message to our users outside of Norway</h2>
-				<p style="line-height: 145%">
-					Hi everybody, FriendUP beta slows down in certain locations because of latency issues. 
-					To fix this we have created local access points for you.
-					Just click on one of the following links and login using your normal credentials:<br>
-				</p>
-				<h3 style="text-align:center; text-transform:uppercase; font-size:1.5em;">
-					<a title="USA" href="https://us.openfriendup.net/webclient/index.html" style="color: white" target="_top">USA</a> -
-					<a title="EU" href="https://eu.openfriendup.net/webclient/index.html" style="color: white" >UK/Europe</a> -
-					<a title="Australia" href="https://au.openfriendup.net/webclient/index.html" style="color: white" >Australia</a>
+			::-webkit-scrollbar-thumb{
+				background-color: #cccccc;
+				outline: none;
+				outline-offset: 0;
+				border: 0;
+			}
+
+			::-webkit-scrollbar-thumb:hover{
+				background-color: #bbbbbb;
+			}
+		
+			#BottomNav
+			{
+				position: absolute;
+				right:82px;
+				top:-11px;
+				background:#DDD;
+				padding:18px 9px 9px 9px;
+				border-radius: 5px;
+				box-shadow:0px 1px 2px rgba(0,0,0,0.05);
+			}
+			.Box { padding-top:35px; }
+			
+			#updates-box {
+				padding : 0;
+			}
+			
+			#updates-box #uptd-frame {
+				width: 100%;
+				height: 100%;
+				border : none;
+			}
+			
+			
+		</style>
+	</head>
+	<body>
+		<div class="MousePointer Hamenu" id="Hamenu" 
+			onmouseover="this.classList.add( 'Hover' )" 
+			ontouchend="this.classList.add( 'Hover' )"
+			onmouseout="document.getElementById( 'Hamenu' ).classList.remove( 'Hover' )">
+			&#9776;
+			<div class="TOC">
+				<ul>
+					<li onclick="
+						document.page = 0;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Updates from Friend
+					</li>
+					<!--
+					<li onclick="
+						document.page = 1;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Main page
+					</li>
+					<li onclick="
+						document.page = 2;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						New updates
+					</li>
+					-->
+					<li onclick="
+						document.page = 1;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Feature tour start
+					</li>
+					<li onclick="
+						document.page = 2;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Basic features
+					</li>
+					<li onclick="
+						document.page = 3;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Chat with friends
+					</li>
+					<li onclick="
+						document.page = 4;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Customizing the Friend Workspace
+					</li>
+					<li onclick="
+						document.page = 5;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Other cool FriendUP applications
+					</li>
+					<li onclick="
+						document.page = 6;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+						Programming in FriendUP
+					</li>
+				</ul>
+			</div>
+		</div>
+	
+		<div class="MousePointer NavNext" onclick="
+			if( !document.page ) document.page = 0; 
+			document.page++; 
+			if( document.page > 6 ) document.page = 0;
+			document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+			">
+			&raquo;
+		</div>
+		<div class="MousePointer NavPrev" onclick="
+			if( !document.page ) document.page = 0;
+			document.page--; 
+			if( document.page < 0 ) document.page = 6;
+			document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+			">
+			&laquo;
+		</div>
+	
+		<div id="Servers">
+			<div>
+				<h3 style="margin: 0; font-size:1.2em; padding: 0 0 0 10px; box-sizing: border-box;">
+					Too slow? Use a server close by:
+					<a class="MousePointer" title="USA" href="https://us.openfriendup.net/webclient/index.html" target="_top">USA</a> -
+					<a class="MousePointer" title="EU" href="https://eu.openfriendup.net/webclient/index.html" target="_top">UK/Europe</a> -
+					<a class="MousePointer" title="Australia" href="https://au.openfriendup.net/webclient/index.html" target="_top">Australia</a>
 				</h3>
 			</div>
-
-			<h1>
-				Welcome to the Friend Unifying Platform!
-			</h1>
-			<hr/>
-			
-			<h2>
-				Version 1.0 beta3b - 10.05.2016
-			</h2>
-			
-			<p>
-				<h2>New features:</h2>
-			</p>
-			
-			<ol>
-				<li>DOS Driver documentation through the System device.</li>
-				<li>Exotica music player now has a oscilliscope visualizer.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Fixed file conversions. Author now writes to .odt and .doc again.</li>
-			</ol>
-			
-			<hr/>
-			
-			<h2>
-				Version 1.0 beta3 - 08.04.2016
-			</h2>
-			
-			<p>
-				This is the third beta in our public beta programme. In this version, we are focusing on 
-				improving the user applications and moving our APIs further to allow for third party
-				libraries to be used by our application developers.
-			</p>
-			
-			<p>
-				<h2>New features:</h2>
-			</p>
-			
-			<p><a href="javascript:ExecuteApplication('Artisan')"><img src="apps/Artisan/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Artisan</strong></a> now can save and load projects with permissions, files list and libraries. Projects can now run with third party javascript libraries. Artisan projects now runs javascript assets at run time like $( document ).ready. We are working on a video tutorial to get you started with Artisan project management. Stay tuned :)</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>			
-
-			<p><a href="javascript:ExecuteApplication('Author')"><img src="apps/Author/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Author</strong></a> is now responsive and "remembers" its state. You can start editing a document on your PC. Just log off and continue where you left off on your tablet or mobile.</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-			
-			<p><a href="javascript:ExecuteApplication('Wallpaper')"><img src="apps/Wallpaper/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Wallpaper</strong></a> - polished off to allow you to set background for both your desktop and windows.</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-			
-			<p>
-				<h2>Other new features:</h2>
-			</p>
-			<ol>
-				<li>Added support for Application sessions.</li>
-				<li>Calculator is now responsive.</li>
-				<li>Workspace: Added gamepad class for VR.</li>
-				<li>Friend Core: got many speedups overall.</li>
-				<li>Friend Core: experimental WebDAV support enabled.</li>
-				<li>Documentation: More info on Workspace file management.</li>
-				<li>Wallpaper: Final functionality completed.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Fixed screen title bug when clicking from views on different screens.</li>
-				<li>Fixed HTTP non-blocking read/writes not completing.</li>
-				<li>.jsx scripts will use sessionid, not empty, non working authid.</li>
-				<li>Gear VR sessions won't be confused with clicks and the soft-keyboard.</li>
-				<li>Artisan won't load a file that is already loaded in the same editor instance.</li>
-				<li>File dialog buttons were badly positioned.</li>
-			</ol>
-			
-			<hr/>
-			
-			<h1>
-				Welcome to the Friend Unifying Platform!
-			</h1>
-			<hr/>
-			<h2>
-				Version 1.0 beta2 Open Source edition - 07.03.2016
-			</h2>
-			
-			<p>Welcome to our second public beta. We have worked hard behind the scenes and tried to increase the usefulness of FriendUP with this release. We will start with the most improved and nice new added apps:</p>
-			
-			<h3>App updates (click app name or icon to start the app)</h3>
-
-			<p><a href="javascript:ExecuteApplication('Author')"><img src="apps/Author/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;"> Author</strong></a> has received a lot of new features. Our goal is to have a fully fledged writing tool by version 1.0. For now we have a better GUI, centered, page-like canvas for writing, as well as more editing options.</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-
-			<p><a href="javascript:ExecuteApplication('Wallpaper')"><img src="apps/Wallpaper/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Wallpaper</strong></a> - Fallback on background color, better control over wallpaper and icon window background.</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-			
-			<p><a href="javascript:ExecuteApplication('Dingo')"><img src="apps/Dingo/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Shell</strong></a> - our Dingo shell gets its focus back after operations.</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-
-			<p><a href="javascript:ExecuteApplication('Calculator')"><img src="apps/Calculator/icon.png" style="float:left; margin-right:12px; width:32px; height:32px; display:inline-block; padding:6px; border-radius:8px; background:#FFF; box-shadow:0px 0px 6px rgba(0,0,0,0.2);" /> <strong style="font-weight:700;">Calculator</strong></a> - a very simple calculator ported to FriendUP :)</p>
-			<p style="overflow:hidden; height:16px; clear:both; flaot:none;"><em></em></p>
-
-
-			
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Friend Core: New core with more caching features and css/js load speed increase.</li>
-				<li>Workspace: When logging in from another location (b), you get the option of renewing your session at location (a).</li>
-				<li>Workspace: Defaults to an "Apple style" global menu.</li>
-				<li>Workspace: Better async loading of applications.</li>
-				<li>Workspace: Faster loading of css and Javascript for less latency impact.</li>
-				<li>Wallpaper: Fallback on background color, better control over wallpaper and icon window background.</li>
-				<li>Workspace: Improvements on touch interface (switch screens with swipe).</li>
-				<li>Workspace: New preferences applications; Language, Security, Mimetypes, Account settings.</li>
-				<li>API: Screens and Views behave more the same on an API level.</li>
-				<li>Author: Better GUI, centered, page-like canvas for writing.</li>
-				<li>Author: More editing options.</li>
-				<li>Dormant: System now has more functions to play with using DOS scripting.</li>
-				<li>API: Added vertical tabs.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Author: Fixed broken save functionality when cancelling save.</li>
-				<li>Login prompt: Don't show message if there was no failed attempt.</li>
-				<li>Friend DOS: 'kill' command works again (spelling mistake).</li>
-				<li>Friend DOS: Added support for makedir command.</li>
-				<li>Friend DOS: Fixed broken save functionality when cancelling save.</li>
-				<li>Friend DOS: Properly performs callbacks on some commands.</li>
-				<li>Workspace: Fixed bug with wallpaper not always loading.</li>
-				<li>Workspace: Run command now remembers last command run properly.</li>
-				<li>Workspace: Fixed bug with slow network and async postmessage.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 1.0 beta1
-			</h2>
-			
-			<p>
-				Welcome to the v1.0 line. Until April, 2016, we intend to gradually
-				stabilize all of our features. We will start on the critical features,
-				and then polish the less critical ones towards April.
-			</p>
-			
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Language: Added language preferences for voice language.</li>
-				<li>Shell: Basic tab autocompletion implemented.</li>
-				<li>DoIt!: Can load and run scripts.</li>
-				<li>DOS Drivers: All dos drivers use the same javascript class.</li>
-				<li>DOS Drivers: All file notifications emitted from Door class.</li>
-				<li>ARENACM: This DOS driver now works as intended on a basic level.</li>
-				<li>Workspace: You can now connect drives from the Workspace menu.</li>
-				<li>Workspace: Setup your personal profile.</li>
-				<li>Workspace: Can alter basic account info.</li>
-				<li>Workspace: Touch improvements.</li>
-				<li>System: File and module permissions honored pr. application.</li>
-				<li>System: Mimetypes now configurable and implemented.</li>
-				<li>System: Screens app can open, close and list screens.</li>
-				<li>Friend Core: Finished and enabled SSL.</li>
-				<li>WideWeb: Navigation works better. Can read local files.</li>
-				<li>Calculator: New app added.</li>
-				<li>FriendDOS: Support ":" operator.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Workspace: Fixed resizing of open screens on device screen rotation.</li>
-				<li>Workspace: Screen swapping with slide left or right.</li>
-				<li>Workspace: Duplicate filenames not allowed.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.9
-			</h2>
-			
-			<p>
-				This is the ninth update to FriendUP, and the last one before we
-				enter the official 1.0 beta phase. By now, all features have been
-				mapped and implemented (fully or partially). It is also the time
-				when we ramp up recruitment of new beta testers.
-			</p>
-			<p>
-				Incidentially, this is also the xmas release! We wish you all a great xmas, and
-				a happy - happy New Year!!
-			</p>
-				
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Minipaint: More integration with FriendUP. Load functionality with file requester.</li>
-				<li>Minipaint: Very early save functionality, only supporting PNG for now.</li>
-				<li>Documentation: Autoindexing of application documentation. Added Author as first test.</li>
-				<li>Screens: Fullscreen mode on screens (use the whole screen).</li>
-				<li>Screens: Now gets events from load and save on File objects.</li>
-				<li>Workspace: Switch screens with CTRL+M everywhere, quit application with CTRL+Q.</li>
-				<li>Workspace: More improvements on copy.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>System volume: Added data fields required to parse Documentation sub folders.</li>
-				<li>File dialogs: Corrects illegal paths.</li>
-				<li>File dialogs: Closes dialogs if parent window is closed.</li>
-				<li>Documentation: Removed confusing talk about "folders"... :)</li>
-				<li>Workspace: Fixed copying/moving of empty directories.</li>
-				<li>Workspace: Refreshing after copying files and directories bugfixed. Also, folders can't be moved into themselves or child directories.</li>
-				<li>Workspace: Removed unneeded menu entries.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.8
-			</h2>
-				
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Workspace: Drag & drop files from Windows/Mac/Linux desktop to FriendUP volume windows.</li>
-				<li>Workspace: New progress bar on file operations.</li>
-				<li>Workspace: New bookmark menu, soon to be expanded.</li>
-				<li>Workspace: Eula for beta period...</li>
-				<li>Exotica: Can play music, pause, stop and loops playlist. Knows when a song has ended.</li>
-				<li>Artisan: Close on active file in files list.</li>
-				<li>Email: New e-mail app</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Shell: Quoted and escaped paths understood. Like "Somedisk:My path/"</li>
-				<li>Workspace: Copying files and directories stable after much testing.</li>
-				<li>GUI: _WindowToFront() did not always work. Fixed.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.7
-			</h2>
-				
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Shell: No more case sensitive (unfinished).</li>
-				<li>Deepest field: Global shell output log.</li>
-				<li>Workspace: Voice recognition and voice synthesis added.</li>
-				<li>Documentation: Voice recognition tutorial and information.</li>
-				<li>WideWeb: Limited web-browser.</li>
-				<li>Artisan: Search and replace/all now implemented.</li>
-				<li>Shell: Added say command.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Friend Core: Potential network lock-up condition fixed.</li>
-				<li>Workspace: Selection regions won't poll taskbar when it's not needed.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.6
-			</h2>
-				
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>Dormant: Global event system implemented for triggering events across Dormant apps.</li>
-				<li>Workspace: Taskbar gets smaller task buttons when there are too many to show.</li>
-				<li>Artisan: Search and replace dialog.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Friend Core: All known mem leaks fixed!</li>
-				<li>Friend Core: More speedups.</li>
-				<li>Workspace: Windows keep their max heights.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.5
-			</h2>
-				
-			<p>
-				<strong>New features:</strong>
-			</p>
-			
-			<ol>
-				<li>PHP Handler: Speedup of C code and atomic file locking.</li>
-				<li>DOS Drivers: SQL Drive will not allow mkdir with existing path name.</li>
-				<li>DOS Drivers: SQL Drive now has a limit of 500 megs (not 100).</li>
-				<li>DOS Drivers: Upload notification.</li>
-				<li>DoIt!: Can load and save lists.</li>
-				<li>DoIt!: Can set arguments on commands.</li>
-				<li>Author: You can now insert images in the document.</li>
-				<li>Workspace: Window dimensions and positions stored on server.</li>
-				<li>Workspace: Websocket engine activated.</li>
-				<li>Workspace: Double clicking images doesn't give "undefined" title.</li>
-				<li>House: Added smart house IoT demo app.</li>
-			</ol>
-			
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			
-			<ol>
-				<li>Workspace: Sometimes app sandbox didn't know where its app was located.</li>
-				<li>Workspace: .jsx scripts now know their progdir.</li>
-				<li>Workspace: Sub templates now know their progdir.</li>
-				<li>Workspace: Windows remembers their position again.</li>
-				<li>Workspace: Screens obey their menus.</li>
-				<li>Shell: Some if conditions was incorrectly parsed.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.4
-			</h2>
-			<p>
-				This is the fourth update in our Beta program. This update is
-				huge! You should now be able
-				to reliably use Artisan to write small apps or games. You can
-				make some tunes with FriendTracker. The Shell is heavily improved,
-				with its own scripting engine.
-			</p>
-			<p>
-				Please make sure you look in the <strong>System:</strong> volume
-				located on the desktop. Doubleclick it, and go to the Software
-				folder. There you will find the applications available in categories.
-			</p>
-			<p>
-				Here is a list of changes:
-			</p>
-			
-			<p>
-				<strong>New features:</strong>
-			</p>
-			<ol>
-				<li>FriendTracker: This app is finally functional. Load and save songs. Load sound samples. Edit patterns. Have fun!</li>
-				<li>Workspace: Doors has been renamed "Workspace".</li>
-				<li>Workspace: Login tells you if you did something wrong.</li>
-				<li>Workspace: Force refresh window.</li>
-				<li>Workspace: All executables now support command line arguments.</li>
-				<li>Workspace: System: volume now has functions.</li>
-				<li>Workspace: Tasks and taskbar has got icons to help show which application is represented.</li>
-				<li>Workspace: We have pulldown menus on window titles.</li>
-				<li>Deepest field: Tasks now have icons.</li>
-				<li>Shell: Shell scripting now possible with the "execute" command.</li>
-				<li>Shell: A whole range of shell commands have been added. See FriendDOS documentation in the System: volume.</li>
-				<li>Dormant: All dormant executables support command line arguments.</li>
-				<li>Dormant: Now has callback functionality, to allow shell scripting.</li>
-				<li>Friend Core: Network code got another performance boost.</li>
-				<li>Mobile: We now have pulldown menus!</li>
-			</ol>
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			<ol>
-				<li>Doors: Copying of files now works properly. Had a problem with unique temporary files.</li>
-				<li>Workspace: Taskbar couldn't handle windows with the same title. Fixed.</li>
-				<li>Artisan: Sessions remembered between each open file.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.3
-			</h2>
-			<p>
-				This is the third update in our Beta program. Here is a list of changes:
-			</p>
-			<p>
-				<strong>New features:</strong>
-			</p>
-			<ol>
-				<li>Doors: We now have a volume gauge on partitions (still work in progress).</li>
-				<li>Doors: Window close gadget now is red on hover.</li>
-				<li>Artisan: Support for Friend DOS scripts (as plan text now).</li>
-				<li>Shell: Support for running Friend DOS scripts.</li>
-				<li>Friend Core: Rewritten network code for a good performance boost.</li>
-				<li>Friend Core: Basic support for encrypted passwords.</li>
-				<li>Friend Core: Web sockets now accepted.</li>
-			</ol>
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			<ol>
-				<li>Dormant: Small bug with Dormant volumes not working in the file manager.</li>
-			</ol>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.2
-			</h2>
-			<p>
-				This is the second update in our Beta program. It includes a number of fixes and improvements on our way to version
-				1.0 beta 1. Here is a list of changes:
-			</p>
-			<p>
-				<strong>New features:</strong>
-			</p>
-			<ol>
-				<li>Doors: Added file upload, accessible in the Doors menu.</li>
-				<li>Author: Support for loading and saving in .docx, .doc and .odt.</li>
-				<li>Author: Support for print preview and printing (requires PDF support in the browser).</li>
-				<li>Artisan: About window displays properly.</li>
-				<li>Friend Core: Files are now cached in memory for speed considerations.</li>
-				<li>Friend Core: Now has support for serving scripted web pages.</li>
-				<li>Friend Core: Now has thumbnail generation available.</li>
-			</ol>
-			<p>
-				<strong>Bug fixes:</strong>
-			</p>
-			<ol>
-				<li>Doors: Windows now open with the correct size.</li>
-				<li>Build: Storage is now protected and backed up for all users.</li>
-			</ol>
-			<p>
-				We hope you enjoy the update and we're looking forward to hearing more of your feedback!
-			</p>
-			
-			<hr class="Space"/>
-			
-			<h2>
-				Version 0.1
-			</h2>
-			<p>
-				You are watching history in the making. We are bringing you a new web based platform where you can work, learn and play.
-				As this is our first beta version of the Friend Unifying Platform, you might expect a few bugs. Some things might not
-				work as you expect it. Some things might fail. This is why you are here - to help us find the quirks so that we can
-				make this a great experience for you.
-			</p>
-			<p>
-				FriendUP has a very simple and easy to use interface. Take some time and review the information below before you
-				get started. FriendUP is themable - but these instructions rely on the default theme.
-			</p>
-			<hr class="Space"/>
-			<h2>
-				Window bar
-			</h2>
-			<p>
-				Our window bar has 3 buttons on the top.
-			</p>
-			<p>
-				<img src="/webclient/gfx/update_info.jpg" alt="Info" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #c0c0c0"/>
-			</p>
-			<p>
-				The Close button on the top left.<br/>
-				The maximize/un-maximize and the send to foreground/background buttons on the right.<br/>
-				Double clicking the window header will set the window to the foreground. You can also use the header to drag windows across the screen.
-			</p>
-			<h2>
-				Title bar
-			</h2>
-			<p>
-				On top of the screen you can find our "title bar". It will display menus depending on the application that is in focus. It can also be dragged down to reveal an overview over running processes. 					You can easily terminate a process just by clicking on it. The menus will display when using the right mouse button. On Mac, you wil have to hold down CTRL + the left mouse button (if you have a one-button mouse).
-			</p>
-			<h2>
-				Clicks
-			</h2>
-			<p>
-				We use simple clicks, double clicks and righthand clicks - just like most other user interfaces.
-			</p>
-			<p>
-				Our dock works with single clicks.
-			</p>
-			<p>
-				Our touch interface uses simple clicks. We must admit that there a a lot of features that are not quite there yet in this initial beta.
-			</p>
-			<p>
-				As we code on desktops this is where we had our focus. We are gonna change that!
-			</p>
-			<p>
-				We admit it right here: our interface on a tablet lacks as a lot of the mobile optimisations are not implemented yet.
-			</p>
-			<p>
-				<strong>Enjoy!</strong>
-			</p>
-			<p>
-				As this is a very early beta we hope you enjoy it and give us constructive feedback at <a href="mailto:titlestad@friendos.com">titlestad@friendos.com</a>.
-				And remember, you can find this window in the Doors menu.
-			</p>
 		</div>
-	</div>
+		<div id="FUPUpdateList" class="VContentTop ScrollArea" style="bottom: 54px">
 
+			<div id="Mover">
+			
+				<div id="updates-box" class="Box">
+				<iframe id="uptd-frame" src="https://friendup.cloud/updates.html">
+				</iframe>
+				<!--
+					<h1>
+						Updates from the FriendUP team
+					</h1>
+					<p>
+						Welcome to FriendUP! This is your quick overview and guide ("Kickstart") to the Friend Workspace.
+						Please spend some time to flick through the pages. If you want to do this at a later time, just
+						close this window. You can bring it back by selecting the "Information & Updates" menu item in the
+						Workspace menu.
+					</p>
+					<ol class="onpagetoc">
+						<li onclick="
+						document.page = 1;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Release Candidate 3
+						</li>
+						<li onclick="
+						document.page = 2;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Updates since last version
+						</li>
+						<li onclick="
+						document.page = 3;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Feature tour start
+						</li>
+						<li onclick="
+						document.page = 4;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Basic features
+						</li>
+						<li onclick="
+						document.page = 5;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Chat with friends
+						</li>
+						<li onclick="
+						document.page = 6;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Customizing the Friend Workspace
+						</li>
+						<li onclick="
+						document.page = 7;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Other cool FriendUP applications
+						</li>
+						<li onclick="
+						document.page = 8;
+						document.getElementById( 'Mover' ).style.left = -( 100 * document.page ) + '%';
+						document.getElementById( 'Hamenu' ).classList.remove( 'Hover' );
+						">
+							Programming in FriendUP
+						</li>
+					</ol>
+				-->
+				</div>
+				<!--
+				<div class="Box">
+					<h1>
+						Release Candidate 2
+					</h1>
+					<img src="gfx/david2.jpg" style="float: right; margin: 0 0 10px 10px"/>
+					<p>
+						Hello and a fantastic happy healthy and prosperous 2017 to you all.
+					</p>
+					<p>
+						So here we are, thrilled to be announcing the launch of Release Candidate 2
+						In which we have moved so very close now to Version 1.00.
+						Having completely changed the whole look, feel and ease of use, plus smoothing
+						the edges you will now see our own personality and identity are really shining through.
+					</p>
+					<p>
+						With improved and comprehensive documentation we strongly urge you to put us through
+						our paces and help us find those little hidden “bugs” that we are sure have so far eluded us.
+					</p>
+					<p>
+						Please spread the word by inviting your friends and start having online fun together!
+					</p>
+					<p><em><strong>David J. Pleasance</strong></em></p>
+					<hr class="Divider"/>
+					<h2>
+						To our newcomers
+					</h2>
+					<p>
+						For those of you looking at FriendUP for the very first time, prepare to be amazed, pleased, enthralled and above all, proud to be part of History in the making. For the very first time you have access to an agnostic web/cloud based meta operating system that allows you to import files, such as  Windows – Mac – Linux into your fully customisable Workspace, to work on, manipulate and share with anyone on any device.
+					</p>
+					<p>
+						However this is not just about fun and games. No sir – Here we offer every serious business, the best and lowest cost opportunity to bring your internal systems into the cloud, to save money, become more flexible, be more efficient and communicate better with all your customers and staff irrespective of global location.
+					</p>
+					<p>
+						All of this is available right now, and can be accessed from any device – Desktop – Laptop – Tablet – Smartphone – TV – wherever you are. 
+					</p>
+					<h2>
+						FRIEND UNIFYING PLATFORM
+					</h2>
+					<p>
+						Visit our website! - <a href="https://friendup.cloud/" target="_blank">friendup.cloud</a>
+					</p>
+					<p>
+						If you have not already Registered as a Developer – please do so now – and see for yourself what the whole world is now talking about – <strong>Stay at the forefront of IT</strong>.
+					</p>
+				</div>
+			
+				<div class="Box">
+					<h2>
+						Updates since the last version:
+					</h2>
+					<ul>
+						<li>
+							<strong>Documentation Central:</strong> Updated with more documentation, more screenshots and more spirit!
+						<li>
+							<strong>Notifications:</strong> More notifications. Global message broadcast implemented.
+						</li>
+						<li>
+							<strong>Mitra:</strong> Full copy & paste between Windows and Friend applications.
+						</li>
+						<li>
+							<strong>Security:</strong> Many security fixes on both the server side and the client side.
+						</li>
+						<li>
+							<strong>File management:</strong> Unzip and zip fixed. Better icon rendering for longer file names. Better labels for download and sharing. Context menu for the desktop interface. Fully working mobile interface.
+						</li>
+						<li>
+							<strong>File systems:</strong> Remote FS implemented. Allows the connection of friend's disks. Improved performance using multithreading and streaming.
+						</li>
+						<li>
+							<strong>Window management:</strong> Many bugs fixed in calculations. Better window hiding (docked mode). Better animations. Better screens management.
+						</li>
+						<li>
+							<strong>Workspace:</strong> Better loading of resources. Better look and feel using custom icons and mouse pointers. Improved menu layout. Session management - see your own connected devices. Mini calendar. Date and time.
+						</li>
+						<li>
+							<strong>Friend Jukebox:</strong> Bug fixes.
+						</li>
+						<li>
+							<strong>WideWeb:</strong> More tuned to load local sites as well as Remote FS sites.</i>
+						</li>
+						<li>
+							<strong>Friend Chat:</strong> Many new features. Run Friend Chat on its own screen. More robust networking with recovery from network timeouts. Websocket reconnections. Latency monitor. Layout revamp and new menu system.
+						</li>
+						<li>
+							<strong>Dock:</strong> Support for Windows 7 style dock mode. Configurable placement and size.
+						</li>
+						<li>
+							<strong>Friend Shell:</strong> Added shell commands. See documentation for more information. Better error handling.
+						</li>
+						<li>
+							<strong>Look'n'feel:</strong> Elegant reloading of themes. Behaviour tab for setting various UI preferences.
+						</li>
+						<li>
+							<strong>Mimetypes:</strong> Much better GUI for handling mimetypes. Also responsive for mobile.
+						</li>
+						<li>
+							<strong>Screens:</strong> Play around with opening and closing new screens. W I P.
+						</li>
+						<li>
+							<strong>System disk:</strong> New icons. Improved layout. More working meta directories.
+						</li>
+						<li>
+							<strong>ASSID:</strong> New application shared sessions. Create multiuser applications. Three example applications: Broadcast, Jumparuond, Whiteboard. Invite friends and test liquid features.
+						</li>
+						<li>
+							And much more! This list will be updated... Look out for a complete feature list soon!
+						</li>
+					</ul>
+				</div>
+				-->
+				<div class="Box">
+					<h2>
+						Feature tour
+					</h2>
+					<p>
+						<img style="float: left; margin: 0 10px 10px 0" src="gfx/updates/FriendWorkspace.jpg"/>
+						FriendUP is much more than a graphical environment – it is a full stack
+						cloud platform. But even though there are more to it than meets the eye,
+						the whole point of Friend is to simplify complexity. The Friend Workspace is exactly
+						that; a simple and easy to use Desktop Environment that gives you all the
+						tools you need to be productive and efficient, while the vast depths
+						of data and functionality is ready to be accessed as your knowledge grows.
+					</p>
+					<p>
+						Over the next few pages, we will take you on a tour through
+						the Friend Workspace. You will learn how it is possible to 
+						work and play in this unique cloud environment.
+					</p>
+					<br style="clear: both"/>
+					<p>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/Astray.jpg"/>
+						We will start with the basics. Then, as we continue, we will
+						get more advanced. In FriendUP there is something for everyone; 
+						be it the casual user or the advanced developer.
+					</p>
+					<p>
+						In FriendUP, you will be able to chat with friends, play games, 
+						make music, write essays, make a spreadsheet and develop new software applications.
+						And your data is kept safe in your cloud space, available on 
+						all of your web enabled devices. Isn't that cool?
+					</p>
+					<p>
+						Now flick the <strong>next page button</strong> to the right. It will take you to the overview
+						of the basic FriendUP features.
+					</p>
+				</div>
+				<div class="Box">
+					<h1>Basic features of the Friend Workspace</h1>
+					<p>
+						On the Friend Workspace desktop, you will see a list of icons on
+						the left side. This is the disks you have currently mounted. By 
+						default, you will find a <strong>Home:</strong> disk and a 
+						<strong>System:</strong> disk. These two disks have different
+						purposes. In FriendUP, a disk may be of a different type. The
+						<strong>Home:</strong> disk is for your personal file storage.
+						Here you can upload and maintain your files.
+						The <strong>System:</strong> disk is for your system settings
+						and software catalog. It is read only - you can't write to the
+						<strong>System:</strong> disk.
+					</p>
+					<p>
+						On disks that allow writing, like the <strong>Home:</strong>
+						disk, there is a <strong>Volume Gauge</strong> to the left of
+						the disk view window. This indicates how much space you have left
+						on the device. Once the gauge goes all the way to the top, the
+						disk is 100% full and will not accept any write requests.
+					</p>
+					<p>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/FileDragging.jpg"/>
+						Managing files in the Friend Workspace is simple. FriendUP applies
+						the spacial model for file management. This means that each path
+						in the system has its own view window. The window positions are remembered.
+						This allows your mind to visualize the hierarchy in which your files
+						are structured.
+					</p>
+					<p>
+						On the right of the screen, there is another list of icons.
+						This is your dock. The dock is an application launcher. It
+						has a list of short cut icons that you can click. When you click
+						the icon, the corresponding application is launched.
+					</p>
+					<p>
+						On the top of the screen you will find the screen bar. Here
+						you will see the Workspace menu. It changes depending on which
+						application view window you have activated. If you launch a
+						Friend application, the Workspace menu will reflect the menu
+						options in that application.
+					</p>
+					<p>
+						On the far right of the screen bar, you will see an icon that
+						symbolizes a screen. This icon can be clicked if you are running
+						one or more fullscreen applications. It will allow you to flip
+						between the fullscreen applications. This function also has a
+						handy keyboard shortcut: <strong>CTRL+m</strong>.
+					</p>
+					<p>
+						You can press your mouse down on the screen bar and drag it.
+						Then you can unveil the screen below it. Below the Workspace
+						desktop screen, you will find the "Deepest field". This screen
+						shows a simple overview over your system and all running
+						applications. You can quit a running application by clicking
+						on the task icon there.
+					</p>
+					<p>
+						On the bottom of the Workspace screen, you will find the view window
+						list and tray. The view window list is a list of tabs that
+						show you all view windows that are open. You can also minimize
+						view windows by clicking on the tabs. Minimized view windows
+						are represented by a slightly recessed tab.
+					</p>
+					<p>
+						The tray is to the far right of the bottom of your screen. 
+						The tray shows you some status icons that represent different
+						applications and components of your system. By default, you
+						have at least one tray icon – the task status icon. It shows you
+						information about the applications and processes that are running
+						in your system.
+					</p>
+				</div>
+				<div class="Box">
+					<h1>
+						Chat with friends
+					</h1>
+					<p>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/Chatlist.png"/>
+						FriendUP comes with its own communication suite - Friend Chat.
+						Friend Chat allows you to connect with other FriendUP users 
+						as well as IRC users world wide. You can chat one on one with
+						the instant messaging features – or you can join in a full
+						conference room where there might be hundreds of simultaneous
+						users chatting away.
+					</p>
+					<h2>
+						Audio and video chat
+					</h2>
+					<p>
+						Friend Chat supports video conferencing with an unlimited amount
+						of participants. Well, you might hit a speed limit when your hardware
+						is maxed out. But Friend Chat can be comfortably be used on
+						normal hardware with 8-10 simulteneous participants. You can
+						change the quality settings to get the most optimum results.
+					</p>
+					<p>
+						Inside of the live video chat, you can bring up a text chat
+						pane where everybody can add their comments in text. Here you
+						can drag & drop files and images from your Friend Workspace to
+						share them with the other participants. You can even draf &
+						drop FriendUP applications so that they can be displayed to the
+						others.
+					</p>
+					<h2>
+						Sharing chatrooms
+					</h2>
+					<p>
+						You can invite people to video chat with you using either
+						a public link or an invite link. Invite links makes sure you
+						have less than a maximum number of people in the chat room at
+						the same time. The public link can be used by anyone.
+					</p>
+					<p>
+						Each of these links can be sent by email, pasted in a social
+						media service like Facebook or Hangouts.
+					</p>
+					<h2>
+						Cryptography
+					</h2>
+					<p>
+						In instant messaging mode, Friend Chat supports strong
+						peer to peer AES-256 encryption. This means that you can chat
+						confidentially with a strong protection of your conversation
+						data. Even though all communication in FriendUP is encrypted
+						using SSL, this feature adds an extra layer of security.
+					</p>
+					<h2>
+						Speak it out loud!
+					</h2>
+					<p>
+						Everywhere you find a phone and keyboard icon in Friend Chat,
+						you have the option of enabling synthetic speech. This is great
+						for those moments where you have to attend to something else,
+						while you have the need to hear your friends chat with you
+						in the background.
+					</p>
+					<p>
+						<strong>Next up, customizing the look and feel of the Friend Workspace.</strong>
+					</p>
+				</div>
+				<div class="Box">
+					<h1>
+						Customizing the Friend Workspace
+					</h1>
+					<p>
+						<img style="float: left; margin: 0 10px 10px 0" src="gfx/updates/Settings.png"/>
+						FriendUP can look like whatever you want! Well, as long as you
+						have the right theme installed. But there are quite a few themes
+						to choose from.
+					</p>
+					<p>
+						To customize the Friend Workspace, you need to enter the <strong>System:</strong>
+						disk. In there, you will find many preference applications in the 
+						<strong>Settings/</strong> directory. Here you will find a couple of applications
+						that you can use to modify FriendUP. These applications do various things,
+						like changing your language settings, the desktop background image and
+						even all the view window borders and buttons.
+					</p>
+					<p>
+						Don't worry - you can not destroy your system when using these
+						applications. If you made an error, you can always log out and
+						log back in again with holding down the SHIFT key while clicking
+						on the login button.
+					</p>
+					<br style="clear: both"/>
+					<h2>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/Wallpaper.png"/>
+						Wallpaper
+					</h2>
+					<p>
+						The simplest way to customize FriendUP is to change the wallpaper.
+						This can be done with starting the Wallpaper application.
+					</p>
+					<p>
+						The wallpaper application lets you change the background image of
+						either the Workspace desktop background or the icon view window backgrounds.
+						This is chosen with the radio buttons on the top left part of the
+						Wallpaper view window.
+					</p>
+					<p>
+						If you want to add an image that you have uploaded, you can do this
+						by clicking the "Add image" button to the left. Remember to select
+						"View Window backgrounds" or "Workspace background" respectively, 
+						as each have different catalogs of available images.
+					</p>
+					<br style="clear: both"/>
+					<h2>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/Looknfeel.png"/>
+						Look and feel
+					</h2>
+					<p>
+						If you want to change the look and feel of the Friend Workspace
+						alltogether, you need the Look and feel application. Here you 
+						can chose from several installed theme alternatives. These themes
+						change all aspects of the Friend Workspace. This is where you 
+						can change FriendUP to look like Mac, Windows or Linux - if you
+						don't find the default look and feel pleasing.
+					</p>
+				</div>
+				<div class="Box">
+					<h1>
+						Other cool FriendUP applications
+					</h1>
+					<h2>
+						Mitra Remote Desktop Suite
+					</h2>
+					<p>
+						Mitra is our RDP and Remote App integration stack. It allows users
+						to hook up RDP and VNC enabled platforms like Windows, Linux and MacOS
+						to the Friend Workspace. Currently only for VIP users.
+					</p>
+					<h2>
+						Author Word Processor
+					</h2>
+					<p>
+						Author allows you to write documents natively in FriendUP. Using only
+						HTML5 technologies, it allows you to do simple editing of text documents 
+						using various formatting styles and images.
+					</p>
+					<h2>
+						Friend Tracker
+					</h2>
+					<p>
+						A music tracker application that allows you to make music. Still in pre
+						beta, it is still somewhat buggy. But we will get there eventually.
+					</p>
+					<h2>
+						Friend Jukebox
+					</h2>
+					<p>
+						The Friend Jukebox for playing mp3 files and other web compatible
+						formats. Allows you to stream compatible stream-friendly file formats.
+					</p>
+					<h2>
+						WideWeb
+					</h2>
+					<p>
+						A web browser for the Friend Workspace. It is not designed to access
+						the world wide web as we know it - it only accepts FriendUP compatible
+						file paths. Useful with our upcoming Remote Drive technology.
+					</p>
+					<h2>
+						Dingo Shell
+					</h2>
+					<p>
+						Dingo is our CLI interface. It uses Friend DOS, which is built
+						into the Friend Workspace. It allows you to control your Workspace
+						using text commands and supports scripts.
+					</p>
+				</div>
+				<div class="Box">
+					<h1>
+						Programming in FriendUP
+					</h1>
+					<p>
+						<img style="float: right; margin: 0 0 10px 10px" src="gfx/updates/Code.png"/>
+						FriendUP can be programmed in different ways. If you're advanced, you
+						will expect to have access to the entire FriendUP stack. If this is the
+						case, you can download and setup your own Friend Core server.
+					</p>
+					<p>
+						For most FriendUP users, it is sufficient to program the Friend Workspace.
+						One of the sweet things in Friend is that you can do backendless programming.
+						This means that you don't have to know how to program the Friend Core. 
+						All you need is Friend Create, our bare bones code editor. Using this
+						tool, you have everything you need to make applications and games right
+						inside of the Friend Workspace.
+					</p>
+					<p>
+						<img style="float: left; margin: 0 10px 10px 0" src="gfx/updates/Code.png"/>
+						If your project is larger than just a couple of files, it could be a good idea
+						to organize it with the Friend Create project managemenet features.
+						This will also ready you for publishing your creation in the Friend Store.
+						The Friend Store is where you distribute your applications. This
+						feature will be introduced in RC3.
+					</p>
+					<p>
+						The project manager will allow you to save a project file. If you
+						open the project file later, all of your code files will be opened
+						automatically. The project definition with screenshots and other
+						information will be used when you generate a Friend package.
+					</p>
+					<p>
+						<strong>This is it for now! Hope you will have fun exploring the Friend Unifying Platform!</strong>
+					</p>
+				</div>
+			</div>
+		</div>
+		<div id="BottomNav">
+			<input type="checkbox" {hideOnLoad} id="dinfowindowch" onchange="if( this.checked ){ parent.Workspace.disableInfoWindow(); } this.checked = 'checked';"/>
+			<label for="dinfowindowch">Do not autoload this</label>
+		</div>
+	</body>
+</html>

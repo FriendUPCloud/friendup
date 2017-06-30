@@ -1,21 +1,25 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #include <core/library.h>
 #include <stdio.h>
@@ -77,11 +81,41 @@ struct linkedCharArray
 	void *next;
 };
 
-char *Run( struct EModule *mod, const char *path, const char *args, unsigned long int *length )
+//
+// Remove dangerous stuff from strings
+//
+
+char *FilterPHPVar( char *line )
+{
+	if( !line ) return NULL;
+	
+	int len = strlen( line ) + 1;
+	int i = 0; for( ; i < len; i++ )
+	{
+		// Skip escaped characters
+		if( i < len - 1 && line[ i ] == '\\' )
+		{
+			i++;
+			continue;
+		}
+		// Kill unwanted stuff
+		if( line[ i ] == '`' )
+			line[ i ] = ' ';
+		else if( line[ i ] == '"' || line[ i ] == '\n' || line[ i ] == '\r' )
+			line[ i ] = ' '; // Eradicate!
+	}
+	return line;
+}
+
+/**
+ * @brief Run a PHP module with arguments
+ *
+ */
+char *Run( struct EModule *mod, const char *path, const char *args, FULONG *length )
 {
 	DEBUG("[PHPmod] call run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 
 	// Escape the input, so that remove code injection is not possible.
 	char *earg = StringShellEscape( args );
@@ -95,7 +129,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, unsigned lon
 	char *command = NULL;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
 	{
-		ERROR("Cannot allocate memory for data\n");
+		FERROR("Cannot allocate memory for data\n");
 		free( epath ); free( earg );
 		return NULL;
 	}
@@ -105,6 +139,10 @@ char *Run( struct EModule *mod, const char *path, const char *args, unsigned lon
 	//
 	// here there should be prepared command
 	//
+	
+	// Remove dangerous crap!
+	FilterPHPVar( earg );
+	FilterPHPVar( epath );
 
 	sprintf( command, "php \"%s\" \"%s\";", path, args != NULL ? args : "" );
 	
@@ -112,17 +150,17 @@ char *Run( struct EModule *mod, const char *path, const char *args, unsigned lon
 	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\";", epath, earg );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
-		ERROR( "[PHPmod] snprintf\n" );
+		FERROR( "[PHPmod] snprintf\n" );
 		free( command ); free( epath ); free( earg );
 		return NULL;
 	}
 	
-	DEBUG( "[PHPmod] run app: '%s'\n", command );
+	//DEBUG( "[PHPmod] run app: %s\n", command );
 	
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
-		ERROR("[PHPmod] cannot open pipe\n");
+		FERROR("[PHPmod] cannot open pipe\n");
 		free( command ); free( epath ); free( earg );
 		return NULL;
 	}
@@ -132,37 +170,24 @@ char *Run( struct EModule *mod, const char *path, const char *args, unsigned lon
 	char *result = NULL;
 	char *gptr = NULL;
 	
-	
-	// List of chunks
-	struct linkedCharArray *chr = calloc( 1, sizeof( struct linkedCharArray ) );
-	struct linkedCharArray *lnk = chr;
-	
 	DEBUG("[PHPmod] command launched\n");
 	int errors = 0;
 	int lbufcall = LBUFFER_SIZE + 1;
 	
+	ListString *ls = ListStringNew();
+	char buffer[ LBUFFER_SIZE ];
+	
+	//printf("<=<=<=<=%s\n", command );
 	while( !feof( pipe ) )
 	{
-		// Make a new buffer and read
-		lnk->data = calloc( lbufcall, sizeof( char ) );
-		if( !lnk->data )
-		{
-			lnk->next = NULL;
-			errors++;
-			break;
-		}
-		int reads = fread( lnk->data, sizeof( char ), LBUFFER_SIZE, pipe );
+		int reads = fread( buffer, sizeof( char ), LBUFFER_SIZE, pipe );
 		if( reads > 0 )
 		{
-			lnk->length = reads;
-			
-			// This is how the total size is now
+			ListStringAdd( ls, buffer, reads );
 			res += reads;
 		}
-		struct linkedCharArray *l = calloc( 1, sizeof( struct linkedCharArray ) );
-		lnk->next = ( void *)l;
-		lnk = l;
 	}
+	//printf("<=<=<=<=%s\n", command );
 	 
 	//DEBUG("[PHPmod] received bytes %d  : %100s\n", bs->bs_Size, bs->bs_Buffer );
 	
@@ -170,36 +195,19 @@ char *Run( struct EModule *mod, const char *path, const char *args, unsigned lon
 	pclose( pipe );
 	
 	// Set the length
-	if( length != NULL ) *length = ( unsigned long int )res;
-	
-	// Put the new string together
-	char *final = calloc( res + 1, sizeof( char ) );
-	lnk = chr;
-	int offset = 0;
-	struct linkedCharArray *tmp = NULL;
-	do
+	if( length != NULL )
 	{
-		if( lnk->data )
-		{
-			if( lnk->length )
-			{
-				memcpy( final + offset, lnk->data, lnk->length );
-				offset += lnk->length;
-			}
-			free( lnk->data ); 
-		}
-		tmp = lnk->next;
-		free( lnk );
+		*length = ( unsigned long int )res;
 	}
-	while( ( lnk = tmp ) != NULL );
+
+	ListStringJoin( ls );
+	char *final = ls->ls_Data;
+	ls->ls_Data = NULL;
+	ListStringDelete( ls );
 	
-	// Don't accept errors
-	if( errors > 0 )
-	{
-		free( final ); free( command ); free( epath ); free( earg );
-		return NULL;
-	}
-	DEBUG( "[PHPmod] We are now complete..\n" );
+	//DEBUG("Final string %s\n", final );
+	
+	//DEBUG( "[PHPmod] We are now complete.. %s\n", final );
 	free( command ); free( epath ); free( earg );
 	return final;
 }
@@ -221,7 +229,7 @@ const char *GetSuffix()
 
 	DEBUG("[PHP mod] mod run\n");
 
-	ULONG res = 0;
+	FULONG res = 0;
 
 	// Escape the input, so that remove code injection is not possible.
 	char* earg = StringShellEscape( args );
@@ -233,7 +241,7 @@ const char *GetSuffix()
 	int siz = eargLen + epathLen+ 128;
 	if( ( command = calloc( 1024 + strlen( path ) + ( args != NULL ? strlen( args ) : 0 ), sizeof( char ) ) ) == NULL )
 	{
-		ERROR("Cannot allocate memory for data\n");
+		FERROR("Cannot allocate memory for data\n");
 		free( earg );
 		free( epath );
 		return NULL;
@@ -257,7 +265,7 @@ const char *GetSuffix()
 	int cx = snprintf( command, escapedSize, "php \"%s\" \"%s\";", epath, earg );
 	if( !( cx >= 0 && cx < escapedSize ) )
 	{
-		ERROR( "[PHP mod] snprintf\n" );
+		FERROR( "[PHP mod] snprintf\n" );
 		return NULL;
 	}
 	*/
@@ -268,7 +276,7 @@ const char *GetSuffix()
 	if( !pipe )
 	{
 		//free( command );
-		ERROR("[PHP mod] cannot open pipe\n");
+		FERROR("[PHP mod] cannot open pipe\n");
 		return 0;
 	}
 */
@@ -278,7 +286,7 @@ const char *GetSuffix()
 	char *temp = NULL;
 	char *result = NULL;
 	char *gptr = NULL;
-	ULONG size = 0;
+	FULONG size = 0;
 	
 	DEBUG("[PHP mod] command launched\n");
 */
@@ -372,11 +380,11 @@ const char *GetSuffix()
 			printf("[PHPmod] Thread: after select res: %d\n", ret );
 			if(ret < 0)
 			{
-				printf("[PHPmod] ERROR select() failed \n");
+				printf("[PHPmod] FERROR select() failed \n");
 			}
 			//else if( ret == 0 )
 			//{
-			//	printf("[PHPmod] ERROR! timeout \n");
+			//	printf("[PHPmod] FERROR! timeout \n");
 			//	break;
 			//}
 			else

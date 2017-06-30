@@ -1,0 +1,23 @@
+
+	<input type="hidden" id="pID" value="0"/>
+	<div class="VContentTop ScrollArea BackgroundLists" style="bottom: 50px">
+		<div class="Padding BackgroundDefault" id="Categories">
+			<p class="Layout"><strong>Category name:</strong></p>
+			<p class="Layout"><input type="text" class="FullWidth" value="" id="pName"/></p>
+			<p class="Layout"><strong>Description:</strong></p>
+			<p class="Layout"><textarea class="FullWidth" style="height: 150px" id="pDescription"></textarea></p>
+		</div>
+	</div>
+	<div class="VContentBottom BorderTop BackgroundDefault" style="height: 50px">
+		<div class="Padding">
+			<button type="button" class="Button fa-remove IconSmall" onclick="cancelCat()">
+				{i18n_cancel}
+			</button>
+			<button type="button" class="Button fa-save IconSmall" onclick="saveCat()">
+				{i18n_save}
+			</button>
+		</div>
+	</div>
+	
+	<script src="Progdir:category.js"></script>
+

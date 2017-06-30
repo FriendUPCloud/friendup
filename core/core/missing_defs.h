@@ -1,30 +1,30 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 #ifndef __CORE_MISSING_DEFS_H__
 #define __CORE_MISSING_DEFS_H__
 
 // definitions needed by some developer tools to enable highlighting
-
-#ifndef ENABLE_WEBSOCKETS
-#define ENABLE_WEBSOCKETS
-#endif
 
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
@@ -40,6 +40,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <winsock2.h>
+#define inline __inline
+#define __mode_t int
+#define __useconds_t unsigned long long
+#else
+#include <netdb.h>
+#endif
+
 // missing definitions for different linux distros
 
 FILE *popen( const char *c, const char *v );
@@ -48,7 +57,14 @@ int fchmod (int __fd, __mode_t __mode) ;
 
 int pipe2( int *pipefd, int opt );
 
-void usleep( long );
+FILE *fdopen (int __fd, const char *__modes);
+
+int usleep (__useconds_t __useconds);
+
+struct hostent *gethostbyname2 (const char *__name, int __af);
+
+void pthread_yield();
+//void usleep( long );
 
 //void pclose( FILE *f );
 

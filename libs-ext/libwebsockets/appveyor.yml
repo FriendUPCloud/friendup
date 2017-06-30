@@ -1,0 +1,58 @@
+environment:
+  matrix:
+    - LWS_METHOD: lwsws
+      CMAKE_ARGS: -DLWS_WITH_LWSWS=1 -DSQLITE3_INCLUDE_DIRS=C:\assets\sqlite3 -DSQLITE3_LIBRARIES=C:\assets\sqlite3\sqlite3.lib -DLIBUV_INCLUDE_DIRS=C:\assets\libuv\include -DLIBUV_LIBRARIES=C:\assets\libuv\libuv.lib
+
+    - LWS_METHOD: default
+
+    - LWS_METHOD: noserver
+      CMAKE_ARGS: -DLWS_WITHOUT_SERVER=ON
+
+    - LWS_METHOD: noclient
+      CMAKE_ARGS: -DLWS_WITHOUT_CLIENT=ON
+
+    - LWS_METHOD: noext
+      CMAKE_ARGS: -DLWS_WITHOUT_EXTENSIONS=ON
+
+    - LWS_METHOD: nossl
+      CMAKE_ARGS: -DLWS_WITH_SSL=OFF
+install:
+  - appveyor DownloadFile https://libwebsockets.org:444/win-libuv.zip
+  - mkdir c:\assets
+  - mkdir c:\assets\libuv
+  - 7z x -oc:\assets\libuv win-libuv.zip
+#  - appveyor DownloadFile https://slproweb.com/download/Win32OpenSSL-1_0_2h.exe
+  - appveyor DownloadFile https://libwebsockets.org:444/Win32OpenSSL-1_0_2h.exe
+  - Win32OpenSSL-1_0_2h.exe /silent /verysilent /sp- /suppressmsgboxes
+  - appveyor DownloadFile https://libwebsockets.org:444/nsis-3.0rc1-setup.exe
+  - cmd /c start /wait nsis-3.0rc1-setup.exe /S /D=C:\nsis
+  - appveyor DownloadFile https://libwebsockets.org:444/sqlite-dll-win32-x86-3130000.zip
+  - mkdir c:\assets\sqlite3
+  - 7z x -oc:\assets\sqlite3 sqlite-dll-win32-x86-3130000.zip
+  - SET PATH=C:\Program Files\NSIS\;C:\Program Files (x86)\NSIS\;c:\nsis;%PATH%
+build:
+
+build_script:
+  - md build
+  - cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release %CMAKE_ARGS% ..
+  - cmake --build . --config Release
+
+# TODO: Keeps breaking Windows build, should be rewritten using CPack properly instead...
+after_build:
+   - 7z a lws.zip %APPVEYOR_BUILD_FOLDER%\build\lib\Release\websockets.lib %APPVEYOR_BUILD_FOLDER%\build\lib\Release\websockets.exp %APPVEYOR_BUILD_FOLDER%\build\bin\Release\websockets.dll %APPVEYOR_BUILD_FOLDER%\lib\libwebsockets.h  %APPVEYOR_BUILD_FOLDER%\build\lws_config.h  %APPVEYOR_BUILD_FOLDER%\build\bin\Release\*.exe
+#  - cd ..
+#  - cd win32port
+#  - makensis -DVERSION=%APPVEYOR_BUILD_VERSION% libwebsockets.nsi
+
+
+artifacts:
+  - path: lws.zip
+    name: lws.zip
+    type: Zip
+
+cache:
+  - C:\OpenSSL-Win32
+
+matrix:
+  fast_finish: true

@@ -1,11 +1,11 @@
 <?php
 
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -14,10 +14,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 global $args, $SqlDatabase, $User;
 
@@ -38,6 +39,7 @@ if( !$o->LoadTable() )
 			`DockID` bigint(20) NOT NULL,
 			`UserID` bigint(20) default \'0\', 
 			`Type` varchar(255) default \'executable\',
+			`Icon` varchar(255) default \'\',
 			`Application` varchar(255), 
 			`ShortDescription` varchar(255), 
 			`SortOrder` int(11) default \'0\',
@@ -50,19 +52,19 @@ else
 {
 	$DockID = false;
 	$Type = false;
-	foreach( $o->fieldnames as $fn )
+	$Icon = false;
+	foreach( $o->_fieldnames as $fn )
 	{
 		if( $fn == 'DockID' ) $DockID = true;
 		if( $fn == 'Type' ) $Type = true;
+		if( $fn == 'Icon' ) $Icon = true;
 	}
 	if( !$DockID )
-	{
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DockID` bigint(20) NOT NULL AFTER `Parent`' );
-	}
 	if( !$Type )
-	{
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Type` varchar(255) default \'executable\' AFTER `UserID`' );
-	}
+	if( !$Icon )
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Icon` varchar(255) AFTER `Type`' );
 }
 
 // End run things first time ---------------------------------------------------
@@ -74,20 +76,34 @@ if( isset( $args->command ) )
 	{
 		case 'items':
 			// Load root items if nothing else is requested
-			if( $rows = $SqlDatabase->FetchObjects( 'SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND Parent=0 ORDER BY SortOrder ASC' ) )
+			if( $rows = $SqlDatabase->FetchObjects( '
+				SELECT d.* FROM
+					DockItem d
+				WHERE
+					d.UserID=\'' . $User->ID . '\' AND d.Parent=0 AND d.Type != \'Dock\'
+				ORDER BY 
+					d.SortOrder ASC
+			' ) )
 			{
 				$eles = [];
 				foreach ( $rows as $row )
 				{
+					$path = FindAppInSearchPaths( $row->Application );
 					$o = new stdClass();
 					if( $row->ID == isset( $args->args ) && isset( $args->args->itemId ) ? $args->args->itemId : false )
 						$o->Current = true;
 					else $o->Current = false;
 					$o->Id = $row->ID;
 					$o->Type = $row->Type;
+					$o->Icon = $row->Icon;
 					$o->Name = trim( $row->Application ) ? $row->Application : i18n( 'Unnamed' );
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
-					$o->Image = ( trim( $row->Application ) && $row->Type == 'executable' ) ? '' : 'gfx/icons/128x128/status/weather-none-available.png';
+					$apath = 'apps/' . $row->Application . '/';
+					if( !strstr( $o->Icon, ':' ) )
+						$o->Icon = file_exists( $path . '/icon_dock.png' ) ? ( $apath . 'icon_dock.png' ) : '';
+					$o->Image = '';
+					
+					// Get config
 					$eles[] = $o;
 				}
 				die( 'ok<!--separate-->' . json_encode( $eles ) );
@@ -151,12 +167,14 @@ if( isset( $args->command ) )
 			break;
 		case 'saveitem':
 			$id = intval( $args->args->itemId, 10 );
-			$application = mysql_real_escape_string( $args->args->application );
-			$shortdesc = mysql_real_escape_string( $args->args->shortdescription );
+			$application = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
+			$shortdesc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
+			$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
 			$SqlDatabase->Query( '
 				UPDATE DockItem SET
 					Application = \'' . $application . '\',
-					ShortDescription = \'' . $shortdesc . '\'
+					ShortDescription = \'' . $shortdesc . '\',
+					`Icon` = \'' . $icon . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
 					UserID=\'' . $User->ID . '\'
@@ -165,20 +183,22 @@ if( isset( $args->command ) )
 			break;
 		case 'additem':
 			$max = $SqlDatabase->FetchRow( 'SELECT MAX(SortOrder) MX FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0' );
-			if( $args->args->application )
+			if( isset( $args->args->application ) )
 			{
-				$exe = mysql_real_escape_string( $args->args->application );
-				$desc = mysql_real_escape_string( $args->args->shortdescription );
-				$type = mysql_real_escape_string( $args->args->type );
+				$exe = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
+				$desc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
+				$type = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type );
+				$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
 				$SqlDatabase->Query( '
 					INSERT INTO DockItem 
-						( UserID, `Type`, Application, ShortDescription, Parent, SortOrder ) 
+						( UserID, `Type`, Application, ShortDescription, Icon, Parent, SortOrder ) 
 					VALUES 
 						( 
 							\'' . $User->ID . '\', 
 							\'' . $type . '\', 
 							\'' . $exe . '\', 
-							\'' . $desc . '\', 
+							\'' . $desc . '\',
+							\'' . $icon . '\',
 							0, 
 							\'' . $max['MX'] . '\' 
 						)
@@ -187,10 +207,44 @@ if( isset( $args->command ) )
 			else
 			{
 				$SqlDatabase->Query( '
-					INSERT INTO DockItem ( UserID, Parent, SortOrder ) VALUES ( \'' . $User->ID . '\', 0, \'' . $max['MX'] . '\' )
+					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder ) VALUES ( \'' . $User->ID . '\', 0, 0, \'' . $max['MX'] . '\' )
 				' );
 			}
 			die( 'ok<!--separate-->' );
+			break;
+		case 'getdock':
+			$o = new DbIO( 'DockItem' );
+			if( $dock = $SqlDatabase->FetchObject( '
+				SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
+			' ) )
+			{
+				if( $o->Load( $dock->ID ) )
+				{
+					die( 'ok<!--separate-->' . $o->ShortDescription );
+				}
+			}
+			die('ok');
+			break;
+		case 'savedock':
+			$o = new DbIO( 'DockItem' );
+			if( $dock = $SqlDatabase->FetchObject( '
+				SELECT * FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND `Type`=\'Dock\' AND `DockID`=\'' . $args->args->dockid . '\'
+			' ) )
+			{
+				$o->Load( $dock->ID );
+			}
+			if( !$o->ID )
+			{
+				$o->DockID = $args->args->dockid;
+				$o->UserID = $User->ID;
+				$o->Type = 'Dock';
+			}
+			$cfg = new stdClass();
+			$cfg->options = $args->args->options;
+			$o->Type = 'Dock';
+			$o->ShortDescription = json_encode( $cfg );
+			$o->Save();
+			if( $o->ID > 0 ) die( 'ok' );
 			break;
 	}
 }

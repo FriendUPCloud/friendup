@@ -1,12 +1,28 @@
 GCC		=	gcc
 OUTPUT	=	bin/image.library
-CFLAGS	=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameters -I../../core/ -I../ -fPIC $(shell mysql_config --cflags)
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter  -I../../core/ -I../ -fPIC $(shell mysql_config --cflags) -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
 
 ifeq ($(DEBUG),1)
-CFLAGS	+=	-D__DEBUG
+CFLAGS  +=      -D__DEBUG
+endif
+
+ifeq ($(WEBSOCKETS_THREADS),1)
+CFLAGS	+=	-DENABLE_WEBSOCKETS_THREADS
+endif
+
+ifeq ($(USE_SELECT),1)
+CFLAGS  +=      -DUSE_SELECT
+endif
+
+ifeq ($(NO_VALGRIND),1)
+CFLAGS  +=      -DNO_VALGRIND_STUFF
+endif
+
+ifeq ($(CYGWIN_BUILD),1)
+CFLAGS  +=      -DCYGWIN_BUILD
 endif
 
 C_FILES := $(wildcard imagelibrary.c )
@@ -17,7 +33,7 @@ ALL:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) ../../core/obj/buffered_string.o
+	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) ../../core/obj/buffered_string.o ../../core/obj/hashmap.o
 
 obj/%.o: %.c *.h %.d
 	@echo "\033[34mCompile ...\033[0m"

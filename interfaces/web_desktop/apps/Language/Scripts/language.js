@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,7 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
@@ -33,6 +33,19 @@ Application.run = function( msg, iface )
 	}
 	
 	var f = new File( 'Progdir:Templates/main.html' );
+	f.replacements = {
+		locale: i18n( 'i18n_locale' ),
+		locale_language: i18n( 'i18n_locale_language' ),
+		loading_languages: i18n( 'i18n_loading_languages' ),
+		speech_settings: i18n( 'i18n_speech_settings' ),
+		preferred_speech: i18n( 'i18n_preferred_speech' ),
+		speech_advice: i18n( 'i18n_speech_advice' ),
+		loading_voices: i18n( 'i18n_loading_voices' ),
+		alternative_speech: i18n( 'i18n_alternative_speech' ),
+		fallback_advice: i18n( 'i18n_fallback_advice' ),
+		save: i18n( 'i18n_save' ),
+		cancel: i18n( 'i18n_cancel' )
+	};
 	f.onLoad = function( data )
 	{
 		v.setContent( data );

@@ -1,0 +1,143 @@
+
+
+	<div class="ContentFull BackgroundNegative">
+		
+		<div class="Centered">
+			<div class="Cnt ColorStGrayLight BackgroundDefault">
+				<p>
+					<img src="Progdir:community_logo.png" width="300" height="65"/>
+				</p>
+				<h2>
+					Login for community members
+				</h2>
+				<table>
+					
+					<tr>
+						<td>
+							<strong>Your e-mail:</strong>
+						</td>
+						<td>
+							<input type="text" id="fUsername" value="" placeholder="username..."/>
+						</td>
+					</tr>
+					
+					<tr style="display: none" id="RecoveryKey">
+						<td>
+							<strong>Recovery key:</strong>
+						</td>
+						<td>
+							<input type="text" id="fRecoveryKey" value="" placeholder="key..."/>
+						</td>
+					</tr>
+					
+					<tr>
+						<td>
+							<strong id="LoginPassword">Password:</strong>
+							<strong style="display: none" id="NewPassword">New password:</strong>
+						</td>
+						<td>
+							<input type="password" id="fPassword" value="" placeholder="********"/>
+						</td>
+					</tr>
+					
+				</table>
+				<p>
+					<button type="button" class="Button IconSmall fa-check" onclick="login()">
+						Log in and save
+					</button>
+					
+					<button type="button" class="Button IconSmall fa-recycle" onclick="recover()">
+						Reset password
+					</button>
+				</p>
+				<hr class="Divider"/>
+				<p id="NonMembersButton">
+					<button type="button" class="Button fa-accept IconSmall" onclick="ge( 'NonMembers' ).style.display = 'block'; ge( 'NonMembersButton' ).style.display = 'none';">
+						Not a member? Please sign up here
+					</button>
+				</p>
+				<div style="display: none" id="NonMembers">
+					<p>
+						Please fill in this form to create your Friend Community account.
+					</p>
+					<table>
+						<tr>
+							<td>
+								<strong>Full name:</strong>
+							</td>
+							<td>
+								<input type="text" id="sFullname" value="" placeholder="John Doe"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<strong>E-mail:</strong>
+							</td>
+							<td>
+								<input type="text" id="sEmail" value="" placeholder="mail@gmail.com"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<strong>Username:</strong>
+							</td>
+							<td>
+								<input type="text" id="sUsername" value="" placeholder="username..."/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<strong>Password:</strong>
+							</td>
+							<td>
+								<input type="password" id="sPassword" value="" placeholder="********"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<strong>Confirm password:</strong>
+							</td>
+							<td>
+								<input type="password" id="sConfirm" value="" placeholder="********"/>
+							</td>
+						</tr>
+					</table>
+					<p>
+						<button type="button" class="Button IconSmall fa-check" onclick="signUp()">
+							Sign up!
+						</button>
+					</p>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+	
+	<script src="Progdir:Scripts/login.js"></script>
+	
+	<style>
+		.Centered
+		{
+			position: absolute;
+			top: 50%;
+			left: 50%;
+		}
+		.Centered > .Cnt
+		{
+			position: absolute;
+			width: 500px;
+			height: 520px;
+			top: -260px;
+			left: -250px;
+			border: 1px solid white;
+			border-radius: 8px;
+			box-sizing: border-box;
+			padding: 20px;
+			text-align: center;
+		}
+		.Centered > .Cnt table
+		{
+			margin: auto;
+		}
+	</style>
+

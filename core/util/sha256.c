@@ -1,3 +1,25 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 /*
  * 
  * SHA256 body
@@ -129,7 +151,7 @@ void Sha256Final(FCSHA256_CTX *ctx, uchar hash[])
    }  
    
    // Append to the padding the total message's length in bits and transform. 
-   DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],ctx->datalen * 8);
+   DBL_INT_ADD(ctx->bitlen[0],ctx->bitlen[1],ctx->datalen << 3);
    ctx->data[63] = ctx->bitlen[0]; 
    ctx->data[62] = ctx->bitlen[0] >> 8; 
    ctx->data[61] = ctx->bitlen[0] >> 16; 
@@ -143,13 +165,13 @@ void Sha256Final(FCSHA256_CTX *ctx, uchar hash[])
    // Since this implementation uses little endian byte ordering and SHA uses big endian,
    // reverse all the bytes when copying the final state to the output hash. 
    for (i=0; i < 4; ++i) { 
-      hash[i]    = (ctx->state[0] >> (24-i*8)) & 0x000000ff; 
-      hash[i+4]  = (ctx->state[1] >> (24-i*8)) & 0x000000ff; 
-      hash[i+8]  = (ctx->state[2] >> (24-i*8)) & 0x000000ff;
-      hash[i+12] = (ctx->state[3] >> (24-i*8)) & 0x000000ff;
-      hash[i+16] = (ctx->state[4] >> (24-i*8)) & 0x000000ff;
-      hash[i+20] = (ctx->state[5] >> (24-i*8)) & 0x000000ff;
-      hash[i+24] = (ctx->state[6] >> (24-i*8)) & 0x000000ff;
-      hash[i+28] = (ctx->state[7] >> (24-i*8)) & 0x000000ff;
+      hash[i]    = (ctx->state[0] >> (24-(i<<3))) & 0x000000ff; 
+      hash[i+4]  = (ctx->state[1] >> (24-(i<<3))) & 0x000000ff; 
+      hash[i+8]  = (ctx->state[2] >> (24-(i<<3))) & 0x000000ff;
+      hash[i+12] = (ctx->state[3] >> (24-(i<<3))) & 0x000000ff;
+      hash[i+16] = (ctx->state[4] >> (24-(i<<3))) & 0x000000ff;
+      hash[i+20] = (ctx->state[5] >> (24-(i<<3))) & 0x000000ff;
+      hash[i+24] = (ctx->state[6] >> (24-(i<<3))) & 0x000000ff;
+      hash[i+28] = (ctx->state[7] >> (24-(i<<3))) & 0x000000ff;
    }  
 }  

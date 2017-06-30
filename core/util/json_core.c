@@ -1,3 +1,25 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +51,7 @@ char* JSONGetExpectedErrorString( unsigned int expected )
 		memcpy( ptr, "value, ", 7 );
 		ptr += 7;
 	}
-	if( expected & JSON_TYPE_BOOL )
+	if( expected & JSON_TYPE_FBOOL )
 	{
 		memcpy( ptr, "bool, ", 6 );
 		ptr += 6;
@@ -146,14 +168,14 @@ JSONData* JSONParse( char* str, unsigned int length )
 	unsigned int nextExpect = 0;
 
 	// Control flags
-	char inObject    = false;
-	char inObjectKey = false;
-	char inArray     = false;
-	char inValue     = false;
-	char doAdd       = false;
-	char resetState  = false;
-	char inEscape    = false;
-	char inHexEscape = false;
+	char inObject    = FALSE;
+	char inObjectKey = FALSE;
+	char inArray     = FALSE;
+	char inValue     = FALSE;
+	char doAdd       = FALSE;
+	char resetState  = FALSE;
+	char inEscape    = FALSE;
+	char inHexEscape = FALSE;
 
 	char* currentKey = NULL;
 
@@ -204,10 +226,10 @@ JSONData* JSONParse( char* str, unsigned int length )
 						state = JSON_TYPE_ARRAY;
 						currentNode->type = state | JSON_TYPE_ARRAY_LIST;
 						currentNode->data = (void*)JSONArrayNew();
-						doAdd = true;
-						inObject = false;
-						inArray = true;
-						resetState = true;
+						doAdd = TRUE;
+						inObject = FALSE;
+						inArray = TRUE;
+						resetState = TRUE;
 						nextExpect = JSON_TYPE_VALUE | JSON_TYPE_ARRAY | JSON_TYPE_OBJECT | JSON_TYPE_ARRAY_END;
 						break;
 
@@ -221,7 +243,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 						else if( inObject )
 						{
 							nextExpect = JSON_TYPE_VALUE | JSON_TYPE_OBJECT_END;
-							inObjectKey = true;
+							inObjectKey = TRUE;
 						}
 						else
 						{
@@ -232,7 +254,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 							return NULL;
 						}
 						state = JSON_TYPE_COMMA;
-						resetState = true;
+						resetState = TRUE;
 						break;
 
 					// End array
@@ -262,16 +284,16 @@ JSONData* JSONParse( char* str, unsigned int length )
 						d = stack[level - 1];
 						if( d && ( d->type & JSON_TYPE_OBJECT ) )
 						{
-							inObject = true;
-							inObjectKey = true;
-							inArray = false;
+							inObject = TRUE;
+							inObjectKey = TRUE;
+							inArray = FALSE;
 							nextExpect = JSON_TYPE_COMMA | JSON_TYPE_OBJECT_END;
 						}
 						if( d && ( d->type & JSON_TYPE_ARRAY ) )
 						{
-							inObject = false;
-							inObjectKey = false;
-							inArray = true;
+							inObject = FALSE;
+							inObjectKey = FALSE;
+							inArray = TRUE;
 							nextExpect = JSON_TYPE_COMMA | JSON_TYPE_ARRAY_END;
 						}
 
@@ -283,7 +305,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 						else if( stack[level]->type & JSON_TYPE_OBJECT )
 							nextExpect |= JSON_TYPE_OBJECT_END;
 						*/
-						resetState = true;
+						resetState = TRUE;
 						break;
 					}
 
@@ -292,11 +314,11 @@ JSONData* JSONParse( char* str, unsigned int length )
 						state = JSON_TYPE_OBJECT;
 						currentNode->type = state;
 						currentNode->data = (void*)HashmapNew();
-						doAdd = true;
-						inObject = true;
-						inObjectKey = true;
-						inArray = false;
-						resetState = true;
+						doAdd = TRUE;
+						inObject = TRUE;
+						inObjectKey = TRUE;
+						inArray = FALSE;
+						resetState = TRUE;
 						//expect = JSON_TYPE_NONE;
 						nextExpect = JSON_TYPE_VALUE | JSON_TYPE_OBJECT_END;
 						break;
@@ -305,8 +327,8 @@ JSONData* JSONParse( char* str, unsigned int length )
 					case ':':
 						nextExpect = JSON_TYPE_VALUE | JSON_TYPE_ARRAY | JSON_TYPE_OBJECT;
 						state = JSON_TYPE_COLON;
-						resetState = true;
-						inObjectKey = false;
+						resetState = TRUE;
+						inObjectKey = FALSE;
 						break;
 
 					// End object
@@ -319,21 +341,21 @@ JSONData* JSONParse( char* str, unsigned int length )
 						JSONData* d = stack[level - 1];
 						if( d && ( d->type & JSON_TYPE_OBJECT ) )
 						{
-							inObject = true;
-							inObjectKey = true;
-							inArray = false;
+							inObject = TRUE;
+							inObjectKey = TRUE;
+							inArray = FALSE;
 							nextExpect = JSON_TYPE_COMMA | JSON_TYPE_OBJECT_END;
 						}
 						if( d && ( d->type & JSON_TYPE_ARRAY ) )
 						{
-							inObject = false;
-							inObjectKey = false;
-							inArray = true;
+							inObject = FALSE;
+							inObjectKey = FALSE;
+							inArray = TRUE;
 							nextExpect = JSON_TYPE_COMMA | JSON_TYPE_ARRAY_END;
 						}
 
 						//expect = JSON_TYPE_NONE;
-						resetState = true;
+						resetState = TRUE;
 						break;
 					}
 					// ----------------------------------------
@@ -357,7 +379,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 					case 't':
 					case 'f':
 						state = JSON_TYPE_VALUE;
-						currentNode->type = JSON_TYPE_BOOL;
+						currentNode->type = JSON_TYPE_FBOOL;
 						currentNode->size = c == 't' ? 4 : 5;
 						buffer[bIndex++] = c;
 						break;
@@ -437,14 +459,14 @@ JSONData* JSONParse( char* str, unsigned int length )
 			{
 				switch( currentNode->type )
 				{
-					case JSON_TYPE_BOOL:
+					case JSON_TYPE_FBOOL:
 						// Is it "true"?
 						if( currentNode->size == 4 && c == trueStr[bIndex] )
 						{
 							buffer[bIndex++] = c;
 							if( bIndex == 4 )
 							{
-								doAdd = true;
+								doAdd = TRUE;
 								buffer[bIndex] = 0;
 								currentNode->data = StringDuplicate( buffer );
 							}
@@ -455,7 +477,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 							buffer[bIndex++] = c;
 							if( bIndex == 5 )
 							{
-								doAdd = true;
+								doAdd = TRUE;
 								buffer[bIndex] = 0;
 								currentNode->data = StringDuplicate( buffer );
 							}
@@ -477,7 +499,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 							buffer[bIndex++] = c;
 							if( bIndex == 4 )
 							{
-								doAdd = true;
+								doAdd = TRUE;
 								buffer[bIndex] = 0;
 								currentNode->data = StringDuplicate( buffer );
 							}
@@ -502,7 +524,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 								// Don't interpret the number until it's nessecary, though.
 								buffer[bIndex++] = 0;
 								currentNode->data = StringDuplicate( buffer );
-								doAdd = true;
+								doAdd = TRUE;
 
 								// Parse the current character again, now that we know it's not
 								// part of this number.
@@ -529,7 +551,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 							// Check for escape character
 							if( c == '\\' )
 							{
-								inEscape = true;
+								inEscape = TRUE;
 							}
 							// Check for end of string
 							else if( c == '"' )
@@ -537,7 +559,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 								buffer[bIndex] = 0;
 								//printf("---- %s\n", buffer);
 								currentNode->data = StringDuplicate( buffer );
-								doAdd = true;
+								doAdd = TRUE;
 							}
 							// Add to the buffer
 							else
@@ -555,36 +577,36 @@ JSONData* JSONParse( char* str, unsigned int length )
 								case '\\':
 								case '/':
 									buffer[bIndex++] = c;
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// Backspace
 								case 'b':
 									buffer[bIndex++] = '\b';
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// ?
 								case 'f':
 									buffer[bIndex++] = '\f';
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// Newline
 								case 'n':
 									buffer[bIndex++] = '\n';
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// Carriage return
 								case 'r':
 									buffer[bIndex++] = '\r';
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// Tab
 								case 't':
 									buffer[bIndex++] = '\t';
-									inEscape = false;
+									inEscape = FALSE;
 									break;
 								// UTF-16 surrogate
 								case 'u':
-									inHexEscape = true;
+									inHexEscape = TRUE;
 									break;
 								// Error
 								default:
@@ -704,7 +726,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 
 					DEBUG( "Now expecting: %.8X (%s) (%s:%d)\n", expect, JSONGetExpectedErrorString( expect ), __FILE__, __LINE__ );
 
-					inObjectKey = false;
+					inObjectKey = FALSE;
 				}
 				// Add value
 				else
@@ -754,7 +776,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 			currentNode = JSONDataNew(__LINE__);
 
 			state = JSON_TYPE_NONE;
-			doAdd = false;
+			doAdd = FALSE;
 		}
 
 		// Sometimes we need to know what happened previously
@@ -764,7 +786,7 @@ JSONData* JSONParse( char* str, unsigned int length )
 		if( resetState )
 		{
 			state = JSON_TYPE_NONE;
-			resetState = false;
+			resetState = FALSE;
 		}
 	}
 
@@ -846,7 +868,7 @@ void printJSONDocument( JSONData* c )
 			case JSON_TYPE_NULL:
 				printf( "null," );
 				break;
-			case JSON_TYPE_BOOL:
+			case JSON_TYPE_FBOOL:
 				printf( "%s,", (char*)t->data );
 				break;
 			case JSON_TYPE_NUMBER:

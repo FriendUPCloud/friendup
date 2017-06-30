@@ -1,4 +1,34 @@
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 
+/** @file
+ * 
+ *  BufferedString
+ *
+ * 
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 01/2016
+ */
 
 #include "buffered_string.h"
 #include <util/log/log.h>
@@ -87,7 +117,7 @@ int BufStringAdd( BufString *bs, const char *ntext )
 			int allsize = ( (addsize / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
 			char *tmp;
 			
-			if( ( tmp = FCalloc( allsize+1, sizeof(char) ) ) != NULL )
+			if( ( tmp = FCalloc( allsize + 1, sizeof(char) ) ) != NULL )
 			{
 				strcpy( tmp, ntext );
 				bs->bs_Bufsize = allsize;
@@ -95,7 +125,7 @@ int BufStringAdd( BufString *bs, const char *ntext )
 			}
 			else
 			{
-				ERROR("Cannot allocate memory for BUFString\n");
+				FERROR("Cannot allocate memory for BUFString\n");
 				return -1;
 			}
 		}
@@ -128,7 +158,7 @@ int BufStringAdd( BufString *bs, const char *ntext )
 		}
 		else
 		{
-			ERROR("Cannot allocate memory for buffer!\n");
+			FERROR("Cannot allocate memory for buffer!\n");
 			return -1;
 		}
 		// there is no space in the buffer, we must extend it
@@ -152,7 +182,7 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 {
 	if( ntext == NULL )
 	{
-		ERROR("Cannot add NULL text!\n");
+		FERROR("Cannot add NULL text!\n");
 		return 1;
 	}
 	
@@ -177,7 +207,7 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 			}
 			else
 			{
-				ERROR("Cannot allocate memory for BUFString\n");
+				FERROR("Cannot allocate memory for BUFString\n");
 				return -1;
 			}
 		}
@@ -197,10 +227,10 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 	if( newsize > bs->bs_Bufsize )
 	{
 		char *tmp;
-		int allsize = ( (newsize / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
+		int allsize = ( (newsize / bs->bs_MAX_SIZE) + 4) * bs->bs_MAX_SIZE;
 		//DEBUG("Allocated mem size %d\n", allsize );
 		
-		if( ( tmp = FCalloc( allsize+10, sizeof(char) ) ) != NULL )
+		if( ( tmp = FCalloc( allsize + 10, sizeof(char) ) ) != NULL )
 		{
 			memcpy( tmp, bs->bs_Buffer, bs->bs_Size );
 			//DEBUG("copy from %d len %d\n", bs->bs_Size, len );
@@ -214,7 +244,7 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 		}
 		else
 		{
-			ERROR("Cannot allocate memory for buffer!\n");
+			FERROR("Cannot allocate memory for buffer!\n");
 			return -1;
 		}
 		// there is no space in the buffer, we must extend it

@@ -1,0 +1,6 @@
+{
+	"type":    "GoogleDrive",
+	"literal": "Google Drive Based Filesystem",
+	"group":   "User",
+	"icon": "icon.png"
+}

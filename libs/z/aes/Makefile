@@ -1,5 +1,5 @@
 CC=cc
-CFLAGS=-O -DHAVE_AES --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -Wno-unused -I../../../core/ -fPIC
+CFLAGS=-O -DHAVE_AES --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -Wno-unused -I../../../core/ -fPIC
 OBJS=aescrypt.o aeskey.o aestab.o entropy.o fileenc.o hmac.o prng.o pwd2key.o sha1.o
 ARFLAGS=rv
 

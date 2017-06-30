@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,7 +15,8 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 Application.proxy = '';
 Application.friendsession = '';
 Application.run = function( msg )
@@ -26,6 +27,44 @@ Application.run = function( msg )
 		height: 600
 	} );
 	
+	v.setMenuItems( [
+		{
+			name: i18n( 'i18n_file' ),
+			items: [
+				{
+					name: i18n( 'i18n_about_wideweb' ),
+					command: 'about'
+				},
+				{
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				}
+			]
+		},
+		{
+			name: i18n( 'i18n_navigate' ),
+			items: [
+				{
+					name: i18n( 'i18n_nav_back' ),
+					command: 'navback'
+				},
+				{
+					name: i18n( 'i18n_nav_forward' ),
+					command: 'navforward'
+				},
+				{
+					name: i18n( 'i18n_nav_reload' ),
+					command: 'reload'
+				}
+			]
+		},
+		{
+			name: i18n( 'i18n_edit' ),
+			items: [
+			]
+		}
+	] );
+	
 	this.mainView = v;
 	
 	v.onClose = function( data )
@@ -35,65 +74,21 @@ Application.run = function( msg )
 	
 	var f = new File( 'Progdir:Templates/webinterface.html' );
 	
-	// a couple of lines to set current host as default proxy for wideweb if no other setting isgiven for this user
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( e == 'fail' )
-		{
-			m = new Module( 'system' );
-			m.onExecuted = function( e, d ) {
-				console.log('prxy setting saved',e,d);
-			}
-			m.execute( 'setsetting', { setting: 'widewebproxy', data: location.protocol + '//proxy.' + location.host } );
-		}
-		else
-		{
-			tmp = JSON.parse( d );
-			Application.proxy = tmp.widewebproxy;
-			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
-			console.log(Application.proxy + ' will be our proxy');
-		}
-
-	}
-	m.execute( 'getsetting', { setting: 'widewebproxy' } );
-	
-	m2 = new Module('system')
-	m2.onExecuted = function( e, d )
-	{
-		if( e == 'fail' )
-		{
-			console.log('User info get ERROR ', d);
-		}
-		else
-		{
-			tmp = JSON.parse( d );
-			Application.friendsession = tmp.SessionID;
-			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
-			console.log('we got ousr sessionn here... didnt we?',tmp.SessionID,d,e);
-		}
-	}
-	m2.execute('userinfoget' );
-	
 	f.onLoad = function( data )
 	{
-		v.setContent( data );
-		v.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
-
+		v.setContent( data, function()
+		{
+			if( msg.args )
+			{
+				v.sendMessage( {
+					command: 'loadfile',
+					filename: msg.args
+				} );
+			}
+		} );
 	}
 	f.load();
 	
-	
-	if( msg.args )
-	{
-		if( msg.args.indexOf( ':' ) > 0 && msg.args.indexOf( ':/' ) < 0 )
-		{
-			v.sendMessage( {
-				command: 'loadfile',
-				filename: msg.args
-			} );
-		}
-	}
 }
 
 Application.receiveMessage = function( msg )
@@ -103,13 +98,47 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'seturl':
-			Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' : ' + msg.url );
+			Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );
+			this.currentUrl = msg.url;
 			break;
 		case 'updateproxy':
 			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
 			break;
+		case 'reload':
+			this.receiveMessage( { command: 'seturl', url: this.currentUrl ? this.currentUrl : "" } );
+			this.mainView.sendMessage( { command: 'loadfile', filename: this.currentUrl } );
+			break;
+		case 'forward':
+			this.mainView.sendMessage( { command: 'forward' } );
+			break;
+		case 'backward':
+			this.mainView.sendMessage( { command: 'backward' } );
+			break;
+		case 'activate_now':
+			this.mainView.activate();
+			break;
+		case 'about':
+			if( this.ab )
+			{
+				return;
+			}
+			this.ab = new View( {
+				title: i18n( 'i18n_about_wideweb' ),
+				width: 300,
+				height: 400
+			} );
+			var f = new File( 'Progdir:Templates/about.html' );
+			f.onLoad = function( data )
+			{
+				Application.ab.setContent( data );
+			}
+			f.i18n();
+			f.load();
+			this.ab.onClose = function()
+			{
+				Application.ab = false;
+			}
+			break;
 	}
 }
-
-
 

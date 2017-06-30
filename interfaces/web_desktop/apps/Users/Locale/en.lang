@@ -1,2 +1,87 @@
+i18n_idle_title                      : Please add or edit a user
+i18n_idle_desc : Select a user from the list to the left, or click "Add user" on the bottom of the list.
 
+i18n_users_title                     : User administration
+i18n_users                           : Users
+i18n_setup                      	 : Setup
+i18n_language                        : Language
+i18n_theme                        	 : Theme
+i18n_template                        : Template
+i18n_templates                       : Templates
+i18n_workgroups                      : Workgroups
+i18n_workgroup                     	 : Workgroup
+i18n_sessions                        : Sessions
+i18n_regenerate                      : Regenerate
+i18n_add                        	 : Add
+i18n_add_user                        : Add user
+i18n_add_setup                       : Add setup
+i18n_add_template                    : Add template
+i18n_add_workgroup                   : Add workgroup
+i18n_add_to_dock                  	 : Add to dock
+i18n_remove              		     : Remove
+i18n_renew_session                   : Renew user session
+i18n_user_updated                    : User updated.
+i18n_user_created                    : New user is now activated.
 
+i18n_filter                 		 : Filter
+
+i18n_preinstall                      : preinstall
+
+i18n_startup-sequence                : Startup-sequence
+
+i18n_add_applications                : Add applications
+i18n_add_apps        		         : Add applications
+i18n_add_selected_apps        		 : Add selected apps
+i18n_add_commands                	 : Add commands
+i18n_add_command                	 : Add command
+i18n_add_startup                	 : Add command
+i18n_edit_startup                	 : Edit command
+i18n_command_line                	 : Commands
+
+i18n_loading                		 : Loading...
+
+#User edit
+i18n_full_name                       : Full name
+i18n_email                           : E-mail
+i18n_username                        : Username
+i18n_password                        : Password
+i18n_level                           : Level
+
+i18n_level_admin                     : Administrator
+i18n_level_user                      : Normal user
+i18n_level_guest                     : Guest user
+i18n_level_api                       : API user
+
+i18n_save_user                       : Save user
+i18n_delete_user                     : Delete user
+i18n_unblock_user                    : Unblock user	
+i18n_cancel                          : Cancel
+i18n_save                            : Save
+i18n_add_members                     : Add members
+i18n_setup_name                	     : Setup name
+i18n_template_name                   : Template name
+i18n_workgroup_name                  : Workgroup name
+i18n_named_workgroup                 : Write a name
+i18n_members                         : Workgroup members
+i18n_add_selected_members            : Add selected users
+i18n_add_workgroup_members           : Add users
+i18n_no_users_available              : No users available.
+i18n_remove_users_from_group         : Remove selected
+i18n_delete                          : Delete
+
+i18n_apply_template                  : Apply template
+
+i18n_applications                	 : Applications
+i18n_disks                			 : Disks
+i18n_folders                		 : Folders
+i18n_files                		 	 : Files
+i18n_wallpapers                		 : Wallpapers
+i18n_settings                		 : Settings
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norwegian
+i18n_locale_en                          : English
+i18n_locale_de                          : German
+i18n_locale_nl                          : Dutch
+i18n_locale_nl                          : Dutch

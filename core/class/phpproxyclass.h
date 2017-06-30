@@ -1,22 +1,33 @@
-/*******************************************************************************
+/*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
 *                                                                              *
 * This program is distributed in the hope that it will be useful,              *
 * but WITHOUT ANY WARRANTY; without even the implied warranty of               *
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
+* MIT License for more details.                                                *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
+/** @file
+ *
+ *  Core PHP classes definitions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @author JMN (John Michael Nilsen)
+ *  @date pushed 06/02/2015
+ */
 #ifndef __CLASS_PHPPROXYCLASS_H__
 #define __CLASS_PHPPROXYCLASS_H__
 
@@ -24,22 +35,25 @@
 #include <class/class.h>
 #include <util/hooks.h>
 
-#define FC_PHPProxyClass     "PHPProxyClass"
+#define FC_PHPProxyClass     "PHPProxyClass"			///< name id of "PHP" classes
 
+/**
+ * Definition of a process
+ */
 struct FUIPProcess
 {
-	ULONG MethodID;
-	ULONG data;
+	FULONG MethodID;
+	FULONG data;
 };
 
-#define FM_PHPProxy_Dummy			0x00000200
-#define FM_PHPProxy_Process		(FM_PHPProxy_Dummy+1)
+#define FM_PHPProxy_Dummy		0x00000200				///< base index of enum
+#define FM_PHPProxy_Process		(FM_PHPProxy_Dummy+1)	///< run proxy
 
-#define FA_PHPProxy_Dummy			0x00002000
-#define FA_PHPProxy_Parameters	(FA_PHPProxy_Dummy+1)
-#define FA_PHPProxy_Results		(FA_PHPProxy_Dummy+2)
+#define FA_PHPProxy_Dummy			0x00002000			///< base index of enum
+#define FA_PHPProxy_Parameters	(FA_PHPProxy_Dummy+1)	///< parameters
+#define FA_PHPProxy_Results		(FA_PHPProxy_Dummy+2)	///< results
 
-ULONG phpproxyDispatcher( struct Class *c, Object *o, struct Msg *m );
+FULONG phpproxyDispatcher( struct Class *c, Object *o, struct Msg *m );
 
 
 #endif //__CLASS_PHPPROXYCLASS_H__

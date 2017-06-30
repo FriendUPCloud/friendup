@@ -150,6 +150,7 @@ void MurmurHash3_x86_32 ( const void * key, int len,
 void MurmurHash3_x86_128 ( const void * key, const int len,
                            uint32_t seed, void * out )
 {
+	int i;
   const uint8_t * data = (const uint8_t*)key;
   const int nblocks = len / 16;
 
@@ -168,7 +169,7 @@ void MurmurHash3_x86_128 ( const void * key, const int len,
 
   const uint32_t * blocks = (const uint32_t *)(data + nblocks*16);
 
-  for(int i = -nblocks; i; i++)
+  for( i = -nblocks; i; i++)
   {
     uint32_t k1 = getblock32(blocks,i*4+0);
     uint32_t k2 = getblock32(blocks,i*4+1);

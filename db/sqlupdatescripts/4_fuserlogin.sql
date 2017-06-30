@@ -1,0 +1,2 @@
+ CREATE TABLE IF NOT EXISTS `FUserLogin` (`ID` bigint(20) NOT NULL AUTO_INCREMENT,`UserID` bigint(32) NOT NULL,`Login` varchar(255) NOT NULL,`Failed` varchar(255) DEFAULT NULL,`Information` TEXT DEFAULT NULL,`LoginTime` bigint(32) NOT NULL,PRIMARY KEY (`ID`)) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+     

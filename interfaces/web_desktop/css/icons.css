@@ -1,3 +1,234 @@
+/* -------------------------------------------------------------------------- *\
+
+Icon styles for the workbench
+Just so that we can keep the outputted HTML smaller by using CSS classes :)
+
+\* -------------------------------------------------------------------------- */
+
+.File a
+{
+	color: #202020;
+	/*text-shadow: 0 1px 0 #000;*/
+}
+
+#Doors .File a
+{
+	color: #FFF;
+	text-shadow: 0 1px 0 #000;	
+}
+
+.File
+{
+	cursor: pointer;
+	float: left;
+	margin: 0;
+	overflow: visible;
+	position: relative;
+	width: 96px;
+	padding: 0px;
+	margin: 20px 0 0 10px;
+	transition: transform,opacity 0.25s;
+	webkit-transition: transform,opacity 0.25s;
+}
+
+.File.Selected
+{
+	background: none;
+}
+
+.File .Icon
+{
+	height: 56px;
+	position: relative;
+	z-index: 2;
+	margin: auto;
+}
+
+.File .Icon > div
+{
+	height: 100%;
+	margin: 0 auto;
+	width: 100%;
+}
+
+/* TODO: Make ready for themes! */
+.File .Icon > .Label.Shared
+{
+    display: block;
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 32px;
+	height: 32px;
+	overflow: hidden;
+	z-index: 100;
+	background: #444444;
+	color: white;
+	border-radius: 100%;
+	padding: 5px;
+	line-height: 20px;
+	white-space: nowrap;
+	box-shadow: 0px 1px 6px rgba(0,0,0,0.4);
+	box-sizing: border-box;
+	border: 2px solid white;
+	text-align: center;
+}
+
+.File.Selected
+{
+	/*
+	opacity: 0.7;
+	filter:alpha(opacity=70);
+	why do we want to make them transparent?
+	*/
+}
+
+.File.Selected .Title
+{
+	background-color: #404040;
+	background-color: rgba(0,0,0,0.3);
+	box-shadow: inset 0px 0px 1px rgba(0,0,0,0.8);
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	color: white;
+	z-index: 1;
+}
+
+.File .Title
+{
+	margin-top: 2px;
+	box-sizing: border-box;
+	padding: 5px;
+	text-align: center;
+	position: relative;
+	left: -6px;
+	width: calc(100% + 12px);
+	font-weight: normal;
+	display: block;
+	white-space: normal;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	-ms-word-break: break-all;
+	word-break: break-word;
+	-ms-hyphens: auto;
+	-moz-hyphens: auto;
+	-webkit-hyphens: auto;
+	hyphens: auto;
+}
+
+.File .Title span
+{
+	display: inline;
+}
+
+.File .Title span:after
+{
+	content: '.';
+	display: inline;
+	color: transparent;
+}
+
+/* Specific icons */
+
+.File > .Icon > div
+{
+	background-repeat: no-repeat !important;
+	background-position: bottom center !important;
+}
+
+.File .Icon .File
+{
+	float: none;
+}
+
+.Launcher .File, 
+.Launcher .File div 
+{
+    width: inherit;
+    height: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+html .Launcher .File div *
+{
+	width: inherit;
+	height: inherit;
+}
+
+/* Download label */
+
+.File > a.Download
+{
+	display: block;
+	position: absolute;
+	top: 0px;
+	right: 0px;
+	width: 32px;
+	height: 32px;
+	overflow: hidden;
+	z-index: 100;
+	background: #444444;
+	color: white;
+	border-radius: 100%;
+	padding: 5px;
+	line-height: 20px;
+	white-space: nowrap;
+	box-shadow:0px 1px 6px rgba(0,0,0,0.4);
+	box-sizing: border-box;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.25s;
+	border: 2px solid white;
+	text-align: center;
+}
+.File > a.Download:after
+{
+	content: " ";
+	display: block;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	top: 0; left: 0;
+	box-shadow: inset 0px 0px 5px rgba(0,0,0,0.5);
+}
+
+.File > a.Download:hover
+{
+	background: #888888;
+}
+
+.File.Selected > a.Download
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+.File > a.Download.Active
+{
+	/*width:auto;*/
+	display:block;
+	overflow:show;
+	text-align:center;
+	background:rgba(255,255,255,0.8);
+	border-radius:10px;
+}
+
+.File.Selected .Door, .File.Selected .SystemDisk
+{
+	filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.6));
+}
+
+/* Special case for the main doors screen */
+#DoorsScreen > .ScreenContent > .Scroller > div > .File > .Title
+{
+	color: white;
+	text-shadow: 0px 1px 1px black;
+}
+
 /* Small icons -------------------------------------------------------------- */
 
 .IconSmall.FUIArrowUp
@@ -44,3 +275,200 @@
 {
 	background-image: $IconSmallListRemove;
 }
+
+/* File icons --------------------------------------------------------------- */
+
+.File .Icon .File
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/unknown.png);
+}
+
+.File .Icon .Drive
+{
+	background-image: url(/webclient/gfx/icons/64x64/devices/drive-harddisk.png);
+}
+
+.File .Icon .Directory
+{
+	background-image: url(/webclient/gfx/icons/64x64/places/folder.png);
+}
+
+.File .Icon .Directory.Upload
+{
+	background-image: url(/webclient/gfx/icons/64x64/places/folder-downloads.png);
+}
+
+.File .Icon .NetworkDirectory
+{
+	background-image: url(/webclient/gfx/icons/64x64/places/folder-network.png);
+}
+
+.File .Icon .Arena
+{
+	background-image: url(/webclient/gfx/icons/64x64/apps/kjournal.png);
+}
+
+.File .Icon .System
+{
+	background-image: url(/webclient/gfx/icons/64x64/devices/computer.png);
+}
+
+
+.File .Icon .Home
+{
+	background-image: url(/webclient/gfx/icons/64x64/places/user-home.png);
+}
+
+.File .Icon .Application
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-desktop.png);
+}
+
+.File .Icon .Trashcan
+{
+	background-image: url(/webclient/gfx/icons/64x64/status/user-trash-full.png);
+	background-size: contain;
+}
+
+.File .Icon .Ram
+{
+	background-image: url(/webclient/gfx/icons/64x64/devices/media-flash.png);
+}
+
+.File .Icon .Custom
+{
+}
+
+.File .Icon .Door
+{
+	background-image: url(/webclient/gfx/icons/64x64/devices/drive-harddisk.png);
+}
+
+.File .Icon .SystemDisk
+{
+	background-image: url(/webclient/gfx/icons/128x128/devices/computer.png);
+	background-size: contain;
+}
+
+.File .Icon .Door.Assign
+{
+	background-image: url(/webclient/gfx/icons/64x64/places/folder-bookmark.png);
+}
+
+.File .Icon .article
+{
+	background-image: url(/webclient/gfx/icons/64x64/apps/knewsticker.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
+.File .Icon .TypeGIF
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/image-x-generic.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeDOC
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-msword.png);
+	background-size: contain;
+}
+
+.File .Icon .TypePDF
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-pdf.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeTXT
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/text-plain.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeRUN
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-executable-script.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeMP3,
+.File .Icon .TypeOGG,
+.File .Icon .TypeWAV
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/audio-x-generic.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeHTML
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/text-html.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeZip
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-zip.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeJS, .File .Icon .TypeJSX
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeAVI
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeMPG, .File .Icon .TypeMPEG
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background-size: contain;
+}
+
+.File .Icon .TypeMOV, .File .Icon .TypeMP4
+{
+	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Tools
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/applications-utilities.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Prefs
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/preferences-system.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Plugins
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/preferences-other.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Docs
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/system-help.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Modules
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/applications-system.png);
+	background-size: contain;
+}
+
+.File .Icon .Application.System_Applications
+{
+	background-image: url(/webclient/gfx/icons/64x64/categories/applications-other.png);
+	background-size: contain;
+}
+

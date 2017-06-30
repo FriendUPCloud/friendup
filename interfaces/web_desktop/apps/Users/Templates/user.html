@@ -3,7 +3,7 @@
 	
 	<div class="HRow">
 		<div class="HContent30 FloatLeft">
-			Full name:
+			{i18n_full_name}:
 		</div>
 		<div class="HContent70 FloatLeft">
 			<input type="text" class="FullWidth" id="FullName" value="{fullname}"/>
@@ -11,7 +11,7 @@
 	</div>
 	<div class="HRow MarginTop">
 		<div class="HContent30 FloatLeft">
-			E-mail:
+			{i18n_email}:
 		</div>
 		<div class="HContent70 FloatLeft">
 			<input type="text" class="FullWidth" id="Email" value="{email}"/>
@@ -19,15 +19,15 @@
 	</div>
 	<div class="HRow MarginTop">
 		<div class="HContent30 FloatLeft">
-			Username:
+			{i18n_username}:
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input type="text" class="FullWidth" id="Name" value="{username}"/>
+			<input type="text" class="FullWidth" id="Username" value="{username}"/>
 		</div>
 	</div>
 	<div class="HRow MarginTop">
 		<div class="HContent30 FloatLeft">
-			Password:
+			{i18n_password}:
 		</div>
 		<div class="HContent70 FloatLeft">
 			<input type="password" class="FullWidth" id="Password" value="{password}"/>
@@ -35,28 +35,56 @@
 	</div>
 	<div class="HRow MarginTop">
 		<div class="HContent30 FloatLeft">
-			Level:
+			{i18n_level}:
 		</div>
 		<div class="HContent70 FloatLeft">
 			<select id="Level">
-				<option selected="selected" value="{level}">{level}</option>
-				<option value="Admin">Admin</option>
-				<option value="User">User</option>
-				<option value="API">API User</option>
+				<option value="Admin">{i18n_level_admin}</option>
+				<option value="User">{i18n_level_user}</option>
+				<option value="Guest">{i18n_level_guest}</option>
+				<option value="API">{i18n_level_api}</option>
 			</select>
+		</div>
+	</div>
+	
+	<div id="SetupContainer">
+		<div class="HRow MarginTop">
+			<div class="HContent30 FloatLeft">
+				{i18n_template}:
+			</div>
+			<div class="HContent70 FloatLeft">
+				<select id="Setup">{setup}</select>
+				<button type="button" class="IconSmall fa-save" onclick="ApplySetup({id})">
+					{i18n_apply_template}
+				</button>
+			</div>
+		</div>
+	</div>
+	
+	<div id="WorkgroupContainer">
+		<div class="HRow MarginTop">
+			<div class="HContent30 FloatLeft">
+				{i18n_workgroups}:
+			</div>
+			<div class="HContent70 FloatLeft">
+				<input type="text" class="FullWidth" id="Workgroup" value="{workgroup}" readonly="readonly"/>
+			</div>
 		</div>
 	</div>
 	
 	<div class="HRow MarginTop BorderTop PaddingTop">
 		<div class="HContent100 FloatLeft">
 			<button type="button" class="IconSmall fa-save" onclick="SaveUser({id})">
-				Save user
+				{i18n_save_user}
 			</button>
-			<button type="button" class="IconSmall fa-delete" onclick="DeleteUser({id})">
-				Delete user
+			<button type="button" class="IconSmall fa-trash" onclick="DeleteUser({id})">
+				{i18n_delete_user}
+			</button>
+			<button type="button" class="IconSmall fa-unlock" onclick="UnblockUser({id})">
+				{i18n_unblock_user}
 			</button>
 			<button type="button" class="IconSmall fa-close" onclick="CancelEditing()">
-				Cancel
+				{i18n_cancel}
 			</button>
 		</div>
 	</div>

@@ -106,7 +106,7 @@ extern "C" {
        typedef unsigned int uint_64t;
 #    endif
 #  elif defined( ULONG_MAX ) && ULONG_MAX > 4294967295u
-#    if ULONG_MAX == 18446744073709551615ul
+#    if FULONG_MAX == 18446744073709551615ul
 #      define BRG_UI64
 #      define li_64(h) 0x##h##ul
        typedef unsigned long uint_64t;
@@ -127,7 +127,7 @@ extern "C" {
 #endif
 
 #if !defined( BRG_UI64 )
-#  if defined( NEED_UINT_64T )
+#  if defined( NEED_FUINT_64T )
 #    error Please define uint_64t as an unsigned 64 bit type in brg_types.h
 #  endif
 #endif

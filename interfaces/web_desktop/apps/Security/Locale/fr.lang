@@ -1,0 +1,21 @@
+
+
+# Security locale, english
+
+i18n_Security                           : Sécurité
+i18n_permissions                        : Permissions
+i18n_application                        : Application
+i18n_edit                               : Editer
+i18n_app_permissions                    : Permissions application
+i18n_cancel                             : Annuler
+i18n_close                              : Fermer
+
+i18n_applications                       : Applications
+i18n_allowed_domains                    : Domaines autorisés
+i18n_domains                            : Domaines
+i18n_system                             : Système
+i18n_gen_system_settings                : Préférence générales de sécurité système
+
+i18n_file                               : Fichier
+i18n_quit                               : Quitter
+

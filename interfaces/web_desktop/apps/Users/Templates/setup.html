@@ -1,0 +1,136 @@
+
+	<input type="hidden" id="pSetupID" value="{id}"/>
+
+	<div id="TopForm" class="Padding ScrollArea VContentTop">
+		
+		<p class="Layout">
+			<strong>{i18n_template_name}:</strong>
+		</p>
+		<p class="Layout">
+			<input id="pSetupName" type="text" class="FullWidth" placeholder="{i18n_named_setup}" value="{name}"/>
+		</p>
+		
+		<!--<hr/>-->
+		
+		<p class="Layout">
+			<strong>{i18n_applications}:</strong>
+			<span class="Preinstall">
+				<span>{i18n_preinstall}</span>
+				<input id="pSetupPreinstall" type="checkbox"/>
+			</span>
+		</p>
+		
+		<div id="pSetupApplications">{applications}</div>
+		
+		<div class="Buttons Padding">
+			<!--<button type="button">{i18n_add_to_dock}</button>
+			<button type="button">{i18n_remove}</button>-->
+			<button type="button" onclick="AddSoftware()">{i18n_add_applications}</button>
+		</div>
+		
+		<!--<p class="Layout">
+			<strong>{i18n_default_disks}:</strong>
+		</p>
+		
+		<div id="pSetupDisks">{disks}</div>-->
+		
+		<p class="Layout">
+			<strong>{i18n_startup-sequence}:</strong>
+		</p>
+		
+		<div id="pSetupStartup">{startups}</div>
+		
+		<div class="Buttons Padding">
+			<button type="button" onclick="AddStartup()">{i18n_add_commands}</button>
+		</div>
+		
+		<p class="Layout">
+			<strong>{i18n_language}:</strong>
+		</p>
+		
+		<select id="pSetupLanguages" class="FullWidth">{languages}</select>
+		
+		<br><br>
+		
+		<p class="Layout">
+			<strong>{i18n_theme}:</strong>
+		</p>
+		
+		<select id="pSetupThemes" class="FullWidth">{themes}</select>
+		
+	</div>
+	<div id="BottomButtons" class="BorderTop Padding VContentBottom">
+		<button type="button" class="Button IconSmall fa-remove FloatRight" onclick="cancelSetup()">
+			{i18n_cancel}
+		</button>
+		<button type="button" class="Button IconSmall fa-save" onclick="saveSetup()">
+			{i18n_save}
+		</button>
+		<button type="button" class="Button IconSmall fa-trash" onclick="deleteSetup()" id="deleteButton">
+			{i18n_delete}
+		</button>
+	</div>
+	
+	<style>
+		h2
+		{
+			position: relative;
+		}
+		h2 > span
+		{
+			position: absolute;
+			right: 0;
+		}
+		.Layout
+		{
+			position: relative;
+		}
+		.Layout > .Preinstall
+		{
+			position: absolute;
+			right: 0;
+		}
+		#pSetupApplications, #pSetupStartup, #pSetupDisks
+		{
+			height: 168px;
+			overflow: hidden;
+			overflow-y: auto;
+			border: 1px solid #c0c0c0;
+			padding: 2px;
+			box-sizing: border-box;
+		}
+		#pSetupApplications
+		{
+			height: 334px;
+		}
+		#pSetupApplications > div
+		{
+			position: relative;
+			float: left;
+			box-sizing: border-box;
+			width: calc(50% - 4px);
+			height: 160px;
+			margin: 2px;
+		}
+		#pSetupApplications > div > .TheButton
+		{
+			position: absolute;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			text-align: center;
+			box-sizing: border-box;
+			border-radius: 0 0 5px 5px;
+			/*min-height: 40px;*/
+			color: white;
+		}
+		#TopForm
+		{
+			bottom: 50px;
+		}
+		#BottomButtons
+		{
+			height: 50px;
+		}
+		{delCss}
+	</style>

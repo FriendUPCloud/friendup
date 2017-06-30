@@ -1,0 +1,19 @@
+
+i18n_file                        : File
+i18n_add_to_playlist             : Add to playlist
+i18n_load_playlist               : Load playlist
+i18n_save_playlist               : Save playlist
+i18n_save_playlist_as            : Save playlist as
+i18n_about_exotica               : About Friend Jukebox
+i18n_quit                        : Quit
+i18n_playlist                    : Playlist
+i18n_edit_playlist               : Edit playlist
+i18n_clear_playlist              : Clear playlist
+i18n_close                       : Close playlist editor
+i18n_up                          : Up
+i18n_down                        : Down
+i18n_toggle_mini_playlist_show   : Show mini playlist
+i18n_toggle_mini_playlist_hide   : Hide mini playlist
+i18n_about1                      : Friend Jukebox is a simple, yet capable music player that gets out of your way so that you can stay productive. It has a simple oscilloscope and an easy to use, minimalist user interface.
+i18n_about2                      : If you have ideas or feature requests - or simply want to chat, please drop by the #friendup channel on irc.freenode.net. Developers and users gather there to share knowledge and small talk every day of the week.
+

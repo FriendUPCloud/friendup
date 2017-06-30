@@ -1,4 +1,4 @@
-/*******************************************************************************
+/*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -15,13 +15,13 @@
 * You should have received a copy of the GNU Affero General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
 	var v = new View( {
-		title: i18n( 'Users' ),
-		width: 600,
+		title: i18n( 'i18n_users_title' ),
+		width: 800,
 		height: 500
 	} );
 	this.mainView = v;
@@ -29,6 +29,8 @@ Application.run = function( msg, iface )
 	v.onClose = function(){ Application.quit(); }
 	
 	var f = new File( 'Progdir:Templates/main.html' );
+	f.replacements = { viewId: v.getViewId() };
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
@@ -37,3 +39,11 @@ Application.run = function( msg, iface )
 	
 }
 
+Application.receiveMessage = function( msg )
+{
+	if( msg.command == 'renewedsession' )
+	{
+		console.log( 'Received renewedsession.' );
+		this.mainView.sendMessage( msg );
+	}
+}

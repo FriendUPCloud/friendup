@@ -1,3 +1,14 @@
+html
+{
+	height: 100%;
+}
+
+html > body
+{
+	min-height: 100%;
+	height: auto;
+}
+
 #Status
 {
 	position: absolute;
@@ -70,11 +81,9 @@
 	height: auto !important;
 	bottom: 41px;
 	box-sizing: border-box;
-	border-top: 1px solid rgba(0,0,0,0.1);
-	box-shadow: 0 0 50px rgba(0,0,0,0.8);
+	box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
 	background-color: white;
-	border-left: 1px solid rgba(0,0,0,0.5);
-	border-right: 1px solid rgba(0,0,0,0.5);
+	border: 0;
 }
 
 /* Remove resizer */
@@ -93,6 +102,10 @@ a.cke_path_item, span.cke_path_empty
 
 .Speech
 {
+	/* Remove for now */
+	display: none;
+	/* Done remove */
+	
 	position: absolute;
 	right: 10px;
 	top: 10px;
@@ -137,7 +150,6 @@ a.cke_path_item, span.cke_path_empty
 	margin: 10px 0 0 5px;
 	display: block !important;
 	box-shadow: inset 0px 0px 4px rgba(0,0,0,0.2);
-	background: white;
 	box-sizing: border-box;
 	outline: none;
 }
@@ -196,10 +208,24 @@ a.cke_path_item, span.cke_path_empty
 	#AuthorToolbar
 	{
 		height: 140px;
+		overflow: hidden;
 	}
 	#cke_1_contents
 	{
 		top: 140px;
+	}
+}
+
+@media (max-width: 320px)
+{
+	#AuthorToolbar
+	{
+		height: 185px;
+		overflow: hidden;
+	}
+	#cke_1_contents
+	{
+		top: 186px;
 	}
 }
 
@@ -230,5 +256,10 @@ For now, we don't use this, we don't have enough tools...
 #cke_1_contents.Hidden
 {
 	top: 0;
+}
+
+.cke_wysiwyg_frame, .cke_wysiwyg_div
+{
+	background: #444444;
 }
 

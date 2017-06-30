@@ -1,9 +1,9 @@
-/*******************************************************************************
+/*©lpgl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
 * This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
+* it under the terms of the GNU Lesser General Public License as published by  *
 * the Free Software Foundation, either version 3 of the License, or            *
 * (at your option) any later version.                                          *
 *                                                                              *
@@ -12,10 +12,11 @@
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
 * GNU Affero General Public License for more details.                          *
 *                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
+* You should have received a copy of the GNU Lesser General Public License     *
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
-*******************************************************************************/
+*****************************************************************************©*/
+
 
 /*
 
@@ -31,6 +32,7 @@
 #include <system/handler/file.h>
 #include <system/handler/fsys.h>
 #include <system/user/user.h>
+#include <system/user/user_session.h>
 
 #ifdef USE_IMAGE_MAGICK
 #include <wand/magick_wand.h>
@@ -48,13 +50,13 @@
 typedef struct ImageLibrary
 {
 	char                 *l_Name;	// library name
-	ULONG                l_Version;		// version information
+	FULONG                l_Version;		// version information
 	void						*l_Handle;
 	void						*sb; // system base
 	void						*(*libInit)( void * );
 	void						(*libClose)( struct Library *l );
-	ULONG                (*GetVersion)(void);
-	ULONG                (*GetRevision)(void);
+	FULONG                (*GetVersion)(void);
+	FULONG                (*GetRevision)(void);
 
 #ifdef USE_IMAGE_MAGICK
 	Image 					*(*ImageRead)( struct ImageLibrary *im, File *rootDev, const char *path );
@@ -64,9 +66,9 @@ typedef struct ImageLibrary
 	gdImagePtr 			(*ImageRead)( struct ImageLibrary *im, File *rootDev, const char *path );
 	int 						(*ImageWrite)( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const char *path );
 	int 						(*ResizeImage)( struct ImageLibrary *im, gdImagePtr *image, int w, int h );
-	
-	Http 					*(*WebRequest)( struct ImageLibrary *l, User *usr, char **func, Http* request );
 #endif
+	Http 					*(*WebRequest)( struct ImageLibrary *l, UserSession *usr, char **func, Http* request );
+
 	
 } ImageLibrary;
 

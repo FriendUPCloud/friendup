@@ -1,0 +1,64 @@
+
+
+i18n_account                         : Mon compte
+
+i18n_basic_information               : Informations de base
+i18n_full_name                       : Votre nom complet
+i18n_username                        : Nom d'utilisateur
+i18n_change_password                 : Changer le mot de passe
+i18n_current_password                : Mot de passe actuel
+i18n_new_password                    : Nouveau mot de passe
+i18n_confirm                         : Confirmer
+
+i18n_extended_information            : Informations complémentaires
+i18n_telephone                       : Telephone
+i18n_email_address                   : Adresse mail
+i18n_account_image                   : Image du compte
+i18n_save                            : Sauver
+i18n_cancel                          : Annuler
+i18n_back                            : Revenir
+
+i18n_publickey                       : Clé publique
+
+i18n_key_information                 : Information sur la clé
+i18n_your_apps                       : Vos apps
+i18n_available_storage               : Espace disponible
+
+i18n_no_apps                         : Statut
+i18n_no_apps_desc                    : Rien d'installé.
+
+i18n_add_storage                     : Ajouter de l'espace
+
+i18n_no_storage                      : Pas d'espace de stockage disponible.
+
+i18n_get_storage                     : Obtenir plus d'espace
+
+i18n_toggle_public_key_visibility    : Montrer / cacher la clé publique
+
+i18n_get_apps                        : Ajouter application
+
+i18n_descheading : Ajouter de l'espace de stockage à votre système
+i18n_description : Choisissez quel type de disque vous voulez ajouter. Certains fournisseurs peuvent vous demander d'enregistrer un compte.
+
+i18n_disk                         : .
+i18n_add_a                        : Ajouter un disque
+
+i18n_connection_details           : Détails de connexion
+i18n_notes                        : Notes
+i18n_directory                    : Répertoire distant
+i18n_login_info                   : Infos de login
+i18n_your_notes                   : Vos notes
+i18n_username                     : Nom d'utilisateur
+i18n_password                     : Mot de passe
+i18n_host_port                    : Port du serveur
+i18n_host_ip                      : Adresse ou IP du serveur
+i18n_hostname                     : Adresse du serveur
+i18n_workgroup_name               : Votre groupe de travail
+i18n_workgroup                    : Groupe de travail
+i18n_device_name                  : Nom du disque
+i18n_placeholder_connection       : Mondisque
+
+i18n_add_storage                  : Ajouter
+i18_account2                      : Compte
+i18n_settings_saved               : Préférences sauvegardées
+
