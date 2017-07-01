@@ -1,229 +1,103 @@
 Determining if the function _snprintf exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_69e02/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_69e02.dir/build.make CMakeFiles/cmTC_69e02.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_69e02.dir/CheckFunctionExists.c.o
-/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_snprintf   -o CMakeFiles/cmTC_69e02.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_69e02
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_69e02.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_snprintf    CMakeFiles/cmTC_69e02.dir/CheckFunctionExists.c.o  -o cmTC_69e02 -rdynamic 
-CMakeFiles/cmTC_69e02.dir/CheckFunctionExists.c.o: In function `main':
-CheckFunctionExists.c:(.text+0x15): undefined reference to `_snprintf'
-collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_69e02.dir/build.make:97: recipe for target 'cmTC_69e02' failed
-make[3]: *** [cmTC_69e02] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_69e02/fast' failed
-make[2]: *** [cmTC_69e02/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the function _vsnprintf exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_51b8e/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_51b8e.dir/build.make CMakeFiles/cmTC_51b8e.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_51b8e.dir/CheckFunctionExists.c.o
-/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_vsnprintf   -o CMakeFiles/cmTC_51b8e.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_51b8e
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_51b8e.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_vsnprintf    CMakeFiles/cmTC_51b8e.dir/CheckFunctionExists.c.o  -o cmTC_51b8e -rdynamic 
-CMakeFiles/cmTC_51b8e.dir/CheckFunctionExists.c.o: In function `main':
-CheckFunctionExists.c:(.text+0x15): undefined reference to `_vsnprintf'
-collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_51b8e.dir/build.make:97: recipe for target 'cmTC_51b8e' failed
-make[3]: *** [cmTC_51b8e] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_51b8e/fast' failed
-make[2]: *** [cmTC_51b8e/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the include file in6addr.h exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_9b387/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_9b387.dir/build.make CMakeFiles/cmTC_9b387.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_9b387.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_9b387.dir/CheckIncludeFile.c.o   -c /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:21: fatal error: in6addr.h: No such file or directory
-compilation terminated.
-CMakeFiles/cmTC_9b387.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_9b387.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_9b387.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_9b387/fast' failed
-make[2]: *** [cmTC_9b387/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the include file sys/sockio.h exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_233bc/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_233bc.dir/build.make CMakeFiles/cmTC_233bc.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_233bc.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_233bc.dir/CheckIncludeFile.c.o   -c /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:24: fatal error: sys/sockio.h: No such file or directory
-compilation terminated.
-CMakeFiles/cmTC_233bc.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_233bc.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_233bc.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_233bc/fast' failed
-make[2]: *** [cmTC_233bc/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the include file vfork.h exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_8539f/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_8539f.dir/build.make CMakeFiles/cmTC_8539f.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_8539f.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_8539f.dir/CheckIncludeFile.c.o   -c /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
-/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:19: fatal error: vfork.h: No such file or directory
-compilation terminated.
-CMakeFiles/cmTC_8539f.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_8539f.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_8539f.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_8539f/fast' failed
-make[2]: *** [cmTC_8539f/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the function TLS_client_method exists failed with the following output:
-Change Dir: /home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
-
-Run Build Command:"/usr/bin/make" "cmTC_8e139/fast"
-make[2]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_8e139.dir/build.make CMakeFiles/cmTC_8e139.dir/build
-make[3]: Entering directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_8e139.dir/CheckFunctionExists.c.o
-/usr/bin/cc  -DKEYWORD=__inline  -Wall -Werror -fvisibility=hidden  -pthread -DCHECK_FUNCTION_EXISTS=TLS_client_method   -o CMakeFiles/cmTC_8e139.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_8e139
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8e139.dir/link.txt --verbose=1
-/usr/bin/cc  -Wall -Werror -fvisibility=hidden  -pthread -DCHECK_FUNCTION_EXISTS=TLS_client_method    CMakeFiles/cmTC_8e139.dir/CheckFunctionExists.c.o  -o cmTC_8e139 -rdynamic /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/x86_64-linux-gnu/libssl.so /usr/lib/x86_64-linux-gnu/libcrypto.so -lm 
-CMakeFiles/cmTC_8e139.dir/CheckFunctionExists.c.o: In function `main':
-CheckFunctionExists.c:(.text+0x15): undefined reference to `TLS_client_method'
-collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_8e139.dir/build.make:100: recipe for target 'cmTC_8e139' failed
-make[3]: *** [cmTC_8e139] Error 1
-make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_8e139/fast' failed
-make[2]: *** [cmTC_8e139/fast] Error 2
-make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-
-
-Determining if the function _snprintf exists failed with the following output:
 Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_f0ad9/fast"
+Run Build Command:"/usr/bin/make" "cmTC_f3eb3/fast"
+make[1]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_f3eb3.dir/build.make CMakeFiles/cmTC_f3eb3.dir/build
 make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_f0ad9.dir/build.make CMakeFiles/cmTC_f0ad9.dir/build
-make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_f0ad9.dir/CheckFunctionExists.c.o
-/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_snprintf   -o CMakeFiles/cmTC_f0ad9.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_f0ad9
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f0ad9.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_snprintf    CMakeFiles/cmTC_f0ad9.dir/CheckFunctionExists.c.o  -o cmTC_f0ad9 -rdynamic 
-CMakeFiles/cmTC_f0ad9.dir/CheckFunctionExists.c.o: In function `main':
+Building C object CMakeFiles/cmTC_f3eb3.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_snprintf   -o CMakeFiles/cmTC_f3eb3.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f3eb3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f3eb3.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_snprintf    CMakeFiles/cmTC_f3eb3.dir/CheckFunctionExists.c.o  -o cmTC_f3eb3 -rdynamic 
+CMakeFiles/cmTC_f3eb3.dir/CheckFunctionExists.c.o: In function `main':
 CheckFunctionExists.c:(.text+0x12): undefined reference to `_snprintf'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_f0ad9.dir/build.make:97: recipe for target 'cmTC_f0ad9' failed
-make[3]: *** [cmTC_f0ad9] Error 1
-make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_f0ad9/fast' failed
-make[2]: *** [cmTC_f0ad9/fast] Error 2
+CMakeFiles/cmTC_f3eb3.dir/build.make:97: recipe for target 'cmTC_f3eb3' failed
+make[2]: *** [cmTC_f3eb3] Error 1
 make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_f3eb3/fast' failed
+make[1]: *** [cmTC_f3eb3/fast] Error 2
+make[1]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
 Determining if the function _vsnprintf exists failed with the following output:
 Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_fcce1/fast"
+Run Build Command:"/usr/bin/make" "cmTC_11e35/fast"
+make[1]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_11e35.dir/build.make CMakeFiles/cmTC_11e35.dir/build
 make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_fcce1.dir/build.make CMakeFiles/cmTC_fcce1.dir/build
-make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_fcce1.dir/CheckFunctionExists.c.o
-/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_vsnprintf   -o CMakeFiles/cmTC_fcce1.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
-Linking C executable cmTC_fcce1
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fcce1.dir/link.txt --verbose=1
-/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_vsnprintf    CMakeFiles/cmTC_fcce1.dir/CheckFunctionExists.c.o  -o cmTC_fcce1 -rdynamic 
-CMakeFiles/cmTC_fcce1.dir/CheckFunctionExists.c.o: In function `main':
+Building C object CMakeFiles/cmTC_11e35.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=_vsnprintf   -o CMakeFiles/cmTC_11e35.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_11e35
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_11e35.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=_vsnprintf    CMakeFiles/cmTC_11e35.dir/CheckFunctionExists.c.o  -o cmTC_11e35 -rdynamic 
+CMakeFiles/cmTC_11e35.dir/CheckFunctionExists.c.o: In function `main':
 CheckFunctionExists.c:(.text+0x12): undefined reference to `_vsnprintf'
 collect2: error: ld returned 1 exit status
-CMakeFiles/cmTC_fcce1.dir/build.make:97: recipe for target 'cmTC_fcce1' failed
-make[3]: *** [cmTC_fcce1] Error 1
-make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_fcce1/fast' failed
-make[2]: *** [cmTC_fcce1/fast] Error 2
+CMakeFiles/cmTC_11e35.dir/build.make:97: recipe for target 'cmTC_11e35' failed
+make[2]: *** [cmTC_11e35] Error 1
 make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_11e35/fast' failed
+make[1]: *** [cmTC_11e35/fast] Error 2
+make[1]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
 Determining if the include file in6addr.h exists failed with the following output:
 Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_708c8/fast"
+Run Build Command:"/usr/bin/make" "cmTC_5551c/fast"
+make[1]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5551c.dir/build.make CMakeFiles/cmTC_5551c.dir/build
 make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_708c8.dir/build.make CMakeFiles/cmTC_708c8.dir/build
-make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_708c8.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_708c8.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Building C object CMakeFiles/cmTC_5551c.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_5551c.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:21: fatal error: in6addr.h: No such file or directory
 compilation terminated.
-CMakeFiles/cmTC_708c8.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_708c8.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_708c8.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_708c8/fast' failed
-make[2]: *** [cmTC_708c8/fast] Error 2
+CMakeFiles/cmTC_5551c.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_5551c.dir/CheckIncludeFile.c.o' failed
+make[2]: *** [CMakeFiles/cmTC_5551c.dir/CheckIncludeFile.c.o] Error 1
 make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_5551c/fast' failed
+make[1]: *** [cmTC_5551c/fast] Error 2
+make[1]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
 Determining if the include file sys/sockio.h exists failed with the following output:
 Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_0c2eb/fast"
+Run Build Command:"/usr/bin/make" "cmTC_314dc/fast"
+make[1]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_314dc.dir/build.make CMakeFiles/cmTC_314dc.dir/build
 make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_0c2eb.dir/build.make CMakeFiles/cmTC_0c2eb.dir/build
-make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_0c2eb.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_0c2eb.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Building C object CMakeFiles/cmTC_314dc.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_314dc.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:24: fatal error: sys/sockio.h: No such file or directory
 compilation terminated.
-CMakeFiles/cmTC_0c2eb.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_0c2eb.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_0c2eb.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_0c2eb/fast' failed
-make[2]: *** [cmTC_0c2eb/fast] Error 2
+CMakeFiles/cmTC_314dc.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_314dc.dir/CheckIncludeFile.c.o' failed
+make[2]: *** [CMakeFiles/cmTC_314dc.dir/CheckIncludeFile.c.o] Error 1
 make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_314dc/fast' failed
+make[1]: *** [cmTC_314dc/fast] Error 2
+make[1]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
 Determining if the include file vfork.h exists failed with the following output:
 Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
 
-Run Build Command:"/usr/bin/make" "cmTC_6bbd5/fast"
+Run Build Command:"/usr/bin/make" "cmTC_b181f/fast"
+make[1]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b181f.dir/build.make CMakeFiles/cmTC_b181f.dir/build
 make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-/usr/bin/make -f CMakeFiles/cmTC_6bbd5.dir/build.make CMakeFiles/cmTC_6bbd5.dir/build
-make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_6bbd5.dir/CheckIncludeFile.c.o
-/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_6bbd5.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Building C object CMakeFiles/cmTC_b181f.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_b181f.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
 /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:19: fatal error: vfork.h: No such file or directory
 compilation terminated.
-CMakeFiles/cmTC_6bbd5.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_6bbd5.dir/CheckIncludeFile.c.o' failed
-make[3]: *** [CMakeFiles/cmTC_6bbd5.dir/CheckIncludeFile.c.o] Error 1
-make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
-Makefile:126: recipe for target 'cmTC_6bbd5/fast' failed
-make[2]: *** [cmTC_6bbd5/fast] Error 2
+CMakeFiles/cmTC_b181f.dir/build.make:65: recipe for target 'CMakeFiles/cmTC_b181f.dir/CheckIncludeFile.c.o' failed
+make[2]: *** [CMakeFiles/cmTC_b181f.dir/CheckIncludeFile.c.o] Error 1
 make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_b181f/fast' failed
+make[1]: *** [cmTC_b181f/fast] Error 2
+make[1]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
