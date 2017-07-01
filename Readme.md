@@ -21,6 +21,10 @@ Getting started
 ===============
 
 Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern linux distributions. Post to the Developer Community if you run into any problems here.
+```
+git clone https://github.com/FriendSoftwareLabs/friendup
+friendup/install.sh
+```
 
 Default login
 -------------
