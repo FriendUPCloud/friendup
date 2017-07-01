@@ -840,3 +840,571 @@ make[3]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsock
 make[2]: Leaving directory '/home/thomas/opensource/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
 
 
+Performing C SOURCE FILE Test LWS_HAVE_inline succeeded with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_e5ab7/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_e5ab7.dir/build.make CMakeFiles/cmTC_e5ab7.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e5ab7.dir/src.c.o
+/usr/bin/cc  -DKEYWORD=inline  -DLWS_HAVE_inline   -o CMakeFiles/cmTC_e5ab7.dir/src.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_e5ab7
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e5ab7.dir/link.txt --verbose=1
+/usr/bin/cc   -DLWS_HAVE_inline    CMakeFiles/cmTC_e5ab7.dir/src.c.o  -o cmTC_e5ab7 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+		#include <stdio.h>
+		static KEYWORD void a() {}
+		int main(int argc, char **argv) { a(); return 0; }
+		
+Performing C SOURCE FILE Test LWS_HAVE___inline__ succeeded with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_5e1b8/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5e1b8.dir/build.make CMakeFiles/cmTC_5e1b8.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5e1b8.dir/src.c.o
+/usr/bin/cc  -DKEYWORD=__inline__  -DLWS_HAVE___inline__   -o CMakeFiles/cmTC_5e1b8.dir/src.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_5e1b8
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5e1b8.dir/link.txt --verbose=1
+/usr/bin/cc   -DLWS_HAVE___inline__    CMakeFiles/cmTC_5e1b8.dir/src.c.o  -o cmTC_5e1b8 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+		#include <stdio.h>
+		static KEYWORD void a() {}
+		int main(int argc, char **argv) { a(); return 0; }
+		
+Performing C SOURCE FILE Test LWS_HAVE___inline succeeded with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_6bfec/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_6bfec.dir/build.make CMakeFiles/cmTC_6bfec.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6bfec.dir/src.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DLWS_HAVE___inline   -o CMakeFiles/cmTC_6bfec.dir/src.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_6bfec
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6bfec.dir/link.txt --verbose=1
+/usr/bin/cc   -DLWS_HAVE___inline    CMakeFiles/cmTC_6bfec.dir/src.c.o  -o cmTC_6bfec -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+Source file was:
+
+		#include <stdio.h>
+		static KEYWORD void a() {}
+		int main(int argc, char **argv) { a(); return 0; }
+		
+Determining if the function bzero exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_87a3a/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_87a3a.dir/build.make CMakeFiles/cmTC_87a3a.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_87a3a.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=bzero   -o CMakeFiles/cmTC_87a3a.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘bzero’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_87a3a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_87a3a.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=bzero    CMakeFiles/cmTC_87a3a.dir/CheckFunctionExists.c.o  -o cmTC_87a3a -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function fork exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_434ca/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_434ca.dir/build.make CMakeFiles/cmTC_434ca.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_434ca.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=fork   -o CMakeFiles/cmTC_434ca.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘fork’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_434ca
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_434ca.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=fork    CMakeFiles/cmTC_434ca.dir/CheckFunctionExists.c.o  -o cmTC_434ca -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function getenv exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_5b990/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_5b990.dir/build.make CMakeFiles/cmTC_5b990.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5b990.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=getenv   -o CMakeFiles/cmTC_5b990.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_5b990
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5b990.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=getenv    CMakeFiles/cmTC_5b990.dir/CheckFunctionExists.c.o  -o cmTC_5b990 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function malloc exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_03ff0/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_03ff0.dir/build.make CMakeFiles/cmTC_03ff0.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_03ff0.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=malloc   -o CMakeFiles/cmTC_03ff0.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘malloc’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_03ff0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_03ff0.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=malloc    CMakeFiles/cmTC_03ff0.dir/CheckFunctionExists.c.o  -o cmTC_03ff0 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function memset exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_c6509/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_c6509.dir/build.make CMakeFiles/cmTC_c6509.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c6509.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=memset   -o CMakeFiles/cmTC_c6509.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘memset’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_c6509
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c6509.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=memset    CMakeFiles/cmTC_c6509.dir/CheckFunctionExists.c.o  -o cmTC_c6509 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function realloc exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_ea485/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_ea485.dir/build.make CMakeFiles/cmTC_ea485.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ea485.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=realloc   -o CMakeFiles/cmTC_ea485.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘realloc’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_ea485
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ea485.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=realloc    CMakeFiles/cmTC_ea485.dir/CheckFunctionExists.c.o  -o cmTC_ea485 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function socket exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_fb2a0/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_fb2a0.dir/build.make CMakeFiles/cmTC_fb2a0.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fb2a0.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=socket   -o CMakeFiles/cmTC_fb2a0.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fb2a0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fb2a0.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=socket    CMakeFiles/cmTC_fb2a0.dir/CheckFunctionExists.c.o  -o cmTC_fb2a0 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function strerror exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_3c699/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_3c699.dir/build.make CMakeFiles/cmTC_3c699.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3c699.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=strerror   -o CMakeFiles/cmTC_3c699.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_3c699
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3c699.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=strerror    CMakeFiles/cmTC_3c699.dir/CheckFunctionExists.c.o  -o cmTC_3c699 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function vfork exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_4bd51/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_4bd51.dir/build.make CMakeFiles/cmTC_4bd51.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4bd51.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=vfork   -o CMakeFiles/cmTC_4bd51.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_4bd51
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4bd51.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=vfork    CMakeFiles/cmTC_4bd51.dir/CheckFunctionExists.c.o  -o cmTC_4bd51 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function execvpe exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_69848/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_69848.dir/build.make CMakeFiles/cmTC_69848.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_69848.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=execvpe   -o CMakeFiles/cmTC_69848.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_69848
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_69848.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=execvpe    CMakeFiles/cmTC_69848.dir/CheckFunctionExists.c.o  -o cmTC_69848 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function getifaddrs exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_c8236/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_c8236.dir/build.make CMakeFiles/cmTC_c8236.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c8236.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=getifaddrs   -o CMakeFiles/cmTC_c8236.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_c8236
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c8236.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=getifaddrs    CMakeFiles/cmTC_c8236.dir/CheckFunctionExists.c.o  -o cmTC_c8236 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function snprintf exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_c6699/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_c6699.dir/build.make CMakeFiles/cmTC_c6699.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c6699.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=snprintf   -o CMakeFiles/cmTC_c6699.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+<command-line>:0:23: warning: conflicting types for built-in function ‘snprintf’
+/usr/share/cmake-3.5/Modules/CheckFunctionExists.c:6:6: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+ char CHECK_FUNCTION_EXISTS();
+      ^
+Linking C executable cmTC_c6699
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c6699.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=snprintf    CMakeFiles/cmTC_c6699.dir/CheckFunctionExists.c.o  -o cmTC_c6699 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the function getloadavg exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_556b1/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_556b1.dir/build.make CMakeFiles/cmTC_556b1.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_556b1.dir/CheckFunctionExists.c.o
+/usr/bin/cc  -DKEYWORD=__inline  -DCHECK_FUNCTION_EXISTS=getloadavg   -o CMakeFiles/cmTC_556b1.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.5/Modules/CheckFunctionExists.c
+Linking C executable cmTC_556b1
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_556b1.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=getloadavg    CMakeFiles/cmTC_556b1.dir/CheckFunctionExists.c.o  -o cmTC_556b1 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file dlfcn.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_41f95/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_41f95.dir/build.make CMakeFiles/cmTC_41f95.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_41f95.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_41f95.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_41f95
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_41f95.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_41f95.dir/CheckIncludeFile.c.o  -o cmTC_41f95 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file fcntl.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9d98b/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_9d98b.dir/build.make CMakeFiles/cmTC_9d98b.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9d98b.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_9d98b.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_9d98b
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d98b.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_9d98b.dir/CheckIncludeFile.c.o  -o cmTC_9d98b -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file inttypes.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a4f8f/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a4f8f.dir/build.make CMakeFiles/cmTC_a4f8f.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a4f8f.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_a4f8f.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_a4f8f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a4f8f.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_a4f8f.dir/CheckIncludeFile.c.o  -o cmTC_a4f8f -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file memory.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_6081c/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_6081c.dir/build.make CMakeFiles/cmTC_6081c.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6081c.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_6081c.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_6081c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6081c.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_6081c.dir/CheckIncludeFile.c.o  -o cmTC_6081c -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file netinet/in.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a5e5a/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a5e5a.dir/build.make CMakeFiles/cmTC_a5e5a.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a5e5a.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_a5e5a.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_a5e5a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a5e5a.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_a5e5a.dir/CheckIncludeFile.c.o  -o cmTC_a5e5a -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_70a27/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_70a27.dir/build.make CMakeFiles/cmTC_70a27.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_70a27.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_70a27.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_70a27
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_70a27.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_70a27.dir/CheckIncludeFile.c.o  -o cmTC_70a27 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file stdlib.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_4bb23/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_4bb23.dir/build.make CMakeFiles/cmTC_4bb23.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4bb23.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_4bb23.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_4bb23
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4bb23.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_4bb23.dir/CheckIncludeFile.c.o  -o cmTC_4bb23 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file strings.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_b87c9/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_b87c9.dir/build.make CMakeFiles/cmTC_b87c9.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b87c9.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_b87c9.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_b87c9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b87c9.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_b87c9.dir/CheckIncludeFile.c.o  -o cmTC_b87c9 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file string.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a8288/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a8288.dir/build.make CMakeFiles/cmTC_a8288.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a8288.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_a8288.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_a8288
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a8288.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_a8288.dir/CheckIncludeFile.c.o  -o cmTC_a8288 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file sys/prctl.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_995ac/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_995ac.dir/build.make CMakeFiles/cmTC_995ac.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_995ac.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_995ac.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_995ac
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_995ac.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_995ac.dir/CheckIncludeFile.c.o  -o cmTC_995ac -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file sys/socket.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f2a41/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_f2a41.dir/build.make CMakeFiles/cmTC_f2a41.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f2a41.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_f2a41.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_f2a41
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f2a41.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_f2a41.dir/CheckIncludeFile.c.o  -o cmTC_f2a41 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file sys/stat.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_2cf55/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_2cf55.dir/build.make CMakeFiles/cmTC_2cf55.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2cf55.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_2cf55.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_2cf55
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2cf55.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_2cf55.dir/CheckIncludeFile.c.o  -o cmTC_2cf55 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_f2394/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_f2394.dir/build.make CMakeFiles/cmTC_f2394.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f2394.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_f2394.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_f2394
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f2394.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_f2394.dir/CheckIncludeFile.c.o  -o cmTC_f2394 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file unistd.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_a24a8/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_a24a8.dir/build.make CMakeFiles/cmTC_a24a8.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a24a8.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_a24a8.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_a24a8
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a24a8.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_a24a8.dir/CheckIncludeFile.c.o  -o cmTC_a24a8 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if the include file zlib.h exists passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_20710/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_20710.dir/build.make CMakeFiles/cmTC_20710.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_20710.dir/CheckIncludeFile.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_20710.dir/CheckIncludeFile.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_20710
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_20710.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_20710.dir/CheckIncludeFile.c.o  -o cmTC_20710 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Determining if files stdlib.h;stdarg.h;string.h;float.h exist passed with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_d36a7/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_d36a7.dir/build.make CMakeFiles/cmTC_d36a7.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d36a7.dir/CheckIncludeFiles.c.o
+/usr/bin/cc  -DKEYWORD=__inline   -o CMakeFiles/cmTC_d36a7.dir/CheckIncludeFiles.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/CheckIncludeFiles.c
+Linking C executable cmTC_d36a7
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d36a7.dir/link.txt --verbose=1
+/usr/bin/cc       CMakeFiles/cmTC_d36a7.dir/CheckIncludeFiles.c.o  -o cmTC_d36a7 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+
+Performing C SOURCE FILE Test LWS_HAVE_VISIBILITY succeeded with the following output:
+Change Dir: /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9b948/fast"
+make[2]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+/usr/bin/make -f CMakeFiles/cmTC_9b948.dir/build.make CMakeFiles/cmTC_9b948.dir/build
+make[3]: Entering directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9b948.dir/src.c.o
+/usr/bin/cc    -DLWS_HAVE_VISIBILITY   -fvisibility=hidden -o CMakeFiles/cmTC_9b948.dir/src.c.o   -c /home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_9b948
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9b948.dir/link.txt --verbose=1
+/usr/bin/cc   -DLWS_HAVE_VISIBILITY    CMakeFiles/cmTC_9b948.dir/src.c.o  -o cmTC_9b948 -rdynamic 
+make[3]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+make[2]: Leaving directory '/home/espandis/Projects/friendup/libs-ext/libwebsockets/CMakeFiles/CMakeTmp'
+
+Source file was:
+int main(void) { return 0; }
