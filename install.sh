@@ -211,10 +211,16 @@ if [ -z "$dbexists" ]; then
 		--execute="CREATE DATABASE $dbname;"
 
         echo "create db user $dbuser"
-	mysql $mysqlconnect \
-		--execute="DROP USER '$dbuser'@'localhost';"
-	mysql $mysqlconnect \
-		--execute="CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
+	
+	if [ "$dbuser" = "root" ];then
+		echo "using root user for DB connection"
+	else
+		mysql $mysqlconnect \
+			--execute="DROP USER '$dbuser'@'localhost';"
+		mysql $mysqlconnect \
+			--execute="CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
+	fi
+
 	mysql $mysqlconnect \
 		--execute="GRANT ALL ON $dbname.* TO '$dbuser'@'localhost'; FLUSH PRIVILEGES;"
 
