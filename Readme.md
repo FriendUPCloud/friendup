@@ -26,6 +26,8 @@ git clone https://github.com/FriendSoftwareLabs/friendup
 friendup/install.sh
 ```
 
+**NB:** Do not install using your MySQL root user.
+
 Default login
 -------------
 
