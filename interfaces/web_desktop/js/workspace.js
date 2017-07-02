@@ -1243,21 +1243,14 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { setting: 'locale' } );
 					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					//call device refresh to make sure user get his devices...
+					var dl = new FriendLibrary( 'system.library' );
+					dl.addVar( 'visible', true );
+					dl.onExecuted = function(e,d)
 					{
-						if( e != 'ok' )
-						{
-							if( !json.acceptedEula )
-							{	
-								ShowEula();
-							}
-						}
-					}
-					m.execute( 'getsetting', {
-						setting: 'accepteula'
-					} );
-				
+						//console.log('First login. Device list refreshed.',e,d);
+					};
+					dl.execute( 'device/refreshlist' );
 					
 					if( !Workspace.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); Workspace.workspaceHasLoadedOnceBefore = true; }
 					
