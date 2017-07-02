@@ -171,7 +171,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
     sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
         mysql-server \
-        php-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+        php php-mysql php-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev cmake make libwebsockets-dev libssh-dev
 else
     dialog --backtitle "Friend installer" --msgbox "Supported linux version not found!\n\n\
