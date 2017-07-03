@@ -43,8 +43,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 		}
 		if( $fnd )
 		{
-			$rows[ $k ]->Preview = $fnd;
-			$rows[ $k ]->Basepath = $path;
+			$rows[ $k ]->Preview = true;
 		}
 	}
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
