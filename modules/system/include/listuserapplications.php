@@ -18,7 +18,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT ua.ID, n.Name, ua.Permissions, ua.Data FROM FUserApplication ua, FApplication n
 	WHERE
@@ -26,6 +25,28 @@ if( $rows = $SqlDatabase->FetchObjects( '
 	ORDER BY n.Name ASC
 ' ) )
 {
+	$basepaths = array(
+		'resources/webclient/apps/',
+		'repository/'
+	);
+	foreach( $rows as $k=>$v )
+	{
+		// Include image preview
+		$fnd = false;
+		foreach( $basepaths as $path )
+		{
+			if( file_exists( $path . '/' . $v->Name . '/preview.png' ) )
+			{
+				$fnd = $path . '/' . $v->Name . '/preview.png';
+				break;
+			}
+		}
+		if( $fnd )
+		{
+			$rows[ $k ]->Preview = $fnd;
+			$rows[ $k ]->Basepath = $path;
+		}
+	}
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
 die( 'fail' );
