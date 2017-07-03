@@ -102,7 +102,10 @@
 					
 					//track users login..
 					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', htmlentities( Trim( ge( 'Username' ).value ) ) );
-					parent.Workspace.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
+					if( parent.Workspace && parent.Workspace.keys )
+					{
+						parent.Workspace.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
+					}
 					parent.Workspace.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
 						var tmp;
