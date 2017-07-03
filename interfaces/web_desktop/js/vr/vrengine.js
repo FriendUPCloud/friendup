@@ -143,24 +143,27 @@ var FriendVR = {
 			var row = 0;
 			for( var a = 0; a < list.length; a++ )
 			{
-				var pln = new THREE.Mesh(
-					new THREE.PlaneGeometry( 0.5, 0.5, 1 ),
-					new THREE.MeshBasicMaterial( { color: 0xAD3524, side: THREE.DoubleSide } )
-				);
-				pln.position.x = start + ( count * ( 0.5 + margin ) );
-				pln.position.y = ypos;
-				pln.position.z = -2;
-				pln.castShadow = true;
-				pln.receiveShadow = true;
-				self.scene.add( pln );
-				if( count++ >= 3 )
+				if( list[a].Preview )
 				{
-					count = 0;
-					ypos -= 0.5 + margin;
-					row++;
-					if( row >= 2 )
+					var pln = new THREE.Mesh(
+						new THREE.PlaneGeometry( 0.5, 0.5, 1 ),
+						new THREE.MeshBasicMaterial( { color: 0xAD3524, side: THREE.DoubleSide } )
+					);
+					pln.position.x = start + ( count * ( 0.5 + margin ) );
+					pln.position.y = ypos;
+					pln.position.z = -2;
+					pln.castShadow = true;
+					pln.receiveShadow = true;
+					self.scene.add( pln );
+					if( count++ >= 3 )
 					{
-						break;
+						count = 0;
+						ypos -= 0.5 + margin;
+						row++;
+						if( row >= 2 )
+						{
+							break;
+						}
 					}
 				}
 			}
