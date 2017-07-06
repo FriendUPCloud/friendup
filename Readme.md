@@ -5,6 +5,8 @@ We are happy to announce the release of FriendUP version 1.0.0.
 
 FriendUP version 1.0.0 is the first complete open source release of the platform. It introduces a complete vision for the next paradigm in computing. FriendUP comes complete with a powerful kernel-like web server that supports multiple protocols and data sources, next to resource- and user session management. This offers javascript developers a fresh backendless environment in which to accelerate their development of exciting new applications and games. 
 
+![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2017/06/desktop-1.png "FriendUP Workspace")
+
 Across devices
 --------------
 
@@ -26,7 +28,7 @@ git clone https://github.com/FriendSoftwareLabs/friendup
 friendup/install.sh
 ```
 
-**NB:** Do not install using your MySQL root user.
+We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
 
 Default login
 -------------
