@@ -16,6 +16,7 @@ ifeq ($(CYGWIN_BUILD),1)
 	cp libwebsockets/bin/cygwebsockets-8.dll ../build/
 else
 	cp libwebsockets/lib/libwebsockets.so* ../build/
+	sudo cp libwebsockets/lib/libwebsockets.so* /usr/lib/
 	for dir in $(LIB_DIR); do \
 		sudo make -C $$dir install; \
 	done
