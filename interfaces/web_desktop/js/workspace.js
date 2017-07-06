@@ -1099,7 +1099,7 @@ Workspace = {
 				}
 			}
 			
-			console.log( '--- Workspace.keys ---', this.keys );
+			//console.log( '--- Workspace.keys ---', this.keys );
 			
 			/*
 				r = remember me set....
@@ -1243,14 +1243,7 @@ Workspace = {
 					}
 					l.execute( 'getsetting', { setting: 'locale' } );
 					
-					//call device refresh to make sure user get his devices...
-					var dl = new FriendLibrary( 'system.library' );
-					dl.addVar( 'visible', true );
-					dl.onExecuted = function(e,d)
-					{
-						//console.log('First login. Device list refreshed.',e,d);
-					};
-					dl.execute( 'device/refreshlist' );
+
 					
 					if( !Workspace.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); Workspace.workspaceHasLoadedOnceBefore = true; }
 					
@@ -1297,6 +1290,16 @@ Workspace = {
 									Workspace.mimeTypes = s.Mimetypes;
 								}
 								else Workspace.refreshTheme( false, false );
+				
+				
+								//call device refresh to make sure user get his devices...
+								var dl = new FriendLibrary( 'system.library' );
+								dl.addVar( 'visible', true );
+								dl.onExecuted = function(e,d)
+								{
+									//console.log('First login. Device list refreshed.',e,d);
+								};
+								dl.execute( 'device/refreshlist' );
 				
 								if( t.loginPrompt )
 								{
