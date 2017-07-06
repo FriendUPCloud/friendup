@@ -226,6 +226,12 @@ FUWORD GetVolumeHash()
  
  static void GetCpuid( FUINT* p, FUINT ax )
  {
+	#ifdef __arm__
+	char *ptr = (char *)p;
+	ptr[ 0 ] = 'a';
+	ptr[ 1 ] = 'r';
+	ptr[ 2 ] = 'm';
+	#else
     __asm __volatile
     (   "movl %%ebx, %%esi\n\t"
         "cpuid\n\t"
@@ -234,6 +240,7 @@ FUWORD GetVolumeHash()
           "=c" (p[2]), "=d" (p[3])
         : "0" (ax)
     );
+	#endif
  }
  
  //

@@ -19,12 +19,6 @@ else
 	for dir in $(LIB_DIR); do \
 		sudo make -C $$dir install; \
 	done
-	
-	if [ -d "/usr/lib/x86_64-linux-gnu/" ]; then \
-		sudo cp /usr/local/lib/libwebsockets.so.* /usr/lib/x86_64-linux-gnu/; \
-	else \
-		sudo cp /usr/local/lib/libwebsockets.so.* /lib/i386-linux-gnu/; \
-	fi
 endif
 
 setup:
