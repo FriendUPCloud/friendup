@@ -259,14 +259,17 @@
 			{
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
-				var j = new cAjax();
-				j.open( 'get', '/publickey/' );
-				j.onload = function()
+				if( location.protocol == 'https:' )
 				{
-					ge( 'publickey' ).value = this.responseText();
+					var j = new cAjax();
+					j.open( 'get', '/publickey/' );
+					j.onload = function()
+					{
+						ge( 'publickey' ).value = this.responseText();
+					}
+					j.send();					
 				}
-				j.send();
-				
+			
 				Application.applicationId = 'loginprompt';
 				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
 				{
