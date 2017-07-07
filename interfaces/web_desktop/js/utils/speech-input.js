@@ -144,21 +144,29 @@ function Say( string, language, mode )
 		var v = speechSynthesis.getVoices();
 		var u = new SpeechSynthesisUtterance( string );
 		u.lang = language ? language : globalConfig.language;
-		for( var a = 0; a < v.length; a++ )
+		try
 		{
-			if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+
+			for( var a = 0; a < v.length; a++ )
 			{
-				u.lang = v[a].lang;
-				u.voice = v[a].voiceURI;
-				break;
-			}
-			else if( v[a].name == u.lang )
-			{
-				u.lang = v[a].lang;
-				u.voice = v[a].voiceURI;
-				break;
+				console.log('Voice...',v[a]);
+
+				if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+				{
+					u.lang = v[a].lang;
+					u.voice = v[a].voiceURI;
+					break;
+				}
+				else if( v[a].name == u.lang )
+				{
+					u.lang = v[a].lang;
+					u.voice = v[a].voiceURI;
+					break;
+				}
 			}
 		}
+		catch(e) { console.log('Could not set lang/voice',e); }
+		
 		var stopper = ge( 'Tray' ).getElementsByClassName( 'Microphone' );
 		if( stopper.length ) stopper = stopper[0];
 		u.onend = function()
