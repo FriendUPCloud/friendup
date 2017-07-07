@@ -146,11 +146,8 @@ function Say( string, language, mode )
 		u.lang = language ? language : globalConfig.language;
 		try
 		{
-
 			for( var a = 0; a < v.length; a++ )
 			{
-				console.log('Voice...',v[a]);
-
 				if( v[a].name == 'Google US English' && u.lang == 'en-US' )
 				{
 					u.lang = v[a].lang;
