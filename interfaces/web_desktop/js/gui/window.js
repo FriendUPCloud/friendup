@@ -1638,7 +1638,7 @@ var View = function( args )
 				wenable = true;
 			
 			var wwi = this.content.offsetWidth;
-			var hhe = this.content.offsetHeight;
+			var hhe = div.offsetHeight - GetElementHeight( this.titleBar ) - GetElementHeight( this.bottombar );
 			if( flags.volume && div.volumeGauge )
 			{
 				wwi += GetElementWidth( div.volumeGauge ) + FUI_WINDOW_MARGIN;
