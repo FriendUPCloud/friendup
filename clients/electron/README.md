@@ -7,12 +7,14 @@ Getting started:
 ----------------
 
 npm install
+
 npm start
 
 Building:
 ------------
 
 npm install electron-packager -g
+
 electron-packager . FriendUP --all
 
 Known issues
