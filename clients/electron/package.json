@@ -1,0 +1,21 @@
+{
+  "name": "friendup-client",
+  "version": "0.0.1",
+  "description": "A minimal cross-platform FriendUP client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/FriendSoftwareLabs/friendup/clients/electron",
+  "keywords": [
+    "FriendUP",
+    "Friend",
+    "Unifying",
+    "Platform"
+  ],
+  "author": "FriendSoftwareLabs",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "electron": "~1.6.2"
+  }
+}
