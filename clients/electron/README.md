@@ -1,7 +1,7 @@
 FriendUP Electron Client
 ========================
 
-The electron client creates a self contained executable for OSX / Linux / Windows that loads FriendUP in it's own window.
+The electron client creates a self contained executable for OSX / Linux / Windows that loads FriendUP in its own window.
 
 Getting started:
 ----------------
@@ -20,4 +20,4 @@ electron-packager . FriendUP --all
 Known issues
 ---------------
 
-Application won't close - something to do with FriendUP's window.onbeforeunload function.
+Application won't close - has to do with FriendUP's window.onbeforeunload function.
