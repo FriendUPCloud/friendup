@@ -29,8 +29,8 @@ friendup/install.sh
 ```
 We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
 
-Running the server manually
----------------------------
+Running the serving kernel manually
+-----------------------------------
 
 Friend Core does not install into /usr/bin or another global path yet. It is contained in the directory where you cloned or unpacked it. When you want to run Friend Core yourself, you enter into its build directory. Like this:
 ```
