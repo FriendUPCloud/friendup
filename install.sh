@@ -164,15 +164,19 @@ echo "========================================================="
 
 if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
     sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
-        php5-cli php5-curl php5-mysql php5-gd php5-imap mysql-server \
+    	mysql-server \
+        php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
         cmake ssh phpmyadmin make
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
     sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
         mysql-server \
-        php php-mysql php-curl libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
-        libgd-dev rsync valgrind-dbg libxml2-dev cmake make libwebsockets-dev libssh-dev
+        php php-cli php-gd php-imap php-mysql php-curl php-readline \
+	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+        libgd-dev rsync valgrind-dbg libxml2-dev \
+	cmake ssh phpmyadmin make \
+	libwebsockets-dev libssh-dev
 else
     dialog --backtitle "Friend installer" --msgbox "Supported linux version not found!\n\n\
 Write to us: developer@friendos.com" 8 40
