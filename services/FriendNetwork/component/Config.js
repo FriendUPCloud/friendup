@@ -22,7 +22,6 @@
 *****************************************************************************©*/
 
 
-
 var log = require( './Log')( 'Config' );
 
 var exampleConfObj = require( '../example.config.js' );

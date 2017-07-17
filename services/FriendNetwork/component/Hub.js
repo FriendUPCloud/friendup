@@ -21,9 +21,17 @@
 *                                                                              *
 *****************************************************************************©*/
 
+/*
+
+ERR_FN_INVALID_HOSTID  : Host ID is not invalid
+ERR_FN_INVALID_APPDATA : Data is not valid
+ERR_FN_P2P_DENIED      : Remote host declined the p2p connection
+
+*/
 
 
 const log = require( './Log' )( 'Hub' );
+const uuid = require( './UuidPrefix')();
 const ns = {};
 
 ns.Hub = function() {
@@ -72,6 +80,8 @@ ns.Hub.prototype.init = function()
 		'privat'      : privat,
 		'expose'      : expose,
 		'conceal'     : conceal,
+		'connect'     : connect,
+		'disconnect'  : disconnect,
 		'subscribe'   : subscribe,
 		'unsubscribe' : unsubscribe,
 	};
@@ -81,6 +91,8 @@ ns.Hub.prototype.init = function()
 	function privat( e , rid, sid ) { self.handlePrivat( e, rid, sid ); }
 	function expose( e, rid, sid ) { self.handleExpose( e, rid, sid ); }
 	function conceal( e, rid, sid ) { self.handleConceal( e, rid, sid ); }
+	function connect( e, rid, sid ) { self.handleConnect( e, rid, sid ) ; }
+	function disconnect( e, rid, sid ) { self.handleDisconnect( e, rid, sid ) ; }
 	function subscribe( e , rid, sid ) { self.handleSubscribe( e, rid, sid ); }
 	function unsubscribe( e , rid, sid ) { self.handleUnsubscribe( e, rid, sid ); }
 }
@@ -136,16 +148,10 @@ ns.Hub.prototype.handleRequest = function( event, sid )
 ns.Hub.prototype.handleHosts = function( e, rid, sid )
 {
 	const self = this;
-	log( 'handleHosts', {
-		e   : e,
-		rid : rid,
-		sid : sid, });
-	
 	let hosts = [];
 	if ( self.sessionIds.length )
 		hosts = self.sessionIds.map( buildHostInfo );
 	
-	hosts.push( null );
 	hosts = hosts.filter( item => !!item );
 	log( 'hosts', hosts );
 	
@@ -193,68 +199,68 @@ ns.Hub.prototype.handlePrivat = function( event, rid, sid )
 	self.respond( rid, null, res, sid );
 }
 
-ns.Hub.prototype.handleSubscribe = function( hostIds, rid, sid )
+ns.Hub.prototype.handleSubscribe = function( hostId, rid, sid )
 {
 	const self = this;
-	log( 'handleSubscribe', event );
-	if ( !hostIds || !hostIds.forEach )
+	log( 'handleSubscribe', hostId );
+	if ( !hostId )
 		return;
 	
-	const subbed = hostIds.map( addToHostSub );
-	subbed = subbed.filter( notNull );
-	self.respond( rid, null, subbed, sid );
-	
-	function addToHostSub( hostId )
-	{
-		const session = self.sessions[ hostId ];
-		if ( !session )
-			return null;
-		
-		session.sub( sid );
-		return hostId;
-	}
-	
-	function notNull( item ) { return !!item; }
-}
-
-ns.Hub.prototype.handleUnsubscribe = function( hostIds, rid, sid )
-{
-	const self = this;
-	log( 'handleUnsubscribe', event );
-	if ( !hostIds || !hostIds.forEach )
+	const sender = self.sessions[ sid ];
+	if ( !sender )
 		return;
 	
-	const unsubbed = hostIds.map( removeFromHostSub );
-	unsubbed = unsubbed.filter( notNull );
-	self.respond( rid, null, unsubbed, sid );
-	
-	function removeFromHostSub( hostId )
-	{
-		const session = self.sessions[ hostId ];
-		if ( !session )
-			return null;
-		
-		sessions.unsub( sid );
-		return hostId;
+	const remote = self.sessions[ hostId ];
+	if ( !remote ) {
+		self.respond( rid, 'ERR_FN_INVALID_HOSTID', null, sid );
+		return;
 	}
 	
-	function notNull( item ) { return !!item; }
+	const added = remote.subscribe( sid );
+	if ( added )
+		sender.subAdded( hostId );
+	
+	self.respond( rid, null, sender.subscriptions, sid );
 }
 
-ns.Hub.prototype.handleExpose = function( apps, rid, sid )
+ns.Hub.prototype.handleUnsubscribe = function( hostId, rid, sid )
 {
 	const self = this;
-	log( 'handleExpose', appIds );
-	if ( !apps || !apps.forEach )
+	log( 'handleUnsubscribe', hostId );
+	if ( !hostId )
+		return;
+	
+	const sender = self.sessions[ sid ];
+	if ( !sender )
+		return;
+	
+	const remote = self.sessions[ hostId ];
+	if ( !remote ) {
+		self.respond( rid, 'ERR_FN_INVALID_HOSTID', null, sid );
+		return;
+	}
+	
+	const removed = remote.unsubscribe( sid );
+	if ( removed )
+		sender.subRemoved( hostId );
+	
+	self.respond( rid, null, sender.subscriptions, sid );
+}
+
+ns.Hub.prototype.handleExpose = function( app, rid, sid )
+{
+	const self = this;
+	log( 'handleExpose', app );
+	if ( !app )
 		return;
 	
 	const session = self.sessions[ sid ];
 	if ( !session )
 		return;
 	
-	const current = session.exposeApps( apps );
+	const current = session.exposeApp( app );
 	if ( !current ) {
-		self.respond( rid, 'ERR_INVALID_DATA', apps, sid );
+		self.respond( rid, 'ERR_FN_INVALID_APPDATA', app, sid );
 		return;
 	}
 	
@@ -266,28 +272,99 @@ ns.Hub.prototype.handleExpose = function( apps, rid, sid )
 	self.respond( rid, null, current, sid );
 }
 
-ns.Hub.prototype.handleConceal = function( appIds, rid, sid )
+ns.Hub.prototype.handleConceal = function( appId, rid, sid )
 {
 	const self = this;
-	log( 'handleConceal', appIds );
-	if ( !appIds || !appIds.forEach )
-		return;
-	
-	const ssession = self.sessions[ sid ];
+	log( 'handleConceal', appId );
+	const session = self.sessions[ sid ];
 	if ( !session )
 		return;
 	
-	const current = session.concealApps( appIds );
-	if ( !current ) {
-		self.respond( rid, 'ERR_INVALID_DATA', appIds, sid );
+	const current = session.concealApp( appId );
+	if ( null == current ) {
+		self.respond( rid, 'ERR_FN_INVALID_DATA', appId, sid );
 		return;
 	}
+	
 	const exposed = {
 		type : 'apps',
 		data : current,
 	};
 	self.broadcast( sid, exposed );
 	self.respond( rid, null, current, sid );
+}
+
+ns.Hub.prototype.handleConnect = function( event, rid, sid )
+{
+	const self = this;
+	log( 'handleconnect', event );
+	if ( !valid( event )) {
+		self.respond( rid, 'ERR_FN_INVALID_DATA', event, sid );
+		return;
+	}
+	
+	const source = event.source;
+	const target = event.target;
+	
+	// ask remote host
+	const req = {
+		sourceHost : sid,
+		sourceApp  : source.appId || null,
+		options    : event.options || null,
+	};
+	
+	self.hostRequest( target.hostId, target.appId, 'connect', req, connReply );
+	function connReply( res, remoteRid, remoteSid ) {
+		log( 'handleConnect - connReply', res );
+		
+		// remote host denied
+		if ( !res.accept ) {
+			self.respond( remoteRid, null, null, remoteSid );
+			self.respond( rid, 'ERR_FN_P2P_DENIED', null, sid );
+			return;
+		}
+		
+		// remote accepted
+		const signal = {
+			signalId : uuid.get( 'peer' ),
+			rtc      : global.config.shared.rtc,
+			options  : res.options,
+		};
+		
+		log( 'signal', signal );
+		self.respond( remoteRid, null, signal, remoteSid );
+		self.respond( rid, null, signal, sid );
+	}
+	
+	function valid( event ) {
+		if ( !event.source || !event.target )
+			return false;
+		
+		// source appId is optional, but lets check type if its defined
+		let s = event.source;
+		if ( s.appId && !isString( s.appId ) )
+			return false;
+		
+		// hostId required, appId optional
+		let t = event.target;
+		if ( !t.hostId || !isString( t.hostId ))
+			return false;
+		
+		if ( t.appId && !isString( t.appId ))
+			return false;
+		
+		return true;
+		
+		function isString( item ) {
+			return 'string' === typeof( item );
+		}
+	}
+}
+
+ns.Hub.prototype.handleDisconnect = function( event, rid, sid )
+{
+	const self = this;
+	log( 'handledisconnect', event );
 }
 
 ns.Hub.prototype.handleMeta = function( conf, sid )
@@ -317,7 +394,50 @@ ns.Hub.prototype.toHost = function( host, event, sid )
 	
 }
 
-/* respond - err OR res must be null
+ns.Hub.prototype.hostRequest = function(
+	hostId,
+	appId,
+	type,
+	data,
+	callback
+) {
+	const self = this;
+	const replyId = uuid.get( 'reply' );
+	let req = {
+		type : type,
+		data : {
+			type : replyId,
+			data : data,
+		},
+	};
+	
+	// wrap in appId so it gets routed to the app
+	if ( null != appId )
+		req = {
+			type : appId,
+			data : req,
+		};
+		
+	
+	/*
+	const session = self.sessions[ hostId ];
+	if ( !session ) {
+		log( 'hostRequest - no session found for host', hostId );
+		return;
+	}
+	
+	session.once( replyId, callback );
+	*/
+	self.requestMap[ replyId ] = response;
+	self.send( null, req, hostId );
+	
+	function response( event, rid, sid ) {
+		delete self.requestMap[ replyId ];
+		callback( event, rid, sid );
+	}
+}
+
+/* respond
 requestId,
 null or error,
 response or null,
@@ -326,9 +446,6 @@ callback for event sent
 */
 ns.Hub.prototype.respond = function( rid, err, res, sid, callback ) {
 	const self = this;
-	if ( err )
-		res = null;
-	
 	const response = {
 		type : rid,
 		data : {
@@ -348,7 +465,6 @@ ns.Hub.prototype.broadcast = function( source, event, callback ) {
 	const subs = session.subscribers;
 	subs.forEach( sendTo );
 	function sendTo( sid ) {
-		log( 'broadcast - send to sid' );
 		self.send( source, event, sid );
 	}
 }

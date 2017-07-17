@@ -481,7 +481,8 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			// Available tools applications
 			var tools = {
 				/*'Processmgr'     : i18n( 'i18n_processmgr' ),*/
-				'Applicationmgr' : i18n( 'i18n_applicationmgr' )
+				'Applicationmgr' : i18n( 'i18n_applicationmgr' ),
+				'SysDiag'        : i18n( 'i18n_sysdiag' )
 			};
 			var icons = {
 				/*'Processmgr'     : 'apps/utilities-system-monitor.png',*/

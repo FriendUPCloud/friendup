@@ -135,7 +135,9 @@ var FriendVR = {
 		m.onExecuted = function( e, d )
 		{
 			if( e != 'ok' ) return;
+			
 			var list = JSON.parse( d );
+			
 			var start = -0.9;
 			var ypos = 0.3;
 			var margin = 0.1;
@@ -210,25 +212,7 @@ var FriendVR = {
 	{
 		// Find intersections (collisions with camera)
 		this.raycaster.setFromCamera( { x: 0, y: 0 }, this.camera );
-		/*var intersects = vrRaycaster.intersectObjects( this.room.mesh.children );
-		if( intersects.length > 0 )
-		{
-			if( INTERSECTED != intersects[ 0 ].object )
-			{
-				if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-
-				INTERSECTED = intersects[ 0 ].object;
-				INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-				INTERSECTED.material.emissive.setHex( 0x000000 );
-			}
-
-		}
-		else
-		{
-			if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-			INTERSECTED = undefined;
-		}*/
-
+		
 		// Rotate the logo
 		if( this.logo ) this.logo.rotation.z = this.rot / 180 * Math.PI;
 		this.rot += 0.5;

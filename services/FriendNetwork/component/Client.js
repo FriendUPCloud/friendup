@@ -22,7 +22,6 @@
 *****************************************************************************©*/
 
 
-
 const log = require( './Log')( 'Client' );
 const Emitter = require( './Events' ).Emitter;
 const uuid = require( './UuidPrefix' )();

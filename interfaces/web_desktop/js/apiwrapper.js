@@ -132,121 +132,88 @@ function apiWrapper( event, force )
 				{
 					case 'list':
 						FriendNetwork.listHosts( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: {command: 'friendnetwork', data: data}
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
+							message: msg,
 						} );
 						break;
 					case 'connect':
 						FriendNetwork.connectToHost( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
+							message: msg,
 							name: msg.name,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: {command: 'friendnetwork', data: data}
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
+						} );
+						break;
+					case 'disconnect':
+						FriendNetwork.disconnectFromHost( {
+							message: msg,
+							key: msg.key,
 						} );
 						break;
 					case 'dispose':
 						FriendNetwork.disposeHosting( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
-							name: msg.name,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: {command: 'friendnetwork', data: data}
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
+							message: msg,
+							key: msg.key
 						} );
 						break;
 					case 'send':
 						FriendNetwork.send( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
-							host: msg.host,
-							event: msg.event,
+							message: msg,
+							data: msg.data,
 							key: msg.key,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: { command: 'friendnetwork', data: data }
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
+						} );
+						break;
+					case 'sendCredentials':
+						FriendNetwork.sendCredentials( {
+							message: msg,
+							password: msg.password,
+							key: msg.key
+						} );
+						break;
+					case 'setHostPassword':
+						FriendNetwork.setHostPassword( {
+							message: msg,
+							password: msg.password,
+							key: msg.key
 						} );
 						break;
 					case 'host':
 						FriendNetwork.startHosting( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
+							message: msg,
 							name: msg.name,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: { command: 'friendnetwork', data: data }
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							},
-							listener: msg.listener
+							data: msg.data
 						} );
 						break;
-					// Add a new session and return key
-					case 'addsession':
-						var key = FriendNetwork.addSession(
-							msg.applicationId,
-							msg.name,
-							'',
-							msg.mode
-						);
-						var cw = GetContentWindowByAppMessage( app, msg );
-						var nmsg = {
-							applicationId: msg.applicationId,
-							applicationName: msg.applicationName,
-							type: 'callback',
-							key: key,
-							callback: msg.callback,
-							data: { command: 'friendnetwork', key: key }
-						};
-						cw.postMessage( JSON.stringify( nmsg ), '*' );
-					case 'getstatus':
-						FriendNetwork.getStatus();
+					case 'setPassword':
+						FriendNetwork.setPassword( {
+							message: msg,
+							key: msg.key,
+							password: msg.password
+						} );
+						break;
+					case 'closeSession':
+						FriendNetwork.closeSession({
+							message: msg,
+							key: msg.key
+						});
+						break;
+					case 'p2pConnect':
+						FriendNetwork.connectToP2PHost({
+							message: msg,
+							name: msg.name,
+							data: msg.data
+						});
+						break;
+					case 'p2pAcceptConnexion':
+						FriendNetwork.p2pAcceptConnexion({
+							message: msg,
+							key: msg.key,
+							accept: msg.accept,
+							data: msg.data
+						});
+						break;
+					case 'closeApplication':
+						FriendNetwork.closeApplication( msg );
+						break;
+					case 'status':
+						FriendNetwork.getStatus( msg );
 						break;
 				}
 				break;
@@ -310,44 +277,6 @@ function apiWrapper( event, force )
 							if (msg.callback)
 								runWrapperCallback(msg.callback, false);
 						}
-						break;
-					// Make a connection to the friend network
-					case 'connectfriendnetwork':
-						DormantMaster.connectFriendNetworkTo( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: {command: 'friendnetwork', data: data}
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
-						} );
-						break;
-					// Disconnect now!
-					case 'disconnectfriendnetwork':
-						DormantMaster.disconnectFriendNetworkFrom( {
-							applicationName: msg.applicationName,
-							applicationId: msg.applicationId,
-							callback: function( data )
-							{
-								var cw = GetContentWindowByAppMessage( app, msg );
-								var nmsg = {
-									applicationId: msg.applicationId,
-									applicationName: msg.applicationName,
-									type: 'callback',
-									callback: msg.callback,
-									data: {command: 'friendnetwork', data: data}
-								};
-								cw.postMessage( JSON.stringify( nmsg ), '*' );
-							}
-						} );
 						break;
 					case 'callback':
 						if( msg.callbackId && msg.data )
@@ -1284,7 +1213,7 @@ function apiWrapper( event, force )
 								{
 									console.log( 'Nothing to do callback on!' );
 								}
-							} );
+							}, msg.clientKey, msg.restrictedPath );
 							break;
 						case 'close':
 							FriendDOS.delSession( msg.shellSession );

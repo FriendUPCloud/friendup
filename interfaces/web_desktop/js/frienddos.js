@@ -92,7 +92,6 @@ Shell = function( appObject )
 	this.state = { entry: -1 }; // Engine state
 	this.mindMode = false; // Use A.I.
 	this.pipe = false; // Target pipe!
-	this.friendNetwork = 'disabled';
 	
 	this.mind = FriendMind.makeSession( appObject );
 	
@@ -738,8 +737,10 @@ Shell = function( appObject )
 	}
 	
 	// Evaluate until done! (for scripts etc)
-	this.evaluate = function( input, callback )
+	this.evaluate = function( input, callback, clientKey, restrictedPath )
 	{
+		this.clientKey = clientKey;
+		this.restrictedPath = restrictedPath;
 		this.evaluateInput( input, 0, callback );
 	}
 	
@@ -771,6 +772,31 @@ Shell = function( appObject )
 		}*/
 		
 		//console.log( "> Ready to do: " + input[ index ] );
+		// What to do with the ouput?
+		var t = this;
+		var previousCallback = callback;
+		callback = function( data, returnMessage )
+		{
+			// If the current shell is a host of FriendNetwork client, send the response to him
+			if ( t.clientKey && !t.skipClient )
+			{
+				FriendNetwork.send({
+					key: t.clientKey,
+					data:{
+						returnMessage: returnMessage,
+						data:          data
+					}
+				}, function (msg)
+				{
+				});
+			}
+			else
+			{
+				// If not, just output to the current output stream
+				t.skipClient = false;
+				previousCallback( data, returnMessage );
+			}
+		};
 		if (this.executing)
 		{
 			if (this.break)
@@ -782,7 +808,6 @@ Shell = function( appObject )
 			}
 		}
 		
-		var t = this;
 		// End of the line on arrays
 		if( !input || index >= input.length )
 		{
@@ -1695,48 +1720,48 @@ Shell = function( appObject )
 		}
 		else if ( cmd[0] == 'friendnetwork' || cmd[0] == 'fnet' )
 		{
-			if ( cmd[1] == 'enable' )
+			switch ( cmd[1] )
 			{
-				if ( this.friendNetwork != 'disabled' )
-					return dcallback( false, {response: 'Friend network is already enabled.'} );
-				this.friendNetwork = 'enabled';
-				return dcallback( 'friendnetworkenable' );
-			}
-			else
-			{
-				if ( this.friendNetwork != 'enabled' )
-					return dcallback( false, {response: 'Friend network is not enabled.'} );
-				switch ( cmd[1] )
-				{
-					case 'disable':
-						this.friendNetwork = 'disabled';
-						return dcallback('friendnetworkdisable');
-					case 'list':
-						return dcallback('friendnetworklist');
-					case 'host':
-						if (cmd.length < 3)
-							return dcallback(false, {response: 'Syntax: friendnetwork host "hostname".'});
-						return dcallback(false, {
-							command: 'friendnetworkhost',
-							name:    cmd[2]
-						});
-					case 'dispose':
-						if (cmd.length < 3)
-							return dcallback(false, {response: 'Syntax: friendnetwork dispose "hostname".'});
-						return dcallback(false, {
-							command: 'friendnetworkdispose',
-							name:    cmd[2]
-						});
-					case 'connect':
-						if (cmd.length < 3)
-							return dcallback(false, {response: 'Syntax: friendnetwork connect "hostname".'});
-						return dcallback(false, {
-							command: 'friendnetworkconnect',
-							name:    cmd[2]
-						});
-					default:
-						return dcallback(false, {response: 'Syntax error.'});
-				}
+				case 'list':
+					return dcallback('friendnetworklist');
+				case 'host':
+					if (cmd.length < 3)
+						return dcallback(false, {response: 'Syntax: friendnetwork host "hostname".'});
+					return dcallback(false, {
+						command: 'friendnetworkhost',
+						name:    cmd[2],
+						password: cmd[3]
+					});
+				case 'dispose':
+					if (cmd.length < 3)
+						return dcallback(false, {response: 'Syntax: friendnetwork dispose "hostname".'});
+					return dcallback(false, {
+						command: 'friendnetworkdispose',
+						name:    cmd[2]
+					});
+				case 'connect':
+					if (cmd.length < 3)
+						return dcallback(false, {response: 'Syntax: friendnetwork connect "hostname".'});
+					return dcallback(false, {
+						command: 'friendnetworkconnect',
+						name:    cmd[2],
+					});
+				case 'password':
+					if (cmd.length < 4)
+						return dcallback(false, {response: 'Syntax: friendnetwork dispose "hostname".'});
+					return dcallback(false, {
+						command: 'friendnetworksetpassword',
+						name:    cmd[2],
+						password: cmd[3]
+					});
+					break;
+				case 'disconnect':
+					this.skipClient = true;
+					return dcallback(false, { command: 'friendnetworkdisconnect' });
+				case 'status':
+					return dcallback(false, { command: 'friendnetworkstatus' });
+				default:
+					return dcallback(false, {response: 'Syntax error.'});
 			}
 		}
 		// Engage with an application (message port and pipe)
@@ -1910,6 +1935,11 @@ Shell = function( appObject )
 					{	
 						if( typeof( data ) == 'object' && path )
 						{
+							// Restricted path (for use with FriendNetwork)
+							if ( t.restrictedPath )
+								if ( fullPath.indexOf( t.restrictedPath ) < 0 )
+									return dcallback( false, { response: 'Path is restricted by host to ' + t.restrictedPath } );
+							
 							t.currentPath = path;
 						}
 						// Error never should be here.
@@ -1922,6 +1952,11 @@ Shell = function( appObject )
 				}
 				else
 				{
+					// Restricted path (for use with FriendNetwork)
+					if ( this.restrictedPath )
+						if ( fullPath.indexOf( this.restrictedPath ) < 0 )
+							return dcallback( false, { response: 'Path is restricted by host to ' + this.restrictedPath } );
+					
 					// TODO: Fix that these are arrays!
 					var count = 0;
 					for( var a in dirs ) count++;
@@ -1941,6 +1976,11 @@ Shell = function( appObject )
 		{
 			if( this.previousPath )
 			{
+				// Restricted path (for use with FriendNetwork)
+				if ( this.restrictedPath )
+					if ( this.previousPath.indexOf( this.restrictedPath ) < 0 )
+						return dcallback( false, { response: 'Host forbids to leave ' + this.currentPath } );
+				
 				// TODO: Perhaps have a history here!
 				var tp = this.currentPath;
 				this.currentPath = this.previousPath;
@@ -1968,6 +2008,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'makedir' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Makedir is not authorised by host.' } );
+			
 			var cdr = this.currentPath;
 			var chk = cdr.substr( cdr.length - 1, 1 );
 			if( chk != ':' && chk != '/' ) cdr += '/';
@@ -2023,7 +2066,7 @@ Shell = function( appObject )
 				dcallback( false, { response: "Syntax: tinyurl url boolean_expire" } );
 			}
 		}
-		else if( cmd[0] == 'cat' )
+		else if( cmd[0] == 'cat' || cmd[0] == 'output')
 		{
 			if( cmd.length == 2 )
 			{
@@ -2063,6 +2106,9 @@ Shell = function( appObject )
 		// Rename a file
 		else if( cmd[0] == 'rename' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Rename is not authorised by host.' } );
+			
 			if( cmd.length == 3 || ( cmd.length == 4 && cmd[2] == 'to' ) )
 			{
 				var src = cmd[1];
@@ -2155,6 +2201,9 @@ Shell = function( appObject )
 		// Copy some files
 		else if( cmd[0] == 'copy' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Copy is not authorised by host.' } );
+			
 			if( cmd.length >= 3 )
 			{
 				var start = 1;
@@ -2224,6 +2273,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'move' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Move is not authorised by host.' } );
+			
 			if( cmd.length >= 3 )
 			{
 				var start = 1;
@@ -2274,10 +2326,30 @@ Shell = function( appObject )
 		{
 			var commands = [ 
 				'ls', 'info', 'list', 'dir', 'cat', 'type', 'why', 'copy', 'delete', 'makedir', 'tinyurl',
-				'protect', 'access', 'execute', 'launch', 'output', 'infoget', 'infoset', 'wait',
-				'rename', 'mind', 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
-				'say', 'leave', 'status', 'break', 'kill', 'assign', 'mount', 'unmount', 'mountlist'
+				'protect', 'access', 'execute', 'launch', 'output', /*'infoget', 'infoset',*/ 'wait',
+				'rename', /*'mind',*/ 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
+				'say', 'leave', 'status', 'break', 'kill', 'assign', 'mount', 'unmount', 'mountlist',
+				'repeat', /*'on',*/ 'increase', 'decrease', 'multiply', 'divide', 'add', 'subtract',
+				'stop', 'version', 'goto', 'help'
 			].sort();
+			if ( cmd.length == 1 )
+			{
+				dcallback( false, { command: 'help', text: commands.join( ', ' ) } );
+			}
+			else if ( cmd.length == 2)
+			{
+				for ( var a = 0; a < commands.length; a++ )
+				{
+					if ( commands[a] == cmd[1] )
+					{
+						return dcallback( false, { command: 'help', name: cmd[1] } );
+					}
+				}
+			}
+			else
+			{
+				dcallback( false, {response: 'Syntax error.'});
+			}
 			switch( cmd[1] )
 			{
 				default:
@@ -2344,6 +2416,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'delete' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Delete is not authorised by host.' } );
+			
 			if( cmd.length >= 2 )
 			{
 				var start = 1;
@@ -2386,6 +2461,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'mount' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Mount is not authorised by host.' } );
+			
 			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
 			{
 				return dcallback( false, { response: 'Syntax error. Usage:<br>mount [disk:]<br>' } );
@@ -2404,6 +2482,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'unmount' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Unmount is not authorised by host.' } );
+			
 			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
 			{
 				return dcallback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
@@ -2481,6 +2562,9 @@ Shell = function( appObject )
 		// Protect command sets file permissions!
 		else if( cmd[0] == 'protect' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Protect is not authorised by host.' } );
+			
 			var t = this;
 			
 			// Find filename, then flags
@@ -2658,7 +2742,7 @@ Shell = function( appObject )
 			var path = cmd[1];
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = t.currentPath; 
+				var cp = t.currentPath;
 				var ssign = cp.substr( cp.length - 1 );
 				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
@@ -2710,6 +2794,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'infoset' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Infoset is not authorised by host.' } );
+			
 			var t = this;
 			
 			if( cmd.length < 2 )
@@ -2930,11 +3017,17 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'endcli' || cmd[0] == 'exit' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Endcli/Exit is not authorised by host.' } );
+			
 			FriendDOS.delSession( this.uniqueId );
 			return dcallback( true, 'quit' );
 		}
 		else if( cmd[0] == 'cli' || cmd[0] == 'newcli' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Cli/Newcli is not authorised by host.' } );
+			
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId,
@@ -2956,6 +3049,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'kill' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Kill is not authorised by host.' } );
+			
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId, 
@@ -2965,6 +3061,9 @@ Shell = function( appObject )
 		}
 		else if( cmd[0] == 'install' )
 		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'Install is not authorised by host.' } );
+			
 			if( cmd.length <= 1 )
 			{
 				return dcallback( false, 'Please tell me which application you wish to install.' );

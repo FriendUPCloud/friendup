@@ -58,10 +58,7 @@ Workspace = {
 	conn: null,
 	websocketsOffline: true,
 	pouchManager: null,
-	keys: {
-		client: false, 
-		server: false 
-	},
+	deviceid: GetDeviceId(),
 	
 	preinit: function()
 	{
@@ -221,9 +218,7 @@ Workspace = {
 			}
 		}
 		
-		// lets not
 		// connect to FriendNetwork
-		/*
 		if ( this.sessionId && window.FriendNetwork ) {
 			var host = document.location.hostname + ':6514';
 			if ( 'http:' === document.location.protocol )
@@ -231,9 +226,16 @@ Workspace = {
 			else
 				host = 'wss://' + host;
 			
-			window.FriendNetwork.init( host, this.sessionId );
+			var hostMeta =
+			{
+				name        : this.loginUsername,
+				description : this.loginUsername + "'s machine",
+				apps        : [],
+				imagePath   : 'friend://path.to/image?', // ( not what a real path// looks like, probably? )
+			};
+			window.FriendNetwork.init( host, this.sessionId, hostMeta );
 		}
-		*/
+		
 		
 		if( window.PouchManager && !this.pouchManager )
 			this.pouchManager = new PouchManager();
@@ -414,6 +416,120 @@ Workspace = {
 			Workspace.showContextMenu( men, e );
 		}
 		this.reloadDocks();
+	},
+	encryption: {
+		
+		fcrypt: fcrypt,
+		keyobject: false,
+		
+		keys: {
+			client: false,
+			server: false
+		},
+		
+		setKeys: function( u, p )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
+				
+				var seed = ( u && p ? Sha256.hash( u + ':' + p ) : false );
+				
+				var keys = ApplicationStorage.load( { applicationName : 'Workspace' } );
+				
+				if( !keys || ( keys && !keys.privatekey ) || ( keys && keys.recoverykey != seed ) )
+				{
+					this.keyobject = this.fcrypt.generateKeys( false, false, false, seed );
+					
+					keys = this.fcrypt.getKeys( this.keyobject );
+				}
+				
+				if( keys )
+				{
+					this.keys.client = {
+						privatekey  : this.fcrypt.encodeKeyHeader( keys.privatekey ),
+						publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ),
+						recoverykey : keys.recoverykey
+					};
+				}
+				
+				console.log( '--- Workspace.keys ---', this.keys );
+				
+				return this.keys;
+			}
+			
+			return false;
+		},
+		
+		encryptRSA: function( str, publickey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				return this.fcrypt.encryptRSA( str, ( publickey ? publickey : this.keys.server.publickey ) );
+			}
+			
+			return false;
+		},
+		
+		decryptRSA: function( cipher, privatekey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				return this.fcrypt.decryptRSA( cipher, ( privatekey ? privatekey : this.keys.client.privatekey ) );
+			}
+			
+			return false;
+		},
+		
+		encryptAES: function( str, publickey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				return this.fcrypt.encryptAES( str, ( publickey ? publickey : this.keys.server.publickey ) );
+			}
+			
+			return false;
+		},
+		
+		decryptAES: function( cipher, privatekey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				return this.fcrypt.decryptAES( cipher, ( privatekey ? privatekey : this.keys.client.privatekey ) );
+			}
+			
+			return false;
+		},
+		
+		encrypt: function( str, publickey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				var encrypted = this.fcrypt.encryptString( str, ( publickey ? publickey : this.keys.server.publickey ) );
+				
+				if( encrypted && encrypted.cipher )
+				{
+					return encrypted.cipher;
+				}
+			}
+			
+			return false;
+		},
+		
+		decrypt: function( cipher, privatekey )
+		{
+			if( typeof( this.fcrypt ) != 'undefined' )
+			{
+				var decrypted = this.fcrypt.decryptString( cipher, ( privatekey ? privatekey : this.keys.client.privatekey ) );
+				
+				if( decrypted && decrypted.plaintext )
+				{
+					return decrypted.plaintext;
+				}
+			}
+			
+			return false;
+		}
 	},
 	terminateSession: function( sess, dev )
 	{
@@ -774,6 +890,12 @@ Workspace = {
 		}
 		m.execute( 'getsetting', { settings: [ 'avatar', 'wallpaperdoors', 'wallpaperwindows', 'language', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 'focusmode' ] } );
 	},
+	// Called on onunload
+	doLeave: function( e )
+ 	{
+		FriendNetwork.close();
+		return Workspace.leave( e );
+ 	},
 	// Do you want to leave?
 	leave: function( e )
 	{
@@ -1034,6 +1156,7 @@ Workspace = {
 		}
 		
 		// TODO: If we have sessionid - verify it through ajax.
+		
 		if( this.sessionId )
 		{
 			if( callback && typeof( callback ) == 'function' ) callback( true );
@@ -1073,64 +1196,36 @@ Workspace = {
 		if( this.loginUsername && this.loginPassword )
 		{
 			
-			if( typeof( fcrypt ) != 'undefined' && this.keys.server && this.keys.server.publickey )
-			{
-				var seed = Sha256.hash( this.loginUsername + ':' + this.loginPassword );
-				
-				if( seed )
-				{
-					var keys = ApplicationStorage.load( { applicationName : 'Workspace' } );
-					
-					if( !keys || ( keys && !keys.privatekey ) || ( keys && keys.recoverykey != seed ) )
-					{
-						var crypt = fcrypt.generateKeys( false, false, false, seed );
-						
-						keys = fcrypt.getKeys( crypt );
-					}
-					
-					if( keys )
-					{
-						this.keys.client = {
-							privatekey  : keys.privatekey, 
-							publickey   : keys.publickey, 
-							recoverykey : keys.recoverykey 
-						};
-					}
-				}
-			}
-			
-			//console.log( '--- Workspace.keys ---', this.keys );
+			this.encryption.setKeys( this.loginUsername, this.loginPassword );
 			
 			/*
 				r = remember me set....
 			*/
 			if( r )
 			{
-				if( this.keys.client )
+				if( this.encryption.keys.client )
 				{
 					ApplicationStorage.save( {
-						privatekey  : this.keys.client.privatekey, 
-						publickey   : this.keys.client.publickey, 
-						recoverykey : this.keys.client.recovery 
+						privatekey  : this.encryption.keys.client.privatekey,
+						publickey   : this.encryption.keys.client.publickey,
+						recoverykey : this.encryption.keys.client.recovery
 					},
 					{ applicationName : 'Workspace' } );
 					
 					console.log( '--- localStorage --- ', window.localStorage );
 				}
 				
-				// TODO: Do we need to store anything in cookie??? if not remove this
+				// TODO: Do we need to store anything in cookie, this is unsafe??? if not remove this
 				
-				SetCookie( 'loginUsername', this.loginUsername );
-				SetCookie( 'loginPassword', this.loginPassword );
+				if( this.loginUsername && this.loginPassword )
+				{
+					SetCookie( 'loginUsername', this.loginUsername );
+					SetCookie( 'loginPassword', this.loginPassword );
+				}
 			}
-			// TODO: Remove GetUrlVar('encryption') when server part of code is in place
-			var m = new FriendLibrary( 'system', ( GetUrlVar( 'encryption' ) ? true : false ) );
-			if( GetUrlVar( 'encryption' ) && this.loginUsername && this.keys.client && this.keys.client.publickey )
-			{
-				m.addVar( 'username', this.loginUsername );
-				m.addVar( 'publickey', this.keys.client.publickey );
-			}
-			else if( this.loginUsername )
+			
+			var m = new FriendLibrary( 'system' );
+			if( this.loginUsername )
 			{
 				m.addVar( 'username', this.loginUsername );
 				m.addVar( 'password', this.loginPassword );
@@ -1196,132 +1291,16 @@ Workspace = {
 						ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
 					}
 					
-					// Only renew session..
-					if( ge( 'SessionBlock' ) )
-					{
-						// Could be many
-						while( ge( 'SessionBlock' ) )
-						{
-							document.body.removeChild( ge( 'SessionBlock' ) );
-						}
-						Workspace.renewAllSessionIds();
-						return;
-					}
-					
-					// Language
-					Workspace.locale = 'en';
-					var l = new Module( 'system' );
-					l.onExecuted = function( e, d )
-					{
-						// New translations
-						i18n_translations = [];
+					Workspace.loginCallBack = callback;
+					return Workspace.initUserWorkspace( userdata, json );
 
-						// Add it!
-						i18nClearLocale();
-						if( e == 'ok' )
-						{
-							Workspace.locale = JSON.parse( d ).locale;
-							//load english first and overwrite with localised values afterwards :)
-							i18nAddPath( 'locale/en.locale', function(){
-								if( Workspace.locale != 'en' ) i18nAddPath( 'locale/' + Workspace.locale + '.locale' );
-							});
-						}
-						else
-						{
-							i18nAddPath( 'locale/en.locale' );
-						}
-						
-						try
-						{
-							var res = JSON.parse( d );
-							if( res.response == 'Failed to load user.' )
-							{
-								Workspace.logout();
-							}
-						}
-						catch( e ){};
-					}
-					l.execute( 'getsetting', { setting: 'locale' } );
-					
-
-					
-					if( !Workspace.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); Workspace.workspaceHasLoadedOnceBefore = true; }
-					
-				
-					// Lets load the stored window positions!
-					LoadWindowStorage();
-				
-					// Set up a shell instance for the workspace
-					var uid = FriendDOS.addSession( Workspace );
-					Workspace.shell = FriendDOS.getSession( uid );
-					
-					// We're getting the theme set in an url var
-					var th = '';
-					if( ( th = GetUrlVar( 'theme' ) ) )
-					{
-						Workspace.refreshTheme( th, false );
-						if( t.loginPrompt )
-						{
-							t.loginPrompt.close();
-							t.loginPrompt = false;
-						}
-						t.init();
-					}
-					// See if we have some theme settings
-					else
-					{
-						// As for body.Inside screens, use > 0.2secs
-						setTimeout( function()
-						{
-							var m = new Module( 'system' );
-							m.onExecuted = function( e, d )
-							{
-								if( e == 'ok' )
-								{
-									var s = JSON.parse( d );
-									if( s.Theme && s.Theme.length )
-									{
-										Workspace.refreshTheme( s.Theme.toLowerCase(), false );
-									}
-									else
-									{
-										Workspace.refreshTheme( false, false );
-									}
-									Workspace.mimeTypes = s.Mimetypes;
-								}
-								else Workspace.refreshTheme( false, false );
-				
-				
-								//call device refresh to make sure user get his devices...
-								var dl = new FriendLibrary( 'system.library' );
-								dl.addVar( 'visible', true );
-								dl.onExecuted = function(e,d)
-								{
-									//console.log('First login. Device list refreshed.',e,d);
-								};
-								dl.execute( 'device/refreshlist' );
-				
-								if( t.loginPrompt )
-								{
-									t.loginPrompt.close();
-									t.loginPrompt = false;
-								}
-				
-								t.init();
-							}
-							m.execute( 'usersettings' );				
-						}, 400 );
-					}
-					if( callback && typeof( callback ) == 'function' ) callback( 1 );
-					return 1;
 				}
 				else
 				{
-					//console.log( 'Getting a problem here!' );
 					if( t.loginPrompt )
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
-					//console.log( 'Should have sent a problem error command' );
+
 				}
 				document.body.className = 'Login';
 			}
@@ -1332,6 +1311,144 @@ Workspace = {
 		this.showDesktop();
 		
 		return 0;
+	},
+	initUserWorkspace: function( userdata, json )
+	{
+		if( !this.sessionId ) return false;
+		
+
+		var t = this;
+		var callback = t.loginCallBack;
+		/*
+			after a user has logged in we want to prepare the workspace for him.
+		*/
+
+
+		// Only renew session..
+		if( ge( 'SessionBlock' ) )
+		{
+			// Could be many
+			while( ge( 'SessionBlock' ) )
+			{
+				document.body.removeChild( ge( 'SessionBlock' ) );
+			}
+			Workspace.renewAllSessionIds();
+			return;
+		}
+		
+		// Language
+		Workspace.locale = 'en';
+		var l = new Module( 'system' );
+		l.onExecuted = function( e, d )
+		{
+			// New translations
+			i18n_translations = [];
+
+			// Add it!
+			i18nClearLocale();
+			if( e == 'ok' )
+			{
+				Workspace.locale = JSON.parse( d ).locale;
+				//load english first and overwrite with localised values afterwards :)
+				i18nAddPath( 'locale/en.locale', function(){
+					if( Workspace.locale != 'en' ) i18nAddPath( 'locale/' + Workspace.locale + '.locale' );
+				});
+			}
+			else
+			{
+				i18nAddPath( 'locale/en.locale' );
+			}
+			
+			try
+			{
+				var res = JSON.parse( d );
+				if( res.response == 'Failed to load user.' )
+				{
+					Workspace.logout();
+				}
+			}
+			catch( e ){};
+		}
+		l.execute( 'getsetting', { setting: 'locale' } );
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+				if( !json.acceptedEula )
+				{
+					ShowEula();
+				}
+			}
+		}
+		m.execute( 'getsetting', {
+			setting: 'accepteula'
+		} );
+	
+		
+		if( !Workspace.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); Workspace.workspaceHasLoadedOnceBefore = true; }
+		
+	
+		// Lets load the stored window positions!
+		LoadWindowStorage();
+	
+		// Set up a shell instance for the workspace
+		var uid = FriendDOS.addSession( Workspace );
+		Workspace.shell = FriendDOS.getSession( uid );
+		
+		// We're getting the theme set in an url var
+		var th = '';
+		if( ( th = GetUrlVar( 'theme' ) ) )
+		{
+			Workspace.refreshTheme( th, false );
+			if( t.loginPrompt )
+			{
+				t.loginPrompt.close();
+				t.loginPrompt = false;
+			}
+			t.init();
+		}
+		// See if we have some theme settings
+		else
+		{
+			// As for body.Inside screens, use > 0.2secs
+			setTimeout( function()
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						var s = JSON.parse( d );
+						if( s.Theme && s.Theme.length )
+						{
+							Workspace.refreshTheme( s.Theme.toLowerCase(), false );
+						}
+						else
+						{
+							Workspace.refreshTheme( false, false );
+						}
+						Workspace.mimeTypes = s.Mimetypes;
+					}
+					else Workspace.refreshTheme( false, false );
+	
+					if( t.loginPrompt )
+					{
+						t.loginPrompt.close();
+						t.loginPrompt = false;
+					}
+	
+					t.init();
+				}
+				m.execute( 'usersettings' );
+			}, 400 );
+		}
+		if( callback && typeof( callback ) == 'function' ) callback( 1 );
+		return 1;
+		
+		
+		/* done here. workspace is shown. */
 	},
 	resetPassword: function( username, callback )
 	{
@@ -3701,12 +3818,15 @@ Workspace = {
 			}
 			
 			var m = new cAjax();
+			Workspace.websocketsOffline = true;
 			m.open( 'get', '/system.library/user/logout/?sessionid=' + Workspace.sessionId, true );
 			m.onload = function()
 			{
 				Workspace.sessionId = ''; document.location.reload(); 
 			}
 			m.send();
+			Workspace.websocketsOffline = false;
+			
 		} );
 	},
 	// Get a list of all applications ------------------------------------------
@@ -5251,173 +5371,4 @@ function handleServerNotice( e )
 		console.log( 'handleServerNotice - Click callback', e );
 	}
 }
-
-
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-/*  SHA-256 implementation in JavaScript                (c) Chris Veness 2002-2014 / MIT Licence  */
-/*                                                                                                */
-/*  - see http://csrc.nist.gov/groups/ST/toolkit/secure_hashing.html                              */
-/*        http://csrc.nist.gov/groups/ST/toolkit/examples.html                                    */
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-/* jshint node:true *//* global define, escape, unescape */
-'use strict';
-
-
-/**
- * SHA-256 hash function reference implementation.
- *
- * @namespace
- */
-var Sha256 = {};
-
-
-/**
- * Generates SHA-256 hash of string.
- *
- * @param   {string} msg - String to be hashed
- * @returns {string} Hash of msg as hex character string
- */
-Sha256.hash = function(msg) {
-    // convert string to UTF-8, as SHA only deals with byte-streams
-    msg = msg.utf8Encode();
-    
-    // constants [§4.2.2]
-    var K = [
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 ];
-    // initial hash value [§5.3.1]
-    var H = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 ];
-
-    // PREPROCESSING 
- 
-    msg += String.fromCharCode(0x80);  // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
-
-    // convert string msg into 512-bit/16-integer blocks arrays of ints [§5.2.1]
-    var l = msg.length/4 + 2; // length (in 32-bit integers) of msg + ‘1’ + appended length
-    var N = Math.ceil(l/16);  // number of 16-integer-blocks required to hold 'l' ints
-    var M = new Array(N);
-
-    for (var i=0; i<N; i++) {
-        M[i] = new Array(16);
-        for (var j=0; j<16; j++) {  // encode 4 chars per integer, big-endian encoding
-            M[i][j] = (msg.charCodeAt(i*64+j*4)<<24) | (msg.charCodeAt(i*64+j*4+1)<<16) | 
-                      (msg.charCodeAt(i*64+j*4+2)<<8) | (msg.charCodeAt(i*64+j*4+3));
-        } // note running off the end of msg is ok 'cos bitwise ops on NaN return 0
-    }
-    // add length (in bits) into final pair of 32-bit integers (big-endian) [§5.1.1]
-    // note: most significant word would be (len-1)*8 >>> 32, but since JS converts
-    // bitwise-op args to 32 bits, we need to simulate this by arithmetic operators
-    M[N-1][14] = ((msg.length-1)*8) / Math.pow(2, 32); M[N-1][14] = Math.floor(M[N-1][14]);
-    M[N-1][15] = ((msg.length-1)*8) & 0xffffffff;
-
-
-    // HASH COMPUTATION [§6.1.2]
-
-    var W = new Array(64); var a, b, c, d, e, f, g, h;
-    for (var i=0; i<N; i++) {
-
-        // 1 - prepare message schedule 'W'
-        for (var t=0;  t<16; t++) W[t] = M[i][t];
-        for (var t=16; t<64; t++) W[t] = (Sha256.OO1(W[t-2]) + W[t-7] + Sha256.OO0(W[t-15]) + W[t-16]) & 0xffffffff;
-
-        // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
-        a = H[0]; b = H[1]; c = H[2]; d = H[3]; e = H[4]; f = H[5]; g = H[6]; h = H[7];
-
-        // 3 - main loop (note 'addition modulo 2^32')
-        for (var t=0; t<64; t++) {
-            var T1 = h + Sha256.EE1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
-            var T2 =     Sha256.EE0(a) + Sha256.Maj(a, b, c);
-            h = g;
-            g = f;
-            f = e;
-            e = (d + T1) & 0xffffffff;
-            d = c;
-            c = b;
-            b = a;
-            a = (T1 + T2) & 0xffffffff;
-        }
-         // 4 - compute the new intermediate hash value (note 'addition modulo 2^32')
-        H[0] = (H[0]+a) & 0xffffffff;
-        H[1] = (H[1]+b) & 0xffffffff; 
-        H[2] = (H[2]+c) & 0xffffffff; 
-        H[3] = (H[3]+d) & 0xffffffff; 
-        H[4] = (H[4]+e) & 0xffffffff;
-        H[5] = (H[5]+f) & 0xffffffff;
-        H[6] = (H[6]+g) & 0xffffffff; 
-        H[7] = (H[7]+h) & 0xffffffff; 
-    }
-
-    return Sha256.toHexStr(H[0]) + Sha256.toHexStr(H[1]) + Sha256.toHexStr(H[2]) + Sha256.toHexStr(H[3]) + 
-           Sha256.toHexStr(H[4]) + Sha256.toHexStr(H[5]) + Sha256.toHexStr(H[6]) + Sha256.toHexStr(H[7]);
-};
-
-
-/**
- * Rotates right (circular right shift) value x by n positions [§3.2.4].
- * @private
- */
-Sha256.ROTR = function(n, x) {
-    return (x >>> n) | (x << (32-n));
-};
-
-/**
- * Logical functions [§4.1.2].
- * @private
- */
-Sha256.EE0  = function(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); };
-Sha256.EE1  = function(x) { return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); };
-Sha256.OO0  = function(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  };
-Sha256.OO1  = function(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); };
-Sha256.Ch  = function(x, y, z) { return (x & y) ^ (~x & z); };
-Sha256.Maj = function(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); };
-
-
-/**
- * Hexadecimal representation of a number.
- * @private
- */
-Sha256.toHexStr = function(n) {
-    // note can't use toString(16) as it is implementation-dependant,
-    // and in IE returns signed numbers when used on full words
-    var s="", v;
-    for (var i=7; i>=0; i--) { v = (n>>>(i*4)) & 0xf; s += v.toString(16); }
-    return s;
-};
-
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-
-
-/** Extend String object with method to encode multi-byte string to utf8
- *  - monsur.hossa.in/2012/07/20/utf-8-in-javascript.html */
-if (typeof String.prototype.utf8Encode == 'undefined') {
-    String.prototype.utf8Encode = function() {
-        return unescape( encodeURIComponent( this ) );
-    };
-}
-
-/** Extend String object with method to decode utf8 string to multi-byte */
-if (typeof String.prototype.utf8Decode == 'undefined') {
-    String.prototype.utf8Decode = function() {
-        try {
-            return decodeURIComponent( escape( this ) );
-        } catch (e) {
-            return this; // invalid UTF-8? return as-is
-        }
-    };
-}
-
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-if (typeof module != 'undefined' && module.exports) module.exports = Sha256; // CommonJs export
-if (typeof define == 'function' && define.amd) define([], function() { return Sha256; }); // AMD
 

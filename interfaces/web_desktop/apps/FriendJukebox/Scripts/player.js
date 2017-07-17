@@ -64,11 +64,16 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'updateplaylist':
-			console.log( 'hey:', msg );
-			this.redrawMiniPlaylist( msg.playlist, msg.index );
+			if( this.miniplaylist )
+				this.redrawMiniPlaylist( msg.playlist, msg.index );
+			break;
+		case 'toggle_miniplaylist':
+			this.miniplaylist = this.miniplaylist ? false : true;
 			break;
 		case 'miniplaylist':
-			this.miniplaylist = this.miniplaylist ? false : true;
+			// Could be we're asked to toggle visibility
+			if( msg.visibility ) this.miniplaylist = msg.visibility;
+		
 			if( this.miniplaylist )
 			{
 				ge( 'Equalizer' ).style.bottom = '247px';

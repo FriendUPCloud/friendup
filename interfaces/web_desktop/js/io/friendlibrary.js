@@ -80,7 +80,7 @@ var FriendLibrary = function ( library, encryption )
 		if( this.encryption )
 		{
 			// If ssl is enabled add vars encrypted data string to send as post raw data with cAjax
-			if( this.vars && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.keys.server && Workspace.keys.client )
+			if( this.vars && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.encryption.keys.server && Workspace.encryption.keys.client )
 			{
 				var json = JSON.stringify( this.vars );
 				
@@ -95,7 +95,7 @@ var FriendLibrary = function ( library, encryption )
 					//}
 					
 					//data = fcrypt.encryptRSA( json, Workspace.keys.server.publickey );
-					var encrypted = fcrypt.encryptRSA( json, Workspace.keys.server.publickey );
+					var encrypted = fcrypt.encryptRSA( json, Workspace.encryption.keys.server.publickey );
 					
 					j.addVar( 'encryptedblob', encrypted );
 					
@@ -124,7 +124,7 @@ var FriendLibrary = function ( library, encryption )
 					if( t.encryption )
 					{
 						// If ssl is enabled decrypt the data returned by cAjax
-						if( rc && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.keys.server && Workspace.keys.client )
+						if( rc && typeof( fcrypt ) != 'undefined' && typeof( Workspace ) != 'undefined' && Workspace.encryption.keys.server && Workspace.encryption.keys.client )
 						{
 							// TODO: This will probably not work in C code only made for js/php since decryptString is a RSA+AES combination to support large blocks of data outside of RSA limitations, make decryptRSA() support stacking of blocks split by block limit
 							//var decrypted = fcrypt.decryptString( rc, Workspace.keys.client.privatekey );
@@ -134,7 +134,7 @@ var FriendLibrary = function ( library, encryption )
 							//	rc = decrypted.plaintext;
 							//}
 							
-							rc = fcrypt.decryptRSA( rc, Workspace.keys.client.privatekey );
+							rc = fcrypt.decryptRSA( rc, Workspace.encryption.keys.client.privatekey );
 						}
 					}
 					

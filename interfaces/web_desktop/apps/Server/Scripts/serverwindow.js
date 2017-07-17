@@ -95,6 +95,11 @@ function validate( pckg )
 	m.execute( 'evaluatepackage', { pckg: pckg } );
 }
 
+function downloadPackage( fn )
+{
+	var v = window.open( '/system.library/module/?module=system&command=repositorysoftware&packageget=' + fn + '&authid=' + Application.authId, '', '' );
+}
+
 // Reload all software
 function reloadSoftware( method, data )
 {
@@ -118,6 +123,7 @@ function reloadSoftware( method, data )
 				if( method && method == 'validation' && data && data.pckg == js[a].Filename )
 				{
 					cl = data.validation == 'ok' ? ' style="color: green"' : ' style="color: red"';
+					validated = data.validation == 'ok' ? true : false;
 				}
 				else if( js[a].Signature && js[a].Signature == js[a].Validated )
 				{
@@ -125,8 +131,10 @@ function reloadSoftware( method, data )
 					validated = true;
 				}
 				sw = sw == 'sw2' ? 'sw1' : 'sw2';
+				
 				var vf = i18n( 'i18n_' + ( validated ? 'revalidate' : 'validate' ) );
-				str += '<div class="HRow ' + sw + '"><div class="HContent20 InputHeight FloatLeft">' + js[a].Filename + '</div><div class="HContent60 InputHeight FloatLeft Ellipsis SelectableText"' + cl + '" title="' + js[a].Signature + '">' + js[a].Signature + '</div><div class="HContent20 InputHeight FloatLeft"><button onclick="validate(\'' + js[a].Filename + '\')" type="button" class="Button IconSmall fa-refresh"> ' + vf + '</button></div></div>';
+				
+				str += '<div class="HRow ' + sw + '"><div class="HContent20 InputHeight FloatLeft">' + js[a].Filename + '</div><div class="HContent50 InputHeight FloatLeft Ellipsis SelectableText"' + cl + '" title="' + js[a].Signature + '">' + js[a].Signature + '</div><div class="HContent20 FloatLeft"><button onclick="validate(\'' + js[a].Filename + '\')" type="button" class="Button IconSmall fa-refresh"> ' + vf + '</button></div><div class="HContent10 FloatLeft"><button onclick="downloadPackage(\'' + js[a].Filename + '\')" type="button" class="FullWidth Button IconSmall fa-download"></button></div></div>';
 			}
 			ge( 'Software' ).innerHTML = str;
 		}

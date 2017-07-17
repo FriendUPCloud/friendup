@@ -47,6 +47,36 @@ Default login
 
 Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: *fadmin*/*securefassword*.
 
+FriendNetwork
+-------------
+
+In order to function, FriendNetwork needs a node server running on the machine.
+
+Please follow these instructions:
+
+- If it is not already installed on your machine, install node and npm with the following commands:
+sudo apt-get update
+sudo apt-get install nodejs npm
+FriendNetwork will work with every version of node above 4.0.4
+
+Once node and npm are installed, we suggest you also install 'n' to control the version of node you are using:
+sudo npm install -g n
+
+- Load the file friendup/services/FriendNetwork/example.config.js in a text editor
+- Enter the name of your domain on the line named 'host' (localhost will work)
+- Save the file as config.js
+- If you have not yet installed Friend with install.sh, it is time to do it
+- If you have already launched this script, go back to the friendup directory and type:
+make install
+- Go to the directory friendup/build/services/FriendNetwork
+- Type:
+npm install
+- To launch the FriendNetwork server, type:
+node fnet.js
+
+The FriendNetwork commands (including the Shell commands) will only work if the FriendNetwork server is running.
+The next versions of FriendCore will automatically launch the FriendNetwork server.
+
 Documentation
 -------------
 

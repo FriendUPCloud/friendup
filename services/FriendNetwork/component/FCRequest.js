@@ -22,7 +22,6 @@
 *****************************************************************************©*/
 
 
-
 var log = require( './Log' )( 'FcRequest' );
 var https = require( 'https' );
 var http = require( 'http' );

@@ -22,7 +22,6 @@
 *****************************************************************************©*/
 
 
-
 const log = require( './Log' )( 'WSPool' );
 const TLSWatch = require( './TLSWatch' );
 const Client = require( './Client' ).WSClient;

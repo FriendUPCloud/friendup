@@ -300,6 +300,7 @@ function ExecuteApplication( app, args, callback )
 				var o = {
 					command: 'register',
 					applicationId: ifr.applicationId,
+					applicationName: ifr.applicationName,
 					userId: ifr.userId,
 					username: ifr.username,
 					authId: ifr.authId,

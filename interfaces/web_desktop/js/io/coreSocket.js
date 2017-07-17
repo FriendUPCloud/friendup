@@ -40,6 +40,7 @@ FriendWebSocket = function( conf )
 	// INTERNAL
 	self.ws = null;
 	self.sendQueue = [];
+	self.chunks = {};
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
 	self.maxPingWait = 1000 * 5;
@@ -111,12 +112,14 @@ FriendWebSocket.prototype.init = function()
 		'session' : session,
 		'ping'    : ping,
 		'pong'    : pong,
+		'chunk'   : chunk,
 	};
 	
 	//function authenticate( e ) { self.handleAuth( e ); }
 	function session( e ) { self.handleSession( e ); }
 	function ping( e ) { self.handlePing( e ); }
 	function pong( e ) { self.handlePong( e ); }
+	function chunk( e ) { self.handleChunk( e ); }
 	
 	self.connect();
 }
@@ -315,16 +318,22 @@ FriendWebSocket.prototype.handleError = function( e )
 FriendWebSocket.prototype.handleSocketMessage = function( e )
 {
 	var self = this;
-	if( self.pingCheck ) clearTimeout( self.pingCheck );
-
+	if( self.pingCheck )
+		clearTimeout( self.pingCheck );
+	
 	var msg = friendUP.tool.objectify( e.data );
-
 	if ( !msg )
 	{
 		console.log( 'FriendWebSocket.handleSocketMessage - invalid data, could not parse JSON' );
 		return;
 	}
+	
+	self.handleEvent( msg );
+}
 
+FriendWebSocket.prototype.handleEvent = function( msg )
+{
+	var self = this;
 	if( 'con' === msg.type )
 	{
 		self.handleConnMessage( msg.data );
@@ -557,6 +566,68 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 
 	if( self.pingCheck ) clearTimeout( self.pingCheck);
 	self.setState( 'ping', pingTime );
+}
+
+FriendWebSocket.prototype.handleChunk = function( chunk )
+{
+	var self = this;
+	console.log( 'handleChunk', {
+		chunk  : chunk,
+		chunks : self.chunks,
+		size   : chunk.data.length,
+		first  : chunk.data.charCodeAt( 0 ),
+		last   : chunk.data.charCodeAt( chunk.data.length - 1 ),
+	});
+	
+	chunk.total = parseInt( chunk.total, 10 );
+	chunk.part = parseInt( chunk.part, 10 );
+	var cid = chunk.id;
+	var chunks = self.chunks[ cid ];
+	if ( !chunks )
+	{
+		chunks = Array( chunk.total );
+		chunks.fill( null );
+		self.chunks[ cid ] = chunks;
+	}
+	
+	var index = chunk.part;
+	chunks[ index ] = chunk.data;
+	if ( !hasAll( chunks, chunk.total ))
+		return;
+	
+	var event = rebuild( chunks );
+	delete self.chunks[ cid ];
+	self.handleEvent( event );
+	
+	function hasAll( chunks, total ) {
+		var anyNull = chunks.some( isNull );
+		//console.log( 'hasAll', !anyNull );
+		return !anyNull;
+		function isNull( item ) {
+			return null == item;
+		}
+	}
+	
+	function rebuild( chunks ) {
+		//console.log( 'rebuild', chunks );
+		var whole = chunks.join( '' );
+		//console.log( 'whole', whole );
+		
+		/* Re enable this to first attempt to parse json, then try base64 if it fails
+		
+		var parsed = friendUP.tool.objectify( whole );
+		if ( parsed )
+			return parsed; // if it was json ( aka not b64 ), this happens
+		
+		*/
+		
+		// well, then, try b64 decode
+		var notB64 = atob( whole );
+		//console.log( 'decoded', notB64 );
+		var parsed = friendUP.tool.objectify( notB64 );
+		//console.log( 'parsed', parsed );
+		return parsed;
+	}
 }
 
 FriendWebSocket.prototype.stopKeepAlive = function()

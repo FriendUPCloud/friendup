@@ -43,4 +43,10 @@ function toggleHosting()
 	}
 }
 
-
+function connect()
+{
+	FriendNetwork.list( hostsBack );
+	function hostsBack( data ) {
+		console.log( 'FriendHost - hostsBack', data );
+	}
+}

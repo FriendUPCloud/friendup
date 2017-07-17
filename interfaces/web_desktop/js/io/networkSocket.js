@@ -37,9 +37,16 @@ eventSink : listener - events with no registered handler are emitted here
 onEnd     : if the socket connection dies and cannot be reestablished, 
 	onEnd is called
 	
-// Public interface:
 
-.getHosts( callback )
+Errors:
+ERR_CONN_ERROR               : Connection is closed or has been close,
+	or otherwise inconvenienced
+	
+ERR_REQUEST_INVALID_RESPONSE : response data format was wrong, it must have
+	atleast either err or res
+	
+ERR_REQUEST_TIMEOUT          : Request has timed out. No reply from the network.
+	In the case of P2P connection setup, it could be the other side not responding
 
 */
 
@@ -88,113 +95,85 @@ NetworkConn.prototype = Object.create( window.EventEmitter.prototype );
 
 error    : if there was an error, this is an error code, otherwise null
 	On an error, response might have additional data.
-	ALWAYS CHECK FOR ERR, NOT RESPONSE
+	ALWAYS CHECK FOR ERROR, NOT RESPONSE
 	
 response : relevant data, see each function for details.
 */
 
-/* getHosts - Get a list of hosts on the network, including youself.
+/* getHosts - Get a list of hosts on the network, including yourself.
 
 Self will always be in the list, remote hosts only if they
-have set themselves active.
+have set themselves public.
 */
 NetworkConn.prototype.getHosts = function( callback )
 {
 	var self = this;
-	var hosts = {
-		type : 'hosts',
-		data : null,
-	};
-	self.request( hosts, callback );
+	self.request( 'hosts', null, callback );
 }
 
 // setPublic - make self public on the network. returns a timestamp
 NetworkConn.prototype.setPublic = function( callback )
 {
 	var self = this;
-	var pub = {
-		type : 'publik',
-		data : null,
-	};
-	self.request( pub, callback );
+	self.request( 'publik', null, callback );
 }
 
 // setPrivate - make self private on the network, returns a timestamp
 NetworkConn.prototype.setPrivate = function( callback )
 {
 	var self = this;
-	var priv = {
-		type : 'privat',
-		data : null,
-	};
-	self.request( priv, callback );
+	self.request( 'privat', null, callback );
 }
 
 /* subscribe - receive events from these remote hosts
 
-hostids  : list of hostIds to receive events from.
-callback : updated list ( in case of disconnects )
+hostId   : receive broadcast events from this host
+callback : complete list of subscriptions
 */
-NetworkConn.prototype.subscribe = function( hostIds, callback )
+NetworkConn.prototype.subscribe = function( hostId, callback )
 {
 	var self = this;
-	var start = {
-		type : 'subscribe',
-		data : hostIds,
-	};
-	self.request( start, callback );
+	self.request( 'subscribe', hostId, callback );
 }
 
 /* unsubscribe - no longer receive events from remote hosts
 
-hostIds  : list of hostId to no longer receive events from
-callback : updated list
+hostId   : no longer receive broadcast events from this host
+callback : complete list of subscriptions
 */
-NetworkConn.prototype.unsubscribe = function( hostIds, callback )
+NetworkConn.prototype.unsubscribe = function( hostId, callback )
 {
 	var self = this;
-	var stop = {
-		type : 'stophosting',
-		data : hostId,
-	};
-	self.request( stop, callback );
+	self.request( 'unsubscribe', hostId, callback );
 }
 
 
 /* expose - tell listening hosts that apps have been exposed to the network
 
-apps     : [ app1, app2, .. ]  - list of apps that are now available. App object:
+app     : <map>
 	{
 		id          : <string>,
 		name        : <string>,
 		description : <string>,
 	}
 
-callback : complete list held by server
+callback : receives complete list held by server
 */
-NetworkConn.prototype.expose = function( apps, callback )
+NetworkConn.prototype.expose = function( app, callback )
 {
 	var self = this;
-	var exp = {
-		type : 'expose',
-		data : apps,
-	}
-	self.request( exp, callback );
+	self.request( 'expose', app, callback );
 }
 
 /* conceal - tell listening host that apps are no longer publicly available
 
-ids      : list of ids for apps that are no longer available
-callback : complete list held by server
+id      : id of app that is no longer available
+callback : receives complete list held by server
 */
-NetworkConn.prototype.conceal = function( ids, callback )
+NetworkConn.prototype.conceal = function( appId, callback )
 {
 	var self = this;
-	var conceal = {
-		type : 'conceal',
-		data : ids,
-	};
-	self.request( conceal, callback );
+	self.request( 'conceal', appId, callback );
 }
 
 /* updateMeta - set human readable info for the host
@@ -217,25 +196,105 @@ NetworkConn.prototype.updateMeta = function( conf )
 
 /* connect - establish a p2p webRTC data channel with a remote host/app
 
+hostId      : <string> - host to connect to or host that has app to connect to
+appId       : <string>, optional - app to connect to
+options     : <stuff>, optinal - application specific data
+sourceAppId : <string>, optinal - must be id of app making connect call,
+	null if its workspace.
+
 */
-NetworkConn.prototype.connect = function( hostId, appId, callback )
-{
+NetworkConn.prototype.connect = function(
+	hostId,
+	appId,
+	options,
+	sourceAppId,
+	callback
+) {
 	var self = this;
 	var connect = {
-		type : 'connect',
-		data : {
+		source  : {
+			appId  : sourceAppId,
+		},
+		target  : {
 			hostId : hostId,
 			appId  : appId,
 		},
+		options : options,
 	};
 	
-	self.request( connect, connectBack );
-	function connectBack( err, res ) {
-		self.handleConnectResult( err, res, callback );
+	console.log( 'fnet.connect', hostId );
+	self.request( 'connect', connect, callback );
+}
+
+/* Request - will be handled by the netwrok. It is NOT sent to a host.
+
+type : <string>, type of request. Static string ( expose, subscribe, etc )
+	or a replyId, if you have received one.
+	
+data : <stuff> relevant request data.
+
+callback : <fn> is called with the result of the request
+*/
+
+NetworkConn.prototype.request = function( type, data, callback )
+{
+	var self = this;
+	var reqId = friendUP.tool.uid( 'req' );
+	self.once( reqId, reqBack );
+	var wrap = {
+		id  : reqId,
+		req : {
+			type : type,
+			data : data,
+		},
+	};
+	self.send( 'request', wrap, sendBack );
+	
+	function sendBack( err )
+	{
+		if ( err ) {
+			if ( callback )
+				callback( 'ERR_CONN_ERROR', null );
+			return;
+		}
+		
+		self.requestTimeouts[ reqId ] = setTimeout(
+			reqTimeout,
+			self.requestTimeout
+		);
+	}
+	
+	function reqBack( event )
+	{
+		var timeout = self.requestTimeouts[ reqId ];
+		if ( null != timeout ) {
+			clearTimeout( timeout );
+			delete self.requestTimeouts[ reqId ];
+		}
+		
+		if ( !event || ( !event.err && !event.res ))
+		{
+			if ( callback )
+				callback( 'ERR_REQUEST_INVALID_RESPONSE', event );
+			return;
+		}
+		
+		if ( callback )
+			callback( event.err, event.res );
+	}
+	
+	function reqTimeout()
+	{
+		console.log( 'request timed out', reqId );
+		self.release( reqId );
+		delete self.requestTimeouts[ reqId ];
+		if ( callback )
+			callback( 'ERR_REQUEST_TIMEOUT', null );
 	}
 }
 
 /* SEND - send an event to a host, or broadcast it to all subscribers
+	For sending an event to a app, the type of the event should be the appId.
 
 hostId   : target host. optional. null means the event is broadcast
 	to all subscribers
@@ -255,7 +314,7 @@ NetworkConn.prototype.send = function( hostId, event, callback )
 	var self = this;
 	if ( !self.conn ) {
 		if ( callback )
-			callback( 'ERR_NO_CONN' );
+			callback( 'ERR_CONN_ERROR' );
 		
 		return;
 	}
@@ -295,11 +354,12 @@ NetworkConn.prototype.init = function( hostMeta )
 	);
 	
 	self.once( 'connopen', onOpen );
-	function onOpen( e )
+	function onOpen( hostId )
 	{
-		console.log( 'connection open', e );
+		console.log( 'connection open', hostId );
+		self.id = hostId;
 		if ( self.onopen )
-			self.onopen( e );
+			self.onopen( hostId );
 		
 		if ( hostMeta )
 			self.updateMeta( hostMeta );
@@ -335,74 +395,6 @@ NetworkConn.prototype.handle = function( source, event ) {
 	});
 	self.emit( event.type, event.data, source );
 }
-
-NetworkConn.prototype.request = function( req, callback )
-{
-	var self = this;
-	var reqId = friendUP.tool.uid( 'req' );
-	self.once( reqId, reqBack );
-	var wrap = {
-		id  : reqId,
-		req : req,
-	};
-	self.send( 'request', wrap, sendBack );
-	
-	function sendBack( err )
-	{
-		if ( err ) {
-			callback( 'ERR_CONN_ERROR', null );
-			return;
-		}
-		
-		self.requestTimeouts[ reqId ] = setTimeout(
-			reqTimeout,
-			self.requestTimeout
-		);
-	}
-	
-	function reqBack( event )
-	{
-		var timeout = self.requestTimeouts[ reqId ];
-		if ( null != timeout ) {
-			clearTimeout( timeout );
-			delete self.requestTimeouts[ reqId ];
-		}
-		
-		if ( !event || ( !event.err && !event.res ))
-		{
-			callback( 'ERR_REQUEST_INVALID_RESPONSE', event );
-			return;
-		}
-		
-		callback( event.err, event.res );
-	}
-	
-	function reqTimeout()
-	{
-		console.log( 'request timed out', reqId );
-		delete self.requestTimeouts[ reqId ];
-		callback( 'ERR_REQUEST_TIMEOUT', null );
-	}
-}
-
-NetworkConn.prototype.handleConnectResult = function( err, res, callback )
-{
-	var self = this;
-	console.log( 'handleConnectResult', {
-		err : err,
-		res : res,
-		cb  : callback,
-	});
-	
-	if ( err ) {
-		callback( err, null );
-		return;
-	}
-	
-	// 
-}
-
-
 
 /* NetworkSocket
 

@@ -103,6 +103,7 @@ Application.saveChanges = function()
 	// Have hashed password and password is not dummy
 	else if( ge( 'HashedPassword' ) && ge( 'HashedPassword' ).value != '********' )
 		data.Password = 'HASHED' + Sha256.hash( ge( 'HashedPassword' ).value );
+		
 	if( ge( 'Path'      ) ) data.Path = ge( 'Path' ).value;
 	if( ge( 'Type'      ) ) data.Type = ge( 'Type' ).value; else if( Application.oldSettings && Application.oldSettings.Type ) data.Type = Application.oldSettings.Type;
 	if( ge( 'Workgroup' ) ) data.Workgroup = ge( 'Workgroup' ).value;
@@ -145,7 +146,7 @@ Application.saveChanges = function()
 			data[inps[a].id] = inps[a].value;
 		}
 	}
-	
+
 
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, dat )

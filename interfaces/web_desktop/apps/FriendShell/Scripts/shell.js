@@ -108,6 +108,9 @@ Application.receiveMessage = function( msg )
 			case 'listapplications':
 				this.view.sendMessage( { command: 'applicationlist', data: msg.data } );
 				break;
+			case 'settitle':
+				this.view.setFlag( 'title', msg.text );
+				break;
 		}
 	}
 };

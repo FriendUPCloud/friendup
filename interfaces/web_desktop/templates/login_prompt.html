@@ -102,9 +102,9 @@
 					
 					//track users login..
 					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', htmlentities( Trim( ge( 'Username' ).value ) ) );
-					if( parent.Workspace && parent.Workspace.keys )
+					if( parent.Workspace && parent.Workspace.encryption.keys )
 					{
-						parent.Workspace.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
+						parent.Workspace.encryption.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
 					}
 					parent.Workspace.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
@@ -259,17 +259,14 @@
 			{
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
-				if( location.protocol == 'https:' )
+				var j = new cAjax();
+				j.open( 'get', '/publickey/' );
+				j.onload = function()
 				{
-					var j = new cAjax();
-					j.open( 'get', '/publickey/' );
-					j.onload = function()
-					{
-						ge( 'publickey' ).value = this.responseText();
-					}
-					j.send();					
+					ge( 'publickey' ).value = this.responseText();
 				}
-			
+				j.send();
+
 				Application.applicationId = 'loginprompt';
 				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
 				{
@@ -289,7 +286,7 @@
 			}
 			setTimeout( loginNow, 150 );
 		</script>
-		<!--<script>
+		<script>
 		  
 			  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 			  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -297,7 +294,7 @@
 			  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 			  ga('create', 'UA-64441212-5', 'auto');
 			  ga('send', 'pageview');			  
-		  
-		</script>--
+			  ga( 'send', 'event', 'logindisplay', htmlentities( document.location.href ) );
+		</script>
 	</body>
 </html>

@@ -1064,6 +1064,7 @@ function receiveEvent( event, queued )
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			Application.username      = dataPacket.username;
+			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
 			// Initialize app frame
 			initApplicationFrame( dataPacket, event.origin );
@@ -2176,6 +2177,7 @@ Shell = function()
 		if( msg.shellSession )
 		{
 			this.shellSession = msg.shellSession;
+			this.shellSession.clientId = this.clientId;
 			this.number = msg.shellNumber;
 			this.pipeOutgoing = msg.pipeCallback;
 		}
@@ -2252,7 +2254,7 @@ Shell = function()
 		} );
 	}
 
-	this.evaluate = function( input, callback )
+	this.evaluate = function( input, callback, clientKey, restrictedPath )
 	{
 		if( !this.shellSession ) return;
 		if( this.output == 'console' ) console.log( 'Shell instance executing evaluate');
@@ -2274,6 +2276,8 @@ Shell = function()
 			command: 'evaluate',
 			input: input,
 			shellSession: this.shellSession,
+			clientKey: clientKey,
+			restrictedPath: restrictedPath,
 			callbackId: cb
 		} );
 	}
@@ -2730,29 +2734,41 @@ function Module( module )
 // Abstract FriendNetwork
 // TODO: Remove keys / sessions on quit!
 FriendNetwork = {
-	init: function( cb )
-	{
-		var self = this;
-		Application.sendMessage( {
-			type: 'friendnet',
-			method: 'addsession',
-			mode: this.type,
-			name: this.name,
-			callback: addCallback( function( msg )
-			{
-				self.key = msg.key;
-				cb();
-			} )
-		} );
-	},
-	list: function()
+	list: function( callback )
     {
 		Application.sendMessage( {
 			type: 'friendnet',
 			method: 'list',
-			callback: addCallback( function( msg )
+			callback: addCallback( function ( msg )
 			{
-				console.log( 'Listing connexions to Friend Network:', msg );
+				if ( callback ) callback( msg );
+			} )
+		} );
+	},
+	p2pConnect: function( name, data, callback )
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'p2pConnect',
+			name: name,
+			data: data,
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
+			} )
+		} );
+	},
+	p2pAcceptConnexion: function( key, accept, data, callback )
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'p2pAcceptConnexion',
+			key: key,
+			accept: accept,
+			data: data,
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
 			} )
 		} );
 	},
@@ -2762,85 +2778,121 @@ FriendNetwork = {
 			type: 'friendnet',
 			method: 'connect',
 			name: name,
-			callback: addCallback( callback )
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
+			} )
 		} );
 	},
-	host: function( name, serverListener )
+	disconnect: function ( key, callback )
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'disconnect',
+			key: key,
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
+			} )
+		} );
+	},
+	host: function( name, data, callback )
     {
 		Application.sendMessage( {
 			type: 'friendnet',
 			method: 'host',
 			name: name,
-			callback: addCallback( function( msg )
+			data: data,
+			callback: addCallback( function ( msg )
 			{
-				console.log( 'Friend Network hosting:', name );
-			} ),
-			listener: addPermanentCallback( serverListener )
+				if ( callback ) callback( msg );
+			} )
 		} );
 	},
-	dispose: function( name )
+	dispose: function( key, callback )
     {
 		Application.sendMessage( {
 			type: 'friendnet',
 			method: 'dispose',
-			name: name,
-			callback: addCallback( function( msg )
+			key: key,
+			callback: addCallback( function ( msg )
 			{
-				console.log( 'Friend Network dispose from:', key );
+				if ( callback ) callback( msg );
 			} )
 		} );
 	},
-	send: function( host, event, callback )
+	sendCredentials: function( key, password )
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'sendCredentials',
+			key: key,
+			password: password
+		} );
+	},
+	setHostPassword: function( key, password )
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'setHostPassword',
+			key: key,
+			password: password
+		} );
+	},
+	send: function( key, data, callback )
     {
-    	var self = this;
-    	if( !this.key )
-    	{
-    		this.type = 'client';
-    		this.name = Sha256.hash( ( Math.random() + ( Math.random() * Math.random() ) + ( new Date() ).getTime() ) + "" );
-    		this.init( function()
-    		{
-    			if( self.key ) return self.send( host, event, callback );
-    		} );
-    	}
 		Application.sendMessage( {
 			type: 'friendnet',
 			method: 'send',
-			host: host,
-			event: event,
-			key: this.key,
-			callback: addCallback( callback )
+			key: key,
+			data: data,
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
+			} )
 		} );
-    }
+    },
+	setPassword: function( key, password, callback )
+    {
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'setPassword',
+			key: key,
+			password: password,
+			callback: addCallback( function ( msg )
+			{
+				if ( callback ) callback( msg );
+			} )
+		} );
+    },
+	closeSession: function( key )
+    {
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'closeSession',
+			key: key
+		} );
+    },
+	closeApplication: function()
+  	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'closeApplication'
+		} );
+  	},
+	status: function()
+	{
+		Application.sendMessage( {
+			type: 'friendnet',
+			method: 'status'
+		} );
+	}
 };
 
 // Abstract dormant ------------------------------------------------------------
 // TODO: All these methods should trigger callbacks
 DormantMaster = {
 	doors: [],
-	// Connect application to Friend Network
-	connectToFriendNetwork: function( msg )
-	{
-		Application.sendMessage( {
-			type: 'dormantmaster',
-			method: 'connectfriendnetwork',
-			callback: addCallback( function( msg )
-			{
-				console.log( 'Connected to Friend Network:', msg );
-			} )
-		} );
-	},
-	// Disconnect application from Friend Network
-	disconnectFromFriendNetwork: function( msg )
-	{
-		Application.sendMessage( {
-			type: 'dormantmaster',
-			method: 'disconnectfriendnetwork',
-			callback: addCallback( function( msg )
-			{
-				console.log( 'Disconnected from Friend Network:', msg );
-			} )
-		} );
-	},
 	// Adds a doormant appdoor
 	addAppDoor: function( dormantDoorObject )
 	{
@@ -4282,7 +4334,6 @@ function InitTabs ( pdiv )
 }
 
 // Speech synthesis ------------------------------------------------------------
-
 // Say command
 if( typeof( Say ) == 'undefined' )
 {
@@ -4291,21 +4342,26 @@ if( typeof( Say ) == 'undefined' )
 		var v = speechSynthesis.getVoices();
 		var u = new SpeechSynthesisUtterance( string );
 		u.lang = language ? language : globalConfig.language;
-		for( var a = 0; a < v.length; a++ )
+		try
 		{
-			if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+			for( var a = 0; a < v.length; a++ )
 			{
-				u.lang = v[a].lang;
-				u.voice = v[a].voiceURI;
-				break;
-			}
-			else if( v[a].name == u.lang )
-			{
-				u.lang = v[a].lang;
-				u.voice = v[a].voiceURI;
-				break;
+				if( v[a].name == 'Google US English' && u.lang == 'en-US' )
+				{
+					u.lang = v[a].lang;
+					u.voice = v[a].voiceURI;
+					break;
+				}
+				else if( v[a].name == u.lang )
+				{
+					u.lang = v[a].lang;
+					u.voice = v[a].voiceURI;
+					break;
+				}
 			}
 		}
+		catch(e) { console.log( 'Could not set voice' ); }
+
 		speechSynthesis.speak( u );
 	}
 }
@@ -5819,28 +5875,42 @@ GuiDesklet = function()
 	 * Unhandled events will be passed to .onevent handler, if defined.
 	 *
 	 * @param event object
-	 * @param username host only, send event to specific username
+	 * @param usernames host only, send event to a list of specific usernames
 	 
 	 * @return void return value
 	 */
-	ns.SAS.prototype.send = function( event, username )
+	ns.SAS.prototype.send = function( event, usernames )
 	{
 		var self = this;
 		if ( !self.isHost )
 			username = undefined;
 		
-		var path = self.isHost ?
-			self.toClientsPath :
-			self.toHostPath;
+		usernames = usernames || undefined;
+		if ( 'string' === typeof( usernames ))
+			usernames = [ usernames ];
+		
+		if ( usernames && !usernames.forEach ) {
+			console.log( 'invalid usernames - must be array', usernames );
+			usernames = undefined;
+		}
+		
+		var path = null;
+		if ( self.isHost )
+			path = self.toClientsPath;
+		else
+			path = self.toHostPath;
 		
 		var msg = {
 			path : path,
 			data : {
-				sasid    : self.id,
-				msg      : event,
-				username : username,
+				sasid     : self.id,
+				msg       : event,
 			},
 		};
+		
+		if ( usernames )
+			msg.data.usernames = usernames;
+		
 		self.conn.send( msg );
 	}
 	

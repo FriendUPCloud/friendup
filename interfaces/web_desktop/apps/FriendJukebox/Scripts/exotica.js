@@ -65,6 +65,7 @@ Application.run = function( msg, iface )
 	}
 }
 
+// Redraws the main application pulldown menu
 Application.redrawMenu = function()
 {
 	this.mainView.setMenuItems( [
@@ -94,14 +95,14 @@ Application.redrawMenu = function()
 				},
 				{
 					name: i18n( 'i18n_toggle_mini_playlist' + ( this.miniplaylist ? '_hide' : '_show' ) ),
-					command: 'mini_playlist'
+					command: 'toggle_miniplaylist'
 				}
 			]
 		}
 	] );
 }
 
-// About exotica
+// About exotica view window
 Application.openAbout = function()
 {
 	if( this.aboutWindow ) return;
@@ -186,6 +187,7 @@ Application.editPlaylist = function()
 	f.load();
 }
 
+// Opens a playlist using a file dialog
 Application.openPlaylist = function()
 {
 	if( this.of ) return;
@@ -195,6 +197,8 @@ Application.openPlaylist = function()
 	}, '', 'load' );
 }
 
+// Adds items from an array to the playlist...
+// If no items are specified, you get the option of selecting from a file dialog
 Application.addToPlaylist = function( items )
 {
 	if( !items )
@@ -227,21 +231,27 @@ Application.addToPlaylist = function( items )
 	
 }
 
-// 
+// Receives events from OS and child windows
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
-		case 'mini_playlist':
-			this.mainView.sendMessage( { command: 'miniplaylist' } );
+		// Toggle the visibility of the mini playlist
+		case 'toggle_miniplaylist':
 			this.miniplaylist = this.miniplaylist ? false : true;
+			this.mainView.sendMessage( { command: 'toggle_miniplaylist' } );
+			this.receiveMessage( { command: 'mini_playlist' } );
+			this.redrawMenu();
+			break;
+		// Redraw the mini playlist
+		case 'mini_playlist':
 			this.mainView.setFlag( 'resize', true );
-			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'min-height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'max-height', this.miniplaylist ? 360 : 160 );
+			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'resize', false );
-			this.redrawMenu();
+			this.mainView.sendMessage( { command: 'miniplaylist', visibility: this.miniplaylist } );
 			break;
 		case 'about_exotica':
 			this.openAbout();

@@ -30,6 +30,7 @@ friend.io = friend.io || {};
 
 // Lets remember values
 var _windowStorage = [];
+var _viewGroups = {}; // Named list of groups
 var _viewHistory = []; // History of views that have been opened
 var _windowStorageLoaded = false;
 var movableViewIdSeed = 0;
@@ -161,6 +162,7 @@ function SetWindowContent( win, data )
 // Refresh the window and add/remove features
 function RefreshWindow( div, noresize )
 {
+	// We need the content element for the flags
 	if( div.content ) div = div.content;
 	if( div.flags )
 	{
@@ -887,6 +889,10 @@ function CloseView( win )
 	{
 		var count = 0;
 		
+		var isGroupMember = false;
+		if( win.groupMember )
+			isGroupMember = true;
+		
 		while( !HasClassname( win, 'View' ) && win != document.body )
 		{
 			win = win.parentNode;
@@ -909,14 +915,16 @@ function CloseView( win )
 		if ( window.regionWindow == div.content )
 			window.regionWindow = false;
 	
-		if ( div.parentNode )
+		if ( !isGroupMember && div.parentNode )
 		{
 			setTimeout( function()
 			{
 				if( div.parentNode )
 					div.parentNode.removeChild( div );
 			}, 500 );
+			
 			div.style.opacity = 0;
+			
 			// Do not click!
 			var ele = document.createElement( 'div' );
 			ele.style.position = 'absolute';
@@ -929,16 +937,15 @@ function CloseView( win )
 		}
 		
 		// Activate latest activated view
-		if( _viewHistory.length )
-			_ActivateWindow( _viewHistory[_viewHistory.length - 1] );
+		if( _viewHistory.length ) _ActivateWindow( _viewHistory[_viewHistory.length - 1] );
 		
-		if ( div )
+		if( div )
 		{
 			// Clean up ids
 			var o = [];
 			for( var b in movableWindows )
 			{
-				if ( movableWindows[b] != div )
+				if( movableWindows[b] != div )
 				{
 					o[b] = movableWindows[b];
 				}
@@ -1139,7 +1146,6 @@ var View = function( args )
 	
 		// If we're making a movable window with a unique id, the make sure
 		// it doesn't exist, in case, just return the existing window
-	
 		var screen = false;
 		var parentWindow = false;
 		var titleStr = '';
@@ -1151,9 +1157,7 @@ var View = function( args )
 			if( typeof( flags.title ) != 'undefined' )
 				titleStr = flags.title;
 			if( typeof( flags.screen ) != 'undefined' )
-			{
 				screen = flags.screen;
-			}
 			if( typeof( flags.parentView ) != 'undefined' )
 				parentWindow = flags.parentView;
 		}
@@ -1273,6 +1277,11 @@ var View = function( args )
 		this._window = contn;
 		contn.className = 'Content';
 		contn.innerHTML = html;
+		
+		// Assign content element to both div and view object
+		div.content = contn;
+		self.content = contn;
+		
 		div.addEventListener( 'touchstart', function( e )
 		{
 			if( window.isMobile && _windowMenuShowing )
@@ -1305,408 +1314,422 @@ var View = function( args )
 					case 'volume':
 						if( v ) div.setAttribute( 'volume', 'true' ); 
 						break;
+					case 'group':
+						if( !_viewGroups[ v ] )
+							_viewGroups[ v ] = { name: v, main: div, members: [ div ] };
+						else _viewGroups[ v ].members.push( div );
 					default:
-						contn.flags[a] = v; 
+						contn.flags[a] = v;
 						break;
 				}
 			}
 		}
-		else flags = new Object ();
+		else flags = {};
 	
-		var titleSpan = document.createElement ( 'span' );
-		titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
-		titleSpan.addEventListener( 'touchstart', function( e )
+		
+		// Group control
+		var group = false;
+		if( flags.group && _viewGroups[ flags.group ] )
+			group = _viewGroups[ flags.group ];
+		
+		if( !group || group.main == div )
 		{
-			if( window.isMobile && _windowMenuShowing )
-			{
-				HideWindowMenu();
-				_ActivateWindow( div );
-				if( !div.getAttribute( 'maximized' ) )
-				{
-					zoom.onclick();
-				}
-				return cancelBubble( e );
-			}
-		} );
-		
-		contn.applicationId = applicationId;
-		
-		if ( div.className.indexOf ( ' View' ) < 0 )
-			div.className += ' View';
-		div.style.zIndex = movableHighestZindex++;
-		
-		div.innerHTML = '';
-		
-		if ( !div.id )
-		{
-			// ID must be unique
-			var num = 0;
-			var oid = id;
-			while( ge( id ) )
-				id = oid + '_' + ++num;
-			div.id = id;
-			movableWindows[ div.id ] = div;
-		}
-		
-		// Volume gauge
-		if( flags.volume && flags.volume != false )
-		{
-			var gauge = document.createElement( 'div' );
-			gauge.className = 'VolumeGauge';
-			gauge.innerHTML = '<div class="Inner"><div class="Pct"></div></div>';
-			div.appendChild( gauge );
-			div.volumeGauge = gauge.getElementsByTagName( 'div' )[0];
-		}
-		
-		// Moveoverlay
-		var molay = document.createElement ( 'div' );
-		molay.className = 'MoveOverlay';
-		molay.onmouseup = function()
-		{
-			workspaceMenu.close();
-		}
-		
-		// Title
-		var title = document.createElement ( 'div' );
-		title.className = 'Title';
-		
-		// Resize
-		var resize = document.createElement ( 'div' );
-		resize.className = 'Resize';
-		resize.style.position = 'absolute';
-		resize.style.width = '14px';
-		resize.style.height = '14px';
-		resize.style.zIndex = '10';
-		
-		var inDiv = document.createElement( 'div' );
-		
-		title.appendChild( inDiv );
-		
-		title.onclick = function ( e ) { return cancelBubble ( e ); }
-		title.ondragstart = function ( e ) { return cancelBubble ( e ); }
-		title.onselectstart = function ( e ) { return cancelBubble ( e ); }
-		
-		// Simulate
-		if( window.isMobile )
-		{
+			var titleSpan = document.createElement ( 'span' );
+			titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
 			titleSpan.addEventListener( 'touchstart', function( e )
 			{
-				// Only cancel touch here when there's a menu!
-				if( contn.menu )
+				if( window.isMobile && _windowMenuShowing )
 				{
-					title.onmousedown( e, 'simualted' );
-					cancelBubble( e );
+					HideWindowMenu();
+					_ActivateWindow( div );
+					if( !div.getAttribute( 'maximized' ) )
+					{
+						zoom.onclick();
+					}
+					return cancelBubble( e );
 				}
 			} );
-		}
 		
-		title.onmousedown = function( e, mode )
-		{ 
-			if ( !e ) e = window.event;
+			contn.applicationId = applicationId;
 		
-			// Blocker
-			if ( div.content.blocker )
+			if ( div.className.indexOf ( ' View' ) < 0 )
+				div.className += ' View';
+			div.style.zIndex = movableHighestZindex++;
+		
+			div.innerHTML = '';
+		
+			if ( !div.id )
 			{
-				_ActivateWindow ( div.content.blocker.getWindowElement ().parentNode, false, e );
+				// ID must be unique
+				var num = 0;
+				var oid = id;
+				while( ge( id ) )
+					id = oid + '_' + ++num;
+				div.id = id;
+				movableWindows[ div.id ] = div;
+			}
+		
+			// Volume gauge
+			if( flags.volume && flags.volume != false )
+			{
+				var gauge = document.createElement( 'div' );
+				gauge.className = 'VolumeGauge';
+				gauge.innerHTML = '<div class="Inner"><div class="Pct"></div></div>';
+				div.appendChild( gauge );
+				div.volumeGauge = gauge.getElementsByTagName( 'div' )[0];
+			}
+		
+			// Moveoverlay
+			var molay = document.createElement ( 'div' );
+			molay.className = 'MoveOverlay';
+			molay.onmouseup = function()
+			{
+				workspaceMenu.close();
+			}
+		
+			// Title
+			var title = document.createElement ( 'div' );
+			title.className = 'Title';
+		
+			// Resize
+			var resize = document.createElement ( 'div' );
+			resize.className = 'Resize';
+			resize.style.position = 'absolute';
+			resize.style.width = '14px';
+			resize.style.height = '14px';
+			resize.style.zIndex = '10';
+		
+			var inDiv = document.createElement( 'div' );
+		
+			title.appendChild( inDiv );
+		
+			title.onclick = function ( e ) { return cancelBubble ( e ); }
+			title.ondragstart = function ( e ) { return cancelBubble ( e ); }
+			title.onselectstart = function ( e ) { return cancelBubble ( e ); }
+		
+			// Simulate
+			if( window.isMobile )
+			{
+				titleSpan.addEventListener( 'touchstart', function( e )
+				{
+					// Only cancel touch here when there's a menu!
+					if( contn.menu )
+					{
+						title.onmousedown( e, 'simualted' );
+						cancelBubble( e );
+					}
+				} );
+			}
+		
+			title.onmousedown = function( e, mode )
+			{
+				if ( !e ) e = window.event;
+		
+				// Blocker
+				if ( div.content.blocker )
+				{
+					_ActivateWindow ( div.content.blocker.getWindowElement ().parentNode, false, e );
+					return cancelBubble ( e );
+				}
+		
+				// Init workspace menu from title text (only active windows for mobile)
+				var t = e.target ? e.target : e.srcElement;
+				if(
+					contn.menu && t == titleSpan && div.className.indexOf( ' Active' ) > 0 &&
+					( window.isMobile || IsSharedApp() )
+				)
+				{
+					// Use correct button
+					if( e.button != 0 && !mode ) return cancelBubble( e );
+			
+					if( !title.popup )
+					{
+						var popup = document.createElement( 'div' );
+						popup.className = 'PopupMenuHidden';
+						title.appendChild( popup );
+						title.popup = popup;
+					}
+					// Make the menu appear after 1 second
+
+					flags.screen.menuTimeout = setTimeout( function()
+					{
+						workspaceMenu.show( title.popup, 'simulate' );
+						ge( 'MobileMenu' ).classList.add( 'Visible' );
+						ge( 'MobileMenu' ).scrollTop = 0;
+						_addMobileMenuClose();
+					}, 1000 );
+					return cancelBubble( e );
+				}
+		
+		
+				// Use correct button
+				if( e.button != 0 && !mode ) return cancelBubble( e );
+		
+				var y = e.clientY ? e.clientY : e.pageYOffset;
+				var x = e.clientX ? e.clientX : e.pageXOffset;
+				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
+				window.currentMovable = this.parentNode;
+				this.parentNode.offx = x - this.parentNode.offsetLeft;
+				this.parentNode.offy = y - this.parentNode.offsetTop;
+				_ActivateWindow( this.parentNode, false, e );
+		
+				return cancelBubble( e );
+			}
+		
+			// Pawel must win!
+			title.ondblclick = function( e )
+			{
+				_WindowToFront( this.parentNode );
+			}
+		
+			// Clicking on window
+			div.onmousedown = function( e )
+			{
+				_ActivateWindow( this, false, e );
+				this.setAttribute( 'moving', 'moving' );
+			}
+		
+			div.ontouchstart = function( e )
+			{
+				this.setAttribute( 'moving', 'moving' );
+			}
+		
+			// Depth gadget
+			var depth = document.createElement ( 'div' );
+			depth.className = 'Depth';
+			depth.onmousedown = function ( e ) { return e.stopPropagation(); }
+			depth.ondragstart = function ( e ) { return e.stopPropagation(); }
+			depth.onselectstart = function ( e ) { return e.stopPropagation(); }
+			depth.window = div;
+			depth.onclick = function ( e )
+			{
+				// Calculate lowest and highest z-index
+				var low = 99999999;	var high = 0;
+				for( var a in movableWindows )
+				{
+					var maxm = movableWindows[a].getAttribute( 'maximized' );
+					if( maxm && maxm.length )
+						continue;
+					var ind = parseInt( movableWindows[a].style.zIndex );
+					if( ind < low ) low = ind;
+					if( ind > high ) high = ind;
+				}
+				movableHighestZindex = high;
+		
+				// If we are below, get us on top
+				if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
+				{
+					this.window.style.zIndex = ++movableHighestZindex;
+				}
+				// If not, don't
+				else
+				{
+					this.window.style.zIndex = 100;
+					var highest = 0;
+					for( var a in movableWindows )
+					{
+						if( movableWindows[a] != this.window )
+						{
+							movableWindows[a].style.zIndex = parseInt( movableWindows[a].style.zIndex ) + 1;
+							if ( parseInt( movableWindows[a].style.zIndex ) > highest )
+								highest = parseInt( movableWindows[a].style.zIndex );
+						}
+					}
+					movableHighestZindex = highest;
+				}
+				_ActivateWindow( this.window, false, e );
+		
+				// Fix it!
+				UpdateWindowContentSize( div );
+		
 				return cancelBubble ( e );
 			}
 		
-			// Init workspace menu from title text (only active windows for mobile)
-			var t = e.target ? e.target : e.srcElement;
-			if( 
-				contn.menu && t == titleSpan && div.className.indexOf( ' Active' ) > 0 &&
-				( window.isMobile || IsSharedApp() )
-			)
+			// Bottom of the window
+			var bottombar = document.createElement ( 'div' );
+			bottombar.className = 'BottomBar';
+		
+			// Left border of window
+			var leftbar = document.createElement ( 'div' );
+			leftbar.className = 'LeftBar';
+		
+			// Left border of window
+			var rightbar = document.createElement ( 'div' );
+			rightbar.className = 'RightBar';
+		
+			// Zoom gadget
+			zoom = document.createElement ( 'div' );
+			zoom.className = 'Zoom';
+			zoom.onmousedown = function ( e ) { return cancelBubble ( e ); }
+			zoom.ondragstart = function ( e ) { return cancelBubble ( e ); }
+			zoom.onselectstart = function ( e ) { return cancelBubble ( e ); }
+			zoom.mode = 'normal';
+			zoom.window = div;
+			zoom.onclick = function ( e )
 			{
-				// Use correct button
-				if( e.button != 0 && !mode ) return cancelBubble( e );
+				if ( this.mode == 'normal' )
+				{
+					if( movableHighestZindex > parseInt( this.window.style.zIndex ) )
+						this.window.style.zIndex = ++movableHighestZindex;
 			
-				if( !title.popup )
-				{
-					var popup = document.createElement( 'div' );
-					popup.className = 'PopupMenuHidden';
-					title.appendChild( popup );
-					title.popup = popup;
-				}
-				// Make the menu appear after 1 second
-
-				flags.screen.menuTimeout = setTimeout( function()
-				{
-					workspaceMenu.show( title.popup, 'simulate' );
-					ge( 'MobileMenu' ).classList.add( 'Visible' );
-					ge( 'MobileMenu' ).scrollTop = 0;
-					_addMobileMenuClose();
-				}, 1000 );
-				return cancelBubble( e );
-			}
-		
-		
-			// Use correct button
-			if( e.button != 0 && !mode ) return cancelBubble( e );
-		
-			var y = e.clientY ? e.clientY : e.pageYOffset;
-			var x = e.clientX ? e.clientX : e.pageXOffset;
-			window.mouseDown = FUI_MOUSEDOWN_WINDOW; 
-			window.currentMovable = this.parentNode;
-			this.parentNode.offx = x - this.parentNode.offsetLeft;
-			this.parentNode.offy = y - this.parentNode.offsetTop;
-			_ActivateWindow( this.parentNode, false, e );
-		
-			return cancelBubble( e );
-		}
-		
-		// Pawel must win!
-		title.ondblclick = function( e )
-		{
-			_WindowToFront( this.parentNode );
-		}
-		
-		// Clicking on window
-		div.onmousedown = function( e )
-		{
-			_ActivateWindow( this, false, e );
-			this.setAttribute( 'moving', 'moving' );
-		}
-		
-		div.ontouchstart = function( e )
-		{
-			this.setAttribute( 'moving', 'moving' );
-		}
-		
-		// Depth gadget
-		var depth = document.createElement ( 'div' );
-		depth.className = 'Depth';
-		depth.onmousedown = function ( e ) { return e.stopPropagation(); }
-		depth.ondragstart = function ( e ) { return e.stopPropagation(); }
-		depth.onselectstart = function ( e ) { return e.stopPropagation(); }
-		depth.window = div;
-		depth.onclick = function ( e )
-		{ 
-			// Calculate lowest and highest z-index
-			var low = 99999999;	var high = 0;
-			for( var a in movableWindows )
-			{
-				var maxm = movableWindows[a].getAttribute( 'maximized' );
-				if( maxm && maxm.length )
-					continue;
-				var ind = parseInt( movableWindows[a].style.zIndex );
-				if( ind < low ) low = ind;
-				if( ind > high ) high = ind;
-			}
-			movableHighestZindex = high;
-		
-			// If we are below, get us on top
-			if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
-			{
-				this.window.style.zIndex = ++movableHighestZindex; 
-			}
-			// If not, don't
-			else
-			{
-				this.window.style.zIndex = 100;
-				var highest = 0;
-				for( var a in movableWindows )
-				{
-					if( movableWindows[a] != this.window )
+					_ActivateWindow( this.window, false, e );
+			
+					if( window.isMobile )
 					{
-						movableWindows[a].style.zIndex = parseInt( movableWindows[a].style.zIndex ) + 1;
-						if ( parseInt( movableWindows[a].style.zIndex ) > highest )
-							highest = parseInt( movableWindows[a].style.zIndex );
+						this.window.setAttribute( 'maximized', 'true' );
 					}
-				}
-				movableHighestZindex = highest;
-			}
-			_ActivateWindow( this.window, false, e );
-		
-			// Fix it!
-			UpdateWindowContentSize( div );
-		
-			return cancelBubble ( e );
-		}
-		
-		// Bottom of the window
-		var bottombar = document.createElement ( 'div' );
-		bottombar.className = 'BottomBar';
-		
-		// Left border of window
-		var leftbar = document.createElement ( 'div' );
-		leftbar.className = 'LeftBar';
-		
-		// Left border of window
-		var rightbar = document.createElement ( 'div' );
-		rightbar.className = 'RightBar';
-		
-		// Zoom gadget
-		zoom = document.createElement ( 'div' );
-		zoom.className = 'Zoom';
-		zoom.onmousedown = function ( e ) { return cancelBubble ( e ); }
-		zoom.ondragstart = function ( e ) { return cancelBubble ( e ); }
-		zoom.onselectstart = function ( e ) { return cancelBubble ( e ); }
-		zoom.mode = 'normal';
-		zoom.window = div;
-		zoom.onclick = function ( e )
-		{
-			if ( this.mode == 'normal' )
-			{
-				if( movableHighestZindex > parseInt( this.window.style.zIndex ) )
-					this.window.style.zIndex = ++movableHighestZindex;
-			
-				_ActivateWindow( this.window, false, e );
-			
-				if( window.isMobile )
-				{
-					this.window.setAttribute( 'maximized', 'true' );
-				}
-				else
-				{
-					var titleh = (GetTitleBar()?GetTitleBar().offsetHeight:0);
-					this.prevLeft = parseInt ( this.window.style.left );
-					this.prevTop = parseInt ( this.window.style.top );
-					this.prevWidth = this.window.offsetWidth;
-					this.prevHeight = this.window.offsetHeight;
-					this.window.style.top = titleh + 'px';
-					this.window.style.left = '0px';
-					var wid = 0; var hei = 0;
-					if( this.window.content.flags.screen )
+					else
 					{
-						var contn = this.window.content;
-						var sbar = 0;
-						if( contn.flags.screen.div == Ge( 'DoorsScreen' ) )
-							sbar = GetStatusbarHeight( contn.flags.screen );
-						wid = contn.flags.screen.div.offsetWidth;
-						hei = contn.flags.screen.div.offsetHeight - titleh - sbar;
-					}
-					ResizeWindow( this.window, wid, hei );
-				}
-				this.mode = 'maximized';
-			}
-			else
-			{
-				this.mode = 'normal';
-				if( window.isMobile )
-				{
-					this.window.setAttribute( 'maximized', '' );
-				}
-				else
-				{
-					this.window.style.top = this.prevTop + 'px';
-					this.window.style.left = this.prevLeft + 'px';
-					ResizeWindow( this.window, this.prevWidth, this.prevHeight );
-				}
-			}
-			// Do resize events
-			if( this.window.content && this.window.content.events )
-			{
-				if( typeof(this.window.content.events['resize']) != 'undefined' )
-				{
-					for( var a = 0; a < this.window.content.events['resize'].length; a++ )
-					{
-						this.window.content.events['resize'][a]();
-					}
-				}
-			}
-			return cancelBubble( e );
-		}
-		zoom.addEventListener( 'touchstart', zoom.onclick, false );
-		
-		resize.onclick = function( e ) { return cancelBubble ( e ); }
-		resize.ondragstart = function( e ) { return cancelBubble ( e ); }
-		resize.onselectstart = function( e ) { return cancelBubble ( e ); }
-		resize.window = div;
-		resize.onmousedown = function( e )
-		{
-			// Offset based on the containing window
-			this.offx = windowMouseX;
-			this.offy = windowMouseY;
-			this.wwid = div.offsetWidth;
-			this.whei = div.offsetHeight;
-		
-			window.mouseDown = FUI_MOUSEDOWN_RESIZE;
-			window.currentMovable = this.parentNode;
-			_ActivateWindow( this.parentNode, false, e );
-			this.window.zoom.mode = 'normal';
-			return cancelBubble ( e );
-		}
-		
-		// remember position
-		div.memorize = function ()
-		{	
-			var wenable = this.content && this.content.flags && this.content.flags.resize ? true : false;
-		
-			// True if we're to enable memory
-			if ( this.content.flags && this.content.flags.memorize )
-				wenable = true;
-			
-			var wwi = this.content.offsetWidth;
-			var hhe = div.offsetHeight - GetElementHeight( this.titleBar ) - GetElementHeight( this.bottombar );
-			if( flags.volume && div.volumeGauge )
-			{
-				wwi += GetElementWidth( div.volumeGauge ) + FUI_WINDOW_MARGIN;
-			}
-			
-			// Update information in the window storage object
-			var d = GetWindowStorage( this.uniqueId );
-			d.top = this.offsetTop;
-			d.left = this.offsetLeft;
-			d.width = wenable ? wwi : false;
-			d.height = wenable ? hhe : false;
-			SetWindowStorage( this.uniqueId, d );
-		}
-		
-		var minimize = document.createElement ( 'div' );
-		minimize.className = 'Minimize';
-		minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
-		minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
-		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
-		minimize.onclick = function ( e )
-		{
-			_ActivateWindow( div, false, e );
-			if( div.windowObject && ( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && ge( 'Taskbar' ) )
-			{
-				var t = ge( 'Taskbar' );
-				for( var tel = 0; tel < t.childNodes.length; tel++ )
-				{
-					if( t.childNodes[tel].window == div )
-					{
-						t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-						return;
-					}
-				}
-			}
-			// Try to use the dock
-			if( globalConfig.viewList == 'docked' )
-			{
-				for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
-				{
-					var ch = Workspace.mainDock.dom.childNodes[ u ];
-					// Check the view list
-					if( ch.classList.contains( 'ViewList' ) )
-					{
-						for( var z = 0; z < ch.childNodes.length; z++ )
+						var titleh = (GetTitleBar()?GetTitleBar().offsetHeight:0);
+						this.prevLeft = parseInt ( this.window.style.left );
+						this.prevTop = parseInt ( this.window.style.top );
+						this.prevWidth = this.window.offsetWidth;
+						this.prevHeight = this.window.offsetHeight;
+						this.window.style.top = titleh + 'px';
+						this.window.style.left = '0px';
+						var wid = 0; var hei = 0;
+						if( this.window.content.flags.screen )
 						{
-							var cj = ch.childNodes[ z ];
-							if( cj.viewId && movableWindows[ cj.viewId ] == div )
-							{
-								return cj.onclick();
-							}
+							var cnt2 = this.window.content;
+							var sbar = 0;
+							if( cnt2.flags.screen.div == Ge( 'DoorsScreen' ) )
+								sbar = GetStatusbarHeight( contn.flags.screen );
+							wid = cnt2.flags.screen.div.offsetWidth;
+							hei = cnt2.flags.screen.div.offsetHeight - titleh - sbar;
+						}
+						ResizeWindow( this.window, wid, hei );
+					}
+					this.mode = 'maximized';
+				}
+				else
+				{
+					this.mode = 'normal';
+					if( window.isMobile )
+					{
+						this.window.setAttribute( 'maximized', '' );
+					}
+					else
+					{
+						this.window.style.top = this.prevTop + 'px';
+						this.window.style.left = this.prevLeft + 'px';
+						ResizeWindow( this.window, this.prevWidth, this.prevHeight );
+					}
+				}
+				// Do resize events
+				if( this.window.content && this.window.content.events )
+				{
+					if( typeof(this.window.content.events['resize']) != 'undefined' )
+					{
+						for( var a = 0; a < this.window.content.events['resize'].length; a++ )
+						{
+							this.window.content.events['resize'][a]();
 						}
 					}
-					// Check applications
-					if( ch.executable )
+				}
+				return cancelBubble( e );
+			}
+			zoom.addEventListener( 'touchstart', zoom.onclick, false );
+		
+			resize.onclick = function( e ) { return cancelBubble ( e ); }
+			resize.ondragstart = function( e ) { return cancelBubble ( e ); }
+			resize.onselectstart = function( e ) { return cancelBubble ( e ); }
+			resize.window = div;
+			resize.onmousedown = function( e )
+			{
+				// Offset based on the containing window
+				this.offx = windowMouseX;
+				this.offy = windowMouseY;
+				this.wwid = div.offsetWidth;
+				this.whei = div.offsetHeight;
+		
+				window.mouseDown = FUI_MOUSEDOWN_RESIZE;
+				window.currentMovable = this.parentNode;
+				_ActivateWindow( this.parentNode, false, e );
+				this.window.zoom.mode = 'normal';
+				return cancelBubble ( e );
+			}
+		
+			// remember position
+			div.memorize = function ()
+			{
+				var wenable = this.content && this.content.flags && this.content.flags.resize ? true : false;
+		
+				// True if we're to enable memory
+				if ( this.content.flags && this.content.flags.memorize )
+					wenable = true;
+			
+				var wwi = this.content.offsetWidth;
+				var hhe = div.offsetHeight - GetElementHeight( this.titleBar ) - GetElementHeight( this.bottombar );
+				if( flags.volume && div.volumeGauge )
+				{
+					wwi += GetElementWidth( div.volumeGauge ) + FUI_WINDOW_MARGIN;
+				}
+			
+				// Update information in the window storage object
+				var d = GetWindowStorage( this.uniqueId );
+				d.top = this.offsetTop;
+				d.left = this.offsetLeft;
+				d.width = wenable ? wwi : false;
+				d.height = wenable ? hhe : false;
+			
+				SetWindowStorage( this.uniqueId, d );
+			}
+		
+			var minimize = document.createElement ( 'div' );
+			minimize.className = 'Minimize';
+			minimize.onmousedown = function ( e ) { return cancelBubble ( e ); }
+			minimize.ondragstart = function ( e ) { return cancelBubble ( e ); }
+			minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
+			minimize.onclick = function ( e )
+			{
+				_ActivateWindow( div, false, e );
+				if( div.windowObject && ( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && ge( 'Taskbar' ) )
+				{
+					var t = ge( 'Taskbar' );
+					for( var tel = 0; tel < t.childNodes.length; tel++ )
 					{
-						for( var r = 0; r < Workspace.applications.length; r++ )
+						if( t.childNodes[tel].window == div )
 						{
-							var app = Workspace.applications[ r ];
-							if( app.applicationName == ch.executable )
+							t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+							return;
+						}
+					}
+				}
+				// Try to use the dock
+				if( globalConfig.viewList == 'docked' )
+				{
+					for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
+					{
+						var ch = Workspace.mainDock.dom.childNodes[ u ];
+						// Check the view list
+						if( ch.classList.contains( 'ViewList' ) )
+						{
+							for( var z = 0; z < ch.childNodes.length; z++ )
 							{
-								if( app.windows )
+								var cj = ch.childNodes[ z ];
+								if( cj.viewId && movableWindows[ cj.viewId ] == div )
 								{
-									for( var t in app.windows )
+									return cj.onclick();
+								}
+							}
+						}
+						// Check applications
+						if( ch.executable )
+						{
+							for( var r = 0; r < Workspace.applications.length; r++ )
+							{
+								var app = Workspace.applications[ r ];
+								if( app.applicationName == ch.executable )
+								{
+									if( app.windows )
 									{
-										if( app.windows[t] == div.windowObject )
+										for( var t in app.windows )
 										{
-											Workspace.mainDock.toggleExecutable( ch.executable );
-											return true;
+											if( app.windows[t] == div.windowObject )
+											{
+												Workspace.mainDock.toggleExecutable( ch.executable );
+												return true;
+											}
 										}
 									}
 								}
@@ -1715,427 +1738,394 @@ var View = function( args )
 					}
 				}
 			}
-		}
 	
-		var close = document.createElement ( 'div' );
-		close.className = 'Close';
-		close.onmousedown = function( e ) { return cancelBubble( e ); }
-		close.ondragstart = function( e ) { return cancelBubble( e ); }
-		close.onselectstart = function( e ) { return cancelBubble( e ); }
-		close.onclick = function( e )
-		{
-			// On mobile, you get a window menu instead
-			if( window.isMobile )
+			var close = document.createElement ( 'div' );
+			close.className = 'Close';
+			close.onmousedown = function( e ) { return cancelBubble( e ); }
+			close.ondragstart = function( e ) { return cancelBubble( e ); }
+			close.onselectstart = function( e ) { return cancelBubble( e ); }
+			close.onclick = function( e )
 			{
-				if( _windowMenuShowing )
+				// On mobile, you get a window menu instead
+				if( window.isMobile )
 				{
-					executeClose();
+					if( _windowMenuShowing )
+					{
+						executeClose();
+						return cancelBubble( e );
+					}
+					ShowWindowMenu();
 					return cancelBubble( e );
 				}
-				ShowWindowMenu();
-				return cancelBubble( e );
-			}
-			function executeClose()
-			{
-				if( div.windowObject )
+				function executeClose()
 				{
-					var wo = div.windowObject;
-					for( var a = 0; a < wo.childWindows.length; a++ )
+					if( div.windowObject )
 					{
-						if( wo.childWindows[a]._window )
+						var wo = div.windowObject;
+						for( var a = 0; a < wo.childWindows.length; a++ )
 						{
-							if( wo.childWindows[a]._window.windowObject )
+							if( wo.childWindows[a]._window )
 							{
-								wo.childWindows[a]._window.windowObject.close();
+								if( wo.childWindows[a]._window.windowObject )
+								{
+									wo.childWindows[a]._window.windowObject.close();
+								}
+								else CloseView ( wo.childWindows[a]._window );
 							}
-							else CloseView ( wo.childWindows[a]._window );
+							else
+							{
+								CloseView( wo.childWindows[a] );
+							}
 						}
-						else 
-						{
-							CloseView( wo.childWindows[a] );
-						}
+						wo.close();
 					}
-					wo.close();
 				}
+				executeClose();
 			}
-			executeClose();
-		}
 	
-		// Add all
-		inDiv.appendChild( depth );
-		inDiv.appendChild( minimize );
-		inDiv.appendChild( zoom );
-		inDiv.appendChild( close );
-		inDiv.appendChild( titleSpan );
+			// Add all
+			inDiv.appendChild( depth );
+			inDiv.appendChild( minimize );
+			inDiv.appendChild( zoom );
+			inDiv.appendChild( close );
+			inDiv.appendChild( titleSpan );
 
-		div.depth     = depth;
-		div.zoom      = zoom;
-		div.close     = close;
-		div.titleBar  = title;
-		div.resize    = resize;
-		div.bottombar = bottombar;
-		div.leftbar   = leftbar;
-		div.rightbar  = rightbar;
-		div.minimize  = minimize;
+			div.depth     = depth;
+			div.zoom      = zoom;
+			div.close     = close;
+			div.titleBar  = title;
+			div.resize    = resize;
+			div.bottombar = bottombar;
+			div.leftbar   = leftbar;
+			div.rightbar  = rightbar;
+			div.minimize  = minimize;
 
-		div.appendChild ( title );
-		div.titleDiv = title;
-		div.appendChild ( resize );
-		div.appendChild ( bottombar );
-		div.appendChild ( leftbar );
-		div.appendChild ( rightbar );
+			div.appendChild ( title );
+			div.titleDiv = title;
+			div.appendChild ( resize );
+			div.appendChild ( bottombar );
+			div.appendChild ( leftbar );
+			div.appendChild ( rightbar );
 	
-		// Empty the window menu
-		contn.menu = false;
+			// Empty the window menu
+			contn.menu = false;
 	
-		// Null out blocker window (if we have one)
-		contn.blocker = false;
+			// Null out blocker window (if we have one)
+			contn.blocker = false;
 	
-		div.refreshWindow = function ()
-		{
-			// Check scrolling
-			var divs = this.content.getElementsByTagName ( 'div' );
-			var contH = this.content.offsetHeight;
-			var mh = contH;
-			// Scrolling vertical
-			var scroller = false;
-			for( var a = 0; a < divs.length; a++ )
+			div.refreshWindow = function ()
 			{
-				if( divs[a].className == 'Scroller' )
+				// Check scrolling
+				var divs = this.content.getElementsByTagName ( 'div' );
+				var contH = this.content.offsetHeight;
+				var mh = contH;
+				// Scrolling vertical
+				var scroller = false;
+				for( var a = 0; a < divs.length; a++ )
 				{
-					scroller = divs[a];
-					break;
+					if( divs[a].className == 'Scroller' )
+					{
+						scroller = divs[a];
+						break;
+					}
 				}
 			}
-		}
 	
-		div.appendChild( contn );
-		div.appendChild( molay );
+			div.appendChild( contn );
+			div.appendChild( molay );
 	
-		div.content = contn;
-	
-		// FUI_WINDOW_MARGIN is the bottom border
-		div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
-
-		var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-		var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	
-		movableWindowCount++;
-		_ActivateWindow( div );
-	
-		div.content.events = new Array ();
-		div.content.AddEvent = function( event, func )
-		{
-			if ( typeof(this.events[event]) == 'undefined' )
-				this.events[event] = new Array ();
-			this.events[event].push( func );
-			return func;
-		}
-		div.content.RemoveEvent = function( event, func )
-		{
-			if( typeof( this.events[event] ) == 'undefined' ) return false;
-			var o = [];
-			var found = false;
-			for( var a in this.events[event] )
-			{
-				if( this.events[event][a] != func )
-				{
-					o.push( this.events[event][a] );
-				}
-				else found = true;
-			}
-			this.events[event] = o;
-			return found;
-		}
-	
-		// Assign the move layer
-		div.moveoverlay = molay;
-	
-		// Also content must have it
-		div.uniqueId = uniqueId;
-		div.viewId = div.id;
-		div.content.viewId = div.id;
-		div.content.uniqueId = uniqueId;
-	
-		var leftSet = false;
-		var topSet = false;
-		var wp = GetWindowStorage( div.uniqueId );
-		if ( wp )
-		{
-			if( window.isMobile )
-			{
-				if ( div.content.flags && div.content.flags.memorize )
-				{
-					height = wp.height;
-					width = wp.width;
-					ResizeWindow( div, width, height );
-				}
-			}
-			else
-			{
-				if( wp.top < hh ) 
-				{
-					div.style.top = wp.top + 'px';
-					topSet = true;
-				}
-				if( wp.left < ww )
-				{
-					div.style.left = wp.left + 'px';
-					leftSet = true;
-				}
-		
-				if ( div.content.flags && div.content.flags.memorize )
-				{
-					height = wp.height;
-					width = wp.width;
-					ResizeWindow( div, width, height );
-				}
-			}
-		}
-		if( !leftSet && div.content.flags.left )
-		{
-			leftSet = true;
-			div.style.left = div.content.flags.left + 'px';
-		}
-		if( !topSet && div.content.flags.top )
-		{
-			topSet = true;
-			div.style.top = div.content.flags.top + 'px';
-		}
-	
-		// Only first window on shared apps, do full width and height
-		if( ( window.isMobile && div.content.flags['mobileMaximised'] ) || ( window.movableWindows.length == 0 && IsSharedApp() ) )
-		{
-			zoom.prevWidth = width;
-			zoom.prevHeight = height;
-			zoom.mode = 'maximized';
-			width = window.innerWidth; height = window.innerHeight;
+			// FUI_WINDOW_MARGIN is the bottom border
 			div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
-		
-			zoom.window.setAttribute( 'maximized', 'true' );
-		}
+
+			var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+			var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 	
-		// Triggers
-		if( parentWindow )
-		{
-			parentWindow.addChildWindow( div );
-		}
+			movableWindowCount++;
+			_ActivateWindow( div );
 	
-		// Do a simple refresh and end func
-		div.refreshWindow();
-	
-		// Real window is the real parent!
-		if( this.nativeWindow )
-		{
-			var d = document.createElement( 'div' );
-			d.className = 'NativeViewContainer';
-			divParent = d;
-			parentWindow._window = d;
-			var nw = this;
-			// Tell we are it!
-			this.nativeWindow.onfocus = function()
+			div.content.events = new Array ();
+			div.content.AddEvent = function( event, func )
 			{
-				currentMovable = div;
-				self.focus();
+				if ( typeof(this.events[event]) == 'undefined' )
+					this.events[event] = new Array ();
+				this.events[event].push( func );
+				return func;
 			}
-			// Clean up
-			this.nativeWindow.onbeforeunload = function()
+			div.content.RemoveEvent = function( event, func )
 			{
-				nw.nativeWindow = false;
-				self.close();
+				if( typeof( this.events[event] ) == 'undefined' ) return false;
+				var o = [];
+				var found = false;
+				for( var a in this.events[event] )
+				{
+					if( this.events[event][a] != func )
+					{
+						o.push( this.events[event][a] );
+					}
+					else found = true;
+				}
+				this.events[event] = o;
+				return found;
 			}
-		}
-		// Make sure it's correctly sized again
-		div.windowObject = this;
-		ResizeWindow( div, width, height );
-		ConstrainWindow( div );
-		
-		// Add the window after all considerations
-		// TODO: See if the real height is not properly calculated..
-		div.style.opacity = 0;
-		div.setAttribute( 'created', 'created' );
-		divParent.appendChild( div );
-		
-		// Don't show the view window if it's hidden
-		if( 
-			( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
-			( typeof( flags.invisible ) != 'undefined' && flags.invisible )
-		)
-		{
-			div.style.visibility = 'hidden';
-			div.style.pointerEvents = 'none';
-		}
-		
-		setTimeout( function(){ div.style.opacity = 1; } );
-		
-		// So, dont creating, behave normally now
-		setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
-		
-		// Once the view appears on screen, again, constrain it
-		ConstrainWindow( div );
 	
-		// First to generate, second to test
-		PollTaskbar();
-		PollTaskbar( div );
+			// Assign the move layer
+			div.moveoverlay = molay;
 	
-		// First resize
-		RefreshWindow( div, true );
+			// Also content must have it
+			div.uniqueId = uniqueId;
+			div.viewId = div.id;
+			div.content.viewId = div.id;
+			div.content.uniqueId = uniqueId;
 	
-		if( window.isMobile )
-		{
-		
-			var winTouchStart = [0,0];
-			var winTouchEnd = [0,0];
-			var winTouchDowned;
-			var winTouchTarget;
-		
-			//resize touch ecvents.... --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
-			resize.addEventListener('touchstart', function(evt) {
-				cancelBubble( evt );
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
-				winTouchDowned = evt.timeStamp;
-			});
-			resize.addEventListener('touchmove', function(evt)
+			var leftSet = false;
+			var topSet = false;
+			var wp = GetWindowStorage( div.uniqueId );
+			if ( wp )
 			{
-				cancelBubble( evt );
-						
-				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
-				touchResizeWindow(evt);
-			});
-			
-			resize.addEventListener('touchend', function(evt)
-			{ 
-				cancelBubble( evt );
-			});
-		
-			bottombar.addEventListener('touchstart', function(evt)
-			{
-				cancelBubble( evt );
-			
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
-				winTouchDowned = evt.timeStamp;
-			});
-			
-			bottombar.addEventListener('touchmove', function(evt)
-			{
-				cancelBubble( evt );
-			
-				if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
-				touchResizeWindow(evt);
-			});
-			
-			bottombar.addEventListener('touchend', function(evt) { 
-				cancelBubble( evt );
-			});		
-		
-			//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
-			close.addEventListener('touchstart', function( evt ) {
-				cancelBubble( evt );
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
-				winTouchEnd = winTouchStart;
-				winTouchDowned = evt.timeStamp;
-			});		
-
-			// TODO: Is this required for Safari? Or other? Because of windowmenu
-			/*close.addEventListener('touchend', function( evt )
-			{ 
-				cancelBubble( evt );
-				evt.target.onclick();
-			});*/
-			
-			//title swipe to minimize --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
-			// TODO: Removed (new window menu is better) but elaborate!
-			/*title.addEventListener('touchstart', function(evt) 
-			{
-				return;
-				
-				winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
-				winTouchEnd = winTouchStart;
-				winTouchDowned = evt.timeStamp;
-
-			});
-			title.addEventListener('touchmove', function(evt)
-			{
-				return;
-				
-				cancelBubble( evt );
-				
-				// Put screen back when moving!
-				var sc = contn.flags && contn.flags.screen ? contn.flags.screen._screen.parentNode : ge( 'DoorsScreen' );
-				sc.style.top = '0px';
-				
-				//if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
-				//touchResizeWindow(evt);
-				winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ];
-			
-				var found = false;
-				var tmp = evt.target;
-				var counter = 10;
-
-				while(found == false)
+				if( window.isMobile )
 				{
-				
-					if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+					if ( div.content.flags && div.content.flags.memorize )
 					{
-						found = true;
+						height = wp.height;
+						width = wp.width;
+						ResizeWindow( div, width, height );
 					}
-					tmp = tmp.parentNode;
-					counter--;
-					if( counter < 0 ) found = true;
-				}
-				tmp.style.transition = 'transform 0.25s';
-				var rotation = Math.max( 0, Math.min( 2, ( ( winTouchEnd[1] - winTouchStart[1] ) / 50 ) ) );
-				tmp.style.transform = 'rotate('+ rotation +'deg)';			
-			
-			} );
-			title.addEventListener( 'touchend', function( evt )
-			{ 
-				return;
-				
-				if( flags.screen.menuTimeout )
-				{
-					clearTimeout( flags.screen.menuTimeout );
-					flags.screen.menuTimeout = null;
-				}
-			
-				if( evt.touches[0] ) winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
-
-				var found = false;
-				var tmp = evt.target;
-				var counter = 10;
-
-
-				while(found == false)
-				{
-					if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
-					{
-						found = true;
-					}
-					tmp = tmp.parentNode;
-					counter--;
-					if( counter < 0 ) found = true;
-				}
-				tmp.style.transform = 'rotate(0deg)';
-			
-				var rotation = Math.max( 0, Math.min( 2, ( ( winTouchEnd[1] - winTouchStart[1] ) / 50 ) ) );
-			
-				// Swiped down.....
-				if( rotation == 2 )
-				{
-					cancelBubble( evt );
-			
-					var tb = ge( 'Taskbar' );
-					for( var tel = 0; tel < tb.childNodes.length; tel++ )
-					{
-						if( tb.childNodes[tel].window == tmp )
-						{
-							tb.childNodes[tel].onmouseup( evt, tb.childNodes[tel] );
-						}
-					}	
 				}
 				else
 				{
-					while( found == false )
+					if( wp.top < hh )
+					{
+						div.style.top = wp.top + 'px';
+						topSet = true;
+					}
+					if( wp.left < ww )
+					{
+						div.style.left = wp.left + 'px';
+						leftSet = true;
+					}
+		
+					if ( div.content.flags && div.content.flags.memorize )
+					{
+						height = wp.height;
+						width = wp.width;
+						ResizeWindow( div, width, height );
+					}
+				}
+			}
+			if( !leftSet && div.content.flags.left )
+			{
+				leftSet = true;
+				div.style.left = div.content.flags.left + 'px';
+			}
+			if( !topSet && div.content.flags.top )
+			{
+				topSet = true;
+				div.style.top = div.content.flags.top + 'px';
+			}
+	
+			// Only first window on shared apps, do full width and height
+			if( ( window.isMobile && div.content.flags['mobileMaximised'] ) || ( window.movableWindows.length == 0 && IsSharedApp() ) )
+			{
+				zoom.prevWidth = width;
+				zoom.prevHeight = height;
+				zoom.mode = 'maximized';
+				width = window.innerWidth; height = window.innerHeight;
+				div.style.height = height + title.offsetHeight + FUI_WINDOW_MARGIN + 'px';
+		
+				zoom.window.setAttribute( 'maximized', 'true' );
+			}
+	
+			// Triggers
+			if( parentWindow )
+			{
+				parentWindow.addChildWindow( div );
+			}
+	
+			// Do a simple refresh and end func
+			div.refreshWindow();
+	
+			// Real window is the real parent!
+			if( this.nativeWindow )
+			{
+				var d = document.createElement( 'div' );
+				d.className = 'NativeViewContainer';
+				divParent = d;
+				parentWindow._window = d;
+				var nw = this;
+				// Tell we are it!
+				this.nativeWindow.onfocus = function()
+				{
+					currentMovable = div;
+					self.focus();
+				}
+				// Clean up
+				this.nativeWindow.onbeforeunload = function()
+				{
+					nw.nativeWindow = false;
+					self.close();
+				}
+			}
+			// Make sure it's correctly sized again
+			div.windowObject = this;
+			ResizeWindow( div, width, height );
+			ConstrainWindow( div );
+		
+			// Add the window after all considerations
+			// TODO: See if the real height is not properly calculated..
+			div.style.opacity = 0;
+			div.setAttribute( 'created', 'created' );
+			divParent.appendChild( div );
+		
+			// Don't show the view window if it's hidden
+			if(
+				( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
+				( typeof( flags.invisible ) != 'undefined' && flags.invisible )
+			)
+			{
+				div.style.visibility = 'hidden';
+				div.style.pointerEvents = 'none';
+			}
+		
+			setTimeout( function(){ div.style.opacity = 1; } );
+		
+			// So, dont creating, behave normally now
+			setTimeout( function(){ div.setAttribute( 'created', '' ); }, 300 );
+		
+			// Once the view appears on screen, again, constrain it
+			ConstrainWindow( div );
+	
+			// First to generate, second to test
+			PollTaskbar();
+			PollTaskbar( div );
+	
+			// First resize
+			RefreshWindow( div, true );
+	
+			if( window.isMobile )
+			{
+		
+				var winTouchStart = [0,0];
+				var winTouchEnd = [0,0];
+				var winTouchDowned;
+				var winTouchTarget;
+		
+				//resize touch ecvents.... --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				resize.addEventListener('touchstart', function(evt) {
+					cancelBubble( evt );
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchDowned = evt.timeStamp;
+				});
+				resize.addEventListener('touchmove', function(evt)
+				{
+					cancelBubble( evt );
+						
+					if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+					touchResizeWindow(evt);
+				});
+			
+				resize.addEventListener('touchend', function(evt)
+				{
+					cancelBubble( evt );
+				});
+		
+				bottombar.addEventListener('touchstart', function(evt)
+				{
+					cancelBubble( evt );
+			
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchDowned = evt.timeStamp;
+				});
+			
+				bottombar.addEventListener('touchmove', function(evt)
+				{
+					cancelBubble( evt );
+			
+					if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+					touchResizeWindow(evt);
+				});
+			
+				bottombar.addEventListener('touchend', function(evt) {
+					cancelBubble( evt );
+				});
+		
+				//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				close.addEventListener('touchstart', function( evt ) {
+					cancelBubble( evt );
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
+					winTouchEnd = winTouchStart;
+					winTouchDowned = evt.timeStamp;
+				});
+
+				// TODO: Is this required for Safari? Or other? Because of windowmenu
+				/*close.addEventListener('touchend', function( evt )
+				{
+					cancelBubble( evt );
+					evt.target.onclick();
+				});*/
+			
+				//title swipe to minimize --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				// TODO: Removed (new window menu is better) but elaborate!
+				/*title.addEventListener('touchstart', function(evt)
+				{
+					return;
+				
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
+					winTouchEnd = winTouchStart;
+					winTouchDowned = evt.timeStamp;
+
+				});
+				title.addEventListener('touchmove', function(evt)
+				{
+					return;
+				
+					cancelBubble( evt );
+				
+					// Put screen back when moving!
+					var sc = contn.flags && contn.flags.screen ? contn.flags.screen._screen.parentNode : ge( 'DoorsScreen' );
+					sc.style.top = '0px';
+				
+					//if( evt.target && evt.target.offsetParent ) evt.target.offH = evt.target.offsetParent.clientHeight;
+					//touchResizeWindow(evt);
+					winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+			
+					var found = false;
+					var tmp = evt.target;
+					var counter = 10;
+
+					while(found == false)
+					{
+				
+						if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+						{
+							found = true;
+						}
+						tmp = tmp.parentNode;
+						counter--;
+						if( counter < 0 ) found = true;
+					}
+					tmp.style.transition = 'transform 0.25s';
+					var rotation = Math.max( 0, Math.min( 2, ( ( winTouchEnd[1] - winTouchStart[1] ) / 50 ) ) );
+					tmp.style.transform = 'rotate('+ rotation +'deg)';
+			
+				} );
+				title.addEventListener( 'touchend', function( evt )
+				{
+					return;
+				
+					if( flags.screen.menuTimeout )
+					{
+						clearTimeout( flags.screen.menuTimeout );
+						flags.screen.menuTimeout = null;
+					}
+			
+					if( evt.touches[0] ) winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+
+					var found = false;
+					var tmp = evt.target;
+					var counter = 10;
+
+
+					while(found == false)
 					{
 						if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
 						{
@@ -2145,72 +2135,109 @@ var View = function( args )
 						counter--;
 						if( counter < 0 ) found = true;
 					}
-
-					//just focus on us...
-					_ActivateWindow( tmp, false, evt );
-				
-				}
+					tmp.style.transform = 'rotate(0deg)';
 			
-			});	*/		
-		}
-		// Ok, if no window position is remembered.. place it somewhere
-		else if( !wp )
-		{
-			ConstrainWindow( div );
-		}
+					var rotation = Math.max( 0, Math.min( 2, ( ( winTouchEnd[1] - winTouchStart[1] ) / 50 ) ) );
+			
+					// Swiped down.....
+					if( rotation == 2 )
+					{
+						cancelBubble( evt );
+			
+						var tb = ge( 'Taskbar' );
+						for( var tel = 0; tel < tb.childNodes.length; tel++ )
+						{
+							if( tb.childNodes[tel].window == tmp )
+							{
+								tb.childNodes[tel].onmouseup( evt, tb.childNodes[tel] );
+							}
+						}
+					}
+					else
+					{
+						while( found == false )
+						{
+							if( tmp.className.indexOf('Title') > -1 ) // && tmp.parentNode.className.indexOf('View') > -1
+							{
+								found = true;
+							}
+							tmp = tmp.parentNode;
+							counter--;
+							if( counter < 0 ) found = true;
+						}
 
-		/* function shal be called by bottombar or resize... */	
-		function touchResizeWindow(evt)
-		{
-			if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
-			//not too small and not too high...
-			var newHeight = Math.min( 
-				Workspace.screenDiv.clientHeight - 
-					72 - evt.target.offsetParent.offsetTop, 
-				Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop ) 
-			);
-		
-			evt.target.offsetParent.style.height = newHeight + 'px';
-			evt.target.offsetParent.lastHeight = newHeight;
-		}
+						//just focus on us...
+						_ActivateWindow( tmp, false, evt );
+				
+					}
+			
+				});	*/
+			}
+			// Ok, if no window position is remembered.. place it somewhere
+			else if( !wp )
+			{
+				ConstrainWindow( div );
+			}
 
-		// Remove window borders
-		if( typeof( flags.borderless ) != 'undefined' && flags.borderless == true )
-		{
-			title.style.position = 'absolute';
-			title.style.height = '0px';
-			title.style.overflow = 'hidden';
-			resize.style.height = '0px';
-			resize.style.overflow = 'hidden';
-			div.leftbar.style.display = 'none';
-			div.rightbar.style.display = 'none';
-			div.bottombar.style.display = 'none';
-			div.content.style.left = '0';
-			div.content.style.right = '0';
-			div.content.style.top = '0';
-			div.content.style.right = '0';
-		}
-		if( typeof( flags.resize ) != 'undefined' && flags.resize == false )
-		{
-			resize.style.display = 'none';
-			zoom.style.display = 'none';
-		}
-		if( typeof( flags.login ) != 'undefined' && flags.login == true )
-		{
-			resize.style.display = 'none';
-			zoom.style.display = 'none';
-			depth.style.display = 'none';
-		}
+			/* function shal be called by bottombar or resize... */
+			function touchResizeWindow(evt)
+			{
+				if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
+				//not too small and not too high...
+				var newHeight = Math.min(
+					Workspace.screenDiv.clientHeight -
+						72 - evt.target.offsetParent.offsetTop,
+					Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop )
+				);
+		
+				evt.target.offsetParent.style.height = newHeight + 'px';
+				evt.target.offsetParent.lastHeight = newHeight;
+			}
 
-		_WindowToFront( div );
+			// Remove window borders
+			if( typeof( flags.borderless ) != 'undefined' && flags.borderless == true )
+			{
+				title.style.position = 'absolute';
+				title.style.height = '0px';
+				title.style.overflow = 'hidden';
+				resize.style.height = '0px';
+				resize.style.overflow = 'hidden';
+				div.leftbar.style.display = 'none';
+				div.rightbar.style.display = 'none';
+				div.bottombar.style.display = 'none';
+				div.content.style.left = '0';
+				div.content.style.right = '0';
+				div.content.style.top = '0';
+				div.content.style.right = '0';
+			}
+			if( typeof( flags.resize ) != 'undefined' && flags.resize == false )
+			{
+				resize.style.display = 'none';
+				zoom.style.display = 'none';
+			}
+			if( typeof( flags.login ) != 'undefined' && flags.login == true )
+			{
+				resize.style.display = 'none';
+				zoom.style.display = 'none';
+				depth.style.display = 'none';
+			}
+
+			_WindowToFront( div );
 		
-		// Start maximized
-		if( window.isMobile )
-		{
-			zoom.onclick();	
+			// Start maximized
+			if( window.isMobile )
+			{
+				zoom.onclick();
+			}
+		
+			setTimeout( function(){ _WindowToFront( div ); }, 50 );
 		}
-		
-		setTimeout( function(){ _WindowToFront( div ); }, 50 );
+		// For elements in groups!
+		else
+		{
+			contn.groupMember = true;
+			group.main.parentNode.appendChild( contn );
+		}
 	}
 	
 	// Set content on window
@@ -2620,6 +2647,15 @@ var View = function( args )
 		if( !eles[0] ) this._window.appendChild( ifr );
 		
 	}
+	
+	// Get window group
+	this.getGroup = function()
+	{
+		var f = this.getFlag( 'group' );
+		if( !f ) return false;
+		return _viewGroups[ f ];
+	}
+	
 	// Send a message
 	this.sendMessage = function( dataObject, event )
 	{
@@ -2984,6 +3020,145 @@ var View = function( args )
 
 // Intermediate anchor for code that uses new Window()
 var Window = View;
+
+// Set a flag
+function SetWindowFlag( div, flag, value )
+{
+	if( !div.content )
+	{
+		if( div.flags )
+			div = div.parentNode;
+		else return false;
+	}
+	if( !div.content.flags )
+		div.content.flags = {};
+	var flagsObject = div.content.flags;
+	switch( flag )
+	{
+		case 'scrollable':
+			if( value == true )
+				div.className = 'Content IconWindow';
+			else div.className = 'Content';
+			break;
+		// Add or create a view group!
+		case 'group':
+			var group = false;
+			if( !_viewGroups[ value ] )
+			{
+				_viewGroups[ value ] = {
+					name: value,
+					main: div,
+					members: [ div ]
+				};
+				group = _viewGroups[ value ];
+			}
+			else
+			{
+				group = _viewGroups[ value ];
+				group.members.push( div );
+			}
+			break;
+		case 'left':
+		case 'top':
+			value = parseInt( value );
+			break;
+		case 'width':
+		case 'height':
+		case 'max-width':
+		case 'max-height':
+		case 'min-width':
+		case 'min-height':
+		case 'resize':
+			ResizeWindow( div, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
+			RefreshWindow( div );
+			break;
+		case 'hidden':
+		case 'invisible':
+			var flags = flagsObject;
+			if( div.parentNode.content ) div = div.parentNode;
+			if( value == 'true' || value == true )
+			{
+				// Fade out!!
+				if( flags.value === false )
+				{
+					setTimeout( function(){
+						div.style.visibility = 'hidden';
+						div.style.pointerEvents = 'none';
+					}, 500 );
+				}
+				else
+				{
+					// Don't show the view window if it's hidden
+					div.style.visibility = 'hidden';
+					div.style.pointerEvents = 'none';
+				}
+				div.style.opacity = 0;
+			}
+			else
+			{
+				// Fade in!!
+				if( flags.value === true )
+				{
+					setTimeout( function(){ div.style.opacity = 1; }, 1 );
+				}
+				// Don't show the view window if it's hidden
+				else div.style.opacity = 1;
+				div.style.visibility = '';
+				div.style.pointerEvents = '';
+			}
+			ResizeWindow( div );
+			RefreshWindow( div );
+			flagsObject[flag] = value;
+			PollTaskbar();
+			break;
+		case 'screen':
+			break;
+		case 'minimized':
+			if( value == 'true' || value == true )
+			{
+				if( !div.parentNode.getAttribute( 'minimized' ) )
+					div.parentNode.minimize.onclick();
+			}
+			else if( value == 'false' || value == false )
+			{
+				if( div.parentNode.getAttribute( 'minimized' ) )
+					div.parentNode.minimize.onclick();
+				_WindowToFront( div );
+			}
+			break;
+		case 'title':
+			SetWindowTitle( div, value );
+			break;
+		case 'theme':
+			break;
+		default: return;
+	}
+	
+	// Finally set the value
+	flagsObject[flag] = value;
+	
+	// Notify window if possible
+	// TODO: Real value after its evaluated
+	if( !Workspace.applications )
+		return;
+	for( var a = 0; a < Workspace.applications.length; a++ )
+	{
+		var app = Workspace.applications[a];
+		if( app.applicationId == div.applicationId )
+		{
+			app.contentWindow.postMessage( JSON.stringify( {
+				command: 'notify',
+				method:  'setviewflag',
+				viewId: div.windowObject.viewId,
+				applicationId: app.applicationId,
+				flag:    flag,
+				value:   value
+			} ), '*' );
+			break;
+		}
+	}
+}
+
 
 /* PopupViews --------------------------------------------------------------- */
 

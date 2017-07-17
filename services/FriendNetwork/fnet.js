@@ -22,7 +22,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 const log = require( './component/Log' )( 'fnet' );
 const conf = require( './component/Config' ); // not really bothering with saving the obj,
                                               // it writes itself to global.config

@@ -23,7 +23,6 @@
 *****************************************************************************©*/
 
 
-
 /*
 	Emitter, general event emitter class.
 	So i dont have to use the node one ( my interface is superior :)))))))

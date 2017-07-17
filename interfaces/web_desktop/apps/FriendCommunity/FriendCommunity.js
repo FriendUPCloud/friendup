@@ -797,8 +797,12 @@ window.config = {
 			}
 			
 			d = objectify( d );
-			console.log( 'loadBack', d );
-			var data = d[ setting ];
+			var data = false;
+			if( d && typeof( d[ setting ] ) != 'undefined' )
+			{
+				//console.log( 'loadBack', d );
+				data = d[ setting ];
+			}
 			
 			if ( !data )
 				done( false );

@@ -1004,6 +1004,7 @@ function ExposeWindows()
 {
 	for ( var a in movableWindows )
 	{
+		if( movableWindows[a].content.groupMember ) continue;
 		if( movableWindows[a].moveoverlay )
 			movableWindows[a].moveoverlay.style.height = '0%';
 		movableWindows[a].memorize ();
@@ -1066,120 +1067,6 @@ function FindWindowById ( id )
 		}
 	}
 	return false;
-}
-
-// Set a flag
-function SetWindowFlag( div, flag, value )
-{
-	if ( !div.flags )
-		div.flags = new Object ();
-	var flagsObject = div.flags;
-	switch( flag )
-	{
-		case 'scrollable':
-			if( value == true )
-				div.className = 'Content IconWindow';
-			else div.className = 'Content';
-			break;
-		case 'left':
-		case 'top':
-			value = parseInt( value );
-			break;
-		case 'width':
-		case 'height':
-		case 'max-width':
-		case 'max-height':
-		case 'min-width':
-		case 'min-height':
-		case 'resize':
-			ResizeWindow( div, ( flag == 'width' ? value : null ), ( flag == 'height' ? value : null ) );
-			RefreshWindow( div );
-			break;
-		case 'hidden':
-		case 'invisible':
-			var flags = div.flags;
-			if( div.parentNode.content ) div = div.parentNode;
-			if( value == 'true' || value == true )
-			{
-				// Fade out!!
-				if( flags.value === false )
-				{
-					setTimeout( function(){ 
-						div.style.visibility = 'hidden';
-						div.style.pointerEvents = 'none';
-					}, 500 );		
-				}
-				else
-				{
-					// Don't show the view window if it's hidden
-					div.style.visibility = 'hidden';
-					div.style.pointerEvents = 'none';
-				}
-				div.style.opacity = 0;
-			}
-			else
-			{
-				// Fade in!!
-				if( flags.value === true )
-				{
-					setTimeout( function(){ div.style.opacity = 1; }, 1 );
-				}
-				// Don't show the view window if it's hidden
-				else div.style.opacity = 1;
-				div.style.visibility = '';
-				div.style.pointerEvents = '';
-			}
-			ResizeWindow( div );
-			RefreshWindow( div );
-			flagsObject[flag] = value;
-			PollTaskbar();
-			break;
-		case 'screen':
-			break;
-		case 'minimized':
-			if( value == 'true' || value == true )
-			{
-				if( !div.parentNode.getAttribute( 'minimized' ) )
-					div.parentNode.minimize.onclick();
-			}
-			else if( value == 'false' || value == false )
-			{
-				if( div.parentNode.getAttribute( 'minimized' ) )
-					div.parentNode.minimize.onclick();
-				_WindowToFront( div );
-			}
-			break;
-		case 'title':
-			SetWindowTitle( div, value );
-			break;
-		case 'theme':
-			break;
-		default: return;
-	}
-	
-	// Finally set the value
-	flagsObject[flag] = value;
-	
-	// Notify window if possible
-	// TODO: Real value after its evaluated
-	if( !Workspace.applications )
-		return;
-	for( var a = 0; a < Workspace.applications.length; a++ )
-	{
-		var app = Workspace.applications[a];
-		if( app.applicationId == div.applicationId )
-		{
-			app.contentWindow.postMessage( JSON.stringify( {
-				command: 'notify',
-				method:  'setviewflag',
-				viewId: div.windowObject.viewId,
-				applicationId: app.applicationId,
-				flag:    flag,
-				value:   value
-			} ), '*' );
-			break;
-		}
-	}
 }
 
 function GuiCreate ( obj )
@@ -1441,7 +1328,7 @@ function RemoveElementPopup( close )
 	if ( !e ) return;
 	if ( e.tm ) clearTimeout ( e.tm );
 	e.tm = false;
-	if ( close )
+	if( close )
 	{
 		e.parentNode.removeChild ( e );
 	}

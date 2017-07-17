@@ -35,10 +35,17 @@ Application.run = function( msg, iface )
 	{
 		if( e == 'ok' )
 		{
-			var o = JSON.parse( d );
-			if( o.friendcreate )
+			var o = false;
+			try
 			{
-				for( var a in o.friendcreate ) settings[a] = o.friendcreate[a];
+				o = JSON.parse( d );
+				if( o.friendcreate )
+				{
+					for( var a in o.friendcreate ) settings[a] = o.friendcreate[a];
+				}
+			}
+			catch( e )
+			{
 			}
 		}
 		var eles = ge( 'MainBox' ).getElementsByTagName( 'input' );

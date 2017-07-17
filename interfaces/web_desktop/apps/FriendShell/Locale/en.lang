@@ -1,5 +1,58 @@
 
 i18n_command_not_found              : Command not found
 i18n_items_total                    : items total
+i18n_syntax                         : Syntax error.
+i18n_frienddos_has                  : Friend DOS has the following commands available
+i18n_help                           : Syntax 'help [command]'<br><br>The help command gives a list of all the commands that are available in the shell. If invoked with a shell command as the second argument, it outputs a short description of how to use the shell command.
+i18n_echo                           : Syntax 'echo text'<br><br>The echo command outputs some text to the shell view window.
+i18n_ls                             : Syntax 'ls'<br><br>The ls command generates a simple directory listing of your current directory path. It organizes directories first, then normal files. It does not list specific information about each file, only the filenames. The dir command is an alias to ls.
+i18n_info                           : Syntax 'info filepath'<br><br>The info command gets file information for a file and shows all the relevant file attributes in a list.
+i18n_list                           : Syntax 'list'<br><br>The list command generates a detailed directory listing of your current directory path. It organizes directories first, then normal files. It lists file size, combined permissions for each file, as well as modification date.
+i18n_dir                            : Syntax 'dir'<br><br>The dir command generates a simple directory listing of your current directory path. It organizes directories first, then normal files. It does not list specific information about each file, only the filenames. The ls command is an alias to ls.
+i18n_cat                            : Syntax 'cat filepath'<br><br>The cat command outputs the content of a file to the shell view. You usually use this command to display the content of a short file.
+i18n_type                           : Syntax 'type filepath'<br><br>The type command outputs the contents of a file to the shell view. This is similar to the unix/linux ‘more’ or ‘less’ commands.
+i18n_why                            : Syntax 'why'<br><br>In case of an error with the previous command typed into the shell, the why command displays the reason in an explicit way.
+i18n_copy                           : Syntax 'copy [all] source_file_or_directory [to] destination_path'<br><br>The copy command copies a file or directory to a destination path. It can be recursive with the 'all' argument, which is optional. By default, it is not recursive, and only copies the first level of files.
+i18n_delete                         : Syntax 'delete [all] file_or_directory'<br><br>The delete command deletes a file or directory. With the all argument, which is optional, it deletes recursively. By default, it is not recursive, and only deletes the first level of files.
+i18n_makedir                        : Syntax 'makedir path/'<br><br>The makedir command creates a new directory with a name given. It is is similar to the unix/linux mkdir command.
+i18n_tinyurl                        : Syntax 'tinyurl url'<br><br>The tinyurl command creates an url that is synonymous with another. It only supports links inside your Friend system. The system will return with a hash that you can use. If you put it after your domain name, it will display the contents of the original link.
+i18n_protect                        : Syntax 'protect file_or_directory [arwed] [ [user=arwed] [group=arwed] [others=arwed] ]'<br><br>The protect command changes the attributes of a file or directory. If use without 'user', 'group' or 'others' the permissions are set for all of them.
+i18n_access                         : Syntax 'access file_or_directory'<br><br>The access command provides you with a list of the access privileges that are set on a file or a directory. The combined privileges match what is listed for each directory or file when issuing the “list” command.
+i18n_execute                        : Syntax 'execute script_path'<br><br>Runs a Friend DOS script. The output of the script is directed to the shell’s standard output buffer, the shell display window. This output can be suppressed, or redirected to a file or another process or application. See input/output stream.
+i18n_launch                         : Syntax 'launch application_path [arguments]'<br><br>Executes a Friend application detached from the shell. Arguments can be provided and will be handled by the application.
+i18n_output                         : Syntax 'output filepath'<br><br>The cat command outputs the content of a file to the shell view. You usually use this command to display the content of a short file. 'output' is an alias of 'cat'.
+i18n_wait                           : Syntax 'wait delay'<br><br>Wait (or pause/delay) for 'delay' amount of milliseconds.
+i18n_rename                         : Syntax 'rename filename [to] newfilename'<br><br>The rename command renames a file on disk. It works on both directories and files. It is similar to the unix/linux mv (or move) command.
+i18n_enter                          : Syntax 'enter disk[:]'<br><br>The enter command changes directory to the Functions/ directory in the specified Dormant disk volume. In this command, the trailing colon “:” of the volume-name need not be specified, it is assumed.
+i18n_leave                          : Syntax 'leave'<br><br>The leave command reverts the prompt back to the previous path before enter was issued.
+i18n_engage                         : Syntax 'engage [with] application_name'<br><br>The engage command enters into, or attaches to, a running Friend application. The input and output is from then on managed by the Friend application, and no longer the Friend Shell.
+i18n_date                           : Syntax 'date'<br><br>The date command outputs the current date and time.
+i18n_clear                          : Syntax 'clear'<br><br>The clear command cleans up the shell log in your current shell view window and positions the prompt and cursor at the top left of the window.
+i18n_flush                          : Syntax 'flush'<br><br>Flushes all variables (removes them from memory) from the current shell session. This operation can not be undone. This command can be good to have around when running sequential scripts.
+i18n_cd                             : Syntax 'cd new_directory'<br><br>The command cd changes the current directory. Use "/" to get one directory up, and ":" to get to the root of the current path.
+i18n_set                            : Syntax 'set variable value'<br><br>The set command sets a shell variable to a value. This is similar to the unix/linux “setenv” command.
+i18n_repeat                         : Syntax 'repeat X times[:] [variable]'<br><br>The repeat command executes the instructions following itself, on the same line or up to the matching 'stop' statement for multiple line scripts. If you use a variable after 'times:', it will contain the number of the loop, and will be undefined when the loop exits.
+i18n_say                            : Syntax 'say "sentence to pronounce"'<br><br>The say command is similar to the echo command, only that it uses the computer voice registered with your Friend system to speak the text within quotes.
+i18n_status                         : Syntax 'status'<br><br>Generates a list of the Friend applications or processes that are running. This includes both foreground and background (detached) processes. The processes are listed in ascending order by task id.
+i18n_break                          : Syntax 'break task_id'<br><br>Shuts down or terminates a Friend application or process by task id. Use 'status' to find the task id associated with each running application.
+i18n_kill                           : Syntax 'kill application_name'<br><br>Kills or terminates a Friend application by name.
+i18n_assign                         : Syntax 'assign source_directory [to] [remove [from]] disk_name: [add]'<br><br>The assign command creates new virtual disk drives based on directories of other existing drives. 'assign path to drive:' will create a drive name 'drive' containing the file present in 'path'. 'assign path to drive add' will add the files contained in 'path' to the specified 'drive'. 'assign path remove from drive:' will remove the files contained in 'path' from the drive.
+i18n_mount                          : Syntax 'mount drive_name'<br><br>Mounts a drive that is then available in the mountlist. When a drive is mounted, it will show up on the Workspace desktop if it is visible.  If it is mounted, but not visible, then it will not appear in the Workspace desktop, but it can still be accessed per its access permissions by Friend applications and commands executed in the CLI DOS shell.
+i18n_unmount                        : Syntax 'unmount drive_name'<br><br>Unmounts a drive that is currently mounted. When unmounted, the disk will be removed from the system and is no longer available for any disk operation. If the mounted drive had been visible on the Workspace desktop, it will now be removed from view.
+i18n_mountlist                      : Syntax 'mountlist [unmounted]'<br><br>Produces a list of available or unavailable disks registered with the Friend system. When the command is executed without arguments, it will produce a list of the mounted disk volumes. If it is executed with the argument unmounted, then it will produce a list of the unmounted disk volumes.
+i18n_increase                       : Syntax 'increase variable'<br><br>Add 1 to the specified variable.
+i18n_decrease                       : Syntax 'decrease variable'<br><br>Subtract 1 to the specified variable.
+i18n_multiply                       : Syntax 'multiple variable multiplier'<br><br>Multiply the value of a variable by the given multiplier.
+i18n_divide                         : Syntax 'divide variable divider'<br><br>Divides the value of a variable by the given divider.
+i18n_add                            : Syntax 'add variable value_to_add'<br><br>Adds a value to the content of a variable.
+i18n_subtract                       : Syntax 'subtract variable value_to_subtract'<br><br>Subtracts a value from the content of a variable.
+i18n_stop                           : Syntax 'stop'<br><br>Indicates the end of a multi line loop. Loops can be nested.
+i18n_version                        : Syntax 'version'<br><br>Displays the current version of the Shell.
+i18n_goto                           : Syntax 'goto label:'<br><br>Set the execution of the next instruction in a Shell script to the given label. Label are just names followed by a semi-colon (cannot be numbers).
+
+
+
+
+
 
 

@@ -186,6 +186,64 @@ fcrypt = {
         return ret;
     },
 	
+	base64_encode: function( str )
+	{
+		try
+		{
+			return btoa( str );
+		}
+		catch( e )
+		{
+			return str;
+		}
+	},
+	
+	base64_decode: function( str )
+	{
+		try
+		{
+			return atob( str );
+		}
+		catch( e )
+		{
+			return str;
+		}
+	},
+	
+	encodeKeyHeader: function ( key )
+	{
+		if( key )
+		{
+			var encoded = ( key.indexOf( '-----BEGIN' ) >= 0 ? this.base64_encode( key ) : key );
+			
+			if( encoded.indexOf( '-----BEGIN' ) < 0 )
+			{
+				return encoded;
+			}
+			
+			return key;
+		}
+		
+		return false;
+	},
+	
+	decodeKeyHeader: function ( key )
+	{
+		if( key )
+		{
+			var decoded = ( key.indexOf( '-----BEGIN' ) < 0 ? this.base64_decode( key ) : key );
+			
+			if( decoded.indexOf( '-----BEGIN' ) >= 0 )
+			{
+				return decoded;
+			}
+			
+			return key;
+		}
+		
+		return false;
+	},
+	
 	trimWhitespaceTrail: function( str )
 	{
 		var l = str.length - 1;
@@ -245,12 +303,12 @@ fcrypt = {
 	
 	// Public functions: _______________________________________________________
 	
-	generateKeys: function ( passPhrase, keySize, keyType )
+	generateKeys: function ( passPhrase, keySize, keyType, seedKey )
 	{
 		keyType = ( keyType ? keyType : this.rsaKeyType );
 		keySize = ( keySize ? keySize : this.rsaKeySize );
 		
-		var key = ( this.key ? this.key : this.generateKey( passPhrase, 32, 256, 'sha256' ) );
+		var key = ( seedKey ? seedKey : this.generateKey( passPhrase, 32, 256, 'sha256' ) );
 		
 		if ( key )
 		{
@@ -369,6 +427,8 @@ fcrypt = {
 	
 	setPrivateKeyRSA: function ( str )
 	{
+		str = this.decodeKeyHeader( str );
+		
 		str = this.stripHeader( str );
         var privKeyObject = new RSAKey();
         privKeyObject.parseKey( str );
@@ -384,6 +444,8 @@ fcrypt = {
 	
 	setPublicKeyRSA: function ( str )
 	{
+		str = this.decodeKeyHeader( str );
+		
 		str = this.stripHeader( str );
 		var pubKeyObject = new RSAKey();
         pubKeyObject.parseKey( str );
@@ -407,7 +469,8 @@ fcrypt = {
 		
 		if ( str )
 		{
-			str = this.stripHeader( str );
+			str = this.decodeKeyHeader( str );
+			
 			return MD5( str );
 		}
 		
@@ -462,6 +525,8 @@ fcrypt = {
 		
 		if ( keysObject && typeof keysObject === 'string' )
 		{
+			keysObject = this.decodeKeyHeader( keysObject );
+			
 			keysObject = this.setPublicKeyRSA( keysObject );
 		}
 		
@@ -494,6 +559,8 @@ fcrypt = {
 		
 		if ( keysObject && typeof keysObject === 'string' )
 		{
+			keysObject = this.decodeKeyHeader( keysObject );
+			
 			keysObject = this.setPrivateKeyRSA( keysObject );
 		}
 		
@@ -583,10 +650,14 @@ fcrypt = {
 	{
 		if ( !plaintext ) return false;
 		
+		publicKey = this.decodeKeyHeader( publicKey );
+		
 		if ( signingKey )
         {
 			if ( signingKey && typeof signingKey === 'string' )
 			{
+				signingKey = this.decodeKeyHeader( signingKey );
+				
 				signingKey = this.setPrivateKeyRSA( signingKey );
 			}
 			
@@ -638,6 +709,8 @@ fcrypt = {
 		
 		if ( privKeyObject && typeof privKeyObject === 'string' )
 		{
+			privKeyObject = this.decodeKeyHeader( privKeyObject );
+			
 			privKeyObject = this.setPrivateKeyRSA( privKeyObject );
 		}
 		
@@ -698,6 +771,8 @@ fcrypt = {
 		
 		if ( signingKey && typeof signingKey === 'string' )
 		{
+			signingKey = this.decodeKeyHeader( signingKey );
+			
 			signingKey = this.setPrivateKeyRSA( signingKey );
 		}
 		
@@ -725,6 +800,8 @@ fcrypt = {
 		
 		if ( publicKey && typeof publicKey === 'string' )
 		{
+			publicKey = this.decodeKeyHeader( publicKey );
+			
 			publicKey = this.setPublicKeyRSA( publicKey );
 		}
 		
@@ -752,8 +829,12 @@ fcrypt = {
 	{
 		if ( !data ) return false;
 		
+		publicKey = this.decodeKeyHeader( publicKey );
+		
 		if ( signingKey && typeof signingKey === 'string' )
 		{
+			signingKey = this.decodeKeyHeader( signingKey );
+			
 			signingKey = this.setPrivateKeyRSA( signingKey );
 		}
 		

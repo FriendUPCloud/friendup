@@ -22,7 +22,6 @@
 *****************************************************************************©*/
 
 
-
 const log = require( './Log' )( 'Session' );
 const Emitter = require( './Events' ).Emitter;
 const util = require( 'util' );
@@ -40,6 +39,7 @@ ns.Session = function( id, onclose ) {
 	
 	self.isPublic = false;
 	self.subscribers = [];
+	self.subscriptions = [];
 	self.meta = {};
 	
 	Emitter.call( self );
@@ -113,23 +113,53 @@ ns.Session.prototype.updateMeta = function( conf ) {
 		self.meta.description = conf.description;
 	
 	if ( conf.apps && conf.apps.forEach )
-		self.meta.apps = conf.apps;
+		conf.apps.forEach( item => self.exposeApp( item ))
 	
 	if ( 'string' === typeof( conf.imagePath ))
 		self.meta.imagePath = conf.imagePath;
 }
 
-ns.Session.prototype.exposeApps = function( apps ) {
+ns.Session.prototype.subscribe = function( hostId ) {
 	const self = this;
-	if ( !apps || apps.forEach )
+	let subbed = -1;
+	subbed = self.subscribers.indexOf( hostId );
+	if ( -1 !== subbed )
+		return false;
+	
+	self.subscribers.push( hostId );
+	return true;
+}
+
+ns.Session.prototype.unsubscribe = function( hostId ) {
+	const self = this;
+	self.subscribers = self.subscribers.filter( id => id !== hostId );
+}
+
+ns.Session.prototype.subAdded = function( hostId ) {
+	const self = this;
+	let added = self.subscriptions.indexOf( hostId );
+	if ( -1 !== added )
+		return false;
+	
+	self.subscriptions.push( hostId );
+	return true;
+}
+
+ns.Session.prototype.subRemoved = function( hostId ) {
+	const self = this;
+	self.subscriptions = self.subscriptions.filter( id => id !== hostId );
+}
+
+ns.Session.prototype.exposeApp = function( app ) {
+	const self = this;
+	if ( !app )
 		return null;
 	
 	if ( !self.meta.apps || !self.meta.apps.forEach )
 		self.meta.apps = [];
 	
-	const parsed = apps.map( parse );
-	parsed = parsed.filter( item => !!item );
-	self.meta.apps = self.meta.apps.concat( parsed );
+	const parsed =  parse( app );
+	self.meta.apps.push( parsed );
 	return self.meta.apps;
 	
 	function parse( item ) {
@@ -153,9 +183,9 @@ ns.Session.prototype.exposeApps = function( apps ) {
 	}
 }
 
-ns.Session.prototype.concealApps = function( appIds ) {
+ns.Session.prototype.concealApp = function( appId ) {
 	const self = this;
-	if ( !appIds || !appIds.forEach )
+	if ( !appId || 'string' !== typeof( appId ))
 		return null;
 	
 	if ( !self.meta.apps || !self.meta.apps.forEach ) {
@@ -163,16 +193,11 @@ ns.Session.prototype.concealApps = function( appIds ) {
 		return self.meta.apps;
 	}
 	
-	self.meta.apps = self.meta.apps.filter( notInAppIds );
+	self.meta.apps = self.meta.apps.filter( notAppId );
 	return self.meta.apps;
 	
-	function notInAppIds( item ) {
-		let is = -1;
-		is = appIds.indexOf( item.id );
-		if ( -1 !== is )
-			return false;
-		else
-			return true;
+	function notAppId( item ) {
+		return item.id !== appId;
 	}
 }
 

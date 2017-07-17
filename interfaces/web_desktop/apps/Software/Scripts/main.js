@@ -33,6 +33,8 @@ function refreshSoftware()
 			return;
 		}
 		
+		var finalList = [];
+		var f = 0;
 		var items = JSON.parse( d );
 		
 		var str = '<div class="Tabs" id="SoftwareTabs">';
@@ -121,7 +123,9 @@ function refreshSoftware()
 			str += header;
 			for( var a = 0; a < soft.length; a++ )
 			{
-				str += '<div class="HBox GuiContainer MarginBottom Padding">';
+				str += '<div class="HBox GuiContainer MarginBottom Padding" id="Product_' + f++ + '"">';
+				finalList.push( soft[a] );
+				
 				
 				if( soft[ a ].jumpTarget ) str +=  soft[ a ].jumpTarget;
 				
@@ -143,11 +147,33 @@ function refreshSoftware()
 				str += '</div>';
 
 				str += '</div>';
-			}
-			
+			}	
 			str += '</div>';
 		}
+		
 		ge( 'Software' ).innerHTML = str + '</div>';
+		
+		// Try to load previews
+		function delayedImageLoader( app, num )
+		{
+			var p = Ge( 'Product_' + num );
+			if( p )
+			{
+				p.classList.add ( 'ProductImage' );
+				var img = document.createElement( 'img' );
+				img.src = '/system.library/module/?module=system&command=getapplicationpreview&application=' + app + '&authid=' + Application.authId;
+				p.appendChild( img );
+				return true;
+			}
+			return false;
+		}
+		for( var a = 0; a < finalList.length; a++ )
+		{
+			if( finalList[a].Preview )
+			{
+				delayedImageLoader( finalList[a].Name, a );
+			}
+		}
 		
 		InitTabs( 'SoftwareTabs' );
 	}

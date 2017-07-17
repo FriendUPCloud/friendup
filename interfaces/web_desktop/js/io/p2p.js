@@ -18,433 +18,82 @@
 *****************************************************************************©*/
 
 /*
-requires EventEmitter and EventNode from js/util/events.js
-uses .stringify and .objectify from js/util/tool.js
+requires EventEmitter and EventNode from /webclient/js/util/events.js
+requires /webclient/3rdparty/adapter.js
+uses .stringify and .objectify from webclient/js/util/tool.js
 */
 
 var friendUP = window.friendUP || {};
 
-// RTC
-// holds all the actual peer objects and connections
-(function( ns, undefined ) {
-	ns.P2P = function( conf, onclose ) {
-		if ( !( this instanceof ns.P2P ))
-			return new ns.P2P( conf, onclose );
-		
-		console.log( 'RTC', conf );
-		var self = this;
-		self.id = conf.p2pId;
-		self.conn = conf.conn || null;
-		self.config = conf.rtc;
-		self.onclose = onclose;
-		
-		self.rtcConf = null;
-		self.peers = {};
-		self.peerList = null;
-		self.joined = false;
-		
-		self.init();
+/* PEER - representation of a P2P connection. EventEmitter
+	conf    : obj {
+		id      : string, signalId.
+		rtcConf : obj, Ice servers
 	}
-	
-	ns.P2P.prototype.init = function() {
-		var self = this;
-		console.log( 'RTC.init', self );
-		if ( !self.conn ) {
-			console.log( 'no conn, setup signal plx', self );
-			throw new Error( 'no conn ^^^' );
-		}
-		
-		self.conn.once( 'config', conf );
-		self.conn.send({
-			type : 'config',
-		});
-		
-		function conf( e ) { self.initialize( e ); }
-	}
-	
-	ns.P2P.prototype.initialize = function( roomConf ) {
-		var self = this;
-		console.log( 'RTC.initialize', roomConf );
-		self.rtcConf = roomConf.conn.rtc;
-		self.peerList = roomConf.peers;
-		
-		// do init checks
-		self.initChecks = new library.rtc.P2PChecks( allChecksDone );
-		self.initChecks.checkBrowser( browserResult );
-		self.initChecks.checkICE( self.rtcConf.iceServers, iceResult );
-		function browserResult( res ) {
-			console.log( 'browser capa check result', res );
-		}
-		
-		function iceResult( res ) {
-			console.log( 'ICE check result', res );
-		}
-		
-		function allChecksDone( err, res ) {
-			console.log( 'init checks done - result', {
-				err : err, 
-				res : res });
-			
-			self.initChecks.close();
-			delete self.initChecks;
-			if ( err ) {
-				console.log( 'init checks had errors', err );
-				return;
-			}
-			
-			self.goActive();
-		}
-	}
-	
-	ns.P2P.prototype.goActive = function() {
-		var self = this;
-		self.bindConn();
-		self.connectPeers();
-	}
-	
-	ns.P2P.prototype.bindConn = function() {
-		var self = this;
-		self.conn.on( 'join', join );
-		self.conn.on( 'leave', leave );
-		self.conn.on( 'close', close );
-		
-		function join( e ) { self.handlePeerJoin( e ); }
-		function leave( e ) { self.handlePeerLeft( e ); }
-		function close( e ) { self.handleClosed( e ); }
-	}
-	
-	ns.P2P.prototype.connectPeers = function() {
-		var self = this;
-		console.log( 'rtc.connectpeers', self.config.peers );
-		self.peerList.forEach( connect );
-		function connect( peerId ) {
-			var conf = {
-				peerId : peerId,
-				doInit : true,
-			};
-			self.createPeer( conf );
-		}
-	}
-	
-	ns.P2P.prototype.handlePing = function( timestamp ) {
-		var self = this;
-		console.log( 'handlePing', timestamp );
-		var pong = {
-			type : 'pong',
-			data : timestamp,
-		};
-		self.conn.send( pong );
-	}
-	
-	ns.P2P.prototype.handlePeerJoin = function( peer ) {
-		var self = this;
-		console.log( 'RTC.handlePeerJoin', peer );
-		peer.doInit = false;
-		self.createPeer( peer );
-	}
-	
-	ns.P2P.prototype.handlePeerLeft = function( peer ) {
-		var self = this;
-		var peerId = peer.peerId;
-		console.log( 'RTC.handlePeerLeft', peerId );
-		self.closePeer( peerId );
-	}
-	
-	ns.P2P.prototype.handleClosed = function() {
-		var self = this;
-		console.log( 'handleClosed' );
-		self.close();
-	}
-	
-	ns.P2P.prototype.restartStream = function() {
-		var self = this;
-		var pids = Object.keys( self.peers );
-		console.log( 'restartStream', pids );
-		
-		// stop peers
-		pids.forEach( stop );
-		// get new media
-		self.selfie.setupStream( streamReady );
-		function streamReady() {
-			// restart peers
-			pids.forEach( reconnect );
-		}
-		
-		function stop( pid ) {
-			var peer = self.peers[ pid ];
-			peer.stop();
-		}
-		
-		function reconnect( pid ) {
-			var peer = self.peers[ pid ];
-			peer.start();
-		}
-	}
-	
-	/*
-	ns.P2P.prototype.syncPeers = function( peers ) {
-		var self = this;
-		checkRemoved( peers );
-		checkJoined( peers );
-		
-		function checkRemoved( peers ) {
-			var localPids = Object.keys( self.peers );
-			var serverPids = peers.map( getId );
-			var removed = localPids.filter( notInPeers );
-			removed.forEach( remove );
-			function remove( pid ) {
-				self.removePeer( pid );
-			}
-			
-			function notInPeers( pid ) {
-				var index = serverPids.indexOf( pid );
-				return !!( -1 === index );
-			}
-			
-			function getId( peer ) { return peer.peerId; }
-		}
-		
-		function checkJoined( peers ) {
-			var joined = peers.filter( notFound );
-			joined.forEach( add );
-			
-			function notFound( peer ) {
-				var pid = peer.peerId;
-				return !self.peers[ pid ];
-			}
-			
-			function add( peer ) {}
-		}
-	}
-	
-	ns.P2P.prototype.getRoomSync = function() {
-		var self = this;
-		console.log( 'getRoomSync' );
-		var msg = {
-			type : 'sync',
-		}
-		self.signal.send( msg );
-	}
+	appConn : EventNode representing a path through FriendNetwork
+	onend   : called when the connection closes and cant be reestablished
 	
 	
-	ns.P2P.prototype.reconnectPeers = function() {
-		var self = this;
-		console.log( 'RTC.reconnectPeers' );
-		for( var pid in self.peers ) {
-			var peer = self.peers[ pid ];
-			peer.checkFailed();
-		}
-	}
-	*/
+	interface:
 	
-	ns.P2P.prototype.createPeer = function( data ) {
-		var self = this;
-		var pid = data.peerId;
-		var peer = self.peers[ pid ];
-		if ( peer ) {
-			peer.close();
-			delete self.peers[ pid ];
-			self.view.removePeer( pid );
-		}
-		
-		//if ( )
-		if ( null == data.doInit )
-			data.doInit = false;
-		
-		var peer = new library.rtc.Peer({
-			id       : data.peerId,
-			doInit   : data.doInit,
-			signal   : self.conn,
-			rtcConf  : self.rtcConf,
-			onremove : onremove,
-			closeCmd : closeCmd,
-		});
-		
-		peer.on( 'nestedapp' , nestedApp );
-		
-		function nestedApp( e ) { self.view.addNestedApp( e ); }
-		
-		self.peers[ peer.id ] = peer;
-		self.view.addPeer( peer );
-		
-		function onremove() { self.onRemovePeer( data.peerId ); }
-		function closeCmd() { self.closePeer( data.peerId ); }
-	}
+	send( event ) - send an event to the other Peer
 	
-	ns.P2P.prototype.onRemovePeer = function( peerId ) {
-		var self = this;
-		self.roomSignal.send({
-			type : 'remove',
-			data : {
-				peerId : peerId,
-			}
-		});
-	}
-	
-	ns.P2P.prototype.removePeer = function( pid ) {
-		var self = this;
-		var peer = self.peers[ pid ];
-		if ( !peer && ( pid === self.userId )) { // yuo got removed, close
-			self.close();
-			return;
-		}
-		
-		if ( !peer )
-			return;
-		
-		self.closePeer( peer.id );
-	}
-	
-	ns.P2P.prototype.peerLeft = function( pid ) {
-		var self = this;
-		var peer = self.peers[ pid ];
-		if ( !peer ) {
-			return;
-		}
-		
-		self.closePeer( peer.id );
-	}
-	
-	ns.P2P.prototype.closePeer = function( peerId ) {
-		var self = this;
-		var peer = self.peers[ peerId ];
-		if ( !peer ) {
-			console.log( 'RTC.closePeer - no peer for id', peerId );
-			return;
-		}
-		
-		delete self.peers[ peerId ];
-		self.view.removePeer( peerId );
-		peer.close();
-	}
-	
-	ns.P2P.prototype.broadcast = function( msg ) {
-		var self = this;
-		if ( !self.conn )
-			return;
-		
-		var wrap = {
-			type : 'broadcast',
-			data : msg,
-		};
-		
-		self.conn.send( wrap );
-	}
-	
-	ns.P2P.prototype.leave = function() {
-		var self = this;
-		console.log( 'rtc.leave' );
-		self.close();
-	}
-	
-	ns.P2P.prototype.close = function() {
-		var self = this;
-		console.log( 'rtc.close' );
-		var peerIds = Object.keys( self.peers );
-		peerIds.forEach( callClose );
-		function callClose( peerId ) {
-			self.closePeer( peerId );
-		}
-		
-		delete self.conf;
-		delete self.conn;
-		
-		var onclose = self.onclose;
-		delete self.onclose;
-		if ( onclose )
-			onclose();
-	}
-	
-})( library.rtc );
 
-// PEER
-Peer = function( conf ) {
+*/
+
+Peer = function( conf, appConn, onend ) {
 	if ( !( this instanceof Peer ))
-		return new Peer( conf );
+		return new Peer( conf, appConn, onend );
+	console.log( 'Peer', {
+		conf    : conf,
+		appConn : appConn,
+		onend   : onend,
+	});
 	
-	library.component.EventEmitter.call( this );
+	EventEmitter.call( this );
 	
 	var self = this;
-	self.conf = conf;
 	self.id = conf.id;
-	self.doInit = conf.doInit;
 	self.rtcConf = conf.rtcConf;
-	self.onremove = conf.onremove; // when the remote peer initiates a close, call this
-	self.closeCmd = conf.closeCmd; // closing from this end
-	self.signal = null; // conf.signal is parent
 	
-	self.channels = {}; // data channels
-	
+	self.signal = null;
+	self.conn = null;
 	self.metaInterval = null;
+	self.syncInterval = null;
+	self.syncStamp = null;
+	self.doInit = null;
 	
-	self.init( conf.signal );
+	self.pingInterval = null;
+	self.pingStep = 1000 * 3;
+	self.pingTimeout = 1000 * 10;
+	self.pingTimeouts = {};
+	self.pongs = [];
+	
+	self.init( appConn );
 }
 
-Peer.prototype = Object.create( library.component.EventEmitter.prototype );
+Peer.prototype = Object.create( EventEmitter.prototype );
 
 // Public
 
-Peer.prototype.checkFailed = function() {
-	var self = this;
-	console.log( 'Peer.checkReconnect', self.channels );
-	for ( var sid in self.channels )
-		check( sid );
+Peer.prototype.send = function( event ) {
+	const self = this;
+	if ( !self.conn )
+		return;
 	
-	function check( sid ) {
-		var sess = self.channels[ sid ];
-		var rtcState = sess.conn.iceConnectionState;
-		console.log( 'check', { sid : sid , state : rtcState });
-		if ( 'failed' !== rtcState )
-			return;
-		
-		console.log( 'failed channel, reconnecting', sess );
-		self.recycleChannel( sid );
-	}
+	console.log( 'Peer.send', event );
+	self.conn.send( event );
 }
 
-Peer.prototype.start = function() {
-	var self = this;
-	console.log( 'Peer.start', self.channels );
-	if ( self.doInit )
-		self.syncMeta();
-	else {
-		self.metaSyncDone = false;
-		sendStart();
-	}
-	
-	function sendStart() {
-		var msg = {
-			type : 'start',
-		};
-		self.signal.send( msg );
-	}
+Peer.prototype.reconnect = function() {
+	const self = this;
+	console.log( 'Peer.reconnect - NYI' );
 }
 
-Peer.prototype.restart = function() {
-	var self = this;
-	console.log( 'Peer.restart', self.channels );
-	for ( var sid in self.channels )
-		recycle( sid );
-	
-	function recycle( sid ) {
-		if ( 'ping' === sid )
-			return;
-		
-		self.recycleChannel( sid );
-	}
-}
-
-Peer.prototype.stop = function() {
-	var self = this;
-	sendStop();
-	self.closeAllChannels();
-	
-	function sendStop() {
-		var msg = {
-			type : 'stop',
-		};
-		self.signal.send( msg );
-	}
+Peer.prototype.close = function() {
+	const self = this;
+	console.log( 'Peer.close' );
+	self.closePeer();
 }
 
 // Private
@@ -452,63 +101,330 @@ Peer.prototype.stop = function() {
 Peer.prototype.init = function( parentSignal ) {
 	var self = this;
 	
-	// websocket to signal server
+	// websocket / signal server path
 	self.signal = new EventNode(
 		self.id,
 		parentSignal,
 		eventSink
 	);
 	
-	self.signal.on( 'ping'         , signalPing );
-	self.signal.on( 'meta'         , meta );
-	self.signal.on( 'recycle'      , recycle );
-	self.signal.on( 'reconnect'    , reconnect );
-	self.signal.on( 'start'        , start );
-	self.signal.on( 'stop'         , stop );
-	self.signal.on( 'leave'        , leave );
-	self.signal.on( 'close'        , closed );
+	function eventSink( type, event ) {
+		console.log( 'Peer.eventsink', {
+			t : type,
+			e : event,
+		});
+	}
 	
-	function signalPing( e ) { self.handleSignalPing( e ); }
+	self.signal.on( 'sync'         , sync );
+	self.signal.on( 'sync-accept'  , syncAccept );
+	self.signal.on( 'conn-ready'  , connReady );
+	
+	function sync( e ) { self.handleSync( e ); }
+	function syncAccept( e ) { self.handleSyncAccept( e ); }
+	function connReady( e ) { self.handleConnReady( e ); }
+	
+	self.startSync();
+}
+
+// peer sync
+
+Peer.prototype.startSync = function() {
+	const self = this;
+	const now = self.syncStamp || Date.now();
+	console.log( 'sending sync', now );
+	self.syncStamp = now;
+	const sync = {
+		type : 'sync',
+		data : now,
+	};
+	
+	self.signal.send( sync );
+	self.syncInterval = setInterval( sendSync, 2000 );
+	function sendSync() {
+		if ( !self.syncInterval )
+			return;
+		
+		console.log( 'sending sync', sync.data );
+		self.signal.send( sync );
+	}
+}
+
+Peer.prototype.handleSync = function( remoteStamp ) {
+	const self = this;
+	console.log( 'handleSync', {
+		remote : remoteStamp,
+		doInit : self.doInit,
+	});
+	// sync has already been set, ignore
+	if ( null != self.doInit )
+		return;
+	
+	// invalid remote stamp, drop
+	if ( null == remoteStamp ) {
+		console.log( 'nullstamp, wut?', remoteStamp );
+		return;
+	}
+	
+	// same stamp, reroll
+	if ( self.syncStamp === remoteStamp ) {
+		self.stopSync();
+		const delay = ( Math.floor( Math.random * 20 ) + 1 ); // we dont want a 0ms delay
+		console.log( 'handleSync - equal, reroll', delay );
+		setTimeout( restart, delay );
+		function restart() {
+			self.startSync();
+		}
+		
+		return;
+	}
+	
+	self.acceptSync( remoteStamp );
+}
+
+Peer.prototype.acceptSync = function( remoteStamp ) {
+	const self = this;
+	console.log( 'acceptSync', {
+		local  : self.syncStamp,
+		remote : remoteStamp,
+		doInit : self.doInit,
+	});
+	
+	if ( null == self.syncStamp )
+		self.syncStamp = Date.now();
+	
+	const accept = {
+		type : 'sync-accept',
+		data : [
+			self.syncStamp,
+			remoteStamp,
+		],
+	};
+	self.signal.send( accept );
+	
+	// comapre, lowest stamp will be it
+	if ( null == self.doInit )
+		self.setDoInit( self.syncStamp, remoteStamp );
+}
+
+Peer.prototype.handleSyncAccept = function( stamps ) {
+	const self = this;
+	console.log( 'syncAccept',{
+		s : stamps,
+		t : self.syncStamp,
+	});
+	if ( !self.syncStamp )
+		return;
+	
+	const remote = ( stamps[0] === self.syncStamp ) ? stamps[ 1 ] : stamps[ 0 ];
+	self.setDoInit( self.syncStamp, remote );
+}
+
+Peer.prototype.stopSync = function() {
+	const self = this;
+	self.syncStamp = null;
+	if ( null == self.syncInterval )
+		return;
+	
+	clearInterval( self.syncInterval );
+	self.syncInterval = null;
+}
+
+Peer.prototype.setDoInit = function( localStamp, remoteStamp ) {
+	const self = this;
+	console.log( 'sync - setDoInit', {
+		l : localStamp,
+		r : remoteStamp,
+	});
+	
+	if ( localStamp < remoteStamp )
+		self.doInit = true;
+	else
+		self.doInit = false;
+	
+	self.stopSync();
+	self.setupSession();
+}
+
+Peer.prototype.setupSession = function() {
+	const self = this;
+	console.log( 'setupSession', self );
+	self.session = new library.rtc.Session(
+		'primary',
+		self.rtcConf,
+		self.doInit,
+		self.signal
+	);
+	
+	self.session.on( 'state', stateChange );
+	self.session.on( 'error', error );
+	self.session.once( 'datachannel', conn );
+	
+	function stateChange( e ) { console.log( 'session state change', e ); }
+	function error( e ) { console.log( 'alphaError', e ); }
+	function conn( e ) { self.bindConn( e ); }
+	
+	if ( self.doInit )
+	{
+		if ( self.remoteConnReady )
+			self.startConn();
+	}
+	else
+	{
+		self.signal.send(
+		{
+			type: 'conn-ready',
+			data: true
+		});
+	}
+}
+
+Peer.prototype.handleConnReady = function( isReady ) {
+	const self = this;
+	console.log( 'handleConnReady', isReady );
+	if ( self.session )
+		self.startConn();
+	else
+		self.remoteConnReady = isReady;
+}
+
+Peer.prototype.startConn = function() {
+	const self = this;
+	console.log( 'startConn', self );
+	if ( !self.doInit )
+		return;
+	
+	const conn = self.session.createDataChannel( 'alpha' );
+	self.bindConn( conn );
+}
+
+Peer.prototype.bindConn = function( conn ) {
+	const self = this;
+	console.log( 'bindConn', conn );
+	self.conn = new library.rtc.DataChannel( 'conn', conn, connSink );
+	self.conn.once( 'open', dataOpen );
+	function connSink( type, data ) {
+		console.log( 'connSink', {
+			t : type,
+			d : data,
+		});
+	}
+	
+	function dataOpen( time ) {
+		console.log( 'dataOpen', time );
+		self.startPing();
+	}
+	
+	self.conn.on( 'meta'        , meta );
+	self.conn.on( 'recycle'     , recycle );
+	self.conn.on( 'reconnect'   , reconnect );
+	self.conn.on( 'start'       , start );
+	self.conn.on( 'stop'        , stop );
+	self.conn.on( 'close'       , closed );
+	self.conn.on( 'ping'        , ping );
+	self.conn.on( 'pong'        , pong );
+	
 	function meta( e ) { self.handleMeta( e ); }
 	function recycle( e ) { self.handleRecycle( e ); }
 	function reconnect( e ) { self.handleReconnect( e ); }
 	function start( e ) { self.handleStart(); }
 	function stop( e ) { self.handleStop( e ); }
-	function leave( e ) { console.log( 'peer left?' ); }
 	function closed( e ) { self.closeCmd(); }
-	
-	function eventSink( e ) { console.log( 'unhandled peer signal event', e ); }
-	
-	// lets go
-	self.start();
+	function ping( e ) { self.handlePing( e ); }
+	function pong( e ) { self.handlePong( e ); }
 }
 
-Peer.prototype.createChannel = function( type ) {
-	var self = this;
-	if ( !type )
-		type = 'stream';
+Peer.prototype.startPing = function() {
+	const self = this;
+	if ( self.pingInterval )
+		self.stopPing();
 	
-	if ( self.channels[ type ])
-		self.closeChannel( type );
+	self.pingInterval = setInterval( sendPing, self.pingStep );
+	function sendPing() {
+		if ( null == self.pingInterval )
+			return;
+		
+		self.sendPing();
+	}
+}
+
+Peer.prototype.sendPing = function() {
+	const self = this;
+	const stamp = Date.now();
+	const ping = {
+		type : 'ping',
+		data : stamp,
+	};
 	
-	var channel = new Session({
-		type      : type,
-		doInit    : self.doInit,
-		rtc       : self.rtcConf,
-		signal    : self.signal,
-		modifySDP : modSDP,
-	});
-	self.channels[ type ] = channel;
+	self.send( ping );
+	self.pingTimeouts[ stamp ] = setTimeout( timeout, self.pingTimeout );
+	function timeout() {
+		const timer = self.pingTimeouts[ stamp ];
+		if ( null == timer )
+			return;
+		
+		delete self.pingTimeouts[ stamp ];
+		self.setConnectionTimeout();
+	}
+}
+
+Peer.prototype.handlePing = function( stamp ) {
+	const self = this;
+	const pong = {
+		type : 'pong',
+		data : stamp,
+	};
+	self.send( pong );
+}
+
+Peer.prototype.handlePong = function( stamp ) {
+	const self = this;
+	const now = Date.now();
+	const timer = self.pingTimeouts[ stamp ];
+	if ( null == timer )
+		return; // it has already timed out
 	
-	channel.on( 'open'  , open );
-	channel.on( 'end'   , ended );
-	channel.on( 'state' , stateChange );
-	channel.on( 'error' , sessionError );
+	clearTimeout( timer );
+	delete self.pingTimeouts[ stamp ];
 	
-	function open( e ) { self.channelOpen( e, type ); }
-	function ended( e ) { self.channelEnded( e, type ); }
-	function stateChange( e ) { self.handleSessionStateChange( e, type ); }
-	function sessionError( e ) { self.handleSessionError( e, type ); }
+	stamp = parseInt( stamp, 10 );
+	const pingTime = now - stamp;
+	const rtcPing = {
+		type : 'rtc',
+		data : {
+			type : 'ping',
+			data : pingTime,
+		},
+	};
+	self.emit( 'state', rtcPing );
+}
+
+Peer.prototype.stopPing = function( ) {
+	const self = this;
+	console.log( 'alpha.stopPing' );
+	if ( self.pingInterval )
+		clearInterval( self.pingInterval );
+	
+	self.pingInterval = null;
+	
+	if ( null == self.pingTimeouts )
+		return;
+	
+	const timeouts = Object.keys( self.pingTimeouts );
+	timeouts.forEach( clear );
+	self.pingTimeouts = {};
+	function clear( stamp ) {
+		if ( !stamp )
+			return;
+		
+		const timer = self.pingTimeouts[ stamp ];
+		delete self.pingTimeouts[ timer ];
+		clearTimeout( timer );
+	}
+}
+
+Peer.prototype.setConnectionTimeout = function() {
+	const self = this;
+	console.log( 'setConnectionTimeout' );
 }
 
 Peer.prototype.handleReconnect = function( sid ) {
@@ -519,9 +435,9 @@ Peer.prototype.handleReconnect = function( sid ) {
 
 Peer.prototype.handleRecycle = function( sid ) {
 	var self = this;
-	console.log( 'Peer.handleRecycle', sid );
-	self.closeChannel( sid );
-	self.createChannel( sid );
+	console.log( 'Peer.handleRecycle', self.doInit );
+	self.closeSession( sid );
+	self.createSession( sid );
 	if ( self.doInit )
 		self.showSelfie( null, sid );
 	else
@@ -532,20 +448,20 @@ Peer.prototype.handleRecycle = function( sid ) {
 			type : 'reconnect',
 			data : sid,
 		};
-		self.signal.send( msg );
+		self.send( msg );
 	}
 }
 
-Peer.prototype.recycleChannel = function( sid ) {
+Peer.prototype.recycleSession = function( sid ) {
 	var self = this;
-	console.log( 'Peer.recycleChannel', sid );
-	self.closeChannel( sid );
-	self.createChannel( sid );
+	console.log( 'Peer.recycleSession', sid );
+	self.closeSession( sid );
+	self.createSession( sid );
 	var msg = {
 		type : 'recycle',
 		data : sid,
 	};
-	self.signal.send( msg );
+	self.send( msg );
 }
 
 Peer.prototype.handleStart = function() {
@@ -557,59 +473,119 @@ Peer.prototype.handleStart = function() {
 Peer.prototype.handleStop = function( sid ) {
 	var self = this;
 	console.log( 'Peer.handleStop', sid );
-	self.closeAllChannels();
+	self.closeAllSessions();
 }
 
-Peer.prototype.closeAllChannels = function() {
+Peer.prototype.closeSession = function( sid ) {
 	var self = this;
-	console.log( 'closeAllChannels' );
-	self.metaSyncDone = false;
-	for ( var sid in self.channels )
-		self.closeChannel( sid );
-}
-
-Peer.prototype.closeChannel = function( sid ) {
-	var self = this;
-	console.log( 'Peer.closeChannel', sid );
-	var sess = self.channels[ sid ];
-	self.channels[ sid ] = null;
+	console.log( 'Peer.closeSession', sid );
+	var sess = self.sessions[ sid ];
+	delete self.sessions[ sid ];
 	sess.close();
 }
 
-Peer.prototype.handleSignalPing = function( pingTime ) {
+Peer.prototype.modifySDP = function( SDPObj, type ) {
 	var self = this;
-	if (( 0 === pingTime ) || ( null == pingTime ))
-		setTimeoutState();
+	console.log( 'modifySDP, returning' );
+	return SDPObj;
 	
-	if ( -1 === pingTime )
-		setErrorState();
+	if ( 'video' === type )
+		return SDPObj;
 	
-	var ping = {
-		type : 'ping',
-		data : pingTime,
-	};
-	sendSignal( ping );
+	if ( 'normal' === self.selfie.currentQuality )
+		return SDPObj;
 	
-	function setTimeoutState() {
-		var timeout = {
-			type : 'timeout',
-		};
-		sendSignal( timeout );
-	}
+	var opusConf = self.selfie.getOpusConf();
+	if ( !opusConf )
+		return SDPObj;
 	
-	function setErrorState() {
-		var error = {
-			type : 'error',
-		};
-		sendSignal( error );
-	}
+	var str = SDPObj.sdp;
+	var lines = str.split( '\r\n' );
+	lines = modOpus( lines, opusConf );
 	
-	function sendSignal( event ) {
-		var state = {
-			type : 'signal',
-			data : event,
-		};
-		self.emit( 'state', state );
+	SDPObj.sdp = lines.join( '\r\n' );
+	return SDPObj;
+	
+	function modOpus( lines, conf ) {
+		var opusIndex = getIndex( lines );
+		if ( -1 === opusIndex ) {
+			console.log( 'could not find opus in line', lines );
+			return lines;
+		}
+		
+		var mediaId = getMediaId( lines[ opusIndex ]);
+		var fmtpIndex = checkForFMTP( lines, mediaId );
+		var fmtpKV = conf;
+		var fmtpLine = null;
+		if ( -1 === fmtpIndex ) {
+			fmtpLine = buildFmtpLine( lines, fmtpKV, mediaId );
+			lines.splice( opusIndex + 1, 0, fmtpLine );
+		}
+		else {
+			fmtpLine = buildFmtpLine( lines, fmtpKV, mediaId, fmtpIndex );
+			lines[ fmtpIndex ] = fmtpLine;
+		}
+		
+		return lines;
+		
+		function getIndex( lines ) {
+			var opi = -1;
+			lines.some( findOpus );
+			return opi;
+			
+			function findOpus( line, index ) {
+				inLine = line.indexOf( 'opus/48000' );
+				if ( -1 !== inLine ) {
+					opi = index;
+					return true;
+				}
+				
+				return false;
+			}
+		}
+		
+		function getMediaId( str ) {
+			var match = str.match( /rtpmap:([\d]+)\s/ )
+			if ( !match )
+				return false;
+			
+			return match[ 1 ];
+		}
+		
+		function checkForFMTP( lines, mId ) {
+			var str = 'fmtp:' + mId;
+			var rx = new RegExp( str );
+			var fmtpIndex = -1;
+			lines.some( match );
+			return fmtpIndex;
+			
+			function match( line, index ) {
+				var match = line.match( rx );
+				if ( match ) {
+					fmtpIndex = index;
+					return true;
+				}
+				
+				return false;
+			}
+		}
+		
+		function buildFmtpLine( lines, fmtpKV, mediaId, index ) {
+			var line = '';
+			if ( null != index )
+				line = lines[ index ] + ';';
+			else
+				line = 'a=fmtp:' + mediaId + ' ';
+			
+			var keys = Object.keys( fmtpKV );
+			keys.forEach( add );
+			return line;
+			
+			function add( key ) {
+				var value = fmtpKV[ key ];
+				line += key + '=' + value + ';';
+			}
+		}
 	}
 }
 
@@ -621,7 +597,7 @@ Peer.prototype.syncMeta = function() {
 	
 	self.metaSyncDone = false;
 	self.sendMeta();
-	self.metaInterval = window.setInterval( resendMeta, 500 );
+	self.metaInterval = window.setInterval( resendMeta, 2000 );
 	function resendMeta() {
 		self.sendMeta();
 	}
@@ -629,20 +605,26 @@ Peer.prototype.syncMeta = function() {
 
 Peer.prototype.sendMeta = function() {
 	var self = this;
-	if ( self.metaInterval ) {
-		clearInterval( self.metaInterval );
-		self.metaInterval = null;
+	console.log( 'sendMeta - TODO? aborting' );
+	return;
+	if ( !self.selfie ) {
+		console.log( 'sendMeta - no selfie, no send', self );
+		if ( self.metaInterval ) {
+			clearInterval( self.metaInterval );
+			self.metaInterval = null;
+		}
 	}
 	
 	var meta = {
 		isChrome : self.selfie.isChrome,
 		isFirefox : self.selfie.isFirefox,
 		state : {
-			
+			isMuted : self.selfie.isMute,
+			isBlinded : self.selfie.isBlind,
 		},
 	};
 	console.log( 'sendMeta', meta );
-	self.signal.send({
+	self.send({
 		type : 'meta',
 		data : meta,
 	});
@@ -677,12 +659,14 @@ Peer.prototype.handleMeta = function( meta ) {
 		},
 	};
 	self.emit( 'state', signalState );
-	self.initializeChannels();
+	self.initializeSessions();
 }
 
 Peer.prototype.updateMeta = function( data ) {
 	var self = this;
-	console.log( 'updateMeta', data );
+	console.log( 'updateMeta - TODO?, aborting', data );
+	return;
+	
 	if ( data.state )
 		updateState( data.state );
 	
@@ -696,12 +680,6 @@ Peer.prototype.updateMeta = function( data ) {
 		if ( null != state.isBlinded )
 			self.setRemoteBlind( state.isBlinded );
 	}
-}
-
-Peer.prototype.initializeChannels = function() {
-	var self = this;
-	console.log( 'initializeChannels' );
-	self.createChannel( 'default' );
 }
 
 Peer.prototype.handleSessionStateChange = function( event ) {
@@ -721,104 +699,63 @@ Peer.prototype.handleSessionStateChange = function( event ) {
 Peer.prototype.handleSessionError = function( event ) {
 	var self = this;
 	console.log( 'handleSessionError', event );
+	
 }
 
-Peer.prototype.emitChannelState = function( state ) {
+Peer.prototype.closePeer = function() {
 	var self = this;
-	console.log( 'emitChannelState', state );
-	return;
-	
-	if ( state )
-		self.streamState = state;
-	
-	state = state || self.streamState;
-	var tracks = getTracks();
-	var constraints = getConstraints();
-	
-	var streamState = {
-		type : 'stream',
-		data : {
-			type : state,
-			tracks : tracks,
-			constraints : constraints,
-		}
-	};
-	
-	self.emit( 'state', streamState );
-	
-	function getTracks() {
-		var at = self.getAudioTrack();
-		var vt = self.getVideoTrack();
-		
-		var atState = at ? at.readyState : 'unknown';
-		var vtState = vt ? vt.readyState : 'unknown';
-		
-		if (( 'live' === atState ) && ( self.remoteMute ))
-			atState = 'paused';
-		
-		if (( 'live' === vtState ) && ( self.remoteBlind ))
-			vtState = 'paused';
-		
-		return {
-			audio : atState,
-			video : vtState,
-		};
-	}
-	
-	function getConstraints() {
-		return self.constraints || null;
-	}
-}
-
-Peer.prototype.remove = function() {
-	var self = this;
-	self.onremove();
-}
-
-Peer.prototype.close = function() {
-	var self = this;
+	console.log( 'Peer.close' );
+	self.stopSync();
+	self.stopPing();
 	if ( self.metaInterval ) {
 		window.clearInterval( self.metaInterval );
 		self.metaInterval = null;
 	}
 	
-	self.releaseStream();
 	self.release(); // component.EventEmitter
-	self.selfie.off( self.streamHandlerId );
-	//self.selfie.off( self.qualityHandlerId );
-	delete self.selfie;
-	
 	delete self.onremove;
 	delete self.closeCmd;
 	
-	closeChannels();
-	self.signal.close();
-	delete self.signal;
+	if ( self.signal )
+		self.signal.close();
+	if ( self.conn )
+		self.conn.close();
 	
-	function closeChannels() {
-		for ( var type in self.channels ) {
-			var sess = self.channels[ type ];
-			sess.close();
-		}
-	}
+	delete self.signal;
+	delete self.conn;
+	
+	if ( self.session )
+		self.session.close();
+	
+	delete self.session;
 }
 
 
-// SESSION
-Session = function( conf ) {
+/* SESSION - sets up and maintains a webRTC.RTCPeerConnection. EventEmitter
+
+	id : string, must be the samme for both sides of the p2p connection
+	ICEconf : list of ICE servers, STUN and TURN
+	doInit : bool, decides if this side will set up the connection or not.
+		should match doInit in the peer.
+		
+	parentSignal : EventNode representing a path through the FriendNetwork.
+		Used for inital setup and renegoatiation of connection
+
+*/
+
+Session = function( id, ICEconf, doInit, parentSignal ) {
 	if( !( this instanceof Session ))
-		return new Session( conf );
+		return new Session( id, ICEconf, doInit, signal );
 	
-	library.component.EventEmitter.call( this );
+	EventEmitter.call( this );
 	
 	var self = this;
-	self.type = conf.type;
-	self.id = 'session-' + self.type;
-	self.doInit = conf.doInit || false;
-	self.rtc = conf.rtc;
-	self.signal = conf.signal;
+	self.id = id;
+	self.doInit = doInit;
+	self.rtc = ICEconf;
 	
 	// peer connection, holder of things
+	self.signal = null;
 	self.conn = null;
 	
 	self.negotiationWaiting = false;
@@ -840,21 +777,23 @@ Session = function( conf ) {
 	// rtc specific logging ( automatic host / client prefix )
 	self.spam = true;
 	
-	self.init();
+	self.init( parentSignal );
 }
 
-Session.prototype = Object.create( library.component.EventEmitter.prototype );
+Session.prototype = Object.create( EventEmitter.prototype );
 
 // Public
 
-Session.prototype.openChannel = function( id ) {
+Session.prototype.openChannel = function( label, opts ) {
 	var self = this;
-	console.log( 'openChannel', id );
+	console.log( 'openChannel', label );
+	self.createDataChannel( label, opts );
 }
 
-Session.prototype.closeChannel = function( id ) {
+Session.prototype.closeChannel = function( label ) {
 	var self = this;
-	console.log( 'closeChannel', id );
+	console.log( 'closeChannel', label );
+	self.closeDataChannel( label );
 }
 
 Session.prototype.renegotiate = function() {
@@ -879,16 +818,12 @@ Session.prototype.stateTypeMap = {
 	'derp'                : 'error', // something lol'd
 };
 
-Session.prototype.init = function() {
+Session.prototype.init = function( parentSignal ) {
 	var self = this;
-	var roomConf = {
-		type : self.id,
-		signal : self.signal,
-	};
 	self.signal = new EventNode(
 		self.id,
-		self.signal,
-		eventSink,
+		parentSignal,
+		eventSink
 	);
 	self.signal.on( 'sdp', sdpReceived );
 	self.signal.on( 'candidate', iceCandidateReceived );
@@ -898,7 +833,7 @@ Session.prototype.init = function() {
 	function iceCandidateReceived( msg ) { self.iceCandidateReceived( msg ); }
 	function handleNegotiate( msg ) { self.handleNegotiate( msg ); }
 	
-	function eventSink( e ) { self.log( 'unhandled signal event', e ); }
+	function eventSink() { self.log( 'unhandled signal event', arguments ); }
 	
 	var peerConf = {
 		iceServers : self.rtc.iceServers,
@@ -937,8 +872,7 @@ Session.prototype.init = function() {
 	function streamRemoved( e ) { self.streamRemoved( e ); }
 	function signalStateChange( e ) { self.signalStateChange( e ); }
 	
-	if ( self.doInit )
-		self.openPingChannel();
+	self.createDataChannel( 'conn' );
 }
 
 Session.prototype.startStatSpam = function() {
@@ -982,22 +916,6 @@ Session.prototype.startStatSpam = function() {
 Session.prototype.connectionStateChange = function( e ) {
 	var self = this;
 	self.log( 'connectionStateChange', e );
-}
-
-Session.prototype.createDataChannel = function( id ) {
-	var self = this;
-	if ( !id )
-		throw new Error( 'rtc.createDataChannel - no id' );
-	
-	self.log( 'createDataChannel' );
-	var channel = self.conn.createDataChannel( id );
-	self.channels[ channel.label ] = channel;
-	return channel;
-}
-
-Session.prototype.closeDataChannel = function( id ) {
-	var self = this;
-	self.log( 'closeDataChannel - NYI', id );
 }
 
 Session.prototype.iceCandidate = function( e ) {
@@ -1409,159 +1327,32 @@ Session.prototype.answerNegotiation = function() {
 	}
 }
 
+Session.prototype.createDataChannel = function( label, opts ) {
+	const self = this;
+	if ( !label )
+		throw new Error( 'rtc.createDataChannel - no label' );
+	
+	self.log( 'createDataChannel', label );
+	const channel = self.conn.createDataChannel( label, opts );
+	self.channels[ label ] = channel;
+	return channel;
+}
+
+Session.prototype.closeDataChannel = function( label ) {
+	const self = this;
+	self.log( 'closeDataChannel', label );
+	const channel = self.channels[ label ];
+	if ( !channel )
+		return;
+	
+	delete self.channels[ label ];
+	channel.close();
+}
+
 Session.prototype.dataChannelAdded = function( e ) {
 	var self = this;
-	self.log( 'datachannel event', e );
-	var channel = e.channel;
-	if ( 'ping' === channel.label ) {
-		self.log( 'dataChannelAdded - ping' );
-		self.bindPingChannel( channel, pingChannelOpen );
-	}
-	
-	function pingChannelOpen() { self.startPing(); }
-}
-
-Session.prototype.openPingChannel = function() {
-	var self = this;
-	var chan = self.createDataChannel( 'ping' );
-	self.bindPingChannel( chan, onOpen );
-	function onOpen() {
-		self.startPing();
-	}
-}
-
-Session.prototype.startPing = function() {
-	var self = this;
-	self.pingInterval = window.setInterval( sendPing, self.pingStep );
-	function sendPing() {
-		self.sendPing();
-	}
-}
-
-Session.prototype.sendPing = function( type, timestamp ) {
-	var self = this;
-	if ( !self.pingChannel || 'open' !== self.pingChannel.readyState ) {
-		self.log( 'ping is closed' );
-		self.setState( 'ping', null );
-		self.stopPing();
-		return;
-	}
-	
-	type = type || 'ping';
-	timestamp = timestamp || Date.now();
-	var ping = {
-		type : type,
-		data : timestamp,
-	};
-	var pingStr = friendUP.tool.stringify( ping );
-	self.pingChannel.send( pingStr );
-}
-
-Session.prototype.stopPing = function() {
-	var self = this;
-	if ( !self.pingInterval )
-		return;
-	
-	window.clearInterval( self.pingInterval );
-	self.pingInterval = null;
-}
-
-Session.prototype.handlePong = function( then ) {
-	var self = this;
-	if (( 0 === then ) || ( null === then )) {
-		emit( then );
-		return;
-	}
-	
-	var now = Date.now();
-	var ping = now - then;
-	self.updatePingAverage( ping );
-	emit( ping );
-	
-	function emit( ping ) { self.setState( 'ping', ping ); }
-}
-
-Session.prototype.updatePingAverage = function( ping ) {
-	var self = this;
-	ping = parseInt( ping );
-	if ( window.isNaN( ping ))
-		return;
-	
-	self.pingsIndex++;
-	if ( self.pingsMax < ( self.pingsIndex + 1 ))
-		self.pingsIndex = 0;
-	
-	self.pings[ self.pingsIndex ] = ping;
-	var total = self.pings.reduce( add );
-	var plen = self.pings.length;
-	var avg = total / plen;
-	var averagePing = Math.ceil( avg );
-	var negTimer = 100 + ( averagePing * 5 );
-	self.negotiationTimer = negTimer;
-	
-	function add( a, b ) {
-		return a + b;
-	}
-}
-
-Session.prototype.bindPingChannel = function( chan, onOpen ) {
-	var self = this;
-	if ( self.pingChannel )
-		throw new Error( 'ping channel already bound' );
-	
-	chan.onopen = open;
-	chan.onerror = err;
-	chan.onclose = close;
-	chan.onmessage = message;
-	
-	self.pingChannel = chan;
-	
-	function open( e ) {
-		self.log( 'ping channel is open', e );
-		if ( onOpen )
-			onOpen();
-	}
-	
-	function err( e ) {
-		self.log( 'ping channel err', e );
-		self.releasePingChannel();
-	}
-	
-	function close( e ) {
-		self.log( 'ping channel closed', e );
-		self.releasePingChannel();
-	}
-	
-	function message( e ) {
-		var msg = friendUP.tool.objectify( e.data );
-		if ( 'ping' === msg.type )
-			handlePing( msg.data );
-		else
-			self.handlePong( msg.data );
-		
-		function handlePing( timestamp ) {
-			self.sendPing( 'pong', timestamp );
-		}
-	}
-}
-
-Session.prototype.releasePingChannel = function() {
-	var self = this;
-	self.log( 'releasePingChannel' );
-	if ( !self.pingChannel )
-		return;
-	
-	delete self.channels[ 'ping' ];
-	
-	var chan = self.pingChannel;
-	self.pingChannel = null;
-	chan.onopen = null;
-	chan.onerror = null;
-	chan.onclose = null;
-	chan.onmessage = null;
-	
-	if ( 'open' === chan.readyState )
-		chan.close();
+	self.log( 'datachannelAdded', e );
+	self.emit( 'datachannel', e.channel );
 }
 
 Session.prototype.signalStateChange = function( e ) {
@@ -1729,6 +1520,382 @@ Session.prototype.err = function( source, e ) {
 	});
 }
 
+/* DataChannel - convenience wrapper for a webRTC.RTCDataChannel. EventEmitter.
+	
+	label     : string - name of channel, not used for anyting in particular atm
+	conn      : rtc.DataChannel
+	eventSink : fn, listener - receives unhandled events
+	
+	interface:
+	
+	send( event )
+	
+	close
+	
+*/
+DataChannel = function( label, conn, eventSink ) {
+	const self = this;
+	self.label = label;
+	self.conn = conn;
+	EventEmitter.call( self, eventSink );
+	
+	self.isOpen = false;
+	self.eventQueue = [];
+	
+	self.init();
+}
+
+DataChannel.prototype = Object.create( EventEmitter.prototype );
+
+// Public
+
+DataChannel.prototype.send = function( event ) {
+	const self = this;
+	const wrap = {
+		type : 'event',
+		data : event,
+	};
+	self.sendOnChannel( wrap );
+}
+
+DataChannel.prototype.close = function() {
+	const self = this;
+	try {
+		self.conn.close();
+	} catch( e ) { console.log( 'dataChannel.close exep', e ); }
+	
+	self.unbind();
+	self.closeEventEmitter();
+	delete self.conn;
+}
+
+// Private
+
+DataChannel.prototype.init = function() {
+	const self = this;
+	self.conn.onopen = onOpen;
+	self.conn.onerror = onError;
+	self.conn.onmessage = onMessage;
+	self.conn.onclose = onClose;
+	
+	function onOpen( e ) {
+		console.log( 'DataChannel.onopen' );
+		self.isOpen = true;
+		self.eventQueue.forEach( send )
+		self.emit( 'open', Date.now() );
+		
+		function send( event ) {
+			self.sendOnChannel( event );
+		}
+	}
+	function onError( e ) { console.log( 'datachannel.onError', e ); }
+	function onMessage( e ) { self.handleMessage( e ); }
+	function onClose( e ) {
+		self.isOpen = false;
+		self.emit( 'closed', self.conn );
+	}
+}
+
+DataChannel.prototype.unbind = function() {
+	const self = this;
+	self.conn.onopen = null;
+	self.conn.onerror = null;
+	self.conn.onmessage = null;
+	self.conn.onclose = null;
+}
+
+DataChannel.prototype.handleMessage = function( e ) {
+	const self = this;
+	//console.log( 'DataChannel.handleMessage', e );
+	const event = friendUP.tool.objectify( e.data );
+	if ( !event )
+		return;
+	
+	const type = event.type;
+	const data = event.data;
+	if ( 'event' === type )
+		self.emit( data.type, data.data );
+	else
+		console.log( 'unknown datachannel message', event );
+}
+
+DataChannel.prototype.sendOnChannel = function( event ) {
+	const self = this;
+	if ( !self.isOpen ){
+		self.eventQueue.push( event );
+		return;
+	}
+	
+	if ( !self.conn )
+		return; // closed
+	
+	if ( 'open' !== self.conn.readyState ) {
+		self.eventQueue.push( event );
+		return;
+	}
+	
+	const str = friendUP.tool.stringify( event );
+	try {
+		self.conn.send( str );
+	} catch ( e ) {
+		console.log( 'DataChannel.send exp', {
+			exp   : e,
+			event : event,
+			str   : str,
+		});
+	}
+}
+
+/* P2P - not useful yet :p
+	Is intended as a wrapper to manage multiple peer connections
+
+*/
+P2P = function( conf, onclose ) {
+	if ( !( this instanceof P2P ))
+		return new P2P( conf, onclose );
+	
+	console.log( 'P2P', conf );
+	var self = this;
+	self.rtcConf = conf.rtcConf;
+	self.peerList = conf.peers;
+	self.onclose = onclose;
+	
+	self.conn = null;
+	self.peers = {};
+	self.joined = false;
+	
+	self.init();
+}
+
+// Public
+
+P2P.prototype.addPeer = function( peerId ) {
+	var self = this;
+	console.log( 'P2P.addPeer', peerId );
+}
+
+P2P.prototype.removePeer = function( peerId ) {
+	var self = this;
+	console.log( 'P2P.removePeer', peerId );
+}
+
+// peerId : null to restart all
+P2P.prototype.restartConnection = function( peerId ) {
+	var self = this;
+	var pids = [];
+	if ( peerId )
+		pids.push( peerId );
+	else
+		pids = Object.keys( self.peers );
+	
+	console.log( 'restartStream', pids );
+	// stop peers
+	pids.forEach( stop );
+	pids.forEach( reconnect );
+	
+	function stop( pid ) {
+		var peer = self.peers[ pid ];
+		peer.stop();
+	}
+	
+	function reconnect( pid ) {
+		var peer = self.peers[ pid ];
+		peer.start();
+	}
+}
+
+// Private
+
+P2P.prototype.init = function( parentConn ) {
+	var self = this;
+	console.log( 'P2P.init', self );
+	return;
+	
+	self.conn = new EventNode(
+		self.id,
+		parentConn,
+		eventSink
+	);
+	
+	function conf( e ) { self.initialize( e ); }
+	function eventSink() { console.log( 'P2P - unhandled event', arguments ); }
+}
+
+P2P.prototype.goActive = function() {
+	var self = this;
+	self.bindConn();
+	self.connectPeers();
+}
+
+P2P.prototype.bindConn = function() {
+	var self = this;
+	self.conn.on( 'join', join );
+	self.conn.on( 'leave', leave );
+	self.conn.on( 'close', close );
+	
+	function join( e ) { self.handlePeerJoin( e ); }
+	function leave( e ) { self.handlePeerLeft( e ); }
+	function close( e ) { self.handleClosed( e ); }
+}
+
+P2P.prototype.connectPeers = function() {
+	var self = this;
+	console.log( 'rtc.connectpeers', self.peerList );
+	self.peerList.forEach( connect );
+	function connect( peerId ) {
+		var conf = {
+			peerId : peerId,
+			doInit : true,
+		};
+		self.createPeer( conf );
+	}
+}
+
+P2P.prototype.handlePing = function( timestamp ) {
+	var self = this;
+	console.log( 'handlePing', timestamp );
+	var pong = {
+		type : 'pong',
+		data : timestamp,
+	};
+	self.conn.send( pong );
+}
+
+P2P.prototype.handlePeerJoin = function( peer ) {
+	var self = this;
+	console.log( 'RTC.handlePeerJoin', peer );
+	peer.doInit = false;
+	self.createPeer( peer );
+}
+
+P2P.prototype.handlePeerLeft = function( peer ) {
+	var self = this;
+	var peerId = peer.peerId;
+	console.log( 'RTC.handlePeerLeft', peerId );
+	self.closePeer( peerId );
+}
+
+P2P.prototype.handleClosed = function() {
+	var self = this;
+	console.log( 'handleClosed' );
+	self.close();
+}
+
+P2P.prototype.createPeer = function( data ) {
+	var self = this;
+	var pid = data.peerId;
+	var peer = self.peers[ pid ];
+	if ( peer ) {
+		peer.close();
+		delete self.peers[ pid ];
+		self.view.removePeer( pid );
+	}
+	
+	//if ( )
+	if ( null == data.doInit )
+		data.doInit = false;
+	
+	var peer = new library.rtc.Peer({
+		id       : data.peerId,
+		doInit   : data.doInit,
+		signal   : self.conn,
+		rtcConf  : self.rtcConf,
+		onremove : onremove,
+		closeCmd : closeCmd,
+	});
+	
+	self.peers[ peer.id ] = peer;
+	
+	function onremove() { self.onRemovePeer( data.peerId ); }
+	function closeCmd() { self.closePeer( data.peerId ); }
+}
+
+P2P.prototype.onRemovePeer = function( peerId ) {
+	var self = this;
+	self.roomSignal.send({
+		type : 'remove',
+		data : {
+			peerId : peerId,
+		}
+	});
+}
+
+P2P.prototype.removePeer = function( pid ) {
+	var self = this;
+	var peer = self.peers[ pid ];
+	if ( !peer && ( pid === self.userId )) { // yuo got removed, close
+		self.close();
+		return;
+	}
+	
+	if ( !peer )
+		return;
+	
+	self.closePeer( peer.id );
+}
+
+P2P.prototype.peerLeft = function( pid ) {
+	var self = this;
+	var peer = self.peers[ pid ];
+	if ( !peer ) {
+		return;
+	}
+	
+	self.closePeer( peer.id );
+}
+
+P2P.prototype.closePeer = function( peerId ) {
+	var self = this;
+	var peer = self.peers[ peerId ];
+	if ( !peer ) {
+		console.log( 'RTC.closePeer - no peer for id', peerId );
+		return;
+	}
+	
+	delete self.peers[ peerId ];
+	self.view.removePeer( peerId );
+	peer.close();
+}
+
+P2P.prototype.broadcast = function( msg ) {
+	var self = this;
+	if ( !self.conn )
+		return;
+	
+	var wrap = {
+		type : 'broadcast',
+		data : msg,
+	};
+	
+	self.conn.send( wrap );
+}
+
+P2P.prototype.leave = function() {
+	var self = this;
+	console.log( 'rtc.leave' );
+	self.close();
+}
+
+P2P.prototype.close = function() {
+	var self = this;
+	console.log( 'rtc.close' );
+	var peerIds = Object.keys( self.peers );
+	peerIds.forEach( callClose );
+	function callClose( peerId ) {
+		self.closePeer( peerId );
+	}
+	
+	delete self.conf;
+	delete self.conn;
+	
+	var onclose = self.onclose;
+	delete self.onclose;
+	if ( onclose )
+		onclose();
+}
+
+
+
 // Initchecks
 P2PChecks = function( ondone ) {
 	if ( !( this instanceof P2PChecks ))
@@ -1757,9 +1924,9 @@ P2PChecks.prototype.checkBrowser = function( callback ) {
 	var self = this;
 	new library.rtc.BrowserCheck( checkBack );
 	function checkBack( res ) {
-		self.ui.updateBrowserCheck( res );
+		console.log( 'browser checkback', res );
 		checkErrors( res );
-		self.setCheckDone( 'browser' );
+		self.setCheckDone( 'browser', res );
 		
 		function checkErrors( res ) {
 			var bErr = res.support.type;
@@ -1974,7 +2141,10 @@ P2PChecks.prototype.done = function() {
 	self.isDone = true;
 	var ondone = self.ondone;
 	delete self.ondone;
-	ondone( self.checksDone );
+	if ( self.hasError )
+		ondone( self.checksDone, null );
+	else
+		ondone( null, self.checksDone );
 }
 
 

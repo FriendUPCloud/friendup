@@ -20,6 +20,7 @@
 // Screen class to support multiple screens
 Screen = function ( flags, initObject )
 {
+	var self = this;
 	this._flags = new Object ();
 	
 	if ( typeof ( flags ) == 'object' )
@@ -317,6 +318,14 @@ Screen = function ( flags, initObject )
 				if( screens[a].parentNode != screenc ) continue;
 				screens[a]._screenoverlay.style.display = '';
 			}
+		}
+		var t = e.target ? e.target : e.srcElement;
+		
+		// Hitting the screen list..
+		if( t.classList && t.classList.contains( 'ScreenList' ) )
+		{
+			self.screenCycle();
+			return cancelBubble( e );
 		}
 		return cancelBubble ( e );
 	}
