@@ -1,25 +1,14 @@
-/*©mit**************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
-*                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
-*                                                                              *
-*****************************************************************************©*/
-
+/*©mit***************************************************************************
+ *                                                                              *
+ * Friend Unifying Platform                                                     *
+ * ------------------------                                                     *
+ *                                                                              *
+ * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+ * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+ * Tel.: (+47) 40 72 96 56                                                      *
+ * Mail: info@friendos.com                                                      *
+ *                                                                              *
+ **©****************************************************************************/
 /**
  * @file
  *
@@ -81,7 +70,8 @@ int ImageSavePNG( FImage *img, const char *filename )
 	}
 	
 	DEBUG("info created\n");
-	
+
+#if PNG_LIBPNG_VER_MINOR < 5
 	if (setjmp(png_ptr->jmpbuf))
 	{
 		/* If we get here, we had a problem reading the file */
@@ -89,6 +79,15 @@ int ImageSavePNG( FImage *img, const char *filename )
 		png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
 		return 0;
 	}
+#else
+	if (setjmp(png_ptr))
+	{
+		/* If we get here, we had a problem reading the file */
+		fclose(fp);
+		png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
+		return 0;
+	}
+#endif
 	
 	png_init_io(png_ptr, fp);
 	
@@ -227,7 +226,11 @@ int ImageSavePNG( FImage *img, const char *filename )
 	
 	if (img->fi_Depth <= 8)
 	{
+#if PNG_LIBPNG_VER_MINOR < 5
 		png_free(png_ptr, info_ptr->palette);
+#else
+		png_free( png_ptr, palette );
+#endif
 	}
 	
 	//png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
