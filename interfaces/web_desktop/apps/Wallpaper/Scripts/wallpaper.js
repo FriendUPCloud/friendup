@@ -43,9 +43,15 @@ Application.run = function( msg )
 		{
 			// Copy settings in
 			if( !Application.settings ) Application.settings = {};
-			var setar = JSON.parse( d );
-			for( var a in setar )
-				Application.settings[a] = setar[a];
+			try
+			{ 
+				var setar = JSON.parse( d );
+				for( var a in setar )
+					Application.settings[a] = setar[a];
+			}
+			catch( e )
+			{
+			}
 		}
 		
 		// Go on!
