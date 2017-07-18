@@ -2087,7 +2087,7 @@ Shell = function( appObject )
 					var d = JSON.parse( res[1] );
 					if (d.Filesize > 1024*100)
 					{
-						dcallback(false, {response: 'File too large: ' + d.Filesize/1024 +' kb.'})
+						dcallback(false, {response: 'File too large: ' + Math.floor(d.Filesize/1024) +' kb.'})
 						return false;
 					}
 					var f = new File( p );
