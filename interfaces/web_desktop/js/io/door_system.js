@@ -657,6 +657,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					output.push( {
 						MetaType: 'File',
 						Title: prefs[pref],
+						Path: 'System:Settings/' + pref,
 						DateModified: dateh,
 						Filename: pref,
 						Permissions: '-r-e-,-r-e-,-r-e-',

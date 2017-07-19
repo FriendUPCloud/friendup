@@ -56,7 +56,7 @@ i18n_run_application                 : Start app
 i18n_driver_handled                  : DOS driver håndtert
 
 i18n_system_version                  : System versjon
-i18n_system_version_num              : Release candidate 1
+i18n_system_version_num              : Version 1.0.0
 
 i18n_notification_archive               : Varselsarkiv
 i18n_sure_remove_notification           : Ønsker du virkelig å gjerne varsel?

@@ -2921,9 +2921,9 @@ Workspace = {
 	{
 		if( !icon ) icon = this.getActiveIcon();
 		
-		// Check volume
 		if( icon )
 		{
+			// Check volume icon
 			if( icon.Type == 'Door' && ( ( !icon.Filesize && icon.Filesize != 0 ) || isNaN( icon.Filesize ) ) )
 			{
 				var m = new Module( 'system' );
@@ -2949,10 +2949,8 @@ Workspace = {
 				m.execute( 'volumeinfo', { path: icon.Path } );
 				return;
 			}
-		}
-		// check if we have a selected icon
-		if( icon )
-		{
+			
+			// Normal file or directory icon
 			var w = new View( {
 				title: ( icon.Type == 'Door' ? i18n( 'i18n_volumeicon_information' ) : i18n( 'i18n_icon_information' ) ) + 
 					' "' + ( icon.Filename ? icon.Filename : icon.Title ) + '"',
@@ -2996,6 +2994,9 @@ Workspace = {
 			
 			icon.UsedSpace = parseInt( icon.UsedSpace );
 			icon.Filesize = parseInt( icon.Filesize );
+			
+			if( isNaN( icon.Filesize ) ) icon.Filesize = 0;
+			if( isNaN( icon.UserSpace ) ) icon.UserSpace = 0;
 			
 			if( icon.UsedSpace )
 			{
@@ -3068,6 +3069,12 @@ Workspace = {
 					info_fields: fdt_out
 				};
 				f.i18n();
+				if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+				{
+					f.replacements.i18n_volume_information = i18n( 'i18n_file_information' );
+					f.replacements.i18n_volume_name = i18n( 'i18n_filename' );
+					f.replacements.i18n_volume_size = i18n( 'i18n_filesize' );
+				}
 				f.onLoad = function( d )
 				{
 					// Check file permissions!
@@ -3077,7 +3084,6 @@ Workspace = {
 					var sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
 					{
-						console.log( 'Response: ', returnCode, returnData );
 						// If we got an OK result, then parse the return data (json data)
 						var rd = false;
 						if( returnCode == 'ok' )
@@ -3100,10 +3106,6 @@ Workspace = {
 								}
 							];
 						}
-			
-						// Alfio, look here!
-						// Build UI from data:
-						// Done building
 			
 						w.setContent( d.split( '!!' ).join( Workspace.seed ) );
 						
