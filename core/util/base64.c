@@ -76,7 +76,7 @@ void base64_cleanup()
 //
 //
 
-char *Base64Encode( const unsigned char* data, int length )
+char *Base64Encode( const unsigned char* data, int length, int *dstlen )
 {
 	int outSize = (int)ceil( (float)length / 3.0f ) << 2;
 	int reminder = length % 3;
@@ -86,7 +86,7 @@ char *Base64Encode( const unsigned char* data, int length )
 	unsigned char c1 = 0, c2 = 0, c3 = 0;
 	int j = 0, i;
 
-	char* encoded = FCalloc( outSize + 1, sizeof( char ) );
+	char* encoded = FMalloc( outSize + 1 );
 	if( encoded == NULL )
 	{
 		FERROR("Cannot allocate memory in Base64Encode\n");
@@ -120,6 +120,8 @@ char *Base64Encode( const unsigned char* data, int length )
 	if( padding > 1 )
 		encoded[i++] = '=';
 	encoded[i] = 0;
+	
+	*dstlen = outSize;
 
 	return encoded;
 }
@@ -127,7 +129,8 @@ char *Base64Encode( const unsigned char* data, int length )
 // Single argument version
 char *Base64EncodeString( const unsigned char *chr )
 {
-	return Base64Encode( chr, strlen( chr ) );
+	int size = 0;
+	return Base64Encode( chr, strlen( chr ), &size );
 }
 
 // Mark the base64 encoded string and return it

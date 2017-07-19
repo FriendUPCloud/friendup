@@ -34,28 +34,27 @@
 #include <system/invar/invar.h>
 
 enum {
-	ASSID_US_STATUS_NEW = 0,
-	ASSID_US_INVITED,
-	ASSID_US_ACCEPTED,
-	ASSID_US_REJECTED,
-	ASSID_US_WORKING,
-	ASSID_US_INVALID
+	SASID_US_STATUS_NEW = 0,
+	SASID_US_INVITED,
+	SASID_US_ACCEPTED,
+	SASID_US_REJECTED,
+	SASID_US_WORKING,
+	SASID_US_INVALID
 };
 
 //
 // Application session
 //
 
-typedef struct ASUList
+typedef struct SASUList
 {
 	MinNode 			node;
-	//User				*user;
 	UserSession 		*usersession;
 	char 				authid[ 256 ];
 	int					status;
 	
 	FULONG				ID;
-}ASUList;
+}SASUList;
 
 
 typedef struct AppSession
@@ -63,8 +62,8 @@ typedef struct AppSession
 	MinNode					node;
 	char							as_AuthID[ 255 ];			// ID of applicaton from UserApplication
 	FUQUAD					as_AppID;						// application ID
-	FUQUAD					as_ASSID;						// Application session ID
-	ASUList					*as_UserSessionList;					// first user is always owner
+	FUQUAD					as_SASID;						// Application session ID
+	SASUList					*as_UserSessionList;					// first user is always owner
 	int							as_UserNumber;
 	pthread_mutex_t		as_SessionsMut;
 	
@@ -73,10 +72,10 @@ typedef struct AppSession
 	time_t						as_Timer;						// session timer
 	
 	FBOOL						as_Obsolete;					// if session is obsolete, remove it
-	FULONG						as_NumberGenerator;		// generate ID for every entry in session list
+	FULONG					as_NumberGenerator;		// generate ID for every entry in session list
 	
 	INVAREntry				*as_Variables;
-	FULONG						as_VariablesNumGenerator;
+	FULONG					as_VariablesNumGenerator;
 	pthread_mutex_t		as_VariablesMut;
 	
 	void 							*as_SB;
@@ -122,7 +121,7 @@ int AppSessionRemUser( AppSession *as, User *u );
 //
 //
 
-int AppSessionSendMessage( AppSession *as, UserSession *sender, char *buffer, int size );
+int AppSessionSendMessage( AppSession *as, UserSession *sender, char *buffer, int size, char *dstusers );
 
 //
 //
@@ -158,6 +157,6 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 //
 //
 
-ASUList *GetListEntryBySession( AppSession *as, UserSession *ses );
+SASUList *GetListEntryBySession( AppSession *as, UserSession *ses );
 
 #endif // __APP_SESSION_H__

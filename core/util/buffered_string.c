@@ -91,6 +91,7 @@ void BufStringDelete( BufString *bs )
 		if( bs->bs_Buffer )
 		{
 			FFree( bs->bs_Buffer );
+			bs->bs_Buffer = NULL;
 		}
 		FFree( bs );
 	}

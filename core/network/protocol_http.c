@@ -50,8 +50,8 @@
 #include <util/tagitem.h>
 #include <util/list_string.h>
 #include <network/protocol_webdav.h>
-#include <system/handler/file.h>
-#include <system/handler/device_handling.h>
+#include <system/fsys/file.h>
+#include <system/fsys/device_handling.h>
 
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
@@ -126,7 +126,7 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 		return -1;
 	}
 	
-	DEBUG("ReadServerFile path %s\n", locpath );
+	DEBUG("[ReadServerFile] path %s\n", locpath );
 	Path *convPath = PathNew( locpath );
 	if( convPath == NULL )
 	{
@@ -224,11 +224,7 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 		{
 			Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
 		}
-		
-		//DEBUG("File readed %d\n", file->bufferSize );
-		
-		// TODO: This shouldn't be needed by the way
-		//       Make method to expand buffer size
+
 		BufStringAddSize( dstbs, file->buffer, file->bufferSize );
 		BufStringAdd( dstbs, "\n");
 
@@ -271,7 +267,7 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 		
 			if( !phpRun )
 			{
-				INFO("File do not exist %s\n", locpath );
+				INFO("[ReadServerFile] File do not exist %s\n", locpath );
 
 				*result = 404;
 			}
@@ -297,11 +293,11 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 {
 	Http *response = NULL;
-	Log( FLOG_DEBUG,"HTTP Callback called\n");
+	Log( FLOG_DEBUG,"[ProtocolHttp] HTTP Callback called\n");
 	
 	if( length <= 0 )
 	{
-		Log( FLOG_DEBUG,"Message length<0 http400\n");
+		Log( FLOG_DEBUG,"[ProtocolHttp] Message length<0 http400\n");
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ) },
@@ -310,7 +306,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 		response = HttpNewSimple( HTTP_400_BAD_REQUEST, tags );
 	
-		//HttpWriteAndFree( response );
 		return response;
 	}
 	
@@ -354,7 +349,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	// Continue parsing the request
 	int result = HttpParsePartialRequest( request, data, length );
 	
-	DEBUG("Parsepartial end %d\n", request->h_ContentType );
+	DEBUG("[ProtocolHttp] Parsepartial end %d\n", request->h_ContentType );
 	
 	partialRequest:
 	
@@ -362,7 +357,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	// Protocol error
 	if( result < 0 )
 	{
-		Log( FLOG_DEBUG, "RESULT < 0 http 400 will be returned\n");
+		Log( FLOG_DEBUG, "[ProtocolHttp] RESULT < 0 http 400 will be returned\n");
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{ TAG_DONE, TAG_DONE }
@@ -375,14 +370,14 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 	// Request not fully parsed yet. Return and wait for more data
 	else if( result == -1 )
 	{
-		DEBUG( " <- (%d): Waiting for more data\n", sock->fd );
+		DEBUG( "[ProtocolHttp] <- (%d): Waiting for more data\n", sock->fd );
 		HttpFreeRequest( request );
 		return response;
 	}
 	// Request parsed without errors!
 	else if( result == 1 && request->uri->path != NULL )
 	{
-		Log( FLOG_DEBUG, "Request parsed without errors\n");
+		Log( FLOG_DEBUG, "[ProtocolHttp] Request parsed without errors\n");
 		Uri *uri = request->uri;
 		Path *path = NULL;
 		if( uri->path->raw )
@@ -395,7 +390,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 					break;
 				}
 			}
-			DEBUG("Want to parse path: %s (%d)\n", uri->path->raw, nlen );
+			DEBUG("[ProtocolHttp] Want to parse path: %s (%d)\n", uri->path->raw, nlen );
 			path = PathNew( uri->path->raw );
 			if( path )
 			{
@@ -406,7 +401,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		// Disallow proxy requests
 		if( uri && ( uri->scheme || uri->authority ) )
 		{
-			DEBUG("Dissalow proxy\n");
+			DEBUG("[ProtocolHttp] Dissalow proxy\n");
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 				{ TAG_DONE, TAG_DONE }
@@ -500,8 +495,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 					
 						if( strcmp( path->parts[ 0 ], "system.library" ) == 0 )
 						{
-							DEBUG( "%s\n", path->parts[1] );
-							DEBUG("------------------------------------------------------Calling SYSBASE via HTTP\n");
+							DEBUG("[ProtocolHttp] %s\n", path->parts[1] );
+							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP\n");
 							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), &request, NULL );
 						
 							if( response == NULL )
@@ -576,11 +571,10 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 					{
 						//
 						//
-						
 						if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
 						//if( strcmp( SLIB->sl_ActiveAuthModule->am_Name, "fcdb.authmod" ) != 0 )
 						{
-							DEBUG("[PHPauthmod] call\n");
+							DEBUG("[ProtocolHttp] call\n");
 							FULONG res = 0;
 
 							char command[ 1024 ];
@@ -589,7 +583,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
 							if( !( cx >= 0 ) )
 							{
-								FERROR( "[PHPmod] snprintf\n" );;
+								FERROR( "[ProtocolHttp] snprintf\n" );;
 							}
 							else
 							{
@@ -627,6 +621,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								if( ls->ls_Data != NULL )
 								{
 									HttpSetContent( response, ls->ls_Data, res );
+									
+									//DEBUG("\n\n\n\n\n\n\n\n\nCallPHP: %s\n", ls->ls_Data );
 								}
 								else
 								{
@@ -689,9 +685,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						
 										response->h_WriteType = FREE_ONLY;
 									}
-									//PathFree( completePath );
 								}
-								//PathFree( base );
 							}
 						}
 					}
@@ -706,7 +700,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						char query[ 1024 ];
 						int entries = 0;
 						
-						Log( FLOG_DEBUG, "Shared file hash %s name %s\n", path->parts[ 1 ], path->parts[ 2 ] );
+						Log( FLOG_DEBUG, "[ProtocolHttp] Shared file hash %s name %s\n", path->parts[ 1 ], path->parts[ 2 ] );
 						
 						char dest[512];
 						UrlDecode( dest, path->parts[2] );
@@ -722,13 +716,13 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							{
 								// Immediately drop here..
 								SLIB->LibraryMYSQLDrop( SLIB, sqllib );
-								DEBUG("Shared file loaded from DB\n");
+								DEBUG("[ProtocolHttp] Shared file loaded from DB\n");
 							
 								char *mime = NULL;
 							
 								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
 								
-								DEBUG("Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
+								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
 
 								//DEBUG("ROOTDEV %p, UserID = %d\n", rootDev, fs->fs_IDUser );
 								if( rootDev != NULL )
@@ -739,12 +733,12 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 
 									if( tuser != NULL )
 									{
-										char *sess = USMUserGetActiveSessionID( SLIB->sl_USM, tuser );
+										char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
 										if( sess && rootDev->f_SessionID )
 										{
 											FFree( rootDev->f_SessionID );
 											rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
-											DEBUG("Session %s tusr ptr %p\n", sess, tuser );
+											DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
 										}
 									}
 									// Done fetching sessionid =)
@@ -764,7 +758,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											}
 										}
 										
-										DEBUG("File will be opened now %s\n", filePath );
+										DEBUG("[ProtocolHttp] File will be opened now %s\n", filePath );
 									
 										File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
 										if( fp != NULL )
@@ -784,8 +778,10 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											len = strlen( reverse );
 											char *extension = FCalloc( 1, len + 1 );
 											for( cz = 0; cz < len; cz++ )
+											{
 												extension[cz] = reverse[len-1-cz];
-											free( reverse );
+											}
+											FFree( reverse );
 										
 											// Use the extension if possible
 											if( strlen( extension ) )
@@ -812,12 +808,12 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 											response = HttpNewSimple( HTTP_200_OK, tags );
 											
-											DEBUG("Response set\n");
+											DEBUG("[ProtocolHttp] Response set\n");
 											
 											HttpWrite( response, request->h_Socket );
 										
 											// Free the extension
-											free( extension );
+											FFree( extension );
 											
 											int dataread;
 
@@ -828,17 +824,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												//BufStringAddSize( bs, tbuffer, dataread  );
 											}
 						
-											//HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-										
 											result = 200;
-							
-											// write here and set data to NULL!!!!!
-											// retusn response
-											//HttpWrite( response, sock );
-											//bs->bs_Buffer = NULL;
-										
-											//BufStringDelete( bs );
-										
+
 											// Close it
 											HttpFree( response );
 											response = NULL;
@@ -930,7 +917,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						// We don't allow directory traversals..
 						if( flaw == 0 )
 						{
-							Log( FLOG_DEBUG, "read static file %s size %d\n", path->raw, path->rawSize );
+							Log( FLOG_DEBUG, "[ProtocolHttp] read static file %s size %d\n", path->raw, path->rawSize );
 						
 							for( i = 0; i < path->rawSize; i++ )
 							{
@@ -1025,7 +1012,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											}
 										}
 								
-										DEBUG("Found entries %d\n", entry );
+										DEBUG("[ProtocolHttp] Found entries %d\n", entry );
 								
 										BufString *bs = BufStringNewSize( 1000 );
 										if( bs != NULL )
@@ -1044,7 +1031,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 													continue;
 												}
 											
-												DEBUG("FIND file %s\n", pathTable[ i ] );
+												DEBUG("[ProtocolHttp] FIND file %s\n", pathTable[ i ] );
 									
 												// Let's find the file extension
 												dl = strlen( pathTable[i] );
@@ -1068,8 +1055,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 
 												err = ReadServerFile( request->uri, pathTable[ i ], bs, &result );
 									
-												//DEBUG("Read file result %d\n", result );
-									
 												if( result == 200 )
 												{
 													resError = 200;
@@ -1077,8 +1062,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											}
 									
 											FFree( extension );
-								
-											//DEBUG("ERROR: %d\n", resError );
 								
 											if( resError == 200 )
 											{
@@ -1096,7 +1079,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												LocFile* nlf = LocFileNewFromBuf( path->raw, bs );
 												if( nlf != NULL )
 												{
-													DEBUG("File created %s size %d\n", nlf->lf_Path, nlf->filesize );
+													DEBUG("[ProtocolHttp] File created %s size %d\n", nlf->lf_Path, nlf->filesize );
 													
 													if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
 													{
@@ -1155,11 +1138,11 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										if( SLIB->sl_CacheFiles == 1 )
 										{
 											
-											Log( FLOG_DEBUG, "Read single file, first from cache %s\n", decoded );
+											Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
 											file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
 											//DEBUG("Readfiletemp single%s    %p\n", completePath->raw, file );
 											if( file == NULL )
-											{									
+											{
 												// Don't allow directory traversal
 												if( !strstr( decoded, ".." ) )
 												{
@@ -1182,7 +1165,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												// if file is new file, reload it
 			
 												//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld   NAME %s\n\n\n\n",attr.st_mtime ,file->info.st_mtime,completePath->raw );
-												Log( FLOG_DEBUG, "File will be reloaded\n");
+												Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
 												if( attr.st_mtime != file->info.st_mtime )
 												{
 													LocFileReload( file, decoded );
@@ -1201,7 +1184,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										FFree( decoded );
 										pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
 									}
-									Log( FLOG_DEBUG, "Return file content\n");
+									Log( FLOG_DEBUG, "[ProtocolHttp] Return file content\n");
 
 									// Send reply
 									if( file != NULL )
@@ -1231,8 +1214,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 										response = HttpNewSimple( HTTP_200_OK, tags );
 						
-										//DEBUG("Before returning data\n");
-						
 										HttpSetContent( response, file->buffer, file->bufferSize );
 						
 										// write here and set data to NULL!!!!!
@@ -1251,7 +1232,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						
 										response->h_WriteType = FREE_ONLY;
 									
-										Log( FLOG_DEBUG, "File returned to caller\n");
+										Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller\n");
 									}
 									else
 									{
@@ -1317,8 +1298,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										else
 										{
 										
-											Log( FLOG_DEBUG, "File do not exist as real file, getting it via Modules\n");
-											//DEBUG( "[ProtocolHttp] Going ahead with %s.\n", path->parts ? path->parts[0] : "No path part.." );
+											Log( FLOG_DEBUG, "[ProtocolHttp] File do not exist as real file, getting it via Modules\n");
 
 											// Try to fall back on module
 											// TODO: Make this behaviour configurable
@@ -1344,8 +1324,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 														bs->ls_Size = StripEmbeddedHeaders( &bs->ls_Data, bs->ls_Size );
 													}
 													
-													//FERROR("CATCHALL\n\n\n\n\n\ncode %s\n\n\n", code );
-
 													struct TagItem tags[] = {
 														{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
 														{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
@@ -1364,7 +1342,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 															errCode = -1;
 														}
 														
-														DEBUG("parsed %s code %d\n", code, errCode );
+														DEBUG("[ProtocolHttp] parsed %s code %d\n", code, errCode );
 														
 														if( errCode == -1 )
 														{
@@ -1430,14 +1408,13 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									}
 									PathFree( base );
 									PathFree( completePath );
-									Log( FLOG_DEBUG, "File delivered\n");
+									Log( FLOG_DEBUG, "[ProtocolHttp] File delivered\n");
 								}
 								else
 								{
 									Log( FLOG_ERROR,"Cannot create completePath\n");
 								}
 							}		// one-many files read
-							//DEBUG("Files delivered\n");
 						}
 					}
 				}
@@ -1452,8 +1429,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 		if( response != NULL )
 		{
-			DEBUG("Response pointer %p responseisstream %d\n", response != NULL, response->h_Stream );
-		
 			if( response != NULL && response->h_Stream == TRUE )
 			{
 				HttpFree( response );
@@ -1466,7 +1441,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			sock->data = NULL;
 		}
 		PathFree( path );
-		DEBUG("[ProtocolHttp] Return response\n");
 
 		return response;
 	}

@@ -36,10 +36,10 @@
 #include <util/list.h>
 #include <core/library.h>
 #include <core/friend_core.h>
-#include <service/comm_service.h>
-#include <service/comm_service_remote.h>
+#include <communication/comm_service.h>
+#include <communication/comm_service_remote.h>
 #include <ssh/ssh_server.h>
-#include <service/service_manager.h>
+#include <system/services/service_manager.h>
 #include <network/websocket.h>
 #include <core/friendcore_info.h>
 #include <core/event_manager.h>
@@ -53,11 +53,30 @@
 #ifndef FRIEND_COMMUNICATION_PORT
 #define FRIEND_COMMUNICATION_PORT 6503
 #endif
-
 #ifndef FRIEND_COMMUNICATION_REMOTE_PORT
 #define FRIEND_COMMUNICATION_REMOTE_PORT 6504
 #endif
-
+#ifndef WORKERS_MAX
+#define WORKERS_MAX 64
+#endif
+#ifndef WORKERS_MIN
+#define WORKERS_MIN 8
+#endif
+#ifndef EPOLL_MAX_EVENTS
+#define EPOLL_MAX_EVENTS 1024
+#endif
+#ifndef BUFFER_READ_SIZE
+#define BUFFER_READ_SIZE 1024 * 8
+#endif
+#ifndef EPOLL_MAX_EVENTS_COMM
+#define EPOLL_MAX_EVENTS_COMM 1024
+#endif
+#ifndef BUFFER_READ_SIZE_COMM
+#define BUFFER_READ_SIZE_COMM 1024 * 8
+#endif
+#ifndef EPOLL_MAX_EVENTS_COMM_REM
+#define EPOLL_MAX_EVENTS_COMM_REM 1024
+#endif
 
 //
 // FriendCoreManager structure
@@ -93,6 +112,19 @@ typedef struct FriendCoreManager
 	
 	FriendcoreInfo               *fcm_FCI;										///< Friend Core Information
 	void                                *fcm_SB;  ///<Pointer to SystemBase
+	
+	int fcm_FCPort; // http port
+	int fcm_ComPort; // communication port
+	int fcm_ComRemotePort; // remote communication port
+	int fcm_WSPort; // websockets internet port
+	int fcm_Maxp; // number of connections in epoll for http
+	int fcm_Bufsize;  // FC buffer size
+	int fcm_MaxpCom; // number of connections in epoll for communication
+	int fcm_MaxpComRemote; // number of connections in epoll for remote connections
+	int fcm_BufsizeCom; // communication buffer size
+	FBOOL fcm_SSLEnabled; // SSL enabled for http
+	FBOOL fcm_WSSSLEnabled; // SSL enabled for WS
+	FBOOL fcm_SSLEnabledCommuncation; // SSL enabled for communication
 }FriendCoreManager;
 
 //
@@ -108,10 +140,16 @@ FriendCoreManager *FriendCoreManagerNew();
 void FriendCoreManagerDelete( FriendCoreManager *fcm );
 
 //
-// run system
+// run Fcores
 //
 
 FULONG FriendCoreManagerRun( FriendCoreManager *fcm );
+
+//
+// run services
+//
+
+int FriendCoreManagerServicesRun( FriendCoreManager *fcm );
 
 //
 // FriendCore shutdown

@@ -35,7 +35,7 @@
 #include <mysql.h>
 #include <util/hooks.h>
 #include <util/list.h>
-#include <system/handler/file.h>
+#include <system/fsys/file.h>
 #include <network/socket.h>
 #include <network/http.h>
 #include <system/application/application.h>
@@ -69,8 +69,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	AppSession *was = l->sl_AppSessionManager->sl_AppSessions;
 	while( was != NULL )
 	{
-		DEBUG("=====%llu\n", was->as_ASSID );
-		ASUList *wus =  was->as_UserSessionList;
+		DEBUG("=====%llu\n", was->as_SASID );
+		SASUList *wus =  was->as_UserSessionList;
 		while( wus != NULL )
 		{
 			if( wus->authid[ 0 ] == 0 )
@@ -81,7 +81,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{
 				DEBUG("authid %s wusptr  %p\n", wus->authid,  wus );
 			}
-			wus = (ASUList *)wus->node.mln_Succ;
+			wus = (SASUList *)wus->node.mln_Succ;
 		}
 		was = (AppSession *)was->node.mln_Succ;
 	}
@@ -218,7 +218,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				int pos = 0;
 				BufStringAdd( bs, " { \"Users\": [" );
 				
-				ASUList *al = as->as_UserSessionList;
+				SASUList *al = as->as_UserSessionList;
 				while( al != NULL )
 				{
 					char temp[ 1024 ];
@@ -247,7 +247,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					
 						pos++;
 					}
-					al = (ASUList *) al->node.mln_Succ;
+					al = (SASUList *) al->node.mln_Succ;
 				}
 				
 				BufStringAdd( bs, "  ]}" );
@@ -316,7 +316,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				int err = AppSessionManagerAddSession( l->sl_AppSessionManager, as );
 				if( err == 0 )
 				{
-					int size = sprintf( buffer, "{ \"SASID\": \"%llu\" }", as->as_ASSID  );
+					int size = sprintf( buffer, "{ \"SASID\": \"%llu\" }", as->as_SASID  );
 					HttpAddTextContent( response, buffer );
 				}
 				else
@@ -393,7 +393,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
 					DEBUG("As Owner I want to remove session and sasid\n");
 					
-					err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize );
+					err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
 					
 					// we are not owner, we must send message to owner too
 					if( loggedSession != locus )
@@ -496,7 +496,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			// We found session!
 			if( as != NULL )
 			{
-				ASUList *li = as->as_UserSessionList;
+				SASUList *li = as->as_UserSessionList;
 				int error = 1;
 		
 				// Find invitee user with authid from user list in allowed users
@@ -512,9 +512,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 							FERROR("\n\nAUTHID IS NOT EMPTY %s!!!\n", li->authid );
 						}
 						
-						if( li->status == ASSID_US_INVITED )
+						if( li->status == SASID_US_INVITED )
 						{
-							li->status == ASSID_US_ACCEPTED;
+							li->status == SASID_US_ACCEPTED;
 						}
 						
 						DEBUG("ASN set %s pointer %p\n", li->authid, li );
@@ -534,7 +534,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						error = 0;
 						break;
 					}
-					li = ( ASUList * )li->node.mln_Succ;
+					li = ( SASUList * )li->node.mln_Succ;
 				}
 			
 				if( error == 0 )
@@ -618,7 +618,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			if( as != NULL )
 			{
 				// Find invitee user with authid from user list in allowed users
-				ASUList *li = GetListEntryBySession( as, loggedSession );
+				SASUList *li = GetListEntryBySession( as, loggedSession );
 				int error = 1;
 				
 				if( li != NULL )
@@ -875,6 +875,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	{
 		char *assid = NULL;
 		char *msg = NULL;
+		char *usernames = NULL;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( "text/html" ) },
@@ -892,6 +893,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		el = HashmapGet( request->parsedPostContent, "msg" );
 		if( el != NULL ) msg = UrlDecodeToMem( ( char *)el->data );
 		
+		el = HashmapGet( request->parsedPostContent, "usernames" );
+		if( el != NULL ) usernames = UrlDecodeToMem( ( char *)el->data );
+		
+		//OST usernames ["stefkos"]
+		
+		
 		char buffer[ 1024 ];
 		
 		if( assid != NULL && msg != NULL )
@@ -903,7 +910,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			if( as != NULL )
 			{
-				int err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ) );
+				int err = AppSessionSendMessage( as, loggedSession, msg, strlen( msg ), usernames );
 				if( err > 0 )
 				{
 					int size = sprintf( buffer, "{\"response\":\"success\"}" );
@@ -932,6 +939,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			HttpAddTextContent( response, buffer );
 		}
 		
+		if( usernames != NULL )
+		{
+			FFree( usernames );
+		}
 		if( assid != NULL )
 		{
 			FFree( assid );
@@ -1066,7 +1077,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				pthread_mutex_lock( &as->as_SessionsMut );
 				
-				ASUList *srcli = as->as_UserSessionList;
+				SASUList *srcli = as->as_UserSessionList;
 				while( srcli != NULL )
 				{
 					if( srcli->usersession == loggedSession )
@@ -1074,12 +1085,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						break;
 					}
 						
-					srcli = (ASUList *) srcli->node.mln_Succ;
+					srcli = (SASUList *) srcli->node.mln_Succ;
 				}
 				
 				// finding session to which we want migrate
 				
-				ASUList *dstli = as->as_UserSessionList;
+				SASUList *dstli = as->as_UserSessionList;
 				while( dstli != NULL )
 				{
 					UserSession *locses = (UserSession *) dstli->usersession;
@@ -1088,7 +1099,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						break;
 					}
 						
-					dstli = (ASUList *) dstli->node.mln_Succ;
+					dstli = (SASUList *) dstli->node.mln_Succ;
 				}
 				
 				if( dstli != NULL && srcli->usersession != NULL )
@@ -1185,7 +1196,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				pthread_mutex_lock( &as->as_SessionsMut );
 				// finding our current session on list
 				
-				ASUList *srcli = as->as_UserSessionList;
+				SASUList *srcli = as->as_UserSessionList;
 				while( srcli != NULL )
 				{
 					if( srcli->usersession == loggedSession )
@@ -1193,12 +1204,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						break;
 					}
 						
-					srcli = (ASUList *) srcli->node.mln_Succ;
+					srcli = (SASUList *) srcli->node.mln_Succ;
 				}
 				
 				// finding session to which we want migrate
 				
-				ASUList *dstli = as->as_UserSessionList;
+				SASUList *dstli = as->as_UserSessionList;
 				while( dstli != NULL )
 				{
 					UserSession *locses = (UserSession *) dstli->usersession;
@@ -1207,7 +1218,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						break;
 					}
 						
-					dstli = (ASUList *) dstli->node.mln_Succ;
+						dstli = (SASUList *) dstli->node.mln_Succ;
 				}
 				
 				if( dstli != NULL && srcli->usersession != NULL )

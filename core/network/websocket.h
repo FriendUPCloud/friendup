@@ -113,6 +113,12 @@ void WebSocketDelete( WebSocket *ws );
 
 int WebSocketStart( WebSocket *ws );
 
+//
+//
+//
+
+int WebsocketWrite( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses );
+
 #endif // __NETWORK_WEBSOCKET_H__
 
 

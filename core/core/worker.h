@@ -67,6 +67,7 @@ typedef struct Worker
 	
 	double 					w_WorkMicros;						///< frequency microseconds
 	float					w_WorkSeconds;						///< frequency seconds
+	void					*w_Request;						// pointer to http request (used to debug)
 } Worker;
 
 //

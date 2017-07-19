@@ -428,7 +428,7 @@ static int cleanup( void )
 	
 	while( ( pid = wait3( &status, WNOHANG, NULL ) ) > 0 )
 	{
-		DEBUG("Process reaped\n",  pid );
+		DEBUG("Process reaped %d\n",  pid );
 	}
 	signal(SIGCHLD, (void (*)())cleanup );
 	

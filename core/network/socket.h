@@ -114,7 +114,7 @@ typedef struct SocketBuffer
 
 typedef struct Socket
 {
-	int                                         fd;              // Unix file descriptor for the socket. TODO: Use HANDLE on Windows.
+	int                                         fd;              // Unix file descriptor for the socket. 
 	pthread_mutex_t                   mutex; // Mutex for locking
 	FBOOL                                  listen;         // Is this a listening socket? SocketAccept can only be used on these kinds of sockets.
 	int		                                  port;// Yup. The port. What else?

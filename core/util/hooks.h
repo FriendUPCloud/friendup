@@ -49,11 +49,5 @@ struct Hook
 
 // You can use this if you want for casting function pointers. 
 
-typedef IPTR (*HOOKFUNC)();
-/*
-	AROS_UFHA(struct Hook *,    hook, A0),
-	AROS_UFHA(APTR,             object, A2),
-	AROS_UFHA(APTR,             message, A1)
-*/
 
 #endif //

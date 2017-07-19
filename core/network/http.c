@@ -39,7 +39,7 @@
 #include "util/string.h"
 #include <util/log/log.h>
 #include <util/tagitem.h>
-#include <service/comm_msg.h>
+#include <communication/comm_msg.h>
 #include <system/systembase.h>
 #include <arpa/inet.h>
 
@@ -672,6 +672,13 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						else if( strcmp( currentToken, "referer" ) == 0 )
 						{
 							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+9;
+							copyValue = FALSE;
+							FFree( currentToken );
+							currentToken = NULL;
+						}
+						else if( strcmp( currentToken, "accept-language" ) == 0 )
+						{
+							http->h_RespHeaders[ HTTP_HEADER_ACCEPT_LANGUAGE ] = lineStartPtr+17;
 							copyValue = FALSE;
 							FFree( currentToken );
 							currentToken = NULL;
@@ -1408,31 +1415,35 @@ void HttpFreeRequest( Http* http )
 	// Free the headers hashmap
 	unsigned int iterator = 0;
 	HashmapElement* e = NULL;
-	while( ( e = HashmapIterate( http->headers, &iterator ) ) != NULL )
+	if( http->headers != NULL )
 	{
-		if( e->data != NULL )
+		while( ( e = HashmapIterate( http->headers, &iterator ) ) != NULL )
 		{
-			List* l = (List*)e->data;
-			List* n = NULL;
-			do
+			if( e->data != NULL )
 			{
-				if( l->data )
+				List* l = (List*)e->data;
+				List* n = NULL;
+				do
 				{
-					FFree( l->data );
-					l->data = NULL;
-				}
-				n = l->next;
-				FFree( l );
-				l = n;
-			} while( l );
-			e->data = NULL;
+					if( l->data )
+					{
+						FFree( l->data );
+						l->data = NULL;
+					}
+					n = l->next;
+					FFree( l );
+					l = n;
+				} while( l );
+				e->data = NULL;
+			}
+			FFree( e->key );
+			e->key = NULL;
 		}
-		FFree( e->key );
-		e->key = NULL;
+	
+		HashmapFree( http->headers );
+		http->headers = NULL;
 	}
 	
-	HashmapFree( http->headers );
-
 	if( http->partialData ) FFree( http->partialData );
 
 	if( http->parsedPostContent ) HashmapFree( http->parsedPostContent );
@@ -1649,7 +1660,7 @@ char *HttpBuild( Http* http )
 	int stringPos = 0;
 
 	// TODO: This is a nasty hack and should be fixed!
-	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); // TODO: FIX ME!!
+	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); 
 	
 	int rrlen = strlen( http->responseReason );
 	int i = 0;
@@ -1777,7 +1788,7 @@ char *HttpBuildHeader( Http* http )
 	int i = 0;
 
 	// TODO: This is a nasty hack and should be fixed!
-	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); // TODO: FIX ME!!
+	HttpAddHeader( http, HTTP_HEADER_CONTROL_ALLOW_ORIGIN, StringDuplicateN( "*", 1 ) ); 
 	
 	int rrlen = strlen( http->responseReason );
 	char *tmpdat = FCalloc( 512 + rrlen, sizeof( char ) );

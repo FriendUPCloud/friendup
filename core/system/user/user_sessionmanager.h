@@ -137,7 +137,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses );
 //
 //
 
-char *USMUserGetActiveSessionID( UserSessionManager *smgr, User *usr );
+char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr );
 
 //
 //
@@ -160,6 +160,8 @@ int USMRemoveOldSessionsinDB( void *lsb );
 //
 //
 //
+
+FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, File *device, char *path );
 
 // get user by auth id
 UserSession *UserGetByAuthID( UserSessionManager *usm, const char *authId );

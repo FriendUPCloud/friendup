@@ -42,11 +42,27 @@ typedef struct AppSessionManager
 
 AppSessionManager *AppSessionManagerNew();
 
+//
+//
+//
+
 void AppSessionManagerDelete( AppSessionManager *as );
+
+//
+//
+//
 
 int AppSessionManagerAddSession( AppSessionManager *as, AppSession *nas );
 
+//
+//
+//
+
 int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas );
+
+//
+//
+//
 
 AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id );
 

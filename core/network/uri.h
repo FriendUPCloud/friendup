@@ -36,8 +36,7 @@
 #include <network/path.h>
 
 //
-// TODO: Protect against null-byte poisioning
-// TODO: Validation
+//
 //
 
 typedef struct Authority

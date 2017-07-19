@@ -27,11 +27,6 @@
 #include "worker.h"
 #include "network/socket.h"
 
-//#define MAX_WORKERS 	64
-//#define MIN_WORKERS 5
-#define MAX_WORKERS 	1
-#define MIN_WORKERS 1
-
 typedef struct WorkerManager
 {
 	
@@ -58,7 +53,13 @@ void WorkerManagerDelete( WorkerManager *wm );
 // add worker to list
 //
 
-int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d );
+int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *wrkinfo );
+
+//
+//
+//
+
+void WorkerManagerDebug( void *sb );
 
 
 #endif // __CORE_WORKER_MANAGER_H__

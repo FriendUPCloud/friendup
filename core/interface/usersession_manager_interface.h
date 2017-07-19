@@ -48,7 +48,7 @@ typedef struct UserSessionManagerInterface
 	UserSession				*(*USMUserSessionAdd)( UserSessionManager *smgr, UserSession *s );
 	int							(*USMUserSessionRemove)( UserSessionManager *smgr, UserSession *s );
 	int							(*USMSessionSaveDB)( UserSessionManager *smgr, UserSession *ses );
-	char						*(*USMUserGetActiveSessionID)( UserSessionManager *smgr, User *usr );
+	char						*(*USMUserGetFirstActiveSessionID)( UserSessionManager *smgr, User *usr );
 	void						(*USMDebugSessions)( UserSessionManager *smgr );
 	//UserSession					*(*UserGetByAuthID)( UserSessionManager *usm, const char *authId );
 }UserSessionManagerInterface;
@@ -73,7 +73,7 @@ inline void UserSessionManagerInterfaceInit( UserSessionManagerInterface *si )
 	si->USMUserSessionAdd = USMUserSessionAdd;
 	si->USMUserSessionRemove = USMUserSessionRemove;
 	si->USMSessionSaveDB = USMSessionSaveDB;
-	si->USMUserGetActiveSessionID = USMUserGetActiveSessionID;
+	si->USMUserGetFirstActiveSessionID = USMUserGetFirstActiveSessionID;
 	si->USMDebugSessions = USMDebugSessions;
 	//si->UserGetByAuthID = UserGetByAuthID;
 }

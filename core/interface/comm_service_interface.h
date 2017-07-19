@@ -30,7 +30,7 @@
 #ifndef __INTERFACE_COMM_SERVICE_INTERFACE_H__
 #define __INTERFACE_COMM_SERVICE_INTERFACE_H__
 
-#include <service/comm_service.h>
+#include <communication/comm_service.h>
 
 typedef struct CommServiceInterface
 {

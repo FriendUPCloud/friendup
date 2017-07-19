@@ -115,17 +115,17 @@ AppSession *AppSessionNew( void *sb, const char *authid, FUQUAD appid, UserSessi
 		
 		DEBUG("AppSessionCreated, authid %s\n", authid );
 		
-		ASUList *ali =  FCalloc( 1, sizeof( ASUList ) );
+		SASUList *ali =  FCalloc( 1, sizeof( SASUList ) );
 		if( ali != NULL )
 		{
 			ali->ID = las->as_NumberGenerator++;
-			ali->status = ASSID_US_STATUS_NEW;
+			ali->status = SASID_US_STATUS_NEW;
 			ali->usersession = owner;
 			strcpy( ali->authid, authid );
 			DEBUG("ASN set %s pointer %p\n", ali->authid, ali );
 			las->as_UserSessionList = ali;
 			
-			las->as_ASSID = (FUQUAD)ali;//( rand() % ULLONG_MAX );
+			las->as_SASID = (FUQUAD)ali;//( rand() % ULLONG_MAX );
 			las->as_Timer = time( NULL );
 			
 			las->as_UserNumber++;
@@ -166,13 +166,13 @@ void AppSessionDelete( AppSession *as )
 		
 		pthread_mutex_lock( &as->as_SessionsMut );
 		
-		ASUList *ali = as->as_UserSessionList;
-		ASUList *rml = ali;
+		SASUList *ali = as->as_UserSessionList;
+		SASUList *rml = ali;
 		
 		while( ali != NULL )
 		{
 			rml = ali;
-			ali = (ASUList *) ali->node.mln_Succ;
+			ali = (SASUList *) ali->node.mln_Succ;
 			
 			FFree( rml );
 			rml = NULL;
@@ -223,8 +223,8 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 	{
 		pthread_mutex_lock( &as->as_SessionsMut );
 		
-		ASUList *lali = (ASUList *)as->as_UserSessionList;
-		ASUList *endli =lali;
+		SASUList *lali = (SASUList *)as->as_UserSessionList;
+		SASUList *endli =lali;
 		while( lali != NULL )
 		{
 			// we check if device was added
@@ -235,7 +235,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 				break;
 			}
 			endli = lali;
-			lali = (ASUList *) lali->node.mln_Succ;
+			lali = (SASUList *) lali->node.mln_Succ;
 		}
 		
 		pthread_mutex_unlock( &as->as_SessionsMut );
@@ -252,13 +252,13 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			}
 			else
 			{
-				FERROR("User is already invited with session %llu\n", as->as_ASSID );
+				FERROR("User is already invited with session %llu\n", as->as_SASID );
 				return -1;
 			}
 		}
 		
 		pthread_mutex_lock( &as->as_SessionsMut );
-		ASUList *ali =  FCalloc( 1, sizeof( ASUList ) );
+		SASUList *ali =  FCalloc( 1, sizeof( SASUList ) );
 		
 		if( ali != NULL )
 		{
@@ -296,8 +296,8 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 		
 		pthread_mutex_lock( &as->as_SessionsMut );
 		
-		ASUList *ali = (ASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
-		ASUList *prevali = as->as_UserSessionList;
+		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
+		SASUList *prevali = as->as_UserSessionList;
 		
 		while( ali != NULL )
 		{
@@ -305,7 +305,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			{
 				if( ali == as->as_UserSessionList )
 				{
-					as->as_UserSessionList =(ASUList *)ali->node.mln_Succ;
+					as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
 				}
 				else
 				{
@@ -321,7 +321,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			}
 		
 			prevali = ali;
-			ali = (ASUList *) ali->node.mln_Succ;
+			ali = (SASUList *) ali->node.mln_Succ;
 		}
 		
 		pthread_mutex_unlock( &as->as_SessionsMut );
@@ -347,8 +347,8 @@ int AppSessionRemUser( AppSession *as, User *u )
 	{
 		pthread_mutex_lock( &as->as_SessionsMut );
 		
-		ASUList *ali = (ASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
-		ASUList *prevali = as->as_UserSessionList;
+		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
+		SASUList *prevali = as->as_UserSessionList;
 		
 		while( ali != NULL )
 		{
@@ -356,7 +356,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 			{
 				if( ali == as->as_UserSessionList )
 				{
-					as->as_UserSessionList =(ASUList *)ali->node.mln_Succ;
+					as->as_UserSessionList =(SASUList *)ali->node.mln_Succ;
 				}
 				else
 				{
@@ -368,7 +368,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 			}
 		
 			prevali = ali;
-			ali = (ASUList *) ali->node.mln_Succ;
+			ali = (SASUList *) ali->node.mln_Succ;
 		}
 		
 		pthread_mutex_unlock( &as->as_SessionsMut );
@@ -464,7 +464,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 
 				pthread_mutex_lock( &as->as_SessionsMut );
 				
-				ASUList *curgusr = as->as_UserSessionList;
+				SASUList *curgusr = as->as_UserSessionList;
 				while( curgusr != NULL )
 				{
 					FERROR("Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
@@ -472,13 +472,13 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 					{
 						DEBUG("User found\n");
 
-						if( curgusr->status == ASSID_US_STATUS_NEW )
+						if( curgusr->status == SASID_US_STATUS_NEW )
 						{
-							curgusr->status = ASSID_US_INVITED;
+							curgusr->status = SASID_US_INVITED;
 						}
 						break;
 					}
-					curgusr = (ASUList *) curgusr->node.mln_Succ;
+					curgusr = (SASUList *) curgusr->node.mln_Succ;
 				}
 				pthread_mutex_unlock( &as->as_SessionsMut );
 
@@ -539,8 +539,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 										pos++;
 
 										char tmpmsg[ 2048 ];
-										int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_ASSID, msg, loggedSession->us_User->u_Name , appname );
-										//TODO add application name
+										int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 
 										WebSocketSendMessageInt( usrses, tmpmsg, len );
 									}
@@ -576,8 +575,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 						pos++;
 					
 						char tmpmsg[ 2048 ];
-						int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_ASSID, msg, loggedSession->us_User->u_Name , appname );
-						//TODO add application name
+						int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 					
 						WebSocketSendMessageInt( ses, tmpmsg, len );
 					}
@@ -682,8 +680,8 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 	UserSession *adminSession = NULL;
 	char tmp[ 1024 ];
 	int msgsndsize = 0;
-	ASUList *asul = as->as_UserSessionList;
-	ASUList **rementr = NULL;
+	SASUList *asul = as->as_UserSessionList;
+	SASUList **rementr = NULL;
 	unsigned int rementrnum = 0;
 	int returnEntry = 0;
 	
@@ -691,7 +689,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 	
 	if( as->as_UserNumber > 0 )
 	{
-		rementr = FCalloc( as->as_UserNumber+100, sizeof(ASUList *) );
+		rementr = FCalloc( as->as_UserNumber+100, sizeof(SASUList *) );
 		
 		User *assidAdmin = NULL;
 	
@@ -728,7 +726,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 				}
 			}
 
-			asul = (ASUList *) asul->node.mln_Succ;
+			asul = (SASUList *) asul->node.mln_Succ;
 		}
 	}
 	
@@ -745,18 +743,18 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 			asul = as->as_UserSessionList;
 			while( asul != NULL )
 			{
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->authid, as->as_ASSID,  loggedSession->us_User->u_Name, asul->usersession->us_User->u_Name );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->authid, as->as_SASID,  loggedSession->us_User->u_Name, asul->usersession->us_User->u_Name );
 				msgsndsize += WebSocketSendMessageInt( asul->usersession, tmp, len );
 			
-				asul = (ASUList *) asul->node.mln_Succ;
+				asul = (SASUList *) asul->node.mln_Succ;
 			}
 		}
 		else
 		{
 			for( i=0 ; i < rementrnum ; i++ )
 			{
-				DEBUG(" authid %s sasid %lu userptr %p usersessptr %p usersessuser ptr %p\n", (unsigned long)rementr[ i ]->authid, as->as_ASSID,  loggedSession->us_User, rementr[ i ]->usersession, rementr[ i ]->usersession->us_User );
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->authid, as->as_ASSID,  loggedSession->us_User->u_Name, rementr[ i ]->usersession->us_User->u_Name );
+				DEBUG(" authid %s sasid %llu userptr %p usersessptr %p usersessuser ptr %p\n", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User, rementr[ i ]->usersession, rementr[ i ]->usersession->us_User );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User->u_Name, rementr[ i ]->usersession->us_User->u_Name );
 				msgsndsize += WebSocketSendMessageInt( rementr[ i ]->usersession, tmp, len );
 			
 				AppSessionRemUsersession( as, rementr[ i ]->usersession );
@@ -777,7 +775,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 typedef struct RWSCon
 {
 	AppSession *as;		// app session
-	ASUList *us;		// user session
+	SASUList *us;		// user session
 	
 	struct RWSCon *next;
 }RWSCon;
@@ -800,7 +798,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	while( as != NULL )
 	{
-		ASUList *le = as->as_UserSessionList;
+		SASUList *le = as->as_UserSessionList;
 		while( le != NULL )
 		{
 			DEBUG("Going through US\n");
@@ -814,6 +812,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
 						if( ne != NULL )
 						{
+							pthread_mutex_lock( &as->as_SessionsMut );
 							ne->as = as;
 							ne->us = le;
 							
@@ -828,13 +827,14 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 								rwsentr = ne;
 							}
 						}
+						pthread_mutex_unlock( &as->as_SessionsMut );
 						
 						break;
 					}
 					lws = (WebsocketClient *)lws->node.mln_Succ;
 				}
 			}
-			le = (ASUList *)le->node.mln_Succ;
+			le = (SASUList *)le->node.mln_Succ;
 		}
 		
 		as = (AppSession *)as->node.mln_Succ;
@@ -858,7 +858,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			
 			if( re->as->as_UserSessionList == re->us )
 			{
-				err = AppSessionSendMessage( as, re->us->usersession, tmpmsg, msgsize );
+				err = AppSessionSendMessage( as, re->us->usersession, tmpmsg, msgsize, NULL );
 			}
 			else
 			{
@@ -885,7 +885,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
  * @return 0 if success, otherwise error number
  */
 
-int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int length )
+int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int length, char *dstusers )
 {
 	int msgsndsize = 0;
 	if( as == NULL || sender == NULL )
@@ -906,37 +906,89 @@ int AppSessionSendMessage( AppSession *as, UserSession *sender, char *msg, int l
 	
 	FERROR("DEBUG %s\n", msg );
 	
-	ASUList *ali = as->as_UserSessionList;
-	while( ali != NULL )
+	if( dstusers == NULL )
 	{
-		if( ali->usersession == sender )
+		SASUList *ali = as->as_UserSessionList;
+		while( ali != NULL )
 		{
-			// sender should receive response
-			DEBUG("SENDER AUTHID %s\n", ali->authid );
-		}
-		else
-		{
-			char *newmsg = NULL;
-			
-			if( ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
+			if( ali->usersession == sender )
 			{
-				User *usend = sender->us_User;
-				
-				DEBUG("Sendmessage AUTHID %s\n", ali->authid );
-				
-				int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_ASSID, usend->u_Name, msg );
-				
-				msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
-				DEBUG("FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
-				FFree( newmsg );
+				// sender should receive response
+				DEBUG("SENDER AUTHID %s\n", ali->authid );
 			}
 			else
 			{
-				FERROR("Cannot allocate memory for message\n");
+				char *newmsg = NULL;
+				
+				if( ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
+				{
+					User *usend = sender->us_User;
+					
+					DEBUG("Sendmessage AUTHID %s\n", ali->authid );
+					
+					int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_SASID, usend->u_Name, msg );
+					
+					msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
+					DEBUG("FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+					FFree( newmsg );
+				}
+				else
+				{
+					FERROR("Cannot allocate memory for message\n");
+				}
 			}
+			ali = (SASUList *) ali->node.mln_Succ;
 		}
-			
-		ali = (ASUList *) ali->node.mln_Succ;
+	}
+	else  // dstusers != NULL
+	{
+		int dstuserssize = strlen( dstusers );
+		char *quotaName = FMalloc( dstuserssize );
+		
+		SASUList *ali = as->as_UserSessionList;
+		while( ali != NULL )
+		{
+			if( ali->usersession == sender )
+			{
+				// sender should receive response
+				DEBUG("SENDER AUTHID %s\n", ali->authid );
+			}
+			else
+			{
+				UserSession *locusrsess = (UserSession *)ali->usersession;
+				User *usr = locusrsess->us_User;
+				
+				if( usr != NULL )
+				{
+					int size = strlen( usr->u_Name );
+					quotaName[ 0 ] = quotaName[ size+1 ] = '\"';
+					quotaName[ size+2 ] = 0;
+					memcpy( &quotaName[ 1 ], usr->u_Name, size );
+					
+					char *newmsg = NULL;
+					
+					if( strstr( dstusers, quotaName ) != NULL &&  ( newmsg = FCalloc( length+256, sizeof(char) ) ) != NULL )
+					{
+						User *usend = sender->us_User;
+						
+						DEBUG("Sendmessage AUTHID %s\n", ali->authid );
+						
+						int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, ali->authid, as->as_SASID, usend->u_Name, msg );
+						
+						msgsndsize += WebSocketSendMessageInt( ali->usersession, newmsg, newmsgsize );
+						DEBUG("FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, ali->usersession->us_User->u_Name, msgsndsize );
+						FFree( newmsg );
+					}
+					else
+					{
+						//FERROR("Cannot allocate memory for message\n");
+					}
+				}
+			}
+			ali = (SASUList *) ali->node.mln_Succ;
+		}
+		
+		FFree( quotaName );
 	}
 	
 	return msgsndsize;
@@ -978,7 +1030,7 @@ int AppSessionSendOwnerMessage( AppSession *as, UserSession *sender, char *msg, 
 	{
 		User *usend = sender->us_User;
 		DEBUG("AS POINTER %p SENDER %p\n", as, usend );
-		int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, as->as_AuthID, as->as_ASSID, usend->u_Name, msg );
+		int newmsgsize = sprintf( newmsg, WS_MESSAGE_TEMPLATE_USER, as->as_AuthID, as->as_SASID, usend->u_Name, msg );
 				
 		msgsndsize += WebSocketSendMessageInt( as->as_UserSessionList->usersession, newmsg, newmsgsize );
 		DEBUG("FROM %s  TO %s  MESSAGE SIZE %d\n", usend->u_Name, as->as_UserSessionList->usersession->us_User->u_Name, msgsndsize );
@@ -1014,7 +1066,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
 	
 	DEBUG("Send message %s\n", msg );
 	
-	ASUList *ali = as->as_UserSessionList;
+	SASUList *ali = as->as_UserSessionList;
 	while( ali != NULL )
 	{
 		if( ali->usersession ==  sender )
@@ -1030,7 +1082,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
 			DEBUG("Message sent to user %s size %d\n", ali->usersession->us_User->u_Name, msgsndsize );
 		}
 			
-		ali = (ASUList *) ali->node.mln_Succ;
+		ali = (SASUList *) ali->node.mln_Succ;
 	}
 	
 	return msgsndsize;
@@ -1044,10 +1096,10 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
  * @return list entry or NULL if its not attached to application session
  */
 
-ASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
+SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 {
 	pthread_mutex_lock( &as->as_SessionsMut );
-	ASUList *li = as->as_UserSessionList;
+	SASUList *li = as->as_UserSessionList;
 		
 	// Find invitee user with authid from user list in allowed users
 	while( li != NULL )
@@ -1057,7 +1109,7 @@ ASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 		{
 			break;
 		}
-		li = ( ASUList * )li->node.mln_Succ;
+		li = ( SASUList * )li->node.mln_Succ;
 	}
 	pthread_mutex_unlock( &as->as_SessionsMut );
 	

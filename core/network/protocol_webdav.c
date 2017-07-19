@@ -30,7 +30,7 @@
 #include <system/json/structures/friend.h>
 #include <mysql/mysqllibrary.h>
 #include <system/auth/authmodule.h>
-#include <system/handler/device_handling.h>
+#include <system/fsys/device_handling.h>
 #include <openssl/md5.h>
 #include <util/md5.h>
 #include <network/digcalc.h>

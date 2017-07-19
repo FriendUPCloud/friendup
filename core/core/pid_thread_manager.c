@@ -42,7 +42,7 @@
  */
 PIDThreadManager *PIDThreadManagerNew( void *sb )
 {
-	DEBUG("PIDThreadManagerNew, pointer to SB %p\n");
+	DEBUG("PIDThreadManagerNew, pointer to SB %p\n", sb );
 	PIDThreadManager *ptm;
 	
 	if( ( ptm = FCalloc( 1, sizeof( PIDThreadManager ) ) ) != NULL )
@@ -211,7 +211,7 @@ FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **u
 			}
 		}
 		
-		pidt->pt_Thread = ThreadNew( PIDThreadThread, pidt, TRUE );
+		pidt->pt_Thread = ThreadNew( PIDThreadThread, pidt, TRUE, NULL );
 		
 		if( pidt->pt_Thread != NULL )
 		{

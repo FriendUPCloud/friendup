@@ -39,13 +39,13 @@
 #include <dirent.h> 
 #include <stdio.h> 
 #include <unistd.h>
-#include <service/service_manager.h>
+#include <system/services/service_manager.h>
 #include <properties/propertieslibrary.h>
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
 #include <network/websocket_client.h>
-#include <system/handler/device_handling.h>
+#include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
 #include <network/digcalc.h>
@@ -53,14 +53,14 @@
 #include <system/invar/invar_manager.h>
 #include <system/application/applicationweb.h>
 #include <system/user/user_manager.h>
-#include <system/handler/fs_manager.h>
-#include <system/handler/fs_manager_web.h>
-#include <system/handler/fs_remote_manager_web.h>
+#include <system/fsys/fs_manager.h>
+#include <system/fsys/fs_manager_web.h>
+#include <system/fsys/fs_remote_manager_web.h>
 #include <core/pid_thread_web.h>
-#include <system/handler/device_manager_web.h>
+#include <system/fsys/device_manager_web.h>
 #include <network/mime.h>
 #include <hardware/usb/usb_device_web.h>
-#include <system/handler/door_notification.h>
+#include <system/fsys/door_notification.h>
 #include <system/admin/admin_web.h>
 
 #define LIB_NAME "system.library"
@@ -291,7 +291,7 @@ Webreq func: %s\n \
 						{
 							//DEBUG("as !=NULL, trying to find user by authid %s\n", authid );
 							
-							ASUList *alist = as->as_UserSessionList;
+							SASUList *alist = as->as_UserSessionList;
 							while( alist != NULL )
 							{
 								//DEBUG("Authid check %s user %s\n", alist->authid, alist->usersession->us_User->u_Name );
@@ -302,7 +302,7 @@ Webreq func: %s\n \
 									DEBUG("Found user %s\n", loggedSession->us_User->u_Name );
 									break;
 								}
-								alist = (ASUList *)alist->node.mln_Succ;
+								alist = (SASUList *)alist->node.mln_Succ;
 							}
 						}
 						FFree( authid );
@@ -411,6 +411,7 @@ Webreq func: %s\n \
 			}
 			else
 			{
+				pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
 				//DEBUG("Checking sessions\n");
 				while( curusrsess != NULL )
 				{
@@ -454,6 +455,7 @@ Webreq func: %s\n \
 					}
 					curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 				}
+				pthread_mutex_unlock( &(l->sl_USM->usm_Mutex) );
 			}
 		}
 		
@@ -671,6 +673,8 @@ Webreq func: %s\n \
 					
 					FBOOL isUserSentinel = FALSE;
 					
+					pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
+					
 					if( deviceid == NULL )
 					{
 						while( tusers != NULL )
@@ -740,6 +744,7 @@ Webreq func: %s\n \
 							tusers = (UserSession *)tusers->node.mln_Succ;
 						}
 					}
+					pthread_mutex_unlock( &(l->sl_USM->usm_Mutex) );
 					
 					if( dstusrsess == NULL )
 					{
@@ -1079,6 +1084,7 @@ Webreq func: %s\n \
 					//char *path = FCalloc( 5, sizeof( char ) );
 					char path[ 512 ];
 					snprintf( path, sizeof(path), "modules/%s", module );
+					path[ 511 ] = 0;
 					
 					if( stat( path, &f ) != -1 )
 					{
@@ -1139,7 +1145,7 @@ Webreq func: %s\n \
 						{
 							DEBUG( "[MODULE] Executing %s module! path %s\n", modType, path );
 							char *modulePath = FCalloc( 256, sizeof( char ) );
-							sprintf( modulePath, "%s/module.%s", path, modType );
+							snprintf( modulePath, 256, "%s/module.%s", path, modType );
 							if( 
 								strcmp( modType, "php" ) == 0 || 
 								strcmp( modType, "jar" ) == 0 ||
@@ -1152,7 +1158,10 @@ Webreq func: %s\n \
 								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
 								
 								// We don't use them now
-								FFree( allArgsNew );
+								if( allArgsNew != NULL )
+								{
+									FFree( allArgsNew );
+								}
 							}
 							if( modulePath )
 							{
@@ -1180,6 +1189,7 @@ Webreq func: %s\n \
 			// 5. Piped response will be output!
 			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
 			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
+			char *dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Disposition" ) : NULL;
 			char *code = CheckEmbeddedHeaders( data, dataLength, "Status Code" );
 			
 			/*
@@ -1214,6 +1224,7 @@ Webreq func: %s\n \
 			{
 				struct TagItem tags[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( ltype, strlen( ltype ) ) },
+					{ HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicateN( dispo ? dispo : "inline", dispo ? strlen( dispo ) : strlen( "inline" ) ) },
 					{ HTTP_HEADER_CONTENT_LENGTH, (FULONG)StringDuplicateN( length, strlen( length ) ) },
 					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 					{ TAG_DONE, TAG_DONE }

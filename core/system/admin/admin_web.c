@@ -34,7 +34,7 @@
 #include <core/nodes.h>
 #include "admin_web.h"
 
-#include <system/handler/device_handling.h>
+#include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
 #include <network/digcalc.h>
@@ -42,14 +42,14 @@
 #include <system/invar/invar_manager.h>
 #include <system/application/applicationweb.h>
 #include <system/user/user_manager.h>
-#include <system/handler/fs_manager.h>
-#include <system/handler/fs_manager_web.h>
-#include <system/handler/fs_remote_manager_web.h>
+#include <system/fsys/fs_manager.h>
+#include <system/fsys/fs_manager_web.h>
+#include <system/fsys/fs_remote_manager_web.h>
 #include <core/pid_thread_web.h>
-#include <system/handler/device_manager_web.h>
+#include <system/fsys/device_manager_web.h>
 #include <network/mime.h>
 #include <hardware/usb/usb_device_web.h>
-#include <system/handler/door_notification.h>
+#include <system/fsys/door_notification.h>
 
 /**
  * Network handler
@@ -390,7 +390,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			{
 				DEBUG("Going through users, user: %s\n", usr->u_Name );
 				
-				UserSessList  *usl = usr->u_SessionsList;
+				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *locses = (UserSession *)usl->us;
@@ -417,8 +417,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							char tmpmsg[ 2048 ];
 							int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
 												  loggedSession->us_User->u_Name , msg );
-							//TODO add application name
-							
 							
 							msgsndsize += WebSocketSendMessageInt( locses, tmpmsg, lenmsg );
 							//int err = AppSessionSendPureMessage( as, loggedSession, tmp, len );
@@ -428,7 +426,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 							pos++;
 						}
 					}
-					usl = (UserSessList *)usl->node.mln_Succ;
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 				usr = (User *)usr->node.mln_Succ;
 			}

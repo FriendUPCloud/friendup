@@ -35,7 +35,7 @@
 //
 //
 
-char* Base64Encode( const unsigned char* data, int length );
+char* Base64Encode( const unsigned char* data, int length, int *dstlen );
 
 //
 //

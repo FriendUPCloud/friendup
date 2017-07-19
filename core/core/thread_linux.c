@@ -29,7 +29,7 @@
 // create new thread
 //
 
-FThread *ThreadNew( void *func, void *data, FBOOL autos )
+FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 {
 	if( !func || !data ) return NULL;
 	
@@ -54,7 +54,7 @@ FThread *ThreadNew( void *func, void *data, FBOOL autos )
 	{
 		nt->t_Quit = FALSE;
 		
-		if( ( error = pthread_create( &(nt->t_Thread), NULL, func, nt ) ) == 0 )
+		if( ( error = pthread_create( &(nt->t_Thread), attr, func, nt ) ) == 0 )
 		{
 			nt->t_Launched = TRUE;
 			// WE ALWAYS PASS POINTER TO THREAD AND ALLOW DEVELOPER TO HANDLE  quit

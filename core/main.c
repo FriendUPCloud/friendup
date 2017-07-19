@@ -90,7 +90,7 @@ void InterruptSignalHandler(int signum)
  * .
  * @param[in]argc not used in this version
  * @param[in]argv not used in this version
- * @return always returns 0
+ * @return 0 when success, otherwise error number
  * @sa SystemInit, FriendCoreManagerNew, SetFriendCoreManager, FriendCoreManagerRun
  * @todo FL>HT - no error numbers returned in case of panic
  */
@@ -102,12 +102,15 @@ int main( int argc, char *argv[] )
 	
 	srand( time( NULL ) );
 	
+	char *cwd;
+	char *envvar;
+	
 	// Setup "Progdir:" in ENV
 	{
-		char cwd[ 1024 ];
-		char envvar[ 1048 ];
+		cwd = FCalloc( 1024, sizeof(char) );
+		envvar = FCalloc( 1048, sizeof(char) );
 		
-		if( getcwd(cwd, sizeof( cwd ) ) != NULL )
+		if( getcwd(cwd, 1024 ) != NULL )
 		{
 			if( cwd[ strlen( cwd ) - 1 ] == '/' )
 			{
@@ -130,26 +133,9 @@ int main( int argc, char *argv[] )
 	
 	if( ( SLIB =  SystemInit() ) != NULL ) // (struct SystemLibrary *)LibraryOpen( "system.library", 0 ) ) != NULL )
 	{
-		// we cannot open libs inside another init
+		SLIB->SystemInitExternal( SLIB );
 		
-		coreManager = FriendCoreManagerNew();
-		if( coreManager != NULL )
-		{
-			SLIB->SetFriendCoreManager( SLIB, coreManager );
-			SLIB->SystemInitExternal( SLIB );
-			FriendCoreManagerRun( coreManager );
-		}
-		else
-		{
-			Log( FLOG_PANIC, "Cannot Run FriendCoreManager!\n");
-		}
-		
-		if( coreManager != NULL )
-		{
-			FriendCoreManagerDelete( coreManager );
-		}
-		
-		//pthread_mutex_destroy( &sslmut );
+		FriendCoreManagerRun( SLIB->fcm );
 		
 		SLIB->SystemClose( SLIB );
 		
@@ -158,7 +144,14 @@ int main( int argc, char *argv[] )
 	else
 	{
 		Log( FLOG_PANIC, "Cannot open 'system.library'\n");
+		FFree( envvar );
+		FFree( cwd );
+		LogDelete();
+		return 1;
 	}
+	
+	FFree( envvar );
+	FFree( cwd );
 
 	return 0;
 }

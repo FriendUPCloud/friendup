@@ -415,8 +415,8 @@ Hashmap* UriParseQuery( char* query )
 					// Couldn't add hto hashmap sadly..
 					else 
 					{
-						if( value ) free( value );
-						free( key );
+						if( value ) FFree( value );
+						FFree( key );
 					}
 				}
 			}

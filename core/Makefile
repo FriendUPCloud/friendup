@@ -32,13 +32,13 @@ else
 LFLAGS	+=		-Wl,--export-dynamic
 endif
 
-C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c services/*.c util/*.c class/*.c service/*.c ssh/*.c hardware/*.c system/*.c \
-			system/dictionary/*.c system/module/*.c system/handler/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
-			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c )
+C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
+			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
+			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c)
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
-	make -C service/services  DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C system/servicesdyn  DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C system DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 $(OUTPUT): $(OBJ_FILES)
@@ -61,7 +61,11 @@ obj/%.o: network/%.c network/*.h network/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
-obj/%.o: services/%.c services/*.h services/%.d
+obj/%.o: system/services/%.c system/services/*.h system/services/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: communication/%.c communication/*.h communication/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
@@ -70,10 +74,6 @@ obj/%.o: util/%.c util/*.h util/%.d
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: class/%.c class/*.h class/%.d
-	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
-	
-obj/%.o: service/%.c service/*.h service/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
@@ -93,7 +93,7 @@ obj/%.o: system/dictionary/%.c system/dictionary/*.h system/dictionary/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
-obj/%.o: system/handler/%.c system/handler/*.h system/handler/%.d
+obj/%.o: system/fsys/%.c system/fsys/*.h system/fsys/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
 
@@ -147,6 +147,9 @@ obj/%.o: system/log/%.c system/log/*.h system/log/%.d
 obj/%.o: system/admin/%.c system/admin/*.h system/admin/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
+obj/%.o: system/autotask/%.c system/autotask/*.h system/autotask/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
 	
 # build/install
 
@@ -166,19 +169,19 @@ clean:
 	@rm -fr obj/*
 	@rm -f *.d*
 	@rm -f $(C_FILES:%.c=%.d)
-	make -C service/services clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C system/servicesdyn clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C system clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	
 install:
 	@echo "\033[34mInstalling\033[0m"
 	cp $(OUTPUT) ../build/ 
-	make -C service/services install
+	make -C system/servicesdyn install
 	make -C system install
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
-	make -C service/services setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C system/servicesdyn setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 # dependency system

@@ -40,14 +40,6 @@
 // currently Friend can create only one core
 //
 
-#define EPOLL_MAX_EVENTS 1024
-#define BUFFER_READ_SIZE 1024 * 8
-
-#define EPOLL_MAX_EVENTS_COMM 1024
-#define BUFFER_READ_SIZE_COMM 1024 * 8
-
-#define EPOLL_MAX_EVENTS_COMM_REM 1024
-
 void *FCM;
 
 //
@@ -118,29 +110,20 @@ FriendCoreManager *FriendCoreManagerNew()
 		//
 		// create services
 		//
-		
-		int port = FRIEND_CORE_PORT;
-		int cport = FRIEND_COMMUNICATION_PORT;
-		int cremoteport = FRIEND_COMMUNICATION_REMOTE_PORT;
-		int wsport = WEBSOCKET_PORT;
-		int maxp = EPOLL_MAX_EVENTS;
-		int bufsize = BUFFER_READ_SIZE;
-		int maxpcom =  EPOLL_MAX_EVENTS_COMM;
-		int maxpcomremote = EPOLL_MAX_EVENTS_COMM_REM;
-		int bufsizecom = BUFFER_READ_SIZE_COMM;
 
-		FBOOL SSLEnabled = FALSE;
-		FBOOL WSSSLEnabled = FALSE;
-		FBOOL SSLEnabledCommuncation = FALSE;
-		SLIB->sl_CacheFiles = TRUE;
-		SLIB->sl_UnMountDevicesInDB =TRUE;
-		SLIB->sl_SocketTimeout = 10000;
-		
-		if( SLIB->sl_ActiveModuleName )
-		{
-			FFree( SLIB->sl_ActiveModuleName );
-		}
-		SLIB->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
+		fcm->fcm_FCPort = FRIEND_CORE_PORT;
+		fcm->fcm_ComPort = FRIEND_COMMUNICATION_PORT;
+		fcm->fcm_ComRemotePort = FRIEND_COMMUNICATION_REMOTE_PORT;
+		fcm->fcm_WSPort = WEBSOCKET_PORT;
+		fcm->fcm_Maxp = EPOLL_MAX_EVENTS;
+		fcm->fcm_Bufsize = BUFFER_READ_SIZE;
+		fcm->fcm_MaxpCom =  EPOLL_MAX_EVENTS_COMM;
+		fcm->fcm_MaxpComRemote = EPOLL_MAX_EVENTS_COMM_REM;
+		fcm->fcm_BufsizeCom = BUFFER_READ_SIZE_COMM;
+
+		fcm->fcm_SSLEnabled = FALSE;
+		fcm->fcm_WSSSLEnabled = FALSE;
+		fcm->fcm_SSLEnabledCommuncation = FALSE;
 
 		{
 			struct PropertiesLibrary *plib = NULL;
@@ -150,61 +133,45 @@ FriendCoreManager *FriendCoreManagerNew()
 			{
 				char *ptr, path[ 1024 ];
 				path[ 0 ] = 0;
-	
+				
 				ptr = getenv("FRIEND_HOME");
+				
 				if( ptr != NULL )
 				{
 					sprintf( path, "%scfg/cfg.ini", ptr );
 				}
-				
-				sprintf( SLIB->RSA_SERVER_CERT, "%s/crt/certificate.pem", ptr );
-				sprintf( SLIB->RSA_SERVER_KEY, "%s/crt/key.pem", ptr );
-				sprintf( SLIB->RSA_SERVER_CA_CERT, "%s/crt/certificate.pem", ptr );
-				sprintf( SLIB->RSA_SERVER_CA_PATH, "%s/crt/", ptr );
 
 				prop = plib->Open( path );
 				if( prop != NULL)
 				{
-					maxp = plib->ReadInt( prop, "Core:epollevents", EPOLL_MAX_EVENTS );
-					bufsize = plib->ReadInt( prop, "Core:networkbuffer", BUFFER_READ_SIZE );
+					fcm->fcm_Maxp = plib->ReadInt( prop, "Core:epollevents", EPOLL_MAX_EVENTS );
+					fcm->fcm_Bufsize = plib->ReadInt( prop, "Core:networkbuffer", BUFFER_READ_SIZE );
 					
-					maxpcom = plib->ReadInt( prop, "Core:epolleventscom", EPOLL_MAX_EVENTS_COMM );
-					bufsizecom = plib->ReadInt( prop, "Core:networkbuffercom", BUFFER_READ_SIZE_COMM );
+					fcm->fcm_MaxpCom = plib->ReadInt( prop, "Core:epolleventscom", EPOLL_MAX_EVENTS_COMM );
+					fcm->fcm_BufsizeCom = plib->ReadInt( prop, "Core:networkbuffercom", BUFFER_READ_SIZE_COMM );
 					
-					maxpcomremote = plib->ReadInt( prop, "Core:epolleventscomremote", EPOLL_MAX_EVENTS_COMM );
+					fcm->fcm_MaxpComRemote = plib->ReadInt( prop, "Core:epolleventscomremote", EPOLL_MAX_EVENTS_COMM );
 					
-					port= plib->ReadInt( prop, "Core:port", FRIEND_CORE_PORT );
-					wsport = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
-					cport = plib->ReadInt( prop, "Core:cport", FRIEND_COMMUNICATION_PORT );
-					cremoteport = plib->ReadInt( prop, "Core:cremoteport", FRIEND_COMMUNICATION_REMOTE_PORT );
+					fcm->fcm_FCPort= plib->ReadInt( prop, "Core:port", FRIEND_CORE_PORT );
+					fcm->fcm_WSPort = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
+					fcm->fcm_ComPort = plib->ReadInt( prop, "Core:cport", FRIEND_COMMUNICATION_PORT );
+					fcm->fcm_ComRemotePort = plib->ReadInt( prop, "Core:cremoteport", FRIEND_COMMUNICATION_REMOTE_PORT );
 					
-					SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
-					WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
-					SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CSSLEnable", 0 );
-					
-					SLIB->sl_CacheFiles = plib->ReadInt( prop, "Options:CacheFiles", 1 );
-					SLIB->sl_UnMountDevicesInDB = plib->ReadInt( prop, "Options:UnmountInDB", 1 );
-					SLIB->sl_SocketTimeout  = plib->ReadInt( prop, "Core:SSLSocketTimeout", 10000 );
-					
-					char *tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
+					fcm->fcm_SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
+					fcm->fcm_WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
+					fcm->fcm_SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CSSLEnable", 0 );
+
+					char *tptr  = plib->ReadString( prop, "LoginModules:modules", "" );
 					if( tptr != NULL )
 					{
-						if( tptr[ 0 ] == '/' )
-						{
-							sprintf( SLIB->RSA_SERVER_CERT, "%s%s", tptr, "certificate.pem" );
-							sprintf( SLIB->RSA_SERVER_KEY, "%s%s", tptr, "key.pem" );
-							sprintf( SLIB->RSA_SERVER_CA_CERT, "%s%s", tptr, "certificate.pem" );
-							sprintf( SLIB->RSA_SERVER_CA_PATH, "%s%s", tptr, "/" );
-						}
-						else
-						{
-							sprintf( SLIB->RSA_SERVER_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
-							sprintf( SLIB->RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
-							sprintf( SLIB->RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
-							sprintf( SLIB->RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
-						}
+						SLIB->sl_ModuleNames = StringDuplicate( tptr );
+					}
+					else
+					{
+						SLIB->sl_ModuleNames = StringDuplicate( " " );
 					}
 					
+					/*
 					if( SLIB->sl_ActiveModuleName != NULL )
 					{
 						FFree( SLIB->sl_ActiveModuleName );
@@ -218,17 +185,7 @@ FriendCoreManager *FriendCoreManagerNew()
 					else
 					{
 						SLIB->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
-					}
-					
-					tptr  = plib->ReadString( prop, "LoginModules:modules", "" );
-					if( tptr != NULL )
-					{
-						SLIB->sl_ModuleNames = StringDuplicate( tptr );
-					}
-					else
-					{
-						SLIB->sl_ModuleNames = StringDuplicate( " " );
-					}
+					}*/
 					
 					plib->Close( prop );
 				}
@@ -236,12 +193,12 @@ FriendCoreManager *FriendCoreManagerNew()
 				LibraryClose( ( struct Library *)plib );
 			}
 			
-			fcm->fcm_FriendCores = FriendCoreNew( SLIB, SSLEnabled, port, maxp, bufsize, "localhost" );
+			fcm->fcm_FriendCores = FriendCoreNew( SLIB, fcm->fcm_SSLEnabled, fcm->fcm_FCPort, fcm->fcm_Maxp, fcm->fcm_Bufsize, "localhost" );
 		}
 		
-		if( SSLEnabled == TRUE )
+		if( fcm->fcm_SSLEnabled == TRUE )
 		{
-			WSSSLEnabled = TRUE;
+			fcm->fcm_WSSSLEnabled = TRUE;
 		}
 		
 		Log(FLOG_INFO, "------------------------------------------------------\n");
@@ -249,13 +206,15 @@ FriendCoreManager *FriendCoreManagerNew()
 		Log(FLOG_INFO, "-----FC id: %128s\n", fcm->fcm_ID  );
 		Log(FLOG_INFO, "-----FC launched with options\n");
 		Log(FLOG_INFO, "-----Cache files: %d\n", SLIB->sl_CacheFiles );
-		Log(FLOG_INFO, "-----SSLEnabled: %d\n", SSLEnabled );
-		Log(FLOG_INFO, "-----WSSEnabled: %d\n", WSSSLEnabled );
-		Log(FLOG_INFO, "-----FCPort: %d\n", port );
-		Log(FLOG_INFO, "-----WSPort: %d\n", wsport );
-		Log(FLOG_INFO, "-----CommPort: %d\n", cport );
-		Log(FLOG_INFO, "-----CommRemotePort: %d\n", cremoteport );
+		Log(FLOG_INFO, "-----HTTP SSL enabled: %d\n", fcm->fcm_SSLEnabled );
+		Log(FLOG_INFO, "-----WS SSL enabled: %d\n", fcm->fcm_WSSSLEnabled );
+		Log(FLOG_INFO, "-----Communication SSL enabled: %d\n", fcm->fcm_SSLEnabledCommuncation );
+		Log(FLOG_INFO, "-----FCPort: %d\n", fcm->fcm_FCPort );
+		Log(FLOG_INFO, "-----WSPort: %d\n", fcm->fcm_WSPort );
+		Log(FLOG_INFO, "-----CommPort: %d\n", fcm->fcm_ComPort );
+		Log(FLOG_INFO, "-----CommRemotePort: %d\n", fcm->fcm_ComRemotePort );
 		Log(FLOG_INFO, "-----SSH_SERVER_PORT %s\n", SSH_SERVER_PORT );
+		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
 			Log(FLOG_INFO, "-----LoginModule %s\n", SLIB->sl_ActiveAuthModule->am_Name );
@@ -265,6 +224,7 @@ FriendCoreManager *FriendCoreManagerNew()
 			Log(FLOG_INFO, "-----LoginModule %s\n", "No module detected" );
 		}
 		Log(FLOG_INFO, "-----LoginModule for login page %s\n", SLIB->sl_ActiveModuleName );
+		*/
 		Log(FLOG_INFO, "------------------------------------------------------\n");
 		
 		if( fcm->fcm_FriendCores == NULL )
@@ -278,7 +238,7 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		fcm->fcm_Shutdown = FALSE;
 		
-		if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB,  wsport, WSSSLEnabled ) ) != NULL )
+		if( ( fcm->fcm_WebSocket = WebSocketNew( SLIB,  fcm->fcm_WSPort, fcm->fcm_WSSSLEnabled ) ) != NULL )
 		{
 			WebSocketStart( fcm->fcm_WebSocket );
 		}
@@ -299,14 +259,14 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		fcm->fcm_Shutdown = FALSE;
 		
-		fcm->fcm_CommService = CommServiceNew( cport, SSLEnabledCommuncation, SLIB, maxpcom, bufsizecom );
+		fcm->fcm_CommService = CommServiceNew( fcm->fcm_ComPort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpCom, fcm->fcm_BufsizeCom );
 		
 		if( fcm->fcm_CommService )
 		{
 			CommServiceStart( fcm->fcm_CommService );
 		}
 		
-		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( cremoteport, SSLEnabledCommuncation, SLIB, maxpcomremote );
+		fcm->fcm_CommServiceRemote = CommServiceRemoteNew( fcm->fcm_ComRemotePort, fcm->fcm_SSLEnabledCommuncation, SLIB, fcm->fcm_MaxpComRemote );
 		
 		if( fcm->fcm_CommServiceRemote )
 		{
@@ -314,7 +274,7 @@ FriendCoreManager *FriendCoreManagerNew()
 		}
 
 		// wait, be sure that services started
-		usleep( 5000000 );
+		//usleep( 5000000 );
 	}
 	Log( FLOG_INFO,"FriendCoreManager Created\n");
 	
@@ -345,10 +305,12 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		if( fcm->fcm_WebSocket != NULL )
 		{
 			WebSocketDelete( fcm->fcm_WebSocket );
+			fcm->fcm_WebSocket = NULL;
 		}
 		
 		DEBUG("FriendCoreManager Shutdown\n");
 		FriendCoreShutdown( fcm->fcm_FriendCores );
+		
 		DEBUG("FriendCoreManager shutdown finished\n");
 		
 		DEBUG("FriendCoreManager Close services\n");

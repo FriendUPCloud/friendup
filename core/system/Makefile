@@ -65,25 +65,25 @@ nodejsmod: moduledyn/nodejsmod.c moduledyn/nodejsmod.d
 #	FILESYSTEMS
 #
 	
-fsyslocal: fsys/fsyslocal.c ../../core/obj/buffered_string.o fsys/fsyslocal.d
+fsyslocal: fsysdyn/fsyslocal.c ../../core/obj/buffered_string.o fsysdyn/fsyslocal.d
 	@echo "\033[34mCompile FSYSlocal ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsys/fsyslocal.c ../../core/obj/buffered_string.o -o bin/fsys/local.fsys -shared -fPIC
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsyslocal.c ../../core/obj/buffered_string.o -o bin/fsys/local.fsys -shared -fPIC
 
-fsysssh2: fsys/fsysssh2.c ../../core/obj/buffered_string.o fsys/fsysssh2.d
+fsysssh2: fsysdyn/fsysssh2.c ../../core/obj/buffered_string.o fsysdyn/fsysssh2.d
 	@echo "\033[34mCompile FSYSssh2 ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsys/fsysssh2.c ../../core/obj/buffered_string.o -o bin/fsys/ssh2.fsys -shared -fPIC -lssh2
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysssh2.c ../../core/obj/buffered_string.o -o bin/fsys/ssh2.fsys -shared -fPIC -lssh2
 
-fsysphp: fsys/fsysphp.c  ../../core/obj/buffered_string.o fsys/fsysphp.d
+fsysphp: fsysdyn/fsysphp.c  ../../core/obj/buffered_string.o fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsys/fsysphp.c ../../core/obj/buffered_string.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o -o bin/fsys/php.fsys -shared -fPIC -lcrypto
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysphp.c ../../core/obj/buffered_string.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o -o bin/fsys/php.fsys -shared -fPIC -lcrypto
 
-fsysinram: fsys/fsysinram.c ../../core/obj/buffered_string.o fsys/fsysinram.d
+fsysinram: fsysdyn/fsysinram.c ../../core/obj/buffered_string.o fsysdyn/fsysinram.d
 	@echo "\033[34mCompile FSYSinram ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsys/fsysinram.c ../../core/obj/buffered_string.o ../../core/obj/inramfs.o ../../core/obj/string.o ../../core/obj/list.o -o bin/fsys/inram.fsys -shared -fPIC -lcrypto
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysinram.c ../../core/obj/buffered_string.o ../../core/obj/inramfs.o ../../core/obj/string.o ../../core/obj/list.o -o bin/fsys/inram.fsys -shared -fPIC -lcrypto
 
-fsysremote: fsys/fsysremote.c ../../core/obj/buffered_string.o fsys/fsysremote.d
+fsysremote: fsysdyn/fsysremote.c ../../core/obj/buffered_string.o fsysdyn/fsysremote.d
 	@echo "\033[34mCompile FSYSremote ...\033[0m"
-	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsys/fsysremote.c ../../core/obj/buffered_string.o ../../core/obj/library.o ../../core/obj/log.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o ../../core/obj/comm_msg.o ../../core/obj/jsmn.o -o bin/fsys/remote.fsys -shared -fPIC -lcrypto
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysremote.c ../../core/obj/buffered_string.o ../../core/obj/library.o ../../core/obj/log.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o ../../core/obj/comm_msg.o ../../core/obj/jsmn.o -o bin/fsys/remote.fsys -shared -fPIC -lcrypto
 
 #
 #	LOGGERS

@@ -32,7 +32,7 @@
 #define __NETWORK_HTTP_H__
 
 //
-// TODO: Protect against null-byte poisioning
+//
 //
 #include <time.h>
 #include <fcntl.h>
@@ -76,6 +76,8 @@ enum {
 	HTTP_HEADER_ACCEPT,
 	HTTP_HEADER_METHOD,
 	HTTP_HEADER_REFERER,
+	HTTP_HEADER_ACCEPT_LANGUAGE,
+	HTTP_HEADER_ACCEPT_ENCODING,
 	HTTP_HEADER_END
 };
 
@@ -99,7 +101,9 @@ static const char *HEADERS[] = {
 	"origin",
 	"accept",
 	"method",
-	"referer"
+	"referer",
+	"accept-language",
+	"accept-encoding"
 };
 
 //

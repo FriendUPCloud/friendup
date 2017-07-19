@@ -29,13 +29,13 @@
 
 #include <mysql/sql_defs.h>
 #include <system/user/user_application.h>
-#include <system/handler/file.h>
+#include <system/fsys/file.h>
 #include <libwebsockets.h>
 #include <network/websocket_client.h>
-#include <service/service.h>
+#include <system/services/service.h>
 #include <hardware/printer/printer.h>
 #include <time.h>
-#include <service/comm_service.h>
+#include <communication/comm_service.h>
 /** @file
  * 
  *  Remote User definition
@@ -56,6 +56,8 @@ typedef struct RemoteDrive
 	char								*rd_Name;
 	char								*rd_LocalName;
 	char								*rd_RemoteName;
+	FULONG						rd_DriveID;
+	FULONG						rd_RemoteID;
 }RemoteDrive;
 
 //
@@ -69,6 +71,7 @@ typedef struct RemoteUser
 	char								*ru_Name;
 	char								*ru_Password;
 	char								*ru_Host;
+	char								ru_FCID[ FRIEND_CORE_MANAGER_ID_SIZE ];		// we must know which server setup connection
 
 	char								*ru_SessionID;       // session id ,  generated only when user is taken from db
 	char								*ru_AuthID; // authentication id

@@ -64,45 +64,68 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		DEBUG("Delete session %s\n", us->us_SessionID );
+		us->us_WSConnections = NULL;
+		
+		 WebsocketClient *nwsc = us->us_WSConnections;
+		 us->us_WSConnections = NULL;
+		 int count = 0;
+		 
+		 // we must wait till all tasks will be finished
+		 while( TRUE )
+		 {
+			 if( us->us_NRConnections <= 0 )
+			{
+				break;
+			}
+			else
+			{
+				DEBUG("number of connections: %d\n", us->us_NRConnections );
+				count++;
+				if( count > 50 )
+				{
+					//WorkerManagerDebug( SLIB );
+					count = 0;
+				}
+			}
+			usleep( 100000 );
+		}
+	
+		DEBUG("Remove session %p\n", us );
 		pthread_mutex_lock( &(us->us_WSMutex) );
-		if( us->us_WSConnections != NULL )
+		if( nwsc != NULL )
 		{
-			WebsocketClient *nwsc = us->us_WSConnections;
 			WebsocketClient *rws = nwsc;
 			while( nwsc != NULL )
 			{
-				
 				rws = nwsc;
 				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
-				
+	
 				DEBUG("Remove websockets\n");
+				FCWSData *data = rws->wc_WebsocketsData;
+				if( data != NULL )
+				{
+					data->fcd_ActiveSession = NULL;
+					data->fcd_WSClient = NULL;
+				}
+				rws->wc_UserSession = NULL;
 				FFree( rws );
-				rws = NULL;
 			}
 		}
+
 		pthread_mutex_unlock( &(us->us_WSMutex) );
-		
-		if( us->us_SessionID != NULL )
-		{
-			FFree( us->us_SessionID );
-		}
-		
+	
+		DEBUG("Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
+	
 		if( us->us_DeviceIdentity != NULL )
 		{
 			FFree( us->us_DeviceIdentity );
 		}
-		
-		/*
-		if( us->us_MasterSession != NULL )
+	
+		if( us->us_SessionID != NULL )
 		{
-			FFree( us->us_MasterSession );
+			FFree( us->us_SessionID );
 		}
-		*/
-		
-		pthread_mutex_destroy( &us->us_WSMutex );
-		
+	
 		FFree( us );
-		us = NULL;
 	}
 }

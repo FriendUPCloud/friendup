@@ -51,7 +51,7 @@
 #include "network/socket.h"
 #include "network/protocol_http.h"
 #include <util/log/log.h>
-#include <service/service_manager.h>
+#include <system/services/service_manager.h>
 #include <util/buffered_string.h>
 #include <util/http_string.h>
 #include <openssl/rand.h>
@@ -120,6 +120,8 @@ static unsigned long ssl_id_function( void )
  * @param port communication port number
  * @param maxp maximum number of polls at the same time FL>PS ?
  * @param bufsiz buffer size
+ * @param hostname FC host name
+ * @param workers number of workers
  * @return pointer to the new instance of FriendCore
  * @return NULL in case of error
  */
@@ -188,6 +190,8 @@ FriendCoreInstance *FriendCoreNew( void *sb, FBOOL ssl, int port, int maxp, int 
 	
 	// Init listen mutex
 	pthread_mutex_init( &fc->fci_ListenMutex, NULL );
+	
+	LOG( FLOG_INFO,"[FriendCore] WorkerManager started\n");
 	
 	return fc;
 }
@@ -309,6 +313,9 @@ struct fcThreadInstance
 	struct AcceptPair *acceptPair;
 };
 
+//#define USE_PTHREAD
+#define USE_WORKERS
+
 /**
  * Accepts a message to a Friend Core instance
  *
@@ -316,9 +323,11 @@ struct fcThreadInstance
  * @return NULL
  */
 
-void *FriendCoreAccept( void *fcv )
+void FriendCoreAccept( void *fcv )
 {
+#ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+#endif
 	
 	IncreaseThreads();
 	
@@ -387,8 +396,13 @@ void *FriendCoreAccept( void *fcv )
 	// code in FriendCoreAcceptPhase1 (further below in this file)
 	DecreaseThreads();
 	
+	
+DecreaseThreads();
+
+#ifdef USE_PTHREAD
 	pthread_exit( 0 );
-	return NULL;
+#endif
+	return;
 }
 
 /**
@@ -397,10 +411,11 @@ void *FriendCoreAccept( void *fcv )
  * @param d pointer to Friend Core instance
  * @return unintialised pointer to a void
  */
-void *FriendCoreAcceptPhase1( void *d )
+void FriendCoreAcceptPhase1( void *d )
 {
+#ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
-	
+#endif
 	IncreaseThreads();
 
 	struct fcThreadInstance *pre = ( struct fcThreadInstance *)d;
@@ -426,26 +441,57 @@ void *FriendCoreAcceptPhase1( void *d )
 			// Add the new SSL accept thread:
 			// We have a notification on the listening socket, which means one or more incoming connections.
 		
-			struct fcThreadInstance *idata = FCalloc( 1, sizeof( struct fcThreadInstance ) );
-			if( idata != NULL )
+			if( p != NULL )
 			{
-				idata->fc = pre->fc;
-				idata->acceptPair = p;
-				memset( &idata->thread, 0, sizeof( pthread_t ) );
-				DEBUG("Create FriendCoreAccept thread\n");
-			
-				// Multithread mode
-				if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+				struct fcThreadInstance *idata = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+				if( idata != NULL )
 				{
-					FFree( idata );
-					// Clean up accept pair
-					shutdown( p->fd, SHUT_RDWR );
-					close( p->fd );
-					FFree( p );
+					idata->fc = pre->fc;
+					idata->acceptPair = p;
+					
+					DEBUG("Create FriendCoreAccept thread\n");
+			
+#ifdef USE_PTHREAD
+					memset( &idata->thread, 0, sizeof( pthread_t ) );
+					// Multithread mode
+					if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+					{
+						FFree( idata );
+						// Clean up accept pair
+						shutdown( p->fd, SHUT_RDWR );
+						close( p->fd );
+						FFree( p );
+					}
+					else
+					{
+	
+					}
+#else
+#ifdef USE_WORKERS
+					SystemBase *locsb = (SystemBase *)idata->fc->fci_SB;
+					WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreAccept, idata, NULL );
+#else
+					int pid = fork();
+				
+					if( pid < 0 )
+					{
+						FERROR("Cannot create fork %ld \n", pid );
+					}
+					else if( pid == 0 )
+					{
+						DEBUG("Launching thread\n");
+						FriendCoreAccept( idata );
+					}
+					else
+					{
+						INFO("Parent %ld \n", pid );
+					}
+#endif
+#endif
 				}
 				else
 				{
-					//IncreaseThreads();
+					FERROR("[FriendCoreAcceptPhase1] Cannot allocate memory for Thread\n");
 				}
 			}
 			else
@@ -453,8 +499,9 @@ void *FriendCoreAcceptPhase1( void *d )
 				FERROR("[FriendCoreAcceptPhase1] Cannot allocate memory for Thread\n");
 			}
 		}
-		pthread_yield();
+		//pthread_yield();
 	}
+	
 	if( pre != NULL )
 	{
 		FFree( pre ); // <- remove thread instance
@@ -462,9 +509,11 @@ void *FriendCoreAcceptPhase1( void *d )
 	}
 
 	DecreaseThreads();
-	
+
+#ifdef USE_PTHREAD
 	pthread_exit( 0 );
-	return NULL;
+#endif
+	return;
 }
 
 
@@ -476,7 +525,9 @@ void *FriendCoreAcceptPhase1( void *d )
  */
 void *FriendCoreProcess__httponthefly( void *fcv )
 {
+#ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
+#endif
 	
 	IncreaseThreads();
 	
@@ -485,12 +536,13 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 	
 	// Get socket
-	Socket *incoming = th->sock;
-	if( incoming == NULL )
+	if( th->sock == NULL )
 	{
 		DecreaseThreads();
 		FFree( th );
+#ifdef USE_PTHREAD
 		pthread_exit( 0 );
+#endif
 		return NULL;
 	}
 	
@@ -511,13 +563,13 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 		FBOOL everythingReaded = FALSE;
 		FBOOL parseOnlyHeader = FALSE;
 		
-		DEBUG("[FriendCoreProcess] before process ptr %p fd %d\n", incoming, incoming->fd );
+		DEBUG("[FriendCoreProcess] before process ptr %p fd %d\n", th->sock, th->sock->fd );
 
 		Http *request = NULL;
 		
 		while( TRUE )
 		{
-			if( ( res = SocketRead( incoming, std_Buffer, HTTP_READ_BUFFER_DATA_SIZE, pass ) ) > 0 )
+			if( ( res = SocketRead( th->sock, std_Buffer, HTTP_READ_BUFFER_DATA_SIZE, pass ) ) > 0 )
 			{
 				char stdBufChr = std_Buffer[ res - 1 ];
 				requestSize += res;
@@ -549,12 +601,12 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 				{
 					DEBUG("[FriendCoreProcess] everythingReaded %d  parseOnlyHeader %d\n", everythingReaded, parseOnlyHeader );
 					
-					request = ( Http *)incoming->data;
+					request = ( Http *)th->sock->data;
 					if( request == NULL )
 					{
 						request = HttpNew( );
 						request->timestamp = time( NULL );
-						incoming->data = ( void* )request;
+						th->sock->data = ( void* )request;
 						resultString->ht_Reqest = request;
 					}
 					
@@ -650,7 +702,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 				{
 					// Process data
 					//LOG( FLOG_DEBUG, "We received this (%d bytes): >>%s<<\n", resultString->bs_Size, resultString->bs_Buffer);
-					Http *resp = ProtocolHttp( incoming, resultString->ht_Buffer, resultString->ht_Size );
+					Http *resp = ProtocolHttp( th->sock, resultString->ht_Buffer, resultString->ht_Size );
 					
 					// -1 is special case, the response already was sent and cleaned up
 					if( resp != NULL )//&& resp != -1 )
@@ -661,7 +713,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 						}
 						else
 						{
-							HttpWriteAndFree( resp, incoming );
+							HttpWriteAndFree( resp, th->sock );
 						}
 					}
 				}
@@ -700,12 +752,13 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 		FFree( std_Buffer );
 	}
 	
-	//epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, incoming->fd, &event );
-	SocketClose( incoming );
+	SocketClose( th->sock );
 	
 	// No more threads
 	DecreaseThreads();
+#ifdef USE_PTHREAD
 	pthread_exit( 0 );
+#endif
 	return NULL;
 }
 
@@ -713,34 +766,38 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 
 
 
-void *FriendCoreProcess( void *fcv )
+void FriendCoreProcess( void *fcv )
 {
+#ifdef USE_PTHREAD
 	pthread_detach( pthread_self() );
-	
+#endif	
 	IncreaseThreads();
 	
 	if( fcv == NULL )
 	{
 		DecreaseThreads();
 		DEBUG("[FriendCoreProcess] FriendCoreProcess fcv = NULL\n");
+#ifdef USE_PTHREAD
 		pthread_exit( 0 );
-		return NULL;
+#endif
+		return;
 	}
 	
 	DEBUG("[FriendCoreProcess] Before while\n");
 	
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
 
-	// Get socket
-	Socket *incoming = th->sock;
-	if( incoming == NULL )
+	if( th->sock == NULL )
 	{
+		DEBUG("Sock = NULL, quit!\n");
 		DecreaseThreads();
 		DEBUG( "[FriendCoreProcess] Freeing th structure.\n" );
 		FFree( th );
 		DEBUG( "[FriendCoreProcess] Th structure is freed.\n" );
+#ifdef USE_PTHREAD
 		pthread_exit( 0 );
-		return NULL;
+#endif
+		return;
 	}
 
 	// Threadcounter done ------------------------------------------------------
@@ -757,6 +814,8 @@ void *FriendCoreProcess( void *fcv )
 	int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
 	int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
 	
+	DEBUG("Parse request\n");
+	
 	char *locBuffer = FCalloc( bufferSizeAlloc, sizeof( char ) );
 	if( locBuffer != NULL )
 	{
@@ -765,6 +824,7 @@ void *FriendCoreProcess( void *fcv )
 		//LOG( FLOG_DEBUG, "[FriendCoreProcess] Please witness the loop that will get us content!\n" );
 		for( ; pass < 2; pass++ )
 		{
+			DEBUG("Going throug pass\n");
 			// No bodylength? Fuck it
 			if( pass == 1 && ( !bodyLength || stopReading ) )
 			{
@@ -786,6 +846,7 @@ void *FriendCoreProcess( void *fcv )
 
 			for( ; ; )
 			{
+				DEBUG("Read loop\n");
 				// Increase the buffer for files!
 				if( count != 0 && bufferSize == HTTP_READ_BUFFER_DATA_SIZE )
 				{
@@ -794,7 +855,7 @@ void *FriendCoreProcess( void *fcv )
 					FFree( locBuffer ); locBuffer = FCalloc( bufferSizeAlloc, sizeof( char ) );
 				}
 				
-				if( ( res = SocketRead( incoming, locBuffer, bufferSize, pass ) ) > 0 )
+				if( ( res = SocketRead( th->sock, locBuffer, bufferSize, pass ) ) > 0 )
 				{
 					BufStringAddSize( resultString, locBuffer, res );
 
@@ -863,10 +924,11 @@ void *FriendCoreProcess( void *fcv )
 
 			if( count > 0 )
 			{
+				DEBUG("Count\n");
 				// Already now parse header to receive other data
 				if( pass == 0 )
 				{
-					Http *request = ( Http *)incoming->data;
+					Http *request = ( Http *)th->sock->data;
 					int result = 0;
 					char *content = NULL;
 					{
@@ -874,12 +936,12 @@ void *FriendCoreProcess( void *fcv )
 						{
 							request = HttpNew( );
 							request->timestamp = time( NULL );
-							incoming->data = ( void* )request;
+							th->sock->data = ( void* )request;
 						}
 						
 						request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
 
-						request->h_Socket = incoming;
+						request->h_Socket = th->sock;
 						result = HttpParseHeader( request, resultString->bs_Buffer, resultString->bs_Size + 1 );
 						request->gotHeader = TRUE;
 						
@@ -916,6 +978,7 @@ void *FriendCoreProcess( void *fcv )
 					{
 						// No content length
 						prevBufSize += count;
+						DEBUG("No content length\n");
 						break;
 					}
 					// Determine if we need pass 2
@@ -936,7 +999,7 @@ void *FriendCoreProcess( void *fcv )
 				{
 					// Process data
 					//LOG( FLOG_DEBUG, "We received this (%d bytes): >>%s<<\n", resultString->bs_Size, resultString->bs_Buffer);
-					Http *resp = ProtocolHttp( incoming, resultString->bs_Buffer, resultString->bs_Size );
+					Http *resp = ProtocolHttp( th->sock, resultString->bs_Buffer, resultString->bs_Size );
 
 					if( resp != NULL )
 					{
@@ -946,7 +1009,7 @@ void *FriendCoreProcess( void *fcv )
 						}
 						else
 						{
-							HttpWriteAndFree( resp, incoming );
+							HttpWriteAndFree( resp, th->sock );
 						}
 					}
 				}
@@ -965,13 +1028,6 @@ void *FriendCoreProcess( void *fcv )
 			DEBUG( "[FriendCoreProcess] No buffer to write!\n" );
 		}
 
-		// Free the pair
-		if( th != NULL )
-		{
-			FFree( th );
-			th = NULL;
-		}
-	
 		DEBUG("[FriendCoreProcess] Before end\n");
 
 		// Free up buffers
@@ -979,12 +1035,22 @@ void *FriendCoreProcess( void *fcv )
 	}
 
 	//DEBUG("FriendCore process, close socket: %d ptr %p\n", incoming->fd, incoming );
-	SocketClose( incoming );
+	SocketClose( th->sock );
 	
+	// Free the pair
+	if( th != NULL )
+	{
+		FFree( th );
+		th = NULL;
+	}
+	
+	DEBUG("Decreased thread\n");
 	// No more threads
 	DecreaseThreads();
+#ifdef USE_PTHREAD
 	pthread_exit( 0 );
-	return NULL;
+#endif
+	return;
 }
 
 /**
@@ -1309,10 +1375,35 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				{
 					pre->fc = fc;
 					// TODO: Make sure we keep the number of threads under the limit
+					
+#ifdef USE_PTHREAD
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase1, ( void *)pre ) != 0 )
 					{
 						FFree( pre );
 					}
+#else
+#ifdef USE_WORKERS
+					SystemBase *locsb = (SystemBase *)fc->fci_SB;
+					WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreAcceptPhase1, pre, NULL );
+					//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreAcceptPhase1, pre );
+#else
+					int pid;
+					pid = fork();
+					
+					if( pid < 0 )
+					{
+						FERROR("FORK fail\n");
+					}
+					else if( pid == 0 )
+					{
+						FriendCoreAcceptPhase1( pre );
+					}
+					else
+					{
+						INFO("Fork done\n");
+					}
+#endif
+#endif
 				}
 			}
 			// Get event that are incoming!
@@ -1331,6 +1422,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					{
 						pre->fc = fc; pre->sock = sock;
 					
+#ifdef USE_PTHREAD
 						size_t stacksize = 16777216; //16 * 1024 * 1024;
 						pthread_attr_t attr;
 						pthread_attr_init( &attr );
@@ -1341,6 +1433,26 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						{
 							FFree( pre );
 						}
+#else
+#ifdef USE_WORKERS
+						SystemBase *locsb = (SystemBase *)fc->fci_SB;
+						WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL );
+						//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreProcess, pre );
+#else
+						int pid = fork();
+						if( pid < 0 )
+						{
+							
+						}else if( pid == 0 )
+						{
+							FriendCoreProcess( pre );
+						}
+						else
+						{
+							
+						}
+#endif
+#endif
 					}
 				}
 			}
@@ -1411,9 +1523,6 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	LOG( FLOG_INFO,"=========================================\n");
 	LOG( FLOG_INFO,"==========Starting FriendCore.===========\n");
 	LOG( FLOG_INFO,"=========================================\n");
-
-	//fc->fci_WorkerManager = WorkerManagerNew( MAX_WORKERS );
-	LOG( FLOG_INFO,"[FriendCore] WorkerManager started\n");
 	
 	SystemBase *lsb = (SystemBase *)fc->fci_SB;
 	
@@ -1511,12 +1620,6 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		}
 		HashmapFree( fc->fci_Libraries );
 		fc->fci_Libraries = NULL;
-	}
-	
-	if( fc->fci_WorkerManager != NULL )
-	{
-		DEBUG( "[FriendCore] Shutting down worker manager.\n" );
-		WorkerManagerDelete( fc->fci_WorkerManager );
 	}
 	
 #ifdef USE_SELECT

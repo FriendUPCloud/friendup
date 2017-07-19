@@ -37,7 +37,7 @@
 #include <network/socket.h>
 #include <sys/stat.h>
 #include <core/nodes.h>
-#include <service/service_manager.h>
+#include <system/services/service_manager.h>
 #include <core/thread.h>
 #include "worker_manager.h"
 #include <core/library.h>
@@ -85,7 +85,6 @@ typedef struct FriendCoreInstance
 	FThread					*fci_Thread;		/// FC instance internal thread
 	pthread_mutex_t		fci_ListenMutex;
 	
-	WorkerManager		*fci_WorkerManager; ///< Worker Manager
 	void 							*fci_SB;							//pointer to systembase
 	
 } FriendCoreInstance;

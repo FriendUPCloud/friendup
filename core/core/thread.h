@@ -65,7 +65,7 @@ typedef struct FThread
 //
 //
 
-FThread *ThreadNew( void *func, void *data, FBOOL autos );
+FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr );
 
 //
 //

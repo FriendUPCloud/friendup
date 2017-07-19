@@ -46,19 +46,21 @@
 #include <dirent.h> 
 #include <stdio.h> 
 #include <unistd.h>
-#include <service/service_manager.h>
+#include <system/services/service_manager.h>
 #include <properties/propertieslibrary.h>
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
 #include <network/websocket_client.h>
-#include <system/handler/device_handling.h>
+#include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
 #include <network/digcalc.h>
 #include <network/mime.h>
 #include <private-libwebsockets.h>
-#include <system/handler/door_notification.h>
+#include <system/fsys/door_notification.h>
+#include <communication/comm_service.h>
+#include <communication/comm_service_remote.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -120,11 +122,7 @@ SystemBase *SystemInit( void )
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
 	pthread_mutex_init( &l->sl_ResourceMutex, NULL );
-
-	FriendCoreManager	*fcm    = NULL;				// connection with FriendCores
-	
 	int 				msqllibc;
-	
 	int				sl_Error;					// last error
 
 	getcwd( tempString, sizeof ( tempString ) );
@@ -153,6 +151,7 @@ SystemBase *SystemInit( void )
 	l->LibraryImageDrop = LibraryImageDrop;
 	l->WebSocketSendMessage = WebSocketSendMessage;
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
+	l->WebsocketWrite = WebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
 	l->SystemInitExternal = SystemInitExternal;
 	l->RunMod = RunMod;
@@ -179,6 +178,16 @@ SystemBase *SystemInit( void )
 	// Get a copy of the properties.library
 	struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)l->LibraryPropertiesGet( l );
 	
+	if( l->sl_ActiveModuleName )
+	{
+		FFree( l->sl_ActiveModuleName );
+	}
+	l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
+	l->sl_CacheFiles = TRUE;
+	l->sl_UnMountDevicesInDB =TRUE;
+	l->sl_SocketTimeout = 10000;
+	l->sl_WorkersNumber = WORKERS_MAX;
+	
 	//DEBUG("Plibcheck %p lsb %p\n", plib, lsb );
 	if( plib != NULL && plib->Open != NULL )
 	{
@@ -191,6 +200,11 @@ SystemBase *SystemInit( void )
 		}
 		
 		DEBUG( "[SystemBase] Opening config file: %s\n", path );
+		
+		sprintf( l->RSA_SERVER_CERT, "%s/crt/certificate.pem", ptr );
+		sprintf( l->RSA_SERVER_KEY, "%s/crt/key.pem", ptr );
+		sprintf( l->RSA_SERVER_CA_CERT, "%s/crt/certificate.pem", ptr );
+		sprintf( l->RSA_SERVER_CA_PATH, "%s/crt/", ptr );
 		
 		prop = plib->Open( path );
 		FFree( path );
@@ -219,6 +233,50 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] port read %d\n", port );
 			l->sqlpoolConnections = plib->ReadInt( prop, "DatabaseUser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
+			
+			l->sl_CacheFiles = plib->ReadInt( prop, "Options:CacheFiles", 1 );
+			l->sl_UnMountDevicesInDB = plib->ReadInt( prop, "Options:UnmountInDB", 1 );
+			l->sl_SocketTimeout  = plib->ReadInt( prop, "Core:SSLSocketTimeout", 10000 );
+			
+			char *tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
+			if( tptr != NULL )
+			{
+				if( tptr[ 0 ] == '/' )
+				{
+					sprintf( l->RSA_SERVER_CERT, "%s%s", tptr, "certificate.pem" );
+					sprintf( l->RSA_SERVER_KEY, "%s%s", tptr, "key.pem" );
+					sprintf( l->RSA_SERVER_CA_CERT, "%s%s", tptr, "certificate.pem" );
+					sprintf( l->RSA_SERVER_CA_PATH, "%s%s", tptr, "/" );
+				}
+				else
+				{
+					sprintf( l->RSA_SERVER_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
+					sprintf( l->RSA_SERVER_KEY, "%s%s%s", ptr, tptr, "key.pem" );
+					sprintf( l->RSA_SERVER_CA_CERT, "%s%s%s", ptr, tptr, "certificate.pem" );
+					sprintf( l->RSA_SERVER_CA_PATH, "%s%s%s", ptr, tptr, "/" );
+				}
+			}
+			
+			l->sl_WorkersNumber = plib->ReadInt( prop, "Core:workers", WORKERS_MAX );
+			if( l->sl_WorkersNumber < WORKERS_MIN )
+			{
+				l->sl_WorkersNumber = WORKERS_MIN;
+			}
+			
+			if( l->sl_ActiveModuleName != NULL )
+			{
+				FFree( l->sl_ActiveModuleName );
+			}
+			
+			tptr  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
+			if( tptr != NULL )
+			{
+				l->sl_ActiveModuleName = StringDuplicate( tptr );
+			}
+			else
+			{
+				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
+			}
 		}
 		else
 		{
@@ -253,7 +311,8 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
-	//Log( FLOG_INFO,  "Systembase: SQL pooled connections created. DB: %s Host: %s Port: %d Connections: %d\n", dbname, host, port, DEFAULT_SQLLIB_POOL_NUMBER );
+	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+	l->fcm = FriendCoreManagerNew();
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase: Initialize interfaces\n" );
 	
@@ -320,21 +379,8 @@ SystemBase *SystemInit( void )
 			if( locmod != NULL )
 			{
 				DEBUG("[SystemBase] mod created, adding to list\n");
-				if( l->sl_Modules == NULL )
-				{
-					l->sl_Modules = locmod;
-				}
-				else
-				{
-					EModule *lmod = l->sl_Modules;
-
-					while( lmod->node.mln_Succ != NULL )
-					{
-						lmod = (EModule *)lmod->node.mln_Succ;
-					}
-					lmod->node.mln_Succ = (struct MinNode *)locmod;	// add new module to list
-
-				}
+				locmod->node.mln_Succ = (MinNode *)l->sl_Modules;
+				l->sl_Modules = locmod;
 			}
 			else
 			{
@@ -399,21 +445,9 @@ SystemBase *SystemInit( void )
 			AuthMod *locmod = AuthModNew( l,  l->sl_LoginModPath, dir->d_name, 0 );
 			if( locmod != NULL )
 			{
+				locmod->node.mln_Succ = (MinNode *)l->sl_AuthModules;
+				l->sl_AuthModules = locmod;
 				DEBUG("[SystemBase] AUTHMOD created, adding to list\n");
-				if( l->sl_AuthModules == NULL )
-				{
-					l->sl_AuthModules = locmod;
-				}
-				else
-				{
-					AuthMod *lmod = l->sl_AuthModules;
-
-					while( lmod->node.mln_Succ != NULL )
-					{
-						lmod = (AuthMod *)lmod->node.mln_Succ;
-					}
-					lmod->node.mln_Succ = (struct MinNode *)locmod;	// add new module to list
-				}
 			}
 			else
 			{
@@ -425,8 +459,8 @@ SystemBase *SystemInit( void )
 	
 	char defaultAuth[ 128 ];
 	defaultAuth[ 0 ] = 0;
-	char *def = "fcdb.authmod";
-	strcpy( defaultAuth, def );
+	char *def = NULL;
+	strcpy( defaultAuth, "fcdb.authmod" );
 	
 /*
 	{
@@ -461,14 +495,24 @@ SystemBase *SystemInit( void )
 		}
 	}
 */
+	if( l->sl_ActiveModuleName != NULL )
+	{
+		def = l->sl_ActiveModuleName;
+	}
+	else
+	{
+		def = defaultAuth;
+		l->sl_ActiveModuleName = StringDuplicate( def );
+	}
 	// Get auth module
-	if( strlen( defaultAuth ) > 0 )
+	if( def != NULL )
 	{
 		AuthMod *mod = l->sl_AuthModules;
-		l->sl_ActiveModuleName = StringDuplicate( defaultAuth );
+		
 		while( mod != NULL )
 		{
-			if( strcmp( mod->am_Name, l->sl_ActiveModuleName ) == 0 )
+			// atm we only need authname to get proper login page
+			if( strcmp( mod->am_Name, defaultAuth ) == 0 ) //l->sl_ActiveModuleName ) == 0 )
 			{
 				l->sl_ActiveAuthModule = mod;
 				INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
@@ -476,6 +520,7 @@ SystemBase *SystemInit( void )
 			}
 			mod = (AuthMod *) mod->node.mln_Succ;
 		}
+		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
 			FFree( l->sl_ActiveModuleName );
@@ -504,7 +549,6 @@ SystemBase *SystemInit( void )
 	
 	if( ( l->sl_Magic = magic_open(MAGIC_CHECK|MAGIC_MIME_TYPE) ) != NULL )
 	{
-		// TODO: Do we really need "/usr/share/file/magic.mgc" ? (static path)
 		int err = magic_load( l->sl_Magic, "/usr/share/file/magic.mgc" );
 		DEBUG("[SystemBase] Magic load return %d\n", err );
 		err = magic_compile( l->sl_Magic, "/usr/share/file/magic.mgc" );
@@ -603,16 +647,50 @@ SystemBase *SystemInit( void )
 	#define MINS60 MINS6*10
 	#define MINS360 6*MINS60
 
-	CoreEvent *nce = EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
-	nce = EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
-	//TODO test, to remove
-	//nce = EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+130, 130, -1 );
-	nce = EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
+	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
+	EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
+	// test, to remove
+	//EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+130, 130, -1 );
+	EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	
 	l->sl_USM->usm_UM = l->sl_UM;
 	l->sl_UM->um_USM = l->sl_USM;
 	
 	Log( FLOG_INFO,  "[SystemBase] base initialized properly\n");
+	
+	// we cannot open libs inside another init
+	
+	//
+	// sl_Autotask
+	//
+	
+	l->sl_AutotaskPath = FCalloc( 1024, sizeof(char) );
+	if( l->sl_AutotaskPath != NULL )
+	{
+		getcwd( l->sl_AutotaskPath, sizeof ( tempString ) );
+		strcat( l->sl_AutotaskPath, "/autostart/");
+
+		d = opendir( l->sl_AutotaskPath );
+	 
+		if( d != NULL )
+		{
+			while( ( dir = readdir( d ) ) != NULL )
+			{
+				if( dir->d_name[0] == '.' ) continue;
+				Log( FLOG_INFO,  "[SystemBase] Reading autostart scripts:  %s\n", dir->d_name );
+			
+				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, dir->d_name );
+				
+				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
+				if( loctask != NULL )
+				{
+					loctask->node.mln_Succ = (MinNode *)l->sl_Autotasks;
+					l->sl_Autotasks = loctask;
+				}
+			}
+			closedir( d );
+		}
+	}
 
 	return ( void *)l;
 }
@@ -764,6 +842,15 @@ void SystemClose( SystemBase *l )
 		FHandlerDelete( rems );
 	}
 	
+	FriendCoreManagerDelete( l->fcm );
+	
+	if( l->sl_WorkerManager != NULL )
+	{
+		DEBUG( "[FriendCore] Shutting down worker manager.\n" );
+		WorkerManagerDelete( l->sl_WorkerManager );
+		l->sl_WorkerManager = NULL;
+	}
+	
 	// Close user library
 	l->AuthModuleDrop( l, l->sl_ActiveAuthModule );
 	
@@ -847,6 +934,20 @@ void SystemClose( SystemBase *l )
 	// Destroy mutex
 	pthread_mutex_destroy( &l->sl_ResourceMutex );
 	pthread_mutex_destroy( &l->sl_InternalMutex );
+	
+	Autotask *at = l->sl_Autotasks;
+	while( at != NULL )
+	{
+		Autotask *rem = at;
+		at = (Autotask *)at->node.mln_Succ;
+		
+		AutotaskDelete( rem );
+	}
+	// delete autotasks
+	if( l->sl_AutotaskPath )
+	{
+		FFree( l->sl_AutotaskPath );
+	}
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase closed.\n");
 }
@@ -1051,7 +1152,7 @@ int SystemInitExternal( SystemBase *l )
 		if( l->sl_Sentinel != NULL && l->sl_Sentinel->s_User != NULL )
 		{
 			FBOOL foundRemoteSession = FALSE;
-			UserSessList *sl = l->sl_Sentinel->s_User->u_SessionsList;
+			UserSessListEntry *sl = l->sl_Sentinel->s_User->u_SessionsList;
 			while( sl != NULL )
 			{
 				UserSession *locses = sl->us;
@@ -1059,7 +1160,7 @@ int SystemInitExternal( SystemBase *l )
 				{
 					foundRemoteSession = TRUE;
 				}
-				sl = (UserSessList *) sl->node.mln_Succ;
+				sl = (UserSessListEntry *) sl->node.mln_Succ;
 			}
 			
 			// remote session is missing, we are adding it
@@ -1998,7 +2099,7 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 	
 	//DEBUG("\n\n\nWebSocketSendMessage start %p device %s\n", usersession, usersession->us_DeviceIdentity );
 	
-	if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
+	//if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
 	{
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( unsigned char ) );
 		if( buf != NULL )
@@ -2013,7 +2114,8 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wc_Wsi );
 				if( wsc->wc_Wsi != NULL )
 				{
-					bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
+					//bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
 				}
 				else
 				{
@@ -2027,10 +2129,10 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 		else
 		{
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-			pthread_mutex_unlock( &usersession->us_WSMutex );
+			//pthread_mutex_unlock( &usersession->us_WSMutex );
 			return 0;
 		}
-		pthread_mutex_unlock( &usersession->us_WSMutex );
+		//pthread_mutex_unlock( &usersession->us_WSMutex );
 	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
@@ -2051,7 +2153,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 	unsigned char *buf;
 	int bytes = 0;
 	
-	if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
+	//if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
 	{
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128+24, sizeof( unsigned char ) );
 		if( buf != NULL )
@@ -2067,8 +2169,9 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 				DEBUG("[SystemBase] send message to user session %p, pointer to websocket connection %p\n", usersession, wsc->wc_Wsi );
 				if( wsc->wc_Wsi != NULL )
 				{
-					bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
-				}
+					//bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
+				}//
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
 		
@@ -2078,11 +2181,11 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
 		
-			pthread_mutex_unlock( &usersession->us_WSMutex );
+			//pthread_mutex_unlock( &usersession->us_WSMutex );
 		
 			return 0;
 		}
-		pthread_mutex_unlock( &usersession->us_WSMutex );
+		//pthread_mutex_unlock( &usersession->us_WSMutex );
 	}
 	
 	return bytes;
@@ -2100,6 +2203,11 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 
 int AddWebSocketConnection( SystemBase *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data )
 {
+	if( l->sl_USM == NULL )
+	{
+		return -1;
+	}
+	
 	UserSession *actUserSess = NULL;
 	char lsessionid[ DEFAULT_SESSION_ID_SIZE ];
 	

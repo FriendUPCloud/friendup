@@ -30,10 +30,10 @@
 #include <mysql/sql_defs.h>
 #include <system/user/user_application.h>
 #include "user_group.h"
-#include <system/handler/file.h>
+#include <system/fsys/file.h>
 #include <libwebsockets.h>
 #include <network/websocket_client.h>
-#include <service/service.h>
+#include <system/services/service.h>
 #include <hardware/printer/printer.h>
 #include <time.h>
 #include "remote_user.h"
@@ -117,11 +117,11 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
 
 */
 
-typedef struct UserSessList
+typedef struct UserSessListEntry
 {
 	void 					*us;
 	MinNode			node;
-}UserSessList;
+}UserSessListEntry;
 
 //
 // user structure
@@ -155,12 +155,13 @@ typedef struct User
 	FBOOL							u_InitialDevMount;
 	FBOOL							u_Anonymous;		// if user is anonymous
 	
-	UserSessList					*u_SessionsList;
+	UserSessListEntry		*u_SessionsList;
 	int								u_SessionsNr;		// number of sessions
 	int								u_NumberOfBadLogins;	// number of bad logins
 	
 	RemoteUser					*u_RemoteUsers; //user which use this account to have access to resources
-	FBOOL							u_IsAdmin;		//is user administrator
+	FBOOL							u_IsAdmin;		//set to TRUE when user is in Admin group
+	FBOOL							u_IsAPI;			//set to TRUE when user is in API group
 } User;
 
 static FULONG UserDesc[] = { 

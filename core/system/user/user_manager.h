@@ -194,36 +194,6 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 
 int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason );
 
-//
-//
-//
-
-int UMAddRemoteUser( UserManager *um, const char *name, const char *sessid, const char *hostname );
-
-//
-//
-//
-
-int UMRemoveRemoteUser( UserManager *um, const char *name, const char *hostname );
-
-//
-//
-//
-
-int UMAddRemoteDrive( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName );
-
-//
-//
-//
-
-int UMRemoveRemoteDrive( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName );
-
-//
-//
-//
-
-int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName );
-
 //Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *session, int *result );
 
 

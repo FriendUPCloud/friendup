@@ -60,7 +60,7 @@ EventManager *EventManagerNew( void *sb )
 	{
 		em->lastID = 0xf;
 		em->em_SB = sb;
-		em->em_EventThread = ThreadNew( EventManagerLoopThread, em, TRUE );
+		em->em_EventThread = ThreadNew( EventManagerLoopThread, em, TRUE, NULL );
 	}
 	else
 	{
@@ -158,7 +158,7 @@ void EventManagerDelete( EventManager *em )
  */
 FUQUAD EventGetNewID( EventManager *em )
 {
-	DEBUG("EVENT: new event created %ld\n", em->lastID+1 );
+	DEBUG("EVENT: new event created %llu\n", em->lastID+1 );
 	return em->lastID++;
 }
 
@@ -288,11 +288,9 @@ void *EventManagerLoopThread( FThread *ptr )
  * @param thread pointer to the thread to send the message to
  * @param nextCall delay before sending the message
  * @param repeat number of repetitions
- * @return pointer to the event created
- * @todo FL>PS no specific value returned in case of error
+ * @return 0 when success, otherwise error number
  */
-CoreEvent *EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
-//CoreEvent *EventAdd( EventManager *em, FThread *thread, time_t nextCall, time_t deltaTime, int repeat )
+int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, time_t deltaTime, int repeat )
 {
 	CoreEvent *nce = FCalloc( sizeof( CoreEvent ), 1 );
 	if( nce != NULL )
@@ -307,7 +305,7 @@ CoreEvent *EventAdd( EventManager *em, void *function, void *data, time_t nextCa
 		nce->ce_TimeDelta = deltaTime;
 		nce->ce_Data = data;
 
-		DEBUG("ADD NEW EVENT %ld\n", nce->ce_ID );
+		DEBUG("ADD NEW EVENT %llu\n", nce->ce_ID );
 
 		nce->node.mln_Succ = (MinNode *) em->em_EventList;
 		em->em_EventList = nce;
@@ -315,9 +313,10 @@ CoreEvent *EventAdd( EventManager *em, void *function, void *data, time_t nextCa
 	else
 	{
 		Log( FLOG_ERROR, "Cannot allocate memory for new Event\n");
+		return -1;
 	}
 
-	return nce;
+	return 0;
 }
 
 /**
@@ -354,7 +353,7 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 		DEBUG("Start thread %p  SB ptr %p\n", ev->ce_Function, em->em_SB );
 		//ThreadStart( ev->ce_Thread );
 		//ev->ce_Data = em->em_SB;
-		ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE );
+		ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );
 		DEBUG("Thread started\n");
 	}
 	

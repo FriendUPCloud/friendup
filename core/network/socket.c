@@ -1171,7 +1171,7 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 			shutdown( fd, SHUT_RDWR );
 			close( fd );
 			pthread_mutex_destroy( &incoming->mutex );
-			free( incoming );
+			FFree( incoming );
 			return NULL;
 		}
 
@@ -1190,7 +1190,7 @@ Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 			close( fd );
 			pthread_mutex_destroy( &incoming->mutex );
 			SSL_free( incoming->s_Ssl );
-			free( incoming );
+			FFree( incoming );
 			return NULL;
 		}
 		
@@ -1315,9 +1315,12 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 		int read_retries = 0;
 		struct timeval timeout;
 		fd_set fds;
+		
+		DEBUG("SOCKREAD %p\n", sock );
+		
 		do
 		{
-			pthread_yield();
+			//pthread_yield();
 			
 			if( read + buf > length ) buf = length - read;
 			
@@ -1356,10 +1359,10 @@ int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass
 						if( read == 0 && read_retries++ < 400 ) 
 						{
 							usleep( 50000 );
-							FERROR( "[SocketRead] Want read, trying a retry (%d/400)\n", read_retries );
+							//FERROR( "[SocketRead] Want read, trying a retry (%d/400)\n", read_retries );
 							continue;
 						}
-						DEBUG("[SocketRead] Want read TIMEOUT....\n");
+						//DEBUG("[SocketRead] Want read TIMEOUT....\n");
 						return read;
 					// The operation did not complete. Call again.
 					case SSL_ERROR_WANT_WRITE:
@@ -2387,7 +2390,7 @@ void SocketFree( Socket *sock )
 	
 	pthread_mutex_destroy( &sock->mutex );
 	
-	free( sock );
+	FFree( sock );
 }
 
 /**
@@ -2398,7 +2401,7 @@ void SocketFree( Socket *sock )
 
 void SocketClose( Socket* sock )
 {
-	DEBUG("Close socket\n");
+	DEBUG("Close socket %p\n", sock );
 	if( sock == NULL || sock->fd == 0 )
 	{
 		FERROR("Socket: sock == NULL!\n");
@@ -2416,11 +2419,30 @@ void SocketClose( Socket* sock )
 		{
 			if( sock->s_Ssl )
 			{
-				while( SSL_shutdown( sock->s_Ssl ) == 0 )
+				/*
+				int stat = SSL_shutdown( sock->s_Ssl );
+				if( stat == 0 )
 				{
-					usleep( 0 );
+					stat = SSL_shutdown( sock->s_Ssl );
+					if( stat <= 0 )
+					{
+						FERROR("Stat <= 0\n" );
+					}
 				}
+				*/
+				int ret;
+				while( ( ret = SSL_shutdown( sock->s_Ssl ) ) == 0 )
+				{
+					usleep( 1000 );
+					if( ret == -1 )
+					{
+						int error = SSL_get_error( sock->s_Ssl, ret );
+						FERROR("SSL_ERROR: %d\n", error );
+					}
+				}
+				
 				SSL_clear( sock->s_Ssl );
+				sock->s_Ssl = NULL;
 			}
 
 			if( sock->s_BIO )

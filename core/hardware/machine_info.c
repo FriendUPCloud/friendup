@@ -314,13 +314,13 @@ char* GetSystemUniqueId()
 		strcat( uniqueID, mname );
 	}
 
-	DEBUG("uniqueID %s len %d\n", uniqueID, strlen(uniqueID) );
+	DEBUG("uniqueID %s len %d\n", uniqueID, (int)strlen(uniqueID) );
 	
 #ifndef CYGWIN_BUILD
 	FUWORD *id = ComputeSystemUniqueId();
 	if( id != NULL )
 	{
-		DEBUG("id is not null uniqueID %s len %d\n", uniqueID, strlen(uniqueID) );
+		DEBUG("id is not null uniqueID %s len %d\n", uniqueID, (int) strlen(uniqueID) );
 		unsigned int i = 0;
 		
 		for ( i = 0; i < 5; i++ )

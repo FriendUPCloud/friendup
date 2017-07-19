@@ -85,7 +85,7 @@ typedef struct UserSession
 	void                           *us_SB;   // pointer to systembase
 	
 	char                           us_UserActionInfo[ 512 ];
-	FULONG                    us_NRConnections;
+	FLONG                    us_NRConnections;
 	
 }UserSession;
 

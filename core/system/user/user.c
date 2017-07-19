@@ -97,9 +97,9 @@ int UserInit( User **up )
 int UserAddSession( User *usr, void *ls )
 {
 	UserSession *s = (UserSession *)ls;
-	UserSessList *us = NULL;
+	UserSessListEntry *us = NULL;
 	
-	UserSessList *exses = (UserSessList *)usr->u_SessionsList;
+	UserSessListEntry *exses = (UserSessListEntry *)usr->u_SessionsList;
 	while( exses != NULL )
 	{
 		if( exses->us == ls )
@@ -107,17 +107,11 @@ int UserAddSession( User *usr, void *ls )
 			DEBUG("Session was already added to user\n");
 			return 0;
 		}
-		exses = (UserSessList *) exses->node.mln_Succ;
+		exses = (UserSessListEntry *) exses->node.mln_Succ;
 	}
 	
-	if( ( us = FCalloc( 1, sizeof( UserSessList ) ) ) != NULL )
+	if( ( us = FCalloc( 1, sizeof( UserSessListEntry ) ) ) != NULL )
 	{
-		/*
-		if( s->us_MasterSession == NULL )
-		{
-			s->us_MasterSession = StringDuplicate( usr->u_MainSessionID );
-		}
-		*/
 		us->us = s;
 		s->us_User = usr;	// assign user to session
 		s->us_UserID = usr->u_ID;
@@ -140,13 +134,13 @@ int UserAddSession( User *usr, void *ls )
 void UserRemoveSession( User *usr, void *ls )
 {
 	UserSession *remses = (UserSession *)ls;
-	if( usr  == NULL )
+	if( usr  == NULL || ls == NULL )
 	{
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return;
 	}
-	UserSessList *us = (UserSessList *)usr->u_SessionsList;
-	UserSessList *prev = us;
+	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+	UserSessListEntry *prev = us;
 	FBOOL removed = FALSE;
 	
 	if( us != NULL )
@@ -154,7 +148,7 @@ void UserRemoveSession( User *usr, void *ls )
 		// first entry
 		if( remses == us->us )
 		{
-			usr->u_SessionsList = (UserSessList *) us->node.mln_Succ;
+			usr->u_SessionsList = (UserSessListEntry *) us->node.mln_Succ;
 			
 			usr->u_SessionsNr--;
 			removed = TRUE;
@@ -162,14 +156,14 @@ void UserRemoveSession( User *usr, void *ls )
 		else
 		{
 			prev = us;
-			us = (UserSessList *)us->node.mln_Succ;
+			us = (UserSessListEntry *)us->node.mln_Succ;
 			
 			while( us != NULL )
 			{
 				if( remses == us->us )
 				{
 					prev->node.mln_Succ = (MinNode *)us->node.mln_Succ;
-					UserSessList *nexts = (UserSessList *)us->node.mln_Succ;
+					UserSessListEntry *nexts = (UserSessListEntry *)us->node.mln_Succ;
 					if( nexts != NULL )
 					{
 						nexts->node.mln_Pred = (MinNode *)prev;
@@ -180,60 +174,14 @@ void UserRemoveSession( User *usr, void *ls )
 				}
 				
 				prev = us;
-				us = (UserSessList *)us->node.mln_Succ;
+				us = (UserSessListEntry *)us->node.mln_Succ;
 			}
 		}
 	}
 	
 	if( removed == TRUE )
 	{
-		pthread_mutex_lock( &(remses->us_WSMutex) );
-		if( remses->us_WSConnections != NULL )
-		{
-			WebsocketClient *nwsc = remses->us_WSConnections;
-			WebsocketClient *rws = nwsc;
-			while( nwsc != NULL )
-			{
-				rws = nwsc;
-				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
-				
-				DEBUG("Remove websockets\n");
-				FCWSData *data = rws->wc_WebsocketsData;
-				if( data != NULL )
-				{
-					data->fcd_ActiveSession = NULL;
-				}
-				rws->wc_UserSession = NULL;
-				FFree( rws );
-				rws = NULL;
-			}
-		}
-		pthread_mutex_unlock( &(remses->us_WSMutex) );
-		
-		DEBUG("Session released  sessid: %s device: %s \n", remses->us_SessionID, remses->us_DeviceIdentity );
-		
-		if( remses->us_DeviceIdentity != NULL )
-		{
-			FFree( remses->us_DeviceIdentity );
-		}
-		
-		/*
-		if( s->us_MasterSession != NULL )
-		{
-			FFree( s->us_MasterSession );
-		}
-		*/
-		
-		if( remses->us_SessionID != NULL )
-		{
-			FFree( remses->us_SessionID );
-		}
-		
-		FFree( remses );
-		if( us != NULL )
-		{
-			FFree( us );
-		}
+		remses->us_WSConnections = NULL;
 	}
 }
 
@@ -258,12 +206,12 @@ void UserDelete( User *usr )
 		
 		// remove all sessions connected to user
 		
-		UserSessList *us = (UserSessList *)usr->u_SessionsList;
-		UserSessList *delus = us;
+		UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
+		UserSessListEntry *delus = us;
 		while( us != NULL )
 		{
 			delus = us;
-			us = (UserSessList *)us->node.mln_Succ;
+			us = (UserSessListEntry *)us->node.mln_Succ;
 			
 			FFree( delus );
 		}

@@ -30,7 +30,7 @@
 #ifndef __INTERFACE_COMM_SERVICE_REMOTE_INTERFACE_H__
 #define __INTERFACE_COMM_SERVICE_REMOTE_INTERFACE_H__
 
-#include <service/comm_service_remote.h>
+#include <communication/comm_service_remote.h>
 
 typedef struct CommServiceRemoteInterface
 {

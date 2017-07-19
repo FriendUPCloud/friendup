@@ -31,6 +31,7 @@
 #define __INTERFACE_USER_MANAGER_INTERFACE_H__
 
 #include <system/user/user_manager.h>
+#include <system/user/user_manager_remote.h>
 #include <system/user/user_manager_web.h>
 
 typedef struct UserManagerInterface
@@ -59,10 +60,10 @@ typedef struct UserManagerInterface
 	FBOOL					(*UMGetLoginPossibilityLastLogins)( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
 	int						(*UMStoreLoginAttempt)( UserManager *um, const char *name, const char *info, const char *failReason );
 	Http					*(*UMWebRequest)( void *m, char **urlpath, Http* request, UserSession *session, int *result );
-	int					(*UMAddRemoteUser)( UserManager *um, const char *name, const char *sessid, const char *hostname );
-	int					(*UMRemoveRemoteUser)( UserManager *um, const char *name, const char *hostname );
-	int					(*UMAddRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName );
-	int					(*UMRemoveRemoteDrive)( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName );
+	int					(*UMAddGlobalRemoteUser)( UserManager *um, const char *name, const char *sessid, const char *hostname );
+	int					(*UMRemoveGlobalRemoteUser)( UserManager *um, const char *name, const char *hostname );
+	int					(*UMAddGlobalRemoteDrive)( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid  );
+	int					(*UMRemoveGlobalRemoteDrive)( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName);
 }UserManagerInterface;
 
 //
@@ -95,10 +96,10 @@ inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMGetAllowedLoginTime = UMGetAllowedLoginTime;
 	si->UMGetLoginPossibilityLastLogins = UMGetLoginPossibilityLastLogins;
 	si->UMStoreLoginAttempt = UMStoreLoginAttempt;
-	si->UMAddRemoteUser = UMAddRemoteUser;
-	si->UMRemoveRemoteUser = UMRemoveRemoteUser;
-	si->UMAddRemoteDrive = UMAddRemoteDrive;
-	si->UMRemoveRemoteDrive = UMRemoveRemoteDrive;
+	si->UMAddGlobalRemoteUser = UMAddGlobalRemoteUser;
+	si->UMRemoveGlobalRemoteUser = UMRemoveGlobalRemoteUser;
+	si->UMAddGlobalRemoteDrive = UMAddGlobalRemoteDrive;
+	si->UMRemoveGlobalRemoteDrive = UMRemoveGlobalRemoteDrive;
 }
 
 #endif

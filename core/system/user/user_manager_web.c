@@ -34,7 +34,8 @@
 #include <core/nodes.h>
 #include "user_manager_web.h"
 #include <system/systembase.h>
-#include <system/handler/device_handling.h>
+#include <system/fsys/device_handling.h>
+#include <system/user/user_sessionmanager.h>
 
 /**
  * Http web call processor
@@ -510,7 +511,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			}
 			
 			{
-				DEBUG("[UMWebRequest] Changeing user data %d\n", id );
+				DEBUG("[UMWebRequest] Changeing user data %lu\n", id );
 				// user is not logged in
 				// try to get it from DB
 				
@@ -579,7 +580,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		DEBUG( "[UMWebRequest] Logging out!!\n" );
 		
 		//
-		//TODO we must provide sessionid of user who wants to logout
+		// we must provide sessionid of user who wants to logout
 		//
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "sessionid" );
@@ -592,14 +593,26 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			
 			if( sessid != NULL )
 			{
-				sess =USMGetSessionBySessionID( l->sl_USM, sessid );
 				
-				int error = USMUserSessionRemove( l->sl_USM, sess );
+				sess =USMGetSessionBySessionID( l->sl_USM, sessid );
+				int error = 0; 
+				
+				if( sess != NULL )
+				{
+					sess->us_NRConnections--;
+					error = USMUserSessionRemove( l->sl_USM, sess );
+				}
 				//
 				// we found user which must be removed
 				//
 				
-				if( error == 0 )
+				if( request->h_RequestSource == HTTP_SOURCE_WS )
+				{
+					HttpFree( response );
+					response = NULL;
+				}
+				
+				if( error == 0 && response != NULL )
 				{
 					HttpAddTextContent( response, "ok<!--separate-->{ \"logout\": \"success\"}" );
 				}
@@ -650,7 +663,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				{
 					BufString *bs = BufStringNew();
 					
-					UserSessList *sessions = logusr->u_SessionsList;
+					UserSessListEntry *sessions = logusr->u_SessionsList;
 					BufStringAdd( bs, "ok<!--separate-->[" );
 					int pos = 0;
 					unsigned long t = time( NULL );
@@ -677,7 +690,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							
 							pos++;
 						}
-						sessions = (UserSessList *) sessions->node.mln_Succ;
+						sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 					}
 					
 					BufStringAdd( bs, "]" );
@@ -752,23 +765,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		if( sessionid != NULL )
 		{
 			DEBUG("[UMWebRequest] Remove session by sessionid\n");
-			while( usrses != NULL )
+			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
+			if( usrses != NULL )
 			{
-				if( usrses->us_SessionID != NULL && strcmp( usrses->us_SessionID, sessionid ) == 0 )
+				char *uname = NULL;
+				if( usrses->us_User != NULL )
 				{
-					char *uname = NULL;
-					if( usrses->us_User != NULL )
-					{
-						uname = usrses->us_User->u_Name;
-					}
-					
-					DEBUG("[UMWebRequest] user %s session %s will be removed by user %s\n", uname, usrses->us_SessionID, uname  );
-					
-					error = USMUserSessionRemove( l->sl_USM, usrses );
-					
-					break;
+					uname = usrses->us_User->u_Name;
 				}
-				usrses = (UserSession *)usrses->node.mln_Succ;
+					
+				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s\n", uname, usrses->us_SessionID, uname  );
+					
+				error = USMUserSessionRemove( l->sl_USM, usrses );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -777,7 +785,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			User *u = UMGetUserByName( l->sl_UM, usrname );
 			if( u != NULL )
 			{
-				UserSessList *usl = u->u_SessionsList;
+				UserSessListEntry *usl = u->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *s = (UserSession *) usl->us;
@@ -787,7 +795,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						break;
 					}
 					
-					usl = (UserSessList *)usl->node.mln_Succ;
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 			}
 			else
@@ -873,7 +881,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 				
-				UserSessList  *usl = usr->u_SessionsList;
+				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *locses = (UserSession *)usl->us;
@@ -918,7 +926,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							pos++;
 						}
 					}
-					usl = (UserSessList *)usl->node.mln_Succ;
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 				usr = (User *)usr->node.mln_Succ;
 			}
@@ -978,7 +986,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				DEBUG("[UMWebRequest] Going through users, user: %s\n", usr->u_Name );
 				
-				UserSessList  *usl = usr->u_SessionsList;
+				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *locses = (UserSession *)usl->us;
@@ -1024,7 +1032,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							pos++;
 						}
 					}
-					usl = (UserSessList *)usl->node.mln_Succ;
+					usl = (UserSessListEntry *)usl->node.mln_Succ;
 				}
 				usr = (User *)usr->node.mln_Succ;
 			}

@@ -47,7 +47,7 @@
 #include "auth/authmodule.h"
 #include <core/friendcore_manager.h>
 
-#include <system/handler/fsys.h>
+#include <system/fsys/fsys.h>
 #include <util/buffered_string.h>
 #include <mysql/mysqllibrary.h>
 #include <application/applicationlibrary.h>
@@ -56,7 +56,7 @@
 #include <z/zlibrary.h>
 #include <image/imagelibrary.h>
 #include <system/module/module.h>
-#include <system/handler/dosdriver.h>
+#include <system/fsys/dosdriver.h>
 #include <util/log/log.h>
 #include <magic.h>
 #include <system/cache/cache_manager.h>
@@ -67,7 +67,7 @@
 #include <system/user/user_sessionmanager.h>
 #include <system/user/user_manager.h>
 #include <system/user/remote_user.h>
-#include <system/handler/fs_manager.h>
+#include <system/fsys/fs_manager.h>
 #include <hardware/usb/usb_manager.h>
 #include <hardware/usb/usb_device_web.h>
 #include <hardware/printer/printer_manager.h>
@@ -75,6 +75,7 @@
 #include <core/pid_thread_manager.h>
 #include <system/log/user_logger_manager.h>
 #include <system/user/user_manager_web.h>
+#include <system/autotask/autotask.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -192,6 +193,7 @@ typedef struct SystemBase
 	DOSDriver									*sl_DOSDrivers;         // avaiable DOSDrivers
 	File 												*sl_INRAM;						// INRAM filesystem drive, avaiable for all users
 
+	WorkerManager							*sl_WorkerManager; ///< Worker Manager
 	AppSessionManager						*sl_AppSessionManager;		// application sessions
 	UserSessionManager					*sl_USM;			// user session manager
 	UserManager								*sl_UM;		// user database manager
@@ -219,11 +221,13 @@ typedef struct SystemBase
 	struct ZLibrary							*zlib;						// z.library
 	struct ImageLibrary					*ilib;						// image.library
 
-	struct FriendCoreManager 			*fcm;						// connection with FriendCores
+	struct FriendCoreManager 					*fcm;						// connection with FriendCores
 	CacheManager 							*cm;						// cache manager
 	INVARManager								*nm;
 	Dictionary									*sl_Dictionary;		// global dictionary
 
+	char												*sl_AutotaskPath;		// path to autotasks
+	Autotask										*sl_Autotasks;		// automatically launched scripts
 	Application									*sl_apps;					// avaiable applications
 	
 	SocketInterface							sl_SocketInterface;	// socket interface
@@ -235,6 +239,11 @@ typedef struct SystemBase
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
 	
 	EModule										*sl_PHPModule;
+	
+	#ifndef DOXIGNORE
+	CommService                 *sl_CommService;						    ///< FC send server
+	CommServiceRemote     *sl_CommServiceRemote;			///< FCservice for non persitent calls
+	#endif
 
 	int												UserLibCounter;						// counter of opened libraries
 	int												MsqLlibCounter;
@@ -249,6 +258,7 @@ typedef struct SystemBase
 	
 	// global settings
 	
+	int												sl_WorkersNumber;  // number of workers
 	int												sl_SocketTimeout;
 	FBOOL 										sl_CacheFiles;
 	FBOOL											sl_UnMountDevicesInDB;
@@ -304,6 +314,8 @@ typedef struct SystemBase
 	int (*WebSocketSendMessage)( struct SystemBase *l, UserSession *usersession, char *msg, int len );
 	
 	int (*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
+	
+	int (*WebsocketWrite)( struct lws *wsi, unsigned char *msgptr, int msglen, int type, pthread_mutex_t *mut );
 	
 	int (*SendProcessMessage)( Http *request, char *data, int len );
 

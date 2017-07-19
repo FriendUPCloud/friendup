@@ -100,7 +100,7 @@ int AppSessionManagerAddSession( AppSessionManager *as, AppSession *nas )
 		
 		LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
 		{
-			if( nas->as_ASSID == las->as_ASSID )
+			if( nas->as_SASID == las->as_SASID )
 			{
 				DEBUG("AppSession was already added to list\n");
 				return 0;
@@ -143,7 +143,7 @@ int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas )
 		
 		LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
 		{
-			if( nas->as_ASSID == las->as_ASSID )
+			if( nas->as_SASID == las->as_SASID )
 			{
 				DEBUG("AppSession will be removed from list\n");
 				
@@ -187,7 +187,7 @@ AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id )
 		
 		LIST_FOR_EACH( as->sl_AppSessions, las, AppSession * )
 		{
-			if( id == las->as_ASSID )
+			if( id == las->as_SASID )
 			{
 				DEBUG("AppSession found\n");
 				
