@@ -75,8 +75,7 @@ void *libInit( void *sb )
 	
 	l->al_zlib = (struct ZLibrary *)LibraryOpen( sb, "z.library", 0 );
 	
-	l->al_ApplicationList = GetApplicationFromDB( l, NULL );
-
+	//l->al_ApplicationList = GetApplicationFromDB( l, NULL );
 	
 	return l;
 }
@@ -181,9 +180,11 @@ int SetSQLConnection( struct ApplicationLibrary *l, MYSQLLibrary *lib )
 
 Application *GetApplicationFromDB( struct ApplicationLibrary *l, const char *where )
 {
-	// TODO: This absolutely don't work! Fix it :D
-	//if( l->al_sqllib )
-	//	return l->al_sqllib->Load( l->al_sqllib, ApplicationDesc, (char *)where );
+	if( l->al_sqllib )
+	{
+		int num = 0;
+		return l->al_sqllib->Load( l->al_sqllib, ApplicationDesc, (char *)where, &num );
+	}
 	return NULL;
 }
 
@@ -415,7 +416,7 @@ char *MakeString ( int length )
 }
 
 // Create HASH
-// TODO: Use stronger key!
+// 
 //
 
 /*
