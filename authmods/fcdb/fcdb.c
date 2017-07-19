@@ -271,55 +271,20 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
 //
 //
 
-int isApiUser( MYSQLLibrary *sqlLib, User *tmpusr )
+FBOOL isAPIUser( MYSQLLibrary *sqlLib, User *tmpusr )
 {
 	// If we are not an API user:
-	// TODO: Just find the group on the user in memory when it syncs with the Users client application
+	return tmpusr->u_IsAPI;
 	
+	/*
 	char sql[ 512 ];
 	
 	sqlLib->SNPrintF( sqlLib, sql, sizeof(sql), "SELECT u.ID FROM FUser u, FUserToGroup ug, FUserGroup g \
 		WHERE u.ID = \'%ld\' AND u.ID = ug.UserID AND g.ID = ug.UserGroupID AND g.Name = \'API\'", tmpusr->u_ID );
-	/*
-	snprintf( sql, sizeof(sql), "\
-		SELECT u.ID FROM FUser u, FUserToGroup ug, FUserGroup g \
-		WHERE \
-		u.ID = \'%ld\' AND u.ID = ug.UserID AND \
-		g.ID = ug.UserGroupID AND g.Name = \'API\'\
-	", tmpusr->u_ID );
-	*/
+
 	DEBUG( "AUTHENTICATE: Trying to see if user %s UserID  (%d) is apiusr \n", tmpusr->u_Name,  (int)tmpusr->u_ID );
 	
-	//
-	// this code must be removed on the end
-	// its here to help with fast rollback
-	//
-	/*
-	int error = mysql_query( sqlLib->con.sql_Con, sql );
-	
-	DEBUG( "AUTHENTICATE: Trying to see if user %s is an API user %d  UserID  (%d)\n", tmpusr->u_Name, error, (int)tmpusr->u_ID );
-	
-	if( error == 0 ) 
-	{
-		// Store and clear, because it makes much sense!
-		MYSQL_RES *res = mysql_store_result( sqlLib->con.sql_Con );
-		if( res )
-		{
-			// Check if it was a real result
-			if( (int)mysql_num_rows( res ) <= 0 )
-			{
-				error = -1;
-			}
-			mysql_free_result( res );
-		}
-		// No results!
-		else
-		{
-			error = -1;
-		}
-	}
-	*/
-	int error = 0;
+	int error = 1;
 	
 	if( sqlLib == NULL )
 	{
@@ -332,16 +297,17 @@ int isApiUser( MYSQLLibrary *sqlLib, User *tmpusr )
 	{
 		if( sqlLib->NumberOfRows( sqlLib, res ) <= 0 )
 		{
-			error = -1;
+			error = 0;
 		}
 		sqlLib->FreeResult( sqlLib, res );
 	}
 	else
 	{
-		error = -1;
+		error = 0;
 	}
 	
 	return error;
+	*/
 }
 
 //
@@ -475,7 +441,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				goto loginfail;
 			}
 			
-			UserSessList *usl = tmpusr->u_SessionsList;
+			UserSessListEntry *usl = tmpusr->u_SessionsList;
 			while( usl != NULL )
 			{
 				UserSession *s = (UserSession *)usl->us;
@@ -483,7 +449,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				{
 					break;
 				}
-				usl = (UserSessList *) usl->node.mln_Succ;
+				usl = (UserSessListEntry *) usl->node.mln_Succ;
 			}
 			
 			if( usl == NULL )
@@ -536,9 +502,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			// session is valid
 			//
 		
-		//DEBUG("\n\n\n============================================================ tmiest %%lld usertime %lld logouttst %lld\n\n
-		//==========================================================================\n");
-			// TODO: reenable timeout when it works!
 			if( 1 == 1 || ( timestamp - uses->us_LoggedTime ) < LOGOUT_TIME )
 			{	// session timeout
 	
@@ -621,9 +584,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
 		if( sqlLib != NULL )
 		{
-			int testAPIUser = isApiUser( sqlLib, tmpusr );
+			FBOOL testAPIUser = isAPIUser( sqlLib, tmpusr );
 			
-			if( uses->us_SessionID == NULL || testAPIUser != 0 )
+			//if( uses->us_SessionID == NULL || testAPIUser != 0 )
+			if( uses->us_SessionID == NULL || testAPIUser == FALSE )
 			{
 				DEBUG( "[FCDB] : We got a response on: \nAUTHENTICATE: SessionID = %s\n", uses->us_SessionID ? uses->us_SessionID : "No session id" );
 				DEBUG("\n\n\n1============================================================ tmiest %lld usertime %lld logouttst %lld\n\
@@ -668,7 +632,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			else 
 			{
 				// We have an API user!
-				if( testAPIUser == 0 && uses->us_SessionID )
+				if( testAPIUser == TRUE && uses->us_SessionID )
 				{
 					
 					DEBUG("APIUSR!\n");
