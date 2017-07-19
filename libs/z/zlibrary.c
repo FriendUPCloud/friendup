@@ -264,7 +264,6 @@ char *MakeString ( int length )
 }
 
 // Create HASH
-// TODO: Use stronger key!
 //
 /*
 void HashedString ( char **str )
