@@ -720,7 +720,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_CLOSED:
 			FERROR("[WS]: Callback session closed\n");
 			
+			pthread_mutex_lock( &(SLIB->sl_InternalMutex) );
+			
 			UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
+			
+			pthread_mutex_unlock( &(SLIB->sl_InternalMutex) );
+			
 			User *u = NULL;
 			if( us == NULL )
 			{
@@ -752,7 +757,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			}
 #endif
 			
-			pthread_mutex_lock( &us->us_WSMutex );
 			SystemBase *sb = NULL;
 			
 			if( u != NULL )
@@ -817,9 +821,6 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				FERROR("Cannot remove connection: Pointer to user is NULL\n");
 			}
-			DEBUG("[WS]: mutex will be unlocked\n");
-			pthread_mutex_unlock(  &us->us_WSMutex );
-
 		break;
 
 		//
