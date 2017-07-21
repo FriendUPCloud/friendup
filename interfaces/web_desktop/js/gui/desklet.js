@@ -745,6 +745,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	this.dom.drop = function( eles )
 	{
 		var dropped = 0;
+		
 		for( var a = 0; a < eles.length; a++ )
 		{
 			var el = eles[a];
