@@ -193,7 +193,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$o->DateModified = $entry->DateModified;
 						$o->DateCreated = $entry->DateCreated;
 						$o->Filesize = $entry->Filesize;
-						$o->Path = end( explode( ':', $thePath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' ) ) );
+						$pth = explode( ':', $thePath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' ) ); 
+						$o->Path = end( $pth ); unset( $pth );
 						$o->Shared = isset( $entry->Shared ) ? $entry->Shared : '';
 						$o->SharedLink = isset( $entry->SharedLink ) ? $entry->SharedLink : '';
 						$out[] = $o;
