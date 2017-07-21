@@ -91,12 +91,14 @@ class Door extends dbIO
 			// This one should not be required!
 			else if( isset( $args->args->directory ) )
 			{
-				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->args->directory ) ) ) . '\')';
+				$r = explode( ':', $args->args->directory );
+				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( $r ) ) . '\')';
 			}
 			// This one should not be required!
 			else if( isset( $args->args->args->path ) )
 			{
-				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->args->args->path ) ) ) . '\')';
+				$r = explode( ':', $args->args->args->path );
+				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( $r ) ) . '\')';
 			}
 			// Try by filesystem database id (LAST RESORT!)
 			else if( isset( $args->fileInfo->ID ) )
@@ -123,7 +125,8 @@ class Door extends dbIO
 		// Get by path (string)
 		else
 		{
-			$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $path ) ) );
+			$op = explode( ':', $path );
+			$name = mysqli_real_escape_string( $SqlDatabase->_link, reset( $op ) );
 			return '
 				SELECT * FROM `Filesystem` f 
 				WHERE 
