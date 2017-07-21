@@ -948,6 +948,11 @@ Application.receiveMessage = function( msg )
 	
 	switch( msg.command )
 	{
+		case 'print_iframe':
+			var f = document.getElementsByTagName( 'iframe' )[0];
+			f.contentWindow.document.title = 'Document';
+			f.contentWindow.print();
+			break;
 		case 'makeinlineimages':
 			/*var eles = ge( 'Editor' ).getElementsByTagName( 'img' );
 			for( var a = 0; a < eles.length; a++ )

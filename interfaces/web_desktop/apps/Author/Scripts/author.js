@@ -59,6 +59,10 @@ Application.run = function( msg, iface )
 					command: 'print'
 				},
 				{
+					name: i18n( 'menu_print_remote' ),
+					command: 'print_remote'
+				},
+				{
 					name: i18n( 'menu_quit' ),
 					command: 'quit'
 				}
