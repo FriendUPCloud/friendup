@@ -91,7 +91,7 @@ extern int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int 
  * @return pointer to memory where arguments are stored
  */
 
-inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+extern inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
 	// Send both get and post
 	int size = 0;

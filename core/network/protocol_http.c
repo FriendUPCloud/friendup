@@ -72,7 +72,7 @@ extern SystemBase *SLIB;
  * @param command pointer to php command provided as string
  * @return new ListString structure or NULL when problem appear
  */
-inline ListString *RunPHPScript( const char *command )
+extern inline ListString *RunPHPScript( const char *command )
 {
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )

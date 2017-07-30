@@ -56,7 +56,7 @@
 pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
-inline void CommServiceSetupOutgoing( CommService *service );
+extern inline void CommServiceSetupOutgoing( CommService *service );
 
 /**
  * Create CommunicationService
@@ -311,7 +311,7 @@ void ParseCallThread( void *tdata )
  * @param service pointer to CommunicationService
  */
 
-inline void CommServiceSetupOutgoing( CommService *service )
+extern inline void CommServiceSetupOutgoing( CommService *service )
 {
 	//                                           *
 	// atm we only read FC connections

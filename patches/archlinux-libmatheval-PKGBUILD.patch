@@ -1,0 +1,12 @@
+--- PKGBUILD	2017-07-26 15:28:42.921109086 +0200
++++ ../patches/PKGBUILD	2017-07-26 15:28:25.321204433 +0200
+@@ -17,6 +17,9 @@
+ prepare() {
+   cd "$pkgname-$pkgver"
+   patch -p1 -i "$srcdir/removeifndefs.patch"
++  patch -p2 -i "$srcdir/../../patches/archlinux-libmatheval-Makefile.am.patch"
++  touch config/config.rpath
++  autoreconf -i
+ }
+ 
+ build() {
