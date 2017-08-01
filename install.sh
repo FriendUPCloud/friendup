@@ -6,6 +6,7 @@
 #
 
 sudo apt-get install dialog
+sudo pacman -Sy dialog
 
 declare -i INSTALL_SCRIPT_NUMBER=0
 
@@ -181,6 +182,14 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
 	cmake ssh phpmyadmin make \
 	libwebsockets-dev libssh-dev
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
+    sudo pacman -Sy flex guile2.0 \
+	libssh2 libssh libaio \
+        mariadb \
+        php php-gd php-imap \
+	mariadb-clients file \
+        gd rsync valgrind libxml2 \
+	cmake openssh phpmyadmin make \
+	libwebsockets
 	wget https://aur.archlinux.org/cgit/aur.git/snapshot/libmatheval.tar.gz
 	tar xvfz libmatheval.tar.gz
 	rm libmatheval.tar.gz -f
@@ -189,13 +198,8 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
 	makepkg 2>&1 | tee makepkg.log
 	sudo pacman -U libmatheval*pkg*
 	cd ..
-    sudo pacman -Sy libssh2 libssh libaio \
-        mariadb \
-        php php-gd php-imap \
-	mariadb-clients file \
-        gd rsync valgrind libxml2 \
-	cmake openssh phpmyadmin make \
-	libwebsockets
+	dialog --backtitle "Friend installer" --msgbox "If you just installed mariadb, please do\n\nsudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql" 10 40
+	sudo systemctl start mariadb
 	dialog --backtitle "Friend installer" --msgbox "Please uncomment lines\n\nextension=gd.so\nextension=imap.so\nextension=pdo_mysql.so\nextension=mysqli.so\nextension=curl.so\nextension=readline.so\nextension=gettext.so\n\nand add\n\n$PWD/build/\n\nto open_basedir directive\n\ninto /etc/php/php.ini" 23 40
 else
     dialog --backtitle "Friend installer" --msgbox "Supported linux version not found!\n\n\
