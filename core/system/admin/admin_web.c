@@ -67,7 +67,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	Http *response = NULL;
 	
 	char *path = NULL;
-	DEBUG("ADMIN\n");
+	DEBUG("[AdminWebRequest] start\n");
 	
 	struct TagItem tags[] = {
 		{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicateN( "text/html", 9 ) },
@@ -84,7 +84,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	
 	if( urlpath[ 1 ] == NULL )
 	{
-		DEBUG( "URL path is NULL!\n" );
+		FERROR( "URL path is NULL!\n" );
 		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"second part of url is null!\"}" );
 		
 		goto error;
@@ -299,7 +299,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			DataForm *df = DataFormFromHttp( *request );
 			if( df != NULL )
 			{
-				DEBUG( "Connect to server rhost %s\n", host );
+				DEBUG("[AdminWebRequest] Connect to server rhost %s\n", host );
 				CommFCConnection *mycon = ConnectToServer( l->fcm->fcm_CommService, host );
 				if( mycon != NULL )
 				{
@@ -307,13 +307,13 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					DataForm *recvdf = CommServiceSendMsgDirect( mycon, df );
 					if( recvdf != NULL )
 					{
-						DEBUG( "Remote command, data received size %lu\n", recvdf->df_Size );
+						DEBUG("[AdminWebRequest] Remote command, data received size %lu\n", recvdf->df_Size );
 						int allocsize = recvdf->df_Size - ((COMM_MSG_HEADER_SIZE<<1)+COMM_MSG_HEADER_SIZE);
 						char *resppointer = FCalloc( allocsize, sizeof(FBYTE) );
 						if( resppointer != NULL )
 						{
 							memcpy( resppointer, ( (char *)recvdf + ((COMM_MSG_HEADER_SIZE<<1)+COMM_MSG_HEADER_SIZE) ), allocsize );
-							DEBUG( "Setting response %s\n", resppointer );
+							DEBUG("[AdminWebRequest] etting response %s\n", resppointer );
 							
 							HttpSetContent( response, resppointer, allocsize );
 						}
@@ -372,8 +372,6 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
 		{
-			DEBUG("Get active sessions\n");
-			
 			BufString *bs = BufStringNew();
 			
 			BufStringAdd( bs, "{\"userlist\":[");
@@ -388,23 +386,19 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			User *usr = l->sl_UM->um_Users;
 			while( usr != NULL )
 			{
-				DEBUG("Going through users, user: %s\n", usr->u_Name );
-				
 				UserSessListEntry  *usl = usr->u_SessionsList;
 				while( usl != NULL )
 				{
 					UserSession *locses = (UserSession *)usl->us;
 					if( locses != NULL )
 					{
-						DEBUG("Going through sessions, device: %s\n", locses->us_DeviceIdentity );
+						DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < LOGOUT_TIME ) )
+						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
 						{
 							char tmp[ 512 ];
 							int tmpsize = 0;
-							
-							//DEBUG("Active session found for user %s - deviceidentity %s\n", usr->u_Name, locses->us_DeviceIdentity );
-							
+
 							if( pos == 0 )
 							{
 								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );

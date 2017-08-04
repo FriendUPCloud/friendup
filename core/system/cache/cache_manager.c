@@ -52,8 +52,6 @@ CacheManager *CacheManagerNew( FULONG size )
 			{
 				cm->cm_CacheFileGroup[ i ].cg_EntryId = i;
 				cm->cm_CacheFileGroup[ i ].cg_File = NULL;
-				
-				//DEBUG("Create cache id %d ptr %p\n", cm->cm_CacheFileGroup[ i ].cg_EntryId, cm->cm_CacheFileGroup[ i ].cg_File );
 			}
 		}
 	}
@@ -206,7 +204,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 	
 	if( path == NULL )
 	{
-		INFO("Cache meananger do not handle NULL file\n");
+		FERROR("[CacheManagerFileGet] Cache meananger do not handle NULL file\n");
 		return NULL;
 	}
 	
@@ -223,7 +221,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 			fname = path;
 		}
 		
-		DEBUG("FNAME %s -- id %d\n", fname, fname[ 0 ] );
+		DEBUG("[CacheManagerFileGet] FNAME %s -- id %d\n", fname, fname[ 0 ] );
 		int id = fname[ 0 ];
 		if( id < 0 || id > 255 )
 		{

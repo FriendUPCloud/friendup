@@ -8,7 +8,7 @@ ALL:
 
 install:
 	for dir in $(LIB_DIR); do \
-		make -C $$dir install; \
+		make -C $$dir install FRIEND_PATH=$(FRIEND_PATH); \
 	done
 
 setup:

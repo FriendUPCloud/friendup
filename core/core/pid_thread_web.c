@@ -22,25 +22,31 @@
 
 /** @file
  * 
- *  Filesystem manager    definitions
+ *  PIDThread web calls handler
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 13 April 2017
  */
 
-
 #include "pid_thread_web.h"
 #include <system/systembase.h>
 
-//
-//
-//
-
+/**
+ * Network handler
+ *
+ * @param sb pointer to SystemBase
+ * @param urlpath pointer to table with path entries
+ * @param request http request
+ * @param loggedSession UserSession of loged user
+ * @return http response
+ */
 Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession *loggedSession )
 {
 	Http *response = NULL;
 	SystemBase *l = (SystemBase *)sb;
 	
+	DEBUG("[PIDThreadWebRequest] PIDThread web request\n");
+
 	//
 	// list PID threads
 	//
@@ -49,8 +55,6 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 	{
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 			 HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-		
-		DEBUG("PIDThread web request\n");
 		
 		BufString *resp = PIDThreadManagerGetThreadList( l->sl_PIDTM );
 		

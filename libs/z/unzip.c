@@ -413,7 +413,7 @@ local unzFile unzOpenInternal(const void *path, zlib_filefunc64_32_def* pzlib_fi
 
 	if (us.filestream == NULL)
 	{
-		DEBUG("Filestream NULL\n");
+		FERROR("Unzip: Filestream NULL\n");
 		return NULL;
 	}
 
@@ -1437,9 +1437,7 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
 
             pfile_in_zip_read_info->total_out_64 = pfile_in_zip_read_info->total_out_64 + copy;
             pfile_in_zip_read_info->rest_read_uncompressed -= copy;
-			
-			DEBUG("ptr 1 %p  crc ptr %p\n", pfile_in_zip_read_info->crc32, crc32 );
-			
+
             pfile_in_zip_read_info->crc32 = crc32(pfile_in_zip_read_info->crc32,
                                 pfile_in_zip_read_info->stream.next_out, copy);
 
@@ -1519,10 +1517,7 @@ extern int ZEXPORT unzReadCurrentFile(unzFile file, voidp buf, unsigned len)
 
             pfile_in_zip_read_info->total_out_64 += out_bytes;
             pfile_in_zip_read_info->rest_read_uncompressed -= out_bytes;
-			//DEBUG("function %p crc function %p\n", pfile_in_zip_read_info->crc32, crc32 );
-			
-			//DEBUG("Buf before %p bytes %d\n", buf_before, out_bytes );
-			
+
             pfile_in_zip_read_info->crc32 =
                 crc32(pfile_in_zip_read_info->crc32,buf_before, (uInt)(out_bytes));
 

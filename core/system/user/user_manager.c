@@ -78,7 +78,7 @@ void UMDelete( UserManager *smgr )
 		
 		if( remusr != NULL )
 		{
-			DEBUG("Releasing user devices\n");
+			DEBUG("[UMDelete] Releasing user devices\n");
 			// Remove all mounted devices
 			File *lf = remusr->u_MountedDevs;
 			File *remdev = lf;
@@ -99,7 +99,7 @@ void UMDelete( UserManager *smgr )
 						
 						if( fsys->Release( fsys, remdev ) != 0 )
 						{
-							DEBUG("Device released\n");
+							DEBUG("[UMDelete] Device released\n");
 						}
 					}
 					else
@@ -112,12 +112,11 @@ void UMDelete( UserManager *smgr )
 				}
 			}
 
-			DEBUG("Free user %s\n", remusr->u_Name );
+			DEBUG("[UMDelete] Free user %s\n", remusr->u_Name );
 			
 			UserDelete( remusr );
 			
 			remusr = NULL;
-			//DEBUG("======================================\n\n\n");
 		}
 	}
 	
@@ -128,7 +127,7 @@ void UMDelete( UserManager *smgr )
 	if( smgr != NULL )
 	{
 		UserGroup *g = smgr->um_UserGroups, *rg;
-		DEBUG("Cleaning groups\n");
+		DEBUG("[UMDelete] Cleaning groups\n");
 		while( g!= NULL )	// remove global groups
 		{
 			rg = g;
@@ -165,7 +164,7 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 {
 	char tmpQuery[ 512 ];
 	struct User *user = NULL;
-	DEBUG("Assign group to user\n");
+	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
 	
@@ -205,8 +204,7 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 			usr->u_Groups = FCalloc( rows, sizeof( UserGroup *) );
 		}
 	
-	//FERROR("\n\n\n\n\\n\n\n\n\n\\n\n-\n");
-		DEBUG("Memory for %d  groups allocated\n", rows );
+		DEBUG("[UMAssignGroupToUser] Memory for %d  groups allocated\n", rows );
 	
 		if( usr->u_Groups != NULL )
 		{
@@ -216,19 +214,15 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 		
 			while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
-				DEBUG("Going through loaded rows %d -> %s\n", j, row[ 0 ] );
-			
-				// first are column names
-				//if( j >= 1 )
+				DEBUG("[UMAssignGroupToUser] Going through loaded rows %d -> %s\n", j, row[ 0 ] );
 				{
 					FULONG gid = atol( row[ 0 ] );
 				
-					DEBUG("User is in group %lu\n", gid  );
+					DEBUG("[UMAssignGroupToUser] User is in group %lu\n", gid  );
 				
 					UserGroup *g = smgr->um_UserGroups;
 					while( g != NULL )
 					{
-						//DEBUG("comparing %ld   -  %ld\n", g->ug_ID, gid );
 						if( g->ug_ID == gid )
 						{
 							if( strcmp( g->ug_Name, "Admin" ) == 0 )
@@ -241,13 +235,12 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 								isAPI = TRUE;
 							}
 							
-							DEBUG("Added group %s to user %s\n", g->ug_Name, usr->u_Name );
+							DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
 							usr->u_Groups[ pos++ ] = g;
 						}
 						g  = (UserGroup *) g->node.mln_Succ;
 					}
-				} 
-				//j++;
+				}
 			}
 		}
 		
@@ -281,7 +274,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 	}
 	char tmpQuery[ 512 ];
 	
-	DEBUG("Assign group to user start NEW GROUPS: %s\n", groups );
+	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: %s\n", groups );
 	
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
@@ -337,7 +330,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 		
 		FBOOL isAdmin = FALSE;
 		FBOOL isAPI = FALSE;
-		DEBUG("Memory for groups allocated\n");
+		DEBUG("[UMAssignGroupToUserByStringDB] Memory for groups allocated\n");
 		for( i = 0; i < pos; i++ )
 		{
 			UserGroup *gr = um->um_UserGroups;
@@ -356,7 +349,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 						isAPI = TRUE;
 					}
 					
-					DEBUG("Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
+					DEBUG("[UMAssignGroupToUserByStringDB] Group found %s will be added to user %s\n", gr->ug_Name, usr->u_Name );
 					
 					char loctmp[ 255 ];
 					if( i == 0 )
@@ -385,14 +378,12 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 		{
 			FERROR("Cannot call query: '%s'\n", tmpQuery );
 		}
-		DEBUG("call query: '%s'\n", tmpQuery );
-		
+
 		if( sqlLib->QueryWithoutResults( sqlLib, bs->bs_Buffer  ) !=  0 )
 		{
 			FERROR("Cannot call query: '%s'\n", bs->bs_Buffer );
 		}
-		DEBUG("call query: '%s'\n", bs->bs_Buffer );
-		
+
 		if( usr->u_Groups != NULL )
 		{
 			FFree( usr->u_Groups );
@@ -407,7 +398,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 		FFree( ptr );
 	}
 	sb->LibraryMYSQLDrop( sb, sqlLib );
-	DEBUG("Assign  groups to user end\n");
+	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
 	
 	return 0;
 }
@@ -448,8 +439,7 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 {
 	char tmpQuery[ 255 ];
-	//sprintf( tmpQuery, "SELECT * FROM FUserApplication WHERE UserID='%lu'", usr->u_ID );
-	
+
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
 	int actapp = 0;
@@ -468,7 +458,8 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		// Free previous applications
 		if( usr->u_Applications )
 		{
-			usr->u_Applications = UserAppDeleteAll( usr->u_Applications );
+			UserAppDeleteAll( usr->u_Applications );
+			usr->u_Applications = NULL;
 		}
 	
 		// Make room
@@ -479,7 +470,6 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		int j = 0;
 		UserApplication *prev = NULL;
 	
-		DEBUG( "Starting process\n" );
 		while( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 		{
 			// first are column names
@@ -504,7 +494,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 
 		sqlLib->FreeResult( sqlLib, result );
 	
-		DEBUG( "%d applications added.\n", actapp );
+		DEBUG( "[UMAssignApplicationsToUser] %d applications added.\n", actapp );
 	
 		// Return with amount of application
 		sb->LibraryMYSQLDrop( sb, sqlLib );
@@ -533,14 +523,11 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	User *user = NULL;
 	char tmpQuery[ 1024 ];
-	//snprintf( tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
 	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," Name = '%s'", name );
 	
-	DEBUG( "Loading user.\n" );
 	int entries;
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 	
-	DEBUG("User poitner %p  number of entries %d\n", user, entries );
 	// No need for sql lib anymore here
 	sb->LibraryMYSQLDrop( sb, sqlLib );
 
@@ -549,14 +536,14 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 		int res = UserInit( &user );
 		if( res == 0 )
 		{
-			DEBUG("[UserGet] User found %s  id %ld\n", user->u_Name, user->u_ID );
+			DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
 			UMAssignGroupToUser( um, user );
 			UMAssignApplicationsToUser( um, user );
 			user->u_MountedDevs = NULL;
 		}
 	}
 	
-	DEBUG("GETUSER data filled, END\n");
+	DEBUG("[UMUserGetByNameDB] END\n");
 
 	return user;
 }
@@ -582,14 +569,13 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 
 	User *user = NULL;
 	char tmpQuery[ 1024 ];
-	//snprintf( tmpQuery, sizeof(tmpQuery)," ID = '%lu'", id );
+
 	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," ID = '%lu'", id );
 	
-	DEBUG( "Loading user, pointer to sqllib %p.\n", sqlLib );
 	int entries = 0;
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 	
-	DEBUG("User poitner %p  number of entries %d\n", user, entries );
+	DEBUG("[UMUserGetByIDDB] User poitner %p  number of entries %d\n", user, entries );
 	// No need for sql lib anymore here
 	sb->LibraryMYSQLDrop( sb, sqlLib );
 
@@ -598,14 +584,14 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 		int res = UserInit( &user );
 		if( res == 0 )
 		{
-			DEBUG("[UserGet] User found %s\n", user->u_Name );
+			DEBUG("[UMUserGetByIDDB] User found %s\n", user->u_Name );
 			UMAssignGroupToUser( um, user );
 			UMAssignApplicationsToUser( um, user );
 			user->u_MountedDevs = NULL;
 		}
 	}
 	
-	DEBUG("GETUSER data filled, END\n");
+	DEBUG("[UMUserGetByIDDB] END\n");
 
 	return user;
 }
@@ -637,7 +623,7 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 
 	if( UMUserExistByNameDB( smgr, usr->u_Name ) == TRUE )
 	{
-		DEBUG("CreateUser: user exist already!\n");
+		DEBUG("[UMUserCreate]: user exist already!\n");
 		sb->LibraryMYSQLDrop( sb, sqlLib );
 		return 1;
 	}
@@ -662,7 +648,7 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 				hashTarget[ 2 ] = '6';
 				hashTarget[ 3 ] = '}';
 		
-				DEBUG("Encrypt password\n");
+				DEBUG("[UMUserCreate] Encrypt password\n");
 		
 				Sha256Init( &ctx );
 				Sha256Update( &ctx, (unsigned char *)usr->u_Password, strlen( usr->u_Password ) );
@@ -705,9 +691,14 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 
 FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr )
 {
-	if( usr->u_IsAdmin == TRUE )
+	if( usr != NULL &&  usr->u_IsAdmin == TRUE )
 	{
 		return TRUE;
+	}
+	else
+	{
+        	FERROR("User is: %p or not admin\n", usr );
+        	return FALSE;
 	}
 	/*
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
@@ -918,7 +909,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	char where[ 128 ];
 	where[ 0 ] = 0;
 	
-	DEBUG("UMGetUserByNameDB start\n");
+	DEBUG("[UMGetUserByNameDB] start\n");
 	
 	if( sqlLib == NULL )
 	{
@@ -944,7 +935,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		tmp = (User *)tmp->node.mln_Succ;
 	}
 	
-	DEBUG("UMGetUserByNameDB end\n");
+	DEBUG("[UMGetUserByNameDB] end\n");
 	return user;
 }
 
@@ -963,10 +954,9 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 	
 	if( sqlLib && sqlLib->con.sql_Con )
 	{
-		DEBUG("GetAuthByAuthid %s\n", authId );
+		DEBUG("[UMUserGetByAuthIDDB] %s\n", authId );
 		// temporary solution, using MYSQL connection
 		char query[ 1024 ];
-		//snprintf( query, sizeof(query), "SELECT u.ID FROM `FUser` u, `FApplication` f WHERE f.AuthID=\"%s\" AND f.UserID = u.ID LIMIT 1", authId );
 		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT u.ID FROM `FUser` u, `FApplication` f WHERE f.AuthID=\"%s\" AND f.UserID = u.ID LIMIT 1", authId );
 		
 		MYSQL_RES *result = sqlLib->Query( sqlLib, query );
@@ -1017,6 +1007,8 @@ User *UMGetAllUsersDB( UserManager *um )
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
 	
+	DEBUG("[UMGetAllUsersDB] start\n");
+	
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get user, mysql.library was not open\n");
@@ -1039,7 +1031,7 @@ User *UMGetAllUsersDB( UserManager *um )
 		tmp = (User *)tmp->node.mln_Succ;
 	}
 	
-	DEBUG("GetAllUsers end\n");
+	DEBUG("[UMGetAllUsersDB] end\n");
 	return user;
 }
 
@@ -1088,7 +1080,7 @@ int UMRemoveUser( UserManager *um, User *usr )
 	{
 		if( lusr == usr )
 		{
-			DEBUG("UserManagerRemove: user removed\n");
+			DEBUG("[UMRemoveUser] UserManagerRemove: user removed\n");
 			break;
 		}
 		prevusr = lusr;
@@ -1098,7 +1090,7 @@ int UMRemoveUser( UserManager *um, User *usr )
 	if( lusr != NULL )
 	{
 		prevusr->node.mln_Succ = lusr->node.mln_Succ;
-		DEBUG("User will be removed from memory\n");
+		DEBUG("[UMRemoveUser] User will be removed from memory\n");
 		UserDelete( lusr );
 		
 		return 0;
@@ -1124,7 +1116,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 	
 	if( sqlLib != NULL )
 	{
-		DEBUG("UMGetAllowedLoginTime %s\n", name );
+		DEBUG("[UMGetAllowedLoginTime] user name: %s\n", name );
 		char query[ 1024 ];
 		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT `LoginTime` FROM `FUser` WHERE `Name`='%s' LIMIT 1", name );
 		
@@ -1162,7 +1154,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
 	User *usr = UMGetUserByNameDB( um, name );
 	
-	DEBUG("UMStoreLoginAttempt\n");
+	DEBUG("[UMStoreLoginAttempt] start\n");
 	
 	if( sqlLib != NULL )
 	{
@@ -1209,7 +1201,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 	
 	if( sqlLib != NULL )
 	{
-		DEBUG("UMGetLastFailLogins %s\n", name );
+		DEBUG("[UMGetLoginPossibilityLastLogins] username %s\n", name );
 		// temporary solution, using MYSQL connection
 		char query[ 2048 ];
 		time_t tm = time( NULL );

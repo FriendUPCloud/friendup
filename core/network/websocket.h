@@ -119,6 +119,18 @@ int WebSocketStart( WebSocket *ws );
 
 int WebsocketWrite( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses );
 
+//
+//
+//
+
+int AddWebSocketConnection( void *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data );
+
+//
+//
+//
+
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *us );
+
 #endif // __NETWORK_WEBSOCKET_H__
 
 

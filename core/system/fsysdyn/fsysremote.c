@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -149,7 +159,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	if( newsock != NULL )
 	{
 		//bs = SendMessageAndWait( con, df );
-		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, df->df_Size );
+		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
 		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
@@ -303,7 +313,7 @@ CommFCConnection *ConnectToServerRFS( SpecialData *sd, char *conname )
 			DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 			//INFO("Message created name byte %c%c%c%c\n", fcm->fcm_ID[32], fcm->fcm_ID[33], fcm->fcm_ID[34], fcm->fcm_ID[35]	);
 		
-			int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, df->df_Size );
+			int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
 		
 			DEBUG("Message sent %d\n", sbytes );
 			DataFormDelete( df );
@@ -563,7 +573,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 					{ ID_PARM, (FULONG)0, MSG_GROUP_START },
 						{ ID_PRMT, (FULONG) sd->logini, (FULONG)usernamec },
 						{ ID_PRMT, (FULONG) sd->passwdi,  (FULONG)passwordc },
-						{ ID_PRMT, (FULONG) sd->idi,  (FULONG)sessionidc },
+						//{ ID_PRMT, (FULONG) sd->idi,  (FULONG)sessionidc },
 						{ ID_PRMT, (FULONG) sd->devidi, (FULONG)sd->devid },
 						{ ID_PRMT, (FULONG) enci, (FULONG) enc },
 						{ ID_PRMT, (FULONG) 18, (FULONG)"appname=Mountlist" },
@@ -924,7 +934,7 @@ DataForm *SendMessageWithReconnection( SpecialData *sd, DataForm *df )
 					FriendCoreManager *fcm = sb->fcm;
 					DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 
-					int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, df->df_Size );
+					int sbytes = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
 		
 					DEBUG("Message sent %d\n", sbytes );
 					DataFormDelete( df );
@@ -1280,7 +1290,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			
 			if( f->f_Stream == TRUE )
 			{
-				sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, d, result );
+				sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, d, (FQUAD)result );
 			}
 			else
 			{

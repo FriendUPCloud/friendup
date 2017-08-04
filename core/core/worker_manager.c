@@ -63,7 +63,6 @@ WorkerManager *WorkerManagerNew( int number )
 			{
 				wm->wm_Workers[ i ] = WorkerNew( i ); 
 				WorkerRun( wm->wm_Workers[ i ]  ); 
-				//DEBUG( "[WorkerManager] Worker Started (#%d)\n", i );
 			}
 		}
 		else
@@ -79,7 +78,7 @@ WorkerManager *WorkerManagerNew( int number )
 		return NULL;
 	}
 	
-	Log( FLOG_INFO, "Worker manager started %d threads\n", wm->wm_MaxWorkers );
+	Log( FLOG_INFO, "[WorkerManager] started %d threads\n", wm->wm_MaxWorkers );
 	
 	return wm;
 }
@@ -115,60 +114,37 @@ void WorkerManagerDelete( WorkerManager *wm )
 
 inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 {
-	//DEBUG( "[WorkerRunCommand] Trying to lock mutex to run command\n" );
-	//
+
+	if( w != NULL )
 	{
-		if( w != NULL )
+		if( w->w_Thread != NULL )
 		{
-			//DEBUG("[WorkerRunCommand] w!=null\n");
-			if( w->w_Thread != NULL )
 			{
-				//DEBUG("[WorkerRunCommand] thread!=null\n");
-				//if( pthread_mutex_lock( &(w->w_Mut) ) == 0 )
+				w->w_Function = foo;
+				w->w_Data = d;
+				pthread_cond_signal( &(w->w_Cond) );
+				
+				int wait = 0;
+				
+				while( TRUE )
 				{
-					w->w_Function = foo;
-					w->w_Data = d;
-					//pthread_mutex_unlock( &(w->w_Mut) );
-					//DEBUG( "[WorkerRunCommand] Sending the signal with cond (worker %d)!\n", w->w_Nr );
-					//}
-					pthread_cond_signal( &(w->w_Cond) );
-					
-					//pthread_mutex_unlock( &(w->w_Mut) );
-					//DEBUG("[WorkerRunCommand] Signal sent\n");
-					int wait = 0;
-					
-					//pthread_mutex_lock( &(w->w_Mut) );
-					//pthread_cond_wait( &(w->w_CondRecv), &(w->w_Mut) );
-					//pthread_mutex_unlock( &(w->w_Mut) );
-					
-					
-					while( TRUE )
+					if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
 					{
-						//pthread_mutex_lock( &(w->w_Mut) );
-						if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
-						{
-							//FERROR("State break\n");
-							//pthread_mutex_unlock( &(w->w_Mut) );
-							break;
-						}
-						//pthread_mutex_unlock( &(w->w_Mut) );
-						DEBUG("[WorkerRunCommand] --------waiting for running state: %d\n", wait++ );
-						usleep( 10 );
+						break;
 					}
-					//DEBUG("[WorkerRunCommand] Command passed\n");
+					DEBUG("[WorkerRunCommand] --------waiting for running state: %d\n", wait++ );
+					usleep( 10 );
 				}
-				//
-			}
-			else
-			{
-				//pthread_mutex_unlock( &(w->w_Mut) );
-				FERROR("[WorkerRunCommand] Thread not initalized\n");
-				return 1;
 			}
 		}
-		//
+		else
+		{
+			//pthread_mutex_unlock( &(w->w_Mut) );
+			FERROR("[WorkerRunCommand] Thread not initalized\n");
+			return 1;
+		}
 	}
-	DEBUG( "[WorkerRunCommand] Successfully ran command\n" );
+
 	return 0;
 }
 
@@ -205,36 +181,29 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	while( TRUE )
 	{
 		wrk = NULL;
-		
-		//DEBUG("[WorkManagerRun] WORKER %d MAX workers %d\n", wm->wm_LastWorker, wm->wm_MaxWorkers );
-		
+
 		max++; wm->wm_LastWorker++;
 		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
 		{ 
 			wm->wm_LastWorker = 0; 
 		}
-		
-		//DEBUG("WorkerManager: trying to setup lock\n");
+
 		// Safely test the state of the worker
 		//if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
-			//DEBUG("workerManager: locked\n");
 			if( wm->wm_Workers[ wm->wm_LastWorker ]->w_State == W_STATE_WAITING )
 			{
 				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
 			
 				// Register worker index..
-				//DEBUG( "[WorkManagerRun] Registering thread data\n" );
 				//struct SocketThreadData *td = ( struct SocketThreadData *)d;
 				//td->workerIndex = wm->wm_LastWorker;
-				//DEBUG( "[WorkManagerRun] Done registering.\n" );
 			}
 			//pthread_mutex_unlock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut );
 		}
 	
 		if( wrk != NULL )
-		{	
-			DEBUG( "[WorkManagerRun] Running worker %d with function and data\n", wrk->w_Nr );
+		{
 			if( wm->w_AverageWorkSeconds == 0 )
 			{
 				wm->w_AverageWorkSeconds = wrk->w_WorkSeconds;
@@ -291,10 +260,9 @@ void WorkerManagerDebug( void *sb )
 		if( wm->wm_Workers[ i ] != NULL )
 		{
 			Http *request = (Http *)wm->wm_Workers[ i ]->w_Request;
-			DEBUG("Worker nmbr : %d state %d\n", wm->wm_Workers[ i ]->w_Nr, wm->wm_Workers[ i ]->w_State );
 			if( request != NULL )
 			{
-				DEBUG("Request: %s pointer to session %p\n", request->content, request->h_UserSession );
+				DEBUG("[WorkerManager] %s pointer to session %p\n", request->content, request->h_UserSession );
 			}
 		}
 	}

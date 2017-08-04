@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 /**
@@ -146,9 +156,6 @@ inline File *GetRootDeviceByName( User *usr, char *devname )
 	
 	while( lDev != NULL )
 	{
-		//DEBUG("Checking dev act ptr %p next ptr %p\n", lDev, lDev->node.mln_Succ ); 
-		//INFO("devname %s  ldevname %s lfile (%s)\n", devname, lDev->f_Name, lDev->f_Mounted ? "mounted" : "not mounted" );
-		
 		if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
 		{
 			if( lDev->f_SharedFile == NULL )

@@ -52,13 +52,13 @@ typedef struct Authority
 
 typedef struct Uri
 {
-	char                *scheme;
-	Authority         *authority;
+	char                 *scheme;
+	Authority            *authority;
 	Path                 *path;
 	char                 *queryRaw;
-	Hashmap         *query;
+	Hashmap              *query;
 	char                 *fragment;
-	FBOOL             valid; // If an illegal character is found, this will be 0, else it'll be 1 (When validation is implemented...)
+	FBOOL                 valid; // If an illegal character is found, this will be 0, else it'll be 1 (When validation is implemented...)
 } Uri;
 
 //

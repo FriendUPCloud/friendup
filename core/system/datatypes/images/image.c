@@ -46,7 +46,7 @@ FImage *ImageNew( int width, int height, int depth )
 {
 	FImage *img = NULL;
 	
-	DEBUG(" Image new: width: %d height: %d depth: %d\n", width, height, depth );
+	DEBUG("[ImageNew] Image new: width: %d height: %d depth: %d\n", width, height, depth );
 	
 	if( ( img = FCalloc( 1, sizeof(FImage) )  ) != NULL )
 	{
@@ -132,7 +132,7 @@ int ImageAddComment( FImage *img, char *key, char *value )
 	KeyValueList *kvl = KeyValueListNewWithEntry( key, value );
 	if( kvl != NULL )
 	{
-		DEBUG("comment added %s %s\n", key, value );
+		DEBUG("[ImageAddComment] comment added %s %s\n", key, value );
 		kvl->node.mln_Succ = (MinNode *)img->fi_Comments;
 		img->fi_Comments = kvl;
 		

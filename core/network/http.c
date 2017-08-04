@@ -561,7 +561,6 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 									app = StringDuplicateN( lineStartPtr + tokenLength + 2, toksize - 2 );
 								}
 								
-
 								//
 								// getting content type
 								//
@@ -587,8 +586,6 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 									{
 										http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
 									}
-									
-									DEBUG( "[HttpParseHeader] Found type: '%s' type id:%d\n", app, http->h_ContentType );
 
 									FFree( app );
 								} // app != NULL
@@ -893,7 +890,7 @@ Content-Type: application/octet-stream
 
 	 */
 	
-//
+	//
 	// Find files in http request
 	//
 	
@@ -910,8 +907,6 @@ Content-Type: application/octet-stream
 			//application/octet-stream
 			if( strncmp( nextlineStart, "Content-Type: ", 14 ) == 0 )
 			{
-				//NFO("File found\n");
-									
 				//if( ( contentDisp = strstr( dataPtr, "Content-Disposition: form-data; name=\"file") ) != NULL )
 				char *startOfFile = strstr( nextlineStart, "\r\n\r\n" ) + 4;
 				FQUAD size = 0;
@@ -924,9 +919,7 @@ Content-Type: application/octet-stream
 					//res = (QUAD )FindInBinarySimple( http->h_PartDivider, strlen(http->h_PartDivider), startOfFile, http->sizeOfContent )-2;
 					
 					char *endOfFile = startOfFile + res;
-					
-					INFO("Found the end of the file, file size %lld\n", res );
-					
+
 					if( endOfFile != NULL )
 					{
 						char *fname = strstr( contentDisp, "filename=\"" ) + 10;
@@ -973,7 +966,6 @@ Content-Type: application/octet-stream
 			
 			else
 			{
-				//FERROR("Data found\n");
 				char *nameStart = contentDisp + 38;
 				char *nameEnd = strchr( nameStart, '"' );
 				char *key = StringDuplicateN( nameStart, (int)(nameEnd - nameStart) );
@@ -991,8 +983,8 @@ Content-Type: application/octet-stream
 				{
 					
 				}
-				/**/
-				INFO("============================---KEY: %s  VALUE %s---s<<----------\n", key, value );
+				
+				INFO("[Http] Parse multipart KEY: %s  VALUE %s---s<<----------\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
@@ -1029,8 +1021,7 @@ inline int HttpParsePartialRequest( Http* http, char* data, unsigned int length 
 	if( !http->partialRequest )
 	{
 		http->partialRequest = TRUE;
-		Log( FLOG_INFO,"\nINCOMING Length: %d Request %512s\n", length, data );
-		//DEBUG("INCOMING REQUEST!\n\n\n\n\n");
+		Log( FLOG_INFO,"INCOMING Request length: %d data: %512s\n", length, data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -1940,7 +1931,7 @@ void HttpWrite( Http* http, Socket *sock )
 			{ ID_RESP, (FULONG)0, (FULONG)0 }
 		};
 		
-		SocketWrite( sock, (char *) tags, sizeof(tags) );
+		SocketWrite( sock, (char *) tags, (FQUAD)sizeof(tags) );
 	}
 	else
 	{

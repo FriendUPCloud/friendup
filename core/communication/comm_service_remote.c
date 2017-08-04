@@ -1,14 +1,31 @@
-/*©mit***************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              * 
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- *****************************************************************************©*/
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+/** @file
+ * 
+ *  CommunicationRemoteService body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 19/06/2017
+ */
 
 #include <core/types.h>
 #include "comm_service_remote.h"
@@ -256,7 +273,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 				
 				while( lsrv != NULL )
 				{
-					DEBUG( "[ParseMessage] Getting lsrv!\n" );
+					DEBUG("[CommServiceRemote] Getting lsrv!\n" );
 					size += strlen( lsrv->GetName() ) + 1 + COMM_MSG_HEADER_SIZE;
 					lsrv = (Service *)lsrv->node.mln_Succ;
 				}
@@ -318,8 +335,6 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 			
 			else if( df->df_ID == ID_SLIB )
 			{
-				
-				//DEBUG("[COMMSERV] SYSTEM.LIBRARY CALLED\n");
 				data += COMM_MSG_HEADER_SIZE;
 				df = (DataForm *)data;
 				
@@ -341,7 +356,6 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 				
 				if( df->df_ID == ID_HTTP )
 				{
-					//DEBUG("HTTP found  %ul\n", df->df_Size );
 					Http *http = HttpNew( );
 					http->parsedPostContent = HashmapNew();
 					char temp[ 1024 ];
@@ -353,13 +367,11 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					
 					if( df->df_ID == ID_AUTH )
 					{
-						//DEBUG("Auth found  %ul\n", df->df_Size );
 						data += COMM_MSG_HEADER_SIZE;
 						df = (DataForm *)data;
 						
 						if( df->df_ID == ID_USER )
 						{
-							//DEBUG("User found size %ul\n", df->df_Size );
 							data += COMM_MSG_HEADER_SIZE;
 							
 							memset( temp, 0, 1024 );
@@ -368,11 +380,9 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 							
 							data += df->df_Size;
 							df = (DataForm *)data;
-							//DEBUG("Size %ul\n", df->df_Size );
-							
+
 							if( df->df_ID == ID_PSWD )
 							{
-								//DEBUG("Password found\n");
 								data += COMM_MSG_HEADER_SIZE;
 								
 								memset( temp, 0, 1024 );
@@ -382,12 +392,9 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 								data += df->df_Size;
 								df = (DataForm *)data;
 							}
-							
-							//DEBUG("End user\n");
 						}
 						else if( df->df_ID == ID_APID )
 						{
-							//DEBUG("APID found\n");
 							data += COMM_MSG_HEADER_SIZE;
 							
 							memset( temp, 0, 1024 );
@@ -409,18 +416,14 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						int part = 1;
 						for( i=1; i < df->df_Size ; i++ )
 						{
-							//printf("%c %d %d\n", data[ i ], data[ i ], i );
 							if( data[ i ] == '/' )
 							{
 								pathParts[ part ] = (char *) &(data[ i+1 ]);
-								//DEBUG("PATH PART %s\n", pathParts[ part ] );
-								
+
 								part++;
 								data[ i ] = 0;
 							}
 						}
-						//DEBUG("Path found %.*s\n", df->df_Size, data );
-						
 						//memset( temp, 0, 1024 );
 						//strncpy( temp, data, df->df_Size );
 						
@@ -432,15 +435,13 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					{
 						int size = df->df_Size;
 						
-						//DEBUG("PARAMETERS found\n");
 						data += COMM_MSG_HEADER_SIZE;
 						df = (DataForm *)data;
 						
 						while( size > 1 )
 						{
 							data += COMM_MSG_HEADER_SIZE;
-							//DEBUG("Going through parameters\n");
-							
+
 							if( df->df_ID == ID_PRMT )
 							{
 								char *temp = (char *)data;
@@ -467,8 +468,6 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 										break;
 									}
 								}
-								
-								//DEBUG("New values passed to before %s %s\n", attr, val );
 								
 								if( attr != NULL && val != NULL )
 								{
@@ -584,7 +583,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 			return -1;
 		}
 		
-		DEBUG("\n\nCommServiceThreadServer\n\n\n");
+		DEBUG("[CommServiceRemote] \t\tCommServiceThreadServer\n");
 		
 		#ifdef USE_SELECT
 		Socket* incomming = NULL;
@@ -619,15 +618,15 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 			FD_SET( socket->fd, &readfds );
 			FD_SET( service->s_ReadCommPipe, &readfds );
 			
-			DEBUG("Before select, maxd %d\n", maxd );
+			DEBUG("[CommServiceRemote] Before select, maxd %d\n", maxd );
 			
 			int activity = select( maxd+1, &readfds, NULL, NULL, NULL );
 			
-			DEBUG("After select\n");
+			DEBUG("[CommServiceRemote] After select\n");
 			
 			if( ( activity < 0 ) && ( errno != EINTR ) )
 			{
-				DEBUG("Select error\n");
+				FERROR("Select error\n");
 			}
 			
 			if( FD_ISSET( socket->fd, &readfds ) )
@@ -809,8 +808,6 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 				
 				eventCount = epoll_wait( service->csr_Epollfd, events, service->csr_MaxEvents, EPOLL_TIMEOUT );
 				
-				//DEBUG("event count %d\n", eventCount );
-				
 				if( eventCount == 0 )
 				{
 					// timeout not used now
@@ -842,7 +839,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						SocketClose( sock );
 						sock = NULL;
 
-						DEBUG("CommService: socket closed\n");
+						DEBUG("[CommServiceRemote] socket closed\n");
 					}
 
 					// Accept incomming connections
@@ -979,7 +976,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										if( isStream == FALSE )
 										{
-											wrote = SocketWrite( sock, (char *)recvDataForm, recvDataForm->df_Size );
+											wrote = SocketWrite( sock, (char *)recvDataForm, (FQUAD)recvDataForm->df_Size );
 										}
 										DEBUG2("[CommServiceRemote] Wrote bytes %d\n", wrote );
 										
@@ -1003,7 +1000,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										DEBUG2("[CommServiceRemote] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
 										
-										SocketWrite( sock, (char *)tmpfrm, tmpfrm->df_Size );
+										SocketWrite( sock, (char *)tmpfrm, (FQUAD)tmpfrm->df_Size );
 										
 										DataFormDelete( tmpfrm );
 									}
@@ -1018,26 +1015,19 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 									FERROR("[CommServiceRemote] Message uknown!\n");
 									BufStringDelete( bs );
 								}
-								
-								DEBUG2("[CommServiceRemote]  end while\n");
-								
+
 								if( tempBuffer != NULL )
 								{
 									FFree( tempBuffer );
 									tempBuffer = NULL;
 								}
 							}
-							DEBUG("[CommServiceRemote]  : end2\n");
 						}
-						DEBUG("[CommServiceRemote]  : end1\n");
-						
 						SocketClose( sock );
 					}
 				}//end for through events
 			} //end while
-			
-			DEBUG("[CommServiceRemote]  : Closing internal pipes\n");
-			
+
 			if( close( pipefds[0] ) != 0 )
 			{
 				FERROR("Cannot close pipe\n");
@@ -1049,10 +1039,8 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 			
 			// TODO: Free open sockets here
 			FFree( events);
-			DEBUG( "[CommServiceRemote] Done freeing events" );
 			events = NULL;
 		}
-		DEBUG("[CommServiceRemote] Close sockets\n");
 		
 		// Close epoll file descriptor
 		

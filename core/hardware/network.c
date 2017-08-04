@@ -19,7 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ *
+ *  Network
+ * 
+ *  Additional network functions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date pushed 19/10/2016
+ */
 
 #include "network.h"
 #include <util/log/log.h>
@@ -28,9 +36,12 @@
 #define __USE_MISC
 #include <net/if.h>
 
-//
-// get mac address of current machine
-//
+/**
+ * Get mac address
+ *
+ * @param maddr pointer to string when mac address will be stored
+ * @return 0 when success, otherwise error number
+ */
 
 int getMacAddress( char *maddr )
 {
@@ -87,7 +98,6 @@ int getMacAddress( char *maddr )
 				 (char)ifr.ifr_hwaddr.sa_data[0], (char)ifr.ifr_hwaddr.sa_data[1], (char)ifr.ifr_hwaddr.sa_data[2],
 				 (char)ifr.ifr_hwaddr.sa_data[3], (char)ifr.ifr_hwaddr.sa_data[4], (char)ifr.ifr_hwaddr.sa_data[5] );
 		//memcpy( maddr, ifr.ifr_hwaddr.sa_data, 6);
-		//DEBUG("MACADDRESS %6s\n", maddr );
 		return 0;
 	}
 	

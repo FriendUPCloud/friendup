@@ -257,7 +257,6 @@ FULONG UrlDecode( char* dst, const char* src )
 {
 	char* org_dst = dst;
 	char ch, a, b;
-	DEBUG( "Decoding: %s\n", src );
 	do 
 	{
 		ch = *src++;
@@ -594,8 +593,6 @@ char** StringSplit( char* str, char delimiter, unsigned int* length )
 
 char* StringShellEscape( const char* str )
 {
-	//DEBUG("StringShellEscape %s\n", str );
-	
 	unsigned int strLen = str ? strlen( str ) : 0;
 	unsigned int estrLen = 0;
 
@@ -648,8 +645,6 @@ char* StringShellEscape( const char* str )
 
 char* StringShellEscapeSize( const char* str, int *len )
 {
-	DEBUG("StringShellEscape %s\n", str );
-	
 	unsigned int strLen = str ? strlen( str ) : 0;
 	unsigned int estrLen = 0;
 
@@ -788,7 +783,6 @@ FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n)
 		j++;
 		if (i >= m) 
 		{
-			DEBUG("Found entry in text\n");
 			return j-i;
 		}
 	}

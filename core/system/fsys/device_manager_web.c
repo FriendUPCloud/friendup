@@ -1,14 +1,24 @@
-/*©mit***************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              *
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- **©****************************************************************************/
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 /** @file device_manager_web.c
  * 
  *  Device manager definitions
@@ -258,7 +268,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		DEBUG("=====================Mount==========================\n");
+		DEBUG("[DeviceMWebRequest] mount\n");
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
@@ -428,7 +438,6 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				{
 					if( mountError == FSys_Error_DeviceAlreadyMounted )
 					{
-						//DEBUG( "We will mount this bastard, even if it's already mounted!\n" );
 						HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device already mounted.\"}" );
 					}
 					else
@@ -537,7 +546,6 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		{
 			char *next;
 			id = strtol ( (char *)el->data, &next, 0 );
-			DEBUG( "[UNMOUNT] unmount device with id %ld!!\n", id );
 		}
 		*/
 		
@@ -718,8 +726,6 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		}
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
-		
-		DEBUG("=====================Refresh==========================\n");
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
@@ -916,11 +922,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			
 			if( user != NULL && rootDev != NULL )
 			{
-				DEBUG("Sharing device in progress\n");
+				DEBUG("[DeviceMWebRequest] Sharing device in progress\n");
 				
 				if( user->u_InitialDevMount == FALSE )
 				{
-					DEBUG("Devices were not mounted for user. They will be mounted now\n");
+					DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
 					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
 					if( sqllib != NULL )
@@ -1065,9 +1071,6 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						}
 					}
 					
-					//DEBUG("\n\n\nID %ld\n\n\n", dev->f_ID );
-					
-					// Clear it!
 					memset( tmp, '\0', TMP_SIZE-1 );
 					
 					FBOOL isLimited = FALSE;
@@ -1161,21 +1164,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			goto error;
 		}
 		
-		/*
-		if( sessionid == NULL )
-		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device name or sessionID are empty\"}" );
-		}
-		else
-			*/
 		{
 			
 			UserSession *logsess = loggedSession;//l->sl_ActiveAuthModule->IsSessionValid( l->sl_ActiveAuthModule, request, sessionid );
 			User *curusr = logsess->us_User;  // l->sl_Sessions;
-			//int found = 0;
-			
-			DEBUG("[DeviceMWebRequest] user found, listing devices\n");
-			
+
 			if( curusr != NULL )
 			{
 				FHandler *fsys = l->sl_Filesystems;

@@ -19,15 +19,27 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-
+/** @file
+ *
+ *  User Application body
+ *
+ * file contain all functitons related to user applications
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 11/2016
+ */
 
 #include "user_application.h"
 
-//
-// create new instance of UserApplication
-//
-
+/**
+ * Create new instance of UserApplication
+ *
+ * @param id User ID
+ * @param appid unique application ID
+ * @param perm permissions
+ * @param authid authentication ID
+ * @return new UserApplication structure when success, otherwise NULL
+ */
 UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
 {
 	UserApplication *ua = NULL;
@@ -57,7 +69,7 @@ UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
 			}
 		}
 		
-		DEBUG("Added user application perm: %s authid %s\n", ua->ua_Permissions, ua->ua_AuthID );
+		DEBUG("[UserAppNew] Added user application perm: %s authid %s\n", ua->ua_Permissions, ua->ua_AuthID );
 	}
 	else
 	{
@@ -67,10 +79,11 @@ UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
 	return ua;
 }
 
-//
-// Delete instance of application
-//
-
+/**
+ * Delete UserApplication
+ *
+ * @param app pointer to UserApplication which will be deleted
+ */
 void UserAppDelete( UserApplication *app )
 {
 	if( app->ua_Permissions != NULL )
@@ -88,11 +101,12 @@ void UserAppDelete( UserApplication *app )
 	FFree( app );
 }
 
-//
-//
-//
-
-UserApplication *UserAppDeleteAll( UserApplication *ua )
+/**
+ * Delete UserApplication linked list
+ *
+ * @param ua pointer to UserApplication first element in list
+ */
+void UserAppDeleteAll( UserApplication *ua )
 {
 	UserApplication *rem = ua;
 	UserApplication *next = ua;
@@ -104,5 +118,4 @@ UserApplication *UserAppDeleteAll( UserApplication *ua )
 		
 		UserAppDelete( rem );
 	}
-	return NULL;
 }

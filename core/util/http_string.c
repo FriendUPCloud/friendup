@@ -97,7 +97,6 @@ int HttpStringAdd( HttpString *bs, const char *ntext, int len )
 		
 		if( len > bs->ht_MAX_SIZE )
 		{
-			DEBUG( "Too big buffer! (len: %d, max: %d)\n", len, bs->ht_MAX_SIZE );
 			int allsize = ( (len / bs->ht_MAX_SIZE) + 1) * bs->ht_MAX_SIZE;
 			char *tmp;
 			
@@ -137,18 +136,15 @@ int HttpStringAdd( HttpString *bs, const char *ntext, int len )
 	int addsize = len;
 	//	int modsize = (bs->bs_Size / bs->bs_MAX_SIZE) * bs->bs_MAX_SIZE;
 	int newsize = (bs->ht_Size + addsize);
-	//DEBUG("Add memory for buffer   addsize %d modsize %d newsize %d current %d\n", addsize, modsize, newsize, bs->bs_Size );
 	
 	if( newsize > bs->ht_Bufsize )
 	{
 		char *tmp;
 		int allsize = ( (newsize / bs->ht_MAX_SIZE) + 1) * bs->ht_MAX_SIZE;
-		//DEBUG("Allocated mem size %d\n", allsize );
 		
 		if( ( tmp = FCalloc( allsize + 10, sizeof(char) ) ) != NULL )
 		{
 			memcpy( tmp, bs->ht_Buffer, bs->ht_Size );
-			//DEBUG("copy from %d len %d\n", bs->bs_Size, len );
 			memcpy( &(tmp[ bs->ht_Size ]), ntext, len );
 			
 			bs->ht_Bufsize = allsize;

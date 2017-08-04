@@ -49,7 +49,7 @@ void PrintNode( xmlNode *root )
 	{
 		if( n->type == XML_ELEMENT_NODE )
 		{
-			DEBUG("node type: Element, name %s\n", n->name );
+			DEBUG("[PrintNode] node type: Element, name %s\n", n->name );
 		}
 		
 		PrintNode( n->children );
@@ -69,7 +69,7 @@ int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs, FBOOL *director
 	
 	FriendFile *ffroot = NULL, *ff = NULL;
 	
-	DEBUG("Convert to WEBDAV '%s'\n", &(sbs->bs_Buffer[17]));
+	DEBUG("[ConvertToWebdav] Convert to WEBDAV '%s'\n", &(sbs->bs_Buffer[17]));
 	
 	if( strcmp( "[]",  &(sbs->bs_Buffer[17])) == 0 )
 	{
@@ -123,7 +123,7 @@ int ConvertToWebdav( char *url,  BufString *dbs, BufString *sbs, FBOOL *director
 			}else{
 				sprintf( buf, "<D:response>\n\t\t<D:href>%s/%s</D:href>\n", url, lf->ff_Filename );
 			}*/
-			DEBUG("-----------------> url %s       filename %s\n",  url, lf->ff_Filename );
+			DEBUG("[HandleWebDav] url %s       filename %s\n",  url, lf->ff_Filename );
 			//sprintf( buf, "<D:response>\n<D:href>%s</D:href>\n", url );
 			BufStringAdd( dbs, buf );
 			
@@ -324,8 +324,8 @@ Http *HandleWebDav( Http *req, char *data, int len )
 	};
 	*/
 	
-	DEBUG("WEBDAV OPERATION-----------------------------------------------------------------------------------\n");
-			
+	DEBUG("[HandleWebDav] WEBDAV OPERATION-----------------------------------------------------------------------------------\n");
+
 #ifndef DISABLE_WEBDAV
 /*	
 	HashmapElement *he = HttpGetPOSTParameter( req, "module" );
@@ -420,8 +420,6 @@ Http *HandleWebDav( Http *req, char *data, int len )
 
 	auth = HttpGetHeader( req, "authorization", 0 );
 
-	//DEBUG("\n\n\nPATH %s RAWPATH %s\n", req->uri->path, req->rawRequestPath );
-
 #ifdef AUTH_BASIC
 	
 	if( auth == NULL )
@@ -446,8 +444,7 @@ Http *HandleWebDav( Http *req, char *data, int len )
 
 	int decodedUserLen;
 	decodedUser = Base64Decode( (const unsigned char *)&(auth[ 6 ]), strlen( &(auth[ 6 ]) ), &decodedUserLen );
-	//DEBUG("-------->>>>LOGIN PASSWORD %s  -- auth %s   ---- size %d\n", decodedUser, &(auth[ 6 ]), strlen( &(auth[ 6 ]) )  );
-	
+
 	userName = decodedUser;
 	for( i=0 ; i < (int)strlen( decodedUser ) ; i++ )
 	{
@@ -667,10 +664,6 @@ b989d99b20a13a797be7611d2b574ba5-----end
 
 	DigestCalcHA1( aalgo, "jacek", arealm, "placek", anonce,acnonce, HA1);
 	DigestCalcResponse( HA1, anonce, anc, acnonce, aqop,  req->method, auri, HA2, Response);
-	//FERROR("RESPONSE Response = %s\n", Response);
-	
-	//FERROR("====================================================STRTOMD5STR============%s\n", tmp3 );
-	//DEBUG(" METHOD %s\n", req->method );
 	
 #endif
 	
@@ -1036,12 +1029,12 @@ request.xml:1: parser error : Start tag expected, '<' not found
 					{
 					FBOOL directory = FALSE;
 						
-						DEBUG("----------->node type: Element, name %s\n", n->name );
+						DEBUG("[HandleWebDav] node type: Element, name %s\n", n->name );
 					
 						for( pfind = n->children ; pfind ; pfind = pfind->next )
 						{
 							// <allprop/>
-							DEBUG("\t----------->node type: Element, name %s\n", pfind->name );
+							DEBUG("[HandleWebDav] node type: Element, name %s\n", pfind->name );
 						/*
 							if( strcmp( (char *)pfind->name, "allprop" ) == 0  )
 							//if( strcmp( (char *)pfind->name, "allprop" ) == 0 || strcmp( (char *)pfind->name, "prop" ) == 0 )
@@ -1116,12 +1109,12 @@ request.xml:1: parser error : Start tag expected, '<' not found
 									
 									if( filePath == NULL )
 									{
-										DEBUG("GetINFO path empty\n");
+										DEBUG("[HandleWebDav] GetINFO path empty\n");
 										dirresp = actFS->Info( rootDev, "" );
 									}
 									else
 									{
-										DEBUG("GetINFO path NOT empty\n");
+										DEBUG("[HandleWebDav] GetINFO path NOT empty\n");
 										dirresp = actFS->Info( rootDev, filePath );
 									}
 									
@@ -1131,7 +1124,7 @@ request.xml:1: parser error : Start tag expected, '<' not found
 									{
 										resp = HttpNewSimple( HTTP_207_MULTI_STATUS,  tags );
 										
-										DEBUG("GetINFO Converting from JSON  %s\n", dirresp->bs_Buffer );
+										DEBUG("[HandleWebDav] GetINFO Converting from JSON  %s\n", dirresp->bs_Buffer );
 										BufStringAdd( strResp, "<?xml version=\"1.0\" ?> \n <D:multistatus xmlns:D=\"DAV:\">\n" );
 										
 										//BufString *tempbs = BufStringNew();
@@ -1269,8 +1262,7 @@ Content-Length: xxxx
 	
 	FFree( path );
 	FFree( fpath );
-	//DEBUG("Webdav response returned  :  %s\n", resp->content );
-	
+
 #else
 	resp = HttpNewSimple( HTTP_400_BAD_REQUEST,  tags );
 		FERROR("WEBDAV Call is not proper\n");

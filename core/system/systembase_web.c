@@ -101,7 +101,7 @@ inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
 	char *allArgsNew = NULL;
 	
-	FERROR("\n\n--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
+	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
 	char *allArgs = FCalloc( fullsize, sizeof(char) );
@@ -222,6 +222,24 @@ Webreq func: %s\n \
 	
 	char sessionid[ DEFAULT_SESSION_ID_SIZE ];
 	sessionid[ 0 ] = 0;
+    
+    if( urlpath[ 0 ] == NULL )
+    {
+        FERROR("urlpath is equal to NULL!\n");
+			
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+
+		response = HttpNewSimple( HTTP_200_OK, tags );
+		
+		char *data = "fail<!--separate-->{\"response\":\"urlpath is equal to NULL\"}";
+		HttpAddTextContent( response, data );
+			
+		return response;
+    }
 	
 	// Check for sessionid by sessionid specificly or authid
 	if( strcmp( urlpath[ 0 ], "login" ) != 0 && loggedSession == NULL )
@@ -252,7 +270,7 @@ Webreq func: %s\n \
 			UrlDecode( tmp, (char *)tst->data );
 			
 			snprintf( sessionid, sizeof(sessionid), "%s", tmp );
-			DEBUG( "Finding sessionid %s.\n", sessionid );
+			DEBUG( "Finding sessionid %s\n", sessionid );
 		}
 		// Get it by authid
 		else if( ast )
@@ -353,7 +371,7 @@ Webreq func: %s\n \
 			UserSession *curusrsess = l->sl_USM->usm_Sessions;
 			int userFound = 0;
 			
-			//DEBUG("Checking remote sessions\n");
+			DEBUG("Checking remote sessions\n");
 				
 			if( strcmp( sessionid, "remote" ) == 0 )
 			{
@@ -412,11 +430,11 @@ Webreq func: %s\n \
 			else
 			{
 				pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
-				//DEBUG("Checking sessions\n");
+				DEBUG("Checking sessions\n");
 				while( curusrsess != NULL )
 				{
 					//DEBUG( "Checking curusrsess.\n" );
-					//DEBUG("\n\n\nProvided sessionid %s\n username %s\n usersession %s\n master session %s\n user session %s\n", sessionid, curusrsess->us_User->u_Name, curusrsess->us_SessionID, curusrsess->us_MasterSession, curusrsess->us_User->u_MainSessionID );	
+					//DEBUG("\n\n\nProvided sessionid %s\n username %s\n usersession %s\n user session %s\n", sessionid, curusrsess->us_User->u_Name, curusrsess->us_SessionID, curusrsess->us_User->u_MainSessionID );	
 					if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
 					{
 						if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
@@ -617,6 +635,7 @@ Webreq func: %s\n \
 			char *appname = NULL;
 			char *deviceid = NULL;
 			char *encryptedBlob = NULL; // If the user sends publickey
+			char *locsessionid = NULL;
 			FULONG blockedTime = 0;
 			
 			HashmapElement *el = HttpGetPOSTParameter( *request, "username" );
@@ -648,11 +667,111 @@ Webreq func: %s\n \
 			{
 				deviceid = (char *)el->data;
 			}
-			//deviceid = "test";
 			
+			el = HttpGetPOSTParameter( *request, "sessionid" );
+			if( el != NULL )
+			{
+				locsessionid = ( char *)el->data;
+			}
+			
+			if( locsessionid != NULL && deviceid != NULL )
+			{
+				UserSession *us = USMGetSessionBySessionID( l->sl_USM, locsessionid );
+				
+				if( us == NULL )
+				{
+					us = USMGetSessionBySessionIDFromDB( l->sl_USM, locsessionid );
+				}
+				
+				if( us != NULL )
+				{
+					loggedSession = us;
+					
+					DEBUG("session loaded session id %s\n", loggedSession->us_SessionID );
+					if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
+					{
+						if( loggedSession->us_User == NULL )
+						{
+							DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
+							User *lusr = l->sl_UM->um_Users;
+							while( lusr != NULL )
+							{
+								if( loggedSession->us_UserID == lusr->u_ID )
+								{
+									loggedSession->us_User = lusr;
+									break;
+								}
+								lusr = (User *)lusr->node.mln_Succ;
+							}
+						}
+						
+						//
+						// update user and session
+						//
+						
+						char tmpQuery[ 512 ];
+						
+						MYSQLLibrary *sqlLib =  l->LibraryMYSQLGet( l );
+						if( sqlLib != NULL )
+						{
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID` = '%s", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
+							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+							{ 
+								
+							}
+							
+							//
+							// update user
+							//
+							
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
+							{ 
+								
+							}
+							
+							UMAddUser( l->sl_UM, loggedSession->us_User );
+							
+							DEBUG("New user and session added\n");
+							
+							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0 );
+							
+							DEBUG("Devices mounted\n");
+							userAdded = TRUE;
+							l->LibraryMYSQLDrop( l, sqlLib );
+						}
+						else
+						{
+							loggedSession = NULL;
+						}
+						DEBUG("Library dropped\n");
+					}
+					else
+					{
+						loggedSession = NULL;
+						FERROR("Cannot  add session\n");
+					}
+				}
+				
+				char tmp[ 1024 ];
+				
+				if( loggedSession != NULL && loggedSession->us_User != NULL )
+				{
+					snprintf( tmp, sizeof(tmp),
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
+					);
+				}
+				else
+				{
+					strcpy( tmp, "fail<!--separate-->{\"result\":\"-1\",\"response\":\"no access\"}" );
+				}
+				
+				HttpAddTextContent( response, tmp );
+			}
 			// Public key mode
 			// TODO: Implement this! Ask Chris and Hogne!
-			if( usrname != NULL && encryptedBlob != NULL && deviceid != NULL )
+			else if( usrname != NULL && encryptedBlob != NULL && deviceid != NULL )
 			{
 				HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"public key not supported yet\"}" );
 			}
@@ -768,18 +887,6 @@ Webreq func: %s\n \
 								if( loggedSession != NULL )
 								{
 									loggedSession->us_UserID = tmpusr->u_ID;
-									
-									/*
-									time_t timestamp = time ( NULL );
-									DEBUG("Master session id will be created\n");
-									char *hashBase = MakeString( 255 );
-									
-									DEBUG("[FCDB] Update empty sessionid\n");
-									sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-									HashedString( &hashBase );
-									
-									loggedSession->us_MasterSession = hashBase;
-									*/
 								}
 								
 								UserDelete( tmpusr );
@@ -865,9 +972,6 @@ Webreq func: %s\n \
 							if( sqlLib != NULL )
 							{
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, SessionID='%s' WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, deviceid,  loggedSession->us_UserID );
-								//sprintf( tmpQuery, "UPDATE FUser SET LoggedTime = '%lld' AND SessionID='%s' WHERE `Name` = '%s'", (long long)timestamp, sessionId, name );
-								//snprintf( tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, SessionID='%s' WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, deviceid,  loggedSession->us_UserID );
-							
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 									
@@ -878,9 +982,6 @@ Webreq func: %s\n \
 								//
 							
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-
-								//sprintf( tmpQuery, "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
-
 								if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 								{ 
 
@@ -905,19 +1006,11 @@ Webreq func: %s\n \
 						
 						if( loggedSession != NULL )
 						{
-							//FERROR("REMOVE OLD ENTRIES %p\n\n\n\n", loggedSession->us_User );
 							DoorNotificationRemoveEntriesByUser( l, loggedSession->us_ID );
 							
 							// since we introduced deviceidentities with random number, we must remove also old entries
 							DoorNotificationRemoveEntries( l );
 						}
-						
-						/*
-						if( loggedSession->us_User->u_MainSessionID != NULL )
-						{
-							FFree( loggedSession->us_User->u_MainSessionID );
-							loggedSession->us_User->u_MainSessionID = StringDuplicate(  loggedSession->us_MasterSession );
-						}*/
 						
 						User *loggedUser = loggedSession->us_User;
 						

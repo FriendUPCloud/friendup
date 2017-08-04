@@ -60,7 +60,7 @@ Dictionary * DictionaryNew(struct MYSQLLibrary *mysqllib )
  */
 void DictionaryDelete(Dictionary* d)
 {
-	DEBUG("Remove dictionary from memory\n");
+	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	while( d != NULL )
 	{
 		Dictionary *temp = d;
@@ -68,8 +68,8 @@ void DictionaryDelete(Dictionary* d)
 		
 		if( temp->d_Lang )
 		{
-			free( temp->d_Lang );
-			free( temp->d_Name );
+			FFree( temp->d_Lang );
+			FFree( temp->d_Name );
 		}
 	}
 }

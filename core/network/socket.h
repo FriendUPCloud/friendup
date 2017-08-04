@@ -213,7 +213,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec );
 // Write to the socket, or queue data for writing if non-blocking socket
 //
 
-int       SocketWrite( Socket* s, char* data, unsigned int length );
+int       SocketWrite( Socket* s, char* data, FQUAD length );
 
 //
 // Request the socket to be closed (Acceptable if the other end also has closed the socket)

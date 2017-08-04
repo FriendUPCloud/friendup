@@ -54,7 +54,7 @@ typedef struct SocketInterface
 
 	BufString*			(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
 	
-	int						(*SocketWrite)( Socket* s, char* data, unsigned int length );
+	int						(*SocketWrite)( Socket* s, char* data, FQUAD length );
 	
 	void						(*SocketClose)( Socket* s );
 

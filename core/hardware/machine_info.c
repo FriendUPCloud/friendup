@@ -19,7 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ *
+ *  Machine Info
+ *
+ *  Get information about working machine
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date pushed 19/10/2016
+ */
 
 #include "machine_info.h"
  
@@ -55,9 +63,12 @@
 
 #include <util/simple_hash.h>
  
-//---------------------------------get MAC addresses ---------------------------------
-// we just need this for purposes of unique machine id. So any one or two 
-// mac's is fine.
+/**
+ * Function is hashing mac address
+ *
+ * @param mac pointer to mac address
+ * @return hashed mac address
+ */
 
 FUWORD HashMacAddress( FBYTE *mac )
 {
@@ -70,10 +81,12 @@ FUWORD HashMacAddress( FBYTE *mac )
 	return hash;
 }
 
-//
-//
-//
- 
+/**
+ * Get machine name
+ *
+ * @return pointer to machine name
+ */
+
 const char* GetMachineName()
 {
 	static struct utsname u;
@@ -86,10 +99,13 @@ const char* GetMachineName()
 	return u.nodename;
 }
 
-//
-//
-//
- 
+/**
+ * Get hashed mac address
+ *
+ * @param mac1 pointer to memory where hashed mac address will be stored
+ * @param mac2 pointer to memory where hashed mac (of second interface if exist) will be stored
+ */
+
 void GetMacHash( FUWORD *mac1, FUWORD *mac2 )
 {
    *mac1 = 0;
@@ -184,10 +200,12 @@ void GetMacHash( FUWORD *mac1, FUWORD *mac2 )
 	}
 }
 
-//
-//
-//
- 
+/**
+ * Hash information about disks
+ *
+ * @return Hashed disk variable (FUWORD)
+ */
+
 FUWORD GetVolumeHash()
 {
 	// we don't have a 'volume serial number' like on windows. 
@@ -220,10 +238,13 @@ FUWORD GetVolumeHash()
  
 #else // !DARWIN
 
-//
-//
-//
- 
+/**
+ * Static locking function.
+ *
+ * @param p pointer to memory where CPUID will be stored
+ * @param ax ax register value
+ */
+
  static void GetCpuid( FUINT* p, FUINT ax )
  {
 	#ifdef __arm__
@@ -243,10 +264,12 @@ FUWORD GetVolumeHash()
 	#endif
  }
  
- //
- //
- //
- 
+/**
+ * Get CPUID as hashed information
+ *
+ * @return CPUID hash as FUBYTE
+ */
+
  FUWORD GetCpuHash()
  {  
 	FUINT cpuinfo[4] = { 0, 0, 0, 0 };
@@ -265,9 +288,11 @@ FUWORD GetVolumeHash()
 
 static FUWORD id[5];
 
-//
-//
-//
+/**
+ * Compute Unique System ID
+ *
+ * @return pointer to FUWORD table with computed ID (4bytes)
+ */
 
 static FUWORD* ComputeSystemUniqueId()
 {
@@ -290,13 +315,18 @@ static FUWORD* ComputeSystemUniqueId()
 	{
 		id[4] += id[i];
 	}
-	DEBUG("ID computed\n");
-    
+
 	Smear( id );
     
 	computed = TRUE;
 	return id;
 }
+
+/**
+ * Get system unique ID
+ *
+ * @return FC Node unique ID as string
+ */
 
 char* GetSystemUniqueId()
 {
@@ -308,19 +338,15 @@ char* GetSystemUniqueId()
 		return NULL;
 	}
 	const char *mname = GetMachineName();
-	DEBUG("Getmachine name %s\n", mname );
 	if( mname != NULL )
 	{
 		strcat( uniqueID, mname );
 	}
 
-	DEBUG("uniqueID %s len %d\n", uniqueID, (int)strlen(uniqueID) );
-	
 #ifndef CYGWIN_BUILD
 	FUWORD *id = ComputeSystemUniqueId();
 	if( id != NULL )
 	{
-		DEBUG("id is not null uniqueID %s len %d\n", uniqueID, (int) strlen(uniqueID) );
 		unsigned int i = 0;
 		
 		for ( i = 0; i < 5; i++ )
@@ -328,7 +354,7 @@ char* GetSystemUniqueId()
 			char num[17];
 			memset( num, 0, sizeof(num) );
 			snprintf( num, 16, "%x", id[i] );
-			//DEBUG("i %d %s\n", i, uniqueID );
+
 			strcat( uniqueID, "-" );
       
 			switch( strlen( num ))

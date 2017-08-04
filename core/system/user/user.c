@@ -177,12 +177,19 @@ void UserRemoveSession( User *usr, void *ls )
 				us = (UserSessListEntry *)us->node.mln_Succ;
 			}
 		}
+		
+		if( us != NULL )
+		{
+			FFree( us );
+		}
 	}
 	
+	/*
 	if( removed == TRUE )
 	{
 		remses->us_WSConnections = NULL;
 	}
+	*/
 }
 
 /**
@@ -201,7 +208,8 @@ void UserDelete( User *usr )
 		
 		if( usr->u_Applications != NULL )
 		{
-			usr->u_Applications = UserAppDeleteAll( usr->u_Applications );
+			UserAppDeleteAll( usr->u_Applications );
+			usr->u_Applications = NULL;
 		}
 		
 		// remove all sessions connected to user

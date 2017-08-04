@@ -143,7 +143,7 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 				sprintf( path, "%scfg/cfg.ini", ptr );
 			}
 			
-			DEBUG( "Opening config file: %s\n", path );
+			DEBUG( "[AuthMod] Opening config file: %s\n", path );
 			
 			prop = plib->Open( path );
 			FFree( path );
@@ -183,7 +183,6 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 			l->SetAttribute = dlsym ( l->am_Handle, "SetAttribute" );
 			l->CheckPassword = dlsym( l->am_Handle, "CheckPassword" );
 			l->UpdatePassword = dlsym( l->am_Handle, "UpdatePassword" );
-			l->WebRequest = dlsym( l->am_Handle, "WebRequest" );
 			l->Logout = dlsym( l->am_Handle, "Logout" );
 			
 			l->libInit( l, sb ) ;

@@ -64,22 +64,22 @@
  */
 Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserSession *loggedSession )
 {
-	Log( FLOG_DEBUG, "APP WEBREQUEST %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
+	Log( FLOG_DEBUG, "ApplicationWebRequest %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 	
 	AppSession *was = l->sl_AppSessionManager->sl_AppSessions;
 	while( was != NULL )
 	{
-		DEBUG("=====%llu\n", was->as_SASID );
+		DEBUG("[ApplicationWebRequest] SASID: %llu\n", was->as_SASID );
 		SASUList *wus =  was->as_UserSessionList;
 		while( wus != NULL )
 		{
 			if( wus->authid[ 0 ] == 0 )
 			{
-				DEBUG("authid %s wusptr  %p\n", "empty",  wus );
+				DEBUG("[ApplicationWebRequest] authid %s wusptr  %p\n", "empty",  wus );
 			}
 			else
 			{
-				DEBUG("authid %s wusptr  %p\n", wus->authid,  wus );
+				DEBUG("[ApplicationWebRequest] authid %s wusptr  %p\n", wus->authid,  wus );
 			}
 			wus = (SASUList *)wus->node.mln_Succ;
 		}
@@ -127,7 +127,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			int pos = 0;
 			Application *al = l->sl_apps;
 			
-			DEBUG("Application.library LIST\n");
+			DEBUG("[ApplicationWebRequest] Application LIST\n");
 			
 			BufStringAdd( bs, " { \"Application\": [" );
 			
@@ -160,8 +160,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			BufStringAdd( bs, "  ]}" );
 			
-			INFO("JSON INFO: %s\n", bs->bs_Buffer );
-
 			HttpAddTextContent( response, bs->bs_Buffer );
 			
 			BufStringDelete( bs );
@@ -251,8 +249,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				}
 				
 				BufStringAdd( bs, "  ]}" );
-				
-				//INFO("JSON INFO: %s\n", bs->bs_Buffer );
+
 				HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
 				bs->bs_Buffer = NULL;
 			}
@@ -287,7 +284,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("Register\n");
+		DEBUG("[ApplicationWebRequest] Register\n");
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -308,7 +305,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			char buffer[ 1024 ];
 			
-			FERROR("\n\n\nUSER SET SESSION %s ---------- authid ---- %s\n\n\n", loggedSession->us_User->u_Name, authid );
+			FERROR("[ApplicationWebRequest] User set session: %s ---------- authid ---- %s\n", loggedSession->us_User->u_Name, authid );
 			
 			AppSession *as = AppSessionNew( l, authid, 0, loggedSession );
 			if( as != NULL )
@@ -346,7 +343,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	{
 		char *assid = NULL;
 		
-		DEBUG("Unregister session\n");
+		DEBUG("[ApplicationWebRequest] Unregister session\n");
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
@@ -367,7 +364,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			char buffer[ 1024 ];
 			int size = sprintf( buffer, "{\"response\":\"%s\"}", "sasid is missing" );
 			HttpAddTextContent( response, buffer );
-			FERROR("sasid is missing!\n");
+			FERROR("SASID is missing!\n");
 		}
 		else
 		{
@@ -380,7 +377,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			if( as != NULL )
 			{
-				DEBUG("Found appsession id %llu\n", as->as_AppID );
+				DEBUG("[ApplicationWebRequest] Found appsession id %llu\n", as->as_AppID );
 				// if our session is owner session all connections must be closed
 				
 				UserSession *locus = (UserSession *)as->as_UserSessionList->usersession;
@@ -391,7 +388,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				if( locus->us_User == loggedSession->us_User )
 				{
 					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"sasid-close\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
-					DEBUG("As Owner I want to remove session and sasid\n");
+					DEBUG("[ApplicationWebRequest] As Owner I want to remove session and sasid\n");
 					
 					err = AppSessionSendMessage( as, loggedSession, tmpmsg, msgsize, NULL );
 					
@@ -455,7 +452,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("ACCEPT\n");
+		DEBUG("[ApplicationWebRequest] accept\n");
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -502,9 +499,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				// Find invitee user with authid from user list in allowed users
 				while( li != NULL )
 				{
-					DEBUG("\n\n\n Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
+					DEBUG("[ApplicationWebRequest] Setting %s userfromlist %s userlogged %s  currauthid %s   entryptr %p\n", authid, li->usersession->us_User->u_Name, loggedSession->us_User->u_Name, li->authid, li );
 					
-					DEBUG("sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
+					DEBUG("[ApplicationWebRequest] sessionfrom list %p loggeduser session %p\n",  li->usersession, loggedSession );
 					if( li->usersession == loggedSession )
 					{
 						if( li->authid[ 0 ] != 0 )
@@ -517,9 +514,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 							li->status == SASID_US_ACCEPTED;
 						}
 						
-						DEBUG("ASN set %s pointer %p\n", li->authid, li );
+						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
 						strcpy( li->authid, authid );
-						DEBUG("\n\n\n\n\n\n Setting authid %s user %s\n\n\n\n", authid, li->usersession->us_User->u_Name );
+						DEBUG("[ApplicationWebRequest] Setting authid %s user %s\n", authid, li->usersession->us_User->u_Name );
 						
 						as->as_UserNumber++;
 						
@@ -580,7 +577,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("DECLINE\n");
+		DEBUG("[ApplicationWebRequest] Decline\n");
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -626,7 +623,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					char tmpmsg[ 255 ];
 					int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-decline\",\"data\":\"%s\"}", loggedSession->us_User->u_Name );
 					
-					DEBUG("Session found and will be removed\n");
+					DEBUG("[ApplicationWebRequest] Session found and will be removed\n");
 					int err = AppSessionSendOwnerMessage( as, loggedSession, tmpmsg, msgsize );
 					if( err != 0 )
 					{
@@ -695,7 +692,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			char *end;
 			//int assidlen = strlen( assid );
 			FUQUAD asval = strtoul( assid,  &end, 0 );
-			DEBUG(" char %s endptr-startp %d\n", assid, (int)(end-assid) );
+			DEBUG("[ApplicationWebRequest] ASSID %s endptr-startp %d\n", assid, (int)(end-assid) );
 			int errors = 0;
 			
 			as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
@@ -835,7 +832,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			int i;
 			int errors = 0;
 			
-			DEBUG("UserList passed '%s'  as ptr %p\n", userlist, as );
+			DEBUG("[ApplicationWebRequest] UserList passed '%s'  as ptr %p\n", userlist, as );
 			
 			BufString *bs = AppSessionRemUserByNames( as, loggedSession, userlist );
 			if( bs != NULL )
@@ -883,7 +880,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
+		DEBUG("[ApplicationWebRequest] app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -1045,7 +1042,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("Takeover\n");
+		DEBUG("[ApplicationWebRequest] Takeover\n");
 		
 		char *assid = NULL;
 		char *devid = NULL;
@@ -1169,7 +1166,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("switchsession\n");
+		DEBUG("[ApplicationWebRequest] switchsession\n");
 		
 		char *assid = NULL;
 		char *devid = NULL;
@@ -1223,7 +1220,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				if( dstli != NULL && srcli->usersession != NULL )
 				{
-					DEBUG("Switching sessions\n");
+					DEBUG("[ApplicationWebRequest] Switching sessions\n");
 					
 					char  tmpauthid[ 255 ];
 					if( srcli->authid[ 0 ] == 0 )
@@ -1307,7 +1304,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
+		DEBUG("[ApplicationWebRequest] app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -1384,7 +1381,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					
 					if( canchange == TRUE )
 					{
-						DEBUG("Old entry changed\n");
+						DEBUG("[ApplicationWebRequest] Old entry changed\n");
 						if( le->ne_Data != NULL )
 						{
 							FFree( le->ne_Data );
@@ -1397,7 +1394,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					INVAREntry *ne = INVAREntryNew( as->as_VariablesNumGenerator++, NULL, NULL );
 					if( ne != NULL )
 					{
-						DEBUG("New entry added\n");
+						DEBUG("[ApplicationWebRequest] New entry added\n");
 						ne->ne_Data = var;
 						le = ne;
 						
@@ -1453,7 +1450,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{TAG_DONE, TAG_DONE}
 		};
 		
-		DEBUG("app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
+		DEBUG("[ApplicationWebRequest] app/send (sending to invitees) called, and \"%s\" is calling it\n", loggedSession->us_User->u_Name );
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
@@ -1640,7 +1637,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		return 404;
 	}
 	*/
-	DEBUG("FriendCore returned %s\n", response->content );
+	DEBUG("[ApplicationWebRequest] FriendCore returned %s\n", response->content );
 
 	return response;
 }

@@ -22,7 +22,7 @@
 
 /** @file
  * 
- *  Filesystem manager    definitions
+ *  PIDThread definitions
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 13 April 2017

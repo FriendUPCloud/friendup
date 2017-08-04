@@ -55,7 +55,7 @@ void *FCM;
 FriendCoreManager *FriendCoreManagerNew()
 {
 	FriendCoreManager *fcm = NULL;
-	DEBUG("FriendCoreManagerNew\n");
+	DEBUG("[FriendCoreManager] new\n");
 	
 	if( ( fcm = FCalloc( 1, sizeof( struct FriendCoreManager ) ) ) != NULL )
 	{
@@ -70,8 +70,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		DEBUG("[FriendCoreManager] ID Generated\n");
 		
 		char temp[ FRIEND_CORE_MANAGER_ID_SIZE ];
-		//SHA256_CTX ctx;
-		
 		{
 			int i = 0;
 			for( ; i < (int)FRIEND_CORE_MANAGER_ID_SIZE ; i++ )
@@ -293,14 +291,14 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 	if( fcm != NULL )
 	{
 		CommServiceRemoteDelete( fcm->fcm_CommServiceRemote );
-		DEBUG("FriendCoreManager Close client\n");
+		DEBUG("[FriendCoreManager] Close client\n");
 		CommServiceDelete( fcm->fcm_CommService );
-		DEBUG("FriendCoreManager Close client\n");
+		DEBUG("[FriendCoreManager] Close client\n");
 		//CommServiceDelete( fcm->fcm_CommServiceClient );
-		DEBUG("FriendCoreManager Close server\n");
+		DEBUG("[FriendCoreManager] Close server\n");
 		//CommServiceDelete( fcm->fcm_CommServiceServer );
 		
-		DEBUG("Closing connections : Outgoing\n");
+		DEBUG("[FriendCoreManager] Closing connections : Outgoing\n");
 		
 		if( fcm->fcm_WebSocket != NULL )
 		{
@@ -308,21 +306,21 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 			fcm->fcm_WebSocket = NULL;
 		}
 		
-		DEBUG("FriendCoreManager Shutdown\n");
+		DEBUG("[FriendCoreManager] Shutdown\n");
 		FriendCoreShutdown( fcm->fcm_FriendCores );
 		
-		DEBUG("FriendCoreManager shutdown finished\n");
+		DEBUG("[FriendCoreManager] shutdown finished\n");
 		
-		DEBUG("FriendCoreManager Close services\n");
+		DEBUG("[FriendCoreManager] Close services\n");
 		if( fcm->fcm_ServiceManager != NULL )
 		{
 			ServiceManagerDelete( fcm->fcm_ServiceManager );
 		}
 		
-		DEBUG("FriendCoreManager Close SSH Server\n");
+		DEBUG("[FriendCoreManager] Close SSH Server\n");
 		SSHServerDelete( fcm->fcm_SSHServer );
 		
-		DEBUG("FriendCoreManager Close FriendCoreInfo\n");
+		DEBUG("[FriendCoreManager] Close FriendCoreInfo\n");
 		if( fcm->fcm_FCI != NULL )
 		{
 			FriendCoreInfoDelete( fcm->fcm_FCI );

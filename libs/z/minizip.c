@@ -332,10 +332,8 @@ int PackDirectory( FILE *zipf, char *path, int cutfilename, char *password, int 
 	d = opendir( path );
 	if( d != NULL )
 	{
-		DEBUG("Checking directory: %s\n", path );
 		while( (dir = readdir(d)) != NULL )
 		{
-			DEBUG("Checking : %s\n", dir->d_name );
 			if( strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 )
 			{
 				continue;
@@ -344,8 +342,6 @@ int PackDirectory( FILE *zipf, char *path, int cutfilename, char *password, int 
 			strcpy( newpath, path );
 			strcat( newpath, "/" );
 			strcat( newpath, dir->d_name );
-			
-			DEBUG("Checking new path: %s\n", newpath );
 			
 			//printf("%s\n", dir->d_name);
 			int status;
@@ -391,12 +387,8 @@ int PackDirectory( FILE *zipf, char *path, int cutfilename, char *password, int 
 					char message[ 1024 ];
 					
 					int per = (int)( (float)(*fileNumber)/(float)numberOfFiles * 100.0f );
-					
-					DEBUG("Percentage %d count %d current %d fname %s\n", per, numberOfFiles, (*fileNumber), filename );
 
 					int size = snprintf( message, sizeof(message), "\"action\":\"compress\",\"filename\":\"%s\",\"progress\":%d", filename, per );
-					
-					DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
 					
 					sb->SendProcessMessage( request, message, size );
 				}
@@ -430,7 +422,6 @@ int PackZip( char *zipfilename, char *compresspath, int cutfilename, char *passw
 
 //	opt_overwrite = APPEND_STATUS_CREATEAFTER;
 
-	DEBUG("Create zip %s write %d\n", zipfilename, opt_overwrite );
 	zf = zipOpen64( zipfilename, opt_overwrite );
 
 	if (zf == NULL)
@@ -441,7 +432,6 @@ int PackZip( char *zipfilename, char *compresspath, int cutfilename, char *passw
 	}
 	else
 	{
-		DEBUG("creating %s\n", zipfilename);
 	}
 	
 	int status;
@@ -456,8 +446,6 @@ int PackZip( char *zipfilename, char *compresspath, int cutfilename, char *passw
 
 	if (S_ISREG (st_buf.st_mode)) 
 	{
-		DEBUG ("%s is a regular file.\n", compresspath );
-		
 		err = PackFileToZIP( zf, compresspath, cutfilename, password, opt_compress_level );
 	}
 	if (S_ISDIR (st_buf.st_mode) ) 

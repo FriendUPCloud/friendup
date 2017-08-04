@@ -1,14 +1,31 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/**
+ *  @file device_handling.h
+ *  Device handling body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date 2015
+ */
 
 #include "device_handling.h"
 #include <core/functions.h>
@@ -18,6 +35,7 @@
 #include <system/systembase.h>
 
 DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name );
+
 void DOSDriverDelete( DOSDriver *ddrive );
 
 /**
@@ -74,7 +92,10 @@ int RescanHandlers( SystemBase *l )
 		{
 			while( ( dir = readdir( d ) ) != NULL )
 			{
-				if( dir->d_name[0] == '.' ) continue;
+				if( strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 )
+				{
+					continue;
+				}
 				
 				sprintf( tempString, "%s%s", l->sl_FSysPath, dir->d_name );
 
@@ -194,7 +215,6 @@ int CheckAndMountWorkgroupDrive( SystemBase *l, char *type, User *usr, FUQUAD id
 {
 	if( type && strcmp( type, "SQLWorkgroupDrive" ) == 0 )
 	{
-		//DEBUG( "[MountFS] -- Refreshing all user drives for others than %s..\n", usr->u_Name );
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
 		{
@@ -340,8 +360,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				//	execute = ( char *)ltl->ti_Data;
 				//	break;
 			}
-		
-			//DEBUG("Switch\n");
+
 			ltl++;
 		}
 	
@@ -353,11 +372,10 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			if( type != NULL ){ FFree( type );}
 			return FSys_Error_NOName;
 		}
-	
-		// Usr == null
+
 		if( usr == NULL )
 		{
-			INFO("[ERROR]: %s - No user passed, cannot put device on mountlist\n", usr->u_Name );
+			FERROR("[ERROR]: %s - No user passed, cannot put device on mountlist\n", usr->u_Name );
 
 			pthread_mutex_unlock( &l->sl_InternalMutex );
 			if( type != NULL ){ FFree( type );}
@@ -457,10 +475,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
 				// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
-				//row = res->row[ j ];
-				//DEBUG("Database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
-		
-				//DEBUG( "%s is %s\n", row[ 0 ], atoi( row[ 5 ] ) == 1 ? "mounted" : "not mounted" );
+
 				if( type != NULL )
 				{
 					FFree( type );
@@ -514,7 +529,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				
 				if( row[ 8 ] != NULL ) execute = StringDuplicate( row[ 8 ] );
 				
-				DEBUG("[MountFS] %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
+				DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
 			}
 			
 			sqllib->FreeResult( sqllib, res );
@@ -527,7 +542,6 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		{
 			FERROR("[ERROR]: %s - No type passed\n", usr->u_Name );
 			l->sl_Error = FSys_Error_NOFSType;
-			//pthread_mutex_unlock( &l->sl_InternalMutex );
 			
 			goto merror;
 		}
@@ -541,7 +555,6 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			{
 				*mfile = fentry;
 				DEBUG("Device is already mounted\n");
-				//pthread_mutex_unlock( &l->sl_InternalMutex );
 				l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 				
 				goto merror;
@@ -549,17 +562,11 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			fentry = (File *) fentry->node.mln_Succ;
 		}
 	
-		//DEBUG("[MountFS] %s - User is not null!\n", usr->u_Name );
-	
-		//INFO("Mount Checking avaiable filesystem(%s)\n", name );
-	
 		//
 		// Find installed filesystems by type
 		DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
-		// FHandler *efsys = NULL;
 		while( ddrive != NULL )
 		{
-			//DEBUG("[MountFS] %s - Mount check DOSDRIVERS FIND TYPE %s ddrivename %s\n", usr->u_Name, type, ddrive->dd_Name );
 			if( strcmp( type, ddrive->dd_Name ) == 0 )
 			{
 				filesys = ddrive->dd_Handler;
@@ -569,14 +576,12 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			ddrive = (DOSDriver *)ddrive->node.mln_Succ;
 		}
 
-		//DEBUG("[MountFS] %s - Mount Filesystem, %s, found? %s, type %s\n", usr->u_Name, name, filesys == NULL ? "no" : "yes", type );
-	
 		File *f = NULL;
 	
 		// super user feauture	
 		if( id > 0 && usr != NULL && usr->u_MountedDevs != NULL )
 		{
-			INFO( "[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
+			DEBUG("[MountFS] %s - Starting to check mounted devs!\n", usr->u_Name );
 		
 			LIST_FOR_EACH( usr->u_MountedDevs, f, File * )
 			{
@@ -609,16 +614,12 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 					}
 					f->f_FSysName = StringDuplicate( type );
 					
-					//DEBUG( "\n\n\n\n\nCan we access caller?  %s\n", f->f_FSysName );
 					// Set structure to caller
 					if( mfile )
 					{
 						*mfile = f;
 					}
-					// Return no error
-					DEBUG( "[MountFS] %s - Ok, returning now, because this was ok... :)  fsysname %s id %lu\n", usr->u_Name, f->f_FSysName, f->f_ID );
-					//pthread_mutex_unlock( &l->sl_InternalMutex );
-					
+
 					l->sl_Error = FSys_Error_DeviceAlreadyMounted;
 					
 					goto merror;
@@ -679,7 +680,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 	
 		retFile = filesys->Mount( filesys, tags, mountUser );
 		
-		DEBUG( "[MountFS] Filesystem mounted.\n" );
+		DEBUG( "[MountFS] Filesystem mounted. Pointer to returned device: %p.\n", retFile );
 		
 		if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
 		{
@@ -692,8 +693,6 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				retFile->f_Execute = StringDuplicate( execute );
 				retFile->f_FSysName = StringDuplicate( type );
 				
-				//DEBUG("\n\n\n\n\n  ----%s  type %s\n\n\n", retFile->f_FSysName, type  );
-		 
 				if( usr != NULL )
 				{
 					File *lfile = usr->u_MountedDevs;
@@ -727,35 +726,27 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 					*mfile = retFile;
 				}
 				
-				//DEBUG("\n\n\n\n---------------- id %lu, reftfs %s\n", retFile->f_ID, retFile->f_FSysName );
 				INFO( "[MountFS] %s - Device '%s' mounted successfully of type %s\n", usr->u_Name, name, type );
 				
 				// If we're here, we need to test if this drive also needs to be added to
 				// other users!
-				
-				//int CheckAndMountWorkgroupDrive( char *type, User *usr, FUQUAD id, int mounted )
-				//CheckAndMountWorkgroupDrive( type, usr, id, retFile->f_Mounted );
+
 				if( type && strcmp( type, "SQLWorkgroupDrive" ) == 0 )
 				{
-					//DEBUG( "[MountFS] -- Refreshing all user drives for others than %s..\n", usr->u_Name );
 					User *tmpUser = l->sl_UM->um_Users;
 					while( tmpUser != NULL )
 					{
 						// Skip current user
 						if( tmpUser->u_ID == usr->u_ID )
 						{
-							//DEBUG( "[MountFS] -- Skipping owner of drive %d (%s).\n", usr->u_ID, usr->u_Name );
 							tmpUser = (User *)tmpUser->node.mln_Succ;
 							continue;
 						}
-						
-						DEBUG( "[MountFS] -- Checking if %s has drive %s.\n", tmpUser->u_Name, name );
 						
 						// Test if this user already has this disk
 						File *search = tmpUser->u_MountedDevs;
 						while( search != NULL )
 						{
-							DEBUG("[MountFS] -- Find %lu current id %lu name %s\n", id, search->f_ID, search->f_Name );
 							if( search->f_ID == id )
 							{
 								DEBUG( "[MountFS] -- Found user.\n" );
@@ -768,8 +759,6 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 						// User doesn't have this disk, add it!
 						if( search == NULL )
 						{
-							DEBUG( "[MountFS] -- User %s has not got drive %s. Trying mount.\n", tmpUser->u_Name, name );
-							
 							pthread_mutex_unlock( &l->sl_InternalMutex );
 							
 							// Try to mount the device with all privileges
@@ -777,23 +766,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 							File *dstFile = NULL;
 							if( MountFS( l, tl, &dstFile, tmpUser ) != 0 )
 							{
-								DEBUG( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
-							}
-							
-							if( dstFile != NULL )
-							{
-								if( dstFile->f_FSysName )
-								{
-									DEBUG("\n\n\n\n---------------- id %lu, reftfs %s  DST\n", dstFile->f_ID, dstFile->f_FSysName );
-								}
-								else 
-								{
-									DEBUG( "\n\n\n\n---------------- NO fsys name - ID: %lu..\n", dstFile->f_ID );
-								}
-							}
-							else
-							{
-								DEBUG( "\n\n\n\n----------- NO dest\n" );
+								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
 							
 							if( pthread_mutex_lock( &l->sl_InternalMutex ) != 0 )
@@ -815,7 +788,6 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			{
 				l->sl_Error = FSys_Error_NOFSAvaiable;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
-				//pthread_mutex_unlock( &l->sl_InternalMutex );
 				
 				goto merror;
 			}
@@ -901,12 +873,9 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 					mount = (FULONG)ltl->ti_Data;
 					break;
 			}
-		
-			//DEBUG("Switch\n");
 			ltl++;
 		}
-		DEBUG("[MountFSNoUser] End switch\n");
-	
+
 		if( type == NULL )
 		{
 			FERROR("[ERROR]: No type passed\n");
@@ -923,18 +892,13 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 			return FSys_Error_NOName;
 		}
 
-		DEBUG("[MountFSNoUser] User is not null!\n");
-	
 		INFO("[MountFSNoUser] Mount Checking avaiable filesystem(%s)\n", name );
 	
 		//
 		// Find installed filesystems by type
 		DOSDriver *ddrive = (DOSDriver *)l->sl_DOSDrivers;
-	//	FHandler *efsys = NULL;
 		while( ddrive != NULL )
 		{
-			DEBUG("[MountFSNoUser] Mount check DOSDRIVERS FIND TYPE %s ddrivename %s\n", type, ddrive->dd_Name );
-		
 			if( strcmp( type, ddrive->dd_Name ) == 0 )
 			{
 				filesys = ddrive->dd_Handler;
@@ -944,8 +908,6 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 			ddrive = (DOSDriver *)ddrive->node.mln_Succ;
 		}
 
-		DEBUG("[MountFSNoUser] Mount Filesystem found %p\n", filesys );
-	
 		File *f = NULL;
 		
 		User *usr = NULL;
@@ -959,7 +921,6 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 		
 			LIST_FOR_EACH( usr->u_MountedDevs, f, File * )
 			{
-				DEBUG( "[MountFSNoUser] %p is the pointer, %p\n", f, f->f_Name );
 				if( f && f->f_Name && strcmp( name, f->f_Name ) == 0 )
 				{
 					INFO("[MountFSNoUser] Root device was on the list, mounted (%s)\n", name );
@@ -971,7 +932,6 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 					// Set structure to caller
 					if( mfile ) *mfile = f;
 					// Return no error
-					DEBUG( "[MountFSNoUser] Ok, returning now, because this was ok... :)\n" );
 					pthread_mutex_unlock( &l->sl_InternalMutex );
 					return 0;
 				}
@@ -1032,8 +992,7 @@ int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 			pthread_mutex_unlock( &l->sl_InternalMutex );
 			return FSys_Error_NOFSAvaiable;
 		}
-	
-		DEBUG("[MountFSNoUser] Mount device END\n");
+
 		pthread_mutex_unlock( &l->sl_InternalMutex );
 	}
 	return 0;
@@ -1107,10 +1066,6 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 			return FSys_Error_UserNotLoggedIn;
 		}
 	
-		DEBUG("[UnMountFS] Unmount user found, device name %s, checking devices\n", name );
-	
-		//DEBUG("\n\n\n\n--------->name %s usrs %p  usrs->user %p\n\n\n\n", name, usrs, usrs?usrs->us_User:NULL );
-		
 		User *usr = usrs->us_User;
 		int errors = 0;
 		File *remdev = UserRemDeviceByName( usr, name, &errors );
@@ -1127,10 +1082,8 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 	
 		while( lf != NULL )
 		{
-			DEBUG( "[UnMountFS] Checking fs in list %s == %s...\n", lf->f_Name, name );
 			if( strcmp( lf->f_Name, name ) == 0 )
 			{
-				DEBUG( "[UnMountFS] Found one (%s == %s)\n", lf->f_Name, name );
 				remdev = lf;
 				break;
 			}
@@ -1143,9 +1096,8 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		{
 			if( remdev->f_Operations < 1 )
 			{
-				DEBUG("[UnMountFS] Unmount device found, unmounting\n");
-		
-				DEBUG("[UnMountFS] UnMount device2\n");
+				DEBUG("[UnMountFS] Device found, unmounting\n");
+
 				FHandler *fsys = (FHandler *)remdev->f_FSys;
 			
 				// If we're here, we need to test if this drive also needs to be removed
@@ -1197,17 +1149,13 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 				}
 			}
 			*/
-		
-			//DEBUG( "[UnmountFS] Lets see here: %s, %ld\n", type, remdev->f_ID );
-			
+
 				// Free up some
 				if( remdev->f_SessionID ) FFree( remdev->f_SessionID );
 				if( remdev->f_Config ) FFree( remdev->f_Config );
 				if( remdev->f_FSysName ) FFree( remdev->f_FSysName );
 				if( remdev->f_Execute ) FFree( remdev->f_Execute );
 				FFree( remdev );
-		
-				//DEBUG("\n\n\n\n--------->name %s usrs %p  usrs->user %p\n\n\n\n", name, usrs, usrs?usrs->us_User:NULL );
 			
 				int numberEntries = 0;
 				int unmID = 0;
@@ -1233,10 +1181,9 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 					l->LibraryMYSQLDrop( l, sqllib );
 				}
 				
-				DEBUG( "Checking fs type: %s\n", unmType );
 				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 )
 				{
-					DEBUG( "[UnMountFS] Refreshing all user drives for unmount.\n" );
+					DEBUG("[UnMountFS] Refreshing all user drives for unmount.\n" );
 					User *tmpUser = l->sl_UM->um_Users;
 					while( tmpUser != NULL )
 					{
@@ -1252,7 +1199,7 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 								// Can match on name since it's a workgroup drive..
 								if( strcmp( search->f_Name, name ) == 0 )
 								{
-									DEBUG( "[UnMountFS] Found the damned drive %s on user %s.\n", name, tmpUser->u_Name );
+									DEBUG( "[UnMountFS] Found the drive %s on user %s.\n", name, tmpUser->u_Name );
 							
 									File *succ = (File *)search->node.mln_Succ; // next
 									File *pred = (File *)search->node.mln_Pred; // prev
@@ -1316,8 +1263,6 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 					}
 				}
 				if( unmType ) FFree( unmType );
-		
-				DEBUG("[UnMountFS] UnMount device3\n");
 			}
 			else
 			{
@@ -1381,7 +1326,6 @@ File *GetFileByPath( User *usr, char **dstpath, const char *path )
 	File *ldr = usr->u_MountedDevs;
 	while( ldr != NULL )
 	{ 
-		DEBUG("[GetFileByPath] GETHANDLER BY %s - %s\n", ldr->f_Name, ddrivename );
 		if( strcmp( ldr->f_Name, ddrivename ) == 0 )
 		{
 			fhand = ldr;
@@ -1584,7 +1528,7 @@ File *GetUserDeviceByUserID( SystemBase *l, MYSQLLibrary *sqllib, FULONG uid, co
 		//row = res->row[ j ];
 		DEBUG("[GetUserDeviceByUserID] Database -> Name '%s' Type '%s', Server '%s', Port '%s', Path '%s', Mounted '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ], row[ 5 ] );
 		
-		DEBUG( "[GetUserDeviceByUserID] %s is %s\n", row[ 0 ], atoi( row[ 5 ] ) == 1 ? "mounted" : "not mounted" );
+		DEBUG("[GetUserDeviceByUserID] %s is %s\n", row[ 0 ], atoi( row[ 5 ] ) == 1 ? "mounted" : "not mounted" );
 		int mount = atoi( row[ 5 ] );
 		int id = atoi( row[ 7 ] );
 		User *owner = NULL;
@@ -1636,7 +1580,6 @@ File *GetUserDeviceByUserID( SystemBase *l, MYSQLLibrary *sqllib, FULONG uid, co
 			FERROR("User do not exist, cannot mount drive\n");
 		}
 	}	// going through all rows
-	//DEBUG( "Device mounted for user %s\n", usr->u_Name );
 
 	sqllib->FreeResult( sqllib, res );
 	
@@ -1672,7 +1615,14 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 		{
 			if( list->us != NULL )
 			{
-				sb->WebSocketSendMessage( sb, list->us, message, strlen( message ) );
+				if( list->us != NULL )
+				{
+					WebSocketSendMessage( sb, list->us, message, strlen( message ) );
+				}
+				else
+				{
+					INFO("Cannot send WS message: %s\n", message );
+				}
 			}
 			list = (UserSessListEntry *)list->node.mln_Succ;
 		}
@@ -1915,33 +1865,6 @@ int MountDoorByRow( SystemBase *l, User *usr, MYSQL_ROW row, User *mountUser )
  */
 int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 {
-	/*
-	char *ids = FCalloc( 2048, sizeof(char) );
-	int idssize = 0;
-	
-	DEBUG("REFRESHLIST\n");
-	
-	// getting all devices which are mounted
-	
-	File *locdev = u->u_MountedDevs;
-	while( locdev != NULL )
-	{
-		char locnr[ 64 ];
-		if( locdev == u->u_MountedDevs )
-		{
-			idssize += snprintf( locnr, sizeof(locnr), "%lu", locdev->f_ID );
-		}
-		else
-		{
-			idssize += snprintf( locnr, sizeof(locnr), ",%lu", locdev->f_ID );
-		}
-		strcat( ids, locnr );
-		
-		locdev = (File *) locdev->node.mln_Succ;
-	}
-	*/
-	//DEBUG("Devicelist which are not on mounte list '%s'\n", ids );
-	
 	FULONG *ids = FCalloc( 512, sizeof( FULONG ) );
 	int idsEntries = 0;
 	
@@ -2116,7 +2039,7 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 			}
 			else
 			{
-				DEBUG("[RefreshUserDrives] No entries found in database\n");
+				INFO("[RefreshUserDrives] No entries found in database\n");
 			}
 			
 			if( bs != NULL )
@@ -2147,7 +2070,6 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 		{
 			if( ids[ i ] == tmpdev->f_ID )
 			{
-				DEBUG("[RefreshUserDrives] Found device = TRUE %lu\n", ids[ i ] );
 				found = TRUE;
 			}
 		}

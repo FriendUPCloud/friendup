@@ -30,7 +30,6 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date first pushed on 10/02/2015
- *  @todo FL>PS this code is not finished. The thread handling function does nothing.
  */
 #include <core/types.h>
 #include <core/event_manager.h>
@@ -55,7 +54,7 @@ static int threadsNo = 0;
 EventManager *EventManagerNew( void *sb )
 {
 	EventManager *em = FCalloc( sizeof( EventManager) , 1 );
-	DEBUG("EventManager start\n");
+	DEBUG("[EventManager] start\n");
 	if( em != NULL )
 	{
 		em->lastID = 0xf;
@@ -77,7 +76,7 @@ EventManager *EventManagerNew( void *sb )
  */
 void EventManagerDelete( EventManager *em )
 {
-	DEBUG("EventManagerDelete\n");
+	DEBUG("[EventManager] Delete\n");
 	// remove long time events
 	if( em != NULL )
 	{
@@ -93,40 +92,20 @@ void EventManagerDelete( EventManager *em )
 		
 		if( em->em_EventThread != NULL )
 		{
+			DEBUG("[EventManager] Delete thread\n");
 			ThreadDelete( em->em_EventThread );
 		}
-		DEBUG("EventManager thread removed\n");
+		DEBUG("[EventManager] thread removed\n");
 		
 		// waiting till all functions died
 		
 		while( TRUE )
 		{
-			/*
-			FBOOL allFunctionsQuit = TRUE;
-			CoreEvent *locnce = em->em_EventList;
-			int threadNr = 0;
-			
-			while( locnce != NULL )
-			{
-				DEBUG( "Threadno: %d launched %d  allquit : %d\n", threadNr++, locnce->ce_Thread->t_Launched , allFunctionsQuit );
-				
-				if( locnce->ce_Thread->t_Launched == TRUE )
-				{
-					allFunctionsQuit = FALSE;
-				}
-				
-				locnce = (CoreEvent *) locnce->node.mln_Succ;
-			}
-			
-			if( allFunctionsQuit == TRUE )
-			{
-				break;
-			}*/
 			if( threadsNo <= 0 )
 			{
 				break;
 			}
-			DEBUG("Not all threads were closed properly, waiting. ThreadsNo: %d\n", threadsNo );
+			DEBUG("[EventManager] Not all threads were closed properly, waiting. ThreadsNo: %d\n", threadsNo );
 			usleep( 500 );
 		}
 		
@@ -136,18 +115,12 @@ void EventManagerDelete( EventManager *em )
 			CoreEvent *rem = locnce;
 			locnce = (CoreEvent *)locnce->node.mln_Succ;
 
-			DEBUG("Remove thread ptr: %p\n", rem->ce_Thread );
-			if( rem->ce_Thread != NULL )
-			{
-				//ThreadDelete( rem->ce_Thread );
-				rem->ce_Thread = NULL;
-			}
 			FFree( rem );
 		}
 		
 		FFree( em );
 	}
-	DEBUG("EventManagerDelete end\n");
+	DEBUG("[EventManager] Delete end\n");
 }
 
 /**
@@ -158,7 +131,7 @@ void EventManagerDelete( EventManager *em )
  */
 FUQUAD EventGetNewID( EventManager *em )
 {
-	DEBUG("EVENT: new event created %llu\n", em->lastID+1 );
+	DEBUG("[EventManager] new event created %llu\n", em->lastID+1 );
 	return em->lastID++;
 }
 
@@ -167,20 +140,19 @@ FUQUAD EventGetNewID( EventManager *em )
  *
  * @param ptr pointer to the FThread structure of the Friend thread to send the event to
  */
-void EventLaunch( FThread *ptr )
+void EventLaunch( CoreEvent *ptr )
 {
 	pthread_detach( pthread_self() );
-	ptr->t_Launched = TRUE;
+	ptr->ce_Launched = TRUE;
 	threadsNo++;
 	
-	CoreEvent *ce = (CoreEvent *) ptr->t_Data;
-	if( ce != NULL )
+	if( ptr->ce_Function != NULL )
 	{
-		ce->ce_Function( ce->ce_Data );
+		ptr->ce_Function( ptr->ce_Data );
 	}
 	
 	threadsNo--;
-	ptr->t_Launched = FALSE;
+	ptr->ce_Launched = FALSE;
 	
 	pthread_exit( 0 );
 }
@@ -305,7 +277,7 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 		nce->ce_TimeDelta = deltaTime;
 		nce->ce_Data = data;
 
-		DEBUG("ADD NEW EVENT %llu\n", nce->ce_ID );
+		DEBUG("[EventManager] Add new event, ID: %llu\n", nce->ce_ID );
 
 		nce->node.mln_Succ = (MinNode *) em->em_EventList;
 		em->em_EventList = nce;
@@ -350,11 +322,13 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 			ev->ce_RepeatTime--;
 		}
 		
-		DEBUG("Start thread %p  SB ptr %p\n", ev->ce_Function, em->em_SB );
+		DEBUG("[EventManager] Start thread %p  SB ptr %p\n", ev->ce_Function, em->em_SB );
 		//ThreadStart( ev->ce_Thread );
 		//ev->ce_Data = em->em_SB;
-		ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );
-		DEBUG("Thread started\n");
+		//ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );
+		pthread_create( &(ev->ce_Thread), NULL, EventLaunch, ev );
+		//ThreadStart( ev->ce_Thread );
+		DEBUG("[EventManager] Thread started\n");
 	}
 	
 	if( removeEvent == TRUE )
@@ -365,8 +339,6 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 	/*
 	List *tmp = em->eventTList;
 	CoreEvent *retEv = NULL;
-
-	DEBUG("EVENT: check");
 
 	while( tmp != NULL )
 	{
@@ -387,8 +359,6 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 		while( retEv != NULL )
 		{
 			// we call function with interesting arguments for us
-			DEBUG("EVENT: check, calling function %p\n", retEv->hook.h_Function );
-
 			retEv->hook.h_Function( retEv->hook.h_Entry, retEv->hook.h_SubEntry, retEv->hook.h_Data );
 
 			retEv = (CoreEvent *)retEv->node.mln_Succ;

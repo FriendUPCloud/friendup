@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -469,7 +479,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 		dev->f_User = usr;
 		dev->f_Name = StringDup( name );
 		DEBUG("data filled, name of the drive: %s\n", dev->f_Name );
-		
 	}
 	
 	//
@@ -724,6 +733,7 @@ shutdown:
 
 	if( dev->f_Name ){ FFree( dev->f_Name ); }
 	if( dev->f_Path ){ FFree( dev->f_Path ); }
+	FFree( dev );
 	
 	return NULL;
 }
@@ -1050,7 +1060,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE && result > 0 )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, result );
+			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
 		}
 		
 		if( hd != NULL )

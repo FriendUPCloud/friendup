@@ -84,7 +84,7 @@ long GetRevision(void)
 int Unpack( struct ZLibrary *l, const char *name, const char *dir, const char *pass, Http *request )
 {
 	request->h_SB = l->sb;
-	DEBUG("Call unzip\n");
+	DEBUG("Z.library: Call unzip\n");
 	return UnpackZip( name, dir, pass, request );
 }
 
@@ -94,7 +94,7 @@ int Unpack( struct ZLibrary *l, const char *name, const char *dir, const char *p
 
 int Pack( struct ZLibrary *l, const char *name, const char *dir, int cutfilename, const char *pass, Http *request, int numberOfFiles )
 {
-	DEBUG("pack called\n");
+	DEBUG("Z.library: pack called\n");
 	request->h_SB = l->sb;
 	return PackZip( name, dir, cutfilename, pass, request, numberOfFiles );
 }
@@ -122,9 +122,6 @@ void *libInit( void *sb )
 
 	l->Unpack = Unpack; //dlsym ( l->l_Handle, "UnpackZIP");
 	l->Pack = Pack;//dlsym ( l->l_Handle, "PackToZIP");
-	
-	DEBUG("Pack function pointer %p\n", l->Pack );
-	DEBUG("Unpack function pointer %p\n", l->Unpack );
 
 	//l->ZWebRequest = dlsym( l->l_Handle, "ZWebRequest" );
 	
@@ -156,7 +153,6 @@ unsigned int ZWebRequest( struct ZLibrary *l, char* func, Http* request, Socket*
 {
 	unsigned int result = 0;
 	/*
-	DEBUG("APPLIBRARY WEBREQUEST %s\n", func );
 	
 	if( strcmp( func, "help" ) == 0 )
 	{
@@ -227,14 +223,11 @@ unsigned int ZWebRequest( struct ZLibrary *l, char* func, Http* request, Socket*
 
 char* StringDuplicate( const char* str )
 {
-	DEBUG("SD str ptr %p\n", str );
 	if( str == NULL )
 	{
 		return NULL;
 	}
 	int size = strlen( str );
-	
-	DEBUG("String duplacate %d\n", size );
 	
 	char *tmp = calloc( size + 1, sizeof( char ) );
 	if( tmp == NULL )

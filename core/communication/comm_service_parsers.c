@@ -1,14 +1,26 @@
 /*©mit**************************************************************************
 *                                                                              *
-*Friend Unifying Platform                                                      *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+
+
 /** @file
  * 
  *  CommunicationService body
@@ -61,7 +73,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 	
 	if( *len <= 0 )
 	{
-		DEBUG("[COMMSERV] No more data provided, quit!\n");
+		DEBUG("[ParseMessage] No more data provided, quit!\n");
 		return NULL;
 	}
 	
@@ -69,7 +81,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 	
 	if( df->df_ID == ID_FCRE )
 	{
-		DEBUG("[COMMSERV] MAIN HEADER\n");
+		DEBUG("[ParseMessage] Found main header\n");
 		
 		*len -= COMM_MSG_HEADER_SIZE;
 		
@@ -79,7 +91,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 		if( df->df_ID == ID_FRID )
 		{
 			responseID = df->df_Size;
-			DEBUG("ResponseID set %lu\n", responseID );
+			DEBUG("[ParseMessage] ResponseID set %lu\n", responseID );
 		}
 		
 		data += COMM_MSG_HEADER_SIZE;
@@ -87,7 +99,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 		
 		if( df->df_ID == ID_QUER )
 		{
-			DEBUG("[COMMSERV] QUERY FOUND %ld\n", df->df_Size );
+			DEBUG("[ParseMessage] QUERY FOUND %ld\n", df->df_Size );
 			SystemBase *lsb = (SystemBase *)serv->s_SB;
 			FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;//serv->s_FCM;
 			/*
@@ -112,7 +124,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 			
 			if( df->df_ID == ID_SVIN )
 			{
-				DEBUG("[COMMSERV] SERVICES INFORMATION\n");
+				DEBUG("[ParseMessage] Found services information query\n");
 				
 				SystemBase *lsb = (SystemBase *)serv->s_SB;
 				FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;//serv->s_FCM;
@@ -123,7 +135,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 				
 				while( lsrv != NULL )
 				{
-					DEBUG( "[ParseMessage] Getting lsrv!\n" );
+					DEBUG( "[ParseMessage] Getting lsrv information\n" );
 					size += strlen( lsrv->GetName() ) + 1 + COMM_MSG_HEADER_SIZE;
 					lsrv = (Service *)lsrv->node.mln_Succ;
 				}
@@ -156,7 +168,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 							int copyStringSize = snamesize;
 							snamesize += COMM_MSG_HEADER_SIZE;
 							
-							DEBUG("Adding service to answer '%s'\n", lsrv->GetName() );
+							DEBUG("[ParseMessage] Adding service to answer '%s'\n", lsrv->GetName() );
 							
 							memcpy( nameptr, &snameinfo, sizeof(FULONG) );
 							nameptr += sizeof(FULONG);
@@ -169,7 +181,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 						}
 						
 						DataFormAdd( &actDataForm, tmpnames, size );
-						DEBUG("Adding service to message\n");
+						DEBUG("[ParseMessage] Adding service to message\n");
 						
 						FFree( tmpnames );
 					}
@@ -185,7 +197,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 			else if( df->df_ID == ID_SLIB )
 			{
 				
-				//DEBUG("[COMMSERV] SYSTEM.LIBRARY CALLED\n");
+				DEBUG("[ParseMessage] Systembase called\n");
 				data += COMM_MSG_HEADER_SIZE;
 				df = (DataForm *)data;
 				
@@ -207,7 +219,6 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 				
 				if( df->df_ID == ID_HTTP )
 				{
-					//DEBUG("HTTP found  %ul\n", df->df_Size );
 					Http *http = HttpNew( );
 					http->parsedPostContent = HashmapNew();
 					char temp[ 1024 ];
@@ -219,13 +230,11 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 					
 					if( df->df_ID == ID_AUTH )
 					{
-						//DEBUG("Auth found  %ul\n", df->df_Size );
 						data += COMM_MSG_HEADER_SIZE;
 						df = (DataForm *)data;
 						
 						if( df->df_ID == ID_USER )
 						{
-							//DEBUG("User found size %ul\n", df->df_Size );
 							data += COMM_MSG_HEADER_SIZE;
 							
 							memset( temp, 0, 1024 );
@@ -234,11 +243,9 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 							
 							data += df->df_Size;
 							df = (DataForm *)data;
-							//DEBUG("Size %ul\n", df->df_Size );
 							
 							if( df->df_ID == ID_PSWD )
 							{
-								//DEBUG("Password found\n");
 								data += COMM_MSG_HEADER_SIZE;
 								
 								memset( temp, 0, 1024 );
@@ -248,12 +255,9 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 								data += df->df_Size;
 								df = (DataForm *)data;
 							}
-							
-							//DEBUG("End user\n");
 						}
 						else if( df->df_ID == ID_APID )
 						{
-							//DEBUG("APID found\n");
 							data += COMM_MSG_HEADER_SIZE;
 							
 							memset( temp, 0, 1024 );
@@ -274,7 +278,6 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 						int part = 1;
 						for( i=1; i < df->df_Size ; i++ )
 						{
-							//printf("%c %d %d\n", data[ i ], data[ i ], i );
 							if( data[ i ] == '/' )
 							{
 								pathParts[ part ] = (char *) &(data[ i+1 ]);
@@ -283,8 +286,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 								data[ i ] = 0;
 							}
 						}
-						//DEBUG("Path found %.*s\n", df->df_Size, data );
-						
+
 						//memset( temp, 0, 1024 );
 						//strncpy( temp, data, df->df_Size );
 						
@@ -295,15 +297,13 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 					if( df->df_ID == ID_PARM )
 					{
 						int size = df->df_Size;
-						
-						//DEBUG("PARAMETERS found\n");
+
 						data += COMM_MSG_HEADER_SIZE;
 						df = (DataForm *)data;
 						
 						while( size > 1 )
 						{
 							data += COMM_MSG_HEADER_SIZE;
-							//DEBUG("Going through parameters\n");
 							
 							if( df->df_ID == ID_PRMT )
 							{
@@ -327,7 +327,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 										temp[ i ] = 0;
 										val = &(temp[ i+1 ]);
 										parsize = df->df_Size - (i+1);
-										DEBUG("Message size %d  - parameter size %ld\n", parsize, df->df_Size );
+										DEBUG("[ParseMessage] Message size %d  - parameter size %ld\n", parsize, df->df_Size );
 										break;
 									}
 								}
@@ -341,33 +341,31 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 									{
 										memcpy( param, val, parsize );
 										param[ parsize ] = 0;
-										DEBUG("Mem allocated for data %p\n",  param );
+										DEBUG("[ParseMessage] Mem allocated for data %p\n",  param );
 									}
 									//char *param = StringDuplicateN( val, parsize );
 									if( HashmapPut( http->parsedPostContent, StringDuplicate( attr ), param ) )
 									{
-										DEBUG("New values passed to POST - %s - %.10s -\n", attr, val );
+										DEBUG("[ParseMessage] New values passed to POST - %s - %.10s -\n", attr, val );
 									}
 								}
 								
 								data += df->df_Size;
 								size -= df->df_Size;
 								df = (DataForm *)data;
-								//printf("size %d\n", size );
 							}
 							else
 							{
 								size--;
 								data++;
 							}
-							//printf("size2 %d\n", size );
 						}
 					}
 					
 					http->h_Socket = socket;
 					http->h_RequestSource = HTTP_SOURCE_FC;
 					http->h_ResponseID = responseID;
-					DEBUG2("-----------------------------Calling SYSBASE via CommuncationService: %s\n\n", (pathParts[ 1 ]) );
+					DEBUG2("-----------------------------Calling SYSBASE via CommuncationService: %s\n", (pathParts[ 1 ]) );
 					
 					SystemBase *lsysbase = (SystemBase *) serv->s_SB;
 					if( lsysbase != NULL )
@@ -386,7 +384,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 							
 							actDataForm = DataFormNew( tags );
 							
-							DEBUG("Messsage received from systembase, responseid %lu\n", actDataForm[ 1 ].df_Size );
+							DEBUG("[ParseMessage] Messsage received from systembase, responseid %lu\n", actDataForm[ 1 ].df_Size );
 							
 							HttpFree( response );
 						}
@@ -414,7 +412,7 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 		FERROR("ID is not correct, message was not procesed\n");
 	}
 	
-	DEBUG("[COMMSERV] End MSG!\n");
+	DEBUG("[ParseMessage] End MSG!\n");
 	
 	return actDataForm;
 }
@@ -430,11 +428,11 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 {
 	SystemBase *lsb = (SystemBase *)sb;
 	
-	FERROR("\n\nParseAndExecuteRequest con %p\n\n\n", con );
+	FERROR("\t\t[ParseAndExecuteRequest] ParseAndExecuteRequest con %p\n", con );
 	
 	if( df->df_ID == ID_CMMD )
 	{
-		DEBUG("Command received\n");
+		DEBUG("[ParseAndExecuteRequest] Command received\n");
 		df++;
 	}
 	else
@@ -462,7 +460,7 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 	
 	if( df->df_ID == ID_PARM )
 	{
-		DEBUG("Found parameters\n");
+		DEBUG("[ParseAndExecuteRequest] Found parameters\n");
 		char *data = (char *)df;
 		int size = df->df_Size;
 		
@@ -488,7 +486,7 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 						temp[ i ] = 0;
 						val = &(temp[ i+1 ]);
 						parsize = df->df_Size - (i+1);
-						DEBUG("ParseAndExecuteRequest Message size %d  - parameter size %ld\n", parsize, df->df_Size );
+						DEBUG("[ParseAndExecuteRequest] Message size %d  - parameter size %ld\n", parsize, df->df_Size );
 						break;
 					}
 				}
@@ -500,26 +498,24 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 					{
 						memcpy( param, val, parsize );
 						param[ parsize ] = 0;
-						DEBUG("Mem allocated for data %p\n",  param );
+						DEBUG("[ParseAndExecuteRequest] Mem allocated for data %p\n",  param );
 					}
 
 					if( HashmapPut( paramhm, StringDuplicate( attr ), param ) )
 					{
-						DEBUG("New values - %s - %.10s -\n", attr, val );
+						DEBUG("[ParseAndExecuteRequest] New values - %s - %.10s -\n", attr, val );
 					}
 				}
 				
 				data += df->df_Size;
 				size -= df->df_Size;
 				df = (DataForm *)data;
-				//printf("size %d\n", size );
 			}
 			else
 			{
 				size--;
 				data++;
 			}
-			//printf("size2 %d\n", size );
 		}
 	}
 
@@ -530,7 +526,7 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 		case ID_UUSR:	// unregister drive
 			break;
 		case ID_RDRI:	// register drive
-			DEBUG("Register drive\n");
+			DEBUG("[ParseAndExecuteRequest] Register drive\n");
 			FULONG deviceid = 0;
 			char *strdevid = HashmapGetData( paramhm, "deviceid" );
 			if( strdevid != NULL )
@@ -544,7 +540,7 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 		case ID_UDRI:	// unregister drive
 			break;
 		case ID_FNOT:
-			FERROR("Notification!\n");
+			INFO("Notification received\n");
 			
 			char *locuname = HashmapGetData( paramhm, "usrname" );
 			char *locpath = HashmapGetData( paramhm, "path" );

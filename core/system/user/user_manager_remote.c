@@ -1,14 +1,24 @@
 /*©mit**************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              * 
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- *****************************************************************************©*/
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 /** @file
  * 
  *  User Manager
@@ -36,7 +46,7 @@
  */
 int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid, const char *hostname )
 {
-	DEBUG("UMAddRemoteUser start\n");
+	DEBUG("[UMAddGlobalRemoteUser] start\n");
 	
 	RemoteUser *actUsr = um->um_RemoteUsers;
 	while( actUsr != NULL )
@@ -86,11 +96,11 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
 		}
 		else
 		{
-			FERROR("Cannot open socket\n");
+			FERROR("Cannot open socket to setup FC-FC connection\n");
 		}
 	}
 	
-	DEBUG("UMAddRemoteUser end\n");
+	DEBUG("[UMAddGlobalRemoteUser] end\n");
 	
 	return 0;
 }
@@ -104,7 +114,7 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
  */
 int UMRemoveGlobalRemoteUser( UserManager *um, const char *name, const char *hostname )
 {
-	DEBUG("UMRemoveRemoteUser start\n");
+	DEBUG("[UMRemoveGlobalRemoteUser] start\n");
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	CommService *service = sb->fcm->fcm_CommService;
 	
@@ -144,7 +154,7 @@ int UMRemoveGlobalRemoteUser( UserManager *um, const char *name, const char *hos
 		}
 	}
 	
-	DEBUG("UMRemoveRemoteUser end\n");
+	DEBUG("[UMRemoveGlobalRemoteUser] end\n");
 	
 	return 0;
 }
@@ -162,7 +172,7 @@ int UMRemoveGlobalRemoteUser( UserManager *um, const char *name, const char *hos
  */
 int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid )
 {
-	DEBUG("UMAddRemoteUser start\n");
+	DEBUG("[UMAddGlobalRemoteDrive] start\n");
 	FBOOL registerUser = FALSE;
 	FBOOL registerDrive = FALSE;
 	CommFCConnection *con = NULL;
@@ -178,7 +188,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 	{
 		if( strcmp( uname, actUsr->ru_Name ) == 0 && strcmp( hostname, actUsr->ru_Host ) == 0 )
 		{
-			DEBUG("User found %s - host %s\n", uname, hostname );
+			DEBUG("[UMAddGlobalRemoteDrive] User found %s - host %s\n", uname, hostname );
 			con = actUsr->ru_Connection;
 			break;
 		}
@@ -250,7 +260,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 		}
 	}
 	
-	DEBUG("Before register drive %d\n", registerDrive );
+	DEBUG("[UMAddGlobalRemoteDrive] Before register drive %d\n", registerDrive );
 	
 	if( registerUser == TRUE || registerDrive == TRUE )
 	{
@@ -287,20 +297,19 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 		
 		DataForm *df = DataFormNew( tags );
 		
-		DEBUG("Register device\n");
+		DEBUG("[UMAddGlobalRemoteDrive] Register device\n");
 		
 		BufString *result = SendMessageAndWait( con, df );
 		
 		if( result != NULL )
 		{
-			DEBUG("Response received Register device\n");
+			DEBUG("[UMAddGlobalRemoteDrive] Response received Registering device\n");
 			if( result->bs_Size > 0 )
 			{
 				DataForm *resultDF = (DataForm *)result->bs_Buffer;
 				if( resultDF->df_ID == ID_FCRE )
 				{
 					char *ptr = result->bs_Buffer + (9*sizeof(FULONG))+FRIEND_CORE_MANAGER_ID_SIZE;
-					DEBUG("Received proper response1\n");
 					
 					resultDF = (DataForm *)ptr;
 					if( resultDF->df_ID == ID_CMMD && resultDF->df_Size == 0 && resultDF->df_Data == MSG_INTEGER_VALUE )
@@ -326,7 +335,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 		FFree( lauthid );
 	}
 	
-	DEBUG("UMAddRemoteUser end\n");
+	DEBUG("[UMAddGlobalRemoteDrive] end\n");
 	
 	return 0;
 }
@@ -343,7 +352,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
  */
 int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *hostname, char *localDevName, char *remoteDevName )
 {
-	DEBUG("UMRemoveRemoteUser start\n");
+	DEBUG("[UMRemoveGlobalRemoteDrive] start\n");
 	FBOOL registerUser = FALSE;
 	FBOOL registerDrive = FALSE;
 	CommFCConnection *con = NULL;
@@ -360,7 +369,7 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
 		// outgoing connection we are verifying by checking address and name
 		if( strcmp( uname, actUsr->ru_Name ) == 0 && strcmp( hostname, actUsr->ru_Host ) == 0 )
 		{
-			DEBUG("User found %s - host %s\n", uname, hostname );
+			DEBUG("[UMRemoveGlobalRemoteDrive] User found %s - host %s\n", uname, hostname );
 			con = actUsr->ru_Connection;
 			break;
 		}
@@ -431,7 +440,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 	{
 		if( strcmp( locuname, locusr->u_Name ) == 0 )
 		{
-			DEBUG("User found: %s\n", locuname );
+			DEBUG("[UMAddRemoteDriveToUser] User found: %s\n", locuname );
 			break;
 		}
 		locusr = (User *)locusr->node.mln_Succ;
@@ -449,7 +458,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 	{
 		if( strcmp( uname, remusr->ru_RemoteDrives->rd_LocalName ) == 0 && con == remusr->ru_Connection )
 		{
-			DEBUG("User found: %s\n", uname );
+			DEBUG("[UMAddRemoteDriveToUser] User found: %s\n", uname );
 			break;
 		}
 		remusr = (RemoteUser *)remusr->node.mln_Succ;
@@ -466,7 +475,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 			
 			remusr->node.mln_Succ = (MinNode *)locusr->u_RemoteUsers;
 			locusr->u_RemoteUsers = remusr;
-			DEBUG("New remote user added %s\n", uname );
+			DEBUG("[UMAddRemoteDriveToUser] New remote user added %s\n", uname );
 		}
 	}
 	
@@ -477,7 +486,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 		{
 			if( strcmp( locremdri->rd_LocalName, localDevName ) == 0 && strcmp( locremdri->rd_RemoteName, remoteDevName ) == 0 )
 			{
-				DEBUG("Remote drive found %s\n", localDevName );
+				DEBUG("[UMAddRemoteDriveToUser] Remote drive found %s\n", localDevName );
 				break;
 			}
 			locremdri = (RemoteDrive *)locremdri->node.mln_Succ;
@@ -508,7 +517,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 							char *next;
 							locremdri->rd_DriveID = strtoul( row[ 0 ], &next, 0 );
 							
-							DEBUG("ID found %lu\n", locremdri->rd_DriveID );
+							DEBUG("[UMAddRemoteDriveToUser] ID found %lu\n", locremdri->rd_DriveID );
 						}
 					}
 					sqllib->FreeResult( sqllib, result );
@@ -518,7 +527,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 			
 			locremdri->node.mln_Succ = (MinNode *)remusr->ru_RemoteDrives;
 			remusr->ru_RemoteDrives = locremdri;
-			DEBUG("New remote drive added: %s\n", remoteDevName );
+			DEBUG("[UMAddRemoteDriveToUser] New remote drive added: %s\n", remoteDevName );
 		}
 	}
 	
@@ -545,7 +554,7 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 	{
 		if( strcmp( locuname, locusr->u_Name ) == 0 )
 		{
-			DEBUG("User found: %s\n", locuname );
+			DEBUG("[UMRemoveRemoteDriveFromUser] User found: %s\n", locuname );
 			break;
 		}
 		locusr = (User *)locusr->node.mln_Succ;
@@ -553,7 +562,7 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 	
 	if( locusr == NULL )
 	{
-		FERROR("Cannot find user\n");
+		FERROR("User not found: %s\n", uname );
 		return -1;
 	}
 	
@@ -563,7 +572,7 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 	{
 		if( strcmp( uname, remusr->ru_RemoteDrives->rd_LocalName ) == 0 && con == remusr->ru_Connection )
 		{
-			DEBUG("User found: %s\n", uname );
+			DEBUG("[UMRemoveRemoteDriveFromUser] User found: %s\n", uname );
 			break;
 		}
 		remusr = (RemoteUser *)remusr->node.mln_Succ;
@@ -580,7 +589,7 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 			
 			remusr->node.mln_Succ = (MinNode *)locusr->u_RemoteUsers;
 			locusr->u_RemoteUsers = remusr;
-			DEBUG("New remote user added %s\n", uname );
+			DEBUG("[UMRemoveRemoteDriveFromUser] New remote user added %s\n", uname );
 		}
 	}
 	

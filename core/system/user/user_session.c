@@ -32,6 +32,9 @@
 
 #include "user_session.h"
 #include <util/string.h>
+#include <system/systembase.h>
+
+extern SystemBase *SLIB;
 
 /**
  * Create new User Session
@@ -64,33 +67,43 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		us->us_WSConnections = NULL;
+		pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
 		
-		 WebsocketClient *nwsc = us->us_WSConnections;
-		 us->us_WSConnections = NULL;
-		 int count = 0;
-		 
-		 // we must wait till all tasks will be finished
-		 while( TRUE )
-		 {
-			 if( us->us_NRConnections <= 0 )
+		WebsocketClient *nwsc = us->us_WSConnections;
+		us->us_WSConnections = NULL;
+		int count = 0;
+		
+        pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
+		// we must wait till all tasks will be finished
+		while( TRUE )
+		{
+            if( us->us_NRConnections <= 0 )
 			{
 				break;
 			}
 			else
 			{
-				DEBUG("number of connections: %d\n", us->us_NRConnections );
+				INFO("Closeing Workers: number of working functions on user session: %ld  sessionid: %s\n", us->us_NRConnections, us->us_SessionID );
 				count++;
 				if( count > 50 )
 				{
-					//WorkerManagerDebug( SLIB );
+					WorkerManagerDebug( SLIB );
 					count = 0;
 				}
 			}
-			usleep( 100000 );
+			usleep( 1000000 );
 		}
+		
+		pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
+		
+        if( us->us_User != NULL )
+        {
+            UserRemoveSession( us->us_User, us );
+        }
+        
+        us->us_User = NULL;
 	
-		DEBUG("Remove session %p\n", us );
+		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 		pthread_mutex_lock( &(us->us_WSMutex) );
 		if( nwsc != NULL )
 		{
@@ -100,21 +113,31 @@ void UserSessionDelete( UserSession *us )
 				rws = nwsc;
 				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
 	
-				DEBUG("Remove websockets\n");
+				DEBUG("[UserSessionDelete] Remove websockets\n");
 				FCWSData *data = rws->wc_WebsocketsData;
 				if( data != NULL )
 				{
 					data->fcd_ActiveSession = NULL;
-					data->fcd_WSClient = NULL;
+					//data->fcd_WSClient = NULL;
 				}
+				
+				if( SLIB->sl_AppSessionManager != NULL )
+				{
+					AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, rws );
+				}
+				
 				rws->wc_UserSession = NULL;
-				FFree( rws );
+                //rws->wc_Wsi = NULL;
+                //rws->wc_WebsocketsData = NULL;
+				//FFree( rws );
+				// there is no need to release memory, it will be released with Websocket connection
 			}
 		}
-
 		pthread_mutex_unlock( &(us->us_WSMutex) );
+		
+		//pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
 	
-		DEBUG("Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
+		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 	
 		if( us->us_DeviceIdentity != NULL )
 		{
@@ -127,5 +150,6 @@ void UserSessionDelete( UserSession *us )
 		}
 	
 		FFree( us );
+		pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
 	}
 }

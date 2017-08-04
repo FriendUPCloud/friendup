@@ -65,7 +65,7 @@ AppSessionManager *AppSessionManagerNew()
 
 void AppSessionManagerDelete( AppSessionManager *as )
 {
-	DEBUG("AppSessionManagerDelete\n");
+	DEBUG("[AppSessionManagerGetSession] AppSessionManagerDelete\n");
 	if( as )
 	{
 		AppSession *las = as->sl_AppSessions;
@@ -73,7 +73,7 @@ void AppSessionManagerDelete( AppSessionManager *as )
 		
 		while( las != NULL )
 		{
-			DEBUG("AppSession will be removed from list\n");
+			DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
 
 			oas = las;
 			las =(AppSession  *)las->node.mln_Succ;
@@ -102,7 +102,7 @@ int AppSessionManagerAddSession( AppSessionManager *as, AppSession *nas )
 		{
 			if( nas->as_SASID == las->as_SASID )
 			{
-				DEBUG("AppSession was already added to list\n");
+				DEBUG("[AppSessionManagerGetSession] AppSession was already added to list\n");
 				return 0;
 			}
 		}
@@ -145,7 +145,7 @@ int AppSessionManagerRemSession( AppSessionManager *as, AppSession *nas )
 		{
 			if( nas->as_SASID == las->as_SASID )
 			{
-				DEBUG("AppSession will be removed from list\n");
+				DEBUG("[AppSessionManagerGetSession] AppSession will be removed from list\n");
 				
 				if( nas == as->sl_AppSessions )
 				{
@@ -189,7 +189,7 @@ AppSession *AppSessionManagerGetSession( AppSessionManager *as, FUQUAD id )
 		{
 			if( id == las->as_SASID )
 			{
-				DEBUG("AppSession found\n");
+				DEBUG("[AppSessionManagerGetSession] AppSession found\n");
 				
 				return las;
 			}

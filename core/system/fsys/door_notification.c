@@ -1,14 +1,24 @@
-/*©mit***************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              *
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- **©****************************************************************************/
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 /** @file
  * 
  *  File/Directory/Door DoorNotification functionalities
@@ -93,9 +103,7 @@ void DoorNotificationDeleteAll( DoorNotification *lck )
 FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession *ses, char *path, int type )
 {
 	DoorNotification lck;
-	
 	int pathsize = strlen( path );
-	
 	
 	lck.dn_ID = 0;
 	lck.dn_LockTime = 1;// time();
@@ -118,11 +126,9 @@ FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession 
 	
 	if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
 	{
-		
-		//DEBUG("Lock was stored, using ID: %d\n", lck.dn_ID );
+
 	}
-	DEBUG("Did it store?, using ID: %lu path : %s\n", lck.dn_ID, lck.dn_Path );
-	
+
 	if( lck.dn_Path != NULL )
 	{
 		FFree( lck.dn_Path );
@@ -175,7 +181,6 @@ FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession 
 		}
 	*/
 	return lck.dn_ID;
-	//return 1;
 }
 
 /**
@@ -206,14 +211,10 @@ int DoorNotificationUpdateDB( MYSQLLibrary *sqllib, File *device, char *path, FU
 	DoorNotification *rootLock = NULL;
 	DoorNotification *lastLock = NULL;
 	
-	DEBUG("\n\n\n\n\n\n\n UPDATE %s path, querysize %d\n", path, querysize );
-	
 	if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 	{
 		sprintf( tmpQuery, "UPDATE `FDoorNotification` SET Path='%s' WHERE ID=%lu", path, id );
-		
-		DEBUG("Checking locks via SQL '%s'\n", tmpQuery );
-		
+
 		int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
 		
 		FFree( tmpQuery );
@@ -280,49 +281,27 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 				lastSlashPosition = i;
 			}
 		}
-		/*
-		if( rootPath == TRUE )
+
+		// file is not in subfolder
+		if( lastSlashPosition == 0 )
 		{
-			//sprintf( tmpQuery, "SELECT ID,OwnerID,Type FROM `FDoorNotification` 
-			
-			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT ID,OwnerID,Type FROM `FDoorNotification` \
-				WHERE CHAR_LENGTH(Path) = 0 \
-				AND DeviceID = %lu ORDER BY CHAR_LENGTH(Path) DESC", device->f_ID );
+			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT Distinct ID,OwnerID,Type FROM `FDoorNotification` \
+				WHERE Path = '' AND DeviceID = %lu ", device->f_ID );
 		}
 		else
 		{
-			*/
-			// file is not in subfolder
-			if( lastSlashPosition == 0 )
+			char *parentPath = StringDuplicate( path );
+			if( parentPath != NULL )
 			{
+				parentPath[ lastSlashPosition ] = 0;
+				
 				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT Distinct ID,OwnerID,Type FROM `FDoorNotification` \
-					WHERE Path = '' AND DeviceID = %lu ", device->f_ID );
+					WHERE (Path='%s' OR Path='%s' ) \
+					AND DeviceID = %lu", path, parentPath, device->f_ID );
+				FFree( parentPath );
 			}
-			else
-			{
-				char *parentPath = StringDuplicate( path );
-				if( parentPath != NULL )
-				{
-					parentPath[ lastSlashPosition ] = 0;
-					
-					sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT Distinct ID,OwnerID,Type FROM `FDoorNotification` \
-						WHERE (Path='%s' OR Path='%s' ) \
-						AND DeviceID = %lu", path, parentPath, device->f_ID );
-					FFree( parentPath );
-				}
-			}
-			
-			//sprintf( tmpQuery, "SELECT ID,OwnerID,Type FROM `FDoorNotification` 
-			/*
-			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT ID,OwnerID,Type FROM `FDoorNotification` \
-				WHERE MATCH(Path) AGAINST('%s' IN BOOLEAN MODE) \
-				AND CHAR_LENGTH(Path) <=  LENGTH('%s') \
-				AND DeviceID = %lu ORDER BY CHAR_LENGTH(Path) DESC", path, path, device->f_ID );
-			*/
-		//}
-		
-		DEBUG("Checking locks via SQL '%s'\n", tmpQuery );
-		
+		}
+
 		MYSQL_RES *res = sqllib->Query( sqllib, tmpQuery );
 		
 		if( res != NULL )
@@ -334,13 +313,11 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 				
 				while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 				{
-					//DEBUG("Found lock etrnies\n");
 					char *next;
 					// ownerid, type
 					DoorNotification *local = DoorNotificationNew();
 					if( local != NULL )
 					{
-						//DEBUG("New DoorNotification entry added\n");
 						char *next;
 						local->dn_ID = (FULONG)strtol( row[ 0 ], &next, 0);
 						local->dn_OwnerID = (FULONG)strtol( row[ 1 ], &next, 0);
@@ -348,13 +325,11 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 						
 						if( rootLock == NULL )
 						{
-							//DEBUG("Notification added as root\n");
 							rootLock = local;
 							lastLock = rootLock;
 						}
 						else
 						{
-							//DEBUG("Notification added as next entry\n");
 							lastLock->node.mln_Succ = (MinNode *)local;
 							lastLock = local;
 						}
@@ -365,7 +340,7 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 			// checking default access
 			else
 			{
-				DEBUG("No entries found\n");
+
 			}
 			
 			sqllib->FreeResult( sqllib, res );
@@ -387,11 +362,10 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *device, char *path )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	DEBUG("[DoorNotificationCommunicateChanges] SB pointer %p\n", sb );
-	
+
 	if( device == NULL )
 	{
-		DEBUG("File structure is equal to NULL!\n");
+		FERROR("File structure is equal to NULL!\n");
 		return 1;
 	}
 	
@@ -406,7 +380,6 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 		
 		while( notification != NULL )
 		{
-			//DEBUG("Got notification\n");
 			DoorNotification *rem = notification;
 			
 			USMSendDoorNotification( sb->sl_USM, notification, device, path );
@@ -506,20 +479,16 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 			// Notifying other workgroup users
 			if( device->f_FSysName != NULL && strcmp( device->f_FSysName, "SQLWorkgroupDrive" ) == 0 )
 			{
-				DEBUG( "[DoorNotificationCommunicateChanges] Now lets notify other workgroup members!\n" );
 				UserSession *uses = sb->sl_USM->usm_Sessions;
 				while( uses != NULL )
 				{
-					//DEBUG("Compare owner id's  session %ld  lock session %ld  deviceident %s\n", uses->us_ID, locks->dn_OwnerID, uses->us_DeviceIdentity );
 					if( uses->us_ID != locks->dn_OwnerID && uses->us_User != NULL )
 					{
 						File *search = uses->us_User->u_MountedDevs;
 						while( search != NULL )
 						{
-							//DEBUG("[DoorNotificationCommunicateChanges] -- Find current id %d name %s\n", search->f_ID, search->f_Name );
 							if( strcmp( search->f_Name, device->f_Name ) == 0 )
 							{
-								//DEBUG( "[DoorNotificationCommunicateChanges] -- Found device %s.\n", device->f_Name );
 								break;
 							}
 							search = (File *)search->node.mln_Succ;
@@ -531,8 +500,7 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 							char tmpmsg[ 2048 ];
 							int len = snprintf( tmpmsg, sizeof(tmpmsg), "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", search->f_ID, search->f_Name, path, uses->us_User->u_Name  );
 					
-							DEBUG("[DoorNotificationCommunicateChanges] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
-							sb->WebSocketSendMessage( sb, uses, tmpmsg, len );
+							WebSocketSendMessage( sb, uses, tmpmsg, len );
 						}
 					}
 					uses = (UserSession *)uses->node.mln_Succ;
@@ -556,19 +524,17 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 
 int DoorNotificationRemoveEntries( void *lsb )
 {
-	//pthread_detach( pthread_self() );
 	SystemBase *sb = (SystemBase *)lsb;
 	DEBUG("DoorNotificationRemoveEntries LSB %p\n", lsb );
 	MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
 	if( sqllib != NULL )
 	{
-		DEBUG("DoorNotificationRemoveEntries launched\n");
+		DEBUG("[DoorNotificationRemoveEntries] start\n");
 		char temp[ 1024 ];
 		time_t acttime = time( NULL );
 		
 		// we remove old entries older then 24 hours
 		snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` WHERE (%lu-Time)>86400", acttime );
-		DEBUG("Call: %s\n", temp );
 		
 		sqllib->QueryWithoutResults( sqllib, temp );
 		
@@ -594,18 +560,16 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 	MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
 	if( sqllib != NULL )
 	{
-		DEBUG("DoorNotificationRemoveEntries launched %lu\n", uid );
+		DEBUG("[DoorNotificationRemoveEntriesByUser] start, userID %lu\n", uid );
 		char temp[ 1024 ];
 		
 		// we remove old entries every 5 mins
 		snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` WHERE OwnerID=%lu", uid );
 		
-		DEBUG("--> %s <--\n", temp );
-		
 		int error = sqllib->QueryWithoutResults( sqllib, temp );
 		if( error != 0 )
 		{
-			DEBUG("Cannot call query\n");
+			DEBUG("[DoorNotificationRemoveEntriesByUser] Cannot call query\n");
 		}
 		
 		sb->LibraryMYSQLDrop( sb, sqllib );

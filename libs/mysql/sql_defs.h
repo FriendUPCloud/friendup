@@ -41,7 +41,7 @@ enum {
 		SQLT_VOIDPTR,
 		SQLT_NODE,		// pointer to next structure
 		SQLT_SKIPBYTES,
-		SQLT_TIMESTAMP,
+		SQLT_DATETIME,
 		SQLT_END
 };
 

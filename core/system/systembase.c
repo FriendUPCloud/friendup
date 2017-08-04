@@ -66,8 +66,6 @@
 #define LIB_VERSION 		1
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
-//#define LOGOUT_TIME         86400	// one day
-//#define LOGOUT_TIME         3600 // one hour
 
 
 //
@@ -83,8 +81,6 @@ struct SystemBase *SLIB;
 DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, const char *name );
 
 void DOSDriverDelete( DOSDriver *ddrive );
-
-void SetFriendCoreManager( struct SystemBase *l, FriendCoreManager *lfcm );
 
 void SystemClose( struct SystemBase *l );
 
@@ -103,10 +99,53 @@ SystemBase *SystemInit( void )
 	struct SystemBase *l = NULL;
 	char tempString[ 1024 ];
 	Log( FLOG_INFO,  "SystemBase Init\n");
-
+	
 	if( ( l = FCalloc( 1, sizeof( struct SystemBase ) ) ) == NULL )
 	{
 		return NULL;
+	}
+	
+	//
+	// sl_Autotask
+	//
+	
+	DIR *asd;
+	struct dirent *asdir;
+	
+	l->sl_AutotaskPath = FCalloc( 1024, sizeof(char) );
+	if( l->sl_AutotaskPath != NULL )
+	{
+		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+		Log( FLOG_INFO, "[SystemBase] Starting autoscripts\n");
+		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+		
+		getcwd( l->sl_AutotaskPath, sizeof ( tempString ) );
+		strcat( l->sl_AutotaskPath, "/autostart/");
+
+		asd = opendir( l->sl_AutotaskPath );
+	 
+		if( asd != NULL )
+		{
+			while( ( asdir = readdir( asd ) ) != NULL )
+			{
+				if( asdir->d_name[0] == '.' ) continue;
+				Log( FLOG_INFO,  "[SystemBase] Reading autostart scripts:  %s\n", asdir->d_name );
+			
+				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, asdir->d_name );
+				
+				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
+				if( loctask != NULL )
+				{
+					loctask->node.mln_Succ = (MinNode *)l->sl_Autotasks;
+					l->sl_Autotasks = loctask;
+				}
+			}
+			closedir( asd );
+		}
+		
+		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+		Log( FLOG_INFO, "[SystemBase] Starting autoscripts END\n");
+		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	}
 	
 	SLIB = l;
@@ -158,12 +197,12 @@ SystemBase *SystemInit( void )
 	l->GetSentinelUser = GetSentinelUser;
 	l->UserDeviceMount = UserDeviceMount;
 	l->UserDeviceUnMount = UserDeviceUnMount;
-	l->AddWebSocketConnection = AddWebSocketConnection;
 	l->GetError = GetError;
-	l->SetFriendCoreManager = SetFriendCoreManager;
 	l->Log = Log;
 
-	Log( FLOG_INFO,  "Systembase: Create SQL pooled connections\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Reading configuration\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// open mysql.library
 	
@@ -302,6 +341,10 @@ SystemBase *SystemInit( void )
 		l->LibraryPropertiesDrop( l, plib );
 	}
 	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Reading configuration END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
 	if( l->sqlpool[ 0 ].sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
@@ -346,6 +389,10 @@ SystemBase *SystemInit( void )
 	{
 		FERROR("[ERROR]: CANNOT OPEN z.library!\n");
 	}
+	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create modules\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	DIR *d;
 	struct dirent *dir;
@@ -412,9 +459,17 @@ SystemBase *SystemInit( void )
 		lmod = (EModule *)lmod->node.mln_Succ;
 	}
 	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create modules END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
 	//
 	// login modules
 	//
+	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create authentication modules\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	getcwd( tempString, sizeof ( tempString ) );
 	
@@ -541,11 +596,29 @@ SystemBase *SystemInit( void )
 	
 	l->sl_ActiveAuthModule = l->AuthModuleGet( l );
 	
-	Log( FLOG_INFO,  "[SystemBase] scanning drivers\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create authentication modules END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	RescanHandlers( l );
 	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
 	RescanDOSDrivers( l );
+	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	if( ( l->sl_Magic = magic_open(MAGIC_CHECK|MAGIC_MIME_TYPE) ) != NULL )
 	{
@@ -563,7 +636,9 @@ SystemBase *SystemInit( void )
 	//
 	//
 	
-	Log( FLOG_INFO,  "[SystemBase] create managers\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create Managers\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// create all managers
 	
@@ -635,11 +710,17 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
 	}
 	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
 	//
 	//
 	//
 	
-	Log( FLOG_INFO,  "[SystemBase] create default events\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Register Events\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	#define MINS5 300
 	#define MINS6 460
@@ -656,41 +737,13 @@ SystemBase *SystemInit( void )
 	l->sl_USM->usm_UM = l->sl_UM;
 	l->sl_UM->um_USM = l->sl_USM;
 	
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	Log( FLOG_INFO, "[SystemBase] Register Events END\n");
+	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+	
 	Log( FLOG_INFO,  "[SystemBase] base initialized properly\n");
 	
 	// we cannot open libs inside another init
-	
-	//
-	// sl_Autotask
-	//
-	
-	l->sl_AutotaskPath = FCalloc( 1024, sizeof(char) );
-	if( l->sl_AutotaskPath != NULL )
-	{
-		getcwd( l->sl_AutotaskPath, sizeof ( tempString ) );
-		strcat( l->sl_AutotaskPath, "/autostart/");
-
-		d = opendir( l->sl_AutotaskPath );
-	 
-		if( d != NULL )
-		{
-			while( ( dir = readdir( d ) ) != NULL )
-			{
-				if( dir->d_name[0] == '.' ) continue;
-				Log( FLOG_INFO,  "[SystemBase] Reading autostart scripts:  %s\n", dir->d_name );
-			
-				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, dir->d_name );
-				
-				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
-				if( loctask != NULL )
-				{
-					loctask->node.mln_Succ = (MinNode *)l->sl_Autotasks;
-					l->sl_Autotasks = loctask;
-				}
-			}
-			closedir( d );
-		}
-	}
 
 	return ( void *)l;
 }
@@ -708,6 +761,8 @@ void SystemClose( SystemBase *l )
 		FERROR("SystemBase is NULL\n");
 		return;
 	}
+	
+	FriendCoreManagerDelete( l->fcm );
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
 	
@@ -776,6 +831,7 @@ void SystemClose( SystemBase *l )
 		EModuleDelete( remm );
 	}
 
+	DEBUG("Delete Managers\n");
 	if( l->sl_USM != NULL )
 	{
 		USMDelete( l->sl_USM );
@@ -842,7 +898,7 @@ void SystemClose( SystemBase *l )
 		FHandlerDelete( rems );
 	}
 	
-	FriendCoreManagerDelete( l->fcm );
+	//FriendCoreManagerDelete( l->fcm );
 	
 	if( l->sl_WorkerManager != NULL )
 	{
@@ -1034,7 +1090,7 @@ int SystemInitExternal( SystemBase *l )
 		// get all user sessions from DB
 		//
 	
-		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, LOGOUT_TIME );
+		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, REMOVE_SESSIONS_AFTER_TIME );
 		UserSession *usess = l->sl_USM->usm_Sessions;
 		DEBUG("[SystemBase] Got users by timeout\n");
 		
@@ -1121,6 +1177,7 @@ int SystemInitExternal( SystemBase *l )
 			}
 			else
 			{
+				DEBUG("[SystemBase] Sentinel user is not avaiable\n");
 			}
 		}
 		
@@ -1167,7 +1224,7 @@ int SystemInitExternal( SystemBase *l )
 			
 			if( foundRemoteSession == FALSE )
 			{
-				DEBUG("[SystemBase] REMOTE SESSION WILL BE CREATED FOR SENTINEL\n");
+				DEBUG("[SystemBase] Remote session will be created for Sentinel\n");
 				
 				UserSession *ses = UserSessionNew( "remote", "remote" );
 				if( ses != NULL )
@@ -1202,7 +1259,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > LOGOUT_TIME )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > REMOVE_SESSIONS_AFTER_TIME )
 			{
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
@@ -1211,9 +1268,9 @@ int SystemInitExternal( SystemBase *l )
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
 		{
-			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s.....\n\n", tmpUser->u_Name );
+			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			UserDeviceMount( l, sqllib, tmpUser, 1 );
-			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s.....\n\n", tmpUser->u_Name );
+			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
 		
@@ -1258,8 +1315,10 @@ typedef struct DBUpdateEntry
 
 void CheckAndUpdateDB( struct SystemBase *l )
 {
-	DEBUG("------------------------------------------------------------------------\n");
-	DEBUG("---------Autoupdatedatabase in progress-------------\n");
+	DEBUG("----------------------------------------------------\n");
+	DEBUG("---------Autoupdatedatabase process-----------------\n");
+	DEBUG("----------------------------------------------------\n");
+	
 	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
 	if( sqllib != NULL )
 	{
@@ -1374,8 +1433,6 @@ void CheckAndUpdateDB( struct SystemBase *l )
 							long fsize = ftell( fp );
 							fseek( fp, 0, SEEK_SET );
 							
-							DEBUG("[SystemBase] File opened\n");
-							
 							char *script;
 							if( ( script = FCalloc( fsize+1, sizeof(char) ) ) != NULL )
 							{
@@ -1406,7 +1463,7 @@ void CheckAndUpdateDB( struct SystemBase *l )
 										}
 									}
 									
-									DEBUG("[SystemBase] Running script2 : %s from file: %s on database\n", command, scriptfname ); 
+									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
 									if( strlen( command) > 10 )
 									{
 										if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
@@ -1421,10 +1478,8 @@ void CheckAndUpdateDB( struct SystemBase *l )
 								}
 								FFree( script );
 							}
-							
 							fclose( fp );
 						}
-						
 						break;
 					}
 					
@@ -1450,12 +1505,14 @@ void CheckAndUpdateDB( struct SystemBase *l )
 				snprintf( query, sizeof(query), "UPDATE `FGlobalVariables` SET `Value`='%d', `Date`='%lu', `Comment`='%s' WHERE `Key`='DB_VERSION'", startUpdatePosition, time(NULL), lastSQLname );
 				sqllib->QueryWithoutResults( sqllib, query );
 			}
-			
 			FFree( dbentries );
 		}
-		
 		l->LibraryMYSQLDrop( l, sqllib );
 	}
+	
+	DEBUG("----------------------------------------------------\n");
+	DEBUG("---------Autoupdatedatabase process END-------------\n");
+	DEBUG("----------------------------------------------------\n");
 }
 
 /**
@@ -1566,7 +1623,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
 			pthread_mutex_unlock( &l->sl_InternalMutex );
 
 			File *device = NULL;
-			DEBUG("[UserDeviceMount] \tBefore mounting\n");
+			DEBUG("[UserDeviceMount] Before mounting\n");
 			int err = MountFS( l, (struct TagItem *)&tags, &device, usr );
 
 			pthread_mutex_lock( &l->sl_InternalMutex );
@@ -1663,21 +1720,6 @@ int UserDeviceUnMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 }
 
 /**
- * Set pointer to FrriendCoreManager
- *
- * @param l pointer to SystemBase
- * @param lfcm pointer to FriendCoreManager
- */
-
-void SetFriendCoreManager( SystemBase *l, FriendCoreManager *lfcm )
-{
-	if( l != NULL )
-	{
-		l->fcm = lfcm;
-	}
-}
-
-/**
  * Run module
  *
  * @param l pointer to SystemBase
@@ -1697,7 +1739,7 @@ char *RunMod( SystemBase *l, const char *type, const char *path, const char *arg
 	EModule *lmod = l->sl_Modules;
 	EModule *workmod = NULL;
 
-	DEBUG("[SystemBase] Checking modules '%s'\n", type );
+	DEBUG("[SystemBase] Run module '%s'\n", type );
 
 	while( lmod != NULL )
 	{
@@ -1966,7 +2008,7 @@ void LibraryPropertiesDrop( SystemBase *l, PropertiesLibrary *pclose )
 	}
 	else if ( l->PropLibCounter == 0 )
 	{
-		DEBUG( "[SystemBase] Finally close properties.library\n" );
+		DEBUG( "[SystemBase] Close properties.library\n" );
 		LibraryClose( (struct Library *)l->plib );
 		l->plib = NULL;
 	}
@@ -2037,7 +2079,7 @@ ImageLibrary *LibraryImageGet( SystemBase *l )
 		l->ilib = (ImageLibrary *)LibraryOpen( l, "image.library", 0 );
 		if( l->ilib == NULL )
 		{
-			DEBUG("[SystemBase] CANNOT OPEN image.library!\n");
+			DEBUG("[SystemBase] Cannot open image.library!\n");
 			return NULL;
 		}
 		l->ImageLibCounter++;
@@ -2097,9 +2139,6 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 	unsigned char *buf;
 	int bytes = 0;
 	
-	//DEBUG("\n\n\nWebSocketSendMessage start %p device %s\n", usersession, usersession->us_DeviceIdentity );
-	
-	//if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
 	{
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( unsigned char ) );
 		if( buf != NULL )
@@ -2115,7 +2154,6 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 				if( wsc->wc_Wsi != NULL )
 				{
 					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
-					//bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
 				}
 				else
 				{
@@ -2129,10 +2167,8 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 		else
 		{
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-			//pthread_mutex_unlock( &usersession->us_WSMutex );
 			return 0;
 		}
-		//pthread_mutex_unlock( &usersession->us_WSMutex );
 	}
 	DEBUG("[SystemBase] WebSocketSendMessage end, wrote %d bytes\n", bytes );
 	
@@ -2153,7 +2189,6 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 	unsigned char *buf;
 	int bytes = 0;
 	
-	//if( pthread_mutex_lock( &usersession->us_WSMutex ) == 0 )
 	{
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128+24, sizeof( unsigned char ) );
 		if( buf != NULL )
@@ -2169,9 +2204,8 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 				DEBUG("[SystemBase] send message to user session %p, pointer to websocket connection %p\n", usersession, wsc->wc_Wsi );
 				if( wsc->wc_Wsi != NULL )
 				{
-					//bytes += lws_write( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
 					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
-				}//
+				}
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
 		
@@ -2180,138 +2214,13 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		else
 		{
 			Log( FLOG_ERROR,"Cannot allocate memory for message\n");
-		
-			//pthread_mutex_unlock( &usersession->us_WSMutex );
-		
+
 			return 0;
 		}
-		//pthread_mutex_unlock( &usersession->us_WSMutex );
 	}
 	
 	return bytes;
 }
-
-/**
- * Add websocket connection to user session
- *
- * @param l pointer to SystemBase
- * @param wsi pointer to libwebsockets
- * @param sessionid sessionid to which 
- * @param len length of the message
- * @return 0 if connection was added without problems otherwise error number
- */
-
-int AddWebSocketConnection( SystemBase *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data )
-{
-	if( l->sl_USM == NULL )
-	{
-		return -1;
-	}
-	
-	UserSession *actUserSess = NULL;
-	char lsessionid[ DEFAULT_SESSION_ID_SIZE ];
-	
-	Log( FLOG_INFO, "[SystemBase] Addwebsocket connection. SessionID %s. Authid %s\n", sessionid, authid );
-	
-	if( authid != NULL )
-	{
-		MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
-
-		// Get authid from mysql
-		if( sqllib != NULL )
-		{
-			char qery[ 1024 ];
-			
-			sqllib->SNPrintF( sqllib, qery,  sizeof(qery), \
-				 "SELECT * FROM ( ( SELECT u.SessionID FROM FUserSession u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.UserID LIMIT 1 ) \
-				UNION ( SELECT u2.SessionID FROM FUserSession u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.UserID = f.UserID LIMIT 1 ) ) z LIMIT 1",
-				( char *)authid, "%", ( char *)authid, "%"
-			);
-
-			MYSQL_RES *res = sqllib->Query( sqllib, qery );
-			if( res != NULL )
-			{
-				DEBUG("[SystemBase] Called %s\n",  qery );
-				
-				MYSQL_ROW row;
-				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-				{
-					snprintf( lsessionid, sizeof(lsessionid), "%s", row[ 0 ] );
-					sessionid = lsessionid;
-				}
-				sqllib->FreeResult( sqllib, res );
-			}
-			l->LibraryMYSQLDrop( l, sqllib );
-		}
-		DEBUG( "[SystemBase] Ok, SQL phase complete\n" );
-	}
-	
-	actUserSess = USMGetSessionBySessionID( l->sl_USM, (char *)sessionid );
-	
-	if( actUserSess == NULL )
-	{
-		Log( FLOG_ERROR,"Cannot find user in session with sessionid %s\n", sessionid );
-		return -1;
-	}
-	
-	DEBUG("[SystemBase] AddWSCon session pointer %p\n", actUserSess );
-	pthread_mutex_lock( &actUserSess->us_WSMutex );
-	
-	WebsocketClient *listEntry = actUserSess->us_WSConnections;
-	while( listEntry != NULL )
-	{
-		DEBUG("[SystemBase] wsclientptr %p\n", listEntry );
-		if( listEntry->wc_Wsi == wsi )
-		{
-			break;
-		}
-		listEntry = (WebsocketClient *)listEntry->node.mln_Succ;
-	}
-	
-	DEBUG("[SystemBase] AddWSCon entry found %p\n", listEntry );
-	
-	if( listEntry != NULL )
-	{
-		INFO("[SystemBase] User already have this websocket connection\n");
-		pthread_mutex_unlock( &actUserSess->us_WSMutex );
-		return 1;
-	}
-	
-	WebsocketClient *nwsc = FCalloc( 1, sizeof( WebsocketClient ) );
-	if( nwsc != NULL )
-	{
-		DEBUG("[SystemBase] AddWSCon new connection created\n");
-		nwsc->wc_Wsi = wsi;
-		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSConnections;
-		actUserSess->us_WSConnections = nwsc;
-		
-		User *actUser = actUserSess->us_User;
-		if( actUser != NULL )
-		{
-			Log( FLOG_INFO,"[SystemBase] WebSocket connection set for user %s  sessionid %s\n", actUser->u_Name, actUserSess->us_SessionID );
-
-			INFO("[SystemBase] ADD WEBSOCKET CONNECTION TO USER %s\n\n",  actUser->u_Name );
-		}
-		else
-		{
-			FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
-		}
-
-		data->fcd_ActiveSession = actUserSess;
-		data->fcd_WSClient  = nwsc;
-		data->fcd_SystemBase = l;
-		nwsc->wc_WebsocketsData = data;
-	}
-	else
-	{
-		Log( FLOG_ERROR,"Cannot allocate memory for WebsocketClient\n");
-		pthread_mutex_unlock( &actUserSess->us_WSMutex );
-		return 2;
-	}
-	pthread_mutex_unlock( &actUserSess->us_WSMutex );
-	return 0;
-}
-
 
 /**
  * Send data
@@ -2347,10 +2256,9 @@ int SendProcessMessage( Http *request, char *data, int len )
 	}
 	else
 	{
-		DEBUG("SendProcessMessage end\n");
+		
 	}
+	DEBUG("SendProcessMessage end\n");
 	
 	return 0;
 }
-
-

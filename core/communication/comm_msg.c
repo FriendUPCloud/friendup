@@ -1,14 +1,26 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+
+
 /** @file
  * 
  *  DataForm structure management
@@ -62,7 +74,6 @@ int DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 			
 			if( (*mi)->mi_Tag == MSG_END )
 			{
-				DEBUG("END OF TAGLIST\n");
 				lmi->mi_Size = size;
 				return size;
 			}
@@ -92,7 +103,6 @@ int DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 
 		if( (*mi)->mi_Tag == MSG_END )
 		{
-			DEBUG("END OF TAGLIST\n");
 			break;
 		}
 	}
@@ -152,11 +162,9 @@ DataForm *DataFormNew( MsgItem *mi )
 			
 			//while( lmi->mi_Tag != MSG_END )
 			//{
-				//DEBUG("START----\n");
 				int oldsize = DataFormWriteGroup( &tmpptr, &mi );
 				//tmpptr += oldsize;
 				lmi->mi_Size = oldsize;
-				//DEBUG("END---- size %ld \n", df->df_Size );
 				//df->df_Size = size;
 				
 		/*
@@ -172,7 +180,6 @@ DataForm *DataFormNew( MsgItem *mi )
 				FULONG oldSize = lmi->mi_Size;
 				
 				BYTE *nameptr = (BYTE *)&(lmi->mi_Tag);
-				//DEBUG("NEWMSG - new entry size %ld  NAME '%c %c %c %c'\n", lmi->mi_Size, (char)nameptr[0], (char)nameptr[1], (char)nameptr[2], (char)nameptr[3] );
 				memcpy( tmpptr, &(lmi->mi_Tag), sizeof( ID ) );
 				tmpptr += sizeof( ID );
 				lmi->mi_Size += COMM_MSG_HEADER_SIZE;
@@ -284,7 +291,6 @@ int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
 	
 	if( data != NULL && srcdata != NULL )
 	{
-		//DEBUG("Before copy size %ld!\n", (*dst)->df_Size );
 		memcpy( data, (*dst), (*dst)->df_Size );
 		
 		if( *dst != NULL )
@@ -295,7 +301,6 @@ int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
 		*dst = (DataForm *)data;
 		memcpy( data + sizeof(ID), &resSize, sizeof( FULONG ) );
 		memcpy( data+oldSize, srcdata, (size_t)size );
-		//printf("%c%c%c%c\n", data[ 0 ], data[ 1 ], data[ 2 ], data[ 3 ] );
 		
 		(*dst)->df_Size = resSize + sizeof( DataForm );
 
@@ -472,7 +477,7 @@ DataForm *DataFormFromHttp( Http *http )
 	DFList *re = NULL;	// root entry
 	DFList *le = NULL;	// last entry
 	
-	DEBUG("DataFormFromttp\n");
+	DEBUG("[DataFormFromHttp] start\n");
 	
 	// check provided paramters
 	/*
@@ -500,8 +505,6 @@ DataForm *DataFormFromHttp( Http *http )
 					char *tmp = NULL;
 					if( ( tmp = FCalloc( size, sizeof(char) ) ) != NULL )
 					{
-						DEBUG("HEADER key %s data %s\n",  e.key, (char *)el->data );
-						
 						size = snprintf( tmp, size, "%s=%s", e.key, (char *)el->data );
 						DFList *ne = FCalloc( 1, sizeof(DFList) );
 						if( ne != NULL )
@@ -527,7 +530,7 @@ DataForm *DataFormFromHttp( Http *http )
 		}
 	}*/
 	
-	DEBUG("DataFormFromttp headers parsed\n");
+	DEBUG("[DataFormFromHttp] headers parsed\n");
 	
 	if( http->parsedPostContent != NULL )
 	{
@@ -547,7 +550,7 @@ DataForm *DataFormFromHttp( Http *http )
 				}
 				else if( strcmp( e.key, "remotecommand" ) == 0 )
 				{
-					DEBUG("remote command : %s\n", (char *)e.data );
+					DEBUG("[DataFormFromHttp] remote command : %s\n", (char *)e.data );
 					char *data = UrlDecodeToMem( e.data );
 					if( data != NULL )
 					{
@@ -606,8 +609,6 @@ DataForm *DataFormFromHttp( Http *http )
 							char *tmp = NULL;
 							if( ( tmp = FCalloc( size+1, sizeof(char) ) ) != NULL )
 							{
-								DEBUG("POST key %s data %s\n",  e.key, data );
-
 								size = snprintf( tmp, size, "%s=%s", e.key, data );
 								DFList *ne = FCalloc( 1, sizeof(DFList) );
 								*/
@@ -636,14 +637,12 @@ DataForm *DataFormFromHttp( Http *http )
 			//}
 		}
 	}
-	
-	DEBUG("DataFormFromttp post entries parsed\n");
-	
-	DEBUG("RemoteURL %s RemoteHost %s\n", remoteurl, remotehost );
+
+	DEBUG("[DataFormFromHttp] RemoteURL %s RemoteHost %s\n", remoteurl, remotehost );
 	
 	if( remoteurl != NULL && remotehost != NULL && ( items = FCalloc( numberTags, sizeof(MsgItem) ) ) != NULL )
 	{
-		DEBUG("DataFormFromttp memory allocated in size %d\n", numberTags );
+		DEBUG("[DataFormFromHttp] memory allocated in size %d\n", numberTags );
 		
 		items[ 0 ].mi_Tag = ID_FCRE;
 		items[ 0 ].mi_Size = 0;
@@ -700,9 +699,9 @@ DataForm *DataFormFromHttp( Http *http )
 		items[ pos ].mi_Size = MSG_END;
 		items[ pos++ ].mi_Data = MSG_END;
 		
-		DEBUG("DataFormFromttp generate DataForm\n");
+		DEBUG("[DataFormFromHttp] generate DataForm\n");
 		df = DataFormNew( items );
-		DEBUG("DataFormFromttp release memory\n");
+		DEBUG("[DataFormFromHttp] release memory\n");
 	}
 	
 	/*

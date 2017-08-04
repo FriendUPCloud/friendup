@@ -1,14 +1,24 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
 *                                                                              *
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
 *                                                                              *
-**©****************************************************************************/
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 /**
  *  @file fs_manager.c
  *  Filesystem manager body
@@ -71,7 +81,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 	FBOOL result = FALSE;
 	char *localPath = NULL;
 	
-	DEBUG("Check access for %s\n", path );
+	DEBUG("[FSManagerCheckAccess] Check access for %s\n", path );
 	if( path == NULL )
 	{
 		return FALSE;
@@ -110,92 +120,10 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 		
 		char *tmpQuery;
 		
-		DEBUG("User ptr %p alloc size %d\n", usr, querysize );
+		DEBUG("[FSManagerCheckAccess] User ptr %p alloc size %d\n", usr, querysize );
 		
 		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 		{
-
-			/*
-			 s qlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELE*CT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-			 PermissionID in( \
-			 SELECT ID FROM `FFilePermission` WHERE \
-			 Path LIKE( '%s%%') \ \
-			 AND CHAR_LENGTH(Path) <=  LENGTH('%s') \
-			 AND DeviceID = %lu ORDER BY CHAR_LENGTH(Path) DESC \
-			 )\
-			 AND ID in( \
-			 select ID from  `FPermLink` where \
-			 ID in( \
-			 select ID from `FPermLink` where ObjectID \
-			 in( \
-			 select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 \
-			 UNION ALL \
-			 select ID from `FPermLink` where ObjectID = %lu and Type = 0 \
-			 UNION ALL \
-			 select ID from `FPermLink` where Type = 2 \
-			 ) \
-			 )", newPath, newPath, devid, usr->u_ID, usr->u_ID );
-			*/
-			
-			/*
-			 i *f( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
-			 {
-			 char *parentPath = StringDuplicate( newPath );
-			 int i;
-			 // getting parent directory path
-			 for( i=pathLen ; i>=0 ; i-- )
-			 {
-			 if( parentPath[ i ] == '/' )
-			 {
-			 parentPath[ i ] = 0;
-			 break;
-		}
-		}
-		
-		sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-		PermissionID in( \
-		SELECT ID FROM `FFilePermission` WHERE \
-		( Path = '%s' OR Path = '%s' ) \
-		AND DeviceID = %lu ORDER BY CHAR_LENGTH(Path) DESC \
-		)\
-		AND ID in( \
-		select ID from  `FPermLink` where \
-		ID in( \
-		select ID from `FPermLink` where ObjectID \
-		in( \
-		select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 \
-		UNION ALL \
-		select ID from `FPermLink` where ObjectID = %lu and Type = 0 \
-		UNION ALL \
-		select ID from `FPermLink` where Type = 2 \
-		) \
-		)", newPath, parentPath, devid, usr->u_ID, usr->u_ID );
-		
-		FFree( parentPath );
-		}
-		else
-		{
-		sqlLib->SNPrintF( sqlLib, tmpQuery, querysize, "SELECT Access, ObjectID, Type, PermissionID from `FPermLink` where \
-		PermissionID in( \
-		SELECT ID FROM `FFilePermission` WHERE \
-		Path = '%s' \
-		AND DeviceID = %lu ORDER BY CHAR_LENGTH(Path) DESC \
-		)\
-		AND ID in( \
-		select ID from  `FPermLink` where \
-		ID in( \
-		select ID from `FPermLink` where ObjectID \
-		in( \
-		select UserGroupID from `FUserToGroup` where UserID = %lu ) and Type = 1 \
-		UNION ALL \
-		select ID from `FPermLink` where ObjectID = %lu and Type = 0 \
-		UNION ALL \
-		select ID from `FPermLink` where Type = 2 \
-		) \
-		)", newPath, devid, usr->u_ID, usr->u_ID );
-		}
-			 */
-
 			if( perm[ 2 ] == 'W' )	// if we are checking write permission, we must check also parent folder permissions
 			{
 				char *parentPath = StringDuplicate( newPath );
@@ -245,11 +173,10 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 				", newPath, devid, usr->u_ID, usr->u_ID );
 			}
 			
-			DEBUG("Checking access via SQL '%s'\n", tmpQuery );
+			DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
 		
 			MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
 			FBOOL access = FALSE;
-			DEBUG("SQL called\n");
 			
 			char defaultAccessRights[] = "-RWED";
 
@@ -265,17 +192,16 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 				// 3 - permissionid
 				// 4 - ID - unused
 				int nrrows = sqlLib->NumberOfRows( sqlLib, res );
-				DEBUG("res != NULL, rows %d\n", nrrows );
-				
+
 				if( nrrows > 0 )
 				{
 					MYSQL_ROW row = NULL;
 					
-					DEBUG("Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
+					DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
 					
 					while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
 					{
-						DEBUG("Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
+						DEBUG("[FSManagerCheckAccess] Found permission entry %s  permissions to check PERM %s OBJID %s TYPE %s\n", row[ 0 ], perm, row[1], row[2] );
 						
 						// others rights
 						//if( row[ 2 ][ 0 ] == '2' )
@@ -315,7 +241,6 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 				// checking default access
 				else
 				{
-					DEBUG("Use default access\n");
 					access = TRUE;
 				}
 				
@@ -323,12 +248,8 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 				{
 					result = TRUE;
 				}
-				
-				DEBUG("Free result\n");
 				sqlLib->FreeResult( sqlLib, res );
 			}
-	
-			DEBUG("FreeQuery\n");
 			FFree( tmpQuery );
 		}
 		else
@@ -342,19 +263,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 		sb->LibraryMYSQLDrop( sb, sqlLib );
 	}
 	FFree( newPath );
-	DEBUG("Access query Quit\n");
-	/*
-	 * 
-	 *  
-          select Access, ObjectID, Type,ID from `FPermLink` where PermissionID
-in( 
-SELECT ID FROM `FFilePermission` WHERE MATCH(Path) AGAINST('stefkos:test' IN BOOLEAN MODE) AND CHAR_LENGTH(Path) <=  LENGTH('stefkos:test') AND DeviceID = 1 ORDER BY CHAR_LENGTH(Path) DESC
-)
-AND ID in( select ID from  `FPermLink` where ID in(
-    select ID from `FPermLink` where ObjectID in ( select UserGroupID from `FUserToGroup` where UserID = 2 ) and Type = 1 ) OR ID in( select ID from `FPermLink` where ObjectID = 2 and Type = 0 )
-)
-	 */
-	
+
 	return result;
 }
 
@@ -374,6 +283,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 	{
 		return bs;
 	}
+	DEBUG("[FSManagerGetAccess] start\n");
 	
 	char *newPath = NULL;
 	int plen = strlen( path );
@@ -505,8 +415,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 				)", newPath, devid, usr->u_ID, usr->u_ID );
 			}
 			*/
-			DEBUG("Checking access via SQL '%s'\n", tmpQuery );
-			
+
 			MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
 			
 
@@ -692,7 +601,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 					
 					int type = atoi( row[ 2 ] );
 					
-					DEBUG("Type %d permissionid %ld access %s\n", type, permissionid, row[ 0 ] );
+					DEBUG("[FSManagerProtect3] Type %d permissionid %ld access %s\n", type, permissionid, row[ 0 ] );
 				
 					switch( type )
 					{
@@ -722,7 +631,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			//DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='stefkosdev:wallhaven-241962.jpg' AND DeviceID=6 )
 			if( permissionid > 0 )
 			{
-				DEBUG("Found permission, remove old entries\n");
+				DEBUG("[FSManagerProtect3] Found permission, remove old entries\n");
 				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "DELETE FROM `FPermLink` WHERE PermissionID in( SELECT ID FROM `FFilePermission` WHERE Path='%s'  AND DeviceID=%lu)", path, devid );
 				//sprintf( tmpQuery, "DELETE `FPermLink` WHERE PermissionID in( SELECT * FROM `FFilePermission` WHERE Path='%s'  ) AND DeviceID=%lu", path, devid );
 			
@@ -741,7 +650,6 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 		
 		if( permissionid <= 0 )
 		{
-			DEBUG("Pmerissionid < 0\n");
 			FilePermission fperm;
 			fperm.fp_DeviceID = devid;
 			fperm.fp_Path = (char *)path;
@@ -752,7 +660,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			permissionid = fperm.fp_ID;
 		}
 		
-		DEBUG("PermissionID %lu\n", permissionid );
+		DEBUG("[FSManagerProtect3] PermissionID %lu\n", permissionid );
 			
 		char insertQuery[ 2048 ];
 		int i;
@@ -766,7 +674,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 0, '%s' )", permissionid, usr->u_ID, userc );
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-			FERROR("User access stored %s\n", insertQuery );
+			DEBUG("[FSManagerProtect3] User access stored %s\n", insertQuery );
 		}
 		else		// default settings or old ones
 		{
@@ -782,11 +690,10 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			
 			for( i=0 ; i <usr->u_GroupsNr ; i++ )
 			{
-				DEBUG("GRoup %d groups %d ptr %p\n", i, usr->u_GroupsNr, usr->u_Groups[ i ] );
 				int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, %lu, 1, '%s' )", permissionid,usr->u_Groups[ i ]->ug_ID, groupc );
 				sqllib->QueryWithoutResults( sqllib, insertQuery );
 				
-				FERROR("Group access stored %s\n", insertQuery );
+				DEBUG("[FSManagerProtect3] Group access stored %s\n", insertQuery );
 			}
 		}
 		else
@@ -807,7 +714,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			int size = snprintf( insertQuery, sizeof( insertQuery ), "INSERT INTO `FPermLink` (PermissionID,ObjectID,Type,Access) VALUES( %lu, 0, 2, '%s' )", permissionid, othersc );
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 			
-			FERROR("Others access stored %s\n", insertQuery );
+			DEBUG("[FSManagerProtect3] Others access stored %s\n", insertQuery );
 		}
 		else
 		{
@@ -855,7 +762,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 	AGroup *root = NULL;
 	AGroup *prev = root;
 
-	DEBUG("Protect command\n");
+	DEBUG("[FSManagerProtect] command\n");
 
 	for( i=1 ; i < strlen( accgroups ) ; i++ )
 	{
@@ -888,8 +795,6 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 				ng->key = key;
 				ng->val = value;
 				ng->type  = type;
-				
-				DEBUG("Create entry %s=%s\n", key, value );
 				
 				// if root is NULL, then we must create first element
 				if( prev == NULL )
@@ -1057,15 +962,11 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 			}
 		}
 		
-		//DEBUG("permissions, path %s\n", allocPath );
-		
 		if( permPtr != NULL )
 		{
 			permPtr = strstr( permPtr, "\"Permissions\"" );
 		}
-		
-		//DEBUG("Found permissions string %p\n", permPtr );
-		
+
 		if( permPtr != NULL )
 		{
 			permPtr += 15;	// "Permissions":"  
@@ -1180,8 +1081,6 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 						) \
 					", newPath, devid, usr->u_ID, usr->u_ID );
 
-					DEBUG("Checking access via SQL '%s'\n", tmpQuery );
-					
 					MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
 					
 					if( res != NULL )

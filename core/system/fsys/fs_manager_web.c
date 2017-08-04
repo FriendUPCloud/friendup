@@ -1,14 +1,24 @@
-/*©mit***************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              *
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- **©****************************************************************************/
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
 /**
  *  @file fs_manager.c
  *  Filesystem Web handler
@@ -895,7 +905,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								 
 								 if( bytes > MAGIC_SIZE ){ bytes = MAGIC_SIZE; }
 								 mime = magic_buffer( l->sl_Magic, outputBuf, bytes );
-								 DEBUG( "Ok, reading file as %s\n", mime == NULL ? "text/plain" : mime );
+
 								 //FERROR("\n\n\n\n\n\n\nHELLO\n");
 							}
 							// Just in case!
@@ -932,7 +942,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 								HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"nCannot open file\" }" );
 							}
-						
 							DEBUG("[FSMWebRequest] Open command on FSYS: %s called\n", actFS->GetPrefix() );
 						}
 						else
@@ -1035,8 +1044,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot open file\" }" );
 							}
-						
-							DEBUG("Open command on FSYS: %s called\n", actFS->GetPrefix() );
 						}
 						else
 						{
@@ -1334,7 +1341,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						sprintf( userid, "%ld", loggedSession->us_User->u_ID );
 						sprintf( name, "%s", &path[ i ] );
-						DEBUG("[FSMWebRequest] DEVNAME %s  %d\n", name, i );
 					}
 					
 					FHandler *actFS = (FHandler *)actDev->f_FSys;
@@ -1352,8 +1358,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( tmpfs != NULL )
 					{
-						DEBUG( "[FSMWebRequest] Save file!\n" );
-						
 						tmpfs->fs_IDUser = loggedSession->us_User->u_ID;
 						
 						//tmpfs->fs_Name = name;
@@ -1380,11 +1384,19 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							int numR = sqllib->NumberOfRecords( sqllib, FileSharedTDesc, check );
 							DEBUG( "[FSMWebRequest] Number of records is: %d (%s)\n", numR, check );
 						
-							//if( numR < 1 )
+							struct tm* ti;
+							ti = localtime( &(tmpfs->fs_CreatedTime) );
+							tmpfs->fs_CreateTimeTM.tm_year = ti->tm_year + 1900;
+							tmpfs->fs_CreateTimeTM.tm_mon = ti->tm_mon;
+							tmpfs->fs_CreateTimeTM.tm_mday = ti->tm_mday;
+							
+							tmpfs->fs_CreateTimeTM.tm_hour = ti->tm_hour;
+							tmpfs->fs_CreateTimeTM.tm_min = ti->tm_min;
+							tmpfs->fs_CreateTimeTM.tm_sec = ti->tm_sec;
+							
 							{
 								if( sqllib->Save( sqllib, FileSharedTDesc, tmpfs ) == 0 )
 								{
-									//DEBUG( "[Expose] The file is now shared on \"%s\"\n", check );
 									sharedFile = TRUE;
 								}
 							}
@@ -1397,7 +1409,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						 *							int entries = 0;
 						 *							if( ( tmpfs = sqllib->Load( sqllib, FileSharedTDesc, check, &entries ) ) )
 						 *							{
-						 *								DEBUG( "[Expose] The file already shared on \"%s\"  entries %d\n", check, entries );
 						 *								sprintf( hashmap, "%s", tmpfs->fs_Hash );
 					}
 					alreadyExist = TRUE;
@@ -1784,8 +1795,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *archpath = NULL;
 					char *files    = NULL;
 					
-					//printf("--------------------------------------------------------------------------------------\n\n--------------------------------------------------------------------------------------\n\n");
-					
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 				
@@ -1905,7 +1914,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										{
 											FERROR("Cannot open file to read %s\n", tmpfilename );
 										}
-										
 										FFree( buffer );
 									}
 									FFree( dstdevicename );
@@ -1914,7 +1922,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								{
 									FERROR("Cannot allocate memory for path\n" );
 								}
-								
 								FFree( command );
 							}
 							
@@ -1994,9 +2001,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						snprintf( tmpfilename, 1024, "%s/%d%d.zip", dirname, rand()%9999, rand()%9999 );
 
 						DEBUG("[FSMWebRequest] dirname %s dstname %s tmpfilename %s\n", dirname, dstname, tmpfilename );
-						
-						//SendProcessMessage( request, "Decompress start", 16 );
-						
+
 						FILE *localfp = NULL;
 						
 						if( ( localfp = fopen( tmpfilename, "wb" ) ) != NULL )
@@ -2009,14 +2014,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							if( actFS != NULL )
 							{
-								DEBUG("[FSMWebRequest] File open %s\n", origDecodedPath );
 								File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "rb" );
 								// Success?
 								if( fp != NULL )
 								{
-									//response->h_RequestSource = request->h_RequestSource;
 									response->h_Stream = FALSE;
-									//response->h_ResponseID = request->h_ResponseID;
 							
 									fp->f_Stream = request->h_Stream;
 									fp->f_Socket = request->h_Socket;
@@ -2035,18 +2037,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										{
 											if( dataread == 0 )
 											{
-												DEBUG("[FSMWebRequest] Data read 0\n");
 												continue;
 											}
 											fwrite( dataBuffer, 1, dataread, localfp );
 											
 											readbytes += dataread;
-											//FERROR("\n\n\n\n read bytes %d dataread %d\n\n\n", readbytes, dataread );
-									
 										}	// end of reading part or whole file
 										FFree( dataBuffer );
 									}
-									DEBUG("[FSMWebRequest] File closed %s\n", origDecodedPath );
 									actFS->FileClose( actDev, fp );
 								}	// if( fp != NULL
 							}	// actfs != NULL
@@ -2071,10 +2069,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								
 								if( strcmp( archiver, "zip" ) == 0 )
 								{
-									 ZLibrary *zlib = l->LibraryZGet( l );
-									 if( zlib != NULL )
+									ZLibrary *zlib = l->LibraryZGet( l );
+									if( zlib != NULL )
 									{
-										DEBUG("[FSMWebRequest] Unpack archive %s to %s  requestus %p  loggedsession %p\n", tmpfilename, dstname, request->h_UserSession, loggedSession );
 										filesExtracted = zlib->Unpack( zlib, tmpfilename, dstname, NULL, request );
 									 
 										DEBUG("[FSMWebRequest] Unpack return %d\n", filesExtracted );
@@ -2083,8 +2080,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 								}
 
-								//DEBUG("Called system command '%s'\n", command );
-								
 								char *dsttmp = StringDuplicate( origDecodedPath );
 								if( dsttmp != NULL )
 								{
@@ -2271,7 +2266,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						if( actFS != NULL )
 						{
-							DEBUG("File open %s\n", origDecodedPath );
 							int error = actFS->InfoSet( actDev, origDecodedPath, param, "rb" );
 							
 							if( error == 0 )
@@ -2328,8 +2322,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	
 	*result = 200;
 	
-	//DEBUG("==================================\n\n\n\n\n");
-	//	}		// end of file
 	done:
 	
 	// Changed target path

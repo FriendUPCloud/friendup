@@ -309,18 +309,14 @@ typedef struct SystemBase
 	
 	Sentinel *(*GetSentinelUser)( struct SystemBase *l );
 
-	int (*AddWebSocketConnection)(  struct SystemBase *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data );
-	
 	int (*WebSocketSendMessage)( struct SystemBase *l, UserSession *usersession, char *msg, int len );
 	
 	int (*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int (*WebsocketWrite)( struct lws *wsi, unsigned char *msgptr, int msglen, int type, pthread_mutex_t *mut );
+	int (*WebsocketWrite)( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses );
 	
 	int (*SendProcessMessage)( Http *request, char *data, int len );
 
-	void (*SetFriendCoreManager)(  struct SystemBase *l, struct FriendCoreManager *fcm );
-	
 	char *(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
 
 	int (*GetError)( struct SystemBase *l );
@@ -433,12 +429,6 @@ int SystemInitExternal( SystemBase *l );
 //
 
 char *RunMod( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
-
-//
-//
-//
-
-int AddWebSocketConnection(  struct SystemBase *l, struct lws *wsi, const char *sessionid, const char *authid, FCWSData *data );
 
 //
 //

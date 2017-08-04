@@ -146,12 +146,8 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 		return -3;
 	}
 	
-	//DEBUG("Readfiletemp multi%s\n", completePath->raw );
-	
 	FBOOL freeFile = FALSE;
 	
-	//DEBUG("Read file %s\n", completePath->raw );
-					
 	LocFile* file = NULL;
 	if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
 	{
@@ -232,14 +228,11 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 		{
 			LocFileFree( file );
 		}
-		//DEBUG("File readed return 200\n");
-		
+
 		*result = 200;
 	}
 	else
 	{
-		//DEBUG( "[ReadServerFile] Going ahead with %s.\n", completePath->parts ? completePath->parts[0] : "No path part.." );
-		
 		// Try to fall back on module
 		// TODO: Make this behaviour configurable
 		char *command;
@@ -318,8 +311,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		sock->data = (void*)request;
 		request->h_Socket = sock;
 	}
-	
-	//DEBUG("Checking timeout, data %s\n", data );
 
 	//DEBUG("time %ld\nreqtimestamp %ld\nreqtimestamp %ld\n",
 	//	  time( NULL ), request->timestamp, HTTP_REQUEST_TIMEOUT );
@@ -343,17 +334,11 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		return response;
 	}*/
 	
-	//INFO("\n\n\n\n\n\n==============================================\n\n\n\n");
-	
-
 	// Continue parsing the request
 	int result = HttpParsePartialRequest( request, data, length );
 	
-	DEBUG("[ProtocolHttp] Parsepartial end %d\n", request->h_ContentType );
-	
 	partialRequest:
 	
-	//DEBUG("HTTPPARSEPARTIAL return %d on data size %d\n", result, length );
 	// Protocol error
 	if( result < 0 )
 	{
@@ -457,7 +442,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			if( !path || !path->resolved ) // If it cannot remove all, path->resolved == false.
 			{
 				FERROR("404 error\n");
-				//DEBUG( "We have no path..\n" );
+
 				struct TagItem tags[] = {
 					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 					{ TAG_DONE, TAG_DONE }
@@ -469,8 +454,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			}
 			else
 			{
-				//DEBUG( "We got through. %s\n", path->parts[ 0 ] );
-				
 				//
 				// we must check if thats WEBDAV call and provide data
 				//
@@ -490,13 +473,11 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 					{
 						// system.library is main library and should be use for most things
 						// we open it and close in main
-						//DEBUG("systemlib found\n");
-						//DEBUG("Calling systemlib\n");
-					
+
 						if( strcmp( path->parts[ 0 ], "system.library" ) == 0 )
 						{
-							DEBUG("[ProtocolHttp] %s\n", path->parts[1] );
-							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP\n");
+							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP %s\n", path->parts[1] );
+							
 							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), &request, NULL );
 						
 							if( response == NULL )
@@ -574,7 +555,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
 						//if( strcmp( SLIB->sl_ActiveAuthModule->am_Name, "fcdb.authmod" ) != 0 )
 						{
-							DEBUG("[ProtocolHttp] call\n");
 							FULONG res = 0;
 
 							char command[ 1024 ];
@@ -621,8 +601,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								if( ls->ls_Data != NULL )
 								{
 									HttpSetContent( response, ls->ls_Data, res );
-									
-									//DEBUG("\n\n\n\n\n\n\n\n\nCallPHP: %s\n", ls->ls_Data );
 								}
 								else
 								{
@@ -709,22 +687,19 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						
 						if( sqllib != NULL )
 						{
-							//snprintf( query, 511, " `Hash` = '%s' AND `Name` = '%s'", path->parts[ 1 ], dest );
 							sqllib->SNPrintF( sqllib, query, sizeof(query), " `Hash` = '%s' AND `Name` = '%s'", path->parts[ 1 ], dest );
 							
 							if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							{
 								// Immediately drop here..
 								SLIB->LibraryMYSQLDrop( SLIB, sqllib );
-								DEBUG("[ProtocolHttp] Shared file loaded from DB\n");
-							
+
 								char *mime = NULL;
 							
 								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
 								
 								DEBUG("[ProtocolHttp] Device taken from DB/Session , devicename %s\n", fs->fs_DeviceName );
 
-								//DEBUG("ROOTDEV %p, UserID = %d\n", rootDev, fs->fs_IDUser );
 								if( rootDev != NULL )
 								{
 									// We need to get the sessionId if we can!
@@ -807,8 +782,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											fp->f_Stream = TRUE;
 		
 											response = HttpNewSimple( HTTP_200_OK, tags );
-											
-											DEBUG("[ProtocolHttp] Response set\n");
 											
 											HttpWrite( response, request->h_Socket );
 										
@@ -927,9 +900,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									break;
 								}
 							}
-						
-							//DEBUG("Found ; in position %d\n",  pos );
-						
+
 	#define MAX_FILES_TO_LOAD 256
 						
 							if( pos > 0 )
@@ -998,8 +969,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									if( ( multipath = FCalloc( pathSize, sizeof( char ) ) ) != NULL )
 									{
 										memcpy( multipath, path->raw, pathSize );
-										//DEBUG("Multiplepath\n");
-								
+
 										int entry = 0;
 										pathTable[ entry ] = multipath;
 								
@@ -1012,9 +982,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											}
 										}
 								
-										DEBUG("[ProtocolHttp] Found entries %d\n", entry );
-								
-										BufString *bs = BufStringNewSize( 1000 );
+										BufString *bs = BufStringNewSize( 10240 );
 										if( bs != NULL )
 										{
 											int resError = 404, ce = 0, de = 0, dl = 0;
@@ -1030,9 +998,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												{
 													continue;
 												}
-											
-												DEBUG("[ProtocolHttp] FIND file %s\n", pathTable[ i ] );
-									
+
 												// Let's find the file extension
 												dl = strlen( pathTable[i] );
 												for( ce = 0, de = 0; ce < dl; ce++ )
@@ -1115,7 +1081,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											FFree( mime );
 											BufStringDelete( bs );
 										}
-										//DEBUG("Before multipath free\n");
 										FFree( multipath );
 									}
 								}	// file not found in cache
@@ -1125,8 +1090,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 								Path *base = PathNew( "resources" );
 								Path* completePath = PathJoin( base, path );
 								FBOOL freeFile = FALSE;
-							
-								//DEBUG("Getting file %s\n", path->raw );
 							
 								if( completePath != NULL )
 								{
@@ -1140,7 +1103,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											
 											Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
 											file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
-											//DEBUG("Readfiletemp single%s    %p\n", completePath->raw, file );
+
 											if( file == NULL )
 											{
 												// Don't allow directory traversal
@@ -1217,14 +1180,13 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										HttpSetContent( response, file->buffer, file->bufferSize );
 						
 										// write here and set data to NULL!!!!!
-										// retusn response
+										// return response
 										HttpWrite( response, sock );
 										result = 200;
 						
 										//INFO("--------------------------------------------------------------%d\n", freeFile );
 										if( freeFile == TRUE )
 										{
-											//ERROR("\n\n\n\nFREEEEEEFILE\n");
 											LocFileFree( file );
 										}
 										response->content = NULL;
@@ -1309,7 +1271,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 											if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
 											{
 												snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
-												DEBUG( "[ProtocolHttp] Executing %s\n", command );
 
 												ListString *bs = RunPHPScript( command );
 
@@ -1341,8 +1302,6 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 														{
 															errCode = -1;
 														}
-														
-														DEBUG("[ProtocolHttp] parsed %s code %d\n", code, errCode );
 														
 														if( errCode == -1 )
 														{
@@ -1378,7 +1337,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 													
 													response->h_WriteType = FREE_ONLY;
 
-													SocketWrite( sock, resp, bs->ls_Size - (resp - bs->ls_Data) );
+													SocketWrite( sock, resp, (FQUAD)(bs->ls_Size - (resp - bs->ls_Data)) );
 													//HttpSetContent( response, bs->ls_Data, bs->ls_Size );
 													
 													if( cntype != NULL ) FFree( cntype );
@@ -1421,7 +1380,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			} // else WEBDAV
 		}
 
-		DEBUG("[ProtocolHttp] free requests\n");
+		
 		HttpFreeRequest( request );
 		
 		// The response pointer might be -1 temporarily (because it might be

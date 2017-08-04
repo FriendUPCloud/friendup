@@ -161,18 +161,18 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 	SSHSession *s = (SSHSession *)userdata;
 	SystemBase *sb = (SystemBase *)s->sshs_SB;
 	
-	DEBUG("Authenticating user %s pwd %s\n", uname, password );
+	DEBUG("[SSH] Authenticating user %s pwd %s\n", uname, password );
 	
 	AuthMod *ulib = sb->AuthModuleGet( sb );
 	
-	DEBUG("Gettings message login/pass\n");
+	DEBUG("[SSH] Gettings message login/pass\n");
 	
 	if( uname != NULL && password != NULL )
 	{
-		DEBUG("uname %s password %s ulib %p\n", uname, password, ulib );
+		DEBUG("[SSH] uname %s password %s ulib %p\n", uname, password, ulib );
 		s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
 		
-		DEBUG("User %p\n", s->sshs_Usr );
+		DEBUG("[SSH] User %p\n", s->sshs_Usr );
 		if( s->sshs_Usr != NULL )
 			//&& strcmp( password, s->sshs_Usr->u_Password ) == 0  )
 		{
@@ -188,7 +188,7 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 				
 				strcpy( newPassword, "HASHED" );
 		
-				DEBUG("Checkpassword, password is in SHA256 format for user %s\n", s->sshs_Usr->u_Name );
+				DEBUG("[SSH] Checkpassword, password is in SHA256 format for user %s\n", s->sshs_Usr->u_Name );
 		
 				Sha256Init( &ctx );
 				Sha256Update( &ctx, (unsigned char *) password, (unsigned int)strlen( password ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
@@ -202,11 +202,11 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 					sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
 					j++;
 				}
-				DEBUG("Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
+				DEBUG("[SSH] Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
 				
 				strcat( newPassword, hashTarget );
 				
-				DEBUG("new password '%s' \n", newPassword );
+				DEBUG("[SSH] new password '%s' \n", newPassword );
 				
 				Sha256Init( &ctx );
 				Sha256Update( &ctx, (unsigned char *) newPassword, (unsigned int)strlen( newPassword ) );
@@ -219,7 +219,7 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 					j++;
 				}
 		
-				DEBUG("Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
+				DEBUG("[SSH] Checking provided password '%s' versus active password '%s'\n", hashTarget, s->sshs_Usr->u_Password );
 		
 				if( strncmp( &(hashTarget[0]), &(s->sshs_Usr->u_Password[4]), 64 ) == 0 )
 				{
@@ -231,12 +231,12 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 				}
 			}
 		}
-		DEBUG("Not authenticated\n");
+		INFO("[SSH] User not authenticated\n");
 	}
 
 	if( s->sshs_Tries >= 3 )
 	{
-		DEBUG("Too many authentication tries\n");
+		DEBUG("[SSH] Too many authentication tries\n");
 		ssh_disconnect(session);
 		s->sshs_Error = 1;
 		sb->AuthModuleDrop( sb, ulib );
@@ -268,7 +268,7 @@ static int auth_gssapi_mic( ssh_session session, const char *user, const char *p
 		printf("Not received any forwardable creds\n");
 	}
 	*/
-	DEBUG("authenticated\n");
+	DEBUG("[SSH] Authenticated\n");
 	s->sshs_Authenticated = 1;
 #endif
 	
@@ -291,7 +291,7 @@ static int pty_request( ssh_session session, ssh_channel channel, const char *te
     (void) y;
     (void) px;
     (void) py;
-    DEBUG("Allocated terminal\n");
+    DEBUG("[SSH] Allocated terminal\n");
     return 0;
 }
 
@@ -305,7 +305,7 @@ static int shell_request( ssh_session session, ssh_channel channel, void *userda
 	(void)session;
 	(void)channel;
     
-	DEBUG("Allocated shell\n");
+	DEBUG("[SSH] Allocated shell\n");
 	return 0;
 }
 
@@ -317,7 +317,7 @@ int mchannel_data_callback(ssh_session session, ssh_channel channel, void *data,
 {
 	SSHSession *s = (SSHSession *)userdata;
 
-	DEBUG("Data arrived %d\n", len );
+	DEBUG("[SSH] Data arrived %d\n", len );
 	return 0;
 }
 
@@ -327,7 +327,7 @@ int mchannel_data_callback(ssh_session session, ssh_channel channel, void *data,
 
 int mchannel_exec_request_callback(ssh_session session, ssh_channel channel, const char *command, void *userdata )
 {
-	printf("Command arrived\n");
+	DEBUG("[SSH] Command received\n");
 	return 0;
 }
 
@@ -352,7 +352,7 @@ static ssh_channel new_session_channel( ssh_session session, void *userdata )
 		FERROR("New session channel\n");
 		return NULL;
 	}
-	printf("Allocated session channel\n");
+	DEBUG("[SSH] Allocated session channel\n");
 	s->sshs_Chan = ssh_channel_new( session );
 	ssh_callbacks_init( &channel_cb );
 	ssh_set_channel_callbacks( s->sshs_Chan, &channel_cb );
@@ -428,7 +428,7 @@ static int cleanup( void )
 	
 	while( ( pid = wait3( &status, WNOHANG, NULL ) ) > 0 )
 	{
-		DEBUG("Process reaped %d\n",  pid );
+		DEBUG("[SSH] Process removed: %d\n",  pid );
 	}
 	signal(SIGCHLD, (void (*)())cleanup );
 	
@@ -437,7 +437,7 @@ static int cleanup( void )
 
 static void wrapup(void)
 {
-	DEBUG("wrapup\n");
+	DEBUG("[SSH] wrapup\n");
 	//exit(0);
 }
 
@@ -465,7 +465,7 @@ int SSHThread( FThread *ptr )
 	int i;
 	int r;
 	
-	DEBUG("Starting SSH Process\n");
+	DEBUG("[SSH] Starting SSH Process\n");
 	
 	SSHServer *ts = (SSHServer *)ptr->t_Data;
 	if( !ts )
@@ -479,7 +479,6 @@ int SSHThread( FThread *ptr )
 	int len = strlen( ts->sshs_FriendHome );
 	ts->sshs_RSAKeyHome = FCalloc( len+64, sizeof(char) );
 	ts->sshs_DSAKeyHome = FCalloc( len+64, sizeof(char) );
-	
 
 	//strcpy( ts->sshs_RSAKeyHome, ts->sshs_FriendHome );
 	//strcpy( ts->sshs_DSAKeyHome, ts->sshs_FriendHome );
@@ -488,8 +487,7 @@ int SSHThread( FThread *ptr )
 	
 	strcpy( ts->sshs_RSAKeyHome, "/etc/ssh/ssh_host_rsa_key" );
 	strcpy( ts->sshs_DSAKeyHome, "/etc/ssh/ssh_host_dsa_key" );
-	//DEBUG("SSH sshs_RSAKeyHome set to %s\n", ts->sshs_RSAKeyHome );
-		
+
 	sshbind = ssh_bind_new();
 		
 	FBOOL welcomeMessage = FALSE;
@@ -497,8 +495,6 @@ int SSHThread( FThread *ptr )
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_DSAKEY, ts->sshs_DSAKeyHome );
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_RSAKEY, ts->sshs_RSAKeyHome );
 	//ssh_bind_options_set(sshbind, SSH_BIND_OPTIONS_HOSTKEY, arg);
-	
-	//DEBUG("IMPORT RSA KEY %s\n", ts->sshs_RSAKeyHome );
 	
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_BINDPORT_STR, SSH_SERVER_PORT );	
 	//verbose
@@ -508,25 +504,23 @@ int SSHThread( FThread *ptr )
 	if( ts->sshs_RSAKeyHome ) free( ts->sshs_RSAKeyHome );
 	if( ts->sshs_DSAKeyHome ) free( ts->sshs_DSAKeyHome );
 	
-	DEBUG("Before SSH loop\n");
-	
 	// TODO: ts->sshs_Quit sometimes can not be read!
 	while( ts != NULL && !ts->sshs_Quit )
 	{
-		DEBUG("Server options set\n");
+		DEBUG("[SSH] Server options set\n");
 	
 	#ifdef WITH_PCAP
 		set_pcap(session);
 	#endif
 		
-		DEBUG("Server before bind\n");
+		DEBUG("[SSH] Server before bind\n");
 		if( ssh_bind_listen( sshbind )<0 )
 		{
 			FERROR("Error listening to socket: %s\n",ssh_get_error(sshbind) );
 			break;
 		}
 		
-		DEBUG("Server before accept\n");
+		DEBUG("[SSH] Server before accept\n");
 
 		signal( SIGCHLD, (void (*)())cleanup);
 		signal(SIGINT, (void (*)())wrapup);
@@ -547,7 +541,7 @@ int SSHThread( FThread *ptr )
 			cb.userdata = sess;
 		}
 		
-		DEBUG("User data set\n");
+		DEBUG("[SSH] User data set\n");
 		ssh_set_server_callbacks( session, &cb );
     
 		if ( ssh_handle_key_exchange( session ) ) 
@@ -557,12 +551,10 @@ int SSHThread( FThread *ptr )
 			//goto disconnect;
 		}
 	
-		DEBUG("Connection accepted\n");
+		DEBUG("[SSH] Connection accepted\n");
 	
 		ssh_set_auth_methods( session,SSH_AUTH_METHOD_PASSWORD | SSH_AUTH_METHOD_GSSAPI_MIC );
-		
-		DEBUG("loop\n");
-		
+
 		//
 		// New session/connection put it into thread
 		//
@@ -613,7 +605,6 @@ int SSHThread( FThread *ptr )
 					}
 				
 					int i = 0;
-				
 					do
 					{
 						ssh_channel_write( sess->sshs_Chan, sess->sshs_DispText, strlen( sess->sshs_DispText ) );
@@ -621,7 +612,7 @@ int SSHThread( FThread *ptr )
 						i = ssh_channel_read( sess->sshs_Chan, buf, 2048, 0 );
 						if( i > 0 )
 						{
-							DEBUG("READING FROM CHANNEL %d - size %d  %d  %c -n  %d\n", i, strlen( buf ), buf[0], buf[0], '\n' );
+							DEBUG("[SSH] READING FROM CHANNEL %d - size %d  %d  %c -n  %d\n", i, (int)strlen( buf ), buf[0], buf[0], '\n' );
 							//ssh_channel_write( sess->sshs_Chan, buf, 1 );
 						
 							handleSSHCommands( sess, buf, i );
@@ -629,7 +620,7 @@ int SSHThread( FThread *ptr )
 					
 						if( sess->sshs_Quit == TRUE || ts->sshs_Quit == TRUE )
 						{
-							DEBUG("Session quit\n");
+							DEBUG("[SSH] Session quit\n");
 							break;
 						}
 					}
@@ -637,11 +628,11 @@ int SSHThread( FThread *ptr )
 				
 					if( sess->sshs_Quit )
 					{
-						DEBUG("Quit\n");
+						DEBUG("[SSH] Quit\n");
 						break;
 					}
 				}
-				DEBUG("Closing ssh connection\n");
+				DEBUG("[SSH] Closing ssh connection\n");
 			
 				ssh_event_free( mainloop );
 				ssh_disconnect( session );
@@ -657,13 +648,13 @@ int SSHThread( FThread *ptr )
 					FFree( sess->sshs_Path );
 				}
 			
-				DEBUG("Connection released\n");
+				DEBUG("[SSH] Connection released\n");
 
 				FFree( sess );
 			
 				//abort();
 			
-				DEBUG("AUTH\n");
+				DEBUG("[SSH] AUTH\n");
 				break;
 			case -1:
 				FERROR("Cannot create fork!\n");
@@ -680,7 +671,7 @@ int SSHThread( FThread *ptr )
 	
 	ssh_bind_free( sshbind );
 	
-	DEBUG("DISCONNECTED\n");
+	DEBUG("[SSH] Disconnected\n");
 	
 	ptr->t_Launched = FALSE;
     return 0;

@@ -4,7 +4,7 @@ OUTPUT			=	FriendCore
 BUILD_DATE		=	$(shell date +"%Y%m%d_%H%M%S")
 BUILD_VERSION	=	"v1.0.0"
 GIT_VERSION 		=	$(shell git describe --abbrev --dirty --always --tags)
-CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/lib/ -I../libs-ext/libwebsockets/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL
+CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/lib/ -I../libs-ext/libwebsockets/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL
 LFLAGS			=	-L../libs-ext/libwebsockets/lib/ -lwebsockets -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
@@ -174,15 +174,15 @@ clean:
 	
 install:
 	@echo "\033[34mInstalling\033[0m"
-	cp $(OUTPUT) ../build/ 
-	make -C system/servicesdyn install
-	make -C system install
+	cp $(OUTPUT) $(FRIEND_PATH)/
+	make -C system/servicesdyn install FRIEND_PATH=$(FRIEND_PATH)
+	make -C system install FRIEND_PATH=$(FRIEND_PATH)
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
-	make -C system/servicesdyn setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
-	make -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C system/servicesdyn setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
+	make -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 
 # dependency system
 	

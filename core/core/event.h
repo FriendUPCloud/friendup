@@ -20,7 +20,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
+/** @file event.h
+ * 
+ *  Event structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 01/2016
+ */
 
 #ifndef __CORE_EVENT_H__
 #define __CORE_EVENT_H__
@@ -76,12 +82,14 @@ typedef struct CoreEvent
 	struct MinNode	node;
 	time_t					ce_Time;
 	time_t					ce_TimeDelta;
-	int 						ce_RepeatTime;		// -1 repeat everytime, 0 - last repeat, n - number of repeats
-	FUQUAD 				ce_ID;
+	int 					ce_RepeatTime;		// -1 repeat everytime, 0 - last repeat, n - number of repeats
+	FUQUAD 					ce_ID;
 	
-	FThread 				*ce_Thread;
+	pthread_t				ce_Thread;
+	FBOOL					ce_Quit;
+	FBOOL					ce_Launched;
 	int						(*ce_Function)( void *sb );
-	void						*ce_Data;
+	void					*ce_Data;
 }CoreEvent;
 
 

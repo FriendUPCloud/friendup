@@ -61,13 +61,16 @@ typedef struct SpecialData
 	int test;
 }SpecialData;
 
-//
-//
-//
-
+/**
+ * Initialize authmodule
+ *
+ * @param l pointer to AuthMod
+ * @param sb pointer to SystemBase
+ * @return 0 when success, otherwise error number
+ */
 int libInit( AuthMod *l, void *sb )
 {
-	DEBUG("FCDB libinit\n");
+	DEBUG("[FCDB] libinit\n");
 
 	if( ( l->SpecialData = FCalloc( 1, sizeof( struct SpecialData ) ) ) == NULL )
 	{
@@ -82,10 +85,11 @@ int libInit( AuthMod *l, void *sb )
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * De-initialize authmodule
+ *
+ * @param l pointer to AuthMod
+ */
 void libClose( struct AuthMod *l )
 {
 	if( l->SpecialData != NULL )
@@ -93,18 +97,24 @@ void libClose( struct AuthMod *l )
 		FFree( l->SpecialData );
 	}
 	
-	DEBUG("FCDB close\n");
+	DEBUG("[FCDB] close\n");
 }
 
-//
-//
-//
-
+/**
+ * Return AuthMod version
+ *
+ * @return AuthMod version
+ */
 long GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
+/**
+ * Return AuthMod revision
+ *
+ * @return AuthMod revision
+ */
 long GetRevision(void)
 {
 	return LIB_REVISION;
@@ -118,10 +128,16 @@ long GetRevision(void)
 #define FUP_AUTHERR_USER		6
 #define RANDOM_WAITING_TIME 20
 
-//
-// check password
-//
-
+/**
+ * Check user password
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param usr pointer to User structure
+ * @param pass password provided
+ * @param blockTime pointer to integer value where blocked account time will be returned (int seconds)
+ * @return TRUE when success, otherwise FALSE
+ */
 FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *blockTime )
 {
 	if( usr == NULL )
@@ -141,13 +157,12 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 		time_t tm_now = time( NULL );
 		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
 		
-		DEBUG("Authentication, access: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
+		DEBUG("[FCDB] Authentication, access flag set: %d, time difference between last login attempt and now %lu\n", (int)access, (unsigned long)( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
 		if( access == FALSE && ( (tm_now - tm ) < l->am_BlockAccountTimeout) )
 		{
-			int max = rand( )%RANDOM_WAITING_TIME;
+			//int max = rand( )%RANDOM_WAITING_TIME;
 			
-			DEBUG("User not found, generate random loop, seconds: %d\n", max );
 			// This "hack" will give login machine feeling that FC is doing something in DB
 			
 			//sleep( max );
@@ -157,7 +172,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 			
 			*blockTime = (FULONG) (tm_now + l->am_BlockAccountTimeout);
 			
-			return NULL;
+			return FALSE;
 		}
 	}
 	
@@ -186,13 +201,13 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 			{
 				if( strcmp( usr->u_Password, pass ) == 0 )
 				{
-					DEBUG("Password is ok! Both are hashed\n");
+					DEBUG("[FCDB] Password is ok! Both are hashed\n");
 					return TRUE;
 				}
 			}
 			else
 			{
-				DEBUG("Checkpassword, password is in SHA256 format for user %s\n", usr->u_Name );
+				DEBUG("[FCDB] Checkpassword, password is not in SHA256 format for user %s\n", usr->u_Name );
 		
 				Sha256Init( &ctx );
 				Sha256Update( &ctx, (unsigned char *) pass, (unsigned int)strlen( pass ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
@@ -201,21 +216,16 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 				int i;
 				int j=0;
 		
-				//for( i=0 ; i < 32 ; i++ )
-				//{
-					//printf( "%d - %02x\n", (char)(hash[ i ]), (char) hash[ i ] & 0xff );
-				//}
-		
 				for( i = 0 ; i < 64 ; i += 2, j++ )
 				{
 					sprintf( &(hashTarget[ i ]), "%02x", (char )hash[ j ] & 0xff );
 				}
 		
-				DEBUG("Checking provided password '%s' versus active password '%s'\n", hashTarget, usr->u_Password );
+				DEBUG("[FCDB] Checking provided password '%s' versus active password '%s'\n", hashTarget, usr->u_Password );
 		
 				if( strncmp( &(hashTarget[0]), &(usr->u_Password[4]), 64 ) == 0 )
 				{
-					DEBUG("Password is ok!\n");
+					DEBUG("[FCDB] Password is ok!\n");
 					return TRUE;
 				}
 			}
@@ -231,10 +241,15 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 	return FALSE;
 }
 
-//
-// update password
-//
-
+/**
+ * Update user password
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param usr pointer to User structure
+ * @param pass password provided (new password)
+ * @return 0 when success, otherwise error number
+ */
 int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
 {
 	if( l != NULL && usr != NULL )
@@ -252,8 +267,7 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
 			char temptext[ 2048 ];
 			
 			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.Password = '%s' WHERE`ID` = '%ld'",  pass, usr->u_ID );
-			//snprintf( temptext, 2048, "UPDATE `FUser` f SET f.Password = '%s' WHERE`ID` = '%ld'", pass, usr->u_ID );
-			
+
 			MYSQL_RES *res = sqlLib->Query( sqlLib, temptext );
 			if( res != NULL )
 			{
@@ -267,54 +281,33 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Return information if User is in API group
+ *
+ * @param sqlLib pointer to MYSQL.library
+ * @param tmpusr pointer to User structure which will be checked
+ * @return TRUE when success, otherwise FALSE
+ */
 FBOOL isAPIUser( MYSQLLibrary *sqlLib, User *tmpusr )
 {
 	// If we are not an API user:
 	return tmpusr->u_IsAPI;
-	
-	/*
-	char sql[ 512 ];
-	
-	sqlLib->SNPrintF( sqlLib, sql, sizeof(sql), "SELECT u.ID FROM FUser u, FUserToGroup ug, FUserGroup g \
-		WHERE u.ID = \'%ld\' AND u.ID = ug.UserID AND g.ID = ug.UserGroupID AND g.Name = \'API\'", tmpusr->u_ID );
-
-	DEBUG( "AUTHENTICATE: Trying to see if user %s UserID  (%d) is apiusr \n", tmpusr->u_Name,  (int)tmpusr->u_ID );
-	
-	int error = 1;
-	
-	if( sqlLib == NULL )
-	{
-		FERROR("Sqllibrary is equal to null\n");
-		return -1;
-	}
-	
-	MYSQL_RES *res = sqlLib->Query( sqlLib, sql );
-	if( res != NULL )
-	{
-		if( sqlLib->NumberOfRows( sqlLib, res ) <= 0 )
-		{
-			error = 0;
-		}
-		sqlLib->FreeResult( sqlLib, res );
-	}
-	else
-	{
-		error = 0;
-	}
-	
-	return error;
-	*/
 }
 
-//
-// authenticate user
-//
-
-UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logsess, const char *name, const char *pass, const char *devname, const char *sessionId, FULONG *blockTime )
+/**
+ * Authenticate User
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param logsess pointer to UserSession structure
+ * @param name name of the User
+ * @param pass password provided
+ * @param devname device identitiy
+ * @param sessionId sessionid provided as string
+ * @param blockTime pointer to integer value where blocked account time will be returned (int seconds)
+ * @return UserSession structure when user is authenticated, otherwise NULL
+ */
+UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logsess, char *name, char *pass, char *devname, char *sessionId, FULONG *blockTime )
 {
 	if( l == NULL )
 	{
@@ -339,13 +332,12 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		time_t tm_now = time( NULL );
 		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, name, l->am_BlockAccountAttempts, &tm );
 		
-		DEBUG("Authentication, access: %d, time difference between last login attempt and now %lu\n", access, ( tm_now - tm ) );
+		DEBUG("[FCDB] Authentication, access: %d, time difference between last login attempt and now %lu\n", access, ( tm_now - tm ) );
 		// if last 3 access failed you must wait one hour from last login attempt
 		if( access == FALSE && ( (tm_now - tm ) < l->am_BlockAccountTimeout) )
 		{
 			int max = rand( )%RANDOM_WAITING_TIME;
-			
-			DEBUG("User not found, generate random loop, seconds: %d\n", max );
+
 			// This "hack" will give login machine feeling that FC is doing something in DB
 			
 			//sleep( max );
@@ -378,7 +370,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		{
 			int max = rand( )%RANDOM_WAITING_TIME;
 			
-			DEBUG("User not found, generate random loop, seconds: %d\n", max );
+			DEBUG("[FCDB] User not found, generate random loop, seconds: %d\n", max );
 			// This "hack" will give login machine feeling that FC is doing something in DB
 
 			//sleep( max );
@@ -390,11 +382,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 	{
 		if( logsess->us_User == NULL )
 		{
-			DEBUG("[FCDB] User is not connected to session, I will load it from DB\n");
+			DEBUG("[FCDB] User is not connected to session, it will loaded from DB\n");
 			tmpusr = sb->sl_UserManagerInterface.UMUserGetByNameDB( sb->sl_UM, name );
 			userFromDB = TRUE;
 		}
-		DEBUG("[FCDB] User taken from provided session\n");
 		tmpusr = logsess->us_User;
 		uses = logsess;
 	}
@@ -423,8 +414,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		if( logsess == NULL )
 		{
 			FERROR("[FCDB] provided Sessionid is empty\n");
-			//UserDelete( tmpusr );
-			//tmpusr = NULL;
 		}
 		
 		//
@@ -502,10 +491,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			// session is valid
 			//
 		
-			if( 1 == 1 || ( timestamp - uses->us_LoggedTime ) < LOGOUT_TIME )
+			if( 1 == 1 || ( timestamp - uses->us_LoggedTime ) < REMOVE_SESSIONS_AFTER_TIME )
 			{	// session timeout
 	
-				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %d\n", timestamp - uses->us_LoggedTime, LOGOUT_TIME );
+				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %d\n", timestamp - uses->us_LoggedTime, REMOVE_SESSIONS_AFTER_TIME );
 	
 				// same session, update login time
 				
@@ -563,7 +552,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		{
 			DEBUG("[FCDB] Create new session\n");
 			//USMGetSessionByDeviceIDandUser()
-			uses = UserSessionNew( NULL, (const char *)devname );
+			uses = UserSessionNew( NULL, devname );
 			uses->us_UserID = tmpusr->u_ID;
 		}
 		else
@@ -591,13 +580,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			{
 				DEBUG( "[FCDB] : We got a response on: \nAUTHENTICATE: SessionID = %s\n", uses->us_SessionID ? uses->us_SessionID : "No session id" );
 				DEBUG("\n\n\n1============================================================ tmiest %lld usertime %lld logouttst %lld\n\
-		==========================================================================\n", timestamp, uses->us_LoggedTime , LOGOUT_TIME);
+		==========================================================================\n", timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
 				
 				//char tmpQuery[ 512 ];
 				//
 				// user was not logged out
 				//
-				if(  (timestamp - uses->us_LoggedTime) < LOGOUT_TIME )
+				if(  (timestamp - uses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME )
 				{
 					DEBUG("User was not logged out\n");
 					
@@ -635,13 +624,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				if( testAPIUser == TRUE && uses->us_SessionID )
 				{
 					
-					DEBUG("APIUSR!\n");
+					DEBUG("[FCDB] APIUSR!\n");
 					// Generate sessionid
 					if( uses->us_SessionID == NULL || !strlen( uses->us_SessionID ) )
 					{
 						DEBUG("\n\n\n============================================================\n \
 											user name %s current timestamp %%lld login time %lld logout time %lld\n\
-											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , LOGOUT_TIME);
+											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
 						
 						char *hashBase = MakeString( 255 );
 						sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
@@ -655,7 +644,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 						uses->us_SessionID = hashBase;
 					}
 					sb->LibraryMYSQLDrop( sb, sqlLib );
-					DEBUG( "AUTHENTICATE: We found an API user! sessionid=%s\n", uses->us_SessionID );
+					DEBUG( "[FCDB] AUTHENTICATE: We found an API user! sessionid=%s\n", uses->us_SessionID );
 					if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 					goto loginok;
 				}
@@ -666,13 +655,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		goto loginfail;
 	}
 
-	DEBUG("AUTHENTICATE END\n");
+	DEBUG("[FCDB] AUTHENTICATE END\n");
 
 	if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 	// next request, if session id exist then user is logged in
 	
 loginok:
-	DEBUG("Login ok Stored\n");
+	DEBUG("[FCDB] Login ok Stored\n");
 	sb->sl_UserManagerInterface.UMStoreLoginAttempt( sb->sl_UM, name, "Login success", NULL );
 	return uses;
 	
@@ -685,11 +674,14 @@ loginfail:
 	return NULL;
 }
 
-//
-// logout
-//
-
-void Logout( struct AuthMod *l, Http *r, const char *name )
+/**
+ * Logout User
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param name name of the User
+ */
+void Logout( struct AuthMod *l, Http *r, char *name )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
 	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
@@ -707,11 +699,15 @@ void Logout( struct AuthMod *l, Http *r, const char *name )
 	}
 }
 
-//
-//
-//
-
-UserSession *IsSessionValid( struct AuthMod *l, Http *r, const char *sessionId )
+/**
+ * Check if UserSession is valid
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param sessionId sessionid provided as string
+ * @return UserSession structure when session is valid, otherwise NULL
+ */
+UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
 	// to see if the session has lastupdated date less then 2 hours old
@@ -733,13 +729,13 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, const char *sessionId )
 	}
 
 	// we check if user is already logged in
-	if( ( timestamp - users->us_LoggedTime ) < LOGOUT_TIME )
+	if( ( timestamp - users->us_LoggedTime ) < REMOVE_SESSIONS_AFTER_TIME )
 	{	// session timeout
 		// we set timeout
 
 		if( strcmp( users->us_SessionID, sessionId ) == 0 )
 		{
-			DEBUG( "IsSessionValid: Session is valid! %s\n", sessionId );
+			DEBUG( "[FCDB] IsSessionValid: Session is valid! %s\n", sessionId );
 			char tmpQuery[ 512 ];
 			
 			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
@@ -756,7 +752,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, const char *sessionId )
 		}
 		else
 		{
-			DEBUG( "IsSessionValid: Wrong sessionid! %s\n", sessionId );
+			DEBUG( "[FCDB] IsSessionValid: Wrong sessionid! %s\n", sessionId );
 			
 			// same session, update loggedtime
 			//user->u_Error = FUP_AUTHERR_WRONGSESID;
@@ -766,7 +762,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, const char *sessionId )
 	}
 	else
 	{
-		DEBUG( "IsSessionValid: Session has timed out! %s\n", sessionId );
+		DEBUG( "[FCDB] IsSessionValid: Session has timed out! %s\n", sessionId );
 		//user->u_Error = FUP_AUTHERR_TIMEOUT;
 		sb->LibraryMYSQLDrop( sb, sqlLib );
 		return users;
@@ -775,49 +771,15 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, const char *sessionId )
 	return users;
 }
 
-//
-// get user by session
-//
-/*
-struct User *UserGetBySession( struct AuthMod *l, Http *r, const char *sessionId )
-{
-	SystemBase *sb = (SystemBase *)l->sb;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
-	
-	if( !sqlLib )
-	{
-		FERROR("Cannot get user, mysql.library was not open\n");
-		return NULL;
-	}
-
-	struct User *user = NULL;
-	char tmpQuery[ 1024 ];
-	sprintf( tmpQuery, " SessionId = '%s'", sessionId );
-	int entries;
-	
-	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
-		
-	if( user != NULL )
-	{
-		int res = UserInit( &user );
-		if( res == 0 )
-		{
-			AssignGroupToUser( l, user );
-			AssignApplicationsToUser( l, user );
-			user->u_MountedDevs = NULL;
-		}
-	}
-	
-	DEBUG("UserGetBySession end\n");
-	return user;
-}
-*/
-
-//
-// Set User Full Name
-//
-
+/**
+ * Set User attribute
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param u pointer to User structure which will be updated
+ * @param param attribute name as string
+ * @param val attribute value as string
+ */
 void SetAttribute( struct AuthMod *l, Http *r, struct User *u, const char *param, void *val )
 {
 	if( param != NULL && u != NULL )
@@ -848,98 +810,21 @@ void SetAttribute( struct AuthMod *l, Http *r, struct User *u, const char *param
 }
 
 //
-// Check if user has a textual permission, like module or filesystem
-// in concert with applications
+// 
 //
-
+/**
+ * Check if user has a textual permission, like module or filesystem
+ * in concert with applications
+ *
+ * @param l pointer to AuthMod
+ * @param r pointer to Http request
+ * @param userId User ID
+ * @param applicationId application ID
+ * @param permission permissions which will be checked
+ * @return 0 when success, otherwise error number
+ */
 int UserAppPermission( struct AuthMod *l, Http *r, int userId, int applicationId, const char *permission )
 {
 
 	return -1;
 }
-
-
-
-//
-// network handler
-//
-
-Http* WebRequest( struct AuthMod *l, Http *r, char **urlpath, Http* request )
-{
-	Http* response = NULL;
-	/*
-	if( strcmp( urlpath[ 0 ], "Authenticate" ) == 0 )
-	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
-
-						//request->query;
-						//
-						// PARAMETERS SHOULD BE TAKEN FROM
-						// POST NOT GET
-						
-		if( request->parsedPostContent != NULL )
-		{
-			char *usr = NULL;
-			char *pass = NULL;
-			char *devname = NULL;
-							
-			HashmapElement *el =  HashmapGet( request->parsedPostContent, "username" );
-			if( el != NULL )
-			{
-				usr = (char *)el->data;
-			}
-							
-			el =  HashmapGet( request->parsedPostContent, "password" );
-			if( el != NULL )
-			{
-				pass = (char *)el->data;
-			}
-			
-			el =  HashmapGet( request->parsedPostContent, "password" );
-			if( el != NULL )
-			{
-				pass = (char *)el->data;
-			}
-							
-			if( usr != NULL && pass != NULL )
-			{
-				UserSession *loggedUser = l->Authenticate( l, r, NULL, usr, pass, devname, NULL );
-				if( loggedUser != NULL )
-				{
-					char tmp[ 20 ];
-					sprintf( tmp, "LERR: %d\n", loggedUser->us_User->u_Error );	// check user.library to display errors
-					HttpAddTextContent( response, tmp );
-				}
-				else
-				{
-					HttpAddTextContent( response, "LERR: -1" );			// out of memory/user not found
-				}
-			}
-		}
-		DEBUG("user login response\n");
-
-		//HttpWriteAndFree( response );
-	}
-	else
-	{
-		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple(  HTTP_404_NOT_FOUND,  tags );
-	
-		//HttpWriteAndFree( response );
-		return response;
-	}
-	*/
-	
-	return response;
-}
-

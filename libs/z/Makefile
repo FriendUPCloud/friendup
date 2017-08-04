@@ -48,14 +48,14 @@ clean:
 	@echo "\033[34mCleaning\033[0m"
 	@rm -f $(C_FILES:%.c=%.d)
 	@rm -rf obj/* $(OUTPUT) *.d
-	@rm -rf *.d.*
+	@rm -rf *.d*
 	make -C aes clean
 
 compile:	ALL
 	
 install:
 	@echo "\033[34mInstalling library\033[0m"
-	cp bin/z.library ../../build/libs/
+	cp bin/z.library $(FRIEND_PATH)/libs/
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"

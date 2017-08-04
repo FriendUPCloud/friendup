@@ -49,7 +49,7 @@
 void *libInit( void *sb )
 {
 	struct ImageLibrary *l = NULL;
-	DEBUG("IMAGE LIBRARY INIT\n");
+	DEBUG("[ImageLibrary] Init\n");
 
 	if( ( l = calloc( 1, sizeof( struct ImageLibrary ) ) ) == NULL )
 		return NULL;
@@ -84,7 +84,7 @@ void libClose( struct ImageLibrary *l )
 	MagickWandTerminus();
 #endif
 	
-	DEBUG("image library close\n");
+	DEBUG("[ImageLibrary] close\n");
 }
 
 //
@@ -439,12 +439,10 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 	}
 	
 	*dstpath = (char *)&path[ dpos + 1 ];
-	DEBUG("Get handle by path!\n");
-	
+
 	File *ldr = usr->u_MountedDevs;
 	while( ldr != NULL )
 	{ 
-		DEBUG("GETHANDLER BY %s - %s\n", ldr->f_Name, ddrivename );
 		if( strcmp( ldr->f_Name, ddrivename ) == 0 )
 		{
 			fhand = ldr;
@@ -465,7 +463,7 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 {
 	Http* response = NULL;
 	
-	DEBUG("IMAGE WEBREQUEST %s\n", urlpath[ 0 ] );
+	DEBUG("[ImageLibrary] first command: %s\n", urlpath[ 0 ] );
 	SystemBase *sb = (SystemBase *)l->sb;
 	
 	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
@@ -513,7 +511,7 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 			path = UrlDecodeToMem(  (char *) tst->data );
 			pathRoot = GetRootDeviceByPath( usr, &oPath, path );
 			
-			DEBUG("Found PATH parameter %s root %s\n", path, oPath );
+			DEBUG("[ImageLibrary] Found PATH parameter %s root %s\n", path, oPath );
 		}
 		
 		tst = HashmapGet( request->parsedPostContent, "to" );
@@ -523,7 +521,7 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 			toPath = UrlDecodeToMem(  (char *) tst->data );
 			toRoot = GetRootDeviceByPath( usr, &otoPath, toPath );
 			
-			DEBUG("Found DESTINATION PATH parameter %s root %s\n", toPath, toRoot );
+			DEBUG("[ImageLibrary] Found DESTINATION PATH parameter %s root %s\n", toPath, toRoot );
 		}
 		
 		tst = HashmapGet( request->parsedPostContent, "width" );

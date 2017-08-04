@@ -1,14 +1,25 @@
-/*©mit***************************************************************************
- *                                                                              *
- * Friend Unifying Platform                                                     *
- * ------------------------                                                     *
- *                                                                              * 
- * Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
- * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
- * Tel.: (+47) 40 72 96 56                                                      *
- * Mail: info@friendos.com                                                      *
- *                                                                              *
- *****************************************************************************©*/
+/*©mit**************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
+*                                                                              *
+*****************************************************************************©*/
+
 /** @file
  * 
  *  CommunicationService body
@@ -83,20 +94,19 @@ int CommServiceThreadConnection( FThread *ptr )
 	{
 		// We must read whatever data is available completely, as we are running in edge-triggered mode
 		// and won't get a notification again for the same data.
-		DEBUG("[COMMSERV]: received message\n");
+		DEBUG("[COMMSERV-s] received message\n");
 		
 		FD_ZERO( &readfds );
 		
 		FD_SET( sock->fd, &readfds );
 		//FD_SET( service->s_ReadCommPipe, &readfds );
 		
-		DEBUG("Before select, maxd %d\n", maxd );
-		
+
 		int activity = select( maxd+1, &readfds, NULL, NULL, NULL );
 		
 		if( ( activity < 0 ) && ( errno != EINTR ) )
 		{
-			DEBUG("Select error\n");
+			DEBUG("[COMMSERV-s] Select error\n");
 			errors++;
 			if( errors > 25 )
 			{
@@ -108,7 +118,7 @@ int CommServiceThreadConnection( FThread *ptr )
 		{
 			FBYTE *tempBuffer = NULL;
 			int tempSize = 0;
-			DEBUG("\n\n\n\n\nMessage received, reading it\n");
+			DEBUG("[COMMSERV-s] Message received, reading it\n");
 			
 			BufString *bs = NULL;
 			if( sock != NULL )
@@ -135,11 +145,7 @@ int CommServiceThreadConnection( FThread *ptr )
 					}
 				}
 				
-				DEBUG2("Readede from socket %lu\n", bs->bs_Size );
-				
-				//DEBUG( "[COMMSERV] processing socket with a callback: %s\n", buffer );
-				
-				DEBUG2("[COMMSERV] PROCESSING RECEIVED CALL, DATA READED %d\n", (int)count );
+				DEBUG2("[COMMSERV-s] PROCESSING RECEIVED CALL, DATA READED %d\n", (int)count );
 				int dcount = count;
 				DataForm *df = (DataForm *)bs->bs_Buffer;
 				
@@ -174,17 +180,17 @@ int CommServiceThreadConnection( FThread *ptr )
 					
 					if( df[ 2 ].df_ID == ID_RESP )
 					{
-						DEBUG("Response received!\n");
+						DEBUG("[COMMSERV-s] Response received!\n");
 						
 						pthread_mutex_lock( &service->s_Mutex );
 						CommRequest *cr = service->s_Requests;
 						while( cr != NULL )
 						{
-							DEBUG("Going through requests %ld find %ld\n", df[ 1 ].df_Size, cr->cr_RequestID );
+							DEBUG("[COMMSERV-s] Going through requests %ld find %ld\n", df[ 1 ].df_Size, cr->cr_RequestID );
 							if( cr->cr_RequestID == df[ 1 ].df_Size )
 							{
 								cr->cr_Bs = bs;
-								DEBUG("Message found by id\n");
+								DEBUG("[COMMSERV-s] Message found by id\n");
 								pthread_cond_broadcast( &service->s_DataReceivedCond );
 								break;
 							}
@@ -321,7 +327,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 {
 	CommService *service = (CommService *)ptr->t_Data;
 	
-	DEBUG("[COMMSERV]  Start\n");
+	DEBUG("[COMMSERV-s] Start\n");
 	SystemBase *lsysbase = (SystemBase *)service->s_SB;
 	
 	service->s_Socket = SocketOpen( lsysbase, service->s_secured, service->s_port, SOCKET_TYPE_SERVER );
@@ -337,7 +343,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 			return -1;
 		}
 		
-		DEBUG("\n\nCommServiceThreadServer\n\n\n");
+		DEBUG("[COMMSERV-s] CommServiceThreadServer\n");
 		
 		Socket* incomming = NULL;
 		
@@ -373,15 +379,15 @@ int CommServiceThreadServerSelect( FThread *ptr )
 			FD_SET( socket->fd, &readfds );
 			FD_SET( service->s_ReadCommPipe, &readfds );
 			
-			DEBUG("Before select, maxd %d\n", maxd );
+			DEBUG("[COMMSERV-s] Before select, maxd %d\n", maxd );
 			
 			int activity = select( maxd+1, &readfds, NULL, NULL, NULL );
 			
-			DEBUG("After select\n");
+			DEBUG("[COMMSERV-s] After select\n");
 			
 			if( ( activity < 0 ) && ( errno != EINTR ) )
 			{
-				DEBUG("Select error\n");
+				FERROR("[COMMSERV-s] Select error\n");
 			}
 			
 			if( FD_ISSET( socket->fd, &readfds ) )
@@ -505,10 +511,10 @@ int CommServiceThreadServerSelect( FThread *ptr )
 	}
 	else
 	{
-		FERROR("[COMMSERV] Cannot open socket for communcation thread!\n");
+		FERROR("[COMMSERV-s] Cannot open socket for communcation thread!\n");
 	}
 	
-	DEBUG("[COMMSERV] CommunicationService End\n");
+	DEBUG("[COMMSERV-s] CommunicationService End\n");
 	
 	ptr->t_Launched = FALSE;
 	

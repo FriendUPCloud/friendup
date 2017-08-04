@@ -46,7 +46,7 @@
 void *libInit( void *sb )
 {
 	struct PropertiesLibrary *l = NULL;
-	DEBUG("PROPERTY LIBRARY INIT\n");
+	DEBUG("Properties.library:  init\n");
 
 	if( ( l = calloc( 1, sizeof( struct PropertiesLibrary ) ) ) == NULL )
 		return NULL;
@@ -77,7 +77,7 @@ void *libInit( void *sb )
 
 void libClose( struct PropertiesLibrary *l )
 {
-	DEBUG("Properties library close\n");
+	DEBUG("Properties.library: close\n");
 }
 
 //
@@ -114,7 +114,7 @@ const char *GetConfigDirectory( struct PropertiesLibrary *s )
 	}
 	else
 	{
-		DEBUG("[ERROR]: Cannot find configuration path!\n");
+		FERROR("[ERROR]: Cannot find configuration path!\n");
 	}
 	
 	return "";
@@ -128,13 +128,9 @@ Props *Open( const char *path )
 {
 	Props *prop = NULL;
 	
-	DEBUG("[PropertiesLibrary] openfile %s\n", path );
-
 	if( ( prop = FCalloc( 1, sizeof( Props ) ) ) != NULL )
 	{
 		prop->p_Dict = iniparser_load( path );
-		
-		DEBUG("[PropertiesLibrary] dictionary pointer %p\n", prop->p_Dict );
 		
 		if( prop->p_Dict == NULL )
 		{

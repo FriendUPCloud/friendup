@@ -19,16 +19,29 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ *
+ *  Threading
+ *
+ * file contain all functitons related to threads
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 02/2015
+ */
 
 #include <core/thread.h>
 #include <util/log/log.h>
 #include <pthread.h>
 
-//
-// create new thread
-//
-
+/**
+ * Create new thread
+ *
+ * @param func pointer to function which will be called
+ * @param data pointer to data which will be passed to function as parameter
+ * @param autos TRUE if function must be launched immidiatly
+ * @param attr pointer to thread attributes (pthread_attr_t)
+ * @return pointer to new FThread structure when success, otherwise NULL
+ */
 FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 {
 	if( !func || !data ) return NULL;
@@ -48,8 +61,6 @@ FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 	//uuid_generate( nt->t_uuid );
 	nt->t_pid = (FUQUAD)nt;
 	
-	//DEBUG("ThreadNew create thread func ptr %x\n", func );
-
 	if( autos == TRUE )
 	{
 		nt->t_Quit = FALSE;
@@ -63,7 +74,7 @@ FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 		else
 		{
 			FFree( nt );
-			DEBUG("[ThreadNew] error: %d\n", error );
+			FERROR("[ThreadNew] error: %d\n", error );
 			return NULL;
 		}
 	}
@@ -75,10 +86,12 @@ FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 	return nt;
 }
 
-//
-// start thread
-//
-
+/**
+ * Start thread
+ *
+ * @param ft pointer to FThread structure
+ * @return pointer to FThread structure when success, otherwise NULL
+ */
 FThread *ThreadStart( FThread *ft )
 {
 	if( ft != NULL && ft->t_Launched == FALSE )
@@ -94,17 +107,19 @@ FThread *ThreadStart( FThread *ft )
 		else
 		{
 			//free( ft );
-			DEBUG("[ThreadNew] error: %d\n", error );
+			FERROR("[ThreadNew] error: %d\n", error );
 			return NULL;
 		}
 	}
 	return ft;
 }
 
-//
-// Stop currently working thread
-//
-
+/**
+ * Stop working thread
+ *
+ * @param ft pointer to FThread structure (thread which will be stopped)
+ * @param wait set to TRUE if you want to wait till thread will stop
+ */
 void ThreadCancel( FThread *ft, FBOOL wait )
 {
 	pthread_cancel( ft->t_Thread );
@@ -115,35 +130,16 @@ void ThreadCancel( FThread *ft, FBOOL wait )
 	}
 }
 
-//
-// example
-//
-/*
-	void f( void *args )
-	{
-	struct FThread *ft = (FThread *)args;
-	while( ft->quit != TRUE )
-	{
-		//...do something
-	}
-	
-	ft = t_Ended = TRUE;
-
-	}
-*/
-
-
-//
-// remove thread
-//
-
+/**
+ * Stop and delete working thread
+ *
+ * @param t pointer to FThread structure (thread which will be stopped/deleted)
+ */
 void ThreadDelete( FThread *t )
 {
 	if( t->t_Thread )
 	{
 		t->t_Quit = TRUE;
-		
-		DEBUG("[ThreadDelete] Asking thread %p to quit.\n", t );
 		
 		//if( t->t_Launched == TRUE )
 		{
@@ -156,4 +152,3 @@ void ThreadDelete( FThread *t )
 	}
 }
 
-//#endif // __LINUX__

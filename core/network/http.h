@@ -292,7 +292,7 @@ typedef struct Http
 
 	// This is a blob (But most likely text)
 	char                   *content;
-	FUQUAD            sizeOfContent;
+	FQUAD            sizeOfContent;
 	Hashmap           *headers; // Additional headers
 	char                   *h_RespHeaders[ HTTP_HEADER_END ]; // response header
 	FBOOL                h_HeadersAlloc[ HTTP_HEADER_END ]; // memory was allocated?
@@ -312,7 +312,7 @@ typedef struct Http
 	// Do not write to these. They are "private"
 	//
 	char                *response;
-	unsigned int   responseLength;
+	FQUAD             responseLength;
 
 	FBOOL           partialRequest;
 	char               *partialData;

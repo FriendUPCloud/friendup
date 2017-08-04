@@ -37,8 +37,8 @@ typedef struct UserSessionManagerInterface
 	UserSessionManager			*(*USMNew)( void *sb );
 	void						(*USMDelete)( UserSessionManager *smgr );
 	User						*(*USMGetUserBySessionID)( UserSessionManager *usm, char *sessionid );
-	UserSession					*(*USMGetSessionBySessionID)( UserSessionManager *usm, const char *id );
-	UserSession					*(*USMGetSessionByDeviceIDandUser)( UserSessionManager *usm, const char *devid, FULONG uid );
+	UserSession					*(*USMGetSessionBySessionID)( UserSessionManager *usm, char *id );
+	UserSession					*(*USMGetSessionByDeviceIDandUser)( UserSessionManager *usm, char *devid, FULONG uid );
 	void						(*USMLogUsersAndDevices)( UserSessionManager *usm );
 	UserSession					*(*USMGetSessionByUserID)( UserSessionManager *usm, FULONG id );
 	UserSession					*(*USMGetSessionsByTimeout)( UserSessionManager *smgr, const FULONG timeout );

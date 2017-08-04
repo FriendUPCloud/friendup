@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -129,6 +139,7 @@ typedef struct FileShared
 	
 	char 										*fs_Hash;
 	time_t                           			fs_CreatedTime;
+	struct tm									fs_CreateTimeTM;
 	
 	ListString									*fs_Data;		// pointer to liststring which represents file data, list must be finalised before it will be atached here
 	FULONG 									fs_AppID;		// application ID
@@ -144,7 +155,7 @@ static const FULONG FileSharedTDesc[] = {
 	SQLT_STR, (FULONG)"Path",            offsetof( struct FileShared, fs_Path ), 
 	SQLT_INT, (FULONG)"UserID",          offsetof( struct FileShared, fs_IDUser ), 
 	SQLT_STR, (FULONG)"DstUserSID",      offsetof( struct FileShared, fs_DstUsers ), 
-	SQLT_INT, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreatedTime ),
+	SQLT_DATETIME, (FULONG)"DateCreated",     offsetof( struct FileShared, fs_CreateTimeTM ),
 	SQLT_STR, (FULONG)"Hash",            offsetof( struct FileShared, fs_Hash ), 
 	SQLT_INT, (FULONG)"AppID",           offsetof( struct FileShared, fs_AppID ), 
 	SQLT_BLOB, (FULONG)"FileData",       offsetof( struct FileShared, fs_Data ), 

@@ -40,7 +40,12 @@
 //
 
 //#define LOGOUT_TIME         86400	// one day
-#define LOGOUT_TIME         3600 // one hour
+//#define LOGOUT_TIME         3600 // one hour
+// 3h timeout
+#define REMOVE_SESSIONS_AFTER_TIME 10800
+#define REMOVE_SESSIONS_AFTER_TIME_STRING "10800"
+//#define REMOVE_SESSIONS_AFTER_TIME 20
+//#define REMOVE_SESSIONS_AFTER_TIME_STRING "20"
 
 //
 // Auth module
@@ -62,7 +67,7 @@ typedef struct AuthMod
 	// check if user exist in database, by name
 	FBOOL							(*UserExistByName)( struct AuthMod *l, Http *r, const char *name );
 	// authenticate user, if user is authenticated to login, it returns User structure
-	UserSession					*(*Authenticate)( struct AuthMod *l, Http *r, struct UserSession *loguser, const char *name, const char *pass, const char *devname, const char *sessionId, FULONG *blockTime );
+	UserSession					*(*Authenticate)( struct AuthMod *l, Http *r, struct UserSession *loguser, char *name, char *pass, char *devname, char *sessionId, FULONG *blockTime );
 	// check password
 	FBOOL 							(*CheckPassword)( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *blockTime );
 	// update password
@@ -71,24 +76,13 @@ typedef struct AuthMod
 	void								(*Logout)( struct AuthMod *l, Http *r, char *s );
 	// check if user serssion is still valid, return filled user structure
 	UserSession					*(*IsSessionValid)( struct AuthMod *l, Http *r, const char *sessionId );
-	// get all users
-	//User								*(*GetAllUsers)( struct AuthMod *l, Http *r );
 	// set attribute
 	void								(*SetAttribute)( struct AuthMod *l, Http *r, struct User *u, const char *param, void *val );
 	// update user in database
 	void								(*UserUpdate)( struct AuthMod *l, Http *r, User *usr );
 	// test textual application user permission
 	int 								(*UserAppPermission)( struct AuthMod *l, Http *r, int userId, int applicationId, const char *permission ); 
-	
-	//FBOOL 							(*UserIsAdmin)( struct AuthMod *l, Http *r, User *u );
-	
-	//FBOOL 							(*UserIsAdminByAuthID)( struct AuthMod *l, Http *r, char *auth );
-	
-	//char								*(*UserGetActiveSessionID)( struct AuthMod *l, Http *r, User *usr );
-	
-	// handle all webrequests
-	Http								*(*WebRequest)( struct AuthMod *l, char **func, Http* request );
-	
+
 	void 								*SpecialData;
 	int								am_BlockAccountTimeout;
 	int								am_BlockAccountAttempts;

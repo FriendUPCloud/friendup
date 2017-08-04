@@ -48,11 +48,11 @@ release:	$(OBJ_FILES) $(OUTPUT)
 clean:
 	@echo "\033[34mCleaning\033[0m"
 	@rm -f $(C_FILES:%.c=%.d)
-	@rm -rf obj/* $(OUTPUT) *.d
+	@rm -rf obj/* $(OUTPUT) *.d*
 
 install:
 	@echo "\033[34mInstalling library\033[0m"
-	cp $(OUTPUT) ../../build/libs/
+	cp $(OUTPUT) $(FRIEND_PATH)/libs/
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"

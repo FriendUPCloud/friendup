@@ -263,7 +263,7 @@ BufString *GetJSONFromStructure( FULONG *descr, void *data )
 				}
 				break;
 				
-			case SQLT_TIMESTAMP:
+			case SQLT_DATETIME:
 				{
 					// '2015-08-10 16:28:31'
 					char date[ 512 ];
@@ -271,12 +271,12 @@ BufString *GetJSONFromStructure( FULONG *descr, void *data )
 					struct tm *tp = (struct tm *)( strptr+dptr[2]);
 					if( opt == 0 )
 					{
-						sprintf( date, "\"%s\": \"%4d-%2d-%2d %2d:%2d:%2d\" ", (char *)dptr[ 1 ], tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						sprintf( date, "\"%s\": \"%04d-%02d-%02d %20d:%02d:%02d\" ", (char *)dptr[ 1 ], tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						BufStringAdd( bs, date );
 					}
 					else
 					{
-						sprintf( date, ", \"%s\": \"%4d-%2d-%2d %2d:%2d:%2d\" ", (char *)dptr[ 1 ], tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						sprintf( date, ", \"%s\": \"%04d-%02d-%02d %02d:%02d:%02d\" ", (char *)dptr[ 1 ], tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						BufStringAdd( bs, date );
 					}
 					
@@ -415,7 +415,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 					break;
 						
 					case SQLT_STR:
-					case SQLT_TIMESTAMP:
+					case SQLT_DATETIME:
 					{
 						int retPos = -1;
 						for( i = 0; i <  value->u.object.length; i++) 
@@ -531,7 +531,7 @@ void *GetStructureFromJSON( FULONG *descr, const char *jsondata )
 						break;
 						
 						case SQLT_STR:
-						case SQLT_TIMESTAMP:
+						case SQLT_DATETIME:
 						{
 							int retPos = -1;
 							for( i = 0; i < intlength; i++) 

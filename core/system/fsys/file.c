@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 /** @file file.c
@@ -193,14 +203,14 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 		return 1;
 	}
 	
-	DEBUG("FileUploadFileOrDirectoryRec %s <- %s start\n", dst, src );
+	DEBUG("[FileUploadFileOrDirectoryRec] dst %s <- src %s start\n", dst, src );
 	
 	if( S_ISDIR( statbuf.st_mode ) )
 	{
 		DIR *dp = NULL;
 		struct dirent *dptr;
 		
-		DEBUG("FileUploadFileOrDirectoryRec found directory\n");
+		DEBUG("[FileUploadFileOrDirectoryRec] found directory\n");
 		
 		if( ( dp = opendir( src ) ) != NULL )
 		{
@@ -210,7 +220,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 			newsrc = FCalloc( 512 + strlen( src ), sizeof(char) );
 			newdst = FCalloc( 512 + strlen( dst ), sizeof(char) );
 			
-			DEBUG("FileUploadFileOrDirectoryRec found directory 1\n");
+			DEBUG("[FileUploadFileOrDirectoryRec] found directory 1\n");
 			
 			if( newsrc != NULL && newdst != NULL )
 			{
@@ -232,31 +242,23 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 					}
 					strcat( newdst, dptr->d_name );
 					
-					DEBUG("Newdst %s newsrc %s\n", newdst, newsrc );
-					
 					if( stat( newsrc, &statbuf ) == 0 )
 					{
 						if( S_ISDIR( statbuf.st_mode ) )
 						{
-							DEBUG("is dir %s\n", newsrc );
 							fsys->MakeDir( dstdev, newdst );
 							//if( fsys->MakeDir( dstdev, newdst ) == 0 )
 							{
 								if( FileUploadFileOrDirectoryRec( request, dstdev, newdst, newsrc, files, numberFiles ) != 0 )
 								{
-									DEBUG("FileUploadFileOrDirectoryRec fail!\n");
+									DEBUG("[FileUploadFileOrDirectoryRec] fail!\n");
 								}
 							}
-						//else
-						//{
-						//	DEBUG("Makedir fail!\n");
-						//}
 						}
 						else
 						{
 							// copy file
 							
-							DEBUG(" is file %s\n", newsrc );
 							LocFile *lf = LocFileNew( (char *) newsrc, FILE_READ_NOW );
 							if( lf != NULL )
 							{
@@ -275,7 +277,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 							}
 							else
 							{
-								DEBUG("Cannot read localfile %s\n", src );
+								DEBUG("[FileUploadFileOrDirectoryRec] Cannot read localfile %s\n", src );
 							}
 							
 							// update progress
@@ -296,19 +298,17 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 								
 								int per = (int)( (float)(*files)/(float)numberFiles * 100.0f );
 								
-								DEBUG("UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
+								DEBUG("[FileUploadFileOrDirectoryRec] UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
 								
 								int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
-								
-								DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
-								
+
 								sb->SendProcessMessage( request, message, size );
 							}
 						}
 					}
 					else
 					{
-						DEBUG("Stat fail!\n");
+						FERROR("Stat fail on file: %s\n", newsrc );
 					}
 				}
 			}
@@ -326,8 +326,6 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 	else
 	{
 		// copy file
-		
-		DEBUG("Found file, makeing copy %s <- %s\n", dst, src );
 		
 		LocFile *lf = LocFileNew( (char *) src, FILE_READ_NOW );
 		if( lf != NULL )
@@ -347,7 +345,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 		}
 		else
 		{
-			DEBUG("Cannot read localfile %s\n", src );
+			DEBUG("[FileUploadFileOrDirectoryRec] Cannot read localfile %s\n", src );
 		}
 		
 		// update progress
@@ -368,13 +366,11 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 			
 			int per = (int)( (float)(*files)/(float)numberFiles * 100.0f );
 			
-			DEBUG("UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
+			DEBUG("[FileUploadFileOrDirectoryRec] UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
 			
 			int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, per );
 			
-			DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
-			
-			sb->SendProcessMessage( request, message, size );
+			SendProcessMessage( request, message, size );
 		}
 	}
 	
@@ -397,7 +393,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	char devname[ 256 ];
 	memset( devname, '\0', sizeof(devname) );
 	
-	DEBUG("FileUploadFileOrDirectory start\n");
+	DEBUG("[FileUploadFileOrDirectory] start\n");
 	
 	// getting devname from destination path
 	
@@ -414,7 +410,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	int files = 0;
 	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
 	{
-		DEBUG("FileUploadFileOrDirectory file uplload rec started\n");
+		DEBUG("[FileUploadFileOrDirectory] file uplload rec started\n");
 		
 		actDev->f_Operations++;
 		FileUploadFileOrDirectoryRec( request, actDev, dst, src, &files, numberFiles );
@@ -425,7 +421,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 		return 1;
 	}
 	
-	DEBUG("FileUploadFileOrDirectory end\n");
+	DEBUG("[FileUploadFileOrDirectory] end\n");
 	
 	return 0;
 }
@@ -460,14 +456,14 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 	int oldfod = fod;
 	BufString *bs = NULL;
 	
-	DEBUG("FileDownloadFileOrDirectoryRec start  fod %d\n", fod );
+	DEBUG("[FileUploadFileOrDirectoryRec]  start fod %d\n", fod );
 	
 	if( fod <= 0 )
 	{
 		bs = fsys->Info( srcdev, src );
 		if( bs != NULL )
 		{
-			DEBUG("Info result %s\n", bs->bs_Buffer );
+			DEBUG("[FileUploadFileOrDirectoryRec] Info result %s\n", bs->bs_Buffer );
 		
 			//ok<!--separate-->{"Type":"File","MetaType":"File","Path":"Home:aaaaa","Filesize":"5","Filename":"aaaaa","DateCreated":"2016-10-19 16:54:53","DateModified":"2016-10-19 16:54:53"}
 			if( strncmp( "ok<!--separate-->", bs->bs_Buffer, 17 ) == 0 )
@@ -479,8 +475,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 			
 				jsmn_init(&p);
 				char *buffer = &bs->bs_Buffer[ 17 ];
-			
-				DEBUG("Parse json1 '%s'\n", buffer );
 			
 				r = jsmn_parse(&p, buffer, bs->bs_Size - 17, t, sizeof(t)/sizeof(t[0]));
 				if (r < 0) 
@@ -542,13 +536,13 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 		newsrc = FCalloc( 512 + strlen( src ), sizeof(char) );
 		newdst = FCalloc( 512 + strlen( dst ), sizeof(char) );
 		
-		DEBUG("FileUploadFileOrDirectoryRec found directory 1\n");
+		DEBUG("[FileUploadFileOrDirectoryRec] found directory 1\n");
 		
 		mkdir( dst, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 		
 		if( bsdir != NULL && newsrc != NULL && newdst != NULL )
 		{
-			DEBUG("Received %s for path %s\n", bsdir->bs_Buffer, src );
+			DEBUG("[FileUploadFileOrDirectoryRec] Received %s for path %s\n", bsdir->bs_Buffer, src );
 			if( strncmp( "ok<!--separate-->", bsdir->bs_Buffer, 17 ) == 0 )
 			{
 				int i;
@@ -563,9 +557,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 				{
 					jsmn_init(&p);
 					char *buffer = &bsdir->bs_Buffer[ 17 ];
-					
-					DEBUG("Parse json '%s'\n", buffer );
-					
+
 					unsigned int entr = 0;
 					jsmntok_t *tokens = JSONTokenise( buffer, &entr );
 					
@@ -583,7 +575,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 							if( t->type == JSMN_ARRAY )
 							{
 								int objsize = t->size;
-								DEBUG("Array size %d\n", t->size );
 								int z;
 								t++;
 								i++;
@@ -591,8 +582,6 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 								for( z = 0; z < objsize ; z++ )
 								{
 									int elements = t->size;
-									DEBUG("Object size %d\n", elements );
-								
 									char *locname = NULL;
 									char *loctype = NULL;
 								
@@ -611,8 +600,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 										{
 											loctype = StringDuplicateN( buffer + valt->start, valt->end-valt->start );
 										}
-									
-										//DEBUG("param %d  %.*s - %.*s\n", x, t->end - t->start, (char *) (buffer + t->start), valt->end - valt->start, (char *) (buffer + valt->start) );
+
 										t += 2;
 									}
 								
@@ -633,12 +621,9 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											strcat( newdst, "/" );
 										}
 										strcat( newdst, locname );
-									
-										//DEBUG("NEWSRC: %s\nNEWDST: %s  locname %s\n\n\n", newsrc, newdst, locname );
-									
+
 										if( strcmp( "File", loctype ) == 0 )
 										{
-											DEBUG("File will be downloaded\n");
 											// copy file to local storage
 										
 											FILE *storefile = NULL;
@@ -678,14 +663,9 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 												{
 													fname = (char *) dst+(namelen - 255);
 												}
-												
-												DEBUG("File number %d\n", (*numberFiles) );
-												
-												//int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, (*numberFiles) );
+
 												int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":null", fname );
-												
-												DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
-												
+
 												sb->SendProcessMessage( request, message, size );
 											}
 										}
@@ -709,7 +689,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 									}
 								}
 							}
-							DEBUG("type %d size %d\n", t->type, t->size );
+							DEBUG("[FileDownloadFileOrDirectoryRec] type %d size %d\n", t->type, t->size );
 						}
 						FFree( tokens );
 					}
@@ -736,7 +716,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 	
 	else if( fod == 1 )
 	{
-		DEBUG("File will be downloaded on start: %s\n", dst );
+		DEBUG("[FileDownloadFileOrDirectoryRec] File will be downloaded on start: %s\n", dst );
 		// copy file to local storage
 		
 		FILE *storefile = NULL;
@@ -757,22 +737,17 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 					FFree( nname );
 				}
 			}
-			
-			DEBUG("Store as : %s\n", newdst );
-			
+
 			if( ( storefile = fopen( newdst, "wb" ) ) != NULL )
 			{
 				// 1024 mul 32 = 32768
 				char dbuf[ 32768 ];
-				
-				DEBUG("File oepened %s\n", dst );
-				
+
 				File *srcfp = (File *)fsys->FileOpen( srcdev, src, "rb" );
 				if( srcfp != NULL )
 				{
 					int rcnt = 0;
-					DEBUG("Src file opened : %s\n", src );
-					
+
 					while( ( rcnt = fsys->FileRead( srcfp, dbuf, 32768 ) ) != -1 )
 					{
 						fwrite( dbuf, 1, rcnt, storefile );
@@ -799,15 +774,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 						fname = (char *) dst+(namelen - 255);
 					}
 					
-					//int per = (int)( (float)(*files)/(float)numberFiles * 100.0f );
-					
-					//DEBUG("UPLOAD Percentage %d count %d current %d fname %s\n", per, numberFiles, (*files), fname );
-					DEBUG("File number %d\n", (*numberFiles) );
-					
-					//int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":%d", fname, (*numberFiles) );
 					int size = snprintf( message, sizeof(message), "\"action\":\"copy\",\"filename\":\"%s\",\"progress\":null", fname );
-					
-					DEBUG(" sbptr %p  request ptr %p usersession %p\n", sb, request, request->h_UserSession );
 					
 					sb->SendProcessMessage( request, message, size );
 				}
@@ -821,7 +788,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 		BufStringDelete( bs );
 	}
 	
-	DEBUG("FileDownloadFileOrDirectoryRec end\n");
+	DEBUG("[FileDownloadFileOrDirectoryRec] end\n");
 	
 	return 0;
 }
@@ -842,7 +809,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 	char devname[ 256 ];
 	memset( devname, '\0', sizeof(devname) );
 	
-	DEBUG("FileDownloadFilesOrFolder start\n");
+	DEBUG("[FileDownloadFilesOrFolder] start\n");
 	
 	// getting devname from destination path
 	
@@ -858,11 +825,10 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 		devname[ i ] = src[ i ];
 	}
 	
-	DEBUG("FileDownloadFilesOrFolder getdevbyname\n");
+	DEBUG("[FileDownloadFilesOrFolder] getdevbyname\n");
 	
 	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
 	{
-		//DEBUG("\n\n\nFileDownloadFilesOrFolder file uplload rec started-------------------------------------\n");
 		actDev->f_Operations++;
 		
 		char *lfile = src;
@@ -871,8 +837,6 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 		
 		for( i=1 ; i < length ; i++ )
 		{
-			//DEBUG("-- %d -- %c\n", i, src[ i ] );
-			
 			if( src[ i ] == ':' || src[ i ] == '/' )
 			{
 				lastslash = i;
@@ -889,25 +853,20 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 						break;
 					}
 				}
-				DEBUG("FileDownloadFilesOrFolder download\n");
-				
-				//DEBUG("Found ;  lfile %s\n", lfile );
+				DEBUG("[FileDownloadFilesOrFolder] download\n");
 				
 				char *tmpdst = FCalloc( strlen( dst ) + 512, sizeof( char ) );
 				if( tmpdst != NULL )
 				{
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
-					
-					DEBUG("New tmpdst %s\n", tmpdst );
-					
+
 					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], -1, numberFiles );
 					FFree( tmpdst );
 				}
 				lfile = &src[ i+1 ];
 				
 				lastslash = i;
-				//DEBUG("end\n");
 			}
 		}
 		
@@ -934,10 +893,6 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 				strcpy( tmpdst, dst );
 				strcat( tmpdst, &lfile[ end+1 ] );
 				
-				//DEBUG("New tmpdst 2 %s  -- path %s  lastfile %s\n\n\n", tmpdst, &lfile[ j+1 ], lfile  );
-				
-				DEBUG("Check directory\n");
-				
 				FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ coma+1 ], -1, numberFiles );
 				FFree( tmpdst );
 			}
@@ -950,7 +905,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 		return 1;
 	}
 	
-	DEBUG("FileDownloadFilesOrFolder end\n");
+	DEBUG("[FileDownloadFilesOrFolder] end\n");
 	
 	return 0;
 }

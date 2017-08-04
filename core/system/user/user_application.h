@@ -19,14 +19,21 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ *
+ *  User Application header
+ *
+ * file contain all functitons related to user applications
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 11/2016
+ */
 
 #ifndef __USER_APPLICATION_H__
 #define __USER_APPLICATION_H__
 
 #include <core/types.h>
 #include <core/nodes.h>
-//#include <mysql.h>
 #include <mysql/mysqllibrary.h>
 
 typedef struct UserApplication
@@ -65,6 +72,10 @@ UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
 
 void UserAppDelete( UserApplication *app );
 
-UserApplication *UserAppDeleteAll( UserApplication *ua );
+//
+//
+//
+
+void UserAppDeleteAll( UserApplication *ua );
 
 #endif // __USER_APPLICATION_H__

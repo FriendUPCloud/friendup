@@ -19,7 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ * 
+ *  UserSessionManager structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __SYSTEM_USER_USER_SESSIONMANAGER_H__
 #define __SYSTEM_USER_USER_SESSIONMANAGER_H__
@@ -65,19 +71,25 @@ User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid );
 //
 //
 
-UserSession *USMGetSessionBySessionID( UserSessionManager *usm, const char *id );
+UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *id );
 
 //
 //
 //
 
-UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, const char *devid, FULONG uid );
+UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *usm, char *id );
 
 //
 //
 //
 
-UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *usm, const char *devid, FULONG uid );
+UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid );
+
+//
+//
+//
+
+UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *usm, char *devid, FULONG uid );
 
 //
 //
@@ -163,14 +175,22 @@ int USMRemoveOldSessionsinDB( void *lsb );
 
 FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notification, File *device, char *path );
 
+//
 // get user by auth id
-UserSession *UserGetByAuthID( UserSessionManager *usm, const char *authId );
-// get users by timeout
-User								*(*UserGetByTimeout)( UserSessionManager *usm, const FULONG timeout );
-// get by user id
-User 							*(*UserGetByID)( UserSessionManager *usm, FULONG id );
-// get user by his name
-//void								*(*UserGetByName)( UserSessionManager *usm, const char *name );
+//
 
+UserSession *UserGetByAuthID( UserSessionManager *usm, const char *authId );
+
+//
+// get users by timeout
+//
+
+User								*(*UserGetByTimeout)( UserSessionManager *usm, const FULONG timeout );
+
+//
+// get by user id
+//
+
+User 							*(*UserGetByID)( UserSessionManager *usm, FULONG id );
 
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

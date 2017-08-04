@@ -74,12 +74,12 @@ clean:
 
 install:
 	@echo "\033[34mInstalling files\033[0m"
-	cp bin/*.serv ../../../build/services/ -R
+	cp bin/*.serv $(FRIEND_PATH)/services/ -R
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
-	mkdir -p ../../../build/services/
+	mkdir -p $(FRIEND_PATH)/services/
 
 dummy:
 	@echo "\033[34mJust skipping so Hogne can build :)\033[0m"

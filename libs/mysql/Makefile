@@ -46,12 +46,12 @@ obj/%.o: %.c *.h %.d
 clean:
 	@echo "\033[34mCleaning\033[0m"
 	@rm -f $(C_FILES:%.c=%.d)
-	@rm -f obj/*o $(OUTPUT) *.d
+	@rm -f obj/*o $(OUTPUT) *.d*
 	@rm -fr obj/*
 
 install:
 	@echo "\033[34mInstalling library\033[0m"
-	cp bin/mysql.library ../../build/libs/
+	cp bin/mysql.library $(FRIEND_PATH)/libs/
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"

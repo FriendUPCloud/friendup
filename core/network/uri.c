@@ -119,7 +119,6 @@ char* UriGetAuthority( char* str, unsigned int strLen, char** next )
 	*/
 	if( strLen < 3 || str[0] != '/' || str[1] != '/' )
 	{
-		//DEBUG("No authority.\n");
 		return 0;
 	}
 
@@ -410,7 +409,6 @@ Hashmap* UriParseQuery( char* query )
 					// TODO: Add support for ?arr[]=something&arr[]=more
 					if( HashmapPut( map, key, value ) )
 					{
-						//DEBUG( "[UriParseQuery] Key:       %s => %s\n", key, value ? value : "" );
 					}
 					// Couldn't add hto hashmap sadly..
 					else 
@@ -497,7 +495,6 @@ Uri* UriParse( char* str )
 	if( authority )
 	{
 		uri->authority = UriParseAuthority( authority );
-		//DEBUG( "Authority: %s\n", authority );
 		free( authority );
 	}
 	
@@ -527,7 +524,6 @@ Uri* UriParse( char* str )
 	{
 		uri->query = UriParseQuery( query );
 		uri->queryRaw = query;
-		DEBUG( "Query:     %s\n", query);
 	}
 
 	if( next >= end )
@@ -539,11 +535,8 @@ Uri* UriParse( char* str )
 	char* fragment = UriGetFragment( next, remainingLen, &next );
 	if( fragment )
 	{
-		DEBUG( "Fragment:  %s\n", fragment);
 		uri->fragment = fragment;
 	}
-
-	// ------------------------------------------------------------------------
 
 	return uri;
 }

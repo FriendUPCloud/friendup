@@ -90,17 +90,13 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		if (bs != NULL)
 		{
 			int  pos = 0;
-			DEBUG("Printers LIST\n");
 
 			BufStringAdd(bs, " { \"Printers\": [");
-			
-			DEBUG("Printer string created\n");
+
 			FPrinter *lprint = l->sl_PrinterM->pm_Printers;
 			
 			while( lprint != NULL )
 			{
-				DEBUG("Going through Printers \n" );
-				
 				char tempBuffer[ 1024 ];
 
 				if (pos > 0)
@@ -111,9 +107,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 				int msgsize = snprintf(tempBuffer, sizeof(tempBuffer), "\"ID\":\"%lu\",\"Name\":\"%s\",\"HardwareID\":\"%s\",\"Manufacturer\":\"%s\",\"Global\":\"true\"", lprint->fp_ID, lprint->fp_Name, lprint->fp_HardwareID, lprint->fp_Manufacturer );
 
 				BufStringAddSize(bs, tempBuffer, msgsize);
-			
-				DEBUG("Info about Printer added\n");
-				
+
 				pos++;
 			}
 			
@@ -124,8 +118,6 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 				
 				while( lprint != NULL )
 				{
-					DEBUG("Going through User Printers \n" );
-					
 					char tempBuffer[ 1024 ];
 					
 					if (pos > 0)
@@ -136,9 +128,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					int msgsize = snprintf(tempBuffer, sizeof(tempBuffer), "\"ID\":\"%lu\",\"Name\":\"%s\",\"HardwareID\":\"%s\",\"Manufacturer\":\"%s\",\"Global\":\"false\"", lprint->fp_ID, lprint->fp_Name, lprint->fp_HardwareID, lprint->fp_Manufacturer );
 					
 					BufStringAddSize(bs, tempBuffer, msgsize);
-					
-					DEBUG("Info about User Printer added\n");
-					
+
 					pos++;
 				}
 			}

@@ -51,7 +51,7 @@
 void *libInit( void *sb )
 {
 	struct ApplicationLibrary *l;
-	DEBUG("Application.library libinit\n");
+	DEBUG("[Application.library] libinit\n");
 
 	if( ( l = calloc( sizeof( struct ApplicationLibrary ), 1 ) ) == NULL )
 	{
@@ -87,7 +87,7 @@ void *libInit( void *sb )
 void libClose( struct ApplicationLibrary *l )
 {
 	
-	DEBUG("Closing connections\n");
+	DEBUG("[Application.library] Closing\n");
 
 	
 	Application *ar = l->al_ApplicationList;
@@ -107,7 +107,7 @@ void libClose( struct ApplicationLibrary *l )
 		LibraryClose( (struct Library *)l->al_sqllib );
 	}
 	
-	DEBUG("Application.library close\n");
+	DEBUG("[Application.library] close\n");
 }
 
 //
@@ -138,25 +138,20 @@ void ApplicationFree( struct ApplicationLibrary *l, Application *app )
 		free( user->u_Groups );
 	}
 	
-	DEBUG("User free\n");
 	if( user->u_Name != NULL )
 	{
 		free( user->u_Name ); user->u_Name = NULL;
 	}
-	DEBUG("User free user\n");
 
 	if( user->u_Password != NULL )
 	{
 		free( user->u_Password ); user->u_Password = NULL;
 	}
 	
-	DEBUG("User free pass\n");
-
 	if( user->u_SessionID )
 	{
 		free( user->u_SessionID ); user->u_SessionID = NULL;
 	}
-	DEBUG("User free END\n");
 */
 	free( app );
 }
@@ -194,7 +189,7 @@ Application *GetApplicationFromDB( struct ApplicationLibrary *l, const char *whe
 
 Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request, Socket_t* sock )
 {
-	DEBUG("APPLIBRARY WEBREQUEST %s\n", urlpath[ 0 ] );
+	DEBUG("[Application.library] WEBREQUEST %s\n", urlpath[ 0 ] );
 	Http* response = NULL;
 	
 	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
@@ -237,9 +232,7 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 		{
 			int pos = 0;
 			Application *al = l->al_ApplicationList;
-			
-			//DEBUG("Application.library LIST\n");
-			
+
 			BufStringAdd( bs, " { \"Application\": [" );
 			
 			while( al != NULL )
@@ -360,7 +353,6 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 				}
 			}
 		}
-		DEBUG("user login response\n");
 
 		HttpWriteAndFree( response, sock );
 		result = 200;
@@ -379,14 +371,11 @@ Http* AppWebRequest( struct ApplicationLibrary *l, char **urlpath, Http* request
 
 char* StringDuplicate( const char* str )
 {
-	DEBUG("SD str ptr %p\n", str );
 	if( str == NULL )
 	{
 		return NULL;
 	}
 	int size = strlen( str );
-	
-	DEBUG("String duplacate %d\n", size );
 	
 	char *tmp = calloc( size + 1, sizeof( char ) );
 	if( tmp == NULL )

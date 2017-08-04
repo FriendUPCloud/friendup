@@ -68,7 +68,7 @@ typedef struct SpecialData
 
 int libInit( AuthMod *l, void *sb )
 {
-	DEBUG("PHPAUTH libinit\n");
+	DEBUG("[PHPAUTH] libinit\n");
 
 	if( ( l->SpecialData = FCalloc( 1, sizeof( struct SpecialData ) ) ) == NULL )
 	{
@@ -101,7 +101,7 @@ int libInit( AuthMod *l, void *sb )
 	{
 		if( sd->sd_EModule->GetSuffix != NULL )
 		{
-			DEBUG(" sd->sd_EModule->Name %s suffix %s\n", sd->sd_EModule->Name, sd->sd_EModule->GetSuffix() );
+			DEBUG("[PHPAUTH] sd->sd_EModule->Name %s suffix %s\n", sd->sd_EModule->Name, sd->sd_EModule->GetSuffix() );
 			
 			if( strcmp( sd->sd_EModule->GetSuffix(), "php" ) == 0 )
 			{
@@ -138,7 +138,7 @@ void libClose( struct AuthMod *l )
 		FFree( l->SpecialData );
 	}
 	
-	DEBUG("PHP.authmod close\n");
+	DEBUG("[PHPAUTH] close\n");
 }
 
 //
@@ -212,9 +212,9 @@ FBOOL UserIsAdminByAuthID( struct AuthMod *l, Http *r, char *auth )
 // authenticate user
 //
 
-UserSession *Authenticate( struct AuthMod *l, Http *request, struct UserSession *loguser, const char *name, const char *pass, const char *sessionId )
+UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logsess, char *name, char *pass, char *devname, char *sessionId, FULONG *blockTime )
 {
-	DEBUG("Authenticate PHP\n");
+	DEBUG("[PHPAUTH] Authenticate PHP\n");
 /*
 	// Send both get and post
 	int size = 0;
@@ -227,7 +227,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *request, struct UserSession 
 		FBOOL both = request->content && request->uri->queryRaw ? TRUE : FALSE;
 		if( request->content != NULL ) size += strlen( request->content );
 		if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
-		//DEBUG( "Putting them in a combined string\n" );
 		
 		char *allArgs = FCalloc( 1, size + 100 + ( both ? 2 : 1 ) );
 		if( both == TRUE )
@@ -242,15 +241,12 @@ UserSession *Authenticate( struct AuthMod *l, Http *request, struct UserSession 
 		{
 			sprintf( allArgs, "%s", request->uri->queryRaw );
 		}
-		DEBUG( "Put them together: %s\n", allArgs );
 		
 		if( sb->sl_ModuleNames != NULL )
 		{
 			strcat( allArgs, "&modules=" );
 			strcat( allArgs, sb->sl_ModuleNames );
 		}
-		
-		DEBUG("Run module ptr %p\n",  sd->RunMod );
 		
 		char *data = NULL;
 		int dataLength = 0;
@@ -266,14 +262,12 @@ UserSession *Authenticate( struct AuthMod *l, Http *request, struct UserSession 
 		
 		if( data != NULL )
 		{
-			DEBUG( "[PHP.authmod] Ok, we got result with length of %d  text %s\n", (int)strlen( data ), data );
-			
+
 			// 5. Piped response will be output!
 			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
 			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
 			
-			//DEBUG("TYPE %s LENGTH %s <<<<<<<<<<<<<<<<<<<<<<<<<<< %s\n", ltype, length, data );
-			
+
 			char *datastart = strstr( data, "---http-headers-end---" );
 			if( datastart != NULL )
 			{
@@ -290,17 +284,6 @@ UserSession *Authenticate( struct AuthMod *l, Http *request, struct UserSession 
 					FFree( length );
 					length = trimmed;
 				}
-			}
-			
-			DEBUG("Length : %s\n", length );
-			
-			if( ltype != NULL )
-			{
-				DEBUG( "[System.library] We found Content-Type: %s\n", ltype );
-			}
-			else
-			{
-				DEBUG( "[System.library] We found no Content-Type header in data.\n" );
 			}
 			
 			if( ltype ){ FFree( ltype ); ltype = NULL;}

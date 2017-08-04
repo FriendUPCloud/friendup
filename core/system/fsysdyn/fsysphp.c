@@ -1,12 +1,22 @@
 /*©mit**************************************************************************
 *                                                                              *
-* Friend Unifying Platform                                                     *
-* ------------------------                                                     *
-*                                                                              * 
-* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
-* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
-* Tel.: (+47) 40 72 96 56                                                      *
-* Mail: info@friendos.com                                                      *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright 2014-2017 Friend Software Labs AS                                  *
+*                                                                              *
+* Permission is hereby granted, free of charge, to any person obtaining a copy *
+* of this software and associated documentation files (the "Software"), to     *
+* deal in the Software without restriction, including without limitation the   *
+* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
+* sell copies of the Software, and to permit persons to whom the Software is   *
+* furnished to do so, subject to the following conditions:                     *
+*                                                                              *
+* The above copyright notice and this permission notice shall be included in   *
+* all copies or substantial portions of the Software.                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -163,11 +173,11 @@ ListString *PHPCall( const char *command, int *length )
 	if( !pipe )
 	{
 		//free( command );
-		FERROR("[PHPFsys] cannot open pipe\n");
+		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
 		return NULL;
 	}
 	
-	char *temp = NULL, result = NULL, gptr = NULL;
+	char *temp = NULL, *result = NULL, *gptr = NULL;
 	int size = 0, res = 0, sch = sizeof( char );
 
 #define PHP_READ_SIZE 262144
@@ -978,13 +988,13 @@ int FileRead( struct File *f, char *buffer, int rsize )
 				char *ptr = strstr( buffer, "---http-headers-end---\n" );
 				SystemBase *sb = (SystemBase *)sd->sb;
 				
-				if( ptr != NULL )
+				if( ptr != NULL && result > 23 )
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), result-23 );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FQUAD)(result-23) );
 				}
 				else
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, result );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
 				}
 			}
 		}

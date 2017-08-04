@@ -40,10 +40,12 @@
 #include <system/systembase.h>
 #include <system/json/json_converter.h>
 
-//
-//
-//
-
+/**
+ * Creates a new Printer Manager
+ * 
+ * @param sb pointer to SystemBase
+ * @return new PrinterManager structure when success, otherwise NULL
+ */
 PrinterManager *PrinterManagerNew( void *sb )
 {
 	PrinterManager *pm = NULL;
@@ -54,10 +56,11 @@ PrinterManager *PrinterManagerNew( void *sb )
 	return pm;
 }
 
-//
-//
-//
-
+/**
+ * Delete Printer Manager
+ * 
+ * @param pm pointer to PrinterManager which will be deleted
+ */
 void PrinterManagerDelete( PrinterManager *pm )
 {
 	if( pm != NULL )
@@ -76,10 +79,14 @@ void PrinterManagerDelete( PrinterManager *pm )
 	}
 }
 
-//
-//
-//
-
+/**
+ * Add printer to system
+ * 
+ * @param pm pointer to PrinterManager
+ * @param np pointer to FPrinter
+ * @param session if session is provided then printer will be attached to it, otherwise printer will be added to global pool
+ * @return 0 when success, otherwise error number
+ */
 int PrinterManagerAddPrinter( PrinterManager *pm, FPrinter *np, UserSession *session )
 {
 	if( pm != NULL )
@@ -89,14 +96,14 @@ int PrinterManagerAddPrinter( PrinterManager *pm, FPrinter *np, UserSession *ses
 		// printer will be added to global printers
 		if( session == NULL )
 		{
-			DEBUG("New printer added\n");
+			DEBUG("[PrinterManager] New printer added\n");
 			np->node.mln_Succ = (MinNode *)pm->pm_Printers;
 			pm->pm_Printers = np;
 		}
 		// printer will be added to local user printers
 		else
 		{
-			DEBUG("New printer added to user\n");
+			DEBUG("[PrinterManager] New printer added to user\n");
 			User *usr = session->us_User;
 			if( usr != NULL )
 			{
@@ -112,10 +119,14 @@ int PrinterManagerAddPrinter( PrinterManager *pm, FPrinter *np, UserSession *ses
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Delete printer from user session or global pool
+ * 
+ * @param pm pointer to PrinterManager
+ * @param id id of Printer
+ * @param session when provided session will be removed from there, otherwise from global pool (If it exist there)
+ * @return 0 when success, otherwise error number
+ */
 int PrinterManagerDeletePrinter( PrinterManager *pm, FULONG id, UserSession *session )
 {
 	if( pm != NULL )
@@ -124,7 +135,7 @@ int PrinterManagerDeletePrinter( PrinterManager *pm, FULONG id, UserSession *ses
 		
 		FPrinter *prev = pm->pm_Printers;
 		FPrinter *act = pm->pm_Printers;
-		DEBUG("Printer Manager Delete Printer\n");
+		DEBUG("[PrinterManager] Printer Manager Delete Printer\n");
 		
 		if( act != NULL )
 		{
@@ -133,7 +144,7 @@ int PrinterManagerDeletePrinter( PrinterManager *pm, FULONG id, UserSession *ses
 			{
 				if( act->fp_ID == id )
 				{
-					DEBUG("Printer found, will be removed from list now\n");
+					DEBUG("[PrinterManager] Printer found, will be removed from list now\n");
 					if( act == pm->pm_Printers )
 					{
 						pm->pm_Printers = (FPrinter *)act->node.mln_Succ;
@@ -161,7 +172,7 @@ int PrinterManagerDeletePrinter( PrinterManager *pm, FULONG id, UserSession *ses
 		{
 			prev = usr->u_Printers;
 			act = usr->u_Printers;
-			DEBUG("Printer Manager Delete Printer from User\n");
+			DEBUG("[PrinterManager] Printer Manager Delete Printer from User\n");
 		
 			if( act != NULL )
 			{
@@ -170,7 +181,7 @@ int PrinterManagerDeletePrinter( PrinterManager *pm, FULONG id, UserSession *ses
 			{
 				if( act->fp_ID == id )
 				{
-					DEBUG("Printer found, will be removed from list now (User)\n");
+					DEBUG("[PrinterManager] Printer found, will be removed from list now (User)\n");
 					if( act == usr->u_Printers )
 					{
 						usr->u_Printers = (FPrinter *)act->node.mln_Succ;

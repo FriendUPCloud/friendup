@@ -138,18 +138,17 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 	{
 		FERROR("Cannot run query: '%s'\n", tmpQuerybs->bs_Buffer );
 		BufStringDelete( tmpQuerybs );
-		DEBUG( "%s\n", mysql_error( l->con.sql_Con ) );
+		FERROR( "[MYSQLLibrary]  %s\n", mysql_error( l->con.sql_Con ) );
 		return NULL;
 	}
 	
-	DEBUG("SQL SELECT QUERY '%s\n", tmpQuerybs->bs_Buffer );
+	DEBUG("[MYSQLLibrary] SQL SELECT QUERY '%s\n", tmpQuerybs->bs_Buffer );
 	BufStringDelete( tmpQuerybs );
 
 	MYSQL_RES *result = mysql_store_result( l->con.sql_Con );
   
 	if( result == NULL )
 	{
-		DEBUG("Query return empty results\n");
 		return NULL;
  	}
 
@@ -184,17 +183,13 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 		int i = 0;
 			
 		// While the column is not the last
-		//DEBUG("[MYSQLLibrary] Found column one, parsing\n");	
 		while( dptr[0] != SQLT_END )
 		{
-			//printf("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
-			//DEBUG("POINTER %p\n", strptr );
 			switch( dptr[ 0 ] )
 			{
 				case SQLT_NODE:
 					{
 						dataUsed = 1;
-						//DEBUG( "Node found\n" );
 						MinNode *locnode = (MinNode *)strptr + dptr[ 2 ];
 						if( node != NULL )
 						{
@@ -207,7 +202,6 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 					case SQLT_IDINT:	// primary key
 					case SQLT_INT:
 						{
-							//DEBUG("[MYSQLLibrary] parsing  sizeofint %d  col %s = data %s\n", (int)sizeof( int ), dptr[1], row[ i ] );
 							int tmp = 0;
 							if( row[ i ] != NULL )
 							{
@@ -230,8 +224,6 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 									memcpy( tmpval, row[i], len );
 									// Add tmpval to string pointer list..
 									memcpy( strptr + dptr[2], &tmpval, sizeof( char * ) );
-									
-									//DEBUG("Field %s data %s\n", dptr[ 1 ], (strptr + dptr[ 2 ]) );
 								}
 							}
 							else
@@ -241,19 +233,17 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 						}
 						break;
 						
-					case SQLT_TIMESTAMP:
+					case SQLT_DATETIME:
 						{
 							struct tm ltm;
-							//DEBUG("TIMESTAMP load\n");
-							
 							// REMEMBER, data fix
 							ltm.tm_year += 1900;
 							ltm.tm_mon ++;
 							
 							memcpy( strptr + dptr[ 2 ], &ltm, sizeof( struct tm) );
-							DEBUG("TIMESTAMP load %s\n", row[ i ] );
+							DEBUG("[MYSQLLibrary] TIMESTAMP load %s\n", row[ i ] );
 							
-							DEBUG("Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
+							DEBUG("[MYSQLLibrary] Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
 						}
 						break;
 
@@ -265,7 +255,7 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 					case SQLT_BLOB:
 						{
-							DEBUG("READBLOB\n");
+							DEBUG("[MYSQLLibrary] Read BLOB\n");
 							ListString *ls = ListStringNew();
 							if( ls != NULL )
 							{
@@ -325,14 +315,14 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 	if( descr == NULL || data == NULL )
 	{
 		BufStringDelete( querybs );
-		DEBUG("Data structure or description was not provided!\n");
+		DEBUG("[MYSQLLibrary] Data structure or description was not provided!\n");
 		return 0;
 	}
 	
 	if( descr[ 0 ] != SQLT_TABNAME )
 	{
 		BufStringDelete( querybs );
-		DEBUG("SQLT_TABNAME was not provided!\n");
+		DEBUG("[MYSQLLibrary] SQLT_TABNAME was not provided!\n");
 		return 0;
 	}
 	
@@ -365,7 +355,7 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 	int lsize = sprintf( tmpQuery, "UPDATE %s set ", (char *)descr[ 1 ] );
 	BufStringAddSize( querybs, tmpQuery, lsize );
 
-	DEBUG("Update SQL: %s\n", tmpQuery );
+	DEBUG("[MYSQLLibrary] Update SQL: %s\n", tmpQuery );
 	
 	dptr = &descr[ SQL_DATA_STRUCT_START ];		// first 2 entries inform about table, rest information provided is about columns
 	
@@ -373,8 +363,6 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 	
 	while( dptr[0] != SQLT_END )
 	{
-		DEBUG("Update POINTER %p\n", strptr );
-		
 		switch( dptr[ 0 ] )
 		{
 			case SQLT_IDINT:	// primary key
@@ -473,27 +461,22 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 				}
 				break;
 				
-				case SQLT_TIMESTAMP:
+				case SQLT_DATETIME:
 				{
 					int sprintfsize = 0;
 					// '2015-08-10 16:28:31'
 					char date[ 64 ];
 					char tmp[ 256 ];
 					
-					DEBUG("TIMESTAMP update\n");
-				
 					struct tm *tp = (struct tm *)( strptr+dptr[2]);
-					//struct tm tp;
-					//memcpy( &tp, strptr+dptr[2], sizeof( struct tm ) );	// copy timestamp pointer
-					
-					DEBUG("TIMESTAMP update 1\n");
-					
-					//if( tp != NULL )
+
 					{
-						sprintf( date, "%4d-%2d-%2d %2d:%2d:%2d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
-						//sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp.tm_year, tp.tm_mon, tp.tm_mday, (int)tp.tm_hour, (int)tp.tm_min, (int)tp.tm_sec );
+						if( tp->tm_year < 1900 ) tp->tm_year = 1900;
+						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
+						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
 						
-						DEBUG("DATE serialised %s\n", date );
+						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
@@ -535,8 +518,6 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 		dptr += 3;
 	}
 	
-	DEBUG("UPDATE FIRST PART %s\n", tmpQuery );
-	
 	if( primaryIdName != NULL )
 	{
 		char tmpvar[ 256 ];
@@ -545,7 +526,7 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 		//strcat( tmpQuery, tmpvar );
 		BufStringAddSize( querybs, tmpvar, sprintfsize );
 	}
-	DEBUG("UPDATE QUERY '%s'\n", tmpQuery );
+	DEBUG("[MYSQLLibrary] UPDATE QUERY '%s'\n", tmpQuery );
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{
@@ -611,20 +592,14 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 	if( stmt != NULL )
 	{
 		// we calculate how many entries we will have
-	
 		while( dptr[0] != SQLT_END )
 		{
-			//DEBUG("Size %d column name %s\n", dptr[2] ,  (char *)dptr[ 1 ] );
-			
-			//DEBUG("Found on pos %d tag %d   row %s\n", i, dptr[ 0 ], row[ i ] ); 
 			switch( dptr[ 0 ] )
 			{
 				case SQLT_IDINT:	// primary key
 				{
 					// we just skip that in save
-					//strptr += 8;
-					//DEBUG("[MYSQLLibrary] : we dont save\n");
-					
+
 					primaryid = (int *)(strptr + dptr[ 2 ]);
 					//opt++;
 				}
@@ -644,9 +619,7 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 					}
 					BufStringAdd( tablequerybs, (char *)dptr[ 1 ]  );
 					BufStringAddSize( dataquerybs, tmp, locsize );
-					
-					//DEBUG("[MYSQLLibrary] save set int %d to %s\n", tmpint, (char *)dptr[ 1 ] );
-					
+
 					opt++;
 				}
 				break;
@@ -654,12 +627,9 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 				case SQLT_STR:
 				{
 					char *tmpchar;
-					
-					//DEBUG("Size %d tABNAME %s\n", dptr[2] ,  (char *)dptr[ 1 ] );
+
 					memcpy( &tmpchar, strptr+dptr[2], sizeof( char *) );
-					
-					//DEBUG("[MYSQLLibrary] save  pointer to text %p - tabname %s\n", tmpchar, (char *)dptr[ 1 ] );
-					
+
 					if( tmpchar != NULL )
 					{
 						if( opt > 0 )
@@ -670,7 +640,6 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 
 						BufStringAddSize( dataquerybs, "'", 1 );
 						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
-						//DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
 
 						char *esctext;
 						int tmpcharsize = strlen( tmpchar );
@@ -683,29 +652,25 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 							FFree( esctext );
 						}
 						BufStringAddSize( dataquerybs, "'", 1 );
-						
-						//DEBUG("[MYSQLLibrary] save set string %s to %s\n", tmpchar, (char *)dptr[ 1 ] );
 					}
 					
 					opt++;
 				}
 				break;
 				
-				case SQLT_TIMESTAMP:
+				case SQLT_DATETIME:
 				{
 					// '2015-08-10 16:28:31'
 					char date[ 64 ];
 					
-					//DEBUG("SQLTimestamp SAVE\n");
-				
 					struct tm *tp = (struct tm *)( strptr+dptr[2]);
-					//memcpy( &tp, strptr+dptr[2], sizeof( MYSQL_TIME *) );	// copy timestamp pointer
-				
-					//if( tp != NULL )
 					{
-						//sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp.tm_year, tp.tm_mon, tp.tm_mday, (int)tp.tm_hour, (int)tp.tm_min, (int)tp.tm_sec );
-						sprintf( date, "%4d-%2d-%2d %2d:%2d:%2d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
-					
+						if( tp->tm_year < 1900 ) tp->tm_year = 1900;
+						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
+
+						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						
 						if( opt > 0 )
 						{
 							BufStringAddSize( tablequerybs, ",", 1 );
@@ -714,7 +679,6 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 
 						BufStringAddSize( dataquerybs, "'", 1 );
 						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
-						//DEBUG("[MYSQLLibrary] save before cat, column name %s\n", (char *)dptr[ 1 ] );
 
 						BufStringAdd( dataquerybs, date );
 						BufStringAddSize( dataquerybs, "'", 1 );
@@ -747,9 +711,7 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 						bindTable[ statementEntry ].is_unsigned    = 1;
 						bindTable[ statementEntry ].length= (long unsigned int *) bindLength[ statementEntry ];
 						bindTable[ statementEntry ].is_null= 0;
-					
-						//DEBUG("--------STORE----%ld\n", bindData[ statementEntry ]->ls_Size );
-					
+
 						statementEntry++;
 					}
 					else
@@ -771,8 +733,7 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 		{
 			
 			sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tablequerybs->bs_Buffer, dataquerybs->bs_Buffer );
-			DEBUG("SQL: %s  entries %d\n", finalQuery, statementEntry );
-	
+
 			if (mysql_stmt_prepare(stmt, finalQuery, strlen(finalQuery)))
 			{
 				FERROR( "\n mysql_stmt_prepare(), INSERT failed");
@@ -802,7 +763,6 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 		
 				for( i=0; i < statementEntry ; i++ )
 				{
-					DEBUG("STORE FILE / SIZE %ld\n", bindData[ i ]->ls_Size );
 					// Supply data in chunks to server 
 					if (mysql_stmt_send_long_data(stmt, i, bindData[ i ]->ls_Data , bindData[ i ]->ls_Size ) )
 					{
@@ -827,10 +787,8 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 		{
 			FULONG uid = mysql_insert_id( l->con.sql_Con );
 			memcpy( primaryid, &uid, sizeof( FULONG ) );
-			DEBUG("NEW ENTRY ID %lu\n", uid );
+			DEBUG("[MYSQLLibrary] New entry created in DB, ID: %lu\n", uid );
 		}
-
-		//DEBUG("[MYSQLLibrary]: insert %s\n", finalQuery );
 	}
 	BufStringDelete( tablequerybs );
 	BufStringDelete( dataquerybs );
@@ -944,7 +902,6 @@ int NumberOfRecords( struct MYSQLLibrary *l, FULONG *descr, char *where )
   
 	if (result == NULL) 
 	{
-		DEBUG("Query return empty results\n");
 		return -4;
  	}
 
@@ -952,8 +909,7 @@ int NumberOfRecords( struct MYSQLLibrary *l, FULONG *descr, char *where )
 	//
 	// Receiving data as linked list of objects
 	//
-	DEBUG("[MYSQLLibrary] Before results\n" );
-  
+
 	while ( ( row = mysql_fetch_row( result ) ) ) 
 	{
 		intRet = (int)atol( row[ 0 ] );
@@ -988,7 +944,6 @@ int NumberOfRecordsCustomQuery( struct MYSQLLibrary *l, const char *query )
   
 	if (result == NULL) 
 	{
-		DEBUG("Query return empty results\n");
 		return -4;
  	}
  	
@@ -1025,7 +980,7 @@ MYSQL_RES *Query( struct MYSQLLibrary *l, const char *sel )
 		return NULL;
 	}
 	
-	DEBUG("SELECT QUERY %s\n", sel );
+	DEBUG("[MYSQLLibrary] SELECT QUERY %s\n", sel );
 
 	result = mysql_store_result( l->con.sql_Con );
 
@@ -1734,8 +1689,6 @@ int SNPrintF( struct MYSQLLibrary *l, char *str, size_t stringSize, const char *
 	if (stringSize > 0)
 	{ 
 		str[ retStringSize <= stringSize-1 ? retStringSize : stringSize-1] = '\0';
-		
-		//DEBUG("SNPrintf: new string : %s\n", str );
 	}
 	
 	va_end(ap);
@@ -1797,7 +1750,7 @@ int Reconnect( struct MYSQLLibrary *l )
  */
 int Connect( struct MYSQLLibrary *l, const char *host, const char *dbname, const char *usr, const char *pass, int port )
 {
-	DEBUG("Connect\n");
+	DEBUG("[MYSQLLibrary] Connect\n");
 	
 	// Initialize mysql connection
 	if( l->con.sql_Con == NULL )
@@ -1836,7 +1789,7 @@ int Connect( struct MYSQLLibrary *l, const char *host, const char *dbname, const
  */
 int Disconnect( struct MYSQLLibrary *l )
 {
-	DEBUG("Closeing mysql connection\n");
+	DEBUG("[MYSQLLibrary] Disconnect\n");
 	
 	if( l->con.sql_Host != NULL ){ FFree( l->con.sql_Host ); l->con.sql_Host = NULL; }
 	if( l->con.sql_DBName != NULL ){ FFree( l->con.sql_DBName );  l->con.sql_DBName = NULL; }
@@ -1881,22 +1834,19 @@ char *MakeEscapedString( struct MYSQLLibrary *l, char *str )
 void *libInit( void *sb )
 {
 	struct MYSQLLibrary *l = NULL;
-	DEBUG("libinit\n");
+	DEBUG("[MYSQLLibrary] libinit\n");
 	
 	if( ( l = FCalloc( 1, sizeof( struct MYSQLLibrary ) ) ) == NULL )
 	{
 		return NULL;
 	}
-	DEBUG("Before assigning functions\n");
-	
+
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
 	
-	DEBUG("versions assigned\n");
 	l->libClose = dlsym ( l->l_Handle, "libClose");
 	l->GetVersion = dlsym ( l->l_Handle, "GetVersion");
-	DEBUG("Before libget libclosed assigned\n");
-	
+
 	// mysql.library structure
 	l->Load = dlsym ( l->l_Handle, "Load");
 	l->Save = dlsym ( l->l_Handle, "Save");
@@ -1934,9 +1884,8 @@ void libClose( struct MYSQLLibrary *l )
 		if( l->con.sql_User != NULL ){ FFree( l->con.sql_User ); l->con.sql_User = NULL; }
 		if( l->con.sql_Pass != NULL ){ FFree( l->con.sql_Pass );  l->con.sql_Pass = NULL; }
 		
-		DEBUG( "MYSQL library closed connection.\n" );
 		mysql_close( l->con.sql_Con );
 		l->con.sql_Con = NULL;
 	}
-	DEBUG("MYSQL library close\n");
+	DEBUG("[MYSQLLibrary] close\n");
 }

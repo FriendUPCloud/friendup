@@ -193,7 +193,6 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 		
 		if( len > bs->bs_MAX_SIZE )
 		{
-			DEBUG( "Too big buffer! (len: %d, max: %d)\n", len, bs->bs_MAX_SIZE );
 			int allsize = ( (len / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
 			char *tmp;
 			
@@ -223,18 +222,15 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 	int addsize = len;
 //	int modsize = (bs->bs_Size / bs->bs_MAX_SIZE) * bs->bs_MAX_SIZE;
 	int newsize = (bs->bs_Size + addsize);
-	//DEBUG("Add memory for buffer   addsize %d modsize %d newsize %d current %d\n", addsize, modsize, newsize, bs->bs_Size );
-	
+
 	if( newsize > bs->bs_Bufsize )
 	{
 		char *tmp;
 		int allsize = ( (newsize / bs->bs_MAX_SIZE) + 4) * bs->bs_MAX_SIZE;
-		//DEBUG("Allocated mem size %d\n", allsize );
 		
 		if( ( tmp = FCalloc( allsize + 10, sizeof(char) ) ) != NULL )
 		{
 			memcpy( tmp, bs->bs_Buffer, bs->bs_Size );
-			//DEBUG("copy from %d len %d\n", bs->bs_Size, len );
 			memcpy( &(tmp[ bs->bs_Size ]), ntext, len );
 			
 			bs->bs_Bufsize = allsize;

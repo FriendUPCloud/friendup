@@ -62,8 +62,6 @@ KeyValueList *KeyValueListNewWithEntry( char *key, char *value )
 	{
 		ne->key = StringDuplicate( key );
 		ne->value = StringDuplicate( value );
-		
-		DEBUG("KVL new %s - %s\n", ne->key, ne->value );
 	}
 	return ne;
 }

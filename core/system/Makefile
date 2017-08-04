@@ -107,17 +107,16 @@ release: $(TARGET) $(MODS) $(FSYS)
 clean:
 	@echo "\033[34mCleaning\033[0m"
 	@rm -rf obj/* $(OUTPUT) *.d*
-	@rm -f fsys/*.d moduledyn/*.d*
+	@rm -f fsysdyn/*.d* moduledyn/*.d* servicesdyn/*.d*
 	@rm -rf bin/emod/*
 	@rm -rf bin/fsys/*
 	@rm -rf bin/loggers/*
 
 install: setup
 	@echo "\033[34mInstalling files\033[0m"
-	#cp bin/system.library ../../build/libs/
-	cp -R bin/emod ../../build/
-	cp -R bin/fsys ../../build/
-	cp -R bin/loggers ../../build/
+	cp -R bin/emod  $(FRIEND_PATH)/
+	cp -R bin/fsys $(FRIEND_PATH)/
+	cp -R bin/loggers $(FRIEND_PATH)/
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"

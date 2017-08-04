@@ -93,20 +93,15 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 		{
 			int pos = 0;
 
-			DEBUG("USB.library LIST\n");
-
 			BufStringAdd(bs, " { \"USBPorts\": [");
 			
-			DEBUG("USB string created\n");
 			for( pos = 0; pos < l->sl_USB->usbm_MaxPort ; pos++ )
 			{
-				DEBUG(" Going through USB ports pos %d\n", pos );
 				USBDevice *dev =  l->sl_USB->usbm_Ports[ pos ];
 				
 				if( dev != NULL )
 				{
 					char tempBuffer[ 1024 ];
-					DEBUG("Device is not NULL\n");
 
 					if (pos > 0)
 					{
@@ -116,8 +111,6 @@ Http* USBManagerWebRequest( void *lb, char **urlpath, Http* request, UserSession
 					int msgsize = snprintf(tempBuffer, sizeof(tempBuffer), "\"Name\":\"%s\",\"Port\":\"%s\",\"Connected\":\"%d\"", dev->usbd_Name, dev->usbd_NetworkAddress, dev->usbd_State );
 
 					BufStringAddSize(bs, tempBuffer, msgsize);
-				
-					DEBUG("Info about port added\n");
 				}
 				else
 				{

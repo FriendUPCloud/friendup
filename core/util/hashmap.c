@@ -180,7 +180,6 @@ unsigned long lcrc32( const unsigned char *s, unsigned int len )
 	crc32val = 0;
 	for (i = 0;  i < len;  i ++)
 	{
-		//DEBUG("pos %d tabsize %d hash\n", len, sizeof( crc32_tab ) );
 		crc32val = crc32_tab[(crc32val ^ s[i]) & 0xff] ^ (crc32val >> 8);
 	}
 	return crc32val;
@@ -335,7 +334,6 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		//DEBUG("---------->key %s ----------- data %s \n", key, in->data[curr].data );
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
 			return &in->data[curr];
@@ -365,14 +363,9 @@ void* HashmapGetData( Hashmap* in, char* key )
 	// Linear probing, if necessary
 	for( unsigned int i = 0; i < MAX_CHAIN_LENGTH; i++ )
 	{
-		//DEBUG("---------->key %s ----------- data %s \n", key, in->data[curr].data );
 		if( in->data[curr].inUse && strcmp( in->data[curr].key, key ) == 0 )
 		{
-			//if( &in->data[curr] != NULL )
-			//{
-				return (in->data[curr].data);
-			//}
-			
+			return (in->data[curr].data);
 		}
 		curr = (curr + 1) % in->table_size;
 	}
@@ -424,18 +417,14 @@ void HashmapFree( Hashmap* in )
 		e = in->data[i];
 		if( e.inUse == TRUE )
 		{
-			//DEBUG("Remove key %s\n", e.data );
-		
 			if( e.data != NULL ) FFree( e.data );
 			if( e.key  != NULL ) FFree( e.key );
 		}
 	}
-	//DEBUG("hashmap free data\n");
 	if( in->data != NULL )
 	{
 		FFree( in->data );
 	}
-	//DEBUG("Free hashmap\n");
 	FFree( in );
 }
 

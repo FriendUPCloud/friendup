@@ -140,7 +140,6 @@ int main()
     //Using read() so that I have the option of using select() if I want non-blocking flow
     while (read(fileno(fp), command_out, sizeof(command_out)-1) != 0)
     {
-        DEBUG( " %d: %s\n", j++, command_out );
         kill(pid, 9);
         memset(&command_out, 0, sizeof(command_out));
     }
@@ -154,7 +153,6 @@ int main()
 		buffer[ i ] = (char) getc( fp );
 		if( buffer[ i ] == '\n' )
 		{
-		DEBUG("OUT: %s\n", buffer );
 			break;
 		}
 		i++;
@@ -163,7 +161,6 @@ int main()
 	
     //string token;
     //while (getline(output, token, '\n'))
-    //    DEBUG("OUT: %s\n", token.c_str());
 
     CommandClose(fp, pid);
 

@@ -92,7 +92,6 @@ void InterruptSignalHandler(int signum)
  * @param[in]argv not used in this version
  * @return 0 when success, otherwise error number
  * @sa SystemInit, FriendCoreManagerNew, SetFriendCoreManager, FriendCoreManagerRun
- * @todo FL>HT - no error numbers returned in case of panic
  */
 int main( int argc, char *argv[] )
 {

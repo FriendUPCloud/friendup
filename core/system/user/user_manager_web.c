@@ -593,12 +593,18 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			
 			if( sessid != NULL )
 			{
-				
-				sess =USMGetSessionBySessionID( l->sl_USM, sessid );
+				sess = USMGetSessionBySessionID( l->sl_USM, sessid );
 				int error = 0; 
 				
 				if( sess != NULL )
 				{
+					MYSQLLibrary *sqlLib =  l->LibraryMYSQLGet( l );
+					if( sqlLib != NULL )
+					{
+						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
+						l->LibraryMYSQLDrop( l, sqlLib );
+					}
+					
 					sess->us_NRConnections--;
 					error = USMUserSessionRemove( l->sl_USM, sess );
 				}
@@ -656,54 +662,61 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		
 		if( usrname != NULL )
 		{
+			char *temp = FCalloc( 2048, 1 );
 			int numberOfSessions = 0;
-			while( logusr != NULL )
+			
+			if( temp != NULL )
 			{
-				if( strcmp( logusr->u_Name, usrname ) == 0 )
+				while( logusr != NULL )
 				{
-					BufString *bs = BufStringNew();
-					
-					UserSessListEntry *sessions = logusr->u_SessionsList;
-					BufStringAdd( bs, "ok<!--separate-->[" );
-					int pos = 0;
-					unsigned long t = time( NULL );
-					
-					while( sessions != NULL )
+					if( strcmp( logusr->u_Name, usrname ) == 0 )
 					{
-						char temp[ 1024 ];
-						UserSession *us = (UserSession *) sessions->us;
-						
-						//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-						//if( us->us_WSConnections != NULL )
+						BufString *bs = BufStringNew();
+					
+						UserSessListEntry *sessions = logusr->u_SessionsList;
+						BufStringAdd( bs, "ok<!--separate-->[" );
+						int pos = 0;
+						unsigned long t = time( NULL );
+					
+						while( sessions != NULL )
 						{
-							int size = 0;
-							if( pos == 0 )
+							UserSession *us = (UserSession *) sessions->us;
+						
+							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
+							//if( us->us_WSConnections != NULL )
+							time_t timestamp = time(NULL);
+							if( ( (timestamp - us->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
 							{
-								size = snprintf( temp, sizeof(temp), "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
-							}
-							else
-							{
-								size = snprintf( temp, sizeof(temp), ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
-							}
+								int size = 0;
+								if( pos == 0 )
+								{
+									size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, 		us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+								}
+								else
+								{
+									size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, 	us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+								}
 							
-							BufStringAddSize( bs, temp, size );
+								BufStringAddSize( bs, temp, size );
 							
-							pos++;
+								pos++;
+							}
+							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 						}
-						sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+					
+						BufStringAdd( bs, "]" );
+					
+						HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+					
+						DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
+						bs->bs_Buffer = NULL;
+					
+						BufStringDelete( bs );
+						numberOfSessions++;
 					}
-					
-					BufStringAdd( bs, "]" );
-					
-					HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-					
-					DEBUG("[UMWebRequest] Sessions %s\n", bs->bs_Buffer );
-					bs->bs_Buffer = NULL;
-					
-					BufStringDelete( bs );
-					numberOfSessions++;
+					logusr = (User *)logusr->node.mln_Succ;
 				}
-				logusr = (User *)logusr->node.mln_Succ;
+				FFree( temp );
 			}
 			
 			if( logusr == NULL && numberOfSessions == 0 )
@@ -890,7 +903,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						FBOOL add = FALSE;
 						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < LOGOUT_TIME ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSConnections != NULL )
 						{
 							add = TRUE;
 						}
@@ -898,7 +911,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						if( usersOnly == TRUE )
 						{
 							char newuser[ 255 ];
-							sprintf( newuser, "\"%s\"", usr->u_Name );
+							snprintf( newuser, 254, "\"%s\"", usr->u_Name );
 							
 							if( strstr( bs->bs_Buffer, newuser ) != NULL )
 							{
@@ -993,9 +1006,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					if( locses != NULL )
 					{
 						FBOOL add = FALSE;
-						DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %d WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), LOGOUT_TIME, locses->us_WSConnections );
+						DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %d WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), REMOVE_SESSIONS_AFTER_TIME, locses->us_WSConnections );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < LOGOUT_TIME ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSConnections != NULL )
 						{
 							add = TRUE;
 						}
@@ -1015,8 +1028,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						{
 							char tmp[ 512 ];
 							int tmpsize = 0;
-							
-							//DEBUG("Active session found for user %s - deviceidentity %s\n", usr->u_Name, locses->us_DeviceIdentity );
 							
 							if( pos == 0 )
 							{
