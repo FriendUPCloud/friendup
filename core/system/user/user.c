@@ -42,7 +42,7 @@ User *UserNew( )
 	User *u;
 	if( ( u = FCalloc( 1, sizeof( User ) ) ) != NULL )
 	{
-		UserInit( &u );
+		UserInit( u );
 	}
 	else
 	{
@@ -58,16 +58,21 @@ User *UserNew( )
  * @param pointer to memory where poiniter to User is stored
  * @return 0 when success, otherwise error number
  */
-int UserInit( User **up )
+int UserInit( User *up )
 {
 	// First make sure we don't have a duplicate!
 	//User *sess = SLIB->sl_Sessions;
-	User *u = *up;
+	User *u = up;
 	if( u == NULL )
 	{
 		FERROR("User provided = NULL\n");
 		return -1;
 	}
+	
+	DEBUG( "[UserInit] Attempting to initialize mutex on new user. Pointer to new user %p\n", up );
+	
+	pthread_mutex_init( &(u->u_Mutex), NULL );
+	
 	/*
 	while( sess != NULL )
 	{
@@ -82,7 +87,6 @@ int UserInit( User **up )
 		}
 		sess = ( User *)sess->node.mln_Succ;
 	}*/
-	DEBUG( "[UserInit] Attempting to initialize mutex on new user.\n" );
 	
 	return 0;
 }
@@ -180,16 +184,15 @@ void UserRemoveSession( User *usr, void *ls )
 		
 		if( us != NULL )
 		{
+			pthread_mutex_lock( &(usr->u_Mutex) );
+			if( usr->u_SessionsNr <= 0 )
+			{
+				usr->u_SessionsList = NULL;
+			}
+			pthread_mutex_unlock( &(usr->u_Mutex) );
 			FFree( us );
 		}
 	}
-	
-	/*
-	if( removed == TRUE )
-	{
-		remses->us_WSConnections = NULL;
-	}
-	*/
 }
 
 /**
@@ -201,6 +204,8 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
+		pthread_mutex_lock( &(usr->u_Mutex) );
+		
 		if( usr->u_Printers != NULL )
 		{
 			usr->u_Printers = PrinterDeleteAll( usr->u_Printers );
@@ -259,6 +264,9 @@ void UserDelete( User *usr )
 		{
 			FFree( usr->u_MainSessionID );
 		}
+		pthread_mutex_unlock( &(usr->u_Mutex) );
+		
+		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
 		FFree( usr );
 	}

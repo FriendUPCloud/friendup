@@ -59,6 +59,18 @@ UserSession *UserSessionNew( char *sessid, char *devid )
 }
 
 /**
+ * UserSession init
+ *
+ * @param us pointer to UserSession which will be initalized
+ */
+void UserSessionInit( UserSession *us )
+{
+	if( us != NULL )
+	{
+	}
+}
+
+/**
  * Delete UserSession
  *
  * @param us pointer to UserSession which will be deleted
@@ -67,13 +79,15 @@ void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
 	{
-		pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
+		//pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
+		pthread_mutex_lock( &(us->us_WSMutex) );
 		
 		WebsocketClient *nwsc = us->us_WSConnections;
 		us->us_WSConnections = NULL;
 		int count = 0;
 		
-        pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
+		pthread_mutex_unlock( &(us->us_WSMutex) );
+        //pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
 		// we must wait till all tasks will be finished
 		while( TRUE )
 		{
@@ -94,7 +108,7 @@ void UserSessionDelete( UserSession *us )
 			usleep( 1000000 );
 		}
 		
-		pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
+		//pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
 		
         if( us->us_User != NULL )
         {
@@ -150,6 +164,6 @@ void UserSessionDelete( UserSession *us )
 		}
 	
 		FFree( us );
-		pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
+		//pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
 	}
 }

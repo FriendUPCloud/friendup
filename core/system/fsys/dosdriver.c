@@ -119,7 +119,7 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 
 		if( ddrive->dd_Handler == NULL )
 		{
-			FERROR("[ERROR]: Handler not found %s, cannot create DOSDriver!\n");
+			FERROR("[ERROR]: Handler not found cannot create DOSDriver!\n");
 			sl->sl_Error = FSys_Error_NOFSAvaiable;
 			DOSDriverDelete( ddrive );
 			return NULL;

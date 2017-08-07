@@ -42,6 +42,7 @@ enum {
 		SQLT_NODE,		// pointer to next structure
 		SQLT_SKIPBYTES,
 		SQLT_DATETIME,
+		SQLT_INIT_FUNCTION,
 		SQLT_END
 };
 

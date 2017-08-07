@@ -1607,9 +1607,12 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 	char message[ mlen ];
 	memset( message, '\0', mlen );
 
-	if( message != NULL )
+	if( message != NULL && u != NULL )
 	{
 		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
+		
+		pthread_mutex_lock( &(u->u_Mutex) );
+		
 		UserSessListEntry *list = u->u_SessionsList;
 		while( list != NULL )
 		{
@@ -1626,6 +1629,7 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 			}
 			list = (UserSessListEntry *)list->node.mln_Succ;
 		}
+		pthread_mutex_unlock( &(u->u_Mutex) );
 	}
 	DEBUG("[UserNotifyFSEvent2] end\n");
 }
@@ -1681,7 +1685,7 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
 				{
 					if( !userlist[i] ) break;
 					UserSession *u = userlist[i];
-					sb->WebSocketSendMessage( sb, u, message, strlen( message ) );
+					WebSocketSendMessage( sb, u, message, strlen( message ) );
 				}
 			}
 			FFree( message );

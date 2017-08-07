@@ -131,54 +131,40 @@ typedef struct User
 {
 	MinNode						node;
 	FULONG						u_ID;
-	char								*u_Name;
-	char								*u_Password;
-	char								*u_FullName;
-	char								*u_Email;
-	int								u_Error;            // if error
+	char						*u_Name;
+	char						*u_Password;
+	char						*u_FullName;
+	char						*u_Email;
+	int							u_Error;            // if error
 
-	char								*u_MainSessionID;       // session id ,  generated only when user is taken from db
-	time_t							u_LoggedTime;       // last action time
-	time_t							u_CreatedTime;
-	time_t							u_LoginTime;			// last login time
+	char						*u_MainSessionID;       // session id ,  generated only when user is taken from db
+	time_t						u_LoggedTime;       // last action time
+	time_t						u_CreatedTime;
+	time_t						u_LoginTime;			// last login time
 	
-	File								*u_MountedDevs;     // root file]
-	int								u_MountedDevsNr;		// number of mounted devices
-	File								*u_WebDAVDevs;		// shared webdav resources 
-	int								u_WebDAVDevsNr;		// number of mounted webdav drives
+	File						*u_MountedDevs;     // root file]
+	int							u_MountedDevsNr;		// number of mounted devices
+	File						*u_WebDAVDevs;		// shared webdav resources 
+	int							u_WebDAVDevsNr;		// number of mounted webdav drives
 	
 	UserGroup					**u_Groups;         // pointer to groups to which user is assigned (table of pointers)
-	int								u_GroupsNr;		// number of assigned groups
-	UserApplication			*u_Applications;   // pointer to application settings
-	FPrinter						*u_Printers;		// user printers
+	int							u_GroupsNr;		// number of assigned groups
+	UserApplication				*u_Applications;   // pointer to application settings
+	FPrinter					*u_Printers;		// user printers
 	
-	FBOOL							u_InitialDevMount;
-	FBOOL							u_Anonymous;		// if user is anonymous
+	FBOOL						u_InitialDevMount;
+	FBOOL						u_Anonymous;		// if user is anonymous
 	
-	UserSessListEntry		*u_SessionsList;
-	int								u_SessionsNr;		// number of sessions
-	int								u_NumberOfBadLogins;	// number of bad logins
+	UserSessListEntry			*u_SessionsList;
+	int							u_SessionsNr;		// number of sessions
+	int							u_NumberOfBadLogins;	// number of bad logins
 	
 	RemoteUser					*u_RemoteUsers; //user which use this account to have access to resources
-	FBOOL							u_IsAdmin;		//set to TRUE when user is in Admin group
-	FBOOL							u_IsAPI;			//set to TRUE when user is in API group
+	FBOOL						u_IsAdmin;		//set to TRUE when user is in Admin group
+	FBOOL						u_IsAPI;			//set to TRUE when user is in API group
+	
+	pthread_mutex_t				u_Mutex;	// User structure mutex
 } User;
-
-static FULONG UserDesc[] = { 
-    SQLT_TABNAME, (FULONG)"FUser",       
-    SQLT_STRUCTSIZE, sizeof( struct User ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct User, u_ID ), 
-	SQLT_STR,     (FULONG)"Name",        offsetof( struct User, u_Name ),
-	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
-	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
-	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
-	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
-	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
-	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
-	SQLT_END 
-};
 
 //
 //
@@ -196,7 +182,7 @@ int UserCheckExists( User *u );
 //
 //
 
-int UserInit( User **u );
+int UserInit( User *u );
 
 //
 //
@@ -240,6 +226,26 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error );
 
 int UserRegenerateSessionID( User *usr, char *newsess );
 
+//
+// SQL structure
+//
+
+static FULONG UserDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FUser",       
+    SQLT_STRUCTSIZE, sizeof( struct User ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct User, u_ID ), 
+	SQLT_STR,     (FULONG)"Name",        offsetof( struct User, u_Name ),
+	SQLT_STR,     (FULONG)"Password",    offsetof( struct User, u_Password ),
+	SQLT_STR,     (FULONG)"Fullname",    offsetof( struct User, u_FullName ),
+	SQLT_STR,     (FULONG)"Email",       offsetof( struct User, u_Email ),
+	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct User, u_MainSessionID ),
+	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
+	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
+	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
+	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
+	SQLT_END 
+};
 
 
 #endif // __SYSTEM_USER_USER_H__

@@ -66,40 +66,28 @@ CREATE TABLE IF NOT EXISTS `FUserSession` (
 
 typedef struct UserSession
 {
-	MinNode                    node;
+	MinNode                node;
 	
-	FULONG                    us_ID;
+	FULONG                 us_ID;
 	WebsocketClient        *us_WSConnections;
 	pthread_mutex_t        us_WSMutex;
 	
-	FULONG                    us_UserID;					//
-	char                           *us_DeviceIdentity;	// device identity
-	char                           *us_SessionID;			// session id
-	time_t                        us_LoggedTime;		// last update from user
-	int                              us_LoginStatus;			// login status
+	FULONG                 us_UserID;					//
+	char                   *us_DeviceIdentity;	// device identity
+	char                   *us_SessionID;			// session id
+	time_t                 us_LoggedTime;		// last update from user
+	int                    us_LoginStatus;			// login status
 	
-	File                            *us_OpenedFiles;		// opened files in user session
+	File                   *us_OpenedFiles;		// opened files in user session
 	
-	User                          *us_User;					// pointer to user structure
+	User                   *us_User;					// pointer to user structure
 	
-	void                           *us_SB;   // pointer to systembase
+	void                   *us_SB;   // pointer to systembase
 	
-	char                           us_UserActionInfo[ 512 ];
-	FLONG                    us_NRConnections;
+	char                   us_UserActionInfo[ 512 ];
+	FLONG                  us_NRConnections;
 	
 }UserSession;
-
-static FULONG UserSessionDesc[] = { 
-    SQLT_TABNAME, (FULONG)"FUserSession",       
-    SQLT_STRUCTSIZE, sizeof( struct UserSession ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
-	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
-	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
-	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
-	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserSession, node ),
-	SQLT_END 
-};
 
 //
 //
@@ -112,5 +100,28 @@ UserSession *UserSessionNew( char *sessid, char *devid );
 //
 
 void UserSessionDelete( UserSession *us );
+
+//
+//
+//
+
+void UserSessionInit( UserSession *us );
+
+//
+//
+//
+
+static FULONG UserSessionDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FUserSession",       
+    SQLT_STRUCTSIZE, sizeof( struct UserSession ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct UserSession, us_ID ), 
+	SQLT_INT,     (FULONG)"UserID", offsetof( struct UserSession, us_UserID ),
+	SQLT_STR,     (FULONG)"DeviceIdentity",       offsetof( struct UserSession, us_DeviceIdentity ),
+	SQLT_STR,     (FULONG)"SessionID",   offsetof( struct UserSession, us_SessionID ),
+	SQLT_INT,     (FULONG)"LoggedTime", offsetof( struct UserSession, us_LoggedTime ),
+	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserSessionInit,
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct UserSession, node ),
+	SQLT_END 
+};
 
 #endif // __SYSTEM_USER_USERSESSION_H__

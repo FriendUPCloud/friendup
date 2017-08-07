@@ -142,6 +142,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					User *locusr = UserNew();
 					if( locusr != NULL )
 					{
+						UserInit( locusr );
 						locusr->u_Name = usrname;
 						locusr->u_FullName = fullname;
 						locusr->u_Email = email;

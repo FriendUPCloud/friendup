@@ -103,7 +103,7 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 	
 	while( dptr[0] != SQLT_END )
 	{
-		if( dptr[0] != SQLT_NODE )
+		if( dptr[0] != SQLT_NODE && dptr[0] != SQLT_INIT_FUNCTION )
 		{
 			if( pos == 0 )
 			{
@@ -271,6 +271,17 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 							// copy pointer to this list
 							memcpy( strptr + dptr[2], &ls, sizeof( ListString * ) );
 							//ListStringDelete( ls );
+						}
+					break;
+					
+						case SQLT_INIT_FUNCTION:
+						{
+							DEBUG("[MYSQLLibrary] Init function found, calling it\n");
+							if( dptr[2] != NULL && data != NULL )
+							{
+								void (*funcptr)( void * ) = (void *)(void *)dptr[2];
+								funcptr( (void *)data );
+							}
 						}
 					break;
 				}

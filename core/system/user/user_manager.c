@@ -533,7 +533,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	if( user != NULL )
 	{
-		int res = UserInit( &user );
+		int res = UserInit( user );
 		if( res == 0 )
 		{
 			DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
@@ -581,7 +581,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 
 	if( user != NULL )
 	{
-		int res = UserInit( &user );
+		int res = UserInit( user );
 		if( res == 0 )
 		{
 			DEBUG("[UMUserGetByIDDB] User found %s\n", user->u_Name );
@@ -930,7 +930,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	{
 		UMAssignGroupToUser( um, tmp );
 		UMAssignApplicationsToUser( um, tmp );
-		UserInit( &tmp );
+		UserInit( tmp );
 		
 		tmp = (User *)tmp->node.mln_Succ;
 	}
@@ -974,7 +974,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 				if( user != NULL )
 				{
 					sb->LibraryMYSQLDrop( sb, sqlLib );
-					int res = UserInit( &user );
+					int res = UserInit( user );
 					if( res == 0 )
 					{
 						UMAssignGroupToUser( um, user );
@@ -1026,7 +1026,7 @@ User *UMGetAllUsersDB( UserManager *um )
 	{
 		UMAssignGroupToUser( um, tmp );
 		UMAssignApplicationsToUser( um, tmp );
-		UserInit( &tmp );
+		UserInit( tmp );
 		
 		tmp = (User *)tmp->node.mln_Succ;
 	}
