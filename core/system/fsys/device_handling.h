@@ -135,7 +135,7 @@ inline int ColonPosition( const char *c )
  * @return pointer to device (File *)
  */
 
-inline File *GetRootDeviceByName( User *usr, char *devname )
+static inline File *GetRootDeviceByName( User *usr, char *devname )
 {
 	//
 	// Check mounted devices for user

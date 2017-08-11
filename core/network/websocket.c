@@ -76,7 +76,7 @@ static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, voi
  * @param mut pointer to pthread mutex
  * @return number of bytes sent
  */
-inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, int msglen, int type, UserSession *ses )
+extern inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, int msglen, int type, UserSession *ses )
 {
 	int result = 0;
 	
