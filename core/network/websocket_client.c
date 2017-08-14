@@ -28,7 +28,11 @@
  *  @author PS (Pawel Stefanski)
  *  @date created 11/2016
  */
+
 #include "websocket_client.h"
+#include <system/systembase.h>
+
+extern SystemBase *SLIB;
 
 /**
  * Create new WebsocketClient
@@ -54,13 +58,36 @@ void WebsocketClientDelete( WebsocketClient *cl )
 {
 	if( cl != NULL )
 	{
+		int tries = 0;
+		while( TRUE )
+		{
+			DEBUG("Check in use %d\n", cl->wc_InUseCounter );
+			if( cl->wc_InUseCounter <= 0 )
+			{
+				break;
+			}
+			sleep( 1 );
+			tries++;
+			if( tries >= 30 )
+			{
+				DEBUG("Websocket released\n");
+				break;
+			}
+		}
+		
+		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
+		
 		pthread_mutex_lock( &(cl->wc_Mutex) );
+		
+		//DEBUG("[WS] connection will be removed %p\n", cl );
+		Log(FLOG_DEBUG, "WebsocketClient delete %p\n", cl );
+		
 		cl->wc_UserSession = NULL;
 		cl->wc_Wsi = NULL;
 		//cl->wc_WebsocketsData = NULL;
 		pthread_mutex_unlock( &(cl->wc_Mutex) );
 		
 		pthread_mutex_destroy( &(cl->wc_Mutex) );
-		//FFree( cl );
+		FFree( cl );
 	}
 }

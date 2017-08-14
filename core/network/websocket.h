@@ -42,6 +42,7 @@
 #include <libwebsockets.h>
 #include <core/thread.h>
 #include <time.h>
+#include <network/websocket_client.h>
 
 #define MAX_MESSAGE_QUEUE 64
 
@@ -87,8 +88,8 @@ typedef struct WebSocket
 typedef struct FCWSData 
 {
 	//int fcd_Number;
-	void								*fcd_ActiveSession;
-	void								*fcd_WSClient;
+	//void								*fcd_ActiveSession;
+	WebsocketClient						*fcd_WSClient;
 	void								*fcd_SystemBase;
 	
 	struct timeval				fcd_Timer;
@@ -128,7 +129,7 @@ int AddWebSocketConnection( void *l, struct lws *wsi, const char *sessionid, con
 //
 //
 
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wcl );
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, FCWSData *data );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

@@ -1,6 +1,6 @@
-GCC				=	gcc
-CPP				=	g++
-OUTPUT			=	FriendCore
+GCC			=	gcc
+CPP			=	g++
+OUTPUT			=	bin/FriendCore
 BUILD_DATE		=	$(shell date +"%Y%m%d_%H%M%S")
 BUILD_VERSION	=	"v1.0.0"
 GIT_VERSION 		=	$(shell git describe --abbrev --dirty --always --tags)

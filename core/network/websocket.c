@@ -186,79 +186,6 @@ int WebsocketWrite( void *wsi, unsigned char *msgptr, int msglen, int type )
 	return WebsocketWriteInline( wsi,  msgptr, msglen, type );
 }
 
-/*
- i f*( msglen > WS_PROTOCOL_BUFFER_SIZE ) // message is too big, we must split data into chunks
- {
- char *locmsgptr = msgptr;
- int totalChunk = (msglen / WS_PROTOCOL_BUFFER_SIZE)+1;
- int actChunk = 0;
- 
- static int END_CHAR_SIGNS = 4;
- char *end = "\"}}}";
- 
- DEBUG("Sending big message , size %d\n", msglen );
- 
- char *sendMsg = FMalloc( LWS_SEND_BUFFER_PRE_PADDING + WS_PROTOCOL_BUFFER_SIZE + 256 );
- if( sendMsg != NULL )
- {
- // sending chunks
- for( actChunk = 0; actChunk < totalChunk ; actChunk++ )
- {
- char *chunkptr = sendMsg + LWS_SEND_BUFFER_PRE_PADDING;
- int sendLen = 0;
- 
- int txtmsgpos = sprintf( chunkptr, "{\"type\":\"con\",\"data\":{\"type\":\"chunk\",\"data\":{\"id\":\"%p\",\"total\":\"%d\",\"part\":\"%d\",\"data\":\"", sendMsg, totalChunk, actChunk );
- int copysize = msglen;
- if( copysize > WS_PROTOCOL_BUFFER_SIZE )
- {
- copysize = WS_PROTOCOL_BUFFER_SIZE;
- }
- 
- sendLen = txtmsgpos;
- chunkptr += txtmsgpos;
- 
- // we must be aware of \\"
- char *msgend = locmsgptr + (copysize-1);
- int subsize = 0;
- while( TRUE )
- {
- if( *msgend == ',' )
-	 //if( *msgend != '\\' && *msgend != '\"' )
- {
- break;
- }
- msgend--;
- subsize++;
- }
- copysize -= subsize;
- 
- DEBUG("Sending chunk:  %s  size %d  first sign %d %c last sign %d %c\n", chunkptr, copysize, ((char)locmsgptr[0]),  ((char)locmsgptr[0]),  ((char)locmsgptr[ copysize-1 ]), ((char)locmsgptr[ copysize-1 ]) );
- memcpy( chunkptr, locmsgptr, copysize );
- sendLen += copysize;
- chunkptr += copysize;
- 
- memcpy( chunkptr, end, END_CHAR_SIGNS );
- sendLen += END_CHAR_SIGNS;
- chunkptr += END_CHAR_SIGNS;
- *chunkptr = 0;	//end message with NULL
- 
- locmsgptr += copysize;
- msglen -= copysize;
- 
- pthread_mutex_lock( mut );
- lws_write( wsi, sendMsg+LWS_SEND_BUFFER_PRE_PADDING , sendLen, type );
- int val; int x=0;
- while( 0 != (val = lws_send_pipe_choked( wsi ) ) )
- {
- usleep( 2000 );
- }
- pthread_mutex_unlock( mut ); 
- }
- FFree( sendMsg );
- }
- }
- */
-
 //
 //
 //
@@ -365,9 +292,8 @@ void WSThread( void *d )
 	BufString *queryrawbs = data->queryrawbs;
 	FCWSData *fcd = data->fcd;
 	struct lws *wsi = data->wsi;
-	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
 	
-	if( fcd == NULL || ses == NULL || ses->us_WSClients == NULL )
+	if( fcd == NULL || fcd->fcd_WSClient == NULL )
 	{
 		FERROR("Error session is NULL\n");
 		if( http != NULL )
@@ -398,6 +324,8 @@ void WSThread( void *d )
 #endif
 		return;
 	}
+	UserSession *ses = (UserSession *)fcd->fcd_WSClient->wc_UserSession;
+	WebsocketClient *wscl = fcd->fcd_WSClient;
 	
 	ses->us_InUseCounter++;
 	
@@ -530,7 +458,7 @@ void WSThread( void *d )
 					if( locptr[ znew-1 ] == 0 ) {znew--; DEBUG("ZNEW\n");}
 					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING + jsonsize + znew, end, END_CHAR_SIGNS );
 
-                    if( fcd->fcd_ActiveSession != NULL )
+                    if( wscl->wc_UserSession != NULL )
                     {
                         WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
                     }
@@ -639,7 +567,7 @@ void WSThread( void *d )
 	
 	FFree( data );
 	
-    if( fcd->fcd_ActiveSession != NULL )
+    if( wscl->wc_UserSession != NULL )
     {
         ses->us_InUseCounter--;
     }
@@ -679,7 +607,16 @@ void WSThreadPing( void *p )
 	char *answer = FCalloc( 1024, sizeof(char) );
 	snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%s\"}}", data->requestid );
 	
-	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
+	WebsocketClient *wscl = fcd->fcd_WSClient;
+	if( wscl == NULL )
+	{
+		pthread_mutex_lock( &nothreadsmutex );
+		nothreads--;
+		pthread_mutex_unlock( &nothreadsmutex );
+		return;
+	}
+	
+	UserSession *ses = wscl->wc_UserSession;
 	if( ses != NULL )
 	{
 		ses->us_LoggedTime = time( NULL );
@@ -759,16 +696,16 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			//pss->fcd_Number = 0;
-			FERROR("[WS] Callback estabilished\n");
+			FERROR("[WS] Callback estabilished %p %p\n", fcd->fcd_SystemBase, fcd->fcd_WSClient );
+			fcd->fcd_SystemBase = NULL;
+			fcd->fcd_WSClient = NULL;
 		break;
 		
 		case LWS_CALLBACK_CLOSED:
 			FERROR("[WS] Callback session closed\n");
 			
-			WebsocketClient *cl = (WebsocketClient *)fcd->fcd_WSClient;
-            DeleteWebSocketConnection( fcd->fcd_SystemBase, wsi, cl );
-			//fcd->fcd_WSClient = NULL;
-			fcd->fcd_ActiveSession = NULL;
+            DeleteWebSocketConnection( SLIB, wsi, fcd );
+			fcd->fcd_WSClient = NULL;
 		break;
 
 		//
@@ -868,10 +805,8 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 												{
 													//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 													memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
-													
-													UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
 
-													if( ses != NULL )
+													if( fcd->fcd_WSClient != NULL )
 													{
 														WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
 													}
@@ -903,8 +838,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 														//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
 														memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
 
-														UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
-														if( ses != NULL )
+														if( fcd->fcd_WSClient != NULL )
 														{
 															WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
 														}
@@ -1022,7 +956,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													http->parsedPostContent = HashmapNew();
 													http->uri = UriNew();
 
-													UserSession *s = fcd->fcd_ActiveSession;
+													UserSession *s = fcd->fcd_WSClient->wc_UserSession;
 													//DEBUG("Session ptr %p\n", s );
 													if( s != NULL )
 													{
@@ -1433,7 +1367,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													http->parsedPostContent = HashmapNew();
 													http->uri = UriNew();
 													
-													UserSession *s = fcd->fcd_ActiveSession;
+													UserSession *s = fcd->fcd_WSClient->wc_UserSession;
 													if( s != NULL )
 													{
 														DEBUG("[WS] Session ptr %p  session %p\n", s, s->us_SessionID );
@@ -1581,7 +1515,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															
 															int respcode = 0;
 															
-															Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession, &respcode );
+															Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_WSClient->wc_UserSession, &respcode );
 														
 															gettimeofday(&stop, NULL);
 															double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
@@ -2124,6 +2058,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	WebsocketClient *nwsc = WebsocketClientNew();
 	if( nwsc != NULL )
 	{
+		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p\n", nwsc, nwsc->node.mln_Succ );
 		DEBUG("[WS] AddWSCon new connection created\n");
 		nwsc->wc_Wsi = wsi;
 		
@@ -2139,7 +2074,6 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 			FERROR("User sessions %s is not attached to user %lu\n", actUserSess->us_SessionID, actUserSess->us_UserID );
 		}
 
-		data->fcd_ActiveSession = actUserSess;
 		data->fcd_WSClient  = nwsc;
 		data->fcd_SystemBase = l;
 		nwsc->wc_WebsocketsData = data;
@@ -2148,7 +2082,10 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		pthread_mutex_lock( &(actUserSess->us_Mutex) );
 		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
 		actUserSess->us_WSClients = nwsc;
+		nwsc->wc_UserSession = actUserSess;
 		pthread_mutex_unlock( &(actUserSess->us_Mutex) );
+		
+		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p actuser session %p\n", nwsc, nwsc->node.mln_Succ, actUserSess );
 	}
 	else
 	{
@@ -2161,27 +2098,32 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 /**
  * Delete websocket connection
  *
- * @param l pointer to SystemBase
+ * @param locsb pointer to SystemBase
  * @param wsi pointer to libwebsockets
- * @param wscl pointer to WebSocketClient
+ * @param data pointer to FCWSData
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, FCWSData *data )
 {
     SystemBase *l = (SystemBase *)locsb;
-	if( wscl == NULL )
+	if( data->fcd_WSClient == NULL )
 	{
 		return 1;
 	}
-	WebsocketClient *locclient = (WebsocketClient *)wscl;
-    UserSession *us = (UserSession *)locclient->wc_UserSession;
+	
+	WebsocketClient *wscl = (WebsocketClient *)data->fcd_WSClient;
+	
+	pthread_mutex_lock( &(wscl->wc_Mutex) );
+    UserSession *us = (UserSession *)wscl->wc_UserSession;
+	pthread_mutex_unlock( &(wscl->wc_Mutex) );
     
 	//
 	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
 	//
     if( us != NULL )
 	{
+		pthread_mutex_lock( &(us->us_Mutex) );
 		WebsocketClient *nwsc = us->us_WSClients;
         WebsocketClient *owsc = nwsc;
 		
@@ -2189,17 +2131,16 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
 		
 		if( nwsc != NULL )
 		{
-			DEBUG("[WS]: Getting connections %p for user %s\n", nwsc, us->us_SessionID );
+			DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
 			
 			// remove first entry!
-			DEBUG("[WS] NWSCPOINTER %p POINTER %p\n" , nwsc->wc_Wsi, wsi );
+			//DEBUG("[WS] NWSCPOINTER to WSI %p POINTER provided wsi %p\n" , nwsc->wc_Wsi, wsi );
 
 			//if( nwsc->wc_Wsi == wsi )
-			if( nwsc == wscl )
+			if( nwsc->wc_WebsocketsData == data )
 			{
-				pthread_mutex_lock( &(us->us_Mutex) );
 				us->us_WSClients = (WebsocketClient *)us->us_WSClients->node.mln_Succ;
-				pthread_mutex_unlock( &(us->us_Mutex) );
+
 				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
             }
 			
@@ -2213,41 +2154,26 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
 					DEBUG("[WS] WS Entry\n");
 					owsc = nwsc;
 					nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
-					
-					if( nwsc != NULL && nwsc->wc_Wsi == wsi )
+					DEBUG("[WS ] OLDWSC %p NWSC %p\n", owsc, nwsc );
+					if( nwsc != NULL && nwsc->wc_WebsocketsData == data )
 					{
-						pthread_mutex_lock( &(us->us_Mutex) );
+						
 						owsc->node.mln_Succ = nwsc->node.mln_Succ;
-						pthread_mutex_unlock( &(us->us_Mutex) );
 						break;
 					}
 				}
-			}
-			
-			if( nwsc != NULL )
-			{
-				while( TRUE )
-				{
-					DEBUG("Check in use %d\n", nwsc->wc_InUseCounter );
-					if( nwsc->wc_InUseCounter <= 0 )
-					{
-						break;
-					}
-					sleep( 1 );
-				}
-				nwsc->wc_Wsi = NULL;
 				
-				AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, locclient );
-				
-				DEBUG("[WS] connection will be removed\n");
 			}
 		}
+		pthread_mutex_unlock( &(us->us_Mutex) );
 	}
 	else
 	{
 		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
-	WebsocketClientDelete( locclient );
+	
+	Log(FLOG_DEBUG, "WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wc_UserSession );
+	WebsocketClientDelete( wscl );
 
     return 0;
 }

@@ -784,6 +784,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			DEBUG("[AppSession] Going through User Sessions\n");
 			if( le->usersession != NULL )
 			{
+				pthread_mutex_lock( &(le->usersession->us_Mutex) );
 				WebsocketClient *lws = le->usersession->us_WSClients;
 				while( lws != NULL )
 				{
@@ -792,7 +793,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
 						if( ne != NULL )
 						{
-							pthread_mutex_lock( &as->as_SessionsMut );
+							//pthread_mutex_lock( &as->as_SessionsMut );
 							ne->as = as;
 							ne->us = le;
 							
@@ -807,16 +808,16 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 								rwsentr = ne;
 							}
 						}
-						pthread_mutex_unlock( &as->as_SessionsMut );
+						//pthread_mutex_unlock( &as->as_SessionsMut );
 						
 						break;
 					}
 					lws = (WebsocketClient *)lws->node.mln_Succ;
 				}
+				pthread_mutex_unlock( &(le->usersession->us_Mutex) );
 			}
 			le = (SASUList *)le->node.mln_Succ;
 		}
-		
 		as = (AppSession *)as->node.mln_Succ;
 	}
 	
@@ -830,11 +831,12 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 		
 		if( re != NULL )
 		{
+			int err = 0;
+			/*
 			char tmpmsg[ 255 ];
 			int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->us->usersession->us_User->u_Name );
 			
 			DEBUG("[AppSession] Session found and will be removed\n");
-			int err = 0;
 			
 			if( re->as->as_UserSessionList == re->us )
 			{
@@ -844,12 +846,12 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			{
 				err = AppSessionSendOwnerMessage( as, re->us->usersession, tmpmsg, msgsize );
 			}
+			*/
 			
 			err = AppSessionRemUsersession( as, re->us->usersession );
 			
 			FFree( re );
 		}
-		
 	}
 	
 	return 0;

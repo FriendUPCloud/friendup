@@ -111,7 +111,7 @@ char *GetFileName( const char *path )
 
 void init( struct FHandler *s )
 {
-	//s->Info = dlsym( s->handle, "Info" );
+	DEBUG("[FSYSLOCAL] init\n");
 }
 
 //
@@ -120,7 +120,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	
+	DEBUG("[FSYSLOCAL] deinit\n");
 }
 
 //

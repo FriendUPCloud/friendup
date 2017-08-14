@@ -42,7 +42,7 @@ libs:
 
 friendcore:
 	cd core; make FriendCore
-	cp core/FriendCore ./
+	cp core/bin/FriendCore ./
 
 webserver:
 
@@ -59,7 +59,7 @@ flush:
 	@echo "Cleaning up."
 	cd interfaces; make clean
 	cd core; make clean
-	rm -f FriendCore
+	rm -f bin/FriendCore
 	rm -fr $(FRIEND_HOME)
 
 setup:

@@ -91,7 +91,7 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 			memcpy( fsys->Path, path, len );
 		}
 
-		if( ( fsys->handle = dlopen ( path, RTLD_LAZY ) ) != NULL )
+		if( ( fsys->handle = dlopen( path, RTLD_NOW|RTLD_GLOBAL ) ) != NULL )
 		{
 			DEBUG("SYSTEMLIB FSYSCREATE, getting pointer to libs\n");
 			
@@ -151,7 +151,6 @@ void FHandlerDelete( FHandler *fsys )
 {
 	if( fsys != NULL )
 	{
-		DEBUG( "\t\t\t\tFSYS deinit %p", fsys->deinit );
 		fsys->deinit( fsys );
 		
 		if( fsys->Name )
@@ -166,7 +165,7 @@ void FHandlerDelete( FHandler *fsys )
 
 		if( fsys->handle )
 		{
-			dlclose ( fsys->handle );
+			dlclose( fsys->handle );
 		}
 
 		FFree( fsys );
