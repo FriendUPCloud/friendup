@@ -111,12 +111,12 @@
 	$ColorDangerButtonHoverBg: #ef653b;
 	$ColorAvailable:           #000000;
 	$ColorAvailableBg:         #94c6e0;
-	$ColorAction:              purple;
-	$ColorActionBg:            transparent;
-	$ColorWarning:             yellow;
-	$ColorWarningBg:           transparent;
-	$ColorNotify:              orange;
-	$ColorNotifyBg:            transparent;
+	$ColorAction:              #000000;
+	$ColorActionBg:            purple;
+	$ColorWarning:             #000000;
+	$ColorWarningBg:           #e6e660;
+	$ColorNotify:              #000000;
+	$ColorNotifyBg:            orange;
 	
 	$ColorIconBlinkStart:      black;
 	$ColorIconBlinkEnd:        grey;
@@ -1844,6 +1844,14 @@ html body.Busy, html body.Busy *
 	94.05% { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0034.png) 0 0, auto; }
 	96.90% { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
 	100%   { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
+}
+
+/* Deepest field */
+
+#DeepestField #UserProfilePicture > p.Fullname
+{
+	color: white;
+	text-shadow: 0px 1px 1px black;
 }
 
 /* Mobile menu */

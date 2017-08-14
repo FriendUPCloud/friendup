@@ -25,6 +25,8 @@ File = function( filename )
 {
 	this.path = filename;
 	
+	this.useEncryption = false; // Default no encryption
+	
 	this.data = false;
 	this.rawdata = false;
 	this.replacements = false;
@@ -41,6 +43,18 @@ File = function( filename )
 				this.replacements[a] = window.i18n_translations[a];
 			}
 		}
+	}
+	
+	// TODO: Complete this
+	this.encrypt = function( data )
+	{
+		return data;
+	}
+	
+	// TODO: Complete this
+	this.decrypt = function( data )
+	{
+		return data;
 	}
 	
 	// Execute replacements
@@ -176,6 +190,13 @@ File = function( filename )
 					for( var a in t.replacements )
 						data = data.split ( '{'+a+'}' ).join ( t.replacements[a] );
 				}
+				
+				// Use encryption!
+				if( t.useEncryption )
+				{
+					data = t.decrypt( data );
+				}
+				
 				if( typeof ( t.onLoad ) != 'undefined' )
 				{
 					t.onLoad( data );
@@ -215,6 +236,13 @@ File = function( filename )
 						for( var a in t.replacements )
 							t.data = t.data.split ( '{'+a+'}' ).join ( t.replacements[a] );
 					}
+					
+					// Use encryption!
+					if( t.useEncryption )
+					{
+						data = t.decrypt( data );
+					}
+					
 					if( typeof ( t.onLoad ) != 'undefined' )
 					{
 						t.onLoad( t.data );
@@ -440,12 +468,19 @@ File = function( filename )
 	}
 	
 	// Save data to a file
-	this.save = function ( content, filename )
+	this.save = function( rawdata, filename )
 	{
 		if( !filename ) filename = this.path;
 		
 		// Make sure this is correct
 		filename = this.resolvePath( filename );
+		
+		// Use encryption!
+		if( this.useEncryption )
+		{
+			content = this.encrypt( rawdata );
+		}
+		else content = rawdata;
 		
 		t = this;
 		// Get the correct door and load data

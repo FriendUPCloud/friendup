@@ -355,6 +355,9 @@ Application.receiveMessage = function( msg )
 			this.newDocument();
 			break;
 		case 'print':
+			this.mainView.sendMessage( { command: 'print_iframe' } );
+			break;
+		case 'print_remote':
 			this.print();
 			break;
 		case 'remembercontent':

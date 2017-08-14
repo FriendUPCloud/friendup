@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  Websockets
@@ -54,6 +53,7 @@
 #include <private-libwebsockets.h>
 #include <system/user/user_session.h>
 #include <util/base64.h>
+#include <network/websocket_client.h>
 
 //#define WS_PROTOCOL_BUFFER_SIZE 0x8fff
 #define WS_PROTOCOL_BUFFER_SIZE 0xffff
@@ -76,10 +76,16 @@ static int callback_http( struct lws *wsi, enum lws_callback_reasons reason, voi
  * @param mut pointer to pthread mutex
  * @return number of bytes sent
  */
-extern inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, int msglen, int type, UserSession *ses )
+inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, int type )
 {
 	int result = 0;
-	
+	WebsocketClient *cl = (WebsocketClient *)wsi;
+	if( cl == NULL )
+	{
+		return 0;
+	}
+	cl->wc_InUseCounter++;
+
 	if( msglen > WS_PROTOCOL_BUFFER_SIZE ) // message is too big, we must split data into chunks
 	{
 		char *encmsg = Base64Encode( (const unsigned char *)msgptr, msglen, &msglen );
@@ -125,19 +131,18 @@ extern inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, 
 					
 					locmsgptr += copysize;
 					msglen -= copysize;
-			
-					DEBUG("[WS] Send message to session %p\n", ses );
-					if( ses->us_WSConnections != NULL )
+
+					pthread_mutex_lock( &(cl->wc_Mutex) );
+					if( cl->wc_Wsi != NULL )
 					{
-						pthread_mutex_lock( &(ses->us_WSMutex) );
-						result += lws_write( wsi, sendMsg+LWS_SEND_BUFFER_PRE_PADDING , sendLen, type );
+						result += lws_write( cl->wc_Wsi, sendMsg+LWS_SEND_BUFFER_PRE_PADDING , sendLen, type );
 						int val; int x=0;
-						while( 0 != (val = lws_send_pipe_choked( wsi ) ) )
+						while( 0 != (val = lws_send_pipe_choked( cl->wc_Wsi ) ) )
 						{
 							usleep( 2000 );
 						}
-						pthread_mutex_unlock( &(ses->us_WSMutex) );
 					}
+					pthread_mutex_unlock( &(cl->wc_Mutex) );
 				}
 				FFree( sendMsg );
 			}
@@ -146,18 +151,21 @@ extern inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, 
 	}
 	else
 	{
-		if( ses->us_WSConnections != NULL )
+		pthread_mutex_lock( &(cl->wc_Mutex) );
+		
+		if( cl->wc_Wsi != NULL )
 		{
-			pthread_mutex_lock( &(ses->us_WSMutex) );
-			result = lws_write( wsi, msgptr, msglen, type );
+			DEBUG("CL %p\n", cl );
+			result = lws_write( cl->wc_Wsi, msgptr, msglen, type );
 			int val; int x=0;
-			while( 0 != (val = lws_send_pipe_choked( wsi ) ) )
+			while( 0 != (val = lws_send_pipe_choked( cl->wc_Wsi ) ) )
 			{
-				usleep( 200000 );
+				usleep( 2000 );
 			}
-			pthread_mutex_unlock( &(ses->us_WSMutex) );
 		}
+		pthread_mutex_unlock( &(cl->wc_Mutex) );
 	}
+	cl->wc_InUseCounter--;
 	
 	return result;
 }
@@ -173,9 +181,9 @@ extern inline int WebsocketWriteInline( struct lws *wsi, unsigned char *msgptr, 
  * @param mut pointer to pthread mutex
  * @return number of bytes sent
  */
-int WebsocketWrite( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses )
+int WebsocketWrite( void *wsi, unsigned char *msgptr, int msglen, int type )
 {
-	return WebsocketWriteInline( wsi,  msgptr, msglen, type, (UserSession *)ses );
+	return WebsocketWriteInline( wsi,  msgptr, msglen, type );
 }
 
 /*
@@ -359,7 +367,7 @@ void WSThread( void *d )
 	struct lws *wsi = data->wsi;
 	UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
 	
-	if( fcd == NULL || ses == NULL || ses->us_WSConnections == NULL )
+	if( fcd == NULL || ses == NULL || ses->us_WSClients == NULL )
 	{
 		FERROR("Error session is NULL\n");
 		if( http != NULL )
@@ -391,7 +399,7 @@ void WSThread( void *d )
 		return;
 	}
 	
-	ses->us_NRConnections++;
+	ses->us_InUseCounter++;
 	
 	int returnError = 0; //this value must be returned to WSI!
 	int n = 0;
@@ -410,7 +418,41 @@ void WSThread( void *d )
 		
 		http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
 		
-		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, ses );
+		int respcode = 0;
+		Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, ses, &respcode );
+		
+		if( respcode == -666 )
+		{
+			INFO("Logout function called.");
+			if( http != NULL )
+			{
+				UriFree( http->uri );
+			
+				if( http->rawRequestPath != NULL )
+				{
+					FFree( http->rawRequestPath );
+					http->rawRequestPath = NULL;
+				}
+			}
+			
+			pthread_mutex_lock( &nothreadsmutex );
+			nothreads--;
+			pthread_mutex_unlock( &nothreadsmutex );
+			
+			FFree( data->requestid );
+			FFree( data->path );
+
+			HttpFree( http );
+			BufStringDelete( queryrawbs );
+	
+			FFree( data );
+			HttpFree( response );
+
+#ifdef USE_PTHREAD
+			pthread_exit(0);
+#endif
+			return;
+		}
 		
 		gettimeofday(&stop, NULL);
 		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
@@ -490,7 +532,7 @@ void WSThread( void *d )
 
                     if( fcd->fcd_ActiveSession != NULL )
                     {
-                        WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT, ses );
+                        WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, znew + jsonsize + END_CHAR_SIGNS, LWS_WRITE_TEXT );
                     }
 					Log( FLOG_INFO, "Websocket size: %d call: '%s'\n", response->sizeOfContent, buf+LWS_SEND_BUFFER_PRE_PADDING, response->content );
 					
@@ -520,9 +562,9 @@ void WSThread( void *d )
 						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response->content,  response->sizeOfContent );
 						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+response->sizeOfContent, end,  END_CHAR_SIGNS );
 						
-                        if( fcd->fcd_ActiveSession != NULL )
+                        if( fcd->fcd_WSClient != NULL )
                         {
-                            WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, ses );
+                            WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING , response->sizeOfContent+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
                         }
 						FFree( buf );
 					}
@@ -540,9 +582,9 @@ void WSThread( void *d )
 						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, jsontemp,  jsonsize );
 						memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, end,  END_CHAR_SIGNS );
 						
-                        if( fcd->fcd_ActiveSession != NULL )
+                        if( fcd->fcd_WSClient != NULL )
                         {
-                            WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, ses );
+                            WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING , jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
                         }
 						FFree( buf );
 					}
@@ -570,9 +612,9 @@ void WSThread( void *d )
 			memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize, response,  resplen );
 			memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING+jsonsize+resplen, end,  END_CHAR_SIGNS );
 			
-            if( fcd->fcd_ActiveSession != NULL )
+            if( fcd->fcd_WSClient != NULL )
             {
-                WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING , resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT, ses );
+                WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING , resplen+jsonsize+END_CHAR_SIGNS, LWS_WRITE_TEXT );
 			}
 			FFree( buf );
 		}
@@ -599,7 +641,7 @@ void WSThread( void *d )
 	
     if( fcd->fcd_ActiveSession != NULL )
     {
-        ses->us_NRConnections--;
+        ses->us_InUseCounter--;
     }
 	pthread_mutex_lock( &nothreadsmutex );
 	nothreads--;
@@ -649,7 +691,7 @@ void WSThreadPing( void *p )
 		{
 			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
 		
-			WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT, ses );
+			WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
 
 			FFree( buf );
 		}
@@ -723,63 +765,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		case LWS_CALLBACK_CLOSED:
 			FERROR("[WS] Callback session closed\n");
 			
-			if( SLIB->sl_USM != NULL )
-			{
-				pthread_mutex_lock( &(SLIB->sl_USM->usm_Mutex) );
-			}
-			
-			UserSession *us = (UserSession *)fcd->fcd_ActiveSession;
-			
-			User *u = NULL;
-			if( us == NULL )
-			{
-				FERROR("[WS] User session dissapeard\n");
-				nothreads--;
-				FFree( fcd->fcd_WSClient );
-				if( SLIB->sl_USM != NULL )
-				{
-					pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
-				}
-				return -1;
-			}
-			else
-			{
-				u = us->us_User;
-			}
-			
-			DEBUG("[WS] WSI %p FCD %p USER %p\n", wsi, fcd, u );
-			if( wsi == NULL || fcd == NULL || u == NULL )
-			{
-				nothreads--;
-				FFree( fcd->fcd_WSClient );
-				if( SLIB->sl_USM != NULL )
-				{
-					pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
-				}
-				return 0;
-			}
-			if( SLIB->sl_USM != NULL )
-			{
-				pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
-			}
-			
-#ifdef ENABLE_WEBSOCKETS_THREADS
-			while( TRUE )
-			{
-				if( fcd->fcd_ActiveSession != NULL && us->us_NRConnections <= 0 )
-				{
-					DEBUG("[WS] There are no more connections, we can remove session\n");
-					break;
-				}
-				else if( fcd->fcd_ActiveSession == NULL )
-                {
-                    DEBUG("[WS] Session was removed\n");
-                    break;
-                }
-				usleep( 10000 );
-			}
-#endif
-            DeleteWebSocketConnection( fcd->fcd_SystemBase, wsi, us );
+			WebsocketClient *cl = (WebsocketClient *)fcd->fcd_WSClient;
+            DeleteWebSocketConnection( fcd->fcd_SystemBase, wsi, cl );
+			//fcd->fcd_WSClient = NULL;
+			fcd->fcd_ActiveSession = NULL;
 		break;
 
 		//
@@ -884,7 +873,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 													if( ses != NULL )
 													{
-														WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT, ses );
+														WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
 													}
 													FFree( buf );
 												}
@@ -917,7 +906,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 														UserSession *ses = (UserSession *)fcd->fcd_ActiveSession;
 														if( ses != NULL )
 														{
-															WebsocketWriteInline( wsi, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT, ses );
+															WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
 														}
 														FFree( buf );
 													}
@@ -1590,7 +1579,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															
 															http->h_ShutdownPtr = &(SLIB->fcm->fcm_Shutdown);
 															
-															Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession );
+															int respcode = 0;
+															
+															Http *response = SLIB->SysWebRequest( SLIB, &(pathParts[ 1 ]), &http, fcd->fcd_ActiveSession, &respcode );
 														
 															gettimeofday(&stop, NULL);
 															double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
@@ -1891,6 +1882,7 @@ void WebSocketDelete( WebSocket* ws )
 	{
 		ws->ws_Quit = TRUE;
 		DEBUG("[WS] Websocket close in progress\n");
+		int tries = 0;
 		
 #ifdef ENABLE_WEBSOCKETS_THREADS
 		while( TRUE )
@@ -1900,7 +1892,14 @@ void WebSocketDelete( WebSocket* ws )
 				break;
 			}
 			DEBUG("[WS] Closeing WS. Threads: %d\n", nothreads );
-			usleep( 100000 );
+			sleep( 1 );
+			
+			tries++;
+			if( tries > 50 )
+			{
+				//WorkerManagerDebug( SLIB );
+				tries = 0;
+			}
 		}
 #endif
 		
@@ -2100,9 +2099,8 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	}
 	
 	DEBUG("[WS] AddWSCon session pointer %p\n", actUserSess );
-	pthread_mutex_lock( &actUserSess->us_WSMutex );
-	
-	WebsocketClient *listEntry = actUserSess->us_WSConnections;
+	pthread_mutex_lock( &(actUserSess->us_Mutex) );
+	WebsocketClient *listEntry = actUserSess->us_WSClients;
 	while( listEntry != NULL )
 	{
 		DEBUG("[WS] wsclientptr %p\n", listEntry );
@@ -2112,23 +2110,22 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		}
 		listEntry = (WebsocketClient *)listEntry->node.mln_Succ;
 	}
+	pthread_mutex_unlock( &(actUserSess->us_Mutex) );
 	
 	DEBUG("[WS] AddWSCon entry found %p\n", listEntry );
 	
 	if( listEntry != NULL )
 	{
 		INFO("[WS] User already have this websocket connection\n");
-		pthread_mutex_unlock( &actUserSess->us_WSMutex );
+		//pthread_mutex_unlock( &(actUserSess->us_Mutex) );
 		return 1;
 	}
 	
-	WebsocketClient *nwsc = FCalloc( 1, sizeof( WebsocketClient ) );
+	WebsocketClient *nwsc = WebsocketClientNew();
 	if( nwsc != NULL )
 	{
 		DEBUG("[WS] AddWSCon new connection created\n");
 		nwsc->wc_Wsi = wsi;
-		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSConnections;
-		actUserSess->us_WSConnections = nwsc;
 		
 		User *actUser = actUserSess->us_User;
 		if( actUser != NULL )
@@ -2146,14 +2143,18 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		data->fcd_WSClient  = nwsc;
 		data->fcd_SystemBase = l;
 		nwsc->wc_WebsocketsData = data;
+		
+		// everything is set, we are adding new connection to list
+		pthread_mutex_lock( &(actUserSess->us_Mutex) );
+		nwsc->node.mln_Succ = (MinNode *)actUserSess->us_WSClients;
+		actUserSess->us_WSClients = nwsc;
+		pthread_mutex_unlock( &(actUserSess->us_Mutex) );
 	}
 	else
 	{
 		Log( FLOG_ERROR,"Cannot allocate memory for WebsocketClient\n");
-		pthread_mutex_unlock( &actUserSess->us_WSMutex );
 		return 2;
 	}
-	pthread_mutex_unlock( &actUserSess->us_WSMutex );
 	return 0;
 }
 
@@ -2162,20 +2163,29 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
  *
  * @param l pointer to SystemBase
  * @param wsi pointer to libwebsockets
- * @param us pointer to UserSession
+ * @param wscl pointer to WebSocketClient
  * @return 0 if connection was deleted without problems otherwise error number
  */
 
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *locus )
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
 {
     SystemBase *l = (SystemBase *)locsb;
-    UserSession *us = (UserSession *)locus;
-    
-    if( us != NULL && us->us_User != NULL && us->us_WSConnections != NULL )
+	if( wscl == NULL )
 	{
-		User *u = us->us_User;
-		WebsocketClient *nwsc = us->us_WSConnections;
+		return 1;
+	}
+	WebsocketClient *locclient = (WebsocketClient *)wscl;
+    UserSession *us = (UserSession *)locclient->wc_UserSession;
+    
+	//
+	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
+	//
+    if( us != NULL )
+	{
+		WebsocketClient *nwsc = us->us_WSClients;
         WebsocketClient *owsc = nwsc;
+		
+		// we must remove first Websocket from UserSession list and then from app session
 		
 		if( nwsc != NULL )
 		{
@@ -2184,29 +2194,20 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *locus )
 			// remove first entry!
 			DEBUG("[WS] NWSCPOINTER %p POINTER %p\n" , nwsc->wc_Wsi, wsi );
 
-			if( nwsc->wc_Wsi == wsi )
+			//if( nwsc->wc_Wsi == wsi )
+			if( nwsc == wscl )
 			{
-				us->us_WSConnections = (WebsocketClient *)us->us_WSConnections->node.mln_Succ;
-				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSConnections );
-				
-				pthread_mutex_lock( &(us->us_WSMutex) );
-				
-				AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, owsc );
-				
-				owsc->wc_UserSession = NULL;
-				owsc->wc_Wsi = NULL;
-				FFree( owsc );
-				owsc = NULL;
-				DEBUG("[WS] WS connection removed\n");
-				pthread_mutex_unlock( &(us->us_WSMutex) );
+				pthread_mutex_lock( &(us->us_Mutex) );
+				us->us_WSClients = (WebsocketClient *)us->us_WSClients->node.mln_Succ;
+				pthread_mutex_unlock( &(us->us_Mutex) );
+				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
             }
 			
 			// remove entry from the list
 			else
 			{
 				DEBUG("[WS] Remove connection from list\n");
-				//pthread_mutex_unlock( &(SLIB->sl_SessionMutex) );
-				
+
 				while( nwsc != NULL )
 				{
 					DEBUG("[WS] WS Entry\n");
@@ -2215,33 +2216,128 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *locus )
 					
 					if( nwsc != NULL && nwsc->wc_Wsi == wsi )
 					{
+						pthread_mutex_lock( &(us->us_Mutex) );
 						owsc->node.mln_Succ = nwsc->node.mln_Succ;
-						
-						pthread_mutex_lock( &(us->us_WSMutex) );
-						AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, nwsc );
-						
-						DEBUG("[WS] connection will be removed\n");
-						nwsc->wc_UserSession = NULL;
-						nwsc->wc_Wsi = NULL;
-						FFree( nwsc );
-						nwsc = NULL;
-						
-						//fcd->fcd_ActiveSession = NULL;
-						//fcd->fcd_SystemBase = NULL;
-						//fcd->fcd_WSClient = NULL;
-						pthread_mutex_unlock( &(us->us_WSMutex) );
+						pthread_mutex_unlock( &(us->us_Mutex) );
 						break;
 					}
 				}
 			}
-            //pthread_mutex_lock( &(SLIB->sl_SessionMutex) );
+			
+			if( nwsc != NULL )
+			{
+				while( TRUE )
+				{
+					DEBUG("Check in use %d\n", nwsc->wc_InUseCounter );
+					if( nwsc->wc_InUseCounter <= 0 )
+					{
+						break;
+					}
+					sleep( 1 );
+				}
+				nwsc->wc_Wsi = NULL;
+				
+				AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, locclient );
+				
+				DEBUG("[WS] connection will be removed\n");
+			}
 		}
 	}
 	else
 	{
-		FERROR("Cannot remove connection: Pointer to user is NULL\n");
-        return -1;
+		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
 	}
+	WebsocketClientDelete( locclient );
+
     return 0;
 }
 
+/*
+ // original
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
+{
+    SystemBase *l = (SystemBase *)locsb;
+	if( wscl == NULL )
+	{
+		return 1;
+	}
+	WebsocketClient *locclient = (WebsocketClient *)wscl;
+    UserSession *us = (UserSession *)locclient->wc_UserSession;
+    
+	//
+	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
+	//
+    if( us != NULL )
+	{
+		WebsocketClient *nwsc = us->us_WSClients;
+        WebsocketClient *owsc = nwsc;
+		
+		// we must remove first Websocket from UserSession list and then from app session
+		
+		if( nwsc != NULL )
+		{
+			DEBUG("[WS]: Getting connections %p for user %s\n", nwsc, us->us_SessionID );
+			
+			// remove first entry!
+			DEBUG("[WS] NWSCPOINTER %p POINTER %p\n" , nwsc->wc_Wsi, wsi );
+
+			//if( nwsc->wc_Wsi == wsi )
+			if( nwsc == wscl )
+			{
+				pthread_mutex_lock( &(us->us_Mutex) );
+				us->us_WSClients = (WebsocketClient *)us->us_WSClients->node.mln_Succ;
+				pthread_mutex_unlock( &(us->us_Mutex) );
+				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
+            }
+			
+			// remove entry from the list
+			else
+			{
+				DEBUG("[WS] Remove connection from list\n");
+
+				while( nwsc != NULL )
+				{
+					DEBUG("[WS] WS Entry\n");
+					owsc = nwsc;
+					nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
+					
+					if( nwsc != NULL && nwsc->wc_Wsi == wsi )
+					{
+						pthread_mutex_lock( &(us->us_Mutex) );
+						owsc->node.mln_Succ = nwsc->node.mln_Succ;
+						pthread_mutex_unlock( &(us->us_Mutex) );
+						break;
+					}
+				}
+			}
+			
+			if( nwsc != NULL )
+			{
+				while( TRUE )
+				{
+					if( nwsc->wc_InUseCounter <= 0 )
+					{
+						break;
+					}
+					sleep( 1 );
+				}
+				nwsc->wc_Wsi = NULL;
+				
+				AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, locclient );
+				
+				DEBUG("[WS] connection will be removed\n");
+				//WebsocketClientDelete( locclient );
+			}
+            //pthread_mutex_lock( &(SLIB->sl_SessionMutex) );
+		}
+		locclient->wc_UserSession = NULL;
+	}
+	else
+	{
+		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
+        return -1;
+	}
+
+    return 0;
+}
+*/

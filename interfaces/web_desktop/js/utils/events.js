@@ -160,9 +160,6 @@ EventEmitter.prototype.emit = function()
 	
 	function emitOnDefault( type, args )
 	{
-		console.log( 'emitOnDefault', {
-			type : type,
-			args : args, });
 		args.unshift( type );
 		self._eventSink.apply( null, args );
 	}

@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #ifndef __SUPPORT_SUPPORT_MANAGER_H__
 #define __SUPPORT_SUPPORT_MANAGER_H__
 

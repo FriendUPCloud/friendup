@@ -1,4 +1,4 @@
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -16,7 +16,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 /*
  * 
@@ -74,7 +73,6 @@ int main()
 		
 		struct UserT *ut, *su;
 		
-		//DEBUG("Test pointers %p  %p  %p\n", &(ut->id), &(ut->name), &(ut->pass) );
 		int size = 0;
 		if( ( ut = sqllib->Load( sqllib, UserTDesc, "name = 'wweew'", &size ) ) != NULL )
 		{
@@ -85,10 +83,8 @@ int main()
 				INFO("MYSQLTEST database contain info id %d  name %s surname %s\n", ut->id, ut->name, ut->surname );
 				ut = ut->node.mln_Succ;
 			}
-			DEBUG("Before set name 1\n");
-			
+
 			free( su->name );
-			DEBUG("Before set name\n");
 			su->name = "hello";
 			
 			su->ts.tm_mon = 1;

@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /*
 
 	SystemBase code
@@ -91,7 +90,7 @@ extern int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int 
  * @return pointer to memory where arguments are stored
  */
 
-extern inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
 	// Send both get and post
 	int size = 0;
@@ -182,7 +181,7 @@ extern inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 		FFree( allArgs );
 	}
 	
-	FERROR("\n\n--->allArgsNew %s  \n\n", allArgsNew );
+	//DEBUG("\n\n--->allArgsNew %s  \n\n", allArgsNew );
 	
 	return allArgsNew;
 }
@@ -198,16 +197,15 @@ extern inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
  * @return http response
  */
 
-Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession  )
+Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result )
 {
-	int result = 0;
+	*result = 0;
+	//int result = 0;
 	Http *response = NULL;
 	//UserSession *loggedSession = NULL;
 	//User *loggedUser = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
-	
-	FERROR(">>>>>>>>>>>>>>%s %s\n", urlpath[ 0 ], urlpath[ 1 ] );
 	
 	Log( FLOG_INFO, \
 "--------------------------------------------------------------------------------\n \
@@ -536,7 +534,7 @@ Webreq func: %s\n \
 				
 					
 					
-					FERROR("Logged time updated: %lu\n", timestamp );
+					INFO("Logged time updated: %lu\n", timestamp );
 				
 					FFree( tmpQuery );
 				}
@@ -610,7 +608,7 @@ Webreq func: %s\n \
 				"\twrite - write files to file\n"
 				"\"}" );
 		
-		result = 200;
+		*result = 200;
 	
 	}
 	
@@ -1101,7 +1099,7 @@ Webreq func: %s\n \
 		
 			HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"no post pararmeters received.\"}");
 		}
-		result = 200;
+		*result = 200;
 	}
 	
 	//
@@ -1115,7 +1113,7 @@ Webreq func: %s\n \
 	else if( strcmp(  urlpath[ 0 ], "user" ) == 0 )
 	{
 		DEBUG("User\n");
-		response = UMWebRequest( l, urlpath, (*request), loggedSession, &result );
+		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
 	}
 	
 	//
@@ -1436,12 +1434,12 @@ Webreq func: %s\n \
 			if( length ){ FFree( length ); length = NULL; }
 			if( code ){ FFree( code ); code = NULL; }
 
-			result = 200;
+			*result = 200;
 		}
 		else
 		{
 			FERROR("[System.library] ERROR returned data is NULL\n");
-			result = 404;
+			*result = 404;
 		}
 	}
 	
@@ -1452,7 +1450,7 @@ Webreq func: %s\n \
 	else if( strcmp( urlpath[ 0 ], "device" ) == 0 )
 	{
 		DEBUG("Device call\n");
-		response = DeviceMWebRequest( l, urlpath, *request, loggedSession, &result );
+		response = DeviceMWebRequest( l, urlpath, *request, loggedSession, result );
 	}
 
 	//=================================================
@@ -1464,7 +1462,7 @@ Webreq func: %s\n \
 	else if( strcmp( urlpath[ 0 ], "file" ) == 0 )
 	{
 #ifdef ENABLE_WEBSOCKETS_THREADS
-		response = FSMWebRequest( l, urlpath, *request, loggedSession, &result );
+		response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
 #else
 		DEBUG("Systembase pointer %p\n", l );
 		if( detachTask == TRUE )
@@ -1485,7 +1483,7 @@ Webreq func: %s\n \
 		}
 		else
 		{
-			response = FSMWebRequest( l, urlpath, *request, loggedSession, &result );
+			response = FSMWebRequest( l, urlpath, *request, loggedSession, result );
 		}
 #endif
 	}
@@ -1503,7 +1501,7 @@ Webreq func: %s\n \
 	
 	else if( strcmp( urlpath[ 0 ], "ufile" ) == 0 )
 	{
-		response = FSMRemoteWebRequest( l, urlpath, *request, loggedSession, &result );
+		response = FSMRemoteWebRequest( l, urlpath, *request, loggedSession, result );
 	}
 	
 	//
@@ -1512,7 +1510,7 @@ Webreq func: %s\n \
 	
 	else if( strcmp( urlpath[ 0 ], "admin" ) == 0 )
 	{
-		response =  AdminWebRequest( l, urlpath, request, loggedSession, &result );
+		response =  AdminWebRequest( l, urlpath, request, loggedSession, result );
 		
 	}
 
@@ -1672,7 +1670,7 @@ Webreq func: %s\n \
 	}*/
 	
 	// Ok, we will handle this one!
-	if( result == 404 )
+	if( (*result) == 404 )
 	{
 		DEBUG( "Closing socket with Http404!!" );
 		struct TagItem tags[] = {
@@ -1703,11 +1701,13 @@ Webreq func: %s\n \
 			{TAG_DONE, TAG_DONE}
 		};	
 		
+		/*
 		if( response != NULL )
 		{
 			HttpFree( response );
 			FERROR("Do RESPONSE no response\n");
 		}
+		*/
 		response = HttpNewSimple( HTTP_200_OK, tags );
 	}
 	

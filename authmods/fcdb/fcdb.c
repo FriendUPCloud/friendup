@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /*
 
 	FCDB auth module code
@@ -153,7 +152,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 	
 	SystemBase *sb = (SystemBase *)l->sb;
 	{
-		time_t tm;
+		time_t tm = 0;
 		time_t tm_now = time( NULL );
 		FBOOL access = sb->sl_UserManagerInterface.UMGetLoginPossibilityLastLogins( sb->sl_UM, usr->u_Name, l->am_BlockAccountAttempts, &tm );
 		

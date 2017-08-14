@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /*
 
 	PHP auth module code
@@ -378,86 +377,4 @@ int AssignGroupToUser( struct AuthMod *l, User *usr )
 int AssignApplicationsToUser( struct AuthMod *l, User *usr )
 {
 	return 0;
-}
-
-//
-// network handler
-//
-
-Http* WebRequest( struct AuthMod *l, char **urlpath, Http* request )
-{
-	Http* response = NULL;
-/*	
-	if( strcmp( urlpath[ 0 ], "Authenticate" ) == 0 )
-	{
-		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple( HTTP_200_OK,  tags );
-
-						//request->query;
-						//
-						// PARAMETERS SHOULD BE TAKEN FROM
-						// POST NOT GET
-						
-		if( request->parsedPostContent != NULL )
-		{
-			char *usr = NULL;
-			char *pass = NULL;
-			char *devname = NULL;
-							
-			HashmapElement *el =  HashmapGet( request->parsedPostContent, "username" );
-			if( el != NULL )
-			{
-				usr = (char *)el->data;
-			}
-							
-			el =  HashmapGet( request->parsedPostContent, "password" );
-			if( el != NULL )
-			{
-				pass = (char *)el->data;
-			}
-			
-			el =  HashmapGet( request->parsedPostContent, "devname" );
-			if( el != NULL )
-			{
-				devname = (char *)el->data;
-			}
-							
-			if( usr != NULL && pass != NULL )
-			{
-				User *loggedUser = l->Authenticate( l, request, NULL, usr, pass, devname, NULL );
-				if( loggedUser != NULL )
-				{
-					char tmp[ 20 ];
-					sprintf( tmp, "LERR: %d\n", loggedUser->u_Error );	// check user.library to display errors
-					HttpAddTextContent( response, tmp );
-				}
-				else
-				{
-					HttpAddTextContent( response, "LERR: -1" );			// out of memory/user not found
-				}
-			}
-		}
-		DEBUG("user login response\n");
-
-		//HttpWriteAndFree( response );
-	}
-	else
-	{
-		struct TagItem tags[] = {
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
-		};
-		
-		response = HttpNewSimple(  HTTP_404_NOT_FOUND,  tags );
-	
-		//HttpWriteAndFree( response );
-		return response;
-	}
-	*/
-	return response;
 }

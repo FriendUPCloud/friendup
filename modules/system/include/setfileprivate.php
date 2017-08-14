@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -17,7 +17,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 // TODO: Add more security and checks!
 $SqlDatabase->query( 'DELETE FROM FFileShared WHERE `Path`=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) . '\' AND `UserID`=\'' . $User->ID . '\' AND `DstUserSID`="Public"' );

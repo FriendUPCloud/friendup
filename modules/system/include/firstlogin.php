@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -17,7 +17,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 // 0. Check if mountlist is installed and user have access!
 if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name = "Mountlist" AND UserID=\'' . $User->ID . '\'' ) ) )
@@ -102,6 +101,7 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 	$dockItems = array(
 		array( 'Dock', 'A simple dock desklet' ),
 		array( 'FriendShell', 'A command line interface' ),
+		array( 'FriendChat', 'A chat client' ),
 		array( 'FriendCreate', 'A programmers editor' ),
 		array( 'Author', 'A word processor' ),
 		array( 'Wallpaper', 'Select a wallpaper' ),

@@ -85,10 +85,16 @@ int HashmapAdd( Hashmap *src, Hashmap *hm );
 
 FBOOL HashmapRemove( Hashmap* in, char* key );
 
+//
 // Free the hashmap
+//
+
 void HashmapFree( Hashmap* in );
 
+//
 // Get the current size of a hashmap
+//
+
 int HashmapLength( Hashmap* in );
 
 #endif

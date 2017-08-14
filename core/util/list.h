@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 // code by Hogne Titlestad
 // email: hogga@sub-ether.org
 

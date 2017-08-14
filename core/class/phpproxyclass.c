@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  *
  *  Core PHP class handling
@@ -305,7 +304,6 @@ FULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
  * @param o pointer to object
  * @param msg pointer to message structure
  * @return return value provided by message handlers
- * @todo FL>PS this function is not used anywhere
  */
 FULONG phpproxyDispatcher( struct Class *c, Object *o, struct Msg *m )
 {

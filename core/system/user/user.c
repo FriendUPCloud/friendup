@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  *
  *  User
@@ -143,6 +142,9 @@ void UserRemoveSession( User *usr, void *ls )
 		FERROR("Cannot remove user session, its not connected to user\n");
 		return;
 	}
+	
+	pthread_mutex_lock( &(usr->u_Mutex) );
+	
 	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
 	UserSessListEntry *prev = us;
 	FBOOL removed = FALSE;
@@ -184,15 +186,14 @@ void UserRemoveSession( User *usr, void *ls )
 		
 		if( us != NULL )
 		{
-			pthread_mutex_lock( &(usr->u_Mutex) );
 			if( usr->u_SessionsNr <= 0 )
 			{
 				usr->u_SessionsList = NULL;
 			}
-			pthread_mutex_unlock( &(usr->u_Mutex) );
 			FFree( us );
 		}
 	}
+	pthread_mutex_unlock( &(usr->u_Mutex) );
 }
 
 /**

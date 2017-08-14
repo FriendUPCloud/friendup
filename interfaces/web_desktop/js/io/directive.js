@@ -235,7 +235,7 @@ function ExecuteApplication( app, args, callback )
 				if( level )
 				{
 					var out = [];
-					for( var a = 0; a < Doors.applications.length; a++ )
+					for( var a = 0; a < Workspace.applications.length; a++ )
 					{
 						if( Doors.applications[a] != this )
 							out.push( Doors.applications[a] );
@@ -528,20 +528,24 @@ function ActivateApplication( app, conf )
 				}
 			}
 			
-			var eles = w.getWindowElement().getElementsByTagName( 'button' );
-			var abtn = false;
-			for( var a = 0; a < eles.length; a++ )
+			var wel = w.getWindowElement();
+			if( wel )
 			{
-				if( eles[a].classList.contains( 'activation' ) )
+				var eles = wel.getElementsByTagName( 'button' );
+				var abtn = false;
+				for( var a = 0; a < eles.length; a++ )
 				{
-					abtn = eles[a];
+					if( eles[a].classList.contains( 'activation' ) )
+					{
+						abtn = eles[a];
+					}
 				}
-			}
-			if( abtn )
-			{
-				abtn.onclick = function()
+				if( abtn )
 				{
-					ExecuteApplicationActivation( app, w, conf.Permissions );
+					abtn.onclick = function()
+					{
+						ExecuteApplicationActivation( app, w, conf.Permissions );
+					}
 				}
 			}
 			if( hideView )
@@ -641,11 +645,22 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 			{
 				win.close();
 				
-				// Refresh mountlist (async)
-				Workspace.refreshDesktop( function()
+				// Disk activation
+				if( app.indexOf( ':' ) > 0 )
+				{
+					var s = new Library( 'system.library' );
+					s.onExecuted = function()
+					{
+						// Refresh mountlist (async)
+						ExecuteApplication( app );
+					}
+					s.execute( 'device/refresh', { devname: app.split( ':' )[0] + ':' } );
+				}
+				// Normal activation
+				else
 				{
 					ExecuteApplication( app );
-				} );
+				}
 			}
 			else
 			{

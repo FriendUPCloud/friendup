@@ -117,7 +117,7 @@ install:
 	cp docs/GDBFriendCore.sh $(FRIEND_PATH)/
 	cp docs/ValgrindFriendCore.sh $(FRIEND_PATH)/
 	cp docs/GDBTrace.sh $(FRIEND_PATH)/
-	cp docs/KillFriend.sh $(FRIEND_PATH)/
+	cp killfriend.sh $(FRIEND_PATH)/
 	#rsync -ravl core/bin/* $(FRIEND_PATH)/
 
 sync:

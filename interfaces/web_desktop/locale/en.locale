@@ -374,6 +374,7 @@ i18n_blocked_in_browser                 : Blocked
 i18n_testing_camera                     : Web camera test
 i18n_testing_camera_desc                : Testing if the web camera is connected and available.
 
+i18n_active_fnet_connections            : Friend Network
 i18n_active_network_connections         : Active connections
 
 #Locale ------------------------------------------------------------------------

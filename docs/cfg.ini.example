@@ -9,15 +9,16 @@ dbname=FriendMaster
 fchost = localhost
 port = 6502
 fcupload = storage/
-fconlocalhost = 1
 
 [Core]
 SSLEnable=1
-WSSSLEnable=1
-wsport=6500
-DeveloperMode=1
+port=6502
 
-[Cores]
-servers=localhost@local,secondlocal@friendlocal
+[FriendNetwork]
+enabled = 0
+
+[FriendChat]
+enabled = 0
+
 
 

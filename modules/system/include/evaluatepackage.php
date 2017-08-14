@@ -1,6 +1,6 @@
 <?php
 
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -18,7 +18,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 global $Logger, $User;
 
@@ -49,7 +48,7 @@ if( isset( $args->args->pckg ) )
 			while( $f = readdir( $hdir ) )
 			{
 				// Skip signature
-				if( $d == 0 && $f == 'Signature.sig' )
+				if( $d == 0 && ( $f == 'Signature.sig' || $f == 'package.zip' ) )
 				{
 					continue;
 				}

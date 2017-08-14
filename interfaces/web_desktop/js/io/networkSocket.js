@@ -72,7 +72,7 @@ NetworkConn = function(
 	
 	self.conn = null;
 	self.requestTimeouts = {};
-	self.requestTimeout = 1000 * 10;
+	self.requestTimeout = 10 * 1000;
 	
 	self.init( hostMeta );
 }
@@ -375,7 +375,6 @@ NetworkConn.prototype.init = function( hostMeta )
 	
 	function onEvent( event )
 	{
-		console.log( 'conn onEvent', event );
 		self.handle( event.type, event.data );
 	}
 	
@@ -389,10 +388,12 @@ NetworkConn.prototype.init = function( hostMeta )
 
 NetworkConn.prototype.handle = function( source, event ) {
 	var self = this;
+	/*
 	console.log( 'handle', {
 		source : source,
 		event  : event,
 	});
+	*/
 	self.emit( event.type, event.data, source );
 }
 
@@ -465,9 +466,9 @@ NetworkSocket = function(
 	self.pingStep = 1000 * 15; // time between pings
 	self.pingTimeouts = {}; // references to timeouts for sent pings
 	self.pingMaxTime = 1000 * 10; // timeout
-	self.reconnectDelay = 1000; // base delay - delay increases for each attempt
+	self.reconnectDelay = 250; // base delay - delay increases for each attempt
 	self.reconnectMaxDelay = 1000 * 30;
-	self.reconnectAttempt = 1; // delay is multiplied with attempts
+	self.reconnectAttempt = 0; // delay is multiplied with attempts
 	                           //to find how long the next delay is
 	self.reconnectMaxAttempts = 20; // 0 to keep hammering
 	self.reconnectScale = {
@@ -609,6 +610,7 @@ NetworkSocket.prototype.clearHandlers = function()
 NetworkSocket.prototype.doReconnect = function()
 {
 	var self = this;
+	console.log( 'doReconnect', self );
 	if ( self.ws )
 		self.cleanup();
 	
@@ -621,17 +623,19 @@ NetworkSocket.prototype.doReconnect = function()
 	if ( self.reconnectTimer )
 		return true;
 	
+	self.reconnectAttempt++;
 	var delay = calcDelay();
 	var showIsReconnectingLimit = 1000 * 5; // 5 seconds
 	if ( delay > showIsReconnectingLimit )
 		self.setState( 'reconnect', delay );
 	
+	console.log( 'doReconnect - delay', delay );
 	self.reconnectTimer = window.setTimeout( reconnect, delay );
 	
 	function reconnect()
 	{
+		console.log( 'reconnect' );
 		self.reconnectTimer = null;
-		self.reconnectAttempt += 1;
 		self.connect();
 	}
 	
@@ -671,12 +675,19 @@ NetworkSocket.prototype.doReconnect = function()
 	function calcDelay()
 	{
 		var delay = self.reconnectDelay;
+		console.log( 'delay', delay );
 		var multiplier = calcMultiplier();
+		console.log( 'multiplier', multiplier );
 		var tries = self.reconnectAttempt;
-		var delay = multiplier * tries;
+		console.log( 'tries', tries );
+		delay = multiplier * tries;
+		console.log( 'actual delay', delay );
 		if ( delay > self.reconnectMaxDelay )
 			delay = self.reconnectMaxDelay;
-		return delay;
+		
+		var delayMs = delay * 1000;
+		console.log( 'ret delay', delayMs );
+		return delayMs;
 	}
 	
 	function calcMultiplier()
@@ -736,6 +747,7 @@ NetworkSocket.prototype.handleOpen = function( e )
 NetworkSocket.prototype.handleClose = function( e )
 {
 	var self = this;
+	console.log( 'handleClose', e );
 	self.cleanup();
 	self.setState( 'close' );
 	self.doReconnect();

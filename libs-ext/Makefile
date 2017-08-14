@@ -10,22 +10,20 @@ ALL:
 install:
 ifeq ($(CYGWIN_BUILD),1)
 	for dir in $(LIB_DIR); do \
-		make -C $$dir install; \
+		make -C $$dir install FRIEND_PATH=$(FRIEND_PATH); \
 	done
 	
-	cp libwebsockets/bin/cygwebsockets-8.dll ../build/
 else
-	cp libwebsockets/lib/libwebsockets.so* ../build/
 	sudo cp libwebsockets/lib/libwebsockets.so* /usr/lib/
 	for dir in $(LIB_DIR); do \
-		sudo make -C $$dir install; \
+		sudo make -C $$dir install FRIEND_PATH=$(FRIEND_PATH); \
 	done
 endif
 
 setup:
 	cd libwebsockets/ ;cmake . ;cd ../
 	#for dir in $(LIB_DIR); do \
-	#	make -C $$dir setup; \
+	#	make -C $$dir setup  FRIEND_PATH=$(FRIEND_PATH); \
 	#done
 
 clean:

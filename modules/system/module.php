@@ -1,6 +1,6 @@
 <?php
 
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -19,16 +19,14 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 // Intermediary module to abstract some system stuff!
-
 
 include_once( 'php/friend.php' );
 include_once( 'php/classes/file.php' );
 
 if( !isset( $User ) || ( $User && ( !isset( $User->ID ) || !$User->ID ) ) || !is_object( $User ) )
 {
-	die( 'fail<!--separate-->{"response":"user did not authenticate."}' );
+	die( 'fail<!--separate-->{"response":"user did not authenticate. system module. Argv[1]: ' . $argv[1] . '"}' );
 }
 
 // We might come here by mistage (direct calling of file by phpfs)
@@ -335,6 +333,10 @@ if( isset( $args->command ) )
 			die( 'totalfail<!--separate-->' . $r . '<!--separate-->' . $args->args->url );
 			break;
 		// Gives a proxy connection
+		case 'checkfriendnetwork':
+			die( 'ok<!--separate-->' . ( isset( $Config->friendnetwork ) ? $Config->friendnetwork  : '0' ) );
+			break;
+		
 		case 'proxyget':
 			if( function_exists( 'curl_init' ) )
 			{
@@ -1736,6 +1738,9 @@ if( isset( $args->command ) )
 			break;
 		case 'listuserapplications':
 			require( 'modules/system/include/listuserapplications.php' );
+			break;
+		case 'getapplicationpreview':
+			require( 'modules/system/include/getapplicationpreview.php' );
 			break;
 		case 'getmimetypes':
 			require( 'modules/system/include/getmimetypes.php' );

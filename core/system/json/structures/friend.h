@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  Internal Friend structures definitions

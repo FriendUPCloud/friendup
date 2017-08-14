@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  *
  *  Core MAIN class handling
@@ -34,14 +33,6 @@
 #include <string.h>
 #include <core/types.h>
 #include <class/rootclass.h>
-
-#ifndef DOXYGEN
-// TODO FL>PS Remove this?
-struct Data
-{
-	FULONG test;
-};
-#endif
 
 /**
  * Creates a new MAIN class object

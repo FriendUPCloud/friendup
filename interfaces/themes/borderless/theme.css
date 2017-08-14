@@ -91,6 +91,32 @@
 	$ColorBgStGrayLight:     #BFBFBF;
 	$ColorStGrayLight:       #000000;
 	
+	/* Context colors */
+	$ColorAccept:              #000000;
+	$ColorAcceptBg:            #92b376;
+	$ColorAcceptButton:        #e0e0e0;
+	$ColorAcceptButtonBg:      #519039;
+	$ColorAcceptButtonHover:   #ffffff;
+	$ColorAcceptButtonHoverBg: #97d137;
+	$ColorDanger:              #000000;
+	$ColorDangerBg:            #b37676;
+	$ColorDangerButton:        #e0e0e0;
+	$ColorDangerButtonBg:      #983b25;
+	$ColorDangerButtonHover:   #ffffff;
+	$ColorDangerButtonHoverBg: #ef653b;
+	$ColorAvailable:           #000000;
+	$ColorAvailableBg:         #94c6e0;
+	$ColorAction:              #000000;
+	$ColorActionBg:            purple;
+	$ColorWarning:             #000000;
+	$ColorWarningBg:           #e6e660;
+	$ColorNotify:              #000000;
+	$ColorNotifyBg:            orange;
+	
+	$ColorIconBlinkStart:      black;
+	$ColorIconBlinkEnd:        grey;
+	
+	
 	/* Font sizes */
 	$FontSizeButton:         14px;
 	$FontSizeDefault:        14px;
@@ -537,6 +563,7 @@ button:hover, .Button:hover
 .View.Active
 {
 	border-bottom: 1px solid #2F6699;
+	height: 100% !important; /* --- Probably just a hack for borderless theme to cover the whole iframe --- */
 }
 
 html .View > .Title

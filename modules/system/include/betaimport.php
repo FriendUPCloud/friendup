@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -17,7 +17,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 // small script to list our beta users---
 // hardcoded fetch URL
@@ -87,11 +86,11 @@ if($args->command == 'userbetamail')
 	$mail->addAddress( $args->args->Email );
 	if( $mail->send() )
 	{
-		die('ok<!--separate-->Mail to user has been send');
+		die('ok<!--separate-->Mail to user '. $args->args->Email .' has been send');
 	}
 	else
 	{
-		die('ok<!--separate-->ERROR ### NO MAIL TO USER HAS BEEN SEND ###');
+		die('ok<!--separate-->ERROR ### NO MAIL TO USER '. $args->args->Email .' HAS BEEN SEND ###');
 	}
 }
 else if( $args->command == 'listbetausers' )

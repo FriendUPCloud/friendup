@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  User Session
@@ -69,8 +68,8 @@ typedef struct UserSession
 	MinNode                node;
 	
 	FULONG                 us_ID;
-	WebsocketClient        *us_WSConnections;
-	pthread_mutex_t        us_WSMutex;
+	WebsocketClient        *us_WSClients;
+	pthread_mutex_t        us_Mutex;
 	
 	FULONG                 us_UserID;					//
 	char                   *us_DeviceIdentity;	// device identity
@@ -85,7 +84,7 @@ typedef struct UserSession
 	void                   *us_SB;   // pointer to systembase
 	
 	char                   us_UserActionInfo[ 512 ];
-	FLONG                  us_NRConnections;
+	int                    us_InUseCounter;
 	
 }UserSession;
 

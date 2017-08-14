@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  Websocket structure
@@ -117,7 +116,7 @@ int WebSocketStart( WebSocket *ws );
 //
 //
 
-int WebsocketWrite( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses );
+int WebsocketWrite( void *cl, unsigned char *msgptr, int msglen, int type );
 
 //
 //
@@ -129,7 +128,7 @@ int AddWebSocketConnection( void *l, struct lws *wsi, const char *sessionid, con
 //
 //
 
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *us );
+int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wcl );
 
 #endif // __NETWORK_WEBSOCKET_H__
 

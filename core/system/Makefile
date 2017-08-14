@@ -1,12 +1,15 @@
 GCC		=	gcc
 OUTPUT	=	bin/libfcsystem.a
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/ -Wno-unused-variable -Wno-unused-parameter `pkg-config --cflags --libs MagickWand`
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/ -Wno-unused-variable -Wno-unused-parameter
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ 
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
 MODS	=	phpmod sysmod nodejsmod pythonmod javamod
-FSYS		=	fsyslocal fsysssh2 fsysphp fsysinram fsysremote
+FSYS	=	fsyslocal fsysssh2 fsysphp fsysinram fsysremote
 LOGGERS	=	sql.ulogger file.ulogger
+SERVICES=	apacheserv mysqlserv nodejsserv phpserv
+SERVICEFLAGS =  --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
+MATHLIB	=
 
 ifeq ($(DEBUG),1)
 CFLAGS	+=	-D__DEBUG
@@ -96,13 +99,40 @@ sql.ulogger: log/loggers/user_logger_sql.c ../../core/obj/buffered_string.o log/
 file.ulogger: log/loggers/user_logger_file.c ../../core/obj/buffered_string.o log/loggers/user_logger_file.d
 	@echo "\033[34mCompile SQL logger ...\033[0m"
 	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  log/loggers/user_logger_file.c ../../core/obj/buffered_string.o ../../core/obj/library.o ../../core/obj/log.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o ../../core/obj/comm_msg.o ../../core/obj/jsmn.o -o bin/loggers/file.ulogger -shared -fPIC -lcrypto
+
+#
+#	SERVICES
+#
 	
+apacheserv: servicesdyn/service_apache.c servicesdyn/service_apache.d
+	@echo "\033[34mCompile apache.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_apache.c -o bin/services/apache.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets -lpthread
+
+mysqlserv: servicesdyn/service_mysql.c servicesdyn/service_mysql.d
+	@echo "\033[34mCompile mysql.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_mysql.c -o bin/services/mysql.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	
+nodejsserv: servicesdyn/service_nodejs.c servicesdyn/service_nodejs.d
+	@echo "\033[34mCompile nodejs.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_nodejs.c -o bin/services/nodejs.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+
+mathserv: servicesdyn/service_math.c servicesdyn/service_math.d
+	@echo "\033[34mCompile math.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_math.c -o bin/services/math.serv $(MATHLIB)  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+
+helloserv: servicesdyn/service_hello.c servicesdyn/service_hello.d
+	@echo "\033[34mCompile math.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_hello.c -o bin/services/hello.serv $(MATHLIB) ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	
+phpserv: servicesdyn/service_php.c servicesdyn/service_php.d
+	@echo "\033[34mCompile math.serv ...\033[0m"
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_php.c -o bin/services/php.serv  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o ../../core/obj/buffered_string.o -lwebsockets	
 
 #build system
 
-compile: $(TARGET) $(MODS) $(FSYS)
+compile: $(OBJ_FILES) $(OUTPUT) $(FSYS) $(MODS) $(LOGGERS) $(SERVICES)
 
-release: $(TARGET) $(MODS) $(FSYS)
+release: $(OBJ_FILES) $(OUTPUT) $(FSYS) $(MODS) $(LOGGERS) $(SERVICES)
 	
 clean:
 	@echo "\033[34mCleaning\033[0m"
@@ -111,16 +141,18 @@ clean:
 	@rm -rf bin/emod/*
 	@rm -rf bin/fsys/*
 	@rm -rf bin/loggers/*
+	@rm -rf bin/services/*
 
 install: setup
 	@echo "\033[34mInstalling files\033[0m"
 	cp -R bin/emod  $(FRIEND_PATH)/
 	cp -R bin/fsys $(FRIEND_PATH)/
 	cp -R bin/loggers $(FRIEND_PATH)/
+	cp -R bin/services $(FRIEND_PATH)/
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
-	mkdir -p obj bin bin/emod bin/fsys bin/loggers
+	mkdir -p obj bin bin/emod bin/fsys bin/loggers bin/services
 
 test: ../../core/obj/buffered_string.o
 	$(GCC) $(CFLAGS) testlibrary.c ../../core/obj/library.o ../../core/obj/buffered_string.o -obin/TestLibrary -ldl -D__DEBUG -L/usr/lib/x86_64-linux-gnu/ -lmysqld
@@ -134,4 +166,3 @@ test: ../../core/obj/buffered_string.o
 	rm -f $@.$$$$
 
 -include $(C_FILES:%.c=%.d) moduledyn/phpmod.d moduledyn/sysmod.d moduledyn/nodejsmod.d fsys/fsyslocal.d fsys/fsysssh2.d fsys/fsysphp.d log/loggers/user_logger_sql.d
-

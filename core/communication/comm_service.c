@@ -19,8 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-
 /** @file
  * 
  *  CommunicationService body
@@ -68,7 +66,7 @@
 pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
-extern inline void CommServiceSetupOutgoing( CommService *service );
+inline void CommServiceSetupOutgoing( CommService *service );
 
 /**
  * Create CommunicationService
@@ -320,7 +318,7 @@ void ParseCallThread( void *tdata )
  * @param service pointer to CommunicationService
  */
 
-extern inline void CommServiceSetupOutgoing( CommService *service )
+inline void CommServiceSetupOutgoing( CommService *service )
 {
 	//                                           *
 	// atm we only read FC connections

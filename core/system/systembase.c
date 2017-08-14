@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file systembase.c
  * 
  *  Systembase functionality
@@ -84,7 +83,7 @@ void DOSDriverDelete( DOSDriver *ddrive );
 
 void SystemClose( struct SystemBase *l );
 
-Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession );
+Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result );
 
 FBOOL skipDBUpdate = FALSE;
 
@@ -2143,26 +2142,23 @@ int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, in
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( unsigned char ) );
 		if( buf != NULL )
 		{
+			usersession->us_InUseCounter++;
 			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, msg,  len );
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 
-			WebsocketClient *wsc = usersession->us_WSConnections;
+			WebsocketClient *wsc = usersession->us_WSClients;
 			while( wsc != NULL )
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wc_Wsi );
-				if( wsc->wc_Wsi != NULL )
-				{
-					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
-				}
-				else
-				{
-					DEBUG("[SystemBase] User session do not have WS connection\n");
-				}
+
+				bytes += WebsocketWrite( wsc , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
 		
 			FFree( buf );
+			usersession->us_InUseCounter--;
 		}
 		else
 		{
@@ -2193,23 +2189,21 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128+24, sizeof( unsigned char ) );
 		if( buf != NULL )
 		{
+			usersession->us_InUseCounter++;
 			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, msg,  len );
 
-			WebsocketClient *wsc = usersession->us_WSConnections;
+			WebsocketClient *wsc = usersession->us_WSClients;
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
 			while( wsc != NULL )
 			{
-				DEBUG("[SystemBase] send message to user session %p, pointer to websocket connection %p\n", usersession, wsc->wc_Wsi );
-				if( wsc->wc_Wsi != NULL )
-				{
-					bytes += WebsocketWrite( wsc->wc_Wsi , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT, usersession );
-				}
+				bytes += WebsocketWrite( wsc , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
 		
 			FFree( buf );
+			usersession->us_InUseCounter--;
 		}
 		else
 		{
@@ -2249,7 +2243,7 @@ int SendProcessMessage( Http *request, char *data, int len )
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );
 			
-			sb->WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
+			WebSocketSendMessage( sb, pidt->pt_UserSession, sendbuf, newmsglen );
 			
 			FFree( sendbuf );
 		}

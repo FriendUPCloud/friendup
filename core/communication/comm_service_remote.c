@@ -20,13 +20,12 @@
 *                                                                              *
 *****************************************************************************©*/
 /** @file
- * 
+ *
  *  CommunicationRemoteService body
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 19/06/2017
  */
-
 #include <core/types.h>
 #include "comm_service_remote.h"
 #include <stdio.h>
@@ -507,7 +506,8 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					SystemBase *lsysbase = (SystemBase *) serv->csr_SB;
 					if( lsysbase != NULL )
 					{
-						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL );
+						int respcode = 0;
+						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL, &respcode );
 						if( response != NULL )
 						{
 							*isStream = response->h_Stream;

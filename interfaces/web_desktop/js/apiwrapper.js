@@ -139,6 +139,7 @@ function apiWrapper( event, force )
 						FriendNetwork.connectToHost( {
 							message: msg,
 							name: msg.name,
+							p2p: msg.p2p
 						} );
 						break;
 					case 'disconnect':
@@ -192,13 +193,6 @@ function apiWrapper( event, force )
 						FriendNetwork.closeSession({
 							message: msg,
 							key: msg.key
-						});
-						break;
-					case 'p2pConnect':
-						FriendNetwork.connectToP2PHost({
-							message: msg,
-							name: msg.name,
-							data: msg.data
 						});
 						break;
 					case 'p2pAcceptConnexion':
@@ -2204,12 +2198,15 @@ if ( window.addEventListener )
 		if( e.data && e.data.command == 'login' )
 		{
 			var args = {
-				'keys'     : false,
-				'username' : false,
-				'password' : false,
-				'remember' : false,
-				'callback' : false,
-				'event'    : false
+				'keys'      : false,
+				'username'  : false,
+				'password'  : false,
+				'sessionid' : false,
+				'userid'    : false,
+				'fullname'  : false,
+				'remember'  : false,
+				'callback'  : false,
+				'event'     : false
 			};
 			
 			for( key in e.data )
@@ -2221,6 +2218,11 @@ if ( window.addEventListener )
 			}
 			
 			console.log( 'Workspace.login() from window.addEventListener: ', args );
+			
+			if( args.sessionid )
+			{
+				Workspace.loginSessionId( args.sessionid, args.callbac, args.event );
+			}
 			
 			Workspace.login( args.username, args.password, args.remember, args.callback, args.event );
 		}

@@ -1,0 +1,285 @@
+/*©*****************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              * 
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+*****************************************************************************©*/
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/sha.h>
+
+#include "network/websocket.h"
+#include "util/base64.h"
+#include "util/string.h"
+#include "network/protocol_websocket.h"
+
+Websocket_t* WebsocketNew()
+{
+	Websocket_t* ws = calloc( 1, sizeof( Websocket_t ) );
+	return ws;
+}
+
+// Derives a new key from the key we got from the client
+// It basically is just to make it very, very unlikely that whatever the client connected to is not actually a websocket server.
+char* WebsocketEncodeKey( const char* key )
+{
+	const char* WEBSOCKET_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	int keyLen = strlen( key );
+	int catLen = keyLen + strlen( WEBSOCKET_MAGIC );
+	unsigned char* cat = calloc( catLen + 1, sizeof(char) );
+	strcpy( (char*)cat, key );
+	strcpy( (char*)(cat + keyLen), WEBSOCKET_MAGIC );
+	unsigned char sha[20];
+	SHA1( cat, catLen, sha );
+	free( cat );
+	char* encoded = Base64Encode( sha, 20 );
+	return encoded;
+}
+
+// Accept a websocket connection
+bool WebsocketAccept( Socket_t* sock, Http_t* request )
+{
+	// Validate
+	Http_t* response = HttpNew();
+	printf( "[WS ] Upgrading websocket.\n" );
+	bool failed = false;
+
+	// Must be GET request
+	if( strcmp( request->method, "GET" ) != 0 )
+	{
+		printf( "[WS ] Wrong method!\n" );
+		failed = true;
+	}
+
+	// Must be HTTP v1.1
+	if( !( request->versionMajor > 1 || ( request->versionMajor == 1 && request->versionMinor >= 1 ) ) )
+	{
+		printf( "[WS ] Wrong HTTP vesion!\n" );
+		failed = true;
+	}
+
+	// Must be WebSocket v13
+	char* version = HttpGetHeader( request, "sec-websocket-version", 0 );
+	if( !version || strcmp( version, "13" ) != 0 )
+	{
+		printf( "[WS ] Unsupported WebSocket version!\n" );
+		// Tell the client what version we support
+		HttpAddHeader( response, "Sec-WebSocket-Version", StringDuplicate( "13" ) );
+		failed = true;
+	}
+
+	// Must have a key
+	char* key = HttpGetHeader( request, "sec-websocket-key", 0 );
+	if( !key )
+	{
+		printf( "[WS ] Missing key!\n" );
+		failed = true;
+	}
+
+	// 
+	char* protocol = HttpGetHeader( request, "sec-websocket-protocol", 0 );
+	if( protocol && strcmp( protocol, "ws" ) == 0 )
+	{
+		HttpAddHeader( response, "Sec-WebSocket-Protocol", StringDuplicate( "ws" ) );
+	}
+
+	if( !failed )
+	{
+		HttpSetCode( response, 101 );
+		HttpAddHeader( response, "Upgrade", StringDuplicate( "websocket" ) );
+		HttpAddHeader( response, "Connection", StringDuplicate( "Upgrade" ) );
+		HttpAddHeader( response, "Sec-WebSocket-Accept", WebsocketEncodeKey( key ) );
+		sock->protocolCallback = (SocketProtocolCallback_t)&ProtocolWebsocket; // Change the protocol :)
+		sock->data = 0;
+	}
+	else
+	{
+		HttpSetCode( response, 400 );
+		HttpAddHeader( response, "Connection", StringDuplicate( "close" ) );
+	}
+	
+	HttpBuild( response );
+	SocketWrite( sock, response->response, response->responseLength );
+	HttpFree( response );
+	DEBUG( "[WebsocketAccept] We have written and freed response.\n" );
+
+	if( failed )
+	{
+		close( sock->fd );
+		// TODO: Might have to free the socket?
+	}
+
+	return !failed;
+}
+
+// Parse a header, byte for byte... Yeah! Robust deluxe!
+int WebsocketParsePartial( Websocket_t* ws, char* data, unsigned int length )
+{
+	if( ws->parseState < 4 )
+	{
+		unsigned char* header = ws->header;
+		unsigned int i = 0;
+
+		// Read the flags and length bytes.
+		if( ws->parseState == 0 )
+		{
+			while( ws->bufferedAmount < 2 && i < length )
+				header[ws->bufferedAmount++] = data[i++];
+
+			// If we still don't have enough bytes to parse the header, wait for more
+			if( ws->bufferedAmount < 2 )
+				return 0;
+
+			// If any reserved bits are set, we must fail the connection
+			if( ( header[0] & 0x70 ) )
+			{
+				printf( "FAIL!!! (%c%c%c)\n", ( header[0] & 2 ) ? '1' : '0', ( header[0] & 4 ) ? '1' : '0', ( header[0] & 6 ) ? '1' : '0' );
+				return -1;
+			}
+
+			ws->fin    = header[0] & 0x80; // Final fragment?
+			ws->opcode = header[0] & 0x0F;
+			ws->mask   = header[1] & 0x80;
+			ws->size   = header[1] & 0x7F;
+			ws->headerSize += 2;
+			
+			if( ws->size >= 126 )
+			{
+				// Read extra size bytes
+				ws->parseState = 2;
+			}
+			else
+			{
+				// No extra size bytes, keep on reading
+				ws->parseState = 3;
+			}
+		}
+
+		// Read extra size bytes
+		if( ws->parseState == 2 )
+		{
+			// If the size field is 126, then the next 2 bytes is the real size,
+			// if the size field is 127, then the next 8 bytes is the real size.
+			unsigned int bytesNeeded = ( ws->size == 127 ? 10 : 4 );
+
+			// Read until 2 or 8 bytes have been read, or 
+			while( ws->bufferedAmount < bytesNeeded && i < length )
+			{
+				// Store the next size byte
+				header[ws->bufferedAmount++] = data[i++];
+				ws->headerSize++;
+
+				// Parse the size data
+				if( ws->headerSize == bytesNeeded )
+				{
+					unsigned int shift = 0;
+					unsigned int size = 0;
+
+					for( unsigned int j = bytesNeeded - 1; j > 1; j-- )
+					{
+						size |= header[j] << ( shift << 3 );
+						shift++;
+					}
+
+					ws->size = size;
+					ws->parseState = 3;
+					break;
+				}
+			}
+		}
+
+		// Read masking bytes
+		if( ws->parseState == 3 )
+		{
+			// Read the masking bytes
+			if( ws->mask )
+			{
+				ws->headerSize += 4;
+				while( ws->bufferedAmount < ws->headerSize && i < length )
+				{
+					header[ws->bufferedAmount++] = data[i++];
+				}
+				if( ws->bufferedAmount < 6 )
+					return 0;
+			
+				ws->maskBytes[0] = header[ws->headerSize - 4];
+				ws->maskBytes[1] = header[ws->headerSize - 3];
+				ws->maskBytes[2] = header[ws->headerSize - 2];
+				ws->maskBytes[3] = header[ws->headerSize - 1];
+			}
+			ws->parseState = 4;
+			ws->payload = (unsigned char*) calloc( ws->size + 1, sizeof(char) ); // Remember to free this :)
+			ws->payload[ws->size] = 0; // So that if the payload is text, it can be treated as a C string
+			ws->bufferedAmount = 0;
+		}
+
+		// Call ourself to jump into the ws->parseState == 4 section
+		if( length - i )
+			WebsocketParsePartial( ws, data + i, length - i );
+	}
+	else
+	{
+		// Cache to avoid dereferencing them on every iteration
+		unsigned char* payload = ws->payload;
+		unsigned int payloadIndex = ws->bufferedAmount;
+		unsigned int payloadSize = ws->size;
+
+		// Read bytes
+		for( unsigned int i = 0; i < length && payloadIndex < payloadSize; i++ )
+		{
+			payload[payloadIndex++] = data[i];
+		}
+		if( payloadIndex == payloadSize )
+		{
+			// Unmask
+			if( ws->mask )
+			{
+				for( unsigned int i = 0; i < payloadSize; i++ )
+				{
+					payload[i] = payload[i] ^ ws->maskBytes[i & 3];
+				}
+			}
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	return ws->parseState == 4;
+}
+
+char* WebsocketBuild( char* raw, unsigned int size, unsigned int* messageSize )
+{
+	// Header is 2 bytes.
+	// TODO: Support frames bigger than 127 bytes and fragmentation
+	char* frame = (char*) calloc( size + 2, sizeof(char) );
+	if( frame != NULL )
+	{
+		frame[0] = 0x80 | 0x1;
+		frame[1] = size & 0x7F;
+
+		memcpy( frame + 2, raw, size );
+	}
+	else
+	{
+		ERROR("Cannot allocate memory in WebSocketBuild\n");
+	}
+	(*messageSize) = size + 2;
+	return frame;
+}
+
+void WebsocketFree( Websocket_t* ws )
+{
+	if( ws->payload )
+		free( ws->payload );
+	ws->payload = NULL;
+	free( ws );
+}

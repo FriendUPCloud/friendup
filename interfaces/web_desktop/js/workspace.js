@@ -126,116 +126,10 @@ Workspace = {
 		// Establish a websocket connection to the core
 		if( !this.conn && this.sessionId && window.FriendConnection )
 		{
-			var conf = {
-				onstate : onState,
-				onend   : onEnd,
-			};
-			this.conn = new FriendConnection( conf );
-			this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
-			this.conn.on( 'server-notice', handleServerNotice );
-			this.conn.on( 'refresh', function( e )
-			{
-				Workspace.refreshDesktop();
-			} );
-			this.conn.on( 'icon-change', handleIconChange );
-			this.conn.on( 'filesystem-change', handleFilesystemChange );
-			
-			function onState( e )
-			{
-				//console.log( 'Worspace.conn.onState', e );
-				if( e.type == 'error' || e.type == 'close' )
-				{
-					if( !Workspace.httpCheckConnectionInterval )
-					{
-						Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
-						Workspace.websocketsOffline = true;
-					}
-				}
-				else if( e.type == 'ping' )
-				{
-					//if we get a ping we have a websocket.... no need to do the http server check
-					clearInterval( Workspace.httpCheckConnectionInterval );
-					Workspace.httpCheckConnectionInterval = false;
-					Workspace.websocketsOffline = false;
-					
-					if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
-					document.body.classList.remove( 'Offline' );
-					Workspace.workspaceIsDisconnected = false;
-				}
-				else
-				{
-					if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
-				}
-			}
-			
-			function onEnd( e )
-			{
-				console.log( 'Workspace.conn.onEnd', e );
-				Workspace.websocketsOffline = true;
-			}
-			
-			function handleIconChange( e ){ console.log( 'icon-change event', e ); }
-			function handleFilesystemChange( msg )
-			{
-				// if we get the same message within 5s we just ignore it.
-				if( 
-					Workspace.lastfileSystemChangeMessage
-					&& Workspace.lastfileSystemChangeMessage.path == msg.path 
-					&& Workspace.lastfileSystemChangeMessage.devname == msg.devname 
-					&& Workspace.lastfileSystemChangeMessage.arrived + 5000 > Date.now()
-				) return;
-				
-				Workspace.lastfileSystemChangeMessage = JSON.parse(JSON.stringify(msg));
-				Workspace.lastfileSystemChangeMessage.arrived = Date.now();
-				
-				
-				if( msg.path || msg.devname )
-				{
-					// Filename stripped!
-					var p = msg.devname + ':' + msg.path;
-					if( p.indexOf( '/' ) > 0 )
-					{
-						p = p.split( '/' );
-						if( Trim( p[ p.length - 1 ] ) != '' )
-							p[ p.length - 1 ] = '';
-						p = p.join( '/' );
-					}
-					else
-					{
-						p = p.split( ':' );
-						p = p[0] + ':';
-					}
-					//console.log( '[handleFilesystemChange] Updating path: ' + p );
-					Workspace.refreshWindowByPath( p );
-					if( p.substr( p.length - 1, 1 ) == ':' )
-					{
-						//console.log( '[handleFilesystemChange] Refreshing desktop.' );
-						Workspace.refreshDesktop();
-					}
-					return;
-				}
-				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
-			}
+			this.initWebSocket();	
 		}
 		
-		// connect to FriendNetwork
-		if ( this.sessionId && window.FriendNetwork ) {
-			var host = document.location.hostname + ':6514';
-			if ( 'http:' === document.location.protocol )
-				host = 'ws://' + host;
-			else
-				host = 'wss://' + host;
-			
-			var hostMeta =
-			{
-				name        : this.loginUsername,
-				description : this.loginUsername + "'s machine",
-				apps        : [],
-				imagePath   : 'friend://path.to/image?', // ( not what a real path// looks like, probably? )
-			};
-			window.FriendNetwork.init( host, this.sessionId, hostMeta );
-		}
-		
+		this.checkFriendNetwork()
 		
 		if( window.PouchManager && !this.pouchManager )
 			this.pouchManager = new PouchManager();
@@ -417,6 +311,136 @@ Workspace = {
 		}
 		this.reloadDocks();
 	},
+	initWebSocket: function()
+	{
+		if( this.conn ) return;
+		if( !this.sessionId ) { setTimeout('Workspace.initWebSocket();', 1000); console.log('no session yet... wait with the websocket'); return; }
+		
+		var conf = {
+			onstate : onState,
+			onend   : onEnd,
+		};
+		this.conn = new FriendConnection( conf );
+		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
+		this.conn.on( 'server-notice', handleServerNotice );
+		this.conn.on( 'refresh', function( e )
+		{
+			Workspace.refreshDesktop();
+		} );
+		this.conn.on( 'icon-change', handleIconChange );
+		this.conn.on( 'filesystem-change', handleFilesystemChange );
+		
+		function onState( e )
+		{
+			//console.log( 'Worspace.conn.onState', e );
+			if( e.type == 'error' || e.type == 'close' )
+			{
+				if( !Workspace.httpCheckConnectionInterval )
+				{
+					Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 7000 );
+					Workspace.websocketsOffline = true;
+				}
+			}
+			else if( e.type == 'ping' )
+			{
+				//if we get a ping we have a websocket.... no need to do the http server check
+				clearInterval( Workspace.httpCheckConnectionInterval );
+				Workspace.httpCheckConnectionInterval = false;
+				Workspace.websocketsOffline = false;
+				
+				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
+				document.body.classList.remove( 'Offline' );
+				Workspace.workspaceIsDisconnected = false;
+			}
+			else
+			{
+				if( e.type != 'connecting' && e.type != 'open' ) console.log( e );
+			}
+		}
+		
+		function onEnd( e )
+		{
+			console.log( 'Workspace.conn.onEnd', e );
+			Workspace.websocketsOffline = true;
+		}
+		
+		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
+		function handleFilesystemChange( msg )
+		{
+			// if we get the same message within 5s we just ignore it.
+			if( 
+				Workspace.lastfileSystemChangeMessage
+				&& Workspace.lastfileSystemChangeMessage.path == msg.path 
+				&& Workspace.lastfileSystemChangeMessage.devname == msg.devname 
+				&& Workspace.lastfileSystemChangeMessage.arrived + 5000 > Date.now()
+			) return;
+			
+			Workspace.lastfileSystemChangeMessage = JSON.parse(JSON.stringify(msg));
+			Workspace.lastfileSystemChangeMessage.arrived = Date.now();
+			
+			
+			if( msg.path || msg.devname )
+			{
+				// Filename stripped!
+				var p = msg.devname + ':' + msg.path;
+				if( p.indexOf( '/' ) > 0 )
+				{
+					p = p.split( '/' );
+					if( Trim( p[ p.length - 1 ] ) != '' )
+						p[ p.length - 1 ] = '';
+					p = p.join( '/' );
+				}
+				else
+				{
+					p = p.split( ':' );
+					p = p[0] + ':';
+				}
+				//console.log( '[handleFilesystemChange] Updating path: ' + p );
+				Workspace.refreshWindowByPath( p );
+				if( p.substr( p.length - 1, 1 ) == ':' )
+				{
+					//console.log( '[handleFilesystemChange] Refreshing desktop.' );
+					Workspace.refreshDesktop();
+				}
+				return;
+			}
+			console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+		}
+	},
+	checkFriendNetwork: function()
+	{
+		
+		var m = new Module('system');
+		m.onExecuted = function( e,d )
+		{
+			if( e == 'ok' && parseInt(d) == 1)
+			{
+				console.log('init friend network');
+				// connect to FriendNetwork
+				if ( Workspace.sessionId && window.FriendNetwork ) {
+					var host = document.location.hostname + ':6514';
+					if ( 'http:' === document.location.protocol )
+						host = 'ws://' + host;
+					else
+						host = 'wss://' + host;
+					
+					var hostMeta =
+					{
+						name        : Workspace.loginUsername,
+						description : Workspace.loginUsername + "'s machine",
+						apps        : [],
+						imagePath   : 'friend://path.to/image?', // ( not what a real path// looks like, probably? )
+					};
+					window.FriendNetwork.init( host, Workspace.sessionId, hostMeta );
+				}				
+			}
+			else
+			{
+				console.log('friend network not enabled');
+			}
+		}
+		m.execute('checkfriendnetwork');
+	},
 	encryption: {
 		
 		fcrypt: fcrypt,
@@ -433,7 +457,7 @@ Workspace = {
 			{
 				p = ( !p || p.indexOf('HASHED') == 0 ? p : ( 'HASHED' + Sha256.hash( p ) ) );
 				
-				var seed = ( u && p ? Sha256.hash( u + ':' + p ) : false );
+				var seed = ( u && p ? this.fcrypt.generateKey( ( u + ':' + p ), 32, 256, 'sha256' ) : false );
 				
 				var keys = ApplicationStorage.load( { applicationName : 'Workspace' } );
 				
@@ -447,9 +471,9 @@ Workspace = {
 				if( keys )
 				{
 					this.keys.client = {
-						privatekey  : this.fcrypt.encodeKeyHeader( keys.privatekey ),
-						publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ),
-						recoverykey : keys.recoverykey
+						privatekey  : this.fcrypt.encodeKeyHeader( keys.privatekey ), 
+						publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ), 
+						recoverykey : keys.recoverykey 
 					};
 				}
 				
@@ -1120,7 +1144,14 @@ Workspace = {
 	{
 		delete Workspace.conn;
 		delete Workspace.sessionId;
-		Workspace.login( Workspace.loginUsername, Workspace.loginPassword );
+		if( Workspace.loginUsername && Workspace.loginPassword )
+		{
+			Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false,Workspace.initWebSocket );			
+		}
+		else
+		{
+			Workspace.logout();			
+		}
 		return;
 	},
 	renewAllSessionIds: function()
@@ -1137,23 +1168,72 @@ Workspace = {
 			friend.cajax = [];
 		}
 	},
+	loginSessionId: function( sessionid, callback, ev )
+	{
+		if( sessionid )
+		{
+			var _this = this;
+			
+			var m = new FriendLibrary( 'system' );
+			m.addVar( 'sessionid', sessionid );
+			m.addVar( 'deviceid', this.deviceid );
+			m.onExecuted = function( json, serveranswer )
+			{
+				if( typeof( json ) != 'object' )
+				{
+					try
+					{
+						var to = JSON.parse( json );
+						if( to.result && to.sessionid )
+							json = to;
+					}
+					catch( e )
+					{
+						json = { result: -1 };
+					}
+				}
+				
+				if( !json && serveranswer )
+				{
+					if( typeof( serveranswer ) == 'string' && serveranswer.indexOf( '{' ) >= 0 )
+					{
+						json = JSON.parse( serveranswer );
+					}
+					else
+					{
+						json = serveranswer;
+					}
+				}
+				
+				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
+				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
+				
+				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
+				{
+					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev )
+				}
+				else
+				{
+					if( _this.loginPrompt )
+					{
+						_this.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
+					}
+					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
+
+				}
+				document.body.className = 'Login';
+			}
+			m.execute( 'login' );
+		}
+		
+		// Show it
+		this.showDesktop();
+		
+		return 0;
+		
+	},
 	login: function( u, p, r, callback, ev )
 	{
-		// Reset some options
-		if( ev && ev.shiftKey )
-			this.themeOverride = 'friendup';
-	
-		if( GetUrlVar( 'interface' ) )
-		{
-			switch( GetUrlVar( 'interface' ) )
-			{
-				case 'native':
-					Workspace.interfaceMode = 'native';
-					break;
-				default:
-					break;
-			}
-		}
 		
 		// TODO: If we have sessionid - verify it through ajax.
 		
@@ -1161,11 +1241,6 @@ Workspace = {
 		{
 			if( callback && typeof( callback ) == 'function' ) callback( true );
 			return true;
-		}
-		
-		if( GetUrlVar( 'noleavealert' ) )
-		{
-			Workspace.noLeaveAlert = true;
 		}
 		
 		// Require username and pw to login
@@ -1206,16 +1281,16 @@ Workspace = {
 				if( this.encryption.keys.client )
 				{
 					ApplicationStorage.save( {
-						privatekey  : this.encryption.keys.client.privatekey,
-						publickey   : this.encryption.keys.client.publickey,
-						recoverykey : this.encryption.keys.client.recovery
+						privatekey  : this.encryption.keys.client.privatekey, 
+						publickey   : this.encryption.keys.client.publickey, 
+						recoverykey : this.encryption.keys.client.recovery 
 					},
 					{ applicationName : 'Workspace' } );
 					
 					console.log( '--- localStorage --- ', window.localStorage );
 				}
 				
-				// TODO: Do we need to store anything in cookie, this is unsafe??? if not remove this
+				// TODO: Do we need to store anything in cookie, this is unsafe??? use localStorage instead, works the same way but only for client storing, remove this ...
 				
 				if( this.loginUsername && this.loginPassword )
 				{
@@ -1268,32 +1343,7 @@ Workspace = {
 				
 				if( json.result == '0' || hasSessionID || hasLoginID || json.result == 3 )
 				{
-					// Ok, we're in
-					//t.sessionId = hasLoginID ? json.loginid : ( json.sessionid ? json.sessionid : null );
-					t.sessionId = json.sessionid ? json.sessionid : null;
-					t.userId = json.userid;
-					t.fullName = json.fullname;
-					
-					//relogin fix
-					console.log('logged in... remove loading...');
-					document.body.classList.remove( 'Loading' );
-					
-					// Store user data in localstorage for later verification
-					
-					var userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
-					
-					if( userdata )
-					{
-						userdata.sessionId = t.sessionId;
-						userdata.userId = t.userId;
-						userdata.fullName = t.fullName;
-						
-						ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
-					}
-					
-					Workspace.loginCallBack = callback;
-					return Workspace.initUserWorkspace( userdata, json );
-
+					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev );
 				}
 				else
 				{
@@ -1312,18 +1362,71 @@ Workspace = {
 		
 		return 0;
 	},
-	initUserWorkspace: function( userdata, json )
+	initUserWorkspace: function( json, callback, ev )
 	{
-		if( !this.sessionId ) return false;
+		var _this = Workspace;
 		
-
-		var t = this;
-		var callback = t.loginCallBack;
+		// TODO: If we have sessionid - verify it through ajax.
+		
+		if( _this.sessionId )
+		{
+			if( callback && typeof( callback ) == 'function' ) callback( true );
+			return true;
+		}
+		
+		if( !json || !json.sessionid ) return false;
+		
+		// Reset some options
+		if( ev && ev.shiftKey )
+		{
+			_this.themeOverride = 'friendup';
+		}
+	
+		if( GetUrlVar( 'interface' ) )
+		{
+			switch( GetUrlVar( 'interface' ) )
+			{
+				case 'native':
+					_this.interfaceMode = 'native';
+					break;
+				default:
+					break;
+			}
+		}
+		
+		if( GetUrlVar( 'noleavealert' ) )
+		{
+			_this.noLeaveAlert = true;
+		}
+		
+		
+		
+		// Ok, we're in
+		//_this.sessionId = hasLoginID ? json.loginid : ( json.sessionid ? json.sessionid : null );
+		_this.sessionId = json.sessionid ? json.sessionid : null;
+		_this.userId    = json.userid;
+		_this.fullName  = json.fullname;
+		
+		//relogin fix
+		document.body.classList.remove( 'Loading' );
+		
 		/*
 			after a user has logged in we want to prepare the workspace for him.
 		*/
-
-
+		
+		// Store user data in localstorage for later verification
+					
+		var userdata = ApplicationStorage.load( { applicationName : 'Workspace' } );
+		
+		if( userdata )
+		{
+			userdata.sessionId = _this.sessionId;
+			userdata.userId    = _this.userId;
+			userdata.fullName  = _this.fullName;
+			
+			ApplicationStorage.save( userdata, { applicationName : 'Workspace' } );
+		}
+		
 		// Only renew session..
 		if( ge( 'SessionBlock' ) )
 		{
@@ -1332,12 +1435,12 @@ Workspace = {
 			{
 				document.body.removeChild( ge( 'SessionBlock' ) );
 			}
-			Workspace.renewAllSessionIds();
+			_this.renewAllSessionIds();
 			return;
 		}
 		
 		// Language
-		Workspace.locale = 'en';
+		_this.locale = 'en';
 		var l = new Module( 'system' );
 		l.onExecuted = function( e, d )
 		{
@@ -1348,10 +1451,10 @@ Workspace = {
 			i18nClearLocale();
 			if( e == 'ok' )
 			{
-				Workspace.locale = JSON.parse( d ).locale;
+				_this.locale = JSON.parse( d ).locale;
 				//load english first and overwrite with localised values afterwards :)
 				i18nAddPath( 'locale/en.locale', function(){
-					if( Workspace.locale != 'en' ) i18nAddPath( 'locale/' + Workspace.locale + '.locale' );
+					if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
 				});
 			}
 			else
@@ -1364,7 +1467,7 @@ Workspace = {
 				var res = JSON.parse( d );
 				if( res.response == 'Failed to load user.' )
 				{
-					Workspace.logout();
+					_this.logout();
 				}
 			}
 			catch( e ){};
@@ -1387,27 +1490,27 @@ Workspace = {
 		} );
 	
 		
-		if( !Workspace.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); Workspace.workspaceHasLoadedOnceBefore = true; }
+		if( !_this.workspaceHasLoadedOnceBefore ){ document.body.classList.add( 'Loading' ); _this.workspaceHasLoadedOnceBefore = true; }
 		
-	
+		
 		// Lets load the stored window positions!
 		LoadWindowStorage();
-	
+		
 		// Set up a shell instance for the workspace
-		var uid = FriendDOS.addSession( Workspace );
-		Workspace.shell = FriendDOS.getSession( uid );
+		var uid = FriendDOS.addSession( _this );
+		_this.shell = FriendDOS.getSession( uid );
 		
 		// We're getting the theme set in an url var
 		var th = '';
 		if( ( th = GetUrlVar( 'theme' ) ) )
 		{
-			Workspace.refreshTheme( th, false );
-			if( t.loginPrompt )
+			t.refreshTheme( th, false );
+			if( _this.loginPrompt )
 			{
-				t.loginPrompt.close();
-				t.loginPrompt = false;
+				_this.loginPrompt.close();
+				_this.loginPrompt = false;
 			}
-			t.init();
+			_this.init();
 		}
 		// See if we have some theme settings
 		else
@@ -1423,28 +1526,28 @@ Workspace = {
 						var s = JSON.parse( d );
 						if( s.Theme && s.Theme.length )
 						{
-							Workspace.refreshTheme( s.Theme.toLowerCase(), false );
+							_this.refreshTheme( s.Theme.toLowerCase(), false );
 						}
 						else
 						{
-							Workspace.refreshTheme( false, false );
+							_this.refreshTheme( false, false );
 						}
-						Workspace.mimeTypes = s.Mimetypes;
+						_this.mimeTypes = s.Mimetypes;
 					}
-					else Workspace.refreshTheme( false, false );
+					else _this.refreshTheme( false, false );
 	
-					if( t.loginPrompt )
+					if( _this.loginPrompt )
 					{
-						t.loginPrompt.close();
-						t.loginPrompt = false;
+						_this.loginPrompt.close();
+						_this.loginPrompt = false;
 					}
 	
-					t.init();
+					_this.init();
 				}
 				m.execute( 'usersettings' );
 			}, 400 );
 		}
-		if( callback && typeof( callback ) == 'function' ) callback( 1 );
+		if( callback && typeof( callback ) == 'function' ) callback;
 		return 1;
 		
 		

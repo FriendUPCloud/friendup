@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 #ifndef __UTIL_JSON_H__
 #define __UTIL_JSON_H__
 

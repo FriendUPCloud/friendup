@@ -107,12 +107,12 @@
 	$ColorDangerButtonHoverBg: #ef653b;
 	$ColorAvailable:           #000000;
 	$ColorAvailableBg:         #94c6e0;
-	$ColorAction:              purple;
-	$ColorActionBg:            transparent;
-	$ColorWarning:             yellow;
-	$ColorWarningBg:           transparent;
-	$ColorNotify:              orange;
-	$ColorNotifyBg:            transparent;
+	$ColorAction:              #000000;
+	$ColorActionBg:            purple;
+	$ColorWarning:             #000000;
+	$ColorWarningBg:           #e6e660;
+	$ColorNotify:              #000000;
+	$ColorNotifyBg:            orange;
 	
 	$ColorIconBlinkStart:      black;
 	$ColorIconBlinkEnd:        grey;

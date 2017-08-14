@@ -1,104 +1,82 @@
-#!/bin/bash
-#  install.sh
-#  Admin Fetches friendup from git, runs this script, which
-#  installs dependencies, and autobuilds the Friend Core dir structure
+#!/bin/sh
 
+#
+# Friend Core, Friend Chat and Friend Network installation script
+#
+# This script will install the necessary components to make the Friend servers
+# run on your machine.
+# It will save all the recorded information so that you do not have to type
+# them the next time you run the script.
 #
 
 sudo apt-get install dialog
-sudo pacman -Sy dialog
 
 declare -i INSTALL_SCRIPT_NUMBER=0
 
-dialog --backtitle "Friend installer" --yesno "           Welcome to Friend\n\n\
-This script will install FriendCore on your machine.\n\n
+dialog --backtitle "Friend Installer" --yesno "           Welcome to Friend\n\n\
+This script will install Friend Core on your machine.\n\n
 Do you want to proceed with installation?" 10 45
 if [ $? -eq "1" ]; then
     clear
     exit 1
 fi
 
-#echo ""
-#echo "=====Configuration..."
-#echo "========================================================="
-#echo
+# Default Friend paths
+FRIEND_FOLDER=$(pwd)
+QUIT="Installation aborted. Please restart script to complete it."
 
-INSTALL_ON_EXISTING_DB="N"
-USE_DEFAULT_DB_STRUCTURE="Y"
+# Calls configuration script
+sh ./installers/config.sh
+if [ $? -eq "1" ]; then
+    clear
+    echo "Aborting installation."
+    exit 1
+fi
 
-while true; do
+# Get directory from Config file
+. "$FRIEND_FOLDER/Config"
+FRIEND_BUILD="$FRIEND_PATH"
+if [ -z "$FRIEND_BUILD" ]; then
+    dialog --backtitle "Friend Installer" --msgbox "\
+Cannot read compilation Config file\n\n\
+Please run this script again and answer\n\
+all the questions." 10 55
+    clear
+    echo "$QUIT"
+    exit 1
+fi
 
-    dbhost='localhost'
-    dbport=3306
-    dbname='friendup'
-    dbuser='friendup'
-    dbpass='friendup1'
+# Checks a setup.ini file has been generated
+if [ ! -f "$FRIEND_BUILD/cfg/setup.ini" ]
+then
+    dialog --backtitle "Friend Installer" --msgbox "\
+Cannot find setup.ini file\n\n\
+Please run this script again and answer\n\
+all the questions." 10 55
+    clear
+    echo "$QUIT"
+    exit 1
+fi
 
-    dialog --backtitle "Friend installer" --yesno "Do you want to install Friend on an existing database?" 8 45
-    if [ $? = "0" ]
-    then
-        INSTALL_ON_EXISTING_DB="Y"
-    else
-        INSTALL_ON_EXISTING_DB="N"
-    fi
+# Root or not?
+mkdir "$FRIEND_BUILD/tryout" > /dev/null 2>&1
+if [ $? -eq "0" ]; then
+    SUDO=""
+    rm -rf "$FRIEND_BUILD/tryout"
+else
+    SUDO="sudo"
+fi
 
-    #read mysql db root password
-    mysqlRootPass=$(dialog --backtitle "Friend installer" --inputbox "Enter mysql root password:" 8 45 --output-fd 1)
-    if [ $? = "1" ]
-    then
-        clear
-        exit 1
-    fi
-
-    dialog --defaultno --backtitle "Friend installer" --yesno "Default mysql settings:\n\n\
-    host: $dbhost\n\
-    port: $dbport\n\
-    database: $dbname\n\
-    user: $dbuser\n\
-    password: $dbpass\n\n\
-Do you want to use the default settings?" 15 50
-
-    if [ $? = "1" ]
-    then
-        dbhost=$(dialog --backtitle "Friend installer" --inputbox "Please enter the mysql host name:" 8 45 --output-fd 1)
-        if [ $? = "1" ]; then
-            clear
-            exit 1
-        fi
-        dbport=$(dialog --backtitle "Friend installer" --inputbox "Please enter the mysql database port:" 8 45 --output-fd 1)
-        if [ $? = "1" ]; then
-            clear
-            exit 1
-        fi
-        dbname=$(dialog --backtitle "Friend installer" --inputbox "Please enter the mysql database name:" 8 45 --output-fd 1)
-        if [ $? = "1" ]; then
-            clear
-            exit 1
-        fi
-        dbuser=$(dialog --backtitle "Friend installer" --inputbox "Please enter the user name:" 8 45 --output-fd 1)
-        if [ $? = "1" ]; then
-            clear
-            exit 1
-        fi
-        dbpass=$(dialog --backtitle "Friend installer" --inputbox "Please enter the user password:" 8 45 --output-fd 1)
-        if [ $? = "1" ]; then
-            clear
-            exit 1
-        fi
-    fi
-
-    dialog --defaultno --backtitle "Friend installer" --yesno "Using the following values for connecting to mysql:\n\n\
-    root password: $mysqlRootPass\n\
-    host name: $dbhost\n\
-    database port: $dbport\n\
-    database name: $dbname\n\
-    user name: $dbuser\n\
-    user password: $dbpass\n\n\
-Please check the values and confirm..." 15 60
-    if [ $? = "0" ]; then
-        break;
-    fi
-done
+# Get values from setup.ini file
+dbhost=$(sed -nr "/^\[FriendCore\]/ { :l /^dbhost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbname=$(sed -nr "/^\[FriendCore\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbuser=$(sed -nr "/^\[FriendCore\]/ { :l /^dbuser[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbpass=$(sed -nr "/^\[FriendCore\]/ { :l /^dbpass[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbport=$(sed -nr "/^\[FriendCore\]/ { :l /^dbport[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^domain[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+TLS=$(sed -nr "/^\[FriendCore\]/ { :l /^TLS[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
 
 clear
 
@@ -108,7 +86,7 @@ clear
 
 # check system
 if cat /etc/*-release | grep ^ID | grep ubuntu; then
-    echo "ubuntu distro found"
+    echo "Ubuntu distro found"
     if cat /etc/*-release | grep ^VERSION_ID | grep 14; then
             echo "version 14"
     		INSTALL_SCRIPT_NUMBER=1
@@ -129,7 +107,7 @@ if cat /etc/*-release | grep ^ID | grep ubuntu; then
             INSTALL_SCRIPT_NUMBER=0
     fi
 elif cat /etc/*-release | grep ^ID | grep debian; then
-	echo "debian distro found"
+	echo "Debian distro found"
 	if cat /etc/*-release | grep ^VERSION_ID | grep 8; then
 		echo "version 8"
 		INSTALL_SCRIPT_NUMBER=1
@@ -141,7 +119,7 @@ elif cat /etc/*-release | grep ^ID | grep debian; then
 		INSTALL_SCRIPT_NUMBER=0
 	fi
 elif cat /etc/*-release | grep ^ID | grep mint; then
-    echo "mint distro found"
+    echo "Mint distro found"
     if cat /etc/*-release | grep ^VERSION_ID | grep 16; then
             echo "version 16"
             INSTALL_SCRIPT_NUMBER=1
@@ -173,6 +151,12 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
         cmake ssh phpmyadmin make
+    if [ $? -eq "1" ]; then
+        echo ""
+        echo "Dependencies installation failed."
+        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
+        exit 1
+    fi
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
     sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
         mysql-server \
@@ -181,6 +165,12 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
         libgd-dev rsync valgrind-dbg libxml2-dev \
 	cmake ssh phpmyadmin make \
 	libwebsockets-dev libssh-dev
+    if [ $? -eq "1" ]; then
+        echo ""
+        echo "Dependencies installation failed."
+        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
+        exit 1
+    fi
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
     sudo pacman -Sy flex guile2.0 \
 	libssh2 libssh libaio \
@@ -202,133 +192,190 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
 	sudo systemctl start mariadb
 	dialog --backtitle "Friend installer" --msgbox "Please uncomment lines\n\nextension=gd.so\nextension=imap.so\nextension=pdo_mysql.so\nextension=mysqli.so\nextension=curl.so\nextension=readline.so\nextension=gettext.so\n\nand add\n\n$PWD/build/\n\nto open_basedir directive\n\ninto /etc/php/php.ini" 23 40
 else
-    dialog --backtitle "Friend installer" --msgbox "Supported linux version not found!\n\n\
+    dialog --backtitle "Friend Installer" --msgbox "Supported linux version not found!\n\n\
 Write to us: developer@friendos.com" 8 40
     clear
     exit 1
 fi
 
-# set up mysql database + user + access
-# echo "removing old database, if it exists: $mysql"
-# sudo rm $mysql
+# Asks for mysql db root password
+while true; do
+    mysqlRootPass=$(dialog --backtitle "Friend Installer" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
+    if [ $? = "1" ]
+    then
+        clear
+        echo "Aborting installation."
+        exit 1
+    fi
+    # Checks mysql root password
+    export MYSQL_PWD=$mysqlRootPass
+    mysql -u root -e ";"
+    export MYSQL_PWD=""
+    if [ $? -eq "0" ]; then
+        break;
+    fi
+done
+clear
 
-# echo "initializing database $mysql"
+# Defines mysql access
+mysqlAdminConnect="--host=$dbhost --port=$dbport --user=root"
+mysqlconnect="--host=$dbhost --port=$dbport --user=$dbuser"
+mysqlconnectdb="$mysqlconnect --database=$dbname"
 
-#  localhost/phpmyadmin
-#  username: root
-#  password: ubpaul
+# Temporary store the password in system variable to avoid warnings
+export MYSQL_PWD=$mysqlRootPass
 
-# need to first setup a user account for the MySQL "root" user, using an unencrypted password.
+echo ""
+echo "Setting up Friend Core database."
 
-# echo "Enter mysql username, followed by [ENTER]"
-#read mysqlusername
-
-mysqlconnect="--host=$dbhost --port=$dbport --user=root --password=$mysqlRootPass"
-mysqlconnectdb=$mysqlconnect" --database=$dbname"
-
-echo "Skipping database if it exists"
-dbexists=`mysqlshow $mysqlconnect $dbname | grep Tables`
-if [ -z "$dbexists" ]; then
-#	no db
-#	echo "no db named $dbname, creating"
-#	mysql $mysqlconnect \
-#	--execute="DROP DATABASE $dbname"
-
-	echo "create database"
-	mysql $mysqlconnect \
-		--execute="CREATE DATABASE $dbname;"
-
-        echo "create db user $dbuser"
-	
-	if [ "$dbuser" = "root" ];then
-		echo "using root user for DB connection"
-	else
-		mysql $mysqlconnect \
-			--execute="DROP USER '$dbuser'@'localhost';"
-		mysql $mysqlconnect \
-			--execute="CREATE USER '$dbuser'@'localhost' IDENTIFIED BY '$dbpass';"
-	fi
-
-	mysql $mysqlconnect \
-		--execute="GRANT ALL ON $dbname.* TO '$dbuser'@'localhost'; FLUSH PRIVILEGES;"
-
-	echo "create tables"
-	mysql $mysqlconnectdb \
-		--execute="SOURCE db/FriendCoreDatabase.sql"
-#  TBD: point instead to a clean, pristine database template, with one or two users
-#	already setup, such as admin, and simple user (non-admin group)
-#	maybe try:   user: guest, password: guest
-#
-# /*-- INSERT INTO `FUser` (`Name`,`Password`) VALUES ("guest","guest" ); */
-#INSERT INTO `FUser` (`ID`,`Name`,`Password`) VALUES (1,"guest",CONCAT("{S6}",SHA2(CONCAT("HASHED",SHA2("guest",256)),256)));
-
+# Checks if user is already present or not, and creates it eventually
+userExists=$(mysql $mysqlAdminConnect \
+	--execute="SELECT mu.User FROM mysql.user AS mu WHERE mu.User='$dbuser'")
+if [ "$userExists" = "" ]; then
+	echo "Setting up user: $dbuser"
+	# Creates user
+	mysql $mysqlAdminConnect \
+		--execute="CREATE USER $dbuser@$dbhost IDENTIFIED BY '$dbpass';"
 else
-	echo "found db $dbname, skipping"
+	echo "User $dbuser already exists, skipping"
 fi
 
+# Checks for database existence and creates it if not present
+dbpresent=$(mysql $mysqlAdminConnect \
+	--execute="SHOW DATABASES LIKE '$dbname'")
+if [ `echo "$dbpresent" | grep -c "$dbname"` -gt 0 ]; then
+	echo "Database $dbname was found, skipping"
+    # Grants access to db if user was not created before
+	mysql $mysqlAdminConnect \
+		--execute="GRANT ALL PRIVILEGES ON $dbname.* TO $dbuser@$dbhost;"
+	# Cleans memory
+	mysql $mysqlAdminConnect \
+		--execute="FLUSH PRIVILEGES;"
+else
+	# Creates database
+	echo "Creating database: $dbname"
+	mysql $mysqlAdminConnect \
+		--execute="CREATE DATABASE $dbname"
+	# Grants access to db
+	mysql $mysqlAdminConnect \
+		--execute="GRANT ALL PRIVILEGES ON $dbname.* TO $dbuser@$dbhost;"
+	# Cleans memory
+	mysql $mysqlAdminConnect \
+		--execute="FLUSH PRIVILEGES;"
+	# Switch to user
+	export MYSQL_PWD=$dbpass
+	# Creates tables
+	echo "Creating tables"
+	mysql $mysqlconnectdb \
+		--execute="SOURCE db/FriendCoreDatabase.sql"
+fi
+
+# Clears dangerous variable
+export MYSQL_PWD=""
+
+# Creates or updates the build/cfg/cfg.ini file
+echo "[DatabaseUser]" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "login = $dbuser" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "password = $dbpass" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "host = $dbhost" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "dbname = $dbname" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = $dbport" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendCore]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "fchost = $friendCoreDomain" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "fcupload = storage/" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[Core]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "SSLEnable = $TLS" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendNetwork]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "enabled = $friendNetwork" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendChat]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "enabled = $friendChat" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+
+# Builds Friend Core
 echo ""
-echo "=====Compilation process in progress..."
-echo "========================================================="
+echo "Building Friend Core."
+echo "This can take up to several minutes depending on your machine."
+echo "Compilation log can be found in $FRIEND_FOLDER/compilation.log"
+if [ -f "$FRIEND_BUILD/FriendCore" ]; then
+    $SUDO rm "$FRIEND_BUILD/FriendCore"
+fi
+$SUDO make setup > /dev/null 2>&1
+$SUDO make clean setup release install > "$FRIEND_FOLDER/compilation.log" 2>&1
 
-cd friendup
+# Checks if FriendCore is present
+if [ ! -f "$FRIEND_BUILD/FriendCore" ]; then
+    echo ""
+    echo "A problem occurred during Friend Core compilation."
+    echo "Please refer to compilation.log for more information."
+    echo "Help can be found on Friend developer community forums at"
+    echo "https://developers.friendup.cloud"
+    echo "Installation unsuccessful."
+    echo ""
+    exit 1
+else
+    echo ""
+    echo "Friend Core compilation successful."
+    echo ""
+    sleep 1
+fi
 
-make setup 2>&1 | tee make_setup.log
-# sets up all the directories properly
+# Launches Friend Network installer
+if [ "$friendNetwork" -eq "1" ]; then
+    sh installers/friendnetwork.sh
+    if [ $? -eq "1" ]; then
+        clear
+        echo "Friend Core installation aborted, please restart the script."
+        exit 1
+    fi
+fi
 
-make clean setup compile install 2>&1 | tee make_clean_setup_compile_install.log
+# Launches Friend Chat installer
+if [ "$friendChat" -eq "1" ]; then
+    sh installers/friendchat.sh "$mysqlRootPass"
+    if [ $? -eq "1" ]; then
+        clear
+        echo "Friend Core installation aborted, please restart the script."
+        exit 1
+    fi
+fi
 
-# make clean - clean all objects and binaries
-# make setup - create required directories and files
-# make compile - compile source in debug mode
-# make install - install all generated components to build directory
-
-# this creates a build/ folder in the friendup root directory
-
-# next, need to add cfg.ini file to build/cfg/ folder
-# generate default file from example in docs/cfg.ini.example
-
-echo ""
-echo "=====Generating cfg.ini file..."
-echo "========================================================="
-
-# cd build/cfg
-echo "[DatabaseUser]" > build/cfg/cfg.ini
-echo "login = $dbuser" >> build/cfg/cfg.ini
-echo "password = $dbpass" >> build/cfg/cfg.ini
-echo "host = $dbhost" >> build/cfg/cfg.ini
-echo "dbname = $dbname" >> build/cfg/cfg.ini
-echo "port = $dbport" >> build/cfg/cfg.ini
-echo " " >> build/cfg/cfg.ini
-#   was 3389
-echo "[FriendCore]" >> build/cfg/cfg.ini
-echo "fchost = localhost" >> build/cfg/cfg.ini
-echo "port = 6502" >> build/cfg/cfg.ini
-echo "fcupload = storage/" >> build/cfg/cfg.ini
-echo " " >> build/cfg/cfg.ini
-
-echo "[Core]" >> build/cfg/cfg.ini
-echo "port = 6502" >> build/cfg/cfg.ini
-echo "SSLEnable = 0" >> build/cfg/cfg.ini
-
-
-#echo ""
-#echo "=====Installation complete"
-#echo "========================================================="
-
-dialog --backtitle "Friend installer" --yesno "          Installation complete.\n\n\
-Once FriendCore is launched, you can access your local machine at:\n\
-http://localhost:6502\n\n\
-Would you like to launch FriendCore?" 12 45
-
+# Installation complete, launch?
+temp="http://$friendCoreDomain:6502"
+if [ "$TLS" -eq "1" ]; then
+    temp="https://$friendCoreDomain:6502"
+fi
+dialog --backtitle "Friend Installer" --yesno "          Installation complete.\n\n\
+Once Friend Core is launched, you can access your local machine at:\n\
+$temp\n\n\
+Would you like to launch Friend Core?" 12 45
 if [ $? = "0" ]
 then
 	clear
-	cd build/
-	echo "launching FriendCore in background"
-	nohup ./FriendCore >> /dev/null &	
+	cd "$FRIEND_BUILD"
+    echo ""
+	echo "Launching Friend Core in the background..."
+	nohup ./FriendCore >> /dev/null &
+	cd "$FRIEND_FOLDER"
+	echo "Friend Network and Friend Chat servers will be automatically launched."
+	echo "Use killfriendcore.sh to kill Friend Core and all the running servers."
 else
 	clear
-	echo "You can start FriendCore from the build folder."
+    echo ""
+	echo "You can start Friend Core from this folder:"
+	echo "$FRIEND_BUILD"
+	echo "by typing './FriendCore'"
+	echo "Friend Network and Friend Chat servers will be automatically launched."
+	echo "Friend Network and Friend Chat servers will be killed upon exit."
 fi
-
-echo "FriendUP installation completed :)"
+echo ""
+echo "Two global environment variables have been created,"
+echo "FRIEND_HOME: pointing to $FRIEND_FOLDER,"
+echo "FRIEND_PATH: pointing to $FRIEND_BUILD,"
+echo "They will be defined the next time you boot your computer."
+echo ""
+exit 0

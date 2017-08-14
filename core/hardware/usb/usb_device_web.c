@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  USB web interface
@@ -28,7 +27,6 @@
  *  @date created 20/01/2017
  */
 
-//#include "usb_manager.h"
 #include <core/types.h>
 #include <core/library.h>
 #include <mysql.h>

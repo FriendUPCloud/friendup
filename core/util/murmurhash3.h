@@ -28,11 +28,31 @@ typedef unsigned __int64 uint64_t;
 
 #endif // !defined(_MSC_VER)
 
-//-----------------------------------------------------------------------------
+//
+//
+//
 
 void MurmurHash3_x86_32  ( const void * key, int len, uint32_t seed, void * out );
+
+//
+//
+//
+
 void MurmurHash3_x86_128 ( const void * key, int len, uint32_t seed, void * out );
+
+//
+//
+//
+
 void MurmurHash3_x64_128 ( const void * key, int len, uint32_t seed, void * out );
+
+#ifndef MURMURHASH3
+#ifdef ENV64BIT
+#define MURMURHASH3( KEY, KEYLEN, OUT ) MurmurHash3_x64_128 ( KEY, KEYLEN, 0, OUT )
+#else
+#define MURMURHASH3( KEY, KEYLEN, OUT ) MurmurHash3_x86_128 ( KEY, KEYLEN, 0, OUT )
+#endif // MURMURHASH3
+#endif
 
 //-----------------------------------------------------------------------------
 

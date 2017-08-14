@@ -1,6 +1,10 @@
 How to compile Friend Unifying Platform
 ---------------------------------------
 
+If you want to compile Friend Core manually, please read this file.
+
+1) Dependencies
+
 When developing FriendUP, we tried to keep the list of dependencies
 as low as possible while keeping dependencies where was required
 and logical. The current list of dependencies for Debian or Ubuntu
@@ -34,17 +38,86 @@ To install these, copy and paste the following in a terminal:
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline
 
+2) Compiling
 
-Once you have installed the dependencies, the way to compile and install
-FriendUP is as follows:
+a) Config
+Before you start a configuration, you have to create a 'Config' file at the root
+oof the friendup directory. This file contains the path where Friend Core will
+be built. It's structure is the following :
+FRIEND_PATH=/my/path/to/friend
+Please note that the 'install.sh' script creates this file automatically.
+If 'Config' is not found, Friend Core will be built in friendup/build.
 
-	make clean && make setup && make compile
-	make install
+b) Compilation
+Once you have installed the dependencies, and created the Config file,
+the way to compile and install Friend is as follows:
 
-This will install FriendUP in the subdirectory "build/". Here you will
-find the executable "FriendCore", that runs the Friend Server.
+    To setup things :
+	    make clean
+	    make setup
+	To compile the debug version of Friend Core :
+	    make compile
+	To compile the release version of Friend Core :
+	    make release
+	To copy the necessary files into the build directory :
+	    make install
+	You can do this in one command :
+	    make clean setup release install
+	    make clean setup compile install
 
-Please read more about how to set up FriendUP in the document, "Setup.txt".
+You will find FriendCore executable in the build directory defined in the
+'Config' file.
+
+3) Creating the cfg.ini file
+
+Friend Core relies on a cfg.ini file to be present in the build/cfg
+directory. You will find in the 'docs' directory an example of such a file.
+
+Important fields:
+
+[DatabaseUser]                      // Defines the access to the mysql database
+dbname = friendup                   // Name of the database used by Friend Core
+login = friendup                    // Name of the database user for Friend Core
+password = friendupuserpassword     // Password for the user
+host = localhost                    // Host of mysql
+port = 3306                         // Port of mysql
+
+[FriendCore]                        // Friend Core variables
+fchost = test.localfriend           // The host on which Friend Core is to run
+port = 6502                         // The port number to access Friend Core
+fcupload = storage/                 // Where to store data
+
+[Core]                              // Other definitions
+port = 6502                         // Same as above
+SSLEnable = 1                       // 0 for no TLS, 1 for TLS
+                                    // If enabled, you must have certificate.pem
+                                    // and key.pem in the cfg/crt folder
+
+[FriendNetwork]
+enabled = 1                         // Indicates that Friend Network is enabled
+                                    // (1) or not (0). If enabled,
+                                    // Friend Network also needs it's server
+                                    // to be running.
+                                    // Friend Network also needs TLS keys
+                                    // to be defined in build/cfg/crt
+
+[FriendChat]
+enabled = 1                         // Indicates that Friend Chat is enabled.
+                                    // (0) = not enabled, (1) = enabled*
+                                    // Friend Chat needs both a Presence server
+                                    // and a Friend Chat server to function.
+                                    // Friend Chat also needs TLS keys to be
+                                    // defined in build/cfg/crt
+
+4) Please read this
+
+We strongly suggest that you install Friend with the options you want before
+compiling it yourself. For this, use the 'install.sh' script that you can find
+at the root of the friendup directory.
+This script will create all the necessary configuration files for you, and
+install Friend Network and Friend Chat servers if you have selected the options.
+Once this done, you are free to compile Friend Core manually if you wish : the
+compilation and installation does not erase the configuration files.
 
 
 

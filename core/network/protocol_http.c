@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  Protocol HTTP parser
@@ -72,7 +71,7 @@ extern SystemBase *SLIB;
  * @param command pointer to php command provided as string
  * @return new ListString structure or NULL when problem appear
  */
-extern inline ListString *RunPHPScript( const char *command )
+inline ListString *RunPHPScript( const char *command )
 {
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
@@ -216,17 +215,17 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 	// Send reply
 	if( file != NULL )
 	{
-		if(  file->buffer == NULL )
+		if(  file->lf_Buffer == NULL )
 		{
 			Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
 		}
 
-		BufStringAddSize( dstbs, file->buffer, file->bufferSize );
+		BufStringAddSize( dstbs, file->lf_Buffer, file->lf_FileSize );
 		BufStringAdd( dstbs, "\n");
 
 		if( freeFile == TRUE )
 		{
-			LocFileFree( file );
+			LocFileDelete( file );
 		}
 
 		*result = 200;
@@ -478,7 +477,8 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						{
 							DEBUG("[ProtocolHttp] -----------------------------------------------------Calling SYSBASE via HTTP %s\n", path->parts[1] );
 							
-							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), &request, NULL );
+							int respcode = 0;
+							response = SLIB->SysWebRequest( SLIB, &(path->parts[1]), &request, NULL, &respcode );
 						
 							if( response == NULL )
 							{
@@ -645,7 +645,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 										response = HttpNewSimple( HTTP_200_OK, tags );
 
-										HttpSetContent( response, file->buffer, file->bufferSize );
+										HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 						
 										// write here and set data to NULL!!!!!
 										// retusn response
@@ -656,7 +656,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										if( freeFile == TRUE )
 										{
 											//ERROR("\n\n\n\nFREEEEEEFILE\n");
-											LocFileFree( file );
+											LocFileDelete( file );
 										}
 										response->content = NULL;
 										response->sizeOfContent = 0;
@@ -944,7 +944,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									
 									response = HttpNewSimple( HTTP_200_OK, tags );
 								
-									HttpSetContent( response, file->buffer, file->filesize );
+									HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 								
 									// write here and set data to NULL!!!!!
 									// return response
@@ -1045,11 +1045,11 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												LocFile* nlf = LocFileNewFromBuf( path->raw, bs );
 												if( nlf != NULL )
 												{
-													DEBUG("[ProtocolHttp] File created %s size %d\n", nlf->lf_Path, nlf->filesize );
+													DEBUG("[ProtocolHttp] File created %s size %d\n", nlf->lf_Path, nlf->lf_FileSize );
 													
 													if( CacheManagerFilePut( SLIB->cm, nlf ) != 0 )
 													{
-														LocFileFree( nlf );
+														LocFileDelete( nlf );
 													}
 												}
 
@@ -1154,7 +1154,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									{
 										char* mime = NULL;
 						
-										if(  file->buffer == NULL )
+										if(  file->lf_Buffer == NULL )
 										{
 											Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
 										}
@@ -1177,7 +1177,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 		
 										response = HttpNewSimple( HTTP_200_OK, tags );
 						
-										HttpSetContent( response, file->buffer, file->bufferSize );
+										HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 						
 										// write here and set data to NULL!!!!!
 										// return response
@@ -1187,7 +1187,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										//INFO("--------------------------------------------------------------%d\n", freeFile );
 										if( freeFile == TRUE )
 										{
-											LocFileFree( file );
+											LocFileDelete( file );
 										}
 										response->content = NULL;
 										response->sizeOfContent = 0;

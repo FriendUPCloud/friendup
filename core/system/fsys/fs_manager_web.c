@@ -1118,7 +1118,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											{
 												DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
 										
-												int dataread = 0, written = 0;
+												int dataread = 0;
 
 												while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
 												{
@@ -1188,6 +1188,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"No access to source\" }" );
 							}
 						}
+						else
+						{
+							HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot find source root file\" }" );
+						}
+					}
+					else
+					{
+						HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"'to' parameter is missing\" }" );
 					}
 				}	// file copy
 				

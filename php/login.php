@@ -21,7 +21,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /******************************************************************************\
 *                                                                              *
 * FriendUP PHP API v1.0                                                        *
@@ -136,7 +135,7 @@ function checkFCConfig()
 	{
 		if( isset( $cfg['LoginModules']['modules'] ) )
 		{
-			$modules = split(',', $cfg['LoginModules']['modules'] );
+			$modules = explode(',', $cfg['LoginModules']['modules'] );
 			return $modules;
 		}
 	}

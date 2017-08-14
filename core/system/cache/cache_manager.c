@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  * file contain functitons related to cache
@@ -29,6 +28,8 @@
  */
 
 #include "cache_manager.h"
+#include <util/murmurhash3.h>
+#include <system/user/user.h>
 
 /**
  * create new CacheManager
@@ -80,7 +81,7 @@ void CacheManagerDelete( CacheManager *cm )
 			{
 				LocFile *rf = lf;
 				lf = (LocFile *)lf->node.mln_Succ;
-				LocFileFree( rf );
+				LocFileDelete( rf );
 			}
 		}
 		
@@ -88,6 +89,17 @@ void CacheManagerDelete( CacheManager *cm )
 		{
 			FFree( cm->cm_CacheFileGroup );
 		}
+		
+		CacheUserFilesDeleteAll( cm->cm_CacheUserFiles );
+		/*
+		LocFile *lf = cm->cm_LocFileCache;
+		while( lf != NULL )
+		{
+			LocFile *rf = lf;
+			lf = (LocFile *)lf->node.mln_Succ;
+			LocFileDelete( rf );
+		}
+		*/
 	}
 	
 	FFree( cm );
@@ -112,11 +124,25 @@ void CacheManagerClearCache( CacheManager *cm )
 				LocFile *rf = lf;
 				lf = (LocFile *)lf->node.mln_Succ;
 				
-				LocFileFree( rf );
+				LocFileDelete( rf );
 			}
 			
 			cm->cm_CacheFileGroup[ i ].cg_File = NULL;
 		}
+		
+		/*
+		disabled for now
+		LocFile *lf = cm->cm_LocFileCache;
+		while( lf != NULL )
+		{
+			LocFile *rf = lf;
+			lf = (LocFile *)lf->node.mln_Succ;
+			
+			LocFileDelete( rf );
+		}
+		*/
+			
+		cm->cm_LocFileCache = NULL;
 	}
 }
 
@@ -133,21 +159,25 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 {
 	if( cm != NULL )
 	{
-		INFO(" cache size %lld file size %lld cache max %lld\n",  cm->cm_CacheSize ,(FQUAD)lf->filesize, (FQUAD)cm->cm_CacheMax );
-		if( (cm->cm_CacheSize + lf->filesize) > cm->cm_CacheMax )
+		INFO(" cache size %lld file size %lld cache max %lld\n",  cm->cm_CacheSize ,(FQUAD)lf->lf_FileSize, (FQUAD)cm->cm_CacheMax );
+		if( (cm->cm_CacheSize + lf->lf_FileSize) > cm->cm_CacheMax )
 		{
 			FERROR("Cannot add file to cache, cache is FULL\n");
 			return 1;
 		}
 		else
 		{
-			if( lf != NULL &&  lf->lf_Filename != NULL )
+			if( lf != NULL )
 			{
-				int id = lf->lf_Filename[ 0 ];		//we sort data by name
-				if( id < 0 && id >= CACHE_GROUP_MAX )
+				char *hfirstChar = (char *)lf->hash;
+				unsigned char id = (unsigned char)hfirstChar[0];		//we sort data by name
+				/*
+				if( id < 0 && id > 255 )
 				{
 					id = 0;
 				}
+				*/
+				DEBUG("ID %d\n", id );
 				if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )
 				{
 					cm->cm_CacheFileGroup[ id ].cg_File = lf;
@@ -157,15 +187,109 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 					lf->node.mln_Succ = (MinNode *)cm->cm_CacheFileGroup[ id ].cg_File;
 					cm->cm_CacheFileGroup[ id ].cg_File = lf;
 				}
+				
+				//lf->node.mln_Succ = (MinNode *)cm->cm_LocFileCache;
+				//cm->cm_LocFileCache = lf;
 			
 				lf->lf_FileUsed++;
 			
-				cm->cm_CacheSize += lf->filesize;
+				cm->cm_CacheSize += lf->lf_FileSize;
 			}
 			else
 			{
 				FERROR("Cannot store file in cache without filename!\n");
 				return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+/**
+ * function store LocFile inside cache (User cache)
+ *
+ * @param cm pointer to CacheManager which will store file
+ * @param usr pointer to User structure
+ * @param lf pointer to LocFile structure which will be stored in cache
+ * @return 0 when success, otherwise error number
+ */
+int CacheManagerUserFilePut( CacheManager *cm, void *usr, LocFile *lf )
+{
+	if( cm != NULL )
+	{
+		// trying to find user assigned to CacheUserFiles, on the end we should assign cache to user
+		CacheUserFiles *cusf = cm->cm_CacheUserFiles;
+		while( cusf != NULL )
+		{
+			if( cusf->cuf_Usr == usr )
+			{
+				break;
+			}
+			cusf = (CacheUserFiles *)cusf->node.mln_Succ;
+		}
+		
+		// if CacheUserFiles exist, we are adding file to list
+		if( cusf != NULL )
+		{
+			CacheUserFilesAddFile( cusf, lf );
+		}
+		else
+		{
+			CacheUserFiles *newcuf = CacheUserFilesNew( usr );
+			if( newcuf != NULL )
+			{
+				newcuf->node.mln_Succ = (MinNode *)cm->cm_CacheUserFiles;
+				cm->cm_CacheUserFiles = newcuf;
+				
+				CacheUserFilesAddFile( newcuf, lf );
+			}
+		}
+	}
+	return 0;
+}
+
+
+/**
+ * function get LocFile from cache (User cache)
+ *
+ * @param cm pointer to CacheManager where LocFile will be searched
+ * @param usr pointer to User structure
+ * @param path full path to file (include device name)
+ * @return LocFile structure when success, otherwise NULL
+ */
+LocFile *CacheManagerUserFileGet( CacheManager *cm, void *usr, char *path )
+{
+	if( cm != NULL )
+	{
+		// trying to find user assigned to CacheUserFiles, on the end we should assign cache to user
+		CacheUserFiles *cusf = cm->cm_CacheUserFiles;
+		while( cusf != NULL )
+		{
+			if( cusf->cuf_Usr == usr )
+			{
+				break;
+			}
+			cusf = (CacheUserFiles *)cusf->node.mln_Succ;
+		}
+		
+		uint64_t hash[ 2 ];
+		MURMURHASH3( path, strlen(path), hash );
+		
+		char *hfirstChar = (char *)hash;
+		unsigned char id = (unsigned char)hfirstChar[0];
+		
+		// if CacheUserFiles exist, we are trying to find file
+		if( cusf != NULL )
+		{
+			LocFile *lf = cusf->cuf_File;
+			while( lf != NULL )
+			{
+				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+				{
+					lf->lf_FileUsed++;
+					return lf;
+				}
+				lf = (LocFile *)lf->node.mln_Succ;
 			}
 		}
 	}
@@ -210,23 +334,18 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 	
 	if( cm != NULL )
 	{
-		char *fname = NULL;
+		uint64_t hash[ 2 ];
+		MURMURHASH3( path, strlen(path), hash );
 		
-		if( checkByPath == FALSE )
-		{
-			fname = GetFileNamePtr( path, strlen(path ) );
-		}
-		else
-		{
-			fname = path;
-		}
-		
-		DEBUG("[CacheManagerFileGet] FNAME %s -- id %d\n", fname, fname[ 0 ] );
-		int id = fname[ 0 ];
+		char *hfirstChar = (char *)hash;
+		unsigned char id = (unsigned char)hfirstChar[0];
+		/*
 		if( id < 0 || id > 255 )
 		{
 			id = 0;
 		}
+		*/
+		
 		LocFile *lf = NULL;
 
 		CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
@@ -234,7 +353,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 
 		while( lf != NULL )
 		{
-			if( lf->lf_Path != NULL && strcmp( lf->lf_Path, path ) == 0 )
+			if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
 			{
 				lf->lf_FileUsed++;
 				return lf;
@@ -242,6 +361,24 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 			
 			lf = (LocFile *)lf->node.mln_Succ;
 		}
+		
+		/*
+		LocFile *lf = cm->cm_LocFileCache;
+		while( lf != NULL )
+		{
+			char *s = (char *)hash;
+			char *d = (char *)lf->hash;
+			
+			int i;
+			FERROR("COMPARE %x-%x %x-%x\n", hash[0], lf->hash[0], hash[1], lf->hash[1] );
+			
+			if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+			{
+				return lf;
+			}
+			lf = (LocFile *)lf->node.mln_Succ;
+		}
+		*/
 	}
 	
 	return ret;

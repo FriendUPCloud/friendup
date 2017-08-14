@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  *
  *  App Session
@@ -486,7 +485,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 								int err = 0;
 								char tmp[ 512 ];
 
-								if( usrses->us_WSConnections == NULL )
+								if( usrses->us_WSClients == NULL )
 								{
 									int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"not invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
 									if( pos > 0  )
@@ -541,9 +540,9 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				{
 					UserSession *ses = (UserSession *)curgusr->usersession;
 					
-					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSConnections );
+					DEBUG("[AppSession] Found user session %p wscon %p\n", ses, ses->us_WSClients );
 					
-					if( ses != NULL && ses->us_WSConnections != NULL && ses != loggedSession )
+					if( ses != NULL && ses->us_WSClients != NULL && ses != loggedSession )
 					{
 						char tmp[ 512 ];
 						int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", ses->us_User->u_Name, ses->us_DeviceIdentity );
@@ -785,7 +784,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			DEBUG("[AppSession] Going through User Sessions\n");
 			if( le->usersession != NULL )
 			{
-				WebsocketClient *lws = le->usersession->us_WSConnections;
+				WebsocketClient *lws = le->usersession->us_WSClients;
 				while( lws != NULL )
 				{
 					if( lws == ws )

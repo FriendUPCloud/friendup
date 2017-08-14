@@ -371,6 +371,7 @@ i18n_webcam_enabled                     : Activé
 i18n_testing_camera                     : Test caméra Web
 i18n_testing_camera_desc                : Caméra Web en cours de test : est-elle connectée et disponible?
 
+i18n_active_fnet_connections            : Friend Network
 i18n_active_network_connections         : Connexions actives
 
 #Locale ------------------------------------------------------------------------

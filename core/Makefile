@@ -38,7 +38,6 @@ C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/servic
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
-	make -C system/servicesdyn  DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C system DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 $(OUTPUT): $(OBJ_FILES)
@@ -169,19 +168,16 @@ clean:
 	@rm -fr obj/*
 	@rm -f *.d*
 	@rm -f $(C_FILES:%.c=%.d)
-	make -C system/servicesdyn clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C system clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	
 install:
 	@echo "\033[34mInstalling\033[0m"
 	cp $(OUTPUT) $(FRIEND_PATH)/
-	make -C system/servicesdyn install FRIEND_PATH=$(FRIEND_PATH)
 	make -C system install FRIEND_PATH=$(FRIEND_PATH)
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
-	make -C system/servicesdyn setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 
 # dependency system

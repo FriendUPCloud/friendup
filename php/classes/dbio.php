@@ -21,7 +21,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 // Dummy object ------------------------------------------------------------
 class Object {}
 
@@ -43,7 +42,7 @@ class SqlDatabase
 	var $_cacheArrArray;
 	
 	// Instantiation - type is unimplemented
-	function SqlDatabase( $type = false )
+	function __construct( $type = false )
 	{
 		$this->_type = 'mysql';
 	}
@@ -210,7 +209,7 @@ class DbTable
 	var $_fieldnames;
 	var $_autofields; // fields that automatically gets a value
 	
-	function DbTable( $name = false, $database = false )
+	function __construct( $name = false, $database = false )
 	{
 		if( $database )
 			$this->_database = &$database;
@@ -367,12 +366,12 @@ class DbIO extends DbTable
 	var $_limit;
 	var $_position;
 	
-	function DbIO( $TableName = false, $database = false )
+	function __construct( $TableName = false, $database = false )
 	{
 		if( $database )
 			$this->_database = $database;
 		else $this->_database = false;
-		$this->dbTable( $TableName, $this->_database );
+		parent::__construct( $TableName, $this->_database );
 		$this->_debug = false;
 	}
 	

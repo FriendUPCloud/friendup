@@ -29,6 +29,8 @@ Widget.prototype.init = function( flags, target )
 	this.target = target;
 
 	this.tx = 0; this.ty = 0; this.tw = 0; this.th = 0;
+	this.marginTop = 0; this.marginLeft = 0; 
+	this.marginRight = 0; this.marginBottom = 0;
 
 	var t = this;
 	this.dom = document.createElement( 'div' );
@@ -63,11 +65,11 @@ Widget.prototype.calcPosition = function()
 		if( this.tx == 'left' )
 		{
 			this.dom.style.right = 'auto';
-			this.dom.style.left = '0';
+			this.dom.style.left = ( 0 + this.marginLeft ) + 'px';
 		}
 		else if( this.tx == 'right' )
 		{
-			this.dom.style.right = '0';
+			this.dom.style.right = ( 0 + this.marginRight ) + 'px';
 			this.dom.style.left = 'auto';
 		}
 		else if( this.tx == 'center' )
@@ -91,11 +93,11 @@ Widget.prototype.calcPosition = function()
 		if( this.ty == 'bottom' )
 		{
 			this.dom.style.top = 'auto';
-			this.dom.style.bottom = '0';
+			this.dom.style.bottom = ( 0 + this.marginBottom ) + 'px';
 		}
 		else if( this.ty == 'top' )
 		{
-			this.dom.style.top = realTop + 'px';
+			this.dom.style.top = ( realTop + this.marginTop ) + 'px';
 			this.dom.style.bottom = 'auto';
 		}
 		else if( this.ty == 'middle' || this.ty == 'center' )
@@ -126,6 +128,18 @@ Widget.prototype.setFlag = function( flag, val )
 	var target = this.target;
 	switch( flag )
 	{
+		case 'margin-left':
+			if( !isNaN( val ) ) this.marginLeft = val;
+			break;
+		case 'margin-right':
+			if( !isNaN( val ) ) this.marginRight = val;
+			break;
+		case 'margin-bottom':
+			if( !isNaN( val ) ) this.marginBottom = val;
+			break;
+		case 'margin-top':
+			if( !isNaN( val ) ) this.marginTop = val;
+			break;
 		case 'animate':
 			if( val ) this.dom.style.transition = 'width,height 0.25s,0.25s';
 			else this.dom.style.transition = '';
@@ -445,3 +459,4 @@ Widget.prototype.close = function()
 	}
 	return false;
 }
+

@@ -981,7 +981,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 
 			// Make a new buffer and read
 			result = fread( buffer, 1, rsize, sd->fp  );
-			DEBUG( "[PHPFsys] Adding %ul of data\n", result );
+			//DEBUG( "[PHPFsys] Adding %ul of data\n", result );
 			
 			if( f->f_Socket )
 			{
@@ -1016,6 +1016,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			//DEBUG( "[fsysphp] Read %d bytes\n", result );
 		}
 	}
+	printf("PHPRead %d\n", result );
 	
 	return result;
 }

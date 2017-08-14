@@ -1835,6 +1835,15 @@ html body.Busy, html body.Busy *
 	100%   { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
 }
 
+/* Deepest field */
+
+#DeepestField #UserProfilePicture > p.Fullname
+{
+	color: white;
+	text-shadow: 0px 1px 1px black;
+}
+
+
 /* Mobile menu */
 
 html body[mobile=mobile] > #MobileMenu.Visible

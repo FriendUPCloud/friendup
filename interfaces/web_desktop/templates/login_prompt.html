@@ -44,7 +44,7 @@
 								</p>
 							</div>
 						</div>
-						<input type="hidden" id="publickey" value=""/>
+						<input type="hidden" id="publickey" value="{publickey}"/>
 					</form>
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
@@ -102,12 +102,9 @@
 					
 					//track users login..
 					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', htmlentities( Trim( ge( 'Username' ).value ) ) );
-					if( parent.Workspace && parent.Workspace.encryption.keys )
-					{
-						parent.Workspace.encryption.keys.server = { publickey: ge( 'publickey' ) ? ge( 'publickey' ).value : false };
-					}
 					parent.Workspace.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
+						
 						var tmp;
 						if( answer )
 						{
@@ -168,41 +165,9 @@
 				{
 					//console.log( 'receiveMessage(login_prompt.html) ', msg );
 					
-					// TODO: Login with external service
-					if( msg.command && msg.command == 'login' )
-					{
-						// store either keys with for now username/password until switched to only keypairs in localstorage and then login or move the handler outside the iframe and only forward to server using this service
-						
-						// Perhaps it's not a security risk when using the onmessage event sending messages local inside the browser, unless it is sent out from the local client it is a security risk, TODO find out, implement insecure method for now.
-						
-						if( msg.data && msg.data.username && msg.data.password )
-						{
-							console.log( 'receiveMessage [login data]: ', msg.data );
-							
-							parent.Workspace.login( htmlentities( Trim( msg.data.username ) ), Trim( msg.data.password ), true, function( result )
-							{
-								if( result == false )
-								{
-									showLoginError();
-								}
-								else if( result == 0 )
-								{
-									setTimeout( showLoginError, 1000 );
-								}
-								// Success!
-								else
-								{
-									//track users login..
-									if( typeof ga == "function" )
-									{
-										ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( msg.data.username ) ) );	
-									}
-									Application.busy = false;
-								}
-							} );
-						}
-					}
-					else if( msg.command && msg.command == 'error' )
+					// TODO: Remove if not in any use ...
+					
+					if( msg.command && msg.command == 'error' )
 					{
 						showLoginError();
 					}
@@ -260,14 +225,17 @@
 			{
 				if( typeof( GetCookie ) == 'undefined' ) return setTimeout( loginNow, 50 );
 				
-				var j = new cAjax();
-				j.open( 'get', '/publickey/' );
-				j.onload = function()
-				{
-					ge( 'publickey' ).value = this.responseText();
-				}
-				j.send();
-
+				// TODO: Remove since it's not used in login with username / password
+				// TODO: If we need this for later use, include server publickey in template rendering instead or directly to the workspace object ... o.O O.o ...
+				
+				//var j = new cAjax();
+				//j.open( 'get', '/publickey/' );
+				//j.onload = function()
+				//{
+				//	ge( 'publickey' ).value = this.responseText();
+				//}
+				//j.send();
+				
 				Application.applicationId = 'loginprompt';
 				if( parent.GetCookie( 'loginUsername' ) && parent.GetCookie( 'loginPassword' ) )
 				{
@@ -281,7 +249,7 @@
 				}
 				else
 				{
-					document.getElementById('LoginElement').style.visibility = 'visible'
+					document.getElementById('LoginElement').style.visibility = 'visible';
 					document.getElementById('Username').focus(); 
 				}
 			}

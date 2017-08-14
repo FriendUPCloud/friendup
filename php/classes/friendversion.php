@@ -21,7 +21,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /**
 
 	FrienDVersion class.... keeps track of Friends database an neccessary changes...

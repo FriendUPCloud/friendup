@@ -150,6 +150,7 @@ DeepestField = {
 	updateNetConnections: function()
 	{
 		ge( 'NetconnectionsHeader' ).innerHTML = i18n( 'i18n_active_network_connections' ) + ':';
+		ge( 'FNetHeader' ).innerHTML = i18n( 'i18n_active_fnet_connections' ) + ':';
 	},
 	addConnection: function( ptr, url, object )
 	{	

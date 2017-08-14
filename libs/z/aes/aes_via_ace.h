@@ -325,43 +325,43 @@ INLINE void via_ofb_op6(
 
 #elif defined( __GNUC__ )
 
-#define NEH_REKEY   __asm__("pushfl\n popfl\n\t")
-#define NEH_ECB     __asm__(".byte 0xf3, 0x0f, 0xa7, 0xc8\n\t")
-#define NEH_CBC     __asm__(".byte 0xf3, 0x0f, 0xa7, 0xd0\n\t")
-#define NEH_CFB     __asm__(".byte 0xf3, 0x0f, 0xa7, 0xe0\n\t")
-#define NEH_OFB     __asm__(".byte 0xf3, 0x0f, 0xa7, 0xe8\n\t")
-#define NEH_RNG     __asm__(".byte 0x0f, 0xa7, 0xc0\n\t");
+#define NEH_REKEY   asm("pushfl\n popfl\n\t")
+#define NEH_ECB     asm(".byte 0xf3, 0x0f, 0xa7, 0xc8\n\t")
+#define NEH_CBC     asm(".byte 0xf3, 0x0f, 0xa7, 0xd0\n\t")
+#define NEH_CFB     asm(".byte 0xf3, 0x0f, 0xa7, 0xe0\n\t")
+#define NEH_OFB     asm(".byte 0xf3, 0x0f, 0xa7, 0xe8\n\t")
+#define NEH_RNG     asm(".byte 0x0f, 0xa7, 0xc0\n\t");
 
 INLINE int has_cpuid(void)
 {   int val;
-    __asm__("pushfl\n\t");
-    __asm__("movl  0(%esp),%eax\n\t");
-    __asm__("xor   $0x00200000,%eax\n\t");
-    __asm__("pushl %eax\n\t");
-    __asm__("popfl\n\t");
-    __asm__("pushfl\n\t");
-    __asm__("popl  %eax\n\t");
-    __asm__("xorl  0(%esp),%edx\n\t");
-    __asm__("andl  $0x00200000,%eax\n\t");
-    __asm__("movl  %%eax,%0\n\t" : "=m" (val));
-    __asm__("popfl\n\t");
+    asm("pushfl\n\t");
+    asm("movl  0(%esp),%eax\n\t");
+    asm("xor   $0x00200000,%eax\n\t");
+    asm("pushl %eax\n\t");
+    asm("popfl\n\t");
+    asm("pushfl\n\t");
+    asm("popl  %eax\n\t");
+    asm("xorl  0(%esp),%edx\n\t");
+    asm("andl  $0x00200000,%eax\n\t");
+    asm("movl  %%eax,%0\n\t" : "=m" (val));
+    asm("popfl\n\t");
     return val ? 1 : 0;
 }
 
 INLINE int is_via_cpu(void)
 {   int val;
-    __asm__("pushl %ebx\n\t");
-    __asm__("xorl %eax,%eax\n\t");
-    __asm__("cpuid\n\t");
-    __asm__("xorl %eax,%eax\n\t");
-    __asm__("subl $0x746e6543,%ebx\n\t");
-    __asm__("orl  %ebx,%eax\n\t");
-    __asm__("subl $0x48727561,%edx\n\t");
-    __asm__("orl  %edx,%eax\n\t");
-    __asm__("subl $0x736c7561,%ecx\n\t");
-    __asm__("orl  %ecx,%eax\n\t");
-    __asm__("movl %%eax,%0\n\t" : "=m" (val));
-    __asm__("popl %ebx\n\t");
+    asm("pushl %ebx\n\t");
+    asm("xorl %eax,%eax\n\t");
+    asm("cpuid\n\t");
+    asm("xorl %eax,%eax\n\t");
+    asm("subl $0x746e6543,%ebx\n\t");
+    asm("orl  %ebx,%eax\n\t");
+    asm("subl $0x48727561,%edx\n\t");
+    asm("orl  %edx,%eax\n\t");
+    asm("subl $0x736c7561,%ecx\n\t");
+    asm("orl  %ecx,%eax\n\t");
+    asm("movl %%eax,%0\n\t" : "=m" (val));
+    asm("popl %ebx\n\t");
     val = (val ? 0 : 1);
     via_flags = (val | NEH_CPU_READ);
     return val;
@@ -369,16 +369,16 @@ INLINE int is_via_cpu(void)
 
 INLINE int read_via_flags(void)
 {   unsigned char   val;
-    __asm__("movl $0xc0000000,%eax\n\t");
-    __asm__("cpuid\n\t");
-    __asm__("movl $0xc0000001,%edx\n\t");
-    __asm__("cmpl %edx,%eax\n\t");
-    __asm__("setae %al\n\t");
-    __asm__("movb %%al,%0\n\t" : "=m" (val));
+    asm("movl $0xc0000000,%eax\n\t");
+    asm("cpuid\n\t");
+    asm("movl $0xc0000001,%edx\n\t");
+    asm("cmpl %edx,%eax\n\t");
+    asm("setae %al\n\t");
+    asm("movb %%al,%0\n\t" : "=m" (val));
     if(!val) return 0;
-    __asm__("movl $0xc0000001,%eax\n\t");
-    __asm__("cpuid\n\t");
-    __asm__("movb %%dl,%0\n\t" : "=m" (val));
+    asm("movl $0xc0000001,%eax\n\t");
+    asm("cpuid\n\t");
+    asm("movb %%dl,%0\n\t" : "=m" (val));
     val &= NEH_FLAGS_MASK;
     via_flags |= val;
     return (int) val;
@@ -386,109 +386,109 @@ INLINE int read_via_flags(void)
 
 INLINE int via_rng_in(void *buf)
 {   int val;
-    __asm__("pushl %edi\n\t");
-    __asm__("movl %0,%%edi\n\t" : : "m" (buf));
-    __asm__("xorl %edx,%edx\n\t");
+    asm("pushl %edi\n\t");
+    asm("movl %0,%%edi\n\t" : : "m" (buf));
+    asm("xorl %edx,%edx\n\t");
     NEH_RNG
-    __asm__("andl $0x0000001f,%eax\n\t");
-    __asm__("movl %%eax,%0\n\t" : "=m" (val));
-    __asm__("popl %edi\n\t");
+    asm("andl $0x0000001f,%eax\n\t");
+    asm("movl %%eax,%0\n\t" : "=m" (val));
+    asm("popl %edi\n\t");
     return val;
 }
 
 INLINE volatile  void via_ecb_op5(
             const void *k, const void *c, const void *s, void *d, int l)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
     NEH_ECB;
-    __asm__("popl %ebx\n\t");
+    asm("popl %ebx\n\t");
 }
 
 INLINE volatile  void via_cbc_op6(
             const void *k, const void *c, const void *s, void *d, int l, void *v)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
-    __asm__("movl %0, %%eax\n\t" : : "m" (v));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%eax\n\t" : : "m" (v));
     NEH_CBC;
-    __asm__("popl %ebx\n\t");
+    asm("popl %ebx\n\t");
 }
 
 INLINE volatile  void via_cbc_op7(
         const void *k, const void *c, const void *s, void *d, int l, void *v, void *w)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
-    __asm__("movl %0, %%eax\n\t" : : "m" (v));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%eax\n\t" : : "m" (v));
     NEH_CBC;
-    __asm__("movl %eax,%esi\n\t");
-    __asm__("movl %0, %%edi\n\t" : : "m" (w));
-    __asm__("movsl; movsl; movsl; movsl\n\t");
-    __asm__("popl %ebx\n\t");
+    asm("movl %eax,%esi\n\t");
+    asm("movl %0, %%edi\n\t" : : "m" (w));
+    asm("movsl; movsl; movsl; movsl\n\t");
+    asm("popl %ebx\n\t");
 }
 
 INLINE volatile  void via_cfb_op6(
             const void *k, const void *c, const void *s, void *d, int l, void *v)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
-    __asm__("movl %0, %%eax\n\t" : : "m" (v));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%eax\n\t" : : "m" (v));
     NEH_CFB;
-    __asm__("popl %ebx\n\t");
+    asm("popl %ebx\n\t");
 }
 
 INLINE volatile  void via_cfb_op7(
         const void *k, const void *c, const void *s, void *d, int l, void *v, void *w)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
-    __asm__("movl %0, %%eax\n\t" : : "m" (v));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%eax\n\t" : : "m" (v));
     NEH_CFB;
-    __asm__("movl %eax,%esi\n\t");
-    __asm__("movl %0, %%edi\n\t" : : "m" (w));
-    __asm__("movsl; movsl; movsl; movsl\n\t");
-    __asm__("popl %ebx\n\t");
+    asm("movl %eax,%esi\n\t");
+    asm("movl %0, %%edi\n\t" : : "m" (w));
+    asm("movsl; movsl; movsl; movsl\n\t");
+    asm("popl %ebx\n\t");
 }
 
 INLINE volatile  void via_ofb_op6(
             const void *k, const void *c, const void *s, void *d, int l, void *v)
 {
-    __asm__("pushl %ebx\n\t");
+    asm("pushl %ebx\n\t");
     NEH_REKEY;
-    __asm__("movl %0, %%ebx\n\t" : : "m" (k));
-    __asm__("movl %0, %%edx\n\t" : : "m" (c));
-    __asm__("movl %0, %%esi\n\t" : : "m" (s));
-    __asm__("movl %0, %%edi\n\t" : : "m" (d));
-    __asm__("movl %0, %%ecx\n\t" : : "m" (l));
-    __asm__("movl %0, %%eax\n\t" : : "m" (v));
+    asm("movl %0, %%ebx\n\t" : : "m" (k));
+    asm("movl %0, %%edx\n\t" : : "m" (c));
+    asm("movl %0, %%esi\n\t" : : "m" (s));
+    asm("movl %0, %%edi\n\t" : : "m" (d));
+    asm("movl %0, %%ecx\n\t" : : "m" (l));
+    asm("movl %0, %%eax\n\t" : : "m" (v));
     NEH_OFB;
-    __asm__("popl %ebx\n\t");
+    asm("popl %ebx\n\t");
 }
 
 #else

@@ -159,6 +159,7 @@ Application.handlePipe = function( packet )
 								}
 								break;
 							case 'friendnetworkhost':
+								//this.noNextNL = true;
 								FriendNetwork.host( packet.returnMessage.name, packet.returnMessage.password, function( msg ) {				// Callback
 								});
 								break;
@@ -166,11 +167,10 @@ Application.handlePipe = function( packet )
 								FriendNetwork.status();
 								break;
 							case 'friendnetworkconnect':
+								this.noNextNL = true;
 								if ( !this.friendNetworkClient )
 								{
-									FriendNetwork.connect( packet.returnMessage.name, function ( msg )
-									{
-									});
+									FriendNetwork.connect( packet.returnMessage.name, packet.returnMessage.p2p );
 								}
 								else
 								{
@@ -243,6 +243,7 @@ Application.handlePipe = function( packet )
 								{
 									FriendNetwork.dispose( key, function( msg ) {
 									});
+									this.noNextNL = true;
 								}
 								else
 								{
@@ -318,11 +319,12 @@ Application.handlePipe = function( packet )
 	// Are we done? Ready to add newline?
 	if( packet.returnMessage && packet.returnMessage.done )
 	{
-		console.log( 'We are done!' );
 		Application.enableCLI();
-		Application.addNL();
+		if ( !this.noNextNL )
+			Application.addNL();
+		else
+			this.noNextNL = false;
 	}
-	
 }
 
 // Add error line
@@ -566,10 +568,6 @@ Application.setupTerminalKeys = function()
 			// Enter pressed
 			if( k == 13 )
 			{
-				if (t.p2pKey)
-				{
-					FriendNetwork.send(t.p2pKey, t.currentCLI.innerHTML);
-				}
 				if( t.currentCLI.innerHTML == '' )
 					t.evaluateInput( [ "\n" ], 0, k );
 				else
@@ -579,7 +577,7 @@ Application.setupTerminalKeys = function()
 						var callback = t.questionCallback;
 						t.questionCallback = false;
 						callback( t.currentCLI.innerHTML );
-						return;
+						return cancelBubble( e );
 					}
 					
 					// Add last command to log
@@ -596,6 +594,10 @@ Application.setupTerminalKeys = function()
 						if ( p >= 0 )
 						{
 							if ( s.indexOf( 'disconnect', p ) > p )
+							{
+								t.evaluateInput( [t.currentCLI.innerHTML], 0, k );
+							}
+							else if ( s.indexOf( 'status', p ) > p )
 							{
 								t.evaluateInput( [t.currentCLI.innerHTML], 0, k );
 							}
@@ -822,6 +824,7 @@ Application.generateOutputFromObjects = function( objects )
 // Receive messages
 Application.receiveMessage = function( object )
 {
+	var self = this;
 	var command = object.command;
 	if( !command )
 	{
@@ -941,6 +944,13 @@ Application.receiveMessage = function( object )
 					if ( this.friendNetworkHosts[ object.hostKey ])
 					{
 						this.friendNetworkHosts[object.hostKey] = false;
+						var temp = [];
+						for ( var key in this.friendNetworkHosts )
+						{
+							if ( this.friendNetworkHosts[ key ])
+								temp[ key ] = this.friendNetworkHosts[ key ];
+						}
+						this.friendNetworkHosts = temp;
 						this.addOutput('You are no longer hosting "' + object.name + '"');
 						this.addNL();
 					}
@@ -951,16 +961,25 @@ Application.receiveMessage = function( object )
 					{
 						if ( Application.friendNetworkHosts[ object.hostKey ] )
 						{
-							Application.friendNetworkHosts[object.hostKey].clients[object.key] = {
+							var restrictedPath = object.sessionPassword ? false : Application.currentPath;
+							Application.friendNetworkHosts[ object.hostKey ].clients[ object.key ] = {
 								key:   object.key,
 								shell: shell,
-								restrictedPath: object.sessionPassword ? false : Application.currentPath
+								restrictedPath: restrictedPath
 							};
-							shell.evaluate(['cd ' + Application.currentPath ], false, object.key);
-							Application.addOutput(object.name + ' just connected to you...');
+							shell.evaluate( ['cd ' + Application.currentPath ], function(){}, restrictedPath, object.key );
+							Application.addOutput( object.name + ' just connected to you...' );
 							Application.addNL();
 						}
 					};
+					break;
+				case 'p2pClientConnected':
+					Application.addOutput( 'Peer-to-peer connection established' );
+					Application.addNL();
+					break;
+				case 'p2pConnected':
+					Application.addOutput( 'Peer-to-peer connection established' );
+					Application.addNL();
 					break;
 				case 'clientDisconnected':
 					if ( this.friendNetworkHosts[ object.hostKey ])
@@ -993,16 +1012,20 @@ Application.receiveMessage = function( object )
 				case 'wrongCredentials':
 					this.addOutput('Invalid password...');
 				case 'getCredentials':
-					this.addQuestion( 'Please enter password ', function( result ) {
-						FriendNetwork.sendCredentials( object.key, result );
-					});
+					setTimeout( function()
+					{
+						self.addQuestion( 'Please enter password ', function( result )
+						{
+							FriendNetwork.sendCredentials( object.key, result );
+						} )
+					}, 1000 );
 					break;
 				case 'connected':
 					this.friendNetworkPreviousPath = this.currentPath;
 					this.friendNetworkClient = { key: object.key, name: object.name, hostName: object.hostName };
 					this.sendMessage( { command: 'settitle', text: 'New Shell - ' + object.hostName } );
 					this.addOutput( 'You are now connected to "' + object.hostName + '"' );
-					//this.addNL();
+					this.addNL();
 					break;
 				case 'disconnected':
 					this.currentPath = this.friendNetworkPreviousPath;
@@ -1022,16 +1045,35 @@ Application.receiveMessage = function( object )
 					if ( this.friendNetworkClient )
 						Application.handlePipe( object.data );
 					break;
-				case 'p2pConnexionRequest':
-					FriendNetwork.p2pAcceptConnexion(object.key, true);
-					break;
-				case 'p2pConnected':
-					debugger;
-					this.p2pKey = object.key;
-					break;
 				case 'status':
-					debugger;
-					this.addOutput( 'FriendNetwork status report');
+					var out = "";
+					out += 'FriendNetwork status report<br />';
+					out += '---------------------------';
+					if ( object.connected )
+					{
+						out += '<br />Connected';
+						for ( var a = 0; a < object.hosts.length; a++ )
+						{
+							out += '<br />Host: ' + object.hosts[ a ].name + '\n';
+							for ( var b = 0; b < object.hosts[ a ].hosting.length; b++ )
+							{
+								out += '<br />    Hosting: ' + object.hosts[ a ].hosting[ b ].distantName + '\n';
+							}
+						}
+						for ( var a = 0; a < object.clients.length; a++ )
+						{
+							out += '<br />Client: of ' + object.clients[a].hostName +'\n';
+						}
+					}
+					else
+					{
+						out = '<br />Disconnected';
+					}
+					out += '<br />---------------------------';
+					this.addOutput( out );
+					this.addNL();
+					break;
+/*					this.addOutput( 'FriendNetwork status report');
 					if ( object.connected )
 					{
 						this.addOutput( 'Connected' );
@@ -1047,14 +1089,14 @@ Application.receiveMessage = function( object )
 						{
 							this.addOutput('Client: of ' + object.clients[a].name );
 						}
-						this.addNL();
 					}
 					else
 					{
 						this.addOutput( 'Disconnected' );
 					}
+					this.addNL();
 					break;
-				case 'error':
+*/				case 'error':
 					switch ( object.error )
 					{
 						case 'ERR_HOST_ALREADY_EXISTS':

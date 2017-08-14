@@ -19,7 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ *
+ *  WebSocket client definition
+ *
+ * file contain all functitons related to websocket client
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 11/2016
+ */
 
 #ifndef __NETWORK_WEBSOCKET_CLIENT_H__
 #define __NETWORK_WEBSOCKET_CLIENT_H__
@@ -27,14 +35,31 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <libwebsockets.h>
-//#include <system/user/user.h>
+
+//
+//
+//
 
 typedef struct WebsocketClient
 {
 	struct MinNode 					node;
-	struct lws				 			*wc_Wsi;
-	void										*wc_UserSession;
-	void 										*wc_WebsocketsData;
+	struct lws				 		*wc_Wsi;
+	int								wc_InUseCounter;
+	void							*wc_UserSession;
+	void 							*wc_WebsocketsData;
+	pthread_mutex_t					wc_Mutex;
 }WebsocketClient;
+
+//
+//
+//
+
+WebsocketClient *WebsocketClientNew();
+
+//
+//
+//
+
+void WebsocketClientDelete( WebsocketClient *cl );
 
 #endif // __NETWORK_WEBSOCKET_CLIENT__

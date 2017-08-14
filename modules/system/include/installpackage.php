@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -17,7 +17,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 global $Config, $Logger, $User;
 
@@ -79,10 +78,7 @@ if( $fr->Load() )
 			$zip->close();
 			
 			$Logger->log( '[InstallPackage] Successfully unzipped.' );
-		
-			// Remove temporary zip file
-			unlink( '/tmp/' . $ff );
-		
+			
 			$Logger->log( '[InstallPackage] Remove temporary zip file.' );
 		
 			// Find jsx and conf!
@@ -141,6 +137,10 @@ if( $fr->Load() )
 			else
 			{
 				$Logger->log( '[InstallPackage] Found no jsx or conf in path ' . '/tmp/' . $fld );
+				
+				// Remove temporary zip file
+				unlink( '/tmp/' . $ff );
+				
 				die( 'fail<!--separate-->{"response":"no jsx or conf found"}' );
 			}
 		
@@ -148,6 +148,10 @@ if( $fr->Load() )
 			if( !file_exists( getcwd() . '/repository' ) )
 			{
 				$Logger->log( '[InstallPackage] Found no repository (' . getcwd() . '/repository).' );
+				
+				// Remove temporary zip file
+				unlink( '/tmp/' . $ff );
+				
 				die( 'fail<!--separate-->{"response":"repository store does not exist on server"}' );
 			}
 			
@@ -209,6 +213,10 @@ if( $fr->Load() )
 				if( $success )
 				{
 					$Logger->log( '[InstallPackage] Success!' );
+					
+					// move package zip to archive
+					exec( 'mv /tmp/' . $ff . ' ' . getcwd() . '/repository/' . $dest . '/package.zip' );
+					
 					die( 'ok<!--separate-->{"response":"successfully installed friend package","package":"' . $dest . '"}' );
 				}
 			}
@@ -219,6 +227,10 @@ if( $fr->Load() )
 			}
 			
 			$Logger->log( '[InstallPackage] Permission error.' );
+			
+			// Remove temporary zip file
+			unlink( '/tmp/' . $ff );
+			
 			die( 'fail<!--separate-->{"response":"failed to install package due to server file permissions"}' );
 		}
 	}

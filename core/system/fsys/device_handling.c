@@ -176,6 +176,11 @@ int RescanDOSDrivers( SystemBase *l )
 	
 		while( ( dir = readdir( d ) ) != NULL )
 		{
+			if( strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 )
+			{
+				continue;
+			}
+			
 			char tempString[ 1024 ];
 		
 			sprintf( tempString, "%s%s", ddrivedirectory, dir->d_name );
@@ -1611,7 +1616,7 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 	{
 		snprintf( message, mlen, "{\"type\":\"msg\",\"data\":{\"type\":\"%s\",\"path\":\"%s\"}}", evt, path );
 		
-		pthread_mutex_lock( &(u->u_Mutex) );
+		//pthread_mutex_lock( &(u->u_Mutex) );
 		
 		UserSessListEntry *list = u->u_SessionsList;
 		while( list != NULL )
@@ -1629,7 +1634,7 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 			}
 			list = (UserSessListEntry *)list->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(u->u_Mutex) );
+		//pthread_mutex_unlock( &(u->u_Mutex) );
 	}
 	DEBUG("[UserNotifyFSEvent2] end\n");
 }

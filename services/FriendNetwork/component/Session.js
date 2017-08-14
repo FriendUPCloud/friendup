@@ -243,7 +243,6 @@ ns.Session.prototype.init = function() {
 
 ns.Session.prototype.handleEvent = function( event, clientId ) {
 	const self = this;
-	log( 'handleEvent', event );
 	self.emit(
 		event.type,
 		event.data,

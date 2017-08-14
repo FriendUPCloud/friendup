@@ -19,8 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-
 /** @file
  * 
  *  DataForm structure management

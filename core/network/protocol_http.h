@@ -21,7 +21,6 @@
 *****************************************************************************©*/
 
 
-
 #ifndef __NETWORK_PROTOCOLHTTP_H__
 #define __NETWORK_PROTOCOLHTTP_H__
 

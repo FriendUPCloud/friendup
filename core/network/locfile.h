@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  * file contain functiton definitions related to local files
@@ -46,21 +45,22 @@
 
 typedef struct LocFile
 {
-// "public":
-	char						*lf_Filename; // Filename with extension
-	char						*lf_Path;     // Absolute path
+	char			*lf_Filename; // Filename with extension
+	FULONG			lf_FilenameLength; // Filename length
+	char			*lf_Path;     // Absolute path
+	FULONG			lf_PathLength; // Path length
 
-	unsigned long      filesize;
-	char*                   buffer;
-	unsigned long      bufferSize;
+	//unsigned long   filesize;
+	char			*lf_Buffer;
+	unsigned long   lf_FileSize;
 
-// "private":
-	FILE*                   fp;       // File pointer
-	int                       fd;       // File descriptor
-	struct stat          info;
+	FILE*           fp;       // File pointer
+	int             fd;       // File descriptor
+	struct stat     info;
 	
-	FUQUAD             lf_FileUsed;
+	FUQUAD          lf_FileUsed;
 	struct MinNode  node;
+	uint64_t		hash[ 2 ];
 } LocFile;
 
 //
@@ -79,7 +79,7 @@ int LocFileRead( LocFile* file, long long offset, long long size );
 //
 //
 
-void LocFileFree( LocFile* file );
+void LocFileDelete( LocFile* file );
 
 //
 //

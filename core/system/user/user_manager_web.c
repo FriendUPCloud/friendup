@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  User Manager Web body
@@ -606,13 +605,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						l->LibraryMYSQLDrop( l, sqlLib );
 					}
 					
-					sess->us_NRConnections--;
+					// Logout must be last action called on UserSession
+					sess->us_InUseCounter--;
 					error = USMUserSessionRemove( l->sl_USM, sess );
 				}
 				//
 				// we found user which must be removed
 				//
-				
+				/*
 				if( request->h_RequestSource == HTTP_SOURCE_WS )
 				{
 					HttpFree( response );
@@ -620,8 +620,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				}
 				
 				if( error == 0 && response != NULL )
+				*/
 				{
+					// !!! logout cannot send message via Websockets!!!!
+					// in this case return error < 0
 					HttpAddTextContent( response, "ok<!--separate-->{ \"logout\": \"success\"}" );
+					if( request->h_RequestSource == HTTP_SOURCE_WS )
+					{
+						*result = -666;
+					}
+					else
+					{
+						*result = 200;
+					}
 				}
 			}
 			if( l->sl_ActiveAuthModule != NULL )
@@ -633,7 +644,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"authmodule not found!\"}" );
 			}
 		}
-		*result = 200;
 	}
 	
 	//
@@ -684,7 +694,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							UserSession *us = (UserSession *) sessions->us;
 						
 							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
-							//if( us->us_WSConnections != NULL )
+							//if( us->us_WSClients != NULL )
 							time_t timestamp = time(NULL);
 							if( ( (timestamp - us->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
 							{
@@ -904,7 +914,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						FBOOL add = FALSE;
 						DEBUG("[UMWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSClients != NULL )
 						{
 							add = TRUE;
 						}
@@ -1007,9 +1017,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					if( locses != NULL )
 					{
 						FBOOL add = FALSE;
-						DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %d WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), REMOVE_SESSIONS_AFTER_TIME, locses->us_WSConnections );
+						DEBUG("[UMWebRequest] Going through sessions, device: %s time %lu timeout time %d WS ptr %p\n", locses->us_DeviceIdentity, (long unsigned int)(timestamp - locses->us_LoggedTime), REMOVE_SESSIONS_AFTER_TIME, locses->us_WSClients );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSConnections != NULL )
+						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) && locses->us_WSClients != NULL )
 						{
 							add = TRUE;
 						}

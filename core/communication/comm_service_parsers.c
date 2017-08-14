@@ -19,8 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-
 /** @file
  * 
  *  CommunicationService body
@@ -370,7 +368,8 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 					SystemBase *lsysbase = (SystemBase *) serv->s_SB;
 					if( lsysbase != NULL )
 					{
-						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL );
+						int respcode = 0;
+						Http *response = lsysbase->SysWebRequest( lsysbase, &(pathParts[ 1 ]), &http, NULL, &respcode );
 						if( response != NULL )
 						{
 							*isStream = response->h_Stream;

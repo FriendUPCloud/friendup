@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #ifndef __SYSTEM_AUTH_AUTHMODULE_H__
 #define __SYSTEM_AUTH_AUTHMODULE_H__
 

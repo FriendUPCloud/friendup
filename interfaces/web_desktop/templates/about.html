@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<script src="/webclient/js/apps/api.js;/repository/packages/three_r75/three.min.js;/webclient/js/native/ftheory.js"></script>
+	<script src="
+		/webclient/js/apps/api.js;
+		/repository/packages/three_r75/three.min.js;
+		/webclient/js/native/ftheory.js"
+	></script>
 	<style>
 		body,html
 		{ 
@@ -12,8 +16,6 @@
 		#fc-info
 		{
 			position: relative;
-			top: 40px;
-			left: 0;
 			color: white;
 			padding-top : 0.3em;
 		}
@@ -38,43 +40,96 @@
 		}
 		#contributors
 		{
-			transition: top 0.55s;
-			width:calc(100% - 24px);
 			padding:12px;
 			background: rgba( 230, 230, 230, 0.3 ); 
-			color: rgba( 30, 30, 30, 1 );
+			color: white; 
+			text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
 			position: relative;
-			top: 40px;
-			left: 0;
-			bottom: 0px;
 			overflow: auto;
+			transform : scale( 1 );
+			opacity: 1;
+			transition: all 2s;
 		}
+		
+		#contributors a {
+			text-decoration: none;
+			color : white;
+			border-bottom : 1px solid white;
+		}
+		
 		.Loading #contributors
 		{
-			top: 100%;
+			transform : scale( 0.5 );
+			opacity: 0;
 		}
+		
+		#FTheoryCanvasContainer {
+			position: absolute;
+			top: 0;
+			left: 0;
+			bottom: 0;
+			right: 0;
+			background: #222
+		}
+		
+		#content {
+			height: 100%;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+		}
+		
+		#logo {
+			position: relative;
+			width: 100%;
+			flex : 1 1 auto;
+		}
+		
+		#logo img {
+			position: absolute;
+			top : 50%;
+			left: 50%;
+			transform: translate( -50%, -50% );
+			max-width:calc( 100% - 40px );
+			display:block;
+			margin:0 auto;
+		}
+		
+		#info {
+			flex : 0 0 auto;
+		}
+		
 		html body.Loading > * { visibility: hidden; }
 		html body.Loading { background-color: #444444; }
 	</style>
 </head>
 <body class="Loading">
-	<div id="FTheoryCanvasContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #222"></div>
-	<div class="ScrollArea" style="width:100%; height:100%;">
-		<div style="position: relative; top: 20px; left: 0; width: 100%;">
-			<img src="/webclient/gfx/system/logo_480_light.png" style="max-width:calc( 100% - 40px ); display:block; margin:0 auto;"/>
+	<div id="FTheoryCanvasContainer" style=""></div>
+	<div id="content" class="ScrollArea" style="">
+		<div id="logo" style="">
+			<img src="/webclient/gfx/system/logo_480_light.png" style=""/>
 		</div>
-		<div id="fc-info"></div>
-		<div id="contributors" style="color: white; text-shadow: 0px 1px 1px rgba(0,0,0,0.6);">
-			<p class="Layout"><strong>Developers:</strong></p>
-			<p>
-				Chris André Strømland, Espen Olsen, Francois Lionet, Hogne Titlestad, Michael Nilsen, Paul Lassa, Pawel Stefanski, Thomas Wollburg.
-			<p>
-				Please remember to visit our website for more information:
-			</p>
-			<p>
-				<a style="color: white; text-decoration: none" href="https://friendup.cloud/" target="_blank">friendup.cloud</a>
-			</p>
-			<div style="clear: both"></div>
+		<div id="info">
+			<div id="fc-info"></div>
+			<div id="contributors" style="">
+				<p class="Layout"><strong>Developers:</strong></p>
+				<p>
+					Chris André Strømland, 
+					Espen Olsen, 
+					Francois Lionet, 
+					Hogne Titlestad, 
+					Michael Nilsen, 
+					Paul Lassa, 
+					Pawel Stefanski, 
+					Thomas Wollburg.
+				<p>
+					Please remember to visit our website for more information:
+				</p>
+				<p>
+					<a href="https://friendup.cloud/" target="_blank">friendup.cloud</a>
+				</p>
+				<div style="clear: both"></div>
+			</div>
 		</div>
 	</div>
 </body>

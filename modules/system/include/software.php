@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -17,7 +17,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 global $SqlDatabase, $Config, $User;
 
@@ -49,6 +48,7 @@ foreach( $paths as $path )
 		
 			$o = new stdClass();
 			$o->Name = $file;
+			$o->Preview = file_exists( $path . $file . '/preview.png' ) ? true : false;
 			$o->Category = $f->Category;
 			$o->Description = isset( $f->Description ) ? $f->Description : '';
 		

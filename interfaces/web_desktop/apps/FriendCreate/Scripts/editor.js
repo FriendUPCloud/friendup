@@ -292,6 +292,7 @@ Application.applySyntaxHighlighting = function ()
 			extension = 'c';
 			mode = 'ace/mode/c_cpp';
 			break;
+		case 'lang':
 		default:     
 			extension = 'txt';
 			mode = 'ace/mode/plain_text';
@@ -575,6 +576,7 @@ Application.checkFileType = function( path )
 		case 'as':
 		case 'txt':
 		case 'js':
+		case 'lang':
 		case 'json':
 		case 'tpl':
 		case 'ptpl':

@@ -60,41 +60,42 @@ enum {
 
 typedef struct File
 {
-	FULONG											f_ID;               // ID in database
+	FULONG										f_ID;               // ID in database
 	struct MinNode								node;               // link to another files, used by Mount
 	
-	char													*f_Name;            // name of file
-	//char												*f_SharedName;		// when device is shared then name = mail+devname
-	char													*f_Path;            // path
-	char													*f_SessionID;
-	char													*f_Config;          // The config of the file system
-	int													f_Visible;         // Visible?
-	char													*f_Execute;         // Execute something?
-	int													f_Type;             // type
-	int													f_Raw;              // Do read in raw mode?
-	char													*f_FSysName;        // filesystem name required by database
-	void													*f_DOSDriver;
-	void													*f_FSys;            // filesystem type
-	void													*f_User;            // user which mounted device / or file (or owner)
-																			// if user != current user device is shared
-	FUQUAD											f_Size;             // file size
-	FUQUAD											f_Position;         // position where user stopped to read/write
-	FULONG											f_DataPassed;       // size in bytes, to read or write (inside buffer)
-	char													*f_Buffer;          // [ FILE_MAX_BUFFER ];
+	char										*f_Name;            // name of file
+	//char										*f_SharedName;		// when device is shared then name = mail+devname
+	char										*f_Path;            // path
+	char										*f_SessionID;
+	char										*f_Config;          // The config of the file system
+	int											f_Visible;         // Visible?
+	char										*f_Execute;         // Execute something?
+	int											f_Type;             // type
+	int											f_Raw;              // Do read in raw mode?
+	char										*f_FSysName;        // filesystem name required by database
+	void										*f_DOSDriver;
+	void										*f_FSys;            // filesystem type
+	void										*f_User;            // user which mounted device / or file (or owner)
+																	// if user != current user device is shared
+	FUQUAD										f_Size;             // file size
+	FUQUAD										f_Position;         // position where user stopped to read/write
+	FULONG										f_DataPassed;       // size in bytes, to read or write (inside buffer)
+	char										*f_Buffer;          // [ FILE_MAX_BUFFER ];
 	
-	struct File										*f_SharedFile;		// points to shared device
-	struct File										*f_RootDevice;
-	void													*f_SpecialData;     // pointer to special data
+	struct File									*f_SharedFile;		// points to shared device
+	struct File									*f_RootDevice;
+	void										*f_SpecialData;     // pointer to special data
 	
-	FBOOL												f_Mounted;			// if device is mounted use it
-	FULONG											f_Pointer;			// pointer to file
+	FBOOL										f_Mounted;			// if device is mounted use it
+	FULONG										f_Pointer;			// pointer to file
 	
-	FBOOL												f_Stream;			// is file streamed
-	Socket												*f_Socket;					// != NULL then data should be streamed
-	void													*f_WSocket;				// websocket context, if provided data should be delivered here
-	int													f_Operations;				// operation counter
+	FBOOL										f_Stream;			// is file streamed
+	Socket										*f_Socket;			// != NULL then data should be streamed
+	void										*f_WSocket;			// websocket context, if provided data should be delivered here
+	int											f_Operations;		// operation counter
 	
-	int													f_OperationMode; // read, write, etc.
+	int											f_OperationMode; // read, write, etc.
+	FILE										*f_FileCache;		// if != NULL then file must be stored there ( in cache )
 } File;
 
 

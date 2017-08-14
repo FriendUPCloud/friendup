@@ -80,7 +80,6 @@ ns.Emitter.prototype.emit = function() {
 	if ( !listenerIds || !listenerIds.length ) {
 		if ( self._emitterEventSink ) {
 			args.unshift( event );
-			log( 'eventsink', args )
 			self._emitterEventSink.apply( null, args );
 		}
 		

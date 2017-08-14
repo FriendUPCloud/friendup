@@ -381,11 +381,13 @@ ns.Hub.prototype.handleMeta = function( conf, sid )
 ns.Hub.prototype.toHost = function( host, event, sid )
 {
 	const self = this;
+	/*
 	log( 'toHost', {
 		host  : host,
 		event : event,
 		sid   : sid,
 	});
+	*/
 	// if no host, broadcast
 	if ( null == host )
 		self.broadcast( sid, event );
@@ -471,10 +473,12 @@ ns.Hub.prototype.broadcast = function( source, event, callback ) {
 
 ns.Hub.prototype.send = function( source, event, targetId, callback ) {
 	const self = this;
+	/*
 	log( 'send', {
 		event : event,
 		tid   : targetId,
 	});
+	*/
 	const session = self.sessions[ targetId ];
 	if ( !session )
 		return;

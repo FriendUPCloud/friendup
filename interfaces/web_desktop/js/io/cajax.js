@@ -311,7 +311,7 @@ cAjax.prototype.send = function( data )
 			document.body.classList.add( 'Busy' );
 		}
 	}
-	
+
 	// TODO: Check that the websocket actually is OPEN (Chrome being silly)
 	if( self.mode == 'websocket' && Workspace.conn && Workspace.conn.ws )
 	{

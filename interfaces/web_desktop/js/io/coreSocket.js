@@ -204,7 +204,7 @@ FriendWebSocket.prototype.doReconnect = function()
 	{
 		self.reconnectTimer = null;
 		self.reconnectAttempt += 1;
-		console.log( 'ws reconnect' );
+        console.log( 'ws reconnect' );
 		self.connect();
 	}
 	
@@ -287,7 +287,6 @@ FriendWebSocket.prototype.handleOpen = function( e )
 	self.reconnectAttempt = 0;
 	self.setSession();
 	self.setReady();
-	
 	/*
 	if ( self.sessionId )
 	{
@@ -318,8 +317,7 @@ FriendWebSocket.prototype.handleError = function( e )
 FriendWebSocket.prototype.handleSocketMessage = function( e )
 {
 	var self = this;
-	if( self.pingCheck )
-		clearTimeout( self.pingCheck );
+	if( self.pingCheck ) { clearTimeout( self.pingCheck); self.pingCheck = 0 }
 	
 	var msg = friendUP.tool.objectify( e.data );
 	if ( !msg )
@@ -538,7 +536,8 @@ FriendWebSocket.prototype.sendPing = function( msg )
 		data : timestamp,
 	};
 
-	self.pingCheck = setTimeout( checkPing, self.maxPingWait );
+	if( self.pingCheck == 0 ) self.pingCheck = setTimeout( checkPing, self.maxPingWait );
+
 	function checkPing()
 	{
 		self.wsClose( 1000, 'ping never got its pong' );
@@ -564,7 +563,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 	var now = Date.now();
 	var pingTime = now - timeSent;
 
-	if( self.pingCheck ) clearTimeout( self.pingCheck);
+	if( self.pingCheck ) { clearTimeout( self.pingCheck); self.pingCheck = 0 }
 	self.setState( 'ping', pingTime );
 }
 

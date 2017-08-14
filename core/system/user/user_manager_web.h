@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #ifndef __SYSTEM_USER_USER_MANAGER_WEB_H__
 #define __SYSTEM_USER_USER_MANAGER_WEB_H__
 

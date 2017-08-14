@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #ifndef __SYSTEM_ADMIN_ADMIN_WEB_H__
 #define __SYSTEM_ADMIN_ADMIN_WEB_H__
 

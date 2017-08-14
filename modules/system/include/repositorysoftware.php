@@ -1,6 +1,6 @@
 <?php
 
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -19,7 +19,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 global $Logger, $User;
 
 if( $level != 'Admin' )
@@ -36,6 +35,18 @@ if( $dir = opendir( 'repository' ) )
 		$p = 'repository/' . $file . '/';
 		$c = new stdClass();
 		$c->Filename = $file;
+		if( isset( $args->packageget ) && $file == $args->packageget )
+		{
+			if( file_exists( 'repository/' . $file . '/package.zip' ) )
+			{
+				FriendHeader( 'Content-Type: application/octet-stream' );
+				FriendHeader( 'Content-Disposition: attachment; filename=package.zip' );
+				closedir( $dir );
+				die( file_get_contents( 'repository/' . $file . '/package.zip' ) );
+			}
+			closedir( $dir );
+			die( 'fail<!--separate-->{"response":"package file does not exist!"}' ); 
+		}
 		if( file_exists( $p . 'Signature.sig' ) )
 		{
 			$c->Signature = file_get_contents( $p . 'Signature.sig' );

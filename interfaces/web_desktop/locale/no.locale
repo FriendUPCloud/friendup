@@ -372,6 +372,7 @@ i18n_webcam_enabled                     : Tilkoblet
 i18n_testing_camera                     : Webkamera test
 i18n_testing_camera_desc                : Tester om kameraet er tilgjengelig og tilkoblet.
 
+i18n_active_fnet_connections            : Friend Nettverket
 i18n_active_network_connections         : Aktive tilkoblinger
 
 #Locale ------------------------------------------------------------------------

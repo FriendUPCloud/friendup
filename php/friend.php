@@ -21,7 +21,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 /******************************************************************************\
 *                                                                              *
 * FriendUP PHP API v1.0                                                        *
@@ -246,12 +245,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$Config = new Object();
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 	              'FCHost', 'FCPort', 'FCUpload', 
-	              'SSLEnable', 'FCOnLocalhost', 'Domains' );
+	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork' );
 
 	foreach( array(
 		'host', 'login', 'password', 'dbname', 
 		'fchost', 'fcport', 'fcupload',
-		'SSLEnable', 'fconlocalhost', 'domains'
+		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork'
 	) as $k=>$type )
 	{
 		$val = '';
@@ -277,7 +276,10 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				
 			case 'domains':
 				$val = isset( $configfilesettings['Security'][$type] ) ? $configfilesettings['Security'][$type] : '';
-				break;		
+				break;	
+			case 'friendnetwork':
+				$val = isset( $configfilesettings['FriendNetwork']['enabled'] ) ? $configfilesettings['FriendNetwork']['enabled'] : '0';	
+				break;
 			default:
 				$val = '';
 				break;	

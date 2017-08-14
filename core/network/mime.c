@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #include "network/mime.h"
 #include "util/murmurhash3.h"
 #include <string.h>

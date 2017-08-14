@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /**
  * @file
  *
@@ -241,7 +240,6 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		}
 	}
 	
-	DEBUG("[WorkManagerRun] WorkerManager: AddWorker END\n");
 	return 0;
 }
 

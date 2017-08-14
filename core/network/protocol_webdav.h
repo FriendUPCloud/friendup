@@ -20,7 +20,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 #ifndef __NETWORK_PROTOCOL_WEBDAV_H__
 #define __NETWORK_PROTOCOL_WEBDAV_H__
 

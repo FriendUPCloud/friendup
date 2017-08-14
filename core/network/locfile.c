@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  * file contain functitons related to local files
@@ -33,15 +32,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <util/log/log.h>
 #include <network/locfile.h>
 #include <util/string.h>
 #include <util/buffered_string.h>
+#include <util/log/log.h>
 
-//#define _XOPEN_SOURCE 500
 #include <ftw.h>
 #include <unistd.h>
 #include <sys/statvfs.h>
+#include <util/murmurhash3.h>
 
 /**
  * Get filename from path
@@ -80,17 +79,17 @@ inline int LocFileRead( LocFile* file, long long offset, long long size )
 		return -1;
 	}
 
-	file->buffer = (char *)FCalloc( size + 1, sizeof( char ) );
-	if( file->buffer == NULL )
+	file->lf_Buffer = (char *)FCalloc( size + 1, sizeof( char ) );
+	if( file->lf_Buffer == NULL )
 	{
 		DEBUG("Cannot allocate memory for file\n");
 		return 0;
 	}
 	
-	file->bufferSize = size;
+	file->lf_FileSize = size;
 	FILE* fp = file->fp;
 	fseek( fp, offset, SEEK_SET );
-	int result = fread( file->buffer, 1, size, fp );
+	int result = fread( file->lf_Buffer, 1, size, fp );
 	if( result < size )
 	{
 		return result; 
@@ -138,11 +137,13 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
 	{
-		int len = strlen( path );
-		fo->lf_Path = StringDuplicateN( path, len );
-		fo->lf_Filename = StringDuplicate( GetFileNamePtr( path, len ) );
+		fo->lf_PathLength = strlen( path );
+		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
+		fo->lf_Filename = StringDuplicate( GetFileNamePtr( path, fo->lf_PathLength ) );
 		
-		DEBUG("PATH: %s FILENAME %s\n", fo->lf_Path, fo->lf_Filename );
+		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
+		
+		DEBUG("PATH: %s\n", fo->lf_Path );
 		
 		memcpy(  &(fo->info),  &st, sizeof( struct stat) );
 		//fstat( fp, &(fo->info));
@@ -153,11 +154,11 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		fseek( fp, 0, SEEK_END );
 		long fsize = ftell( fp );
 		fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-		fo->filesize = fsize;// st.st_size; //ftell( fp );
+		fo->lf_FileSize = fsize;// st.st_size; //ftell( fp );
 
 		if( flags & FILE_READ_NOW )
 		{
-			LocFileRead( fo, 0, fo->filesize );
+			LocFileRead( fo, 0, fo->lf_FileSize );
 		}
 	}
 	else
@@ -193,19 +194,18 @@ LocFile* LocFileNewFromBuf( char* path, BufString *bs )
 	LocFile* fo = (LocFile*) FCalloc( 1, sizeof(LocFile) );
 	if( fo != NULL )
 	{
-		int len = strlen( path );
-		fo->lf_Path = StringDuplicateN( path, len );
-		fo->lf_Filename = StringDuplicateN( path, len );//StringDuplicate( GetFileNamePtr( path, len ) );
+		fo->lf_PathLength = strlen( path );
+		fo->lf_Path = StringDuplicateN( path, fo->lf_PathLength );
+		//fo->lf_Filename = StringDuplicateN( path, fo->lf_PathLength );//StringDuplicate( GetFileNamePtr( path, len ) );
+		MURMURHASH3( fo->lf_Path, fo->lf_PathLength, fo->hash );
 		
-		DEBUG("PATH: %s FILENAME %s\n", fo->lf_Path, fo->lf_Filename );
+		DEBUG("PATH: %s \n", fo->lf_Path );
 
-		fo->filesize = bs->bs_Size;
+		fo->lf_FileSize = bs->bs_Size;
 		
-		//DEBUG("Converted \n\n%s\n\n", bs->bs_Buffer );
-
-		if( ( fo->buffer = FMalloc( fo->filesize ) ) != NULL )
+		if( ( fo->lf_Buffer = FMalloc( fo->lf_FileSize ) ) != NULL )
 		{
-			memcpy( fo->buffer, bs->bs_Buffer, fo->filesize );
+			memcpy( fo->lf_Buffer, bs->bs_Buffer, fo->lf_FileSize );
 		}
 	}
 	else
@@ -239,10 +239,10 @@ int LocFileReload( LocFile *file,  char *path )
 	//	tmpPath =  file->lf_Path;
 	}
 	
-	if( file->buffer )
+	if( file->lf_Buffer )
 	{
-		FFree( file->buffer );
-		file->buffer = NULL;
+		FFree( file->lf_Buffer );
+		file->lf_Buffer = NULL;
 	}
 	
 	FILE* fp = fopen( path, "rb" );
@@ -261,13 +261,12 @@ int LocFileReload( LocFile *file,  char *path )
 	memcpy(  &(file->info),  &st, sizeof(stat) );
 	
 	file->fp = fp;
-	//file->filesize = file->info.st_size; //ftell( fp );
 	fseek( fp, 0, SEEK_END );
 	long fsize = ftell( fp );
 	fseek( fp, 0, SEEK_SET );  //same as rewind(f);
-	file->filesize = fsize;
+	file->lf_FileSize = fsize;
 
-	LocFileRead( file, 0, file->filesize );
+	LocFileRead( file, 0, file->lf_FileSize );
 	
 	return 0;
 }
@@ -277,7 +276,7 @@ int LocFileReload( LocFile *file,  char *path )
  *
  * @param file pointer to LocFile which will be deleted
  */
-void LocFileFree( LocFile* file )
+void LocFileDelete( LocFile* file )
 {
 	if( file == NULL )
 	{
@@ -298,10 +297,10 @@ void LocFileFree( LocFile* file )
 		FFree( file->lf_Path );
 		file->lf_Path = NULL;
 	}
-	if( file->buffer )
+	if( file->lf_Buffer )
 	{
-		FFree( file->buffer );
-		file->buffer = NULL;
+		FFree( file->lf_Buffer );
+		file->lf_Buffer = NULL;
 	}
 
 	FFree( file );	

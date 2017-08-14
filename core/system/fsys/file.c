@@ -265,7 +265,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 								File *fp = (File *)fsys->FileOpen( dstdev, newdst, "wb" );
 								if( fp != NULL )
 								{
-									fsys->FileWrite( fp, lf->buffer, lf->bufferSize );
+									fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
 									fsys->FileClose( dstdev, fp );
 								}
 								else
@@ -273,7 +273,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 									FERROR("Cannot open file to store %s\n", dst );
 								}
 								
-								LocFileFree( lf );
+								LocFileDelete( lf );
 							}
 							else
 							{
@@ -333,7 +333,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 			File *fp = (File *)fsys->FileOpen( dstdev, dst, "wb" );
 			if( fp != NULL )
 			{
-				fsys->FileWrite( fp, lf->buffer, lf->bufferSize );
+				fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
 				fsys->FileClose( dstdev, fp );
 			}
 			else
@@ -341,7 +341,7 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 				FERROR("Cannot open file to store %s\n", dst );
 			}
 			
-			LocFileFree( lf );
+			LocFileDelete( lf );
 		}
 		else
 		{

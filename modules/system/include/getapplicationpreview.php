@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -21,13 +21,13 @@
 $places = array( 'repository/', 'resources/webclient/apps/' );
 foreach( $places as $place )
 {
-	if( file_exists( $place . '/' . $args->args->application . '/preview.png' ) )
+	if( file_exists( $place . '/' . $args->application . '/preview.png' ) )
 	{
 		FriendHeader( 'Content-Type: image/png' );
-		die( file_get_contents( $place . '/' . $args->args->application . '/preview.png' ) );
+		die( file_get_contents( $place . '/' . $args->application . '/preview.png' ) );
 	}
 }
 
-die( '' );
+die( 'fail' );
 
 ?>

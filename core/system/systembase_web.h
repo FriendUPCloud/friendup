@@ -20,12 +20,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
-/*
-
-	SystemBase_WEB code
-
-*/
+/** @file
+ * 
+ *  SystemBase Web functions definitions
+ *
+ *  @author HT
+ *  @date created 2015
+ */
 
 #ifndef __SYSTEM_SYSTEMBASE_WEB_H__
 #define __SYSTEM_SYSTEMBASE_WEB_H__
@@ -34,6 +35,6 @@
 #include <core/library.h>
 #include "systembase.h"
 
-Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession );
+Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result );
 
 #endif

@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /**
  * @file
  *
@@ -148,6 +147,24 @@ typedef void * APTR;
 
 #ifndef FRIEND_CORE_MANAGER_ID_SIZE
 #define FRIEND_CORE_MANAGER_ID_SIZE	128
+#endif
+
+// Check windows
+#if _WIN32 || _WIN64
+   #if _WIN64
+     #define ENV64BIT
+  #else
+    #define ENV32BIT
+  #endif
+#endif
+
+// Check GCC
+#if __GNUC__
+  #if __x86_64__ || __ppc64__
+    #define ENV64BIT
+  #else
+    #define ENV32BIT
+  #endif
 #endif
 
 #endif		// __TYPES_H__

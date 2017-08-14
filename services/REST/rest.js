@@ -22,7 +22,6 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 // logging ( wrap in each module with a static source, for your convenience )
 global.log = function( source, message, data ) {
 	var now = new Date();

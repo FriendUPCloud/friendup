@@ -991,6 +991,7 @@ Application.checkFileType = function( path )
 		case 'sql':
 		case 'sh':
 		case 'as':
+		case 'lang':
 		case 'txt':
 		case 'js':
 		case 'sol':

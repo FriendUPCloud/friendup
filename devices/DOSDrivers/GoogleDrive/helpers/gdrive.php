@@ -1,6 +1,6 @@
 <?php
 
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -18,7 +18,6 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
-
 
 	/*
 		Landing file to enable Google Drive access in Friend. The HTTP path to this file must match the redrect URI for our oAuth cliet ID (https://console.developers.google.com/apis/credentials?project=friend-unifying-platform&authuser=1)

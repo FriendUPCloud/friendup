@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  User Session Manager
@@ -626,7 +625,12 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	if( sessionRemoved == TRUE )
 	{
 		User *usr = remsess->us_User;
-		remsess->us_User = NULL;
+		if( usr != NULL )
+		{
+			pthread_mutex_lock( &(usr->u_Mutex) );
+			remsess->us_User = NULL;
+			pthread_mutex_unlock( &(usr->u_Mutex) );
+		}
 
 		UserSessionDelete( remsess );
 		
@@ -941,6 +945,97 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		return FALSE;
 	}
     
+    //pthread_mutex_lock( &(usm->usm_Mutex) );
+	User *usr = sb->sl_UM->um_Users;
+	while( usr != NULL )
+	{
+		if( usr->u_ID == notification->dn_OwnerID )
+		{
+			char *uname = usr->u_Name;
+			
+			UserSessListEntry *le = usr->u_SessionsList;
+			while( le != NULL )
+			{
+				UserSession *uses = (UserSession *)le->us;
+			
+				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
+			
+				DEBUG("[DoorNotificationCommunicateChanges] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
+				
+				WebSocketSendMessage( sb, uses, tmpmsg, len );
+
+				RemoteUser *ruser = usr->u_RemoteUsers;
+				while( ruser != NULL )
+				{
+					DEBUG("[DoorNotificationCommunicateChanges] Remote user connected: %s\n", ruser->ru_Name );
+					RemoteDrive *rdrive = ruser->ru_RemoteDrives;
+				
+                    while( rdrive != NULL )
+					{
+						DEBUG("[DoorNotificationCommunicateChanges] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+					
+						if( rdrive->rd_DriveID == device->f_ID )
+						{
+							char devid[ 128 ];
+						
+							int fnamei;
+							int fpathi;
+							int funamei;
+							int fdriveid;
+						
+							char *fname =  createParameter( "devname", rdrive->rd_RemoteName, &fnamei );
+							char *fpath =  createParameter( "path", path, &fpathi );
+							char *funame =  createParameter( "usrname", ruser->ru_Name, &funamei );
+							char *fdeviceid = createParameterFULONG( "deviceid", rdrive->rd_RemoteID, &fdriveid );
+						
+							MsgItem tags[] = {
+								{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+								{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)sb->fcm->fcm_ID },
+								{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+								{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+								{ ID_FNOT, (FULONG)0 , MSG_INTEGER_VALUE },
+								{ ID_PARM, (FULONG)0, MSG_GROUP_START },
+								{ ID_PRMT, (FULONG) fnamei, (FULONG)fname },
+								{ ID_PRMT, (FULONG) fpathi, (FULONG)fpath },
+								{ ID_PRMT, (FULONG) funamei, (FULONG)funame },
+								{ ID_PRMT, (FULONG) fdriveid, (FULONG)fdeviceid },
+								{ MSG_GROUP_END, 0,  0 },
+								{ TAG_DONE, TAG_DONE, TAG_DONE }
+							};
+						
+							DataForm *df = DataFormNew( tags );
+							if( df != NULL )
+							{
+								DEBUG("[DoorNotificationCommunicateChanges] Register device, send notification\n");
+							
+								BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
+								if( result != NULL )
+								{
+									DEBUG("[DoorNotificationCommunicateChanges] Received response\n");
+									BufStringDelete( result );
+								}
+								DataFormDelete( df );
+							}
+						
+							FFree( fdeviceid );
+							FFree( fname );
+							FFree( fpath );
+							FFree( funame );
+							break;
+						}
+						rdrive = (RemoteDrive *)rdrive->node.mln_Succ;
+					}
+					ruser = (RemoteUser *)ruser->node.mln_Succ;
+				}
+				
+				le = (UserSessListEntry *)le->node.mln_Succ;
+			} // if ->usr == NULL
+		}
+		usr = (User *)usr->node.mln_Succ;
+	}
+	//pthread_mutex_unlock( &(usm->usm_Mutex) );
+	
+    /*
 	pthread_mutex_lock( &(usm->usm_Mutex) );
 	UserSession *uses = usm->usm_Sessions;
 	while( uses != NULL )
@@ -962,7 +1057,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
             DEBUG("[DoorNotificationCommunicateChanges] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 			WebSocketSendMessage( sb, uses, tmpmsg, len );
 			
-			pthread_mutex_lock( &(uses->us_WSMutex) );
+			//pthread_mutex_lock( &(uses->us_Mutex) );
 			if( uses->us_User == NULL )
 			{
                 
@@ -1035,13 +1130,14 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 			} // if ->usr == NULL
 			
 			uses->us_NRConnections--;
-			pthread_mutex_unlock( &(uses->us_WSMutex) );
+			//pthread_mutex_unlock( &(uses->us_Mutex) );
 			
 			pthread_mutex_lock( &(usm->usm_Mutex) );
 		}
 		uses = (UserSession *)uses->node.mln_Succ;
 	}
 	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	*/
     
 	FFree( tmpmsg );
 	return TRUE;

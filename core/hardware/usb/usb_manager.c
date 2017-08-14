@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  *  USB devices manager
@@ -541,6 +540,7 @@ if( dev != NULL )
 #else
 
 #endif
+	return 0;
 }
 
 /**

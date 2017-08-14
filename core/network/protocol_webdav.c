@@ -21,7 +21,6 @@
 *****************************************************************************©*/
 
 
-
 #include "protocol_webdav.h"
 #include <core/functions.h>
 #include <util/buffered_string.h>

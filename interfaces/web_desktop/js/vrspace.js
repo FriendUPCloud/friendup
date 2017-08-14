@@ -254,8 +254,8 @@ Workspace = {
 		keyobject: false,
 		
 		keys: {
-			client: false,
-			server: false
+			client: false, 
+			server: false 
 		},
 		
 		setKeys: function( u, p )
@@ -278,9 +278,9 @@ Workspace = {
 				if( keys )
 				{
 					this.keys.client = {
-						privatekey  : this.fcrypt.encodeKeyHeader( keys.privatekey ),
-						publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ),
-						recoverykey : keys.recoverykey
+						privatekey  : this.fcrypt.encodeKeyHeader( keys.privatekey ), 
+						publickey   : this.fcrypt.encodeKeyHeader( keys.publickey ), 
+						recoverykey : keys.recoverykey 
 					};
 				}
 				
@@ -793,9 +793,9 @@ Workspace = {
 				if( this.encryption.keys.client )
 				{
 					ApplicationStorage.save( {
-						privatekey  : this.encryption.keys.client.privatekey,
-						publickey   : this.encryption.keys.client.publickey,
-						recoverykey : this.encryption.keys.client.recovery
+						privatekey  : this.encryption.keys.client.privatekey, 
+						publickey   : this.encryption.keys.client.publickey, 
+						recoverykey : this.encryption.keys.client.recovery 
 					},
 					{ applicationName : 'Workspace' } );
 					
@@ -905,7 +905,7 @@ Workspace = {
 		
 
 		var t = this;
-		var callback = t.loginCallBack;
+		var callback = t.loginCallBack;		
 		/*
 			after a user has logged in we want to prepare the workspace for him.
 		*/
@@ -964,7 +964,7 @@ Workspace = {
 			if( e != 'ok' )
 			{
 				if( !json.acceptedEula )
-				{
+				{	
 					ShowEula();
 				}
 			}
@@ -1028,12 +1028,12 @@ Workspace = {
 	
 					t.init();
 				}
-				m.execute( 'usersettings' );
+				m.execute( 'usersettings' );				
 			}, 400 );
 		}
 		if( callback && typeof( callback ) == 'function' ) callback( 1 );
 		return 1;
-		
+					
 		
 		/* done here. workspace is shown. */
 	},

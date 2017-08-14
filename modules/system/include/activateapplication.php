@@ -1,5 +1,5 @@
 <?php
-/*©lpgl*************************************************************************
+/*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
 *                                                                              *
@@ -18,12 +18,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
-
 global $Logger;
 
 require_once( 'php/classes/door.php' );
 
-// Device activation
+// Disk activation
 if( strstr( $args->args->application, ':' ) )
 {
 	$deviceName = reset( explode( ':', $args->args->application ) );
@@ -60,8 +59,9 @@ if( strstr( $args->args->application, ':' ) )
 			{
 				$Logger->log( '[ActivateApplication] Refreshing drive permissions.' );
 				$d = new Door( $deviceName . ':' );
-				$d->dosQuery( '/system.library/device/unmount?devname=' . $deviceName );
-				$d->dosQuery( '/system.library/device/mount?devname=' . $deviceName );
+				/*$t1 = $d->dosQuery( '/system.library/device/unmount?devname=' . $deviceName );
+				$t2 = $d->dosQuery( '/system.library/device/mount?devname=' . $deviceName );
+				$t3 = $d->dosQuery( '/system.library/device/refresh?devname=' . $deviceName );*/
 			}
 			else
 			{

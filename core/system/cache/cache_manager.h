@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  * 
  * file contain function definitions related to cache
@@ -36,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cache_user_files.h"
 
 #define CACHE_GROUP_MAX 256
 
@@ -55,7 +55,9 @@ typedef struct CacheFileGroup
 
 typedef struct CacheManager
 {
-	CacheFileGroup		*cm_CacheFileGroup;
+	CacheFileGroup	*cm_CacheFileGroup;
+	LocFile			*cm_LocFileCache;
+	CacheUserFiles	*cm_CacheUserFiles;
 	FUQUAD			cm_CacheSize;
 	FUQUAD 			cm_CacheMax;
 }CacheManager;

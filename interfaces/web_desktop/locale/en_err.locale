@@ -1,0 +1,9 @@
+#Connections --------------------------------------------------------------------
+ERR_CONN_ERROR                          : Connection is closed
+ERR_REQUEST_INVALID_RESPONSE            : Invalid response message
+ERR_REQUEST_TIMEOUT                     : Request has timed out
+
+#FriendNetwork ------------------------------------------------------------------
+ERR_FN_INVALID_HOSTID                   : Host ID is not invalid
+ERR_FN_INVALID_APPDATA                  : Data is not valid
+ERR_FN_P2P_DENIED                       : Remote host declined the p2p connection

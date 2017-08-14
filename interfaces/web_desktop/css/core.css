@@ -2859,21 +2859,31 @@ body[mobile=mobile] #DeepestField > div > #Identity
 	height: 180px;
 }
 
-#DeepestField > div > #NotificationHeader
+#DeepestField > div > #NotificationHeader,
+#DeepestField > div > #FNetHeader
 {
 	background: rgba(0,0,0,0.8);
 	position: absolute;
-	right: 20px;
 	top: 260px;
 	display: block;
 	color: white;
-	left: calc(50% + 10px);
 	border-radius: 2px 2px 0 0;
 	height: 30px;
 	line-height: 30px;
 	z-index: 2;
 	padding: 0 10px 0 10px;
 	font-weight: bold;
+}
+#DeepestField > div > #NotificationHeader
+{
+	left: calc(75% + 10px);
+	right: 20px;
+}
+
+#DeepestField > div > #FNetHeader
+{
+	left: calc(50% + 10px);
+	right: calc(25% + 10px);
 }
 
 #DeepestField > div > #CapabilityHeader,
@@ -2927,7 +2937,8 @@ body[mobile=mobile] #DeepestField > div > #Identity
 #DeepestField > div > #Notifications,
 #DeepestField > div > #Tasks,
 #DeepestField > div > #Capabilities,
-#DeepestField > div > #Netconnections
+#DeepestField > div > #Netconnections,
+#DeepestField > div > #FNetContent
 {
 	background: rgba(0,0,0,0.3);
 	overflow: auto;
@@ -2937,16 +2948,23 @@ body[mobile=mobile] #DeepestField > div > #Identity
 	color: white;
 }
 
-#DeepestField > div > #Notifications
+#DeepestField > div > #Notifications,
+#DeepestField > div > #FNetContent
 {
 	position: absolute;
-	left: calc(50% + 10px);
+	left: calc(75% + 10px);
     font-family: monospace, courier, courier new;
     font-size: 13px;
     top: 261px;
     height: 246px;
     right: 20px;
     padding: 45px 20px 12px 20px;
+}
+
+#DeepestField > div > #FNetContent
+{
+	left: calc(50% + 10px);
+	right: calc(25% + 10px);
 }
 
 #DeepestField > div > #Capabilities,

@@ -190,7 +190,7 @@ void WorkerThread( void *w )
 			}
 			else
 			{
-				FERROR("Function is not set\n");
+				//FERROR("Function is not set\n");
 			}
 		}
 		else

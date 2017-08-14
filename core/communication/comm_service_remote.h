@@ -20,7 +20,7 @@
 *                                                                              *
 *****************************************************************************©*/
 /** @file
- * 
+ *
  *  CommunicationRemoteService header
  *
  *  @author PS (Pawel Stefanski)

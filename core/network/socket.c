@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /** @file
  *
  *  Sockets
@@ -2112,7 +2111,7 @@ int SocketWrite( Socket* sock, char* data, FQUAD length )
 {
     if( sock == NULL || length < 1 )
     {
-        FERROR("Socket is NULL or length < 1: %lu\n", length );
+        FERROR("Socket is NULL or length < 1: %llu\n", length );
         return -1;
     }
 	if( sock->s_SSLEnabled == TRUE )

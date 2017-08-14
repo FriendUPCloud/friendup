@@ -2307,7 +2307,9 @@ Shell = function()
 // TODO: Make this global for the Doors space (use proxy!)
 var __audioContext = false;
 
-WebAudioLoader = function( filePath, callback )
+WebAudioLoader = function(
+		
+		Path, callback )
 {
 	if( !__audioContext )
 		__audioContext = new AudioContext();
@@ -2745,19 +2747,6 @@ FriendNetwork = {
 			} )
 		} );
 	},
-	p2pConnect: function( name, data, callback )
-	{
-		Application.sendMessage( {
-			type: 'friendnet',
-			method: 'p2pConnect',
-			name: name,
-			data: data,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
-	},
 	p2pAcceptConnexion: function( key, accept, data, callback )
 	{
 		Application.sendMessage( {
@@ -2772,11 +2761,12 @@ FriendNetwork = {
 			} )
 		} );
 	},
-	connect: function( name, callback )
+	connect: function( name, p2p, callback )
     {
 		Application.sendMessage( {
 			type: 'friendnet',
 			method: 'connect',
+			p2p: p2p,
 			name: name,
 			callback: addCallback( function ( msg )
 			{
@@ -4358,7 +4348,7 @@ if( typeof( Say ) == 'undefined' )
 					u.voice = v[a].voiceURI;
 					break;
 				}
-			}
+			}			
 		}
 		catch(e) { console.log( 'Could not set voice' ); }
 

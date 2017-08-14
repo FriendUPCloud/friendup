@@ -19,7 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
 /**
  *  @file systembase.h
  *  Server entry point
@@ -266,7 +265,7 @@ typedef struct SystemBase
 
 	void (*SystemClose)( struct SystemBase *l );
 
-	Http  *(*SysWebRequest)( struct SystemBase *l, char **path, Http **request, UserSession *loggedSession  );
+	Http  *(*SysWebRequest)( struct SystemBase *l, char **path, Http **request, UserSession *loggedSession, int *result );
 
 	int (*InitSystem)( struct SystemBase *l );
 
@@ -313,7 +312,7 @@ typedef struct SystemBase
 	
 	int (*WebSocketSendMessageInt)( UserSession *usersession, char *msg, int len );
 	
-	int (*WebsocketWrite)( struct lws *wsi, unsigned char *msgptr, int msglen, int type, void *ses );
+	int (*WebsocketWrite)( void *wscl, unsigned char *msgptr, int msglen, int type );
 	
 	int (*SendProcessMessage)( Http *request, char *data, int len );
 

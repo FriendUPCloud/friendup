@@ -786,7 +786,7 @@ Shell = function( appObject )
 						returnMessage: returnMessage,
 						data:          data
 					}
-				}, function (msg)
+				}, function( msg )
 				{
 				});
 			}
@@ -797,13 +797,13 @@ Shell = function( appObject )
 				previousCallback( data, returnMessage );
 			}
 		};
-		if (this.executing)
+		if( this.executing )
 		{
-			if (this.break)
+			if( this.break )
 			{
 				this.executing = false;
 				this.break = false;
-				callback(false, {done: true});
+				callback( false, { done: true } );
 				return false;
 			}
 		}
@@ -838,11 +838,14 @@ Shell = function( appObject )
 				this.temporaryList = null;
 				return this.evaluateInput( nextList, nextIndex, callback, mode );
 			}
-			// 'inside' type arrays are sub arrays, and not done
-			if( mode != 'inside' )
+			// Terminate with a newline (done=true) when we're outside the recursion
+			// except if we've terminated this process with this.terminate
+			if( !this.terminate && mode != 'inside' )
 			{
+				console.log( 'We are not inside.' );
 				callback( true, { done: true } );
 			}
+			this.terminate = false;
 			this.executing = false;
 			return;
 		}
@@ -1174,7 +1177,7 @@ Shell = function( appObject )
 			}
 			else
 			{
-				callback(true, { done: true} );
+				callback( true, { done: true } );
 				return false;
 			}
 		}
@@ -1433,7 +1436,7 @@ Shell = function( appObject )
 						// Hmm. No more commands?
 						if( input.length <= index && !preroll.length )
 						{
-							callback(true, {response: "newline", done: true});
+							callback(true, { response: "newline", done: true } );
 							return false;
 						}
 						// Ok we have what we need, now find out if we have a long list!
@@ -1538,7 +1541,7 @@ Shell = function( appObject )
 		// Handle scripts!
 		else if( cmd[0] == 'version' )
 		{
-			callback( true, { response: 'Friend Shell version 0.9' } );
+			callback( true, { response: 'Friend Shell version 1.0.0' } );
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
 		// Handle gotos!
@@ -1742,9 +1745,13 @@ Shell = function( appObject )
 				case 'connect':
 					if (cmd.length < 3)
 						return dcallback(false, {response: 'Syntax: friendnetwork connect "hostname".'});
+					var p2p = false;
+					if ( cmd.length == 4 && cmd[ 3 ] == 'p2p' )
+						p2p = true;
 					return dcallback(false, {
 						command: 'friendnetworkconnect',
 						name:    cmd[2],
+						p2p:	 p2p
 					});
 				case 'password':
 					if (cmd.length < 4)
@@ -2087,7 +2094,7 @@ Shell = function( appObject )
 					var d = JSON.parse( res[1] );
 					if (d.Filesize > 1024*100)
 					{
-						dcallback(false, {response: 'File too large: ' + Math.floor(d.Filesize/1024) +' kb.'})
+						dcallback(false, {response: 'File too large: ' + d.Filesize/1024 +' kb.'})
 						return false;
 					}
 					var f = new File( p );
@@ -2206,6 +2213,8 @@ Shell = function( appObject )
 			
 			if( cmd.length >= 3 )
 			{
+				this.terminate = true;
+				
 				var start = 1;
 				var recursive = false;
 			
@@ -2227,9 +2236,10 @@ Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
 				
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result, done )
 				{
-					dcallback( false, { response: result } );
+					if( !done ) done = false;
+					dcallback( false, { response: result, done: done } );
 				} );
 			}
 			else
@@ -2278,6 +2288,8 @@ Shell = function( appObject )
 			
 			if( cmd.length >= 3 )
 			{
+				this.terminate = true;
+				
 				var start = 1;
 				var recursive = false;
 			
@@ -2299,9 +2311,10 @@ Shell = function( appObject )
 				// 'all' on the end
 				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
 				
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result )
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
 				{
-					dcallback( false, { response: result } );
+					if( !done ) done = false;
+					dcallback( false, { response: result, done: done } );
 				} );
 			}
 			else
@@ -2419,6 +2432,8 @@ Shell = function( appObject )
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Delete is not authorised by host.' } );
 			
+			this.terminate = true;
+			
 			if( cmd.length >= 2 )
 			{
 				var start = 1;
@@ -2450,7 +2465,7 @@ Shell = function( appObject )
 				// Finally delete
 				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
 				{
-					dcallback( false, { response: result } );
+					dcallback( false, { response: result, done: true } );
 				} );
 			}
 		}
@@ -2971,7 +2986,7 @@ Shell = function( appObject )
 				{
 					return dcallback( false, { response: 'Invalid path.' } );
 				}
-				return dcallback( true, { response: 'Invalid path.' } );
+				return dcallback( false, { response: 'Invalid path.' } );
 			}, { details: true } );
 		}
 		else if( cmd[0] == 'dir' )
@@ -2987,14 +3002,13 @@ Shell = function( appObject )
 			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
 				path += '/';
 		
-		
 			path = path.split( '<!--space--!>' ).join( ' ' );
 		
 			this.getDirectory( path, function( doorItem, data )
 			{
 				if( data && data.length )
 				{
-					return dcallback( data, { path: path } );
+					return dcallback( data );
 				}
 				// We have empty list
 				else if( data )
@@ -3006,7 +3020,7 @@ Shell = function( appObject )
 				{
 					return dcallback( false, { response: 'Invalid path.' } );
 				}
-				return dcallback( true, { path: path } );
+				return dcallback( false );
 			} );
 		}
 		// Flush variables
@@ -3656,12 +3670,33 @@ FriendDOS =
 	sessions: [],
 	count: 0,
 	// Copy files with option flags
-	copyFiles: function( src, dest, flags, callback, depth )
+	copyFiles: function( src, dest, flags, callback, depth, copyObject )
 	{
+		// Do we want to move the files?
+		var move = flags && flags.move ? true : false;
+		
+		// Setup copyobject!
+		if( !copyObject ) copyObject = {
+			copyCounter: 0, // Done copying files
+			copyTotal: 0,   // Files copying in progress
+			copyDepth: 0,    // Swipe depth
+			callback: callback,
+			test: function()
+			{
+				if( this.copyCounter == this.copyTotal && this.copyDepth == 0 )
+				{
+					if ( move )
+						this.callback( 'Done moving ' + this.copyTotal + ' files.', true );
+					else
+						this.callback( 'Done copying ' + this.copyTotal + ' files.', true );
+				}
+				//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
+			}
+		};
+		
 		// Verified destinations are passing
 		if( flags.verifiedDestination )
 		{
-			console.log( 'Second time: ' + dest );
 			cfcbk( src, dest, flags, callback, depth );
 		}
 		// Unverified are verified first
@@ -3677,7 +3712,7 @@ FriendDOS =
 			{
 				FriendDOS.getFileInfo( dest, function( e, d )
 				{
-					if( !e ) return callback( 'Failed to copy files.' );
+					if( !e ) return callback( 'Failed to copy files.', { done: true } );
 					var f = false;
 					try
 					{
@@ -3685,7 +3720,7 @@ FriendDOS =
 					}
 					catch( e )
 					{
-						return callback( 'Failed to get file info on ' + dest );
+						return callback( 'Failed to get file info on ' + dest, { done: true } );
 					}
 					if( f && f.Type == 'Directory' && dest.substr( dest.length - 1, 1 ) != '/' )
 						dest += '/';
@@ -3697,17 +3732,14 @@ FriendDOS =
 		}
 		
 		// Actual working code
-		function cfcbk( src, dest, flags, callback, depth )
-		{
+		function cfcbk( src, dest, flags, cb, depth )
+		{	
 			var self = this;
-
-			// Do we want to move the files?
-			var move = flags && flags.move ? true : false;
 			
 			if (!depth)
    			{
     			depth = 0;
-    			if (move)
+    			if( move )
 				{
 					window.moveFiles = { fileArray: [], dirArray: [], counter: 0 };
 				}
@@ -3716,7 +3748,7 @@ FriendDOS =
 			// Get door objects
 			var doorSrc = ( new Door() ).get( src );
 			var doorDst = ( new Door() ).get( src );
-			if (move) window.moveFiles.doorSrc = doorSrc;
+			if( move ) window.moveFiles.doorSrc = doorSrc;
 		
 			// Don't copy to self
 			if ( src == dest )
@@ -3750,7 +3782,7 @@ FriendDOS =
 			doorSrc.path = pthTest;
 		
 			//console.log( 'So, getting icons on: ' + pthTest );
-			if (move) window.moveFiles.counter++;
+			if( move ) window.moveFiles.counter++;
 			doorSrc.getIcons( false, function( data )
 			{
 				var abort = false;
@@ -3761,58 +3793,70 @@ FriendDOS =
 					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
 					var compare = data[a].Path;
-					if( data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
-						src.substr( src.length - 1, 1 ) != '/' )
+					if( 
+						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
+						src.substr( src.length - 1, 1 ) != '/' 
+					)
 					{
 						compare = compare.substr( 0, compare.length - 1 );
 					}
 				
-					// We have a match!
+					// We have a match with the path we want to copy!
 					if( compare == src )
 					{
-						// Recurse into directories
+						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
-						{
-							var dsign = dest.substr( dest.length-1, 1 );
-							if( dsign != ':' && dsign != '/' )
-								dsign = '/';
-							else dsign = '';
+						{	
+							var dsign = dest.substr( dest.length - 1, 1 );
+							if( dsign != ':' && dsign != '/' ) dsign = '/'; else dsign = '';
 						
 							var destination = dest + dsign + data[a].Filename + '/';
 							var p = data[a].Path;
-							if (move)
+							
+							if( move )
 			    			{
 				    			window.moveFiles.dirArray.push(p);
 				    			window.moveFiles.counter++;
 			    			}
+			    			
+			    			// Assume the destination directory does not exist
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
-								if (move) window.moveFiles.counter--;
+								if( move ) window.moveFiles.counter--;
 								var d = ( new Door() ).get( p );
-								if (move) window.moveFiles.counter++;
+								if( move ) window.moveFiles.counter++;
+								// Get source directory
 								d.getIcons( p, function( subs )
 								{
+									function CopyAndCallback( dcp, dfn, move )
+									{
+										if( move )
+										{
+											window.moveFiles.fileArray.push({ source: dcp, destination: destination + dfn });
+											window.moveFiles.counter++;
+										}
+										doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
+										{
+											if( move )
+											{
+												window.moveFiles.counter--;
+												callback( 'Moved ' + dcp + ' to ' + destination + dfn );
+											}
+											else
+											{
+												callback( 'Copied ' + dcp + ' to ' + destination + dfn );
+											}
+											copyObject.copyCounter++;
+											copyObject.test();
+										} );
+									}
+								
 									for( var c = 0; c < subs.length; c++ )
 									{
 										if( subs[c].Type == 'File' )
 										{
-											var dcp = subs[c].Path;
-											var dfn = subs[c].Filename;
-											if (move)
-											{
-												window.moveFiles.fileArray.push({ source: dcp, destination: destination + dfn });
-												window.moveFiles.counter++;
-											}
-											doorSrc.dosAction( 'copy', { from: dcp, to: destination + dfn }, function( result )
-											{
-												if (move)
-												{
-													window.moveFiles.counter--;
-													callback( 'Moved ' + dcp + ' to ' + destination + dfn );
-												}
-												else
-													callback( 'Copied ' + dcp + ' to ' + destination + dfn );
-											} );
+											copyObject.copyTotal++;
+											CopyAndCallback( subs[c].Path, subs[c].Filename, move );
 										}
 										else
 										{
@@ -3823,50 +3867,52 @@ FriendDOS =
 												if( psign != ':' && psign != '/' ) p += '/';
 											
 												//console.log( 'Foodah! Recursing on ' + p + "! Because of recursion: " + flags.recursive + "\n" );
-												FriendDOS.copyFiles( p, destination, flags, callback, depth+1 );
+												FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
 											}
 											else
 							    			{
-								    			if (move) window.moveFiles.noDeleteRoot = true;
+								    			if( move ) window.moveFiles.noDeleteRoot = true;
 							    			}
 										}
 									}
-									if (move) window.moveFiles.counter--;
+									if( move ) window.moveFiles.counter--;
 								} );
 							} );
 						}
 						// Copy single file
 						else
-						{
+						{	
+							copyObject.copyTotal++;
 							var destination = dest + data[a].Filename;
-							if (move)
+							if( move )
 							{
-								window.moveFiles.fileArray.push({source: src, destination: destination});
+								window.moveFiles.fileArray.push( { source: src, destination: destination } );
 								window.moveFiles.counter++;
 							}
 							doorSrc.dosAction( 'copy', { from: src, to: destination }, function( result )
 							{
-								if (move)
+								if( move )
 								{
 									window.moveFiles.counter--;
 									callback( 'Moved ' + src + ' to ' + destination + '..' );
 								}
 								else
-									callback( 'Copied ' + src + ' to ' + destination + '..' );
-								// Upon fail!
-								if( 1 == 2 )
 								{
-									abort = true;
+									callback( 'Copied ' + src + ' to ' + destination + '..' );
 								}
+								// Upon fail! Just piss.
+								if( 1 == 2 ) abort = true;
+								
+								copyObject.copyCounter++; copyObject.test();
 							} );
 						}
 					}
 				}
-				if (move) window.moveFiles.counter--;
+				if( move ) window.moveFiles.counter--;
 			} );
-			if (move && depth == 0)
+			if( move && depth == 0 )
    			{
-	   			setTimeout(FriendDOS.checkMove, 100);
+	   			setTimeout( FriendDOS.checkMove, 100 );
    			}
 		}
 	},
@@ -4172,7 +4218,8 @@ FriendDOS =
 			else
 			{
 				 console.log( 'We had original callback.' );
-				 return callback();
+				 return;
+				 //return callback();
 			}
 		} );
 	},

@@ -572,7 +572,30 @@ function i18nAddTranslations( string )
 	}
 }
 
-// Execute replacements
+// Search and execute replacements in string (Note from FL: I'll certainly remove this later, redundant)
+function i18nReplaceInString( str )
+{
+	var pos = 0;
+	while ( ( pos = str.indexOf( "{i18n_", pos ) ) >= 0 )
+	{
+		var pos2 = str.indexOf( "}", pos );
+		if ( pos2 >=0 )
+		{
+			var key = str.substring( pos + 1, pos2 - pos - 1 );
+			var replace = i18n( key );
+			if ( replace != key )
+			{
+				str = str.substring(0, pos) + replace + str.substring(pos2 + 1);
+			}
+			pos = pos2 + 1;
+		}
+		else
+		{
+			break;
+		}
+	}
+}
+// Execute replacements (Note from FL: I'll certainly remove this later)
 function i18nReplace( data, replacements )
 {
 	var str = data ? data : this.data;

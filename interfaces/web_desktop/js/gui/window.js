@@ -882,7 +882,7 @@ function HasClassname( div, classname )
 // Close a movable window by pointing to the content div
 // Could one day be moved to the View class...
 function CloseView( win )
-{
+{	
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
 	if( win )
@@ -1422,7 +1422,7 @@ var View = function( args )
 			}
 		
 			title.onmousedown = function( e, mode )
-			{
+			{ 
 				if ( !e ) e = window.event;
 		
 				// Blocker
@@ -1434,7 +1434,7 @@ var View = function( args )
 		
 				// Init workspace menu from title text (only active windows for mobile)
 				var t = e.target ? e.target : e.srcElement;
-				if(
+				if( 
 					contn.menu && t == titleSpan && div.className.indexOf( ' Active' ) > 0 &&
 					( window.isMobile || IsSharedApp() )
 				)
@@ -1467,7 +1467,7 @@ var View = function( args )
 		
 				var y = e.clientY ? e.clientY : e.pageYOffset;
 				var x = e.clientX ? e.clientX : e.pageXOffset;
-				window.mouseDown = FUI_MOUSEDOWN_WINDOW;
+				window.mouseDown = FUI_MOUSEDOWN_WINDOW; 
 				window.currentMovable = this.parentNode;
 				this.parentNode.offx = x - this.parentNode.offsetLeft;
 				this.parentNode.offy = y - this.parentNode.offsetTop;
@@ -1502,7 +1502,7 @@ var View = function( args )
 			depth.onselectstart = function ( e ) { return e.stopPropagation(); }
 			depth.window = div;
 			depth.onclick = function ( e )
-			{
+			{ 
 				// Calculate lowest and highest z-index
 				var low = 99999999;	var high = 0;
 				for( var a in movableWindows )
@@ -1519,7 +1519,7 @@ var View = function( args )
 				// If we are below, get us on top
 				if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
 				{
-					this.window.style.zIndex = ++movableHighestZindex;
+					this.window.style.zIndex = ++movableHighestZindex; 
 				}
 				// If not, don't
 				else
@@ -1651,7 +1651,7 @@ var View = function( args )
 		
 			// remember position
 			div.memorize = function ()
-			{
+			{	
 				var wenable = this.content && this.content.flags && this.content.flags.resize ? true : false;
 		
 				// True if we're to enable memory
@@ -1772,7 +1772,7 @@ var View = function( args )
 								}
 								else CloseView ( wo.childWindows[a]._window );
 							}
-							else
+							else 
 							{
 								CloseView( wo.childWindows[a] );
 							}
@@ -1893,7 +1893,7 @@ var View = function( args )
 				}
 				else
 				{
-					if( wp.top < hh )
+					if( wp.top < hh ) 
 					{
 						div.style.top = wp.top + 'px';
 						topSet = true;
@@ -1977,7 +1977,7 @@ var View = function( args )
 			divParent.appendChild( div );
 		
 			// Don't show the view window if it's hidden
-			if(
+			if( 
 				( typeof( flags.hidden ) != 'undefined' && flags.hidden ) ||
 				( typeof( flags.invisible ) != 'undefined' && flags.invisible )
 			)
@@ -2009,10 +2009,10 @@ var View = function( args )
 				var winTouchDowned;
 				var winTouchTarget;
 		
-				//resize touch ecvents.... --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				//resize touch ecvents.... --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
 				resize.addEventListener('touchstart', function(evt) {
 					cancelBubble( evt );
-					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
 					winTouchDowned = evt.timeStamp;
 				});
 				resize.addEventListener('touchmove', function(evt)
@@ -2024,7 +2024,7 @@ var View = function( args )
 				});
 			
 				resize.addEventListener('touchend', function(evt)
-				{
+				{ 
 					cancelBubble( evt );
 				});
 		
@@ -2032,7 +2032,7 @@ var View = function( args )
 				{
 					cancelBubble( evt );
 			
-					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
 					winTouchDowned = evt.timeStamp;
 				});
 			
@@ -2044,32 +2044,32 @@ var View = function( args )
 					touchResizeWindow(evt);
 				});
 			
-				bottombar.addEventListener('touchend', function(evt) {
+				bottombar.addEventListener('touchend', function(evt) { 
 					cancelBubble( evt );
-				});
+				});		
 		
-				//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				//close  --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
 				close.addEventListener('touchstart', function( evt ) {
 					cancelBubble( evt );
-					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
 					winTouchEnd = winTouchStart;
 					winTouchDowned = evt.timeStamp;
-				});
+				});		
 
 				// TODO: Is this required for Safari? Or other? Because of windowmenu
 				/*close.addEventListener('touchend', function( evt )
-				{
+				{ 
 					cancelBubble( evt );
 					evt.target.onclick();
 				});*/
 			
-				//title swipe to minimize --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ##
+				//title swipe to minimize --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## --- ## 
 				// TODO: Removed (new window menu is better) but elaborate!
-				/*title.addEventListener('touchstart', function(evt)
+				/*title.addEventListener('touchstart', function(evt) 
 				{
 					return;
 				
-					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ];
+					winTouchStart = [ evt.touches[0].clientX, evt.touches[0].clientY, (evt.target.hasAttribute('class') ? evt.target.getAttribute('class') : '') ]; 
 					winTouchEnd = winTouchStart;
 					winTouchDowned = evt.timeStamp;
 
@@ -2105,11 +2105,11 @@ var View = function( args )
 					}
 					tmp.style.transition = 'transform 0.25s';
 					var rotation = Math.max( 0, Math.min( 2, ( ( winTouchEnd[1] - winTouchStart[1] ) / 50 ) ) );
-					tmp.style.transform = 'rotate('+ rotation +'deg)';
+					tmp.style.transform = 'rotate('+ rotation +'deg)';			
 			
 				} );
 				title.addEventListener( 'touchend', function( evt )
-				{
+				{ 
 					return;
 				
 					if( flags.screen.menuTimeout )
@@ -2118,7 +2118,7 @@ var View = function( args )
 						flags.screen.menuTimeout = null;
 					}
 			
-					if( evt.touches[0] ) winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ];
+					if( evt.touches[0] ) winTouchEnd = [ evt.touches[0].clientX, evt.touches[0].clientY ]; 
 
 					var found = false;
 					var tmp = evt.target;
@@ -2151,7 +2151,7 @@ var View = function( args )
 							{
 								tb.childNodes[tel].onmouseup( evt, tb.childNodes[tel] );
 							}
-						}
+						}	
 					}
 					else
 					{
@@ -2171,7 +2171,7 @@ var View = function( args )
 				
 					}
 			
-				});	*/
+				});	*/		
 			}
 			// Ok, if no window position is remembered.. place it somewhere
 			else if( !wp )
@@ -2179,15 +2179,15 @@ var View = function( args )
 				ConstrainWindow( div );
 			}
 
-			/* function shal be called by bottombar or resize... */
+			/* function shal be called by bottombar or resize... */	
 			function touchResizeWindow(evt)
 			{
 				if( !evt.target.offH ) evt.target.offH = evt.target.offsetParent.clientHeight;
 				//not too small and not too high...
-				var newHeight = Math.min(
-					Workspace.screenDiv.clientHeight -
-						72 - evt.target.offsetParent.offsetTop,
-					Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop )
+				var newHeight = Math.min( 
+					Workspace.screenDiv.clientHeight - 
+						72 - evt.target.offsetParent.offsetTop, 
+					Math.max(80,evt.touches[0].clientY - evt.target.offsetParent.offsetTop ) 
 				);
 		
 				evt.target.offsetParent.style.height = newHeight + 'px';
@@ -2227,7 +2227,7 @@ var View = function( args )
 			// Start maximized
 			if( window.isMobile )
 			{
-				zoom.onclick();
+				zoom.onclick();	
 			}
 		
 			setTimeout( function(){ _WindowToFront( div ); }, 50 );
@@ -3081,10 +3081,10 @@ function SetWindowFlag( div, flag, value )
 				// Fade out!!
 				if( flags.value === false )
 				{
-					setTimeout( function(){
+					setTimeout( function(){ 
 						div.style.visibility = 'hidden';
 						div.style.pointerEvents = 'none';
-					}, 500 );
+					}, 500 );		
 				}
 				else
 				{
