@@ -123,7 +123,7 @@ const char *GetPrefix()
 
 void init( struct FHandler *s )
 {
-	DEBUG("[REMOTEFS] init\n");
+	//s->Info = dlsym( s->handle, "Info" );
 }
 
 //
@@ -132,7 +132,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	DEBUG("[REMOTEFS] deinit\n");
+	
 }
 
 //
@@ -459,6 +459,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			FFree( dev );
 			return NULL;
 		}
+		
+		init( s );
 		
 		// we are trying to open folder/connection
 		

@@ -243,7 +243,6 @@ Application.handlePipe = function( packet )
 								{
 									FriendNetwork.dispose( key, function( msg ) {
 									});
-									this.noNextNL = true;
 								}
 								else
 								{
@@ -475,8 +474,10 @@ Application.addQuestion = function( question, callback )
 		setTimeout( function(){ Application.focusCLI(); }, 150 );
 	}
 	
+	n.className = 'Password';
+	
 	var path = GeByClass( 'Path', n );
-	path.innerHTML = question + '>';
+	path.innerHTML = question +': ';
 	path.onfocus = function() { Application.focusCLI(); }
 	path.onclick = function() { Application.focusCLI(); }
 
@@ -940,7 +941,7 @@ Application.receiveMessage = function( object )
 						this.addNL();
 					}
 					break;
-				case 'dispose':
+				case 'disposed':
 					if ( this.friendNetworkHosts[ object.hostKey ])
 					{
 						this.friendNetworkHosts[object.hostKey] = false;
@@ -968,7 +969,9 @@ Application.receiveMessage = function( object )
 								restrictedPath: restrictedPath
 							};
 							shell.evaluate( ['cd ' + Application.currentPath ], function(){}, restrictedPath, object.key );
-							Application.addOutput( object.name + ' just connected to you...' );
+							var p2p = "";
+							if ( object.p2p ) p2p = ' (peer-to-peer)'
+							Application.addOutput( object.name + ' just connected to you' + p2p + '...' );
 							Application.addNL();
 						}
 					};
@@ -1009,16 +1012,8 @@ Application.receiveMessage = function( object )
 						this.addNL();
 					}
 					break;
-				case 'wrongCredentials':
-					this.addOutput('Invalid password...');
 				case 'getCredentials':
-					setTimeout( function()
-					{
-						self.addQuestion( 'Please enter password ', function( result )
-						{
-							FriendNetwork.sendCredentials( object.key, result );
-						} )
-					}, 1000 );
+					setTimeout( askQuestion, 500 );
 					break;
 				case 'connected':
 					this.friendNetworkPreviousPath = this.currentPath;
@@ -1073,30 +1068,7 @@ Application.receiveMessage = function( object )
 					this.addOutput( out );
 					this.addNL();
 					break;
-/*					this.addOutput( 'FriendNetwork status report');
-					if ( object.connected )
-					{
-						this.addOutput( 'Connected' );
-						for ( var a = 0; a < object.hosts.length; a++ )
-						{
-							this.addOutput( 'Host: ' + object.hosts[ a ].name );
-							for ( var b = 0; b < object.hosts[ a ].hosting.length; b++ )
-							{
-								this.addOutput( '    Hosting: ' + object.hosts[ a ].hosting[ b ].distantName );
-							}
-						}
-						for ( var a = 0; a < object.hosts.length; a++ )
-						{
-							this.addOutput('Client: of ' + object.clients[a].name );
-						}
-					}
-					else
-					{
-						this.addOutput( 'Disconnected' );
-					}
-					this.addNL();
-					break;
-*/				case 'error':
+				case 'error':
 					switch ( object.error )
 					{
 						case 'ERR_HOST_ALREADY_EXISTS':
@@ -1110,6 +1082,14 @@ Application.receiveMessage = function( object )
 							break;
 						case 'ERR_DISPOSING':
 							this.addError('Error while disposing host.');
+							break;
+						case 'ERR_FAILED_CREDENTIALS':
+							this.addOutput('Connection cancelled.');
+							this.addNL();
+							break;
+						case 'ERR_WRONG_CREDENTIALS':
+							this.addOutput('Invalid password...');
+							setTimeout( askQuestion, 500 );
 							break;
 						default:
 							this.addError('Network error.');
@@ -1133,6 +1113,13 @@ Application.receiveMessage = function( object )
 			//console.log( 'Received an uncaught packet' );
 			//console.log( object );
 			break;
+	}
+	function askQuestion()
+	{
+		self.addQuestion( 'Please enter password ', function( result )
+		{
+			FriendNetwork.sendCredentials( object.key, result );
+		} );
 	}
 }
 Application.parseVariables = function( pr )

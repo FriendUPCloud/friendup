@@ -163,6 +163,7 @@ then
         fi
     done
 fi
+clear
 
 # INSTALLATION OF THE PRESENCE SERVER
 # -----------------------------------

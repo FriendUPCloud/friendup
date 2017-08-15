@@ -28,18 +28,18 @@ do
     if test "${TASKPATH#*services/FriendNetwork}" != "$TASKPATH"
     then
         echo "Friend Network server killed."
-        kill $i
+        kill -9 $i
         KILLED="1"
     fi
     if test "${TASKPATH#*services/FriendChat}" != "$TASKPATH"
     then
-        kill $i
+        kill -9 $i
         echo "Friend Chat server killed."
         KILLED="1"
     fi
     if test "${TASKPATH#*services/Presence}" != "$TASKPATH"
     then
-        kill $i
+        kill -9 $i
         echo "Presence server killed."
         KILLED="1"
     fi

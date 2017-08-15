@@ -30,6 +30,13 @@ body
 	margin: 0 5px 0 0;
 	display: inline;
 }
+
+.Terminal .Password .Cli
+{
+	-webkit-text-security: disc;
+	text-security: disc;
+}
+
 .Terminal .Cli
 {
 	outline: none;

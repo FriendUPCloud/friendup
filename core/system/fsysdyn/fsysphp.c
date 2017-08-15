@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command, int *length )
 
 void init( struct FHandler *s )
 {
-	DEBUG("[PHPFS] init\n");
+	//s->Info = dlsym( s->handle, "Info" );
 }
 
 //
@@ -222,7 +222,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	DEBUG("[PHPFS] deinit\n");
+	
 }
 
 //
@@ -303,7 +303,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			return NULL;
 		}
 		*/
-
+		init( s );
+		
 		// we are trying to open folder/connection
 		
 		if( path != NULL )

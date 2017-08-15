@@ -110,7 +110,7 @@ char *GetFileName( const char *path )
 
 void init( struct FHandler *s )
 {
-	DEBUG("[RAMFS] init\n");
+	//s->Info = dlsym( s->handle, "Info" );
 }
 
 //
@@ -119,7 +119,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	DEBUG("[RAMFS] deinit\n");
+	
 }
 
 //
@@ -163,6 +163,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			}
 			lptr++;
 		}
+		
+		init( s );
 		
 		SpecialData *srd =  calloc( 1, sizeof( SpecialData ) );
 		srd->root = INRAMFileNew( INRAM_ROOT, name, name );
