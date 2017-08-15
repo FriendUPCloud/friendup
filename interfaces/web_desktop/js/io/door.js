@@ -297,7 +297,10 @@ Door.prototype.write = function( filename, data )
 {
 	var dr = this;
 	var j = new cAjax();
+	var old = Workspace.websocketsOffline;
+	Workspace.websocketsOffline = true;
 	j.open( 'post', '/system.library/file/write', true, true );
+	Workspace.websocketsOffline = false;
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
