@@ -159,9 +159,7 @@ Application.handlePipe = function( packet )
 								}
 								break;
 							case 'friendnetworkhost':
-								//this.noNextNL = true;
-								FriendNetwork.host( packet.returnMessage.name, packet.returnMessage.password, function( msg ) {				// Callback
-								});
+								FriendNetwork.host( packet.returnMessage.name, packet.returnMessage.password );
 								break;
 							case 'friendnetworkstatus':
 								FriendNetwork.status();
@@ -1069,6 +1067,7 @@ Application.receiveMessage = function( object )
 					this.addNL();
 					break;
 				case 'error':
+					this.noNextNL = false;
 					switch ( object.error )
 					{
 						case 'ERR_HOST_ALREADY_EXISTS':
@@ -1085,7 +1084,6 @@ Application.receiveMessage = function( object )
 							break;
 						case 'ERR_FAILED_CREDENTIALS':
 							this.addOutput('Connection cancelled.');
-							this.addNL();
 							break;
 						case 'ERR_WRONG_CREDENTIALS':
 							this.addOutput('Invalid password...');

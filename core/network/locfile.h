@@ -54,9 +54,10 @@ typedef struct LocFile
 	char			*lf_Buffer;
 	unsigned long   lf_FileSize;
 
-	FILE*           fp;       // File pointer
-	int             fd;       // File descriptor
-	struct stat     info;
+	FILE*           lf_Fp;       // File pointer
+	int             lf_Fd;       // File descriptor
+	struct stat     lf_Info;
+	time_t			lf_ModificationTimestamp;
 	
 	FUQUAD          lf_FileUsed;
 	struct MinNode  node;

@@ -90,7 +90,6 @@ void CacheManagerDelete( CacheManager *cm )
 			FFree( cm->cm_CacheFileGroup );
 		}
 		
-		CacheUserFilesDeleteAll( cm->cm_CacheUserFiles );
 		/*
 		LocFile *lf = cm->cm_LocFileCache;
 		while( lf != NULL )
@@ -208,42 +207,19 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 /**
  * function store LocFile inside cache (User cache)
  *
- * @param cm pointer to CacheManager which will store file
- * @param usr pointer to User structure
+ * @param locusr pointer to User structure
  * @param lf pointer to LocFile structure which will be stored in cache
  * @return 0 when success, otherwise error number
  */
-int CacheManagerUserFilePut( CacheManager *cm, void *usr, LocFile *lf )
+int CacheManagerUserFilePut( void *locusr, LocFile *lf )
 {
-	if( cm != NULL )
+	if( locusr != NULL )
 	{
 		// trying to find user assigned to CacheUserFiles, on the end we should assign cache to user
-		CacheUserFiles *cusf = cm->cm_CacheUserFiles;
-		while( cusf != NULL )
-		{
-			if( cusf->cuf_Usr == usr )
-			{
-				break;
-			}
-			cusf = (CacheUserFiles *)cusf->node.mln_Succ;
-		}
-		
-		// if CacheUserFiles exist, we are adding file to list
-		if( cusf != NULL )
-		{
-			CacheUserFilesAddFile( cusf, lf );
-		}
-		else
-		{
-			CacheUserFiles *newcuf = CacheUserFilesNew( usr );
-			if( newcuf != NULL )
-			{
-				newcuf->node.mln_Succ = (MinNode *)cm->cm_CacheUserFiles;
-				cm->cm_CacheUserFiles = newcuf;
-				
-				CacheUserFilesAddFile( newcuf, lf );
-			}
-		}
+		User *usr = (User *)locusr;
+
+		CacheUserFilesAddFile( &(usr->u_FileCache), lf );
+
 	}
 	return 0;
 }
@@ -252,25 +228,16 @@ int CacheManagerUserFilePut( CacheManager *cm, void *usr, LocFile *lf )
 /**
  * function get LocFile from cache (User cache)
  *
- * @param cm pointer to CacheManager where LocFile will be searched
- * @param usr pointer to User structure
+ * @param locusr pointer to User structure
  * @param path full path to file (include device name)
  * @return LocFile structure when success, otherwise NULL
  */
-LocFile *CacheManagerUserFileGet( CacheManager *cm, void *usr, char *path )
+LocFile *CacheManagerUserFileGet( void *locusr, char *path )
 {
-	if( cm != NULL )
+	if( locusr != NULL )
 	{
 		// trying to find user assigned to CacheUserFiles, on the end we should assign cache to user
-		CacheUserFiles *cusf = cm->cm_CacheUserFiles;
-		while( cusf != NULL )
-		{
-			if( cusf->cuf_Usr == usr )
-			{
-				break;
-			}
-			cusf = (CacheUserFiles *)cusf->node.mln_Succ;
-		}
+		User *usr = (User *)locusr;
 		
 		uint64_t hash[ 2 ];
 		MURMURHASH3( path, strlen(path), hash );
@@ -279,18 +246,16 @@ LocFile *CacheManagerUserFileGet( CacheManager *cm, void *usr, char *path )
 		unsigned char id = (unsigned char)hfirstChar[0];
 		
 		// if CacheUserFiles exist, we are trying to find file
-		if( cusf != NULL )
+
+		LocFile *lf = usr->u_FileCache->cuf_File;
+		while( lf != NULL )
 		{
-			LocFile *lf = cusf->cuf_File;
-			while( lf != NULL )
+			if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
 			{
-				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
-				{
-					lf->lf_FileUsed++;
-					return lf;
-				}
-				lf = (LocFile *)lf->node.mln_Succ;
+				lf->lf_FileUsed++;
+				return lf;
 			}
+			lf = (LocFile *)lf->node.mln_Succ;
 		}
 	}
 	return 0;

@@ -108,9 +108,15 @@ or NO to install it manually: the script will\n\
 exit, you install node and restart the script.\n\
 Please note that you also need to install 'npm' and 'n'." 15 65
     if [ $? -eq "0" ]; then
-        curl -L http://git.io/n-install | bash
-        nv=$(node -v)
-        npm=$(npm -v)
+		curl -L https://git.io/n-install | bash
+    dialog --backtitle "Friend Network Installer" --msgbox "\
+After installation, node needs variables defined by .bashrc to run.\n\
+Unfortunately there is no option to run this script from\n\
+another script (please contact us if you find one that works)\n\
+This script will now end. Open a new shell and restart\n\
+install.sh with the -s option (you will not be asked for\n\
+information again)..."  15 70
+		exit 1
     else
         clear
         echo "Aborting Friend Chat installation."
@@ -126,7 +132,7 @@ Choose YES to switch to version 4.5.0,\n\
 or NO to abort this script..." 11 60
     if [ $? -eq "0" ]; then
         echo "Calling 'n' to change the version of node."
-        n 4.5.0
+        n stable
     else
         clear
         echo "Aborting Friend Chat installation."
@@ -157,10 +163,10 @@ then
         # Checks mysql root password
         export MYSQL_PWD=$mysqlRootPass
         mysql -u root -e ";"
-        export MYSQL_PWD=""
         if [ $? == "0" ]; then
             break;
         fi
+	dialog --backtitle "Friend Chat Installer" --msgbox "Illegal mysql password, please try again." 8 65
     done
 fi
 clear

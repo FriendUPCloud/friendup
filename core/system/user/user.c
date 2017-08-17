@@ -30,6 +30,7 @@
  */
 #include "user.h"
 #include <system/systembase.h>
+#include <system/cache/cache_user_files.h>
 
 /**
  * Create new User
@@ -54,38 +55,23 @@ User *UserNew( )
 /**
  * Initialize User structure
  *
- * @param pointer to memory where poiniter to User is stored
+ * @param u pointer to memory where poiniter to User is stored
  * @return 0 when success, otherwise error number
  */
-int UserInit( User *up )
+int UserInit( User *u )
 {
 	// First make sure we don't have a duplicate!
-	//User *sess = SLIB->sl_Sessions;
-	User *u = up;
 	if( u == NULL )
 	{
 		FERROR("User provided = NULL\n");
 		return -1;
 	}
 	
-	DEBUG( "[UserInit] Attempting to initialize mutex on new user. Pointer to new user %p\n", up );
+	DEBUG( "[UserInit] Attempting to initialize mutex on new user. Pointer to new user %p\n", u );
 	
 	pthread_mutex_init( &(u->u_Mutex), NULL );
 	
-	/*
-	while( sess != NULL )
-	{
-		// Found a duplicate, use it, clean up u (not needed), return
-		if( sess->u_Name != NULL && strcmp( sess->u_Name, u->u_Name ) == 0 && strcmp( sess->u_Password, u->u_Password ) == 0 )
-		{
-			FERROR( "[UserInit] User already exists. Give the one in this slot.\n" );
-			UserDelete( u );
-			*up = sess;
-			u = sess;
-			return 1;
-		}
-		sess = ( User *)sess->node.mln_Succ;
-	}*/
+	u->u_FileCache = CacheUserFilesNew( u );
 	
 	return 0;
 }
@@ -216,6 +202,12 @@ void UserDelete( User *usr )
 		{
 			UserAppDeleteAll( usr->u_Applications );
 			usr->u_Applications = NULL;
+		}
+		
+		if( usr->u_FileCache != NULL )
+		{
+			CacheUserFilesDelete( usr->u_FileCache );
+			usr->u_FileCache = NULL;
 		}
 		
 		// remove all sessions connected to user

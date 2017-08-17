@@ -36,6 +36,8 @@
 #include <hardware/printer/printer.h>
 #include <time.h>
 #include "remote_user.h"
+#include <network/locfile.h>
+#include <system/cache/cache_user_files.h>
 /** @file
  * 
  *  User definitions
@@ -163,6 +165,7 @@ typedef struct User
 	FBOOL						u_IsAPI;			//set to TRUE when user is in API group
 	
 	pthread_mutex_t				u_Mutex;	// User structure mutex
+	CacheUserFiles				*u_FileCache;
 } User;
 
 //

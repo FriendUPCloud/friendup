@@ -57,7 +57,6 @@ typedef struct CacheManager
 {
 	CacheFileGroup	*cm_CacheFileGroup;
 	LocFile			*cm_LocFileCache;
-	CacheUserFiles	*cm_CacheUserFiles;
 	FUQUAD			cm_CacheSize;
 	FUQUAD 			cm_CacheMax;
 }CacheManager;

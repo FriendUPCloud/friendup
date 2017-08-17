@@ -33,6 +33,8 @@
 #include <util/md5.h>
 #include <system/fsys/door_notification.h>
 #include <stdlib.h>
+#include <system/cache/cache_user_files.h>
+#include <system/cache/cache_manager.h>
 
 /**
  * Filesystem web calls handler
@@ -697,6 +699,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
 					if( have == TRUE )
 					{
+						LocFile *lf = CacheManagerUserFileGet( loggedSession->us_User, origDecodedPath );
+						
 						if( mode != NULL && strcmp( mode, "rs" ) == 0 )		// read stream
 						{ 
 							File *fp = (File *)actFS->FileOpen( actDev, path, mode );

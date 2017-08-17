@@ -187,7 +187,7 @@ inline int ReadServerFile( Uri *uri, char *locpath, BufString *dstbs, int *resul
 			
 			
 				//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld\n\n\n\n",attr.st_mtime ,file->info.st_mtime );
-				if( attr.st_mtime != file->info.st_mtime )
+				if( attr.st_mtime != file->lf_Info.st_mtime )
 				{
 					LocFileReload( file, completePath->raw);
 				}
@@ -1129,7 +1129,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 			
 												//DEBUG1("\n\n\n\n\n SIZE %lld  stat %lld   NAME %s\n\n\n\n",attr.st_mtime ,file->info.st_mtime,completePath->raw );
 												Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
-												if( attr.st_mtime != file->info.st_mtime )
+												if( attr.st_mtime != file->lf_Info.st_mtime )
 												{
 													LocFileReload( file, decoded );
 												}

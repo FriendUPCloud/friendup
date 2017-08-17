@@ -68,7 +68,7 @@ function getWrapperCallback( uniqueId )
 // Run a callback and remove from list
 function runWrapperCallback( uniqueId, data )
 {
-	if( typeof( apiWrapperCallbacks[uniqueId] ) != 'undefined' )
+	if( typeof( apiWrapperCallbacks[uniqueId] ) == 'function' )
 	{
 		apiWrapperCallbacks[uniqueId]( data );
 		var o = [];
@@ -133,25 +133,29 @@ function apiWrapper( event, force )
 					case 'list':
 						FriendNetwork.listHosts( {
 							message: msg,
+							callback: msg.callback
 						} );
 						break;
 					case 'connect':
 						FriendNetwork.connectToHost( {
 							message: msg,
 							name: msg.name,
-							p2p: msg.p2p
+							p2p: msg.p2p,
+							callback: msg.callback
 						} );
 						break;
 					case 'disconnect':
 						FriendNetwork.disconnectFromHost( {
 							message: msg,
 							key: msg.key,
+							callback: msg.callback
 						} );
 						break;
 					case 'dispose':
 						FriendNetwork.disposeHosting( {
 							message: msg,
-							key: msg.key
+							key: msg.key,
+							callback: msg.callback
 						} );
 						break;
 					case 'send':
@@ -159,48 +163,48 @@ function apiWrapper( event, force )
 							message: msg,
 							data: msg.data,
 							key: msg.key,
+							callback: msg.callback
 						} );
 						break;
 					case 'sendCredentials':
 						FriendNetwork.sendCredentials( {
 							message: msg,
 							password: msg.password,
-							key: msg.key
+							key: msg.key,
+							callback: msg.callback
 						} );
 						break;
 					case 'setHostPassword':
 						FriendNetwork.setHostPassword( {
 							message: msg,
 							password: msg.password,
-							key: msg.key
+							key: msg.key,
+							callback: msg.callback
 						} );
 						break;
 					case 'host':
-						FriendNetwork.startHosting( {
+						var newmsg =
+						{
 							message: msg,
 							name: msg.name,
-							data: msg.data
-						} );
+							data: msg.data,
+							callback: msg.callback
+						};
+						FriendNetwork.startHosting( newmsg );
 						break;
 					case 'setPassword':
 						FriendNetwork.setPassword( {
 							message: msg,
 							key: msg.key,
-							password: msg.password
+							password: msg.password,
+							callback: msg.callback
 						} );
 						break;
 					case 'closeSession':
 						FriendNetwork.closeSession({
 							message: msg,
-							key: msg.key
-						});
-						break;
-					case 'p2pAcceptConnexion':
-						FriendNetwork.p2pAcceptConnexion({
-							message: msg,
 							key: msg.key,
-							accept: msg.accept,
-							data: msg.data
+							callback: msg.callback
 						});
 						break;
 					case 'closeApplication':
@@ -210,6 +214,7 @@ function apiWrapper( event, force )
 						FriendNetwork.getStatus( msg );
 						break;
 				}
+				msg.callback = false; // terminate callback
 				break;
 			// Dormant ---------------------------------------------------------
 			// TODO : permissions - does the app have persmission to:

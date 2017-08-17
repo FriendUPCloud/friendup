@@ -111,7 +111,7 @@ char *GetFileName( const char *path )
 
 void init( struct FHandler *s )
 {
-	//s->Info = dlsym( s->handle, "Info" );
+	DEBUG("[FSYSLOCAL] init\n");
 }
 
 //
@@ -120,7 +120,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	
+	DEBUG("[FSYSLOCAL] deinit\n");
 }
 
 //
@@ -1112,6 +1112,20 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 	}
 	
 	//DEBUG( "FILLSTAT END\n");
+}
+
+//
+// Get information about last file changes (seconds from 1970)
+//
+
+FQUAD GetChangeTimestamp( struct File *s, const char *path )
+{
+	struct stat result;
+	if(stat( path, &result) == 0 )
+	{
+		return (FQUAD)result.st_mtimensec;
+	}
+	return (FQUAD)-1;
 }
 
 //

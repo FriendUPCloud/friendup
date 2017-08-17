@@ -123,7 +123,7 @@ const char *GetPrefix()
 
 void init( struct FHandler *s )
 {
-	//s->Info = dlsym( s->handle, "Info" );
+	DEBUG("[REMOTEFS] init\n");
 }
 
 //
@@ -132,7 +132,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	
+	DEBUG("[REMOTEFS] deinit\n");
 }
 
 //
@@ -459,8 +459,6 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			FFree( dev );
 			return NULL;
 		}
-		
-		init( s );
 		
 		// we are trying to open folder/connection
 		
@@ -1877,7 +1875,16 @@ char *Execute( struct File *s, const char *path, const char *args )
 
 	return result;
 	*/
-return NULL;
+	return NULL;
+}
+
+//
+// Get information about last file changes (seconds from 1970)
+//
+
+FQUAD GetChangeTimestamp( struct File *s, const char *path )
+{
+	return (FQUAD)0;
 }
 
 //

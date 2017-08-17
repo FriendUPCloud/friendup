@@ -87,9 +87,8 @@ inline int LocFileRead( LocFile* file, long long offset, long long size )
 	}
 	
 	file->lf_FileSize = size;
-	FILE* fp = file->fp;
-	fseek( fp, offset, SEEK_SET );
-	int result = fread( file->lf_Buffer, 1, size, fp );
+	fseek( file->lf_Fp, offset, SEEK_SET );
+	int result = fread( file->lf_Buffer, 1, size, file->lf_Fp );
 	if( result < size )
 	{
 		return result; 
@@ -121,14 +120,14 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	struct stat st;
 	if( stat( path, &st ) < 0 )
 	{
-		FERROR( "Cannot stat file.\n" );
+		FERROR( "Cannot stat file: '%s'.\n", path );
 		fclose( fp );
 		return NULL;
 	}
 	
 	if( S_ISDIR( st.st_mode ) )
 	{
-		FERROR( "Is a directory. Can not open.\n" );
+		FERROR( "'%s' is a directory. Can not open.\n", path );
 		fclose( fp );
 		return NULL;
 	}
@@ -145,10 +144,10 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 		
 		DEBUG("PATH: %s\n", fo->lf_Path );
 		
-		memcpy(  &(fo->info),  &st, sizeof( struct stat) );
+		memcpy(  &(fo->lf_Info),  &st, sizeof( struct stat) );
 		//fstat( fp, &(fo->info));
 	
-		fo->fp = fp;
+		fo->lf_Fp = fp;
 		//fseek( fp, 0L, SEEK_END );
 		
 		fseek( fp, 0, SEEK_END );
@@ -228,10 +227,10 @@ int LocFileReload( LocFile *file,  char *path )
 	DEBUG("File %s will be reloaded\n", path );
 	//char *tmpPath = NULL;
 	
-	if( file->fp )
+	if( file->lf_Fp )
 	{
-		fclose( file->fp );
-		file->fp = NULL;
+		fclose( file->lf_Fp );
+		file->lf_Fp = NULL;
 	}
 	
 	//if( file->lf_Path )
@@ -258,9 +257,9 @@ int LocFileReload( LocFile *file,  char *path )
 		FERROR("Cannot run stat on file: %s!\n", path);
 		return -2;
 	}
-	memcpy(  &(file->info),  &st, sizeof(stat) );
+	memcpy(  &(file->lf_Info),  &st, sizeof(stat) );
 	
-	file->fp = fp;
+	file->lf_Fp = fp;
 	fseek( fp, 0, SEEK_END );
 	long fsize = ftell( fp );
 	fseek( fp, 0, SEEK_SET );  //same as rewind(f);
@@ -287,10 +286,10 @@ void LocFileDelete( LocFile* file )
 	{
 		FFree( file->lf_Filename );
 	}
-	if( file->fp )
+	if( file->lf_Fp )
 	{
-		fclose( file->fp );
-		file->fp = NULL;
+		fclose( file->lf_Fp );
+		file->lf_Fp = NULL;
 	}
 	if( file->lf_Path )
 	{

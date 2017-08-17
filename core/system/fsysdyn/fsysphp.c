@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command, int *length )
 
 void init( struct FHandler *s )
 {
-	//s->Info = dlsym( s->handle, "Info" );
+	DEBUG("[PHPFS] init\n");
 }
 
 //
@@ -222,7 +222,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	
+	DEBUG("[PHPFS] deinit\n");
 }
 
 //
@@ -303,8 +303,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			return NULL;
 		}
 		*/
-		init( s );
-		
+
 		// we are trying to open folder/connection
 		
 		if( path != NULL )
@@ -1397,6 +1396,15 @@ char *Execute( struct File *s, const char *path, const char *args )
 {
 	
 	return NULL;
+}
+
+//
+// Get information about last file changes (seconds from 1970)
+//
+
+FQUAD GetChangeTimestamp( struct File *s, const char *path )
+{
+	return (FQUAD)0;
 }
 
 //

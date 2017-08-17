@@ -1,4 +1,4 @@
-#!bin/bash
+#!/bin/sh
 
 # Autostart script for Friend Network server
 # ------------------------------------------

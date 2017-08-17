@@ -35,7 +35,6 @@
 #include <util/hooks.h>
 #include <util/hashmap.h>
 #include <util/tagitem.h>
-//#include <user/userlibrary.h>
 #include <util/base64.h>
 #include <util/buffered_string.h>
 #include <system/fsys/file.h>
@@ -88,19 +87,16 @@ typedef struct FHandler
 	char                    *(*GetSuffix)();
 	char                    *(*GetPrefix)();
 	
-	// ONLY USED BY system.library
 	void                    *(*Mount)( struct FHandler *s, struct TagItem *ti, User *us );
 	int                     (*UnMount)( struct FHandler *s, void *f, User *usr );
 	int                     (*Release)( struct FHandler *s, void *f );
-	
-	//
+
 	void                    *(*FileOpen)( struct File *s, const char *path, char *mode );
 	int                     (*FileClose)( struct File *s, void *fp );
 	int                     (*FileRead)( struct File *s, char *buf, int size );
 	int                     (*FileWrite)( struct File *s, char *buf, int size );
 	int                     (*FileSeek)( struct File *s, int pos );
 	
-	// mount / unmount will be system.library function, will return pointer to root file
 	int                     (*MakeDir)( struct File *s, const char *path );
 	int                     (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
@@ -113,6 +109,7 @@ typedef struct FHandler
 	BufString               *(*Info)( struct File *s, const char *path );
 	BufString               *(*Call)( struct File *s, const char *path, char *args );
 	BufString               *(*Dir)( struct File *s, const char *path );
+	FQUAD					(*GetChangeTimestamp)( struct File *s, const char *path );
 	
 	void                     *fh_SpecialData;
 }FHandler;

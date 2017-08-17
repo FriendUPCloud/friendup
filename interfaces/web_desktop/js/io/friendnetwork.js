@@ -147,6 +147,12 @@ FriendNetwork = {
 	{
 		if ( !this.conn )
 			return;
+
+		var window;
+		if ( msg.message && msg.message.applicationId )
+		{
+			window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+		}
 		
 		this.conn.getHosts( hostsBack );
 		function hostsBack( err, response )
@@ -155,25 +161,15 @@ FriendNetwork = {
 			if ( err )
 			{
 				console.log('FriendNetwork.list', err, response ? response  : '');
-				FriendNetwork.sendError( msg.message, 'ERR_LIST_HOSTS', false, false, response );
+				FriendNetwork.sendErrorToWindow( window, msg.callback, 'ERR_LIST_HOSTS', false, response );
 				return;
 			}
 			
-			var application = findApplication( msg.message.applicationId );
-			var window = GetContentWindowByAppMessage( application, msg.message );
-			
-			var nmsg = {
-				applicationId: msg.message.applicationId,
-				applicationName: msg.message.applicationName,
-				command: 'friendnetwork',
-				subCommand: 'list',
+			var nmsg =
+			{
 				hosts: response
 			};
-			try {
-				window.postMessage( JSON.stringify( nmsg ), '*' );
-			}
-			catch ( err ) {	}
-			//msg.callback( response );
+			FriendNetwork.sendToWindow( window, msg.callback, 'list', nmsg );
 		}
 	},
 	
@@ -183,22 +179,31 @@ FriendNetwork = {
 		if ( !this.conn )
 			return;
 		
+		var applicationId, window;
 		var applicationName = msg.message.applicationName;
-		var applicationId = msg.message.applicationId;
-		var application = findApplication( applicationId );
-		var window = GetContentWindowByAppMessage( application, msg.message );
-		
+		if ( msg.message && msg.message.applicationId )
+		{
+			applicationId = msg.message.applicationId;
+			window = GetContentWindowByAppMessage( findApplication( applicationId ), msg.message );
+		}
+		else
+		{
+			applicationId = 'friendnetwork'
+		}
+	
 		for( var a in this.hosts )
 		{
 			if ( this.hosts[ a ].name == msg.name )
 			{
 				console.log('FriendNetwork.startHosting', 'ERR_HOST_ALREADY_EXISTS', msg.name);
-				this.sendErrorToWindow( window, 'ERR_HOST_ALREADY_EXISTS' );
+				this.sendErrorToWindow( window, msg.callback, 'ERR_HOST_ALREADY_EXISTS', false, msg.name );
 				return;
 			}
 		}
+		
+		// Creates new FNethost object
 		var key = this.addSession( applicationId );
-		this.sessions[ key ] = new FNetHost( key, window, applicationId, applicationName, msg.name, msg.description, msg.data );
+		this.sessions[ key ] = new FNetHost( key, window, applicationId, applicationName, msg.name, msg.description, msg.data, msg.callback );
     },
 	
 	// Dispose hosting session (from its name)
@@ -206,7 +211,7 @@ FriendNetwork = {
 	{
 		if ( !this.conn )
 			return;
-
+		
 		if ( this.sessions[ msg.key ] && this.sessions[ msg.key ].isHost )
 		{
 			this.sessions[ msg.key ].close();
@@ -215,8 +220,12 @@ FriendNetwork = {
 		else
 		{
 			console.log('FriendNetwork.disposeHosting', 'ERR_HOST_NOT_FOUND');
-			if ( msg.message )
-				this.sendError( msg.message, 'ERR_HOST_NOT_FOUND', msg.key, msg.name );
+			var window;
+			if ( msg.message && msg.message.applicationId )
+			{
+				window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+			}
+			this.sendErrorToWindow( window, msg.callback, 'ERR_HOST_NOT_FOUND', msg.key, msg.name );
 		}
 	},
 	
@@ -226,8 +235,18 @@ FriendNetwork = {
 		if ( !this.conn )
 			return;
 		
-		var application = findApplication(msg.message.applicationId);
-		var window = GetContentWindowByAppMessage(application, msg.message);
+		var applicationId, window;
+		var applicationName = msg.message.applicationName;
+		if ( msg.message && msg.message.applicationId )
+		{
+			applicationId = msg.message.applicationId;
+			window = GetContentWindowByAppMessage( findApplication( applicationId ), msg.message );
+		}
+		else
+		{
+			applicationId = 'friendnetwork'
+		}
+
 		var found = false;
 		var hostName = msg.name;
 		var userName, p;
@@ -254,15 +273,16 @@ FriendNetwork = {
 							{
 								found = true;
 								var key = FriendNetwork.addSession(msg.message.applicationId);
-								FriendNetwork.sessions[key] = new FNetClient(
+								FriendNetwork.sessions[ key ] = new FNetClient(
 									key,
 									window,
-									msg.message.applicationId,
-									msg.message.applicationName,
+									applicationId,
+									applicationName,
 									response[a].hostId,
 									apps[b].id,
 									apps[b].name + '@' + response[a].name,
-									msg.p2p
+									msg.p2p,
+									msg.callback
 								);
 								break;
 							}
@@ -273,13 +293,13 @@ FriendNetwork = {
 			else
 			{
 				console.log( 'FriendNetwork.connectToHost.hostBack', err, response ? response : '' );
-				FriendNetwork.sendErrorToWindow(window, err, false, response);
+				FriendNetwork.sendErrorToWindow( window, msg.callback, err, false, response );
 				return;
 			}
 			if ( !found )
 			{
 				console.log( 'FriendNetwork.connectToHost', 'ERR_HOST_NOT_FOUND', msg.name );
-				FriendNetwork.sendErrorToWindow(window, 'ERR_HOST_NOT_FOUND');
+				FriendNetwork.sendErrorToWindow( window, msg.callback, 'ERR_HOST_NOT_FOUND', false, msg.name );
 			}
 		}
 	},
@@ -289,8 +309,6 @@ FriendNetwork = {
 		if ( !this.conn )
 			return;
 
-		var application = findApplication(msg.message.applicationId);
-		var window = GetContentWindowByAppMessage(application, msg.message);
 		var session = FriendNetwork.sessions[ msg.key ];
 		if ( session && session.isClient )
 		{
@@ -300,8 +318,10 @@ FriendNetwork = {
 		else
 		{
 			console.log('FriendNetwork.disconnectFromHost', 'ERR_CLIENT_NOT_FOUND', msg.name);
-			if ( msg.message )
-				this.sendErrorToWindow( window, 'ERR_CLIENT_NOT_FOUND' );
+			var window;
+			if ( msg.message && msg.message.applicationId )
+				window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+			this.sendErrorToWindow( window, msg.callback, 'ERR_CLIENT_NOT_FOUND', msg.key );
 		}
 	},
 	
@@ -319,7 +339,10 @@ FriendNetwork = {
 		else
 		{
 			console.log('FriendNetwork.setHostPassword', 'ERR_HOST_NOT_FOUND', msg.key);
-			this.sendError( msg.message, 'ERR_HOST_NOT_FOUND', msg.key );
+			var window;
+			if ( msg.message && msg.message.applicationId )
+				window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+			this.sendErrorToWindow( window, msg.callback, 'ERR_HOST_NOT_FOUND', msg.key );
 		}
 	},
 	
@@ -337,7 +360,10 @@ FriendNetwork = {
 		else
 		{
 			console.log('FriendNetwork.sendCredentials.send', 'ERR_HOST_NOT_FOUND');
-			this.sendError( msg.message, 'ERR_HOST_NOT_FOUND', msg.key );
+			var window;
+			if ( msg.message && msg.message.applicationId )
+				window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+			this.sendErrorToWindow( window, msg.callback, 'ERR_HOST_NOT_FOUND', msg.key );
 		}
 	},
 	
@@ -363,7 +389,9 @@ FriendNetwork = {
 				msg      : msg,
 				sessions : this.sessions,
 			});
-			this.sendError( msg.message, 'ERR_SESSION_NOT_FOUND', msg.key);
+			if ( msg.message && msg.message.applicationId )
+				window = GetContentWindowByAppMessage( findApplication( msg.message.applicationId ), msg.message );
+			this.sendErrorToWindow( window, msg.callback, 'ERR_SESSION_NOT_FOUND', msg.key );
 		}
 	},
 	
@@ -396,7 +424,7 @@ FriendNetwork = {
 					    name:       session.distantName,
 					    appName:    session.distantAppName
 				    };
-				    FriendNetwork.sendToWindow( window, 'timeout', msg );
+				    FriendNetwork.sendToWindow( window, session.host.callback, 'timeout', msg );
 				    session.close( true );
 			    }
 
@@ -418,59 +446,47 @@ FriendNetwork = {
 	    }
     },
 	// Send error message to window
-	sendErrorToWindow: function( window, error, key, response )
+	sendErrorToWindow: function( window, callback, error, key, response )
     {
+		var msg = {
+			command:         'friendnetwork',
+			subCommand:      'error',
+			error:        	 error,
+			key:             key,
+			response:		 response
+		};
+		if ( typeof callback == 'function' )
+		{
+			callback( msg );
+		}
     	if ( window )
 		{
-			var nmsg = {
-				command:         'friendnetwork',
-				subCommand:      'error',
-				error:        	 error,
-				key:             key,
-				response:		 response
-			};
+			if ( typeof callback == 'string' )
+				message.callback = callback;
 			try
 			{
-				window.postMessage(JSON.stringify(nmsg), '*');
+				window.postMessage( JSON.stringify( msg ), '*' );
 			}
 			catch (err)
 			{}
 		}
     },
 	// Send message to window
-	sendToWindow: function( window, subCommand, message )
+	sendToWindow: function( window, callback, subCommand, message )
     {
+		message.command = 'friendnetwork';
+		message.subCommand = subCommand;
+		if ( typeof callback == 'function' )
+		{
+			callback( msg );
+		}
     	if ( window )
 		{
-			message.command = 'friendnetwork';
-			message.subCommand = subCommand;
+			if ( typeof callback == 'string' )
+				message.callback = callback;
 			try
 			{
-				var str = JSON.stringify( message );
-				window.postMessage(JSON.stringify( message ), '*');
-			}
-			catch (err)
-			{}
-		}
-    },
-	// Send error message to window
-	sendError: function( message, error, key, name, response )
-    {
-    	if ( message )
-		{
-			var application = findApplication( message.applicationId );
-			var window = GetContentWindowByAppMessage(application, message);
-			var nmsg = {
-				command:         'friendnetwork',
-				subCommand:      'error',
-				error:        	 error,
-				key:             key,
-				name:            name,
-				response:		 response
-			};
-			try
-			{
-				window.postMessage(JSON.stringify(nmsg), '*');
+				window.postMessage( JSON.stringify( message ), '*' );
 			}
 			catch (err)
 			{}
@@ -529,7 +545,7 @@ FriendNetwork = {
 		return false;
 	},
 	// Get online status of a session / the network
-	getStatus: function( msg )
+	getStatus: function( msg, callback )
 	{
 		var result = {
 			connected: false,
@@ -603,12 +619,12 @@ FriendNetwork = {
 			hosts:			result.hosts,
 			clients:		result.clients
 		};
-		FriendNetwork.sendToWindow( window, 'status', nmsg);
+		FriendNetwork.sendToWindow( window, callback, 'status', nmsg);
 	}
 };
 
 // FriendNetwork host object
-FNetHost = function( key, window, applicationId, applicationName, name, description, password )
+FNetHost = function( key, window, applicationId, applicationName, name, description, password, callback )
 {
 	var self = this;
 	self.key = key;
@@ -618,6 +634,7 @@ FNetHost = function( key, window, applicationId, applicationName, name, descript
 	self.description = description;
 	self.window = window;
 	self.isHost = true;
+	self.callback = callback;
 	self.hostClients = [];
 	if ( typeof password == 'string' )
 		self.password = 'HASHED' + Sha256.hash( password );
@@ -627,7 +644,7 @@ FNetHost = function( key, window, applicationId, applicationName, name, descript
 	self.conn = new EventNode(
 		self.key,
 		FriendNetwork.conn,
-		eventSink,
+		eventSink
 	);
 	self.conn.send = function() {
 		console.log( 'FnetHost.conn.send - dont use this. \
@@ -671,7 +688,7 @@ FNetHost = function( key, window, applicationId, applicationName, name, descript
 		if (err)
 		{
 			console.log('FdNethost exposeBack', err, response ? response : '');
-			FriendNetwork.sendErrorToWindow(self.window, err, self.key, response);
+			FriendNetwork.sendErrorToWindow( self.window, self.callback, err, self.key, response );
 			FriendNetwork.conn.release(self.key);
 			FriendNetwork.removeHost(self.key);
 			return;
@@ -689,7 +706,7 @@ FNetHost = function( key, window, applicationId, applicationName, name, descript
 						name:    self.name,
 						hostKey: self.key
 					};
-					FriendNetwork.sendToWindow(self.window, 'host', nmsg);
+					FriendNetwork.sendToWindow(self.window, self.callback, 'host', nmsg);
 					break;
 				}
 			}
@@ -697,7 +714,7 @@ FNetHost = function( key, window, applicationId, applicationName, name, descript
 		if (!ok)
 		{
 			console.log('FNethost exposeBack', err, response ? response : '');
-			FriendNetwork.sendErrorToWindow(self.window, 'ERR_HOSTING_FAILED', self.key, response);
+			FriendNetwork.sendErrorToWindow( self.window, self.callback, 'ERR_HOSTING_FAILED', self.key, response );
 			FriendNetwork.conn.release(self.key);
 			FriendNetwork.sessions[ self.key ] = false;
 			FriendNetwork.cleanKeys( FriendNetwork.sessions );
@@ -769,7 +786,7 @@ FNetHost.prototype.close = function( closingSession )
 		if (err)
 		{
 			console.log('FriendNetwork.close conceal', err, response ? response : '');
-			FriendNetwork.sendErrorToWindow( self.window, err, self.key, response);
+			FriendNetwork.sendErrorToWindow( self.window, self.callback, err, self.key, response );
 			return;
 		}
 		
@@ -789,7 +806,7 @@ FNetHost.prototype.close = function( closingSession )
 			hostKey:    self.key,
 			name:       self.name
 		};
-		FriendNetwork.sendToWindow( self.window, 'disposed', msg );
+		FriendNetwork.sendToWindow( self.window, self.callback, 'disposed', msg );
 	});
 };
 
@@ -813,7 +830,7 @@ function FNetHostClient( key, host, data )
 	self.conn = new EventNode(
 		self.key,
 		FriendNetwork.conn,
-		eventSink,
+		eventSink
 	);
 	function eventSink() {
 		console.log( 'FnetHostClient.conn.eventSink', arguments );
@@ -838,7 +855,7 @@ function FNetHostClient( key, host, data )
 		if (err)
 		{
 			console.log('FNetClient constructor', err, response ? response : '');
-			FriendNetwork.sendErrorToWindow( self.host.window, err, self.key, response);
+			FriendNetwork.sendErrorToWindow( self.host.window, self.host.callback, err, self.key, response);
 			FriendNetwork.removeSession( self.key );
 		}
 	});
@@ -945,7 +962,7 @@ function FNetHostClient( key, host, data )
 				sessionPassword: self.sessionPassword,
 				p2p:			 false
 			};
-			FriendNetwork.sendToWindow( self.host.window, 'clientConnected', nmsg );
+			FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'clientConnected', nmsg );
 		}
 	}
 	function disconnect( data )
@@ -956,7 +973,7 @@ function FNetHostClient( key, host, data )
 			key:             self.key,
 			name:            self.distantName
 		};
-		FriendNetwork.sendToWindow( self.host.window, 'clientDisconnected', nmsg );
+		FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'clientDisconnected', nmsg );
 		
 		// Remove session
 		self.host.removeHClient( self.key );
@@ -970,7 +987,7 @@ function FNetHostClient( key, host, data )
 			name:            self.distantName,
 			data:            data.data
 		};
-		FriendNetwork.sendToWindow( self.host.window, 'messageFromClient', nmsg );
+		FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'messageFromClient', nmsg );
 	}
 }
 FNetHostClient.prototype.close = function()
@@ -1002,21 +1019,14 @@ FNetHostClient.prototype.send = function( data )
 			data:    	data
 		}
 	};
-	if ( !self.p2p )
+	FriendNetwork.conn.send(self.distantId, nmsg, function (err, response)
 	{
-		FriendNetwork.conn.send(self.distantId, nmsg, function (err, response)
+		if (err)
 		{
-			if (err)
-			{
-				console.log('FriendNetwork.send', err, response ? response : '');
-				FriendNetwork.sendErrorToWindow(self.host.window, err, self.key, response);
-			}
-		});
-	}
-	else if ( self.peer )
-	{
-		self.peer.send( nmsg );
-	}
+			console.log('FriendNetwork.send', err, response ? response : '');
+			FriendNetwork.sendErrorToWindow( self.host.window, self.host.callback, err, self.key, response );
+		}
+	});
 };
 
 // A client of the host
@@ -1034,8 +1044,6 @@ function FNetHostP2PClient( netKey, req, onend, host, key )
 	self.events[ 'credentials' ] = credentials;
 	self.events[ 'clientDisconnected' ] = disconnect;
 	self.events[ 'message' ] = message;
-	//self.distantName = data.name;
-	//self.distantAppName = data.applicationName;
 	
 	self.conn = new EventNode(
 		netKey,
@@ -1116,6 +1124,8 @@ function FNetHostP2PClient( netKey, req, onend, host, key )
 	function credentials( data )
 	{
 		var good = false;
+		self.distantName = data.name;
+		self.distantAppName = data.applicationName;
 		
 		var clientPassword = Workspace.encryption.decrypt(data.data, Workspace.encryption.keys.client.privatekey);
 		
@@ -1204,7 +1214,7 @@ function FNetHostP2PClient( netKey, req, onend, host, key )
 				sessionPassword: self.sessionPassword,
 				p2p: 			 true
 			};
-			FriendNetwork.sendToWindow( self.host.window, 'clientConnected', nmsg );
+			FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'clientConnected', nmsg );
 		}
 	}
 	function disconnect( data )
@@ -1216,7 +1226,7 @@ function FNetHostP2PClient( netKey, req, onend, host, key )
 			key:             self.key,
 			name:            self.distantName
 		};
-		FriendNetwork.sendToWindow( self.host.window, 'clientDisconnected', nmsg );
+		FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'clientDisconnected', nmsg );
 		
 		// Remove session
 		FriendNetwork.removeSession( self.key );
@@ -1231,7 +1241,7 @@ function FNetHostP2PClient( netKey, req, onend, host, key )
 			name:            self.distantName,
 			data:            data.data
 		};
-		FriendNetwork.sendToWindow( self.host.window, 'messageFromClient', nmsg );
+		FriendNetwork.sendToWindow( self.host.window, self.host.callback, 'messageFromClient', nmsg );
 	}
 }
 FNetHostP2PClient.prototype.close = function()
@@ -1264,7 +1274,7 @@ FNetHostP2PClient.prototype.send = function( data )
 	self.peer.send( msg );
 };
 
-function FNetClient( key, window, applicationId, applicationName, hostId, hostKey, hostName, p2p )
+function FNetClient( key, window, applicationId, applicationName, hostId, hostKey, hostName, p2p, callback )
 {
 	console.log( 'FNetClient', key );
 	var self = this;
@@ -1276,6 +1286,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 	self.distantId = hostId;
 	self.hostKey = hostKey;
 	self.hostName = hostName;
+	self.callback = callback;
 	self.p2pEnabled = p2p;
 	self.isClient = true;
 	self.conn = null;
@@ -1288,18 +1299,15 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 	self.events[ 'message' ] = message;
 	self.events[ 'ping' ] = ping;
 	self.timeoutCount = 10;
-	/*
-		using this as appConn for peer connection
-	*/
+	
+	// Using this as appConn for peer connection
 	self.conn = new EventNode(
 		self.key,
 		FriendNetwork.conn,
-		eventSink,
+		eventSink
 	);
 	
-	// we need to redefine EventNode.send as the network interface is not
-	// a standard EventNode; it requires two extra pieces of information.
-	// Someone could probably add a NetworkNode to events.js
+	// Redefine EventNode.send
 	self.conn.send = sendToHost;
 	function sendToHost( event ) {
 		var toApp = {
@@ -1333,7 +1341,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 				self.hostKey,
 				{},
 				self.key,
-				connectBack,
+				connectBack
 		);
 		
 		function connectBack(err, res)
@@ -1346,7 +1354,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 					res,
 					self.conn,
 					peerEventSink,
-					onPeerEnd,
+					onPeerEnd
 			);
 			self.p2p = true;
 			self.peer.on( 'event', handleEvents );
@@ -1384,29 +1392,15 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 			hostName:	self.hostName,
 			sessionPassword: self.sessionPassword
 		};
-		FriendNetwork.sendToWindow( window, 'getCredentials', nmsg );
+		FriendNetwork.sendToWindow( self.window, self.callback, 'getCredentials', nmsg );
 	}
 	function wrongCredentials( data )
 	{
-		var nmsg = {
-			error			: 'ERR_WRONG_CREDENTIALS',
-			key             : self.key,
-			name            : self.distantName,
-			appName         : self.distantAppName,
-			sessionPassword : self.sessionPassword,
-		};
-		FriendNetwork.sendToWindow( window, 'error', nmsg );
+		FriendNetwork.sendErrorToWindow( self.window, self.callback, 'ERR_WRONG_CREDENTIALS', self.key, self.distantName );
 	}
 	function failedCredentials( data )
 	{
-		var nmsg = {
-			error			: 'ERR_WRONG_CREDENTIALS',
-			key             : self.key,
-			name            : self.distantName,
-			appName         : self.distantAppName,
-			sessionPassword : self.sessionPassword,
-		};
-		FriendNetwork.sendErrorToWindow( window, 'error', nmsg );
+		FriendNetwork.sendErrorToWindow( self.window, self.callback, 'ERR_FAILED_CREDENTIALS', self.key, self.distantName );
 		FriendNetwork.conn.release( self.key );
 		FriendNetwork.sessions[ self.key ] = false;
 		FriendNetwork.cleanKeys( FriendNetwork.sessions );
@@ -1417,9 +1411,9 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 			key             : self.key,
 			hostName        : self.hostName,
 			name            : self.distantName,
-			sessionPassword : self.sessionPassword,
+			sessionPassword : self.sessionPassword
 		};
-		FriendNetwork.sendToWindow( window, 'connected', nmsg );
+		FriendNetwork.sendToWindow( self.window, self.callback, 'connected', nmsg );
 		
 		console.log( 'FNetClient.connected', data );
 	}
@@ -1430,7 +1424,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 			key:      	self.key,
 			name:       self.hostName
 		};
-		FriendNetwork.sendToWindow( window, 'hostDisconnected', nmsg );
+		FriendNetwork.sendToWindow( self.window, self.callback, 'hostDisconnected', nmsg );
 		FriendNetwork.conn.release( self.key );
 		FriendNetwork.removeSession( self.key );
 	}
@@ -1441,7 +1435,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 		var msg =
 		{
 			command: 	'pong',
-			key: 		self.distantKey,
+			key: 		self.distantKey
 		};
 		self.conn.send( msg );
 	}
@@ -1452,7 +1446,7 @@ function FNetClient( key, window, applicationId, applicationName, hostId, hostKe
 			name:       self.distantName,
 			data:		data.data
 		};
-		FriendNetwork.sendToWindow( window, 'messageFromHost', nmsg );
+		FriendNetwork.sendToWindow( self.window, self.callback, 'messageFromHost', nmsg );
 	}
 }
 FNetClient.prototype.send = function( data )
@@ -1546,12 +1540,11 @@ FNetClient.prototype.close = function()
 	}
 
 	// Send message to window
-	var nmsg = {
-		subCommand:      'disconnected',
+	var msg = {
 		key:             self.key,
 		name:            self.distantName
 	};
-	FriendNetwork.sendToWindow( self.window, 'disconnected', nmsg );
+	FriendNetwork.sendToWindow( self.window, self.callback, 'disconnected', msg );
 	
 	FriendNetwork.conn.release( self.key );
 	FriendNetwork.sessions[ self.key ] = false;

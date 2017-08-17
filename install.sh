@@ -10,6 +10,7 @@
 #
 
 sudo apt-get install dialog
+sudo pacman -Sy dialog
 
 declare -i INSTALL_SCRIPT_NUMBER=0
 
@@ -25,12 +26,21 @@ fi
 FRIEND_FOLDER=$(pwd)
 QUIT="Installation aborted. Please restart script to complete it."
 
-# Calls configuration script
-sh ./installers/config.sh
-if [ $? -eq "1" ]; then
-    clear
-    echo "Aborting installation."
-    exit 1
+# Calls configuration script if -s is not used
+CONFIG="0"
+if [ ! -f "$FRIEND_FOLDER/Config" ]; then
+	CONFIG="1"
+fi
+if [ -z $1 ]; then
+	CONFIG="1"
+fi
+if [ $CONFIG -eq "1" ]; then
+	sh ./installers/config.sh
+	if [ $? -eq "1" ]; then
+    	clear
+    	echo "Aborting installation."
+    	exit 1
+	fi
 fi
 
 # Get directory from Config file
@@ -150,7 +160,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin make
+        cmake ssh phpmyadmin make curl
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -164,7 +174,7 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
 	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
 	cmake ssh phpmyadmin make \
-	libwebsockets-dev libssh-dev
+	libwebsockets-dev libssh-dev curl
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -210,10 +220,10 @@ while true; do
     # Checks mysql root password
     export MYSQL_PWD=$mysqlRootPass
     mysql -u root -e ";"
-    export MYSQL_PWD=""
     if [ $? -eq "0" ]; then
         break;
     fi
+	dialog --backtitle "Friend Installer" --msgbox "Illegal mysql password, please try again." 8 65
 done
 clear
 

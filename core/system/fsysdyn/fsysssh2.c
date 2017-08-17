@@ -162,6 +162,7 @@ void init( struct FHandler *s )
 		HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 		hd->initialized = 0;
 		pthread_mutex_init( &hd->hd_Mutex, NULL );
+		DEBUG("[SSH2FS] init\n");
 	}
 }
 
@@ -175,6 +176,7 @@ void deinit( struct FHandler *s )
 	libssh2_exit();
 	pthread_mutex_destroy( &hd->hd_Mutex );
 	FFree( hd );
+	DEBUG("[SSH2FS] deinit\n");
 }
 
 //
@@ -1492,6 +1494,15 @@ char *GetFileName( const char *path )
 	}
 	
 	return p;
+}
+
+//
+// Get information about last file changes (seconds from 1970)
+//
+
+FQUAD GetChangeTimestamp( struct File *s, const char *path )
+{
+	return (FQUAD)0;
 }
 
 //
