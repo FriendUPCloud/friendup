@@ -21,74 +21,11 @@ if [ $? -eq "1" ]; then
     clear
     exit 1
 fi
+clear
 
 # Default Friend paths
 FRIEND_FOLDER=$(pwd)
 QUIT="Installation aborted. Please restart script to complete it."
-
-# Calls configuration script if -s is not used
-CONFIG="0"
-if [ ! -f "$FRIEND_FOLDER/Config" ]; then
-	CONFIG="1"
-fi
-if [ -z $1 ]; then
-	CONFIG="1"
-fi
-if [ $CONFIG -eq "1" ]; then
-	sh ./installers/config.sh
-	if [ $? -eq "1" ]; then
-    	clear
-    	echo "Aborting installation."
-    	exit 1
-	fi
-fi
-
-# Get directory from Config file
-. "$FRIEND_FOLDER/Config"
-FRIEND_BUILD="$FRIEND_PATH"
-if [ -z "$FRIEND_BUILD" ]; then
-    dialog --backtitle "Friend Installer" --msgbox "\
-Cannot read compilation Config file\n\n\
-Please run this script again and answer\n\
-all the questions." 10 55
-    clear
-    echo "$QUIT"
-    exit 1
-fi
-
-# Checks a setup.ini file has been generated
-if [ ! -f "$FRIEND_BUILD/cfg/setup.ini" ]
-then
-    dialog --backtitle "Friend Installer" --msgbox "\
-Cannot find setup.ini file\n\n\
-Please run this script again and answer\n\
-all the questions." 10 55
-    clear
-    echo "$QUIT"
-    exit 1
-fi
-
-# Root or not?
-mkdir "$FRIEND_BUILD/tryout" > /dev/null 2>&1
-if [ $? -eq "0" ]; then
-    SUDO=""
-    rm -rf "$FRIEND_BUILD/tryout"
-else
-    SUDO="sudo"
-fi
-
-# Get values from setup.ini file
-dbhost=$(sed -nr "/^\[FriendCore\]/ { :l /^dbhost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbname=$(sed -nr "/^\[FriendCore\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbuser=$(sed -nr "/^\[FriendCore\]/ { :l /^dbuser[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbpass=$(sed -nr "/^\[FriendCore\]/ { :l /^dbpass[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbport=$(sed -nr "/^\[FriendCore\]/ { :l /^dbport[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^domain[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-TLS=$(sed -nr "/^\[FriendCore\]/ { :l /^TLS[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-
-clear
 
 #echo ""
 #echo "=====Checking linux distribution..."
@@ -160,7 +97,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin make curl
+        cmake ssh phpmyadmin curl build/build-essentials
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -174,7 +111,7 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
 	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
 	cmake ssh phpmyadmin make \
-	libwebsockets-dev libssh-dev curl
+	libwebsockets-dev libssh-dev curl build/build-essentials
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -207,6 +144,70 @@ Write to us: developer@friendos.com" 8 40
     clear
     exit 1
 fi
+
+# Calls configuration script if -s is not used
+CONFIG="0"
+if [ ! -f "$FRIEND_FOLDER/Config" ]; then
+	CONFIG="1"
+fi
+if [ -z $1 ]; then
+	CONFIG="1"
+fi
+if [ $CONFIG -eq "1" ]; then
+	sh ./installers/config.sh
+	if [ $? -eq "1" ]; then
+    	clear
+    	echo "Aborting installation."
+    	exit 1
+	fi
+fi
+
+# Get directory from Config file
+. "$FRIEND_FOLDER/Config"
+FRIEND_BUILD="$FRIEND_PATH"
+if [ -z "$FRIEND_BUILD" ]; then
+    dialog --backtitle "Friend Installer" --msgbox "\
+Cannot read compilation Config file\n\n\
+Please run this script again and answer\n\
+all the questions." 10 55
+    clear
+    echo "$QUIT"
+    exit 1
+fi
+
+# Checks a setup.ini file has been generated
+if [ ! -f "$FRIEND_BUILD/cfg/setup.ini" ]
+then
+    dialog --backtitle "Friend Installer" --msgbox "\
+Cannot find setup.ini file\n\n\
+Please run this script again and answer\n\
+all the questions." 10 55
+    clear
+    echo "$QUIT"
+    exit 1
+fi
+
+# Root or not?
+mkdir "$FRIEND_BUILD/tryout" > /dev/null 2>&1
+if [ $? -eq "0" ]; then
+    SUDO=""
+    rm -rf "$FRIEND_BUILD/tryout"
+else
+    SUDO="sudo"
+fi
+
+# Get values from setup.ini file
+dbhost=$(sed -nr "/^\[FriendCore\]/ { :l /^dbhost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbname=$(sed -nr "/^\[FriendCore\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbuser=$(sed -nr "/^\[FriendCore\]/ { :l /^dbuser[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbpass=$(sed -nr "/^\[FriendCore\]/ { :l /^dbpass[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+dbport=$(sed -nr "/^\[FriendCore\]/ { :l /^dbport[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^domain[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+TLS=$(sed -nr "/^\[FriendCore\]/ { :l /^TLS[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
+
+clear
 
 # Asks for mysql db root password
 while true; do
