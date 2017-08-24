@@ -97,7 +97,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin curl build/build-essentials
+        cmake ssh phpmyadmin curl build-essential
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -111,7 +111,7 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
 	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
 	cmake ssh phpmyadmin make \
-	libwebsockets-dev libssh-dev curl build/build-essentials
+	libwebsockets-dev libssh-dev curl build-essential
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."

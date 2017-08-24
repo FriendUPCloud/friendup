@@ -414,6 +414,8 @@ if [ ! -d "$FRIEND_BUILD/autostart" ]; then
 fi
 $SUDO cp "$FRIEND_FOLDER/installers/startpresence.sh" "$FRIEND_BUILD/autostart/startpresence.sh"
 $SUDO cp "$FRIEND_FOLDER/installers/startfriendchat.sh" "$FRIEND_BUILD/autostart/startfriendchat.sh"
+$SUDO chmod +x "$FRIEND_BUILD/autostart/startpresence.sh"
+$SUDO chmod +x "$FRIEND_BUILD/autostart/startfriendchat.sh"
 
 echo "Friend Chat installed successfully."
 exit 0

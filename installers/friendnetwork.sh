@@ -148,6 +148,7 @@ if [ ! -d "$FRIEND_BUILD/autostart" ]; then
     $SUDO mkdir "$FRIEND_BUILD/autostart"
 fi
 $SUDO cp "$FRIEND_FOLDER/installers/startfriendnetwork.sh" "$FRIEND_BUILD/autostart/startfriendnetwork.sh"
+$SUDO chmod +x "$FRIEND_BUILD/autostart/startfriendnetwork.sh"
 
 echo "Friend Network installed successfully."
 exit 0
