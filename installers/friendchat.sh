@@ -169,10 +169,12 @@ then
 	dialog --backtitle "Friend Chat Installer" --msgbox "Illegal mysql password, please try again." 8 65
     done
 fi
+export MYSQL_PWD=""
 clear
 
 # INSTALLATION OF THE PRESENCE SERVER
 # -----------------------------------
+npm install bcrypt
 
 # Stores the GIT password for 1 minute to avoid entering it 3 times
 git config --global credential.helper cache

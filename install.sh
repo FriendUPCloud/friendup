@@ -24,6 +24,7 @@ fi
 clear
 
 # Default Friend paths
+ASKCONFIG = $1
 FRIEND_FOLDER=$(pwd)
 QUIT="Installation aborted. Please restart script to complete it."
 
@@ -90,14 +91,14 @@ fi
 echo ""
 echo "=====Installing dependencies..."
 echo "========================================================="
-
+sudo apt-get update
 if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
     sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
     	mysql-server \
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin curl build-essential
+        cmake ssh phpmyadmin curl build-essential python
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -110,8 +111,8 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
         php php-cli php-gd php-imap php-mysql php-curl php-readline \
 	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
-	cmake ssh phpmyadmin make \
-	libwebsockets-dev libssh-dev curl build-essential
+	cmake ssh phpmyadmin \
+	libwebsockets-dev libssh-dev curl build-essential python
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -150,7 +151,7 @@ CONFIG="0"
 if [ ! -f "$FRIEND_FOLDER/Config" ]; then
 	CONFIG="1"
 fi
-if [ -z $1 ]; then
+if [ -z ASKCONFIG ]; then
 	CONFIG="1"
 fi
 if [ $CONFIG -eq "1" ]; then
@@ -226,6 +227,7 @@ while true; do
     fi
 	dialog --backtitle "Friend Installer" --msgbox "Illegal mysql password, please try again." 8 65
 done
+export MYSQL_PWD=""
 clear
 
 # Defines mysql access
@@ -315,8 +317,8 @@ echo "Compilation log can be found in $FRIEND_FOLDER/compilation.log"
 if [ -f "$FRIEND_BUILD/FriendCore" ]; then
     $SUDO rm "$FRIEND_BUILD/FriendCore"
 fi
-$SUDO make setup > /dev/null 2>&1
-$SUDO make clean setup release install > "$FRIEND_FOLDER/compilation.log" 2>&1
+$SUDO make setup > "$FRIEND_FOLDER/compilation.log" 2>&1
+$SUDO make clean setup release install >> "$FRIEND_FOLDER/compilation.log" 2>&1
 
 # Checks if FriendCore is present
 if [ ! -f "$FRIEND_BUILD/FriendCore" ]; then
