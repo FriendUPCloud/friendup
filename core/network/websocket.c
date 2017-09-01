@@ -54,9 +54,9 @@
 #include <system/user/user_session.h>
 #include <util/base64.h>
 #include <network/websocket_client.h>
+#include <websockets/websocket_req_manager.h>
 
-//#define WS_PROTOCOL_BUFFER_SIZE 0x8fff
-#define WS_PROTOCOL_BUFFER_SIZE 0xffff
+
 #define USE_WORKERS
 
 extern SystemBase *SLIB;
@@ -155,7 +155,6 @@ inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int msglen, i
 		
 		if( cl->wc_Wsi != NULL )
 		{
-			DEBUG("CL %p\n", cl );
 			result = lws_write( cl->wc_Wsi, msgptr, msglen, type );
 			int val; int x=0;
 			while( 0 != (val = lws_send_pipe_choked( cl->wc_Wsi ) ) )
@@ -293,7 +292,7 @@ void WSThread( void *d )
 	FCWSData *fcd = data->fcd;
 	struct lws *wsi = data->wsi;
 	
-	if( fcd == NULL || fcd->fcd_WSClient == NULL )
+	if( fcd == NULL || fcd->fcd_WSClient == NULL || fcd->fcd_WSClient->wc_UserSession == NULL )
 	{
 		FERROR("Error session is NULL\n");
 		if( http != NULL )
@@ -613,6 +612,9 @@ void WSThreadPing( void *p )
 		pthread_mutex_lock( &nothreadsmutex );
 		nothreads--;
 		pthread_mutex_unlock( &nothreadsmutex );
+		FFree( answer );
+		FFree( data->requestid );
+		FFree( data );
 		return;
 	}
 	
@@ -689,6 +691,9 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	FCWSData *fcd =  (FCWSData *) user;// lws_context_user ( this );
 	int returnError = 0;
 	nothreads++;
+	
+	//void *in = FCalloc( len, 1 );
+	//memcpy( in, din, len );
 
 	Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, (char *)in );
 	
@@ -696,13 +701,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	{
 		case LWS_CALLBACK_ESTABLISHED:
 			//pss->fcd_Number = 0;
-			FERROR("[WS] Callback estabilished %p %p\n", fcd->fcd_SystemBase, fcd->fcd_WSClient );
+			INFO("[WS] Callback estabilished %p %p\n", fcd->fcd_SystemBase, fcd->fcd_WSClient );
 			fcd->fcd_SystemBase = NULL;
 			fcd->fcd_WSClient = NULL;
 		break;
 		
 		case LWS_CALLBACK_CLOSED:
-			FERROR("[WS] Callback session closed\n");
+			INFO("[WS] Callback session closed\n");
 			
             DeleteWebSocketConnection( SLIB, wsi, fcd );
 			fcd->fcd_WSClient = NULL;
@@ -746,7 +751,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					type : session
 					data : string
 				*/
-				DEBUG1("[WS] Callback receive: %s\n", in );
+				//DEBUG1("[WS] Callback receive: %s\n", in );
 				
 				{
 					int i, i1;
@@ -778,61 +783,94 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 								if( t[4].type == JSMN_OBJECT )
 								{
 									// we are trying to find now session or authid
-									for( i = 0; i < r ; i++ )
-									{
-										i1 = i + 1;
-										
-										// Incoming connection is authenticating with sessionid (the Workspace probably)
-										if( strncmp( "sessionId",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
-										{
-											char session[ DEFAULT_SESSION_ID_SIZE ];
-											memset( session, 0, DEFAULT_SESSION_ID_SIZE );
-										
-											strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
-											
-											// We could connect? If so, then just send back a pong..
-											if( AddWebSocketConnection( SLIB, wsi, session, NULL, fcd ) >= 0 )
-											{
-												INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
-												
-												char answer[ 1024 ];
-												snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
-												
-												unsigned char *buf;
-												int len = strlen( answer );
-												buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
-												if( buf != NULL )
-												{
-													//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
-													memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+									// {"type":"con","data":{"type":"chunk","data":{"id":"chunks-634g582h-6ny4ingy-apl77hpt-9u","part":0,"total":5,"data":"eyJ
 
-													if( fcd->fcd_WSClient != NULL )
-													{
-														WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
-													}
-													FFree( buf );
+									if( r > 14 &&  strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
+									{
+										if( strncmp( "chunk",  in + t[ 6 ].start, t[ 6 ].end-t[ 6 ].start ) == 0 )
+										{
+											int id = 0;
+											int part;
+											int total;
+											int data;
+											
+											for( i = 9; i < r ; i++ )
+											{
+												if( strncmp( "id",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+												{
+													id = i+1;
+												}
+												else if( strncmp( "part",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+												{
+													part = i+1;
+												}
+												else if( strncmp( "total",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+												{
+													total = i+1;
+												}
+												else if( strncmp( "data",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+												{
+													data = i+1;
 												}
 											}
-										}
-										// Incoming connection is authenticating with authid (from an application or an FS)
-										else if( strncmp( "authid",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
-										{
-											char authid[ DEFAULT_SESSION_ID_SIZE ];
-											memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
-										
-											strncpy( authid, in + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start );
+											
+											if( part > 0 && total > 0 && data > 0 && fcd->fcd_WSClient != NULL )
 											{
-												// We could connect? If so, then just send back a pong..
-												if( AddWebSocketConnection( SLIB, wsi, NULL, authid, fcd ) >= 0 )
+												//DEBUG("[WS] Got chunked message: %d\n\n\n%.*s\n\n\n", t[ data ].end-t[ data ].start, t[ data ].end-t[ data ].start, (char *)(in + t[ data ].start) );
+												char *idc = StringDuplicateN( in + t[ id ].start, t[ id ].end-t[ id ].start );
+												part = StringNToInt( in + t[ part ].start, t[ part ].end-t[ part ].start );
+												total = StringNToInt( in + t[ total ].start, t[ total ].end-t[ total ].start );
+												WebsocketClient *cl = (WebsocketClient *)fcd->fcd_WSClient;
+												if( cl->wc_UserSession != NULL )
 												{
-													INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
+													UserSession *ses = (UserSession *)cl->wc_UserSession;
+													WebsocketReq *wsreq = WebsocketReqManagerPutChunk( ses->us_WSReqManager, idc, part, total, (char *)(in + t[ data ].start), t[ data ].end-t[ data ].start );
+													
+													if( wsreq != NULL )
+													{
+														FC_Callback( wsi, reason, user, wsreq->wr_Message, wsreq->wr_MessageSize );
+														
+														WebsocketReqDelete( wsreq );
+													}
+												}
+												if( idc != NULL )
+												{
+													FFree( idc );
+												}
 												
-													char answer[ 2048 ];
-													snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+												DEBUG("Found proper chunk message\n");
+											}
+											else
+											{
+												DEBUG("Chunk Message parameters not found!\n");
+											}
+										}
+									}
+									else	// connection message
+									{
+										for( i = 4; i < r ; i++ )
+										{
+											i1 = i + 1;
+										
+											// Incoming connection is authenticating with sessionid (the Workspace probably)
+											if( strncmp( "sessionId",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+											{
+												char session[ DEFAULT_SESSION_ID_SIZE ];
+												memset( session, 0, DEFAULT_SESSION_ID_SIZE );
+										
+												strncpy( session, in + t[ i1 ].start, t[i1 ].end-t[ i1 ].start );
+											
+												// We could connect? If so, then just send back a pong..
+												if( AddWebSocketConnection( SLIB, wsi, session, NULL, fcd ) >= 0 )
+												{
+													INFO("[WS] Websocket communication set with user (sessionid) %s\n", session );
+												
+													char answer[ 1024 ];
+													snprintf( answer, 1024, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
 												
 													unsigned char *buf;
 													int len = strlen( answer );
-													buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len+LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+													buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
 													if( buf != NULL )
 													{
 														//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
@@ -846,8 +884,41 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													}
 												}
 											}
-										}
-									}	// for through parameters
+											// Incoming connection is authenticating with authid (from an application or an FS)
+											else if( strncmp( "authid",  in + t[ i ].start, t[ i ].end-t[ i ].start ) == 0 )
+											{
+												char authid[ DEFAULT_SESSION_ID_SIZE ];
+												memset( authid, 0, DEFAULT_SESSION_ID_SIZE );
+										
+												//strncpy( authid, in + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start );
+												{
+													// We could connect? If so, then just send back a pong..
+													if( AddWebSocketConnection( SLIB, wsi, NULL, authid, fcd ) >= 0 )
+													{
+														INFO("[WS] Websocket communication set with user (authid) %s\n", authid );
+												
+														char answer[ 2048 ];
+														snprintf( answer, 2048, "{\"type\":\"con\", \"data\" : { \"type\": \"pong\", \"data\":\"%.*s\"}}",t[ i1 ].end-t[ i1 ].start, (char *) (in + t[ i1 ].start) );
+												
+														unsigned char *buf;
+														int len = strlen( answer );
+														buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len+LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+														if( buf != NULL )
+														{
+															//unsigned char buf[ LWS_SEND_BUFFER_PRE_PADDING + response->sizeOfContent +LWS_SEND_BUFFER_POST_PADDING ];
+															memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, answer,  len );
+
+															if( fcd->fcd_WSClient != NULL )
+															{
+																WebsocketWriteInline( fcd->fcd_WSClient, buf + LWS_SEND_BUFFER_PRE_PADDING, len, LWS_WRITE_TEXT );
+															}
+															FFree( buf );
+														}
+													}
+												}
+											}
+										}	// for through parameters
+									}	// next type of message
 									
 									if( strncmp( "type",  in + t[ 5 ].start, t[ 5 ].end-t[ 5 ].start ) == 0 )
 									{

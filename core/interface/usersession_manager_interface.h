@@ -43,13 +43,12 @@ typedef struct UserSessionManagerInterface
 	UserSession					*(*USMGetSessionsByTimeout)( UserSessionManager *smgr, const FULONG timeout );
 	int							(*USMAddFile)( UserSessionManager *smgr, UserSession *ses, File *f );
 	int							(*USMRemFile)( UserSessionManager *smgr, UserSession *ses, FULONG id );
-	File							*(*USMGetFile)( UserSessionManager *smgr, UserSession *ses, FULONG id );
-	UserSession				*(*USMUserSessionAdd)( UserSessionManager *smgr, UserSession *s );
+	File						*(*USMGetFile)( UserSessionManager *smgr, UserSession *ses, FULONG id );
+	UserSession					*(*USMUserSessionAdd)( UserSessionManager *smgr, UserSession *s );
 	int							(*USMUserSessionRemove)( UserSessionManager *smgr, UserSession *s );
 	int							(*USMSessionSaveDB)( UserSessionManager *smgr, UserSession *ses );
 	char						*(*USMUserGetFirstActiveSessionID)( UserSessionManager *smgr, User *usr );
 	void						(*USMDebugSessions)( UserSessionManager *smgr );
-	//UserSession					*(*UserGetByAuthID)( UserSessionManager *usm, const char *authId );
 }UserSessionManagerInterface;
 
 //
@@ -74,7 +73,6 @@ inline void UserSessionManagerInterfaceInit( UserSessionManagerInterface *si )
 	si->USMSessionSaveDB = USMSessionSaveDB;
 	si->USMUserGetFirstActiveSessionID = USMUserGetFirstActiveSessionID;
 	si->USMDebugSessions = USMDebugSessions;
-	//si->UserGetByAuthID = UserGetByAuthID;
 }
 
 #endif

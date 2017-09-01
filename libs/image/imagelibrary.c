@@ -178,7 +178,22 @@ int ImageWrite( struct ImageLibrary *im, Image *img, File *rootDev, const char *
 		}
 		else
 		{
-			fh->FileWrite( rfp, buffer, length );
+			if( fp->f_Activity.fsa_StoredBytesLeft >= 0 )
+			{
+				int stored = fh->FileWrite( rfp, buffer, length );
+				fp->f_BytesStored += stored;
+				if( fp->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+				{
+					if( (fp->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
+					{
+						fp->f_Activity.fsa_StoredBytesLeft = -1;
+					}
+					else
+					{
+						fp->f_Activity.fsa_StoredBytesLeft -= stored;
+					}
+				}
+			}
 		}
 		
 		DestroyExceptionInfo( ei );
@@ -344,7 +359,22 @@ int ImageWrite( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const ch
 			}
 			else
 			{
-				fh->FileWrite( rfp, buffer, length );
+				if( rootDev->f_Activity.fsa_StoredBytesLeft >= 0 )
+				{
+					int stored = fh->FileWrite( rfp, buffer, length );
+					rootDev->f_BytesStored += stored;
+					if( rootDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+					{
+						if( (rootDev->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
+						{
+							rootDev->f_Activity.fsa_StoredBytesLeft = -1;
+						}
+						else
+						{
+							rootDev->f_Activity.fsa_StoredBytesLeft -= stored;
+						}
+					}
+				}
 			}
 		}
 		else
@@ -508,7 +538,7 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 		if( tst != NULL  )
 		{
 			path = UrlDecodeToMem(  (char *) tst->data );
-			pathRoot = GetRootDeviceByPath( usr, &oPath, path );
+			pathRoot = GetRootDeviceByPath( usr->us_User, &oPath, path );
 			
 			DEBUG("[ImageLibrary] Found PATH parameter %s root %s\n", path, oPath );
 		}
@@ -518,7 +548,7 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 		if( tst != NULL  )
 		{
 			toPath = UrlDecodeToMem(  (char *) tst->data );
-			toRoot = GetRootDeviceByPath( usr, &otoPath, toPath );
+			toRoot = GetRootDeviceByPath( usr->us_User, &otoPath, toPath );
 			
 			DEBUG("[ImageLibrary] Found DESTINATION PATH parameter %s root %s\n", toPath, toRoot );
 		}
@@ -546,8 +576,8 @@ Http*  WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Htt
 			gdImagePtr image = l->ImageRead( l, pathRoot, path );
 			if( image != NULL )
 			{
-				image = l->ResizeImage( l, image, width, height );
-				if( image != NULL )
+				int err = FResizeImage( l, &image, width, height );
+				if( err == 0 )
 				{
 					if( toPath != NULL )
 					{

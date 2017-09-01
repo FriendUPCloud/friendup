@@ -314,7 +314,10 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 	char *config = NULL;
 	char *ctype = NULL, *type = NULL;
 	char *execute = NULL;
-	FULONG id = 0;
+	FULONG id = 0, factivityID = 0;
+	FQUAD storedBytes = 0;
+	FQUAD storedBytesLeft = 0;
+	FQUAD readedBytesLeft = 0;
 	
 	DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
 		
@@ -399,20 +402,20 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			
 			sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 			//snprintf( temptext, sizeof( temptext ), 
-				"SELECT \
-					`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute` \
-				FROM `Filesystem` f\
-				WHERE\
-				(\
-					f.UserID = '%ld' OR\
-					f.GroupID IN (\
-						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-						WHERE \
-							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-							ug.UserID = '%ld'\
-					)\
-				)\
-				AND f.Name = '%s'",
+"SELECT \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`, fsa.`StoredBytesLeft`, fsa.`ReadedBytesLeft` \
+FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
+WHERE \
+(\
+f.UserID = '%ld' OR \
+f.GroupID IN (\
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+) \
+) \
+AND f.Name = '%s'",
 				usr->u_ID , usr->u_ID, name
 			);
 	
@@ -428,20 +431,20 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 					memset( temptext, '\0', 512 );
 					sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 					//snprintf( temptext, sizeof( temptext ), 
-						"SELECT \
-							`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute` \
-						FROM `Filesystem` f\
-						WHERE\
-						(\
-							f.UserID = '%ld' OR\
-							f.GroupID IN (\
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-								WHERE \
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-									ug.UserID = '%ld'\
-							)\
-						)\
-						AND f.Name = '%s'",
+"SELECT \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`, fsa.`ID`, fsa.`StoredBytesLeft`, fsa.`ReadedBytesLeft` \
+FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
+WHERE \
+( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+)\
+) \
+AND f.Name = '%s'",
 						sent->s_User->u_ID, sent->s_User->u_ID, name 
 					);
 					if( ( res = sqllib->Query( sqllib, temptext ) ) == NULL )
@@ -533,6 +536,30 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				}
 				
 				if( row[ 8 ] != NULL ) execute = StringDuplicate( row[ 8 ] );
+				
+				if( row[ 9 ] != NULL )
+				{
+					char *end;
+					storedBytes = strtoul( (char *)row[ 9 ],  &end, 0 );
+				}
+				
+				if( row[ 10 ] != NULL )
+				{
+					char *end;
+					factivityID = strtoul( (char *)row[ 10 ],  &end, 0 );
+				}
+				
+				if( row[ 11 ] != NULL )
+				{
+					char *end;
+					storedBytesLeft = strtoul( (char *)row[ 11 ],  &end, 0 );
+				}
+				
+				if( row[ 12 ] != NULL )
+				{
+					char *end;
+					readedBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 );
+				}
 				
 				DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
 			}
@@ -697,6 +724,11 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 				retFile->f_Visible = visible ? 1 : 0;
 				retFile->f_Execute = StringDuplicate( execute );
 				retFile->f_FSysName = StringDuplicate( type );
+				retFile->f_BytesStored = storedBytes;
+				retFile->f_Activity.fsa_ReadedBytesLeft = readedBytesLeft;
+				retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
+				retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
+				retFile->f_Activity.fsa_ID = factivityID;
 				
 				if( usr != NULL )
 				{
@@ -1103,7 +1135,7 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 			{
 				DEBUG("[UnMountFS] Device found, unmounting\n");
 
-				FHandler *fsys = (FHandler *)remdev->f_FSys;
+				//FHandler *fsys = (FHandler *)remdev->f_FSys;
 			
 				// If we're here, we need to test if this drive also needs to be removed
 				// from other users!
@@ -1123,7 +1155,8 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 						)\
 					", name, usrs->us_User->u_ID, usrs->us_User->u_ID );
 
-				if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
+				if( DeviceUnMount( l, remdev, usr ) != 0 )
+				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
 				{
 					FERROR("[UnMountFS] ERROR: Cannot unmount device\n");
 			
@@ -1211,7 +1244,8 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 								
 									DEBUG( "[UnMountFS] Freeing this defunct device: %s (%s)\n", name, tmpUser->u_Name );
 								
-									fsys->UnMount( search->f_FSys, search, usr );
+									DeviceUnMount( l, search, usr );
+									//fsys->UnMount( search->f_FSys, search, usr );
 								
 									// Free up some
 									if( search->f_SessionID ) FFree( search->f_SessionID );
@@ -1411,6 +1445,7 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
 				filesys->fs_UserID = owner->u_ID;
 				filesys->fs_Mounted = mount;
 				filesys->fs_Path = rootDev->f_Path;
+				filesys->fs_StoredBytes = rootDev->f_BytesStored;
 			
 				int error = 0;
 			
@@ -1704,7 +1739,7 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
  *
  * @param l pointer to systembase
  * @param usr pointer to user which call this function
- * @param row database row entry
+ * @param row database row entryf
  * @param mountUser pointer to user which is mounting device
  * @param param to user session which called function
  * @return success (0) or fail value (not equal to 0)
@@ -1886,14 +1921,14 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 		if( sqllib != NULL )
 		{
 			sqllib->SNPrintF( sqllib, query, 1024, "\
-				SELECT `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Name`,`Execute`,`Mounted` FROM Filesystem f WHERE (\
-					f.UserID = '%ld' OR\
-					f.GroupID IN (\
-						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE \
-							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-							ug.UserID = '%lu'\
-					)\
-				)",  u->u_ID, u->u_ID );
+SELECT `Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Name`,`Execute`,`Mounted` FROM Filesystem f WHERE ( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%lu' \
+)\
+)",  u->u_ID, u->u_ID );
 			
 			DEBUG("[RefreshUserDrives] Query which will be used to find devices %s\n", query );
 			
@@ -2021,12 +2056,14 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 								{
 									olddev->node.mln_Succ = tmpdev->node.mln_Succ;
 								}
-								
+								DeviceRelease( l, tmpdev );
+								/*
 								FHandler *remfs = tmpdev->f_FSys;
 								if( remfs != NULL )
 								{
 									remfs->Release( remfs, tmpdev );
 								}
+								*/
 								FileDelete( tmpdev );
 								tmpdev = NULL;
 								
@@ -2095,11 +2132,14 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 				olddev->node.mln_Succ = tmpdev->node.mln_Succ;
 			}
 			
+			DeviceRelease( l, tmpdev );
+			/*
 			FHandler *remfs = tmpdev->f_FSys;
 			if( remfs != NULL )
 			{
 				remfs->Release( remfs, tmpdev );
 			}
+			*/
 			FileDelete( tmpdev );
 			tmpdev = NULL;
 		}
@@ -2114,4 +2154,88 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 	FFree( ids );
 		
 	return 0;
+}
+
+/**
+ * Release device resources
+ *
+ * @param l pointer to systembase
+ * @param rootDev pointer to device root file
+ * @return success (0) or fail value (not equal to 0)
+ */
+int DeviceRelease( SystemBase *l, File *rootDev )
+{
+	int errRet = 0;
+	
+	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	if( sqllib != NULL )
+	{
+		char temptext[ 256 ];
+	
+		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%lld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
+		sqllib->QueryWithoutResults( sqllib, temptext );
+		
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
+	
+		FHandler *fsys = (FHandler *)rootDev->f_FSys;
+
+		if( fsys != NULL && fsys->Release != NULL )
+		{
+			errRet = fsys->Release( fsys, rootDev );
+		}
+		else
+		{
+			errRet = 1;
+		}
+		l->LibraryMYSQLDrop( l, sqllib );
+	}
+	else
+	{
+		return 2;
+	}
+	
+	return errRet;
+}
+
+/**
+ * UnMount device resources
+ *
+ * @param l pointer to systembase
+ * @param rootDev pointer to device root file
+ * @param usr pointer to User structure (device owner)
+ * @return success (0) or fail value (not equal to 0)
+ */
+int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
+{
+	int errRet = 0;
+	
+	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	if( sqllib != NULL )
+	{
+		char temptext[ 256 ];
+	
+		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%lld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
+		sqllib->QueryWithoutResults( sqllib, temptext );
+		
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
+		sqllib->QueryWithoutResults( sqllib, temptext );
+	
+		FHandler *fsys = (FHandler *)rootDev->f_FSys;
+
+		if( fsys != NULL && fsys->Release != NULL )
+		{
+			errRet = fsys->UnMount( fsys, rootDev, usr );
+		}
+		else
+		{
+			errRet = 1;
+		}
+		l->LibraryMYSQLDrop( l, sqllib );
+	}
+	else
+	{
+		return 2;
+	}
+	
+	return errRet;
 }

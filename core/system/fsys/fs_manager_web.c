@@ -491,15 +491,22 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					if( have == TRUE )
 					{
-						int error = actFS->Delete( actDev, path );
-						if( error == 0 )
+						FQUAD bytes = actFS->Delete( actDev, path );
+						if( bytes >= 0 )
 						{
-							sprintf( tmp, "ok<!--separate-->{\"response\":\"%d\"}", error );
+							actDev->f_BytesStored -= bytes;
+							if( actDev->f_BytesStored < 0 )
+							{
+								actDev->f_BytesStored = 0;
+							}
+							sprintf( tmp, "ok<!--separate-->{\"response\":\"%lld\"}", bytes );
 							DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
+							
+							CacheUFManagerFileDelete( l->sl_CacheUFM, loggedSession->us_ID, actDev->f_ID, origDecodedPath );
 						}
 						else
 						{
-							sprintf( tmp, "fail<!--separate-->{\"response\":\"%d\"}", error );
+							sprintf( tmp, "fail<!--separate-->{\"response\":\"%lld\"}", bytes );
 						}
 						DEBUG("[FSMWebRequest] info command on FSYS: %s DELETE\n", actFS->GetPrefix() );
 					}
@@ -699,8 +706,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "-R----" );
 					if( have == TRUE )
 					{
-						LocFile *lf = CacheManagerUserFileGet( loggedSession->us_User, origDecodedPath );
-						
 						if( mode != NULL && strcmp( mode, "rs" ) == 0 )		// read stream
 						{ 
 							File *fp = (File *)actFS->FileOpen( actDev, path, mode );
@@ -771,9 +776,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							if( fp != NULL )
 							{
 								int dataread = 0;
-							
-								//struct stringPart *head = NULL;
-								//struct stringPart *curr = NULL;
 							
 								fp->f_Raw = 0;
 								if( strcmp( mode, "rb" ) == 0 )
@@ -1029,16 +1031,38 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 							if( fp != NULL )
 							{
-								int size = actFS->FileWrite( fp, fdata, dataSize );
-								if( size > 0 )
+								int size = 0;
+								
+								if( actDev->f_Activity.fsa_StoredBytesLeft >= 0 )
 								{
-									char tmp[ 128 ];
-									sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
-									HttpAddTextContent( response, tmp );
+									size = actFS->FileWrite( fp, fdata, dataSize );
+									actDev->f_BytesStored += size;
+									if( actDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+									{
+										if( (actDev->f_Activity.fsa_StoredBytesLeft-size) <= 0 )
+										{
+											actDev->f_Activity.fsa_StoredBytesLeft = -1;
+										}
+										else
+										{
+											actDev->f_Activity.fsa_StoredBytesLeft -= size;
+										}
+									}
+									
+									if( size > 0 )
+									{
+										char tmp[ 128 ];
+										sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
+										HttpAddTextContent( response, tmp );
+									}
+									else
+									{
+										HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for File\" }" );
+									}
 								}
-								else
+								else		// cannot write more
 								{
-									HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for File\" }" );
+									HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User cannot store more data\" }" );
 								}
 								actFS->FileClose( actDev, fp );
 							
@@ -1132,7 +1156,26 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													}
 													if( dataread > 0 )
 													{
-														written += dsthand->FileWrite( wfp, dataBuffer, dataread );
+														int bytes = 0;
+														
+														if( dstrootf->f_Activity.fsa_StoredBytesLeft >= 0 )
+														{
+															bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
+															written += bytes;
+															dstrootf->f_BytesStored += bytes;
+															
+															if( dstrootf->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+															{
+																if( (dstrootf->f_Activity.fsa_StoredBytesLeft-bytes) <= 0 )
+																{
+																	dstrootf->f_Activity.fsa_StoredBytesLeft = -1;
+																}
+																else
+																{
+																	dstrootf->f_Activity.fsa_StoredBytesLeft -= bytes;
+																}
+															}
+														}
 													}
 												}
 												FFree( dataBuffer );
@@ -1273,7 +1316,24 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
 								if( fp != NULL )
 								{
-									actFS->FileWrite( fp, file->hf_Data, file->hf_FileSize );
+									int bytes = 0;
+									
+									if( actDev->f_Activity.fsa_StoredBytesLeft >= 0 )
+									{
+										bytes = actFS->FileWrite( fp, file->hf_Data, file->hf_FileSize );
+										actDev->f_BytesStored += bytes;
+										if( actDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+										{
+											if( (actDev->f_Activity.fsa_StoredBytesLeft-bytes) <= 0 )
+											{
+												actDev->f_Activity.fsa_StoredBytesLeft = -1;
+											}
+											else
+											{
+												actDev->f_Activity.fsa_StoredBytesLeft -= bytes;
+											}
+										}
+									}
 									actFS->FileClose( actDev, fp );
 								
 									uploadedFiles++;
@@ -1897,7 +1957,25 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												int bufferSize = 0;
 												while( ( bufferSize = fread( buffer, 1, 32768, readfile ) ) > 0 )
 												{
-													fsys->FileWrite( fp, buffer, bufferSize );
+													int stored = 0;
+													
+													if( dstdevice->f_Activity.fsa_StoredBytesLeft >=0 )
+													{
+														stored = fsys->FileWrite( fp, buffer, bufferSize );
+														dstdevice->f_BytesStored += stored;
+													
+														if( dstdevice->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+														{
+															if( (dstdevice->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
+															{
+																dstdevice->f_Activity.fsa_StoredBytesLeft = -1;
+															}
+															else
+															{
+																dstdevice->f_Activity.fsa_StoredBytesLeft -= stored;
+															}
+														}
+													}
 												}
 												fsys->FileClose( dstdevice, fp );
 											
@@ -2000,7 +2078,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					{
 						//char dirname[ 756 ];
 						char *dirname = FCalloc( 1024, sizeof(char ) );
-						snprintf( dirname, 1024, "/tmp/%s_decomp_%d%d", loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+						snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
 						
 						mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -2302,6 +2380,34 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						HttpAddTextContent( response,  "fail<!--separate-->{ \"response\": \"Key or value parameter missing.\"}" );
 					}
 					*/
+				}
+				
+				//
+				// meta get
+				//
+				
+				else if( strcmp( urlpath[ 1 ], "getmodifydate" ) == 0 )
+				{
+					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
+											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+					
+					DEBUG("[FSMWebRequest] Get modify date\n");
+					
+					FHandler *actFS = (FHandler *)actDev->f_FSys;
+
+					if( actFS != NULL )
+					{
+						char msg[ 512 ];
+						FQUAD tim = actFS->GetChangeTimestamp( actDev, origDecodedPath );
+						
+						snprintf( msg, sizeof(msg), "{ \"modifytime\": \"%lld\"}", tim );
+
+						HttpAddTextContent( response,  msg );
+					}
+					else
+					{
+						HttpAddTextContent( response,  "fail<!--separate-->{ \"response\": \"Filesystem not found.\"}" );
+					}
 				}
 				
 				//

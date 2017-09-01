@@ -23,6 +23,8 @@
 #ifndef __CORE_MISSING_DEFS_H__
 #define __CORE_MISSING_DEFS_H__
 
+#define DEFAULT_TMP_DIRECTORY "/tmp/Friendup/"
+
 // definitions needed by some developer tools to enable highlighting
 
 #ifndef _POSIX_SOURCE

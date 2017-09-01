@@ -159,13 +159,14 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 
 	if( length % 4 != 0 )
 	{
-		FERROR("Cannot decode entry, beacouse size is incorect\n");
+		FERROR("Cannot decode entry, beacouse size is incorect: %d\n", length );
 		return NULL;
 	}
 
 	// Length / 4 * 3
-	int output_length = ( ( ( length >> 4 ) + ( length >> 4 ) ) );
-	output_length += output_length << 1;
+	//int output_length = ( ( ( length >> 4 ) + ( length >> 4 ) ) );
+	//output_length += output_length << 1;
+	int output_length = ((length + 3) / 4) * 3;
     
 	if( data[ length - 1 ] == '=' ) ( output_length )--;
 	if( data[ length - 2 ] == '=' ) ( output_length )--;
@@ -187,9 +188,11 @@ char *Base64Decode( const unsigned char* data, int length, int *finalLength )
 									+ ( sextet_c << 6  )  // 1 * 6
 									+ ( sextet_d       ); // 0 * 6
 
+		int x = j;
 		if( j < output_length) decoded_data[j++] = (triple >> 16 ) & 0xFF; // 2 * 8
 		if( j < output_length) decoded_data[j++] = (triple >> 8  ) & 0xFF; // 1 * 8
 		if( j < output_length) decoded_data[j++] = (triple       ) & 0xFF; // 0 * 8
+		//printf(" %c %c %c", decoded_data[x], decoded_data[x+1], decoded_data[x+2] );
 	}
 	
 	*finalLength = output_length;

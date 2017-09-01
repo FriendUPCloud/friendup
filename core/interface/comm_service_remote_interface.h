@@ -33,11 +33,11 @@
 
 typedef struct CommServiceRemoteInterface
 {
-	CommServiceRemote									*(*CommServiceRemoteNew)( int port, int secured, void *sb, int maxev );
-	void																(*CommServiceRemoteDelete)( CommServiceRemote *s );
-	int																(*CommServiceRemoteStart)( CommServiceRemote *s );
-	int																(*CommServiceRemoteStop)( CommServiceRemote *s );
-	DataForm														*(*CommServiceRemoteSendMsg)( CommServiceRemote *s, char *address, int port );
+	CommServiceRemote				*(*CommServiceRemoteNew)( int port, int secured, void *sb, int maxev );
+	void							(*CommServiceRemoteDelete)( CommServiceRemote *s );
+	int								(*CommServiceRemoteStart)( CommServiceRemote *s );
+	int								(*CommServiceRemoteStop)( CommServiceRemote *s );
+	DataForm						*(*CommServiceRemoteSendMsg)( CommServiceRemote *s, char *address, int port );
 }CommServiceRemoteInterface;
 
 //

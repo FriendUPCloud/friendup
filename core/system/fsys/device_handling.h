@@ -109,6 +109,18 @@ int CheckAndMountWorkgroupDrive( SystemBase *l, char *type, User *usr, FUQUAD id
 int RefreshUserDrives( SystemBase *l, User *u, BufString *bs );
 
 //
+//
+//
+
+int DeviceRelease( SystemBase *l, File *rootDev );
+
+//
+//
+//
+
+int DeviceUnMount( SystemBase *l, File *rootDev, User *usr );
+
+//
 // find comma and return position
 //
 

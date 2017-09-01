@@ -1238,16 +1238,14 @@ int MakeDir( struct File *s, const char *path )
 // rm files/dirs
 //
 
-int RemoveDirectory( SpecialData *sdat, const char *path )
+FQUAD RemoveDirectory( SpecialData *sdat, const char *path )
 {
 	LIBSSH2_SFTP_HANDLE *sftphandle;
-	int r = 0;
+	FQUAD r = 0;
 	
 	// Request a dir listing via SFTP 
 	sftphandle = libssh2_sftp_opendir( sdat->sftp_session, path );
 	int pathlen = strlen( path );
-	
-	//DEBUG("DELETE: %s handle %p\n", path, sftphandle );
 	
 	if ( sftphandle != NULL )	// this is directory
 	{
@@ -1268,8 +1266,6 @@ int RemoveDirectory( SpecialData *sdat, const char *path )
 			
 				if( strcmp( mem, "..") == 0 ){ continue; }
 				
-				//DEBUG("File: %s\n", longentry );
-			
 				int isDir = 0;
 				if( longentry[ 0 ] == 'd' )
 				{
@@ -1282,18 +1278,15 @@ int RemoveDirectory( SpecialData *sdat, const char *path )
 				if ( buf != NULL )
 				{
 					snprintf( buf, len, "%s/%s", path, mem );
-					//DEBUG("Buf '%s'  --> %d  memstrlen %d\n", buf, isDir, strlen(mem) );
-				
+
 					if ( isDir == 1 )
 					{
 						r2 = RemoveDirectory( sdat, buf );
 						libssh2_sftp_rmdir( sdat->sftp_session, buf );
-						//DEBUG("Delete dir\n");
 					}
 					else
 					{
 						r2 = libssh2_sftp_unlink( sdat->sftp_session, buf );
-						//DEBUG("Delete file\n");
 					}
 					FFree(buf);
 				}
@@ -1326,7 +1319,7 @@ int RemoveDirectory( SpecialData *sdat, const char *path )
 //
 //
 
-int Delete( struct File *s, const char *path )
+FQUAD Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
 	
@@ -1361,7 +1354,7 @@ int Delete( struct File *s, const char *path )
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
 		pthread_mutex_lock( &hd->hd_Mutex );
-		int ret = RemoveDirectory( sdat, comm );
+		FQUAD ret = RemoveDirectory( sdat, comm );
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		
 		FFree( comm );
@@ -1502,7 +1495,81 @@ char *GetFileName( const char *path )
 
 FQUAD GetChangeTimestamp( struct File *s, const char *path )
 {
-	return (FQUAD)0;
+	DEBUG("GetChangeTimestamp!\n");
+	FQUAD rettime = 0;
+	
+	int spath = 0;
+	if( path != NULL )
+	{
+		spath = strlen( path );
+	}
+	int rspath = strlen( s->f_Path );
+	SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+	
+	if( sdat == NULL || sdat->sftp_session == NULL )
+	{
+		return 0;
+	}
+
+	// user is trying to get access to not his directory
+	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
+	
+	int doub = strlen( s->f_Name );
+	
+	char *comm = NULL;
+	char *tempString = FCalloc( rspath +512, sizeof(char) );
+	
+	if( ( comm = FCalloc( rspath + spath + 512, sizeof(char) ) ) != NULL )
+	{
+		strcpy( comm, s->f_Path );
+		
+		if( comm[ strlen( comm ) -1 ] != '/' )
+		{
+			strcat( comm, "/" );
+		}
+
+		if( path != NULL )
+		{
+			strcat( comm, path );
+		}
+		
+		FHandler *fh = (FHandler *)s->f_FSys;
+		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
+		
+		DEBUG("info lock %p\n", &hd->hd_Mutex );
+		pthread_mutex_lock( &hd->hd_Mutex );
+		
+		DEBUG("PATH created %s\n", comm );
+		
+		LIBSSH2_SFTP_HANDLE *handle = libssh2_sftp_open( sdat->sftp_session, comm, LIBSSH2_FXF_READ, 0 );
+		if( handle == NULL )
+		{
+			ServerReconnect( sdat, hd );
+			handle = libssh2_sftp_open( sdat->sftp_session, comm, LIBSSH2_FXF_READ, 0 );
+		}
+		
+		if( handle != NULL )
+		{
+			LIBSSH2_SFTP_ATTRIBUTES attrs;
+			
+			int err = libssh2_sftp_fstat( handle, &attrs);
+			if( err != 0 )
+			{
+				rettime = attrs.mtime;
+			}
+			
+			libssh2_sftp_close_handle( handle );
+		}
+		
+		pthread_mutex_unlock( &hd->hd_Mutex );
+		DEBUG("intfo SFTP unlock %p\n", &hd->hd_Mutex );
+		
+		FFree( comm );
+	}
+	FFree( tempString );
+	
+	DEBUG("Info END\n");
+	return rettime;
 }
 
 //
@@ -1657,34 +1724,13 @@ BufString *Info( File *s, const char *path )
 		
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		DEBUG("intfo SFTP unlock %p\n", &hd->hd_Mutex );
-
-		/*
-		struct stat ls;
-		
-		if( stat( comm, &ls ) == 0 )
-		{
-			DEBUG("LOCAL file stat %s\n", comm );
-			FillStat( bs, &ls, s, comm );
-		}
-		else
-		{
-			DEBUG("LOCAL file stat FAIL %s\n", comm );
-			BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
-		}
-		*/
 		
 		FFree( comm );
 	}
 	FFree( tempString );
 	
 	DEBUG("Info END\n");
-	
-	/*
-	LIBSSH2_API int libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *handle,
-										  LIBSSH2_SFTP_ATTRIBUTES *attrs,
-									   int setstat);
-	*/
-	
+
 	return bs;
 }
 

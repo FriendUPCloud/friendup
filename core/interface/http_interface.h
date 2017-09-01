@@ -33,52 +33,29 @@
 
 typedef struct HttpInterface
 {
-	int			(*HttpParseHeader)( Http* http, const char* request, unsigned int length );
-
-	Http		*(*HttpNew)( );
-
-	Http		*(*HttpNewSimple)( unsigned int code, struct TagItem * );
-
-	Http		*(*HttpParseRequest)( const char* request, unsigned int length );
- 
-	int			(*HttpParsePartialRequest)( Http* http, char* data, unsigned int length );
-
-	void		(*HttpFreeRequest)( Http* http );
-
-	void		(*HttpSetCode)( Http* http, unsigned int code );
-
-	int			(*HttpAddHeader)(Http* http, int id, char* value );
-
-	List		*(*HttpGetHeaderList)( Http* http, const char* name );
-
-	char		*(*HttpGetHeader)( Http* http, const char* name, unsigned int index );
-
-	char		*(*HttpGetSingleHeader)( Http* http, const char* name );
-
-	unsigned int (*HttpNumHeader)( Http* http, const char* name );
-
-	FBOOL		(*HttpHeaderContains)( Http* http, const char* name, const char* value, FBOOL caseSensitive );
-
-	void		(*HttpAddTextContent)( Http* http, char* content );
-
-	void		(*HttpSetContent)( Http*, char* data, unsigned int length );
-
-	char		*(*HttpBuild)( Http* http );
-
-	void		(*HttpFree)( Http* http );
-
-	void		(*HttpTest)();
-
-	HashmapElement *(*HttpGetPOSTParameter)( Http *request,  char *param );
-
-	void		(*HttpWriteAndFree)( Http* http, Socket *sock );
-
-	void		(*HttpWrite)( Http* http, Socket *sock );
-
-	HttpFile 	*(*HttpFileNew)( char *filename, int fnamesize, char *data, QUAD size );
-
-	void		(*HttpFileDelete)( HttpFile *f );
-	
+	int				(*HttpParseHeader)( Http* http, const char* request, unsigned int length );
+	Http			*(*HttpNew)( );
+	Http			*(*HttpNewSimple)( unsigned int code, struct TagItem * );
+	Http			*(*HttpParseRequest)( const char* request, unsigned int length );
+	int				(*HttpParsePartialRequest)( Http* http, char* data, unsigned int length );
+	void			(*HttpFreeRequest)( Http* http );
+	void			(*HttpSetCode)( Http* http, unsigned int code );
+	int				(*HttpAddHeader)(Http* http, int id, char* value );
+	List			*(*HttpGetHeaderList)( Http* http, const char* name );
+	char			*(*HttpGetHeader)( Http* http, const char* name, unsigned int index );
+	char			*(*HttpGetSingleHeader)( Http* http, const char* name );
+	unsigned int	(*HttpNumHeader)( Http* http, const char* name );
+	FBOOL			(*HttpHeaderContains)( Http* http, const char* name, const char* value, FBOOL caseSensitive );
+	void			(*HttpAddTextContent)( Http* http, char* content );
+	void			(*HttpSetContent)( Http*, char* data, unsigned int length );
+	char			*(*HttpBuild)( Http* http );
+	void			(*HttpFree)( Http* http );
+	void			(*HttpTest)();
+	HashmapElement	*(*HttpGetPOSTParameter)( Http *request,  char *param );
+	void			(*HttpWriteAndFree)( Http* http, Socket *sock );
+	void			(*HttpWrite)( Http* http, Socket *sock );
+	HttpFile 		*(*HttpFileNew)( char *filename, int fnamesize, char *data, FQUAD size );
+	void			(*HttpFileDelete)( HttpFile *f );
 }HttpInterface;
 
 //

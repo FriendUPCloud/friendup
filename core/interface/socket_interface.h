@@ -34,35 +34,18 @@
 typedef struct SocketInterface
 {
 	Socket*					(*SocketOpen)( void *sb, FBOOL ssl, unsigned short port, int type );
-	
 	int						(*SocketListen)( Socket* s );
-	
 	int						(*SocketConnect)( Socket* sock, const char *host );
-
 	Socket*					(*SocketConnectHost)( void *sb, FBOOL ssl, char *host, unsigned short port );
-
 	int						(*SocketSetBlocking)( Socket* s, FBOOL block );
-	
 	Socket*					(*SocketAcceptPair)( Socket* sock, struct AcceptPair *p );
-	
 	Socket*					(*SocketAccept)( Socket* s );
-
 	int						(*SocketRead)( Socket* sock, char* data, unsigned int length, unsigned int pass );
-
 	int						(*SocketWaitRead)( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
-
-	BufString*			(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
-	
+	BufString*				(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
 	int						(*SocketWrite)( Socket* s, char* data, FQUAD length );
-	
-	void						(*SocketClose)( Socket* s );
-
-	void						(*SocketFree)( Socket *s );
-	
-	//char						*RSA_SERVER_CERT;
-	//char						*RSA_SERVER_KEY;
-	//char						*RSA_SERVER_CA_CERT;
-	//char						*RSA_SERVER_CA_PATH;
+	void					(*SocketClose)( Socket* s );
+	void					(*SocketFree)( Socket *s );
 }SocketInterface;
 
 //

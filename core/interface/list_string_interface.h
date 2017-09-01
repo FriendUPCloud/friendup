@@ -34,13 +34,9 @@
 typedef struct ListStringInterface
 {
 	ListString					*(*ListStringNew)();
-
-	void							(*ListStringDelete)( ListString *ls );
-
+	void						(*ListStringDelete)( ListString *ls );
 	int							(*ListStringAdd)( ListString *add, char *data, int size );
-	
 	ListString					*(*ListStringJoin)( ListString *ls );
-	
 }ListStringInterface;
 
 //

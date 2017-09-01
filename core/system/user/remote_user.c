@@ -86,6 +86,7 @@ void RemoteUserDelete( RemoteUser *usr )
 		if( usr->ru_AuthID != NULL )
 		{
 			FFree( usr->ru_AuthID );
+			usr->ru_AuthID = NULL;
 		}
 		
 		FFree( usr );

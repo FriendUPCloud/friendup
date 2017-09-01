@@ -42,7 +42,6 @@ typedef struct CommServiceInterface
 	DataForm			*(*CommServiceSendMsg)( CommService *s, DataForm *df );
 	DataForm			*(*CommServiceSendMsgDirect)(  CommFCConnection *con, DataForm *df );
 	CommFCConnection 	*(*CommServiceAddConnection)( CommService *s, Socket *socket, char *addr, char *id, int type );
-	//CommFCConnection 	*(*CommServiceAddConnection)( void *sb, Socket *socket, char *addr, char *id, int type );
 	int					(*CommServiceDelConnection)( CommService* s, CommFCConnection *loccon, Socket *sock );
 	int					(*CommServiceRegisterEvent)( CommFCConnection *con, Socket *socket );
 	int					(*CommServiceUnRegisterEvent)( CommFCConnection *con, Socket *socket );

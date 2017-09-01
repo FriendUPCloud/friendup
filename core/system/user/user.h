@@ -38,6 +38,7 @@
 #include "remote_user.h"
 #include <network/locfile.h>
 #include <system/cache/cache_user_files.h>
+
 /** @file
  * 
  *  User definitions
@@ -69,10 +70,10 @@ typedef struct UserLogin
 	MinNode						node;
 	FULONG						ul_ID;
 	FULONG						ul_UserID;
-	char								*ul_Login;
-	char								*ul_Failed;
-	char								*ul_Information;
-	time_t							ul_LoginTime;
+	char						*ul_Login;
+	char						*ul_Failed;
+	char						*ul_Information;
+	time_t						ul_LoginTime;
 }UserLogin;
 
 //
@@ -165,7 +166,10 @@ typedef struct User
 	FBOOL						u_IsAPI;			//set to TRUE when user is in API group
 	
 	pthread_mutex_t				u_Mutex;	// User structure mutex
-	CacheUserFiles				*u_FileCache;
+	CacheUserFiles				*u_FileCache;	// internal file cache
+	
+	FQUAD						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
+	FQUAD						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
 } User;
 
 //
@@ -244,6 +248,8 @@ static FULONG UserDesc[] = {
 	SQLT_INT,     (FULONG)"LoggedTime",  offsetof( struct User, u_LoggedTime ),
 	SQLT_INT,     (FULONG)"CreatedTime", offsetof( struct User, u_CreatedTime ),
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
+	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStoredPerDevice ),
+	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadedPerDevice ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
 	SQLT_END 

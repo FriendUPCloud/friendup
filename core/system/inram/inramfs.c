@@ -79,14 +79,16 @@ INRAMFile *INRAMFileNew( int type, char *path, char *name )
  * @param nf pointer to INRAMFile structure which will be deleted
  */
 
-void INRAMFileDelete( INRAMFile *nf )
+FQUAD INRAMFileDelete( INRAMFile *nf )
 {
+	FQUAD deleted = 0;
 	if( nf != NULL )
 	{
 		if( nf->nf_Type == INRAM_FILE )
 		{
 			if( nf->nf_Data != NULL )
 			{
+				deleted = nf->nf_Data->bs_Size;
 				BufStringDelete( nf->nf_Data );
 			}
 		}
@@ -101,6 +103,7 @@ void INRAMFileDelete( INRAMFile *nf )
 		}
 		FFree( nf );
 	}
+	return deleted;
 }
 
 /**
@@ -352,8 +355,9 @@ INRAMFile *INRAMFileRemoveByPath( INRAMFile *root, char *path )
  *
  * @param root pointer to INRAMFile from which entry will be removed
  */
-void INRAMFileDeleteAll( INRAMFile *root )
+FQUAD INRAMFileDeleteAll( INRAMFile *root )
 {
+	FQUAD deleted = 0;
 	INRAMFile *f = root->nf_Children;
 	
 	while( f != NULL )
@@ -361,13 +365,14 @@ void INRAMFileDeleteAll( INRAMFile *root )
 		INRAMFile *del = f;
 		if( f->nf_Type == INRAM_DIR )
 		{
-			INRAMFileDeleteAll( f );
+			deleted += INRAMFileDeleteAll( f );
 		}
 		
 		f = (INRAMFile *)f->node.mln_Succ;
 		
-		INRAMFileDelete( del );
+		deleted += INRAMFileDelete( del );
 	}
+	return deleted;
 }
 
 /**

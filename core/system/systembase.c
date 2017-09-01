@@ -99,6 +99,8 @@ SystemBase *SystemInit( void )
 	char tempString[ 1024 ];
 	Log( FLOG_INFO,  "SystemBase Init\n");
 	
+	mkdir( DEFAULT_TMP_DIRECTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+	
 	if( ( l = FCalloc( 1, sizeof( struct SystemBase ) ) ) == NULL )
 	{
 		return NULL;
@@ -225,6 +227,7 @@ SystemBase *SystemInit( void )
 	l->sl_UnMountDevicesInDB =TRUE;
 	l->sl_SocketTimeout = 10000;
 	l->sl_WorkersNumber = WORKERS_MAX;
+	l->sl_USFCacheMax = 102400000;
 	
 	//DEBUG("Plibcheck %p lsb %p\n", plib, lsb );
 	if( plib != NULL && plib->Open != NULL )
@@ -275,6 +278,7 @@ SystemBase *SystemInit( void )
 			l->sl_CacheFiles = plib->ReadInt( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadInt( prop, "Options:UnmountInDB", 1 );
 			l->sl_SocketTimeout  = plib->ReadInt( prop, "Core:SSLSocketTimeout", 10000 );
+			l->sl_USFCacheMax = plib->ReadInt( prop, "Core:USFCachePerDevice", 102400000 );
 			
 			char *tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
 			if( tptr != NULL )
@@ -447,7 +451,7 @@ SystemBase *SystemInit( void )
 	{
 		if( lmod->GetSuffix != NULL )
 		{
-			//DEBUG("SEARCHING FILESYSTEM %s found %s\n", type, lmod->GetSuffix() );
+			//DEBUG("SEARCHING MODULE %s found %s\n", type, lmod->GetSuffix() );
 			
 			if( strcmp( lmod->GetSuffix(), "php" ) == 0 )
 			{
@@ -641,6 +645,12 @@ SystemBase *SystemInit( void )
 	
 	// create all managers
 	
+	l->sl_CacheUFM = CacheUFManagerNew( l->sl_USFCacheMax, 0 );
+	if( l->sl_CacheUFM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize CacheUFManager\n");
+	}
+	
 	l->sl_FSM = FSManagerNew( l );
 	if( l->sl_FSM == NULL )
 	{
@@ -726,12 +736,14 @@ SystemBase *SystemInit( void )
 	#define MINS30 1800
 	#define MINS60 MINS6*10
 	#define MINS360 6*MINS60
+	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
 	EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
 	//EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+130, 130, -1 );
 	EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
+	EventAdd( l->sl_EventManager, CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
 	
 	l->sl_USM->usm_UM = l->sl_UM;
 	l->sl_UM->um_USM = l->sl_USM;
@@ -761,7 +773,11 @@ void SystemClose( SystemBase *l )
 		return;
 	}
 	
-	FriendCoreManagerDelete( l->fcm );
+	if( l->fcm != NULL )
+	{
+		FriendCoreManagerDelete( l->fcm );
+		l->fcm = NULL;
+	}
 	
 	Log( FLOG_INFO, "[SystemBase] SystemClose in progress\n");
 	
@@ -858,6 +874,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_ULM != NULL )
 	{
 		UserLoggerManagerDelete( l->sl_ULM );
+	}
+	if( l->sl_CacheUFM != NULL )
+	{
+		CacheUFManagerDelete( l->sl_CacheUFM );
 	}
 	
 	// Remove sentinel from active memory
@@ -1701,11 +1721,14 @@ int UserDeviceUnMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
 				remdev = dev;
 				dev = (File *)dev->node.mln_Succ;
 				
+				DeviceUnMount( l, remdev, usr );
+				/*
 				FHandler *handler = remdev->f_FSys;
 				if( handler != NULL )
 				{
 					handler->UnMount( handler, remdev, usr );
 				}
+				*/
 				
 				FFree( remdev );
 			}

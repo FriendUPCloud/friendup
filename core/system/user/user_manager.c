@@ -34,6 +34,7 @@
 
 #include <system/systembase.h>
 #include <util/sha256.h>
+#include <system/fsys/device_handling.h>
 
 /**
  * Create UserManager
@@ -88,6 +89,8 @@ void UMDelete( UserManager *smgr )
 				
 				if( remdev != NULL )
 				{
+					DeviceRelease( smgr->um_SB, remdev );
+					/*
 					FHandler *fsys = (FHandler *)remdev->f_FSys;
 
 					if( fsys != NULL && fsys->UnMount != NULL )
@@ -105,6 +108,7 @@ void UMDelete( UserManager *smgr )
 					{
 						FERROR("Cannot free FSYS (null)\n");
 					}
+					*/
 				
 					FileDelete( remdev );
 					remdev = NULL;
@@ -532,8 +536,6 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 
 	if( user != NULL )
 	{
-		int res = UserInit( user );
-		if( res == 0 )
 		{
 			DEBUG("[UMUserGetByNameDB] User found %s  id %ld\n", user->u_Name, user->u_ID );
 			UMAssignGroupToUser( um, user );
@@ -580,8 +582,6 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 
 	if( user != NULL )
 	{
-		int res = UserInit( user );
-		if( res == 0 )
 		{
 			DEBUG("[UMUserGetByIDDB] User found %s\n", user->u_Name );
 			UMAssignGroupToUser( um, user );
@@ -929,7 +929,6 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	{
 		UMAssignGroupToUser( um, tmp );
 		UMAssignApplicationsToUser( um, tmp );
-		UserInit( tmp );
 		
 		tmp = (User *)tmp->node.mln_Succ;
 	}
@@ -973,8 +972,6 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 				if( user != NULL )
 				{
 					sb->LibraryMYSQLDrop( sb, sqlLib );
-					int res = UserInit( user );
-					if( res == 0 )
 					{
 						UMAssignGroupToUser( um, user );
 						UMAssignApplicationsToUser( um, user );
@@ -1025,7 +1022,6 @@ User *UMGetAllUsersDB( UserManager *um )
 	{
 		UMAssignGroupToUser( um, tmp );
 		UMAssignApplicationsToUser( um, tmp );
-		UserInit( tmp );
 		
 		tmp = (User *)tmp->node.mln_Succ;
 	}

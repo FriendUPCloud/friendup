@@ -50,23 +50,23 @@ typedef struct ImageLibrary
 {
 	char                 *l_Name;	// library name
 	FULONG                l_Version;		// version information
-	void						*l_Handle;
-	void						*sb; // system base
-	void						*(*libInit)( void * );
-	void						(*libClose)( struct Library *l );
-	FULONG                (*GetVersion)(void);
-	FULONG                (*GetRevision)(void);
+	void				*l_Handle;
+	void				*sb; // system base
+	void				*(*libInit)( void * );
+	void				(*libClose)( struct Library *l );
+	FULONG              (*GetVersion)(void);
+	FULONG              (*GetRevision)(void);
 
 #ifdef USE_IMAGE_MAGICK
-	Image 					*(*ImageRead)( struct ImageLibrary *im, File *rootDev, const char *path );
-	int 						(*ImageWrite)( struct ImageLibrary *im, Image *img, File *rootDev, const char *path );
-	int 						(*ResizeImage)( struct ImageLibrary *im, Image **image, int w, int h );
+	Image 				*(*ImageRead)( struct ImageLibrary *im, File *rootDev, const char *path );
+	int 				(*ImageWrite)( struct ImageLibrary *im, Image *img, File *rootDev, const char *path );
+	int 				(*ResizeImage)( struct ImageLibrary *im, Image **image, int w, int h );
 #else
 	gdImagePtr 			(*ImageRead)( struct ImageLibrary *im, File *rootDev, const char *path );
-	int 						(*ImageWrite)( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const char *path );
-	int 						(*ResizeImage)( struct ImageLibrary *im, gdImagePtr *image, int w, int h );
+	int 				(*ImageWrite)( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const char *path );
+	int 				(*ResizeImage)( struct ImageLibrary *im, gdImagePtr *image, int w, int h );
 #endif
-	Http 					*(*WebRequest)( struct ImageLibrary *l, UserSession *usr, char **func, Http* request );
+	Http 				*(*WebRequest)( struct ImageLibrary *l, UserSession *usr, char **func, Http* request );
 
 	
 } ImageLibrary;

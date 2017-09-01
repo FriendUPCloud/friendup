@@ -470,9 +470,10 @@ int MakeDir( struct File *s, const char *path )
 // Delete
 //
 
-int Delete( struct File *s, const char *path )
+FQUAD Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
+	FQUAD deleted = 0;
 	
 	int error = 0;
 	SpecialData *srd = (SpecialData *) s->f_SpecialData;
@@ -485,10 +486,10 @@ int Delete( struct File *s, const char *path )
 		if( pdir != NULL )
 		{
 			dir = INRAMFileRemoveChild( pdir, dir );
-			INRAMFileDeleteAll( dir );
+			deleted += INRAMFileDeleteAll( dir );
 			if( dir->nf_Type != INRAM_ROOT )
 			{
-				INRAMFileDelete( dir );
+				deleted += INRAMFileDelete( dir );
 			}
 			DEBUG("Delete entries deleted\n");
 		}
@@ -503,11 +504,9 @@ int Delete( struct File *s, const char *path )
 		FERROR("Path not found %s\n", path );
 		return -2;
 	}
-	
-
 	DEBUG("Delete END\n");
 	
-	return 0;
+	return deleted;
 }
 
 //
@@ -606,7 +605,7 @@ void FillStat( BufString *bs, INRAMFile *nf, File *d, const char *path )
 	//DEBUG("FILLSTAT path '%s' rootpath '%s'  %d\n", path, d->f_Path, path[ strlen( d->f_Path ) ] );
 			
 	BufStringAdd( bs, "{" );
-	sprintf( tmp, " \"Filename\":\"%s\",",nf->nf_Name );
+	snprintf( tmp, 1023, " \"Filename\":\"%s\",",nf->nf_Name );
 	BufStringAdd( bs, tmp );
 	
 	//DEBUG( "FILLSTAT filename set\n");

@@ -234,15 +234,29 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 						
 					case SQLT_DATETIME:
 						{
-							struct tm ltm;
-							// REMEMBER, data fix
-							ltm.tm_year += 1900;
-							ltm.tm_mon ++;
+							//struct tm ltm;
+							//ltm.tm_year += 1900;
+							//ltm.tm_mon ++;
+							struct tm *ltm = (struct tm *)strptr + dptr[ 2 ];
+							if( sscanf( (char *)row[i], "%d-%d-%d %d:%d:%d", &(ltm->tm_year), &(ltm->tm_mon), &(ltm->tm_mday), &(ltm->tm_hour), &(ltm->tm_min), &(ltm->tm_sec) ) != EOF )
+							{
+							}
 							
-							memcpy( strptr + dptr[ 2 ], &ltm, sizeof( struct tm) );
+							//memcpy( strptr + dptr[ 2 ], &lotime, sizeof( time_t ) );
 							DEBUG("[MYSQLLibrary] TIMESTAMP load %s\n", row[ i ] );
+						}
+						break;
+						
+					case SQLT_DATE:
+						{
+							struct tm *ltm = (struct tm *)strptr + dptr[ 2 ];
+							if( sscanf( (char *)row[i], "%d-%d-%d", &(ltm->tm_year), &(ltm->tm_mon), &(ltm->tm_mday) ) != EOF )
+							{
+								ltm->tm_hour = ltm->tm_min = ltm->tm_sec = 0;
+							}
+							DEBUG("[MYSQLLibrary] DATE load %s\n", row[ i ] );
 							
-							DEBUG("[MYSQLLibrary] Year %d  month %d  day %d\n", ltm.tm_year, ltm.tm_mon, ltm.tm_mday );
+							DEBUG("[MYSQLLibrary] Year %d  month %d  day %d\n", ltm->tm_year, ltm->tm_mon, ltm->tm_mday );
 						}
 						break;
 
@@ -276,7 +290,7 @@ void *Load( struct MYSQLLibrary *l, FULONG *descr, char *where, int *entries )
 						case SQLT_INIT_FUNCTION:
 						{
 							DEBUG("[MYSQLLibrary] Init function found, calling it\n");
-							if( dptr[2] != NULL && data != NULL )
+							if( ((void *)dptr[2]) != NULL && data != NULL )
 							{
 								void (*funcptr)( void * ) = (void *)(void *)dptr[2];
 								funcptr( (void *)data );
@@ -478,10 +492,13 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 					char date[ 64 ];
 					char tmp[ 256 ];
 					
-					struct tm *tp = (struct tm *)( strptr+dptr[2]);
+					time_t *timepointer = (time_t *)( strptr+dptr[2] );
+					struct tm *tp;
+					tp = localtime( timepointer );
 
+					if( (dptr[2]) != 0 )
 					{
-						if( tp->tm_year < 1900 ) tp->tm_year = 1900;
+						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
 						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
@@ -500,26 +517,38 @@ int Update( struct MYSQLLibrary *l, FULONG *descr, void *data )
 						//strcat( tmpQuery, tmp );
 						cols++;
 					}
+				}
+			break;
+			
+			case SQLT_DATE:
+				{
+					int sprintfsize = 0;
+					char date[ 64 ];
+					char tmp[ 256 ];
 					
-					/*
-					MYSQL_TIME *tp;
-					memcpy( &tp, strptr+dptr[2], sizeof( MYSQL_TIME *) );	// copy timestamp pointer
-				
-					if( tp != NULL )
+					struct tm *tp = (struct tm *)( strptr+dptr[2]);
+
+					if( (dptr[2]) != 0 )
 					{
-						sprintf( date, "%4d-%2d-%2d %2d:%2d:%2d", tp->year, tp->month, tp->day, tp->hour, tp->minute, tp->minute );
+						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
+						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
+						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon, tp->tm_mday );
+						
+						DEBUG("[MYSQLLibrary] DATE serialised %s\n", date );
 					
 						if( cols == 0 )
 						{
-							sprintf( tmp, " %s = '%s'", (char *)dptr[ 1 ], date );
+							sprintfsize = sprintf( tmp, " %s = '%s'", (char *)dptr[ 1 ], date );
 						}
 						else
 						{
-							sprintf( tmp, ", %s = '%s'", (char *)dptr[ 1 ], date );
+							sprintfsize = sprintf( tmp, ", %s = '%s'", (char *)dptr[ 1 ], date );
 						}
-						strcat( tmpQuery, tmp );
+						BufStringAddSize( querybs, tmp, sprintfsize );
+						//strcat( tmpQuery, tmp );
+						cols++;
 					}
-					*/
 				}
 			break;
 		}
@@ -673,13 +702,47 @@ int Save( struct MYSQLLibrary *l, const FULONG *descr, void *data )
 					// '2015-08-10 16:28:31'
 					char date[ 64 ];
 					
-					struct tm *tp = (struct tm *)( strptr+dptr[2]);
+					time_t *timepointer = (time_t *)( strptr+dptr[2]);
+					struct tm *tp;
+					tp = localtime( timepointer );
+					if( dptr[2] != 0 )
 					{
-						if( tp->tm_year < 1900 ) tp->tm_year = 1900;
+						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
 						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
 						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
 
 						sprintf( date, "%04d-%02d-%02d %02d:%02d:%02d", tp->tm_year, tp->tm_mon, tp->tm_mday, tp->tm_hour, tp->tm_min, tp->tm_sec );
+						
+						if( opt > 0 )
+						{
+							BufStringAddSize( tablequerybs, ",", 1 );
+							BufStringAddSize( dataquerybs, ",", 1 );
+						}
+
+						BufStringAddSize( dataquerybs, "'", 1 );
+						BufStringAdd( tablequerybs, (char *)dptr[ 1 ] );
+
+						BufStringAdd( dataquerybs, date );
+						BufStringAddSize( dataquerybs, "'", 1 );
+
+					}
+					opt++;
+				}
+				break;
+				
+				case SQLT_DATE:
+				{
+					// '2015-08-10'
+					char date[ 64 ];
+					
+					struct tm *tp = (struct tm *)( strptr+dptr[2]);
+					if( dptr[2] != 0 )
+					{
+						if( tp->tm_year < 1901 ) tp->tm_year += 1900;
+						if( tp->tm_mon < 1 ) tp->tm_mon = 1;
+						if( tp->tm_mday < 1 ) tp->tm_mday = 1;
+
+						sprintf( date, "%04d-%02d-%02d", tp->tm_year, tp->tm_mon, tp->tm_mday );
 						
 						if( opt > 0 )
 						{

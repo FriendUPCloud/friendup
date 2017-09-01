@@ -71,7 +71,7 @@ int UserInit( User *u )
 	
 	pthread_mutex_init( &(u->u_Mutex), NULL );
 	
-	u->u_FileCache = CacheUserFilesNew( u );
+	//u->u_FileCache = CacheUserFilesNew( u->u_ID );
 	
 	return 0;
 }
@@ -141,6 +141,10 @@ void UserRemoveSession( User *usr, void *ls )
 		if( remses == us->us )
 		{
 			usr->u_SessionsList = (UserSessListEntry *) us->node.mln_Succ;
+			if( usr->u_SessionsList != NULL )
+			{
+				usr->u_SessionsList->node.mln_Pred = NULL;
+			}
 			
 			usr->u_SessionsNr--;
 			removed = TRUE;

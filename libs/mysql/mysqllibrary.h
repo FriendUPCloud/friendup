@@ -39,10 +39,10 @@ typedef struct SQLConnection
 	char 			*sql_Host;		// host
 	char 			*sql_User;		// user
 	char 			*sql_Pass;		// password
-	char				*sql_DBName; // database name
+	char			*sql_DBName; // database name
 	int				sql_Port;		// port
 
-	MYSQL 		*sql_Con;			// sql connection
+	MYSQL 			*sql_Con;			// sql connection
 	FBOOL			sql_Recconect;	// should I reconnect
 }SQLConnection;
 
@@ -62,33 +62,33 @@ typedef struct SQLConnection
 
 typedef struct MYSQLLibrary
 {
-	char 		*l_Name;			// library name
-	FULONG 		l_Version;			// version information
-	void 		*l_Handle;
-	void						*sb; // system base
-	void *		(*libInit)( void *sb );
-	void 		(*libClose)( struct Library *l );
-	FULONG 		(*GetVersion)(void);
-	FULONG 		(*GetRevision)(void);
+	char 					*l_Name;			// library name
+	FULONG 					l_Version;			// version information
+	void 					*l_Handle;
+	void					*sb; // system base
+	void					*(*libInit)( void *sb );
+	void 					(*libClose)( struct Library *l );
+	FULONG 					(*GetVersion)(void);
+	FULONG 					(*GetRevision)(void);
 
 	// mysql.library structure
 	int						(*Connect)( struct MYSQLLibrary *l, const char *host, const char *name, const char *usr, const char *pass, int port );
 	int						(*Reconnect)( struct MYSQLLibrary *l );
 	int						(*Disconnect)( struct MYSQLLibrary *l );
-	void						*(*Load)( struct MYSQLLibrary *l, const FULONG *descr, char *where, int *entries );
+	void					*(*Load)( struct MYSQLLibrary *l, const FULONG *descr, char *where, int *entries );
 	int						(*Save)( struct MYSQLLibrary *l, const FULONG *descr, void *data );
 	int						(*Update)( struct MYSQLLibrary *l, const FULONG *descr, void *data );
-	void 						(*Delete)( struct MYSQLLibrary *l, const FULONG *descr, void *data );
-	void						(*DeleteWhere)( struct MYSQLLibrary *l, const FULONG *descr, char *where );
-	MYSQL_RES 			*(*Query)( struct MYSQLLibrary *l, const char *sel );
-	int 						(*NumberOfRecords)( struct MYSQLLibrary *l, const FULONG *descr, char *where );
-	int 						(*NumberOfRecordsCustomQuery)( struct MYSQLLibrary *l, const char *query );
-	MYSQL_ROW 		(*FetchRow)( struct MYSQLLibrary *l, MYSQL_RES *res );
-	void 						(*FreeResult)( struct MYSQLLibrary *l, MYSQL_RES *res );
+	void 					(*Delete)( struct MYSQLLibrary *l, const FULONG *descr, void *data );
+	void					(*DeleteWhere)( struct MYSQLLibrary *l, const FULONG *descr, char *where );
+	MYSQL_RES 				*(*Query)( struct MYSQLLibrary *l, const char *sel );
+	int 					(*NumberOfRecords)( struct MYSQLLibrary *l, const FULONG *descr, char *where );
+	int 					(*NumberOfRecordsCustomQuery)( struct MYSQLLibrary *l, const char *query );
+	MYSQL_ROW 				(*FetchRow)( struct MYSQLLibrary *l, MYSQL_RES *res );
+	void 					(*FreeResult)( struct MYSQLLibrary *l, MYSQL_RES *res );
 	int						(*NumberOfRows)( struct MYSQLLibrary *l, MYSQL_RES *res );
 	int						(*QueryWithoutResults)( struct MYSQLLibrary *l, const char *sel );
 	int						(*SNPrintF)( struct MYSQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... );
-	char						*(*MakeEscapedString)( struct MYSQLLibrary *l, char *str );
+	char					*(*MakeEscapedString)( struct MYSQLLibrary *l, char *str );
 
 	SQLConnection con;
 	

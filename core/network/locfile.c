@@ -349,3 +349,32 @@ FLONG LocFileAvaiableSpace( const char *path )
 	return stat.f_bsize * stat.f_bavail;
 }
 
+/**
+ * Function returns file extension
+ *
+ * @param name pointer to file path
+ * @return extension as string
+ */
+char * GetExtension( char* name )
+{
+	char *reverse = FCalloc( 1, 16 ); // 16 characters extension!
+	int cmode = 0, cz = 0;
+	int len = strlen( name ) - 1;
+	for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
+	{
+		if( name[cz] == '.' )
+		{
+			break;
+		}
+		reverse[len-cz] = name[cz];
+	}
+	len = strlen( reverse );
+	char *extension = FCalloc( 1, len + 1 );
+	for( cz = 0; cz < len; cz++ )
+	{
+		extension[cz] = reverse[len-1-cz];
+	}
+	FFree( reverse );
+	return extension;
+}
+

@@ -38,7 +38,7 @@
 #include <dirent.h>
 
 #define SUFFIX "fsys"
-#define PREFIX "php"
+#define PREFIX "node"
 
 //
 // special structure
@@ -75,7 +75,7 @@ FBOOL PathHasColon( char *string )
 	int size = strlen( string ) + 1;
 	char *dec = FCalloc( size, sizeof( char ) );
 	UrlDecode( dec, (const char *)string );
-	DEBUG( "[fsysphp] Decoded string for path: %s\n", dec );
+	DEBUG( "[fsysnode] Decoded string for path: %s\n", dec );
 	if( strchr( dec, ':' ) != NULL )
 	{
 		FFree( dec );
@@ -89,7 +89,7 @@ FBOOL PathHasColon( char *string )
 // Remove dangerous stuff from strings
 //
 
-char *FilterPHPVar( char *line )
+char *FilterNodeVar( char *line )
 {
 	if( !line ) return NULL;
 	
@@ -129,7 +129,7 @@ char* StringDup( const char* str )
 {
 	if( str == NULL)
 	{
-		//DEBUG("[fsysphp] Cannot copy string!\n");
+		//DEBUG("[fsysnode] Cannot copy string!\n");
 		return NULL;
 	}
 	
@@ -161,37 +161,37 @@ char *GetFileName( const char *path )
 }
 
 //
-// php call, send request, read answer
+// node call, send request, read answer
 //
 
-ListString *PHPCall( const char *command, int *length )
+ListString *NodeCall( const char *command, int *length )
 {
-	DEBUG("[PHPFsys] run app: '%s'\n", command );
-	//Log( FLOG_INFO, "[PHPFsys] run app: '%s'\n", command );
+	DEBUG("[NodeFsys] run app: '%s'\n", command );
+	//Log( FLOG_INFO, "[nodeFsys] run app: '%s'\n", command );
 	
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )
 	{
 		//free( command );
-		FERROR("[PHPFsys] cannot open pipe: %s\n", strerror(errno) );
+		FERROR("[NodeFsys] cannot open pipe: %s\n", strerror(errno) );
 		return NULL;
 	}
 	
 	char *temp = NULL, *result = NULL, *gptr = NULL;
 	int size = 0, res = 0, sch = sizeof( char );
 
-#define PHP_READ_SIZE 262144
+#define NODE_READ_SIZE 262144
 	
-	//DEBUG("[PHPFsys] command launched\n");
+	//DEBUG("[nodeFsys] command launched\n");
 
-	char buf[ PHP_READ_SIZE ]; memset( buf, '\0', PHP_READ_SIZE );
+	char buf[ NODE_READ_SIZE ]; memset( buf, '\0', NODE_READ_SIZE );
 	ListString *data = ListStringNew();
 	
 	while( !feof( pipe ) )
 	{
 		// Make a new buffer and read
-		size = fread( buf, sch, PHP_READ_SIZE, pipe );
-		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
+		size = fread( buf, sch, NODE_READ_SIZE, pipe );
+		//DEBUG( "[nodeFsys] Adding %d of data\n", size );
 		ListStringAdd( data, buf, size );
 	}
 	
@@ -203,7 +203,7 @@ ListString *PHPCall( const char *command, int *length )
 	// Set the length
 	if( length != NULL ) *length = data->ls_Size;
 	
-	//DEBUG( "[fsysphp] Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
+	//DEBUG( "[fsysnode] Finished node call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
 	return data;
 }
 
@@ -213,7 +213,7 @@ ListString *PHPCall( const char *command, int *length )
 
 void init( struct FHandler *s )
 {
-	DEBUG("[PHPFS] init\n");
+	DEBUG("[NODEFS] init\n");
 }
 
 //
@@ -222,7 +222,7 @@ void init( struct FHandler *s )
 
 void deinit( struct FHandler *s )
 {
-	DEBUG("[PHPFS] deinit\n");
+	DEBUG("[NODEFS] deinit\n");
 }
 
 //
@@ -248,14 +248,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 		return NULL;
 	}
 	
-	DEBUG("[fsysphp] Mounting PHPFS filesystem!\n");
+	DEBUG("[fsysnode] Mounting NodeFS filesystem!\n");
 	
 	if( ( dev = FCalloc( 1, sizeof( File ) ) ) != NULL )
 	{
 		struct TagItem *lptr = ti;
-		
-		// typical mount call
-		//   'php "modules/system/module.php" "type=corvo&devname=HomeSql&path=&module=system&unmount=%5Bobject%20Object%5D&sessionid=0eff3a525c8e0495301f7418bd6b6ce358a995e6";'
 		
 		//
 		// checking passed arguments
@@ -316,7 +313,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			{
 				dev->f_Path = StringDup( path );
 			}
-			DEBUG("[fsysphp] phpfs path is ok '%s' (ignore this message, unimplemented!)\n", dev->f_Path );
+			DEBUG("[fsysnode] nodefs path is ok '%s' (ignore this message, unimplemented!)\n", dev->f_Path );
 		}
 		
 		dev->f_FSys = s;
@@ -338,7 +335,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			sd->sb = sb;
 			
 			// Calculate length of variables in string
-			int cmdLength = strlen( "command=dosaction&action=mount&type=&devname=&path=&module=&sessionid=" ) +
+			int cmdLength = strlen( "command=dosaction&action=mount&type=&devname=&path=&sessionid=" ) +
 				( type ? strlen( type ) : 0 ) + 
 				( name ? strlen( name ) : 0 ) + 
 				( path ? strlen( path ) : 0 ) + 
@@ -348,7 +345,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 			
 			if( command != NULL )
@@ -365,22 +362,22 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 						path ? path : "", 
 						module ? module : "files", 
 						usr->u_MainSessionID ? usr->u_MainSessionID : ""  );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					// Execute!
 					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 					FFree( command );
 			
 					if( result && result->ls_Size >= 0 )
 					{
 
-						DEBUG( "[fsysphp] Return was \"%s\"\n", result->ls_Data );
+						DEBUG( "[fsysnode] Return was \"%s\"\n", result->ls_Data );
 						if( strncmp( result->ls_Data, "ok", 2 ) != 0 )
 						{
-							DEBUG( "[fsysphp] Failed to mount device %s..\n", name );
-							DEBUG( "[fsysphp] Output was: %s\n", result->ls_Data );
+							DEBUG( "[fsysnode] Failed to mount device %s..\n", name );
+							DEBUG( "[fsysnode] Output was: %s\n", result->ls_Data );
 							if( sd->module ) FFree( sd->module );
 							if( dev->f_SessionID ) FFree( dev->f_SessionID );
 							if( sd->type ) FFree( sd->type );
@@ -396,7 +393,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 					}
 					else
 					{
-						DEBUG( "[fsysphp] Error mounting device %s..\n", name );
+						DEBUG( "[fsysnode] Error mounting device %s..\n", name );
 						if( sd->module ) FFree( sd->module );
 						if( dev->f_SessionID ) FFree( dev->f_SessionID );
 						if( sd->type ) FFree( sd->type );
@@ -417,10 +414,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 				}
 			}
 		}
-		DEBUG("[fsysphp] IS DIRECTORY data filled\n");
+		DEBUG("[fsysnode] IS DIRECTORY data filled\n");
 	}
 	
-	DEBUG("[fsysphp] mount ok\n");
+	DEBUG("[fsysnode] mount ok\n");
 	
 	return dev;
 }
@@ -433,7 +430,7 @@ int Release( struct FHandler *s, void *f )
 {
 	if( f != NULL )
 	{
-		DEBUG("[fsysphp] Release filesystem\n");
+		DEBUG("[fsysnode] Release filesystem\n");
 		File *lf = (File*)f;
 		
 		if( lf->f_SpecialData )
@@ -462,7 +459,7 @@ int UnMount( struct FHandler *s, void *f )
 {
 	if( f != NULL )
 	{
-		DEBUG("[fsysphp] Unmount filesystem\n");
+		DEBUG("[fsysnode] Unmount filesystem\n");
 		File *lf = (File*)f;
 		
 		if( lf->f_SpecialData )
@@ -470,7 +467,7 @@ int UnMount( struct FHandler *s, void *f )
 			SpecialData *sd = (SpecialData *)lf->f_SpecialData;
 		
 			// Calculate length of variables in string
-			int cmdLength = strlen( "command=dosaction&action=unmount&devname=&module=&sessionid=" ) +
+			int cmdLength = strlen( "command=dosaction&action=unmount&devname=&sessionid=" ) +
 				( lf->f_Name ? strlen( lf->f_Name ) : 0 ) + 
 				( sd->module ? strlen( sd->module ) : strlen( "files" ) ) + 
 				( lf->f_SessionID ? strlen( lf->f_SessionID ) : 0 )
@@ -478,7 +475,7 @@ int UnMount( struct FHandler *s, void *f )
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 			
 			if( command != NULL )
@@ -491,11 +488,11 @@ int UnMount( struct FHandler *s, void *f )
 				{
 					snprintf( commandCnt, cmdLength, "command=dosaction&action=unmount&devname=%s&module=%s&sessionid=%s",
 						lf->f_Name ? lf->f_Name : "", sd->module ? sd->module : "files", lf->f_SessionID ? lf->f_SessionID : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 					
 					FFree( command );
 					
@@ -503,12 +500,12 @@ int UnMount( struct FHandler *s, void *f )
 					{
 						if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 						{
-							DEBUG( "[fsysphp] Failed to unmount device %s..\n", lf->f_Name );
+							DEBUG( "[fsysnode] Failed to unmount device %s..\n", lf->f_Name );
 						}
 					}
 					else
 					{
-						DEBUG( "[fsysphp] Unknown error unmounting device %s..\n", lf->f_Name );
+						DEBUG( "[fsysnode] Unknown error unmounting device %s..\n", lf->f_Name );
 					}
 					if( result ) ListStringDelete( result );
 				}
@@ -561,7 +558,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	FFree( comm );
 	
 	// Calculate length of variables in string
-	int cmdLength = strlen( "type=&module=files&args=false&command=read&authkey=false&sessionid=&path=&mode=" ) +
+	int cmdLength = strlen( "type=&args=false&command=read&authkey=false&sessionid=&path=&mode=" ) +
 		( sd->type ? strlen( sd->type ) : 0 ) + 
 		( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
 		( encodedcomm ? strlen( encodedcomm ) : 0 ) +
@@ -569,7 +566,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	
 	// Whole command
 	char *command = FCalloc(
-		strlen( "php \"modules/system/module.php\" \"\";" ) +
+		strlen( "node \"modules/node/module.js\" \"\";" ) +
 		cmdLength + 1, sizeof( char ) );
 	
 	if( command != NULL )
@@ -580,9 +577,9 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		// Generate command string
 		if( commandCnt != NULL )
 		{
-			snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s",
+			snprintf( commandCnt, cmdLength, "type=%s&args=false&command=read&authkey=false&sessionid=%s&path=%s&mode=%s",
 				sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encodedcomm ? encodedcomm : "", mode ? mode : "" );
-			sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+			sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 			FFree( commandCnt );
 		}
 	}
@@ -604,7 +601,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			FFree( command );
 			FFree( encodedcomm );
-			FERROR("[PHPFsys] cannot open pipe\n");
+			FERROR("[NODEFsys] cannot open pipe\n");
 			return NULL;
 		}
 	
@@ -624,7 +621,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				locsd->path = StringDup( path );
 				locfil->f_SessionID = StringDup( s->f_SessionID );
 		
-				DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+				DEBUG("[fsysnode] FileOpened, memory allocated for reading.\n" );
 				FFree( command );
 				FFree( encodedcomm );
 				return locfil;
@@ -639,7 +636,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			FFree( command );
 			FFree( encodedcomm );
-			FERROR("[PHPFsys] cannot alloc memory\n");
+			FERROR("[NODEFsys] cannot alloc memory\n");
 			return NULL;
 		}
 	}
@@ -658,7 +655,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		do
 		{
 			snprintf( tmpfilename, sizeof(tmpfilename), "/tmp/%s_read_%d%d%d%d", s->f_SessionID, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
-			//DEBUG( "[fsysphp] Trying to lock %s\n", tmpfilename );
+			//DEBUG( "[fsysnode] Trying to lock %s\n", tmpfilename );
 			if( ( lockf = open( tmpfilename, O_CREAT|O_EXCL|O_RDWR ) ) >= 0 )
 			{
 				break;
@@ -667,7 +664,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			// Failed.. bailing
 			if( retries-- <= 0 )
 			{
-				FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+				FERROR( "[fsysnode] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
 				FFree( command );
 				FFree( encodedcomm );
 				return NULL;
@@ -675,18 +672,18 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		while( TRUE );
 
-		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
+		DEBUG( "[fsysnode] Success in locking %s\n", tmpfilename );
 
 		// Open the tmp file and get a file lock!
 
 		// Get the data
 		//char command[ 1024 ];	// maybe we should count that...
 
-		DEBUG( "[fsysphp] Getting data for tempfile, seen below as command:\n" );
-		DEBUG( "[fsysphp] %s\n", command );
+		DEBUG( "[fsysnode] Getting data for tempfile, seen below as command:\n" );
+		DEBUG( "[fsysnode] %s\n", command );
 
 		int answerLength = 0;			
-		ListString *result = PHPCall( command, &answerLength );
+		ListString *result = NodeCall( command, &answerLength );
 
 		// Open a file pointer
 		if( result )
@@ -728,7 +725,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 							locsd->path = StringDup( path );
 							locfil->f_SessionID = StringDup( s->f_SessionID );
 		
-							DEBUG("[fsysphp] FileOpened, memory allocated for reading.\n" );
+							DEBUG("[fsysnode] FileOpened, memory allocated for reading.\n" );
 							FFree( command );
 							FFree( encodedcomm );
 							return locfil;
@@ -744,7 +741,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				}
 				else
 				{
-					FERROR("[fsysphp] Cannot open temporary file %s\n", tmpfilename );
+					FERROR("[fsysnode] Cannot open temporary file %s\n", tmpfilename );
 				}
 			}
 			// Remove result with no data
@@ -755,12 +752,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		else
 		{
-			FERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
+			FERROR("[fsysnode] Cannot create temporary file %s\n", tmpfilename );
 		}
 		// Close lock
 		if( lockf >= 0 ) 
 		{
-			DEBUG( "[fsysphp] Closing lock..\n" );
+			DEBUG( "[fsysnode] Closing lock..\n" );
 			close( lockf );
 		}
 	}
@@ -775,7 +772,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		//}
 		//while( access( tmpfilename, F_OK ) != -1 );
 
-		DEBUG("[fsysphp] WRITE FILE %s\n", tmpfilename );
+		DEBUG("[fsysnode] WRITE FILE %s\n", tmpfilename );
 
 		FILE *locfp = NULL;
 		if( ( locfp = fopen( tmpfilename, "w+" ) ) != NULL )
@@ -793,7 +790,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					locsd->path = StringDup( path );
 					locfil->f_SessionID = StringDup( s->f_SessionID );
 
-					DEBUG("[fsysphp] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
+					DEBUG("[fsysnode] FileOpened, memory allocated.. store to file %s fid %p\n", locsd->fname, locfp );
 	
 					FFree( command );
 					FFree( encodedcomm );
@@ -855,7 +852,7 @@ int FileClose( struct File *s, void *fp )
 				sd->fp = NULL;
 			}
 			
-			DEBUG("[fsysphp] CLOSE, file path %s\n", sd->fname );
+			DEBUG("[fsysnode] CLOSE, file path %s\n", sd->fname );
 			
 			if( sd->mode == MODE_READ )
 			{
@@ -882,14 +879,14 @@ int FileClose( struct File *s, void *fp )
 				}
 	
 				// Calculate length of variables in string
-				int cmdLength = strlen( "module=files&command=write&sessionid=&path=&tmpfile=" ) +
+				int cmdLength = strlen( "command=write&sessionid=&path=&tmpfile=" ) +
 					( lfp->f_SessionID ? strlen( lfp->f_SessionID ) : 0 ) +
 					( encPath ? strlen( encPath ) : 0 ) + 
 					( sd->fname ? strlen( sd->fname ) : 0 ) + 1;
 				
 				// Whole command
 				char *command = FCalloc(
-					strlen( "php \"modules/system/module.php\" \"\";" ) +
+					strlen( "node \"modules/node/module.js\" \"\";" ) +
 					cmdLength + 1, sizeof( char ) );
 	
 				if( command != NULL )
@@ -900,9 +897,9 @@ int FileClose( struct File *s, void *fp )
 					// Generate command string
 					if( commandCnt != NULL )
 					{
-						snprintf( commandCnt, cmdLength, "module=files&command=write&sessionid=%s&path=%s&tmpfile=%s",
+						snprintf( commandCnt, cmdLength, "command=write&sessionid=%s&path=%s&tmpfile=%s",
 							lfp->f_SessionID ? lfp->f_SessionID : "", encPath ? encPath : "", sd->fname ? sd->fname : "" );
-						sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+						sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 						FFree( commandCnt );
 				
 						//INFO("Call write command %s\n", command );
@@ -910,10 +907,10 @@ int FileClose( struct File *s, void *fp )
 	
 						int answerLength = 0;
 		
-						ListString *result = PHPCall( command, &answerLength );
+						ListString *result = NodeCall( command, &answerLength );
 						if( result != NULL )
 						{
-							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
+							DEBUG( "[fsysnode] Closed file using node call.\n" );
 							ListStringDelete( result );
 						}
 					}
@@ -937,7 +934,7 @@ int FileClose( struct File *s, void *fp )
 		// And the structure
 		FFree( lfp );
 		
-		DEBUG( "[fsysphp] FileClose: Closing file pointer done.\n" );
+		DEBUG( "[fsysnode] FileClose: Closing file pointer done.\n" );
 		
 		return closeerr;
 	}
@@ -965,7 +962,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 	//DEBUG( "FileRead: Starting to read file.\n" );
 	
 	SpecialData *sd = (SpecialData *)f->f_SpecialData;
-	//DEBUG( "[fsysphp] Trying to do some reading( %d )!\n", rsize );
+	//DEBUG( "[fsysnode] Trying to do some reading( %d )!\n", rsize );
 	if( sd != NULL )
 	{
 		if( f->f_Stream == TRUE )
@@ -974,13 +971,13 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			
 			if( feof( sd->fp ) )
 			{
-				DEBUG("[fsysphp] EOF\n");
+				DEBUG("[fsysnode] EOF\n");
 				return -1;
 			}
 
 			// Make a new buffer and read
 			result = fread( buffer, 1, rsize, sd->fp  );
-			//DEBUG( "[PHPFsys] Adding %ul of data\n", result );
+			//DEBUG( "[NODEFsys] Adding %ul of data\n", result );
 			
 			if( f->f_Socket )
 			{
@@ -1006,16 +1003,16 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		{
 			if( feof( sd->fp ) )
 			{
-				DEBUG("[fsysphp] EOF\n");
+				DEBUG("[fsysnode] EOF\n");
 				return -1;
 			}
 		
-			//DEBUG( "[fsysphp] Ok, lets read %d bytes.\n", rsize );
+			//DEBUG( "[fsysnode] Ok, lets read %d bytes.\n", rsize );
 			result = fread( buffer, 1, rsize, sd->fp );
-			//DEBUG( "[fsysphp] Read %d bytes\n", result );
+			//DEBUG( "[fsysnode] Read %d bytes\n", result );
 		}
 	}
-	printf("PHPRead %d\n", result );
+	printf("NODERead %d\n", result );
 	
 	return result;
 }
@@ -1043,7 +1040,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 	if( f == NULL )
 		return NULL;
 		
-	DEBUG("[fsysphp] Get information\n");
+	DEBUG("[fsysnode] Get information\n");
 	
 	File *lf = ( File *)f;
 	if( lf->f_SpecialData )
@@ -1054,14 +1051,14 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 		char *urlKey = MarkAndBase64EncodeString( key );
 		
 		// Calculate length of variables in string
-		int cmdLength = strlen( "command=infoget&path=&module=files&sessionid=&key=" ) +
+		int cmdLength = strlen( "command=infoget&path=&sessionid=&key=" ) +
 			( urlPath ? strlen( urlPath ) : 0 ) +  
 			( lf->f_SessionID ? strlen( lf->f_SessionID ) : 0 ) +
 			( urlKey == NULL ? 1 : strlen( urlKey ) ) + 1;
 		
 		// Whole command
 		char *command = FCalloc(
-			strlen( "php \"modules/system/module.php\" \"\";" ) +
+			strlen( "node \"modules/node/module.js\" \"\";" ) +
 			cmdLength + 1, sizeof( char ) );
 		
 		if( command != NULL )
@@ -1072,13 +1069,13 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 			// Generate command string
 			if( commandCnt != NULL )
 			{
-				snprintf( commandCnt, cmdLength, "command=infoget&path=%s&module=files&sessionid=%s&key=%s",
+				snprintf( commandCnt, cmdLength, "command=infoget&path=%s&sessionid=%s&key=%s",
 					urlPath ? urlPath : "", lf->f_SessionID ? lf->f_SessionID : "", urlKey == NULL ? "*" : urlKey );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 				FFree( commandCnt );
 	
 				int answerLength = 0;
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = NodeCall( command, &answerLength );
 				
 				FFree( command );
 				
@@ -1086,7 +1083,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 				{
 					if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 					{
-						DEBUG( "[fsysphp] Failed to get information..\n" );
+						DEBUG( "[fsysnode] Failed to get information..\n" );
 					}
 					// Success!
 					else
@@ -1103,7 +1100,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 				}
 				else
 				{
-					DEBUG( "[fsysphp] Unknown error getting information\n" );
+					DEBUG( "[fsysnode] Unknown error getting information\n" );
 				}
 				
 				// we should parse result to get information about success
@@ -1129,12 +1126,12 @@ int InfoSet( struct File *s, const char *path, const char *key, const char *valu
 }
 
 //
-// make directory in php file system
+// make directory in node file system
 //
 
 int MakeDir( struct File *f, const char *path )
 {
-	DEBUG("[fsysphp] makedir filesystem\n");
+	DEBUG("[fsysnode] makedir filesystem\n");
 	if( f != NULL && f->f_SpecialData != NULL )
 	{
 		SpecialData *sd = (SpecialData *)f->f_SpecialData;
@@ -1154,13 +1151,13 @@ int MakeDir( struct File *f, const char *path )
 		}
 		
 		// Calculate length of variables in string
-		int cmdLength = strlen( "module=files&command=dosaction&action=makedir&sessionid=&path=" ) +
+		int cmdLength = strlen( "command=dosaction&action=makedir&sessionid=&path=" ) +
 			( f->f_SessionID ? strlen( f->f_SessionID ) : 0 ) +
 			( comm ? strlen( comm ) : 0 ) + 1;
 		
 		// Whole command
 		char *command = FCalloc(
-			strlen( "php \"modules/system/module.php\" \"\";" ) +
+			strlen( "node \"modules/node/module.js\" \"\";" ) +
 			cmdLength + 1, sizeof( char ) );
 		
 		if( command != NULL )
@@ -1171,24 +1168,24 @@ int MakeDir( struct File *f, const char *path )
 			// Generate command string
 			if( commandCnt != NULL )
 			{
-				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=makedir&sessionid=%s&path=%s",
+				snprintf( commandCnt, cmdLength, "command=dosaction&action=makedir&sessionid=%s&path=%s",
 					f->f_SessionID ? f->f_SessionID : "", comm ? comm : "" );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 				FFree( commandCnt );
 			
-				DEBUG("[fsysphp] MAKEDIR %s\n", command );
+				DEBUG("[fsysnode] MAKEDIR %s\n", command );
 	
 				int answerLength = 0;
 		
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = NodeCall( command, &answerLength );
 		
 				if( result && result->ls_Size >= 0 )
 				{
 					// TODO: Handle, especially "already exists" reasoning
 					if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
 					{
-						FERROR( "[fsysphp] phpfs: Failed to execute makedir '%s' on device '%s'\n", comm, f->f_Name );
-						//FERROR( "[fsysphp] phpfs said: %s\n", result->ls_Data );
+						FERROR( "[fsysnode] nodefs: Failed to execute makedir '%s' on device '%s'\n", comm, f->f_Name );
+						//FERROR( "[fsysnode] nodefs said: %s\n", result->ls_Data );
 					
 						// TODO: Also return FERROR! :)
 						ListStringDelete( result );
@@ -1199,7 +1196,7 @@ int MakeDir( struct File *f, const char *path )
 				}
 				else
 				{
-					FERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
+					FERROR( "[fsysnode] Unknown error unmounting device %s..\n", f->f_Name );
 				}
 				
 				// TODO: we should parse result to get information about success
@@ -1223,7 +1220,7 @@ int MakeDir( struct File *f, const char *path )
 
 FQUAD Delete( struct File *s, const char *path )
 {
-	DEBUG("[fsysphp] Delete %s\n", path);
+	DEBUG("[fsysnode] Delete %s\n", path);
 	if( s != NULL )
 	{
 		// Fix path
@@ -1242,13 +1239,13 @@ FQUAD Delete( struct File *s, const char *path )
 		}
 	
 		// Calculate length of variables in string
-		int cmdLength = strlen( "module=files&command=dosaction&action=delete&sessionid=&path=" ) +
+		int cmdLength = strlen( "command=dosaction&action=delete&sessionid=&path=" ) +
 			( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
 			( comm ? strlen( comm ) : 0 ) + 1;
 	
 		// Whole command
 		char *command = FCalloc(
-			strlen( "php \"modules/system/module.php\" \"\";" ) +
+			strlen( "node \"modules/node/module.js\" \"\";" ) +
 			cmdLength + 1, sizeof( char ) );
 
 		if( command != NULL )
@@ -1259,15 +1256,15 @@ FQUAD Delete( struct File *s, const char *path )
 			// Generate command string
 			if( commandCnt != NULL )
 			{					
-				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
+				snprintf( commandCnt, cmdLength, "command=dosaction&action=delete&sessionid=%s&path=%s",
 					s->f_SessionID ? s->f_SessionID : "", comm ? comm : "" );
-				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+				sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 				FFree( commandCnt );
 		
 				SpecialData *sd = (SpecialData *)s->f_SpecialData;
 		
 				int answerLength = 0;
-				ListString *result = PHPCall( command, &answerLength );
+				ListString *result = NodeCall( command, &answerLength );
 		
 				// TODO: we should parse result to get information about success
 				if( result )
@@ -1294,7 +1291,7 @@ FQUAD Delete( struct File *s, const char *path )
 
 int Rename( struct File *s, const char *path, const char *nname )
 {
-	DEBUG("[fsysphp] Rename %s to %s\n", path, nname );
+	DEBUG("[fsysnode] Rename %s to %s\n", path, nname );
 	
 	if( s != NULL )
 	{
@@ -1318,14 +1315,14 @@ int Rename( struct File *s, const char *path, const char *nname )
 			
 	
 			// Calculate length of variables in string
-			int cmdLength = strlen( "module=files&command=dosaction&action=rename&sessionid=&path=&newname=" ) +
+			int cmdLength = strlen( "command=dosaction&action=rename&sessionid=&path=&newname=" ) +
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
 				( encPath ? strlen( encPath ) : 0 ) + 
 				( newName ? strlen( newName ) : 0 ) + 1;
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 
 			if( command != NULL )
@@ -1338,13 +1335,13 @@ int Rename( struct File *s, const char *path, const char *nname )
 				{
 					//DEBUG( "Renaming from %s to %s...\n", encPath, newName );
 					
-					snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
+					snprintf( commandCnt, cmdLength, "command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 						s->f_SessionID ? s->f_SessionID : "", encPath ? encPath : "", newName ? newName : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 					
 					int answerLength = 0;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 		
 					// TODO: we should parse result to get information about success
 					if( result )
@@ -1376,10 +1373,10 @@ int Rename( struct File *s, const char *path, const char *nname )
 int Copy( struct File *s, const char *dst, const char *src )
 {
 	int error = 0;
-	DEBUG("[fsysphp] Copy!\n");
+	DEBUG("[fsysnode] Copy!\n");
 	
 	
-	DEBUG("[fsysphp] Copy END\n");
+	DEBUG("[fsysnode] Copy END\n");
 	
 	return error;
 }
@@ -1432,14 +1429,14 @@ BufString *Info( File *s, const char *path )
 			char *encPath = MarkAndBase64EncodeString( comm ); FFree( comm );
 		
 			// Calculate length of variables in string
-			int cmdLength = strlen( "type=&module=files&args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
+			int cmdLength = strlen( "args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) + 
 				( encPath ? strlen( encPath ) : 0 ) + 1;
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 				
 			if( command != NULL )
@@ -1450,15 +1447,15 @@ BufString *Info( File *s, const char *path )
 				// Generate command string
 				if( commandCnt != NULL )
 				{
-					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
+					snprintf( commandCnt, cmdLength, "type=%s&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encPath ? encPath : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					// Execute!
 					int answerLength = 0;
 					BufString *bs = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 					if( result != NULL )
 					{
 						bs = BufStringNewSize( result->ls_Size );
@@ -1506,7 +1503,7 @@ BufString *Call( File *s, const char *path, char *args )
 			else FFree( comm );
 	
 			// Calculate length of variables in string
-			int cmdLength = strlen( "type=&module=files&command=call&authkey=false&sessionid=&path=&args=" ) +
+			int cmdLength = strlen( "command=call&authkey=false&sessionid=&path=&args=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) + 
 				( encComm ? strlen( encComm ) : 0 ) +
@@ -1514,7 +1511,7 @@ BufString *Call( File *s, const char *path, char *args )
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 			
 			if( command != NULL )
@@ -1525,14 +1522,14 @@ BufString *Call( File *s, const char *path, char *args )
 				// Generate command string
 				if( commandCnt != NULL )
 				{
-					snprintf( commandCnt, cmdLength, "type=%s&module=files&command=call&authkey=false&sessionid=%s&path=%s&args=%s",
+					snprintf( commandCnt, cmdLength, "type=%s&command=call&authkey=false&sessionid=%s&path=%s&args=%s",
 						sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encComm ? encComm : "", args ? args : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 			
 					int answerLength = 0;
 					BufString *bs = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 					if( result != NULL )
 					{
 						bs =BufStringNewSize( result->ls_Size );
@@ -1580,14 +1577,14 @@ BufString *Dir( File *s, const char *path )
 			else FFree( comm );
 			
 			// Calculate length of variables in string
-			int cmdLength = strlen( "type=&module=files&args=false&command=directory&authkey=false&sessionid=&path=&subPath=" ) +
+			int cmdLength = strlen( "type=&args=false&command=directory&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) +
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
 				( encComm ? strlen( encComm ) : 0 ) + 1;
 			
 			// Whole command
 			char *command = FCalloc(
-				strlen( "php \"modules/system/module.php\" \"\";" ) +
+				strlen( "node \"modules/node/module.js\" \"\";" ) +
 				cmdLength + 1, sizeof( char ) );
 			
 			if( command != NULL )
@@ -1598,14 +1595,14 @@ BufString *Dir( File *s, const char *path )
 				// Generate command string
 				if( commandCnt != NULL )
 				{
-					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
+					snprintf( commandCnt, cmdLength, "type=%s&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encComm ? encComm : "" );
-					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+					sprintf( command, "node \"modules/node/module.js\" \"%s\";", FilterNodeVar( commandCnt ) );
 					FFree( commandCnt );
 		
 					int answerLength;
 					BufString *bs  = NULL;
-					ListString *result = PHPCall( command, &answerLength );
+					ListString *result = NodeCall( command, &answerLength );
 					if( result != NULL )
 					{
 						bs =BufStringNewSize( result->ls_Size );

@@ -90,27 +90,27 @@
 
 typedef struct FriendCoreManager
 {
-	char                               fcm_ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];		///< ID of machine
+	char                       fcm_ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];		///< ID of machine
 	// first 6 - mac address
 	// 32 and above hostname
 	
-	FriendCoreInstance       *fcm_FriendCores;								///< Friend Cores
-	int                                  fcm_FriendCoresRunning;                         ///< ID of the current core
+	FriendCoreInstance         *fcm_FriendCores;								///< Friend Cores
+	int                        fcm_FriendCoresRunning;                         ///< ID of the current core
 
 	#ifndef DOXIGNORE
-	CommService                 *fcm_CommService;						    ///< FC send server
-	CommServiceRemote     *fcm_CommServiceRemote;			///< FCservice for non persitent calls
+	CommService                *fcm_CommService;						    ///< FC send server
+	CommServiceRemote          *fcm_CommServiceRemote;			///< FCservice for non persitent calls
 	#endif
 
 	struct SSHServer           *fcm_SSHServer;									///< TelnetServer
 	
-	FBOOL                           fcm_Shutdown;									///< Shutdown FCM
+	FBOOL                      fcm_Shutdown;									///< Shutdown FCM
 	
 	ServiceManager             *fcm_ServiceManager;							///< Service Manager
-	WebSocket                     *fcm_WebSocket;                                 ///< WebSocket Manager
+	WebSocket                  *fcm_WebSocket;                                 ///< WebSocket Manager
 	
-	FriendcoreInfo               *fcm_FCI;										///< Friend Core Information
-	void                                *fcm_SB;  ///<Pointer to SystemBase
+	FriendcoreInfo             *fcm_FCI;										///< Friend Core Information
+	void                       *fcm_SB;  ///<Pointer to SystemBase
 	
 	int fcm_FCPort; // http port
 	int fcm_ComPort; // communication port

@@ -693,7 +693,9 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							{
 								// Immediately drop here..
 								SLIB->LibraryMYSQLDrop( SLIB, sqllib );
-
+								
+								CacheFile *cf = NULL;
+								
 								char *mime = NULL;
 							
 								File *rootDev = GetUserDeviceByUserID( SLIB, sqllib, fs->fs_IDUser, fs->fs_DeviceName );
@@ -702,134 +704,201 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 
 								if( rootDev != NULL )
 								{
-									// We need to get the sessionId if we can!
-									// currently from table we read UserID
-									User *tuser = UMGetUserByID( SLIB->sl_UM, fs->fs_IDUser );
-
-									if( tuser != NULL )
-									{
-										char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
-										if( sess && rootDev->f_SessionID )
-										{
-											FFree( rootDev->f_SessionID );
-											rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
-											DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
-										}
-									}
-									// Done fetching sessionid =)
-								
 									FHandler *actFS = (FHandler *)rootDev->f_FSys;
-									if( actFS != NULL )
+									int cacheState = CACHE_NOT_SUPPORTED;
+									
+									char *extension = GetExtension( fs->fs_Path );
+									
+									// Use the extension if possible
+									if( strlen( extension ) )
 									{
-										//BufString *bs = BufStringNew();
-										char *filePath = fs->fs_Path;
-										unsigned int i;
+										mime = StringDuplicate( MimeFromExtension( extension ) );
+									}
+									else
+									{
+										mime = StringDuplicate( "application/octet-stream" );
+									}
 									
-										for( i = 0; i < strlen( fs->fs_Path ); i++ )
-										{
-											if( fs->fs_Path[i] == ':' )
-											{
-												filePath = &(fs->fs_Path[i+1]);
-											}
-										}
-										
-										DEBUG("[ProtocolHttp] File will be opened now %s\n", filePath );
+									//add mounting and reading files from FS
+									struct TagItem tags[] = {
+										{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
+										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
+										{ TAG_DONE, TAG_DONE }
+									};
 									
-										File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
-										if( fp != NULL )
-										{
-											// Get extension
-											char *reverse = FCalloc( 1, 16 ); // 16 characters extension!
-											int cmode = 0, cz = 0;
-											int len = strlen( fs->fs_Path ) - 1;
-											for( cz = len; cz > 0 && cmode < 16; cz--, cmode++ )
-											{
-												if( fs->fs_Path[cz] == '.' )
-												{
-													break;
-												}
-												reverse[len-cz] = fs->fs_Path[cz];
-											}
-											len = strlen( reverse );
-											char *extension = FCalloc( 1, len + 1 );
-											for( cz = 0; cz < len; cz++ )
-											{
-												extension[cz] = reverse[len-1-cz];
-											}
-											FFree( reverse );
+									// 0 = filesystem do not provide modify timestamp
+									time_t tim = actFS->GetChangeTimestamp( rootDev, fs->fs_Path );
+									// there is no need to cache files which are stored on local disk
+									if( tim == 0 ) //|| strcmp( actFS->GetPrefix(), "local" ) )
+									{
 										
-											// Use the extension if possible
-											if( strlen( extension ) )
+									}
+									else
+									{
+										cf = CacheUFManagerFileGet( SLIB->sl_CacheUFM, fs->fs_IDUser, rootDev->f_ID, fs->fs_Path );
+										
+										// if TRUE file must be reloaded
+										if( cf != NULL )
+										{
+											cf->cf_ModificationTimestamp = tim;
+											if( cf->cf_ModificationTimestamp != tim )
 											{
-												mime = StringDuplicate( MimeFromExtension( extension ) );
+												cacheState = CACHE_FILE_REQUIRE_REFRESH;		// we can use same pointer to file, but there is need to store it again
 											}
 											else
 											{
-												mime = StringDuplicate( "application/octet-stream" );
+												cacheState = CACHE_FILE_CAN_BE_USED;		// cache have last file, we can use it
 											}
-											
-											//add mounting and reading files from FS
-											struct TagItem tags[] = {
-												{ HTTP_HEADER_CONTENT_TYPE, (FULONG)mime },
-												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
-												{ TAG_DONE, TAG_DONE }
-											};
-											
-											fp->f_Stream = request->h_Stream;
-											fp->f_Socket = request->h_Socket;
-											fp->f_WSocket =  request->h_WSocket;
-											fp->f_Stream = TRUE;
-		
-											response = HttpNewSimple( HTTP_200_OK, tags );
-											
-											HttpWrite( response, request->h_Socket );
+										}
+										else
+										{
+											cacheState = CACHE_FILE_MUST_BE_CREATED;		// file do not exist in cache, we can create new one
+										}
+									}
+									
+									if( cacheState == CACHE_FILE_CAN_BE_USED )
+									{
+										response = HttpNewSimple( HTTP_200_OK, tags );
 										
-											// Free the extension
-											FFree( extension );
-											
-											int dataread;
+										HttpWrite( response, request->h_Socket );
+										
+										int dataread;
 
-											char tbuffer[ SHARING_BUFFER_SIZE ];
-										
-											while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
+										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
+										if( cf->cf_Fp != NULL )
+										{
+											char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
+											if( tbuffer != NULL )
 											{
-												//BufStringAddSize( bs, tbuffer, dataread  );
+												while( !feof( cf->cf_Fp ) )
+												{
+													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
+													SocketWrite( request->h_Socket, tbuffer, dataread );
+												}
+												FFree( tbuffer );
 											}
-						
-											result = 200;
+											fclose( cf->cf_Fp );
+										}
+										
+										
+										result = 200;
 
-											// Close it
-											HttpFree( response );
-											response = NULL;
+										HttpFree( response );
+										response = NULL;
+									}
+									else
+									{
+										DEBUG("CACHE STATE: %d\n", cacheState );
+										FILE *cffp = NULL;
+										
+										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
+										{
+											cf = CacheFileNew( fs->fs_Path );
+											cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
+											cf->cf_ModificationTimestamp = tim;
+											cf->cf_FileSize = 0;
+											cffp = cf->cf_Fp;
+										}
+										else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
+										{
+											cf->cf_Fp = fopen( cf->cf_StorePath, "wb" );
+											cf->cf_FileSize = 0;
+											cffp = cf->cf_Fp;
+										}
+										
+										
+										// We need to get the sessionId if we can!
+										// currently from table we read UserID
+										User *tuser = UMGetUserByID( SLIB->sl_UM, fs->fs_IDUser );
+
+										if( tuser != NULL )
+										{
+											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
+											if( sess && rootDev->f_SessionID )
+											{
+												FFree( rootDev->f_SessionID );
+												rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
+												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
+											}
+										}
+									
+								
+										if( actFS != NULL )
+										{
+											char *filePath = fs->fs_Path;
+											unsigned int i;
+									
+											for( i = 0; i < strlen( fs->fs_Path ); i++ )
+											{
+												if( fs->fs_Path[i] == ':' )
+												{
+													filePath = &(fs->fs_Path[i+1]);
+												}
+											}
+										
+											DEBUG("[ProtocolHttp] File will be opened now %s\n", filePath );
+									
+											File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
+											if( fp != NULL )
+											{
+												fp->f_Stream = request->h_Stream;
+												fp->f_Socket = request->h_Socket;
+												fp->f_WSocket =  request->h_WSocket;
+												fp->f_Stream = TRUE;
+		
+												response = HttpNewSimple( HTTP_200_OK, tags );
 											
-											actFS->FileClose( rootDev, fp );
+												HttpWrite( response, request->h_Socket );
+
+												int dataread;
+
+												char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
+												if( tbuffer != NULL )
+												{
+													while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
+													{
+														if( cffp != NULL )
+														{
+															DEBUG("Store %d\n", dataread );
+															fwrite( tbuffer, 1, dataread, cffp );
+															cf->cf_FileSize += dataread;
+														}
+													}
+													FFree( tbuffer );
+												}
+						
+												result = 200;
+
+												HttpFree( response );
+												response = NULL;
+											
+												actFS->FileClose( rootDev, fp );
+											}
+											else
+											{
+												result = 404;
+												Log( FLOG_ERROR,"Cannot open file %s!\n", filePath );
+											}
 										}
 										else
 										{
 											result = 404;
-											Log( FLOG_ERROR,"Cannot open file %s!\n", filePath );
+											Log( FLOG_ERROR,"Cannot find filesystem for device!\n");
 										}
-							
-									
-									}
-									else
-									{
-										result = 404;
-										Log( FLOG_ERROR,"Cannot find filesystem for device!\n");
-									}
-								
-									// Will free up memory (if not, bust!)
-									/*
-									int erra = 0;
-									if( ( erra = actFS->UnMount( actFS, rootDev ) != 0 ) )
-									{
-										DEBUG( "UnMount, Here we are..\n" );
-									}						
-									else
-									{
-										DEBUG( "UnMount reported error: %d\n", erra );
-									}*/
+										
+										if( cacheState == CACHE_FILE_MUST_BE_CREATED )
+										{
+											fclose( cf->cf_Fp );
+											CacheUFManagerFilePut( SLIB->sl_CacheUFM, fs->fs_IDUser, rootDev->f_ID, cf );
+										}
+										else if( cacheState == CACHE_FILE_REQUIRE_REFRESH )
+										{
+											fclose( cf->cf_Fp );
+										}
+										
+									} // cache support
+									FFree( extension );
 								}
 								else
 								{

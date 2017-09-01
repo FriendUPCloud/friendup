@@ -1,4 +1,3 @@
-
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
@@ -22,62 +21,60 @@
 *****************************************************************************©*/
 /** @file
  * 
- * file contain function definitions related to user cache
+ *  Filesystem activity definition
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 08/08/2017
+ *  @date created 28/08/2017
  */
 
-#ifndef __FILE_CACHE_USER_FILES_H__
-#define __FILE_CACHE_USER_FILES_H__
+#ifndef __SYSTEM_FSYS_FSYS_ACTIVITY_H__
+#define __SYSTEM_FSYS_FSYS_ACTIVITY_H__
 
 #include <core/types.h>
-#include <network/locfile.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cache_file.h"
-#include "cache_drive.h"
+#include <core/library.h>
+#include <util/hooks.h>
+#include <util/hashmap.h>
+#include <util/tagitem.h>
+#include <util/base64.h>
+#include <util/buffered_string.h>
+#include <mysql/sql_defs.h>
 
 //
-//
+// Filesystem structure and database description
 //
 
-typedef struct CacheUserFiles
+typedef struct FilesystemActivity
 {
-	FUQUAD				cuf_CacheSize;
-	FUQUAD				cuf_MaxCacheSize;
-	FUQUAD				cuf_CacheRamSize;
-	FUQUAD				cuf_MaxCacheRamSize;
-	FULONG				cuf_UsrID;
-	CacheDrive			*cuf_Drive;
-	MinNode				node;
-	pthread_mutex_t 	cuf_Mutex;
-}CacheUserFiles;
+	MinNode             node;
+	FULONG              fsa_ID;             // entry id
+	FULONG              fsa_FilesystemID;   // filesystem id
+	struct tm           fsa_ToDate;         // till what date this entry will be used
+	FQUAD              fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
+	FQUAD              fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
+} FilesystemActivity;
+
+static const FULONG FilesystemActivityDesc[] = { 
+    SQLT_TABNAME, (FULONG)"FilesystemActivity",       SQLT_STRUCTSIZE, sizeof( struct FilesystemActivity ), 
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct FilesystemActivity, fsa_ID ), 
+	SQLT_INT,     (FULONG)"FilesystemID",          offsetof( struct FilesystemActivity, fsa_FilesystemID ), 
+	SQLT_DATE,    (FULONG)"ToDate", offsetof( struct FilesystemActivity, fsa_ToDate ),
+	SQLT_INT,     (FULONG)"StoredBytesLeft", offsetof( struct FilesystemActivity, fsa_StoredBytesLeft ),
+	SQLT_INT,     (FULONG)"ReadedBytesLeft", offsetof( struct FilesystemActivity, fsa_ReadedBytesLeft ),
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct FilesystemActivity, node ),
+	SQLT_END 
+};
 
 //
 //
 //
 
-CacheUserFiles *CacheUserFilesNew( FULONG id, FQUAD cacheSize );
+int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id );
 
 //
 //
 //
 
-void CacheUserFilesDelete( CacheUserFiles *cuf );
+int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act );
 
-//
-//
-//
 
-void CacheUserFilesDeleteAll( CacheUserFiles *cuf );
-
-//
-//
-//
-
-int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid, CacheFile *lf );
-
-#endif //__FILE_CACHE_USER_FILES_H__
-
+#endif // __SYSTEM_FSYS_FSYS_ACTIVITY_H__

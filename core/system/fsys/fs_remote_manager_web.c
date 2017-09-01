@@ -496,9 +496,27 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			
 			if( f != NULL )
 			{
-				FHandler *actFS  =  f->f_RootDevice->f_FSys;
+				FHandler *actFS = f->f_RootDevice->f_FSys;
 				DEBUG("[FSMRemoteWebRequest] Store data from PTR %p  - '%s' size %lu\n", data, data, size );
-				int wrotesize = actFS->FileWrite( f, data, (int) size );
+				int wrotesize = 0;
+				
+				if( f->f_RootDevice->f_Activity.fsa_StoredBytesLeft >= 0 )
+				{
+					wrotesize = actFS->FileWrite( f, data, (int) size );
+					f->f_RootDevice->f_BytesStored += wrotesize;
+					
+					if( f->f_RootDevice->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
+					{
+						if( (f->f_RootDevice->f_Activity.fsa_StoredBytesLeft-wrotesize) <= 0 )
+						{
+							f->f_RootDevice->f_Activity.fsa_StoredBytesLeft = -1;
+						}
+						else
+						{
+							f->f_RootDevice->f_Activity.fsa_StoredBytesLeft -= wrotesize;
+						}
+					}
+				}
 				
 				char temp[ 256 ];
 				snprintf( temp, 256, "{\"filestored\":\"%d\"}", wrotesize );

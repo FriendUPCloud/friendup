@@ -206,9 +206,6 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 		actUsr = RemoteUserNew( (char *)uname, (char *) hostname );
 		if( actUsr != NULL )
 		{
-			actUsr->node.mln_Succ = (MinNode *) um->um_RemoteUsers;
-			um->um_RemoteUsers = actUsr;
-			
 			actUsr->ru_AuthID = StringDuplicate( authid );
 			
 			Socket *newsock;
@@ -223,7 +220,39 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 					
 					CommServiceRegisterEvent( con, newsock );
 				}
+				else
+				{
+					FERROR("Cannot setup CommService connection with server: %s\n", actUsr->ru_Host );
+					if( actUsr->ru_AuthID != NULL )
+					{
+						FFree( actUsr->ru_AuthID );
+						actUsr->ru_AuthID = NULL;
+					}
+					RemoteUserDelete( actUsr );
+					
+					return -1;
+				}
 			}
+			else
+			{
+				FERROR("Cannot setup socket connection with server: %s\n", actUsr->ru_Host );
+				if( actUsr->ru_AuthID != NULL )
+				{
+					FFree( actUsr->ru_AuthID );
+					actUsr->ru_AuthID = NULL;
+				}
+				RemoteUserDelete( actUsr );
+				
+				return -1;
+			}
+			// user is only added to list when connection worked
+			actUsr->node.mln_Succ = (MinNode *) um->um_RemoteUsers;
+			um->um_RemoteUsers = actUsr;
+		}
+		else
+		{
+			FERROR("Cannot allocate memory for RemoteUser!\n");
+			return -2;
 		}
 	}
 	
@@ -357,7 +386,6 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
 	FBOOL registerDrive = FALSE;
 	CommFCConnection *con = NULL;
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	CommService *service = sb->fcm->fcm_CommService;
 	
 	RemoteUser *actUsr = um->um_RemoteUsers;
 	RemoteDrive *remDri = NULL;
@@ -402,9 +430,12 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
 			// last entry was removed
 			if( actUsr->ru_RemoteDrives == NULL )
 			{
-				// we can try to delete connection if its not used
-				int err = CommServiceDelConnection( service, actUsr->ru_Connection, NULL );
-				
+				if( sb->fcm != NULL )
+				{
+					CommService *service = sb->fcm->fcm_CommService;
+					// we can try to delete connection if its not used
+					int err = CommServiceDelConnection( service, actUsr->ru_Connection, NULL );
+				}
 				RemoteDriveDelete( remDri );
 			}
 		}

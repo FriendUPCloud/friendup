@@ -1,4 +1,3 @@
-
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
@@ -21,63 +20,72 @@
 *                                                                              *
 *****************************************************************************©*/
 /** @file
- * 
- * file contain function definitions related to user cache
+ *
+ *  WebSocket request definition
+ *
+ * file contain all functitons related to websocket requests
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 08/08/2017
+ *  @date created 16/08/2017
  */
 
-#ifndef __FILE_CACHE_USER_FILES_H__
-#define __FILE_CACHE_USER_FILES_H__
+#ifndef __WEBSOCKETS_WEBSOCKET_REQ_H__
+#define __WEBSOCKETS_WEBSOCKET_REQ_H__
 
 #include <core/types.h>
-#include <network/locfile.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cache_file.h"
-#include "cache_drive.h"
+#include <core/nodes.h>
+#include <libwebsockets.h>
+
+//#define WS_PROTOCOL_BUFFER_SIZE 0x8fff
+#define WS_PROTOCOL_BUFFER_SIZE 0xffff
+#define WSREQ_ID_SIZE 128
 
 //
 //
 //
 
-typedef struct CacheUserFiles
+typedef struct WebsocketReq
 {
-	FUQUAD				cuf_CacheSize;
-	FUQUAD				cuf_MaxCacheSize;
-	FUQUAD				cuf_CacheRamSize;
-	FUQUAD				cuf_MaxCacheRamSize;
-	FULONG				cuf_UsrID;
-	CacheDrive			*cuf_Drive;
-	MinNode				node;
-	pthread_mutex_t 	cuf_Mutex;
-}CacheUserFiles;
+	struct MinNode 					node;
+	char							wr_ID[ WSREQ_ID_SIZE ];
+	int								wr_Chunks;		// number of chunks
+	int								wr_ChunkSize;	// one chunk size
+	int								wr_Total;		// total number of chunks
+	int								wr_TotalSize;	// size of all chunks (total*chunksize)
+	char							*wr_Message;	// encoded data from chunks (if chunksize == totalsize == 0 message is in data)
+	int								wr_MessageSize;	// meessage size
+	time_t							wr_CreatedTime;
+}WebsocketReq;
 
 //
 //
 //
 
-CacheUserFiles *CacheUserFilesNew( FULONG id, FQUAD cacheSize );
+WebsocketReq *WebsocketReqNew( char *id, int chunk, int total, char *data, int datasize );
 
 //
 //
 //
 
-void CacheUserFilesDelete( CacheUserFiles *cuf );
+WebsocketReq *WebsocketReqRawNew( char *data, int datasize );
 
 //
 //
 //
 
-void CacheUserFilesDeleteAll( CacheUserFiles *cuf );
+void WebsocketReqDelete( WebsocketReq *wr );
 
 //
 //
 //
 
-int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid, CacheFile *lf );
+void WebsocketReqDeleteAll( WebsocketReq *wr );
 
-#endif //__FILE_CACHE_USER_FILES_H__
+//
+//
+//
+
+WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, int datasize );
+
+#endif // __WEBSOCKETS_WEBSOCKET_REQ_H__
 

@@ -265,7 +265,8 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 								File *fp = (File *)fsys->FileOpen( dstdev, newdst, "wb" );
 								if( fp != NULL )
 								{
-									fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
+									int stored = fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
+									dstdev->f_BytesStored += stored;
 									fsys->FileClose( dstdev, fp );
 								}
 								else
@@ -333,7 +334,8 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 			File *fp = (File *)fsys->FileOpen( dstdev, dst, "wb" );
 			if( fp != NULL )
 			{
-				fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
+				int stored = fsys->FileWrite( fp, lf->lf_Buffer, lf->lf_FileSize );
+				dstdev->f_BytesStored += stored;
 				fsys->FileClose( dstdev, fp );
 			}
 			else

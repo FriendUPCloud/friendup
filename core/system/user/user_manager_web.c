@@ -141,7 +141,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					User *locusr = UserNew();
 					if( locusr != NULL )
 					{
-						UserInit( locusr );
 						locusr->u_Name = usrname;
 						locusr->u_FullName = fullname;
 						locusr->u_Email = email;
@@ -683,37 +682,52 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					if( strcmp( logusr->u_Name, usrname ) == 0 )
 					{
 						BufString *bs = BufStringNew();
+						
+						pthread_mutex_lock( &(logusr->u_Mutex) );
 					
 						UserSessListEntry *sessions = logusr->u_SessionsList;
 						BufStringAdd( bs, "ok<!--separate-->[" );
 						int pos = 0;
 						unsigned long t = time( NULL );
+						DEBUG("1\n");
 					
 						while( sessions != NULL )
 						{
+							DEBUG("2\n");
 							UserSession *us = (UserSession *) sessions->us;
-						
+							if( us == NULL )
+							{
+								DEBUG("ERR\n");
+								sessions = (UserSessListEntry *) sessions->node.mln_Succ;
+								continue;
+							}
+							DEBUG("3 number of sessions:  %d\n", logusr->u_SessionsNr );
 							//if( (us->us_LoggedTime - t) > LOGOUT_TIME )
 							//if( us->us_WSClients != NULL )
 							time_t timestamp = time(NULL);
-							if( ( (timestamp - us->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
+							if( us->us_WSClients != NULL && ( (timestamp - us->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
 							{
+								DEBUG("4\n");
 								int size = 0;
 								if( pos == 0 )
 								{
-									size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, 		us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+									size = snprintf( temp, 2047, "{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
 								}
 								else
 								{
-									size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, 	us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
+									size = snprintf( temp, 2047, ",{ \"id\":\"%lu\",\"deviceidentity\":\"%s\",\"sessionid\":\"%s\",\"time\":\"%llu\"}", us->us_ID, us->us_DeviceIdentity, us->us_SessionID, (long long unsigned int)us->us_LoggedTime );
 								}
+								DEBUG("5\n");
 							
 								BufStringAddSize( bs, temp, size );
 							
 								pos++;
 							}
+							DEBUG("6\n");
 							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 						}
+						
+						pthread_mutex_unlock( &(logusr->u_Mutex) );
 					
 						BufStringAdd( bs, "]" );
 					
@@ -790,17 +804,19 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		{
 			DEBUG("[UMWebRequest] Remove session by sessionid\n");
 			UserSession *ses = USMGetSessionBySessionID( l->sl_USM, sessionid );
-			if( usrses != NULL )
+			if( ses != NULL )
 			{
+				
 				char *uname = NULL;
-				if( usrses->us_User != NULL )
+				if( ses->us_User != NULL )
 				{
-					uname = usrses->us_User->u_Name;
+					uname = ses->us_User->u_Name;
 				}
 					
-				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s\n", uname, usrses->us_SessionID, uname  );
-					
-				error = USMUserSessionRemove( l->sl_USM, usrses );
+				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s\n", uname, ses->us_SessionID, uname  );
+				
+				ses->us_InUseCounter--;
+				error = USMUserSessionRemove( l->sl_USM, ses );
 			}
 		}
 		else if( deviceid != NULL && usrname != NULL )
@@ -815,6 +831,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					UserSession *s = (UserSession *) usl->us;
 					if( s != NULL && s->us_DeviceIdentity != NULL && strcmp( s->us_DeviceIdentity, deviceid ) == 0 )
 					{
+						s->us_InUseCounter--;
 						error = USMUserSessionRemove( l->sl_USM, s );
 						break;
 					}

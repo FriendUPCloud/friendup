@@ -106,4 +106,10 @@ FLONG LocFileAvaiableSpace( const char *path );
 
 LocFile* LocFileNewFromBuf( char* path, BufString *bs );
 
+//
+//
+//
+
+char *GetExtension( char *name );
+
 #endif

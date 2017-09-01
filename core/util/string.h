@@ -107,4 +107,6 @@ void HashedString ( char **str );
 
 char *GetStringFromJSON( char *text, char *token );
 
+int StringNToInt( char *s, int len );
+
 #endif

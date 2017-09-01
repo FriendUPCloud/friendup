@@ -39,6 +39,7 @@
 #include <system/user/user_application.h>
 #include <network/websocket_client.h>
 #include <system/user/user.h>
+#include <websockets/websocket_req_manager.h>
 
 enum 
 {
@@ -85,7 +86,7 @@ typedef struct UserSession
 	
 	char                   us_UserActionInfo[ 512 ];
 	int                    us_InUseCounter;
-	
+	WebsocketReqManager    *us_WSReqManager;
 }UserSession;
 
 //

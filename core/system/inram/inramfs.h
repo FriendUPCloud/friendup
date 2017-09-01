@@ -73,12 +73,12 @@
 typedef struct INRAMFile
 {
 	MinNode node;
-	int 						nf_Type;
-	char 					*nf_Name;
-	char 					*nf_Path;
+	int 				nf_Type;
+	char 				*nf_Name;
+	char 				*nf_Path;
 	BufString 			*nf_Data;
 	FUQUAD 				nf_Offset;
-	time_t 					*nf_CreateTime;
+	time_t 				*nf_CreateTime;
 	
 	struct INRAMFile	*nf_Parent;
 	struct INRAMFile	*nf_Children;
@@ -94,7 +94,7 @@ INRAMFile *INRAMFileNew( int type, char *path, char *name );
 // INRAMFile Delete
 //
 
-void INRAMFileDelete( INRAMFile *nf );
+FQUAD INRAMFileDelete( INRAMFile *nf );
 
 //
 // Add Children
@@ -136,7 +136,7 @@ INRAMFile *INRAMFileRemoveByPath( INRAMFile *root, char *path );
 // Delete all files
 //
 
-void INRAMFileDeleteAll( INRAMFile *root );
+FQUAD INRAMFileDeleteAll( INRAMFile *root );
 
 //
 // find pointer to last path

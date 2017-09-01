@@ -80,6 +80,8 @@
 #include <system/systembase.h>
 #include <network/http.h>
 
+int CountFilesInArchiveZip( const char *zipfilename, const char *password, int *count );
+
 void change_file_date(const char *filename, uLong dosdate, tm_unz tmu_date)
 {
 #ifdef _WIN32
@@ -710,7 +712,7 @@ BufString *ListZip( const char *zipfilename, const char *password )
 	if (uf == NULL)
 	{
 		DEBUG("Cannot open %s\n", zipfilename);
-		return 1;
+		return NULL;
 	}
 	
 	BufString *bs = BufStringNew();

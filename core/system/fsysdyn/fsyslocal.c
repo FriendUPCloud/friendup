@@ -689,11 +689,11 @@ int MakeDir( struct File *s, const char *path )
 // rm files/dirs
 //
 
-int RemoveDirectory(const char *path)
+FQUAD RemoveDirectory(const char *path)
 {
 	DIR *d = opendir( path );
 	size_t path_len = strlen( path );
-	int r = -1;
+	FQUAD r = 0;
 
 	if( d )
 	{
@@ -702,7 +702,6 @@ int RemoveDirectory(const char *path)
 
 		while( !r && ( p = readdir( d ) ) )
 		{
-			int r2 = -1;
 			char *buf;
 			size_t len;
 
@@ -715,7 +714,7 @@ int RemoveDirectory(const char *path)
 			len = path_len + strlen(p->d_name) + 2; 
 			buf = FCalloc(len , sizeof(char));
 
-			if (buf)
+			if( buf != NULL )
 			{
 				struct stat statbuf;
 
@@ -725,29 +724,32 @@ int RemoveDirectory(const char *path)
 				{
 					if (S_ISDIR(statbuf.st_mode))
 					{
-						r2 = RemoveDirectory(buf);
+						r += RemoveDirectory(buf);
 					}
 					else
 					{
-						r2 = unlink(buf);
+						r += statbuf.st_size;
+						unlink( buf );
 						remove( buf );
 					}
 				}
 				FFree(buf);
 			}
-			r = r2;
 		}
 		closedir(d);
-		
-		if( r == 0 )
-		{
-			r = rmdir(path);
-		}
+
+		rmdir(path);
 	}
 	else // file
 	{
 		DEBUG("Remove file %s\n", path );
-		r = remove( path );
+		
+		struct stat statbuf;
+		if( !stat( path, &statbuf ) )
+		{
+			r += statbuf.st_size;
+		}
+		remove( path );
 	}
 
 	return r;
@@ -757,18 +759,16 @@ int RemoveDirectory(const char *path)
 // Delete
 //
 
-int Delete( struct File *s, const char *path )
+FQUAD Delete( struct File *s, const char *path )
 {
-	DEBUG("Delete!\n");
+	DEBUG("[LocalfsDelete] start!\n");
 	
-	//BufString *bs = BufStringNew();
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
-	//int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
 	
-	DEBUG("Delete new path size %d\n", rspath + spath );
+	DEBUG("[LocalfsDelete] new path size %d\n", rspath + spath );
 	
 	if( ( comm = FCalloc( rspath + spath + 10, sizeof(char) ) ) != NULL )
 	{
@@ -780,15 +780,15 @@ int Delete( struct File *s, const char *path )
 		}
 		strcat( comm, path );
 	
-		DEBUG("Delete file or directory %s!\n", comm );
+		DEBUG("[LocalfsDelete] file or directory %s!\n", comm );
 	
-		int ret = RemoveDirectory( comm );
+		FQUAD ret = RemoveDirectory( comm );
 
 		FFree( comm );
 		return ret;
 	}
 	
-	DEBUG("Delete END\n");
+	DEBUG("[LocalfsDelete] END\n");
 	
 	return 0;
 }
@@ -1058,7 +1058,7 @@ char *Execute( struct File *s, const char *path, const char *args )
 // Fill buffer with data from stat
 //
 
-void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
+void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 {
 	char tmp[ 1024 ];
 	int rootSize = strlen( d->f_Path );
@@ -1067,7 +1067,7 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 	//DEBUG("FILLSTAT path '%s' rootpath '%s'  %d\n", path, d->f_Path, path[ strlen( d->f_Path ) ] );
 			
 	BufStringAdd( bs, "{" );
-	sprintf( tmp, " \"Filename\":\"%s\",", GetFileName( path ) );
+	snprintf( tmp, 1023, " \"Filename\":\"%s\",", GetFileName( path ) );
 	BufStringAdd( bs, tmp );
 	
 	//DEBUG( "FILLSTAT filename set\n");
@@ -1076,27 +1076,27 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 	{
 		if( S_ISDIR( s->st_mode ) )
 		{
-			sprintf( tmp, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
+			snprintf( tmp, 1023, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
 		}
 		else
 		{
-			sprintf( tmp, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
+			snprintf( tmp, 1023, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
 		}
 	}
 	else
 	{
-		sprintf( tmp, "\"Path\":\"%s:\",", d->f_Name );
+		snprintf( tmp, 1023, "\"Path\":\"%s:\",", d->f_Name );
 	}
 	
 	//DEBUG( "FILLSTAT fullname set\n");
 	
 	BufStringAdd( bs, tmp );
-	sprintf( tmp, "\"Filesize\": %d,",(int) s->st_size );
+	snprintf( tmp, 1023, "\"Filesize\": %d,",(int) s->st_size );
 	BufStringAdd( bs, tmp );
 	
 	char *timeStr = FCalloc( 40, sizeof( char ) );
 	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
-	sprintf( tmp, "\"DateModified\": \"%s\",", timeStr );
+	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
 	BufStringAdd( bs, tmp );
 	FFree( timeStr );
 	
@@ -1121,7 +1121,7 @@ void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
 FQUAD GetChangeTimestamp( struct File *s, const char *path )
 {
 	struct stat result;
-	if(stat( path, &result) == 0 )
+	if( stat( path, &result) == 0 )
 	{
 		return (FQUAD)result.st_mtimensec;
 	}
@@ -1176,7 +1176,7 @@ BufString *Info( File *s, const char *path )
 		if( stat( comm, &ls ) == 0 )
 		{
 			DEBUG("LOCAL file stat %s\n", comm );
-			FillStat( bs, &ls, s, comm );
+			FillStatLocal( bs, &ls, s, comm );
 		}
 		else
 		{
@@ -1284,7 +1284,7 @@ BufString *Dir( File *s, const char *path )
 						{
 							BufStringAdd( bs, "," );
 						}
-						FillStat( bs, &ls, s, tempString );
+						FillStatLocal( bs, &ls, s, tempString );
 						pos++;
 					}
 				}

@@ -67,6 +67,8 @@ void UserSessionInit( UserSession *us )
 	if( us != NULL )
 	{
 		pthread_mutex_init( &us->us_Mutex, NULL );
+		
+		us->us_WSReqManager = WebsocketReqManagerNew();
 	}
 }
 
@@ -91,7 +93,7 @@ void UserSessionDelete( UserSession *us )
 			}
 			else
 			{
-				INFO("UserSessionDelete: number of working functions on user session: %ld  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
+				INFO("UserSessionDelete: number of working functions on user session: %d  sessionid: %s\n", us->us_InUseCounter, us->us_SessionID );
 				count++;
 				if( count > 50 )
 				{
@@ -141,6 +143,12 @@ void UserSessionDelete( UserSession *us )
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
 	
+		if( us->us_WSReqManager != NULL )
+		{
+			WebsocketReqManagerDelete( us->us_WSReqManager );
+			us->us_WSReqManager = NULL;
+		}
+		
 		if( us->us_DeviceIdentity != NULL )
 		{
 			FFree( us->us_DeviceIdentity );

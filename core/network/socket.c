@@ -1777,7 +1777,7 @@ BufString *SocketReadPackage( Socket *sock )
 				if( ID_FCRE == rdat[ 0 ] )
 				{
 					fullPackageSize = rdat[ 1 ];
-					DEBUG("[SocketReadPackage] package size %lu\n", fullPackageSize );
+					DEBUG("[SocketReadPackage] package size %d\n", fullPackageSize );
 				}
 				
 				BufStringAddSize( bs, locbuffer, res );
@@ -2043,7 +2043,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 					if( ID_FCRE == rdat[ 0 ] )
 					{
 						fullPackageSize = rdat[ 1 ];
-						DEBUG("[SocketReadTillEnd] package size %lu\n", fullPackageSize );
+						DEBUG("[SocketReadTillEnd] package size %d\n", fullPackageSize );
 					}
 					
 					BufStringAddSize( bs, locbuffer, res );
@@ -2118,14 +2118,14 @@ int SocketWrite( Socket* sock, char* data, FQUAD length )
 	{
 		//INFO( "SSL Write length: %d (sock: %p)\n", length, sock );
 		
-		int left = length;
-		unsigned int written = 0;
+		FQUAD left = length;
+		FQUAD written = 0;
 		int res = 0;
 		int errors = 0;
 		
 		int retries = 0;
 		
-		unsigned int bsize = length;
+		FQUAD bsize = left;
 		
 		int err = 0;		
 		// Prepare to get fd state
@@ -2135,7 +2135,7 @@ int SocketWrite( Socket* sock, char* data, FQUAD length )
 
 		while( written < length )
 		{
-			if( bsize + written > length ) bsize = length - written;
+			if( (bsize + written) > length ) bsize = length - written;
 			
 			if( sock->s_Ssl == NULL )
 			{
@@ -2169,7 +2169,7 @@ int SocketWrite( Socket* sock, char* data, FQUAD length )
 						break;
 					}
 					default:
-						FERROR("Cannot write %d\n", err );
+						FERROR("Cannot write %d stringerr: %s size: %lld\n", err, strerror( err ), length );
 						return 0;
 				}
 			}
@@ -2211,7 +2211,7 @@ int SocketWrite( Socket* sock, char* data, FQUAD length )
 		}
 		while( written < length );
 		
-		DEBUG("end write %d/%d (had %d retries)\n", written, length, retries );
+		DEBUG("end write %d/%lld (had %d retries)\n", written, length, retries );
 		return written;
 	}
 }

@@ -624,20 +624,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	if( sessionRemoved == TRUE )
 	{
-		User *usr = remsess->us_User;
-		if( usr != NULL )
-		{
-			pthread_mutex_lock( &(usr->u_Mutex) );
-			remsess->us_User = NULL;
-			pthread_mutex_unlock( &(usr->u_Mutex) );
-		}
-
 		UserSessionDelete( remsess );
-		
-		if( usr != NULL &&  usr->u_SessionsNr == 0 )
-		{
-
-		}
 	}
 
 	return 0;

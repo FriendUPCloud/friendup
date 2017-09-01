@@ -34,7 +34,8 @@ endif
 
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
-			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c)
+			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c \
+			websockets/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
@@ -143,13 +144,18 @@ obj/%.o: system/datatypes/images/%.c system/datatypes/images/*.h system/datatype
 obj/%.o: system/log/%.c system/log/*.h system/log/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
+	
 obj/%.o: system/admin/%.c system/admin/*.h system/admin/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
+	
 obj/%.o: system/autotask/%.c system/autotask/*.h system/autotask/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
-	
+
+obj/%.o: websockets/%.c websockets/*.h websockets/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
 # build/install
 
 compile: $(OBJ_FILES)  $(TARGET)

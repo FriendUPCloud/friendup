@@ -218,7 +218,7 @@ int CacheManagerUserFilePut( void *locusr, LocFile *lf )
 		// trying to find user assigned to CacheUserFiles, on the end we should assign cache to user
 		User *usr = (User *)locusr;
 
-		CacheUserFilesAddFile( &(usr->u_FileCache), lf );
+		//CacheUserFilesAddFile( &(usr->u_FileCache), lf );
 
 	}
 	return 0;
@@ -247,6 +247,7 @@ LocFile *CacheManagerUserFileGet( void *locusr, char *path )
 		
 		// if CacheUserFiles exist, we are trying to find file
 
+		/*
 		LocFile *lf = usr->u_FileCache->cuf_File;
 		while( lf != NULL )
 		{
@@ -257,6 +258,7 @@ LocFile *CacheManagerUserFileGet( void *locusr, char *path )
 			}
 			lf = (LocFile *)lf->node.mln_Succ;
 		}
+		*/
 	}
 	return 0;
 }

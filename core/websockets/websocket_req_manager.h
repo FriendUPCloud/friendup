@@ -1,4 +1,3 @@
-
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
@@ -22,62 +21,64 @@
 *****************************************************************************©*/
 /** @file
  * 
- * file contain function definitions related to user cache
+ * file contain function definitions related to websocket request manager
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 08/08/2017
+ *  @date created 16/08/2017
  */
 
-#ifndef __FILE_CACHE_USER_FILES_H__
-#define __FILE_CACHE_USER_FILES_H__
+#ifndef __WEBSOCKETS_WEBSOCKET_REQ_MANAGER_H__
+#define __WEBSOCKETS_WEBSOCKET_REQ_MANAGER_H__
 
 #include <core/types.h>
 #include <network/locfile.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cache_file.h"
-#include "cache_drive.h"
+#include "websocket_req.h"
 
 //
 //
 //
 
-typedef struct CacheUserFiles
+typedef struct WebsocketReqManager
 {
-	FUQUAD				cuf_CacheSize;
-	FUQUAD				cuf_MaxCacheSize;
-	FUQUAD				cuf_CacheRamSize;
-	FUQUAD				cuf_MaxCacheRamSize;
-	FULONG				cuf_UsrID;
-	CacheDrive			*cuf_Drive;
-	MinNode				node;
-	pthread_mutex_t 	cuf_Mutex;
-}CacheUserFiles;
+	WebsocketReq	*wrm_WRWaiting;	//chunked requests, they must be completed before they will go to queue
+	WebsocketReq	*wrm_WRQueue;		//FIFO queue
+	WebsocketReq	*wrm_WRLastInQueue;	// last entry in queue
+	int				wrm_WSRNumber;
+	pthread_mutex_t	wrm_Mutex;
+}WebsocketReqManager;
 
 //
 //
 //
 
-CacheUserFiles *CacheUserFilesNew( FULONG id, FQUAD cacheSize );
+WebsocketReqManager *WebsocketReqManagerNew( );
 
 //
 //
 //
 
-void CacheUserFilesDelete( CacheUserFiles *cuf );
+void WebsocketReqManagerDelete( WebsocketReqManager *cm );
 
 //
 //
 //
 
-void CacheUserFilesDeleteAll( CacheUserFiles *cuf );
+WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *cm, char *id, int chunk, int total, char *data, int datasize );
 
 //
 //
 //
 
-int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid, CacheFile *lf );
+WebsocketReq *WebsocketReqManagerPutRawData( WebsocketReqManager *cm, char *data, int datasize );
 
-#endif //__FILE_CACHE_USER_FILES_H__
+//
+//
+//
+
+WebsocketReq *WebsocketReqManagerGetFromQueue( WebsocketReqManager *cm );
+
+#endif //__WEBSOCKETS_WEBSOCKET_REQ_MANAGER_H__
 

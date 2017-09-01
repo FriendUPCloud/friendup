@@ -98,7 +98,7 @@ typedef struct FHandler
 	int                     (*FileSeek)( struct File *s, int pos );
 	
 	int                     (*MakeDir)( struct File *s, const char *path );
-	int                     (*Delete)( struct File *s, const char *path );
+	FQUAD                   (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
 	char                  *(*Execute)( struct File *s, const char *path, const char *args, WebsocketClient *wsc );
 	int                     (*Copy)( struct File *s, const char *dst, const char *src );
@@ -137,6 +137,7 @@ typedef struct Filesystem
 	FULONG               fs_DeviceID;
 	FULONG               fs_Authorized;
 	FULONG               fs_Owner;
+	FUQUAD               fs_StoredBytes;
 } Filesystem;
 
 static const FULONG FilesystemDesc[] = { 
@@ -157,6 +158,7 @@ static const FULONG FilesystemDesc[] = {
 	SQLT_INT,     (FULONG)"Mounted", offsetof( struct Filesystem, fs_Mounted ),
 	SQLT_INT,     (FULONG)"Authorized", offsetof( struct Filesystem, fs_Authorized ),
 	SQLT_INT,     (FULONG)"Owner", offsetof( struct Filesystem, fs_Owner ),
+	SQLT_INT,     (FULONG)"StoredBytes", offsetof( struct Filesystem, fs_StoredBytes ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct Filesystem, node ),
 	SQLT_END 
 };

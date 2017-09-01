@@ -5,7 +5,7 @@ LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
 MODS	=	phpmod sysmod nodejsmod pythonmod javamod
-FSYS	=	fsyslocal fsysssh2 fsysphp fsysinram fsysremote
+FSYS	=	fsyslocal fsysssh2 fsysphp fsysnode fsysinram fsysremote
 LOGGERS	=	sql.ulogger file.ulogger
 SERVICES=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS =  --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
@@ -79,6 +79,10 @@ fsysssh2: fsysdyn/fsysssh2.c ../../core/obj/buffered_string.o fsysdyn/fsysssh2.d
 fsysphp: fsysdyn/fsysphp.c  ../../core/obj/buffered_string.o fsysdyn/fsysphp.d
 	@echo "\033[34mCompile FSYSphp ...\033[0m"
 	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysphp.c ../../core/obj/buffered_string.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o -o bin/fsys/php.fsys -shared -fPIC -lcrypto
+
+fsysnode: fsysdyn/fsysnode.c  ../../core/obj/buffered_string.o fsysdyn/fsysnode.d
+	@echo "\033[34mCompile FSYSnode ...\033[0m"
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysnode.c ../../core/obj/buffered_string.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o -o bin/fsys/node.fsys -shared -fPIC -lcrypto
 
 fsysinram: fsysdyn/fsysinram.c ../../core/obj/buffered_string.o fsysdyn/fsysinram.d
 	@echo "\033[34mCompile FSYSinram ...\033[0m"
@@ -165,4 +169,4 @@ test: ../../core/obj/buffered_string.o
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
--include $(C_FILES:%.c=%.d) moduledyn/phpmod.d moduledyn/sysmod.d moduledyn/nodejsmod.d fsys/fsyslocal.d fsys/fsysssh2.d fsys/fsysphp.d log/loggers/user_logger_sql.d
+-include $(C_FILES:%.c=%.d) moduledyn/phpmod.d moduledyn/sysmod.d moduledyn/nodejsmod.d fsys/fsyslocal.d fsys/fsysssh2.d fsys/fsysphp.d fsys/fsysnode.d log/loggers/user_logger_sql.d
