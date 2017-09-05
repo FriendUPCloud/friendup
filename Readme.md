@@ -25,7 +25,8 @@ Getting started
 Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern linux distributions. Post to the Developer Community if you run into any problems here.
 ```
 git clone https://github.com/FriendSoftwareLabs/friendup
-friendup/install.sh
+cd friendup/
+./install.sh
 ```
 We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
 
