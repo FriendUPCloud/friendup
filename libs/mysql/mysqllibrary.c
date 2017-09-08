@@ -1083,6 +1083,9 @@ int QueryWithoutResults( struct MYSQLLibrary *l, const char *sel )
 				if( strstr( errstr, "List connection to MySQL server" ) != NULL )
 				{
 					l->con.sql_Recconect = TRUE;
+				}else if( strstr( errstr, "Duplicate column name " ) != NULL )
+				{
+					return 0;
 				}
 			}
 			else
