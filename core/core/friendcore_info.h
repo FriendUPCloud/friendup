@@ -38,17 +38,26 @@
  */
 typedef struct FriendcoreInfo
 {
-	void 						*fci_FCM;		///< pointer to Friend Core manager
 	int 						fci_FCNumber;	///< numbe of the Friend Core to query
+	char						*fci_LocalisationJSON; // localisation string in json format
+	void						*fci_SLIB; // pointer to system.library
 }FriendcoreInfo;
 
 //
 //
 //
 
-FriendcoreInfo *FriendCoreInfoNew( void *fcm );
+FriendcoreInfo *FriendCoreInfoNew( void *slib );
+
+//
+//
+//
 
 void FriendCoreInfoDelete( FriendcoreInfo *fci );
+
+//
+//
+//
 
 BufString *FriendCoreInfoGet( FriendcoreInfo *fci );
 

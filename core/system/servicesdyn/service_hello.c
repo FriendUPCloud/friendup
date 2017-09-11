@@ -222,7 +222,7 @@ char *ServiceGetStatus( Service *service, int *len )
 	service->s_State = SERVICE_STOPPED;
  
 	// Setup our pipe for reading and execute our command.
-	pf = popen("/etc/init.d/nodejs status","r"); 
+	pf = popen("nodejs status","r"); 
  
 	if( !pf )
 	{

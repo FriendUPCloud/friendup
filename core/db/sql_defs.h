@@ -19,38 +19,35 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/** @file
- * 
- *  json  converter functions definition
- *
- *  @author PS (Pawel Stefanski)
- *  @date created March 2016
- */
 
-#ifndef __JSON_JSON_CONVERTER_H__
-#define __JSON_JSON_CONVERTER_H__
-
-#include <core/types.h>
-#include <db/sql_defs.h>
-#include <util/buffered_string.h>
-#include "jsmn.h"
+#ifndef __CORE_SQL_DEFS_H__
+#define __CORE_SQL_DEFS_H__
 
 //
-//
-//
-
-jsmntok_t * JSONTokenise(char *js, unsigned int *entr );
-
-//
-//
+// database types
 //
 
-BufString *GetJSONFromStructure( FULONG *desc, void *data );
+#define SQL_DATA_TABLE_NAME		1
+#define SQL_DATA_STRUCTURE_SIZE	3
+#define SQL_DATA_STRUCT_START 	4		// information where data information is stored
+										// remember  TAG, DATA, TAG, DATA, ....START...
 
-//
-//
-//
+enum {
+		SQLT_TABNAME = 0xff01,
+		SQLT_STRUCTSIZE,
+		SQLT_IDINT,
+		SQLT_INT,
+		SQLT_STR,
+		SQLT_QUAD,
+		SQLT_BLOB,
+		SQLT_VOIDPTR,
+		SQLT_NODE,		// pointer to next structure
+		SQLT_SKIPBYTES,
+		SQLT_DATETIME,
+		SQLT_DATE,
+		SQLT_INIT_FUNCTION,
+		SQLT_END
+};
 
-void *GetStructureFromJSON( FULONG *desc, const char *data );
+#endif //__CORE_SQL_DEFS_H__
 
-#endif // __JSON_JSON_CONVERTER_H__

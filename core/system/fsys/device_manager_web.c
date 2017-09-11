@@ -111,7 +111,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			char *query = FCalloc( 512, sizeof( char ) );
 			
 			// Fetch rows
-			MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib )
 			{
 				//snprintf( query, 512, ""
@@ -120,11 +120,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					"WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
 					"AND f.Name = \"%s\" LIMIT 1", devname );
 				
-				MYSQL_RES *res = sqllib->Query( sqllib, query );
+				void *res = sqllib->Query( sqllib, query );
 				
 				if( res != NULL )
 				{
-					MYSQL_ROW row;
+					char **row;
 					int rownr = 0;
 					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
@@ -139,7 +139,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					sqllib->FreeResult( sqllib, res );
 				}
 				
-				l->LibraryMYSQLDrop( l, sqllib );
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			
 			FFree( query );
@@ -200,14 +200,14 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			ListString *str = ListStringNew();
 			
 			// Fetch rows
-			MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
-				MYSQL_RES *res = sqllib->Query( sqllib, query );
+				void *res = sqllib->Query( sqllib, query );
 				
 				if( res != NULL )
 				{
-					MYSQL_ROW row;
+					char **row;
 					int rownr = 0;
 					while( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
@@ -222,7 +222,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					}
 					sqllib->FreeResult( sqllib, res );
 				}
-				l->LibraryMYSQLDrop( l, sqllib );
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			
 			// Add positive response
@@ -452,7 +452,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				
 				if( mountedDev != NULL && l->sl_UnMountDevicesInDB == 1 && mountError != FSys_Error_DeviceAlreadyMounted )
 				{
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						char *temptext = FCalloc( 512, sizeof( char ) );
@@ -476,11 +476,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 								loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
 							);
 
-							MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+							void *res = sqllib->Query( sqllib, temptext );
 
 							FFree( temptext );
 						}
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					
 					mountedDev->f_Mounted = TRUE;
@@ -637,7 +637,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				{
 					char temptext[ 512 ];
 					
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						//sprintf( temptext, "
@@ -675,7 +675,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 							loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, id 
 						);
 						*/
-						MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+						void *res = sqllib->Query( sqllib, temptext );
 					
 						//HttpWriteAndFree( response, sock );
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"Successfully unmounted\" }" );
@@ -686,7 +686,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						//DoorNotificationCommunicateChanges( l, loggedSession, mountedDev, devfull );
 						//FFree( devfull );
 						
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 				}
 				
@@ -769,7 +769,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		{
 			int error = 0;
 			
-			MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
 				User *usr = loggedSession->us_User;
@@ -817,7 +817,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User not found!\"}" );
 				}
 
-				l->LibraryMYSQLDrop( l, sqllib );
+				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
@@ -928,11 +928,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				{
 					DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
 					
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						UserDeviceMount( l, sqllib, user, 0 );
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					else
 					{
@@ -1263,7 +1263,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			{
 				int pos = 0;
 				// we will build update script
-				MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
 					if( config != NULL )
@@ -1339,7 +1339,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Database updated\"}" );
 						
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					
 					BufStringDelete( bs );

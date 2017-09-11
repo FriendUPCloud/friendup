@@ -31,9 +31,8 @@
 #define __SYSTEM_FSYS_FILE_PERMISSIONS_H__
 
 #include <core/types.h>
-//#include <system/handler/file.h>
 #include <core/nodes.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 
 typedef struct UGAccessEl
 {

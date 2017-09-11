@@ -69,8 +69,10 @@ BufString *BufStringNewSize( int bufsize )
 		str->bs_Bufsize = bufsize;
 		str->bs_MAX_SIZE = bufsize;
 		
-		if( ( str->bs_Buffer = FCalloc( str->bs_Bufsize + 1, sizeof( char ) ) ) != NULL )
+		if( ( str->bs_Buffer = FMalloc( str->bs_Bufsize + 1 ) ) != NULL )
+		//if( ( str->bs_Buffer = FCalloc( str->bs_Bufsize + 1, sizeof( char ) ) ) != NULL )
 		{
+			str->bs_Buffer[ 0 ] = 0;
 			return str;
 		}
 		FFree( str );
@@ -117,7 +119,8 @@ int BufStringAdd( BufString *bs, const char *ntext )
 			int allsize = ( (addsize / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
 			char *tmp;
 			
-			if( ( tmp = FCalloc( allsize + 1, sizeof(char) ) ) != NULL )
+			if( ( tmp = FMalloc( allsize + 1 ) ) != NULL )
+			//if( ( tmp = FCalloc( allsize + 1, sizeof(char) ) ) != NULL )
 			{
 				strcpy( tmp, ntext );
 				bs->bs_Bufsize = allsize;
@@ -134,6 +137,8 @@ int BufStringAdd( BufString *bs, const char *ntext )
 			strcpy( bs->bs_Buffer, ntext );
 			bs->bs_Size = strlen( ntext );
 		}
+		bs->bs_Buffer[ bs->bs_Size ] = 0;
+		
 		return 0;
 	}
 	
@@ -145,7 +150,8 @@ int BufStringAdd( BufString *bs, const char *ntext )
 		char *tmp;
 		int allsize = ( (newsize / bs->bs_MAX_SIZE) + 1) * bs->bs_MAX_SIZE;
 		
-		if( ( tmp = FCalloc( allsize+1, sizeof(char) ) ) != NULL )
+		if( ( tmp = FMalloc( allsize + 1 ) ) != NULL )
+		//if( ( tmp = FCalloc( allsize+1, sizeof(char) ) ) != NULL )
 		{
 			bs->bs_Bufsize = allsize;
 			bs->bs_Size = newsize;
@@ -169,6 +175,7 @@ int BufStringAdd( BufString *bs, const char *ntext )
 		strcat( bs->bs_Buffer, ntext );
 		bs->bs_Size = newsize;
 	}
+	bs->bs_Buffer[ bs->bs_Size ] = 0;
 	
 	return 0;
 }
@@ -215,6 +222,8 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 			memcpy( bs->bs_Buffer, ntext, len );
 			bs->bs_Size = len;
 		}
+		bs->bs_Buffer[ bs->bs_Size ] = 0;
+		
 		return 0;
 	}
 	
@@ -251,6 +260,7 @@ int BufStringAddSize( BufString *bs, const char *ntext, int len )
 		memcpy( &(bs->bs_Buffer[ bs->bs_Size ] ), ntext, len );
 		bs->bs_Size = newsize;
 	}
+	bs->bs_Buffer[ bs->bs_Size ] = 0;
 	
 	return 0;
 }

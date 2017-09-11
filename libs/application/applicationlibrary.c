@@ -70,7 +70,7 @@ void *libInit( void *sb )
 
 	l->AppWebRequest = dlsym( l->l_Handle, "AppWebRequest" );
 
-	l->al_sqllib = (struct MYSQLLibrary *)LibraryOpen( sb, "mysql.library", 0 );
+	l->al_sqllib = (struct SQLLibrary *)LibraryOpen( sb, "mysql.library", 0 );
 	
 	l->al_zlib = (struct ZLibrary *)LibraryOpen( sb, "z.library", 0 );
 	
@@ -159,7 +159,7 @@ void ApplicationFree( struct ApplicationLibrary *l, Application *app )
 //
 //
 
-int SetSQLConnection( struct ApplicationLibrary *l, MYSQLLibrary *lib )
+int SetSQLConnection( struct ApplicationLibrary *l, SQLLibrary *lib )
 {
 	l->al_sqllib = lib;
 	

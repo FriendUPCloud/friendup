@@ -65,10 +65,10 @@ Service *ServiceManagerGetByName( ServiceManager *smgr, char *name );
 int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int state );
 
 //
-// Web calls handler, void *FriendCoreManager
+// Web calls handler, void *SystemBase
 //
 
-Http *ServiceManagerWebRequest( void *fcm, char **urlpath, Http *request  );
+Http *ServiceManagerWebRequest( void *sb, char **urlpath, Http *request  );
 
 
 

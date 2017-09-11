@@ -79,7 +79,7 @@
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force );
+extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
 
 
 /**
@@ -334,7 +334,7 @@ Webreq func: %s\n \
 			
 			if( loggedSession == NULL )
 			{
-				MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				
 				DEBUG("Session not found in appsessionid table\n");
 
@@ -345,10 +345,10 @@ Webreq func: %s\n \
 
 					sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT * FROM ( ( SELECT u.SessionID FROM FUser u, FUserApplication a WHERE a.AuthID=\"%s\" AND a.UserID = u.ID LIMIT 1 ) UNION ( SELECT u2.SessionID FROM FUser u2, Filesystem f WHERE f.Config LIKE \"%s%s%s\" AND u2.ID = f.UserID LIMIT 1 ) ) z LIMIT 1",( char *)ast->data, "%", ( char *)ast->data, "%");
 					
-					MYSQL_RES *res = sqllib->Query( sqllib, qery );
+					void *res = sqllib->Query( sqllib, qery );
 					if( res != NULL )
 					{
-						MYSQL_ROW row;
+						char **row;
 						if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 						{
 							if( row[ 0 ] != NULL )
@@ -358,7 +358,7 @@ Webreq func: %s\n \
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					l->LibraryMYSQLDrop( l, sqllib );
+					l->LibrarySQLDrop( l, sqllib );
 				}
 			}
 		}
@@ -511,7 +511,7 @@ Webreq func: %s\n \
 				loggedSession->us_User->u_LoggedTime = timestamp;
 			}
 			
-			MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+			SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 			if( sqllib != NULL )
 			{
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
@@ -538,7 +538,7 @@ Webreq func: %s\n \
 				
 					FFree( tmpQuery );
 				}
-				l->LibraryMYSQLDrop( l, sqllib );
+				l->LibrarySQLDrop( l, sqllib );
 			}
 		}
 	}
@@ -709,7 +709,7 @@ Webreq func: %s\n \
 						
 						char tmpQuery[ 512 ];
 						
-						MYSQLLibrary *sqlLib =  l->LibraryMYSQLGet( l );
+						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
 							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID` = '%s", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
@@ -736,7 +736,7 @@ Webreq func: %s\n \
 							
 							DEBUG("Devices mounted\n");
 							userAdded = TRUE;
-							l->LibraryMYSQLDrop( l, sqlLib );
+							l->LibrarySQLDrop( l, sqlLib );
 						}
 						else
 						{
@@ -966,7 +966,7 @@ Webreq func: %s\n \
 							
 							char tmpQuery[ 512 ];
 							
-							MYSQLLibrary *sqlLib =  l->LibraryMYSQLGet( l );
+							SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 							if( sqlLib != NULL )
 							{
 								sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, SessionID='%s' WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", (long long)loggedSession->us_LoggedTime, loggedSession->us_SessionID, deviceid,  loggedSession->us_UserID );
@@ -993,7 +993,7 @@ Webreq func: %s\n \
 
 								DEBUG("Devices mounted\n");
 								userAdded = TRUE;
-								l->LibraryMYSQLDrop( l, sqlLib );
+								l->LibrarySQLDrop( l, sqlLib );
 							}
 							DEBUG("Library dropped\n");
 						}
@@ -1028,7 +1028,7 @@ Webreq func: %s\n \
 						}
 						else
 						{
-							MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+							SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 
 							// Get authid from mysql
 							if( sqllib != NULL )
@@ -1040,10 +1040,10 @@ Webreq func: %s\n \
 								//snprintf( q, sizeof( q ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
 								sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
 								
-								MYSQL_RES *res = sqllib->Query( sqllib, qery );
+								void *res = sqllib->Query( sqllib, qery );
 								if( res != NULL )
 								{
-									MYSQL_ROW row;
+									char **row;
 									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 									{
 										sprintf( authid, "%s", row[ 0 ] );
@@ -1051,7 +1051,7 @@ Webreq func: %s\n \
 									sqllib->FreeResult( sqllib, res );
 								}
 
-								l->LibraryMYSQLDrop( l, sqllib );
+								l->LibrarySQLDrop( l, sqllib );
 
 								snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
 										  loggedUser->u_Error, loggedUser->u_MainSessionID, authid
@@ -1537,7 +1537,7 @@ Webreq func: %s\n \
 		{
 			if( UMUserIsAdmin( l->sl_UM, *request, loggedSession->us_User ) == TRUE )
 			{
-				response =  ServiceManagerWebRequest( l->fcm, &(urlpath[1]), *request );
+				response =  ServiceManagerWebRequest( l, &(urlpath[1]), *request );
 				called = TRUE;
 			}
 		}

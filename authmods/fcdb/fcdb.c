@@ -260,20 +260,20 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
 		usr->u_Password = StringDuplicate( pass );
 		
 		SystemBase *sb = (SystemBase *)l->sb;
-		MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 		if( sqlLib != NULL )
 		{
 			char temptext[ 2048 ];
 			
 			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.Password = '%s' WHERE`ID` = '%ld'",  pass, usr->u_ID );
 
-			MYSQL_RES *res = sqlLib->Query( sqlLib, temptext );
+			void *res = sqlLib->Query( sqlLib, temptext );
 			if( res != NULL )
 			{
 				sqlLib->FreeResult( sqlLib, res );
 			}
 						
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 		}
 	}
 	
@@ -287,7 +287,7 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
  * @param tmpusr pointer to User structure which will be checked
  * @return TRUE when success, otherwise FALSE
  */
-FBOOL isAPIUser( MYSQLLibrary *sqlLib, User *tmpusr )
+FBOOL isAPIUser( SQLLibrary *sqlLib, User *tmpusr )
 {
 	// If we are not an API user:
 	return tmpusr->u_IsAPI;
@@ -569,7 +569,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		SystemBase *sb = (SystemBase *)l->sb;
 		
 		DEBUG("[FCDB] SB %p\n", sb );
-		MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+		SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 		if( sqlLib != NULL )
 		{
 			FBOOL testAPIUser = isAPIUser( sqlLib, tmpusr );
@@ -578,7 +578,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( uses->us_SessionID == NULL || testAPIUser == FALSE )
 			{
 				DEBUG( "[FCDB] : We got a response on: \nAUTHENTICATE: SessionID = %s\n", uses->us_SessionID ? uses->us_SessionID : "No session id" );
-				DEBUG("\n\n\n1============================================================ tmiest %lld usertime %lld logouttst %lld\n\
+				DEBUG("\n\n\n1============================================================ tmiest %ld usertime %ld logouttst %d\n\
 		==========================================================================\n", timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
 				
 				//char tmpQuery[ 512 ];
@@ -611,7 +611,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 				DEBUG("[FCDB] Update filesystems\n");
 				uses->us_LoggedTime = timestamp;
 
-				sb->LibraryMYSQLDrop( sb, sqlLib );
+				sb->LibrarySQLDrop( sb, sqlLib );
 				// TODO: Generate sessionid the first time if it is empty!!
 				INFO("Auth return user %s with sessionid %s\n", tmpusr->u_Name,  uses->us_SessionID );
 				if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
@@ -628,7 +628,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 					if( uses->us_SessionID == NULL || !strlen( uses->us_SessionID ) )
 					{
 						DEBUG("\n\n\n============================================================\n \
-											user name %s current timestamp %%lld login time %lld logout time %lld\n\
+											user name %s current timestamp %ld login time %ld logout time %d\n\
 											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
 						
 						char *hashBase = MakeString( 255 );
@@ -642,13 +642,13 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 						}
 						uses->us_SessionID = hashBase;
 					}
-					sb->LibraryMYSQLDrop( sb, sqlLib );
+					sb->LibrarySQLDrop( sb, sqlLib );
 					DEBUG( "[FCDB] AUTHENTICATE: We found an API user! sessionid=%s\n", uses->us_SessionID );
 					if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 					goto loginok;
 				}
 			}
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 		}
 		if(  tmpusr != NULL && userFromDB == TRUE ){ UserDelete( tmpusr );	tmpusr =  NULL; }
 		goto loginfail;
@@ -685,7 +685,7 @@ void Logout( struct AuthMod *l, Http *r, char *name )
 	SystemBase *sb = (SystemBase *)l->sb;
 	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
 	
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
 		char tmpQuery[ 1024 ];
@@ -694,7 +694,7 @@ void Logout( struct AuthMod *l, Http *r, char *name )
 		
 		sqlLib->QueryWithoutResults(  sqlLib, tmpQuery );
 	
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 }
 
@@ -714,7 +714,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 	time_t timestamp = time ( NULL );
 	
 	
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get mysql.library slot!\n");
@@ -740,12 +740,12 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 			sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
 			//sprintf( tmpQuery, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionId );
 
-			MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+			void *res = sqlLib->Query( sqlLib, tmpQuery );
 			if( res != NULL )
 			{
 			//users->us_User->u_Error = FUP_AUTHERR_UPDATE;
 				sqlLib->FreeResult( sqlLib, res );
-				sb->LibraryMYSQLDrop( sb, sqlLib );
+				sb->LibrarySQLDrop( sb, sqlLib );
 				return users;
 			}
 		}
@@ -755,7 +755,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 			
 			// same session, update loggedtime
 			//user->u_Error = FUP_AUTHERR_WRONGSESID;
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return users;
 		}
 	}
@@ -763,10 +763,10 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 	{
 		DEBUG( "[FCDB] IsSessionValid: Session has timed out! %s\n", sessionId );
 		//user->u_Error = FUP_AUTHERR_TIMEOUT;
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 		return users;
 	}
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	return users;
 }
 

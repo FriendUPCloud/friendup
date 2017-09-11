@@ -172,25 +172,25 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
 	
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 
 	if( sqlLib != NULL )
 	{
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
 
-		MYSQL_RES *result = sqlLib->Query(  sqlLib, tmpQuery );
+		void *result = sqlLib->Query(  sqlLib, tmpQuery );
 	
 		if ( result == NULL ) 
 		{
 			FERROR("SQL query result is empty!\n");
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return 2;
 		}
 		
 		FBOOL isAdmin = FALSE;
 		FBOOL isAPI = FALSE;
 
-		MYSQL_ROW row;
+		char **row;
 		int j = 0;
 		int actgroup = 0;
 	
@@ -252,7 +252,7 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 	
 		sqlLib->FreeResult( sqlLib, result );
 
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	
 	return 0;
@@ -280,7 +280,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign group to user start NEW GROUPS: %s\n", groups );
 	
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -400,7 +400,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 		
 		FFree( ptr );
 	}
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	DEBUG("[UMAssignGroupToUserByStringDB] Assign  groups to user end\n");
 	
 	return 0;
@@ -417,7 +417,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 int UMUserUpdateDB( UserManager *um, User *usr )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -427,7 +427,7 @@ int UMUserUpdateDB( UserManager *um, User *usr )
 	
 	sqlLib->Update( sqlLib, UserDesc, usr );
 	
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	return 0;
 }
 
@@ -444,17 +444,17 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 	char tmpQuery[ 255 ];
 
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	int actapp = 0;
 	
 	if( sqlLib != NULL )
 	{
 		sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "SELECT * FROM FUserApplication WHERE UserID='%lu'", usr->u_ID );
 
-		MYSQL_RES *result = sqlLib->Query( sqlLib, tmpQuery );
+		void *result = sqlLib->Query( sqlLib, tmpQuery );
 		if( result == NULL )
 		{
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return 2;
 		}
 
@@ -469,7 +469,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		//usr->u_Applications = FCalloc( result->row_count, sizeof( UserApplication * ) );
 	
 		// Fetch from mysql
-		MYSQL_ROW row;
+		char **row;
 		int j = 0;
 		UserApplication *prev = NULL;
 	
@@ -500,7 +500,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		DEBUG( "[UMAssignApplicationsToUser] %d applications added.\n", actapp );
 	
 		// Return with amount of application
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return actapp;
 }
@@ -516,7 +516,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 User * UMUserGetByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -532,7 +532,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 	user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 	
 	// No need for sql lib anymore here
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 
 	if( user != NULL )
 	{
@@ -560,7 +560,7 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
 User * UMUserGetByIDDB( UserManager *um, FULONG id )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -578,7 +578,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 	
 	DEBUG("[UMUserGetByIDDB] User poitner %p  number of entries %d\n", user, entries );
 	// No need for sql lib anymore here
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 
 	if( user != NULL )
 	{
@@ -607,7 +607,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
 int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -623,7 +623,7 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 	if( UMUserExistByNameDB( smgr, usr->u_Name ) == TRUE )
 	{
 		DEBUG("[UMUserCreate]: user exist already!\n");
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 		return 1;
 	}
 	time_t timestamp = time ( NULL );
@@ -674,7 +674,7 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 	}
 
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return val;
 }
@@ -750,7 +750,7 @@ FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr )
 FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib == NULL )
 	{
@@ -765,7 +765,7 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
 	
 	//sprintf( tmpQuery, "select count(*) from FUser u, FUserToGroup utg, FUserGroup g, FUserApplication a where u.ID = utg.UserID AND g.ID = utg.UserGroupID AND g.Name = 'Admin'  AND a.UserID = u.ID AND  a.AuthID=\"%s\"", auth );
 	
-	MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+	void *res = sqlLib->Query( sqlLib, tmpQuery );
 
 	if( res != NULL )
 	{
@@ -773,13 +773,13 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
 		if( sqlLib->NumberOfRows( sqlLib, res ) > 0 )
 		{
 			sqlLib->FreeResult( sqlLib, res );
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return TRUE;
 		}
 		sqlLib->FreeResult( sqlLib, res );
 	}
 	
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return FALSE;
 }
@@ -827,17 +827,17 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
 	char query[ 1024 ];
 	sprintf( query, " FUser where`Name` = '%s'" , name );
 	
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
 		int res = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
 		if( res <= 0 )
 		{
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return FALSE;
 		}
 	
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 		return TRUE;
 	}
 	return FALSE;
@@ -904,7 +904,7 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 User *UMGetUserByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	char where[ 128 ];
 	where[ 0 ] = 0;
 	
@@ -922,7 +922,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 	int entries;
 	
 	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	User *tmp = user;
 	while( tmp != NULL )
@@ -948,7 +948,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib && sqlLib->con.sql_Con )
 	{
@@ -957,10 +957,10 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 		char query[ 1024 ];
 		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT u.ID FROM `FUser` u, `FApplication` f WHERE f.AuthID=\"%s\" AND f.UserID = u.ID LIMIT 1", authId );
 		
-		MYSQL_RES *result = sqlLib->Query( sqlLib, query );
+		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
 		{
-			MYSQL_ROW row;
+			char **row;
 			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				struct User *user = NULL;
@@ -971,7 +971,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 				user = sqlLib->Load( sqlLib, UserDesc, tmpQuery, &entries );
 				if( user != NULL )
 				{
-					sb->LibraryMYSQLDrop( sb, sqlLib );
+					sb->LibrarySQLDrop( sb, sqlLib );
 					{
 						UMAssignGroupToUser( um, user );
 						UMAssignApplicationsToUser( um, user );
@@ -986,7 +986,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 		}
 	}
 	
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return NULL;
 }
@@ -1001,7 +1001,7 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 User *UMGetAllUsersDB( UserManager *um )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	DEBUG("[UMGetAllUsersDB] start\n");
 	
@@ -1015,7 +1015,7 @@ User *UMGetAllUsersDB( UserManager *um )
 	int entries;
 	
 	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, NULL, &entries );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	User *tmp = user;
 	while( tmp != NULL )
@@ -1107,7 +1107,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 	FULONG tm = 0;
 	
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -1115,10 +1115,10 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 		char query[ 1024 ];
 		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT `LoginTime` FROM `FUser` WHERE `Name`='%s' LIMIT 1", name );
 		
-		MYSQL_RES *result = sqlLib->Query( sqlLib, query );
+		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
 		{ 
-			MYSQL_ROW row;
+			char **row;
 			if( ( row = sqlLib->FetchRow( sqlLib, result ) ) )
 			{
 				tm = atol( row[ 0 ] );
@@ -1126,7 +1126,7 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 			sqlLib->FreeResult( sqlLib, result );
 		}
 		
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	
 	return tm;
@@ -1146,7 +1146,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 {
 	UserLogin ul;
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	User *usr = UMGetUserByNameDB( um, name );
 	
 	DEBUG("[UMStoreLoginAttempt] start\n");
@@ -1168,7 +1168,7 @@ int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, co
 		
 		sqlLib->Save( sqlLib, UserLoginDesc, &ul );
 		
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	
 	if( usr != NULL )
@@ -1192,7 +1192,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 {
 	FBOOL canILogin = FALSE;
 	SystemBase *sb = (SystemBase *)um->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( sqlLib != NULL )
 	{
@@ -1204,10 +1204,10 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 		// we are checking failed logins in last hour
 		sqlLib->SNPrintF( sqlLib, query, sizeof(query), "SELECT `LoginTime`,`Failed` FROM `FUserLogin` WHERE `Login`='%s' AND (`LoginTime` > %lu AND `LoginTime` <= %lu) ORDER BY `LoginTime` DESC", name, tm-(3600l), tm );
 		
-		MYSQL_RES *result = sqlLib->Query( sqlLib, query );
+		void *result = sqlLib->Query( sqlLib, query );
 		if( result != NULL )
 		{ 
-			MYSQL_ROW row;
+			char **row;
 			int i = 0;
 			FBOOL goodLogin = FALSE;
 			
@@ -1249,7 +1249,7 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 			}
 		}
 		
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	
 	return canILogin;

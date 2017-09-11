@@ -76,7 +76,7 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount );
 //
 //
 
-File *GetUserDeviceByUserID( SystemBase *l, MYSQLLibrary *sqllib, FULONG uid, const char *devname );
+File *GetUserDeviceByUserID( SystemBase *l, SQLLibrary *sqllib, FULONG uid, const char *devname );
 
 //
 //
@@ -94,7 +94,7 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path );
 //
 //
 
-int MountDoorByRow( SystemBase *l, User *usr, MYSQL_ROW row, User *mountUser );
+int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser );
 
 //
 //

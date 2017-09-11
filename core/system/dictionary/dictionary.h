@@ -33,7 +33,7 @@
 
 #include <core/types.h>
 #include <core/nodes.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <stddef.h>
 
 /*
@@ -84,7 +84,7 @@ static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STR
 
 // Load dictionary from DB
 	
-Dictionary *DictionaryNew( struct MYSQLLibrary *mysqllib );
+Dictionary *DictionaryNew( struct SQLLibrary *mysqllib );
 
 // release dictionary
 

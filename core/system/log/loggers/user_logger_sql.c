@@ -34,7 +34,7 @@
 
 typedef struct SpecialData
 {
-	MYSQLLibrary        *sd_LibSQL;
+	SQLLibrary        *sd_LibSQL;
 }SpecialData;
 
 //

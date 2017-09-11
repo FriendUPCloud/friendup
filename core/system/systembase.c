@@ -179,8 +179,8 @@ SystemBase *SystemInit( void )
 
 	l->AuthModuleGet = AuthModuleGet;
 	l->AuthModuleDrop = AuthModuleDrop;
-	l->LibraryMYSQLGet = LibraryMYSQLGet;
-	l->LibraryMYSQLDrop = LibraryMYSQLDrop;
+	l->LibrarySQLGet = LibrarySQLGet;
+	l->LibrarySQLDrop = LibrarySQLDrop;
 	l->LibraryApplicationGet = LibraryApplicationGet;
 	l->LibraryApplicationDrop = LibraryApplicationDrop;
 	l->LibraryPropertiesGet = LibraryPropertiesGet;
@@ -228,6 +228,7 @@ SystemBase *SystemInit( void )
 	l->sl_SocketTimeout = 10000;
 	l->sl_WorkersNumber = WORKERS_MAX;
 	l->sl_USFCacheMax = 102400000;
+	l->sl_DefaultDBLib = StringDuplicate("mysql.library");
 	
 	//DEBUG("Plibcheck %p lsb %p\n", plib, lsb );
 	if( plib != NULL && plib->Open != NULL )
@@ -259,6 +260,12 @@ SystemBase *SystemInit( void )
 				{
 					skipDBUpdate = TRUE;
 				}
+			}
+			char *tmp = plib->ReadString( prop, "Core:DBLib", "mysql.library" );
+			if( tmp != NULL )
+			{
+				if( l->sl_DefaultDBLib != NULL ){ FFree( l->sl_DefaultDBLib ); }
+				l->sl_DefaultDBLib = StringDuplicate( tmp );
 			}
 			
 			DEBUG("[SystemBase] reading login\n");
@@ -299,7 +306,7 @@ SystemBase *SystemInit( void )
 				}
 			}
 			
-			l->sl_WorkersNumber = plib->ReadInt( prop, "Core:workers", WORKERS_MAX );
+			l->sl_WorkersNumber = plib->ReadInt( prop, "Core:Workers", WORKERS_MAX );
 			if( l->sl_WorkersNumber < WORKERS_MIN )
 			{
 				l->sl_WorkersNumber = WORKERS_MIN;
@@ -332,7 +339,7 @@ SystemBase *SystemInit( void )
 
 			for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 			{
-				l->sqlpool[i ].sqllib = (struct MYSQLLibrary *)LibraryOpen( l,  "mysql.library", 0 );
+				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l,  l->sl_DefaultDBLib, 0 );
 				if( l->sqlpool[i ].sqllib != NULL )
 				{
 					l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
@@ -373,7 +380,7 @@ SystemBase *SystemInit( void )
 	l->alib = l->LibraryApplicationGet( l );
 	// dictionary
 	
-	MYSQLLibrary *lsqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
 	if( lsqllib != NULL )
 	{
 		l->sl_Dictionary = DictionaryNew( lsqllib );
@@ -383,7 +390,7 @@ SystemBase *SystemInit( void )
 		FERROR("Cannot open 'mysql.library' instance!\n");
 		return NULL;
 	}
-	l->LibraryMYSQLDrop( l, lsqllib );
+	l->LibrarySQLDrop( l, lsqllib );
 
 	l->ilib = l->LibraryImageGet( l );
 	
@@ -972,7 +979,7 @@ void SystemClose( SystemBase *l )
 		
 		FFree( l->sqlpool );
 	}
-	mysql_library_end();
+	//mysql_library_end();
 	
 	// release them all strings ;)
 	if( l->sl_ModPath )
@@ -1018,10 +1025,17 @@ void SystemClose( SystemBase *l )
 		
 		AutotaskDelete( rem );
 	}
+	
 	// delete autotasks
 	if( l->sl_AutotaskPath )
 	{
 		FFree( l->sl_AutotaskPath );
+	}
+	
+	if( l->sl_DefaultDBLib != NULL )
+	{ 
+		FFree( l->sl_DefaultDBLib ); 
+		
 	}
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase closed.\n");
@@ -1047,7 +1061,7 @@ int SystemInitExternal( SystemBase *l )
 	}
 	
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
 		//  get all users active
@@ -1293,7 +1307,7 @@ int SystemInitExternal( SystemBase *l )
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
 		
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	
 	
@@ -1338,7 +1352,7 @@ void CheckAndUpdateDB( struct SystemBase *l )
 	DEBUG("---------Autoupdatedatabase process-----------------\n");
 	DEBUG("----------------------------------------------------\n");
 	
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
 		int startUpdatePosition = 0;
@@ -1347,10 +1361,10 @@ void CheckAndUpdateDB( struct SystemBase *l )
 		char query[ 1024 ];
 		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='DB_VERSION'" );
 		
-		MYSQL_RES *res = sqllib->Query( sqllib, query );
+		void *res = sqllib->Query( sqllib, query );
 		if( res != NULL )
 		{
-			MYSQL_ROW row;
+			char **row;
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 			{
 				// Id, Key, Value, Comment, date
@@ -1463,27 +1477,53 @@ void CheckAndUpdateDB( struct SystemBase *l )
 
 									for( i=1 ; i < fsize ; i++ )
 									{
-										if( script[ i ] == ';' )
+										if( strncmp( &(script[ i ]), "----script----" , 14 ) == 0 )
 										{
-											script[ i ] = 0;
-											DEBUG("[SystemBase] Running script: %s from file: %s on database\n", command, scriptfname ); 
-											if( strlen( command) > 10 )
+											char *start = &(script[ i ]);
+											char *end = strstr( start, "----script-end----" );
+											int len = (end - start)-1;
+											i += len;
+											
+											start += 14;
+											*end = 0;
+											
+											DEBUG("[SystemBase] Running script1 : %s from file: %s on database\n", start, scriptfname );
+											
+											if( sqllib->QueryWithoutResults( sqllib, start ) != 0 )
 											{
-												if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
-												{
-													error = 1;
-												}
-												else
-												{
-													lastSQLname = dbentries[j].name;
-												}
+												error = 1;
 											}
+											else
+											{
+												lastSQLname = dbentries[ j ].name;
+											}
+											
 											command = &script[ i+1 ];
+										}
+										else
+										{
+											if( script[ i ] == ';' )
+											{
+												script[ i ] = 0;
+												DEBUG("[SystemBase] Running script: %s from file: %s on database\n", command, scriptfname ); 
+												if( strlen( command) > 10 )
+												{
+													if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
+													{
+														error = 1;
+													}
+													else
+													{
+														lastSQLname = dbentries[j].name;
+													}
+												}
+												command = &script[ i+1 ];
+											}
 										}
 									}
 									
 									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
-									if( strlen( command) > 10 )
+									if( strlen( command ) > 10 )
 									{
 										if( sqllib->QueryWithoutResults( sqllib, command ) != 0 )
 										{
@@ -1526,7 +1566,7 @@ void CheckAndUpdateDB( struct SystemBase *l )
 			}
 			FFree( dbentries );
 		}
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	
 	DEBUG("----------------------------------------------------\n");
@@ -1546,12 +1586,12 @@ UserGroup *LoadGroups( struct SystemBase *sb )
 	UserGroup *groups = NULL;
 	UserGroup *newGroup = NULL, *lastGroup = NULL;
 	
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
 	{
 		int entries;
 		groups = sqlLib->Load( sqlLib, GroupDesc, NULL, &entries );
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return groups;
 }
@@ -1566,7 +1606,7 @@ UserGroup *LoadGroups( struct SystemBase *sb )
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -1602,7 +1642,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
 		usr->u_ID , usr->u_ID
 	);
 	DEBUG("[UserDeviceMount] Finding drives in DB\n");
-	MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
 	{
 		Log( FLOG_ERROR,  "[UserDeviceMount] UserDeviceMount fail: database results = NULL\n");
@@ -1612,7 +1652,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
 	
 	if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
 	{
-		MYSQL_ROW row;
+		char **row;
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 		{
 			// Id, UserId, Name, Type, ShrtDesc, Server, Port, Path, Username, Password, Mounted
@@ -1669,7 +1709,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
 						AND LOWER(f.Name) = LOWER('%s')", 
 						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
 					);
-					MYSQL_RES *resx = sqllib->Query( sqllib, temptext );
+					void *resx = sqllib->Query( sqllib, temptext );
 					if( resx != NULL )
 					{
 						sqllib->FreeResult( sqllib, resx );
@@ -1706,7 +1746,7 @@ int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force )
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr )
+int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
@@ -1834,9 +1874,9 @@ void AuthModuleDrop( SystemBase *l, AuthMod *uclose )
  * @return pointer to mysql.library
  */
 
-MYSQLLibrary *LibraryMYSQLGet( SystemBase *l )
+SQLLibrary *LibrarySQLGet( SystemBase *l )
 {
-	MYSQLLibrary *retlib = NULL;
+	SQLLibrary *retlib = NULL;
 	int i ;
 	int timer = 0;
 	int retries = 0;
@@ -1852,7 +1892,7 @@ MYSQLLibrary *LibraryMYSQLGet( SystemBase *l )
 			
 				pthread_mutex_lock( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				if( retlib == NULL || retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				if( retlib == NULL || retlib->GetStatus( retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
 					// Increment and check
@@ -1917,7 +1957,7 @@ MYSQLLibrary *LibraryMYSQLGet( SystemBase *l )
  * @param mclose pointer to mysql.library which will be returned to pool
  */
 
-void LibraryMYSQLDrop( SystemBase *l, MYSQLLibrary *mclose )
+void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 {
 	int i = 0;
 	int closed = -1;

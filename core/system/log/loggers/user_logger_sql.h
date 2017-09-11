@@ -31,7 +31,7 @@
 #define __UTIL_LOG_LOGGERS_USER_LOGGER_SQL_H__
 
 #include <system/log/user_logger.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 
 //
 //

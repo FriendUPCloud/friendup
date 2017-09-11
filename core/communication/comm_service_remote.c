@@ -255,6 +255,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 			data += COMM_MSG_HEADER_SIZE + df->df_Size;
 			df = (DataForm *)data;
 			
+			/*
 			//
 			// Services Information
 			//
@@ -287,7 +288,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 						struct MsgItem tags[] = {
 							{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
 							{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-							{ ID_RESP, (FULONG)0, (FULONG)0 },
+							{ ID_FCRI, (FULONG)0, (FULONG)0 },
 							{ ID_SVIN, (FULONG)0, (FULONG)NULL },
 							{ TAG_DONE, TAG_DONE, TAG_DONE }
 						};
@@ -332,7 +333,9 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 			// system.library calls
 			//
 			
-			else if( df->df_ID == ID_SLIB )
+			else 
+				*/
+			if( df->df_ID == ID_SLIB )
 			{
 				data += COMM_MSG_HEADER_SIZE;
 				df = (DataForm *)data;
@@ -532,15 +535,6 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					}	// Sysbase checking
 					HttpFree( http );
 				}
-			}
-			
-			//
-			// FILE
-			//
-			
-			else if( df->df_ID == ID_FILE )
-			{
-				
 			}
 		}
 	}
@@ -922,7 +916,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						int tempSize = 0;
 						DEBUG("[CommServiceRemote] Wait for message on socket\n");
 						
-						SocketSetBlocking( sock, TRUE );
+						//SocketSetBlocking( sock, TRUE );
 						
 						BufString *bs = NULL;
 						if( sock != NULL )
@@ -961,7 +955,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 									DataForm *recvDataForm = NULL;
 									FBOOL isStream = FALSE;
 									
-									FERROR("[CommServiceRemote] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", dcount );
+									DEBUG("[CommServiceRemote] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", dcount );
 									
 									recvDataForm = ParseMessageCSR( service, sock, (FBYTE *)bs->bs_Buffer, (int *)&dcount, &isStream );
 									

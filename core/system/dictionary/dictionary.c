@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <core/library.h>
 #include <system/dictionary/dictionary.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 
 /**
  * Create new Dictionary
@@ -40,7 +40,7 @@
  * @param mysqllib pointer to opened mysql.library
  * @return pointer to new Dictionary structure, otherwise NULL
  */
-Dictionary * DictionaryNew(struct MYSQLLibrary *mysqllib )
+Dictionary * DictionaryNew(struct SQLLibrary *mysqllib )
 {
 	if( mysqllib == NULL )
 	{

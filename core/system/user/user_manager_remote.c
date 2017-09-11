@@ -230,6 +230,8 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 					}
 					RemoteUserDelete( actUsr );
 					
+					SocketFree( newsock );
+					
 					return -1;
 				}
 			}
@@ -531,14 +533,14 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 		{
 			locremdri->rd_RemoteID = remoteid;
 			
-			MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+			SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 			if( sqllib != NULL )
 			{
 				char tmp[ 1024 ];
 				
 				sqllib->SNPrintF( sqllib, tmp, sizeof(tmp), "select ID from `Filesystem` where UserID=%lu and Name='%s'", locusr->u_ID, localDevName );
-				MYSQL_ROW row;
-				MYSQL_RES *result = sqllib->Query( sqllib, tmp );
+				char **row;
+				void *result = sqllib->Query( sqllib, tmp );
 				if( result != NULL )
 				{
 					while( ( row = sqllib->FetchRow( sqllib, result ) ) )
@@ -553,7 +555,7 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
 					}
 					sqllib->FreeResult( sqllib, result );
 				}
-				sb->LibraryMYSQLDrop( sb, sqllib );
+				sb->LibrarySQLDrop( sb, sqllib );
 			}
 			
 			locremdri->node.mln_Succ = (MinNode *)remusr->ru_RemoteDrives;

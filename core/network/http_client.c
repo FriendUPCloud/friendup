@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <core/types.h>
 #include "http_client.h"
+#include <util/buffered_string.h>
 
 /**
  * Function create HttpClient call
@@ -51,11 +52,11 @@ HttpClient *HttpClientNew( FBOOL post, char *param )
 		//POST /oauth/token HTTP/1.1
 		if( post == TRUE )
 		{
-			size = snprintf( temp, 2048, "POST %s HTTP/1.1", param );
+			size = snprintf( temp, 2048, "POST %s HTTP/1.1\n", param );
 		}
 		else
 		{
-			size = snprintf( temp, 2048, "GET %s HTTP/1.1", param );
+			size = snprintf( temp, 2048, "GET %s HTTP/1.1\n", param );
 		}
 		
 		c->hc_MainLine = StringDuplicateN( temp, size );
@@ -69,7 +70,7 @@ HttpClient *HttpClientNew( FBOOL post, char *param )
  *
  * @param c pointer to HttpClient which will be deleted
  */
-void HttpClientFree( HttpClient *c )
+void HttpClientDelete( HttpClient *c )
 {
 	if( c != NULL )
 	{
@@ -87,8 +88,96 @@ void HttpClientFree( HttpClient *c )
 		{
 			FFree( c->hc_MainLine );
 		}
-		
 		FFree( c );
 	}
 }
 
+#define h_addr h_addr_list[0]
+/**
+ * Function calls other server by using HTTP call
+ *
+ * @param c pointer to HttpClient
+ * @param host pointer to server name
+ * @return new BufferedString structure when success, otherwise NULL
+ */
+BufString *HttpClientCall( HttpClient *c, char *host )
+{
+	BufString *bs = BufStringNew();
+	if( bs != NULL )
+	{
+		struct hostent *server;
+		struct sockaddr_in serv_addr;
+		int sockfd, bytes, sent, received, total;
+
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if( sockfd < 0 )
+		{
+			BufStringDelete( bs );
+			return NULL;
+		}
+
+		server = gethostbyname( host );
+		if( server == NULL )
+		{
+			FERROR("[HttpClientCall] Cannot reach server: %s\n", host );
+			BufStringDelete( bs );
+			return NULL;
+		}
+
+		memset( &serv_addr, 0, sizeof(serv_addr) );
+		serv_addr.sin_family = AF_INET;
+		serv_addr.sin_port = htons( 80 );	// default http port
+		memcpy( &serv_addr.sin_addr.s_addr, server->h_addr, server->h_length );
+
+		if( connect( sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr) ) < 0 )
+		{
+			FERROR("ERROR connecting");
+		}
+		
+		total = strlen( c->hc_MainLine );
+		// temporary solution
+		char message[ 512 ];
+		int addsize = snprintf( message, sizeof(message), "%sHost: %s\nAccept: */*\nUser-Agent: Friend/1.0.0\r\n\r\n", c->hc_MainLine, host );
+		//int addsize = snprintf( message, sizeof(message), "GET /xml/ HTTP/1.1\nHost: freegeoip.net\nUser-Agent: curl/7.52.1\nAccept: */*\r\n\r\n" );
+
+		DEBUG("[HttpClientCall] request: %s\n", message );
+		
+		bytes = send( sockfd, message, addsize, NULL );
+		
+		DEBUG("[HttpClientCall] sent bytes: %d\n", bytes );
+
+		char response[ 2048 ];
+		memset( response, 0, sizeof(response) );
+		received = 0;
+		
+		struct timeval timeout;      
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
+		if( setsockopt( sockfd, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout) ) < 0 )
+		{
+			
+		}
+		
+		while( TRUE ) 
+		{
+			bytes = read( sockfd, response, sizeof(response) );
+			if( bytes < 0 )
+			{
+				FERROR("ERROR reading response from socket");
+				break;
+			}
+			if( bytes == 0 )
+			{
+				break;
+			}
+			received += bytes;
+			BufStringAddSize( bs, response, bytes );
+		}
+
+		close( sockfd );
+
+		DEBUG("HttpClientCall response:\n%s\n", bs->bs_Buffer );
+	}
+	return bs;
+}

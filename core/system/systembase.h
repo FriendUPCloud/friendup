@@ -48,7 +48,7 @@
 
 #include <system/fsys/fsys.h>
 #include <util/buffered_string.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <application/applicationlibrary.h>
 #include <properties/propertieslibrary.h>
 #include <system/dictionary/dictionary.h>
@@ -85,6 +85,7 @@
 #include <interface/comm_service_remote_interface.h>
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
+#include <db/sqllib.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -174,7 +175,7 @@ enum {
 typedef struct SQLConPool
 {
 	int inUse;
-	MYSQLLibrary *sqllib;
+	SQLLibrary *sqllib;
 }SQLConPool;
 
 // DONT FORGET TO USE THAT AS TEMPLATE
@@ -212,6 +213,7 @@ typedef struct SystemBase
 	AuthMod							*sl_ActiveAuthModule;		// active login module
 	char 							*sl_ModuleNames;				// name of modules which will be used
 	char 							*sl_ActiveModuleName;	// name of active module
+	char							*sl_DefaultDBLib;		// default DB library name
 
 	//struct UserLibrary                  *ulib;					// user.library
 	struct SQLConPool				*sqlpool;			// mysql.library pool
@@ -281,9 +283,9 @@ typedef struct SystemBase
 
 	void							(*AuthModuleDrop)( struct SystemBase *l, struct AuthMod * );
 
-	struct MYSQLLibrary				*(*LibraryMYSQLGet)( struct SystemBase *l );
+	struct SQLLibrary				*(*LibrarySQLGet)( struct SystemBase *l );
 
-	void							(*LibraryMYSQLDrop)( struct SystemBase *l, struct MYSQLLibrary * );
+	void							(*LibrarySQLDrop)( struct SystemBase *l, struct SQLLibrary * );
 
 	struct ApplicationLibrary		*(*LibraryApplicationGet)( struct SystemBase *l );
 
@@ -301,9 +303,9 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
 	
-	int								(*UserDeviceUnMount)( struct SystemBase *l, MYSQLLibrary *sqllib, User *usr );
+	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
 	int								(*SystemInitExternal)( struct SystemBase *l );
 	
@@ -395,13 +397,13 @@ void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib );
 //
 //
 
-struct MYSQLLibrary *LibraryMYSQLGet( struct SystemBase *l );
+struct SQLLibrary *LibrarySQLGet( struct SystemBase *l );
 
 //
 //
 //
 
-void LibraryMYSQLDrop( struct SystemBase *l, MYSQLLibrary *mclose );
+void LibrarySQLDrop( struct SystemBase *l, SQLLibrary *mclose );
 
 //
 //
@@ -455,13 +457,13 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr, int force );
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
 
 //
 //
 //
 
-int UserDeviceUnMount( SystemBase *l, MYSQLLibrary *sqllib, User *usr );
+int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr );
 
 //
 //

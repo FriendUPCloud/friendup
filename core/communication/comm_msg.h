@@ -62,6 +62,7 @@ typedef FLONG ID;
 #define ID_FCRS MAKE_ID32('F','C','R','S')	// friend cores
 #define ID_FCID MAKE_ID32('F','C','I','D')	// friend core ID
 #define ID_FRID MAKE_ID32('F','R','I','D')	// friend request id
+#define ID_FCRI MAKE_ID32('F','C','R','I')	// friend request id (in reponse message)
 
 #define ID_FCON MAKE_ID32('F','C','O','N')	// friend connection
 #define ID_FCOR MAKE_ID32('F','C','O','R')	// friend connection response
@@ -101,9 +102,14 @@ typedef FLONG ID;
 #define ID_APID MAKE_ID32('A','P','I','D')			// application id
 
 #define MSG_END 						0
-#define MSG_GROUP_START		0xf0000001
-#define MSG_GROUP_END			0xf0000002
-#define MSG_INTEGER_VALUE		0xf0000003
+#define MSG_GROUP_START					0xf0000001
+#define MSG_GROUP_END					0xf0000002
+#define MSG_INTEGER_VALUE				0xf0000003
+
+#define FC_QUERY_DEFAULT				0x000f0000
+#define FC_QUERY_SERVICES				(FC_QUERY_DEFAULT)
+#define FC_QUERY_GEOLOC					(FC_QUERY_DEFAULT+1)
+#define FC_QUERY_FRIENDCORE_INFO		(FC_QUERY_DEFAULT+2)
 
 //
 // Message item defined by the user
@@ -122,7 +128,7 @@ typedef struct MsgItem
 
 typedef struct DataForm
 {
-	FULONG					df_ID;
+	FULONG				df_ID;
 	FULONG 				df_Size;
 	FULONG 				df_Data;
 }DataForm;

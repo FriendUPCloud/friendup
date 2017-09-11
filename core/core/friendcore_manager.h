@@ -90,40 +90,40 @@
 
 typedef struct FriendCoreManager
 {
-	char                       fcm_ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];		///< ID of machine
+	char						fcm_ID[ FRIEND_CORE_MANAGER_ID_SIZE+1 ];		///< ID of machine
 	// first 6 - mac address
 	// 32 and above hostname
+	char						padding[ 3 ];
 	
-	FriendCoreInstance         *fcm_FriendCores;								///< Friend Cores
-	int                        fcm_FriendCoresRunning;                         ///< ID of the current core
+	FriendCoreInstance			*fcm_FriendCores;								///< Friend Cores
+	int							fcm_FriendCoresRunning;                         ///< ID of the current core
 
 	#ifndef DOXIGNORE
-	CommService                *fcm_CommService;						    ///< FC send server
-	CommServiceRemote          *fcm_CommServiceRemote;			///< FCservice for non persitent calls
+	CommService					*fcm_CommService;						    ///< FC send server
+	CommServiceRemote			*fcm_CommServiceRemote;			///< FCservice for non persitent calls
 	#endif
 
-	struct SSHServer           *fcm_SSHServer;									///< TelnetServer
+	struct SSHServer			*fcm_SSHServer;									///< TelnetServer
 	
-	FBOOL                      fcm_Shutdown;									///< Shutdown FCM
+	ServiceManager				*fcm_ServiceManager;							///< Service Manager
+	WebSocket					*fcm_WebSocket;                                 ///< WebSocket Manager
 	
-	ServiceManager             *fcm_ServiceManager;							///< Service Manager
-	WebSocket                  *fcm_WebSocket;                                 ///< WebSocket Manager
+	FriendcoreInfo				*fcm_FCI;										///< Friend Core Information
+	void						*fcm_SB;  ///<Pointer to SystemBase
 	
-	FriendcoreInfo             *fcm_FCI;										///< Friend Core Information
-	void                       *fcm_SB;  ///<Pointer to SystemBase
-	
-	int fcm_FCPort; // http port
-	int fcm_ComPort; // communication port
-	int fcm_ComRemotePort; // remote communication port
-	int fcm_WSPort; // websockets internet port
-	int fcm_Maxp; // number of connections in epoll for http
-	int fcm_Bufsize;  // FC buffer size
-	int fcm_MaxpCom; // number of connections in epoll for communication
-	int fcm_MaxpComRemote; // number of connections in epoll for remote connections
-	int fcm_BufsizeCom; // communication buffer size
-	FBOOL fcm_SSLEnabled; // SSL enabled for http
-	FBOOL fcm_WSSSLEnabled; // SSL enabled for WS
-	FBOOL fcm_SSLEnabledCommuncation; // SSL enabled for communication
+	int							fcm_FCPort; // http port
+	int							fcm_ComPort; // communication port
+	int							fcm_ComRemotePort; // remote communication port
+	int							fcm_WSPort; // websockets internet port
+	int							fcm_Maxp; // number of connections in epoll for http
+	int							fcm_Bufsize;  // FC buffer size
+	int							fcm_MaxpCom; // number of connections in epoll for communication
+	int							fcm_MaxpComRemote; // number of connections in epoll for remote connections
+	int							fcm_BufsizeCom; // communication buffer size
+	FBOOL						fcm_SSLEnabled; // SSL enabled for http
+	FBOOL						fcm_WSSSLEnabled; // SSL enabled for WS
+	FBOOL						fcm_SSLEnabledCommuncation; // SSL enabled for communication
+	FBOOL						fcm_Shutdown;									///< Shutdown FCM
 }FriendCoreManager;
 
 //

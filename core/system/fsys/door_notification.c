@@ -100,7 +100,7 @@ void DoorNotificationDeleteAll( DoorNotification *lck )
  * @return Lock id or 0 when error appear
  */
 
-FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession *ses, char *path, int type )
+FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *ses, char *path, int type )
 {
 	DoorNotification lck;
 	int pathsize = strlen( path );
@@ -193,7 +193,7 @@ FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession 
  * @return 0 when success, otherwise error number
  */
 
-int DoorNotificationUpdateDB( MYSQLLibrary *sqllib, File *device, char *path, FULONG id )
+int DoorNotificationUpdateDB( SQLLibrary *sqllib, File *device, char *path, FULONG id )
 {
 	int querysize = 0;
 	
@@ -232,7 +232,7 @@ int DoorNotificationUpdateDB( MYSQLLibrary *sqllib, File *device, char *path, FU
  * @return 0 if everything went fine, otherwise error number
  */
 
-int DoorNotificationRemoveDB( MYSQLLibrary *sqllib, FULONG id )
+int DoorNotificationRemoveDB( SQLLibrary *sqllib, FULONG id )
 {
 	char temp[ 1024 ];
 	snprintf( temp, sizeof(temp), "DELETE from `FDoorNotification` where `ID`=%lu", id );
@@ -249,7 +249,7 @@ int DoorNotificationRemoveDB( MYSQLLibrary *sqllib, FULONG id )
  * @return Lock id or 0 when error appear
  */
 
-DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib, File *device, char *path )
+DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, File *device, char *path )
 {
 	int querysize = 0;
 	
@@ -302,13 +302,13 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib
 			}
 		}
 
-		MYSQL_RES *res = sqllib->Query( sqllib, tmpQuery );
+		void *res = sqllib->Query( sqllib, tmpQuery );
 		
 		if( res != NULL )
 		{
 			if( sqllib->NumberOfRows( sqllib, res ) > 0 )
 			{
-				MYSQL_ROW row = NULL;
+				char **row = NULL;
 				// OwnerID , Type
 				
 				while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -369,14 +369,14 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 		return 1;
 	}
 	
-	MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationCommunicateChanges] Lock communicate changes\n");
 		
 		DoorNotification *notification = DoorNotificationGetNotificationsFromPath( sqllib, device, path );
 		
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 		
 		while( notification != NULL )
 		{
@@ -526,7 +526,7 @@ int DoorNotificationRemoveEntries( void *lsb )
 {
 	SystemBase *sb = (SystemBase *)lsb;
 	DEBUG("DoorNotificationRemoveEntries LSB %p\n", lsb );
-	MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationRemoveEntries] start\n");
@@ -538,7 +538,7 @@ int DoorNotificationRemoveEntries( void *lsb )
 		
 		sqllib->QueryWithoutResults( sqllib, temp );
 		
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	//pthread_exit( 0 );
 	return 0;
@@ -557,7 +557,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 {
 	pthread_detach( pthread_self() );
 	SystemBase *sb = (SystemBase *)lsb;
-	MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		DEBUG("[DoorNotificationRemoveEntriesByUser] start, userID %lu\n", uid );
@@ -572,7 +572,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 			DEBUG("[DoorNotificationRemoveEntriesByUser] Cannot call query\n");
 		}
 		
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;
 }

@@ -30,26 +30,119 @@
 #include "friendcore_info.h"
 #include <core/friendcore_manager.h>
 #include <core/friend_core.h>
-
+#include <network/http_client.h>
+#include <util/buffered_string.h>
 
 /**
  * Allocates a new Friend Core information structure.
  *
- * @param fcm pointer to Friend Core manager
  * @return pointer to allocated structure
  * @return undefined in case of error
  */
-FriendcoreInfo *FriendCoreInfoNew( void *fcm )
+FriendcoreInfo *FriendCoreInfoNew( void *slib )
 {
+	SystemBase *sb = (SystemBase *)slib;
 	FriendcoreInfo *fci = NULL;
+	/*  XML response
+	<Response>
+	<IP>82.177.144.226</IP>
+	<CountryCode>PL</CountryCode>
+	<CountryName>Poland</CountryName>
+	<RegionCode>MZ</RegionCode>
+	<RegionName>Mazovia</RegionName>
+	<City>Warsaw</City>
+	<ZipCode>01-923</ZipCode>
+	<TimeZone>Europe/Warsaw</TimeZone>
+	<Latitude>52.25</Latitude>
+	<Longitude>21</Longitude>
+	<MetroCode>0</MetroCode>
+	</Response>
+	    JSON response
+	{"ip":"82.177.144.226","country_code":"PL","country_name":"Poland","region_code":"MZ","region_name":"Mazovia","city":"Warsaw","zip_code":"01-923","time_zone":"Europe/Warsaw","latitude":52.25,"longitude":21,"metro_code":0}
+	 */
+	
+	Props *prop = NULL;
+
+	struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+	char *geoProvider = NULL;
+	char *geoFormat = NULL;
+
+	if( plib != NULL && plib->Open != NULL )
+	{
+		char *ptr = getenv("FRIEND_HOME");
+		char *path = FCalloc( 1000, sizeof( char ) );
+		
+		if( ptr != NULL )
+		{
+			sprintf( path, "%scfg/cfg.ini", ptr );
+		}
+		prop = plib->Open( path );
+		FFree( path );
+		
+		if( prop != NULL)
+		{
+			char *loctmp = plib->ReadString( prop, "Global:GEOProvider", "freegeoip.net" );
+			if( loctmp != NULL )
+			{
+				geoProvider = StringDuplicate( loctmp );
+			}
+			loctmp = plib->ReadString( prop, "Global:GEOFormat", "json" );
+			if( loctmp != NULL )
+			{
+				geoFormat = StringDuplicate( loctmp );
+			}
+		}
+		
+		if( prop ) plib->Close( prop );
+	
+		sb->LibraryPropertiesDrop( sb, plib );
+	}
+	
+	if( geoProvider == NULL )
+	{
+		geoProvider = StringDuplicate( "freegeoip.net" );
+	}
+	
+	if( geoFormat == NULL )
+	{
+		geoFormat = StringDuplicate( "json" );
+	}
 	
 	if( ( fci = FCalloc( 1, sizeof( FriendcoreInfo ) ) ) != NULL )
 	{
-		fci->fci_FCM = fcm;
+		fci->fci_SLIB = slib;
+		char tmp[ 128 ];
+		snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
+		
+		HttpClient *c = HttpClientNew( FALSE, tmp );
+		if( c != NULL )
+		{
+			//freegeoip.net/xml/
+			
+			BufString *bs = HttpClientCall( c, geoProvider );
+			if( bs != NULL )
+			{
+				fci->fci_LocalisationJSON = StringDuplicate( strstr( bs->bs_Buffer, "\r\n\r\n" ) );
+				DEBUG("[FriendCoreInfoNew] Localisation string received %s\n", fci->fci_LocalisationJSON );
+				BufStringDelete( bs );
+			}
+			
+			HttpClientDelete( c );
+		}
 	}
 	else
 	{
 		FERROR("Cannot allocate memory for FriendcoreInfo structure\n");
+	}
+	
+	if( geoProvider != NULL )
+	{
+		FFree( geoProvider );
+	}
+	
+	if( geoFormat != NULL )
+	{
+		FFree( geoFormat );
 	}
 	
 	return fci;
@@ -64,6 +157,10 @@ void FriendCoreInfoDelete( FriendcoreInfo *fci )
 {
 	if( fci != NULL )
 	{
+		if( fci->fci_LocalisationJSON != NULL )
+		{
+			FFree( fci->fci_LocalisationJSON );
+		}
 		FFree( fci );
 	}
 }
@@ -71,18 +168,18 @@ void FriendCoreInfoDelete( FriendcoreInfo *fci )
 /**
  * Get information about a running Friend Core/
  *
- * @param fci pointer to the Friend Core information structure to store data
+ * @param fci pointer to the Friend Core information structure
  * @return pointer to a buffered string containing the informations
  * @return NULL in case of error
  */
 BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 {
+	SystemBase *sb = (SystemBase *)fci->fci_SLIB;
 	BufString *bs = BufStringNew();
-	if( bs != NULL )
+	char *temp = FMalloc( 2048 );
+	if( bs != NULL && temp != NULL )
 	{
-		FriendCoreManager *fcm = (FriendCoreManager *)fci->fci_FCM;
-	
-		char temp[ 2048 ];
+		FriendCoreManager *fcm = (FriendCoreManager *)sb->fcm;
 	
 		BufStringAdd( bs, "{" );
 	
@@ -110,35 +207,58 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		
 			strcpy( temp, "\"0\"" );
 			BufStringAdd( bs, temp );
-			/*
-			if( fc->fci_WorkerManager->wm_MaxWorkers == 0 )
+			
+			if( sb->sl_WorkerManager != NULL )
 			{
-				
-			}
-			else
-			{
-				for( j=0 ; j < fc->fci_WorkerManager->wm_MaxWorkers ; j++ )
+				if( sb->sl_WorkerManager->wm_MaxWorkers == 0 )
 				{
-					Worker *wrk = fc->fci_WorkerManager->wm_Workers[ j ];
-					if( j == 0 )
+				
+				}
+				else
+				{
+					/*
+					for( j=0 ; j < sb->sl_WorkerManager->wm_MaxWorkers ; j++ )
 					{
-						sprintf( temp, "{\"Number\":\"%d\", \"State\":\"%d\", \"Quit\":\"%d\", \"AvgUsage\":\"%f\"'}", wrk->w_Nr, wrk->w_State, wrk->w_Quit, wrk->w_WorkSeconds );
-					}
-					else
-					{
-						sprintf( temp, ",{\"Number\":\"%d\", \"State\":\"%d\", \"Quit\":\"%d\", \"AvgUsage\":\"%f'\"}", wrk->w_Nr, wrk->w_State, wrk->w_Quit, wrk->w_WorkSeconds );
-					}
+						Worker *wrk = sb->sl_WorkerManager->wm_Workers[ j ];
+						if( j == 0 )
+						{
+							sprintf( temp, "{\"Number\":\"%d\", \"State\":\"%d\", \"Quit\":\"%d\", \"AvgUsage\":\"%f\"'}", wrk->w_Nr, wrk->w_State, wrk->w_Quit, wrk->w_WorkSeconds );
+						}
+						else
+						{
+							sprintf( temp, ",{\"Number\":\"%d\", \"State\":\"%d\", \"Quit\":\"%d\", \"AvgUsage\":\"%f'\"}", wrk->w_Nr, wrk->w_State, wrk->w_Quit, wrk->w_WorkSeconds );
+						}
+					}*/
 				}
 			}
-			*/
 		
 			BufStringAdd( bs, "}" );
 		
 			i++;
 			fc = (FriendCoreInstance *)fc->node.mln_Succ;
 		}
+		
+		// add geo location
 	
+		BufStringAddSize( bs, ",\"GeoLocation\":\"", 16 );
+		
+		if( sb->fcm->fcm_FCI->fci_LocalisationJSON != NULL )
+		{
+			BufStringAdd( bs, sb->fcm->fcm_FCI->fci_LocalisationJSON );
+		}
+		else
+		{
+			BufStringAddSize( bs, "not available", 12 );
+		}
+		
+		BufStringAddSize( bs, "\"", 1 );
+		
 		BufStringAdd( bs, "}" );
+	}
+	
+	if( temp != NULL )
+	{
+		FFree( temp );
 	}
 	
 	return bs;

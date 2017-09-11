@@ -26,7 +26,7 @@
 #include <core/types.h>
 #include <core/nodes.h>
 
-#include <mysql/sql_defs.h>
+#include <db/sql_defs.h>
 #include <system/user/user_application.h>
 #include <system/fsys/file.h>
 #include <libwebsockets.h>

@@ -154,7 +154,7 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
@@ -173,7 +173,7 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
 	
 	//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
 	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	DEBUG("[USMGetSessionBySessionIDFromDB] end\n");
 	return usersession;
@@ -217,7 +217,7 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *devid, FULONG uid )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	struct UserSession *usersession = NULL;
 	char tmpQuery[ 1024 ];
 	
@@ -236,7 +236,7 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 	
 	//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
 	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	DEBUG("[USMGetSessionByDeviceIDandUserDB] end\n");
 	return usersession;
@@ -305,7 +305,7 @@ void USMLogUsersAndDevices( UserSessionManager *usm )
 UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG timeout )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	time_t timestamp = time ( NULL );
 	struct UserSession *usersession = NULL;
 	int entries = 0;
@@ -351,7 +351,7 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
         ses = (UserSession *)ses->node.mln_Succ;
     }
     
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 
 	DEBUG("[USMGetSessionsByTimeout] UserGetByTimeout end\n");
 	return usersession;
@@ -680,7 +680,7 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
 int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 {
 	SystemBase *sb = (SystemBase *) smgr->usm_SB;
-	MYSQLLibrary *sqllib  = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
 	
 	DEBUG("[USMSessionSaveDB] start\n");
 	if( sqllib != NULL )
@@ -694,8 +694,8 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 		
 		sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "SELECT ID FROM `FUserSession` WHERE `DeviceIdentity` = '%s' AND `UserID`=%lu", ses->us_DeviceIdentity,  ses->us_UserID );
 
-		MYSQL_RES *res = sqllib->Query( sqllib, temptext );
-		MYSQL_ROW row;
+		void *res = sqllib->Query( sqllib, temptext );
+		char **row;
 		int numberEntries = 0;
 	
 		if( res != NULL )
@@ -727,7 +727,7 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 			DEBUG("[USMSessionSaveDB] Session already exist in DB and it will be not stored.\n");
 		}
 		
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	
 	return 0;
@@ -862,14 +862,14 @@ int USMRemoveOldSessions( void *lsb )
 	
 	if( temp[ 0 ] != 0 )
 	{
-		MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+		SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 		if( sqllib != NULL )
 		{
 			DEBUG("USMRemoveOldSessionsInDB launched\n");
 		
 			sqllib->QueryWithoutResults( sqllib, sqlreq->bs_Buffer );
 		
-			sb->LibraryMYSQLDrop( sb, sqllib );
+			sb->LibrarySQLDrop( sb, sqllib );
 		}
 	}
 	BufStringDelete( sqlreq );
@@ -892,7 +892,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	
 	DEBUG("USMRemoveOldSessionsDB\n" );
 
-	 MYSQLLibrary *sqllib = sb->LibraryMYSQLGet( sb );
+	 SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	 if( sqllib != NULL )
 	 {
 		DEBUG("\n");
@@ -904,7 +904,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
 	 
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;
 }

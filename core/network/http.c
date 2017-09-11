@@ -404,7 +404,6 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 			break;
 		}
 		i++;
-		pthread_yield();
 	}
 
 	// Parse
@@ -417,9 +416,6 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 		{
 			return 400;
 		}
-		
-		// Yield
-		pthread_yield();
 
 		// Request-Line
 		if( step == 0 )

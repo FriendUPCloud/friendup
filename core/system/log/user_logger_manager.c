@@ -38,13 +38,14 @@
 #include <util/buffered_string.h>
 #include <dirent.h>
 
-//
-//
-//
-
+/**
+ * Create new UserLoggerManager
+ *
+ * @param sb pointer to SystemBase
+ * @return new UserLoggerManager structure when success, otherwise NULL
+ */
 UserLoggerManager *UserLoggerManagerNew( void *sb )
 {
-	//DEBUG("UserLoggerManagerNew\n\n\n\n\n\n\n\n\n\n");
 	UserLoggerManager *ulm;
 	
 	if( ( ulm = FCalloc( 1, sizeof( UserLoggerManager ) ) ) != NULL )
@@ -129,10 +130,11 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 	return ulm;
 }
 
-//
-//
-//
-
+/**
+ * Delete UserLoggerManager
+ *
+ * @param ulm pointer to UserLoggerManager which will be deleted
+ */
 void UserLoggerManagerDelete( UserLoggerManager *ulm )
 {
 	DEBUG("UserLoggerManagerDelete\n");

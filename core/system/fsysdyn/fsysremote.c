@@ -58,38 +58,38 @@
 
 typedef struct SpecialData
 {
-	CommServiceRemote	*csr;
-	SystemBase 					*sb;
+	CommServiceRemote				*csr;
+	SystemBase 						*sb;
 	
-	char								*host;
+	char							*host;
 	char 							*id;
 	char 							*login;
-	char								*passwd;
-	char								*devid;
+	char							*passwd;
+	char							*devid;
 	char 							*privkey;
 	char 							fileptr[ 64 ];
 	
-	char								*remoteUserName;
-	char								*localDevName;
-	char								*remoteDevName;
+	char							*remoteUserName;
+	char							*localDevName;
+	char							*remoteDevName;
 	
 	int								idi, 
-										logini, 
-										passwdi, 
-										devidi,
-										hosti, 
-										remotepathi, 
-										fileptri;
+									logini, 
+									passwdi, 
+									devidi,
+									hosti, 
+									remotepathi, 
+									fileptri;
 
 	int								mode;			// read or write
 	char 							*tmppath;			// path to temporary file
 	char 							*remotepath;		// path to remote file
 	int								fileSize;		// temporary file size
 	
-	CommFCConnection 	*con;			// remote fs connection
+	CommFCConnection 				*con;			// remote fs connection
 	
-	char								*address;	// hold destination server address
-	int 								port;			// port
+	char							*address;	// hold destination server address
+	int 							port;			// port
 	int								secured;		// is connection secured
 }SpecialData;
 
@@ -147,7 +147,7 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 		{ TAG_DONE, TAG_DONE, TAG_DONE }
 	};
 
-	DEBUG("Send message to targetDirect\n");
+	DEBUG("[SendMessageRFS] message to targetDirect\n");
 		
 	DataForm *ldf = DataFormNew( tags );
 		
@@ -158,13 +158,13 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 	Socket *newsock = sd->sb->sl_SocketInterface.SocketConnectHost( sd->sb, sd->secured, sd->address, sd->port );
 	if( newsock != NULL )
 	{
-		//bs = SendMessageAndWait( con, df );
+		DEBUG("[SendMessageRFS] Connection created, message will be send: %d\n", df->df_Size );
 		int size = sd->sb->sl_SocketInterface.SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
 		bs = sd->sb->sl_SocketInterface.SocketReadTillEnd( newsock, 0, 15 );
 		
 		if( bs != NULL )
 		{
-			DEBUG2("Received from socket %d\n", bs->bs_Size );
+			DEBUG2("[SendMessageRFS] Received from socket %d\n", bs->bs_Size );
 			lsdata = (FBYTE *)bs->bs_Buffer;
 			sockReadSize = bs->bs_Size;
 		}
@@ -176,9 +176,9 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 			DataFormAdd( &ldf, lsdata, sockReadSize );
 			
 			ldf->df_Size = sockReadSize;
-			DEBUG2("[CommServClient]: ---------------------Added new server to answer serverdfsize %ld sockreadsize %lu\n", ldf->df_Size, sockReadSize );
+			DEBUG2("[SendMessageRFS] ---------------------Added new server to answer serverdfsize %ld sockreadsize %lu\n", ldf->df_Size, sockReadSize );
 			
-			DEBUG2("Message received '%.*s\n", (int)sockReadSize, lsdata );
+			DEBUG2("[SendMessageRFS] Message received '%.*s\n", (int)sockReadSize, lsdata );
 			
 			char *d = (char *)lsdata + (3*COMM_MSG_HEADER_SIZE);
 			if( d[ 0 ] == 'f' && d[ 1 ] == 'a' && d[ 2 ] == 'i' && d[ 3 ] ==  'l' )
@@ -204,6 +204,8 @@ DataForm *SendMessageRFS( SpecialData *sd, DataForm *df )
 		}
 		
 		sd->sb->sl_SocketInterface.SocketClose( newsock );
+		
+		DEBUG("[SendMessageRFS] got reponse\n");
 		
 		return ldf;
 	}
@@ -495,6 +497,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 			
 			FriendCoreManager *fcm = sb->fcm;
 			sd->csr = fcm->fcm_CommServiceRemote;
+			sd->secured = fcm->fcm_CommServiceRemote->csr_secured;
 			sd->port = sd->csr->csr_port;
 			//sd->port = 6503;
 			

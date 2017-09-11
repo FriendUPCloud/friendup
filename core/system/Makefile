@@ -141,7 +141,7 @@ release: $(OBJ_FILES) $(OUTPUT) $(FSYS) $(MODS) $(LOGGERS) $(SERVICES)
 clean:
 	@echo "\033[34mCleaning\033[0m"
 	@rm -rf obj/* $(OUTPUT) *.d*
-	@rm -f fsysdyn/*.d* moduledyn/*.d* servicesdyn/*.d*
+	@rm -f fsysdyn/*.d* moduledyn/*.d* servicesdyn/*.d* log/*.d* log/loggers/*.d*
 	@rm -rf bin/emod/*
 	@rm -rf bin/fsys/*
 	@rm -rf bin/loggers/*

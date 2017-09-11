@@ -43,7 +43,7 @@
 
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <properties/propertieslibrary.h>
 
 //

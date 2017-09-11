@@ -28,7 +28,7 @@
 
 #include <core/types.h>
 #include <core/library.h>
-#include <mysql.h>
+#include <db/sqllib.h>
 #include <util/hooks.h>
 #include <util/list.h>
 #include <system/fsys/file.h>
@@ -73,7 +73,7 @@ typedef struct ApplicationLibrary
 	Http 				*(*AppWebRequest)( struct ApplicationLibrary *l, char **func, Http* request );
 
 	Application 					*al_ApplicationList;
-	MYSQLLibrary				*al_sqllib;
+	SQLLibrary						*al_sqllib;
 	ZLibrary						*al_zlib;
 
 } ApplicationLibrary;

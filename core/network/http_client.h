@@ -37,8 +37,8 @@ grant_type=password&username=johndoe&password=A3ddj3w
 
 typedef struct HttpClient
 {
-	char							*hc_MainLine;
-	char 						*hc_Headers[ HTTP_HEADER_END ];
+	char					*hc_MainLine;
+	char 					*hc_Headers[ HTTP_HEADER_END ];
 	BufString 				*hc_Body;
 }HttpClient;
 
@@ -52,7 +52,13 @@ HttpClient *HttpClientNew( FBOOL post, char *param );
 //
 //
 
-void HttpClientFree( HttpClient *htc );
+void HttpClientDelete( HttpClient *htc );
+
+//
+//
+//
+
+BufString *HttpClientCall( HttpClient *c, char *host );
 
 
 #endif // __NETWORK_HTTP_CLIENT_H__

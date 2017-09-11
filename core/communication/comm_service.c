@@ -291,7 +291,7 @@ void ParseCallThread( void *tdata )
 	
 	FERROR("[COMMSERV] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", count );
 	
-	recvDataForm = ParseMessage( fcmsg->fccm_Service, fcmsg->fccm_Socket, (FBYTE *)fcmsg->fccm_BS->bs_Buffer, (int *)&count, &isStream );
+	//recvDataForm = ParseMessage( fcmsg->fccm_Service, fcmsg->fccm_Socket, (FBYTE *)fcmsg->fccm_BS->bs_Buffer, (int *)&count, &isStream );
 	
 	if( recvDataForm != NULL )
 	{
@@ -326,6 +326,7 @@ inline void CommServiceSetupOutgoing( CommService *service )
 
 	struct PropertiesLibrary *plib = NULL;
 	char *servers = NULL;
+	char *masterServer = NULL;
 	Props *prop = NULL;
 
 	if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
@@ -336,7 +337,8 @@ inline void CommServiceSetupOutgoing( CommService *service )
 		prop = plib->Open( coresPath  );
 		if( prop != NULL)
 		{
-			servers = plib->ReadString( prop, "Cores:servers", "" );
+			servers = plib->ReadString( prop, "Cores:Servers", NULL );
+			masterServer = plib->ReadString( prop, "Cores:MasterServer", NULL );
 		}
 	}
 	
@@ -372,13 +374,16 @@ inline void CommServiceSetupOutgoing( CommService *service )
 			Socket *newsock;
 			
 			newsock = SocketConnectHost( service->s_SB, service->s_secured, address, port );
-			//newcon->cfcc_Socket = SocketOpen( service->s_secured, service->s_port, SOCKET_TYPE_CLIENT );
 			if( newsock != NULL )
 			{
 				int err = 0;
 				DEBUG("[COMMSERV] Outgoing connection created on port: %d\n", service->s_port);
 
 				CommFCConnection *con = CommServiceAddConnection( service, newsock, address, NULL, SERVICE_CONNECTION_OUTGOING );
+				if( con != NULL )
+				{
+					CommServiceRegisterEvent( con, newsock );
+				}
 			}
 			else
 			{
@@ -388,8 +393,36 @@ inline void CommServiceSetupOutgoing( CommService *service )
 			token = strtok( NULL, "," );
 		}
 	}
-	else
-	{	// servers == NULL
+	
+	if( masterServer != NULL )
+	{
+		// now split address:port
+		int port = service->s_port;
+		
+		DEBUG("[CommServiceThreadClient] Create connection: %s\n", masterServer );
+		
+		char *pos = strchr( masterServer, SERVER_PORT_SPLIT_SIGN );
+		if( pos != NULL )
+		{
+			*pos = 0;
+			char *ipport = ++pos;
+			port = atoi( ipport );
+		}
+		
+		DEBUG("[CommServiceThreadClient] Create connection: %s\n", masterServer );
+		
+		Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, masterServer, port );
+		if( newsock != NULL )
+		{
+			int err = 0;
+			DEBUG("[CommServClient] Outgoing connection created on port: %d\n", service->s_port);
+
+			CommFCConnection *con = CommServiceAddConnection( service, newsock, masterServer, NULL, SERVICE_CONNECTION_OUTGOING );
+			if( con != NULL )
+			{
+				CommServiceRegisterEvent( con, newsock );
+			}
+		}
 	}
 	
 	if( plib != NULL && prop != NULL )
@@ -490,8 +523,6 @@ int CommServiceThreadServer( FThread *ptr )
 			
 			while( service->s_Cam.cam_Quit != TRUE )
 			{
-				//usleep( 10000000 );
-				
 				// All incomming network events go through here :)
 				// Wait for something to happen on any of the sockets we're listening on
 				
@@ -532,6 +563,7 @@ int CommServiceThreadServer( FThread *ptr )
 						{
 							loccon = sock->s_Data;
 
+							DEBUG("[COMMSERV] remove socket connection %p\n", loccon );
 							// Remove event
 							epoll_ctl( service->s_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
 						
@@ -573,6 +605,7 @@ int CommServiceThreadServer( FThread *ptr )
 								// We have processed all incoming connections.
 								if( (errno == EAGAIN ) || ( errno == EWOULDBLOCK) )
 								{
+									//FERROR("EAGAIN or EWOULDBLOCK\n");
 									break;
 								}
 								// Other error
@@ -591,7 +624,7 @@ int CommServiceThreadServer( FThread *ptr )
 							 //								SocketClose( incomming );
 							 //								continue;
 							 					// Set the default protocol callback
-							incomming->protocolCallback = (void* (*)( Socket_t* sock, char* bytes, unsigned int size ))&ParseMessage;
+							//incomming->protocolCallback = (void* (*)( Socket_t* sock, char* bytes, unsigned int size ))&ParseMessage;
 
 							
 							incomming->s_Timeouts = 5;
@@ -651,7 +684,7 @@ int CommServiceThreadServer( FThread *ptr )
 						int tempSize = 0;
 						DEBUG("[COMMSERV] Wait for message on socket\n");
 						
-						SocketSetBlocking( sock, TRUE );
+						//SocketSetBlocking( sock, TRUE );
 						
 						BufString *bs = NULL;
 						if( sock != NULL )
@@ -674,7 +707,6 @@ int CommServiceThreadServer( FThread *ptr )
 							for( z=0 ; z < bs->bs_Size ; z++ ) printf(" %c ", bs->bs_Buffer[ z ] );
 							printf("\n");
 							
-							//DEBUG2("\n\n\n\n\n\n\n[COMMSERV] PROCESSING RECEIVED CALL, DATA READED %d\n", (int)count );
 							int dcount = count;
 							DataForm *df = (DataForm *)bs->bs_Buffer;
 							
@@ -687,26 +719,19 @@ int CommServiceThreadServer( FThread *ptr )
 								//char *id = (char *)&(df[ 2 ].df_ID);
 								//DEBUG2("ID POS 2 %lu ID_RESP %lu ID_FRID %lu ID_QUERY %lu   ID %c %c %c %c\n", df[ 2 ].df_ID, ID_RESP, ID_FRID, ID_QUER, id[0], id[1], id[2], id[3] );
 								df++;
-								//df =(DataForm *)(((char *)df) + (6*sizeof(FULONG)) + df[ 1 ].df_Size);;
-								
+
 								if( df->df_ID == ID_FCID )
 								{
 									friendCoreID = ((char *)(df+1));
 
 									char *ptr = (char *)df;
-									ptr += df->df_Size + (3*sizeof(FULONG) );
+									ptr += df->df_Size + COMM_MSG_HEADER_SIZE;
 									df = (DataForm *)ptr;
-									
-									//int i;
-									//for( i=0 ; i < 32 ; i++ )
-									//{
-									//	printf("- %c\n", ptr[ i ] );
-									//}
 								}
 								
-								//DEBUG("Check resp %lu  -  %lu\n", df->df_ID, ID_RESP );
+								//DEBUG("Check resp %lu  -  %lu\n", df->df_ID, ID_FCRI );
 								
-								if( df->df_ID == ID_RESP )
+								if( df->df_ID == ID_FCRI )
 								{
 									DEBUG("[COMMSERV] Response received!\n");
 									
@@ -726,6 +751,7 @@ int CommServiceThreadServer( FThread *ptr )
 									}
 									pthread_mutex_unlock( &service->s_Mutex );
 								}
+								/*
 								else if( df->df_ID == ID_QUER  )
 								{
 									// checking if its a request or response
@@ -741,7 +767,7 @@ int CommServiceThreadServer( FThread *ptr )
 										
 										WorkerManagerRun( lsb->sl_WorkerManager, &ParseCallThread, commsg, NULL );
 									}
-								}
+								}*/
 								else if( df->df_ID == ID_FCON )
 								{
 									INFO("[COMMSERV] New connection was set\n");
@@ -791,7 +817,6 @@ int CommServiceThreadServer( FThread *ptr )
 											
 											INFO("Outgoing connection created\n");
 										}
-										
 										FFree( lfcm );
 										lfcm = NULL;
 									}
@@ -803,7 +828,6 @@ int CommServiceThreadServer( FThread *ptr )
 										FERROR( "[COMMSERV] Closing incoming!\n" );
 									}
 									BufStringDelete( bs );
-									
 								}
 								else if( df->df_ID == ID_FRID )
 								{
@@ -811,21 +835,23 @@ int CommServiceThreadServer( FThread *ptr )
 									
 									DEBUG("[COMMSERV] Request data %lu size %lu\n", df->df_Data, df->df_Size );
 									
-									int error = ParseAndExecuteRequest( lsb, sock->s_Data, ++df );
+									DataForm *responsedf = ParseAndExecuteRequest( lsb, sock->s_Data, ++df, reqid );
 									
 									// when connection tag is received we must response with our FriendCoreID 
+									if( responsedf == NULL )
+									{
+										DEBUG("[COMMSERV] Generate Data Form\n");
+										MsgItem tags[] = {
+											{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+											{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+											{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+											{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+											{ TAG_DONE, TAG_DONE, TAG_DONE }
+										};
+										responsedf = DataFormNew( tags );
+									}
 									
-									DEBUG("[COMMSERV] Generate Data Form\n");
-									MsgItem tags[] = {
-										{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-										{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
-										{ ID_RESP, (FULONG)reqid , MSG_INTEGER_VALUE },
-										{ ID_CMMD, (FULONG)error, MSG_INTEGER_VALUE },
-										{ TAG_DONE, TAG_DONE, TAG_DONE }
-									};
-									
-									DataForm *responsedf = DataFormNew( tags );
-									DEBUG("[COMMSERV] Response size %lu\n", responsedf->df_Size );
+									DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
 									
 									// FC send his own id in response
 									int sbytes = SocketWrite( sock, (char *)responsedf, (FQUAD)responsedf->df_Size );
@@ -1106,10 +1132,7 @@ CommFCConnection *CommServiceAddConnection( CommService* s, Socket* socket, char
  * Add new FC connection
  *
  * @param s pointer to new CommService
- * @param socket pointer socket on which communication is working
  * @param addr pointer to internet address
- * @param id pointer to FC id
- * @param type communication service type (incomming/outgoing)
  * @return pointer to new CommFCConnection structure when success, otherwise NULL
  */
 
@@ -1167,7 +1190,7 @@ CommFCConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
  *
  * @param s pointer to CommService
  * @param loccon pointer to CommFCConnection which will be removed
- * @param socket pointer socket on which communication is working (if NULL all connections are removed)
+ * @param sock pointer socket on which communication is working (if NULL all connections are removed)
  * @return 0 when success, otherwise error number
  */
 
@@ -1217,7 +1240,9 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 				con->cfcc_ConnectionsNumber--;
 				
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, remsocket->fd, NULL );
+				DEBUG("[COMMSERV] I want close socket\n");
 				SocketClose( remsocket );
+				DEBUG("[COMMSERV] Socket closed\n");
 			}
 			con->cfcc_Socket = NULL;
 		}
@@ -1257,6 +1282,8 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 			}
 		}
 		
+		DEBUG("[COMMSERV] Check number of connections\n");
+		
 		// if thats our last socket, we must set it to NULL and remove connection
 		if( con->cfcc_ConnectionsNumber == 0 )
 		{
@@ -1270,7 +1297,6 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 			{
 				prevcon->node.mln_Succ = (MinNode *)con->node.mln_Succ;
 			}
-			
 			CommFCConnectionDelete( con );
 		}
 	}

@@ -76,10 +76,10 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 	CommService *serv = (CommService *)con->cfcc_Service;
 	if( serv == NULL )
 	{
-		FERROR("[CommServClient] Service is equal to NULL!\n");
+		FERROR("[SendMessageAndWait] Service is equal to NULL!\n");
 		return NULL;
 	}
-	DEBUG("[CommServClient] SendMessageAndWait alloc memory\n");
+	DEBUG("[SendMessageAndWait] SendMessageAndWait alloc memory\n");
 	CommRequest *cr = FCalloc( 1, sizeof( CommRequest ) );
 	if( cr != NULL )
 	{
@@ -87,26 +87,36 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		cr->cr_RequestID = (FULONG)cr;
 		cr->cr_Df = df;
 		
-		DataForm *rid= (DataForm *)(((char *)df) + (6*sizeof(FULONG)) + df[ 1 ].df_Size);
+		char *ridbytes = (char *) df;// (DataForm *)(((char *)df) + (6*sizeof(FULONG)) + df[ 1 ].df_Size);
+		ridbytes += COMM_MSG_HEADER_SIZE;
+		DataForm *rid = (DataForm *)ridbytes;
+		if( rid->df_ID == ID_FCID )
+		{
+			DEBUG("[SendMessageAndWait]  found fcid, tag size %lu\n", rid->df_Size );
+			int size = COMM_MSG_HEADER_SIZE + FRIEND_CORE_MANAGER_ID_SIZE;
+			ridbytes += size;
+		}
+		rid = (DataForm *)ridbytes;
 		rid->df_Size = (FULONG)cr;		// pointer is our request id
-		DEBUG2("[CommServClient] Request ID set to %ld\n", rid->df_Size );
+		DEBUG2("[SendMessageAndWait] Request ID set to %lu base %lu\n", rid->df_Size, cr->cr_RequestID );
 	}
 	else
 	{
+		FERROR("Cannot allocate memory for request!\n");
 		return NULL;
 	}
 	
-	DEBUG("[CommServClient] SendMessageAndWait before lock\n");
+	DEBUG("[SendMessageAndWait] SendMessageAndWait before lock\n");
 	if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 	{
-		DEBUG("[CommServClient] SendMessageAndWait add entry to list\n");
+		DEBUG("[SendMessageAndWait] SendMessageAndWait add entry to list\n");
 		if( serv->s_Requests == NULL )
 		{
 			serv->s_Requests = cr;
 		}
 		else
 		{
-			DEBUG("[CommServClient] Pointer %p\n", serv->s_Requests );
+			DEBUG("[SendMessageAndWait] Pointer %p\n", serv->s_Requests );
 			serv->s_Requests->node.mln_Pred = (MinNode *)cr;
 			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
 			serv->s_Requests = cr;
@@ -115,14 +125,16 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 	}
 	else
 	{
-		FFree( cr ); return NULL;
+		FERROR("Cannot lock mutex!\n");
+		FFree( cr ); 
+		return NULL;
 	}
 	
-	DEBUG("[CommServClient] Before sending message lock\n");
+	DEBUG("[SendMessageAndWait] Before sending message lock\n");
 	
 	if( pthread_mutex_lock( &con->cfcc_Mutex ) == 0 )
 	{
-		DEBUG("[CommServClient] mutex locked\n");
+		DEBUG("[SendMessageAndWait] mutex locked\n");
 		SocketSetBlocking( con->cfcc_Socket, TRUE );
 	
 		// send request
@@ -131,7 +143,8 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 	}
 	else
 	{
-		FFree( cr ); return NULL;
+		FFree( cr ); 
+		return NULL;
 	}
 	
 	// wait for answer
@@ -139,16 +152,16 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 	FBOOL quit = FALSE;
 	while( quit != TRUE )
 	{
-		DEBUG("[CommServClient] SendMessageAndWait waiting for condition\n");
+		DEBUG("[SendMessageAndWait] SendMessageAndWait waiting for condition\n");
 		if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 		{
-			DEBUG("[CommServClient] SendMessageAndWait Setup condition\n");
+			DEBUG("[SendMessageAndWait] SendMessageAndWait Setup condition\n");
 			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
 			pthread_mutex_unlock( &serv->s_Mutex );
 		}
 		else break;
 
-		DEBUG( "[CommServClient] Condition met, now going on\n!" );
+		DEBUG( "[SendMessageAndWait] Condition met, now going on\n!" );
 		time_t acttime = time( NULL );
 		if( ( acttime - cr->cr_Time ) > 10 || cr->cr_Bs != NULL )
 		{
@@ -160,13 +173,13 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		{
 			*/
 			// remove entry from list
-			DEBUG("[CommServClient] SendMessageAndWait message : time %lu  cr_bs ptr %p\n", (unsigned long)( acttime - cr->cr_Time ), cr->cr_Bs );
+			DEBUG("[SendMessageAndWait] SendMessageAndWait message : time %lu  cr_bs ptr %p\n", (unsigned long)( acttime - cr->cr_Time ), cr->cr_Bs );
 			bs = cr->cr_Bs;
 			quit = TRUE;
 
 			if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 			{
-				DEBUG("[CommServClient] Remove Socket entry from list\n");
+				DEBUG("[SendMessageAndWait] Remove Socket entry from list\n");
 				if( cr == serv->s_Requests )
 				{
 					CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
@@ -208,7 +221,7 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		}
 	}
 	
-	DEBUG( "[CommServClient] SendMessageAndWait Done with sending, returning\n" );
+	DEBUG( "[SendMessageAndWait] SendMessageAndWait Done with sending, returning\n" );
 	
 	return bs;
 }
@@ -627,228 +640,3 @@ CommFCConnection *ConnectToServer( CommService *s, char *conname )
 	return retcon;
 }
 
-/**
- * CommunicationService clients thread
- *
- * @param ptr pointer to CommunicationService Thread
- * @return 0 when success, otherwise error number
- */
-int CommServiceThreadClient( FThread *ptr )
-{
-	CommService *service = (CommService *)ptr->t_Data;
-	
-	usleep( 1000000 );
-	
-	DEBUG("[CommServClient] CommunicationServiceSend Start\n");
-	
-	struct mq_attr attr;
-	char buffer[ MAX_SIZE + 1 ];
-
-	pthread_mutex_lock( &InitMutex ); 
-	pthread_cond_signal( &InitCond );    
-	pthread_mutex_unlock( &InitMutex );  
-	
-	//
-	// atm we only read FC connections
-	//
-	
-	struct PropertiesLibrary *plib = NULL;
-	char *servers = NULL;
-	Props *prop = NULL;
-	
-	// teporary
-	//usleep( 1000 );
-	
-	if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
-	{
-		char coresPath[ 1024 ];
-		sprintf( coresPath, "%s/cfg/cfg.ini", getenv( "FRIEND_HOME" ) );
-		
-		prop = plib->Open( coresPath  );
-		if( prop != NULL)
-		{
-			servers = plib->ReadString( prop, "Cores:servers", "" );
-			DEBUG("[CommServClient] servers %s\n", servers );
-		}
-		//DEBUG("PROPERTIES LIBRARY OPENED, poitner to props %p!   %s  %s  %s  %s  %d\n", prop, login, pass, host, dbname, port );
-	}
-		
-	if( servers != NULL )
-	{
-		char *token;
-		
-		DEBUG("[CommServClient] Server list found %s\n", servers );
-   
-		// get the first token 
-		token = strtok( servers, SERVER_SPLIT_SIGN );
-		// walk through other tokens 
-		while( token != NULL ) 
-		{
-			CommFCConnection *newcon = NULL;
-			
-			char *address = NULL;
-			char *name = NULL;
-			char *ipport = NULL;
-			int port = service->s_port;
-
-			char *pos = strchr( token, SERVER_NAME_SPLIT_SIGN );
-			if( pos != NULL )
-			{
-				*pos = 0;
-				address = token;
-				name = ++pos;
-				
-			}else{
-				address = token;
-				name = token;
-			}
-			
-			// now split address:port
-			
-			pos = strchr( address, SERVER_PORT_SPLIT_SIGN );
-			if( pos != NULL )
-			{
-				*pos = 0;
-				ipport = ++pos;
-				port = atoi( ipport );
-			}
-			
-			DEBUG2("[CommServClient] New connection found address : %s name : %s\n", address, name );
-			
-			Socket *newsock;
-			
-			newsock = SocketConnectHost( service->s_SB, service->s_secured, address, port );
-			//newcon->cfcc_Socket = SocketOpen( service->s_secured, service->s_port, SOCKET_TYPE_CLIENT );
-			if( newsock != NULL )
-			{
-				int err = 0;
-				DEBUG("[CommServClient] Outgoing connection created on port: %d\n", service->s_port);
-				//SocketSetBlocking( newcon->cfcc_Socket, TRUE );
-				{
-					SystemBase *lsb = (SystemBase *)service->s_SB;
-					
-					FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm; //service->s_FCM;
-					
-					MsgItem tags[] = {
-						{ ID_FCRE,  (FULONG)0, (FULONG)NULL },
-						{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
-						{ ID_FCON, (FULONG)0 , MSG_INTEGER_VALUE },
-						{ TAG_DONE, TAG_DONE, TAG_DONE }
-					};
-
-					DataForm * df = DataFormNew( tags );
-
-					DEBUG("[CommServClient] DataForm created, pointer to fcm %p  sb ptr %p\n", fcm, lsb );
-
-					//DataFormAdd( &df, (FBYTE *)fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
-				
-					int sbytes = SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
-				
-					DEBUG("[CommServClient] Message sent %d\n", sbytes );
-					DataFormDelete( df );
-					
-					CommFCConnection *con = CommServiceAddConnection( service, newsock, address, name, SERVICE_CONNECTION_OUTGOING );
-				}
-			}
-			else
-			{
-				CommFCConnectionDelete( newcon );
-				FERROR("Cannot open socket\n");
-			}
-			DEBUG( "[CommServClient] TOKEN %s\n", token );
-			
-			token = strtok( NULL, "," );
-		}
-		
-		DEBUG("[CommServClient] All tokens passed\n");
-		
-	}
-	else
-	{	// servers == NULL
-	}
-	
-	if( plib != NULL && prop != NULL )
-	{
-		plib->Close( prop );
-	}
-	
-	if( plib != NULL )
-	{
-		LibraryClose( (struct Library *)plib );
-	}
-	DEBUG("[CommServClient] CommunicationClient start working\n");
-	
-	//
-	// we should ask for information from connection
-	//
-	
-	// messages get and pass to destination
-	
-	//int queueFd = mq_ msgqToFd( service->s_inMqfd );
-	
-	struct timeval tv;
-	fd_set writeToServ;
-	fd_set readFromServ;
-	
-	FLONG idMax = 0;
-	if( service->s_sendPipe[ 0 ] > idMax ) idMax = service->s_sendPipe[ 0 ];
-	if( service->s_sendPipe[ 1 ] > idMax ) idMax = service->s_sendPipe[ 1 ];
-	if( service->s_recvPipe[ 0 ] > idMax ) idMax = service->s_recvPipe[ 0 ];
-	if( service->s_recvPipe[ 1 ] > idMax ) idMax = service->s_recvPipe[ 1 ];
-	
-	{
-		//FriendCoreManager *fcm = (FriendCoreManager *)service->s_FCM;
-		CommFCConnection *lc = service->s_Connections;
-		while( lc != NULL )
-		{
-			if( lc->cfcc_Socket->fd > idMax )
-			{
-				idMax = lc->cfcc_Socket->fd;
-			}
-			lc = (CommFCConnection *)lc->node.mln_Succ;
-		}
-	}
-	
-	DEBUG("[CommServClient] IDMAX SET TO %ld\n", idMax );
-	/*
-	if( service->s_inMqfd != -1 )
-	{*/
-		while( service->s_Cam.cam_Quit != 1 )
-		{
-			FD_ZERO( &writeToServ );
-			FD_ZERO( &readFromServ );
-			FD_SET( service->s_sendPipe[ 0 ] , &writeToServ );
-			//FD_SET( lc->cfcc_Socket , &readFromServ );
-			
-			tv.tv_sec = 0;
-			tv.tv_usec = 10000000;
-
-			//ret = 0;
-
-			//DEBUG("Communication client: waiting for message\n");
-			int ret = select( idMax+1, &writeToServ, NULL, NULL, &tv );
-			
-			// handle message
-			
-			if( ret > 0 )
-			{
-				int rets = read( service->s_sendPipe[ 0 ], buffer, MAX_SIZE );
-				DEBUG("[CommServClient] DATAREADED! %d\n", rets );
-				
-				buffer[ rets ] = '\0';
-				//TODO
-				// we should read from QUEUE, check destination server and send message
-				//
-				
-				}else{
-				
-				}
-		}
-	
-	DEBUG("[CommServClient] CommunicationService close\n");
-
-	ptr->t_Launched = FALSE;
-
-	
-	return 0;
-}

@@ -106,7 +106,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 	}
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	
 	if( fm != NULL && perm != NULL && newPath != NULL && sqlLib != NULL )
 	{
@@ -175,7 +175,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 			
 			DEBUG("[FSManagerCheckAccess] Checking access via SQL '%s'\n", tmpQuery );
 		
-			MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+			void *res = sqlLib->Query( sqlLib, tmpQuery );
 			FBOOL access = FALSE;
 			
 			char defaultAccessRights[] = "-RWED";
@@ -195,7 +195,7 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 
 				if( nrrows > 0 )
 				{
-					MYSQL_ROW row = NULL;
+					char **row = NULL;
 					
 					DEBUG("[FSManagerCheckAccess] Checking permissions %c  -   permission param %s\n", (char)perm[ 0 ], perm );
 					
@@ -256,11 +256,11 @@ FBOOL FSManagerCheckAccess( FSManager *fm, const char *path, FULONG devid, User 
 		{
 			FERROR("Cannot allocate memory for query!\n");
 			FFree( newPath );
-			sb->LibraryMYSQLDrop( sb, sqlLib );
+			sb->LibrarySQLDrop( sb, sqlLib );
 			return result;
 		}
 		
-		sb->LibraryMYSQLDrop( sb, sqlLib );
+		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	FFree( newPath );
 
@@ -306,7 +306,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 		if( ( tmpQuery = FCalloc( querysize, sizeof(char) ) ) != NULL )
 		{
 			SystemBase *sb = (SystemBase  *) fm->fm_SB;
-			MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+			SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 			
 			if( sqlLib == NULL )
 			{
@@ -416,7 +416,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 			}
 			*/
 
-			MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+			void *res = sqlLib->Query( sqlLib, tmpQuery );
 			
 
 			if( res != NULL )
@@ -432,7 +432,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 				// 4 - ID - unused
 				
 				int pos = 0;
-				MYSQL_ROW row = NULL;
+				char **row = NULL;
 				
 				FBOOL foundAccess[ 3 ];
 				foundAccess[ 0 ] = foundAccess[ 1 ] = foundAccess[ 2 ] = FALSE;
@@ -498,7 +498,7 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 				//BufStringAdd( bs, "fail<!--separate-->{\"response\":\"could not find file permissions\"}" );
 			}
 	
-			sb->LibraryMYSQLDrop( sb, sqlLib );		
+			sb->LibrarySQLDrop( sb, sqlLib );		
 			FFree( tmpQuery );
 		}
 		else
@@ -542,7 +542,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 {
 	SystemBase *sb = (SystemBase *)fm->fm_SB;
 	
-	MYSQLLibrary *sqllib  = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		char usercOld[ 6 ];
@@ -588,11 +588,11 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			", path, devid, usr->u_ID, usr->u_ID );
 			
 			
-			MYSQL_RES *res = sqllib->Query( sqllib, tmpQuery );
+			void *res = sqllib->Query( sqllib, tmpQuery );
 			
 			if( res != NULL )
 			{
-				MYSQL_ROW row = NULL;
+				char **row = NULL;
 				
 				while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 				{
@@ -722,7 +722,7 @@ int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char 
 			sqllib->QueryWithoutResults( sqllib, insertQuery );
 		}
 
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;
 }
@@ -813,7 +813,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 
 	SystemBase *sb = (SystemBase *)fm->fm_SB;
 
-	MYSQLLibrary *sqllib  = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqllib  = sb->LibrarySQLGet( sb );
 	if( sqllib != NULL )
 	{
 		//
@@ -882,7 +882,7 @@ int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgr
 				FFree( rem );
 			}
 		}
-		sb->LibraryMYSQLDrop( sb, sqllib );
+		sb->LibrarySQLDrop( sb, sqllib );
 	}
 	return 0;
 }
@@ -907,7 +907,7 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 	}
 	
 	SystemBase *sb = (SystemBase  *) fm->fm_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib == NULL )
 	{
 		FERROR("Cannot get mysql.library slot!\n");
@@ -1032,10 +1032,10 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 							) \
 						", parentPath, devid, usr->u_ID, usr->u_ID );
 						
-						MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+						void *res = sqlLib->Query( sqlLib, tmpQuery );
 						if( res != NULL )
 						{
-							MYSQL_ROW row = NULL;
+							char **row = NULL;
 							
 							while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
 							{
@@ -1081,12 +1081,12 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 						) \
 					", newPath, devid, usr->u_ID, usr->u_ID );
 
-					MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
+					void *res = sqlLib->Query( sqlLib, tmpQuery );
 					
 					if( res != NULL )
 					{
 						int pos = 0;
-						MYSQL_ROW row = NULL;
+						char **row = NULL;
 						
 						while( ( row = sqlLib->FetchRow( sqlLib, res ) ) ) 
 						{
@@ -1149,7 +1149,7 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 					FERROR("Cannot allocate memory for query!\n");
 					//BufStringDelete( bs );
 					FFree( newPath );
-					sb->LibraryMYSQLDrop( sb, sqlLib );
+					sb->LibrarySQLDrop( sb, sqlLib );
 					return NULL;
 				}
 			}
@@ -1171,7 +1171,7 @@ BufString *FSManagerAddPermissionsToDir( FSManager *fm, BufString *recv, FULONG 
 	
 	BufStringDelete( recv );
 	
-	sb->LibraryMYSQLDrop( sb, sqlLib );
+	sb->LibrarySQLDrop( sb, sqlLib );
 	
 	return bsres;
 }

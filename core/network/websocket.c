@@ -636,7 +636,7 @@ void WSThreadPing( void *p )
 		}
 	
 		/*
-		MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+		SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 		if( sqllib != NULL )
 		{
 			char *tmpQuery = FCalloc( 1024, 1 );
@@ -968,7 +968,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													FFree( buf );
 												}
 											
-												MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+												SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 												if( sqllib != NULL )
 												{
 													char *tmpQuery = FCalloc( 1024, 1 );
@@ -980,7 +980,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", time(NULL), us->us_SessionID );
 															sqllib->SelectWithoutResults( sqllib, tmpQuery );
 														}
-														SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+														SLIB->LibrarySQLDrop( SLIB, sqllib );
 													
 														//FERROR("Logged time updated: %lu\n", time(NULL) );
 													
@@ -1027,7 +1027,13 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													http->parsedPostContent = HashmapNew();
 													http->uri = UriNew();
 
-													UserSession *s = fcd->fcd_WSClient->wc_UserSession;
+													UserSession *s = NULL;
+													
+													if( fcd->fcd_WSClient != NULL && fcd->fcd_WSClient->wc_UserSession )
+													{
+														s = fcd->fcd_WSClient->wc_UserSession;
+													}
+													
 													//DEBUG("Session ptr %p\n", s );
 													if( s != NULL )
 													{
@@ -2064,7 +2070,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 	
 	if( authid != NULL )
 	{
-		MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 
 		// Get authid from mysql
 		if( sqllib != NULL )
@@ -2077,12 +2083,12 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 				( char *)authid, "%", ( char *)authid, "%"
 			);
 
-			MYSQL_RES *res = sqllib->Query( sqllib, qery );
+			void *res = sqllib->Query( sqllib, qery );
 			if( res != NULL )
 			{
 				DEBUG("[WS] Called %s\n",  qery );
 				
-				MYSQL_ROW row;
+				char **row;
 				if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 				{
 					snprintf( lsessionid, sizeof(lsessionid), "%s", row[ 0 ] );
@@ -2090,7 +2096,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 				}
 				sqllib->FreeResult( sqllib, res );
 			}
-			l->LibraryMYSQLDrop( l, sqllib );
+			l->LibrarySQLDrop( l, sqllib );
 		}
 		DEBUG("[WS] Ok, SQL phase complete\n" );
 	}

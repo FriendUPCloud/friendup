@@ -27,7 +27,7 @@
 #include <system/json/json.h>
 #include <system/json/json_converter.h>
 #include <system/json/structures/friend.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <system/auth/authmodule.h>
 #include <system/fsys/device_handling.h>
 #include <openssl/md5.h>
@@ -694,7 +694,7 @@ b989d99b20a13a797be7611d2b574ba5-----end
 	{
 		FERROR("User '%s' not found\n", userName );
 		// SQL is used to mount  device!
-		MYSQLLibrary *sqll = SLIB->LibraryMYSQLGet( SLIB );
+		SQLLibrary *sqll = SLIB->LibrarySQLGet( SLIB );
 		
 		usr = UMUserGetByNameDB( SLIB->sl_UM,userName );
 		
@@ -707,7 +707,7 @@ b989d99b20a13a797be7611d2b574ba5-----end
 		else
 		{
 			SLIB->AuthModuleDrop( SLIB, ulib );
-			SLIB->LibraryMYSQLDrop( SLIB, sqll );
+			SLIB->LibrarySQLDrop( SLIB, sqll );
 			
 			HttpAddTextContent( resp, "ok<!--separate-->{\"response\":\"cannot find or load user\"}" );
 
@@ -719,7 +719,7 @@ b989d99b20a13a797be7611d2b574ba5-----end
 		}
 		
 		SLIB->AuthModuleDrop( SLIB, ulib );
-		SLIB->LibraryMYSQLDrop( SLIB, sqll );
+		SLIB->LibrarySQLDrop( SLIB, sqll );
 	}
 	
 	if( usr == NULL )

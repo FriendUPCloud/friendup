@@ -45,7 +45,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include "comm_msg.h"
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <core/thread.h>
 
 //

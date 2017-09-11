@@ -34,7 +34,7 @@
 
 #include <core/types.h>
 #include <core/nodes.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 
 typedef struct UserApplication
 {

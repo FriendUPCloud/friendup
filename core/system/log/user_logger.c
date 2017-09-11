@@ -35,10 +35,14 @@
 #include "user_logger.h"
 #include <dlfcn.h>
 
-//
-// Filesystems
-//
-
+/**
+ * Create user function logger
+ *
+ * @param sb pointer to SystemBase
+ * @param path path where data will be stored
+ * @param name name of log entry (file name for example)
+ * @return new UserLogger structure when success, otherwise NULL
+ */
 UserLogger *UserLoggerCreate( void *sb, const char *path, const char *name )
 {
 	UserLogger *ulogger = NULL;
@@ -85,10 +89,11 @@ UserLogger *UserLoggerCreate( void *sb, const char *path, const char *name )
 	return ulogger;
 }
 
-//
-// delete UserLogger
-//
-
+/**
+ * Delete UserLogger
+ *
+ * @param log UserLogger structure which will be deleted
+ */
 void UserLoggerDelete( UserLogger *log )
 {
 	if( log != NULL )

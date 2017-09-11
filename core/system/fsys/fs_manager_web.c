@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <system/cache/cache_user_files.h>
 #include <system/cache/cache_manager.h>
+#include <system/fsys/fsys_activity.h>
 
 /**
  * Filesystem web calls handler
@@ -1033,37 +1034,21 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								int size = 0;
 								
-								if( actDev->f_Activity.fsa_StoredBytesLeft >= 0 )
+								dataSize = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), dataSize );
+								size = actFS->FileWrite( fp, fdata, dataSize );
+								actDev->f_BytesStored += size;
+								
+								if( size > 0 )
 								{
-									size = actFS->FileWrite( fp, fdata, dataSize );
-									actDev->f_BytesStored += size;
-									if( actDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-									{
-										if( (actDev->f_Activity.fsa_StoredBytesLeft-size) <= 0 )
-										{
-											actDev->f_Activity.fsa_StoredBytesLeft = -1;
-										}
-										else
-										{
-											actDev->f_Activity.fsa_StoredBytesLeft -= size;
-										}
-									}
-									
-									if( size > 0 )
-									{
-										char tmp[ 128 ];
-										sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
-										HttpAddTextContent( response, tmp );
-									}
-									else
-									{
-										HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for File\" }" );
-									}
+									char tmp[ 128 ];
+									sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" } ", size );
+									HttpAddTextContent( response, tmp );
 								}
-								else		// cannot write more
+								else
 								{
-									HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User cannot store more data\" }" );
+									HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for File\" }" );
 								}
+
 								actFS->FileClose( actDev, fp );
 							
 								DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
@@ -1158,24 +1143,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													{
 														int bytes = 0;
 														
-														if( dstrootf->f_Activity.fsa_StoredBytesLeft >= 0 )
-														{
-															bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
-															written += bytes;
-															dstrootf->f_BytesStored += bytes;
-															
-															if( dstrootf->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-															{
-																if( (dstrootf->f_Activity.fsa_StoredBytesLeft-bytes) <= 0 )
-																{
-																	dstrootf->f_Activity.fsa_StoredBytesLeft = -1;
-																}
-																else
-																{
-																	dstrootf->f_Activity.fsa_StoredBytesLeft -= bytes;
-																}
-															}
-														}
+														dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
+														DEBUG("[FSMWebRequest] Copy, store size %d\n", dataread );
+														bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
+														written += bytes;
+														dstrootf->f_BytesStored += bytes;
 													}
 												}
 												FFree( dataBuffer );
@@ -1318,22 +1290,10 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								{
 									int bytes = 0;
 									
-									if( actDev->f_Activity.fsa_StoredBytesLeft >= 0 )
-									{
-										bytes = actFS->FileWrite( fp, file->hf_Data, file->hf_FileSize );
-										actDev->f_BytesStored += bytes;
-										if( actDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-										{
-											if( (actDev->f_Activity.fsa_StoredBytesLeft-bytes) <= 0 )
-											{
-												actDev->f_Activity.fsa_StoredBytesLeft = -1;
-											}
-											else
-											{
-												actDev->f_Activity.fsa_StoredBytesLeft -= bytes;
-											}
-										}
-									}
+									int size = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), file->hf_FileSize );
+									bytes = actFS->FileWrite( fp, file->hf_Data, size );
+									actDev->f_BytesStored += bytes;
+
 									actFS->FileClose( actDev, fp );
 								
 									uploadedFiles++;
@@ -1347,9 +1307,6 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							{
 								FERROR("No access to: %s\n", tmpPath );
 							}
-							
-							pthread_yield(); // Let's yield a little
-							
 							file = (HttpFile *) file->node.mln_Succ;
 						} // while, goging through files
 						
@@ -1449,7 +1406,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						// TODO: Check on device ID..
 						sprintf( check, " FFileShared where `UserID`='%ld' AND `Path`='%s:%s'", loggedSession->us_User->u_ID, devname, dest );
 						
-						MYSQLLibrary *sqllib = l->LibraryMYSQLGet( l );
+						SQLLibrary *sqllib = l->LibrarySQLGet( l );
 						tmpfs->fs_CreatedTime = time( NULL );
 						if( sqllib != NULL )
 						{
@@ -1486,7 +1443,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					alreadyExist = TRUE;
 					}*/
 						
-							l->LibraryMYSQLDrop( l, sqllib );
+							l->LibrarySQLDrop( l, sqllib );
 						}
 						
 						FileSharedDeleteAll( tmpfs );
@@ -1526,7 +1483,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					
 					if( sqllib != NULL )
 					{
@@ -1544,7 +1501,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						*result = 200;
 						
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 				}
 				//
@@ -1722,7 +1679,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						int err = 0;
@@ -1777,7 +1734,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						HttpAddTextContent( response, answer );
 						
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					else
 					{
@@ -1794,7 +1751,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
-					MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
 						char answer[ 1024 ];
@@ -1828,7 +1785,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						}
 						HttpAddTextContent( response, answer );
 						
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 					}
 					else
 					{
@@ -1959,23 +1916,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												{
 													int stored = 0;
 													
-													if( dstdevice->f_Activity.fsa_StoredBytesLeft >=0 )
-													{
-														stored = fsys->FileWrite( fp, buffer, bufferSize );
-														dstdevice->f_BytesStored += stored;
-													
-														if( dstdevice->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-														{
-															if( (dstdevice->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
-															{
-																dstdevice->f_Activity.fsa_StoredBytesLeft = -1;
-															}
-															else
-															{
-																dstdevice->f_Activity.fsa_StoredBytesLeft -= stored;
-															}
-														}
-													}
+													bufferSize = FileSystemActivityCheckAndUpdate( l, &(dstdevice->f_Activity), bufferSize );
+													stored = fsys->FileWrite( fp, buffer, bufferSize );
+													dstdevice->f_BytesStored += stored;
 												}
 												fsys->FileClose( dstdevice, fp );
 											

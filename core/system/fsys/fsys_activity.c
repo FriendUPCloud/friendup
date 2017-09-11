@@ -26,27 +26,35 @@
 /**
  * Load FilesystemActivity table
  *
- * @param l pointer to systembase
+ * @param sb pointer to systembase
  * @param act pointer to Filesystem Activity structure
  * @param id FilesystemID
+ * @param byDate set TRUE if you want to load activity by new date
  * @return success (0) or fail value (not equal to 0)
  */
-int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id )
+int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id, FBOOL byDate )
 {
 	SystemBase *l = (SystemBase *)sb;
-	
+	DEBUG("[LoadFilesystemActivityDB] id %lu\n", id );
 	int errRet = 0;
 	
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
-		char temptext[ 256 ];
+		char temptext[ 512 ];
 
-		snprintf( temptext, sizeof(temptext), "SELECT `ID`,`FilesystemID`,`StoredBytesLeft`,`ReadedBytesLeft` FROM `FilesystemActivity` WHERE `ID` = '%lu'", id );
-		MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+		if( byDate == TRUE )
+		{
+			snprintf( temptext, sizeof(temptext), "SELECT `ID`,`FilesystemID`,`StoredBytesLeft`,`ReadedBytesLeft`,`ToDate` FROM `FilesystemActivity` WHERE `ToDate` <> '%04d-%02d-%02d' AND `FilesystemID` = '%lu'", act->fsa_ToDate.tm_year, act->fsa_ToDate.tm_mon, act->fsa_ToDate.tm_mday, id );
+		}
+		else
+		{
+			snprintf( temptext, sizeof(temptext), "SELECT `ID`,`FilesystemID`,`StoredBytesLeft`,`ReadedBytesLeft`,`ToDate` FROM `FilesystemActivity` WHERE `FilesystemID` = '%lu'", id );
+		}
+		void *res = sqllib->Query( sqllib, temptext );
 		if( res != NULL )
 		{
-			MYSQL_ROW row;
+			char **row;
 			int j = 0;
 
 			while( ( row = sqllib->FetchRow( sqllib, res ) ) )
@@ -71,11 +79,18 @@ int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id )
 					char *end;
 					act->fsa_ReadedBytesLeft = strtoul( (char *)row[ 3 ],  &end, 0 );
 				}
+				if( row[ 4 ] != NULL )
+				{
+					if( sscanf( (char *)row[ 4 ], "%d-%d-%d", &(act->fsa_ToDate.tm_year), &(act->fsa_ToDate.tm_mon), &(act->fsa_ToDate.tm_mday) ) != EOF )
+					{
+						act->fsa_ToDate.tm_hour = act->fsa_ToDate.tm_min = act->fsa_ToDate.tm_sec = 0;
+					}
+				}
 			}
 			sqllib->FreeResult( sqllib, res );
 		}
 
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	else
 	{
@@ -88,7 +103,7 @@ int LoadFilesystemActivityDB( void *sb, FilesystemActivity *act, FULONG id )
 /**
  * Update FilesystemActivity table
  *
- * @param l pointer to systembase
+ * @param sb pointer to systembase
  * @param act pointer to Filesystem Activity structure
  * @return success (0) or fail value (not equal to 0)
  */
@@ -98,15 +113,24 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act )
 	
 	int errRet = 0;
 	
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	time_t rawtime;
+
+	time( &rawtime );
+		
+	if( ( act->fsa_ToDateTimeT - rawtime ) > 0 || act->fsa_StoredBytesLeft < 0 )
+	{	// our current contain old information, we must update them
+		LoadFilesystemActivityDB( sb, act, act->fsa_FilesystemID, TRUE );
+	}
+	
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
-
+		
 		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadedBytesLeft, act->fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	else
 	{

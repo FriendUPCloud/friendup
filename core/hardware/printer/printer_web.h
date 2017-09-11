@@ -32,7 +32,7 @@
 
 #include <core/types.h>
 #include <core/library.h>
-#include <mysql.h>
+#include <db/sqllib.h>
 #include <util/hooks.h>
 #include <util/list.h>
 #include <system/fsys/file.h>

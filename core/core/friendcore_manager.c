@@ -151,12 +151,12 @@ FriendCoreManager *FriendCoreManagerNew()
 					
 					fcm->fcm_FCPort= plib->ReadInt( prop, "Core:port", FRIEND_CORE_PORT );
 					fcm->fcm_WSPort = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
-					fcm->fcm_ComPort = plib->ReadInt( prop, "Core:cport", FRIEND_COMMUNICATION_PORT );
-					fcm->fcm_ComRemotePort = plib->ReadInt( prop, "Core:cremoteport", FRIEND_COMMUNICATION_REMOTE_PORT );
+					fcm->fcm_ComPort = plib->ReadInt( prop, "Core:CommunicationPort", FRIEND_COMMUNICATION_PORT );
+					fcm->fcm_ComRemotePort = plib->ReadInt( prop, "Core:RemoteCommunicationPort", FRIEND_COMMUNICATION_REMOTE_PORT );
 					
 					fcm->fcm_SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
 					fcm->fcm_WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
-					fcm->fcm_SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CSSLEnable", 0 );
+					fcm->fcm_SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CommunicationSSLEnable", 0 );
 
 					char *tptr  = plib->ReadString( prop, "LoginModules:modules", "" );
 					if( tptr != NULL )
@@ -233,7 +233,7 @@ FriendCoreManager *FriendCoreManagerNew()
 			return NULL;
 		}
 		
-		fcm->fcm_FCI = FriendCoreInfoNew( fcm );
+		fcm->fcm_FCI = FriendCoreInfoNew( SLIB );
 		
 		fcm->fcm_Shutdown = FALSE;
 		
@@ -245,13 +245,10 @@ FriendCoreManager *FriendCoreManagerNew()
 		{
 			Log( FLOG_FATAL, "Cannot launch websocket server\n");
 		}
-		
-		//usleep( 100000 );
-		
+
 		SLIB->fcm = fcm;
 		fcm->fcm_SB = SLIB;
 		
-		//usleep( 100000 );
 		Log( FLOG_INFO,"Start SSH console\n");
 		
 		fcm->fcm_SSHServer = SSHServerNew( SLIB );
@@ -271,9 +268,6 @@ FriendCoreManager *FriendCoreManagerNew()
 		{
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
-
-		// wait, be sure that services started
-		//usleep( 5000000 );
 	}
 	Log( FLOG_INFO,"FriendCoreManager Created\n");
 	

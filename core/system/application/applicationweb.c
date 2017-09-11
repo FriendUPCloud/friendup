@@ -697,7 +697,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
 		}
 		
-		MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
 		{
 			//
@@ -710,17 +710,17 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1",( char *)as->as_AuthID );
 				//snprintf( q, sizeof(q), "SELECT `Name` FROM `FUserApplication` ua, `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1",( char *)as->as_AuthID );
 
-				MYSQL_RES *res = sqllib->Query( sqllib, q );
+				void *res = sqllib->Query( sqllib, q );
 				if( res != NULL )
 				{
-					MYSQL_ROW row;
+					char **row;
 					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 					{
 						strcpy( applicationName, row[ 0 ] );
 					}
 					sqllib->FreeResult( sqllib, res );
 				}
-				l->LibraryMYSQLDrop( l, sqllib );
+				l->LibrarySQLDrop( l, sqllib );
 			}
 		}
 		

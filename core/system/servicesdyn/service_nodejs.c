@@ -183,7 +183,7 @@ int ServiceStop( Service *service, char *data )
 {
 	NodejsService *hs = (NodejsService *)service->s_SpecialData;
 	
-	system( "/etc/init.d/nodejs stop" );
+	system( "nodejs stop" );
 	
 	ThreadCancel( hs->hs_Thread, TRUE );
 	
@@ -206,7 +206,7 @@ char *ServiceGetStatus( Service *service, int *len )
 	service->s_State = SERVICE_STOPPED;
  
 	// Setup our pipe for reading and execute our command.
-	pf = popen("/etc/init.d/nodejs status","r"); 
+	pf = popen("nodejs status","r"); 
  
 	if( !pf )
 	{

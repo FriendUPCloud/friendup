@@ -33,7 +33,7 @@
 
 #include <core/types.h>
 #include <core/nodes.h>
-#include <mysql/sql_defs.h>
+#include <db/sql_defs.h>
 
 typedef struct FriendFile
 {

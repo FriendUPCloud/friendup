@@ -59,32 +59,32 @@ typedef struct FriendCoreInstance
 {
 	MinNode					node;				///< list of cores
 	
-	char 						fci_CoreID[ 32 ];	///< id of the core
-	char							fci_IP[ 256 ]; // ip or hostname of FriendCoreInstance
+	char 					fci_CoreID[ 32 ];	///< id of the core
+	char					fci_IP[ 256 ]; // ip or hostname of FriendCoreInstance
 	
-	int 							fci_Epollfd;            ///< File descriptor for epoll
-	Socket	 					*fci_Sockets; 	///< Socket for incomming connections (TODO: Make this "socketS": We must be able to listen on multiple interfaces!)
+	int 					fci_Epollfd;            ///< File descriptor for epoll
+	Socket	 				*fci_Sockets; 	///< Socket for incomming connections (TODO: Make this "socketS": We must be able to listen on multiple interfaces!)
 
 	// "Private"
 	//char                  *fci_Shutdown;      ///< Ends all event loops
-	FBOOL						 fci_Shutdown;       ///< Ends all event loops
+	FBOOL					 fci_Shutdown;       ///< Ends all event loops
 	FBOOL 					fci_Closed;			///< if FC quits, then its set to TRUE
 	FBOOL 					fci_SSLEnabled;		///< if ssl is enabled
 
 	Hashmap* 				fci_Libraries;   		///< Contains all loaded libraries. Key: library name.
 	
-	int 							fci_Port;			/// port on which FC will be launched
-	int 							fci_MaxPoll;		/// number of maximum sockets connections
-	int 							fci_BufferSize;		/// internal FC buffer to hold messages
+	int 					fci_Port;			/// port on which FC will be launched
+	int 					fci_MaxPoll;		/// number of maximum sockets connections
+	int 					fci_BufferSize;		/// internal FC buffer to hold messages
 	
-	int 							fci_SendPipe[ 2 ];	/// pipes used to send messages to FC
-	int 							fci_RecvPipe[ 2 ];	/// pipes used to received messages from FC
-	int							fci_ReadCorePipe, fci_WriteCorePipe; // pointers to read/write pipes
+	int 					fci_SendPipe[ 2 ];	/// pipes used to send messages to FC
+	int 					fci_RecvPipe[ 2 ];	/// pipes used to received messages from FC
+	int						fci_ReadCorePipe, fci_WriteCorePipe; // pointers to read/write pipes
 	
 	FThread					*fci_Thread;		/// FC instance internal thread
-	pthread_mutex_t		fci_ListenMutex;
+	pthread_mutex_t			fci_ListenMutex;
 	
-	void 							*fci_SB;							//pointer to systembase
+	void 					*fci_SB;							//pointer to systembase
 	
 } FriendCoreInstance;
 

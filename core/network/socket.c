@@ -127,9 +127,10 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 				
 				// Set to require peer (client) certificate verification 
 				SSL_CTX_set_verify( sock->s_Ctx, SSL_VERIFY_NONE, NULL );
+				//SSL_set_verify( sock->s_Ctx, SSL_VERIFY_PEER, 0 );
 				
 				// Set the verification depth to 1 
-				SSL_CTX_set_verify_depth( sock->s_Ctx ,1);
+				SSL_CTX_set_verify_depth( sock->s_Ctx ,1 );
 			}
 			
 			// Load the server certificate into the SSL_CTX structure 
@@ -382,51 +383,26 @@ inline int LoadCertificates( SSL_CTX* ctx, char* CertFile, char* KeyFile)
  * Setup connection with another server
  *
  * @param hostname internet address
- * @param service port or service name
+ * @param port socket port
  * @param family socket family descriptor
  * @param socktype SOCK_DGRAM or SOCK_STREAM
  * @return socket descriptor
  */
 
-int SocketConnectClient (const char *hostname, const char *service, int family, int socktype)
+int SocketConnectClient(const char *hostname, int port, int family, int socktype)
 {
 	struct sockaddr_in sin;
 	struct hostent *phe;
-	struct servent *pse;
 	struct protoent *ppe;
 	int sockfd;
 	char *protocol;
     
 	memset(&sin, 0, sizeof(sin));
 	
-	DEBUG("[SocketConnectClient] Connect to %s on port %s\n", hostname, service );
+	//DEBUG("[SocketConnectClient] Connect to %s on port %s\n", hostname, service );
 
 	sin.sin_family=AF_INET;
-
-	switch(socktype)
-	{
-		case SOCK_DGRAM:
-			protocol= "udp";
-			break;
-		case SOCK_STREAM:
-			protocol= "tcp";
-		break;
-		default:
-			FERROR("Listen_server:: unknown socket type=[%d]\n", socktype);
-			return -1;
-	}
-
-
-	if ( (pse = (struct servent *)getservbyname(service, protocol) ) != NULL  ) 
-	{
-		sin.sin_port = pse->s_port;
-	}
-	else if ((sin.sin_port = htons((short)atoi(service)))==0) 
-	{
-		FERROR("Connec_client:: could not get service=[%s]\n",service);
-		return -1;
-	}
-
+	sin.sin_port = htons(port);
 
 	if (!hostname) 
 	{
@@ -452,28 +428,95 @@ int SocketConnectClient (const char *hostname, const char *service, int family, 
 		}
 	}
 
+	/*
 	if ((ppe = getprotobyname(protocol)) == 0) 
 	{
 		FERROR( "Connect_client:: could not get protocol=[%s]\n", protocol);
 		return -1;
 	}
+	*/
      
-	if ((sockfd = socket(PF_INET, socktype, ppe->p_proto)) < 0) 
+	if( (sockfd = socket(PF_INET, socktype, 0 ) ) < 0 )
 	{  
 		FERROR( "Connect_client:: could not open socket\n");
 		return -1;
 	}
 
-	if (connect(sockfd,(struct sockaddr *)&sin, sizeof(sin)) < 0) 
+	fd_set fdset;
+    struct timeval tv;
+	struct timespec tstart={0,0}, tend={0,0};
+    int seconds = 3;
+	socklen_t len;
+	int so_error;
+	
+	clock_gettime( CLOCK_MONOTONIC, &tstart );
+
+	fcntl( sockfd, F_SETFL, O_NONBLOCK); // setup non blocking socket
+
+	// make the connection
+	int rc = connect( sockfd,(struct sockaddr *)&sin, sizeof(sin) );
+	if( (rc == -1) && (errno != EINPROGRESS) ) 
+	{
+		printf("Error: %s\n", strerror(errno));
+		close( sockfd );
+		return -1;
+	}
+	
+	if( rc == 0 )
+	{
+		// connection has succeeded immediately
+		//clock_gettime(CLOCK_MONOTONIC, &tend);
+		return sockfd;
+	}
+	
+	FD_ZERO(&fdset);
+	FD_SET( sockfd, &fdset);
+	tv.tv_sec = seconds;
+	tv.tv_usec = 0;
+
+	rc = select( sockfd + 1, NULL, &fdset, NULL, &tv);
+	switch( rc )
+	{
+		case 1: // data to read
+			len = sizeof( so_error );
+
+			getsockopt( sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
+
+			if( so_error == 0 ) 
+			{
+				clock_gettime(CLOCK_MONOTONIC, &tend);
+				DEBUG("socket connected. It took %.5f seconds\n",
+                (((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec)));
+				return sockfd;
+			}
+			else
+			{ // error
+				printf( "socket NOT connected: %s\n", strerror(so_error) );
+				close( sockfd );
+				return -1;
+			}
+		break;
+	case 0: //timeout
+		printf( "connection timeout trying to connect\n");
+		close( sockfd );
+		return -1;
+	}
+    
+	/*
+	// BLOCKING socket solution
+	if ( connect(sockfd,(struct sockaddr *)&sin, sizeof(sin)) < 0 ) 
 	{
 		close( sockfd );
 		FERROR( "Connect_client:: could not connect to host=[%s]\n", hostname);
 		return -1;
 	}
+	return sockfd;  
+	*/
 	
 	DEBUG("[SocketConnectClient] Connection created with host: %s\n", hostname );
-
-	return sockfd;            
+	close( sockfd );
+		return -1;
+	          
 }
 
 #define h_addr h_addr_list[0] // for backward compatibility 
@@ -508,10 +551,7 @@ int SocketConnect( Socket* sock, const char *host )
 	hints.ai_protocol = IPPROTO_TCP;
 	//hints.ai_flags  =  AI_NUMERICHOST;
 	
-	char prt[ 64 ];
-	sprintf( prt, "%d", sock->port );
-	
-	if( ( n = SocketConnectClient( host, prt, AF_UNSPEC, SOCK_STREAM ) ) < 0 )
+	if( ( n = SocketConnectClient( host, sock->port, AF_UNSPEC, SOCK_STREAM ) ) < 0 )
 	{
 		FERROR("Cannot setup connection with : %s\n", host );
 		return -1;
@@ -619,19 +659,9 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 	Socket *sock = NULL;
 	SystemBase *lsb = (SystemBase *)SLIB;
 	
-	struct addrinfo hints, *res, *p;
 	int fd;
-
-	bzero( &hints, sizeof(struct addrinfo ) );
-	hints.ai_family =AF_UNSPEC;//  AF_INET6;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	//hints.ai_flags  =  AI_NUMERICHOST;
 	
-	char prt[ 64 ];
-	sprintf( prt, "%d", port );
-	
-	if( ( fd = SocketConnectClient( host, prt, AF_UNSPEC, SOCK_STREAM ) ) < 0 )
+	if( ( fd = SocketConnectClient( host, port, AF_UNSPEC, SOCK_STREAM ) ) < 0 )
 	{
 		FERROR("Cannot setup connection with : %s\n", host );
 		return NULL;
@@ -651,13 +681,16 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 	sock->s_Timeouts = 0;
 	sock->s_Timeoutu = lsb->sl_SocketTimeout;
 	sock->s_SSLEnabled = ssl;
+	
+	DEBUG("[SocketConnectHost] connect to host, secured: %d\n", ssl );
 		
 	if( sock->s_SSLEnabled == TRUE )
 	{
-		OpenSSL_add_all_ciphers();
+		//SocketSetBlocking( sock, TRUE );
 		OpenSSL_add_all_algorithms();
+		OpenSSL_add_all_ciphers();
 
-		sock->s_BIO = BIO_new(BIO_s_mem());
+		//sock->s_BIO = BIO_new(BIO_s_mem());
 
 		sock->s_Meth = SSLv23_client_method();
 		if( sock->s_Meth  == NULL )
@@ -675,7 +708,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 			SocketClose( sock );
 			return NULL;
 		}
-			
+		
 		SSL_CTX_set_mode( sock->s_Ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY );
 		SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH ); // for now
 		SSL_CTX_set_options( sock->s_Ctx, SSL_OP_NO_SSLv3 | SSL_OP_NO_SSLv2 | SSL_OP_NO_TICKET | SSL_OP_ALL | SSL_OP_NO_COMPRESSION );
@@ -689,8 +722,28 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 			FERROR("Cannot create new SSL connection\n");
 			return NULL;
 		}
+		
+		int retc = LoadCertificates( sock->s_Ctx, lsb->RSA_SERVER_CERT, lsb->RSA_SERVER_KEY );
+		DEBUG("Certs loaded %d\n", retc );
+		
+		SSL_CTX_load_verify_locations( sock->s_Ctx,
+					 NULL, // CAfile
+					 "cfg/crt/"                  // CApath
+					 );
+		
+		SSL_set_verify( sock->s_Ctx, SSL_VERIFY_PEER, 0 );
+		
+		// Set the verification depth to 1 
+		SSL_CTX_set_verify_depth( sock->s_Ctx , 2 );
+		
 		SSL_set_fd( sock->s_Ssl, sock->fd );
-			
+		SSL_set_connect_state( sock->s_Ssl );
+		//SSL_do_handshake( sock->s_Ssl );
+		
+		//int flags = fcntl( sock->fd, F_GETFL, 0 );
+		//printf("\n\nFLAGS: %x  %d\n\n", flags, flags&O_NONBLOCK );
+		
+		/*
 		//SSL_CTX_set_session_cache_mode( sock->s_Ctx, SSL_SESS_CACHE_BOTH );
 		int cache = SSL_CTX_get_session_cache_mode( sock->s_Ctx );
 		INFO("[SocketConnectHost] SSL Cache mode set to: ");
@@ -713,40 +766,53 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 		}
 		
 		DEBUG("[SocketConnectHost] Loading certificates\n");
+		*/
 		
-		LoadCertificates( sock->s_Ctx, lsb->RSA_SERVER_CERT, lsb->RSA_SERVER_KEY );
-			
 		X509                *cert = NULL;
 		X509_NAME       *certname = NULL;
 		
-		SocketSetBlocking( sock, FALSE );
+		//SocketSetBlocking( sock, TRUE );
 		int n=0;
 		
-		DEBUG("[SocketConnectHost] SSLConnect\n");
+		//n = SSL_connect( sock->s_Ssl );
+		DEBUG("[SocketConnectHost] SSLConnect: %d\n", sock->s_SSLEnabled );
+		FBOOL quit = FALSE;
 		
-		while( TRUE )
+		while( quit != TRUE )
 		{
 			if ( ( n = SSL_connect( sock->s_Ssl ) ) != 1 )
 			{
-				FERROR("Cannot create SSL connection %d!\n", SSL_get_error( sock->s_Ssl, n ));
+				ERR_print_errors_fp(stderr);
+				//FERROR("Cannot create SSL connection %d  n: %d!\n", SSL_get_error( sock->s_Ssl, n ), n );
+				
+				char buf[ 256 ];
+				int err;
+				while ((err = ERR_get_error()) != 0) 
+				{
+					ERR_error_string_n(err, buf, sizeof(buf));
+					FERROR("Error: %s\n", buf);
+				}
 				//if( err <= 0 )
 				{
 					int error = SSL_get_error( sock->s_Ssl, n );
 				
-					FERROR( "[SocketConnect] We experienced an error %d.\n", error );
+					//FERROR( "[SocketConnect] We experienced an error %d.\n", error );
 				
 					switch( error )
 					{
 						case SSL_ERROR_NONE:
 							// NO error..
+							quit = TRUE;
 							FERROR( "[SocketConnect] No error\n" );
 							break;
 						case SSL_ERROR_ZERO_RETURN:
 							FERROR("[SocketConnect] SSL_ACCEPT error: Socket closed.\n" );
+							quit = TRUE;
+							break;
 						case SSL_ERROR_WANT_READ:
-							FERROR( "[SocketConnect] Error want read, retrying\n" );
+							//FERROR( "[SocketConnect] Error want read, retrying\n" );
 						case SSL_ERROR_WANT_WRITE:
-							FERROR( "[SocketConnect] Error want write, retrying\n" );
+							//FERROR( "[SocketConnect] Error want write, retrying\n" );
 							break;
 						case SSL_ERROR_WANT_ACCEPT:
 							FERROR( "[SocketConnect] Want accept\n" );
@@ -756,20 +822,22 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 							break;
 						case SSL_ERROR_SYSCALL:
 							FERROR( "[SocketConnect] Error syscall!\n" );
+							SocketClose( sock );
 							return NULL;
 						default:
 							FERROR( "[SocketConnect] Other error.\n" );
+							SocketClose( sock );
 							return NULL;
 					}
 				}
-				SocketClose( sock );
-				return NULL;
+				//SocketClose( sock );
+				//return NULL;
 			}
 			else
 			{
+				INFO("[SocketConnectHost] Socket connected to: %s\n", host );
 				break;
 			}
-			
 		}
 
 		cert = SSL_get_peer_certificate( sock->s_Ssl );
@@ -857,6 +925,14 @@ int SocketSetBlocking( Socket* sock, FBOOL block )
 	return 1;
 }
 
+static int serverAuthSessionIdContext;
+
+int VerifyPeer(int ok, X509_STORE_CTX* ctx)
+{
+	INFO("VERIFY PEER\n");
+	return 1;
+}
+
 /**
  * Accepts an incoming connection
  *
@@ -933,6 +1009,7 @@ Socket* SocketAccept( Socket* sock )
 		incoming->s_SSLEnabled = sock->s_SSLEnabled;
 		incoming->s_SB = sock->s_SB;
 		
+		SocketSetBlocking( incoming, FALSE );
 		pthread_mutex_init( &incoming->mutex, NULL );
 	}
 	else
@@ -940,6 +1017,8 @@ Socket* SocketAccept( Socket* sock )
 		FERROR("[SocketAccept] Cannot allocate memory for socket!\n");
 		return NULL;
 	}
+	
+	DEBUG("[SocketAccept] SSL: %d\n", sock->s_SSLEnabled );
 	
 	if( sock->s_SSLEnabled == TRUE )
 	{
@@ -952,6 +1031,12 @@ Socket* SocketAccept( Socket* sock )
 			FFree( incoming );
 			return NULL;
 		}
+		
+		//SSL_set_verify( incoming->s_Ssl, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, VerifyPeer );
+		SSL_set_verify( incoming->s_Ssl, SSL_VERIFY_PEER, 0 );
+		//SSL_CTX_set_verify( sock->s_Ctx, SSL_VERIFY_PEER, VerifyPeer);
+		
+		SSL_set_session_id_context( incoming->s_Ssl, (void *)&serverAuthSessionIdContext, sizeof(serverAuthSessionIdContext) );
 
 		// Make a unique session id here
 		/*const unsigned char *unique = FCalloc( 255, sizeof( const unsigned char ) );
@@ -977,10 +1062,62 @@ Socket* SocketAccept( Socket* sock )
 		int err = 0;
 		while( 1 )
 		{
+			if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
+			{
+				DEBUG("[SocketAccept] Connection accepted\n");
+				break;
+			}
+			
+			//DEBUG("[SocketAccept] err %d\n", err );
+
+			if( err <= 0 || err == 2 )
+			{
+				ERR_print_errors_fp(stderr);
+				
+				int error = SSL_get_error( incoming->s_Ssl, err );
+				//DEBUG("[SocketAccept] SSL error %d\n", error );
+				switch( error )
+				{
+					case SSL_ERROR_NONE:
+						// NO error..
+						FERROR( "[SocketAcceptPair] No error\n" );
+						//return incoming;
+					case SSL_ERROR_ZERO_RETURN:
+						FERROR("[SocketAcceptPair] SSL_ACCEPT error: Socket closed.\n" );
+						SocketClose( incoming );
+						return NULL;
+					case SSL_ERROR_WANT_READ:
+						//return incoming;
+						break;
+					case SSL_ERROR_WANT_WRITE:
+						//return incoming;
+						break;
+					case SSL_ERROR_WANT_ACCEPT:
+						FERROR( "[SocketAcceptPair] Want accept\n" );
+						SocketClose( incoming );
+						return NULL;
+					case SSL_ERROR_WANT_X509_LOOKUP:
+						FERROR( "[SocketAcceptPair] Want 509 lookup\n" );
+						SocketClose( incoming );
+						return NULL;
+					case SSL_ERROR_SYSCALL:
+						FERROR( "[SocketAcceptPair] Error syscall.\n" ); //. Goodbye! %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+						SocketClose( incoming );
+						return NULL;
+					case SSL_ERROR_SSL:
+						FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
+						SocketClose( incoming );
+						return NULL;
+				}
+			}
+			usleep( 0 );
+			/*
 			err = SSL_accept( incoming->s_Ssl );
 
 			if( err <= 0 )
 			{
+				ERR_print_errors_fp(stderr);
+				
 				int error = SSL_get_error( incoming->s_Ssl, err );
 			
 				FERROR( "[SocketAccept] We experienced an error %d.\n", error );
@@ -1021,19 +1158,42 @@ Socket* SocketAccept( Socket* sock )
 						SSL_free( incoming->s_Ssl );
 						FFree( incoming );
 						return NULL;
-					default:
-						FERROR( "[SocketAccept] Other error.\n" );
-						shutdown( fd, SHUT_RDWR );
-						close( fd );
-						SSL_free( incoming->s_Ssl );
-						FFree( incoming );
-						return NULL;
+					
+					//default:
+					//	FERROR( "[SocketAccept] Other error.\n" );
+					//	shutdown( fd, SHUT_RDWR );
+					//	close( fd );
+					//	SSL_free( incoming->s_Ssl );
+					//	FFree( incoming );
+					//	return NULL;
+						
 				}
 			}
 			else
 			{
 				break;
-			}
+			}*/
+		}
+		
+		X509                *cert = NULL;
+		X509_NAME       *certname = NULL;
+		
+		cert = SSL_get_peer_certificate( incoming->s_Ssl );
+		if (cert == NULL)
+		{
+			FERROR( "Error: Could not get a certificate from: \n" );
+		}
+		else
+		{
+			DEBUG( "[SocketAccept] Retrieved the client certificate from: .\n");
+			char *line;
+			line  = X509_NAME_oneline( X509_get_subject_name( cert ), 0, 0 );
+			DEBUG("[SocketAccept] %s\n", line );
+			free( line );
+			line = X509_NAME_oneline( X509_get_issuer_name( cert ), 0, 0 );
+			DEBUG("[SocketAccept] %s\n", line );
+			free( line );
+			X509_free( cert );
 		}
 	}
 
@@ -1439,8 +1599,6 @@ int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int 
 		
 		do
 		{
-			pthread_yield();
-			
 			INFO( "[SocketWaitRead] Start of the voyage.. %p\n", sock );
 			
 			if( read + buf > length ) buf = length - read;
@@ -1638,8 +1796,6 @@ BufString *SocketReadPackage( Socket *sock )
 		
 		do
 		{
-			pthread_yield();
-			
 			INFO( "[SocketReadPackage] Start of the voyage.. %p\n", sock );
 			if( pthread_mutex_lock( &sock->mutex ) == 0 )
 			{
@@ -1805,7 +1961,6 @@ BufString *SocketReadPackage( Socket *sock )
 				return bs;
 			}
 			DEBUG( "[SocketReadPackage] Read %d/\n", read );
-			pthread_yield();
 		}
 		
 		DEBUG( "[SocketReadPackage] Done reading %d/ (errno: %d)\n", read, errno );
@@ -1843,18 +1998,16 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 			FD_SET( app->outfd[1] , &(app->writefd) );
 	 */
 	
-	if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	//if( pthread_mutex_lock( &sock->mutex ) == 0 )
 	{
 		FD_ZERO( &rset );
 		//FD_SET( 0,  &rset );
 		FD_SET( sock->fd,  &rset );
 		//wset = rset;
 		
-		pthread_mutex_unlock( &sock->mutex );
+		//pthread_mutex_unlock( &sock->mutex );
 	}
 	
-	SocketSetBlocking( sock, TRUE );
-		
 	tv.tv_sec = sec;
 	tv.tv_usec = 0;
 	FBOOL quit = FALSE;
@@ -1867,8 +2020,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 	
 	while( quit != TRUE )
 	{
-		pthread_yield();
-		
+		/*
 		if( ( n = select( sock->fd+1, &rset, NULL, NULL, &tv ) ) == 0 )
 		{
 			FERROR("[SocketReadTillEnd] Connection timeout\n");
@@ -1881,8 +2033,9 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 		{
 			FERROR("[SocketReadTillEnd] Select error\n");
 		}
+		*/
 	
-		SocketSetBlocking( sock, FALSE );
+		//SocketSetBlocking( sock, FALSE );
 	
 		if( sock->s_SSLEnabled == TRUE )
 		{
@@ -1895,6 +2048,8 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 			//{
 			INFO( "[SocketReadTillEnd] Start of the voyage.. %p\n", sock );
 
+			//while( TRUE )
+			//{
 			//if( read + buf > length ) buf = length - read;
 			if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
 			{
@@ -1912,13 +2067,14 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 					return bs;
 				}
 			}
+			DEBUG("[SocketReadTillEnd] SSLReaded %d\n", res );
 			//pthread_mutex_unlock( &sock->mutex );	
 			//}
 			
 			struct timeval timeout;
 			fd_set fds;
 			
-			if( res <= 0 )
+			if( res < 0 )
 			{
 				err = SSL_get_error( sock->s_Ssl, res );
 				switch( err )
@@ -1937,6 +2093,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 							return bs;
 							// The operation did not complete. Call again.
 						case SSL_ERROR_WANT_READ:
+							/*
 						// no data available right now, wait a few seconds in case new data arrives...
 						//printf("SSL_ERROR_WANT_READ %i\n", count);
 
@@ -1967,12 +2124,13 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 							FERROR("[SocketReadTillEnd] want read everything read....\n");
 							return bs;
 						}
-						
+						*/
 						FERROR("want read\n");
-						return NULL;
+						//return NULL;
 						// The operation did not complete. Call again.
 
 						case SSL_ERROR_WANT_WRITE:
+							/*
 							FERROR( "[SocketReadTillEnd] Want write.\n" );
 							
 						if( pthread_mutex_lock( &sock->mutex ) == 0 )
@@ -2002,6 +2160,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 							FERROR("[SocketReadTillEnd] want read everything read....\n");
 							return bs;
 						}
+						*/
 						//return read;
 					case SSL_ERROR_SYSCALL:
 						return bs;
@@ -2013,14 +2172,20 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 							return bs;
 						}
 						return NULL;
+					}
 				}
-			}
-			//while( read < (unsigned int)fullPackageSize );
-			DEBUG("[SocketReadTillEnd]  readed\n");
+				//while( read < (unsigned int)fullPackageSize );
+				DEBUG("[SocketReadTillEnd] readed\n");
 			
-			return bs;
+				//return bs;
+			}else if( res == 0 )
+			{
+				DEBUG("[SocketReadTillEnd] There is nothing to read\n");
+				return bs;
+				break;
+			}
+		//} // while
 		}
-	}
 		
 		//
 		// Read in a non-SSL way
@@ -2082,7 +2247,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec )
 					if( errno == EAGAIN && retries++ < 25 )
 					{
 						// Approx successful header
-						FERROR( "[SocketReadTillEnd] Resource temporarily unavailable.. Read %d/ (retries %d)\n", read, retries );
+						//FERROR( "[SocketReadTillEnd] Resource temporarily unavailable.. Read %d/ (retries %d)\n", read, retries );
 						continue;
 					}
 					DEBUG( "[SocketReadTillEnd] Read %d  res < 0/\n", read );
@@ -2287,10 +2452,13 @@ void SocketClose( Socket* sock )
 		return;
 	}
 
+	DEBUG("[SocketClose] before lock\n");
 	if( pthread_mutex_lock( &sock->mutex ) == 0 )
 	{
+		DEBUG("[SocketClose] locked\n");
 		if( sock->s_SSLEnabled == TRUE )
 		{
+			DEBUG("[SocketClose] ssl\n");
 			if( sock->s_Ssl )
 			{
 				/*
@@ -2304,24 +2472,87 @@ void SocketClose( Socket* sock )
 					}
 				}
 				*/
-				int ret;
+				int ret, ssl_r;
+				unsigned long err;
+				ERR_clear_error();
+				switch( ( ret = SSL_shutdown( sock->s_Ssl ) ) )
+				{
+					case 1:
+						DEBUG("Ret 1\n");
+					// ok 
+					break;
+					case 0:
+						DEBUG("Ret 0\n");
+						ERR_clear_error();
+						/*
+						if( -1 != ( ret = SSL_shutdown( sock->s_Ssl ) ) )
+						{
+							DEBUG("another shutdown completed\n");
+							break;
+						}
+						*/
+						break;
+					default:
+						switch( ( ssl_r = SSL_get_error( sock->s_Ssl, ret) ) )
+						{
+							case SSL_ERROR_ZERO_RETURN:
+							break;
+							case SSL_ERROR_WANT_WRITE:
+							case SSL_ERROR_WANT_READ:
+							break;
+							case SSL_ERROR_SYSCALL:
+								if( 0 != (err = ERR_get_error() ) )
+								{
+									do
+									{
+									//log_error_write(srv, __FILE__, __LINE__, "sdds",  "SSL:", ssl_r, ret, ERR_error_string(err, NULL));
+									}while( ( err = ERR_get_error() ) );
+								}
+								else if( errno != 0 )
+								{
+									switch( errno )
+									{
+										case EPIPE:
+										case ECONNRESET:
+										break;
+										default:
+										//log_error_write(srv, __FILE__, __LINE__, "sddds", "SSL (error):", ssl_r, ret, errno, strerror(errno));
+										break;
+									}
+								}
+								break;
+								default:
+									while( ( err = ERR_get_error() ) )
+									{
+                    //					log_error_write(srv, __FILE__, __LINE__, "sdds","SSL:", ssl_r, ret, ERR_error_string(err, NULL));
+									}
+								break;
+						}
+				}
+				//int ret;
+				//SSL_shutdown( sock->s_Ssl );
+				/*
 				while( ( ret = SSL_shutdown( sock->s_Ssl ) ) == 0 )
 				{
 					usleep( 1000 );
+					DEBUG("[SocketClose] shutdown in progress\n");
 					if( ret == -1 )
 					{
 						int error = SSL_get_error( sock->s_Ssl, ret );
 						FERROR("SSL_ERROR: %d\n", error );
 					}
-				}
+				}*/
 				
+				DEBUG("[SocketClose] before ssl clear\n");
 				SSL_clear( sock->s_Ssl );
 				SSL_free( sock->s_Ssl );
 				sock->s_Ssl = NULL;
+				DEBUG("[SocketClose] ssl released\n");
 			}
 
 			if( sock->s_BIO )
 			{
+				DEBUG("[SocketClose] BIO free\n");
 				BIO_free( sock->s_BIO );;
 			}
 			sock->s_BIO = NULL;
@@ -2329,11 +2560,14 @@ void SocketClose( Socket* sock )
 		// default
 		if( sock->fd )
 		{
+			DEBUG("shutdown socket\n");
 		    shutdown( sock->fd, SHUT_RDWR );
 			close( sock->fd );
 			sock->fd = 0;
 		}
+		DEBUG("[SocketClose] before unlock\n");
 		pthread_mutex_unlock( &sock->mutex );
+		DEBUG("[SocketClose] mutex unlocked\n");
 		SocketFree( sock );
 		sock = NULL;
 	}

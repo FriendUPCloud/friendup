@@ -456,7 +456,7 @@ char *ServiceGetStatus( Service *service, int *len )
 	service->s_State = SERVICE_STOPPED;
  
 	// Setup our pipe for reading and execute our command.
-	pf = popen("/etc/init.d/nodejs status","r"); 
+	pf = popen("php test","r"); 
  
 	if( !pf )
 	{
@@ -468,7 +468,7 @@ char *ServiceGetStatus( Service *service, int *len )
 	char *tmp = fgets( data, DATA_SIZE , pf );
 	if( tmp != NULL )
 	{
-		if( strncmp( "PHP is running", data, 18 ) == 0 )
+		if( strncmp( "Could not open input file", data, 25 ) == 0 )
 		{
 			service->s_State = SERVICE_STARTED;
 		}

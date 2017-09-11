@@ -318,6 +318,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 	FQUAD storedBytes = 0;
 	FQUAD storedBytesLeft = 0;
 	FQUAD readedBytesLeft = 0;
+	struct tm activityTime;
 	
 	DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
 		
@@ -395,7 +396,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 		int usingSentinel = 0;
 		
 		// New way of finding type of device
-		MYSQLLibrary *sqllib = l->LibraryMYSQLGet( l );
+		SQLLibrary *sqllib = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
 		{
 			char temptext[ 512 ]; memset( temptext, 0, sizeof(temptext) );
@@ -403,7 +404,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 			//snprintf( temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`, fsa.`StoredBytesLeft`, fsa.`ReadedBytesLeft` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 (\
@@ -419,7 +420,7 @@ AND f.Name = '%s'",
 				usr->u_ID , usr->u_ID, name
 			);
 	
-			MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+			void *res = sqllib->Query( sqllib, temptext );
 			if( res == NULL || sqllib->NumberOfRows( sqllib, res ) <= 0 )
 			{
 				FERROR("[MountFS] %s - GetUserDevice fail: database results = NULL\n", usr->u_Name );
@@ -432,7 +433,7 @@ AND f.Name = '%s'",
 					sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 					//snprintf( temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`, fsa.`ID`, fsa.`StoredBytesLeft`, fsa.`ReadedBytesLeft` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 ( \
@@ -452,7 +453,7 @@ AND f.Name = '%s'",
 						pthread_mutex_unlock( &l->sl_InternalMutex );
 						if( type != NULL ){ FFree( type );}
 						l->sl_Error = FSys_Error_SelectFail;
-						l->LibraryMYSQLDrop( l, sqllib );
+						l->LibrarySQLDrop( l, sqllib );
 						return FSys_Error_SelectFail;
 					}
 					usingSentinel = 1;
@@ -462,7 +463,7 @@ AND f.Name = '%s'",
 					pthread_mutex_unlock( &l->sl_InternalMutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
-					l->LibraryMYSQLDrop( l, sqllib );
+					l->LibrarySQLDrop( l, sqllib );
 				
 					return FSys_Error_SelectFail;
 				}
@@ -472,7 +473,7 @@ AND f.Name = '%s'",
 				DEBUG( "[MountFS] %s - We actually did get a result!\n", usr->u_Name );
 			}
 	
-			MYSQL_ROW row;
+			char **row;
 			int j = 0;
 	
 			if( usingSentinel == 1 )
@@ -561,12 +562,20 @@ AND f.Name = '%s'",
 					readedBytesLeft = strtoul( (char *)row[ 12 ],  &end, 0 );
 				}
 				
+				if( row[ 13 ] != NULL )
+				{
+					if( sscanf( (char *)row[ 13 ], "%d-%d-%d", &(activityTime.tm_year), &(activityTime.tm_mon), &(activityTime.tm_mday) ) != EOF )
+					{
+						activityTime.tm_hour = activityTime.tm_min = activityTime.tm_sec = 0;
+					}
+				}
+				
 				DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
 			}
 			
 			sqllib->FreeResult( sqllib, res );
 
-			l->LibraryMYSQLDrop( l, sqllib );
+			l->LibrarySQLDrop( l, sqllib );
 		}
 		
 		 // old way when FC had control
@@ -729,6 +738,9 @@ AND f.Name = '%s'",
 				retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
 				retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
 				retFile->f_Activity.fsa_ID = factivityID;
+				memcpy( &(retFile->f_Activity.fsa_ToDate), &activityTime, sizeof( struct tm ) );
+				activityTime.tm_year -= 1900;
+				retFile->f_Activity.fsa_ToDateTimeT = mktime( &activityTime );
 				
 				if( usr != NULL )
 				{
@@ -871,8 +883,6 @@ merror:
  * @param mfile pointer to pointer where new created door will be stored
  * @return success (0) or fail value (not equal to 0)
  */
-
-
 int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile )
 {
 	if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
@@ -1141,19 +1151,19 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 				// from other users!
 				char *tmp = FCalloc( 1024, sizeof( char ) );
 				snprintf( tmp, 1024, "\
-					SELECT ID, `Type` FROM `Filesystem` f\
-					WHERE\
-						f.Name = '%s' AND\
-						(\
-							f.UserID = '%ld' OR\
-							f.GroupID IN (\
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-								WHERE \
-								g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND\
-								ug.UserID = '%ld'\
-							)\
-						)\
-					", name, usrs->us_User->u_ID, usrs->us_User->u_ID );
+SELECT ID, `Type` FROM `Filesystem` f \
+WHERE \
+f.Name = '%s' AND \
+( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND \
+ug.UserID = '%ld' \
+)\
+)\
+", name, usrs->us_User->u_ID, usrs->us_User->u_ID );
 
 				if( DeviceUnMount( l, remdev, usr ) != 0 )
 				//if( fsys->UnMount( remdev->f_FSys, remdev, usr ) != 0 )
@@ -1199,15 +1209,15 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 				int unmID = 0;
 				char *unmType = NULL;
 				
-				MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
-					MYSQL_RES *res = sqllib->Query( sqllib, tmp );
+					void *res = sqllib->Query( sqllib, tmp );
 					FFree( tmp );
 			
 					if( res != NULL )
 					{
-						MYSQL_ROW row;
+						char **row;
 				
 						while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 						{
@@ -1216,7 +1226,7 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 						}
 						sqllib->FreeResult( sqllib, res );
 					}
-					l->LibraryMYSQLDrop( l, sqllib );
+					l->LibrarySQLDrop( l, sqllib );
 				}
 				
 				if( unmID > 0 && unmType != NULL && strcmp( unmType, "SQLWorkgroupDrive" ) == 0 )
@@ -1389,7 +1399,7 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
 {
 	if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
 	{
-		MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 		
 		if( sqllib == NULL )
 		{
@@ -1405,17 +1415,17 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
 		
 		sqllib->SNPrintF( sqllib, 
 			where, sizeof(where), "\
-			(\
-				f.UserID = '%ld' OR\
-				f.GroupID IN (\
-					SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-					WHERE \
-						g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-						ug.UserID = '%ld'\
-				)\
-			)\
-			AND LOWER(f.Name) = LOWER('%s')\
-			", 
+(\
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+)\
+) \
+AND LOWER(f.Name) = LOWER('%s') \
+", 
 			owner->u_ID, owner->u_ID, rootDev->f_Name 
 		);
 	
@@ -1463,36 +1473,22 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
 		}
 	
 		char temptext[ 1024 ];
-		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), "SELECT * FROM `Filesystem` f\
-		WHERE\
-			f.Name = '%s' AND\
-			(\
-				f.UserID = '%ld' OR\
-				f.GroupID IN (\
-				SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-				WHERE \
-				g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND\
-				ug.UserID = '%ld'\
-			)\
-		)\
+		sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), "SELECT * FROM `Filesystem` f \
+WHERE \
+f.Name = '%s' AND \
+( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND \
+ug.UserID = '%ld' \
+)\
+)\
 		", rootDev->f_Name, owner->u_ID, owner->u_ID );
-		/*
-		sprintf( temptext, "SELECT * FROM `Filesystem` f\
-		WHERE\
-			f.Name = '%s' AND\
-			(\
-				f.UserID = '%ld' OR\
-				f.GroupID IN (\
-				SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-				WHERE \
-					g.ID = ug.UserGroupID AND g.Type = 'Workgroup' AND\
-					ug.UserID = '%ld'\
-				)\
-			)\
-		", rootDev->f_Name, owner->u_ID, owner->u_ID );
-		*/
-		MYSQL_RES *res = sqllib->Query( sqllib, temptext );
-		MYSQL_ROW row;
+
+		void *res = sqllib->Query( sqllib, temptext );
+		char **row;
 		int numberEntries = 0;
 	
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -1500,22 +1496,8 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
 			numberEntries++;
 		}
 		sqllib->FreeResult( sqllib, res );
-		/*
-		// if device was not found then we must add it
-	
-		if( numberEntries == 0 )
-		{
-			sprintf( finalQuery, "INSERT INTO %s ( %s ) VALUES( %s )", (char *)descr[ 1 ], tableQuery, dataQuery );
-		}
-		else		// device found, lets update entry
-		{
-			sprintf( temptext, "UPDATE `Filesystem` SET `Mounted` = '%d' WHERE `UserID` = '%ld' AND LOWER(`Name`) = LOWER('%s')", mount,  owner->u_ID, rootDev->f_Name );
-		}
-	
-		//int res = sqllib->NumberOfRecords( sqllib, FilesystemDesc, temptext );
-		//sqllib->Save( sqllib, FilesystemDesc, rootDev );
-		*/
-		l->LibraryMYSQLDrop( l, sqllib );
+
+		l->LibrarySQLDrop( l, sqllib );
 		pthread_mutex_unlock( &l->sl_InternalMutex );
 	}	
 	return 0;
@@ -1531,31 +1513,24 @@ int DeviceMountDB( SystemBase *l, File *rootDev, FBOOL mount )
  * @return when device exist and its avaiable then pointer to it is returned
  */
 
-File *GetUserDeviceByUserID( SystemBase *l, MYSQLLibrary *sqllib, FULONG uid, const char *devname )
+File *GetUserDeviceByUserID( SystemBase *l, SQLLibrary *sqllib, FULONG uid, const char *devname )
 {
 	File *device = NULL;
 	char temptext[ 512 ];
 	
 	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-		SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
-		FROM `Filesystem` \
-		WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
+SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
+FROM `Filesystem` \
+WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
 
-	//sprintf( temptext, "SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID` FROM `Filesystem` f WHERE f.UserID = '%ld'", usr->u_ID );
-	/*
-	sprintf( temptext, "
-		SELECT `Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
-		FROM `Filesystem` \
-		WHERE `UserID` = '%ld' AND `Name` = '%s'", uid, devname );
-	*/
-	MYSQL_RES *res = sqllib->Query( sqllib, temptext );
+	void *res = sqllib->Query( sqllib, temptext );
 	if( res == NULL )
 	{
 		FERROR("GetUserDevice fail: database results = NULL\n");
 		return NULL;
 	}
 	
-	MYSQL_ROW row;
+	char **row;
 
 	// check if device is already on list
 	INFO("[GetUserDeviceByUserID] Mount user device from Database\n");
@@ -1744,7 +1719,7 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
  * @param param to user session which called function
  * @return success (0) or fail value (not equal to 0)
  */
-int MountDoorByRow( SystemBase *l, User *usr, MYSQL_ROW row, User *mountUser )
+int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser )
 {
 	l->sl_Error = 0;
 	
@@ -1917,7 +1892,7 @@ int RefreshUserDrives( SystemBase *l, User *u, BufString *bs )
 	char *query = FCalloc( 1024, sizeof(char) );
 	if( query != NULL )
 	{
-		MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+		SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 		if( sqllib != NULL )
 		{
 			sqllib->SNPrintF( sqllib, query, 1024, "\
@@ -1941,10 +1916,10 @@ ug.UserID = '%lu' \
 				BufStringAdd( bs, "ok<!--separate-->{\"Result\":[" );
 			}
 			
-			MYSQL_RES *res = sqllib->Query( sqllib, query );
+			void *res = sqllib->Query( sqllib, query );
 			if( res != NULL  )
 			{
-				MYSQL_ROW row;
+				char **row;
 				
 				while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
 				{
@@ -2094,7 +2069,7 @@ ug.UserID = '%lu' \
 				BufStringAdd( bs, "]}" );
 			}
 			
-			l->LibraryMYSQLDrop( l, sqllib );
+			l->LibrarySQLDrop( l, sqllib );
 		}
 		
 		DEBUG("[RefreshUserDrives] query released\n");
@@ -2167,7 +2142,7 @@ int DeviceRelease( SystemBase *l, File *rootDev )
 {
 	int errRet = 0;
 	
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
@@ -2175,7 +2150,7 @@ int DeviceRelease( SystemBase *l, File *rootDev )
 		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%lld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `FilesystemID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_ID );
 	
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 
@@ -2187,7 +2162,7 @@ int DeviceRelease( SystemBase *l, File *rootDev )
 		{
 			errRet = 1;
 		}
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	else
 	{
@@ -2209,7 +2184,7 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
 {
 	int errRet = 0;
 	
-	MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
 	{
 		char temptext[ 256 ];
@@ -2230,7 +2205,7 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
 		{
 			errRet = 1;
 		}
-		l->LibraryMYSQLDrop( l, sqllib );
+		l->LibrarySQLDrop( l, sqllib );
 	}
 	else
 	{

@@ -29,7 +29,6 @@
 #include <time.h>
 #include <core/types.h>
 #include <core/library.h>
-//#include <mysql/mysqllibrary.h>
 #include <mysql.h>
 
 #include "sql_defs.h"

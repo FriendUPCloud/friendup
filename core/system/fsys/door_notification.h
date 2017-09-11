@@ -30,7 +30,7 @@
 #define __SYSTEM_FSYS_HANDLER_DOOR_NOTIFICATTION_H__
 
 #include <core/types.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <time.h>
 #include <system/systembase.h>
 #include "file_permissions.h"
@@ -58,10 +58,10 @@ typedef struct DoorNotification
 	FULONG				dn_ID;
 	FULONG 				dn_OwnerID;
 	FULONG				dn_DeviceID;
-	char						*dn_Path;
-	int						dn_Type;
-	time_t					dn_LockTime;
-	void 						*dn_SB;
+	char				*dn_Path;
+	int				dn_Type;
+	time_t				dn_LockTime;
+	void 				*dn_SB;
 }DoorNotification;
 
 //
@@ -110,25 +110,25 @@ void DoorNotificationDeleteAll( DoorNotification *lck );
 // Lock path in DB
 //
 
-FULONG DoorNotificationStartDB( MYSQLLibrary *sqllib, File *device, UserSession *ses, char *path, int type );
+FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *ses, char *path, int type );
 
 //
 // Update FFileLock table
 //
 
-int DoorNotificationUpdateDB( MYSQLLibrary *sqllib, File *device, char *path, FULONG id );
+int DoorNotificationUpdateDB( SQLLibrary *sqllib, File *device, char *path, FULONG id );
 
 //
 // Remove lock from database
 //
 
-int DoorNotificationRemoveDB( MYSQLLibrary *sqllib, FULONG id );
+int DoorNotificationRemoveDB( SQLLibrary *sqllib, FULONG id );
 
 //
 // Get all locks set on path
 //
 
-DoorNotification *DoorNotificationGetNotificationsFromPath( MYSQLLibrary *sqllib, File *device, char *path );
+DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, File *device, char *path );
 
 //
 // Communicate changes on path

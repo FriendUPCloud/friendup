@@ -238,7 +238,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		{
 			if( id > 0 )
 			{
-				MYSQLLibrary *sqllib  = l->LibraryMYSQLGet( l );
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 				if( sqllib != NULL )
 				{
 					char *tmpQuery = NULL;
@@ -281,6 +281,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					{
 						HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot allocate memory for string\"}" );
 					}
+					
+					l->LibrarySQLDrop( l, sqllib );
 				}
 				else
 				{
@@ -597,11 +599,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				
 				if( sess != NULL )
 				{
-					MYSQLLibrary *sqlLib =  l->LibraryMYSQLGet( l );
+					SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 					if( sqlLib != NULL )
 					{
 						sqlLib->Delete( sqlLib, UserSessionDesc, sess );
-						l->LibraryMYSQLDrop( l, sqlLib );
+						l->LibrarySQLDrop( l, sqlLib );
 					}
 					
 					// Logout must be last action called on UserSession

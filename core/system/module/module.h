@@ -44,7 +44,7 @@
 
 #include <system/fsys/fsys.h>
 #include <util/buffered_string.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <application/applicationlibrary.h>
 
 //

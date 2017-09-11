@@ -208,21 +208,21 @@ typedef struct SServ
 {
 	struct MinNode node;
 	FBYTE id[ FRIEND_CORE_MANAGER_ID_SIZE ];		// id of the device
-	FBYTE *sinfo;														// pointer to services information
+	char *sinfo;									// pointer to services information
 }SServ;
 
 /**
  * ServiceManager web handler
  *
- * @param lfcm pointer to FriendCoreManager
+ * @param sb pointer to SystemBase
  * @param urlpath pointer to memory where table with path is stored
  * @param request pointer to request sent by client
  * @return reponse in Http structure
  */
 
-Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
+Http *ServiceManagerWebRequest( void *lsb, char **urlpath, Http* request )
 {
-	FriendCoreManager *fcm = (FriendCoreManager *)lfcm;
+	SystemBase *l = (SystemBase *)lsb;
 	char *serviceName = NULL;
 	int newStatus = -1;
 	Service *selService = NULL;
@@ -250,22 +250,90 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		DEBUG("[ServiceManagerWebRequest] list all avaiable  services\n");
 		
 		SServ *servInfo = NULL;
+		
+		MsgItem tags[] = {
+			{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
+			{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)l->fcm->fcm_ID },
+			{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+			{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+			{ ID_QUER, (FULONG)FC_QUERY_SERVICES , MSG_INTEGER_VALUE },
+			{ MSG_GROUP_END, 0,  0 },
+			{ TAG_DONE, TAG_DONE, TAG_DONE }
+		};
+
+		DataForm *df = DataFormNew( tags );
+		SServ *lss = servInfo;
+		
+		CommFCConnection *loccon = l->fcm->fcm_CommService->s_Connections;
+		while( loccon != NULL )
+		{
+			DEBUG("[ServiceManagerWebRequest] Sending message to connection %s\n", loccon->cfcc_Address );
+			BufString *bs = SendMessageAndWait( loccon, df );
+			if( bs != NULL )
+			{
+				char *serverdata = bs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
+				DataForm *locdf = (DataForm *)serverdata;
+				
+				DEBUG("Checking RESPONSE\n");
+				if( locdf->df_ID == ID_RESP )
+				{
+					DEBUG("ID_RESP found!\n");
+					int size = locdf->df_Size;
+
+					SServ * li = FCalloc( 1, sizeof( SServ ) );
+					if( li != NULL )
+					{
+						memcpy( li->id, bs->bs_Buffer+(COMM_MSG_HEADER_SIZE*2), FRIEND_CORE_MANAGER_ID_SIZE );
+						li->sinfo = StringDuplicateN( ((char *)locdf) +COMM_MSG_HEADER_SIZE, size );
+				
+						if( lss != NULL )
+						{
+							lss->node.mln_Succ = (struct MinNode *) li;
+						}
+						else
+						{
+							if( servInfo == NULL )
+							{
+								servInfo = li;
+								lss = li;
+							}
+						}
+						lss = li;
+					}
+					else
+					{
+						FERROR("Cannot allocate memory for service\n");
+					}
+					
+					/*
+					int i;
+					for( i=0 ; i < bs->bs_Size ; i++ )
+					{
+						printf("%c ", bs->bs_Buffer[ i ] );
+					}
+					printf("\n");
+					*/
+				}
+				else
+				{
+					FERROR("Reponse in message not found!\n");
+				}
+				BufStringDelete( bs );
+			}
+			else
+			{
+				DEBUG("[ServiceManagerWebRequest] NO response received\n");
+			}
+			loccon = (CommFCConnection *)loccon->node.mln_Succ;
+		}
+		
+		DataFormDelete( df );
+		
 		//
 		// checking services on ALL Friends servers
 		//
 		/*
-		MsgItem tags[] = {
-			{ ID_FCRE, 0, MSG_GROUP_START },
-			{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
-			{ ID_QUER, (FULONG)4, (FULONG)"ALL" },
-			{ ID_SVIN, 0, (FULONG)NULL },
-			{ MSG_GROUP_END, MSG_GROUP_END, MSG_GROUP_END },
-			{ MSG_END, MSG_END, MSG_END }
-		};
-
 		
-		
-		DataForm *df = DataFormNew( tags );
 		
 		DEBUG2("[ServiceManagerWebRequest] Get services from all servers\n");
 				//const char *t = "hello";
@@ -347,7 +415,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		*/
 		BufStringAdd( nbs, "{ \"Services\": [" );
 		// should be changed later
-		Service *ls = fcm->fcm_ServiceManager->sm_Services;
+		Service *ls = l->fcm->fcm_ServiceManager->sm_Services;
 		
 		//
 		// going trough local services
@@ -382,25 +450,12 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 			SServ *checkedServer = servInfo;
 			while( checkedServer != NULL )
 			{
-				DataForm *cdf = (DataForm *)checkedServer->sinfo;
-				DEBUG("[ServiceManagerWebRequest] Services size %ld for server '%s'\n", cdf->df_Size, &(checkedServer->id[ 32 ] ) ); 
-				FBYTE *curserv = checkedServer->sinfo + COMM_MSG_HEADER_SIZE;
-				
-				cdf = (DataForm *)curserv;
-				while( cdf->df_ID == ID_SNAM )
+				if( strstr( checkedServer->sinfo, ls->GetName() ) != NULL )
 				{
-					DEBUG("[ServiceManagerWebRequest] Service found %s  entry size %ld\n", curserv + COMM_MSG_HEADER_SIZE, cdf->df_Size );
-					if( strcmp( ls->GetName(), (char *)(curserv + COMM_MSG_HEADER_SIZE) ) == 0 )
-					{
-						BufStringAdd( nbs, "," );
-						BufStringAdd( nbs, (const char *)checkedServer->id );
-						servicesAdded++;
-						break;
-					}
-					curserv += cdf->df_Size;
-					cdf = (DataForm *)curserv;
+					BufStringAdd( nbs, "," );
+					BufStringAdd( nbs, (const char *)checkedServer->id );
+					servicesAdded++;
 				}
-				
 				checkedServer = (SServ *)checkedServer->node.mln_Succ;
 			} // check remote servers
 			
@@ -421,11 +476,15 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 		
 		BufStringDelete( nbs );
 		
-		SServ *lss = servInfo;
+		lss = servInfo;
 		while( lss != NULL )
 		{
 			SServ *rem = lss;
 			lss = (SServ *)lss->node.mln_Succ;
+			if( rem->sinfo != NULL )
+			{
+				FFree( rem->sinfo );
+			}
 			FFree( rem );
 		}
 		
@@ -443,7 +502,7 @@ Http *ServiceManagerWebRequest( void *lfcm, char **urlpath, Http* request )
 	{
 		serviceName = urlpath[ ELEMENT_NAME ]; //el->data;
 		
-		Service *ls = fcm->fcm_ServiceManager->sm_Services;
+		Service *ls = l->fcm->fcm_ServiceManager->sm_Services;
 		while( ls != NULL )
 		{
 			DEBUG("[ServiceManagerWebRequest] Checking avaiable services %s pointer %p\n", ls->GetName(), ls );

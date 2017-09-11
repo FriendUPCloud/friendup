@@ -63,7 +63,7 @@
  * @param isStream pointer to information if messsage will be streamed
  * @return pointer to DataForm (response message)
  */
-
+/*
 DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len,  FBOOL *isStream )
 {
 	DataForm *df = (DataForm *)data;
@@ -99,28 +99,28 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 		{
 			DEBUG("[ParseMessage] QUERY FOUND %ld\n", df->df_Size );
 			SystemBase *lsb = (SystemBase *)serv->s_SB;
-			FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;//serv->s_FCM;
-			/*
-			 *			MsgItem tags[] = {
-			 *				{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
-			 *				{ ID_FRID, 0, 0 },
-			 *					{ ID_RESP, (FULONG)64, (FULONG)fcm->fcm_ID },
-			 *				{ MSG_GROUP_END, 0,  0 },
-			 *				{ TAG_DONE, TAG_DONE, TAG_DONE }
-		};
+			FriendCoreManager *fcm = lsb->fcm;//serv->s_FCM;
+			//
+			 //*			MsgItem tags[] = {
+			// *				{ ID_FCRE, (FULONG)0, MSG_GROUP_START },
+			// *				{ ID_FRID, 0, 0 },
+			// *					{ ID_RESP, (FULONG)64, (FULONG)fcm->fcm_ID },
+			// *				{ MSG_GROUP_END, 0,  0 },
+		//	 *				{ TAG_DONE, TAG_DONE, TAG_DONE }
+	//	};
 		
-		actDataForm = DataFormNew( tags );
-		*/
+		//actDataForm = DataFormNew( tags );
+		
 			
-			*len -= df->df_Size;
-			data += COMM_MSG_HEADER_SIZE + df->df_Size;
-			df = (DataForm *)data;
+			//*len -= df->df_Size;
+			//data += COMM_MSG_HEADER_SIZE + df->df_Size;
+			//df = (DataForm *)data;
 			
 			//
 			// Services Information
 			//
 			
-			if( df->df_ID == ID_SVIN )
+			if( df->df_Size == FC_QUERY_SERVICES )
 			{
 				DEBUG("[ParseMessage] Found services information query\n");
 				
@@ -312,11 +312,6 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 								char *attr = temp;
 								char *val = NULL;
 								
-								/*
-								 *								for( i=0 ; i < df->df_Size ; i++ )
-								 *								{
-								 *									printf("-%c\n", temp[ i ] );
-							}*/
 								
 								for( i=1 ; i < df->df_Size ; i++ )
 								{
@@ -415,17 +410,22 @@ DataForm *ParseMessage( CommService *serv, Socket *socket, FBYTE *data, int *len
 	
 	return actDataForm;
 }
+*/
 
 /**
  * Parse and run incomming Service messages
  *
+ * @param sb poitner to SystemBase
+ * @param con pointer to communication connection
  * @param df pointer to DataForm
- * @return return 0 when success, otherwise error number
+ * @param reqid request ID
+ * @return return new DataForm when success, otherwise NULL
  */
 
-int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
+DataForm *ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df, FULONG reqid )
 {
 	SystemBase *lsb = (SystemBase *)sb;
+	DataForm *respdf = NULL;
 	
 	FERROR("\t\t[ParseAndExecuteRequest] ParseAndExecuteRequest con %p\n", con );
 	
@@ -437,10 +437,11 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 	else
 	{
 		FERROR("Command not recognized!\n");
-		return -1;
+		return NULL;
 	}
 	
 	FULONG command = df->df_ID;
+	FULONG param = df->df_Size;
 	
 	Hashmap *paramhm = HashmapNew();
 	
@@ -572,9 +573,87 @@ int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df )
 				usr = (User *)usr->node.mln_Succ;
 			}
 			break;
+			
+		case ID_QUER:
+			DEBUG("[ParseMessage] Found services information query %x\n", df->df_Size );
+			
+			FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;//serv->s_FCM;
+			
+			if( param == FC_QUERY_SERVICES )
+			{
+				DEBUG("[ParseMessage] Found services information query 1\n");
+				Service *lsrv = fcm->fcm_ServiceManager->sm_Services;
+			
+				BufString *bs = BufStringNew();
+			
+				// we create buffer now and put names into it
+
+				int pos = 0;
+				lsrv = fcm->fcm_ServiceManager->sm_Services;
+			
+				BufStringAddSize( bs, "{", 1 );
+			
+				while( lsrv != NULL )
+				{
+					char temp[ 128 ];
+					int size = 0;
+				
+					if( pos == 0 )
+					{
+						size = snprintf( temp, sizeof(temp), "\"service\"=\"%s\"", lsrv->GetName() );
+					}
+					else
+					{
+						size = snprintf( temp, sizeof(temp), ",\"service\"=\"%s\"", lsrv->GetName() );
+					}
+					BufStringAddSize( bs, temp, size );
+				
+					lsrv = (Service *)lsrv->node.mln_Succ;
+					pos++;
+				}
+				BufStringAddSize( bs, "}", 1 );
+			
+				MsgItem tags[] = {
+					{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+					{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+					{ ID_QUER, (FULONG)FC_QUERY_SERVICES, MSG_INTEGER_VALUE },
+					{ ID_RESP, (FULONG)bs->bs_Size+1, (FULONG)bs->bs_Buffer },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				};
+			
+				DEBUG( "[ParseMessage] Prepare response with id: %lu buffer: %s\n", reqid, bs->bs_Buffer );
+			
+				respdf = DataFormNew( tags );
+			
+				BufStringDelete( bs );
+			}
+			else if( param == FC_QUERY_GEOLOC )
+			{
+				
+			}
+			else if( param == FC_QUERY_FRIENDCORE_INFO )
+			{
+				BufString *bs = FriendCoreInfoGet( lsb );
+				
+				MsgItem tags[] = {
+					{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+					{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_INFO, MSG_INTEGER_VALUE },
+					{ ID_RESP, (FULONG)bs->bs_Size+1, (FULONG)bs->bs_Buffer },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				};
+			
+				DEBUG( "[ParseMessage] Prepare response with id: %lu\n", reqid );
+			
+				respdf = DataFormNew( tags );
+			
+				BufStringDelete( bs );
+			}
+		break;
 	}
-	
 	HashmapFree( paramhm );
 
-return 0;
+	return respdf;
 }

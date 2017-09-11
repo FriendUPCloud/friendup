@@ -98,21 +98,12 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	{
 		BufString *bs = NULL;
 		
-		FriendCoreManager *fcm = (FriendCoreManager *) l->fcm;
+		bs = FriendCoreInfoGet( l->fcm->fcm_FCI );
 		
-		if( fcm->fcm_FCI != NULL )
-		{
-			bs = FriendCoreInfoGet( fcm->fcm_FCI );
-			
-			HttpAddTextContent( response, bs->bs_Buffer );
-			*result = 200;
-			
-			BufStringDelete( bs );
-		}
-		else
-		{
-			HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot get information from FriendCoreInfo.\"}" );
-		}
+		HttpAddTextContent( response, bs->bs_Buffer );
+		*result = 200;
+		
+		BufStringDelete( bs );
 	}
 	
 	//
@@ -121,33 +112,126 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	
 	else if( strcmp( urlpath[ 1 ], "listcores" ) == 0 )
 	{
-		FBOOL uiadmin = FALSE;
-		char temp[ 1024 ];
+		char *FCID = NULL;
+		DataForm *df = NULL; 		// if NULL then no details needed
+		char *temp = FMalloc( 2048 );
 		int pos = 0;
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		HashmapElement *el = GetHEReq( *request, "details" );
+		if( el != NULL && el->data )
+		{
+			if( strcmp( (char *)el->data, "true" ) == 0 )
+			{
+				MsgItem tags[] = {
+					{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
+					{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)l->fcm->fcm_ID },
+					{ ID_FRID, (FULONG)0 , MSG_INTEGER_VALUE },
+					{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+					{ ID_QUER, (FULONG)FC_QUERY_FRIENDCORE_INFO , MSG_INTEGER_VALUE },
+					{ MSG_GROUP_END, 0,  0 },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				};
+			
+				df = DataFormNew( tags );
+			}
+		}
+		
+		el = GetHEReq( *request, "id" );
+		if( el != NULL && el->data )
+		{
+			FCID = UrlDecodeToMem( (char *)el->data );
+		}
+		
+		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE && temp != NULL )
 		{
 			BufString *bs = BufStringNew();
-			
+
 			BufStringAddSize( bs, "ok<!--separate-->[", 18 );
+			
+			int size;
+			// current core
+			
+			if( df != NULL )
+			{
+				FBOOL addText = FALSE;
+				if( FCID != NULL )
+				{
+					if( strncmp( FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+					{
+						addText = TRUE;
+					}
+				}
+				else
+				{
+					addText = TRUE;
+				}
+				
+				if( addText == TRUE )
+				{
+					BufString *locbs = FriendCoreInfoGet( l->fcm->fcm_FCI );
+					if( locbs != NULL )
+					{
+						size = snprintf( temp, 2048, "{\"name\":\"localhost\",\"id\":\"%128s\",\"host\":\"localhost\",\"type\":\"fcnode\",\"details\":%s}", l->fcm->fcm_ID, locbs->bs_Buffer );
+						BufStringDelete( locbs );
+					}
+				}
+			}
+			else
+			{
+				size = snprintf( temp, 2048, ",{\"name\":\"localhost\",\"id\":\"%128s\",\"host\":\"localhost\",\"type\":\"fcnode\"}", l->fcm->fcm_ID );
+			}
+			BufStringAddSize( bs, temp, size );
+			pos = 1;
 			
 			// add other FC connections
 			
 			CommFCConnection *actCon = l->fcm->fcm_CommService->s_Connections;
 			while( actCon != NULL )
 			{
-				int size;
-				
-				if( pos == 0 )
+				FBOOL addText = FALSE;
+				if( FCID != NULL )
 				{
-					size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+					if( strncmp( FCID, actCon->cfcc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+					{
+						addText = TRUE;
+					}
 				}
 				else
 				{
-					size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+					addText = TRUE;
 				}
 				
-				BufStringAddSize( bs, temp, size );
+				DEBUG("Details %p\n", df );
+				
+				if( addText == TRUE )
+				{
+					if( df != NULL )	// user asked for details
+					{
+						BufString *receivedbs = SendMessageAndWait( actCon, df );
+						if( receivedbs != NULL )
+						{
+							char *serverdata = receivedbs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
+							DataForm *locdf = (DataForm *)serverdata;
+				
+							DEBUG("Checking RESPONSE\n");
+							if( locdf->df_ID == ID_RESP )
+							{
+								serverdata += COMM_MSG_HEADER_SIZE;
+								DEBUG("Response: %s\n", serverdata );
+							
+								size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"details\":%s}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address, serverdata );
+							}
+						
+							BufStringDelete( receivedbs );
+						}
+					}
+					else		// no details required
+					{
+						size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+					}
+				
+					BufStringAddSize( bs, temp, size );
+				}	// addText = TRUE
 				
 				actCon = (CommFCConnection *)actCon->node.mln_Succ;
 				pos++;
@@ -159,12 +243,23 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			bs->bs_Buffer = NULL;
 			
 			BufStringDelete( bs );
+			
+			DataFormDelete( df );
 		}
 		else
 		{
 			HttpAddTextContent( response, "fail<!--separate-->{\"result\":\"User dont have access to functionality\"}" );
 		}
 		
+		if( FCID != NULL )
+		{
+			FFree( FCID );
+		}
+		
+		if( temp != NULL )
+		{
+			FFree( temp );
+		}
 		*result = 200;
 	}
 	

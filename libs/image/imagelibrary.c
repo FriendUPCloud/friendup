@@ -36,6 +36,7 @@
 #include <util/buffered_string.h>
 #include <ctype.h>
 #include <system/systembase.h>
+#include <system/fsys/fsys_activity.h>
 
 #define LIB_NAME "image.library"
 #define LIB_VERSION			1
@@ -178,22 +179,9 @@ int ImageWrite( struct ImageLibrary *im, Image *img, File *rootDev, const char *
 		}
 		else
 		{
-			if( fp->f_Activity.fsa_StoredBytesLeft >= 0 )
-			{
-				int stored = fh->FileWrite( rfp, buffer, length );
-				fp->f_BytesStored += stored;
-				if( fp->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-				{
-					if( (fp->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
-					{
-						fp->f_Activity.fsa_StoredBytesLeft = -1;
-					}
-					else
-					{
-						fp->f_Activity.fsa_StoredBytesLeft -= stored;
-					}
-				}
-			}
+			length = FileSystemActivityCheckAndUpdate( im->sb, &(fp->f_Activity), length );
+			int stored = fh->FileWrite( rfp, buffer, length );
+			fp->f_BytesStored += stored;
 		}
 		
 		DestroyExceptionInfo( ei );
@@ -359,22 +347,9 @@ int ImageWrite( struct ImageLibrary *im, File *rootDev, gdImagePtr img, const ch
 			}
 			else
 			{
-				if( rootDev->f_Activity.fsa_StoredBytesLeft >= 0 )
-				{
-					int stored = fh->FileWrite( rfp, buffer, length );
-					rootDev->f_BytesStored += stored;
-					if( rootDev->f_Activity.fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
-					{
-						if( (rootDev->f_Activity.fsa_StoredBytesLeft-stored) <= 0 )
-						{
-							rootDev->f_Activity.fsa_StoredBytesLeft = -1;
-						}
-						else
-						{
-							rootDev->f_Activity.fsa_StoredBytesLeft -= stored;
-						}
-					}
-				}
+				length = FileSystemActivityCheckAndUpdate( im->sb, &(rootDev->f_Activity), length );
+				int stored = fh->FileWrite( rfp, buffer, length );
+				rootDev->f_BytesStored += stored;
 			}
 		}
 		else

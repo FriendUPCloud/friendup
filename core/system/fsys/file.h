@@ -32,7 +32,7 @@
 
 #include <core/types.h>
 #include <util/tagitem.h>
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <util/list_string.h>
 #include "file_permissions.h"
 #include "fsys_activity.h"

@@ -683,7 +683,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 						char dest[512];
 						UrlDecode( dest, path->parts[2] );
 						
-						MYSQLLibrary *sqllib = SLIB->LibraryMYSQLGet( SLIB );
+						SQLLibrary *sqllib = SLIB->LibrarySQLGet( SLIB );
 						
 						if( sqllib != NULL )
 						{
@@ -692,7 +692,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							if( ( fs = sqllib->Load( sqllib, FileSharedTDesc, query, &entries ) ) != NULL )
 							{
 								// Immediately drop here..
-								SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+								SLIB->LibrarySQLDrop( SLIB, sqllib );
 								
 								CacheFile *cf = NULL;
 								
@@ -909,7 +909,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 							}
 							else
 							{
-								SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+								SLIB->LibrarySQLDrop( SLIB, sqllib );
 								result = 404;
 								Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
 							}
@@ -1269,7 +1269,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 									{
 										// First try to get tinyurl
 										char *hash = path->parts[0];
-										MYSQLLibrary *sqllib  = SLIB->LibraryMYSQLGet( SLIB );
+										SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 										
 										char url[ 2048 ]; 
 										memset( url, '\0', 2048 );
@@ -1278,10 +1278,10 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 										{
 											char qery[ 1024 ];
 											sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
-											MYSQL_RES *res = sqllib->Query( sqllib, qery );
+											void *res = sqllib->Query( sqllib, qery );
 											if( res != NULL )
 											{
-												MYSQL_ROW row;
+												char **row;
 												if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 												{
 													if( row[ 0 ] != NULL )
@@ -1296,7 +1296,7 @@ extern inline Http *ProtocolHttp( Socket* sock, char* data, unsigned int length 
 												}
 												sqllib->FreeResult( sqllib, res );
 											}
-											SLIB->LibraryMYSQLDrop( SLIB, sqllib );
+											SLIB->LibrarySQLDrop( SLIB, sqllib );
 										}
 										// We have tinyurl!
 										if( hasUrl )

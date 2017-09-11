@@ -46,7 +46,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include "comm_msg.h"
-#include <mysql/mysqllibrary.h>
+#include <db/sqllib.h>
 #include <core/thread.h>
 
 //
@@ -313,7 +313,7 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df );
 //
 //
 
-int ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df );
+DataForm *ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df, FULONG reqid );
 
 //
 // CommService thread

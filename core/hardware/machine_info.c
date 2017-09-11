@@ -247,7 +247,12 @@ FUWORD GetVolumeHash()
 
  static void GetCpuid( FUINT* p, FUINT ax )
  {
-	#ifdef __arm__
+	char *ptr = (char *)p;
+	ptr[ 0 ] = 'u';
+	ptr[ 1 ] = 'n';
+	ptr[ 2 ] = 'k';
+/*
+	#if defined( __arm__ ) || defined( __arm64__ )
 	char *ptr = (char *)p;
 	ptr[ 0 ] = 'a';
 	ptr[ 1 ] = 'r';
@@ -262,6 +267,7 @@ FUWORD GetVolumeHash()
         : "0" (ax)
     );
 	#endif
+*/
  }
  
 /**
