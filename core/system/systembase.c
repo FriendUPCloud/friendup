@@ -134,7 +134,7 @@ SystemBase *SystemInit( void )
 			
 				snprintf( tempString, sizeof(tempString), "%s%s", l->sl_AutotaskPath, asdir->d_name );
 				
-				Autotask *loctask = AutotaskNew( "/bin/bash", tempString );
+				Autotask *loctask = AutotaskNew( "/bin/sh", tempString );
 				if( loctask != NULL )
 				{
 					loctask->node.mln_Succ = (MinNode *)l->sl_Autotasks;

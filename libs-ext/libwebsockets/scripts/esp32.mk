@@ -6,7 +6,7 @@
 # [ 32-b LE len ] [ Image information JSON ]
 #
 
-SHELL=/bin/bash
+SHELL=/bin/sh
 
 ESPPORT ?= $(CONFIG_ESPTOOLPY_PORT)
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # This script enables debugging the node process, IF UNSURE; DO NOT USE
 
 timestamp() {

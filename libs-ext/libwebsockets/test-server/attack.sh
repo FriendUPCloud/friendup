@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # attack the test server and try to make it fall over
 #

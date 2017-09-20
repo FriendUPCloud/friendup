@@ -182,7 +182,7 @@ pid_t popen2(const char *command, pid_t *p, int *infp, int *outfp)
 		close(p_stdout[WRITE]);
 
 		//can change to any exec* function family.
-		execl("/bin/bash", "bash", "-c", command, NULL);
+		execl("/bin/sh", "sh", "-c", command, NULL);
 		perror("execl");
 		exit(1);
 	}

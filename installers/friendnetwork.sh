@@ -78,7 +78,7 @@ or NO to install it manually: the script will\n\
 exit, you install node and restart the script.\n\
 Please note that you also need to install 'npm' and 'n'." 15 65
     if [ $? -eq "0" ]; then
-		curl -L https://git.io/n-install | bash
+		curl -L https://git.io/n-install | sh
     dialog --backtitle "Friend Network Installer" --msgbox "\
 After installation, node needs variables defined by .bashrc to run.\n\
 Unfortunately there is no option to run this script from\n\

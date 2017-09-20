@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Fake POP3 server
 # By Marcus Bointon <phpmailer@synchromedia.co.uk>

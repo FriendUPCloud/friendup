@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Run the fake pop server from bash
 # Idea from http://blog.ale-re.net/2007/09/ipersimple-remote-shell-with-netcat.html
@@ -6,5 +6,5 @@
 # Optionally, pass in a port number as the first arg
 
 mkfifo fifo
-nc -l ${1:-1100} <fifo |bash ./fakepopserver.sh >fifo
+nc -l ${1:-1100} <fifo |sh ./fakepopserver.sh >fifo
 rm fifo
