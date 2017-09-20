@@ -39,7 +39,7 @@ C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/servic
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
-	make -C system DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	$(MAKE) -C system DEBUG=$(DEBUG) NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
@@ -160,11 +160,11 @@ obj/%.o: websockets/%.c websockets/*.h websockets/%.d
 
 compile: $(OBJ_FILES)  $(TARGET)
 	@echo "\033[34mDebug compilation\033[0m"
-	make -C system compile DEBUG=1 NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	$(MAKE) -C system compile DEBUG=1 NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 release:  $(OBJ_FILES)  $(TARGET) $(OUTPUT)
 	@echo "\033[34mRelease compilation\033[0m"
-	make -C system release DEBUG=0  NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	$(MAKE) -C system release DEBUG=0  NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	
 clean:
 	@echo "\033[34mCleaning\033[0m"
@@ -174,17 +174,17 @@ clean:
 	@rm -fr obj/*
 	@rm -f *.d*
 	@rm -f $(C_FILES:%.c=%.d)
-	make -C system clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	$(MAKE) -C system clean NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	
 install:
 	@echo "\033[34mInstalling\033[0m"
 	cp $(OUTPUT) $(FRIEND_PATH)/
-	make -C system install FRIEND_PATH=$(FRIEND_PATH)
+	$(MAKE) -C system install FRIEND_PATH=$(FRIEND_PATH)
 
 setup:
 	@echo "\033[34mPrepare enviroment\033[0m"
 	mkdir -p obj bin
-	make -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
+	$(MAKE) -C system setup NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 
 # dependency system
 	

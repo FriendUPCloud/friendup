@@ -32,7 +32,7 @@ OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 ALL:	$(OBJ_FILES) $(OUTPUT)
 
 aes/libaes.a:
-	make -C aes 
+	$(MAKE) -C aes 
 
 $(OUTPUT): aes/libaes.a $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
@@ -49,7 +49,7 @@ clean:
 	@rm -f $(C_FILES:%.c=%.d)
 	@rm -rf obj/* $(OUTPUT) *.d
 	@rm -rf *.d*
-	make -C aes clean
+	$(MAKE) -C aes clean
 
 compile:	ALL
 	

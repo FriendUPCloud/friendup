@@ -1,4 +1,4 @@
 
 clean:
-	cd chrome_extension; make clean
+	cd chrome_extension; $(MAKE) clean
 
