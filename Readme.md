@@ -33,10 +33,11 @@ We recommend setting up a dedicated user for your FriendUP installation. You wil
 Dependencies
 ------------
 
-The Friend installer relies on the following packages to work :
+The Friend installer relies on the following packages to work, and must be present on the machine before starting an installation :
 
 - sudo
 - gcc
+- bash
 
 If you encounter an error during the dependencies installation process, please refer to the end of this file for a complete list of the necessary dependencies, and install them manually. Then restart the installer.
 
@@ -60,6 +61,10 @@ If you want to kill Friend Core and it's dedicated servers (see later), use the 
 ```
 
 You can run the install.sh script as many times as you want, and select different installation options. Your choices are saved and will be recovered the next time you run it. You can also have several versions of friendup on your machine with different setup options, as long as you do not try to run two Friend Cores at the same time.
+
+If you want to reinstall without having to re-enter all the information, just type :
+
+./install.sh -s
 
 Default login
 -------------
@@ -93,6 +98,8 @@ As for Friend Network, you will need to provide links to a TURN server, a STUN s
 Friend Chat needs two servers to function, the 'Presence' server, and the 'Friend Chat' server. Both servers will automatically be launched by Friend Core.
 
 In order to kill Friend Core and all the associated servers, we suggest you use the 'killfriend.sh' script.
+
+Please note that the 'Presence' server, necessary for IRC connections, does not work with user 'fadmin'": you have to create a real user and use its session for it to connect.
 
 Documentation
 -------------
@@ -128,6 +135,7 @@ List of dependencies
 
 This is the list of dependencies Friend Core needs to function.
 
+- bash
 - libssh2-1-dev
 - libssh-dev
 - libssl-dev
