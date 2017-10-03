@@ -151,7 +151,7 @@ CONFIG="0"
 if [ ! -f "$FRIEND_FOLDER/Config" ]; then
 	CONFIG="1"
 fi
-if [ -z ASKCONFIG ]; then
+if [ -z $ASKCONFIG ]; then
 	CONFIG="1"
 fi
 if [ $CONFIG -eq "1" ]; then
