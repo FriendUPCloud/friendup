@@ -3,7 +3,7 @@ Friend Unifying Platform version 1.0.0
 
 We are happy to announce the release of FriendUP version 1.0.0.
 
-FriendUP version 1.0.0 is the first complete open source release of the platform. It introduces a saturated vision for the next paradigm in computing. FriendUP comes with a powerful kernel-like web server that supports multiple protocols and data sources, next to resource- and user session management. This offers javascript developers a fresh backendless environment in which to accelerate their development of exciting new applications and games. 
+FriendUP version 1.0.0 is the first complete open source release of the platform. It introduces a saturated vision for the next paradigm in computing. FriendUP comes with a powerful kernel-like web server that supports multiple protocols and data sources, next to resource- and user session management. This offers javascript developers a fresh backendless environment in which to accelerate their development of exciting new applications and games.
 
 ![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2017/06/desktop-1.png "FriendUP Workspace")
 
@@ -29,6 +29,8 @@ cd friendup/
 ./install.sh
 ```
 We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
+
+Note: the installer will not work if you launch it with 'sh install.sh'
 
 Dependencies
 ------------

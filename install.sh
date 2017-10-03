@@ -9,6 +9,11 @@
 # them the next time you run the script.
 #
 
+# Make sure to change directory to where the script recide
+BASEDIR=$(dirname "$0")
+cd "$BASEDIR"
+echo "entering $BASEDIR"
+
 sudo apt-get install dialog
 sudo pacman -Sy dialog
 
@@ -93,11 +98,11 @@ echo "=====Installing dependencies..."
 echo "========================================================="
 sudo apt-get update
 if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
-    sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libssl1.0-dev libaio-dev \
     	mysql-server \
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
-        libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
+        libgd-dev rsync valgrind-dbg libxml2-dev php5-readline \
         cmake ssh phpmyadmin curl build-essential python
     if [ $? -eq "1" ]; then
         echo ""
@@ -106,13 +111,13 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         exit 1
     fi
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
-    sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libssl1.0-dev libaio-dev \
         mysql-server \
         php php-cli php-gd php-imap php-mysql php-curl php-readline \
-	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+	    libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
         libgd-dev rsync valgrind-dbg libxml2-dev \
-	cmake ssh phpmyadmin \
-	libwebsockets-dev libssh-dev curl build-essential python
+	    cmake ssh phpmyadmin \
+	    libssh-dev curl build-essential python
     if [ $? -eq "1" ]; then
         echo ""
         echo "Dependencies installation failed."
@@ -121,13 +126,13 @@ elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
     fi
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
     sudo pacman -Sy flex guile2.0 \
-	libssh2 libssh libaio \
+	    libssh2 libssh libaio \
         mariadb \
         php php-gd php-imap \
-	mariadb-clients file \
+	    mariadb-clients file \
         gd rsync valgrind libxml2 \
-	cmake openssh phpmyadmin make \
-	libwebsockets
+	    cmake openssh phpmyadmin make \
+	    libwebsockets
 	wget https://aur.archlinux.org/cgit/aur.git/snapshot/libmatheval.tar.gz
 	tar xvfz libmatheval.tar.gz
 	rm libmatheval.tar.gz -f
