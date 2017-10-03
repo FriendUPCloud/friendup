@@ -1225,6 +1225,7 @@ int MakeDir( struct File *s, const char *path )
 
 			FFree( directory );
 		}
+		pthread_mutex_unlock( &hd->hd_Mutex );
 		FFree( newPath );
 		return error;
 	}
