@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Werror -fvisibility=hidden  -pthread -O3 -DNDEBUG   CMakeFiles/test-client.dir/test-server/test-client.c.o  -o bin/libwebsockets-test-client -rdynamic lib/libwebsockets.a -lz -lssl -lcrypto -lm 

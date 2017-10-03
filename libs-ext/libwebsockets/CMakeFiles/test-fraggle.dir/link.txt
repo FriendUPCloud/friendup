@@ -1,1 +1,0 @@
-/usr/bin/cc  -Wall -Werror -fvisibility=hidden  -pthread -O3 -DNDEBUG   CMakeFiles/test-fraggle.dir/test-server/test-fraggle.c.o  -o bin/libwebsockets-test-fraggle -rdynamic lib/libwebsockets.a -lz -lssl -lcrypto -lm 
