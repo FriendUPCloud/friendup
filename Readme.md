@@ -22,6 +22,8 @@ In the Future, FriendUP will be to the cloud users what Linux is for machines.
 Getting started
 ===============
 
+Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
+
 Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern linux distributions. Post to the Developer Community if you run into any problems here.
 ```
 git clone https://github.com/FriendSoftwareLabs/friendup
@@ -30,16 +32,19 @@ cd friendup/
 ```
 We recommend setting up a dedicated user for your FriendUP installation. You will need the MySQL root password to allow the install script to create the database and user.
 
-Note: the installer will not work if you launch it with 'sh install.sh'
+Note: the installer will not work if you launch it with anything else than bash. Example:
+```
+sh install.sh   << Will *not* work...
+```
 
 Dependencies
 ------------
 
 The Friend installer relies on the following packages to work, and must be present on the machine before starting an installation :
 
+- bash
 - sudo
 - gcc
-- bash
 
 If you encounter an error during the dependencies installation process, please refer to the end of this file for a complete list of the necessary dependencies, and install them manually. Then restart the installer.
 
@@ -62,11 +67,14 @@ If you want to kill Friend Core and it's dedicated servers (see later), use the 
 ./killfriend.sh
 ```
 
-You can run the install.sh script as many times as you want, and select different installation options. Your choices are saved and will be recovered the next time you run it. You can also have several versions of friendup on your machine with different setup options, as long as you do not try to run two Friend Cores at the same time.
+The installation script overwrites the content of the Friend Core configuration file (build/cfg/cfg.ini), and
+will erase the extra data you have entered manually.
 
-If you want to reinstall without having to re-enter all the information, just type :
-
-./install.sh -s
+If you just want to recompile Friend Core, enter the following command in a shell:
+```
+cd myfriend
+make clean setup release install
+```
 
 Default login
 -------------
@@ -76,7 +84,13 @@ Once the installation script is finished and your local FriendCore is up and run
 FriendNetwork
 -------------
 
-The installer will give you the option to install Friend Network. Friend Network needs Friend Core to run in TLS mode, so be sure to have TLS keys ready, or select 'Create self-signed keys' when the installer prompts you for it.
+FriendNetwork can only be installed on an already installed Friend Core.
+
+To install FriendNetwork, enter the following command in a shell:
+```
+cd myfriend
+./installFriendNetwork.sh
+```
 
 In order to function, Friend Network needs a node server running on the machine. Friend Network installer will automatically install the latest version of node, npm and n.
 
@@ -89,11 +103,21 @@ In order to kill Friend Core and all the associated servers, we suggest you use 
 Friend Chat
 -----------
 
-The installer gives you the opportunity to install Friend Chat, our integrated text and video communication tool.
+You can also install Friend Chat, our integrated text and video communication tool.
 
-Friend Chat needs Friend Core to run with TLS protection : be sure to have keys ready before the installation, or just select 'Create self-encrypted keys' when the installer asks you for it.
+FriendChat can only be installed on an already installed Friend Core.
 
-The installer will also check for node.js, npm and n and install them if necessary.
+To install FriendChat, enter the following command in a shell:
+```
+cd myfriend
+./installFriendChat.sh
+```
+
+The installer will check for node.js, npm and n and install them if necessary.
+
+Friend Chat needs Friend Core to run with TLS protection : if you have not defined TLS keys during the installation of Friend Core,
+the Friend Chat installer will give you the opportunity to create them. Once this is done, Friend Core will run in TLS mode,
+and you will have to connect to your Friend machine with 'https' instead of 'http'.
 
 As for Friend Network, you will need to provide links to a TURN server, a STUN server and the credentials to enter the TURN server.
 
@@ -101,7 +125,8 @@ Friend Chat needs two servers to function, the 'Presence' server, and the 'Frien
 
 In order to kill Friend Core and all the associated servers, we suggest you use the 'killfriend.sh' script.
 
-Please note that the 'Presence' server, necessary for IRC connections, does not work with user 'fadmin'": you have to create a real user and use its session for it to connect.
+Please note that the 'Presence' server, necessary for IRC connections, does not work with user 'fadmin'": you have to create a real user and define
+bothy its name and user name and use its session for it to connect.
 
 Documentation
 -------------

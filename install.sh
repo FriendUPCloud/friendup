@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # Friend Core, Friend Chat and Friend Network installation script
@@ -19,19 +19,298 @@ sudo pacman -Sy dialog
 
 declare -i INSTALL_SCRIPT_NUMBER=0
 
-dialog --backtitle "Friend Installer" --yesno "           Welcome to Friend\n\n\
-This script will install Friend Core on your machine.\n\n
-Do you want to proceed with installation?" 10 45
-if [ $? -eq "1" ]; then
-    clear
-    exit 1
-fi
-clear
-
 # Default Friend paths
-ASKCONFIG = $1
 FRIEND_FOLDER=$(pwd)
 QUIT="Installation aborted. Please restart script to complete it."
+
+# Asks for installation path
+FRIEND_BUILD="$FRIEND_FOLDER/build"
+while true; do
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Please enter the path where Friend Core is\n\
+to be installed:" 10 55 "$FRIEND_BUILD" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        FRIEND_BUILD="$temp"
+    fi
+    # Checks the path
+    if [ -d "$FRIEND_BUILD" ]; then
+        break;
+    else
+        mkdir "$FRIEND_BUILD" > /dev/null 2>&1
+        if [ $? -eq "1" ]; then
+            # Try again as root
+            sudo mkdir "$FRIEND_BUILD"
+            if [ $? -eq "1" ]; then
+                dialog --backtitle "Friend Installer (internal)" --msgbox "\
+Impossible to create the directory\n\
+"$FRIEND_BUILD"\n\n\
+Please try again." 10 55
+            else
+                break
+            fi
+        else
+            break
+        fi
+    fi
+done
+
+# Root or not?
+mkdir "$FRIEND_BUILD/tryout" > /dev/null
+if [ $? -eq "0" ]; then
+    SUDO=""
+    rm -rf "$FRIEND_BUILD/tryout"
+else
+    SUDO="sudo"
+fi
+
+# Path to setup.ini file
+CFG_PATH="$FRIEND_BUILD/cfg/cfg.ini"
+
+# Creates build/cfg and crt directories
+if [ ! -d "$FRIEND_BUILD" ]; then
+    $SUDO mkdir "$FRIEND_BUILD"
+fi
+if [ ! -d "$FRIEND_BUILD/cfg" ]; then
+    $SUDO mkdir "$FRIEND_BUILD/cfg"
+fi
+if [ ! -d "$FRIEND_BUILD/cfg/crt" ]; then
+    $SUDO mkdir "$FRIEND_BUILD/cfg/crt"
+fi
+
+# Checks if TLS keys are already defined
+TLS="0"
+TLSCOPY="0"
+TLSDELETE="0"
+TLSSTRING="TLS: NO.\n"
+if [ -f "$FRIEND_BUILD/cfg/crt/key.pem" ]; then
+    if [ -f "$FRIEND_BUILD/cfg/crt/certificate.pem" ]; then
+        TLS="1"
+        TLSSTRING="TLS: YES, already defined.\n"
+    fi
+fi
+
+# Checks if a cfg.ini file already exists
+friendNetwork="0"
+friendChat="0"
+if [ -f "$CFG_PATH" ]; then
+
+    # Get information from cfg/cfg.ini
+    dbhost=$(sed -nr "/^\[DatabaseUser\]/ { :l /^host[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    dbname=$(sed -nr "/^\[DatabaseUser\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    dbuser=$(sed -nr "/^\[DatabaseUser\]/ { :l /^login[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    dbpass=$(sed -nr "/^\[DatabaseUser\]/ { :l /^password[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    dbport=$(sed -nr "/^\[DatabaseUser\]/ { :l /^port[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^fchost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+    friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
+
+    // Warning message: cfg.ini will be rewritten
+    dialog --backtitle "Friend Installer (internal)" --yesno "\
+The installer has detected a previous installation\n\n\
+Installing Friend again will erase the extra information from\n\
+the cfg.ini configuration file (the ones you entered manually)...\n\n\
+If you only want to recompile FriendCore, enter this command in the shell:\n\n\
+make clean setup release install\n\n\
+Do you want to continue anyway?" 16 70
+    if [ $? -eq "1" ]; then
+        clear
+        exit 1
+    fi
+fi
+if [ "$friendChat" = "" ]; then
+    friendChat="0"
+fi
+if [ "$friendNetwork" = "" ]; then
+    friendNetwork="0"
+fi
+
+# Fill-up default values if the are not defined
+if [ "$dbhost" = "" ]; then
+    dbhost="localhost"
+fi
+if [ "$dbname" = "" ]; then
+    dbname="friendup"
+fi
+if [ "$dbuser" = "" ]; then
+    dbuser="friendup"
+fi
+if [ "$dbpass" = "" ]; then
+    dbpass="friendup1"
+fi
+if [ "$dbport" = "" ]; then
+    dbport="3306"
+fi
+if [ "$friendCoreDomain" = "" ]; then
+    friendCoreDomain="localhost"
+fi
+
+# Asks for Friend Core credentials
+while true; do
+
+    dialog --defaultno --backtitle "Friend Installer (internal)" --yesno "\
+Friend Core will be installed with the following values:\n\n\
+    mysql host: $dbhost\n\
+    mysql port: $dbport\n\
+    database name: $dbname\n\
+    database user name: $dbuser\n\
+    database user password: $dbpass\n\
+    domain: $friendCoreDomain\n\
+    $TLSSTRING\n\
+Please confirm or choose 'No' to change the values..." 18 78
+    if [ $? = "0" ]; then
+        break;
+    fi
+
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core needs a database to run.\n\n\
+Please enter the mysql host name:" 11 45 "$dbhost" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ $temp != "" ]; then
+        dbhost="$temp"
+    fi
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core database.\n\n\
+Please enter the mysql port:" 10 45 "$dbport" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        dbport="$temp"
+    fi
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core database.\n\n\
+Please enter the database name:" 10 45 "$dbname" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        dbname="$temp"
+    fi
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core database.\n\n\
+Please enter a mysql user name for Friend Core,\n\
+it can be an existing user name or a new one,\n\
+but must be different from 'root'." 13 65 "$dbuser" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        dbuser="$temp"
+    fi
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core database.\n\n\
+Please enter the password\n\
+for mysql user $dbuser:" 10 45 "$dbpass" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        dbpass="$temp"
+    fi
+    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Please enter the domain name on which Friend Core will run.\n\n\
+Note that if you intend to install Friend Chat and are running\n\
+on a virtual machine, this domain cannot be 'localhost'..." 12 70 "$friendCoreDomain" --output-fd 1)
+    if [ $? = "1" ]; then
+        clear
+        echo "$QUIT"
+        exit 1
+    fi
+    if [ "$temp" != "" ]; then
+        friendCoreDomain="$temp"
+    fi
+
+# Asks for TLS keys and certificate
+    ASK="0"
+    if [ "$TLS" -eq "1" ]; then
+        temp=$(dialog --defaultno --backtitle "Friend Installer (internal)" --yesno "\
+Friend Core has been already configured with TLS keys.\n\n\
+Do you want to update them?" 10 65 --output-fd 1)
+        if [ $? -eq "0" ]; then
+            ASK="1"
+        else
+            TLSSTRING="TLS: YES.\n"
+        fi
+    else
+        temp=$(dialog --backtitle "Friend Installer (internal)" --yesno "\
+Do you want Friend Core to use TLS encryption?\n\n\
+Note: TLS is mandatory if you want to install\n\
+Friend Chat on your machine." 10 65 --output-fd 1)
+        if [ $? -eq "0" ]; then
+            ASK="1"
+        else
+            TLSSTRING="TLS: NO.\n"
+        fi
+    fi
+    if [ "$ASK" -eq "1" ]; then
+        temp=$(dialog --backtitle "Friend Installer (internal)" --yesno "\
+Create a new key and certificate or use existing ones?\n\n\
+Choose YES and this script will create new self signed keys\n\
+for you in the\n\
+$FRIEND_BUILD/cfg/crt folder.\n\n\
+Choose NO and this script will ask for the path of\n\
+existing keys, and create symlinks to them." 15 75 --output-fd 1)
+        if [ $? -eq "0" ]; then
+            # Delete existing keys
+            if [ -f "$FRIEND_BUILD/cfg/crt/key.pem" ]; then
+                rm "$FRIEND_BUILD/cfg/crt/key.pem"
+            fi
+            if [ -f "$FRIEND_BUILD/cfg/crt/certificate.pem" ]; then
+                rm "$FRIEND_BUILD/cfg/crt/certificate.pem"
+            fi
+            # Calls openssl to create the keys
+            echo "Calling openssl to create the keys."
+            $SUDO openssl req -newkey rsa:2048 -nodes -sha512 -x509 -days 3650 -nodes -out "$FRIEND_BUILD/cfg/crt/certificate.pem" -keyout "$FRIEND_BUILD/cfg/crt/key.pem"
+            TLS="1"
+            TLSCOPY="0"
+            TLSDELETE="0"
+            TLSSTRING="TLS:  YES, keys from Friend directory.\n"
+        else
+            temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core TLS.\n\n\
+Please enter the path to the private key .pem file." 10 65 "path/to/key.pem" --output-fd 1)
+            if [ $? -eq "1" ]; then
+                clear
+                echo "$QUIT"
+                exit 1
+            fi
+            if [ "$temp" != "" ]; then
+                keyPath="$temp"
+            fi
+            temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+Friend Core TLS.\n\n\
+Please enter the path to the certificate.pem file." 10 65 "path/to/certificate.pem" --output-fd 1)
+            if [ $? -eq "1" ]; then
+                clear
+                echo "$QUIT"
+                exit 1
+            fi
+            if [ "$temp" != "" ]; then
+                certificatePath="$temp"
+            fi
+            # Creates symlinks to TLS keys
+            $SUDO ln -s "$keyPath" "$FRIEND_BUILD/cfg/crt/key.pem"
+            $SUDO ln -s "$certificatePath" "$FRIEND_BUILD/cfg/crt/certificate.pem"
+        fi
+    fi
+done
 
 #echo ""
 #echo "=====Checking linux distribution..."
@@ -40,6 +319,7 @@ QUIT="Installation aborted. Please restart script to complete it."
 # check system
 if cat /etc/*-release | grep ^ID | grep ubuntu; then
     echo "Ubuntu distro found"
+    EXTRALIBS="libssl1.0-dev"
     if cat /etc/*-release | grep ^VERSION_ID | grep 14; then
             echo "version 14"
     		INSTALL_SCRIPT_NUMBER=1
@@ -49,6 +329,7 @@ if cat /etc/*-release | grep ^ID | grep ubuntu; then
 	elif cat /etc/*-release | grep ^VERSION_ID | grep 16; then
             echo "version 16"
             INSTALL_SCRIPT_NUMBER=2
+            EXTRALIBS="libssl-dev"
 	elif cat /etc/*-release | grep ^VERSION_ID | grep 17; then
             echo "version 17"
             INSTALL_SCRIPT_NUMBER=2
@@ -60,6 +341,7 @@ if cat /etc/*-release | grep ^ID | grep ubuntu; then
             INSTALL_SCRIPT_NUMBER=0
     fi
 elif cat /etc/*-release | grep ^ID | grep debian; then
+    EXTRALIBS="libssl1.0-dev"
 	echo "Debian distro found"
 	if cat /etc/*-release | grep ^VERSION_ID | grep 8; then
 		echo "version 8"
@@ -72,6 +354,7 @@ elif cat /etc/*-release | grep ^ID | grep debian; then
 		INSTALL_SCRIPT_NUMBER=0
 	fi
 elif cat /etc/*-release | grep ^ID | grep mint; then
+    EXTRALIBS="libssl1.0-dev"
     echo "Mint distro found"
     if cat /etc/*-release | grep ^VERSION_ID | grep 16; then
             echo "version 16"
@@ -96,9 +379,12 @@ fi
 echo ""
 echo "=====Installing dependencies..."
 echo "========================================================="
+clear
+echo "Installing dependencies."
+sleep 2
 sudo apt-get update
 if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
-    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libssl1.0-dev libaio-dev \
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
     	mysql-server \
         php5-cli php5-gd php5-imap php5-mysql php5-curl \
         libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
@@ -111,7 +397,7 @@ if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
         exit 1
     fi
 elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
-    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libssl1.0-dev libaio-dev \
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
         mysql-server \
         php php-cli php-gd php-imap php-mysql php-curl php-readline \
 	    libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
@@ -150,74 +436,11 @@ Write to us: developer@friendos.com" 8 40
     clear
     exit 1
 fi
-
-# Calls configuration script if -s is not used
-CONFIG="0"
-if [ ! -f "$FRIEND_FOLDER/Config" ]; then
-	CONFIG="1"
-fi
-if [ -z $ASKCONFIG ]; then
-	CONFIG="1"
-fi
-if [ $CONFIG -eq "1" ]; then
-	sh ./installers/config.sh
-	if [ $? -eq "1" ]; then
-    	clear
-    	echo "Aborting installation."
-    	exit 1
-	fi
-fi
-
-# Get directory from Config file
-. "$FRIEND_FOLDER/Config"
-FRIEND_BUILD="$FRIEND_PATH"
-if [ -z "$FRIEND_BUILD" ]; then
-    dialog --backtitle "Friend Installer" --msgbox "\
-Cannot read compilation Config file\n\n\
-Please run this script again and answer\n\
-all the questions." 10 55
-    clear
-    echo "$QUIT"
-    exit 1
-fi
-
-# Checks a setup.ini file has been generated
-if [ ! -f "$FRIEND_BUILD/cfg/setup.ini" ]
-then
-    dialog --backtitle "Friend Installer" --msgbox "\
-Cannot find setup.ini file\n\n\
-Please run this script again and answer\n\
-all the questions." 10 55
-    clear
-    echo "$QUIT"
-    exit 1
-fi
-
-# Root or not?
-mkdir "$FRIEND_BUILD/tryout" > /dev/null 2>&1
-if [ $? -eq "0" ]; then
-    SUDO=""
-    rm -rf "$FRIEND_BUILD/tryout"
-else
-    SUDO="sudo"
-fi
-
-# Get values from setup.ini file
-dbhost=$(sed -nr "/^\[FriendCore\]/ { :l /^dbhost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbname=$(sed -nr "/^\[FriendCore\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbuser=$(sed -nr "/^\[FriendCore\]/ { :l /^dbuser[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbpass=$(sed -nr "/^\[FriendCore\]/ { :l /^dbpass[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-dbport=$(sed -nr "/^\[FriendCore\]/ { :l /^dbport[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^domain[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-TLS=$(sed -nr "/^\[FriendCore\]/ { :l /^TLS[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enable[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$FRIEND_BUILD/cfg/setup.ini")
-
-clear
+sleep 2
 
 # Asks for mysql db root password
 while true; do
-    mysqlRootPass=$(dialog --backtitle "Friend Installer" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
+    mysqlRootPass=$(dialog --backtitle "Friend Installer (internal)" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
     if [ $? = "1" ]
     then
         clear
@@ -230,10 +453,45 @@ while true; do
     if [ $? -eq "0" ]; then
         break;
     fi
-	dialog --backtitle "Friend Installer" --msgbox "Illegal mysql password, please try again." 8 65
+    mysqlRootPass=$(dialog --backtitle "Friend Installer (internal)" --msgbox "Incorrect password. Please try again." 8 50 --output-fd 1)
 done
 export MYSQL_PWD=""
 clear
+
+# Creates or updates the build/cfg/cfg.ini file
+echo ";" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "; Friend Core configuration file" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "; ------------------------------" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "; Please respect both spaces and breaks between lines if you change this file manually" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo ";" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[DatabaseUser]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "login = $dbuser" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "password = $dbpass" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "host = $dbhost" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "dbname = $dbname" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = $dbport" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendCore]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "fchost = $friendCoreDomain" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "fcupload = storage/" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[Core]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "SSLEnable = $TLS" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendNetwork]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "enabled = $friendNetwork" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "[FriendChat]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "enabled = $friendChat" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+
+# Writes Config file for Friend Core compilation
+echo "# Friend Core compilation path" | tee "$FRIEND_FOLDER/Config" >> installation.log
+echo "# If empty compilation will default to" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
+echo "# $FRIEND_FOLDER/build" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
+echo "FRIEND_PATH=$FRIEND_BUILD" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
 
 # Defines mysql access
 mysqlAdminConnect="--host=$dbhost --port=$dbport --user=root"
@@ -291,29 +549,6 @@ fi
 # Clears dangerous variable
 export MYSQL_PWD=""
 
-# Creates or updates the build/cfg/cfg.ini file
-echo "[DatabaseUser]" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "login = $dbuser" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "password = $dbpass" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "host = $dbhost" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "dbname = $dbname" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "port = $dbport" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "[FriendCore]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "fchost = $friendCoreDomain" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "fcupload = storage/" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "[Core]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "SSLEnable = $TLS" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "[FriendNetwork]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "enabled = $friendNetwork" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "[FriendChat]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "enabled = $friendChat" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-
 # Builds Friend Core
 echo ""
 echo "Building Friend Core."
@@ -342,35 +577,17 @@ else
     sleep 1
 fi
 
-# Launches Friend Network installer
-if [ "$friendNetwork" -eq "1" ]; then
-    sh installers/friendnetwork.sh
-    if [ $? -eq "1" ]; then
-        clear
-        echo "Friend Core installation aborted, please restart the script."
-        exit 1
-    fi
-fi
-
-# Launches Friend Chat installer
-if [ "$friendChat" -eq "1" ]; then
-    sh installers/friendchat.sh "$mysqlRootPass"
-    if [ $? -eq "1" ]; then
-        clear
-        echo "Friend Core installation aborted, please restart the script."
-        exit 1
-    fi
-fi
-
 # Installation complete, launch?
 temp="http://$friendCoreDomain:6502"
 if [ "$TLS" -eq "1" ]; then
     temp="https://$friendCoreDomain:6502"
 fi
-dialog --backtitle "Friend Installer" --yesno "          Installation complete.\n\n\
+dialog --backtitle "Friend Installer (internal)" --yesno "Installation complete.\n\n\
 Once Friend Core is launched, you can access your local machine at:\n\
 $temp\n\n\
-Would you like to launch Friend Core?" 12 45
+To install Friend Chat run ./installFriendChat.sh,\n\
+To install Friend Network, run ./installFriendNetwork.sh\n\n\
+Would you like to launch Friend Core?" 15 75
 if [ $? = "0" ]
 then
 	clear
@@ -379,21 +596,18 @@ then
 	echo "Launching Friend Core in the background..."
 	nohup ./FriendCore >> /dev/null &
 	cd "$FRIEND_FOLDER"
-	echo "Friend Network and Friend Chat servers will be automatically launched."
-	echo "Use killfriendcore.sh to kill Friend Core and all the running servers."
+    echo
+	echo "Use killfriend.sh to kill Friend Core and all the associated servers."
+    echo
 else
 	clear
     echo ""
 	echo "You can start Friend Core from this folder:"
+    echo
 	echo "$FRIEND_BUILD"
+    echo
 	echo "by typing './FriendCore'"
-	echo "Friend Network and Friend Chat servers will be automatically launched."
-	echo "Friend Network and Friend Chat servers will be killed upon exit."
+    echo
 fi
-echo ""
-echo "Two global environment variables have been created,"
-echo "FRIEND_HOME: pointing to $FRIEND_FOLDER,"
-echo "FRIEND_PATH: pointing to $FRIEND_BUILD,"
-echo "They will be defined the next time you boot your computer."
-echo ""
+
 exit 0
