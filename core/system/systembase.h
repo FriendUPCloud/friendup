@@ -209,9 +209,10 @@ typedef struct SystemBase
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
 	
-	AuthMod							*sl_AuthModules;				// all login modules
-	AuthMod							*sl_ActiveAuthModule;		// active login module
-	char 							*sl_ModuleNames;				// name of modules which will be used
+	AuthMod							*sl_AuthModules;		// all login modules
+	AuthMod							*sl_ActiveAuthModule;	// active login module
+	AuthMod							*sl_DefaultAuthModule;  //
+	char 							*sl_ModuleNames;		// name of modules which will be used
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
 

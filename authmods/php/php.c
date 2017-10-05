@@ -58,7 +58,7 @@ typedef struct SpecialData
 	char 			*sd_ModulePath;
 	EModule 		*sd_EModule;
 	
-	char 			*(*RunMod)( struct SystemBase *l, const char *mime, const char *path, const char *args, unsigned long *length );
+	char 			*(*RunMod)( struct EModule *em, const char *mime, const char *path, const char *args, unsigned long *length );
 }SpecialData;
 
 //
@@ -154,6 +154,8 @@ long GetRevision(void)
 	return LIB_REVISION;
 }
 
+/*
+
 #define FUP_AUTHERR_PASSWORD	1
 #define FUP_AUTHERR_TIMEOUT		2
 #define FUP_AUTHERR_UPDATE		3
@@ -214,6 +216,7 @@ FBOOL UserIsAdminByAuthID( struct AuthMod *l, Http *r, char *auth )
 UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logsess, char *name, char *pass, char *devname, char *sessionId, FULONG *blockTime )
 {
 	DEBUG("[PHPAUTH] Authenticate PHP\n");
+	*/
 /*
 	// Send both get and post
 	int size = 0;
@@ -292,6 +295,7 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 		}
 	}
 	*/
+/*
 	return NULL;
 }
 
@@ -321,25 +325,6 @@ int UserCreate( struct AuthMod *l, Http *r, User *usr )
 {
 	return 0;
 }
-
-//
-// insernal , createUser
-//
-
-/*
-User *UserFromSQL( MYSQL_ROW row )
-{
-	return NULL;
-}
-
-//
-// get user by session
-//
-
-struct User *UserGetBySession( struct AuthMod *l, Http *r, const char *sessionId )
-{
-	return NULL;
-}*/
 
 //
 // Set User Full Name
@@ -378,3 +363,4 @@ int AssignApplicationsToUser( struct AuthMod *l, User *usr )
 {
 	return 0;
 }
+*/
