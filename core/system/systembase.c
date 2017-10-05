@@ -494,24 +494,44 @@ SystemBase *SystemInit( void )
 	strcpy( l->sl_LoginModPath, tempString );
 	strcat( l->sl_LoginModPath, "/authmods/");
 	
-	// all modules will be avaiable in system.library folder/emod/ subfolder
+	// all modules will be avaiable in system.library folder/authmods/ subfolder
 
-	l->sl_ActiveAuthModule = l->sl_AuthModules;
+	l->sl_ActiveAuthModule = NULL;
 	
 	d = opendir( l->sl_LoginModPath );
 	
 	if( d != NULL )
 	{
+		// we are loading default authentication module
+		
+		AuthMod *locmod = AuthModNew( l,  l->sl_LoginModPath, "fcdb.authmod", 0, NULL );
+		if( locmod != NULL )
+		{
+			l->sl_DefaultAuthModule = locmod;
+			l->sl_ActiveAuthModule = locmod;
+			//l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
+		}
+		
+		// loading additional developer modules
+		
 		while( ( dir = readdir( d ) ) != NULL )
 		{
-			if( dir->d_name[0] == '.' ) continue;
+			if( dir->d_name[0] == '.' || strcmp( dir->d_name, "fcdb.authmod" ) == 0 ) continue;
 			Log( FLOG_INFO,  "[SystemBase] Reading auth modules:  %s fullauthmodpath %s\n", dir->d_name, tempString );
 			
-			AuthMod *locmod = AuthModNew( l,  l->sl_LoginModPath, dir->d_name, 0 );
+			locmod = AuthModNew( l,  l->sl_LoginModPath, dir->d_name, 0, l->sl_DefaultAuthModule );
 			if( locmod != NULL )
 			{
 				locmod->node.mln_Succ = (MinNode *)l->sl_AuthModules;
 				l->sl_AuthModules = locmod;
+				
+				if( strcmp( locmod->am_Name, l->sl_ActiveModuleName ) == 0 )
+				{
+					l->sl_ActiveAuthModule = locmod;
+					INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
+					break;
+				}
+				
 				DEBUG("[SystemBase] AUTHMOD created, adding to list\n");
 			}
 			else
@@ -522,12 +542,8 @@ SystemBase *SystemInit( void )
 		closedir( d );
 	}
 	
-	char defaultAuth[ 128 ];
-	defaultAuth[ 0 ] = 0;
-	char *def = NULL;
-	strcpy( defaultAuth, "fcdb.authmod" );
-	
-/*
+	/*
+	// read config and set active authmod
 	{
 		struct PropertiesLibrary *plib = NULL;
 		Props *prop = NULL;
@@ -548,9 +564,26 @@ SystemBase *SystemInit( void )
 			{
 
 				char *tmp  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
-				if( tmp != NULL )
+				if( tmp != NULL && strcmp( tmp, "fcdb.authmod" ) != 0 )
 				{
-					strcpy( defaultAuth, tmp );
+					AuthMod *mod = l->sl_AuthModules;
+		
+					while( mod != NULL )
+					{
+						if( strcmp( mod->am_Name, tmp ) == 0 )
+						{
+							l->sl_ActiveAuthModule = mod;
+							if( l->sl_ActiveModuleName != NULL )
+							{
+								FFree( l->sl_ActiveModuleName );
+							}
+							l->sl_ActiveModuleName = StringDuplicate( tmp );
+							INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
+							break;
+						}
+						mod = (AuthMod *) mod->node.mln_Succ;
+					}
+					
 				}
 				
 				plib->Close( prop );
@@ -559,52 +592,19 @@ SystemBase *SystemInit( void )
 			LibraryClose( ( struct Library *)plib );
 		}
 	}
-*/
+	*/
+
 	if( l->sl_ActiveModuleName != NULL )
 	{
-		def = l->sl_ActiveModuleName;
+
 	}
 	else
 	{
-		def = defaultAuth;
-		l->sl_ActiveModuleName = StringDuplicate( def );
-	}
-	// Get auth module
-	if( def != NULL )
-	{
-		AuthMod *mod = l->sl_AuthModules;
-		
-		while( mod != NULL )
-		{
-			// atm we only need authname to get proper login page
-			if( strcmp( mod->am_Name, defaultAuth ) == 0 ) //l->sl_ActiveModuleName ) == 0 )
-			{
-				l->sl_ActiveAuthModule = mod;
-				INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
-				break;
-			}
-			mod = (AuthMod *) mod->node.mln_Succ;
-		}
-		
-		if( l->sl_ActiveAuthModule == NULL )
-		{
-			FFree( l->sl_ActiveModuleName );
-			l->sl_ActiveModuleName = NULL;
-			FERROR("ActiveAuthModule = NULL!\n");
-			return NULL;
-		}
-	}
-	else
-	{
-		FERROR("Default path not provided\n");
+		FERROR("Authentication module not provided\n");
 		return NULL;	
 	}
 	
 	Log( FLOG_INFO, "AUTHOD master set to %s\n", l->sl_ActiveAuthModule->am_Name );
-	
-	// open fcdb.logmod
-	
-	l->sl_ActiveAuthModule = l->AuthModuleGet( l );
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules END\n");
@@ -952,6 +952,11 @@ void SystemClose( SystemBase *l )
 		rmod = amod;
 		amod = (AuthMod *)amod->node.mln_Succ;
 		AuthModDelete( rmod );
+	}
+	
+	if( l->sl_DefaultAuthModule != NULL )
+	{
+		AuthModDelete( l->sl_DefaultAuthModule );
 	}
 	
 	Log( FLOG_INFO,  "[SystemBase] Closing application.library\n");

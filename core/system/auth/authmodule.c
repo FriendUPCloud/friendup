@@ -37,6 +37,28 @@
 #include <unistd.h>
 #include <system/systembase.h>
 
+// internal function
+
+int GetFunction( void *handle, char *name, void **dstfun, void *def )
+{
+	if( dlsym( handle, name ) != NULL )
+	{
+		*dstfun = dlsym( handle, name );
+	}
+	else
+	{
+		if( def != NULL )
+		{
+			*dstfun = def;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /**
  * create new AuthMod (AuthenticationModule)
  *
@@ -44,9 +66,10 @@
  * @param path to authmod file
  * @param name name of required AuthenticationModule
  * @param version required version of AuthenticationModule
+ * @param defaultAuthMod default authentication module
  * @return new AuthMod structure or NULL if error appear
  */
-AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version )
+AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version, AuthMod *defaultAuthMod )
 {
 	if( name == NULL )
 	{
@@ -163,26 +186,44 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 		}
 		
 		
+		l->am_Handle = handle = dlopen ( lmodpath, RTLD_NOW|RTLD_GLOBAL );
+		if( handle != NULL )
 		{
 			l->sb = lsb;
+			int error = 0;
 		
-			DEBUG( "[AuthMod] After init\n" );
+			DEBUG("[AuthMod] After init\n" );
 
-			l->am_Handle = handle = dlopen ( lmodpath, RTLD_NOW|RTLD_GLOBAL );
-			l->libInit = dlsym( l->am_Handle, "libInit" );
-			l->GetRevision = dlsym( l->am_Handle, "GetRevision" );
-			l->libClose = dlsym( l->am_Handle, "libClose" );
-			l->libClose = dlsym ( l->am_Handle, "libClose" );
-			l->GetVersion = dlsym ( l->am_Handle, "GetVersion" );
-			l->GetRevision = dlsym( l->am_Handle, "GetRevision" );
+			if( defaultAuthMod != NULL )
+			{
+				error = GetFunction( l->am_Handle, "libInit", &(l->libInit), defaultAuthMod->libInit );
+				error = GetFunction( l->am_Handle, "libClose", &(l->libClose), defaultAuthMod->libClose );
+				error = GetFunction( l->am_Handle, "GetVersion", &(l->GetVersion), defaultAuthMod->GetVersion );
+				error = GetFunction( l->am_Handle, "GetRevision", &(l->GetRevision), defaultAuthMod->GetRevision );
 
-			// user.library structure
-			l->Authenticate = dlsym ( l->am_Handle, "Authenticate" );
-			l->IsSessionValid = dlsym ( l->am_Handle, "IsSessionValid" );
-			l->SetAttribute = dlsym ( l->am_Handle, "SetAttribute" );
-			l->CheckPassword = dlsym( l->am_Handle, "CheckPassword" );
-			l->UpdatePassword = dlsym( l->am_Handle, "UpdatePassword" );
-			l->Logout = dlsym( l->am_Handle, "Logout" );
+				// user.library structure
+				error = GetFunction( l->am_Handle, "Authenticate", &(l->Authenticate), defaultAuthMod->Authenticate );
+				error = GetFunction( l->am_Handle, "IsSessionValid", &(l->IsSessionValid), defaultAuthMod->IsSessionValid );
+				error = GetFunction( l->am_Handle, "SetAttribute", &(l->SetAttribute), defaultAuthMod->SetAttribute );
+				error = GetFunction( l->am_Handle, "CheckPassword", &(l->CheckPassword), defaultAuthMod->CheckPassword );
+				error = GetFunction( l->am_Handle, "UpdatePassword", &(l->UpdatePassword), defaultAuthMod->UpdatePassword );
+				error = GetFunction( l->am_Handle, "Logout", &(l->Logout), defaultAuthMod->Logout );
+			}
+			else
+			{
+				l->libInit = dlsym( l->am_Handle, "libInit" );
+				l->libClose = dlsym( l->am_Handle, "libClose" );
+				l->GetVersion = dlsym ( l->am_Handle, "GetVersion" );
+				l->GetRevision = dlsym( l->am_Handle, "GetRevision" );
+
+				// user.library structure
+				l->Authenticate = dlsym ( l->am_Handle, "Authenticate" );
+				l->IsSessionValid = dlsym ( l->am_Handle, "IsSessionValid" );
+				l->SetAttribute = dlsym ( l->am_Handle, "SetAttribute" );
+				l->CheckPassword = dlsym( l->am_Handle, "CheckPassword" );
+				l->UpdatePassword = dlsym( l->am_Handle, "UpdatePassword" );
+				l->Logout = dlsym( l->am_Handle, "Logout" );
+			}
 			
 			l->libInit( l, sb ) ;
 	

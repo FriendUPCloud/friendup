@@ -211,7 +211,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
 				Sha256Init( &ctx );
 				Sha256Update( &ctx, (unsigned char *) pass, (unsigned int)strlen( pass ) ); //&(usr->u_Password[4]), strlen( usr->u_Password )-4 );
 				Sha256Final( &ctx, hash );
-		
+
 				int i;
 				int j=0;
 		
