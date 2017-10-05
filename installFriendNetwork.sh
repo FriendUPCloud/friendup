@@ -36,6 +36,61 @@ Please try again." 10 55
     fi
 done
 
+# Installs node.js
+clear
+echo "Checking for node.js and npm"
+nv=$(node -v)
+npm=$(npm -v)
+if [ -z $nv ]; then
+    dialog --backtitle "Friend Network Installer" --yesno "\
+Friend Chat needs Node.js to work and it was not found.\n\n\
+Choose YES to install it automatically\n\
+or NO to install it manually: the script will\n\
+exit, you install node and restart the script.\n\
+Please note that you also need to install 'npm' and 'n'." 15 65
+    if [ $? -eq "0" ]; then
+		curl -L https://git.io/n-install | bash
+    dialog --backtitle "Friend Network Installer" --msgbox "\
+After installation, node needs variables defined by .bashrc to run.\n\
+Unfortunately there is no option to run this script from\n\
+another script (please contact us if you find one that works)\n\
+This script will now end.\n\n\
+Open a new shell and restart .\installFriendNetwork.sh..."  15 70
+		exit 1
+    else
+        clear
+        echo "Aborting Friend Network installation."
+        exit 1
+    fi
+fi
+
+if [ "$nv" \< "v8.6.0" ]; then
+    dialog --backtitle "Friend Network Installer" --yesno "\
+Warning! node version found: $nv.\n\
+Recommended version: v8.6.0 and above.\n\n\
+Choose YES to switch to version 8.6.0,\n\
+or NO to abort this script..." 11 60
+    if [ $? -eq "0" ]; then
+        echo "Calling 'n' to change the version of node."
+        n 8.6.0
+    else
+        clear
+        echo "Aborting Friend Network installation."
+        exit 1
+    fi
+fi
+
+if [ -z "$npm" ]; then
+    dialog --backtitle "Friend Network Installer" --msgbox "\
+Node was found, but not npm. \n\
+Please install npm and restart the script." 10 70
+    clear
+    echo "Aborting Friend Network installation."
+	exit 1
+fi
+echo "node.js and npm found."
+sleep 2
+
 # Path to setup.ini file
 CFG_PATH="$FRIEND_BUILD/cfg/cfg.ini"
 
@@ -272,9 +327,5 @@ rm temp.ini
 clear
 echo "Friend Network installed successfully."
 echo "It will be automatically started when you launch Friend Core."
-echo
-echo "Warning! Since Friend Core is running in TLS mode,"
-echo "you must connect to your Friend machine with the following URL:"
-echo "https://$friendCoreDomain:6502"
 echo
 exit 0

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # Friend Core kill script
@@ -7,6 +7,18 @@
 #
 
 KILLED="0"
+
+# Kills phoenix scripts first
+ID=$(pgrep -f phoenix_FriendCoreGDB.sh)
+if [ ! -z $ID ]; then
+    echo "Phoenix_FriendCoreGDB killed"
+    pkill -9 $ID
+fi
+ID=$(pgrep -f phoenix_FriendCore.sh)
+if [ ! -z $ID ]; then
+    echo "Phoenix_FriendCore killed"
+    pkill -9 $ID
+fi
 
 # Kills Friend Core
 pkill -9 FriendCore
