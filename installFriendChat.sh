@@ -170,7 +170,7 @@ existing keys, and create symlinks to them." 15 75 --output-fd 1)
         TLSDELETE="0"
         TLSSTRING="TLS:  YES, keys from Friend directory.\n"
     else
-        temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+        temp=$(dialog --backtitle "Friend Chat Installer" --inputbox "\
 Friend Core TLS.\n\n\
 Please enter the path to the private key .pem file." 10 65 "path/to/key.pem" --output-fd 1)
         if [ $? -eq "1" ]; then
@@ -181,7 +181,7 @@ Please enter the path to the private key .pem file." 10 65 "path/to/key.pem" --o
         if [ "$temp" != "" ]; then
             keyPath="$temp"
         fi
-        temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+        temp=$(dialog --backtitle "Friend Chat Installer" --inputbox "\
 Friend Core TLS.\n\n\
 Please enter the path to the certificate.pem file." 10 65 "path/to/certificate.pem" --output-fd 1)
         if [ $? -eq "1" ]; then

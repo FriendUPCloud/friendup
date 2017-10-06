@@ -26,7 +26,7 @@ QUIT="Installation aborted. Please restart script to complete it."
 # Asks for installation path
 FRIEND_BUILD="$FRIEND_FOLDER/build"
 while true; do
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Please enter the path where Friend Core is\n\
 to be installed:" 10 55 "$FRIEND_BUILD" --output-fd 1)
     if [ $? = "1" ]; then
@@ -46,7 +46,7 @@ to be installed:" 10 55 "$FRIEND_BUILD" --output-fd 1)
             # Try again as root
             sudo mkdir "$FRIEND_BUILD"
             if [ $? -eq "1" ]; then
-                dialog --backtitle "Friend Installer (internal)" --msgbox "\
+                dialog --backtitle "Friend Installer" --msgbox "\
 Impossible to create the directory\n\
 "$FRIEND_BUILD"\n\n\
 Please try again." 10 55
@@ -110,7 +110,7 @@ if [ -f "$CFG_PATH" ]; then
     friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
 
     // Warning message: cfg.ini will be rewritten
-    dialog --backtitle "Friend Installer (internal)" --yesno "\
+    dialog --backtitle "Friend Installer" --yesno "\
 The installer has detected a previous installation\n\n\
 Installing Friend again will erase the extra information from\n\
 the cfg.ini configuration file (the ones you entered manually)...\n\n\
@@ -152,7 +152,7 @@ fi
 # Asks for Friend Core credentials
 while true; do
 
-    dialog --defaultno --backtitle "Friend Installer (internal)" --yesno "\
+    dialog --defaultno --backtitle "Friend Installer" --yesno "\
 Friend Core will be installed with the following values:\n\n\
     mysql host: $dbhost\n\
     mysql port: $dbport\n\
@@ -166,7 +166,7 @@ Please confirm or choose 'No' to change the values..." 18 78
         break;
     fi
 
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core needs a database to run.\n\n\
 Please enter the mysql host name:" 11 45 "$dbhost" --output-fd 1)
     if [ $? = "1" ]; then
@@ -177,7 +177,7 @@ Please enter the mysql host name:" 11 45 "$dbhost" --output-fd 1)
     if [ $temp != "" ]; then
         dbhost="$temp"
     fi
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core database.\n\n\
 Please enter the mysql port:" 10 45 "$dbport" --output-fd 1)
     if [ $? = "1" ]; then
@@ -188,7 +188,7 @@ Please enter the mysql port:" 10 45 "$dbport" --output-fd 1)
     if [ "$temp" != "" ]; then
         dbport="$temp"
     fi
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core database.\n\n\
 Please enter the database name:" 10 45 "$dbname" --output-fd 1)
     if [ $? = "1" ]; then
@@ -199,7 +199,7 @@ Please enter the database name:" 10 45 "$dbname" --output-fd 1)
     if [ "$temp" != "" ]; then
         dbname="$temp"
     fi
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core database.\n\n\
 Please enter a mysql user name for Friend Core,\n\
 it can be an existing user name or a new one,\n\
@@ -212,7 +212,7 @@ but must be different from 'root'." 13 65 "$dbuser" --output-fd 1)
     if [ "$temp" != "" ]; then
         dbuser="$temp"
     fi
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core database.\n\n\
 Please enter the password\n\
 for mysql user $dbuser:" 10 45 "$dbpass" --output-fd 1)
@@ -224,7 +224,7 @@ for mysql user $dbuser:" 10 45 "$dbpass" --output-fd 1)
     if [ "$temp" != "" ]; then
         dbpass="$temp"
     fi
-    temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+    temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Please enter the domain name on which Friend Core will run.\n\n\
 Note that if you intend to install Friend Chat and are running\n\
 on a virtual machine, this domain cannot be 'localhost'..." 12 70 "$friendCoreDomain" --output-fd 1)
@@ -240,7 +240,7 @@ on a virtual machine, this domain cannot be 'localhost'..." 12 70 "$friendCoreDo
 # Asks for TLS keys and certificate
     ASK="0"
     if [ "$TLS" -eq "1" ]; then
-        temp=$(dialog --defaultno --backtitle "Friend Installer (internal)" --yesno "\
+        temp=$(dialog --defaultno --backtitle "Friend Installer" --yesno "\
 Friend Core has been already configured with TLS keys.\n\n\
 Do you want to update them?" 10 65 --output-fd 1)
         if [ $? -eq "0" ]; then
@@ -249,7 +249,7 @@ Do you want to update them?" 10 65 --output-fd 1)
             TLSSTRING="TLS: YES.\n"
         fi
     else
-        temp=$(dialog --backtitle "Friend Installer (internal)" --yesno "\
+        temp=$(dialog --backtitle "Friend Installer" --yesno "\
 Do you want Friend Core to use TLS encryption?\n\n\
 Note: TLS is mandatory if you want to install\n\
 Friend Chat on your machine." 10 65 --output-fd 1)
@@ -260,7 +260,7 @@ Friend Chat on your machine." 10 65 --output-fd 1)
         fi
     fi
     if [ "$ASK" -eq "1" ]; then
-        temp=$(dialog --backtitle "Friend Installer (internal)" --yesno "\
+        temp=$(dialog --backtitle "Friend Installer" --yesno "\
 Create a new key and certificate or use existing ones?\n\n\
 Choose YES and this script will create new self signed keys\n\
 for you in the\n\
@@ -283,7 +283,7 @@ existing keys, and create symlinks to them." 15 75 --output-fd 1)
             TLSDELETE="0"
             TLSSTRING="TLS:  YES, keys from Friend directory.\n"
         else
-            temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+            temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core TLS.\n\n\
 Please enter the path to the private key .pem file." 10 65 "path/to/key.pem" --output-fd 1)
             if [ $? -eq "1" ]; then
@@ -294,7 +294,7 @@ Please enter the path to the private key .pem file." 10 65 "path/to/key.pem" --o
             if [ "$temp" != "" ]; then
                 keyPath="$temp"
             fi
-            temp=$(dialog --backtitle "Friend Installer (internal)" --inputbox "\
+            temp=$(dialog --backtitle "Friend Installer" --inputbox "\
 Friend Core TLS.\n\n\
 Please enter the path to the certificate.pem file." 10 65 "path/to/certificate.pem" --output-fd 1)
             if [ $? -eq "1" ]; then
@@ -440,7 +440,7 @@ sleep 2
 
 # Asks for mysql db root password
 while true; do
-    mysqlRootPass=$(dialog --backtitle "Friend Installer (internal)" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
+    mysqlRootPass=$(dialog --backtitle "Friend Installer" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
     if [ $? = "1" ]
     then
         clear
@@ -453,7 +453,7 @@ while true; do
     if [ $? -eq "0" ]; then
         break;
     fi
-    mysqlRootPass=$(dialog --backtitle "Friend Installer (internal)" --msgbox "Incorrect password. Please try again." 8 50 --output-fd 1)
+    mysqlRootPass=$(dialog --backtitle "Friend Installer" --msgbox "Incorrect password. Please try again." 8 50 --output-fd 1)
 done
 export MYSQL_PWD=""
 clear
@@ -582,7 +582,7 @@ temp="http://$friendCoreDomain:6502"
 if [ "$TLS" -eq "1" ]; then
     temp="https://$friendCoreDomain:6502"
 fi
-dialog --backtitle "Friend Installer (internal)" --yesno "Installation complete.\n\n\
+dialog --backtitle "Friend Installer" --yesno "Installation complete.\n\n\
 Once Friend Core is launched, you can access your local machine at:\n\
 $temp\n\n\
 To install Friend Chat run ./installFriendChat.sh,\n\
