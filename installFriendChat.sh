@@ -52,15 +52,7 @@ if [ -f "$FRIEND_BUILD/cfg/crt/key.pem" ]; then
 fi
 
 # Checks if a cfg.ini file already exists
-if [ -f "$CFG_PATH" ]; then
-    # Get information from cfg/cfg.ini
-    dbhost=$(sed -nr "/^\[DatabaseUser\]/ { :l /^host[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-    dbname=$(sed -nr "/^\[DatabaseUser\]/ { :l /^dbname[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-    dbuser=$(sed -nr "/^\[DatabaseUser\]/ { :l /^login[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-    dbpass=$(sed -nr "/^\[DatabaseUser\]/ { :l /^password[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-    dbport=$(sed -nr "/^\[DatabaseUser\]/ { :l /^port[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-    friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^fchost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-else
+if [ ! -f "$CFG_PATH" ]; then
     clear
     echo "Cannot find Friend Core cfg.ini file."
     echo "Please restart Friend Core installer.7"
@@ -80,6 +72,29 @@ fi
 # Friend Chat installation directories
 FRIENDCHATSERVERS_FOLDER="$FRIEND_BUILD/services"
 FRIENDCHATAPP_FOLDER="$FRIEND_FOLDER/interfaces/web_client/apps/FriendChat"
+presencePath="$FRIENDCHATSERVERS_FOLDER/Presence"
+helloPath="$FRIENDCHATSERVERS_FOLDER/FriendChat"
+friendChatPath="$FRIEND_BUILD/resources/webclient/apps/FriendChat"
+
+# Is Friend Chat already installed?
+installed=""
+if [ -f "$FRIENDCHATSERVERS_FOLDER/Presence/config.js" ]; then
+    installed="yes"
+    dialog --defaultno --backtitle "Friend Chat Installer" --yesno "\
+The installer has detected a previous installation.\n\n\
+Installing Friend Chat again will erase the extra information from\n\
+the configuration files (the ones you entered manually)...\n\n\
+A copy of the files will been made to:\n\
+$presencePath/config.bak\n\
+$helloPath/config.bak\n\
+$friendChatPath/local.config.bak\n\n\
+and you will have to port the modifications manually.\n\n\
+Do you want to continue anyway?" 18 79
+    if [ $? -eq "1" ]; then
+        clear
+        exit 1
+    fi
+fi
 
 GIT="https://github.com/FriendSoftwareLabs"
 
@@ -221,18 +236,35 @@ if [ -f "$CFG_PATH" ]; then
 
 fi
 
+# Removes the quotes
+if [[ $dbhost == *"\""* ]]; then
+    dbhost=$(echo "$dbhost" | sed -e 's/^"//' -e 's/"$//')
+fi
+if [[ $dbname == *"\""* ]]; then
+    dbname=$(echo "$dbname" | sed -e 's/^"//' -e 's/"$//')
+fi
+if [[ $dbuser == *"\""* ]]; then
+    dbuser=$(echo "$dbuser" | sed -e 's/^"//' -e 's/"$//')
+fi
+if [[ $dbpass == *"\""* ]]; then
+    dbpass=$(echo "$dbpass" | sed -e 's/^"//' -e 's/"$//')
+fi
+if [[ $friendCoreDomain == *"\""* ]]; then
+    friendCoreDomain=$(echo "$friendCoreDomain" | sed -e 's/^"//' -e 's/"$//')
+fi
+
 # Set proper values for Friend Chat
 if [ "$turnServer" = "" ]; then
-    turnServer="your_turn_server.com"
+    turnServer="ice.friendup.cloud"
 fi
 if [ "$stunServer" = "" ]; then
-    stunServer="your_stun_server.com"
+    stunServer="ice.friendup.cloud"
 fi
 if [ "$turnUser" = "" ]; then
-    turnUser="your_turn_username"
+    turnUser="TINA"
 fi
 if [ "$turnPass" = "" ]; then
-    turnPass="your_turn_password"
+    turnPass="TURNER"
 fi
 if [ "$presenceDbHost" = "" ]; then
     presenceDbHost="$dbhost"
@@ -268,7 +300,7 @@ fi
 LOOP="0"
 while true; do
     ASK="0"
-    if [ "$turnServer" = "your_turn_server.com" ]; then
+    if [ "$turnServer" = "ice.friendup.cloud" ]; then
         ASK="1"
     fi
     if [ "$LOOP" = "1" ]; then
@@ -432,15 +464,19 @@ clear
 
 # INSTALLATION OF THE PRESENCE SERVER
 # -----------------------------------
-npm install bcrypt
+
+# Makes a backup of the config file
+if [ "$installed" = "yes" ]; then
+    $SUDO cp "$presencePath/config.js" "$presencePath/config.bak"
+fi    
 
 # Stores the GIT password for 1 minute to avoid entering it 3 times
+npm install bcrypt
 git config --global credential.helper cache
 git config --global credential.helper 'cache --timeout=60'
 
 # Clone 'presence' from GIT in temp directory
 tempPath="/home/$USER/frienduptemp"
-presencePath="$FRIENDCHATSERVERS_FOLDER/Presence"
 if [ -d "$tempPath" ]; then
     rm -rf "$tempPath"
 fi
@@ -461,7 +497,7 @@ $SUDO cp "$presencePath"/example.config.js "$presencePath"/config.js
 
 # Pokes the new values in the presence/config.js file
 $SUDO sed -i -- "s@presence_database_host@$presenceDbHost@g" "$presencePath"/config.js
-$SUDO sed -i -- "s@3306@$presenceDbPort@g" "$presencePath"/config.js
+$SUDO sed -i -- "s@3306@$presenceDbPort@g" "$presencePath/config.js"
 $SUDO sed -i -- "s@presence_database_user@$presenceDbUser@g" "$presencePath"/config.js
 $SUDO sed -i -- "s@presence_database_password@$presenceDbPass@g" "$presencePath"/config.js
 $SUDO sed -i -- "s@presence_database_name@$presenceDbName@g" "$presencePath"/config.js
@@ -544,8 +580,12 @@ cd "$FRIEND_FOLDER"
 # Installation of the Friend Chat Server
 # --------------------------------------
 
+# Copies example.config.js file to config.bak
+if [ "$installed" = "yes" ]; then
+    $SUDO cp "$helloPath/config.js" "$helloPath/config.bak"
+fi    
+
 # Clone friendchat repository into a temp folder
-helloPath="$FRIENDCHATSERVERS_FOLDER/FriendChat"
 echo "Cloning Friend Chat server from GIT"
 if [ -d "$tempPath" ]; then
     rm -rf "$tempPath"
@@ -562,7 +602,6 @@ cd "$tempPath/server"
 $SUDO rsync -ravl . "$helloPath"
 cd "$FRIEND_FOLDER"
 
-# Copies example.config.js file to config.js
 $SUDO cp "$helloPath"/example.config.js "$helloPath"/config.js
 
 # Pokes the new values in the friendchat/config.js file
@@ -647,22 +686,24 @@ cd "$FRIEND_FOLDER"
 # -------------------------------------------
 
 # Copies all the files into friendup build directory
-helloPath="$FRIEND_BUILD/resources/webclient/apps/FriendChat"
-if [ ! -d "$helloPath" ]; then
-    $SUDO mkdir "$helloPath"
+if [ ! -d "$friendChatPath" ]; then
+    $SUDO mkdir "$friendChatPath"
 fi
 cd "$tempPath/client"
-$SUDO rsync -ravl . "$helloPath"
+$SUDO rsync -ravl . "$friendChatPath"
 
 # Delete temp directory
 rm -rf "$tempPath"
 cd "$FRIEND_FOLDER"
 
 # Copies example.local.config.js file to local.config.js
-$SUDO cp "$helloPath/example.local.config.js" "$helloPath/local.config.js"
+if [ "$installed" = "yes" ]; then
+    $SUDO cp "$friendChatPath/local.config.js" "$friendChatPath/local.config.bak"
+fi    
+$SUDO cp "$friendChatPath/example.local.config.js" "$friendChatPath/local.config.js"
 
 # Pokes the new values in the local.config.js file
-$SUDO sed -i -- "s@friendcore_host@$friendCoreDomain@g" "$helloPath/local.config.js"
+$SUDO sed -i -- "s@friendcore_host@$friendCoreDomain@g" "$friendChatPath/local.config.js"
 
 # Copy servers autostart
 if [ ! -d "$FRIEND_BUILD/autostart" ]; then

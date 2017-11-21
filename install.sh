@@ -474,9 +474,7 @@ export MYSQL_PWD=""
 clear
 
 # Make a copy of the configuration file
-if [ "$cfgFound" = "yes" ]; then
-    $SUDO cp "$FRIEND_BUILD/cfg/cfg.ini" "$FRIEND_BUILD/cfg/cfg.bak"
-fi
+$SUDO cp "$FRIEND_BUILD/cfg/cfg.ini" "$FRIEND_BUILD/cfg/cfg.bak"
 
 # Creates or updates the build/cfg/cfg.ini file
 echo ";" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
@@ -512,6 +510,7 @@ echo "# Friend Core compilation path" | tee "$FRIEND_FOLDER/Config" >> installat
 echo "# If empty compilation will default to" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
 echo "# $FRIEND_FOLDER/build" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
 echo "FRIEND_PATH=\"$FRIEND_BUILD\"" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
+echo $FRIEND_PATH
 
 # Defines mysql access
 mysqlAdminConnect="--host=$dbhost --port=$dbport --user=root"
