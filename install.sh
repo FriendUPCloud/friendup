@@ -97,6 +97,7 @@ fi
 # Checks if a cfg.ini file already exists
 friendNetwork="0"
 friendChat="0"
+cfgFound=""
 if [ -f "$CFG_PATH" ]; then
 
     # Get information from cfg/cfg.ini
@@ -108,19 +109,7 @@ if [ -f "$CFG_PATH" ]; then
     friendCoreDomain=$(sed -nr "/^\[FriendCore\]/ { :l /^fchost[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
     friendNetwork=$(sed -nr "/^\[FriendNetwork\]/ { :l /^enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
     friendChat=$(sed -nr "/^\[FriendChat\]/ { :l /^enabled[ ]*=/ { s/.*=[ ]*//; p; q;}; n; b l;}" "$CFG_PATH")
-
-    // Warning message: cfg.ini will be rewritten
-    dialog --backtitle "Friend Installer" --yesno "\
-The installer has detected a previous installation\n\n\
-Installing Friend again will erase the extra information from\n\
-the cfg.ini configuration file (the ones you entered manually)...\n\n\
-If you only want to recompile FriendCore, enter this command in the shell:\n\n\
-make clean setup release install\n\n\
-Do you want to continue anyway?" 16 70
-    if [ $? -eq "1" ]; then
-        clear
-        exit 1
-    fi
+    cfgFound="yes"
 fi
 if [ "$friendChat" = "" ]; then
     friendChat="0"
@@ -128,6 +117,13 @@ fi
 if [ "$friendNetwork" = "" ]; then
     friendNetwork="0"
 fi
+
+# Removes the quotes
+dbhost=$(echo "$dbhost" | sed -e 's/^"//' -e 's/"$//')
+dbname=$(echo "$dbname" | sed -e 's/^"//' -e 's/"$//')
+dbuser=$(echo "$dbuser" | sed -e 's/^"//' -e 's/"$//')
+dbpass=$(echo "$dbpass" | sed -e 's/^"//' -e 's/"$//')
+friendCoreDomain=$(echo "$friendCoreDomain" | sed -e 's/^"//' -e 's/"$//')
 
 # Fill-up default values if the are not defined
 if [ "$dbhost" = "" ]; then
@@ -147,6 +143,151 @@ if [ "$dbport" = "" ]; then
 fi
 if [ "$friendCoreDomain" = "" ]; then
     friendCoreDomain="localhost"
+fi
+
+#echo ""
+#echo "=====Checking linux distribution..."
+#echo "========================================================="
+
+# check system
+if cat /etc/*-release | grep ^ID | grep ubuntu; then
+    echo "Ubuntu distro found"
+    EXTRALIBS="libssl1.0-dev"
+    if cat /etc/*-release | grep ^VERSION_ID | grep 14; then
+            echo "version 14"
+    		INSTALL_SCRIPT_NUMBER=1
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 15; then
+            echo "version 15"
+            INSTALL_SCRIPT_NUMBER=1
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 16; then
+            echo "version 16"
+            INSTALL_SCRIPT_NUMBER=2
+            EXTRALIBS="libssl-dev"
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 17; then
+            echo "version 17"
+            INSTALL_SCRIPT_NUMBER=2
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 18; then
+            echo "version 18"
+            INSTALL_SCRIPT_NUMBER=2
+	else
+            echo "version other"
+            INSTALL_SCRIPT_NUMBER=0
+    fi
+elif cat /etc/*-release | grep ^ID | grep debian; then
+    EXTRALIBS="libssl1.0-dev"
+	echo "Debian distro found"
+	if cat /etc/*-release | grep ^VERSION_ID | grep 8; then
+		echo "version 8"
+		INSTALL_SCRIPT_NUMBER=1
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 9; then
+		echo "version 9"
+		INSTALL_SCRIPT_NUMBER=2
+	else
+		echo "version other"
+		INSTALL_SCRIPT_NUMBER=0
+	fi
+elif cat /etc/*-release | grep ^ID | grep mint; then
+    EXTRALIBS="libssl1.0-dev"
+    echo "Mint distro found"
+    if cat /etc/*-release | grep ^VERSION_ID | grep 16; then
+            echo "version 16"
+            INSTALL_SCRIPT_NUMBER=1
+    elif cat /etc/*-release | grep ^VERSION_ID | grep 17; then
+            echo "version 17"
+            INSTALL_SCRIPT_NUMBER=1
+	elif cat /etc/*-release | grep ^VERSION_ID | grep 18; then
+            echo "version 18"
+            INSTALL_SCRIPT_NUMBER=2
+	else
+            echo "version other"
+            INSTALL_SCRIPT_NUMBER=0
+    fi
+elif cat /etc/*-release | grep ^ID | grep arch; then
+	echo "archlinux distro found"
+	INSTALL_SCRIPT_NUMBER=3
+else
+    INSTALL_SCRIPT_NUMBER=-1
+fi
+
+echo ""
+echo "=====Installing dependencies..."
+echo "========================================================="
+clear
+echo "Installing dependencies."
+sleep 2
+sudo apt-get update
+if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
+    	mysql-server \
+        php5-cli php5-gd php5-imap php5-mysql php5-curl \
+        libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+        libgd-dev rsync valgrind-dbg libxml2-dev php5-readline \
+        cmake ssh phpmyadmin curl build-essential python
+    if [ $? -eq "1" ]; then
+        echo ""
+        echo "Dependencies installation failed."
+        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
+        exit 1
+    fi
+elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
+    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
+        mysql-server \
+        php php-cli php-gd php-imap php-mysql php-curl php-readline \
+	    libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+        libgd-dev rsync valgrind-dbg libxml2-dev \
+	    cmake ssh phpmyadmin \
+	    libssh-dev curl build-essential python
+    if [ $? -eq "1" ]; then
+        echo ""
+        echo "Dependencies installation failed."
+        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
+        exit 1
+    fi
+elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
+    sudo pacman -Sy flex guile2.0 \
+	    libssh2 libssh libaio \
+        mariadb \
+        php php-gd php-imap \
+	    mariadb-clients file \
+        gd rsync valgrind libxml2 \
+	    cmake openssh phpmyadmin make \
+	    libwebsockets
+	wget https://aur.archlinux.org/cgit/aur.git/snapshot/libmatheval.tar.gz
+	tar xvfz libmatheval.tar.gz
+	rm libmatheval.tar.gz -f
+	cd libmatheval
+	patch -p0 -i ../patches/archlinux-libmatheval-PKGBUILD.patch
+	makepkg 2>&1 | tee makepkg.log
+	sudo pacman -U libmatheval*pkg*
+	cd ..
+	dialog --backtitle "Friend installer" --msgbox "If you just installed mariadb, please do\n\nsudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql" 10 40
+	sudo systemctl start mariadb
+	dialog --backtitle "Friend installer" --msgbox "Please uncomment lines\n\nextension=gd.so\nextension=imap.so\nextension=pdo_mysql.so\nextension=mysqli.so\nextension=curl.so\nextension=readline.so\nextension=gettext.so\n\nand add\n\n$PWD/build/\n\nto open_basedir directive\n\ninto /etc/php/php.ini" 23 40
+else
+    dialog --backtitle "Friend Installer" --msgbox "Supported linux version not found!\n\n\
+Write to us: developer@friendos.com" 8 40
+    clear
+    exit 1
+fi
+sleep 2
+
+# Warning message: cfg.ini will be rewritten
+if [ "$cfgFound" = "yes" ]; then
+    dialog --defaultno --backtitle "Friend Installer" --yesno "\
+The installer has detected a previous installation.\n\n\
+Installing Friend again will erase the extra information from\n\
+the cfg.ini configuration file (the ones you entered manually)...\n\n\
+A copy of the file will been made to:\n\
+$FRIEND_BUILD/cfg/cfg.bak\n\
+and you will have to port the modifications manually.\n\n\
+If you only want to recompile FriendCore, enter this command in the shell
+after exiting the installer:\n\n\
+make clean setup release install\n\n\
+Do you want to continue anyway?" 21 70
+    if [ $? -eq "1" ]; then
+        clear
+        exit 1
+    fi
 fi
 
 # Asks for Friend Core credentials
@@ -312,132 +453,6 @@ Please enter the path to the certificate.pem file." 10 65 "path/to/certificate.p
     fi
 done
 
-#echo ""
-#echo "=====Checking linux distribution..."
-#echo "========================================================="
-
-# check system
-if cat /etc/*-release | grep ^ID | grep ubuntu; then
-    echo "Ubuntu distro found"
-    EXTRALIBS="libssl1.0-dev"
-    if cat /etc/*-release | grep ^VERSION_ID | grep 14; then
-            echo "version 14"
-    		INSTALL_SCRIPT_NUMBER=1
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 15; then
-            echo "version 15"
-            INSTALL_SCRIPT_NUMBER=1
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 16; then
-            echo "version 16"
-            INSTALL_SCRIPT_NUMBER=2
-            EXTRALIBS="libssl-dev"
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 17; then
-            echo "version 17"
-            INSTALL_SCRIPT_NUMBER=2
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 18; then
-            echo "version 18"
-            INSTALL_SCRIPT_NUMBER=2
-	else
-            echo "version other"
-            INSTALL_SCRIPT_NUMBER=0
-    fi
-elif cat /etc/*-release | grep ^ID | grep debian; then
-    EXTRALIBS="libssl1.0-dev"
-	echo "Debian distro found"
-	if cat /etc/*-release | grep ^VERSION_ID | grep 8; then
-		echo "version 8"
-		INSTALL_SCRIPT_NUMBER=1
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 9; then
-		echo "version 9"
-		INSTALL_SCRIPT_NUMBER=2
-	else
-		echo "version other"
-		INSTALL_SCRIPT_NUMBER=0
-	fi
-elif cat /etc/*-release | grep ^ID | grep mint; then
-    EXTRALIBS="libssl1.0-dev"
-    echo "Mint distro found"
-    if cat /etc/*-release | grep ^VERSION_ID | grep 16; then
-            echo "version 16"
-            INSTALL_SCRIPT_NUMBER=1
-    elif cat /etc/*-release | grep ^VERSION_ID | grep 17; then
-            echo "version 17"
-            INSTALL_SCRIPT_NUMBER=1
-	elif cat /etc/*-release | grep ^VERSION_ID | grep 18; then
-            echo "version 18"
-            INSTALL_SCRIPT_NUMBER=2
-	else
-            echo "version other"
-            INSTALL_SCRIPT_NUMBER=0
-    fi
-elif cat /etc/*-release | grep ^ID | grep arch; then
-	echo "archlinux distro found"
-	INSTALL_SCRIPT_NUMBER=3
-else
-    INSTALL_SCRIPT_NUMBER=-1
-fi
-
-echo ""
-echo "=====Installing dependencies..."
-echo "========================================================="
-clear
-echo "Installing dependencies."
-sleep 2
-sudo apt-get update
-if [ "$INSTALL_SCRIPT_NUMBER" -eq "1" ];then
-    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
-    	mysql-server \
-        php5-cli php5-gd php5-imap php5-mysql php5-curl \
-        libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
-        libgd-dev rsync valgrind-dbg libxml2-dev php5-readline \
-        cmake ssh phpmyadmin curl build-essential python
-    if [ $? -eq "1" ]; then
-        echo ""
-        echo "Dependencies installation failed."
-        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
-        exit 1
-    fi
-elif [ "$INSTALL_SCRIPT_NUMBER" -eq "2" ];then
-    sudo apt-get install libsqlite3-dev libsmbclient-dev libssh2-1-dev libssh-dev libaio-dev $EXTRALIBS \
-        mysql-server \
-        php php-cli php-gd php-imap php-mysql php-curl php-readline \
-	    libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
-        libgd-dev rsync valgrind-dbg libxml2-dev \
-	    cmake ssh phpmyadmin \
-	    libssh-dev curl build-essential python
-    if [ $? -eq "1" ]; then
-        echo ""
-        echo "Dependencies installation failed."
-        echo "Please refer to 'Readme.md' for more information on how to solve this problem."
-        exit 1
-    fi
-elif [ "$INSTALL_SCRIPT_NUMBER" -eq "3" ];then
-    sudo pacman -Sy flex guile2.0 \
-	    libssh2 libssh libaio \
-        mariadb \
-        php php-gd php-imap \
-	    mariadb-clients file \
-        gd rsync valgrind libxml2 \
-	    cmake openssh phpmyadmin make \
-	    libwebsockets
-	wget https://aur.archlinux.org/cgit/aur.git/snapshot/libmatheval.tar.gz
-	tar xvfz libmatheval.tar.gz
-	rm libmatheval.tar.gz -f
-	cd libmatheval
-	patch -p0 -i ../patches/archlinux-libmatheval-PKGBUILD.patch
-	makepkg 2>&1 | tee makepkg.log
-	sudo pacman -U libmatheval*pkg*
-	cd ..
-	dialog --backtitle "Friend installer" --msgbox "If you just installed mariadb, please do\n\nsudo mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql" 10 40
-	sudo systemctl start mariadb
-	dialog --backtitle "Friend installer" --msgbox "Please uncomment lines\n\nextension=gd.so\nextension=imap.so\nextension=pdo_mysql.so\nextension=mysqli.so\nextension=curl.so\nextension=readline.so\nextension=gettext.so\n\nand add\n\n$PWD/build/\n\nto open_basedir directive\n\ninto /etc/php/php.ini" 23 40
-else
-    dialog --backtitle "Friend Installer" --msgbox "Supported linux version not found!\n\n\
-Write to us: developer@friendos.com" 8 40
-    clear
-    exit 1
-fi
-sleep 2
-
 # Asks for mysql db root password
 while true; do
     mysqlRootPass=$(dialog --backtitle "Friend Installer" --passwordbox "Please enter mysql root password:" 8 50 --output-fd 1)
@@ -458,6 +473,11 @@ done
 export MYSQL_PWD=""
 clear
 
+# Make a copy of the configuration file
+if [ "$cfgFound" = "yes" ]; then
+    $SUDO cp "$FRIEND_BUILD/cfg/cfg.ini" "$FRIEND_BUILD/cfg/cfg.bak"
+fi
+
 # Creates or updates the build/cfg/cfg.ini file
 echo ";" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "; Friend Core configuration file" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
@@ -465,14 +485,14 @@ echo "; ------------------------------" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.in
 echo "; Please respect both spaces and breaks between lines if you change this file manually" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo ";" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "[DatabaseUser]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "login = $dbuser" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "password = $dbpass" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "host = $dbhost" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "dbname = $dbname" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "login = \"$dbuser\"" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "password = \"$dbpass\"" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "host = \"$dbhost\"" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "dbname = \"$dbname\"" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "port = $dbport" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "[FriendCore]" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
-echo "fchost = $friendCoreDomain" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
+echo "fchost = \"$friendCoreDomain\"" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "port = 6502" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "fcupload = storage/" | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
@@ -491,7 +511,7 @@ echo " " | $SUDO tee -a "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log
 echo "# Friend Core compilation path" | tee "$FRIEND_FOLDER/Config" >> installation.log
 echo "# If empty compilation will default to" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
 echo "# $FRIEND_FOLDER/build" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
-echo "FRIEND_PATH=$FRIEND_BUILD" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
+echo "FRIEND_PATH=\"$FRIEND_BUILD\"" | tee -a "$FRIEND_FOLDER/Config" >> installation.log
 
 # Defines mysql access
 mysqlAdminConnect="--host=$dbhost --port=$dbport --user=root"
