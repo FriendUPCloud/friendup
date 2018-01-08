@@ -5,7 +5,7 @@ We are happy to announce the release of FriendUP version 1.1.
 
 FriendUP version 1.1 is the second major release of the platform, and has aggregated a huge bunch of fixes and improvements.
 
-![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2017/06/desktop-1.png "FriendUP Workspace")
+![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2018/01/11.png "FriendUP Workspace")
 
 Across devices
 --------------
