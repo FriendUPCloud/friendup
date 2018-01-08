@@ -111,6 +111,7 @@ Application.run = function( msg )
 	
 		// Initialize
 		var f = new File( 'Progdir:Templates/editor.html' );
+		f.i18n();
 		f.onLoad = function ( d )
 		{
 			w.setContent ( d, function()
@@ -360,7 +361,7 @@ Application.save = function( mode )
 		// We have a filename
 		if( p < ( f ? f.filename.length : 0 ) && p > 0 )
 		{
-			Application.getCurrentContent( function( data ){ Application.saveFile( f.filename, data ); } );
+			Application.getCurrentContent( function( data ){ Application.saveFile( f.filename, data, mode ); } );
 		}
 		// We need to choose where to save
 		else
@@ -455,7 +456,7 @@ Application.saveAs = function()
 };
 
 // Do the actual saving of the file
-Application.saveFile = function( filename, content )
+Application.saveFile = function( filename, content, mode )
 {
 	var p = Application.currentPath;
 	if ( p.substr( p.length-1, 1 ) != ':' && p.substr( p.length-1, 1 ) != '/' )
@@ -473,6 +474,18 @@ Application.saveFile = function( filename, content )
 	{
 		var files = msg.files;
 		var currentFile = msg.currentFile;
+
+		// Save a backup of the old file!
+		if( mode == 'withbackup' )
+		{
+			var oldFile = new File( filename );
+			oldFile.onLoad = function( data )
+			{
+				var bf = new File( filename + '.bak' );
+				bf.save( data );
+			}
+			oldFile.load();
+		}
 
 		var f = new File(filename);
 		f.onSave = function ()
@@ -564,7 +577,7 @@ Application.receiveMessage = function( msg )
 			break;
 		case 'save':
 		case 'save_file':
-			Application.save();
+			Application.save( msg.mode );
 			break;
 		case 'close':
 			Application.closeFile();
@@ -781,7 +794,14 @@ Application.receiveMessage = function( msg )
 				var data = {
 					str: 'unknown'
 				};
-				if( msg.file.filename.length && msg.file.filename != 'Empty file' )
+								
+				// Test only real files, no backup or empty files
+				var fl = msg.file.filename;
+				if( 
+					fl.length && 
+					fl != 'Empty file' &&
+					fl.substr( fl.length - 4, 4 ) != '.bak'
+				)
 				{
 					if( this.project.Files )
 					{
@@ -964,6 +984,10 @@ Application.receiveMessage = function( msg )
 				var f = new File( Application.projectFilename );
 				f.save( JSON.stringify( project ) );
 				Application.receiveMessage( { command: 'project_closewin' } );
+				Application.masterView.sendMessage( {
+					command: 'projectinfo',
+					data: project
+				} );
 			}
 			break;
 	}
@@ -1380,7 +1404,7 @@ Application.addAppDoor = function()
 						var f = msg.files[msg.currentFile];
 						var p = ap.currentPath + f.filename;
 						if (args) p = args[0];
-						Application.saveFile(p, f.content);
+						Application.saveFile( p, f.content );
 						pollEvent('FileSave', p);
 					});
 					break;
