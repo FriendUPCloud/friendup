@@ -27,10 +27,11 @@ function GuiDeskletScrollHorizontal( e )
 	var m = e.clientX - l.offsetLeft;
 	if( m >= lw ) m = lw - 1;
 	var end = l.childNodes[ l.childNodes.length - 1 ];
-	if( !end ) return l.scroll( 0, 0 );
+	if( !end ) { l.scrollLeft = 0; l.scrollTop = 0; return; }
 	var whole = end.offsetLeft + end.offsetWidth + 10;
 	var off = m / lw * ( whole - lw );
-	l.scroll( off, 0 );
+	l.scrollLeft = off;
+	l.scrollTop = 0;
 }
 
 function GuiDeskletScrollVertical( e )
@@ -41,10 +42,11 @@ function GuiDeskletScrollVertical( e )
 	var m = e.clientY - l.offsetTop;
 	if( m >= lh ) m = lh - 1;
 	var end = l.childNodes[ l.childNodes.length - 1 ];
-	if( !end ) return l.scroll( 0, 0 );
+	if( !end ) { l.scrollLeft = 0; l.scrollTop = 0; return }
 	var whole = end.offsetTop + end.offsetHeight + 10;
 	var off = m / lh * ( whole - lh );
-	l.scroll( 0, off );
+	l.scrollLeft = 0;
+	l.scrollTop = off;
 }
 
 
