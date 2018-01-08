@@ -120,19 +120,33 @@ function AuthenticateApplication( $appName, $UserID, $searchGroups = false )
 	
 	if( !$searchGroups )
 	{
-		$groups = $SqlDatabase->FetchObjects( 'SELECT ug.Name FROM FUserGroup ug, FUserToGroup utg WHERE utg.UserID=\'' . $UserID . '\' AND utg.UserGroupID = ug.ID' );
-		if( !$groups ) return 'fail<!--separate-->User with no group can not use apps.';
-		$searchGroups = array(); foreach( $groups as $g ) $searchGroups[] = $g->Name;
+		if( !( $groups = $SqlDatabase->FetchObjects( '
+			SELECT ug.Name 
+			FROM 
+				FUserGroup ug, FUserToGroup utg 
+			WHERE 
+				utg.UserID=\'' . $UserID . '\' AND utg.UserGroupID = ug.ID
+		' ) ) )
+		{
+			return 'fail<!--separate-->User with no group can not use apps.';
+		}
+		$searchGroups = array(); 
+		foreach( $groups as $g )
+		{
+			$searchGroups[] = $g->Name;
+		}
 	}
-	
+		
 	// Do we have a project?
 	if( strtolower( substr( $appName, -4, 4 ) ) == '.apf' )
 	{
 		include_once( 'php/classes/file.php' );
 		$f = new File( $appName );
-		$f->Load();
-		$content = $f->GetContent();
-		return 'ok<!--separate-->' . $content;
+		if( $f->Load() )
+		{
+			return 'ok<!--separate-->' . $f->GetContent();
+		}
+		return 'fail<!--separate-->{"Error":"Can not find file."}';
 	}
 	else
 	{
@@ -249,26 +263,36 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	// Set config object
 	$Config = new Object();
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
-	              'FCHost', 'FCPort', 'FCUpload', 
+	              'FCHost', 'FCPort', 'FCUpload', 'FCPort', 
 	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork' );
+
+	// Shortcuts
+	$dataUser = $configfilesettings[ 'DatabaseUser' ];
+	$dataCore = $configfilesettings[ 'FriendCore' ];
+	$datCore2 = $configfilesettings[ 'Core' ]; // TODO: Deprecated?
+	if( isset( $configfilesettings[ 'Security' ] ) )
+		$security = $configfilesettings[ 'Security' ];
+	else $security = [];
+	$frindNet = $configfilesettings[ 'FriendNetwork' ];
 
 	foreach( array(
 		'host', 'login', 'password', 'dbname', 
-		'fchost', 'fcport', 'fcupload',
+		'fchost', 'fcport', 'fcupload', 'port', 
 		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork'
 	) as $k=>$type )
 	{
 		$val = '';
+		
 		switch( $type )
 		{
 			case 'host':
 			case 'login':
 			case 'password':
 			case 'dbname':
-				$val = isset( $configfilesettings['DatabaseUser'][$type] ) ? $configfilesettings['DatabaseUser'][$type] : '';
+				$val = isset( $dataUser[ $type ] ) ? $dataUser[ $type ] : '';
 				break;	
 			case 'fcupload':
-				$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				if( substr( $val, 0, 1 ) != '/' )
 					$val = getcwd() . '/' . $val;
 				break;
@@ -276,17 +300,22 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			case 'fchost':
 			case 'fcport':
 			case 'fconlocalhost':
-				$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				break;
 			case 'SSLEnable':	
-				$val = isset( $configfilesettings['Core'][$type] ) ? $configfilesettings['Core'][$type] : '';
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
+				// Check in deprecated location
+				if( !$val )
+				{
+					$val = isset( $datCore2[ $type ] ) ? $datCore2[ $type ] : '';
+				}
 				break;
 				
 			case 'domains':
-				$val = isset( $configfilesettings['Security'][$type] ) ? $configfilesettings['Security'][$type] : '';
+				$val = isset( $security[ $type ] ) ? $security[ $type ] : '';
 				break;	
 			case 'friendnetwork':
-				$val = isset( $configfilesettings['FriendNetwork']['enabled'] ) ? $configfilesettings['FriendNetwork']['enabled'] : '0';	
+				$val = isset( $frindNet[ 'enabled' ] ) ? $frindNet[ 'enabled' ] : '0';	
 				break;
 			default:
 				$val = '';
@@ -294,6 +323,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		}
 		$Config->{$car[$k]} = $val;
 	}
+	
+	// Don't need these now
+	$dataUser = null;
+	$dataCore = null;
+	$security = null;
+	$frindNet = null;
 	
 	// Temporary folder
 	$Config->FCTmp    = isset( $ar['fctmp'] ) ? $ar['fctmp'] : '/tmp/';
