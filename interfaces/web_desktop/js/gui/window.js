@@ -1630,8 +1630,11 @@ var View = function( args )
 		// Clicking on window
 		div.onmousedown = function( e )
 		{
-			_ActivateWindow( this, false, e );
-			this.setAttribute( 'moving', 'moving' );
+			if( e.button == 0 )
+			{
+				_ActivateWindow( this, false, e );
+				this.setAttribute( 'moving', 'moving' );
+			}
 		}
 
 		div.ontouchstart = function( e )
