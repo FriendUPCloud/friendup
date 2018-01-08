@@ -120,7 +120,7 @@ JSONArray* JSONArrayNew()
 //
 //
 
-JSONData* JSONDataNew( unsigned int line )
+JSONData* JSONDataNew( unsigned int line __attribute__((unused)))
 {
 	JSONData* d = calloc( 1, sizeof( JSONData ) );
 	d->type = JSON_TYPE_NONE;
@@ -809,8 +809,8 @@ JSONData* JSONParse( char* str, unsigned int length )
 //
 //
 
-List* _JSONStringify( JSONData* d, List* l )
-{
+List* _JSONStringify( JSONData* d __attribute__((unused)), List* l __attribute__((unused)))
+{ //UNIMPLEMENTED
 	return NULL;
 }
 

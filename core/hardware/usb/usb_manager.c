@@ -168,8 +168,11 @@ void USBManagerDelete(USBManager *usbm)
  * @param connected set to TRUE if you want to set port to connected state
  * @return return new USBDevice structure when success, otherwise NULL
  */
-
+#ifdef _WIN32
 USBDevice *CreatePort( USBManager *usbm, int pos, FBOOL connected )
+#else
+USBDevice *CreatePort( USBManager *usbm __attribute__((unused)), int pos __attribute__((unused)), FBOOL connected __attribute__((unused)))
+#endif
 {
 	#ifdef _WIN32
 
@@ -266,8 +269,11 @@ USBDevice *CreatePort( USBManager *usbm, int pos, FBOOL connected )
  * @param connected set to TRUE if you want to have all ports in connected state
  * @return return 0 when success, otherwise error number
  */
-
+#ifdef _WIN32
 int USBManagerCreatePorts(USBManager *usbm, FBOOL connected)
+#else
+int USBManagerCreatePorts(USBManager *usbm __attribute__((unused)), FBOOL connected __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -299,8 +305,11 @@ int USBManagerCreatePorts(USBManager *usbm, FBOOL connected)
  *
  * @param usbm pointer to USBManager
  */
-
+#ifdef _WIN32
 void USBManagerDeletePorts(USBManager *usbm)
+#else
+void USBManagerDeletePorts(USBManager *usbm __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 	if (usbm->usbm_Ports != NULL)
@@ -335,8 +344,11 @@ void USBManagerDeletePorts(USBManager *usbm)
  * @param connected set to TRUE if you want to have all ports in connected state
  * @return return 0 when success, otherwise error number
  */
-
+#ifdef _WIN32
 int USBManagerAddNewPort(USBManager *usbm, char *port)
+#else
+int USBManagerAddNewPort(USBManager *usbm __attribute__((unused)), char *port __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -369,8 +381,11 @@ int USBManagerAddNewPort(USBManager *usbm, char *port)
  *
  * @param usbm pointer to USBManager
  */
-
+#ifdef _WIN32
 void USBManagerGetAllCreatedPorts(USBManager *usbm)
+#else
+void USBManagerGetAllCreatedPorts(USBManager *usbm __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -410,8 +425,11 @@ void USBManagerGetAllCreatedPorts(USBManager *usbm)
  * @param usesession pointer to UserSession which is locking port
  * @return return pointer to USBDevice when success, otherwise NULL
  */
-
+#ifdef _WIN32
 USBDevice *USBManagerLockPort(USBManager *usbm, UserSession *session)
+#else
+USBDevice *USBManagerLockPort(USBManager *usbm __attribute__((unused)), UserSession *session __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -443,8 +461,11 @@ USBDevice *USBManagerLockPort(USBManager *usbm, UserSession *session)
  * @param ldev pointer to USBDevice which will be unlocked
  * @return return 0 when success, otherwise error number
  */
-
+#ifdef _WIN32
 int USBManagerUnLockPort(USBManager *usbm, USBDevice *ldev )
+#else
+int USBManagerUnLockPort(USBManager *usbm __attribute__((unused)), USBDevice *ldev __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -474,8 +495,11 @@ int USBManagerUnLockPort(USBManager *usbm, USBDevice *ldev )
  * @param id id of device which you want to get
  * @return return pointer to USBDevice when success, otherwise NULL
  */
-
+#ifdef _WIN32
 USBDevice *USBManagerGetDeviceByID(USBManager *usbm, FUQUAD id)
+#else
+USBDevice *USBManagerGetDeviceByID(USBManager *usbm __attribute__((unused)), FUQUAD id __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -504,8 +528,11 @@ return NULL;
  * @param connected set to TRUE if you want to create new device in connected state 
  * @return return 0 when success, otherwise error number
  */
-
+#ifdef _WIN32
 int USBManagerCreateDevice(USBManager *usbm, FBOOL connected)
+#else
+int USBManagerCreateDevice(USBManager *usbm __attribute__((unused)), FBOOL connected __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 
@@ -549,8 +576,11 @@ if( dev != NULL )
  * @param usbm pointer to USBManager
  * @param id id of device which will be deleted
  */
-
+#ifdef _WIN32
 void USBManagerDeleteDevice( USBManager *usbm, FUQUAD id )
+#else
+void USBManagerDeleteDevice( USBManager *usbm __attribute__((unused)), FUQUAD id __attribute__((unused)))
+#endif
 {
 #ifdef _WIN32
 

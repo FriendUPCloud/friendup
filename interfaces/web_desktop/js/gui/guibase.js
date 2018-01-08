@@ -33,7 +33,7 @@ var mousePointer =
 			var d = document.createElement( 'div' );
 			d.id = 'MousePointer';
 			d.style.position = 'absolute';
-			d.style.zIndex = '10000';
+			d.style.zIndex = 10000;
 			d.style.opacity = 0.7;
 			d.style.whiteSpace = 'nowrap';
 			document.body.appendChild( d );
@@ -54,6 +54,18 @@ var mousePointer =
 			// Object moved over
 			var mover = false;
 			var moveWin = false;
+			
+			// Get mouse coords
+			windowMouseX = e.clientX;
+			windowMouseY = e.clientY;
+			// Skew them
+			if( ge( 'DoorsScreen' ).screenOffsetTop )
+				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;
+			
+			if( globalConfig.workspacecount > 1 )
+			{
+				windowMouseX += window.innerWidth * globalConfig.workspaceCurrent;
+			}			
 			
 			// Check move on window
 			var z = 0;
@@ -294,7 +306,7 @@ var mousePointer =
 			}
 			
 			// Check drop on desklet
-			if( !dropper || ( dropper.classList && dropper.classList == 'ScreenContent' ) )
+			if( !dropper || ( dropper.classList && dropper.classList.contains( 'ScreenContent' ) ) )
 			{
 				var z = 0;
 				var dropWin = 0;
@@ -365,9 +377,14 @@ var mousePointer =
 			// We didn't drop anything, or there was an error..
 			if( dropped <= 0 )
 			{
-				if( window.currentMovable.content && window.currentMovable.content.refresh )
-					window.currentMovable.content.refresh();
+				if( window.currentMovable )
+				{
+					if( window.currentMovable.content && window.currentMovable.content.refresh )
+						window.currentMovable.content.refresh();
+				}
 			}
+			
+			Workspace.redrawIcons();
 			
 			// Place back again
 			if( !dropped || !dropper )
@@ -456,9 +473,12 @@ var mousePointer =
 			ele.style.top = 'auto';
 			ele.style.left = 'auto';
 			ele.style.position = 'relative';
-			ele.oldParent = ele.parentNode;
-			ele.sibling = 
-			ele.parentNode.removeChild( ele );
+			if( ele.parentNode )
+			{
+				if( ele.oldParent )
+					ele.oldParent.ele = ele.parentNode;
+				ele.parentNode.removeChild( ele );
+			}
 			this.dom.appendChild( ele );
 			this.elements.push( ele );
 		}
@@ -473,521 +493,86 @@ var mousePointer =
 		}
 		else
 		{
-			this.dom.style.top = windowMouseY - Math.floor ( this.dom.firstChild.offsetHeight * 0.5 ) + 'px';
-			this.dom.style.left = windowMouseX - Math.floor ( this.dom.firstChild.offsetWidth * 0.5 ) + 'px';
+			this.dom.style.top = windowMouseY - ( this.dom.firstChild.offsetHeight >> 1 ) + 'px';
+			this.dom.style.left = windowMouseX - ( this.dom.firstChild.offsetWidth >> 1 ) + 'px';
 			window.mouseDown = 5;
 			ClearSelectRegion();
 		}
 	}
 };
 
-// The workspace menu!
-workspaceMenu =
+// Get information about theme
+var themeInfo = { loaded: false };
+function GetThemeInfo( property )
 {
-	show: function( popupElement )
+	if( !Workspace.loginUsername ) return false;
+	if( !themeInfo.loaded )
 	{
-		// We need a screen!
-		if( !window.currentScreen )
+		themeInfo = { loaded: true };
+		// Flush old rules
+		var sheet = false;
+		for( var a = 0; a < document.styleSheets.length; a++ )
 		{
-			return;
-		}
-	
-		var wm = false;
-
-		// Move it!
-		if( !window.isMobile && !IsSharedApp() )
-		{
-			if( ge( 'WorkbenchMenu' ) )
+			if( document.styleSheets[a].href && document.styleSheets[a].href.indexOf( 'theme' ) > 0 )
 			{
-				var m = ge( 'WorkbenchMenu' );
-				m.parentNode.removeChild( m );
-				currentScreen.appendChild( m );
-			}
-			// Make it!
-			else if ( !ge ( 'WorkbenchMenu' ) )
-			{
-				var d = document.createElement ( 'div' );
-				d.id = 'WorkbenchMenu';
-				currentScreen.appendChild( d );
-			}
-	
-			if( wm = ge ( 'WorkbenchMenu' ) )
-			{
-	
-				// It's not a text document, don't allow drag/select
-				wm.ondragstart = function( e ){ return cancelBubble( e ); }
-				wm.onselectstart = function( e ){ return cancelBubble( e ); }
+				sheet = document.styleSheets[a];
+				break;
 			}
 		}
-		// Mobile mode (and let's remove the popup element reference)
-		else
+		if( sheet )
 		{
-			popupElement = false;
-			if( !ge( 'MobileMenu' ) )
+			for( var a = 0; a < sheet.cssRules.length; a++ )
 			{
-				var mm = document.createElement( 'div' );
-				mm.id = 'MobileMenu';
-				document.body.appendChild( mm );
-				wm = mm;
-			}
-			else 
-			{
-				wm = ge( 'MobileMenu' );
-			}
-		}
-	
-		// Special case! Make it pop up!
-		if( popupElement ) 
-		{
-			wm = popupElement;
-		}
-		else if( !window.isMobile && !IsSharedApp() )
-		{
-			if( ge( 'WorkbenchMenu' ) )
-				ge( 'WorkbenchMenu' ).style.display = '';
-		}
-	
-		// Make sure we don't have problems!
-		if( Workspace && Workspace.menuMode == 'miga' )
-		{
-			CoverWindows();
-		}
-		// Others (fensters and pares)
-		else if( Workspace && !window.isMobile && !IsSharedApp() )
-		{
-			var t = window.currentScreen.screenTitle.getElementsByClassName( 'Info' )[0];
-			if( ge( 'WorkbenchMenu' ) )
-			{
-				ge( 'WorkbenchMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
-				ge( 'WorkbenchMenu' ).className = 'Pear';
-			}
-		}
-	
-		var menuFound = false;
-		
-		// Test if we have menu items 
-		if ( window.currentMovable && wm == popupElement )
-		{
-			workspaceMenu.generate( wm, window.regionWindow.menu, false, window.regionWindow.applicationId );
-			if( popupElement )
-			{
-				popupElement.className = 'PopupMenu';
-				menuFound = true;
-			}
-		}
-		// Other chance
-		else if( window.isMobile || IsSharedApp() )
-		{
-			wm = ge( 'MobileMenu' );
-			setTimeout( function(){ wm.scrollTop = 0; }, 50 );
-		}
-	
-		var returnCode = false;
-	
-		// Ok this is the fallback menu and the workbench menu
-		if ( !menuFound && wm )
-		{
-			// Blank menu on windows without any directory view or menu
-			if( currentMovable && currentMovable.parentNode && currentMovable.parentNode.screen == currentScreen.screen  )
-			{
-				if( currentMovable.content && currentMovable.content.menu && currentMovable.parentNode == currentScreen )
+				var rule = sheet.cssRules[a];
+				var key = false;
+				var qualifier = false; // What qualifies this as the final rule
+				// TODO: Add all important keys here!
+				switch( rule.selectorText )
 				{
-					workspaceMenu.generate( wm, currentMovable.content.menu, false, currentMovable.content.applicationId );
-					menuFound = true;
+					case '.ScreenContentMargins':
+						key = 'ScreenContentMargins';
+						break;
+					case '.Screen > .TitleBar > .Left .Extra .Offline':
+					case 'html .Screen > .TitleBar > .Left .Extra .Offline':
+						key = 'OfflineIcon';
+						qualifier = 'backgroundImage';
+						break;
+					case '.Screen > .TitleBar':
+						key = 'ScreenTitle';
+						break;
+					case '.View > .LeftBar':
+						key = 'ViewLeftBar';
+						break;
+					case '.View > .RightBar':
+						key = 'ViewRightBar';
+						break;
+					case '.View > .Title':
+						key = 'ViewTitle';
+						break;
+					case '.View > .BottomBar':
+						key = 'ViewBottom';
+						break;
+					default: 
+						//console.log( 'Unhandled css selector: ' + rule.selectorText );
+						break;
 				}
-				else if( !( currentMovable.content && currentMovable.content.directoryview ) )
+				// Test if the theme info property has already qualified, and skip it if so
+				var qualifierTest = themeInfo[ key ] && ( 
+					qualifier && 
+					typeof( themeInfo[ key ][ qualifier ] ) != 'undefined' && 
+					themeInfo[ key ][ qualifier ].length 
+				);
+				if( qualifierTest )
 				{
-					// If this is an application owned window, check if it has an application
-					// screen, and if not, let it be
-					if( currentMovable.content.applicationId )
-					{
-						var screenAppId = currentScreen.screen._screen.applicationId;
-						if( currentMovable.content.applicationId != screenAppId )
-						{
-							workspaceMenu.generate( wm, [] );
-							menuFound = true;
-						}
-					}
-					// Other case for empty menu
-					else
-					{
-						workspaceMenu.generate( wm, [] );
-						menuFound = true;
-					}
+					continue;
 				}
-			}
-			if( !menuFound )
-			{
-				// We are using the popup element instead
-				if( popupElement )
-				{
-					returnCode = 'popup';
-				}
-				else
-				{
-					// We have a screen menu!
-					if( window.currentScreen && window.currentScreen.menu )
-					{
-						if( window.currentScreen == ge( 'DoorsScreen' ) )
-						{
-							Workspace.refreshMenu( true );
-						}
-						workspaceMenu.generate( wm, window.currentScreen.menu, false, window.currentScreen.screenObject._screen.applicationId );
-					}
-					else if( window.currentScreen != ge( 'DoorsScreen' ) && !window.currentScreen.menu )
-					{
-						workspaceMenu.generate( wm, [] );
-						returnCode = 'empty_1';
-					}
-					// We have a doors screen and no menu..
-					else if ( ge ( 'DoorsScreen' ) && Workspace.menu )
-					{
-						Workspace.refreshMenu( true );
-						workspaceMenu.generate( wm, Workspace.menu );
-					}
-					else
-					{
-						// TODO: This might not be needed..
-						if ( window.menu )
-						{
-							workspaceMenu.generate( wm, window.menu );
-							returnCode = 'window_menu_1';
-						}
-					}
-				}
-			}
-		}
-		if( returnCode )
-		{
-			//console.log( 'We have a returncode! ' + returnCode );
-		}
-	},
-	// Close the open menus
-	close: function()
-	{
-		if( !window.isMobile && !IsSharedApp() )
-		{
-			var e = ge( 'WorkbenchMenu' );
-			if( !e ) return;
-			e.isActivated = false;
-			var divs = e.getElementsByTagName( 'div' );
-			var lis = e.getElementsByTagName( 'li' );
-			for ( var a = 0; a < divs.length; a++ ) divs[a].classList.remove( 'Open' );
-			for ( var a = 0; a < lis.length; a++ ) lis[a].classList.remove( 'Open' );
-		}
-	
-		// Remove them!
-		removeWindowPopupMenus();
-		if( ge( 'MobileMenu' ) )
-		{
-			ge( 'MobileMenu' ).classList.remove( 'Visible' );
-			_mobileMenuClose();
-		}
-	
-		ExposeWindows();
-		ExposeScreens();
-	},
-	hide: function( e )
-	{
-		if( !e ) e = window.event;
-		var m = ge( 'WorkbenchMenu' );
-		if( m )
-		{
-			var t = e.target ? e.target : e.srcElement;
-			if ( t && t.getAttribute ( 'onclick' ) ) t.onclick ();
-			// Remove open menus
-			var divs = m.getElementsByTagName( 'div' );
-			var lis = m.getElementsByTagName( 'li' );
-			for ( var a = 0; a < divs.length; a++ ) divs[a].className = 'Menu';
-			for ( var a = 0; a < lis.length; a++ ) lis[a].className = '';
-			m.style.display = 'none';
-			m.classList.remove( 'Visible' );
-		}
-		if( ge( 'MobileMenu' ) )
-		{
-			ge( 'MobileMenu' ).classList.remove( 'Visible' );
-		}
-	
-		// Popup menu close
-		removeWindowPopupMenus();
-	
-		// Let it go
-		ExposeWindows();
-	
-		// Don't know which menu items we have?
-		friend.currentMenuItems = false;
-	},
-	// Generates menu html, sets up events and chooses menu container element
-	generate: function( menudiv, menuItems, depth, appid )
-	{
-		// We can't do this while showing!
-		if( ( window.isMobile || IsSharedApp() ) && ge( 'MobileMenu' ) && ge( 'MobileMenu' ).classList.contains( 'Visible' ) )
-			return;
-		
-		if ( !depth ) 
-			depth = 0;
-
-		if( depth == 0 )
-		{
-			if( menudiv )
-			{
-				friend.lastMenuDiv = menudiv;	
-			}
-			else if( !menudiv && friend.lastMenuDiv )
-			{
-				menudiv = friend.lastMenuDiv;
-			}	
-		}
-
-		var viewId = false; // Where to send command!
-	
-		// Don't assign the same array twice!
-		if( menudiv && menudiv.menu != menuItems ) menudiv.menu = menuItems; else return;
-		
-		//this NEED stringify in order to work.
-		if( depth == 0 && friend.currentMenuItems == JSON.stringify( menuItems ) )
-		{
-			return false;
-		}
-		else if( depth == 0 )
-		{
-			friend.currentMenuItems = JSON.stringify( menuItems );
-			menudiv.innerHTML = '';
-		}
-	
-		for( var i in menuItems )
-		{
-			if( menuItems[i] == false ) continue;
-			var d = menudiv;
-			if( depth == 0 )
-			{
-				var n = document.createElement ( 'div' );
-				n.className = 'Menu';
-				n.innerHTML = menuItems[i].name;
-				d.appendChild ( n );
-				d = n;
-			}
-			var ul = document.createElement ( 'ul' );
-			var depth2 = depth + 1;
-		
-			// Object members
-			if( menuItems[i].items )
-			{
-				for ( var j in menuItems[i].items )
-				{
-					if( menuItems[i].items[j] == false ) continue;
-					var li = document.createElement( 'li' );
-					var it = menuItems[i].items[j];
-					if( it.disabled )
-					{
-						li.classList.add( 'Disabled' );
-					}
-					// A postmessage command
-					else if( typeof ( it.command ) == 'string' )
-					{
-						li.command = it.command;
-						li.scope = it.scope;
-					
-						// Sends command to application
-						var mode = 'onmouseup';
-						li[mode] = function() 
-						{
-							// Set appid from current movable..
-							if( !appid && currentMovable.windowObject && currentMovable.windowObject.applicationId )
-								appid = currentMovable.windowObject.applicationId;
-						
-							var viewId = false;
-							if( currentMovable && typeof( currentMovable.windowObject._window.menuViewId ) != 'undefined' )
-								viewId = currentMovable.windowObject._window.menuViewId;
-							else if( currentScreen && typeof( currentScreen.menuScreenId ) != 'undefined' )
-								viewId = currentScreen.menuScreenId; // TODO: Check this one out!
-							
-							if( appid )
-							{
-								var app = findApplication( appid );
-								if( app )
-								{
-									var mmsg = {
-										applicationId: appid,
-										command: this.command + ""
-									};
-									if( this.scope )
-									{
-										// Has the scope on the view|screen
-										if( this.scope == 'local' && viewId )
-										{
-											var c = GetContentWindowById( app, viewId );
-											if( c )
-											{
-												mmsg.destinationViewId = viewId;
-												c.postMessage( JSON.stringify( mmsg ), '*' );
-												workspaceMenu.close();
-												return;
-											}
-										}
-									}
-									app.contentWindow.postMessage( JSON.stringify( mmsg ), '*' );
-									workspaceMenu.close();
-								}
-							}
-						};
-					}
-					// A runnable function
-					else if( it.command )
-					{
-						li.commandMethod = it.command;
-						li.onmouseup = function( e )
-						{
-							this.commandMethod( e ); workspaceMenu.close(); 
-						}
-					}
-					if ( it.items )
-					{
-						li.innerHTML = it.name;
-						li.classList.add( 'Submenu' );
-						workspaceMenu.generate ( li, [ it ], depth2, appid );
-					}
-					else if ( it.itemsHTML )
-					{
-						li.innerHTML = it.itemsHTML;
-					}
-					else if( typeof( it.divider ) != 'undefined' )
-					{
-						li.setAttribute( 'divider', 'divider' );
-					}
-					else
-					{ 
-						li.innerHTML = '<span>' + it.name + '</span>';
-						li.onmousemove = function()
-						{
-							ClearMenuItemStyling( menudiv );
-							this.getElementsByTagName( 'span' )[0].className = 'Active';
-						}
-					}
-					ul.appendChild ( li );
-				}
-			}
-			// Static members
-			else if ( menuItems[i].itemsHTML )
-			{
-				ul.innerHTML = menuItems[i].itemsHTML;
-			}
-			d.appendChild( ul );
-		}
-		if( ge( 'MobileMenu' ) )
-		{
-			ge( 'MobileMenu' ).scrollTop = 0;
-		}
-		// Setup da events
-		this.setMenuEvents( menudiv );
-	},
-	// Setup the menu input events on wm (dom element)
-	setMenuEvents: function( wm )
-	{
-		if( !wm ) return;
-		var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
-
-		// We generated a new menu?
-		var menus = wm.getElementsByTagName ( 'div' );
-		for ( var a = 0; a < menus.length; a++ )
-		{
-			if ( menus[a].className != 'Menu' )
-				continue;
-			menus[a].menus = menus;
-			menus[a][mode] = function( e, state )
-			{
-				var t = e.target ? e.target : e.srcElement;
-		
-				// Double click closes menu
-				if( wm.isActivated && !state )
-				{
-					if( t.nodeName == 'DIV' )
-					{
-						workspaceMenu.close();
-						return cancelBubble( e );
-					}
-				}
-		
-				// Clicking a disabled element!
-				if( t.nodeName == 'SPAN' && t.parentNode.classList.contains( 'Disabled' ) )
-				{
-					return cancelBubble( e );
-				}
-		
-				//if( Workspace.menuMode != 'miga' )
-				//	if( wm.isActivated ) return;
-		
-				wm.isActivated = true; // This menu is activated!
-		
-				// Cover movable windows to avoid mouse collision
-				CoverWindows();
-	
-				// Open and close them menus!
-				for( var c = 0; c < this.menus.length; c++ )
-				{
-					// Ah, we found the menu to open!
-					if ( this.menus[c] == this ) 
-					{
-						this.classList.add( 'Open' );
-					}
-					// This is a menu to close..
-					else this.menus[c].classList.remove( 'Open' );
-				}
-				return cancelBubble( e );
-			}
-			// When one menu is open, allow changing menu with mouseover
-			if( mode == 'onmousedown' )
-			{
-				menus[a].onmouseover = function( e )
-				{
-					if( wm.isActivated )
-					{
-						this.onmousedown( e, 'hover' );
-					}
-				}
-			}
-		}
-		var lis = wm.getElementsByTagName ( 'li' );
-		for ( var a = 0; a < lis.length; a++ )
-		{
-			lis[a].lis = lis;
-			lis[a].onmouseover = function ()
-			{
-				// Open menu
-				this.classList.add( 'Open' );
-				var sublis = this.getElementsByTagName( 'li' );
-				
-				// close all others
-				for ( var a = 0; a < this.lis.length; a++ )
-				{
-					var found = false;
-					for( var b = 0; b < sublis.length; b++ )
-					{
-						if( this.lis[a] == sublis[b] )
-						{
-							found = true;
-							break;
-						}
-					}
-					if( found ) continue;
-					if( this.lis[a] != this ) this.lis[a].classList.remove( 'Open' );
-				}
-				
-				// Open parents
-				var d = this;
-				while ( d.nodeName != 'DIV' )
-				{
-					d = d.parentNode;
-					if ( d.nodeName == 'LI' )
-						d.classList.add( 'Open' );
-				}
-			}
-			if( mode == 'onmousedown' )
-			{
-				lis[a].onmousedown = lis[a].onmouseover;
+				if( key ) themeInfo[ key ] = rule.style;
 			}
 		}
 	}
+	if( themeInfo[ property ] )
+		return themeInfo[ property ];
+	return false;
 }
 
 // Cover windows with overlay
@@ -996,7 +581,10 @@ function CoverWindows()
 	for ( var a in movableWindows )
 	{
 		if( movableWindows[a].moveoverlay )
+		{
 			movableWindows[a].moveoverlay.style.height = '100%';
+			movableWindows[a].moveoverlay.style.pointerEvents = '';
+		}
 	}
 }
 // Expose windows / remove overlay
@@ -1006,8 +594,11 @@ function ExposeWindows()
 	{
 		if( movableWindows[a].content.groupMember ) continue;
 		if( movableWindows[a].moveoverlay )
+		{
 			movableWindows[a].moveoverlay.style.height = '0%';
-		movableWindows[a].memorize ();
+			movableWindows[a].moveoverlay.style.pointerEvents = 'none';
+		}
+		movableWindows[a].memorize();
 	}
 }
 // Cover screens with overlay
@@ -1015,12 +606,13 @@ function CoverScreens()
 {
 	// Disable all screen overlays
 	var screenc = ge ( 'Screens' );
-	var screens = screenc.getElementsByTagName ( 'div' );
+	var screens = screenc.getElementsByTagName( 'div' );
 	for( var a = 0; a < screens.length; a++ )
 	{
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
 		screens[a]._screenoverlay.style.display = '';
+		screens[a]._screenoverlay.style.pointerEvents = '';
 	}
 }
 
@@ -1037,6 +629,7 @@ function CoverOtherScreens()
 		if( currentScreen && screens[a] == currentScreen )
 			continue;
 		screens[a]._screenoverlay.style.display = '';
+		screens[a]._screenoverlay.style.pointerEvents = 'none';
 	}
 }
 
@@ -1051,6 +644,9 @@ function ExposeScreens()
 		if( !screens[a].className ) continue;
 		if( screens[a].parentNode != screenc ) continue;
 		screens[a]._screenoverlay.style.display = 'none';
+		screens[a].moveoverlay.style.pointerEvents = 'none';
+		screens[a]._screenoverlay.style.display = 'none';
+		screens[a].moveoverlay.style.pointerEvents = 'none';
 	}
 }
 
@@ -1074,7 +670,7 @@ function GuiCreate ( obj )
 	var str = '';
 	for ( var a = 0; a < obj.length; a++ )
 	{
-		switch ( typeof ( obj[a] ) )
+		switch( typeof ( obj[a] ) )
 		{
 			case 'function':
 				if ( typeof ( obj[a+1] ) != 'undefined' )
@@ -1256,8 +852,8 @@ function RepositionPopup( e, test )
 
 	var w = el.offsetWidth + 20;
 	var h = el.offsetHeight + 20;
-	l -= Math.floor ( el.offsetWidth * 0.5 );
-	t -= ( height + 20 );
+	l -= el.offsetWidth >> 1;
+	t -= height + 20;
 	
 	// Constrain to page
 	if ( t + h > wh ) t -= ( t + h ) - wh;
@@ -1399,7 +995,6 @@ function NewSelectBox ( divobj, height, multiple )
 	// Adjust height
 	var rheight = 0;
 	rheight = cont.getElementsByTagName ( 'td' )[0].offsetHeight;
-	/*cont.style.height = rheight * height + 'px';*/
 	cont.style.minHeight = rheight * height + 'px';
 	
 }
@@ -1474,7 +1069,7 @@ function _NewSelectBoxRadio ( pid, ele )
 /* For movable windows ------------------------------------------------------ */
 
 // Moves windows on mouse move
-movableListener = function ( e )
+movableListener = function( e, data )
 {
 	if( !e ) e = window.event;
 	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -1482,15 +1077,26 @@ movableListener = function ( e )
 	var y = e.clientY ? e.clientY : e.pageY;
 	var x = e.clientX ? e.clientX : e.pageX;
 	var sh = e.shiftKey || e.ctrlKey;
+	
+	// Injection
+	if( data )
+	{
+		if( data.mouseX ) x = data.mouseX;
+		if( data.mouseY ) y = data.mouseY;
+	}
+	
 	windowMouseX = x;
 	windowMouseY = y;
+	
+
 	mousePointer.poll();
 	mousePointer.move( e );
+	
 	if( window.mouseDown && window.mouseMoveFunc ) 
 	{
 		window.mouseMoveFunc( e );
 	}
-	else if ( window.currentMovable )
+	else if( window.currentMovable )
 	{
 		// Some defaults
 		var minW = 160;
@@ -1498,27 +1104,27 @@ movableListener = function ( e )
 		var maxW = 1000000;
 		var maxH = 1000000;
 		var st = document.body.scrollTop;
-		if ( window.currentMovable.content && window.currentMovable.content.flags )
+		if ( window.currentMovable.content && window.currentMovable.windowObject.flags )
 		{
-			if ( window.currentMovable.content.flags['min-width'] >= 100 )
-				minW = window.currentMovable.content.flags['min-width'];
-			if ( window.currentMovable.content.flags['max-width'] >= 100 )
-				maxW = window.currentMovable.content.flags['max-width'];
-			if ( window.currentMovable.content.flags['min-height'] >= 100 )
-				minH = window.currentMovable.content.flags['min-height'];
-			if ( window.currentMovable.content.flags['max-height'] >= 100 )
-				maxH = window.currentMovable.content.flags['max-height'];
+			if ( window.currentMovable.windowObject.flags['min-width'] >= 100 )
+				minW = window.currentMovable.windowObject.flags['min-width'];
+			if ( window.currentMovable.windowObject.flags['max-width'] >= 100 )
+				maxW = window.currentMovable.windowObject.flags['max-width'];
+			if ( window.currentMovable.windowObject.flags['min-height'] >= 100 )
+				minH = window.currentMovable.windowObject.flags['min-height'];
+			if ( window.currentMovable.windowObject.flags['max-height'] >= 100 )
+				maxH = window.currentMovable.windowObject.flags['max-height'];
 		}
 		
 		// Clicking on the window title
-		var mx = ( x - window.currentMovable.offx );
-		var my = ( y - window.currentMovable.offy );
+		var mx = x - ( window.currentMovable.offx ? window.currentMovable.offx : 0 );
+		var my = y - ( window.currentMovable.offy ? window.currentMovable.offy : 0 );
 		
 		// 8 px grid
 		if( e.shiftKey )
 		{
-			mx = Math.floor( mx / 8 ) << 3;
-			my = Math.floor( my / 8 ) << 3;
+			mx = ( mx >> 3 ) << 3;
+			my = ( my >> 3 ) << 3;
 		}
 		
 		// Moving a window..
@@ -1531,30 +1137,15 @@ movableListener = function ( e )
 			{
 				window.currentScreen.moveoverlay.style.display = '';
 				window.currentScreen.moveoverlay.style.height = '100%';
-			}	
-			
-			// Get the position
-			var screen = window.currentScreen.screenObject;
-			var statusbarHeight = GetStatusbarHeight( screen );
-			
-			var minY = w.parentWindow ? 0 : ( GetTitleBarG() ? GetTitleBarG().offsetHeight : 0 );
-			var maxY = w.parentWindow ? w.parentWindow.offsetHeight : ( statusbarHeight > 0 ? wh - statusbarHeight : wh );
-			var maxX = w.parentWindow ? w.parentWindow.offsetWidth : ww;
-			
-			if ( my < minY ) my = minY;
-			if ( mx < 0 ) mx = 0;
-			else if ( mx + window.currentMovable.offsetWidth > maxX )
-				mx = maxX - window.currentMovable.offsetWidth;
-			if ( my + window.currentMovable.offsetHeight > maxY )
-				my = maxY - window.currentMovable.offsetHeight;
+			}
 				
 			// Move the window!
-			if ( window.currentMovable && window.currentMovable.style )
+			if( w && w.style )
 			{
 				// Move sticky widgets!
-				if( window.currentMovable.windowObject && window.currentMovable.windowObject.widgets )
+				if( w.windowObject && w.windowObject.widgets )
 				{
-					var wds = window.currentMovable.windowObject.widgets;
+					var wds = w.windowObject.widgets;
 					for( var z = 0; z < wds.length; z++ )
 					{
 						var vx = mx + ( isNaN( wds[z].tx ) ? 0 : wds[z].tx );
@@ -1572,45 +1163,35 @@ movableListener = function ( e )
 					}
 				}
 				
-				if( !window.currentMovable.getAttribute( 'moving' ) )
-					window.currentMovable.setAttribute( 'moving', 'moving' );
-				window.currentMovable.style.left = mx + 'px';
-				window.currentMovable.style.top  = my + 'px';
-				window.currentMovable.memorize ();
+				if( !w.getAttribute( 'moving' ) )
+					w.setAttribute( 'moving', 'moving' );
+				
+				// Move the window
+				ConstrainWindow( w, mx, my )
 			}
 			
 			// Do resize events
-			var w = window.currentMovable;
-			CoverWindows();
-			CoverOtherScreens();
-			if ( w.content && w.content.events )
+			CoverWindows(); CoverScreens();
+			if( w.content && w.content.events )
 			{
-				if ( typeof(w.content.events['move']) != 'undefined' )
+				if( typeof( w.content.events['move'] ) != 'undefined' )
 				{
-					for ( var a = 0; a < w.content.events['move'].length; a++ )
+					for( var a = 0; a < w.content.events[ 'move' ].length; a++ )
 					{
-						w.content.events['move'][a]();
+						w.content.events[ 'move' ][ a ]();
 					}
 				}
 			}
 			return cancelBubble ( e );
 		}
 		// Mouse down on a resize gadget
-		else if ( window.mouseDown == 2 )
+		else if( window.mouseDown == 2 )
 		{ 
 			var w = window.currentMovable;
 			var r = w.resize;
 			var t = w.titleBar;
 			var l = w.leftbar;
 			var x = w.rightbar;
-			
-			var screen = w.windowObject.getFlag( 'screen' );
-			var statusbarHeight = GetStatusbarHeight( screen );
-			
-			var minY = w.parentWindow ? 0 : ( GetTitleBarG() ? GetTitleBarG().offsetHeight : 0 );
-			var maxY = w.parentWindow ? w.parentWindow.offsetHeight : 
-				( statusbarHeight > 0 ? wh - statusbarHeight : wh );
-			var maxX = w.parentWindow ? w.parentWindow.offsetWidth : ww;
 			
 			var rx = ( windowMouseX - r.offx ); // resizex
 			var ry = ( windowMouseY - r.offy ); // resizey
@@ -1624,33 +1205,23 @@ movableListener = function ( e )
 			
 			ResizeWindow( w, r.wwid - w.marginHoriz + rx, r.whei - w.marginVert + ry );
 			
-			// Move window if out of bounds!
-			var t = w.offsetTop;
-			var l = w.offsetLeft;
-			if ( l + w.offsetWidth > maxX ) l = maxX - w.offsetWidth;
-			if ( t + w.offsetHeight > maxY ) t = maxY - w.offsetHeight;
-			if ( t < minY ) t = minY;
-			if ( l < 0 ) l = 0;
-			w.style.left = l + 'px';
-			w.style.top  = t + 'px';
-			
-			// Do resize even••••••••ts (and make sure we have the overlay to speed things up)
+			// Do resize events (and make sure we have the overlay to speed things up)
 			CoverWindows();
-			if ( w.content.events )
+			if( w.content.events )
 			{
-				if ( typeof(w.content.events['resize']) != 'undefined' )
+				if( typeof(w.content.events['resize']) != 'undefined' )
 				{
-					for ( var a = 0; a < w.content.events['resize'].length; a++ )
+					for( var a = 0; a < w.content.events['resize'].length; a++ )
 					{
 						w.content.events['resize'][a]();
 					}
 				}
 			}
-			return cancelBubble ( e );
+			return cancelBubble( e );
 		}
 	}
 	// Mouse down on desktop (regions)
-	if ( window.mouseDown == 4 && window.regionWindow )
+	if( window.mouseDown == 4 && window.regionWindow )
 	{
 		if( DrawRegionSelector( e ) )
 		{		
@@ -1666,13 +1237,13 @@ function DrawRegionSelector( e )
 	var sh = e.shiftKey || e.ctrlKey;
 	
 	// Create region selector if it doesn't exist!
-	if ( !ge ( 'RegionSelector' ) )
+	if( !ge ( 'RegionSelector' ) )
 	{
 		var d = document.createElement ( 'div' );
 		d.id = 'RegionSelector';
 		
 		window.regionWindow.appendChild ( d );
-		if ( document.body.attachEvent )
+		if( document.body.attachEvent )
 		{
 			d.style.border = '1px solid #000000';
 			d.style.background = '#555555';
@@ -1682,24 +1253,33 @@ function DrawRegionSelector( e )
 	
 	// Extra offset in content window
 	var mx = windowMouseX; var my = windowMouseY;
-	var diffx = 0;		 var diffy = 0; 
+	var diffx = 0;		   var diffy = 0; 
 	var ex = 0; var ey = 0;
 	var eh = 0; var ew = 0;
-	var rwc = window.regionWindow.className;
+	var rwc = window.regionWindow.classList;
 	var scrwn = window.regionWindow.scroller;
 	
 	// In icon windows or new screens
-	if ( rwc == 'Content' || rwc == 'ScreenContent' )
+	if ( rwc && ( rwc.contains( 'Content' ) || rwc.contains( 'ScreenContent' ) ) )
 	{
 		// Window offset
 		ex = -window.regionWindow.parentNode.offsetLeft;
 		ey = -window.regionWindow.parentNode.offsetTop;
 		
+		// Some implications per theme accounted for
+		if( rwc.contains( 'Content' ) )
+		{
+			var top = GetThemeInfo( 'ViewTitle' );
+			if( top ) ey -= parseInt( top.height );
+			var bor = GetThemeInfo( 'ScreenContentMargins' );
+			if( bor ) ey += parseInt( bor.top );
+		}
+		
 		// Scrolling down / left? Add to mouse scroll
 		eh += window.regionWindow.scrollTop;
 		ew += window.regionWindow.scrollLeft;
 		
-		if( rwc == 'Content' )
+		if( rwc.contains( 'Content' ) )
 		{
 			_ActivateWindow( window.regionWindow.parentNode, false, e );
 		}
@@ -1735,8 +1315,8 @@ function DrawRegionSelector( e )
 		}
 	}
 	
-	var d = ge ( 'RegionSelector' );
-	if ( !d ) return;
+	var d = ge( 'RegionSelector' );
+	if( !d ) return;
 	
 	// Coordinate variables
 	var wx = mx,				   wy = my;
@@ -1766,6 +1346,19 @@ function DrawRegionSelector( e )
 	// Some offset in windows or screens
 	dy -= window.regionWindow.offsetTop;
 	dx -= window.regionWindow.offsetLeft;
+	
+	// Check screen offset top
+	if( window.regionWindow.windowObject )
+	{
+		if( window.regionWindow.windowObject.flags.screen )
+		{
+			var s = window.regionWindow.windowObject.flags.screen;
+			if( s.div.screenOffsetTop )
+			{
+				dy -= s.div.screenOffsetTop;
+			}
+		}
+	}
 	
 	// Set dimensions!
 	d.style.width = dw + 'px';
@@ -1831,7 +1424,7 @@ function DrawRegionSelector( e )
 
 
 // Gui modification / editing
-function AbsolutePosition ( div, left, top, width, height )
+function AbsolutePosition( div, left, top, width, height )
 {
 	div.style.position = 'absolute';
 	if ( left )
@@ -1845,7 +1438,7 @@ function AbsolutePosition ( div, left, top, width, height )
 }
 
 // Make a table list with checkered bgs
-function MakeTableList ( entries, headers )
+function MakeTableList( entries, headers )
 {
 	var str = '<table class="List" style="width: 100%">';
 	var cols = 0;
@@ -1875,38 +1468,33 @@ function MakeTableList ( entries, headers )
 	return str;
 }
 
-function removeWindowPopupMenus()
-{
-	// Deactivate workbench menu
-	if( ge( 'WorkbenchMenu' ) )
-		ge( 'WorkbenchMenu' ).isActivated = false;
-
-	for( var a in movableWindows )
-	{
-		var cm = movableWindows[a];
-		if( cm && cm.titleDiv && cm.titleDiv.popup )
-		{
-			var titl = cm.titleDiv;
-			titl.removeChild( titl.popup );
-			titl.popup = null;
-		}
-	}
-}
-
 var workbenchMenus = new Array ();
 function SetMenuEntries ( menu, entries )
 {
 	if ( typeof ( workbenchMenus[menu] ) == 'undefined' ) 
 		workbenchMenus[menu] = new Array ();
 	workbenchMenus[menu].push ( entries );
-	if ( typeof ( RefreshWorkbenchMenu ) != 'undefined' )
-		RefreshWorkbenchMenu ();
+	if ( typeof ( RefreshWorkspaceMenu ) != 'undefined' )
+		RefreshWorkspaceMenu ();
+}
+
+// Deep remove events
+function cancelMouseEvents( e )
+{
+	window.mouseMoveFunc = false;
+	window.mouseDown = false;
+	window.fileMenuElement = null;
+	window.mouseReleaseFunc = false;
+	window.mouseDown = 0;
+	return cancelBubble( e );
 }
 
 // Just register we left the building
-movableMouseUp = function ( e )
+movableMouseUp = function( e )
 {
 	if( !e ) e = window.event;
+	
+	var target = e.target ? e.target : e.srcElement;
 	
 	window.fileMenuElement = null;
 	window.mouseDown = false;
@@ -1923,21 +1511,25 @@ movableMouseUp = function ( e )
 	// If we have a current movable window, stop "moving"
 	if( window.currentMovable )
 	{
-		ExposeWindows();
 		window.currentMovable.removeAttribute( 'moving' );
 	}
 	
-	// Make sure the inner overlay is over screens
-	if( window.currentScreen )
+	if( WorkspaceMenu.open || ( target && target.classList && ( target.classList.contains( 'ScreenContent' ) ) ) )
 	{
-		window.currentScreen.moveoverlay.style.display = 'none';
+		if( !isMobile )
+			WorkspaceMenu.close();
+	
+		// Hide start menu
+		if( Workspace.toggleStartMenu )
+			Workspace.toggleStartMenu( false );
 	}
+	ExposeScreens(); ExposeWindows();
 	
 	// Workbench menu is now hidden (only miga style)
 	if( Workspace && Workspace.menuMode == 'miga' )
 	{
-		workspaceMenu.hide( e );
-		workspaceMenu.close();
+		WorkspaceMenu.hide( e );
+		WorkspaceMenu.close();
 	}
 	
 	// If we selected icons, clear the select region
@@ -1966,11 +1558,22 @@ function RemoveDragTargets()
 	}
 }
 
+
 // Check the screen title of active window/screen and check menu
 function CheckScreenTitle( screen )
 {	
 	var testObject = screen ? screen : window.currentScreen;
 	if( !testObject ) return;
+	
+	// Tell system we are maximized
+	if( window.currentMovable && window.currentMovable.getAttribute( 'maximized' ) == 'true' )
+	{
+		document.body.classList.add( 'ViewMaximized' );
+	}
+	else
+	{
+		document.body.classList.remove( 'ViewMaximized' );
+	}
 	
 	// Set screen title
 	var csc = testObject.screenObject;
@@ -1999,199 +1602,288 @@ function CheckScreenTitle( screen )
 	// Enable the global menu
 	if( Workspace && Workspace.menuMode == 'pear' )
 	{
-		workspaceMenu.show();
+		if( !WorkspaceMenu.generated || WorkspaceMenu.currentView != currentMovable || WorkspaceMenu.currentScreen != currentScreen )
+		{
+			WorkspaceMenu.show();
+			WorkspaceMenu.currentView = currentMovable;
+			WorkspaceMenu.currentScreen = currentScreen;
+		}
 	}
 }
 
+// Let's make gui for movable windows minimize maximize
 pollingTaskbar = false;
 function PollTaskbar( curr )
 {
 	if( pollingTaskbar ) return;
+	
+	// Abort if we have a premature element
+	if( curr && !curr.parentNode )
+		return;
+	
 	if( globalConfig.viewList == 'docked' )
 	{
 		return PollDockedTaskbar(); // <- we are using the dock
 	}
+	
 	var doorsScreen = ge( 'DoorsScreen' );
+	if( !doorsScreen ) return;
 	pollingTaskbar = true;
-	if( ge( 'Taskbar' ) )
+	
+	var baseElement = ge( 'Taskbar' );
+	
+	// Placing the apps inside the dock and not using a normal taskbar
+	if( globalConfig.viewList == 'dockedlist' )
+	{
+		if( !ge( 'DockWindowList' ) )
+		{
+			// Find first desklet
+			var dlets = document.getElementsByClassName( 'Desklet' );
+			if( dlets.length || dlets[ 0 ] )
+			{
+				ge( 'Statusbar' ).className = 'Docklist';
+				
+				var dlet = dlets[ 0 ];
+				dlet.style.zIndex = 2147483641;
+				var d = document.createElement( 'div' );
+				d.id = 'DockWindowList';
+				d.className = 'WindowList';
+				dlet.appendChild( d );
+				
+				dlet.classList.add( 'HasWindowlist' );
+				if( dlet.classList.contains( 'Vertical' ) )
+				{
+					d.style.bottom = '0px';
+				}
+				else
+				{
+					d.style.right = '0px';
+				}
+				
+				baseElement = d;
+				
+				// Add size here
+				var dock = d.parentNode.desklet;
+				if( dock.conf )
+					d.classList.add( 'Size' + dock.conf.size );
+			}
+			// Nothing to track
+			else
+			{
+				pollingTaskbar = false;
+				return;
+			}
+		}
+		else
+		{	
+			baseElement = ge( 'DockWindowList' );
+		}
+		
+		if( !baseElement ) return;
+		
+		// Make into a HasWindowlist element
+		var dock = baseElement.parentNode.desklet;
+		baseElement.parentNode.classList.add( 'HasWindowlist' );
+		
+		if( baseElement.parentNode.classList.contains( 'Vertical' ) )
+		{
+			baseElement.style.height = 'calc(100% - ' + ( Workspace.mainDock.iconListPixelLength ) + 'px)';
+			baseElement.style.width = '100%';
+		}
+		else
+		{
+			baseElement.style.width = 'calc(100% - ' + ( Workspace.mainDock.iconListPixelLength ) + 'px)';
+			baseElement.style.height = '100%';
+		}
+		
+		// Add size here
+		if( dock.conf )
+		{
+			baseElement.classList.add( 'Size' + dock.conf.size );
+		}
+	}
+	// Normal taskbar
+	else
+	{
+		if( !baseElement ) return;
+		if( baseElement.childNodes.length )
+		{
+			var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+			// Horizontal
+			
+			var taskWidth = lastTask.offsetLeft + lastTask.offsetWidth;
+			baseElement.style.left = '0px';
+			baseElement.style.top = 'auto';
+			baseElement.classList.add( 'Horizontal' );
+			baseElement.style.width = 'calc(100% - ' + ( ge( 'Tray' ).offsetWidth + 5 ) + 'px)';
+			
+			if( baseElement.scrollFunc )
+				baseElement.removeEventListener( 'mousemove', baseElement.scrollFunc );
+			baseElement.scrollFunc = function( e )
+			{
+				var l = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
+				if( !l ) return;
+				
+				var off = e.clientX - baseElement.offsetLeft;
+				var scr = off / baseElement.offsetWidth;
+				if( l.offsetLeft + l.offsetWidth > baseElement.offsetWidth )
+				{
+					var whole = l.offsetLeft + l.offsetWidth - baseElement.offsetWidth;
+					baseElement.scroll( scr * whole, 0 );
+				}
+			}
+			baseElement.addEventListener( 'mousemove', baseElement.scrollFunc );
+		}
+	}
+	
+	if( baseElement )
 	{
 		var whw = 0; // whole width
-		var swi = ge( 'Taskbar' ).offsetWidth;
+		var swi = baseElement.offsetWidth;
 		
-		var t = ge( 'Taskbar' );
+		var t = baseElement;
 		var queue = Math.floor( Math.random() * 65 );
 		
 		// When activated normally
-		if ( !curr )
+		
+		if( !curr )
 		{
-			t.innerHTML = '';
-			t.tasks = [];
-			var lst = [ movableWindows, Workspace.applications ];
-			for( var zo in lst )
+			// No task array?
+			if( typeof( t.tasks ) == 'undefined' )
+				t.tasks = [];
+			
+			// Remove tasks on the taskbar that isn't represented by a view
+			var cleaner = [];
+			for( var b = 0; b < t.tasks.length; b++ )
 			{
-				for( var a in lst[zo] )
+				// Look if this task is registered with a view
+				var f = false;
+				for( var a in movableWindows )
 				{
-					var d = false;
-					
-					// Movable windows
-					if( zo == 0 )
+					if( movableWindows[ a ].viewId == t.tasks[ b ].viewId )
 					{
-						var pn = movableWindows[a];
-						// Don't care about views on other screens
-						// In native mode, we will list all
-						// TODO: Connect views to screens better (not on dom parentNode)
-						//       so it works in native mode
-						if( Workspace.interfaceMode != 'native' )
-						{
-							if( pn && pn.parentNode != doorsScreen ) continue;
-						}
-				
-						// Lets see if the view is a task we manage
-						var found = false;
-						for( var c = 0; c < t.tasks.length; c++ )
-						{
-							if ( t.tasks[c] == movableWindows[a].viewId )
-							{
-								found = true; // don't add twice
-							}
-						}
-						if( found ) continue;
-				
-						// Skip hidden ones
-						if( movableWindows[a].content.flags['hidden'] == true )
-							continue;
-							
-						// New view!
-						t.tasks.push( movableWindows[a].viewId );
-						d = document.createElement ( 'div' );
-						d.viewId = movableWindows[a].viewId;
-						d.className = movableWindows[a].getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden' : 'Task';
-						if( movableWindows[a] == currentMovable ) 
-							d.className += ' Active';
-						d.window = movableWindows[a];
-						d.applicationId = d.window.applicationId;
-						d.innerHTML = d.window.titleString;
+						f = true;
+						break;
 					}
-					// Applications (native)
-					else
+				}
+				// If we already registered this task, add to cleaner
+				if( f )
+				{
+					var tt = t.tasks[ b ];
+					if( !currentMovable && tt.dom.classList.contains( 'Active' ) )
 					{
-						if( !Workspace.applications[a].pid ) continue;
-						var found = false;
-						for( var c = 0; c < t.tasks.length; c++ )
-						{
-							if( !Workspace.applications[a].pid )
-								continue;
-							if ( t.tasks[c] == 'native_' + Workspace.applications[a].pid )
-							{
-								found = true; // don't add twice
-							}
-						}
-						if( found ) continue;
-						
-						// New view!
-						t.tasks.push( 'native_' + Workspace.applications[a].pid );
-						d = document.createElement ( 'div' );
-						d.viewId = 'native_' + Workspace.applications[a].pid;
-						d.className = Workspace.applications[a].minimized ? 'Task Hidden' : 'Task';
-						
-						d.window = Workspace.applications[a];
-						d.applicationId = d.window.pid;
-						d.innerHTML = d.window.name;
+						// Remove active if there's no movable
+						tt.dom.classList.remove( 'Active' );
 					}
+					cleaner.push( tt );
+				}
+				// If the window doesn't exist, remove the DOM element from tasbkar
+				else t.removeChild( t.tasks[ b ].dom );
+			}
+			t.tasks = cleaner; // Set cleaned task list
+			
+			for( var a in movableWindows )
+			{
+				var d = false;
+				
+				// Movable windows
+				var pn = movableWindows[a];
+				
+				// Skip hidden ones
+				if( pn.windowObject.flags[ 'hidden' ] == true )
+					continue;
+				if( pn.windowObject.flags[ 'invisible' ] == true )
+					continue;
+				
+				// Don't care about views on other screens
+				// In native mode, we will list all
+				// TODO: Connect views to screens better (not on dom parentNode)
+				//       so it works in native mode
+				if( Workspace.interfaceMode != 'native' )
+				{
+					if( pn && pn.parentNode.parentNode != doorsScreen ) continue;
+				}
+				
+				// Lets see if the view is a task we manage
+				for( var c = 0; c < t.tasks.length; c++ )
+				{
+					if ( t.tasks[c].viewId == pn.viewId )
+					{
+						d = t.tasks[ c ].dom; // don't add twice
+						break;
+					}
+				}
+				
+				// Create new tasks
+				if( !d )
+				{
+					// New view!
+					d = document.createElement ( 'div' );
+					d.viewId = pn.viewId;
+					d.view = pn;
+					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden' : 'Task';
+					d.window = pn;
+					pn.taskbarTask = d;
+					d.applicationId = d.window.applicationId;
+					d.innerHTML = d.window.titleString;
+					t.tasks.push( { viewId: pn.viewId, dom: d } );
+				
+					if( pn == currentMovable ) d.classList.add( 'Active' );
+				
+					// Functions on task element
+					// Activate
+					d.setActive = function()
+					{
+						this.classList.add( 'Active' );
+						_ActivateWindow( this.window );
+						this.window.setAttribute( 'minimized', '' );
+						if( this.window.windowObject.workspace != globalConfig.workspaceCurrent )
+						{
+							Workspace.switchWorkspace( this.window.windowObject.workspace );
+						}
+					}
+					// Deactivate
+					d.setInactive = function()
+					{
+						this.classList.remove( 'Active' );
+						_DeactivateWindow( this.window );
+					}
+					// Click event
 					d.onmouseup = function( e, extarg )
 					{
 						if ( !e ) e = window.event;
 						var targ = e ? ( e.target ? e.target : e.srcElement ) : false;
 						if( extarg ) targ = extarg;
-						var divs = this.parentNode.getElementsByTagName( 'div' );
-						for( var b = 0; b < divs.length; b++ )
+						for( var n = 0; n < t.childNodes.length; n++ )
 						{
-							if ( divs[b].className.indexOf( 'Task' ) < 0 ) continue;
-							if ( divs[b] == this )
+							var ch = t.childNodes[ n ];
+							if( !ch.className ) continue;
+							if( ch.className.indexOf( 'Task' ) < 0 ) continue;
+							if( this == ch )
 							{
-								if ( divs[b].className.indexOf( 'Task Active' ) == 0 )
+								if( !this.window.classList.contains( 'Active' ) )
 								{
-									if ( targ && targ.className && targ.className.indexOf ( 'Task Active' ) == 0 )
-									{
-										var w = divs[b].window;
-										// Natives
-										if( w && w.pid && w.viewId )
-										{
-											if( w.minimized )
-											{
-												Workspace.restoreNativeWindow( w.viewId );
-												w.minimized = false;
-											}
-											else
-											{
-												Workspace.minimizeNativeWindow( w.viewId );
-												w.minimized = true;
-											}
-										}
-										// Divs
-										else
-										{
-											if( w.getAttribute( 'minimized' ) == 'minimized' )
-											{
-												w.setAttribute( 'minimized', '' );
-												targ.className = 'Task Active';
-												w.style.left = w.maximizedLeft;
-												w.windowObject.setFlag( 'minimized', false );
-											}
-											else 
-											{
-												w.setAttribute( 'minimized', 'minimized' );
-												targ.className = 'Task Active Hidden';
-												w.maximizedLeft = w.style.left;
-												w.style.left = targ.offsetLeft + 'px';
-												w.windowObject.setFlag( 'minimized', true );
-											}
-										}
-									}
+									this.setActive();
+									_WindowToFront( this.window );
 								}
 								else
 								{
-									if ( targ && targ.className && targ.className.indexOf ( 'Task' ) == 0 )
-									{
-										// Natives
-										var w = this.window;
-										if( w && w.pid && w.viewId )
-										{
-											if( w.minimized )
-											{
-												Workspace.restoreNativeWindow( w.viewId );
-												w.minimized = false;
-											}
-											else
-											{
-												Workspace.minimizeNativeWindow( w.viewId );
-												w.minimized = true;
-											}
-										}
-										else
-										{
-											divs[b].window.setAttribute( 'minimized', '' );
-											divs[b].window.style.left = w.maximizedLeft;
-											divs[b].window.windowObject.setFlag( 'minimized', false );
-										}
-									}
-									divs[b].className = 'Task Active';
-									_ActivateWindow ( divs[b].window, 1, e );
-									if ( targ && targ.className && targ.className.indexOf ( 'Task' ) == 0 )
-										_WindowToFront ( divs[b].window );
+									this.setInactive();
+									this.window.setAttribute( 'minimized', 'minimized' );
 								}
 							}
 							else
 							{
-								divs[b].className = divs[b].className.indexOf ( 'Hidden' ) > 0 ? 'Task Hidden' : 'Task';
+								ch.setInactive();
+								if( ch.window.classList.contains( 'Active' ) )
+									_DeactivateWindow( ch.window );
 							}
 						}
 					}
-					d.addEventListener( 'touchstart', d.onmouseup, false ); // <- mobile
 					t.appendChild( d );
 					d.origWidth = d.offsetWidth + 20;
-				
-					// Check if we opened a window
+			
+					// Check if we opened a window with a task image
 					if( d.applicationId )
 					{
 						var running = ge( 'Tasks' ).getElementsByTagName( 'iframe' );
@@ -2209,35 +1901,34 @@ function PollTaskbar( curr )
 				}
 			}
 		}
-		
-		// When activating on the window
-		var isFull = ge( 'Taskbar' ).getAttribute( 'full' ) == 'full';
-		var divs = t.getElementsByTagName ( 'div' );
-		for( var b = 0; b < divs.length; b++ )
+		else
 		{
-			if( divs[b].className.indexOf ( 'Task' ) < 0 ) continue;
-			if( !isFull ) divs[b].origWidth = divs[b].offsetWidth;
-			whw += divs[b].origWidth + 20; // todo calc size
-			if ( divs[b].window == curr )
+			// Update existing tasks
+			if( curr && curr.taskbarTask ) curr.taskbarTask.setActive();
+			for( var c = 0; c < t.tasks.length; c++ )
 			{
-				divs[b].onmouseup();
+				var d = t.tasks[ c ].dom;
+				if( d.window != curr )
+				{
+					d.setInactive();
+				}
 			}
 		}
 		
 		// Can't 
 		if( whw >= swi )
 		{
-			ge( 'Taskbar' ).setAttribute( 'full', 'full' );
+			baseElement.setAttribute( 'full', 'full' );
 		}
 		// We deleted some
 		else
 		{
-			ge( 'Taskbar' ).setAttribute( 'full', 'no' );
-		}	
+			baseElement.setAttribute( 'full', 'no' );
+		}
 	}
 	
 	// Manage running apps -------
-	
+
 	// Just check if the app represented on the desklet is running
 	for( var a = 0; a < __desklets.length; a++ )
 	{
@@ -2341,6 +2032,11 @@ function PollDockedTaskbar()
 		{
 			if( movableWindows[b].windowObject )
 			{
+				// Skip invisible windows
+				if( movableWindows[b].windowObject.flags.invisible )
+				{
+					continue;
+				}
 				var app = movableWindows[b].windowObject.applicationName;
 				var win = b;
 				var wino = movableWindows[b];
@@ -2432,10 +2128,25 @@ function PollDockedTaskbar()
 					viewRep.onclick = function()
 					{
 						this.state = this.state == 'visible' ? 'hidden' : 'visible';
+						var wsp = movableWindows[ this.viewId ].windowObject.workspace;
+						if( wsp != globalConfig.workspaceCurrent )
+						{
+							Workspace.switchWorkspace( wsp );
+							this.state = 'visible';
+						}
 						if( this.state == 'hidden' )
+						{
 							this.classList.add( 'Minimized' );
-						else this.classList.remove( 'Minimized' );
-						movableWindows[this.viewId].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+						}
+						else
+						{
+							this.classList.remove( 'Minimized' );
+						}
+						var mv = movableWindows[ this.viewId ];
+						if( mv && mv.windowObject )
+						{
+							movableWindows[this.viewId].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+						}
 						_WindowToFront( movableWindows[this.viewId] );
 					}
 					desklet.viewList.appendChild( viewRep );
@@ -2638,8 +2349,6 @@ function ClearSelectRegion()
 {
 	if( ge ( 'RegionSelector' ) )
 	{
-		Workspace.refreshMenu();
-		
 		var s = ge ( 'RegionSelector' );
 		s.parentNode.removeChild( s );
 	}
@@ -2685,23 +2394,29 @@ movableMouseDown = function ( e )
 	{
 		tar = tar.parentNode;
 	}
+	var clickonDesktop = tar.classList && ( 
+		tar.classList.contains( 'ScreenContent' ) ||
+		tar.classList.contains( 'ScreenOverlay' ) 
+	);
+	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	// Desktop / view selection 
 	if(
-		// Desktop selection
-		( tar.className == 'ScreenContent' ) ||
-		// Making selection on content window!
-		( tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ) )
+		clickonDesktop || clickOnView
 	)
 	{
 		if( !sh )
-		{
 			clearRegionIcons();
-		}
+		
 		window.mouseDown = 4;
 		window.regionX = windowMouseX;
 		window.regionY = windowMouseY;
 		if( tar ) window.regionWindow = tar;
 		else window.regionWindow = ge( 'DoorsScreen' );
-		if( tar.className == 'ScreenContent' )
+		if( clickOnView )
+		{
+			_ActivateWindow( tar.parentNode );
+		}
+		else if( clickonDesktop )
 		{
 			// Clicking from an active view to screen
 			DefaultToWorkspaceScreen( tar );
@@ -2718,8 +2433,7 @@ movableMouseDown = function ( e )
 function DefaultToWorkspaceScreen( tar ) // tar = click target
 {
 	FocusOnNothing();
-	removeWindowPopupMenus();
-	workspaceMenu.close();
+	WorkspaceMenu.close();
 }
 
 function clearRegionIcons()
@@ -2744,7 +2458,7 @@ function clearRegionIcons()
 		}
 	}
 	// Clear desktop icons
-	if( Doors.screen && Doors.screen.contentDiv.icons )
+	if( window.Doors && Doors.screen && Doors.screen.contentDiv.icons )
 	{
 		for( var a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
 		{
@@ -2770,28 +2484,29 @@ function contextMenu( e )
 		mov3 = tar.parentNode.parentNode.parentNode.className.indexOf ( ' View' ) >= 0;
 	
 	if ( 
-		tar.className == 'ScreenContent' || 
+		tar.classList.contains( 'ScreenContent' ) || 
 		windowMouseY < (mdl?mdl.offsetHeight:0) || 
-		( tar.className == 'Content' && mov ) ||
-		( tar.className == 'Title' && mov ) ||
-		( tar.parentNode.className == 'Title' && mov2 ) ||
+		( tar.classList.contains( 'Content' ) && mov ) ||
+		( tar.classList.contains( 'Title' ) && mov ) ||
+		( tar.parentNode.classList.contains( 'Title' ) && mov2 ) ||
 		( tar.className == 'MoveOverlay' && mov ) ||
 		( tar.className == 'Resize' && mov ) ||
-		( tar.parentNode.parentNode && tar.parentNode.parentNode.className == 'Title' && mov3 )
+		( tar.parentNode.parentNode && tar.parentNode.parentNode.classList.contains( 'Title' ) && mov3 )
 	)
 	{
 		window.mouseDown = false;
-		workspaceMenu.show();
+		WorkspaceMenu.show();
 	}
 	return cancelBubble( e );
 }
 
 function FixWindowDimensions ( mw )
 {
-	SetWindowFlag ( mw, 'min-height', mw.parentNode.offsetHeight );
-	SetWindowFlag ( mw, 'max-height', mw.parentNode.offsetHeight );
-	SetWindowFlag ( mw, 'min-width', mw.parentNode.offsetWidth );
-	SetWindowFlag ( mw, 'max-width', mw.parentNode.offsetWidth );
+	console.log( mw.windowObject );
+	SetWindowFlag( mw, 'min-height', mw.parentNode.offsetHeight );
+	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );
+	SetWindowFlag( mw, 'min-width', mw.parentNode.offsetWidth );
+	SetWindowFlag( mw, 'max-width', mw.parentNode.offsetWidth );
 }
 
 function ElementWindow ( ele )
@@ -2820,8 +2535,7 @@ function InitGuibaseEvents()
 
 	if ( document.attachEvent )
 		document.attachEvent ( 'onmouseup', movableMouseUp, false );
-	else window.addEventListener ( 'mouseup', movableMouseUp, false );
-
+	else window.addEventListener ( 'mouseup', movableMouseUp, false );	
 	window.addEventListener( 'touchend', movableMouseUp, false );
 
 	if ( document.attachEvent )
@@ -2970,12 +2684,12 @@ function FindImageColorProduct( img )
 		for( var i = 0; i < imgd.data.length; i += increments )
 		{
 			average.r += imgd.data[ i   ];
-			average.g += imgd.data[ i+1 ];
-			average.b += imgd.data[ i+2 ];
+			average.g += imgd.data[ i + 1 ];
+			average.b += imgd.data[ i + 2 ];
 		}
-		average.r /= imgd.data.length / steps;
-		average.g /= imgd.data.length / steps;
-		average.b /= imgd.data.length / steps;
+		average.r /= imgd.data.length >> 3;
+		average.g /= imgd.data.length >> 3; // step == 8 (>>3)
+		average.b /= imgd.data.length >> 3;
 		average.r = Math.floor( average.r );
 		average.g = Math.floor( average.g );
 		average.b = Math.floor( average.b );
@@ -2986,134 +2700,6 @@ function FindImageColorProduct( img )
 }
 
 // END COLOR PROCESSOR ---------------------------------------------------------
-
-// Disposable menu for mobile use ----------------------------------------------
-
-var FullscreenMenu = function()
-{
-	var t = this;
-	this.dom = ge( 'MobileMenu' );
-	this.items = [];
-	if( !this.dom ) return;
-	
-	this.addMenuItem = function( mitem )
-	{
-		this.items.push( mitem );
-	}
-	
-	this.show = function( heading, men ) // With an optional menu
-	{	
-		// Generate menu from workspace menu
-		if( men && typeof( men ) == 'string' )
-		{
-			var f = false;
-			for( var a = 0; a < Workspace.menu.length; a++ )
-			{
-				if( Workspace.menu[a].name == men )
-				{
-					f = true;
-					men = Workspace.menu[a].items;
-				}
-			}
-			if( !f ) men = false;
-		}
-		
-		friend.currentMenuItems = false; // <- make it regenerate
-		this.dom.innerHTML = '';
-		var root = document.createElement( 'div' );
-		root.className = 'Menu';
-		root.innerHTML = heading ? heading : i18n( 'i18n_choose_disk' );
-		var menuCn = document.createElement( 'ul' );
-		root.appendChild( menuCn );
-		
-		// Set items to display
-		var items = this.items;
-		if( men ) items = men;
-		
-		for( var a = 0; a < items.length; a++ )
-		{
-			menuCn.appendChild( this.createMenuItem( items[a] ) );
-		}
-		this.dom.appendChild( root );
-		
-		var d = _addMobileMenuClose();
-		this.dom.closeMenu = d;
-		this.dom.classList.add( 'Visible' );
-		this.dom.scrollTop = 0;
-		setTimeout( function(){ t.dom.classList.add( 'Showing' ); }, 5 );
-	}
-	this.createMenuItem = function( m )
-	{
-		var mitem = m;
-		var menu = document.createElement( 'li' );
-		if( m.disabled )
-		{
-			menu.classList.add( 'Disabled' );
-		}
-		if( m.divider == true )
-		{
-			menu.classList.add( 'Divider' );
-			menu.innerHTML = '';
-		}
-		else menu.innerHTML = '<span>' + ( mitem.name ? mitem.name : mitem.text ) + '</span>';
-		menu.onclick = function()
-		{
-			if( this.clicked ) return;
-			this.clicked = true;
-			if( mitem.command ) mitem.onclick = mitem.command;
-			if( mitem.onclick )
-				mitem.onclick();
-			else if( mitem.clickItem )
-				mitem.clickItem.onclick();
-			t.dom.classList.remove( 'Visible' );
-			_mobileMenuClose();
-		}
-		if( m.clickItem && m.clickItem.firstChild && m.clickItem.firstChild.firstChild )
-		{
-			var o = document.createElement( 'div' );
-			o.className = m.clickItem.className;
-			o.innerHTML = m.clickItem.innerHTML;
-			menu.innerHTML = '<span class="IconText">' + mitem.text + '</span>';
-			menu.appendChild( o );
-		}
-		return menu;
-	}
-}
-
-// Add a close button
-function _addMobileMenuClose()
-{
-	if( !ge( 'MobileMenuClose' ) )
-	{
-		var d = document.createElement( 'span' );
-		d.id = 'MobileMenuClose';
-		d.className = 'Close IconMedium fa-close';
-		d.style.top = '-50px';
-		d.innerHTML = i18n( 'i18n_close_menu' );
-		d.onclick = function()
-		{
-			workspaceMenu.close();
-			_mobileMenuClose( d );
-		}
-		document.body.appendChild( d );
-		ge( 'MobileMenu' ).closeMenu = d;
-		setTimeout( function(){ d.style.top = '0px'; }, 5 );
-		return d;
-	}
-	return ge( 'MobileMenuClose' );
-}
-
-// Close the menu
-function _mobileMenuClose( ele )
-{
-	var d = ele ? ele : ge( 'MobileMenuClose' );
-	if( d )
-	{
-		d.style.top = '-50px';
-		ge( 'MobileMenu' ).closeMenu = false;
-		setTimeout( function(){ if( d && d.parentNode ) d.parentNode.removeChild( d ); }, 500 );
-	}
-}
 
 // End disposable menu for mobile use ------------------------------------------
 

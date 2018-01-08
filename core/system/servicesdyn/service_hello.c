@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ *  Hello Service
+ *
+ * file contain all 'hello - test' service functitons
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <sys/types.h>
 #include <signal.h>
@@ -39,6 +48,7 @@
 #include <dlfcn.h>
 #include <core/thread.h>
 #include <signal.h>
+#include <system/systembase.h>
 
 #define NAME "hello"
 #define VERSION 		1
@@ -47,7 +57,8 @@
 typedef struct HelloService
 {
 	int					hs_PID;
-	FThread			*hs_Thread;
+	FThread				*hs_Thread;
+	SystemBase			*hs_SB;
 }HelloService;
 
 //
@@ -75,6 +86,7 @@ Service *ServiceNew( void *sysbase, char *command )
 		if( hs != NULL )
 		{
 			service->s_SpecialData = hs;
+			hs->hs_SB = (SystemBase *)sysbase;
 		}
 		
 		service->s_State = SERVICE_STOPPED;
@@ -139,8 +151,9 @@ int hthread( FThread *t )
 				if( s->s_WSI != NULL && len > 0 )
 				{
 					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, data,  len );
-					int n = lws_write( s->s_WSI, buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT);
-					
+					//int n = lws_write( s->s_WSI, buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT);
+					hs->hs_SB->WebsocketWrite( s->s_WSI, buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+
 					DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
 				else

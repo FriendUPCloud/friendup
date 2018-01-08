@@ -26,6 +26,10 @@
  *  @author PS (Pawel Stefanski)
  *  @date created 23 March 2017
  */
+/**
+ * \ingroup FriendCoreThreadsPID
+ * @{
+ */
 
 #ifndef __CORE_PID_THREAD_H__
 #define __CORE_PID_THREAD_H__
@@ -80,3 +84,5 @@ PIDThread *PIDThreadNew( void *sb );
 void PIDThreadDelete( PIDThread *t );
 
 #endif // __CORE_PID_THREAD_H__
+
+/**@}*/

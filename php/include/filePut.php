@@ -47,18 +47,25 @@ if( count( $argv ) >= 4 )
 
 	if( file_exists( $filePath ) )
 	{
+		if( strstr( $filePath, '/' ) )
+		{
+			$file = explode( '/', $filePath );
+			$file = $file[ count( $file ) - 1 ];
+		}
+		else $file = $filePath;
+		
+		$curlFile = new CURLFile( $filePath, 'application/octetstream', $file );
 		$postfields = array(
 			'sessionid' => $session,
 			'devname' => $devname,
 			'path' => urlencode( $destPath ),
 			'target' => urlencode( $destPath ),
-			'data' => '@' . $filePath
+			'data' => $curlFile
 		);
 	
 		$ch = curl_init();
 		curl_setopt( $ch, CURLOPT_URL, $url    );
 		curl_setopt( $ch, CURLOPT_PORT, $Config->FCPort );
-		curl_setopt( $ch, CURLOPT_SAFE_UPLOAD, false );
 		curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 		if( $Config->SSLEnable == 1 )

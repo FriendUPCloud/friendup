@@ -120,6 +120,7 @@ FHandler *FHandlerCreate( const char *path, const char *name )
 			fsys->Rename = dlsym( fsys->handle, "Rename");
 			fsys->Execute = dlsym( fsys->handle, "Execute");
 			fsys->Copy = dlsym( fsys->handle, "Copy" );
+			fsys->GetDiskInfo = dlsym( fsys->handle, "GetDiskInfo" );
 			
 			fsys->InfoGet = dlsym( fsys->handle, "InfoGet" );
 			fsys->InfoSet = dlsym( fsys->handle, "InfoSet" );

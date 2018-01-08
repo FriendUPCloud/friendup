@@ -240,7 +240,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			}
 			else
 			{
-				FERROR("User is already invited with session %llu\n", as->as_SASID );
+				FERROR("User is already invited with session %lu\n", as->as_SASID );
 				return -1;
 			}
 		}
@@ -319,7 +319,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 	return -1;
 }
 
-#define WS_MESSAGE_TEMPLATE_USER "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": %s}}}}"
+#define WS_MESSAGE_TEMPLATE_USER "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": %s}}}}"
 
 /**
  * Remove user from application session
@@ -428,8 +428,8 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 		}
 		
 		// I assume that user can have max 8 sessions - usersi * 512 * 8
-		DEBUG("[AppSession] Bytes %d for user list will be allocated\n", ( usersi << 9 ) << 3 );
-		userlistadded = FCalloc( ( usersi << 9 ) << 3, sizeof(char) );
+		DEBUG("[AppSession] Bytes %d for user list will be allocated\n", SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ) );
+		userlistadded = FCalloc( SHIFT_LEFT( SHIFT_LEFT(usersi, 9), 3 ), sizeof(char) );
 		if( userlistadded != NULL )
 		{
 			int errors = 0;
@@ -522,7 +522,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 										pos++;
 
 										char tmpmsg[ 2048 ];
-										int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
+										int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 
 										WebSocketSendMessageInt( usrses, tmpmsg, len );
 									}
@@ -558,7 +558,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 						pos++;
 					
 						char tmpmsg[ 2048 ];
-						int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%llu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
+						int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
 					
 						WebSocketSendMessageInt( ses, tmpmsg, len );
 					}
@@ -723,7 +723,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 			asul = as->as_UserSessionList;
 			while( asul != NULL )
 			{
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->authid, as->as_SASID,  loggedSession->us_User->u_Name, asul->usersession->us_User->u_Name );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", asul->authid, as->as_SASID,  loggedSession->us_User->u_Name, asul->usersession->us_User->u_Name );
 				msgsndsize += WebSocketSendMessageInt( asul->usersession, tmp, len );
 			
 				asul = (SASUList *) asul->node.mln_Succ;
@@ -733,8 +733,8 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 		{
 			for( i=0 ; i < rementrnum ; i++ )
 			{
-				DEBUG("[AppSession] authid %s sasid %llu userptr %p usersessptr %p usersessuser ptr %p\n", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User, rementr[ i ]->usersession, rementr[ i ]->usersession->us_User );
-				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User->u_Name, rementr[ i ]->usersession->us_User->u_Name );
+				DEBUG("[AppSession] authid %s sasid %lu userptr %p usersessptr %p usersessuser ptr %p\n", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User, rementr[ i ]->usersession, rementr[ i ]->usersession->us_User );
+				int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%lu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"sasid-close\",\"data\":\"%s\"}}}}}", rementr[ i ]->authid, as->as_SASID,  loggedSession->us_User->u_Name, rementr[ i ]->usersession->us_User->u_Name );
 				msgsndsize += WebSocketSendMessageInt( rementr[ i ]->usersession, tmp, len );
 			
 				AppSessionRemUsersession( as, rementr[ i ]->usersession );
@@ -812,6 +812,11 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						
 						break;
 					}
+					if( lws->wc_UserSession == NULL )
+					{
+						break;
+					}
+					
 					lws = (WebsocketClient *)lws->node.mln_Succ;
 				}
 				pthread_mutex_unlock( &(le->usersession->us_Mutex) );

@@ -23,22 +23,65 @@ global $args, $SqlDatabase, $User, $Config;
 
 include_once( 'php/classes/door.php' );
 
-if( !defined( 'SQLWORKGROUPDRIVE_FILE_LIMIT' ) )
-{
-	// 500 megabytes
-	define( 'SQLWORKGROUPDRIVE_FILE_LIMIT', 5242880000 );
-}
-
 if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 {
 	class DoorSQLWorkgroupDrive extends Door
 	{	
+		/**
+		 * Constructor
+		*/
 		function onConstruct()
 		{
 			global $args;
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
+			$defaultDiskspace = 536870912;
+			if( $this->Config )
+			{
+				$this->configObject = json_decode( $this->Config );
+				if( isset( $this->configObject->DiskSize ) )
+				{
+					$ds = strtolower( $this->configObject->DiskSize . '' );
+					$ty = substr( $ds, strlen( $ds ) - 2, 2 );
+					$nn = $defaultDiskspace;
+					switch( $ty )
+					{
+						case 'kb':
+							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
+							$nn = intval( $nn, 10 ) * 1024;
+							break;
+						case 'mb':
+							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
+							$nn = intval( $nn, 10 ) * 1024 * 1024;
+							break;
+						case 'gb':
+							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
+							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024;
+							break;
+						case 'tb':
+							$nn = substr( $ds, 0, strlen( $ds ) - 2 );
+							$nn = intval( $nn, 10 ) * 1024 * 1024 * 1024 * 1024;
+							break;
+						default:
+							$nn = intval( $ds, 10 );
+							break;
+					}
+					if( $nn <= 0 ) $nn = $defaultDiskspace;
+					define( 'SQLWORKGROUPDRIVE_FILE_LIMIT', $nn );
+				}
+				else
+				{
+					define( 'SQLWORKGROUPDRIVE_FILE_LIMIT', $defaultDiskspace );
+				}
+			}
 			
+			if( !defined( 'SQLWORKGROUPDRIVE_FILE_LIMIT' ) )
+			{
+				// 500 megabytes
+				define( 'SQLWORKGROUPDRIVE_FILE_LIMIT', $defaultDiskspace );
+			}
 		}
+		
+		// Public functions --------------------------------------------
 
 		// Gets the subfolder by path on this filesystem door
 		// Path should be like this: SomePath:Here/ or Here/ (relating to Filesystem in $this)
@@ -119,24 +162,39 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			// TODO: This is a workaround, please fix in Friend Core!
 			//       Too much code for getting a real working path..
 			if( isset( $args->path ) )
+			{
 				$path = $args->path;
+			}
 			else if( isset( $args->args ) )
 			{
 				if( isset( $args->args->path ) )
 					$path = $args->args->path;
 			}
+			
 			if( isset( $path ) )
 			{
 				$path = str_replace( '::', ':', $path );
+				$path = str_replace( ':/', ':', $path );
 				$path = explode( ':', $path );
 				if( count( $path ) > 2 )
+				{
 					$args->path = $path[1] . ':' . $path[2];
-				else $args->path = implode( ':', $path );
+				}
+				else
+				{
+					// FIX WEBDAV problems
+					if( count( $path ) > 1 )
+					{
+						if( $path[1] != '' && $path[1]{0} == '/' )
+							$path[1] = substr( $path[1], 1, strlen( $path[1] ) );
+					}
+					$args->path = implode( ':', $path );
+				}
+				
+				$path = $args->path;
+				
 				if( isset( $args->args ) && isset( $args->args->path ) )
 					unset( $args->args->path );
-					
-					
-				$path = $args->path;
 			}
 		
 			// Do a directory listing
@@ -149,13 +207,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				$fo = false;
 			
 				// Can we get sub folder?
-				$thePath = isset( $args->path ) ? $args->path : ( isset( $args->args->path ) ? $args->args->path : '' );
-				if( isset( $thePath ) && strlen( $thePath ) > 0 && $subPath = trim( end( explode( ':', $thePath ) ) ) )
+				if( isset( $path ) && strlen( $path ) > 0 )
 				{
-					$fo = $this->getSubFolder( $subPath );
-				
-					// Failed to find a path
-					if( !$fo ) die( 'fail<!--separate-->Path error.' );
+					$subPath = explode( ':', $path ); 
+					if( $subPath = end( $subPath ) )
+					{
+						$fo = $this->getSubFolder( $subPath );
+						// Failed to find a path
+						if( !$fo ) die( 'fail<!--separate-->{"response":0,"message":"Path error.","path":"' . $path . '"}' );
+					}
+					else $subPath = '';
 				}
 	
 				$out = [];
@@ -183,7 +244,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					{
 						if( $entry->Type == 'File' )
 						{
-							$entries[$k]->Path = $thePath . $entry->Name . ( $entry->Type == 'Directory' ? '/' : '' );
+							$entries[$k]->Path = $subPath . $entry->Name . ( $entry->Type == 'Directory' ? '/' : '' );
 							$paths[] = $entry->Path;
 							$files[] = $entry->ID;
 							$f = false;
@@ -222,7 +283,6 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							}
 						}
 					}
-					//$Logger->log( 'Tried to get files shared: ' . $q . ' AND ' . print_r( $userids, 1 ) );
 					
 					// List files
 					foreach( $entries as $entry )
@@ -236,7 +296,8 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						$o->DateModified = $entry->DateModified;
 						$o->DateCreated = $entry->DateCreated;
 						$o->Filesize = $entry->Filesize;
-						$o->Path = end( explode( ':', $thePath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' ) ) );
+						$pth = explode( ':', $subPath . $o->Filename . ( $o->Type == 'Directory' ? '/' : '' ) ); 
+						$o->Path = end( $pth ); unset( $pth );
 						$o->Shared = isset( $entry->Shared ) ? $entry->Shared : '';
 						$o->SharedLink = isset( $entry->SharedLink ) ? $entry->SharedLink : '';
 						$out[] = $o;
@@ -246,7 +307,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// No entries
 				return 'ok<!--separate-->[]';
 			}
-			else if( $args->command == 'info' )
+			else if( $args->command == 'info' && is_string( $path ) && isset( $path ) && strlen( $path ) )
 			{
 				// Is it a folder?
 				if( substr( $path, -1, 1 ) == '/' )
@@ -263,6 +324,20 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						$fldInfo->DateModified = $sp->DateModified;
 						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
 					}
+				}
+				else if( substr( $path, -1, 1 ) == ':' )
+				{
+					//its our mount itself
+
+					$fldInfo = new stdClass();
+					$fldInfo->Type = 'Directory';
+					$fldInfo->MetaType = '';
+					$fldInfo->Path = $path;
+					$fldInfo->Filesize = 0;
+					$fldInfo->Filename = $path;
+					$fldInfo->DateCreated = '';
+					$fldInfo->DateModified = '';
+					die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
 					
 				}
 				// Ok, it's a file
@@ -305,13 +380,27 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						$fldInfo->DateModified = $f->DateModified;
 						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
 					}
+					// We added a directory after all..
+					else
+					{
+						if( $sp = $this->getSubFolder( $path . '/' ) )
+						{
+							$fldInfo = new stdClass();
+							$fldInfo->Type = 'Directory';
+							$fldInfo->MetaType = $fldInfo->Type;
+							$fldInfo->Path = end( explode( ':', $path ) );
+							$fldInfo->Filesize = 0;
+							$fldInfo->Filename = $sp->Name;
+							$fldInfo->DateCreated = $sp->DateCreated;
+							$fldInfo->DateModified = $sp->DateModified;
+							die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+						}
+					}
 				}
 				die( 'fail<!--separate-->Could not find file!' );
 			}
 			else if( $args->command == 'write' )
 			{
-				$Logger->log( '[SQLWorkgroupDrive] Preparing to write file to disk.' );
-				
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -326,45 +415,38 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Create a file object
 				$f = new dbIO( 'FSFile' );
 				$f->FilesystemID = $this->ID;
-				$fname = end( explode( ':', $args->path ) );
-				$fname = end( explode( '/', $fname ) );
+				$fname = explode( ':', $args->path ); $fname = end( $fname );
+				$subPath = $fname;
+				
+				if( strstr( $fname, '/' ) )
+				{
+					$fname = explode( '/', $fname ); $fname = end( $fname );
+				}
 				$f->Filename = $fname;
 				$f->FolderID = '0';
-	
+
 				// Can we get sub folder?
 				$fo = false;
 				
-				$args->path = str_replace( ':/', ':', $args->path );
-				
-				if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+				// Remove filename
+				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
 				{
-					//$Logger->log( 'Trying to find existing file in path -> ' . $subPath . ' (' . $args->path . ')' );
-					
-					// Remove filename
-					if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
-					{
-						$subPath = explode( '/', $subPath );
-						array_pop( $subPath );
-						$subPath = implode( '/', $subPath ) . '/';
-					}
-					
-					$Logger->log( '[SQLWorkgroupDrive] We will try to find the folder ID for this path now ' . $subPath );
-					if( $fo = $this->getSubFolder( $subPath ) )
-					{
-						$f->FolderID = $fo->ID;	
-					}
+					$subPath = explode( '/', $subPath );
+					array_pop( $subPath );
+					$subPath = implode( '/', $subPath ) . '/';
 				}
+				
+				if( $fo = $this->getSubFolder( $subPath ) )
+					$f->FolderID = $fo->ID;
 				
 				// Overwrite existing and catch object
 				if( $f->Load() )
 				{
 					$deletable = $Config->FCUpload . $f->DiskFilename;
-					$Logger->log( '[SQLWorkgroupDrive] Yay, overwriting existing file -> ' . $f->DiskFilename . '!: ' . $f->FolderID );
 					$fn = $f->DiskFilename;
 				}
 				else
 				{
-					$Logger->log( '[SQLWorkgroupDrive] We will be writing a new file.' );
 					$fn = $f->Filename;
 					$f->DiskFilename = '';
 				}
@@ -378,7 +460,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				if( $f->ID <= 0 )
 				{
 					$ofn = $fn;
-					$fna = end( explode( '.', $ofn ) );
+					$fna = explode( '.', $ofn ); $fna = end( $fna );
 					while( file_exists( $Config->FCUpload . $fn ) )
 					{
 						// Keep extension last
@@ -426,13 +508,11 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							}
 							else
 							{
-								$Logger->log( 'Write: Limit broken' );
 								die( 'fail<!--separate-->Limit broken' );
 							}
 						}
 						else
 						{
-							$Logger->log( 'Write: Tempfile does not exist.' );
 							die( 'fail<!--separate-->Tempfile does not exist!' );
 						}
 					}
@@ -446,20 +526,17 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						else
 						{
 							fclose( $file );
-							$Logger->log( 'Write: Limit broken' );
 							die( 'fail<!--separate-->Limit broken' );
 						}
 					}
 					
 					$f->DiskFilename = $fn;
-					$f->Filesize = filesize( getcwd() . '/' . $Config->FCUpload . $fn );
+					$f->Filesize = filesize( $Config->FCUpload . $fn );
 					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 					$f->DateModified = date( 'Y-m-d H:i:s' );
 					$f->Save();
-					$Logger->log( 'Write: wrote new file with id: ' . $f->ID . ', filesize: ' . $f->Filesize );
 					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 				}
-				$Logger->log( 'Write: could not write file..' );
 				return 'fail<!--separate-->Could not write file: ' . $Config->FCUpload . $fn;
 			}
 			else if( $args->command == 'read' )
@@ -467,33 +544,39 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				// Create a file object
 				$f = new dbIO( 'FSFile' );
 				$f->FilesystemID = $this->ID;
-				$fname = end( explode( ':', $args->path ) );
-				$fname = end( explode( '/', $fname ) );
+				
+				$fname = explode( ':', $args->path );
+				$fname = end( $fname );
+				
+				$subPath = $fname;
+				
+				$fname = explode( '/', $fname );
+				$fname = end( $fname );
+				
 				$f->Filename = $fname;
 				$f->FolderID = '0';
 				$fn = '';
 	
 				// Can we get sub folder?
-				if( isset( $args->path ) && $subPath = trim( end( explode( ':', $args->path ) ) ) )
+				
+				// Remove filename
+				if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
 				{
-					// Remove filename
-					if( substr( $subPath, -1, 1 ) != '/' && strstr( $subPath, '/' ) )
-					{
-						$subPath = explode( '/', $subPath );
-						array_pop( $subPath );
-						$subPath = implode( '/', $subPath ) . '/';
-					}
-					if( $fo = $this->getSubFolder( $subPath ) )
-						$f->FolderID = $fo->ID;	
+					$subPath = explode( '/', $subPath );
+					array_pop( $subPath );
+					$subPath = implode( '/', $subPath ) . '/';
 				}
+				if( $fo = $this->getSubFolder( $subPath ) )
+					$f->FolderID = $fo->ID;	
 	
 				// Try to load database object
 				if( $f->Load() )
 				{
 					// Read the file
 					$fn = $f->DiskFilename;
+					
 					$fname = $Config->FCUpload . $fn;
-					if( file_exists( $fname ) && $data = file_get_contents( $fname ) )
+					if( file_exists( $fname ) )
 					{
 						$info = @getimagesize( $fname );
 					
@@ -522,18 +605,12 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						// Some data is raw
 						if( isset( $args->mode ) && ( $args->mode == 'rb' || $args->mode == 'rs' ) )
 						{
-							if( $df = fopen( $fname, 'r' ) )
-							{
-								$buffer = 64000;
-								while( $str = fread( $df, $buffer ) )
-								{
-									echo( $str );
-								}
-								fclose( $df );
-								die();
-							}
+							//US-230 This is a memory friendly way to dump a file :-)
+							//Previously the download got broken at 94MB (or another file size depending on php.ini)
+							ob_end_clean(); 
+							readfile($fname);
+							die();
 						}
-					
 						// Return ok
 						$okRet = 'ok<!--separate-->';
 					
@@ -547,7 +624,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						return $okRet . trim( file_get_contents( $fname ) );
 					}
 				}
-				return 'fail<!--separate-->Could not read file: ' . $Config->FCUpload . $fn;
+				return 'fail<!--separate-->{"response":"could not read file"}'; //Could not read file: ' . $Config->FCUpload . $fn . '<!--separate-->' . print_r( $f, 1 );
 			}
 			// Import sent files!
 			else if( $args->command == 'import' )
@@ -622,8 +699,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							)
 					' ) )
 					{
-						foreach( $d as $k=>$v )
-						$this->$k = $v;
+						foreach( $d as $k=>$v ) $this->$k = $v;
 					}
 				}
 				if( $row = $SqlDatabase->FetchObject( '
@@ -647,16 +723,17 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				switch( $action )
 				{
 					case 'mount':
-						$Logger->log( 'Mounting not needed here.. Always succeed.' );
+						//$Logger->log( 'Mounting not needed here.. Always succeed.' );
 						die( 'ok' );
 					case 'unmount':
-						$Logger->log( 'Unmounting not needed here.. Always succeed.' );
+						//$Logger->log( 'Unmounting not needed here.. Always succeed.' );
 						die( 'ok' );
 					case 'rename':
 						ob_clean();
 						// Is it a folder?
 						if( substr( $path, -1, 1 ) == '/' )
 						{
+							//$Logger->log( '[Rename] Trying to find: ' . $path );
 							$sp = $this->getSubFolder( $path );
 							if( $sp )
 							{
@@ -756,11 +833,11 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								$f->DateModified = date( 'Y-m-d H:i:s' );
 								$f->DateCreated = $f->DateModified;
 								$f->Save();
-								$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
+								//$Logger->log( 'Made directory ' . $f->Name . ' (in ' . $path . ') id ' . $f->ID );
 								return 'ok<!--separate-->' . $f->ID;
 							}
 						}
-						die( 'fail<!--separate-->why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
+						die( 'fail<!--separate-->' ); //why: ' . print_r( $args, 1 ) . '(' . $path . ')' );
 						break;
 					case 'delete':
 						if( isset( $path ) )
@@ -778,7 +855,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						$to   = isset( $args->to )   ? $args->to   : ( isset( $args->args->to )   ? $args->args->to   : false );
 						if( isset( $from ) && isset( $to ) )
 						{
-							$Logger->log( 'Trying from ' . $from . ' to ' . $to );
+							//$Logger->log( 'Trying from ' . $from . ' to ' . $to );
 							if( $this->copyFile( $from, $to ) )
 							{
 								return 'ok';
@@ -788,11 +865,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 						return 'fail';
 				}
 			}
-			return 'fail<!--separate-->' . print_r( $args, 1 );
+			return 'fail<!--separate-->'; // . print_r( $args, 1 );
 		}
 		
-		// Gets a file by path!
-		function getFile( $path )
+		/**
+		 * @brief Gets a file by path!
+		 *
+		 * @param $path a Friend DOS path
+		 * @return a dbIO file object or false
+		 */
+		public function getFile( $path )
 		{
 			global $User, $Logger;
 		
@@ -801,9 +883,9 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			array_pop( $subPath );
 			$subPath = implode( '/', $subPath ) . '/';
 		
-			$Logger->log( 'Trying to get file.. ------------------->' );
+			/*$Logger->log( 'Trying to get file.. ------------------->' );
 			$Logger->log( 'Path was: ' . $path );
-			$Logger->log( 'Sub path is therefore: ' . $subPath );
+			$Logger->log( 'Sub path is therefore: ' . $subPath );*/
 		
 			$fo = $this->getSubFolder( $subPath );
 			$fi = new dbIO( 'FSFile' );
@@ -828,8 +910,14 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return false;
 		}
 		
-		// Will open and return a file pointer set with options
-		function openFile( $path, $mode )
+		/**
+		 * @brief Will open and return a file pointer set with options
+		 * 
+		 * @param $path Friend DOS path
+		 * @param $mode is 'r', 'rw', 'rs'
+		 * @return false or file object
+		*/
+		public function openFile( $path, $mode )
 		{
 			global $Config, $User;
 			
@@ -885,8 +973,13 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return false;
 		}
 		
-		// Close file pointer!
-		function closeFile( $filePointer )
+		/**
+		 * @brief Close file pointer!
+		 *
+		 * @param $filePointer a file object
+		 * @return string or false
+		**/
+		public function closeFile( $filePointer )
 		{
 			$filePointer->offset = 0;
 			$filePointer->tmpPath = NULL;
@@ -894,8 +987,14 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return false;
 		}
 		
-		// Will read from file pointer x bytes
-		function readFile( $fp, $bytes )
+		/**
+		 * @brief Will read from file pointer x bytes
+		 *
+		 * @param $fp file object
+		 * @param $bytes number of bytes to read
+		 * return string or null
+		**/
+		public function readFile( $fp, $bytes )
 		{
 			if( !isset( $fp->offset ) || !isset( $fp->mode ) || !file_exists( $fp->tmpPath ) )
 				return NULL;
@@ -914,8 +1013,16 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return NULL;
 		}
 	
-		// Will write to pointer, data, x bytes
-		function writeFile( $filePointer, $data, $bytes )
+		/**
+		 * @brief Will write to pointer, data, x bytes
+		 *
+		 * @param $filePointer file object
+		 * @param $data string/binary data
+		 * @param $bytes how many bytes to write
+		 * 
+		 * @return value is number of bytes written
+		*/
+		public function writeFile( $filePointer, $data, $bytes )
 		{
 			if( !isset( $fp->offset ) || !isset( $fp->mode ) || !file_exists( $fp->tmpPath ) )
 				return NULL;
@@ -970,8 +1077,15 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return false;
 		}
 	
-		// Put a file
-		function putFile( $path, $fileObject )
+		/**
+		 * @brief Put a file into a path
+		 * 
+		 * @param $path a Friend DOS path
+		 * @param $fileObject a file object
+		 *
+		 * @return value is true or false
+		*/
+		public function putFile( $path, $fileObject )
 		{
 			global $Config, $User;
 		
@@ -1015,8 +1129,15 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			return false;
 		}
 	
-		// Create a folder
-		function createFolder( $folderName, $where )
+		/**
+		 * @brief Create a folder
+		 *
+		 * @param $folderName name of directory
+		 * @param $where Friend DOS path
+		 *
+		 * @return true false
+		**/
+		public function createFolder( $folderName, $where )
 		{
 			global $Config, $User, $Logger;
 
@@ -1060,7 +1181,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 		}
 	
 		// Not to be used outside! Not public!
-		function _deleteFolder( $fo, $recursive = true )
+		private function _deleteFolder( $fo, $recursive = true )
 		{
 			global $Config, $User, $Logger;
 		
@@ -1075,7 +1196,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 				{
 					foreach( $fop as $fopp )
 					{
-						$Logger->log( 'Attempting to delete sub folder -> ' . $fopp->Name . '/ (' . $fopp->ID . ')' );
+						//$Logger->log( 'Attempting to delete sub folder -> ' . $fopp->Name . '/ (' . $fopp->ID . ')' );
 						$this->_deleteFolder( $fopp, $recursive );
 					}
 				}
@@ -1090,7 +1211,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 			{
 				foreach( $files as $file )
 				{
-					$Logger->log( 'Attempting to delete file ' . $file->Filename . ' in ' . $fo->Name . '/ (' . $fo->ID . ')' );
+					//$Logger->log( 'Attempting to delete file ' . $file->Filename . ' in ' . $fo->Name . '/ (' . $fo->ID . ')' );
 					if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 					{
 						unlink( $Config->FCUpload . $file->DiskFilename );
@@ -1098,7 +1219,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 					$file->Delete();
 				}
 			}
-			$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
+			//$Logger->log( 'Deleting database entry of folder ' . $fo->Name . '/ (' . $fo->ID . ')' );
 			$fo->Delete();
 			return true;
 		}

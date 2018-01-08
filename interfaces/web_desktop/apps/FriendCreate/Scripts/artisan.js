@@ -59,14 +59,14 @@ Application.run = function( msg )
 	// Some variables
 	this.project = {
 		ProjectName: '',
-		Author: '',
-		Email: '',
-		Version: '',
-		API: 'v1',
+		Author:      '',
+		Email:       '',
+		Version:     '',
+		API:         'v1',
 		Description: '',
-		Files: [],
+		Files:       [],
 		Permissions: [],
-		Libraries: []
+		Libraries:   []
 	};
 	this.currentPath = 'Mountlist:';
 	this.statusBar = false;
@@ -79,14 +79,14 @@ Application.run = function( msg )
 	{
 		var flags = {
 			'title'            : 'Friend Create',
-			'width'            : 800,
-			'height'           : 480,
+			'width'            : 1024,
+			'height'           : 720,
 			'min-width'        : 800,
 			'min-height'       : 300,
 			'loadinganimation' : true
 		};
 		
-		if( settings.ownScreen )
+		/*if( settings.ownScreen )
 		{
 			flags.screen = new Screen( { title: 'Friend Create' } );
 			flags.screen.onclose = function()
@@ -95,7 +95,7 @@ Application.run = function( msg )
 			}
 			flags.maximized = true;
 			Application.screen = flags.screen;
-		}
+		}*/
 			
 		var w = new View( flags );
 		appl.masterView = w;
@@ -259,16 +259,15 @@ Application.loadFile = function( file )
 		data: i18n( 'i18n_loading_file' )
 	} );
 	
+	// Tell that we are loading a file
+	this.masterView.sendMessage( {
+		command: 'incrementloader',
+		data: file
+	} );
+	
 	var f = new File( p );
 	f.onLoad = function( data )
 	{	
-		// Post it
-		Application.masterView.sendMessage( {
-			command: 'loadfile',
-			data: data,
-			path: p
-		} );
-		
 		// Load first from queue
 		var qf = false;
 		if( Application.loadQueue.length )
@@ -288,11 +287,20 @@ Application.loadFile = function( file )
 			data: ''
 		} );
 		
-		Application.isLoading = false;
-		if( qf )
-		{
-			Application.loadFile( qf );		
-		}
+		// Post it
+		Application.masterView.sendMessage( {
+			command: 'loadfile',
+			data: data,
+			path: p,
+			callbackId: addCallback( function()
+			{
+				Application.isLoading = false;
+				if( qf )
+				{
+					Application.loadFile( qf );		
+				}
+			} )
+		} );
 	};
 	f.load();
 };
@@ -461,7 +469,7 @@ Application.saveFile = function( filename, content )
 		data: i18n( 'i18n_saving_file' )
 	} );
 
-	this.syncFilesList( function(msg)
+	this.syncFilesList( function( msg )
 	{
 		var files = msg.files;
 		var currentFile = msg.currentFile;
@@ -626,8 +634,6 @@ Application.receiveMessage = function( msg )
 					var f = {};
 					for( var a in fn )
 						f[a] = fn[a];
-					console.log( Application.projectFilename );
-					console.log( f.Path + '...' );
 					Application.setPathFromFilename( Application.projectFilename );
 					f.Path = Application.currentPath + f.Path;
 					Application.loadFile( f );
@@ -664,6 +670,7 @@ Application.receiveMessage = function( msg )
 				
 				Application.prevFilename = Application.projectFilename;
 				Application.projectFilename = files[0].Path;
+				Application.setProjectPath( files[0].Path );
 				
 				// Update path again
 				Application.getCurrentPath();
@@ -675,12 +682,15 @@ Application.receiveMessage = function( msg )
 					Application.project = {}; // Clear the project
 					for( var a in proj ) Application.project[a] = proj[a];
 					Application.setProjectTitle();
+					Application.projectFilename = files[0].Path;
 					Application.sendMessage( { command: 'open_project_files' } );
 				}
 				f.load();
 			}, Application.currentPath, 'load', false, i18n( 'i18n_load_project' ) );
 			break;
 		case 'project_load':
+			Application.projectFilename = msg.path;
+			Application.setProjectPath( msg.path );
 			var f = new File( msg.path );
 			f.onLoad = function( data )
 			{
@@ -688,6 +698,7 @@ Application.receiveMessage = function( msg )
 				Application.project = {}; // Clear the project
 				for( var a in proj ) Application.project[a] = proj[a];
 				Application.setProjectTitle();
+				//Application.masterView.sendMessage( { command: '', filename: msg.path } );
 				Application.sendMessage( { command: 'open_project_files' } );
 			}
 			f.load();
@@ -701,6 +712,109 @@ Application.receiveMessage = function( msg )
 					command: 'executeapplication',
 					executable: Application.projectFilename,
 					arguments: ''
+				} );
+			}
+			break;
+		case 'addtoproject':
+			if( msg.file && msg.file.filename )
+			{
+				// Validate the file
+				var cmp = msg.file.filename;
+				if( cmp.indexOf( '/' ) )
+				{
+					cmp = cmp.split( '/' );
+					cmp.pop();
+					cmp = cmp.join( '/' );
+				}
+				else
+				{
+					cmp = cmp.split( ':' )[0] + ':';
+				}
+				var d = new Door( cmp );
+				d.getIcons( function( files )
+				{
+					var resp = 'fail';
+					var f = null;
+					for( var a = 0; a < files.length; a++ )
+					{
+						if( files[a].Path == msg.file.filename )
+						{
+							resp = 'ok';
+							f = files[a];
+							break;
+						}
+					}
+					
+					if( resp == 'ok' && f )
+					{
+						if( f.Path.indexOf( Application.projectPath ) == 0 )
+						{
+							f.Path = f.Path.substr( Application.projectPath.length, f.Path.length - Application.projectPath.length );
+						}
+						
+						Application.project.Files.push( f );
+						Application.receiveMessage( {
+							command: 'project_save'
+						} );
+					}
+					
+					// Reply to editor window
+					Application.masterView.sendMessage( {
+						type: 'callback',
+						callback: msg.callbackId,
+						response: resp
+					} );
+				} );
+				return;
+			}
+			// Reply to editor window
+			this.masterView.sendMessage( {
+				type: 'callback',
+				callback: msg.callbackId,
+				response: 'fail'
+			} );
+			break;
+		case 'checkfile':
+			if( this.project && this.projectPath )
+			{
+				// Assume the file is unknown
+				var data = {
+					str: 'unknown'
+				};
+				if( msg.file.filename.length && msg.file.filename != 'Empty file' )
+				{
+					if( this.project.Files )
+					{
+						for( var a = 0; a < this.project.Files.length; a++ )
+						{
+							var comp = msg.file.filename.substr( this.projectPath.length, msg.file.filename.length - this.projectPath.length + 1 );
+							if( this.project.Files[a].Path == comp )
+							{
+								// This file exists in project
+								data.str = 'exists';
+								break;
+							}
+						}
+					}
+				}
+				else
+				{
+					data.str = '';
+				}
+				// Reply to editor window
+				this.masterView.sendMessage( {
+					type: 'callback',
+					callback: msg.callbackId,
+					data: data
+				} );
+			}
+			else
+			{
+				// Reply to editor window
+				this.masterView.sendMessage( {
+					type: 'callback',
+					callback: msg.callbackId,
+					data: { str: 'failed' }
 				} );
 			}
 			break;
@@ -743,14 +857,17 @@ Application.receiveMessage = function( msg )
 				{
 					Alert( i18n( 'i18n_package_created' ), i18n( 'i18n_package_created_desc' ) );
 					var p = this.projectFilename;
-					if( p && p.indexOf( '/' ) > 0 )
+					if( p )
 					{
-						p = p.split( '/' );
-						p = p.pop();
-						p = p.join( '/' ) + '/';
+						if( p && p.indexOf( '/' ) > 0 )
+						{
+							p = p.split( '/' );
+							p = p.pop();
+							p = p.join( '/' ) + '/';
+						}
+						else p = p.split( ':' )[0] + ':';
+						Workspace.refreshWindowByPath( p );
 					}
-					else p = p.split( ':' )[0] + ':';
-					Workspace.refreshWindowByPath( p );
 				}
 				else
 				{
@@ -851,6 +968,21 @@ Application.receiveMessage = function( msg )
 			break;
 	}
 };
+
+Application.setProjectPath = function( fp )
+{
+	if( fp.indexOf( '/' ) )
+	{
+		fp = fp.split( '/' );
+		fp.pop();
+		fp = fp.join( '/' ) + '/';
+	}
+	else
+	{
+		fp = fp.split( ':' )[0] + ':';
+	}
+	this.projectPath = fp;
+}
 
 // Show project properties
 Application.showProjectProperties = function()
@@ -1011,6 +1143,8 @@ Application.checkFileType = function( path )
 		case 'java':
 		case 'css':
 		case 'run':
+		case 'apf':
+		case 'conf':
 			return true;
 		default:
 			return false;

@@ -19,6 +19,27 @@
 
 Application.run = function( msg )
 {
+	var mode = ge( 'mode' ).value;
+	var devname = ge( 'devname' ).value;
+	if( typeof( mode ) != 'undefined' && mode == 'edit' )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e == 'ok' )
+			{
+				var js = JSON.parse( d );
+				return storageForm( js.Type, js.id, js );
+			}
+			// Oops!
+			Application.sendMessage( { command: 'closewindow' } );
+		}
+		m.execute( 'filesystem', {
+			userid: Application.userId,
+			devname: devname
+		} );
+		return;
+	}
 	this.refresh();
 }
 
@@ -27,7 +48,6 @@ Application.refresh = function()
 	var s = new Module( 'system' );
 	s.onExecuted = function( e, d )
 	{
-		console.log( e );
 		if( e != 'ok' )
 		{
 			return;
@@ -53,7 +73,6 @@ Application.refresh = function()
 		}
 		ge( 'Types' ).innerHTML = str;
 	}
-	console.log( 'Getting types' );
 	s.execute( 'types' );
 }
 
@@ -66,7 +85,7 @@ function doTheClose()
 	} );
 }
 
-function storageForm( type, id )
+function storageForm( type, id, data )
 {
 	var ft = new Module( 'system' );
 	ft.onExecuted = function( e, d )
@@ -77,7 +96,7 @@ function storageForm( type, id )
 		}
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
-		{		
+		{	
 			if( e == 'ok' )
 			{
 				var mch;
@@ -97,30 +116,132 @@ function storageForm( type, id )
 		
 			d = i18nReplace( d, [ 'i18n_port', 'i18n_key' ] );
 		
-			ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + i18n( 'i18n_add_a' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
-			ge( 'GUI' ).innerHTML = d + '<input type="hidden" id="Type" value="' + type + '"/>';
-			ge( 'Form' ).classList.add( 'open' );
-			ge( 'Types' ).classList.add( 'closed' );
-			ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_back' );
-			ge( 'CButton' ).disabled = '';
-			ge( 'CButton' ).oldOnclick = ge( 'CButton' ).onclick;
-			// Return!!
-			ge( 'CButton' ).onclick = function()
+			if( ge( 'mode' ).value == 'edit' )
 			{
-				ge( 'Types' ).classList.remove( 'closed' );
-				ge( 'Form' ).classList.remove( 'open' );
-				ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_cancel' );
-				ge( 'CButton' ).onclick = ge( 'CButton' ).oldOnclick;
+				ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
+					i18n( 'i18n_edit' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
 			}
-			verifyForm();
+			else
+			{
+				ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
+					i18n( 'i18n_add_a' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
+			}
+			
+			ge( 'GUI' ).innerHTML = d + '<input type="hidden" id="Type" value="' + type + '"/>';
+			
+			ge( 'Form' ).classList.add( 'open' );
+			
+			if( ge( 'Types' ) )
+			{
+				ge( 'Types' ).classList.add( 'closed' );
+			}
+			
+			if( ge( 'CButton' ) )
+			{
+				ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_back' );
+				ge( 'CButton' ).disabled = '';
+				ge( 'CButton' ).oldOnclick = ge( 'CButton' ).onclick;
+				
+				// Return!!
+				ge( 'CButton' ).onclick = function()
+				{
+					if( ge( 'Types' ) )
+					{
+						ge( 'Types' ).classList.remove( 'closed' );
+					}
+					ge( 'Form' ).classList.remove( 'open' );
+					ge( 'CButton' ).innerHTML = '&nbsp;' + i18n( 'i18n_cancel' );
+					ge( 'CButton' ).onclick = ge( 'CButton' ).oldOnclick;
+				}
+			}
+			
+			// We are in edit mode..
+			if( data )
+			{
+				if( typeof( data[ 'ID' ] ) != 'undefined' )
+					ge( 'diskId' ).value = data[ 'ID' ];
+				
+				var fields = [
+					'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
+					'Password', 'Path', 'Type', 'Workgroup', 'PublicKey'
+				];
+				for( var a = 0; a < fields.length; a++ )
+				{
+					if( ge( fields[ a ] ) && typeof( data[ fields[ a ] ] ) != 'undefined' )
+					{
+						ge( fields[ a ] ).value = data[ fields[ a ] ];
+					}
+				}
+				// Do we have conf?
+				if( data.Config )
+				{
+					data.Config = JSON.parse( data.Config );
+					for( var a in data.Config )
+					{
+						if( ge( 'conf.' + a ) )
+							ge( 'conf.' + a ).value = data.Config[ a ];
+					}
+				}
+			}
+			
+			verifyForm( null, 'show' );
 		}
-		m.execute( 'dosdrivergui', { type: type } );
+		m.execute( 'dosdrivergui', { type: type, id: id } );
 	}
 	ft.execute( 'dosdrivergui', { component: 'locale', type: type, language: Application.language } );
 }
 
-function verifyForm( typing )
+// Disable a file system
+function deleteFilesystem()
 {
+	Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_this_will_remove' ), function( r )
+	{
+		if( r && r.data == true )
+		{
+			var devname = ge( 'devname' ).value;
+			unmountFilesystem( devname, function( e )
+			{
+				if( e == 'ok' )
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
+							Application.sendMessage( { command: 'notify', method: 'closeview' } );
+							Application.sendMessage( { command: 'refreshdoors' } );
+							return;
+						}
+						return;
+					}
+					m.execute( 'deletefilesystem', { devname: devname } );
+				}
+			} );
+		}
+	} );
+}
+
+// Unmount a file system
+function unmountFilesystem( devname, callback )
+{
+	var f = new Library( 'system.library' );
+	
+	f.onExecuted = function( e, d )
+	{	
+		if( callback ) callback( e );
+	}
+	
+	var args = {
+		command: 'unmount',
+		devname: devname
+	};
+	
+	f.execute( 'device', args );
+}
+
+function verifyForm( typing, mode )
+{	
 	var optionals = [ 'ShortDescription' ];
 	var inps = ge( 'Form' ).getElementsByTagName( 'input' );
 	var texs = ge( 'Form' ).getElementsByTagName( 'textarea' );
@@ -147,22 +268,31 @@ function verifyForm( typing )
 				break;
 			}
 		}
-		out[b].onkeyup = function(){ verifyForm( true ); }
+		out[b].onkeyup = function()
+		{ 
+			verifyForm( true );
+		};
 		if( !opt && !out[b].value )
 		{
 			if( !typing )
 				out[b].focus();
-			ge( 'AddButton' ).disabled = 'disabled';
-			ge( 'AddButton' ).classList.add( 'Disabled' );
+			if( ge( 'AddButton' ) )
+			{
+				ge( 'AddButton' ).disabled = 'disabled';
+				ge( 'AddButton' ).classList.add( 'Disabled' );
+			}
 			return false;
 		}
 	}
 	
-	ge( 'AddButton' ).disabled = '';
-	ge( 'AddButton' ).classList.remove( 'Disabled' );
+	if( ge( 'AddButton' ) )
+	{
+		ge( 'AddButton' ).disabled = '';
+		ge( 'AddButton' ).classList.remove( 'Disabled' );
+	}
 	
 	// Submit!
-	if( !typing )
+	if( !typing && !mode )
 	{
 		addDisk();
 	}
@@ -228,16 +358,33 @@ function addDisk()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, dat )
 	{
-		if( e != 'ok' ) return;
-		
+		if( e != 'ok' ) 
+		{
+			Notify( { title: i18n( 'i18n_disk_error' ), text: i18n( 'i18n_failed_to_edit' ) } );
+			return;
+		}
+		else
+		{
+			Notify( { title: i18n( 'i18n_disk_success' ), text: i18n( 'i18n_disk_edited' ) } );
+		}
 		remountDrive( data, function()
 		{
 			Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
-			Application.sendMessage( { command: 'closeStorageWin', destinationViewId: ge( 'vid' ).value } );
+			Application.sendMessage( { command: 'notify', method: 'closeview' } );
 			Application.sendMessage( { command: 'refreshdoors' } );
 		} );
 	}
-	m.execute( 'addfilesystem', data );
+	// Edit?
+	if( ge( 'mode' ).value == 'edit' )
+	{
+		data.ID = ge( 'diskId' ).value;
+		m.execute( 'editfilesystem', data );
+	}
+	// Add new...
+	else
+	{
+		m.execute( 'addfilesystem', data );
+	}
 }
 
 // Unmounts partition
@@ -246,12 +393,11 @@ function remountDrive( data, callback )
 	var f = new Library( 'system.library' );
 	
 	f.onExecuted = function( e, d )
-	{
+	{	
 		var f2 = new Library( 'system.library' );
 
 		f2.onExecuted = function( e, d )
 		{
-
 			callback();
 		}
 
@@ -265,7 +411,7 @@ function remountDrive( data, callback )
 	
 	var args = {
 		command: 'unmount',
-		devname: data.Name
+		devname: ge( 'devname' ).value
 	};
 	
 	f.execute( 'device', args );

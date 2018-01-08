@@ -67,9 +67,7 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
 			actUsr->node.mln_Succ = (MinNode *) um->um_RemoteUsers;
 			um->um_RemoteUsers = actUsr;
 			
-			//actUsr->ru_Name = StringDuplicate( name );
 			actUsr->ru_SessionID = StringDuplicate( sessid );
-			//actUsr->ru_Host = StringDuplicate( hostname );
 		}
 	}
 	
@@ -83,10 +81,9 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
 		Socket *newsock;
 		
 		newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port );
-		//newcon->cfcc_Socket = SocketOpen( service->s_secured, service->s_port, SOCKET_TYPE_CLIENT );
 		if( newsock != NULL )
 		{
-			CommFCConnection *con = CommServiceAddConnection( service, newsock, actUsr->ru_Host, NULL, SERVICE_CONNECTION_OUTGOING );
+			FConnection *con = CommServiceAddConnection( service, newsock, NULL, actUsr->ru_Host, NULL, SERVER_CONNECTION_OUTGOING, 0 );
 			if( con != NULL )
 			{
 				actUsr->ru_Connection = con;
@@ -108,7 +105,7 @@ int UMAddGlobalRemoteUser( UserManager *um, const char *name, const char *sessid
 /**
  * Remove remote user
  *
- * @param uname user name as string
+ * @param name user name as string
  * @param hostname hostname string
  * @return 0 when success, otherwise error number
  */
@@ -175,7 +172,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 	DEBUG("[UMAddGlobalRemoteDrive] start\n");
 	FBOOL registerUser = FALSE;
 	FBOOL registerDrive = FALSE;
-	CommFCConnection *con = NULL;
+	FConnection *con = NULL;
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	CommService *service = sb->fcm->fcm_CommService;
 	
@@ -213,7 +210,7 @@ int UMAddGlobalRemoteDrive( UserManager *um, const char *locuname, const char *u
 			newsock = SocketConnectHost( service->s_SB, service->s_secured, actUsr->ru_Host, service->s_port );
 			if( newsock != NULL )
 			{
-				con = CommServiceAddConnection( service, newsock, actUsr->ru_Host, NULL, SERVICE_CONNECTION_OUTGOING );
+				con = CommServiceAddConnection( service, newsock, NULL, actUsr->ru_Host, NULL, SERVER_CONNECTION_OUTGOING, 0 );
 				if( con != NULL )
 				{
 					actUsr->ru_Connection = con;
@@ -386,7 +383,7 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
 	DEBUG("[UMRemoveGlobalRemoteDrive] start\n");
 	FBOOL registerUser = FALSE;
 	FBOOL registerDrive = FALSE;
-	CommFCConnection *con = NULL;
+	FConnection *con = NULL;
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	
 	RemoteUser *actUsr = um->um_RemoteUsers;
@@ -463,7 +460,7 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
  * @param remoteDevName remote device name
  * @return 0 when success, otherwise error number
  */
-int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid )
+int UMAddRemoteDriveToUser( UserManager *um, FConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteid )
 {
 	User *locusr = um->um_Users;
 	RemoteDrive *locremdri = NULL;
@@ -573,11 +570,11 @@ int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *
  * @param um pointer to UserManager
  * @param locuname user name as string
  * @param hostname hostname string
- * @param localDevName local device name
- * @param remoteDevName remote device name
+ * @param localDevName local device name UNUSED
+ * @param remoteDevName remote device name UNUSED
  * @return 0 when success, otherwise error number
  */
-int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName )
+int UMRemoveRemoteDriveFromUser( UserManager *um, FConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName __attribute__((unused)), char *remoteDevName __attribute__((unused)) )
 {
 	User *locusr = um->um_Users;
 	RemoteDrive *locremdri = NULL;
@@ -599,7 +596,7 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 		return -1;
 	}
 	
-	// we are trying to find remote user with same/existing connection
+	// trying to find remote user with same/existing connection
 	RemoteUser *remusr = locusr->u_RemoteUsers;
 	while( remusr != NULL )
 	{
@@ -625,6 +622,5 @@ int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const c
 			DEBUG("[UMRemoveRemoteDriveFromUser] New remote user added %s\n", uname );
 		}
 	}
-	
 	return 0;
 }

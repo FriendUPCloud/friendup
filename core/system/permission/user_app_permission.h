@@ -47,7 +47,6 @@
 
  */
 
-
 typedef struct UserAppPermission
 {
 	struct MinNode			node;

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>FUI test</title>
+		<link rel="stylesheet" href="theme.css"/>
+		<script src="../oo.js"></script>
+		<script src="fui.js"></script>
+	</head>
+	<body onload="fui.init()">
+		<script>
+			fui.onready = function()
+			{
+				var workspace = fui.build( [
+					// Dock
+					{
+						type: 'Desklet',
+						width: '100%',
+						height: 64,
+						bottom: 0,
+						name: 'dock1',
+						borderless: true,
+						background: '#444444',
+						above: true,
+						show: true,
+						children: [
+							{
+								type: 'Workspaces',
+								width: 128,
+								height: '100%',
+								background: '#666666',
+								border: '1',
+								name: 'workspaces',
+								show: true
+							},
+							{
+								type: 'WindowList',
+								width: 200,
+								height: '100%',
+								background: '#666666',
+								border: '1',
+								name: 'windowlist',
+								show: true
+							},
+							{
+								type: 'Group',
+								width: 300,
+								height: '100%',
+								name: 'buttongroup',
+								show: true,
+								children: [
+									{
+										type: 'Button',
+										width: 100,
+										height: '100%',
+										name: 'launchview',
+										label: 'New view',
+										show: true
+									}
+								]
+							}
+						]
+					},
+					// Test view
+					{
+						type: 'View',
+						title: 'Test',
+						width: 400,
+						height: 300,
+						show: true
+					}
+				] );
+				
+				// Add a view spawner button event!
+				( function()
+				{ 
+					var va = 1;
+					var btn = workspace.get( 'launchview' );
+					btn.addEvent( 'click', function( e )
+					{
+						var v = new fui.View().create( { 
+							title: 'New view ' + va++, 
+							width: 400, 
+							height: 200,
+							show: true 
+						} );
+					} );
+				} )();
+			};
+		</script>
+	</body>
+</html>

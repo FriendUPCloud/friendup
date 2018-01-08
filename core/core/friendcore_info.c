@@ -25,6 +25,10 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date pushed 14/10/2015
+ * 
+ * \defgroup FriendCoreInfo Information
+ * \ingroup FriendCore
+ * @{
  */
 
 #include "friendcore_info.h"
@@ -122,8 +126,13 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 			BufString *bs = HttpClientCall( c, geoProvider );
 			if( bs != NULL )
 			{
-				fci->fci_LocalisationJSON = StringDuplicate( strstr( bs->bs_Buffer, "\r\n\r\n" ) );
-				DEBUG("[FriendCoreInfoNew] Localisation string received %s\n", fci->fci_LocalisationJSON );
+				char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
+				if( pos != NULL )
+				{
+					pos+=4;
+					fci->fci_LocalisationJSON = StringDuplicate( pos );
+					DEBUG("[FriendCoreInfoNew] Localisation string received %s\n", fci->fci_LocalisationJSON );
+				}
 				BufStringDelete( bs );
 			}
 			
@@ -193,15 +202,19 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		FriendCoreInstance *fc = fcm->fcm_FriendCores;
 		int i = 0, j =0;
 	
+		char coreid[ 33 ];
+		
 		while( fc != NULL )
 		{
+			strncpy( coreid, fc->fci_CoreID, 32 );
+			
 			if( i == 0 )
 			{
-				sprintf( temp, "{ \"ID\":\"%32s\" ,\"Port\":\"%d\",\"Workers\":", fc->fci_CoreID, fc->fci_Port );
+				sprintf( temp, "{ \"ThreadID\":\"%s\" ,\"Port\":\"%d\",\"Workers\":", coreid, fc->fci_Port );
 			}
 			else
 			{
-				sprintf( temp, ", { \"ID\":\"%32s\" ,\"Port\":\"%d\",\"Workers\":", fc->fci_CoreID, fc->fci_Port );
+				sprintf( temp, ", { \"ThreadID\":\"%s\" ,\"Port\":\"%d\",\"Workers\":", coreid, fc->fci_Port );
 			}
 			BufStringAdd( bs, temp );
 		
@@ -240,18 +253,23 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		
 		// add geo location
 	
-		BufStringAddSize( bs, ",\"GeoLocation\":\"", 16 );
+		BufStringAddSize( bs, ",\"GeoLocation\":", 15 );
 		
 		if( sb->fcm->fcm_FCI->fci_LocalisationJSON != NULL )
 		{
-			BufStringAdd( bs, sb->fcm->fcm_FCI->fci_LocalisationJSON );
+			if( strlen( sb->fcm->fcm_FCI->fci_LocalisationJSON ) < 2 )
+			{
+				BufStringAddSize( bs, "not available", 12 );
+			}
+			else
+			{
+				BufStringAdd( bs, sb->fcm->fcm_FCI->fci_LocalisationJSON );
+			}
 		}
 		else
 		{
 			BufStringAddSize( bs, "not available", 12 );
 		}
-		
-		BufStringAddSize( bs, "\"", 1 );
 		
 		BufStringAdd( bs, "}" );
 	}
@@ -263,3 +281,6 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 	
 	return bs;
 }
+
+/**@}*/
+// End of FriendCoreInfo Doxygen group

@@ -154,7 +154,7 @@ char *Run( struct EModule *mod, const char *path, const char *args, FULONG *leng
 		return NULL;
 	}
 	
-	//DEBUG( "[PHPmod] run app: %s\n", command );
+	DEBUG( "[PHPmod] run app: %s\n", command );
 	
 	FILE *pipe = popen( command, "r" );
 	if( !pipe )

@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  Application Session Manager
+ *
+ * All functions related to Remote User structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __APP_SESSION_MANAGER_H__
 #define __APP_SESSION_MANAGER_H__

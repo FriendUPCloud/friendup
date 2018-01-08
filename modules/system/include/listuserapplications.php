@@ -19,7 +19,7 @@
 *****************************************************************************©*/
 
 if( $rows = $SqlDatabase->FetchObjects( '
-	SELECT ua.ID, n.Name, ua.Permissions, ua.Data FROM FUserApplication ua, FApplication n
+	SELECT ua.ID, ua.ApplicationID, n.Name, ua.Permissions, ua.Data FROM FUserApplication ua, FApplication n
 	WHERE
 		n.ID = ua.ApplicationID AND ua.UserID=\'' . $User->ID . '\'
 	ORDER BY n.Name ASC
@@ -35,6 +35,19 @@ if( $rows = $SqlDatabase->FetchObjects( '
 		$fnd = false;
 		foreach( $basepaths as $path )
 		{
+			// For repositories
+			if( $path == 'repository/' )
+			{
+				if( file_exists( $path . $file . '/Signature.sig' ) )
+				{
+					if( !( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) ) )
+						continue;
+					if( !( $js = json_decode( $d ) ) )
+						continue;
+					if( !isset( $js->validated ) )
+						continue;
+				}
+			}
 			if( file_exists( $path . '/' . $v->Name . '/preview.png' ) )
 			{
 				$fnd = $path . '/' . $v->Name . '/preview.png';

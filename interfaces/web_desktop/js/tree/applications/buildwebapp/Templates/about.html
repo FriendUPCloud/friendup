@@ -1,0 +1,27 @@
+
+<div class="VContentTop Padding ScrollArea" id="vt">    
+    <p>
+        <strong>{i18n_title}</strong>
+    </p>
+    <p>
+        {i18n_about1}
+    </p>
+    <p>
+        {i18n_about2}
+    </p>
+</div>
+<div class="VContentBottom BorderTop BackgroundDefault Padding" id="vb">
+    <p class="Layout">
+        <button type="button" class="Button IconSmall fa-close" onclick="Application.sendMessage( { type: 'view', method: 'close' } )">&nbsp;{i18n_close}</button>
+    </p>
+</div>
+<style>
+    #vt
+    {
+        bottom: 50px;
+    }
+    #vb
+    {
+        height: 50px;
+    }
+</style>

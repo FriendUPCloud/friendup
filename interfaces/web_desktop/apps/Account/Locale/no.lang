@@ -10,6 +10,17 @@ i18n_current_password                : Nåværende passord
 i18n_new_password                    : Nytt passord
 i18n_confirm                         : bekreftelse
 
+i18n_are_you_sure                    : Er du sikker?
+i18n_this_will_remove                : Dette vil fjerne disken fra listen.
+
+i18n_delete_disk                     : Slett
+
+i18n_key_type              			 : Nøkkel type
+i18n_key_name              			 : Nøkkel navn
+i18n_key_password             	     : Nøkkel passord
+i18n_generate                        : Generer
+i18n_generate_keypair                : Generer Nøkkelpar
+
 i18n_extended_information            : Utvidet informasjon
 i18n_telephone                       : Telefon nummer
 i18n_email_address                   : E-mail adresse
@@ -29,6 +40,7 @@ i18n_no_apps                         : Status
 i18n_no_apps_desc                    : Ingen installert.
 
 i18n_add_storage                     : Mer lagringsplass
+i18n_edit_storage                    : Endre disk
 
 i18n_no_storage                      : Du har ikke lagringsplass.
 
@@ -41,27 +53,52 @@ i18n_get_apps                        : Flere apper
 i18n_descheading                     : Legg til mer lagring 
 i18n_description                     : Vennligst velg hvilken type disk du ønsker å legge til. Noen tilbydere kan komme til å kreve en registrering.
 
-i18n_disk                         : disk
-i18n_add_a                        : Tilføy en
+i18n_disk                            : disk
+i18n_add_a                           : Tilføy en
+i18n_edit                            : Endre
 
+i18n_disk_error                      : Disk feil
+i18n_failed_to_edit                  : Kunne ikke oppdatere disken.
+i18n_disk_success                    : Disk endret
+i18n_disk_edited                     : Diskendringene ble lagret.
 
-i18n_connection_details           : Nettverskdetaljer
-i18n_notes                        : Notater
-i18n_directory                    : Filsti på server
-i18n_login_info                   : Innloggingsinfo
-i18n_your_notes                   : Dine notater
-i18n_username                     : Brukernavn
-i18n_password                     : Passord
-i18n_host_port                    : Server port
-i18n_host_ip                      : Server adresse eller IP
-i18n_hostname                     : Server adresse
-i18n_workgroup_name               : Din arbeidsgruppe
-i18n_workgroup                    : Arbeidsgruppe
-i18n_device_name                  : Disk navn
-i18n_placeholder_connection       : Mindisk
+i18n_connection_details              : Nettverskdetaljer
+i18n_notes                           : Notater
+i18n_directory                       : Filsti på server
+i18n_login_info                      : Innloggingsinfo
+i18n_your_notes                      : Dine notater
+i18n_username                        : Brukernavn
+i18n_password                        : Passord
+i18n_host_port                       : Server port
+i18n_host_ip                         : Server adresse eller IP
+i18n_hostname                        : Server adresse
+i18n_workgroup_name                  : Din arbeidsgruppe
+i18n_workgroup                       : Arbeidsgruppe
+i18n_device_name                     : Disk navn
+i18n_placeholder_connection          : Mindisk
 
-i18n_add_storage                  : Tilføy disk
-i18_account2                      : Konto
-i18n_settings_saved               : Instillinger lagret
+i18n_add_storage                     : Tilføy disk
+i18n_update_disk                     : Oppdater
+i18_account2                         : Konto
+i18n_settings_saved                  : Instillinger lagret
 
+i18n_key_password_confirm            : Bekreft passord
+i18n_pass_mis_desc                   : Passordene må stemme overens.
+i18n_password_mismatch               : Password mismatch!
+
+i18n_key_management                  : Nøkkeladministrasjon
+i18n_application                     : Applikasjoner
+i18n_options                         : Alternativer
+
+i18n_add_key                         : Legg til nøkkel
+i18n_data                            : Data
+
+i18n_close                           : Lukk
+i18n_encrypt                         : Krypter
+i18n_decrypt                         : Dekrypter
+
+i18n_system_wide                     : Hele systemet
+i18n_devices                         : Enheter
+
+i18n_generate_key                    : Generer nøkkel
 

@@ -76,7 +76,7 @@ FUWORD HashMacAddress( FBYTE *mac )
  
 	for ( unsigned int i = 0; i < 6; i++ )
 	{
-		hash += ( mac[i] << (( i & 1 ) * 8 ));
+		hash += ( SHIFT_LEFT( mac[i], (( i & 1 ) * 8 ) ) );
 	}
 	return hash;
 }
@@ -215,7 +215,7 @@ FUWORD GetVolumeHash()
  
 	for ( unsigned int i = 0; sysname[i]; i++ )
 	{
-		hash += ( sysname[i] << (( i & 1 ) * 8 ));
+		hash += SHIFT_LEFT( sysname[i], (( i & 1 ) * 8 ));
 	}
  
 	return hash;
@@ -245,7 +245,7 @@ FUWORD GetVolumeHash()
  * @param ax ax register value
  */
 
- static void GetCpuid( FUINT* p, FUINT ax )
+ static void GetCpuid( FUINT* p, FUINT ax __attribute__((unused)))
  {
 	char *ptr = (char *)p;
 	ptr[ 0 ] = 'u';

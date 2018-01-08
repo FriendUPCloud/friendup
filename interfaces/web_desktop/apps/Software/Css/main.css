@@ -1,13 +1,35 @@
-
+.PageScroll
+{
+	padding-right: 8px;
+	box-sizing: border-box;
+}
 
 .HBox
 {
 	float: left;
-	margin: 2px;
-	width: calc(33% - 4px);
-	height: 160px;
+	margin: 8px 0 8px 8px;
+	width: calc(50% - 8px);
+	height: 200px;
 	position: relative;
 	overflow: hidden;
+	background: rgba(100,100,100,0.1);
+}
+
+@media (max-width: 500px)
+{
+	.HBox
+	{
+		width: calc(100% - 8px);
+		float: none;
+	}
+}
+
+@media (min-width: 1000px)
+{
+	.HBox
+	{
+		width: calc(33% - 8px);
+	}
 }
 
 .HBox > *
@@ -32,7 +54,6 @@
 	right: 0;
 	text-align: center;
 	box-sizing: border-box;
-	border-radius: 0 0 5px 5px;
 }
 
 .HBox .TheButton *
@@ -40,24 +61,31 @@
 	display: inline;
 }
 
-.ProductImage img
+.ProductImage .Image
 {
+	height: calc(100% - 51px);
 	position: absolute;
 	top: 0;
 	right: 0;
 	z-index: 1;
 	width: 50%;
-	height: auto;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: top right;
 }
 
 .ProductImage > p, .ProductImage h2
 {
-	width: 50%;
+	width: calc(50% - 20px);
+	position: relative;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
 }
 
-.ProductImage
+.ProductImage > p.Layout
 {
-	
+	box-sizing: border-box;
+	font-size: 14px;
 }
 
 #SortAlphaNumeric,
@@ -73,3 +101,4 @@
 {
 	margin-bottom: 5px;
 }
+

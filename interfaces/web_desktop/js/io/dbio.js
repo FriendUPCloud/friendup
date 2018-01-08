@@ -49,14 +49,14 @@ function ( tableName )
 		j.open ( 'post', 'admin.php?module=files&command=dbio', true, true );
 		j.addVar ( 'data', d );
 		j.addVar ( 'app', appName );
-		j.o = this;
+		var o = this;
 		j.onload = function ()
 		{
-			if ( this.o.OnData )
+			if ( o.OnData )
 			{
 				if ( this.returnCode == 'ok' )
-					return this.o.OnData ( JSON.parse ( this.returnData ) );
-				return this.o.OnData ( false );
+					return o.OnData ( JSON.parse ( this.returnData ) );
+				return o.OnData ( false );
 			}
 		}
 		j.send ();

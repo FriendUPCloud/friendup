@@ -43,7 +43,7 @@ typedef struct SocketInterface
 	int						(*SocketRead)( Socket* sock, char* data, unsigned int length, unsigned int pass );
 	int						(*SocketWaitRead)( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
 	BufString*				(*SocketReadTillEnd)( Socket* sock, unsigned int pass, int sec );
-	int						(*SocketWrite)( Socket* s, char* data, FQUAD length );
+	FLONG					(*SocketWrite)( Socket* s, char* data, FLONG length );
 	void					(*SocketClose)( Socket* s );
 	void					(*SocketFree)( Socket *s );
 }SocketInterface;
@@ -60,7 +60,7 @@ typedef struct SocketInterface
 // init function
 //
 
-inline void SocketInterfaceInit( SocketInterface *si )
+static inline void SocketInterfaceInit( SocketInterface *si )
 {
 	si->SocketOpen = SocketOpen;
 	si->SocketListen = SocketListen;

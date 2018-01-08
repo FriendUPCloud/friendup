@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2013 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,7 @@ lws_add_http_header_by_name(struct lws *wsi, const unsigned char *name,
 			    const unsigned char *value, int length,
 			    unsigned char **p, unsigned char *end)
 {
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	if (wsi->mode == LWSCM_HTTP2_SERVING)
 		return lws_add_http2_header_by_name(wsi, name,
 						    value, length, p, end);
@@ -65,13 +65,13 @@ lws_add_http_header_by_name(struct lws *wsi, const unsigned char *name,
 int lws_finalize_http_header(struct lws *wsi, unsigned char **p,
 			     unsigned char *end)
 {
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	if (wsi->mode == LWSCM_HTTP2_SERVING)
 		return 0;
 #else
 	(void)wsi;
 #endif
-	if ((long)(end - *p) < 3)
+	if ((lws_intptr_t)(end - *p) < 3)
 		return 1;
 	*((*p)++) = '\x0d';
 	*((*p)++) = '\x0a';
@@ -85,9 +85,10 @@ lws_add_http_header_by_token(struct lws *wsi, enum lws_token_indexes token,
 			     unsigned char **p, unsigned char *end)
 {
 	const unsigned char *name;
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	if (wsi->mode == LWSCM_HTTP2_SERVING)
-		return lws_add_http2_header_by_token(wsi, token, value, length, p, end);
+		return lws_add_http2_header_by_token(wsi, token, value,
+						     length, p, end);
 #endif
 	name = lws_token_to_string(token);
 	if (!name)
@@ -96,18 +97,18 @@ lws_add_http_header_by_token(struct lws *wsi, enum lws_token_indexes token,
 }
 
 int lws_add_http_header_content_length(struct lws *wsi,
-				       unsigned long content_length,
+				       lws_filepos_t content_length,
 				       unsigned char **p, unsigned char *end)
 {
 	char b[24];
 	int n;
 
-	n = sprintf(b, "%lu", content_length);
+	n = sprintf(b, "%llu", (unsigned long long)content_length);
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)b, n, p, end))
 		return 1;
-	wsi->u.http.content_length = content_length;
-	wsi->u.http.content_remain = content_length;
+	wsi->u.http.tx_content_length = content_length;
+	wsi->u.http.tx_content_remain = content_length;
 
 	return 0;
 }
@@ -159,7 +160,7 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 	wsi->access_log.response = code;
 #endif
 
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	if (wsi->mode == LWSCM_HTTP2_SERVING)
 		return lws_add_http2_header_status(wsi, code, p, end);
 #endif
@@ -167,6 +168,9 @@ lws_add_http_header_status(struct lws *wsi, unsigned int _code,
 		description = err400[code - 400];
 	if (code >= 500 && code < (500 + ARRAY_SIZE(err500)))
 		description = err500[code - 500];
+
+	if (code == 100)
+		description = "Continue";
 
 	if (code == 200)
 		description = "OK";
@@ -222,16 +226,13 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 	struct lws_context *context = lws_get_context(wsi);
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	unsigned char *p = pt->serv_buf + LWS_PRE;
-	unsigned char *start = p, *body = p + 512;
+	unsigned char *start = p;
 	unsigned char *end = p + context->pt_serv_buf_size - LWS_PRE;
-	int n, m, len;
+	int n = 0, m = 0, len;
 	char slen[20];
 
 	if (!html_body)
 		html_body = "";
-
-	len = sprintf((char *)body, "<html><body><h1>%u</h1>%s</body></html>",
-		      code, html_body);
 
 	if (lws_add_http_header_status(wsi, code, &p, end))
 		return 1;
@@ -240,7 +241,10 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 					 (unsigned char *)"text/html", 9,
 					 &p, end))
 		return 1;
+
+	len = 35 + strlen(html_body) + sprintf(slen, "%d", code);
 	n = sprintf(slen, "%d", len);
+
 	if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH,
 					 (unsigned char *)slen, n,
 					 &p, end))
@@ -249,11 +253,66 @@ lws_return_http_status(struct lws *wsi, unsigned int code,
 	if (lws_finalize_http_header(wsi, &p, end))
 		return 1;
 
-	m = lws_write(wsi, start, p - start, LWS_WRITE_HTTP_HEADERS);
-	if (m != (int)(p - start))
-		return 1;
+#if defined(LWS_WITH_HTTP2)
+	if (wsi->http2_substream) {
+		unsigned char *body = p + 512;
 
-	m = lws_write(wsi, body, len, LWS_WRITE_HTTP);
+		/*
+		 * for HTTP/2, the headers must be sent separately, since they
+		 * go out in their own frame.  That puts us in a bind that
+		 * we won't always be able to get away with two lws_write()s in
+		 * sequence, since the first may use up the writability due to
+		 * the pipe being choked or SSL_WANT_.
+		 *
+		 * However we do need to send the human-readable body, and the
+		 * END_STREAM.
+		 *
+		 * Solve it by writing the headers now...
+		 */
+		m = lws_write(wsi, start, p - start, LWS_WRITE_HTTP_HEADERS);
+		if (m != (int)(p - start))
+			return 1;
+
+		/*
+		 * ... but stash the body and send it as a priority next
+		 * handle_POLLOUT
+		 */
+
+		len = sprintf((char *)body,
+			      "<html><body><h1>%u</h1>%s</body></html>",
+			      code, html_body);
+		wsi->u.http.tx_content_length = len;
+		wsi->u.http.tx_content_remain = len;
+
+		wsi->u.h2.pending_status_body = lws_malloc(len + LWS_PRE + 1,
+							"pending status body");
+		if (!wsi->u.h2.pending_status_body)
+			return -1;
+
+		strcpy(wsi->u.h2.pending_status_body + LWS_PRE,
+		       (const char *)body);
+		lws_callback_on_writable(wsi);
+
+		return 0;
+	} else
+#endif
+	{
+		/*
+		 * for http/1, we can just append the body after the finalized
+		 * headers and send it all in one go.
+		 */
+		p += lws_snprintf((char *)p, end - p - 1,
+				  "<html><body><h1>%u</h1>%s</body></html>",
+				  code, html_body);
+
+		n = (int)(p - start);
+
+		m = lws_write(wsi, start, n, LWS_WRITE_HTTP);
+		if (m != n)
+			return 1;
+	}
+
+	lwsl_notice("%s: return\n", __func__);
 
 	return m != n;
 }
@@ -273,9 +332,8 @@ lws_http_redirect(struct lws *wsi, int code, const unsigned char *loc, int len,
 			loc, len, p, end))
 		return -1;
 	/*
-	 * if we're going with http/1.1 and keepalive,
-	 * we have to give fake content metadata so the
-	 * client knows we completed the transaction and
+	 * if we're going with http/1.1 and keepalive, we have to give fake
+	 * content metadata so the client knows we completed the transaction and
 	 * it can do the redirect...
 	 */
 	if (lws_add_http_header_by_token(wsi,
@@ -291,8 +349,7 @@ lws_http_redirect(struct lws *wsi, int code, const unsigned char *loc, int len,
 	if (lws_finalize_http_header(wsi, p, end))
 		return -1;
 
-	n = lws_write(wsi, start, *p - start,
-			LWS_WRITE_HTTP_HEADERS);
+	n = lws_write(wsi, start, *p - start, LWS_WRITE_HTTP_HEADERS | LWS_WRITE_H2_STREAM_END);
 
 	return n;
 }

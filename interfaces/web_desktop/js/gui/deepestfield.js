@@ -24,6 +24,7 @@
 DeepestField = {
 	zones: [],
 	connections: {},
+	available: true,
 	// For measuring network activity
 	networkActivity: {
 		frame: 0,
@@ -32,8 +33,14 @@ DeepestField = {
 		frameLength: window.innerWidth,
 		timeToFinish: []
 	},
+	// Initialize deepest field
 	init: function()
 	{
+		// No need to reinitialize
+		if( this.initialized ) return;
+		
+		this.initialized = true;
+		
 		// Cound network activity
 		if( !window.isMobile )
 		{
@@ -135,7 +142,6 @@ DeepestField = {
 		this.ctx.restore();
 		this.ctx.fillStyle = '#333333';
 		this.ctx.fillRect( 0, 0, this.w, this.h );
-		this.drawUserProfile();
 		this.updateTaskInformation();
 		// Don't do this on mobile
 		if( !window.isMobile )
@@ -153,12 +159,27 @@ DeepestField = {
 		ge( 'FNetHeader' ).innerHTML = i18n( 'i18n_active_fnet_connections' ) + ':';
 	},
 	addConnection: function( ptr, url, object )
-	{	
+	{
 		for( var a in this.connections )
 			if( this.connections[a] == ptr ) return;
 		var d = document.createElement( 'div' );
 		d.className = 'Connection Ellipsis FullWidth PaddingSmall IconSmall fa-bullet';
 		d.innerHTML = '<span class="IconSmall fa-remove MousePointer">&nbsp;</span>' + url;
+		var str = 'Url: ' + object.url;
+		if( object.vars )
+		{
+			var varcount = 0; for( var a in object.vars ) varcount++;
+			if( varcount > 0 )
+			{
+				str += "\nVariables:";
+				for( var a in object.vars )
+				{
+					str += "\n" + a + ': ' + object.vars[ a ];
+				}
+			}
+		}
+		d.object = object;
+		d.setAttribute( 'title', str );
 		this.connections[ptr] = d;
 		ge( 'Netconnections' ).appendChild( d );
 		var s = d.getElementsByTagName( 'span' )[0];
@@ -205,25 +226,29 @@ DeepestField = {
 			return;
 		}
 		
-		function foundDevices( items ) {
+		function foundDevices( items )
+		{
 			self.checkedCamera = true;
 			var addedMic = false;
 			var addedCam = false;
 			items.forEach( addToCapa );
-			if ( !addedMic )
+			if( !addedMic )
 				addMicrophone({ disabled : true, });
 			
-			if ( !addedCam )
+			if( !addedCam )
 				addCamera({ disabled : true, });
 			
-			function addToCapa( item ) {
-				if ( 'audioinput' === item.kind ) {
+			function addToCapa( item )
+			{
+				if( 'audioinput' === item.kind )
+				{
 					addedMic = true;
 					addMicrophone( item );
 					return;
 				}
 				
-				if ( 'videoinput' === item.kind ) {
+				if( 'videoinput' === item.kind )
+				{
 					addedCam = true;
 					addCamera( item );
 					return;
@@ -232,11 +257,13 @@ DeepestField = {
 			}
 		}
 		
-		function enumError( err ) {
+		function enumError( err )
+		{
 			console.log( 'updateCapabilities - enumerate devices failed', err );
 		}
 		
-		function addCamera( conf ) {
+		function addCamera( conf )
+		{
 			conf.icon = 'fa-camera';
 			var label = checkLabel( conf.label );
 			if ( null == label )
@@ -246,7 +273,8 @@ DeepestField = {
 			addElement( conf );
 		}
 		
-		function addMicrophone( conf ) {
+		function addMicrophone( conf )
+		{
 			conf.icon = 'fa-microphone';
 			var label = checkLabel( conf.label );
 			if ( null == label )
@@ -256,13 +284,14 @@ DeepestField = {
 			addElement( conf );
 		}
 		
-		
-		function checkLabel( label ) {
+		function checkLabel( label )
+		{
 			if ( null == label )
 				return null;
 			
 			// if label is '', the device has been blocked in the browser
-			if ( 0 === label.length ) {
+			if ( 0 === label.length )
+			{
 				label = i18n( 'i18n_blocked_in_browser' ); 
 				return label;
 			}
@@ -270,7 +299,8 @@ DeepestField = {
 				return label;
 		}
 		
-		function addElement( conf ) {
+		function addElement( conf )
+		{
 			var d = document.createElement( 'div' );
 			d.className = 'Webcam ' + conf.icon;
 			var enableKlass = conf.disabled ? 'Disabled' : 'Enabled';
@@ -293,24 +323,13 @@ DeepestField = {
 	{
 		this.x = 0;
 		this.y = 0;
-		this.w = this.canvas.getAttribute( 'width' );
-		this.h = this.canvas.getAttribute( 'height' );
-		// Center of profile bubble
-		this.centerx = this.x + ( this.w * .5 );
-		this.centery = this.y + 100 + 10;
-	},
-	drawUserProfile: function()
-	{
-		if( !( ge( 'UserProfilePicture' ) ) && this.avatar )
+		if( this.canvas )
 		{
-			var d = document.createElement( 'div' );
-			d.id = 'UserProfilePicture';
-			d.innerHTML = '<img src="' + this.avatar.src + '"/><p class="Fullname">' + Workspace.fullName + '</p>';
-			ge( 'TasksHeader' ).parentNode.appendChild( d );
-			d.onclick = function()
-			{
-				ExecuteApplication( 'Account' );
-			}
+			this.w = this.canvas.getAttribute( 'width' );
+			this.h = this.canvas.getAttribute( 'height' );
+			// Center of profile bubble
+			this.centerx = this.x + ( this.w * .5 );
+			this.centery = this.y + 100 + 10;
 		}
 	},
 	// Draw the statistics onto the deepest field

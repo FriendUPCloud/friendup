@@ -162,7 +162,6 @@ void UMDelete( UserManager *smgr )
  * @param usr pointer to user structure to which groups will be assigned
  * @return 0 when success, otherwise error number
  */
-
 int UMAssignGroupToUser( UserManager *smgr, User *usr )
 {
 	char tmpQuery[ 512 ];
@@ -267,7 +266,6 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
  * @param groups groups provided as string, where comma is separator between group names
  * @return 0 when success, otherwise error number
  */
-
 int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 {
 	if( groups == NULL )
@@ -413,7 +411,6 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
  * @param usr pointer to user structure to which will be updated in DB
  * @return 0 when success, otherwise error number
  */
-
 int UMUserUpdateDB( UserManager *um, User *usr )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -438,7 +435,6 @@ int UMUserUpdateDB( UserManager *um, User *usr )
  * @param usr pointer to user structure to which applications will be assigned
  * @return 0 when success, otherwise error number
  */
-
 int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 {
 	char tmpQuery[ 255 ];
@@ -512,7 +508,6 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  * @param name user name
  * @return User structure or NULL value when problem appear
  */
-
 User * UMUserGetByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -556,7 +551,6 @@ User * UMUserGetByNameDB( UserManager *um, const char *name )
  * @param name user id
  * @return User structure or NULL value when problem appear
  */
-
 User * UMUserGetByIDDB( UserManager *um, FULONG id )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -603,8 +597,7 @@ User * UMUserGetByIDDB( UserManager *um, FULONG id )
  * @param usr user structure which will be stored in DB
  * @return 0 when success, otherwise error number
  */
-
-int UMUserCreate( UserManager *smgr, Http *r, User *usr )
+int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -682,13 +675,12 @@ int UMUserCreate( UserManager *smgr, Http *r, User *usr )
 /**
  * Return information if user is admin
  *
- * @param smgr pointer to UserManager
- * @param r http request
+ * @param smgr pointer to UserManager UNUSED
+ * @param r http request UNUSED
  * @param usr pointer to user structure which will be checked
  * @return TRUE if user is administrator, otherwise FALSE
  */
-
-FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr )
+FBOOL UMUserIsAdmin( UserManager *smgr __attribute__((unused)), Http *r __attribute__((unused)), User *usr )
 {
 	if( usr != NULL &&  usr->u_IsAdmin == TRUE )
 	{
@@ -696,46 +688,9 @@ FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr )
 	}
 	else
 	{
-        	FERROR("User is: %p or not admin\n", usr );
-        	return FALSE;
-	}
-	/*
-	SystemBase *sb = (SystemBase *)smgr->um_SB;
-	MYSQLLibrary *sqlLib = sb->LibraryMYSQLGet( sb );
-	
-	if( sqlLib == NULL)
-	{
-		FERROR("Cannot get user, mysql.library was not open\n");
+		FERROR("User is: %p or not admin\n", usr );
 		return FALSE;
 	}
-	
-	char *tmpQuery = FCalloc( 2048, sizeof(char) );;
-	
-	sqlLib->SNPrintF( sqlLib, tmpQuery, 2048, "select u.ID from FUser u, FUserToGroup utg, FUserGroup g where u.ID = utg.UserID AND g.ID = utg.UserGroupID AND g.Name = 'Admin' AND u.Name = '%s'", usr->u_Name );
-	//sprintf( tmpQuery, "select count(*) from FUser u, FUserToGroup utg, FUserGroup g where u.ID = utg.UserID AND g.ID = utg.UserGroupID AND g.Name = 'Admin' AND u.Name = '%s'", usr->u_Name );
-	
-	MYSQL_RES *res = sqlLib->Query( sqlLib, tmpQuery );
-
-	if( res != NULL )
-	{
-		int rows = 0;
-		// Check if it was a real result
-		if( ( rows = sqlLib->NumberOfRows( sqlLib, res ) )> 0 )
-		{
-			DEBUG("rows %d\n", rows );
-			
-			sqlLib->FreeResult( sqlLib, res );
-			sb->LibraryMYSQLDrop( sb, sqlLib );
-			FFree( tmpQuery );
-			return TRUE;
-		}
-		sqlLib->FreeResult( sqlLib, res );
-	}
-	
-	sb->LibraryMYSQLDrop( sb, sqlLib );
-	FFree( tmpQuery );
-	*/
-	return FALSE;
 }
 
 /**
@@ -746,8 +701,7 @@ FBOOL UMUserIsAdmin( UserManager *smgr, Http *r, User *usr )
  * @param auth authentication id as string
  * @return TRUE if user is administrator, otherwise FALSE
  */
-
-FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
+FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r __attribute__((unused)), char *auth )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -762,8 +716,6 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
 	//"SELECT u.SessionID FROM FUser u,  WHERELIMIT 1",
 	
 	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "select count(*) from FUser u, FUserToGroup utg, FUserGroup g, FUserApplication a where u.ID = utg.UserID AND g.ID = utg.UserGroupID AND g.Name = 'Admin'  AND a.UserID = u.ID AND  a.AuthID=\"%s\"", auth );
-	
-	//sprintf( tmpQuery, "select count(*) from FUser u, FUserToGroup utg, FUserGroup g, FUserApplication a where u.ID = utg.UserID AND g.ID = utg.UserGroupID AND g.Name = 'Admin'  AND a.UserID = u.ID AND  a.AuthID=\"%s\"", auth );
 	
 	void *res = sqlLib->Query( sqlLib, tmpQuery );
 
@@ -791,7 +743,6 @@ FBOOL UMUserIsAdminByAuthID( UserManager *smgr, Http *r, char *auth )
  * @param u pointer to user structure which will be checked
  * @return pointer to User structure, otherwise NULL
  */
-
 User *UMUserCheckExistsInMemory( UserManager *smgr, User *u )
 {
 	// First make sure we don't have a duplicate!
@@ -820,7 +771,6 @@ User *UMUserCheckExistsInMemory( UserManager *smgr, User *u )
  * @param name user name
  * @return TRUE if user is in database, otherwise FALSE
  */
-
 FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
@@ -850,7 +800,6 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
  * @param name user name
  * @return User structure when success, otherwise NULL
  */
-
 User *UMGetUserByName( UserManager *um, char *name )
 {
 	User *tuser = um->um_Users;
@@ -873,7 +822,6 @@ User *UMGetUserByName( UserManager *um, char *name )
  * @param id user id
  * @return User structure when success, otherwise NULL
  */
-
 User *UMGetUserByID( UserManager *um, FULONG id )
 {
 	User *tuser = um->um_Users;
@@ -890,17 +838,12 @@ User *UMGetUserByID( UserManager *um, FULONG id )
 }
 
 /**
- * 
- */
-
-/**
  * Get user from database by his name
  *
  * @param um pointer to UserManager
  * @param name name of the user
  * @return User or NULL when error will appear
  */
-
 User *UMGetUserByNameDB( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -915,7 +858,7 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 		FERROR("Cannot get user, mysql.library was not open\n");
 		return NULL;
 	}
-	//snprintf( where, sizeof(where), " `Name` = '%s'", name );
+
 	sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
 	
 	struct User *user = NULL;
@@ -941,10 +884,9 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
  * Get User structure from database by authentication id
  *
  * @param um pointer to UserManager
- * @param authid authentication id
+ * @param authId authentication id
  * @return User structure when success, otherwise NULL
  */
-
 void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -997,7 +939,6 @@ void *UMUserGetByAuthIDDB( UserManager *um, const char *authId )
  * @param um pointer to UserManager
  * @return User list or NULL when error will appear
  */
-
 User *UMGetAllUsersDB( UserManager *um )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
@@ -1037,7 +978,6 @@ User *UMGetAllUsersDB( UserManager *um )
  * @param usr user which will be added to FC user list
  * @return 0 when success, otherwise error number
  */
-
 int UMAddUser( UserManager *um,  User *usr )
 {
 	User *lu =  UMGetUserByID( um, usr->u_ID );
@@ -1065,7 +1005,6 @@ int UMAddUser( UserManager *um,  User *usr )
  * @param usr user which will be removed from FC user list
  * @return 0 when success, otherwise error number
  */
-
 int UMRemoveUser( UserManager *um, User *usr )
 {
 	User *lusr = um->um_Users;
@@ -1101,7 +1040,6 @@ int UMRemoveUser( UserManager *um, User *usr )
  * @param name username which will be checked
  * @return 0 or time from which user is allowed to login (0 is also the value when he can login)
  */
-
 FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 {
 	FULONG tm = 0;
@@ -1128,7 +1066,6 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
-	
 	return tm;
 }
 
@@ -1141,7 +1078,6 @@ FULONG UMGetAllowedLoginTime( UserManager *um, const char *name )
  * @param failReason if field is not equal to NULL then user is not authenticated
  * @return 0 when success otherwise error number
  */
-
 int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason )
 {
 	UserLogin ul;

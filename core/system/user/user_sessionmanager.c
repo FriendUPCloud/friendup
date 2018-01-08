@@ -42,7 +42,6 @@
  * @param sb pointer to SystemBase
  * @return UserSessionManager
  */
-
 UserSessionManager *USMNew( void *sb )
 {
 	UserSessionManager *sm;
@@ -63,7 +62,6 @@ UserSessionManager *USMNew( void *sb )
  *
  * @param smgr pointer to UserSessionManager which will be deleted
  */
-
 void USMDelete( UserSessionManager *smgr )
 {
 	if( smgr != NULL )
@@ -94,7 +92,6 @@ void USMDelete( UserSessionManager *smgr )
  * @param sessionid sessionid as string
  * @return pointer to User structure
  */
-
 User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 {
 	pthread_mutex_lock( &(usm->usm_Mutex) );
@@ -119,7 +116,6 @@ User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
  * @param sessionid sessionid as string
  * @return pointer to UserSession structure
  */
-
 UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid )
 {
 	DEBUG("[USMGetSessionBySessionID] sesssion id %s\n", sessionid );
@@ -146,11 +142,10 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
 /**
  * Get UserSession by sessionid from DB
  *
- * @param usm pointer to UserSessionManager
- * @param sessionid sessionid as string
+ * @param smgr pointer to UserSessionManager
+ * @param id sessionid as string
  * @return pointer to UserSession structure
  */
-
 UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
@@ -168,10 +163,7 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
 	sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery)," SessionID='%s'", id );
 	
 	DEBUG( "[USMGetSessionBySessionIDFromDB] Sending query: %s...\n", tmpQuery );
-	
-	// You added 'where' and on the end you did not used it??
-	
-	//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
+
 	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
 	sb->LibrarySQLDrop( sb, sqlLib );
 	
@@ -187,7 +179,6 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
  * @param uid user id as unsigned integer value
  * @return UserSession structure
  */
-
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid )
 {
 	pthread_mutex_lock( &(usm->usm_Mutex) );
@@ -208,12 +199,11 @@ UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devi
 /**
  * Get UserSession by deviceid and user id from Database
  *
- * @param usm pointer to UserSessionManager
+ * @param smgr pointer to UserSessionManager
  * @param devid device id as string
  * @param uid user id as unsigned integer value
  * @return UserSession structure
  */
-
 UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *devid, FULONG uid )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
@@ -249,7 +239,6 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
  * @param id user id as integer value
  * @return UserSession structure
  */
-
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
 	//  we  will take only first session of that user
@@ -273,7 +262,6 @@ UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
  *
  * @param usm pointer to UserSessionManager
  */
-
 void USMLogUsersAndDevices( UserSessionManager *usm )
 {
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
@@ -289,7 +277,6 @@ void USMLogUsersAndDevices( UserSessionManager *usm )
 			INFO("Device %s\n", lf->f_Name );
 			lf = (File *)lf->node.mln_Succ;
 		}
-	
 		lu = (User *)lu->node.mln_Succ;
 	}
 }
@@ -297,11 +284,10 @@ void USMLogUsersAndDevices( UserSessionManager *usm )
 /**
  * Get all sessions from database which
  *
- * @param usm pointer to UserSessionManager
- * @param id user id as integer value
+ * @param smgr pointer to UserSessionManager
+ * @param timeout time from which we want to get sessions
  * @return UserSession structure
  */
-
 UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG timeout )
 {
 	SystemBase *sb = (SystemBase *)smgr->usm_SB;
@@ -340,9 +326,6 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 	
 	DEBUG( "[USMGetSessionsByTimeout] Sending query: %s...\n", tmpQuery );
 	
-	// You added 'where' and on the end you did not used it??
-	
-	//usersession = ( UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, NULL, &entries );
 	usersession = ( struct UserSession *)sqlLib->Load( sqlLib, UserSessionDesc, tmpQuery, &entries );
     UserSession *ses = usersession;
     while( ses != NULL )
@@ -360,13 +343,12 @@ UserSession *USMGetSessionsByTimeout( UserSessionManager *smgr, const FULONG tim
 /**
  * Add file to user session
  *
- * @param smgr pointer to UserSessionManager
+ * @param smgr pointer to UserSessionManager UNUSED
  * @param ses pointer to user session to which file will be added
  * @param f pointer to file which will be added to user session
  * @return 0 if everything will go ok, otherwise error number
  */
-
-int USMAddFile( UserSessionManager *smgr, UserSession *ses, File *f )
+int USMAddFile( UserSessionManager *smgr __attribute__((unused)), UserSession *ses, File *f )
 {
 	f->node.mln_Succ = (MinNode *) ses->us_OpenedFiles;
 	ses->us_OpenedFiles = f;
@@ -377,13 +359,12 @@ int USMAddFile( UserSessionManager *smgr, UserSession *ses, File *f )
 /**
  * Remove file from user session
  *
- * @param smgr pointer to UserSessionManager
+ * @param smgr pointer to UserSessionManager UNUSED
  * @param ses pointer to user session from which file will be removed
  * @param id id of the file which will be removed from user session
  * @return 0 if everything will go ok, otherwise error number
  */
-
-int USMRemFile( UserSessionManager *smgr, UserSession *ses, FULONG id )
+int USMRemFile( UserSessionManager *smgr __attribute__((unused)), UserSession *ses, FULONG id )
 {
 	File *f = ses->us_OpenedFiles;
 	File *prevfile = f;
@@ -419,13 +400,12 @@ int USMRemFile( UserSessionManager *smgr, UserSession *ses, FULONG id )
 /**
  * Get file from user session
  *
- * @param smgr pointer to UserSessionManager
+ * @param smgr pointer to UserSessionManager UNUSED
  * @param ses pointer to user session from which file will be taken
  * @param id id of the file which will be taken from user session
  * @return pointer to File structure when success, otherwise NULL
  */
-
-File *USMGetFile( UserSessionManager *smgr, UserSession *ses, FULONG id )
+File *USMGetFile( UserSessionManager *smgr __attribute__((unused)), UserSession *ses, FULONG id )
 {
 	File *f = ses->us_OpenedFiles;
 	while( f != NULL )
@@ -441,13 +421,37 @@ File *USMGetFile( UserSessionManager *smgr, UserSession *ses, FULONG id )
 }
 
 /**
- * Add user session to global user sessions list
+ * Add user session to global user sessions list without checking if session exist
  *
  * @param smgr pointer to UserSessionManager
  * @param s pointer to user session which  will be added
  * @return UserSession if success, otherwise NULL
  */
+UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
+{
+	DEBUG("[USMUserSessionAddToList] start\n");
+	
+	pthread_mutex_lock( &(smgr->usm_Mutex) );
 
+	s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
+	smgr->usm_Sessions = s;
+	smgr->usm_SessionCounter++;
+	
+	pthread_mutex_unlock( &(smgr->usm_Mutex) );
+	
+	DEBUG("[USMUserSessionAddToList] end\n");
+	
+	return s;
+}
+
+/**
+ * Add user session to global user sessions list.
+ * Function check first if session with provided already exist. If it exist its not added.
+ *
+ * @param smgr pointer to UserSessionManager
+ * @param s pointer to user session which  will be added
+ * @return UserSession if success, otherwise NULL
+ */
 UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAdd] start\n");
@@ -485,10 +489,9 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	{
 		INFO("[USMUserSessionAdd] Add UserSession to User. SessionID: %s\n", s->us_SessionID );
 	
-		//lastuser->node.mln_Succ = (struct MinNode *)loggedUser;
-		//loggedUser->node.mln_Pred = (struct MinNode *)lastuser;
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 		smgr->usm_Sessions = s;
+		smgr->usm_SessionCounter++;
 	}
 	else
 	{
@@ -532,8 +535,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		
 		if( locusr == NULL )
 		{
-			FERROR("Cannot get user by ID\n");
-			//pthread_mutex_unlock( &(smgr->usm_Mutex) );
+			Log( FLOG_ERROR, "Cannot get user by ID\n");
 			return NULL;
 		}
 		else
@@ -544,7 +546,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 			UserAddSession( locusr, s );
 			s->us_User = locusr;
 			
-			//DEBUG("New session was added session master %s user session %s does user have more sessions %d\n", loggedSession->us_MasterSession, loggedSession->us_User->u_MainSessionID, userHaveMoreSessions );
 			if( userHaveMoreSessions == FALSE )
 			{
 				if( locusr != NULL )
@@ -572,7 +573,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
  * @param remsess session which will be removed
  * @return 0 when success, otherwise error number
  */
-
 int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 {
 	if( remsess == NULL )
@@ -597,6 +597,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 			nexts->node.mln_Pred = (MinNode *)NULL;
 		}
 		sessionRemoved = TRUE;
+		smgr->usm_SessionCounter--;
 		INFO("[USMUserSessionRemove] Session removed from list\n");
 	}
 	else
@@ -637,11 +638,8 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
  * @param usr point to User structure from which session will be taken
  * @return pointer to sessionid string
  */
-
 char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
 {
-	//pthread_mutex_lock( &(smgr->usm_Mutex) );
-	
 	//TODO get  only active  session
 	if( smgr != NULL && usr != NULL )
 	{
@@ -655,17 +653,13 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
 				UserSession *s = (UserSession *) us->us;
 				if( s->us_SessionID != NULL )
 				{
-					//pthread_mutex_unlock( &(smgr->usm_Mutex) );
 					return s->us_SessionID;
 				}
 			}
 			us = (UserSessListEntry *)us->node.mln_Succ;
 		}
-		//pthread_mutex_unlock( &(smgr->usm_Mutex) );
 		return sessionid;
 	}
-	
-	//pthread_mutex_unlock( &(smgr->usm_Mutex) );
 	return NULL;
 }
 
@@ -676,7 +670,6 @@ char *USMUserGetFirstActiveSessionID( UserSessionManager *smgr, User *usr )
  * @param ses pointer to user session which will be stored in DB
  * @return 0 when success, otherwise error number
  */
-
 int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
 {
 	SystemBase *sb = (SystemBase *) smgr->usm_SB;
@@ -738,10 +731,8 @@ int USMSessionSaveDB( UserSessionManager *smgr, UserSession *ses )
  *
  * @param smgr pointer to UserSessionManager
  */
-
 void USMDebugSessions( UserSessionManager *smgr )
 {
-	//pthread_mutex_lock( &(smgr->usm_Mutex) );
 	UserSession *lses  = smgr->usm_Sessions;
 	while( lses != NULL )
 	{
@@ -755,7 +746,6 @@ void USMDebugSessions( UserSessionManager *smgr )
 		}
 		lses = (UserSession *)lses->node.mln_Succ;
 	}
-	//pthread_mutex_unlock( &(smgr->usm_Mutex) );
 }
 
 /**
@@ -764,7 +754,6 @@ void USMDebugSessions( UserSessionManager *smgr )
  * @param lsb pointer to SystemBase
  * @return 0 when success, otherwise error number
  */
-
 int USMRemoveOldSessions( void *lsb )
 {
 	SystemBase *sb = (SystemBase *)lsb;
@@ -805,8 +794,7 @@ int USMRemoveOldSessions( void *lsb )
 	UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
 	if( remsessions != NULL )
 	{
-        //pthread_mutex_lock( &(sb->sl_SessionMutex) );
-        pthread_mutex_lock( &(smgr->usm_Mutex) );
+		pthread_mutex_lock( &(smgr->usm_Mutex) );
         
 		UserSession *actSession = smgr->usm_Sessions;
 		UserSession *remSession = actSession;
@@ -827,7 +815,7 @@ int USMRemoveOldSessions( void *lsb )
 			}
 			actSession = (UserSession *)actSession->node.mln_Succ;
 		
-			if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > REMOVE_SESSIONS_AFTER_TIME ) )
+			if( canDelete == TRUE && ( ( acttime -  remSession->us_LoggedTime ) > sb->sl_RemoveSessionsAfterTime ) )
 			{
 				int size = 0;
 				if( temp[ 0 ] == 0 )
@@ -846,14 +834,20 @@ int USMRemoveOldSessions( void *lsb )
 		BufStringAddSize( sqlreq, ")", 1 );
 		
         pthread_mutex_unlock( &(smgr->usm_Mutex) );
-        //pthread_mutex_unlock( &(sb->sl_SessionMutex) );
         
 		int i;
 		for( i=0 ; i < nr ; i++ )
 		{
 			if( remsessions[ i ] != NULL )
 			{
+				char tmpmsg[ 2048 ];
+				int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":\"session timeout\"}}" );
+				
+				int msgsndsize = WebSocketSendMessageInt( remsessions[ i ], tmpmsg, lenmsg );
+				
 				USMUserSessionRemove( smgr, remsessions[ i ] );
+				
+				smgr->usm_SessionCounter--;
 			}
 		}
 		
@@ -883,7 +877,6 @@ int USMRemoveOldSessions( void *lsb )
  * @param lsb pointer to SystemBase
  * @return 0 when success, otherwise error number
  */
-
 int USMRemoveOldSessionsinDB( void *lsb )
 {
 	SystemBase *sb = (SystemBase *)lsb;
@@ -899,7 +892,7 @@ int USMRemoveOldSessionsinDB( void *lsb )
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then 6 hours 43200
-		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime != '' AND (%lu-LoggedTime)>"REMOVE_SESSIONS_AFTER_TIME_STRING, acttime );
+		snprintf( temp, sizeof(temp), "DELETE from `FUserSession` WHERE LoggedTime != '' AND (%lu-LoggedTime)>%lu", acttime, sb->sl_RemoveSessionsAfterTime );
 		DEBUG("USMRemoveOldSessionsDB launched SQL: %s\n", temp );
 	 
 		sqllib->QueryWithoutResults( sqllib, temp );
@@ -913,15 +906,13 @@ int USMRemoveOldSessionsinDB( void *lsb )
  * Send door notification
  *
  * @param usm pointer to UserSessionManager
- * @param name username which will be checked
- * @param numberOfFail if last failed logins will have same value as this variable then login possibility will be blocked for some period of time
- * @param lastLoginTime in this field infomration about last login time will be stored
+ * @param notif pointer to DoorNotification
+ * @param device pointer to RootDevice
+ * @param path path to file/folder
  * @return TRUE if user can procced with login procedure or FALSE if error appear
  */
 FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *device, char *path )
 {
-	//return FALSE;
-    
 	SystemBase *sb = (SystemBase *)usm->usm_SB;
 	DoorNotification *notification = (DoorNotification *)notif;
 	
@@ -936,9 +927,12 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
 	{
+		DEBUG("[USMSendDoorNotification] going through users, user: %lu\n", usr->u_ID );
 		if( usr->u_ID == notification->dn_OwnerID )
 		{
 			char *uname = usr->u_Name;
+			
+			DEBUG("[USMSendDoorNotification] found ownerid %lu\n", usr->u_ID );
 			
 			UserSessListEntry *le = usr->u_SessionsList;
 			while( le != NULL )
@@ -947,19 +941,19 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 			
 				int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
 			
-				DEBUG("[DoorNotificationCommunicateChanges] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
+				DEBUG("[USMSendDoorNotification] Send message %s function pointer %p sbpointer %p to sessiondevid: %s\n", tmpmsg, sb->WebSocketSendMessage, sb, uses->us_DeviceIdentity );
 				
 				WebSocketSendMessage( sb, uses, tmpmsg, len );
 
 				RemoteUser *ruser = usr->u_RemoteUsers;
 				while( ruser != NULL )
 				{
-					DEBUG("[DoorNotificationCommunicateChanges] Remote user connected: %s\n", ruser->ru_Name );
+					DEBUG("[USMSendDoorNotification] Remote user connected: %s\n", ruser->ru_Name );
 					RemoteDrive *rdrive = ruser->ru_RemoteDrives;
 				
                     while( rdrive != NULL )
 					{
-						DEBUG("[DoorNotificationCommunicateChanges] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
+						DEBUG("[USMSendDoorNotification] Remote drive connected: %s %lu\n", rdrive->rd_LocalName, rdrive->rd_DriveID );
 					
 						if( rdrive->rd_DriveID == device->f_ID )
 						{
@@ -993,12 +987,12 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 							DataForm *df = DataFormNew( tags );
 							if( df != NULL )
 							{
-								DEBUG("[DoorNotificationCommunicateChanges] Register device, send notification\n");
+								DEBUG("[USMSendDoorNotification] Register device, send notification\n");
 							
 								BufString *result = SendMessageAndWait( ruser->ru_Connection, df );
 								if( result != NULL )
 								{
-									DEBUG("[DoorNotificationCommunicateChanges] Received response\n");
+									DEBUG("[USMSendDoorNotification] Received response\n");
 									BufStringDelete( result );
 								}
 								DataFormDelete( df );

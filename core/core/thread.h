@@ -19,6 +19,16 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ * Threading management definitions
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 02/2015
+ * 
+ * \ingroup FriendCoreThreads
+ * @{
+ */
 
 #ifndef __CORE_THREAD_H__
 #define __CORE_THREAD_H__
@@ -86,4 +96,4 @@ void ThreadCancel( FThread *ft, FBOOL wait );
 
 #endif // __CORE_THREAD_H__
 
-
+/**@}*/

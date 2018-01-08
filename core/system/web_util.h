@@ -30,15 +30,28 @@
 // Some helper functions on http data
 //
 
+//
 // Find where the headers start -1 on fail >= 0 on success
+//
+
 int FindEmbeddedHeaders( char *data, int dataLength );
 
+//
 // Strip headers
+//
+
 int StripEmbeddedHeaders( char **data, unsigned int dataLength );
+
+//
+//
+//
 
 char *CheckEmbeddedHeaders( char *data, int dataLength, const char *header );
 
+//
 // Decode string
+//
+
 int UrlDecodeSyslib( char* dst, const char* src );
 
 #endif // __WEBUTIL_H__

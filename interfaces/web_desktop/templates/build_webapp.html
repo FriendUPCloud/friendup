@@ -1,0 +1,53 @@
+
+	<div class="ContentFull LayoutButtonbarBottom">
+		<div class="VContentTop Padding ScrollArea">
+			<table border="0" class="FullWidth">
+				<tr><td colspan="2"><b>{i18n_waPleaseFill}</b></td></tr>
+				<tr><td colspan="2"><input type="text" size="42" id="waName" name="waName" placeholder="{i18n_waName}"></td></tr>
+				<tr><td colspan="2"><input type="text" size="42" id="waUrl" name="waUrl" placeholder="{i18n_waUrl}"></td></tr>
+				<tr><td colspan="2"><input type="text" size="42" id="waAuthor" name="waAuthor" placeholder="{i18n_waAuthor}"></td></tr>
+				<tr><td colspan="2"><input type="text" size="42" id="waEmail" name="waEmail" placeholder="{i18n_waEmail}"></td></tr>
+				<tr><td colspan="2"><input type="text" size="42" id="waDescription" name="waDescription" placeholder="{i18n_waDescription}"></td></tr>
+				<tr><td colspan="2">&nbsp;</td></tr>
+				<tr><td colspan="2"><b>{i18n_waWindow}</b></td></tr>
+				<tr><td>{i18n_waWidth}</td><td><input type="text" name="waWidth" id="waWidth" size="5" value="640"></td></tr>
+				<tr><td>{i18n_waHeight}</td><td><input type="text" name="waHeight" id="waHeight" size="5" value="480"></td></tr>
+				<tr><td colspan="2">&nbsp;</td></tr>
+				<tr><td><b>{i18n_waCategory}</b></td><td>
+					<select id="waType">
+						<option value="0" selected>{i18n_waInternet}</option>
+						<option value="1">{i18n_waGames}</option>
+						<option value="2">{i18n_waOffice}</option>
+						<option value="3">{i18n_waGraphics}</option>
+						<option value="4">{i18n_waProgramming}</option>
+					</select>
+				</td></tr>
+				<tr><td colspan="2">&nbsp;</td></tr>
+				<tr><td colspan="2"><b>{i18n_waIcon}</b></td></tr>
+				<tr><td><img src="/webclient/gfx/icons/waIcon.png" style="width:64px;height:64px;" name="waIcon" id="waIcon"></td>
+					<td>
+						<button class="IconSmall fa-save" type="button" onclick="Workspace.changeWebAppIcon()">
+							{i18n_waChange}
+						</button>
+					</td>
+				</tr>
+				<tr><td colspan="2">&nbsp;</td></tr>
+				<tr><td colspan="2"><b>{i18n_waPreview}</b></td></tr>
+				<tr><td><img src="/webclient/gfx/icons/waPreview.png" style="width:128px;height:128px; name="waPreview" id="waPreview""></td>
+					<td>
+						<button class="IconSmall fa-save" type="button" onclick="Workspace.changeWebAppPreview()">
+							{i18n_waChange}
+						</button>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
+			<button class="IconSmall fa-save" type="button" onclick="Workspace.createWebApplication()">
+				{i18n_createWebApp}
+			</button>
+			<button class="IconSmall fa-remove FloatRight" type="button" onclick="Workspace.createWebAppView.close()">
+				{i18n_cancel}
+			</button>
+		</div>
+	</div>

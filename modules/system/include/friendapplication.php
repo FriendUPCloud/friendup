@@ -224,6 +224,6 @@ else if ( $path = findInSearchPaths( $args->args->application ) )
 	}
 	die( 'notinstalled<!--separate-->{"path":"' . $path . '","trusted":"'. $trusted .'"}' );
 }
-die( 'fail<!--separate-->{"response": "not installed"}' );
+die( 'fail<!--separate-->{"response": "file does not exist"}' );
 
 ?>

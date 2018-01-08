@@ -23,7 +23,19 @@ var currentDock = 0;
 
 Application.run = function( msg, iface )
 {
-	//console.log( 'We ran.' );
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) return;
+		var data = JSON.parse( d );
+		var opts = '<option value="">' + i18n( 'i18n_select_application' ) + '</option>';
+		for( var a = 0; a < data.length; a++ )
+		{
+			opts += '<option value="' + data[a].Name + '">' + data[a].Name + '</option>';
+		}
+		ge( 'ApplicationSelection' ).innerHTML = opts;
+	}
+	m.execute( 'listuserapplications' );
 }
 
 Application.receiveMessage = function( msg )
@@ -38,15 +50,39 @@ Application.receiveMessage = function( msg )
 	{
 		case 'updateitem':
 			ge( 'Application' ).value = msg.item.Application;
+			ge( 'DisplayName' ).value = typeof( msg.item.DisplayName ) != 'undefined' ? msg.item.DisplayName : '';
 			ge( 'ShortDescription' ).value = msg.item.ShortDescription;
 			ge( 'Icon' ).value = typeof( msg.item.Icon ) != 'undefined' ? msg.item.Icon : '';
+			ge( 'Workspace' ).value = typeof( msg.item.Workspace ) != 'undefined' ? msg.item.Workspace : '';
 			ge( 'Settings' ).classList.remove( 'Disabled' );
+			
+		 	document.body.classList.add( 'DockEdit' );
+		 	
+		 	var opts = ge( 'ApplicationSelection' ).getElementsByTagName( 'option' );
+		 	for( var a = 0; a < opts.length; a++ )
+		 	{
+		 		if( a == 0 ) opts[a].selected = 'selected';
+		 		else opts[a].selected = '';
+		 	}
+		 	
+		 	if( ge( 'Application' ).value.length <= 0 )
+		 	{ 
+		 		document.body.classList.remove( 'SelectedApp' ); 
+		 		ge( 'Application' ).value = this.value; 
+		 	} 
+		 	else 
+		 	{
+		 		document.body.classList.add( 'SelectedApp' );
+		 	}
 			break;
 		case 'refreshapps':
 			ge( 'Applications' ).innerHTML = msg.data;
+			document.body.classList.remove( 'DockEdit' );
+			break;
+		case 'close':
+			document.body.classList.remove( 'DockEdit' );
 			break;
 		case 'setdocks':
-			console.log('setdocks received....',msg);
 			if( msg.docks == false )
 			{
 				ge( 'Docks' ).innerHTML = '<option value="0">' + i18n( 'i18n_standard_dock' ) + '</option>'; 
@@ -107,26 +143,29 @@ function setSelectValue( sel, val )
 
 function LoadDock( callback )
 {
-	console.log('load em dockk ');
-
 	var m = new Module( 'dock' );
 	m.onExecuted = function( e, d )
 	{
-		console.log('dock loaded...',e,d);
 		if( e == 'ok' )
 		{
 			var dd = false;
-			try {
+			try
+			{
 				dd = JSON.parse( d );
-			} catch( e ) { console.log('no dock settings saved'); }
+			}
+			catch( e )
+			{ 
+				console.log('no dock settings saved'); 
+			}
 			
-			if(dd)
+			if( dd )
 			{
 				setSelectValue( ge( 'DockPlacement' ), dd.options.position );
 				setSelectValue( ge( 'DockLayout' )   , dd.options.layout   );
 				setSelectValue( ge( 'DockSize' )     , dd.options.size     );
 				ge( 'DockY' ).value = dd.options.dockx;
-				ge( 'DockX' ).value = dd.options.docky;				
+				ge( 'DockX' ).value = dd.options.docky;
+				ge( 'Workspace' ).value = dd.options.workspace >= 1 ? dd.options.workspace : 1;
 			}
 		}
 	}
@@ -134,13 +173,14 @@ function LoadDock( callback )
 }
 
 function SaveCurrentDock()
-{
+{	
 	var options = {};
-	options.position = getSelectValue( ge( 'DockPlacement' ) );
-	options.layout   = getSelectValue( ge( 'DockLayout' ) );
-	options.size     = parseInt( getSelectValue( ge( 'DockSize' ) ) );
-	options.dockx    = ge( 'DockY' ).value;
-	options.docky    = ge( 'DockX' ).value;
+	options.position  = getSelectValue( ge( 'DockPlacement' ) );
+	options.layout    = getSelectValue( ge( 'DockLayout' ) );
+	options.size      = parseInt( getSelectValue( ge( 'DockSize' ) ) );
+	options.dockx     = ge( 'DockY' ).value;
+	options.docky     = ge( 'DockX' ).value;
+	options.workspace = ge( 'Workspace' ).value;
 	Application.sendMessage( { 
 		command: 'savecurrentdock', 
 		dockid: currentDock, 

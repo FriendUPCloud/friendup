@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2015 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -62,9 +62,6 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 	pa->fd = wsi->desc.sockfd;
 	pa->prev_events = pfd->events;
 	pa->events = pfd->events = (pfd->events & ~_and) | _or;
-
-	//lwsl_notice("%s: wsi %p, posin %d. from %d -> %d\n", __func__, wsi, wsi->position_in_fds_table, pa->prev_events, pa->events);
-
 
 	if (wsi->http2_substream)
 		return 0;
@@ -194,13 +191,11 @@ insert_wsi_socket_into_fds(struct lws_context *context, struct lws *wsi)
 #endif
 		wsi->position_in_fds_table = pt->fds_count;
 
-	// lwsl_notice("%s: %p: setting posinfds %d\n", __func__, wsi, wsi->position_in_fds_table);
-
 	pt->fds[wsi->position_in_fds_table].fd = wsi->desc.sockfd;
 #if LWS_POSIX
 	pt->fds[wsi->position_in_fds_table].events = LWS_POLLIN;
 #else
-	pt->fds[wsi->position_in_fds_table].events = 0; // LWS_POLLIN;
+	pt->fds[wsi->position_in_fds_table].events = 0;
 #endif
 	pa.events = pt->fds[pt->fds_count].events;
 
@@ -236,9 +231,15 @@ remove_wsi_socket_from_fds(struct lws *wsi)
 #endif
 	int m, ret = 0;
 
+	if (wsi->parent_carries_io) {
+		lws_same_vh_protocol_remove(wsi);
+		return 0;
+	}
+
 #if !defined(_WIN32) && !defined(LWS_WITH_ESP8266)
 	if (wsi->desc.sockfd > context->max_fds) {
-		lwsl_err("fd %d too high (%d)\n", wsi->desc.sockfd, context->max_fds);
+		lwsl_err("fd %d too high (%d)\n", wsi->desc.sockfd,
+			 context->max_fds);
 		return 1;
 	}
 #endif
@@ -253,8 +254,10 @@ remove_wsi_socket_from_fds(struct lws *wsi)
 	m = wsi->position_in_fds_table;
 	
 #if !defined(LWS_WITH_ESP8266)
-	lws_libev_io(wsi, LWS_EV_STOP | LWS_EV_READ | LWS_EV_WRITE | LWS_EV_PREPARE_DELETION);
-	lws_libuv_io(wsi, LWS_EV_STOP | LWS_EV_READ | LWS_EV_WRITE | LWS_EV_PREPARE_DELETION);
+	lws_libev_io(wsi, LWS_EV_STOP | LWS_EV_READ | LWS_EV_WRITE |
+			  LWS_EV_PREPARE_DELETION);
+	lws_libuv_io(wsi, LWS_EV_STOP | LWS_EV_READ | LWS_EV_WRITE |
+			  LWS_EV_PREPARE_DELETION);
 
 	lws_pt_lock(pt);
 
@@ -272,7 +275,8 @@ remove_wsi_socket_from_fds(struct lws *wsi)
 	/* end guy's "position in fds table" is now the deletion guy's old one */
 	end_wsi = wsi_from_fd(context, v);
 	if (!end_wsi) {
-		lwsl_err("no wsi found for sock fd %d at pos %d, pt->fds_count=%d\n", (int)pt->fds[m].fd, m, pt->fds_count);
+		lwsl_err("no wsi found for sock fd %d at pos %d, pt->fds_count=%d\n",
+				(int)pt->fds[m].fd, m, pt->fds_count);
 		assert(0);
 	} else
 		end_wsi->position_in_fds_table = m;
@@ -296,7 +300,7 @@ remove_wsi_socket_from_fds(struct lws *wsi)
 	lws_pt_unlock(pt);
 
 	if (wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_UNLOCK_POLL,
-					   wsi->user_space, (void *) &pa, 1))
+					      wsi->user_space, (void *) &pa, 1))
 		ret = -1;
 #endif
 	return ret;
@@ -318,7 +322,7 @@ lws_change_pollfd(struct lws *wsi, int _and, int _or)
 		return 1;
 
 	if (wsi->vhost->protocols[0].callback(wsi, LWS_CALLBACK_LOCK_POLL,
-					   wsi->user_space,  (void *) &pa, 0))
+					      wsi->user_space,  (void *) &pa, 0))
 		return -1;
 
 	pt = &context->pt[(int)wsi->tsi];
@@ -337,10 +341,11 @@ LWS_VISIBLE int
 lws_callback_on_writable(struct lws *wsi)
 {
 	struct lws_context_per_thread *pt;
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	struct lws *network_wsi, *wsi2;
 	int already;
 #endif
+	int n;
 
 	if (wsi->state == LWSS_SHUTDOWN)
 		return 0;
@@ -349,6 +354,23 @@ lws_callback_on_writable(struct lws *wsi)
 		return 0;
 
 	pt = &wsi->context->pt[(int)wsi->tsi];
+
+	if (wsi->parent_carries_io) {
+#if defined(LWS_WITH_STATS)
+		if (!wsi->active_writable_req_us) {
+			wsi->active_writable_req_us = time_in_microseconds();
+			lws_stats_atomic_bump(wsi->context, pt,
+					      LWSSTATS_C_WRITEABLE_CB_EFF_REQ, 1);
+		}
+#endif
+		n = lws_callback_on_writable(wsi->parent);
+		if (n < 0)
+			return n;
+
+		wsi->parent_pending_cb_on_writable = 1;
+		return 1;
+	}
+
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB_REQ, 1);
 #if defined(LWS_WITH_STATS)
 	if (!wsi->active_writable_req_us) {
@@ -357,41 +379,44 @@ lws_callback_on_writable(struct lws *wsi)
 	}
 #endif
 
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	lwsl_info("%s: %p\n", __func__, wsi);
 
 	if (wsi->mode != LWSCM_HTTP2_SERVING)
 		goto network_sock;
 
-	if (wsi->u.http2.requested_POLLOUT) {
+	if (wsi->u.h2.requested_POLLOUT) {
 		lwsl_info("already pending writable\n");
 		return 1;
 	}
 
-	if (wsi->u.http2.tx_credit <= 0) {
+	/* is this for DATA or for control messages? */
+	if (wsi->upgraded_to_http2 && !wsi->u.h2.h2n->pps &&
+	    !lws_h2_tx_cr_get(wsi)) {
 		/*
-		 * other side is not able to cope with us sending
-		 * anything so no matter if we have POLLOUT on our side.
+		 * other side is not able to cope with us sending DATA
+		 * anything so no matter if we have POLLOUT on our side if it's
+		 * DATA we want to send.
 		 *
 		 * Delay waiting for our POLLOUT until peer indicates he has
 		 * space for more using tx window command in http2 layer
 		 */
-		lwsl_info("%s: %p: waiting_tx_credit (%d)\n", __func__, wsi,
-			  wsi->u.http2.tx_credit);
-		wsi->u.http2.waiting_tx_credit = 1;
+		lwsl_notice("%s: %p: skint (%d)\n", __func__, wsi, wsi->u.h2.tx_cr);
+		wsi->u.h2.skint = 1;
 		return 0;
 	}
 
-	network_wsi = lws_http2_get_network_wsi(wsi);
-	already = network_wsi->u.http2.requested_POLLOUT;
+	wsi->u.h2.skint = 0;
+	network_wsi = lws_get_network_wsi(wsi);
+	already = network_wsi->u.h2.requested_POLLOUT;
 
 	/* mark everybody above him as requesting pollout */
 
 	wsi2 = wsi;
 	while (wsi2) {
-		wsi2->u.http2.requested_POLLOUT = 1;
+		wsi2->u.h2.requested_POLLOUT = 1;
 		lwsl_info("mark %p pending writable\n", wsi2);
-		wsi2 = wsi2->u.http2.parent_wsi;
+		wsi2 = wsi2->u.h2.parent_wsi;
 	}
 
 	/* for network action, act only on the network wsi */
@@ -406,7 +431,7 @@ network_sock:
 		return 1;
 
 	if (wsi->position_in_fds_table < 0) {
-		lwsl_err("%s: failed to find socket %d\n", __func__, wsi->desc.sockfd);
+		lwsl_debug("%s: failed to find socket %d\n", __func__, wsi->desc.sockfd);
 		return -1;
 	}
 
@@ -428,20 +453,14 @@ network_sock:
 void
 lws_same_vh_protocol_insert(struct lws *wsi, int n)
 {
-	//lwsl_err("%s: pre insert vhost start wsi %p, that wsi prev == %p\n",
-	//		__func__,
-	//		wsi->vhost->same_vh_protocol_list[n],
-	//		wsi->same_vh_protocol_prev);
-
 	if (wsi->same_vh_protocol_prev || wsi->same_vh_protocol_next) {
-		lwsl_err("Attempted to attach wsi twice to same vh prot\n");
-		assert(0);
+		lws_same_vh_protocol_remove(wsi);
+		lwsl_notice("Attempted to attach wsi twice to same vh prot\n");
 	}
 
-	wsi->same_vh_protocol_prev = /* guy who points to us */
-		&wsi->vhost->same_vh_protocol_list[n];
-	wsi->same_vh_protocol_next = /* old first guy is our next */
-			wsi->vhost->same_vh_protocol_list[n];
+	wsi->same_vh_protocol_prev = &wsi->vhost->same_vh_protocol_list[n];
+	/* old first guy is our next */
+	wsi->same_vh_protocol_next =  wsi->vhost->same_vh_protocol_list[n];
 	/* we become the new first guy */
 	wsi->vhost->same_vh_protocol_list[n] = wsi;
 
@@ -492,7 +511,6 @@ lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 
 	if (protocol < vhost->protocols ||
 	    protocol >= (vhost->protocols + vhost->count_protocols)) {
-
 		lwsl_err("%s: protocol %p is not from vhost %p (%p - %p)\n",
 			__func__, protocol, vhost->protocols, vhost,
 			(vhost->protocols + vhost->count_protocols));
@@ -501,19 +519,13 @@ lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 	}
 
 	wsi = vhost->same_vh_protocol_list[protocol - vhost->protocols];
-	//lwsl_notice("%s: protocol %p, start wsi %p\n", __func__, protocol, wsi);
 	while (wsi) {
-		//lwsl_notice("%s: protocol %p, this wsi %p (wsi->protocol=%p)\n",
-		//		__func__, protocol, wsi, wsi->protocol);
 		assert(wsi->protocol == protocol);
 		assert(*wsi->same_vh_protocol_prev == wsi);
-		if (wsi->same_vh_protocol_next) {
-		//	lwsl_err("my next says %p\n", wsi->same_vh_protocol_next);
-		//	lwsl_err("my next's prev says %p\n",
-		//		wsi->same_vh_protocol_next->same_vh_protocol_prev);
-			assert(wsi->same_vh_protocol_next->same_vh_protocol_prev == &wsi->same_vh_protocol_next);
-		}
-		//lwsl_notice("  apv: %p\n", wsi);
+		if (wsi->same_vh_protocol_next)
+			assert(wsi->same_vh_protocol_next->same_vh_protocol_prev ==
+					&wsi->same_vh_protocol_next);
+
 		lws_callback_on_writable(wsi);
 		wsi = wsi->same_vh_protocol_next;
 	}
@@ -525,8 +537,13 @@ LWS_VISIBLE int
 lws_callback_on_writable_all_protocol(const struct lws_context *context,
 				      const struct lws_protocols *protocol)
 {
-	struct lws_vhost *vhost = context->vhost_list;
+	struct lws_vhost *vhost;
 	int n;
+
+	if (!context)
+		return 0;
+
+	vhost = context->vhost_list;
 
 	while (vhost) {
 		for (n = 0; n < vhost->count_protocols; n++)

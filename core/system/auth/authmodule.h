@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  AuthenticationModule header
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created on 01/2017
+ */
 
 #ifndef __SYSTEM_AUTH_AUTHMODULE_H__
 #define __SYSTEM_AUTH_AUTHMODULE_H__
@@ -30,21 +37,6 @@
 #include <system/user/user.h>
 #include <system/user/user_session.h>
 #include <system/application/application.h>
-
-//
-// 60 seconds
-// 60 minutes
-// 24 hours
-// = 86400
-//
-
-//#define LOGOUT_TIME         86400	// one day
-//#define LOGOUT_TIME         3600 // one hour
-// 3h timeout
-#define REMOVE_SESSIONS_AFTER_TIME 10800
-#define REMOVE_SESSIONS_AFTER_TIME_STRING "10800"
-//#define REMOVE_SESSIONS_AFTER_TIME 20
-//#define REMOVE_SESSIONS_AFTER_TIME_STRING "20"
 
 //
 // Auth module

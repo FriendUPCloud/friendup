@@ -1,4 +1,3 @@
-
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
@@ -59,7 +58,7 @@ typedef struct CacheUserFiles
 //
 //
 
-CacheUserFiles *CacheUserFilesNew( FULONG id, FQUAD cacheSize );
+CacheUserFiles *CacheUserFilesNew( FULONG id, FLONG cacheSize );
 
 //
 //

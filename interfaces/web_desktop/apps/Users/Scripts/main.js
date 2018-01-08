@@ -340,7 +340,15 @@ function SaveUser( id )
 				Notify({'title':i18n( 'i18n_users' ),'text':i18n( 'i18n_user_updated' )});
 			}
 			
-			EditUser( id );
+			if( ge( 'Setup' ) )
+			{
+				ApplySetup( id );
+			}
+			else
+			{
+				EditUser( id );
+			}
+			
 			Application.listUsers();
 		}
 		else
@@ -468,13 +476,13 @@ function EditSetup( id )
 	{
 		var data = {};
 		
-		var ele;
+		var ele = {};
 		try
 		{
 			ele = JSON.parse( d );
-		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load setup data!'}); return; }
+		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load setup data!'});/* return;*/ }
 		
-		if( ele.Data )
+		if( ele && ele.Data )
 		{
 			try
 			{
@@ -484,8 +492,8 @@ function EditSetup( id )
 		
 		var f = new File( 'Progdir:Templates/setup.html' );
 		f.replacements = {
-			'id': ele.ID,
-			'name': ele.Name,
+			'id': ( ele.ID ? ele.ID : id ),
+			'name': ( ele.Name ? ele.Name : 'Unnamed setup' ),
 			'applications': '',
 			'disks': '',
 			'startups': '',
@@ -499,7 +507,7 @@ function EditSetup( id )
 			
 			if( ge( 'pSetupPreinstall' ) )
 			{
-				ge( 'pSetupPreinstall' ).checked = ( data.preinstall ? true : false );
+				ge( 'pSetupPreinstall' ).checked = ( data.preinstall != '0' ? true : false );
 			}
 			
 			RefreshSoftware( data.software );
@@ -553,7 +561,7 @@ function RefreshSoftware( apps )
 						'<p class="Layout"><strong>' + sfw[apps[k][0]].Category + '</strong></p>' +
 						'<p class="Layout">No description available for this title.</p>' +
 						'<div class="TheButton BackgroundNegative Padding">' +
-						'<span>include in dock&nbsp;</span><input type="checkbox"' + ( apps[k][1] ? ' checked="checked"' : '' ) + '/>' + 
+						'<span>include in dock&nbsp;</span><input type="checkbox"' + ( apps[k][1] != '0' ? ' checked="checked"' : '' ) + '/>' + 
 						'</div>' +
 						'</div>';
 					}
@@ -694,7 +702,7 @@ function RefreshStartup( starts )
 		
 		ge( 'pSetupStartup' ).innerHTML = str;
 		
-		ge( 'pSetupStartup' ).obj = ( starts ? starts : false );
+		ge( 'pSetupStartup' ).obj = ( starts ? starts : [] );
 	}
 }
 
@@ -949,14 +957,36 @@ function saveSetup()
 
 function ApplySetup( id )
 {
-	if ( id && ge( 'Setup' ) && ge( 'Setup' ).value )
+	if ( id && ge( 'Setup' ) )
 	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
+			try { d = JSON.parse( d ) } catch( e ) {}
+			
+			console.log( { e: e, d: d, id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
+			
 			EditUser( id );
 		}
-		m.execute( 'usersetupapply', { id: ge( 'Setup' ).value, userid: id } );
+		m.execute( 'usersetupapply', { id: ( ge( 'Setup' ).value ? ge( 'Setup' ).value : '0' ), userid: id } );
+	}
+}
+
+function ApplyGroupSetup( id )
+{
+	if ( id && ge( 'pWorkgroupSetup' ) )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			try { d = JSON.parse( d ) } catch( e ) {}
+			
+			console.log( { e: e, d: d, id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
+			
+			RefreshWorkgroups();
+			//EditWorkgroup( id );
+		}
+		m.execute( 'usersetupapply', { id: ( ge( 'pWorkgroupSetup' ).value ? ge( 'pWorkgroupSetup' ).value : '0' ), members: ( ge( 'pMembers' ).value ? ge( 'pMembers' ).value : '0' ), group: id } );
 	}
 }
 
@@ -966,6 +996,8 @@ function deleteSetup()
 	m.onExecuted = function( e, d )
 	{
 		RefreshSetup();
+		
+		if( ge( 'SetupGui' ) ) ge( 'SetupGui' ).innerHTML = '';
 	}
 	m.execute( 'usersetupdelete', { id: ge( 'pSetupID' ).value } );
 }
@@ -1040,9 +1072,9 @@ function EditWorkgroup( id )
 		{
 			ge( 'WorkgroupGui' ).innerHTML = data;
 			
-			if( ge( 'SetupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'pWorkgroupSetup' ).value )
+			if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
 			{
-				ge( 'SetupContainer' ).style.display = 'none';
+				ge( 'SetupGroupContainer' ).style.display = 'none';
 			}
 			
 			refreshMembers( ele.ID );
@@ -1053,7 +1085,7 @@ function EditWorkgroup( id )
 }
 
 // Save a workgroup
-function saveWorkgroup( callback )
+function saveWorkgroup( callback, tmp )
 {
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
@@ -1086,7 +1118,15 @@ function saveWorkgroup( callback )
 		
 		
 		if( callback ) callback();
-		RefreshWorkgroups();
+		
+		if( o.ID > 0 && tmp )
+		{
+			ApplyGroupSetup( o.ID );
+		}
+		else
+		{
+			RefreshWorkgroups();
+		}
 	}
 	
 	if( o.ID > 0 )
@@ -1269,3 +1309,14 @@ function RenewSession( id )
 	}
 }
 
+function TogglePasswordField( inputid )
+{
+	var finput = ge( inputid );
+	if( finput )
+	{
+		if( finput.getAttribute('type') == 'text' )
+			finput.setAttribute('type','password')
+		else
+			finput.setAttribute('type','text')
+	}
+}

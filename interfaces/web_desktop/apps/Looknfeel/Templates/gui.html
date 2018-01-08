@@ -11,14 +11,14 @@
 				<div class="Page">
 					<div class="PageScroll">
 						<div class="HRow">
-							<div class="HContent40 FloatLeft Relative Padding">
+							<div class="HContent40 FloatLeft Relative Padding ThemeList">
 								<p>
 									<strong>{i18n_available_themes}:</strong>
 								</p>
 								<div class="BackgroundLists ColorLists" style="min-height: 400px" id="ThemeList">
 								</div>
 							</div>
-							<div class="HContent60 FloatLeft Relative Padding">
+							<div class="HContent60 FloatLeft Relative Padding ThemePreview">
 								<p>
 									<strong>{i18n_preview}:</strong>
 								</p>
@@ -66,6 +66,29 @@
 								<form>
 									<input type="radio" name="windowList" value="separate" id="windowlistSeparate"> {i18n_separated}
 									<input type="radio" name="windowList" value="docked" id="windowlistDocked"> {i18n_docked}
+									<input type="radio" name="windowList" value="dockedlist" id="windowlistDockedlist"> {i18n_dockedlist}
+								</form>
+							</p>
+							<p class="Layout">
+								<strong>{i18n_hidden_system}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="checkbox" name="hiddenSystem" id="hiddenSystem"> {i18n_hide_system}
+								</form>
+							</p>
+							<p class="Layout">
+								<strong>{i18n_virtual_workspaces}:</strong>
+							</p>
+							<p>
+								<input type="number" size="4" name="workspaceCount" id="workspaceCount"> {i18n_workspace_count}
+							</p>
+							<p class="Layout">
+								<strong>{i18n_scrollable_desktop_icons}:</strong>
+							</p>
+							<p>
+								<form>
+									<input type="checkbox" name="scrollDesktopIcons" id="scrollDesktopIcons">
 								</form>
 							</p>
 						</div>

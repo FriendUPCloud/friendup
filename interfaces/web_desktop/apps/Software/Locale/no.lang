@@ -1,5 +1,5 @@
 
-i18n_software_administration       : Programvare administrasjon
+i18n_software_administration       : Programvarekatalog
 
 
 #Menu
@@ -11,6 +11,7 @@ i18n_install                       : Installer
 i18n_uninstall                     : Avinstaller
 
 i18n_page_name                     : Alfabetisk
+i18n_page_by_date                  : Nyeste programvare
 i18n_page_category                 : På kategori
 i18n_page_rating                   : På rating
 

@@ -41,9 +41,10 @@
 
 typedef struct UserSessionManager
 {
-	void										*usm_SB;
-	UserSession							*usm_Sessions;							// user sessions
-	void 										*usm_UM;
+	void							*usm_SB;
+	UserSession						*usm_Sessions;							// user sessions
+	int								usm_SessionCounter;
+	void 							*usm_UM;
 	
 	pthread_mutex_t					usm_Mutex;		// mutex
 } UserSessionManager;
@@ -131,6 +132,12 @@ File *USMGetFile( UserSessionManager *smgr, UserSession *ses, FULONG id );
 //
 //
 
+UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s );
+
+//
+//
+//
+
 UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s );
 
 //
@@ -185,12 +192,12 @@ UserSession *UserGetByAuthID( UserSessionManager *usm, const char *authId );
 // get users by timeout
 //
 
-User								*(*UserGetByTimeout)( UserSessionManager *usm, const FULONG timeout );
+User *UserGetByTimeout( UserSessionManager *usm, const FULONG timeout );
 
 //
 // get by user id
 //
 
-User 							*(*UserGetByID)( UserSessionManager *usm, FULONG id );
+User *UserGetByID( UserSessionManager *usm, FULONG id );
 
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

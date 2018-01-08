@@ -26,6 +26,10 @@
  *  @author PS (Pawel Stefanski)
  *  @date created 13 April 2017
  */
+/**
+ * \ingroup FriendCoreThreadsWeb
+ * @{
+ */
 
 #ifndef __CORE_PID_THREAD_WEB_H__
 #define __CORE_PID_THREAD_WEB_H__
@@ -45,3 +49,6 @@ Http *PIDThreadWebRequest( void *sb, char **urlpath, Http *request, UserSession 
 
 
 #endif // __CORE_PID_THREAD_WEB_H__
+
+/**@}*/
+// End of FriendCoreThreadsWeb Doxygen group

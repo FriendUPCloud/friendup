@@ -734,6 +734,11 @@ fcrypt = {
 				return { status: 'failure' };
 			}
 			
+			if( !cipherblock[1] && aeskey )
+			{
+				return { status: 'success', plaintext: aeskey, signature: 'unsigned' };
+			}
+			
 			aeskey = aeskey.split( '?' );
 			
 			var plaintext = this.decryptAES( cipherblock[1], aeskey[0], aeskey[1] );

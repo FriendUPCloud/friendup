@@ -6,6 +6,7 @@ i18n_Security                           : Security
 i18n_permissions                        : Permissions
 i18n_application                        : Application
 i18n_edit                               : Edit
+i18n_delete                             : Delete
 i18n_app_permissions                    : Application permissions
 i18n_cancel                             : Cancel
 i18n_close                              : Close

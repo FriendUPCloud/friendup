@@ -53,7 +53,7 @@ typedef struct TagItem
 #define TAG_SKIP   (3L)   // SKIP TAG
 
 // USER TAG
-#define TAG_USER    ((FULONG)(1L<<31))
+#define TAG_USER    ((FULONG)( SHIFT_INC(1L,31) ))
 #define TAG_OS	    (16L)   // TAG USED BY OS
 
 

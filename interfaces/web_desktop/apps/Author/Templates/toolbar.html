@@ -28,15 +28,16 @@
 				<option value="p">{i18n_paragraph}</option>
 			</select>
 			<div class="ToolDivider Divider2"></div>
-			<select class="ToolSelect" title="{i18n_set_document_zoom}" onchange="editorCommand( 'zoom' + this.value, 'store' )">
+			<select class="ToolSelect" id="zoom" title="{i18n_set_document_zoom}" onchange="editorCommand( 'zoom' + this.value, 'store' )">
 				<option value="100%">{i18n_select_zoom}</option>
 				<option value="">--------------------</option>
+				<option value="75%">75%</option>
 				<option value="100%">100%</option>
 				<option value="125%">125%</option>
 				<option value="150%">150%</option>
 				<option value="200%">200%</option>
 			</select>
-			<div class="ToolDivider Divider3"></div>
+			<div class="ToolDivider Divider3" id="zoomd"></div>
 			<select class="ToolSelect" id="FontSelector" title="{i18n_select_font}" onchange="editorCommand( 'fontType', this.value )">
 				<option selected="selected" value="sans serif">Sans serif</option>
 				<option value="sans">Sans</option>

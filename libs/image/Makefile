@@ -25,7 +25,7 @@ ifeq ($(CYGWIN_BUILD),1)
 CFLAGS  +=      -DCYGWIN_BUILD
 endif
 
-C_FILES := $(wildcard imagelibrary.c )
+C_FILES := $(wildcard imagelibrary.c imagelibrary_web.c)
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)

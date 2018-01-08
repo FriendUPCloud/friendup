@@ -2,15 +2,19 @@ GCC			=	gcc
 CPP			=	g++
 OUTPUT			=	bin/FriendCore
 BUILD_DATE		=	$(shell date +"%Y%m%d_%H%M%S")
-BUILD_VERSION	=	"v1.0.0"
+BUILD_VERSION           =       "v1.1"
 GIT_VERSION 		=	$(shell git describe --abbrev --dirty --always --tags)
-CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/lib/ -I../libs-ext/libwebsockets/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL
-LFLAGS			=	-L../libs-ext/libwebsockets/lib/ -lwebsockets -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng
+CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/lib/ -I../libs-ext/libwebsockets/build/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL -Wunused-parameter
+LFLAGS			=	../libs-ext/libwebsockets/build/lib/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng -lz
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
 ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
+endif
+
+ifeq ($(PROFILE),1)
+CFLAGS  +=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS_THREADS),1)
@@ -35,7 +39,7 @@ endif
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
 			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c \
-			websockets/*.c )
+			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
@@ -148,6 +152,10 @@ obj/%.o: system/log/%.c system/log/*.h system/log/%.d
 obj/%.o: system/admin/%.c system/admin/*.h system/admin/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/connection/%.c system/connection/*.h system/connection/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/autotask/%.c system/autotask/*.h system/autotask/%.d
 	@echo "\033[34mCompile ...\033[0m"
@@ -156,13 +164,30 @@ obj/%.o: system/autotask/%.c system/autotask/*.h system/autotask/%.d
 obj/%.o: websockets/%.c websockets/*.h websockets/%.d
 	@echo "\033[34mCompile ...\033[0m"
 	$(GCC) $(CFLAGS) -c -o $@ $<
+	
+obj/%.o: security/%.c security/*.h security/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: webdav/%.c webdav/*.h webdav/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: mobile_app/%.c mobile_app/*.h mobile_app/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(GCC) $(CFLAGS) -c -o $@ $<
+	
 # build/install
 
-compile: $(OBJ_FILES)  $(TARGET)
+compile: $(OBJ_FILES) $(OUTPUT)
 	@echo "\033[34mDebug compilation\033[0m"
 	make -C system compile DEBUG=1 NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
-release:  $(OBJ_FILES)  $(TARGET) $(OUTPUT)
+compileprof: $(OBJ_FILES) $(OUTPUT)
+	@echo "\033[34mDebug compilation\033[0m"
+	make -C system compile PROFILE=1 DEBUG=1 NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
+
+release:  $(OBJ_FILES) $(OUTPUT)
 	@echo "\033[34mRelease compilation\033[0m"
 	make -C system release DEBUG=0  NO_VALGRIND=$(NO_VALGRIND) USE_SELECT=$(USE_SELECT) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	

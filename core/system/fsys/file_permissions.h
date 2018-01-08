@@ -34,20 +34,22 @@
 #include <core/nodes.h>
 #include <db/sqllib.h>
 
+//
+// User Group Access Element
+//
+
 typedef struct UGAccessEl
 {
 	MinNode 				node;
-	//UserGroup			*uga_Group;					// which user groups have access
-	void						*uga_Group;					// which user groups have access
+	void					*uga_Group;			// which user groups have access
 	char 					uga_Access[ 5 ];	// user group access rights
 }UGAccessEl;
 
 typedef struct UAccessEl
 {
 	MinNode 				node;
-	//User 					*ua_User;					// which users have access
-	void 						*ua_User;					// which users have access
-	char						ua_Access[ 5 ]; // user access rights
+	void 					*ua_User;		// which users have access
+	char					ua_Access[ 5 ]; // user access rights
 }UAccessEl;
 
 
@@ -90,10 +92,10 @@ typedef struct FilePermission
 //
 //
 
-static FULONG FilePermissionDesc[] = { 
-    SQLT_TABNAME, (FULONG)"FFilePermission",       SQLT_STRUCTSIZE, sizeof( struct FilePermission ), 
+static FULONG FilePermissionDesc[] = {
+    SQLT_TABNAME, (FULONG)"FFilePermission",       SQLT_STRUCTSIZE, sizeof( struct FilePermission ),
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct FilePermission, fp_ID ),							// points to user/group
-	SQLT_INT,   (FULONG)"DeviceID",          offsetof( struct FilePermission, fp_DeviceID ), 
+	SQLT_INT,   (FULONG)"DeviceID",          offsetof( struct FilePermission, fp_DeviceID ),
 	SQLT_STR,     (FULONG)"Path",        offsetof( struct FilePermission, fp_Path ),
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct FilePermission, node ),
 	SQLT_END

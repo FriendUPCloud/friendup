@@ -45,7 +45,7 @@ typedef struct ZLibrary
 	void 		*l_Handle;
 	void						*sb; // system base
 	void *		(*libInit)( void *sb );
-	void 		(*libClose)( struct Library *l );
+	void 		(*libClose)( struct ZLibrary *l ); //FIXME: should this be ZLibrary instead of Library?
 	FULONG 		(*GetVersion)(void);
 	FULONG 		(*GetRevision)(void);
 	

@@ -77,7 +77,6 @@ void UserSessionInit( UserSession *us )
  *
  * @param us pointer to UserSession which will be deleted
  */
-
 void UserSessionDelete( UserSession *us )
 {
 	if( us != NULL )
@@ -123,7 +122,7 @@ void UserSessionDelete( UserSession *us )
 		if( nwsc != NULL )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
-			//nwsc = us->us_WSClients;
+
 			WebsocketClient *rws = nwsc;
 			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
 			while( nwsc != NULL )
@@ -138,7 +137,6 @@ void UserSessionDelete( UserSession *us )
 				rws->wc_UserSession = NULL;
 				pthread_mutex_unlock( &(rws->wc_Mutex) );
 			}
-			
 		}
 
 		DEBUG("[UserSessionDelete] Session released  sessid: %s device: %s \n", us->us_SessionID, us->us_DeviceIdentity );
@@ -162,6 +160,5 @@ void UserSessionDelete( UserSession *us )
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	
 		FFree( us );
-		//pthread_mutex_unlock( &(SLIB->sl_USM->usm_Mutex) );
 	}
 }

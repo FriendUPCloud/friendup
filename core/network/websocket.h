@@ -87,12 +87,11 @@ typedef struct WebSocket
 
 typedef struct FCWSData 
 {
-	//int fcd_Number;
-	//void								*fcd_ActiveSession;
 	WebsocketClient						*fcd_WSClient;
 	void								*fcd_SystemBase;
 	
-	struct timeval				fcd_Timer;
+	struct timeval						fcd_Timer;
+	FBOOL								fcd_Disconnect;
 }FCWSData;
 
 //

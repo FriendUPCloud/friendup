@@ -81,7 +81,7 @@
 	$ColorLEDAlert:          #ff5308;
 	$ColorLEDOff:            #ececec;
 	$ColorLEDText:           #111111;
-	
+
 	/* Special colors */
 	$ColorBgStError:         #990000;
 	$ColorStError:           #ff6666;
@@ -91,7 +91,7 @@
 	$ColorStBlueLight:       #000000;
 	$ColorBgStGrayLight:     #BFBFBF;
 	$ColorStGrayLight:       #000000;
-	
+
 	/* Context colors */
 	$ColorAccept:              #000000;
 	$ColorAcceptBg:            #92b376;
@@ -108,15 +108,15 @@
 	$ColorAvailable:           #000000;
 	$ColorAvailableBg:         #94c6e0;
 	$ColorAction:              #000000;
-	$ColorActionBg:            purple;
+	$ColorActionBg:            #c362ff;
 	$ColorWarning:             #000000;
 	$ColorWarningBg:           #e6e660;
 	$ColorNotify:              #000000;
-	$ColorNotifyBg:            orange;
-	
+	$ColorNotifyBg:            #ff9d4a;
+
 	$ColorIconBlinkStart:      black;
 	$ColorIconBlinkEnd:        grey;
-	
+
 	/* Font sizes */
 	$FontSizeButton:         14px;
 	$FontSizeDefault:        14px;
@@ -126,19 +126,19 @@
 	$FontWeightThList:       normal;
 	$FontWeightTabs:         normal;
 	$FontWeightButtonActive: bold;
-	
+
 	/* Default face */
 	$FontFaceNormal:         lato;
-	
+
 	/* Font transforms */
 	$FontTransformThList:    uppercase;
-	
+
 	/* Text shadow */
 	$TxtShdThList:           1px 1px 1px white;
 	$TxtShdTdList:           none;
 	$TxtShdPositive:         1px 1px 1px black;
 	$TxtShdNegative:         1px 1px 1px white;
-	
+
 	/* Margins */
 	$MarginButton:           0 4px 0 0;
 	$MarginButtonTd:         0;
@@ -150,7 +150,7 @@
 	$MarginWindowLeft:       3px;
 	$MarginWindowRight:      3px;
 	$MarginWindowBottom:     0px;
-	
+
 	/* Padding */
 	$PaddingSelect:          4px 5px 5px 5px;
 	$PaddingButton:          5px;
@@ -160,11 +160,11 @@
 	$PaddingInput:           2px 5px;
 	$PaddingTabs:            4px 7px 5px 7px;
 	$PaddingBox:             10px;
-	
+
 	/* Tables */
 	$TblListsBorderCollapse: collapse;
 	$TblListsBorderSpacing:  0px;
-	
+
 	/* Borders */
 	$ButtonBorderRadius:     3px;
 	$BorderBox:              1px solid #e0e0e0;
@@ -179,24 +179,24 @@
 	$WinBorderRightBlur:     1px solid #9B9B9B;
 	$WinBorderBottomBlur:    1.4px solid #707070;
 	$WinBottomBarHeight:     10px;
-	$WinContentBottom:       18px;
+	$WinContentBottom:       17px;
 	$BorderRadiusTabs:       8px 8px 0 0;
 	$BorderPageActive:       1px solid #e0e0e0;
 	$BorderRuler:            1px solid #e0e0e0;
-	
+
 	$BorderDefaultTop:       1px solid rgba(255,255,255,0.5);
 	$BorderDefaultLeft:      1px solid rgba(255,255,255,0.5);
 	$BorderDefaultRight:     1px solid rgba(0,0,0,0.5);
 	$BorderDefaultBottom:    1px solid rgba(0,0,0,0.5);
-	
-	
+
+
 	/* Box shadow */
 	$BoxShadowButton:        0px 2px 2px rgba(0,0,0,0.2);
 	$BoxShadowRecessed:      inset 0px 1px 3px rgba(0,0,0,0.2);
 	$BoxShadowElevated:      0px 1px 3px rgba(0,0,0,0.2);
 	$BorderRecessed:         none;
 	$BorderElevated:         1px solid rgba(0,0,0,0.1);
-	
+
 	/* Window gadgets */
 	$WinGadResizeImg:        url(../gfx/theme/default_window_resize.png);
 	$WinGadResizeImgA:       url(../gfx/theme/default_window_resize.png);
@@ -214,28 +214,39 @@
 	$WinFrameBgDarkBlur:     #606060;
 	$WinFrameBgActive:       #6bb8ff;
 	$WinFrameBgDarkActive:   #2D618B;
-	
+
 	/* Gui image elements */
 	$GuiImgWinTitle:         url(../gfx/system/window_topgradient_off.png);
 	$GuiImgWinTitleActive:   url(../gfx/system/window_topgradient.png);
 	$GuiImgWinLoading:       #505050 url(../gfx/system/busycube.gif) no-repeat center center;
-	
+
 	/* Icon set */
 	$IconSmallArrowUp:       url(../gfx/icons/16x16/actions/arrow-up.png);
 	$IconSmallArrowDown:     url(../gfx/icons/16x16/actions/arrow-down.png);
 	$IconSmallArrowLeft:     url(../gfx/icons/16x16/actions/arrow-left.png);
 	$IconSmallArrowRight:    url(../gfx/icons/16x16/actions/arrow-right.png);
-	
+
 	$IconSmallSave:          url(../gfx/icons/16x16/actions/dialog-ok.png);
 	$IconSmallUse:           url(../gfx/icons/16x16/actions/dialog-ok-apply.png);
 	$IconSmallCancel:        url(../gfx/icons/16x16/actions/dialog-cancel.png);
-	
+
 	$IconSmallListAdd:       url(../gfx/icons/16x16/actions/list-add.png);
 	$IconSmallListRemove:    url(../gfx/icons/16x16/actions/list-remove.png);
-	
+
 	/* Other */
 	$LineHeightInput:        14px;
 }
+
+/* VIRTUAL ELEMENTS --------------------------------------------------------- */
+/* Where the windows can move */
+.ScreenContentMargins
+{
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+/* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
 .BordersDefault
 {
@@ -332,7 +343,7 @@
 
 .WindowBackground
 {
-	background-color: $ColorBackground;	
+	background-color: $ColorBackground;
 }
 
 .WindowBackgroundActive
@@ -850,7 +861,7 @@ html button:hover, html .Button:hover
 }
 
 /* Some effects */
-.View > .Title, .View > .BottomBar, .View > .LeftBar, .View > .RightBar 
+.View > .Title, .View > .BottomBar, .View > .LeftBar, .View > .RightBar
 {
     opacity: 0.95;
 }
@@ -866,13 +877,13 @@ html .Desklet
 
 /* Menu */
 
-html #WorkbenchMenu *, html #WorkbenchMenu *:hover
+html #WorkspaceMenu *, html #WorkspaceMenu *:hover
 {
 	text-shadow: none;
 	color: black;
 }
 
-#WorkbenchMenu .Open ul > li:hover, #WorkbenchMenu .Open ul > li.Open
+#WorkspaceMenu .Open ul > li:hover, #WorkspaceMenu .Open ul > li.Open
 {
 	background-color: rgba(100,100,100,0.2);
 }
@@ -916,9 +927,9 @@ html .Active > .DirectoryToolbar, html .DirectoryToolbar
 {
 	content: " ";
 	position: absolute;
-	top: 0; 
-	left: 0; 
-	width: 100%; 
+	top: 0;
+	left: 0;
+	width: 100%;
 	height: 100%;
 	background-size: 24px;
 	background-repeat: no-repeat;
@@ -1086,6 +1097,12 @@ html .File .Icon .Application
 {
 	/*background-image: url(/themes/friendup/gfx/icons/icon_executable.png);*/
 	background-image: url(/iconthemes/friendup/80/doc_script.png);
+}
+
+html .File .Icon .TApplication
+{
+	/*background-image: url(/themes/friendup/gfx/icons/icon_executable.png);*/
+	background-image: url(/iconthemes/friendup/80/treeapplication.png);
 }
 
 html .File .Icon .Trashcan
@@ -1323,14 +1340,14 @@ html .File .Icon .System_Library
 
 /* System icons */
 
-html .File .Icon .System_Tools
+html .File .Icon .System_Repositories
 {
-	background-image: url(/iconthemes/friendup/80/drawer_small_tools.png);
+	background-image: url(/iconthemes/friendup/80/drawer_small_globe.png);
 }
 
-html .File.Selected .Icon .System_Tools
+html .File.Selected .Icon .System_Repositories
 {
-	background-image: url(/iconthemes/friendup/80/drawer_small_tools_open.png);
+	background-image: url(/iconthemes/friendup/80/drawer_small_globe_open.png);
 }
 
 html .File .Icon .System_Settings
@@ -1498,8 +1515,8 @@ body
 }
 
 html .MousePointer,
-html .File, html button, html .Button, html .Desklet .Launcher, html #Tray > div, 
-html #Statusbar .Task, 
+html .File, html button, html .Button, html .Desklet .Launcher, html #Tray > div,
+html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
@@ -1512,7 +1529,7 @@ html select,
 html .List > div,
 html .Tab, html .TabActive, html .VertTab,
 html .ToolButton, html .ToolSelect, html .ToolButtonLabel,
-html #WorkbenchMenu .Menu, html #WorkbenchMenu .Open, html #WorkbenchMenu .Menu:hover,
+html #WorkspaceMenu .Menu, html #WorkspaceMenu .Open, html #WorkspaceMenu .Menu:hover,
 html input[type=checkbox], html input[type=radio], html input[type=image]
 {
 	cursor: url(/themes/friendup/gfx/icons/Custom/mouse_pointer_green.png) 7 3, auto;
@@ -1538,9 +1555,9 @@ html .View > .MoveOverlay, html .Screen > .MoveOverlay
 }
 
 html .MouseRestricted,
-html body #WorkbenchMenu .Menu li.Disabled, 
-html body #WorkbenchMenu .Menu li.Disabled:hover, 
-html body #WorkbenchMenu .Menu li.Disabled *
+html body #WorkspaceMenu .Menu li.Disabled,
+html body #WorkspaceMenu .Menu li.Disabled:hover,
+html body #WorkspaceMenu .Menu li.Disabled *
 {
 	cursor: url(/themes/friendup/gfx/icons/Custom/mouse_pointer_red.png) 7 3, auto;
 }
@@ -1642,5 +1659,3 @@ html body[mobile=mobile] > #MobileMenu.Visible
 	background: #222222;
 	color: white;
 }
-
-

@@ -19,8 +19,8 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file systembase.h
+/** @file systembase.h
+ * 
  *  Server entry point
  *
  *  @author HT (Hogne Tildstad), PS (Pawel Stefanski)
@@ -86,6 +86,10 @@
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
 #include <db/sqllib.h>
+#include <security/connection_info.h>
+#include <security/fkey_manager.h>
+#include <webdav/webdav_token_manager.h>
+#include <communication/cluster_node.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -178,7 +182,9 @@ typedef struct SQLConPool
 	SQLLibrary *sqllib;
 }SQLConPool;
 
-// DONT FORGET TO USE THAT AS TEMPLATE
+//
+//
+//
 
 typedef struct SystemBase
 {
@@ -205,6 +211,8 @@ typedef struct SystemBase
 	PIDThreadManager				*sl_PIDTM;			// PIDThreadManager
 	UserLoggerManager				*sl_ULM;			// UserLoggerManager
 	CacheUFManager					*sl_CacheUFM;		// Cache User File Manager
+	FKeyManager						*sl_KeyM;			// Key Maanager
+	WebdavTokenManager				*sl_WDavTokM;		// WebdavTokenManager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -215,8 +223,15 @@ typedef struct SystemBase
 	char 							*sl_ModuleNames;		// name of modules which will be used
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
+	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
+	
+	//
+	// 60 seconds
+	// 60 minutes
+	// 24 hours
+	// = 86400
+	//
 
-	//struct UserLibrary                  *ulib;					// user.library
 	struct SQLConPool				*sqlpool;			// mysql.library pool
 	int								sqlpoolConnections;	// number of database connections
 	struct ApplicationLibrary		*alib;				// application library
@@ -227,7 +242,7 @@ typedef struct SystemBase
 	struct FriendCoreManager 		*fcm;						// connection with FriendCores
 	CacheManager 					*cm;						// cache manager
 	INVARManager					*nm;
-	Dictionary						*sl_Dictionary;		// global dictionary
+	Dictionary						*sl_Dictionary;
 
 	char							*sl_AutotaskPath;		// path to autotasks
 	Autotask						*sl_Autotasks;		// automatically launched scripts
@@ -242,11 +257,6 @@ typedef struct SystemBase
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
 	
 	EModule							*sl_PHPModule;
-	
-	#ifndef DOXIGNORE
-	CommService						*sl_CommService;						    ///< FC send server
-	CommServiceRemote				*sl_CommServiceRemote;			///< FCservice for non persitent calls
-	#endif
 
 	int								UserLibCounter;						// counter of opened libraries
 	int								MsqLlibCounter;
@@ -265,7 +275,7 @@ typedef struct SystemBase
 	int								sl_SocketTimeout;
 	FBOOL 							sl_CacheFiles;
 	FBOOL							sl_UnMountDevicesInDB;
-	FQUAD							sl_USFCacheMax; // User Shared File Manager cache max (per device)
+	FLONG							sl_USFCacheMax; // User Shared File Manager cache max (per device)
 	Sentinel 						*sl_Sentinel;
 
 	void							(*SystemClose)( struct SystemBase *l );
@@ -278,7 +288,7 @@ typedef struct SystemBase
 
 	int								(*UnMountFS)( struct SystemBase *l, struct TagItem *tl, UserSession *usr );
 
-// libraries
+// "Global" functions
 
 	struct AuthMod					*(*AuthModuleGet)( struct SystemBase *l );
 
@@ -304,7 +314,7 @@ typedef struct SystemBase
 
 	void							(*LibraryImageDrop)( struct SystemBase *sb, ImageLibrary *pl );
 	
-	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
+	int								(*UserDeviceMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail  );
 	
 	int								(*UserDeviceUnMount)( struct SystemBase *l, SQLLibrary *sqllib, User *usr );
 	
@@ -330,6 +340,9 @@ typedef struct SystemBase
 	char							RSA_SERVER_KEY[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_CA_CERT[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_CA_PATH[ CERT_PATH_SIZE ];
+	char							RSA_CLIENT_KEY_PEM[ CERT_PATH_SIZE ];
+	int								l_SSLAcceptFlags;
+	
 	int								fdPool[ 1024 ];
 } SystemBase;
 
@@ -458,7 +471,7 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len );
 //
 //
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
 
 //
 //
@@ -488,7 +501,7 @@ extern SystemBase *SLIB;
 //
 //
 
-inline HashmapElement *GetHEReq( Http *request, char *param )
+static inline HashmapElement *GetHEReq( Http *request, char *param )
 {
 	HashmapElement *tst = HashmapGet( request->parsedPostContent, param );
 	if( tst == NULL ) tst = HashmapGet( request->query, param );
@@ -497,5 +510,6 @@ inline HashmapElement *GetHEReq( Http *request, char *param )
 }
 
 // 
+extern struct SystemBase *SLIB;
 
 #endif	// __SYSTEM_LIBRARY_H_

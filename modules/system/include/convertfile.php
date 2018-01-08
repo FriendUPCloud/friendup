@@ -154,17 +154,17 @@ if( $process )
 		{	
 			if( !$args->args->returnData )
 			{
+				$curlFile = new CURLFile( '/tmp/' . $newFile, 'application/octetstream', $newFile );
 				$postfields = array( 
 					'sessionid' => $args->sessionid,
 					'devname' => $dev,
 					'path' => $destination,
 					'type' => $f->Type,
-					'file' => '@/tmp/' . $newFile
+					'file' => $curlFile
 				);
 				$ch = curl_init();
 				curl_setopt( $ch, CURLOPT_URL, $writeUrl );
 				curl_setopt( $ch, CURLOPT_PORT, $Config->FCPort );
-				curl_setopt( $ch, CURLOPT_SAFE_UPLOAD, false );
 				curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 				if( $Config->SSLEnable == 1 )

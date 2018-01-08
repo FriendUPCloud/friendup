@@ -21,7 +21,7 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Filesystem manager    definitions
+ *  Filesystem manager header
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 02 Feb 2017
@@ -35,6 +35,10 @@
 #include "file_permissions.h"
 #include <system/user/user.h>
 #include <system/user/user_session.h>
+
+//
+//
+//
 
 Http *FSMWebRequest( void *m, char **urlpath, Http* request, UserSession *session, int *result );
 

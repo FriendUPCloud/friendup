@@ -1,12 +1,16 @@
 GCC		=	gcc
 OUTPUT		=	bin/fcdb.authmod
-CFLAGS		=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ $(shell mysql_config --cflags)  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
+CFLAGS		=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ $(shell mysql_config --cflags)  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/ -Wunused-parameter
 LFLAGS		=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
 DFLAGS		=	-M $(CFLAGS)  
 FPATH		=	$(shell pwd)
 
 ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
+endif
+
+ifeq ($(PROFILE),1)
+CFLAGS  +=	-pg -DPROFILE=1
 endif
 
 ifeq ($(WEBSOCKETS),1)

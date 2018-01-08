@@ -1,0 +1,6 @@
+{
+	"type":    "NodeDrive",
+	"literal": "Node Based Filesystem",
+	"group":   "User",
+	"sharing": "1"
+}

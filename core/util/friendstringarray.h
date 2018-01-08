@@ -19,10 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-
-/**
- * @file
+/** @file
  *
  *  Fast array of Friend Strings definitions
  *

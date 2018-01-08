@@ -29,7 +29,6 @@
  *  @date created 16/08/2017
  */
 
-
 #include <core/types.h>
 #include <core/nodes.h>
 #include <libwebsockets.h>
@@ -41,13 +40,13 @@
  * create new WebsocketReq
  * 
  * @param id pointer to request ID as string
- * @param chunk number of chunk
+ * @param chunk number of chunk UNUSED
  * @param total number of all chunks which create message
  * @param data pointer to request data
  * @param datasize size of request data
  * @return pointer to new WebsocketReq when success, otherwise NULL
  */
-WebsocketReq *WebsocketReqNew( char *id, int chunk, int total, char *data, int datasize )
+WebsocketReq *WebsocketReqNew( char *id, int chunk __attribute__((unused)), int total, char *data, int datasize )
 {
 	WebsocketReq *req;
 	
@@ -148,12 +147,11 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 	if( req != NULL )
 	{
 		req->wr_Chunks++;
-		//chunk--;			// C table index is starting from 0
 		int pos = chunk * req->wr_ChunkSize;
 
 		memcpy( &(req->wr_Message[ pos ]), data, datasize );
 		req->wr_MessageSize += datasize;
-		//INFO("\n\n[WebsocketReqAddChunk] chunk added %d datasize %d message size %d stored data in position %d last char %c\n\n", chunk, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
+		INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
 		
 		if( req->wr_Chunks == req->wr_Total )
 		{
@@ -162,7 +160,7 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{
-				//FERROR("[WebsocketReqAddChunk] data delivered %d data decoded %d strlen of msg %d total size %d\n", req->wr_MessageSize, len, strlen( req->wr_Message ), req->wr_TotalSize );
+				DEBUG("[WebsocketReqAddChunk] data delivered %d data decoded %d strlen of msg %d total size %d\n", req->wr_MessageSize, len, (int)strlen( req->wr_Message ), req->wr_TotalSize );
 				
 				FFree( req->wr_Message );
 				req->wr_Message = dst;

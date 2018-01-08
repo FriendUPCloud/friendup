@@ -28,7 +28,10 @@
 #include <util/buffered_string.h>
 #include <network/http.h>
 
-//extern inline 
-Http *ProtocolHttp( Socket *sock, char* bytes, unsigned int size );
+//
+//
+//
+
+Http *ProtocolHttp( Socket *sock, char* data, unsigned int size );
 
 #endif

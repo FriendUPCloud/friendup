@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * Cookies
  *
@@ -43,7 +42,7 @@
 // ----------------------------------------------------------------------------
 
 // Parse server cookies (The Set-Cookie field type cookie)
-void CookieParse( char* str )
+void CookieParse( char* str __attribute__((unused)) )
 {	
 	return;
 }
@@ -76,7 +75,7 @@ Cookie* CookieNew( char* name, char* value )
 // Set the expire field
 //
 
-void CookieExpires( Cookie* cookie, time_t date )
+void CookieExpires( Cookie* cookie __attribute__((unused)), time_t date __attribute__((unused)))
 {
 	return;
 }

@@ -92,12 +92,22 @@ if( isset( $args->args->filename ) )
 				$z = new File( $filename . '.fpkg' );
 				$res = $z->Save( file_get_contents( '/tmp/' . $ff ) );
 				unlink( '/tmp/' . $ff );
-				die( 'ok<!--separate-->' . $args->args->filename . '.fpkg<!--separate-->' . $res );
+				$r = explode( '<!--separate-->', $res );
+				if( $r[0] == 'ok' )
+				{
+					die( 'ok<!--separate-->{"response":0,"message":"File was transferred correctly.","file":"' . $args->args->filename . '.fpkg"}' );
+				}
+				else
+				{
+					die( 'fail<!--separate-->{"response":0,"message":"Could not transfer package to server directory."}' );
+				}
 			}
+			die( 'fail<!--separate-->{"response":0,"message":"Could not unzip package file.","file":"' . $args->args->filename . '"}' );
 		}
+		die( 'fail<!--separate-->{"response":0,"message":"Could not decode the JSON content.","file":"' . $args->args->filename . '"}' );
 	}
+	die( 'fail<!--separate-->{"response":0,"message":"Could not load the file specified.","file":"' . $args->args->filename . '"}' );
 }
 
-die( 'fail' );
-
+die( 'fail<!--separate-->{"response":0,"message":"No file specified."}' );
 ?>

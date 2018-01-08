@@ -67,12 +67,14 @@ void WebsocketClientDelete( WebsocketClient *cl )
 				break;
 			}
 			sleep( 1 );
+			/*
 			tries++;
 			if( tries >= 30 )
 			{
-				DEBUG("Websocket released\n");
+				Log( FLOG_DEBUG, "Websocket released %p\n", cl );
 				break;
 			}
+			*/
 		}
 		
 		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );

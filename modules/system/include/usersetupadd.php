@@ -52,7 +52,7 @@ if( $level == 'Admin' )
 		//	'launch Dingo'				   
 		//);
 		
-		$obj->language = 'no';
+		$obj->language = 'en';
 		
 		$obj->theme = 'Friendup';
 		

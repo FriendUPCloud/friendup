@@ -26,18 +26,18 @@ DeepestField = {
 	networkActivity: { timeToFinish: [] },
 	addConnection: function(){},
 	delConnection: function(){}
-	
+
 };
 
 Workspace = {
 	locale: 'en',
-	init: function( mode ) 
+	init: function( mode )
 	{
 		// Add locale
 		i18nAddPath( 'locale/en.locale' );
-		
+
 		this.mode = mode;
-	
+
 		// Interpret directive
 		var urlVars = {};
 		var url = document.location.href.split( '?' )[1].split( '&' );
@@ -64,12 +64,12 @@ Workspace = {
 		var t = this;
 		var p = 'HASHED' + Sha256.hash( 'apipass' );
 		var j = new cAjax();
-		
+
 		var si = GetUrlVar( 'sessionid' );
 		var au = GetUrlVar( 'authid' );
 		var authType = si ? 'sessionId' : 'authId';
 		var authValue = si ? si : au;
-		
+
 		if( !au && !si )
 		{
 			j.open( 'POST', '/system.library/login', true, true );
@@ -91,7 +91,7 @@ Workspace = {
 				try{ o = JSON.parse( r ); } catch( e )
 				{ console.log( 'Result is not in JSON format.' ); }
 			}
-			
+
 			// Either guest user or real user
 			if( ( ( si || au ) && r == 'ok' ) || ( r && o ) )
 			{
@@ -100,11 +100,11 @@ Workspace = {
 					// Register no Workspace object
 					if( !si && o && o.sessionid ) Workspace.sessionId = o.sessionid;
 					if( au || si ) Workspace[authType] = authValue;
-					
+
 					// Ping every 10 seconds
 					if( !window.pingInt ) window.pingInt = setInterval( Workspace.pingAccount, 10000 );
 					Workspace.pingAccount();
-					
+
 					// Get available drives
 					return Workspace.getMountlist( function()
 					{
@@ -116,7 +116,7 @@ Workspace = {
 								taskbar: false
 							}
 						);
-						
+
 						// Touch start show menu!
 						wbscreen.contentDiv.addEventListener( 'click', function( e )
 						{
@@ -135,15 +135,15 @@ Workspace = {
 								}
 								setTimeout( function()
 								{
-									workspaceMenu.show();
+									WorkspaceMenu.show();
 									ge( 'MobileMenu' ).classList.add( 'Visible' );
-								}, 100 );					
+								}, 100 );
 							}
 						}, true );
-					
-					
+
+
 						document.body.style.visibility = 'visible';
-						
+
 						if( t.conf.app )
 						{
 							return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function()
@@ -174,25 +174,27 @@ Workspace = {
 			}
 			document.body.innerHTML = '<h1>Error with call</h1><p>FriendUP can not interpret application call.</p>';
 		}
-		j.send();	
-		
+		j.send();
+
 		// Add event listeners
 		for( var a = 0; a < this.runLevels.length; a++ )
 		{
 			var listener = this.runLevels[a].listener;
-			
+
 			if ( !listener )
 				continue;
-			
+
 			if( window.addEventListener )
 				window.addEventListener( 'message', listener, true );
 			else window.attachEvent( 'onmessage', listener, true );
 		}
-		
+
 		// Set theme
 		if( typeof( this.conf.theme ) != 'undefined' )
 			this.refreshTheme( this.conf.theme );
-		
+
+		// Init security subdomains
+		SubSubDomains.initSubSubDomains();
 	},
 	refreshTheme: function( themeName, update )
 	{
@@ -200,21 +202,21 @@ Workspace = {
 		if( this.themeRefreshed && !update )
 			return;
 		this.themeRefreshed = true;
-		
+
 		Workspace.theme = themeName ? themeName.toLowerCase() : '';
 		themeName = Workspace.theme;
-		
+
 		var h = document.getElementsByTagName( 'head' );
 		if( h )
 		{
 			h = h[0];
-			
+
 			// New css!
 			var styles = document.createElement( 'link' );
 			styles.rel = 'stylesheet';
 			styles.type = 'text/css';
 			styles.onload = function(){ document.body.className = 'Inside'; }
-			
+
 			if( themeName && themeName != 'default' )
 			{
 				AddCSSByUrl( '/themes/' + Workspace.theme + '/scrollbars.css' );
@@ -229,7 +231,7 @@ Workspace = {
 					styles.href = '/themes/friendup/theme_compiled.css';
 				else styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup"}' ) + '&sessionid=' + Workspace.sessionId;
 			}
-			
+
 			// Remove old one
 			var l = h.getElementsByTagName( 'link' );
 			for( var b = 0; b < l.length; b++ )
@@ -238,14 +240,14 @@ Workspace = {
 				l[b].href = '';
 				l[b].parentNode.removeChild( l[b] );
 			}
-			
+
 			// Add new one
 			h.appendChild( styles );
 		}
-		
+
 		// TODO: Loop through all apps and update themes...
-		
-		
+
+
 	},
 	// Get a door by path
 	getDoorByPath: function( path )
@@ -270,7 +272,7 @@ Workspace = {
 		m.onExecuted = function( e, dat )
 		{
 			t.icons = [];
-			
+
 			// Check dormant
 			if( DormantMaster )
 			{
@@ -293,10 +295,10 @@ Workspace = {
 					found.push( doors[a] );
 				}
 			}
-			
+
 			// Network devices
 			var rows = friendUP.tool.parse( dat );
-			if ( rows && rows.length ) 
+			if ( rows && rows.length )
 			{
 				for ( var a = 0; a < rows.length; a++ )
 				{
@@ -306,17 +308,17 @@ Workspace = {
 						continue;
 					}
 					var o = false;
-				
+
 					var d;
-				
-					var typ = r.Type.substr(0,1).toUpperCase()+r.Type.substr(1,r.Type.length); 
-				
+
+					var typ = r.Type.substr(0,1).toUpperCase()+r.Type.substr(1,r.Type.length);
+
 					d = ( new Door() ).get( r.Name + ':' );
 					d.permissions[0] = 'r';
 					d.permissions[1] = 'w';
 					d.permissions[2] = 'e';
 					d.permissions[3] = 'd';
-				
+
 					var o = {
 						Title: r.Name.split(':').join('') + ':',
 						Volume: r.Name.split(':').join('') + ':',
@@ -327,7 +329,7 @@ Workspace = {
 						Mounted: r.Mounted ? true : false,
 						Door: d
 					};
-					
+
 					// Force mounnt
 					var f = new FriendLibrary( 'system.library' );
 					f.addVar( 'type', r.Type );
@@ -335,21 +337,21 @@ Workspace = {
 					if( r.Type != 'Local' )
 						f.addVar( 'module', 'system' );
 					f.execute( 'device/mount' );
-				
+
 					// We need volume information
 					d.Volume = o.Volume;
 					d.Type = typ;
-				
+
 					// Add to list
 					t.icons.push( o );
 				}
 			}
-			
+
 			// Do the callback thing
 			if( callback ) callback( t.icons );
 		}
 		m.execute( 'mountlist', this.conf );
-		
+
 		return true;
 	},
 	// Just check if the system is being used or has expired
@@ -373,7 +375,7 @@ Workspace = {
 			m.execute( 'ping' );
 		}
 	},
-	
+
 	// Dummy functions here
 	relogin: function( us, ps ){},
 	updateTasks: function(){},
@@ -386,21 +388,31 @@ Workspace = {
 	protocol: _protocol,
 	menu: [],
 	diskNotificationList: [],
+	notifications: [],
 	applications: [],
 	importWindow: false,
-	runLevels: [ 
-		{ 
-			name: 'root', 
+	menuState: '',
+	themeOverride: false,
+	systemInfo: false,
+	lastfileSystemChangeMessage:false,
+	serverIsThere: false,
+	runLevels: [
+		{
+			name: 'root',
 			domain: _protocol + '://' + document.location.href.match( /h[^:]*?\:\/\/([^/]+)/i )[1]
 		},
-		{ 
-			name: 'utilities', 
+		{
+			name: 'utilities',
 			domain: _protocol + '://' + document.location.href.match( /h[^:]*?\:\/\/([^/]+)/i )[1],
 			/*domain: 'http://utilities.' + document.location.href.match( /h[^:]*?\:\/\/([^/]+)/i )[1],*/
 			listener: apiWrapper
 		}
 	],
-	directoryView: false
+	directoryView: false,
+	//set an additional URL to call on logout
+	setLogoutURL: function( logoutURL )
+	{
+		Workspace.logoutURL = logoutURL;
+	}
 }
 Doors = Workspace;
-

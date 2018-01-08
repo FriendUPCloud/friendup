@@ -44,11 +44,11 @@
 
 typedef struct UserManager
 {
-	void										*um_SB;
+	void								*um_SB;
 	
-	User										*um_Users; 						// logged users with mounted devices
+	User								*um_Users; 						// logged users with mounted devices
 	UserGroup							*um_UserGroups;			// all user groups
-	void 										*um_USM;
+	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
 } UserManager;
 
@@ -192,19 +192,5 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 //
 
 int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason );
-
-//Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *session, int *result );
-
-
-// get user by auth id
-//UserSession *UserGetByAuthID( UserDBManager *usm, const char *authId );
-// get users by timeout
-//User *UDBMUserGetByTimeout( UserDBManager *smgr, const FULONG timeout );
-
-// get by user id
-//User 							*(*UserGetByID)( UserDBManager *usm, FULONG id );
-// get user by his name
-//void								*(*UserGetByName)( UserDBManager *usm, const char *name );
-
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

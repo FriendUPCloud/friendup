@@ -42,9 +42,9 @@ Application.run = function( msg )
 			return setTimeout( delayedSetupAce, 100 );
 		}
 	}
-	
+
 	loadConfig( delayedSetupAce );
-	
+
 	this.sideBarHidden = false;
 };
 
@@ -64,10 +64,9 @@ Application.refreshAceSettings = function( reload )
 			sess.setUseWrapMode( false );
 		}
 		sess.setUseSoftTabs( false );
-		
+
 		var editor = ace.edit ( 'EditorArea' );
 		editor.setTheme( 'ace/theme/' + settings.theme );
-		
 	}
 	if( reload ) loadConfig( carryOut );
 	else carryOut();
@@ -85,28 +84,68 @@ function loadConfig( callback )
 			try
 			{
 				o = JSON.parse( d );
+				console.log( 'Settings retrieved.' );
 			}
-			catch( e )	{ console.log('unexpected settings'); }
-			
+			catch( e )
+			{ 
+				console.log( 'Unexpected settings...' ); 
+			}
 			if( o && o.friendcreate )
 			{
 				for( var a in o.friendcreate ) settings[a] = o.friendcreate[a];
 			}
 		}
-		if( callback ) callback();
+		if( callback )
+		{
+			callback();
+		}
 	}
 	m.execute( 'getsetting', { setting: 'friendcreate' } );
 }
 
+// Create / recreate ace area
+Application.createAceArea = function()
+{
+	// Remove previous editor
+	if( this.editor )
+	{
+		this.editor.destroy();
+		this.editor = null;
+		if( ge( 'EditorArea' ) )
+		{
+			ge( 'editordiv' ).removeChild( ge( 'EditorArea' ) );
+		}
+	}
+	
+	// Create editor root container
+	var area = document.createElement( 'div' );
+	area.id = 'EditorArea';
+	area.style.position = 'absolute';
+	area.style.top = '0';
+	area.style.left = '0';
+	area.style.right = '0';
+	area.style.bottom = '0';
+	ge( 'editordiv' ).appendChild( area );
+
+	// Setup the area with ace
+	this.editor = ace.edit( 'EditorArea' );
+	this.editor.setTheme( 'ace/theme/' + settings.theme );
+	this.editor.session.setUseWorker( false );
+	this.editor.getSession().setMode( 'ace/mode/javascript' );
+}
+
 Application.setupAce = function()
 {
-	var area = document.createElement( 'div' );
-	ge( 'editordiv' ).appendChild( area );
+	// Setup theme
+	ace.config.set( 'basePath', 'apps/FriendCreate/Libraries/Ace' );
+	
+	var area = this.createAceArea();
+	
 	ge( 'editordiv' ).onmouseup = function()
 	{
 		Application.updateStatusbar();
 	}
-
+	
 	// Setup styling
 	var h = document.getElementsByTagName( 'head' )[0];
 	var ex = document.createElement( 'style' );
@@ -114,45 +153,23 @@ Application.setupAce = function()
 		           ' -webkit-transform: rotateZ(0deg);}';
 	h.appendChild(ex);
 
-	// Setup editor
-	area.id = 'EditorArea';
-	area.style.position = 'absolute';
-	area.style.top = '0';
-	area.style.left = '0';
-	area.style.right = '0';
-	area.style.bottom = '0';
-
-	// Setup theme
-	ace.config.set ( 'basePath', 'apps/FriendCreate/Libraries/Ace' );
-	var editor = ace.edit ( 'EditorArea' );
-	
-	
-	editor.setTheme( 'ace/theme/' + settings.theme );
-	editor.getSession().setMode ( 'ace/mode/javascript' );
-
-	//pasting is done by api.js... emoty here to avoid double content into editor
-	editor.on('paste', function( evt ) {
-		evt.text = '';
-	});
-	Application.editor = editor;
-
 	// Set base font
 	var s = document.createElement ( 'style' );
 	s.innerHTML += 'html .ace_editor { font-size: 15px; }';
 	document.body.appendChild ( s );
 
-	// Also take keyboard shortcuts here. 
+	// Also take keyboard shortcuts here.
 	// TODO: Instead, just connect the iframe to the
 	//       event handler of the application!
 	//       I.e. make such functionality! Like:
 	//       app.connectKeyboardShortcuts ( iframe )
 	var hk2 = function( e )
-	{ 
+	{
 		var kc = e.which ? e.which : e.keyCode;
 		Application.sendMessage( { command: 'presskey', keycode: kc } );
-		Application.updateStatusbar(); 
+		Application.updateStatusbar();
 	}
-	
+
 	if ( document.addEventListener )
 	{
 		document.body.addEventListener( 'keyup', hk2 );
@@ -161,41 +178,42 @@ Application.setupAce = function()
 	{
 		document.body.attachEvent( 'onkeyup', hk2 );
 	}
-	
+
 	// Unbind the command/ctrl f key
-	editor.commands.addCommand( {
+	this.editor.commands.addCommand( {
 		name: "unfind",
 		bindKey: {
 		    win: "Ctrl-F",
 		    mac: "Command-F"
 		},
-		exec: function(editor, line) {
+		exec: function( editor, line)
+		{
 		    return false;
 		},
 		readOnly: true
 	} );
 
 	// Focus
-	editor.focus ();
+	this.editor.focus();
 
 	// Make a new file
-	this.newFile ();
+	this.newFile();
 };
 
 Application.handleKeys = function( k, e )
 {
 	var wo = k;
-	
+
 	if ( e.ctrlKey )
 	{
 		if( wo == 79 )
 		{
-			Application.open(); 
+			Application.open();
 			return true;
 		}
 		else if( wo == 83 )
 		{
-			Application.save(); 
+			Application.save();
 			return true;
 		}
 		// n (doesn't work, find a different key)
@@ -223,11 +241,11 @@ Application.handleKeys = function( k, e )
 		    return true;
 		}
 	}
-	
+
 	// Make sure current file is touched
-	if ( 
-		Application.files[Application.currentFile] && Application.files[Application.currentFile].touched != true && 
-		this.editor.getSession().getValue().length > 0 
+	if (
+		Application.files[Application.currentFile] && Application.files[Application.currentFile].touched != true &&
+		this.editor.getSession().getValue().length > 0
 	)
 	{
 		Application.files[Application.currentFile].touched = true;
@@ -246,7 +264,7 @@ Application.applySyntaxHighlighting = function ()
 	}
 	var mode = '';
 	var extension = this.files[this.currentFile].filetype.toLowerCase();
-	
+
 	switch( extension )
 	{
 		case 'php':  mode = 'ace/mode/php';          break;
@@ -274,14 +292,14 @@ Application.applySyntaxHighlighting = function ()
 			break;
 		case 'tpl':
 		case 'ptpl':
-		case 'html': 
+		case 'html':
 			extension = 'html';
 			mode = 'ace/mode/html';
 			break;
 		case 'xml':  mode = 'ace/mode/xml';          break;
 		case 'c':
 		case 'h':
-		case 'cpp':  
+		case 'cpp':
 			extension = 'cpp';
 			mode = 'ace/mode/c_cpp';
 			break;
@@ -292,13 +310,18 @@ Application.applySyntaxHighlighting = function ()
 			extension = 'c';
 			mode = 'ace/mode/c_cpp';
 			break;
+		case 'apf':
+		case 'conf':
+			extension = 'conf';
+			mode = 'ace/mode/plain_text';
+			break;
 		case 'lang':
-		default:     
+		default:
 			extension = 'txt';
 			mode = 'ace/mode/plain_text';
 			break;
 	}
-	this.editor.getSession ().setMode( mode );
+	this.editor.getSession().setMode( mode );
 	var opts = ge( 'Syntax' ).getElementsByTagName( 'option' );
 	for( var a = 0; a < opts.length; a++ )
 	{
@@ -306,9 +329,9 @@ Application.applySyntaxHighlighting = function ()
 			opts[a].selected = 'selected';
 		else opts[a].selected = '';
 	}
-	
+
 	// Find extra functionality
-	var xt = this.checkExtraFunctionality( extension );	
+	var xt = this.checkExtraFunctionality( extension );
 	ge( 'SpecialControls' ).innerHTML = xt ? xt : '';
 };
 
@@ -339,10 +362,11 @@ Application.checkExtraFunctionality = function( ext )
 	return false;
 }
 
+// Run the current jsx
 Application.runJSX = function()
 {
 	var args = false;
-	
+
 	this.sendMessage( {
 		type: 'system',
 		command: 'executeapplication',
@@ -351,16 +375,18 @@ Application.runJSX = function()
 	} );
 }
 
+// Kill running jsx
 Application.stopJSX = function()
 {
 	var fname = this.files[this.currentFile].filename.split( ':' )[1];
 	if( fname.indexOf( '/' ) >= 0 )
 	{
-		fname = fname.split( '/' ); fname = fname[fname.length-1] 
+		fname = fname.split( '/' ); fname = fname[fname.length-1]
 	}
 	this.sendMessage( { type: 'system', command: 'kill', appName: fname } );
 }
 
+// Run the project main executable
 Application.runProject = function()
 {
 	this.sendMessage( {
@@ -371,6 +397,7 @@ Application.runProject = function()
 	} );
 }
 
+// Kill project
 Application.stopProject = function()
 {
 	for( var a in this.files )
@@ -426,9 +453,9 @@ Application.updateStatusbar = function()
 	this.statusBarLn.innerHTML = (l.row+1);
 	this.statusBarTabWidth.innerHTML = this.editor.getSession().getTabSize();
 	this.statusBarInsOvr.innerHTML = this.editor.getOverwrite() ? 'OVR' : 'INS';
-	
+
 	// TODO: Allow override with temporary highlighting!
-	if( this.files && this.files[this.currentFile] ) 
+	if( this.files && this.files[this.currentFile] )
 	{
 		var mode = this.files[this.currentFile].filetype;
 		if ( typeof ( mode ) == 'undefined' || !mode || mode == 'undefined' ) mode = 'txt';
@@ -442,8 +469,33 @@ Application.updateStatusbar = function()
 	}
 };
 
+// Progress indicator when loading files!
+var loader = false;
+var loading = 0;
+function loadProgress()
+{
+	// Make ready a progress bar for loading the files
+	if( !loader )
+	{
+		loader = document.createElement( 'div' );
+		loader.className = 'FileLoaderProgress MouseBusy';
+		loader.bar = document.createElement( 'div' ),
+		loader.appendChild( loader.bar );
+		document.body.appendChild( loader );
+		loader.style.display = 'none';
+	}
+	if( loading > 0 )
+	{
+		loader.style.display = 'block';
+	}
+	else
+	{
+		loader.style.display = 'none';
+	}
+}
+
 // Loads a file
-Application.loadFile = function( data, path )
+Application.loadFile = function( data, path, cb )
 {
 	if( !this.files )
 	{
@@ -468,7 +520,10 @@ Application.loadFile = function( data, path )
 		{
 			// It already exists..
 			if( this.files[a].filename == path )
+			{
+				if( cb ) cb();
 				return;
+			}
 		}
 		// Set it
 		this.files.push( { content: data, filename: path, touched: true } );
@@ -476,6 +531,7 @@ Application.loadFile = function( data, path )
 	}
 	// Refresh so we can see it in the list
 	this.refreshFilesList();
+	if( cb ) cb();
 }
 
 // Say we wanna open
@@ -497,7 +553,7 @@ Application.newFile = function()
 	this.files.push( { content: '', filename: i18n ( 'i18n_empty_file' ), touched: false } );
 	this.setCurrentFile( this.files.length - 1 );
 	this.refreshFilesList();
-	
+
 	// Sync the new list to parent level
 	this.sendMessage( {
 		command: 'receivefilesync',
@@ -508,31 +564,47 @@ Application.newFile = function()
 // Refresh file tabs -----------------------------------------------------------
 Application.refreshFilesList = function ()
 {
-	var d = document.getElementsByTagName ( 'div' );
-	var files = false;
-	for ( var a = 0; a < d.length; a++ )
+	// Do only once at a time!
+	if( this.refreshingFiles )
 	{
-		if ( d[a].className.indexOf ( ' Files' ) > 0 )
+		return setTimeout( function()
+		{
+			Application.refreshFilesList();
+		}, 100 );
+	}
+	this.refreshingFiles = true;
+	
+	// Get all elements
+	var d = document.getElementsByTagName( 'div' );
+	var files = false;
+	for( var a = 0; a < d.length; a++ )
+	{
+		if( d[a].classList && d[a].classList.contains( 'Files' ) )
 		{
 			files = d[a];
 			break;
 		}
 	}
-	if ( !files ) return;
-	
+	if( !files )
+	{
+		this.refreshingFiles = false;
+		return;
+	}
+
 	files.innerHTML = '';
-	
-	for ( var t = 0; t < this.files.length; t++ )
+
+	// Loop through the files
+	for( var t = 0; t < this.files.length; t++ )
 	{
 		var c = document.createElement ( 'div' );
 		var fullfile = this.files[t].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
-		var onlyfile = fullfile.split ( ':' )[1];
-		if ( onlyfile && onlyfile.indexOf ( '/' ) >= 0 )
+		var onlyfile = fullfile.split( ':' )[1];
+		if( onlyfile && onlyfile.indexOf( '/' ) >= 0 )
 		{
-			onlyfile = onlyfile.split ( '/' );
-			if ( onlyfile[onlyfile.length-1] === '' )
-				onlyfile = onlyfile[onlyfile.length-2];
-			else onlyfile = onlyfile[onlyfile.length-1];
+			onlyfile = onlyfile.split( '/' );
+			if( onlyfile[ onlyfile.length - 1 ] === '' )
+				onlyfile = onlyfile[ onlyfile.length - 2 ];
+			else onlyfile = onlyfile[ onlyfile.length - 1 ];
 			c.innerHTML = '<span>' + onlyfile + '</span>&nbsp;|&nbsp;<span title="' + fullfile + '">' + fullfile + '</span><div class="Icon IconSmall fa-close"></div>';
 		}
 		else c.innerHTML = '<span>' + fullfile + '</span><div class="Icon IconSmall fa-close"></div>';
@@ -540,13 +612,13 @@ Application.refreshFilesList = function ()
 		c.style.textOverflow = 'ellipsis';
 		c.style.overflow = 'hidden';
 		c.className = 'Padding MousePointer';
-		if ( t == this.currentFile ) c.className += ' Selected';
+		if ( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
 		c.onclick = function ( e )
 		{
-			Application.setCurrentFile ( this.ind );
+			Application.setCurrentFile( this.ind );
 			Application.refreshFilesList ();
-			
+
 			// Close when clicking on close icon
 			var t = e.target ? e.target : e.srcElement;
 			if( t.className.indexOf( 'fa-close' ) > 0 )
@@ -557,8 +629,10 @@ Application.refreshFilesList = function ()
 		files.appendChild ( c );
 	}
 	
-	// Sync files up
-	Application.receiveMessage( { command: 'syncfiles' } );
+	this.applySyntaxHighlighting();
+	
+	// We are done
+	this.refreshingFiles = false;
 };
 
 // Check if we support the filetype --------------------------------------------
@@ -591,22 +665,25 @@ Application.checkFileType = function( path )
 		case 'java':
 		case 'css':
 		case 'run':
+		case 'apf':
+		case 'conf':
 			return true;
 		default:
 			return false;
 	}
 }
 
+// Get a storable session that we can recover
 Application.getStorableSession = function( session )
 {
 	var filterHistory = function( deltas )
-	{ 
+	{
 		return deltas.filter( function( d )
 		{
 		    return d.group != "fold";
 		} );
 	};
-	return {
+	var o = {
         selection: session.selection.toJSON(),
         value: session.getValue(),
         history: {
@@ -617,11 +694,15 @@ Application.getStorableSession = function( session )
         scrollLeft: session.getScrollLeft(),
         options: session.getOptions()
     };
+    return o;
 }
 
+// Set a stored session
 Application.setStoredSession = function( data )
 {
-	var session = ace.require( 'ace/ace' ).createEditSession( data.value );
+	// Setup the area again to prevent leaks!
+	this.createAceArea();
+	var session = ace.createEditSession( data.value );
 	session.$undoManager.$doc = session; // NOTICE: workaround for a bug in ace
 	session.setOptions( data.options );
 	session.$undoManager.$undoStack = data.history.undo;
@@ -630,22 +711,24 @@ Application.setStoredSession = function( data )
 	session.setScrollTop( data.scrollTop );
 	session.setScrollLeft( data.scrollLeft );
 	this.editor.setSession( session );
+	this.editor.session.setUseWorker( false );
 }
 
+var inc = 0;
 // Set the content from current file -------------------------------------------
 Application.setCurrentFile = function( curr )
 {
-	var sess = this.editor.getSession ();
-	
+	var sess = this.editor.getSession();
+
 	// Make sure we copy the right content before we change curr!
 	if( sess && this.files && this.files[this.currentFile] )
 	{
-		this.files[this.currentFile].content = this.editor.getValue();
-		this.files[this.currentFile].session = this.getStorableSession( sess );
+		this.files[ this.currentFile ].content = this.editor.getValue();
+		this.files[ this.currentFile ].session = this.getStorableSession( sess );
 	}
-	
+
 	// Make sure we have files
-	if ( !this.files || !this.files[this.currentFile] )
+	if ( !this.files || !this.files[ this.currentFile ] )
 	{
 		if( this.files )
 		{
@@ -662,48 +745,100 @@ Application.setCurrentFile = function( curr )
 	}
 	
 	// Store current scroll top and values etc
-	if( sess && ( curr || curr === 0 ) && this.files[this.currentFile] )
+	if( sess && ( curr || curr === 0 ) && this.files[ this.currentFile ] )
 	{
 		var f = this.files[this.currentFile];
-		if ( curr != this.currentFile ) f.content = Application.editor.getValue ();
+		if( curr != this.currentFile )
+		{
+			f.content = Application.editor.getValue ();
+		}
 	}
-	
+
 	// Set current file
 	if( curr || curr === 0 )
 	{
 		this.currentFile = curr;
 	}
-	
+
 	// Manage undo
 	if( this.files[this.currentFile].session )
 	{
-		Application.setStoredSession( this.files[this.currentFile].session );
+		Application.setStoredSession( this.files[ this.currentFile ].session );
 	}
 	else
 	{
 		// New one
 		var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
 		this.editor.setSession( session );
+		this.editor.session.setUseWorker( false );
 	}
 	
-	this.updateStatusbar();
-	
+	// Clear the selection in the editor
 	this.editor.clearSelection();
 	
+	// Show stuff to user
+	this.updateStatusbar();
+
+
+	// Check if this file is part of your project
+	if( this.files[ this.currentFile ] && this.projectFilename )
+	{
+		var ftabs = ge( 'filestabs' );
+		ftabs.innerHTML = i18n( 'i18n_checking_file' );
+		this.sendMessage( {
+			command: 'checkfile',
+			file: this.files[ this.currentFile ],
+			callbackId: addCallback( function( data )
+			{
+				if( data.data )
+				{
+					var d = data.data;
+					if( d.str == '' )
+						ftabs.innerHTML = '';
+					else if( d.str == 'exists' )
+					{
+						ftabs.innerHTML = '';
+					}
+					else if( d.str == 'unknown' )
+					{
+						ftabs.innerHTML = '<p class="Layout">' + i18n( 'i18n_add_file_to_project' ) + 
+							'</p><p><button type="button" class="Button IconSmall fa-plus"> ' + 
+								i18n( 'i18n_add_to_project' ) + '</button>';
+						var b = ftabs.getElementsByTagName( 'button' )[0];
+						b.onclick = function()
+						{
+							Application.sendMessage( {
+								command: 'addtoproject',
+								file: Application.files[ Application.currentFile ],
+								callbackId: addCallback( function( data )
+								{
+									if( data.response == 'ok' )
+									{
+										ftabs.innerHTML = '';
+									}
+									else
+									{
+										ftabs.innerHTML = i18n( 'i18n_could_not_add_file' );
+									}
+								} )
+							} );
+						}
+					}
+					else
+					{
+						ftabs.innerHTML = '';
+					}
+				}
+				else
+				{
+					ftabs.innerHTML = '';
+				}
+			} )
+		} );
+	}
+
 	// Enable word wrapping
 	this.refreshAceSettings();
-	
-	// Notify artisan.js
-	function callbackF()
-	{ 
-		Application.applySyntaxHighlighting();
-	}
-	var cid = addCallback( callbackF );
-	
-	this.receiveMessage( { 
-		command: 'syncfiles', 
-		callback: cid
-	} );
 };
 
 // Close a file
@@ -723,7 +858,7 @@ Application.closeFile = function()
 			this.currentFile = newFiles.length-1;
 	    }
 	}
-	
+
 	// Initial state
 	if ( newFiles.length <= 0 )
 	{
@@ -739,11 +874,11 @@ Application.closeFile = function()
 				break;
 			}
 		}
-		if ( !files ) 
+		if ( !files )
 		{
 			return;
 		}
-		this.editor.setValue ( '' );
+		this.editor.setValue( '' );
 		this.editor.clearSelection ();
 		this.editor.getSession().setScrollTop ( 0 );
 		this.newFile();
@@ -767,19 +902,21 @@ Application.closeAllFiles = function()
 	this.newFile();
 }
 
-// TODO: Consolidate all "applySyntaxHighlighting in a centralized way!
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
 	{
 		switch( msg.command )
 		{
+			case 'incrementloader':
+				loading++; 
+				loadProgress();
+				break;
 			case 'refreshsettings':
 				this.refreshAceSettings( true );
 				break;
 			case 'toggleSideBar':
 				this.sideBarHidden = this.sideBarHidden ? false : true;
-				
 				ge( 'CodeView' ).style.left = !this.sideBarHidden ? '' : '0px';
 				ge( 'ResizeColumn' ).style.visibility = !this.sideBarHidden ? '' : 'hidden';
 				break;
@@ -815,14 +952,19 @@ Application.receiveMessage = function( msg )
 			case 'replace':
 				var range = this.editor.find( msg.keywords, {
 					wrap: true,
-					caseSensitive: true, 
+					caseSensitive: true,
 					wholeWord: true,
 					regExp: false,
 					preventScroll: true // do not change selection
 				} );
 				if( msg.all )
+				{
 					this.editor.replaceAll( msg.replacement );
-				else this.editor.replace( msg.replacement );
+				}
+				else
+				{
+					this.editor.replace( msg.replacement );
+				}
 				break;
 			// Get project info
 			case 'projectinfo':
@@ -886,7 +1028,6 @@ Application.receiveMessage = function( msg )
 			case 'closeallfiles':
 				this.closeAllFiles();
 				break;
-			// Asked to sync files up to artisan.js
 			case 'syncfiles':
 				var meg = {
 					command: 'receivefilesync',
@@ -903,7 +1044,7 @@ Application.receiveMessage = function( msg )
 				if( msg.callback ) meg.callback = msg.callback;
 				this.sendMessage( meg );
 				this.refreshFilesList();
-				this.applySyntaxHighlighting();
+				this.syncing = false;
 				break;
 			// Just passes current editor content
 			case 'getcurrentcontent':
@@ -914,12 +1055,29 @@ Application.receiveMessage = function( msg )
 				} );
 				break;
 			case 'loadfile':
-				Application.loadFile( msg.data, msg.path );
+				var cb = msg.callbackId;
+				delete msg.callbackId;
+				Application.loadFile( msg.data, msg.path, function()
+				{
+					// Tell we are done.
+					if( cb )
+					{
+						loading--;
+						// Give it time 
+						setTimeout( function()
+						{
+							loadProgress();
+						}, 500 );
+						Application.sendMessage( {
+							type: 'callback',
+							callback: cb 
+						} );	
+					}
+				} );
 				break;
 			case 'drop':
 				var paths = [];
 				var project = false;
-				console.log( 'Dropped', msg );
 				for( var a = 0; a < msg.data.length; a++ )
 				{
 					// Filter
@@ -928,19 +1086,10 @@ Application.receiveMessage = function( msg )
 					{
 						paths.push( path );
 					}
-					else if( path && path.substr && path.substr( path.length - 4, 4 ).toLowerCase() == '.apf' )
+					if( path && path.substr && path.substr( path.length - 4, 4 ).toLowerCase() == '.apf' )
 					{
 						project = path;
 					}
-				}
-				
-				if( paths.length )
-				{
-					this.sendMessage( {
-						command: 'loadfiles',
-						paths: paths
-					} );
-					return;
 				}
 				if( project )
 				{
@@ -949,6 +1098,11 @@ Application.receiveMessage = function( msg )
 						path: project
 					} );
 				}
+				// Files
+				else
+				{
+					Application.sendMessage( { command: 'loadfiles', paths: paths } );
+				}
 				break;
 			case 'updateStatus':
 				ge( 'status' ).innerHTML = msg.data ? msg.data : '';
@@ -956,7 +1110,6 @@ Application.receiveMessage = function( msg )
 		}
 	}
 };
-
 
 // TODO: Add more stuff here
 document.oncontextmenu = function( e )

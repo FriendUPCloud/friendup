@@ -51,7 +51,8 @@ function SaveSource()
 		Server: ge( 'InpServer' ).value,
 		Type: ge( 'InpType' ).value,
 		Username: ge( 'InpUsername' ).value,
-		Password: ge( 'InpPassword' ).value
+		Password: ge( 'InpPassword' ).value,
+		ApiSession: ge( 'ApiSession' ).value
 	}
 	// First one!
 	if( !Application.sources || ( Application.sources && !Application.sources.length ) )
@@ -118,7 +119,8 @@ function Source(id)
 			'server'             : data.Name ? data.Server : '',
 			'type'               : data.Name ? data.Type : '',
 			'username'           : data.Name ? data.Username : '',
-			'password'           : data.Name ? '********' : ''
+			'password'           : data.Name ? '********' : '',
+			'session'            : data.ApiSession ? data.ApiSession : ''
 		};
 		s.onLoad = function( data )
 		{

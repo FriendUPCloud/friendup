@@ -5,14 +5,23 @@
 			<div class="HContentLeft HContent30 VContent100 BackgroundLists Padding ScrollableY" id="Applications">
 			
 			</div>
-			<div class="HContentRight HContent70">
+			<div class="HContentRight HContent70" id="SettingsContainer">
 				<div class="BackgroundDefault Padding Disabled BorderBottom ScrollableY" id="Settings">
 					<div class="HRow">
 						<div class="HContent25 FloatLeft">
 							<strong id="ApplicationLabel">{i18n_application}:</strong>
 						</div>
 						<div class="HContent75 FloatLeft">
-							<input type="text" class="FullWidth" id="Application"/>
+							<select id="ApplicationSelection" onchange="if( this.value != '' ){ document.body.classList.add( 'SelectedApp' ); ge( 'Application' ).value = this.value; } else document.body.classList.remove( 'SelectedApp' );"></select>
+							<input type="text" class="FullWidth" onchange="if( this.value.length <= 0 ){ document.body.classList.remove( 'SelectedApp' ); ge( 'Application' ).value = this.value; } else document.body.classList.add( 'SelectedApp' );" id="Application"/>
+						</div>
+					</div>
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
+							<strong id="DisplayLabel">{i18n_display_name}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="text" class="FullWidth" id="DisplayName"/>
 						</div>
 					</div>
 					<div class="HRow MarginTop">
@@ -21,6 +30,14 @@
 						</div>
 						<div class="HContent75 FloatLeft">
 							<input type="text" class="FullWidth" id="ShortDescription"/>
+						</div>
+					</div>
+					<div class="HRow MarginTop">
+						<div class="HContent25 FloatLeft">
+							<strong id="IconLabel">{i18n_preferred_workspace}:</strong>
+						</div>
+						<div class="HContent75 FloatLeft">
+							<input type="number" id="Workspace" value="1" min="0" max="9"/>
 						</div>
 					</div>
 					<div class="HRow MarginTop">
@@ -37,17 +54,28 @@
 						</div>
 						<div class="HContent75 FloatLeft">
 							<button type="button" class="IconSmall fa-arrow-up" onclick="Application.sendMessage( { command: 'updockitem' } )">
-							
+					
 							</button>
 							<button type="button" class="IconSmall fa-arrow-down" onclick="Application.sendMessage( { command: 'downdockitem' } )">
-							
+					
 							</button>
-							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value } )">
-								{i18n_save}
-							</button>
-							<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
-								{i18n_remove}
-							</button>
+						</div>
+					</div>
+					<div class="HRow MarginTop BorderTop">
+						<div class="HContent100">
+							<p>
+								<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value } )">
+									{i18n_save}
+								</button>
+								<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
+									{i18n_remove}
+								</button>
+							</p>
+							<p>
+								<button type="button" class="IconSmall fa-angle-left" onclick="Application.receiveMessage( { command: 'close' } )">
+									{i18n_close}
+								</button>
+							</p>
 						</div>
 					</div>
 				</div>
@@ -136,7 +164,7 @@
 	<style>
 		#Settings
 		{
-			height: 40%;
+			height: 50%;
 		}
 		#Settings.Disabled
 		{
@@ -145,7 +173,7 @@
 		}
 		#Options
 		{
-			top: 40%;
+			top: 50%;
 			bottom: 0px;
 		}
 		#Settings.Disabled + #Options

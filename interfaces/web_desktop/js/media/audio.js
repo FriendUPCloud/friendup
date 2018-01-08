@@ -18,37 +18,133 @@
 *****************************************************************************©*/
 
 // Simple audio object with global sound and balance control
-AudioObject = function()
+SoundObject = function( filename, callback )
 {
+	var self = this;
 	this.audio = document.createElement ( 'audio' );
-	
+	this.callback = callback;
+
 	// Load an audio file
-	// TODO: Recognize friend doors!
-	this.load = function( filename )
+	this.audio.src = filename;
+	this.audio.onloadeddata = loaded;
+	this.audio.load ();
+	this.audio.onended = onEnded;
+	this.audio.onplaying = onPlaying;
+	this.audio.onpause = onPause;
+	this.loops = 0;
+	this.volume = 1;
+	this.playing = false;
+	this.paused = true;
+
+	// On file loaded
+	function loaded()
 	{
-		this.audio.src = filename;
-		this.audio.load ();
+		self.callback();
+	}
+
+	// On playing toggle values
+	function onPlaying() 
+	{
+    	self.playing = true;
+    	self.paused = false;
+	}
+
+	// On pause toggle values
+	function onPause() 
+	{
+    	self.playing = false;
+    	self.paused = true;
+	}
+
+	// When the sound ends
+	function onEnded()
+	{
+		if ( self.loops > 0)
+			self.loops--;
+		if ( self.loops )
+		{
+			self.audio.currentTime = 0;
+			self.audio.volume = self.volume;
+			self.audio.play();
+			if ( self.onLoop )
+				self.onLoop( this );
+		}
+		else
+		{
+			if ( self.onEnd )
+				self.onEnd( this );
+		}
 	};
-	// Let's add an event
+	// Mute
+	this.mute = function()
+	{
+		this.audio.muted = true;
+	}
+	this.isMuted = function()
+	{
+		return this.audio.muted;
+	}
+	// Playback rate of the sound
+	this.setPlaybackRate = function( rate )
+	{
+		this.audio.playbackRate = rate;
+	}
+	this.getPlaybackRate = function( rate )
+	{
+		return this.audio.playbackRate;
+	}
+	// Position of the sound
+	this.setPosition = function( position )
+	{
+		this.audio.currentTime = position;
+	}
+	this.getPosition = function( position )
+	{
+		return this.audio.currentTime;
+	}
+	// Volume of the sound
+	this.setVolume = function( volume )
+	{
+		this.audio.volume = volume;
+	}
+	this.getVolume = function( volume )
+	{
+		return this.audio.volume;
+	}
+	// Add an event
 	this.addEventListener = function( type, func )
 	{
 		this.audio.addEventListener( type, func );
 	};
+	// Control
 	this.play = function()
 	{
-		this.audio.play();
+		if ( !this.playing )
+		{
+			this.audio.volume = this.volume;
+			this.audio.play();
+		}
 	};
 	this.stop = function()
 	{
-		this.audio.stop();
+		if ( !this.paused )
+		{
+			this.audio.currentTime = 0;
+			this.audio.pause();
+		}
 	};
 	this.pause = function()
 	{
-		this.audio.pause();
+		if ( !this.paused )
+			this.audio.pause();
 	};
-	this.paused = function()
+	this.isPaused = function()
 	{
-		return this.audio.paused;
+		return this.paused;
+	}
+	this.isEnded = function()
+	{
+		return this.audio.ended;
 	}
 };
 

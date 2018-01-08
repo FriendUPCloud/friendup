@@ -69,14 +69,13 @@ FriendConnection.prototype.send = function( conf )
 	
 	// messages from 
 	event = self.setId( event, conf );
-	//console.log( 'FriendConnection.send', event );
 	self.sendMessage( event );
 }
 
 FriendConnection.prototype.on = function( event, listener )
-{
+{	
 	var self = this;
-	if ( !self.listeners[ event ])
+	if( !self.listeners[ event ] )
 		self.listeners[ event ] = [];
 	
 	var listenerId = friendUP.tool.uid( 'listener' );
@@ -198,21 +197,26 @@ FriendConnection.prototype.onWsMessage = function( msg )
 {
 	var self = this;
 	if ( 'response' === msg.type )
+	{
 		handleResponse( msg );
+	}
 	else
+	{
 		handleEvent( msg );
+	}
 	
 	function handleEvent( msg )
 	{
 		var event = msg.type;
 		var lIds = self.listeners[ event ];
-		if ( !lIds ) {
+		if( !lIds )
+		{
 			console.log( 'FriendConnection - handler ids not found for', {
 				msg : msg,
 				msgJson : JSON.stringify( msg ),
 				event : event,
 				listeners : self.listeners,
-			});
+			} );
 			return;
 		}
 		
@@ -228,7 +232,20 @@ FriendConnection.prototype.onWsMessage = function( msg )
 				return;
 			}
 			
-			handler( msg.data );
+			// Default member
+			if( msg.data )
+			{
+				handler( msg.data );
+			}
+			// Session data member
+			else if( msg.session )
+			{
+				handler( msg.session );
+			}
+			else
+			{
+				console.log( 'Illegal message format.' );
+			}
 		}
 	}
 	

@@ -17,9 +17,19 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var user = '';
+
+function setUser( id )
+{
+	user = id;
+	Application.sendMessage( { command: 'setuser', userid: id } );
+}
+
 // Nothing to do
 Application.run = function( msg )
 {
+	user = Application.userId;
+	
 	//
 	//console.log( 'Initialized' );
 	
@@ -34,11 +44,28 @@ Application.run = function( msg )
 		}
 		m.execute( 'getlocale', { type: 'DOSDrivers', locale: data.locale } );
 	} );
+	
+	
+	console.log( Application );
 }
 Application.receiveMessage = function( msg )
 {
 	if( msg.command == 'setmountlist' )
 	{
+		var users = JSON.parse( msg.users );
+		
+		var str = '<p><strong>' + i18n( 'i18n_select_user' ) + ':</strong> <select onchange="setUser(this.value)" id="Userlistvalues">';
+		for( var a in users )
+		{
+			var c = '';
+			if( users[ a ].ID == user )
+				c = ' selected="selected"';
+			str += '<option value="' + users[ a ].ID + '"' + c + '>' + users[ a ].FullName + '</option>';
+		}
+		str += '</select></p>';
+		
+		ge( 'UserList' ).innerHTML = '<div id="Userlist">' + str + '</div>';
+		
 		ge( 'Disks' ).innerHTML = '\
 			<div class="Mountlist">\
 				' + msg.data + '\

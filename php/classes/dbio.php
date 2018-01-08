@@ -98,6 +98,7 @@ class SqlDatabase
 	// Query the database
 	function Query( $query )
 	{
+		global $Logger;
 		if( !$this->_link ) return false;
 		
 		// Delete cache when writing to database
@@ -141,20 +142,35 @@ class SqlDatabase
 		return false;
 	}
 	
+	function FreeResult( $result )
+	{
+		if( $this->_lastResult == $result )
+			$this->_lastResult = null;
+		mysqli_free_result( $result );
+	}
+	
 	function FetchRow( $query )
 	{
+		global $Logger;
+		
 		// Recall cache
 		if( isset( $this->_cacheArr[$query] ) )
 			return $this->_cacheArr[$query];
 		
 		if( $res = $this->Query( $query ) )
 		{
-			$result = false;
-			if( $result = mysqli_fetch_assoc( $res  ) )
+			$result = False;
+			$num = mysqli_num_rows( $res );
+			if( $num > 0 )
 			{
-				// Write cache
-				$this->_cacheArr[$query] = $result;
+				$result = false;
+				if( $result = mysqli_fetch_assoc( $res ) )
+				{
+					// Write cache
+					$this->_cacheArr[$query] = $result;
+				}
 			}
+			$this->FreeResult( $res );
 			return $result;
 		}
 		return false;
@@ -166,15 +182,20 @@ class SqlDatabase
 		if( isset( $this->_cacheObjArray[$query] ) )
 			return $this->_cacheObjArray[$query];
 
-
 		if( $res = $this->Query( $query ) )
 		{
-			$result = array();
-			while( $rowo = mysqli_fetch_object( $res ) )
+			$result = false;
+			$num = mysqli_num_rows( $res );
+			if( $num > 0 )
 			{
-				$result[] = $rowo;
+				$result = array();
+				while( $rowo = mysqli_fetch_object( $res ) )
+				{
+					$result[] = $rowo;
+				}
+				$this->_cacheObjArray[$query] = $result;
 			}
-			$this->_cacheObjArray[$query] = $result;
+			$this->FreeResult( $res );
 			return $result;
 		}
 		return false;
@@ -190,6 +211,7 @@ class SqlDatabase
 		{
 			$result = mysqli_fetch_object( $res );
 			$this->_cacheObj[$query] = $result;
+			$this->FreeResult( $res );
 			return $result;
 		}
 		return false;
@@ -198,6 +220,20 @@ class SqlDatabase
 	function MakeGlobal()
 	{
 		$GLOBALS[ 'SqlDatabase' ] =& $this;
+	}
+
+	function EscapeString($s, $strict = FALSE)
+	{
+        if ($strict)
+        {
+            $replace_from = array('_', '%');
+            $replace_to   = array('\_', '\%');
+            return str_replace($replace_from, $replace_to, mysqli_real_escape_string($this->_link, $s));
+        }
+        else
+        {
+            return mysqli_real_escape_string($this->_link, $s);
+        }
 	}
 }
 
@@ -334,6 +370,10 @@ class DbTable
 					$default_value = '';
 				}
 				break;
+			case 'text':
+				$size = 0;
+				$default_value = '';
+				break;
 		}
 		
 		if( isset( $options[ 'after' ] ) )
@@ -439,7 +479,8 @@ class DbIO extends DbTable
 				$where[] = "`$v` = " . $this->EncapsulateField( $v, $this->$v );
 			}
 		}
-		$query = "SELECT * FROM `$this->_name` WHERE " . implode( " AND ", $where );
+		$query = "SELECT * FROM `{$this->_name}` WHERE " . implode( " AND ", $where );
+		$this->_lastQuery = $query;
 		
 		if( $row = $this->_database->FetchRow( $query ) )
 		{
@@ -449,6 +490,10 @@ class DbIO extends DbTable
 			}
 			if( method_exists( $this, 'OnLoaded' ) ) $this->OnLoaded();
 			return true;
+		}
+		else
+		{
+			$this->_lastQuery .= '--' . $this->_database->_lastError . '|' . mysqli_error( $this->_database->_link );
 		}
 		
 		return false;

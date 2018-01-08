@@ -25,6 +25,10 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 27 March 2017
+ * 
+ * \defgroup FriendCoreThreadsPID PID
+ * \ingroup FriendCoreThreads
+ * @{
  */
 
 #include <core/types.h>
@@ -74,3 +78,5 @@ void PIDThreadDelete( PIDThread *th )
 	}
 }
 
+/**@}*/
+// End of FriendCoreThreadsPID Doxygen group

@@ -50,7 +50,6 @@ typedef struct HttpInterface
 	void			(*HttpSetContent)( Http*, char* data, unsigned int length );
 	char			*(*HttpBuild)( Http* http );
 	void			(*HttpFree)( Http* http );
-	void			(*HttpTest)();
 	HashmapElement	*(*HttpGetPOSTParameter)( Http *request,  char *param );
 	void			(*HttpWriteAndFree)( Http* http, Socket *sock );
 	void			(*HttpWrite)( Http* http, Socket *sock );
@@ -62,7 +61,7 @@ typedef struct HttpInterface
 // init function
 //
 
-inline void HttpInterfaceInit( HttpInterface *si )
+static inline void HttpInterfaceInit( HttpInterface *si )
 {
 	si->HttpParseHeader = HttpParseHeader;
 	si->HttpNew = HttpNew;

@@ -57,6 +57,7 @@ typedef struct Uri
 	char                 *queryRaw;
 	Hashmap              *query;
 	char                 *fragment;
+	FBOOL                 redirect;
 	FBOOL                 valid; // If an illegal character is found, this will be 0, else it'll be 1 (When validation is implemented...)
 } Uri;
 

@@ -44,6 +44,9 @@ CacheManager *CacheManagerNew( FULONG size )
 	if( cm != NULL )
 	{
 		int i = 0;
+		
+		pthread_mutex_init( &(cm->cm_Mutex), NULL );
+		
 		cm->cm_CacheMax = size;
 		
 		cm->cm_CacheFileGroup = FCalloc( CACHE_GROUP_MAX, sizeof(CacheFileGroup) );
@@ -74,6 +77,8 @@ void CacheManagerDelete( CacheManager *cm )
 	{
 		int i = 0;
 		
+		pthread_mutex_lock( &(cm->cm_Mutex) );
+		
 		for( ; i < CACHE_GROUP_MAX; i++ )
 		{
 			LocFile *lf = cm->cm_CacheFileGroup[ i ].cg_File;
@@ -90,6 +95,9 @@ void CacheManagerDelete( CacheManager *cm )
 			FFree( cm->cm_CacheFileGroup );
 		}
 		
+		pthread_mutex_unlock( &(cm->cm_Mutex) );
+		
+		pthread_mutex_destroy( &(cm->cm_Mutex) );
 		/*
 		LocFile *lf = cm->cm_LocFileCache;
 		while( lf != NULL )
@@ -99,9 +107,8 @@ void CacheManagerDelete( CacheManager *cm )
 			LocFileDelete( rf );
 		}
 		*/
+		FFree( cm );
 	}
-	
-	FFree( cm );
 }
 
 /**
@@ -113,6 +120,7 @@ void CacheManagerClearCache( CacheManager *cm )
 {
 	if( cm != NULL )
 	{
+		pthread_mutex_lock( &(cm->cm_Mutex) );
 		int i = 0;
 		
 		for( ; i < CACHE_GROUP_MAX; i++ )
@@ -142,6 +150,8 @@ void CacheManagerClearCache( CacheManager *cm )
 		*/
 			
 		cm->cm_LocFileCache = NULL;
+		
+		pthread_mutex_unlock( &(cm->cm_Mutex) );
 	}
 }
 
@@ -158,7 +168,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 {
 	if( cm != NULL )
 	{
-		INFO(" cache size %lld file size %lld cache max %lld\n",  cm->cm_CacheSize ,(FQUAD)lf->lf_FileSize, (FQUAD)cm->cm_CacheMax );
+		INFO(" cache size %ld file size %ld cache max %ld\n",  cm->cm_CacheSize ,(FLONG)lf->lf_FileSize, (FLONG)cm->cm_CacheMax );
 		if( (cm->cm_CacheSize + lf->lf_FileSize) > cm->cm_CacheMax )
 		{
 			FERROR("Cannot add file to cache, cache is FULL\n");
@@ -176,23 +186,30 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 					id = 0;
 				}
 				*/
-				DEBUG("ID %d\n", id );
-				if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )
-				{
-					cm->cm_CacheFileGroup[ id ].cg_File = lf;
-				}
-				else
-				{
-					lf->node.mln_Succ = (MinNode *)cm->cm_CacheFileGroup[ id ].cg_File;
-					cm->cm_CacheFileGroup[ id ].cg_File = lf;
-				}
 				
-				//lf->node.mln_Succ = (MinNode *)cm->cm_LocFileCache;
-				//cm->cm_LocFileCache = lf;
+				pthread_mutex_lock( &(cm->cm_Mutex) );
+				
+				if( cm->cm_LocFileCache != NULL )
+				{
+					DEBUG("ID %d\n", id );
+					if( cm->cm_CacheFileGroup[ id ].cg_File == NULL )
+					{
+						cm->cm_CacheFileGroup[ id ].cg_File = lf;
+					}
+					else
+					{
+						lf->node.mln_Succ = (MinNode *)cm->cm_CacheFileGroup[ id ].cg_File;
+						cm->cm_CacheFileGroup[ id ].cg_File = lf;
+					}
+				
+					//lf->node.mln_Succ = (MinNode *)cm->cm_LocFileCache;
+					//cm->cm_LocFileCache = lf;
 			
-				lf->lf_FileUsed++;
+					lf->lf_FileUsed++;
 			
-				cm->cm_CacheSize += lf->lf_FileSize;
+					cm->cm_CacheSize += lf->lf_FileSize;
+				}
+				pthread_mutex_unlock( &(cm->cm_Mutex) );
 			}
 			else
 			{
@@ -211,7 +228,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
  * @param lf pointer to LocFile structure which will be stored in cache
  * @return 0 when success, otherwise error number
  */
-int CacheManagerUserFilePut( void *locusr, LocFile *lf )
+int CacheManagerUserFilePut( void *locusr, LocFile *lf __attribute__((unused)) )
 {
 	if( locusr != NULL )
 	{
@@ -263,24 +280,6 @@ LocFile *CacheManagerUserFileGet( void *locusr, char *path )
 	return 0;
 }
 
-//
-// Internal function which gets pointer to char where filename is started
-//
-
-inline char *GetFileNamePtr( char *path, int len )
-{
-	int i = len;
-	while( i != 0 )
-	{
-		if( path[ i ] == '/' )
-		{
-			return &path[ i+1 ];
-		}
-		i--;
-	}
-	return path;
-}
-
 /**
  * get LocFile from cache
  *
@@ -289,7 +288,7 @@ inline char *GetFileNamePtr( char *path, int len )
  * @param checkByPath find file by compareing paths
  * @return pointer to LocFile when structure is stored in CacheManager, otherwise NULL
  */
-LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
+LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __attribute__((unused)) )
 {
 	LocFile *ret = NULL;
 	
@@ -315,19 +314,26 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath )
 		
 		LocFile *lf = NULL;
 
-		CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
-		lf = cg->cg_File;
-
-		while( lf != NULL )
+		pthread_mutex_lock( &(cm->cm_Mutex) );
+				
+		if( cm->cm_LocFileCache != NULL )
 		{
-			if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+			CacheFileGroup *cg = &(cm->cm_CacheFileGroup[ id ]);
+			lf = cg->cg_File;
+
+			while( lf != NULL )
 			{
-				lf->lf_FileUsed++;
-				return lf;
-			}
+				if( memcmp( hash, lf->hash, sizeof(hash) ) == 0 )
+				{
+					lf->lf_FileUsed++;
+					return lf;
+				}
 			
-			lf = (LocFile *)lf->node.mln_Succ;
+				lf = (LocFile *)lf->node.mln_Succ;
+			}
 		}
+		
+		pthread_mutex_unlock( &(cm->cm_Mutex) );
 		
 		/*
 		LocFile *lf = cm->cm_LocFileCache;

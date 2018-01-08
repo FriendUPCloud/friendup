@@ -9,6 +9,7 @@ i18n_pollable                     : Visible sur le réseau
 i18n_short_desc                   : Description brève
 i18n_publisher                    : Editeur
 i18n_visible                      : Montrer
+i18n_select_user                  : Select user
 
 i18n_storage_disks                : Disques de stockage
 i18n_software_disks               : Disques logiciels

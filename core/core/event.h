@@ -26,6 +26,8 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 01/2016
+ * 
+ * \ingroup EventManager
  */
 
 #ifndef __CORE_EVENT_H__
@@ -62,15 +64,15 @@ typedef enum EventPriority
 
 typedef struct Event
 {
-	struct MinNode	node;		// pointer to next event
+	struct MinNode			node;		// pointer to next event
 
-	struct _Object *e_Src;                // pointer to source object
-    FULONG e_AttributeCheck;       // check argument set
-    FLONG e_Value;                // if value is set do something
+	struct _Object			*e_Src;                // pointer to source object
+    FULONG					e_AttributeCheck;       // check argument set
+    FLONG					e_Value;                // if value is set do something
 
-    struct _Object *e_Dst;
-    FULONG e_DstMethodID;
-    void *e_Data;
+    struct _Object			*e_Dst;
+    FULONG					e_DstMethodID;
+    void					*e_Data;
 }Event;
 
 //
@@ -79,7 +81,7 @@ typedef struct Event
 
 typedef struct CoreEvent
 {
-	struct MinNode	node;
+	struct MinNode			node;
 	time_t					ce_Time;
 	time_t					ce_TimeDelta;
 	int 					ce_RepeatTime;		// -1 repeat everytime, 0 - last repeat, n - number of repeats
@@ -95,3 +97,5 @@ typedef struct CoreEvent
 
 
 #endif
+
+/**@}*/

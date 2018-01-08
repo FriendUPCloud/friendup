@@ -17,6 +17,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
+
 Widget = function( flags )
 {
 	this.init( flags );
@@ -46,15 +48,28 @@ Widget.prototype.init = function( flags, target )
 		return cancelBubble( e );
 	}
 	
-	target.appendChild( this.dom );
+	this.target.appendChild( this.dom );
 }
 
 Widget.prototype.calcPosition = function()
 {
 	if( this.tw <= 0 && this.th <= 0 ) return;
 	
-	var realTop = this.target.screenObject._screen.offsetTop + this.target.screenObject._screen.parentNode.offsetTop;
-	var target = this.target;	
+	var screen = this.target.screenObject;
+	if( !screen ) screen = Workspace.screen;
+	var sccont = screen.contentDiv;
+	if( !sccont ) sscont = screen;
+	
+	var realTop = sccont.offsetTop;
+	var target = this.target;
+	
+	// TODO: Support left right bottom
+	// Extra margins for screen content area
+	var inf = GetThemeInfo( 'ScreenContentMargins' );
+	if( inf && inf.top )
+	{
+		realTop += parseInt( inf.top );
+	}
 	
 	this.dom.style.width = this.tw + 'px';
 	this.dom.style.height = this.th + 'px';
@@ -74,7 +89,7 @@ Widget.prototype.calcPosition = function()
 		}
 		else if( this.tx == 'center' )
 		{
-			this.dom.style.left = Math.floor( target.offsetWidth * 0.5 - ( this.tw * 0.5 ) ) + 'px';
+			this.dom.style.left = ( target.offsetWidth >> 1 ) - ( this.tw >> 1 ) + 'px';
 		}
 	}
 	else
@@ -84,9 +99,10 @@ Widget.prototype.calcPosition = function()
 			this.tx = this.target.offsetWidth - this.tw;
 		else if( this.tx < 0 ) this.tx = 0;
 		//
-		var px = this.tx - this.target.offsetLeft;	
+		var px = this.tx - this.target.offsetLeft;
 		this.dom.style.left = px + 'px';
 	}
+	
 	// Calculate y axis
 	if( isNaN( this.ty ) )
 	{
@@ -102,18 +118,17 @@ Widget.prototype.calcPosition = function()
 		}
 		else if( this.ty == 'middle' || this.ty == 'center' )
 		{
-			this.dom.style.top = Math.floor( target.offsetHeight * 0.5 - ( this.th * 0.5 ) ) + 'px';
+			this.dom.style.top = ( target.offsetHeight >> 1 ) - ( this.th >> 1 ) + 'px';
 		}
 	}
 	else
 	{	
-		// Absolute position 50 margin
-		if( this.ty + this.th > ( this.target.offsetHeight - 50 ) )
-			this.ty = ( this.target.offsetHeight - 50 ) - this.th;
-		else if( this.ty < 0 ) this.ty = 0;
-		//
-		var py = this.ty - this.target.offsetTop + realTop;
-		this.dom.style.top = py + 'px';
+		// Absolute position
+		if( this.ty + this.th > target.offsetHeight )
+			this.ty = target.offsetHeight - this.th;
+		else if( this.ty < realTop ) this.ty = realTop;
+		
+		this.dom.style.top = this.ty + 'px';
 	}
 }
 
@@ -229,6 +244,17 @@ Widget.prototype.setFlag = function( flag, val )
 			else this.dom.style.zIndex = '';
 			break;
 		case 'below':
+			// Below widgets are below windows - in screen content
+			if( this.dom.parentNode )
+			{
+				this.dom.parentNode.removeChild( this.dom );
+				Workspace.screen.contentDiv.appendChild( this.dom );
+			}
+			else
+			{
+				this.target = Workspace.screen.contentDiv;
+			}
+			this.dom.style.position = 'fixed';
 			this.dom.style.zIndex = '';
 			break;
 	}
@@ -321,7 +347,7 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 	var c = this.dom;
 	if( c ) c.innerHTML = '';
 	
-	var ifr = document.createElement( 'iframe' );
+	var ifr = document.createElement( _viewType );
 	ifr.applicationId = self.applicationId;
 	ifr.authId = self.authId;
 	ifr.applicationName = self.applicationName;
@@ -401,13 +427,6 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 		msg.data = msg.data.split( /system\:/i ).join( '/webclient/' );
 		if( !msg.origin ) msg.origin = document.location.href;
 		ifr.contentWindow.postMessage( JSON.stringify( msg ), domain );
-	
-		// TODO: Reenable this functionality if we need it (but now it's a security issue with CORS)
-		/*
-		// Remove window popup menus when clicking on the app
-		if( ifr.contentWindow.addEventListener )
-			ifr.contentWindow.addEventListener( 'mousedown', function(){ removeWindowPopupMenus(); }, false );
-		else ifr.contentWindow.attachEvent( 'onmousedown', function(){ removeWindowPopupMenus(); }, false );*/
 	}
 	c.appendChild( ifr );
 }
@@ -454,7 +473,8 @@ Widget.prototype.close = function()
 			}
 			this.originObject.widgets = out;
 		}
-		this.dom.parentNode.removeChild( this.dom );
+		if( this.dom.parentNode )
+			this.dom.parentNode.removeChild( this.dom );
 		return true;
 	}
 	return false;

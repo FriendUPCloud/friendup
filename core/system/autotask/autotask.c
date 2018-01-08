@@ -31,6 +31,7 @@
 #include "autotask.h"
 #include <system/systembase.h>
 #include <linux/prctl.h>
+#include <sys/prctl.h>
 
 /**
  * Create new Autotask

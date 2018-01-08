@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  *  Simplified C++ like string handling
  *
@@ -1118,8 +1117,8 @@ int FStringSetCurrentDir(FString* pFString)
 // Internal routine, used in FriendParser
 char* CheckExtension(const char* pString, const char* pExt)
 {
-	size_t position;
-	for (position = strlen(pString)-1; position >=0; position--)
+	int position = strlen(pString)-1;
+	for( ; position >=0; position--)
 	{
 		if (pString[position] == '.')
 		{

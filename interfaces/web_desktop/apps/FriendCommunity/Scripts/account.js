@@ -81,7 +81,8 @@ var system = window.system || {};
 		}
 	}
 	
-	ns.Account.prototype.tryLogin = function( resolve, reject ) {
+	ns.Account.prototype.tryLogin = function( resolve, reject )
+	{
 		
 		var self = this;
 		console.log( 'checking account data: ', self );
@@ -297,3 +298,4 @@ var system = window.system || {};
 	}
 	
 })( system );
+

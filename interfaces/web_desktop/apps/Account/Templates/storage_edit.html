@@ -1,0 +1,43 @@
+<input type="hidden" id="vid" value="{vid}"/>
+<input type="hidden" id="mode" value="{mode}"/>
+<input type="hidden" id="devname" value="{devname}"/>
+<input type="hidden" id="diskId" value=""/>
+
+<div class="ContentFull LayoutButtonbarBottom">
+	<div class="VContentTop">
+		<div class="ContentFull ScrollArea BackgroundNegative Negative BorderLeft Padding" id="Form">
+			<div id="FormHeading"></div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="Layout InputHeight">
+						<strong>
+							{i18n_device_name}:
+						</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<p class="Layout InputHeight">
+						<input type="text" id="Name" class="FullWidth" value="" placeholder="{i18n_placeholder_connection}"/>
+					</p>
+				</div>
+			</div>
+			<div id="GUI">
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom Padding BackgroundDefault BorderTop">
+		<button type="button" class="IconSmall fa-remove FloatRight" onclick="Application.sendMessage( { command: 'notify', method: 'closeview' } )"">
+			&nbsp;{i18n_cancel}
+		</button>
+		<button onclick="verifyForm()" type="button" class="IconSmall fa-check FloatLeft">
+			&nbsp;{i18n_update_disk}
+		</button>
+		<button onclick="deleteFilesystem()" type="button" class="IconSmall fa-trash FloatLeft Danger">
+			&nbsp;{i18n_delete_disk}
+		</button>
+	</div>
+</div>
+
+<script src="Progdir:Scripts/newstorage.js"></script>
+
+

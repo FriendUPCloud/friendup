@@ -41,6 +41,7 @@
 #include <db/sqllib.h>
 #include <stddef.h>
 #include "invar.h"
+#include "invar_manager_web.h"
 
 typedef struct INVARManager 
 {

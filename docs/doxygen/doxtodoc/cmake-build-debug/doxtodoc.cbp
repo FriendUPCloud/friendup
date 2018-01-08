@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="doxtodoc"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="doxtodoc">
+				<Option output="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/doxtodoc" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/include/c++/4.8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
+					<Add directory="/usr/include/c++/4.8/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 doxtodoc"/>
+					<CompileFile command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="doxtodoc/fast">
+				<Option output="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/doxtodoc" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/4.8/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+					<Add directory="/usr/include/c++/4.8"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/4.8"/>
+					<Add directory="/usr/include/c++/4.8/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 doxtodoc/fast"/>
+					<CompileFile command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j2 -f &quot;/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/francois/friendup/core/util/friendstring.c">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/core/util/friendstring.h">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/dirparser.c">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/dirparser.h">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/main.cpp">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/main.h">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/pugixml.cpp">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/pugixml.hpp">
+			<Option target="doxtodoc"/>
+		</Unit>
+		<Unit filename="/home/francois/friendup/docs/doxygen/doxtodoc/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

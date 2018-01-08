@@ -17,14 +17,15 @@
 				</div>
 			</div>
 			<div class="HRow">
-				<input type="file" class="FullWidth" name="file"/>
+				<input type="file" id="uploadFileField" class="FullWidth" name="file"/>
 			</div>
 		</form>
 	</div>
 	<div class="HRow MarginTop BorderTop Padding">
-		<button type="button" class="IconSmall fa-upload" onclick="Doors.uploadFile('fileUpload')">
+		<button type="button" class="FloatLeft IconSmall fa-upload" onclick="Doors.uploadFile('fileUpload')">
 			&nbsp;{i18n_upload_the_file}
 		</button>
+		<div class="FloatLeft MarginLeft" id="uploadFeedback"></div>
 	</div>
-	<iframe style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>
+	<iframe id="fileUploadFrame" style="visibility: hidden; top: -800px; position: absolute; width: 1px; height: 1px" name="uploadFrame"></iframe>
 </div>

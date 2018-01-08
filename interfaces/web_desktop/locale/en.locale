@@ -26,6 +26,8 @@ i18n_bookmarks_select                : Select
 i18n_bookmarks_remove                : Remove
 i18n_empty_view                      : Empty view
 i18n_no_bookmarks                    : You have no bookmarks.
+i18n_illegal_path                    : Illegal path
+i18n_illegal_fld_mountlist           : You can not make a new directory in the mountlist.
 i18n_desklets                        : Desklets
 i18n_software                        : Software
 i18n_sound                           : Sound
@@ -138,7 +140,7 @@ i18n_directory_Software             	: Software
 i18n_directory_Modules                  : Modules
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Settings
-i18n_directory_Tools                    : Tools
+i18n_directory_Repositories             : Repositories
 i18n_directory_Devices                  : Devices
 i18n_directory_Libraries                : Libraries
 
@@ -158,6 +160,7 @@ menu_system                             : System
 menu_new_shell                          : New shell
 menu_about_friendup                     : About FriendUP
 menu_refresh_desktop                    : Refresh desktop
+menu_add_storage                        : Add storage
 menu_run_command                        : Run command
 menu_show_launcher                      : Show Launcher
 menu_hide_launcher                      : Hide Launcher
@@ -179,14 +182,21 @@ menu_unzip                              : Decompress file(s)
 menu_looknfeel                          : Look and feel
 menu_backdrop                           : Show overview
 
+menu_close_idle_connections             : Close idle connections
+
 menu_edit_wallpaper                     : Edit wallpaper
 i18n_edit_dock                          : Edit dock
+i18n_remove_from_dock                   : Remove from dock
 
 i18n_choose_file_to_upload              : Choose file to upload
 i18n_upload_target                      : Upload target
 i18n_browse                             : Browse
 i18n_upload_the_file                    : Start upload
 i18n_file_upload                        : File upload
+i18n_upload_completed                   : Upload completed.
+i18n_upload_failed                      : Upload failed.
+i18n_upload_completed_description       : The upload process completed successfully.
+i18n_upload_failed_description          : Could not upload your file.
 
 i18n_unzip_completed                    : Uncompressing completed.
 i18n_unzip_comdesc                      : Uncompressing a file(s) completed successfully
@@ -226,6 +236,7 @@ menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
 menu_fullscreen                         : Toggle fullscreen
 
+menu_buildwebapp                        : Build web application
 menu_icons                              : Actions
 menu_new_directory                      : Make directory
 menu_new_weblink                        : Create web link
@@ -409,6 +420,10 @@ i18n_dir_btn_search                     : Search
 
 #Sessions ----------------------------------------------------------------------
 
+i18n_session_killed                     : Your session was killed
+i18n_session_killed_desc                : Trying to fetch a new session
+i18n_session_expired                    : Your session expired
+i18n_session_expired_desc               : Trying to fetch a new session
 i18n_no_other_sessions_available        : No other sessions available
 i18n_no_sessions_available              : No sessions available
 i18n_active_session_list                : Other active sessions
@@ -460,6 +475,7 @@ i18n_day_sun                            : sun
 
 
 i18n_server_disconnected                : Disconnected
+i18n_ws_disconnected                    : Low connectivity
 i18n_copy_to_system_clipboard           : Do you want to copy your Friend clipboard to your system clipboard?
 i18n_copy_to_system_clipboard_headline  : Transfer clipboard to system
 
@@ -528,4 +544,51 @@ i18n_filetype_mp4                       : MP4 video
 i18n_filetype_svg                       : Scalable vector graphics
 i18n_filetype_ogv                       : Ogg Vorbis video
 i18n_filetype_run                       : Friend script
+i18n_createWebApp					    : Create
+i18n_buildWebApp						: Build a web Application
+menu_buildWebApp						: Build a web Application
+menu_openfolder							: Open folder
+i18n_waUrl								: Web site URL (must start with 'http' or 'https')
+i18n_waName								: Name of the application
+i18n_waAuthor							: Your name
+i18n_waEmail							: Your email address
+i18n_waDescription						: Information about this application
+i18n_waWidth							: Width
+i18n_waHeight							: Height
+i18n_waCategory							: Application's category
+i18n_waWindow							: Window
+i18n_typeWebApp							: Type
+i18n_waWrongUrl							: Enter the URL in the form of 'http://www.website.com' or 'https://www.website.com'
+i18n_waWrongName						: Enter a name for the new applicationName
+i18n_waWrongWidth						: Window width must be a positive number
+i18n_waWrongHeight						: Window height must be a positive number
+i18n_waGames							: Games
+i18n_waOffice							: Office
+i18n_waGraphics							: Graphics
+i18n_waProgramming						: Programming
+i18n_waInternet							: Internet
+i18n_waCreated							: Web application successfully created.
+i18n_waAbout0							: About
+i18n_waAbout1							: This application has been created using the 'Build web application' option from the Tools menu by
+i18n_waFile								: File
+i18n_waFileSelectorTitle				: Please choose where to save the new application...
+i18n_waIcon								: Application icon
+i18n_waPreview							: Application preview image
+i18n_waChange							: Change
+i18n_waChangeWebAppPreviewTitle			: Please choose a png image to use a preview
+i18n_waChangeWebAppIconTitle			: Please choose a png image to use as icon
+i18n_waPleaseFill						: Application definition
+
+menu_move_view_to_workspace_1           : Move to workspace 1
+menu_move_view_to_workspace_2           : Move to workspace 2
+menu_move_view_to_workspace_3           : Move to workspace 3
+menu_move_view_to_workspace_4           : Move to workspace 4
+menu_move_view_to_workspace_5           : Move to workspace 5
+menu_move_view_to_workspace_6           : Move to workspace 6
+menu_move_view_to_workspace_7           : Move to workspace 7
+menu_move_view_to_workspace_8           : Move to workspace 8
+menu_move_view_to_workspace_9           : Move to workspace 9
+menu_move_view_to_workspace_10          : Move to workspace 10
+
+
 

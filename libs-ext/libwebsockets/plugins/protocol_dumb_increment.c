@@ -88,7 +88,7 @@ callback_dumb_increment(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		if (!vhd)
 			break;
-	//	lwsl_notice("di: LWS_CALLBACK_PROTOCOL_DESTROY: v=%p, ctx=%p\n", vhd, vhd->context);
+		lwsl_notice("di: LWS_CALLBACK_PROTOCOL_DESTROY: v=%p, ctx=%p\n", vhd, vhd->context);
 		uv_timer_stop(&vhd->timeout_watcher);
 		uv_close((uv_handle_t *)&vhd->timeout_watcher, NULL);
 		break;
@@ -132,6 +132,7 @@ callback_dumb_increment(struct lws *wsi, enum lws_callback_reasons reason,
 		callback_dumb_increment, \
 		sizeof(struct per_session_data__dumb_increment), \
 		10, /* rx buf size must be >= permessage-deflate rx size */ \
+		0, NULL, 0 \
 	}
 
 #if !defined (LWS_PLUGIN_STATIC)

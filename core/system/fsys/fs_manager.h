@@ -24,7 +24,7 @@
  *  Filesystem manager    definitions
  *
  *  @author PS (Pawel Stefanski)
- *  @date created 28 Nov 2016
+ *  @date created 28 11 2016
  */
 
 #ifndef __SYSTEM_FSYS_FSMANAGER_H__
@@ -32,7 +32,6 @@
 
 #include <core/types.h>
 #include "file.h"
-//#include "file_lock.h"
 #include "file_permissions.h"
 #include <system/user/user.h>
 #include <system/user/user_session.h>
@@ -73,9 +72,9 @@ BufString *FSManagerGetAccess( FSManager *fm, const char *path, FULONG devid, Us
 
 int FSManagerProtect3( FSManager *fm, User *usr, char *path, FULONG devid, char *userc, char *groupc, char *othersc );
 
-// FSMProtect
 //
 // accgroups - string in format  userA:ARWED,userB:ARWED,userC:ARWED;groupA:ARWED,groupB:ARWED;other:ARWED
+//
 
 int FSManagerProtect( FSManager *fm, const char *path, FULONG devid, char *accgroups );
 

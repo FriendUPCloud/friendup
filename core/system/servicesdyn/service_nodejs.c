@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ *  nodejs Service
+ *
+ * file contain all nodejs service functitons
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <core/types.h>
 #include <system/services/service.h>

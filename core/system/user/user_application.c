@@ -75,7 +75,6 @@ UserApplication *UserAppNew( FULONG id, FULONG appid, char *perm, char *authid )
 	{
 		FERROR("Cannot allocate memory for UserApplication\n");
 	}
-	
 	return ua;
 }
 

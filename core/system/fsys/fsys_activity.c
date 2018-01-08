@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  Filesystem activity body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 28/08/2017
+ */
 
 #include "fsys_activity.h"
 #include <system/systembase.h>
@@ -127,7 +134,7 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act )
 	{
 		char temptext[ 256 ];
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadedBytesLeft, act->fsa_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", act->fsa_StoredBytesLeft, act->fsa_ReadedBytesLeft, act->fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 
 		l->LibrarySQLDrop( l, sqllib );

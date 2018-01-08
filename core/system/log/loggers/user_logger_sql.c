@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * UserLoggerSQL logger
  *
@@ -48,7 +47,7 @@ void init( struct UserLogger *s )
 	SpecialData *sd = FCalloc( 1, sizeof( SpecialData ) );
 	if( sd != NULL )
 	{
-		sd->sd_LibSQL = (struct MYSQLLibrary *)LibraryOpen( sb,  "mysql.library", 0 );
+		sd->sd_LibSQL = (struct SQLLibrary *)LibraryOpen( sb,  "mysql.library", 0 );
 		if( sd->sd_LibSQL == NULL )
 		{
 			

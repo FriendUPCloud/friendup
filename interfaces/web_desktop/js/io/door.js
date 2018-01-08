@@ -60,7 +60,7 @@ Door.prototype.get = function( path )
 	if( path.substr( 0, 5 ) == 'http:' || path.substr( 0, 6 ) == 'https:' || path.substr( 0, 1 ) == '/' )
 		return false;
 	if( path.indexOf( ':' ) < 0 ) return false;
-	
+
 	// An object? Fuck!
 	if( path && path.Path ) path = path.Path;
 	var vol = path.split( ':' )[0] + ':';
@@ -93,7 +93,7 @@ Door.prototype.get = function( path )
 Door.prototype.getIcons = function( fileInfo, callback, flags )
 {
 	var finfo = false;
-		
+
 	if( fileInfo )
 	{
 		finfo = fileInfo;
@@ -118,7 +118,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	{
 		if( this.path.indexOf( ':' ) > 0 )
 			this.path = this.path.split( ':' )[1];
-			
+
 		this.fileInfo = {
 			ID:       false,
 			MetaType: 'Meta',
@@ -138,7 +138,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	{
 		if( !t.fileInfo.Path && t.path )
 			t.fileInfo.Path = t.deviceName + ':' + t.path;
-		
+
 		var fname = t.fileInfo.Path.split( ':' )[1];
 		if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
 		var deviceName = t.fileInfo.Path.split( ':' )[0] + ':';
@@ -148,21 +148,21 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 		{
 			// Use standard Friend Core doors
 			var j = new cAjax();
-			
+
 			var updateurl = '/system.library/file/dir?r=1';
-			
+
 			if( Workspace.conf && Workspace.conf.authId )
 				updateurl += '&authid=' + encodeURIComponent( Workspace.conf.authId ); //j.addVar( 'authid', Workspace.conf.authId );
 			else
 				updateurl += '&sessionid=' + encodeURIComponent( Workspace.sessionId ); //j.addVar( 'sessionid', Workspace.sessionId );
-			
+
 			updateurl += '&path=' + encodeURIComponent( t.fileInfo.Path );    			//j.addVar( 'path', t.fileInfo.Path );
-			
+
 			if( flags && flags.details )
 			{
 				updateurl += '&details=true';
 			}
-			
+
 			//changed from post to get to get more speed.
 			j.open( 'get', updateurl, true, true );
 			j.onload = function( e, d )
@@ -185,7 +185,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						return callback( false, t.fileInfo.Path, false );
 					}
-				
+
 					var list = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
 					if( typeof( list ) == 'object' && list.length )
 					{
@@ -210,7 +210,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 					callback( false, t.fileInfo.Path, false );
 				}
 			}
-			
+
 			j.send();
 		}
 		else if( callback )
@@ -222,7 +222,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				for( var a in dirs ) o.push( dirs[a] );
 				dirs = o;
 			}
-			var pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length ); 
+			var pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length );
 			callback( dirs, t.fileInfo.Path, pth );
 		}
 	} );
@@ -232,7 +232,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 Door.prototype.checkDormantDoors = function( path, callback )
 {
 	if( !path ) path = this.fileInfo.Path;
-	if( !path ) 
+	if( !path )
 	{
 		return callback( false );
 	}
@@ -297,15 +297,17 @@ Door.prototype.write = function( filename, data )
 {
 	var dr = this;
 	var j = new cAjax();
-	var old = Workspace.websocketsOffline;
-	Workspace.websocketsOffline = true;
+	
+	//var old = Workspace.websocketsOffline;
+	//Workspace.websocketsOffline = true;
 	j.open( 'post', '/system.library/file/write', true, true );
-	Workspace.websocketsOffline = false;
+	//Workspace.websocketsOffline = false;
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
 	j.addVar( 'path', filename );
-	j.addVar( 'data', data );
+	// Url encode data so we can store special characters..
+	j.addVar( 'data', encodeURIComponent( data ) );
 	if( this.vars && this.vars.encoding )
 		j.addVar( this.vars.encoding );
 	else j.addVar( 'encoding', 'url' );
@@ -326,7 +328,7 @@ Door.prototype.write = function( filename, data )
 			Workspace.refreshWindowByPath( filename );
 			dat = ( JSON.parse( d ) ).FileDataStored;
 		}
-		
+
 		if( dr.onWrite )
 			dr.onWrite( dat );
 	}
@@ -334,7 +336,7 @@ Door.prototype.write = function( filename, data )
 }
 
 // Reads a file
-Door.prototype.read = function( filename )
+Door.prototype.read = function( filename, mode )
 {
 	var dr = this;
 	var j = new cAjax();
@@ -343,7 +345,13 @@ Door.prototype.read = function( filename )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
 	j.addVar( 'path', filename );
-	j.addVar( 'mode', 'r' );
+
+	// Check read mode
+	if( mode ) mode = mode.toLowerCase();
+	if( mode == 'r' || mode == 'rb' )
+		j.addVar( 'mode', mode );
+	else j.addVar( 'mode', 'r' );
+
 	if( this.vars )
 	{
 		for( var a in this.vars )
@@ -366,7 +374,7 @@ Door.prototype.read = function( filename )
 
 // Execute a dos action now..
 Door.prototype.dosAction = function( ofunc, args, callback )
-{	
+{
 	// Alterations depending on command format
 	var func = ofunc;
 	switch( ofunc )
@@ -383,10 +391,10 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 			func = 'file/' + ofunc;
 			break;
 	}
-	
+
 	// We need a path
 	if( !args.path ) args.path = this.deviceName + ':' + this.path;
-	
+
 	// Do the request
 	var dr = this;
 	var j = new cAjax();
@@ -494,4 +502,3 @@ Door.prototype.Unmount = function( callback )
 	}
 	f.execute( 'device', args );
 }
-

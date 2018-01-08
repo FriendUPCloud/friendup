@@ -13,17 +13,20 @@
 			<input id="pWorkgroupName" type="text" class="FullWidth" placeholder="{i18n_named_workgroup}" value="{name}"/>
 		</p>
 		
-		<hr/>
-		
-		<!--<div id="SetupContainer">
+		<div id="SetupGroupContainer">
 			
 			<p class="Layout">
 				<strong>{i18n_template}:</strong>
 			</p>
 			
-			<select id="pWorkgroupSetup" class="FullWidth">{setup}</select>
+			<select id="pWorkgroupSetup">{setup}</select>
+			<!--<button type="button" class="IconSmall fa-save" onclick="ApplyGroupSetup({id})">
+				{i18n_apply_template}
+			</button>-->
 			
-		</div>-->
+		</div>
+		
+		<hr/>
 		
 		<p class="Layout">
 			<strong>{i18n_members}:</strong>
@@ -42,7 +45,7 @@
 		<button type="button" class="Button IconSmall fa-remove FloatRight" onclick="cancelWorkgroup()">
 			{i18n_cancel}
 		</button>
-		<button type="button" class="Button IconSmall fa-save" onclick="saveWorkgroup()">
+		<button type="button" class="Button IconSmall fa-save" onclick="saveWorkgroup(false,true)">
 			{i18n_save}
 		</button>
 		<button type="button" class="Button IconSmall fa-trash" onclick="deleteWorkgroup()" id="deleteButton">

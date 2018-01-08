@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  *  Simple linked list with key/value
  *

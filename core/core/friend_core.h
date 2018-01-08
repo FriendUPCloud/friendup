@@ -26,6 +26,9 @@
  *  @author PS (Pawel Stefanski)
  *  @author HT (Hogne Tildstad)
  *  @date pushed 29/01/2016
+ * 
+ * \ingroup FriendCore
+ * @{
  */
 
 #ifndef _FRIENDCORE_H_
@@ -48,6 +51,7 @@
 #include <sys/epoll.h>
 #endif
 #include <poll.h>
+
 
 /**
  * FriendCore instance data
@@ -92,7 +96,7 @@ typedef struct FriendCoreInstance
  * Create instance of FC
  */
 
-FriendCoreInstance *FriendCoreNew( void *sb, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname );
+FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname );
 
 /**
  * Closes all sockets, signals shutdown to all subsystems
@@ -120,12 +124,15 @@ Library* FriendCoreGetLibrary( FriendCoreInstance* instance, char* libname, FULO
  * This waits for stuff to happen on sockets
  */
 
-void FriendCoreEpoll( FriendCoreInstance* instance );
+//void FriendCoreEpoll( FriendCoreInstance* instance );
 
 /**
  * The event loop pattern.
  * This waits for stuff to happen on sockets
  */
-void FriendCoreSelect( FriendCoreInstance* fc );
+//void FriendCoreSelect( FriendCoreInstance* fc );
 
 #endif
+
+/**@}*/
+// End of FriendCore Doxygen group

@@ -17,22 +17,55 @@
 	top: 12px;
 }
 
-@media (max-width: 360px)
+#Settings
 {
-	#Applications > .Box .HRow > div + div
+	display: none;
+}
+
+.DockEdit #Options
+{
+	display: none;
+}
+
+.DockEdit #SettingsContainer, .DockEdit #Settings
+{
+	height: 100%;
+	display: block;
+}
+
+@media (max-width: 480px)
+{
+	#Options
 	{
 		display: none;
 	}
-	#Applications > .Box .HRow > div
+	#Applications
 	{
-		float: none;
 		width: 100%;
+		clear: both;
 	}
-	#Applications img
+	.DockEdit #SettingsContainer, .DockEdit #Settings
 	{
-		float: none !important;
 		display: block;
-		margin-left: auto;
-		margin-right: auto;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
 	}
+}
+
+.SelectedApp #ApplicationSelection
+{
+	display: none;
+}
+
+.SelectedApp #Application
+{
+	display: block;
+}
+
+#Application
+{
+	display: none;
 }

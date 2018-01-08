@@ -63,11 +63,6 @@ typedef struct UserGroup
 	char 						*ug_Type;
 }UserGroup;
 
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored " -Wconversion"
-
-//GCC_DIAG_OFF(int-to-pointer-cast);
-
 static FULONG GroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
 	SQLT_IDINT, (FULONG)"ID", offsetof( struct UserGroup, ug_ID ), 
 	SQLT_INT, (FULONG)"UserID", offsetof( struct UserGroup, ug_UserID ),
@@ -75,9 +70,6 @@ static FULONG GroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZ
 	SQLT_STR, (FULONG)"Type", offsetof( struct UserGroup, ug_Type ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct UserGroup, node ),
 	SQLT_END };
-	
-//GCC_DIAG_ON(int-to-pointer-cast);
-//#pragma GCC diagnostic pop
 
 //
 //

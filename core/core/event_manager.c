@@ -29,7 +29,13 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date first pushed on 10/02/2015
+ * 
+ * \defgroup EventManager Event manager
+ * \ingroup FriendCore
+ * @{
  */
+
+
 #include <core/types.h>
 #include <core/event_manager.h>
 #include <stdio.h>
@@ -130,7 +136,7 @@ void EventManagerDelete( EventManager *em )
  */
 FUQUAD EventGetNewID( EventManager *em )
 {
-	DEBUG("[EventManager] new event created %llu\n", em->lastID+1 );
+	DEBUG("[EventManager] new event created %lu\n", em->lastID+1 );
 	return em->lastID++;
 }
 
@@ -276,7 +282,7 @@ int EventAdd( EventManager *em, void *function, void *data, time_t nextCall, tim
 		nce->ce_TimeDelta = deltaTime;
 		nce->ce_Data = data;
 
-		DEBUG("[EventManager] Add new event, ID: %llu\n", nce->ce_ID );
+		DEBUG("[EventManager] Add new event, ID: %lu\n", nce->ce_ID );
 
 		nce->node.mln_Succ = (MinNode *) em->em_EventList;
 		em->em_EventList = nce;
@@ -325,7 +331,7 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 		//ThreadStart( ev->ce_Thread );
 		//ev->ce_Data = em->em_SB;
 		//ev->ce_Thread = ThreadNew( EventLaunch, ev, TRUE, NULL );
-		pthread_create( &(ev->ce_Thread), NULL, EventLaunch, ev );
+		pthread_create( &(ev->ce_Thread), NULL, (void *)( void * )EventLaunch, ev );
 		//ThreadStart( ev->ce_Thread );
 		DEBUG("[EventManager] Thread started\n");
 	}
@@ -368,3 +374,4 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti )
 	return NULL;
 }
 
+/**@}*/

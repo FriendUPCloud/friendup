@@ -94,7 +94,7 @@ INRAMFile *INRAMFileNew( int type, char *path, char *name );
 // INRAMFile Delete
 //
 
-FQUAD INRAMFileDelete( INRAMFile *nf );
+FLONG INRAMFileDelete( INRAMFile *nf );
 
 //
 // Add Children
@@ -136,7 +136,7 @@ INRAMFile *INRAMFileRemoveByPath( INRAMFile *root, char *path );
 // Delete all files
 //
 
-FQUAD INRAMFileDeleteAll( INRAMFile *root );
+FLONG INRAMFileDeleteAll( INRAMFile *root );
 
 //
 // find pointer to last path

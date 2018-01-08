@@ -70,17 +70,20 @@ if( isset( $args->conf ) )
 	
 	// Base url of config
 	$burl = '';
-	if( strstr( $args->conf, '/' ) )
+	if( is_string( $args->conf ) )
 	{
-		$burl = explode( '/', $args->conf );
-		array_pop( $burl );
-		$burl = implode( '/', $burl );
-		$burl .= '/';
-	}
-	else
-	{
-		list( $burl, ) = explode( ':', $args->conf );
-		$burl .= ':';
+		if( strstr( $args->conf, '/' ) )
+		{
+			$burl = explode( '/', $args->conf );
+			array_pop( $burl );
+			$burl = implode( '/', $burl );
+			$burl .= '/';
+		}
+		else
+		{
+			list( $burl, ) = explode( ':', $args->conf );
+			$burl .= ':';
+		}
 	}
 	
 

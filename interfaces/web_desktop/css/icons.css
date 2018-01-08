@@ -117,6 +117,7 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	-moz-hyphens: auto;
 	-webkit-hyphens: auto;
 	hyphens: auto;
+	z-index: 1;
 }
 
 .File .Title span
@@ -436,7 +437,7 @@ html .Launcher .File div *
 	background-size: contain;
 }
 
-.File .Icon .Application.System_Tools
+.File .Icon .Application.System_Repositories
 {
 	background-image: url(/webclient/gfx/icons/64x64/categories/applications-utilities.png);
 	background-size: contain;

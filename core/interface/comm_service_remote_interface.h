@@ -44,7 +44,7 @@ typedef struct CommServiceRemoteInterface
 // init function
 //
 
-inline void CommServiceRemoteInterfaceInit( CommServiceRemoteInterface *si )
+static inline void CommServiceRemoteInterfaceInit( CommServiceRemoteInterface *si )
 {
 	si->CommServiceRemoteNew = CommServiceRemoteNew;
 	si->CommServiceRemoteDelete = CommServiceRemoteDelete;

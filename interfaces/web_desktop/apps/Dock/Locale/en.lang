@@ -40,4 +40,11 @@ i18n_large                            : Large
 i18n_medium                           : Medium
 i18n_small                            : Small
 i18n_dock_editor                      : Dock editor
+i18n_close                            : Close dock editor
+i18n_select_application               : Select application
+i18n_display_name                     : Display name
 
+i18n_preferred_workspace              : Preferred workspace
+
+i18n_item_saved : Item saved
+i18n_item_saved_text : Your changes to the Dock item have been saved.

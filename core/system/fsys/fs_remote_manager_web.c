@@ -49,10 +49,6 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
 	
-	char *path = NULL;
-	char *originalPath = NULL;
-	char *origDecodedPath = NULL;
-	char *targetPath = NULL;
 	INFO("[FSMRemoteWebRequest] pointer %p  url %p  request %p session %p\n", m, urlpath, request, loggedSession );
 	
 	if( l->sl_ActiveAuthModule == NULL )
@@ -60,7 +56,9 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
-		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"user.library is not opened!\"}" );
+		char buffer[ 256 ];
+		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+		HttpAddTextContent( response, buffer );
 		
 		goto error;
 	}
@@ -73,7 +71,6 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
 		DEBUG( "[FSMRemoteWebRequest] URL path is NULL!\n" );
-		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"second part of url is null!\"}" );
 		
 		goto error;
 	}
@@ -83,12 +80,25 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 								   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 		
-		HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"user not logged in\"}" );
+		char buffer[ 256 ];
+		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+		HttpAddTextContent( response, buffer );
 		
 		*result = 200;
 		goto error;
 	}
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/ufile/open</H2>Open file
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param path - (required) path with device name to file
+	* @param mode - (required) mode in format "rb" - read binary, "wb" - write binary, "rs" - read stream
+	* @return {fileptr:<number>} when success, otherwise error code
+	*/
+	/// @endcond
 	if( strcmp( urlpath[ 1 ], "open" ) == 0 )
 	{
 		char *path = NULL;
@@ -108,8 +118,11 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 			
-			//DEBUG("No session id or path %p %p\n", sessionid, path );
-			HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"path or sessionid is empty\"}" );
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "path, sessionid" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
 		}
 		else		// sessionid or path = NULL
 		{
@@ -175,7 +188,9 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 					// checking remote write access for Sentinel user
 					if( l->sl_Sentinel != NULL &&  loggedSession->us_User == l->sl_Sentinel->s_User && mode[0] == 'w' )
 					{
-						HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"You are using sentinel user. No write access allowed\"}" );
+						char buffer[ 256 ];
+						snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SENTINEL_USER_REQUIRED] , DICT_SENTINEL_USER_REQUIRED );
+						HttpAddTextContent( response, buffer );
 					}
 					else
 					{
@@ -256,7 +271,11 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 						}
 						else
 						{
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot open file\"}" );
+							char buffer[ 256 ];
+							char buffer1[ 256 ];
+							snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_CANNOT_OPEN_FILE], path );
+							snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_CANNOT_OPEN_FILE );
+							HttpAddTextContent( response, buffer );
 						}
 					
 					DEBUG("[FSMRemoteWebRequest] RAWpen command on FSYS: %s called\n", actFS->GetPrefix() );
@@ -264,17 +283,37 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				}
 				else
 				{
-					HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"mode parameter is missing\"}" );
+					char buffer[ 256 ];
+					char buffer1[ 256 ];
+					snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "mode" );
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+					HttpAddTextContent( response, buffer );
 				}
 			}
 			else
 			{
 				response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
 										   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-				HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"device not found\"}" );
+				
+				char buffer[ 256 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], devname );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
 			}
 		}
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/ufile/close</H2>Close file
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param fptr - (required) pointer to opened file
+	* @return {result:success} when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "close" ) == 0 )
 	{
 		{
@@ -293,6 +332,9 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				pointer = (FULONG)strtoul( (char *)el->data, &eptr, 0 );
 			}
 			
+			response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
+				HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+			
 			DEBUG("[FSMRemoteWebRequest] Close\n");
 			if( el != NULL )
 			{
@@ -305,20 +347,33 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 				}
 				
 				USMRemFile( l->sl_USM,  loggedSession, pointer );
+				
+				char tmp[ 256 ];
+				sprintf( tmp, "ok<!--separate-->{\"result\":\"success\"}" );
+				HttpAddTextContent( response, tmp );
 			}
 			else
 			{
-				response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
-										   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
-				HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"pointer parameter is missing\"}" );
+				char buffer[ 256 ];
+				char buffer1[ 256 ];
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "pointer" );
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+				HttpAddTextContent( response, buffer );
 			}
 		}	// sessionid or path = NULL
 	}		// close
 	
-	//
-	// read
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/ufile/read</H2>Read file
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param fptr - (required) pointer to opened file
+	* @param size - (required) number of maximum bytes which you want to receive
+	* @return received bytes when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "read" ) == 0 )
 	{
 		FULONG pointer = 0;
@@ -422,7 +477,6 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 			{
 				HttpAddTextContent( response, sizec );
 			}
-			//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"Pointer parameter is missing\"}" );
 		}
 		/*
 		 * if( error != 0 )
@@ -437,10 +491,18 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 	}*/
 	}
 	
-	//
-	// write
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/ufile/write</H2>Write file
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param fptr - (required) pointer to opened file
+	* @param size - (required) number of bytes which you want to send
+	* @param data - (required) data which you want to send
+	* @return {filestored:\<stored bytes\>} when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "write" ) == 0 )
 	{
 		FULONG pointer = 0;
@@ -524,10 +586,66 @@ Http *FSMRemoteWebRequest( void *m, char **urlpath, Http *request, UserSession *
 		
 		if( error != 0 )
 		{
-			HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"pointer parameter is missing\"}" );
+			char buffer[ 256 ];
+			char buffer1[ 256 ];
+			snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "pointer" );
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, buffer );
 		}
 	}
 	
+	//
+	// release
+	//
+	
+	else if( strcmp( urlpath[ 1 ], "release" ) == 0 )
+	{
+		char *username = NULL;
+		
+		HashmapElement *el  = HashmapGet( request->parsedPostContent, "username" );
+		if( el == NULL ) el = HashmapGet( request->query, "username" );
+		if( el != NULL )
+		{
+			username = (char *)el->data;
+		}
+	}
+	
+	//
+	// unmount
+	//
+	
+	else if( strcmp( urlpath[ 1 ], "unmount" ) == 0 )
+	{
+		
+	}
+	
+	//
+	// function not found
+	//
+	
+	else
+	{
+		Log( FLOG_ERROR, "[FSRemoteManagerWeb]: Function not found '%s'\n", urlpath[ 0 ] );
+		
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
+		};
+		
+		if( response != NULL )
+		{
+			HttpFree( response );
+			FERROR("RESPONSE unknown function\n");
+		}
+		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+		
+		char buffer[ 256 ];
+		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, buffer );
+		*result = 404;
+	
+		return response;
+	}
 	error:
 	*result = 200;
 	

@@ -19,12 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-//
-// 
-// System/Command
-// 
-//
+/** @file
+ * 
+ * System/Command Body
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -53,7 +54,11 @@ FILE * CommandRun( char *command, char *type, int *pid )
 {
 	int child_pid;
 	int fd[2];
-	pipe(fd);
+	if (pipe(fd) != 0)
+	{
+		FERROR("pipe call failed");
+		exit(5);
+	}
 
 	if( ( child_pid = fork() ) == -1 )
 	{

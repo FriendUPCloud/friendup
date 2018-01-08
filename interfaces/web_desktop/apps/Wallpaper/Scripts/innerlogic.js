@@ -62,8 +62,15 @@ Application.showImages = function()
 		{
 			if( d )
 			{
-				d = JSON.parse( d );
-				current = d['wallpaper'+Application.mode];
+				try
+				{
+					d = JSON.parse( d );
+					current = d['wallpaper'+Application.mode];
+				}
+				catch( e )
+				{
+					d = null;
+				}
 			}
 		}
 		

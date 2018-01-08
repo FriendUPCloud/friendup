@@ -57,29 +57,29 @@ typedef struct CommServiceRemote
 	Socket									*csr_Socket;			// soclet
 	int										csr_Epollfd;			// EPOLL - file descriptor
 	
-	FThread								*csr_Thread;			// service thread
+	FThread									*csr_Thread;			// service thread
 	
 	FILE 									*csr_Pipe;			// sending message pipe
 	FBYTE									*csr_Buffer;
 	char 									*csr_Name;				// service name
 	char 									*csr_Address;			// network address
-	FBOOL 								csr_Quit;					// quit or not
+	FBOOL 									csr_Quit;					// quit or not
 	
-	int 										csr_sendPipe[ 2 ];
-	int 										csr_recvPipe[ 2 ];
-	int 										csr_ReadCommPipe, csr_WriteCommPipe;
+	int 									csr_sendPipe[ 2 ];
+	int 									csr_recvPipe[ 2 ];
+	int 									csr_ReadCommPipe, csr_WriteCommPipe;
 	
-	void 										*csr_SB;
+	void 									*csr_SB;
 	
 	int										csr_MaxEvents;
-	int 										csr_BufferSize;
+	int 									csr_BufferSize;
 	int										csr_port;				// Friend Communication Port
 	int										csr_secured;		// ssl secured
 	
-	int 										csr_IncomingInc;		// incomming connections incremental  value
+	int 									csr_IncomingInc;		// incomming connections incremental  value
 	
-	int 										csr_NumberConnections;
-	pthread_mutex_t					csr_Mutex;
+	int 									csr_NumberConnections;
+	pthread_mutex_t							csr_Mutex;
 }CommServiceRemote;
 
 //

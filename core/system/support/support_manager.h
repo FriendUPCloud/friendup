@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ *  Support Manager header
+ *
+ * file contain definition of functitons related to all misc functionalities which support FC
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #ifndef __SUPPORT_SUPPORT_MANAGER_H__
 #define __SUPPORT_SUPPORT_MANAGER_H__

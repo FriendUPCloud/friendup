@@ -1,0 +1,429 @@
+/*©*****************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              *
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+**©****************************************************************************/
+/**
+ * @file
+ *
+ * How to document your code
+ * Version 2 - Updated 13/12/2017
+ *
+ * @author FL (Francois Lionet)
+ * @date first pushed on 28/12/2016
+ */
+
+HOW TO INSTALL DOXYGEN
+----------------------
+sudo apt-get doxygen doxygen-gui doxygen-doc 
+
+
+HOW TO GENERATE THE DOC
+-----------------------
+In a CLI, move to docs/doxygen, and run ./makeopensourcedoc.sh or -makeinternaldoc.sh
+
+The HTML documentation will be generated in a build/internal or build/opensource sub-folder.
+Process takes a couple of seconds on a machine with a SSD drive.
+
+Internal doc will have TODOs and bugs, and hidden functions that we hide with specific commands
+from the open-source documentation.
+
+
+HOW TO GROUP THINGS
+-------------------
+Friend Core is written in C, Doxygen needs to be informed of the structure of the code in 
+modules. A module is an ensemble of function or structures centered around the same task.
+Modules can have the structure of a tree, a module can be a sub-module of a parent module.
+I have created as an example the following structure for the '/core/core' directory:
+
+Friend Core
+    Events
+    Information
+    Manager
+    Library
+        Library management
+    Threads
+        PID
+        Web
+        Linux
+    Workers
+
+To achieve the grouping, you insert Doxygen commands at the start of a file and at its end,
+in the Doxygen comment header of the file.
+
+- At the top: 
+
+/** @file
+ *
+ * Title of the file
+ *
+ * @author
+ * @date
+ *
+ * \defgroup GroupName Title of the group
+ * @{
+ */    
+
+- In the bottom:
+/**@}*/
+or
+/**
+ *@}
+ */
+
+>>> Any function or structure defined within the curly brackets will be a part of the group, and 
+will be inserted in the 'Modules' section of the documentation.
+
+- Include a file in a pre-existing group
+
+To include the content of another file in a group that is defined somewhere else, use the 
+following commands on the start of the file:
+ *
+ * \ingroup GroupName
+ * @{
+ */    
+
+- Define sub-groups as parts of a parent group
+
+You can define subgroups as part of parent groups. When defining the sub-group, use:
+/**
+ *
+ * \defgroup GroupName Title of the group
+ * \ingroup ParentGroupName
+ * @{
+ */    
+
+The sub-group will appear when you open the parent group in the module section of the documentation.
+
+- A tree structure
+
+We can define a very clear tree-structure (another one) for any aspect of the documentation, and make
+it simple to browser and facilitate the comprehension of our system.
+
+Have a look at all the files in the /core/core folder to understand what I have done, it is simple.
+
+
+FOR JAVASCRIPT
+--------------
+Doxygen is not specifically made for Javascript, but has a Java parser that seems to suffice.
+You can also find parser extensions, I will dig the subjet and implement the proper tools
+for a fast workflow. Stay tuned!
+
+
+GENERAL SYNTAX
+--------------
+LINKS TO WEB PAGES AND EMAIL ADDRESSES
+Doxygen will automatically replace any URLs and mail addresses found in the
+documentation by links (in HTML).
+To manually specify link text, use the HTML 'a' tag:
+<a href="linkURL">link text</a>
+which will be automatically translated to other output formats by doxygen.
+
+LINKS TO OTHER DOCUMENTED (or not) FILES
+Links to files : all words that contain a dot (.) that is not the last character
+in the word are considered to be file names. If the word is indeed the name of
+a documented input file, a link will automatically be created to the documentation
+of that file.
+
+FOR MORE INFORMATION ON LINKS IN DOXYGEN
+Please refer to https://www.stack.nl/~dimitri/doxygen/manual/autolink.html
+
+EXCLUDING CODE WHEN IN DOXYGEN
+The macro "DOXYGEN" will be defined when Doxygen is running. Use normal
+#ifndef macros.
+
+EXCLUDING SECTIONS FOR INTERNAL DOCUMENTATION
+You can use the #define INTERNAL_DOCS as a normal C macro, it will be defined
+when the internal documentation is generated.
+You can also use the Doxygen command @internal that will only copy the next
+paragraph if Doxygen is making the internal documentation (up to the next
+"Doxygen empty" line (with just one * at the beginning).
+/**
+ * My super function
+ *
+ * @internal
+ * Hogne I did it as you asked, here is how it works.. Let me explain in this
+ * lengthy paragraph that only FriendUP can see what I think about it.
+ * Your idea is crap/brilliant and I like/hate it.
+ * here are my suggestions to make it über-cool...
+ * Bla bla bla. :) :) :)
+ *
+ * This line will be included in normal documentation.
+ *
+... very simple.
+
+FORMATTING YOUR DOCUMENTATION FROM THE SOURCE
+Although I think that formatting of the documentation should not be done within
+the code itself, you can include formatting commands, the same as the ones used
+by Trello, and change the aspect of the code in the final documentation.
+Underline, bold, make paragraph titles bigger, insert HTML etc. just like Trello.
+It should be OK for every kind of doc generated by Doxygen yet inclusion of
+HTML code might render the doc difficult to export in other formats, so please avoid.
+Documentation of the syntax here:
+http://daringfireball.net/projects/markdown/syntax
+
+COMMENTING JAVASCRIPT
+Doxygen is less good with Javascript. It works, yet it was not made specifically
+for it. I had no time so far to use it for this purpose.
+If you find something that is difficult to do, just tell me: we can use
+FriendParser for this kind of things. For example, no C-like macros in Javascript,
+and they are sometimes really cool for keeping blocks of code separated...
+Like an experimental section of code beside a tested section, easy to
+do in C, difficult in Javascript. When you want to switch from one to another you have to
+uncomment one section and comment the other... boring...
+FriendParser will solve that with commands when building Friend:
+FP>IFDEF(variable)
+FP>IFEQUAL(variable, value)
+FP>IFNOTEQUAL(variable, value)
+will allow you to cut code in the generated final version of any code.
+I will insert FriendParser in the build process when I have time for it, and
+when the commands are done.
+I made a similar system at the end of the HTML5 runtime (big one!) and it was
+_really_ cool to use.
+
+
+
+HOW TO CODE YOUR DOCUMENTATION WITHOUT REALIZING IT
+---------------------------------------------------
+Please note that you will find empty code sections to paste in your code for
+easy documentation insertion in your code at the end of this file.
+
+HEADERS
+Just use the one on the top of this file. You can change what's between the first
+and last line, but FriendParser will replace what's inside if it asked to do it
+(it will be done for next open-source version certainly)...
+If you don't want a specific file to be included in the "header replacement process"
+just remove the copyright character in the first and last line (or the whole
+header itself).
+
+FILE DESCRIPTION
+The format is the same as the one of this file.
+
+/**
+ * @file
+ *
+ * Short one-line description of the content of the file (its function in the system)
+ *
+ * This is a more complete description, a paragraph that can have as many lines
+ * as you want. You want to describe in it the whole class (or system of functions
+ * in C), and its intentions, contained in the file. This is the "how-to-use"
+ * place of the group of functions. For example for The WebSocket handler, the
+ * author (Pawel?) should put here all the necessary to understand and use it
+ * easily, including links to code examples (or directories).
+ *
+ * @author PS (Pawel Stefansky)                                                 <<< list of authors, ordered, last author first
+ * @author HT (Hogne TildStad)
+ * @author TW (Thomas Wollburg)                                                 <<< person whho created the file
+ * @date first pushed on xx/xx/xxxx                                             <<< please push the day you create the file, or change the date! (I know we can get that on GIT yet...)
+ * @todo this is the place for public or internal documentation TODOs. Add FLTODO on the line and it will also be a personal TODO
+ * @important you can use that too here as well as any Doxygen commands
+ */
+
+FUNCTIONS
+Function documentation uses the Javadoc format of Doxygen.
+
+/**
+ * This is a title, it should be short                                          <<< and describe the function intention, not dot at the end, one line only
+ *
+ * This is a description text, it can be a paragraph of many lines.
+ * Formatting is done automatically by Doxygen, and you can add some extra
+ * formatting, like tables, as in Trello.
+ * Do not go too much into detail if the function is obvious (time lost for you
+ * AND the reader). But if there is something specific, or "ultra cool" don't
+ * hesitate to say it. Signal exceptions, or eventual cases of predicted crashes:
+ * what NOT to do, you may not be there in two years time.
+ * PARAMETER LIST
+ * Parameter list is essential, a good parameter list properly described saves
+ * time. No capital at start of the description of a parameter.
+ * @param at start of line, followed by the exact name of the
+ * parameter in the function definition, if pointer, say it! with
+ * "pointer to", of course there is a * yet it stays consistent and easier to read
+ * as we are all lazy bastards up there.
+ * RETURN VALUES
+ * One line starting with @return for the general case, one line for each error
+ * or specific values, last line eventually "general" error messages (like -1).
+ * Don't comment too much obvious names! Obvious names are really cool for that!
+ * Specially for error numbers, they should be descriptive enough so that you
+ * don't have to open a doc file or the log file.
+ * Example of such a parameter list...
+ *
+ * @param sb pointer to a already opened Sysbase.library                        <<< Doxygen will generate a link to Sysbase.library code (I hope :)
+ * @param name pointer to the name of the library to open                       <<< use simple words
+ * @param version version number of the library to open                         <<< stay consistent, use the same wording
+ * @return void pointer to the newly opened library                             <<< consistency in words makes remembering easier (forced internal repeat when you read it, as in school!)
+ * @return NULL if case of error (library name not found, version not found     <<< in case of "generic error return" like this one, please state the major cases when it happens
+ * 		   or other errors)                                                     <<< Doxygen will work on this one, lines at higher tabs will be merged with the first one, clever Doxygen
+ * @attention will bring the next paragraph to attention
+ * @deprecated will make this function as deprecated and copy the paragraph
+ *             following this command (like this line).
+ *
+ * @example filename.ext will include in the example section of this function
+ *                       the code found in another file
+ *
+ */
+
+In my personal case, when I code, I insert headers as soon as I know I'm not going
+back to a group of routines, or eventually at night before closing if I was too deep
+in my code... Even immediately (in the morning when I am awake :) or when
+the function is complicated or still fuzzy in my head, it helps.
+Because the information is still fresh in my mind, and most of all, my mind is
+still focused on it: I will write more precise information, more "inside the thing".
+I would be "less into it" after a meal, or the next day if I do not dive into it again.
+This is why I suggest not to wait too long to write the function / file headers
+if you can...
+Even if you know you will have to change them later: Doxygen reports such errors as
+inconsistencies between documentation parameters and function definitions and
+I will copy them into your report with FriendParser later.
+I really appreciate finding old good documentation in a code I forgot, it
+give me an impression that I am kind of "serious", which is good for the moral,
+specially when you know how messy I am usually. Moral-raising time bombs
+are good for you!
+
+STRUCTURES
+.h files are included in the process. You can (and should) document each
+member of a structure that needs to, for both internal and open-source
+members... Here is an example, taken from friend_code.h
+Members are described with inline Doxygen comments.
+Doxygen inline comments start with ///<
+
+/**
+ * FriendCore instance data
+ *
+ * Preferably, the contents of this struct should                               <<< I copied the original comments from Hogne, description could be more detailed here
+ * never be modified after the server has been started
+ */
+typedef struct FriendCoreInstance
+{
+	MinNode					node;				///< list of cores
+
+	char 					fci_CoreID[ 32 ];	///< id of the core
+
+	int 					epollfd;            ///< file descriptor for epoll
+	Socket	 				* listenSocket; 	///< socket for incoming connections (HTTODO: Make this "socketS": We must be able to listen on multiple interfaces!)
+
+	// "Private"
+	//char                  *fci_Shutdown;      ///< ends all event loops
+	BOOL                    fci_Shutdown;       ///< ends all event loops
+	BOOL 					fci_Closed;			///< if FC quits, then its set to TRUE
+	BOOL 					fci_SSLEnabled;		///< if ssl is enabled
+
+	Hashmap* 				libraries;   		///< contains all loaded libraries. Key: library name.
+
+	int 					fci_Port;			///< FL>PS ?                    <<< asking questions to Hogne,
+	int 					fci_MaxPoll;		///< FL>PS ?                    <<< he may read them sometime! :D
+	int 					fci_BufferSize;		///< FL>PS ?                    <<< basically, the best option is that
+
+	int 					fci_SendPipe[ 2 ];	///< FL>PS ?                    <<< each developer comments his own code...
+	int 					fci_RecvPipe[ 2 ];	///< FL>PS ?
+	int						fci_ReadCorePipe, fci_WriteCorePipe;
+
+	FThread					*fci_Thread;		///< FL>PS ?
+	pthread_mutex_t      	listenMutex;
+
+	WorkerManager			*fci_WorkerManager; ///< worker manager
+
+} FriendCoreInstance;
+
+#DEFINES
+Same principle.
+
+/**
+ * Worker state enumeration
+ */
+enum {
+	W_STATE_CREATED   = 1,				///< created yet not initialized
+	W_STATE_RUNNING   = 2,				///< running
+	W_STATE_WAITING   = 3,				///< waiting for message or mutex
+	W_STATE_TO_REMOVE = 4,				///< has received interrupt message
+	W_STATE_COMMAND_CALLED				///< waiting for response from message handler
+};
+
+FUNCTION DECLARATIONS
+Do *not* comment function declarations in the .h, or extern in another .h,
+Doxygen automatically links the .h and the .c declarations.
+
+GLOBAL VARIABLES
+Only comment the ones that are exported. The other ones are usually for the
+file only, or the group of functions, for you, you don't need to comment them
+(or internal only).
+
+GENERAL NOTE ABOUT DOCUMENTING
+In "internal" documentation mode, there will be no hidden members of structure
+or functions in the doc. Some of them will not be documented (as not worth it)
+but they will be listed. Please be free to document anything internally
+that might help you or the rest of us later.
+
+
+EMPTY DOCUMENTATION HEADERS TO PASTE IN YOUR CODE
+-------------------------------------------------
+
+INTERNAL FILE HEADER
+/*©*****************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              *
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+**©****************************************************************************/
+
+OPEN-SOURCE FILE HEADER
+/*©*****************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+*                                                                              *
+* This program is free software: you can redistribute it and/or modify         *
+* it under the terms of the GNU Affero General Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* GNU Affero General Public License for more details.                          *
+*                                                                              *
+* You should have received a copy of the GNU Affero General Public License     *
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+*                                                                              *
+**©****************************************************************************/
+
+FILE HEADER
+/**
+ * @file
+ *
+ * Title
+ *
+ * Description
+ * paragraph
+ *
+ * @author XX (Author Name)
+ * @date first pushed on ../../2017
+ */
+
+FUNCTION HEADER
+/**
+ * Title
+ *
+ * Description
+ * paragraph
+ *
+ * @param xx parameter
+ * @return void return value
+ */
+
+STRUCTURE HEADER
+/**
+ * Title
+ *
+ * Description
+ * paragraph
+ */

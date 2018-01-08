@@ -36,11 +36,6 @@
 #include <util/log/log.h>
 #include <core/event.h>
 
-//
-//
-//
-
-FULONG DoMethodS( Class *c, Object *o, struct Msg *m );
 
 /**
  * Special class data
@@ -62,7 +57,7 @@ struct Data
  * @param o pointer to object
  * @param msg pointer to message structure
  */
-void rootSetForAll( Class *c, Object *o, struct Msg *msg )
+void rootSetForAll( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	DEBUG("ROOTNEW: SET FOR ALL\n");
 
@@ -99,7 +94,7 @@ void rootSetForAll( Class *c, Object *o, struct Msg *msg )
  * @return pointer to the new object
  * @return NULL if error
  */
-FULONG rootNew( Class *c, Object *o, struct Msg *msg )
+FULONG rootNew( Class *c, Object *o __attribute__((unused)), struct Msg *msg )
 {
 	FULONG res = 0;
 	DEBUG("ROOTNEW START\n");
@@ -140,7 +135,7 @@ FULONG rootNew( Class *c, Object *o, struct Msg *msg )
  * @param msg pointer to message structure
  * @return 0
  */
-FULONG rootDispose( Class *c, Object *o, struct Msg *msg )
+FULONG rootDispose( Class *c __attribute__((unused)), Object *o, struct Msg *msg __attribute__((unused)))
 {
 	FULONG res = 0;
 
@@ -209,7 +204,7 @@ FULONG rootSet( Class *c, Object *o, struct Msg *msg )
  * @param msg pointer to message structure
  * @return 0
  */
-FULONG rootGet( Class *c, Object *o, struct Msg *msg )
+FULONG rootGet( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	FULONG res = 0;
 	DEBUG("ROOTGET\n");
@@ -238,7 +233,7 @@ FULONG rootGet( Class *c, Object *o, struct Msg *msg )
  * @return 0
  * @return 1 in case of memory allocation error
  */
-FULONG rootNotify( Class *c, Object *o, struct Msg *msg )
+FULONG rootNotify( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
 	FULONG *lt = (FULONG *)(set->ops_AttrList);
@@ -283,7 +278,7 @@ FULONG rootNotify( Class *c, Object *o, struct Msg *msg )
 //
 // TEST
 //
-FULONG rootTest( Class *c, Object *o, struct Msg *msg )
+FULONG rootTest( Class *c __attribute__((unused)), Object *o __attribute__((unused)), struct Msg *msg )
 {
 	FULONG *data = (FULONG *)(msg->data);
 
@@ -335,11 +330,11 @@ FULONG rootDispatcher( struct Class *c, Object *o, struct Msg *m )
 						if( lt->ti_Data == FNotify_Everytime )
 						{
 							DEBUG("Event call: Every Time call\n");
-							DoMethod( event->e_Dst, event->e_DstMethodID, event->e_Data );
+							DoMethod( event->e_Dst, event->e_DstMethodID, (FULONG)event->e_Data );
 						}else if( event->e_Value == (FLONG)lt->ti_Data )
 						{
 							DEBUG("Event call: for value %ld\n", event->e_Value );
-							DoMethod( event->e_Dst, event->e_DstMethodID, event->e_Data );
+							DoMethod( event->e_Dst, event->e_DstMethodID, (FULONG)event->e_Data );
 						}
 					}
 					lt++;
@@ -347,6 +342,7 @@ FULONG rootDispatcher( struct Class *c, Object *o, struct Msg *m )
 
 				event = (Event *)event->node.mln_Succ;
 			}
+			return rootSet( c, o, m );
 		}
 	case FM_SETNN:		return rootSet( c, o, m );
 		break;

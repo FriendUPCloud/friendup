@@ -19,4 +19,11 @@ i18n_spacial                            : Spacial
 i18n_window_list_mode                   : Window list mode
 i18n_separated                          : Separated
 i18n_docked                             : Docked
+i18n_dockedlist                         : Docked window list
 
+i18n_hidden_system                      : Hidden System disk
+i18n_hide_system                        : Hide System disk
+
+i18n_virtual_workspaces                 : Virtual workspaces
+i18n_workspace_count                    : Workspace count
+i18n_scrollable_desktop_icons           : Scrollable desktop icons

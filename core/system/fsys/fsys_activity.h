@@ -45,13 +45,13 @@
 
 typedef struct FilesystemActivity
 {
-	MinNode             node;
-	FULONG              fsa_ID;             // entry id
-	FULONG              fsa_FilesystemID;   // filesystem id
-	struct tm           fsa_ToDate;         // till what date this entry will be used
+	MinNode				node;
+	FULONG				fsa_ID;             // entry id
+	FULONG				fsa_FilesystemID;   // filesystem id
+	struct tm			fsa_ToDate;         // till what date this entry will be used
 	time_t				fsa_ToDateTimeT;
-	FQUAD              fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
-	FQUAD              fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
+	FLONG				fsa_StoredBytesLeft;  // how many bytes user can store, this entry is updated each month
+	FLONG				fsa_ReadedBytesLeft;  // how many bytes user can read, this entry is updated each month
 } FilesystemActivity;
 
 static const FULONG FilesystemActivityDesc[] = { 
@@ -81,9 +81,9 @@ int UpdateFilesystemActivityDB( void *sb, FilesystemActivity *act );
 //
 //
 
-inline int FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, int bytes )
+static inline int FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, int bytes )
 {
-	DEBUG("[FileSystemActivityCheckAndUpdate] store %d left %llu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
+	DEBUG("[FileSystemActivityCheckAndUpdate] store %d left %lu ID %lu\n", bytes, fsa->fsa_StoredBytesLeft, fsa->fsa_ID );
 	if( fsa->fsa_StoredBytesLeft != 0 )	// 0 == unlimited bytes to store
 	{
 		int left = fsa->fsa_StoredBytesLeft;
@@ -100,6 +100,5 @@ inline int FileSystemActivityCheckAndUpdate( void *sb, FilesystemActivity *fsa, 
 	}
 	return bytes;
 }
-
 
 #endif // __SYSTEM_FSYS_FSYS_ACTIVITY_H__

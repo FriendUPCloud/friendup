@@ -67,13 +67,13 @@ int UMRemoveGlobalRemoteDrive( UserManager *um, const char *uname, const char *h
 //
 //
 
-int UMAddRemoteDriveToUser( UserManager *um, CommFCConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteID );
+int UMAddRemoteDriveToUser( UserManager *um, FConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName, FULONG remoteID );
 
 //
 //
 //
 
-int UMRemoveRemoteDriveFromUser( UserManager *um, CommFCConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName );
+int UMRemoveRemoteDriveFromUser( UserManager *um, FConnection *con, const char *locuname, const char *uname, const char *authid, const char *hostname, char *localDevName, char *remoteDevName );
 
 
 #endif //__SYSTEM_USER_USER_MANAGER_REMOTE_H__

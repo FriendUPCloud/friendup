@@ -19,7 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
+/** @file
+ * 
+ *  Application
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __APPLICATION_H__
 #define __APPLICATION_H__
@@ -76,15 +82,13 @@ typedef struct Application
 	char 			    *a_DateInstalled;		//
 	char		 	    *a_DateModified;	//
 	char				*a_Config;		// Config
-	//MYSQL_TIME 		a_DateCreated;		//
-	//MYSQL_TIME 		a_DateInstalled;	//
 	MinNode 			node;
 }Application;
 
 
-static FULONG ApplicationDesc[] = { SQLT_TABNAME, (FULONG)"FApplication", SQLT_STRUCTSIZE, sizeof( struct Application ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( struct Application, a_ID ), 
-	SQLT_IDINT, (FULONG)"UserID", offsetof( struct Application, a_UserID ), 
+static FULONG ApplicationDesc[] = { SQLT_TABNAME, (FULONG)"FApplication", SQLT_STRUCTSIZE, sizeof( struct Application ),
+	SQLT_IDINT, (FULONG)"ID", offsetof( struct Application, a_ID ),
+	SQLT_IDINT, (FULONG)"UserID", offsetof( struct Application, a_UserID ),
 	SQLT_STR, (FULONG)"Name", offsetof( struct Application, a_Name ),
 	SQLT_STR, (FULONG)"InstallPath", offsetof( struct Application, a_InstallPath ),
 	SQLT_STR, (FULONG)"Permissions", offsetof( struct Application, a_Permissions ),

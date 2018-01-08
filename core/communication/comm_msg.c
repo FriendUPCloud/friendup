@@ -47,18 +47,18 @@
  * @param mi pointer to taglist entries
  * @return size of created message group
  */
-int DataFormWriteGroup( FBYTE **data, MsgItem **mi )
+int64_t DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 {
-	int size = 0;
+	int64_t size = 0;
 	MsgItem *lmi = (*mi);
 
 	while( (*mi)->mi_Tag != MSG_GROUP_END )
 	{
-		int res = 0;
+		int64_t res = 0;
 
 		memcpy( (*data), (*mi), COMM_MSG_HEADER_SIZE );
 		char *t = (char *)*data;
-		FULONG *sizeptr = (FULONG *)( (*data)+sizeof(FULONG) );
+		uint64_t *sizeptr = (uint64_t *)( (*data)+sizeof(uint64_t) );
 		(*data) += COMM_MSG_HEADER_SIZE;
 		size += COMM_MSG_HEADER_SIZE;
 
@@ -88,11 +88,13 @@ int DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 				}
 				else
 				{
-					//INFO("STORE DATA %d  entry size %ld  TEXT %.*s\n", res, (*mi)->mi_Size, (int)((*mi)->mi_Size ),  (char *)((*mi)->mi_Data ) );
-					INFO("STORE DATA %d  entry size %ld  TEXT %.100s\n", res, (*mi)->mi_Size,(char *)((*mi)->mi_Data ) );
-					memcpy( (void *)(*data), (const void *)((*mi)->mi_Data), (*mi)->mi_Size );
-					(*data) += (*mi)->mi_Size;
-					size += (*mi)->mi_Size;
+					if( (*mi)->mi_Size > 0 && (*mi)->mi_Data != NULL )
+					{
+						INFO("STORE DATA %ld  entry size %ld  TEXT %.100s\n", res, (*mi)->mi_Size,(char *)((*mi)->mi_Data ) );
+						memcpy( (void *)(*data), (const void *)((*mi)->mi_Data), (*mi)->mi_Size );
+						(*data) += (*mi)->mi_Size;
+						size += (*mi)->mi_Size;
+					}
 				}
 			}
 		}
@@ -124,20 +126,20 @@ DataForm *DataFormNew( MsgItem *mi )
 	
 	if( mi != NULL )
 	{
-		FULONG size = 0;
+		uint64_t size = 0;
 		MsgItem *lmi = mi;
-		int sizePtrSize = 0;
 		
 		while( lmi->mi_Tag != MSG_END )
 		{
 			if( lmi->mi_Data == MSG_GROUP_START || lmi->mi_Tag == MSG_GROUP_END || lmi->mi_Tag == MSG_END || lmi->mi_Data == MSG_INTEGER_VALUE )
 			{
 				size += COMM_MSG_HEADER_SIZE;
+				//DEBUG("GROUP %lu\n", size );
 			}
 			else
 			{
 				size += lmi->mi_Size + COMM_MSG_HEADER_SIZE;
-				
+				//DEBUG("DATA %lu\n", size );
 				/*
 				char *tag = (char *)&(lmi->mi_Tag);
 				if( tag != NULL )
@@ -148,7 +150,7 @@ DataForm *DataFormNew( MsgItem *mi )
 			lmi ++;
 		}
 		
-		df = FCalloc( size+100, sizeof( FBYTE ) );
+		df = FCalloc( size+128, sizeof( FBYTE ) );
 		if( df != NULL )
 		{
 			FBYTE *tmpptr = (FBYTE *)df;
@@ -157,63 +159,19 @@ DataForm *DataFormNew( MsgItem *mi )
 			//
 			// we are inserting data into buffer
 			//
-			
-			//while( lmi->mi_Tag != MSG_END )
-			//{
-				int oldsize = DataFormWriteGroup( &tmpptr, &mi );
-				//tmpptr += oldsize;
-				lmi->mi_Size = oldsize;
-				//df->df_Size = size;
-				
-		/*
-				{
-					int i;
-					char *t = (char *)df;
-					for( i=0 ; i < oldsize ; i++ )
-					{
-						printf(" %c ", t[ i ]);
-					}
-				}*/
-				/*
-				FULONG oldSize = lmi->mi_Size;
-				
-				BYTE *nameptr = (BYTE *)&(lmi->mi_Tag);
-				memcpy( tmpptr, &(lmi->mi_Tag), sizeof( ID ) );
-				tmpptr += sizeof( ID );
-				lmi->mi_Size += COMM_MSG_HEADER_SIZE;
-				
-				FULONG *datasize = (FULONG *)tmpptr;
-				tmpptr += sizeof( FULONG );
-				
-				if( lmi->mi_Data != NULL )
-				{
-					memcpy( tmpptr, lmi->mi_Data, oldSize );
-					tmpptr += oldSize;
-					//lmi->mi_Size += oldSize;
-					
-					INFO("NEWMSG Found data size %ld  entry size %ld\n", oldSize, lmi->mi_Size );
-				
-				}
-				if( *datasize != 0 )
-				{
-					*datasize = lmi->mi_Size;
-				}
-				*/
-				//lmi++;
-			//}
-			Log( FLOG_INFO, "NEWMSG Created package size %ld\n", size ); 
-			
-			// update package size
-			//df->df_Size = size;
+
+			uint64_t oldsize = (uint64_t)DataFormWriteGroup( &tmpptr, &mi );
+			lmi->mi_Size = oldsize;
+
+			Log( FLOG_INFO, "NEWMSG Created package size %lu\n", size ); 
 		}
 		else
 		{
-			FERROR("Cannot allocate memory for message %lu\n", size );	
+			Log( FLOG_ERROR, "Cannot allocate memory for message %lu\n", size );	
 		}
 	}
 	else
 	{
-		//DEBUG("CREATE NEW EMPTY MESSAGE\n");
 		df = FCalloc( 1, sizeof( DataForm ) );
 		if( df != NULL )
 		{
@@ -222,7 +180,7 @@ DataForm *DataFormNew( MsgItem *mi )
 		}
 		else
 		{
-			FERROR("Cannot allocate memory for data!\n");
+			Log( FLOG_ERROR, "Cannot allocate memory for data!\n");
 			return NULL;
 		}
 	}
@@ -276,14 +234,14 @@ void DataFormDelete( DataForm *msg )
  * @return size of created message group
  */
 
-int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
+int64_t DataFormAdd( DataForm **dst, FBYTE *srcdata, int64_t size )
 {
 	if( size <= 0 )
 	{
 		return 2;
 	}
-	FULONG resSize = (*dst)->df_Size + size;
-	FULONG oldSize = (*dst)->df_Size;
+	uint64_t resSize = (*dst)->df_Size + size;
+	uint64_t oldSize = (*dst)->df_Size;
 	FBYTE *data = (FBYTE *)FCalloc( resSize + sizeof( DataForm ), sizeof(FBYTE) );
 	INFO("MESSAGE DATA aDDED\n");
 	
@@ -302,7 +260,9 @@ int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
 		
 		(*dst)->df_Size = resSize + sizeof( DataForm );
 
-	}else{
+	}
+	else
+	{
 		if( srcdata == NULL )
 		{
 			FERROR("SRC data is NULL\n");
@@ -320,8 +280,7 @@ int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
 			return 1;
 		}
 	}
-	//INFO("DataFormAdd END\n");
-	
+
 	return 0;
 }
 
@@ -333,10 +292,10 @@ int DataFormAdd( DataForm **dst, FBYTE *srcdata, FLONG size )
  * @return 0 when success, otherwise error number
  */
 
-int DataFormAddForm( DataForm **dst, DataForm *src )
+int64_t DataFormAddForm( DataForm **dst, DataForm *src )
 {
-	FULONG resSize = (*dst)->df_Size + src->df_Size;
-	FULONG oldSize = (*dst)->df_Size;
+	uint64_t resSize = (*dst)->df_Size + src->df_Size;
+	uint64_t oldSize = (*dst)->df_Size;
 	FBYTE *data = (FBYTE *)FCalloc( resSize + sizeof( DataForm ), sizeof( FBYTE ) );
 	
 	if( data != NULL )
@@ -373,9 +332,8 @@ int DataFormAddForm( DataForm **dst, DataForm *src )
  * @todo function empty, not finished
  */
 
-DataForm *intFind( DataForm *df, ID id, FLONG *size )
+DataForm *intFind( DataForm *df __attribute__((unused)), ID id __attribute__((unused)), FLONG *size )
 {
-	
 	//TODO
 	if( *size <= 0 )
 	{
@@ -400,13 +358,14 @@ FBYTE *DataFormFind( DataForm *df, ID id )
 		FERROR("Dataform is empty\n");
 		return NULL;
 	}
+	
 	if( df->df_ID == ID_FCRE )
 	{
-		FLONG size = (FLONG)df->df_Size;
+		int64_t size = (int64_t)df->df_Size;
 		size -= COMM_MSG_HEADER_SIZE;
 		data += COMM_MSG_HEADER_SIZE;
 		
-		DEBUG("------->size %d\n", size );
+		DEBUG("------->size %ld\n", size );
 		
 		FBYTE *bptr = (FBYTE *)data;
 		// temporary checking byte after byte
@@ -476,57 +435,6 @@ DataForm *DataFormFromHttp( Http *http )
 	DFList *le = NULL;	// last entry
 	
 	DEBUG("[DataFormFromHttp] start\n");
-	
-	// check provided paramters
-	/*
-	if( http->headers != NULL )
-	{
-		for( i = 0 ; i < http->headers->table_size; i++ )
-		{
-			HashmapElement e = http->headers->data[i];
-			
-			if( e.key != NULL && e.inUse == TRUE )
-			{
-				if( strcmp( e.key, "remoteurl" ) == 0 )
-				{
-					remoteurl = e.data;
-				}
-				else if( strcmp( e.key, "remotehost" ) == 0 )
-				{
-					remotehost = e.data;
-				}
-				else
-				{
-					HashmapElement *el = HashmapGet( http->headers, e.key );
-					
-					int size = strlen( e.key ) + 2 + strlen( el->data );
-					char *tmp = NULL;
-					if( ( tmp = FCalloc( size, sizeof(char) ) ) != NULL )
-					{
-						size = snprintf( tmp, size, "%s=%s", e.key, (char *)el->data );
-						DFList *ne = FCalloc( 1, sizeof(DFList) );
-						if( ne != NULL )
-						{
-							ne->t = tmp;
-							ne->s = size;
-							
-							if( re == NULL )
-							{
-								re = ne;
-								le = ne;
-							}
-							else
-							{
-								le->n = ne;
-								le = ne;
-							}
-						}
-					}
-					numberTags++;
-				}
-			}
-		}
-	}*/
 	
 	DEBUG("[DataFormFromHttp] headers parsed\n");
 	
@@ -608,31 +516,30 @@ DataForm *DataFormFromHttp( Http *http )
 							if( ( tmp = FCalloc( size+1, sizeof(char) ) ) != NULL )
 							{
 								size = snprintf( tmp, size, "%s=%s", e.key, data );
-								DFList *ne = FCalloc( 1, sizeof(DFList) );
-								*/
-								if( ne != NULL )
-								{
-									//ne->t = tmp;
-									//ne->s = size+1;
+							DFList *ne = FCalloc( 1, sizeof(DFList) );
+							*/
+							if( ne != NULL )
+							{
+								//ne->t = tmp;
+								//ne->s = size+1;
 							
-									if( re == NULL )
-									{
-										re = ne;
-										le = ne;
-									}
-									else
-									{
-										le->n = ne;
-										le = ne;
-									}
-								} // ne != NULL
-							} // Calloc for temp message
-							FFree( data );
-						} // data != NULL 
-					}	//e.data != NULL
-					numberTags++;
-				}
-			//}
+								if( re == NULL )
+								{
+									re = ne;
+									le = ne;
+								}
+								else
+								{
+									le->n = ne;
+									le = ne;
+								}
+							} // ne != NULL
+						} // Calloc for temp message
+						FFree( data );
+					} // data != NULL 
+				}	//e.data != NULL
+				numberTags++;
+			}
 		}
 	}
 

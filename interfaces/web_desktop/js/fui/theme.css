@@ -1,0 +1,350 @@
+/* Base */
+
+body
+{
+	background: #2E689F;
+	user-select: none;
+	overflow: hidden;
+}
+
+/* FUI Screens */
+.FUIScreen
+{
+	transform: rotatez( 0deg ); /* hw acc */
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.FUIScreen > .FUIScreenTitle
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 30px;
+	background: white;
+	z-index: 2;
+}
+
+.FUIScreen > .FUIScreenTitle > .FUIScreenGadgetTitle
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: calc(100% - 64px);
+	height: 30px;
+	line-height: 30px;
+	box-sizing: border-box;
+	padding: 0 10px;
+}
+
+.FUIScreen > .FUIScreenTitle > .FUIScreenGadgetDepth
+{
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 30px;
+	height: 30px;
+	background: #cccccc;
+}
+.FUIScreen > .FUIScreenTitle > .FUIScreenGadgetExtras
+{
+	position: absolute;
+	top: 0;
+	right: 30px;
+	width: 300px;
+	height: 30px;
+	background: #eeeeee;
+}
+
+.FUIScreen > .FUIScreenContent
+{
+	position: absolute;
+	top: 30px;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+/* FUI Views */
+
+.FUIView, .FUIDesklet
+{
+	transform: rotatez( 0deg ); /* hw acc */
+	position: absolute;
+	min-width: 180px;
+	min-height: 100px;
+	border-radius: 3px;
+	overflow: hidden;
+	box-shadow: 0px 1px 7px rgba(0,0,0,0.5);
+}
+.FUIView.Borderless, .FUIDesklet.Borderless
+{
+	box-shadow: none;
+}
+.FUIView.Minimizing
+{
+	transition-property: top left width height opacity;
+	transition-duration: 0.2s;
+}
+.FUIView.Minimizing.Minimized, .FUIView.Minimized
+{
+	top: 100% !important;
+	height: 10px !important;
+}
+.FUIViewTitle
+{
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 30px;
+	background: #eeeeee;
+}
+.FUIViewTitle > .FUIViewGadgetClose,
+.FUIViewTitle > .FUIViewGadgetZoom,
+.FUIViewTitle > .FUIViewGadgetDepth,
+.FUIViewTitle > .FUIViewGadgetMinimize
+{
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	background: #cccccc;
+	cursor: pointer;
+}
+.FUIViewTitle > .FUIViewGadgetClose
+{
+	top: 3px;
+	left: 3px;
+}
+.FUIViewTitle > .FUIViewGadgetDepth
+{
+	top: 3px;
+	left: calc(100% - 27px);
+}
+.FUIViewTitle > .FUIViewGadgetZoom
+{
+	top: 3px;
+	left: calc(100% - 54px);
+}
+.FUIViewTitle > .FUIViewGadgetMinimize
+{
+	top: 3px;
+	left: calc(100% - 81px);
+}
+.FUIViewTitle > .FUIViewGadgetTitle
+{
+	position: absolute;
+	cursor: pointer;
+	top: 3px;
+	left: 30px;
+	right: calc(0% + 84px);
+	height: 24px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	line-height: 24px;
+	font-size: 16px;
+	color: black;
+}
+.FUIViewFrame
+{
+	position: absolute;
+	left: 0px;
+	top: 30px;
+	width: 100%;
+	height: calc(100% - 30px);
+	background: white;
+	overflow: hidden;
+}
+.FUIViewContent
+{
+	position: absolute;
+	left: 3px;
+	top: 30px;
+	width: calc(100% - 6px);
+	height: calc(100% - 33px);
+	background: #444444;
+	overflow: hidden;
+}
+.FUIViewBorderlessContent
+{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+/* Group */
+.FUIGroup
+{
+	position: relative;
+	box-sizing: border-box;
+	display: inline-block;
+	overflow: hidden;
+	float: left;
+}
+.FUIGroup.BorderSolid
+{
+	border: 1px solid rgba(0,0,0,0.2);
+	border-radius: 3px;
+}
+
+/* Button */
+
+.FUIButton
+{
+	position: relative;
+	min-height: 24px;
+	line-height: 24px;
+	font-size: 14px;
+	color: #000000;
+	background: #eeeeee;
+	border-radius: 3px;
+	text-align: center;
+	cursor: pointer;
+	box-sizing: border-box;
+	display: inline-block;
+}
+.FUIButton:hover
+{
+	background: #f8f8f8;
+}
+.FUIButton.Margin + .FUIButton.Margin
+{
+	margin-left: 5px;
+}
+.FUIGroup.BorderSolid
+{
+	border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* Input text */
+
+.FUIInput
+{
+	position: relative;
+	min-height: 24px;
+	line-height: 24px;
+	font-size: 14px;
+	color: #000000;
+	background: #ffffff;
+	border-radius: 3px;
+	text-align: left;
+	cursor: pointer;
+	box-sizing: border-box;
+	border: 1px solid #c0c0c0;
+	padding: 0 4px;
+	display: inline-block;
+}
+
+/* Lists */
+
+.FUIList
+{
+	display: block;
+	position: relative;
+	background: #222222;
+}
+
+.FUIListColumns
+{
+	position: relative;
+	width: 100%;
+	height: 24px;
+}
+
+.FUIListColumn
+{
+	display: inline-block;
+	height: 24px;
+	line-height: 24px;
+	box-sizing: border-box;
+	font-size: 14px;
+	border-top: 1px solid rgba(255,255,255,0.2);
+	border-left: 1px solid rgba(255,255,255,0.2);
+	border-right: 1px solid rgba(0,0,0,0.2);
+	border-bottom: 1px solid rgba(0,0,0,0.2);
+	padding: 0 4px;
+	background: #cccccc;
+}
+
+.FUIListRows
+{
+	position: relative;
+	width: 100%;
+	height: calc(100% - 24px);
+	overflow: auto;
+}
+
+.FUIListRow
+{
+	display: block;
+	background: #ffffff;
+	margin: 0;
+	clear: both;
+	height: 24px;
+	box-sizing: border-box;
+	user-select: text;
+}
+.FUIListField
+{
+	display: block;
+	float: left;
+	height: 24px;
+	line-height: 24px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0 4px;
+	color: black;
+	box-sizing: border-box;
+	border-right: 1px solid rgba(0,0,0,0.2);
+	border-bottom: 1px solid rgba(0,0,0,0.2);
+}
+
+/* WindowList */
+
+.FUIWindowList
+{
+	display: inline-block;
+}
+
+.FUIWindowList > .FUIWindowListView
+{
+	display: inline-block;
+	border: 1px solid black;
+	background: white;
+}
+
+/* Widths */
+.FUIWidth5   { width:  5%;   }
+.FUIWidth10  { width: 10%;   }
+.FUIWidth15  { width: 15%;   }
+.FUIWidth20  { width: 20%;   }
+.FUIWidth25  { width: 25%;   }
+.FUIWidth30  { width: 30%;   }
+.FUIWidth35  { width: 35%;   }
+.FUIWidth40  { width: 40%;   }
+.FUIWidth45  { width: 45%;   }
+.FUIWidth50  { width: 50%;   }
+.FUIWidth55  { width: 55%;   }
+.FUIWidth60  { width: 60%;   }
+.FUIWidth65  { width: 65%;   }
+.FUIWidth70  { width: 70%;   }
+.FUIWidth75  { width: 75%;   }
+.FUIWidth80  { width: 80%;   }
+.FUIWidth85  { width: 85%;   }
+.FUIWidth90  { width: 90%;   }
+.FUIWidth95  { width: 95%;   }
+.FUIWidth100 { width: 100%;  }
+.FUIWidth33  { width: 33.3%; }
+.FUIWidth66  { width: 66.6%; }
+

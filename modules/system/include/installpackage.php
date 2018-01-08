@@ -123,6 +123,8 @@ if( $fr->Load() )
 				$nconf->Verified = 'no';
 				$nconf->Trusted = 'no';
 			
+				$dest = str_replace( ' ', '_', $dest );
+			
 				if( $f = fopen( $conf, 'w+' ) )
 				{
 					fwrite( $f, json_encode( $nconf ) );
@@ -136,7 +138,7 @@ if( $fr->Load() )
 			}
 			else
 			{
-				$Logger->log( '[InstallPackage] Found no jsx or conf in path ' . '/tmp/' . $fld );
+				//$Logger->log( '[InstallPackage] Found no jsx or conf in path ' . '/tmp/' . $fld );
 				
 				// Remove temporary zip file
 				unlink( '/tmp/' . $ff );
@@ -156,15 +158,15 @@ if( $fr->Load() )
 			}
 			
 			// Now hash all files!
-			function hashEmRecursive( $p, &$hashes, $d = 0 )
+			function hashEmRecursive( $p, &$hashes, $d = 0, $rpath = '' )
 			{
+				global $Logger;
 				if( $hdir = opendir( $p ) )
 				{
 					while( $f = readdir( $hdir ) )
 					{
-						if( $d == 0 && $f == 'Signature.sig' )
+						if( $d == 0 && ( $f == 'Signature.sig' || $f == 'package.zip' ) )
 						{
-							unlink( $p . '/' . $f );
 							continue;
 						}
 						if( $f{0} == '.' )
@@ -176,12 +178,17 @@ if( $fr->Load() )
 							}
 							continue;
 						}
-						$hashes[] = hash( 'sha256', $f ); // Add dir names
+						$path = $rpath . ( $rpath ? '/' : '' ) . $f; // rel path
+						$hashes[] = hash( 'sha256', $rpath ); // Add dir names
 						if( is_dir( $p . '/' . $f ) )
 						{
-							hashEmRecursive( $p . '/' . $f, $hashes, $d + 1 );
+							hashEmRecursive( $p . '/' . $f, $hashes, $d + 1, $path );
 						}
-						$hashes[] = $hash = hash_file( 'sha256', $p . '/' . $f );
+						else
+						{
+							$hashes[] = $hash = hash_file( 'sha256', $f );
+							//$Logger->log( $path );
+						}
 					}
 					closedir( $hdir );
 				}
@@ -191,7 +198,7 @@ if( $fr->Load() )
 			// Write a signature
 			if( $f = fopen( '/tmp/' . $fld . '/Signature.sig', 'w+' ) )
 			{
-				fwrite( $f, '{"signature":"' . hash( 'sha256', implode( '', $hashes ) ) . '"}' );
+				fwrite( $f, '{"signature":"' . hash( 'sha256', implode( '', sort( $hashes ) ) ) . '"}' );
 				fclose( $f );
 			}
 			

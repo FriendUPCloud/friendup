@@ -59,7 +59,7 @@ struct Data
  * @param msg pointer to message structure
  *
  */
-void setForAll( Class *c, Object *o, struct Msg *msg )
+void setForAll( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
 	struct TagItem *lt = (set->ops_AttrList);
@@ -105,7 +105,7 @@ void setForAll( Class *c, Object *o, struct Msg *msg )
  * @return NULL if error
  *
  */
-FULONG phpproxyNew( Class *c, Object *o, struct Msg *msg )
+FULONG phpproxyNew( Class *c, Object *o __attribute__((unused)), struct Msg *msg )
 {
 	Object *newObject = NULL;
 
@@ -205,7 +205,7 @@ FULONG phpproxySet( Class *c, Object *o, struct Msg *msg )
  * @return 0
  *
  */
-FULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
+FULONG phpproxyGet( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	FULONG res = 0;
 	DEBUG("PHPPROXY get\n");
@@ -242,7 +242,7 @@ FULONG phpproxyGet( Class *c, Object *o, struct Msg *msg )
  * @return 0 in case of error
  *
  */
-FULONG phpproxyProcess( Class *c, Object *o, struct Msg *msg )
+FULONG phpproxyProcess( Class *c __attribute__((unused)), Object *o, struct Msg *msg )
 {
 	FULONG res = 0;
 	char command[ BUFFER_SIZE ];

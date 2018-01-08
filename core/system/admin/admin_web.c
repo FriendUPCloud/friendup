@@ -39,7 +39,7 @@
 #include <network/digcalc.h>
 #include <network/mime.h>
 #include <system/invar/invar_manager.h>
-#include <system/application/applicationweb.h>
+#include <system/application/application_web.h>
 #include <system/user/user_manager.h>
 #include <system/fsys/fs_manager.h>
 #include <system/fsys/fs_manager_web.h>
@@ -57,7 +57,7 @@
  * @param urlpath pointer to table with path entries
  * @param request http request
  * @param loggedSession user session
- * @param pointer to integer where error number will be returned
+ * @param result pointer to integer where error number will be returned
  * @return http response
  */
 Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *loggedSession, int *result )
@@ -84,16 +84,23 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	if( urlpath[ 1 ] == NULL )
 	{
 		FERROR( "URL path is NULL!\n" );
-		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"second part of url is null!\"}" );
+		
+		char dictmsgbuf[ 256 ];
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+		HttpAddTextContent( response, dictmsgbuf );
 		
 		goto error;
-		//return response;
 	}
 	
-	//
-	// Get FC information
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/info</H2>Function return information about FriendCore
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return function return information about FriendCore
+	*/
+	/// @endcond
 	if( strcmp( urlpath[ 1 ], "info" ) == 0 )
 	{
 		BufString *bs = NULL;
@@ -106,10 +113,16 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		BufStringDelete( bs );
 	}
 	
-	//
-	// Get information about connections
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/listcores</H2>Function return information about FriendCore and connected FCores
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param module - (required) module which will be used (all other params will be taken from request)
+	* @return function return information about FriendCore and connected FCores
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "listcores" ) == 0 )
 	{
 		char *FCID = NULL;
@@ -148,8 +161,11 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 
 			BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 			
-			int size;
+			int size = 0;
+			char locid[ 129 ];
 			// current core
+			
+			strcpy( locid, l->fcm->fcm_ID );
 			
 			if( df != NULL )
 			{
@@ -171,27 +187,29 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					BufString *locbs = FriendCoreInfoGet( l->fcm->fcm_FCI );
 					if( locbs != NULL )
 					{
-						size = snprintf( temp, 2048, "{\"name\":\"localhost\",\"id\":\"%128s\",\"host\":\"localhost\",\"type\":\"fcnode\",\"details\":%s}", l->fcm->fcm_ID, locbs->bs_Buffer );
+						size = snprintf( temp, 2048, "{\"name\":\"localhost\",\"id\":\"%s\",\"host\":\"localhost\",\"type\":\"fcnode\",\"details\":%s}", locid, locbs->bs_Buffer );
+						
 						BufStringDelete( locbs );
+						pos = 1;
 					}
 				}
 			}
 			else
 			{
-				size = snprintf( temp, 2048, ",{\"name\":\"localhost\",\"id\":\"%128s\",\"host\":\"localhost\",\"type\":\"fcnode\"}", l->fcm->fcm_ID );
+				size = snprintf( temp, 2048, "{\"name\":\"localhost\",\"id\":\"%s\",\"host\":\"localhost\",\"type\":\"fcnode\"}", locid );
+				pos = 1;
 			}
 			BufStringAddSize( bs, temp, size );
-			pos = 1;
 			
 			// add other FC connections
 			
-			CommFCConnection *actCon = l->fcm->fcm_CommService->s_Connections;
+			FConnection *actCon = l->fcm->fcm_CommService->s_Connections;
 			while( actCon != NULL )
 			{
 				FBOOL addText = FALSE;
 				if( FCID != NULL )
 				{
-					if( strncmp( FCID, actCon->cfcc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+					if( strncmp( FCID, actCon->fc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
 					{
 						addText = TRUE;
 					}
@@ -200,9 +218,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 				{
 					addText = TRUE;
 				}
-				
-				DEBUG("Details %p\n", df );
-				
+
 				if( addText == TRUE )
 				{
 					if( df != NULL )	// user asked for details
@@ -212,14 +228,25 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						{
 							char *serverdata = receivedbs->bs_Buffer + (COMM_MSG_HEADER_SIZE*4) + FRIEND_CORE_MANAGER_ID_SIZE;
 							DataForm *locdf = (DataForm *)serverdata;
-				
+							
 							DEBUG("Checking RESPONSE\n");
 							if( locdf->df_ID == ID_RESP )
 							{
 								serverdata += COMM_MSG_HEADER_SIZE;
 								DEBUG("Response: %s\n", serverdata );
 							
-								size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"details\":%s}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address, serverdata );
+								if( pos == 0 )
+								{
+									size = snprintf( temp, 2048, "{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d,\"details\":%s}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status, serverdata );
+								}
+								else
+								{
+									size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d,\"details\":%s}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status, serverdata );
+								}
+								
+								DEBUG("TEMPADD: %s\n", temp );
+								
+								pos++;
 							}
 						
 							BufStringDelete( receivedbs );
@@ -227,14 +254,22 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					}
 					else		// no details required
 					{
-						size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+						if( pos == 0 )
+						{
+							size = snprintf( temp, 2048, "{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status );
+						}
+						else
+						{
+							size = snprintf( temp, 2048, ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\",\"ping\":%lu,\"status\":%d}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address, actCon->fc_PINGTime, actCon->fc_Status );
+						}
+						pos++;
 					}
 				
 					BufStringAddSize( bs, temp, size );
 				}	// addText = TRUE
 				
-				actCon = (CommFCConnection *)actCon->node.mln_Succ;
-				pos++;
+				actCon = (FConnection *)actCon->node.mln_Succ;
+				//pos++;
 			}
 			
 			BufStringAddSize( bs, "]", 1 );
@@ -263,10 +298,15 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		*result = 200;
 	}
 	
-	//
-	// Get information about connections
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/connectionsinfo</H2>Get information about FC connections
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return function return information about FriendCore connections
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "connectionsinfo" ) == 0 )
 	{
 		BufString *bs = BufStringNew();
@@ -308,23 +348,23 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			
 			// add other FC connections
 			
-			CommFCConnection *actCon = l->fcm->fcm_CommService->s_Connections;
+			FConnection *actCon = l->fcm->fcm_CommService->s_Connections;
 			while( actCon != NULL )
 			{
 				int size;
 				
 				if( pos == 0 )
 				{
-					size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+					size = snprintf( temp, sizeof(temp), "{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address );
 				}
 				else
 				{
-					size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->cfcc_Name, actCon->cffc_ID, actCon->cfcc_Address );
+					size = snprintf( temp, sizeof(temp), ",{\"name\":\"%s\",\"id\":\"%s\",\"host\":\"%s\",\"type\":\"fcnode\"}", actCon->fc_Name, actCon->fc_FCID, actCon->fc_Address );
 				}
 				
 				BufStringAddSize( bs, temp, size );
 				
-				actCon = (CommFCConnection *)actCon->node.mln_Succ;
+				actCon = (FConnection *)actCon->node.mln_Succ;
 				pos++;
 			}
 		}
@@ -361,10 +401,15 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		BufStringDelete( bs );
 	}
 	
-	//
-	// Send command to remote server
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/remotecommand</H2>Send command to remote server
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return remote functions response
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "remotecommand" ) == 0 )
 	{
 		HashmapElement *el = NULL;
@@ -394,65 +439,85 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 			if( df != NULL )
 			{
 				DEBUG("[AdminWebRequest] Connect to server rhost %s\n", host );
-				CommFCConnection *mycon = ConnectToServer( l->fcm->fcm_CommService, host );
+				FConnection *mycon = ConnectToServer( l->fcm->fcm_CommService, host );
 				if( mycon != NULL )
 				{
-					CommServiceRegisterEvent( mycon, mycon->cfcc_Socket );
+					CommServiceRegisterEvent( mycon, mycon->fc_Socket );
 					DataForm *recvdf = CommServiceSendMsgDirect( mycon, df );
 					if( recvdf != NULL )
 					{
 						DEBUG("[AdminWebRequest] Remote command, data received size %lu\n", recvdf->df_Size );
-						int allocsize = recvdf->df_Size - ((COMM_MSG_HEADER_SIZE<<1)+COMM_MSG_HEADER_SIZE);
+						int allocsize = recvdf->df_Size - (( SHIFT_LEFT(COMM_MSG_HEADER_SIZE, 1) )+COMM_MSG_HEADER_SIZE);
 						char *resppointer = FCalloc( allocsize, sizeof(FBYTE) );
 						if( resppointer != NULL )
 						{
-							memcpy( resppointer, ( (char *)recvdf + ((COMM_MSG_HEADER_SIZE<<1)+COMM_MSG_HEADER_SIZE) ), allocsize );
+							memcpy( resppointer, ( (char *)recvdf + (( SHIFT_LEFT(COMM_MSG_HEADER_SIZE, 1) )+COMM_MSG_HEADER_SIZE) ), allocsize );
 							DEBUG("[AdminWebRequest] etting response %s\n", resppointer );
 							
 							HttpSetContent( response, resppointer, allocsize );
 						}
 						else
 						{
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot allocate memory for response!\"}" );
+							char dictmsgbuf[ 256 ];
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+							HttpAddTextContent( response, dictmsgbuf );
+							//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot allocate memory for response!\"}" );
 						}
 						DataFormDelete( recvdf );
 					}
 					else
 					{
-						HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"response is empty!\"}" );
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED_EMPTY_STRING], "CommServiceSendMsgDirect" );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED_EMPTY_STRING );
+						HttpAddTextContent( response, dictmsgbuf );
+						//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"response is empty!\"}" );
 					}
 				}
 				else
 				{
-					char temp[ 512 ];
-					snprintf( temp, sizeof(temp), "ok<!--separate-->{\"response\":\"cannot setup connection with server!: %s\"}", host );
-					
-					HttpAddTextContent( response, temp );
+					char dictmsgbuf[ 256 ];
+					char dictmsgbuf1[ 196 ];
+					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_SERVER_CONNECT_ERROR], host );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_SERVER_CONNECT_ERROR );
+					HttpAddTextContent( response, dictmsgbuf );
+					//char temp[ 512 ];
+					//snprintf( temp, sizeof(temp), "ok<!--separate-->{\"response\":\"cannot setup connection with server!: %s\"}", host );
+					//HttpAddTextContent( response, temp );
 				}
 				
 				DataFormDelete( df );
 			}
 			else
 			{
-				HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot convert message!\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_CONVERT_MESSAGE] , DICT_CANNOT_CONVERT_MESSAGE );
+				HttpAddTextContent( response, dictmsgbuf );
+				//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"cannot convert message!\"}" );
 			}
 			FFree( host );
 		}
 		else
 		{
-			HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"'remotehost' parameter not found!\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "remotehost" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
+			//HttpAddTextContent( response, "fail<!--separate-->{\"response\":\"'remotehost' parameter not found!\"}" );
 		}
-		/*
-		 * if( remsession != NULL )
-		 * {
-		 *	FFree( remsession );
-	}*/
 	}
 	
-	//
-	// send message to all sessions
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/servermessage</H2>Send message to all sessions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return remote functions response
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "servermessage" ) == 0 )
 	{
 		HashmapElement *el = NULL;
@@ -488,7 +553,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 					{
 						DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
 						
-						if( ( (timestamp - locses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME ) )
+						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
 						{
 							char tmp[ 512 ];
 							int tmpsize = 0;
@@ -528,7 +593,10 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		}
 		else	//is admin
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"access denied\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+			//HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"access denied\"}" );
 		}
 		
 		if( msg != NULL )
@@ -538,6 +606,51 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 		
 		*result = 200;
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/admin/restartws</H2> Restart Websockets function
+	*
+	* @param sessionid - (required) session id of logged user
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "restartws" ) == 0 )
+	{
+		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		{
+			Log( FLOG_INFO, "Websocket thread will be restarted\n");
+			
+			if( l->fcm->fcm_WebSocket != NULL )
+			{
+				WebSocketDelete( l->fcm->fcm_WebSocket );
+				l->fcm->fcm_WebSocket = NULL;
+			}
+		
+			Log( FLOG_INFO, "Websocket stopped\n");
+			
+			if( ( l->fcm->fcm_WebSocket = WebSocketNew( l,  l->fcm->fcm_WSPort, l->fcm->fcm_WSSSLEnabled ) ) != NULL )
+			{
+				WebSocketStart( l->fcm->fcm_WebSocket );
+				Log( FLOG_INFO, "Websocket thread will started\n");
+			}
+			else
+			{
+				Log( FLOG_FATAL, "Cannot launch websocket server\n");
+			}
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+	}
+	
+		//
+		// function not found
+		//
+		
 	error:
 	
 	return response;

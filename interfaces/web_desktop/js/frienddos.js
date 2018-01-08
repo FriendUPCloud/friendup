@@ -27,12 +27,12 @@ function SayWithText( text )
 // Generating string
 function PadList( str, len, dir, chr, ellipsis )
 {
-	if( !str ) str = '';
-	if( !dir ) dir = 'left';
-	if( !chr ) chr = '&nbsp;';
-	if( typeof( ellipsis ) == 'undefined' ) ellipsis = true;
+	if( !str ){ str = ''; }
+	if( !dir ){ dir = 'left'; }
+	if( !chr ){ chr = '&nbsp;'; }
+	if( typeof( ellipsis ) == 'undefined' ){ ellipsis = true; }
 	var slen = str.length;
-	
+
 	// If we're using ellipsis
 	if( ellipsis )
 	{
@@ -42,12 +42,14 @@ function PadList( str, len, dir, chr, ellipsis )
 			str = str.substr( 0, len - 3 ) + '...';
 		}
 	}
-	
+
 	var stro = str;
+	var a;
+	
 	// Left padded
 	if( dir == 'left' )
 	{
-		for( var a = slen; a < len; a++ )
+		for( a = slen; a < len; a++ )
 		{
 			stro += chr;
 		}
@@ -77,7 +79,7 @@ function PadList( str, len, dir, chr, ellipsis )
 *                                                                              *
 *******************************************************************************/
 
-Shell = function( appObject )
+window.Shell = function( appObject )
 {
 	this.applicationId = false;
 	this.authId = false;
@@ -92,9 +94,11 @@ Shell = function( appObject )
 	this.state = { entry: -1 }; // Engine state
 	this.mindMode = false; // Use A.I.
 	this.pipe = false; // Target pipe!
-	
+
 	this.mind = FriendMind.makeSession( appObject );
-	
+
+	var aa = 0;
+
 	// This is used by object that are living in the Workspace domain
 	if( appObject.sessionId )
 	{
@@ -107,9 +111,9 @@ Shell = function( appObject )
 		this.authId = appObject.authId;
 		// Find app object
 		var tsk = ge( 'Tasks' );
-		for( var a = 0; a < tsk.childNodes.length; a++ )
+		for( aa = 0; aa < tsk.childNodes.length; aa++ )
 		{
-			var ttt = tsk.childNodes[a];
+			var ttt = tsk.childNodes[aa];
 			if( ttt.ifr && ttt.ifr.applicationId == this.applicationId )
 			{
 				this.app = ttt.ifr;
@@ -117,19 +121,20 @@ Shell = function( appObject )
 			}
 		}
 	}
+	
 	this.uniqueId = false;
 	while( !this.uniqueId || typeof( FriendDOS.sessions[this.uniqueId] ) != 'undefined' )
 	{
 		this.uniqueId = '';
-		for( var a = 0; a < 4; a++ )
+		for( aa = 0; aa < 4; aa++ )
 			this.uniqueId += Math.random() * 9999;
 	}
-	
+
 	// Check if we're trying to access a dormant drive
 	this.checkDormantDoors = function( path, callback )
 	{
 		if( !path ) path = this.currentPath;
-		if( !path ) 
+		if( !path )
 		{
 			return callback( false );
 		}
@@ -142,21 +147,23 @@ Shell = function( appObject )
 				path = this.currentPath + '/' + path;
 		}
 		if( path.indexOf( ':' ) <= 0 ) path = this.currentPath;
-	
+
 		var p = path.split( ':' )[0] + ':';
 		if( typeof( DormantMaster ) != 'undefined' )
 		{
+			function handleDirs( dirs )
+			{
+				if( callback ) callback( dirs );
+			}
+		
 			var doors = DormantMaster.getDoors();
 			if( doors )
 			{
-				for ( var a in doors )
+				for( var a in doors )
 				{
 					if( doors[a].Title.toLowerCase() == p.toLowerCase() )
 					{
-						doors[a].Dormant.getDirectory( path, function( dirs )
-						{
-							if( callback ) callback( dirs );
-						} );
+						doors[a].Dormant.getDirectory( path, handleDirs );
 						return;
 					}
 				}
@@ -171,21 +178,21 @@ Shell = function( appObject )
 			return callback( false );
 		}
 		return;
-	}
-	
+	};
+
 	// Check if a file exists
 	this.fileExists = function( fileWithPath, callback )
 	{
 		var path = '';
 		var dirmode = false;
-		
+
 		// Aha a directory!
 		if( fileWithPath.substr( fileWithPath.length - 1, 1 ) == '/' )
 		{
 			fileWithPath = fileWithPath.substr( 0, fileWithPath.length - 1 );
 			dirmode = true;
 		}
-		
+
 		if( fileWithPath.indexOf( '/' ) > 0 )
 		{
 			path = fileWithPath.split( '/' );
@@ -193,7 +200,7 @@ Shell = function( appObject )
 			path = path.join( '/' ) + '/';
 		}
 		else path = fileWithPath.split( ':' )[0] + ':';
-		
+
 		this.getDirectory( path, function( info, data )
 		{
 			if( dirmode ) fileWithPath += '/';
@@ -210,8 +217,8 @@ Shell = function( appObject )
 			}
 			callback( false, false );
 		} );
-	}
-	
+	};
+
 	// Gets a directory based on path and returns directory items and info
 	this.getDirectory = function( path, callback, flags )
 	{
@@ -220,7 +227,7 @@ Shell = function( appObject )
 		{
 			var fname = path.split( ':' )[1];
 			if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }
-	
+
 			// If we end up here, we're not using dormant - which is OK! :)
 			if( !dirs || ( !dirs && !dirs.length ) )
 			{
@@ -235,7 +242,7 @@ Shell = function( appObject )
 							Type: path.substr( path.length - 1, 1 ) == ':' ? 'Volume' : 'Directory',
 							Filename: fname && fname.length ? fname : path,
 							Path: path
-						}
+						};
 					}
 					if( callback ) callback( info, data );
 				}, flags );
@@ -249,7 +256,7 @@ Shell = function( appObject )
 					for( var a in dirs ) o.push( dirs[a] );
 					dirs = o;
 				}
-			
+
 				callback( {
 					Type: path.substr( path.length - 1, 1 ) == ':' ? 'Volume' : 'Directory',
 					Filename: fname && fname.length ? fname : path,
@@ -257,8 +264,8 @@ Shell = function( appObject )
 				}, dirs );
 			}
 		}, flags );
-	}
-	
+	};
+
 	this.mountDevice = function( devname )
 	{
 		var l = new Library( 'system.library' );
@@ -267,10 +274,10 @@ Shell = function( appObject )
 			if( e != 'ok' )
 			{
 			}
-		}
+		};
 		l.execute( 'device/mount', { devname: devname, sessionid: Workspace.sessionid } );
-	}
-	
+	};
+
 	this.unmountDevice = function( dev )
 	{
 		var l = new Library( 'system.library' );
@@ -279,10 +286,10 @@ Shell = function( appObject )
 			if( e != 'ok' )
 			{
 			}
-		}
+		};
 		l.execute( 'device/unmount', { devname: devname, sessionid: Workspace.sessionid } );
-	}
-	
+	};
+
 	// Adds an event
 	this.addEvent = function( eventName, persistent, callback )
 	{
@@ -299,8 +306,8 @@ Shell = function( appObject )
 			}
 		}
 		return false;
-	}
-	
+	};
+
 	// This one is triggered on system events
 	this.runEvents = function( eventName )
 	{
@@ -326,8 +333,8 @@ Shell = function( appObject )
 		}
 		this.events = nlist;
 		this.eventsRunning = false;
-	}
-	
+	};
+
 	// Clear events (by name optionally)
 	this.clearEvents = function( eventName )
 	{
@@ -342,15 +349,15 @@ Shell = function( appObject )
 			}
 			this.events = nlist;
 		}
-	}
-	
+	};
+
 	// Parse a whole script
 	this.parseScript = function( script, callback )
 	{
 		script = script.split( "\n" );
 		this.queueCommand( script, 0, [], callback );
-	}
-	
+	};
+
 	// queue and culminate output!
 	this.queueCommand = function( array, index, buffer, callback )
 	{
@@ -370,8 +377,8 @@ Shell = function( appObject )
 				t.queueCommand( array, index, buffer, callback );
 			}
 		} );
-	}
-	
+	};
+
 	// Preparse script to support voice commands!
 	this.context = false;
 	this.exeIcon = false;
@@ -391,18 +398,19 @@ Shell = function( appObject )
                 ge( 'Tray' ).getElementsByTagName( 'div' )[0].style.color = 'white';
             }
 		}
-		
+
 		// Sanitize
 		string = Trim( string.toLowerCase() );
 		var args = string.split( ' ' );
-		var arguments = '';
-		for( var a = 1; a < args.length; a++ )
+		var fin_args = '';
+		var a = 0;
+		for( a = 1; a < args.length; a++ )
 		{
 			if( a != 1 )
-				arguments += ' ';
-			arguments += args[a];
+				fin_args += ' ';
+			fin_args += args[a];
 		}
-		
+
 		// Check context!
 		if( this.context == 'executable' )
 		{
@@ -458,7 +466,7 @@ Shell = function( appObject )
 			SayWithText( 'Could not understand what you wanted to do with the executable. Reverting to standard mode.' );
 			return false;
 		}
-		
+
 		// Some number magick!
 		if( args.length >= 3 && ( args[2] == 'file' || args[2] == 'directory' || args[2] == 'volume' ) )
 		{
@@ -481,8 +489,8 @@ Shell = function( appObject )
 			}
 			args[1] = type;
 		}
-		
-		arguments = Trim( arguments );
+
+		fin_args = Trim( fin_args );
 		switch( Trim( args[0] ) )
 		{
 			case 'open':
@@ -505,14 +513,14 @@ Shell = function( appObject )
 				   var tries = [ args[2].toLowerCase() ];
 				   if( typeof( args[3] ) != 'undefined' )
 				   {
-					   tries.push( 
-						   args[2].toLowerCase() + args[3].toLowerCase() 
+					   tries.push(
+						   args[2].toLowerCase() + args[3].toLowerCase()
 					   );
 				   }
 				   for( var b = 0; b < tries.length; b++ )
 				   {
 					   // Two tries
-					   for( var a = 0; a < icons.length; a++ )
+					   for( a = 0; a < icons.length; a++ )
 					   {
 						   if( icons[a].Volume.toLowerCase().split( ':' )[0] == tries[b] )
 						   {
@@ -542,26 +550,27 @@ Shell = function( appObject )
 					SayWithText( 'I can not find the file you are looking for. Are you sure ' + args[2] + ' is found in the active view?' );
 					return;
 				}
+				break;
 			case 'run':
-				if( arguments == 'programming application' )
+				if( fin_args == 'programming application' )
 				{
 					ExecuteApplication( 'Artisan' );
 					SayWithText( 'You opened the programming application, Artisan.' );
 					return;
 				}
-				else if( arguments == 'chat application' )
+				else if( fin_args == 'chat application' )
 				{
 					ExecuteApplication( 'Hello' );
 					SayWithText( 'You open the chat application, Hello.' );
 					return;
 				}
-				else if( arguments == 'terminal application' )
+				else if( fin_args == 'terminal application' )
 				{
 					ExecuteApplication( 'Shell' );
 					SayWithText( 'You open the terminal, application.' );
 					return;
 				}
-				else if( arguments == 'document application' )
+				else if( fin_args == 'document application' )
 				{
 					ExecuteApplication( 'Author' );
 					SayWithText( 'You opened the document application, Author.' );
@@ -569,7 +578,7 @@ Shell = function( appObject )
 				}
 				break;
 			case 'screen':
-				// TODO: Don't accept more arguments
+				// TODO: Don't accept more fin_args
 				if( args[1] == 'close' )
 				{
 					window.currentScreen.screen.close();
@@ -595,6 +604,7 @@ Shell = function( appObject )
 				}
 				break;
 			case 'move':
+				var nl;
 				if( !window.currentMovable )
 				{
 					SayWithText( 'I have no window or desklet to move.' );
@@ -602,35 +612,34 @@ Shell = function( appObject )
 				}
 				if( args[1] == 'left' )
 				{
-					var nl = window.currentMovable.offsetLeft - 100;
+					nl = window.currentMovable.offsetLeft - 100;
 					ConstrainWindow( window.currentMovable, nl );
 					SayWithText( 'Window moved left.' );
 					return false;
 				}
 				else if( args[1] == 'right' )
 				{
-					var nl = window.currentMovable.offsetLeft + 100;
+					nl = window.currentMovable.offsetLeft + 100;
 					ConstrainWindow( window.currentMovable, nl );
 					SayWithText( 'Window moved right.' );
 					return false;
 				}
 				else if( args[1] == 'up' )
 				{
-					var nl = window.currentMovable.offsetTop - 100;
+					nl = window.currentMovable.offsetTop - 100;
 					ConstrainWindow( window.currentMovable, false, nl );
 					SayWithText( 'Window moved up.' );
 					return false;
 				}
 				else if( args[1] == 'down' )
 				{
-					var nl = window.currentMovable.offsetTop + 100;
+					nl = window.currentMovable.offsetTop + 100;
 					ConstrainWindow( window.currentMovable, false, nl );
 					SayWithText( 'Window moved down.' );
 					return false;
 				}
 				SayWithText( 'How do I move?' );
 				return false;
-				break;
 			case 'scroll':
 				if( !window.currentMovable && !window.currentMovable.content )
 				{
@@ -651,9 +660,8 @@ Shell = function( appObject )
 				}
 				SayWithText( 'How do I scroll?' );
 				return false;
-				break;
 			case 'window':
-				// TODO: Don't accept more arguments
+				// TODO: Don't accept more fin_args
 				if( args[1] == 'close' )
 				{
 					CloseWindow( window.currentMovable );
@@ -663,11 +671,11 @@ Shell = function( appObject )
 				else if( args[1] == 'cycle' || args[1] == 'swap' )
 				{
 					var ind = [];
-					for( var a in movableWindows )
+					for( a in movableWindows )
 					{
 						ind.push( movableWindows[a] );
 					}
-					for( var a = 0; a < ind.length; a++ )
+					for( a = 0; a < ind.length; a++ )
 					{
 						if( ind[a] == window.currentMovable || !window.currentMovable )
 						{
@@ -684,31 +692,31 @@ Shell = function( appObject )
 				break;
 			case 'quit':
 			case 'close':
-				 if( arguments == 'programming application' )
+				 if( fin_args == 'programming application' )
 				{
 					KillApplication( 'Artisan' );
 					SayWithText( 'You quit the programming application, Artisan.' );
 					return;
 				}
-				else if( arguments == 'chat application' )
+				else if( fin_args == 'chat application' )
 				{
 					KillApplication( 'Hello' );
 					SayWithText( 'You quit the chat application, Hello.' );
 					return;
 				}
-				else if( arguments == 'terminal application' )
+				else if( fin_args == 'terminal application' )
 				{
 					KillApplication( 'Shell' );
 					SayWithText( 'You quit the termina application.' );
 					return;
 				}
-				else if( arguments == 'document application' )
+				else if( fin_args == 'document application' )
 				{
 					KillApplication( 'Author' );
 					SayWithText( 'You quit the document application, Author.' );
 					return;
 				}
-				else if( arguments == 'windows' )
+				else if( fin_args == 'windows' )
 				{
 					CloseAllWindows();
 					SayWithText( 'All the windows have been closed.' );
@@ -724,8 +732,8 @@ Shell = function( appObject )
 				break;
 		}
 		SayWithText( 'Excuse me. Can you repeat that?' );
-	}
-	
+	};
+
 	this.parseVariables = function( pr )
 	{
 		for( var a in this.variables )
@@ -734,16 +742,19 @@ Shell = function( appObject )
 			pr = pr.split( "$" + a ).join( this.variables[a] );
 		}
 		return pr;
-	}
-	
+	};
+
 	// Evaluate until done! (for scripts etc)
 	this.evaluate = function( input, callback, clientKey, restrictedPath )
 	{
-		this.clientKey = clientKey;
+		if ( clientKey == 'Workspace' )
+			this.workspace = true;
+		else
+			this.clientKey = clientKey;
 		this.restrictedPath = restrictedPath;
 		this.evaluateInput( input, 0, callback );
-	}
-	
+	};
+
 	// Evaluate an input command array
 	this.evaluateInput = function( input, index, callback, mode )
 	{
@@ -752,7 +763,8 @@ Shell = function( appObject )
 		{
 			t.executeEvaluateInput( input, index, callback, mode );
 		}, 0 );
-	}
+	};
+	
 	this.executeEvaluateInput = function( input, index, callback, mode )
 	{
 		// Only allow 100 iterations and then exit!
@@ -761,42 +773,52 @@ Shell = function( appObject )
 			// Reset from line 0
 			window.counter = 0;
 		}
-		else 
+		else
 		{
 			window.counter++;
-			if( window.counter > 100 ) 
+			if( window.counter > 100 )
 			{
 				console.log( 'Maximum execution 100! Abort.' );
 				return false;
 			}
 		}*/
-		
+
 		//console.log( "> Ready to do: " + input[ index ] );
 		// What to do with the ouput?
 		var t = this;
 		var previousCallback = callback;
 		callback = function( data, returnMessage )
 		{
-			// If the current shell is a host of FriendNetwork client, send the response to him
-			if ( t.clientKey && !t.skipClient )
+			if ( t.workspace )
 			{
-				FriendNetwork.send({
-					key: t.clientKey,
-					data:{
-						returnMessage: returnMessage,
-						data:          data
-					}
-				}, function( msg )
-				{
-				});
+				//t.skipClient = false;
+				previousCallback( data, returnMessage );
 			}
 			else
 			{
-				// If not, just output to the current output stream
-				t.skipClient = false;
-				previousCallback( data, returnMessage );
+				// If the current shell is a host of FriendNetwork client, send the response to him
+				if ( t.clientKey && !t.skipClient )
+				{
+					FriendNetwork.send(
+					{
+						key: t.clientKey,
+						data:{
+							returnMessage: returnMessage,
+							data:          data
+						}
+					}, function( msg )
+					{
+					});
+				}
+				else
+				{
+					// If not, just output to the current output stream
+					t.skipClient = false;
+					previousCallback( data, returnMessage );
+				}
 			}
 		};
+		
 		if( this.executing )
 		{
 			if( this.break )
@@ -807,7 +829,7 @@ Shell = function( appObject )
 				return false;
 			}
 		}
-		
+
 		// End of the line on arrays
 		if( !input || index >= input.length )
 		{
@@ -818,7 +840,7 @@ Shell = function( appObject )
 				if( this.variables[this.state.variable] < this.state.times )
 				{
 					this.variables[this.state.variable]++;
-					
+
 					// Just repeat over and over..
 					return this.evaluateInput( this.state.preroll, 0, callback, 'inside' );
 				}
@@ -842,7 +864,7 @@ Shell = function( appObject )
 			// except if we've terminated this process with this.terminate
 			if( !this.terminate && mode != 'inside' )
 			{
-				console.log( 'We are not inside.' );
+				//console.log( 'We are not inside.' );
 				callback( true, { done: true } );
 			}
 			this.terminate = false;
@@ -850,20 +872,20 @@ Shell = function( appObject )
 			return;
 		}
 		if( !index ) index = 0;
-		
+
 		var cmd, rawLine;
-		
+
 		// elements
 		if( input[index] )
 		{
 			rawLine = input[index];
-			cmd = rawLine.split( /\<[^>]*?\>/i ).join( '' );
+			cmd = rawLine.split( /<[^>]*?>/i ).join( '' );
 		}
 		else
 		{
 			rawLine = ''; cmd = '';
 		}
-		
+
 		// Shortcut to cd
 		if( !mode && rawLine.indexOf( ' ' ) < 0 )
 		{
@@ -891,20 +913,23 @@ Shell = function( appObject )
 				return this.evaluateInput( input, index, callback, mode );
 			}
 		}
-		
+
 		// Ignore identation
 		cmd = Trim( cmd, 'left' );
 		//console.log( " > CMD:" + cmd );
-		
+
 		// Ignore comments
 		if( cmd.substr( 0, 2 ) == '//' ) return this.evaluateInput( input, index + 1, callback, mode );
-		
+
 		// Fix spaces
 		cmd = cmd.split( '\\ ' ).join( '<!--space--!>' );
 		cmd = this.parseVariables( cmd );
 		cmd = cmd.split( ' ' );
 		cmd[0] = cmd[0].toLowerCase();
-		for( var a = 0; a < cmd.length; a++ )
+		// Counters
+		var a = 0, b = 0, c = 0, ba = 0;
+		
+		for( ; a < cmd.length; a++ )
 		{
 			// Fix these, because we use it for something else
 			do
@@ -919,7 +944,7 @@ Shell = function( appObject )
 			}
 			while( 1 );
 		}
-		
+
 		// Multiline fork
 		if( cmd.indexOf( ';' ) > 0 )
 		{
@@ -940,14 +965,14 @@ Shell = function( appObject )
 			}
 			return this.evaluateInput( ar, 0, callback, mode );
 		}
-	
+
 		// Safety, correct currentpath
 		if ( this.currentPath.substr( this.currentPath.length-1, 1 ) != ':' )
 		{
 			if ( this.currentPath.substr( this.currentPath.length-1, 1 ) != '/' )
 				this.currentPath += '/';
 		}
-		
+
 		// Test for some erroneous input
 		if( cmd[0] == "\n" )
 		{
@@ -955,9 +980,9 @@ Shell = function( appObject )
 			//				this.addNL();
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
-		
+
 		//console.log( ' > Beginning to test: ' + cmd.join( ' ' ) );
-		
+
 		// Go do the real stuff ----------------------------------------------------
 		// Condition block
 		if( cmd[0] == 'if' )
@@ -969,22 +994,23 @@ Shell = function( appObject )
 				// Find what we compare, and what we compare to
 				var preroll = '';
 				var operators = [ '=', '!=', '<', '>' ];
-				var arguments = [];
+				var fin_args = [];
 				var compi = 0;
 				var argument = {
 					operator: '',
 					vars: []
 				};
-				
+
 				// Case
 				var out = [];
-				for( var a = 0; a < cmd.length; a++ )
+				var c = 0;
+				for( a = 0; a < cmd.length; a++ )
 				{
 					if( cmd[a].substr( cmd[a].length - 1, 1 ) == ':' )
 					{
 						out.push( cmd[a].substr( 0, cmd[a].length - 1 ) );
 						out.push( ':' );
-						for( var c = a + 1; c < cmd.length; c++ )
+						for( c = a + 1; c < cmd.length; c++ )
 						{
 							if( c > a + 1 ) preroll += ' ';
 							preroll += cmd[c];
@@ -993,27 +1019,27 @@ Shell = function( appObject )
 					else out.push( cmd[a] );
 				}
 				cmd = out;
-				
-				for( var b = 1; b < cmd.length; b++ )
+
+				for( b = 1; b < cmd.length; b++ )
 				{
 					// End of the line
 					if( cmd[b] == ':' )
 					{
-						if( argument.operator ) arguments.push( argument );
+						if( argument.operator ) fin_args.push( argument );
 						break;
 					}
-					
+
 					if( cmd[b] == 'and' || cmd[b] == 'or' )
 					{
-						if( argument.operator ) arguments.push( argument );
-						arguments.push( { operator: cmd[b] } );
+						if( argument.operator ) fin_args.push( argument );
+						fin_args.push( { operator: cmd[b] } );
 						argument = { operator: '', vars: [] };
 						continue;
 					}
-					
+
 					// find operators
 					var operatorFound = false;
-					for( var c = 0; c < operators.length; c++ )
+					for( c = 0; c < operators.length; c++ )
 					{
 						if( cmd[b] == operators[c] )
 						{
@@ -1023,74 +1049,74 @@ Shell = function( appObject )
 						}
 					}
 					if( operatorFound ) continue;
-					
-					// We only allow to compare two arguments
+
+					// We only allow to compare two fin_args
 					if( argument.vars.length < 2 )
 						argument.vars.push( cmd[b] );
 					else
 					{
-						arguments.push( argument );
+						fin_args.push( argument );
 						argument = { operator: '', vars: [] };
 					}
 				}
-				
+
 				// Unadded - now added
 				if( argument.operator )
-					arguments.push( argument );
-				
+					fin_args.push( argument );
+
 				// Check if this fans out!
-				for( var a = 0; a < arguments.length; a++ )
+				for( a = 0; a < fin_args.length; a++ )
 				{
 					// Parse variables
-					for( var c = 0; c < arguments[a].vars.length; c++ )
-						if( arguments[a].vars[c].substr( 0, 1 ) == '$' )
-							arguments[a].vars[c] = this.parseVariables( arguments[a].vars[c] );
-					
-					switch( arguments[a].operator )
+					for( c = 0; c < fin_args[a].vars.length; c++ )
+						if( fin_args[a].vars[c].substr( 0, 1 ) == '$' )
+							fin_args[a].vars[c] = this.parseVariables( fin_args[a].vars[c] );
+
+					switch( fin_args[a].operator )
 					{
 						case '=':
-							if( arguments[a].vars.length == 2 )
+							if( fin_args[a].vars.length == 2 )
 							{
-								arguments[a].result = arguments[a].vars[0] == arguments[a].vars[1];
+								fin_args[a].result = fin_args[a].vars[0] == fin_args[a].vars[1];
 							}
 							break;
 						case '!=':
-							if( arguments[a].vars.length == 2 )
-								arguments[a].result = arguments[a].vars[0] != arguments[a].vars[1];
+							if( fin_args[a].vars.length == 2 )
+								fin_args[a].result = fin_args[a].vars[0] != fin_args[a].vars[1];
 							break;
 						case '<':
-							if( arguments[a].vars.length == 2 )
-								arguments[a].result = parseFloat( arguments[a].vars[0] ) < parseFloat( arguments[a].vars[1] );
+							if( fin_args[a].vars.length == 2 )
+								fin_args[a].result = parseFloat( fin_args[a].vars[0] ) < parseFloat( fin_args[a].vars[1] );
 							break;
 						case '>':
-							if( arguments[a].vars.length == 2 )
+							if( fin_args[a].vars.length == 2 )
 							{
-								arguments[a].result = parseFloat( arguments[a].vars[0] ) > parseFloat( arguments[a].vars[1] );
+								fin_args[a].result = parseFloat( fin_args[a].vars[0] ) > parseFloat( fin_args[a].vars[1] );
 							}
 							break;
 					}
 				}
-				
-				// Evaluate all arguments
+
+				// Evaluate all fin_args
 				var result  = true;
 				var orFlag  = false;
 				var oneTrue = false;
-				for( var a = 0; a < arguments.length; a++ )
+				for( a = 0; a < fin_args.length; a++ )
 				{
-					if( arguments[a].operator == 'or' )
+					if( fin_args[a].operator == 'or' )
 					{
 						orFlag = true;
 					}
-					if( arguments[a].result == false )
+					if( fin_args[a].result === false )
 						result = false;
 					else oneTrue = true;
 				}
-				
+
 				// Sum it up!
 				result = oneTrue && orFlag ? true : result;
-				
+
 				//console.log( 'Result from cmd: ' + cmd.join( ' ' ) + ' is ' + ( result ? 'true' : 'false' ) );
-				
+
 				if( preroll.length )
 				{
 					if( result )
@@ -1105,10 +1131,10 @@ Shell = function( appObject )
 					// Find the terminator
 					var terminator = false;
 					var depth = 0;
-					for( var ba = index + 1; ba < input.length; ba++ )
+					for( ba = index + 1; ba < input.length; ba++ )
 					{
 						var lineH = Trim( input[ba], 'left' );
-						
+
 						// TODO: Add all other loops that use stop!
 						if(
 							lineH.substr( 0, 6 ) == 'repeat' ||
@@ -1120,7 +1146,7 @@ Shell = function( appObject )
 						}
 						if( lineH.substr( 0, 4 ) == 'stop' )
 						{
-							if( depth == 0 )
+							if( depth === 0 )
 							{
 								terminator = ba;
 								break;
@@ -1132,7 +1158,7 @@ Shell = function( appObject )
 					{
 						terminator = index + 1;
 					}
-					
+
 					// Ok, we have a terminator, rearrange with these items
 					if( terminator )
 					{
@@ -1188,13 +1214,13 @@ Shell = function( appObject )
 			if( cmd.length < 2 || typeof( cmd[2] ) == 'undefined' )
 			{
 				t.lastErrorMessage = 'The set command needs both a variable name and a value.';
-				return callback( false, { response: "Not enough arguments.", done: true } );
+				return callback( false, { response: "Not enough fin_args.", done: true } );
 			}
-			
+
 			var va = cmd[2];
 			if( va.indexOf && va.indexOf( '<!--space--!>' ) )
 				va = va.split( '<!--space--!>' ).join( ' ' );
-			
+
 			this.variables[cmd[1]] = isNaN( parseFloat( va ) ) ? va : parseFloat( va );
 			callback( true, { variable: cmd[1], variableValue: this.variables[cmd[1]] } );
 			return this.evaluateInput( input, index+1, callback, mode );
@@ -1280,14 +1306,14 @@ Shell = function( appObject )
 						// If we have a colon here, the next part is a new command
 						var colonFound = false;
 						if( cmd[2] == 'times:' ) colonFound = 2;
-					
+
 						// Add preroll
 						var preroll = [];
-				
+
 						var variable = '';
-						if( colonFound == false )
+						if( colonFound === false )
 						{
-							for( var c = 0; c < cmd.length; c++ )
+							for( c = 0; c < cmd.length; c++ )
 							{
 								// Variable next to colon
 								if( cmd[c].indexOf( ':' ) > 0 && !colonFound )
@@ -1307,7 +1333,7 @@ Shell = function( appObject )
 						var command = '';
 						if( colonFound > 0 && cmd.length > colonFound )
 						{
-							for( var c = colonFound + 1; c < cmd.length; c++ )
+							for( c = colonFound + 1; c < cmd.length; c++ )
 							{
 								if( c > colonFound + 1 )
 									command += ' ';
@@ -1321,14 +1347,14 @@ Shell = function( appObject )
 							if (command.length)
 								preroll.push(command);
 						}
-					
+
 						// Find the terminator 'stop'
 						var terminator = index;
 						var depth = 0;
-						for( var ba = index + 1; ba < input.length; ba++ )
+						for( ba = index + 1; ba < input.length; ba++ )
 						{
 							var lineH = Trim( input[ba], 'left' );
-							
+
 							// TODO: Add all other loops that use stop!
 							if(
 								lineH.substr( 0, 6 ) == 'repeat' ||
@@ -1340,7 +1366,7 @@ Shell = function( appObject )
 							}
 							if( lineH.substr( 0, 4 ) == 'stop' )
 							{
-								if( depth == 0 )
+								if( depth === 0 )
 								{
 									terminator = ba;
 									break;
@@ -1348,16 +1374,16 @@ Shell = function( appObject )
 								else depth--;
 							}
 						}
-						
+
 						if (terminator > index)
 						{
 							for (var a = index + 1; a < terminator; a++)
 								preroll.push(input[a]);
 						}
-						
+
 						// Reset variable!
 						this.variables[ variable ] = 0;
-					
+
 						// Set the state of the engine
 						this.state = {
 							mode: 'repeat',
@@ -1369,7 +1395,7 @@ Shell = function( appObject )
 							prevInput: input,
 							prevMode: mode
 						};
-					
+
 						// Reevaluate!
 						return this.evaluateInput( preroll, 0, callback, 'inside' );
 					}
@@ -1400,13 +1426,13 @@ Shell = function( appObject )
 						if( colonFound == 2 )
 							trigger = cmd[2].substr( 0, cmd[2].length - 1 );
 						else trigger = cmd[2];
-						
+
 						// Add preroll
 						var preroll = '';
 						var variable = '';
-						if( colonFound == false )
+						if( colonFound === false )
 						{
-							for( var c = 0; c < cmd.length; c++ )
+							for( c = 0; c < cmd.length; c++ )
 							{
 								// Variable next to colon
 								if( cmd[c].indexOf( ':' ) > 0 && !colonFound )
@@ -1422,17 +1448,17 @@ Shell = function( appObject )
 									colonFound = c;
 							}
 						}
-						
+
 						if( colonFound > 0 && cmd.length > colonFound )
 						{
-							for( var c = colonFound+1; c < cmd.length; c++ )
+							for( c = colonFound+1; c < cmd.length; c++ )
 							{
 								if( c > colonFound+1 )
 									preroll += ' ';
 								preroll += cmd[c];
 							}
 						}
-						
+
 						// Hmm. No more commands?
 						if( input.length <= index && !preroll.length )
 						{
@@ -1446,10 +1472,10 @@ Shell = function( appObject )
 							// Find the terminator
 							var terminator = false;
 							var depth = 0;
-							for( var ba = index + 1; ba < input.length; ba++ )
+							for( ba = index + 1; ba < input.length; ba++ )
 							{
 								var lineH = Trim( input[ba], 'left' );
-						
+
 								// TODO: Add all other loops that use stop!
 								if(
 									lineH.substr( 0, 6 ) == 'repeat' ||
@@ -1461,7 +1487,7 @@ Shell = function( appObject )
 								}
 								if( lineH.substr( 0, 4 ) == 'stop' )
 								{
-									if( depth == 0 )
+									if( depth === 0 )
 									{
 										terminator = ba;
 										break;
@@ -1473,35 +1499,35 @@ Shell = function( appObject )
 							{
 								terminator = index + 1;
 							}
-							
+
 							// Ok, we have a terminator, add list to callbacks
 							if( terminator )
 							{
 								var newList = [];
-								
+
 								for( var n = index + 1; n <= terminator; n++ )
 								{
 									if( preroll )
 									{
 										var pr = Trim( preroll, 'left' );
-										
+
 										// Skip the stop
 										if( pr == 'stop' ) continue;
 										if( pr == '' ) continue;
-										
+
 										pr = this.parseVariables( pr );
 										newList.push( Trim( pr, 'left' ) );
 									}
-									
+
 									// Skip a stop
 									var pr = Trim( input[n], 'left' );
 									if( pr == 'stop' ) continue;
 									if( pr == '' ) continue;
-									
+
 									var pr = this.parseVariables( pr );
 									newList.push( pr );
 								}
-								
+
 								// Add script that will run on event
 								if( app && trigger )
 									addOnEventTrigger( app, trigger, variable, newList );
@@ -1517,11 +1543,11 @@ Shell = function( appObject )
 								var pr = preroll;
 								pr = this.parseVariables( pr );
 								newList.push( pr );
-								
+
 								// Add script that will run on event
 								if( app && trigger )
 									addOnEventTrigger( app, trigger, variable, newList );
-								
+
 								// Go ahead with the list after terminator
 								// t.addNL()
 								return this.evaluateInput( input, index + 1, callback, mode );
@@ -1541,7 +1567,7 @@ Shell = function( appObject )
 		// Handle scripts!
 		else if( cmd[0] == 'version' )
 		{
-			callback( true, { response: 'Friend Shell version 1.0.0' } );
+			callback( true, { response: 'Friend Shell version 1.1' } );
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
 		// Handle gotos!
@@ -1552,7 +1578,7 @@ Shell = function( appObject )
 			{
 				return this.evaluateInput( input, parseInt( where ), callback, mode );
 			}
-			for( var a = 0; a < input.length; a++ )
+			for( a = 0; a < input.length; a++ )
 			{
 				var str = Trim( input[a], 'left' );
 				if( str.substr( str.length - 1, 1 ) == ':' && str.substr( 0, str.length - 1 ) == where )
@@ -1575,11 +1601,11 @@ Shell = function( appObject )
 					t.evaluateInput( input, index + 1, callback, mode );
 			} );
 		}
-	}
-	
+	};
+
 	// Parses a shell script!
 	this.parseShellScript = function( data, callback )
-	{	
+	{
 		if( data.substr( 0, 1 ) == '<' )
 		{
 			this.input = true;
@@ -1587,20 +1613,20 @@ Shell = function( appObject )
 				callback( false, { response: 'Error in script on line 1.', input: 'on' } );
 			return false;
 		}
-		
+
 		// Start executing script
 		data = data.split( "\n" );
 		this.executing = true;
 		this.evaluateInput( data, 0, callback, 'script' );
-	}
-	
+	};
+
 	// Parse a command
 	this.execute = function( cmd, ecallback )
-	{	
+	{
 		// References
 		// TODO: Remove dosobj and replace with t
 		var dosobj = t = this;
-		
+
 		// Pipe to another place (reroute)
 		if( this.pipe )
 		{
@@ -1613,7 +1639,7 @@ Shell = function( appObject )
 						return ecallback( false, 'Unknown response..' );
 					ecallback( true, { response: response } );
 				} );
-				this.pipe.contentWindow.postMessage( JSON.stringify( { command: 'cliarguments', shellId: this.uniqueId, args: cmd, callbackId: cid } ), '*' );
+				this.pipe.contentWindow.postMessage( JSON.stringify( { command: 'clifin_args', shellId: this.uniqueId, args: cmd, callbackId: cid } ), '*' );
 				return;
 			}
 			// Pipe is a function. It needs to take commands and callback!
@@ -1629,7 +1655,7 @@ Shell = function( appObject )
 				return;
 			}
 		}
-		
+
 		// For applications to jack in..
 		if( cmd == 'mind on' )
 		{
@@ -1641,14 +1667,14 @@ Shell = function( appObject )
 			this.mindMode = false;
 			return ecallback( false, { response: 'Mind off.' } );
 		}
-		
+
 		if( this.mindMode )
 		{
 			return this.mind.parse( cmd, ecallback );
 		}
-		
+
 		var rawLine = cmd + '';
-		
+
 		// Setup proxy caller we can add some things to
 		var dcallback;
 		if( !ecallback )
@@ -1674,26 +1700,28 @@ Shell = function( appObject )
 				ecallback( dat, r );
 			}
 		}
-	
+
 		// Ignore comments
 		if( rawLine.substr( 0, 2 ) == '//' ) return dcallback( false );
-		
+
+		var a = 0, b = 0;
+
 		// Multiline fork
 		if( rawLine.indexOf( ';' ) > 0 )
 		{
 			cmd = rawLine.split( ';' ).join( "\n" );
 			cmd = cmd.split( "\n" );
-			for( var a = 0; a < cmd.length; a++ )
+			for( a = 0; a < cmd.length; a++ )
 			{
 				cmd[a] = Trim( cmd[a] );
 			}
 			cmd = cmd.join( "\n" );
 			return this.parseScript( cmd, dcallback );
 		}
-		
-		// Get an intelligent parsed object for variables and arguments
+
+		// Get an intelligent parsed object for variables and fin_args
 		cmd = Trim( EntityDecode( cmd.split( '<!--semicolon-->' ).join( ';' ) ) );
-		
+
 		// Common ones
 		switch( cmd.toLowerCase() )
 		{
@@ -1704,10 +1732,10 @@ Shell = function( appObject )
 				cmd = 'launch FriendShell';
 				break;
 		}
-		
+
 		var parsedObject = this.parseInput( cmd );
-		cmd = parsedObject.args; // Just the arguments
-		
+		cmd = parsedObject.args; // Just the fin_args
+
 		// Let's do lowercase
 		cmd[0] = cmd[0].toLowerCase();
 
@@ -1777,7 +1805,7 @@ Shell = function( appObject )
 			var preposition = 'with';
 			var subject = false;
 			var number = -1;
-			for( var b = 1; b < cmd.length; b++ )
+			for( b = 1; b < cmd.length; b++ )
 			{
 				if( cmd[b] == 'with' )
 					preposition = cmd[b];
@@ -1785,17 +1813,17 @@ Shell = function( appObject )
 					number = parseInt( cmd[b] );
 				else subject = cmd[b];
 			}
-			
+
 			// Add number specification
 			if( subject && number > 0 ) subject = subject + ' ' + number;
-			
+
 			if( subject && preposition )
 			{
 				// Check if subject exists!
 				var candidates = [];
 				var appObjects = [];
 				var i = 0;
-				for( var a in Workspace.applications )
+				for( a in Workspace.applications )
 				{
 					i++;
 					var appNr = Workspace.applications[a].applicationName + ' ' + i;
@@ -1807,7 +1835,7 @@ Shell = function( appObject )
 				}
 				if( candidates.length > 1 )
 				{
-					for( var a = 0; a < candidates.length; a++ )
+					for( a = 0; a < candidates.length; a++ )
 					{
 						candidates[a] += ' ' + ( 1 + a );
 					}
@@ -1819,7 +1847,7 @@ Shell = function( appObject )
 					nsp = '';
 					if( number > 0 ) nsp = ' (' + number + ').';
 					this.pipe = appObjects[0];
-					
+
 					// Tell it we're engaging!
 					return this.execute( 'engage', dcallback );
 				}
@@ -1829,7 +1857,7 @@ Shell = function( appObject )
 		else if( cmd[0] == 'say' )
 		{
 			var args = [];
-			for( var a = 1; a < cmd.length; a++ )
+			for( a = 1; a < cmd.length; a++ )
 				args.push( cmd[a].split( '<!--space--!>' ).join( ' ' ) );
 			var str = args.join( ' ' );
 			SayWithText( this.parseVariables( str ) );
@@ -1841,25 +1869,25 @@ Shell = function( appObject )
 			{
 				return dcallback( true );
 			}
-		
+
 			// Get path string (and fix spaces)
 			var str = cmd[1];
 			if( cmd.length > 2 )
 			{
 				var args = [];
-				for( var a = 1; a < cmd.length; a++ )
+				for( a = 1; a < cmd.length; a++ )
 					args.push( cmd[a].split( '<!--space--!>' ).join( ' ' ) );
 				str = args.join( ' ' );
 			}
-		
+
 			var fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ), 'left' );
-		
+
 			// Go to root
 			if( fullPath == ':' )
 			{
 				fullPath = this.currentPath.split( ':' )[0] + ':';
 			}
-			
+
 			// Go to parent
 			if( fullPath.substr( 0, 1 ) == '/' && this.currentPath )
 			{
@@ -1889,7 +1917,7 @@ Shell = function( appObject )
 				}
 				fullPath = tmp;
 			}
-		
+
 			// Fix path
 			if( fullPath.indexOf( ':' ) < 0 )
 			{
@@ -1909,8 +1937,8 @@ Shell = function( appObject )
 				if( ll != '/' )
 					fullPath += '/';
 			}
-			
-		
+
+
 			// No volume written by name!
 			// TODO: enter must imply mount or running a dormant app with a callback??
 			if( cmd[0] == 'enter' )
@@ -1929,7 +1957,7 @@ Shell = function( appObject )
 					this.previousPath = this.currentPath;
 				}
 			}
-		
+
 			// First check dormant
 			// TODO: Implement "evaluate path"
 			this.checkDormantDoors( fullPath, function( dirs )
@@ -1939,14 +1967,14 @@ Shell = function( appObject )
 				{
 					var door = ( new Door() ).get( fullPath );
 					door.getIcons( false, function( data, path )
-					{	
+					{
 						if( typeof( data ) == 'object' && path )
 						{
 							// Restricted path (for use with FriendNetwork)
 							if ( t.restrictedPath )
 								if ( fullPath.indexOf( t.restrictedPath ) < 0 )
 									return dcallback( false, { response: 'Path is restricted by host to ' + t.restrictedPath } );
-							
+
 							t.currentPath = path;
 						}
 						// Error never should be here.
@@ -1963,15 +1991,15 @@ Shell = function( appObject )
 					if ( this.restrictedPath )
 						if ( fullPath.indexOf( this.restrictedPath ) < 0 )
 							return dcallback( false, { response: 'Path is restricted by host to ' + this.restrictedPath } );
-					
+
 					// TODO: Fix that these are arrays!
 					var count = 0;
-					for( var a in dirs ) count++;
+					for( a in dirs ) count++;
 					if( dirs || count > 0 )
 					{
 						t.currentPath = fullPath;
 					}
-					else 
+					else
 					{
 						return dcallback( false, { response: 'Could not change directory.' } );
 					}
@@ -1987,7 +2015,7 @@ Shell = function( appObject )
 				if ( this.restrictedPath )
 					if ( this.previousPath.indexOf( this.restrictedPath ) < 0 )
 						return dcallback( false, { response: 'Host forbids to leave ' + this.currentPath } );
-				
+
 				// TODO: Perhaps have a history here!
 				var tp = this.currentPath;
 				this.currentPath = this.previousPath;
@@ -2008,7 +2036,7 @@ Shell = function( appObject )
 				var args = '';
 				for( var z = 2; z < cmd.length; z++ )
 					args += ( z > 2 ? ' ' : '' ) + cmd[z];
-					
+
 				return ExecuteApplication( cmd[1], args, cbn );
 			}
 			return dcallback( true );
@@ -2017,7 +2045,7 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Makedir is not authorised by host.' } );
-			
+
 			var cdr = this.currentPath;
 			var chk = cdr.substr( cdr.length - 1, 1 );
 			if( chk != ':' && chk != '/' ) cdr += '/';
@@ -2032,7 +2060,7 @@ Shell = function( appObject )
 			}
 			else cdr += dir;
 			var d = ( new Door() ).get( npath );
-			
+
 			d.dosAction( 'makedir', { path: cdr }, function()
 			{
 				// TODO: Do some error handling
@@ -2046,7 +2074,7 @@ Shell = function( appObject )
 				var post = { source: cmd[1] };
 				if( cmd.length > 2 )
 					post.expire = cmd[2];
-			
+
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -2056,7 +2084,7 @@ Shell = function( appObject )
 						r = JSON.parse( d );
 					}
 					catch( e ){};
-					
+
 					if( e != 'ok' )
 					{
 						dcallback( false, { response: 'Failed to set tinyurl: ' + ( r ? r.response : 'unknown error' ) } );
@@ -2080,30 +2108,33 @@ Shell = function( appObject )
 				var p = cmd[1];
 				if( p.indexOf( ':' ) <= 0 )
 					p = this.currentPath + p;
-				
+
 				// Get a door object and get file information about image
 				var pp = p.indexOf( ':' );
 				pp = p.substr(0, pp + 1);
 				var d = new Door( pp );
-				d.dosAction( "file/info", { path: p },
-				function( data )
-				{
-					var res = data.split( "<!--separate-->" );
-					if( res[0] != "ok" )
-						return false;
-					var d = JSON.parse( res[1] );
-					if (d.Filesize > 1024*100)
+				d.dosAction( 
+					'file/info', 
+					{ path: p },
+					function( data )
 					{
-						dcallback(false, {response: 'File too large: ' + d.Filesize/1024 +' kb.'})
-						return false;
+						var res = data.split( "<!--separate-->" );
+						if( res[0] != "ok" )
+							return false;
+						var d = JSON.parse( res[1] );
+						if (d.Filesize > 1024*100)
+						{
+							dcallback(false, {response: 'File too large: ' + d.Filesize/1024 +' kb.'})
+							return false;
+						}
+						var f = new File( p );
+						f.onLoad = function( data )
+						{
+							dcallback( false, { response: data.split( "\n" ).join( "<br>" ) } );
+						}
+						f.load();
 					}
-					var f = new File( p );
-					f.onLoad = function( data )
-					{
-						dcallback( false, { response: data.split( "\n" ).join( "<br>" ) } );
-					}
-					f.load();
-				});
+				);
 			}
 			else
 			{
@@ -2115,36 +2146,36 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Rename is not authorised by host.' } );
-			
+
 			if( cmd.length == 3 || ( cmd.length == 4 && cmd[2] == 'to' ) )
 			{
 				var src = cmd[1];
 				var dst = cmd[2];
 				if( cmd.length == 4 && cmd[2] == 'to' )
 					dst = cmd[3];
-				
+
 				var dstVolume = '';
 				var srcVolume = '';
-				
+
 				if( dst.indexOf( ':' ) > 0 )
 					dstVolume = dst.split( ':' )[0] + ':';
 				else dst = this.currentPath + dst;
 				if( src.indexOf( ':' ) > 0 )
 					srcVolume = src.split( ':' )[0] + ':';
 				else src = this.currentPath + src;
-				
+
 				// Make sure we convert space placeholder
 				src = src.split( '<!--space--!>' ).join( ' ' );
 				dst = dst.split( '<!--space--!>' ).join( ' ' );
-				
+
 				if( dstVolume == srcVolume || !dstVolume )
 				{
 					var newname = dst.split( ':' )[1];
 					newname = newname.split( '/' );
 					newname = newname[newname.length-1];
-				
+
 					var doorSrc = ( new Door() ).get( src );
-				
+
 					doorSrc.dosAction( 'rename', { path: src, newname: newname }, function()
 					{
 						dcallback( false, { response: 'Renamed file to ' + dst + '..' } );
@@ -2172,7 +2203,7 @@ Shell = function( appObject )
 					path = this.currentPath + '/' + path;
 			}
 			if( path.indexOf( ':' ) <= 0 ) path = this.currentPath;
-		
+
 			FriendDOS.getFileInfo( path, function( e, d )
 			{
 				if( !e )
@@ -2210,32 +2241,32 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Copy is not authorised by host.' } );
-			
+
 			if( cmd.length >= 3 )
 			{
 				this.terminate = true;
-				
+
 				var start = 1;
 				var recursive = false;
-			
+
 				// check recursive
 				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'copy all' )
 				{
 					start++;
 					recursive = true;
 				}
-			
+
 				var src = cmd[start];
-				
+
 				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-				
+
 				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-				
+
 				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-				
+
 				// 'all' on the end
 				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
-				
+
 				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result, done )
 				{
 					if( !done ) done = false;
@@ -2253,15 +2284,15 @@ Shell = function( appObject )
 			if( cmd.length >= 3 )
 			{
 				var start = 1;
-				
+
 				var src = cmd[start];
-				
+
 				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-				
+
 				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-				
+
 				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-				
+
 				if( dst )
 				{
 					var d = ( new Door() ).get( dst );
@@ -2277,7 +2308,7 @@ Shell = function( appObject )
 						} );
 					}
 				}
-				
+
 			}
 			return dcallback( false, { response: 'Command not recognized.' } );
 		}
@@ -2285,32 +2316,32 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Move is not authorised by host.' } );
-			
+
 			if( cmd.length >= 3 )
 			{
 				this.terminate = true;
-				
+
 				var start = 1;
 				var recursive = false;
-			
+
 				// check recursive
 				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'move all' )
 				{
 					start++;
 					recursive = true;
 				}
-			
+
 				var src = cmd[start];
-				
+
 				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-				
+
 				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-				
+
 				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-				
+
 				// 'all' on the end
 				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
-				
+
 				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
 				{
 					if( !done ) done = false;
@@ -2326,18 +2357,18 @@ Shell = function( appObject )
 		else if( cmd[0] == 'date' )
 		{
 			var td = new Date();
-			dcallback( true, { 
-				response: td.getFullYear() + '-' + 
-				StrPad( ( td.getMonth() + 1 ), 2, '0' ) + '-' + 
-				StrPad( td.getDate(), 2, '0' ) + ' ' + 
+			dcallback( true, {
+				response: td.getFullYear() + '-' +
+				StrPad( ( td.getMonth() + 1 ), 2, '0' ) + '-' +
+				StrPad( td.getDate(), 2, '0' ) + ' ' +
 				StrPad( td.getHours(), 2, '0' ) + ':' +
-				StrPad( td.getMinutes(), 2, '0' ) + ':' + 
+				StrPad( td.getMinutes(), 2, '0' ) + ':' +
 				StrPad( td.getSeconds(), 2, '0' )
 			} );
 		}
 		else if( cmd[0] == 'help' )
 		{
-			var commands = [ 
+			var commands = [
 				'ls', 'info', 'list', 'dir', 'cat', 'type', 'why', 'copy', 'delete', 'makedir', 'tinyurl',
 				'protect', 'access', 'execute', 'launch', 'output', /*'infoget', 'infoset',*/ 'wait',
 				'rename', /*'mind',*/ 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
@@ -2366,7 +2397,7 @@ Shell = function( appObject )
 			switch( cmd[1] )
 			{
 				default:
-					dcallback( true, { response: 'Friend DOS has the following commands available:<br><br>' + commands.join( ', ' ) } );
+					dcallback( true, { response: 'Friend DOS has the following commands available:<br><br>' + commands.join( ', ' ) + '<br><br>Please try "help {commandname}".' } );
 					break;
 			}
 		}
@@ -2375,7 +2406,7 @@ Shell = function( appObject )
 			// Get command
 			var command = false;
 			var options = [ 'get', 'set', 'list' ];
-			for( var a = 0; a < options.length; a++ )
+			for( a = 0; a < options.length; a++ )
 			{
 				if( cmd[1] == options[a] )
 				{
@@ -2385,11 +2416,11 @@ Shell = function( appObject )
 			}
 			if( !command )
 				return dcallback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
-			
+
 			var filename = false;
 			var variable = false;
 			var data = false;
-			
+
 			// Get the rest
 			for( a = 2; a < cmd.length; a++ )
 			{
@@ -2404,12 +2435,12 @@ Shell = function( appObject )
 				}
 				else filename = cmd[a];
 			}
-			
+
 			if( filename && filename.indexOf( ':' ) < 0 )
 			{
 				filename = this.currentPath + filename;
 			}
-			
+
 			if( filename )
 			{
 				var d = ( new Door() ).get( filename );
@@ -2431,28 +2462,28 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Delete is not authorised by host.' } );
-			
+
 			this.terminate = true;
-			
+
 			if( cmd.length >= 2 )
 			{
 				var start = 1;
 				var recursive = false;
 				var notrash = false;
-			
-				// check recursive (if we have at least three arguments)
+
+				// check recursive (if we have at least three fin_args)
 				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'delete all' && typeof( cmd[2] ) != 'undefined' )
 				{
 					start++;
 					recursive = true;
 				}
-			
-			
+
+
 				// Find source path
 				var src = cmd[start++];
 				src = src.split( '&nbsp;' ).join( ' ' ).split( '<!--space--!>' ).join( ' ' );
 				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-				
+
 				// Find other keywords after filename
 				for( ; start < cmd.length; start++ )
 				{
@@ -2461,7 +2492,7 @@ Shell = function( appObject )
 					if( cmd[start] == 'notrash' )
 						notrash = true;
 				}
-				
+
 				// Finally delete
 				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
 				{
@@ -2478,7 +2509,7 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Mount is not authorised by host.' } );
-			
+
 			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
 			{
 				return dcallback( false, { response: 'Syntax error. Usage:<br>mount [disk:]<br>' } );
@@ -2499,7 +2530,7 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Unmount is not authorised by host.' } );
-			
+
 			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
 			{
 				return dcallback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
@@ -2520,7 +2551,7 @@ Shell = function( appObject )
 		{
 			if( cmd.length > 2 || ( cmd.length == 2 && cmd[1] != 'unmounted' ) )
 				return dcallback( false, { response: 'Syntax error. Usage:<br>mountlist [unmounted]<br>' } );
-			
+
 			if( cmd.length == 2 && cmd[1] == 'unmounted' )
 			{
 				var m = new Module( 'system' );
@@ -2532,17 +2563,17 @@ Shell = function( appObject )
 					}
 					var rows = JSON.parse( d );
 					var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' + 
+						        PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
 						        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
-					disks +=   '<br>'; 
+					disks +=   '<br>';
 					var diskcount = 0;
-					for( var a = 0; a < rows.length; a++ )
+					for( a = 0; a < rows.length; a++ )
 					{
 						var cfg = false;
 						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
 							cfg = JSON.parse( rows[a].Config );
 						if( rows[a].Mounted == '1' ) continue;
-						disks += '<div class="Container">' + 
+						disks += '<div class="Container">' +
 						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
 							PadList( rows[a].Type, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
 							PadList( cfg && cfg.Invisible == 'Yes' ? 'hidden' : 'yes', 10, 'right', '&nbsp;' ) + '</div>';
@@ -2556,21 +2587,28 @@ Shell = function( appObject )
 			{
 				Workspace.getMountlist( function( rows )
 				{
-					var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' + 
-						        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
-					disks +=   '<br>'; 
-					var diskcount = 0;
-					for( var a = 0; a < rows.length; a++ )
+					if ( !t.workspace )
 					{
-						if( rows[a].Mounted != '1' ) continue;
-						disks += '<div class="Container">' + 
-						    PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							PadList( rows[a].Handler, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
-							PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
-						diskcount++;
+						var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							        PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
+						disks +=   '<br>';
+						var diskcount = 0;
+						for( var a = 0; a < rows.length; a++ )
+						{
+							if( rows[a].Mounted != '1' ) continue;
+							disks += '<div class="Container">' +
+							    PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+								PadList( rows[a].Handler, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
+								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
+							diskcount++;
+						}
+						dcallback( true, { response: disks + '<br>' + 'Found ' + rows.length + ' disk(s) in mountlist.' } );
 					}
-					dcallback( true, { response: disks + '<br>' + 'Found ' + rows.length + ' disk(s) in mountlist.' } );
+					else
+					{
+						dcallback( true, rows );
+					}
 				} );
 			}
 		}
@@ -2579,14 +2617,14 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Protect is not authorised by host.' } );
-			
+
 			var t = this;
-			
+
 			// Find filename, then flags
 			// Usage: protect myfile rwd
 			var fn = '';
 			var flags = '';
-			for( var a = 1; a < cmd.length; a++ )
+			for( a = 1; a < cmd.length; a++ )
 			{
 				if( !fn && cmd[a].indexOf( '=' ) < 0 )
 				{
@@ -2599,53 +2637,53 @@ Shell = function( appObject )
 					break;
 				}
 			}
-			
+
 			if( fn.indexOf( ':' ) < 0 )
 			{
 				fn = this.currentPath + fn;
 			}
-			
+
 			var uf = false, gf = false, of = false;
-			
+
 			if( parsedObject.vars.user )
 				uf = parsedObject.vars.user;
 			if( parsedObject.vars.group )
 				gf = parsedObject.vars.group;
 			if( parsedObject.vars.others )
 				of = parsedObject.vars.others;
-			
+
 			if( fn && ( flags || uf || gf || of ) )
 			{
 				// Put the flags in the right format
 				var finalFlags = '';
-				
+
 				var data = {
 					user: ( flags ? flags : ( uf ? uf : '' ) ).toLowerCase(),
 					group: ( gf ? gf : '' ).toLowerCase(),
 					others: ( of ? of : '' ).toLowerCase()
 				};
-				
+
 				var all = {};
-				
+
 				// Go through users-others
 				for( var g in data )
 				{
 					if( !data[g].length ) continue;
 					all[g] = '';
 					var perms = { a: '-', r: '-', w: '-', e: '-', d: '-' };
-					for( var a = 0; a < data[g].length; a++ )
+					for( a = 0; a < data[g].length; a++ )
 					{
 						perms[data[g][a]] = data[g][a] ? data[g][a] : '-';
 					}
-					for( var a in perms )
+					for( a in perms )
 					{
 						all[g] += perms[a];
 					}
 					all[g] = Trim( all[g] ); // Remove whitespace
 				}
-			
+
 				all.path = fn;
-			
+
 				// Execute!
 				var l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
@@ -2671,7 +2709,7 @@ Shell = function( appObject )
 			if( cmd.length < 2 )
 			{
 				this.lastErrorMessage = 'The access command needs a filename to get the access privileges from.';
-				return dcallback( false, { response: "Not enough arguments." } );
+				return dcallback( false, { response: "Not enough fin_args." } );
 			}
 			if( cmd[1].indexOf( ':' ) < 0 ) cmd[1] = this.currentPath + cmd[1];
 			this.fileExists( cmd[1], function( result, data )
@@ -2684,13 +2722,14 @@ Shell = function( appObject )
 						if( e == 'ok' )
 						{
 							t.lastErrorMessage = 'Your last call succeeded.';
-							
+
 							d = JSON.parse( d );
-							
+
 							var str2ar = function( str ){ var o = []; for( var a = 0; a < str.length; a++ ) o.push( str[a] ); return o };
 							var res = { user: '', group: '', others: '' };
 							var combined = [ '-', '-', '-', '-', '-' ];
-							for( var a = 0; a < d.length; a++ )
+							var a = 0;
+							for( ; a < d.length; a++ )
 							{
 								if( !d[a].access ) continue;
 								d[a].access = str2ar( d[a].access ); // To string!
@@ -2716,10 +2755,10 @@ Shell = function( appObject )
 								}
 							}
 							var out = '';
-							for( var a in res )
+							for( a in res )
 								out += a + ': ' + ( typeof( res[a] ) == 'object' ? res[a].join( '' ) : '-----' ) + "&nbsp;&nbsp;&nbsp;&nbsp;";
 							out += '<br>combined: ' + combined.join( '' ).toLowerCase();
-							
+
 							return dcallback( true, { response: "Access privileges found:<br>" + out } );
 						}
 						t.lastErrorMessage = 'Could not get a list of access privileges from this file.';
@@ -2747,13 +2786,13 @@ Shell = function( appObject )
 		else if( cmd[0] == 'infoget' )
 		{
 			var t = this;
-			
+
 			if( cmd.length < 2 )
 			{
 				return dcallback( false, { response: "Could not get info. Please specify file." } );
 			}
 			var o = new Object();
-			
+
 			var path = cmd[1];
 			if( path.indexOf( ':' ) < 0 )
 			{
@@ -2761,17 +2800,17 @@ Shell = function( appObject )
 				var ssign = cp.substr( cp.length - 1 );
 				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
-			
+
 			var m = new Library( 'system.library' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) return;
-				
+
 				d = JSON.parse( d );
-				
+
 				var fn = path.split( path.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
 				var info = false;
-				
+
 				for( var a = 0; a < d.length; a++ )
 				{
 					if( d[a].Filename == fn )
@@ -2780,20 +2819,20 @@ Shell = function( appObject )
 						break;
 					}
 				}
-				
+
 				if( !info )
 				{
 					return dcallback( false, { response: "File " + o.path + " does not exist.." } );
 				}
-				
+
 				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
 					path += '/';
-			
+
 				o.path = path.split( '<!--space--!>' ).join( ' ' );
-			
+
 				if( typeof( cmd[2] ) != 'undefined' )
 					o.key = cmd[2];
-			
+
 				var l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{
@@ -2811,36 +2850,36 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Infoset is not authorised by host.' } );
-			
+
 			var t = this;
-			
+
 			if( cmd.length < 2 )
 			{
 				return dcallback( false, { response: "Could not get info. Please specify file." } );
 			}
 			var o = new Object();
-			
+
 			var path = cmd[1];
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = t.currentPath; 
+				var cp = t.currentPath;
 				var ssign = cp.substr( cp.length - 1 );
 				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
-			
+
 			var m = new Library( 'system.library' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) return;
-				
+
 				d = JSON.parse( d );
-				
+
 				var np = path;
 				if( np.substr( np.length - 1, 1 ) == '/' )
 					np = np.substr( 0, np.length - 1 );
 				var fn = np.split( np.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
 				var info = false;
-				
+
 				for( var a = 0; a < d.length; a++ )
 				{
 					if( d[a].Filename == fn )
@@ -2849,24 +2888,24 @@ Shell = function( appObject )
 						break;
 					}
 				}
-				
+
 				if( !info )
 				{
 					return dcallback( false, { response: "File " + o.path + " does not exist.." } );
 				}
-				
+
 				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
 					path += '/';
-			
+
 				o.path = path.split( '<!--space--!>' ).join( ' ' );
-			
+
 				// Get args
 				var ind = cmd[2].indexOf( '=' );
 				if( ind < 0 )
 					return dcallback( false, { response: "Could not set info. Please specify file, key and value." } );
 				o.key = cmd[2].substr( 0, ind );
 				o.value = cmd[2].substr( ind + 1, cmd[2].length - ind );
-			
+
 				// Execute!
 				var l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
@@ -2884,19 +2923,19 @@ Shell = function( appObject )
 		else if( cmd[0] == 'ls' || cmd[0] == 'list' )
 		{
 			var path = ( typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
-		
+
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = t.currentPath; 
+				var cp = t.currentPath;
 				var ssign = cp.substr( cp.length - 1 );
 				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
 				path += '/';
-		
-		
+
+
 			path = path.split( '<!--space--!>' ).join( ' ' );
-		
+
 			this.getDirectory( path, function( doorItem, data )
 			{
 				// We got data
@@ -2914,7 +2953,7 @@ Shell = function( appObject )
 									data[a].DateCreated = data[a].DateModified;
 							else
 								data[a].DateCreated = now;
-							
+
 							var fnam = '';
 							if( data[a].Type != 'Directory' )
 							{
@@ -2929,7 +2968,7 @@ Shell = function( appObject )
 							if( today == date[0] )
 								date[0] = i18n( 'i18n_today' );
 							date = PadList( date[0], 10, 'right', '&nbsp;', false ) + ' &nbsp;' + date[1];
-							
+
 							var permz = '-----';
 							if( data[a].Permissions )
 							{
@@ -2941,7 +2980,7 @@ Shell = function( appObject )
 								{
 									permz = '*****'; // Not supported yet..
 								}
-								
+
 								// Flatten permissions (user,group,others -> combined)
 								permz = permz.split( ',' );
 								var out = '-----';
@@ -2963,8 +3002,8 @@ Shell = function( appObject )
 								}
 								permz = out;
 							}
-							
-							if( c == 0 && data[a].Type == 'Directory' )
+
+							if( c === 0 && data[a].Type == 'Directory' )
 							{
 								str += '<div class="Container">' + PadList( fnam + '/', 30 ) + ' ' + PadList( 'Dir', 13, 'right' ) + '&nbsp; ' + permz + ' &nbsp;' + date + "</div>";
 							}
@@ -2992,18 +3031,18 @@ Shell = function( appObject )
 		else if( cmd[0] == 'dir' )
 		{
 			var path = ( typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
-		
+
 			if( path.indexOf( ':' ) < 0 )
 			{
-				var cp = t.currentPath; 
+				var cp = t.currentPath;
 				var ssign = cp.substr( cp.length - 1 );
 				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
 			}
 			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
 				path += '/';
-		
+
 			path = path.split( '<!--space--!>' ).join( ' ' );
-		
+
 			this.getDirectory( path, function( doorItem, data )
 			{
 				if( data && data.length )
@@ -3033,7 +3072,7 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Endcli/Exit is not authorised by host.' } );
-			
+
 			FriendDOS.delSession( this.uniqueId );
 			return dcallback( true, 'quit' );
 		}
@@ -3041,14 +3080,14 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Cli/Newcli is not authorised by host.' } );
-			
+
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId,
 				type: 'system',
 				command: 'executeapplication',
 				executable: 'Shell',
-				arguments: ''
+				fin_args: ''
 			} ) } );
 			return dcallback( true, { response: 'New shell launched.' } );
 		}
@@ -3057,7 +3096,7 @@ Shell = function( appObject )
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId,
-				type: 'system', command: 'listapplications', callbackId: addWrapperCallback( dcallback ) 
+				type: 'system', command: 'listapplications', callbackId: addWrapperCallback( dcallback )
 			} ) } );
 			return;
 		}
@@ -3065,11 +3104,11 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Kill is not authorised by host.' } );
-			
+
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
-				applicationId: this.app.applicationId, 
-				type: 'system', command: 'kill', appName: cmd[1], callbackId: addWrapperCallback( dcallback ) 
+				applicationId: this.app.applicationId,
+				type: 'system', command: 'kill', appName: cmd[1], callbackId: addWrapperCallback( dcallback )
 			} ) } );
 			return dcallback( false, { response: 'Killed ' + cmd[1] + '.' } );
 		}
@@ -3077,7 +3116,7 @@ Shell = function( appObject )
 		{
 			if ( this.restrictedPath )
 				return dcallback( false, { response: 'Install is not authorised by host.' } );
-			
+
 			if( cmd.length <= 1 )
 			{
 				return dcallback( false, 'Please tell me which application you wish to install.' );
@@ -3104,7 +3143,7 @@ Shell = function( appObject )
 			apiWrapper( { data: JSON.stringify( {
 				applicationName: this.app.applicationName,
 				applicationId: this.app.applicationId,
-				type: 'system', command: 'break', appNum: cmd[1], callbackId: addWrapperCallback( dcallback ) 
+				type: 'system', command: 'break', appNum: cmd[1], callbackId: addWrapperCallback( dcallback )
 			} ) } );
 			// TODO: Find out why callback by callbackId doesn't work on 'break'
 			dcallback( true );
@@ -3164,7 +3203,7 @@ Shell = function( appObject )
 				var p = cmd[1];
 				if( p.indexOf( ':' ) <= 0 )
 					p = this.currentPath + p;
-				
+
 				var f = new File( p );
 				f.onLoad = function( data )
 				{
@@ -3186,13 +3225,13 @@ Shell = function( appObject )
 		else if( cmd[0] == 'assign' )
 		{
 			var mode = 'new';
-		
+
 			if( cmd.length >= 2 )
 			{
 				var path = cmd[1];
 				var assign = cmd[2];
-		
-				for( var a = 2; a < cmd.length; a++ )
+
+				for( a = 2; a < cmd.length; a++ )
 				{
 					var cm = cmd[a].toLowerCase();
 					if( cm == 'add' ) mode = 'add';
@@ -3206,17 +3245,17 @@ Shell = function( appObject )
 					if( cmd[a].indexOf( ':' ) > 0 )
 						assign = cmd[a];
 				}
-		
+
 				// Keep the whole path!
 				if( path.indexOf( ':' ) < 0 )
 					path = t.currentPath + path;
-		
+
 				if( path.indexOf( ':' ) <= 0 || assign.indexOf( ':' ) <= 0 )
 				{
 					this.lastErrorMessage = 'Could not understand your assign syntax as there was no valid path and assign drive.';
 					return dcallback( false, { response: 'Unknown assign syntax.' } );
 				}
-		
+
 				// Let us validate
 				if( path.indexOf( ':' ) > 0 && assign.indexOf( ':' ) > 0 && assign.split( ':' )[1].length <= 0 && mode != 'remove' )
 				{
@@ -3261,7 +3300,7 @@ Shell = function( appObject )
 					var assignPath = path;
 					if( assign.indexOf( ':' ) > 0 )
 						assignPath = assign;
-						
+
 					var m = new Module( 'system' );
 					m.onExecuted = function( e, d )
 					{
@@ -3304,7 +3343,7 @@ Shell = function( appObject )
 					{
 						out += "&nbsp;&nbsp;" + list[y].Name + ":" + ( list[y].Mounted == 1 ? " mounted..." : "<br>" );
 					}
-					
+
 					return dcallback( true, { response: 'List of assigned devices:' + "<br><br>" + out } );
 				}
 				m.execute( 'assign' );
@@ -3323,7 +3362,7 @@ Shell = function( appObject )
 		else
 		{
 			console.log( 'This one didn\'t compute!', cmd );
-			
+
 			// If all else fails
 			function lastCallback()
 			{
@@ -3342,18 +3381,18 @@ Shell = function( appObject )
 				//	type: 'system',
 				//	command: 'executeapplication',
 				//	executable: command,
-				//	arguments: args
+				//	fin_args: args
 				//} );
 				return dcallback( false, 'Command not found.' );
 			}
-		
+
 			// Try to see if there is an executable in the current directory
 			var dirs = false;
 			var door = false;
 			var tt = this;
-			
-			var path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;	
-			
+
+			var path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
+
 			// Check dormant first!
 			// TODO: Make uniform!
 			this.checkDormantDoors( path, function( dirs )
@@ -3376,15 +3415,15 @@ Shell = function( appObject )
 									var args = [];
 									for( var aa = 1; aa < cmd.length; aa++ )
 										args.push( cmd[aa].split( '<!--space--!>' ).join( ' ' ) );
-								
+
 									var command = cmd[0];
-								
+
 									// TODO: Make safe! Could have jsx in the middle of the file name!
 									if( command.indexOf( '.jsx' ) > 0 )
 									{
 										command = path + command;
 									}
-								
+
 									var s = command.split( '.' );
 									if( s[ s.length - 1 ].toLowerCase() == 'module' )
 									{
@@ -3443,24 +3482,24 @@ Shell = function( appObject )
 												args[cmd[f]] = 1;
 											}
 										}
-										
+
 										m.execute( call, args );
 										return;
 									}
-									
+
 									var cid = addWrapperCallback( function( msg )
 									{
 										var resp = msg ? ( msg.response ? msg.response : msg ) : false;
 										dcallback( resp ? resp : false, { path: path } );
 									} );
-									
+
 									var msgHere = {
 										applicationName: tt.app.applicationName,
 										applicationId: tt.app.applicationId,
 										type: 'system',
 										command: 'executeapplication',
 										executable: command,
-										arguments: args,
+										fin_args: args,
 										path: path,
 										callback: cid
 									};
@@ -3485,13 +3524,13 @@ Shell = function( appObject )
 							var args = [];
 							for( var aa = 1; aa < cmd.length; aa++ )
 								args.push( cmd[aa].split( '<!--space--!>' ).join( ' ' ) );
-						
+
 							var cid = addWrapperCallback( function( msg )
 							{
 								var resp = msg ? msg.response : false;
 								dcallback( resp ? resp : false, { path: path } );
 							} );
-							
+
 							var msgHere = {
 								applicationName: tt.app.applicationName,
 								applicationId: tt.app.applicationId,
@@ -3511,10 +3550,10 @@ Shell = function( appObject )
 				}
 			} );
 		}
-	}
-	
+	};
+
 	/**
-	 * @brief Converts a string into an object with a list of arguments and vars
+	 * @brief Converts a string into an object with a list of fin_args and vars
 	 *
 	 * @string a string value
 	 * @return an object with the members args (array) and vars (key/values)
@@ -3524,9 +3563,10 @@ Shell = function( appObject )
 		// Clean up escaped characters and double quoted
 		var qmode = 0;
 		var out = '';
-		for( var a = 0; a < string.length; a++ )
+		var a = 0;
+		for( ; a < string.length; a++ )
 		{
-			if( qmode == 0 && string[a] == '"' )
+			if( qmode === 0 && string[a] == '"' )
 			{
 				qmode = 1;
 				continue;
@@ -3558,7 +3598,7 @@ Shell = function( appObject )
 		// Get an array. Return an object with vars and args
 		out = out.split( ' ' );
 		var object = { args: [], vars: [] };
-		for( var a = 0; a < out.length; a++ )
+		for( a = 0; a < out.length; a++ )
 		{
 			if( out[a].indexOf( '<!--space--!>' ) >= 0 )
 				out[a] = out[a].split( '<!--space--!>' ).join( ' ' );
@@ -3573,12 +3613,13 @@ Shell = function( appObject )
 			}
 		}
 		return object;
-	}
+	};
+	
 	// Create formatted output from objects
 	this.generateOutputFromObjects = function( objects, type )
 	{
 		if( !type ) type = 'html';
-		
+
 		var acount = objects.length;
 		var third  = Math.floor( acount / 3 );
 		var output = [];
@@ -3587,7 +3628,9 @@ Shell = function( appObject )
 		// Go through the icons
 		var icons = '';
 		var trash = 0; // how many bad icons were found
-		for( var a = 0; a < acount; a++ )
+		var a = 0;
+		
+		for( ; a < acount; a++ )
 		{
 			var row = objects[a];
 			if( !output[column] ) output[column] = '';
@@ -3600,11 +3643,11 @@ Shell = function( appObject )
 			output[column] += itm;
 			if( ++count > third ) { column++; count = 0; }
 		}
-	
+
 		acount -= trash;
-	
+
 		icons += '<table style="border-collapse: collapse; border-spacing: 0"><tr>';
-		for( var a = 0; a < output.length; a++ )
+		for( a = 0; a < output.length; a++ )
 		{
 			var c = output[a];
 			icons += '<td style="vertical-align: top; padding-right: 20px">' + c + '</td>';
@@ -3612,7 +3655,8 @@ Shell = function( appObject )
 		icons += '</tr></table><br>';
 		icons += acount + ' ' + i18n( 'i18n_items_total' ) + '.<br><br>';
 		return icons;
-	}
+	};
+	
 	this.fileOpen = function( win, arg )
 	{
 		if( !win.content || !win.content.icons ) return false;
@@ -3630,17 +3674,18 @@ Shell = function( appObject )
 				{
 					this.context = 'executable';
 					this.exeIcon = i;
-					SayWithText( 'The file, ' + t + ', is an executable. What are your arguments?' );
+					SayWithText( 'The file, ' + t + ', is an executable. What are your fin_args?' );
 					return true;
 				}
-				
+
 				i.domNode.ondblclick();
 				SayWithText( 'File ' + t + ' opened.' );
 				return true;
 			}
 		}
 		return false;
-	}
+	};
+	
 	this.directoryOpen = function( win, arg )
 	{
 		if( !win.content || !win.content.icons ) return false;
@@ -3660,47 +3705,49 @@ Shell = function( appObject )
 			}
 		}
 		return false;
-	}
-}
+	};
+};
 
 /* Global dos object that manages all dos sessions */
 
-FriendDOS =
+window.FriendDOS =
 {
 	sessions: [],
-	count: 0,
 	// Copy files with option flags
 	copyFiles: function( src, dest, flags, callback, depth, copyObject )
 	{
 		// Do we want to move the files?
 		var move = flags && flags.move ? true : false;
-		
+
 		// Setup copyobject!
-		if( !copyObject ) copyObject = {
-			copyCounter: 0, // Done copying files
-			copyTotal: 0,   // Files copying in progress
-			copyDepth: 0,    // Swipe depth
-			callback: callback,
-			test: function()
-			{
-				if( this.copyCounter == this.copyTotal && this.copyDepth == 0 )
+		if( !copyObject ) 
+		{
+			copyObject = {
+				copyCounter: 0, // Done copying files
+				copyTotal: 0,   // Files copying in progress
+				copyDepth: 0,    // Swipe depth
+				callback: callback,
+				test: function()
 				{
-					if ( move )
-						this.callback( 'Done moving ' + this.copyTotal + ' files.', true );
-					else
-						this.callback( 'Done copying ' + this.copyTotal + ' files.', true );
+					if( this.copyCounter == this.copyTotal && this.copyDepth === 0 )
+					{
+						if ( move )
+							this.callback( 'Done moving ' + this.copyTotal + ' files.', true );
+						else
+							this.callback( 'Done copying ' + this.copyTotal + ' files.', true );
+					}
+					//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
 				}
-				//console.log( 'Copying files: ' + this.copyCounter + ' / ' + this.copyTotal + ' at depth ' + this.copyDepth );
-			}
-		};
-		
+			};
+		}
+
 		// Verified destinations are passing
 		if( flags.verifiedDestination )
 		{
 			cfcbk( src, dest, flags, callback, depth );
 		}
 		// Unverified are verified first
-		else 
+		else
 		{
 			if( dest.substr( dest.length - 1, 1 ) == ':' )
 			{
@@ -3712,6 +3759,24 @@ FriendDOS =
 			{
 				FriendDOS.getFileInfo( dest, function( e, d )
 				{
+					if( e )
+					{
+						var f = false;
+						try
+						{
+							 f = JSON.parse( d );
+						}
+						catch( e )
+						{
+							return callback( 'Failed to get file info on ' + dest, { done: true } );
+						}
+						if( f && f.Type == 'Directory' && dest.substr( dest.length - 1, 1 ) != '/' )
+							dest += '/';
+						if( flags ) flags.verifiedDestination = true;
+						else flags = { verifiedDestination: true };
+					}
+					cfcbk( src, dest, flags, callback, depth );
+					/*
 					if( !e ) return callback( 'Failed to copy files.', { done: true } );
 					var f = false;
 					try
@@ -3727,15 +3792,16 @@ FriendDOS =
 					if( flags ) flags.verifiedDestination = true;
 					else flags = { verifiedDestination: true };
 					cfcbk( src, dest, flags, callback, depth );
+					*/
 				} );
 			}
 		}
-		
+
 		// Actual working code
 		function cfcbk( src, dest, flags, cb, depth )
-		{	
+		{
 			var self = this;
-			
+
 			if (!depth)
    			{
     			depth = 0;
@@ -3744,25 +3810,25 @@ FriendDOS =
 					window.moveFiles = { fileArray: [], dirArray: [], counter: 0 };
 				}
    			}
-			
+
 			// Get door objects
 			var doorSrc = ( new Door() ).get( src );
 			var doorDst = ( new Door() ).get( src );
 			if( move ) window.moveFiles.doorSrc = doorSrc;
-		
+
 			// Don't copy to self
 			if ( src == dest )
 				return false;
-		
+
 			// Check what type source and destination is
 			var pthTest = src;
-		
+
 			// Get without trailing forward slash so we get the parent folder
 			if( src.substr( src.length - 1, 1 ) == '/' )
 			{
 				pthTest = src.substr( 0, src.length - 1 );
 			}
-		
+
 			// Get parent
 			if( pthTest.indexOf( '/' ) > 0 )
 			{
@@ -3774,51 +3840,51 @@ FriendDOS =
 			{
 				pthTest = pthTest.split( ':' )[0] + ':';
 			}
-		
+
 			// Correct path
 			var ptsg = pthTest.substr( pthTest.length - 1, 1 );
 			if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
-		
+
 			doorSrc.path = pthTest;
-		
+
 			//console.log( 'So, getting icons on: ' + pthTest );
 			if( move ) window.moveFiles.counter++;
 			doorSrc.getIcons( false, function( data )
 			{
 				var abort = false;
-			
+
 				// TODO: Support #? and * wildcards
 				for( var a = 0; a < data.length && !abort; a++ )
 				{
 					//console.log( '>>> Examining: ' + data[a].Path );
 					// Make a trim
 					var compare = data[a].Path;
-					if( 
+					if(
 						data[a].Path.substr( data[a].Path.length - 1, 1 ) == '/' &&
-						src.substr( src.length - 1, 1 ) != '/' 
+						src.substr( src.length - 1, 1 ) != '/'
 					)
 					{
 						compare = compare.substr( 0, compare.length - 1 );
 					}
-				
+
 					// We have a match with the path we want to copy!
 					if( compare == src )
 					{
 						// Recurse into directories (copy a directory)
 						if( data[a].Type == 'Directory' || data[a].Type == 'Door' )
-						{	
+						{
 							var dsign = dest.substr( dest.length - 1, 1 );
 							if( dsign != ':' && dsign != '/' ) dsign = '/'; else dsign = '';
-						
+
 							var destination = dest + dsign + data[a].Filename + '/';
 							var p = data[a].Path;
-							
+
 							if( move )
 			    			{
 				    			window.moveFiles.dirArray.push(p);
 				    			window.moveFiles.counter++;
 			    			}
-			    			
+
 			    			// Assume the destination directory does not exist
 							doorSrc.dosAction( 'makedir', { path: destination }, function()
 							{
@@ -3850,7 +3916,7 @@ FriendDOS =
 											copyObject.test();
 										} );
 									}
-								
+
 									for( var c = 0; c < subs.length; c++ )
 									{
 										if( subs[c].Type == 'File' )
@@ -3865,7 +3931,7 @@ FriendDOS =
 												var p = subs[c].Path;
 												var psign = p.substr( p.length - 1, 1 );
 												if( psign != ':' && psign != '/' ) p += '/';
-											
+
 												//console.log( 'Foodah! Recursing on ' + p + "! Because of recursion: " + flags.recursive + "\n" );
 												FriendDOS.copyFiles( p, destination, flags, callback, depth + 1, copyObject );
 											}
@@ -3881,7 +3947,7 @@ FriendDOS =
 						}
 						// Copy single file
 						else
-						{	
+						{
 							copyObject.copyTotal++;
 							var destination = dest + data[a].Filename;
 							if( move )
@@ -3902,7 +3968,7 @@ FriendDOS =
 								}
 								// Upon fail! Just piss.
 								if( 1 == 2 ) abort = true;
-								
+
 								copyObject.copyCounter++; copyObject.test();
 							} );
 						}
@@ -3910,7 +3976,7 @@ FriendDOS =
 				}
 				if( move ) window.moveFiles.counter--;
 			} );
-			if( move && depth == 0 )
+			if( move && depth === 0 )
    			{
 	   			setTimeout( FriendDOS.checkMove, 100 );
    			}
@@ -3978,7 +4044,7 @@ FriendDOS =
 					}
 				} );
 			}
-			
+
 			if (move.currentSrceSize[count] >= 0 && move.currentDestSize[count] >= 0 && move.currentSrceSize[count] == move.currentDestSize[count] )
 			{
 				// Delete source file
@@ -4018,12 +4084,12 @@ FriendDOS =
 		var self = this;
 		if( !depth ) depth = 0;
 		if( !flags ) flags = {};
-		
+
 		// Remove temporary spaces
 		src = src.split( '<!--space--!>' ).join( ' ' );
-		
+
 		// Keep track of stuff!
-		if( depth == 0 )
+		if( depth === 0 )
 		{
 			flags._startedCleanup = false;
 			flags._dirsToDelete = [];
@@ -4031,19 +4097,19 @@ FriendDOS =
 			flags._originalCallback = callback;
 			flags._cleanup = function()
 			{
-				if( this._activeProcesses != 0 ) 
+				if( this._activeProcesses != 0 )
 				{
 					//console.log( 'Not ready to clean up. Still ' + this._activeProcesses + ' left.' );
 					return;
 				}
 				//console.log( 'Starting on _cleanup process.' );
-				
+
 				if( !this._startedCleanup )
 				{
 					this._folderCount = this._dirsToDelete.length;
 					this._startedCleanup = true;
 				}
-				
+
 				// Delete five directories at a time
 				var ceiling = 5;
 				var out = [];
@@ -4078,17 +4144,17 @@ FriendDOS =
 				}
 			}
 		}
-		
+
 		// Get door objects
 		var doorSrc = ( new Door() ).get( src );
-		
+
 		// Check what type source
 		var pthTest = src;
-		
+
 		// Get without trailing forward slash so we get the parent folder
 		if( src.substr( src.length - 1, 1 ) == '/' )
 			pthTest = src.substr( 0, src.length - 1 );
-		
+
 		// Get parent
 		if( pthTest.indexOf( '/' ) > 0 )
 		{
@@ -4100,20 +4166,20 @@ FriendDOS =
 		{
 			pthTest = pthTest.split( ':' )[0] + ':';
 		}
-		
+
 		// Correct path
 		var ptsg = pthTest.substr( pthTest.length - 1, 1 );
 		if( ptsg != ':' && ptsg != '/' ) pthTest += '/';
-		
+
 		doorSrc.path = pthTest;
-		
+
 		// Get directory listing
 		doorSrc.getIcons( false, function( data )
 		{
 			var abort = false; // in the future, we can abort the process
-			
+
 			var dirCount = 0;
-			
+
 			// TODO: Support #? and * wildcards
 			for( var a = 0; a < data.length && !abort; a++ )
 			{
@@ -4124,7 +4190,7 @@ FriendDOS =
 				{
 					compare = compare.substr( 0, compare.length - 1 );
 				}
-				
+
 				// We have a match!
 				if( compare == src )
 				{
@@ -4133,18 +4199,18 @@ FriendDOS =
 					{
 						dirCount++;
 						var p = data[a].Path;
-						
+
 						var d = ( new Door() ).get( p );
-						
+
 						// Start process getting sub folder
 						flags._activeProcesses++;
-						
+
 						var foo = p;
 						d.getIcons( p, function( subs )
 						{
 							flags._dirsToDelete.push( foo );
 							//console.log( 'Added ' + foo + ' to dirsToDelete array...' );
-							
+
 							for( var c = 0; c < subs.length; c++ )
 							{
 								// If we have a directory/file ID, then use that instead of a whole path
@@ -4169,7 +4235,7 @@ FriendDOS =
 										var p = subs[c].Path;
 										var psign = p.substr( p.length - 1, 1 );
 										if( psign != ':' && psign != '/' ) p += '/';
-										
+
 										// Start deleting of sub directory
 										flags._activeProcesses++;
 										//console.log( 'Adding another process: ' + flags._activeProcesses );
@@ -4181,7 +4247,7 @@ FriendDOS =
 									}
 								}
 							}
-							
+
 							// We're done
 							flags._activeProcesses--;
 							flags._cleanup();
@@ -4189,9 +4255,9 @@ FriendDOS =
 					}
 					// Delete single file
 					else
-					{	
+					{
 						var dPath = src;
-						
+
 						// Start delete process
 						flags._activeProcesses++;
 						doorSrc.dosAction( 'delete', { path: dPath, notrash: flags.notrash }, function( result )
@@ -4223,7 +4289,7 @@ FriendDOS =
 			}
 		} );
 	},
-	
+
 	// Callback format myFunc( bool return value, data )
 	getFileInfo: function( path, callback )
 	{
@@ -4234,7 +4300,7 @@ FriendDOS =
 		}
 		l.execute( 'file/info', { path: path } );
 	},
-	
+
 	// Add a new session and return the Shell session id
 	addSession: function( appObject, callback )
 	{
@@ -4254,14 +4320,14 @@ FriendDOS =
 			if( found ) available++;
 		}
 		while( found );
-	
+
 		var a = new Shell( appObject );
 		this.sessions[a.uniqueId] = a;
 		this.sessions[a.uniqueId].number = available;
-		if( callback ) callback( a.uniqueId );		
+		if( callback ) callback( a.uniqueId );
 		return a.uniqueId;
 	},
-	
+
 	// Get a shell object
 	getSession: function( sessionid )
 	{
@@ -4271,7 +4337,7 @@ FriendDOS =
 		}
 		return false;
 	},
-	
+
 	// Delete a shell session
 	delSession: function( sessionid )
 	{
@@ -4290,6 +4356,4 @@ FriendDOS =
 		}
 		return false;
 	}
-}
-
-
+};

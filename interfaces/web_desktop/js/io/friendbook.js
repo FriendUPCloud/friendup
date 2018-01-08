@@ -1,0 +1,1 @@
+/* Friend Book additions for the Friend Workspace */

@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  Application Permission
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __APP_PERMISSION_H__
 #define __APP_PERMISSION_H__
@@ -47,12 +54,12 @@ typedef struct AppPermission
 	char 	 					*p_Name;			// pointer to string from dictionary
 }AppPermission;
 
-static FULONG AppPermissionDesc[] = { SQLT_TABNAME, (FULONG)"FAppPermission", SQLT_STRUCTSIZE, sizeof( struct AppPermission ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( struct AppPermission, p_ID ), 
-	SQLT_INT,(FULONG) "DictID", offsetof( struct AppPermission, p_DictID ),
-	SQLT_STR, (FULONG)"Name", offsetof( struct AppPermission, p_Name ),
-	SQLT_NODE, (FULONG)"node", offsetof( struct AppPermission, node ),
-	SQLT_END };
+//static FULONG AppPermissionDesc[] = { SQLT_TABNAME, (FULONG)"FAppPermission", SQLT_STRUCTSIZE, sizeof( struct AppPermission ),
+//	SQLT_IDINT, (FULONG)"ID", offsetof( struct AppPermission, p_ID ),
+//	SQLT_INT,(FULONG) "DictID", offsetof( struct AppPermission, p_DictID ),
+//	SQLT_STR, (FULONG)"Name", offsetof( struct AppPermission, p_Name ),
+//	SQLT_NODE, (FULONG)"node", offsetof( struct AppPermission, node ),
+//	SQLT_END };
 
 
 #endif //__APP_PERMISSION_H__

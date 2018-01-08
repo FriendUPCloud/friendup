@@ -53,6 +53,7 @@
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
+#include <system/admin/admin_manager.h>
 
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50
@@ -61,7 +62,7 @@
  * Create remote communication service
  *
  * @param port port number on which connection will be set
- * @param int if set to 0 connection will not be secured, otherwise it will
+ * @param secured if set to 0 connection will not be secured, otherwise it will
  * @param sb pointer to SystemBase
  * @param maxev number of maximum events
  * @return new CommServiceRemote structure when success, otherwise NULL
@@ -182,12 +183,12 @@ int CommServiceRemoteStart( CommServiceRemote *s )
 }
 
 /**
- * Stop Remote Communication Service
+ * Stop Remote Communication Service UNIMPLEMENTED
  *
  * @param s pointer to CommServiceRemote which will be stopped
  * @return 0 when function will end with success, otherwise err number
  */
-int CommServiceRemoteStop( CommServiceRemote *s )
+int CommServiceRemoteStop( CommServiceRemote *s __attribute__((unused)) )
 {
 	return 0;
 }
@@ -565,6 +566,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 	
 	if( service->csr_Socket != NULL )
 	{
+		service->csr_Socket->VerifyPeer = VerifyPeer;
 		#ifdef USE_SELECT
 		SocketSetBlocking( service->csr_Socket, TRUE );
 		#else
@@ -625,8 +627,6 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 			
 			if( FD_ISSET( socket->fd, &readfds ) )
 			{
-				//Socket *sock = SocketAccept( socket );
-				
 				// accept
 				incomming = SocketAccept( service->s_Socket );
 				if( incomming == NULL )
@@ -679,7 +679,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						// untill admin will accept connection
 						//
 						
-						CommFCConnection *con = CommServiceAddConnection( service, incomming, NULL, lfcm->fcm_ID, SERVICE_CONNECTION_INCOMING );
+						CommFCConnection *con = CommServiceAddConnection( service, incomming, lfcm->fcm_ID, NULL, SERVICE_CONNECTION_INCOMING );
 						
 						incomming->s_Data = con;
 						
@@ -824,7 +824,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 						// An error has occured on this fd, or the socket is not ready for reading (why were we notified then?).
 						FERROR("[CommServiceRemote] FDerror!\n");
 						
-						CommFCConnection *loccon = NULL;
+						FConnection *loccon = NULL;
 						loccon = sock->s_Data;
 
 						// Remove event
@@ -970,7 +970,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										if( isStream == FALSE )
 										{
-											wrote = SocketWrite( sock, (char *)recvDataForm, (FQUAD)recvDataForm->df_Size );
+											wrote = SocketWrite( sock, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 										}
 										DEBUG2("[CommServiceRemote] Wrote bytes %d\n", wrote );
 										
@@ -994,7 +994,7 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 										
 										DEBUG2("[CommServiceRemote] Service, send message to socket, size %lu\n", tmpfrm->df_Size );
 										
-										SocketWrite( sock, (char *)tmpfrm, (FQUAD)tmpfrm->df_Size );
+										SocketWrite( sock, (char *)tmpfrm, (FLONG)tmpfrm->df_Size );
 										
 										DataFormDelete( tmpfrm );
 									}
@@ -1058,14 +1058,14 @@ int CommServiceRemoteThreadServer( FThread *ptr )
 }
 
 /**
- * Send message via Communication Service
+ * Send message via Communication Service UNIMPLEMENTED
  *
- * @param serv pointer to CommServiceRemote
+ * @param s pointer to CommServiceRemote
  * @param address internet address as string
  * @param port port number on which message will be send
  * @return DataForm with reponse structure when message will be parsed without errors, otherwise NULL
  */
-DataForm *CommServiceRemoteSendMsg( CommServiceRemote *s, char *address, int port )
+DataForm *CommServiceRemoteSendMsg( CommServiceRemote *s __attribute__((unused)), char *address __attribute__((unused)), int port __attribute__((unused)))
 {
 	return NULL;
 }

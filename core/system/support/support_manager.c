@@ -19,13 +19,23 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ *  Support Manager Body
+ *
+ * file contain all functitons related to all misc functionalities which support FC
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <system/support/support_manager.h>
 
-//
-//
-//
-
+/**
+ * Create new SupportManager
+ *
+ * @return new SupportManager structure when success, otherwise NULL
+ */
 SupportManager *SupportManagerNew( )
 {
 	SupportManager *sm;
@@ -42,9 +52,11 @@ SupportManager *SupportManagerNew( )
 	return sm;
 }
 
-//
-//
-//
+/**
+ * Delete SupportManager
+ *
+ * @param sm pointer to SupportManager which will be deleted
+ */
 
 void SupportManagerDelete( SupportManager *sm )
 {
@@ -55,7 +67,7 @@ void SupportManagerDelete( SupportManager *sm )
 }
 
 //
-//
+// internal SupportManager thread
 //
 
 void SupportManagerThread( SupportManager *sm )

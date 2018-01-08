@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ *  mysql Service
+ *
+ * file contain all mysql service functitons
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #include <core/types.h>
 #include <system/services/service.h>

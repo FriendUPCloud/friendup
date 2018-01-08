@@ -19,8 +19,8 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file
+/** @file
+ * 
  *  AuthenticationModule body
  *
  *  @author PS (Pawel Stefanski)
@@ -196,18 +196,18 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 
 			if( defaultAuthMod != NULL )
 			{
-				error = GetFunction( l->am_Handle, "libInit", &(l->libInit), defaultAuthMod->libInit );
-				error = GetFunction( l->am_Handle, "libClose", &(l->libClose), defaultAuthMod->libClose );
-				error = GetFunction( l->am_Handle, "GetVersion", &(l->GetVersion), defaultAuthMod->GetVersion );
-				error = GetFunction( l->am_Handle, "GetRevision", &(l->GetRevision), defaultAuthMod->GetRevision );
+				error = GetFunction( l->am_Handle, "libInit", (void **)&(l->libInit), defaultAuthMod->libInit );
+				error = GetFunction( l->am_Handle, "libClose", (void **)&(l->libClose), defaultAuthMod->libClose );
+				error = GetFunction( l->am_Handle, "GetVersion", (void **)&(l->GetVersion), defaultAuthMod->GetVersion );
+				error = GetFunction( l->am_Handle, "GetRevision", (void **)&(l->GetRevision), defaultAuthMod->GetRevision );
 
 				// user.library structure
-				error = GetFunction( l->am_Handle, "Authenticate", &(l->Authenticate), defaultAuthMod->Authenticate );
-				error = GetFunction( l->am_Handle, "IsSessionValid", &(l->IsSessionValid), defaultAuthMod->IsSessionValid );
-				error = GetFunction( l->am_Handle, "SetAttribute", &(l->SetAttribute), defaultAuthMod->SetAttribute );
-				error = GetFunction( l->am_Handle, "CheckPassword", &(l->CheckPassword), defaultAuthMod->CheckPassword );
-				error = GetFunction( l->am_Handle, "UpdatePassword", &(l->UpdatePassword), defaultAuthMod->UpdatePassword );
-				error = GetFunction( l->am_Handle, "Logout", &(l->Logout), defaultAuthMod->Logout );
+				error = GetFunction( l->am_Handle, "Authenticate", (void **)&(l->Authenticate), defaultAuthMod->Authenticate );
+				error = GetFunction( l->am_Handle, "IsSessionValid", (void **)&(l->IsSessionValid), defaultAuthMod->IsSessionValid );
+				error = GetFunction( l->am_Handle, "SetAttribute", (void **)&(l->SetAttribute), defaultAuthMod->SetAttribute );
+				error = GetFunction( l->am_Handle, "CheckPassword", (void **)&(l->CheckPassword), defaultAuthMod->CheckPassword );
+				error = GetFunction( l->am_Handle, "UpdatePassword", (void **)&(l->UpdatePassword), defaultAuthMod->UpdatePassword );
+				error = GetFunction( l->am_Handle, "Logout", (void **)&(l->Logout), defaultAuthMod->Logout );
 			}
 			else
 			{

@@ -30,6 +30,8 @@
 #ifndef FILE_H_
 #define FILE_H_
 
+#define LOCFILE_USE_MMAP 0 //TK-704
+
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <core/nodes.h>
@@ -38,6 +40,10 @@
 #define FILE_CACHEABLE 0x00000001
 #define FILE_READ_NOW  0x00000002
 #define FILE_EXISTS    0x00000004
+
+#ifndef LOCFILE_USE_MMAP
+#error "LOCFILE_USE_MMAP must be defined to 0 or 1"
+#endif
 
 //
 //
@@ -54,14 +60,16 @@ typedef struct LocFile
 	char			*lf_Buffer;
 	unsigned long   lf_FileSize;
 
-	FILE*           lf_Fp;       // File pointer
-	int             lf_Fd;       // File descriptor
+	//FILE*           lf_Fp;       // File pointer
+	//int             lf_Fd;       // File descriptor
 	struct stat     lf_Info;
 	time_t			lf_ModificationTimestamp;
 	
 	FUQUAD          lf_FileUsed;
 	struct MinNode  node;
 	uint64_t		hash[ 2 ];
+	
+	char			*lf_Mime;
 } LocFile;
 
 //
@@ -70,11 +78,6 @@ typedef struct LocFile
 
 LocFile* LocFileNew( char* path, unsigned int flags ); // Can be relative, or absolute.
 
-//
-//
-//
-
-int LocFileRead( LocFile* file, long long offset, long long size );
 
 //
 //
@@ -86,8 +89,11 @@ void LocFileDelete( LocFile* file );
 //
 //
 
+#if LOCFILE_USE_MMAP == 1
+#define LocFileReload(a,b ) //empty macro - reloading of a file is not needed because mmap will automatically carry out all the changes
+#else
 int LocFileReload( LocFile *file,  char *path );
-
+#endif
 //
 //
 //

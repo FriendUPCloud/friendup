@@ -1,0 +1,3 @@
+/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/francois/friendup/docs/doxygen/doxtodoc/cmake-build-debug/CMakeFiles/doxtodoc.dir

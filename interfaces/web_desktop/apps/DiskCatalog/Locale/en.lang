@@ -9,6 +9,7 @@ i18n_pollable                     : Network visible
 i18n_short_desc                   : Short description
 i18n_publisher                    : Publisher
 i18n_visible                      : Show on desktop
+i18n_select_user                  : Select user
 
 i18n_storage_disks                : Storage disks
 i18n_software_disks               : Software disks
@@ -23,10 +24,12 @@ i18n_sure_delete                  : Are you sure?
 i18n_sure_delete_desc             : Deleting a disk will remove it from your catalog.
 
 i18n_select_dos_driver            : Select DOS driver
+i18n_select_encryption_key        : Select encryption key
 i18n_placeholder_connection       : My device
 i18n_choose_type                  : Choose type
 i18n_loading                      : Loading
 i18n_device_name                  : Device name
+i18n_encryption_key               : Encryption key
 
 i18n_mounting                     : Mounting
 i18n_unmounting                   : Unmounting
@@ -63,6 +66,8 @@ i18n_Local                        : Server filesystem
 
 i18n_Friend Store                 : Friend Store
 i18n_FriendStore                  : Friend Store
+
+i18n_Samba	                      : Samba filesystem
 
 i18n_Dropbox Based Filesystem     : Dropbox drive
 i18n_DropboxDrive                 : Dropbox drive

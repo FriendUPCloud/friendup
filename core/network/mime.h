@@ -32,21 +32,12 @@
 #include <util/string.h>
 
 //
-// get MIME by checking 1st bytes of file
-//
-
-inline char *getMIMEFromBuffer( char *buffer, int size )
-{
-	return NULL;
-}
-
-//
 // get MIME by filename extension
 //
 
 //#define CHECK_MIME( A, B, C, D )
 
-inline char *GetMIMEByFilename( char *fname )
+static inline char *GetMIMEByFilename( char *fname )
 {
 	unsigned int flen = strlen( fname );
 	

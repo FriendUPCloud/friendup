@@ -324,6 +324,8 @@ int count_list(unzFile uf, int *entries )
 	return 0;
 }
 
+int check_file_exists(const char* filename);
+
 //
 //
 //

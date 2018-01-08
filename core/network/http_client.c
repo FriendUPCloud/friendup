@@ -142,7 +142,7 @@ BufString *HttpClientCall( HttpClient *c, char *host )
 
 		DEBUG("[HttpClientCall] request: %s\n", message );
 		
-		bytes = send( sockfd, message, addsize, NULL );
+		bytes = send( sockfd, message, addsize, 0 );
 		
 		DEBUG("[HttpClientCall] sent bytes: %d\n", bytes );
 
@@ -181,3 +181,4 @@ BufString *HttpClientCall( HttpClient *c, char *host )
 	}
 	return bs;
 }
+

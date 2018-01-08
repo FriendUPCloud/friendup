@@ -63,7 +63,7 @@ void UserLoggerManagerDelete( UserLoggerManager *ulm );
 //
 //
 
-inline void UserLoggerStore( UserLoggerManager *ulm, UserSession *ses, char *path, char *information )
+static inline void UserLoggerStore( UserLoggerManager *ulm, UserSession *ses, char *path, char *information )
 {
 	DEBUG("SESSION %p\n", ses );
 	if( ulm->ulm_ActiveLogger != NULL && ses != NULL )

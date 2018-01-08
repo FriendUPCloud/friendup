@@ -27,11 +27,12 @@ ifeq ($(CYGWIN_BUILD),1)
 CFLAGS  +=      -DCYGWIN_BUILD
 endif
 
-C_FILES := $(wildcard applicationlibrary.c)
+C_FILES := $(wildcard applicationlibrary.c applicationlibrary_web.c)
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
 ALL:	$(OBJ_FILES) $(OUTPUT)
 
+compile:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"

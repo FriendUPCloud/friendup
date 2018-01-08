@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * Worker-Manager: handles a set of workers
  *
@@ -29,6 +28,10 @@
  * @author PS (Pawel Stefansky)
  * @date first push by PS (10/02/2015)
  * @sa worker.c worker.h
+ * 
+ * \defgroup FriendCoreWorker Workers
+ * \ingroup FriendCore
+ * @{
  */
 
 #include "worker_manager.h"
@@ -111,7 +114,7 @@ void WorkerManagerDelete( WorkerManager *wm )
 // Start worker
 //
 
-inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
+static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 {
 
 	if( w != NULL )
@@ -231,10 +234,12 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			if( testquit > 25 )
 			{
 				//
-				FERROR("Worker testquit > 25 \n");
+				FERROR("Worker dispatch timeout, dropping client\n");
+				return -1;
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				usleep( 15000 );
+				//sleep( 2 );
 			}
 			max = 0;
 		}
@@ -245,8 +250,8 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 
 /**
 * For debug
- *
- */
+*
+*/
 void WorkerManagerDebug( void *sb )
 {
 	SystemBase *locsb = (SystemBase *)sb;
@@ -266,3 +271,4 @@ void WorkerManagerDebug( void *sb )
 	}
 }
 
+/**@}*/

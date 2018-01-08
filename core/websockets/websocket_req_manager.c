@@ -36,10 +36,11 @@
 #include "websocket_req_manager.h"
 #include <util/string.h>
 
-//
-//
-//
-
+/**
+ * Create new WebsocketReqManager structure
+ *
+ * @return pointer to new WebsocketReqManager when success, otherwise NULL
+ */
 WebsocketReqManager *WebsocketReqManagerNew( )
 {
 	WebsocketReqManager *wrm;
@@ -52,10 +53,11 @@ WebsocketReqManager *WebsocketReqManagerNew( )
 	return wrm;
 }
 
-//
-//
-//
-
+/**
+ * Delete WebsocketReqManager structure
+ *
+ * @param wrm to WebsocketReqManager which will be deleted
+ */
 void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 {
 	if( wrm != NULL )
@@ -71,10 +73,17 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 	}
 }
 
-//
-//
-//
-
+/**
+ * Put chunk of message to stack
+ *
+ * @param wrm to WebsocketReqManager
+ * @param id message id
+ * @param chunk chunk number
+ * @param total total number of chunks
+ * @param data part of message as string
+ * @param datasize size of provided message
+ * @return WebsocketReq new structure when success, otherwise NULL
+ */
 WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, int chunk, int total, char *data, int datasize )
 {
 	if( wrm != NULL )
@@ -94,7 +103,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 		}
 		pthread_mutex_unlock( &(wrm->wrm_Mutex) );
 		
-		DEBUG("[WebsocketReqPutData] req pointer %p\n", req );
+		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
 		// request exist, we are adding new part to it
 		if( req != NULL )
@@ -184,10 +193,14 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 	return NULL;
 }
 
-//
-//
-//
-
+/**
+ * Put message to stack
+ *
+ * @param wrm to WebsocketReqManager
+ * @param data part of message as string
+ * @param datasize size of provided message
+ * @return WebsocketReq new structure when success, otherwise NULL
+ */
 WebsocketReq *WebsocketReqManagerPutRawData( WebsocketReqManager *wrm, char *data, int datasize )
 {
 	if( wrm != NULL )
@@ -211,13 +224,16 @@ WebsocketReq *WebsocketReqManagerPutRawData( WebsocketReqManager *wrm, char *dat
 			
 			pthread_mutex_unlock( &(wrm->wrm_Mutex) );
 		}
+		return oreq;
 	}
+	return NULL;
 }
 
-//
-//
-//
-
+/**
+ * Get message from queue
+ *
+ * @param wrm to WebsocketReqManager
+ */
 WebsocketReq *WebsocketReqManagerGetFromQueue( WebsocketReqManager *wrm )
 {
 	WebsocketReq *req = NULL;

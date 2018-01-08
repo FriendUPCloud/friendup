@@ -6,6 +6,7 @@ i18n_Security                           : Sikkerhet
 i18n_permissions                        : Rettigheter
 i18n_application                        : Programmer
 i18n_edit                               : Endre
+i18n_delete                             : Slett
 i18n_app_permissions                    : Program rettigheter
 i18n_cancel                             : Lukk
 i18n_close                              : Lukk

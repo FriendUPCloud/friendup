@@ -41,8 +41,15 @@ function initLoginModules()
 	$modules = checkFCConfig();
 	$moduleconfigs = [];
 	
+	if( preg_match( '/\/oauth[\/]{0,1}/i', $GLOBALS['argv'][1], $m ) )
+	{
+		if( file_exists( 'modules/login/oauth/oauth.php' ) )
+		{
+			include_once( 'modules/login/oauth/oauth.php' );
+		}
+	}
 	// try to find config for each module
-	if( $modules )
+	else if( $modules )
 	{
 		for($i = 0; $i < count( $modules ); $i++)
 		{
@@ -73,21 +80,20 @@ function initLoginModules()
 			
 			$GLOBALS['login_modules'] = $moduleconfigs;
 			
-			foreach($moduleconfigs as $module => $config)
+			foreach( $moduleconfigs as $module => $config )
 			{
-				if($module == 'fcdb')
+				if( $module == 'fcdb' )
 				{
 					return renderDefaultLogin();
 				}
 				if( isset( $config['Module']['login'] ) && file_exists( $config['Module']['login'] ) )
 				{
-					include_once($config['Module']['login']);
+					include_once( $config['Module']['login'] );
 				}
-				die( $module . ' :: ' . print_r( $config,1 ) . print_r($moduleconfigs,1) );
+				die( 'Could not find login module: ' . $module );
 			}
 			
-			
-			die('call standard module loginform and inform about the others');
+			die( 'Call standard module loginform and inform about the others.' );
 		}
 	}
 	

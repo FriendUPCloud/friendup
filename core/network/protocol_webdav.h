@@ -31,6 +31,10 @@
 
 #include <system/systembase.h>
 
-Http *HandleWebDav( Http *req, char *data, int len );
+//
+//
+//
+
+Http *HandleWebDav( void *lsb, Http *req, char *data, int len );
 
 #endif // __NETWORK_PROTOCOL_WEBDAV_H__

@@ -41,10 +41,10 @@ if( $args->module && $args->module != 'system' && $args->module != '(null)' )
 
 // Get user level
 if( $level = $SqlDatabase->FetchObject( '
-	SELECT g.Name FROM FUserGroup g, FUserToGroup ug 
-	WHERE 
-		g.Type = \'Level\' AND 
-		ug.UserID=\'' . $User->ID . '\' AND 
+	SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+	WHERE
+		g.Type = \'Level\' AND
+		ug.UserID=\'' . $User->ID . '\' AND
 		ug.UserGroupID = g.ID
 ' ) )
 {
@@ -56,7 +56,7 @@ function GetFilesystemByArgs( $args )
 {
 	global $SqlDatabase, $User;
 	$identifier = false;
-	
+
 	if( isset( $args->fileInfo ) )
 	{
 		if( isset( $args->fileInfo->ID ) )
@@ -74,16 +74,16 @@ function GetFilesystemByArgs( $args )
 	}
 	if( $Filesystem = $SqlDatabase->FetchObject( '
 	SELECT * FROM `Filesystem` f
-	WHERE 
+	WHERE
 		(
 			f.GroupID IN (
 						SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-						WHERE 
+						WHERE
 							g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
 							ug.UserID = \'' . $User->ID . '\'
 					)
 			OR
-			f.UserID=\'' . $User->ID . '\' 
+			f.UserID=\'' . $User->ID . '\'
 		)
 		AND ' . $identifier . '
 	' ) )
@@ -98,7 +98,7 @@ function checkDesktopEvents()
 {
 	// Returnvar
 	$returnvar = [];
-	
+
 	// Check if we have files to import
 	$files = [];
 	if( file_exists( 'import' ) && $f = opendir( 'import' ) )
@@ -126,9 +126,9 @@ function checkDesktopEvents()
 
 
 function curl_exec_follow( $cu, &$maxredirect = null )
-{		
+{
 	$mr = 5;
-	
+
 	if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' == 'Off' ) )
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, $mr > 0 );
@@ -137,12 +137,12 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 	else
 	{
 		curl_setopt( $cu, CURLOPT_FOLLOWLOCATION, false );
-		
+
 		if ( $mr > 0 )
 		{
 			$newurl = curl_getinfo( $cu, CURLINFO_EFFECTIVE_URL );
 			$rch = curl_copy_handle( $cu );
-			
+
 			curl_setopt( $rch, CURLOPT_HEADER, true );
 			curl_setopt( $rch, CURLOPT_NOBODY, true );
 			curl_setopt( $rch, CURLOPT_FORBID_REUSE, false );
@@ -150,29 +150,29 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 			do
 			{
 				curl_setopt( $rch, CURLOPT_URL, $newurl );
-				
+
 				$header = curl_exec( $rch );
-				
-				if ( curl_errno( $rch ) ) 
+
+				if ( curl_errno( $rch ) )
 				{
 					$code = 0;
 				}
 				else
 				{
 					$code = curl_getinfo( $rch, CURLINFO_HTTP_CODE );
-					
+
 					if ( $code == 301 || $code == 302 || $code == 303 )
 					{
 						preg_match( '/Location:(.*?)\n/', $header, $matches );
-						
+
 						if ( !$matches )
 						{
 							preg_match( '/location:(.*?)\n/', $header, $matches );
 						}
-						
+
 						$oldurl = $newurl;
 						$newurl = trim( array_pop( $matches ) );
-						
+
 						if ( $newurl && !strstr( $newurl, 'http://' ) && !strstr( $newurl, 'https://' ) )
 						{
 							if ( strstr( $oldurl, 'https://' ) )
@@ -185,7 +185,7 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 								$parts = explode( '/', str_replace( 'http://', '', $oldurl ) );
 								$newurl = ( 'http://' . reset( $parts ) . ( $newurl{0} != '/' ? '/' : '' ) . $newurl );
 							}
-							
+
 						}
 					}
 					else
@@ -206,25 +206,25 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 				{
 					$maxredirect = 0;
 				}
-				
+
 				return false;
 			}
-			
+
 			curl_setopt( $cu, CURLOPT_URL, $newurl );
 		}
 	}
-	
+
 	$cu = curl_exec( $cu );
-	
+
 	if( $cu )
 	{
 		return $cu;
 	}
-	
+
 	return false;
 }
-	
-	
+
+
 
 if( isset( $args->command ) )
 {
@@ -243,26 +243,26 @@ if( isset( $args->command ) )
 			break;*/
 		case 'help':
 			$commands = array(
-				'ping', 'theme', 'systempath', 'software', 'proxycheck', 'proxyget', 
+				'ping', 'theme', 'systempath', 'software', 'proxycheck', 'proxyget',
 				'usersessionrenew', 'usersessions', 'userlevel', 'convertfile',
 				'userlevel', 'convertfile', 'install', 'assign', 'doorsupport', 'setup',
-				'languages', 'types', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
-				'mountlist', 'mountlist_list', 'deletedoor', 'fileinfo', 
+				'languages', 'types', 'keys', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
+				'mountlist', 'mountlist_list', 'deletedoor', 'fileinfo',
 				'addfilesystem', 'editfilesystem', 'status', 'makedir', 'mount',
-				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions',  
-				'installapplication',  'uninstallapplication', 'package',  'updateappdata', 
-				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo', 
-				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark', 
-				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget', 
-				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers', 
-				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete', 
-				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete', 
-				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules', 
+				'unmount', 'friendapplication', 'activateapplication', 'updateapppermissions',
+				'installapplication',  'uninstallapplication', 'package',  'updateappdata',
+				'setfilepublic', 'setfileprivate', 'zip', 'unzip', 'volumeinfo',
+				'securitydomains', 'systemmail', 'removebookmark', 'addbookmark',
+				'getbookmarks', 'listapplicationdocs', 'finddocumentation', 'userinfoget',
+				'userinfoset',  'useradd', 'checkuserbyname', 'userbetamail', 'listbetausers',
+				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
+				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
+				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
 				'listuserapplications', 'getmimetypes',  'setmimetypes', 'deletemimetypes',
-				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent', 
-				'listappcategories', 'systempath', 'listthemes', 'settheme', 'userdelete','userunblock', 
-				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting', 
-				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion'
+				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
+				'listappcategories', 'systempath', 'listthemes', 'settheme', 'userdelete','userunblock',
+				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
+				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey' 
 			);
 			sort( $commands );
 			die( 'ok<!--separate-->{"Commands": ' . json_encode( $commands ) . '}' );
@@ -280,8 +280,24 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"ping failed"}'  );
 			break;
+		// Get the app image from repository
+		case 'repoappimage':
+			require( 'modules/system/include/repoappimage.php' );
+			break;
 		case 'theme':
 			require( 'modules/system/include/theme.php' );
+			break;
+		case 'getsecuritysettings':
+			if( isset( $configfilesettings[ 'Security' ] ) )
+			{
+				$r = new stdClass();
+				if( isset( $configfilesettings[ 'Security' ][ 'subdomainsroot' ] ) )
+					$r->subdomainsroot = $configfilesettings[ 'Security' ][ 'subdomainsroot' ];
+				if( isset( $configfilesettings[ 'Security' ][ 'subdomainsnumber' ] ) )
+					$r->subdomainsnumber = $configfilesettings[ 'Security' ][ 'subdomainsnumber' ];
+				die( 'ok<!--separate-->' . json_encode( $r ) );
+			}
+			die( 'fail<!--separate-->{"responseCode":"-1","response":"no security settings available"}' );
 			break;
 		case 'systempath':
 			require( 'modules/system/include/systempath.php' );
@@ -307,7 +323,7 @@ if( isset( $args->command ) )
 					curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
 					curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
 				}
-				
+
 				if( function_exists( 'curl_exec_follow' ) )
 				{
 					$r = curl_exec_follow( $c );
@@ -316,10 +332,10 @@ if( isset( $args->command ) )
 				{
 					$r = curl_exec( $c );
 				}
-				
+
 				$k = curl_getinfo( $c );
 				curl_close( $c );
-				
+
 				if( $r !== false && $k && ( $k['http_code'] == 200 || $k['http_code'] == 301 || $k['http_code'] == 206 ) )
 				{
 					die( 'ok<!--separate-->' . $k['http_code'] . '<!--separate-->' . print_r( $k,1 ) );
@@ -336,7 +352,7 @@ if( isset( $args->command ) )
 		case 'checkfriendnetwork':
 			die( 'ok<!--separate-->' . ( isset( $Config->friendnetwork ) ? $Config->friendnetwork  : '0' ) );
 			break;
-		
+
 		case 'proxyget':
 			if( function_exists( 'curl_init' ) )
 			{
@@ -371,7 +387,7 @@ if( isset( $args->command ) )
 					curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
 					curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
 				}
-				
+
 				if( function_exists( 'curl_exec_follow' ) )
 				{
 					$r = curl_exec_follow( $c );
@@ -380,9 +396,9 @@ if( isset( $args->command ) )
 				{
 					$r = curl_exec( $c );
 				}
-				
+
 				curl_close( $c );
-				
+
 				if( isset( $fields['rawdata'] ) && $fields['rawdata'] )
 				{
 					die( 'ok<!--separate-->' . $r );
@@ -412,9 +428,9 @@ if( isset( $args->command ) )
 								}
 							}
 						}
-						
+
 						// TODO: Make support for rss with namespacing
-						
+
 						if( $xml = simplexml_load_string( trim( $r ), 'simple_xml_extended' ) )
 						{
 							die( 'ok<!--separate-->' . json_encode( $xml ) );
@@ -440,7 +456,24 @@ if( isset( $args->command ) )
 			}
 			die( 'totalfail<!--separate-->' . $r . '<!--separate-->' . $args->args->url );
 			break;
-		
+
+		// Save f.eg from photopea
+		case 'savefile':
+			require( 'modules/system/include/savefile.php' );
+			break;
+
+		// Likes
+		case 'like':
+			require( 'modules/system/include/like.php' );
+			break;
+		case 'getlikes':
+			require( 'modules/system/include/getlikes.php' );
+			break;
+
+		case 'removefromstartupsequence':
+			require( 'modules/system/include/removefromstartupsequence.php' );
+			break;
+
 		// Forcefully renew a session for a user
 		case 'usersessionrenew':
 			require( 'modules/system/include/usersessionrenew.php' );
@@ -451,8 +484,8 @@ if( isset( $args->command ) )
 			break;
 		case 'userlevel':
 			if( $o = $SqlDatabase->FetchObject( '
-				SELECT g.Name FROM FUserGroup g, FUserToGroup ug 
-				WHERE 
+				SELECT g.Name FROM FUserGroup g, FUserToGroup ug
+				WHERE
 					ug.UserID=\'' . $User->ID . '\' AND ug.UserGroupID = g.ID
 					AND g.Type = \'Level\'
 			' ) )
@@ -473,9 +506,9 @@ if( isset( $args->command ) )
 			if( !isset( $args->args->assign ) )
 			{
 				if( $devices = $SqlDatabase->fetchObjects( '
-					SELECT f.Name, f.Mounted FROM 
-						Filesystem f 
-					WHERE 
+					SELECT f.Name, f.Mounted FROM
+						Filesystem f
+					WHERE
 						f.Type="Assign" AND f.UserID=\'' . $User->ID . '\'
 					ORDER BY f.Name ASC
 				' ) )
@@ -486,21 +519,21 @@ if( isset( $args->command ) )
 			}
 			$assign = $args->args->assign;
 			$path = $args->args->path;
-			
-			
+
+
 			// Remove others
 			if( $mode ) $mode = strtolower( $mode );
 			if( !$mode || ( $mode && $mode != 'add' ) )
 			{
 				$SqlDatabase->query( 'DELETE FROM `Filesystem` WHERE `Type` = "Assign" AND `UserID`=\'' . $User->ID . '\' AND `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, str_replace( ':', '', trim( $assign ) ) ) . '"' );
 			}
-			
+
 			// Just remove the assign
-			if( $mode == 'remove' && !$path ) 
+			if( $mode == 'remove' && !$path )
 			{
 				die( 'ok<!--separate-->{"response": "Filesystem was properly removed."}' );
 			}
-			
+
 			// Add item
 			$o = new dbIO( 'Filesystem' );
 			$o->UserID = $User->ID;
@@ -509,14 +542,14 @@ if( isset( $args->command ) )
 			$o->Load(); // Try to load..
 			$o->Mounted = '0';
 			$o->Config = '{"Invisible":"Yes"}';
-			
+
 			if( $mode == 'add' )
 			{
 				$o->Path = $o->Path ? ( ( $o->Path . ';' ) . $path ) : $path;
-				
+
 				// Process paths
 				$all = explode( ';', $o->Path );
-				
+
 				// No duplicates
 				$final = [];
 				foreach( $all as $p )
@@ -535,13 +568,13 @@ if( isset( $args->command ) )
 					}
 					if( !$found ) $final[] = $p;
 				}
-				$o->Path = implode( ';', $final ); 
+				$o->Path = implode( ';', $final );
 			}
 			else if( $mode == 'remove' )
 			{
 				// Process paths
 				$all = explode( ';', $o->Path );
-				
+
 				// Just remove one specified by $path
 				$final = $o->Path;
 				if( $mode == 'remove' )
@@ -598,7 +631,7 @@ if( isset( $args->command ) )
 				{
 					if( $o->group == 'Admin' && $level != 'Admin' ) die( '404' );
 					if( !$o->icon ) die( '404' );
-					
+
 					if( file_exists( 'devices/DOSDrivers/' . $f . '/' . $o->icon ) )
 					{
 						FriendHeader( 'Content-Type: image/png' );
@@ -615,16 +648,16 @@ if( isset( $args->command ) )
 				while( $f = readdir( $dir ) )
 				{
 					if( $f{0} == '.' ) continue;
-					
+
 					if( !file_exists( $fn = 'devices/DOSDrivers/' . $f . '/sysinfo.json' ) )
 						continue;
 					$o = file_get_contents( $fn );
 					if( !( $o = json_decode( $o ) ) ) continue;
-					
+
 					// Admin filesystems can only be added by admin..
 					if( $o->group == 'Admin' && $level != 'Admin' )
 						continue;
-					
+
 					if( isset( $o->icon ) && file_exists( 'devices/DOSDrivers/' . $f . '/' . $o->icon ) )
 					{
 						$o->hasIcon = 'true';
@@ -633,7 +666,7 @@ if( isset( $args->command ) )
 					{
 						$o->hasIcon = 'false';
 					}
-					
+
 					$out[] = $o;
 				}
 				closedir( $dir );
@@ -643,6 +676,64 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
 			die( 'fail<!--separate-->{"response":"types failed"}' );
+			//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
+			break;
+		case 'keys':
+			$out = [];
+			
+			if( isset( $args->args->appPath ) )
+			{
+				$fname = explode( ':', $args->args->appPath );
+				
+				$args->args->appPath = $fname[0];
+				
+				if( $fsys = $SqlDatabase->FetchObject( '
+					SELECT f.* 
+					FROM `Filesystem` f 
+					WHERE f.UserID = \'' . $User->ID . '\' AND f.Name = \'' . $args->args->appPath . '\' 
+					ORDER BY f.ID ASC 
+				' ) )
+				{
+					$args->args->id = $fsys->KeysID;
+				}
+			}
+			
+			if( $User->ID > 0 && ( $keys = $SqlDatabase->FetchObjects( $q = '
+				SELECT k.*, a.Name AS Application, u.AuthID AS ApplicationAuthID 
+				FROM 
+					`FKeys` k 
+						LEFT JOIN `FApplication` a ON 
+						( 
+							a.ID = k.ApplicationID 
+						) 
+						LEFT JOIN `FUserApplication` u ON 
+						( 
+								u.ApplicationID = k.ApplicationID 
+							AND u.UserID = \'' . $User->ID . '\' 
+						)
+				WHERE 
+						k.UserID = \'' . $User->ID . '\' 
+					AND k.IsDeleted = "0" 
+					' . ( isset( $args->args->id ) ? 'AND k.ID IN ( ' . $args->args->id . ' ) ' : '' ) . '
+					' . ( isset( $args->args->authId ) && !isset( $args->args->appPath ) ? ( $args->args->authId == "0" ? 'AND ( k.ApplicationID = "0" OR k.ApplicationID = "-1" ) ' : 'AND u.AuthID = \'' . $args->args->authId . '\' ' ) : '' ) . '
+				ORDER 
+					BY k.ID ASC 
+			' ) ) )
+			{
+				foreach( $keys as $key )
+				{
+					$out[] = $key;
+				}
+			}
+			if( isset( $args->args->id ) && $args->args->id && isset( $out[0] ) )
+			{
+				die( 'ok<!--separate-->' . json_encode( $out[0] ) );
+			}
+			else if( count( $out ) > 0 )
+			{
+				die( 'ok<!--separate-->' . json_encode( $out ) );
+			}
+			die( 'fail<!--separate-->{"response":"keys failed"} ' . $q );
 			//die( 'ok<!--separate-->[{"type":"treeroot","literal":"Treeroot"},{"type":"local","literal":"Local filesystem"},{"type":"corvo","literal":"MySQL Based Filesystem"},{"type":"website","literal":"Mount websites as doors"}]' );
 			break;
 		// Get desktop events
@@ -660,7 +751,7 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' . $d );
 			}
 			die( 'fail<!--separate-->{"response":"news failed"}'  );
-			break;	
+			break;
 		case 'setdiskcover':
 			require( 'modules/system/include/setdiskcover.php' );
 			break;
@@ -694,16 +785,21 @@ if( isset( $args->command ) )
 			break;
 		// Get a list of mounted and unmounted devices
 		case 'mountlist':
+			$userid = $User->ID;
+			if( $level == 'Admin' && $args->args->userid )
+			{
+				$userid = $args->args->userid;
+			}
 			if( $rows = $SqlDatabase->FetchObjects( '
-				SELECT f.* FROM Filesystem f 
-				WHERE 
+				SELECT f.* FROM Filesystem f
+				WHERE
 					(
-						f.UserID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $User->ID ) . '\' OR
+						f.UserID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $userid ) . '\' OR
 						f.GroupID IN (
 							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-							WHERE 
+							WHERE
 								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
-								ug.UserID = \'' . $User->ID . '\'
+								ug.UserID = \'' . $userid . '\'
 						)
 					)
 					' . ( isset( $args->args->type ) ? '
@@ -711,7 +807,7 @@ if( isset( $args->command ) )
 					' : '' ) . ( isset( $args->args->mounted ) ? '
 					AND f.Mounted = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->mounted ) . '\'
 					' : '' ) . '
-				ORDER BY 
+				ORDER BY
 					f.Name ASC
 			' ) )
 			{
@@ -728,26 +824,28 @@ if( isset( $args->command ) )
 				die( 'fail<!--separate-->no filesystems available<!--separate-->' . mysql_error() );
 			}
 			break;
-			
+
 		case 'mountlist_list':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"mountlist_list failed"}' );
-			
+
 			if( !isset($args->args->userids) ) die('fail<!--seperate-->no userids given');
 			$sql = '';
 			if( isset($args->args->path) )
 			{
 				$type = ( isset($args->args->type) ? ' AND f.Type=\''. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type ) .'\'' : '' );
 				$sql = '
-					SELECT f.* FROM Filesystem f 
-					WHERE 
+					SELECT f.* FROM Filesystem f
+					WHERE
 						f.UserID IN (' . implode(',', $args->args->userids ) . ') ' . $type . ' AND f.Path LIKE \'%'. mysqli_real_escape_string( $SqlDatabase->_link, $args->args->path ) .'%\'
-					ORDER BY 
+					ORDER BY
 						f.Name ASC
 				';
 			}
-			
+
 			if( $sql == '' ) die('fail<!--seperate-->no filter given');
-			
+
+			$Logger->log( 'mounstlist list ' . $sql );
+
 			if( $rows = $SqlDatabase->FetchObjects( $sql ) )
 			{
 				// Let's censor some data..
@@ -758,24 +856,28 @@ if( isset( $args->command ) )
 				}
 				die( 'ok<!--separate-->' . json_encode( $rows ) );
 			}
+			else if( mysqli_error() )
+			{
+				die( 'fail<!--separate-->server is defect. check database<!--separate-->' . mysqli_error() );
+			}
 			else
 			{
-				die( 'fail<!--separate-->server is defect. check database<!--separate-->' . mysql_error() );
+				die('ok<!--separate-->[]');
 			}
-			
+
 			break;
-			
+
 		case 'deletedoor':
 			//admins can delete others users mounts...
-			if( $level == 'Admin' && isset( $args->args->userid ) ) 
+			if( $level == 'Admin' && isset( $args->args->userid ) )
 				$userid = intval( $args->args->userid );
 			else
 				$userid = $User->ID;
-		
+
 			if( $row = $SqlDatabase->FetchObject( '
-				SELECT * FROM Filesystem 
-				WHERE 
-					UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id ) . '\' 
+				SELECT * FROM Filesystem
+				WHERE
+					UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id ) . '\'
 				LIMIT 1
 			' ) )
 			{
@@ -783,7 +885,7 @@ if( isset( $args->command ) )
 				{
 					die( 'fail<!--separate-->{"response":"deletedoor failed"}'  ); // print_r( $User, 1 )  ???
 				}
-				
+
 				// Delete encryption keys if they exist
 				if( $args->args->id > 0 )
 				{
@@ -794,16 +896,16 @@ if( isset( $args->command ) )
 					$k->IsDeleted 		= 0;
 					if( $k->Load() ) $k->Delete();
 				}
-				
+
 				include_once( 'php/classes/door.php' );
-				
+
 				//$Logger->log( 'Unmounting ' . $row->Name );
 				if( $userid == $User->ID )
 				{
 					$door = new Door( $row->Name . ':' );
-					$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );					
+					$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );
 				}
-				
+
 				$SqlDatabase->Query( 'DELETE FROM Filesystem WHERE UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id, 10 ) . '\'' );
 				die( 'ok<!--separate-->' );
 			}
@@ -813,45 +915,24 @@ if( isset( $args->command ) )
 			break;
 		// List available systems stored for the current user
 		case 'filesystem':
-			if( $row = $SqlDatabase->FetchObject( '
-				SELECT f . * , u.Name AS Workgroup
-				FROM Filesystem f
-				LEFT JOIN FUserGroup u ON ( u.ID = f.GroupID AND u.Type =  "Workgroup" ) 
-				WHERE
-					f.UserID=\'' . $User->ID . '\' AND f.ID=\'' . intval( $args->args->id ) . '\' 
-				LIMIT 1
-			' ) )
-			{
-				if( $key = $SqlDatabase->FetchObject( '
-					SELECT * 
-					FROM 
-						`FKeys` k 
-					WHERE 
-							k.UserID = \'' . $User->ID . '\'
-						AND k.RowType = "Filesystem"
-						AND k.RowID = \'' . intval( $args->args->id ) . '\'
-						AND k.IsDeleted = "0" 
-					ORDER 
-						BY k.ID DESC
-					LIMIT 1
-				' ) )
-				{
-					$row->Key = $key;
-				}
-				
-				die( 'ok<!--separate-->' . json_encode( $row ) );
-			}
+			require( 'modules/system/include/filesystem.php' );
 			break;
 		case 'addfilesystem':
 			$obj = $args->args;
 
+			$userid = $User->ID;
+			if( $level == 'Admin' && $args->args->userid )
+			{
+				$userid = $args->args->userid;
+			}
+
 			// some checks for correctness of request before we do stuff...
 			if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"add file system failed"}' );
 			if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )	die('fail<!--seperate-->could not read config for chosen file system');
-				
+
 			$o = file_get_contents( $fn );
 			if( !( $o = json_decode( $o ) ) ) die('fail<!--seperate-->could not read config for chosen file system');
-				
+
 			// Admin filesystems can only be added by admin..
 			if( $o->group == 'Admin' && $level != 'Admin' )
 				die('fail<!--separate-->unauthorised access attempt!');
@@ -864,19 +945,19 @@ if( isset( $args->command ) )
 				if( isset( $args->args->Workgroup ) )
 				{
 					if( $group = $SqlDatabase->FetchObject( '
-						SELECT ug.* FROM FUserGroup ug, FUserToGroup tg 
+						SELECT ug.* FROM FUserGroup ug, FUserToGroup tg
 							WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
 							AND ug.Type = "Workgroup"
 							AND tg.UserGroupID = ug.ID
-							AND tg.UserID = \'' . $User->ID . '\'
+							AND tg.UserID = \'' . $userid . '\'
 					' ) )
 					{
 						$groupID = $group->ID;
 					}
 				}
-				
+
 				// TODO: Add support for storing EncryptedKey with PublicKey connected to user
-				
+
 				// Set optional or extra args
 				$config = new stdClass();
 				foreach( $obj as $k=>$v )
@@ -887,28 +968,28 @@ if( isset( $args->command ) )
 						$config->$key = $v;
 					}
 				}
-				
+
 				$fs = new DbIO( 'Filesystem' );
-				
+
 				$fs->Name = $obj->Name;
-				$fs->UserID = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID);
+				$fs->UserID = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
 				$fs->GroupID = $groupID;
 				if( !$fs->Load() )
 				{
-					$keys = array( 'Server', 'Name', 'Path', 'Type', 'ShortDescription', 'Username', 'Password', 'Mounted', 'PublicKey' );
+					$keys = array( 'Server', 'Name', 'Path', 'Type', 'ShortDescription', 'Username', 'Password', 'Mounted', 'PublicKey', 'KeysID' );
 					foreach( $keys as $kkey )
 						if( !isset( $obj->$kkey ) )
 							$obj->$kkey = '';
-					
+
 					// Commented out to use DbIO instead to get the ID after saving
-					
+
 					//$SqlDatabase->query( '
 					//INSERT INTO Filesystem
 					//( `Name`, `UserID`, `GroupID`, `Server`, `Port`, `Path`, `Type`, `ShortDescription`, `Username`, `Password`, `Mounted`, `Config` )
 					//VALUES
 					//(
 					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Name ) . '",
-					//	"' . ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID) . '", 
+					//	"' . ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID) . '",
 					//	"' . $groupID . '",
 					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Server ) . '",
 					//	"' . intval( $obj->Port, 10 ) . '",
@@ -921,11 +1002,12 @@ if( isset( $args->command ) )
 					//	"' . mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) ) . '"
 					//)
 					//' );
-					
+
 					$f = new DbIO( 'Filesystem' );
 					$f->Name             = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Name );
-					$f->UserID           = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID);
+					$f->UserID           = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
 					$f->GroupID          = $groupID;
+					$f->KeysID           = $obj->KeysID;
 					$f->Server           = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Server );
 					$f->Port             = intval( $obj->Port, 10 );
 					$f->Path             = mysqli_real_escape_string( $SqlDatabase->_link, $obj->Path );
@@ -936,13 +1018,14 @@ if( isset( $args->command ) )
 					$f->Mounted          = mysqli_real_escape_string( $SqlDatabase->_link, isset( $obj->Mounted ) ? $obj->Mounted : '' );
 					$f->Config           = mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) );
 					$f->Save();
-					
+
 					if( $f->ID > 0 && isset( $obj->EncryptedKey ) )
 					{
-						$k = new DbIO( 'FKeys' );
+						// Don't use this ...
+						/*$k = new DbIO( 'FKeys' );
 						$k->RowType         = 'Filesystem';
 						$k->RowID           = $f->ID;
-						$k->UserID          = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $User->ID);
+						$k->UserID          = ( $level == 'Admin' && $obj->UserID ? $obj->UserID : $userid );
 						$k->IsDeleted 		= 0;
 						if( !$k->Load() )
 						{
@@ -952,96 +1035,23 @@ if( isset( $args->command ) )
 						$k->Data            = $obj->EncryptedKey;
 						$k->PublicKey       = $obj->PublicKey;
 						$k->DateModified    = date( 'Y-m-d H:i:s' );
-						$k->Save();
+						$k->Save();*/
 					}
-					
+
 					die( 'ok' );
 				}
 				die( 'fail<!--separate-->{"response":"add file system failed"}'  );
 			}
 			die( 'fail<!--separate-->{"response":"add file system failed"}'  );
+		// Disable a file system (don't really delete..)
+		case 'deletefilesystem':
+			require( 'modules/system/include/deletefilesystem.php' );
+			break;
+		// Update a file system
 		case 'editfilesystem':
-			$obj = $args->args;
-			
-			// some checks for correctness of request before we do stuff...
-			if( !isset( $obj->Type ) ) die('fail<!--separate-->{"response":"edit filesystem failed"}' );
-			if( !file_exists( $fn = 'devices/DOSDrivers/' . $obj->Type . '/sysinfo.json' ) )	die('fail<!--seperate-->could not read config for chosen file system');
-				
-			$o = file_get_contents( $fn );
-			if( !( $o = json_decode( $o ) ) ) die('fail<!--seperate-->could not read config for chosen file system');
-				
-			// Admin filesystems can only be added by admin..
-			if( $o->group == 'Admin' && $level != 'Admin' )
-				die('fail<!--separate-->unauthorised access attempt!');
-			
-			if( isset( $obj->ID ) && $obj->ID > 0 )
-			{
-				// Support workgroups (that we are member of)!
-				$groupID = '';
-				if( $group = $SqlDatabase->FetchObject( '
-					SELECT ug.* FROM FUserGroup ug, FUserToGroup tg 
-						WHERE ug.Name = "' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Workgroup ) . '"
-						AND ug.Type = "Workgroup"
-						AND tg.UserGroupID = ug.ID
-						AND tg.UserID = \'' . $User->ID . '\'
-				' ) )
-				{
-					$groupID = $group->ID;
-				}
-				
-				// TODO: Add support for updating EncryptedKey with PublicKey connected to user
-				
-				// Set optional or extra args
-				$config = new stdClass();
-				foreach( $obj as $k=>$v )
-				{
-					if( substr( $k, 0, 5 ) == 'conf.' )
-					{
-						$key = end( explode( '.', $k ) );
-						$config->$key = $v;
-					}
-				}
-				
-				$SqlDatabase->query( '
-				UPDATE Filesystem
-					SET `Name` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Name ) . '", 
-					`UserID` = "' . $User->ID . '", 
-					`GroupID` = "' . $groupID . '", 
-					`Server` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Server ) . '", 
-					`Port` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Port ) . '", 
-					`Path` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Path ) . '", 
-					' . ( isset( $obj->Type ) ? ( '`Type` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Type ) . '",' ) : '' ) . '
-					`ShortDescription` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->ShortDescription ) . '", 
-					`Username` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Username ) . '", 
-					'. ( isset($obj->Password) && $obj->Password != '' ? '`Password` = "' . mysqli_real_escape_string( $SqlDatabase->_link, $obj->Password ) . '",' : '' ) . ' 
-					`Mounted` = "0",
-					`Config` = "' . mysqli_real_escape_string( $SqlDatabase->_link, json_encode( $config ) ) . '"
-				WHERE
-					ID = \'' . intval( $obj->ID, 10 ) . '\'
-				' );
-				
-				if( $obj->ID > 0 && isset( $obj->EncryptedKey ) )
-				{
-					$k = new DbIO( 'FKeys' );
-					$k->RowType         = 'Filesystem';
-					$k->RowID           = intval( $obj->ID, 10 );
-					$k->UserID          = $User->ID;
-					$k->IsDeleted 		= 0;
-					if( !$k->Load() )
-					{
-						$k->DateCreated = date( 'Y-m-d H:i:s' );
-					}
-					$k->Type 			= $obj->Name;
-					$k->Data            = $obj->EncryptedKey;
-					$k->PublicKey       = $obj->PublicKey;
-					$k->DateModified    = date( 'Y-m-d H:i:s' );
-					$k->Save();
-				}
-				
-				die( 'ok' );
-			}
-			die( 'fail<!--separate-->{"response":"edit fs failed"}'  );
-			
+			require( 'modules/system/include/editfilesystem.php' );
+			break;
+
 		// Filesystem status
 		case 'status':
 			if( $args->devname )
@@ -1054,7 +1064,7 @@ if( isset( $args->command ) )
 							f.UserID=\'' . $User->ID . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-								WHERE 
+								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
 									ug.UserID = \'' . $User->ID . '\'
 							)
@@ -1084,11 +1094,11 @@ if( isset( $args->command ) )
 					SELECT * FROM Filesystem f
 					WHERE
 						f.Name=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $devname ) . '\' AND
-						( 
+						(
 							f.UserID=\'' . intval( $User->ID ) .'\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-								WHERE 
+								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
 									ug.UserID = \'' . intval( $User->ID ) . '\'
 							)
@@ -1097,7 +1107,7 @@ if( isset( $args->command ) )
 				' ) )
 				{
 					//$Logger->log( 'Found fs ' . $row->Name . ':' );
-					
+
 					// TODO: Will be deprecated to be here'
 					$path = isset( $args->path ) ? $args->path : ( isset( $args->args->path ) && $args->args->path ? $args->args->path : false );
 					$test = 'devices/DOSDrivers/' . $row->Type . '/door.php';
@@ -1105,16 +1115,16 @@ if( isset( $args->command ) )
 					{
 						$Logger->log( 'Found: ' . $test );
 						$Logger->log( 'Found ' . 'devices/DOSDrivers/' . $row->Type . '/door.php' );
-						
+
 						$args->command = 'dosaction';
 						$args->action = 'mount';
-						
+
 						$Logger->log( 'right before... ' );
 
 						include_once( $test );
-						
+
 						$Logger->log('file was included');
-						
+
 						foreach( $row as $k=>$v )
 							$door->$k = $v;
 
@@ -1148,7 +1158,7 @@ if( isset( $args->command ) )
 							f.UserID=\'' . intval( $User->ID ) . '\' OR
 							f.GroupID IN (
 								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
-								WHERE 
+								WHERE
 									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
 									ug.UserID = \'' . intval( $User->ID ) . '\'
 							)
@@ -1164,8 +1174,8 @@ if( isset( $args->command ) )
 					WHERE
 						`ID` = \'' . $row->ID . '\' AND UserID=\'' . $User->ID . '\'
 					' );
-					
-					
+
+
 					// TODO: Will be deprecated to be here'
 					$Logger->log( 'Trying to use dosdriver to unmount drive ' . $devname . '..' );
 					$test = 'devices/DOSDrivers/' . $row->Type . '/door.php';
@@ -1177,7 +1187,7 @@ if( isset( $args->command ) )
 						if( $result = $door->dosAction( $args ) )
 							die( $result );
 					}
-					
+
 					die( 'ok<!--separate-->' );
 				}
 			}
@@ -1296,28 +1306,11 @@ if( isset( $args->command ) )
 			break;
 		// Gets a list of available filesystem "drivers"
 		case 'listfilesystems':
-			
+
 			break;
 		// Get the whole or components of the dos driver gui
 		case 'dosdrivergui':
-			if( !isset( $args->args->type ) ) die( 'fail<!--separate-->{"response":"dos driver gui failed"}'  );
-			if( isset( $args->args->component ) && isset( $args->args->language ) )
-			{
-				if( $args->args->component == 'locale' )
-				{
-					$f = 'devices/DOSDrivers/' . $args->args->type . '/Locale/' . $args->args->language . '.lang';
-					if( file_exists( $f ) )
-					{
-						die( 'ok<!--separate-->' . file_get_contents( $f ) );
-					}
-					die( 'fail<!--separate-->' . $f );
-				}
-			}
-			if( file_exists( $f = ( 'devices/DOSDrivers/' . $args->args->type . '/gui.html' ) ) )
-			{
-				die( 'ok<!--separate-->' . file_get_contents( $f ) );
-			}
-			die( 'fail<!--separate-->{"response":"dosdrivergui failed"}'  );
+			require( 'modules/system/include/dosdrivergui.php' );
 			break;
 		case 'evaluatepackage':
 			require( 'modules/system/include/evaluatepackage.php' );
@@ -1400,16 +1393,16 @@ if( isset( $args->command ) )
 		//                      level, unless you are Admin
 		case 'listusers':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"list users failed Error 1"}' );
-			
+
 			if( $users = $SqlDatabase->FetchObjects( '
-				SELECT u.*, g.Name AS `Level` FROM 
+				SELECT u.*, g.Name AS `Level` FROM
 					`FUser` u, `FUserGroup` g, `FUserToGroup` ug
 				WHERE
 					    u.ID = ug.UserID
 					AND g.ID = ug.UserGroupID
 					AND g.Type = "Level"
 				GROUP BY u.ID, g.Name
-				ORDER BY 
+				ORDER BY
 					u.FullName ASC
 			' ) )
 			{
@@ -1428,7 +1421,7 @@ if( isset( $args->command ) )
 			}
 			die( 'fail<!--separate-->{"response":"list users failed Error 2"}'  );
 			break;
-		
+
 		// Get detailed info about a user
 		// TODO: Permissions!!! Only access users if you are admin!
 		case 'userinfoget':
@@ -1440,127 +1433,330 @@ if( isset( $args->command ) )
 			{
 				// Create FKeys table for storing encrypted keys connected to user
 				$t = new dbTable( 'FKeys' );
-				if( !$t->load() )
+				if( !$t->LoadTable() )
 				{
 					$SqlDatabase->Query( '
 					CREATE TABLE IF NOT EXISTS `FKeys` (
 					 `ID` bigint(20) NOT NULL AUTO_INCREMENT,
 					 `UserID` bigint(20) NOT NULL,
+					 `ApplicationID` bigint(20) NOT NULL,
 					 `UniqueID` varchar(255) NOT NULL,
 					 `RowID` bigint(20) NOT NULL,
 					 `RowType` varchar(255) NOT NULL,
+					 `Name` varchar(255) NOT NULL,
 					 `Type` varchar(255) NOT NULL,
 					 `Blob` longblob,
 					 `Data` text,
 					 `PublicKey` text,
+					 `Signature` text,
 					 `DateModified` datetime NOT NULL,
 					 `DateCreated` datetime NOT NULL,
 					 `IsDeleted` tinyint(4) NOT NULL,
 					 PRIMARY KEY (`ID`)
-					) 
+					)
 					' );
 				}
-				
+				else
+				{
+					$name = false;
+					$signature = false;
+					$applicationid = false;
+					if ( isset ( $t->_fieldnames ) )
+					{
+						foreach ( $t->_fieldnames as $f )
+						{
+							if ( $f == 'Name' )
+							{
+								$name = true;
+							}
+							if ( $f == 'Signature' )
+							{
+								$signature = true;
+							}
+							if ( $f == 'ApplicationID' )
+							{
+								$applicationid = true;
+							}
+						}
+						if ( !$name )
+						{
+							$t->AddField ( 'Name', 'varchar', array ( 'after'=>'RowType' ) );
+						}
+						if ( !$signature )
+						{
+							$t->AddField ( 'Signature', 'text', array ( 'after'=>'PublicKey' ) );
+						}
+						if ( !$applicationid )
+						{
+							$t->AddField ( 'ApplicationID', 'bigint', array ( 'after'=>'UserID' ) );
+						}
+					}
+				}
+
 				if( $userinfo = $SqlDatabase->FetchObject( '
-					SELECT 
-						u.*, 
-						g.Name AS `Level`, 
-						wg.Name AS `Workgroup` 
-					FROM 
-						`FUser` u, 
-						`FUserGroup` g, 
-						`FUserToGroup` ug 
-							LEFT JOIN `FUserGroup` wg ON 
+					SELECT
+						u.*,
+						g.Name AS `Level`,
+						wg.Name AS `Workgroup`
+					FROM
+						`FUser` u,
+						`FUserGroup` g,
+						`FUserToGroup` ug
+							LEFT JOIN `FUserGroup` wg ON
 							(
-									ug.UserID = \'' . $uid . '\' 
-								AND wg.ID = ug.UserGroupID 
-								AND wg.Type = "Workgroup" 
+									ug.UserID = \'' . $uid . '\'
+								AND wg.ID = ug.UserGroupID
+								AND wg.Type = "Workgroup"
 							)
-					WHERE 
-							u.ID = ug.UserID 
-						AND g.ID = ug.UserGroupID 
-						AND u.ID = \'' . $uid . '\' 
+					WHERE
+							u.ID = ug.UserID
+						AND g.ID = ug.UserGroupID
+						AND u.ID = \'' . $uid . '\'
 						AND g.Type = \'Level\'
 				' ) )
 				{
 					$gds = '';
-					
+
 					// TODO: Fix this sql code to work with workgroup, code under is temporary
 					if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
 						SELECT
 							g.ID,
-							g.Name AS `Workgroup` 
-						FROM 
-							`FUserGroup` g, 
-							`FUserToGroup` ug 
-						WHERE 
-								ug.UserID = \'' . $uid . '\' 
-							AND g.ID = ug.UserGroupID 
-							AND g.Type = "Workgroup" 
+							g.Name AS `Workgroup`
+						FROM
+							`FUserGroup` g,
+							`FUserToGroup` ug
+						WHERE
+								ug.UserID = \'' . $uid . '\'
+							AND g.ID = ug.UserGroupID
+							AND g.Type = "Workgroup"
 					' ) ) )
 					{
 						$ugs = array();
-						
+
 						foreach( $wgs as $wg )
 						{
 							$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
 							$ugs[] = $wg->Workgroup;
 						}
-						
+
 						if( $ugs )
 						{
 							$userinfo->Workgroup = implode( ', ', $ugs );
 						}
 					}
-					
+
 					$gds = false;
-					
+
 					if( $sts = $SqlDatabase->FetchObjects( '
-						SELECT g.ID, g.Name, ug.UserID' . ( $gds ? ', wg.UserID AS SetupGroup' : '' ) . ' 
-						FROM 
-							`FUserGroup` g 
+						SELECT g.ID, g.Name, ug.UserID' . ( $gds ? ', wg.UserID AS SetupGroup' : '' ) . '
+						FROM
+							`FUserGroup` g
 								' . ( $gds ? '
-								LEFT JOIN `FUserGroup` wg ON 
+								LEFT JOIN `FUserGroup` wg ON
 								(
-										wg.Name = g.ID 
-									AND wg.Type = \'SetupGroup\' 
-									AND wg.UserID IN (' . $gds . ') 
+										wg.Name = g.ID
+									AND wg.Type = \'SetupGroup\'
+									AND wg.UserID IN (' . $gds . ')
 								)
 								' : '' ) . '
-								LEFT JOIN `FUserToGroup` ug ON 
+								LEFT JOIN `FUserToGroup` ug ON
 								(
-										g.ID = ug.UserGroupID 
-									AND g.Type = \'Setup\' 
-									AND ug.UserID = \'' . $uid . '\' 
+										g.ID = ug.UserGroupID
+									AND g.Type = \'Setup\'
+									AND ug.UserID = \'' . $uid . '\'
 								)
-						WHERE g.Type = \'Setup\' 
-						ORDER BY g.Name ASC 
+						WHERE g.Type = \'Setup\'
+						ORDER BY g.Name ASC
 					' ) )
 					{
 						$userinfo->Setup = $sts;
 					}
-					
-					if( $keys = $SqlDatabase->FetchObjects( '
-						SELECT * 
+
+					if( $uid > 0 && ( $keys = $SqlDatabase->FetchObjects( '
+						SELECT k.*, a.Name AS Application, u.AuthID AS ApplicationAuthID 
 						FROM 
 							`FKeys` k 
+								LEFT JOIN `FApplication` a ON 
+								( 
+									a.ID = k.ApplicationID 
+								) 
+								LEFT JOIN `FUserApplication` u ON 
+								( 
+										u.ApplicationID = k.ApplicationID 
+									AND u.UserID = \'' . $uid . '\' 
+								)
 						WHERE 
-							k.UserID = \'' . $uid . '\' 
+								k.UserID = \'' . $uid . '\' 
+							AND k.IsDeleted = "0" 
 						ORDER 
 							BY k.ID ASC 
-					' ) )
+					' ) ) )
 					{
 						$userinfo->Keys = $keys;
 					}
-					
+
 					die( 'ok<!--separate-->' . json_encode( $userinfo ) );
 				}
 			}
 			die( 'fail<!--separate-->{"response":"user info get failed"}'  );
 			break;
+		case 'userkeysupdate':
+			if( $User->ID )
+			{
+				$fsysid = false;
+				
+				if( isset( $args->args->appPath ) )
+				{
+					$fname = explode( ':', $args->args->appPath );
+					
+					$args->args->appPath = $fname[0];
+				}
+				
+				$key = new dbIO( 'FKeys' );
+				$key->IsDeleted = '0';
+				$key->UserID = $User->ID;
+				if( isset( $args->args->id ) && $args->args->id )
+				{
+					if( !$key->Load( $args->args->id ) )
+					{
+						die( 'fail' );
+					}
+				}
+				else if( isset( $args->args->authId ) && $args->args->authId )
+				{
+					if( $fup = $SqlDatabase->FetchObject( '
+						SELECT 
+							a.ID 
+						FROM 
+							`FUserApplication` u, 
+							`FApplication` a 
+						WHERE 
+								u.UserID = \'' . $User->ID . '\' 
+							AND u.AuthID = \'' . $args->args->authId . '\' 
+							AND a.ID = u.ApplicationID 
+						ORDER BY 
+							a.ID ASC 
+						LIMIT 1 
+					' ) )
+					{
+						$key->ApplicationID = $fup->ID;
+						
+						if( !$key->Load() )
+						{
+							$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
+							$key->DateCreated = date( 'Y-m-d H:i:s' );
+						}
+					}
+					else
+					{
+						die( 'fail' );
+					}					
+				}
+				else if( isset( $args->args->appPath ) && $args->args->appPath )
+				{
+					if( $fs = $SqlDatabase->FetchObject( '
+						SELECT 
+							f.ID, f.KeysID 
+						FROM 
+							`Filesystem` f 
+						WHERE 
+								f.UserID = \'' . $User->ID . '\' 
+							AND f.Name = \'' . $args->args->appPath . '\' 
+						ORDER BY 
+							f.ID ASC 
+						LIMIT 1
+					' ) )
+					{
+						$deviceid = $fs->ID;
+						
+						$args->args->app = '-1';
+						
+						if( $fs->KeysID && ( $fsys = $SqlDatabase->FetchObjects( $q = '
+							SELECT 
+								k.ID 
+							FROM 
+								`FKeys` k 
+							WHERE 
+									k.UserID = \'' . $User->ID . '\' 
+								AND k.ID IN ( ' . $fs->KeysID . ' ) 
+								AND k.IsDeleted = "0" 
+								AND k.ApplicationID = "-1" 
+							ORDER BY 
+								k.ID DESC 
+						' ) ) )
+						{
+							foreach( $fsys as $fsy )
+							{
+								$key->ID = $fsy->ID;
+							}
+						}
+						
+						//die( print_r( $fsys,1 ) . ' [] ' . $q );
+						
+						if( !$key->ID || !$key->Load() )
+						{
+							$fsysid = $deviceid;
+							
+							//$key->RowType = 'Filesystem';
+							//$key->RowID = intval( $fsy->ID, 10 );
+							
+							$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
+							$key->DateCreated = date( 'Y-m-d H:i:s' );
+						}
+					}
+					else
+					{
+						die( 'fail' );
+					}					
+				}
+				else
+				{
+					$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
+					$key->DateCreated = date( 'Y-m-d H:i:s' );
+				}
+				$key->ApplicationID = ( isset( $args->args->app ) ? $args->args->app : $key->ApplicationID );
+				$key->Name          = ( $args->args->name ? $args->args->name : $key->Type );
+				$key->Type          = ( $args->args->type ? $args->args->type : $key->Type );
+				$key->Data          = ( $args->args->key ? $args->args->key : $key->Data );
+				$key->Signature     = ( $args->args->signature ? $args->args->signature : $key->Signature );
+				$key->PublicKey     = $args->args->publickey;
+				$key->DateModified  = date( 'Y-m-d H:i:s' );
+				$key->Save();
+				
+				if( $fsysid && $key->ID > 0 )
+				{
+					$sys = new dbIO( 'Filesystem' );
+					$sys->ID = $fsysid;
+					$sys->UserID = $User->ID;
+					if( $sys->Load() )
+					{
+						$sys->KeysID = ( !strstr( ','.$sys->KeysID.',', ','.$key->ID.',' ) ? ( $sys->KeysID ? $sys->KeysID.',' : '' ) . $key->ID : $sys->KeysID );
+						$sys->Save();
+					}
+				}
+				
+				die( 'ok<!--separate-->' . $key->ID );
+			}
+			die( 'fail<!--separate-->{"response":"user keys update failed"}'  );
+			break;
+		case 'userkeysdelete':
+			if( $User->ID > 0 && $args->args->id )
+			{
+				$key = new dbIO( 'FKeys' );
+				$key->UserID = $User->ID;
+				if( $key->Load( $args->args->id ) )
+				{
+					$key->IsDeleted = 1;
+					$key->Save();
+
+					die( 'ok' );
+				}
+			}
+			die( 'fail<!--separate-->{"response":"user keys delete failed"}'  );
+			break;
 		// Set info on a user
 		// TODO: Update with correct encryption algo
-		case 'userinfoset':	
+		case 'userinfoset':
 			if( $level == 'Admin' || $args->args->id == $User->ID )
 			{
 				$u = new dbIO( 'FUser' );
@@ -1577,9 +1773,9 @@ if( isset( $args->command ) )
 						// Check if the user group exists
 						$g = false;
 						if( !$g = $SqlDatabase->FetchObject( '
-							SELECT * FROM `FUserGroup` g 
-							WHERE 
-								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Level ) . '\'' 
+							SELECT * FROM `FUserGroup` g
+							WHERE
+								g.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Level ) . '\''
 						) )
 						{
 							$g = new dbIO( 'FUserGroup' );
@@ -1592,25 +1788,25 @@ if( isset( $args->command ) )
 						if( isset( $g->ID ) && $g->ID > 0 )
 						{
 							if( $ugs = $SqlDatabase->FetchObjects( '
-								SELECT 
-									g.* 
-								FROM 
-									`FUserGroup` g, 
-									`FUserToGroup` ug, 
-								WHERE 
-										g.Type = "Level" 
-									AND ug.UserGroupID = g.ID 
-									AND ug.UserID = \'' . $u->ID . '\' 
+								SELECT
+									g.*
+								FROM
+									`FUserGroup` g,
+									`FUserToGroup` ug,
+								WHERE
+										g.Type = "Level"
+									AND ug.UserGroupID = g.ID
+									AND ug.UserID = \'' . $u->ID . '\'
 							' ) )
 							{
 								foreach( $ugs as $ug )
 								{
 									$SqlDatabase->query( '
-										UPDATE FUserToGroup 
-											SET UserGroupID = \'' . $g->ID . '\' 
-										WHERE 
+										UPDATE FUserToGroup
+											SET UserGroupID = \'' . $g->ID . '\'
+										WHERE
 												UserGroupID = \'' . $ug->ID . '\'
-											AND UserID = \'' . $u->ID . '\' 
+											AND UserID = \'' . $u->ID . '\'
 									' );
 								}
 							}
@@ -1622,7 +1818,7 @@ if( isset( $args->command ) )
 								$ug->Load();
 								$ug->Save();
 							}
-							
+
 							die( 'ok' );
 						}
 					}
@@ -1640,7 +1836,7 @@ if( isset( $args->command ) )
 				$g->Name = 'User';
 				$g->Load();
 				$g->Save();
-				
+
 				if( $g->ID > 0 )
 				{
 					// Create the new user
@@ -1649,7 +1845,7 @@ if( isset( $args->command ) )
 					$u->Name = 'Unnamed user';
 					$u->FullName = 'Unnamed user';
 					$u->Save();
-					
+
 					if( $u->ID > 0 )
 					{
 						$SqlDatabase->query( 'INSERT INTO FUserToGroup ( UserID, UserGroupID ) VALUES ( \'' . $u->ID . '\', \'' . $g->ID . '\' )' );
@@ -1658,7 +1854,7 @@ if( isset( $args->command ) )
 				}
 			}
 			die( 'fail<!--separate-->{"response":"user add failed"}'  );
-		// 
+		//
 		case 'checkuserbyname':
 			if( $level == 'Admin' || $args->args->id == $User->ID )
 			{
@@ -1674,8 +1870,8 @@ if( isset( $args->command ) )
 				}
 			}
 			die( 'fail<!--separate-->{"response":"checkuserbyname failed"}'  );
-			break;	
-		case 'userbetamail':		
+			break;
+		case 'userbetamail':
 		case 'listbetausers':
 			require( 'modules/system/include/betaimport.php' );
 			break;
@@ -1689,7 +1885,11 @@ if( isset( $args->command ) )
 			break;
 		// Apply setup
 		case 'usersetupapply':
-			require( 'modules/system/include/usersetupapply.php' );
+			if( $level == 'Admin' && ( $args->args->userid > 0 || $args->args->members > 0 ) )
+			{
+				require( 'modules/system/include/usersetupapply.php' );
+			}
+			die( 'fail' );
 			break;
 		// Save setup
 		case 'usersetupsave':
@@ -1723,7 +1923,7 @@ if( isset( $args->command ) )
 		case 'workgroupget':
 			require( 'modules/system/include/workgroupget.php' );
 			break;
-			
+
 		case 'setsetting':
 			require( 'modules/system/include/setsetting.php' );
 			break;
@@ -1735,6 +1935,9 @@ if( isset( $args->command ) )
 			break;
 		case 'listmodules':
 			require( 'modules/system/include/modules.php' );
+			break;
+		case 'removeapplicationsettings':
+			require( 'modules/system/include/removeapplicationsettings.php' );
 			break;
 		case 'listuserapplications':
 			require( 'modules/system/include/listuserapplications.php' );
@@ -1807,18 +2010,26 @@ if( isset( $args->command ) )
 		case 'usersettings':
 			// Settings object
 			$s = new stdClass();
-			
+
 			// The first login test!
 			include( 'modules/system/include/firstlogin.php' );
-			
+
 			// Theme information
 			$o = new dbIO( 'FSetting' );
 			$o->UserID = $User->ID;
 			$o->Type = 'system';
 			$o->Key = 'theme';
 			$o->Load();
-
-			$s->Theme = $o->ID > 0 ? $o->Data : 'friendup'; // default theme set to friendup
+			
+			// Check if theme exists before setting it ...
+			if( $o->ID > 0 && !file_exists( 'resources/themes/' . strtolower( $o->Data ) . '/theme.css' ) )
+			{
+				$s->Theme = 'friendup';
+			}
+			else
+			{
+				$s->Theme = $o->ID > 0 ? $o->Data : 'friendup'; // default theme set to friendup
+			}
 			
 			// Get all mimetypes!
 			$types = [];
@@ -1855,10 +2066,10 @@ if( isset( $args->command ) )
 				}
 			}
 			$s->Mimetypes = $types;
-			
+
 			die( 'ok<!--separate-->' . json_encode( $s ) );
-			
-			
+
+
 		case 'listsystemsettings':
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM FSetting s
@@ -1871,16 +2082,16 @@ if( isset( $args->command ) )
 			}
 			else
 			{
-				die('ok<!--separate-->nosettingsfound');	
+				die('ok<!--separate-->nosettingsfound');
 			}
-			
+
 			break;
-		
+
 		// Save the application state
 		case 'savestate':
 			require( 'modules/system/include/savestate.php' );
 			break;
-		
+
 		case 'getsystemsetting':
 			if( $args->args->type && $args->args->key && $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM FSetting s
@@ -1895,10 +2106,10 @@ if( isset( $args->command ) )
 			}
 			else
 			{
-				die('ok<!--separate-->settingnotfouns');	
+				die('ok<!--separate-->settingnotfouns');
 			}
 			break;
-			
+
 		case 'saveserversetting':
 			if( $level == 'Admin' && $args->args->settingsid && $args->args->settings )
 			{
@@ -1923,7 +2134,7 @@ if( isset( $args->command ) )
 				die('fail<!--separate-->You are ' . $level );
 			}
 			die( 'fail<!--separate-->{"response":"saveserversettings failed"}'  );
-		
+
 		case 'deleteserversetting':
 			if( $level == 'Admin' && $args->args->sid )
 			{
@@ -1931,20 +2142,74 @@ if( isset( $args->command ) )
 				die('ok<!--separate-->' .$args->args->settingsid );
 			}
 			break;
-			
+
 		// Launch an app...
 		case 'launch':
 			require( 'modules/system/include/launch.php' );
 			break;
-			
-			
+
+
 		// handle FriendUp version
 		case 'friendversion':
 			require( 'modules/system/include/friendversion.php' );
 			break;
 		
-		// NATIVE version commands ---------------------------------------------
+		// get server publickey, create keypairs if not found
+		case 'getserverkey':
+			
+			include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
+			
+			$publickey = '';
+			
+			// TODO: Have a look at why there is a slight difference between a standard 2048 bit RSA key and the key generated here (probably pkcs#7) ...
+			
+			if( file_exists( 'cfg/crt/server_encryption_key.pem' ) )
+			{
+				if( $keys = file_get_contents( 'cfg/crt/server_encryption_key.pem' ) )
+				{
+					if( strstr( $keys, '-----' . "\r\n" . '-----' ) && ( $keys = explode( '-----' . "\r\n" . '-----', $keys ) ) )
+					{
+						if( isset( $keys[1] ) )
+						{
+							$publickey = ( '-----' . $keys[1] );
+						}
+					}
+				}
+			}
+			else 
+			{
+				$fcrypt = new fcrypto( 2048 );
+				
+				if( $keys = $fcrypt->generateKeys(  ) )
+				{
+					$pem = ( $keys['privatekey'] . "\r\n" . $keys['publickey'] );
+					
+					if( !file_exists( 'cfg/crt' ) )
+					{
+						@mkdir( 'cfg/crt', 0755, true );
+					}
+					
+					if( $pem && ( $fp = @fopen( 'cfg/crt/server_encryption_key.pem', 'w+' ) ) )
+					{
+						fwrite ( $fp, $pem );
+						fclose ( $fp );
+						
+						$publickey = $keys['publickey'];
+					}
+				}
+			}
+			
+			if( $publickey )
+			{
+				die( 'ok<!--separate-->' . $publickey );
+			}
+			
+			die( 'fail' );
+			
+			break;
 		
+		// NATIVE version commands ---------------------------------------------
+
 		// These functions are insecure. Commented out, we do not need them
 		// Get all windows managed by friend core
 		/*case 'list_windows':

@@ -31,6 +31,16 @@ var FriendLibrary = function ( library, encryption )
 	{
 		this.vars[k] = value;
 	}
+	
+	this.destroy = function()
+	{
+		this.encryption = null;
+		this.library = null;
+		this.args = null;
+		this.method = null;
+		this.vars = null;
+		delete this;
+	}
 
 	// Execute a method to a Friend UP module
 	this.execute = function( method, args )
@@ -40,6 +50,9 @@ var FriendLibrary = function ( library, encryption )
 		var data = '';
 		
 		var j = new cAjax ();		
+		
+		if( this.forceHTTP )
+			j.forceHTTP = true;
 		
 		var ex = '';
 		
@@ -145,6 +158,7 @@ var FriendLibrary = function ( library, encryption )
 					}
 					// No json then..
 					t.onExecuted( rc, d );
+					t.destroy();
 				}
 				// No, it's not that
 				catch( e )
@@ -158,6 +172,7 @@ var FriendLibrary = function ( library, encryption )
 						}
 					}
 					t.onExecuted( rc, d );
+					t.destroy();
 				}
 			}
 		}

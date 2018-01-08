@@ -69,7 +69,7 @@ typedef struct UserManagerInterface
 // init function
 //
 
-inline void UserManagerInterfaceInit( UserManagerInterface *si )
+static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 {
 	si->UMNew = UMNew;
 	si->UMDelete = UMDelete;

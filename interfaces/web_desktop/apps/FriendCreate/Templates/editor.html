@@ -3,6 +3,17 @@
 		<script src="Progdir:Scripts/editor.js"></script>
 
 		<style>
+			.FileLoaderProgress
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: url(/themes/friendup/gfx/loading.gif) no-repeat center center #222222;
+				opacity: 0.4;
+				z-index: 20;
+			}
 		    #fileslistlabel
 		    {
 		        position: absolute;
@@ -14,10 +25,10 @@
 		    }
 			#fileslist
 			{
-				position: absolute; 
-				top: 35px; 
-				left: 0; 
-				width: 225px; 
+				position: absolute;
+				top: 35px;
+				left: 0;
+				width: 225px;
 				bottom: 240px;
 				overflow: auto;
 				overflow-x: hidden;
@@ -52,12 +63,12 @@
 			}
 			#CodeView
 			{
-				position: absolute; 
-				top: 0; 
-				left: 230px; right: 0; 
+				position: absolute;
+				top: 0;
+				left: 230px; right: 0;
 				bottom: 0;
 			}
-			
+
 			@media (max-width: 640px)
 			{
 				#fileslist
@@ -92,7 +103,7 @@
 			</div>
 			<div style="position: absolute; top: auto; left: 0; width: 225px; bottom: 0; height: 40px" class="BackgroundDefault BorderTop">
 				<div class="Padding Relative TextCenter" id="status">
-				
+
 				</div>
 			</div>
 			<div id="ResizeColumn" style="position: absolute; top: 0; left: 225px; width: 5px; bottom: 0; background: #606060; cursor: col-resize;">
@@ -138,6 +149,7 @@
 											<option value="java">{i18n_java}</option>
 											<option value="txt">{i18n_plain_text}</option>
 											<option value="xml">{i18n_xml}</option>
+											<option value="conf">{i18n_conf}</option>
 										</select>
 									</div>
 									<div class="HContent50 FloatLeft">
@@ -176,9 +188,9 @@
 			.CodeEditor > .Editor
 			{
 				position: absolute;
-				top: 0; 
+				top: 0;
 				left: 0;
-				right: 0; 
+				right: 0;
 				bottom: 40px;
 				margin: 0;
 			}
@@ -189,9 +201,9 @@
 				width: 100%;
 				height: 100%;
 				position: absolute;
-				top: 0; 
+				top: 0;
 				left: 0;
-				right: 0; 
+				right: 0;
 				bottom: 0;
 				margin: 0;
 				transform: rotateZ(0deg);
@@ -202,7 +214,7 @@
 				position: relative;
 				top: -5px;
 			}
-			
+
 			.AppPreview
 			{
 				position: absolute;
@@ -226,5 +238,3 @@
 				color: white;
 			}
 		</style>
-
-

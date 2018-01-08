@@ -99,20 +99,23 @@ $t = new dbTable( 'FKeys' );
 if( !$t->load() )
 {
 	$SqlDatabase->Query( '
-	CREATE TABLE `FKeys` (
+	CREATE TABLE IF NOT EXISTS `FKeys` (
 	 `ID` bigint(20) NOT NULL AUTO_INCREMENT,
 	 `UserID` bigint(20) NOT NULL,
 	 `UniqueID` varchar(255) NOT NULL,
 	 `RowID` bigint(20) NOT NULL,
 	 `RowType` varchar(255) NOT NULL,
+	 `Name` varchar(255) NOT NULL,
 	 `Type` varchar(255) NOT NULL,
-	 `Data` longblob,
-	 `PublicKey` blob,
+	 `Blob` longblob,
+	 `Data` text,
+	 `PublicKey` text,
+	 `Signature` text,
 	 `DateModified` datetime NOT NULL,
 	 `DateCreated` datetime NOT NULL,
 	 `IsDeleted` tinyint(4) NOT NULL,
 	 PRIMARY KEY (`ID`)
-	) 
+	)
 	' );
 }
 

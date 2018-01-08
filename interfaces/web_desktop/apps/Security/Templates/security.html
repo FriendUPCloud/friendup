@@ -1,9 +1,9 @@
 
 	<link rel="stylesheet" href="Progdir:Css/security.css"/>
 	
-	<div class="VContentTop" style="bottom: 50px">
-		<div class="ContentFull" style="top: 10px; left: 0px; right: 0px; bottom: 0px; height: auto">
-			<div class="Tabs" id="SecurityTabs">
+	<div class="ContentFull LayoutButtonbarBottom">
+		<div class="Padding VContentTop">
+			<div id="SecurityTabs">
 				<div class="Tab IconSmall fa-archive">
 					{i18n_applications}
 				</div>
@@ -11,11 +11,11 @@
 					{i18n_system}
 				</div>
 				<div class="Page">
-					<div class="VContentBottom Padding ScrollArea BackgroundLists" id="Applications">
+					<div class="PageScroll BackgroundLists" id="Applications">
 					</div>
 				</div>
 				<div class="Page">
-					<div class="VContentBottom Padding ScrollArea BackgroundLists" id="System">
+					<div class="PageScroll BackgroundLists" id="System">
 						<div class="GuiContainer Padding MarginBottom">
 							<p class="Layout"><strong>{i18n_gen_system_settings}</strong></p>
 						</div>
@@ -25,11 +25,11 @@
 				</div>
 			</div>
 		</div>
-	</div>
-	<div class="VContentBottom Padding BackgroundToolbar BorderTop" id="Bottom" style="height: 50px">
-		<button type="button" class="FloatRight Button fa-close IconSmall" onclick="closeWin()">
-			{i18n_close}
-		</button>
+		<div class="VContentBottom Padding BackgroundDefault BorderTop" id="Bottom">
+			<button type="button" class="FloatRight Button fa-close IconSmall" onclick="closeWin()">
+				{i18n_close}
+			</button>
+		</div>
 	</div>
 
 	<script src="Progdir:Scripts/securitywindow.js"></script>

@@ -28,6 +28,7 @@
  *  @author PS (Pawel Stefanski)
  *  @date created 29/05/2017
  */
+
 #include "remote_user.h"
 #include <system/systembase.h>
 
@@ -114,10 +115,13 @@ int RemoteUserDeleteAll( RemoteUser *usr )
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Add remote drive to remote user
+ *
+ * @param ru pointer to RemoteUser to which drive will be assigned
+ * @param name name of remote drive
+ * @return 0 when success, otherwise error number
+ */
 int RemoteDriveAdd( RemoteUser *ru, char *name )
 {
 	if( ru != NULL )
@@ -134,10 +138,13 @@ int RemoteDriveAdd( RemoteUser *ru, char *name )
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Remove remote drive from remote user
+ *
+ * @param ru pointer to RemoteUser from which drive will be removed
+ * @param name name of remote drive
+ * @return 0 when success, otherwise error number
+ */
 int RemoteDriveRemove( RemoteUser *ru, char *name )
 {
 	if( ru != NULL )
@@ -160,7 +167,6 @@ int RemoteDriveRemove( RemoteUser *ru, char *name )
 		{
 			prevdrive->node.mln_Succ = ldrive->node.mln_Succ;
 			DEBUG("RemoteDriveDelete drive will be removed from memory\n");
-			//UserDelete( ldrive );
 			
 			RemoteDriveDelete( ldrive );
 			
@@ -170,10 +176,13 @@ int RemoteDriveRemove( RemoteUser *ru, char *name )
 	return 0;
 }
 
-//
-//
-//
-
+/**
+ * Create new RemoteDrive
+ *
+ * @param localName pointer to local drive name
+ * @param remoteName pointer to remote drive name
+ * @return new structure when success, otherwise NULL
+ */
 RemoteDrive *RemoteDriveNew( char *localName, char *remoteName )
 {
 	RemoteDrive *rd = NULL;
@@ -183,14 +192,14 @@ RemoteDrive *RemoteDriveNew( char *localName, char *remoteName )
 		rd->rd_LocalName = StringDuplicate( localName );
 		rd->rd_RemoteName = StringDuplicate( remoteName );
 	}
-	
 	return rd;
 }
 
-//
-//
-//
-
+/**
+ * Delete RemoteDrive
+ *
+ * @param rd pointer to drive which will be deleted
+ */
 void RemoteDriveDelete( RemoteDrive *rd )
 {
 	if( rd != NULL )
@@ -209,15 +218,15 @@ void RemoteDriveDelete( RemoteDrive *rd )
 		{
 			FFree( rd->rd_Name );
 		}
-		
 		FFree( rd );
 	}
 }
 
-//
-//
-//
-
+/**
+ * Delete RemoteDrive linked list
+ *
+ * @param rd pointer to drive which is first on linked list
+ */
 void RemoteDriveDeleteAll( RemoteDrive *rd )
 {
 	RemoteDrive *next = rd;
@@ -240,7 +249,6 @@ void RemoteDriveDeleteAll( RemoteDrive *rd )
 		{
 			FFree( rd->rd_Name );
 		}
-		
 		FFree( rd );
 	}
 }

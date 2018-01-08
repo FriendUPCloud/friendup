@@ -1,11 +1,11 @@
 GCC		=	gcc
 OUTPUT	=	bin/libfcsystem.a
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/ -Wno-unused-variable -Wno-unused-parameter
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/ -Wno-unused-variable -Wno-unused-parameter -I/usr/include/samba-4.0/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ 
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
 MODS	=	phpmod sysmod nodejsmod pythonmod javamod
-FSYS	=	fsyslocal fsysssh2 fsysphp fsysnode fsysinram fsysremote
+FSYS	=	fsyslocal fsysssh2 fsysphp fsysnode fsysinram fsysremote fsyssmb
 LOGGERS	=	sql.ulogger file.ulogger
 SERVICES=	apacheserv mysqlserv nodejsserv phpserv
 SERVICEFLAGS =  --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
@@ -13,6 +13,10 @@ MATHLIB	=
 
 ifeq ($(DEBUG),1)
 CFLAGS	+=	-D__DEBUG
+endif
+
+ifeq ($(PROFILE),1)
+CFLAGS  +=	-pg -DPROFILE=1
 endif
 
 ifeq ($(NO_VALGRIND),1)
@@ -92,6 +96,11 @@ fsysremote: fsysdyn/fsysremote.c ../../core/obj/buffered_string.o fsysdyn/fsysre
 	@echo "\033[34mCompile FSYSremote ...\033[0m"
 	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsysremote.c ../../core/obj/buffered_string.o ../../core/obj/library.o ../../core/obj/log.o ../../core/obj/string.o ../../core/obj/list_string.o ../../core/obj/list.o ../../core/obj/comm_msg.o ../../core/obj/jsmn.o -o bin/fsys/remote.fsys -shared -fPIC -lcrypto
 
+fsyssmb: fsysdyn/fsyssmb.c ../../core/obj/buffered_string.o fsysdyn/fsyssmb.d
+	@echo "\033[34mCompile FSYSlocal ...\033[0m"
+	$(GCC) $(CFLAGS) --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -I. -I../../core/  fsysdyn/fsyssmb.c ../../core/obj/buffered_string.o -o bin/fsys/smb.fsys -shared -fPIC -lsmbclient
+
+
 #
 #	LOGGERS
 #
@@ -110,27 +119,27 @@ file.ulogger: log/loggers/user_logger_file.c ../../core/obj/buffered_string.o lo
 	
 apacheserv: servicesdyn/service_apache.c servicesdyn/service_apache.d
 	@echo "\033[34mCompile apache.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_apache.c -o bin/services/apache.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets -lpthread
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_apache.c -o bin/services/apache.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o  -lpthread
 
 mysqlserv: servicesdyn/service_mysql.c servicesdyn/service_mysql.d
 	@echo "\033[34mCompile mysql.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_mysql.c -o bin/services/mysql.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_mysql.c -o bin/services/mysql.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o 
 	
 nodejsserv: servicesdyn/service_nodejs.c servicesdyn/service_nodejs.d
 	@echo "\033[34mCompile nodejs.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_nodejs.c -o bin/services/nodejs.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_nodejs.c -o bin/services/nodejs.serv ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o 
 
 mathserv: servicesdyn/service_math.c servicesdyn/service_math.d
 	@echo "\033[34mCompile math.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_math.c -o bin/services/math.serv $(MATHLIB)  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_math.c -o bin/services/math.serv $(MATHLIB)  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o 
 
 helloserv: servicesdyn/service_hello.c servicesdyn/service_hello.d
 	@echo "\033[34mCompile math.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_hello.c -o bin/services/hello.serv $(MATHLIB) ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o -lwebsockets
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_hello.c -o bin/services/hello.serv $(MATHLIB) ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o 
 	
 phpserv: servicesdyn/service_php.c servicesdyn/service_php.d
 	@echo "\033[34mCompile math.serv ...\033[0m"
-	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_php.c -o bin/services/php.serv  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o ../../core/obj/buffered_string.o -lwebsockets	
+	$(GCC) $(CFLAGS) $(SERVICEFLAGS) servicesdyn/service_php.c -o bin/services/php.serv  ../../core/obj/thread_linux.o ../../core/obj/log.o ../../core/obj/library.o ../../core/obj/buffered_string.o
 
 #build system
 

@@ -208,8 +208,6 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 								tmp = (int)atol( row[ i ] );
 							}
 							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( int ) );
-							//
-							
 						}
 						break;
 					case SQLT_STR:
@@ -238,12 +236,16 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 							//struct tm ltm;
 							//ltm.tm_year += 1900;
 							//ltm.tm_mon ++;
-							struct tm *ltm = (struct tm *)strptr + dptr[ 2 ];
-							if( sscanf( (char *)row[i], "%d-%d-%d %d:%d:%d", &(ltm->tm_year), &(ltm->tm_mon), &(ltm->tm_mday), &(ltm->tm_hour), &(ltm->tm_min), &(ltm->tm_sec) ) != EOF )
+							struct tm extm;
+							if( sscanf( (char *)row[i], "%d-%d-%d %d:%d:%d", &(extm.tm_year), &(extm.tm_mon), &(extm.tm_mday), &(extm.tm_hour), &(extm.tm_min), &(extm.tm_sec) ) != EOF )
 							{
 							}
+							if( extm.tm_year > 1900 )
+							{
+								extm.tm_year -= 1900;
+							}
 							
-							//memcpy( strptr + dptr[ 2 ], &lotime, sizeof( time_t ) );
+							memcpy( strptr + dptr[ 2 ], &extm, sizeof( struct tm ) );
 							DEBUG("[MYSQLLibrary] TIMESTAMP load %s\n", row[ i ] );
 						}
 						break;
@@ -251,19 +253,32 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					case SQLT_DATE:
 						{
 							struct tm *ltm = (struct tm *)strptr + dptr[ 2 ];
-							if( sscanf( (char *)row[i], "%d-%d-%d", &(ltm->tm_year), &(ltm->tm_mon), &(ltm->tm_mday) ) != EOF )
+							struct tm extm;
+							if( sscanf( (char *)row[i], "%d-%d-%d", &(extm.tm_year), &(extm.tm_mon), &(extm.tm_mday) ) != EOF )
 							{
-								ltm->tm_hour = ltm->tm_min = ltm->tm_sec = 0;
+								extm.tm_hour = extm.tm_min = extm.tm_sec = 0;
 							}
+							if( extm.tm_year > 1900 )
+							{
+								extm.tm_year -= 1900;
+							}
+							memcpy( strptr + dptr[ 2 ], &extm, sizeof( struct tm ) );
+							
 							DEBUG("[MYSQLLibrary] DATE load %s\n", row[ i ] );
 							
 							DEBUG("[MYSQLLibrary] Year %d  month %d  day %d\n", ltm->tm_year, ltm->tm_mon, ltm->tm_mday );
 						}
 						break;
 
-					case SQLT_QUAD:
+					case SQLT_LONG:
 						{
-							
+							FLONG tmp = 0;
+							if( row[ i ] != NULL )
+							{
+								char *end;
+								tmp = (FLONG)strtoll( row[ i ], &end, 0 );
+							}
+							memcpy( strptr + dptr[ 2 ], &tmp, sizeof( FLONG ) );
 						}
 					break;
 					
@@ -1120,7 +1135,7 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
  * @param res pointer to SQL response
  * @return 0 number of rows
  */
-int NumberOfRows( struct MYSQLLibrary *l, MYSQL_RES *res )
+int NumberOfRows( struct SQLLibrary *l, MYSQL_RES *res )
 {
 	return (int)mysql_num_rows( res );
 }
@@ -1132,7 +1147,7 @@ int NumberOfRows( struct MYSQLLibrary *l, MYSQL_RES *res )
  * @param res pointer to MYSQL_RES
  * @return MYSQL_ROW when success, otherwise NULL
  */
-MYSQL_ROW FetchRow( struct MYSQLLibrary *l, MYSQL_RES *res )
+MYSQL_ROW FetchRow( struct SQLLibrary *l, MYSQL_RES *res )
 {
 	return mysql_fetch_row( res );
 }
@@ -1143,7 +1158,7 @@ MYSQL_ROW FetchRow( struct MYSQLLibrary *l, MYSQL_RES *res )
  * @param l pointer to mysql.library structure
  * @param res pointer to MYSQL_RES
  */
-void FreeResult( struct MYSQLLibrary *l, MYSQL_RES *res )
+void FreeResult( /*struct MYSQLLibrary *l*/ void *unused __attribute__((unused)), MYSQL_RES *res )
 {
 	mysql_free_result( res );
 }
@@ -1209,6 +1224,14 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 	const char *ptr = fmt;
 	char *escapedString = NULL;
 
+	/* This function can have SQL injection if the arguments are too long.
+	 * The last one may leak. To avoid it (until we get rid of this function alltogether)
+	 * the byte before the last is reserved for an extra null terminator (as a canary).
+	 * If that byte gets overwritten then the whole buffer is erased and zero
+	 * length is returned.
+	 */
+	str[stringSize-2] = '\0';
+
 	if( ptr == NULL )
 	{
 		ptr = "";
@@ -1221,7 +1244,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 		if( *ptr != '%' )
 		{
 			const char *q = strchr( ptr+1,'%' );
-			size_t n = !q ? (size_t)strlen( ptr ) : ( q-ptr );
+			size_t n = !q ? (size_t)strlen( ptr ) : (size_t)( q-ptr );
 			
 			if( retStringSize < stringSize )
 			{
@@ -1415,7 +1438,7 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 							else
 							{
 								const char *q = memchr( stringArg, '\0', precision <= 0x7fffffff ? precision : 0x7fffffff );
-								stringArgSize = !q ? precision : (q-stringArg);
+								stringArgSize = !q ? precision : (size_t)(q-stringArg);
 							}
 							
 							if( stringArg != NULL )
@@ -1776,6 +1799,11 @@ int SNPrintF( struct SQLLibrary *l, char *str, size_t stringSize, const char *fm
 		escapedString = NULL;
 	}
 	
+	if (str[stringSize-2] != '\0'){ //leak occured - clean up the whole query to avoid SQL injection
+		memset(str, 0, stringSize);
+		return 0;
+	}
+
 	return (int) retStringSize;
 }
 

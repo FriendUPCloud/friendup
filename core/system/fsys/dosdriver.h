@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ * DOSDriver header
+ *
+ * @author PS (Pawel Stefansky)
+ * @date created PS 2015
+ */
 
 #ifndef __SYSTEM_FSYS_DOSDRIVER_H__
 #define __SYSTEM_FSYS_DOSDRIVER_H__

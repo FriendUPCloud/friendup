@@ -19,13 +19,6 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-#ifndef __SYSTEM_ADMIN_ADMIN_WEB_H__
-#define __SYSTEM_ADMIN_ADMIN_WEB_H__
-
-#include <core/types.h>
-#include <core/nodes.h>
-
 /** @file
  * 
  *  Admin Web header
@@ -36,6 +29,11 @@
  *  @date created 30/05/2017
  */
 
+#ifndef __SYSTEM_ADMIN_ADMIN_WEB_H__
+#define __SYSTEM_ADMIN_ADMIN_WEB_H__
+
+#include <core/types.h>
+#include <core/nodes.h>
 #include <network/http.h>
 #include <system/user/user_session.h>
 

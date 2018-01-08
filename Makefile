@@ -18,6 +18,21 @@ chrome_extension:
 	@echo "Making the Chrome Extension."
 	cd interfaces/chrome_extension; make
 
+cleanfiles:
+	rm -fr $(FRIEND_PATH)/resources/webclient/*
+	rm -fr $(FRIEND_PATH)/php/
+	rm -fr $(FRIEND_PATH)/modules/
+	rm -fr $(FRIEND_PATH)/resources/webclient/
+	rm -fr $(FRIEND_PATH)/resources/themes/
+	rm -fr $(FRIEND_PATH)/resources/iconthemes/
+	rm -fr $(FRIEND_PATH)/devices/
+	rm -fr $(FRIEND_PATH)/resources/repository/
+	rm -fr $(FRIEND_PATH)/services/
+
+cleanws:
+	@echo "Cleaning Websocket lib"
+	make -C libs-ext clean
+
 updatefiles:
 	rsync -ravl php/* $(FRIEND_PATH)/php/
 	rsync -ravl modules/* $(FRIEND_PATH)/modules/
@@ -62,7 +77,9 @@ flush:
 	rm -f bin/FriendCore
 	rm -fr $(FRIEND_HOME)
 
-setup:
+setup: cleanws
+	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
+	mkdir -p $(FRIEND_PATH)/docs/internal/core
 	mkdir -p $(FRIEND_HOME) $(FRIEND_PATH)/autostart $(FRIEND_PATH)/resources $(FRIEND_PATH)/resources/webclient $(FRIEND_PATH)/resources/repository $(FRIEND_PATH)/sqlupdatescripts
 	make -C libs-ext setup CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs-ext DEBUG=1 CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
@@ -77,6 +94,12 @@ compile:
 	make -C libs DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C libs-ext DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 	make -C authmods DEBUG=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+
+compileprof:
+	make -C core PROFILE=1 compileprof WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs PROFILE=1 compileprof WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C libs-ext PROFILE=1 WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
+	make -C authmods PROFILE=1 compileprof WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 release:
 	make -C core DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
@@ -100,6 +123,7 @@ install:
 
 
 	rsync -ravl interfaces/web_desktop/* $(FRIEND_PATH)/resources/webclient/
+	rsync -ravl interfaces/web_desktop/favicon.ico $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/themes $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/iconthemes/* $(FRIEND_PATH)/resources/iconthemes/
 
@@ -114,10 +138,7 @@ install:
 	make -C core install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C libs install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
-	cp docs/GDBFriendCore.sh $(FRIEND_PATH)/
-	cp docs/ValgrindFriendCore.sh $(FRIEND_PATH)/
-	cp docs/GDBTrace.sh $(FRIEND_PATH)/
-	cp killfriend.sh $(FRIEND_PATH)/
+	cp scripts/*.sh $(FRIEND_PATH)/
 	#rsync -ravl core/bin/* $(FRIEND_PATH)/
 
 sync:
@@ -125,3 +146,7 @@ sync:
 	rsync -ravl php $(FRIEND_PATH)/
 	rsync -ravl modules $(FRIEND_PATH)/
 
+internaldoc:
+	doxygen docs/doxygen/core/coreWebCalls
+	doxygen docs/doxygen/core/coreInternal
+	@echo "Documentation ready in docs/core/webcalls/"

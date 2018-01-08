@@ -27,6 +27,9 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date first pushed on 10/02/2015
+ * 
+ * \ingroup EventManager Event manager
+ * @{
  */
 
 #ifndef __CORE_EVENT_MANAGER_H__
@@ -35,6 +38,7 @@
 #include <core/types.h>
 #include <core/event.h>
 #include <util/list.h>
+
 
 //
 // EventManager structure
@@ -85,3 +89,6 @@ CoreEvent *EventCheck( EventManager *em, CoreEvent *ev, time_t ti );
 
 
 #endif //__CORE_EVENT_MANAGER_H__
+
+/**@}*/
+// End of EventManager Doxygen group

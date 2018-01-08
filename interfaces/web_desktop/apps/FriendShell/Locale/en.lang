@@ -23,7 +23,7 @@ i18n_launch                         : Syntax 'launch application_path [arguments
 i18n_output                         : Syntax 'output filepath'<br><br>The cat command outputs the content of a file to the shell view. You usually use this command to display the content of a short file. 'output' is an alias of 'cat'.
 i18n_wait                           : Syntax 'wait delay'<br><br>Wait (or pause/delay) for 'delay' amount of milliseconds.
 i18n_rename                         : Syntax 'rename filename [to] newfilename'<br><br>The rename command renames a file on disk. It works on both directories and files. It is similar to the unix/linux mv (or move) command.
-i18n_enter                          : Syntax 'enter disk[:]'<br><br>The enter command changes directory to the Functions/ directory in the specified Dormant disk volume. In this command, the trailing colon “:” of the volume-name need not be specified, it is assumed.
+i18n_enter                          : Syntax 'enter {disk}'<br><br>The enter command changes directory to the Functions/ directory in the specified Dormant disk volume. In this command, the trailing colon of the volume-name need not be specified, it is assumed.
 i18n_leave                          : Syntax 'leave'<br><br>The leave command reverts the prompt back to the previous path before enter was issued.
 i18n_engage                         : Syntax 'engage [with] application_name'<br><br>The engage command enters into, or attaches to, a running Friend application. The input and output is from then on managed by the Friend application, and no longer the Friend Shell.
 i18n_date                           : Syntax 'date'<br><br>The date command outputs the current date and time.

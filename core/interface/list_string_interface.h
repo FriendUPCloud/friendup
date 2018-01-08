@@ -35,19 +35,19 @@ typedef struct ListStringInterface
 {
 	ListString					*(*ListStringNew)();
 	void						(*ListStringDelete)( ListString *ls );
-	int							(*ListStringAdd)( ListString *add, char *data, int size );
+	int64_t						(*ListStringAdd)( ListString *add, char *data, int64_t size );
 	ListString					*(*ListStringJoin)( ListString *ls );
-}ListStringInterface;
+} ListStringInterface;
 
 //
 // init function
 //
 
-inline void ListStringInterfaceInit( ListStringInterface *si )
+static inline void ListStringInterfaceInit( ListStringInterface *si )
 {
 	si->ListStringNew = ListStringNew;
 	si->ListStringDelete = ListStringDelete;
-	si->ListStringAdd = ListStringAdd;
+	si->ListStringAdd = ( void *)ListStringAdd;
 	si->ListStringJoin = ListStringJoin;
 }
 

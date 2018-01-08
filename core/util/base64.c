@@ -129,7 +129,7 @@ char *Base64Encode( const unsigned char* data, int length, int *dstlen )
 char *Base64EncodeString( const unsigned char *chr )
 {
 	int size = 0;
-	return Base64Encode( chr, strlen( chr ), &size );
+	return Base64Encode( chr, strlen( (const char *)chr ), &size );
 }
 
 // Mark the base64 encoded string and return it

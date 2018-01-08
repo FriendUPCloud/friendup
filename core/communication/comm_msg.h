@@ -66,6 +66,7 @@ typedef FLONG ID;
 
 #define ID_FCON MAKE_ID32('F','C','O','N')	// friend connection
 #define ID_FCOR MAKE_ID32('F','C','O','R')	// friend connection response
+#define ID_CLID MAKE_ID32('C','L','I','D')	// cluster ID
 
 #define ID_RDRI MAKE_ID32('R','D','R','I')	// register drive
 #define ID_UDRI MAKE_ID32('U','D','R','I')	// unregister drive
@@ -73,6 +74,10 @@ typedef FLONG ID;
 #define ID_UUSR MAKE_ID32('U','U','S','R')	// unregister user
 #define ID_CMMD MAKE_ID32('C','M','M','D')	// command
 #define ID_FNOT MAKE_ID32('F','N','O','T')	// notification
+#define ID_FERR MAKE_ID32('F','E','R','R')	// Error
+
+#define ID_PING MAKE_ID32('P','I','N','G')	// PING
+#define ID_SSCN MAKE_ID32('S','S','C','N')	// number of user sessions on FriendCode
 
 #define ID_CORE MAKE_ID32('C','O','R','E')
 #define ID_SERV MAKE_ID32('S','E','R','V')	
@@ -117,9 +122,9 @@ typedef FLONG ID;
 
 typedef struct MsgItem
 {
-    FULONG		mi_Tag;		// description
-    FULONG		mi_Size;	// size of object
-    FULONG 		mi_Data;	// data
+    uint64_t	mi_Tag;		// description
+    uint64_t	mi_Size;	// size of object
+    uint64_t 	mi_Data;	// data
 }MsgItem;
 
 //
@@ -128,22 +133,18 @@ typedef struct MsgItem
 
 typedef struct DataForm
 {
-	FULONG				df_ID;
-	FULONG 				df_Size;
-	FULONG 				df_Data;
+	uint64_t	df_ID;
+	uint64_t 	df_Size;
+	uint64_t 	df_Data;
 }DataForm;
 
 #define COMM_MSG_HEADER_SIZE sizeof(DataForm)
-
-//#pragma pack()
 
 //
 //
 //
 
 DataForm *DataFormNew( MsgItem *mi );
-
-//DataForm *DataFormQueryNew( ID id, ID qdata, char *dst, int size );
 
 //
 //
@@ -155,13 +156,13 @@ void DataFormDelete( DataForm *msg );
 //
 //
 
-int DataFormAdd( DataForm **dst, FBYTE *data, FLONG size );
+int64_t DataFormAdd( DataForm **dst, FBYTE *data, int64_t size );
 
 //
 //
 //
 
-int DataFormAddForm( DataForm **dst, DataForm *afm );
+int64_t DataFormAddForm( DataForm **dst, DataForm *afm );
 
 //
 //

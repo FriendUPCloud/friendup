@@ -3,9 +3,10 @@
 LIB_DIR = libwebsockets 
 
 ALL:
-	for dir in $(LIB_DIR); do \
-		make -C $$dir; \
-	done
+	@echo "make ALL"
+	#for dir in $(LIB_DIR); do \
+	#	make -C $$dir; \
+	#done
 
 install:
 ifeq ($(CYGWIN_BUILD),1)
@@ -14,31 +15,25 @@ ifeq ($(CYGWIN_BUILD),1)
 	done
 	
 else
-	sudo cp libwebsockets/lib/libwebsockets.so* /usr/lib/
-	for dir in $(LIB_DIR); do \
-		sudo make -C $$dir install FRIEND_PATH=$(FRIEND_PATH); \
-	done
+	#sudo cp libwebsockets/build/lib/libwebsockets.so* /usr/lib/
+	cd libwebsockets/build/ ;make install ;cd ../../
 endif
 
 setup:
-	cd libwebsockets/ ;cmake . ;cd ../
+	mkdir -p libwebsockets/build
+	cd libwebsockets/build/ ; cmake ../ -DLWS_HAVE_SYS_CAPABILITY_H=OFF ; make DEBUG=0 ; cd ../../
 	#for dir in $(LIB_DIR); do \
 	#	make -C $$dir setup  FRIEND_PATH=$(FRIEND_PATH); \
 	#done
 
 clean:
-	for dir in $(LIB_DIR); do \
-		make -C $$dir clean; \
-	done
+	mkdir -p libwebsockets/build
+	cd libwebsockets/build/ && rm -rf * && cd ../../
 
 compile:
-	for dir in $(LIB_DIR); do \
-		make -C $$dir DEBUG=1; \
-	done
+	cd libwebsockets/build/ ;make DEBUG=1 ; cd ../../
 
 release:
-	for dir in $(LIB_DIR); do \
-                make -C $$dir release; \
-        done
+	cd libwebsockets/build/ ;make DEBUG=0 ; cd ../../
 
 

@@ -25,7 +25,12 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 23 March 2017
+ * 
+ * \defgroup FriendCoreThreads Threads Management
+ * \ingroup FriendCore
+ * @{
  */
+
 
 #include <core/types.h>
 #include <core/thread.h>
@@ -145,8 +150,7 @@ void PIDThreadThread( FThread *t )
 		pidt->pt_Status = PID_THREAD_STARTED;
 		
 		FERROR("[PIDThreadManager] Run thread pointers sb %p urlpath %p request %p, usersession %p\n", pidt->pt_SB, pidt->pt_Url, pidt->pt_Request, pidt->pt_UserSession );
-	
-		//Http *FSMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedSession, int *result )
+
 		Http *resp = pidt->pt_Function( pidt->pt_SB, pidt->pt_Url, pidt->pt_Request, pidt->pt_UserSession, &result );
 		if( resp != NULL )
 		{
@@ -264,11 +268,11 @@ BufString *PIDThreadManagerGetThreadList( PIDThreadManager *ptm )
 		
 		if( pos == 0 )
 		{
-			size = snprintf( temp, sizeof( temp ), "\"pid\":\"%llu\",\"status\":\"%d\"", thr->pt_PID, thr->pt_Status );
+			size = snprintf( temp, sizeof( temp ), "\"pid\":\"%lu\",\"status\":\"%d\"", thr->pt_PID, thr->pt_Status );
 		}
 		else
 		{
-			size = snprintf( temp, sizeof( temp ), ",\"pid\":\"%llu\",\"status\":\"%d\"", thr->pt_PID, thr->pt_Status );
+			size = snprintf( temp, sizeof( temp ), ",\"pid\":\"%lu\",\"status\":\"%d\"", thr->pt_PID, thr->pt_Status );
 		}
 		
 		thr = (PIDThread *)thr->node.mln_Succ;
@@ -333,3 +337,5 @@ int PIDThreadManagerKillPID( PIDThreadManager *ptm, FUQUAD pid )
 	DEBUG("[PIDThreadManager] KillPID end\n");
 	return 1;
 }
+
+/**@}*/

@@ -28,6 +28,14 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date pushed 19/10/2015
+ * 
+ * \defgroup FriendCore Friend Core
+ * @{
+ */
+
+/* epoll events use data.ptr to store pointer to a Socket struct.
+ * Previously the data.fd union field was used. Now it is unified,
+ * except for the pipe that is used to trigger shutdown.
  */
 
 #define _POSIX_SOURCE
@@ -61,9 +69,9 @@
 #include <core/friendcore_manager.h>
 #include <openssl/crypto.h>
 
-//
-//
-//
+//#define USE_PTHREAD
+#define USE_WORKERS
+//#define USE_PTHREAD_ACCEPT
 
 extern void *FCM;			// FriendCoreManager
 pthread_mutex_t maxthreadmut;
@@ -72,6 +80,12 @@ struct AcceptPair *DoAccept( Socket *sock );
 
 static int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
+
+/* HTTP requests above this thresholds are saved to temporary files
+ * and mmap'ed for later use. This conserves RAM during large
+ * file uploads. (TK-628)
+ */
+#define TUNABLE_LARGE_HTTP_REQUEST_SIZE (10*1024*1024) //10MB
 
 /**
  * Mutex buffer for ssl locking
@@ -88,7 +102,7 @@ static pthread_mutex_t *ssl_mutex_buf = NULL;
  * @param line not used
  */
 
-static void ssl_locking_function( int mode, int n, const char *file, int line )
+static void ssl_locking_function( int mode, int n, const char *file __attribute__((unused)), int line __attribute__((unused)))
 { 
     if( mode & CRYPTO_LOCK )
     {
@@ -114,17 +128,17 @@ static unsigned long ssl_id_function( void )
 /**
  * Creates a new instance of Friend Core.
  *
+ * @param sb pointer to SystemBase
  * @param ssl flag to indicate the use of ssl protocol
  * @param port communication port number
  * @param maxp maximum number of polls at the same time FL>PS ?
  * @param bufsiz buffer size
  * @param hostname FC host name
- * @param workers number of workers
  * @return pointer to the new instance of FriendCore
  * @return NULL in case of error
  */
 
-FriendCoreInstance *FriendCoreNew( void *sb, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
+FriendCoreInstance *FriendCoreNew( void *sb, int id, FBOOL ssl, int port, int maxp, int bufsiz, char *hostname )
 {
 	LOG( FLOG_INFO, "[FriendCoreNew] Starting friend core\n" );
 	
@@ -178,6 +192,7 @@ FriendCoreInstance *FriendCoreNew( void *sb, FBOOL ssl, int port, int maxp, int 
 		fc->fci_BufferSize = bufsiz;
 		fc->fci_SSLEnabled = ssl;
 		fc->fci_SB = sb;
+		snprintf( fc->fci_CoreID, 32, "%032d", id );
 		strncpy( fc->fci_IP, hostname, 256 );
 	}
 	else
@@ -254,7 +269,7 @@ static void DecreaseThreads()
 	{
 		nothreads--;
 #ifdef __DEBUG
-		//LOG( FLOG_DEBUG,"<<<<<<<<<<<<<<<< %d %d\n", pthread_self(), nothreads );
+		//LOG( FLOG_DEBUG,"DecreaseThreadsDecreaseThreadsDecreaseThreads %d %d\n", pthread_self(), nothreads );
 #endif
 		pthread_mutex_unlock( &maxthreadmut );
 	}
@@ -270,7 +285,7 @@ static void IncreaseThreads()
 	{
 		nothreads++;
 #ifdef __DEBUG
-		//LOG( FLOG_DEBUG,">>>>>>>>>>>>>>>> %d %d\n", pthread_self(), nothreads );
+		//LOG( FLOG_DEBUG,"IncreaseThreadsIncreaseThreadsIncreaseThreads %d %d\n", pthread_self(), nothreads );
 #endif
 		pthread_mutex_unlock( &maxthreadmut );
 	}
@@ -287,7 +302,7 @@ struct FriendCoreInstance *fci;
  *
  * @param signal
  */
-void SignalHandler( int signal )
+void SignalHandler( int signal __attribute__((unused)) )
 {
 	DEBUG("[FriendCoreShutdown] Quit signal sent\n");
 #ifdef USE_SELECT
@@ -297,6 +312,8 @@ void SignalHandler( int signal )
 	FriendCoreManagerShutdown( FCM );
 }
 
+// Removes from doc as it appears in list of modules for Friend Core group (should be in .h! :)
+#ifndef DOXYGEN
 /**
  * Thread to handle incoming connections!!!
  */
@@ -311,8 +328,7 @@ struct fcThreadInstance
 	struct AcceptPair *acceptPair;
 };
 
-//#define USE_PTHREAD
-#define USE_WORKERS
+#endif
 
 /**
  * Accepts a message to a Friend Core instance
@@ -323,10 +339,12 @@ struct fcThreadInstance
 
 void FriendCoreAccept( void *fcv )
 {
-#ifdef USE_PTHREAD
+#ifdef USE_PTHREAD_ACCEPT
 	pthread_detach( pthread_self() );
 #endif
 	
+	DEBUG( "[FriendCoreAccept] start\n" );
+
 	IncreaseThreads();
 	
 	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
@@ -339,8 +357,9 @@ void FriendCoreAccept( void *fcv )
 	Socket *incoming = NULL;
 	int error = 0;
 	
+	
 	// Get incoming socket
-
+	
 	incoming = SocketAcceptPair( fc->fci_Sockets, th->acceptPair );
 
 	// We got incoming!
@@ -351,25 +370,45 @@ void FriendCoreAccept( void *fcv )
 	#ifdef USE_SELECT
 	
 	#else
-		pthread_mutex_lock( &incoming->mutex );
 		/// Add to epoll
 		// TODO: Check return of epoll ctl
 		struct epoll_event event;
-		event.data.fd = incoming->fd;
 		event.data.ptr = incoming;
-		event.events = EPOLLIN | EPOLLET; // old way | EPOLLET | EPOLLHUP | EPOLLRDHUP;
+		event.events = EPOLLIN| EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 		error = epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, incoming->fd, &event );
+		FERROR("Adding epoll event struct at %p, fd %d, socket ptr %p\n", &event, incoming->fd, event.data.ptr);
 	
-		DEBUG("[FriendCoreAccept] Event added, shutdown %d error %d fd %d\n", fci->fci_Shutdown, error, incoming->fd  );
+		if (error){
+			FERROR("\n************************************** epoll_ctl failure **************************************\n\n");
+			SocketClose(incoming);
+		}
+
 	
-		pthread_mutex_unlock( &incoming->mutex );
 	#endif // USE_SELECT
-	
 		if( fc->fci_Shutdown == TRUE )
 		{
-			shutdown( th->acceptPair->fd, SHUT_RDWR );
-			close( th->acceptPair->fd );
+			if( pthread_mutex_lock( &incoming->mutex ) == 0 )
+			{
+				shutdown( th->acceptPair->fd, SHUT_RDWR );
+				close( th->acceptPair->fd );
+				
+				// Just clear here!
+				if( th->acceptPair != NULL )
+				{
+					FFree( th->acceptPair );
+					th->acceptPair = NULL;
+				}
+				FFree( th );
+				th = NULL;
+				
+				pthread_mutex_unlock( &incoming->mutex );
+			}
 		}
+	}
+	// Miss?
+	else
+	{
+		DEBUG( "[FriendCoreAccept] Could not get an incoming..\n" );	
 	}
 	
 	// Don't need these anymore
@@ -390,21 +429,21 @@ void FriendCoreAccept( void *fcv )
 	
 DecreaseThreads();
 
-#ifdef USE_PTHREAD
+#ifdef USE_PTHREAD_ACCEPT
 	pthread_exit( 0 );
 #endif
 	return;
 }
 
 /**
- * Processes phase 1 of acceptation process.
+ * Processes phase 1 of acceptation process. This is a thread.
  *
  * @param d pointer to Friend Core instance
  * @return unintialised pointer to a void
  */
 void FriendCoreAcceptPhase1( void *d )
 {
-#ifdef USE_PTHREAD
+#ifdef USE_PTHREAD_ACCEPT
 	pthread_detach( pthread_self() );
 #endif
 	IncreaseThreads();
@@ -415,7 +454,7 @@ void FriendCoreAcceptPhase1( void *d )
 	struct AcceptPair *p = NULL;
 	
 	// Run accept() and return an accept pair
-	for( ; ( p = DoAccept( pre->fc->fci_Sockets ) ) != NULL ; )
+	while( ( p = DoAccept( pre->fc->fci_Sockets ) ) != NULL )
 	{
 		// Shutting down
 		if( pre->fc->fci_Shutdown == TRUE )
@@ -430,60 +469,55 @@ void FriendCoreAcceptPhase1( void *d )
 		{
 			// Add the new SSL accept thread:
 			// We have a notification on the listening socket, which means one or more incoming connections.
-		
-			if( p != NULL )
+			struct fcThreadInstance *idata = FCalloc( 1, sizeof( struct fcThreadInstance ) );
+			if( idata != NULL )
 			{
-				struct fcThreadInstance *idata = FCalloc( 1, sizeof( struct fcThreadInstance ) );
-				if( idata != NULL )
-				{
-					idata->fc = pre->fc;
-					idata->acceptPair = p;
-			
+				idata->fc = pre->fc;
+				idata->acceptPair = p;
+		
 #ifdef USE_PTHREAD
-					memset( &idata->thread, 0, sizeof( pthread_t ) );
-					// Multithread mode
-					if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
-					{
-						FFree( idata );
-						// Clean up accept pair
-						shutdown( p->fd, SHUT_RDWR );
-						close( p->fd );
-						FFree( p );
-					}
-					else
-					{
-	
-					}
+				// Multithread mode
+				if( pthread_create( &idata->thread, NULL, &FriendCoreAccept, ( void *)idata ) != 0 )
+				{
+					FFree( idata );
+					// Clean up accept pair
+					shutdown( p->fd, SHUT_RDWR );
+					close( p->fd );
+					FFree( p );
+				}
 #else
-#ifdef USE_WORKERS
-					SystemBase *locsb = (SystemBase *)idata->fc->fci_SB;
-					WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreAccept, idata, NULL );
-#else
-					int pid = fork();
-				
-					if( pid < 0 )
-					{
-						FERROR("Cannot create fork %ld \n", pid );
-					}
-					else if( pid == 0 )
-					{
-						FriendCoreAccept( idata );
-					}
-					else
-					{
-						INFO("Parent %ld \n", pid );
-					}
-#endif
-#endif
+	#ifdef USE_WORKERS
+				SystemBase *locsb = (SystemBase *)idata->fc->fci_SB;
+				int worker_run_status = WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreAccept, idata, NULL );
+				if (worker_run_status != 0){ //worker could not be started - remove the socket
+					close(p->fd);
+					FFree(p);
+					FFree(idata);
+				}
+	#else
+				int pid = fork();
+			
+				if( pid < 0 )
+				{
+					FERROR("Cannot create fork %ld \n", pid );
+				}
+				else if( pid == 0 )
+				{
+					FriendCoreAccept( idata );
 				}
 				else
 				{
-					FERROR("[FriendCoreAcceptPhase1] Cannot allocate memory for Thread\n");
+					INFO("Parent %ld \n", pid );
 				}
+	#endif
+#endif
+			}
+			else
+			{
+				FERROR("[FriendCoreAcceptPhase1] Cannot allocate memory for Thread\n");
 			}
 		}
-		//pthread_yield();
-	}
+	} //end of thread loop
 	
 	if( pre != NULL )
 	{
@@ -493,7 +527,7 @@ void FriendCoreAcceptPhase1( void *d )
 
 	DecreaseThreads();
 
-#ifdef USE_PTHREAD
+#ifdef USE_PTHREAD_ACCEPT
 	pthread_exit( 0 );
 #endif
 	return;
@@ -543,7 +577,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 		int res = 0;
 		int requestSize = 0;
 		int timesRead = 0;
-		FBOOL everythingReaded = FALSE;
+		FBOOL everythingRead = FALSE;
 		FBOOL parseOnlyHeader = FALSE;
 		
 		DEBUG("[FriendCoreProcess] before process ptr %p fd %d\n", th->sock, th->sock->fd );
@@ -564,7 +598,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 				{
 					if( res < HTTP_READ_BUFFER_DATA_SIZE )
 					{
-						everythingReaded = TRUE;
+						everythingRead = TRUE;
 
 						// we have whole message, no need to read more
 						//break;
@@ -576,7 +610,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 					parseOnlyHeader = TRUE;
 				}
 				
-				if( everythingReaded == TRUE || parseOnlyHeader == TRUE )
+				if( everythingRead == TRUE || parseOnlyHeader == TRUE )
 				{
 					request = ( Http *)th->sock->data;
 					if( request == NULL )
@@ -592,9 +626,6 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 						int result = HttpParseHeader( request, resultString->ht_Buffer, resultString->ht_Size + 1 );
 						if( result == 1 )
 						{
-							//char *content = HttpGetHeader( request, "content-length", 0 );
-							//char *content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
-							
 							if( request->h_ContentLength > 0 )
 							{
 								//char *divider = strstr( content, dividerStr );
@@ -615,14 +646,10 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 								//bodyLength = atoi( content );
 								int headerLength = divider - resultString->ht_Buffer + 4;
 
-								if( bodyLength == 124 )
-								{
-									//abort( );
-								}
 								// We have enough data and are ready for reading the body
 								if( requestSize >= ( headerLength + bodyLength ) )
 								{
-									everythingReaded = TRUE;
+									everythingRead = TRUE;
 								}
 								
 							}
@@ -643,7 +670,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 						request->gotHeader = TRUE;
 					}
 					
-					if( everythingReaded == TRUE )
+					if( everythingRead == TRUE )
 					{
 						
 						break;
@@ -662,7 +689,7 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 			}
 		}
 		
-		if( everythingReaded == TRUE )
+		if( everythingRead == TRUE )
 		{
 			// Free up
 			if( resultString->ht_Buffer != NULL )
@@ -730,166 +757,259 @@ void *FriendCoreProcess__httponthefly( void *fcv )
 }
 
 
-
-
-
+ 
 void FriendCoreProcess( void *fcv )
 {
 #ifdef USE_PTHREAD
-	pthread_detach( pthread_self() );
-#endif	
-	IncreaseThreads();
-	
-	if( fcv == NULL )
-	{
-		DecreaseThreads();
+    pthread_detach( pthread_self() );
+#endif 
+    IncreaseThreads();
+   
+    if( fcv == NULL )
+    {
+        DecreaseThreads();
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+        pthread_exit( 0 );
 #endif
-		return;
-	}
-	
-	struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
-
-	if( th->sock == NULL )
-	{
-		DecreaseThreads();
-		FFree( th );
+        return;
+    }
+   
+    struct fcThreadInstance *th = ( struct fcThreadInstance *)fcv;
+ 
+    if( th->sock == NULL )
+    {
+        DecreaseThreads();
+        FFree( th );
 #ifdef USE_PTHREAD
-		pthread_exit( 0 );
+        pthread_exit( 0 );
 #endif
-		return;
-	}
-
-	// Threadcounter done ------------------------------------------------------
-	
-	// Let's go!
-	
-	// First pass header, second, data
-	int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, stopReading = 0;
-
-	// Often used
-	int partialDivider = 0, foundDivider = 0, y = 0;
-	char findDivider[ 5 ];
-	
-	int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
-	int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
-
-	char *locBuffer = FCalloc( bufferSizeAlloc, sizeof( char ) );
-	if( locBuffer != NULL )
-	{
-		BufString *resultString = BufStringNewSize( bufferSizeAlloc << 1 );
-
-		for( ; pass < 2; pass++ )
-		{
-			// No bodylength? Fuck it
-			if( pass == 1 && ( !bodyLength || stopReading ) )
-			{
-				//FERROR( "We have Bodylength: %s, Stopreading: %s\n", !bodyLength ? "no body" : "have body", stopReading ? "stop" : "continue" );
-				break;
-			}
-
-			int count = preroll, res = 0, joints = 0, methodGet = 0;
-
-			// We must find divider!
-			// TODO: before there was table of pointers and sign was placed there
-			memset( findDivider, 0, 5 );
-
-			char *stdBufChr = NULL;
-			partialDivider = 0, foundDivider = 0, y = res - 1;
-
-			for( ; ; )
-			{
-				// Increase the buffer for files!
-				if( count != 0 && bufferSize == HTTP_READ_BUFFER_DATA_SIZE )
-				{
-					bufferSize = 1048576; // Bit faster, bit greedier
-					bufferSizeAlloc = 1048608; // buffersize + 32
-					FFree( locBuffer ); locBuffer = FCalloc( bufferSizeAlloc, sizeof( char ) );
-				}
-				
-				if( ( res = SocketRead( th->sock, locBuffer, bufferSize, pass ) ) > 0 )
-				{
-					BufStringAddSize( resultString, locBuffer, res );
-
-					if( pass == 0 && partialDivider != 0 )
-					{
-						stdBufChr = strstr( "\r", locBuffer );
-						if( stdBufChr == NULL ) stdBufChr = strstr( "\n", locBuffer );
-						if( stdBufChr != NULL )
-						{
-							findDivider[ partialDivider++ ] = stdBufChr[0];
-							if( partialDivider > 3 )
-							{
-								findDivider[ 4 ] = '\0';
-							}
-						}
-						else partialDivider = 0;
-					}
-
-					// How much data did we read?
-					count += res;
-					joints++;
-
-					// Break get posts after header
-					if( pass == 0 )
-					{
-						stdBufChr = locBuffer + res - 1;
-
-						// If we found a divider!
-						if( partialDivider >= 4 || strstr( locBuffer, dividerStr ) )
-						{
-							// We have a divider! Great!
-							break;
-						}
-						// Does it end with this? Perhaps it's a partial divider
-						else if( stdBufChr[0] == '\r' ||  stdBufChr[0] == '\n' )
-						{
-							memcpy( findDivider, locBuffer + res - 5, 5 );
-							partialDivider = 5;
-						}
-					}
-					// Or in second pass, body length
-					else if( pass == 1 && count >= bodyLength )
-					{
-						// remove preroll to get correct read bytes
-						count -= preroll;
-						DEBUG( "[FriendCoreProcess] Fixing preroll %d\n", preroll );
-						break;
-					}
-				}
-				// No data?
-				else break;
-			}
-
-			if( count > 0 )
-			{
-				// Already now parse header to receive other data
-				if( pass == 0 )
-				{
-					Http *request = ( Http *)th->sock->data;
-					int result = 0;
-					char *content = NULL;
-					{
-						if( request == NULL )
-						{
-							request = HttpNew( );
-							request->timestamp = time( NULL );
-							th->sock->data = ( void* )request;
-						}
-						
-						request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
-
-						request->h_Socket = th->sock;
-						result = HttpParseHeader( request, resultString->bs_Buffer, resultString->bs_Size + 1 );
-						request->gotHeader = TRUE;
-						
-						content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
-					}
-
-					// If we have content, then parse it
+        return;
+    }
+ 
+    // Threadcounter done ------------------------------------------------------
+   
+    // Let's go!
+   
+    // First pass header, second, data
+    int pass = 0, bodyLength = 0, prevBufSize = 0, preroll = 0, 
+    	stopReading = 0, headerLength = 0;
+ 
+    // Often used
+    int partialDivider = 0, foundDivider = 0, y = 0;
+    char findDivider[ 5 ]; memset( findDivider, 0, 5 );
+   
+    int bufferSize = HTTP_READ_BUFFER_DATA_SIZE;
+    int bufferSizeAlloc = HTTP_READ_BUFFER_DATA_SIZE_ALLOC;
+   
+    int tmp_file_handle = -2;
+    char *tmp_filename = NULL;
+    char tmp_filename_template[] = "/tmp/FriendHTTP_XXXXXX";
+ 
+    char *incoming_buffer_ptr = 0;
+    unsigned int incoming_buffer_length = 0;
+ 
+    BufString *resultString = BufStringNewSize( SHIFT_LEFT( bufferSizeAlloc, 1) );
+ 
+    char *locBuffer = FMalloc( bufferSizeAlloc );
+    char *firstLocBuffer = locBuffer;
+    
+    if( locBuffer != NULL )
+    {
+        incoming_buffer_ptr = resultString->bs_Buffer;
+ 
+        for( ; pass < 2; pass++ )
+        {
+            // No bodylength? Fuck it
+            if( pass == 1 && ( !bodyLength || stopReading ) )
+            {
+                //FERROR( "We have Bodylength: %s, Stopreading: %s\n", !bodyLength ? "no body" : "have body", stopReading ? "stop" : "continue" );
+                break;
+            }
+ 
+ 			// int count = the amount of data read
+ 			// int res = the amount of data read in one chunk
+            int count = preroll, res = 0, joints = 0, methodGet = 0;
+ 
+            // We must find divider!
+ 
+            char *stdBufChr = NULL;
+            partialDivider = 0, foundDivider = 0, y = res - 1;
+ 
+            for( ; ; )
+            {
+                // Increase the buffer for files!
+                if( count != 0 && locBuffer == firstLocBuffer )
+                {
+                    bufferSize = 1048576; // Bit faster, bit greedier
+                    bufferSizeAlloc = 1048608; // buffersize + 32
+                    locBuffer = FRealloc( locBuffer, bufferSizeAlloc );
+                }
+               
+                if( tmp_file_handle < 0 && resultString->bs_Bufsize > TUNABLE_LARGE_HTTP_REQUEST_SIZE )
+                {
+                    //this is going to be a huge request, create a temporary file
+                    //copy already received data to it and continue writing to the file
+                    tmp_filename = mktemp( tmp_filename_template );
+                    DEBUG( "large upload will go to remporary file %s", tmp_filename );
+                    if( strlen( tmp_filename ) == 0 )
+                    {
+                        FERROR("mktemp failed!");
+                        break; //drop the connection, rest of this function will do the cleanup
+                    }
+                    else
+                    {
+                        //TODO: use open64 to support >4GB files on 32-bit machines...
+                        tmp_file_handle = open(tmp_filename, O_RDWR | O_CREAT | O_EXCL, 0600/*permissions*/);
+                        if( tmp_file_handle == -1 )
+                        {
+                            FERROR("temporary file open failed!");
+                            break; //drop the connection, rest of this function will do the cleanup
+                        }
+                        //write already received chunk
+                        write( tmp_file_handle, resultString->bs_Buffer, resultString->bs_Size );
+                        BufStringDelete( resultString );
+                    }
+                }
+ 
+ 				unsigned int expected = headerLength > 0 && bodyLength > 0 ?
+ 					headerLength + bodyLength - count :
+ 					0;
+ 
+		res = SocketRead( th->sock, locBuffer, bufferSize, expected );
+                if( res > 0 )
+                {
+                    if( tmp_file_handle >= 0 )
+                    {
+                        write( tmp_file_handle, locBuffer, res );
+                    }
+                    else
+                    {
+                        int err = BufStringAddSize( resultString, locBuffer, res );
+                        incoming_buffer_ptr = resultString->bs_Buffer; //buffer can be in a different place after resize
+                        incoming_buffer_length = resultString->bs_Size;
+                        DEBUG( "Data added : %d res: %d count: %d received %d\n", err, res, count, count + res );
+                    }
+                   
+                    if( pass == 0 && partialDivider != 0 )
+                    {
+                        stdBufChr = strstr( "\r", locBuffer );
+                        if( stdBufChr == NULL ) stdBufChr = strstr( "\n", locBuffer );
+                        if( stdBufChr != NULL )
+                        {
+                            findDivider[ partialDivider++ ] = stdBufChr[0];
+                            if( partialDivider > 3 )
+                            {
+                                findDivider[ 4 ] = '\0';
+                            }
+                        }
+                        else partialDivider = 0;
+                    }
+ 
+                    // How much data did we read?
+                    count += res;
+                    joints++;
+ 
+                    // Break get posts after header
+                    if( pass == 0 )
+                    {
+                        stdBufChr = locBuffer + res - 1;
+ 
+                        // If we found a divider!
+                        if( partialDivider >= 4 || strstr( locBuffer, dividerStr ) )
+                        {
+                            // We have a divider! Great!
+                            break;
+                        }
+                        // Does it end with this? Perhaps it's a partial divider
+                        else if( stdBufChr[0] == '\r' ||  stdBufChr[0] == '\n' )
+                        {
+                            memcpy( findDivider, locBuffer + res - 5, 5 );
+                            partialDivider = 5;
+                        }
+                    }
+                    // Or in second pass, body length
+                    else if( pass == 1 && count >= bodyLength )
+                    {
+                        // remove preroll to get correct read bytes
+                        count -= preroll;
+                        DEBUG( "[FriendCoreProcess] Fixing preroll %d\n", preroll );
+                        break;
+                    }
+                }
+                // Socket closed!
+                else if( res == -1 )
+                {
+                	DEBUG( "[FriendCoreProcess] The connection dropped!!\n" );
+                	if( locBuffer )
+                	{
+                		FFree( locBuffer );
+                		locBuffer = NULL;
+                	}
+            		goto close_fcp;
+                }
+                // No data?
+                else
+                {
+					DEBUG("No data, res %d\n", res );
+                    break;
+                }
+                DEBUG("Socket read: %d\n", res );
+            } //end if inner socket reading loop
+ 
+            if( count > 0 )
+            {
+                // Already now parse header to receive other data
+                if( pass == 0 )
+                {
+                    Http *request = ( Http *)th->sock->data;
+                    int result = 0;
+                    char *content = NULL;
+                    if( request == NULL )
+                    {
+                        request = HttpNew( );
+                        request->timestamp = time( NULL );
+                        th->sock->data = ( void* )request;
+                    }
+                    request->h_ShutdownPtr = &(th->fc->fci_Shutdown);
+                    request->h_Socket = th->sock;
+ 
+                    /* -------------- Support for large uploads -------------- */
+                    if( tmp_file_handle >= 0 )
+                    {
+                        if( incoming_buffer_ptr )
+                        {
+                            DEBUG("incoming buffer already set? unmapping");
+                            munmap(incoming_buffer_ptr, incoming_buffer_length);
+                        }
+                        DEBUG( "mmaping" );
+                        incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
+                        incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
+                        DEBUG( "mmap status %p", incoming_buffer_ptr );
+                    }
+                    else 
+                    {
+                        DEBUG( "regular processing" );
+                    }
+                    /* ------------------------------------------------------- */
+                    result = HttpParseHeader( request, incoming_buffer_ptr, incoming_buffer_length + 1 );
+                    request->gotHeader = TRUE;
+                    content = HttpGetHeaderFromTable( request, HTTP_HEADER_CONTENT_LENGTH );
+ 
+                    socket_update_state(th->sock, socket_state_got_header);
+ 
+                    DEBUG("CONT LENGTH %ld\n", request->h_ContentLength );
+ 
+                    // If we have content, then parse it
 					if( request->h_ContentLength > 0 )
 					{
+						//DEBUG("Content found\n");
+						
+						if( content == NULL )
+						{
+							FERROR("Content is NULL!\n");
+							break;
+						}
+						
 						//rchar *divider = strstr( resultString->bs_Buffer, dividerStr );
 						char *divider = strstr( content, dividerStr );
 						
@@ -897,18 +1017,78 @@ void FriendCoreProcess( void *fcv )
 						if( !divider )
 						{
 							prevBufSize += count;
+							//DEBUG("\n\n 1prevBufSize %d count %d\n\n\n", prevBufSize, count );
 							break;
 						}
 
 						bodyLength = request->h_ContentLength;//atoi( content );
 						
 						// We have enough data and are ready for reading the body
-						int headerLength = divider - resultString->bs_Buffer + 4;
+						headerLength = divider - resultString->bs_Buffer + 4;
 						if( count > headerLength )
 						{
 							prevBufSize += count;
 							preroll = count - headerLength;
 							stopReading = count >= ( headerLength + bodyLength );
+							
+							//DEBUG("\n\n stopread %d count %d headerlen %d bodylen %d\n\n\n", stopReading, count, headerLength, bodyLength );
+							continue;
+						}
+					}
+					else if( request->h_ExpectedLength > 0 )
+					{
+						content = HttpGetHeaderFromTable( request, HTTP_HEADER_EXPECTED_CONTENT_LENGTH );
+						if( content == NULL )
+						{
+							FERROR("Content is NULL!\n");
+							break;
+						}
+						
+						char* found = strstr( ( char* )locBuffer, "\r\n\r\n" );
+						
+						char *next = NULL;
+						int chunkSize = 8192;
+						
+						if( found != NULL )
+						{
+							found += 4;
+							//DEBUG("found\n");
+							found[ 4 ] = 0;
+							chunkSize = (int)strtol( found, &next, 16);
+						}
+						
+						//FERROR("\n\n\n\nCHUNKSIZE %d\n\n\n", chunkSize );
+
+						//rchar *divider = strstr( resultString->bs_Buffer, dividerStr );
+						char *divider = strstr( content, dividerStr );
+						
+						// No divider?
+						if( !divider )
+						{
+							prevBufSize += count;
+							//DEBUG("\n\n 1prevBufSize %d count %d\n\n\n", prevBufSize, count );
+							break;
+						}
+
+						if( chunkSize != 0 )
+						{
+							bodyLength = request->h_ExpectedLength + ( ( request->h_ExpectedLength / ( chunkSize ) << 3 ) );
+						}
+						
+						//DEBUG("BODDDY %d\n", bodyLength );
+						
+						// We have enough data and are ready for reading the body
+						int headerLength = divider - resultString->bs_Buffer + 4;
+						
+						request->h_ContentLength = bodyLength - headerLength;
+						
+						if( count > headerLength )
+						{
+							prevBufSize += count;
+							preroll = count - headerLength;
+							stopReading = count >= ( headerLength + bodyLength );
+							
+							//DEBUG("\n\n stopread %d count %d headerlen %d bodylen %d\n\n\n", stopReading, count, headerLength, bodyLength );
 							continue;
 						}
 					}
@@ -917,75 +1097,108 @@ void FriendCoreProcess( void *fcv )
 					{
 						// No content length
 						prevBufSize += count;
+						//DEBUG("\n\n prevBufSize %d count %d\n\n\n", prevBufSize, count );
 						break;
 					}
-					// Determine if we need pass 2
-				}
-				// For next pass
-				prevBufSize += count;
-			}
-		}	// for pass 0 < 2
-	
-		//DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+                    // Determine if we need pass 2
+                }
+                // For next pass
+                prevBufSize += count;
+            }
+        }   // for pass 0 < 2, end of outer socket reading loop
+   
+        //DEBUG( "[FriendCoreProcess] Exited headers loop. Now freeing up.\n" );
+ 
+        // Free up
+        if( incoming_buffer_ptr != NULL )
+        {
+            if( incoming_buffer_length > 0 )
+            {
+                // Process data
+                // -------------- Support for large uploads --------------------
+                if (tmp_file_handle >= 0)
+                {
+                    if (incoming_buffer_ptr)
+                    {
+                        DEBUG("incoming buffer already set? unmapping");
+                        munmap(incoming_buffer_ptr, incoming_buffer_length);
+                    }
+                    DEBUG("mmaping");
+                    incoming_buffer_length = lseek(tmp_file_handle, 0, SEEK_END);
+                    incoming_buffer_ptr = mmap(0, incoming_buffer_length, PROT_READ | PROT_WRITE, MAP_SHARED, tmp_file_handle, 0/*offset*/);
+                    DEBUG("mmap status %p", incoming_buffer_ptr);
+                }
+                else
+                {
+                    DEBUG( "regular processing" );
+                }
+                /* ------------------------------------------------------- */
+                Http *resp = ProtocolHttp( th->sock, incoming_buffer_ptr, incoming_buffer_length );
+ 
+                if( resp != NULL )
+                {
+                    if( resp->h_WriteType == FREE_ONLY )
+                    {
+                        HttpFree( resp );
+                    }
+                    else
+                    {
+                        HttpWriteAndFree( resp, th->sock );
+                    }
+                }
+            }
+            // No data, just free
+            else
+            {
+                // Ask for more info
+                DEBUG( "[FriendCoreProcess] No buffer to write, so just free!\n" );
+            }
+        }
+ 
+        DEBUG("Removing string\n");
+ 
+        // Free up buffers
+        if( locBuffer )
+	        FFree( locBuffer );
+    }
+ 
+ 	// Shortcut!
+ 	close_fcp:
+ 	
+ 	DEBUG( "Closing socket %d.\n", th->sock->fd );
+    SocketClose( th->sock );
+   
+    // Free the pair
+    if( th != NULL )
+    {
+        FFree( th );
+        th = NULL;
+    }
+   
+    if( tmp_file_handle >= 0 )
+    {
+        if( incoming_buffer_ptr )
+        {
+            munmap( incoming_buffer_ptr, incoming_buffer_length );
+        }
+        close( tmp_file_handle );
+        DEBUG( "Deleting temporary file %s", tmp_filename );
+        unlink( tmp_filename );
+    }
+    else 
+    {
+        BufStringDelete( resultString );
+    }
 
-		// Free up
-		if( resultString != NULL )
-		{
-			if( resultString->bs_Buffer != NULL )
-			{
-				if( resultString->bs_Size > 0 )
-				{
-					// Process data
-					//LOG( FLOG_DEBUG, "We received this (%d bytes): >>%s<<\n", resultString->bs_Size, resultString->bs_Buffer);
-					Http *resp = ProtocolHttp( th->sock, resultString->bs_Buffer, resultString->bs_Size );
+    // No more threads
+    DecreaseThreads();
 
-					if( resp != NULL )
-					{
-						if( resp->h_WriteType == FREE_ONLY )
-						{
-							HttpFree( resp );
-						}
-						else
-						{
-							HttpWriteAndFree( resp, th->sock );
-						}
-					}
-				}
-				// No data, just free
-				else
-				{
-					// Ask for more info
-					DEBUG( "[FriendCoreProcess] No buffer to write, so just free!\n" );
-				}
-			}
-			BufStringDelete( resultString );
-		}
-		else
-		{
-			// Ask for more info
-			DEBUG( "[FriendCoreProcess] No buffer to write!\n" );
-		}
-
-		// Free up buffers
-		FFree( locBuffer );
-	}
-
-	SocketClose( th->sock );
-	
-	// Free the pair
-	if( th != NULL )
-	{
-		FFree( th );
-		th = NULL;
-	}
-	
-	// No more threads
-	DecreaseThreads();
 #ifdef USE_PTHREAD
-	pthread_exit( 0 );
+    pthread_exit( 0 );
 #endif
-	return;
+    return;
 }
+ 
 
 /**
  * Return an accept pair from accept
@@ -1046,6 +1259,7 @@ struct AcceptPair *DoAccept( Socket *sock )
 	int prerr = getpeername( fd, (struct sockaddr *) &client, &clientLen );
 	if( prerr == -1 )
 	{
+		shutdown( fd, SHUT_RDWR );
 		close( fd );
 		return NULL;
 	}
@@ -1069,7 +1283,7 @@ struct AcceptPair *DoAccept( Socket *sock )
  *
  * @param fc pointer to Friend Core instance to poll
  */
-inline void FriendCoreSelect( FriendCoreInstance* fc )
+static inline void FriendCoreSelect( FriendCoreInstance* fc )
 {
 	// add communication ReadCommPipe		
 	//signal(SIGINT, test);
@@ -1158,6 +1372,8 @@ inline void FriendCoreSelect( FriendCoreInstance* fc )
 			
 			FD_CLR( fc->fci_Sockets->fd, &readfds );
 			
+			fc->fci_Sockets->s_AcceptFlags = SSL_VERIFY_PEER;
+			// there is no need to reject non validated (by cert) connections
 			Socket *sock = SocketAccept( fc->fci_Sockets );
 			
 			if( sock != NULL )
@@ -1189,7 +1405,7 @@ inline void FriendCoreSelect( FriendCoreInstance* fc )
  *
  * @param fc pointer to Friend Core instance to poll
  */
-inline void FriendCoreEpoll( FriendCoreInstance* fc )
+static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 {
 	int eventCount = 0;
 	int retval;
@@ -1204,7 +1420,11 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	
 	// add communication ReadCommPipe		
 	int pipefds[2] = {}; struct epoll_event piev = { 0 };	
-	pipe( pipefds );	
+	if (pipe( pipefds ) != 0)
+	{
+		FERROR("pipe call failed");
+		exit(5);
+	}
 	fc->fci_ReadCorePipe = pipefds[ 0 ]; fc->fci_WriteCorePipe = pipefds[ 1 ];
 	// add the read end to the epoll
 	piev.events = EPOLLIN; piev.data.fd = fc->fci_ReadCorePipe;
@@ -1228,6 +1448,8 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	sigprocmask( SIG_SETMASK, NULL, &curmask );
 	fci = fc;
 
+	events->events = EPOLLIN;
+
 	// All incoming network events go through here
 	while( !fc->fci_Shutdown )
 	{
@@ -1239,6 +1461,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		{
 			currentEvent = &events[i];
 			Socket *sock = ( Socket *)currentEvent->data.ptr;
+			FERROR("epoll event %d sock %p fd %d\n", currentEvent->events, sock, sock->fd);
 			
 			// Ok, we have a problem with our connection
 			if( 
@@ -1248,7 +1471,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				!( currentEvent->events & EPOLLIN ) 
 			)
 			{
-				if( currentEvent->data.fd == fc->fci_Sockets->fd )
+				if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd )
 				{
 					// Oups! We have gone away!
 					DEBUG( "[FriendCoreEpoll] Socket went away!\n" );
@@ -1269,7 +1492,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 				DEBUG( "[FriendCoreEpoll] Wake up!\n" );
 			}
 			// First handle pipe messages
-			else if( currentEvent->data.fd == fc->fci_ReadCorePipe )
+			else if( currentEvent->data.fd == fc->fci_ReadCorePipe ) //FIXME! pipe must be wrapped in a Socket*
 			{
 				// read all bytes from read end of pipe
 				char ch;
@@ -1294,17 +1517,17 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					break;
 				}
 			}
-			// Accept incoming connections
-			else if( currentEvent->data.fd == fc->fci_Sockets->fd && !fc->fci_Shutdown )
-			{	
+			// Accept incoming connections - if the socket fd is out listening socket fd
+			else if( ((Socket*)currentEvent->data.ptr)->fd == fc->fci_Sockets->fd && !fc->fci_Shutdown )
+			{
+				DEBUG("=====================before worker\n");
 				// Setup for reading
 				struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
 				if( pre != NULL )
 				{
 					pre->fc = fc;
 					// TODO: Make sure we keep the number of threads under the limit
-					
-#ifdef USE_PTHREAD
+#ifdef USE_PTHREAD_ACCEPT
 					if( pthread_create( &pre->thread, NULL, &FriendCoreAcceptPhase1, ( void *)pre ) != 0 )
 					{
 						FFree( pre );
@@ -1315,12 +1538,11 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreAcceptPhase1, pre, NULL );
 					//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreAcceptPhase1, pre );
 #else
-					int pid;
-					pid = fork();
+					int pid = fork();
 					
 					if( pid < 0 )
 					{
-						FERROR("FORK fail\n");
+						FERROR( "FORK fail\n" );
 					}
 					else if( pid == 0 )
 					{
@@ -1328,7 +1550,7 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 					}
 					else
 					{
-						INFO("Fork done\n");
+						INFO( "Fork done\n" );
 					}
 #endif
 #endif
@@ -1337,12 +1559,10 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 			// Get event that are incoming!
 			else if( currentEvent->events & EPOLLIN )
 			{
-				pthread_mutex_lock( &sock->mutex );
+				// Stop listening here..
 				epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
-				pthread_mutex_unlock( &sock->mutex );
 				
 				// Process
-
 				if( !fc->fci_Shutdown )
 				{
 					struct fcThreadInstance *pre = FCalloc( 1, sizeof( struct fcThreadInstance ) );
@@ -1368,16 +1588,9 @@ inline void FriendCoreEpoll( FriendCoreInstance* fc )
 						//WorkerManagerRun( fc->fci_WorkerManager,  FriendCoreProcess, pre );
 #else
 						int pid = fork();
-						if( pid < 0 )
-						{
-							
-						}else if( pid == 0 )
+						if( pid == 0 )
 						{
 							FriendCoreProcess( pre );
-						}
-						else
-						{
-							
 						}
 #endif
 #endif
@@ -1500,8 +1713,8 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	// Register for events
 	struct epoll_event event;
 	memset( &event, 0, sizeof( event ) );
-	event.data.fd = fc->fci_Sockets->fd;
-	event.events = EPOLLIN | EPOLLET;
+	event.data.ptr = fc->fci_Sockets;
+	event.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
 	
 	if( epoll_ctl( fc->fci_Epollfd, EPOLL_CTL_ADD, fc->fci_Sockets->fd, &event ) == -1 )
 	{
@@ -1613,3 +1826,5 @@ Library* FriendCoreGetLibrary( FriendCoreInstance* fc, char* libname, FULONG ver
 	return lib;
 }
 
+/**@}*/
+// End of FriendCore Doxygen group

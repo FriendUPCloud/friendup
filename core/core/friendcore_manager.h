@@ -19,12 +19,14 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  * Core manager structure definition
  *
  * @author HT (Hogne Tildstad)
  * @date 16 Nov 2016
+ * 
+ * \ingroup FriendCoreManager
+ * @{
  */
 
 #ifndef __CORE_FRIENDCORE_MANAGER_H__
@@ -42,6 +44,8 @@
 #include <network/websocket.h>
 #include <core/friendcore_info.h>
 #include <core/event_manager.h>
+#include <communication/cluster_node.h>
+
 
 #ifndef FRIEND_CORE_PORT
 #define FRIEND_CORE_PORT	6502
@@ -120,10 +124,18 @@ typedef struct FriendCoreManager
 	int							fcm_MaxpCom; // number of connections in epoll for communication
 	int							fcm_MaxpComRemote; // number of connections in epoll for remote connections
 	int							fcm_BufsizeCom; // communication buffer size
+	int							fcm_CoreIDGenerator;	// one core (thread) ID
+	int							fcm_NodeIDGenerator; // node ID, used to attach numbers to new nodes
 	FBOOL						fcm_SSLEnabled; // SSL enabled for http
 	FBOOL						fcm_WSSSLEnabled; // SSL enabled for WS
 	FBOOL						fcm_SSLEnabledCommuncation; // SSL enabled for communication
 	FBOOL						fcm_Shutdown;									///< Shutdown FCM
+	FBOOL						fcm_ClusterMaster;		// if server is cluster master
+	
+	int							fcm_ClusterID;			// cluster ID (1 if its master)
+	//ConnectionInfo				*fcm_ConnectionsInformation;					// connection information
+	ClusterNode					*fcm_ClusterNodes;								// cluster node information
+																				// first Node is always current FC node
 }FriendCoreManager;
 
 //
@@ -131,6 +143,12 @@ typedef struct FriendCoreManager
 //
 
 FriendCoreManager *FriendCoreManagerNew();
+
+//
+// Init function
+//
+
+int FriendCoreManagerInit( FriendCoreManager *fcm );
 
 //
 // FriendCoreManager destructor
@@ -159,3 +177,6 @@ void FriendCoreManagerShutdown( FriendCoreManager *fcm );
 
 
 #endif //__CORE_FRIENDCORE_MANAGER_H__
+
+/**@}*/
+// End of FriendCoreManager Doxygen group

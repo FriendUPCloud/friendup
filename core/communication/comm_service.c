@@ -20,7 +20,7 @@
 *                                                                              *
 *****************************************************************************©*/
 /** @file
- * 
+ *
  *  CommunicationService body
  *
  *  @author PS (Pawel Stefanski)
@@ -52,9 +52,20 @@
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
+#include <system/admin/admin_manager.h>
+#include <util/time.h>
+#include <hardware/network.h>
 
 #define FLAGS S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH
 #define MAX_MSG 50
+
+void *get_in_addr(const struct sockaddr *sa) {
+
+    if( sa->sa_family == AF_INET) // IPv4 address
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    // else IPv6 address
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
 
 //
 // cfg/cores.ini
@@ -66,7 +77,7 @@
 pthread_cond_t InitCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t InitMutex = PTHREAD_MUTEX_INITIALIZER;
 
-inline void CommServiceSetupOutgoing( CommService *service );
+void CommServiceSetupOutgoing( CommService *service );
 
 /**
  * Create CommunicationService
@@ -84,17 +95,13 @@ CommService *CommServiceNew( int port, int secured, void *sb, int maxev, int buf
 	CommService *service = NULL;
 	DEBUG2("[COMMSERV] CommunicationServiceNew START\n"); 
 	
-	//if( ( service =  (ServiceAppMsg*)mmap( NULL, sizeof( CommService ), PROT_READ|PROT_WRITE, MAP_SHARED, -1, 0 ) ) != NULL )
 	if( ( service = FCalloc( 1, sizeof( CommService ) )  ) != NULL )
 	{
-		DEBUG2("[COMMSERV] CommunicationService created type \n" );
-		//service->s_Type = type;
 		service->s_BufferSize = bufsiz;
 		service->s_MaxEvents = maxev;
 		service->s_port = port;
 		service->s_secured = secured;
 		
-		//service->s_outMqfd = -1;
 		pipe2( service->s_sendPipe, 0 );
 		pipe2( service->s_recvPipe, 0 );
 		
@@ -125,6 +132,12 @@ void CommServiceDelete( CommService *s )
 	{
 		s->s_Cam.cam_Quit = TRUE;
 		
+		while( s->s_OutgoingConnectionSet != TRUE )
+		{
+			sleep( 1 );
+		}
+		
+		pthread_cond_broadcast( &s->s_DataReceivedCond );
 		pthread_mutex_lock( &s->s_Mutex );
 
 		CommRequest *cr = s->s_Requests;
@@ -142,9 +155,18 @@ void CommServiceDelete( CommService *s )
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
-		char ch = 'q';
-		write( s->s_WriteCommPipe, &ch, 1);
-		
+		while( TRUE )
+		{
+			char ch = 'q';
+			write( s->s_WriteCommPipe, &ch, 1);
+			
+			if( s->s_Thread->t_Launched == FALSE )
+			{
+				break;
+			}
+			DEBUG("sending quit signal\n");
+			sleep( 1 );
+		}
 		DEBUG2("[COMMSERV]  close thread\n");
 		
 		if( s->s_Thread )
@@ -176,19 +198,20 @@ void CommServiceDelete( CommService *s )
 		
 		pthread_mutex_lock( &s->s_Mutex );
 		SystemBase *lsb = (SystemBase *)s->s_SB;
-		FriendCoreManager *fcm = lsb->fcm;//s->s_FCM;
+		FriendCoreManager *fcm = lsb->fcm;
 		
 		DEBUG("[COMMSERV] Closing connections : Incoming\n");
 		// close incoming connections
 		
-		CommFCConnection *con = s->s_Connections;
-		CommFCConnection *rcon = con;
+		FConnection *con = s->s_Connections;
+		FConnection *rcon = con;
 		while( con != NULL )
 		{
 			rcon = con;
-			con = (CommFCConnection *) con->node.mln_Succ;
+			con = (FConnection *) con->node.mln_Succ;
+			
 			DEBUG("[COMMSERV] Delete connection\n");
-			CommFCConnectionDelete( rcon );
+			FConnectionDelete( rcon );
 		}
 		s->s_Connections = NULL;
 		
@@ -208,6 +231,17 @@ void CommServiceDelete( CommService *s )
 		
 		Log( FLOG_ERROR,"[COMMSERV] Communication service closed\n");
 	}
+}
+
+//
+//
+//
+
+
+void *ServiceTempThread( void *d )
+{
+	CommServiceSetupOutgoing( d );
+	pthread_exit(0);
 }
 
 /**
@@ -245,20 +279,23 @@ int CommServiceStart( CommService *s )
 		{
 			usleep( 2000 );
 		}
-			CommServiceSetupOutgoing( s );
+		
+		pthread_t t;
+		pthread_create( &t, NULL, &ServiceTempThread, s );
+		pthread_detach( t );
 	}
 	return 0;
 }
 
 /**
- * Stop CommunicationService
+ * Stop CommunicationService UNIMPLEMENTED
  *  Function stops CommunicationService thread
  *
  * @param s pointer to CommunicationService
  * @return 0 when service will be stopped without problems, otherwise error number
  */
 
-int CommServiceStop( CommService *s )
+int CommServiceStop( CommService *s __attribute__((unused)) )
 {
 	return 0;
 }
@@ -277,9 +314,8 @@ struct FCCommMsg
 /**
  * Receive and send Service messages
  *
- * @param ft pointer to CommunicationService FThread structure
+ * @param tdata pointer to CommunicationService FThread structure
  */
-
 void ParseCallThread( void *tdata )
 {
 	FThread *ft = (FThread *)tdata;
@@ -291,17 +327,13 @@ void ParseCallThread( void *tdata )
 	
 	FERROR("[COMMSERV] All data received, processing bytes %d-------------------------------------------PROCESSING ANSWER\n", count );
 	
-	//recvDataForm = ParseMessage( fcmsg->fccm_Service, fcmsg->fccm_Socket, (FBYTE *)fcmsg->fccm_BS->bs_Buffer, (int *)&count, &isStream );
-	
 	if( recvDataForm != NULL )
 	{
-		DEBUG2("[COMMSERV] Data received-----------------------------------------%lu\n", recvDataForm->df_Size);
-		
 		int wrote = 0;
 		
 		if( isStream == FALSE )
 		{
-			wrote = SocketWrite( fcmsg->fccm_Socket, (char *)recvDataForm, (FQUAD)recvDataForm->df_Size );
+			wrote = SocketWrite( fcmsg->fccm_Socket, (char *)recvDataForm, (FLONG)recvDataForm->df_Size );
 		}
 		DEBUG2("[COMMSERV] Wrote bytes %d\n", wrote );
 		
@@ -317,124 +349,144 @@ void ParseCallThread( void *tdata )
  *
  * @param service pointer to CommunicationService
  */
-
-inline void CommServiceSetupOutgoing( CommService *service )
+void CommServiceSetupOutgoing( CommService *service )
 {
-	//                                           *
-	// atm we only read FC connections
-	//
+	SystemBase *lsb = (SystemBase *)service->s_SB;
+	FriendCoreManager *fcm = lsb->fcm;
 
-	struct PropertiesLibrary *plib = NULL;
-	char *servers = NULL;
-	char *masterServer = NULL;
-	Props *prop = NULL;
-
-	if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
+	// if ID is different, we must change it in DB
+	
+	if( fcm->fcm_ClusterMaster != SLIB->fcm->fcm_ClusterID )
 	{
-		char coresPath[ 1024 ];
-		sprintf( coresPath, "%s/cfg/cfg.ini", getenv( "FRIEND_HOME" ) );
 		
-		prop = plib->Open( coresPath  );
-		if( prop != NULL)
-		{
-			servers = plib->ReadString( prop, "Cores:Servers", NULL );
-			masterServer = plib->ReadString( prop, "Cores:MasterServer", NULL );
-		}
 	}
 	
-	if( servers != NULL )
+	SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
 	{
-		char *token;
-		
-		DEBUG("[COMMSERV] Server list found %s. Create connections.\n", servers );
-		
-		// get the first token 
-		token = strtok( servers, SERVER_SPLIT_SIGN );
-		// walk through other tokens 
-		while( token != NULL ) 
+		// when FC is in cluser there is need to split outgoing and incoming connections
+		char data[ 129 ];
+		char where[ 256 ];
+		memcpy( data, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+		data[ 128 ] = 0;
+	
+		snprintf( where, sizeof(where), "FCID='%s'", data );
+	
+		int entries;
+		// reading FC connections
+		fcm->fcm_CommService->s_Connections = lsqllib->Load( lsqllib, FConnectionDesc, where, &entries );
+		// reading all cluster nodes
+		fcm->fcm_ClusterNodes = lsqllib->Load( lsqllib, ClusterNodeDesc, where, &entries );
+		if( fcm->fcm_ClusterNodes == NULL )
 		{
-			CommFCConnection *newcon = NULL;
-			
-			char *address = token;
-			char *ipport = NULL;
-			int port = service->s_port;
-			
-			// now split address:port
-			
-			char *pos = strchr( address, SERVER_PORT_SPLIT_SIGN );
-			if( pos != NULL )
+			ClusterNode *cnode = fcm->fcm_ClusterNodes;
+			while( cnode != NULL )
 			{
-				*pos = 0;
-				ipport = ++pos;
-				port = atoi( ipport );
+				if( cnode->cn_FCID != NULL &&  memcmp( cnode->cn_FCID, data, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+				{
+					break;
+				}
+				cnode = (ClusterNode *) cnode->node.mln_Succ;
 			}
 			
-			DEBUG2("[COMMSERV] New connection found address : %s \n", address );
+			// node is not registered, we must register it in DB
 			
-			Socket *newsock;
-			
-			newsock = SocketConnectHost( service->s_SB, service->s_secured, address, port );
-			if( newsock != NULL )
+			if( cnode == NULL )
 			{
-				int err = 0;
-				DEBUG("[COMMSERV] Outgoing connection created on port: %d\n", service->s_port);
-
-				CommFCConnection *con = CommServiceAddConnection( service, newsock, address, NULL, SERVICE_CONNECTION_OUTGOING );
-				if( con != NULL )
+				fcm->fcm_ClusterNodes = ClusterNodeNew();
+				if( fcm->fcm_ClusterNodes != NULL )
 				{
-					CommServiceRegisterEvent( con, newsock );
+					char buffer[ 32 ];
+					memset( buffer, 0, 32 );
+			
+					if( getPrimaryIp( buffer, 16 ) == 0 )
+					{
+						fcm->fcm_ClusterNodes->cn_Address = StringDuplicateN( buffer, 16 );
+					}
+			
+					fcm->fcm_ClusterNodes->cn_NodeID = fcm->fcm_ClusterMaster;
+					fcm->fcm_ClusterNodes->cn_FCID = StringDuplicateN( data, FRIEND_CORE_MANAGER_ID_SIZE );
+			
+					lsqllib->Save( lsqllib, ClusterNodeDesc, fcm->fcm_ClusterNodes );
 				}
 			}
-			else
+		}
+		SLIB->LibrarySQLDrop( SLIB, lsqllib );
+		
+		//
+		// Go through all connections
+		//
+		
+		char *masterServer = "pal.ideverket.no";
+		
+		FBOOL masterFriendFound = FALSE;
+		FConnection *loccon = fcm->fcm_CommService->s_Connections;
+		while( loccon != NULL )
+		{
+			loccon->fc_Service = fcm->fcm_CommService;
+			
+			if( loccon->fc_Type == SERVER_CONNECTION_OUTGOING )
 			{
-				CommFCConnectionDelete( newcon );
-				FERROR("Cannot open socket\n");
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, loccon->fc_Address, service->s_port );
+				if( newsock != NULL )
+				{
+					DEBUG("[CommServiceSetupOutgoing] Connection reestabilished\n");
+					
+					if( loccon->fc_Socket != NULL )
+					{
+						SocketClose( loccon->fc_Socket );
+						loccon->fc_Socket = newsock;
+					}
+					loccon->fc_Status = CONNECTION_STATUS_CONNECTED;
+					//loccon->fc_Socket = newsock;
+					//newsock->s_Data = loccon;
+					FConnection *con = CommServiceAddConnection( service, newsock, NULL, loccon->fc_Address, NULL, SERVER_CONNECTION_OUTGOING, 0 );
+					if( con != NULL )
+					{
+						con->fc_ServerType = SERVER_TYPE_FRIEND_MASTER;
+						CommServiceRegisterEvent( con, newsock );
+						//lsqllib->Save( lsqllib, FConnectionDesc, con );
+					}
+				}
+				else
+				{
+					loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+				}
 			}
-			token = strtok( NULL, "," );
-		}
-	}
-	
-	if( masterServer != NULL )
-	{
-		// now split address:port
-		int port = service->s_port;
-		
-		DEBUG("[CommServiceThreadClient] Create connection: %s\n", masterServer );
-		
-		char *pos = strchr( masterServer, SERVER_PORT_SPLIT_SIGN );
-		if( pos != NULL )
-		{
-			*pos = 0;
-			char *ipport = ++pos;
-			port = atoi( ipport );
+			
+			if( loccon->fc_ServerType == SERVER_TYPE_FRIEND_MASTER )
+			{
+				masterFriendFound = TRUE;
+			}
+			
+			loccon = (FConnection *)loccon->node.mln_Succ;
 		}
 		
-		DEBUG("[CommServiceThreadClient] Create connection: %s\n", masterServer );
+		//
 		
-		Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, masterServer, port );
-		if( newsock != NULL )
+		if( masterFriendFound == FALSE )
 		{
-			int err = 0;
-			DEBUG("[CommServClient] Outgoing connection created on port: %d\n", service->s_port);
+			DEBUG("[CommServiceSetupOutgoing] trying to setup connection to Friend Master Server: %s\n", masterServer );
+			
+			Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, masterServer, service->s_port );
+			//if( newsock != NULL ) // master connection must be always avaiable in list
+			{
+				DEBUG("[CommServiceSetupOutgoing] Connection to Master FriendNode created on port: %d\n", service->s_port);
 
-			CommFCConnection *con = CommServiceAddConnection( service, newsock, masterServer, NULL, SERVICE_CONNECTION_OUTGOING );
-			if( con != NULL )
-			{
-				CommServiceRegisterEvent( con, newsock );
+				FConnection *con = CommServiceAddConnection( service, newsock, "FriendMaster", masterServer, NULL, SERVER_CONNECTION_OUTGOING, 0 );
+				if( con != NULL )
+				{
+					con->fc_ServerType = SERVER_TYPE_FRIEND_MASTER;
+					CommServiceRegisterEvent( con, newsock );
+					lsqllib->Save( lsqllib, FConnectionDesc, con );
+				}
 			}
 		}
 	}
 	
-	if( plib != NULL && prop != NULL )
-	{
-		plib->Close( prop );
-	}
-	
-	if( plib != NULL )
-	{
-		LibraryClose( (struct Library *)plib );
-	}
 	DEBUG("[COMMSERV] CommunicationClient start working\n");
+	
+	service->s_OutgoingConnectionSet = TRUE;
 }
 
 /**
@@ -455,6 +507,7 @@ int CommServiceThreadServer( FThread *ptr )
 	
 	if( service->s_Socket != NULL )
 	{
+		service->s_Socket->VerifyPeer = VerifyPeer;
 		SocketSetBlocking( service->s_Socket, FALSE );
 		
 		if( SocketListen( service->s_Socket ) != 0 )
@@ -547,8 +600,6 @@ int CommServiceThreadServer( FThread *ptr )
 					
 					Socket *sock = ( Socket *)currentEvent.data.ptr;
 					
-					DEBUG("[COMMSERV] Event count\n");
-					
 					if(
 						( currentEvent.events & EPOLLERR ) ||
 						( currentEvent.events & EPOLLHUP ) ||
@@ -558,7 +609,7 @@ int CommServiceThreadServer( FThread *ptr )
 
 						FERROR("[COMMSERV] FDerror!\n");
 						
-						CommFCConnection *loccon = NULL;
+						FConnection *loccon = NULL;
 						if( sock != NULL )
 						{
 							loccon = sock->s_Data;
@@ -569,6 +620,7 @@ int CommServiceThreadServer( FThread *ptr )
 						
 							if( loccon != NULL )
 							{
+								/*
 								if( 0 == CommServiceDelConnection( service, loccon, sock ) )
 								{
 									INFO("Socket connection removed\n");
@@ -577,11 +629,14 @@ int CommServiceThreadServer( FThread *ptr )
 								{
 									FERROR("Cannot remove socket connection\n");
 								}
+								*/
 								sock->s_Data = NULL;
+								loccon->fc_Socket = NULL;
+								loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 							}
+							SocketClose( sock );
 						}
 
-						//SocketClose( sock );
 						//sock = NULL;
 						
 						//loccon->cfcc_Status = SERVICE_STATUS_DISCONNECTED;
@@ -617,16 +672,7 @@ int CommServiceThreadServer( FThread *ptr )
 							
 							incomming->s_Timeouts = 5;
 							incomming->s_Timeoutu = 0;
-							//
-							 //							if( SocketSetBlocking( incomming, TRUE ) == -1)
-							 //							{
-							 //								FERROR("[COMMSERV]SocketSetBlocking\n");
-							 //								SocketClose( incomming );
-							 //								continue;
-							 					// Set the default protocol callback
-							//incomming->protocolCallback = (void* (*)( Socket_t* sock, char* bytes, unsigned int size ))&ParseMessage;
 
-							
 							incomming->s_Timeouts = 5;
 							incomming->s_Timeoutu = 0;
 							
@@ -655,12 +701,9 @@ int CommServiceThreadServer( FThread *ptr )
 						char ch;
 						int result = 1;
 						
-						DEBUG2("[COMMSERV] Hogne Read from pipe!\n");
-						
 						while( result > 0 )
 						{
 							result = read( service->s_ReadCommPipe, &ch, 1 );
-							DEBUG2("[COMMSERV] Hogne Read from pipe %c\n", ch );
 							if( ch == 'q' )
 							{
 								//goto service_exit;
@@ -678,14 +721,10 @@ int CommServiceThreadServer( FThread *ptr )
 					else
 					{
 						// Remove event // not persistent connection
-						//epoll_ctl( service->s_Epollfd, EPOLL_CTL_DEL, sock->fd, NULL );
-						
+
 						FBYTE *tempBuffer = NULL;
-						int tempSize = 0;
 						DEBUG("[COMMSERV] Wait for message on socket\n");
-						
-						//SocketSetBlocking( sock, TRUE );
-						
+
 						BufString *bs = NULL;
 						if( sock != NULL )
 						{
@@ -703,39 +742,42 @@ int CommServiceThreadServer( FThread *ptr )
 							
 							DEBUG2("[COMMSERV] Readed from socket %lu\n", (unsigned long)bs->bs_Size );
 							
-							int z = 0;
-							for( z=0 ; z < bs->bs_Size ; z++ ) printf(" %c ", bs->bs_Buffer[ z ] );
-							printf("\n");
-							
-							int dcount = count;
 							DataForm *df = (DataForm *)bs->bs_Buffer;
 							
 							// checking if its FRIEND message
-							char *friendCoreID = NULL;
+
+							char incomingFriendCoreID[ FRIEND_CORE_MANAGER_ID_SIZE + 32 ];
+							memset( incomingFriendCoreID, 0, FRIEND_CORE_MANAGER_ID_SIZE + 32 );
+							
+							int z;
+							for( z=0 ; z < bs->bs_Size ; z++ )
+								printf("_%c_ ", bs->bs_Buffer[ z ] );
+							printf("\n");
 							
 							int j = 0;
 							if( df->df_ID == ID_FCRE && count > 24 )
 							{
 								//char *id = (char *)&(df[ 2 ].df_ID);
-								//DEBUG2("ID POS 2 %lu ID_RESP %lu ID_FRID %lu ID_QUERY %lu   ID %c %c %c %c\n", df[ 2 ].df_ID, ID_RESP, ID_FRID, ID_QUER, id[0], id[1], id[2], id[3] );
+								DEBUG2("COMMSERV] FCRE found\n");
 								df++;
 
 								if( df->df_ID == ID_FCID )
 								{
-									friendCoreID = ((char *)(df+1));
+									DEBUG("[COMMSERV] ID found\n");
+									memcpy( incomingFriendCoreID, ((char *)(df+1)), FRIEND_CORE_MANAGER_ID_SIZE );
 
 									char *ptr = (char *)df;
+									DEBUG("[COMMSERV] size %lu\n", df->df_Size );
 									ptr += df->df_Size + COMM_MSG_HEADER_SIZE;
 									df = (DataForm *)ptr;
 								}
-								
-								//DEBUG("Check resp %lu  -  %lu\n", df->df_ID, ID_FCRI );
 								
 								if( df->df_ID == ID_FCRI )
 								{
 									DEBUG("[COMMSERV] Response received!\n");
 									
 									pthread_mutex_lock( &service->s_Mutex );
+									DEBUG("[COMMSERV] lock set\n");
 									CommRequest *cr = service->s_Requests;
 									while( cr != NULL )
 									{
@@ -751,37 +793,32 @@ int CommServiceThreadServer( FThread *ptr )
 									}
 									pthread_mutex_unlock( &service->s_Mutex );
 								}
-								/*
-								else if( df->df_ID == ID_QUER  )
-								{
-									// checking if its a request or response
-
-									// we received whole data
-									// Process data
-									struct FCCommMsg *commsg;
-									if( ( commsg = FCalloc( 1, sizeof( struct FCCommMsg ) ) ) != NULL )
-									{
-										commsg->fccm_BS = bs;
-										commsg->fccm_Service = service;
-										commsg->fccm_Socket = sock;
-										
-										WorkerManagerRun( lsb->sl_WorkerManager, &ParseCallThread, commsg, NULL );
-									}
-								}*/
+								
+								// Another FC is trying to connect
+								
 								else if( df->df_ID == ID_FCON )
 								{
+									DataForm *clusterDF = df + 1;
 									INFO("[COMMSERV] New connection was set\n");
 
-									FriendCoreManager *lfcm = FCalloc( 1, sizeof( struct FriendCoreManager ) );//FriendCoreManagerNew();
+									// if number 0 is connected then its normal server
+									// 1 - node master
+									// > 1 sub nodes
+									FULONG nodeID = clusterDF->df_Size;
+									FULONG newID = 0;
+									if( fcm->fcm_ClusterMaster )
+									{
+										newID = fcm->fcm_NodeIDGenerator++;
+									}
 
-									DEBUG2("[COMMSERV] FriendOS connected, name '%128s'\n", friendCoreID );
+									DEBUG2("[COMMSERV] FriendOS connected, name '%s'\n", incomingFriendCoreID );
 
 									//
 									// on the end we should accept connection but do not allow to call anything
 									// untill admin will accept connection
 									//
 
-									CommFCConnection *con = CommServiceAddConnection( service, sock, NULL, friendCoreID, SERVICE_CONNECTION_INCOMING );
+									FConnection *con = CommServiceAddConnection( service, sock, NULL, NULL, incomingFriendCoreID, SERVER_CONNECTION_INCOMING, nodeID );
 
 									sock->s_Data = con;
 									
@@ -804,6 +841,7 @@ int CommServiceThreadServer( FThread *ptr )
 												{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
 												{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
 												{ ID_FCOR, (FULONG)0 , MSG_INTEGER_VALUE },
+												{ ID_CLID, (FULONG)newID, MSG_INTEGER_VALUE },
 												{ TAG_DONE, TAG_DONE, TAG_DONE }
 											};
 											
@@ -811,19 +849,30 @@ int CommServiceThreadServer( FThread *ptr )
 											DEBUG("[COMMSERV] DataForm Created size %lu\n", dfresp->df_Size );
 											
 											// FC send his own id in response
-											int sbytes = SocketWrite( sock, (char *)dfresp, (FQUAD)dfresp->df_Size );
+											int sbytes = SocketWrite( sock, (char *)dfresp, (FLONG)dfresp->df_Size );
 
 											DataFormDelete( dfresp );
 											
 											INFO("Outgoing connection created\n");
+											
+											SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+											if( lsqllib != NULL )
+											{
+												char where[ 1024 ];
+												snprintf( where, 1024, " FConnection where FCID='%s' AND Type=0", con->fc_FCID );
+												//snprintf( where, 1024, " FConnection where FCID='%s' AND DestinationFCID='%s' AND Type=0", con->fc_FCID, con->fc_DestinationFCID );
+												int number = lsqllib->NumberOfRecords( lsqllib, FConnectionDesc, where );
+												DEBUG("Number of connection found in DB %d\n", number );
+												if( number == 0 )
+												{
+													lsqllib->Save( lsqllib, FConnectionDesc, con );
+												}
+												SLIB->LibrarySQLDrop( SLIB, lsqllib );
+											}
 										}
-										FFree( lfcm );
-										lfcm = NULL;
 									}
 									else
 									{
-										FFree( lfcm );
-										lfcm = NULL;
 										SocketClose( sock );
 										FERROR( "[COMMSERV] Closing incoming!\n" );
 									}
@@ -833,38 +882,79 @@ int CommServiceThreadServer( FThread *ptr )
 								{
 									FULONG reqid = df->df_Size;
 									
-									DEBUG("[COMMSERV] Request data %lu size %lu\n", df->df_Data, df->df_Size );
+									DEBUG("[COMMSERV] Request socket data ptr %p size %lu\n", sock->s_Data, df->df_Size );
 									
-									DataForm *responsedf = ParseAndExecuteRequest( lsb, sock->s_Data, ++df, reqid );
-									
-									// when connection tag is received we must response with our FriendCoreID 
-									if( responsedf == NULL )
+									// connection is not assigned to FCConnection, we cannot run commands
+									if( sock->s_Data == NULL )
 									{
+										// when connection tag is received we must response with our FriendCoreID 
+										DataForm *responsedf = NULL;
+
 										DEBUG("[COMMSERV] Generate Data Form\n");
 										MsgItem tags[] = {
 											{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
 											{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
 											{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
-											{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+											{ ID_FERR, (FULONG)SERVER_ERROR_CONNOTASSIGNED, MSG_INTEGER_VALUE },
 											{ TAG_DONE, TAG_DONE, TAG_DONE }
 										};
 										responsedf = DataFormNew( tags );
-									}
-									
-									DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
-									
-									// FC send his own id in response
-									int sbytes = SocketWrite( sock, (char *)responsedf, (FQUAD)responsedf->df_Size );
 
-									DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
+										DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
 									
-									DataFormDelete( responsedf );
+										// FC send his own id in response
+										int sbytes = SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
+
+										DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
+									
+										DataFormDelete( responsedf );
+									}
+									else
+									{
+										FConnection *fccon = (FConnection *)sock->s_Data;
+										
+										// Friend cannot run blocked connections
+										if( fccon->fc_Status != CONNECTION_STATUS_BLOCKED )
+										{
+											DataForm *responsedf = ParseAndExecuteRequest( lsb, sock->s_Data, ++df, reqid );
+									
+											// when connection tag is received we must response with our FriendCoreID 
+											if( responsedf == NULL )
+											{
+												DEBUG("[COMMSERV] Generate Data Form\n");
+												MsgItem tags[] = {
+													{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
+													{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)(FBYTE *)fcm->fcm_ID },
+													{ ID_FCRI, (FULONG)reqid , MSG_INTEGER_VALUE },
+													{ ID_CMMD, (FULONG)0, MSG_INTEGER_VALUE },
+													{ TAG_DONE, TAG_DONE, TAG_DONE }
+												};
+												responsedf = DataFormNew( tags );
+											}
+									
+											DEBUG("[COMMSERV] Response idreq %lu\n", reqid );
+									
+											// FC send his own id in response
+											int sbytes = SocketWrite( sock, (char *)responsedf, (FLONG)responsedf->df_Size );
+
+											DEBUG("[COMMSERV] WROTE to sock %d\n", sbytes );
+									
+											DataFormDelete( responsedf );
+										}
+									}
 									
 									BufStringDelete( bs );
 								}
 								else
 								{
-									FERROR("[COMMSERV] Message uknown!\n");
+									char eid[ 9 ]; eid[ 8 ] = 0;
+									char *t = (char *)df;
+									int z;
+									for( z=0 ; z < 8 ; z++ )
+										eid[ z ] = t[ z ];
+									
+									FERROR("[COMMSERV] Message uknown: [%s], FCRE found!\n", eid );
+
 									BufStringDelete( bs );
 								}
 
@@ -876,7 +966,14 @@ int CommServiceThreadServer( FThread *ptr )
 							}
 							else
 							{
-								FERROR("[COMMSERV] Message uknown!\n");
+								char eid[ 9 ]; eid[ 8 ] = 0;
+								char *t = (char *)df;
+								int z;
+								for( z=0 ; z < 8 ; z++ )
+									eid[ z ] = t[ z ];
+									
+								FERROR("[COMMSERV] Message uknown [%s]!\n", eid );
+
 								BufStringDelete( bs );
 							}
 						}
@@ -929,9 +1026,13 @@ int CommServiceThreadServer( FThread *ptr )
  * @return 0 when success, otherwise error number
  */
 
-int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket )
+int CommServiceRegisterEvent( FConnection *con, Socket *socket )
 {
-	CommService *cserv = (CommService *)con->cfcc_Service;
+	if( socket == NULL )
+	{
+		return -1;
+	}
+	CommService *cserv = (CommService *)con->fc_Service;
 	// add event
 	//if( type == SERVICE_TYPE_SERVER )
 	{
@@ -940,18 +1041,17 @@ int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket )
 		event.data.fd = socket->fd;//s->s_Socket->fd;
 		event.data.ptr = (void *) socket;
 		event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+		DEBUG("[CommServiceRegisterEvent] cserv ptr %p socket ptr %p\n", cserv, socket );
 		int retval = epoll_ctl( cserv->s_Epollfd, EPOLL_CTL_ADD, socket->fd, &event );
 		if( retval == -1 )
 		{
-			FERROR("[COMMSERV] EPOLLctrl error\n");
+			Log( FLOG_ERROR, "[CommServiceRegisterEvent] EPOLLctrl error\n");
 			
-			//SocketClose( service->s_Socket );
-			//abort();
 			return 1;
 		}
 		else
 		{
-			DEBUG("[COMMSERV] Socket added to events handling sock ptr %p\n", socket);
+			DEBUG("[CommServiceRegisterEvent] Socket added to events handling sock ptr %p\n", socket);
 		}
 	}
 	return 0;
@@ -960,14 +1060,13 @@ int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket )
 #endif
 
 /**
- * UnRegister CommunicationService event (epoll)
+ * UnRegister CommunicationService event (epoll) UNIMPLEMENTED
  *
- * @param con pointer to CommFCConnection
+ * @param con pointer to FConnection
  * @param socket pointer socket on which communication is working
  * @return 0 when success, otherwise error number
  */
-
-int CommServiceUnRegisterEvent( CommFCConnection *con, Socket *socket )
+int CommServiceUnRegisterEvent( FConnection *con __attribute__((unused)), Socket *socket __attribute__((unused)))
 {
 	return 0;
 }
@@ -977,154 +1076,259 @@ int CommServiceUnRegisterEvent( CommFCConnection *con, Socket *socket )
  *
  * @param s pointer to new CommService
  * @param socket pointer socket on which communication is working
+ * @param name pointer to user name
  * @param addr pointer to internet address
- * @param id pointer to FC id
+ * @param recvid received FCID (incoming connections)
  * @param type communication service type (incomming/outgoing)
- * @return pointer to new CommFCConnection structure when success, otherwise NULL
+ * @param cluster 0 - normal connection, 1 - cluster master, > 1 - cluster node
+ * @return pointer to new FConnection structure when success, otherwise NULL
  */
-
-CommFCConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *addr, char *id, int type )
+FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *name, char *addr, char *recvid, int type, int cluster )
 {
 	struct sockaddr_in clientAddr;
+	SystemBase *lsb = (SystemBase *)s->s_SB;
+	FULONG clusterID = 0;
+	FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;
 	
-	/*
-	if( addr != NULL && strstr( addr, "127.0.0.1"  ) != NULL )
-	{
-		FERROR("Cannot add 127.0.0.1 address\n");
-		return NULL;
-	}
-	*/
+	//FERROR("\n\n\n\n------------------------------------------------\n service %p name %s addr %s recvid %s\n\n\n", s, name, addr, recvid );
 	
-	char lid[ 256 ];
-	memset( lid, 0, sizeof(lid) );
+	char recvfcid[ 256 ];
+	memset( recvfcid, 0, sizeof(recvfcid) );
 	
-	char locaddr[ 32 ];
-	memset( locaddr, 0, sizeof( locaddr ) );
+	char recvaddr[ 32 ];
+	memset( recvaddr, 0, sizeof( recvaddr ) );
 	
 	// when outgoing connection is created, then message must be send to another FC
 	// another FC will send us message of his own FCID
 	
-	if( type == SERVICE_CONNECTION_OUTGOING )
+	if( type == SERVER_CONNECTION_OUTGOING )
 	{
-		SystemBase *lsb = (SystemBase *)s->s_SB;
-		
-		FriendCoreManager *fcm = (FriendCoreManager *) lsb->fcm;
-		
-		MsgItem tags[] = {
-			{ ID_FCRE,  (FULONG)0, (FULONG)MSG_GROUP_START },
-			{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
-			{ ID_FCON, (FULONG)0 , MSG_INTEGER_VALUE },
-			{ TAG_DONE, TAG_DONE, TAG_DONE }
-		};
-		
-		DEBUG("[COMMSERV] Generate Data Form\n");
-		DataForm * df = DataFormNew( tags );
-		DEBUG("[COMMSERV] DataForm Created  %ld\n", df->df_Size );
-		
-		int sbytes = SocketWrite( socket, (char *)df, (FQUAD)df->df_Size );
-		
-		DEBUG("[COMMSERV] Message sent %d\n", sbytes );
-		DataFormDelete( df );
-		
-		BufString *result = SocketReadTillEnd( socket, 0, 15 );
-		if( result != NULL )
+		if( socket != NULL )
 		{
-			if( result->bs_Size > 0 )
+			MsgItem tags[] = {
+				{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
+				{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
+				{ ID_FCON, (FULONG)0 , MSG_INTEGER_VALUE },
+				{ ID_CLID, (FULONG)cluster, MSG_INTEGER_VALUE },
+				{ TAG_DONE, TAG_DONE, TAG_DONE }
+			};
+		
+			DataForm * df = DataFormNew( tags );
+		
+			int64_t sbytes = SocketWrite( socket, (char *)df, (FLONG)df->df_Size );
+		
+			DataFormDelete( df );
+		
+			BufString *result = SocketReadTillEnd( socket, 0, 15 );
+			if( result != NULL )
 			{
-				DataForm *resultDF = (DataForm *)result->bs_Buffer;
-				if( resultDF->df_ID == ID_FCRE )
+				if( result->bs_Size > 0 )
 				{
-					char *tmp = (char *)(resultDF+2);
-					memcpy( lid, tmp, FRIEND_CORE_MANAGER_ID_SIZE );
-					id = lid;
+					char *resbuf = result->bs_Buffer;
+					DataForm *resultDF = (DataForm *)resbuf;
+					if( resultDF->df_ID == ID_FCRE )
+					{
+						char *tmp = (char *)(resultDF+2);
+						memcpy( recvfcid, tmp, FRIEND_CORE_MANAGER_ID_SIZE );
+					
+						resbuf = tmp + FRIEND_CORE_MANAGER_ID_SIZE + COMM_MSG_HEADER_SIZE;
+						// get new assigned clusterid
+						DataForm *resultDF = (DataForm *)resbuf;
+						clusterID = resultDF->df_Size;
+					}
 				}
+				BufStringDelete( result );
 			}
 		
-			BufStringDelete( result );
+			if( recvfcid[ 0 ] == 0 )
+			{
+				FERROR("FCID not provided. Rejecting connection\n");
+				return NULL;
+			}
 		}
 	}
-	
-	if( id == NULL )
+	else
 	{
-		FERROR("ID not provided. Rejecting connection\n");
-		return NULL;
+		if( recvid == NULL )
+		{
+			FERROR("FCID not provided. Rejecting connection\n");
+			return NULL;
+		}
+		memcpy( recvfcid, recvid, FRIEND_CORE_MANAGER_ID_SIZE );
 	}
+	
 
-	DEBUG("[COMMSERV] Add new FC connection  %s ; socket ptr %p\n", type ? "client" : "server", socket );
+	DEBUG("[CommServiceAddConnection] Add new FC connection  %s ; socket ptr %p\n", type ? "client" : "server", socket );
 
-	CommFCConnection *cfcn = NULL;
-	CommFCConnection *con  = s->s_Connections;
+	FConnection *cfcn = NULL;
+	FConnection *con  = s->s_Connections;
+	char locname[ 256 ];
 
 	while( con != NULL )
 	{
-		if( addr != NULL && con->cfcc_Address != NULL && strcmp( con->cfcc_Address, addr )  == 0 )
+		// we cannot create same connections (outgoing or incoming)
+		if( con->fc_Type == type )
 		{
-			DEBUG("[COMMSERV] We found connection with CORE %s\n",  id  );
-			break;
+			if( con->fc_FCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 \
+				&& con->fc_DestinationFCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			{
+				break;
+			}
 		}
 		
-		if( id != NULL && con->cfcc_Name != NULL && strcmp( con->cfcc_Address, id )  == 0 )
-		{
-			DEBUG("[COMMSERV] We found connection with CORE %s\n",  id  );
-			break;
-		}
-		
-		con =  (CommFCConnection *)con->node.mln_Succ;
+		con =  (FConnection *)con->node.mln_Succ;
 	}
-	DEBUG("[COMMSERV] FC finding connection end\n");
+	DEBUG("[CommServiceAddConnection] FC finding connection end\n");
 	
 	// if we are getting incoming connection, we must take address from socket
-	if( type == SERVICE_CONNECTION_INCOMING )
+	if( type == SERVER_CONNECTION_INCOMING )
 	{
-		socklen_t clientAddrSize = sizeof( clientAddr );
-		int res = getpeername( socket->fd, (struct sockaddr *)&clientAddr, &clientAddrSize );
+		// get IP from socket
 		
-		strcpy( locaddr, "error" );
-	
-		if( res == 0 )
+		struct sockaddr_in6 serveraddr, clientaddr;
+		socklen_t addrlen = sizeof( clientaddr );
+		getpeername( socket->fd, (struct sockaddr *)&clientaddr, &addrlen);
+		if( inet_ntop( AF_INET6, &clientaddr.sin6_addr, recvaddr, sizeof( recvaddr ) ) ) 
 		{
-			strcpy( locaddr, (char *)inet_ntoa( clientAddr.sin_addr ) );
+			//DEBUG("Client address is %s\n", locaddr );
+			//DEBUG("Client port is %d\n", ntohs(clientaddr.sin6_port));
 		}
-		addr = locaddr;
-
-		DEBUG("[COMMSERV] Pointer to commservice %p\n", s );
+		else
+		{
+			strcpy( recvaddr, "Unknown" );
+		}
+		addr = recvaddr;
+		
+		if( name == NULL )
+		{
+			memcpy( locname, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+			memcpy( &(locname[FRIEND_CORE_MANAGER_ID_SIZE]), "-INC", 4 );
+			name = locname;
+		}
+		
+		strcpy( recvfcid, recvid );
+		
+		DEBUG("[CommServiceAddConnection] Pointer to commservice %p\n", s );
+	}
+	else // OUTGOING
+	{
+		if( name == NULL )
+		{
+			memcpy( locname, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+			memcpy( &(locname[FRIEND_CORE_MANAGER_ID_SIZE]), "-OUT", 4 );
+			name = locname;
+		}
 	}
 
 	if( con == NULL )
 	{
-		cfcn = CommFCConnectionNew( addr, id, type, s );
+		cfcn = FConnectionNew( addr, name, type, s );
 		if( cfcn != NULL )
 		{
-			socket->node.mln_Succ = (MinNode *)cfcn->cfcc_Socket;
-			cfcn->cfcc_Socket = socket;
+			//socket->node.mln_Succ = (MinNode *)cfcn->fc_Socket;
+			//cfcn->fc_Socket = socket;
 			
-			cfcn->cfcc_ConnectionsNumber++;
+			//cfcn->fc_ConnectionsNumber++;
 		
-			INFO("INCOMING Connection added %s %s number of connections %d type %d\n", addr, id, cfcn->cfcc_ConnectionsNumber, type );
+			INFO("[CommServiceAddConnection] INCOMING Connection added %s %s number of connections %d type %d\n", addr, recvfcid, cfcn->fc_ConnectionsNumber, type );
 
 			cfcn->node.mln_Succ = (MinNode *) s->s_Connections;
 			s->s_Connections = cfcn;
 		}
-		DEBUG("[COMMSERV] new connection created\n");
+		DEBUG("[CommServiceAddConnection] new connection created\n");
 	}
 	else
 	{
-		DEBUG("[COMMSERV] old connection will be used\n");
+		DEBUG("[CommServiceAddConnection] old connection will be used, csock %p\n", con->fc_Socket );
 		cfcn = con;
 	}
-	/*
+	
 	if( cfcn != NULL )
 	{
-		socket->node.mln_Succ = (MinNode *)cfcn->cfcc_Socket;
-		cfcn->cfcc_Service = s;
-		cfcn->cfcc_Socket = socket;
+		cfcn->fc_ConnectionsNumber++;
+		cfcn->fc_Service = s;
+		cfcn->fc_Type = type;
 		
-		cfcn->cfcc_ConnectionsNumber++;
-	
-		return cfcn;
+		if( cfcn->fc_FCID != NULL )
+		{
+			FFree( cfcn->fc_FCID );
+		}
+		cfcn->fc_FCID = StringDuplicateN( fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+		
+		if( cfcn->fc_DestinationFCID != NULL )
+		{
+			FFree( cfcn->fc_DestinationFCID );
+			cfcn->fc_DestinationFCID = NULL;
+		}
+		if( recvfcid[ 0 ] != 0 )
+		{
+			cfcn->fc_DestinationFCID = StringDuplicate( recvfcid );
+		}
+		
+		if( cfcn->fc_Socket != NULL )
+		{
+			SocketClose( socket );
+		}
+		else
+		{
+			cfcn->fc_Socket = socket;
+			if( socket != NULL )
+			{
+				socket->s_Data = cfcn;
+			}
+		}
+		//DEBUG("FCID '%s' DSTFCID '%s'\n", cfcn->fc_FCID, cfcn->fc_DestinationFCID );
+		
+		if( socket != NULL && socket->s_SSLEnabled == TRUE )
+		{
+			X509 *cert = NULL;
+			cert = SSL_get_peer_certificate( socket->s_Ssl );
+			if( cert != NULL )
+			{
+				char *issuerName = X509_NAME_oneline( X509_get_issuer_name( cert ), 0, 0 );
+		
+				// looks like FC do not contain CERT connected to this connection, we must store it in DB
+			
+				char *data;
+				unsigned int len = 0;
+			
+				cfcn->fc_SSLInfo = StringDuplicate( issuerName );
+				
+				BIO *bio = BIO_new( BIO_s_mem() );
+				PEM_write_bio_X509( bio, cert );
+				len = BIO_get_mem_data( bio, &data );
+			
+				cfcn->fc_PEM = StringDuplicateN( data, len );
+					
+				BIO_free( bio );
+				
+				if( issuerName != NULL )
+				{
+					free( issuerName );
+				}
+			} // if cert  = NULL
+		} // SSL
 	}
-*/
-	//FERROR("Cannot  add new connection\n");
+	
+	if( cfcn->fc_ClusterID != 1 )
+	{
+		cfcn->fc_ClusterID = clusterID;
+		
+		SQLLibrary *sqllib  = lsb->LibrarySQLGet( lsb );
+		fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
+		
+		// if ClusterID was changed, we must update it
+		char tmpQuery[ 256 ];
+		sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%d' WHERE ID=%lu", fcm->fcm_ClusterNodes->cn_NodeID, fcm->fcm_ClusterNodes->cn_ID );
+
+		int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
+		DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, fcm->fcm_ClusterNodes->cn_ID );
+		
+		lsb->LibrarySQLDrop( lsb, sqllib );
+	}
+	
+	Log( FLOG_INFO, "NodeID assigned: %lu\n", clusterID );
+
 	return cfcn;
 }
 
@@ -1133,10 +1337,9 @@ CommFCConnection *CommServiceAddConnection( CommService* s, Socket* socket, char
  *
  * @param s pointer to new CommService
  * @param addr pointer to internet address
- * @return pointer to new CommFCConnection structure when success, otherwise NULL
+ * @return pointer to new FConnection structure when success, otherwise NULL
  */
-
-CommFCConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
+FConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 {
 	struct sockaddr_in clientAddr;
 
@@ -1145,19 +1348,19 @@ CommFCConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
 		return NULL;
 	}
 	
-	CommFCConnection *cfcn = NULL;
-	CommFCConnection *con  = s->s_Connections;
+	FConnection *cfcn = NULL;
+	FConnection *con  = s->s_Connections;
 
 	while( con != NULL )
 	{
-		if( strcmp( con->cfcc_Address, addr )  == 0 )
+		if( strcmp( con->fc_Address, addr )  == 0 )
 		{
-			if( con->cfcc_Socket != NULL )
+			if( con->fc_Socket != NULL )
 			{
 				return con;
 			}
 		}
-		con =  (CommFCConnection *)con->node.mln_Succ;
+		con =  (FConnection *)con->node.mln_Succ;
 	}
 	
 	Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, addr, s->s_port );
@@ -1189,17 +1392,17 @@ CommFCConnection *CommServiceAddConnectionByAddr( CommService* s, char *addr )
  * Remove FC connection
  *
  * @param s pointer to CommService
- * @param loccon pointer to CommFCConnection which will be removed
+ * @param loccon pointer to FConnection which will be removed
  * @param sock pointer socket on which communication is working (if NULL all connections are removed)
  * @return 0 when success, otherwise error number
  */
-
-int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *sock )
+int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock )
 {
 	SystemBase *lsb = (SystemBase *)s->s_SB;
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
-	CommFCConnection *con  = NULL, *prevcon;
+	FConnection *con  = NULL, *prevcon;
 	
+	DEBUG("[CommServiceDelConnection] Start\n");
 	pthread_mutex_lock( &s->s_Mutex );
 	//
 	// connection is server
@@ -1218,37 +1421,41 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 			break;
 		}
 		prevcon = con;
-		con =  (CommFCConnection *)con->node.mln_Succ;
+		con =  (FConnection *)con->node.mln_Succ;
 	}
-			
+	
+	pthread_mutex_unlock( &s->s_Mutex );
+	
 	DEBUG("[COMMSERV] Remove socket connection\n");
 	
 	if( con != NULL )
 	{
-		loccon->cfcc_ConnectionsNumber--;
+		loccon->fc_ConnectionsNumber--;
+		
+		DEBUG("[COMMSERV] Remove socket connection, number connections: %d\n", loccon->fc_ConnectionsNumber );
 		
 		// if sock = NULL, then we remove all sockets
 		if( sock == NULL )
 		{
-			Socket *socket = con->cfcc_Socket;
+			Socket *socket = con->fc_Socket;
 			Socket *remsocket = socket;
 			while( socket != NULL )
 			{
 				remsocket = socket;
 				socket = (Socket *)socket->node.mln_Succ;
 				
-				con->cfcc_ConnectionsNumber--;
+				con->fc_ConnectionsNumber--;
 				
 				epoll_ctl( s->s_Epollfd, EPOLL_CTL_DEL, remsocket->fd, NULL );
 				DEBUG("[COMMSERV] I want close socket\n");
 				SocketClose( remsocket );
 				DEBUG("[COMMSERV] Socket closed\n");
 			}
-			con->cfcc_Socket = NULL;
+			con->fc_Socket = NULL;
 		}
 		else
 		{
-			Socket *c = con->cfcc_Socket;
+			Socket *c = con->fc_Socket;
 			Socket *prev = c;
 			while( c != NULL )
 			{
@@ -1258,18 +1465,18 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 				{
 					// we remove socket connection
 				
-					if( c == con->cfcc_Socket )
+					if( c == con->fc_Socket )
 					{
-						con->cfcc_Socket = (Socket *)c->node.mln_Succ;
+						con->fc_Socket = (Socket *)c->node.mln_Succ;
 					}
 					else
 					{
 						prev->node.mln_Succ = c->node.mln_Succ;
 					}
 				
-					con->cfcc_ConnectionsNumber--;
+					con->fc_ConnectionsNumber--;
 				
-					DEBUG("[COMMSERV] Socket connection removed, connections left %d\n", con->cfcc_ConnectionsNumber );
+					DEBUG("[COMMSERV] Socket connection removed, connections left %d\n", con->fc_ConnectionsNumber );
 					break;
 				}
 				c = (Socket *)c->node.mln_Succ;
@@ -1285,27 +1492,184 @@ int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *
 		DEBUG("[COMMSERV] Check number of connections\n");
 		
 		// if thats our last socket, we must set it to NULL and remove connection
-		if( con->cfcc_ConnectionsNumber == 0 )
+		if( con->fc_ConnectionsNumber <= 0 )
 		{
-			con->cfcc_Socket = NULL;
+			con->fc_Socket = NULL;
 			
 			if( con ==  s->s_Connections )
 			{
-				s->s_Connections = (CommFCConnection *)s->s_Connections->node.mln_Succ;
+				s->s_Connections = (FConnection *)s->s_Connections->node.mln_Succ;
 			}
 			else
 			{
 				prevcon->node.mln_Succ = (MinNode *)con->node.mln_Succ;
 			}
-			CommFCConnectionDelete( con );
+			FConnectionDelete( con );
+		}
+		else
+		{
+			DEBUG("[COMMSERV] Connection is used, cannot be removed\n");
+			return -1;
 		}
 	}
 
 	DEBUG("[COMMSERV] Socket connection removed\n");
 	
-	pthread_mutex_unlock( &s->s_Mutex );
-	
 	return 0;
 }
 
+//
+//
+//
 
+void *InternalPINGThread( void *d )
+{
+	FConnection *con = (FConnection *)d;
+	con->fc_PingInProgress = TRUE;
+	
+	CommService* s = (CommService *)con->fc_Service;
+	DEBUG("CS %p\n", s );
+	SystemBase *lsb = (SystemBase *)s->s_SB;
+	DEBUG("lsb %p\n", lsb );
+	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm;
+	
+	DEBUG("ping loop>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%p\n", con );
+	
+	uint64_t stime = GetCurrentTimestamp();
+	FBOOL badResp = FALSE;
+	
+	MsgItem tags[] = {
+		{ ID_FCRE, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+		{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE,  (uint64_t)fcm->fcm_ID },
+		{ ID_FRID, (uint64_t)0 , MSG_INTEGER_VALUE },
+		{ ID_CMMD, (uint64_t)0, MSG_INTEGER_VALUE },
+		{ ID_PING, (uint64_t)stime , MSG_INTEGER_VALUE },
+		{ MSG_GROUP_END, 0,  0 },
+		{ TAG_DONE, TAG_DONE, TAG_DONE }
+	};
+	
+	DataForm * df = DataFormNew( tags );
+
+	BufString *result = SendMessageAndWait( con, df );
+	DataFormDelete( df );
+	
+	if( result != NULL )
+	{
+		if( result->bs_Size > 0 )
+		{
+			/*
+			{ ID_FCRE,  (uint64_t)0, (uint64_t)MSG_GROUP_START },
+				{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE, (uint64_t)lsb->fcm->fcm_ID },
+				{ ID_FCRI, (uint64_t)reqid , MSG_INTEGER_VALUE },
+				{ ID_PING, (uint64_t)ptime, MSG_INTEGER_VALUE },
+				{ TAG_DONE, TAG_DONE, TAG_DONE }
+			*/
+			char *resbuf = result->bs_Buffer;
+			DataForm *resultDF = (DataForm *)resbuf;
+			if( resultDF->df_ID == ID_FCRE )
+			{
+				char *tmp = (char *)(resultDF+3);
+				
+				resbuf = tmp + FRIEND_CORE_MANAGER_ID_SIZE;// + (3 * COMM_MSG_HEADER_SIZE );
+				// get timestamp again!
+				DataForm *resultDF = (DataForm *)resbuf;
+				if( resultDF->df_ID == ID_PING )
+				{
+					uint64_t etime = GetCurrentTimestamp();
+					stime = resultDF->df_Size;
+					con->fc_PINGTime = etime - stime;
+					
+					con->fc_Status = CONNECTION_STATUS_CONNECTED;
+				}
+				else if( resultDF->df_ID == ID_FERR )
+				{
+					con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+					FERROR("[CommServicePING] Error returned\n");
+				}
+				DEBUG("[CommServicePING] received time %lu ID %x -> diff %lu\n", resultDF->df_Size, (unsigned int)resultDF->df_ID, con->fc_PINGTime );
+			}
+			else
+			{
+				con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+				DEBUG("[CommServicePING] bad message received\n");
+			}
+		}
+		else
+		{
+			badResp = TRUE;
+		}
+		BufStringDelete( result );
+	}
+	else
+	{
+		badResp = TRUE;
+	}
+	
+	DEBUG("bad resp %d\n", badResp );
+	
+	if( badResp == TRUE )
+	{
+		con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+		
+		// we can try to estabilish outgoing connections
+		
+		if( con->fc_Type == SERVER_CONNECTION_OUTGOING )
+		{
+			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port );
+			if( newsock != NULL )
+			{
+				DEBUG("[CommServicePING] Connection reestabilished\n");
+				
+				SocketClose( con->fc_Socket );
+				con->fc_Socket = newsock;
+				newsock->s_Data = con;
+				
+				con->fc_Status = CONNECTION_STATUS_CONNECTED;
+				
+				CommServiceRegisterEvent( con, newsock );
+			}
+			else
+			{
+				FERROR("Connection cannot be reestabilished\n");
+				con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+			}
+		}
+		else
+		{
+			FINFO("Incoming connection lost\n");
+			con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+		}
+	}
+	
+	con->fc_PingInProgress = FALSE;
+	
+	pthread_exit( 0 );
+}
+
+/**
+ * Send ping to all connected servers
+ *
+ * @param s pointer to CommService
+ */
+void CommServicePING( CommService* s )
+{
+	SystemBase *lsb = (SystemBase *)s->s_SB;
+	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
+	
+	pthread_mutex_lock( &s->s_Mutex );
+	FConnection *con = s->s_Connections;
+	pthread_mutex_unlock( &s->s_Mutex );
+	
+	while( con != NULL )
+	{
+		if( con->fc_PingInProgress == FALSE )
+		{
+			pthread_t t;
+			pthread_create( &t, NULL, &InternalPINGThread, con );
+			pthread_detach( t );
+		}
+		con = (FConnection *)con->node.mln_Succ;
+	}
+	
+	DEBUG("Mutex released\n");
+}

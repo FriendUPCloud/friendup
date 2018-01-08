@@ -99,14 +99,16 @@ char* StringShellEscapeSize( const char* str, int *len );
 
 char *FindInBinary(char *x, int m, char *y, int n) ;
 
-FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n);
+FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n);
 
-FQUAD FindInBinarySimple( char *x, int m, char *y, FUQUAD n );
+FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n );
 
 void HashedString ( char **str );
 
 char *GetStringFromJSON( char *text, char *token );
 
 int StringNToInt( char *s, int len );
+
+void string_escape_quotes(const char *src, char *dst); //destination has to be at least twice as long as src (in worst case)
 
 #endif

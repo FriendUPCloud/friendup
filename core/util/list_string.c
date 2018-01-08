@@ -39,7 +39,7 @@
 #endif
 
 //
-//
+// create new ListString
 //
 
 ListString *ListStringNew()
@@ -79,7 +79,7 @@ void ListStringDelete( ListString *ls )
 // add entry to list
 //
 
-int ListStringAdd( ListString *ls, char *data, int size )
+FLONG ListStringAdd( ListString *ls, char *data, FLONG size )
 {
 	ListString *nls = FCalloc( 1, sizeof( ListString ) );
 	if( nls != NULL )

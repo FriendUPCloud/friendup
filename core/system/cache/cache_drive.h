@@ -55,7 +55,7 @@ typedef struct CacheDrive
 //
 //
 
-CacheDrive* CacheDriveNew( FULONG id, FQUAD cacheSize );
+CacheDrive* CacheDriveNew( FULONG id, FLONG cacheSize );
 
 //
 //

@@ -333,6 +333,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 	
 	if( service->s_Socket != NULL )
 	{
+		service->s_Socket->VerifyPeer = VerifyPeer;
 		SocketSetBlocking( service->s_Socket, TRUE );
 
 		if( SocketListen( service->s_Socket ) != 0 )
@@ -391,8 +392,6 @@ int CommServiceThreadServerSelect( FThread *ptr )
 			
 			if( FD_ISSET( socket->fd, &readfds ) )
 			{
-				//Socket *sock = SocketAccept( socket );
-				
 				// accept
 				incomming = SocketAccept( service->s_Socket );
 				if( incomming == NULL )
@@ -445,7 +444,7 @@ int CommServiceThreadServerSelect( FThread *ptr )
 						// untill admin will accept connection
 						//
 						
-						CommFCConnection *con = CommServiceAddConnection( service, incomming, NULL, lfcm->fcm_ID, SERVICE_CONNECTION_INCOMING );
+						CommFCConnection *con = CommServiceAddConnection( service, incomming, lfcm->fcm_ID, NULL, SERVICE_CONNECTION_INCOMING );
 						
 						incomming->s_Data = con;
 						

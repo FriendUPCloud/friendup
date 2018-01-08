@@ -30,6 +30,12 @@
 #ifndef __CORE_PID_THREAD_MANAGER_H__
 #define __CORE_PID_THREAD_MANAGER_H__
 
+/**
+ * \defgroup FriendCoreThreads Friend Core Threads Management
+ * \ingroup FriendCore
+ * @{
+ */
+
 #include <core/types.h>
 #include <core/thread.h>
 #include <core/nodes.h>

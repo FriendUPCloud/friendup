@@ -99,14 +99,16 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM DockItem WHERE UserID=\'
 {
 	// 2. Setup standard dock items
 	$dockItems = array(
-		array( 'Dock', 'A simple dock desklet' ),
-		array( 'FriendShell', 'A command line interface' ),
-		array( 'FriendChat', 'A chat client' ),
+		array( 'Dock', 'Manage your application laucher' ),
+		array( 'FriendShell', 'The Friend command line interface' ),
+		array( 'FriendChat', 'A chat and video conferencing application' ),
 		array( 'FriendCreate', 'A programmers editor' ),
-		array( 'Author', 'A word processor' ),
-		array( 'Wallpaper', 'Select a wallpaper' ),
-		array( 'Astray', 'Play a game' ),
+		array( 'Author', 'A simple word processor' ),
+		array( 'Wallpaper', 'Select wallpapers' ),
+		array( 'Astray', 'A labyrinth ball game in 3D' ),
 		array( 'Calculator', 'Do some math' ),
+		array( 'Panzers', 'Multiplayer tanks fun!' ),
+		array( 'Welcome', 'Useful Friend information' )
 	);
 	$i = 0;
 	foreach( $dockItems as $r )
@@ -273,6 +275,17 @@ if( !( $disk = $SqlDatabase->FetchObject( $q = 'SELECT * FROM Filesystem WHERE U
 			$wp->Data = '"Home:Wallpaper/Freedom.jpg"';
 			$wp->Save();
 		}		
+		
+		// 8. Fill Wallpaper app with settings and set default wallpaper
+		$wp = new dbIO( 'FSetting' );
+		$wp->UserID = $User->ID;
+		$wp->Type = 'system';
+		$wp->Key = 'startupsequence';
+		if( !$wp->Load() )
+		{
+			$wp->Data = '["launch Welcome"]';
+			$wp->Save();
+		}
 		
 	}
 }

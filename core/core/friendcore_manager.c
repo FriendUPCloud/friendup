@@ -25,6 +25,10 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date pushed 14/10/2015
+ * 
+ * \defgroup FriendCoreManager Friend Core Manager
+ * \ingroup FriendCore 
+ * @{
  */
 
 #include "friendcore_manager.h"
@@ -34,6 +38,7 @@
 #include <properties/propertieslibrary.h>
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
+
 
 //
 // currently Friend can create only one core
@@ -58,7 +63,6 @@ FriendCoreManager *FriendCoreManagerNew()
 	
 	if( ( fcm = FCalloc( 1, sizeof( struct FriendCoreManager ) ) ) != NULL )
 	{
-		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );
 		FCM = fcm;
 		//
 		// Create FriendCoreID
@@ -121,81 +125,96 @@ FriendCoreManager *FriendCoreManagerNew()
 		fcm->fcm_SSLEnabled = FALSE;
 		fcm->fcm_WSSSLEnabled = FALSE;
 		fcm->fcm_SSLEnabledCommuncation = FALSE;
-
-		{
-			struct PropertiesLibrary *plib = NULL;
-			Props *prop = NULL;
+		
+		fcm->fcm_NodeIDGenerator = 2;
+		
+		struct PropertiesLibrary *plib = NULL;
+		Props *prop = NULL;
 	
-			if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
+		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
+		{
+			char *ptr, path[ 1024 ];
+			path[ 0 ] = 0;
+			
+			ptr = getenv("FRIEND_HOME");
+			
+			if( ptr != NULL )
 			{
-				char *ptr, path[ 1024 ];
-				path[ 0 ] = 0;
+				sprintf( path, "%scfg/cfg.ini", ptr );
+			}
+
+			prop = plib->Open( path );
+			if( prop != NULL)
+			{
+				fcm->fcm_Maxp = plib->ReadInt( prop, "Core:epollevents", EPOLL_MAX_EVENTS );
+				fcm->fcm_Bufsize = plib->ReadInt( prop, "Core:networkbuffer", BUFFER_READ_SIZE );
 				
-				ptr = getenv("FRIEND_HOME");
+				fcm->fcm_MaxpCom = plib->ReadInt( prop, "Core:epolleventscom", EPOLL_MAX_EVENTS_COMM );
+				fcm->fcm_BufsizeCom = plib->ReadInt( prop, "Core:networkbuffercom", BUFFER_READ_SIZE_COMM );
 				
-				if( ptr != NULL )
+				fcm->fcm_MaxpComRemote = plib->ReadInt( prop, "Core:epolleventscomremote", EPOLL_MAX_EVENTS_COMM );
+				
+				fcm->fcm_FCPort= plib->ReadInt( prop, "Core:port", FRIEND_CORE_PORT );
+				fcm->fcm_WSPort = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
+				fcm->fcm_ComPort = plib->ReadInt( prop, "Core:CommunicationPort", FRIEND_COMMUNICATION_PORT );
+				fcm->fcm_ComRemotePort = plib->ReadInt( prop, "Core:RemoteCommunicationPort", FRIEND_COMMUNICATION_REMOTE_PORT );
+				
+				fcm->fcm_SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
+				fcm->fcm_WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
+				fcm->fcm_SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CommunicationSSLEnable", 0 );
+				fcm->fcm_ClusterMaster = plib->ReadInt( prop, "Core:ClusterMaster", 0 );
+				
+				char *tptr  = plib->ReadString( prop, "LoginModules:modules", "" );
+				if( tptr != NULL )
 				{
-					sprintf( path, "%scfg/cfg.ini", ptr );
+					SLIB->sl_ModuleNames = StringDuplicate( tptr );
 				}
-
-				prop = plib->Open( path );
-				if( prop != NULL)
+				else
 				{
-					fcm->fcm_Maxp = plib->ReadInt( prop, "Core:epollevents", EPOLL_MAX_EVENTS );
-					fcm->fcm_Bufsize = plib->ReadInt( prop, "Core:networkbuffer", BUFFER_READ_SIZE );
-					
-					fcm->fcm_MaxpCom = plib->ReadInt( prop, "Core:epolleventscom", EPOLL_MAX_EVENTS_COMM );
-					fcm->fcm_BufsizeCom = plib->ReadInt( prop, "Core:networkbuffercom", BUFFER_READ_SIZE_COMM );
-					
-					fcm->fcm_MaxpComRemote = plib->ReadInt( prop, "Core:epolleventscomremote", EPOLL_MAX_EVENTS_COMM );
-					
-					fcm->fcm_FCPort= plib->ReadInt( prop, "Core:port", FRIEND_CORE_PORT );
-					fcm->fcm_WSPort = plib->ReadInt( prop, "Core:wsport", WEBSOCKET_PORT );
-					fcm->fcm_ComPort = plib->ReadInt( prop, "Core:CommunicationPort", FRIEND_COMMUNICATION_PORT );
-					fcm->fcm_ComRemotePort = plib->ReadInt( prop, "Core:RemoteCommunicationPort", FRIEND_COMMUNICATION_REMOTE_PORT );
-					
-					fcm->fcm_SSLEnabled = plib->ReadInt( prop, "Core:SSLEnable", 0 );
-					fcm->fcm_WSSSLEnabled = plib->ReadInt( prop, "Core:WSSSLEnable", 0 );
-					fcm->fcm_SSLEnabledCommuncation = plib->ReadInt( prop, "Core:CommunicationSSLEnable", 0 );
-
-					char *tptr  = plib->ReadString( prop, "LoginModules:modules", "" );
-					if( tptr != NULL )
-					{
-						SLIB->sl_ModuleNames = StringDuplicate( tptr );
-					}
-					else
-					{
-						SLIB->sl_ModuleNames = StringDuplicate( " " );
-					}
-					
-					/*
-					if( SLIB->sl_ActiveModuleName != NULL )
-					{
-						FFree( SLIB->sl_ActiveModuleName );
-					}
-					
-					tptr  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
-					if( tptr != NULL )
-					{
-						SLIB->sl_ActiveModuleName = StringDuplicate( tptr );
-					}
-					else
-					{
-						SLIB->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
-					}*/
-					
-					plib->Close( prop );
+					SLIB->sl_ModuleNames = StringDuplicate( " " );
 				}
 				
-				LibraryClose( ( struct Library *)plib );
+				/*
+				if( SLIB->sl_ActiveModuleName != NULL )
+				{
+					FFree( SLIB->sl_ActiveModuleName );
+				}
+				
+				tptr  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
+				if( tptr != NULL )
+				{
+					SLIB->sl_ActiveModuleName = StringDuplicate( tptr );
+				}
+				else
+				{
+					SLIB->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
+				}*/
+				
+				plib->Close( prop );
 			}
 			
-			fcm->fcm_FriendCores = FriendCoreNew( SLIB, fcm->fcm_SSLEnabled, fcm->fcm_FCPort, fcm->fcm_Maxp, fcm->fcm_Bufsize, "localhost" );
+			LibraryClose( ( struct Library *)plib );
 		}
 		
-		if( fcm->fcm_SSLEnabled == TRUE )
+		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );
+	}
+	return fcm;
+}
+
+/**
+ * Initialize FriendCoreManager
+ *
+ * @param fcm pointer to FriendCoreManager
+ */
+
+int FriendCoreManagerInit( FriendCoreManager *fcm )
+{
+	if( fcm != NULL )
+	{
+		if( fcm->fcm_SSLEnabled == 1 )
 		{
-			fcm->fcm_WSSSLEnabled = TRUE;
+			// if http works on SSL, WS must work on SSL too
+			fcm->fcm_WSSSLEnabled = 1;
 		}
 		
 		Log(FLOG_INFO, "------------------------------------------------------\n");
@@ -213,6 +232,7 @@ FriendCoreManager *FriendCoreManagerNew()
 		Log(FLOG_INFO, "-----SSH_SERVER_PORT %s\n", SSH_SERVER_PORT );
 		Log(FLOG_INFO, "-----SQL connections: %d\n", SLIB->sqlpoolConnections );
 		Log(FLOG_INFO, "-----UserFileShareCache (per drive): %ld\n", SLIB->sl_USFCacheMax );
+		Log(FLOG_INFO, "-----Cluster Master: %d\n", fcm->fcm_ClusterMaster );
 		/*
 		if( SLIB != NULL && SLIB->sl_ActiveAuthModule != NULL )
 		{
@@ -226,11 +246,18 @@ FriendCoreManager *FriendCoreManagerNew()
 		*/
 		Log(FLOG_INFO, "------------------------------------------------------\n");
 		
+		fcm->fcm_FriendCores = FriendCoreNew( SLIB, fcm->fcm_CoreIDGenerator++, fcm->fcm_SSLEnabled, fcm->fcm_FCPort, fcm->fcm_Maxp, fcm->fcm_Bufsize, "localhost" );
+		
+		if( fcm->fcm_SSLEnabled == TRUE )
+		{
+			fcm->fcm_WSSSLEnabled = TRUE;
+		}
+		
 		if( fcm->fcm_FriendCores == NULL )
 		{
-			free( fcm );
+			FFree( fcm );
 			Log( FLOG_PANIC, "Cannot create FriendCore!\n");
-			return NULL;
+			return 1;
 		}
 		
 		fcm->fcm_FCI = FriendCoreInfoNew( SLIB );
@@ -269,9 +296,9 @@ FriendCoreManager *FriendCoreManagerNew()
 			CommServiceRemoteStart( fcm->fcm_CommServiceRemote );
 		}
 	}
-	Log( FLOG_INFO,"FriendCoreManager Created\n");
+	Log( FLOG_INFO,"FriendCoreManager Initialized\n");
 	
-	return fcm;
+	return 0;
 }
 
 /**
@@ -285,15 +312,12 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 	Log( FLOG_INFO,"FriendCoreManager Delete\n");
 	if( fcm != NULL )
 	{
+		DEBUG("[FriendCoreManager] Close remote communcation service\n");
 		CommServiceRemoteDelete( fcm->fcm_CommServiceRemote );
-		DEBUG("[FriendCoreManager] Close client\n");
+		DEBUG("[FriendCoreManager] Close communication service\n");
 		CommServiceDelete( fcm->fcm_CommService );
-		DEBUG("[FriendCoreManager] Close client\n");
-		//CommServiceDelete( fcm->fcm_CommServiceClient );
-		DEBUG("[FriendCoreManager] Close server\n");
-		//CommServiceDelete( fcm->fcm_CommServiceServer );
 		
-		DEBUG("[FriendCoreManager] Closing connections : Outgoing\n");
+		DEBUG("[FriendCoreManager] Closing websockets\n");
 		
 		if( fcm->fcm_WebSocket != NULL )
 		{
@@ -320,6 +344,13 @@ void FriendCoreManagerDelete( FriendCoreManager *fcm )
 		{
 			FriendCoreInfoDelete( fcm->fcm_FCI );
 		}
+		
+		DEBUG("[FriendCoreManager] Close ConnectionInfo\n");
+		// delete all informations about connections
+		//ConnectionInfoDeleteAll( fcm->fcm_ConnectionsInformation );
+		DEBUG("[FriendCoreManager] Close cluster nodes handling\n");
+		// delete information about FC in ClusterNode
+		ClusterNodeDeleteAll( fcm->fcm_ClusterNodes );
 		
 		FFree( fcm );
 	}
@@ -373,4 +404,6 @@ void FriendCoreManagerShutdown( FriendCoreManager *fcm )
 	}
 }
 
+/**@}*/
+// End of FriendCoreManager Doxygen group
 

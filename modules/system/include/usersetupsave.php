@@ -96,6 +96,10 @@ if( $level == 'Admin' && $args->args->id > 0 )
 					$obj->startups[] = trim( $a );
 				}
 			}
+			else
+			{
+				$obj->startups = [];
+			}
 			
 			$obj->preinstall = $args->args->Preinstall;
 			$obj->language = $args->args->Languages;

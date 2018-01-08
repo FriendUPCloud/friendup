@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file device_handling.h
+/** @file device_handling.h
  *  Device handling body
  *
  *  @author PS (Pawel Stefanski)
@@ -49,7 +48,7 @@ int RescanHandlers( SystemBase *l )
 {
 	if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
 	{
-		char tempString[ 1024 ];
+		char tempString[ PATH_MAX ];
 		DIR           *d;
 		struct dirent *dir;
 	
@@ -65,7 +64,11 @@ int RescanHandlers( SystemBase *l )
 			FHandlerDelete( fh );
 		}
 	
-		getcwd( tempString, sizeof ( tempString ) );
+		if (getcwd( tempString, sizeof ( tempString ) ) == NULL)
+		{
+			FERROR("getcwd failed!");
+			exit(5);
+		}
 
 		if( l->sl_FSysPath != NULL )
 		{
@@ -314,10 +317,10 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 	char *config = NULL;
 	char *ctype = NULL, *type = NULL;
 	char *execute = NULL;
-	FULONG id = 0, factivityID = 0;
-	FQUAD storedBytes = 0;
-	FQUAD storedBytesLeft = 0;
-	FQUAD readedBytesLeft = 0;
+	FULONG id = 0, factivityID = 0, keysid = 0;
+	FLONG storedBytes = 0;
+	FLONG storedBytesLeft = 0;
+	FLONG readedBytesLeft = 0;
 	struct tm activityTime;
 	
 	DEBUG("[MountFS] %s: Start - MountFS before lock for user..\n", usr->u_Name );
@@ -404,7 +407,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 			sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 			//snprintf( temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,f.`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 (\
@@ -433,7 +436,7 @@ AND f.Name = '%s'",
 					sqllib->SNPrintF( sqllib, temptext, sizeof( temptext ), 
 					//snprintf( temptext, sizeof( temptext ), 
 "SELECT \
-`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate` \
+`Type`,`Server`,`Path`,`Port`,`Username`,`Password`,`Config`,`ID`,`Execute`,`StoredBytes`,fsa.`ID`,fsa.`StoredBytesLeft`,fsa.`ReadedBytesLeft`,fsa.`ToDate`, f.`KeysID` \
 FROM `Filesystem` f left outer join `FilesystemActivity` fsa on f.ID = fsa.FilesystemID and CURDATE() <= fsa.ToDate \
 WHERE \
 ( \
@@ -460,6 +463,7 @@ AND f.Name = '%s'",
 				}
 				else
 				{
+					sqllib->FreeResult( sqllib, res );
 					pthread_mutex_unlock( &l->sl_InternalMutex );
 					if( type != NULL ){ FFree( type );}
 					l->sl_Error = FSys_Error_SelectFail;
@@ -568,6 +572,12 @@ AND f.Name = '%s'",
 					{
 						activityTime.tm_hour = activityTime.tm_min = activityTime.tm_sec = 0;
 					}
+				}
+				
+				if( row[ 14 ] != NULL )
+				{
+					char *end;
+					keysid = strtoul( (char *)row[ 14 ],  &end, 0 );
 				}
 				
 				DEBUG("[MountFS] User name %s - found row type %s server %s path %s port %s\n", usr->u_Name, row[0], row[1], row[2], row[3] );
@@ -734,6 +744,12 @@ AND f.Name = '%s'",
 				retFile->f_Execute = StringDuplicate( execute );
 				retFile->f_FSysName = StringDuplicate( type );
 				retFile->f_BytesStored = storedBytes;
+				if( port != NULL )
+				{
+					retFile->f_DevPort = atoi( port );
+				}
+				retFile->f_DevServer = StringDuplicate( server );
+				
 				retFile->f_Activity.fsa_ReadedBytesLeft = readedBytesLeft;
 				retFile->f_Activity.fsa_StoredBytesLeft = storedBytesLeft;
 				retFile->f_Activity.fsa_FilesystemID = retFile->f_ID;
@@ -741,6 +757,7 @@ AND f.Name = '%s'",
 				memcpy( &(retFile->f_Activity.fsa_ToDate), &activityTime, sizeof( struct tm ) );
 				activityTime.tm_year -= 1900;
 				retFile->f_Activity.fsa_ToDateTimeT = mktime( &activityTime );
+				retFile->f_KeysID = keysid;
 				
 				if( usr != NULL )
 				{
@@ -1719,7 +1736,7 @@ void UserNotifyFSEvent( SystemBase *sb, char *evt, char *path )
  * @param param to user session which called function
  * @return success (0) or fail value (not equal to 0)
  */
-int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser )
+int MountDoorByRow( SystemBase *l, User *usr, char **row, User *mountUser __attribute__((unused)))
 {
 	l->sl_Error = 0;
 	
@@ -2147,10 +2164,10 @@ int DeviceRelease( SystemBase *l, File *rootDev )
 	{
 		char temptext[ 256 ];
 	
-		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%lld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%ld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `FilesystemID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `FilesystemID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_ID );
 	
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 
@@ -2189,15 +2206,15 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
 	{
 		char temptext[ 256 ];
 	
-		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%lld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `Filesystem` SET `StoredBytes` = '%ld' WHERE `ID` = '%lu'", rootDev->f_BytesStored, rootDev->f_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 		
-		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%lld',`ReadedBytesLeft`='%lld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
+		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
 	
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 
-		if( fsys != NULL && fsys->Release != NULL )
+		if( fsys != NULL && fsys->UnMount != NULL )
 		{
 			errRet = fsys->UnMount( fsys, rootDev, usr );
 		}

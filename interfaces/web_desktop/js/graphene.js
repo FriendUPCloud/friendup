@@ -149,7 +149,7 @@ Workspace = {
 				}
 				setTimeout( function()
 				{
-					workspaceMenu.show();
+					WorkspaceMenu.show();
 					ge( 'MobileMenu' ).classList.add( 'Visible' );
 				}, 100 );					
 			}
@@ -2982,7 +2982,7 @@ Workspace = {
 		// Generate
 		if( !prohibitworkspaceMenu )
 		{
-			workspaceMenu.generate( false, this.menu );
+			WorkspaceMenu.generate( false, this.menu );
 		}
 	},
 	viewDirectory: function( mode )

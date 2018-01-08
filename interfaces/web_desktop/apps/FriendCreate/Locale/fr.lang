@@ -36,6 +36,11 @@ i18n_package_generation_error       : Le paquet n'a pu être généré. Veuillez
 i18n_package_submitted              : Paquet envoyé
 i18n_submitted_desc                 : Le paquet a été envoyé à Friend Store. Connectez vous pour le suivre.
 
+i18n_checking_file                  : Dossier d'enquête.
+i18n_add_file_to_project            : Le fichier n'est pas ajouté au projet. Voulez-vous l'ajouter?
+i18n_add_to_project                 : Ajouter
+i18n_could_not_add_file             : Impossible d'ajouter le fichier au projet.
+
 #macro menu
 i18n_macros                         : Macros
 i18n_clear_macro                    : Effacer macro

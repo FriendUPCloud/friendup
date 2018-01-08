@@ -36,7 +36,7 @@
  * @param cacheSize size of cache per disk
  * @return pointer to new CacheUserFiles when success, otherwise NULL
  */
-CacheUserFiles *CacheUserFilesNew( FULONG uid, FQUAD cacheSize )
+CacheUserFiles *CacheUserFilesNew( FULONG uid, FLONG cacheSize )
 {
 	CacheUserFiles *cuf = FCalloc( 1, sizeof(CacheUserFiles) );
 	if( cuf != NULL )
@@ -85,7 +85,7 @@ void CacheUserFilesDeleteAll( CacheUserFiles *cuf )
  * @param lf pointer to CacheFile which will be stored inside cache list
  * @return 0 when success, otherwise error number
  */
-int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid, CacheFile *lf )
+int CacheUserFilesAddFile( CacheUserFiles *cuf, FULONG devid __attribute__((unused)), CacheFile *lf )
 {
 	if( (cuf->cuf_CacheSize + lf->cf_FileSize) > cuf->cuf_MaxCacheSize )
 	{

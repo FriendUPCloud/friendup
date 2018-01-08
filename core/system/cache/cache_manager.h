@@ -59,6 +59,7 @@ typedef struct CacheManager
 	LocFile			*cm_LocFileCache;
 	FUQUAD			cm_CacheSize;
 	FUQUAD 			cm_CacheMax;
+	pthread_mutex_t cm_Mutex;
 }CacheManager;
 
 //

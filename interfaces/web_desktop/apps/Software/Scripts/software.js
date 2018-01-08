@@ -19,10 +19,11 @@
 
 Application.run = function( msg, iface )
 {
+	this.setApplicationName( 'Software Catalog' );
 	var v = new View( {
 		title: i18n( 'i18n_software_administration' ),
-		width: 807,
-		height: 603,
+		width: 1280,
+		height: 'max',
 		id: 'software_administration'
 	} );
 	this.setSingleInstance( true );

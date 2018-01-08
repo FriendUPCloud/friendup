@@ -38,7 +38,7 @@
  * @param cacheSize size of cache in bytes
  * @return new CacheDrive structure when success, otherwise NULL
  */
-CacheDrive* CacheDriveNew( FULONG did, FQUAD cacheSize )
+CacheDrive* CacheDriveNew( FULONG did, FLONG cacheSize )
 {
 	CacheDrive *cd = FCalloc( 1, sizeof( CacheDrive ) );
 	if( cd != NULL )

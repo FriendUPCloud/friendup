@@ -40,17 +40,35 @@ foreach( $paths as $path )
 		{
 			if( $file{0} == '.' ) continue;
 		
+			// For repositories
+			if( file_exists( $path . $file . '/Signature.sig' ) )
+			{
+				if( !( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) ) )
+					continue;
+				if( !( $js = json_decode( $d ) ) )
+					continue;
+				if( !isset( $js->validated ) )
+					continue;
+			}
+
 			if( !file_exists( $path . $file . '/Config.conf' ) )
 				continue;
 			
+			
 			$f = json_decode( file_get_contents( $path . $file . '/Config.conf' ) );
 			if( !$f ) continue;
+			if( isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
+			
+			$stat = stat( $path . $file . '/Config.conf' );
+		
 		
 			$o = new stdClass();
 			$o->Name = $file;
 			$o->Preview = file_exists( $path . $file . '/preview.png' ) ? true : false;
 			$o->Category = $f->Category;
 			$o->Description = isset( $f->Description ) ? $f->Description : '';
+			$o->DateModifiedUnix = $stat[9];
+			$o->DateModified = date( 'Y-m-d H:i:s', $stat[9] );
 		
 			if( isset( $byName[ $o->Name ] ) )
 			{

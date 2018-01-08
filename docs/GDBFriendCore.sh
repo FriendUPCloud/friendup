@@ -1,2 +1,0 @@
-gdb -ex run FriendCore
-

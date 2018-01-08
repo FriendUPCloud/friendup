@@ -19,12 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-/*
-
-	FCDB auth module code
-
-*/
+/** @file
+ *
+ *  FCDB auth module code
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2017
+ */
 
 #include <core/types.h>
 #include <core/library.h>
@@ -39,6 +40,7 @@
 #include <propertieslibrary.h>
 #include <user/user.h>
 #include <util/sha256.h>
+#include <util/session_id.h>
 #include <network/websocket_client.h>
 
 #include <system/user/user_sessionmanager.h>
@@ -137,7 +139,7 @@ long GetRevision(void)
  * @param blockTime pointer to integer value where blocked account time will be returned (int seconds)
  * @return TRUE when success, otherwise FALSE
  */
-FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *blockTime )
+FBOOL CheckPassword( struct AuthMod *l, Http *r __attribute__((unused)), User *usr, char *pass, FULONG *blockTime )
 {
 	if( usr == NULL )
 	{
@@ -249,7 +251,7 @@ FBOOL CheckPassword( struct AuthMod *l, Http *r, User *usr, char *pass, FULONG *
  * @param pass password provided (new password)
  * @return 0 when success, otherwise error number
  */
-int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
+int UpdatePassword( struct AuthMod *l, Http *r __attribute__((unused)), User *usr, char *pass )
 {
 	if( l != NULL && usr != NULL )
 	{
@@ -287,7 +289,7 @@ int UpdatePassword( struct AuthMod *l, Http *r, User *usr, char *pass )
  * @param tmpusr pointer to User structure which will be checked
  * @return TRUE when success, otherwise FALSE
  */
-FBOOL isAPIUser( SQLLibrary *sqlLib, User *tmpusr )
+FBOOL isAPIUser( SQLLibrary *sqlLib __attribute__((unused)), User *tmpusr )
 {
 	// If we are not an API user:
 	return tmpusr->u_IsAPI;
@@ -490,10 +492,10 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			// session is valid
 			//
 		
-			if( 1 == 1 || ( timestamp - uses->us_LoggedTime ) < REMOVE_SESSIONS_AFTER_TIME )
+			if( (timestamp - uses->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
 			{	// session timeout
 	
-				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %d\n", timestamp - uses->us_LoggedTime, REMOVE_SESSIONS_AFTER_TIME );
+				DEBUG("[FCDB] checking login time %ld < LOGOUTTIME %lu\n", timestamp - uses->us_LoggedTime, sb->sl_RemoveSessionsAfterTime );
 	
 				// same session, update login time
 				
@@ -578,34 +580,30 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 			if( uses->us_SessionID == NULL || testAPIUser == FALSE )
 			{
 				DEBUG( "[FCDB] : We got a response on: \nAUTHENTICATE: SessionID = %s\n", uses->us_SessionID ? uses->us_SessionID : "No session id" );
-				DEBUG("\n\n\n1============================================================ tmiest %ld usertime %ld logouttst %d\n\
-		==========================================================================\n", timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
+				DEBUG("\n\n\n1============================================================ tmiest %ld usertime %ld logouttst %lu\n\
+		==========================================================================\n", timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
 				
 				//char tmpQuery[ 512 ];
 				//
 				// user was not logged out
 				//
-				if(  (timestamp - uses->us_LoggedTime) < REMOVE_SESSIONS_AFTER_TIME )
+				if(  (timestamp - uses->us_LoggedTime) < sb->sl_RemoveSessionsAfterTime )
 				{
 					DEBUG("User was not logged out\n");
 					
 				}
 				else		// user session is no longer active
 				{
-					// Create new session hash
-					// for user  session
-					
-					DEBUG("[FCDB] Generate new sessionid\n");
-					char *hashBase = MakeString( 255 );
-					sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
-					HashedString( &hashBase );
+					//Generate new session ID for the user
+					char *new_session_id = session_id_generate();
+					DEBUG("[FCDB] New sessionid <%s>\n", new_session_id);
 				
-					// Remove old one and update
+					// Remove old session ID and update
 					if( uses->us_SessionID )
 					{
 						FFree( uses->us_SessionID );
 					}
-					uses->us_SessionID = hashBase;
+					uses->us_SessionID = new_session_id;
 				}
 
 				DEBUG("[FCDB] Update filesystems\n");
@@ -628,8 +626,8 @@ UserSession *Authenticate( struct AuthMod *l, Http *r, struct UserSession *logse
 					if( uses->us_SessionID == NULL || !strlen( uses->us_SessionID ) )
 					{
 						DEBUG("\n\n\n============================================================\n \
-											user name %s current timestamp %ld login time %ld logout time %d\n\
-											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , REMOVE_SESSIONS_AFTER_TIME);
+											user name %s current timestamp %ld login time %ld logout time %lu\n\
+											============================================================\n", tmpusr->u_Name, timestamp, uses->us_LoggedTime , sb->sl_RemoveSessionsAfterTime);
 						
 						char *hashBase = MakeString( 255 );
 						sprintf( hashBase, "%ld%s%d", timestamp, tmpusr->u_FullName, ( rand() % 999 ) + ( rand() % 999 ) + ( rand() % 999 ) );
@@ -680,7 +678,7 @@ loginfail:
  * @param r pointer to Http request
  * @param name name of the User
  */
-void Logout( struct AuthMod *l, Http *r, char *name )
+void Logout( struct AuthMod *l, Http *r __attribute__((unused)), char *name )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
 	UserSession *users = sb->sl_UserSessionManagerInterface.USMGetSessionBySessionID( sb->sl_USM, name );
@@ -706,7 +704,7 @@ void Logout( struct AuthMod *l, Http *r, char *name )
  * @param sessionId sessionid provided as string
  * @return UserSession structure when session is valid, otherwise NULL
  */
-UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
+UserSession *IsSessionValid( struct AuthMod *l, Http *r __attribute__((unused)), char *sessionId )
 {
 	SystemBase *sb = (SystemBase *)l->sb;
 	// to see if the session has lastupdated date less then 2 hours old
@@ -728,7 +726,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
 	}
 
 	// we check if user is already logged in
-	if( ( timestamp - users->us_LoggedTime ) < REMOVE_SESSIONS_AFTER_TIME )
+	if( ( timestamp - users->us_LoggedTime ) < sb->sl_RemoveSessionsAfterTime )
 	{	// session timeout
 		// we set timeout
 
@@ -779,7 +777,7 @@ UserSession *IsSessionValid( struct AuthMod *l, Http *r, char *sessionId )
  * @param param attribute name as string
  * @param val attribute value as string
  */
-void SetAttribute( struct AuthMod *l, Http *r, struct User *u, const char *param, void *val )
+void SetAttribute( struct AuthMod *l __attribute__((unused)), Http *r __attribute__((unused)), struct User *u, const char *param, void *val )
 {
 	if( param != NULL && u != NULL )
 	{
@@ -822,7 +820,11 @@ void SetAttribute( struct AuthMod *l, Http *r, struct User *u, const char *param
  * @param permission permissions which will be checked
  * @return 0 when success, otherwise error number
  */
-int UserAppPermission( struct AuthMod *l, Http *r, int userId, int applicationId, const char *permission )
+int UserAppPermission( struct AuthMod *l __attribute__((unused)),
+		Http *r __attribute__((unused)),
+		int userId __attribute__((unused)),
+		int applicationId __attribute__((unused)),
+		const char *permission __attribute__((unused)) )
 {
 
 	return -1;

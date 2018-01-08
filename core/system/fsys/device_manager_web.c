@@ -49,16 +49,51 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 	SystemBase *l = (SystemBase *)m;
 	Http *response = NULL;
 	
-	//
-	// refreshlist
-	//
-	
-	if( strcmp( urlpath[ 1 ], "refreshlist" ) == 0 )
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/help</H2>Return available commands
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return avaiable device commands
+	*/
+	/// @endcond
+	if( strcmp( urlpath[ 1 ], "help" ) == 0 )
 	{
-		//char query[ 1024 ];
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+		};
+		
+		response = HttpNewSimple( HTTP_200_OK,  tags );
+		
+		HttpAddTextContent( response, "ok<!--separate-->{\"HELP\":\"commands: \"" 
+			"mount - mount device"
+			",unmount - unmount device"
+			",list - list all mounted devices"
+			",listsys - take all avaiable file systems"
+			"\"}" );
+		
+		*result = 200;
+		
+		return response;
+	}
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/refreshlist</H2>Refresh user drives.
+	* This function check database Filesystem changes and mount unmounted devices.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return information which devices are mounted
+	*/
+	/// @endcond
+	else if( strcmp( urlpath[ 1 ], "refreshlist" ) == 0 )
+	{
 		char ids[ 1024 ];
 		ids[ 0 ] = 0;
-		int idssize = 0;
+		int resperr = 0;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -69,25 +104,34 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		BufString *bs = BufStringNew();
-		if( RefreshUserDrives( l, loggedSession->us_User, bs ) == 0 )
+		if( ( resperr = RefreshUserDrives( l, loggedSession->us_User, bs ) ) == 0 )
 		{
 			HttpSetContent( response, bs->bs_Buffer, bs->bs_Bufsize );
 			bs->bs_Buffer = NULL;
 		}
 		else
 		{
-			HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Cannot refresh user drive!\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "RefreshUserDrives", resperr );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 		BufStringDelete( bs );
 		
 		*result = 200;
 	}
 	
-	//
-	//
-	//
-	
-	// Check detailed information about a drive
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/knock</H2>Get detailed information about drive.
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param devname - (required) device name
+	* @return ok + separator + message when call passed without problems, otherwise error code will be returned
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "knock" ) == 0 )
 	{
 		char *devname = NULL;
@@ -116,9 +160,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			{
 				//snprintf( query, 512, ""
 				sqllib->SNPrintF( sqllib, query, 512, ""
-					"SELECT f.Name, f.ShortDescription FROM `Filesystem` f "
-					"WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
-					"AND f.Name = \"%s\" LIMIT 1", devname );
+"SELECT f.Name, f.ShortDescription FROM `Filesystem` f "
+"WHERE f.Config LIKE \"%%\\\"pollable\\\":\\\"yes\\\"%%\" "
+"AND f.Name = \"%s\" LIMIT 1", devname );
 				
 				void *res = sqllib->Query( sqllib, query );
 				
@@ -147,7 +191,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			// We failed
 			if( success == -1 )
 			{
-				HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Could not find drive.\"}" );
+				char dictmsgbuf[ 256 ];
+				char dictmsgbuf1[ 196 ];
+				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DRIVE_NOT_FOUND], devname );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DRIVE_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 			// Wee we succeeded
 			else if( resultstring != NULL )
@@ -157,7 +205,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			// We failed (future use cases where error message is in success integer var)
 			else
 			{
-				HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"An error occured.\"}" );
+				char dictmsgbuf[ 256 ];
+				char dictmsgbuf1[ 196 ];
+				snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ENTRY_IN_DB], devname );
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ENTRY_IN_DB );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 			// Free resources
 			if( resultstring )
@@ -168,13 +220,26 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		// No device name
 		else
 		{
-			HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"No device name specified.\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}		
 		
 		
 		*result = 200;
 	}
-	// Show list of available drives
+
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/polldrives</H2>Return list of available drives
+	*
+	* @param sessionid - (required) session id of logged user
+	* @TODO Hogne give more details
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "polldrives" ) == 0 )
 	{
 		// Ready response
@@ -192,10 +257,10 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		// Build query and make ready to fetch rows in liststring
 		char *query = "\
-			SELECT f.Name, u.FullName AS Username  FROM `Filesystem` f, FUser u \
-			WHERE f.Config LIKE \"%\\\"pollable\\\":\\\"yes\\\"%\" AND u.ID = f.UserID \
-				ORDER BY \
-				f.Name ASC";
+SELECT f.Name, u.FullName AS Username  FROM `Filesystem` f, FUser u \
+WHERE f.Config LIKE \"%\\\"pollable\\\":\\\"yes\\\"%\" AND u.ID = f.UserID \
+ORDER BY \
+f.Name ASC";
 			
 			ListString *str = ListStringNew();
 			
@@ -234,17 +299,33 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				FFree( cnt );
 			}
 			// Add negative response
-			else HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Polling the drives is not possible.\"}" );
+			else
+			{
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_POLL_DRIVE_NO_DATA] , DICT_POLL_DRIVE_NO_DATA );
+				HttpAddTextContent( response, dictmsgbuf );
+			}
 			
 			// Clean up and set result status
 			ListStringDelete( str );
 			*result = 200;
 	}
 	
-	//
-	//  mount
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/mount</H2>Mount device
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param devname - (required) device name. Parameter and logged user id is used to get user device parameters from Filesystem table.
+	* @param path - used by most filesystems to point directory which will be mounted (like server filesystem)
+	* @param enc - set to 'true' to encode data on disk
+	* @param type - filesystem type
+	* @param execute - point to application which will be launched when mount function will be called
+	* @param visible - set to 'true' if you want to make device visible for users
+	* @return { Response: Mounted successfully. } when success, otherwise error number
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "mount" ) == 0 )
 	{
 		char *devname = NULL;
@@ -272,10 +353,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
-			//return response;
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
@@ -348,8 +430,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		if( devname == NULL )
 		{
 			FERROR("One of required arguments is missing: sessionid, devname\n");
-			// required arguments missing
-			HttpAddTextContent( response, "{ \"response\": \"Required arguments is missing sessionid, devname\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 		else
 		{
@@ -410,17 +495,25 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				
 				// This is ok!
 				if( mountError != 0 && mountError != FSys_Error_DeviceAlreadyMounted )
-				{	
+				{
+					char dictmsgbuf[ 256 ];
 					switch( mountError )
 					{
 						case FSys_Error_NOFSAvaiable:
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"Could not locate file system.\"}" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+							HttpAddTextContent( response, dictmsgbuf );
+							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"Could not locate file system.\"}" );
 							break;
 						case FSys_Error_NOFSType:
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk type specified or disk does not exist.\"}" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILESYSTEM_NOT_FOUND] , DICT_FILESYSTEM_NOT_FOUND );
+							HttpAddTextContent( response, dictmsgbuf );
+							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk type specified or disk does not exist.\"}" );
 							break;
 						case FSys_Error_NOName:
-							HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk name specified or disk does not exist.\"}" );
+						case FSys_Error_SelectFail:
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_DISKNAME_OR_DISK] , DICT_NO_DISKNAME_OR_DISK );
+							HttpAddTextContent( response, dictmsgbuf );
+							//HttpAddTextContent( response, "fail<!--separate-->{\"response\": \"No disk name specified or disk does not exist.\"}" );
 							break;
 						default:
 						{
@@ -431,7 +524,6 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 							break;
 						}
 					}
-					
 					mountError = 1;
 				}
 				else
@@ -461,18 +553,18 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						if( temptext != NULL )
 						{
 							sqllib->SNPrintF( sqllib,  temptext, 512,"\
-								UPDATE `Filesystem` f SET f.Mounted = '1'\
-								WHERE\
-								(\
-									`UserID` = '%ld' OR\
-									f.GroupID IN (\
-										SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-										WHERE \
-										g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-										ug.UserID = '%ld'\
-									)\
-								)\
-								AND LOWER(f.Name) = LOWER('%s')", 
+UPDATE `Filesystem` f SET f.Mounted = '1' \
+WHERE \
+( \
+`UserID` = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+) \
+) \
+AND LOWER(f.Name) = LOWER('%s')", 
 								loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
 							);
 
@@ -498,27 +590,33 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			else
 			{	// user not found , he is not logged in
 				DEBUG("[DeviceMWebRequest] Cannot mount device for not logged in user\n");
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot mount device for not logged user\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}		// check mount parameters
-		
-		//HttpWriteAndFree( response );
 		*result = 200;
-		
-		//
-		// unmount
-		//
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/unmount</H2>Unmount device
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param devname - (required) device name which system will try unmount.
+	* @return { Response: Successfully unmounted } when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "unmount" ) == 0 )
 	{
 		char *devname = NULL;
 		int mountError = 0;
-		//FULONG id = 0;
-		
+
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
 		};
 		
 		if( response != NULL )
@@ -530,24 +628,15 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
-			//return response;
 		}
-		
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( !el ) el = HashmapGet( request->query, "devname" );
-		
-		/*
-		HashmapElement *el = HttpGetPOSTParameter( request, "id" );
-		if( el != NULL )
-		{
-			char *next;
-			id = strtol ( (char *)el->data, &next, 0 );
-		}
-		*/
 		
 		if( el != NULL )
 		{
@@ -579,16 +668,13 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		}
 		
 		if( devname == NULL )
-		//if( devname == NULL || sessionid == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device name or sessionID are empty\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
-		/*
-		if( id <= 0 )
-		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"id paramter is missing\"}" );
-		}
-		*/
 		else
 		{
 			if( loggedSession != NULL )
@@ -616,12 +702,10 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				
 				struct TagItem tags[] = {
 					{FSys_Mount_ID, (FULONG)fid },
-					//{FSys_Mount_Name, (FULONG)ldevname },
 					{FSys_Mount_Name, (FULONG)devname },
 					{FSys_Mount_Type, (FULONG)type },
 					{TAG_DONE, TAG_DONE }
 				};
-				
 				
 				mountError = UnMountFS( l, (struct TagItem *)&tags, loggedSession );
 				DEBUG("[DeviceMWebRequest] Unmounting device error %d\n", mountError );
@@ -643,72 +727,52 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						//sprintf( temptext, "
 						
 						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
-							UPDATE `Filesystem` f SET f.Mounted = '0'\
-							WHERE\
-							(\
-								`UserID` = '%ld' OR\
-								f.GroupID IN (\
-									SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-									WHERE \
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-									ug.UserID = '%ld'\
-								)\
-							)\
-							AND LOWER(f.Name) = LOWER('%s')", 
+UPDATE `Filesystem` f SET f.Mounted = '0' \
+WHERE \
+( \
+`UserID` = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+) \
+) \
+AND LOWER(f.Name) = LOWER('%s')", 
 							loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
 						);
 						
-						/*
-						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
-							UPDATE `Filesystem` f SET f.Mounted = '0'\
-							WHERE\
-							(\
-								`UserID` = '%ld' OR\
-								f.GroupID IN (\
-									SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-									WHERE \
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-									ug.UserID = '%ld'\
-								)\
-							)\
-							AND f.ID = %lu", 
-							loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, id 
-						);
-						*/
 						void *res = sqllib->Query( sqllib, temptext );
 					
-						//HttpWriteAndFree( response, sock );
 						HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"Successfully unmounted\" }" );
 						*result = 200;
-					
-						//char *devfull = FCalloc( strlen( devname ) + 2, sizeof( char ) );
-						//sprintf( devfull, "%s:", devname );
-						//DoorNotificationCommunicateChanges( l, loggedSession, mountedDev, devfull );
-						//FFree( devfull );
-						
+
 						l->LibrarySQLDrop( l, sqllib );
 					}
 				}
-				
-				//char tmp[ 100 ];
-				//	sprintf( tmp, "UnMouting error: %d\n", l->GetError( l ) );
-				//HttpAddTextContent( response, tmp );
-			}	
+			}
 			else
 			{
 				FERROR("User session is invalid\n");
-				HttpAddTextContent( response, "ok<!--separate-->{ \"Response\": \"User not logged in, cannot unmount device\"}" );
+				
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_INVALID_USER_SESSION] , DICT_INVALID_USER_SESSION );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
-		
-		//HttpWriteAndFree( response );
 		*result = 200;
 	}
 	
-	//
-	//  refresh
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/refresh</H2>Refresh user drive in FriendCore
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param devname - (required) device name. Parameter and logged user id is used to get user device parameters from Filesystem table.
+	* @return { Result: Device updated!} when success, otherwise error number
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "refresh" ) == 0 )
 	{
 		char *devname = NULL;
@@ -729,10 +793,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
-			//return response;
 		}
 		
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
@@ -809,35 +874,54 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					}
 					else
 					{
-						HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device not found!\"}" );
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_NOT_FOUND], devname );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_NOT_FOUND );
+						HttpAddTextContent( response, dictmsgbuf );
 					}
 				}
 				else
 				{
-					HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User not found!\"}" );
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 
 				l->LibrarySQLDrop( l, sqllib );
 			}
 			else
 			{
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot open mysql.library!\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SQL_LIBRARY_NOT_FOUND] , DICT_SQL_LIBRARY_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		else
 		{	// user not found , he is not logged in
 			DEBUG("[DeviceMWebRequest] Cannot mount device for not logged in user\n");
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot find devname parameter!\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "devname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 		
 		//HttpWriteAndFree( response );
 		*result = 200;
 	}
 	
-	//
-	// share device
-	//
-	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/share</H2>Refresh user drive in FriendCore
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param devname - (required) device name which you want to share with another user
+	* @param username - (required) name of the user to which you want to share your drive
+	* @return { Result: Device shared successfully} when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "share" ) == 0 )
 	{
 		char *devname = NULL;
@@ -853,7 +937,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			
 			goto error;
 		}
@@ -872,14 +958,18 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( devname == NULL || username == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device name or Username are empty\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "username, devname" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 			FERROR("Devname or username are empty! Cannot share device\n");
 			goto error;
 		}
 		else
 		{
 			// first we must find user
-			//  to which user we will share our device
+			// to which user we will share our device
 			
 			User *user = NULL;
 			
@@ -902,9 +992,10 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				else
 				{
 					FERROR("Cannot find user with name %s in database\n", username );
-					HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User account do not exists\"}" );
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+					HttpAddTextContent( response, dictmsgbuf );
 					goto error;
-					//return response;
 				}
 			}
 			
@@ -931,12 +1022,12 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
-						UserDeviceMount( l, sqllib, user, 0 );
+						UserDeviceMount( l, sqllib, user, 0, TRUE );
 						l->LibrarySQLDrop( l, sqllib );
 					}
 					else
 					{
-						FERROR("Cannot get mysql.library slot\n");
+						FERROR("Cannot get sql.library slot\n");
 					}
 				}
 				
@@ -956,7 +1047,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					if( ( err = DeviceMountDB( l, file, TRUE ) ) != 0 )
 					{
 						FERROR("[DeviceMWebRequest] Cannot share device, error %d\n", err );
-						HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"Device cannot be shared\"}" );
+						char dictmsgbuf[ 256 ];
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
+						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
+						HttpAddTextContent( response, dictmsgbuf );
 					}
 					else
 					{
@@ -968,9 +1063,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			else
 			{
 				FERROR("User account do not exist!Sharing device option is not possible\n");
-				HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"User account do not exists\"}" );
-				//goto error;
-				//return response;
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_OR_DEVICE_NOT_EXIST] , DICT_USER_OR_DEVICE_NOT_EXIST );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
 			//char tmp[ 100 ];
@@ -986,17 +1081,23 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			 *	l->LibraryMYSQLDrop( l, sqllib );
 			 */
 		}
-		
-		//
-		// list mounted devices
-		//
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/list</H2>List mounted devices
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return All devices and their attributes in JSON when success, otherwise error
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "list" ) == 0 )
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		if( response != NULL )
@@ -1008,7 +1109,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			goto error;
 		}
 		
@@ -1085,27 +1188,33 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 					
 					if( devnr == 0 )
 					{
-						snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\"}\n", 
+						snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\"}\n", 
 							dev->f_Name ? dev->f_Name : "", 
+							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
 							sys && sys->Name ? sys->Name : "",
 							configEscaped ? configEscaped: "{}",
 							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", //,dev->f_ID
-							isLimited
+							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+							isLimited,
+							dev->f_DevServer ? dev->f_DevServer : "",
+							dev->f_DevPort
 						);
 						
 					}
 					else
 					{
-						snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\"}\n", 
-							dev->f_Name ? dev->f_Name : "", 
+						snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\"}\n", 
+							dev->f_Name ? dev->f_Name : "",
+							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
 							sys && sys->Name ? sys->Name : "",
 							configEscaped ? configEscaped: "{}",
 							dev->f_Visible == 1 ? "true" : "false",
-							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",//,dev->f_ID
-							isLimited
+							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+							isLimited,
+							dev->f_DevServer ? dev->f_DevServer : "",
+							dev->f_DevPort
 						);
 					}
 					
@@ -1131,20 +1240,27 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			}
 			else
 			{
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User not logged in\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		
 		*result = 200;
 		
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/listsys</H2>List all avaiable filesystems
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return All filesystems and their attributes in JSON when success, otherwise error
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "listsys" ) == 0 )
 	{
-		
-		//
-		// list all filesystems
-		//
-		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1160,12 +1276,13 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		
 		if( l->sl_ActiveAuthModule == NULL )
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"user.library is not opened!\"}" );
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+			HttpAddTextContent( response, dictmsgbuf );
 			goto error;
 		}
 		
 		{
-			
 			UserSession *logsess = loggedSession;//l->sl_ActiveAuthModule->IsSessionValid( l->sl_ActiveAuthModule, request, sessionid );
 			User *curusr = logsess->us_User;  // l->sl_Sessions;
 
@@ -1200,15 +1317,23 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			}
 			else
 			{
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"User not logged in\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 		}
 		*result = 200;
-		
-		//
-		// update device in database
-		//
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/device/update</H2>Store device attributes in database
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return { Result: Database updated} when success, otherwise error code
+	*/
+	/// @endcond
 	else if( strcmp( urlpath[ 1 ], "update" ) == 0 )
 	{
 		struct TagItem tags[] = {
@@ -1220,7 +1345,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		char *devname = NULL;
 		char *config = NULL;
 		char *descrypt = NULL;
-		FQUAD id = -1;
+		FLONG id = -1;
 		
 		//`ID`, `UserID`, `GroupID`, `DeviceID`, `Name`, `Type`, `ShortDescription`, `Server`, `Port`, `Path`, `Username`, `Password`, `Config`, `Mounted`, `Authorized`, `Owner`SELECT * FROM `Filesystem` WHERE 1
 		
@@ -1252,7 +1377,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		el = HttpGetPOSTParameter( request, "id" );
 		{
 			char *next;
-			id = (FQUAD)strtol(( char *)el->data, &next, 0);
+			id = (FLONG)strtol(( char *)el->data, &next, 0);
 		}
 		
 		if( id >= 0 )
@@ -1332,7 +1457,7 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 						BufStringAdd( bs, names->bs_Buffer );
 						BufStringAdd( bs, " ) VALUES (" );
 						BufStringAdd( bs, values->bs_Buffer );
-						int size = snprintf( idchar,  sizeof(idchar), ") WHERE ID = %llu;", id );
+						int size = snprintf( idchar,  sizeof(idchar), ") WHERE ID = %ld;", id );
 						BufStringAddSize( bs, idchar, size );
 					
 						sqllib->QueryWithoutResults( sqllib, bs->bs_Buffer );
@@ -1346,12 +1471,16 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 				}
 				else	// bs == NULL
 				{
-					HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for buffers\"}" );
+					char dictmsgbuf[ 256 ];
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 			} // values, names = NULL
 			else
 			{
-				HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Cannot allocate memory for buffers\"}" );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+				HttpAddTextContent( response, dictmsgbuf );
 			}
 			
 			if( names != NULL )
@@ -1366,7 +1495,11 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 		}
 		else	// id < 0
 		{
-			HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"id parameter is missing\"}" );
+			char dictmsgbuf[ 256 ];
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "id" );
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			HttpAddTextContent( response, dictmsgbuf );
 		}
 		
 		if( descrypt != NULL )
@@ -1398,7 +1531,9 @@ Http *DeviceMWebRequest( void *m, char **urlpath, Http* request, UserSession *lo
 			{ TAG_DONE, TAG_DONE }
 		};
 		response = HttpNewSimple( HTTP_200_OK, tags );
-		HttpAddTextContent( response, "ok<!--separate-->{ \"response\": \"Device function do not exist\"}" );
+		char dictmsgbuf[ 256 ];
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, dictmsgbuf );
 	}
 	
 	error:

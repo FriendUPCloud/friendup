@@ -19,10 +19,9 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
- * Body of  DOSDriver
+ * DOSDriver body
  *
  * @author PS (Pawel Stefansky)
  * @date created PS 2015

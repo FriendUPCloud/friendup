@@ -17,12 +17,45 @@
 *                                                                              *
 *****************************************************************************©*/
 
+// Handling navigation
+var historyLog = []; // Our history log
+var index = 0; // Where we are now in history
+
 Application.run = function( msg )
 {
 	document.getElementsByTagName( 'input' )[0].focus();
 	document.getElementsByTagName( 'input' )[0].select();
-	
+
 	ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
+
+	// Opens the Tree engine fgor connexion to other tree via Friend Network
+	var self = this;
+	Friend.Tree.init( function( response )
+	{
+		// Loaded OK?
+		if ( response != 'OK' )
+		{
+			Application.Quit();
+			return;
+		}
+
+		// Creates a new instance of the Tree engine
+		// Will add the rendering ID later if you connect to a Tree
+		Application.tree = new Friend.Tree( self,
+		{
+			title: 'Wideweb',
+			renderer: 'RendererThree2D',
+			width: window.innerWidth,
+			height: window.innerHeight
+		} );
+
+		// Creates the root object of the tree
+		Application.root = new Root( Application.tree, 'Root',
+		{
+			width: window.innerWidth,
+			height: window.innerHeight
+		} );
+	} );
 }
 
 Application.receiveMessage = function( msg )
@@ -51,7 +84,7 @@ Application.receiveMessage = function( msg )
 				for( var a in msg.data )
 				{
 					items.push( {
-						Path: msg.data[a].Path, 
+						Path: msg.data[a].Path,
 						Filename: msg.data[a].Filename
 					} );
 				}*/
@@ -61,21 +94,30 @@ Application.receiveMessage = function( msg )
 	}
 }
 
-var historyLog = [];
-var index = 0;
-
 function back()
 {
-	var pindex = index; index--;
-	if( index <= 0 ) index = 0;
-	if( index != pindex ) setUrl( historyLog[index] );
+	var pindex = index;
+	if( --index < 0 ) 
+		index = 0;
+	// We actually moved
+	if( index != pindex )
+	{
+		console.log( 'Index is now: ' + index + ' (was ' + pindex + ' )' );
+		setUrl( index, 1 );
+	}
 }
 
 function forward()
 {
-	var pindex = index; index++;
-	if( index > historyLog.length - 1 ) index = historyLog.length - 1;
-	if( pindex != index ) setUrl( historyLog[index] );
+	var pindex = index; 
+	if( ++index >= historyLog.length )
+		index = historyLog.length - 1;
+	// We actually moved
+	if( pindex != index )
+	{
+		console.log( 'Going back: ' + historyLog[ index ] );
+		setUrl( index, 1 );
+	}
 }
 
 function reload()
@@ -105,7 +147,7 @@ function replaceFriendUrls( data, url )
 	}
 	else baseUrl = url.split( ':' )[0] + ':';
 	baseUrl = baseUrl.split( ':/' ).join( ':' );
-	
+
 	var r;
 	// Replace relative sources
 	while( r = data.match( /src\=['"]([^:"']*?)['"]/i ) )
@@ -137,20 +179,32 @@ function replaceFriendUrls( data, url )
 	return data;
 }
 
-function setUrl( uri )
+function setUrl( uri, move )
 {
+	if( !move ) move = false;
+	var wantedIndex = null;
+	if( !isNaN( uri ) && ( uri === 0 || uri > 0 ) )
+	{
+		if( uri < historyLog.length )
+		{
+			wantedIndex = uri;
+			uri = historyLog[ wantedIndex ];
+			index = wantedIndex;
+		}
+	}
+	
 	if( uri == 'about:blank' || uri == 'about:home' )
 	{
 		ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
 		return;
 	}
-	
-	uri = uri.split( 'http://' ).join( '' ).split( 'https://' ).join( '' );
+
+	//uri = uri.split( 'http://' ).join( '' ).split( 'https://' ).join( '' );
 	var urldata = '';
 	var skiploading = false;
 
 	if( uri.indexOf( ':' ) > 0 && uri.indexOf( ':/' ) < 0 )
-	{	
+	{
 		skiploading = true;
 		if( uri.toLowerCase().substr( 0, 7 ) == 'system:' )
 		{
@@ -167,9 +221,9 @@ function setUrl( uri )
 				fr.onLoad = ge( 'BrowserBox' ).onload;
 				ge( 'BrowserBox' ).parentNode.replaceChild( fr, ge( 'BrowserBox' ) );
 				var doc = ge( 'BrowserBox' ).contentDocument || ge( 'BrowserBox' ).contentWindow.document;
-				
+
 				data = replaceFriendUrls( data, uri );
-				
+
 				doc.body.parentNode.innerHTML = data;
 				doc.body.onmousedown = function()
 				{
@@ -189,9 +243,9 @@ function setUrl( uri )
 				fr.onLoad = ge( 'BrowserBox' ).onload;
 				ge( 'BrowserBox' ).parentNode.replaceChild( fr, ge( 'BrowserBox' ) );
 				var doc = ge( 'BrowserBox' ).contentDocument || ge( 'BrowserBox' ).contentWindow.document;
-				
+
 				data = replaceFriendUrls( data, uri );
-				
+
 				doc.body.parentNode.innerHTML = data;
 				doc.body.onmousedown = function()
 				{
@@ -212,41 +266,182 @@ function setUrl( uri )
 			urldata = urldata.substr( si, urldata.length - si );
 		else urldata = '';
 	}
+	// Normal url
+	else
+	{
+		skiploading = true;
+		ge( 'BrowserBox' ).src = uri;
+	}
 	
 	ge( 'uri' ).value = uri;
-	
+
 	// Cap historyLog
-	var newhistoryLog = [];
-	for( var a = 0; a < index; a++ )
+	if( !move )
 	{
-		newhistoryLog.push( historyLog[a] );
-	}
-	newhistoryLog = historyLog;
-	
-	if( historyLog[ index ] != uri )
-	{
-		historyLog.push( uri );
-		index = historyLog.length - 1;
+		if( wantedIndex != null && wantedIndex < historyLog.length )
+		{
+			var newHistoryLog = [];
+			for( var a = 0; a < wantedIndex; a++ )
+			{
+				newHistoryLog.push( historyLog[a] );
+			}
+			historyLog = newHistoryLog;
+			index = wantedIndex;
+		}
+		else
+		{
+			// Add to history
+			historyLog.push( uri );
+			index = historyLog.length - 1;
+		}
 	}
 	
 	// do normal loading
 	if( !skiploading )
 	{
-		var fp = uri.split( 'friend://' )[1];
-		fp = fp.substr( 0, fp.indexOf( '/' ) > 0 ? fp.indexOf( '/' ) : fp.length );
-		
-		// Contact the host, fp, with the following method and path, then
-		// display the response
-		FriendNetwork.send( fp, {
-			method: 'get',
-			path: urldata ? '/' + urldata : '/'
-		}, function( msg )
+		if ( uri.substring( 0, 9 ) == 'friend://' )
 		{
-			console.log( 'What happened!? ', msg.data );
-		} );
+			// Calls the Tree network object for connexion
+			Application.root.connectToFriend( uri );
+			Application.sendMessage( { command: 'setcontent', url: uri } );
+		}
 	}
-	
+	else
+	{
+		Application.sendMessage( { command: 'seturl', url: uri, logic: true } );
+	}
+}
+
+function registerUrl( uri )
+{
 	Application.sendMessage( { command: 'seturl', url: uri } );
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// tree sharing handling
+//
+function Root( tree, name, flags )
+{
+	var self = this;
 
+	// Initialize the root item
+	this.caller = false;
+	this.messages = false;
+	Friend.Tree.Items.init( this, tree, 'Wideweb Tree Root', 'Application.Root', flags );
+
+	// Adds a network object (TODO: gameNetwork item should be called "Network" )
+	this.network = new Friend.Network.Manager( this.tree, 'network',
+	{
+		root: this,
+		parent: this,
+		appName: 'Wideweb',
+		caller: this,
+		messages: self.receiveNetworkMessages,
+		p2p: false
+	} );
+};
+Root.prototype.renderUp = function ( flags )
+{
+	return flags;
+};
+Root.prototype.renderDown = function ( flags )
+{
+    return flags;
+};
+Root.prototype.processUp = function ( flags )
+{
+	// Call the next processes, watching for NO flags
+	return this.startProcess( flags, [ ] );
+};
+Root.prototype.processDown = function ( flags )
+{
+	// End the process, no flags property to handle
+	return this.endProcess( flags, [ ] );
+};
+
+Root.prototype.receiveNetworkMessages = function( message )
+{
+	switch ( message.command )
+	{
+		case 'treeSharing':
+			switch ( message.subCommand )
+			{
+				// Succesfull connection
+				case 'connected':					
+					//debugger;
+					this.key = message.key;
+					this.network.getWelcomePage( this.key );
+					break;
+
+				// Host disconnected
+				case 'hostDisconnected':
+					break;
+
+				// Host disconnected
+				case 'clientDisconnected':
+					break;
+
+				default:
+					break;
+			}
+			break;
+
+		// File transfer
+		case 'fileTransfer':
+			switch ( message.response )
+			{
+				case 'welcome':
+					var index;
+					var replace = [];
+					for ( var f = 0; f < message.list.length; f++ )
+					{
+						var file = message.list[ f ];
+						if ( file.fileName == 'index.html' )
+							index = file.filePath;
+						else
+						{
+							replace.push( 
+							{
+								search: file.fileInfo,
+								replace: getImageUrl( file.filePath )
+							} );
+						}	
+					}
+					if ( index )
+					{
+						var file = new File( index );
+						file.onLoad = function( content )
+						{
+							content = Friend.Utilities.replaceFriendPaths( content, replace );
+							var fr = document.createElement( 'iframe' );
+							fr.className = 'Browser';
+							fr.id = 'BrowserBox';
+							fr.onLoad = ge( 'BrowserBox' ).onload;
+							ge( 'BrowserBox' ).parentNode.replaceChild( fr, ge( 'BrowserBox' ) );
+							var doc = ge( 'BrowserBox' ).contentDocument || ge( 'BrowserBox' ).contentWindow.document;
+							doc.body.parentNode.innerHTML = content;
+							doc.body.onmousedown = function()
+							{
+								Application.sendMessage( { command: 'activate_now' } );
+							}
+						};
+						file.load();
+					}
+					break;
+
+				default:
+					break;
+			}
+			break;
+	}
+};
+Root.prototype.connectToFriend = function( url )
+{
+	// We want a Friend URL
+	if ( url.substring( 0, 9 ) != 'friend://' )
+		return false;
+//debugger;
+	// Extracts the name of the host and lists the hosts
+	this.network.connectToTree( url );
+};

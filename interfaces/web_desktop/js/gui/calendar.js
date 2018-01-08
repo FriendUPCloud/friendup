@@ -132,7 +132,6 @@ Calendar.prototype.render = function( skipOnRender )
 							var out = this.events[key][aa];
 							var ev = new CalendarEvent( out );
 							eventsToday.push( ev );
-							//eventsToday += '<div class="CalendarDetailEvent"><div class="IconSmall FloatRight MousePointer fa-remove" onclick="Workspace.removeCalendarEvent(\'' + out.ID + '\')"></div><p>' + out.Title + '</p><p>' + out.Description + '</p><p><em>' + i18n( 'i18n_from' ) + ':</em> ' + out.TimeFrom + '</p><p><em>' + i18n( 'i18n_to' ) + ':</em> ' + out.TimeTo + '</p></div>';
 						}
 					}
 				
@@ -173,7 +172,8 @@ Calendar.prototype.render = function( skipOnRender )
 		}
 		ml += '</div>';
 	}
-	if( eventsToday.length ) {
+	if( eventsToday.length )
+	{
 		var eventsTodayContainer = '<div id="calendarEventsToday" class="Padding"><p><strong>' + i18n( 'i18n_calendar_events' ) + ':</strong></p></div>';
 		ml += eventsTodayContainer;
 		this.calendar.innerHTML = ml;
@@ -181,8 +181,11 @@ Calendar.prototype.render = function( skipOnRender )
 		eventsToday.forEach( function( item ) {
 			container.appendChild( item );
 		});
-	} else
+	} 
+	else
+	{
 		this.calendar.innerHTML = ml;
+	}
 	
 	// Set events
 	var eles = this.calendar.getElementsByTagName( 'div' );
@@ -230,7 +233,9 @@ Calendar.prototype.drawMonthname = function()
 	var year = this.date.getFullYear();
 	var month = this.date.getMonth() + 1;
 
-	this.monthName.innerHTML = this.monthNames[ month-1 ] + ' ' + year + '<div class="Navigation">' + nav + '</div>';
+	var mn = this.monthNames[ month-1 ];
+	mn = mn.substr( 0, 1 ).toUpperCase() + mn.substr( 1, mn.length - 1 );
+	this.monthName.innerHTML = mn + ' ' + year + '<div class="Navigation">' + nav + '</div>';
 	
 	// Add extra buttons
 	if( this.buttons )
@@ -317,15 +322,28 @@ CalendarEvent.prototype.close = function()
 CalendarEvent.prototype.init = function()
 {
 	var self = this;
+	
+	console.log( self );
+	
+	var title = self.data.Title;
+	
 	self.element = document.createElement( 'div' );
 	self.element.className = "CalendarDetailEvent";
 	// remove
-	var remove = document.createElement( 'div' );
-	remove.className = "IconSmall FloatRight MousePointer fa-remove";
-	remove.onclick = function() { Workspace.removeCalendarEvent( self.data.ID ); }
-	self.element.appendChild( remove );
+	if( self.data.ID.indexOf( '_' ) < 0 )
+	{
+		var remove = document.createElement( 'div' );
+		remove.className = "IconSmall FloatRight MousePointer fa-remove";
+		remove.onclick = function() { Workspace.removeCalendarEvent( self.data.ID ); }
+		self.element.appendChild( remove );
+	}
+	else
+	{
+		var off = self.data.ID.indexOf( '_' );
+		title += ' (' + self.data.ID.substr( off + 1, self.data.ID.length - off - 1 ) + ')';
+	}
 	// Title
-	setP( self.data.Title );
+	setP( title );
 	// Description
 	setP( self.data.Description );
 	// From
@@ -355,8 +373,8 @@ CalendarEvent.prototype.init = function()
 CalendarEvent.prototype.bind = function()
 {
 	var self = this;
-	self.element.onmousedown = function() {
-		console.log( 'mousedown' );
+	self.element.onmousedown = function()
+	{
 		window.mouseDown = self.element;
 		self.pickupTimer = window.setTimeout( doPickup, 100 );
 		function doPickup() {
@@ -366,8 +384,8 @@ CalendarEvent.prototype.bind = function()
 		}
 	}
 	
-	self.element.onmouseup = function() {
-		console.log( 'onmouseup' );
+	self.element.onmouseup = function()
+	{
 		if ( self.pickupTimer )
 			window.clearTimeout( self.pickupTimer );
 		
@@ -376,5 +394,5 @@ CalendarEvent.prototype.bind = function()
 			self.hasPickup = false;
 		}
 	}
-	
 }
+

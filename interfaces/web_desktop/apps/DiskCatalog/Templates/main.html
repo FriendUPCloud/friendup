@@ -1,13 +1,12 @@
 
 	<link rel="stylesheet" href="Progdir:Stylesheets/main.css"/>
-	
 	<script src="Progdir:Scripts/mainwindow.js"></script>
 	
 	<div class="ContentFull">
-		
-		<div class="VContentTop" style="bottom: 49px">
-			
-			<div id="PageTabs" class="Padding">
+		<div class="Padding VContentTop" style="bottom: 51px">
+			<div id="PageTabs">
+				<div class="Selector" id="UserList">
+				</div>
 				<div class="Tab fa-user IconSmall" id="tabDisks">
 					{i18n_storage_disks}
 				</div>
@@ -15,45 +14,29 @@
 					{i18n_software_disks}
 				</div>
 				<div class="Page" id="pageMountlist">
-					<div class="ContentFull Padding ScrollArea" id="Disks">
+					<div class="PageScroll">
+						<div class="Padding" id="Disks">
 				
+						</div>
 					</div>
 				</div>
 				<div class="Page" id="pageCatalog">
-					<div class="ContentFull Padding ScrollArea" id="Catalog">
+					<div class="PageScroll">
+						<div class="Padding" id="Catalog">
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-		<div class="VContentBottom BorderTop" style="height: 49px" id="BottomPart">
-		
-			<div class="ContentFull BackgroundDefault Padding">
-			
-				<button class="IconSmall fa-cog" type="button" onclick="Application.sendMessage( { command: 'newconnection' } )">
-					{i18n_new_connection}
-				</button>
-				
-			</div>
-		
+		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px" id="BottomPart">
+			<button class="IconSmall fa-cog" type="button" onclick="Application.sendMessage( { command: 'newconnection' } )">
+				{i18n_new_connection}
+			</button>	
 		</div>
-		
 	</div>
 	
 	<script>
 		InitTabs( 'PageTabs' );
-		{
-			function func()
-			{
-				var disks = ge( 'tabDisks' );
-				var subTop = GetElementTop( disks ) + disks.offsetHeight;
-				var subBottom = ge( 'BottomPart' ).offsetHeight;
-				var sh = window.innerHeight - subTop - subBottom - 14;
-				var eles = [ ge( 'pageCatalog' ), ge( 'pageMountlist' ) ];
-				for( var a in eles ) eles[a].style.height = sh + 'px';
-			}
-			window.addEventListener( 'resize', func );
-			func();
-		}
 	</script>
 	<style>
 		.Disk .Image

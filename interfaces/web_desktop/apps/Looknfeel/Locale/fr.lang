@@ -19,4 +19,12 @@ i18n_spacial                            : Spacial
 i18n_window_list_mode                   : Mode de fenètre liste
 i18n_separated                          : Séparées
 i18n_docked                             : Attachées
+i18n_dockedlist                         : Liste de fenètres attachées
+
+i18n_hidden_system                      : Disques Système Caché
+i18n_hide_system                        : Cacher le Disque Système
+
+i18n_virtual_workspaces                 : Workspace virtuel
+i18n_workspace_count                    : Nombre de Workspaces
+i18n_scrollable_desktop_icons           : Icônes de défilement du Workspace
 

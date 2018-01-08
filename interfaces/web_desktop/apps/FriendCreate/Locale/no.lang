@@ -36,6 +36,11 @@ i18n_package_generation_error       : Pakken kunne ikke genereres. Det oppsto en
 i18n_package_submitted              : Pakken er sendt
 i18n_submitted_desc                 : Pakken er sent til Friend Store. Logg gjerne inn der for å spore pakken.
 
+i18n_checking_file                  : Undersøker fil.
+i18n_add_file_to_project            : Filen er ikke lagt til prosjektet. Ønsker du å legge den til?
+i18n_add_to_project                 : Legg til
+i18n_could_not_add_file             : Kunne ikke tilføye til prosjektet.
+
 #macro menu
 i18n_macros                         : Makroer
 i18n_clear_macro                    : Tøm makroer

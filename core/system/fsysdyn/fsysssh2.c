@@ -155,15 +155,12 @@ char* StringDup( const char* str )
 
 void init( struct FHandler *s )
 {
-	if( s )
-	{
-		int rc = libssh2_init ( 0 );
-		s->fh_SpecialData = FCalloc( 1, sizeof( HandlerData ) );
-		HandlerData *hd = (HandlerData *)s->fh_SpecialData;
-		hd->initialized = 0;
-		pthread_mutex_init( &hd->hd_Mutex, NULL );
-		DEBUG("[SSH2FS] init\n");
-	}
+	int rc = libssh2_init( 0 );
+	s->fh_SpecialData = FCalloc( 1, sizeof( HandlerData ) );
+	HandlerData *hd = (HandlerData *)s->fh_SpecialData;
+	hd->initialized = 0;
+	pthread_mutex_init( &hd->hd_Mutex, NULL );
+	DEBUG("[SSH2FS] init\n");
 }
 
 //
@@ -185,14 +182,14 @@ void deinit( struct FHandler *s )
 
 int ServerReconnect( SpecialData *sd, HandlerData *hd )
 {
-	if( sd->sftp_session != NULL )
-	{
-		libssh2_sftp_shutdown( sd->sftp_session );
-		sd->sftp_session = NULL;
-	}
-	
 	if( sd->session != NULL )
 	{
+		if( sd->sftp_session != NULL )
+		{
+			libssh2_sftp_shutdown( sd->sftp_session );
+			sd->sftp_session = NULL;
+		}
+	
 		libssh2_session_disconnect( sd->session,  "Normal Shutdown, Thank you for playing" );
 		libssh2_session_free( sd->session );
 		sd->session = NULL;
@@ -359,10 +356,18 @@ int UnMount( struct FHandler *s, void *f )
 			
 			pthread_mutex_lock( &hd->hd_Mutex );
 			
-			libssh2_sftp_shutdown( sdat->sftp_session );
+			if( sdat->session != NULL )
+			{
+				if( sdat->sftp_session != NULL )
+				{
+					libssh2_sftp_shutdown( sdat->sftp_session );
+					sdat->sftp_session = NULL;
+				}
 			
-			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing" );
-			libssh2_session_free( sdat->session );
+				libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing" );
+				libssh2_session_free( sdat->session );
+				sdat->session = NULL;
+			}
 
 			if( sdat->sock != 0 )
 			{
@@ -383,8 +388,6 @@ int UnMount( struct FHandler *s, void *f )
 		
 		if( lf->f_Name ){ FFree( lf->f_Name ); }
 		if( lf->f_Path ){ FFree( lf->f_Path ); }
-		
-		//free( f );
 	}
 	
 	return 0;
@@ -460,9 +463,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 		
 		//
 		
-		if( path == NULL )
+		if( path == NULL || name == NULL )
 		{
-			DEBUG("[ERROR]: Path option not found!\n");
+			DEBUG("[ERROR]: Path or name parameters not found!\n");
 			FFree( dev );
 			return NULL;
 		}
@@ -506,14 +509,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
  
 		sdat->sin.sin_family = AF_INET;
 		sdat->sin.sin_port = htons( sdat->sd_Port );
-		//sdat->sin.sin_addr.s_addr = sdat->hostaddr;
 		
 		DEBUG("PORT %d HOST %s\n", sdat->sd_Port, sdat->sd_Host );
 		
 		struct hostent *phe;
-		struct servent *pse;
-		struct protoent *ppe;
-		char *protocol;
 		
 		DEBUG("SFTP lock %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
@@ -596,15 +595,15 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 		DEBUG( "AUTHLIST %s\n", userauthlist );
 		
 		int authpw = 0;
-		if( strstr(userauthlist, "password") != NULL )
+		if( strstr( userauthlist, "password" ) != NULL )
 		{
 			authpw |= 1;
 		}
-		if( strstr(userauthlist, "keyboard-interactive") != NULL )
+		if( strstr( userauthlist, "keyboard-interactive" ) != NULL )
 		{
 			authpw |= 2;
 		}
-		if( strstr(userauthlist, "publickey") != NULL )
+		if( strstr( userauthlist, "publickey" ) != NULL )
 		{
 			authpw |= 4;
 		}
@@ -724,6 +723,8 @@ shutdown:
 		DEBUG("all done!\n");
 		
 		pthread_mutex_unlock( &hd->hd_Mutex );
+		
+		//pthread_mutex_destroy( &hd->hd_Mutex );
 		DEBUG("mount SFTP unlock %p\n", &hd->hd_Mutex );
 		
 		if( sdat->sd_Host ){ FFree( sdat->sd_Host ); }
@@ -764,11 +765,7 @@ int Release( struct FHandler *s, void *f )
 			libssh2_session_free( sdat->session );
 			
 			pthread_mutex_unlock( &hd->hd_Mutex );
-			DEBUG("release unlocked %p\n", &hd->hd_Mutex );
-			
-			//pthread_mutex_destroy( &hd->hd_Mutex );
 
-			//close( sdat->sock);
 			DEBUG("all done!\n");
 			//libssh2_exit();
 			
@@ -1062,7 +1059,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE && result > 0 )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
+			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 		
 		if( hd != NULL )
@@ -1143,6 +1140,17 @@ int FileSeek( struct File *s, int pos )
 }
 
 //
+// GetDiskInfo
+//
+
+int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+{
+	*used = 0;
+	*size = 0;
+	return 0;
+}
+
+//
 //
 //
 
@@ -1197,18 +1205,17 @@ int MakeDir( struct File *s, const char *path )
 						
 						FERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
 						
-						int err =libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
-						if( err != 0 )
+						error = libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+						if( error != 0 )
 						{
 							ServerReconnect( sdat, hd );
-							err =libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+							error = libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 						}
 						
 						// Create if not exist!
-						if( err != 0 )
+						if( error != 0 )
 						{
 							FERROR( "Cannot create directory: %s\n", directory );
-							error = 1;
 						}
 					}
 					slash++;
@@ -1221,11 +1228,12 @@ int MakeDir( struct File *s, const char *path )
 			struct stat filest;
 			
 			sprintf( directory, "%s%s", newPath, path );
-			error =libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+			error = libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 
 			FFree( directory );
 		}
 		pthread_mutex_unlock( &hd->hd_Mutex );
+		
 		FFree( newPath );
 		return error;
 	}
@@ -1239,10 +1247,10 @@ int MakeDir( struct File *s, const char *path )
 // rm files/dirs
 //
 
-FQUAD RemoveDirectory( SpecialData *sdat, const char *path )
+FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 {
 	LIBSSH2_SFTP_HANDLE *sftphandle;
-	FQUAD r = 0;
+	FLONG r = 0;
 	
 	// Request a dir listing via SFTP 
 	sftphandle = libssh2_sftp_opendir( sdat->sftp_session, path );
@@ -1320,7 +1328,7 @@ FQUAD RemoveDirectory( SpecialData *sdat, const char *path )
 //
 //
 
-FQUAD Delete( struct File *s, const char *path )
+FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
 	
@@ -1355,7 +1363,7 @@ FQUAD Delete( struct File *s, const char *path )
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		
 		pthread_mutex_lock( &hd->hd_Mutex );
-		FQUAD ret = RemoveDirectory( sdat, comm );
+		FLONG ret = RemoveDirectory( sdat, comm );
 		pthread_mutex_unlock( &hd->hd_Mutex );
 		
 		FFree( comm );
@@ -1494,10 +1502,10 @@ char *GetFileName( const char *path )
 // Get information about last file changes (seconds from 1970)
 //
 
-FQUAD GetChangeTimestamp( struct File *s, const char *path )
+FLONG GetChangeTimestamp( struct File *s, const char *path )
 {
 	DEBUG("GetChangeTimestamp!\n");
-	FQUAD rettime = 0;
+	FLONG rettime = 0;
 	
 	int spath = 0;
 	if( path != NULL )

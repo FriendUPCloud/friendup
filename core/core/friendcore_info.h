@@ -25,6 +25,9 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date pushed 14/10/2015
+ * 
+ * \ingroup FriendCoreInfo
+ * @{
  */
 
 #ifndef __CORE_FRIENDCORE_INFO_H__
@@ -62,3 +65,6 @@ void FriendCoreInfoDelete( FriendcoreInfo *fci );
 BufString *FriendCoreInfoGet( FriendcoreInfo *fci );
 
 #endif // __CORE_FRIENDCORE_INFO_H__
+
+/**@}*/
+// End of FriendCoreInfo Doxygen group

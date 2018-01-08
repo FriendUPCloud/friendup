@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file device_handling.h
+/** @file device_handling.h
  *  Device handling header
  *
  *  @author PS (Pawel Stefanski)
@@ -124,7 +123,7 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr );
 // find comma and return position
 //
 
-inline int ColonPosition( const char *c )
+static inline int ColonPosition( const char *c )
 {
 	int res = 0;
 	
@@ -147,7 +146,7 @@ inline int ColonPosition( const char *c )
  * @return pointer to device (File *)
  */
 
-inline File *GetRootDeviceByName( User *usr, char *devname )
+static inline File *GetRootDeviceByName( User *usr, char *devname )
 {
 	//
 	// Check mounted devices for user

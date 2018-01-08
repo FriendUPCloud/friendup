@@ -53,11 +53,7 @@ typedef struct Path
 
 Path* PathNew( const char* path );                 // Parse a path
 
-char*   PathBasename( char* path );                  // Returns path->parts[partsSize] (TODO)
-
-char*   PathDirectory( char* path );                 // Returns PathJoin( path->parts, 0, partsSize - 1 ) (TODO)
-
-void    PathSplit( Path* p );                      // All paths get split by default. Just use path->parts[n]
+//void    PathSplit( Path* p );                      // All paths get split by default. Just use path->parts[n]
 
 Path* PathJoin( Path* path1, Path* path2 );    // Combines two paths
 

@@ -47,21 +47,23 @@
 #include <db/sqllib.h>
 #include <application/applicationlibrary.h>
 
+struct EModule;
+
+typedef char *(*module_run_func_t)(struct EModule *em, const char *path, const char *args, FULONG *length);
+
 //
 // Execute Module structure
 //
 
 typedef struct EModule
 {
-	struct MinNode node;		// list of modules
-	char *Name;					// name of module
-	char *Path;					// full path to module
-	void *handle;				// handle to dynamic object
-
-	char         *(*Run)( struct EModule *em, const char *path, const char *args, FULONG *length );
-	char         *(*GetSuffix)( );
-	
-	void          *em_SB;
+	struct MinNode					node;		// list of modules
+	char							*em_Name;					// name of module
+	char							*em_Path;					// full path to module
+	void							*em_Handle;				// handle to dynamic object
+	module_run_func_t				Run;
+	char							*(*GetSuffix)( );
+	void							*em_SB;
 
 }EModule;
 
@@ -76,12 +78,5 @@ EModule *EModuleCreate( void *sb, const char *path, const char *name );
 //
 
 void EModuleDelete( EModule *mod );
-
-/*
- * type = module;
-handler = treeroot;
-language = php;
-version = 1;
- */
 
 #endif // __MODULE_MODULE_H__

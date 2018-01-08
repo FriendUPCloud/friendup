@@ -125,7 +125,11 @@ DormantMaster =
 		// Add door object with unique volume name
 		dormantDoorObject.title = namnum;
 		this.appDoors.push( dormantDoorObject );
-		if( typeof( Workspace ) != 'undefined' ) Workspace.refreshDormantDisks();
+		if( typeof( Workspace ) != 'undefined' ) 
+		{
+			if( Workspace.refreshDormantDisks )
+				Workspace.refreshDormantDisks();
+		}
 	},
 	// Get all doors
 	getDoors: function( callback )

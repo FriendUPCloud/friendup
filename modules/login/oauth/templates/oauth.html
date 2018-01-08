@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>OAuth Authorisation Landing Page</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<script> 
+			if( typeof window.opener !== 'undefined' ) 
+			{
+				window.opener.postMessage( { 'url' : window.location.href + '{data}' }, '*' ); 
+			} 
+		</script>
+	</head>
+	<body onload="document.body.innerHTML = window.location.href + '{data}'"></body>
+</html>

@@ -36,7 +36,7 @@
 typedef struct ListString
 {
 	char *ls_Data;
-	long ls_Size;					// size == 0, first element without data
+	FLONG ls_Size;					// size == 0, first element without data
 	
 	FILE			*ls_File;			// poitner to file
 	char			*ls_FName;		// pointer to file name
@@ -60,7 +60,7 @@ void ListStringDelete(ListString *ls);
 // add entry to list
 //
 
-int ListStringAdd(ListString *add, char *data, int size);
+FLONG ListStringAdd(ListString *add, char *data, FLONG size);
 
 //
 // join all lists to one string

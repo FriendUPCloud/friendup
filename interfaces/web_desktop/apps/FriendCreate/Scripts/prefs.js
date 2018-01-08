@@ -75,12 +75,12 @@ var tabs = [
 		name:  'Code',
 		label: i18n('i18n_code_editor'),
 		pageDiv: ge( 'VPage2' )
-	},
+	}/*,
 	{
 		name:  'Features',
 		label: i18n('i18n_feature_settings'),
 		pageDiv: ge( 'VPage3' )
-	}
+	}*/
 ];
 for( var a = 0; a < tabs.length; a++ )
 {

@@ -1,0 +1,56 @@
+
+.TopScroller
+{
+	top: 50px !important;
+	bottom: 50px;
+}
+
+
+.BottomPart
+{
+	height: 50px;
+}
+
+.TopArea
+{
+	height: 50px;
+}
+
+.Issue
+{
+	display: block;
+	border-radius: 5px;
+	margin: 0px;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.Issue.verified
+{
+}
+
+.Issue.fixed
+{
+}
+
+.Issue + .Issue
+{
+	margin-top: 10px;
+}
+
+.Issue .Who, .Issue .Subj
+{
+	display: block;
+	margin: 0 0 5px 0;
+}
+
+.Issue .What, .Issue .Subj
+{
+	margin: 0 0 5px 0;
+}
+
+.Issue .Who
+{
+	padding-bottom: 5px;
+	border-bottom: 1px solid rgba(0,0,0,0.25);
+}

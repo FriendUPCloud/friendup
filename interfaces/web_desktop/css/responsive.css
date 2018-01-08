@@ -17,7 +17,11 @@ html, body
 	overflow: hidden;
 	display: block;
 	height: 0;
-	transition: height 0.25s;
+}
+
+#Screens .Screen .ScreenContent
+{
+	background-size: cover !important;
 }
 
 #Screens > div.Screen + div.Screen > .TitleBar,
@@ -34,9 +38,19 @@ html, body
 
 #Screens > div.Screen > .ScreenContent
 {
-	top: 0px !important;
+	top: 32px;
 	position: absolute;
-	transition: top 0.25s;
+}
+
+#Screens > .Screen + div.Screen > .ScreenContent {
+    top: 0;
+    height: 100% !important;
+}
+
+body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
+{
+	top: 0 !important;
+	height: 100% !important;
 }
 
 /* Sub screens */
@@ -55,33 +69,86 @@ html, body
 #Screens > div.Screen + div.Screen > .ScreenContent,
 #Screens > div.Screen[moved=moved] > .ScreenContent
 {
-	top: 32px !important;
+	width: 100%;
 }
 
 #Screens > div.Screen
 {
 	padding-top: 0;
-	transition: padding-top 0.25s;
 	-webkit-transform: translate3d(0, 0, 0);
 	-moz-transform: translate3d(0, 0, 0);
 	-ms-transform: translate3d(0, 0, 0);
 	transform: translate3d(0, 0, 0);
 }
 
-#Screens > div.Screen[moved=moved]
+#Screens > div.Screen[moved=moved],
+#Screens > div.Screen.HasWidget
 {
 	padding-top: 32px;
+}
+body.WindowMenu #Screens > div.Screen
+{
+	padding-top: 0;
+}
+
+/* Calendar should always be on top */
+body:not(.WidgetSlideDown) #Screens > div.Screen.HasWidget #CalendarWidget
+{
+	top: 0 !important;
+}
+
+.Calendar.MonthName:before
+{
+	content: "\f0c9";
+	margin: 0 10px 0 0;
+	display: inline-block;
+	font-family: fontawesome;
+}
+
+.Calendar .Navigation
+{
+	display: none;
+}
+
+body.WidgetSlideDown .Calendar .Navigation
+{
+	display: block;
+}
+
+.WidgetSlideDown .Calendar.MonthName:before
+{
+	content: "\f073";
+}
+
+.ViewMaximized #CalendarWidget
+{
+	height: 0 !important;
+	overflow: hidden !important;
+	min-height: 0;
+}
+
+/* Calendar no events when dragging screen or showing window menu */
+#Screens > div.Screen[moved=moved] #CalendarWidget,
+html body.WindowMenu .Widget
+{
+	display: none;
+	pointer-events: none !important;
 }
 
 #Statusbar { display:none; }
 
 #DoorsScreen > .offline
 {
-	font-size: 32px;
-	opacity: 0.7;
+	display: none;
 }
 
-.Offline .Screen .Widget { border-top:5px solid #F00; }
+.Offline .Screen .Widget { border-top: 5px solid #F00; }
+
+body:not(.HasMenu) #Screens > div.Screen[moved=moved], 
+body:not(.HasMenu) #Screens > div.Screen.HasWidget
+{
+	padding-top: 0;
+}
 
 #DoorsScreen #Statusbar
 {
@@ -97,7 +164,7 @@ html, body
 	right: 80px;
 }
 
-#Screens .View
+body:not([tablet]) #Screens .View
 {
 	position: relative;
 	width: auto !important;
@@ -109,9 +176,25 @@ html, body
 	clear: both;
 	float: left;
 	overflow: hidden;
-	transition: opacity,top 0.2s,0.2s;
-	-moz-transition: opacity,top 0.2s,0.2s;
-	-webkit-transition: no opacity,top 0.2s,0.2s;
+	transition: none;
+	-moz-transition: none;
+	-webkit-transition: none;
+	box-shadow: none;
+	-moz-box-shadow: none;
+	-webkit-box-shadow: none;
+}
+
+body:not([tablet]) #Screens .View:last-child
+{
+	z-index: 1 !important;
+	box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.5);
+	-moz-box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.5);
+	-webkit-box-shadow: 0px 5px 15px 0px rgba(0,0,0,0.5);
+}
+
+body.WindowMenu #Screens .View
+{
+	width: calc(50% - 20px) !important;
 }
 
 /* Popup dialog boxes lil bit larger */
@@ -120,27 +203,15 @@ html, body
 	font-size: 24px;
 }
 
+#Screens .View > .Content
+{
+	bottom: 0;
+}
+
 #Screens .View.Active
 {
 	overflow: auto;
 	min-height: 175px; /* calc(100% - 200px); */
-}
-
-#Screens .View.Active .PopupMenu
-{
-	left: 10px;
-	top: 35px;
-	right: 10px;
-	box-shadow: 0px 0px 1px 1px white;
-	height: 126px;
-	border-radius: 2px;
-	overflow: auto;
-	border: 0;
-}
-
-html .View.HasPopupMenu > .Title > div > span
-{
-	width: auto;
 }
 
 #Screens .View.Active[maximized=true]
@@ -152,11 +223,6 @@ html .View.HasPopupMenu > .Title > div > span
 	height: 100% !important;
 	min-height: 100% !important;
 	z-index: 99999999 !important;
-}
-
-#Screens .View.Active[maximized=true] .PopupMenu
-{
-	height: 80vh;
 }
 
 #Screens .View.Active .BottomBar
@@ -194,7 +260,7 @@ html .View > .Title > div > .Zoom
 
 .Desklet:before
 {
-	content:"\f0c9";
+	content:"\f00a";
 	font-family: fontawesome;
 	font-size: 40px;
 	display: block;
@@ -207,10 +273,18 @@ html .View > .Title > div > .Zoom
 	border-radius: 4px;
 	position: absolute;
 	top: -80px;
-	left: -10px;
+	left: -9px;
 	text-align: center;
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+}
 
+.Apps .Desklet:before
+{
+	content:"\f062";
+}
+.ViewMaximized .Desklet:before
+{
+	display: none;
 }
 
 .Desklet
@@ -223,61 +297,78 @@ html .View > .Title > div > .Zoom
 	height: auto;
 	margin:0px;
 	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
-	/*-moz-transition: top, left, bottom, right, width,height 0.5s,0.5s,0.5s,0.5s,0.5s,0.5s;
-	-webkit-transition: top, left, bottom, right, width,height 0.5s,0.5s,0.5s,0.5s,0.5s,0.5s;*/
 
 }
 
 .Desklet .Launcher
 {
-	overflow:hidden;
-	float:left; 
-	margin:5px;
+	overflow: hidden;
+	float: left; 
+	margin: 5px;
+	position: relative;
 }
-.Desklet .Launcher + .Launcher { margin:5px; }
+.Desklet .Launcher + .Launcher { margin: 5px; }
 
 .Desklet.Open
 {
-	top: 76px;
-	bottom: 10px;
+	top: 100% !important;
+	left: 12px !important;
+	height: calc(100% - 124px) !important;
+	width: calc(100% - 24px) !important;
 	z-index: 9999999;
-	background: rgba(0,0,0,0.8);
-	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+	position: fixed;
+	background: rgba(0,0,0,0.5);
+	transition: top 0.25s !important;
+}
+
+.Desklet .Launcher span
+{
+	display: none;
+}
+[mobile=mobile] .Desklet .Launcher span
+{
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	position: absolute;
+	left: 5px;
+	width: calc(100% - 5px);
+	top: 56px;
+	text-align: center;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
+}
+
+.Desklet.Open.Opened
+{
+	top: 45px !important;
+}
+
+.Desklet.Open .Launcher
+{
+	width: 25% !important;
+	overflow: visible;
+	box-sizing: border-box;
+	margin: 20px 0 20px 0 !important;
 }
 
 /* make it loook like a close button now.... */
 .Desklet.Open:before
 {
-	position: absolute;
-	top: -70px !important;
-	left:-15px !important;
-	height: 56px;
-	background: rgba(0,0,0,0.8);
-	bottom: auto !important;
-	/*content: "\f00d";*/
+	position: fixed;
+    top: 100%;
+    left: auto;
+    height: 56px;
+    right: 0px;
+    background: rgba(0,0,0,0.5);
+    bottom: auto;
+    content: "\f00d";
 }
 
-.Desklet.Open:after
+.AppsShowing .View
 {
-	position: absolute;
-	top: -70px !important;
-	height: 56px;
-	bottom: auto !important;
-	content: "\f00d";
-	font-family: fontawesome;
-	font-size: 40px;
-	display: block;
-	width: 56px;
-	line-height: 56px;
-	background: rgba(0,0,0,0.8);
-	margin: 12px 0 15px 15px;
-	color: #ffffff;
-	border-radius: 4px;
-	position: absolute;
-	text-align: center;
-	right:0px;
-	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
-
+	display: none;
+	pointer-events: none;
 }
 
 /* Icons in general */
@@ -305,9 +396,9 @@ body[mobile=mobile] .File .Title
 	margin: 0;
 	color: #ffffff;
 	border-radius: 4px;
-	position: absolute;
-	top: -68px;
-	left: 15px;
+	position: fixed;
+	bottom: 12px;
+	left: 12px;
 	text-align: center;
 }
 
@@ -321,7 +412,7 @@ body[mobile=mobile] .File .Title
 	height: 0;
 	background: rgba(0,0,0,0.5);
 	border-radius: 4px;
-	transition: top, left, bottom, right, width, height 0.1s,0s,0.1s,0s,0s,0s;
+	transition: none;
 	box-sizing: border-box;
 }
 
@@ -388,11 +479,18 @@ html body[mobile=mobile] .View > .Title > div > .Zoom
 }
 
 /* mobile styles...  */
-#Screens .View .BottomBar, #Screens .View .Resize
+
+body:not([tablet]) #Screens .View.Hidden
 {
 	display: none;
 }
-#Screens .View.Active .BottomBar, #Screens .View.Active .Resize
+
+body:not([tablet]) #Screens .View .BottomBar, 
+body:not([tablet]) #Screens .View .Resize
+{
+	display: none;
+}
+body #Screens .View.Active .BottomBar, #Screens .View.Active .Resize
 {
 	display: block;
 }
@@ -417,4 +515,108 @@ body[mobile=mobile] #DeepestField > div > #Netconnections
 	display: none;
 }
 
+/* Deepest field TODO: Fix */
+
+#DeepestField > div > #Identity *
+{
+	max-width: 100px;
+} 
+#DeepestField > div > #FNetHeader, 
+#DeepestField > div > #FNetContent 
+{ 
+	display: none; 
+}
+
+
+/* Mobile menu -------------------------------------------------------------- */
+
+[mobile=mobile] #WorkspaceMenu .Open ul
+{
+	overflow: auto;
+	top: 50px;
+}
+
+[mobile=mobile]:not(.ViewMaximized):not(.WidgetSlideDown) #WorkspaceMenu
+{
+	height: 0;
+	overflow: hidden;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
+{
+	top: 0;
+	background: rgba(255,255,255,0.8);
+	bottom: calc(100% - 32px);
+	visibility: visible;
+	z-index: 2147483644;
+	width: 100%;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu,
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
+{
+	float: left;
+	text-shadow: none;
+	padding: 2px 10px;
+	display: block;
+	font-size: inherit;
+	color: black;
+	margin: 0px 1px 0 4px;
+	line-height: 28px;
+	text-transform: none;
+	background: #ffffff;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li.CloseButton + li,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li.CloseButton + li
+{
+	margin-top: 10px;
+}
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li
+{
+	font-size: 24px;
+	border-bottom: 1px solid rgba(0,0,0,0.1);
+    padding: 10px;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li[divider=divider],
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li[divider=divider]
+{
+	display: none;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li.Heading,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li.Heading
+{
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+/* Workspace menu ----------------------------------------------------------- */
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
+{
+	position: fixed;
+	bottom: 0px;
+	border-radius: 0;
+	width: 100%;
+	font-size: 20px;
+	line-height: 30px;
+	padding: 10px 4px;
+	box-sizing: border-box;
+	background: #222222;
+}
+
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul > li + li,
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu li.Submenu:after
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul > li + li,
+[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu li.Submenu:after
+{
+	color: white;
+}
 

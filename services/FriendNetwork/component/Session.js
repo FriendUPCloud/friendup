@@ -112,11 +112,14 @@ ns.Session.prototype.updateMeta = function( conf ) {
 	if ( 'string' === typeof( conf.description ))
 		self.meta.description = conf.description;
 	
+	if ( 'string' === typeof( conf.imagePath ))
+		self.meta.imagePath = conf.imagePath;
+	
+	self.meta.info = conf.info || self.meta.info;
+	
 	if ( conf.apps && conf.apps.forEach )
 		conf.apps.forEach( item => self.exposeApp( item ))
 	
-	if ( 'string' === typeof( conf.imagePath ))
-		self.meta.imagePath = conf.imagePath;
 }
 
 ns.Session.prototype.subscribe = function( hostId ) {
@@ -159,6 +162,9 @@ ns.Session.prototype.exposeApp = function( app ) {
 		self.meta.apps = [];
 	
 	const parsed =  parse( app );
+	if ( !parsed )
+		return null;
+	
 	self.meta.apps.push( parsed );
 	return self.meta.apps;
 	
@@ -167,18 +173,24 @@ ns.Session.prototype.exposeApp = function( app ) {
 			return null;
 		
 		let id = item.id;
+		let type = '';
 		let name = '';
 		let desc = '';
+		if ( item.type && item.type.toString )
+			type = item.type.toString();
+		
 		if ( item.name && item.name.toString )
 			name = item.name.toString();
 		
 		if ( item.description && item.description.toString )
-			desc = item.description;
+			desc = item.description.toString();
 		
 		return {
 			id          : id,
+			type        : type,
 			name        : name,
 			description : desc,
+			info        : item.info || undefined,
 		}
 	}
 }

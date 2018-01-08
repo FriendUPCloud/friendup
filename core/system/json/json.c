@@ -82,7 +82,7 @@ typedef struct
 //
 //
 
-static void * default_alloc (size_t size, int zero, void * user_data)
+static void * default_alloc (size_t size, int zero, void * user_data __attribute__((unused)))
 {
 	return zero ? calloc (1, size) : malloc (size);
 }
@@ -91,7 +91,7 @@ static void * default_alloc (size_t size, int zero, void * user_data)
 //
 //
 
-static void default_free (void * ptr, void * user_data)
+static void default_free (void * ptr, void * user_data __attribute__((unused)))
 {
 	free (ptr);
 }
@@ -775,7 +775,7 @@ json_value * json_parse_ex (json_settings * settings,
 					{
 						++ num_digits;
 
-						if (top->type == json_integer || flags & flag_num_e)
+						if (top->type == json_integer || (flags & flag_num_e))
 						{
 							if (! (flags & flag_num_e))
 							{
@@ -795,11 +795,13 @@ json_value * json_parse_ex (json_settings * settings,
 								continue;
 							}
 
-							top->u.integer = (top->u.integer * 10) + (b - '0');
+                     // Bit shifting for * 10
+							top->u.integer = ( top->u.integer << 3 ) + ( top->u.integer << 1 ) + (b - '0');
 							continue;
 						}
 
-						num_fraction = (num_fraction * 10) + (b - '0');
+                  // Bit shifting for * 10
+						num_fraction = ( num_fraction << 3 ) + ( num_fraction << 1 ) + (b - '0');
 						continue;
 					}
 

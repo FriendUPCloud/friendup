@@ -10,6 +10,15 @@ i18n_current_password                : Mot de passe actuel
 i18n_new_password                    : Nouveau mot de passe
 i18n_confirm                         : Confirmer
 
+i18n_are_you_sure                    : Êtes-vous sûr?
+i18n_this_will_remove                : Cela supprimera le disque de votre liste de montage.
+
+i18n_delete_disk                     : Supprimer
+
+i18n_key_name              			 : Nom cle
+i18n_key_password             	     : Mot de passe cle
+i18n_generate_keypair                : Generer paire de cle
+
 i18n_extended_information            : Informations complémentaires
 i18n_telephone                       : Telephone
 i18n_email_address                   : Adresse mail
@@ -28,6 +37,12 @@ i18n_no_apps                         : Statut
 i18n_no_apps_desc                    : Rien d'installé.
 
 i18n_add_storage                     : Ajouter de l'espace
+i18n_edit_storage                    : Modifier le disque
+
+i18n_disk_error                      : Erreur de disque
+i18n_failed_to_edit                  : Échec de l'édition du volume de disque.
+i18n_disk_success                    : Disque édité
+i18n_disk_edited                     : Le disque a été modifié avec succès.
 
 i18n_no_storage                      : Pas d'espace de stockage disponible.
 
@@ -42,6 +57,7 @@ i18n_description : Choisissez quel type de disque vous voulez ajouter. Certains 
 
 i18n_disk                         : .
 i18n_add_a                        : Ajouter un disque
+i18n_edit                            : Modifier
 
 i18n_connection_details           : Détails de connexion
 i18n_notes                        : Notes
@@ -59,6 +75,10 @@ i18n_device_name                  : Nom du disque
 i18n_placeholder_connection       : Mondisque
 
 i18n_add_storage                  : Ajouter
+i18n_update_disk                  : Mettre à jour
 i18_account2                      : Compte
 i18n_settings_saved               : Préférences sauvegardées
 
+i18n_key_password_confirm         : Confirm password
+i18n_pass_mis_desc                : The passwords need to match.
+i18n_password_mismatch            : Password mismatch!

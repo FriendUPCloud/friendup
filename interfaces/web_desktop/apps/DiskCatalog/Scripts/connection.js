@@ -17,6 +17,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var user = '';
+
 /* Init connection window */
 Application.oldSettings = false;
 Application.run = function( msg )
@@ -32,6 +34,7 @@ Application.run = function( msg )
 		}
 		m.execute( 'getlocale', { type: 'DOSDrivers', locale: data.locale } );
 	} );
+	user = Application.userId;
 }
 
 /* Cancel the operation */
@@ -129,6 +132,26 @@ Application.saveChanges = function()
 		data.EncryptedKey = ge( 'EncryptedKey' ).value;
 	}
 	
+	if( ge( 'Key' ) )
+	{
+		var keys = [];
+		
+		var opt = ge( 'Key' ).getElementsByTagName( 'option' );
+		
+		if( opt && opt.length > 0 )
+		{
+			for( var a = 0; a < opt.length; a++ )
+			{
+				if( opt[a].value && opt[a].selected )
+				{
+					keys.push( opt[a].value );
+				}
+			}
+		}
+		
+		data.KeysID = ( keys ? keys.join( ',' ) : '' );
+	}
+	
 	// Custom fields
 	var inps = document.getElementsByTagName( 'input' );
 	var txts = document.getElementsByTagName( 'textarea' );
@@ -160,13 +183,12 @@ Application.saveChanges = function()
 			Application.sendMessage( { command: 'refresh' } );
 			Application.cancel();
 		}
-		else
-		{
-			console.log( dat );
-		}
+		
+		console.log( dat );
 	}
+	
+	data.userid = user;
 
-	console.log('dataset is',data);
 	if( ge( 'FileSystemID' ) && ge( 'FileSystemID' ).value > 0 )
 	{
 		m.execute( 'editfilesystem', data );
@@ -186,6 +208,8 @@ Application.receiveMessage = function( msg )
 		
 			var d = msg.info;
 			var out = msg.types;
+			var keys = msg.keys;
+			user = msg.user;
 			
 			if( msg.info && msg.info.ID )
 			{
@@ -216,6 +240,7 @@ Application.receiveMessage = function( msg )
 				if( ge( 'conf.Pollable' ) ) ge( 'conf.Pollable' ).checked = ( conf.Pollable == 'yes' ? 'checked' : '' );
 				if( ge( 'conf.Invisible' ) ) ge( 'conf.Invisible' ).checked = ( conf.Invisible == 'yes' ? 'checked' : '' );
 				if( ge( 'conf.Executable' ) ) ge( 'conf.Executable' ).value = conf.Executable ? conf.Executable : '';
+				if( ge( 'conf.DiskSize' ) ) ge( 'conf.DiskSize' ).value = conf.DiskSize ? conf.DiskSize : '';
 				
 				if( d.Key && ge( 'EncryptedKey' ) && ge( 'PublicKey' ) )
 				{
@@ -243,6 +268,12 @@ Application.receiveMessage = function( msg )
 				ge( 'Types' ).innerHTML = '<select id="Type" class="FullWidth" onchange="LoadDOSDriverGUI()">' + out + '</select>';
 			}
 			
+			if( ge( 'Keys' ) )
+			{
+				var str = '<option value="">' + i18n( 'i18n_select_encryption_key' ) + '</option>' + ( keys ? keys : '' );
+				ge( 'Keys' ).innerHTML = '<select id="Key" class="FullWidth" multiple>' + str + '</select>';
+			}
+			
 			break;
 		
 		case 'setkey':
@@ -265,6 +296,7 @@ function LoadDOSDriverGUI()
 	{
 		if( e == 'ok' )
 		{
+			i18nAddTranslations( d );
 			var f = new File();
 			f.i18n();
 			for( var a in f.replacements )
@@ -278,6 +310,8 @@ function LoadDOSDriverGUI()
 	}
 	m.execute( 'dosdrivergui', { type: ge( 'Type' ).value } );
 }
+
+
 
 function setCover()
 {

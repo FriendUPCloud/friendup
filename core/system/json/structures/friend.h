@@ -39,9 +39,11 @@ typedef struct FriendFile
 {
 	char 			*ff_Filename;
 	char 			*ff_Path;
-	FUQUAD 		ff_Size;
+	FUQUAD 			ff_Size;
 	char 			*ff_MetaType;
 	char 			*ff_Type;
+	struct tm		ff_CreateTime;
+	struct tm		ff_ModifyTime;
 	MinNode 		node;
 }FriendFile;
 
@@ -53,6 +55,7 @@ static FULONG FriendFileDesc[] = {
 	SQLT_INT,   (FULONG)"Filesize",    offsetof( struct FriendFile, ff_Size ),
 	SQLT_STR,   (FULONG)"MetaType",    offsetof( struct FriendFile, ff_MetaType ),
 	SQLT_STR,   (FULONG)"Type",   offsetof( struct FriendFile, ff_Type ),
+	SQLT_DATETIME, (FULONG)"DateModified", offsetof( struct FriendFile, ff_ModifyTime ),
 	SQLT_NODE,  (FULONG)"node",        offsetof( struct FriendFile, node ),
 	SQLT_END 
 };

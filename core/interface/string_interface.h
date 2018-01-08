@@ -61,8 +61,8 @@ typedef struct StringInterface
 	char				*(*StringShellEscape)( const char* str );
 	char				*(*StringShellEscapeSize)( const char* str, int *len );
 	char				*(*FindInBinary)(char *x, int m, char *y, int n) ;
-	FQUAD				(*FindInBinaryPOS)(char *x, int m, char *y, FUQUAD n);
-	FQUAD				(*FindInBinarySimple)( char *x, int m, char *y, FUQUAD n );
+	FLONG				(*FindInBinaryPOS)(char *x, int m, char *y, FULONG n);
+	FLONG				(*FindInBinarySimple)( char *x, int m, char *y, FULONG n );
 	void				(*HashedString)( char **str );
 	char				*(*StringDuplicateEOL)( const char* str );
 	int					(*StringNToInt)( char *s, int len );
@@ -72,7 +72,7 @@ typedef struct StringInterface
 // init function
 //
 
-inline void StringInterfaceInit( StringInterface *si )
+static inline void StringInterfaceInit( StringInterface *si )
 {
 	si->MakeString = MakeString;
 	si->SubStrCmp = SubStrCmp;

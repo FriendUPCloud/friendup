@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ * ServiceManager header
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2015
+ */
 
 #ifndef __SERVICE_SERVICE_MANAGER_H__
 #define __SERVICE_SERVICE_MANAGER_H__
@@ -63,13 +70,5 @@ Service *ServiceManagerGetByName( ServiceManager *smgr, char *name );
 //
 
 int ServiceManagerChangeServiceState( ServiceManager *smgr, Service *srv, int state );
-
-//
-// Web calls handler, void *SystemBase
-//
-
-Http *ServiceManagerWebRequest( void *sb, char **urlpath, Http *request  );
-
-
 
 #endif //__SERVICE_SERVICE_MANAGER_H__

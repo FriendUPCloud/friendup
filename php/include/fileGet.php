@@ -31,7 +31,6 @@ $ssl = substr( $url, 0, 6 ) == 'https:';
 $ch = curl_init();
 curl_setopt( $ch, CURLOPT_URL, $url    );
 curl_setopt( $ch, CURLOPT_PORT, $port );
-curl_setopt( $ch, CURLOPT_SAFE_UPLOAD, false );
 curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 if( $ssl == 1 )

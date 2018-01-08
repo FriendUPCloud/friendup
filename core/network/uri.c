@@ -287,23 +287,27 @@ char* UriGetPath( char* str, unsigned int strLen, char** next )
 	}
 	if( ptrEnd == str )
 	{
-		return 0;
+		return NULL;
 	}
 
 	unsigned int len = ptrEnd - str;
-	char* out = FCalloc( len + 1, sizeof(char) );
-	if( out != NULL )
+	if( len > 0 )
 	{
-		memcpy( out, str, len );
-		out[len] = 0;
-	}
-	else
-	{
-		FERROR("Get Uri Path memory alloc error\n");
-	}
-	*next = ptrEnd;
+		char* out = FCalloc( len + 1, sizeof(char) );
+		if( out != NULL )
+		{
+			memcpy( out, str, len );
+			out[len] = 0;
+		}
+		else
+		{
+			FERROR("Get Uri Path memory alloc error\n");
+		}
+		*next = ptrEnd;
 
-	return out;
+		return out;
+	}
+	return NULL;
 }
 
 /**
@@ -469,6 +473,9 @@ char* UriGetFragment( char* str, unsigned int strLen, char** next )
  */
 Uri* UriParse( char* str )
 {
+	if (str == NULL){ //BG-355
+		return NULL;
+	}
 	Uri* uri = UriNew();
 	unsigned int strLen = strlen( str );
 	unsigned int remainingLen = strLen;

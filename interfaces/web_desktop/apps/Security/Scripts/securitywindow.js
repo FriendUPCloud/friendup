@@ -61,7 +61,8 @@ function redrawApps()
 		{
 			pout += perms[c][0] + ( ( perms[c][1] && perms[c][1].length ) ? ( '(' + perms[c][1] + ')' ) : '' ) + ( ( c < perms.length - 1 ) ? ', ' : '' );
 		}
-		var btn = '<button type="button" class="FullWidth Button IconSmall fa-pencil" onclick="SecurityEdit( \'' + apps[a].Name + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button>';
+		var btn = '<button type="button" class="HContent45 NoMargins FloatLeft Button IconSmall fa-pencil" onclick="SecurityEdit( \'' + apps[a].Name + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button><div class="HContent5 FloatLeft">&nbsp;</div>';
+		btn += '<button type="button" class="HContent50 NoMargins FloatLeft Button IconSmall fa-pencil" onclick="SecurityDelete( \'' + apps[a].Name + '\' )">&nbsp;' 	+ i18n( 'i18n_delete' ) + '</button>';
 		sw = sw == 2 ? 1 : 2;
 		str += '<div class="GuiContainer"><div class="HRow BackgroundDefault sw' + sw + '">';
 		str += '<div class="HContent25 FloatLeft Padding LineHeight2x"><strong>' + apps[a].Name + '</strong></div>';
@@ -104,6 +105,19 @@ Application.closeAppWindow = function( app, clean )
 			this.popWindows = out;
 		}
 	}
+}
+
+function SecurityDelete( app )
+{
+	Confirm( 'Are you sure?', 'This will delete the security entry.', function( e )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			reloadApps();
+		}
+		m.execute( 'removeapplicationsettings', { appName: app } );
+	} );
 }
 
 function SecurityEdit( app )
@@ -164,3 +178,4 @@ function closeWin()
 {
 	Application.sendMessage( { command: 'quit' } );
 }
+

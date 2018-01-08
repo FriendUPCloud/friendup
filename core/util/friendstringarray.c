@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  *  Fast array of Friend Strings
  *
@@ -535,7 +534,7 @@ int FStringArrayFindNumberFromString(FStringArray* pFSArray, char* pString, int 
  * @param flags
  * @return FSTRINGERROR_NOTIMPLEMENTED
  */
-int FStringArrayInsertFileAscii(FStringArray* pFSArray, char* pPath, int number, int nLines, int flags)
+int FStringArrayInsertFileAscii(FStringArray* pFSArray __attribute__((unused)), char* pPath __attribute__((unused)), int number __attribute__((unused)), int nLines __attribute__((unused)), int flags __attribute__((unused)))
 {
 	return FSTRINGERROR_NOTIMPLEMENTED;
 }
@@ -550,7 +549,7 @@ int FStringArrayInsertFileAscii(FStringArray* pFSArray, char* pPath, int number,
  * @param flags
  * @return FSTRINGERROR_NOTIMPLEMENTED
  */
-int FStringArraySaveAscii(FStringArray* pFSArray, int nLines, int flags)
+int FStringArraySaveAscii(FStringArray* pFSArray __attribute__((unused)), int nLines __attribute__((unused)), int flags __attribute__((unused)))
 {
 	return FSTRINGERROR_NOTIMPLEMENTED;
 }
@@ -565,7 +564,7 @@ int FStringArraySaveAscii(FStringArray* pFSArray, int nLines, int flags)
  * @param flags
  * @return FSTRINGERROR_NOTIMPLEMENTED
  */
-int FStringArrayLoadAscii(FStringArray* pFSArray, int nLines, int position, int flags)
+int FStringArrayLoadAscii(FStringArray* pFSArray __attribute__((unused)), int nLines __attribute__((unused)), int position __attribute__((unused)), int flags __attribute__((unused)))
 {
 	return FSTRINGERROR_NOTIMPLEMENTED;
 }
@@ -699,7 +698,7 @@ int FStringArrayInsertStringAtId(FStringArray* pFSArray, char* pString, int id, 
  * @return FSTRINGERROR_OK
  * @return error code (<0)
  */
-int FStringArraySetFStringAtNumber(FStringArray* pFSArray, FString* pFString, int number, int flags)
+int FStringArraySetFStringAtNumber(FStringArray* pFSArray, FString* pFString, int number, int flags __attribute__((unused)))
 {
 	if ( pFSArray== NULL || pFString == NULL)
 		return FSTRINGERROR_NULLPOINTER;
@@ -722,7 +721,7 @@ int FStringArraySetFStringAtNumber(FStringArray* pFSArray, FString* pFString, in
  * @return FSTRINGERROR_OK
  * @return error code (<0)
  */
-int FStringArraySetStringAtNumber(FStringArray* pFSArray, char* pString, int number, int flags)
+int FStringArraySetStringAtNumber(FStringArray* pFSArray, char* pString, int number, int flags __attribute__((unused)))
 {
 	if ( pFSArray== NULL || pString == NULL)
 		return FSTRINGERROR_NULLPOINTER;
@@ -746,7 +745,7 @@ int FStringArraySetStringAtNumber(FStringArray* pFSArray, char* pString, int num
  * @return FSTRINGERROR_OK
  * @return error code (<0)
  */
-int FStringArraySetFStringAtId(FStringArray* pFSArray, FString* pFString, int id, int flags)
+int FStringArraySetFStringAtId(FStringArray* pFSArray, FString* pFString, int id, int flags __attribute__((unused)))
 {
 	if ( pFSArray== NULL || pFString == NULL)
 		return FSTRINGERROR_NULLPOINTER;
@@ -768,7 +767,7 @@ int FStringArraySetFStringAtId(FStringArray* pFSArray, FString* pFString, int id
  * @return FSTRINGERROR_OK
  * @return error code (<0)
  */
-int FStringArraySetStringAtId(FStringArray* pFSArray, char* pString, int id, int flags)
+int FStringArraySetStringAtId(FStringArray* pFSArray, char* pString, int id, int flags __attribute__((unused)))
 {
 	if ( pFSArray== NULL || pString == NULL)
 		return FSTRINGERROR_NULLPOINTER;

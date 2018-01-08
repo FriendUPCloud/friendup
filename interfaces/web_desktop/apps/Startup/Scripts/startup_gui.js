@@ -29,6 +29,7 @@ Application.receiveMessage = function( msg )
 	switch( msg.command )
 	{
 		case 'saveitem':
+			
 			var o = [];
 			for( var a in this.views )
 			{
@@ -48,8 +49,15 @@ Application.receiveMessage = function( msg )
 				
 				if( d )
 				{
-					list = JSON.parse( d );
-					list = list.startupsequence;
+					try
+					{
+						list = JSON.parse( d );
+						list = list.startupsequence;
+					}
+					catch( e ) 
+					{ 
+						console.log( { e:e, d:d } ); 
+					}
 				}
 				if( list == '[]' ) list = [];
 
@@ -61,7 +69,7 @@ Application.receiveMessage = function( msg )
 						if( a == msg.itemId ) list[a] = msg.itemcommand;
 					}
 				}
-					
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
@@ -156,7 +164,17 @@ function LoadStartupSequence()
 			ge( 'Cont' ).innerHTML = str;
 			return;
 		}
-		var sequence = JSON.parse( d );
+		var sequence = false;
+		
+		try
+		{
+			sequence = JSON.parse( d );
+		}
+		catch( e )
+		{
+			console.log( { e:e, d:d } );
+		}
+		
 		sequence = sequence ? sequence.startupsequence : [];
 		if( sequence == '[]' ) sequence = [];
 		if( sequence.length )

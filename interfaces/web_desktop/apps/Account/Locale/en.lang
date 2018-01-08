@@ -10,6 +10,17 @@ i18n_current_password                : Current password
 i18n_new_password                    : New password
 i18n_confirm                         : confirm
 
+i18n_are_you_sure                    : Are you sure?
+i18n_this_will_remove                : This will remove the disk from your mountlist.
+
+i18n_delete_disk                     : Delete disk
+
+i18n_key_type              			 : Key type
+i18n_key_name              			 : Key name
+i18n_key_password             	     : Key password
+i18n_generate                        : Generate
+i18n_generate_keypair                : Generate keypair
+
 i18n_extended_information            : Extended information
 i18n_telephone                       : Telephone
 i18n_email_address                   : E-mail address
@@ -28,6 +39,7 @@ i18n_no_apps                         : Status
 i18n_no_apps_desc                    : None installed.
 
 i18n_add_storage                     : Add storage
+i18n_edit_storage                    : Edit disk
 
 i18n_no_storage                      : No storage space available.
 
@@ -40,26 +52,52 @@ i18n_get_apps                        : Get applications
 i18n_descheading : Add more storage to your system
 i18n_description : Please choose which disk type you want to add to your system. Some providers may ask you to register an account.
 
-i18n_disk                         : disk
-i18n_add_a                        : Add a
+i18n_disk                            : disk
+i18n_add_a                           : Add a
+i18n_edit                            : Edit
 
-i18n_connection_details           : Connection details
-i18n_notes                        : Notes
-i18n_directory                    : Remote directory
-i18n_login_info                   : Login info
-i18n_your_notes                   : Your notes
-i18n_username                     : Username
-i18n_password                     : Password
-i18n_host_port                    : Server port
-i18n_host_ip                      : Server address or IP
-i18n_hostname                     : Server address
-i18n_workgroup_name               : Your workgroup
-i18n_workgroup                    : Workgroup
-i18n_device_name                  : Disk name
-i18n_placeholder_connection       : Mydisk
+i18n_disk_error                      : Disk error
+i18n_failed_to_edit                  : Failed to edit disk volume.
+i18n_disk_success                    : Disk edited
+i18n_disk_edited                     : Disk was edited successfully.
 
-i18n_add_storage                  : Add storage
-i18_account2                      : Account
-i18n_settings_saved               : Settings saved
+i18n_connection_details              : Connection details
+i18n_notes                           : Notes
+i18n_directory                       : Remote directory
+i18n_login_info                      : Login info
+i18n_your_notes                      : Your notes
+i18n_username                        : Username
+i18n_password                        : Password
+i18n_host_port                       : Server port
+i18n_host_ip                         : Server address or IP
+i18n_hostname                        : Server address
+i18n_workgroup_name                  : Your workgroup
+i18n_workgroup                       : Workgroup
+i18n_device_name                     : Disk name
+i18n_placeholder_connection          : Mydisk
 
+i18n_add_storage                     : Add storage
+i18n_update_disk                     : Update disk
+i18_account2                         : Account
+i18n_settings_saved                  : Settings saved
+
+i18n_key_password_confirm            : Confirm password
+i18n_pass_mis_desc                   : The passwords need to match.
+i18n_password_mismatch               : Password mismatch!
+
+i18n_key_management                  : Key management
+i18n_application                     : Application
+i18n_options                         : Options
+
+i18n_add_key                         : Add key
+i18n_data                            : Data
+
+i18n_close                           : Close
+i18n_encrypt                         : Encrypt
+i18n_decrypt                         : Decrypt
+
+i18n_system_wide                     : System wide
+i18n_devices                         : Devices
+
+i18n_generate_key                    : Generate key
 

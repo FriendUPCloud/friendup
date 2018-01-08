@@ -47,6 +47,7 @@ typedef struct SpecialData
 {
 	INRAMFile *fp;
 	INRAMFile * root;
+	void *sb;
 }SpecialData;
 
 
@@ -131,7 +132,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 	File *dev = NULL;
 	char *path = NULL;
 	char *name = NULL;
-	//User *usr = NULL;
+	void *sb;
 	
 	if( s == NULL )
 	{
@@ -160,6 +161,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 				case FSys_Mount_Name:
 					name = (char *)lptr->ti_Data;
 					break;
+				case FSys_Mount_SysBase:
+					sb = (void *)lptr->ti_Data;
+					break;
 			}
 			lptr++;
 		}
@@ -167,6 +171,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 		SpecialData *srd =  calloc( 1, sizeof( SpecialData ) );
 		srd->root = INRAMFileNew( INRAM_ROOT, name, name );
 		dev->f_SpecialData = srd;
+		srd->sb = sb;
 		
 		dev->f_FSys = s;
 		dev->f_Position = 0;
@@ -246,7 +251,7 @@ int UnMount( struct FHandler *s, void *f )
 void *FileOpen( struct File *s, const char *path, char *mode )
 {
 	int spath = strlen( path );
-	char *tmppath = calloc( spath+10, sizeof(char) );
+	char *tmppath = FCalloc( spath+10, sizeof(char) );
 	memcpy( tmppath, path, spath );
 	
 	File *locfil = NULL;
@@ -317,37 +322,28 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			}
 		}
 		
-		
-		
+		// Ready the file structure
+		if( ( locfil = calloc( sizeof( File ), 1 ) ) != NULL )
 		{
-			// Ready the file structure
-			if( ( locfil = calloc( sizeof( File ), 1 ) ) != NULL )
-			{
-				locfil->f_Path = StringDup( path );
-				DEBUG("Fileopen, path duplicated %s\n", path );
-		
-				locfil->f_SpecialData = calloc( 1, sizeof( SpecialData ) );
-		
-				SpecialData *sd = (SpecialData *)locfil->f_SpecialData;
-		
-				if( sd )
-				{
-					sd->fp = nf;
-				}
-				DEBUG("\nOffset set to %lld\n\n", nf->nf_Offset );
-				
-				DEBUG("File open, descriptor returned\n");
-				
-				return locfil;
-			}
-		}
-		/*
-		else
-		{
+			locfil->f_Path = StringDup( path );
+			DEBUG("Fileopen, path duplicated %s\n", path );
 			
-		}*/
+			locfil->f_SpecialData = calloc( 1, sizeof( SpecialData ) );
+			SpecialData *sd = (SpecialData *)locfil->f_SpecialData;
+		
+			if( sd )
+			{
+				sd->fp = nf;
+			}
+			DEBUG("\nOffset set to %ld\n\n", nf->nf_Offset );
+			
+			DEBUG("File open, descriptor returned\n");
+			
+			return locfil;
+		}
 	}
-	free( tmppath );
+
+	FFree( tmppath );
 	DEBUG("File open end\n");
 
 	return NULL;
@@ -460,20 +456,31 @@ int MakeDir( struct File *s, const char *path )
 	if( directory != NULL )
 	{
 		DEBUG("Directory found\n");
-		return 0;
+		return -1;
 	}
 	
-	return -1;
+	return 0;
+}
+
+//
+// GetDiskInfo
+//
+
+int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+{
+	*used = 0;
+	*size = 0;
+	return 0;
 }
 
 //
 // Delete
 //
 
-FQUAD Delete( struct File *s, const char *path )
+FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("Delete!\n");
-	FQUAD deleted = 0;
+	FLONG deleted = 0;
 	
 	int error = 0;
 	SpecialData *srd = (SpecialData *) s->f_SpecialData;
@@ -649,9 +656,9 @@ void FillStat( BufString *bs, INRAMFile *nf, File *d, const char *path )
 // Get information about last file changes (seconds from 1970)
 //
 
-FQUAD GetChangeTimestamp( struct File *s, const char *path )
+FLONG GetChangeTimestamp( struct File *s, const char *path )
 {
-	return (FQUAD)0;
+	return (FLONG)0;
 }
 
 //
@@ -660,8 +667,7 @@ FQUAD GetChangeTimestamp( struct File *s, const char *path )
 
 BufString *Info( File *s, const char *path )
 {
-	DEBUG("\n\n\n\n\n\n");
-	DEBUG("Info!\n");
+	DEBUG("[INRAM] Info!\n");
 	
 	BufString *bs = BufStringNew();
 
@@ -682,11 +688,18 @@ BufString *Info( File *s, const char *path )
 	}
 	else
 	{
-		//DEBUG("LOCAL file stat FAIL %s\n", comm );
-		BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
+		DEBUG("[INRAM] file stat FAIL %s\n", path );
+		SpecialData *locsd = (SpecialData *)s->f_SpecialData;
+		SystemBase *l = (SystemBase *)locsd->sb;
+		
+		char buffer[ 256 ];
+		int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
+		
+		BufStringAddSize( bs, buffer, size );
+		//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 	}
 	
-	DEBUG("Info END\n");
+	DEBUG("[INRAM] Info END\n");
 	
 	return bs;
 }

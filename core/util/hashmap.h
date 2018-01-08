@@ -51,7 +51,7 @@ HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator );
 
 //
 // Add an element to the hashmap. Returns false on faliure
-//
+// 'key' MUST BE PERMANENTLY ALLOCATED AND NOT FREED AFTER CALLING THIS FUNCTION
 
 FBOOL HashmapPut( Hashmap* in, char* key, void* value );
 
@@ -65,7 +65,7 @@ HashmapElement* HashmapGet( Hashmap* in, char* key );
 // Get pointer to data from Hashmap
 //
 
-void* HashmapGetData( Hashmap* in, char* key );
+void* HashmapGetData( Hashmap* in, const char* key );
 
 //
 // Hashmap clone

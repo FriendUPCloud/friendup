@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  Application Session
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __APP_SESSION_H__
 #define __APP_SESSION_H__

@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * UserLoggerFile logger
  *
@@ -137,7 +136,7 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 	
 	if( sd->sd_FP != NULL )
 	{
-		fprintf( sd->sd_FP, "Date: %s, UserID: %llu, UserSessionID: %s, Action: %s, Information: %s\n",  datestring, logEntry.ul_UserID, logEntry.ul_UserSessionID, actions, information );
+		fprintf( sd->sd_FP, "Date: %s, UserID: %lu, UserSessionID: %s, Action: %s, Information: %s\n",  datestring, logEntry.ul_UserID, logEntry.ul_UserSessionID, actions, information );
 	}
 	
 	return 0;

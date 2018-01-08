@@ -22,7 +22,9 @@ Application.run = function()
 	var v = new View( {
 		title: i18n( 'i18n_calculator' ),
 		width: 198,
-		height: 229
+		height: 229,
+		'min-width': 198,
+		'min-height': 229
 	} );
 	
 	v.onClose = function()

@@ -41,8 +41,9 @@ if( isset( $args->args->pckg ) )
 	$hashes = array();
 
 	// Now hash all files!
-	function hashEmRecursive( $p, &$hashes, $d = 0 )
+	function hashEmRecursive( $p, &$hashes, $d = 0, $rpath = '' )
 	{
+		global $Logger;
 		if( $hdir = opendir( $p ) )
 		{
 			while( $f = readdir( $hdir ) )
@@ -61,12 +62,17 @@ if( isset( $args->args->pckg ) )
 					}
 					continue;
 				}
-				$hashes[] = hash( 'sha256', $f ); // Add dir names
+				$path = $rpath . ( $rpath ? '/' : '' ) . $f; // rel path
+				$hashes[] = hash( 'sha256', $rpath ); // Add dir names
 				if( is_dir( $p . '/' . $f ) )
 				{
-					hashEmRecursive( $p . '/' . $f, $hashes, $d + 1 );
+					hashEmRecursive( $p . '/' . $f, $hashes, $d + 1, $path );
 				}
-				$hashes[] = $hash = hash_file( 'sha256', $p . '/' . $f );
+				else
+				{
+					$hashes[] = $hash = hash_file( 'sha256', $p . '/' . $f );
+					//$Logger->log( $path );
+				}
 			}
 			closedir( $hdir );
 		}
@@ -74,9 +80,10 @@ if( isset( $args->args->pckg ) )
 	hashEmRecursive( 'repository/' . $args->args->pckg, $hashes );
 	
 	// Validate signature
-	$validation = hash( 'sha256', implode( '', $hashes ) );
+	$validation = hash( 'sha256', implode( '', sort( $hashes ) ) );
 	if( $validation != $signature->signature )
 	{
+		$Logger->log( 'Validation: ' . $validation . ' != ' . $signature->signature );
 		die( 'fail<!--separate-->{"response":"invalid signature"}' );
 	}
 	

@@ -19,8 +19,8 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file
+/** @file
+ * 
  * Service header
  *
  *  @author PS (Pawel Stefanski)
@@ -53,8 +53,6 @@ typedef struct ServiceAppMsg
 {
 	int 		a_AppPid;
 	pthread_t	a_Thread;
-	
-//	int			a_Pipes[2][2];
 	int			a_Outfd[2];
 	int			a_Infd[2];
 	fd_set		a_Readfd, a_Writefd;

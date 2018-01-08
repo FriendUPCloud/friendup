@@ -45,10 +45,12 @@
 void *libInit( void *sb )
 {
 	struct PropertiesLibrary *l = NULL;
-	DEBUG("Properties.library:  init\n");
+	//DEBUG("Properties.library:  init\n");
 
 	if( ( l = calloc( 1, sizeof( struct PropertiesLibrary ) ) ) == NULL )
+	{
 		return NULL;
+	}
 
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
@@ -74,9 +76,9 @@ void *libInit( void *sb )
 //
 //
 
-void libClose( struct PropertiesLibrary *l )
+void libClose( struct PropertiesLibrary *l __attribute__((unused)))
 {
-	DEBUG("Properties.library: close\n");
+	//DEBUG("Properties.library: close\n");
 }
 
 //
@@ -97,8 +99,6 @@ FULONG GetRevision(void)
 //
 //
 //
-
-char *realpath(const char *path, char *resolved_path);
 
 const char *GetConfigDirectory( struct PropertiesLibrary *s )
 {

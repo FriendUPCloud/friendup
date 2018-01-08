@@ -17,10 +17,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-console.log( 'treeeroot mainview.js');
-
-Application.run = function() {
-	console.log( 'mainview.run' );
+Application.run = function()
+{
 	bindAdd();
 	send({
 		type : 'main-loaded',
@@ -67,27 +65,42 @@ function toggleAdd( show )
 
 function open( data )
 {
-	console.log( 'view.open', data );
 	hideAdd();
+	
+	// A hack ....
+	
+	data.host = ( data.host == 'store.openfriendup.net' ? 'friendup.world' : data.host );
+	
 	var src = 'https://'
 			+ data.host
 			+ '?component=authentication&action=login'
+			//+ '&excludecomponent=chat'
 			//+ '&rendermodule=' + data.config.module
 			//+ '&displaymode=' + data.config.display
 			+ '&UniqueID=' + data.uniqueId
 			+ '&PublicKey=' + data.pubKey
 			+ '&SessionID=' + data.sessionId;
-			
+	
+	if( data.param )
+	{
+		for( var k in data.param )
+		{
+			src += ( '&' + k + '=' + data.param[k] );
+		}
+	}
+	
+	//src += '&wall_default_categoryid=';
+	//src += '&redirect=groups/55/';
+	
 	var iframe = document.getElementById( 'main' );
 	iframe.src = src;
-	
-	console.log( 'iframe.src', src );
 	
 	// Save config data to Application
 	Application.conf = data;
 }
 
-function send( msg ) {
+function send( msg )
+{
 	var wrap = {
 		derp : 'viewmessage',
 		data : msg,
@@ -111,15 +124,12 @@ function sendToTreeroot()
 				'uniqueid' : conf.uniqueId 
 			}
 		};
-		
 		iframe.contentWindow.postMessage( msg, '*' );
 	}
 }
 
 Application.receiveMessage = function( e ) 
 {
-	console.log( 'mainView.receiveMessage', e );
-	
 	var msg = e.data;
 	
 	if( e.command )
@@ -141,32 +151,28 @@ Application.receiveMessage = function( e )
 		}
 	}
 	
-	if ( !e.derp )
+	if( !e.derp )
 		return;
 	
-	console.log( 'mainView.receiveMessage', msg );
-	
-	if ( 'showadd' === msg.type )
+	if( 'showadd' === msg.type )
 	{
 		showAdd();
 		return;
 	}
 	
-	if ( 'open' === msg.type )
+	if( 'open' === msg.type )
 	{
 		open( msg.data );
 		return;
 	}
 	
-	if ( 'treeroot' === msg.type )
+	if( 'treeroot' === msg.type )
 	{
 		if( msg.loaded )
 		{
-			console.log( 'send message to store some localstorage data in TR' );
-			
 			sendToTreeroot();
 		}
 		return;
-	}
-	
+	}	
 }
+

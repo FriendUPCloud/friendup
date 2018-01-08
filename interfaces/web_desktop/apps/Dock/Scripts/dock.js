@@ -28,6 +28,8 @@
 
 document.title = 'The dock base app.';
 
+Application.selectAfterLoad = false;
+
 function LoadDocks()
 {
 	var m = new Module( 'dock' );
@@ -100,8 +102,13 @@ function LoadApplications( win, currentItemId, callback )
 		
 		Application.view.sendMessage( { command: 'refreshapps', data: ele } );
 		Application.sendMessage( { type: 'system', command: 'refreshdocks' } );
-		
-		if( callback ) callback();
+		if( Application.selectAfterLoad )
+		{
+			var nid = Application.selectAfterLoad;
+			Application.selectAfterLoad = false;
+			Application.activateDockItem( nid );
+		}
+		if( callback ) callback( eles );
 	}
 	m.execute( 'items', { itemId: !currentItemId ? 0 : currentItemId } );
 }
@@ -166,6 +173,13 @@ Application.newDockItem = function()
 	var w = this.view;
 	m.onExecuted = function( r, dat )
 	{
+		console.log('new dock item... ',r,dat);
+		if(r == 'ok')
+		{
+			Application.selectAfterLoad = dat;
+			console.log('new dockitem id is',dat);
+		}
+		
 		LoadApplications( w );
 	}
 	m.execute( 'additem', {} );
@@ -201,7 +215,13 @@ Application.deleteDockItem = function( id )
 			var m = new Module( 'dock' );
 			m.onExecuted = function( r, d )
 			{
-				LoadApplications( w );
+				if( !isMobile )
+				{
+					LoadApplications( w, false, function( items )
+					{
+						Application.activateDockItem( items[0].Id );
+					} );
+				}
 			}
 			m.execute( 'deleteitem', { itemId: id } );
 		}
@@ -216,7 +236,7 @@ Application.blur = function()
 }
 
 // Update an application in the database
-Application.saveItem = function( id, application, shortdescription, icon )
+Application.saveItem = function( id, application, displayname, shortdescription, icon, workspace )
 {
 	var w = this.view;
 
@@ -231,13 +251,22 @@ Application.saveItem = function( id, application, shortdescription, icon )
 		}
 	}
 	*/
-	
 	var m = new Module( 'dock' );
 	m.onExecuted = function( r, d )
 	{
 		LoadApplications( w, id );
+   		Notify({title:i18n('i18n_item_saved'),text:i18n('i18n_item_saved_text')});
 	}
-	m.execute( 'saveitem', { itemId: id, application: application, shortdescription: shortdescription, icon: icon } );
+	var ms = { 
+		itemId: id, 
+		application: application,
+		displayname: displayname,
+		shortdescription: shortdescription, 
+		icon: icon, 
+		workspace: workspace 
+	};
+	console.log( 'Saving item: ', ms );
+	m.execute( 'saveitem', ms );
 }
 
 Application.sortOrder = function( direction )
@@ -290,8 +319,10 @@ Application.receiveMessage = function( msg )
 					Application.saveItem( 
 						Application.currentItemId,
 						msg.application,
+						msg.displayname,
 						msg.shortdescription,
-						msg.icon
+						msg.icon,
+						msg.workspace
 					);
 				}
 				break;
@@ -312,5 +343,4 @@ Application.receiveMessage = function( msg )
 		}
 	}
 }
-
 

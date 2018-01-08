@@ -29,6 +29,16 @@
 #include <signal.h>
 #include <fcntl.h>
 
+//
+//
+//
+
 int getMacAddress( char *maddr );
+
+//
+//
+//
+
+int getPrimaryIp( char* buffer, size_t buflen );
 
 #endif // __HARDWARE_NETWORK_H__

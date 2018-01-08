@@ -40,6 +40,18 @@ FriendWebSocket = function( conf )
 	// INTERNAL
 	self.ws = null;
 	self.sendQueue = [];
+	
+	/*
+		length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
+		If the blob byte size is above maxFCBytes, the event is chunked before sending.
+	*/
+	self.maxFCBytes = 65535; // FriendCore ws packet max bytes
+	self.metaReserve = 512;
+	self.maxStrLength = ( Math.floor( self.maxFCBytes / 4 )) - self.metaReserve;
+		// worst case scenario its all 4 byte unicode
+	self.chunkDataLength = self.maxFCBytes - self.metaReserve;
+		// need some room for meta data aswell.
+
 	self.chunks = {};
 	self.allowReconnect = true;
 	self.pingInterval = 1000 * 10;
@@ -62,12 +74,10 @@ FriendWebSocket = function( conf )
 
 FriendWebSocket.prototype.send = function( msgObj )
 {
-	var self = this;
-	var wrap = {
-		type : 'msg',
-		data : msgObj,
-	};
-	self.sendOnSocket( wrap );
+	this.sendOnSocket( {
+		type: 'msg',
+		data: msgObj,
+	} );
 }
 
 FriendWebSocket.prototype.reconnect = function()
@@ -77,7 +87,8 @@ FriendWebSocket.prototype.reconnect = function()
 	self.doReconnect();
 }
 
-// code and reason can be whatever, the socket is closed anyway, whats the server going to do? cry more lol
+// code and reason can be whatever, the socket is closed anyway.
+// whats the server going to do? cry more lol
 FriendWebSocket.prototype.close = function( code, reason )
 {
 	var self = this;
@@ -190,6 +201,7 @@ FriendWebSocket.prototype.doReconnect = function()
 		return true;
 	
 	var delay = calcDelay();
+	
 	if ( delay > self.reconnectMaxDelay )
 		delay = self.reconnectMaxDelay;
 	
@@ -204,6 +216,7 @@ FriendWebSocket.prototype.doReconnect = function()
 	{
 		self.reconnectTimer = null;
 		self.reconnectAttempt += 1;
+		
         console.log( 'ws reconnect' );
 		self.connect();
 	}
@@ -215,14 +228,6 @@ FriendWebSocket.prototype.doReconnect = function()
 			hasTriesLeft : !tooManyTries(),
 			hasSession : !!self.sessionId,
 		};
-		
-		/*
-		console.log( 'checks', { 
-			allow : self.allowReconnect,
-			hasTriesLeft : !tooManyTries(),
-			hasSession : !!self.sessionId,
-		});
-		*/
 		
 		var allow = !!( true
 			&& checks.allow
@@ -271,22 +276,18 @@ FriendWebSocket.prototype.doReconnect = function()
 
 FriendWebSocket.prototype.setState = function( type, data )
 {
-	var self = this;
-	var state = {
-		type : type,
-		data : data,
+	this.state =  {
+		type: type,
+		data: data,
 	};
-	self.state = state;
-	if ( self.onstate )
-		self.onstate( state );
+	if( this.onstate ) this.onstate( this.state );
 }
 
 FriendWebSocket.prototype.handleOpen = function( e )
 {
-	var self = this;
-	self.reconnectAttempt = 0;
-	self.setSession();
-	self.setReady();
+	this.reconnectAttempt = 0;
+	this.setSession();
+	this.setReady();
 	/*
 	if ( self.sessionId )
 	{
@@ -300,58 +301,83 @@ FriendWebSocket.prototype.handleOpen = function( e )
 
 FriendWebSocket.prototype.handleClose = function( e )
 {
-	var self = this;
-	self.cleanup();
-	self.setState( 'close' );
-	self.doReconnect();
+	this.cleanup();
+	this.setState( 'close' );
+	this.doReconnect();
 }
 
 FriendWebSocket.prototype.handleError = function( e )
 {
-	var self = this;
-	self.cleanup();
-	self.setState( 'error' );
-	self.doReconnect();
+	this.cleanup();
+	this.setState( 'error' );
+	this.doReconnect();
 }
 
 FriendWebSocket.prototype.handleSocketMessage = function( e )
-{
-	var self = this;
-	if( self.pingCheck ) { clearTimeout( self.pingCheck); self.pingCheck = 0 }
+{	
+	if( this.pingCheck )
+	{ 
+		clearTimeout( this.pingCheck ); 
+		this.pingCheck = null; 
+	}
 	
+	// TODO: Debug why some data isn't encapsulated
+	// console.log( e.data );
 	var msg = friendUP.tool.objectify( e.data );
-	if ( !msg )
+	if( !msg )
 	{
 		console.log( 'FriendWebSocket.handleSocketMessage - invalid data, could not parse JSON' );
 		return;
 	}
 	
-	self.handleEvent( msg );
+	// Handle server notices with session timeout / death
+	if( msg.data && msg.data.type == 'server-notice' )
+	{
+		if( msg.data.data == 'session killed' )
+		{
+			Notify( { title: i18n( 'i18n_session_killed' ), text: i18n( 'i18n_session_killed_desc' ) } );
+			this.handleClose();
+			Workspace.relogin();
+			return;
+		}
+		else if( msg.data.data == 'session timeout' )
+		{
+			Notify( { title: i18n( 'i18n_session_expired' ), text: i18n( 'i18n_session_expired_desc' ) } );
+			this.handleClose();
+			Workspace.relogin();
+			return;
+		}
+	}
+	
+	this.handleEvent( msg );
 }
 
 FriendWebSocket.prototype.handleEvent = function( msg )
 {
-	var self = this;
+	if( !msg )
+	{
+		console.log( 'FriendWebSocket - Could not handle empty message.' );
+		return false;
+	}
 	if( 'con' === msg.type )
 	{
-		self.handleConnMessage( msg.data );
+		this.handleConnMessage( msg.data );
 		return;
 	}
 	
 	//console.log( 'FriendWebSocket - msg', msg );
 	if( 'msg' === msg.type )
 	{
-		self.onmessage( msg.data );
+		this.onmessage( msg.data );
 		return;
 	}
 	
-	console.log( 'FriendWebSocket - unknown messge', msg );
+	console.log( 'FriendWebSocket - Unknown message:', msg );
 }
 
 FriendWebSocket.prototype.handleConnMessage = function( msg )
 {
-	var self = this;
-	var handler = self.sysMsgMap[ msg.type ];
+	var handler = this.sysMsgMap[ msg.type ];
 	if ( !handler )
 	{
 		console.log( 'FriendWebSocket.handleConnMessage - no handler for', msg );
@@ -381,74 +407,65 @@ FriendWebSocket.prototype.handleAuth = function( data )
 
 FriendWebSocket.prototype.handleSession = function( sessionId )
 {
-	var self = this;
-	console.log( 'handleSession', sessionId );
-	if ( self.sessionId === sessionId )
+	if ( this.sessionId === sessionId )
 	{
-		self.setReady();
+		this.setReady();
 	}
 	
-	self.sessionId = sessionId;
-	if ( !self.sessionId )
+	this.sessionId = sessionId;
+	if ( !this.sessionId )
 	{
-		self.allowReconnect = false;
-		if ( self.onend )
-			self.onend();
+		this.allowReconnect = false;
+		if ( this.onend )
+			this.onend();
 	}
 }
 
 FriendWebSocket.prototype.restartSession = function()
 {
-	var self = this;
-	var session = {
+	this.sendOnSocket( {
 		type : 'session',
-		data : self.sessionId,
-	};
-	self.sendOnSocket( session, true );
+		data : this.sessionId,
+	}, true );
 }
 
 FriendWebSocket.prototype.unsetSession = function()
 {
-	var self = this;
-	self.sessionId = false;
+	this.sessionId = false;
 	var msg = {
 		type : 'session',
-		data : self.sessionId,
+		data : this.sessionId,
 	};
-	self.sendOnSocket( msg );
+	this.sendOnSocket( msg );
 }
 
 
 FriendWebSocket.prototype.setSession = function()
 {
-	var self = this;
 	var sess = {
-		type : 'con',
-		data : {
-			sessionId : self.sessionId || undefined,
-			authId : self.authId || undefined,
+		type: 'con',
+		data: {
+			sessionId: this.sessionId || undefined,
+			authId: this.authId || undefined,
 		},
 	};
-	self.sendOnSocket( sess );
+	this.sendOnSocket( sess );
 }
 
 FriendWebSocket.prototype.setReady = function()
 {
-	var self = this;
-	self.ready = true;
-	self.setState( 'open' );
-	self.startKeepAlive();
-	self.executeSendQueue();
+	this.ready = true;
+	this.setState( 'open' );
+	this.startKeepAlive();
+	this.executeSendQueue();
 }
 
 FriendWebSocket.prototype.sendCon = function( msg )
 {
-	var self = this;
-	var wrap = {
-		type : 'con',
-		data : msg,
-	};
-	self.sendOnSocket( wrap );
+	this.sendOnSocket( {
+		type: 'con',
+		data: msg,
+	} );
 }
 
 FriendWebSocket.prototype.sendOnSocket = function( msg, force )
@@ -466,19 +483,13 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	}
 	
 	var msgStr = friendUP.tool.stringify( msg );
-	
-	try
+	if ( checkMustChunk( msgStr ))
 	{
-		//console.log( 'Sending like superman: ' + msgStr );
-		self.ws.send( msgStr );
-	} 
-	catch(e)
-	{
-		console.log( 'FriendWebSocket.sendOnSocket failed', {
-			e : e,
-			msg : msg,
-		});
+		self.chunkSend( msgStr );
+		return;
 	}
+	
+	self.wsSend( msgStr );
 	
 	function queue( msg )
 	{
@@ -498,6 +509,128 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	{
 		var ready = !!( self.ws && ( self.ws.readyState === 1 ));
 		return ready;
+	}
+	
+	function checkMustChunk( str )
+	{
+		if ( str.length < self.maxStrLength )
+			return false;
+		
+		var realString = new String( str );
+		strBlob = new Blob( realString );
+		if ( strBlob.size >= self.maxFCBytes )
+			return true;
+		else
+			return false;
+	}
+}
+
+FriendWebSocket.prototype.chunkSend = function( str )
+{
+	var self = this;
+	var b64str = toBase64( str );
+	if ( !b64str )
+	{
+		console.log( 'could not encode str, aborting', str );
+		return;
+	}
+	
+	var parts = chunkData( b64str );
+	var chunksId = friendUP.tool.uid( 'chunks' );
+	var chunks = parts.map( createChunk );
+	var sendTimeout = 50;
+	//chunks.forEach( send );
+	setTimeout( sendAChunk, sendTimeout );
+	function sendAChunk()
+	{
+		if ( !chunks.length )
+			return;
+		
+		var chunk = chunks.shift();
+		send( chunk );
+		setTimeout( sendAChunk, sendTimeout );
+	}
+	
+	function send( chunk )
+	{
+		var event = {
+			type : 'con',
+			data : {
+				type : 'chunk',
+				data : chunk,
+			},
+		};
+		self.sendOnSocket( event );
+	}
+	
+	function toBase64( str )
+	{
+		var encStr = null;
+		if ( window.Base64alt )
+		{
+			try
+			{
+				encStr = window.Base64alt.encode( str );
+			} catch( e )
+			{
+				console.log( 'tried Base64alt, failed', e );
+			}
+			
+			if ( encStr )
+				return encStr;
+		}
+		
+		try
+		{
+			encStr = window.btoa( str );
+		}
+		catch( e )
+		{
+			console.log( 'tried btoa, failed', e );
+		}
+		
+		return encStr;
+	}
+	
+	function chunkData( str )
+	{
+		var parts = [];
+		for( var i = 0; i * self.chunkDataLength < str.length; i++ )
+		{
+			var startIndex = self.chunkDataLength * i;
+			var part = str.substr( startIndex, self.chunkDataLength );
+			parts.push( part );
+		}
+		
+		return parts;
+	}
+	
+	function createChunk( part, index )
+	{
+		var chunk = {
+			id    : chunksId,
+			part  : index,
+			total : parts.length,
+			data  : part,
+		};
+		return chunk;
+	}
+}
+
+FriendWebSocket.prototype.wsSend = function( str )
+{
+	var self = this;
+	try
+	{
+		//console.log( 'sending on ws ', str );
+		self.ws.send( str );
+	}
+	catch( e )
+	{
+		console.log( 'FriendWebSocket.sendOnSocket failed', {
+			e   : e,
+			str : str,
+		});
 	}
 }
 
@@ -570,14 +703,6 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 FriendWebSocket.prototype.handleChunk = function( chunk )
 {
 	var self = this;
-	console.log( 'handleChunk', {
-		chunk  : chunk,
-		chunks : self.chunks,
-		size   : chunk.data.length,
-		first  : chunk.data.charCodeAt( 0 ),
-		last   : chunk.data.charCodeAt( chunk.data.length - 1 ),
-	});
-	
 	chunk.total = parseInt( chunk.total, 10 );
 	chunk.part = parseInt( chunk.part, 10 );
 	var cid = chunk.id;
@@ -600,7 +725,6 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 	
 	function hasAll( chunks, total ) {
 		var anyNull = chunks.some( isNull );
-		//console.log( 'hasAll', !anyNull );
 		return !anyNull;
 		function isNull( item ) {
 			return null == item;
@@ -608,10 +732,8 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 	}
 	
 	function rebuild( chunks ) {
-		//console.log( 'rebuild', chunks );
 		var whole = chunks.join( '' );
-		//console.log( 'whole', whole );
-		
+
 		/* Re enable this to first attempt to parse json, then try base64 if it fails
 		
 		var parsed = friendUP.tool.objectify( whole );
@@ -622,9 +744,7 @@ FriendWebSocket.prototype.handleChunk = function( chunk )
 		
 		// well, then, try b64 decode
 		var notB64 = atob( whole );
-		//console.log( 'decoded', notB64 );
 		var parsed = friendUP.tool.objectify( notB64 );
-		//console.log( 'parsed', parsed );
 		return parsed;
 	}
 }
@@ -646,7 +766,7 @@ FriendWebSocket.prototype.wsClose = function( code, reason )
 		return;
 	
 	code = code || 1000;
-	reason = reason || 'screw you guys, im going home';
+	reason = reason || 'WS connection closed';
 	
 	try {
 		console.log('closing websocket',code,reason);

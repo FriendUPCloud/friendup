@@ -1,0 +1,53 @@
+	
+	<link rel="stylesheet" href="Progdir:Stylesheets/treeroot.css"/>
+	
+	<script src="Progdir:Scripts/main.js"></script>
+	
+	<input type="hidden" id="viewId" value="{viewId}"/>
+	
+	<input type="hidden" id="module" value="{module}"/>
+	<input type="hidden" id="component" value="{component}"/>
+	
+	<div id="_Scripts_">{Scripts}</div>
+	<div id="_Styles_">{Styles}</div>
+	
+	<div class="ContentFull Pages BackgroundLists ScrollArea" id="AppContent">
+		<div id="TopBox__">
+			<div id="InnerTopBox__">
+				<div id="Top">
+					<div id="Logo">
+						<a href="./">
+							<img src="Progdir:logo_white.png">
+						</a>
+					</div>
+					{Top}
+				</div>
+			</div>
+		</div>
+		<div id="CenterBox__">
+			<div id="Center__">
+				<div id="Content__">
+					<div id="InnerContainer__">
+						<div id="InnerContent__">
+							<div id="Scene">
+								<div id="Field_top">
+									<div id="_Scene_">{Scene}</div>
+								</div>
+								<table id="Table_Fields">
+									<tbody> 
+										<tr>
+											{LeftCol}{MiddleCol}{RightCol}
+										</tr>
+									</tbody>
+								</table>
+								{Chat}
+							</div>
+							<div id="Field1"></div>
+							<div id="Field2"></div>
+						</div>
+						<div id="Bottom"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>

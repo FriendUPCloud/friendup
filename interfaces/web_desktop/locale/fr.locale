@@ -26,6 +26,8 @@ i18n_bookmarks_select                : Selectionner
 i18n_bookmarks_remove                : Suprimer
 i18n_empty_view                      : Vue vide
 i18n_no_bookmarks                    : Vous n'avez pas de marque pages.
+i18n_illegal_path                    : Illegal path
+i18n_illegal_fld_mountlist           : You can not make a new directory in the mountlist.
 i18n_desklets                        : Desklets
 i18n_software                        : Gestion des applications
 i18n_sound                           : Son
@@ -138,7 +140,7 @@ i18n_directory_Software             	: Logiciels
 i18n_directory_Modules                  : Modules
 i18n_directory_Plugins                  : Plugins
 i18n_directory_Prefs                    : Préférences
-i18n_directory_Tools                    : Outils
+i18n_directory_Repositories             : Repositories
 i18n_directory_Devices                  : Matériel
 i18n_directory_Libraries                : Librairies
 
@@ -158,6 +160,7 @@ menu_system                             : Système
 menu_new_shell                          : Nouveau terminal
 menu_about_friendup                     : A propos de FriendUP
 menu_refresh_desktop                    : Rafraichir le bureau
+menu_add_storage                        : Ajouter un disque
 menu_run_command                        : Executer une commande
 menu_show_launcher                      : Montrer le lanceur
 menu_hide_launcher                      : Cacher le lanceur
@@ -178,15 +181,21 @@ menu_zip                                : Compresser fichier(s)
 menu_unzip                              : Décompresser fichier(s)
 menu_looknfeel                          : Préférences visuelles
 menu_backdrop                           : Montrer vue d'ensemble
+menu_buildwebapp                        : Construire application web
 
 menu_edit_wallpaper                     : Editer le papier-peint
 i18n_edit_dock                          : Editer le dock
+i18n_remove_from_dock                   : Efficer
 
 i18n_choose_file_to_upload              : Choisissez le fichier à importer
 i18n_upload_target                      : Cible
 i18n_browse                             : Choisir
 i18n_upload_the_file                    : Lancer l'importation
 i18n_file_upload                        : Importation de fichier
+i18n_upload_completed                   : Téléchargement terminé.
+i18n_upload_failed                      : Téléchargement terminé.
+i18n_upload_completed_description       : Le terlechargement s'est terminé avec succès.
+i18n_upload_failed_description          : Impossible de télécharger ce fichier.
 
 i18n_unzip_completed                    : Décompression terminée.
 i18n_unzip_comdesc                      : Les fichiers ont été décompressés avec succès
@@ -525,4 +534,15 @@ i18n_filetype_mp4                       : Video MP4
 i18n_filetype_svg                       : Graphiques vectoriels
 i18n_filetype_ogv                       : Vidéo Ogg Vorbis
 i18n_filetype_run                       : Friend script
+
+menu_move_view_to_workspace_1           : Afficher le Workspace 1
+menu_move_view_to_workspace_2           : Afficher le Workspace 2
+menu_move_view_to_workspace_3           : Afficher le Workspace 3
+menu_move_view_to_workspace_4           : Afficher le Workspace 4
+menu_move_view_to_workspace_5           : Afficher le Workspace 5
+menu_move_view_to_workspace_6           : Afficher le Workspace 6
+menu_move_view_to_workspace_7           : Afficher le Workspace 7
+menu_move_view_to_workspace_8           : Afficher le Workspace 8
+menu_move_view_to_workspace_9           : Afficher le Workspace 9
+menu_move_view_to_workspace_10          : Afficher le Workspace 10
 

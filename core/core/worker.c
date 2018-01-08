@@ -27,6 +27,9 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 02/2015
+ * 
+ * \ingroup FriendCoreWorker
+ * @{
  */
 
 #include "worker.h"
@@ -76,6 +79,7 @@ void WorkerDelete( Worker *w )
 	{
 		if( w->w_Thread )
 		{
+			int count = 0;
 			w->w_Quit = TRUE;
 
 			while( w->w_State != W_STATE_TO_REMOVE )
@@ -87,7 +91,10 @@ void WorkerDelete( Worker *w )
 				}
 				
 				DEBUG("[WorkerThread] State %d quit %d WRKID %d\n", w->w_State, w->w_Quit, w->w_Nr );
-				usleep( 100000 );
+				if( count++ > 1 )
+				{
+					usleep( 10000 );
+				}
 			}
 			ThreadDelete( w->w_Thread );
 		}
@@ -213,3 +220,4 @@ void WorkerThread( void *w )
 	thread->t_Launched = FALSE;
 }
 
+/**@}*/

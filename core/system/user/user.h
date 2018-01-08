@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  User definitions
+ *
+ * All functions related to User structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 11/2016
+ */
 
 #ifndef __SYSTEM_USER_USER_H__
 #define __SYSTEM_USER_USER_H__
@@ -38,16 +47,6 @@
 #include "remote_user.h"
 #include <network/locfile.h>
 #include <system/cache/cache_user_files.h>
-
-/** @file
- * 
- *  User definitions
- *
- * All functions related to User structure
- *
- *  @author PS (Pawel Stefanski)
- *  @date created 11/2016
- */
 
 /*
  CREATE TABLE IF NOT EXISTS `FUserLogin` ( 
@@ -168,8 +167,8 @@ typedef struct User
 	pthread_mutex_t				u_Mutex;	// User structure mutex
 	CacheUserFiles				*u_FileCache;	// internal file cache
 	
-	FQUAD						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
-	FQUAD						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
+	FLONG						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
+	FLONG						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
 } User;
 
 //

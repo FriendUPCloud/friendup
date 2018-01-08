@@ -39,6 +39,8 @@ include_once( 'php/classes/door.php' );
 //load required files
 require_once( 'devices/DOSDrivers/DropboxDrive/dropbox-sdk-php/Dropbox_APIv2/vendor/autoload.php' );
 
+include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
+
 use Kunnu\Dropbox\Dropbox;
 use Kunnu\Dropbox\DropboxApp;
 use Kunnu\Dropbox\Http\Clients\DropboxHttpClientFactory;
@@ -54,11 +56,15 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 		
 		const LOGINAPP = 'devices/DOSDrivers/DropboxDrive/DropboxAuthoriseApp.jsx';
 		const UNAUTHORIZED = 'unauthorized';
-					
+				
 		function onConstruct()
 		{
 			global $args, $Logger, $User;
-
+			
+			// TODO: Get login data / token from door connected to fkeys encrypted with the servers privatekey perhaps ... since we don't have any client when we use the door system with webdav ...
+			
+			// TODO: Get client id and so on from server settings not from config ...
+			
 			$this->parseSysInfo();
 			
 			if( !is_array(  $this->sysinfo ) || !$this->sysinfo['key'] || !$this->sysinfo['secret'] ) { $Logger->log('Unable to load sysinfo'); die('fail<!--separate-->system information incomplete'); }	
@@ -71,16 +77,61 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			{
 				//check config contains what we need...
 				$confjson = json_decode($this->Config,1);
-				if( !( json_last_error() == JSON_ERROR_NONE && isset( $confjson['access_token'] ) && isset( $confjson[ 'db_uid' ] ) ) ) $this->state = self::UNAUTHORIZED;
+				if( !( json_last_error() == JSON_ERROR_NONE && isset( $confjson['access_token'] ) && isset( $confjson['uid'] ) ) ) $this->state = self::UNAUTHORIZED;
 			}
 			
 			$this->fileInfo = isset( $args->fileInfo ) ? $args->fileInfo : new stdClass();
 		}
-
+		
+		function GetByCurl( $url, $args = false, $method = 'POST', $headers = false )
+		{
+			if( !$url ) return;
+			
+			$agent = ( isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:33.0) Gecko/20100101 Firefox/33.0' );
+			
+			if( function_exists( 'curl_init' ) )
+			{
+				// Get data
+				$ch = curl_init();
+				curl_setopt( $ch, CURLOPT_URL, $url );
+				//curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, 1 );
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
+				curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Accept-charset: UTF-8' ) );
+				curl_setopt( $ch, CURLOPT_ENCODING, 'UTF-8' );
+				//curl_setopt( $ch, CURLOPT_ENCODING, 1 );
+				curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
+				
+				if( $headers )
+				{
+					curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
+				}
+		
+				if( $method != 'POST' )
+				{
+					curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
+				}
+		
+				if( $args )
+				{
+					curl_setopt( $ch, CURLOPT_POST, true );
+					curl_setopt( $ch, CURLOPT_POSTFIELDS, $args );
+				}
+		
+				curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+				
+				return ( curl_exec( $ch ) );
+				
+			}
+			
+			return 'fail<!separate-->curl unavailable';
+		}
+		
+		
 		//small helper to get config from safe place..
 		function parseSysinfo()
 		{
-
+			global $SqlDatabase, $User, $Logger;
+			
 			$cfg = file_exists('cfg/cfg.ini') ? parse_ini_file('cfg/cfg.ini',true) : [];
 			
 			if( is_array($cfg) && isset( $cfg['DropboxAPI'] ) )
@@ -91,6 +142,105 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			{
 				$this->sysinfo = [];
 			}
+			
+			
+			
+			if( $fs = $SqlDatabase->FetchObject( '
+				SELECT 
+					f.ID, f.KeysID 
+				FROM 
+					`Filesystem` f 
+				WHERE 
+						f.ID = \'' . $this->ID . '\' 
+					AND f.UserID = \'' . $User->ID . '\' 
+				ORDER BY 
+					f.ID ASC 
+				LIMIT 1
+			' ) )
+			{
+				if( $fs->KeysID && ( $dbs = $SqlDatabase->FetchObjects( $q = '
+					SELECT 
+						k.* 
+					FROM 
+						`FKeys` k 
+					WHERE 
+							k.UserID = \'' . $User->ID . '\' 
+						AND k.ID IN ( ' . $fs->KeysID . ' ) 
+						AND k.IsDeleted = "0" 
+						AND k.ApplicationID = "-1" 
+					ORDER BY 
+						k.ID DESC 
+				' ) ) )
+				{
+					$data = ''; $publickey = '';
+					
+					foreach( $dbs as $db )
+					{
+						$data = $db->Data;
+						$publickey = $db->PublicKey;
+					}
+					
+					// If publickey is set and it's the servers publickey decrypt it with the servers privatekey
+					
+					if( $publickey && $data )
+					{
+						if( file_exists( 'cfg/crt/server_encryption_key.pem' ) )
+						{
+							$privatekey = '';
+						
+							$fcrypt = new fcrypto();
+						
+							if( $keys = file_get_contents( 'cfg/crt/server_encryption_key.pem' ) )
+							{
+								if( strstr( $keys, '-----' . "\r\n" . '-----' ) && ( $keys = explode( '-----' . "\r\n" . '-----', $keys ) ) )
+								{
+									if( isset( $keys[0] ) )
+									{
+										$privatekey = ( $keys[0] . '-----' );
+									}
+								}
+							}
+							
+							if( $privatekey && ( $decrypted = $fcrypt->decryptString( $data, $privatekey ) ) )
+							{
+								if( $plaintext = $decrypted->plaintext )
+								{
+									$data = $decrypted->plaintext;
+								}
+							}
+						}
+					}
+					
+					//$Logger->log( ' $keys ' . print_r( $keys,1 ) . ' [] $privatekey ' . $privatekey . ' [] $data ' . $data . ' [] $decrypted ' . print_r( $decrypted, 1 ) );
+					
+					$this->Config = $data;
+					
+					if( strstr( $this->Config, '#' ) && strstr( $this->Config, '&' ) && strstr( $this->Config, '=' ) )
+					{
+						if( $this->Config = explode( '#', $this->Config ) )
+						{
+							if( $this->Config = explode( '&', $this->Config[1] ) )
+							{
+								$json = new stdClass();
+								
+								foreach( $this->Config as $v )
+								{
+									if( $v = explode( '=', $v ) )
+									{
+										$json->{$v[0]} = $v[1];
+									}
+								}
+					
+								if( $json )
+								{
+									$this->Config = json_encode( $json );
+								}
+							}
+						}
+					}
+				}
+			}
+				
 		}
 
 
@@ -109,6 +259,8 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			if( substr($subPath,0,1) != '/' ) $subPath = '/' . $subPath; //sometimes the leading trail is missing; like in sometimes when a folder is created at root level
 
 			$rs = $this->dbx->listFolder( $subPath )->getData();	
+			
+			//$Logger->log( $subPath . ' [] ' . print_r( $rs,1 ) . ' [] ' . print_r( $this->dbx->listFolder( $subPath ),1 ) );
 			
 			//die( print_r( $rs,1 ) );  
 			
@@ -147,7 +299,48 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 		function dosAction( $args )
 		{
 			global $User, $SqlDatabase, $Config, $Logger;
-		
+			
+			
+			
+			// TODO: This is a workaround, please fix in Friend Core!
+			//       Too much code for getting a real working path..
+			if( isset( $args->path ) )
+			{
+				$path = $args->path;
+			}
+			else if( isset( $args->args ) )
+			{
+				if( isset( $args->args->path ) )
+				{
+					$path = $args->args->path;
+				}
+			}
+			
+			if( isset( $path ) )
+			{
+				$path = str_replace( '::', ':', $path );
+				$path = str_replace( ':/', ':', $path );
+				$path = explode( ':', $path );
+				if( count( $path ) > 2 )
+				{
+					$path = $path[1] . ':' . $path[2];
+				}
+				else
+				{
+					// FIX WEBDAV problems
+					if( count( $path ) > 1 )
+					{
+						if( $path[1] != '' && $path[1]{0} == '/' )
+							$path[1] = substr( $path[1], 1, strlen( $path[1] ) );
+					}
+					$path = implode( ':', $path );
+				}
+				
+				$path = $args->path;
+			}
+			
+			
+			
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 			// Do a directory listing
 			// TODO: Make it uniform! Not to methods! use command == dir
@@ -157,7 +350,7 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			)
 			{
 				$fo = false;
-						
+				
 				// Can we get sub folder?
 				$thePath = isset( $args->path ) ? $args->path : ( isset( $args->args->path ) ? $args->args->path : '' );
 				$subPath = false;
@@ -170,6 +363,8 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 	
 				$out = [];
 				
+				
+				
 				if( substr( $thePath, -1, 1 ) == ':' )
 				{
 					if( $this->state == self::UNAUTHORIZED )
@@ -179,6 +374,10 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					else if( $this->connectClient() )
 					{
 						$fo = $this->listFolderContents( '/'); 
+					}
+					else
+					{
+						die('ok<!--separate-->' . json_encode( $this->loginFile( $this->Name . ':/' ) ) );
 					}
 				}
 				else
@@ -193,6 +392,68 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					}
 				}
 				return 'ok<!--separate-->' . json_encode( $fo );
+			}
+			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
+			else if( $args->command == 'info' && is_string( $path ) && isset( $path ) && strlen( $path ) )
+			{
+				// TODO: Make this simpler, and also finish it, only fake 0 data atm ...
+				
+				// Is it a folder?
+				if( substr( $path, -1, 1 ) == '/' )
+				{
+					$fldInfo = new stdClass();
+					$fldInfo->Type = 'Directory';
+					$fldInfo->MetaType = 'Directory';
+					$fldInfo->Path = $path;
+					$fldInfo->Filesize = 0;
+					$fldInfo->Filename = end( explode( '/', substr( end( explode( ':', $path ) ), 0, -1 ) ) );
+					$fldInfo->DateCreated = '';
+					$fldInfo->DateModified = '';
+					die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+				}
+				else if( substr( $path, -1, 1 ) == ':' )
+				{
+					// its our mount itself
+					
+					$fldInfo = new stdClass();
+					$fldInfo->Type = 'Directory';
+					$fldInfo->MetaType = 'Directory';
+					$fldInfo->Path = $path;
+					$fldInfo->Filesize = 0;
+					$fldInfo->Filename = $path;
+					$fldInfo->DateCreated = '';
+					$fldInfo->DateModified = '';
+					die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+				}
+				// Ok, it's a file
+				else
+				{
+					if( strstr( $path, '.' ) )
+					{
+						$fldInfo = new stdClass();
+						$fldInfo->Type = 'File';
+						$fldInfo->MetaType = 'File';
+						$fldInfo->Path = $path;
+						$fldInfo->Filesize = 0;
+						$fldInfo->Filename = end( explode( '/', end( explode( ':', $path ) ) ) );
+						$fldInfo->DateCreated = '';
+						$fldInfo->DateModified = '';
+						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+					}
+					else
+					{
+						$fldInfo = new stdClass();
+						$fldInfo->Type = 'Directory';
+						$fldInfo->MetaType = 'Directory';
+						$fldInfo->Path = $path . '/';
+						$fldInfo->Filesize = 0;
+						$fldInfo->Filename = end( explode( '/', end( explode( ':', $path ) ) ) );
+						$fldInfo->DateCreated = '';
+						$fldInfo->DateModified = '';
+						die( 'ok<!--separate-->' . json_encode( $fldInfo ) );
+					}
+				}
+				die( 'fail<!--separate-->Could not find file!' );
 			}
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 			else if( $args->command == 'write' )
@@ -234,38 +495,43 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 			
 			else if( $args->command == 'read' )
 			{
-
-				if($this->state == self::UNAUTHORIZED)
+				if( $this->connectClient() )
+				{
+					//we want a file stream here
+					return $this->getFile( $args->path );
+				}				
+				else/* if($this->state == self::UNAUTHORIZED)*/
 				{
 					// return login Dialogue
+					
 					if( $args->path == $this->Name .':/Login.jsx' )
 					{
 						//
-						//$Logger->log( 'What can we send to dropbox... args ... ' . print_r( $args,1 ) . ' User ######## ' . print_r( $User,1 ));
+						$Logger->log( 'What can we send to dropbox... args ... ' . print_r( $args,1 ) . ' User ######## ' . print_r( $User,1 ));
 						
 						$rs = $SqlDatabase->FetchObject('SELECT fs.Data FROM FSetting fs WHERE fs.UserID=\'-1\' AND fs.Type = \'system\' AND fs.Key=\'dropbox\'');
 						if( $rs ) $dconf=json_decode($rs->Data,1);
 						
-						if( $rs && json_last_error() == JSON_ERROR_NONE && $dconf['interfaceurl'] )
+						if( 1==1/*$rs && json_last_error() == JSON_ERROR_NONE && $dconf['interfaceurl']*/ )
 						{
-
-						
 							// we want to use token... but as we do not have SSL yet we need to work with the code
 							// our state info must contain user id and our mountname so that we can update the database...
 							// we will also tell our dropbox answer which server to redirect the dropbox request to.
-							$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . $dconf['interfaceurl'];
-							
-							
-							$targetURL = 'https://www.dropbox.com/oauth2/authorize' . '?response_type=token&client_id=' . $this->sysinfo['key'] . '&state=' . rawurlencode( bin2hex( $statevar ) );
-							
+							//$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . $dconf['interfaceurl'];
+							$targetURL = 'https://www.dropbox.com/oauth2/authorize?response_type=token&client_id=' . $this->sysinfo['key']/* . '&state=' . rawurlencode( bin2hex( $statevar ) )*/;
 							
 							if( file_exists(self::LOGINAPP) ) 
 							{
 								$loginapp = file_get_contents(self::LOGINAPP);		
+								
 								$loginapp = str_replace('{dropboxurl}', $targetURL,$loginapp);
-								$loginapp = str_replace('{authid}', $args->sessionid,$loginapp);
-								$loginapp = str_replace('{dropboxinterface}', urlencode( $this->sysinfo['dropboxhandler'] ),$loginapp);
-								$loginapp = str_replace('{path}', $this->Name .':Authorized.html',$loginapp);
+								$loginapp = str_replace('{path}', $this->Name .':',$loginapp);
+								
+								$loginapp = str_replace('{redirect_uri}', ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : '' ),$loginapp);
+								
+								//$loginapp = str_replace('{authid}', $args->sessionid,$loginapp);
+								//$loginapp = str_replace('{dropboxinterface}', urlencode( $this->sysinfo['dropboxhandler'] ),$loginapp);
+								//$loginapp = str_replace('{path}', $this->Name .':Authorized.html',$loginapp);
 								
 								ob_clean();
 								return 'ok<!--separate-->' . $loginapp;
@@ -273,27 +539,34 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 							}
 							else
 							{
-								 return 'fail<!--separate-->Login app not found' . self::LOGINAPP;
+								$errapp = '';
+								$errapp.= '';
+								$errapp.= 'Application.run = function( msg, interface )';
+								$errapp.= '{';
+								$errapp.= 'Notify({"title":"Dropbox system error","text":"Login app not found!"}); Application.quit();';
+								$errapp.= '}';							
+								
+								return 'ok<!--separate-->' . $errapp;
 								
 							}
-
-							
 						}
 						else
 						{
-							$Logger->log('System configration incomplete. Please defined system/dropbox key with interfaceurl as setting in data.');
-							return 'fail<!--separate-->Sysconfig incomplete' . print_r($rs,1) . json_last_error()  . '::' . JSON_ERROR_NONE . '__' . print_r( $dconf, 1 ) . ' == ' . print_r(json_decode($rs->Data,1),1 );
+							//$Logger->log('System configration incomplete. Please defined system/dropbox key with interfaceurl as setting in data.');
+							
+							$errapp = '';
+							$errapp.= '';
+							$errapp.= 'Application.run = function( msg, interface )';
+							$errapp.= '{';
+							$errapp.= 'Notify({"title":"Dropbox system error","text":"Incomplete system configuration. Please notify your Administrator!"}); Application.quit();';
+							$errapp.= '}';							
+							
+							return 'ok<!--separate-->' . $errapp;
 						}
 						
 
 					}
 				}
-				else if( $this->connectClient() )
-				{
-					//we want a file stream here
-					return $this->getFile( $args->path );
-				}
-				
 				
 				die( 'fail<!--separate-->Could not connect to Dropbox for file read ::' . $this->state );
 				
@@ -302,22 +575,22 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			else if( $args->command == 'import' )
 			{
 				/* TODO: implement import; postponed as Hogne said this is not needed */
-				die('fail');
+				die('fail<!--separate-->import not implemented');
 			}
 			else if( $args->command == 'loaddocumentformat' )
 			{
 				/* TODO: check if we can just reuse the existing code from mysql drive here... */
-				die('fail');
+				die('fail<!--separate-->loaddocumentformat not implemented');
 			}
 			else if( $args->command == 'gendocumentpdf' )
 			{
 				/* TODO: Postponed as Hogne said not needed now */
-				die('fail');
+				die('fail<!--separate-->gendocumentpdf not implemented');
 			}
 			else if( $args->command == 'writedocumentformat' )
 			{
 				/* TODO: Postponed as Hogne said not needed now */
-				die('fail');
+				die('fail<!--separate-->writedocumentformat not implemented');
 			}
 			// Read some important info about a volume!
 			else if( $args->command == 'volumeinfo' )
@@ -339,7 +612,7 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					die( 'ok<!--separate-->' . json_encode( $o ) );
 				}
 	
-				die( 'fail' );
+				die( 'fail<!--separate-->volumeinfo failed' );
 			}
 			else if( $args->command == 'dosaction' )
 			{
@@ -558,9 +831,8 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 		/* connect to dropbox */
 		function connectToDropbox()
 		{
-			
 			global $args, $Logger, $User;
-
+			
 			//nothing to do if we have never been there and need oauth approval from user			
 			if( $this->state == self::UNAUTHORIZED ) return 'ok';
 			
@@ -584,26 +856,34 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 		function connectClient()
 		{
 			global $User, $SqlDatabase, $Config, $Logger;
-
-			if( $this->state == self::UNAUTHORIZED ) die('fail<!--separate-->Cannot connect unauthorized.');
+			
+			if( $this->state == self::UNAUTHORIZED ) return false;/*die('fail<!--separate-->Cannot connect unauthorized.');*/
 			if( $this->dbx ) return true;
 			
 			$confjson = json_decode($this->Config,1);
-			if( json_last_error() == JSON_ERROR_NONE && isset( $confjson['access_token'] ) && isset( $confjson[ 'db_uid' ] )  )
+			if( json_last_error() == JSON_ERROR_NONE && isset( $confjson['access_token'] ) && isset( $confjson['uid'] )  )
 			{
 
 				//die( print_r( $confjson,2 ) );
 				
-				$app = new Kunnu\Dropbox\DropboxApp($confjson['db_uid'], $this->sysinfo['secret'], $confjson['access_token']);
-				$this->dbx = new Kunnu\Dropbox\Dropbox($app);
+				try
+				{
+					$app = new Kunnu\Dropbox\DropboxApp($confjson['uid'], $this->sysinfo['secret'], $confjson['access_token']);
+					$this->dbx = new Kunnu\Dropbox\Dropbox($app);
 				
-				$this->accountinfo = $this->dbx->getCurrentAccount()->getData();
-				$this->accountinfo['storageStatus'] = $this->dbx->getSpaceUsage();
+					$this->accountinfo = $this->dbx->getCurrentAccount()->getData();
+					$this->accountinfo['storageStatus'] = $this->dbx->getSpaceUsage();
+				
+				}
+				catch ( Exception $e ) 
+				{
+					return false; 
+				}
 				
 				if( isset( $this->accountinfo['account_id']) ) return true;
 			}
 			
-			$Logger->log( 'Dropbox config is not valid' );
+			$Logger->log( 'Dropbox config is not valid ' );
 			return false;
 			
 		} // end of connectClient
@@ -626,7 +906,8 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			$oLogin->DateCreated = $oLogin->DateModified;
 			$oLogin->Filesize = 16;
 			$oLogin->Path = end( explode( ':', $thePath . $oLogin->Filename ) );
-			return [ $oLogin ];
+			
+			return array( $oLogin );
 		}
 	}
 }

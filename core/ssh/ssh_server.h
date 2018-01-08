@@ -35,7 +35,6 @@
 #include <core/types.h>
 #include <core/thread.h>
 #include <network/socket.h>
-//#include <network/sshsocket.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>

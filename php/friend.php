@@ -185,8 +185,10 @@ function FindAppInSearchPaths( $app )
 // Get arguments from argv
 if( isset( $argv ) && isset( $argv[1] ) )
 {
-	if( $args = explode( "&", $argv[1] ) )
+	if( $args = explode( '&', $argv[1] ) )
 	{
+		//include_once( 'classes/logger.php' );
+		//$Logger->log( 'Here are the received args: ' . $argv[1]  . print_r( $args, 1 ) );
 		$kvdata = new stdClass();
 		foreach ( $args as $arg )
 		{
@@ -196,9 +198,11 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				if( isset( $key ) && isset( $value ) )
 				{
 					if( substr( $value, 0, 13 ) == '<!--base64-->' )
-						$value = base64_decode( substr( $value, 13, strlen( $value ) - 13 ) );
+						$value = trim( base64_decode( substr( $value, 13, strlen( $value ) - 13 ) ) );
 					if( strstr( $value, '%' ) || strstr( $value, '&' ) ) 
+					{
 						$value = rawurldecode( $value );
+					}
 					if( $value && ( $value[0] == '{' || $value[0] == '[' ) )
 					{
 						if( $data = json_decode( $value) )
@@ -239,6 +243,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	include_once( 'include/i18n.php' );
 	// For debugging
 	include_once( 'classes/logger.php' );
+	
 	$logger =& $GLOBALS['Logger'];
 	
 	// Set config object
@@ -262,14 +267,17 @@ if( file_exists( 'cfg/cfg.ini' ) )
 			case 'dbname':
 				$val = isset( $configfilesettings['DatabaseUser'][$type] ) ? $configfilesettings['DatabaseUser'][$type] : '';
 				break;	
-			
+			case 'fcupload':
+				$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
+				if( substr( $val, 0, 1 ) != '/' )
+					$val = getcwd() . '/' . $val;
+				break;
+			case 'port':
 			case 'fchost':
 			case 'fcport':
-			case 'fcupload':
 			case 'fconlocalhost':
 				$val = isset( $configfilesettings['FriendCore'][$type] ) ? $configfilesettings['FriendCore'][$type] : '';
 				break;
-				
 			case 'SSLEnable':	
 				$val = isset( $configfilesettings['Core'][$type] ) ? $configfilesettings['Core'][$type] : '';
 				break;
@@ -328,15 +336,6 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		isset( $User->SessionID ) ? $User->SessionID :
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
-	
-	//die( $sidm .'..' . $User->ID . '..');
-	
-	/*die( '
-			SELECT u.* FROM FUser u, FUserSession us
-			WHERE
-				us.UserID = u.ID AND
-				( u.SessionID=\'' . $sidm . '\' OR us.SessionID = \'' . $sidm . '\' )
-		' );*/
 	
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..

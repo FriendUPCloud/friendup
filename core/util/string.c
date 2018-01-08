@@ -1,24 +1,14 @@
 /*©mit**************************************************************************
 *                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
+* Copyright 2014-2016 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
 *                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
-*                                                                              *
-*****************************************************************************©*/
+*****************************************************************************�*/
 
 #include <core/types.h>
 #include <stdio.h>
@@ -36,14 +26,9 @@
 //
 //
 
-inline char *MakeString ( int length )
+char *MakeString ( int length )
 {
-	return ( char *)FCalloc ( length, sizeof(char) );
-	/*if ( c != NULL )
-	{
-		return c;
-	}
-	return NULL;*/
+	return ( char *)FCallocAlign( length, sizeof(char) );
 }
 
 //
@@ -87,7 +72,7 @@ int SafeString ( char **string, int length )
 	{
 		char *newStr = MakeString ( length );
 		sprintf ( newStr, "%.*s", length, *string );
-		free ( *string );
+		FFree ( *string );
 		*string = newStr;
 		return length + 1;
 	}
@@ -117,20 +102,27 @@ int SafeStrlen ( char **string, int maxlen )
 
 char* StringDuplicateN( char* str, int len )
 {
+	if( !str )
+	{
+		DEBUG("Cannot duplicate string in size 0\n");
+		return NULL;
+	}
+	
 	char* copy;
 	if( len <= 0 )
 	{
 		FERROR("Cannot duplicate string in size 0\n");
 		return NULL;
 	}
-	copy = FCalloc( len + 1, sizeof(char) );
+	//copy = FMallocAlign( len + 1 );
+	copy = FCallocAlign( len + 1, 1 );
 	if( copy == NULL )
 	{
 		FERROR("Cannot allocate memory in StringDuplicateN\n");
 		return NULL;
 	}
 	memcpy( copy, str, len );
-	copy[len] = 0;
+	copy[ len ] = 0;
 	return copy;
 }
 
@@ -148,13 +140,14 @@ char* StringDuplicate( const char* str )
 		return NULL;
 	}
 	len = strlen( str );
-	newStr = calloc( len + 1, sizeof( char ) );
+	newStr = FMallocAlign( len + 1 );
+	//newStr = FCallocAlign( len + 1, 1 );
 	if( !newStr )
 	{
 		FERROR("Cannot allocate memory in StringDuplicateN\n");
 		return NULL;
 	}
-	memcpy( newStr, str, len );
+	memcpy( newStr, str, len+1 );
 	return newStr;
 }
 
@@ -185,13 +178,15 @@ char* StringDuplicateEOL( const char* str )
 		p++;
 	}
 	
-	newStr = FCalloc( len + 1, sizeof( char ) );
+	newStr = FMallocAlign( len + 1 );
 	if( newStr == NULL )
 	{
 		FERROR("Cannot allocate memory in StringDuplicateN\n");
 		return NULL;
 	}
 	memcpy( newStr, str, len );
+	newStr[ len ] = 0;
+	
 	return newStr;
 }
 
@@ -211,7 +206,7 @@ void StringSecureFree( char* str )
 	{
 		*(ptr++) = 0;
 	}
-	free( str );
+	FFree( str );
 	return;
 }
 
@@ -293,7 +288,8 @@ char *UrlDecodeToMem( const char* src )
 		return NULL;
 	}
 	int size = strlen( src );
-	char *dst = calloc( size + 1, sizeof(char ) );
+	//char *dst = FMallocAlign( size + 1);
+	char *dst = FCallocAlign( size + 1, 1 );
 	if( dst == NULL )
 	{
 		FERROR("Cannot alloc memory for decoded url\n");
@@ -323,6 +319,9 @@ char *UrlDecodeToMem( const char* src )
 		*dst++ = ch;
 	} 
 	while( ch );
+	
+	//*dst = 0;
+	
 	return org_dst;
 }
 
@@ -336,22 +335,26 @@ char *UrlEncodeToMem( const char *src )
 {
 	if( _rfc3986[0] == 0 ) _UrlEncodeInitTables();
 	
-	char *enc = FCalloc( ( strlen( src ) << 2 ), sizeof( char ) );
+	int memsize = ( SHIFT_LEFT( strlen( src ), 2) );
+	//char *enc = FCalloc( ( SHIFT_LEFT( strlen( src ), 2) ), sizeof( char ) );
+	//char *enc = FMallocAlign( memsize );
+	char *enc = FCallocAlign( memsize, 1 );
 	char *res = enc;
 	for( ; *src; src++ )
 	{
 		// if we don't have an index on the current character in the 
 		// table, then add it pure, else, encode it
-		if( _rfc3986[ *src ] ) 
+		if( _rfc3986[ (int)*src ] ) 
 		{
-			sprintf( enc, "%c", _rfc3986[ *src ] );
+			sprintf( enc, "%c", _rfc3986[ (int)*src ] );
 		}
 		else 
 		{
 			sprintf( enc, "%%%02X", ( unsigned char)*src );
 		}
-		while( *( ++enc ) != NULL ){};
+		while( *( ++enc ) != '\0' ){};
 	}
+	//enc[ memsize-1 ] = 0;
     return res;
 }
 
@@ -367,7 +370,7 @@ unsigned int StringParseUInt( char* str )
 	{
 		if( str[i] >= '0' && str[i] <= '9' )
 		{
-			v = ( ( v << 3 ) + ( v << 1 ) ) + ( str[i] - '0' );
+			v = ( ( SHIFT_LEFT(v, 3) ) + ( SHIFT_LEFT( v, 1) ) ) + ( str[i] - '0' );
 		}
 		else
 		{
@@ -385,7 +388,7 @@ char* StringAppend( const char* str1, const char* str2 )
 {
 	unsigned int len1 = strlen( str1 );
 	unsigned int len2 = strlen( str2 );
-	char* combined = calloc( len1 + len2 + 1, sizeof(char) );
+	char* combined = FMallocAlign( len1 + len2 + 1 );
 
 	// Out of memory?
 	if( !combined )
@@ -396,7 +399,7 @@ char* StringAppend( const char* str1, const char* str2 )
 
 	strcpy( combined, str1 );
 	strcpy( combined + len1, str2 );
-	combined[len1 + len2] = 0;
+	combined[ len1 + len2 ] = 0;
 	return combined;
 }
 
@@ -404,27 +407,27 @@ char* StringAppend( const char* str1, const char* str2 )
 //
 //
 
-inline FBOOL CharIsDigit( char c )
+FBOOL CharIsDigit( char c )
 {
 	return c >= '0' && c <= '9';
 }
 
-inline FBOOL CharIsUpAlpha( char c )
+FBOOL CharIsUpAlpha( char c )
 {
 	return c >= 'A' && c <= 'Z';
 }
 
-inline FBOOL CharIsLoAlpha( char c )
+FBOOL CharIsLoAlpha( char c )
 {
 	return c >= 'a' && c <= 'z';
 }
 
-inline FBOOL CharIsAlpha( char c )
+FBOOL CharIsAlpha( char c )
 {
 	return CharIsUpAlpha( c ) || CharIsLoAlpha( c );
 }
 
-inline FBOOL CharIsAlphanumeric( char c )
+FBOOL CharIsAlphanumeric( char c )
 {
 	return CharIsAlpha( c ) || CharIsDigit( c );	
 }
@@ -664,7 +667,9 @@ char* StringShellEscapeSize( const char* str, int *len )
 			estrLen++;
 		}
 	}
-	char* estr = calloc( estrLen + 1, sizeof(char) );
+	//char* estr = FMallocAlign( estrLen + 1 );
+	char* estr = FCallocAlign( estrLen + 1, 1 );
+	//char* estr = calloc( estrLen + 1, sizeof(char) );
 	if( estr == NULL )
 	{
 		FERROR("Cannot allocate memory in StringShellEscape\n");
@@ -696,7 +701,7 @@ char* StringShellEscapeSize( const char* str, int *len )
 //
 //
 
-inline void preKmp(char *x, int m, int kmpNext[]) {
+static inline void preKmp(char *x, int m, int kmpNext[]) {
 	int i, j;
 
 	i = 0;
@@ -762,9 +767,9 @@ char *FindInBinary(char *x, int m, char *y, int n)
 //
 //
 
-FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n) 
+FLONG FindInBinaryPOS(char *x, int m, char *y, FULONG n) 
 {
-	FQUAD i, j;
+	FLONG i, j;
 	int kmpNext[ m ];
 
 	// Preprocessing 
@@ -772,7 +777,7 @@ FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n)
 
 	// Searching 
 	i = j = 0;
-	while (j < (FQUAD)n) 
+	while (j < (FLONG)n) 
 	{
 		//printf("find %d\n", j );
 		while (i > -1 && x[i] != y[j])
@@ -793,9 +798,9 @@ FQUAD FindInBinaryPOS(char *x, int m, char *y, FUQUAD n)
 //
 //
 
-FQUAD FindInBinarySimple( char *x, int m, char *y, FUQUAD n )
+FLONG FindInBinarySimple( char *x, int m, char *y, FULONG n )
 {
-	FUQUAD i;
+	FULONG i;
 	
 	//INFO("\n\n\nFIND TEXT %s\n", x );
 	
@@ -805,7 +810,7 @@ FQUAD FindInBinarySimple( char *x, int m, char *y, FUQUAD n )
 		if( memcmp( x, y, m ) == 0 )
 		{
 			//FERROR("Found text %50s ------------------------------ %10s\n", (y-50), y );
-			return (FQUAD)i;
+			return (FLONG)i;
 		}
 		y++;
 	}
@@ -818,7 +823,9 @@ void HashedString ( char **str )
 	unsigned char temp[SHA_DIGEST_LENGTH];
 	memset( temp, 0x0, SHA_DIGEST_LENGTH );
 	
-	char *buf = FCalloc( ( SHA_DIGEST_LENGTH << 1 ) + 1, sizeof( char ) );
+	//char *buf = FMallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1 );
+	char *buf = FCallocAlign( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, 1 );
+	//char *buf = FCalloc( ( SHIFT_LEFT( SHA_DIGEST_LENGTH, 1) ) + 1, sizeof( char ) );
 
 	if( buf != NULL )
 	{
@@ -827,7 +834,7 @@ void HashedString ( char **str )
 		int i = 0;
 		for ( ; i < SHA_DIGEST_LENGTH; i++ )
 		{
-			sprintf( (char*)&(buf[ i << 1 ]), "%02x", temp[i] );
+			sprintf( (char*)&(buf[ SHIFT_LEFT( i, 1) ]), "%02x", temp[i] );
 		}
 
 		if ( *str ) 
@@ -895,4 +902,21 @@ int StringNToInt( char *s, int len )
 	memcpy( chars, s, len );
 	chars[ len ] = 0;
 	return atoi( chars );
+}
+
+//destination has to be at least twice as long as src (in worst case)
+void string_escape_quotes(const char *src, char *dst)
+{
+	while( *src )
+	{
+		if (*src == '"')
+		{
+			*dst = '\\';
+            dst++;
+		}
+		*dst = *src;
+		dst++;
+		src++;
+	}
+	*dst = 0;
 }

@@ -79,9 +79,9 @@ INRAMFile *INRAMFileNew( int type, char *path, char *name )
  * @param nf pointer to INRAMFile structure which will be deleted
  */
 
-FQUAD INRAMFileDelete( INRAMFile *nf )
+FLONG INRAMFileDelete( INRAMFile *nf )
 {
-	FQUAD deleted = 0;
+	FLONG deleted = 0;
 	if( nf != NULL )
 	{
 		if( nf->nf_Type == INRAM_FILE )
@@ -355,9 +355,9 @@ INRAMFile *INRAMFileRemoveByPath( INRAMFile *root, char *path )
  *
  * @param root pointer to INRAMFile from which entry will be removed
  */
-FQUAD INRAMFileDeleteAll( INRAMFile *root )
+FLONG INRAMFileDeleteAll( INRAMFile *root )
 {
-	FQUAD deleted = 0;
+	FLONG deleted = 0;
 	INRAMFile *f = root->nf_Children;
 	
 	while( f != NULL )

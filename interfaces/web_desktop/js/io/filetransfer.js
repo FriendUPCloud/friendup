@@ -25,7 +25,8 @@ var Base64 = {_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234
 
 
 
-// == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ## 
+// -----------------------------------------------------------------------------
+
 var files = [];
 var volume;
 var path;
@@ -34,7 +35,9 @@ var totals = 0;
 var filecounter = [];
 var filesundertransport = 0;
 
-// == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ## 
+// -----------------------------------------------------------------------------
+
+// Gets information about disk volume
 self.checkVolume = function()
 {
 	xhr = new XMLHttpRequest();
@@ -42,6 +45,7 @@ self.checkVolume = function()
 	{
 		if( this.readyState == 4 && this.status == 200 )
 		{
+			console.log( 'Response from server: ', this.responseText );
 			// Don't abort if we succeeded anyway
 			if( self.delayedAbort )
 			{
@@ -51,7 +55,14 @@ self.checkVolume = function()
 			var tmp = this.responseText.split( 'ok<!--separate-->' );
 			if( typeof( tmp ) != 'undefined' )
 			{
-				tmp = JSON.parse( tmp[ 1 ] );
+				try
+				{
+					tmp = JSON.parse( tmp[ 1 ] );
+				}
+				catch( e )
+				{
+					self.postMessage( { 'error': 1, 'errormessage': 'Illegal server response.' } ); return; 
+				}
 				
 				var diskspace = parseInt( tmp.Filesize ) - parseInt( tmp.Used );
 				var uploadsize = 0;
@@ -104,48 +115,51 @@ self.checkVolume = function()
 	xhr.send( data.join( '&' ) );
 } // end of checkVolumne
 
-// == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ## 
+// -----------------------------------------------------------------------------
 self.uploadFiles = function() 
 {
-	
 	// once we get here we can upload all files at once :)
 	var xhrs = [];
 	
-	//console.log('We will now look into uploading our files..');
-	//console.log(self.files);
-	//console.log('#### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### ');
-	for(var f in self.files )
+	for( var f in self.files )
 	{
-		if(typeof self.files[f] != "object") continue;
+		if( typeof self.files[ f ] != 'object' ) continue;
 		
-		var file = self.files[f];
+		var file = self.files[ f ];
 		
 		xhrs[f] = new XMLHttpRequest();
-		xhrs[f].upload.uploadfileindex = xhrs[f].uploadfileindex = f;
+		xhrs[f].upload.uploadfileindex = xhrs[ f ].uploadfileindex = f;
 		
 		xhrs[f].upload.addEventListener( 'progress', function ( e )
 		{
-			if ( e.lengthComputable )
+			if( e.lengthComputable )
 			{
-				self.filecounter[this.uploadfileindex][0] = e.loaded;
+				self.filecounter[ this.uploadfileindex ][ 0 ] = e.loaded;
 				var uploaded = 0;
-				for(var i in self.filecounter)
+				for( var i in self.filecounter )
 				{
-					uploaded += self.filecounter[i][0];
+					uploaded += self.filecounter[ i ][ 0 ];
 				}
-				var progress = Math.min((100-self.filecounter.length), ( uploaded * 100 / self.totals) );
+				var progress = Math.min( ( 100 - self.filecounter.length ), ( uploaded * 100 / self.totals) );
 				
 				if( e.loaded == e.total ) self.filesundertransport++;
 				
-				self.postMessage({'progressinfo':1,'progress':progress,'progresson':this.uploadfileindex,'filesundertransport':self.filesundertransport} );
+				self.postMessage(
+					{
+						'progressinfo': 1,
+						'progress': progress,
+						'progresson': this.uploadfileindex,
+						'filesundertransport': self.filesundertransport
+					} 
+				);
 			}
-		});
+		} );
 
 		xhrs[f].onreadystatechange = function()
 		{
-			if ( this.status == 200 )
+			if( this.status == 200 )
 			{
-				self.filecounter[this.uploadfileindex][0] = self.filecounter[this.uploadfileindex][1];
+				self.filecounter[ this.uploadfileindex ][ 0 ] = self.filecounter[ this.uploadfileindex ][ 1 ];
 				if( self.filesundertransport > 1 ) self.filesundertransport--;
 				
 				var done = true;
@@ -153,39 +167,43 @@ self.uploadFiles = function()
 
 				for(var i in self.filecounter)
 				{
-					if( self.filecounter[i][0] != self.filecounter[i][1] )
+					if( self.filecounter[ i ][ 0 ] != self.filecounter[ i ][ 1 ] )
 					{
 						done = false;
 					}
 				}
-				if(done)
-					self.postMessage({'progressinfo':1,'uploadscomplete':1});
-				else
-					self.postMessage({'progressinfo':1,'progress':progress });
+				if( done ) self.postMessage( { 'progressinfo' : 1,'uploadscomplete' : 1 } );
+				else self.postMessage( { 'progressinfo' : 1, 'progress' : progress } );
 			}
-			else if(this.readyState > 1 && this.status > 0)
+			else if( this.readyState > 1 && this.status > 0 )
 			{
-				self.postMessage({'progressinfo':1,'fileindex':this.uploadfileindex,'uploaderror':'Upload failed. Server response was readystate/status: |' + this.readyState + '/' + this.status + '|' });
+				self.postMessage( {
+					'progressinfo' : 1,
+					'fileindex' : this.uploadfileindex, 
+					'uploaderror' : 'Upload failed. Server response was readystate/status: |' + 
+						this.readyState + '/' + this.status + '|' 
+				} );
 			}
 		}
-		xhrs[f].open('POST','/system.library/file/upload',true);
+		xhrs[f].open( 'POST', '/system.library/file/upload', true );
 		xhrs[f].setRequestHeader( 'Method', 'POST /system.library/file/upload HTTP/1.1' );
 		xhrs[f].setRequestHeader( 'Content-Type', 'multipart/form-data;' );
 		
 		// add request data...
 		var fd = new FormData();
-		fd.append('sessionid',self.session);
-		fd.append('module','files');
-		fd.append('command','uploadfile');
-		fd.append('path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
-		fd.append('file', file);
+		fd.append( 'sessionid',self.session );
+		fd.append( 'module','files' );
+		fd.append( 'command','uploadfile' );
+		fd.append( 'path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
+		fd.append( 'file', file );
 		
 		//get the party started
 		xhrs[f].send( fd );
 	}
 } // end of uploadFiles
 
-// == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ##  == ## 
+// -----------------------------------------------------------------------------
+
 self.onmessage = function( e )
 {
 	// Do a copy with files list

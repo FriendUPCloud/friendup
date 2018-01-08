@@ -94,7 +94,7 @@ int CacheFileRead( CacheFile* file )
 		}
 	
 		fseek( file->cf_Fp, 0, SEEK_SET );
-		int result = fread( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
+		unsigned int result = fread( file->cf_FileBuffer, 1, file->cf_FileSize, file->cf_Fp );
 		fclose( file->cf_Fp );
 		
 		if( result < file->cf_FileSize )

@@ -1,0 +1,98 @@
+/* For scrollbars ----------------------------------------------------------- */
+
+/* addresses the background of the bar itself. It is usually covered by the other elements */
+::-webkit-scrollbar
+{
+	width: 16px;
+	height: 16px;
+	background: #454545;
+}
+
+.View.Active ::-webkit-scrollbar
+{
+	background: #144777;
+}
+
+::-webkit-scrollbar:vertical
+{
+	border-width: 0 2px;
+}
+/* addresses the directional buttons on the scrollbar */
+::-webkit-scrollbar-button
+{
+}
+
+/* addresses the empty space “below” the progress bar */
+::-webkit-scrollbar-track,
+.View.Active ::-webkit-scrollbar-track,
+body.activated ::-webkit-scrollbar-track
+{
+	background: #777777;
+	box-shadow: none;
+}
+.View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background: #174a59;
+	box-shadow: none;
+}
+/* is the top-most layer of the the progress bar not covered by the draggable scrolling element (thumb) */
+::-webkit-scrollbar-track-piece
+{
+	padding-left: 2px;
+	margin-right: 2px;
+}
+/* addresses the draggable scrolling element that resizes depending on the size of the scrollable element */
+::-webkit-scrollbar-thumb
+{
+	left: 1px;
+	right: 1px;
+	background-clip: padding-box;
+	background-image: url(/themes/hove/gfx/scrollknob.png);
+	background-position: center center;
+	background-repeat: no-repeat;
+	border-radius: 0;
+	background-color: #c7c7c7;
+	border: 0;
+}
+.View.Active ::-webkit-scrollbar-thumb,
+body.activated ::-webkit-scrollbar-thumb
+{
+	background-color: #c7c7c7;
+	background-image: url(/themes/hove/gfx/scrollknob_active.png);
+	border: 0;
+}
+.View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: #4A9AE3;
+	border: 0;
+}
+
+/* addresses the (usually) bottom corner of the scrollable element, where two scrollbars might meet */
+::-webkit-scrollbar-corner
+{
+}
+/* addresses the draggable resizing handle that appears above the scrollbar-corner at the bottom */
+::-webkit-resizer
+{
+}
+
+@media only screen and (max-device-width: 768px)
+{
+	::-webkit-scrollbar
+	{
+		width: 4px;
+		height: 4px;
+	}
+	::-webkit-scrollbar-thumb, .View.Active.IconWindow ::-webkit-scrollbar-thumb,
+	body.activated ::-webkit-scrollbar-thumb, .View.Active ::-webkit-scrollbar-thumb
+	{
+		background-image: none;
+		border: 0,
+	}
+	.View.Active ::-webkit-scrollbar-track,
+	body.activated ::-webkit-scrollbar-track
+	{
+		background: #777777;
+	}
+}
+

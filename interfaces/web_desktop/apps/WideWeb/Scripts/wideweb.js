@@ -26,7 +26,7 @@ Application.run = function( msg )
 		width:  900,
 		height: 600
 	} );
-	
+
 	v.setMenuItems( [
 		{
 			name: i18n( 'i18n_file' ),
@@ -59,21 +59,42 @@ Application.run = function( msg )
 			]
 		},
 		{
+			name: i18n( 'i18n_bookmarks' ),
+			items: [
+				{
+					name: 'FriendUP',
+					command: 'navto:https://friendup.cloud/'
+				},
+				{
+					name: 'FriendUP Developers',
+					command: 'navto:https://developers.friendup.cloud/'
+				},
+				{
+					name: 'Friend Software Corporation',
+					command: 'navto:https://friendsoftware.cloud/'
+				},
+				{
+					name: 'Slashdot.org',
+					command: 'navto:https://slashdot.org/'
+				}
+			]
+		}/*,
+		{
 			name: i18n( 'i18n_edit' ),
 			items: [
 			]
-		}
+		}*/
 	] );
-	
+
 	this.mainView = v;
-	
+
 	v.onClose = function( data )
 	{
 		Application.quit();
 	}
-	
+
+	Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) );
 	var f = new File( 'Progdir:Templates/webinterface.html' );
-	
 	f.onLoad = function( data )
 	{
 		v.setContent( data, function()
@@ -88,18 +109,34 @@ Application.run = function( msg )
 		} );
 	}
 	f.load();
-	
+
 }
 
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
-	
+
+	if( msg.command.substr( 0, 6 ) == 'navto:' )
+	{
+		var url = msg.command.substr( 6, msg.command.length - 6 );
+		msg.command = 'seturl';
+		msg.url = url;
+	}
+
 	switch( msg.command )
 	{
-		case 'seturl':
+		case 'setcontent':
 			Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );
 			this.currentUrl = msg.url;
+			break;
+		case 'seturl':
+			if ( msg.url.indexOf( 'WideWeb/Templates/about.html' ) < 0 && msg.url != this.currentUrl )
+			{
+				this.currentUrl = msg.url;
+				Application.mainView.setFlag( 'title', i18n( 'i18n_wideweb' ) + ' - ' + msg.url );
+				if( !msg.logic )
+					this.mainView.sendMessage( { command: 'loadfile', filename: this.currentUrl } );
+			}
 			break;
 		case 'updateproxy':
 			Application.mainView.sendMessage( { command: 'setproxy', proxy: Application.proxy, friendsession: Application.friendsession } );
@@ -141,4 +178,3 @@ Application.receiveMessage = function( msg )
 			break;
 	}
 }
-

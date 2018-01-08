@@ -22,6 +22,7 @@
 friend = window.friend || {};
 friend.iconsSelectedCount = 0;
 friend.currentMenuItems = 0;
+friend.scope = 'API';
 
 friend.lib = friend.lib || {};
 
@@ -59,7 +60,7 @@ friend.globalConfig = globalConfig;
 friend.application = {
 	doneLoading: function()
 	{
-		document.body.className = '';
+		document.body.className = 'activated';
 		setTimeout( function()
 		{
 			document.body.style.opacity = '';
@@ -73,10 +74,112 @@ var Application =
 	sessionObject: {},
 	callbacks: [],
 	permanentCallbacks: [],
-	windows: [],
+	windows: {},
 	widgets: [],
 	language: false,
 	messageQueue: [],
+	keyData:
+	{
+		get: function( callback, systemWide )
+		{
+			Application.sendMessage( {
+				type: 'system', 
+				command: 'getapplicationkey', 
+				callback: addCallback( callback ), 
+				userId: Application.userId, 
+				appPath: Application.appPath, 
+				applicationId: Application.applicationId, 
+				authId: Application.authId, 
+				systemWide: ( systemWide ? '*' : false ) 
+			} );
+		},
+		save: function( name, data, encrypt, callback )
+		{
+			Application.sendMessage( {
+				type: 'system', 
+				command: 'setapplicationkey', 
+				callback: ( callback ? addCallback( callback ) : false ), 
+				userId: Application.userId, 
+				appPath: Application.appPath, 
+				applicationId: Application.applicationId, 
+				authId: Application.authId, 
+				args: {
+					name: name,
+					data: data,
+					encrypt: encrypt
+				}
+			} );
+		}
+	},
+	// Get an element retrieved by View.getWindowElement()
+	getWindowElementById: function( id )
+	{
+		if( !this.windowElements ) return false;
+		return this.windowElements[ id ];
+	},
+	encryption:
+	{
+		generateKeys: function( args, algo, callback )
+		{
+			if( !algo ) algo = 'rsa1024';
+			
+			var msg = {
+				type: 'encryption', 
+				algo: algo, 
+				command: 'generatekeys', 
+				callback: addCallback( callback ), 
+				args: args
+			};
+			
+			switch( algo )
+			{
+				case 'md5':
+					Application.sendMessage( msg );
+					break;
+				
+				case 'sha256':
+					Application.sendMessage( msg );
+					break;
+				
+				case 'rsa1024':
+					Application.sendMessage( msg );
+					break;
+					
+				default:
+					return false;
+					break;
+			}
+		},
+		encrypt: function( args, callback )
+		{
+			Application.sendMessage( { 
+				type: 'encryption', 
+				command: 'encrypt', 
+				callback: addCallback( callback ), 
+				args: args
+			} );
+		},
+		decrypt: function( args, callback )
+		{
+			Application.sendMessage( { 
+				type: 'encryption', 
+				command: 'decrypt', 
+				callback: addCallback( callback ), 
+				args: args
+			} );
+		},
+		publickey: function( callback, args )
+		{
+			Application.sendMessage( { 
+				type: 'encryption', 
+				command: 'publickey', 
+				callback: addCallback( callback ), 
+				args: ( args ? args : { 
+					encoded: false 
+				} ) 
+			} );
+		}
+	},
 	// Load locale translations
 	loadTranslations: function( path, callback )
 	{
@@ -91,7 +194,7 @@ var Application =
 				this.loadTranslations( path, callback );
 				return;
 			}
-			
+
 			if( !window.translations ) window.translations = [];
 			var expl = data.split( "\n" );
 			for( var a = 0; a < expl.length; a++ )
@@ -285,7 +388,7 @@ var Application =
 				Application.widgets[a].close();
 			}
 		}
-		
+
 		if( Application.screens )
 		{
 			for( var a in Application.screens )
@@ -329,7 +432,7 @@ if( !friend.clipboard )
 {
 	friend.clipboard = '';
 	friend.prevClipboard = '';
-	friend.macCommand = false;	
+	friend.macCommand = false;
 }
 
 
@@ -346,7 +449,7 @@ document.addEventListener( 'keydown', function( e )
 	if( e.ctrlKey || friend.macCommand )
 	{
 		// CTRL V
-		if( wh == 86 )
+		/*if( wh == 86 )
 		{
 			//fire paste event instead pf doing stuff herre...
 			friend.lastKeydownTarget = t;
@@ -360,7 +463,8 @@ document.addEventListener( 'keydown', function( e )
 			Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
 		}
 		// Screen swap!
-		else if( wh == 77 )
+		else */
+		if( wh == 77 )
 		{
 			Application.sendMessage( { type: 'system', command: 'switchscreens' } );
 			return cancelBubble( e );
@@ -372,17 +476,17 @@ document.addEventListener( 'keydown', function( e )
 document.addEventListener( 'keyup', function( e )
 {
 	var wh = e.which ? e.which : e.keyCode;
-	if( wh == 91 ) friend.macCommand = false;
+	friend.macCommand = false;
 } );
 
 
-
-document.addEventListener('paste', function(evt)
+/*document.addEventListener( 'paste', function(evt)
 {
-	if(friend && typeof friend.pasteClipboard == 'function' ) friend.pasteClipboard( evt );
-});
+	if( friend && typeof friend.pasteClipboard == 'function' ) friend.pasteClipboard( evt );
+	return true;
+} );
 
-document.addEventListener('copy', function(evt)
+document.addEventListener( 'copy', function(evt)
 {
 	friend.sysClipBoardUpdate = Date.now();
 
@@ -397,7 +501,7 @@ document.addEventListener('copy', function(evt)
 		if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
 	}
 	//console.log('copy event fired',friend,evt);
-});
+} );*/
 
 
 /**
@@ -429,7 +533,7 @@ friend.pasteClipboard = function( evt )
 	{
 		//wait a bit for the clipboard to be updated...
 		setTimeout( 'Application.handlePaste( friend.clipboard );',250);
-	}	
+	}
 	if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
 	if( friend.lastKeydownTarget )
 	{
@@ -524,9 +628,9 @@ uniqueIdString = friend.uniqueIdString;
 function extractCallback( id, keep )
 {
 	var f = false;
-	
+
 	var out = []; // Only use this if we're not keeping callback
-	
+
 	for( var a in Application.callbacks )
 	{
 		if( a == id )
@@ -536,11 +640,11 @@ function extractCallback( id, keep )
 		// unless we keep, add callback
 		else if( keep != true ) out[a] = Application.callbacks[a];
 	}
-	
+
 	// Remove the callback we asked for
 	if( keep != true )
 		Application.callbacks = out;
-	
+
 	for( var a in Application.permanentCallbacks )
 	{
 		if( a == id )
@@ -645,13 +749,28 @@ function receiveEvent( event, queued )
 {
 	// TODO: Do security stuff...
 	//
+	
 	if( !window.eventQueue )
 		window.eventQueue = [];
 
-	if ( 'string' === typeof( event.data ))
-		var dataPacket = JSON.parse( event.data );
+	var dataPacket;
+	
+	if( 'string' === typeof( event.data ) )
+	{
+		try
+		{
+			dataPacket = JSON.parse( event.data );
+		}
+		catch( e )
+		{
+			// No data packet
+			return;
+		}
+	}
 	else
-		var dataPacket = event.data;
+	{
+		dataPacket = event.data;
+	}
 
 	if( !dataPacket.command )
 	{
@@ -686,7 +805,7 @@ function receiveEvent( event, queued )
 			__queuedEventInterval = setInterval( queuedEventTimer, __timeout );
 		return;
 	}
-
+	
 	switch( dataPacket.command )
 	{
 		// Update clipboard
@@ -694,22 +813,29 @@ function receiveEvent( event, queued )
 			friend.clipboard = dataPacket.value;
 			break;
 
+		case 'friendnetwork':
+			return FriendNetwork.receiveMessage( dataPacket );
+
 		// Update theme
 		case 'refreshtheme':
 			var themeName = dataPacket.theme;
-			
+
 			var h = document.getElementsByTagName( 'head' );
 			if( h )
 			{
 				h = h[0];
-				document.body.className = 'Loading';
-
+				document.body.classList.add( 'Loading' );
+				
 				// New css!
 				var styles = document.createElement( 'link' );
 				styles.rel = 'stylesheet';
 				styles.type = 'text/css';
-				styles.onload = function(){ document.body.className = 'Loaded'; }
-
+				styles.onload = function()
+				{
+					document.body.classList.remove( 'Loading' );
+					document.body.classList.add( 'Loaded' );
+				}
+				
 				if( themeName && themeName != 'default' )
 				{
 					AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
@@ -722,7 +848,7 @@ function receiveEvent( event, queued )
 					styles.href = '/system.library/module/?module=system&command=theme&args=' +
 						encodeURIComponent( '{"theme":"friendup"}' ) + '&authid=' + Application.authId;
 				}
-
+				
 				// Remove old one
 				var l = h.getElementsByTagName( 'link' );
 				for( var b = 0; b < l.length; b++ )
@@ -745,6 +871,7 @@ function receiveEvent( event, queued )
 				// Add new one
 				h.appendChild( styles );
 			}
+
 			// Refresh subviews
 			if( Application.windows )
 			{
@@ -774,16 +901,9 @@ function receiveEvent( event, queued )
 			//console.log( 'api.js - dispatchevent', dataPacket );
 			var eles = [ window, document.body ];
 			var ev = typeof( dataPacket.eventData ) == 'string' ? JSON.parse( dataPacket.eventData ) : dataPacket.eventData;
-
-			//console.log( 'We are here: ' + document.title );
-
+			
 			for( var a = 0; a < eles.length; a++ )
 			{
-				/*console.log( 'eles[a].trappedEvents', {
-					trapped : eles[a].trappedEvents,
-					event : dataPacket,
-				});*/
-
 				if( eles[a].trappedEvents && eles[a].trappedEvents[ dataPacket.eventType ] )
 				{
 					// Execute found events!
@@ -842,7 +962,6 @@ function receiveEvent( event, queued )
 				Application.handleKeys( dataPacket.key, ev );
 			}
 			break;
-
 		// On opening window
 		case 'viewresponse':
 			// Can't create window? Quit
@@ -872,12 +991,20 @@ function receiveEvent( event, queued )
 							w._flags[dataPacket.flag] = dataPacket.value;
 						}
 						break;
+					case 'servermessage':
+						if( Application.receiveMessage )
+						{
+							Application.receiveMessage( {
+								command: 'servermessage',
+								data: dataPacket.message
+							} );
+						}
+						break;
 					case 'closewindow':
 					case 'closeview':
 						// Close an exact window
 						if( dataPacket.viewId && Application.windows && Application.windows[dataPacket.viewId] )
 						{
-
 							var w = Application.windows[dataPacket.viewId];
 							w.close();
 						}
@@ -904,7 +1031,6 @@ function receiveEvent( event, queued )
 							for( var a in Application.windows )
 							{
 								var w = Application.windows[a];
-								if( w.onClose ) w.onClose();
 								w.close();
 							}
 						}
@@ -926,7 +1052,7 @@ function receiveEvent( event, queued )
 					// Deactivate it
 					case 'deactivateview':
 						Application.activated = false;
-						document.body.className = document.body.className.split( ' activated' ).join ( '' );
+						document.body.classList.remove( 'activated' );
 						Application.receiveMessage( { type: 'system', command: 'blurview' } );
 						break;
 					default:
@@ -951,7 +1077,7 @@ function receiveEvent( event, queued )
 			Application.applicationId = dataPacket.applicationId;
 			Application.userId        = dataPacket.userId;
 			Application.username      = dataPacket.username;
-			
+
 			// Register screen
 			if( dataPacket.screenId ) Application.screenId = dataPacket.screenId;
 
@@ -1066,6 +1192,7 @@ function receiveEvent( event, queued )
 			Application.username      = dataPacket.username;
 			Application.applicationName = dataPacket.applicationName;
 			Application.sendMessage   = setupMessageFunction( dataPacket, window.origin );
+			
 			// Initialize app frame
 			initApplicationFrame( dataPacket, event.origin );
 			break;
@@ -1080,7 +1207,7 @@ function receiveEvent( event, queued )
 				// Shall we keep the callback so we can continue to pass info on it?
 				var kcb = dataPacket.returnMessage;
 				var keep = kcb ? ( kcb.keepCallback ? true : false ) : false;
-			
+
 				// Shell object
 				if( dataPacket.shellId )
 				{
@@ -1425,17 +1552,26 @@ function receiveEvent( event, queued )
 		// Run callbacks and clean up
 		if( dataPacket.callback )
 		{
+			//console.log( 'This is where the callbacks end ... ', dataPacket );
+			
 			// Ok, we will try to execute the callback we found here!
-			if( typeof(Application.callbacks) != 'undefined' && typeof(Application.callbacks[dataPacket.callback]) != 'undefined' )
+			var f;
+			if( dataPacket.resp && ( f = extractCallback( dataPacket.callback ) ) )
 			{
-				Application.callbacks[dataPacket.callback]( dataPacket );
-
-				// Remove callback function from callback buffer
-				var out = [];
-				for( var a in Application.callbacks )
-					if( a != dataPacket.callback )
-						out[a] = Application.callbacks[a];
-				Application.callbacks = out;
+				if( dataPacket.data )
+				{
+					f( dataPacket.resp, dataPacket.data );
+					return true;
+				}
+				else
+				{
+					f( dataPacket.resp, false );
+					return true;
+				}
+			}
+			else if( ( f = extractCallback( dataPacket.callback ) ) )
+			{
+				f( dataPacket );
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
@@ -1520,7 +1656,6 @@ function FriendWebSocket( config )
 }
 
 // Open a new widget -----------------------------------------------------------
-
 function Widget( flags )
 {
 	var widgetId = 'widget_' + ( new Date() ).getTime() + '.' + Math.random();
@@ -1637,14 +1772,13 @@ function Widget( flags )
 				w.push(Application.widgets[a]);
 		Application.widgets = w;
 	}
-	
+
 	// Setup view object with master
 	Application.sendMessage( msg );
 	if( !Application.widgets )
 		Application.widgets = {};
 	Application.widgets[ widgetId ] = this;
 }
-
 
 // Open a new view -------------------------------------------------------------
 
@@ -1664,8 +1798,17 @@ function View( flags )
 		type:    'view',
 		data:    flags,
 		viewId: viewId
-	}
+	};
 
+	// Bring a window to front
+	this.toFront = function()
+	{
+		Application.sendMessage( {
+			type:    'view',
+			method:  'toFront',
+			viewId: viewId
+		} );
+	}
 	this.getViewId = function()
 	{
 		return viewId;
@@ -1694,6 +1837,19 @@ function View( flags )
 			viewId: viewId,
 			data:    { flag: flag, value: value }
 		} );
+	}
+	this.getWindowElement = function( callback )
+	{
+		if( callback )
+			cid = addCallback( callback );
+		var o = {
+			type:     'view',
+			method:   'getWindowElement',
+			viewId:   viewId,
+			destination: Application.viewId ? Application.viewId : false,
+			callback: cid
+		};
+		Application.sendMessage( o );
 	}
 	// Set window content
 	this.setContent = function( data, callback )
@@ -1932,10 +2088,13 @@ function View( flags )
 	{
 		// Don't double close!
 		if( this.closed ) return;
+		if( this.onClose )
+		{
+			this.onClose();
+		}
 
-		if ( this.onClose ) this.onClose();
-		
 		if( this.preventClosing ) return;
+		
 		this.closed = true;
 
 		// Kill slot
@@ -1972,12 +2131,45 @@ function View( flags )
 
 	// Setup view object with master
 	Application.sendMessage( msg );
-	if( !Application.windows )
-		Application.windows = {};
 	Application.windows[ viewId ] = this;
 
 	// Just activate this window
 	this.activate();
+}
+
+// To close a view
+function CloseView( id )
+{
+	// No id? Get the actual view we're in
+	if( !id && Application.viewId )
+		id = Application.viewId;
+
+	// It's an object
+	if( typeof( id ) == 'object' )
+	{
+		if( id.close )
+		{
+			console.log( ' -> Closing object.' );
+			return id.close();
+		}
+		return false;
+	}
+	// It's an id here in this scope?
+	else if( Application.windows[ id ] )
+	{
+		// Closing object by id.
+		Application.windows[ id ].close();
+	}
+	else if( Application.viewId )
+	{
+		// Asking a specific view to close this one by id.
+		Application.sendMessage( { command: 'notify', method: 'closeview', targetViewId: Application.viewId, viewId: id } );
+	}
+	else
+	{
+		// Asking app to close this view.
+		Application.sendMessage( { command: 'notify', method: 'closeview', viewId: id } );
+	}
 }
 
 // Make a new popupview --------------------------------------------------------
@@ -2146,9 +2338,9 @@ function Screen( flags )
 Shell = function()
 {
 	var cid = addCallback( this );
-	
+
 	var shellObject = this;
-	
+
 	this.output = false;
 
 	var appObject = {
@@ -2163,7 +2355,7 @@ Shell = function()
 		if( shellObject.onPipe )
 			shellObject.onPipe( dmsg );
 	} );
-	
+
 	Application.sendMessage( {
 		type:    'shell',
 		args:    appObject,
@@ -2221,7 +2413,7 @@ Shell = function()
 		if( this.output == 'console' ) console.log( 'Shell instance executing command line:', commandLine );
 		var cb = false;
 		var t = this;
-		
+
 		// Special extra callbacks in addition to pipe activity
 		if( callback )
 		{
@@ -2260,7 +2452,7 @@ Shell = function()
 		if( this.output == 'console' ) console.log( 'Shell instance executing evaluate');
 		var cb = false;
 		var t = this;
-		
+
 		// Special extra callbacks in addition to pipe activity
 		if( callback )
 		{
@@ -2270,7 +2462,7 @@ Shell = function()
 			}
 			cb = addCallback( wcallback );
 		}
-		
+
 		Application.sendMessage( {
 			type: 'shell',
 			command: 'evaluate',
@@ -2282,7 +2474,7 @@ Shell = function()
 		} );
 	}
 
-	
+
 	// Clear events (by name optionally)
 	this.clearEvents = function( eventName )
 	{
@@ -2308,7 +2500,7 @@ Shell = function()
 var __audioContext = false;
 
 WebAudioLoader = function(
-		
+
 		Path, callback )
 {
 	if( !__audioContext )
@@ -2585,7 +2777,7 @@ function getImageUrl( path )
 
 	if( path.toLowerCase().substr( 0, 8 ) == 'progdir:' )
 	{
-		return path.split( /progdir\:/i ).join( apath );
+		path = apath + path.substr( 8, path.length - 8 );
 	}
 	else if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
 	{
@@ -2594,6 +2786,10 @@ function getImageUrl( path )
 	else if( path.toLowerCase().substr( 0, 5 ) == 'libs:' )
 	{
 		return path.split( /libs\:/i ).join( '/webclient/' );
+	}
+	if( path.indexOf( 'http:' ) == 0 || path.indexOf( 'https:' ) == 0 )
+	{
+		return path;
 	}
 
 	var prt = 'authid=' + ( Application.authId ? Application.authId : '' );
@@ -2662,9 +2858,12 @@ function File( path )
 	}
 
 	// Load the file
-	this.load = function()
+	this.load = function( mode )
 	{
 		var fid = addCallback( this );
+		if( !mode ) mode = 'r'; else mode = mode.toLowerCase();
+		if(mode=='r'||mode=='rb') this.vars.mode = mode;
+		
 		Application.sendMessage( {
 			type:    'file',
 			data:    { path: this.path },
@@ -2679,7 +2878,7 @@ function File( path )
 	this.post = function( content, filename )
 	{
 		if( !filename ) filename = this.path;
-		
+
 		var fid = addCallback( this );
 		Application.sendMessage( {
 			type:    'file',
@@ -2692,7 +2891,7 @@ function File( path )
 	this.save = function( data, filename )
 	{
 		if( !filename ) filename = this.path;
-		
+
 		var fid = addCallback( this );
 		Application.sendMessage( {
 			type:    'file',
@@ -2735,133 +2934,248 @@ function Module( module )
 
 // Abstract FriendNetwork
 // TODO: Remove keys / sessions on quit!
-FriendNetwork = {
+FriendNetwork =
+{
 	list: function( callback )
     {
-		Application.sendMessage( {
-			type: 'friendnet',
-			method: 'list',
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'list'
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
-	p2pAcceptConnexion: function( key, accept, data, callback )
-	{
-		Application.sendMessage( {
-			type: 'friendnet',
-			method: 'p2pAcceptConnexion',
-			key: key,
-			accept: accept,
-			data: data,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
-	},
-	connect: function( name, p2p, callback )
+	connect: function( url, hostType, flags, callback )
     {
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'connect',
-			p2p: p2p,
-			name: name,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			url: url,
+			hostType: hostType,
+			flags: flags,
+		};
+		if ( callback )
+			message.callback = addPermanentCallback( callback );
+		Application.sendMessage( message );
+	},
+	initFileTransfer: function( key, onOff, infos )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'initFileTransfer',
+			key: key,
+			onOff: onOff,
+			infos: infos
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	acceptFileTransfer: function( key, transferId, accept, infos, callback )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'acceptFileTransfer',
+			key: key,
+			accept: accept,
+			infos: infos,
+			transferId: transferId
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	refuseFileTransfer: function( key, infos )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'refuseFileTransfer',
+			key: key,
+			infos: infos
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	demandFileTransfer: function( key, list, infos, finalResponse )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'demandFileTransfer',
+			key: key,
+			infos: infos,
+			list: list,
+			finalResponse: finalResponse
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	authoriseFileTransfer: function( key, response, transferId )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'authoriseFileTransfer',
+			key: key,
+			response: response,
+			transferId: transferId
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	transferFiles: function( key, list, destinationPath, finalResponse, callback )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'transferFiles',
+			key: key,
+			list: list,
+			finalResponse: finalResponse,
+			destinationPath: destinationPath
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	deleteTransferedFiles: function( key, transferId, callback )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'deleteTransferedFiles',
+			key: key,
+			transferId: transferId
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeFileTransfer: function( key, transferId, callback )
+    {
+		var message =
+		{
+			type: 'friendnet',
+			method: 'deleteTransferedFiles',
+			key: key,
+			transferId: transferId
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
 	disconnect: function ( key, callback )
 	{
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'disconnect',
-			key: key,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			key: key
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
-	host: function( name, data, callback )
+	host: function( name, applicationName, type, identifier, flags, callback )
     {
-		Application.sendMessage( {
+    	var message =
+		{
 			type: 'friendnet',
 			method: 'host',
 			name: name,
-			data: data,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			hostType: type,
+			identifier: identifier,
+			applicationName: applicationName,
+			flags: flags
+		};
+    	if ( callback )
+			message.callback = addPermanentCallback( callback );
+		Application.sendMessage( message );
 	},
 	dispose: function( key, callback )
     {
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'dispose',
-			key: key,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			key: key
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
-	sendCredentials: function( key, password )
+	sendCredentials: function( key, password, callback )
 	{
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'sendCredentials',
 			key: key,
 			password: password
-		} );
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
-	setHostPassword: function( key, password )
+	setHostPassword: function( key, password, callback )
 	{
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'setHostPassword',
 			key: key,
 			password: password
-		} );
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	},
 	send: function( key, data, callback )
     {
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'send',
 			key: key,
-			data: data,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			data: data
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
     },
 	setPassword: function( key, password, callback )
     {
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'setPassword',
 			key: key,
-			password: password,
-			callback: addCallback( function ( msg )
-			{
-				if ( callback ) callback( msg );
-			} )
-		} );
+			password: password
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
     },
-	closeSession: function( key )
+	closeSession: function( key, callback )
     {
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'closeSession',
 			key: key
-		} );
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
     },
 	closeApplication: function()
   	{
@@ -2870,12 +3184,30 @@ FriendNetwork = {
 			method: 'closeApplication'
 		} );
   	},
-	status: function()
+	status: function( callback )
 	{
-		Application.sendMessage( {
+		var message =
+		{
 			type: 'friendnet',
 			method: 'status'
-		} );
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	receiveMessage: function( dataPacket )
+	{
+        if( dataPacket.viewId && Application.windows && Application.windows[ dataPacket.viewId ] )
+            Application.windows[ dataPacket.viewId ].sendMessage( dataPacket );
+        else
+            Application.receiveMessage( dataPacket );
+		if( dataPacket.callback )
+		{
+			console.log( 'FriendNetwork callback execute: ' + dataPacket.callback );
+			var f = extractCallback( dataPacket.callback );
+			if ( f )
+				f( dataPacket );
+		}
 	}
 };
 
@@ -2970,9 +3302,9 @@ DormantMaster = {
 // ApplicationStorage ----------------------------------------------------------
 
 ApplicationStorage = {
-	
+
 	//public
-	
+
 	set : function( id, data, callback )
 	{
 		var bundle = {
@@ -2985,7 +3317,7 @@ ApplicationStorage = {
 		};
 		ApplicationStorage.send( msg, callback );
 	},
-	
+
 	get : function( id, callback )
 	{
 		var msg = {
@@ -2996,7 +3328,7 @@ ApplicationStorage = {
 		};
 		ApplicationStorage.send( msg, callback );
 	},
-	
+
 	remove : function( id, callback )
 	{
 		var msg = {
@@ -3007,9 +3339,9 @@ ApplicationStorage = {
 		};
 		ApplicationStorage.send( msg, callback );
 	},
-	
+
 	// private
-	
+
 	send : function( msg, callback )
 	{
 		console.log( 'api.ApplicationStorage.send', msg );
@@ -3017,7 +3349,7 @@ ApplicationStorage = {
 			var callbackId = addCallback( callback );
 			msg.callbackId = callbackId;
 		}
-		
+
 		msg.type = 'applicationstorage';
 		Application.sendMessage( msg );
 	},
@@ -3039,68 +3371,68 @@ Authenticate = {
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	uniqueId : function( item, callback )
 	{
 		var msg = {
 			method : 'uniqueid',
 			data : {
-				destinationViewId : item.destinationViewId, 
+				destinationViewId : item.destinationViewId,
 				path : item.path,
-				username : item.username 
+				username : item.username
 			}
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	encryptKey : function( item, callback )
 	{
 		var msg = {
 			method : 'encryptkey',
 			data : {
-				destinationViewId : item.destinationViewId, 
-				str : item.data 
+				destinationViewId : item.destinationViewId,
+				str : item.data
 			}
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	decryptKey : function( item, callback )
 	{
 		var msg = {
 			method : 'decryptkey',
 			data : {
-				destinationViewId : item.destinationViewId, 
-				key : item.data 
+				destinationViewId : item.destinationViewId,
+				key : item.data
 			}
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	encrypt : function( item, callback )
 	{
 		var msg = {
 			method : 'encrypt',
 			data : {
-				destinationViewId : item.destinationViewId, 
-				str : item.data 
+				destinationViewId : item.destinationViewId,
+				str : item.data
 			}
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	decrypt : function( item, callback )
 	{
 		var msg = {
 			method : 'decrypt',
 			data : {
-				destinationViewId : item.destinationViewId, 
-				str : item.data 
+				destinationViewId : item.destinationViewId,
+				str : item.data
 			}
 		};
 		Authenticate.send( msg, callback );
 	},
-	
+
 	// private
 
 	send : function( msg, callback )
@@ -3109,11 +3441,11 @@ Authenticate = {
 			var callbackId = addCallback( callback );
 			msg.callbackId = callbackId;
 		}
-		
+
 		msg.type = 'authenticate';
-		
+
 		console.log( 'api.Authenticate.send', msg );
-		
+
 		Application.sendMessage( msg );
 	}
 };
@@ -3360,8 +3692,8 @@ Authenticate = {
 
 	ns.FConn.prototype.receiveMessage = function( msg )
 	{
-		
-		
+
+
 		var self = this;
 		var event = msg.data;
 		var handler = self.listeners[ event.type ];
@@ -3408,7 +3740,7 @@ Authenticate = {
 		var self = this;
 		self.init();
 	}
-	
+
 	ns.Calendar.prototype.addEvent = function( data, messageToUser, callback )
 	{
 		var self = this;
@@ -3419,11 +3751,11 @@ Authenticate = {
 			TimeFrom    : data.TimeFrom,
 			TimeTo      : data.TimeTo,
 		};
-		
+
 		var cid = undefined;
 		if ( callback )
 			cid = addCallback( callback );
-		
+
 		var wrap = {
 			type : 'add',
 			data : {
@@ -3434,14 +3766,14 @@ Authenticate = {
 		};
 		self.send( wrap );
 	}
-	
+
 	// priv
-	
+
 	ns.Calendar.prototype.init = function()
 	{
 		var self = this;
 	}
-	
+
 	ns.Calendar.prototype.send = function( msg )
 	{
 		var self = this;
@@ -3682,7 +4014,7 @@ function Library( libraryName )
 	this.execute = function( func, args )
 	{
 		var cid = addCallback( this );
-		
+
 		// Execute a library with full path
 		if( libraryName.indexOf( ':' ) >= 0 )
 		{
@@ -3806,7 +4138,7 @@ function setupMessageFunction( dataPacket, origin )
 			Application.callbacks[uid] = callback;
 			msg.callback = uid;
 		}
-		
+
 		// Post the message
 		parent.postMessage( JSON.stringify( msg ), origin ? origin : dataPacket.origin );
 	}
@@ -3891,7 +4223,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		document.getElementsByTagName( 'head' )[0].appendChild( b );
 		Application.baseDir = b.href;
 	}
-	
+
 	if( !packet.filePath ) packet.filePath = '';
 
 	// Clippy
@@ -3919,9 +4251,9 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			language = packet.locale;
 		else
 			packet.loadedLocaleFallback = true;
-			
+
 		Application.language = language;
-		
+
 		packet.localeLoaded = true;
 
 		var url = path + 'Locale/' + language + '.lang';
@@ -3934,7 +4266,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 				loadLocale(path, callback);
 				return;
 			}
-	
+
 			var ar = this.responseText().split( "\n" );
 			var out = [];
 			for( var a = 0; a < ar.length; a++ )
@@ -3971,16 +4303,16 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		{
 			return setTimeout( onLoaded, 50 );
 		}
-		
+
 		var tpath = '/webclient/theme/theme.css';
 		if( packet && packet.theme )
 		{
 			tpath = '/themes/' + packet.theme + '/theme.css';
 		}
-		
+
 		var loadingResources = 0;
 		var totalLoadingResources = 0;
-		
+
 		// Let's save some time
 		if( !document.themeCss )
 		{
@@ -3995,14 +4327,14 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			document.getElementsByTagName('head')[0].appendChild( s );
 			totalLoadingResources++;
 		}
-		
+
 		var activat = [];
-		
+
 		// What to do when we are done loading..
 		function doneLoading( e )
 		{
 			loadingResources++;
-			
+
 			// Async is a bitch!
 			function waitToStart()
 			{
@@ -4020,8 +4352,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
 					activat = [];
+					
 					// Delayed in case we didn't succeed!
-					setTimeout( function()
+					if( window.applicationLoadingTimeout )
+						clearTimeout( window.applicationLoadingTimeout );
+					window.applicationLoadingTimeout = setTimeout( function()
 					{
 						if( Application.run && !window.applicationStarted )
 						{
@@ -4050,21 +4385,21 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 							if( initcallback )
 								initcallback();
 						}
-
+						window.applicationLoadingTimeout = null;
 					}, 50 );
 				}
 			}
-			
+
 			// Loading complete
 			if( loadingResources == totalLoadingResources )
 			{
 				waitToStart();
 			}
 		}
-		
+
 		// For templates
 		if( packet.appPath ) Application.appPath = packet.appPath;
-		
+
 		// TODO: Take language var from config
 		if( packet && packet.filePath )
 		{
@@ -4085,7 +4420,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			totalLoadingResources++;
 			doneLoading();
 		}
-		
+
 		// Delayed loading of scripts
 		window.delayedScriptLoading = function()
 		{
@@ -4110,7 +4445,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 				}
 				removes.push( scripts[a] );
 			}
-			
+
 			// Clear friendscripts
 			for( var a = 0; a < removes.length; a++ )
 			{
@@ -4118,7 +4453,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			}
 			doneLoading();
 		}
-		
+
 		// Tell we're registered
 		Application.sendMessage( {
 			type:            'notify',
@@ -4126,32 +4461,40 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			registerCallback: packet.registerCallback,
 			viewId:         packet.viewId
 		} );
-		
+
+		// TODO: Figure out what this is..
 		window.sendEventToParent = function( e )
 		{
-			if(window.parent && window.parent.window )
+			if( window.parent && window.parent.window )
 			{
-				ne = new e.constructor(e.type, e);
-				window.parent.window.dispatchEvent(ne);
+				ne = new e.constructor( e.type, e);
+				try
+				{
+					window.parent.window.dispatchEvent( ne );
+				}
+				catch( e )
+				{
+					console.log( 'Could not dispatch event.' );
+				}
 			}
 		}
-		
+
 		window.addEventListener( 'touchstart', sendEventToParent);
 		window.addEventListener( 'touchmove', sendEventToParent );
 		window.addEventListener( 'touchend', sendEventToParent );
-		
+
 		window.loaded = true;
 	}
-	
+
 	// Make sure we don't show gui until the scrollbars have changed
 	// The scrollbars takes some milliseconds to load and init..
 	// TODO: Figure out why we can't load scrollbars immediately
 	var head = document.getElementsByTagName( 'head' )[0];
-	
+
 	if( packet && packet.theme )
 		AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
 	else AddCSSByUrl( '/webclient/theme/scrollbars.css' );
-	
+
 	var js = [
 		[
 			'js/utils/engine.js',
@@ -4161,9 +4504,10 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			'js/gui/treeview.js',
 			'js/io/appConnection.js',
 			'js/io/coreSocket.js',
-		],
+			'js/oo.js'
+		]
 	];
-	
+
 	var elez = [];
 	for ( var a = 0; a < js.length; a++ )
 	{
@@ -4211,7 +4555,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		}
 		head.appendChild( s );
 	}
-	
+
 	// Setup application id from message
 	Application.applicationId = packet.applicationId;
 	Application.userId        = packet.userId;
@@ -4219,7 +4563,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	Application.authId        = packet.authId;
 	Application.sessionId     = packet.sessionId != undefined ? packet.sessionId : false;
 	Application.theme         = packet.theme;
-	
+
 	// Autogenerate this
 	Application.sendMessage   = setupMessageFunction( packet, eventOrigin ? eventOrigin : packet.origin );
 }
@@ -4348,7 +4692,7 @@ if( typeof( Say ) == 'undefined' )
 					u.voice = v[a].voiceURI;
 					break;
 				}
-			}			
+			}
 		}
 		catch(e) { console.log( 'Could not set voice' ); }
 
@@ -4358,10 +4702,21 @@ if( typeof( Say ) == 'undefined' )
 
 // Handle keys in iframes too!
 if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
-{
+{	
 	// Handle keys
 	function _kresponse( e )
-	{
+	{	
+		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
+		var params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
+		if( e.shiftKey || e.ctrlKey || e.metaKey || e.altKey )
+		{
+			var clone = {}; for( var a in params )
+			{
+				if( e[params[a]] ) clone[params[a]] = e[params[a]];
+			}
+			Application.sendMessage( { type: 'system', command: 'keydown', data: clone } );
+		}
+		
 		var win = false;
 		for( var a in Application.windows )
 		{
@@ -4394,11 +4749,18 @@ if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 				}
 			}
 			if( win.handleKeys( k, e ) )
-				return cancelBubble ( e );
+			{
+				return cancelBubble( e );
+			}
 		}
 		// Some fallbacks
 		else
 		{
+			if( Application.handleKeys )
+			{
+				if( Application.handleKeys( k, e ) )
+					return cancelBubble( e );
+			}
 			if( e.ctrlKey )
 			{
 				switch ( k )
@@ -4408,25 +4770,14 @@ if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 						abort = true;
 						Application.quit();
 						break;
-					case 77:
-						Application.sendMessage( {
-							type: 'system',
-							command: 'switchscreens'
-						} );
-						break;
 				}
 			}
 		}
 
-		// Application wide
-		if( Application.handleKeys && Application.activated )
-		{
-			if( Application.handleKeys( k, e ) )
-				return cancelBubble( e );
-		}
-
 		if( abort )
+		{
 			return cancelBubble( e );
+		}
 	}
 	function _kresponseup( e )
 	{
@@ -4442,6 +4793,8 @@ if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 
 		if ( win && ( e.ctrlKey || e.shiftKey ) && typeof ( win.handkeKeys ) )
 		{
+			if( e.ctrlKey ) win.ctrlKey = false;
+			if( e.shiftKey ) win.shiftKey = false;
 			if ( e.preventDefault ) e.preventDefault ();
 			return cancelBubble ( e );
 		}
@@ -4503,16 +4856,20 @@ if( typeof( windowMouseX ) == 'undefined' )
 
 // Confirm view ----------------------------------------------------------------
 
-function Confirm( title, string, callb )
+function Confirm( title, string, callb, confirmOKText, confirmCancelText )
 {
 	var cb = addCallback( callb );
-	Application.sendMessage( {
+	var msg = {
 		type: 'system',
 		command: 'confirm',
 		callback: cb,
 		title: title,
 		string: string
-	} );
+	};
+	if( confirmOKText ) msg.confirmok = confirmOKText;
+	if( confirmCancelText ) msg.confirmcancel = confirmCancelText;
+	
+	Application.sendMessage( msg  );
 }
 
 // Alert view ------------------------------------------------------------------
@@ -5737,22 +6094,22 @@ GuiDesklet = function()
 	{
 		if ( !( this instanceof ns.SAS ))
 			return new ns.SAS( conf );
-		
+
 		var self = this;
 		self.id = conf.sasid || null;
 		self.onevent = conf.onevent;
 		self.callback = callback;
-		
+
 		self.isHost = false;
 		self.users = {};
 		self.invited = {};
 		self.subs = {};
-		
+
 		self.init();
 	}
-	
+
 	// Public
-	
+
 	/**
 	 * invite
 	 *
@@ -5772,7 +6129,7 @@ GuiDesklet = function()
 				callback( false );
 			return;
 		}
-		
+
 		var inv = {
 			path : self.invitePath,
 			data : {
@@ -5788,7 +6145,7 @@ GuiDesklet = function()
 				callback( res );
 		}
 	}
-	
+
 	/**
 	 * remove
 	 *
@@ -5797,7 +6154,7 @@ GuiDesklet = function()
 	 * @param users array of users to be removed
 	 * @param removeMessage sent to the removed party as part of the event
 	 * @param callback fn, called with the result, an array of usernames that were removed - optional
-	
+
 	 * @return void return value
 	 */
 	ns.SAS.prototype.remove = function( users, removeMessage, callback )
@@ -5808,12 +6165,12 @@ GuiDesklet = function()
 				callback( false );
 			return;
 		}
-		
+
 		if ( 'string' === typeof users ) {
 			var parts = users.split( ',' );
 			users = parts.map( trimp );
 		}
-		
+
 		var rem = {
 			path : self.removePath,
 			data : {
@@ -5828,10 +6185,10 @@ GuiDesklet = function()
 			if ( callback )
 				callback( res );
 		}
-		
+
 		function trimp( name ) { return name.trim(); }
 	}
-	
+
 	/**
 	 * getUsers
 	 *
@@ -5851,7 +6208,7 @@ GuiDesklet = function()
 		};
 		self.conn.request( req, callback );
 	}
-	
+
 	/**
 	 * send
 	 *
@@ -5866,7 +6223,7 @@ GuiDesklet = function()
 	 *
 	 * @param event object
 	 * @param usernames host only, send event to a list of specific usernames
-	 
+
 	 * @return void return value
 	 */
 	ns.SAS.prototype.send = function( event, usernames )
@@ -5874,22 +6231,22 @@ GuiDesklet = function()
 		var self = this;
 		if ( !self.isHost )
 			username = undefined;
-		
+
 		usernames = usernames || undefined;
 		if ( 'string' === typeof( usernames ))
 			usernames = [ usernames ];
-		
+
 		if ( usernames && !usernames.forEach ) {
 			console.log( 'invalid usernames - must be array', usernames );
 			usernames = undefined;
 		}
-		
+
 		var path = null;
 		if ( self.isHost )
 			path = self.toClientsPath;
 		else
 			path = self.toHostPath;
-		
+
 		var msg = {
 			path : path,
 			data : {
@@ -5897,13 +6254,13 @@ GuiDesklet = function()
 				msg       : event,
 			},
 		};
-		
+
 		if ( usernames )
 			msg.data.usernames = usernames;
-		
+
 		self.conn.send( msg );
 	}
-	
+
 	/**
 	 * on
 	 *
@@ -5912,7 +6269,7 @@ GuiDesklet = function()
 	 *
 	 * @param event string, name of event to register for
 	 * @param handler function, event of type is passed on to this handler
-	
+
 	 * @return void return value
 	 */
 	ns.SAS.prototype.on = function( event, handler )
@@ -5925,17 +6282,17 @@ GuiDesklet = function()
 			});
 			throw new Error( 'SAS.on - event already registered ^^^' );
 		}
-		
+
 		self.subs[ event ] = handler;
 	}
-	
+
 	/**
 	 * off
 	 *
 	 * Unregister for event type. The handler will be unrefrerenced.
 	 *
 	 * @param event string, event name
-	
+
 	 * @return void return value
 	 */
 	ns.SAS.prototype.off = function( event )
@@ -5943,7 +6300,7 @@ GuiDesklet = function()
 		var self = this;
 		delete self.subs[ event ];
 	}
-	
+
 	/**
 	 * close
 	 *
@@ -5970,9 +6327,9 @@ GuiDesklet = function()
 			delete self.conn;
 		}
 	}
-	
+
 	// Private - if you are calling these, you are doing it wrong
-	
+
 	ns.SAS.prototype.regPath = 'system.library/app/register';
 	ns.SAS.prototype.acceptPath = 'system.library/app/accept';
 	ns.SAS.prototype.invitePath = 'system.library/app/share';
@@ -5981,25 +6338,25 @@ GuiDesklet = function()
 	ns.SAS.prototype.toClientsPath = 'system.library/app/send';
 	ns.SAS.prototype.toHostPath = 'system.library/app/sendowner';
 	ns.SAS.prototype.userlistPath = 'system.library/app/userlist';
-	
+
 	ns.SAS.prototype.init =function() {
 		var self = this;
 		if ( !window.Application )
 			throw new Error( 'SAS - window.Application is not defined' );
-		
+
 		self.conn = new FConn();
-		
+
 		if ( !self.id )
 			self.isHost = true;
-		
+
 		if ( self.isHost )
 			self.registerHost( self.callback );
 		else
 			self.registerClient( self.callback );
-		
+
 		delete self.callback;
 	}
-	
+
 	ns.SAS.prototype.registerHost = function( callback )
 	{
 		var self = this;
@@ -6015,16 +6372,16 @@ GuiDesklet = function()
 				callback( false );
 				return;
 			}
-			
+
 			self.id = res.SASID;
 			self.conn.on( self.id, clientEvents );
 			callback( res );
-			
+
 			function clientEvents( e ) { self.handleEvent( e ); }
 		}
-		
+
 	}
-	
+
 	ns.SAS.prototype.registerClient = function( callback )
 	{
 		var self = this;
@@ -6033,7 +6390,7 @@ GuiDesklet = function()
 			throw new Error( 'SAS.registerClient - missing SAS ID' );
 			return;
 		}
-		
+
 		var accept = {
 			path : self.acceptPath,
 			data : {
@@ -6047,11 +6404,11 @@ GuiDesklet = function()
 			res.host = host;
 			callback( res );
 			self.conn.on( self.id, hostEvents );
-			
+
 			function hostEvents( e ) { self.handleEvent( e ); }
 		}
 	}
-	
+
 	ns.SAS.prototype.handleEvent = function( e )
 	{
 		var self = this;
@@ -6062,14 +6419,14 @@ GuiDesklet = function()
 			handler( event.data, identity );
 			return;
 		}
-		
+
 		console.log( 'handleEvent - no handler', {
 			e : e,
 			s : self.subs
 		});
-		
+
 		if ( self.onevent )
 			self.onevent( e );
 	}
-	
+
 })( window );

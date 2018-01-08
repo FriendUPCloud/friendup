@@ -19,11 +19,19 @@
 
 Application.run = function( msg, iface )
 {
-	var v = new View( {
+	var wflags = {
 		title: i18n( 'i18n_account' ),
-		width: 700,
-		height: 490
-	} );
+		width: 1000,
+		height: 600
+	};
+
+	if( msg.args == 'addstorage' )
+	{
+		wflags.invisible = true;
+		wflags.hidden = true;
+	}
+	
+	var v = new View( wflags );
 	
 	v.onClose = function()
 	{
@@ -49,7 +57,21 @@ Application.run = function( msg, iface )
 			s.command = 'userinfo';
 			v.sendMessage( s );
 			
-			Authenticate.load( 'publickey', displayPublicKey );
+			if( msg.args == 'addstorage' )
+			{
+				v.sendMessage( { command: 'addstorage' } );
+			}
+			
+			
+			//Authenticate.load( 'publickey', displayPublicKey );
+			
+			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( data )
+			{
+				if( data && data.publickey )
+				{
+					displayPublicKey( data.publickey );
+				}
+			} );
 		}
 		f.load();
 	}
@@ -61,9 +83,12 @@ function displayPublicKey( data )
 	Application.mainView.sendMessage( { command : 'setkey', data : data } );
 }
 
+// Receive messages
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
+	
+	//console.log( 'Application.receiveMessage: ', msg );
 	
 	if( msg.command == 'saveresult' )
 	{
@@ -91,7 +116,7 @@ Application.receiveMessage = function( msg )
 		case 'encrypt':
 			if( msg.key )
 			{
-				console.log( 'encrypt msg: ', msg );
+				//console.log( 'encrypt msg: ', msg );
 				
 				Authenticate.encrypt( {
 					
@@ -117,7 +142,7 @@ Application.receiveMessage = function( msg )
 		case 'decrypt':
 			if( msg.key )
 			{
-				console.log( 'decrypt msg: ', msg );
+				//console.log( 'decrypt msg: ', msg );
 				
 				Authenticate.decrypt( {
 					
@@ -144,3 +169,4 @@ Application.receiveMessage = function( msg )
 			return;
 	}
 }
+

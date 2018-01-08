@@ -33,6 +33,17 @@ var Module = function( mod )
 		this.vars[k] = value;
 	}
 
+	this.destroy = function()
+	{
+		this.module = null;
+		this.args = null;
+		this.command = null;
+		this.vars = null;
+		if( this.lastJax )
+			this.lastJax.destroy();
+		delete this;
+	}
+
 	// Execute a command to a Friend UP module
 	this.execute = function( cmd, args )
 	{
@@ -62,6 +73,10 @@ var Module = function( mod )
 		j.addVar( 'command',   this.command                 );
 		
 		for( var a in this.vars ) j.addVar( a, this.vars[a] );
+			
+		// Force http!
+		if( this.forceHTTP )
+			j.forceHTTP = true;
 		
 		if( this.onExecuted )
 		{
@@ -78,9 +93,13 @@ var Module = function( mod )
 					}
 				}
 				t.onExecuted( rc, data );
+				t.destroy();
 			};
 		}
 		j.send();
+		if( this.lastJax )
+			this.lastJax.destroy();
+		this.lastJax = j;
 	}
 };
 

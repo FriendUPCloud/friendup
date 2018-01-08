@@ -19,12 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-/*
-
-	SystemBase code
-
-*/
+/** @file
+ * 
+ *  SystemBase web functionality
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 14/10/2015
+ */
 
 #include <core/types.h>
 #include <core/library.h>
@@ -39,6 +40,7 @@
 #include <stdio.h> 
 #include <unistd.h>
 #include <system/services/service_manager.h>
+#include <system/services/service_manager_web.h>
 #include <properties/propertieslibrary.h>
 #include <ctype.h>
 #include <magic.h>
@@ -50,36 +52,29 @@
 #include <network/digcalc.h>
 #include <network/mime.h>
 #include <system/invar/invar_manager.h>
-#include <system/application/applicationweb.h>
+#include <system/application/application_web.h>
 #include <system/user/user_manager.h>
 #include <system/fsys/fs_manager.h>
 #include <system/fsys/fs_manager_web.h>
 #include <system/fsys/fs_remote_manager_web.h>
 #include <core/pid_thread_web.h>
 #include <system/fsys/device_manager_web.h>
-#include <network/mime.h>
 #include <hardware/usb/usb_device_web.h>
 #include <system/fsys/door_notification.h>
 #include <system/admin/admin_web.h>
+#include <system/connection/connection_web.h>
+#include <system/dictionary/dictionary.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
 #define LIB_REVISION		0
 #define CONFIG_DIRECTORY	"cfg/"
-#define LOGOUT_TIME         86400
-/** @file
- * 
- *  Additional web functionality
- *
- *  @author PS (Pawel Stefanski)
- *  @date created 14/10/2015
- */
 
 //
 //
 //
 
-extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force );
+extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail );
 
 
 /**
@@ -90,11 +85,11 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
  * @return pointer to memory where arguments are stored
  */
 
-inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+static inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
 	// Send both get and post
 	int size = 0;
-	//DEBUG( "Ok, lets see about that string\n" );
+
 	FBOOL both = request->content && request->uri->queryRaw ? TRUE : FALSE;
 	if( request->content != NULL ) size += strlen( request->content );
 	if( request->uri->queryRaw != NULL ) size += strlen( request->uri->queryRaw );
@@ -130,7 +125,8 @@ inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession
 			int startpos = (sessptr - allArgs);
 		
 			FBOOL overwrite = FALSE;
-			for( i=0 ; i < fullsize ; i++ )
+			int fumin = fullsize - 1;
+			for( i = 0; i < fullsize; i++ )
 			{
 				if( i >= startpos && overwrite == FALSE )
 				{
@@ -144,7 +140,7 @@ inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession
 							strcat( allArgsNew, tmp );
 							overwrite = TRUE;
 						}
-						if( i == fullsize - 1 )
+						if( i == fumin )
 						{
 							j += sprintf( tmp, "sessionid=%s", loggedSession->us_User->u_MainSessionID );
 							strcat( allArgsNew, tmp );
@@ -177,12 +173,8 @@ inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession
 		{
 			strcpy( allArgsNew, allArgs );
 		}
-		
 		FFree( allArgs );
 	}
-	
-	//DEBUG("\n\n--->allArgsNew %s  \n\n", allArgsNew );
-	
 	return allArgsNew;
 }
 
@@ -200,10 +192,7 @@ inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession
 Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result )
 {
 	*result = 0;
-	//int result = 0;
 	Http *response = NULL;
-	//UserSession *loggedSession = NULL;
-	//User *loggedUser = NULL;
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
 	
@@ -233,8 +222,9 @@ Webreq func: %s\n \
 
 		response = HttpNewSimple( HTTP_200_OK, tags );
 		
-		char *data = "fail<!--separate-->{\"response\":\"urlpath is equal to NULL\"}";
-		HttpAddTextContent( response, data );
+		char buffer[ 256 ];
+		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_PATH_PARAMETER_IS_EMPTY] , DICT_PATH_PARAMETER_IS_EMPTY );
+		HttpAddTextContent( response, buffer );
 			
 		return response;
     }
@@ -242,10 +232,6 @@ Webreq func: %s\n \
 	// Check for sessionid by sessionid specificly or authid
 	if( strcmp( urlpath[ 0 ], "login" ) != 0 && loggedSession == NULL )
 	{
-		char *authid = NULL;
-		
-		//DEBUG( "Finding login info.\n" );
-		
 		HashmapElement *tst = GetHEReq( *request, "sessionid" );
 		HashmapElement *ast = GetHEReq( *request, "authid" );
 		if( tst == NULL && ast == NULL )
@@ -255,10 +241,12 @@ Webreq func: %s\n \
 				{ HTTP_HEADER_CONNECTION,(FULONG)StringDuplicate( "close" ) },
 				{ TAG_DONE, TAG_DONE }
 			};
-			char *data = "{\"response\":\"could not find sessionid or authid\"}";
 			response = HttpNewSimple( HTTP_200_OK, tags );
-			HttpAddTextContent( response, data );
-			FERROR( "Could not log in, no sessionid or authid.. (404, %p, %p)\n", tst, ast );
+			
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SESSIONID_AUTH_MISSING] , DICT_SESSIONID_AUTH_MISSING );
+			HttpAddTextContent( response, buffer );
+			FERROR( "login function miss parameter sessionid or authid\n" );
 			return response;
 		}
 		// Ah, we got our session
@@ -298,15 +286,11 @@ Webreq func: %s\n \
 					char *end;
 					FUQUAD asval = strtoull( assid,  &end, 0 );
 					
-					DEBUG("assid != NULL\n");
-					
 					if( authid != NULL )
 					{
 						AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
 						if( as != NULL )
 						{
-							//DEBUG("as !=NULL, trying to find user by authid %s\n", authid );
-							
 							SASUList *alist = as->as_UserSessionList;
 							while( alist != NULL )
 							{
@@ -428,11 +412,8 @@ Webreq func: %s\n \
 			else
 			{
 				pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
-				DEBUG("Checking sessions\n");
 				while( curusrsess != NULL )
 				{
-					//DEBUG( "Checking curusrsess.\n" );
-					//DEBUG("\n\n\nProvided sessionid %s\n username %s\n usersession %s\n user session %s\n", sessionid, curusrsess->us_User->u_Name, curusrsess->us_SessionID, curusrsess->us_User->u_MainSessionID );	
 					if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
 					{
 						if(  (strcmp( curusrsess->us_SessionID, sessionid ) == 0 || strcmp( curusrsess->us_User->u_MainSessionID, sessionid ) == 0 ) )
@@ -463,8 +444,6 @@ Webreq func: %s\n \
 							userAdded = TRUE;		// there is no need to free resources
 							User *curusr = curusrsess->us_User;
 						
-						
-							//DEBUG("FOUND user: %s sessionid %s matched on %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
 							DEBUG("FOUND user: %s session sessionid %s provided session %s\n", curusr->u_Name, curusrsess->us_SessionID, sessionid );
 							break;
 						}
@@ -477,7 +456,7 @@ Webreq func: %s\n \
 		
 		if( loggedSession == NULL )
 		{
-			FERROR("User not found !\n");
+			FERROR("User session not found !\n");
 			
 			struct TagItem tags[] = {
 				{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
@@ -492,8 +471,9 @@ Webreq func: %s\n \
 			}
 			response = HttpNewSimple( HTTP_200_OK, tags );
 			
-			char *data = "fail<!--separate-->{\"response\":\"user session not found\"}";
-			HttpAddTextContent( response, data );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_SESSION_NOT_FOUND] , DICT_USER_SESSION_NOT_FOUND );
+			HttpAddTextContent( response, buffer );
 				
 			return response;
 		}
@@ -517,23 +497,9 @@ Webreq func: %s\n \
 				char *tmpQuery = FCalloc( 1025, sizeof( char ) );
 				if( tmpQuery )
 				{
-					//sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUser SET `LoggedTime` = '%lu' WHERE `SessionID` = '%s'", timestamp, sessionid );
-					//sprintf( tmpQuery, "UPDATE FUser SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
-					//sqllib->SimpleQuery( sqllib, tmpQuery );
-					
-					//DEBUG("QUERY: %s\n", tmpQuery );
-				
-					// there is no need to "try to mount devices" for users every call
-					// it looks like that FC fill devices structure later then Workspace is reading it
-					//UserDeviceMount( l, sqllib, loggedSession->us_User, 0 );
-				
-					//memset( tmpQuery, '\0', 255 );
 					sqllib->SNPrintF( sqllib, tmpQuery, 1024, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
-					//sprintf( tmpQuery, "UPDATE FUserSession SET `LoggedTime` = '%ld' WHERE `SessionID` = '%s'", timestamp, sessionid );
 					sqllib->QueryWithoutResults( sqllib, tmpQuery );
 				
-					
-					
 					INFO("Logged time updated: %lu\n", timestamp );
 				
 					FFree( tmpQuery );
@@ -572,9 +538,14 @@ Webreq func: %s\n \
 		UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
 	}
 	
-	//
-	// help function
-	//
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/help</H2>Return all available Friend WebCalls
+	*
+	* @param sessionid (required) - id of user session
+	*/
+	/// @endcond
 	
 	if( strcmp( urlpath[ 0 ], "help" ) == 0 )
 	{
@@ -586,35 +557,42 @@ Webreq func: %s\n \
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-		HttpAddTextContent( response, "ok<!--separate-->{\"HELP\":\"commands: \n" 
-				"- user: \n" 
-				"\tcreate - create user in database\n" 
-				"\tlogin - login user to system\n"
-				"\tlogout - logout user from system\n\n"
-				"- module - run module\n\n"
-				"- device:\n"
-				"\tmount - mount device\n"
-				"\tunmount - unmount device\n\n"
-				"\tlist - list all mounted devices\n"
-				"\tlistsys - take all avaiable file systems\n"
-				"- file:\n"
-				"\tinfo - get information about file/directory\n"
-				"\tdir - get all files in directory\n"
-				"\trename - rename file or directory\n"
-				"\tdelete - delete all files or directory (and all data in directory)\n"
-				"\tmakedir - make new directory\n"
-				"\texec - run command\n"
-				"\tread - read bytes from file\n"
-				"\twrite - write files to file\n"
+		HttpAddTextContent( response, "ok<!--separate-->{\"HELP\":\"commands: \"" 
+				"module - run module"
+				", clearcache - clear static files cache\""
+				", \"groups\",\""
+				"user - functions releated to user and session management"
+				", device - functions releated to device management"
+				", file - functions releated to files"
+				", ufile - functions releated to remote files"
+				", admin - functions releated to server administration"
+				", connection - functions releated to FC-FC connections"
+				", invar - functions releated to INRam variables"
+				", services - functions related to services management"
+				", app - functions releated to application management"
+				", image - functions releated to image processing"
+				", usb - functions releated to usb management"
+				", printer - functions releated to printer management"
+				", pid - functions releated to processes in threads"
 				"\"}" );
 		
 		*result = 200;
-	
 	}
 	
-	//
-	// login function
-	//
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/login</H2>Function allow user to login and get user session id
+	*
+	* @param username (required) - name of user
+	* @param password (required) - user password
+	* @param deviceid (required) - id which recognize device which is used to login
+	* @param encryptedblob - used by keys which allow to login
+	* @param appname - application name which want 
+	* @param sessionid - session id of logged user
+	* @return information about login process "{result:-1,response: success/fail, code:error code }
+	*/
+	/// @endcond
 	
 	else if( strcmp(  urlpath[ 0 ], "login" ) == 0 )
 	{
@@ -646,7 +624,9 @@ Webreq func: %s\n \
 			// Fetch public key
 			el = HttpGetPOSTParameter( *request, "encryptedblob" );
 			if( el != NULL )
+			{
 				encryptedBlob = ( char *)el->data;
+			}
 			
 			el = HttpGetPOSTParameter( *request, "password" );
 			if( el != NULL )
@@ -690,7 +670,6 @@ Webreq func: %s\n \
 					{
 						if( loggedSession->us_User == NULL )
 						{
-							DEBUG("User is not attached to session %lu\n", loggedSession->us_UserID );
 							User *lusr = l->sl_UM->um_Users;
 							while( lusr != NULL )
 							{
@@ -732,7 +711,7 @@ Webreq func: %s\n \
 							
 							DEBUG("New user and session added\n");
 							
-							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0 );
+							UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
 							
 							DEBUG("Devices mounted\n");
 							userAdded = TRUE;
@@ -756,13 +735,15 @@ Webreq func: %s\n \
 				if( loggedSession != NULL && loggedSession->us_User != NULL )
 				{
 					snprintf( tmp, sizeof(tmp),
-						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-						0, loggedSession->us_SessionID , loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
+						"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
+						0, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedSession->us_User->u_ID, loggedSession->us_User->u_FullName,  loggedSession->us_SessionID
 					);
 				}
 				else
 				{
-					strcpy( tmp, "fail<!--separate-->{\"result\":\"-1\",\"response\":\"no access\"}" );
+					FERROR("[ERROR] User session or User not found\n" );
+
+					snprintf( tmp, sizeof(tmp), "fail<!--separate-->{ \"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USERSESSION_OR_USER_NOT_FOUND] , DICT_USERSESSION_OR_USER_NOT_FOUND );
 				}
 				
 				HttpAddTextContent( response, tmp );
@@ -771,7 +752,10 @@ Webreq func: %s\n \
 			// TODO: Implement this! Ask Chris and Hogne!
 			else if( usrname != NULL && encryptedBlob != NULL && deviceid != NULL )
 			{
-				HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"public key not supported yet\"}" );
+				FERROR("[ERROR] Authentication by using public key not suported\n" );
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "{\"result\":\"-1\",\"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED] , DICT_AUTH_PUBLIC_KEY_NOT_SUPPORTED );
+				HttpAddTextContent( response, buffer );
 			}
 			// standard username and password mode
 			else if( usrname != NULL && pass != NULL && deviceid != NULL )
@@ -796,7 +780,6 @@ Webreq func: %s\n \
 					{
 						while( tusers != NULL )
 						{
-							DEBUG("Checking sessions %p\n", tusers->us_User );
 							User *tuser = tusers->us_User;
 							// Check both username and password
 
@@ -816,8 +799,6 @@ Webreq func: %s\n \
 								{
 									dstusrsess = tusers;
 									DEBUG("Found user session  id %s\n", tusers->us_SessionID );
-									
-									//UMStoreLoginAttempt( l->sl_UM, usrname, "Login success: on list or Sentinel", NULL );
 									break;
 								}
 							}
@@ -828,14 +809,11 @@ Webreq func: %s\n \
 					{
 						while( tusers != NULL )
 						{
-							//DEBUG("Checking sessions %p finding devid: %s usrname: %s\n", tusers->us_User,deviceid, usrname );
 							User *tuser = tusers->us_User;
 							// Check both username and password
 
 							if( tusers->us_DeviceIdentity != NULL && tuser != NULL )
 							{
-								//DEBUG("DEVID %s\n", tusers->us_DeviceIdentity );
-								
 								if( strcmp( tusers->us_DeviceIdentity, deviceid ) == 0 && strcmp( tuser->u_Name, usrname ) == 0 )
 								{
 									Sentinel *sent = l->GetSentinelUser( l );
@@ -898,6 +876,7 @@ Webreq func: %s\n \
 						//
 						// user not logged in previously, we must add it to list
 						// 
+						
 						if( loggedSession != NULL )
 						{
 							loggedSession->us_LoggedTime = time( NULL );
@@ -916,9 +895,7 @@ Webreq func: %s\n \
 					else
 					{
 						DEBUG("Call authenticate by %s\n", l->sl_ActiveAuthModule->am_Name );
-						
-						//USMUserSessionAdd( l->sl_USM, loggedSession );
-						
+
 						if( isUserSentinel == TRUE )
 						{
 							loggedSession = dstusrsess;
@@ -987,15 +964,11 @@ Webreq func: %s\n \
 
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
-								DEBUG("New user and session added\n");
+								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0, TRUE );
 
-								UserDeviceMount( l, sqlLib, loggedSession->us_User, 0 );
-
-								DEBUG("Devices mounted\n");
 								userAdded = TRUE;
 								l->LibrarySQLDrop( l, sqlLib );
 							}
-							DEBUG("Library dropped\n");
 						}
 						else
 						{
@@ -1012,19 +985,16 @@ Webreq func: %s\n \
 						
 						User *loggedUser = loggedSession->us_User;
 						
-						INFO(  "User authenticated %s sessionid %s\n", loggedUser->u_Name, loggedSession->us_SessionID );
 						Log( FLOG_INFO, "User authenticated %s sessionid %s \n", loggedUser->u_Name, loggedSession->us_SessionID );
 						
 						char tmp[ 512 ];
 						
 						if( appname == NULL )
 						{
-							snprintf( tmp, 512,
-								"{\"result\":\"%d\",\"sessionid\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
-								loggedUser->u_Error, loggedSession->us_SessionID , loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID
+							snprintf( tmp, sizeof(tmp) ,
+								"{\"result\":\"%d\",\"sessionid\":\"%s\",\"level\":\"%s\",\"userid\":\"%ld\",\"fullname\":\"%s\",\"loginid\":\"%s\"}",
+								loggedUser->u_Error, loggedSession->us_SessionID , loggedSession->us_User->u_IsAdmin ? "admin" : "user", loggedUser->u_ID, loggedUser->u_FullName,  loggedSession->us_SessionID
 							);	// check user.library to display errors
-							
-							DEBUG("appname = NULL, returning response %s\n", tmp );
 						}
 						else
 						{
@@ -1037,7 +1007,6 @@ Webreq func: %s\n \
 								authid[ 0 ] = 0;
 								
 								char qery[ 1024 ];
-								//snprintf( q, sizeof( q ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
 								sqllib->SNPrintF( sqllib, qery, sizeof( qery ),"select `AuthID` from `FUserApplication` where `UserID` = %lu and `ApplicationID` = (select ID from `FApplication` where `Name` = '%s' and `UserID` = %ld)",loggedUser->u_ID, appname, loggedUser->u_ID);
 								
 								void *res = sqllib->Query( sqllib, qery );
@@ -1046,7 +1015,7 @@ Webreq func: %s\n \
 									char **row;
 									if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 									{
-										sprintf( authid, "%s", row[ 0 ] );
+										snprintf( authid, sizeof(authid), "%s", row[ 0 ] );
 									}
 									sqllib->FreeResult( sqllib, res );
 								}
@@ -1054,7 +1023,7 @@ Webreq func: %s\n \
 								l->LibrarySQLDrop( l, sqllib );
 
 								snprintf( tmp, 512, "{\"response\":\"%d\",\"sessionid\":\"%s\",\"authid\":\"%s\"}",
-										  loggedUser->u_Error, loggedUser->u_MainSessionID, authid
+									loggedUser->u_Error, loggedUser->u_MainSessionID, authid
 								);
 							}
 						}
@@ -1063,21 +1032,29 @@ Webreq func: %s\n \
 					else
 					{
 						char temp[ 1024 ];
-						snprintf( temp, sizeof(temp), "fail<!--separate-->{\"result\":\"-1\",\"response\":\"account blocked until: %lu\"}", blockedTime );
-						FERROR("[ERROR] User not found by user.library\n" );
-						HttpAddTextContent( response, temp );			// out of memory/user not found
+						char buffer[ 256 ];
+						
+						snprintf( buffer, sizeof(buffer), l->sl_Dictionary->d_Msg[DICT_ACCOUNT_BLOCKED], blockedTime );
+						FERROR("[ERROR] User account '%s' will be blocked until: %lu seconds\n", usrname, blockedTime );
+
+						snprintf( temp, sizeof(temp), "fail<!--separate-->{\"result\":\"-1\",\"response\":\"%s\", \"code\":\"%d\"}", buffer , DICT_ACCOUNT_BLOCKED );
+						HttpAddTextContent( response, temp );
 					}
 				}
 				else
 				{
-					FERROR("[ERROR] User.library is not opened\n" );
-					HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"user.library is not opened!\"}" );
+					FERROR("[ERROR] Authentication module not selected\n" );
+					char buffer[ 256 ];
+					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_AUTHMOD_NOT_SELECTED] , DICT_AUTHMOD_NOT_SELECTED );
+					HttpAddTextContent( response, buffer );
 				}
 			}
 			else
 			{
-				FERROR("[ERROR] username or password not found\n" );
-				HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"username, password and/or deviceid not found!\"}" );
+				FERROR("[ERROR] username,password,deviceid parameters not found\n" );
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_PASS_DEV_REQUIRED] , DICT_USER_PASS_DEV_REQUIRED );
+				HttpAddTextContent( response, buffer );
 			}
 			
 			if( usrname != NULL )
@@ -1097,15 +1074,13 @@ Webreq func: %s\n \
 		
 			response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-			HttpAddTextContent( response, "{\"result\":\"-1\",\"response\":\"no post pararmeters received.\"}");
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_POST_MODE_PARAMETERS_REQUIRED] , DICT_POST_MODE_PARAMETERS_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
 		*result = 200;
 	}
-	
-	//
-	//user
-	//
-	
+
 	//
 	// user function
 	//
@@ -1116,9 +1091,16 @@ Webreq func: %s\n \
 		response = UMWebRequest( l, urlpath, (*request), loggedSession, result );
 	}
 	
-	//
-	// Polling a module!
-	//
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	*
+	* <HR><H2>system.library/module</H2>Function allow user to call functions handled in modules
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param module - (required) module which will be used (all other params will be taken from request)
+	* @return output from modules
+	*/
+	/// @endcond
 	
 	else if( strcmp( urlpath[ 0 ], "module" ) == 0 )
 	{
@@ -1172,7 +1154,6 @@ Webreq func: %s\n \
 				if( he != NULL )
 				{
 					char *module = ( char *)he->data;
-					//char *path = FCalloc( 5, sizeof( char ) );
 					char path[ 512 ];
 					snprintf( path, sizeof(path), "modules/%s", module );
 					path[ 511 ] = 0;
@@ -1267,7 +1248,6 @@ Webreq func: %s\n \
 							}
 						}
 					}
-					//FFree( path );
 				}
 			}
 		}
@@ -1275,23 +1255,11 @@ Webreq func: %s\n \
 		
 		if( data != NULL )
 		{
-			//DEBUG("Data is avaiable %s\n", data );
-
 			// 5. Piped response will be output!
 			char *ltype  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Type"   ) : NULL;
 			char *length = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Length" ) : NULL;
 			char *dispo  = dataLength ? CheckEmbeddedHeaders( data, dataLength, "Content-Disposition" ) : NULL;
 			char *code = CheckEmbeddedHeaders( data, dataLength, "Status Code" );
-			
-			/*
-			{
-				char *ldata="---http-headers-begin---\nStatus Code: 200\n---http-headers-end---\n";
-				//char *
-				code =  strlen(ldata) ? CheckEmbeddedHeaders( ldata, strlen(ldata), "Status Code" ) : NULL;
-				FERROR("\n\n\n\n\n\n\nCODE %s\n\n\n\n\n\ndlen %d\n", code,  strlen(ldata) );
-			}
-			*/
-			//FERROR("\n\n\n\n\n\n\nCODE %s\n\n\n\n\n\ndlen %d\n", code,  dataLength );
 
 			char *datastart = strstr( data, "---http-headers-end---" );
 			if( datastart != NULL )
@@ -1338,9 +1306,7 @@ Webreq func: %s\n \
 					{
 						errCode = -1;
 					}
-					
-					DEBUG("parsed %s code %d\n", code, errCode );
-					
+
 					if( errCode == -1 )
 					{
 						response = HttpNewSimple( HTTP_200_OK, tags );
@@ -1365,7 +1331,6 @@ Webreq func: %s\n \
 					}
 					else
 					{
-						DEBUG( "file size counted %d\n", calSize );
 						char *returnData = FCalloc( calSize, sizeof( FBYTE ) );
 						if( returnData != NULL )
 						{
@@ -1378,11 +1343,9 @@ Webreq func: %s\n \
 			}
 			else
 			{
-				DEBUG("Create default response\n");
-					
 				struct TagItem tags[] = {
 					{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  ( ltype != NULL ? StringDuplicateN( ltype, strlen( ltype ) ) : StringDuplicate( "text/plain" ) ) },
-					{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+					{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 					{TAG_DONE, TAG_DONE}
 				};
 
@@ -1438,6 +1401,8 @@ Webreq func: %s\n \
 		}
 		else
 		{
+			Log( FLOG_ERROR, "[SystemWeb]: php returned NULL for request '%s'\n", (*request)->content );
+			
 			FERROR("[System.library] ERROR returned data is NULL\n");
 			*result = 404;
 		}
@@ -1467,7 +1432,6 @@ Webreq func: %s\n \
 		DEBUG("Systembase pointer %p\n", l );
 		if( detachTask == TRUE )
 		{
-			//FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **url, void *us, void *func )
 			DEBUG("Ptr to request %p\n", *request );
 			FUQUAD pid = PIDThreadManagerRunThread( l->sl_PIDTM, *request, urlpath, loggedSession, FSMWebRequest );
 			
@@ -1475,7 +1439,7 @@ Webreq func: %s\n \
 									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 			
 			char pidtxt[ 256 ];
-			snprintf( pidtxt, sizeof(pidtxt), "ok<!--separate-->{\"PID\":\"%llu\"}", pid );
+			snprintf( pidtxt, sizeof(pidtxt), "ok<!--separate-->{\"PID\":\"%lu\"}", pid );
 			
 			HttpAddTextContent( response, pidtxt );
 			
@@ -1511,6 +1475,16 @@ Webreq func: %s\n \
 	else if( strcmp( urlpath[ 0 ], "admin" ) == 0 )
 	{
 		response =  AdminWebRequest( l, urlpath, request, loggedSession, result );
+		
+	}
+	
+	//
+	// connection stuff
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "connection" ) == 0 )
+	{
+		response =  ConnectionWebRequest( l, urlpath, request, loggedSession, result );
 		
 	}
 
@@ -1557,7 +1531,9 @@ Webreq func: %s\n \
 			}
 			response = HttpNewSimple( HTTP_200_OK,  tags );
 		
-			HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"access denied\"}" );
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 
 			goto error;
 		}
@@ -1626,9 +1602,12 @@ Webreq func: %s\n \
 		else
 		{
 			response = HttpNewSimpleA( HTTP_200_OK, (*request),  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( "text/html", 9 ),
-									   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+				HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
+			
+			char buffer[ 256 ];
+			snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+			HttpAddTextContent( response, buffer );
 		}
-		HttpAddTextContent( response, "fail<!--separate-->{ \"response\": \"You dont have access to 'pid' functions\" }" );
 	}
 	
 	//
@@ -1637,7 +1616,7 @@ Webreq func: %s\n \
 	
 	else	// if file, services, etc.
 	{
-		FERROR("Function not found %s\n", urlpath[ 0 ] );
+		Log( FLOG_ERROR, "[SystemWeb]: Function not found '%s'\n", urlpath[ 0 ] );
 		
 		struct TagItem tags[] = {
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -1650,24 +1629,13 @@ Webreq func: %s\n \
 			FERROR("RESPONSE unknown function\n");
 		}
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
-		HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"function not found\"}" );
+		
+		char buffer[ 256 ];
+		snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, buffer );
 	
 		goto error;
 	}
-	
-	/*
-	if( loggedUser )
-	{
-		DEBUG("WebRequest end OK result: %d  loggeduser %p\n", result, loggedUser );
-		if( l->sl_Sessions )
-		{
-			//INFO("USER %s SESSIONS %p\n", loggedUser->u_Name, l->sl_Sessions );
-		}
-		else
-		{
-			//INFO( "USER %s HAS NO SESSION ANYMORE!!!\n", loggedUser->u_Name );
-		}
-	}*/
 	
 	// Ok, we will handle this one!
 	if( (*result) == 404 )
@@ -1685,47 +1653,24 @@ Webreq func: %s\n \
 		}
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 	}
-	
-	DEBUG("Response pointer %p\n", response );
-	/*
-	if( userAdded == FALSE && loggedUser != NULL )
-	{
 
-	}*/
-	
 	if( !response )
 	{
 		DEBUG( "Closing socket with Http 200 OK!!\n" );
 		struct TagItem tags[] = {
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
-		};	
+		};
 		
-		/*
-		if( response != NULL )
-		{
-			HttpFree( response );
-			FERROR("Do RESPONSE no response\n");
-		}
-		*/
 		response = HttpNewSimple( HTTP_200_OK, tags );
 	}
-	
-	//FERROR(">>>>>>>>>>>>>>%s %s\n", urlpath[ 0 ], urlpath[ 1 ] );
 	
 	return response;
 	
 error:
 	
-	DEBUG("WebRequest end ERROR\n");
-	/*
-	if( userAdded == FALSE && loggedUser != NULL )
-	{
+	FERROR("WebRequest end ERROR\n");
 
-	}
-	*/
-	FERROR(">>>>>>>>>>>>>>%s %s\n", urlpath[ 0 ], urlpath[ 1 ] );
-	
 	return response;
 }
 

@@ -45,7 +45,7 @@ class File
 	
 	function Load( $path = false )
 	{
-		global $Config, $Logger;
+		global $Config, $User, $Logger;
 		
 		if( $path ) $this->path = urldecode( $path );
 		
@@ -56,7 +56,8 @@ class File
 			$url .= '&sessionid=' . $GLOBALS[ 'args' ]->sessionid;
 		else if( isset( $GLOBALS[ 'args' ]->authid ) )
 			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;
-
+		else if( isset( $User->SessionID ) )
+			$url .= '&sessionid=' . $User->SessionID;
 
 		//$Logger->log( '[File::Load] Url to load: ' . $url );
 
@@ -127,12 +128,13 @@ class File
 		
 		if( file_exists( '/tmp/' . $ff ) )
 		{
+			$curlFile = new CURLFile( '/tmp/' . $ff, 'application/octetstream', $ff );
 			$postfields = array(
 				'sessionid' => $GLOBALS[ 'args' ]->sessionid,
 				'devname' => $devname,
 				'path' => jsUrlEncode( $this->path ),
 				'target' => jsUrlEncode( $this->path ),
-				'data' => '@/tmp/' . $ff
+				'data' => $curlFile
 			);
 		
 			//$Logger->log( '[File::Save] Trying to save content in: ' . $url . ' with path ' . $this->path );
@@ -140,7 +142,6 @@ class File
 			$ch = curl_init();
 			curl_setopt( $ch, CURLOPT_URL, $url    );
 			curl_setopt( $ch, CURLOPT_PORT, $Config->FCPort );
-			curl_setopt( $ch, CURLOPT_SAFE_UPLOAD, false );
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 			if( $Config->SSLEnable == 1 )

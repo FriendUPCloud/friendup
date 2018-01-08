@@ -90,6 +90,21 @@ Application.receiveMessage = function( msg )
 			for( var a in msg.data )
 			{
 				this.project[a] = msg.data[a];
+				if( a == 'Permissions' && !msg.data['ProjectName'] )
+				{
+					this.project.Permissions = [
+						{
+							Permission: 'Module',
+							Name:       'system',
+							Options:    ''
+						},
+						{
+							Permission: 'Module',
+							Name:       'files',
+							Options:    ''
+						}
+					];
+				}
 				switch( a )
 				{
 					case 'ProjectName':
@@ -367,7 +382,8 @@ function saveProject()
 		Permissions: Application.project.Permissions,
 		Files:       Application.project.Files,
 		Screenshots: Application.project.Screenshots,
-		Libraries:   JSON.parse( ge( 'Libraries' ).value )
+		Libraries:   ge( 'Libraries' ).value ? 
+		             JSON.parse( ge( 'Libraries' ).value ) : []
 	};
 	Application.sendMessage( { command: 'project_save', data: o, filename: Application.projectFilename } );
 }

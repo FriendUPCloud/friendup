@@ -9,6 +9,7 @@ i18n_pollable                     : Synlig på nettverk
 i18n_short_desc                   : Kort beskrivelse
 i18n_publisher                    : Utgiver
 i18n_visible                      : Vis på skrivebord
+i18n_select_user                  : Velg bruker
 
 i18n_storage_disks                : Data disker
 i18n_software_disks               : Programvare disker
@@ -23,10 +24,12 @@ i18n_sure_delete                  : Er du sikker?
 i18n_sure_delete_desc             : Sletting av disk vil fjerne den fra katalogen din.
 
 i18n_select_dos_driver            : Velg DOS driver
+i18n_select_encryption_key        : Velg krypteringsnøkkel
 i18n_placeholder_connection       : Min enhet
 i18n_choose_type                  : Velg type
 i18n_loading                      : Laster
 i18n_device_name                  : Enhetsnavn
+i18n_encryption_key               : Krypteringsnøkkel
 
 i18n_mounting                     : Monterer
 i18n_unmounting                   : Avmonterer
@@ -60,6 +63,9 @@ i18n_key                   		  : Nøkkel
 
 i18n_MySQL Based Filesystem       : SQL enhet
 i18n_SQLDrive                     : SQL enhet
+
+i18n_Samba	                      : Samba filsystem
+
 
 i18n_Server filesystem            : Server filsystem
 i18n_Local                        : Server filsystem

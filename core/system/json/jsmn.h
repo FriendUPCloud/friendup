@@ -23,6 +23,7 @@
 #ifndef __JSMN_H_
 #define __JSMN_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -89,6 +90,45 @@ void jsmn_init(jsmn_parser *parser);
  */
 jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 		jsmntok_t *tokens, unsigned int num_tokens);
+
+
+/**
+ * This struct holds everything needed by json_get_element_string.
+ */
+typedef struct {
+	char *string;
+	int string_length;
+	const jsmntok_t *tokens;
+	int token_count;
+} json_t;
+
+/**
+ * Compare json token name to provided string
+ *
+ * @param json pointer to json memory where json is placed
+ * @param tok pointer to json token
+ * @param s name which will be used to compare with token name
+ * @return 0 when success, otherwise error number
+ */
+int jsoneq(const char *json, const jsmntok_t *tok, const char *s);
+
+/**
+ * Returns a string described by a token. Example: {"t":"someting"} when asked for "t" it will return pointer
+ * to "something". Returned string will be NULL-terminated.
+ *
+ * @param json JSON struct to look in
+ * @param needle key to look for
+ * @return pointer to NULL-terminated string (within json_string) or NULL in case of failure
+ */
+char* json_get_element_string(json_t *json, const char *needle);
+
+/**
+ * Returns a string that is JSON-escaped.
+ *
+ * @param string_to_escape string that should be escaped
+  * @return pointer to NULL-terminated string or NULL in case of failure
+ */
+char* json_escape_string(const char *string_to_escape);
 
 #ifdef __cplusplus
 }

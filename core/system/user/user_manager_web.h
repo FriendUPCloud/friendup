@@ -19,6 +19,15 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  User Manager Web header
+ *
+ * All functions related to Remote User structure
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 29/05/2017
+ */
 
 #ifndef __SYSTEM_USER_USER_MANAGER_WEB_H__
 #define __SYSTEM_USER_USER_MANAGER_WEB_H__
@@ -30,15 +39,6 @@
 #include "user_group.h"
 #include "user.h"
 #include "remote_user.h"
-/** @file
- * 
- *  User Manager Web header
- *
- * All functions related to Remote User structure
- *
- *  @author PS (Pawel Stefanski)
- *  @date created 29/05/2017
- */
 
 //
 //

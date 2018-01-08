@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * Library opening and closing
  *
@@ -28,6 +27,10 @@
  * @author HT (Hogne Tildstad)
  * @author JMN (John Michael Nilsen)
  * @date first pushed on 06/02/2015
+ * 
+ * \defgroup FriendCoreLibrary Library Management
+ * \ingroup FriendCore
+ * @{
  */
 
 #include <core/types.h>
@@ -39,7 +42,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <system/systembase.h>
-
 
 /**
  * Opens a library
@@ -67,10 +69,10 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	}
 		
 	FBOOL loaded = FALSE;
-	char currentDirectory[ 255 ];
-	char loadLibraryPath[ 512 ];
-	memset( &currentDirectory, 0, 255 );
-	memset( &loadLibraryPath, 0, 512 );
+	char currentDirectory[ PATH_MAX ];
+	char loadLibraryPath[ PATH_MAX ];
+	memset( &currentDirectory, 0, sizeof(currentDirectory) );
+	memset( &loadLibraryPath, 0, sizeof(loadLibraryPath) );
 
 	// Open library
 	if( name == NULL )
@@ -85,7 +87,11 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	void * ( *libInit )( void * );
 
 	// there is no need to multiply by sizeof(char)
-	getcwd( currentDirectory, sizeof ( currentDirectory ) );
+	if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL)
+	{
+		FERROR("getcwd failed!");
+		exit(5);
+	}
 	//DEBUG( "[LibraryOpen] Current directory %s\n", currentDirectory );
 
 	// we should check and get lib from current dirrectory first (compatybility)
@@ -129,7 +135,11 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	if( loaded == FALSE )
 	{
 		// there is no need to multiply by sizeof(char)
-		getcwd( currentDirectory, sizeof ( currentDirectory ) );
+		if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL)
+		{
+			FERROR("getcwd failed!");
+			exit(5);
+		}
 
 		// we should check and get lib from "current dirrectory"/libs/
 	
@@ -217,8 +227,6 @@ void *LibraryOpen( void *sb, const char *name, long version )
 	
 	if( library != NULL )
 	{
-		//library->sb = sb;
-		
 		DEBUG( "[LibraryOpen] After init\n" );
 
 		library->handle = handle;
@@ -260,3 +268,5 @@ void LibraryClose( void *lib )
 	DEBUG( "[LibraryOpen] Lib closed memory free\n" );
 }
 
+/**@}*/
+// End of FriendCoreLibrary Doxygen group

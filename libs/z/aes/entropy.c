@@ -17,12 +17,15 @@
 *                                                                              *
 *****************************************************************************©*/
 
+#include <stdio.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #endif
+#include <stdio.h>
 
 #if defined(__cplusplus)
 extern "C"

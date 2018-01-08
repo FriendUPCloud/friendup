@@ -19,6 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ * 
+ *  Application Cathegory
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2016
+ */
 
 #ifndef __DICT_APP_CATEGORY_H__
 #define __DICT_APP_CATEGORY_H__
@@ -47,11 +54,11 @@ typedef struct AppCategory
 	
 }AppCategory;
 
-static FULONG AppCategoryDesc[] = { SQLT_TABNAME, (FULONG)"FAppCategory", SQLT_STRUCTSIZE, sizeof( struct AppCategory ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( struct AppCategory, ac_ID ), 
-	SQLT_INT,(FULONG) "DictID", offsetof( struct AppCategory, ac_DictID ),
-	SQLT_STR, (FULONG)"Name", offsetof( struct AppCategory, ac_Name ),
-	SQLT_NODE, (FULONG)"node", offsetof( struct AppCategory, node ),
-	SQLT_END };
+//static FULONG AppCategoryDesc[] = { SQLT_TABNAME, (FULONG)"FAppCategory", SQLT_STRUCTSIZE, sizeof( struct AppCategory ),
+//	SQLT_IDINT, (FULONG)"ID", offsetof( struct AppCategory, ac_ID ),
+//	SQLT_INT,(FULONG) "DictID", offsetof( struct AppCategory, ac_DictID ),
+//	SQLT_STR, (FULONG)"Name", offsetof( struct AppCategory, ac_Name ),
+//	SQLT_NODE, (FULONG)"node", offsetof( struct AppCategory, node ),
+//	SQLT_END };
 
 #endif //__DICT_APP_CATEGORY_H__

@@ -48,6 +48,7 @@
 #include "comm_msg.h"
 #include <db/sqllib.h>
 #include <core/thread.h>
+#include <security/connection_info.h>
 
 //
 // Queue data
@@ -58,27 +59,44 @@
 #define MAX_SIZE    1024
 #define MSG_STOP    "exit"
 
-
-//#define FRIEND_COMMUNICATION_PORT	6764
-
 //
 // Service Type
 //
-/*
-enum {
-	SERVICE_TYPE_SERVER = 0,
-	SERVICE_TYPE_CLIENT
-};
-*/
-enum {
-	SERVICE_CONNECTION_INCOMING = 0,
-	SERVICE_CONNECTION_OUTGOING
+
+enum {	//cfcc_Type
+	SERVER_CONNECTION_INCOMING = 0,
+	SERVER_CONNECTION_OUTGOING
 };
 
 enum {
 	SERVICE_STATUS_STOPPED = 0,
 	SERVICE_STATUS_CONNECTED,
 	SERVICE_STATUS_DISCONNECTED,
+};
+
+enum { //cfcc_ServerType
+	SERVER_TYPE_OTHER = 0,
+	SERVER_TYPE_NODE,
+	SERVER_TYPE_NODE_MASTER,
+	SERVER_TYPE_FRIEND_MASTER
+};
+
+#define CONNECTION_ACCESS_NONE	0
+#define CONNECTION_ACCESS_READ	2
+#define CONNECTION_ACCESS_WRITE	4
+
+// Connection status
+
+#define CONNECTION_STATUS_NONE			0
+#define CONNECTION_STATUS_CONNECTING	1
+#define CONNECTION_STATUS_CONNECTED		2
+#define CONNECTION_STATUS_DISCONNECTED	3
+#define CONNECTION_STATUS_REJECTED		4
+#define CONNECTION_STATUS_BLOCKED		5
+
+enum {
+	SERVER_ERROR_NO = 0,
+	SERVER_ERROR_CONNOTASSIGNED		// connection not assigned
 };
 
 #define SERVER_SPLIT_SIGN	","
@@ -109,59 +127,102 @@ typedef struct CommRequest
 }CommRequest;
 
 //
+// user access
+//
+
+typedef struct UserAccess
+{
+	MinNode							ua_Node;
+}UserAccess;
+
+//
+// group access
+//
+
+typedef struct UserGroupAccess
+{
+	MinNode							uga_Node;
+}UserGroupAccess;
+
+//
 // Communication 
 //
 
-typedef struct CommFCConnection
+typedef struct FConnection
 {
-	FUQUAD					ID;
-	FBYTE 						cffc_ID[ FRIEND_CORE_MANAGER_ID_SIZE ];			// communication service id
-	int							cffc_Type;			//  if Im the client SERVICE_TYPE_CLIENT is set
+	MinNode						node;
+	FULONG						fc_ID;
+	char 						*fc_FCID;			// communication service id
+	char						*fc_DestinationFCID;
+	int							fc_Type;			//  if Im the client SERVICE_TYPE_CLIENT is set
+	int							fc_ServerType;	// server type
+	char 						*fc_Name;		// SERVER NAMEe (ID)
+	char 						*fc_Address;	// internet address
+	FBOOL 						fc_ConnectionApproved;		// if connection is approved by  admin, flag is set to TRUE
+	char						*fc_SSLInfo;
+	struct tm					fc_DateCreated;
+	char						*fc_PEM;
+	FULONG						fc_ClusterID;		// 0 - normal connection, 1 - cluster master, > 1 - cluster node
+	int							fc_Status;			// connection status
+	FBOOL						fc_PingInProgress;	// ping in progress
 	
-	Socket 						*cfcc_Socket;			// socket to new connection
-	int 							cfcc_ConnectionsNumber;
+	Socket 						*fc_Socket;			// socket to new connection
+	int 						fc_ConnectionsNumber;
+	int							fc_Port;			// ip port
 	
-	char 						*cfcc_Name;		// SERVER NAMEe (ID)
-	char 						*cfcc_Address;	// internet address
-	int							cfcc_Port;			// ip port
-	
-	FBOOL 					cfcc_ConnectionApproved;		// if connection is approved by  admin, flag is set to TRUE
-	int							cfcc_Status;								// connection status
-	pthread_mutex_t		cfcc_Mutex;
-	
-	FThread					*cfcc_Thread;
-	void							*cfcc_Data;
-	void 							*cfcc_Service;			// pointer to communication service
-	
-	int							cfcc_ReadCommPipe, cfcc_WriteCommPipe;
-	
-	MinNode					node;
-}CommFCConnection;
+	// access
+	UserAccess					*fc_UserAccess;
+	UserGroupAccess				*fc_UserGroupAccess;
 
-static FULONG CommFCConnectionDesc[] = { 
-    SQLT_TABNAME, (FULONG)"FCommFCConnection",       SQLT_STRUCTSIZE, sizeof( struct CommFCConnection ), 
-	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct CommFCConnection, ID ),
-	SQLT_STR,   (FULONG)"FCID",          offsetof( struct CommFCConnection, cffc_ID ), 
-	SQLT_INT,     (FULONG)"Type",        offsetof( struct CommFCConnection, cffc_Type ),
-	SQLT_STR,     (FULONG)"Name", offsetof( struct CommFCConnection, cfcc_Name ),
-	SQLT_STR,     (FULONG)"Address", offsetof( struct CommFCConnection, cfcc_Address ),
-	SQLT_INT,     (FULONG)"Approved",        offsetof( struct CommFCConnection, cfcc_ConnectionApproved ),
-	SQLT_NODE,    (FULONG)"node",        offsetof( struct CommFCConnection, node ),
-	SQLT_END 
+	uint64_t					fc_PINGTime;
+	pthread_mutex_t				fc_Mutex;
+	FThread						*fc_Thread;
+	void						*fc_Data;
+	void 						*fc_Service;			// pointer to communication service
+	
+	int							fc_ReadCommPipe, fc_WriteCommPipe;
+	int							fc_UserSessionsCount;	// number of working user sessions on FC
+}FConnection;
+
+static FULONG FConnectionDesc[] = {
+    SQLT_TABNAME, (FULONG)"FConnection",
+    SQLT_STRUCTSIZE, sizeof( struct FConnection ),
+	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct FConnection, fc_ID ),
+	SQLT_STR,     (FULONG)"FCID",          offsetof( struct FConnection, fc_FCID ),
+	SQLT_STR,     (FULONG)"DestinationFCID",    offsetof( struct FConnection, fc_DestinationFCID ),
+	SQLT_INT,     (FULONG)"Type",        offsetof( struct FConnection, fc_Type ),
+	SQLT_INT,     (FULONG)"ServerType",        offsetof( struct FConnection, fc_ServerType ),
+	SQLT_STR,     (FULONG)"Name", offsetof( struct FConnection, fc_Name ),
+	SQLT_STR,     (FULONG)"Address", offsetof( struct FConnection, fc_Address ),
+	SQLT_INT,     (FULONG)"Approved",        offsetof( struct FConnection, fc_ConnectionApproved ),
+	SQLT_STR,     (FULONG)"SSLInfo", offsetof( struct FConnection, fc_SSLInfo ),
+	SQLT_DATETIME,(FULONG)"DateCreated", offsetof( struct FConnection, fc_DateCreated ),
+	SQLT_STR,     (FULONG)"PEM", offsetof( struct FConnection, fc_PEM ),
+	SQLT_INT,     (FULONG)"ClusterID", offsetof( struct FConnection, fc_ClusterID ),
+	SQLT_INT,     (FULONG)"Status", offsetof( struct FConnection, fc_Status ),
+	SQLT_NODE,    (FULONG)"node",        offsetof( struct FConnection, node ),
+	SQLT_END
 };
 
 /*
 --
--- Table structure for table `FCommFCConnection`
+-- Table structure for table `FConnection`
 --
 
-CREATE TABLE IF NOT EXISTS `FCommFCConnection` (
+CREATE TABLE IF NOT EXISTS `FConnection` (
   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
   `FCID` varchar(255) NOT NULL,
+  `DestinationFCID` varchar(128),
   `Type` bigint(3) NOT NULL,
+  `ServerType` bigint(3) NOT NULL,
   `Name` varchar(1024) NOT NULL,
   `Address` varchar(64) NOT NULL,
   `Approved` bigint(3) NOT NULL,
+  `SSLInfo` varchar(255),
+  `DateCreated` datetime NOT NULL,
+  `PEM` text,
+  `ClusterID` smallint(2),
+  `Status` smallint(2),
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 */
@@ -170,13 +231,13 @@ CREATE TABLE IF NOT EXISTS `FCommFCConnection` (
 // create / delete connection
 //
 
-CommFCConnection *CommFCConnectionNew( const char *address, const char *name, int type, void *service );
+FConnection *FConnectionNew( const char *address, const char *name, int type, void *service );
 
 //
 //
 //
 
-void CommFCConnectionDelete( CommFCConnection *con );
+void FConnectionDelete( FConnection *con );
 
 //
 // Communicaton Service
@@ -184,38 +245,39 @@ void CommFCConnectionDelete( CommFCConnection *con );
 
 typedef struct CommService
 {
-	Socket									*s_Socket;			// soclet
-	int										s_Epollfd;			// EPOLL - file descriptor
+	Socket							*s_Socket;			// soclet
+	int								s_Epollfd;			// EPOLL - file descriptor
 	
-	FThread								*s_Thread;			// service thread
+	FThread							*s_Thread;			// service thread
 	
-	FILE 									*s_Pipe;			// sending message pipe
-	FBYTE									*s_Buffer;
-	char 									*s_Name;				// service name
-	char 									*s_Address;			// network address
-	int 										s_Type;				// type of service, see enum on top of file
+	FILE 							*s_Pipe;			// sending message pipe
+	FBYTE							*s_Buffer;
+	char 							*s_Name;				// service name
+	char 							*s_Address;			// network address
+	int 							s_Type;				// type of service, see enum on top of file
 	
-	int 										s_sendPipe[ 2 ];
-	int 										s_recvPipe[ 2 ];
-	int 										s_ReadCommPipe, s_WriteCommPipe;
+	int 							s_sendPipe[ 2 ];
+	int 							s_recvPipe[ 2 ];
+	int 							s_ReadCommPipe, s_WriteCommPipe;
 	
 	CommAppMsg						s_Cam;				//
-	void 										*s_SB;
+	void 							*s_SB;
 	
-	int										s_MaxEvents;
-	int 										s_BufferSize;
-	int										s_port;				// Friend Communication Port
-	int										s_secured;		// ssl secured
+	int								s_MaxEvents;
+	int 							s_BufferSize;
+	int								s_port;				// Friend Communication Port
+	int								s_secured;		// ssl secured
 	
-	int 										s_IncomingInc;		// incomming connections incremental  value
+	int 							s_IncomingInc;		// incomming connections incremental  value
 	
-	CommFCConnection				*s_Connections;							///< FCConnections incoming
-	int 										s_NumberConnections;
+	FConnection						*s_Connections;							///< FCConnections incoming
+	int 							s_NumberConnections;
 	pthread_mutex_t					s_Mutex;
 	
 	CommRequest						*s_Requests;
 	pthread_cond_t 					s_DataReceivedCond;
-	FBOOL									s_Started;			//if thread is started
+	FBOOL							s_Started;			//if thread is started
+	FBOOL							s_OutgoingConnectionSet; // if outgoing connections are not set, FC cannot quit
 }CommService;
 
 //
@@ -252,38 +314,37 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df );
 // send message directly to connection
 //
 
-DataForm *CommServiceSendMsgDirect(  CommFCConnection *con, DataForm *df );
+DataForm *CommServiceSendMsgDirect(  FConnection *con, DataForm *df );
 
 //
 // Add new connection
 //
 
-CommFCConnection *CommServiceAddConnection( CommService *s, Socket *socket, char *addr, char *id, int type );
-//CommFCConnection *CommServiceAddConnection( void *sb, Socket *socket, char *addr, char *id, int type );
+FConnection *CommServiceAddConnection( CommService *s, Socket *socket, char *name, char *addr, char *recvid, int type, int cluster );
 
 //
 // remove socket or whole connection
 //
 
-int CommServiceDelConnection( CommService* s, CommFCConnection *loccon, Socket *sock );
+int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock );
 
 //
 //
 //
 
-int CommServiceRegisterEvent( CommFCConnection *con, Socket *socket );
+int CommServiceRegisterEvent( FConnection *con, Socket *socket );
 
 //
 //
 //
 
-int CommServiceUnRegisterEvent( CommFCConnection *con, Socket *socket );
+int CommServiceUnRegisterEvent( FConnection *con, Socket *socket );
 
 //
 //
 //
 
-CommFCConnection *ConnectToServer( CommService *s, char *conname );
+FConnection *ConnectToServer( CommService *s, char *conname );
 
 //
 //
@@ -307,13 +368,19 @@ int CommServiceThreadServerSelect( FThread *ptr );
 //
 //
 
-BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df );
+BufString *SendMessageAndWait( FConnection *con, DataForm *df );
 
 //
 //
 //
 
-DataForm *ParseAndExecuteRequest( void *sb, CommFCConnection *con, DataForm *df, FULONG reqid );
+DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULONG reqid );
+
+//
+// PING service
+//
+
+void CommServicePING( CommService* s );
 
 //
 // CommService thread

@@ -31,7 +31,7 @@ ge = function( el )
 			else if( el.substr ( 0, 1 ) == '.' )
 			{
 				var elements = document.getElementsByTagName( '*' );
-				var out = new Array();
+				var out = [];
 				var cl = el.split( '.' ).join( '' );
 				for( var a = 0; a < elements.length; a++ )
 				{
@@ -50,7 +50,7 @@ ge = function( el )
 			}
 			return document.getElementById( el );
 		case 'array':
-			var r = new Array();
+			var r = [];
 			for( var a in el )
 			{
 				var t = document.getElementById( el[a] );
@@ -64,6 +64,57 @@ ge = function( el )
 		default:
 			return false;
 	}			
+}
+
+// Deep clone an element
+function deepClone( ele )
+{
+	var obj = ele.cloneNode();
+	
+	// Get objects and functions
+	for( var a in ele )
+	{
+		switch( a )
+		{
+			case 'onclick':
+			case 'command':
+			case 'name':
+			case 'items':
+			case 'innerHMTL':
+			case 'touchend':
+			case 'onmouseup':
+			case 'onmousedown':
+			case 'ontouchstart':
+			case 'ontouchend':
+			case 'disabled':
+				obj[a] = ele[a];
+				break;
+		}
+	}
+	
+	// Get attributes
+	var supported = [ 'name', 'disabled', 'divider' ];
+	for( var a = 0; a < supported.length; a++ )
+	{
+		if( ele.getAttribute )
+		{
+			var v = ele.getAttribute( supported[ a ] );
+			if( v )	obj.setAttribute( supported[ a ], v );
+		}
+	}
+	
+	// Get childnodes recursively
+	if( ele.childNodes )
+	{
+		for( var a = 0; a < ele.childNodes.length; a++ )
+		{
+			var d = deepClone( ele.childNodes[ a ] );
+			obj.appendChild( d );
+		}
+	}
+	
+	// Return clone
+	return obj;
 }
 
 //
@@ -227,6 +278,32 @@ function GetByAjax( url, execfunc )
 	}
 	client.open ( 'POST', url );
 	client.send ();
+}
+
+function hideKeyboard()
+{
+	if( !isMobile && !isTablet ) return;
+	
+	setTimeout( function()
+	{
+		var field = document.createElement( 'input' );
+		field.setAttribute( 'type', 'text' );
+		field.setAttribute( 'style', 'position: absolute; top: 0px; opacity: 0; -webkit-user-modify: read-write-plaintext-only; left: 0px;' );
+		document.body.appendChild( field );
+		field.onfocus = function()
+		{
+			setTimeout( function()
+			{
+				field.setAttribute('style', 'display:none;');
+				setTimeout( function()
+				{
+					document.body.removeChild( field );
+					document.body.focus();
+				}, 14 );
+			}, 200);
+		};
+		field.focus();
+	}, 50 );
 }
 
 // Make sure the objs are in array form
@@ -711,8 +788,8 @@ function ShowDialog ( width, url, func, endfunc )
 	d.style.webkitBoxShadow = '0px 3px 15px rgba(0,0,0,0.4)';
 	d.style.mozBoxShadow = '0px 3px 15px rgba(0,0,0,0.4)';
 	d.style.width = Math.floor ( width ) + 'px';
-	d.style.left = Math.floor ( GetWindowWidth() * 0.5 - ( width * 0.5 ) ) + 'px';
-	d.style.top = Math.floor ( GetWindowHeight() * 0.5 - ( d.offsetHeight * 0.5 ) ) + 'px';
+	d.style.left = Math.floor ( GetWindowWidth() >> 1 - ( width >> 1 ) ) + 'px';
+	d.style.top = Math.floor ( GetWindowHeight() >> 1 - ( d.offsetHeight >> 1 ) ) + 'px';
 	d.style.visibility = 'hidden';
 	d.op = 0; d.func = null;
 	d._time = 0;
@@ -730,7 +807,7 @@ function ShowDialog ( width, url, func, endfunc )
 			this.style.visibility = 'visible';
 		}
 		if ( this._time == 0 ) this._time = ( new Date () ).getTime ();
-		this.op = (( new Date () ).getTime () - this._time) / 250 * 1;
+		this.op = (( new Date () ).getTime () - this._time) / 250.0;
 		if ( this.op >= 1 )
 		{
 			this.op = 1;
@@ -739,7 +816,7 @@ function ShowDialog ( width, url, func, endfunc )
 		}
 		SetOpacity ( this, this.op );
 		if ( window.addEventListener )
-			SetOpacity ( this.bg, this.op * 0.5 );
+			SetOpacity ( this.bg, this.op >> 1 );
 	}
 	d.fadeOut = function ( init )
 	{
@@ -750,7 +827,7 @@ function ShowDialog ( width, url, func, endfunc )
 			this._time = 0;
 		}
 		if ( this._time == 0 ) this._time = ( new Date () ).getTime ();
-		this.op = (( new Date () ).getTime () - this._time) / 250 * 1;
+		this.op = (( new Date () ).getTime () - this._time) / 250.0;
 		if ( this.op >= 1 )
 		{
 			this.op = 1;
@@ -758,13 +835,13 @@ function ShowDialog ( width, url, func, endfunc )
 			if ( this.func ) this.func();
 		}
 		SetOpacity ( this, 1-this.op );
-		SetOpacity ( this.bg, (1-this.op) * 0.5 );
+		SetOpacity ( this.bg, (1-this.op) >> 1 );
 	}
 	GetByAjax ( 
 		url, function () 
 		{ 
 			d.innerHTML = '<div class="Box">' + this.responseText + '</div>'; 
-			d.style.top = Math.floor ( GetWindowHeight() * 0.5 - ( d.offsetHeight * 0.5 ) ) + 'px';
+			d.style.top = Math.floor ( GetWindowHeight() >> 1 - ( d.offsetHeight >> 1 ) ) + 'px';
 			d.fadeIn ( true );
 		} 
 	);
@@ -800,8 +877,8 @@ function ShowPopup ( width, url, func )
 			p.className = 'GuiPopup';
 			p.innerHTML = '<div class="Center"><div><div>' + r[1] + '</div></div></div>';
 			document.body.appendChild ( p );
-			p.firstChild.firstChild.style.left = Math.floor ( 0 - ( this.w * 0.5 ) ) + 'px';
-			p.firstChild.firstChild.style.top = Math.floor ( 0 - ( 300 * 0.5 ) ) + 'px';
+			p.firstChild.firstChild.style.left = 0 - ( this.w >> 1 ) + 'px';
+			p.firstChild.firstChild.style.top = -150 + 'px';
 			_GuiOpenPopups.push ( p );
 		}
 	}
@@ -826,8 +903,8 @@ function RefreshPopup ( width, url, func )
 			{
 				var p = _GuiOpenPopups[ _GuiOpenPopups.length - 1 ];
 				p.innerHTML = '<div class="Center"><div><div>' + r[1] + '</div></div></div>';
-				p.firstChild.firstChild.style.left = Math.floor ( 0 - ( this.w * 0.5 ) ) + 'px';
-				p.firstChild.firstChild.style.top = Math.floor ( 0 - ( 300 * 0.5 ) ) + 'px';
+				p.firstChild.firstChild.style.left = 0 - ( this.w >> 1 ) + 'px';
+				p.firstChild.firstChild.style.top = -150 + 'px';
 			}
 		}
 		j.send ();
@@ -1206,8 +1283,8 @@ function GetElementWidth( ele )
 	var value = ele.offsetWidth;
 	if( css.boxSizing != 'border-box' )
 	{
-		value += parseInt( css.paddingLeft, 10 ) + 
-			parseInt( css.paddingRight, 10 );
+		value += parseInt( css.paddingLeft, 10) + 
+			parseInt( css.paddingRight, 10);
 		value += parseInt( css.borderLeftWidth, 10) + 
 			parseInt( css.borderRightWidth, 10);
 	}
@@ -1221,11 +1298,11 @@ function GetElementHeight( ele )
 	if( ele == null || ele.length == 0 )
 		return 0;
 	var css = window.getComputedStyle( ele, null );
-	var value  = ele.offsetHeight;
+	var value = ele.offsetHeight;
 	if( css.boxSizing != 'border-box' )
 	{
-		value += parseInt( css.paddingTop, 10 ) + 
-			parseInt( css.paddingBottom, 10 );
+		value += parseInt( css.paddingTop, 10) + 
+			parseInt( css.paddingBottom, 10);
 		value += parseInt( css.borderTopWidth, 10) + 
 			parseInt( css.borderBottomWidth, 10);
 	}
@@ -1234,7 +1311,7 @@ function GetElementHeight( ele )
 	return value;
 }
 
-function GetWindowWidth ( )
+function GetWindowWidth()
 {
 	if ( typeof ( window.innerWidth ) == 'number' ) 
 	{
@@ -1255,7 +1332,7 @@ function GetWindowWidth ( )
 	return false;
 }
 
-function GetWindowHeight ( )
+function GetWindowHeight()
 {
 	if ( typeof ( window.innerHeight ) == 'number' ) 
 	{
@@ -1774,7 +1851,8 @@ function CleanFileinfo( fi )
 	return Base64.encode( str ); 
 */
 var Base64 = {_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t } }
-
+// because Base64 gets overwritten by the crypto library
+window.Base64alt = {_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64alt._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64alt._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t } }
 
 /* Vertical tabs ------------------------------------------------------------ */
 
@@ -1960,11 +2038,14 @@ function InitSliders( pdiv )
 /* Standard tabs ------------------------------------------------------------ */
 
 // Initializes tab system on the subsequent divs one level under parent div
+friend.horizontalTabs = {};
 function InitTabs ( pdiv )
 {
 	if( typeof( pdiv ) == 'string' )
 		pdiv = ge( pdiv );
-		
+	
+	// Save these
+	friend.horizontalTabs[ pdiv.id ] = pdiv;
 	
 	// Find window
 	var wobj = pdiv;
@@ -1972,20 +2053,17 @@ function InitTabs ( pdiv )
 	{
 		if( wobj.classList && wobj.classList.contains( 'Content' ) && wobj.windowObject )
 		{
-			wobj = wobj.windowObject;
+			wobj = wobj.windowObject.content;
 			break;
 		}
 		wobj = wobj.parentNode;
 	}
 	// Ah we are in an api!
-	if( !wobj )
-	{
-		wobj = window;
-	}
+	if( !wobj ) wobj = window;
 	
 	var divs = pdiv.getElementsByTagName( 'div' );
-	var tabs = new Array();
-	var pages = new Array();
+	var tabs = [];
+	var pages = [];
 	var active = 0;
 	for( var a = 0; a < divs.length; a++ )
 	{
@@ -2064,10 +2142,11 @@ function InitTabs ( pdiv )
 	// Scroll areas
 	for( var a = 0; a < pages.length; a++ )
 	{
-		for( var b = 0; b < pages[a].childNodes.length; b++ )
+		var pag = pages[a];
+		for( var b = 0; b < pag.childNodes.length; b++ )
 		{
 			// Find content container
-			var cr = pages[a].childNodes[b];
+			var cr = pag.childNodes[ b ];
 			var resizeObject = false;
 			var spaceSize = 0; // margins and paddings
 			while( cr && cr != document.body )
@@ -2084,52 +2163,74 @@ function InitTabs ( pdiv )
 					resizeObject = cr;
 					break;
 				}
-				
-				// Get all properties here
-				if( cr.classList )
-				{
-					var cst = window.getComputedStyle( cr, null );
-				
-					// Add padding
-					var props = [ 'padding', 'padding-top', 'padding-bottom', 'margin', 'margin-top', 'margin-bottom' ];
-					for( var c = 0; c < props.length; c++ )
-					{
-						var prop = cst.getPropertyValue( props[c] );
-						if( !prop ) continue;
-						if( props[c].indexOf( '-' ) > 0 )
-							spaceSize += parseInt( prop );
-						else spaceSize += parseInt( prop ) * 2;
-					}
-				}
 				cr = cr.parentNode;
 			}
 			
+			// TODO: Get margins from theme..
+			var margins = 15;
+			
 			// Resize pagescroll and set resize event
-			var cl = pages[a].childNodes[b].classList;
+			var cl = pag.childNodes[ b ].classList;
 			if( cl && cl.contains( 'PageScroll' ) )
 			{
-				function addResizeEvent( n )
+				// New scope for resize event
+				function addResizeEvent( n, page )
 				{
-					function resiz()
+					var ch = 0;
+					var ph = 0;
+					function resiz( force )
 					{
-						n.style.height = ( resizeObject.offsetHeight - n.tab.offsetHeight - spaceSize ) + 'px';
-						n.parentNode.style.minHeight = n.style.height;
+						// Take last container height
+						ph = ch;
+						ch = wobj.offsetHeight ? wobj.offsetHeight : wobj.innerHeight;
+
+						// We succeeded in getting a stable tabpage container height
+						// Check if it changed, and abort if it didn't
+						if( ch == ph && !force ) return;
+						
+						// Containing element
+						var hhh = ( GetElementHeight( resizeObject ) - GetElementHeight( n.tab ) );
+						
+						// Page scroll height (other elements contained minus page scroll element)
+						var psh = 0;
+						for( var pa = 0; pa < n.parentNode.childNodes.length; pa++ )
+							if( n.parentNode.childNodes[ pa ] != n )
+							{
+								if( n.parentNode && n.parentNode.childNodes[ pa ].nodeName == 'DIV' )
+									psh += GetElementHeight( n.parentNode.childNodes[ pa ] );
+							}
+						
+						// Page scroll
+						n.style.height = ( hhh - psh - margins ) + 'px';
+						
+						// Container
+						page.style.height = hhh + 'px';
+						
+						// Refresh again in case height changes
+						setTimeout( function(){ resiz(); }, 25 );
 					}
-					if( wobj.addEvent )
-						wobj.addEvent( 'resize', resiz );
+					
+					if( wobj.AddEvent )
+					{
+						wobj.AddEvent( 'resize', resiz );
+					}
 					else wobj.addEventListener( 'resize', resiz );
+					n.tab.addEventListener( 'click', function(){ resiz( 1 ); } );
+					
+					// Resize now! (in 5ms)
 					setTimeout( function()
 					{
 						resiz();
 					}, 5 );
 				}
-				var n = pages[a].childNodes[b];
+				// Register the page and associate it so we can add the resize event
+				var n = pag.childNodes[ b ];
 				n.tab = tabs[a];
 				n.style.position = 'relative';
-				n.style.height = ( resizeObject.offsetHeight - tabs[a].offsetHeight - spaceSize ) + 'px';
+				n.style.height = ( GetElementHeight( resizeObject ) - GetElementHeight( tabs[a] ) - margins ) + 'px';
 				n.style.overflow = 'auto';
-				n.parentNode.style.minHeight = n.style.height;
-				if( wobj ) addResizeEvent( n );
+				n.parentNode.style.height = n.style.height;
+				if( wobj ) addResizeEvent( n, pag );
 			}
 		}
 	}
@@ -2158,6 +2259,7 @@ function touchDoubleClick( element, callback, e )
 // Are we on a mobile browser?
 function checkMobileBrowser()
 {
+	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
 	if( !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
 	{
 		window.isMobile = window.innerWidth <= 760 ||
@@ -2165,13 +2267,26 @@ function checkMobileBrowser()
 			navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
 			navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
 			navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0;
+		if( window.isMobile && window.innerWidth >= 1024 )
+		{
+			window.isTablet = true;
+			window.isMobile = false;
+		}
 	}
-	else if( document.getElementsByTagName( 'head' )[0].getAttribute( 'mobile' ) )
+	else 
 	{
-		window.isMobile = true;
+		window.isMobile = false;
+		window.isTablet = false;
 	}
-	else window.isMobile = false;
 	window.isTouch = !!('ontouchstart' in window);
+	if( window.isTablet )
+	{
+		document.body.setAttribute( 'tablet', 'tablet' );
+	}
+	else
+	{
+		document.body.removeAttribute( 'tablet' );
+	}
 	
 	return window.isMobile;
 }

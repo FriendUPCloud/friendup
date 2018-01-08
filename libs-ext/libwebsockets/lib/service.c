@@ -1,7 +1,7 @@
 /*
  * libwebsockets - small server side websockets and web server implementation
  *
- * Copyright (C) 2010-2015 Andy Green <andy@warmcat.com>
+ * Copyright (C) 2010-2017 Andy Green <andy@warmcat.com>
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -29,11 +29,14 @@ lws_calllback_as_writeable(struct lws *wsi)
 
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB, 1);
 #if defined(LWS_WITH_STATS)
-	{
-		uint64_t ul = time_in_microseconds() - wsi->active_writable_req_us;
+	if (wsi->active_writable_req_us) {
+		uint64_t ul = time_in_microseconds() -
+			      wsi->active_writable_req_us;
 
-		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_MS_WRITABLE_DELAY, ul);
-		lws_stats_atomic_max(wsi->context, pt, LWSSTATS_MS_WORST_WRITABLE_DELAY, ul);
+		lws_stats_atomic_bump(wsi->context, pt,
+				      LWSSTATS_MS_WRITABLE_DELAY, ul);
+		lws_stats_atomic_max(wsi->context, pt,
+				     LWSSTATS_MS_WORST_WRITABLE_DELAY, ul);
 		wsi->active_writable_req_us = 0;
 	}
 #endif
@@ -58,23 +61,21 @@ lws_calllback_as_writeable(struct lws *wsi)
 		n = LWS_CALLBACK_HTTP_WRITEABLE;
 		break;
 	}
-	lwsl_debug("%s: %p (user=%p)\n", __func__, wsi, wsi->user_space);
+
 	return user_callback_handle_rxflow(wsi->protocol->callback,
 					   wsi, (enum lws_callback_reasons) n,
 					   wsi->user_space, NULL, 0);
 }
 
-int
+LWS_VISIBLE int
 lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 {
 	int write_type = LWS_WRITE_PONG;
 	struct lws_tokens eff_buf;
-#ifdef LWS_USE_HTTP2
-	struct lws *wsi2;
+#ifdef LWS_WITH_HTTP2
+	struct lws **wsi2, *wsi2a;
 #endif
 	int ret, m, n;
-
-	//lwsl_err("%s: %p\n", __func__, wsi);
 
 	wsi->leave_pollout_active = 0;
 	wsi->handling_pollout = 1;
@@ -94,6 +95,7 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 	 *	       corrupted.
 	 */
 	if (wsi->trunc_len) {
+		//lwsl_notice("%s: completing partial\n", __func__);
 		if (lws_issue_raw(wsi, wsi->trunc_alloc + wsi->trunc_offset,
 				  wsi->trunc_len) < 0) {
 			lwsl_info("%s signalling to close\n", __func__);
@@ -110,22 +112,22 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 	if (wsi->mode == LWSCM_WSCL_ISSUE_HTTP_BODY)
 		goto user_service;
 
-
-#ifdef LWS_USE_HTTP2
-	/* Priority 2: protocol packets
+#ifdef LWS_WITH_HTTP2
+	/*
+	 * Priority 2: protocol packets
 	 */
-	if (wsi->pps) {
-		lwsl_info("servicing pps %d\n", wsi->pps);
-		switch (wsi->pps) {
-		case LWS_PPS_HTTP2_MY_SETTINGS:
-		case LWS_PPS_HTTP2_ACK_SETTINGS:
-			lws_http2_do_pps_send(lws_get_context(wsi), wsi);
-			break;
-		default:
-			break;
+	if (wsi->upgraded_to_http2 && wsi->u.h2.h2n->pps) {
+		lwsl_info("servicing pps\n");
+		if (lws_h2_do_pps_send(wsi)) {
+			wsi->socket_is_permanently_unusable = 1;
+			goto bail_die;
 		}
-		wsi->pps = LWS_PPS_NONE;
-		lws_rx_flow_control(wsi, 1);
+		if (wsi->u.h2.h2n->pps)
+			goto bail_ok;
+
+		/* we can resume whatever we were doing */
+		lws_rx_flow_control(wsi, LWS_RXFLOW_REASON_APPLIES_ENABLE |
+					 LWS_RXFLOW_REASON_H2_PPS_PENDING);
 
 		goto bail_ok; /* leave POLLOUT active */
 	}
@@ -144,7 +146,29 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 #endif
 
 	/* Priority 3: pending control packets (pong or close)
+	 *
+	 * 3a: close notification packet requested from close api
 	 */
+
+	if (wsi->state == LWSS_WAITING_TO_SEND_CLOSE_NOTIFICATION) {
+		lwsl_debug("sending close packet\n");
+		wsi->waiting_to_send_close_frame = 0;
+		n = lws_write(wsi, &wsi->u.ws.ping_payload_buf[LWS_PRE],
+			      wsi->u.ws.close_in_ping_buffer_len,
+			      LWS_WRITE_CLOSE);
+		if (n >= 0) {
+			wsi->state = LWSS_AWAITING_CLOSE_ACK;
+			lws_set_timeout(wsi, PENDING_TIMEOUT_CLOSE_ACK, 1);
+			lwsl_debug("sent close indication, awaiting ack\n");
+
+			goto bail_ok;
+		}
+
+		goto bail_die;
+	}
+
+	/* else, the send failed and we should just hang up */
+
 	if ((wsi->state == LWSS_ESTABLISHED &&
 	     wsi->u.ws.ping_pending_flag) ||
 	    (wsi->state == LWSS_RETURNED_CLOSE_ALREADY &&
@@ -232,6 +256,7 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 	ret = 1;
 	if (wsi->mode == LWSCM_RAW || wsi->mode == LWSCM_RAW_FILEDESC)
 		ret = 0;
+
 	while (ret == 1) {
 
 		/* default to nobody has more to spill */
@@ -242,9 +267,8 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 
 		/* give every extension a chance to spill */
 
-		m = lws_ext_cb_active(wsi,
-					LWS_EXT_CB_PACKET_TX_PRESEND,
-					       &eff_buf, 0);
+		m = lws_ext_cb_active(wsi, LWS_EXT_CB_PACKET_TX_PRESEND,
+				      &eff_buf, 0);
 		if (m < 0) {
 			lwsl_err("ext reports fatal error\n");
 			goto bail_die;
@@ -307,6 +331,13 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 user_service:
 	/* one shot */
 
+	if (wsi->parent_carries_io) {
+		wsi->handling_pollout = 0;
+		wsi->leave_pollout_active = 0;
+
+		return lws_calllback_as_writeable(wsi);
+	}
+
 	if (pollfd) {
 		int eff = wsi->leave_pollout_active;
 
@@ -319,7 +350,6 @@ user_service:
 		wsi->handling_pollout = 0;
 
 		/* cannot get leave_pollout_active set after the above */
-
 		if (!eff && wsi->leave_pollout_active)
 			/* got set inbetween sampling eff and clearing
 			 * handling_pollout, force POLLOUT on */
@@ -337,7 +367,7 @@ user_service:
 user_service_go_again:
 #endif
 
-#ifdef LWS_USE_HTTP2
+#ifdef LWS_WITH_HTTP2
 	/*
 	 * we are the 'network wsi' for potentially many muxed child wsi with
 	 * no network connection of their own, who have to use us for all their
@@ -356,39 +386,157 @@ user_service_go_again:
 		goto notify;
 	}
 
-	wsi->u.http2.requested_POLLOUT = 0;
-	if (!wsi->u.http2.initialized) {
+	wsi->u.h2.requested_POLLOUT = 0;
+	if (!wsi->u.h2.initialized) {
 		lwsl_info("pollout on uninitialized http2 conn\n");
 		goto bail_ok;
 	}
 
-	lwsl_info("%s: doing children\n", __func__);
+//	if (SSL_want_read(wsi->ssl) || SSL_want_write(wsi->ssl)) {
+//		lws_callback_on_writable(wsi);
+//		goto bail_ok;
+//	}
 
-	wsi2 = wsi;
+	lwsl_info("%s: %p: children waiting for POLLOUT service:\n", __func__, wsi);
+	wsi2a = wsi->u.h2.child_list;
+	while (wsi2a) {
+		if (wsi2a->u.h2.requested_POLLOUT)
+			lwsl_debug("  * %p\n", wsi2a);
+		else
+			lwsl_debug("    %p\n", wsi2a);
+
+		wsi2a = wsi2a->u.h2.sibling_list;
+	}
+
+	wsi2 = &wsi->u.h2.child_list;
+	if (!*wsi2)
+		goto bail_ok;
+
 	do {
-		wsi2 = wsi2->u.http2.next_child_wsi;
-		lwsl_info("%s: child %p\n", __func__, wsi2);
-		if (!wsi2)
-			continue;
-		if (!wsi2->u.http2.requested_POLLOUT)
-			continue;
-		wsi2->u.http2.requested_POLLOUT = 0;
-		if (lws_calllback_as_writeable(wsi2)) {
-			lwsl_debug("Closing POLLOUT child\n");
-			lws_close_free_wsi(wsi2, LWS_CLOSE_STATUS_NOSTATUS);
+		struct lws *w, **wa;
+	
+		wa = &(*wsi2)->u.h2.sibling_list;
+		if (!(*wsi2)->u.h2.requested_POLLOUT) {
+			lwsl_debug("  child %p doesn't want POLLOUT\n", *wsi2);
+			goto next_child;
 		}
-		wsi2 = wsi;
-	} while (wsi2 != NULL && !lws_send_pipe_choked(wsi));
 
-	lwsl_info("%s: completed\n", __func__);
+		/*
+		 * we're going to do writable callback for this child.
+		 * move him to be the last child
+		 */
+
+		lwsl_debug("servicing child %p\n", *wsi2);
+
+		w = *wsi2;
+		while (w) {
+			if (!w->u.h2.sibling_list) { /* w is the current last */
+				lwsl_debug("w=%p, *wsi2 = %p\n", w, *wsi2);
+				if (w == *wsi2) /* we are already last */
+					break;
+				w->u.h2.sibling_list = *wsi2; /* last points to us as new last */
+				*wsi2 = (*wsi2)->u.h2.sibling_list; /* guy pointing to us until now points to our old next */
+				w->u.h2.sibling_list->u.h2.sibling_list = NULL; /* we point to nothing because we are last */
+				w = w->u.h2.sibling_list; /* w becomes us */
+				break;
+			}
+			w = w->u.h2.sibling_list;
+		}
+
+		w->u.h2.requested_POLLOUT = 0;
+		lwsl_info("%s: child %p (state %d)\n", __func__, (*wsi2), (*wsi2)->state);
+
+		if (w->u.h2.pending_status_body) {
+			w->u.h2.send_END_STREAM = 1;
+			n = lws_write(w,
+				      (uint8_t *)w->u.h2.pending_status_body + LWS_PRE,
+				      strlen(w->u.h2.pending_status_body + LWS_PRE),
+				      LWS_WRITE_HTTP_FINAL);
+			lws_free_set_NULL(w->u.h2.pending_status_body);
+			lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS);
+			wa = &wsi->u.h2.child_list;
+			goto next_child;
+		}
+
+		if (w->state == LWSS_HTTP_ISSUING_FILE) {
+
+			w->leave_pollout_active = 0;
+
+			/* >0 == completion, <0 == error
+			 *
+			 * We'll get a LWS_CALLBACK_HTTP_FILE_COMPLETION callback when
+			 * it's done.  That's the case even if we just completed the
+			 * send, so wait for that.
+			 */
+			n = lws_serve_http_file_fragment(w);
+			lwsl_debug("lws_serve_http_file_fragment says %d\n", n);
+
+			/*
+			 * We will often hear about out having sent the final
+			 * DATA here... if so close the actual wsi
+			 */
+			if (n < 0 || w->u.h2.send_END_STREAM) {
+				lwsl_debug("Closing POLLOUT child %p\n", w);
+				lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS);
+				wa = &wsi->u.h2.child_list;
+				goto next_child;
+			}
+			if (n > 0)
+				if (lws_http_transaction_completed(w))
+					goto bail_die;
+			if (!n) {
+				lws_callback_on_writable(w);
+				(w)->u.h2.requested_POLLOUT = 1;
+			}
+
+			goto next_child;
+		}
+
+		if (lws_calllback_as_writeable(w) || w->u.h2.send_END_STREAM) {
+			lwsl_debug("Closing POLLOUT child\n");
+			lws_close_free_wsi(w, LWS_CLOSE_STATUS_NOSTATUS);
+			wa = &wsi->u.h2.child_list;
+		}
+
+next_child:
+		wsi2 = wa;
+	} while (wsi2 && *wsi2 && !lws_send_pipe_choked(wsi));
+
+	lwsl_info("%s: %p: children waiting for POLLOUT service: %p\n", __func__, wsi, wsi->u.h2.child_list);
+	wsi2a = wsi->u.h2.child_list;
+	while (wsi2a) {
+		if (wsi2a->u.h2.requested_POLLOUT)
+			lwsl_debug("  * %p\n", wsi2a);
+		else
+			lwsl_debug("    %p\n", wsi2a);
+
+		wsi2a = wsi2a->u.h2.sibling_list;
+	}
+
+
+	wsi2a = wsi->u.h2.child_list;
+	while (wsi2a) {
+		if (wsi2a->u.h2.requested_POLLOUT) {
+			lws_change_pollfd(wsi, 0, LWS_POLLOUT);
+			break;
+		}
+		wsi2a = wsi2a->u.h2.sibling_list;
+	}
 
 	goto bail_ok;
+
+
 notify:
 #endif
-	wsi->handling_pollout = 0;
 	wsi->leave_pollout_active = 0;
 
-	return lws_calllback_as_writeable(wsi);
+	n = lws_calllback_as_writeable(wsi);
+	wsi->handling_pollout = 0;
+
+	if (wsi->leave_pollout_active)
+		lws_change_pollfd(wsi, 0, LWS_POLLOUT);
+
+	return n;
 
 	/*
 	 * since these don't disable the POLLOUT, they are always doing the
@@ -411,10 +559,8 @@ bail_die:
 int
 lws_service_timeout_check(struct lws *wsi, unsigned int sec)
 {
-//#if LWS_POSIX
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 	int n = 0;
-//#endif
 
 	(void)n;
 
@@ -433,19 +579,24 @@ lws_service_timeout_check(struct lws *wsi, unsigned int sec)
 	 * connection
 	 */
 	if ((time_t)sec > wsi->pending_timeout_limit) {
-//#if LWS_POSIX
-		if (wsi->desc.sockfd != LWS_SOCK_INVALID && wsi->position_in_fds_table >= 0)
+
+		if (wsi->desc.sockfd != LWS_SOCK_INVALID &&
+		    wsi->position_in_fds_table >= 0)
 			n = pt->fds[wsi->position_in_fds_table].events;
 
 		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_TIMEOUTS, 1);
 
 		/* no need to log normal idle keepalive timeout */
 		if (wsi->pending_timeout != PENDING_TIMEOUT_HTTP_KEEPALIVE_IDLE)
-			lwsl_notice("wsi %p: TIMEDOUT WAITING on %d (did hdr %d, ah %p, wl %d, pfd events %d) %llu vs %llu\n",
-			    (void *)wsi, wsi->pending_timeout,
-			    wsi->hdr_parsing_completed, wsi->u.hdr.ah,
-			    pt->ah_wait_list_length, n, (unsigned long long)sec, (unsigned long long)wsi->pending_timeout_limit);
-//#endif
+			lwsl_info("wsi %p: TIMEDOUT WAITING on %d "
+				  "(did hdr %d, ah %p, wl %d, pfd "
+				  "events %d) %llu vs %llu\n",
+				  (void *)wsi, wsi->pending_timeout,
+				  wsi->hdr_parsing_completed, wsi->u.hdr.ah,
+				  pt->ah_wait_list_length, n,
+				  (unsigned long long)sec,
+				  (unsigned long long)wsi->pending_timeout_limit);
+
 		/*
 		 * Since he failed a timeout, he already had a chance to do
 		 * something and was unable to... that includes situations like
@@ -457,7 +608,8 @@ lws_service_timeout_check(struct lws *wsi, unsigned int sec)
 		if (wsi->mode == LWSCM_WSCL_WAITING_SSL)
 			wsi->vhost->protocols[0].callback(wsi,
 				LWS_CALLBACK_CLIENT_CONNECTION_ERROR,
-				wsi->user_space, (void *)"Timed out waiting SSL", 21);
+				wsi->user_space,
+				(void *)"Timed out waiting SSL", 21);
 
 		lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS);
 
@@ -469,18 +621,46 @@ lws_service_timeout_check(struct lws *wsi, unsigned int sec)
 
 int lws_rxflow_cache(struct lws *wsi, unsigned char *buf, int n, int len)
 {
+#if defined(LWS_WITH_HTTP2)
+	if (wsi->upgraded_to_http2) {
+		struct lws_h2_netconn *h2n = wsi->u.h2.h2n;
+
+		assert(h2n->rx_scratch);
+		buf += n;
+		len -= n;
+		assert ((char *)buf >= (char *)h2n->rx_scratch &&
+			(char *)&buf[len] <= (char *)&h2n->rx_scratch[LWS_H2_RX_SCRATCH_SIZE]);
+
+		h2n->rx_scratch_pos = ((char *)buf - (char *)h2n->rx_scratch);
+		h2n->rx_scratch_len = len;
+
+		lwsl_info("%s: %p: pausing h2 rx_scratch\n", __func__, wsi);
+
+		return 0;
+	}
+#endif
 	/* his RX is flowcontrolled, don't send remaining now */
 	if (wsi->rxflow_buffer) {
-		/* rxflow while we were spilling prev rxflow */
-		lwsl_info("stalling in existing rxflow buf\n");
-		return 1;
+		if (buf >= wsi->rxflow_buffer &&
+		    &buf[len - 1] < &wsi->rxflow_buffer[wsi->rxflow_len]) {
+			/* rxflow while we were spilling prev rxflow */
+			lwsl_info("%s: staying in rxflow buf\n", __func__);
+			return 1;
+		} else {
+			lwsl_err("%s: conflicting rxflow buf, "
+				 "current %p len %d, new %p len %d\n", __func__,
+				 wsi->rxflow_buffer, wsi->rxflow_len, buf, len);
+			assert(0);
+			return 1;
+		}
 	}
 
 	/* a new rxflow, buffer it and warn caller */
-	lwsl_info("new rxflow input buffer len %d\n", len - n);
-	wsi->rxflow_buffer = lws_malloc(len - n);
+	lwsl_info("%s: new rxflow input buffer len %d\n", __func__, len - n);
+	wsi->rxflow_buffer = lws_malloc(len - n, "rxflow buf");
 	if (!wsi->rxflow_buffer)
 		return -1;
+
 	wsi->rxflow_len = len - n;
 	wsi->rxflow_pos = 0;
 	memcpy(wsi->rxflow_buffer, buf + n, len - n);
@@ -496,7 +676,7 @@ LWS_VISIBLE LWS_EXTERN int
 lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
-	int n;
+	struct allocated_headers *ah;
 
 	/* Figure out if we really want to wait in poll()
 	 * We only need to wait if really nothing already to do and we have
@@ -516,15 +696,16 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 #endif
 
 	/* 3) if any ah has pending rx, do not wait in poll */
-	for (n = 0; n < context->max_http_header_pool; n++)
-		if (pt->ah_pool[n].rxpos != pt->ah_pool[n].rxlen) {
-			/* any ah with pending rx must be attached to someone */
-			if (!pt->ah_pool[n].wsi) {
-				lwsl_err("%s: assert: no wsi attached to ah\n", __func__);
+	ah = pt->ah_list;
+	while (ah) {
+		if (ah->rxpos != ah->rxlen) {
+			if (!ah->wsi) {
 				assert(0);
 			}
 			return 0;
 		}
+		ah = ah->next;
+	}
 
 	return timeout_ms;
 }
@@ -539,12 +720,12 @@ int
 lws_service_flag_pending(struct lws_context *context, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct allocated_headers *ah;
 #ifdef LWS_OPENSSL_SUPPORT
 	struct lws *wsi_next;
 #endif
 	struct lws *wsi;
 	int forced = 0;
-	int n;
 
 	/* POLLIN faking */
 
@@ -595,16 +776,20 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 	 * fake their POLLIN status so they will be able to drain the
 	 * rx buffered in the ah
 	 */
-	for (n = 0; n < context->max_http_header_pool; n++)
-		if (pt->ah_pool[n].rxpos != pt->ah_pool[n].rxlen &&
-		    !pt->ah_pool[n].wsi->hdr_parsing_completed) {
-			pt->fds[pt->ah_pool[n].wsi->position_in_fds_table].revents |=
-				pt->fds[pt->ah_pool[n].wsi->position_in_fds_table].events &
+	ah = pt->ah_list;
+	while (ah) {
+		if (ah->rxpos != ah->rxlen && !ah->wsi->hdr_parsing_completed) {
+			pt->fds[ah->wsi->position_in_fds_table].revents |=
+				pt->fds[ah->wsi->position_in_fds_table].events &
 					LWS_POLLIN;
-			if (pt->fds[pt->ah_pool[n].wsi->position_in_fds_table].revents &
-			    LWS_POLLIN)
+			if (pt->fds[ah->wsi->position_in_fds_table].revents &
+			    LWS_POLLIN) {
 				forced = 1;
+				break;
+			}
 		}
+		ah = ah->next;
+	}
 
 	return forced;
 }
@@ -696,9 +881,9 @@ spin_chunks:
 	if (wsi->chunked && !wsi->chunk_remaining)
 		return 0;
 
-	if (wsi->u.http.content_remain &&
-	    (int)wsi->u.http.content_remain < *len)
-		n = wsi->u.http.content_remain;
+	if (wsi->u.http.rx_content_remain &&
+	    wsi->u.http.rx_content_remain < *len)
+		n = (int)wsi->u.http.rx_content_remain;
 	else
 		n = *len;
 
@@ -736,10 +921,10 @@ spin_chunks:
 		return 0;
 
 	/* if we know the content length, decrement the content remaining */
-	if (wsi->u.http.content_length > 0)
-		wsi->u.http.content_remain -= n;
+	if (wsi->u.http.rx_content_length > 0)
+		wsi->u.http.rx_content_remain -= n;
 
-	if (wsi->u.http.content_remain || !wsi->u.http.content_length)
+	if (wsi->u.http.rx_content_remain || !wsi->u.http.rx_content_length)
 		return 0;
 
 completed:
@@ -775,6 +960,7 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
 	lws_sockfd_type our_fd = 0, tmp_fd;
+	struct allocated_headers *ah;
 	struct lws_tokens eff_buf;
 	unsigned int pending = 0;
 	struct lws *wsi, *wsi1;
@@ -809,6 +995,12 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 
 		lws_plat_service_periodic(context);
 
+		lws_check_deferred_free(context, 0);
+
+#if defined(LWS_WITH_PEER_LIMITS)
+		lws_peer_cull_peer_wait_list(context);
+#endif
+
 		/* retire unused deprecated context */
 #if !defined(LWS_PLAT_OPTEE) && !defined(LWS_WITH_ESP32)
 #if LWS_POSIX && !defined(_WIN32)
@@ -824,6 +1016,10 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 		if (pollfd)
 			our_fd = pollfd->fd;
 
+		/*
+		 * Phase 1: check every wsi on the timeout check list
+		 */
+
 		wsi = context->pt[tsi].timeout_list;
 		while (wsi) {
 			/* we have to take copies, because he may be deleted */
@@ -838,7 +1034,77 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 			}
 			wsi = wsi1;
 		}
+
+		/*
+		 * Phase 2: double-check active ah timeouts independent of wsi
+		 *	    timeout status
+		 */
+
+		ah = pt->ah_list;
+		while (ah) {
+			int len;
+			char buf[256];
+			const unsigned char *c;
+
+			if (!ah->in_use || !ah->wsi || !ah->assigned ||
+			    (ah->wsi->vhost && now - ah->assigned <
+			    ah->wsi->vhost->timeout_secs_ah_idle + 60)) {
+				ah = ah->next;
+				continue;
+			}
+
+			/*
+			 * a single ah session somehow got held for
+			 * an unreasonable amount of time.
+			 *
+			 * Dump info on the connection...
+			 */
+			wsi = ah->wsi;
+			buf[0] = '\0';
+			lws_get_peer_simple(wsi, buf, sizeof(buf));
+			lwsl_notice("ah excessive hold: wsi %p\n"
+				    "  peer address: %s\n"
+				    "  ah rxpos %u, rxlen %u, pos %u\n",
+				    wsi, buf, ah->rxpos, ah->rxlen,
+				    ah->pos);
+			buf[0] = '\0';
+			m = 0;
+			do {
+				c = lws_token_to_string(m);
+				if (!c)
+					break;
+
+				len = lws_hdr_total_length(wsi, m);
+				if (!len || len > sizeof(buf) - 1) {
+					m++;
+					continue;
+				}
+
+				if (lws_hdr_copy(wsi, buf,
+						 sizeof buf, m) > 0) {
+					buf[sizeof(buf) - 1] = '\0';
+
+					lwsl_notice("   %s = %s\n",
+						    (const char *)c, buf);
+				}
+				m++;
+			} while (1);
+
+			/* ... and then drop the connection */
+
+			if (wsi->desc.sockfd == our_fd)
+				/* it was the guy we came to service! */
+				timed_out = 1;
+
+			lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS);
+
+			ah = ah->next;
+		}
+
 #ifdef LWS_WITH_CGI
+		/*
+		 * Phase 3: handle cgi timeouts
+		 */
 		lws_cgi_kill_terminated(pt);
 #endif
 #if 0
@@ -890,6 +1156,7 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 		}
 	}
 
+
 	/* the socket we came to service timed out, nothing to do */
 	if (timed_out)
 		return 0;
@@ -928,45 +1195,45 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 
 #endif
 
-//       lwsl_debug("fd=%d, revents=%d, mode=%d, state=%d\n", pollfd->fd, pollfd->revents, (int)wsi->mode, (int)wsi->state);
-	if (pollfd->revents & LWS_POLLHUP) {
+	if ((!(pollfd->revents & pollfd->events & LWS_POLLIN)) &&
+			(pollfd->revents & LWS_POLLHUP)) {
 		lwsl_debug("pollhup\n");
 		wsi->socket_is_permanently_unusable = 1;
 		goto close_and_handled;
 	}
 
-
 #ifdef LWS_OPENSSL_SUPPORT
-	if ((wsi->state == LWSS_SHUTDOWN) && lws_is_ssl(wsi) && wsi->ssl)
-	{
+	if ((wsi->state == LWSS_SHUTDOWN) && lws_is_ssl(wsi) && wsi->ssl) {
 		n = SSL_shutdown(wsi->ssl);
 		lwsl_debug("SSL_shutdown=%d for fd %d\n", n, wsi->desc.sockfd);
-		if (n == 1)
-		{
+		switch (n) {
+		case 1:
 			n = shutdown(wsi->desc.sockfd, SHUT_WR);
 			goto close_and_handled;
-		}
-		else if (n == 0)
-		{
-			lws_change_pollfd(wsi, LWS_POLLOUT, LWS_POLLIN);
+
+		case 0:
+			lws_change_pollfd(wsi, 0, LWS_POLLIN);
 			n = 0;
 			goto handled;
-		}
-		else /* n < 0 */
-		{
-			int shutdown_error = SSL_get_error(wsi->ssl, n);
-			lwsl_debug("SSL_shutdown returned %d, SSL_get_error: %d\n", n, shutdown_error);
-			if (shutdown_error == SSL_ERROR_WANT_READ) {
-				lws_change_pollfd(wsi, LWS_POLLOUT, LWS_POLLIN);
-				n = 0;
-				goto handled;
-			} else if (shutdown_error == SSL_ERROR_WANT_WRITE) {
-				lws_change_pollfd(wsi, LWS_POLLOUT, LWS_POLLOUT);
-				n = 0;
-				goto handled;
+
+		default:
+			n = SSL_get_error(wsi->ssl, n);
+			if (n != SSL_ERROR_SYSCALL && n != SSL_ERROR_SSL) {
+				if (SSL_want_read(wsi->ssl)) {
+					lwsl_debug("(wants read)\n");
+					lws_change_pollfd(wsi, 0, LWS_POLLIN);
+					n = 0;
+					goto handled;
+				}
+				if (SSL_want_write(wsi->ssl)) {
+					lwsl_debug("(wants write)\n");
+					lws_change_pollfd(wsi, 0, LWS_POLLOUT);
+					n = 0;
+					goto handled;
+				}
 			}
 
-			// actual error occurred, just close the connection
+			/* actual error occurred, just close the connection */
 			n = shutdown(wsi->desc.sockfd, SHUT_WR);
 			goto close_and_handled;
 		}
@@ -1042,6 +1309,7 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 		     wsi->state == LWSS_HTTP2_ESTABLISHED ||
 		     wsi->state == LWSS_HTTP2_ESTABLISHED_PRE_SETTINGS ||
 		     wsi->state == LWSS_RETURNED_CLOSE_ALREADY ||
+		     wsi->state == LWSS_WAITING_TO_SEND_CLOSE_NOTIFICATION ||
 		     wsi->state == LWSS_FLUSHING_STORED_SEND_BEFORE_CLOSE)) &&
 		    lws_handle_POLLOUT_event(wsi, pollfd)) {
 			if (wsi->state == LWSS_RETURNED_CLOSE_ALREADY)
@@ -1051,6 +1319,7 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 		}
 
 		if (wsi->state == LWSS_RETURNED_CLOSE_ALREADY ||
+		    wsi->state == LWSS_WAITING_TO_SEND_CLOSE_NOTIFICATION ||
 		    wsi->state == LWSS_AWAITING_CLOSE_ACK) {
 			/*
 			 * we stopped caring about anything except control
@@ -1072,11 +1341,24 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 			 */
 			break;
 
-		if (!(wsi->rxflow_change_to & LWS_RXFLOW_ALLOW))
+		if (lws_is_flowcontrolled(wsi))
 			/* We cannot deal with any kind of new RX
 			 * because we are RX-flowcontrolled.
 			 */
 			break;
+
+#if defined(LWS_WITH_HTTP2)
+		if (wsi->http2_substream || wsi->upgraded_to_http2) {
+			wsi1 = lws_get_network_wsi(wsi);
+			if (wsi1 && wsi1->trunc_len)
+				/* We cannot deal with any kind of new RX
+				 * because we are dealing with a partial send
+				 * (new RX may trigger new http_action() that
+				 * expect to be able to send)
+				 */
+				break;
+		}
+#endif
 
 		/* 2: RX Extension needs to be drained
 		 */
@@ -1106,13 +1388,13 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 			 */
 			break;
 
-		/* 3: RX Flowcontrol buffer needs to be drained
+		/* 3: RX Flowcontrol buffer / h2 rx scratch needs to be drained
 		 */
 
 		if (wsi->rxflow_buffer) {
 			lwsl_info("draining rxflow (len %d)\n",
-				wsi->rxflow_len - wsi->rxflow_pos
-			);
+				wsi->rxflow_len - wsi->rxflow_pos);
+			assert(wsi->rxflow_pos < wsi->rxflow_len);
 			/* well, drain it */
 			eff_buf.token = (char *)wsi->rxflow_buffer +
 						wsi->rxflow_pos;
@@ -1121,14 +1403,36 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd, int t
 			goto drain;
 		}
 
+#if defined(LWS_WITH_HTTP2)
+		if (wsi->upgraded_to_http2) {
+			struct lws_h2_netconn *h2n = wsi->u.h2.h2n;
+
+			if (h2n->rx_scratch_len) {
+				lwsl_info("%s: %p: resuming h2 rx_scratch pos = %d len = %d\n",
+					  __func__, wsi, h2n->rx_scratch_pos, h2n->rx_scratch_len);
+				eff_buf.token = (char *)h2n->rx_scratch +
+						h2n->rx_scratch_pos;
+				eff_buf.token_len = h2n->rx_scratch_len;
+
+				h2n->rx_scratch_len = 0;
+				goto drain;
+			}
+		}
+#endif
+
 		/* 4: any incoming (or ah-stashed incoming rx) data ready?
 		 * notice if rx flow going off raced poll(), rx flow wins
 		 */
 
 		if (!(pollfd->revents & pollfd->events & LWS_POLLIN))
 			break;
-
 read:
+		if (lws_is_flowcontrolled(wsi)) {
+			lwsl_info("%s: %p should be rxflow (bm 0x%x)..\n",
+				    __func__, wsi, wsi->rxflow_bitmap);
+			break;
+		}
+
 		/* all the union members start with hdr, so even in ws mode
 		 * we can deal with the ah via u.hdr
 		 */
@@ -1145,15 +1449,32 @@ read:
 				 * as to what it can output...) has to go in per-wsi rx buf area.
 				 * Otherwise in large temp serv_buf area.
 				 */
-				eff_buf.token = (char *)pt->serv_buf;
-				if (lws_is_ws_with_ext(wsi)) {
-					eff_buf.token_len = wsi->u.ws.rx_ubuf_alloc;
-				} else {
-					eff_buf.token_len = context->pt_serv_buf_size;
+
+#if defined(LWS_WITH_HTTP2)
+				if (wsi->upgraded_to_http2) {
+					if (!wsi->u.h2.h2n->rx_scratch) {
+						wsi->u.h2.h2n->rx_scratch = lws_malloc(LWS_H2_RX_SCRATCH_SIZE, "h2 rx scratch");
+						if (!wsi->u.h2.h2n->rx_scratch)
+							goto close_and_handled;
+					}
+					eff_buf.token = wsi->u.h2.h2n->rx_scratch;
+					eff_buf.token_len = LWS_H2_RX_SCRATCH_SIZE;
+				} else
+#endif
+				{
+					eff_buf.token = (char *)pt->serv_buf;
+					if (lws_is_ws_with_ext(wsi)) {
+						eff_buf.token_len = wsi->u.ws.rx_ubuf_alloc;
+					} else {
+						eff_buf.token_len = context->pt_serv_buf_size;
+					}
+
+					if ((unsigned int)eff_buf.token_len > context->pt_serv_buf_size)
+						eff_buf.token_len = context->pt_serv_buf_size;
 				}
 
-				if (eff_buf.token_len > context->pt_serv_buf_size)
-					eff_buf.token_len = context->pt_serv_buf_size;
+				if ((int)pending > eff_buf.token_len)
+					pending = eff_buf.token_len;
 
 				eff_buf.token_len = lws_ssl_capable_read(wsi,
 					(unsigned char *)eff_buf.token, pending ? pending :
@@ -1200,9 +1521,12 @@ drain:
 					wsi->protocol->callback,
 					wsi, LWS_CALLBACK_RECEIVE_CLIENT_HTTP,
 					wsi->user_space, NULL, 0)) {
-				lwsl_notice("LWS_CALLBACK_RECEIVE_CLIENT_HTTP closed it\n");
+				lwsl_info("RECEIVE_CLIENT_HTTP closed it\n");
 				goto close_and_handled;
 			}
+
+			n = 0;
+			goto handled;
 		}
 #endif
 		/*
@@ -1236,8 +1560,6 @@ drain:
 				 * around again it will pick up from where it
 				 * left off.
 				 */
-				// lwsl_notice("doing lws_read from pt->serv_buf %p %p for len %d\n", pt->serv_buf, eff_buf.token, (int)eff_buf.token_len);
-
 				n = lws_read(wsi, (unsigned char *)eff_buf.token,
 					     eff_buf.token_len);
 				if (n < 0) {
@@ -1252,10 +1574,8 @@ drain:
 		} while (more);
 
 		if (wsi->u.hdr.ah) {
-			lwsl_notice("%s: %p: detaching\n",
-				 __func__, wsi);
-			/* show we used all the pending rx up */
-			wsi->u.hdr.ah->rxpos = wsi->u.hdr.ah->rxlen;
+			lwsl_debug("%s: %p: detaching\n", __func__, wsi);
+			lws_header_table_force_to_detachable_state(wsi);
 			/* we can run the normal ah detach flow despite
 			 * being in ws union mode, since all union members
 			 * start with hdr */
@@ -1275,7 +1595,7 @@ drain:
 
 		if (draining_flow && wsi->rxflow_buffer &&
 		    wsi->rxflow_pos == wsi->rxflow_len) {
-			lwsl_info("flow buffer: drained\n");
+			lwsl_info("%s: %p flow buf: drained\n", __func__, wsi);
 			lws_free_set_NULL(wsi->rxflow_buffer);
 			/* having drained the rxflow buffer, can rearm POLLIN */
 #ifdef LWS_NO_SERVER
@@ -1310,8 +1630,9 @@ drain:
 			args.stdwsi = &wsi->parent->cgi->stdwsi[0];
 			args.hdr_state = wsi->hdr_state;
 
-			//lwsl_err("CGI LWS_STDOUT waiting wsi %p mode %d state %d\n",
-			//	 wsi->parent, wsi->parent->mode, wsi->parent->state);
+			lwsl_debug("CGI LWS_STDOUT %p mode %d state %d\n",
+				   wsi->parent, wsi->parent->mode,
+				   wsi->parent->state);
 
 			if (user_callback_handle_rxflow(
 					wsi->parent->protocol->callback,
@@ -1323,6 +1644,14 @@ drain:
 			break;
 		}
 #endif
+	/*
+	 * something went wrong with parsing the handshake, and
+	 * we ended up back in the event loop without completing it
+	 */
+	case LWSCM_PRE_WS_SERVING_ACCEPT:
+		wsi->socket_is_permanently_unusable = 1;
+		goto close_and_handled;
+
 	default:
 #ifdef LWS_NO_CLIENT
 		break;

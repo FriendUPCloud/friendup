@@ -12,6 +12,9 @@
 						<div class="Tab">
 							{i18n_extended_information}
 						</div>
+						<div class="Tab">
+							{i18n_key_management}
+						</div>
 						<div class="Page">
 							<div class="HRow Padding">
 								<div id="UserImageRect">
@@ -28,7 +31,7 @@
 									</p>
 									<p class="Layout" id="PublicKeyContainer" style="display:none;">
 										<label>{i18n_publickey}:</label>
-										<button type="button" class="IconSmall fa-certificate Button" onclick="var p = Ge('UserAccPublicKey'); if( p.style.visibility != 'visible' ){ p.style.visibility = 'visible'; p.style.height = '60px'; p.style.pointerEvents = ''; } else { p.style.height = '1px'; p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }">
+										<button type="button" class="IconSmall fa-certificate Button" onclick="var p = Ge('UserAccPublicKey'); if( p.style.visibility != 'visible' ){ p.style.visibility = 'visible'; p.style.height = '132px'; p.style.pointerEvents = ''; } else { p.style.height = '1px'; p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }">
 											{i18n_toggle_public_key_visibility}
 										</button>
 										<textarea class="FullWidth" value="" readonly="readonly" id="UserAccPublicKey" placeholder="{publickey}" onclick="this.focus();this.select();" style="visibility: hidden; pointer-events: none; height: 1px"></textarea>
@@ -74,13 +77,53 @@
 										<input type="text" value="" id="UserAccImage"/>
 									</p>-->
 								</div>
+								<!--<div id="KeyStorage">
+									
+									<p class="Layout">
+										<label>{i18n_key_information}:</label>
+										<input style="visibility:hidden"/>
+									</p>
+								
+									<p class="Layout">
+										<label>{i18n_key_type}:</label>
+										<select id="NewKeyType">
+											<option value="rsa1024">RSA1024</option>
+											<option value="sha256">SHA256</option>
+											<option value="md5">MD5</option>
+											<option value="token">Token</option>
+											<option value="plain">Plain</option>
+										</select>
+									</p>
+									<p class="Layout">
+										<label>{i18n_key_name}:</label>
+										<input type="text" id="NewKeyName" value=""/>
+									</p>
+									<p class="Layout">
+										<label>{i18n_key_password}:</label>
+										<input type="password" id="NewKeyPassword" value=""/>
+									</p>
+									<p class="Layout">
+										<label>{i18n_key_password_confirm}:</label>
+										<input type="password" id="NewKeyPasswordConfirm" value=""/>
+									</p>
+									
+									<div>
+										<button type="button" class="Button IconSmall fa-lock" onclick="generateKeypair()">
+											{i18n_generate}
+										</button>
+									</div>
+									
+									<div id="Keys"></div>
+									
+								</div>-->
 							</div>
-							<div id="KeyStorage" style="display:none;">
-								<h3>
-									{i18n_key_information}:
-								</h3>
-								<div class="Box" id="Keys"></div>
-							</div>
+						</div>
+						<div class="Page">
+						
+							<!-- some new stuff here -->
+							
+							<div class="HRow Padding" id="KeysList"></div>
+						
 						</div>
 					</div>
 					<script> InitTabs( 'MTabs' ); </script>

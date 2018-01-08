@@ -44,7 +44,6 @@
 #include <util/string.h>
 #include <dirent.h> 
 #include <stdio.h> 
-#include <unistd.h>
 #include <system/services/service_manager.h>
 #include <properties/propertieslibrary.h>
 #include <ctype.h>
@@ -60,6 +59,11 @@
 #include <system/fsys/door_notification.h>
 #include <communication/comm_service.h>
 #include <communication/comm_service_remote.h>
+#include <libxml2/libxml/tree.h>
+#include <libxml2/libxml/parser.h>
+#include <hardware/network.h>
+#include <libxml2/libxml/xmlversion.h>
+#include <unistd.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -95,8 +99,10 @@ FBOOL skipDBUpdate = FALSE;
 
 SystemBase *SystemInit( void )
 {
+	socket_init_once();
+
 	struct SystemBase *l = NULL;
-	char tempString[ 1024 ];
+	char tempString[ PATH_MAX ];
 	Log( FLOG_INFO,  "SystemBase Init\n");
 	
 	mkdir( DEFAULT_TMP_DIRECTORY, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
@@ -106,24 +112,31 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
+	LIBXML_TEST_VERSION;
+	
+	l->sl_RemoveSessionsAfterTime = 10800;
+	
 	//
 	// sl_Autotask
 	//
 	
-	DIR *asd;
 	struct dirent *asdir;
 	
-	l->sl_AutotaskPath = FCalloc( 1024, sizeof(char) );
+	l->sl_AutotaskPath = FCalloc( PATH_MAX, sizeof(char) );
 	if( l->sl_AutotaskPath != NULL )
 	{
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		Log( FLOG_INFO, "[SystemBase] Starting autoscripts\n");
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		
-		getcwd( l->sl_AutotaskPath, sizeof ( tempString ) );
+		if( getcwd( l->sl_AutotaskPath, sizeof ( tempString ) ) == NULL )
+		{
+			FERROR("getcwd failed!");
+			exit(5);
+		}
 		strcat( l->sl_AutotaskPath, "/autostart/");
 
-		asd = opendir( l->sl_AutotaskPath );
+		DIR *asd = opendir( l->sl_AutotaskPath );
 	 
 		if( asd != NULL )
 		{
@@ -162,10 +175,12 @@ SystemBase *SystemInit( void )
 	// Set mutex
 	pthread_mutex_init( &l->sl_InternalMutex, NULL );
 	pthread_mutex_init( &l->sl_ResourceMutex, NULL );
-	int 				msqllibc;
-	int				sl_Error;					// last error
 
-	getcwd( tempString, sizeof ( tempString ) );
+	if( getcwd( tempString, sizeof ( tempString ) ) == NULL )
+	{
+		FERROR("getcwd failed!");
+		exit(5);
+	}
 	l->handle = dlopen( 0, RTLD_LAZY );
 	
 	l->SystemClose = SystemClose;
@@ -230,7 +245,10 @@ SystemBase *SystemInit( void )
 	l->sl_USFCacheMax = 102400000;
 	l->sl_DefaultDBLib = StringDuplicate("mysql.library");
 	
-	//DEBUG("Plibcheck %p lsb %p\n", plib, lsb );
+	
+	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
+	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
+	
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
@@ -287,7 +305,23 @@ SystemBase *SystemInit( void )
 			l->sl_SocketTimeout  = plib->ReadInt( prop, "Core:SSLSocketTimeout", 10000 );
 			l->sl_USFCacheMax = plib->ReadInt( prop, "Core:USFCachePerDevice", 102400000 );
 			
-			char *tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
+			char *tptr  = plib->ReadString( prop, "Core:ClientCert", NULL );
+			if( tptr != NULL )
+			{
+				strcpy( l->RSA_CLIENT_KEY_PEM, tptr );
+			}
+			
+			int val = plib->ReadInt( prop, "Core:RequireClientCert", 0 );
+			if( val == 1 )
+			{
+				l->l_SSLAcceptFlags = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+			}
+			else
+			{
+				l->l_SSLAcceptFlags = SSL_VERIFY_PEER;
+			}
+			
+			tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
 			if( tptr != NULL )
 			{
 				if( tptr[ 0 ] == '/' )
@@ -355,7 +389,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Reading configuration END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if( l->sqlpool[ 0 ].sqllib == NULL )
+	if( l->sqlpool == NULL || l->sqlpool[ 0 ].sqllib == NULL )
 	{
 		FERROR("Cannot open 'mysql.library' in first slot\n");
 		FFree( l->sqlpool );
@@ -364,8 +398,10 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
-	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
 	l->fcm = FriendCoreManagerNew();
+
+	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+	FriendCoreManagerInit( l->fcm );
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase: Initialize interfaces\n" );
 	
@@ -378,11 +414,36 @@ SystemBase *SystemInit( void )
 	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
 
 	l->alib = l->LibraryApplicationGet( l );
-	// dictionary
 	
 	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
 	if( lsqllib != NULL )
 	{
+		// session timeout
+		
+		char query[ 1024 ];
+		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='USERSESSION_TIMEOUT'" );
+		
+		void *res = lsqllib->Query( lsqllib, query );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) ) 
+			{
+				// Id, Key, Value, Comment, date
+			
+				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
+			
+				FLONG tmp = atol( row[ 2 ] );
+				if( tmp < 20 )
+				{
+					l->sl_RemoveSessionsAfterTime = tmp;
+				}
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		// dictionary
+		
 		l->sl_Dictionary = DictionaryNew( lsqllib );
 	}
 	else
@@ -404,7 +465,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create modules\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	DIR *d;
+//	DIR *d;
 	struct dirent *dir;
 	
 	// modules
@@ -421,7 +482,7 @@ SystemBase *SystemInit( void )
 	
 	// all modules will be avaiable in system.library folder/emod/ subfolder
 
-	d = opendir( l->sl_ModPath );
+	DIR *d = opendir( l->sl_ModPath );
 	
 	if( d )
 	{
@@ -444,7 +505,6 @@ SystemBase *SystemInit( void )
 				DEBUG("Cannot load mod %s\n", dir->d_name );
 			}
 		}
-		
 		closedir( d );
 	}
 	
@@ -458,8 +518,6 @@ SystemBase *SystemInit( void )
 	{
 		if( lmod->GetSuffix != NULL )
 		{
-			//DEBUG("SEARCHING MODULE %s found %s\n", type, lmod->GetSuffix() );
-			
 			if( strcmp( lmod->GetSuffix(), "php" ) == 0 )
 			{
 				l->sl_PHPModule = lmod;
@@ -481,7 +539,11 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	getcwd( tempString, sizeof ( tempString ) );
+	if (getcwd( tempString, sizeof ( tempString ) ) == NULL)
+	{
+		FERROR("getcwd failed!");
+		exit(5);
+	}
 	
 	l->sl_LoginModPath = FCalloc( 1025, sizeof( char ) );
 	if( l->sl_LoginModPath == NULL )
@@ -509,7 +571,6 @@ SystemBase *SystemInit( void )
 		{
 			l->sl_DefaultAuthModule = locmod;
 			l->sl_ActiveAuthModule = locmod;
-			//l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 		}
 		
 		// loading additional developer modules
@@ -542,58 +603,6 @@ SystemBase *SystemInit( void )
 		closedir( d );
 	}
 	
-	/*
-	// read config and set active authmod
-	{
-		struct PropertiesLibrary *plib = NULL;
-		Props *prop = NULL;
-	
-		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( l, "properties.library", 0 ) ) != NULL )
-		{
-			char *ptr, path[ 1024 ];
-			path[ 0 ] = 0;
-	
-			ptr = getenv("FRIEND_HOME");
-			if( ptr != NULL )
-			{
-				sprintf( path, "%scfg/cfg.ini", ptr );
-			}
-
-			prop = plib->Open( path );
-			if( prop != NULL)
-			{
-
-				char *tmp  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
-				if( tmp != NULL && strcmp( tmp, "fcdb.authmod" ) != 0 )
-				{
-					AuthMod *mod = l->sl_AuthModules;
-		
-					while( mod != NULL )
-					{
-						if( strcmp( mod->am_Name, tmp ) == 0 )
-						{
-							l->sl_ActiveAuthModule = mod;
-							if( l->sl_ActiveModuleName != NULL )
-							{
-								FFree( l->sl_ActiveModuleName );
-							}
-							l->sl_ActiveModuleName = StringDuplicate( tmp );
-							INFO("[SystemBase] Default login module set to : %s\n", l->sl_ActiveAuthModule->am_Name );
-							break;
-						}
-						mod = (AuthMod *) mod->node.mln_Succ;
-					}
-					
-				}
-				
-				plib->Close( prop );
-			}
-			
-			LibraryClose( ( struct Library *)plib );
-		}
-	}
-	*/
-
 	if( l->sl_ActiveModuleName != NULL )
 	{
 
@@ -651,6 +660,18 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
 	// create all managers
+	
+	l->sl_WDavTokM = WebdavTokenManagerNew( l );
+	if( l->sl_WDavTokM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize WebdavTokenManager\n");
+	}
+	
+	l->sl_KeyM = FKeyManagerNew( l );
+	if( l->sl_KeyM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize FKeyManager\n");
+	}
 	
 	l->sl_CacheUFM = CacheUFManagerNew( l->sl_USFCacheMax, 0 );
 	if( l->sl_CacheUFM == NULL )
@@ -738,6 +759,7 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Register Events\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
+	#define MINS1 60
 	#define MINS5 300
 	#define MINS6 460
 	#define MINS30 1800
@@ -748,9 +770,12 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
 	EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+MINS360, MINS360, -1 );
 	// test, to remove
-	//EventAdd( l->sl_EventManager, USMRemoveOldSessions, l, time( NULL )+130, 130, -1 );
 	EventAdd( l->sl_EventManager, PIDThreadManagerRemoveThreads, l->sl_PIDTM, time( NULL )+MINS60, MINS60, -1 );
 	EventAdd( l->sl_EventManager, CacheUFManagerRefresh, l->sl_CacheUFM, time( NULL )+DAYS5, DAYS5, -1 );
+	
+	EventAdd( l->sl_EventManager, WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
+	
+	EventAdd( l->sl_EventManager, CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
 	
 	l->sl_USM->usm_UM = l->sl_UM;
 	l->sl_UM->um_USM = l->sl_USM;
@@ -778,6 +803,12 @@ void SystemClose( SystemBase *l )
 	{
 		FERROR("SystemBase is NULL\n");
 		return;
+	}
+	
+	DEBUG("[SystemBase] close event manager\n");
+	if( l->sl_EventManager != NULL )
+	{
+		EventManagerDelete( l->sl_EventManager );
 	}
 	
 	if( l->fcm != NULL )
@@ -818,12 +849,6 @@ void SystemClose( SystemBase *l )
 		}
 	}*/
 	
-	DEBUG("[SystemBase] close event manager\n");
-	if( l->sl_EventManager != NULL )
-	{
-		EventManagerDelete( l->sl_EventManager );
-	}
-	
 	if( l->cm != NULL )
 	{
 		CacheManagerDelete( l->cm );
@@ -836,7 +861,6 @@ void SystemClose( SystemBase *l )
 	if( l->sl_Dictionary )
 	{
 		DictionaryDelete( l->sl_Dictionary );
-		l->sl_Dictionary = NULL;
 	}
 	
 	// Close image library
@@ -849,7 +873,7 @@ void SystemClose( SystemBase *l )
 	{
 		EModule *remm = lmod;
 		lmod = (EModule *)lmod->node.mln_Succ;
-		DEBUG("[SystemBase] Remove module %s\n", remm->Name );
+		DEBUG("[SystemBase] Remove module %s\n", remm->em_Name );
 		EModuleDelete( remm );
 	}
 
@@ -885,6 +909,14 @@ void SystemClose( SystemBase *l )
 	if( l->sl_CacheUFM != NULL )
 	{
 		CacheUFManagerDelete( l->sl_CacheUFM );
+	}
+	if( l->sl_KeyM != NULL )
+	{
+		FKeyManagerDelete( l->sl_KeyM );
+	}
+	if( l->sl_WDavTokM != NULL )
+	{
+		WebdavTokenManagerDelete( l->sl_WDavTokM );
 	}
 	
 	// Remove sentinel from active memory
@@ -923,8 +955,6 @@ void SystemClose( SystemBase *l )
 		DEBUG("[SystemBase] Remove fsys %s\n", rems->Name );
 		FHandlerDelete( rems );
 	}
-	
-	//FriendCoreManagerDelete( l->fcm );
 	
 	if( l->sl_WorkerManager != NULL )
 	{
@@ -984,8 +1014,7 @@ void SystemClose( SystemBase *l )
 		
 		FFree( l->sqlpool );
 	}
-	//mysql_library_end();
-	
+
 	// release them all strings ;)
 	if( l->sl_ModPath )
 	{
@@ -1042,6 +1071,8 @@ void SystemClose( SystemBase *l )
 		FFree( l->sl_DefaultDBLib ); 
 		
 	}
+	
+	xmlCleanupParser();
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase closed.\n");
 }
@@ -1128,7 +1159,7 @@ int SystemInitExternal( SystemBase *l )
 		// get all user sessions from DB
 		//
 	
-		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, REMOVE_SESSIONS_AFTER_TIME );
+		l->sl_USM->usm_Sessions = USMGetSessionsByTimeout( l->sl_USM, l->sl_RemoveSessionsAfterTime );
 		UserSession *usess = l->sl_USM->usm_Sessions;
 		DEBUG("[SystemBase] Got users by timeout\n");
 		
@@ -1272,6 +1303,8 @@ int SystemInitExternal( SystemBase *l )
 					
 					UserAddSession( l->sl_Sentinel->s_User, ses );
 					
+					USMUserSessionAddToList( l->sl_USM, ses );
+					/*
 					UserSession *nextses = NULL;
 					if( l->sl_USM->usm_Sessions != NULL )
 					{
@@ -1283,6 +1316,7 @@ int SystemInitExternal( SystemBase *l )
 					{
 						nextses->node.mln_Pred = (MinNode *)ses;
 					}
+					*/
 					
 					//
 					//if( sqllib->NumberOfRecordsCustomQuery( sqllib, "select * from `FUserSession` where UserID='1' AND DeviceIdentity='remote'") < 1)
@@ -1297,7 +1331,7 @@ int SystemInitExternal( SystemBase *l )
 			// regenerate sessionid for User
 			//
 			
-			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > REMOVE_SESSIONS_AFTER_TIME )
+			if(  (timestamp - l->sl_Sentinel->s_User->u_LoggedTime) > l->sl_RemoveSessionsAfterTime )
 			{
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
@@ -1307,7 +1341,7 @@ int SystemInitExternal( SystemBase *l )
 		while( tmpUser != NULL )
 		{
 			DEBUG( "[SystemBase] FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
-			UserDeviceMount( l, sqllib, tmpUser, 1 );
+			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE );
 			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
@@ -1348,7 +1382,7 @@ typedef struct DBUpdateEntry
 /**
  * Check and Update FC database
  *
- * @param sb pointer to SystemBase
+ * @param l pointer to SystemBase
  */
 
 void CheckAndUpdateDB( struct SystemBase *l )
@@ -1422,6 +1456,7 @@ void CheckAndUpdateDB( struct SystemBase *l )
 						continue;
 					}
 				
+					DEBUG("[SystemBase] get number from name\n");
 					// we must extract number from filename
 					strcpy( number, dptr->d_name );
 					for( i=0 ; i < strlen( number ) ; i++ )
@@ -1433,12 +1468,18 @@ void CheckAndUpdateDB( struct SystemBase *l )
 						}
 					}
 					
+					DEBUG("[SystemBase] number found: '%s'\n", number );
+					
 					dbentries[ position ].number = atoi( number );
 					if( dbentries[ position ].number > startUpdatePosition )
 					{
 						DEBUG("[SystemBase] Found script with number %d, script added: %s\n", dbentries[ position ].number, dptr->d_name );
 						strcpy( dbentries[ position ].name, dptr->d_name );
 						position++;
+					}
+					else
+					{
+						DEBUG("[SystemBase] !!!! dbentries[ position ].number <= startUpdatePosition\n");
 					}
 				}
 				closedir( dp );
@@ -1608,10 +1649,11 @@ UserGroup *LoadGroups( struct SystemBase *sb )
  * @param sqllib pointer to sql.library
  * @param usr pointer to user to which doors belong
  * @param force integer 0 = don't force 1 = force
+ * @param unmountIfFail should be device unmounted in DB if mount will fail
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
+int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force, FBOOL unmountIfFail )
 {	
 	Log( FLOG_INFO,  "[UserDeviceMount] Mount user device from Database\n");
 	
@@ -1630,21 +1672,21 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
 	char temptext[ 1024 ];
 
 	sqllib->SNPrintF( sqllib, temptext, sizeof(temptext) ,"\
-		SELECT \
-			`Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID`\
-		FROM `Filesystem` f\
-		WHERE\
-		(\
-			f.UserID = '%ld' OR\
-			f.GroupID IN (\
-				SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-				WHERE \
-					g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-					ug.UserID = '%ld'\
-			)\
-		)\
-		AND f.Mounted = \'1\'", 
-		usr->u_ID , usr->u_ID
+SELECT \
+`Name`, `Type`, `Server`, `Port`, `Path`, `Mounted`, `UserID`, `ID` \
+FROM `Filesystem` f \
+WHERE \
+( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+) \
+) \
+AND f.Mounted = \'1\'", 
+usr->u_ID , usr->u_ID
 	);
 	DEBUG("[UserDeviceMount] Finding drives in DB\n");
 	void *res = sqllib->Query( sqllib, temptext );
@@ -1680,7 +1722,6 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
 				{ FSys_Mount_Mount,   (FULONG)mount },
 				{ FSys_Mount_SysBase, (FULONG)SLIB },
 				{ FSys_Mount_Visible, (FULONG)1 },     // Assume visible
-				//{ FSys_Mount_Execute, (FULONG)NULL },  // Assume no executable
 				{TAG_DONE, TAG_DONE}
 			};
 
@@ -1695,23 +1736,21 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
 				Log( FLOG_ERROR,"[UserDeviceMount] \tCannot mount device, device '%s' will be unmounted. ERROR %d\n", row[ 0 ], err );
-				if( mount == 1 )
+				if( mount == 1 && unmountIfFail == TRUE )
 				{
-					//sprintf( temptext, "
-					
 					sqllib->SNPrintF( sqllib, temptext, sizeof(temptext), "\
-						UPDATE Filesystem f SET `Mounted` = '0'\
-						WHERE\
-						(\
-							f.UserID = '%ld' OR\
-							f.GroupID IN (\
-								SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g\
-								WHERE \
-									g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND\
-									ug.UserID = '%ld'\
-							)\
-						)\
-						AND LOWER(f.Name) = LOWER('%s')", 
+UPDATE Filesystem f SET `Mounted` = '0' \
+WHERE \
+( \
+f.UserID = '%ld' OR \
+f.GroupID IN ( \
+SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
+WHERE \
+g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
+ug.UserID = '%ld' \
+) \
+) \
+AND LOWER(f.Name) = LOWER('%s')", 
 						usr->u_ID, usr->u_ID, (char *)row[ 0 ] 
 					);
 					void *resx = sqllib->Query( sqllib, temptext );
@@ -1746,12 +1785,12 @@ int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int force )
  * Unmount user doors
  *
  * @param l pointer to SystemBase
- * @param sqllib pointer to sql.library
+ * @param sqllib pointer to sql.library UNUSED
  * @param usr pointer to user to which doors belong
  * @return 0 if everything went fine, otherwise error number
  */
 
-int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr )
+int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused)), User *usr )
 {
 	DEBUG("UserDeviceUnMount\n");
 	if( usr != NULL )
@@ -1767,13 +1806,6 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr )
 				dev = (File *)dev->node.mln_Succ;
 				
 				DeviceUnMount( l, remdev, usr );
-				/*
-				FHandler *handler = remdev->f_FSys;
-				if( handler != NULL )
-				{
-					handler->UnMount( handler, remdev, usr );
-				}
-				*/
 				
 				FFree( remdev );
 			}
@@ -1793,7 +1825,7 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib, User *usr )
  * @param type type of module which will be used to make call
  * @param path path to module exe file
  * @param args additional parameters to module
- * @param pointer to integer where length of answer will be stored
+ * @param length pointer to integer where length of answer will be stored
  * @return string with answer from module
  */
 
@@ -1862,13 +1894,13 @@ struct AuthMod *AuthModuleGet( SystemBase *l )
 }
 
 /**
- * Close authentication module
+ * Close authentication module UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
  * @param uclose pointer to module which will closed
  */
 
-void AuthModuleDrop( SystemBase *l, AuthMod *uclose )
+void AuthModuleDrop( SystemBase *l __attribute__((unused)), AuthMod *uclose __attribute__((unused)))
 {
 }
 
@@ -1884,8 +1916,6 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	SQLLibrary *retlib = NULL;
 	int i ;
 	int timer = 0;
-	int retries = 0;
-	int usingSleep = 0;
 	
 	while( TRUE )
 	{
@@ -1897,7 +1927,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			
 				pthread_mutex_lock( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
-				if( retlib == NULL || retlib->GetStatus( retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
+				if( retlib == NULL || retlib->GetStatus( (void *)retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
 					// Increment and check
@@ -1929,7 +1959,7 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 		if( timer >= l->sqlpoolConnections )
 		{
 			timer = 0;
-			usleep( 20000 );
+			usleep( 5000 );
 		}
 		
 		l->MsqLlibCounter++;
@@ -2019,7 +2049,7 @@ ApplicationLibrary *LibraryApplicationGet( SystemBase *l )
  * @param aclose pointer to application.library which will be returned to pool
  */
 
-void LibraryApplicationDrop( SystemBase *l, ApplicationLibrary *aclose )
+void LibraryApplicationDrop( SystemBase *l, ApplicationLibrary *aclose __attribute__((unused)) )
 {
 	if( l->AppLibCounter > 0 )
 	{
@@ -2050,9 +2080,6 @@ PropertiesLibrary *LibraryPropertiesGet( SystemBase *l )
 		}
 		DEBUG("[SystemBase] properties.library opened %p (count %d)!\n", l->plib, l->PropLibCounter );
 		
-		// We start on 1, just so that we leave one open until quitting (will be
-		// closed when system deinits..)
-		
 		l->PropLibCounter = 1;
 	}
 	l->PropLibCounter++;
@@ -2064,10 +2091,10 @@ PropertiesLibrary *LibraryPropertiesGet( SystemBase *l )
  * Drop properties.library to pool
  *
  * @param l pointer to SystemBase
- * @param pclose pointer to properties.library which will be returned to pool
+ * @param pclose pointer to properties.library which will be returned to pool UNUSED
  */
 
-void LibraryPropertiesDrop( SystemBase *l, PropertiesLibrary *pclose )
+void LibraryPropertiesDrop( SystemBase *l, PropertiesLibrary *pclose __attribute__((unused)))
 {
 	if( l->PropLibCounter > 0 )
 	{
@@ -2110,13 +2137,13 @@ ZLibrary *LibraryZGet( SystemBase *l )
 }
 
 /**
- * Drop z.library to pool
+ * Drop z.library to pool UNIMPLEMENTED
  *
  * @param l pointer to SystemBase
  * @param aclose pointer to z.library which will be returned to pool
  */
 
-void LibraryZDrop( SystemBase *l, ZLibrary *closelib )
+void LibraryZDrop( SystemBase *l __attribute__((unused)), ZLibrary *closelib __attribute__((unused)) )
 {
 	/*
 	if( l->ZLibCounter > 0 )
@@ -2160,10 +2187,10 @@ ImageLibrary *LibraryImageGet( SystemBase *l )
  * Drop image.library to pool
  *
  * @param l pointer to SystemBase
- * @param aclose pointer to image.library which will be returned to pool
+ * @param closelib pointer to image.library which will be returned to pool
  */
 
-void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib )
+void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib __attribute__((unused)) )
 {
 	if( l->ImageLibCounter > 0 )
 	{
@@ -2182,7 +2209,7 @@ void LibraryImageDrop( SystemBase *l, ImageLibrary *closelib )
  * @return Sentinel user
  */
 
-Sentinel* GetSentinelUser(SystemBase* l)
+Sentinel* GetSentinelUser( SystemBase* l )
 {
 	if( l != NULL )
 	{
@@ -2201,7 +2228,7 @@ Sentinel* GetSentinelUser(SystemBase* l)
  * @return 0 if message was sent otherwise error number
  */
 
-int WebSocketSendMessage( SystemBase *l, UserSession *usersession, char *msg, int len )
+int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *usersession, char *msg, int len )
 {
 	unsigned char *buf;
 	int bytes = 0;
@@ -2306,7 +2333,7 @@ int SendProcessMessage( Http *request, char *data, int len )
 		
 		if( ( sendbuf = FCalloc( msglen, sizeof( char ) ) ) != NULL )
 		{
-			int newmsglen = snprintf( sendbuf, msglen, "{\"type\":\"msg\", \"data\":{\"type\":\"%llu\",\"data\":{%.*s}}}", pidt->pt_PID, len, data );
+			int newmsglen = snprintf( sendbuf, msglen, "{\"type\":\"msg\", \"data\":{\"type\":\"%lu\",\"data\":{%.*s}}}", pidt->pt_PID, len, data );
 			SystemBase *sb = (SystemBase *)pidt->pt_SB;
 			
 			DEBUG("[SystemBase] SendProcessMessage message '%s'\n", sendbuf );

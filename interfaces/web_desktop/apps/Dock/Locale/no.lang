@@ -40,4 +40,12 @@ i18n_large                            : Stor
 i18n_medium                           : Medium
 i18n_small                            : Liten
 i18n_dock_editor                      : Dock editor
+i18n_close                            : Lukk skjema
+i18n_select_application               : Velg applikasjon
+i18n_display_name                     : Vist navn
 
+
+i18n_preferred_workspace              : Foretrukne arbeidsbord
+
+i18n_item_saved : Ikonet lagret
+i18n_item_saved_text : Dine endringene har blitt lagret.

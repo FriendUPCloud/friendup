@@ -32,6 +32,7 @@
 
 #include <core/types.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <time.h>
 #include <pthread.h>
 
@@ -72,29 +73,25 @@ typedef struct FlogDate{
     int fd_Usec;
 } FlogDate;
 
-#ifndef FUQUAD
-typedef unsigned long long FUQUAD;
-#endif
-
 // Flags 
 typedef struct FlogFlags{
-    const char* ff_Fname;
-    short ff_FileLevel;
-    short ff_Level;
-    short ff_ToFile;
-    short ff_Pretty;
-    short ff_Time;
-    short ff_TdSafe;
-	FILE *ff_FP;
-	char			ff_DateString[ 256 ];
-	FUQUAD ff_Size;
-	FUQUAD ff_MaxSize;
-	int		ff_LogNumber;
+	const char			*ff_Fname;
+	short				ff_FileLevel;
+	short				ff_Level;
+	short				ff_ToFile;
+	short				ff_Pretty;
+	short				ff_Time;
+	short				ff_TdSafe;
+	FILE				*ff_FP;
+	char				ff_DateString[ 256 ];
+	uint64_t			ff_Size;
+	uint64_t			ff_MaxSize;
+	int					ff_LogNumber;
 	
-	FlogDate ff_FD;
-	pthread_mutex_t logMutex;
-	int ff_ArchiveFiles;
-	char **ff_FileNames;
+	FlogDate			ff_FD;
+	pthread_mutex_t		logMutex;
+	int					ff_ArchiveFiles;
+	char				**ff_FileNames;
 } FlogFlags;
 
 
@@ -118,7 +115,7 @@ extern FlogFlags slg;
 		time_t rawtime; \
 		struct tm timeinfo; \
 		rawtime = time(NULL); \
-		localtime_r(&timeinfo,&rawtime );  \
+		localtime_r( &rawtime, &timeinfo );  \
 \
 		slg.ff_FD.fd_Year = timeinfo.tm_year+1900; \
 		slg.ff_FD.fd_Mon = timeinfo.tm_mon+1; \
@@ -127,7 +124,6 @@ extern FlogFlags slg;
 		slg.ff_FD.fd_Min = timeinfo.tm_min; \
 		slg.ff_FD.fd_Sec = timeinfo.tm_sec; \
 		\
-		printf("aaa\n"); \
 \
 		if( slg.ff_FD.fd_Day != slg.ff_Time ) \
 		{ \
@@ -146,10 +142,8 @@ extern FlogFlags slg;
 			slg.ff_Time = slg.ff_FD.fd_Day; \
 		} \
 \
-printf("mutex\n"); \
 		 if (pthread_mutex_lock(&slg.logMutex) == 0) \
 		 { \
-		 printf("-----------------------before \n"); \
 			/*fprintf( slg.ff_FP, "\x1B[34m (%s:%d) ", __FILE__, __LINE__ ); fprintf( slg.ff_FP, FIRST(__VA_ARGS__) " " REST(__VA_ARGS__) ); */ \
 			pthread_mutex_unlock(&slg.logMutex);  \
 		} \

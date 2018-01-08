@@ -201,6 +201,10 @@ a.cke_path_item, span.cke_path_empty
 	{
 		display: none;
 	}
+	#zoom, #zoomd
+	{
+		display: none !important;
+	}
 }
 
 @media (max-width: 556px)

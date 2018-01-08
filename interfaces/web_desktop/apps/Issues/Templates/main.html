@@ -1,0 +1,60 @@
+
+	<link rel="stylesheet" href="Progdir:Css/main.css"/>
+	<script src="Progdir:main.js"></script>
+	
+	<div class="ContentFull">
+		<div class="VContentTop BackgroundDefault ColorDefault BorderBottom TopArea Padding">
+			<div class="HRow">
+				<div class="HContent40 FloatLeft">
+					<div class="HContent30 FloatLeft">
+						<p class="InputHeight">
+							<strong>Find:</strong>
+						</p>
+					</div>
+					<div class="HContent65 FloatLeft">
+						<p class="Layout">
+							<input class="InputHeight FullWidth" type="text" placeholder="issue..." onkeydown="catchSearch(event, this.value)"/>
+						</p>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+				</div>
+				<div class="HContent60 FloatLeft">
+					<div class="HContent30 FloatLeft">
+						<button id="btnnew" class="Button FullWidth IconSmall fa-bug" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							New
+						</button>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+					<div class="HContent30 FloatLeft">
+						<button id="btnver" class="Button FullWidth IconSmall fa-thumbs-up" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							Verified
+						</button>
+					</div>
+					<div class="HContent5 FloatLeft">
+						&nbsp;
+					</div>
+					<div class="HContent30 FloatLeft">
+						<button id="btnfix" class="Button FullWidth IconSmall fa-check" type="button" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis">
+							Fixed
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="VContentTop BackgroundLists ScrollArea BorderBottom TopScroller Padding" id="Issues">
+			
+		</div>
+		<div class="VContentBottom BackgroundToolbar BottomPart">
+			<div class="Padding">
+				<button type="button" class="Button IconSmall fa-plus" onclick="issueWin()">
+					Report issue
+				</button>
+			</div>
+		</div>
+		
+	</div>
+

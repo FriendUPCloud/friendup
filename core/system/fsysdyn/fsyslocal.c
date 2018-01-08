@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <system/datatypes/images/image.h>
 #include <system/datatypes/images/png.h>
+#include <sys/statvfs.h>
 
 #define SUFFIX "fsys"
 #define PREFIX "local"
@@ -318,52 +319,41 @@ int lstat(const char *path, struct stat *buf);
 
 void *FileOpen( struct File *s, const char *path, char *mode )
 {
+	DEBUG("[LocalFS] FileOpen\n");
+	
 	// Make relative path
 	int pathsize = strlen( path );
 	char *commClean = FCalloc( pathsize+10, sizeof( char ) );
-	int il = pathsize, imode = 0, in = 0;
-	int ii = 0; for( ; ii < il; ii++ )
+	
+	int i = 0;
+	for( i=0 ; i < pathsize ; i++ )
 	{
-		if( imode == 0 && path[ii] == ':' )
+		if( path[ i ] == ':' )
 		{
-			imode = 1; continue;
-		}
-		else if( imode == 1 )
-		{
-			commClean[in++] = path[ii];
+			break;
 		}
 	}
-	// ---- DEBUG( "Fixing the path to be a relative one: %s\n", commClean );
-	if( imode != 1 )
+	
+	if( i < pathsize )
 	{
-		// ---- DEBUG( "Just using the path. No colon was found.\n" );
-		//sprintf( commClean, "%s", path );
+		strcpy( commClean, &(path[ i+1 ]) );
+	}
+	else
+	{
 		strcpy( commClean, path );
 	}
 
-	int spath = strlen( commClean );
+	int spath = pathsize;//strlen( path );		//commClean before
 	int rspath = strlen( s->f_Path );
 	File *locfil = NULL;
 	char *comm = FCalloc( rspath + spath + 5, sizeof( char ) );
 	
-	DEBUG(" comm---size %d\n", rspath + spath + 5 );
+	//DEBUG(" comm---size %d\n", rspath + spath + 5 );
 	
 	// ---- DEBUG( "FileOpen new: %s %s\n", s->f_Path, commClean );
 	
 	// Remove the filename from commclean in a clean path
-	char *cleanPath = NULL;
-	il = strlen( commClean ); imode = 0, ii = il;
-	for( ; il > 0; il-- )
-	{
-		if( imode == 0 && ( commClean[il] == '/' || commClean[il] == ':' ) )
-		{
-			imode = 1;
-			cleanPath = FCalloc( il+10, sizeof( char ) );
-			break;
-		}
-	}
-	if( imode == 1 ) sprintf( cleanPath, "%.*s", il, commClean );
-	
+
 	// Create a string that has the real file path of the file
 	if( comm != NULL )
 	{
@@ -376,6 +366,17 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		else
 		{
 			sprintf( comm, "%s/%s", s->f_Path, commClean );
+		}
+		
+		struct stat buf;
+		if( stat( comm, &buf ) >= 0 )
+		{
+			if( S_ISDIR( buf.st_mode ) )
+			{
+				FERROR("You cannot read or write from directory!\n");
+				FFree( comm );
+				return NULL;
+			}
 		}
 	
 		// Make the directories that do not exist
@@ -390,14 +391,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		int off = 0, slash = 0;
 		for( i = 0; i < spath; i++ )
 		{
-			if( path[i] == '/' )
+			if( commClean[i] == '/' )
 			{
 				int alsize = rspath + i + 1;
-				DEBUG("Allocate %d\n", alsize );
+				//DEBUG("Allocate %d\n", alsize );
 				char *directory = FCalloc( alsize , sizeof( char ) );
 				if( directory != NULL )
 				{
-					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, cleanPath );
+					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, commClean );
+					//DEBUG("CREATE '%s' path '%s' size %d cleanpath X%sX\n", directory, s->f_Path, i, commClean );
 				
 					struct stat filest;
 				
@@ -416,14 +418,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		
 		FFree( commClean );
-		if( cleanPath != NULL )
-		{
-			FFree( cleanPath );
-		}
+
 		commClean = NULL;
-		cleanPath = NULL;
-		
-		DEBUG("FileOpen in progress\n");
 		
 		//
 		// Only go on if we can find the file and open it 
@@ -432,7 +428,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		//
 		// read stream
 		//
-			
+		
 		if( strcmp( mode, "rs" ) == 0 )
 		{
 			f = fopen( comm, "rb" );
@@ -461,7 +457,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 					sd->sb = locsd->sb;
 					sd->fp = f;
 				}
-				DEBUG("FileOpened, memory allocated for localfs\n");
+				//DEBUG("FileOpened, memory allocated for localfs\n");
 			
 				// Free temp string
 				FFree( comm );
@@ -483,10 +479,12 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	{
 		FFree( commClean );
 	}
+	/*
 	if( cleanPath )
 	{
 		FFree( cleanPath );
 	}
+	*/
 	FERROR("Cannot open file %s\n", path );
 	
 	return NULL;
@@ -542,7 +540,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 		
 		if( f->f_Stream == TRUE )
 		{
-			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
+			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
 		}
 	}
 	
@@ -581,12 +579,49 @@ int FileSeek( struct File *s, int pos )
 }
 
 //
+// GetDiskInfo
+//
+
+int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+{
+	*used = 0;
+	*size = 0;
+
+	struct statvfs buf;
+	if( !statvfs( s->f_Path, &buf ) )
+	{
+		unsigned long blksize, blocks, freeblks, ldisk_size, lused, lfree;
+
+		blksize = buf.f_bsize;
+		blocks = buf.f_blocks;
+		freeblks = buf.f_bfree;
+ 
+		ldisk_size = blocks * blksize;
+		lfree = freeblks * blksize;
+		lused = ldisk_size - lfree;
+		
+		*size = ldisk_size;
+		*used = lused;
+ 
+		//printf("Disk usage : %lu \t Free space %lu\n", used, free);} else {
+		//printf("Couldn't get file system statistics\n");
+	}
+	else
+	{
+		*used = 0;
+		*size = 0;
+	}
+	
+	return 0;
+}
+
+//
 // make directory in local file system
 //
 
 int MakeDir( struct File *s, const char *path )
 {
-	INFO("MakeDir!\n");
+	DEBUG("[LocalMakeDir]\n");
 	int error = 0;
 	
 	int rspath = strlen( s->f_Path );
@@ -605,7 +640,7 @@ int MakeDir( struct File *s, const char *path )
 		strcat( newPath, "/" );
 	}
 	
-	DEBUG("----------------------> %s\n", path );
+	DEBUG("----------------------> '%s'\n", path );
 	
 	// Create a string that has the real file path of the file
 	if( path != NULL )
@@ -634,7 +669,7 @@ int MakeDir( struct File *s, const char *path )
 						//{
 						sprintf( directory, "%s%.*s", newPath, i, path );
 						
-						FERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
+						//FERROR("PATH CREATED %s   NPATH %s   PATH %s\n", directory,  newPath, path );
 				
 						struct stat filest;
 				
@@ -644,10 +679,15 @@ int MakeDir( struct File *s, const char *path )
 							mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 							DEBUG( "Making directory %s\n", directory );
 						}
+						else if( S_ISREG( filest.st_mode) )
+						{
+							FERROR( "Cannot create directory: %s, it is a file probably.\n", directory );
+							error = 1; // there is no error if directory exist
+						}
 						else
 						{
-							FERROR( "Cannot create directory: %s\n", directory );
-							error = 1;
+							//FERROR( "Cannot create directory: %s\n", directory );
+							//error = 1; // there is no error if directory exist
 						}
 					}
 					slash++;
@@ -667,13 +707,13 @@ int MakeDir( struct File *s, const char *path )
 			// Create if not exist!
 			if( stat( directory, &filest ) == -1 )
 			{
-				mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+				error = mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
 				DEBUG( "Making directory %s\n", directory );
 			}
 			else
 			{
-				FERROR( "Cannot create directory: %s , fullpath\n", directory );
-				error = 1;
+				INFO( "Cannot create directory: %s , fullpath\n", directory );
+				error = 0;
 			}
 			FFree( directory );
 		}
@@ -682,18 +722,18 @@ int MakeDir( struct File *s, const char *path )
 	}
 	FFree( newPath );
 	
-	return -1;
+	return 0;
 }
 
 //
 // rm files/dirs
 //
 
-FQUAD RemoveDirectory(const char *path)
+FLONG RemoveDirectoryLocal(const char *path)
 {
 	DIR *d = opendir( path );
 	size_t path_len = strlen( path );
-	FQUAD r = 0;
+	FLONG r = 0;
 
 	if( d )
 	{
@@ -704,6 +744,8 @@ FQUAD RemoveDirectory(const char *path)
 		{
 			char *buf;
 			size_t len;
+			
+			DEBUG("localfs: in directory %s\n", p->d_name );
 
 			/* Skip the names "." and ".." as we don't want to recurse on them. */
 			if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, "..") )
@@ -719,12 +761,13 @@ FQUAD RemoveDirectory(const char *path)
 				struct stat statbuf;
 
 				snprintf(buf, len, "%s/%s", path, p->d_name);
+				DEBUG("To delete: %s\n", buf );
 
 				if (!stat(buf, &statbuf))
 				{
 					if (S_ISDIR(statbuf.st_mode))
 					{
-						r += RemoveDirectory(buf);
+						r += RemoveDirectoryLocal(buf);
 					}
 					else
 					{
@@ -759,7 +802,7 @@ FQUAD RemoveDirectory(const char *path)
 // Delete
 //
 
-FQUAD Delete( struct File *s, const char *path )
+FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("[LocalfsDelete] start!\n");
 	
@@ -780,9 +823,9 @@ FQUAD Delete( struct File *s, const char *path )
 		}
 		strcat( comm, path );
 	
-		DEBUG("[LocalfsDelete] file or directory %s!\n", comm );
+		DEBUG("[LocalfsDelete] file or directory '%s'\n", comm );
 	
-		FQUAD ret = RemoveDirectory( comm );
+		FLONG ret = RemoveDirectoryLocal( comm );
 
 		FFree( comm );
 		return ret;
@@ -840,8 +883,11 @@ int Rename( struct File *s, const char *path, const char *nname )
 	{
 		dest = FCalloc( rspath + off + strlen( nname ) + 1, sizeof( char ) );
 		sprintf( dest, "%.*s", rspath, s->f_Path );
+		printf("-------%s\n", dest );
 		sprintf( dest + rspath, "%.*s", off, targetPath );
+		printf("1-------%s\n", dest );
 		sprintf( dest + rspath + off, "%s", nname );
+		printf("2-------%s\n", dest );
 	}
 	else 
 	{
@@ -1118,14 +1164,14 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 // Get information about last file changes (seconds from 1970)
 //
 
-FQUAD GetChangeTimestamp( struct File *s, const char *path )
+FLONG GetChangeTimestamp( struct File *s, const char *path )
 {
 	struct stat result;
 	if( stat( path, &result) == 0 )
 	{
-		return (FQUAD)result.st_mtimensec;
+		return (FLONG)result.st_mtimensec;
 	}
-	return (FQUAD)-1;
+	return (FLONG)-1;
 }
 
 //
@@ -1181,7 +1227,14 @@ BufString *Info( File *s, const char *path )
 		else
 		{
 			DEBUG("LOCAL file stat FAIL %s\n", comm );
-			BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
+			SpecialData *locsd = (SpecialData *)s->f_SpecialData;
+			SystemBase *l = (SystemBase *)locsd->sb;
+			
+			char buffer[ 256 ];
+			int size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST] , DICT_FILE_OR_DIRECTORY_DO_NOT_EXIST );
+			
+			BufStringAddSize( bs, buffer, size );
+			//BufStringAdd( bs, "{ \"response\": \"File or directory do not exist\"}" );
 		}
 		
 		FFree( comm );

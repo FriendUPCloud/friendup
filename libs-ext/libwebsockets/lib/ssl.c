@@ -40,8 +40,8 @@ int lws_alloc_vfs_file(struct lws_context *context, const char *filename, uint8_
 
 	len = lws_vfs_get_length(fops_fd);
 
-	*buf = malloc(len);
-	if (!buf)
+	*buf = lws_malloc((size_t)len, "lws_alloc_vfs_file");
+	if (!*buf)
 		goto bail;
 
 	if (lws_vfs_file_read(fops_fd, amount, *buf, len))
@@ -54,6 +54,7 @@ bail:
 	return ret;
 }
 
+#if defined(LWS_WITH_MBEDTLS)
 #if defined(LWS_WITH_ESP32)
 int alloc_file(struct lws_context *context, const char *filename, uint8_t **buf,
 	       lws_filepos_t *amount)
@@ -67,13 +68,13 @@ int alloc_file(struct lws_context *context, const char *filename, uint8_t **buf,
 		n = 1;
 		goto bail;
 	}
-	*buf = malloc(s);
+	*buf = lws_malloc(s, "alloc_file");
 	if (!*buf) {
 		n = 2;
 		goto bail;
 	}
 	if (nvs_get_blob(nvh, filename, (char *)*buf, &s) != ESP_OK) {
-		free(*buf);
+		lws_free(*buf);
 		n = 1;
 		goto bail;
 	}
@@ -85,6 +86,58 @@ bail:
 
 	return n;
 }
+#else
+int alloc_file(struct lws_context *context, const char *filename, uint8_t **buf,
+		lws_filepos_t *amount)
+{
+	FILE *f;
+	size_t s;
+	int n = 0;
+
+	f = fopen(filename, "rb");
+	if (f == NULL) {
+		n = 1;
+		goto bail;
+	}
+
+	if (fseek(f, 0, SEEK_END) != 0) {
+		n = 1;
+		goto bail;
+	}
+
+	s = ftell(f);
+	if (s == -1) {
+		n = 1;
+		goto bail;
+	}
+
+	if (fseek(f, 0, SEEK_SET) != 0) {
+		n = 1;
+		goto bail;
+	}
+
+	*buf = lws_malloc(s, "alloc_file");
+	if (!*buf) {
+		n = 2;
+		goto bail;
+	}
+
+	if (fread(*buf, s, 1, f) != 1) {
+		lws_free(*buf);
+		n = 1;
+		goto bail;
+	}
+
+	*amount = s;
+
+bail:
+	if (f)
+		fclose(f);
+
+	return n;
+
+}
+#endif
 int alloc_pem_to_der_file(struct lws_context *context, const char *filename, uint8_t **buf,
 	       lws_filepos_t *amount)
 {
@@ -135,7 +188,7 @@ int alloc_pem_to_der_file(struct lws_context *context, const char *filename, uin
 	return 0;
 
 bail:
-	free(pem);
+	lws_free(pem);
 
 	return 4;
 }
@@ -146,10 +199,15 @@ int openssl_websocket_private_data_index,
 
 int lws_ssl_get_error(struct lws *wsi, int n)
 {
+	int m;
+
 	if (!wsi->ssl)
 		return 99;
-	lwsl_debug("%s: %p %d\n", __func__, wsi->ssl, n);
-	return SSL_get_error(wsi->ssl, n);
+
+	m = SSL_get_error(wsi->ssl, n);
+	lwsl_debug("%s: %p %d -> %d\n", __func__, wsi->ssl, n, m);
+
+	return m;
 }
 
 /* Copies a string describing the code returned by lws_ssl_get_error(),
@@ -199,19 +257,19 @@ char* lws_ssl_get_error_string(int status, int ret, char *buf, size_t len) {
 void
 lws_ssl_elaborate_error(void)
 {
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_WITH_MBEDTLS)
 #else
 	char buf[256];
 	u_long err;
 
 	while ((err = ERR_get_error()) != 0) {
 		ERR_error_string_n(err, buf, sizeof(buf));
-		lwsl_err("*** %s\n", buf);
+		lwsl_info("*** %s\n", buf);
 	}
 #endif
 }
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_MBEDTLS)
 
 static int
 lws_context_init_ssl_pem_passwd_cb(char * buf, int size, int rwflag, void *userdata)
@@ -245,27 +303,31 @@ lws_context_init_ssl_library(struct lws_context_creation_info *info)
 {
 #ifdef USE_WOLFSSL
 #ifdef USE_OLD_CYASSL
-	lwsl_notice(" Compiled with CyaSSL support\n");
+	lwsl_info(" Compiled with CyaSSL support\n");
 #else
-	lwsl_notice(" Compiled with wolfSSL support\n");
+	lwsl_info(" Compiled with wolfSSL support\n");
 #endif
 #else
-#if defined(LWS_USE_BORINGSSL)
-	lwsl_notice(" Compiled with BoringSSL support\n");
+#if defined(LWS_WITH_BORINGSSL)
+	lwsl_info(" Compiled with BoringSSL support\n");
 #else
-	lwsl_notice(" Compiled with OpenSSL support\n");
+#if defined(LWS_WITH_MBEDTLS)
+	lwsl_info(" Compiled with MbedTLS support\n");
+#else
+	lwsl_info(" Compiled with OpenSSL support\n");
+#endif
 #endif
 #endif
 	if (!lws_check_opt(info->options, LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT)) {
-		lwsl_notice(" SSL disabled: no LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT\n");
+		lwsl_info(" SSL disabled: no LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT\n");
 		return 0;
 	}
 
 	/* basic openssl init */
 
-	lwsl_notice("Doing SSL library init\n");
+	lwsl_info("Doing SSL library init\n");
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_MBEDTLS)
 	SSL_library_init();
 	OpenSSL_add_all_algorithms();
 	SSL_load_error_strings();
@@ -291,8 +353,11 @@ lws_ssl_destroy(struct lws_vhost *vhost)
 		SSL_CTX_free(vhost->ssl_ctx);
 	if (!vhost->user_supplied_ssl_ctx && vhost->ssl_client_ctx)
 		SSL_CTX_free(vhost->ssl_client_ctx);
-#if !defined(LWS_WITH_ESP32)
 
+#if defined(LWS_WITH_MBEDTLS)
+	if (vhost->x509_client_CA)
+		X509_free(vhost->x509_client_CA);
+#else
 // after 1.1.0 no need
 #if (OPENSSL_VERSION_NUMBER <  0x10100000)
 // <= 1.0.1f = old api, 1.0.1g+ = new api
@@ -307,11 +372,35 @@ lws_ssl_destroy(struct lws_vhost *vhost)
 	ERR_remove_thread_state(NULL);
 #endif
 #endif
+	// after 1.1.0 no need
+#if  (OPENSSL_VERSION_NUMBER >= 0x10002000) && (OPENSSL_VERSION_NUMBER <= 0x10100000)
+	SSL_COMP_free_compression_methods();
+#endif
 	ERR_free_strings();
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 #endif
 #endif
+}
+
+int
+lws_ssl_anybody_has_buffered_read_tsi(struct lws_context *context, int tsi)
+{
+	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws *wsi, *wsi_next;
+
+	wsi = pt->pending_read_list;
+	while (wsi) {
+		wsi_next = wsi->pending_read_list_next;
+		pt->fds[wsi->position_in_fds_table].revents |=
+			pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
+		if (pt->fds[wsi->position_in_fds_table].revents & LWS_POLLIN)
+			return 1;
+
+		wsi = wsi_next;
+	}
+
+	return 0;
 }
 
 LWS_VISIBLE void
@@ -347,10 +436,7 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 {
 	struct lws_context *context = wsi->context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
-	int n = 0;
-#if !defined(LWS_WITH_ESP32)
-	int ssl_read_errno = 0;
-#endif
+	int n = 0, m;
 
 	if (!wsi->ssl)
 		return lws_ssl_capable_read_no_ssl(wsi, buf, len);
@@ -377,47 +463,30 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 
 	lwsl_debug("%p: SSL_read says %d\n", wsi, n);
 	/* manpage: returning 0 means connection shut down */
-	if (!n) {
-		n = lws_ssl_get_error(wsi, n);
-		lwsl_debug("%p: ssl err %d errno %d\n", wsi, n, errno);
-		if (n == SSL_ERROR_ZERO_RETURN)
-			return LWS_SSL_CAPABLE_ERROR;
-
-		if (n == SSL_ERROR_SYSCALL) {
-#if !defined(LWS_WITH_ESP32)
-			int err = ERR_get_error();
-			if (err == 0 && (ssl_read_errno == EPIPE ||
-					 ssl_read_errno == ECONNABORTED ||
-					 ssl_read_errno == 0))
-				return LWS_SSL_CAPABLE_ERROR;
-#endif
-		}
-
-		lwsl_err("%s failed: %s\n",__func__,
-			 ERR_error_string(lws_ssl_get_error(wsi, 0), NULL));
-		lws_ssl_elaborate_error();
+	if (!n || (n == -1 && errno == ENOTCONN)) {
+		wsi->socket_is_permanently_unusable = 1;
 
 		return LWS_SSL_CAPABLE_ERROR;
 	}
 
 	if (n < 0) {
-		n = lws_ssl_get_error(wsi, n);
-		// lwsl_notice("get_ssl_err result %d\n", n);
-		if (n ==  SSL_ERROR_WANT_READ || SSL_want_read(wsi->ssl)) {
+		m = lws_ssl_get_error(wsi, n);
+		lwsl_debug("%p: ssl err %d errno %d\n", wsi, m, errno);
+		if (m == SSL_ERROR_ZERO_RETURN ||
+		    m == SSL_ERROR_SYSCALL)
+			return LWS_SSL_CAPABLE_ERROR;
+
+		if (m == SSL_ERROR_WANT_READ || SSL_want_read(wsi->ssl)) {
 			lwsl_debug("%s: WANT_READ\n", __func__);
 			lwsl_debug("%p: LWS_SSL_CAPABLE_MORE_SERVICE\n", wsi);
 			return LWS_SSL_CAPABLE_MORE_SERVICE;
 		}
-		if (n ==  SSL_ERROR_WANT_WRITE || SSL_want_write(wsi->ssl)) {
+		if (m == SSL_ERROR_WANT_WRITE || SSL_want_write(wsi->ssl)) {
 			lwsl_debug("%s: WANT_WRITE\n", __func__);
 			lwsl_debug("%p: LWS_SSL_CAPABLE_MORE_SERVICE\n", wsi);
 			return LWS_SSL_CAPABLE_MORE_SERVICE;
 		}
-
-
-		lwsl_err("%s failed2: %s\n",__func__,
-				 ERR_error_string(lws_ssl_get_error(wsi, 0), NULL));
-			lws_ssl_elaborate_error();
+		wsi->socket_is_permanently_unusable = 1;
 
 		return LWS_SSL_CAPABLE_ERROR;
 	}
@@ -478,10 +547,7 @@ lws_ssl_pending(struct lws *wsi)
 LWS_VISIBLE int
 lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len)
 {
-	int n;
-#if !defined(LWS_WITH_ESP32)
-       	int ssl_read_errno = 0;
-#endif
+	int n, m;
 
 	if (!wsi->ssl)
 		return lws_ssl_capable_write_no_ssl(wsi, buf, len);
@@ -490,33 +556,28 @@ lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len)
 	if (n > 0)
 		return n;
 
-	n = lws_ssl_get_error(wsi, n);
-	if (n == SSL_ERROR_WANT_READ || n == SSL_ERROR_WANT_WRITE) {
-		if (n == SSL_ERROR_WANT_WRITE) {
-			lwsl_debug("%s: WANT_WRITE\n", __func__);
-			lws_set_blocking_send(wsi);
+	m = lws_ssl_get_error(wsi, n);
+	if (m != SSL_ERROR_SYSCALL) {
+
+		if (SSL_want_read(wsi->ssl)) {
+			lwsl_notice("%s: want read\n", __func__);
+
+			return LWS_SSL_CAPABLE_MORE_SERVICE;
 		}
-		return LWS_SSL_CAPABLE_MORE_SERVICE;
+
+		if (SSL_want_write(wsi->ssl)) {
+			lws_set_blocking_send(wsi);
+
+			lwsl_notice("%s: want write\n", __func__);
+
+			return LWS_SSL_CAPABLE_MORE_SERVICE;
+		}
 	}
 
- if (n == SSL_ERROR_ZERO_RETURN)
-  return LWS_SSL_CAPABLE_ERROR;
-
-#if !defined(LWS_WITH_ESP32)
- if (n == SSL_ERROR_SYSCALL) {
-
-  int err = ERR_get_error();
-  if (err == 0
-    && (ssl_read_errno == EPIPE
-     || ssl_read_errno == ECONNABORTED
-     || ssl_read_errno == 0))
-    return LWS_SSL_CAPABLE_ERROR;
- }
-#endif
-
- lwsl_err("%s failed: %s\n",__func__,
-   ERR_error_string(lws_ssl_get_error(wsi, 0), NULL));
+	lwsl_debug("%s failed: %s\n",__func__, ERR_error_string(m, NULL));
 	lws_ssl_elaborate_error();
+
+	wsi->socket_is_permanently_unusable = 1;
 
 	return LWS_SSL_CAPABLE_ERROR;
 }
@@ -534,14 +595,44 @@ lws_gate_accepts(struct lws_context *context, int on)
 
 	while (v) {
 		if (v->use_ssl &&  v->lserv_wsi) /* gate ability to accept incoming connections */
-			if (lws_change_pollfd(v->lserv_wsi, (LWS_POLLIN) * !on, (LWS_POLLIN) * on))
-				lwsl_err("Unable to set accept POLLIN %d\n", on);
+			if (lws_change_pollfd(v->lserv_wsi, (LWS_POLLIN) * !on,
+					      (LWS_POLLIN) * on))
+				lwsl_info("Unable to set accept POLLIN %d\n", on);
 
 		v = v->vhost_next;
 	}
 
 	return 0;
 }
+
+void
+lws_ssl_info_callback(const SSL *ssl, int where, int ret)
+{
+	struct lws *wsi;
+	struct lws_context *context;
+	struct lws_ssl_info si;
+
+	context = (struct lws_context *)SSL_CTX_get_ex_data(
+					SSL_get_SSL_CTX(ssl),
+					openssl_SSL_CTX_private_data_index);
+	if (!context)
+		return;
+	wsi = wsi_from_fd(context, SSL_get_fd(ssl));
+	if (!wsi)
+		return;
+
+	if (!(where & wsi->vhost->ssl_info_event_mask))
+		return;
+
+	si.where = where;
+	si.ret = ret;
+
+	if (user_callback_handle_rxflow(wsi->protocol->callback,
+						   wsi, LWS_CALLBACK_SSL_INFO,
+						   wsi->user_space, &si, 0))
+		lws_set_timeout(wsi, PENDING_TIMEOUT_KILLED_BY_SSL_INFO, -1);
+}
+
 
 LWS_VISIBLE int
 lws_ssl_close(struct lws *wsi)
@@ -551,8 +642,17 @@ lws_ssl_close(struct lws *wsi)
 	if (!wsi->ssl)
 		return 0; /* not handled */
 
+#if defined (LWS_HAVE_SSL_SET_INFO_CALLBACK)
+	/* kill ssl callbacks, becausse we will remove the fd from the
+	 * table linking it to the wsi
+	 */
+	if (wsi->vhost->ssl_info_event_mask)
+		SSL_set_info_callback(wsi->ssl, NULL);
+#endif
+
 	n = SSL_get_fd(wsi->ssl);
-	SSL_shutdown(wsi->ssl);
+	if (!wsi->socket_is_permanently_unusable)
+		SSL_shutdown(wsi->ssl);
 	compatible_close(n);
 	SSL_free(wsi->ssl);
 	wsi->ssl = NULL;
@@ -575,12 +675,15 @@ LWS_VISIBLE int
 lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 {
 	struct lws_context *context = wsi->context;
+	struct lws_vhost *vh;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int n, m;
-#if !defined(USE_WOLFSSL) && !defined(LWS_WITH_ESP32)
+#if !defined(USE_WOLFSSL) && !defined(LWS_WITH_MBEDTLS)
 	BIO *bio;
 #endif
         char buf[256];
+
+        (void)buf;
 
 	if (!LWS_SSL_ENABLED(wsi->vhost))
 		return 0;
@@ -608,6 +711,10 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 				compatible_close(accept_fd);
 			goto fail;
 		}
+#if defined (LWS_HAVE_SSL_SET_INFO_CALLBACK)
+		if (wsi->vhost->ssl_info_event_mask)
+			SSL_set_info_callback(wsi->ssl, lws_ssl_info_callback);
+#endif
 		if (context->simultaneous_ssl_restriction &&
 		    ++context->simultaneous_ssl == context->simultaneous_ssl_restriction)
 			/* that was the last allowed SSL connection */
@@ -616,7 +723,7 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 	context->updated = 1;
 #endif
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_MBEDTLS)
 		SSL_set_ex_data(wsi->ssl,
 			openssl_websocket_private_data_index, wsi);
 #endif
@@ -629,7 +736,7 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 		wolfSSL_set_using_nonblock(wsi->ssl, 1);
 #endif
 #else
-#if defined(LWS_WITH_ESP32)
+#if defined(LWS_WITH_MBEDTLS)
 		lws_plat_set_socket_options(wsi->vhost, accept_fd);
 #else
 		SSL_set_mode(wsi->ssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
@@ -680,8 +787,8 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 
 		if (wsi->vhost->allow_non_ssl_on_ssl_port) {
 
-			n = recv(wsi->desc.sockfd, (char *)pt->serv_buf, context->pt_serv_buf_size,
-				 MSG_PEEK);
+			n = recv(wsi->desc.sockfd, (char *)pt->serv_buf,
+				 context->pt_serv_buf_size, MSG_PEEK);
 
 		/*
 		 * optionally allow non-SSL connect on SSL listening socket
@@ -736,7 +843,9 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 		if (!wsi->accept_start_us)
 			wsi->accept_start_us = time_in_microseconds();
 #endif
-
+		errno = 0;
+		lws_stats_atomic_bump(wsi->context, pt,
+				      LWSSTATS_C_SSL_CONNECTIONS_ACCEPT_SPIN, 1);
 		n = SSL_accept(wsi->ssl);
 		lws_latency(context, wsi,
 			"SSL_accept LWSCM_SSL_ACK_PENDING\n", n, n == 1);
@@ -746,15 +855,17 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 
 		m = lws_ssl_get_error(wsi, n);
 
-#if defined(LWS_WITH_ESP32)
-		if (m == 5 && errno == 11)
+#if defined(LWS_WITH_MBEDTLS)
+		if (m == SSL_ERROR_SYSCALL && errno == 11)
 			m = SSL_ERROR_WANT_READ;
 #endif
+		if (m == SSL_ERROR_SYSCALL || m == SSL_ERROR_SSL)
+			goto failed;
 
 go_again:
 		if (m == SSL_ERROR_WANT_READ || SSL_want_read(wsi->ssl)) {
 			if (lws_change_pollfd(wsi, 0, LWS_POLLIN)) {
-				lwsl_err("%s: WANT_READ change_pollfd failed\n", __func__);
+				lwsl_info("%s: WANT_READ change_pollfd failed\n", __func__);
 				goto fail;
 			}
 
@@ -765,24 +876,41 @@ go_again:
 			lwsl_debug("%s: WANT_WRITE\n", __func__);
 
 			if (lws_change_pollfd(wsi, 0, LWS_POLLOUT)) {
-				lwsl_err("%s: WANT_WRITE change_pollfd failed\n", __func__);
+				lwsl_info("%s: WANT_WRITE change_pollfd failed\n", __func__);
 				goto fail;
 			}
 
 			break;
 		}
-		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_SSL_CONNECTIONS_FAILED, 1);
-                lwsl_err("SSL_accept failed socket %u: %s\n", wsi->desc.sockfd,
+failed:
+		lws_stats_atomic_bump(wsi->context, pt,
+				      LWSSTATS_C_SSL_CONNECTIONS_FAILED, 1);
+                lwsl_info("SSL_accept failed socket %u: %s\n", wsi->desc.sockfd,
                          lws_ssl_get_error_string(m, n, buf, sizeof(buf)));
 		lws_ssl_elaborate_error();
 		goto fail;
 
 accepted:
-		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_SSL_CONNECTIONS_ACCEPTED, 1);
+		lws_stats_atomic_bump(wsi->context, pt,
+				      LWSSTATS_C_SSL_CONNECTIONS_ACCEPTED, 1);
 #if defined(LWS_WITH_STATS)
-		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_MS_SSL_CONNECTIONS_ACCEPTED_DELAY, time_in_microseconds() - wsi->accept_start_us);
+		lws_stats_atomic_bump(wsi->context, pt,
+				      LWSSTATS_MS_SSL_CONNECTIONS_ACCEPTED_DELAY,
+				      time_in_microseconds() - wsi->accept_start_us);
 		wsi->accept_start_us = time_in_microseconds();
 #endif
+
+		/* adapt our vhost to match the SNI SSL_CTX that was chosen */
+		vh = context->vhost_list;
+		while (vh) {
+			if (!vh->being_destroyed &&
+			    vh->ssl_ctx == SSL_get_SSL_CTX(wsi->ssl)) {
+				lwsl_info("setting wsi to vh %s\n", vh->name);
+				wsi->vhost = vh;
+				break;
+			}
+			vh = vh->vhost_next;
+		}
 
 		/* OK, we are accepted... give him some time to negotiate */
 		lws_set_timeout(wsi, PENDING_TIMEOUT_ESTABLISH_WITH_SERVER,
@@ -792,9 +920,10 @@ accepted:
 			wsi->mode = LWSCM_RAW;
 		else
 			wsi->mode = LWSCM_HTTP_SERVING;
-
-		lws_http2_configure_if_upgraded(wsi);
-
+#if defined(LWS_WITH_HTTP2)
+		if (lws_h2_configure_if_upgraded(wsi))
+			goto fail;
+#endif
 		lwsl_debug("accepted new SSL conn\n");
 		break;
 	}
@@ -819,7 +948,7 @@ void
 lws_ssl_context_destroy(struct lws_context *context)
 {
 
-#if !defined(LWS_WITH_ESP32)
+#if !defined(LWS_WITH_MBEDTLS)
 
 // after 1.1.0 no need
 #if (OPENSSL_VERSION_NUMBER <  0x10100000)
@@ -834,6 +963,10 @@ lws_ssl_context_destroy(struct lws_context *context)
 #else
 	ERR_remove_thread_state(NULL);
 #endif
+#endif
+	// after 1.1.0 no need
+#if  (OPENSSL_VERSION_NUMBER >= 0x10002000) && (OPENSSL_VERSION_NUMBER <= 0x10100000)
+	SSL_COMP_free_compression_methods();
 #endif
 	ERR_free_strings();
 	EVP_cleanup();

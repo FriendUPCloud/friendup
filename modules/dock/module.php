@@ -52,11 +52,13 @@ else
 	$DockID = false;
 	$Type = false;
 	$Icon = false;
+	$DisplayName = false;
 	foreach( $o->_fieldnames as $fn )
 	{
 		if( $fn == 'DockID' ) $DockID = true;
 		if( $fn == 'Type' ) $Type = true;
 		if( $fn == 'Icon' ) $Icon = true;
+		if( $fn == 'DisplayName' ) $DisplayName = true;
 	}
 	if( !$DockID )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DockID` bigint(20) NOT NULL AFTER `Parent`' );
@@ -64,6 +66,8 @@ else
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Type` varchar(255) default \'executable\' AFTER `UserID`' );
 	if( !$Icon )
 		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `Icon` varchar(255) AFTER `Type`' );
+	if( !$DisplayName )
+		$SqlDatabase->query( 'ALTER TABLE `DockItem` ADD `DisplayName` varchar(255) default \'\' AFTER `Application`' );
 }
 
 // End run things first time ---------------------------------------------------
@@ -95,10 +99,12 @@ if( isset( $args->command ) )
 					$o->Id = $row->ID;
 					$o->Type = $row->Type;
 					$o->Icon = $row->Icon;
+					$o->DisplayName = trim( $row->DisplayName ) ? $row->DisplayName : '';
 					$o->Name = trim( $row->Application ) ? $row->Application : i18n( 'Unnamed' );
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
+					$o->Workspace = $row->Workspace;
 					$apath = 'apps/' . $row->Application . '/';
-					if( !strstr( $o->Icon, ':' ) )
+					if( !strstr( $o->Icon, ':' ) && !strstr( $o->Icon, '/system.library' ) )
 						$o->Icon = file_exists( $path . '/icon_dock.png' ) ? ( $apath . 'icon_dock.png' ) : '';
 					$o->Image = '';
 					
@@ -107,6 +113,14 @@ if( isset( $args->command ) )
 				}
 				die( 'ok<!--separate-->' . json_encode( $eles ) );
 			}
+			break;
+		case 'removefromdock':
+			$s = filter_var( $args->args->name, FILTER_SANITIZE_STRING );
+			if( $SqlDatabase->Query( $q = ( 'DELETE FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND `Application`="' . $s . '" LIMIT 1' ) ) )
+			{
+				die( 'ok<!--separate-->{"response":1,"message":"Dock item removed","item":"' . $s . '"}' );
+			}
+			die( 'fail<!--separate-->{"response":0,"message":"Could not find dock item"}' );
 			break;
 		case 'deleteitem';
 			if( $rows = $SqlDatabase->Query( 'DELETE FROM DockItem WHERE UserID=\'' . $User->ID . '\' AND ID=\'' . intval( $args->args->itemId, 10 ) . '\' LIMIT 1' ) )
@@ -140,16 +154,16 @@ if( isset( $args->command ) )
 					// Shift up
 					if( $args->args->direction == 'up' && $row->ID == $args->args->itemId && $i > 0 )
 					{
-						$tmp = $out[$i-1];
-						$out[$i-1] = $row;
-						$out[$i] = $tmp;
+						$tmp = $out[ $i - 1 ];
+						$out[ $i - 1 ] = $row;
+						$out[ $i ] = $tmp;
 					}
 					// Shift down
 					else if( $args->args->direction == 'down' && $row->ID == $args->args->itemId && $i+1 < $len )
 					{
-						$tmp = $out[$i+1];
-						$out[$i+1] = $row;
-						$out[$i] = $tmp;
+						$tmp = $out[ $i + 1 ];
+						$out[ $i + 1 ] = $row;
+						$out[ $i ] = $tmp;
 						$i++;
 						continue;
 					}
@@ -169,11 +183,15 @@ if( isset( $args->command ) )
 			$application = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
 			$shortdesc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
 			$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+			$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
+			$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
 			$SqlDatabase->Query( '
 				UPDATE DockItem SET
 					Application = \'' . $application . '\',
+					DisplayName = \'' . $dname . '\',
 					ShortDescription = \'' . $shortdesc . '\',
-					`Icon` = \'' . $icon . '\'
+					`Icon` = \'' . $icon . '\',
+					`Workspace` = \'' . $work . '\'
 				WHERE
 					ID=\'' . $id . '\' AND
 					UserID=\'' . $User->ID . '\'
@@ -187,29 +205,41 @@ if( isset( $args->command ) )
 				$exe = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->application );
 				$desc = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->shortdescription );
 				$type = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type );
-				$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+				if( $args->args->icon )
+					$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+				else $icon = '';
+				if( $args->args->workspace )
+					$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
+				else $work = '0';
+				$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
 				$SqlDatabase->Query( '
 					INSERT INTO DockItem 
-						( UserID, `Type`, Application, ShortDescription, Icon, Parent, SortOrder ) 
+						( UserID, `Type`, Application, DisplayName, ShortDescription, Icon, Parent, SortOrder, Workspace ) 
 					VALUES 
 						( 
 							\'' . $User->ID . '\', 
 							\'' . $type . '\', 
 							\'' . $exe . '\', 
+							\'' . $dname . '\',
 							\'' . $desc . '\',
 							\'' . $icon . '\',
 							0, 
-							\'' . $max['MX'] . '\' 
+							\'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\',
+							\'' . $work . '\'
 						)
 				' );
 			}
 			else
 			{
 				$SqlDatabase->Query( '
-					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder ) VALUES ( \'' . $User->ID . '\', 0, 0, \'' . $max['MX'] . '\' )
+					INSERT INTO DockItem ( UserID, DockID, Parent, SortOrder, Workspace ) VALUES ( \'' . $User->ID . '\', 0, 0, \'' . ( intval($max['MX']) + 1 ) . '\', \'1\' )
 				' );
 			}
-			die( 'ok<!--separate-->' );
+			//get ID and give it back to the user...
+			$maxquery = 'SELECT ID FROM DockItem WHERE UserID = \'' . $User->ID . '\' AND Parent = 0 AND DockID = 0 AND SortOrder = \'' . ( intval( $max[ 'MX' ] ) + 1 ) . '\'';
+			$newid = $SqlDatabase->FetchRow( $maxquery );
+			//$Logger->log( 'Dock item saved' . print_r( $newid, 1 ) . ' :: ' . $maxquery );
+			die( 'ok<!--separate-->' .  $newid[ 'ID' ] );
 			break;
 		case 'getdock':
 			$o = new DbIO( 'DockItem' );
@@ -241,6 +271,8 @@ if( isset( $args->command ) )
 			$cfg = new stdClass();
 			$cfg->options = $args->args->options;
 			$o->Type = 'Dock';
+			$o->Workspace = $args->args->workspace;
+			$o->DisplayName = $args->args->displayname;
 			$o->ShortDescription = json_encode( $cfg );
 			$o->Save();
 			if( $o->ID > 0 ) die( 'ok' );

@@ -19,8 +19,8 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- *  @file
+/** @file
+ * 
  * Service body
  *
  *  @author PS (Pawel Stefanski)
@@ -53,13 +53,13 @@
  * @param sendMessage pointer to function which will be used to send messages
  * @return pointer to new Service structure or NULL when error appear
  */
-Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void (*sendMessage)(void *a, void *b) )
+Service* ServiceOpen( void *sysbase, char* name, long version __attribute__((unused)), void *sm, void (*sendMessage)(void *a, void *b) )
 {
 	FBOOL loaded = FALSE;
-	char currentDirectory[ 255 ];
-	char loadServicePath[ 512 ];
-	memset( &currentDirectory, 0, sizeof(currentDirectory) );
-	memset( &loadServicePath, 0, sizeof(loadServicePath) );
+	char currentDirectory[ PATH_MAX ];
+	char loadServicePath[ PATH_MAX ];
+	memset( currentDirectory, 0, sizeof(currentDirectory) );
+	memset( loadServicePath, 0, sizeof(loadServicePath) );
 
 	// Open service
 	if( name == NULL )
@@ -72,7 +72,10 @@ Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void (*
 	void *handle = NULL;
 
 	// there is no need to multiply by sizeof(char)
-	getcwd( currentDirectory, sizeof ( currentDirectory ) );
+	if (getcwd( currentDirectory, sizeof ( currentDirectory ) ) == NULL){
+		FERROR("getcwd failed!");
+		exit(5);
+	}
 	DEBUG( "[ServiceOpen] Current directory %s\n", currentDirectory );
 
 	// we should check and get lib from current dirrectory first (compatybility)
@@ -83,7 +86,13 @@ Service* ServiceOpen( void *sysbase, char* name, long version, void *sm, void (*
 	}
 	else
 	{
-		//FERROR( "[ServiceOpen] Cannot open file '%s'\n", name );
+		FERROR( "[ServiceOpen] Cannot open file '%s'\n", name );
+		char* error = dlerror();
+		if( error )
+		{
+			FERROR( "[ServiceOpen] Library error: %s  DYNAMIC LINK ERROR\n", error );
+		}
+		return NULL;
 	}
 
 	char* error = dlerror();

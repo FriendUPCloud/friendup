@@ -482,6 +482,11 @@ Application.initializeToolbar = function()
 		f.onLoad = function( data )
 		{
 			d.innerHTML = data;
+			if( window.innerWidth < 600 )
+			{
+				ge( 'zoom' ).style.display = 'none';
+				ge( 'zoomd' ).style.display = 'none';
+			}
 		}
 		f.i18n();
 		f.load();
@@ -511,13 +516,20 @@ Application.initializeBody = function()
 	f.document.body.style.backgroundPosition = 'top left';
 	f.document.body.style.backgroundRepeat = 'repeat';
 	f.document.body.style.padding = '20pt 20pt';
-	f.document.body.style.borderRadius = '15px';
-	f.document.body.style.width = '595pt';
-	f.document.body.style.minHeight = '842pt';
+	f.document.body.style.borderRadius = '3px';
+	if( window.innerWidth < 600 )
+	{
+	}
+	else
+	{
+		f.document.body.style.width = '595pt';
+		f.document.body.style.minHeight = '842pt';
+	}
 	f.document.body.style.boxSizing = 'border-box';
 	f.document.body.style.margin = '20pt 0 20pt 0';
 	f.document.body.style.fontSize = '12pt';
 	f.document.body.style.color = 'black';
+	f.document.body.classList.add( 'activated' );
 	editorCommand( 'zoom100%', 'store' );
 	AddEvent( 'onmouseup', MyMouseListener, f );
 	AddEvent( 'onkeyup', MyKeyListener, f );
@@ -1138,13 +1150,16 @@ function editorCommand( command, value )
 		ed.style.width = Math.floor( defWidth ) + 'px';
 		f.body.style.zoom = 0.6;
 		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
-	else if( command == 'zoom70%' )
+	}*/
+	else if( command == 'zoom75%' )
 	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 0.7;
-		f.body.style.left = 'calc(50% - 297.5pt)';
-	}
+		if( window.innerWidth >= 600 )
+		{
+			ed.style.width = Math.floor( defWidth ) + 'px';
+			f.body.style.zoom = 0.75;
+			f.body.style.left = 'calc(50% - 297.5pt)';
+		}
+	}/*
 	else if( command == 'zoom80%' )
 	{
 		ed.style.width = Math.floor( defWidth ) + 'px';
@@ -1159,30 +1174,42 @@ function editorCommand( command, value )
 	}*/
 	else if( command == 'zoom100%' )
 	{
-		ed.style.width = Math.floor( defWidth ) + 'px';
-		f.body.style.zoom = 1;
-		f.body.style.left = 'calc(50% - 297.5pt)';
+		if( window.innerWidth >= 600 )
+		{
+			ed.style.width = Math.floor( defWidth ) + 'px';
+			f.body.style.zoom = 1;
+			f.body.style.left = 'calc(50% - 297.5pt)';
+		}
 	}
 	else if( command == 'zoom125%' )
 	{
-		ed.style.width = Math.floor( defWidth * 1.25 ) + 'px';
-		f.body.style.zoom = 1.25;
-		var c = Math.floor( defWidth * 1.25 * 0.5 );
-		f.body.style.left = 'calc(50% - 297.5pt)';
+		if( window.innerWidth >= 600 )
+		{
+			ed.style.width = Math.floor( defWidth * 1.25 ) + 'px';
+			f.body.style.zoom = 1.25;
+			var c = Math.floor( defWidth * 1.25 * 0.5 );
+			f.body.style.left = 'calc(50% - 297.5pt)';
+		}
 	}
 	else if( command == 'zoom150%' )
 	{
-		ed.style.width = Math.floor( defWidth * 1.5 ) + 'px';
-		f.body.style.zoom = 1.5;
-		var c = Math.floor( defWidth * 1.5 * 0.5 );
-		f.body.style.left = 'calc(50% - 297.5pt)';
+		if( window.innerWidth >= 600 )
+		{
+			ed.style.width = Math.floor( defWidth * 1.5 ) + 'px';
+			f.body.style.zoom = 1.5;
+			var c = Math.floor( defWidth * 1.5 * 0.5 );
+			f.body.style.left = 'calc(50% - 297.5pt)';
+		}
 	}
 	else if( command == 'zoom200%' )
 	{
-		ed.style.width = Math.floor( defWidth * 2 ) + 'px';
-		f.body.style.zoom = 2;
-		var c = Math.floor( defWidth * 2 * 0.5 );
-		f.body.style.left = 'calc(50% - 297.5pt)';
+		if( window.innerWidth >= 600 )
+		{
+			ed.style.width = Math.floor( defWidth * 2 ) + 'px';
+			f.body.style.zoom = 2;
+			var c = Math.floor( defWidth * 2 * 0.5 );
+			f.body.style.left = 'calc(50% - 297.5pt)';
+		}
 	}
 	else if( command == 'staticWidth' )
 	{

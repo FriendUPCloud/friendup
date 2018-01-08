@@ -18,6 +18,12 @@ body
 	-webkit-transition: opacity 0.25s;
 }
 
+body > #FocusGrabber
+{
+	position: fixed;
+	top: 100%;
+}
+
 /* Helper classes ----------------------------------------------------------- */
 
 h1, h2, h3, h4

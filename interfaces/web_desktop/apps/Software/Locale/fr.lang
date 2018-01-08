@@ -1,5 +1,5 @@
 
-i18n_software_administration       : Gestion des applications
+i18n_software_administration       : Catalogue de logiciels
 
 
 #Menu
@@ -11,6 +11,7 @@ i18n_install                       : Installer
 i18n_uninstall                     : Désinstaller
 
 i18n_page_name                     : Alphabétiquement
+i18n_page_by_date                  : Dernier logiciel
 i18n_page_category                 : Par catégories
 i18n_page_rating                   : Par évaluation
 

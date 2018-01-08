@@ -20,8 +20,16 @@
 *****************************************************************************©*/
 
 $f = 'repository/' . $args->file;
+$ext = explode( '.', $args->file );
+$ext = array_pop( $ext );
 if( file_exists( $f ) )
 {
+	switch( $ext )
+	{
+		case 'css':
+			FriendHeader( 'Content-Type: text/css' );
+			break;
+	}
 	die( file_get_contents( $f ) );
 }
 die( 'fail<!--separate-->{"response":"resource not found"}' . $f );

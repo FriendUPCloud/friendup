@@ -121,7 +121,7 @@ FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *s
 	}
 	
 	lck.dn_LockTime = time(NULL);
-	lck.dn_OwnerID = ses->us_ID;
+	lck.dn_OwnerID = ses->us_UserID;
 	lck.dn_DeviceID = device->f_ID;
 	
 	if( sqllib->Save( sqllib, DoorNotificationDesc, &lck ) != 0 )
@@ -193,7 +193,7 @@ FULONG DoorNotificationStartDB( SQLLibrary *sqllib, File *device, UserSession *s
  * @return 0 when success, otherwise error number
  */
 
-int DoorNotificationUpdateDB( SQLLibrary *sqllib, File *device, char *path, FULONG id )
+int DoorNotificationUpdateDB( SQLLibrary *sqllib, File *device __attribute__((unused)), char *path, FULONG id )
 {
 	int querysize = 0;
 	
@@ -286,7 +286,7 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, 
 		if( lastSlashPosition == 0 )
 		{
 			sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT Distinct ID,OwnerID,Type FROM `FDoorNotification` \
-				WHERE Path = '' AND DeviceID = %lu ", device->f_ID );
+WHERE Path = '' AND DeviceID = %lu ", device->f_ID );
 		}
 		else
 		{
@@ -296,8 +296,8 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, 
 				parentPath[ lastSlashPosition ] = 0;
 				
 				sqllib->SNPrintF( sqllib, tmpQuery, querysize, "SELECT Distinct ID,OwnerID,Type FROM `FDoorNotification` \
-					WHERE (Path='%s' OR Path='%s' ) \
-					AND DeviceID = %lu", path, parentPath, device->f_ID );
+WHERE (Path='%s' OR Path='%s' ) \
+AND DeviceID = %lu", path, parentPath, device->f_ID );
 				FFree( parentPath );
 			}
 		}
@@ -353,13 +353,14 @@ DoorNotification *DoorNotificationGetNotificationsFromPath( SQLLibrary *sqllib, 
 /**
  * Send notification to users about changes in the path
  *
- * @param sqllib pointer to sql.library
+ * @param lsb pointer to SystemBase
+ * @param ses pointer to UserSession
  * @param device pointer to device (root file)
  * @param path path on which lock is set (fullpath)
  * @return Lock id or 0 when error appear
  */
 
-int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *device, char *path )
+int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses __attribute__((unused)), File *device, char *path )
 {
 	SystemBase *sb = (SystemBase *)lsb;
 
@@ -381,6 +382,8 @@ int DoorNotificationCommunicateChanges( void *lsb, UserSession *ses, File *devic
 		while( notification != NULL )
 		{
 			DoorNotification *rem = notification;
+			
+			DEBUG("[DoorNotificationCommunicateChanges] send door notification to: %lud\n", notification->dn_OwnerID );
 			
 			USMSendDoorNotification( sb->sl_USM, notification, device, path );
 			/*
@@ -578,7 +581,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
 }
 
 /**
- * Remove old DoorNotifications from DB by userid
+ * Remove old DoorNotifications from DB by userid UNIMPLEMENTED
  *
  * @param lsb pointer to SystemBase
  * @param owner user object
@@ -586,7 +589,7 @@ int DoorNotificationRemoveEntriesByUser( void *lsb, FULONG uid )
  * @param path path on which lock is set (fullpath)
  * @return 0 when success, otherwise error number
  */
-int DoorNotificationCommunicateDiskUpdate( void *lsb, User *owner, UserSession *sessions, File *device )
+int DoorNotificationCommunicateDiskUpdate( void *lsb __attribute__((unused)), User *owner __attribute__((unused)), UserSession *sessions __attribute__((unused)), File *device __attribute__((unused)))
 {
 	return 0;
 }

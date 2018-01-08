@@ -1,0 +1,34 @@
+
+FriendParser quick documentation
+--------------------------------
+
+Build:
+Just use 'make', and it will create the executable 'friendparser' at the
+root of the friendup directory.
+
+Rules:
+- Everything in 'interfaces' is AGPLv3
+- Modules, DOSDrivers, libraries are LGPLv3
+- All the rest is MIT
+
+How to use:
+friendparser [-o] [-i]
+
+-o: replace headers with the open-source headers
+-i: replace headers with the internal (copyrighted) header
+
+Typical uses:
+friendparser -i : changes all headers to internal
+friendparser -o : changes all headers to open-source
+
+Headers:
+All the headers are defined in the file 'headers.txt'
+
+Notes:
+- if you change the text, please keep the markers, '/*©xxxx' at the beginning
+and '**©*' at the end.
+- it does not matter if some files have the open-source and some other files
+have the internal header, run friendparser and all will be restored to the
+correct state.
+- you will get an error message if one file uses the old header starting with
+'/*©**', and you will have to change it for friendparser to continue

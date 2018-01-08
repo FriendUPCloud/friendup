@@ -55,6 +55,14 @@
 	border: $BorderPageActive;
 	background: $ColorBgPageActive;
 	padding: 5px;
+	box-sizing: border-box;
+}
+
+.PageActive .PageScroll
+{
+	border: 1px solid rgba(0,0,0,0.07);
+	background: $ColorBgTdListTable;
+	border-radius: $BorderBoxRadius;
 }
 
 /* Vertical tabs ------------------------------------------------------------ */

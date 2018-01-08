@@ -9,6 +9,10 @@ ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
 endif
 
+ifeq ($(PROFILE),1)
+CFLAGS  +=	-pg -DPROFILE=1
+endif
+
 ifeq ($(WEBSOCKETS),1)
 CFLAGS	+=	-DENABLE_WEBSOCKETS
 endif

@@ -33,28 +33,28 @@
 
 typedef struct CommServiceInterface
 {
-	CommFCConnection	*(*CommFCConnectionNew)( const char *address, const char *name, int type, void *service );
-	void				(*CommFCConnectionDelete)( CommFCConnection *con );
+	FConnection			*(*FConnectionNew)( const char *address, const char *name, int type, void *service );
+	void				(*FConnectionDelete)( FConnection *con );
 	CommService			*(*CommServiceNew)( int port, int secured, void *sb, int maxev, int bufsiz );
 	void				(*CommServiceDelete)( CommService *s );
 	int					(*CommServiceStart)( CommService *s );
 	int					(*CommServiceStop)( CommService *s );
 	DataForm			*(*CommServiceSendMsg)( CommService *s, DataForm *df );
-	DataForm			*(*CommServiceSendMsgDirect)(  CommFCConnection *con, DataForm *df );
-	CommFCConnection 	*(*CommServiceAddConnection)( CommService *s, Socket *socket, char *addr, char *id, int type );
-	int					(*CommServiceDelConnection)( CommService* s, CommFCConnection *loccon, Socket *sock );
-	int					(*CommServiceRegisterEvent)( CommFCConnection *con, Socket *socket );
-	int					(*CommServiceUnRegisterEvent)( CommFCConnection *con, Socket *socket );
+	DataForm			*(*CommServiceSendMsgDirect)(  FConnection *con, DataForm *df );
+	FConnection 		*(*CommServiceAddConnection)( CommService *s, Socket *socket, char *name, char *addr, char *recvfcid, int type, int node );
+	int					(*CommServiceDelConnection)( CommService* s, FConnection *loccon, Socket *sock );
+	int					(*CommServiceRegisterEvent)( FConnection *con, Socket *socket );
+	int					(*CommServiceUnRegisterEvent)( FConnection *con, Socket *socket );
 }CommServiceInterface;
 
 //
 // init function
 //
 
-inline void CommServiceInterfaceInit( CommServiceInterface *si )
+static inline void CommServiceInterfaceInit( CommServiceInterface *si )
 {
-	si->CommFCConnectionNew = CommFCConnectionNew;
-	si->CommFCConnectionDelete = CommFCConnectionDelete;
+	si->FConnectionNew = FConnectionNew;
+	si->FConnectionDelete = FConnectionDelete;
 	si->CommServiceNew = CommServiceNew;
 	si->CommServiceDelete = CommServiceDelete;
 	si->CommServiceStart = CommServiceStart;

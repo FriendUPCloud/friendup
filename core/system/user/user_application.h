@@ -36,15 +36,18 @@
 #include <core/nodes.h>
 #include <db/sqllib.h>
 
+//
+// structure
+//
+
 typedef struct UserApplication
 {
 	FULONG					ua_ID;
-	FULONG               ua_UserID;
-	FULONG               ua_ApplicationID;
-	char *              ua_Permissions;     // <- in json format
-	char *              ua_AuthID; 
-	//void *              ua_Next;
-	MinNode			node;
+	FULONG					ua_UserID;
+	FULONG					ua_ApplicationID;
+	char 					*ua_Permissions;     // <- in json format
+	char 					*ua_AuthID; 
+	MinNode					node;
 } 
 UserApplication;
 

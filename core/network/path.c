@@ -32,7 +32,7 @@
 //
 //
 
-inline void PathSplit( Path* p )
+static inline void PathSplit( Path* p )
 {
 	char* path = p->raw;
 	char** pathArray = NULL;
@@ -134,42 +134,29 @@ Path* PathNew( const char* path )
 Path* PathJoin( Path* path1, Path* path2 )
 {
 	unsigned int size = path1->rawSize + path2->rawSize + 1;
-	char* newPath = FCalloc( (size + 10), sizeof(char) );
+	char* newPath = FMalloc( (size + 10) );
 	if( newPath == NULL )
 	{
 		FERROR("PathJoin, cannot allocate memory for newpath\n");
 		return NULL;
 	}
 	memcpy( newPath, path1->raw, path1->rawSize );
-	memcpy( newPath + path1->rawSize + 1, path2->raw, path2->rawSize );
-	newPath[path1->rawSize] = '/'; // Doesn't matter if path1 already has this. It'll just be ignored, then :)
-	newPath[size] = 0;
+	if( path2->raw[ 0 ] != '/' )
+	{
+		memcpy( newPath + path1->rawSize + 1, path2->raw, path2->rawSize );
+		newPath[path1->rawSize] = '/';
+		newPath[size] = 0;
+	}
+	else
+	{
+		memcpy( newPath + path1->rawSize, path2->raw, path2->rawSize );
+		newPath[size-1] = 0;
+	}
+
 	Path* p = PathNew( newPath );
-	free( newPath );
+	FFree( newPath );
 	return p;
 }
-
-//
-//
-//
-
-char* PathBasename( char* path )
-{
-	return 0;
-}
-
-//
-//
-//
-
-char* PathDirectory( char* path )
-{
-	return 0;
-}
-
-//
-//
-//
 
 void PathResolve( Path* p )
 {

@@ -165,6 +165,12 @@ extern int ZEXPORT zipOpenNewFileInZip3_64 OF((zipFile file, const char* filenam
     int strategy, const char* password, uLong crcForCrypting, int zip64));
 /* Same as zipOpenNewFileInZip3 with zip64 support */
 
+extern int ZEXPORT zipOpenNewDirectoryInZip3_64(zipFile file, const char* filename, const zip_fileinfo* zipfi,
+    const void* extrafield_local, uInt size_extrafield_local, const void* extrafield_global,
+    uInt size_extrafield_global, const char* comment, int method, int level, int raw, int windowBits,
+    int memLevel, int strategy, const char* password, uLong crcForCrypting, int zip64);
+/* Create empty directory */
+
 extern int ZEXPORT zipOpenNewFileInZip4 OF((zipFile file, const char* filename, const zip_fileinfo* zipfi,
     const void* extrafield_local, uInt size_extrafield_local, const void* extrafield_global, 
     uInt size_extrafield_global, const char* comment, int method, int level, int raw, int windowBits, int memLevel, 

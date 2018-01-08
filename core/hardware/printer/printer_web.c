@@ -54,6 +54,15 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 	Log( FLOG_DEBUG, "Printer Request %s  CALLED BY: %s\n", urlpath[ 0 ], loggedSession->us_User->u_Name );
 	Http *response = NULL;
 	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/printer/help</H2>Return information about printer functions
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return return information about avaiable printer functions
+	*/
+	/// @endcond
 	if (strcmp(urlpath[0], "help") == 0)
 	{
 		struct TagItem tags[] = {
@@ -69,12 +78,17 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 			add - add new printer\n \
 			remove - remove printer\n \
 			");
-
-	//
-	// list all avaiable ports
-	//
-
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/printer/list</H2>List of avaiable printers for user
+	*
+	* @param sessionid - (required) session id of logged user
+	* @return return printers table in JSON format
+	*/
+	/// @endcond
 	else if (strcmp(urlpath[0], "list") == 0)
 	{
 		struct TagItem tags[] = {
@@ -145,12 +159,21 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		{
 			FERROR("ERROR: Cannot allocate memory for BufferString\n");
 		}
-
-	//
-	// add new printer
-	//
-
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/printer/add</H2>Add new printer to global pool or user
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param name - (required) name of printer
+	* @param manufacturer - manufacturer of printer
+	* @param hardwareid - printer hardware id
+	* @param global - set to 'true' if you want to make printer avaiable for everyone
+	* @return { PrinterID: <number> } when success, otherwise error code
+	*/
+	/// @endcond
 	else if (strcmp(urlpath[0], "add") == 0)
 	{
 		struct TagItem tags[] = {
@@ -214,7 +237,10 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					}
 					else
 					{
-						size = sprintf(buffer, "{ \"response\": \"%s %d\" }", "Printer not added, error: ", error );
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PRINTER_NOT_ADDED_ERR], error );
+						size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
+						//size = sprintf(buffer, "{ \"response\": \"%s %d\" }", "Printer not added, error: ", error );
 					}
 				}
 				else
@@ -225,26 +251,37 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 					}
 					else
 					{
-						size = sprintf(buffer, "{ \"response\": \"%s %d\" }", "Printer not added, error: ", error );
+						char dictmsgbuf1[ 196 ];
+						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PRINTER_NOT_ADDED_ERR], error );
+						size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PRINTER_NOT_ADDED_ERR );
 					}
 				}
 			}
 			else
 			{
-				size = sprintf(buffer, "{ \"response\": \"%s\" }", "Cannot allocate memory for FPrinter");
+				size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
 			}
 		}
 		else
 		{
-			size = sprintf(buffer, "{ \"response\": \"%s\" }", "Name was not provided");
+			char dictmsgbuf1[ 196 ];
+			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "name" );
+			size = snprintf( buffer, sizeof(buffer), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
+			//size = sprintf(buffer, "{ \"response\": \"%s\" }", "Name was not provided");
 		}
 		HttpAddTextContent(response, buffer);
-
-	//
-	// remote printer
-	//
-
 	}
+	
+	/// @cond WEB_CALL_DOCUMENTATION
+	/**
+	* 
+	* <HR><H2>system.library/printer/remove</H2>Remove printer
+	*
+	* @param sessionid - (required) session id of logged user
+	* @param id - (required) id of printer
+	* @return { PrinterID: <number> } when success, otherwise error code
+	*/
+	/// @endcond
 	else if (strcmp(urlpath[0], "remove") == 0)
 	{
 		struct TagItem tags[] = {
@@ -253,7 +290,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 			{ TAG_DONE, TAG_DONE }
 		};
 
-		FULONG id = 0;
+		FLONG id = 0;
 
 		response = HttpNewSimple(HTTP_200_OK, tags);
 
@@ -261,7 +298,7 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 		if (el != NULL)
 		{
 			char *next;
-			id = (FQUAD)strtol((char *)el->data, &next, 0);
+			id = (FLONG)strtol((char *)el->data, &next, 0);
 		}
 		
 		if (id > 0)
@@ -278,16 +315,40 @@ Http* PrinterManagerWebRequest( void *lb, char **urlpath, Http* request, UserSes
 			{
 				if (error == -1)
 				{
-					int size = sprintf(buffer, "{ \"response\": \"%s %d\" }", "Cannot unlock port, error number ", error );
-					HttpAddTextContent(response, buffer);
+					char dictmsgbuf[ 256 ];
+					char dictmsgbuf1[ 196 ];
+					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_UNLOCK_PORT], error );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_UNLOCK_PORT );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 				else 
 				{
-					int size = sprintf(buffer, "{ \"response\": \"%s %lu\" }", "Cannot find device with provided ID: ", id );
-					HttpAddTextContent(response, buffer);
+					char dictmsgbuf[ 256 ];
+					char dictmsgbuf1[ 196 ];
+					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_FIND_DEVICE], id );
+					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_FIND_DEVICE );
+					HttpAddTextContent( response, dictmsgbuf );
 				}
 			}
 		}
 	}
+	
+	//
+	// function releated to devices not found
+	//
+	
+	else
+	{
+		struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE }
+		};
+		response = HttpNewSimple( HTTP_200_OK, tags );
+		char dictmsgbuf[ 256 ];
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_FUNCTION_NOT_FOUND] , DICT_FUNCTION_NOT_FOUND );
+		HttpAddTextContent( response, dictmsgbuf );
+	}
+	
 	return response;
 }

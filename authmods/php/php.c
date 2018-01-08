@@ -19,12 +19,13 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-
-/*
-
-	PHP auth module code
-
-*/
+/** @file
+ *
+ *  PHP auth module code
+ *
+ *  @author PS (Pawel Stefanski)
+ *  @date created 2017
+ */
 
 #include <core/types.h>
 #include <core/library.h>
@@ -57,12 +58,11 @@ typedef struct SpecialData
 	char				*sd_ModuleType;
 	char 			*sd_ModulePath;
 	EModule 		*sd_EModule;
-	
-	char 			*(*RunMod)( struct EModule *em, const char *mime, const char *path, const char *args, unsigned long *length );
-}SpecialData;
+	module_run_func_t RunMod;
+} SpecialData;
 
 //
-//
+// Init library
 //
 
 int libInit( AuthMod *l, void *sb )
@@ -100,7 +100,7 @@ int libInit( AuthMod *l, void *sb )
 	{
 		if( sd->sd_EModule->GetSuffix != NULL )
 		{
-			DEBUG("[PHPAUTH] sd->sd_EModule->Name %s suffix %s\n", sd->sd_EModule->Name, sd->sd_EModule->GetSuffix() );
+			DEBUG("[PHPAUTH] sd->sd_EModule->Name %s suffix %s\n", sd->sd_EModule->em_Name, sd->sd_EModule->GetSuffix() );
 			
 			if( strcmp( sd->sd_EModule->GetSuffix(), "php" ) == 0 )
 			{
@@ -115,7 +115,7 @@ int libInit( AuthMod *l, void *sb )
 }
 
 //
-//
+// Close library
 //
 
 void libClose( struct AuthMod *l )

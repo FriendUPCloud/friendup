@@ -21,12 +21,16 @@
 *****************************************************************************©*/
 /** @file
  *
- *  Threading
+ * Threading managemen t
  *
  * file contain all functitons related to threads
  *
- *  @author PS (Pawel Stefanski)
- *  @date created 02/2015
+ * @author PS (Pawel Stefanski)
+ * @date created 02/2015
+ * 
+ * \defgroup FriendCoreThreadsLinux Linux
+ * \ingroup FriendCoreThreads
+ * @{
  */
 
 #include <core/thread.h>
@@ -152,3 +156,4 @@ void ThreadDelete( FThread *t )
 	}
 }
 
+/**@}*/

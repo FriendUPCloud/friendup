@@ -272,15 +272,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	if( fileInfo.Path.indexOf( ':' ) < 0 )
 		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
 	
-	var dirPrefs         = 'System:' + i18n('i18n_directory_Prefs') + '/';
-	var dirTools         = 'System:' + i18n('i18n_directory_Tools') + '/';
-	var dirModules       = 'System:' + i18n('i18n_directory_Modules') + '/';
+	var dirPrefs         = 'System:' + i18n( 'i18n_directory_Prefs') + '/';
+	var dirRepositories  = 'System:' + i18n( 'i18n_directory_Repositories') + '/';
+	var dirModules       = 'System:' + i18n( 'i18n_directory_Modules') + '/';
 	var dirLibraries     = 'System:' + i18n( 'i18n_directory_Libraries' ) + '/';
-	var dirSoftware      = 'System:' + i18n('i18n_directory_Software') + '/';
-	var dirDevices       = 'System:' + i18n('i18n_directory_Devices') + '/';
-	var dirFunctions     = 'System:' + i18n('i18n_directory_Functions') + '/';
-	var dirDocumentation = 'System:' + i18n('i18n_directory_Documentation' ) + '/';
-	var dirDocApps       = 'System:' + i18n('i18n_directory_DocApps' ) + '/';
+	var dirSoftware      = 'System:' + i18n( 'i18n_directory_Software') + '/';
+	var dirDevices       = 'System:' + i18n( 'i18n_directory_Devices') + '/';
+	var dirFunctions     = 'System:' + i18n( 'i18n_directory_Functions') + '/';
+	var dirDocumentation = 'System:' + i18n( 'i18n_directory_Documentation' ) + '/';
+	var dirDocApps       = 'System:' + i18n( 'i18n_directory_DocApps' ) + '/';
 	
 	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
 	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
@@ -307,15 +307,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				},
 				{
 					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Tools' ),
+					Title    : i18n( 'i18n_directory_Repositories' ),
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Tools' ) + '/',
+					Path     : 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
 					Type     : 'Directory',
 					IconFile : 'gfx/icons/128x128/categories/applications-utilities.png',
-					IconClass: 'System_Tools',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Tools' ) + '/' )
+					IconClass: 'System_Repositories',
+					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -395,9 +395,9 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				}
 			], 'System:' );
 		case dirDocumentation:
-			var files = [ 'Developer\'s manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
-			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Tools', 'Devices' ];
+			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
 			var eles = [];
 			for( var a = 0; a < files.length; a++ )
 			{
@@ -477,38 +477,22 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			return callback( eles, dirFunctions );
-		case dirTools:
-			// Available tools applications
-			var tools = {
-				/*'Processmgr'     : i18n( 'i18n_processmgr' ),*/
-				'Applicationmgr' : i18n( 'i18n_applicationmgr' ),
-				'SysDiag'        : i18n( 'i18n_sysdiag' )
-			};
-			var icons = {
-				/*'Processmgr'     : 'apps/utilities-system-monitor.png',*/
-				'Applicationmgr' : 'Tool_ApplicationManager',
-				'SysDiag'        : 'Tool_SystemDiagnostics'
-			};
-			var output = [];
-			
-			// Loop through and make icons
-			for( var tool in tools )
-			{
-				var icon = icons[tool];
-				output.push( {
-					MetaType: 'File',
-					Title: tools[tool],
-					DateModified: dateh,
-					Filename: tool,
+		case dirRepositories:
+			var output = [
+				{
+					MetaType: 'Directory',
+					Title: 'FriendUP',
 					Permissions: '-r-e-,-r-e-,-r-e-',
-					Path: 'System:Tools/',
-					IconClass: icon,
+					DateModified: '2017-12-22 12:00:00',
+					Filesize: 16,
 					Position: 'left',
-					Type: 'Executable'
-				} );
-			}
+					Type: 'Directory',
+					Path: path + 'FriendUP/',
+					Dormant: WorkspaceDormant
+				}
+			];
 			if( callback )
-				return callback( output, dirTools );
+				return callback( output, dirRepositories );
 			return output;
 		case dirDevices:
 			var devs = {

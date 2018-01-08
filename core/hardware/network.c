@@ -35,6 +35,8 @@
 
 #define __USE_MISC
 #include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /**
  * Get mac address
@@ -42,7 +44,6 @@
  * @param maddr pointer to string when mac address will be stored
  * @return 0 when success, otherwise error number
  */
-
 int getMacAddress( char *maddr )
 {
 	struct ifreq ifr;
@@ -100,6 +101,64 @@ int getMacAddress( char *maddr )
 		//memcpy( maddr, ifr.ifr_hwaddr.sa_data, 6);
 		return 0;
 	}
-	
 	return 3;
+}
+
+/**
+ * Get primary IP address
+ *
+ * @param buffer buffer where IP will be stored
+ * @param buflen buffer size where data will be stored
+ * @return 0 when success, otherwise error number
+ */
+int getPrimaryIp( char* buffer, size_t buflen )
+{
+    if( buflen < 16 )
+	{
+		return 1;
+	}
+
+	int sock = socket( AF_INET, SOCK_DGRAM, 0 );
+	if( sock > 0 )
+	{
+		struct sockaddr_in serv;
+		memset( &serv, 0, sizeof(serv) );
+		serv.sin_family = AF_INET;
+		serv.sin_addr.s_addr = inet_addr( "8.8.8.8" );
+		serv.sin_port = htons( 53 );
+
+		int err = connect( sock, (const struct sockaddr*) &serv, sizeof(serv) );
+		if( err != -1 )
+		{
+			struct sockaddr_in name;
+			socklen_t namelen = sizeof( name );
+			err = getsockname( sock, (struct sockaddr*) &name, &namelen );
+			if( err != -1 )
+			{
+				const char* p = inet_ntop( AF_INET, &name.sin_addr, buffer, buflen );
+				if( p != NULL )
+				{
+					close( sock );
+					return 0;
+				}
+				else
+				{
+					close( sock );
+					return 1;
+				}
+			}
+			else
+			{
+				close( sock );
+				return 1;
+			}
+		}
+		else
+		{
+			close( sock );
+			return 1;
+		}
+		close( sock );
+	}
+	return 0;
 }

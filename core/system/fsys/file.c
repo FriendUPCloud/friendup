@@ -84,6 +84,11 @@ void FileDelete( File *f )
 			FFree( f->f_FSysName );
 		}
 		
+		if( f->f_DevServer != NULL )
+		{
+			FFree( f->f_DevServer );
+		}
+		
 		FFree( f );
 	}
 }
@@ -246,8 +251,9 @@ int FileUploadFileOrDirectoryRec( Http *request, File *dstdev, const char *dst, 
 					{
 						if( S_ISDIR( statbuf.st_mode ) )
 						{
+							//DEBUG("\n\nCREATE DIR %s\n", newdst );
 							fsys->MakeDir( dstdev, newdst );
-							//if( fsys->MakeDir( dstdev, newdst ) == 0 )
+							//if( fsys->MakeDir( dstdev, newdst ) != 0 )
 							{
 								if( FileUploadFileOrDirectoryRec( request, dstdev, newdst, newsrc, files, numberFiles ) != 0 )
 								{
@@ -404,9 +410,10 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	{
 		if( dst[ i ] == ':' )
 		{
+			dst += i+1;	// remove device name from dst path
 			break;
 		}
-		devname[ i ] = dst[ i ];
+		devname[ i ] = dst[ i ]; // fill device name
 	}
 	
 	int files = 0;
@@ -426,18 +433,6 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 	DEBUG("[FileUploadFileOrDirectory] end\n");
 	
 	return 0;
-}
-
-//
-//
-//
-
-static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
-	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start &&
-		strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
-		return 0;
-		}
-		return -1;
 }
 
 /**
@@ -680,7 +675,7 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 										}
 									}
 								
-									i += elements << 2;
+									i += SHIFT_LEFT( elements, 2);
 									if( locname != NULL )
 									{
 										FFree( locname );
@@ -908,6 +903,240 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 	}
 	
 	DEBUG("[FileDownloadFilesOrFolder] end\n");
+	
+	return 0;
+}
+
+/**
+ * Function which scans Friend files and delete them
+ *
+ * @param srcdev pointer to source Friend root File
+ * @param src pointer to source path
+ * @param fod file or directory flag. When you know if you want to process file or directory place values 1 for File and 2 for Directory
+ * @return 0 when success, otherwise error number
+ */
+
+int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int fod, int *numberFiles )
+{
+	FHandler *fsys = srcdev->f_FSys;
+	char *fname = NULL;
+	int fnamesize = 0;
+	int oldfod = fod;
+	BufString *bs = NULL;
+	
+	DEBUG("[FileOrDirectoryDeleteRec]  start fod %d  - srcpath '%s'\n", fod, src );
+	
+	if( fod <= 0 )
+	{
+		bs = fsys->Info( srcdev, src );
+		if( bs != NULL )
+		{
+			DEBUG("[FileOrDirectoryDeleteRec] Info result %s\n", bs->bs_Buffer );
+
+			if( strncmp( "ok<!--separate-->", bs->bs_Buffer, 17 ) == 0 )
+			{
+				int i, i1;
+				int r;
+				jsmn_parser p;
+				jsmntok_t t[128]; // We expect no more than 128 tokens 
+			
+				jsmn_init(&p);
+				char *buffer = &bs->bs_Buffer[ 17 ];
+			
+				r = jsmn_parse(&p, buffer, bs->bs_Size - 17, t, sizeof(t)/sizeof(t[0]));
+				if (r < 0) 
+				{
+					FERROR("Failed to parse JSON: %d\n", r);
+					BufStringDelete( bs );
+					return 1;
+				}
+			
+				// Filename, Path, Filesize, DateModified, MetaType, Type (File/Directory)
+				
+				char *isdir = NULL;
+			
+				for( i = 0; i < r ; i++ )
+				{
+					i1 = i + 1;
+					if (jsoneq( buffer, &t[ i ], "Type") == 0) 
+					{
+						if( strncmp( "Directory",  buffer + t[ i1 ].start, t[ i1 ].end-t[ i1 ].start ) == 0 )
+						{
+							isdir = buffer + t[ i1 ].start;
+						}
+					}
+					else if (jsoneq( buffer, &t[ i ], "Filename") == 0) 
+					{
+						fname = buffer + t[ i1 ].start;
+						fnamesize = t[ i1 ].end-t[ i1 ].start;
+					}
+				}
+			
+				// is directory
+			
+				if( isdir != NULL )
+				{
+					fod = 2;
+				}
+			
+				// is file
+			
+				else
+				{
+					fod = 1;
+				}
+			}
+		}
+	}
+	
+	//
+	//
+	
+	// is directory
+	
+	if( fod == 2 )
+	{
+		BufString *bsdir = fsys->Dir( srcdev, src );
+		char *newsrc = NULL;
+		
+		newsrc = FCalloc( 512 + strlen( src ), sizeof(char) );
+		
+		DEBUG("[FileOrDirectoryDeleteRec] found directory 1\n");
+		
+		if( bsdir != NULL && newsrc != NULL )
+		{
+			DEBUG("[FileOrDirectoryDeleteRec] Received %s for path %s\n", bsdir->bs_Buffer, src );
+			if( strncmp( "ok<!--separate-->", bsdir->bs_Buffer, 17 ) == 0 )
+			{
+				int i;
+				int r;
+				jsmn_parser p;
+				
+				// assume we will have not more then 1024 entries
+				jsmntok_t *t;
+				
+				// 1024 multiplied by 18 = 18432
+				if( ( t = FCalloc( 18432, sizeof( jsmntok_t ) ) ) != NULL )
+				{
+					jsmn_init(&p);
+					char *buffer = &bsdir->bs_Buffer[ 17 ];
+
+					unsigned int entr = 0;
+					jsmntok_t *tokens = JSONTokenise( buffer, &entr );
+					
+					// find all File objects
+					
+					size_t object_tokens = 0;
+					size_t i, j;
+					
+					if( tokens != NULL )
+					{
+						for ( i = 0; i < entr; i++ )
+						{
+							jsmntok_t *t = &tokens[ i ];
+						
+							if( t->type == JSMN_ARRAY )
+							{
+								int objsize = t->size;
+								int z;
+								t++;
+								i++;
+							
+								for( z = 0; z < objsize ; z++ )
+								{
+									int elements = t->size;
+									char *locname = NULL;
+									char *loctype = NULL;
+								
+									int x;
+									t++;
+									i++;
+									for( x = 0; x < elements ; x++ )
+									{
+										jsmntok_t *valt = t + 1;
+									
+										if( strncmp( "Filename",  buffer + t->start, t->end-t->start ) == 0 )
+										{
+											locname = StringDuplicateN( buffer + valt->start, valt->end-valt->start );
+										}
+										else if( strncmp( "Type",  buffer + t->start, t->end-t->start ) == 0 )
+										{
+											loctype = StringDuplicateN( buffer + valt->start, valt->end-valt->start );
+										}
+
+										t += 2;
+									}
+								
+									if( locname != NULL && loctype != NULL )
+									{
+										int srclen = strlen( src );
+										strcpy( newsrc, src );
+										if( src[ srclen-1 ] != '/' && src[ srclen-1 ] != ':' )
+										{
+											strcat( newsrc, "/" );
+										}
+										strcat( newsrc, locname );
+
+										if( strcmp( "File", loctype ) == 0 )
+										{
+											fsys->Delete( srcdev, newsrc );
+											
+											(*numberFiles)++;
+										}
+										else
+										{
+											strcat( newsrc, "/" );
+											
+											//DEBUG("Directory will be deleted  newdst %s newsrc %s\n\n\n", newdst, newsrc );
+											FileOrDirectoryDeleteRec( request, srcdev, newsrc, 2, numberFiles );
+										}
+									}
+								
+									i += SHIFT_LEFT( elements, 2 );
+									if( locname != NULL )
+									{
+										FFree( locname );
+									}
+									if( loctype != NULL )
+									{
+										FFree( loctype );
+									}
+								}
+							}
+							DEBUG("[FileOrDirectoryDeleteRec] type %d size %d\n", t->type, t->size );
+						}
+						FFree( tokens );
+					}
+					
+					FFree( t );
+				}	// t calloc
+			}
+			if( bsdir != NULL )
+			{
+				BufStringDelete( bsdir );
+			}
+			if( newsrc != NULL )
+			{
+				FFree( newsrc );
+			}
+		}
+	}
+	
+	// is file
+	
+	else if( fod == 1 )
+	{
+		DEBUG("[FileOrDirectoryDeleteRec] File will be deleted on start: %s\n", src );
+		// copy file to local storage
+		fsys->Delete( srcdev, src );
+	}
+	
+	if( bs != NULL )
+	{
+		BufStringDelete( bs );
+	}
+	
+	DEBUG("[FileOrDirectoryDeleteRec] end\n");
 	
 	return 0;
 }

@@ -19,6 +19,19 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ * Worker-Manager definitions
+ *
+ * @author TW (Thomas Wollburg)
+ * @author HT (Hogne Tildstad)
+ * @author PS (Pawel Stefansky)
+ * @date first push by PS (10/02/2015)
+ * @sa worker.c worker.h
+ * 
+ * \ingroup FriendCoreWorker
+ * @{
+ */
 
 #ifndef __CORE_WORKER_MANAGER_H__
 #define __CORE_WORKER_MANAGER_H__
@@ -62,3 +75,5 @@ void WorkerManagerDebug( void *sb );
 
 
 #endif // __CORE_WORKER_MANAGER_H__
+
+/**@}*/

@@ -32,7 +32,29 @@ const char* MimeFromExtension( char* extension )
 {
 	if( !extension ) return "text/plain";
 	unsigned int hash = 0;
-	MurmurHash3_x86_32( extension, strlen( extension ), 0, &hash );
+	DEBUG("Check mime for extension: '%s'\n", extension );
+	MurmurHash3_32( extension, strlen( extension ), 0, &hash );
+	/*
+#ifdef IS_BIG_ENDIAN
+	unsigned int hashppc = 0;
+	char *s = (char *) &hash;
+	char *d = (char *) &hashppc;
+	d[0] = s[3];
+	d[1] = s[2];
+	d[2] = s[1];
+	d[3] = s[0];
+	
+	printf("HASH org %02x %02x %02x %02x\n", d[0], d[1], d[2], d[3] );
+	printf("HASH  %02x %02x %02x %02x\n", s[0], s[1], s[2], s[3] );
+	
+	hash = hashppc;
+#endif
+	*/
+	
+	//	case 0xEB24DE23:
+	//	case 0xC5A24103:
+	//		return "text/html";
+	
 	switch( hash )
 	{
 		case 0xCF0B1A32:

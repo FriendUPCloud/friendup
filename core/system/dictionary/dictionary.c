@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * Body of  dictionary
  *
@@ -34,22 +33,128 @@
 #include <system/dictionary/dictionary.h>
 #include <db/sqllib.h>
 
+static const char *DefaultDictionaryMessages[] = 
+{
+"PID parameter is missing",
+"Function not found",
+"Path parameter is empty",
+"sessionid or authid parameter is missing",
+"Cannot execute function. Admin rights required",
+"Parameters must be send by using POST method",
+"Account blocked until: %lu",
+"Authentication module not selected",
+"Missing parameters: username,password,deviceid",
+"Authentication by using publickeys is not supported",
+"User session or User not found",
+"User session not found",
+"Missing parameters: username,deviceid",
+"User not found",
+"Missing parameters: %s",
+"Cannot change password, error: %d",
+"SQL.library not found",
+"Cannot allocate memory",
+"Function %s returned: %d",
+"User already exist",
+"Service not found or service name parameter is missing!",
+"File or directory do not exist",
+"Device: '%s' not found",
+"Cannot open file: '%s'",
+"Sentinel user access rights missing",
+"Filesystem not found",
+"Function %s returned empty string",
+"Cannot create temporary file",
+"File do not exist or its empty",
+"Cannot send notification. Error %d",
+"Entry with id: %lu cannot be removed",
+"Cannot update notification entry. Error: %d",
+"Cannot change access. Error %d",
+"Cannot share file",
+"Destination drive not found",
+"No access to: %s",
+"Module call returned empty string",
+"Part %d of path is missing",
+"User or device do not exist",
+"Device cannot be shared. Error %d",
+"Invalid user session",
+"No disk name specified or disk does not exist",
+"Cannot poll drive. No data in DB",
+"Drive not found: %s",
+"No entry in DB: %s",
+"SASID not found",
+"No access to variable",
+"No user session in SAS",
+"Cannot send message. Error %d",
+"Cannot remove users",
+"Cannot add users",
+"Cannot create SAS",
+"Cannot convert message",
+"Cannot setup connection: %s",
+"Cannot parse command or not existing lib was called",
+"Bad user or password",
+"Cannot find device by ID: %lu",
+"Cannot unlock port. Error: %d",
+"Printer not added. Error: %d",
+"Connection created",
+"Connection reused",
+"FCConnection cannot be created",
+"Connection not found",
+"Connection deleted",
+"Cannot delete connection. Internal error: %d",
+"Connection with that name already exist"
+};
+
 /**
  * Create new Dictionary
  *
  * @param mysqllib pointer to opened mysql.library
  * @return pointer to new Dictionary structure, otherwise NULL
  */
-Dictionary * DictionaryNew(struct SQLLibrary *mysqllib )
+Dictionary * DictionaryNew( SQLLibrary *mysqllib )
 {
 	if( mysqllib == NULL )
 	{
 		FERROR("[DictionaryNew] Mysql.library was not opened\n");
 		return NULL;
 	}
-	int entries;
 	
-	return mysqllib->Load( mysqllib, DictionaryDesc, NULL, &entries );
+	Dictionary *d = FCalloc( 1, sizeof( Dictionary ) );
+	
+	if( d != NULL )
+	{
+		FULONG i;
+		int entry = 0;
+		DictEntry *locdic = d->d_DictList = mysqllib->Load( mysqllib, DictionaryDesc, " Language='ENG' ORDER BY DictID", &(d->d_Entries) );
+	
+		d->d_Msg = FMalloc( DICT_MAX * sizeof(char *) );
+		
+		for( i = 0 ; i < DICT_MAX ; i++ )
+		{
+			locdic = d->d_DictList;
+			char *msg = NULL;
+			
+			while( locdic != NULL )
+			{
+				if( i == locdic->de_DictID )
+				{
+					msg = locdic->de_Message;
+				}
+			
+				locdic = (DictEntry *)locdic->node.mln_Succ;
+			}
+			
+			if( msg != NULL )
+			{
+				d->d_Msg[ i ] = msg;
+			}
+			else
+			{
+				DEBUG("Message with ID %lu not found\n", i );
+				d->d_Msg[ i ] = (char *)DefaultDictionaryMessages[ i ];
+			}
+		}
+	}
+	
+	return d;
 }
 
 /**
@@ -57,18 +162,47 @@ Dictionary * DictionaryNew(struct SQLLibrary *mysqllib )
  *
  * @param d pointer to Dictionary structure which will be deleted
  */
-void DictionaryDelete(Dictionary* d)
+void DictionaryDelete( Dictionary* d )
+{
+	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
+	if( d != NULL )
+	{
+		FFree( d->d_Msg );
+		DictEntryDeleteAll( d->d_DictList );
+	}
+}
+
+/**
+ * Delete DictEntry
+ *
+ * @param d pointer to DictEntry structure which will be deleted
+ */
+void DictEntryDelete( DictEntry* d )
+{
+	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
+	if( d != NULL )
+	{
+		if( d->de_Lang )
+		{
+			FFree( d->de_Lang );
+			FFree( d->de_Message );
+		}
+	}
+}
+
+/**
+ * Delete Dictionary List
+ *
+ * @param d pointer to DictEntry list structure which will be deleted
+ */
+void DictEntryDeleteAll( DictEntry* d )
 {
 	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	while( d != NULL )
 	{
-		Dictionary *temp = d;
-		d = (Dictionary *)d->node.mln_Succ;
+		DictEntry *temp = d;
+		d = (DictEntry *)d->node.mln_Succ;
 		
-		if( temp->d_Lang )
-		{
-			FFree( temp->d_Lang );
-			FFree( temp->d_Name );
-		}
+		DictEntryDelete( temp );
 	}
 }

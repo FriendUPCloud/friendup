@@ -98,18 +98,19 @@ typedef struct FHandler
 	int                     (*FileSeek)( struct File *s, int pos );
 	
 	int                     (*MakeDir)( struct File *s, const char *path );
-	FQUAD                   (*Delete)( struct File *s, const char *path );
+	int64_t                 (*Delete)( struct File *s, const char *path );
 	int                     (*Rename)( struct File *s, const char *path, const char *nname );
-	char                  *(*Execute)( struct File *s, const char *path, const char *args, WebsocketClient *wsc );
-	int                     (*Copy)( struct File *s, const char *dst, const char *src );
+	char                    *(*Execute)( struct File *s, const char *path, const char *args, WebsocketClient *wsc );
+	int64_t                 (*Copy)( struct File *s, const char *dst, const char *src );
+	int                     (*GetDiskInfo)( struct File *s, int64_t *used, int64_t *size );
 	
-	char                   *(*InfoGet)( struct File *s, const char *path, const char *key );
+	char                    *(*InfoGet)( struct File *s, const char *path, const char *key );
 	int                     (*InfoSet)( struct File *s, const char *path, const char *key, const char *value );
 	
 	BufString               *(*Info)( struct File *s, const char *path );
 	BufString               *(*Call)( struct File *s, const char *path, char *args );
 	BufString               *(*Dir)( struct File *s, const char *path );
-	FQUAD					(*GetChangeTimestamp)( struct File *s, const char *path );
+	FLONG					(*GetChangeTimestamp)( struct File *s, const char *path );
 	
 	void                     *fh_SpecialData;
 }FHandler;

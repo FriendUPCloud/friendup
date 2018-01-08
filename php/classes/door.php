@@ -22,11 +22,11 @@
 *****************************************************************************©*/
 
 class Door extends dbIO
-{
+{	
 	// Construct a Door object
 	function Door( $path = false )
 	{
-		global $SqlDatabase;
+		global $SqlDatabase, $Logger;
 		
 		$this->dbTable( 'Filesystem' );
 		
@@ -81,11 +81,13 @@ class Door extends dbIO
 			}
 			else if( isset( $args->path ) )
 			{
-				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->path ) ) ) . '\')';
+				$ident = explode( ':', $args->path ); $res = reset( $ident );
+				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, $res ) . '\')';
 			}
 			else if( isset( $args->args->path ) )
 			{
-				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, reset( explode( ':', $args->args->path ) ) ) . '\')';
+				$ident = explode( ':', $args->args->path ); $res = reset( $ident );
+				$identifier = 'LOWER(f.Name)=LOWER(\'' . mysqli_real_escape_string( $SqlDatabase->_link, $res ) . '\')';
 			}
 			// This one should not be required!
 			else if( isset( $args->args->directory ) )
@@ -164,8 +166,6 @@ class Door extends dbIO
 		
 		$c = curl_init();
 		
-		//$Logger->log('curling in ' . $u . $query);
-		
 		curl_setopt( $c, CURLOPT_URL, $u . $query );
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, 1 );
 		if( $Config->SSLEnable )
@@ -201,7 +201,191 @@ class Door extends dbIO
 	{
 		return 0;
 	}
-
+	
+	function syncFiles( $pathFrom, $pathTo, $log )
+	{
+		global $Logger;
+		
+		$dest = [];
+		
+		// Destination path ...
+		
+		if( $dir = $this->dir( trim( $pathTo ) ) )
+		{
+			$dir = array_reverse( $dir );
+			
+			foreach( $dir as $k=>$v )
+			{
+				$dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )] = $v;
+			}
+		}
+		
+		// Location path ...
+		
+		if( $dir = $this->dir( trim( $pathFrom ) ) )
+		{
+			$dir = array_reverse( $dir );
+			
+			if( $log ) $log->log( " ", true );
+			
+			if( $log ) $log->ok( "Preping ... [From] -> " . trim( $pathFrom ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
+			if( $log ) $log->ok( "Preping ... [To]   -> " . trim( $pathTo ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
+			
+			$subs = [];
+			
+			foreach( $dir as $k=>$v )
+			{
+				$modified = false;
+				
+				if( $log ) $log->waiting( "Copying ...        -> " . trim( $v->Filename ) );
+				
+				$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
+				
+				if( isset( $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )] ) )
+				{
+					$dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->Found = true;
+					
+					if( isset( $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->DateModified ) )
+					{
+						// TODO: Fix this, commented out while DateModified is not fully operational
+						//$modified = $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->DateModified;
+					}
+				}
+				
+				if( !$v->DateModified || !$modified || ( strtotime( $v->DateModified ) > strtotime( $modified ) ) )
+				{
+					if( $this->copyFile( trim( $v->Path ), trim( $v->Destination ) ) )
+					{
+						if( !strstr( trim( $v->Filename ), '.info' ) )
+						{
+							if( $log ) $log->ok( "Copying ...        -> " . trim( $v->Filename ), true );
+						}
+					}
+					else
+					{
+						if( $log ) $log->error( "Copying ...        -> " . trim( $v->Filename ), true );
+					}
+				}
+				else
+				{
+					if( !strstr( trim( $v->Filename ), '.info' ) )
+					{
+						if( $log ) $log->ok( "Ignored ...        -> " . trim( $v->Filename ), true );
+					}
+				}
+				
+				if( $v->Type == 'Directory' )
+				{
+					$subs[] = $v;
+				}
+			}
+			
+			if( $dest )
+			{
+				foreach( $dest as $des )
+				{
+					if( !isset( $des->Found ) && $des->Path )
+					{
+						// TODO: If it has been deleted return ok when next loop has the same path in regards to .info files
+						
+						if( !strstr( trim( $des->Filename ), '.info' ) )
+						{
+							if( $log ) $log->waiting( "Delete  ...        -> " . trim( $des->Filename ) );
+						
+							if( $this->deleteFile( $des->Path ) )
+							{
+								if( $log ) $log->ok( "Delete  ...        -> " . trim( $des->Filename ), true );
+							}
+							else
+							{
+								if( $log ) $log->error( "Delete  ...        -> " . trim( $des->Filename ), true );
+							}
+						}
+					}
+				}
+			}
+			
+			if( $subs )
+			{
+				foreach( $subs as $k=>$v )
+				{
+					$this->syncFiles( trim( $v->Path ), trim( $v->Destination ), $log );
+				}
+			}
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	function deleteFile( $delpath )
+	{
+		global $User, $Logger;
+		
+		// 1. Get the filesystem objects
+		$ph = reset( explode( ':', $delpath ) );
+		
+		$fs = new dbIO( 'Filesystem' );
+		$fs->UserID = $User->ID;
+		$fs->Name   = $ph;
+		$fs->Load();
+		
+		// We got two filesystems, good!
+		if( $fs->ID > 0 )
+		{
+			// New version:
+			if( !isset( $test ) )
+			{
+				$test = 'devices/DOSDrivers/' . $fs->Type . '/door.php';
+			}
+			
+			// Final test
+			if( !file_exists( $test ) )
+			{
+				// Use built-in, will work on local.handler
+				$deldoor = new Door( $delpath );
+			}
+			else
+			{
+				$path = $delpath;
+				include( $test );
+				$deldoor = $door;
+			}
+			
+			unset( $door, $path );
+			
+			// It's a folder!
+			if( substr( $delpath, -1, 1 ) == '/' )
+			{
+				if( $deldoor->_deleteFolder( $delpath ) )
+				{
+					return true;
+				}
+				
+				$Logger->log( 'couldn\'t deleteFolder... ' . $delpath );
+				
+				return false;
+			}
+			// It's a file
+			else
+			{
+				if( $deldoor->_deleteFile( $delpath ) )
+				{
+					return true;
+				}
+				
+				$Logger->log( 'couldn\'t deleteFile... ' . $delpath );
+				
+				return false;
+			}
+			
+			$Logger->log( 'how did we even get here... ' . $delpath );
+			
+			return false;
+		}
+	}
+	
 	function copyFile( $pathFrom, $pathTo )
 	{
 		global $User, $Logger;

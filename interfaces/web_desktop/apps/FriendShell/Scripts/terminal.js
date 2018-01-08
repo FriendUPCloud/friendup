@@ -144,14 +144,8 @@ Application.handlePipe = function( packet )
 						switch ( packet.returnMessage.command )
 						{
 							case 'help':
-								if ( !packet.returnMessage.name )
-								{
-									Application.addOutput( i18n( 'i18n_frienddos_has' ) + ':' );
-									Application.addNL();
-									Application.addOutput( packet.returnMessage.text );
-									Application.addNL();
-								}
-								else
+								// Help on command
+								if( packet.returnMessage.name )
 								{
 									var help = i18n( 'i18n_' + packet.returnMessage.name );
 									Application.addOutput( help );
@@ -336,7 +330,6 @@ Application.addError = function( str )
 // Add error line
 Application.addOutput = function( str)
 {
-	console.log('Adding output (input: ' + ( this.input ? 'on' : 'off' ) + ' ): ' + str);
 	var n = document.createElement('div');
 	n.innerHTML = '<div class="Output SelectableText">' + str + '</div>';
 	this.terminal.appendChild(n);
@@ -441,6 +434,8 @@ Application.addNL = function( focus )
 	this.terminal.scrollTop = 99999999;
 	
 	this.enableCLI();
+	
+	this.focusCLI();
 }
 
 // Add new line
@@ -825,14 +820,14 @@ Application.receiveMessage = function( object )
 {
 	var self = this;
 	var command = object.command;
-	if( !command )
+/*	if( !command )
 	{
 		if ( object.data && object.data.command )
 			command = object.data.command;
 		else
 			return false;
 	}
-	switch( command )
+*/	switch( command )
 	{
 		case 'quit_shell':
 			FriendNetwork.closeApplication();
@@ -892,6 +887,9 @@ Application.receiveMessage = function( object )
 				var f = extractCallback( object.callback );
 				if( f ) f();
 			}
+			break;
+		case 'activate':
+			Application.focusCLI();
 			break;
 		case 'friendnetwork':
 			switch (object.subCommand)

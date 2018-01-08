@@ -25,14 +25,14 @@
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 2015
+ * 
+ * \ingroup FriendCore
+ * @{
  */
 
 #ifndef __CORE_FUNCTIONS_H__
 #define __CORE_FUNCTIONS_H__
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types -Wformat -Wall -Wpedantic"
-          
 #define LIST_FOR_EACH( LIST, ENTRY, TYPE ) \
 	for( ENTRY = LIST; ENTRY != NULL ; ENTRY = ( TYPE ) ENTRY->node.mln_Succ )
 
@@ -49,4 +49,11 @@
 		ENTRY->node.mln_Succ =(MinNode *) LIST; \
 		LIST = ENTRY;
 		
+#ifndef NO_NULL
+#define NO_NULL( DISP ) ( DISP != NULL ? DISP : "" )
+#endif
+		
 #endif //__CORE_FUNCTIONS_H__
+
+/**@}*/
+// End of FriendCore Doxygen group

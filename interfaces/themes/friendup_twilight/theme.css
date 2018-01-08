@@ -85,7 +85,7 @@
 	$ColorLEDAlert:          #ff5308;
 	$ColorLEDOff:            #444444;
 	$ColorLEDText:           #e4e4e4;
-	
+
 	/* Special colors */
 	$ColorBgStError:         #990000;
 	$ColorStError:           #ff6666;
@@ -95,7 +95,7 @@
 	$ColorStBlueLight:       #e4e4e4;
 	$ColorBgStGrayLight:     #BFBFBF;
 	$ColorStGrayLight:       #e4e4e4;
-	
+
 	/* Context colors */
 	$ColorAccept:              #000000;
 	$ColorAcceptBg:            #92b376;
@@ -111,16 +111,16 @@
 	$ColorDangerButtonHoverBg: #ef653b;
 	$ColorAvailable:           #000000;
 	$ColorAvailableBg:         #94c6e0;
-	$ColorAction:              #ff59ff;
-	$ColorActionBg:            transparent;
-	$ColorWarning:             yellow;
-	$ColorWarningBg:           transparent;
-	$ColorNotify:              orange;
-	$ColorNotifyBg:            transparent;
-	
+	$ColorAction:              #000000;
+	$ColorActionBg:            #c362ff;
+	$ColorWarning:             #000000;
+	$ColorWarningBg:           #fdff87;
+	$ColorNotify:              #000000;
+	$ColorNotifyBg:            #ff9d4a;
+
 	$ColorIconBlinkStart:      white;
 	$ColorIconBlinkEnd:        grey;
-	
+
 	/* Font sizes */
 	$FontSizeButton:         14px;
 	$FontSizeDefault:        14px;
@@ -130,19 +130,19 @@
 	$FontWeightThList:       normal;
 	$FontWeightTabs:         normal;
 	$FontWeightButtonActive: bold;
-	
+
 	/* Default face */
 	$FontFaceNormal:         lato, sans serif;
-	
+
 	/* Font transforms */
 	$FontTransformThList:    uppercase;
-	
+
 	/* Text shadow */
 	$TxtShdThList:           1px 1px 1px white;
 	$TxtShdTdList:           none;
 	$TxtShdPositive:         1px 1px 1px black;
 	$TxtShdNegative:         1px 1px 1px white;
-	
+
 	/* Margins */
 	$MarginButton:           0 4px 0 0;
 	$MarginButtonTd:         0;
@@ -154,7 +154,7 @@
 	$MarginWindowLeft:       3px;
 	$MarginWindowRight:      3px;
 	$MarginWindowBottom:     0px;
-	
+
 	/* Padding */
 	$PaddingSelect:          4px 5px 5px 5px;
 	$PaddingButton:          5px;
@@ -164,11 +164,11 @@
 	$PaddingInput:           2px 5px;
 	$PaddingTabs:            8px 10px 8px 10px;
 	$PaddingBox:             10px;
-	
+
 	/* Tables */
 	$TblListsBorderCollapse: collapse;
 	$TblListsBorderSpacing:  0px;
-	
+
 	/* Borders */
 	$ButtonBorderRadius:     3px;
 	$BorderBox:              1px solid #e0e0e0;
@@ -183,23 +183,23 @@
 	$WinBorderRightBlur:     1px solid #222222;
 	$WinBorderBottomBlur:    1.4px solid #050505;
 	$WinBottomBarHeight:     17px;
-	$WinContentBottom:       18px;
+	$WinContentBottom:       17px;
 	$BorderRadiusTabs:       3px 3px 0 0;
 	$BorderPageActive:       none;
 	$BorderRuler:            1px solid #202020;
-	
+
 	$BorderDefaultTop:       1px solid rgba(255,255,255,0.1);
 	$BorderDefaultLeft:      1px solid rgba(255,255,255,0.1);
 	$BorderDefaultRight:     1px solid rgba(0,0,0,0.1);
 	$BorderDefaultBottom:    1px solid rgba(0,0,0,0.1);
-	
+
 	/* Box shadow */
 	$BoxShadowButton:        0px 2px 2px rgba(0,0,0,0.2);
 	$BoxShadowRecessed:      inset 0px 1px 3px rgba(0,0,0,0.2);
 	$BoxShadowElevated:      0px 1px 3px rgba(0,0,0,0.2);
 	$BorderRecessed:         none;
 	$BorderElevated:         1px solid rgba(0,0,0,0.1);
-	
+
 	/* Window gadgets */
 	$WinGadResizeImg:        url(/themes/friendup_twilight/gfx/win_resizewin_passive.png);
 	$WinGadResizeImgA:       url(/themes/friendup_twilight/gfx/win_resizewin_passive.png);
@@ -217,28 +217,39 @@
 	$WinFrameBgDarkBlur:     #101010;
 	$WinFrameBgActive:       #303030;
 	$WinFrameBgDarkActive:   #202020;
-	
+
 	/* Gui image elements */
 	$GuiImgWinTitle:         url(/themes/friendup_twilight/gfx/window_topgradient_inactive.png);
 	$GuiImgWinTitleActive:   url(/themes/friendup_twilight/gfx/window_topgradient.png);
 	$GuiImgWinLoading:       #222222 url(/themes/friendup_twilight/gfx/loading.gif) no-repeat center center;
-	
+
 	/* Icon set */
 	$IconSmallArrowUp:       url(/webclient/gfx/icons/16x16/actions/arrow-up.png);
 	$IconSmallArrowDown:     url(/webclient/gfx/icons/16x16/actions/arrow-down.png);
 	$IconSmallArrowLeft:     url(/webclient/gfx/icons/16x16/actions/arrow-left.png);
 	$IconSmallArrowRight:    url(/webclient/gfx/icons/16x16/actions/arrow-right.png);
-	
+
 	$IconSmallSave:          url(/webclient/gfx/icons/16x16/actions/dialog-ok.png);
 	$IconSmallUse:           url(/webclient/gfx/icons/16x16/actions/dialog-ok-apply.png);
 	$IconSmallCancel:        url(/webclient/gfx/icons/16x16/actions/dialog-cancel.png);
-	
+
 	$IconSmallListAdd:       url(/webclient/gfx/icons/16x16/actions/list-add.png);
 	$IconSmallListRemove:    url(/webclient/gfx/icons/16x16/actions/list-remove.png);
-	
+
 	/* Other */
 	$LineHeightInput:        14px;
 }
+
+/* VIRTUAL ELEMENTS --------------------------------------------------------- */
+/* Where the windows can move */
+.ScreenContentMargins
+{
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+/* DONE VIRTUAL ELEMENTS ---------------------------------------------------- */
 
 html body
 {
@@ -246,10 +257,31 @@ html body
 	font-size: 15px;
 }
 
+html body[mobile=mobile]
+{
+	font-size: 16px;
+}
+
 html .Screen > .TitleBar > .Left *
 {
 	margin: -1px 5px 0 0;
 	color: white;
+}
+
+@keyframes offlineFade
+{
+	0% { color: #ff0000; }
+	50% { color: #ffee00; }
+	100% { color: #ff0000; }
+}
+html .Screen > .TitleBar > .Left .Extra .Offline
+{
+	animation: offlineFade 2s infinite;
+}
+
+html .Screen > .TitleBar > .Left .Extra .Offline
+{
+	background-image: url(/themes/friendup_twilight/gfx/offline_16px.png);
 }
 
 .BordersDefault
@@ -353,7 +385,7 @@ html .File.Selected .Title
 
 .WindowBackground
 {
-	background-color: $ColorBackground;	
+	background-color: $ColorBackground;
 }
 
 .WindowBackgroundActive
@@ -527,14 +559,37 @@ button:hover, .Button:hover
 .IconHeightMedium { height: 36px; padding: 4px; box-sizing: border-box; }
 .IconHeightLarge { height: 44px; padding: 4px; box-sizing: border-box; }
 
+/* Menu stuff --------------------------------------------------------------- */
+
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
+html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
+{
+	background: #282828;
+}
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu,
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line,
+html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu,
+html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
+{
+	background: #282828;
+	color: white;
+	margin: 0px 1px 0 4px;
+	line-height: 32px;
+}
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line,
+html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
+{
+	background: none;
+}
+
 /* Extra styling just for this theme ---------------------------------------- */
 
 .View
 {
-	border-bottom: 1px solid rgba(0,0,0,0.2);
-	border-radius: 3px 3px 4px 4px;
-	-moz-border-radius: 3px 3px 4px 4px;
-	-webkit-border-radius: 3px 3px 4px 4px;
+	border-bottom: 1px solid rgb(30,30,30);
+	border-radius: 7px 7px 4px 4px;
+	-moz-border-radius: 7px 7px 4px 4px;
+	-webkit-border-radius: 7px 7px 4px 4px;
 	box-shadow: 0px 1px 16px rgba(0,0,0,0.6);
 	-moz-box-shadow: 0px 1px 16px rgba(0,0,0,0.6);
 	-webkit-box-shadow: 0px 1px 16px rgba(0,0,0,0.6);
@@ -552,13 +607,14 @@ body[mobile=mobile] #Screens .View
 
 .View.Active
 {
-	border-bottom: 1px solid rgba(0,0,0,0.2);
+	border-bottom: 1px solid rgb(30,30,30);
 }
 
 .View.Active:active
 {
-	-moz-border-radius: 3px 3px 4px 4px;
-	-webkit-border-radius: 3px 3px 4px 4px;
+	border-radius: 7px 7px 4px 4px;
+	-moz-border-radius: 7px 7px 4px 4px;
+	-webkit-border-radius: 7px 7px 4px 4px;
 	box-shadow: 0px 1px 16px rgb(17, 43, 67);
 	-moz-box-shadow: 0px 1px 16px rgb(17, 43, 67);
 	-webkit-box-shadow: 0px 1px 16px rgb(17, 43, 67);
@@ -574,13 +630,62 @@ html .View > .Title
 .View.Active > .Title > div > .Close:hover,
 .View.Active > .Title > div > .Close
 {
-	background-image: url(/themes/friendup_twilight/gfx/win_close_active.png);
+	background-image: url(/themes/friendup/gfx/win_close_active.png);
 }
 
-body[mobile=mobile] .View.Active > .Title > div > .Close:hover,
-body[mobile=mobile] .View.Active > .Title > div > .Close
+.View.Active > .Title > div > .MobileClose
 {
-	background-image: url(/themes/friendup_twilight/gfx/win_windowmenu_active.png);
+	position: absolute;
+	top: 0;
+	right: 3px;
+	width: 33px;
+	height: 33px;
+	border-left: 1px solid rgba(0,0,0,0.1);
+}
+.View.Active > .Title > div > .MobileClose:after
+{
+	content: " ";
+	display: block;
+	position: absolute;
+	height: 33px;
+	left: 0px;
+	width: 1px;
+	top: 0;
+	background: rgba(255,255,255,0.1);
+}
+
+/* Mobile glypths */
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close
+{
+	background-image: none;
+}
+.View.Active > .Title > div > .MobileClose:before,
+body:not([tablet])[mobile=mobile] .View > .Title > div > .Close:before
+{
+	content: "\f00d";
+	font-family: fontawesome;
+	font-size: 18px;
+	position: absolute;
+	top: 0; left: 0; width: 33px; height: 33px;
+	text-align: center;
+	line-height: 33px;
+	font-weight: normal;
+}
+
+/* Mobile glypths */
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close
+{
+	background-image: none;
+}
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
+{
+	content: "\f104";
+	font-family: fontawesome;
+	font-size: 18px;
+	position: absolute;
+	top: 0; left: 0; width: 33px; height: 33px;
+	text-align: center;
+	line-height: 33px;
 }
 
 /* Window menu */
@@ -604,7 +709,7 @@ body.WindowMenu #Screens .View .Depth,
 body.WindowMenu #Screens .View .Minimize,
 body.WindowMenu #Screens .View .Resize,
 body.WindowMenu #Screens .View span:after,
-body.WindowMenu #Screens .View.Active .BottomBar, 
+body.WindowMenu #Screens .View.Active .BottomBar,
 body.WindowMenu #Screens .View.Active .Resize,
 body.WindowMenu #Screens .View.Active .RightBar,
 body.WindowMenu #Screens .View.Active .LeftBar
@@ -645,6 +750,17 @@ body.WindowMenu .Desklet, body.WindowMenu .Screen .ScreenContent .Scroller:befor
 	opacity: 0;
 	pointer-events: none;
 }
+
+html .Desklet
+{
+	background: rgba(0,0,0,0.8);
+}
+
+.Desklet.HasWindowlist
+{
+	border-radius: 0;
+}
+
 /* Window menu done */
 
 .View > .LeftBar
@@ -719,7 +835,7 @@ html .VolumeGauge > .Inner
 	z-index: 2147483647;
 }
 
-html .View.Active > .Resize 
+html .View.Active > .Resize
 {
     background-color: transparent;
 }
@@ -734,7 +850,7 @@ html .View.Active .Content
 	background: #282828;
 }
 
-.View > .Resize 
+.View > .Resize
 {
     background-image: url(/themes/friendup_twilight/gfx/win_resizewin_passive.png);
     background-repeat: no-repeat;
@@ -748,7 +864,7 @@ html .View.Active .Content
     height: 16px !important;
 }
 
-.Screen > .TitleBar .ScreenList > img 
+.Screen > .TitleBar .ScreenList > img
 {
     display: none;
 }
@@ -781,7 +897,7 @@ html .Screen > .TitleBar:after
 	left: 4px;
 	width: 24px;
 	height: 24px;
-	
+
 	background: url(/themes/friendup_twilight/gfx/friend_logo_24px.png);
 }
 
@@ -790,61 +906,74 @@ html .Screen > .TitleBar .Left
 	border-left: 1px solid rgba(0,0,0,0.1);
 }
 
-html #WorkbenchMenu
+html #WorkspaceMenu
 {
 	background: transparent;
 }
 
-html #WorkbenchMenu .Open ul > li
+html #WorkspaceMenu .Open ul > li
 {
 	background: none;
 }
+html [mobile=mobile] #WorkspaceMenu .Open ul > li
+{
+	color: white;
+}
 
-html #WorkbenchMenu .Open > ul
+html #WorkspaceMenu .Open > ul
 {
 	background: rgba(255,255,255,0.9);
 	border-radius: 0 0 5px 5px;
 }
 
-html #WorkbenchMenu li:last-child
+html #WorkspaceMenu li:last-child
 {
 	border-radius: 0 0 5px 5px;
 	border-radius: 0 0 4.2px 4.2px;
 }
 
-html #WorkbenchMenu ul ul li:first-child
+html #WorkspaceMenu ul ul li:first-child
 {
 	border-radius: 5px 5px 0 0;
 	border-radius: 4.2px 4.2px 0 0;
 }
 
-html #WorkbenchMenu ul ul li:only-child
+html #WorkspaceMenu ul ul li:only-child
 {
 	border-radius: 5px;
 	border-radius: 4.2px;
 }
 
-html #WorkbenchMenu .Open ul > li ul
+html #WorkspaceMenu .Open ul > li ul
 {
 	border-radius: 5px;
 }
 
-html #WorkbenchMenu .Menu
+html #WorkspaceMenu .Menu
 {
 	color: white;
 	font-weight: bold;
 	text-shadow: 0 1px 1px rgba(0,0,0,0.5);
 }
 
-html #WorkbenchMenu .Menu:hover
+html #WorkspaceMenu .Menu:hover
 {
 	background-color: rgba(0,0,0,0.6);
 }
 
-html #WorkbenchMenu .Open ul > li:hover, 
-html #WorkbenchMenu .Open ul > li.Open
+html #WorkspaceMenu .Open ul > li:hover,
+html #WorkspaceMenu .Open ul > li.Open
 {
 	background: rgba(0,0,0,0.6);
+}
+
+[mobile=mobile] .Screen #CalendarWidget .MonthName
+{
+	background: black;
+}
+[mobile=mobile] .Screen #CalendarWidget
+{
+	border-radius: 0;
 }
 
 html .View > .RightBar
@@ -983,10 +1112,10 @@ html #Statusbar .Task:hover
 	box-shadow: 0px 1px 5px rgba(0,0,0,0.5);
 }
 
-html #Statusbar .Task.Active
+html #Statusbar .Task.Active,
+html #DockWindowList .Task.Active
 {
-	background-color: #3a3a3a;
-	height: 27px;
+	background-color: #326da4;
 }
 
 html .PageActive
@@ -1078,9 +1207,9 @@ html .ToolDivider
 {
 	content: " ";
 	position: absolute;
-	top: 0; 
-	left: 0; 
-	width: 100%; 
+	top: 0;
+	left: 0;
+	width: 100%;
 	height: 100%;
 	background-size: 24px;
 	background-repeat: no-repeat;
@@ -1403,6 +1532,11 @@ html .File .Icon .TypeFPkg
 	background-image: url(/iconthemes/friendup/80/archive_fpkg.png);
 }
 
+html .File .Icon .TApplication
+{
+	background-image: url(/iconthemes/friendup/80/treeapplication.png);
+}
+
 html .File .Icon .TypeZip
 {
 	background-image: url(/iconthemes/friendup/80/archive_zip.png);
@@ -1470,14 +1604,14 @@ html .File .Icon .FriendCore
 	background-image: url(/iconthemes/friendup/80/friendcore.png);
 }
 
-html .File.Selected .Icon .Devs_Drawer_DOSDrivers
-{
-	background-image: url(/iconthemes/friendup/80/drawer_gray_open.png);
-}
-
 html .File .Icon .DeviceSession
 {
 	background-image: url(/iconthemes/friendup/80/usersession.png);
+}
+
+html .File.Selected .Icon .Devs_Drawer_DOSDrivers
+{
+	background-image: url(/iconthemes/friendup/80/drawer_gray_open.png);
 }
 
 html .File .Icon .DOSDriver
@@ -1512,14 +1646,14 @@ html .File .Icon .System_Library
 
 /* System icons */
 
-html .File .Icon .System_Tools
+html .File .Icon .System_Repositories
 {
-	background-image: url(/iconthemes/friendup/80/drawer_small_tools.png);
+	background-image: url(/iconthemes/friendup/80/drawer_small_globe.png);
 }
 
-html .File.Selected .Icon .System_Tools
+html .File.Selected .Icon .System_Repositories
 {
-	background-image: url(/iconthemes/friendup/80/drawer_small_tools_open.png);
+	background-image: url(/iconthemes/friendup/80/drawer_small_globe_open.png);
 }
 
 html .File .Icon .System_Settings
@@ -1690,6 +1824,11 @@ html input, html textarea, html select
 	font-size: 15px;
 }
 
+html #DoorsScreen .Left > .VirtualWorkspaces > div:not(.Active):hover > span
+{
+	color: black;
+}
+
 /* Mouse pointers ----------------------------------------------------------- */
 
 body
@@ -1698,8 +1837,8 @@ body
 }
 
 html .MousePointer,
-html .File, html button, html .Button, html .Desklet .Launcher, html #Tray > div, 
-html #Statusbar .Task, 
+html .File, html button, html .Button, html .Desklet .Launcher, html #Tray > div,
+html #Statusbar .Task,
 html .View > .Title > div > .Zoom,
 html .View > .Title > div > .Depth,
 html .View > .Title > div > .Close,
@@ -1712,7 +1851,7 @@ html select,
 html .List > div,
 html .Tab, html .TabActive, html .VertTab,
 html .ToolButton, html .ToolSelect, html .ToolButtonLabel,
-html #WorkbenchMenu .Menu, html #WorkbenchMenu .Open, html #WorkbenchMenu .Menu:hover,
+html #WorkspaceMenu .Menu, html #WorkspaceMenu .Open, html #WorkspaceMenu .Menu:hover,
 html input[type=checkbox], html input[type=radio], html input[type=image]
 {
 	cursor: url(/themes/friendup/gfx/icons/Custom/mouse_pointer_green.png) 7 3, auto;
@@ -1738,9 +1877,9 @@ html .View > .MoveOverlay, html .Screen > .MoveOverlay
 }
 
 html .MouseRestricted,
-html body #WorkbenchMenu .Menu li.Disabled, 
-html body #WorkbenchMenu .Menu li.Disabled:hover, 
-html body #WorkbenchMenu .Menu li.Disabled *
+html body #WorkspaceMenu .Menu li.Disabled,
+html body #WorkspaceMenu .Menu li.Disabled:hover,
+html body #WorkspaceMenu .Menu li.Disabled *
 {
 	cursor: url(/themes/friendup/gfx/icons/Custom/mouse_pointer_red.png) 7 3, auto;
 }
@@ -1756,6 +1895,7 @@ html body.Busy, html body.Busy *
 	animation: busyPointer 1000ms infinite;
 	-webkit-animation: busyPointer 1000ms infinite;
 }
+
 @keyframes busyPointer
 {
 	0%     { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0001.png) 0 0, auto; }
@@ -1835,6 +1975,12 @@ html body.Busy, html body.Busy *
 	100%   { cursor: url(/themes/friendup/gfx/icons/Custom/busyanim/busy0035.png) 0 0, auto; }
 }
 
+/* Icon fix */
+html #Screens .File.Selected  .Title
+{
+	color: white;
+}
+
 /* Deepest field */
 
 #DeepestField #UserProfilePicture > p.Fullname
@@ -1843,12 +1989,85 @@ html body.Busy, html body.Busy *
 	text-shadow: 0px 1px 1px black;
 }
 
+/* Mobile window management - special styles for different view modes ------- */
+body .View[maximized=true],
+body .View[maximized=true] > .Title,
+body .View.Active[maximized=true] > .Title,
+body:not([tablet])[mobile=mobile] .View,
+body:not([tablet])[mobile=mobile] .View > .Title,
+body:not([tablet])[mobile=mobile] .View.Active > .Title
+{
+	border-radius: 0;
+	-moz-border-radius: 0;
+	-webkit-border-radius: 0;
+	background-color: #222222;
+}
+html body:not([tablet])[mobile=mobile] .View > .Title > div > span
+{
+	left: 8px;
+	width: calc(100% - 8px);
+}
+body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
+{
+	left: 40px;
+	width: calc(100% - 75px);
+}
+
+body:not([tablet])[mobile=mobile] #Screens .View .BottomBar, 
+body:not([tablet])[mobile=mobile] #Screens .View .Resize,
+body:not([tablet])[mobile=mobile] #Screens .View .Zoom, 
+body:not([tablet])[mobile=mobile] #Screens .View .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View .Minimize, 
+body:not([tablet])[mobile=mobile] #Screens .View .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View .Zoom,
+body:not([tablet])[mobile=mobile] #Screens .View .Minimize
+{
+	visibility: hidden;
+	pointer-events: none;
+}
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Close,
+body:not([tablet])[mobile=mobile].WindowMenu #Screens .View .Close,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Depth,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Zoom,
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Minimize
+{
+	visibility: visible;
+	pointer-events: all;
+}
+
+body:not([tablet])[mobile=mobile] #Screens .View:not(.Active) .Close
+{
+	left: auto;
+	right: 0;
+	position: absolute;
+	visibility: visible;
+	pointer-events: all;
+	top: 0;
+	z-index: 10;
+	margin: 0;
+}
+body:not([tablet])[mobile=mobile] #Screens .View:not(.Active) .Close:after
+{
+	display: none;
+}
+
+body:not([tablet])[mobile=mobile] #Screens .View.Active .BottomBar, 
+body:not([tablet])[mobile=mobile] #Screens .View.Active .Resize
+{
+	display: block;
+}
+/* Done mobile window management -------------------------------------------- */
 
 /* Mobile menu */
 
-html body[mobile=mobile] > #MobileMenu.Visible
+html body[mobile=mobile] > .MobileMenu.Visible,
+html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul
 {
 	background: #222222;
+	color: white;
+}
+[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li
+{
 	color: white;
 }
 
@@ -1860,4 +2079,3 @@ html body[mobile=mobile] > #MobileMenu.Visible
 		height: 4px;
 	}
 }
-

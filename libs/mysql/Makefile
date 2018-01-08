@@ -9,6 +9,10 @@ ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
 endif
 
+ifeq ($(PROFILE),1)
+CFLAGS  +=	-pg -DPROFILE=1
+endif
+
 ifeq ($(WEBSOCKETS_THREADS),1)
 CFLAGS	+=	-DENABLE_WEBSOCKETS_THREADS
 endif
@@ -37,7 +41,7 @@ $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
 	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) $(CFLAGS) ../../core/obj/library.o ../../core/obj/list_string.o 
 
-obj/%.o: %.c *.h %.d
+obj/%.o: %.c %.d
 	@echo "\033[34mCompile ...\033[0m"
 	gcc $(CFLAGS) -c -o $@ $<
 

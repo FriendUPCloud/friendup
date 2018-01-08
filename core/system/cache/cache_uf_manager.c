@@ -38,7 +38,7 @@
  * @param ramBufSize maxiumum buffer size for stored files in ram
  * @return new CacheUFManager structure or NULL if error appear
  */
-CacheUFManager *CacheUFManagerNew( FULONG fileBufSize, FULONG ramBufSize )
+CacheUFManager *CacheUFManagerNew( FULONG fileBufSize, FULONG ramBufSize __attribute__((unused)) )
 {
 	DEBUG( "[CacheUFManagerNew] Setting up cache manager.\n" );
 	CacheUFManager *cm = FCalloc( 1, sizeof( CacheUFManager ) );
@@ -134,7 +134,7 @@ int CacheUFManagerFilePut( CacheUFManager *cm, FULONG uid, FULONG did, CacheFile
 				DEBUG("[CacheUFManagerFilePut] new cache drive (id %lu) for user created\n", did );
 			}
 		
-			INFO(" cache size %lld file size %lld cache max %lld\n",  cdev->cd_CacheSize ,(FQUAD)lf->cf_FileSize, (FQUAD)cdev->cd_MaxCacheSize );
+			INFO(" cache size %ld file size %ld cache max %ld\n",  cdev->cd_CacheSize ,(FLONG)lf->cf_FileSize, (FLONG)cdev->cd_MaxCacheSize );
 			if( cdev == NULL || (cdev->cd_CacheSize + lf->cf_FileSize) > cdev->cd_MaxCacheSize )
 			{
 				FERROR("Cannot add file to cache, cache is FULL or cannot be created\n");

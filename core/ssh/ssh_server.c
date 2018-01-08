@@ -75,7 +75,7 @@ extern struct SystemBase *SLIB;
  * @return SSHServer structure or NULL when error appear
  */
 
-SSHServer *SSHServerNew( void *lsb )
+SSHServer *SSHServerNew( void *lsb __attribute__((unused)) )
 {
 	SSHServer *ts = NULL;
 
@@ -251,7 +251,7 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 // Checking another way of authorisation
 //
 
-static int auth_gssapi_mic( ssh_session session, const char *user, const char *principal, void *userdata )
+static int auth_gssapi_mic( ssh_session session __attribute__((unused)), const char *user __attribute__((unused)), const char *principal __attribute__((unused)), void *userdata )
 {
 #ifdef ENABLE_SSH	
 	SSHSession *s = (SSHSession *)userdata;
@@ -278,21 +278,21 @@ static int auth_gssapi_mic( ssh_session session, const char *user, const char *p
 // Terminal requests
 //
 
-static int pty_request( ssh_session session, ssh_channel channel, const char *term,
-        int x,int y, int px, int py, void *userdata )
-{
-	SSHSession *s = (SSHSession *)userdata;
-	
-    (void) session;
-    (void) channel;
-    (void) term;
-    (void) x;
-    (void) y;
-    (void) px;
-    (void) py;
-    DEBUG("[SSH] Allocated terminal\n");
-    return 0;
-}
+//static int pty_request( ssh_session session, ssh_channel channel, const char *term,
+//        int x,int y, int px, int py, void *userdata )
+//{
+//	SSHSession *s = (SSHSession *)userdata;
+//
+//    (void) session;
+//    (void) channel;
+//    (void) term;
+//    (void) x;
+//    (void) y;
+//    (void) px;
+//    (void) py;
+//    DEBUG("[SSH] Allocated terminal\n");
+//    return 0;
+//}
 
 //
 // Shell requests
@@ -312,7 +312,7 @@ static int shell_request( ssh_session session, ssh_channel channel, void *userda
 // Data arrived on channel, callback
 //
 
-int mchannel_data_callback(ssh_session session, ssh_channel channel, void *data, uint32_t len, int is_stderr, void *userdata )
+int mchannel_data_callback(ssh_session session __attribute__((unused)), ssh_channel channel __attribute__((unused)), void *data __attribute__((unused)), uint32_t len, int is_stderr __attribute__((unused)), void *userdata __attribute__((unused)))
 {
 	SSHSession *s = (SSHSession *)userdata;
 
@@ -324,7 +324,7 @@ int mchannel_data_callback(ssh_session session, ssh_channel channel, void *data,
 // exec requests
 //
 
-int mchannel_exec_request_callback(ssh_session session, ssh_channel channel, const char *command, void *userdata )
+int mchannel_exec_request_callback(ssh_session session __attribute__((unused)), ssh_channel channel __attribute__((unused)), const char *command __attribute__((unused)), void *userdata __attribute__((unused)))
 {
 	DEBUG("[SSH] Command received\n");
 	return 0;
@@ -368,7 +368,7 @@ static ssh_channel new_session_channel( ssh_session session, void *userdata )
  * @return 0 when success, otherwise error number
  */
 
-int handleSSHCommands( SSHSession *sess, const char *buf, const int len )
+int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attribute__((unused)))
 {	
 	char outbuf[ 2048 ];
 	

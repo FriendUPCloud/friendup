@@ -22,7 +22,12 @@
 $f = new dbIO( 'FTinyUrl' );
 $f->Source = $args->args->source;
 if( $f->Load() )
-	die( 'fail<!--separate-->{"response":"source is already in database"}' );
+{
+	$url = buildUrl( $f->Hash, $Config );
+	die( 'ok<!--separate-->{"response":"source is already in database","hash":"' . 
+		$f->Hash . '","url":"' . $url . '"}' );
+}
+
 $f->UserID = $User->ID;
 
 do
@@ -43,8 +48,19 @@ $f->Save();
 
 if( $f->ID > 0 )
 {
-	die( 'ok<!--separate-->{"response":"url successfully created","hash":"' . $f->Hash . '"}' );
+	$url = buildUrl( $f->Hash, $Config );
+	die( 'ok<!--separate-->{"response":"url successfully created","hash":"' . 
+		$f->Hash . '","url":"' . $url . '"}' );
 }
 die( 'fail<!--separate-->{"response":"could not generate url"}' );
+
+function buildURL( $hash, $conf )
+{
+	$proto = $conf->SSLEnable ? 'https://' : 'http://';
+	$host = $conf->FCHost;
+	$port = $conf->FCPort ? ( ':' . $conf->FCPort ) : '';
+	$url = $proto . $host . $port . '/' . $hash;
+	return $url;
+}
 
 ?>

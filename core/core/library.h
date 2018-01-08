@@ -19,6 +19,18 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
+/** @file
+ *
+ * Library management definitions
+ *
+ * @author PS (Pawel Stefansky)
+ * @author HT (Hogne Tildstad)
+ * @author JMN (John Michael Nilsen)
+ * @date first pushed on 06/02/2015
+ * 
+ * \defgroup FriendCoreLibrary Friend Core Library Management
+ * @{
+ */
 
 #ifndef __CORE_LIBRARY_H_
 #define __CORE_LIBRARY_H_
@@ -28,6 +40,7 @@
 #include "network/socket.h"
 #include "network/http.h"
 //#include "system/systembase.h"
+
 
 //
 // library
@@ -61,3 +74,6 @@ void LibraryClose( void * library );
 #define F_LIBRARY_PATH		"/var/www/lib/,/var/www/mcc/"
 
 #endif // __CORE_LIBRARY_H_
+
+/**@}*/
+// End of FriendCoreLibrary Doxygen group

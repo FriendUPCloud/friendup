@@ -1,5 +1,5 @@
 
-i18n_software_administration       : Software administration
+i18n_software_administration       : Software Catalog
 
 
 #Menu
@@ -11,6 +11,7 @@ i18n_install                       : Install
 i18n_uninstall                     : Uninstall
 
 i18n_page_name                     : Alphabetical
+i18n_page_by_date                  : Latest software
 i18n_page_category                 : By category
 i18n_page_rating                   : By rating
 

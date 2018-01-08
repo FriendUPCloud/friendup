@@ -593,6 +593,15 @@ class fcrypto extends Crypt_RSA
 				return $obj;
 			}
 			
+			if( !isset( $cipherblock[1] ) && $aeskey )
+			{
+				$obj->status = 'success';
+				$obj->plaintext = $aeskey;
+				$obj->signature = 'unsigned';
+				
+				return $obj;
+			}
+			
 			$aeskey = explode( '?', $aeskey );
 			
 			$plaintext = $this->decryptAES( $cipherblock[1], $aeskey[0], $aeskey[1] );

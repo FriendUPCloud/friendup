@@ -133,6 +133,7 @@ ns.NoMansLand.prototype.checkClientAuth = function( auth, cid ) {
 ns.NoMansLand.prototype.authFailed = function( err, cid, callback ) {
 	const self = this;
 	const client = self.getClient( cid );
+	log( 'authFailed', err );
 	if ( !client )
 		return;
 	

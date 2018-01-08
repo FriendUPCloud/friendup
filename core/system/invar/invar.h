@@ -62,13 +62,13 @@ typedef struct INVAREntry
 	void 							*ne_SpecialData;	// special data
 }INVAREntry;
 
-static FULONG INVAREntryDesc[] = { SQLT_TABNAME, (FULONG)"FINVAREntry", SQLT_STRUCTSIZE, sizeof( struct INVAREntry ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( INVAREntry, ne_ID ), 
-	SQLT_INT, (FULONG)"Pointer", offsetof( INVAREntry, ne_Pointer ), 
-	SQLT_STR, (FULONG)"Name", offsetof( INVAREntry, ne_Name ),
-	SQLT_STR, (FULONG)"Data", offsetof( INVAREntry, ne_Data ),
-	SQLT_NODE, (FULONG)"node", offsetof( struct INVAREntry, node ),
-	SQLT_END };
+//static FULONG INVAREntryDesc[] = { SQLT_TABNAME, (FULONG)"FINVAREntry", SQLT_STRUCTSIZE, sizeof( struct INVAREntry ),
+//	SQLT_IDINT, (FULONG)"ID", offsetof( INVAREntry, ne_ID ),
+//	SQLT_INT, (FULONG)"Pointer", offsetof( INVAREntry, ne_Pointer ),
+//	SQLT_STR, (FULONG)"Name", offsetof( INVAREntry, ne_Name ),
+//	SQLT_STR, (FULONG)"Data", offsetof( INVAREntry, ne_Data ),
+//	SQLT_NODE, (FULONG)"node", offsetof( struct INVAREntry, node ),
+//	SQLT_END };
 
 //
 // Load INVAREntry from DB
@@ -111,12 +111,12 @@ typedef struct INVARGroup
 	INVAREntry 				*ng_Entries;
 }INVARGroup;
 
-static FULONG INVARGroupDesc[] = { SQLT_TABNAME, (FULONG)"FINVARGroup", SQLT_STRUCTSIZE, sizeof( struct INVARGroup ), 
-	SQLT_IDINT, (FULONG)"ID", offsetof( INVARGroup, ng_ID ), 
-	SQLT_INT, (FULONG)"Pointer", offsetof( INVARGroup, ng_Pointer ), 
-	SQLT_STR, (FULONG)"Name", offsetof( INVARGroup, ng_Name ),
-	SQLT_NODE, (FULONG)"node", offsetof( struct INVARGroup, node ),
-	SQLT_END };
+//static FULONG INVARGroupDesc[] = { SQLT_TABNAME, (FULONG)"FINVARGroup", SQLT_STRUCTSIZE, sizeof( struct INVARGroup ),
+//	SQLT_IDINT, (FULONG)"ID", offsetof( INVARGroup, ng_ID ),
+//	SQLT_INT, (FULONG)"Pointer", offsetof( INVARGroup, ng_Pointer ),
+//	SQLT_STR, (FULONG)"Name", offsetof( INVARGroup, ng_Name ),
+//	SQLT_NODE, (FULONG)"node", offsetof( struct INVARGroup, node ),
+//	SQLT_END };
 
 //
 // INVARGroup

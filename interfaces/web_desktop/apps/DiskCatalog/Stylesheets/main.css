@@ -38,6 +38,21 @@
 	height: 300px;
 }
 
+#UserList
+{
+	float: right;
+}
+
+#UserList p
+{
+	margin: 0;
+}
+
+#UserList select
+{
+	padding: 2px 5px;
+}
+
 .Disk .Image
 {
 	display: block;

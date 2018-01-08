@@ -47,7 +47,7 @@
  *
  * @todo FL>PS exploration of the list of message should be removed in release version
  */
-FULONG mainNew( Class *c, Object *o, struct Msg *msg )
+FULONG mainNew( Class *c, Object *o __attribute__((unused)), struct Msg *msg )
 {
 	struct opSet *set = (struct opSet *)msg;//->data;
 	struct TagItem *lt = (set->ops_AttrList);

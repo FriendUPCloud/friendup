@@ -1,3 +1,15 @@
+/*©mit**************************************************************************
+*                                                                              *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
+*                                                                              *
+* Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
+*                                                                              *
+*****************************************************************************©*/
+
 /*
 	Application that will run Google Docs and Spreadcheats right inside the users Workspace!
 */
@@ -29,9 +41,11 @@ Application.run = function( conf )
 				console.log('data was not json',data);
 			}
 			
-			if(tmp &&  tmp.url && tmp.title )
+			console.log( 'tmp ', tmp );
+			
+			if( tmp && tmp.url && tmp.title )
 			{
-				Application.displayEditor(tmp.title,tmp.url );
+				Application.displayEditor( tmp.title, tmp.url );
 				return;
 			}
 			
@@ -69,6 +83,6 @@ Application.displayEditor = function(title,url)
 
 Application.receiveMessage = function( msg )
 {
-	console.log( 'got a message',msg );
+	//console.log( 'got a message',msg );
 	if( !msg.cmd ) return;
 }

@@ -94,59 +94,80 @@ enum {
 struct AcceptPair
 {
 	struct sockaddr_in6 client;
-	int                fd;
+	int                 fd;
 	int                 *fds;
 	int                 fdcount;
 };
 
 typedef struct SocketBuffer
 {
-	void                     *sb_Data;           // Actual data
+	void                *sb_Data;          // Actual data
 	unsigned int        sb_DataSize;       // Total amount data
 	unsigned int        sb_DataWritten;    // Amounts of bytes written
-	FBOOL                sb_FreeOnComplete; // If true, data will be free()'d on completion
+	FBOOL               sb_FreeOnComplete; // If true, data will be free()'d on completion
 } SocketBuffer;
 
-//
-//
-//
+typedef enum {
+	socket_state_none,
+	socket_state_accepted,
+	socket_state_got_header,
+	socket_state_wait_for_payload,
+} socket_state_t;
 
 typedef struct Socket
 {
-	int                                         fd;              // Unix file descriptor for the socket. 
-	pthread_mutex_t                   mutex; // Mutex for locking
-	FBOOL                                  listen;         // Is this a listening socket? SocketAccept can only be used on these kinds of sockets.
-	int		                                  port;// Yup. The port. What else?
-	struct in6_addr                     ip;  // IPv6 address, or an IPv4-converted IPv6 address (http://tools.ietf.org/html/rfc6052)
+	int							fd;              // Unix file descriptor for the socket.
+
+	pthread_mutex_t				mutex; /* This mutex is used for changing the blocking state of the socket,
+	                                    * some TLS stuff and changing of 'state' field.
+	                                    */
+
+	FBOOL						listen;         // Is this a listening socket? SocketAccept can only be used on these kinds of sockets.
+	int							port;// Yup. The port. What else?
+	struct in6_addr				ip;  // IPv6 address, or an IPv4-converted IPv6 address (http://tools.ietf.org/html/rfc6052)
 	                                        // For compatibility, /ALWAYS/ use 16 bytes (IPv6 length) when dealing with IP addresses internally!
 	                                        // If needed, SocketGetIPv4 can be used to convert an IPv4-converted IPv6 address back into an IPv4 address, but use this only when absolutely needed.
-	void                                        *data;          // Session-spesific data
-	SocketProtocolCallback_t       protocolCallback; // Socket protocol callback (Defaults to HTTP, use Upgrade: header to change protocol)
-	SocketShutdownCallback_t     shutdownCallback; // This is called when the socket is shut down, so that the protocol can free their memory
 
-	FBOOL                                    s_SSLEnabled;
-	FBOOL                                    nonBlocking;    // If true, writes to this socket won't block
+	//Fields used to detect a stale socket (or misbehaving client)
+	time_t                      state_update_timestamp;
+	socket_state_t              state;
 
-	void                                         *s_Data;             // user data
-	void                                         *s_SB;                // pointer to SystemBase
 
-	FBOOL                                    doShutdown;
-	FBOOL                                    doClose;
+	//struct sockaddr_in6			s_ClientIP;
+	void						*data;          // Session-spesific data
+	SocketProtocolCallback_t	protocolCallback; // Socket protocol callback (Defaults to HTTP, use Upgrade: header to change protocol)
+	SocketShutdownCallback_t	shutdownCallback; // This is called when the socket is shut down, so that the protocol can free their memory
+
+	FBOOL						s_SSLEnabled;
+	FBOOL						s_Blocked;    // If false, writes to this socket won't block
+
+	void						*s_Data;             // user data
+	void						*s_SB;                // pointer to SystemBase
+
+	FBOOL						doShutdown;
+	FBOOL						doClose;
 
 // SSL
-	FBOOL                                    s_VerifyClient;
-	SSL_CTX                                 *s_Ctx;
-	SSL                                         *s_Ssl;
-	const SSL_METHOD                *s_Meth;
-	X509                                       *s_Client_cert;
-	BIO                                         *s_BIO;
+	FBOOL						s_VerifyClient;
+	SSL_CTX						*s_Ctx;
+	SSL							*s_Ssl;
+	const SSL_METHOD			*s_Meth;
+	X509						*s_Client_cert;
+	BIO							*s_BIO;
 	
-	int                                           s_Timeouts;
-	int                                           s_Timeoutu;
-	int                                           s_Users;        // How many use it right now?
+	int							s_Timeouts;
+	int							s_Timeoutu;
+	int							s_Users;        // How many use it right now?
+	
+	int							s_AcceptFlags;
+	int							(*VerifyPeer)( int ok, X509_STORE_CTX* ctx );
 
-	MinNode                                 node;
+	MinNode						node;
 } Socket;
+
+void socket_init_once(void);
+
+void socket_update_state(Socket *sock, socket_state_t state);
 
 //
 // Open a new socket
@@ -176,31 +197,38 @@ Socket* SocketConnectHost( void *systembase, FBOOL ssl, char *host, unsigned sho
 // Enable or disable blocking for socket write functions
 //
 
-int       SocketSetBlocking( Socket* s, FBOOL block );
+int SocketSetBlocking( Socket* s, FBOOL block );
 
 //
 // Accept incomming connections if listening
 //
 
-Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p );
+extern Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p );
 
 //
 //
 //
 
-Socket* SocketAccept( Socket* s );
+extern Socket* SocketAccept( Socket* s );
 
 //
 // Read from the socket
 //
 
-int       SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass );
+extern int SocketRead( Socket* sock, char* data, unsigned int length, unsigned int pass );
+
+//
+//
+//
+
+
+int SocketReadBlocked( Socket* sock, char* data, unsigned int length, unsigned int pass );
 
 //
 // Wait and Read from the socket
 //
 
-int       SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
+int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int pass, int sec );
 
 //
 // Read till end of stream
@@ -212,19 +240,19 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass, int sec );
 // Write to the socket, or queue data for writing if non-blocking socket
 //
 
-int       SocketWrite( Socket* s, char* data, FQUAD length );
+FLONG SocketWrite( Socket* s, char* data, FLONG length );
 
 //
 // Request the socket to be closed (Acceptable if the other end also has closed the socket)
 //
 
-void      SocketClose( Socket* s );
+void SocketClose( Socket* s );
 
 //
 //
 //
 
-void      SocketFree( Socket *s );
+void SocketFree( Socket *s );
 
 //
 //

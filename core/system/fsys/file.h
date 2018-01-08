@@ -21,7 +21,7 @@
 *****************************************************************************©*/
 /** @file
  *
- *  File and FileShared    definitions
+ *  File and FileShared definitions
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 6 Feb 2015
@@ -62,6 +62,7 @@ enum {
 typedef struct File
 {
 	FULONG						f_ID;               // ID in database
+	FULONG						f_KeysID;			// link to FKeys
 	struct MinNode				node;               // link to another files, used by Mount
 	
 	char						*f_Name;            // name of file
@@ -77,13 +78,18 @@ typedef struct File
 	void						*f_DOSDriver;
 	void						*f_FSys;            // filesystem type
 	void						*f_User;            // user which mounted device / or file (or owner)
+	
+	// device details
+	char						*f_DevServer;
+	int							f_DevPort;
+	
 													// if user != current user device is shared
 	FUQUAD						f_Size;             // file size
 	FUQUAD						f_Position;         // position where user stopped to read/write
 	FULONG						f_DataPassed;       // size in bytes, to read or write (inside buffer)
 	char						*f_Buffer;          // [ FILE_MAX_BUFFER ];
-	FQUAD						f_BytesStored;		// number of bytes stored in root file
-	FQUAD						f_MaxBytesStored;	// maximum bytes which could be stored on disk
+	FLONG						f_BytesStored;		// number of bytes stored in root file
+	FLONG						f_MaxBytesStored;	// maximum bytes which could be stored on disk
 	
 	struct File					*f_SharedFile;		// points to shared device
 	struct File					*f_RootDevice;
@@ -196,6 +202,12 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 //
 
 int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *src, int *numberFiles );
+
+//
+//
+//
+
+int FileOrDirectoryDeleteRec( Http *request, File *srcdev, const char *src, int fod, int *numberFiles );
 
 
 #endif // __SYSTEM_FSYS_FILE_H__

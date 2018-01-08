@@ -19,8 +19,7 @@
 * MIT License for more details.                                                *
 *                                                                              *
 *****************************************************************************©*/
-/**
- * @file
+/** @file
  *
  * Friend Workers definitions
  *
@@ -28,6 +27,9 @@
  * @author PS (Pawel Stefansky)
  * @author HT (Hogne Tildstad)
  * @date first push by PS (31/05/2015)
+ * 
+ * \ingroup FriendCoreWorker
+ * @{
  */
 
 #ifndef __CORE_WORKER_H__
@@ -97,6 +99,8 @@ int WorkerRun( Worker *w );
 // Run function in thread
 //
 
-int WorkerRunCommand( Worker *wrk, void (*foo)( void *), void *d );
+//extern static inline int WorkerRunCommand( Worker *wrk, void (*foo)( void *), void *d );
 
 #endif // __CORE_THREAD_H__
+
+/**@}*/

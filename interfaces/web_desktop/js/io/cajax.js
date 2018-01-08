@@ -22,9 +22,42 @@ var _cajax_process_count = 0;
 var _cajax_connection_seed = Math.random(0,999)+Math.random(0,999)+Math.random(0,999) + '_';
 var _cajax_connection_num = 0;
 
+var _cajax_queue = [];
+var _cajax_file_queue = [];
+var _cajax_send_interval = null;
+var _cajax_queue_length = 10;
+var _cajax_file_process_count = 0;
+
+// For debug
+var _c_count = 0;
+var _c_destroyed = 0;
+
+function AddToCajaxQueue( ele )
+{
+	ele.destroy();
+	// TODO: Support a nice queue.. :-)
+	/*
+	if( !window.friend || !window.friend.cajax )
+	{
+		console.log( 'Impossible error' );
+		return false;
+	}
+	for( var a = 0; a < friend.cajax.length; a++ )
+	{
+		// Already there
+		if( friend.cajax[a] == ele ) return false;
+	}
+	friend.cajax.push( ele );*/
+}
+
 // A simple ajax function
 cAjax = function()
 {
+	this.openFunc = null;
+	
+	//_c_count++;
+	//console.log( 'cAjax: Created ' + _c_count );
+
 	// Make sure to track object in case of renewal...
 	if( typeof( friend ) != 'undefined' )
 	{
@@ -51,9 +84,28 @@ cAjax = function()
 		this.connectionId = _cajax_connection_seed + _cajax_connection_num;
 	}
 	
+	this.setResponseType = function( type )
+	{
+		switch( type )
+		{
+			case 'arraybuffer':
+				this.proxy.responseType = 'arraybuffer';
+				break;
+			case 'blob':
+				this.proxy.responseType = 'blob';
+				break;
+			default:
+				this.proxy.responseType = '';
+				break;
+		}
+	};
+	
 	this.vars = [];
 	this.mode = 'ajax';
 	this.varcount = 0;
+
+	// TODO: Enable for later	
+	//this.worker = new Worker( '/webclient/js/io/cajax_worker.js' );
 	
 	// Get correct AJAX base object
 	if ( typeof( ActiveXObject ) != 'undefined' )
@@ -66,18 +118,26 @@ cAjax = function()
 	{
 		// We're finished handshaking
 		if( this.readyState == 4 && this.status == 200  )
-		{
-			//console.log( '* We are ready ajax: ' + this.readyState + ' ' + this.status + '(' + typeof( jax.df ) + ')' );
+		{	
+			if( this.responseType == 'arraybuffer' )
+			{
+				jax.rawData = this.response;
+			}
+			else if( this.responseType == 'blob' )
+			{
+				jax.rawData = new Blob( [ this.response ] );
+			}
+			else
+			{
+				jax.rawData = this.responseText;
+			}
 			
-			// Delete cancellable network connection
-			if( jax.df ) jax.df.delConnection( jax.connectionId );
-		
-			// Update process count and set loading
-			jax.decreaseProcessCount();
-			
-			jax.rawData = this.responseText;
-			
-			if( this.hasReturnCode )
+			if( this.responseType != '' )
+			{
+				jax.returnData = jax.rawData;
+				jax.returnCode = 'ok';
+			}
+			else if( this.hasReturnCode )
 			{
 				var sep = '<!--separate-->';
 				if( this.responseText.indexOf( sep ) > 0)
@@ -98,51 +158,64 @@ cAjax = function()
 			}
 			
 			// TODO: This error is general
-			if( JSON && jax.rawData.charAt( 0 ) == '{' )
+			if( this.responseType != 'arraybuffer' && this.responseType != 'blob' )
 			{
-				try
+				if( JSON && jax.rawData.charAt( 0 ) == '{' )
 				{
-					var t = JSON.parse( jax.rawData );
-					// Deprecate from 1.0 beta 2 "no user!"
-					if( t && ( t.response == 'user not found' || t.response == 'user session not found' ) )
+					try
 					{
-						if( Workspace )
+						var t = JSON.parse( jax.rawData );
+						// Deprecate from 1.0 beta 2 "no user!"
+						var res = t ? t.response.toLowerCase() : '';
+						if( t && ( res == 'user not found' || res == 'user session not found' ) )
 						{
-							// Drop these (don't retry!) because of remote fs disconnect
-							if( jax.url.indexOf( 'file/info' ) > 0 )
-								return;
-							// Add to queue
-							friend.cajax.push( jax );
-							return Workspace.relogin();
+							if( Workspace )
+							{
+								// Drop these (don't retry!) because of remote fs disconnect
+								if( jax.url.indexOf( 'file/info' ) > 0 )
+									return;
+								// Add to queue
+								AddToCajaxQueue( jax );
+								return Workspace.relogin();
+							}
+						}
+					}
+					catch( e )
+					{
+						if( !jax.rawData )
+						{
+							if( Workspace )
+							{
+								AddToCajaxQueue( jax );
+								return Workspace.relogin();
+							}
 						}
 					}
 				}
-				catch( e )
+				// Respond to old expired sessions!
+				else if( jax.returnCode == 'fail' )
 				{
-					if( !jax.rawData )
+					try
 					{
-						if( Workspace )
+						var r = JSON.parse( jax.returnData );
+						var res = r ? r.response.toLowerCase() : '';
+						if( res == 'user session not found' )
 						{
-							friend.cajax.push( jax );
+							AddToCajaxQueue( jax );
 							return Workspace.relogin();
 						}
+					}
+					catch( e )
+					{
 					}
 				}
 			}
-			// Respond to old expired sessions!
-			else if( jax.returnCode == 'fail' )
+			else
 			{
-				try
+				if( jax.rawData )
 				{
-					var r = JSON.parse( jax.returnData );
-					if( r.response == 'user session not found' )
-					{
-						friend.cajax.push( jax );
-						return Workspace.relogin();
-					}
-				}
-				catch( e )
-				{
+					this.returnCode = 'ok';
+					this.returnData = this.rawData;
 				}
 			}
 			
@@ -157,7 +230,7 @@ cAjax = function()
 			// End clean queue
 			
 			// Register send time
-			if( jax.sendTime && jax.df )
+			if( jax.sendTime && jax.df && jax.df.available )
 			{
 				var ttr = ( new Date() ).getTime() - jax.sendTime;
 				jax.sendTime = false;
@@ -169,18 +242,11 @@ cAjax = function()
 			{
 				jax.onload( jax.returnCode, jax.returnData );
 			}
+			jax.destroy();
 		}
 		// Something went wrong!
 		else if( this.readyState == 4 && ( this.status == 500 || this.status == 0 || this.status == 404 ) )
-		{
-			//console.log( '* Error ajax: ' + this.readyState + ' ' + this.status );
-			
-			// Delete cancellable network connection
-			if( jax.df ) jax.df.delConnection( jax.connectionId );
-			
-			// Update process count and set loading
-			jax.decreaseProcessCount();
-			
+		{	
 			// Clean out possible queue
 			var o = [];
 			for( var a = 0; a < friend.cajax.length; a++ )
@@ -193,6 +259,7 @@ cAjax = function()
 
 			// tell our caller...
 			if( jax.onload ) jax.onload( 'fail', false );
+			jax.destroy();
 		}
 		else
 		{
@@ -201,17 +268,61 @@ cAjax = function()
 	}
 }
 
+// Clean up object
+cAjax.prototype.destroy = function()
+{
+	//_c_destroyed++;
+	//console.log( 'cAjax: ' + _c_count + ' created and ' + _c_destroyed + ' destroyed' );
+
+	// No more activity here!
+	this.decreaseProcessCount();
+	if( this.df && this.df.available ) this.df.delConnection( this.connectionId );
+	
+	// Null all attributes
+	if( this.dfTimeout ) clearTimeout( this.dfTimeout );
+	this.dfTimeout = null;
+	this.df = null;
+	this.vars = null;
+	this.mode = null;
+	this.url = null;
+	this.hasReturnCode = null;
+	this.lastOptions = null;
+	this.proxy = null;
+	if( this.worker )
+		this.worker.terminate();
+	this.worker = null;
+	this.rawData = null;
+	this.varcount = null;
+	this.wsRequestID = null;
+	this.wsData = null;
+	this.connectionId = null;
+	this.sendTime = null;
+	this.hasReturnCode = null;
+	this.method = null;
+	this.onload = null;
+	this.queued = null;
+	this.openFunc = null;
+	this.fileQueue = null;
+	// finally
+	delete this;
+}
+
 // Open an ajax query
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
+	var self = this;
+	
 	// Try websockets!!
 	if( 
+		!this.forceHTTP &&
 		typeof Workspace != 'undefined' && 
 		Workspace.conn && 
 		Workspace.conn.ws && 
 		!Workspace.websocketsOffline && 
 		typeof( url ) == 'string' && 
-		url.indexOf( 'system.library' ) >= 0 
+		url.indexOf( 'system.library' ) >= 0 &&
+		url.indexOf( '/file/write' ) < 0 &&
+		url.indexOf( '/file/read' )
 	)
 	{
 		this.mode = 'websocket';
@@ -229,7 +340,8 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	if( this.lastOptions && !method && !url && !syncing && !hasReturnCode )
 	{
 		this.proxy.hasReturnCode = this.lastOptions.hasReturnCode;
-		return this.proxy.open( this.lastOptions.method, this.lastOptions.url, this.lastOptions.syncing );
+		this.openFunc = function(){ self.proxy.open( self.lastOptions.method, self.lastOptions.url, self.lastOptions.syncing ); };
+		return;
 	}
 	else
 	{
@@ -249,16 +361,15 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 		this.url = url;
 		this.proxy.hasReturnCode = hasReturnCode;
 	}
-	return this.proxy.open( method, url, syncing );
+	this.openFunc = function(){ self.proxy.open( self.method, self.url, syncing ); };
 }
 
 // Close it!
 cAjax.prototype.close = function()
 {
 	// Abort connection
-	this.decreaseProcessCount();
 	this.proxy.abort();	
-	if( this.df ) this.df.delConnection( this.connectionId );
+	this.destroy();
 }
 
 // Add a variable to ajax query
@@ -281,7 +392,7 @@ cAjax.prototype.getRandNumbers = function()
 {
 	var i = '';
 	for( var a = 0; a < 2; a++ )
-		i += Math.floor(Math.random()*1000) + '';
+		i += Math.floor( Math.random() * 1000 ) + '';
 	i += ( new Date() ).getTime();
 	return i;
 }
@@ -294,21 +405,116 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data )
 {
+	// If we're in the queue, skip
+	if( this.queued ) return;
+	
 	var self = this;
+	
+	// Which queue this goes into
+	this.fileQueue = this.url && this.url.substr( this.url.length - 5, 5 ) == '/copy';
 
-	// Update process count and set loading
-	_cajax_process_count++;
+	// TODO: Research why this is a problem!
+	var pcount = _cajax_process_count;
+	var queue = _cajax_queue;
 	
-	// Add cancellable network connection
-	if( this.df ) this.df.addConnection( this.connectionId, this.url, this );
-	
-	if( ge( 'Screens' ) )
+	if( this.fileQueue )
 	{
-		var titleBars = document.getElementsByClassName( 'TitleBar' );
-		for( var b = 0; b < titleBars.length; b++ )
+		pcount = _cajax_file_process_count;
+		queue = _cajax_file_queue;
+	}
+	
+	// If we're not in the queue, and 
+	if( pcount > _cajax_queue_length )
+	{
+		if( !_cajax_send_interval )
 		{
-			titleBars[b].classList.add( 'Busy' );
-			document.body.classList.add( 'Busy' );
+			_cajax_send_interval = setInterval( function()
+			{
+				var f = [];
+				// Take this current queue
+				for( var a = 0; a < _cajax_file_queue.length; a++ )
+				{
+					var q = _cajax_file_queue[ a ];
+					if( a < _cajax_queue_length )
+					{
+						try
+						{
+							ret = q();
+						}
+						catch( e )
+						{
+							console.log( 'This ajax file object does not exist.' );
+						}
+					}
+					else
+					{
+						f.push( q );
+					}
+				}
+				// Cleaned list
+				_cajax_file_queue = f;
+				
+				var o = [];
+				// Take this current queue
+				for( var a = 0; a < _cajax_queue.length; a++ )
+				{
+					var q = _cajax_queue[ a ];
+					if( a < _cajax_queue_length )
+					{
+						try
+						{
+							ret = q();
+						}
+						catch( e )
+						{
+							console.log( 'This ajax object does not exist.' );
+						}
+					}
+					else
+					{
+						o.push( q );
+					}
+				}
+				// Cleaned list
+				_cajax_queue = o;
+				
+				// Check
+				if( !f.length && !o.length )
+				{
+					clearInterval( _cajax_send_interval );
+					_cajax_send_interval = null;
+				}
+			}, 100 );
+		}
+		
+		// Copy goes in the file queue
+		var of = function()
+		{
+			self.queued = false;
+			self.send( data, true );
+		}
+		this.queued = true;
+		queue.push( of );
+		return;
+	}
+	
+	// Only if successful
+	function successfulSend()
+	{
+		// Update process count and set loading
+		if( self.fileQueue )
+			_cajax_file_process_count++;
+		else _cajax_process_count++;
+		if( ge( 'Screens' ) )
+		{
+			var titleBars = document.getElementsByClassName( 'TitleBar' );
+			for( var b = 0; b < titleBars.length; b++ )
+			{
+				if( !titleBars[b].classList.contains( 'Busy' ) )
+					titleBars[b].classList.add( 'Busy' );
+			}
+			if( !document.body.classList.contains( 'Busy' ) )
+				document.body.classList.add( 'Busy' );
 		}
 	}
 
@@ -350,67 +556,110 @@ cAjax.prototype.send = function( data )
         
         var reqID = Workspace.conn.request( req, bindSingleParameterMethod( self, 'handleWebSocketResponse' ) );
         self.wsRequestID = reqID;
+		
+		// Add cancellable network connection
+		if( this.df && this.df.available ) 
+		{
+			// Don't overkill - only add connections taking more than 500 ms
+			self.dfTimeout = setTimeout( function()
+			{
+				self.df.addConnection( self.connectionId, self.url, self );
+			}, 500 );
+		}
+		successfulSend();
 		return;
 	}
-
 
 	// standard HTTP way....
 	// Now
 	this.sendTime = ( new Date() ).getTime();
 	
-	if( this.method == 'POST' )
+	if( this.openFunc )
 	{
-		var u = this.url.split( '?' );
-		u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
-		this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
-		this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
-		// Send data
-		if( data ) 
+		this.openFunc();
+	
+		var res = null;
+		
+		if( this.method == 'POST' )
 		{
-			this.proxy.send( data );
+			var u = this.url.split( '?' );
+			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			this.proxy.setRequestHeader( 'Method', 'POST ' + u + ' HTTP/1.1' );
+			this.proxy.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+			
+			// Send data
+			if( data ) 
+			{
+				res = this.proxy.send( data );
+			}
+			else if( this.varcount > 0 )
+			{
+				var out = [];
+				for( var a in this.vars )
+					out.push( a + '=' + this.vars[a] );
+				res = this.proxy.send( out.join ( '&' ) );
+			}
+			// All else fails?
+			else
+			{
+				try { res = this.proxy.send ( null ); }
+				catch ( e ) { res = this.proxy.send( NULL ); }
+			}
+		
+			//console.log( 'Posting ' + u );
 		}
-		else if( this.varcount > 0 )
-		{
-			var out = [];
-			for( var a in this.vars )
-				out.push( a + '=' + this.vars[a] );
-			var res = this.proxy.send( out.join ( '&' ) );
-		}
-		// All else fails?
+		// Normal GET request
 		else
 		{
-			try { this.proxy.send ( null ); }
-			catch ( e ) { this.proxy.send( NULL ); }
+			var u = this.url.split( '?' );
+			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
+			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
+			try { res = this.proxy.send( null ); }
+			catch ( e ) { res = this.proxy.send( NULL ); }
+		
+			//console.log( 'Getting ' + u );
 		}
-		
-		//console.log( 'Posting ' + u );
+		if( res )
+		{
+			succsessfulSend();
+			// Add cancellable network connection
+			if( this.df && this.df.available ) 
+			{
+				// Don't overkill - only add connections taking more than 500 ms
+				self.dfTimeout = setTimeout( function()
+				{
+					self.df.addConnection( self.connectionId, self.url, self );
+				}, 500 );
+			}
+		}
+		return;
 	}
-	// Normal GET request
-	else
-	{
-		var u = this.url.split( '?' );
-		u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
-		this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
-		try { this.proxy.send( null ); }
-		catch ( e ) { this.proxy.send( NULL ); }
-		
-		//console.log( 'Getting ' + u );
-	}
+	// We were not successful!
+	this.destroy();
 }
 
 cAjax.prototype.decreaseProcessCount = function()
 {
-	_cajax_process_count--;
-	if( _cajax_process_count <= 0 )
+	if( this.fileQueue )
 	{
-		_cajax_process_count = 0;
-		if( ge( 'Screens' ) )
+		_cajax_file_process_count--;
+		if( _cajax_file_process_count < 0 )
+			_cajax_file_process_count = 0;
+	}
+	else
+	{
+		_cajax_process_count--;
+		if( _cajax_process_count <= 0 )
 		{
-			var titleBars = document.getElementsByClassName( 'TitleBar' );
-			for( var b = 0; b < titleBars.length; b++ )
+			_cajax_process_count = 0;
+			if( ge( 'Screens' ) )
 			{
-				titleBars[b].classList.remove( 'Busy' );
-				document.body.classList.remove( 'Busy' );
+				var titleBars = document.getElementsByClassName( 'TitleBar' );
+				for( var b = 0; b < titleBars.length; b++ )
+				{
+					titleBars[b].classList.remove( 'Busy' );
+					document.body.classList.remove( 'Busy' );
+				}
 			}
 		}
 	}
@@ -420,17 +669,12 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 {	
 	var self = this;
 	
-	// Delete cancellable network connection
-	if( this.df ) this.df.delConnection( this.connectionId );
-	
-	// Update process count and set loading
-	this.decreaseProcessCount();
-	
 	if( typeof( wsdata ) == 'object' && wsdata.response )
 	{
 		self.rawData = 'fail';
 		self.proxy.responseText = self.rawData;
 		self.returnCode = 'fail';
+		self.destroy();
 		return false;
 	}
 	
@@ -452,10 +696,11 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		// With a separator
 		var sep = '<!--separate-->';
-		if( self.rawData.indexOf( sep ) > 0)
+		var sepaIndex = self.rawData.indexOf( sep );
+		if( sepaIndex > 0 )
 		{
-			self.returnCode = self.rawData.substr( 0, self.rawData.indexOf( sep ) );
-			self.returnData = self.rawData.substr( self.rawData.indexOf( sep ) + sep.length );
+			self.returnCode = self.rawData.substr( 0, sepaIndex );
+			self.returnData = self.rawData.substr( sepaIndex + sep.length );
 		}
 		// No data
 		else
@@ -483,7 +728,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					// Add to queue
-					friend.cajax.push( self );
+					AddToCajaxQueue( self );
 					return Workspace.relogin();
 				}
 			}
@@ -494,7 +739,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			{
 				if( Workspace )
 				{
-					friend.cajax.push( self );
+					AddToCajaxQueue( self );
 					return Workspace.relogin();
 				}
 			}
@@ -508,7 +753,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			var r = JSON.parse( self.returnData );
 			if( r.response == 'user session not found' )
 			{
-				friend.cajax.push( self );
+				AddToCajaxQueue( self );
 				return Workspace.relogin();
 			}
 		}
@@ -531,12 +776,15 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 	{
 		console.log( 'got ws data... but nowhere to send it' );
 	}
+	self.destroy();
 }
 
 if( typeof bindSingleParameterMethod != 'function' )
 {
-	function bindSingleParameterMethod(toObject, methodName){
-    	return function(e){toObject[methodName](e)}
+	function bindSingleParameterMethod( toObject, methodName )
+	{
+    	return function(e){ toObject[ methodName ]( e ) }
 	};
 }
+
 

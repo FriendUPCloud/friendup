@@ -55,7 +55,7 @@ typedef struct UserSessionManagerInterface
 // init function
 //
 
-inline void UserSessionManagerInterfaceInit( UserSessionManagerInterface *si )
+static inline void UserSessionManagerInterfaceInit( UserSessionManagerInterface *si )
 {
 	si->USMNew = USMNew;
 	si->USMDelete = USMDelete;

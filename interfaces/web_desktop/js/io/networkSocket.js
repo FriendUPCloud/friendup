@@ -153,7 +153,9 @@ NetworkConn.prototype.unsubscribe = function( hostId, callback )
 app     : <map>
 	{
 		id          : <string>,
+		type        : <string>,
 		name        : <string>,
+		info        : <object>,
 		description : <string>,
 	}
 
@@ -178,10 +180,12 @@ NetworkConn.prototype.conceal = function( appId, callback )
 
 /* updateMeta - set human readable info for the host
 
-conf {
-	name        <string>
-	description <longer string>
-	apps        [ apps, you, might, be, hosting ]
+conf : <map>
+{
+	name        : <string>,
+	description : <longer string>,
+	info        : <object>,
+	apps        : [ <map>, <map>, .. ],
 }
 */
 NetworkConn.prototype.updateMeta = function( conf )
@@ -634,6 +638,12 @@ NetworkSocket.prototype.doReconnect = function()
 	
 	function reconnect()
 	{
+		// See if we have low connectivity!
+		if( Workspace )
+		{
+			Workspace.checkServerConnectionHTTP();
+		}
+		
 		console.log( 'reconnect' );
 		self.reconnectTimer = null;
 		self.connect();
@@ -655,7 +665,9 @@ NetworkSocket.prototype.doReconnect = function()
 		
 		if ( !allow )
 		{
-			console.log( 'not allowed to reconnect', checks )
+			//console.log( 'not allowed to reconnect', checks )
+			// Try to reconnect!
+			Workspace.relogin();
 			return false;
 		}
 		return true;

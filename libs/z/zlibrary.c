@@ -66,12 +66,12 @@ void libClose( struct ZLibrary *l )
 //
 //
 
-long GetVersion(void)
+FULONG GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
-long GetRevision(void)
+FULONG GetRevision(void)
 {
 	return LIB_REVISION;
 }

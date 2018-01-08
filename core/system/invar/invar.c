@@ -64,7 +64,7 @@ INVAREntry *INVAREntryNew( FULONG id, char *name, char *data )
 /**
  * Delete INVAREntry structure
  *
- * @param id of new created INVAREntry
+ * @param ne of new created INVAREntry
  */
 void INVAREntryDelete( INVAREntry *ne )
 {
@@ -87,7 +87,7 @@ void INVAREntryDelete( INVAREntry *ne )
 /**
  * Convert full INVAREntry to json
  *
- * @param id of new created INVAREntry
+ * @param ne of new created INVAREntry
  * @param buffer where string will be stored
  * @param len length of the buffer
  */
@@ -100,7 +100,7 @@ int INVAREntryToJSON( INVAREntry *ne, char *buffer, int len )
 /**
  * Convert INVAREntry to json
  *
- * @param id of new created INVAREntry
+ * @param ne of new created INVAREntry
  * @param buffer where string will be stored
  * @param len length of the buffer
  */
@@ -157,7 +157,7 @@ void INVARGroupDelete( INVARGroup *ne )
 /**
  * Convert INVARGroup to json
  *
- * @param id of new created INVARGroup
+ * @param ne of new created INVARGroup
  * @param buffer where string will be stored
  * @param len length of the buffer
  */
@@ -170,7 +170,7 @@ int INVARGroupToJSON( INVARGroup *ne, char *buffer, int len )
 /**
  * Convert INVARGroup to json
  *
- * @param id of new created INVARGroup
+ * @param ne of new created INVARGroup
  * @param buffer where string will be stored
  * @param len length of the buffer
  */

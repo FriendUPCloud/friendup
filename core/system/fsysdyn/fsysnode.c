@@ -234,12 +234,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 	File *dev = NULL;
 	char *path = NULL;
 	char *name = NULL;
-	//UserSession *us =  NULL;
-	//User *usr = NULL;
 	char *module = NULL;
 	char *type = NULL;
 	char *authid = NULL;
-	FULONG id = 0;
+//	FULONG id = 0;
 	
 	SystemBase *sb = NULL;
 	
@@ -275,7 +273,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 					name = (char *)lptr->ti_Data;
 					break;
 				case FSys_Mount_ID:
-					id = (FULONG)lptr->ti_Data;
+//					id = (FULONG)lptr->ti_Data; //not used?
 					break;
 				case FSys_Mount_Type:
 					type = (char *)lptr->ti_Data;
@@ -986,11 +984,11 @@ int FileRead( struct File *f, char *buffer, int rsize )
 				
 				if( ptr != NULL && result > 23 )
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FQUAD)(result-23) );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
 				}
 				else
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
 				}
 			}
 		}
@@ -1126,11 +1124,22 @@ int InfoSet( struct File *s, const char *path, const char *key, const char *valu
 }
 
 //
+// GetDiskInfo
+//
+
+int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+{
+	*used = 0;
+	*size = 0;
+	return 0;
+}
+//
 // make directory in node file system
 //
 
 int MakeDir( struct File *f, const char *path )
 {
+	int error = 0;
 	DEBUG("[fsysnode] makedir filesystem\n");
 	if( f != NULL && f->f_SpecialData != NULL )
 	{
@@ -1196,6 +1205,7 @@ int MakeDir( struct File *f, const char *path )
 				}
 				else
 				{
+					error = -2;
 					FERROR( "[fsysnode] Unknown error unmounting device %s..\n", f->f_Name );
 				}
 				
@@ -1209,16 +1219,16 @@ int MakeDir( struct File *f, const char *path )
 	}
 	else
 	{
-		return -1;
+		error = -1;
 	}
-	return 1;
+	return error;
 }
 
 //
 // Delete
 //
 
-FQUAD Delete( struct File *s, const char *path )
+FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("[fsysnode] Delete %s\n", path);
 	if( s != NULL )
@@ -1399,9 +1409,9 @@ char *Execute( struct File *s, const char *path, const char *args )
 // Get information about last file changes (seconds from 1970)
 //
 
-FQUAD GetChangeTimestamp( struct File *s, const char *path )
+FLONG GetChangeTimestamp( struct File *s, const char *path )
 {
-	return (FQUAD)0;
+	return (FLONG)0;
 }
 
 //

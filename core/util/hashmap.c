@@ -188,22 +188,22 @@ unsigned long lcrc32( const unsigned char *s, unsigned int len )
 // Hash a string
 //
 
-unsigned int HashmapHashInt( Hashmap* in, char* key )
+unsigned int HashmapHashInt( Hashmap* in, const char* key )
 {
     unsigned long hash = lcrc32( (unsigned char*) key, strlen( key ) );
 
 	// Robert Jenkins' 32 bit Mix Function
-	hash += (hash << 12);
-	hash ^= (hash >> 22);
-	hash += (hash << 4);
-	hash ^= (hash >> 9);
-	hash += (hash << 10);
-	hash ^= (hash >> 2);
-	hash += (hash << 7);
-	hash ^= (hash >> 12);
+	hash += SHIFT_LEFT(hash, 12);
+	hash ^= SHIFT_RIGHT(hash, 22);
+	hash += SHIFT_LEFT(hash, 4);
+	hash ^= SHIFT_RIGHT(hash, 9);
+	hash += SHIFT_LEFT(hash, 10);
+	hash ^= SHIFT_RIGHT(hash, 2);
+	hash += SHIFT_LEFT(hash, 7);
+	hash ^= SHIFT_RIGHT(hash, 12);
 
 	// Knuth's Multiplicative Method
-	hash = (hash >> 3) * 2654435761;
+	hash = (SHIFT_RIGHT(hash, 3)) * 2654435761;
 
 	return hash % in->table_size;
 }
@@ -213,7 +213,7 @@ unsigned int HashmapHashInt( Hashmap* in, char* key )
  // to store the point to the item, or MAP_FULL.
  //
  
-int HashmapHash( Hashmap* in, char* key )
+int HashmapHash( Hashmap* in, const char* key )
 {
 	// If full, return immediately
 	if( in->size >= ( in->table_size >> 1 ) )
@@ -251,7 +251,7 @@ int HashmapHash( Hashmap* in, char* key )
 int HashmapRehash( Hashmap* in )
 {
 	// Setup the new elements
-	HashmapElement* temp = (HashmapElement*) calloc( in->table_size << 1, sizeof( HashmapElement ) );
+	HashmapElement* temp = (HashmapElement*) calloc( SHIFT_LEFT(in->table_size, 1), sizeof( HashmapElement ) );
 	if(!temp)
 	{
 		FERROR("Cannot allocate memory for temporary hashmap\n");
@@ -289,7 +289,7 @@ int HashmapRehash( Hashmap* in )
 //
 // Add a pointer to the hashmap with some key
 // No data is copied!
-//
+// 'key' MUST BE PERMANENTLY ALLOCATED AND NOT FREED AFTER CALLING THIS FUNCTION
 
 FBOOL HashmapPut( Hashmap* in, char* key, void* value )
 {
@@ -348,7 +348,7 @@ HashmapElement* HashmapGet( Hashmap* in, char* key )
 // Get pointer to data from Hashmap
 //
 
-void* HashmapGetData( Hashmap* in, char* key )
+void* HashmapGetData( Hashmap* in, const char* key )
 {
 	// We need data!
 	if( in == NULL || key == NULL )
@@ -406,6 +406,10 @@ HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator )
 
 void HashmapFree( Hashmap* in )
 {
+	if( in == NULL )
+	{
+		return;
+	}
 	HashmapElement e;
 	unsigned int i = 0;
 	

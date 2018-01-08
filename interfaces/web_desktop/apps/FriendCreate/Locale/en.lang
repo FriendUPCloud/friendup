@@ -36,6 +36,11 @@ i18n_package_generation_error       : The package failed to generate. Please che
 i18n_package_submitted              : Package sent
 i18n_submitted_desc                 : The package was sent to Friend Store. Login there to track your package.
 
+i18n_checking_file                  : Checking file.
+i18n_add_file_to_project            : File is not added to your project. You want to add it?
+i18n_add_to_project                 : Add to project
+i18n_could_not_add_file             : Could not add file to project.
+
 #macro menu
 i18n_macros                         : Macros
 i18n_clear_macro                    : Clear macro
@@ -103,6 +108,7 @@ i18n_javascriptexe                   : JavascriptEXE
 i18n_solidity                        : Solidity
 i18n_json                            : JSON
 i18n_html                            : HTML
+i18n_conf                            : Config script
 i18n_c_code                          : C/C++ code
 i18n_d_code                          : D code
 i18n_ini_script                      : INI script
@@ -142,7 +148,3 @@ i18n_category                        : Category
 i18n_could_not_save : Could not save!
 i18n_friend_create_iot_monitor : Friend Create - IOT Monitor
 i18n_search_and_replace : Search and replace
-
-
-
-

@@ -85,6 +85,7 @@ typedef struct UserSession
 	void                   *us_SB;   // pointer to systembase
 	
 	char                   us_UserActionInfo[ 512 ];
+	char                   us_Name[ 256 ];		// session name
 	int                    us_InUseCounter;
 	WebsocketReqManager    *us_WSReqManager;
 }UserSession;

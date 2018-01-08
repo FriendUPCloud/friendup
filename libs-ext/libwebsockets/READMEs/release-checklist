@@ -1,0 +1,97 @@
+Release Checklist
+-----------------
+
+1) QA
+
+ a) ab / h2load / h2spec
+
+   $ ab -n 100000 -c 200 https://127.0.0.1:7681/
+   $ h2load -n 100000 -c 200  https://localhost:7681
+   $ h2spec  -h 127.0.0.1 -p 7681 -t -k -o 1
+
+ b) coverity
+ 
+   $ ../make-coverity-tarball.sh
+   https://scan.coverity.com/projects/warmcat-libwebsockets
+
+ c) test servers + client + browser
+ 
+ d) valgrind test servers + client + browser
+
+ e) attack.sh
+ 
+     $ ./test-apps/attack.sh
+
+ f) Autobahn
+
+     $ wstest -m fuzzingserver &
+     $ ./scripts/autobahn-test.sh
+
+     Force update by browser using agent "libwebsockets"
+     http://localhost:8080/test_browser.html
+     
+     rsync -av ./reports/* root@warmcat.com:/var/www/libwebsockets.org
+
+2) soname bump?
+
+ a) We need one if we added / changed / removed apis
+
+  CMakeLists.txt
+
+   set(SOVERSION "6")
+
+  scripts/libwebsockets.spec
+
+  -/%{_libdir}/libwebsockets.so.6
+  +/%{_libdir}/libwebsockets.so.7
+
+3) changelog
+
+ a) Add next version tag header.
+
+ b) Classify as
+
+    - MINOR bug fixes
+    - MAJOR bug fixes
+    - SECURITY fixes
+
+4) main version bump
+
+  CMakeLists.txt
+
+   set(CPACK_PACKAGE_VERSION_MAJOR "1")
+   set(CPACK_PACKAGE_VERSION_MINOR "6")
+   set(CPACK_PACKAGE_VERSION_PATCH "0")
+
+5) specfile
+
+ a) rpm version bump to match CMake one
+
+  scripts/libwebsockets.spec
+
+   Version: 1.6.0
+
+ b) Summarize changelog
+
+  scripts/libwebsockets.spec
+
+%changelog
+* Sun Jan 17 2016 Andrew Cooks <acooks@linux.com> 1.6.4-1
+- Bump version to 1.6.4
+- MINOR fix xyz
+
+6) Announce latest version on README.md
+
+7) signed tag
+
+  git tag -s vX.Y[.Z]
+
+8) git
+
+ a) push
+ 
+ b) final CI check, if fail delete tag, kill pushed tags, restart flow
+
+9) website
+
+ a) update latest tag for release branch

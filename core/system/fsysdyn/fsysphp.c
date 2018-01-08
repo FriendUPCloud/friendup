@@ -184,7 +184,7 @@ ListString *PHPCall( const char *command, int *length )
 	
 	//DEBUG("[PHPFsys] command launched\n");
 
-	char buf[ PHP_READ_SIZE ]; memset( buf, '\0', PHP_READ_SIZE );
+	char *buf = FCalloc( PHP_READ_SIZE, sizeof( char ) );
 	ListString *data = ListStringNew();
 	
 	while( !feof( pipe ) )
@@ -194,6 +194,8 @@ ListString *PHPCall( const char *command, int *length )
 		//DEBUG( "[PHPFsys] Adding %d of data\n", size );
 		ListStringAdd( data, buf, size );
 	}
+	
+	FFree( buf );
 	
 	// Free pipe if it's there
 	pclose( pipe );
@@ -234,12 +236,10 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 	File *dev = NULL;
 	char *path = NULL;
 	char *name = NULL;
-	//UserSession *us =  NULL;
-	//User *usr = NULL;
 	char *module = NULL;
 	char *type = NULL;
 	char *authid = NULL;
-	FULONG id = 0;
+//	FULONG id = 0; //not used
 	
 	SystemBase *sb = NULL;
 	
@@ -278,7 +278,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usr )
 					name = (char *)lptr->ti_Data;
 					break;
 				case FSys_Mount_ID:
-					id = (FULONG)lptr->ti_Data;
+//					id = (FULONG)lptr->ti_Data; //not needed?
 					break;
 				case FSys_Mount_Type:
 					type = (char *)lptr->ti_Data;
@@ -555,8 +555,28 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	if( !sd ) return NULL;
 	
 	// Url encoded device name
-	char *comm = FCalloc( strlen( s->f_Name ) + strlen( path ) + 2, sizeof( char ) );
-	sprintf( comm, "%s:%s", s->f_Name, path );
+	
+	char *comm = NULL;
+	
+	if( strchr( path, ':' ) != NULL )
+	{
+		int l = strlen( path );
+		if( (comm = FCalloc( l + 2, sizeof( char ) )) != NULL )
+		{
+			memcpy( comm, path, l );
+		}
+		else return NULL;
+		
+	}
+	else
+	{
+		if( (comm = FCalloc( strlen( s->f_Name ) + strlen( path ) + 2, sizeof( char ) )) != NULL )
+		{
+			sprintf( comm, "%s:%s", s->f_Name, path );
+		}
+		else return NULL;
+	}
+	
 	char *encodedcomm = MarkAndBase64EncodeString( comm );
 	FFree( comm );
 	
@@ -634,9 +654,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			FFree( locfil->f_Path );
 			locfil->f_Path = NULL;
 			FFree( locfil );
+			pclose( pipe );
 		}
 		else
 		{
+			pclose( pipe );
 			FFree( command );
 			FFree( encodedcomm );
 			FERROR("[PHPFsys] cannot alloc memory\n");
@@ -670,6 +692,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
 				FFree( command );
 				FFree( encodedcomm );
+				close( lockf );
 				return NULL;
 			}
 		}
@@ -693,6 +716,17 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			if( result->ls_Data )
 			{
+				if( strncmp( result->ls_Data, "fail", 4 ) == 0 )
+				{
+					FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+					FFree( command );
+					FFree( encodedcomm );
+					ListStringDelete( result );
+					close( lockf );
+					unlink( tmpfilename );
+					return NULL;
+				}
+				
 				// Write the buffer to the file
 				int written = write( lockf, ( void *)result->ls_Data, result->ls_Size );
 	
@@ -763,6 +797,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			DEBUG( "[fsysphp] Closing lock..\n" );
 			close( lockf );
 		}
+		unlink( tmpfilename );
 	}
 	else if( mode[0] == 'w' )
 	{
@@ -810,6 +845,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			}
 			// Close the dangling fp
 			fclose( locfp );
+			unlink( tmpfilename );
 		}
 		else
 		{
@@ -847,10 +883,12 @@ int FileClose( struct File *s, void *fp )
 				if( lfp->f_Stream == TRUE )
 				{
 					closeerr = pclose( ( FILE *)sd->fp );
+					DEBUG("[fsysphp] Managed to do a pclose.\n" );
 				}
 				else
 				{
 					closeerr = fclose( ( FILE *)sd->fp );
+					DEBUG("[fsysphp] Managed to do a fclose, file path %s\n", sd->fname );
 				}
 				sd->fp = NULL;
 			}
@@ -913,6 +951,11 @@ int FileClose( struct File *s, void *fp )
 						ListString *result = PHPCall( command, &answerLength );
 						if( result != NULL )
 						{
+							if( result->ls_Data[0] == 'f' && result->ls_Data[1] == 'a' && result->ls_Data[2] == 'i' && result->ls_Data[3] == 'l' )
+							{
+								closeerr = 2;
+							}
+							
 							DEBUG( "[fsysphp] Closed file using PHP call.\n" );
 							ListStringDelete( result );
 						}
@@ -989,11 +1032,11 @@ int FileRead( struct File *f, char *buffer, int rsize )
 				
 				if( ptr != NULL && result > 23 )
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FQUAD)(result-23) );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, (ptr+23), (FLONG)(result-23) );
 				}
 				else
 				{
-					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FQUAD)result );
+					sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
 				}
 			}
 		}
@@ -1015,8 +1058,7 @@ int FileRead( struct File *f, char *buffer, int rsize )
 			//DEBUG( "[fsysphp] Read %d bytes\n", result );
 		}
 	}
-	printf("PHPRead %d\n", result );
-	
+
 	return result;
 }
 
@@ -1129,11 +1171,22 @@ int InfoSet( struct File *s, const char *path, const char *key, const char *valu
 }
 
 //
+// GetDiskInfo
+//
+
+int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+{
+	*used = 0;
+	*size = 0;
+	return 0;
+}
+//
 // make directory in php file system
 //
 
 int MakeDir( struct File *f, const char *path )
 {
+	int error = 0;
 	DEBUG("[fsysphp] makedir filesystem\n");
 	if( f != NULL && f->f_SpecialData != NULL )
 	{
@@ -1199,6 +1252,7 @@ int MakeDir( struct File *f, const char *path )
 				}
 				else
 				{
+					error = -2;
 					FERROR( "[fsysphp] Unknown error unmounting device %s..\n", f->f_Name );
 				}
 				
@@ -1212,44 +1266,57 @@ int MakeDir( struct File *f, const char *path )
 	}
 	else
 	{
-		return -1;
+		error = -1;
 	}
-	return 1;
+	return error;
 }
 
 //
 // Delete
 //
 
-FQUAD Delete( struct File *s, const char *path )
+FLONG Delete( struct File *s, const char *path )
 {
 	DEBUG("[fsysphp] Delete %s\n", path);
 	if( s != NULL )
 	{
 		// Fix path
 		char *comm = NULL;
+		char *commSlash = NULL;
 		if( !PathHasColon( (char *)path ) )
 		{
-			int len = strlen( path ) + strlen( s->f_Name ) + 2;
+			int len = strlen( path ) + strlen( s->f_Name ) + 10;
 			char *tmp = FCalloc( len, sizeof( char ) );
 			snprintf( tmp, len, "%s:%s", s->f_Name, path );
 			comm = MarkAndBase64EncodeString( tmp );
+			
+			strcat( tmp,  "/" );
+			commSlash = MarkAndBase64EncodeString( tmp );
+			DEBUG("SLASH DElete %s\n", tmp );
 			FFree( tmp );
 		}
 		else
 		{
+			int len = strlen( path ) + 10;
+			char *tmp = FCalloc( len, sizeof( char ) );
+			snprintf( tmp, len, "%s/", path );
 			comm = MarkAndBase64EncodeString( path );
+			DEBUG("SLASH DElete1 %s\n", tmp );
+			commSlash = MarkAndBase64EncodeString( tmp );
+			FFree( tmp );
 		}
+		
+		DEBUG("COMM '%s' / '%s'\n", comm, commSlash );
 	
 		// Calculate length of variables in string
 		int cmdLength = strlen( "module=files&command=dosaction&action=delete&sessionid=&path=" ) +
 			( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
-			( comm ? strlen( comm ) : 0 ) + 1;
+			( comm ? strlen( comm ) : 0 ) + 10;
 	
 		// Whole command
 		char *command = FCalloc(
 			strlen( "php \"modules/system/module.php\" \"\";" ) +
-			cmdLength + 1, sizeof( char ) );
+			cmdLength + 10, sizeof( char ) );
 
 		if( command != NULL )
 		{
@@ -1261,8 +1328,8 @@ FQUAD Delete( struct File *s, const char *path )
 			{					
 				snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
 					s->f_SessionID ? s->f_SessionID : "", comm ? comm : "" );
+				DEBUG("PATH %s\n", commandCnt );
 				sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
-				FFree( commandCnt );
 		
 				SpecialData *sd = (SpecialData *)s->f_SpecialData;
 		
@@ -1270,16 +1337,36 @@ FQUAD Delete( struct File *s, const char *path )
 				ListString *result = PHPCall( command, &answerLength );
 		
 				// TODO: we should parse result to get information about success
-				if( result )
+				if( result != NULL )
 				{
+					DEBUG("Delete res: %s\n", result->ls_Data );
+					if( result->ls_Data != NULL && strncmp( "fail", result->ls_Data, 4 ) == 0 )
+					{
+						snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=delete&sessionid=%s&path=%s",
+							s->f_SessionID ? s->f_SessionID : "", commSlash ? commSlash : "" );
+						DEBUG("PATH1 %s\n", commandCnt );
+						sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+		
+						if( result != NULL )
+						{
+							ListStringDelete( result );
+							result = NULL;
+						}
+						result = PHPCall( command, &answerLength );
+						DEBUG("Delete res 1: %s\n", result->ls_Data );
+					}
+
 					ListStringDelete( result );
 				}
+				
+				FFree( commandCnt );
 			}
 			
 			FFree( command );
 			// Success
 		}
 		FFree( comm );
+		FFree( commSlash );
 	}
 	else
 	{
@@ -1294,13 +1381,13 @@ FQUAD Delete( struct File *s, const char *path )
 
 int Rename( struct File *s, const char *path, const char *nname )
 {
-	DEBUG("[fsysphp] Rename %s to %s\n", path, nname );
+	DEBUG("[fsysphp] Rename '%s' to '%s'\n", path, nname );
 	
 	if( s != NULL )
 	{
 		char *comm = NULL;
 	
-		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 2, sizeof(char) ) ) != NULL )
+		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 10, sizeof(char) ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
@@ -1314,6 +1401,9 @@ int Rename( struct File *s, const char *path, const char *nname )
 	
 			char *encPath = MarkAndBase64EncodeString( comm );
 			
+			strcat( comm, "/" );
+			char *encPathSlash = MarkAndBase64EncodeString( comm );
+			
 			char *newName = MarkAndBase64EncodeString( nname );
 			
 	
@@ -1321,17 +1411,17 @@ int Rename( struct File *s, const char *path, const char *nname )
 			int cmdLength = strlen( "module=files&command=dosaction&action=rename&sessionid=&path=&newname=" ) +
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
 				( encPath ? strlen( encPath ) : 0 ) + 
-				( newName ? strlen( newName ) : 0 ) + 1;
+				( newName ? strlen( newName ) : 0 ) + 2;
 			
 			// Whole command
 			char *command = FCalloc(
 				strlen( "php \"modules/system/module.php\" \"\";" ) +
-				cmdLength + 1, sizeof( char ) );
+				cmdLength + 10, sizeof( char ) );
 
 			if( command != NULL )
 			{
 				// Just get vars
-				char *commandCnt = FCalloc( cmdLength + 1, sizeof( char ) );
+				char *commandCnt = FCalloc( cmdLength + 10, sizeof( char ) );
 
 				// Generate command string
 				if( commandCnt != NULL )
@@ -1341,21 +1431,38 @@ int Rename( struct File *s, const char *path, const char *nname )
 					snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
 						s->f_SessionID ? s->f_SessionID : "", encPath ? encPath : "", newName ? newName : "" );
 					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
-					FFree( commandCnt );
 					
 					int answerLength = 0;
 					ListString *result = PHPCall( command, &answerLength );
 		
-					// TODO: we should parse result to get information about success
-					if( result )
+					if( result != NULL )
 					{
-						ListStringDelete( result );
+						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						{
+							snprintf( commandCnt, cmdLength, "module=files&command=dosaction&action=rename&sessionid=%s&path=%s&newname=%s",
+								s->f_SessionID ? s->f_SessionID : "", encPathSlash ? encPathSlash : "", newName ? newName : "" );
+							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+		
+							if( result != NULL )
+							{
+								ListStringDelete( result );
+								result = NULL;
+							}
+							result = PHPCall( command, &answerLength );
+						}
+						// TODO: we should parse result to get information about success
+						if( result != NULL )
+						{
+							ListStringDelete( result );
+						}
 					}
 				}
+				FFree( commandCnt );
 				FFree( command );
 			}
 			
 			if( encPath ) FFree( encPath );
+			if( encPathSlash ) FFree( encPathSlash );
 			if( newName ) FFree( newName );
 			
 			FFree( comm );
@@ -1365,7 +1472,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 	{
 		return -1;
 	}
-	return 1;
+	return 0;
 }
 
 
@@ -1402,9 +1509,9 @@ char *Execute( struct File *s, const char *path, const char *args )
 // Get information about last file changes (seconds from 1970)
 //
 
-FQUAD GetChangeTimestamp( struct File *s, const char *path )
+FLONG GetChangeTimestamp( struct File *s, const char *path )
 {
-	return (FQUAD)0;
+	return (FLONG)0;
 }
 
 //
@@ -1414,12 +1521,13 @@ FQUAD GetChangeTimestamp( struct File *s, const char *path )
 BufString *Info( File *s, const char *path )
 {
 	char *comm = NULL;
+	DEBUG("[PHPFS] Info\n");
 	
 	if( s != NULL )
 	{
 		char *comm = NULL;
 	
-		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 2, sizeof(char) ) ) != NULL )
+		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 8, sizeof(char) ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
@@ -1428,14 +1536,19 @@ BufString *Info( File *s, const char *path )
 				strcat( comm, path ); 
 		
 			SpecialData *sd = (SpecialData *)s->f_SpecialData;
+			
+			DEBUG("[PHPFS] info path : %s\n", comm );
 	
-			char *encPath = MarkAndBase64EncodeString( comm ); FFree( comm );
+			char *encPath = MarkAndBase64EncodeString( comm );
+			strcat( comm, "/" );
+			char *encPathSlash = MarkAndBase64EncodeString( comm );
+			FFree( comm );
 		
 			// Calculate length of variables in string
 			int cmdLength = strlen( "type=&module=files&args=false&command=info&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) + 
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) + 
-				( encPath ? strlen( encPath ) : 0 ) + 1;
+				( encPath ? strlen( encPath ) : 0 ) + 16;
 			
 			// Whole command
 			char *command = FCalloc(
@@ -1453,7 +1566,6 @@ BufString *Info( File *s, const char *path )
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encPath ? encPath : "" );
 					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
-					FFree( commandCnt );
 			
 					// Execute!
 					int answerLength = 0;
@@ -1461,6 +1573,17 @@ BufString *Info( File *s, const char *path )
 					ListString *result = PHPCall( command, &answerLength );
 					if( result != NULL )
 					{
+						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						{
+							ListStringDelete( result );
+							
+							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=info&authkey=false&sessionid=%s&path=%s&subPath=",
+								sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encPathSlash ? encPathSlash : "" );
+							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+		
+							result = PHPCall( command, &answerLength );
+						}
+						
 						bs = BufStringNewSize( result->ls_Size );
 						if( bs != NULL )
 						{
@@ -1470,13 +1593,16 @@ BufString *Info( File *s, const char *path )
 					}
 					// we should parse result to get information about success
 				
+					FFree( commandCnt );
 					FFree( command );
 					FFree( encPath );
+					FFree( encPathSlash );
 					return bs;
 				}
 				FFree( command );
 			}
 			FFree( encPath );
+			FFree( encPathSlash );
 		}
 	}
 	return NULL;
@@ -1562,10 +1688,11 @@ BufString *Call( File *s, const char *path, char *args )
 	
 BufString *Dir( File *s, const char *path )
 {
+	DEBUG("[PHPFS] Dir\n");
 	if( s != NULL )
 	{
 		char *comm = NULL;
-		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 2, sizeof(char) ) ) != NULL )
+		if( ( comm = FCalloc( strlen( path ) + strlen( s->f_Name ) + 8, sizeof(char) ) ) != NULL )
 		{
 			strcpy( comm, s->f_Name );
 			strcat( comm, ":" );
@@ -1574,8 +1701,11 @@ BufString *Dir( File *s, const char *path )
 			
 			SpecialData *sd = (SpecialData *)s->f_SpecialData;
 			
+			DEBUG("[PHPFS] dir path : %s\n", comm );
 			// Encoded path
 			char *encComm = MarkAndBase64EncodeString( comm );
+			strcat( comm, "/" );
+			char *encPathSlash = MarkAndBase64EncodeString( comm );
 			if( !encComm ) encComm = comm;
 			else FFree( comm );
 			
@@ -1583,7 +1713,7 @@ BufString *Dir( File *s, const char *path )
 			int cmdLength = strlen( "type=&module=files&args=false&command=directory&authkey=false&sessionid=&path=&subPath=" ) +
 				( sd->type ? strlen( sd->type ) : 0 ) +
 				( s->f_SessionID ? strlen( s->f_SessionID ) : 0 ) +
-				( encComm ? strlen( encComm ) : 0 ) + 1;
+				( encComm ? strlen( encComm ) : 0 ) + 16;
 			
 			// Whole command
 			char *command = FCalloc(
@@ -1601,29 +1731,51 @@ BufString *Dir( File *s, const char *path )
 					snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
 						sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encComm ? encComm : "" );
 					sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
-					FFree( commandCnt );
 		
 					int answerLength;
 					BufString *bs  = NULL;
 					ListString *result = PHPCall( command, &answerLength );
 					if( result != NULL )
 					{
+						if( result->ls_Data != NULL && strncmp( "fail<!--separate-->", result->ls_Data, 19 ) == 0 )
+						{
+							ListStringDelete( result );
+							
+							snprintf( commandCnt, cmdLength, "type=%s&module=files&args=false&command=directory&authkey=false&sessionid=%s&path=%s&subPath=",
+								sd->type ? sd->type : "", s->f_SessionID ? s->f_SessionID : "", encPathSlash ? encPathSlash : "" );
+							sprintf( command, "php \"modules/system/module.php\" \"%s\";", FilterPHPVar( commandCnt ) );
+		
+							result = PHPCall( command, &answerLength );
+						}
+						
 						bs =BufStringNewSize( result->ls_Size );
 						if( bs != NULL )
 						{
 							BufStringAddSize( bs, result->ls_Data, result->ls_Size );
 						}
 						ListStringDelete( result );
+						
+						//DEBUG("\n\n\n\nAnswer %s\n\n\n\n\n", bs->bs_Buffer );
 					}
+					
+					FFree( commandCnt );
 		
 					FFree( command );
 					FFree( encComm );
+					if( encPathSlash != NULL )
+					{
+						FFree( encPathSlash );
+					}
 					return bs;
 				}
 			}
 			// we should parse result to get information about success
 	
 			FFree( encComm );
+			if( encPathSlash != NULL )
+			{
+				FFree( encPathSlash );
+			}
 			return NULL;
 		}
 	}

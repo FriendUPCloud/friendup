@@ -64,22 +64,22 @@ extern SystemBase *SLIB;
 /**
  * Send message via CommunicationService and wait+read response
  *
- * @param con pointer to CommFCConnection to which message will be send
+ * @param con pointer to FConnection to which message will be send
  * @param df pointer message which will be send
  * @return pointer to new BufString structure when success, otherwise NULL
  */
 
-BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
+BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 {
 	BufString *bs = NULL;
 	
-	CommService *serv = (CommService *)con->cfcc_Service;
-	if( serv == NULL )
+	CommService *serv = (CommService *)con->fc_Service;
+	if( serv == NULL || con->fc_Socket == NULL )
 	{
-		FERROR("[SendMessageAndWait] Service is equal to NULL!\n");
+		FERROR("[SendMessageAndWait] Service [%p] or socket [%p] is equal to NULL!\n", con, con->fc_Socket );
 		return NULL;
 	}
-	DEBUG("[SendMessageAndWait] SendMessageAndWait alloc memory\n");
+
 	CommRequest *cr = FCalloc( 1, sizeof( CommRequest ) );
 	if( cr != NULL )
 	{
@@ -87,18 +87,16 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		cr->cr_RequestID = (FULONG)cr;
 		cr->cr_Df = df;
 		
-		char *ridbytes = (char *) df;// (DataForm *)(((char *)df) + (6*sizeof(FULONG)) + df[ 1 ].df_Size);
+		char *ridbytes = (char *) df;
 		ridbytes += COMM_MSG_HEADER_SIZE;
 		DataForm *rid = (DataForm *)ridbytes;
 		if( rid->df_ID == ID_FCID )
 		{
-			DEBUG("[SendMessageAndWait]  found fcid, tag size %lu\n", rid->df_Size );
 			int size = COMM_MSG_HEADER_SIZE + FRIEND_CORE_MANAGER_ID_SIZE;
 			ridbytes += size;
 		}
 		rid = (DataForm *)ridbytes;
 		rid->df_Size = (FULONG)cr;		// pointer is our request id
-		DEBUG2("[SendMessageAndWait] Request ID set to %lu base %lu\n", rid->df_Size, cr->cr_RequestID );
 	}
 	else
 	{
@@ -106,17 +104,14 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		return NULL;
 	}
 	
-	DEBUG("[SendMessageAndWait] SendMessageAndWait before lock\n");
 	if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 	{
-		DEBUG("[SendMessageAndWait] SendMessageAndWait add entry to list\n");
 		if( serv->s_Requests == NULL )
 		{
 			serv->s_Requests = cr;
 		}
 		else
 		{
-			DEBUG("[SendMessageAndWait] Pointer %p\n", serv->s_Requests );
 			serv->s_Requests->node.mln_Pred = (MinNode *)cr;
 			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
 			serv->s_Requests = cr;
@@ -129,17 +124,17 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		FFree( cr ); 
 		return NULL;
 	}
+
+	int blocked = con->fc_Socket->s_Blocked;
 	
-	DEBUG("[SendMessageAndWait] Before sending message lock\n");
-	
-	if( pthread_mutex_lock( &con->cfcc_Mutex ) == 0 )
+	if( pthread_mutex_lock( &con->fc_Mutex ) == 0 )
 	{
 		DEBUG("[SendMessageAndWait] mutex locked\n");
-		SocketSetBlocking( con->cfcc_Socket, TRUE );
+		SocketSetBlocking( con->fc_Socket, TRUE );
 	
 		// send request
-		int size = SocketWrite( con->cfcc_Socket, (char *)df, (FQUAD)df->df_Size );
-		pthread_mutex_unlock( &con->cfcc_Mutex );
+		FLONG size = SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
+		pthread_mutex_unlock( &con->fc_Mutex );
 	}
 	else
 	{
@@ -152,16 +147,13 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 	FBOOL quit = FALSE;
 	while( quit != TRUE )
 	{
-		DEBUG("[SendMessageAndWait] SendMessageAndWait waiting for condition\n");
 		if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 		{
-			DEBUG("[SendMessageAndWait] SendMessageAndWait Setup condition\n");
 			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
 			pthread_mutex_unlock( &serv->s_Mutex );
 		}
 		else break;
 
-		DEBUG( "[SendMessageAndWait] Condition met, now going on\n!" );
 		time_t acttime = time( NULL );
 		if( ( acttime - cr->cr_Time ) > 10 || cr->cr_Bs != NULL )
 		{
@@ -179,7 +171,7 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 
 			if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 			{
-				DEBUG("[SendMessageAndWait] Remove Socket entry from list\n");
+				//DEBUG("[SendMessageAndWait] Remove Socket entry from list\n");
 				if( cr == serv->s_Requests )
 				{
 					CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
@@ -221,6 +213,8 @@ BufString *SendMessageAndWait( CommFCConnection *con, DataForm *df )
 		}
 	}
 	
+	SocketSetBlocking( con->fc_Socket, blocked );
+	
 	DEBUG( "[SendMessageAndWait] SendMessageAndWait Done with sending, returning\n" );
 	
 	return bs;
@@ -238,7 +232,7 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 {
 	DataForm *retDF = NULL;
 	
-	DEBUG("[CommServClient] CommunicationSendmesage FCRE size %ld QUERY size  %ld\n", df[0].df_Size, df[1].df_Size );
+	DEBUG("[CommServiceSendMsg] CommunicationSendmesage FCRE size %ld QUERY size  %ld\n", df[0].df_Size, df[1].df_Size );
 	if( s && df )
 	{
 		char buffer[ MAX_SIZE ];
@@ -248,7 +242,7 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 			FBYTE *targetName = (FBYTE *)(df+1);
 			targetName += COMM_MSG_HEADER_SIZE;
 			
-			DEBUG2("[CommServClient] Message destination %s  size %ld\n", targetName, df[ 0 ].df_Size );
+			DEBUG2("[CommServiceSendMsg] Message destination %s  size %ld\n", targetName, df[ 0 ].df_Size );
 			
 			// send message to all servers
 			
@@ -264,9 +258,9 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 				DataForm *ldf = DataFormNew( tags );
 				
 				//FriendCoreManager *fcm = (FriendCoreManager *)s->s_FCM;
-				CommFCConnection *lc = s->s_Connections;
+				FConnection *lc = s->s_Connections;
 				
-				DEBUG("[CommServClient] pointer to connections %p\n", lc );
+				DEBUG("[CommServiceSendMsg] pointer to connections %p\n", lc );
 				
 				while( lc != NULL )
 				{
@@ -280,34 +274,27 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 					
 						if( lsdata != NULL )
 						{
-							DEBUG2("[CommServClient]:Received bytes %ld CommunicationServiceClient Sending message size: %lu server: %128s\n", sockReadSize, df->df_Size, lc->cfcc_Name );
+							DEBUG2("[CommServiceSendMsg]:Received bytes %ld CommunicationServiceClient Sending message size: %lu server: %128s\n", sockReadSize, df->df_Size, lc->fc_Name );
 
 							MsgItem loctags[] = {
-								{ ID_SNAM,  (FULONG)(FRIEND_CORE_MANAGER_ID_SIZE*sizeof(FBYTE)),  (FULONG)lc->cffc_ID },
+								{ ID_SNAM,  (FULONG)(FRIEND_CORE_MANAGER_ID_SIZE*sizeof(FBYTE)),  (FULONG)lc->fc_ID },
 								{ TAG_DONE, TAG_DONE, TAG_DONE }
 							};
 			
-							//INFO("joining messages\n");
-					
 							DataForm *serverdf = DataFormNew( loctags );
 					
 							DataFormAdd( &ldf, lsdata, sockReadSize );
-							DEBUG2("[CommServClient] ---------------------Added new server to answer serverdfsize %ld sockreadsize %ld\n", serverdf->df_Size, sockReadSize );
+							DEBUG2("[CommServiceSendMsg] Added new server to answer serverdfsize %ld sockreadsize %ld\n", serverdf->df_Size, sockReadSize );
 					
 							DataFormAddForm( &ldf, serverdf );
 					
 							DataFormDelete( serverdf );
 						}
-						//DEBUG("ldf size!!!!\n\n\n\n\n\n\n\n\n\nSIZE %lld\n\n\n\n\n %d\n\n\n\n\n", bs->bs_Size, ldf->df_Size );
 						BufStringDelete( bs );
 					}
 					
-					//sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE, 0 );
-					DEBUG2("[CommServClient] Received information in bytes %ld\n", sockReadSize );
-					//int writeSize = write( service->s_recvPipe[ 1 ], buffer, sockReadSize );
-			
-					//DEBUG("Message received '%s'\n", buffer );
-					lc = (CommFCConnection *)lc->node.mln_Succ;
+					DEBUG2("[CommServiceSendMsg] Received information in bytes %ld\n", sockReadSize );
+					lc = (FConnection *)lc->node.mln_Succ;
 				}
 				
 				return ldf;
@@ -320,16 +307,14 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 					{ TAG_DONE, TAG_DONE, TAG_DONE }
 				};
 				
-				DEBUG("[CommServClient] Send message to target\n");
+				DEBUG("[CommServiceSendMsg] Send message to target\n");
 			
 				DataForm *ldf = DataFormNew( tags );
 				
-				CommFCConnection *lc = s->s_Connections;
+				FConnection *lc = s->s_Connections;
 				while( lc != NULL )
 				{
-					//DEBUG2("Checking receipients  target %s fromlist %s  size %ld  \n", (char *)targetName, (char *)lc->cfcc_Name, df[ 1 ].df_Size );
-					
-					if( strncmp( (char *)targetName, (char *)lc->cfcc_Name, df[ 1 ].df_Size ) == 0 )
+					if( strncmp( (char *)targetName, (char *)lc->fc_Name, df[ 1 ].df_Size ) == 0 )
 					{
 						BufString *bs = SendMessageAndWait( lc, df );
 						FBYTE *lsdata = NULL;
@@ -337,64 +322,59 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 						
 						if( bs != NULL )
 						{
-							DEBUG2("[CommServClient] Received from socket %lu\n", (unsigned long)bs->bs_Size );
+							DEBUG2("[CommServiceSendMsg] Received from socket %lu\n", (unsigned long)bs->bs_Size );
 							lsdata = (FBYTE *)bs->bs_Buffer;
 							sockReadSize = bs->bs_Size;
 						}
 
 						if( lsdata != NULL )
 						{
-							DEBUG2("[CommServClient] Received bytes %ld CommunicationServiceClient Sending message size: %lu server: %128s\n", sockReadSize, (unsigned long)df->df_Size, lc->cfcc_Name );
+							DEBUG2("[CommServiceSendMsg] Received bytes %ld CommunicationServiceClient Sending message size: %lu server: %128s\n", sockReadSize, (unsigned long)df->df_Size, lc->fc_Name );
 					
 							DataFormAdd( &ldf, lsdata, sockReadSize );
 							
 							ldf->df_Size = sockReadSize;
-							DEBUG2("[CommServClient]  ---------------------Added new server to answer serverdfsize %ld sockreadsize %lu\n", ldf->df_Size, sockReadSize );
+							DEBUG2("[CommServiceSendMsg]  ---------------------Added new server to answer serverdfsize %ld sockreadsize %lu\n", ldf->df_Size, sockReadSize );
 						}
 						else
 						{
-							DEBUG("End of file added\n");
 							DataFormAdd( &ldf, (FBYTE *)"{\"rb\":\"-1\"}", 11 );
-							DEBUG2("[CommServClient] endof serverdfsize %lu sockreadsize %lu\n", ldf->df_Size, sockReadSize );
+							DEBUG2("[CommServiceSendMsg] endof serverdfsize %lu sockreadsize %lu\n", ldf->df_Size, sockReadSize );
 						}
 						
 						if( bs != NULL )
 						{
-							//DEBUG2("ldf size!!!!\n\n\n\n\n\n\n\n\n\nSIZE %lld\n\n\n\n\n %d\n\n\n\n\n", bs->bs_Size, ldf->df_Size );
 							BufStringDelete( bs );
 						}
 						
-						//sockReadSize = SocketRead( lc->cfcc_Socket, buffer, MAX_SIZE, 0 );
-						DEBUG2("[CommServClient] Received information in bytes %ld\n", sockReadSize );
-						//int writeSize = write( service->s_recvPipe[ 1 ], buffer, sockReadSize );
+						DEBUG2("[CommServiceSendMsg] Received information in bytes %ld\n", sockReadSize );
 						break;
 					}
 
-					lc = (CommFCConnection *)lc->node.mln_Succ;
+					lc = (FConnection *)lc->node.mln_Succ;
 				}
-				DEBUG2("[CommServClient] Message returned %lu\n", ldf->df_Size );
+				DEBUG2("[CommServiceSendMsg] Message returned %lu\n", ldf->df_Size );
 				return ldf;
 			}
 		}
 		else
 		{
-			FERROR("Message is broken, cannot send it\n");
+			FERROR("[CommServiceSendMsg] Message is broken, cannot send it\n");
 		}
 
-		DEBUG("[CommServClient] resources free\n");
+		DEBUG("[CommServiceSendMsg] resources free\n");
 	}
-	
 	return retDF;
 }
 
 /**
  * Send message via CommunicationService to provided receipient
  *
- * @param con pointer to CommFCConnection to which message will be send
+ * @param con pointer to FConnection to which message will be send
  * @param df pointer message which will be send
  * @return pointer to new DataForm structure when success, otherwise NULL
  */
-DataForm *CommServiceSendMsgDirect( CommFCConnection *con, DataForm *df )
+DataForm *CommServiceSendMsgDirect( FConnection *con, DataForm *df )
 {
 	MsgItem tags[] = {
 		{ ID_FCRE, (FULONG)0,  (FULONG)MSG_GROUP_START },
@@ -402,7 +382,7 @@ DataForm *CommServiceSendMsgDirect( CommFCConnection *con, DataForm *df )
 		{ TAG_DONE, TAG_DONE, TAG_DONE }
 	};
 		
-	DEBUG("[CommServClient] Send message to targetDirect\n");
+	DEBUG("[CommServiceSendMsgDirect] Send message to targetDirect\n");
 			
 	DataForm *ldf = DataFormNew( tags );
 	
@@ -414,19 +394,19 @@ DataForm *CommServiceSendMsgDirect( CommFCConnection *con, DataForm *df )
 	
 	if( bs != NULL )
 	{
-		DEBUG2("[CommServClient] Received from socket %lu\n", (unsigned long)bs->bs_Size );
+		DEBUG2("[CommServiceSendMsgDirect] Received from socket %lu\n", (unsigned long)bs->bs_Size );
 		lsdata = (FBYTE *)bs->bs_Buffer;
 		sockReadSize = bs->bs_Size;
 	}
 
 	if( lsdata != NULL )
 	{
-		DEBUG2("[CommServClient] Received bytes %ld CommunicationServiceClient Sending message size: %d server: %128s\n", sockReadSize, (int) df->df_Size, con->cfcc_Name );
+		DEBUG2("[CommServiceSendMsgDirect] Received bytes %ld CommunicationServiceClient Sending message size: %d server: %128s\n", sockReadSize, (int) df->df_Size, con->fc_Name );
 		
 		DataFormAdd( &ldf, lsdata, sockReadSize );
 		
 		ldf->df_Size = sockReadSize;
-		DEBUG2("[CommServClient] ---------------------Added new server to answer serverdfsize %ld sockreadsize %ld\n", ldf->df_Size, sockReadSize );
+		DEBUG2("[CommServiceSendMsgDirect] Added new server to answer serverdfsize %ld sockreadsize %ld\n", ldf->df_Size, sockReadSize );
 	}
 	else
 	{
@@ -442,64 +422,86 @@ DataForm *CommServiceSendMsgDirect( CommFCConnection *con, DataForm *df )
 }
 
 /**
- * Create new CommFCConnection
+ * Create new FConnection
  *
  * @param add pointer to char table with internet address
  * @param name name of created connection
- * @return pointer to new CommFCConnection structure when success, otherwise NULL
+ * @return pointer to new FConnection structure when success, otherwise NULL
  */
-CommFCConnection *CommFCConnectionNew( const char *add, const char *name, int type, void *service )
+FConnection *FConnectionNew( const char *add, const char *name, int type, void *service )
 {
-	CommFCConnection *newcon;
+	FConnection *newcon;
 	
-	if( ( newcon = FCalloc( 1, sizeof( CommFCConnection ) ) ) != NULL )
+	if( ( newcon = FCalloc( 1, sizeof( FConnection ) ) ) != NULL )
 	{
 		int addlen = strlen( add );
-		int namlen = strlen( name );
+
+		newcon->fc_Address = FCalloc( addlen+1 , sizeof( char ) );
+		newcon->fc_Name = StringDuplicate( (char *) name );
 		
-		newcon->cfcc_Address = FCalloc( addlen+1 , sizeof( char ) );
-		newcon->cfcc_Name = FCalloc( namlen+1, sizeof( char ) );
+		strcpy( newcon->fc_Address, add );
+		strcpy( newcon->fc_Name, name );
 		
-		newcon->cfcc_Name = FCalloc( FRIEND_CORE_MANAGER_ID_SIZE+1, sizeof( char ) );
-		memcpy( newcon->cfcc_Name, name, FRIEND_CORE_MANAGER_ID_SIZE );
+		newcon->fc_Type  = type;
+		newcon->fc_Service = service;
 		
-		strcpy( newcon->cfcc_Address, add );
-		//strcpy( newcon->cfcc_Name, name );
+		pthread_mutex_init( &newcon->fc_Mutex, NULL );
 		
-		newcon->cffc_Type  = type;
-		newcon->cfcc_Service = service;
-		
-		pthread_mutex_init( &newcon->cfcc_Mutex, NULL );
-		
-		newcon->cfcc_Status = SERVICE_STATUS_CONNECTED;
+		newcon->fc_Status = SERVICE_STATUS_CONNECTED;
 	}
 	return newcon;
 }
 
 /**
- * Delete CommFCConnection
+ * Delete FConnection
  *
- * @param con pointer to CommFCConnection which will be deleted
+ * @param con pointer to FConnection which will be deleted
  */
-void CommFCConnectionDelete( CommFCConnection *con )
+void FConnectionDelete( FConnection *con )
 {
 	if( con != NULL )
 	{
-		pthread_mutex_destroy( &con->cfcc_Mutex );
+		// we cannot delete FCommuncation when its doing PING
 		
-		if( con->cfcc_Address ) FFree( con->cfcc_Address );
-		if( con->cfcc_Name ) FFree( con->cfcc_Name );
-		
-		if( con->cfcc_Socket != NULL )
+		while( TRUE )
 		{
-			SocketClose( con->cfcc_Socket );
-			con->cfcc_Socket = NULL;
+			if( con->fc_PingInProgress == FALSE )
+			{
+				break;
+			}
+			sleep( 1 );
 		}
 		
-		if( con->cfcc_Thread != NULL )
+		pthread_mutex_destroy( &con->fc_Mutex );
+		
+		if( con->fc_Address ) FFree( con->fc_Address );
+		if( con->fc_Name ) FFree( con->fc_Name );
+		if( con->fc_FCID ) FFree( con->fc_FCID );
+		
+		if( con->fc_DestinationFCID != NULL )
 		{
-			ThreadDelete( con->cfcc_Thread );
-			con->cfcc_Thread = NULL;
+			FFree( con->fc_DestinationFCID );
+		}
+
+		if( con->fc_SSLInfo != NULL )
+		{
+			FFree( con->fc_SSLInfo );
+		}
+		if( con->fc_PEM != NULL )
+		{
+			FFree( con->fc_PEM );
+		}
+		
+		if( con->fc_Socket != NULL )
+		{
+			SocketClose( con->fc_Socket );
+			con->fc_Socket = NULL;
+		}
+		
+		if( con->fc_Thread != NULL )
+		{
+			ThreadDelete( con->fc_Thread );
+			con->fc_Thread = NULL;
 		}
 		
 		FFree( con );
@@ -511,12 +513,12 @@ void CommFCConnectionDelete( CommFCConnection *con )
  *
  * @param s pointer to service to which new connection will be added
  * @param conname name of connection to which communication will be set (FCID or host name)
- * @return pointer to new CommFCConnection structure when success, otherwise NULL
+ * @return pointer to new FConnection structure when success, otherwise NULL
  */
-CommFCConnection *ConnectToServer( CommService *s, char *conname )
+FConnection *ConnectToServer( CommService *s, char *conname )
 {
-	CommFCConnection *con = NULL;
-	CommFCConnection *retcon = NULL;
+	FConnection *con = NULL;
+	FConnection *retcon = NULL;
 	FBOOL coreConnection = FALSE;
 	SystemBase *lsb = (SystemBase *)SLIB;
 	FriendCoreManager *fcm = lsb->fcm;
@@ -525,13 +527,13 @@ CommFCConnection *ConnectToServer( CommService *s, char *conname )
 	con = fcm->fcm_CommService->s_Connections;
 	while( con != NULL )
 	{
-		DEBUG("[CommServClient] Going through connections %128s   vs  %128s\n", conname, con->cffc_ID );
-		if( memcmp( conname, con->cfcc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 || strcmp( conname, con->cfcc_Address ) == 0 )
+		DEBUG("[CommServClient] Going through connections %128s   vs  %128s\n", conname, con->fc_FCID );
+		if( memcmp( conname, con->fc_Name, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 || strcmp( conname, con->fc_Address ) == 0 )
 		{
 			coreConnection = TRUE;
 			break;
 		}
-		con = (CommFCConnection *) con->node.mln_Succ;
+		con = (FConnection *) con->node.mln_Succ;
 	}
 	
 	Socket *newsock = NULL;
@@ -573,32 +575,31 @@ CommFCConnection *ConnectToServer( CommService *s, char *conname )
 		
 		if( newsock != NULL )
 		{
-			retcon = CommFCConnectionNew( address, conname, SERVICE_CONNECTION_OUTGOING, s );
+			retcon = FConnectionNew( address, conname, SERVER_CONNECTION_OUTGOING, s );
 			if( retcon != NULL )
 			{
-				retcon->cfcc_Port = port;
-				retcon->cfcc_Socket = newsock;
+				retcon->fc_Port = port;
+				retcon->fc_Socket = newsock;
 			}
 		}
 	}
 	
 	if( newsock != NULL )
 	{
-		int err = 0;
 		DEBUG("[CommServClient] Outgoing connection created\n");
 		{
 			MsgItem tags[] = {
-				{ ID_FCRE,  (FULONG)0, (FULONG)NULL },
-				{ ID_FCID,  (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
+				{ ID_FCRE, (FULONG)0, (FULONG)NULL },
+				{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
 				{ ID_FCON, (FULONG)0 , MSG_INTEGER_VALUE },
 				{ TAG_DONE, TAG_DONE, TAG_DONE }
 			};
 			
 			DataForm * df = DataFormNew( tags );
 
-			int sbytes = SocketWrite( newsock, (char *)df, (FQUAD)df->df_Size );
+			FLONG sbytes = SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 			
-			DEBUG("[CommServClient] Message sent %d\n", sbytes );
+			DEBUG("[CommServClient] Message sent %ld\n", sbytes );
 			DataFormDelete( df );
 			
 			char id[ FRIEND_CORE_MANAGER_ID_SIZE ];
@@ -608,7 +609,7 @@ CommFCConnection *ConnectToServer( CommService *s, char *conname )
 			
 			if( coreConnection == TRUE )
 			{
-				memcpy( id, con->cffc_ID, FRIEND_CORE_MANAGER_ID_SIZE );
+				memcpy( id, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE );
 			}
 			else
 			{
@@ -634,9 +635,8 @@ CommFCConnection *ConnectToServer( CommService *s, char *conname )
 	}
 	else
 	{
-		retcon->cfcc_Service = fcm->fcm_CommService;
+		retcon->fc_Service = fcm->fcm_CommService;
 	}
-	
 	return retcon;
 }
 

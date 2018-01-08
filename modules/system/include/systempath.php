@@ -62,7 +62,7 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 	
 	foreach( array( 'resources/webclient/apps/', 'repository/' ) as $path )
 	{
-		if( $dir = opendir( $path ) )
+		if( file_exists( $path ) && is_dir( $path ) && $dir = opendir( $path ) )
 		{
 			$cats = [];
 			$apps = [];
@@ -76,6 +76,16 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 				// Skip non installed apps
 				if( !isset( $appsByName[ $file ] ) ) continue;
 			
+				// For repositories
+				if( file_exists( $path . $file . '/Signature.sig' ) )
+				{
+					if( !( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) ) )
+						continue;
+					if( !( $js = json_decode( $d ) ) )
+						continue;
+					if( !isset( $js->validated ) )
+						continue;
+				}
 				if( $f = file_get_contents( $fz ) )
 				{
 					if( $fj = json_decode( $f ) )
@@ -138,7 +148,14 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 					$o->MetaType = 'File';
 					if( file_exists( $path . $app->Filename . '/icon.png' ) )
 					{
-						$o->IconFile = '/webclient/apps/' . $app->Filename . '/icon.png';
+						if( $path == 'repository/' )
+						{
+							$o->IconFile = '/system.library/module/?sessionid=' . $User->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
+						}
+						else
+						{
+							$o->IconFile = '/webclient/apps/' . $app->Filename . '/icon.png';
+						}
 					}
 					$o->Path = 'System:Software/' . $app->Cat . '/';
 					$o->Permissions = '';
@@ -151,6 +168,48 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 	}
 	if( count( $out ) > 0 )
 		die( 'ok<!--separate-->' . json_encode( $out ) );
+}
+// Repositories
+else if( isset( $args->args ) && substr( $args->args->path, 0, strlen( 'System:Repositories/FriendUP/' ) ) == 'System:Repositories/FriendUP/' )
+{
+	if( $dr = opendir( 'repository' ) )
+	{
+		$out = [];
+		while( $file = readdir( $dr ) )
+		{
+			if( $file{0} == '.' ) continue;
+			if( is_dir( 'repository/' . $file ) )
+			{
+				if( file_exists( 'repository/' . $file . '/package.zip' ) )
+				{
+					if( file_exists( 'repository/' . $file . '/Signature.sig' ) )
+					{
+						if( $d = file_get_contents( 'repository/' . $file . '/Signature.sig' ) )
+						{
+							if( $js = json_decode( $d ) )
+							{
+								if( isset( $js->validated ) )
+								{
+									$o = new stdClass();
+									$o->Filename = $file . '.fpkg';
+									$o->Path = 'System:Repositories/FriendUP/' . $o->Filename;
+									$o->MetaType = 'File';
+									$o->Type = 'File';
+									$o->Filesize = filesize( 'repository/' . $file . '/package.zip' );
+									// TODO: Get date!
+									$o->DateModified = date( 'Y-m-d H:i:s' );
+									$o->DateCreated = $o->DateModified;
+									$out[] = $o;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		closedir( $dr );
+		die( 'ok<!--separate-->' . json_encode( $out ) );
+	}
 }
 // DOS Drivers
 else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'system:devices/dosdrivers/' )
@@ -214,7 +273,7 @@ else if( isset( $args->args ) && strtolower( trim( $args->args->path ) ) == 'sys
 {
 	// TODO: Support other cores (friend core to friend core connection)
 	$o = new stdClass();
-	$o->Filename = 'local';
+	$o->Filename = 'Root';
 	$o->Type = 'File';
 	$o->MetaType = 'File';
 	$o->IconClass = 'FriendCore';
@@ -245,7 +304,7 @@ else if( isset( $args->args) && strtolower( trim( $args->args->path ) ) == 'syst
 	die( 'fail<!--separate-->' );
 }
 
-die( 'fail<!--separate-->' );
+die( 'fail<!--separate-->{"response":0,"message":"Unknown system path."}' );
 
 
 ?>
