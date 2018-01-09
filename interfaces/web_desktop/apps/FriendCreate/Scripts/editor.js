@@ -345,6 +345,7 @@ Application.applySyntaxHighlighting = function ()
 		case 'tpl':
 		case 'ptpl':
 		case 'html':
+		case 'htm':
 			extension = 'html';
 			mode = 'ace/mode/html';
 			break;
@@ -737,6 +738,7 @@ Application.checkFileType = function( path )
 		case 'ptpl':
 		case 'xml':
 		case 'html':
+		case 'htm':
 		case 'c':
 		case 'h':
 		case 'cpp':

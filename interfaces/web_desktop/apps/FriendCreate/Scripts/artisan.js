@@ -1157,6 +1157,7 @@ Application.checkFileType = function( path )
 		case 'ptpl':
 		case 'xml':
 		case 'html':
+		case 'htm':
 		case 'c':
 		case 'h':
 		case 'cpp':
