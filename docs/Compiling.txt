@@ -114,11 +114,21 @@ enabled = 1                         // Indicates that Friend Chat is enabled.
 We strongly suggest that you install Friend with the options you want before
 compiling it yourself. For this, use the 'install.sh' script that you can find
 at the root of the friendup directory.
+
 This script will create all the necessary configuration files for you, and
 install Friend Network and Friend Chat servers if you have selected the options.
 Once this done, you are free to compile Friend Core manually if you wish : the
 compilation and installation does not erase the configuration files.
 
+After having installed Friend using the script, you may update Friend with
+these simple commands:
 
+ git pull
+ make clean setup compile install
+
+If you want to build a version without debugging symbols:
+
+ make clean setup release install
+ strip build/FriendCore
 
 
