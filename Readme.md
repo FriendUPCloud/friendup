@@ -5,6 +5,11 @@ We are happy to announce the release of FriendUP version 1.1.
 
 FriendUP version 1.1 is the second major release of the platform, and has aggregated a huge bunch of fixes and improvements.
 
+NB: Please checkout the v1.1 branch for the most predictable results. 
+The master may get patched at any time.
+Next major version is v1.2.
+Next minor version is v1.1.1.
+
 ![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2018/01/11.png "FriendUP Workspace")
 
 Across devices
