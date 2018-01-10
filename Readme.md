@@ -19,6 +19,13 @@ Distributed and powerful
 FriendUP aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
 In the Future, FriendUP will be to the cloud users what Linux is for machines.
 
+Documentation
+=============
+
+All three current volumes of documentation is available in your Friend environment or at this address:
+
+[FriendUP Documentation, volumes 1, 2 and 3](https://friendup.cloud/friend-documentation/)
+
 Getting started
 ===============
 
