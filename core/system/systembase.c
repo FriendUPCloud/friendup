@@ -55,7 +55,7 @@
 #include <util/md5.h>
 #include <network/digcalc.h>
 #include <network/mime.h>
-#include <private-libwebsockets.h>
+#include <libwebsockets.h>
 #include <system/fsys/door_notification.h>
 #include <communication/comm_service.h>
 #include <communication/comm_service_remote.h>

@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/image.library
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter  -I../../core/ -I../ -fPIC $(shell mysql_config --cflags) -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter  -I../../core/ -I../ -fPIC $(shell mysql_config --cflags) -I../../libs-ext/libwebsockets/build/include/ -L../../libs-ext/libwebsockets/lib/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

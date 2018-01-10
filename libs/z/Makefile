@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/z.library
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -DHAVE_AES -Iaes/ -I/usr/include/mysql/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -O0 -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -DHAVE_AES -Iaes/ -I/usr/include/mysql/  -I../../libs-ext/libwebsockets/build/include/  -L../../libs-ext/libwebsockets/lib/
 LFLAGS	=	`mysql_config --libs`  -shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt  -Laes `mysql_config --libs`
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

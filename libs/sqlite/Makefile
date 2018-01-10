@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/sqlite.library
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -I../../libs-ext/libwebsockets/build/include/  -L../../libs-ext/libwebsockets/lib/
 LFLAGS	=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt -lcrypt -lssl -lsqlite3 ../../core/obj/buffered_string.o ../../core/obj/list_string.o
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

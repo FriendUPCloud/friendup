@@ -16,7 +16,7 @@ ifeq ($(CYGWIN_BUILD),1)
 	
 else
 	#sudo cp libwebsockets/build/lib/libwebsockets.so* /usr/lib/
-	cd libwebsockets/build/ ;make install ;cd ../../
+	#cd libwebsockets/build/ ;make install ;cd ../../
 endif
 
 setup:

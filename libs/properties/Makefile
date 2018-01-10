@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/properties.library
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/  -fPIC -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/  -L../../libs-ext/libwebsockets/lib/
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/  -fPIC -I../../libs-ext/libwebsockets/build/include/  -L../../libs-ext/libwebsockets/lib/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lstdc++ -lz -lpthread -lrt -lcrypt
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)

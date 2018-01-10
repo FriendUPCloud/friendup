@@ -40,7 +40,7 @@
 #include <util/string.h>
 #include <system/systembase.h>
 #include <system/json/jsmn.h>
-#include <private-libwebsockets.h>
+#include <libwebsockets.h>
 #include <system/user/user_session.h>
 #include <util/base64.h>
 #include <network/websocket_client.h>

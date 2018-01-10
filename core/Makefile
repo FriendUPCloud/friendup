@@ -4,7 +4,7 @@ OUTPUT			=	bin/FriendCore
 BUILD_DATE		=	$(shell date +"%Y%m%d_%H%M%S")
 BUILD_VERSION           =       "v1.1"
 GIT_VERSION 		=	$(shell git describe --abbrev --dirty --always --tags)
-CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/lib/ -I../libs-ext/libwebsockets/build/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL -Wunused-parameter
+CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/build/include/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL -Wunused-parameter
 LFLAGS			=	../libs-ext/libwebsockets/build/lib/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng -lz
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)

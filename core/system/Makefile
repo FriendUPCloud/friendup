@@ -1,6 +1,6 @@
 GCC		=	gcc
 OUTPUT	=	bin/libfcsystem.a
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/lib/ -I../../libs-ext/libwebsockets/ -Wno-unused-variable -Wno-unused-parameter -I/usr/include/samba-4.0/
+CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../../libs/  -I../../libs-ext/libwebsockets/build/include/ -Wno-unused-variable -Wno-unused-parameter -I/usr/include/samba-4.0/
 LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ 
 DFLAGS	=	-M $(CFLAGS)  
 FPATH	=	$(shell pwd)
