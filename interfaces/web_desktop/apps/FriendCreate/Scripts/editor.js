@@ -72,6 +72,36 @@ Application.refreshAceSettings = function( reload )
 	else carryOut();
 }
 
+function tb( type )
+{
+	switch( type )
+	{
+		case 'new':
+			Application.newFile();
+			break;
+		case 'load':
+			Application.sendMessage( { command: 'open' } );
+			break;
+		case 'save':
+			Application.save( 'withbackup' );
+			break;
+		case 'saveas':
+			Application.sendMessage( { command: 'save_as' } );
+			break;
+		case 'close':
+			Application.closeFile();
+			break;
+		case 'properties':	
+			Application.sendMessage( { command: 'project_properties' } );
+			break;
+		case 'find':
+			Application.sendMessage( {
+		        command: 'search_replace'
+		    } );
+		   	break;
+	}
+}
+
 function loadConfig( callback )
 {
 	// Read the config
@@ -132,6 +162,9 @@ Application.createAceArea = function()
 	this.editor.setTheme( 'ace/theme/' + settings.theme );
 	this.editor.session.setUseWorker( false );
 	this.editor.getSession().setMode( 'ace/mode/javascript' );
+	
+	// Remove find dialog
+	this.editor.commands.removeCommand( 'find' );
 }
 
 Application.setupAce = function()
@@ -158,6 +191,9 @@ Application.setupAce = function()
 	s.innerHTML += 'html .ace_editor { font-size: 15px; }';
 	document.body.appendChild ( s );
 
+	// Remove find dialog
+	this.editor.commands.removeCommand( 'find' );
+
 	// Also take keyboard shortcuts here.
 	// TODO: Instead, just connect the iframe to the
 	//       event handler of the application!
@@ -167,6 +203,7 @@ Application.setupAce = function()
 	{
 		var kc = e.which ? e.which : e.keyCode;
 		Application.sendMessage( { command: 'presskey', keycode: kc } );
+		
 		Application.updateStatusbar();
 	}
 
@@ -213,7 +250,7 @@ Application.handleKeys = function( k, e )
 		}
 		else if( wo == 83 )
 		{
-			Application.save();
+			Application.save( 'withbackup' );
 			return true;
 		}
 		// n (doesn't work, find a different key)
@@ -233,6 +270,7 @@ Application.handleKeys = function( k, e )
 			Application.closeFile();
 			return true;
 		}
+		// F
 		else if( wo == 70 )
 		{
 		    Application.sendMessage( {
@@ -242,9 +280,23 @@ Application.handleKeys = function( k, e )
 		}
 	}
 
+	// Every second, after clicking a key, autosave ticks in
+	var fn = Application.files[Application.currentFile];
+	if( fn.touched && fn.filename.indexOf( ':' ) > 0 )
+	{
+		if( Application.autoSaveTimeout )
+		{
+			clearTimeout( Application.autoSaveTimeout );
+		}
+		Application.autoSaveTimeout = setTimeout( function()
+		{
+			Application.save( 'autosave' );
+		}, 1000 );
+	}
+
 	// Make sure current file is touched
 	if (
-		Application.files[Application.currentFile] && Application.files[Application.currentFile].touched != true &&
+		fn && fn.touched != true &&
 		this.editor.getSession().getValue().length > 0
 	)
 	{
@@ -293,6 +345,7 @@ Application.applySyntaxHighlighting = function ()
 		case 'tpl':
 		case 'ptpl':
 		case 'html':
+		case 'htm':
 			extension = 'html';
 			mode = 'ace/mode/html';
 			break;
@@ -389,6 +442,12 @@ Application.stopJSX = function()
 // Run the project main executable
 Application.runProject = function()
 {
+	if( !this.projectFilename )
+	{
+		Alert( i18n( 'i18n_no_project' ), i18n( 'i18n_cant_project_filename' ) );
+		return;
+	}
+	
 	this.sendMessage( {
 		type: 'system',
 		command: 'executeapplication',
@@ -541,9 +600,31 @@ Application.open = function()
 }
 
 // Say we wanna save
-Application.save = function()
+Application.save = function( mode )
 {
-	this.sendMessage( { command: 'save' } );
+	if( !mode ) mode = 'normal';
+	
+	// Do an autosave
+	if( mode == 'autosave' )
+	{
+		var f = new File( this.files[ this.currentFile ].filename );
+		f.onSave = function()
+		{
+			ge( 'status' ).innerHTML = i18n( 'i18n_autosaved' );
+			if( ge( 'status' ).timeout )
+				clearTimeout( ge( 'status' ) );
+			ge( 'status' ).timeout = setTimeout( function()
+			{
+				ge( 'status' ).innerHTML = '';
+			}, 1000 );
+		}
+		f.save( this.editor.getValue() );
+	}
+	else
+	{
+		// Bump!
+		this.sendMessage( { command: 'save', mode: mode } );
+	}
 }
 
 // Add a new file
@@ -594,6 +675,7 @@ Application.refreshFilesList = function ()
 	files.innerHTML = '';
 
 	// Loop through the files
+	var sw = 2;
 	for( var t = 0; t < this.files.length; t++ )
 	{
 		var c = document.createElement ( 'div' );
@@ -611,7 +693,7 @@ Application.refreshFilesList = function ()
 		c.style.whiteSpace = 'nowrap';
 		c.style.textOverflow = 'ellipsis';
 		c.style.overflow = 'hidden';
-		c.className = 'Padding MousePointer';
+		c.className = 'Padding MousePointer sw' + ( sw = sw == 1 ? 2 : 1 );
 		if ( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
 		c.onclick = function ( e )
@@ -656,6 +738,7 @@ Application.checkFileType = function( path )
 		case 'ptpl':
 		case 'xml':
 		case 'html':
+		case 'htm':
 		case 'c':
 		case 'h':
 		case 'cpp':
@@ -712,6 +795,9 @@ Application.setStoredSession = function( data )
 	session.setScrollLeft( data.scrollLeft );
 	this.editor.setSession( session );
 	this.editor.session.setUseWorker( false );
+	
+	// Remove find dialog
+	this.editor.commands.removeCommand( 'find' );
 }
 
 var inc = 0;
@@ -771,6 +857,9 @@ Application.setCurrentFile = function( curr )
 		var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
 		this.editor.setSession( session );
 		this.editor.session.setUseWorker( false );
+		
+		// Remove find dialog
+		this.editor.commands.removeCommand( 'find' );
 	}
 	
 	// Clear the selection in the editor

@@ -16,6 +16,18 @@ i18n_paste                          : Lim
 i18n_new                            : Ny fil
 i18n_about_codeeditor               : Om Friend Create
 
+i18n_autosaved                      : Autolagret.
+i18n_no_project                     : Fant ikke prosjektet
+i18n_cant_project_filename          : Fant ikke et filnavn for prosjektet.
+
+tb_newfile                          : Ny fil
+tb_open                             : Åpne fil
+tb_save                             : Lagre fil
+tb_saveas                           : Lagre som
+tb_close                            : Lukk fil
+tb_project                          : Prosjekt egenskaper
+tb_find                             : Finn/Erstatt
+
 #project menu
 i18n_project                        : Prosjekt
 i18n_project_new                    : Nytt prosjekt

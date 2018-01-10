@@ -16,6 +16,18 @@ i18n_paste                          : Coller
 i18n_new                            : Nouveau fichier
 i18n_about_codeeditor               : A propos...
 
+i18n_autosaved                      : Enregistrement automatique.
+i18n_no_project                     : Impossible de trouver le projet
+i18n_cant_project_filename          : Aucun nom de fichier de projet trouvé.
+
+tb_newfile                          : Nouveau fichier
+tb_open                             : Fichier ouvert
+tb_save                             : Enregistrer le fichier
+tb_saveas                           : Enregistrer le fichier sous
+tb_close                            : Fermer le fichier
+tb_project                          : Propriétés du projet
+tb_find                             : Trouver/Remplacer
+
 #project menu
 i18n_project                        : Projet
 i18n_project_new                    : Nouveau projet

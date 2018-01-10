@@ -386,7 +386,7 @@ CREATE TABLE IF NOT EXISTS `FUserToGroup` (
 
 /*-- INSERT INTO `FUser` (`Name`,`Password`) VALUES ("fadmin","securefassword" ); */
 
-INSERT INTO `FUser` (`ID`,`Name`,`Password`) VALUES (1,"fadmin",CONCAT("{S6}",SHA2(CONCAT("HASHED",SHA2("securefassword",256)),256)));
+INSERT INTO `FUser` (`ID`,`Name`,`FullName`,`Password`) VALUES (1,"fadmin","Friend Administrator",CONCAT("{S6}",SHA2(CONCAT("HASHED",SHA2("securefassword",256)),256)));
 
 /*-- INSERT INTO `FUser` (`Name`,`Password`) VALUES ("guest","guest" ); */
 INSERT INTO `FUser` (`ID`,`Name`,`Password`) VALUES (2,"guest",CONCAT("{S6}",SHA2(CONCAT("HASHED",SHA2("guest",256)),256)));

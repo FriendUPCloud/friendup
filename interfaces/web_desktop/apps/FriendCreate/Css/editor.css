@@ -1,0 +1,213 @@
+#Toolbar
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 50px;
+	box-sizing: border-box;
+	padding: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#EditorContent
+{
+	position: absolute;
+	top: 50px;
+	left: 0;
+	width: 100%;
+	height: calc(100% - 50px);
+}
+
+.Horizontal .IconButton
+{
+	display: inline-block;
+	min-width: 80px;
+	height: 30px;
+	margin: 0 5px 0 0;
+	text-align: center;
+	box-sizing: border-box;
+	background: rgba(200,200,200,0.2);
+	border-top: 1px solid rgba(255,255,255,0.3);
+	border-left: 1px solid rgba(255,255,255,0.3);
+	border-right: 1px solid rgba(255,255,255,0.3);
+	border-bottom: 1px solid rgba(0,0,0,0.0);
+	box-shadow: 0px 1px 2px rgba(0,0,0,0.2);
+	color: black;
+	text-shadow: none;
+}
+
+.Horizontal .IconButton:hover
+{
+	color: white;
+}
+
+.Horizontal .IconButtonSpacer
+{
+	content: " ";
+	display: inline-block;
+	width: 1px;
+	background: rgba(0,0,0,0.2);
+	margin: 0 10px -10px 5px;
+	height: 30px;
+	box-sizing: border-box;
+}
+
+.FileLoaderProgress
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: url(/themes/friendup/gfx/loading.gif) no-repeat center center #222222;
+	opacity: 0.4;
+	z-index: 20;
+}
+#fileslistlabel
+{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 225px;
+    height: 35px;
+    box-sizing: border-box;
+}
+#fileslist
+{
+	position: absolute;
+	top: 35px;
+	left: 0;
+	width: 225px;
+	bottom: 240px;
+	overflow: auto;
+	overflow-x: hidden;
+	box-sizing: border-box;
+}
+#fileslist > .Files > div
+{
+	position: relative;
+}
+#fileslist > .Files > div .Icon
+{
+	position: absolute;
+	opacity: 0;
+	right: 8px;
+	top: 10px;
+	cursor: hand;
+	cursor: pointer;
+	transition: opacity 0.25s;
+}
+#fileslist > .Files > div:hover .Icon
+{
+	opacity: 1;
+}
+#filestabs
+{
+    position: absolute;
+    height: 200px;
+    bottom: 40px;
+    left: 0;
+    width: 225px;
+    box-sizing: border-box;
+}
+#CodeView
+{
+	position: absolute;
+	top: 0;
+	left: 230px; right: 0;
+	bottom: 0;
+}
+
+@media (max-width: 640px)
+{
+	#fileslist
+	{
+		display: none;
+	}
+	#CodeView
+	{
+		left: 0;
+	}
+	.Statusbar .HRow > .HContent65 *
+	{
+		font-size: 11px;
+		line-height: 21px;
+	}
+}
+
+.CodeEditor
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+}
+.CodeEditor > .Statusbar
+{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 39px;
+}
+.CodeEditor > .Statusbar select
+{
+	margin: -6px 10px 0 0;
+}
+.CodeEditor > .Editor
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 40px;
+	margin: 0;
+}
+.CodeEditor > .Editor > iframe
+{
+	border: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: 0;
+	transform: rotateZ(0deg);
+	-webkit-transform: rotateZ(0deg);
+}
+#SpecialControls
+{
+	position: relative;
+	top: -5px;
+}
+
+.AppPreview
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 6;
+}
+.AppClose
+{
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	height: 24px;
+	z-index: 7;
+	line-height: 24px;
+	padding: 0 6px 0 6px;
+	background: rgba(0,0,0,0.6);
+	border-radius: 3px;
+	color: white;
+}

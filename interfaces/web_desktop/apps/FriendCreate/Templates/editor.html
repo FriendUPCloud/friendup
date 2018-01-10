@@ -2,239 +2,113 @@
 		<script src="Progdir:Libraries/Ace/ace.js"></script>
 		<script src="Progdir:Scripts/editor.js"></script>
 
-		<style>
-			.FileLoaderProgress
-			{
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: url(/themes/friendup/gfx/loading.gif) no-repeat center center #222222;
-				opacity: 0.4;
-				z-index: 20;
-			}
-		    #fileslistlabel
-		    {
-		        position: absolute;
-		        top: 0;
-		        left: 0;
-		        width: 225px;
-		        height: 35px;
-		        box-sizing: border-box;
-		    }
-			#fileslist
-			{
-				position: absolute;
-				top: 35px;
-				left: 0;
-				width: 225px;
-				bottom: 240px;
-				overflow: auto;
-				overflow-x: hidden;
-				box-sizing: border-box;
-			}
-			#fileslist > .Files > div
-			{
-				position: relative;
-			}
-			#fileslist > .Files > div .Icon
-			{
-				position: absolute;
-				opacity: 0;
-				right: 8px;
-				top: 10px;
-				cursor: hand;
-				cursor: pointer;
-				transition: opacity 0.25s;
-			}
-			#fileslist > .Files > div:hover .Icon
-			{
-				opacity: 1;
-			}
-			#filestabs
-			{
-			    position: absolute;
-			    height: 200px;
-			    bottom: 40px;
-			    left: 0;
-			    width: 225px;
-			    box-sizing: border-box;
-			}
-			#CodeView
-			{
-				position: absolute;
-				top: 0;
-				left: 230px; right: 0;
-				bottom: 0;
-			}
-
-			@media (max-width: 640px)
-			{
-				#fileslist
-				{
-					display: none;
-				}
-				#CodeView
-				{
-					left: 0;
-				}
-				.Statusbar .HRow > .HContent65 *
-				{
-					font-size: 11px;
-					line-height: 21px;
-				}
-			}
-		</style>
+		<link rel="stylesheet" href="Progdir:Css/editor.css"/>
 
 		<div class="ContentFull">
-		    <div id="fileslistlabel" class="Padding BorderBottom BackgroundToolbar">
-		        <p class="Layout"><strong id="Filelist">{i18n_files}</strong></p>
-		    </div>
-			<div id="fileslist" class="BorderBottom">
-				<div class="CodeEditor Files BackgroundDefault">
-					<div class="CodeEditorFile Selected Padding">
-						Empty file
+			<div id="Toolbar" class="BorderBottom Horizontal">
+				<div class="Button IconButton IconSmall fa-file" onclick="tb('new')">
+					{tb_newfile}
+				</div>
+				<div class="Button IconButton IconSmall fa-folder-open" onclick="tb('load')">
+					{tb_open}
+				</div>
+				<div class="Button IconButton IconSmall fa-save" onclick="tb('save')">
+					{tb_save}
+				</div>
+				<div class="Button IconButton IconSmall fa-files-o" onclick="tb('saveas')">
+					{tb_saveas}
+				</div>
+				<div class="Button IconButton IconSmall fa-remove" onclick="tb('close')">
+					{tb_close}
+				</div>
+				<div class="IconButtonSpacer">
+				</div>
+				<div class="Button IconButton IconSmall fa-info-circle" onclick="tb('properties')">
+					{tb_project}
+				</div>
+				<div class="IconButtonSpacer">
+				</div>
+				<div class="Button IconButton IconSmall  fa-search" onclick="tb('find')">
+					{tb_find}
+				</div>
+			</div>
+			<div id="EditorContent">
+				<div class="ContentFull">
+					<div id="fileslistlabel" class="Padding BorderBottom BackgroundToolbar">
+						<p class="Layout"><strong id="Filelist">{i18n_files}</strong></p>
 					</div>
-				</div>
-			</div>
-			<div id="filestabs" class="Padding">
-			    &nbsp;
-			</div>
-			<div style="position: absolute; top: auto; left: 0; width: 225px; bottom: 0; height: 40px" class="BackgroundDefault BorderTop">
-				<div class="Padding Relative TextCenter" id="status">
+					<div id="fileslist" class="BorderBottom">
+						<div class="CodeEditor Files BackgroundDefault List">
+							<div class="CodeEditorFile Selected Padding">
+								Empty file
+							</div>
+						</div>
+					</div>
+					<div id="filestabs" class="Padding">
+						&nbsp;
+					</div>
+					<div style="position: absolute; top: auto; left: 0; width: 225px; bottom: 0; height: 40px" class="BackgroundDefault BorderTop">
+						<div class="Padding Relative TextCenter" id="status">
 
-				</div>
-			</div>
-			<div id="ResizeColumn" style="position: absolute; top: 0; left: 225px; width: 5px; bottom: 0; background: #606060; cursor: col-resize;">
-			</div>
-			<div id="CodeView">
-				<div class="CodeEditor">
-					<div class="Editor" id="editordiv" style="border: 0; outline: 0"></div>
-				    <div class="Statusbar BorderTop" id="statusbar">
-				    	<div class="Padding">
-							<div class="HRow">
-								<div class="HContent65 FloatRight">
-									<div class="HContent35 FloatRight">
-										<div class="FloatLeft">&nbsp;&nbsp;{i18n_tab_width}:&nbsp;</div>
-										<div class="TabWidth FloatLeft">0</div>
-									</div>
-									<div class="HContent25 FloatRight">
-										<div class="FloatLeft">Ln&nbsp;</div>
-										<div class="Ln FloatLeft">0</div>
-										<div class="FloatLeft">,&nbsp;Col&nbsp;</div>
-										<div class="Col FloatLeft">0</div>
-									</div>
-									<div class="HContent10 FloatRight">
-										<div class="InsOvr">INS</div>
-									</div>
-								</div>
-								<div class="HContent35 FloatLeft">
-									<div class="HContent50 FloatLeft">
-										<select class="SyntaxHighlighting FullWidth" id="Syntax">
-											<option value="php">{i18n_php}</option>
-											<option value="css">{i18n_css}</option>
-											<option value="pl">{i18n_perl}</option>
-											<option value="sql">{i18n_sql}</option>
-											<option value="sh">{i18n_bash_script}</option>
-											<option value="as">{i18n_actionscript}</option>
-											<option value="js">{i18n_javascript}</option>
-											<option value="jsx">{i18n_javascriptexe}</option>
-											<option value="sol">{i18n_solidity}</option>
-											<option value="json">{i18n_json}</option>
-											<option value="html">{i18n_html}</option>
-											<option value="c">{i18n_c_code}</option>
-											<option value="d">{i18n_d_code}</option>
-											<option value="ini">{i18n_ini_script}</option>
-											<option value="java">{i18n_java}</option>
-											<option value="txt">{i18n_plain_text}</option>
-											<option value="xml">{i18n_xml}</option>
-											<option value="conf">{i18n_conf}</option>
-										</select>
-									</div>
-									<div class="HContent50 FloatLeft">
-										<div class="MarginLeft" id="SpecialControls">
+						</div>
+					</div>
+					<div id="ResizeColumn" style="position: absolute; top: 0; left: 225px; width: 5px; bottom: 0; background: #606060; cursor: col-resize;">
+					</div>
+					<div id="CodeView">
+						<div class="CodeEditor">
+							<div class="Editor" id="editordiv" style="border: 0; outline: 0"></div>
+							<div class="Statusbar BorderTop" id="statusbar">
+								<div class="Padding">
+									<div class="HRow">
+										<div class="HContent65 FloatRight">
+											<div class="HContent35 FloatRight">
+												<div class="FloatLeft">&nbsp;&nbsp;{i18n_tab_width}:&nbsp;</div>
+												<div class="TabWidth FloatLeft">0</div>
+											</div>
+											<div class="HContent25 FloatRight">
+												<div class="FloatLeft">Ln&nbsp;</div>
+												<div class="Ln FloatLeft">0</div>
+												<div class="FloatLeft">,&nbsp;Col&nbsp;</div>
+												<div class="Col FloatLeft">0</div>
+											</div>
+											<div class="HContent10 FloatRight">
+												<div class="InsOvr">INS</div>
+											</div>
+										</div>
+										<div class="HContent35 FloatLeft">
+											<div class="HContent50 FloatLeft">
+												<select class="SyntaxHighlighting FullWidth" id="Syntax">
+													<option value="php">{i18n_php}</option>
+													<option value="css">{i18n_css}</option>
+													<option value="pl">{i18n_perl}</option>
+													<option value="sql">{i18n_sql}</option>
+													<option value="sh">{i18n_bash_script}</option>
+													<option value="as">{i18n_actionscript}</option>
+													<option value="js">{i18n_javascript}</option>
+													<option value="jsx">{i18n_javascriptexe}</option>
+													<option value="sol">{i18n_solidity}</option>
+													<option value="json">{i18n_json}</option>
+													<option value="html">{i18n_html}</option>
+													<option value="c">{i18n_c_code}</option>
+													<option value="d">{i18n_d_code}</option>
+													<option value="ini">{i18n_ini_script}</option>
+													<option value="java">{i18n_java}</option>
+													<option value="txt">{i18n_plain_text}</option>
+													<option value="xml">{i18n_xml}</option>
+													<option value="conf">{i18n_conf}</option>
+												</select>
+											</div>
+											<div class="HContent50 FloatLeft">
+												<div class="MarginLeft" id="SpecialControls">
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-				    </div>
+					</div>
 				</div>
 			</div>
 		</div>
-		<style id="codestyle">
-			.CodeEditor
-			{
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				margin: 0;
-			}
-			.CodeEditor > .Statusbar
-			{
-			    position: absolute;
-			    left: 0;
-			    right: 0;
-			    bottom: 0;
-			    height: 39px;
-			}
-			.CodeEditor > .Statusbar select
-			{
-				margin: -6px 10px 0 0;
-			}
-			.CodeEditor > .Editor
-			{
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 40px;
-				margin: 0;
-			}
-			.CodeEditor > .Editor > iframe
-			{
-				border: 0;
-				display: block;
-				width: 100%;
-				height: 100%;
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				margin: 0;
-				transform: rotateZ(0deg);
-				-webkit-transform: rotateZ(0deg);
-			}
-			#SpecialControls
-			{
-				position: relative;
-				top: -5px;
-			}
 
-			.AppPreview
-			{
-				position: absolute;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				z-index: 6;
-			}
-			.AppClose
-			{
-				position: absolute;
-				top: 4px;
-				right: 4px;
-				height: 24px;
-				z-index: 7;
-				line-height: 24px;
-				padding: 0 6px 0 6px;
-				background: rgba(0,0,0,0.6);
-				border-radius: 3px;
-				color: white;
-			}
-		</style>

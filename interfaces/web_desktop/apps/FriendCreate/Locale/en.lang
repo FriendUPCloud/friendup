@@ -16,6 +16,18 @@ i18n_paste                          : Paste
 i18n_new                            : New file
 i18n_about_codeeditor               : About Friend Create
 
+i18n_autosaved                      : Autosaved.
+i18n_no_project                     : Could not find project
+i18n_cant_project_filename          : Found no project filename.
+
+tb_newfile                          : New file
+tb_open                             : Open file
+tb_save                             : Save file
+tb_saveas                           : Save file as
+tb_close                            : Close file
+tb_project                          : Project properties
+tb_find                             : Find/Replace
+
 #project menu
 i18n_project                        : Project
 i18n_project_new                    : New project
@@ -58,7 +70,7 @@ i18n_rtw_preview                    : Realtime Web preview
 i18n_iot_monitor                    : IOT Monitor
 i18n_close_app_preview              : Close application preview
 
-i18n_search_replace                 : Search and replace
+i18n_search_replace                 : Find and replace
 
 i18n_preferences                    : Preferences
 i18n_application_settings           : Edit preferences
@@ -132,7 +144,7 @@ i18n_code_editor_theme               : Code editor theme
 i18n_choose_theme                    : Choose theme
 i18n_interface_related               : Interface related
 i18n_open_friend_create              : Open Friend Create on its own screen
-i18n_search_for                      : Search for
+i18n_search_for                      : Find
 i18n_keywords                        : keywords
 i18n_replace_with                    : Replace with
 i18n_replacement                     : replacement
