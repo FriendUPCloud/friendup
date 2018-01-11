@@ -2194,11 +2194,19 @@ function InitTabs ( pdiv )
 						// Page scroll height (other elements contained minus page scroll element)
 						var psh = 0;
 						for( var pa = 0; pa < n.parentNode.childNodes.length; pa++ )
+						{
+							var nn = n.parentNode.childNodes[ pa ];
+							// Skip elements after page scroll
+							if( nn.className && nn.classList.contains( 'PageScroll' ) )
+							{
+								break;
+							}
 							if( n.parentNode.childNodes[ pa ] != n )
 							{
 								if( n.parentNode && n.parentNode.childNodes[ pa ].nodeName == 'DIV' )
 									psh += GetElementHeight( n.parentNode.childNodes[ pa ] );
 							}
+						}
 						
 						// Page scroll
 						n.style.height = ( hhh - psh - margins ) + 'px';

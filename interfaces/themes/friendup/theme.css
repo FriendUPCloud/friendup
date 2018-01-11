@@ -42,7 +42,7 @@
 	$ColorLists:             #3f3f3f;
 	$ColorListsAlternate:    #303030;
 	$ColorBgListSw1:         #f4f4f4;
-	$ColorBgListSw2:         #f8f8f8;
+	$ColorBgListSw2:         #e8e8e8;
 	$ColorBgListSwHover:     #C1D4E5;
 	$ColorListSw1:           #000000;
 	$ColorListSw2:           #030303;
@@ -1165,6 +1165,7 @@ html .Tab:before, html .TabActive:before
 html .Tab
 {
 	background-color: rgb(230, 230, 230);
+	box-shadow: inset 0px -5px 6px rgba(0,0,0,0.05);
 }
 
 html .TabActive

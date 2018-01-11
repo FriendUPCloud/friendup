@@ -249,6 +249,28 @@ button, .Button
 	cursor: hand;
 	cursor: pointer;
 	position: relative;
+	outline: 0 !important;
+}
+
+.Button.Glue, 
+button.Glue
+{
+	margin: 0;
+	border-radius: 0;
+}
+
+.Button.Glue:first-child,
+button.Glue:first-child
+{
+	border-top-left-radius: $ButtonBorderRadius;
+	border-bottom-left-radius: $ButtonBorderRadius;
+}
+
+.Button.Glue:last-child,
+button.Glue:last-child
+{
+	border-top-right-radius: $ButtonBorderRadius;
+	border-bottom-right-radius: $ButtonBorderRadius;
 }
 
 button:hover, .Button:hover
