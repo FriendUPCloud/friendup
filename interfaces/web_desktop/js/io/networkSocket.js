@@ -570,9 +570,12 @@ NetworkSocket.prototype.connect = function()
 	}
 	
 	self.setState( 'connecting', self.host );
-	try {
+	try
+	{
 		self.ws = new window.WebSocket( self.host );
-	} catch( e ) {
+	}
+	catch( e )
+	{
 		console.log( 'NetworkSocket.connect - failed to connect to ', {
 			host : self.host,
 			self : self,

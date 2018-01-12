@@ -1644,7 +1644,6 @@ var WorkspaceInside = {
 						{
 							// Flush theme info
 							themeInfo = { loaded: false };
-							Workspace.refreshDesktop( false, true );
 							Workspace.reloadDocks();
 						}, 250 );
 					}
@@ -1972,10 +1971,11 @@ var WorkspaceInside = {
 		}
 
 		var self = this;
-		this.getMountlist( function()
+		
+		this.getMountlist( function( data )
 		{
-			if( callback && typeof( callback ) == 'function' ) callback();
-
+			if( callback && typeof( callback ) == 'function' ) callback( data );
+			
 			// make drive list behave like a desklet... copy paste som code back and forth ;)
 			window.setupDriveClicks = function( delayed )
 			{
@@ -2081,6 +2081,8 @@ var WorkspaceInside = {
 							document.body.classList.remove( 'Loading' );
 							document.body.classList.add( 'Loaded' );
 							Workspace.wallpaperLoaded = true;
+							// Init the websocket etc
+							InitWorkspaceNetwork();						
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
@@ -2094,6 +2096,8 @@ var WorkspaceInside = {
 								document.body.classList.add( 'Loaded' );
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								Workspace.wallpaperLoaded = true;
+								// Init the websocket etc
+								InitWorkspaceNetwork();
 								if( globalConfig.workspacecount > 1 )
 								{
 									Workspace.checkWorkspaceWallpapers();
@@ -2125,7 +2129,9 @@ var WorkspaceInside = {
 									Workspace.wallpaperImageObject.done = true;
 									document.body.classList.remove( 'Loading' );
 									document.body.classList.add( 'Loaded' );
-
+						
+									// Init the websocket etc
+									InitWorkspaceNetwork();
 								}
 							}, 3000 );
 							break;
@@ -2143,6 +2149,8 @@ var WorkspaceInside = {
 				}
 				document.body.classList.remove( 'Loading' );
 				document.body.classList.add( 'Loaded' );
+				// Init the websocket etc
+				InitWorkspaceNetwork();
 			}
 
 			// Show deepest field now..
@@ -5695,6 +5703,28 @@ function InitWorkspaceEvents()
 		window.addEventListener( 'keydown', DoorsKeyDown, false );
 		//window.addEventListener( 'paste', friendWorkspacePasteListener, false);
 	}
+}
+
+function InitWorkspaceNetwork()
+{
+	var wsp = Workspace;
+	
+	if( wsp.workspaceNetworkInitialized ) return;
+	wsp.workspaceNetworkInitialized = true;
+	
+	//check for server....
+	wsp.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 5000 );
+
+	// Establish a websocket connection to the core
+	if( !wsp.conn && wsp.sessionId && window.FriendConnection )
+	{
+		wsp.initWebSocket();
+	}
+
+	wsp.checkFriendNetwork();
+
+	if( window.PouchManager && !this.pouchManager )
+		this.pouchManager = new PouchManager();
 }
 
 // Voice -----------------------------------------------------------------------

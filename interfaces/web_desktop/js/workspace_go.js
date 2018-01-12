@@ -108,7 +108,11 @@ Workspace = {
 
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
-			return setTimeout ( 'Workspace.init()', 5 );
+		{
+			if( this.initTimeout )
+				clearTimeout( this.initTimeout );
+			this.initTimeout = setTimeout ( 'Workspace.init()', 5 );
+		}
 
 		// We passed!
 		this.initialized = true;
@@ -121,20 +125,6 @@ Workspace = {
 		InitWindowEvents();
 		InitWorkspaceEvents();
 		InitGuibaseEvents();
-
-		//check for server....
-		Workspace.httpCheckConnectionInterval = setInterval('Workspace.checkServerConnectionHTTP()', 5000 );
-
-		// Establish a websocket connection to the core
-		if( !this.conn && this.sessionId && window.FriendConnection )
-		{
-			this.initWebSocket();
-		}
-
-		this.checkFriendNetwork()
-
-		if( window.PouchManager && !this.pouchManager )
-			this.pouchManager = new PouchManager();
 
 		var dapis = document.createElement( 'script' );
 		dapis.src = '/system.library/module/?module=system&command=doorsupport&sessionid=' + this.sessionId;
