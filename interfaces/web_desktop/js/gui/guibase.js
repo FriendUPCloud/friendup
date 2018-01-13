@@ -2125,8 +2125,11 @@ function PollDockedTaskbar()
 					viewRep.state = 'visible';
 					viewRep.viewId = win;
 					viewRep.setAttribute( 'title', movableWindows[win].titleString );
-					viewRep.onclick = function()
+					viewRep.onclick = function( e )
 					{
+						// TODO: Make sure we also have touch
+						if( e.button != '0' ) return;
+						
 						this.state = this.state == 'visible' ? 'hidden' : 'visible';
 						var wsp = movableWindows[ this.viewId ].windowObject.workspace;
 						if( wsp != globalConfig.workspaceCurrent )
@@ -2390,14 +2393,22 @@ movableMouseDown = function ( e )
 	window.regionScrollTop = 0;
 	
 	// Clicking inside content
-	if ( tar.className == 'Scroller' && tar.parentNode.className == 'Content' )
+	if ( 
+		tar.classList && tar.classList.contains( 'Scroller' ) &&
+		( 
+			tar.parentNode.classList.contains( 'Content' ) || 
+			tar.parentNode.classList.contains( 'ScreenContent' ) 
+		)
+	)
 	{
 		tar = tar.parentNode;
 	}
+	// Check if we got a click on desktop
 	var clickonDesktop = tar.classList && ( 
 		tar.classList.contains( 'ScreenContent' ) ||
 		tar.classList.contains( 'ScreenOverlay' ) 
 	);
+	
 	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
 	// Desktop / view selection 
 	if(
