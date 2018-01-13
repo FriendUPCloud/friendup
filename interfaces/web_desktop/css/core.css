@@ -1804,8 +1804,8 @@ body.Loading:after
 	padding: 0 10px;
 	text-align: center;
 	border-radius: 10px;
-	animation: bodyLoading 0.5s;
-	-webkit-animation: bodyLoading 0.5s;
+	animation: bodyLoading 0.2s;
+	-webkit-animation: bodyLoading 0.2s;
 }
 
 @-webkit-keyframes bodyLoading
@@ -2262,6 +2262,18 @@ body #DeepestField
 	overflow: auto;
 	background-size: cover;
 	background-position: center;
+}
+
+#DoorsScreen > .ScreenContent > .Scroller
+{
+	height: 100%;
+	opacity: 0;
+	transition: opacity 0.25s;
+}
+
+#DoorsScreen > .ScreenContent > .Scroller.Loaded
+{
+	opacity: 1;
 }
 
 /* Different solution for drives */
@@ -3248,6 +3260,12 @@ html #Statusbar > #Taskbar .Task
 	z-index: 1;
 }
 
+.Inside #DeepestCanvas
+{
+	background: #303030;
+	border-radius: 4px;
+}
+
 .Inside #DeepestField
 {
 	position: absolute;
@@ -3625,4 +3643,41 @@ blockquote.Code
 	backface-visibility: none;
 	perspective: none;
 }
+
+html body .ScrollBarSmall::-webkit-scrollbar
+{
+	width: 4px;
+	height: 4px;
+}
+
+/* Palette colors */
+
+div.Green, button.Green
+{
+	color: white;
+	background: #74A790;
+	border-color: #638F7B;
+}
+
+div.Red, button.Red
+{
+	color: white;
+	background: #E2452F;
+	border-color: #C23B28;
+}
+
+div.Blue, button.Blue
+{
+	color: white;
+	background: #2481D7;
+	border-color: #1E6BB3;
+}
+
+div.Orange, button.Orange
+{
+	color: white;
+	background: #DE9446;
+	border-color: #C4833E;
+}
+
 

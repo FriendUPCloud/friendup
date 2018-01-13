@@ -1771,6 +1771,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 
 	// Remove dummy icon
 	document.body.removeChild( dummyIcon );
+	
+	// We are loaded!
+	obj.scroller.classList.add( 'Loaded' );
 }
 
 // Try to resize
@@ -2305,6 +2308,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 	{
 		obj.parentNode.refreshWindow ();
 	}
+	
+	// We are loaded!
+	icnt.classList.add( 'Loaded' );
 }
 
 // -------------------------------------------------------------------------
