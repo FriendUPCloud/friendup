@@ -74,7 +74,10 @@ Workspace = {
 		if( this.initialized ) return;
 
 		// Preload some images
-		var imgs = [ '/webclient/gfx/system/offline_16px.png' ];
+		var imgs = [ 
+			'/webclient/gfx/system/offline_16px.png',
+			'/themes/friendup/gfx/loading.gif'
+		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
 		{
