@@ -1657,6 +1657,8 @@ var View = function( args )
 		depth.window = div;
 		depth.onclick = function( e )
 		{
+			if( e.button != 0 ) return;
+			
 			// Calculate lowest and highest z-index
 			var low = 99999999;	var high = 0;
 			for( var a in movableWindows )
@@ -1723,6 +1725,8 @@ var View = function( args )
 			zoom.window = div;
 			zoom.onclick = function ( e )
 			{
+				if( e.button != 0 ) return;
+				
 				// Don't animate
 				div.setAttribute( 'moving', 'moving' );
 			
@@ -1789,6 +1793,8 @@ var View = function( args )
 		resize.window = div;
 		resize.onmousedown = function( e )
 		{
+			if( e.button != 0 ) return;
+			
 			// Offset based on the containing window
 			this.offx = windowMouseX;
 			this.offy = windowMouseY;
@@ -1835,6 +1841,8 @@ var View = function( args )
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onclick = function ( e )
 		{
+			if( e.button != 0 ) return;
+			
 			_ActivateWindow( div, false, e );
 			if( 
 				div.windowObject && 
@@ -1945,6 +1953,8 @@ var View = function( args )
 		close.onselectstart = function( e ) { return cancelBubble( e ); }
 		close.onclick = function( e )
 		{
+			if( e.button != 0 ) return;
+			
 			// On mobile, you get a window menu instead
 			if( window.isMobile && !window.isTablet )
 			{
@@ -2278,6 +2288,8 @@ var View = function( args )
 							divParent.tabs.appendChild( tab );
 							tab.onclick = function( e )
 							{
+								if( e.button != 0 ) return;
+								
 								_WindowToFront( div );
 								for( var b = 0; b < divParent.tabs.childNodes.length; b++ )
 								{
