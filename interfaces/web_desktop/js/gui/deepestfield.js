@@ -50,12 +50,13 @@ DeepestField = {
 			}, 250 );
 		}
 		
+		// Stats...
 		var d = document.createElement( 'canvas' );
 		ge( 'DeepestField' ).appendChild( d );
 		d.id = 'DeepestCanvas';
 		d.style.position = 'absolute';
-		d.style.top = '0px';
-		d.style.left = '0px';
+		d.style.top = ge( 'Capabilities' ).offsetTop + ge( 'Capabilities' ).offsetHeight + 20 + 'px';
+		d.style.left = '20px';
 		this.canvas = d;
 		this.ctx = d.getContext( '2d' );
 		
@@ -70,53 +71,11 @@ DeepestField = {
 		
 		function resizeField()
 		{
-			d.setAttribute( 'width', document.body.offsetWidth );
-			d.setAttribute( 'height', document.body.offsetHeight );
+			d.setAttribute( 'width', document.body.offsetWidth - 40 );
+			d.setAttribute( 'height', document.body.offsetHeight - ( d.offsetTop + 20 ) );
 			DeepestField.redraw();
 		}
 		window.addEventListener( 'resize', resizeField );
-		window.addEventListener( 'mousemove', function( e )
-		{
-			// Only allow on canvas
-			var tg = e.target ? e.target : e.srcElement;
-			if( tg.id != 'DeepestCanvas' ) return;
-				
-			var cx = e.clientX;
-			var cy = e.clientY;
-			var found = false;
-			for( var a = 0; a < DeepestField.zones.length; a++ )
-			{
-				var p = DeepestField.zones[a];
-				if( cx >= p.x && cx < p.x + p.w && cy >= p.y && cy < p.y + p.h )
-				{
-					document.body.classList.add( 'MousePointer' );
-					found = true;
-					break;
-				}
-			}
-			if( !found )
-			{
-				document.body.classList.remove( 'MousePointer' );
-			}
-		} );
-		window.addEventListener( 'mouseup', function( e )
-		{
-			// Only allow on canvas
-			var tg = e.target ? e.target : e.srcElement;
-			if( tg.id != 'DeepestCanvas' ) return;
-			
-			var cx = e.clientX;
-			var cy = e.clientY;
-			for( var a = 0; a < DeepestField.zones.length; a++ )
-			{
-				var p = DeepestField.zones[a];
-				if( cx >= p.x && cx < p.x + p.w && cy >= p.y && cy < p.y + p.h )
-				{
-					KillApplication( p.ele );
-				}
-			}
-		} );
-		
 		
 		resizeField();
 	},
