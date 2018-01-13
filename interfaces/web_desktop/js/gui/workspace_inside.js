@@ -1643,6 +1643,9 @@ var WorkspaceInside = {
 							// Refresh them
 							Workspace.initWorkspaces();
 							
+							// Redraw icons if they are delayed
+							Workspace.redrawIcons();
+							
 							// Show deepest field now..
 							ge( 'DeepestField' ).style.opacity = '1';
 						}, 150 );
