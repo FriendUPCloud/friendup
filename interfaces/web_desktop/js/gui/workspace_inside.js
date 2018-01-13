@@ -720,22 +720,6 @@ var WorkspaceInside = {
 					globalConfig.workspacecount = 1;
 				}
 
-				// Our avatar!
-				if( dat.avatar )
-				{
-					if( DeepestField.hiddenBuffer )
-					{
-						var i = new Image();
-						i.src = getImageUrl( dat.avatar );
-						i.onload = function()
-						{
-							DeepestField.avatar = i;
-							DeepestField.redraw();
-						}
-						DeepestField.hiddenBuffer.appendChild( i );
-					}
-				}
-
 				// Do the startup sequence in sequence (only once)
 				if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
 				{
@@ -766,8 +750,6 @@ var WorkspaceInside = {
 				Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 				Workspace.windowWallpaperImage = '';
 			}
-			// Refresh them
-			Workspace.refreshWorkspaces();
 			if( callback && typeof( callback ) == 'function' ) callback();
 		}
 		m.execute( 'getsetting', { settings: [ 'avatar', 'wallpaperdoors', 'wallpaperwindows', 'language', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 'focusmode', 'hiddensystem', 'workspacecount', 'scrolldesktopicons' ] } );
@@ -1636,16 +1618,34 @@ var WorkspaceInside = {
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
-						if( document.body.classList.contains( 'Inside' ) )
-							document.body.classList.remove( 'Loading' );
-						document.body.classList.add( 'Inside' );
-						document.body.classList.remove( 'Login' );
 						setTimeout( function()
 						{
+							// We are inside
+							document.body.classList.add( 'Inside' );
+							document.body.classList.remove( 'Login' );
+							
 							// Flush theme info
 							themeInfo = { loaded: false };
+							
+							// When all is loaded, do this
+							document.body.classList.remove( 'Loading' );
+							document.body.classList.add( 'Loaded' );
+				
+							// Init the websocket etc
+							InitWorkspaceNetwork();
+							
+							// Redraw now
+							DeepestField.redraw();
+							
+							// Reload the docks
 							Workspace.reloadDocks();
-						}, 250 );
+							
+							// Refresh them
+							Workspace.initWorkspaces();
+							
+							// Show deepest field now..
+							ge( 'DeepestField' ).style.opacity = '1';
+						}, 150 );
 					}
 
 					if( themeName && themeName != 'default' )
@@ -2078,26 +2078,33 @@ var WorkspaceInside = {
 							eles[0].style.backgroundImage = '';
 							eles[0].parentNode.appendChild( m );
 							eles[0].parentNode.appendChild( c );
-							document.body.classList.remove( 'Loading' );
-							document.body.classList.add( 'Loaded' );
 							Workspace.wallpaperLoaded = true;
-							// Init the websocket etc
-							InitWorkspaceNetwork();						
 							break;
 						default:
 							Workspace.wallpaperLoaded = false;
 							var workspaceBackgroundImage = new Image();
-							workspaceBackgroundImage.addEventListener( 'load',  function()
+							workspaceBackgroundImage.onload = function()
 							{
+								// Let's not fill up memory with new wallpaper images
+								if( Workspace.prevWallpaper )
+								{
+									var o = [];
+									for( var c = 0; c < Workspace.imgPreload.length; c++ )
+									{
+										if( Workspace.imgPreload[c].src != Workspace.prevWallpaper )
+											o.push( Workspace.imgPreload[c] );
+									}								
+									Workspace.imgPreload = o;
+								}
+								Workspace.imgPreload.push( this );
+								Workspace.prevWallpaper = this.src;
+								
 								eles[0].style.backgroundSize = 'cover';
 								setupDriveClicks();
 								this.done = true;
-								document.body.classList.remove( 'Loading' );
-								document.body.classList.add( 'Loaded' );
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								Workspace.wallpaperLoaded = true;
-								// Init the websocket etc
-								InitWorkspaceNetwork();
+								
 								if( globalConfig.workspacecount > 1 )
 								{
 									Workspace.checkWorkspaceWallpapers();
@@ -2106,7 +2113,7 @@ var WorkspaceInside = {
 								{
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 								}
-							} );
+							};
 							if( found )
 								workspaceBackgroundImage.src = getImageUrl( self.wallpaperImage );
 							else workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
@@ -2127,11 +2134,7 @@ var WorkspaceInside = {
 								{
 									setupDriveClicks();
 									Workspace.wallpaperImageObject.done = true;
-									document.body.classList.remove( 'Loading' );
-									document.body.classList.add( 'Loaded' );
-						
-									// Init the websocket etc
-									InitWorkspaceNetwork();
+									Workspace.wallpaperLoaded = true;
 								}
 							}, 3000 );
 							break;
@@ -2147,14 +2150,8 @@ var WorkspaceInside = {
 					eles[0].style.backgroundImage = '';
 					setupDriveClicks();
 				}
-				document.body.classList.remove( 'Loading' );
-				document.body.classList.add( 'Loaded' );
-				// Init the websocket etc
-				InitWorkspaceNetwork();
+				Workspace.wallpaperLoaded = true;
 			}
-
-			// Show deepest field now..
-			ge( 'DeepestField' ).style.opacity = '1';
 			
 			Workspace.checkWorkspaceWallpapers();
 
@@ -2424,6 +2421,11 @@ var WorkspaceInside = {
 	{
 		if( !this.screen ) return;
 
+		if( !document.body.classList.contains( 'Loaded' ) )
+		{
+			return;
+		}
+	
 		// The desktop always uses the same fixed values :)
 		var wb = this.screen.contentDiv;
 		wb.onselectstart = function( e ) { return cancelBubble ( e ); };
@@ -4535,7 +4537,7 @@ var WorkspaceInside = {
 			} );
 		}
 		// Screen menu
-		else if( !menu && tr.classList.contains( 'ScreenContent' ) )
+		else if( !menu && ( tr.classList.contains( 'ScreenContent' ) || tr.parentNode.classList.contains( 'ScreenContent' ) ) )
 		{
 			menu = [
 				{
