@@ -78,6 +78,10 @@ function LoadApplications( win, currentItemId, callback )
 			{
 				if( eles[a].Icon.indexOf( ':' ) > 0 )
 					img = getImageUrl( eles[a].Icon );
+				else if( eles[a].Icon.indexOf( '/system.library' ) == 0 )
+				{
+					img = eles[a].Icon.split( /sessionid\=[^&]+/ ).join( 'authid=' + Application.authId );
+				}
 				else img = '/webclient/' + eles[a].Icon;
 			}
 			
