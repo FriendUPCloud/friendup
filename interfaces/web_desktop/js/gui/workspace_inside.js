@@ -660,11 +660,13 @@ var WorkspaceInside = {
 					{
 						Workspace.wallpaperImage = dat.wallpaperdoors;
 					}
-					else Workspace.wallpaperImage =
-						'/webclient/gfx/theme/default_login_screen.jpg';
+					else 
+					{
+						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+					}
 				}
 				// Fallback
-				else
+				if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 				}
@@ -1696,8 +1698,6 @@ var WorkspaceInside = {
 		var m = new Module( 'system' );
 		m.onExecuted = function( r, data )
 		{
-
-			console.log('we got events',r,data);
 			// Should only be run once!
 			if( !data ) return;
 			var events = JSON.parse( data );
@@ -2102,36 +2102,51 @@ var WorkspaceInside = {
 								Workspace.imgPreload.push( this );
 								Workspace.prevWallpaper = this.src;
 								
+								// Set the background size on wallpaper element
 								eles[0].style.backgroundSize = 'cover';
+								
 								setupDriveClicks();
 								this.done = true;
+								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
 								Workspace.wallpaperLoaded = true;
 								
 								if( globalConfig.workspacecount > 1 )
 								{
+									// Check series of wallpaper elements
 									Workspace.checkWorkspaceWallpapers();
 								}
 								else
 								{
+									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
 								}
 							};
 							if( found )
+							{
 								workspaceBackgroundImage.src = getImageUrl( self.wallpaperImage );
-							else workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
+							}
+							else 
+							{
+								workspaceBackgroundImage.src = '/webclient/gfx/theme/default_login_screen.jpg';
+							}
 							if( workspaceBackgroundImage.width > 0 && workspaceBackgroundImage.height > 0 && workspaceBackgroundImage.onload )
 							{
-								Workspace.wallpaperImageObject.onload();
+								workspaceBackgroundImage.onload();
 							}
 							
-							Workspace.wallpaperImageObject = workspaceBackgroundImage
+							Workspace.wallpaperImageObject = workspaceBackgroundImage;
+							
 							// If this borks up in 2 seconds, bail!
 							setTimeout( function()
 							{
-								if( typeof Workspace.wallpaperImageObject != 'undefined' && !Workspace.wallpaperImageObject.done && typeof Workspace.wallpaperImageObject.onload == 'function' )
+								if( 
+									typeof( Workspace.wallpaperImageObject ) != 'undefined' && 
+									!Workspace.wallpaperImageObject.done && 
+									typeof Workspace.wallpaperImageObject.onload == 'function' 
+								)
 								{
-									Workspace.wallpaperImageObject .onload();
+									Workspace.wallpaperImageObject.onload();
 								}
 								else
 								{
@@ -2154,9 +2169,8 @@ var WorkspaceInside = {
 					setupDriveClicks();
 				}
 				Workspace.wallpaperLoaded = true;
+				Workspace.checkWorkspaceWallpapers();
 			}
-			
-			Workspace.checkWorkspaceWallpapers();
 
 		}, forceRefresh );
 	},
@@ -2243,180 +2257,218 @@ var WorkspaceInside = {
 	getMountlist: function( callback, forceRefresh )
 	{
 		var t = this;
-		var m = new Library( 'system.library' )
-		m.onExecuted = function( e, dat )
+		var mo = new Module( 'system' );
+		mo.onExecuted = function( returnCode, shortcuts )
 		{
-			var newIcons = [];
-
-			// Add system on top (after Ram: if it exists)
-			newIcons.push( {
-				Title:	'System:',
-				Volume:   'System:',
-				Path:	 'System:',
-				Type:	 'Door',
-				Handler: 'built-in',
-				MetaType: 'Directory',
-				IconClass: 'SystemDisk',
-				ID:	   'system', // TODO: fix
-				Mounted:  true,
-				Visible: globalConfig.hiddenSystem == true ? false : true,
-				Door:	  new DoorSystem( 'System:' )
-			} );
-
-			// Redraw icons when tested for disk info
-			var redrawIconsT = false;
-			function testDrive( o, d )
+			var m = new Library( 'system.library' )
+			m.onExecuted = function( e, dat )
 			{
-				if( !d ) return;
-				// Check disk info
-				d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+				var newIcons = [];
+
+				// Add system on top (after Ram: if it exists)
+				newIcons.push( {
+					Title:	'System:',
+					Volume:   'System:',
+					Path:	 'System:',
+					Type:	 'Door',
+					Handler: 'built-in',
+					MetaType: 'Directory',
+					IconClass: 'SystemDisk',
+					ID:	   'system', // TODO: fix
+					Mounted:  true,
+					Visible: globalConfig.hiddenSystem == true ? false : true,
+					Door:	  new DoorSystem( 'System:' )
+				} );
+				
+				if( returnCode == 'ok' )
 				{
-					if( io.split( '<!--separate-->' )[0] == 'ok' )
+					var shorts = JSON.parse( shortcuts );
+					for( var a = 0; a < shorts.length; a++ )
 					{
-						var fl = new File( o.Volume + 'disk.info' );
-						fl.onLoad = function( data )
+						var pair = shorts[a].split( ':' );
+						// Shift camelcase
+						var literal = '';
+						for( var c = 0; c < pair[0].length; c++ )
 						{
-							if( data.indexOf( '{' ) >= 0 )
+							if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
 							{
-								var dt = JSON.parse( data );
-								if( dt && dt.DiskIcon )
+								literal += ' ';
+							}
+							literal += pair[0].charAt( c );
+						}
+						
+						// Add marketplace
+						newIcons.push( {
+							Title: literal,
+							Filename: pair[0],
+							Type: 'Executable',
+							IconFile: '/' + pair[1],
+							Handler: 'built-in',
+							MetaType: 'ExecutableShortcut',
+							ID: shorts[a].toLowerCase(),
+							Mounted: true,
+							Visible: true,
+							Door: 'executable'
+						} );
+					}
+				}
+
+				// Redraw icons when tested for disk info
+				var redrawIconsT = false;
+				function testDrive( o, d )
+				{
+					if( !d ) return;
+					// Check disk info
+					d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+					{
+						if( io.split( '<!--separate-->' )[0] == 'ok' )
+						{
+							var fl = new File( o.Volume + 'disk.info' );
+							fl.onLoad = function( data )
+							{
+								if( data.indexOf( '{' ) >= 0 )
 								{
-									o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-									clearTimeout( redrawIconsT );
-									redrawIconsT = setTimeout( function()
+									var dt = JSON.parse( data );
+									if( dt && dt.DiskIcon )
 									{
-										t.redrawIcons();
-									}, 100 );
+										o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+										clearTimeout( redrawIconsT );
+										redrawIconsT = setTimeout( function()
+										{
+											t.redrawIcons();
+										}, 100 );
+									}
 								}
 							}
+							fl.load();
 						}
-						fl.load();
-					}
-					clearTimeout( redrawIconsT );
-					redrawIconsT = setTimeout( function()
-					{
-						t.redrawIcons();
-					}, 100 );
-				} );
-			}
-
-			// Network devices
-			var rows;
-			try
-			{
-				rows = JSON.parse( dat );
-			}
-			catch(e)
-			{
-				rows = false;
-				console.log( 'Could not parse network drives',e,dat );
-			}
-
-			if( rows && rows.length )
-			{
-				for ( var a = 0; a < rows.length; a++ )
-				{
-					var r = rows[a];
-					if( r.Config.indexOf( '{' ) >= 0 )
-						r.Config = JSON.parse( r.Config );
-
-					// Check if it was already found!
-					var found = false;
-					for( var va in t.icons )
-					{
-						if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
+						clearTimeout( redrawIconsT );
+						redrawIconsT = setTimeout( function()
 						{
-							found = true;
-							if( !forceRefresh )
-								newIcons.push( t.icons[va] );
-							break;
-						}
-					}
-					if( found && !forceRefresh )
-					{
-						continue;
-					}
-
-					// Doesn't exist, go on
-					var o = false;
-
-					var d;
-
-					d = ( new Door() ).get( r.Name + ':' );
-					d.permissions[0] = 'r';
-					d.permissions[1] = 'w';
-					d.permissions[2] = 'e';
-					d.permissions[3] = 'd';
-
-					var o = {
-						Title: r.Name.split(':').join('') + ':',
-						Volume: r.Name.split(':').join('') + ':',
-						Path: r.Name.split(':').join('') + ':',
-						Handler: r.FSys,
-						Type: 'Door',
-						MetaType: 'Directory',
-						ID: r.ID,
-						Mounted: true,
-						Door: d,
-						Visible: r.Visible != "false" ? true : false,
-						Config: r.Config
-					};
-
-					// Execute it if it has execute flag set! Only the first time..
-					if( !found && r.Execute )
-					{
-						ExecuteJSXByPath( o.Volume + r.Execute );
-					}
-
-					// Force mount
-					var f = new FriendLibrary( 'system.library' );
-					f.addVar( 'devname', r.Name.split(':').join('') );
-					f.execute( 'device/mount' );
-
-					// We need volume information
-					d.Volume = o.Volume;
-					//d.Type = typ;
-
-					testDrive( o, d );
-
-					// Add to list
-					newIcons.push( o );
+							t.redrawIcons();
+						}, 100 );
+					} );
 				}
-			}
 
-			// The new list
-			if( newIcons.length )
-			{
-				// Check change
-				if( t.icons )
+				// Network devices
+				var rows;
+				try
 				{
-					for( var a = 0; a < t.icons.length; a++ )
+					rows = JSON.parse( dat );
+				}
+				catch(e)
+				{
+					rows = false;
+					console.log( 'Could not parse network drives',e,dat );
+				}
+
+				if( rows && rows.length )
+				{
+					for ( var a = 0; a < rows.length; a++ )
 					{
+						var r = rows[a];
+						if( r.Config.indexOf( '{' ) >= 0 )
+							r.Config = JSON.parse( r.Config );
+
+						// Check if it was already found!
 						var found = false;
-						for( var b = 0; b < newIcons.length; b++ )
+						for( var va in t.icons )
 						{
-							if( newIcons[b].Volume == t.icons[a].Volume )
+							if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
 							{
 								found = true;
+								if( !forceRefresh )
+									newIcons.push( t.icons[va] );
 								break;
 							}
 						}
-						if( !found )
+						if( found && !forceRefresh )
 						{
-							testDrive( t.icons[a], t.icons[a].Door )
-							break;
+							continue;
 						}
+
+						// Doesn't exist, go on
+						var o = false;
+
+						var d;
+
+						d = ( new Door() ).get( r.Name + ':' );
+						d.permissions[0] = 'r';
+						d.permissions[1] = 'w';
+						d.permissions[2] = 'e';
+						d.permissions[3] = 'd';
+
+						var o = {
+							Title: r.Name.split(':').join('') + ':',
+							Volume: r.Name.split(':').join('') + ':',
+							Path: r.Name.split(':').join('') + ':',
+							Handler: r.FSys,
+							Type: 'Door',
+							MetaType: 'Directory',
+							ID: r.ID,
+							Mounted: true,
+							Door: d,
+							Visible: r.Visible != "false" ? true : false,
+							Config: r.Config
+						};
+
+						// Execute it if it has execute flag set! Only the first time..
+						if( !found && r.Execute )
+						{
+							ExecuteJSXByPath( o.Volume + r.Execute );
+						}
+
+						// Force mount
+						var f = new FriendLibrary( 'system.library' );
+						f.addVar( 'devname', r.Name.split(':').join('') );
+						f.execute( 'device/mount' );
+
+						// We need volume information
+						d.Volume = o.Volume;
+						//d.Type = typ;
+
+						testDrive( o, d );
+
+						// Add to list
+						newIcons.push( o );
 					}
 				}
-				t.icons = newIcons;
-			}
-			// Do the callback thing
-			if( callback && typeof( callback ) == 'function' ) callback( t.icons );
 
-			// Check for new events
-			t.checkDesktopEvents();
+				// The new list
+				if( newIcons.length )
+				{
+					// Check change
+					if( t.icons )
+					{
+						for( var a = 0; a < t.icons.length; a++ )
+						{
+							var found = false;
+							for( var b = 0; b < newIcons.length; b++ )
+							{
+								if( newIcons[b].Volume == t.icons[a].Volume )
+								{
+									found = true;
+									break;
+								}
+							}
+							if( !found )
+							{
+								testDrive( t.icons[a], t.icons[a].Door )
+								break;
+							}
+						}
+					}
+					t.icons = newIcons;
+				}
+				// Do the callback thing
+				if( callback && typeof( callback ) == 'function' ) callback( t.icons );
+
+				// Check for new events
+				t.checkDesktopEvents();
+			}
+			m.execute( 'device/list' );
 		}
-		m.execute( 'device/list' );
+		mo.execute( 'workspaceshortcuts' );
 
 		return true;
 	},
