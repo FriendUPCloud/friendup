@@ -95,7 +95,7 @@ if( $fr->Load() )
 				
 				$confo = json_decode( file_get_contents( $conf ) );
 				
-				$nconf = new Object();
+				$nconf = new stdClass();
 				$init = substr( $jsx, 0, strlen( $jsx ) - 4 ) . '.js';
 				rename( $jsx, $init ); // Give jsx a .js name
 				$nconf->Init = str_replace( '/tmp/' . $fld . '/', '', $init );

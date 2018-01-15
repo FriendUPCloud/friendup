@@ -18,7 +18,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-$settings = new object();
+$settings = new stdClass();
 $settings->Date = date( 'Y-m-d H:i:s' );
 
 if( isset( $args->args->settings ) )

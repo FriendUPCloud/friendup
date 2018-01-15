@@ -474,6 +474,9 @@ if( isset( $args->command ) )
 			require( 'modules/system/include/removefromstartupsequence.php' );
 			break;
 
+		case 'workspaceshortcuts':
+			require( 'modules/system/include/workspaceshortcuts.php' );
+			break;
 		// Forcefully renew a session for a user
 		case 'usersessionrenew':
 			require( 'modules/system/include/usersessionrenew.php' );
@@ -1395,15 +1398,37 @@ if( isset( $args->command ) )
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"list users failed Error 1"}' );
 
 			if( $users = $SqlDatabase->FetchObjects( '
-				SELECT u.*, g.Name AS `Level` FROM
-					`FUser` u, `FUserGroup` g, `FUserToGroup` ug
-				WHERE
-					    u.ID = ug.UserID
-					AND g.ID = ug.UserGroupID
-					AND g.Type = "Level"
-				GROUP BY u.ID, g.Name
-				ORDER BY
-					u.FullName ASC
+				SELECT u.*, g.Name AS `Level` FROM 
+					`FUser` u, `FUserGroup` g, `FUserToGroup` ug 
+				WHERE 
+					    u.ID = ug.UserID 
+					AND g.ID = ug.UserGroupID 
+					AND g.Type = "Level" 
+					' . ( isset( $args->args->userid ) && $args->args->userid ? '
+					AND u.ID IN (' . $args->args->userid . ') 
+					' : '' ) . '
+					' . ( isset( $args->args->query ) && $args->args->query ? '
+					AND 
+					(
+						( 
+							u.Fullname LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+						OR 
+						( 
+							u.Name LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+						OR 
+						( 
+							u.Email LIKE "' . trim( $args->args->query ) . '%" 
+						) 
+					)' : '' ) . '
+				GROUP 
+					BY u.ID, g.Name 
+				ORDER BY 
+					u.FullName ASC 
+				' . ( isset( $args->args->limit ) && $args->args->limit ? '
+				LIMIT ' . $args->args->limit . ' 
+				' : '' ) . '
 			' ) )
 			{
 				$out = [];
@@ -1417,6 +1442,13 @@ if( isset( $args->command ) )
 					}
 					$out[] = $o;
 				}
+				
+				if( isset( $args->args->count ) && $args->args->count )
+				{
+					$count = $SqlDatabase->FetchObject( 'SELECT COUNT( ID ) AS Num FROM FUser ' );
+					$out['Count'] = ( $count ? $count->Num : 0 );
+				}
+				
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
 			die( 'fail<!--separate-->{"response":"list users failed Error 2"}'  );
@@ -1516,35 +1548,79 @@ if( isset( $args->command ) )
 				' ) )
 				{
 					$gds = '';
-
-					// TODO: Fix this sql code to work with workgroup, code under is temporary
-					if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
-						SELECT
-							g.ID,
-							g.Name AS `Workgroup`
-						FROM
-							`FUserGroup` g,
-							`FUserToGroup` ug
-						WHERE
-								ug.UserID = \'' . $uid . '\'
-							AND g.ID = ug.UserGroupID
-							AND g.Type = "Workgroup"
-					' ) ) )
+					
+					switch( $args->args->mode )
 					{
-						$ugs = array();
+						case 'all':
+							
+							$userinfo->Workgroup = '';
+							
+							if( $wgs = $SqlDatabase->FetchObjects( '
+								SELECT 
+									g.ID, 
+									g.Name, 
+									ug.UserID 
+								FROM 
+									`FUserGroup` g 
+										LEFT JOIN `FUserToGroup` ug ON 
+										(
+												ug.UserID = \'' . $uid . '\'
+											AND g.ID = ug.UserGroupID
+										)
+								WHERE g.Type = "Workgroup" 
+								ORDER BY g.Name ASC 
+							' ) )
+							{
+								$ugs = array();
 
-						foreach( $wgs as $wg )
-						{
-							$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
-							$ugs[] = $wg->Workgroup;
-						}
+								foreach( $wgs as $wg )
+								{
+									if( $wg->UserID > 0 )
+									{
+										$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
+									}
+								}
+								
+								$userinfo->Workgroup = $wgs;
+							}
+							
+							break;
+							
+						default:
+							
+							// TODO: Fix this sql code to work with workgroup, code under is temporary
+							if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
+								SELECT
+									g.ID,
+									g.Name AS `Workgroup`
+								FROM
+									`FUserGroup` g,
+									`FUserToGroup` ug
+								WHERE
+										ug.UserID = \'' . $uid . '\'
+									AND g.ID = ug.UserGroupID
+									AND g.Type = "Workgroup"
+							' ) ) )
+							{
+								$ugs = array();
 
-						if( $ugs )
-						{
-							$userinfo->Workgroup = implode( ', ', $ugs );
-						}
+								foreach( $wgs as $wg )
+								{
+									$gds = ( $gds ? ( $gds . ',' . $wg->ID ) : $wg->ID );
+									$ugs[] = $wg->Workgroup;
+								}
+						
+								$userinfo->Workgroup = $wgs;
+								
+								if( $ugs )
+								{
+									$userinfo->Workgroup = implode( ', ', $ugs );
+								}
+							}
+							
+							break;
 					}
-
+					
 					$gds = false;
 
 					if( $sts = $SqlDatabase->FetchObjects( '
