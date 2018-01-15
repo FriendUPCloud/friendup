@@ -261,10 +261,12 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$logger =& $GLOBALS['Logger'];
 	
 	// Set config object
-	$Config = new Object();
+	$Config = new stdClass();
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 	              'FCHost', 'FCPort', 'FCUpload', 'FCPort', 
-	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork' );
+	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork', 
+	              'WorkspaceShortcuts' 
+	);
 
 	// Shortcuts
 	$dataUser = $configfilesettings[ 'DatabaseUser' ];
@@ -278,13 +280,27 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	foreach( array(
 		'host', 'login', 'password', 'dbname', 
 		'fchost', 'fcport', 'fcupload', 'port', 
-		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork'
+		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork',
+		'workspaceshortcuts'
 	) as $k=>$type )
 	{
 		$val = '';
 		
 		switch( $type )
 		{
+			case 'workspaceshortcuts':
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : [];
+				if( $val )
+				{
+					$val = trim( $val );
+					$o = array();
+					$val = explode( ',', $val );
+					foreach( $val as $v )
+						$o[] = trim( $v );
+					$val = $o;
+					$o = null;
+				}
+				break;
 			case 'host':
 			case 'login':
 			case 'password':
