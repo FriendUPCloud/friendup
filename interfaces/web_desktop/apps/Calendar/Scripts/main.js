@@ -131,6 +131,7 @@ function AddEvent( day )
 	} );
 	
 	var f = new File( 'Progdir:Templates/event.html' );
+	f.i18n();
 	f.onLoad = function( data )
 	{
 		v.setContent( data );
