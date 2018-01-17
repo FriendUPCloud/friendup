@@ -3764,26 +3764,6 @@ function _kresponseup( e )
 // Resize all screens
 function _kresize( e )
 {
-	var d = ge( 'Screens' );
-	var screens = d.getElementsByClassName( 'Screen' );
-	for( var a = 0; a < screens.length; a++ )
-	{
-		var s = screens[a];
-		if( s.parentNode != d ) continue;
-		s.style.width = window.innerWidth + 'px';
-		s.style.height = window.innerHeight + 'px';
-		s.style.minWidth = window.innerWidth + 'px';
-		s.style.minHeight = window.innerHeight + 'px';
-		var el = s.getElementsByClassName( 'ScreenContent' );
-		var cnt = false;
-		if( el.length ) cnt = el[0];
-		if( !cnt ) continue;
-		else
-		{
-			s.screenObject.resize();
-		}
-	}
-
 	checkMobileBrowser();
 	
 	// Resize screens

@@ -43,6 +43,10 @@
 {
 	transform: translate3d(0,0,0) !important;
 }
+[mobile=mobile] #Screens .View:not(.Active)
+{
+	max-height: 35px;
+}
 
 /* View groups */
 
