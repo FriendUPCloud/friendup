@@ -1953,7 +1953,8 @@ var View = function( args )
 		close.onselectstart = function( e ) { return cancelBubble( e ); }
 		close.onclick = function( e )
 		{
-			if( e.button != 0 ) return;
+			if( !isMobile )
+				if( e.button != 0 ) return;
 			
 			// On mobile, you get a window menu instead
 			if( window.isMobile && !window.isTablet )
