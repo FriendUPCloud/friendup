@@ -90,7 +90,7 @@ int64_t DataFormWriteGroup( FBYTE **data, MsgItem **mi )
 				{
 					if( (*mi)->mi_Size > 0 && (*mi)->mi_Data != NULL )
 					{
-						INFO("STORE DATA %ld  entry size %ld  TEXT %.100s\n", res, (*mi)->mi_Size,(char *)((*mi)->mi_Data ) );
+						//INFO("STORE DATA %ld  entry size %ld  TEXT %.100s\n", res, (*mi)->mi_Size,(char *)((*mi)->mi_Data ) );
 						memcpy( (void *)(*data), (const void *)((*mi)->mi_Data), (*mi)->mi_Size );
 						(*data) += (*mi)->mi_Size;
 						size += (*mi)->mi_Size;
