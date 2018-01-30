@@ -219,6 +219,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}, 250 );
 			document.body.classList.remove( 'AppsShowing' );
 			this.open = false;
+			Workspace.redrawIcons();
 			return cancelBubble( e );
 		}
 	}

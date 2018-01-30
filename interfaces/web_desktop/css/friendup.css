@@ -14,8 +14,6 @@ body
 	margin: 0;
 	background: #1A3854;
 	visibility: hidden;
-	transition: opacity 0.25s;
-	-webkit-transition: opacity 0.25s;
 }
 
 body > #FocusGrabber

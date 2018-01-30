@@ -62,11 +62,11 @@ var WorkspaceInside = {
 		this.workspaceWallpapers = [];
 	},
 	// Check workspace wallpapers
-	checkWorkspaceWallpapers: function()
+	checkWorkspaceWallpapers: function( loaded )
 	{
 		if( globalConfig.workspacecount <= 1 ) return;
-		
-		if( !Workspace.wallpaperLoaded ) return;
+
+		if( !Workspace.wallpaperLoaded && !loaded ) return;		
 		
 		// Check if we already have workspace wallpapers
 		var o = []; // <- result after cleanup
@@ -79,6 +79,7 @@ var WorkspaceInside = {
 			if( url.indexOf( ':' ) > 0 && url.indexOf( 'http' ) != 0 )
 				url = getImageUrl( url );
 		}
+		
 		var image = url == 'none' ? url : ( 'url(' + url + ')' );
 		for( var a = 0; a < m; a++ )
 		{
@@ -114,6 +115,9 @@ var WorkspaceInside = {
 		}
 		// Overwrite array
 		this.workspaceWallpapers = o;
+		
+		if( loaded )
+			Workspace.wallpaperLoaded = true;
 	},
 	// Initialize virtual workspaces
 	initWorkspaces: function()
@@ -1620,37 +1624,45 @@ var WorkspaceInside = {
 					styles.type = 'text/css';
 					styles.onload = function()
 					{
-						setTimeout( function()
+						// We are inside (wait for wallpaper) - watchdog
+						if( !Workspace.insideInterval )
 						{
-							// We are inside
-							document.body.classList.add( 'Inside' );
-							document.body.classList.remove( 'Login' );
-							
-							// Flush theme info
-							themeInfo = { loaded: false };
-							
-							// When all is loaded, do this
-							document.body.classList.remove( 'Loading' );
-							document.body.classList.add( 'Loaded' );
-				
-							// Init the websocket etc
-							InitWorkspaceNetwork();
-							
-							// Redraw now
-							DeepestField.redraw();
-							
-							// Reload the docks
-							Workspace.reloadDocks();
-							
-							// Refresh them
-							Workspace.initWorkspaces();
-							
-							// Redraw icons if they are delayed
-							Workspace.redrawIcons();
-							
-							// Show deepest field now..
-							ge( 'DeepestField' ).style.opacity = '1';
-						}, 150 );
+							Workspace.insideInterval = setInterval( function()
+							{
+								if( Workspace.wallpaperLoaded )
+								{
+									clearInterval( Workspace.insideInterval );
+									Workspace.insideInterval = null;
+									
+									// Set right classes
+									document.body.classList.add( 'Inside' );
+									document.body.classList.add( 'Loaded' );
+									document.body.classList.remove( 'Login' );
+									document.body.classList.remove( 'Loading' );
+									
+									// Refresh mountlist
+									Workspace.refreshDesktop( false, true );
+									
+									// Redraw now
+									DeepestField.redraw();
+								}
+							}, 50 );
+						}
+						
+						// Flush theme info
+						themeInfo = { loaded: false };
+			
+						// Init the websocket etc
+						InitWorkspaceNetwork();
+						
+						// Reload the docks
+						Workspace.reloadDocks();
+						
+						// Refresh them
+						Workspace.initWorkspaces();
+						
+						// Redraw icons if they are delayed
+						Workspace.redrawIcons();
 					}
 
 					if( themeName && themeName != 'default' )
@@ -2036,12 +2048,12 @@ var WorkspaceInside = {
 					if( self.wallpaperImage.indexOf( '.' ) > 0 )
 					{
 						ext = self.wallpaperImage.split( '.' );
-						ext = ( ( ext[ext.length-1] ) + "" ).toLowerCase();
+						ext = ( ( ext[ ext.length - 1 ] ) + "" ).toLowerCase();
 					}
 
 					// Remove prev
 					var v = eles[0].parentNode.getElementsByTagName( 'video' );
-					for( var z = 0; z < v.length; z++ ) eles[0].parentNode.removeChild( v[z] );
+					for( var z = 0; z < v.length; z++ ) eles[ 0 ].parentNode.removeChild( v[ z ] );
 
 					// Check extension
 					switch( ext )
@@ -2109,17 +2121,17 @@ var WorkspaceInside = {
 								this.done = true;
 								
 								Workspace.wallpaperImageObject = workspaceBackgroundImage;
-								Workspace.wallpaperLoaded = true;
 								
 								if( globalConfig.workspacecount > 1 )
 								{
 									// Check series of wallpaper elements
-									Workspace.checkWorkspaceWallpapers();
+									Workspace.checkWorkspaceWallpapers( true );
 								}
 								else
 								{
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
+									Workspace.wallpaperLoaded = true;
 								}
 							};
 							if( found )
@@ -2137,7 +2149,7 @@ var WorkspaceInside = {
 							
 							Workspace.wallpaperImageObject = workspaceBackgroundImage;
 							
-							// If this borks up in 2 seconds, bail!
+							// If this borks up in 5 seconds, bail!
 							setTimeout( function()
 							{
 								if( 
@@ -2154,7 +2166,7 @@ var WorkspaceInside = {
 									Workspace.wallpaperImageObject.done = true;
 									Workspace.wallpaperLoaded = true;
 								}
-							}, 3000 );
+							}, 5000 );
 							break;
 					}
 				}
@@ -4208,14 +4220,6 @@ var WorkspaceInside = {
 						name:	i18n( 'menu_upload_file' ),
 						command: function(){ Workspace.uploadFile(); }
 					},
-					/*{
-						name:	i18n( 'menu_show_launcher' ),
-						command: 'document.launcher.show()'
-					},
-					{
-						name:	i18n( 'menu_hide_launcher' ),
-						command: 'document.launcher.hide()'
-					},*/
 					{
 						divider: true
 					},

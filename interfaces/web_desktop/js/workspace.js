@@ -1226,7 +1226,7 @@ Workspace = {
 		    	if(typeof callback == 'function') callback( this.responseText );
 			}
 		};
-		xhttp.open("GET", passWordResetURL, true);
+		xhttp.open( 'GET', passWordResetURL, true);
 		xhttp.send();
 	},
 	//set an additional URL to call on logout
@@ -1234,4 +1234,5 @@ Workspace = {
 	{
 		Workspace.logoutURL = logoutURL;
 	}
-}
+};
+

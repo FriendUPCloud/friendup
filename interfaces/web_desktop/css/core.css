@@ -24,13 +24,10 @@ body
 	/*
 	TODO: Figure out why this ruins some apps
 	-webkit-transform: rotateZ(0deg);
-   -moz-transform: rotateZ(0deg);
-   -o-transform: rotateZ(0deg);
-   -ms-transform: rotateZ(0deg);
+	-moz-transform: rotateZ(0deg);
+	-o-transform: rotateZ(0deg);
+	-ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
-	transition: opacity 0.2s;
-	-moz-transition: opacity 0.2s;
-	-webkit-transition: opacity 0.2s;
 	overflow: hidden;
 }
 
@@ -1763,16 +1760,9 @@ body.Inside
 
 body #Screens
 {
-	transition: opacity 1s;
-	-webkit-transition: opacity 1s;
 	background-image: url(/webclient/theme/loginimage.jpg);
 	background-position: center center;
 	background-size: cover;
-}
-
-body.Login #Screens
-{
-	opacity: 0.3;
 }
 
 body.Login > img
@@ -1780,16 +1770,25 @@ body.Login > img
 	display: none;
 }
 
-body.Loading
+body.Loaded > #Screens
+{
+	transition-property: opacity;
+	transition-duration: 1s;
+	-webkit-transition-property: opacity;
+	-webkit-transition-duration: 1s;
+	opacity: 1;
+	box-sizing: border-box;
+}
+
+body.Loaded > #Screens > #DeepestField
+{
+	opacity: 1;
+}
+
+body.Loading > #Screens
 {
 	opacity: 0;
 }
-
-body.Loading #Screens
-{
-	opacity: 0;
-}
-
 
 body.Loading:after
 {
@@ -1822,11 +1821,6 @@ body.Loading:after
 body.Inside #Screens
 {
 	background-image: none;
-}
-
-body.Loaded #Screens
-{
-	opacity: 1;
 }
 
 /* Hide this in the beginning */

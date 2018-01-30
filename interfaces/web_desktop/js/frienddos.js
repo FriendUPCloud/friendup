@@ -3123,19 +3123,43 @@ window.Shell = function( appObject )
 			}
 			else
 			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
+				// We are installing a friend package
+				if( cmd[1] == 'package' && cmd.length == 3 )
 				{
-					if( e == 'ok' )
+					var p = cmd[2];
+					if( p.indexOf( ':' ) <= 0 )
+						p = this.currentPath + p;
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
 					{
-						return dcallback( true, 'Installed or upgraded in the future.' );
+						if( e != 'ok' )
+						{
+							dcallback( false, { response: 'Failed to install package ' + cmd[2] } );
+						}
+						else
+						{
+							dcallback( true, { response: 'The package, ' + cmd[2] + ', was successfully installed.' } );
+						}
 					}
-					else
-					{
-						return dcallback( false, 'Failed to install ' + cmd[1] + '.' );
-					}
+					m.execute( 'installpackage', { path: p } );
 				}
-				m.execute( 'install', { application: cmd[1] } );
+				else
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							return dcallback( true, 'Installed or upgraded in the future.' );
+						}
+						else
+						{
+							return dcallback( false, 'Failed to install ' + cmd[1] + '.' );
+						}
+					}
+					m.execute( 'install', { application: cmd[1] } );
+				}
 			}
 		}
 		else if( cmd[0] == 'break' )

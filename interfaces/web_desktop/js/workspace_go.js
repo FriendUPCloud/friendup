@@ -77,7 +77,10 @@ Workspace = {
 		if( this.initialized ) return;
 
 		// Preload some images
-		var imgs = [ '/webclient/gfx/system/offline_16px.png' ];
+		var imgs = [ 
+			'/webclient/gfx/system/offline_16px.png',
+			'/themes/friendup/gfx/loading.gif'
+		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
 		{
@@ -1217,7 +1220,7 @@ Workspace = {
 		    	if(typeof callback == 'function') callback( this.responseText );
 			}
 		};
-		xhttp.open("GET", passWordResetURL, true);
+		xhttp.open( 'GET', passWordResetURL, true);
 		xhttp.send();
 	},
 	//set an additional URL to call on logout
@@ -1225,4 +1228,5 @@ Workspace = {
 	{
 		Workspace.logoutURL = logoutURL;
 	}
-}
+};
+
