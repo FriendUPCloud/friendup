@@ -12,6 +12,8 @@ Next minor version is v1.1.1.
 
 ![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2018/01/11.png "FriendUP Workspace")
 
+[Please join our Telegram group and have a chat with the community.](https://t.me/friendupcloud)
+
 Across devices
 --------------
 
