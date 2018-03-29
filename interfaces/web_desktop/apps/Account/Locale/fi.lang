@@ -1,0 +1,103 @@
+
+
+i18n_account                         : Tilini
+
+i18n_basic_information               : Perustiedot
+i18n_full_name                       : Koko nimesi
+i18n_username                        : Käyttäjätunnus
+i18n_change_password                 : Vaihda salasana
+i18n_current_password                : Nykyinen salasana
+i18n_new_password                    : Uusi salasana
+i18n_confirm                         : varmista
+
+i18n_are_you_sure                    : Oletko varma?
+i18n_this_will_remove                : Tämä poistaa levyn levyasemalistastasi.
+
+i18n_delete_disk                     : Poista levy
+
+i18n_key_type              			 : Avain tyyppi
+i18n_key_name              			 : Avain nimi
+i18n_key_password             	     : Avain salasana
+i18n_generate                        : Luo
+i18n_generate_keypair                : Luo avainpari
+
+i18n_extended_information            : Laajennetut tiedot
+i18n_telephone                       : Puhelin
+i18n_email_address                   : Sähköposti osoite
+i18n_account_image                   : Tili kuva
+i18n_save                            : Tallenna
+i18n_cancel                          : Peruuta
+i18n_back                            : Takaisin
+
+i18n_publickey                       : Julkinen avain
+
+i18n_key_information                 : Avain tiedot
+i18n_your_apps                       : Ohjelmasi
+i18n_available_storage               : Käytettävissä oleva tallennustila
+
+i18n_no_apps                         : Tilanne
+i18n_no_apps_desc                    : Ei asennettuja.
+
+i18n_add_storage                     : Lisää tallennustilaa
+i18n_edit_storage                    : Muokkaa levyä
+
+i18n_no_storage                      : Tallennustilaa ei ole saatavilla.
+
+i18n_get_storage                     : Hanki lisää tilaa
+
+i18n_toggle_public_key_visibility    : Vaihda julkisen avaimen näkyvyys
+
+i18n_get_apps                        : Hae ohjelmia
+
+i18n_descheading : Lisää enemmän tallennustilaa järjestelmääsi
+i18n_description : Valitse minkä levytyypin haluat lisätä järjestelmääsi. Jotkut tarjoajat voitat pyytää sinua rekisteröimään tilin.
+
+i18n_disk                            : levy
+i18n_add_a                           : Lisää
+i18n_edit                            : Muokkaa
+
+i18n_disk_error                      : Levyvirhe
+i18n_failed_to_edit                  : Levyaseman muokkaus epäonnistui.
+i18n_disk_success                    : Levy muokattu
+i18n_disk_edited                     : Levyä muokattu onnistuneesti.
+
+i18n_connection_details              : Yhteystiedot
+i18n_notes                           : Muistiot
+i18n_directory                       : Etähakemisto
+i18n_login_info                      : Kirjautumistiedot
+i18n_your_notes                      : Muistiosi
+i18n_username                        : Käyttäjätunnus
+i18n_password                        : Salasana
+i18n_host_port                       : Palvelimen portti
+i18n_host_ip                         : Palvelimen osoite tai IP
+i18n_hostname                        : Palvelimen osoite
+i18n_workgroup_name                  : Työryhmäsi
+i18n_workgroup                       : Työryhmä
+i18n_device_name                     : Levyn nimi
+i18n_placeholder_connection          : Levyni
+
+i18n_add_storage                     : Lisää tallennustilaa
+i18n_update_disk                     : Päivitä levy
+i18_account2                         : Tili
+i18n_settings_saved                  : Asetukset tallennettu
+
+i18n_key_password_confirm            : Varmista salasana
+i18n_pass_mis_desc                   : Salasanojen täytyy tästämä.
+i18n_password_mismatch               : Salasana ei täsmää!
+
+i18n_key_management                  : Avainhallinta
+i18n_application                     : Ohjelma
+i18n_options                         : Vaihtoehdot
+
+i18n_add_key                         : Lisää avain
+i18n_data                            : Tieto
+
+i18n_close                           : Sulje
+i18n_encrypt                         : Salaa
+i18n_decrypt                         : Pura salaus
+
+i18n_system_wide                     : Järjestelmän laajuinen
+i18n_devices                         : Laitteet
+
+i18n_generate_key                    : Luo avain
+

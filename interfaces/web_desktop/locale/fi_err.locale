@@ -1,0 +1,9 @@
+#Connections --------------------------------------------------------------------
+ERR_CONN_ERROR                          : Yhteys on suljettu
+ERR_REQUEST_INVALID_RESPONSE            : Virheellinen vastausviesti
+ERR_REQUEST_TIMEOUT                     : Pyyntö on vanhentunut
+
+#FriendNetwork ------------------------------------------------------------------
+ERR_FN_INVALID_HOSTID                   : Isännän ID ei ole virheellinen
+ERR_FN_INVALID_APPDATA                  : Tiedot eivät ole kelvollisia
+ERR_FN_P2P_DENIED                       : Etäisäntä on kieltäytynyt p2p yhteydestä

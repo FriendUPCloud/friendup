@@ -1,0 +1,21 @@
+
+i18n_fullscreen                      : Koko näyttö
+i18n_window                     	 : Ikkuna
+i18n_logout                          : Kirjaudu ulos
+i18n_quit                            : Lopeta
+i18n_file                            : Tiedosto
+i18n_bookmarks                       : Kirjanmerkit
+i18n_bm_add                          : Lisää
+
+i18n_account                         : Tili
+i18n_edit_profile                    : Muokkaa profiilia
+i18n_account_settings                : Tili asetukset
+i18n_global_settings                 : Yleiset asetukset
+
+i18n_navigation                      : Navigointi
+i18n_nav_newsfeed                    : Uutisvirta
+i18n_nav_messages                    : Viestit
+i18n_nav_calendar                    : Kalenteri
+i18n_nav_library                     : Kirjasto
+i18n_nav_browse                      : Selaa
+i18n_nav_bookmarks                   : Kirjanmerkit

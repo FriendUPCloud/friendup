@@ -1,0 +1,50 @@
+i18n_file                             : Tiedosto
+i18n_quit                             : Lopeta
+i18n_application                      : Ohjelma
+i18n_description                      : Kuvaus
+i18n_icon                             : Ikoni
+i18n_sort_order                       : Lajittelujärjestys
+i18n_add_dock_item                    : Lisää telakkaan kohde
+i18n_quit                             : Lopeta
+i18n_save                             : Tallenna
+i18n_remove                           : Poista
+i18n_you_sure                         : Oletko varma?
+i18n_you_sure_text                    : Oletko varma että haluat poistaa tämän telakka kohteen?
+i18n_item_exists                      : Telakka ikoni on olemassa
+i18n_item_exists_desc                 : Tämä ikoni on jo olemassa. Telakka ikoneita ei voi lisätä kahdesti.
+i18n_standard_dock                    : Standardi telakka
+i18n_dock_list                        : Telakka lista
+i18n_dock_layout                      : Leiska
+i18n_dock_position                    : Sijainti
+i18n_dock_coords                      : X/Y koordinaatit
+i18n_save_dock                        : Tallenna telakka
+i18n_add_dock                         : Lisää telakka
+i18n_dock_size                        : Telakan koko
+i18n_standard_dock                    : Standardi telakka
+i18n_left_top                         : Vasen ylä
+i18n_left_center                      : Vasen keskellä
+i18n_left_bottom                      : Vasen alhaalla
+i18n_right_top                        : Oikea ylä
+i18n_right_center                     : Oikea keskellä
+i18n_right_bottom                     : Oikea alhaalla
+i18n_top_left                         : Ylä vasen
+i18n_top_center                       : Ylä keskellä
+i18n_top_right                        : Ylä oikealla
+i18n_bottom_left                      : Ala vasemmalla
+i18n_bottom_center                    : Ala keskellä
+i18n_bottom_right                     : Ala oikealla
+i18n_aligned                          : Tasattu
+i18n_fixed                            : Kiinteä
+i18n_extra_large                      : Erittäin suuri
+i18n_large                            : Suuri
+i18n_medium                           : Keskikoko
+i18n_small                            : Pieni
+i18n_dock_editor                      : Telakka muokkaus
+i18n_close                            : Sulje telakka muokkaus
+i18n_select_application               : Valitse ohjelma
+i18n_display_name                     : Näyttö nimi
+
+i18n_preferred_workspace              : Työtila mieluiten
+
+i18n_item_saved : Kohde tallennettu
+i18n_item_saved_text : Muutoksesi telakka kohteeseen on tallennettu.
