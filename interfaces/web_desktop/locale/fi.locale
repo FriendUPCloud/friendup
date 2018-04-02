@@ -1,0 +1,596 @@
+
+File_Date                            : Pvm
+
+i18n_Builtin_Label_Trash             : Roskakori
+i18n_Builtin_Label_Ram_disk          : Ram levy
+i18n_Builtin_Label_Home              : Koti
+i18n_Builtin_Label_System            : Järjestelmä
+
+i18n_leave_question                  : Olet poistumassa FriendUP työtilasta. Tämä lopettaa käyttäjäistuntosi tällä kertaa.
+
+#Built-in preferences
+
+i18n_install_application             : Asenna ohjelma
+i18n_security_domain                 : Tietoturva-alue
+i18n_looknfeel                       : Ulkoasu
+i18n_startup_sequence                : Käynnistysjärjestys
+i18n_screens                         : Ruudut
+i18n_wallpaper                       : Taustakuva
+i18n_printers                        : Tulostimet
+i18n_network                         : Verkko
+i18n_language                        : Kieli
+i18n_bookmarks                       : Kirjanmerkit
+i18n_bookmarks_add                   : Lisää
+i18n_bookmarks_close                 : Sulje
+i18n_bookmarks_select                : Valitse
+i18n_bookmarks_remove                : Poista
+i18n_empty_view                      : Tyhjä näkymä
+i18n_no_bookmarks                    : Sinulla ei ole kirjanmerkkejä.
+i18n_illegal_path                    : Virheellinen polku
+i18n_illegal_fld_mountlist           : Et voi tehdä uutta kansiota levyasema listaan.
+i18n_desklets                        : Työpöytä pienoisohjelmat
+i18n_software                        : Ohjelmat
+i18n_sound                           : Ääni
+i18n_keyboard                        : Näppäimistö
+i18n_input                           : Syöte
+i18n_hardware                        : Laitteisto
+i18n_useraccounts                    : Käyttäjät
+i18n_datetime                        : Päivä ja aika
+i18n_docksettings                    : Telakka
+i18n_security                        : Tietoturva
+i18n_mimetypes                       : Mimetyypit
+i18n_account                         : Tiliasetukset
+i18n_affirmative                     : Ok
+i18n_negative                        : Ei
+i18n_yes                             : Kyllä
+i18n_cancel                          : Peruuta
+i18n_accept                          : Hyväksy
+i18n_understood                      : Ymmärretty
+
+i18n_disk_icon                       : Levy ikoni
+i18n_choose_disk                     : Valitse levy
+i18n_run_application                 : Aja ohjelma
+
+i18n_driver_handled                  : DOS ajuri käsitelty
+
+i18n_system_version                  : Järjestelmä versio
+i18n_system_version_num              : Versio 1.0.0
+
+
+i18n_notification_archive               : Ilmotusarkisto
+i18n_sure_remove_notification           : Oletko varma että haluat poistaa tämän ilmoituksen?
+i18n_sure_remove_notification_desc      : Nämä ovat arkistoituja ilmoituksia. Kuin poistat ne, ne poistuvat muistista.
+i18n_system_message                     : Järjestelmäviestit
+
+#Tools
+i18n_processmgr                         : Tehtävien hallinta
+i18n_applicationmgr                     : Ohjelmien hallinta
+i18n_sysdiag                            : Järjestelmän diagnoosi
+
+i18n_continue                           : Jatka
+i18n_couldnotinstallapp                 : Ei voitu asentaa ohjelmaa.
+
+i18n_choose_file                        : Valitse tiedosto
+i18n_new_container                      : Uusi kansio
+i18n_create_container                   : Luo kansio
+i18n_name                               : Nimi
+i18n_make_a_new_container               : Luo uusi kansio
+i18n_error_could_not_list_directory     : Kansiolistauksen teko ei onnistunut
+
+i18n_error                              : Virhe
+i18n_could_not_run_jsx                  : Ei voitu suorittaa JSX.
+
+i18n_disk_catalog                       : Levy luettelo
+i18n_items_total                        : kpl yhteensä
+
+i18n_port                               : Portti
+i18n_key                                : Avain
+
+i18n_package_installed                  : Paketti asennettu
+i18n_package                            : Paketti
+i18n_was_installed                      : asentui
+i18n_failed_install_package             : Epäonnistui asentaa
+i18n_package_failed                     : Tätä pakettia ei onnistuttu asentamaan
+
+i18n_Storage_Local_Read_desc            : Luku oikeus, paikalliset levyt
+i18n_Storage_Local_Write_desc           : Kirjoitus oikeus, paikalliset levyt
+i18n_Storage_Local_Read/Write_desc      : Luku/kirjoitus oikeus, paikalliset levyt
+i18n_Storage_Remote_Read_desc           : Luku oikeus, verkkolevyt
+i18n_Storage_Remote_Write_desc          : Kirjoitus oikeus, verkkolevyt
+i18n_Storage_Remote_Read/Write_desc     : Luku/kirjoitus oikeus, verkkolevyt
+i18n_Storage_Ramdisk_Read_desc          : Luku oikeus, Ram levy
+i18n_Storage_Ramdisk_Write_desc         : Kirjoitus oikeus, Ram levy
+i18n_Storage_Ramdisk_Read/Write_desc    : Luku/kirjoitus oikeus, Ram levy
+i18n_Module_System_desc                 : Pääsy perustoiminnallisuuteen
+
+i18n_connect_network_drive              : Yhdistä verkkolevy
+
+i18n_your_command                       : Komentosi
+
+#Default doors
+i18n_door_home                          : Koti
+
+please_choose_an_icon                   : Valitse ikoni(t).
+about_friendup                          : Tietoja FriendUP
+information                             : Tietoja & päivitykset
+documentation_central                   : Ohjekeskus
+software_catalog                        : Ohjelmat
+clear_cache                             : Tyhjennä välimuisti
+documentation_on                        : Ohjeet aiheeseen
+i18n_sharewith                          : Jaa jonkun kanssa
+i18n_sharename                          : Jaon nimi
+my_account                              : Tilini
+i18n_account_setup                      : Tiliasetukset
+
+#Default directorys for applications
+i18n_directory_Games                    : Pelit
+i18n_directory_Office                   : Toimisto
+i18n_directory_Graphics                 : Grafiikka
+i18n_directory_Internet                 : Internet
+i18n_directory_Media                    : Ääni ja video
+i18n_directory_Programming              : Programming
+i18n_directory_System                   : Järjestelmä
+i18n_directory_Functions                : Funktiot
+i18n_directory_Triggers                 : Triggerit
+
+i18n_directory_DocApps                  : Ohje/Ohjelmat
+
+i18n_directory_Documentation            : Ohje
+i18n_directory_Software             	: Ohjelmat
+i18n_directory_Modules                  : Moduulit
+i18n_directory_Plugins                  : Lisäosat
+i18n_directory_Prefs                    : Asetukset
+i18n_directory_Repositories             : Repot
+i18n_directory_Devices                  : Laitteet
+i18n_directory_Libraries                : Kirjastot
+
+#Devices
+
+i18n_dosdrivers                         : DOS ajurit
+i18n_cores                              : Coret
+i18n_sessions                           : Istunnot
+i18n_printers                           : Tulostimet
+
+#Menu
+
+i18n_close_menu                         : Sulje valikko
+
+menu_workspace                          : Työtila
+menu_system                             : Järjestelmä
+menu_new_shell                          : Uusi shell
+menu_about_friendup                     : Tietoja FriendUP
+menu_refresh_desktop                    : Päivitä työpöytä
+menu_add_storage                        : Lisää levy
+menu_run_command                        : Aja komento
+menu_show_launcher                      : Näytä käynnistin
+menu_hide_launcher                      : Piilota käynnistin
+menu_log_out                            : Kirjaudu ulos
+menu_exit								: Poistu FriendUP
+menu_execute_command                    : Suorita komento
+menu_upload_file                        : Lähetä tiedosto palvelimelle
+menu_snapshot                           : Tallenna ikkunan paikka
+menu_snapshot_all                       : Tallenna kaikkien ikkunoiden paikat
+menu_bookmarks                          : Kirjanmerkit
+menu_add_bookmark                       : Lisää kirjanmerkki
+menu_mount_filesystem                   : Levyluettelo
+menu_unmount_filesystem                 : Katkaise yhteys levyyn
+menu_hide_active_view                   : Piilota aktiivinen ikkuna
+menu_hide_all_views                     : Piilota kaikki ikkunat
+menu_hide_inactive_views                : Piilota ei-aktiiviset ikkunat
+menu_zip                                : Pakkaa tiedosto(t)
+menu_unzip                              : Pura tiedosto(t)
+menu_looknfeel                          : Ulkoasu
+menu_backdrop                           : Näytä yleiskatsaus
+
+menu_close_idle_connections             : Sulje idle yhteydet
+
+menu_edit_wallpaper                     : Muokkaa taustakuvaa
+i18n_edit_dock                          : Muokkaa telakkaa
+i18n_remove_from_dock                   : Poista telakasta
+
+i18n_choose_file_to_upload              : Valitse lähetettävä tiedosto
+i18n_upload_target                      : Lähetettävän tiedoston kohde
+i18n_browse                             : Selaa
+i18n_upload_the_file                    : Aloita tiedoston lähetys
+i18n_file_upload                        : Tiedoston lähetys
+i18n_upload_completed                   : Tiedoston lähetys valmis.
+i18n_upload_failed                      : Tiedoston lähetys epäonnistui.
+i18n_upload_completed_description       : Tiedoston lähetys onnistui.
+i18n_upload_failed_description          : Ei voitu lähettää tiedostoa.
+
+i18n_unzip_completed                    : Purkaminen valmis.
+i18n_unzip_comdesc                      : Tiedosto(je)n purkaminen onnistui
+i18n_unzip_failed                       : Purkaminen epäonnistui.
+i18n_unzip_failed_desc                  : Tiedosto(je)n purkaminen epäonnistui
+
+i18n_zip_completed                      : Pakkaaminen valmis.
+i18n_zip_comdesc                        : Tiedosto(je)n pakkaaminen onnistui
+i18n_zip_not_completed                  : Pakkaaminen epäonnistui.
+i18n_zip_not_comdesc                    : Tiedosto(je)n pakkaaminen epäonnistui
+
+i18n_unzip_start                        : Tiedosto(j)a puretaan.
+i18n_unzip_startdesc                    : Puretaan valittu(j)a tiedosto(j)a.
+
+i18n_zip_start                          : Pakataan tiedosto(j)a.
+i18n_zip_startdesc                      : Pakataan valittu(j)a tiedosto(j)a.
+
+cmd_execute                             : Suorita
+
+i18n_create_web_link                    : Luo uusi web linkki
+i18n_link                               : Linkki
+i18n_broken_link                        : Rikkinäinen linkki
+i18n_broken_link_desc                   : Linkki .url tiedostossa on rikki, tai tiedosto on viallinen.
+i18n_follow_link                        : Seuraa web linkkiä
+i18n_open_link                          : Mene
+i18n_follow_link_desc                   : Klikkaa allaolevaa linkkiä mennäksesi sinne
+
+
+menu_window                             : Ikkuna
+menu_refresh_directory                  : Päivitä ikkuna
+menu_open_directory                     : Avaa kansio
+menu_open_parent_directory              : Avaa edellinen kansio
+menu_show_as                            : Näytä
+menu_show_as_icons                      : Ikoneina
+menu_show_as_list                       : Listana
+menu_show_as_columns                    : Sarakkeina
+menu_close_window                       : Sulje ikkuna
+menu_fullscreen                         : Vaihda koko näytön tila
+
+menu_buildwebapp                        : Rakenna web ohjelma
+menu_icons                              : Toiminnot
+menu_new_directory                      : Luo kansio
+menu_new_weblink                        : Luo web linkki
+menu_show_icon_information              : Ikoni tiedot
+menu_edit_filename                      : Nimeä uudelleen
+menu_delete                             : Poista
+i18n_sure_delete                        : Haluatko varmasti poistaa?
+i18n_sure_deldesc                       : Tiedostot tai kansiot joita olet poistassa voivat poistua lopullisesti. Oletko silti varma että haluat poistaa ne?
+
+menu_tools                              : Työkalut
+menu_edit                               : Muokkaa
+menu_clear_clipboard                    : Tyhjennä leikepöytä
+
+menu_file								: Tiedosto
+menu_copy								: Kopioi
+menu_cut								: Leikkaa
+menu_paste								: Liitä
+
+menu_manage_disks                       : Hallitse levyjä
+
+menu_workspheres                        : Työpallot
+i18n_worksphere_all                     : Kaikki työpallot
+i18n_worksphere_add                     : Lisää työpallo
+
+#Applications ------------------------------------------------------------------
+install_question_mintitle               : Asenna ohjelma
+install_question_title                  : Ohjelma löytyi, mutta ei ole asennettu
+install_question_desc                   : Ohjelma löytyi, mutta ei ole asennettu. Haluatko asentaa sen nyt?
+install_button                          : Asenna
+install_cancel                          : Ei nyt
+application_permissions_change          : Muuta ohjelman oikeuksia
+activate_application                    : Aktivoi ohjelma
+activate_disk                           : Aktivoi levyoikeudet
+disk_activation_head                    : Aktivoi levyoikeudet
+disk_activation_desc                    : Käyttääksesi levyä suoritettaville tiedostoille, sinun täytyy aktivoida oikeudet. Valtuuta seuraavat oikeudet aloittaaksesi.
+app_activation_head                     : Aktivoi ohjelma
+app_activation_head_permissions         : Aseta oikeudet ohjelmalle
+app_activation_desc                     : Käyttääksesi tätä ohjelmaa, sinun täytyy aktivoida se. Valtuuta seuraavat oikeudet aloittaaksesi.
+app_activation_desc_alter               : Järjestelmä haluaa muuttaa tämän ohjelman oikeuksia. Tarkista oikeudet valtuuttaaksesi muutokset.
+app_authorization_button                : Valtuuta muutokset
+app_activation_button                   : Aktivoi nyt
+app_activation_abort                    : Peruuta
+grant_door_access                       : Salli pääsy kohteeseen
+all_filesystems                         : kaikki tiedostojärjestelmät
+grant_module_access                     : Salli pääsy moduuliin
+grant_service_access                    : Salli pääsy palveluun
+failed_application_activation           : Ohjelman aktivointi epäonnistui.
+no_activation_fields_checked            : Et lisännyt mitään oikeuksia. Tarkista valintasi.
+application_not_found                   : Ohjelmaa ei löytynyt. Onko se asennettu?
+application_not_signed                  : Ohjelmaa ei ole allekirjoitettu. Asenna paketti uudelleen.
+application_not_validated               : Ohjelmat tarkistus epäonnistui. Poista se ja asenna uudelleen toimiva paketti.
+
+#Icon info ---------------------------------------------------------------------
+
+i18n_icon_information                   : Ikoni tiedot
+i18n_volumeicon_information             : Levyn tiedot
+i18n_volume_name                        : Levyn tiedot
+i18n_volume_size                        : Levyn koko
+i18n_protection                         : Suojaus
+i18n_used_space                         : käytetty
+i18n_filename                           : Tiedostonimi
+i18n_permissions                        : Oikeudet
+i18n_filesize                           : Tiedostokoko
+i18n_public_file                        : Julkinen tiedosto
+i18n_public_link                        : Julkinen url
+i18n_close                              : Sulje
+i18n_file_information                   : Yleiset tiedot
+i18n_file_permissions                   : Tiedoston oikeudet
+i18n_meta_information                   : Tiedoston tiedot
+i18n_click_to_copy                      : Klikkaa kopioidaksesi leikepöydälle
+i18n_total_listed                       : ikonit kpl yhteensä
+i18n_add_attribute                      : Lisää ominaisuus
+i18n_field_info                         : Kenttä tiedot
+i18n_info_fields                        : Tieto kentät
+i18n_edit_attribute                     : Muokkaa ominaisuutta
+i18n_icon_image                         : Ikoni kuva
+i18n_no_field_information               : Ei ominaisuus tietoja saatavilla.
+i18n_non_compatible_field_information   : Ei voida esikatsella kenttä tietoja.
+
+
+#File dialogs ------------------------------------------------------------------
+
+file_load                               : Lataa
+file_abort                              : Sulje
+file_save                               : Tallenna
+file_open_title                         : Lataa tiedosto
+file_open_path                          : Valitse polku
+file_save_title                         : Tallenna tiedosto
+file_unknown_title                      : Tuntematon tiedosto toiminta
+i18n_directory                          : Kansio
+information_of_icon                     : Tietoja
+owner                                   : Omistaja
+group                                   : Ryhmä
+others                                  : Muut
+readable                                : Luku
+writable                                : Kirjoitus
+deletable                               : Poista
+executable                              : Suorita
+i18n_save                               : Tallenna
+i18n_notes                              : Muistiot
+rename_file                             : Nimeä uudelleen
+new_name                                : Uusi nimi
+i18n_read_only_filesystem               : Vain luku -tiedostojärjestelmä
+i18n_read_only_fs_desc                  : Yrität kirjoittaa kirjoitussuojatulle tai vain luku -tiedostojärjestelmälle.
+
+#File operations ---------------------------------------------------------------
+
+i18n_cancel                             : Peruuta
+i18n_moving_files                       : Siirretään tiedostoja
+i18n_copying_files                      : Kopioidaan tiedostoja
+
+i18n_delete_operation                   : Poistetaa tiedosto(j)a
+i18n_could_not_delete_files             : Ei voitu poistaa tiedosto(j)a.
+i18n_copy_operation                     : Kopioidaan tiedosto(j)a
+i18n_could_not_copy_files               : Ei voitu kopioida tiedosto(j)a.
+i18n_rename_operation                   : Nimetään uudelleen
+i18n_could_not_rename_file              : Ei voitu nimetä uudelleen tiedostoa.
+i18n_stat_operation                     : Tiedoston tiedot
+i18n_could_not_stat_file                : Ei voitu saada tiedoston tietoja.
+i18n_protect_operation                  : Suojataan tiedosto(j)a
+i18n_could_not_protect_files            : Ei voitu suojata tiedosto(j)a.
+i18n_makedir_operation                  : Uusi kansio
+i18n_could_not_make_dir                 : Ei voitu luoda uutta kansiota.
+i18n_volume_information                 : Levy tiedot
+i18n_volume_permissions                 : Levy oikeudet
+i18n_drag_to_download_file              : Klikkaa tai vedä työpöydälle ladataksesi.
+
+#Misc --------------------------------------------------------------------------
+
+Shell output : Shell output
+Running tasks : Running tasks
+i18n_read_only                          : Vain luku
+i18n_task_running                       : tehtävä käynnissä
+i18n_tasks_running                      : tehtävää käynnissä
+i18n_visible                            : Näkyvissä
+i18n_network_activity                   : Verkko aktiviteetti
+i18n_today                              : Tänään
+i18n_notifications                      : ilmoitukset
+i18n_notification                       : ilmoitus
+i18n_devices_and_capabilities           : Laitteet ja kyvyt
+i18n_webcam_disabled                    : Poistettu käytöstä
+i18n_webcam_enabled                     : Käytössä
+i18n_microphone_disabled                : Poistettu käytöstä
+i18n_microphone_enabled                 : Käytössä
+i18n_blocked_in_browser                 : Estetty
+i18n_testing_camera                     : Web kamera testi
+i18n_testing_camera_desc                : Testataan onko web kamera liitetty ja saatavilla.
+
+i18n_active_fnet_connections            : Friend verkko
+i18n_active_network_connections         : Aktiiviset yhteydet
+
+#Locale ------------------------------------------------------------------------
+
+i18n_locale_no                          : Norsk
+i18n_locale_en                          : Engelsk
+i18n_locale_de                          : Tysk
+i18n_locale_nl                          : Nederlandsk
+i18n_locale_fr                          : Français
+i18n_locale_fi                          : Finnish
+
+#Search ------------------------------------------------------------------------
+
+i18n_case_sensitive                     : Merkkikokoriippuvainen
+i18n_search_do                          : Etsi
+i18n_search_path_button                 : Valitse polku
+i18n_search_files                       : Etsi tiedostoja
+i18n_search_keywords                    : Avainsanat...
+i18n_search_path                        : Etsi polusta...
+i18n_select_path_to_search              : Valitse etsinnän polku
+i18n_search_stop                        : Pysäytä etsintä
+i18n_search_type_Door                   : laite
+i18n_search_type_Directory              : hakemisto
+i18n_search_type_File                   : tiedosto
+
+#Directory view ----------------------------------------------------------------
+
+i18n_dir_btn_root                       : Juuri
+i18n_dir_btn_up                         : Ylös
+i18n_dir_btn_back                       : Takaisin
+i18n_dir_btn_forward                    : Eteinpäin
+i18n_dir_btn_reload                     : Päivitä listaus
+i18n_dir_btn_search                     : Etsi
+
+#Sessions ----------------------------------------------------------------------
+
+i18n_session_killed                     : Istuntosi lopetettiin
+i18n_session_killed_desc                : Yritetään noutaa uutta istuntoa
+i18n_session_expired                    : Istuntosi vanheni
+i18n_session_expired_desc               : Yritetään noutaa uutta istuntoa
+i18n_no_other_sessions_available        : Ei muuta istuntoa saatavilla
+i18n_no_sessions_available              : Ei istuntoja saatavilla
+i18n_active_session_list                : Muut aktiiviset istunnot
+i18n_are_you_sure                       : Oletko varma?
+i18n_sure_you_want_terminate_session    : Oletko varma että haluat lopettaa tämän istunnon?
+
+#Calendar ----------------------------------------------------------------------
+
+i18n_event_overview                     : Tapahtuma yleisnäkymä
+i18n_calendar_events                    : Tapahtumat päivälle
+i18n_no_events_on_day                   : Yhtään tapahtumaa ei löytynyt tälle päivälle.
+i18n_no_events_day_description          : Sinulla ei ole tapahtumia vielä rekisteröity tälle päivälle. Lisää tapahtuma tai synkkaa ulkopuolisten palvelujesi kanssa.
+
+i18n_cal_evt_title                      : Tapahtuma otsikko
+i18n_cal_evt_title_what                 : Tapahtumasi otsikko
+i18n_cal_evt_time_to                    : Aika Loppu
+i18n_cal_evt_time_from                  : Aika Alku
+i18n_cal_evt_description                : Kuvaus tapahtumasta
+i18n_cal_btn_add                        : Tallenna tapahtuma
+i18n_from                               : Alku
+i18n_to                                 : Loppu
+
+i18n_evt_added                          : Kalenteri päivitetty
+i18n_evt_addeddesc                      : Tapahtuma lisätty kalenteriisi.
+i18n_evt_delete_desc                    : Tämä poistaa kalenteri tapahtuman.
+i18n_evt_delete_failed                  : Poistaminen epäonnistui
+i18n_evt_delete_failed_desc             : Kalenteri tapahtuman poistaminen epäonnistui.
+
+month_january                           : tammikuu
+month_february                          : helmikuu
+month_march                             : maaliskuu
+month_april                             : huhtikuu
+month_may                               : toukokuu
+month_june                              : kesäkuu
+month_july                              : heinäkuu
+month_august                            : elokuu
+month_september                         : syyskuu
+month_october                           : lokakuu
+month_november                          : marraskuu
+month_december                          : joulukuu
+
+i18n_day_mon                            : ma
+i18n_day_tue                            : ti
+i18n_day_wed                            : ke
+i18n_day_thu                            : to
+i18n_day_fri                            : pe
+i18n_day_sat                            : la
+i18n_day_sun                            : su
+
+
+i18n_server_disconnected                : Ei yhteyttä
+i18n_ws_disconnected                    : Alhainen yhteysnopeus
+i18n_copy_to_system_clipboard           : Haluatko kopioida Friend leikepöydän järjestelmäsi leikepöydälle?
+i18n_copy_to_system_clipboard_headline  : Siirrä leikepöytä järjestelmääsi
+
+#File types --------------------------------------------------------------------
+
+i18n_filename                           : Tiedostonimi
+i18n_size                               : Tiedostokoko
+i18n_date                               : Pvm
+i18n_type                               : Tyyppi
+
+i18n_directory                          : Kansio
+i18n_filetype_jpg                       : JPEG kuva
+i18n_filetype_png                       : PNG kuva
+i18n_filetype_gif                       : GIF kuva
+i18n_filetype_bmp                       : BMP kuva
+i18n_filetype_avi                       : AVI video
+i18n_filetype_flv                       : FLV video
+i18n_filetype_mov                       : MOV video
+i18n_filetype_mpg                       : MPG video
+i18n_filetype_webm                      : Webm video
+i18n_filetype_ogg                       : OGG video
+i18n_filetype_odt                       : Open office dokumentti
+i18n_filetype_rtf                       : RTF dokumentti
+i18n_filetype_doc                       : Word dokumentti
+i18n_filetype_docx                      : Word dokumentti
+i18n_filetype_ppt                       : Power point
+i18n_filetype_mod                       : Protracker moduuli
+i18n_filetype_s3m                       : Screamtracker moduuli
+i18n_filetype_zip                       : Zip arkisto
+i18n_filetype_tgz                       : Gzipped tar arkisto
+i18n_filetype_gz                        : Gzip arkisto
+i18n_filetype_sit                       : Sit Mac arkisto
+i18n_filetype_rar                       : Rar arkisto
+i18n_filetype_dmg                       : DMG levy arkisto
+i18n_filetype_adf                       : Amiga levy tiedosto
+i18n_filetype_dms                       : Disk masher tiedosto
+i18n_filetype_gitignore                 : Git ignore tiedosto
+i18n_filetype_jsx                       : Suoritettava javascript
+i18n_filetype_js                        : Javascript
+i18n_filetype_php                       : PHP skripti
+i18n_filetype_h                         : C kielinen pragma tiedosto
+i18n_filetype_c                         : C kielinen koodi
+i18n_filetype_md                        : Markdown teksti
+i18n_filetype_manifest                  : Manifest tiedosto
+i18n_filetype_txt                       : Pelkkä teksti
+i18n_filetype_html                      : HTML teksti
+i18n_filetype_css                       : CSS tyylitiedosto
+i18n_filetype_readme                    : Dokumentaatio
+i18n_filetype_mid                       : Midi musiikki tiedosto
+i18n_filetype_py                        : Python skripti
+i18n_filetype_library                   : Friend kirjasto
+i18n_filetype_module                    : Friend moduuli
+i18n_filetype_file                      : Binääri tiedosto
+i18n_filetype_executable                : Suoritettava
+i18n_filetype_meta                      : Meta tiedosto
+i18n_filetype_pov                       : POV-Ray projekti
+i18n_filetype_pdf                       : PDF dokumentti
+i18n_filetype_otf                       : Open type fontti
+i18n_filetype_woff                      : Web fontti
+i18n_filetype_ttf                       : True type fontti
+i18n_filetype_odp                       : Open office esitys
+i18n_filetype_mp3                       : MP3 ääni
+i18n_filetype_flac                      : FLAC ääni
+i18n_filetype_wav                       : WAV ääni
+i18n_filetype_mp4                       : MP4 video
+i18n_filetype_svg                       : SVG skaalautuva vektorigrafiikka
+i18n_filetype_ogv                       : Ogg Vorbis video
+i18n_filetype_run                       : Friend skripti
+i18n_createWebApp					    : Luo
+i18n_buildWebApp						: Rakenna web ohjelma
+menu_buildWebApp						: Rakenna web ohjelma
+menu_openfolder							: Avaa kansio
+i18n_waUrl								: Web sivusto URL (täytyy alkaa 'http' tai 'https')
+i18n_waName								: Ohjelman nimi
+i18n_waAuthor							: Nimesi
+i18n_waEmail							: Sähköposti osoitteesi
+i18n_waDescription						: Tietoja tästä ohjelmasta
+i18n_waWidth							: Leveys
+i18n_waHeight							: Korkeus
+i18n_waCategory							: Ohjelman kategoria
+i18n_waWindow							: Ikkuna
+i18n_typeWebApp							: Tyyppi
+i18n_waWrongUrl							: Kirjoita URL muodossa 'http://www.website.com' tai 'https://www.website.com'
+i18n_waWrongName						: Kirjoita nimi uudelle ohjelmaNimelle
+i18n_waWrongWidth						: Ikkunan leveys täytyy olla positiivinen numero
+i18n_waWrongHeight						: Ikkunan korkeus täytyy olla positiivinen numero
+i18n_waGames							: Pelit
+i18n_waOffice							: Toimisto
+i18n_waGraphics							: Grafiikka
+i18n_waProgramming						: Ohjelmointi
+i18n_waInternet							: Internet
+i18n_waCreated							: Web ohjelma luotu onnistuneesti.
+i18n_waAbout0							: Tietoja
+i18n_waAbout1							: Tämä ohjelma on luotu käyttämällä 'Rakenna web ohjelma' vaihtoehtoa Työkalut valikosta, tekijänä
+i18n_waFile								: Tiedosto
+i18n_waFileSelectorTitle				: Valitse minne tallentaa uusi ohjelma...
+i18n_waIcon								: Ohjelma ikoni
+i18n_waPreview							: Ohjelma esikatselu kuva
+i18n_waChange							: Vaihda
+i18n_waChangeWebAppPreviewTitle			: Valitse png kuva käytettäväksi esikatselussa
+i18n_waChangeWebAppIconTitle			: Valitse png kuva käytettäväksi ikonina
+i18n_waPleaseFill						: Ohjelma kuvaus
+
+menu_move_view_to_workspace_1           : Siirrä työtilaan 1
+menu_move_view_to_workspace_2           : Siirrä työtilaan 2
+menu_move_view_to_workspace_3           : Siirrä työtilaan 3
+menu_move_view_to_workspace_4           : Siirrä työtilaan 4
+menu_move_view_to_workspace_5           : Siirrä työtilaan 5
+menu_move_view_to_workspace_6           : Siirrä työtilaan 6
+menu_move_view_to_workspace_7           : Siirrä työtilaan 7
+menu_move_view_to_workspace_8           : Siirrä työtilaan 8
+menu_move_view_to_workspace_9           : Siirrä työtilaan 9
+menu_move_view_to_workspace_10          : Siirrä työtilaan 10
+
+
+

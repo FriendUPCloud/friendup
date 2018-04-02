@@ -1,0 +1,115 @@
+i18n_mountlist                    : Levylista
+i18n_disk_catalog                 : Levy luettelo
+edit_connection                   : Muokkaa yhteyttä
+i18n_edit_connection              : Muokkaa yhteyttä
+i18n_new_connection               : Uusi yhteys
+new_connection                    : Uusi yhteys
+i18n_shared_drive                 : Jaettu asema
+i18n_pollable                     : Verkko näkyvissä
+i18n_short_desc                   : Lyhyt kuvaus
+i18n_publisher                    : Julkaisija
+i18n_visible                      : Näytä työpöydällä
+i18n_select_user                  : Valitse käyttäjä
+
+i18n_storage_disks                : Tallennustila levyt
+i18n_software_disks               : Ohjelma levyt
+
+i18n_disk_cover                   : Levyn kansi
+i18n_choose_disk_cover            : Valitse levyn kansi
+i18n_browse                       : Selaa...
+i18n_cant_show_disk_cover         : Ei voitu asettaa levyn kantta
+i18n_cant_show_disk_desc          : Levyn kantta ei voitu ladata tietokannasta.
+
+i18n_sure_delete                  : Oletko varma?
+i18n_sure_delete_desc             : Levyn poistaminen poistaa sen luettelostasi.
+
+i18n_select_dos_driver            : Valitse DOS ajuri
+i18n_select_encryption_key        : Valitse salaus avain
+i18n_placeholder_connection       : Laitteeni
+i18n_choose_type                  : Valitse tyyppi
+i18n_loading                      : Ladataan
+i18n_device_name                  : Laitteen nimi
+i18n_encryption_key               : Salaus avain
+
+i18n_mounting                     : Liitetään
+i18n_unmounting                   : Irrotetaan
+i18n_executable                   : JSX suoritettava
+i18n_successfully_mounted         : Laitteesi liitettiin onnistuneesti.
+i18n_successfully_unmounted       : Laitteesi irrotettiin onnistuneesti.
+i18n_fail_mount                   : Laitteen liittäminen epäonnistui
+i18n_fail_mount_more              : Ei voitu liittää laitetta.
+i18n_fail_unmount                 : Laitteen irrottaminen epäonnistui
+i18n_fail_unmount_more            : Ei voitu irrottaa laitetta.
+
+i18n_save                         : Tallenna
+i18n_cancel                       : Peruuta
+
+i18n_connection_details           : Yhteyden tiedot
+i18n_notes                        : Muistiot
+i18n_directory                    : Etähakemisto
+i18n_login_info                   : Kirjautumis tiedot
+i18n_your_notes                   : Muistiosi
+i18n_username                     : Käyttäjätunnus
+i18n_password                     : Salasana
+i18n_host_port                    : Palvelin portti
+i18n_host_ip                      : Palvelin osoite tai IP
+i18n_workgroup_name               : Työryhmäsi
+i18n_workgroup                    : Työryhmä
+
+i18n_key                   		  : Avain
+
+i18n_MySQL Based Filesystem       : SQL asema
+i18n_SQLDrive                     : SQL asema
+
+i18n_Server filesystem            : Palvelin tiedostojärjestelmä
+i18n_Local                        : Palvelin tiedostojärjestelmä
+
+i18n_Friend Store                 : Friend Kauppa
+i18n_FriendStore                  : Friend Kauppa
+
+i18n_Samba	                      : Samba tiedostojärjestelmä
+
+i18n_Dropbox Based Filesystem     : Dropbox asema
+i18n_DropboxDrive                 : Dropbox asema
+
+i18n_GoogleDrive                  : Google asema
+i18n_Google Drive Based Filesystem: Google asema
+
+
+i18n_Mount Wordpress sites as doors : Wordpress asema
+i18n_Wordpress                    : WordPress asema
+
+i18n_MySQL Based Filesystem for workgroups : MySQL pohjainen tiedostojärjestelmä työryhmille
+i18n_SQLWorkgroupDrive            : MySQL pohjainen tiedostojärjestelmä työryhmille
+
+
+i18n_Mount Treeroot servers as doors : Treeroot asema
+i18n_Treeroot                     : Treeroot asema
+
+i18n_Mount ARENA sites as doors   : Arena CM asema
+i18n_ArenaCM                      : Arena CM asema
+
+i18n_Mount websites as doors      : Websivusto asema
+i18n_Website                      : Websivusto asema
+
+i18n_Assign                       : Assign asema
+i18n_AssignDOSDriver              : Yhteenlaskettu virtuaalinen tiedostojärjestelmä
+
+i18n_INRam                        : INRam asema
+i18n_INRamDOSdriver               : INRam DOS ajuri monikäyttäjä tarkoituksiin
+
+i18n_FriendStoreDrive             : FriendStore asema
+i18n_FriendStoreDOSdriver         : FriendStore ajuri ohjelmistotoimittajille
+
+i18n_Remote                       : Remote asema
+i18n_RemoteDOSdriver              : Remote DOS ajuri
+
+i18n_Node                         : Node verkko
+i18n_NodeDOSDriver                : Node verkko tietokanta pohjainen levyajuri
+
+i18n_SFTP                         : SFTP
+
+i18n_successfully_unmounted       : Aseman irrotettiin onnistuneesti
+i18n_your_device_was              : Asemasi liitettiin onnistuneesti.
+i18n_failed_to_unmount            : Aseman irrotaminen epäonnistui
+i18n_could_not_unmount            : Ei voitu irrottaa asemaa. Muutoksia <b>EI tallennettu</b>
