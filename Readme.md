@@ -5,7 +5,7 @@ We are happy to announce the release of FriendUP version 1.1.1.
 
 FriendUP version 1.1.1 is the latest open source release of this cloud operating system. It introduces a saturated vision for the next paradigm in computing. FriendUP comes with a powerful kernel-like web server that supports multiple protocols and data sources, next to resource- and user session management. This offers javascript developers a fresh backendless environment in which to accelerate their development of exciting new applications and games.
 
-![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2017/06/desktop-1.png "FriendUP Workspace")
+![FriendUP Workspace](https://friendup.tech/templates/gfx/workspace.jpg "FriendUP Workspace")
 
 Across devices
 --------------
