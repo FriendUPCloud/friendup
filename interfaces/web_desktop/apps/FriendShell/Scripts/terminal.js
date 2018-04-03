@@ -153,7 +153,14 @@ Application.handlePipe = function( packet )
 								}
 								break;
 							case 'friendnetworkhost':
-								FriendNetwork.host( packet.returnMessage.name, packet.returnMessage.password );
+								FriendNetwork.host
+								( 
+									packet.returnMessage.name, 
+									'system', 
+									'FriendShell', 
+									'Please connect to my Friend Shell', 
+									{ password: packet.returnMessage.password }
+								);
 								break;
 							case 'friendnetworkstatus':
 								FriendNetwork.status();
@@ -162,7 +169,7 @@ Application.handlePipe = function( packet )
 								this.noNextNL = true;
 								if ( !this.friendNetworkClient )
 								{
-									FriendNetwork.connect( packet.returnMessage.name, packet.returnMessage.p2p );
+									FriendNetwork.connect( packet.returnMessage.name, 'system', packet.returnMessage.p2p );
 								}
 								else
 								{
@@ -411,7 +418,7 @@ Application.addNL = function( focus )
 	cli.spellcheck = false;
 	
 	// Hack, please check if window is active..
-	if( focus || document.body.className.indexOf( 'activated' ) > 0 )
+	if( focus || document.body.classList.contains( 'activated' ) )
 	{
 		setTimeout( function(){ Application.focusCLI(); }, 150 );
 	}
@@ -897,6 +904,7 @@ Application.receiveMessage = function( object )
 				case 'list':
 					var output = false;
 					var count = 1;
+					debugger;
 					for (var a = 0; a < object.hosts.length; a++)
 					{
 						if ( object.hosts[a].apps )
@@ -904,9 +912,9 @@ Application.receiveMessage = function( object )
 							var apps = object.hosts[a].apps;
 							for (var b = 0; b < apps.length; b++)
 							{
-								if (apps[b].id.indexOf('FriendShell') >= 0)
+								if ( apps[b].type == 'system' )
 								{
-									if (!output)
+									if ( !output )
 									{
 										this.addOutput('These servers are available:');
 										output = true;

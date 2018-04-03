@@ -17,31 +17,48 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Inherit from group
-fui.Input = fui.inherit( fui.Group.prototype );
-
-
-fui.Input.prototype.show = function( bool )
+fui.addClass( function()
 {
-	this.flags.height = 25;
-	this.baseDivs = [ {
-		type: 'input_text', 
-		className: 'FUIInput', 
-		width: this.flags.width, 
-		height: this.flags.height,
-		label: 'content',
-		name: this.flags.name ? this.flags.name : false
-	} ];
-}
+	// Inherit from group
+	fui.Input = fui.inherit( fui.Group.prototype );
 
-// Clear the input
-fui.Input.prototype.clear = function()
-{
-	this.dom.value = '';
-}
+	fui.Input.prototype.setFlag = function( key, value )
+	{
+		switch( key )
+		{
+			case 'focus':
+				if( value === true || value === false )
+				{
+					this.flags.focus = value;
+					return true;
+				}
+				break;
+		}
+	}
 
-// Clear the input
-fui.Input.prototype.getValue = function()
-{
-	return this.dom.value;
-}
+	fui.Input.prototype.show = function( bool )
+	{
+		this.flags.height = 25;
+		this.baseDivs = [ {
+			type: 'input_text', 
+			className: 'FUIInput', 
+			width: this.flags.width, 
+			height: this.flags.height,
+			focus: this.flags.focus,
+			label: 'content',
+			name: this.flags.name ? this.flags.name : false
+		} ];
+	}
+
+	// Clear the input
+	fui.Input.prototype.clear = function()
+	{
+		this.dom.value = '';
+	}
+
+	// Clear the input
+	fui.Input.prototype.getValue = function()
+	{
+		return this.dom.value;
+	}
+}, 'Group' );

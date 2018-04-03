@@ -34,6 +34,7 @@
 typedef struct SpecialData
 {
 	SQLLibrary        *sd_LibSQL;
+	pthread_mutex_t		sd_Mutex;
 }SpecialData;
 
 //
@@ -106,6 +107,7 @@ void init( struct UserLogger *s )
 		}
 		
 		s->ul_SD = sd;
+		pthread_mutex_init( &(sd->sd_Mutex), NULL);
 	}
 }
 
@@ -124,6 +126,8 @@ void deinit( struct UserLogger *s )
 			LibraryClose( sd->sd_LibSQL );
 		}
 		
+		pthread_mutex_destroy( &(sd->sd_Mutex) );
+		
 		FFree( s->ul_SD );
 	}
 }
@@ -140,6 +144,9 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 	logEntry.ul_CreatedTime = time( NULL );
 	logEntry.ul_Action = actions;
 	logEntry.ul_Information = information;
+	
+	pthread_mutex_lock( &(sd->sd_Mutex) );
+	
 	if( session != NULL )
 	{
 		logEntry.ul_UserID = session->us_UserID;
@@ -154,6 +161,9 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 	{
 		sd->sd_LibSQL->Save( sd->sd_LibSQL, UserLogDesc, &logEntry );
 	}
+	
+	pthread_mutex_unlock( &(sd->sd_Mutex) );
+	
 	return 0;
 }
 

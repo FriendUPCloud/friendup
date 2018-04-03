@@ -1,0 +1,19 @@
+
+
+Friend sources on repository uses 3 branches:
+ - master
+ - fix
+ - experimental (not used) 2016.07.10
+ - fcssl - FriendCore SSL connection
+ - nom - 'shared' memory
+ 
+ Master is main branch used to make builds and future branches.
+ Fix branch contain all fixes which apply to production branch (master).
+ Experimental handle all requested feautures untill they will be accepted by the team.
+ 
+ To checkout sources:
+ git checkount <branch>
+
+ Merge current branch with provided one: 
+ git merge <branch>
+

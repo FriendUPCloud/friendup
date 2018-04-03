@@ -1,0 +1,76 @@
+Assid System
+------------
+
+
+Introduction
+
+FriendUP is a liquid meta operating system. "Liquid software" is fluid appli-
+cations that flow between devices. Ultimately, a liquid application can float
+from a server to your device - from your device to another device - while
+running. It achieves this because the application logic and data is held in a
+meta state - the underlaying system allows its variables and algorithms to move
+across the network.
+
+In FriendUP, we have many technological features that lets developers build
+liquid software. One of these features is the Assid System - short for Appli-
+cation Shared Session ID. When somebody uses an application, they engage in a
+user session. The session is defined as the time they start using the appli-
+cation to the time they stop using it. Using an app entails various data, like
+variables, events and graphical representations of application structures. Once
+an application shares this session, it means that other users can take part in
+using it in real time. Additionally, it means that several devices can run the
+application in the same state - at the same time. This way, the application 
+becomes liquid.
+
+With FriendUP's Assid System, an application becomes liquid. It allows the 
+development of powerful multi-user applications that can span the internet.
+In our time of social networks and world wide collaboration, it is finally time
+to follow games - and how they have brought people together. It is time to bring
+people together to work and collaborate to increase productivity, collaegue
+synergy and fun!
+
+How it works
+
+Friend's Assid System works by defining an application session owner and the
+invitees. As an application is always initially executed by a single user, this
+user naturally becomes the session owner. This owner then invites the other
+users who he or she wants to participate in the application session. The
+invitees gets the invitation and accepts or denies it. If they accept, the 
+application loads in their Friend Workspace and the session is shared.
+
+The sharing happens in the Friend Core server. When the owner initiates a
+session, he or she gets an ASSID - a slot - in the Core. Here, a shared room
+is created that will pass information to each of the participants. Additionally,
+variables are stored in memory so that they can be accessed by everyone inst-
+antly.
+
+Once a shared session is initialized, every user who initiates an input event in
+the application instantly shares this event with the others. The event is
+executed for everyone in a way that the application instances are syncronized
+between the users. Additionally, variables are synchronized - making the
+application behave as one - even though it is running in multiple instances.
+This means that the application can be as responsive as if it was running 
+locally on each user's computer even though it is running over the network.
+
+The Assid System extends on event sharing with introducing modes of sharing. 
+At the moment, two modes are offered: owner gets all events but shares none, or
+everybody gets each other's events. This allows a developer to work in higher
+precision, allowing more complex application structures and GUI elements to be
+synchronized with minimal programming.
+
+Termination of shared sessions
+
+A shared application session id is removed once the owner of the room leaves.
+Then all the variables and algorithms are cleared from the server memory. A 
+timeout can be used to let the room automatically time out. Currently, this
+restriction is enforced for rooms that are idle for more than 40 seconds.
+A ping / pong event can be implemented to extend the lifetime of a room.
+
+The future
+
+ * Transfer of ownership from owner to invitee
+ * Transfer of ownership from owner to server
+ * Inviting users from outside the Friend Core server (FC to FC connections).
+ * Transfer of ownership from owner to user on another Friend Core server
+
+

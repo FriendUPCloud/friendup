@@ -65,6 +65,9 @@ int usleep (__useconds_t __useconds);
 struct hostent *gethostbyname2 (const char *__name, int __af);
 
 void pthread_yield();
+
+char *mktemp(char *template);
+
 //void usleep( long );
 
 //void pclose( FILE *f );

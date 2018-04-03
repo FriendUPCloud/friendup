@@ -2,13 +2,17 @@
 i18n_look_and_feel_title                : Préférences visuelles
 
 i18n_themes                             : Thèmes
-i18n_behavior                           : Comportement
+i18n_theme_engines                      : Moteurs de thème
+i18n_desktop                            : Bureau
 i18n_menu_mode                          : Mode du menu
 i18n_preview                            : Prévisualisation
 i18n_cancel                             : Fermer
 i18n_save                               : Sauver
+i18n_customize_theme                    : Réglage des thèmes
 
-i18n_available_themes                   : Thèmes disponibles
+i18n_no_theme_config                    : Ce thème ne prend pas en charge la personnalisation.
+
+i18n_available_themes                   : Moteurs disponibles
 i18n_directory_model                    : Modèle de répertoire
 i18n_window_clicks                      : Click sur fenètre
 i18n_click_to_front                     : Click pour passer devant

@@ -131,6 +131,51 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 				{
 					pos+=4;
 					fci->fci_LocalisationJSON = StringDuplicate( pos );
+					
+					if( fci->fci_LocalisationJSON != NULL )
+					{
+						char *sptr = NULL;
+						
+						if( ( sptr = strstr( fci->fci_LocalisationJSON, "time_zone" ) ) != NULL )
+						{
+							// 12 = time_zone":"
+							sptr += 12;
+							char *eptr = sptr + 1;
+							while( *eptr != 0 )
+							{
+								if( *eptr == '"' ) break;
+								eptr++;
+							}
+							fci->fci_TimeZone = StringDuplicateN( sptr, eptr-sptr );
+						}
+						
+						if( ( sptr = strstr( fci->fci_LocalisationJSON, "city" ) ) != NULL )
+						{
+							// 7 = city":"
+							sptr += 7;
+							char *eptr = sptr + 1;
+							while( *eptr != 0 )
+							{
+								if( *eptr == '"' ) break;
+								eptr++;
+							}
+							fci->fci_City = StringDuplicateN( sptr, eptr-sptr );
+						}
+						
+						if( ( sptr = strstr( fci->fci_LocalisationJSON, "country_code" ) ) != NULL )
+						{
+							// 15 = country_code":"
+							sptr += 15;
+							int pos = 0;
+							char *dptr = fci->fci_CountryCode;
+							while( *sptr != 0 )
+							{
+								dptr[ pos++ ] = *sptr;
+								if( *sptr == '"' || pos > 9 ) break;
+								sptr++;
+							}
+						}
+					}
 					DEBUG("[FriendCoreInfoNew] Localisation string received %s\n", fci->fci_LocalisationJSON );
 				}
 				BufStringDelete( bs );
@@ -169,6 +214,14 @@ void FriendCoreInfoDelete( FriendcoreInfo *fci )
 		if( fci->fci_LocalisationJSON != NULL )
 		{
 			FFree( fci->fci_LocalisationJSON );
+		}
+		if( fci->fci_City != NULL )
+		{
+			FFree( fci->fci_City );
+		}
+		if( fci->fci_TimeZone != NULL )
+		{
+			FFree( fci->fci_TimeZone );
 		}
 		FFree( fci );
 	}
@@ -259,7 +312,7 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		{
 			if( strlen( sb->fcm->fcm_FCI->fci_LocalisationJSON ) < 2 )
 			{
-				BufStringAddSize( bs, "not available", 12 );
+				BufStringAdd( bs, "\"not available\"" );
 			}
 			else
 			{
@@ -268,9 +321,9 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		}
 		else
 		{
-			BufStringAddSize( bs, "not available", 12 );
+			BufStringAdd( bs, "\"not available\"" );
 		}
-		
+
 		BufStringAdd( bs, "}" );
 	}
 	

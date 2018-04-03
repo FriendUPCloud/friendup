@@ -155,7 +155,11 @@ File = function( filename )
 		var jax = new cAjax ();
 
 		for( var a in this.vars )
+		{
 			jax.addVar( a, this.vars[a] );
+			if( !mode && a == 'mode' )
+				mode = this.vars[a];
+		}
 
 		// Check progdir on path
 		if( filename )
@@ -178,17 +182,20 @@ File = function( filename )
 				theDoor.addVar( 'authid', Workspace.conf.authId );
 			theDoor.onRead = function( data )
 			{
-				if( data && data.length )
+				if( !( jax.mode == 'rb' || typeof( data ) == 'object' ) )
 				{
-					// TODO: Is this wise? We don't want to show the ok stuff..
-					if( data.substr( 0, 17 ) == 'ok<!--separate-->' )
-						data = "";
-				} else data = "";
-
-				if( t.replacements )
-				{
-					for( var a in t.replacements )
-						data = data.split ( '{'+a+'}' ).join ( t.replacements[a] );
+					if( data && data.length )
+					{
+						// TODO: Is this wise? We don't want to show the ok stuff..
+						if( data.substr( 0, 17 ) == 'ok<!--separate-->' )
+							data = "";
+					} else data = "";
+					
+					if( t.replacements )
+					{
+						for( var a in t.replacements )
+							data = data.split ( '{'+a+'}' ).join ( t.replacements[a] );
+					}
 				}
 
 				// Use encryption!
@@ -461,9 +468,6 @@ File = function( filename )
 				'targetVolume': vol,
 				'objectdata': Base64.encode( content )
 			} );
-			console.log( 'Execute: ' );
-			console.log( path, vol );
-
 		}
 	}
 

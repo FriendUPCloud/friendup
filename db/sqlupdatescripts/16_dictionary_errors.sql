@@ -1,3 +1,8 @@
+ALTER TABLE `FDictionary` CHANGE `ID` `ID` bigint(20) AUTO_INCREMENT;
+ALTER TABLE `FDictionary` ADD COLUMN `CategoryID` bigint(20) NOT NULL;
+ALTER TABLE `FDictionary` ADD COLUMN `Message` text;
+ALTER TABLE `FDictionary` ADD COLUMN `Language` varchar(10);
+
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'PID parameter is missing', 'ENG', '0');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Function not found', 'ENG', '1');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Path parameter is empty', 'ENG', '2');

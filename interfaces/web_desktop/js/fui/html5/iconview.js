@@ -17,7 +17,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
-// Icon view class
-fui.IconView = fui.inherit( fui.Group.prototype );
+fui.addClass( function()
+{
+	// Icon view class
+	fui.IconView = fui.inherit( fui.Group.prototype );
+}, 'Group' );
 
 

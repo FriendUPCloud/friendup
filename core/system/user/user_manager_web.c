@@ -339,7 +339,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 	else if( strcmp( urlpath[ 1 ], "create" ) == 0 )
 	{
 		struct TagItem tags[] = {
-			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
@@ -351,7 +351,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		char *fullname = NULL;
 		char *email = NULL;
 		char *groups = NULL;
-		FULONG id = 0;
+		//FULONG id = 0;
 		FBOOL userCreated = FALSE;
 		
 		DEBUG( "[UMWebRequest] Create user!!\n" );
@@ -528,23 +528,22 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						if( usr != NULL )
 						{
 							UserDeviceUnMount( l, sqllib, usr );
-							
-							UMRemoveUser( l->sl_UM, usr );
+							UMRemoveUser( l->sl_UM, usr, ((SystemBase*)m)->sl_USM);
 						}
 
-						sprintf( tmpQuery, "DELETE `FUser` WHERE ID=%lu", id );
+						sprintf( tmpQuery, "DELETE FROM `FUser` WHERE ID=%lu", id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sprintf( tmpQuery, " DELETE `FUserGroup` WHERE UserID=%lu", id );
+						sprintf( tmpQuery, " DELETE FROM `FUserGroup` WHERE UserID=%lu", id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sprintf( tmpQuery, " DELETE `FUserSession` WHERE UserID=%lu", id );
+						sprintf( tmpQuery, " DELETE FROM `FUserSession` WHERE UserID=%lu", id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
-						sprintf( tmpQuery, " DELETE `Filesystem` WHERE UserID=%lu", id );
+						sprintf( tmpQuery, " DELETE FROM `Filesystem` WHERE UserID=%lu", id );
 						
 						sqllib->QueryWithoutResults( sqllib, tmpQuery );
 						
@@ -714,6 +713,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		FBOOL userFromSession = FALSE;
 		FBOOL canChange = FALSE;
 		FBOOL imAdmin = FALSE;
+		int entries = 0;
 		
 		DEBUG( "[UMWebRequest] Update user!!\n" );
 		
@@ -779,9 +779,20 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				usrname = UrlDecodeToMem( (char *)el->data );
 				DEBUG( "[UMWebRequest] Update usrname %s!!\n", usrname );
 				
-				if( imAdmin  == TRUE )
+				if( imAdmin == TRUE )
 				{
-					if( usrname != NULL && logusr->u_Name != NULL )
+					char query[ 1024 ];
+					sprintf( query, " FUser where `Name`='%s' AND ID != %lu" , usrname, id );
+	
+					SQLLibrary *sqlLib = l->LibrarySQLGet( l );
+					if( sqlLib != NULL )
+					{
+						entries = sqlLib->NumberOfRecords( sqlLib, UserDesc,  query );
+
+						l->LibrarySQLDrop( l, sqlLib );
+					}
+
+					if( entries == 0 && usrname != NULL && logusr->u_Name != NULL )
 					{
 						FFree( logusr->u_Name );
 						logusr->u_Name = usrname;
@@ -789,50 +800,57 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				}
 			}
 			
-			el = HttpGetPOSTParameter( request, "password" );
-			if( el != NULL )
+			if( entries != 0 )
 			{
-				usrpass = UrlDecodeToMem( (char *)el->data );
-				DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
-				if( usrpass != NULL && logusr->u_Password != NULL )
+				char buffer[ 256 ];
+				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_ALREADY_EXIST] , DICT_USER_ALREADY_EXIST );
+				HttpAddTextContent( response, buffer );
+			}
+			else
+			{
+				el = HttpGetPOSTParameter( request, "password" );
+				if( el != NULL )
 				{
-					FFree( logusr->u_Password );
-					logusr->u_Password = usrpass;
+					usrpass = UrlDecodeToMem( (char *)el->data );
+					DEBUG( "[UMWebRequest] Update usrpass %s!!\n", usrpass );
+					if( usrpass != NULL && logusr->u_Password != NULL )
+					{
+						FFree( logusr->u_Password );
+						logusr->u_Password = usrpass;
+					}
 				}
-			}
 			
-			el = HttpGetPOSTParameter( request, "fullname" );
-			if( el != NULL )
-			{
-				fullname = UrlDecodeToMem( (char *)el->data );
-				DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
-				if( logusr->u_FullName != NULL )
+				el = HttpGetPOSTParameter( request, "fullname" );
+				if( el != NULL )
 				{
-					FFree( logusr->u_FullName );
+					fullname = UrlDecodeToMem( (char *)el->data );
+					DEBUG( "[UMWebRequest] Update fullname %s!!\n", fullname );
+					if( logusr->u_FullName != NULL )
+					{
+						FFree( logusr->u_FullName );
+					}
+					logusr->u_FullName = fullname;
 				}
-				logusr->u_FullName = fullname;
-			}
 			
-			el = HttpGetPOSTParameter( request, "email" );
-			if( el != NULL )
-			{
-				email = UrlDecodeToMem( (char *)el->data );
-				DEBUG( "[UMWebRequest] Update email %s!!\n", email );
-				if( logusr->u_Email != NULL )
+				el = HttpGetPOSTParameter( request, "email" );
+				if( el != NULL )
 				{
-					FFree( logusr->u_Email );
+					email = UrlDecodeToMem( (char *)el->data );
+					DEBUG( "[UMWebRequest] Update email %s!!\n", email );
+					if( logusr->u_Email != NULL )
+					{
+						FFree( logusr->u_Email );
+					}
+					logusr->u_Email = email;
 				}
-				logusr->u_Email = email;
-			}
 			
-			el = HttpGetPOSTParameter( request, "level" );
-			if( el != NULL )
-			{
-				groups = UrlDecodeToMem( (char *)el->data );
-			}
+				el = HttpGetPOSTParameter( request, "level" );
+				if( el != NULL )
+				{
+					groups = UrlDecodeToMem( (char *)el->data );
+				}
 			
-			{
-				DEBUG("[UMWebRequest] Changeing user data %lu\n", id );
+				DEBUG("[UMWebRequest] Changing user data %lu\n", id );
 				// user is not logged in
 				// try to get it from DB
 				
@@ -1027,7 +1045,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						UserSessListEntry *sessions = logusr->u_SessionsList;
 						BufStringAdd( bs, "ok<!--separate-->[" );
 						int pos = 0;
-						unsigned long t = time( NULL );
+						//unsigned long t = time( NULL );
 					
 						while( sessions != NULL )
 						{
@@ -1168,7 +1186,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					uname = ses->us_User->u_Name;
 				}
 					
-				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s\n", uname, ses->us_SessionID, uname  );
+				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 				
 				ses->us_InUseCounter--;
 				error = USMUserSessionRemove( l->sl_USM, ses );
@@ -1193,6 +1211,9 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						
 						s->us_InUseCounter--;
 						error = USMUserSessionRemove( l->sl_USM, s );
+						
+						DEBUG("Bytes send: %d\n", msgsndsize );
+						
 						break;
 					}
 					

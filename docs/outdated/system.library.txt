@@ -1,0 +1,854 @@
+
+        System.library
+
+1. Introduction
+
+If you have connected to your  machine to FriendUP using the web layer,  you can 
+use special requests  to maintain system.library functionality. This  part of the documentation  will 
+provide  you  with information  about  how  calls  should  be prepared,  what is
+required and what response you can expect.
+
+If you don't know what HTTP data looks like, please visit wikipedia:
+
+	* http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol
+
+
+2. INVAR - Instance Network Variable
+
+2.1. Structures
+
+INVAR is piece of server memory avaiable for developers to share their temporary data. Simple data entries
+contain Name, Data and Pointer.
+Name - custom name, set by developer,
+Data - custom data received from web,
+Pointer - unique ID of each entry.
+
+INVAREntries are holded in groups wchich contain fields:
+Name - custom name, set by developer,
+Pointer - unique ID of each group
+
+INVAREntry
+C structure:
+
+typedef struct INVAREntry
+{
+	struct MinNode 		node;
+	ULONG 					ne_ID;				// database ID
+	ULONG 					ne_Pointer;		// memory pointer to this field
+	ULONG						ne_GroupPointer;		// pointer to group
+	char 						*ne_Name;			// name of entry
+	char							*ne_Data;			// data
+}INVAREntry;
+
+Database structure:
+
+ CREATE TABLE IF NOT EXISTS `FINVAREntry` ( 
+   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+   `Name` varchar(1024) DEFAULT NULL,
+   `Data` mediumtext DEFAULT NULL,
+   PRIMARY KEY (`ID`)
+ ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+ 
+JSON structure:
+
+{ "Name":"Entry", "Pointer":"0x12f388b0", "Data":"hellohello"}
+
+INVARGroup
+C structure:
+
+typedef struct INVARGroup
+{
+	struct MinNode node;
+	ULONG 					ng_ID;
+	ULONG 					ng_Pointer;
+	char 						*ng_Name;
+	INVAREntry 				*ng_Entries;
+}INVARGroup;
+
+Database structure:
+
+ CREATE TABLE IF NOT EXISTS `FINVARGroup` ( 
+   `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+   `Name` bigint(20),
+   PRIMARY KEY (`ID`)
+ ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+    
+JSON structure:
+
+{ "Name":"Group", "Pointer":"0x8192400"}
+
+2.2 Friend API calls
+
+ Create Group
+ 
+	var t = new Library( 'system.library' );
+	t.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+		gid = obj.response.Pointer;
+    }
+    t.execute( 'invar/cgroup', {
+        name: 'Group',
+	} );
+                
+ Delete Group
+ 
+    var t = new Library( 'system.library' );
+	t.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+		gid = obj.response.Pointer;
+    }
+    t.execute( 'invar/dgroup', {
+        gid: '0x00000001',
+	} );
+
+ Create Entry
+ 
+	var l = new Library( 'system.library' );
+	l.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+		eid = obj.response.Pointer;
+    }
+	l.execute( 'invar/centry', {
+		name: 'Entry',
+		data: 'test',
+		gid: gid
+	} );
+
+ Get Entry		
+
+	var l = new Library( 'system.library' );
+	l.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+    }
+	l.execute( 'invar/gentry', {
+		eid: eid
+	} );
+					
+ Update Entry
+
+	var l = new Library( 'system.library' );
+	l.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+    }
+	l.execute( 'invar/uentry', {
+		eid: eid,
+		data: 'hellohello'
+	} );
+						    
+ Delete Entry	
+
+    var l = new Library( 'system.library' );
+	l.onExecuted = function( e, d )
+	{
+		var obj = JSON.parse( e );
+	}
+	l.execute( 'invar/dentry', {
+		eid: eid,
+	} );
+	
+
+3. Websocket support
+
+Websocket connection in FC is handled by libwebsockets.lib . Current functionality supports calls:
+
+- connection
+ { type: con, sessionid/authid: <sessionid/authid> }
+ setup new websocket connection between user/app session and FriendCore
+- ping
+ { type: con, data: { type: ping, data: <time> } }
+ receive and send back ping timestamp which allow client to count lag time
+- requests
+ { type: msg, data: { type: request, data: { requestid: <id>, path: <path>, authid } } }
+ request are messages from application or user which can calls system or other libraries.
+ Libraries and calls to it are provided in path.
+ For example:
+ path:system.library/file/read will call function read from group file in system.library
+ Requests always return response to callers.
+- events
+ { type: msg, data: { type: event, data: { requestid: <id>, path: <path>, authid } } }
+ events works in same way like requests with difference, they do not return response to caller.
+	
+4. Application sessions
+
+
+
+						
+3. Filesystem
+
+
+3.1. Filesystem
+
+The Friend Core file system is used  to control how data is stored  and retrived 
+for all kinds  of media.  In Friend all  devices can  be accessed  via specially 
+prepared HTTP calls.
+
+
+3.2. DOSDrivers
+
+Because  of the way we handle so many  types of devices, through one  filesystem
+implementation, we have provided you with DOS drivers.
+
+DOS drivers allow  you to set  which type  of device  will be  handled by  which 
+file system.
+
+3.3. Webcalls
+
+If you have connected to your  machine to FriendUP using the web layer,  you can 
+use special requests  to maintain devices. This  part of the documentation  will 
+provide  you  with information  about  how  calls  should  be prepared,  what is
+required and what response you can expect.
+
+If you don't know what HTTP data looks like, please visit wikipedia:
+
+	* http://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol
+
+As mentioned before all calls which work  on devices and files are  done through 
+system.library. In most descriptions below, server and system.library calls will
+be skipped.
+
+Example call:
+
+	* http://friendos.com/system.library/file/dir?sessionid=33442233&path=mydevice:home/test
+
+	http://friendos.com - send call to the friendos.com host
+	system.library      - point Friend Core to open system.library and use it
+	file                - use file functionality
+	dir                 - use directory function call
+	sessionid           - session ID of logged in user
+	path                - full path to directory on which dir function will be called
+
+If mydevice is already mounted (as / in Linux) and you are logged in, you should 
+see a response similar to this:
+
+[ {Title: "vmlinuz", Path: "Local:vmlinuz", Filesize: 3112752, MetaType: "File", Type: "File"}
+ {Title: "opt", Path: "Local:opt", Filesize: 4096, MetaType: "Directory", Type: "Directory"}
+ {Title: "lib", Path: "Local:lib", Filesize: 4096, MetaType: "Directory", Type: "Directory"}
+ {Title: "boot", Path: "Local:boot", Filesize: 4096, MetaType: "Directory", Type: "Directory"}
+ {Title: "vmlinuz.old", Path: "Local:vmlinuz.old", Filesize: 2842400, MetaType: "File", Type: "File"}
+ {Title: "root", Path: "Local:root", Filesize: 4096, MetaType: "Directory", Type: "Directory"}
+ {Title: "home", Path: "Local:home", Filesize: 4096, MetaType: "Directory", Type: "Directory"}
+ {Title: "initrd.img", Path: "Local:initrd.img", Filesize: 14939626, MetaType: "File", Type: "File"}
+ {Title: "tmp", Path: "Local:tmp", Filesize: 4096, MetaType: "Directory", Type: "Directory"} ]
+ 
+...where:
+	Title         - name which will be displayed in Doors
+	Path          - full path to the file
+	Filesize      - size of the file in bytes
+	MetaType/Type - information about filetype (file or directory)
+
+To differenciate, we have grouped commands to device and file.
+
+	a) system.library/device/
+		- mount - mount device for already logged user
+			sessionid - special id marker for already logged user (REQUIRED)
+			devname   - name of device which will be used in system, it must be 
+			            unique (REQUIRED)
+			path      - path to a local storage. This path will be root to all 
+			            files and directories in device
+			type      - DOSDriver type. Everytime mount is called FC is trying 
+			            to find suitable DOSDriver by using type parameter.
+			            (REQUIRED)
+
+	Example:
+
+		* http://friendos.com/system.library/device/mount?sessionid=12345&devname=Home&path=/home/user/&type=Local
+
+		This call will try to mount new device for user recognized by sessionid.
+		Device will be displayed in Dormant as Home and it will represent local device with path /home/user 
+
+		- unmount - unmount device assigned to user
+			sessionid - special id marker for already logged user (REQUIRED)
+			devname   - name of device which will be used in system, it must be unique (REQUIRED)
+
+	Example:
+
+		* http://friendos.com/system.library/device/unmount?sessionid=12345&devname=Home
+
+		Call will just simply try to unmount device by Home name for user recognized by sessionid.
+
+			
+		- share - share device with another users.
+			- devname - device name which will be visible for provided user. In current version device must be mounted.
+			- username - name of user to who will have access to shared device
+
+	Example:
+		
+		* http://friendos.com/system.library/device/share?sessionid=12345&devname=Home&username=test_user
+		
+		Call will share Home device with test_user.
+		
+		
+		- list - list all mounted devices assigned to user
+			sessionid - special id marker for already logged user (REQUIRED)
+
+		- listsys - list avaiable filesystems on host
+			sessionid - special id marker for already logged user (REQUIRED)
+		
+	b) system.library/file/
+	
+		All functions from 'file' cathegory require parameters:
+			sessionid - like before, its session of already logged user. (REQUIRED)
+			path - full path to file or directory, its overrided by 'from' parameter in copy function.
+				This parameter is also used to get device and filesystem information. (REQUIRED)
+		All functions return response in json format.
+
+		- info - get information about file or directory
+		
+		- dir - get file and directory list
+			Dir example was presented before.
+		
+		- rename - rename file provided by path
+			newname - new file or directory name (REQUIRED)
+		
+		- delete - delete file or directory provided by path
+		Example call:
+			system.library/file/delete?sessionid=e92310880cfaf1d4aaaa67039333ea85a77ec2f7&path=stefkoshome:gra_w_skoki.txt
+		
+		- makedir - make directory
+		
+		- exec - run program
+		
+		- read - read file data. If no additional parameters are passed then full file is readed.
+			mode - read mode, same as in linux os "r", "rb", etc
+			offset - from which byte read should start reading. 'offset' must be provided with 'bytes' parameter.
+			bytes - number of bytes which will be readed.
+			download - if set to 1 then user will get requester where he should store file
+			
+			ATTENTION: Witchout parameters startpos and write pure read function is called.
+		
+		- write - write data to file handled by device.
+			mode - write mode, same as in linux os "w", "wb", etc.
+			data - data which will be stored by write function
+		
+		- copy - copy file from one place to another. Copy is using read and write functions to load and store data between
+			filesystems.
+			- from - path to source file
+			- to - path to destination
+		Example call:
+			* system.library/file/copy?sessionid=e92310880cfaf1d4aaaa67039333ea85a77ec2f7&from=TEST:TEST.txt&to=TEST2:TEST.txt	
+			
+		- share - share file with another users.
+
+		Example:	
+			* system.library/file/share?sessionid=12345&path=Home:testfile.txt
+			
+3.4. Writting FS
+
+	In this chapter we will show how to write Filesystem for FriendCore by example. Lets start then...
+	First you must take a look inside file: handler/file.h
+	
+	typedef struct File
+{
+	int								f_ID;				// ID in database
+	struct MinNode					node;				// link to another files, used by Mount
+	
+	char							*f_Name;			// name of file
+	char							*f_Path;			// path
+	int								f_Type;				// type
+	char							*f_FSysName;		// filesystem name required by database
+	void 							*f_DOSDriver;
+	void							*f_FSys;			// filesystem type
+	void							*f_User;			// user which mounted device / or file 
+	UQUAD							f_Size;				// file size
+	UQUAD							f_Position;			// position where user stopped to read/write
+	ULONG							f_DataPassed;		// size in bytes, to read or write (inside buffer)
+	char 							*f_Buffer;			// obsolete
+	void 							*f_SpecialData;		// pointer to special
+}File;
+	
+	File is your destination structure and as you see all required information is holded by default.
+	If its not enough for you, you can use f_SpecialData field to hold some special data.
+	File also points to your root directory (through path) and must be returned when Mount fuction is called.
+	REMEMBER: Your root file must always point to used filesystem by f_FSys.
+	
+	Now when you know how file is handled we can continue work on filesystem.
+	Take a look into filesystem header (handler/fsys.h).
+
+	
+	typedef struct FHandler
+	{
+	struct MinNode node;			// used to handle filesystems in linked list
+
+	char 				*Name;		// name of filesystem
+	char 				*Path;		// path to file
+	void				*handle;	// handler to all filesystem functions
+	
+	void				(*init)( struct FHandler *s );		// function used to initialize filesystem
+	void				(*deinit)( struct FHandler *s );	// function used to release filesystem
+	
+	char 				*(*GetSuffix)();		// function which provides suffix name to caller
+	char 				*(*GetPrefix)();		// function which provides prefix name to caller
+	
+	void 				*(*Mount)( struct FHandler *s, struct TagItem *ti );	// function called when user is mounting device
+																					// return File structure which points to used filesystem
+	void 				(*UnMount)( struct FHandler *s, void *f );				// function called when user is unmounting device
+	
+	//
+	void 				*(*FileOpen)( struct File *s, const char *path, char *mode );	// open function
+																						// return pointer to File structure
+																						// s - root file
+																						// path - full path to file
+																						// mode - read/write mode same as in linux os "r", "w", etc.
+	int 				(*FileClose)( struct File *s, void *fp );						// close file function
+																						// return 0 if file is closed properly
+																						// s - pointer to root file
+																						// fp - pointer to file which will be closed (File structure)
+	int 				(*FileRead)( struct File *s, char *buf, int size );				// read function
+																						// return information how many bytes were readed
+																						// s - pointer to file which will be readed
+																						// buf - pointer to buffer where data will be stored
+																						// size - information about how many bytes we want to read
+	int 				(*FileWrite)( struct File *s, char *buf, int size );			// write data to file
+																						// return how many bytes were written by function
+																						// s - pointer to file where data will be stored
+																						// buf - pointer to buffer from which will be stored
+																						// size - number of bytes which will be stored
+	int 				(*FileSeek)( struct File *s, int pos );							// seek position in file
+																						// return information about position in file
+																						// s - pointer to file
+																						// pos - offset position in file
+	
+	// mount / unmount will be system.library function, will return pointer to root file
+	int					(*MakeDir)( struct File *s, const char *path );					// make directory function
+																						// return 0 when directory was created
+																						// s - pointer to root file
+																						// path - full path to new directory which will be created
+	int					(*Delete)( struct File *s, const char *path );					// delete file or directory
+																						// return 0 when file or directory was removed
+																						// s - pointer to root file
+																						// path - fill path to file or directory which will be deleted
+																						// REMEMBER: this function cannot remove directory which is not empty
+	int					(*Rename)( struct File *s, const char *path, const char *nname );	// rename file
+																							// return 0 when file was renamed
+																							// s - pointer to root file
+																							// path - full path to file which will be renamed
+																							// nname - full path to file which new name
+	char				*(*Execute)( struct File *s, const char *path, const char *args );	// run file
+																							// return pointer to information returned by program
+																							// s - pointer to root file
+																							// path - full path to file which will be executed
+																							// args - additional parameters passed to program
+	int 				(*Copy)( struct File *s, const char *dst, const char *src );		// copy file - not used
+	BufString	 		*(*Info)( struct File *s, const char *path );						// information about file or directory
+																							// return information about file or directory in json format
+																							// s - pointer to root file
+																							// path - full path to file or directory about which we want to get information
+	BufString			*(*Dir)( struct File *s, const char *path );						// provide information about directory content
+																							// return information about directory content in json format
+																							// s - pointer to root file
+																							// path - full path to directory about which we want to get this information
+}FHandler;
+
+	Now when you know structures, lets write our dummy filesystem.
+	Lets call our file fsysdummy.s in fsys directory.
+	
+/*
+
+	FSys Dummy
+
+*/
+
+#include <core/library.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include "systemlibrary.h"
+#include <util/log/log.h>
+#include <sys/stat.h>
+#include <util/buffered_string.h>
+#include <dirent.h> 
+#include <sys/time.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <ctype.h>
+
+#define SUFFIX "fsys"
+#define PREFIX "dummy"		// filesystem name information
+
+//
+// Special SSH data
+//
+
+typedef struct SpecialData
+{
+	int 			id;		// special information
+	FILE			*fp;	// pointer to file, this example shows how to make local file system 
+}SpecialData;
+
+const char *GetSuffix(){
+	return SUFFIX;
+}
+
+const char *GetPrefix(){
+	return PREFIX;
+}
+
+// function is called when filesystem is initialized in FriendCore
+
+void init( struct FHandler *s )
+{
+	if( s ) return;
+}
+
+// function is called when filesystem is removed from FriendCore
+
+void deinit( struct FHandler *s )
+{}
+}
+
+// Mount device
+
+void *Mount( struct FHandler *s, struct TagItem *ti )
+{
+	File *dev = NULL;		// pointer to new File - root directory
+	char *path = NULL;		// path parameter
+	char *name = NULL;		// name of file, which will be used to present device in Doormant
+	char *host = NULL;		// pointer to host name, custom parameter
+	char *ulogin = NULL;	// pointer to user name, custom parameter
+	char *upass = NULL;		// pointer to user password, custom parameter
+	int port = 22;			// port number, custom parameter
+	User *usr = NULL;		// pointer to User structure, user which called mount command
+	
+	if( s == NULL )			// checking Handler data
+	{
+		return NULL;
+	}
+	
+	DEBUG("Dummy mount DEBUG\n");		// Debug information, use it to display information in log
+	INFO("Dummy INFO\n");				// Information, use it to always display information in log
+	ERROR("Dummy ERROR\n");				// Error information, use it to display error in log
+	
+	if( ( dev = calloc( sizeof( File ), 1 ) ) != NULL )		// allocate memory for root File
+	{
+		struct TagItem *lptr = ti;
+		// parameters are passed by taglist, use it to get interesting values for you
+		while( lptr->ti_Tag != TAG_DONE )
+		{
+			switch( lptr->ti_Tag )
+			{
+				case FSys_Mount_Path:
+					path = (char *)lptr->ti_Data; break;
+				case FSys_Mount_Host:
+					host = (char *)lptr->ti_Data; break;
+				case FSys_Mount_Port:
+					port = atol( (char *)lptr->ti_Data ); break;
+				case FSys_Mount_Name:
+					name = (char *)lptr->ti_Data; break;
+				case FSys_Mount_User:
+					usr = (User *)lptr->ti_Data; break;
+				case FSys_Mount_LoginUser:
+					ulogin = (char *)lptr->ti_Data; break;
+				case FSys_Mount_LoginPass:
+					upass = (char *)lptr->ti_Data; break;
+			}
+			lptr++;	// go to next tag from list
+		}
+
+		if( path == NULL )
+		{
+			ERROR("[ERROR]: Path option not found!\n");
+			free( dev );
+			return NULL;
+		}
+		
+		// call init function provided by filesystem
+		init( s );
+		
+		dev->f_Path = calloc( strlen(path)+1, sizeof(char) ); strcpy( dev->f_Path, path );	// alloc memory for root path and copy it
+		dev->f_FSys = s;				// point to our filesystem structure, provided by taglist
+		dev->f_Type = FType_Directory;	// set this flag to provide information about its type (directory)
+		dev->f_Size = 0;				// directory and root directories must have size equal to 0
+		dev->f_Position = 0;			//
+		dev->f_User = usr;				// copy pointer to user structure
+		dev->f_Name = calloc( strlen(name)+1, sizeof(char) ); strcpy( dev->f_Name, name );	// alloc memory for root file name and copy it
+	}
+	
+	// alloc memory and set SpecialData used by new filesystem
+	
+	dev->f_SpecialData = calloc( sizeof(SpecialData), 1 );
+	SpecialData *sdat = (SpecialData *) dev->f_SpecialData;
+	if( sdat != NULL )
+	{
+		sdat->id = 12; 	// set our custom data
+	}
+	return dev;
+}
+
+// UnMount function
+
+void UnMount( struct FHandler *s, void *f )
+{
+	// checking provided pointer
+	if( f != NULL )
+	{
+		File *lf = (File *)f;
+		
+		// remove custom data and free memory
+		if( lf->f_SpecialData )
+		{
+			SpecialData *sdat = (SpecialData *) lf->f_SpecialData;
+			// put code here to deinitialize your data
+			sdat->id = 0;
+			free( lf->f_SpecialData );
+		}
+		
+		// free memory
+		if( lf->f_Name ){ free( lf->f_Name ); }
+		if( lf->f_Path ){ free( lf->f_Path ); }
+		
+		free( f );
+	}
+}
+
+// File open function
+
+void *FileOpen( struct File *s, const char *path, int mode )
+{
+	File *rfile = NULL;			// custom file structure
+	if( ( rfile = calloc( 1, sizeof(File) ) ) != NULL )
+	{
+		char dstpath[ 1024 ];
+		// join root path from s File structure which path parameter
+		.....
+		dev->f_SpecialData = calloc( sizeof(SpecialData), 1 );
+		SpecialData *sdat = (SpecialData *) dev->f_SpecialData;
+		if( sdat != NULL )
+		{
+			sdat->fd = fopen( dstpath, mode ); 	// set our custom data
+			if( sdat->fd != NULL )
+			{
+				return rfile;
+			}
+			free( rfile );
+			return NULL;
+		}
+		
+	}
+	return NULL;
+}
+
+// File close function
+
+int FileClose( struct File *s, void *fp )
+{
+	File *locfile = (File *)fp;
+	if( locfile )
+	{
+		SpecialData *sdat = (SpecialData *) locfile->f_SpecialData;
+		if( sdat != NULL )
+		{
+			if( sdat->fd != NULL )
+			{
+				fclose( sdat->fd );
+			}
+		}
+	}
+	return 0;
+}
+
+// Fill buffer with data from stat
+
+void FillStat( BufString *bs, struct stat *s, File *d, const char *path )
+{
+	char tmp[ 1024 ];
+	int rootSize = strlen( d->f_Path );
+	int pathSize = strlen( path );
+
+	BufStringAdd( bs, "{" );
+	sprintf( tmp, " \"Title\":\"%s\",", GetFileName( path ) );
+	BufStringAdd( bs, tmp );
+
+	if( rootSize != pathSize )
+	{
+		sprintf( tmp, "\"Path\":\"%s:%s\",", d->f_Name, &path[ strlen( d->f_Path ) ] );
+	}
+	else
+	{
+		sprintf( tmp, "\"Path\":\"%s:\",", d->f_Name );
+	}
+	
+	BufStringAdd( bs, tmp );
+	sprintf( tmp, "\"Filesize\": %d,",(int) s->st_size );
+	BufStringAdd( bs, tmp );
+	
+	if( S_ISDIR( s->st_mode ) )
+	{
+		BufStringAdd( bs,  "\"MetaType\":\"Directory\",\"Type\":\"Directory\" }" );
+	}
+	else
+	{
+		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
+	}
+}
+
+// File read function
+
+int FileRead( struct File *s, void *fp, char *b, int size )
+{
+	// use code to check and use custom data
+	...
+		return fread( b, size, sizeof(char), sdat->fd );
+	}
+	...
+	return 0;
+}
+
+// File write function
+
+int FileWrite( struct File *s, void *fp, char *b, int size )
+{
+	// use code to check and use custom data
+	...
+		return fwrite( b, size, sizeof(char), sdat->fd );
+	}
+	...
+	return 0;
+}
+
+// File seek function
+
+int FileSeek( struct File *s, int pos )
+{
+	// use code to check and use custom data
+	...
+		return fseek( sdat->fd, pos, SEEK_SET );
+	}
+	...
+	return -1;
+}
+
+// Make directory function
+
+int MakeDir( struct File *s, const char *path )
+{
+	// use code to check and use custom data
+	...
+		return mkdir( path_to_new_directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+	}
+	...
+	return -1;
+}
+
+// Delete function
+
+int Delete( struct File *s, const char *path )
+{
+	// use code to check and use custom data
+	...
+	if( dev->f_Type == FType_Directory ) return rmdir( path_to_file );
+	else return remove( path_to_file );
+	}
+	...
+	return -1;
+}
+
+// Rename function
+
+int Rename( struct File *s, const char *path, const char *nname )
+{
+	// use code to check and use custom data
+	...
+		return rename( path_to_old_file_name, path_to_new_file_name );
+	}
+	...
+	return -1;
+}
+
+// Copy - NOT USED
+
+int Copy( struct File *s, const char *dst, const char *src )
+{
+	return 0;
+}
+
+// Execute function
+
+BufString *Execute( struct File *s, const char *dst, const char *src )
+{
+	BufString *bs = BufStringNew();
+	
+	// run program and return data to BufferedString structure
+	// in our example we can use popen()
+	// ATTENTION: We should execute only small programs, will be fixed in next version
+	
+	return bs;
+}
+
+//
+// Get info about file/folder and return as "string"
+//
+
+BufString *Info( File *s, const char *path )
+{
+	BufString *bs = BufStringNew();		// init buffer string
+	int spath = strlen( path );
+	int rspath = strlen( s->f_Path );
+
+	if( strncmp( path, s->f_Path, rspath ) != 0 )		// check if user have access to path
+	{
+		BufStringAdd( bs, "{ \"ErrorMessage\": \"No access to file\"}" );	// if not, just return error message in json format
+	}else{
+		struct stat ls;
+		
+		if( stat( path, &ls ) == 0 )		// check if stat function return error on file/directory
+		{
+			// fill buffered string with file information
+		}else{
+			BufStringAdd( bs, "{ \"ErrorMessage\": \"File or directory do not exist\"}" );	// return error otherwise
+		}
+	}
+	return bs;
+}
+
+// return content of directory
+	
+BufString *Dir( File *s, const char *path )
+{
+	BufString *bs = BufStringNew();		// initialize buffered string
+	
+	int rspath = strlen( s->f_Path );
+	
+	// user is trying to get access to not his directory
+	
+	if( strncmp( path, s->f_Path, rspath ) != 0 )
+	{
+		BufStringAdd( bs, "{ \"ErrorMessage\": \"No access to file/directory\"}" );			// return error
+	}else{
+		char tempString[ 1024 ];
+		DIR           *d;
+		struct dirent *dir;
+		d = opendir( path );		// open directory
+		
+		if( d )						// check opendir information
+		{
+			while ((dir = readdir(d)) != NULL)		// get files and directories information
+			{
+				sprintf( tempString, "%s%s", path, dir->d_name );	// join path and file names to use stat
+				
+				struct stat ls;
+		
+				if( stat( tempString, &ls ) == 0 )					// check stat result
+				{
+					// FillStat( bs, &ls, s, tempString );			// fill buffered string with required information
+				}
+			}
+			closedir( d );		// close directory
+		}
+	}
+	return bs;
+}
+
+
+
+				
+			
+
+

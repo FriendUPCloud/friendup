@@ -19,11 +19,36 @@
 
 Application.run = function( msg, iface )
 {
-	var v = new View( {
+	var viewFlags = {
 		title: i18n( 'i18n_Server' ),
 		width: 700,
 		height: 600
-	} );
+	};
+	
+	if( msg.args.indexOf( ' ' ) > 0 )
+	{
+		var args = msg.args.split( ' ' );
+		if( args[1] == 'test' )
+		{
+			viewFlags.frameworks = { 
+				fui: {
+					data: 'Progdir:FUI/server.json',
+					javascript: 'Progdir:Scripts/server_fui.js'
+				}
+			};
+		}
+		else if( args[1] == 'tree' )
+		{
+			viewFlags.frameworks = {
+				tree: {
+					data: 'Progdir:FUI/server.json',
+					javascript: 'Progdir:Tree/server.js'
+				}
+			}
+		}
+	}
+	
+	var v = new View( viewFlags );
 	
 	this.mv = v;
 	
@@ -32,13 +57,16 @@ Application.run = function( msg, iface )
 		Application.quit();
 	}
 	
-	var f = new File( 'Progdir:Templates/server.html' );
-	f.i18n();
-	f.onLoad = function( data )
+	if( !viewFlags.frameworks )
 	{
-		v.setContent( data );
+		var f = new File( 'Progdir:Templates/server.html' );
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		f.load();
 	}
-	f.load();
 }
 
 Application.receiveMessage = function( msg )

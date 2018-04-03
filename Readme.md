@@ -1,21 +1,11 @@
-Friend Unifying Platform version 1.1
-====================================
+Friend Unifying Platform version 1.0.0
+==================================
 
-We are happy to announce the release of FriendUP version 1.1.
+We are happy to announce the release of FriendUP version 1.0.0.
 
-FriendUP version 1.1 is the second major release of the platform, and has aggregated a huge bunch of fixes and improvements.
+FriendUP version 1.0.0 is the first complete open source release of the platform. It introduces a saturated vision for the next paradigm in computing. FriendUP comes with a powerful kernel-like web server that supports multiple protocols and data sources, next to resource- and user session management. This offers javascript developers a fresh backendless environment in which to accelerate their development of exciting new applications and games.
 
-NB: Please checkout the v1.1 branch for the most predictable results. 
-The master may get patched at any time.
-Next major version is v1.2.
-Next minor version is v1.1.1.
-
-![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2018/01/11.png "FriendUP Workspace")
-
-Live chat group in our growing community
-----------------------------------
-
-[Please join our Telegram group and have a chat with the community.](https://t.me/friendupcloud)
+![FriendUP Workspace](https://friendup.cloud/wp-content/uploads/2017/06/desktop-1.png "FriendUP Workspace")
 
 Across devices
 --------------
@@ -28,13 +18,6 @@ Distributed and powerful
 
 FriendUP aims to make the powerful emerging web technologies easy to work with. This is why we reach out to you, to help us enrich this platform with DOS drivers, modules, libraries and apps so that we can cover all of the interesting technologies out there that people use and love.
 In the Future, FriendUP will be to the cloud users what Linux is for machines.
-
-Documentation
-=============
-
-All three current volumes of documentation is available in your Friend environment or at this address:
-
-[FriendUP Documentation, volumes 1, 2 and 3](https://friendup.cloud/friend-documentation/)
 
 Getting started
 ===============

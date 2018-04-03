@@ -1,0 +1,30 @@
+Javascript Naming Convention in FriendUP
+
+
+When programming in Javascript, we've adopted a certain coding style and naming
+convention.
+
+Classes are named uppercase like this:
+
+Door, File, Module
+
+Class methods are camel cased
+
+File.onLoad, Module.onExecuted
+
+Functions are uppercase:
+
+Ge(), ...
+
+Additionally, we program like this:
+
+
+for( var a = 0; a < 10; a++ )
+{
+	// We don't like java brackets! Use Nano NOT Vim! :P
+	for( var b = 0; b < 20; b++ )
+	{
+		console.log( 'Just sayin!' );
+	}
+}
+

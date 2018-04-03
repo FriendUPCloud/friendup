@@ -19,6 +19,7 @@ i18n_printers                        : Printere
 i18n_network                         : Nettverk
 i18n_language                        : Språk
 i18n_bookmarks                       : Bokmerker
+i18n_deleting_files                  : Sletter filer
 i18n_bookmarks_add                   : Legg til
 i18n_bookmarks_close                 : Lukk
 i18n_bookmarks_select                : Velg
@@ -51,6 +52,7 @@ i18n_cancel                          : Avbryt
 i18n_accept                          : Aksepter
 i18n_understood                      : Forstått
 
+i18n_full                            : full.
 i18n_disk_icon                       : Diskikon
 i18n_choose_disk                     : Velg disk
 i18n_run_application                 : Start app
@@ -226,6 +228,7 @@ menu_open_directory                     : Åpne mappe
 menu_open_parent_directory              : Åpne overliggende vindu
 menu_show_as                            : Vis som
 menu_show_as_icons                      : Ikoner
+menu_show_as_compact                    : Kompakt
 menu_show_as_list                       : Liste
 menu_show_as_columns                    : Kolonner
 menu_close_window                       : Lukk
@@ -306,6 +309,7 @@ i18n_public_file                        : Public file
 i18n_public_link                        : Public url
 i18n_close                              : Lukk
 i18n_file_information                   : Generelt
+i18n_link_information                   : Link informasjon
 i18n_file_permissions                   : Filrettigheter
 i18n_meta_information                   : Filinformasjon
 i18n_click_to_copy                      : Klikk for å kopiere til utklippstavle
@@ -348,6 +352,7 @@ i18n_read_only_fs_desc                  : Filsystemet du prøver å skrive til e
 i18n_cancel                             : Avbryt
 i18n_moving_files                       : Flytt filer
 i18n_copying_files                      : Kopier filer
+i18n_filecopy_error                     : Feil ved filkopiering
 
 i18n_delete_operation                   : Sletting av fil(er)
 i18n_could_not_delete_files             : Kunne ikke slette fil(er).
@@ -392,8 +397,6 @@ i18n_locale_no                          : Norsk
 i18n_locale_en                          : Engelsk
 i18n_locale_de                          : Tysk
 i18n_locale_nl                          : Nederlandsk
-i18n_locale_fr                          : Français
-i18n_locale_fi                          : Finnish
 
 #Search ------------------------------------------------------------------------
 

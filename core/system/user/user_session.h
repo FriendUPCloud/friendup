@@ -66,28 +66,29 @@ CREATE TABLE IF NOT EXISTS `FUserSession` (
 
 typedef struct UserSession
 {
-	MinNode                node;
+	MinNode					node;
 	
-	FULONG                 us_ID;
-	WebsocketClient        *us_WSClients;
-	pthread_mutex_t        us_Mutex;
+	FULONG					us_ID;
+	WebsocketClient			*us_WSClients;
+	pthread_mutex_t			us_Mutex;
 	
-	FULONG                 us_UserID;					//
-	char                   *us_DeviceIdentity;	// device identity
-	char                   *us_SessionID;			// session id
-	time_t                 us_LoggedTime;		// last update from user
-	int                    us_LoginStatus;			// login status
+	FULONG					us_UserID;					//
+	char					*us_DeviceIdentity;	// device identity
+	char					*us_SessionID;			// session id
+	time_t					us_LoggedTime;		// last update from user
+	int						us_LoginStatus;			// login status
 	
-	File                   *us_OpenedFiles;		// opened files in user session
+	File					*us_OpenedFiles;		// opened files in user session
 	
-	User                   *us_User;					// pointer to user structure
+	User					*us_User;					// pointer to user structure
 	
-	void                   *us_SB;   // pointer to systembase
+	void					*us_SB;   // pointer to systembase
 	
-	char                   us_UserActionInfo[ 512 ];
-	char                   us_Name[ 256 ];		// session name
-	int                    us_InUseCounter;
-	WebsocketReqManager    *us_WSReqManager;
+	char					us_UserActionInfo[ 512 ];
+	char					us_Name[ 256 ];		// session name
+	int						us_InUseCounter;
+	WebsocketReqManager		*us_WSReqManager;
+	void					*us_DOSToken;
 }UserSession;
 
 //

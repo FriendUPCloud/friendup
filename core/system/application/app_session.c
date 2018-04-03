@@ -378,7 +378,6 @@ int AppSessionRemUser( AppSession *as, User *u )
 
 char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char *userlist, char *appname, char *msg )
 {
-	
 	// remove spaces and 'weird' chars from entry
 	unsigned int i, j=0;
 	int  pos = 0;
@@ -401,7 +400,6 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				if( userlist[ i ] == ']' )
 				{
 					userlist[ i ] = 0;
-					DEBUG("End\n");
 					break;
 				}
 			}
@@ -755,7 +753,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 typedef struct RWSCon
 {
 	AppSession *as;		// app session
-	SASUList *us;		// user session
+	SASUList *sasuentry;		// user session
 	
 	struct RWSCon *next;
 }RWSCon;
@@ -776,6 +774,9 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	
 	DEBUG("[AppSession] App session remove by WS\n");
 	
+	/*
+	pthread_mutex_lock( &(as->as_SessionsMut) );
+	
 	while( as != NULL )
 	{
 		SASUList *le = as->as_UserSessionList;
@@ -795,7 +796,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						{
 							//pthread_mutex_lock( &as->as_SessionsMut );
 							ne->as = as;
-							ne->us = le;
+							ne->sasuentry = le;
 							
 							if( root == NULL )
 							{
@@ -826,6 +827,8 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 		as = (AppSession *)as->node.mln_Succ;
 	}
 	
+	pthread_mutex_unlock( &(as->as_SessionsMut) );
+	
 	rwsentr = root;
 	while( rwsentr != NULL )
 	{
@@ -837,27 +840,30 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 		if( re != NULL )
 		{
 			int err = 0;
-			/*
+			// *
 			char tmpmsg[ 255 ];
-			int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->us->usersession->us_User->u_Name );
+			int msgsize = snprintf( tmpmsg, sizeof( tmpmsg ), "{\"type\":\"client-close\",\"data\":\"%s\"}", re->sasuentry->usersession->us_User->u_Name );
 			
 			DEBUG("[AppSession] Session found and will be removed\n");
 			
-			if( re->as->as_UserSessionList == re->us )
+			if( re->as->as_UserSessionList == re->sasuentry )
 			{
-				err = AppSessionSendMessage( as, re->us->usersession, tmpmsg, msgsize, NULL );
+				err = AppSessionSendMessage( as, re->sasuentry->usersession, tmpmsg, msgsize, NULL );
 			}
 			else
 			{
-				err = AppSessionSendOwnerMessage( as, re->us->usersession, tmpmsg, msgsize );
+				err = AppSessionSendOwnerMessage( as, re->sasuentry->usersession, tmpmsg, msgsize );
 			}
-			*/
+			* //
 			
-			err = AppSessionRemUsersession( as, re->us->usersession );
+			err = AppSessionRemUsersession( as, re->sasuentry->usersession );
 			
 			FFree( re );
 		}
 	}
+	*/
+	
+	int err = AppSessionRemUsersession( as, ws->wc_UserSession );
 	
 	return 0;
 }

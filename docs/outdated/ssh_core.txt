@@ -1,0 +1,22 @@
+
+FC SSH connection
+-----------------
+
+For Developer:
+
+To disable SSH server, please remove flag -DENABLE_SSH from core/Makefile
+
+For Administrator:
+
+To setup ssh connection with FriendCore:
+- create keys directory in FriendCore Home
+- copy keys ssh_host_dsa_key, ssh_host_rsa_key from /etc/ssh/ to keys directory
+- be sure that you set access to keys for user
+- check if port 24 is avaiable for user
+- run FriendCore
+At the momenet FriendSSHServer runs on 127.0.0.1, to setup connection please enter:
+ ssh <frienduser>@127.0.0.1 -p 24
+
+INFO: You can skip some of this problems by running FC on superuser
+
+

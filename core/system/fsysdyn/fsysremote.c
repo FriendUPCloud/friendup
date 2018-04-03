@@ -1086,9 +1086,22 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	if( sd != NULL )
 	{
 		int hostsize = strlen( sd->host ) + 1;
+		int plen = strlen( path );
 		
-		if( ( tmpremotepath = FCalloc( strlen( path ) + 512, sizeof( char ) ) ) != NULL )
+		if( ( tmpremotepath = FCalloc( plen + 512, sizeof( char ) ) ) != NULL )
 		{
+			int doub = 0;
+			int i;
+			
+			for( i=0 ; i < plen ; i++ )
+			{
+				if( path[ i ] == ':' )
+				{
+					doub = i+1;
+					break;
+				}
+			}
+			
 			strcpy( tmpremotepath, "path=" );
 		
 			if( s->f_Path != NULL )
@@ -1098,8 +1111,11 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 			if( path != NULL )
 			{
-				strcat( tmpremotepath, path ); //&(path[ doub+1 ]) );
+				strcat( tmpremotepath, &(path[ doub ]) );
 			}
+			
+			DEBUG("\nREMOTE FOPEN %s - path %s\n", tmpremotepath, path );
+	
 			
 			sd->remotepathi = strlen( tmpremotepath ) + 1;
 	
@@ -1454,7 +1470,7 @@ int FileWrite( struct File *f, char *buffer, int wsize )
 
 				char *d = (char *)recvdf + (ANSWER_POSITION*COMM_MSG_HEADER_SIZE);
 			
-				DEBUG("[RemoteWrite] RECEIVED  %.10s\n", d );
+				DEBUG("[RemoteWrite] RECEIVED  %s\n", d );
 				result =  recvdf->df_Size  - (ANSWER_POSITION*COMM_MSG_HEADER_SIZE);
 				// 1531 - 1483
 			

@@ -74,6 +74,7 @@
 #include <core/pid_thread_manager.h>
 #include <system/log/user_logger_manager.h>
 #include <system/user/user_manager_web.h>
+#include <system/token/dos_token_manager.h>
 #include <system/autotask/autotask.h>
 
 #include <interface/socket_interface.h>
@@ -113,10 +114,10 @@ typedef struct Device
 
  typedef struct Sentinel
  {
- char *              s_ConfigUsername;
- char *              s_ConfigPassword;
- char                s_FCID[ FRIEND_CORE_MANAGER_ID_SIZE ];
- User *              s_User;
+ char				*s_ConfigUsername;
+ char				*s_ConfigPassword;
+ char				s_FCID[ FRIEND_CORE_MANAGER_ID_SIZE ];
+ User				*s_User;
  } Sentinel;
 
 
@@ -213,6 +214,7 @@ typedef struct SystemBase
 	CacheUFManager					*sl_CacheUFM;		// Cache User File Manager
 	FKeyManager						*sl_KeyM;			// Key Maanager
 	WebdavTokenManager				*sl_WDavTokM;		// WebdavTokenManager
+	DOSTokenManager					*sl_DOSTM;			// DOSToken Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -344,6 +346,7 @@ typedef struct SystemBase
 	int								l_SSLAcceptFlags;
 	
 	int								fdPool[ 1024 ];
+	char							*l_InitError;	// if NULL then there was no error
 } SystemBase;
 
 

@@ -13,6 +13,8 @@ mode = 0
 
 request_counter = 0
 total_request = 0
+error_request = 0
+error_create_socket = 0
 
 method = []
 uri = []
@@ -259,6 +261,8 @@ def fuzz(file, p_method, p_url):
 	global cookie
 	global content_lenght
 	global body
+	global error_create_socket
+	global error_request
 	out_str = ''
 	
 	for k in range(len(querystring)):
@@ -269,8 +273,9 @@ def fuzz(file, p_method, p_url):
 						fuzzSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 						fuzzSocket.connect((remoteAddress, remotePort))
 					except socket.error:
-						print 'create socket error\n'
-						sys.exit(1)
+						error_create_socket = error_create_socket + 1
+						#print 'create socket error\n'
+						#sys.exit(1)
 						continue
 					
 					for kkkkk in range(len(body)):
@@ -281,9 +286,10 @@ def fuzz(file, p_method, p_url):
 								inc_counter()
 						except socket.error:
 							#Handle error
-							print 'send socket error\n'
+							error_request = error_request + 1
+							#print 'send socket error\n'
 							#print 'STIMULUS <', out_str, '>'
-							sys.exit(1)
+							#sys.exit(1)
 							continue
 					fuzzSocket.close()
 						
@@ -294,7 +300,7 @@ def MonitorThread():
 		if (previous+100<request_counter) & (previous<>request_counter):
 			rate = float(request_counter) / float(total_request)
 			rate_num = rate*100
-			print "\r%f%%\t%d Requests Sent" % (rate_num,request_counter),
+			print "\r%f%%\t%d Requests Sent. Error request: %d Error create socket: %d" % (rate_num,request_counter, error_request, error_create_socket),
 			time.sleep(0.002)
 			previous=request_counter
 		if (request_counter == total_request):

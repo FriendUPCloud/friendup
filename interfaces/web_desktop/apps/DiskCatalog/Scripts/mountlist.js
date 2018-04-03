@@ -225,7 +225,7 @@ Application.refreshDoors = function()
 						//console.log('we have this row info...',rows[a]);
 						edits = '\
 								<div class="">\
-									<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage({ command: \'delete\', id: ' + rows[a].ID + ' })"></button>\
+									<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage({ command: \'delete\', id: \'' + rows[a].ID + '\', devname: \'' + rows[a].Name + '\' })"></button>\
 								</div>\
 								<div class="">\
 									<button type="button" class="IconSmall fa-pencil" onclick="Application.sendMessage({ command: \'edit\', id: ' + rows[a].ID + ' })"></button>\
@@ -286,7 +286,7 @@ Application.receiveMessage = function( msg )
 			{
 				if( acc.data == true )
 				{
-					t.deleteConnection( msg.id );
+					t.deleteConnection( msg.id, msg.devname );
 				}
 			} );
 			break;
@@ -415,15 +415,25 @@ Application.loadKeys = function( d, callback )
 	n.execute( 'keys' );*/
 }
 
-Application.deleteConnection = function( id )
+Application.deleteConnection = function( id, devname )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, dat )
+	var l = new Library( 'system.library' );
+	l.onExecuted = function()
 	{
-		Application.refreshDoors();
-		Application.refreshSoftware();
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, dat )
+		{
+			Application.refreshDoors();
+			Application.refreshSoftware();
+		}
+		m.execute( 'deletedoor', { id: id } );
 	}
-	m.execute( 'deletedoor', { id: id } );
+	var args = {
+		command: 'unmount',
+		devname: devname
+	};
+	l.execute( 'device', args );
 }
 
 // Opens the New connection dialog

@@ -1,0 +1,28 @@
+
+FC SSL connection
+-----------------
+
+For developers:
+---------------
+
+To disable SSL server, please remove flag -DENABLE_SSL from core/Makefile
+
+For users:
+----------
+
+To generate your certs, use this (with your crt and key):
+
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out certificate.pem -days 360 -nodes
+
+Copy this certificate.pem to:
+
+build/cfg/crt/certificate.pem
+
+Add to cfg.ini (mind the casing!)
+
+[Core]
+
+SSLEnable = 1;
+
+When SSLEnable will be set to 1 then websockets will be secured too.
+

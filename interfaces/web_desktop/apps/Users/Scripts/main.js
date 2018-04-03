@@ -19,13 +19,24 @@
 
 var state = { mode: null, user: null };
 
+var startlimit = 0;
+var maxlimit = 50;
+
+var nothingnew = false;
+
+var limit = ( maxlimit ? ( startlimit + ', ' + maxlimit ) : '' );
+
+var updateuserlist = true;
+
+var searchQuery = {};
+
 Application.run = function( msg, iface )
 {
 	this.views = [];
 	this.listUsers();
 	RefreshSetup();
 	RefreshWorkgroups();
-	RefreshSessions();
+	//RefreshSessions();
 	this.guiHTML = '\
 	<div class="Padding"><h1>' + i18n( 'i18n_idle_title' ) + '</h1><p>' + i18n( 'i18n_idle_desc' ) + '</p></div>';
 	ge( 'UserGui' ).innerHTML = this.guiHTML;
@@ -43,14 +54,14 @@ Application.receiveMessage = function( msg )
 					this.renewSessionGui.close();
 				this.renewSessionGui = false;
 			}
-			RefreshSessions();
+			//RefreshSessions( msg.uid );
 			break;
 		case 'refreshworkgroups':
 			RefreshWorkgroups();
 			//console.log( 'Fodah' );
 			break;
 		case 'refreshsessions':
-			RefreshSessions();
+			//RefreshSessions();
 			break;
 		case 'addmembers':
 			if( msg.members )
@@ -96,29 +107,58 @@ Application.listUsers = function( current, mode )
 	// TODO: Use user.library
 	var m = new Module( 'system' );
 	
+	updateuserlist = false;
+	
+	var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '' );
+	
 	// What happens when we've executed?
 	m.onExecuted = function( e, d )
 	{
+		var users; var i = 0;
+		
 		if( e == 'ok' )
 		{
-			var users;
 			try
 			{
 				users = JSON.parse( d );
 			}
 			catch(e)
 			{
-				ge( 'UserList' ).innerHTML = '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>';
+				console.log( '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>' );
+				Notify({'title':'ERROR in Users app','text':'Could not parse user list!'});
+				//ge( 'UserList' ).innerHTML = '<h4 style="#F00">ERROR!</h4><p>Could not parse user list!</p><p>' + e + ' :: ' + d + '</p>';
 				return;
 			}
+			
 			var ml = '';
-			var i = 0;
+			
 			var sw = 1;
+		
+			console.log('users',users);
+			
+			if( ge( 'UsersCount' ) && users['Count'] )
+			{
+				ge( 'UsersCount' ).innerHTML = ' (' + users['Count'] + ')';
+			}
+			
 			for( var a in users )
 			{
+				if( a == 'Count' ) continue;
+				
 				var icon = users[a].Level == 'Admin' ? '-secret' : '-md';
-				ml += '<div userId="' + users[a].ID + '" class="sw' + sw + ' HRow BorderBottom Padding" onclick="EditUser(' + users[a].ID + ')" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-user' + icon + ' FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft"><span name="' + (users[a].Name ? users[a].Name : 'n/a' ) + '" email="' + ( users[a].Email ? users[a].Email : '' ) + '">' + ( users[a].FullName ? users[a].FullName : 'n/a' ) + '</span></div></div>';
+				var str = '<div userId="' + users[a].ID + '" onclick="EditUser(' + users[a].ID + ')" class="HRow BorderBottom Padding" onmouseover="SwitchRow(this, \'over\')" onmouseout="SwitchRow(this, \'out\')"><div class="IconMedium fa-user' + icon + ' FloatLeft"></div><div class="FloatLeft LineHeight2x MarginLeft"><span name="' + (users[a].Name ? users[a].Name : 'n/a' ) + '" email="' + ( users[a].Email ? users[a].Email : '' ) + '">' + ( users[a].FullName ? users[a].FullName : 'n/a' ) + '</span></div></div>';
+				
+				if( !ge( 'UserListID_' + users[a].ID ) )
+				{
+					ml += '<div id="UserListID_' + users[a].ID + '" class="sw' + sw + '">' + str + '</div>';
+				}
+				else
+				{
+					ge( 'UserListID_' + users[a].ID ).innerHTML = str;
+				}
+				
 				sw = sw == 1 ? 2 : 1;
+				
 				i++;
 			}
 			
@@ -128,18 +168,34 @@ Application.listUsers = function( current, mode )
 				//ge( 'UserFilter' ).style.display = 'none';
 			}
 			
-			ge( 'UserList' ).innerHTML = ml;
+			ge( 'UserList' ).innerHTML = ( ge( 'UserList' ).innerHTML + ml );
 			
 			if( current )
 			{
 				EditUser( current, mode );
 			}
+			
+			nothingnew = false;
 		}
+		else
+		{
+			if( !query )
+			{
+				nothingnew = true;
+				
+				startlimit = 0;
+			}
+		}
+		
+		updateuserlist = true;
+		
+		console.log( 'listusers: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
 	}
-	
 	// Execute the "get user list"
-	m.execute( 'listusers' );
+	m.execute( 'listusers', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query } );
 }
+
+var FilterQueue = [];
 
 function FilterUsers()
 {
@@ -150,7 +206,7 @@ function FilterUsers()
 	
 	if( v )
 	{
-		i = v.toLowerCase()
+		i = v.toLowerCase();
 	}
 	
 	if( u )
@@ -170,9 +226,12 @@ function FilterUsers()
 					if( span.innerHTML.length )
 					{
 						if( !v || v == '' 
-						|| span.innerHTML.toLowerCase().split( i ).join( '' ).length < span.innerHTML.length
-						|| span.getAttribute( 'name' ).toLowerCase().split( i ).join( '' ).length < span.getAttribute( 'name' ).length
-						|| span.getAttribute( 'email' ).toLowerCase().split( i ).join( '' ).length < span.getAttribute( 'email' ).length 
+						//|| span.innerHTML.toLowerCase().split( i ).join( '' ).length < span.innerHTML.length
+						//|| span.getAttribute( 'name' ).toLowerCase().split( i ).join( '' ).length < span.getAttribute( 'name' ).length
+						//|| span.getAttribute( 'email' ).toLowerCase().split( i ).join( '' ).length < span.getAttribute( 'email' ).length 
+						|| span.innerHTML.toLowerCase().substr( 0, i.length ) == i 
+						|| span.getAttribute( 'name' ).toLowerCase().substr( 0, i.length ) == i
+						|| span.getAttribute( 'email' ).toLowerCase().substr( 0, i.length ) == i
 						)
 						{
 							e[a].style.display = '';
@@ -185,6 +244,99 @@ function FilterUsers()
 				}
 			}
 		}
+		
+		if( i && updateuserlist )
+		{
+			FilterQueue.push( function() 
+			{ 
+				startlimit = 0;
+				
+				limit = ( startlimit + ', ' + maxlimit );
+				
+				Application.listUsers(); 
+			} );
+			
+			FilterInit();
+		}
+	}
+}
+
+var InitFilter = false;
+
+function FilterInit()
+{
+	var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '-' );
+	
+	if( !searchQuery[query] )
+	{
+		//console.log( 'running a setTimeout ... ', { query: query } );
+		
+		setTimeout( function()
+		{ 
+			
+			if( FilterQueue )
+			{
+				var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '-' );
+				
+				for( var key in FilterQueue )
+				{
+					if( !searchQuery[query] )
+					{
+						FilterQueue[key]();
+					}
+					
+					delete FilterQueue[key];
+					
+					if( !searchQuery[query] )
+					{
+						FilterInit();
+					}
+					
+					searchQuery[query] = query;
+					
+					break;
+				}
+			}
+		
+		}, 1000 );
+	}
+}
+
+function CheckScroll( ele )
+{
+	if( !ele ) return;
+	
+	if( ( ele.scrollHeight - ele.clientHeight ) > 0 )
+	{
+		//console.log( ele.scrollTop + ' / ' + ( ele.scrollHeight - ele.clientHeight ) + ' * ' + 100 );
+		
+		var pos = Math.round( ele.scrollTop / ( ele.scrollHeight - ele.clientHeight ) * 100 );
+		
+		// Outputs prosentage
+		
+		return pos;
+	}
+}
+
+function CheckUserList( ele )
+{
+	var check = CheckScroll( ele );
+	
+	var query = ( ge( 'UserFilterInput' ).value ? ge( 'UserFilterInput' ).value : '' );
+	
+	if( maxlimit > 0 && !query && !nothingnew && updateuserlist && check && check >= 50 )
+	{
+		// 
+		
+		startlimit = ( startlimit + maxlimit );
+		
+		
+		
+		//console.log( 'limit [' + check + '] ' + limit );
+		
+		Application.listUsers();
+		//RefreshSessions();
+		
 	}
 }
 
@@ -202,7 +354,7 @@ function EditUser( id, mode )
 		{
 			state = { mode: mode ? mode : 'edit', user: d };
 			
-			var str = '';
+			var str = ''; var ugs = '';
 			
 			
 			var dat;
@@ -213,7 +365,7 @@ function EditUser( id, mode )
 			
 			if( dat.Setup && dat.Setup.length > 0 )
 			{
-				str += '<option value="0">none</option>';
+				str += '<option value="0">' + i18n( 'i18n_none' ) + '</option>';
 				
 				var set = false;
 				
@@ -244,6 +396,18 @@ function EditUser( id, mode )
 				}
 			}
 			
+			/*if( dat.Workgroup && dat.Workgroup.length > 0 )
+			{
+				ugs += '<option value="0">' + i18n( 'i18n_select_workgroups' ) + '</option>';
+				
+				for( k in dat.Workgroup )
+				{
+					var s = ( dat.Workgroup[k].UserID > 0 ? ' selected="selected"' : '' );
+					
+					ugs += '<option value="' + dat.Workgroup[k].ID + '"' + s + '>' + dat.Workgroup[k].Name + '</option>';
+				}
+			}*/
+			
 			var f = new File( 'Progdir:Templates/user.html' );
 			f.replacements = {
 				'id'        : dat.ID,
@@ -253,7 +417,7 @@ function EditUser( id, mode )
 				'email'     : (dat.Email ? dat.Email : ''),
 				'level'     : dat.Level,
 				'setup' 	: str,
-				'workgroup' : ( dat.Workgroup ? dat.Workgroup : '' ) 
+				'workgroup' : ugs 
 			};
 			f.i18n();
 			f.onLoad = function( data )
@@ -265,9 +429,14 @@ function EditUser( id, mode )
 					ge( 'SetupContainer' ).style.display = 'none';
 				}
 				
-				if( ge( 'WorkgroupContainer' ) && !ge( 'Workgroup' ).value )
+				if( ge( 'WorkgroupContainer' ) && !dat.Workgroup.length )
 				{
 					ge( 'WorkgroupContainer' ).style.display = 'none';
+				}
+				
+				if( dat.Workgroup )
+				{
+					RefreshUserGroups( dat.Workgroup );
 				}
 				
 				var f = ge( 'UserGui' ).getElementsByTagName( 'option' );
@@ -294,8 +463,13 @@ function EditUser( id, mode )
 			}
 			f.load();
 		}
+		// Else if user is deleted, remove from list of users if found
+		else if( ge( 'UserListID_' + id ) )
+		{
+			ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+		}
 	}
-	m.execute( 'userinfoget', { id: id } );
+	m.execute( 'userinfoget', { id: id, mode: 'all' } );
 }
 
 function SaveUser( id )
@@ -349,13 +523,18 @@ function SaveUser( id )
 				EditUser( id );
 			}
 			
-			Application.listUsers();
+			if( ge( 'pUserWorkgroup' ) )
+			{
+				ApplyUserGroups( id );
+			}
+			
+			Application.listUsers( id );
 		}
 		else
 		{
 			console.log('Error during user update',e,d);
 		}
-		RefreshSessions()	
+		//RefreshSessions( id )	
 	}
 	
 	args.command ='update';
@@ -364,17 +543,137 @@ function SaveUser( id )
 
 function DeleteUser( id )
 {
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
+    var f = new Library( 'system.library' );
+    var args = {};
+    args.command ='delete';
+    args.id = id;
+
+    f.onExecuted = function( e, d )
+    {
+        if( e == 'ok' )
+        {
+            CancelEditing();
+            startlimit = 0;
+            limit = ( startlimit + ', ' + maxlimit );
+            Application.listUsers();
+        }
+        else
+        {
+	        console.log('delete user gave unexpected response',e,d);
+        }
+        //RefreshSessions( id );
+    }
+
+    f.execute( 'user', args );
+}
+
+function RefreshUserGroups( groups )
+{
+	if ( ge( 'pUserWorkgroup' ) )
 	{
-		if( e == 'ok' )
+		if (!ge( 'pUserWorkgroup' ).innerHTML )
 		{
-			CancelEditing();
-			Application.listUsers();
+			ge( 'pUserWorkgroup' ).innerHTML = i18n( 'i18n_loading' );
 		}
-		RefreshSessions();
+
+		var str = ''; var ugs = '';
+		
+		if ( groups )
+		{
+			var sw = 1;
+			
+			//ugs += '<option value="0">' + i18n( 'i18n_add_workgroup' ) + '</option>';
+			
+			str += '<table class="List"><tbody>';
+			
+			for( k in groups )
+			{
+				if( groups[k].UserID > 0 )
+				{
+					str += '<tr itemid="' + ( 1 + k ) + '" value="' + groups[k].ID + '" class="sw' + ( sw = ( sw == 1 ? 2 : 1 ) ) + '">' +
+						   '<td>&nbsp;' + groups[k].Name + '</td>' +
+						   '<td width="24px" onclick="RemoveUserGroups(this)" class="MousePointer IconSmall fa-remove">&nbsp;&nbsp;&nbsp;</td>' +
+						   '</tr>';
+				}
+				else
+				{
+					ugs += '<option value="' + groups[k].ID + '">' + groups[k].Name + '</option>';
+				}
+			}
+			
+			str += '</tbody></table>';
+		}
+		
+		ge( 'pUserWorkgroup' ).innerHTML = str;
+		
+		ge( 'pUserWorkgroup' ).obj = ( groups ? groups : [] );
+		
+		if( ge( 'WorkgroupSelect' ) )
+		{
+			if( !ugs )
+			{
+				ge( 'WorkgroupSelect' ).style.display = 'none';
+			}
+			else
+			{
+				ge( 'WorkgroupSelect' ).style.display = '';
+			}
+		}
+		
+		ge( 'Workgroup' ).innerHTML = ugs;
 	}
-	m.execute( 'userdelete', { id: id } );
+}
+
+function RemoveUserGroups( ele )
+{
+	if ( ele.parentNode && ge( 'pUserWorkgroup' ) && ge( 'pUserWorkgroup' ).obj )
+	{
+		var sts = ele.parentNode;
+	
+		groups = new Array();
+		
+		var obj = ge( 'pUserWorkgroup' ).obj;
+	
+		if ( obj )
+		{
+			for( k in obj )
+			{
+				if( obj[k].ID == sts.getAttribute( 'value' ) )
+				{
+					obj[k].UserID = 0;
+				}
+				
+				groups.push( obj[k] );
+			}
+			
+			RefreshUserGroups( groups );
+		}
+	}
+}
+
+function AddUserGroup()
+{
+	if ( ge( 'Workgroup' ) && ge( 'pUserWorkgroup' ) && ge( 'pUserWorkgroup' ).obj )
+	{
+		groups = new Array();
+		
+		var obj = ge( 'pUserWorkgroup' ).obj;
+	
+		if ( obj && ge( 'Workgroup' ).value )
+		{
+			for( k in obj )
+			{
+				if( obj[k].ID == ge( 'Workgroup' ).value )
+				{
+					obj[k].UserID = 1;
+				}
+				
+				groups.push( obj[k] );
+			}
+			
+			RefreshUserGroups( groups );
+		}
+	}
 }
 
 function UnblockUser( id )
@@ -385,14 +684,14 @@ function UnblockUser( id )
 		if( e == 'ok' )
 		{
 			CancelEditing();
-			Application.listUsers();
+			Application.listUsers( id );
 			Notify({'title':'Users administration','text':'User unblocked'});
 		}
 		else
 		{
 			Notify({'title':'Users administration','text':'Could not unblock user ' + e + ':' + d });
 		}
-		RefreshSessions();
+		//RefreshSessions( id );
 	}
 	m.execute( 'userunblock', { id: id } );
 }
@@ -972,6 +1271,38 @@ function ApplySetup( id )
 	}
 }
 
+function ApplyUserGroups( id )
+{
+	if( id && ge( 'pUserWorkgroup' ) )
+	{
+		var opt = [];
+		
+		var obj = ge( 'pUserWorkgroup' ).obj;
+		
+		if( obj )
+		{
+			for( k in obj )
+			{
+				if( obj[k].ID > 0 && obj[k].UserID > 0 )
+				{
+					opt.push( obj[k].ID );
+				}
+			}
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			try { d = JSON.parse( d ) } catch( e ) {}
+			
+			console.log( { e: e, d: d, workgroups: ( opt ? opt : '0' ), userid: id } );
+			
+			EditUser( id );
+		}
+		m.execute( 'workgroupupdate', { workgroups: ( opt ? opt : '0' ), userid: id } );
+	}
+}
+
 function ApplyGroupSetup( id )
 {
 	if ( id && ge( 'pWorkgroupSetup' ) )
@@ -1256,8 +1587,10 @@ function deleteWorkgroup()
 
 /* Sessions --------------------------------------------------------------- */
 
-function RefreshSessions()
+function RefreshSessions( id )
 {
+	return false;
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -1266,26 +1599,41 @@ function RefreshSessions()
 		try
 		{
 			list = JSON.parse( d );
-		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load usersessions!'}); return; }
-		var str = '';
+		} catch(e) { /*Notify({'title':'ERROR in Users app','text':'Could not load usersessions!'});*/ return; }
+		var sl = '';
 		var sw = 2;
 		for( var a = 0; a < list.length; a++ )
 		{
 			var us = list[a];
+			
+			var str = '';
+			
 			sw = sw == 1 ? 2 : 1;
-			str += '<div class="UserSession HRow sw' + sw + ' Padding">';
+			
+			str += '<div class="UserSession HRow Padding">';
 			str += '<div class="HContent35 FloatLeft Ellipsis Padding">' + us.FullName + '</div>';
 			str += '<div class="HContent45 FloatLeft Ellipsis Padding"><input type="text" class="FullWidth" value="' + us.SessionID + '"/></div>';
-			str += '<div class="HContent20 FloatLeft Ellipsis"><div class="HContent5 FloatLeft">&nbsp;</div><div class="HContent95 FloatLeft"><button type="button" class="Button IconSmall fa-refresh" onclick="RenewSession(' + us.ID + ')">' + i18n( 'i18n_regenerate' ) + '</button></div></div>';
+			str += '<div class="HContent20 FloatLeft Ellipsis"><div class="HContent5 FloatLeft">&nbsp;</div><div class="HContent95 FloatLeft"><button type="button" class="Button IconSmall fa-refresh" onclick="RenewSession(' + us.ID + ')"> ' + i18n( 'i18n_regenerate' ) + '</button></div></div>';
 			str += '</div>';
+			
+			if( !ge( 'UserSessionID_' + us.ID ) )
+			{
+				sl += '<div id="UserSessionID_' + us.ID + '" class="sw' + sw + '">' + str + '</div>';
+			}
+			else
+			{
+				ge( 'UserSessionID_' + us.ID ).innerHTML = str;
+			}
 		}
-		ge( 'Sessions' ).innerHTML = str;
+		ge( 'Sessions' ).innerHTML = ge( 'Sessions' ).innerHTML + sl;
 	}
-	m.execute( 'usersessions' );
+	m.execute( 'usersessions', { limit: limit, userid: id } );
 }
 
 function RenewSession( id )
 {
+	return false;
+	
 	if( Application.renewSessionGui ) return;
 	var v = new View( {
 		title: i18n( 'i18n_renew_session' ),

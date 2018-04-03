@@ -123,6 +123,17 @@ int jsoneq(const char *json, const jsmntok_t *tok, const char *s);
 char* json_get_element_string(json_t *json, const char *needle);
 
 /**
+ * Extracts an integer described by a token. Example: {"t":123} when asked for "t" it will return true
+ * and set target_int to its value.
+ *
+ * @param json JSON struct to look in
+ * @param needle key to look for
+ * @param target_int pointer where to place the parsed int
+ * @return true on success, false otherwise (target_int is not modified on failure)
+ */
+bool json_get_element_int(json_t *json, const char *needle, int *target_int);
+
+/**
  * Returns a string that is JSON-escaped.
  *
  * @param string_to_escape string that should be escaped

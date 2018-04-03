@@ -1,0 +1,10 @@
+
+i18n_FriendStoreDrive            : Disque FriendStore
+i18n_FriendStoreDOSdriver        : Driver FriendStore pour revendeurs
+i18n_vendor                      : Infos revendeur
+i18n_vendor_ID                   : Votre id d'enregistrement revendeur
+
+#From dos actions
+
+i18n_cannotcreate_deep_directory : Vous ne pouvez créer que des répertoires projet (un seul niveau).
+

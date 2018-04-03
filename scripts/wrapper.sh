@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# THIS SCRIPT IS OBSOLETE!!! THIS SCRIPT IS OBSOLETE!!!
+# THIS SCRIPT IS OBSOLETE!!! THIS SCRIPT IS OBSOLETE!!!
+
+# Do not use this script in normal deployments.
+# Use install_systemd.sh instead.
+
+# THIS SCRIPT IS OBSOLETE!!! THIS SCRIPT IS OBSOLETE!!!
+# THIS SCRIPT IS OBSOLETE!!! THIS SCRIPT IS OBSOLETE!!!
+exit 0
+
 #This is a startup script that should be used in production environments
 #It check first if MySQL is available (because FriendCore will fail permanently
 #without working MySQL and will not recover on its own)

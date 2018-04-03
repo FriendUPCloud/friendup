@@ -38,9 +38,7 @@ Friend.Flags = Friend.Flags || {};
 Friend.Resources.Manager = function ( flags )
 {
 	this.tree = flags.tree;
-	this.renderer = false;
 	this.tree.utilities.setFlags( this, flags );
-	this.renderer.caller = this;
 	this.images = { };
 	this.sounds = { };
 	this.toLoad = 0;
@@ -93,7 +91,7 @@ Friend.Resources.Manager.checkCompletion = function ()
 	 this.loadCompleted = false;
 	 this.loadProgress = false;
 	 this.loadError = false;
-	 Friend.Utilities.setFlags( this, flags );
+	 Friend.Tree.Utilities.setFlags( this, flags );
 
 	 var self = this;
 	 this.imageDefinitions = {};
@@ -127,11 +125,8 @@ Friend.Resources.Manager.checkCompletion = function ()
 			 for ( var z = imageDef.start; z <= imageDef.end; z++ )
 			 {
 				image = new Image();
-				image.className = 'Friend.Resources.Image';
 				var name = imageDef.name + z;
 				image.treeName = name;
-				//image.treeWidth = imageDef.width;
-				//image.treeHeight = imageDef.height;
 				image.hotSpot = imageDef.hotSpot;
 				image.hotSpotX = 0;
 				image.hotSpotY = 0;
@@ -159,7 +154,6 @@ Friend.Resources.Manager.checkCompletion = function ()
 		{
 			// A single image
 			image = new Image();
-			image.className = 'Friend.Resources.Image';
 			image.treeName = imageDef.name;
 			image.treeWidth = imageDef.width;
 			image.treeHeight = imageDef.height;
@@ -229,20 +223,30 @@ Friend.Resources.Manager.finishImage = function ( image, callback )
 		}
 
 		// Adapt the image to the renderer
-		self.tree.renderer.setImage( image, function( image )
+		var count = 0;
+		for ( var r = 0; r < self.tree.renderers.length; r++ )
 		{
-			Friend.Tree.log( self, { infos: 'Loaded image: ' + image.treeName, level: Friend.Flags.ERRORLEVEL_LOW } );
-			if ( !callback )
+			var renderer = self.tree.renderers[ r ];
+			count++;
+			renderer.setImage( image, function( image )
 			{
-				// One more loaded, check for completion
-				self.loaded ++;
-				self.checkCompletion();
-			}
-			else
-			{
-				callback( image );
-			}
-		} );
+				Friend.Tree.log( self, { infos: 'Loaded image: ' + image.treeName, level: Friend.Tree.ERRORLEVEL_LOW } );
+				count--;
+				if ( count == 0 )
+				{
+					if ( !callback )
+					{
+						// One more loaded, check for completion
+						self.loaded ++;
+						self.checkCompletion();
+					}
+					else
+					{
+						callback( image );
+					}
+				}
+			} );
+		}
 	}
 };
 Friend.Resources.Manager.loadSingleImage = function( name, path, hotSpot, callback, width, height )
@@ -276,39 +280,39 @@ Friend.Resources.Manager.setImageHotSpot = function ( image, hotSpot )
 {
 	switch ( hotSpot )
 	{
-		case Friend.Flags.HOTSPOT_LEFTTOP:
+		case Friend.Tree.HOTSPOT_LEFTTOP:
 			image.hotSpotX = 0;
 			image.hotSpotY = 0;
 			break;
-		case Friend.Flags.HOTSPOT_CENTERTOP:
+		case Friend.Tree.HOTSPOT_CENTERTOP:
 			image.hotSpotX = image.width / 2;
 			image.hotSpotY = 0;
 			break;
-		case Friend.Flags.HOTSPOT_RIGHTTOP:
+		case Friend.Tree.HOTSPOT_RIGHTTOP:
 			image.hotSpotX = image.width;
 			image.hotSpotY = 0;
 			break;
-		case Friend.Flags.HOTSPOT_LEFTCENTER:
+		case Friend.Tree.HOTSPOT_LEFTCENTER:
 			image.hotSpotX = 0;
 			image.hotSpotY = image.height / 2;
 			break;
-		case Friend.Flags.HOTSPOT_CENTER:
+		case Friend.Tree.HOTSPOT_CENTER:
 			image.hotSpotX = image.width / 2;
 			image.hotSpotY = image.height / 2;
 			break;
-		case Friend.Flags.HOTSPOT_RIGHTCENTER:
+		case Friend.Tree.HOTSPOT_RIGHTCENTER:
 			image.hotSpotX = image.width;
 			image.hotSpotY = image.height / 2;
 			break;
-		case Friend.Flags.HOTSPOT_LEFTBOTTOM:
+		case Friend.Tree.HOTSPOT_LEFTBOTTOM:
 			image.hotSpotX = 0;
 			image.hotSpotY = image.height;
 			break;
-		case Friend.Flags.HOTSPOT_CENTERBOTTOM:
+		case Friend.Tree.HOTSPOT_CENTERBOTTOM:
 			image.hotSpotX = image.width / 2;
 			image.hotSpotY = image.height;
 			break;
-		case Friend.Flags.HOTSPOT_RIGHTBOTTOM:
+		case Friend.Tree.HOTSPOT_RIGHTBOTTOM:
 			image.hotSpotX = image.width;
 			image.hotSpotY = image.height;
 			break;
@@ -318,7 +322,26 @@ Friend.Resources.Manager.setImageHotSpot = function ( image, hotSpot )
 		image.hotSpotX = 0;
 	if ( typeof image.hotSpotY == 'undefined' )
 		image.hotSpotY = 0;
-	image.hotSpotX = hotSpot;
+	image.hotSpot = hotSpot;
+};
+
+// Returns the path of all the images
+Friend.Resources.Manager.getImagesPaths = function ( )
+{
+	var result = [];
+	for ( var i in this.images )
+	{
+		if ( this.images[ i ].image )
+			result.push( this.images[ i ].image.src );
+		else
+		{
+			for ( var ii = 0; ii < this.image[ i ].images.length; ii++ )
+			{
+				result.push( this.images[ i ].images[ ii ].image.src );
+			}
+		}
+	}
+	return result;
 };
 
 /**
@@ -340,7 +363,7 @@ Friend.Resources.Manager.loadSounds = function ( soundList, flags )
 	this.loadCompleted = false;
 	this.loadProgress = false;
 	this.loadError = false;
-	Friend.Utilities.setFlags( this, flags );
+	Friend.Tree.Utilities.setFlags( this, flags );
 
 	// Calculate total number of sounds to load
 	for ( var i = 0; i < soundList.length; i ++ )
@@ -360,7 +383,6 @@ Friend.Resources.Manager.loadSounds = function ( soundList, flags )
 
 		var path = this.tree.utilities.getPath( soundDef.path );
 		sound = new SoundObject( path, loaded );
-		sound.className = 'Friend.Resources.Sound';
 		sound.name = soundDef.name;
 		sound.volume = 1;
 		if ( typeof soundDef.volume != 'undefined' )
@@ -420,7 +442,7 @@ Friend.Resources.Manager.addImage = function ( name, image, hotSpot, callback )
 		// Adapt the image to the renderer
 		this.tree.renderer.setImage( image, function( image )
 		{
-			Friend.Tree.log( self, { infos: 'Friend.Resources.Manager.addImage: added image ' + image.treeName, level: Friend.Flags.ERRORLEVEL_LOW } );
+			Friend.Tree.log( self, { infos: 'Friend.Resources.Manager.addImage: added image ' + image.treeName, level: Friend.Tree.ERRORLEVEL_LOW } );
 			if ( callback )
 				callback( image );
 		} );	
@@ -429,7 +451,7 @@ Friend.Resources.Manager.addImage = function ( name, image, hotSpot, callback )
 	}
 	else
 	{
-		Friend.Tree.log( self, { infos: 'Friend.Resources.Manager.addImage: image already exists ' + name, level: Friend.Flags.ERRORLEVEL_HIGH } );	
+		Friend.Tree.log( self, { infos: 'Friend.Resources.Manager.addImage: image already exists ' + name, level: Friend.Tree.ERRORLEVEL_HIGH } );	
 	}
 	return false;
 };

@@ -1,0 +1,1745 @@
+
+DOCUMENTATION INFORMATION FORM
+FL - 14/11/2016
+------------------------------
+
+Goal :
+As you might know, I need to document the whole Friend system, server, web-interface for both internal and client use.
+Most of the source-codes of the project do not include the name of the authors and the name of the people who worked
+after the initial author. I could find it with GIT, yet it would take a lot of manipulations, and I do not know any
+solution that would allow me to do it quickly (if you know please tell me !)
+
+This file is a Tree listing of the Friend Server content pulled today from GIT (14/11)
+I have removed all the filenames that were not source-codes (like PNGs), and removed the external libraries to reduce
+the number of entries.
+
+I would like everyone of the developers to explore this file and in front of each file or directory -if he the one who
+created all the content of this directory- to write his initials, so that a reference of who-made-what is available
+for the company. At the end I will have a reference document that I can use to create a better doc for new
+developers: they will easily know the person to contact for information, if the API doc -next on my schedule-
+is not enough...
+
+So I think it is worth spending a little time on this as the number of persons involved in the project may grow fast.
+It will allow us to save a lot of time getting them fluent enough and be productive quicker.
+
+It may be a little boring to do, yet I think this is really worth the time spend.
+
+So please:
+1. Set your text editor to REPLACE mode. Please respect the format of the file for the next
+   person (put a bit of tape on BACKSPACE and DELETE in replace mode :)
+2. Explore this file and for each folder, or each file eventually, write your initials in the "AUTHOR" column
+   if you were the creator of the file / folder...
+3. If you have modified some files of a folder of which you are NOT the author, write your initials in the
+   "MODIFIED BY" column
+4. Once done, send this file to the next person who will continue the task
+5. Please put a note on the Documentation Trello card I have created when you pass this file to another person..
+6. I will grab the file at the end, and fill-up the "ROLE" column discovering the sources one by one.
+   It would help me too if you could, at the same time do this : a few words at the beginning of each section
+   explaining the purpose of this section, only if the name of the files are not obvious enough.
+7. It would be cool if from now on, when you create a new file, you would write your initials in the header!
+8. People to work on this. The order is just a suggestion (apart from Hogne to be first)...
+   HT
+   TW
+   PS
+   EO
+   BM
+
+Thank you very much for your participation!
+F.
+
+AUTHOR │ MODIFIED BY │ ROLE                     .
+       │             │                          ├── core
+       │             │                          │   ├── class
+PS     │             │                          │   │   ├── class.c
+PS     │             │                          │   │   ├── class.h
+PS     │             │                          │   │   ├── mainclass.c
+PS     │             │                          │   │   ├── mainclass.h
+PS     │             │                          │   │   ├── phpproxyclass.c
+PS     │             │                          │   │   ├── phpproxyclass.h
+PS     │             │                          │   │   ├── rootclass.c
+PS     │             │                          │   │   └── rootclass.h
+       │             │                          │   ├── core
+PS     │             │                          │   │   ├── event.h
+PS     │             │                          │   │   ├── event_manager.c
+PS     │             │                          │   │   ├── event_manager.h
+PS/HT  │             │                          │   │   ├── friend_core.c
+PS/HT  │             │                          │   │   ├── friend_core.h
+PS     │             │                          │   │   ├── friendcore_info.c
+PS     │             │                          │   │   ├── friendcore_info.h
+PS     │             │                          │   │   ├── friendcore_manager.c
+PS     │             │                          │   │   ├── friendcore_manager.h
+PS     │             │                          │   │   ├── functions.h
+PS     │             │                          │   │   ├── library.c
+PS     │             │                          │   │   ├── library.h
+PS     │             │                          │   │   ├── lists.h
+PS     │             │                          │   │   ├── missing_defs.h
+PS     │             │                          │   │   ├── nodes.h
+PS     │             │                          │   │   ├── thread.h
+PS     │             │                          │   │   ├── thread_linux.c
+PS     │             │                          │   │   ├── types.h
+PS     │             │                          │   │   ├── worker.c
+PS     │             │                          │   │   ├── worker.h
+PS     │             │                          │   │   ├── worker_manager.c
+PS     │             │                          │   │   └── worker_manager.h
+       │             │                          │   ├── hardware
+PS     │             │                          │   │   ├── machine_info.c
+PS     │             │                          │   │   ├── machine_info.h
+PS     │             │                          │   │   ├── network.c
+PS     │             │                          │   │   └── network.h
+HT/PS  │             │                          │   ├── main.c
+       │             │                          │   ├── network
+HT     │             │                          │   │   ├── cookie.c
+HT     │             │                          │   │   ├── cookie.h
+HT     │             │                          │   │   ├── digcalc.c
+HT     │             │                          │   │   ├── digcalc.h
+PS     │             │                          │   │   ├── file_download.c
+PS     │             │                          │   │   ├── file_download.h
+HT/PS  │             │                          │   │   ├── http.c
+HT/PS  │             │                          │   │   ├── http.h
+PS     │             │                          │   │   ├── locfile.c
+PS     │             │                          │   │   ├── locfile.h
+PS     │             │                          │   │   ├── mime.c
+PS     │             │                          │   │   ├── mime.h
+HT     │             │                          │   │   ├── path.c
+HT     │             │                          │   │   ├── path.h
+HT/PS  │             │                          │   │   ├── protocol_http.c
+HT/PS  │             │                          │   │   ├── protocol_http.h
+PS     │             │                          │   │   ├── protocol_webdav.c
+PS     │             │                          │   │   ├── protocol_webdav.h
+HT/PS  │             │                          │   │   ├── socket.c
+HT/PS  │             │                          │   │   ├── socket.h
+HT     │             │                          │   │   ├── uri.c
+HT     │             │                          │   │   ├── uri.h
+HT     │             │                          │   │   ├── url.h
+PS     │             │                          │   │   ├── websocket.c
+PS     │             │                          │   │   ├── websocket_client.h
+PS     │             │                          │   │   └── websocket.h
+       │             │                          │   ├── Profiling.h
+       │             │                          │   ├── resources
+       │             │                          │   │   ├── index.html
+       │             │                          │   │   ├── update_info.jpg
+       │             │                          │   │   └── updates.html
+       │             │                          │   ├── service
+       │             │                          │   │   ├── services
+       │             │                          │   │   │   ├── service_apache.c
+PS     │             │                          │   │   │   ├── service_hello.c
+PS     │             │                          │   │   │   ├── service_math.c
+PS     │             │                          │   │   │   ├── service_mysql.c
+PS     │             │                          │   │   │   ├── service_nodejs.c
+PS     │             │                          │   │   │   ├── service_php.c
+PS     │             │                          │   │   ├── comm_msg.c
+PS     │             │                          │   │   ├── comm_msg.h
+PS     │             │                          │   │   ├── comm_service.c
+PS     │             │                          │   │   ├── comm_service_client.c
+PS     │             │                          │   │   ├── comm_service.h
+PS     │             │                          │   │   ├── service.c
+PS     │             │                          │   │   ├── service.h
+PS     │             │                          │   │   ├── service_manager.c
+PS     │             │                          │   │   └── service_manager.h
+       │             │                          │   ├── ssh
+PS     │             │                          │   │   ├── ssh_server.c
+PS     │             │                          │   │   └── ssh_server.h
+       │             │                          │   ├── system
+       │             │                          │   │   ├── application
+PS     │             │                          │   │   │   ├── app_category.h
+PS     │             │                          │   │   │   ├── application.h
+PS     │             │                          │   │   │   ├── applicationweb.c
+PS     │             │                          │   │   │   ├── applicationweb.h
+PS     │             │                          │   │   │   ├── app_permission.h
+PS     │             │                          │   │   │   ├── app_session.c
+PS     │             │                          │   │   │   ├── app_session.h
+PS     │             │                          │   │   │   ├── app_session_manager.c
+PS     │             │                          │   │   │   └── app_session_manager.h
+       │             │                          │   │   ├── cache
+PS     │             │                          │   │   │   ├── cache_manager.c
+PS     │             │                          │   │   │   └── cache_manager.h
+       │             │                          │   │   ├── dictionary
+PS     │             │                          │   │   │   ├── dictionary.c
+PS     │             │                          │   │   │   └── dictionary.h
+       │             │                          │   │   ├── fsys
+PS     │             │                          │   │   │   ├── fsysinram.c
+PS     │             │                          │   │   │   ├── fsyslocal.c
+PS/HT  │             │                          │   │   │   ├── fsysphp.c
+PS     │             │                          │   │   │   ├── fsysremote.c
+PS     │             │                          │   │   │   ├── fsysssh2.c
+       │             │                          │   │   ├── handler
+PS     │             │                          │   │   │   ├── dosdriver.c
+PS     │             │                          │   │   │   ├── dosdriver.h
+PS     │             │                          │   │   │   ├── file.c
+PS     │             │                          │   │   │   ├── file.h
+PS     │             │                          │   │   │   ├── fsys.c
+PS     │             │                          │   │   │   ├── fsys.h
+PS     │             │                          │   │   │   ├── lock.c
+PS     │             │                          │   │   │   └── lock.h
+       │             │                          │   │   ├── inram
+PS     │             │                          │   │   │   ├── inramfs.c
+PS     │             │                          │   │   │   └── inramfs.h
+       │             │                          │   │   ├── invar
+PS     │             │                          │   │   │   ├── invar.c
+PS     │             │                          │   │   │   ├── invar.h
+PS     │             │                          │   │   │   ├── invar_manager.c
+PS     │             │                          │   │   │   └── invar_manager.h
+       │             │                          │   │   ├── json
+PS     │             │                          │   │   │   ├── jsmn.c
+PS     │             │                          │   │   │   ├── jsmn.h
+PS     │             │                          │   │   │   ├── json.c
+PS     │             │                          │   │   │   ├── json_converter.c
+PS     │             │                          │   │   │   ├── json_converter.h
+PS     │             │                          │   │   │   ├── json.h
+       │             │                          │   │   │   └── structures
+       │             │                          │   │   │       └── friend.h
+       │             │                          │   │   ├── module
+PS     │             │                          │   │   │   ├── module.c
+PS     │             │                          │   │   │   └── module.h
+       │             │                          │   │   ├── moduledyn
+PS     │             │                          │   │   │   ├── javamod.c
+PS     │             │                          │   │   │   ├── nodejsmod.c
+HT/PS  |             │                          │   │   │   ├── phpmod.c
+PS     │             │                          │   │   │   ├── pythonmod.c
+PS     │             │                          │   │   │   ├── sysmod.c
+       │             │                          │   │   ├── permission
+PS     │             │                          │   │   │   └── user_app_permission.h
+       │             │                          │   │   ├── support
+PS     │             │                          │   │   │   ├── support_manager.c
+PS     │             │                          │   │   │   └── support_manager.h
+       │             │                          │   │   ├── user
+PS     │             │                          │   │   │   ├── user_application.c
+PS     │             │                          │   │   │   ├── user_application.h
+PS     │             │                          │   │   │   ├── user.c
+PS     │             │                          │   │   │   ├── user_group.c
+PS     │             │                          │   │   │   ├── user_group.h
+PS     │             │                          │   │   │   └── user.h
+PS     │             │                          │   │   ├── command.c
+PS     │             │                          │   │   ├── command.h
+PS     │             │                          │   │   ├── device_handling.c
+PS     │             │                          │   │   ├── device_handling.h
+PS     │             │                          │   │   ├── Makefile
+PS     │             │                          │   │   ├── systembase.c
+PS     │             │                          │   │   ├── systembase.h
+PS     │             │                          │   │   ├── systembase_web.c
+PS     │             │                          │   │   ├── systembase_web.h
+PS     │             │                          │   │   ├── web_util.c
+PS     │             │                          │   │   └── web_util.h
+       │             │                          │   └── util
+HT     │             │                          │       ├── base64.c
+HT     │             │                          │       ├── base64.h
+PS     │             │                          │       ├── buffered_string.c
+PS     │             │                          │       ├── buffered_string.h
+HT     │             │                          │       ├── hashmap.c
+HT     │             │                          │       ├── hashmap.h
+PS     │             │                          │       ├── hooks.h
+PS     │             │                          │       ├── json_core.c
+PS     │             │                          │       ├── json_core.h
+HT     │             │                          │       ├── list.c
+HT     │             │                          │       ├── list.h
+PS     │             │                          │       ├── list_string.c
+PS     │             │                          │       ├── list_string.h
+PS     │             │                          │       ├── md5.c
+PS     │             │                          │       ├── md5.h
+HT     │             │                          │       ├── murmurhash3.c
+HT     │             │                          │       ├── murmurhash3.cpp
+HT     │             │                          │       ├── murmurhash3.h
+HT     │             │                          │       ├── sha256.c
+HT     │             │                          │       ├── sha256.h
+PS     │             │                          │       ├── simple_hash.c
+PS     │             │                          │       ├── simple_hash.h
+HT     │             │                          │       ├── string.c
+HT     │             │                          │       ├── string.h
+PS     │             │                          │       └── tagitem.h
+       │             │                          ├── devices
+       │             │                          │   ├── DOSDrivers
+       │             │                          │   │   ├── ArenaCM
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+       │             │                          │   │   │   ├── gui.html
+       │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── Assign
+       │             │                          │   │   │   ├── Locale
+HT     │             │                          │   │   │   │   ├── en.lang
+HT     │             │                          │   │   │   │   └── no.lang
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── info.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── DropboxDrive
+TW     │             │                          │   │   │   ├── door.html
+TW     │             │                          │   │   │   ├── door.js.old
+TW     │             │                          │   │   │   ├── door.php
+TW     │             │                          │   │   │   ├── dosdriver.ini
+TW     │             │                          │   │   │   ├── DropboxAuthoriseApp.jsx
+TW     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── FriendStoreDrive
+       │             │                          │   │   │   ├── Locale
+HT     │             │                          │   │   │   │   ├── en.lang
+HT     │             │                          │   │   │   │   └── no.lang
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   ├── info.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── INRam
+       │             │                          │   │   │   ├── Locale
+HT     │             │                          │   │   │   │   ├── en.lang
+HT     │             │                          │   │   │   │   └── no.lang
+HT     │             │                          │   │   │   ├── info.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── Local
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── LocalDrive
+HT     │             │                          │   │   │   └── door.html
+       │             │                          │   │   ├── Remote
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── SQLDrive
+HT     │             │                          │   │   │   ├── door.html
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   ├── info.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── SQLWorkgroupDrive
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   ├── info.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── Treeroot
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   ├── Website
+HT     │             │                          │   │   │   ├── door.html
+HT     │             │                          │   │   │   ├── door.php
+HT     │             │                          │   │   │   ├── dosdriver.ini
+HT     │             │                          │   │   │   ├── gui.html
+HT     │             │                          │   │   │   └── sysinfo.json
+       │             │                          │   │   └── Wordpress
+HT     │             │                          │   │       ├── door.php
+HT     │             │                          │   │       └── dosdriver.ini
+       │             │                          │   └── Printers
+       │             │                          │       └── LinuxCUPS
+       │             │                          │           └── printer.ini
+       │             │                          ├── install.php
+       │             │                          ├── interfaces
+       │             │                          │   ├── themes
+       │             │                          │   │   ├── amigadark
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── borderless
+HT     │             │                          │   │   │   ├── desktop.xcf
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── fenster
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── fensterx
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── friendup
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── friendup_ambient
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   ├── friendup_forest
+HT     │             │                          │   │   │   ├── desktop.xcf
+HT     │             │                          │   │   │   ├── scrollbars.css
+HT     │             │                          │   │   │   ├── theme.conf
+HT     │             │                          │   │   │   └── theme.css
+       │             │                          │   │   └── randstad
+HT     │             │                          │   │       ├── scrollbars.css
+HT     │             │                          │   │       └── theme.css
+       │             │                          │   └── web_desktop
+       │             │                          │       ├── apps
+       │             │                          │       │   ├── Account
+       │             │                          │       │   │   ├── Css
+HT/TW  │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Locale
+HT/TW  │             │                          │       │   │   │   ├── en.lang
+HT/TW  │             │                          │       │   │   │   └── no.lang
+       │             │                          │       │   │   ├── Scripts
+HT/TW  │             │                          │       │   │   │   ├── account.js
+HT/TW  │             │                          │       │   │   │   └── accountmain.js
+       │             │                          │       │   │   ├── Templates
+HT/TW  │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── icon.png
+       │             │                          │       │   ├── Afww
+       │             │                          │       │   │   ├── Locale
+TW     │             │                          │       │   │   │   ├── en.lang
+TW     │             │                          │       │   │   │   └── no.lang
+       │             │                          │       │   │   ├── Scripts
+TW     │             │                          │       │   │   │   ├── afww-board.js
+TW     │             │                          │       │   │   │   ├── afww-invitereceiver.js
+TW     │             │                          │       │   │   │   └── afww.js
+       │             │                          │       │   │   ├── Templates
+TW     │             │                          │       │   │   │   ├── afww-board.html
+TW     │             │                          │       │   │   │   └── afww-invitereceiver.html
+TW     │             │                          │       │   │   ├── Config.conf
+TW     │             │                          │       │   │   └── icon.png
+       │             │                          │       │   ├── Ampache
+HT     │             │                          │       │   │   ├── Locale
+HT     │             │                          │       │   │   │   └── en.lang
+HT     │             │                          │       │   │   ├── ampache.js
+HT     │             │                          │       │   │   ├── Config.conf
+HT     │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Applicationmgr
+HT     │             │                          │       │   │   ├── Locale
+HT     │             │                          │       │   │   │   └── en.lang
+       │             │                          │       │   │   ├── Templates
+HT     │             │                          │       │   │   │   └── main.html
+HT     │             │                          │       │   │   ├── applicationmgr.js
+HT     │             │                          │       │   │   ├── Config.conf
+HT     │             │                          │       │   │   ├── gui.js
+HT     │             │                          │       │   │   ├── icon.png
+HT     │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Archived
+       │             │                          │       │   │   ├── BlenderFriend
+       │             │                          │       │   │   │   ├── Locale
+HT     │             │                          │       │   │   │   │   └── en.lang
+       │             │                          │       │   │   │   ├── Scripts
+HT     │             │                          │       │   │   │   │   └── blenderfriend.js
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Cubedemo
+       │             │                          │       │   │   │   ├── Templates
+TW     │             │                          │       │   │   │   │   └── launch.html
+TW     │             │                          │       │   │   │   ├── Config.conf
+TW     │             │                          │       │   │   │   ├── icon.png
+TW     │             │                          │       │   │   │   └── launch.js
+       │             │                          │       │   │   ├── DemoApp
+       │             │                          │       │   │   │   ├── Locale
+HT     │             │                          │       │   │   │   │   └── en.lang
+       │             │                          │       │   │   │   ├── Scripts
+HT     │             │                          │       │   │   │   │   └── demo.js
+       │             │                          │       │   │   │   ├── Stylesheets
+HT     │             │                          │       │   │   │   │   └── demogui.css
+       │             │                          │       │   │   │   ├── Templates
+HT     │             │                          │       │   │   │   │   └── demogui.html
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── DemoHogneApp
+       │             │                          │       │   │   │   ├── Locale
+HT     │             │                          │       │   │   │   │   └── en.lang
+       │             │                          │       │   │   │   ├── Scripts
+HT     │             │                          │       │   │   │   │   ├── main.js
+HT     │             │                          │       │   │   │   │   └── mygui.js
+       │             │                          │       │   │   │   ├── Templates
+HT     │             │                          │       │   │   │   │   └── mygui.html
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── FriendStore
+       │             │                          │       │   │   │   ├── Gfx
+HT     │             │                          │       │   │   │   │   └── something
+       │             │                          │       │   │   │   ├── Scripts
+HT     │             │                          │       │   │   │   │   └── friendstore.js
+       │             │                          │       │   │   │   ├── Templates
+HT     │             │                          │       │   │   │   │   └── friendstore.js
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Mail
+       │             │                          │       │   │   │   ├── Graphics
+HT     │             │                          │       │   │   │   │   └── pile.jpg
+       │             │                          │       │   │   │   ├── Locale
+HT     │             │                          │       │   │   │   │   └── en.lang
+       │             │                          │       │   │   │   ├── Scripts
+HT     │             │                          │       │   │   │   │   ├── accountwindow.js
+HT     │             │                          │       │   │   │   │   ├── mailapp.js
+HT     │             │                          │       │   │   │   │   └── maillogic.js
+       │             │                          │       │   │   │   ├── Templates
+HT     │             │                          │       │   │   │   │   ├── accountmanager.html
+HT     │             │                          │       │   │   │   │   ├── edit_accounts.html
+HT     │             │                          │       │   │   │   │   ├── entry.html
+HT     │             │                          │       │   │   │   │   ├── maingui.html
+HT     │             │                          │       │   │   │   │   ├── new_account.html
+HT     │             │                          │       │   │   │   │   ├── no_accounts.html
+HT     │             │                          │       │   │   │   │   ├── read.html
+HT     │             │                          │       │   │   │   │   ├── stats.html
+HT     │             │                          │       │   │   │   │   └── trash.html
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   ├── icon.png
+HT     │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Microscopix
+       │             │                          │       │   │   │   ├── Locale
+HT     │             │                          │       │   │   │   │   └── en.lang
+HT     │             │                          │       │   │   │   ├── Config.conf
+HT     │             │                          │       │   │   │   ├── index.html
+HT     │             │                          │       │   │   │   └── microscopix.js
+       │             │                          │       │   │   └── Photopea
+       │             │                          │       │   │       ├── Locale
+HT     │             │                          │       │   │       │   └── en.lang
+HT     │             │                          │       │   │       ├── Config.conf
+HT     │             │                          │       │   │       ├── index.html
+HT     │             │                          │       │   │       └── photopea.js
+       │             │                          │       │   ├── Astray
+HT     │             │                          │       │   │   ├── ball.png
+HT     │             │                          │       │   │   ├── Box2dWeb.min.js
+HT     │             │                          │       │   │   ├── brick.png
+HT     │             │                          │       │   │   ├── concrete.png
+HT     │             │                          │       │   │   ├── Config.conf
+HT     │             │                          │       │   │   ├── foo.html
+HT     │             │                          │       │   │   ├── icon.png
+HT     │             │                          │       │   │   ├── index.html
+HT     │             │                          │       │   │   ├── jquery.js
+HT     │             │                          │       │   │   ├── keyboard.js
+HT     │             │                          │       │   │   ├── launch.js
+HT     │             │                          │       │   │   ├── maze.js
+HT     │             │                          │       │   │   ├── README.md
+HT     │             │                          │       │   │   ├── StereoCamera.js
+HT     │             │                          │       │   │   ├── StereoEffect.js
+HT     │             │                          │       │   │   ├── Three.js
+HT     │             │                          │       │   │   └── three.min.js
+       │             │                          │       │   ├── Author
+       │             │                          │       │   │   ├── Css
+HT     │             │                          │       │   │   │   ├── editor.css
+HT     │             │                          │       │   │   │   └── prefs.css
+       │             │                          │       │   │   ├── Scripts
+HT     │             │                          │       │   │   │   ├── author.js
+       │             │                          │       │   │   │   ├── ckeditor
+       │             │                          │       │   │   │   │   ├── adapters
+HT     │             │                          │       │   │   │   │   │   └── jquery.js
+       │             │                          │       │   │   │   │   ├── plugins
+       │             │                          │       │   │   │   │   │   ├── a11yhelp
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+HT     │             │                          │       │   │   │   │   │   │       └── a11yhelp.js
+       │             │                          │       │   │   │   │   │   ├── about
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+HT     │             │                          │       │   │   │   │   │   │       ├── about.js
+       │             │                          │       │   │   │   │   │   │       ├── hidpi
+HT     │             │                          │       │   │   │   │   │   │       │   └── logo_ckeditor.png
+HT     │             │                          │       │   │   │   │   │   │       └── logo_ckeditor.png
+       │             │                          │       │   │   │   │   │   ├── clipboard
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+HT     │             │                          │       │   │   │   │   │   │       └── paste.js
+       │             │                          │       │   │   │   │   │   ├── dialog
+HT     │             │                          │       │   │   │   │   │   │   └── dialogDefinition.js
+HT     │             │                          │       │   │   │   │   │   ├── icons_hidpi.png
+HT     │             │                          │       │   │   │   │   │   ├── icons.png
+       │             │                          │       │   │   │   │   │   ├── image
+       │             │                          │       │   │   │   │   │   │   ├── dialogs
+HT     │             │                          │       │   │   │   │   │   │   │   └── image.js
+       │             │                          │       │   │   │   │   │   │   └── images
+HT     │             │                          │       │   │   │   │   │   │       └── noimage.png
+       │             │                          │       │   │   │   │   │   ├── link
+       │             │                          │       │   │   │   │   │   │   ├── dialogs
+HT     │             │                          │       │   │   │   │   │   │   │   ├── anchor.js
+HT     │             │                          │       │   │   │   │   │   │   │   └── link.js
+       │             │                          │       │   │   │   │   │   │   └── images
+HT     │             │                          │       │   │   │   │   │   │       ├── anchor.png
+       │             │                          │       │   │   │   │   │   │       └── hidpi
+HT     │             │                          │       │   │   │   │   │   │           └── anchor.png
+       │             │                          │       │   │   │   │   │   ├── magicline
+       │             │                          │       │   │   │   │   │   │   └── images
+       │             │                          │       │   │   │   │   │   │       ├── hidpi
+HT     │             │                          │       │   │   │   │   │   │       │   ├── icon.png
+HT     │             │                          │       │   │   │   │   │   │       │   └── icon-rtl.png
+HT     │             │                          │       │   │   │   │   │   │       ├── icon.png
+HT     │             │                          │       │   │   │   │   │   │       └── icon-rtl.png
+       │             │                          │       │   │   │   │   │   ├── pastefromword
+       │             │                          │       │   │   │   │   │   │   └── filter
+HT     │             │                          │       │   │   │   │   │   │       └── default.js
+       │             │                          │       │   │   │   │   │   ├── scayt
+       │             │                          │       │   │   │   │   │   │   ├── dialogs
+HT     │             │                          │       │   │   │   │   │   │   │   ├── options.js
+HT     │             │                          │       │   │   │   │   │   │   │   └── toolbar.css
+HT     │             │                          │       │   │   │   │   │   │   ├── LICENSE.md
+HT     │             │                          │       │   │   │   │   │   │   └── README.md
+       │             │                          │       │   │   │   │   │   ├── specialchar
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+       │             │                          │       │   │   │   │   │   │       ├── lang
+       │             │                          │       │   │   │   │   │   │       │   ...
+HT     │             │                          │       │   │   │   │   │   │       └── specialchar.js
+       │             │                          │       │   │   │   │   │   ├── table
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+HT     │             │                          │       │   │   │   │   │   │       └── table.js
+       │             │                          │       │   │   │   │   │   ├── tabletools
+       │             │                          │       │   │   │   │   │   │   └── dialogs
+HT     │             │                          │       │   │   │   │   │   │       └── tableCell.js
+       │             │                          │       │   │   │   │   │   └── wsc
+       │             │                          │       │   │   │   │   │       └── dialogs
+HT     │             │                          │       │   │   │   │   │           ├── ciframe.html
+HT     │             │                          │       │   │   │   │   │           ├── tmpFrameset.html
+HT     │             │                          │       │   │   │   │   │           ├── wsc.css
+HT     │             │                          │       │   │   │   │   │           ├── wsc_ie.js
+HT     │             │                          │       │   │   │   │   │           └── wsc.js
+       │             │                          │       │   │   │   │   ├── samples
+       │             │                          │       │   │   │   │   │   ├── css
+HT     │             │                          │       │   │   │   │   │   │   └── samples.css
+       │             │                          │       │   │   │   │   │   ├── js
+HT     │             │                          │       │   │   │   │   │   │   ├── sample.js
+HT     │             │                          │       │   │   │   │   │   │   └── sf.js
+       │             │                          │       │   │   │   │   │   ├── old
+       │             │                          │       │   │   │   │   │   │   ├── assets
+       │             │                          │       │   │   │   │   │   │   │   ├── inlineall
+HT     │             │                          │       │   │   │   │   │   │   │   │   └── logo.png
+       │             │                          │       │   │   │   │   │   │   │   ├── outputxhtml
+HT     │             │                          │       │   │   │   │   │   │   │   │   └── outputxhtml.css
+       │             │                          │       │   │   │   │   │   │   │   ├── uilanguages
+HT     │             │                          │       │   │   │   │   │   │   │   │   └── languages.js
+HT     │             │                          │       │   │   │   │   │   │   │   ├── posteddata.php
+HT     │             │                          │       │   │   │   │   │   │   │   └── sample.jpg
+       │             │                          │       │   │   │   │   │   │   ├── dialog
+       │             │                          │       │   │   │   │   │   │   │   ├── assets
+HT     │             │                          │       │   │   │   │   │   │   │   │   └── my_dialog.js
+HT     │             │                          │       │   │   │   │   │   │   │   └── dialog.html
+       │             │                          │       │   │   │   │   │   │   ├── enterkey
+HT     │             │                          │       │   │   │   │   │   │   │   └── enterkey.html
+       │             │                          │       │   │   │   │   │   │   ├── htmlwriter
+       │             │                          │       │   │   │   │   │   │   │   ├── assets
+       │             │                          │       │   │   │   │   │   │   │   │   └── outputforflash
+HT     │             │                          │       │   │   │   │   │   │   │   │       ├── outputforflash.fla
+HT     │             │                          │       │   │   │   │   │   │   │   │       ├── outputforflash.swf
+HT     │             │                          │       │   │   │   │   │   │   │   │       └── swfobject.js
+HT     │             │                          │       │   │   │   │   │   │   │   ├── outputforflash.html
+HT     │             │                          │       │   │   │   │   │   │   │   └── outputhtml.html
+       │             │                          │       │   │   │   │   │   │   ├── magicline
+HT     │             │                          │       │   │   │   │   │   │   │   └── magicline.html
+       │             │                          │       │   │   │   │   │   │   ├── toolbar
+HT     │             │                          │       │   │   │   │   │   │   │   └── toolbar.html
+       │             │                          │       │   │   │   │   │   │   ├── wysiwygarea
+HT     │             │                          │       │   │   │   │   │   │   │   └── fullpage.html
+HT     │             │                          │       │   │   │   │   │   │   ├── ajax.html
+HT     │             │                          │       │   │   │   │   │   │   ├── api.html
+HT     │             │                          │       │   │   │   │   │   │   ├── appendto.html
+HT     │             │                          │       │   │   │   │   │   │   ├── datafiltering.html
+HT     │             │                          │       │   │   │   │   │   │   ├── divreplace.html
+HT     │             │                          │       │   │   │   │   │   │   ├── index.html
+HT     │             │                          │       │   │   │   │   │   │   ├── inlineall.html
+HT     │             │                          │       │   │   │   │   │   │   ├── inlinebycode.html
+HT     │             │                          │       │   │   │   │   │   │   ├── inlinetextarea.html
+HT     │             │                          │       │   │   │   │   │   │   ├── jquery.html
+HT     │             │                          │       │   │   │   │   │   │   ├── readonly.html
+HT     │             │                          │       │   │   │   │   │   │   ├── replacebyclass.html
+HT     │             │                          │       │   │   │   │   │   │   ├── replacebycode.html
+HT     │             │                          │       │   │   │   │   │   │   ├── sample.css
+HT     │             │                          │       │   │   │   │   │   │   ├── sample.js
+HT     │             │                          │       │   │   │   │   │   │   ├── sample_posteddata.php
+HT     │             │                          │       │   │   │   │   │   │   ├── tabindex.html
+HT     │             │                          │       │   │   │   │   │   │   ├── uicolor.html
+HT     │             │                          │       │   │   │   │   │   │   ├── uilanguages.html
+HT     │             │                          │       │   │   │   │   │   │   └── xhtmlstyle.html
+       │             │                          │       │   │   │   │   │   ├── toolbarconfigurator
+HT     │             │                          │       │   │   │   │   │   │   ├── index.html
+       │             │                          │       │   │   │   │   │   │   └── js
+HT     │             │                          │       │   │   │   │   │   │       ├── abstracttoolbarmodifier.js
+HT     │             │                          │       │   │   │   │   │   │       ├── fulltoolbareditor.js
+HT     │             │                          │       │   │   │   │   │   │       ├── toolbarmodifier.js
+HT     │             │                          │       │   │   │   │   │   │       └── toolbartextmodifier.js
+HT     │             │                          │       │   │   │   │   │   └── index.html
+HT     │             │                          │       │   │   │   │   ├── styles.js
+HT     │             │                          │       │   │   │   │   ├── build-config.js
+HT     │             │                          │       │   │   │   │   ├── CHANGES.md
+HT     │             │                          │       │   │   │   │   ├── ckeditor.js
+HT     │             │                          │       │   │   │   │   ├── config.js
+HT     │             │                          │       │   │   │   │   └── contents.css
+HT     │             │                          │       │   │   │   ├── maingui.js
+HT     │             │                          │       │   │   │   └── prefs.js
+       │             │                          │       │   │   ├── Templates
+HT     │             │                          │       │   │   │   ├── image.html
+HT     │             │                          │       │   │   │   ├── maingui.html
+HT     │             │                          │       │   │   │   ├── notice.html
+HT     │             │                          │       │   │   │   ├── preferences.html
+HT     │             │                          │       │   │   │   └── toolbar.html
+HT     │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Calculator
+       │             │                          │       │   │   ├── Example
+HT     │             │                          │       │   │   │   ├── index.html
+HT     │             │                          │       │   │   │   └── page.css
+       │             │                          │       │   │   ├── Locale
+HT     │             │                          │       │   │   │   ├── en.lang
+HT     │             │                          │       │   │   │   └── no.lang
+HT     │             │                          │       │   │   ├── calc_friend.js
+HT     │             │                          │       │   │   ├── calculator.html
+HT     │             │                          │       │   │   ├── calculator.js
+HT     │             │                          │       │   │   ├── calculator.min.js
+HT     │             │                          │       │   │   ├── Config.conf
+HT     │             │                          │       │   │   ├── friend.js
+HT     │             │                          │       │   │   ├── icon.png
+HT     │             │                          │       │   │   ├── knockout-2.1.0.js
+HT     │             │                          │       │   │   ├── README.md
+HT     │             │                          │       │   │   └── style.css
+       │             │                          │       │   ├── Calendar
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── fcrypto
+HT     │             │                          │       │   │   │   │   ├── component.js
+       │             │                          │       │   │   │   │   ├── deps
+HT     │             │                          │       │   │   │   │   │   ├── base64.js
+       │             │                          │       │   │   │   │   │   ├── cryptojs
+       │             │                          │       │   │   │   │   │   │   └── rollups
+HT     │             │                          │       │   │   │   │   │   │       ├── aes.js
+HT     │             │                          │       │   │   │   │   │   │       └── pbkdf2.js
+HT     │             │                          │       │   │   │   │   │   ├── hash.js
+HT     │             │                          │       │   │   │   │   │   ├── jsbn.js
+HT     │             │                          │       │   │   │   │   │   ├── jscrypto.js
+HT     │             │                          │       │   │   │   │   │   ├── jsencrypt.js
+HT     │             │                          │       │   │   │   │   │   ├── random.js
+HT     │             │                          │       │   │   │   │   │   └── rsa.js
+HT     │             │                          │       │   │   │   │   └── fcrypto.js
+HT     │             │                          │       │   │   │   ├── calendar.js
+HT     │             │                          │       │   │   │   ├── main.js
+HT     │             │                          │       │   │   │   └── sources.js
+       │             │                          │       │   │   ├── Templates
+HT     │             │                          │       │   │   │   ├── event.html
+HT     │             │                          │       │   │   │   ├── main.html
+HT     │             │                          │       │   │   │   ├── sources_gui.html
+HT     │             │                          │       │   │   │   └── sources.html
+HT     │             │                          │       │   │   ├── Config.conf
+HT     │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── CompetentCandidate
+       │             │                          │       │   │   ├── Scripts
+HT/TW  │             │                          │       │   │   │   ├── competencies.js
+HT/TW  │             │                          │       │   │   │   ├── competency_chooser.js
+HT/TW  │             │                          │       │   │   │   ├── competencygroup_chooser.js
+HT/TW  │             │                          │       │   │   │   ├── competency.js
+HT/TW  │             │                          │       │   │   │   ├── competent.js
+HT/TW  │             │                          │       │   │   │   ├── group.js
+HT/TW  │             │                          │       │   │   │   ├── group_set_globalgroups.js
+HT/TW  │             │                          │       │   │   │   ├── groups.js
+HT/TW  │             │                          │       │   │   │   ├── maingui.js
+HT/TW  │             │                          │       │   │   │   ├── profile.js
+HT/TW  │             │                          │       │   │   │   ├── profiles_candidate_connect.js
+HT/TW  │             │                          │       │   │   │   ├── profiles_candidate_review.js
+HT/TW  │             │                          │       │   │   │   ├── profiles_candidates.js
+       │             │                          │       │   │   │   ├── profiles.js
+       │             │                          │       │   │   │   ├── rating_list.js
+       │             │                          │       │   │   │   ├── rating_lists.js
+       │             │                          │       │   │   │   ├── work_candidates.js
+       │             │                          │       │   │   │   ├── work_globalgroup.js
+       │             │                          │       │   │   │   ├── work_globalgroups.js
+       │             │                          │       │   │   │   └── z_dragtable.js
+       │             │                          │       │   │   ├── Stylesheets
+       │             │                          │       │   │   │   └── tables.css
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── competencies.html
+       │             │                          │       │   │   │   ├── competency_chooser.html
+       │             │                          │       │   │   │   ├── competencygroup_chooser.html
+       │             │                          │       │   │   │   ├── competency.html
+       │             │                          │       │   │   │   ├── group.html
+       │             │                          │       │   │   │   ├── group_set_globalgroups.html
+       │             │                          │       │   │   │   ├── groups.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   ├── profile.html
+       │             │                          │       │   │   │   ├── profiles_candidate_connect.html
+       │             │                          │       │   │   │   ├── profiles_candidate_review.html
+       │             │                          │       │   │   │   ├── profiles_candidate_review_print.html
+       │             │                          │       │   │   │   ├── profiles_candidates.html
+       │             │                          │       │   │   │   ├── profiles.html
+       │             │                          │       │   │   │   ├── rating_list.html
+       │             │                          │       │   │   │   ├── rating_lists.html
+       │             │                          │       │   │   │   ├── work_globalgroup.html
+       │             │                          │       │   │   │   └── work_globalgroups.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── DataSources
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   └── datasources.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── gui.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Dingo
+       │             │                          │       │   │   ├── Documentation
+       │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── shell.js
+       │             │                          │       │   │   │   └── terminal.js
+       │             │                          │       │   │   ├── Stylesheets
+       │             │                          │       │   │   │   └── terminal.css
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── terminal.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Dock
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── dock.js
+       │             │                          │       │   │   │   └── gui.js
+       │             │                          │       │   │   ├── Stylesheets
+       │             │                          │       │   │   │   └── gui.css
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── gui.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── DocuEditor
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Documentation
+       │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── add_image.html
+       │             │                          │       │   │   │   ├── categories.html
+       │             │                          │       │   │   │   ├── category.html
+       │             │                          │       │   │   │   ├── comment.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   ├── main_read.html
+       │             │                          │       │   │   │   ├── preferences.html
+       │             │                          │       │   │   │   ├── topic.html
+       │             │                          │       │   │   │   └── view.html
+       │             │                          │       │   │   ├── add_image.js
+       │             │                          │       │   │   ├── categories.js
+       │             │                          │       │   │   ├── category.js
+       │             │                          │       │   │   ├── comment.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── docu.js
+       │             │                          │       │   │   ├── main.js
+       │             │                          │       │   │   ├── main_read.js
+       │             │                          │       │   │   ├── preferences.js
+       │             │                          │       │   │   ├── topic.js
+       │             │                          │       │   │   └── view.js
+       │             │                          │       │   ├── DoIt
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── item.js
+       │             │                          │       │   │   │   └── main.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── item.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   └── palette.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── doit.js
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── DrillBunny
+       │             │                          │       │   │   ├── assets
+       │             │                          │       │   │   │   ├── atlas.json
+       │             │                          │       │   │   │   ├── atlas.mp3
+       │             │                          │       │   │   │   ├── atlas.ogg
+       │             │                          │       │   │   │   ├── atlas.png
+       │             │                          │       │   │   │   └── preloader.png
+       │             │                          │       │   │   ├── js
+       │             │                          │       │   │   │   ├── game.js
+       │             │                          │       │   │   │   ├── game.min.js
+       │             │                          │       │   │   │   ├── phaser.js
+       │             │                          │       │   │   │   └── phaser.min.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── launch.js
+       │             │                          │       │   ├── Epat
+       │             │                          │       │   │   ├── Locale
+       │             │                          │       │   │   │   ├── en.lang
+       │             │                          │       │   │   │   └── no.lang
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── epat.js
+       │             │                          │       │   │   │   ├── epatlaunch.js
+       │             │                          │       │   │   │   └── settings.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── epat.html
+       │             │                          │       │   │   │   └── settings.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── FriendCreate
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   ├── iotmonitor.css
+       │             │                          │       │   │   │   └── prefs.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── about.js
+       │             │                          │       │   │   │   ├── artisan.js
+       │             │                          │       │   │   │   ├── editor.js
+       │             │                          │       │   │   │   ├── iotmonitor.js
+       │             │                          │       │   │   │   ├── permission.js
+       │             │                          │       │   │   │   ├── prefs.js
+       │             │                          │       │   │   │   ├── project.js
+       │             │                          │       │   │   │   └── search.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   ├── editor.html
+       │             │                          │       │   │   │   ├── iotmonitor.html
+       │             │                          │       │   │   │   ├── permission.html
+       │             │                          │       │   │   │   ├── prefs.html
+       │             │                          │       │   │   │   ├── project.html
+       │             │                          │       │   │   │   └── search.html
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── FriendJukebox
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── exotica.js
+       │             │                          │       │   │   │   ├── player.js
+       │             │                          │       │   │   │   └── playlisteditor.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   └── playlisteditor.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── FriendReference
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── maingui.js
+       │             │                          │       │   │   └── reference.js
+       │             │                          │       │   ├── FriendStore
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   └── store.js
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── FriendStoreAdmin
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── maingui.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── friendstoreadmin.js
+       │             │                          │       │   │   └── maingui.js
+       │             │                          │       │   ├── FriendTracker
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── documentation.html
+       │             │                          │       │   │   ├── friendtracker.js
+       │             │                          │       │   │   ├── icon.png
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── tracker.js
+       │             │                          │       │   ├── FriendUPCommunity
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── account.js
+       │             │                          │       │   │   │   └── fcrypto
+       │             │                          │       │   │   │       ├── component.js
+       │             │                          │       │   │   │       ├── deps
+       │             │                          │       │   │   │       │   ├── base64.js
+       │             │                          │       │   │   │       │   ├── cryptojs
+       │             │                          │       │   │   │       │   │   └── rollups
+       │             │                          │       │   │   │       │   │       ├── aes.js
+       │             │                          │       │   │   │       │   │       └── pbkdf2.js
+       │             │                          │       │   │   │       │   ├── hash.js
+       │             │                          │       │   │   │       │   ├── jsbn.js
+       │             │                          │       │   │   │       │   ├── jscrypto.js
+       │             │                          │       │   │   │       │   ├── jsencrypt.js
+       │             │                          │       │   │   │       │   ├── random.js
+       │             │                          │       │   │   │       │   └── rsa.js
+       │             │                          │       │   │   │       └── fcrypto.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── login.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── fcomm.js
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── login.js
+       │             │                          │       │   ├── GuiTester
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── gui.js
+       │             │                          │       │   │   │   └── main.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── gui.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Hardware
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── hardware.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── hardware.js
+       │             │                          │       │   ├── HexGL
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── launch.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── launch.js
+       │             │                          │       │   ├── House
+       │             │                          │       │   │   ├── Libraries
+       │             │                          │       │   │   │   └── launch.js
+       │             │                          │       │   │   ├── Locale
+       │             │                          │       │   │   │   └── en.lang
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── overview.html
+       │             │                          │       │   │   │   └── preview.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── House.friendapp.js
+       │             │                          │       │   ├── IoTDeck
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── iotdeck.js
+       │             │                          │       │   │   │   └── main.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Issues
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Documentation
+       │             │                          │       │   │   │   └── index.html
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── categories.html
+       │             │                          │       │   │   │   ├── category.html
+       │             │                          │       │   │   │   ├── comment.html
+       │             │                          │       │   │   │   ├── issue.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   └── view.html
+       │             │                          │       │   │   ├── categories.js
+       │             │                          │       │   │   ├── category.js
+       │             │                          │       │   │   ├── comment.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── issue.js
+       │             │                          │       │   │   ├── issues.js
+       │             │                          │       │   │   ├── main.js
+       │             │                          │       │   │   └── view.js
+       │             │                          │       │   ├── JumpAround
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── game.js
+       │             │                          │       │   │   │   ├── invite.js
+       │             │                          │       │   │   │   └── player.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── game.html
+       │             │                          │       │   │   │   ├── invite.html
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── jumparound.js
+       │             │                          │       │   ├── Language
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── guilogic.js
+       │             │                          │       │   │   │   └── language.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Looknfeel
+       │             │                          │       │   │   ├── CSS
+       │             │                          │       │   │   │   └── gui.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── gui.js
+       │             │                          │       │   │   │   └── looknfeel.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── gui.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Merkur
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   └── merkur.js
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Mimetypes
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   └── mimetypes.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Minipaint
+       │             │                          │       │   │   ├── js
+       │             │                          │       │   │   │   ├── controlls.js
+       │             │                          │       │   │   │   ├── draw.js
+       │             │                          │       │   │   │   ├── helpers.js
+       │             │                          │       │   │   │   ├── layers.js
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   ├── menu_actions.js
+       │             │                          │       │   │   │   ├── popup.js
+       │             │                          │       │   │   │   ├── settings.js
+       │             │                          │       │   │   │   └── tools.js
+       │             │                          │       │   │   ├── libs
+       │             │                          │       │   │   │   ├── exif-binaryajax.js
+       │             │                          │       │   │   │   ├── exif.js
+       │             │                          │       │   │   │   ├── glfx.js
+       │             │                          │       │   │   │   ├── html5slider.js
+       │             │                          │       │   │   │   ├── imagefilters.js
+       │             │                          │       │   │   │   ├── jquery-1.8.3.js
+       │             │                          │       │   │   │   └── menu.js
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── Palette.js
+       │             │                          │       │   │   │   └── Toolbox.js
+       │             │                          │       │   │   ├── styles
+       │             │                          │       │   │   │   ├── menu.css
+       │             │                          │       │   │   │   ├── print.css
+       │             │                          │       │   │   │   └── styles.css
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   ├── palette.html
+       │             │                          │       │   │   │   └── toolbox.html
+       │             │                          │       │   │   ├── boot.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── editor.html
+       │             │                          │       │   │   ├── friend.js
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Mitra
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── form-usercredentials.js
+       │             │                          │       │   │   │   ├── maingui.js
+       │             │                          │       │   │   │   ├── mitra-applauncher.js
+       │             │                          │       │   │   │   ├── mitra-desktop.js
+       │             │                          │       │   │   │   ├── mitra.js
+       │             │                          │       │   │   │   ├── mitra-keyboards.js
+       │             │                          │       │   │   │   ├── pdf.js
+       │             │                          │       │   │   │   ├── pdf.worker.js
+       │             │                          │       │   │   │   └── z_3rdparty_pdfobject.min.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── form-usercredentials.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   ├── mitra-app.html
+       │             │                          │       │   │   │   ├── mitra-desktop.html
+       │             │                          │       │   │   │   ├── mitra-filedisplay.html
+       │             │                          │       │   │   │   └── singleapp.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── MitraAdmin
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── addconnection.js
+       │             │                          │       │   │   │   ├── editconnections.js
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   ├── main-mitrafunctions.js
+       │             │                          │       │   │   │   ├── mitra.js
+       │             │                          │       │   │   │   └── reviewmounts.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── addconnection.html
+       │             │                          │       │   │   │   ├── editconnections.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   ├── reviewmounts.html
+       │             │                          │       │   │   │   └── user.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Mountlist
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── connection.js
+       │             │                          │       │   │   │   ├── mainwindow.js
+       │             │                          │       │   │   │   └── mountlist.js
+       │             │                          │       │   │   ├── Stylesheets
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │    ├── connection_edit.html
+       │             │                          │       │   │   │    ├── connection.html
+       │             │                          │       │   │   │    └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Packager
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   └── logic.js
+       │             │                          │       │   │   └── Templates
+       │             │                          │       │   │   │   └── packager.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── packager.js
+       │             │                          │       │   ├── Pat
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── launch.js
+       │             │                          │       │   │   │   └── pat.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── pat.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── jumpfile.txt
+       │             │                          │       │   ├── PythonTestSuite
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── python.js
+       │             │                          │       │   │   ├── testsuite.html
+       │             │                          │       │   │   └── testsuite.js
+       │             │                          │       │   ├── RseDemo
+       │             │                          │       │   │   ├── GL
+       │             │                          │       │   │   │   ├── 3dtext.html
+       │             │                          │       │   │   │   ├── ColladaLoader.js
+       │             │                          │       │   │   │   ├── Detector.js
+       │             │                          │       │   │   │   ├── FirstPersonControls.js
+       │             │                          │       │   │   │   ├── helvetiker_bold.typeface.js
+       │             │                          │       │   │   │   ├── obj_3dplanet.json
+       │             │                          │       │   │   │   ├── obj_block_blue.json
+       │             │                          │       │   │   │   ├── obj_block_gray.json
+       │             │                          │       │   │   │   ├── obj_cake.json
+       │             │                          │       │   │   │   ├── objects.blend
+       │             │                          │       │   │   │   ├── objects.blend1
+       │             │                          │       │   │   │   ├── obj_plane.json
+       │             │                          │       │   │   │   ├── obj_spark.json
+       │             │                          │       │   │   │   ├── obj_star.json
+       │             │                          │       │   │   │   ├── obj_wall.json
+       │             │                          │       │   │   │   ├── stats.js
+       │             │                          │       │   │   │   ├── three.js
+       │             │                          │       │   │   │   ├── three.min.js
+       │             │                          │       │   │   │   └── UnpackDepthRGBAShader.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── demo.html
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   ├── logic.js
+       │             │                          │       │   │   └── rse.js
+       │             │                          │       │   ├── Sauron
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── add_core.js
+       │             │                          │       │   │   │   ├── add_customer.js
+       │             │                          │       │   │   │   ├── find.js
+       │             │                          │       │   │   │   ├── gui_main.js
+       │             │                          │       │   │   │   └── preferences.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   ├── add_core.html
+       │             │                          │       │   │   │   ├── add_customer.html
+       │             │                          │       │   │   │   ├── customer.html
+       │             │                          │       │   │   │   ├── edit_preferences.html
+       │             │                          │       │   │   │   ├── find.html
+       │             │                          │       │   │   │   └── gui_main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── sauron.js
+       │             │                          │       │   ├── Screens
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   └── Screens.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── addscreen.html
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   └── screengui.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Security
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── security.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── security.js
+       │             │                          │       │   │   │   ├── securitywindow.js
+       │             │                          │       │   │   │   └── setpermissions.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── security.html
+       │             │                          │       │   │   │   └── setpermission.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Server
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── server.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── server_item.js
+       │             │                          │       │   │   │   ├── server.js
+       │             │                          │       │   │   │   ├── serverwindow.js
+       │             │                          │       │   │   │   └── setsettings.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── server.html
+       │             │                          │       │   │   │   ├── server_item.html
+       │             │                          │       │   │   │   └── setsettings.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Services
+       │             │                          │       │   │   ├── CSS
+       │             │                          │       │   │   │   ├── flex.css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   ├── main.js~
+       │             │                          │       │   │   │   └── mainView.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── entry.html
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Software
+       │             │                          │       │   │   ├── Css
+       │             │                          │       │   │   │   └── main.css
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   └── software.js
+       │             │                          │       │   │   │── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── SpaceCrusade
+       │             │                          │       │   │   ├── js
+       │             │                          │       │   │   │   ├── game.js
+       │             │                          │       │   │   │   ├── game.min.js
+       │             │                          │       │   │   │   └── phaser.min.js
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── launch.js
+       │             │                          │       │   ├── SpaceInvaders
+       │             │                          │       │   │   └── friend.js
+       │             │                          │       │   ├── Startup
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── item.js
+       │             │                          │       │   │   │   ├── startup_gui.js
+       │             │                          │       │   │   │   └── startup.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── item.html
+       │             │                          │       │   │   │   └── startup.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── SVGEdit
+       │             │                          │       │   │   ├── canvg
+       │             │                          │       │   │   │   ├── canvg.js
+       │             │                          │       │   │   │   └── rgbcolor.js
+       │             │                          │       │   │   ├── contextmenu
+       │             │                          │       │   │   │   └── jquery.contextMenu.js
+       │             │                          │       │   │   ├── svgicons
+       │             │                          │       │   │   │   └── jquery.svgicons.js
+       │             │                          │       │   │   ├── browser.js
+       │             │                          │       │   │   ├── browser-not-supported.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── config.js
+       │             │                          │       │   │   ├── contextmenu.js
+       │             │                          │       │   │   ├── coords.js
+       │             │                          │       │   │   ├── custom.css
+       │             │                          │       │   │   ├── draw.js
+       │             │                          │       │   │   ├── embedapi-dom.js
+       │             │                          │       │   │   ├── embedapi.html
+       │             │                          │       │   │   ├── embedapi.js
+       │             │                          │       │   │   ├── history.js
+       │             │                          │       │   │   ├── math.js
+       │             │                          │       │   │   ├── path.js
+       │             │                          │       │   │   ├── pathseg.js
+       │             │                          │       │   │   ├── recalculate.js
+       │             │                          │       │   │   ├── sanitize.js
+       │             │                          │       │   │   ├── select.js
+       │             │                          │       │   │   ├── svgcanvas.js
+       │             │                          │       │   │   ├── svgedit_friend.js
+       │             │                          │       │   │   ├── svgedit.js
+       │             │                          │       │   │   ├── svg-editor.css
+       │             │                          │       │   │   ├── svg-editor.html
+       │             │                          │       │   │   ├── svg-editor.js
+       │             │                          │       │   │   ├── svg-editor.manifest
+       │             │                          │       │   │   ├── svgtransformlist.js
+       │             │                          │       │   │   ├── svgutils.js
+       │             │                          │       │   │   ├── touch.js
+       │             │                          │       │   │   └── units.js
+       │             │                          │       │   ├── SysDiag
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── View
+       │             │                          │       │   │   │   │   └── main.js
+       │             │                          │       │   │   │   ├── sysdiag.js
+       │             │                          │       │   │   │   └── sys.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Treeroot
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── fcrypto
+       │             │                          │       │   │   │   │   ├── component.js
+       │             │                          │       │   │   │   │   ├── fcrypto.js
+       │             │                          │       │   │   │   │   │   ├── hash.js
+       │             │                          │       │   │   │   │   │   ├── jsbn.js
+       │             │                          │       │   │   │   │   │   ├── jscrypto.js
+       │             │                          │       │   │   │   │   │   ├── jsencrypt.js
+       │             │                          │       │   │   │   │   │   ├── random.js
+       │             │                          │       │   │   │   │   │   └── rsa.js
+       │             │                          │       │   │   │   │   └── deps
+       │             │                          │       │   │   │   │       ├── base64.js
+       │             │                          │       │   │   │   │       └── cryptojs
+       │             │                          │       │   │   │   │           └── rollups
+       │             │                          │       │   │   │   │               ├── aes.js
+       │             │                          │       │   │   │   │               └── pbkdf2.js
+       │             │                          │       │   │   │   ├── account.js
+       │             │                          │       │   │   │   ├── login.js
+       │             │                          │       │   │   │   ├── mainView.js
+       │             │                          │       │   │   │   └── views.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── login.html
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── index.html
+       │             │                          │       │   │   └── Treeroot.js
+       │             │                          │       │   ├── Trello
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── settings.js
+       │             │                          │       │   │   │   ├── trello.js
+       │             │                          │       │   │   │   └── trellolaunch.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── settings.html
+       │             │                          │       │   │   │   └── trello.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── Updates
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   └── updates.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── list.html
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   ├── UserBetaImport
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   └── userbetaimport.js
+       │             │                          │       │   │   └── Templates
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   └── user.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Users
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── main.js
+       │             │                          │       │   │   │   ├── userlogin.js
+       │             │                          │       │   │   │   ├── users.js
+       │             │                          │       │   │   │   ├── workgroup.js
+       │             │                          │       │   │   │   └── workgroup_members.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── main.html
+       │             │                          │       │   │   │   ├── setup.html
+       │             │                          │       │   │   │   ├── user.html
+       │             │                          │       │   │   │   ├── user_login.html
+       │             │                          │       │   │   │   ├── workgroup.html
+       │             │                          │       │   │   │   └── workgroup_members.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── Wallpaper
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── innerlogic.js
+       │             │                          │       │   │   │   └── wallpaper.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   └── main.html
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── index.html
+       │             │                          │       │   ├── WebsocketToolbox
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   └── toolbox.js
+       │             │                          │       │   ├── WebVR
+       │             │                          │       │   │   ├── Config.conf
+       │             │                          │       │   │   ├── iframe.html
+       │             │                          │       │   │   └── mvr.js
+       │             │                          │       │   ├── WideWeb
+       │             │                          │       │   │   ├── Scripts
+       │             │                          │       │   │   │   ├── logic.js
+       │             │                          │       │   │   │   └── wideweb.js
+       │             │                          │       │   │   ├── Templates
+       │             │                          │       │   │   │   ├── about.html
+       │             │                          │       │   │   │   └── webinterface.html
+       │             │                          │       │   │   └── Config.conf
+       │             │                          │       │   └── Workstream
+       │             │                          │       │       ├── Scripts
+       │             │                          │       │       │   └── workstream.js
+       │             │                          │       │       ├── Stylesheets
+       │             │                          │       │       │   └── gui_main.css
+       │             │                          │       │       ├── Templates
+       │             │                          │       │       │   └── gui_main.html
+       │             │                          │       │       ├── Config.conf
+       │             │                          │       │       └── index.html
+       │             │                          │       ├── css
+       │             │                          │       │   ├── core.css
+       │             │                          │       │   ├── doors.css
+       │             │                          │       │   ├── font-awesome.min.css
+       │             │                          │       │   ├── friendup.css
+       │             │                          │       │   ├── icons.css
+       │             │                          │       │   ├── lists.css
+       │             │                          │       │   ├── responsive.css
+       │             │                          │       │   ├── sharedapp.css
+       │             │                          │       │   ├── tabs.css
+       │             │                          │       │   ├── windows.css
+       │             │                          │       │   └── workspace.css
+       │             │                          │       ├── js
+       │             │                          │       │   ├── apps
+       │             │                          │       │   │   └── api.js
+       │             │                          │       │   ├── gui
+       │             │                          │       │   │   ├── desklet.js
+       │             │                          │       │   │   ├── directoryview.js
+       │             │                          │       │   │   ├── filedialog.js
+       │             │                          │       │   │   ├── guibase.js
+       │             │                          │       │   │   ├── listview.js
+       │             │                          │       │   │   ├── screen.js
+       │             │                          │       │   │   ├── template.js
+       │             │                          │       │   │   ├── treeview.js
+       │             │                          │       │   │   └── window.js
+       │             │                          │       │   ├── io
+       │             │                          │       │   │   ├── appConnection.js
+       │             │                          │       │   │   ├── applicationstorage.js
+       │             │                          │       │   │   ├── cajax.js
+       │             │                          │       │   │   ├── connection.js
+       │             │                          │       │   │   ├── dbio.js
+       │             │                          │       │   │   ├── directive.js
+       │             │                          │       │   │   ├── door.js
+       │             │                          │       │   │   ├── door_system.js
+       │             │                          │       │   │   ├── dormant.js
+       │             │                          │       │   │   ├── file.js
+       │             │                          │       │   │   ├── filetransfer.js
+       │             │                          │       │   │   ├── fragment.js
+       │             │                          │       │   │   ├── friendlibrary.js
+       │             │                          │       │   │   ├── gamepad.js
+       │             │                          │       │   │   ├── module.js
+       │             │                          │       │   │   ├── request.js
+       │             │                          │       │   │   ├── websocket.js
+       │             │                          │       │   │   └── websocket_old.js
+       │             │                          │       │   ├── media
+       │             │                          │       │   │   └── audio.js
+       │             │                          │       │   ├── native
+       │             │                          │       │   │   └── ftheory.js
+       │             │                          │       │   ├── trash
+       │             │                          │       │   │   ├── door_localstorage.js
+       │             │                          │       │   │   ├── friendapi_sandbox.js
+       │             │                          │       │   │   ├── old_application.js
+       │             │                          │       │   │   ├── old_applicationv1.js
+       │             │                          │       │   │   ├── old_directive.js
+       │             │                          │       │   │   └── old_directivev1.js
+       │             │                          │       │   ├── utils
+       │             │                          │       │   │   ├── closure-handler.js
+       │             │                          │       │   │   ├── cssparser.js
+       │             │                          │       │   │   ├── engine.js
+       │             │                          │       │   │   ├── frame-closure.js
+       │             │                          │       │   │   ├── installapplication.js
+       │             │                          │       │   │   ├── json.js
+       │             │                          │       │   │   ├── md5.js
+       │             │                          │       │   │   ├── sha256.js
+       │             │                          │       │   │   ├── speech-input.js
+       │             │                          │       │   │   ├── speech-input.txt
+       │             │                          │       │   │   ├── tool.js
+       │             │                          │       │   │   └── touch.js
+       │             │                          │       │   ├── apiwrapper.js
+       │             │                          │       │   ├── appspace.js
+       │             │                          │       │   ├── frienddos.js
+       │             │                          │       │   ├── graphene.js
+       │             │                          │       │   ├── namespace.js
+       │             │                          │       │   ├── nodedocument.js
+       │             │                          │       │   └── workspace.js
+       │             │                          │       ├── templates
+       │             │                          │       │   ├── about.html
+       │             │                          │       │   ├── activate.html
+       │             │                          │       │   ├── alert.html
+       │             │                          │       │   ├── beta_notice.html
+       │             │                          │       │   ├── confirm.html
+       │             │                          │       │   ├── connect_netdrive.html
+       │             │                          │       │   ├── eula.html
+       │             │                          │       │   ├── filedialog_bookmarks.html
+       │             │                          │       │   ├── filedialog_open.html
+       │             │                          │       │   ├── filedialog_save.html
+       │             │                          │       │   ├── file_import.html
+       │             │                          │       │   ├── file_operation.html
+       │             │                          │       │   ├── file_upload.html
+       │             │                          │       │   ├── fragments.html
+       │             │                          │       │   ├── guests_spent.html
+       │             │                          │       │   ├── handsfree.html
+       │             │                          │       │   ├── iconinfo.html
+       │             │                          │       │   ├── iconinfo_system.html
+       │             │                          │       │   ├── iconinfo_volume.html
+       │             │                          │       │   ├── install.html
+       │             │                          │       │   ├── login_prompt.html
+       │             │                          │       │   ├── login_relogin.html
+       │             │                          │       │   ├── newline.txt
+       │             │                          │       │   ├── runcommand.html
+       │             │                          │       │   ├── search.html
+       │             │                          │       │   ├── sysdoc_Dormant.html
+       │             │                          │       │   ├── sysdoc_FriendDOS.html
+       │             │                          │       │   ├── sysdoc_FriendScript.html
+       │             │                          │       │   ├── sysdoc_Programming.html
+       │             │                          │       │   ├── sysdoc_VoiceCommand.html
+       │             │                          │       │   ├── sysdoc_Workspace.html
+       │             │                          │       │   └── thankyou.html
+       │             │                          │       ├── app.html
+       │             │                          │       ├── graphene.html
+       │             │                          │       ├── guest.html
+       │             │                          │       ├── index.html
+       │             │                          │       ├── test.php
+       │             │                          │       ├── touchdesktop.html
+       │             │                          │       ├── updates_archive.html
+       │             │                          │       ├── updates.html
+       │             │                          │       ├── nodesession.js
+       │             │                          │       └── sandboxed.html
+       │             │                          ├── libs
+       │             │                          │   ├── application
+       │             │                          │   │   ├── applicationlibrary.c
+       │             │                          │   │   ├── applicationlibrary.d
+       │             │                          │   │   ├── applicationlibrary.h
+       │             │                          │   │   └── testlibrary.c
+       │             │                          │   ├── echo
+       │             │                          │   │   ├── bin
+       │             │                          │   │   ├── echo.c
+       │             │                          │   │   ├── echo.h
+       │             │                          │   │   └── testlibrary.c
+       │             │                          │   ├── image
+       │             │                          │   │   ├── imagelibrary.c
+       │             │                          │   │   ├── imagelibrary.d
+       │             │                          │   │   ├── imagelibrary.h
+       │             │                          │   │   └── testlibrary.c
+       │             │                          │   ├── mylibrary
+       │             │                          │   │   ├── mylibrary.c
+       │             │                          │   │   └── mylibrary.h
+       │             │                          │   ├── mysql
+       │             │                          │   │   ├── mysqllibrary.c
+       │             │                          │   │   ├── mysqllibrary.d
+       │             │                          │   │   ├── mysqllibrary.h
+       │             │                          │   │   ├── sql_defs.h
+       │             │                          │   │   └── testlibrary.c
+       │             │                          │   ├── properties
+       │             │                          │   │   ├── dictionary.c
+       │             │                          │   │   ├── dictionary.d
+       │             │                          │   │   ├── dictionary.h
+       │             │                          │   │   ├── iniparser.c
+       │             │                          │   │   ├── iniparser.d
+       │             │                          │   │   ├── iniparser.h
+       │             │                          │   │   ├── propertieslibrary.c
+       │             │                          │   │   ├── propertieslibrary.d
+       │             │                          │   │   ├── propertieslibrary.h
+       │             │                          │   │   └── testlibrary.c
+       │             │                          │   ├── user
+       │             │                          │   │   ├── testlibrary.c
+       │             │                          │   │   ├── userlibrary.c
+       │             │                          │   │   ├── userlibrary.d
+       │             │                          │   │   └── userlibrary.h
+       │             │                          │   └── z
+       │             │                          │       ├── configure.ac
+       │             │                          │       ├── crypt.h
+       │             │                          │       ├── ioapi_buf.c
+       │             │                          │       ├── ioapi_buf.h
+       │             │                          │       ├── ioapi.c
+       │             │                          │       ├── ioapi.d
+       │             │                          │       ├── ioapi.h
+       │             │                          │       ├── ioapi_mem.c
+       │             │                          │       ├── ioapi_mem.d
+       │             │                          │       ├── ioapi_mem.h
+       │             │                          │       ├── iowin32.c
+       │             │                          │       ├── iowin32.h
+       │             │                          │       ├── miniunz.c
+       │             │                          │       ├── miniunz.d
+       │             │                          │       ├── minizip.c
+       │             │                          │       ├── minizip.d
+       │             │                          │       ├── minizip.pc.in
+       │             │                          │       ├── testlibrary.c
+       │             │                          │       ├── unzip.c
+       │             │                          │       ├── unzip.d
+       │             │                          │       ├── unzip.h
+       │             │                          │       ├── zip.c
+       │             │                          │       ├── zip.d
+       │             │                          │       ├── zip.h
+       │             │                          │       ├── zlibrary.c
+       │             │                          │       ├── zlibrary.d
+       │             │                          │       ├── zlibrary.h
+       │             │                          │       └── aes
+       │             │                          │           ├── aescrypt.c
+       │             │                          │           ├── aescrypt.o
+       │             │                          │           ├── aes.h
+       │             │                          │           ├── aeskey.c
+       │             │                          │           ├── aeskey.o
+       │             │                          │           ├── aesopt.h
+       │             │                          │           ├── aestab.c
+       │             │                          │           ├── aestab.h
+       │             │                          │           ├── aestab.o
+       │             │                          │           ├── aes_via_ace.h
+       │             │                          │           ├── brg_endian.h
+       │             │                          │           ├── brg_types.h
+       │             │                          │           ├── entropy.c
+       │             │                          │           ├── entropy.h
+       │             │                          │           ├── entropy.o
+       │             │                          │           ├── fileenc.c
+       │             │                          │           ├── fileenc.h
+       │             │                          │           ├── fileenc.o
+       │             │                          │           ├── hmac.c
+       │             │                          │           ├── hmac.h
+       │             │                          │           ├── hmac.o
+       │             │                          │           ├── libaes.a
+       │             │                          │           ├── Makefile
+       │             │                          │           ├── prng.c
+       │             │                          │           ├── prng.h
+       │             │                          │           ├── prng.o
+       │             │                          │           ├── pwd2key.c
+       │             │                          │           ├── pwd2key.h
+       │             │                          │           ├── pwd2key.o
+       │             │                          │           ├── sha1.c
+       │             │                          │           ├── sha1.h
+       │             │                          │           └── sha1.o
+       │             │                          ├── modules
+       │             │                          │   ├── competentcandidate
+       │             │                          │   │   ├── module.php
+       │             │                          │   │   └── include
+       │             │                          │   │       ├── cmd_candidate_connect_profile.php
+       │             │                          │   │       ├── cmd_candidate_disconnect_profile.php
+       │             │                          │   │       ├── cmd_candidate_get_data.php
+       │             │                          │   │       ├── cmd_candidate_profile_load.php
+       │             │                          │   │       ├── cmd_candidate_profile_review_save_comment.php
+       │             │                          │   │       ├── cmd_candidate_profile_review_save_rating.php
+       │             │                          │   │       ├── cmd_candidate_profiles_list.php
+       │             │                          │   │       ├── cmd_candidate_search.php
+       │             │                          │   │       ├── cmd_checkuser.php
+       │             │                          │   │       ├── cmd_globalgroup_get.php
+       │             │                          │   │       ├── cmd_globalgroup_set.php
+       │             │                          │   │       ├── cmd_group_delete.php
+       │             │                          │   │       ├── cmd_listdelete.php
+       │             │                          │   │       ├── cmd_listget.php
+       │             │                          │   │       ├── cmd_listset.php
+       │             │                          │   │       ├── cmd_lists.php
+       │             │                          │   │       ├── cmd_profile_delete.php
+       │             │                          │   │       ├── cmd_profile_get.php
+       │             │                          │   │       ├── cmd_profile_set.php
+       │             │                          │   │       ├── cmd_profiles.php
+       │             │                          │   │       └── dbsetup.php
+       │             │                          │   ├── dock
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── files
+       │             │                          │   │   ├── include
+       │             │                          │   │   │   └── door_Local.php
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── friendreference
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── friendstoreadmin
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── iotdevice
+       │             │                          │   │   ├── module.php
+       │             │                          │   │   ├── include
+       │             │                          │   │   │   ├── getsetting.php
+       │             │                          │   │   │   └── setsetting.php
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── issues
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── mail
+       │             │                          │   │   ├── include
+       │             │                          │   │   │   ├── accountfolders.php
+       │             │                          │   │   │   ├── checkstorage.php
+       │             │                          │   │   │   ├── folder.php
+       │             │                          │   │   │   ├── mailheader.php
+       │             │                          │   │   │   ├── pat.php
+       │             │                          │   │   │   └── read.php
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── mitra
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── pythontest
+       │             │                          │   │   ├── file.py
+       │             │                          │   │   ├── module.php
+       │             │                          │   │   └── ---module.py
+       │             │                          │   ├── sauron
+       │             │                          │   │   └── module.php
+       │             │                          │   ├── system
+       │             │                          │   │   ├── include
+       │             │                          │   │   │   ├── activateapplication.php
+       │             │                          │   │   │   ├── appcategories.php
+       │             │                          │   │   │   ├── betaimport.php
+       │             │                          │   │   │   ├── convertfile.php
+       │             │                          │   │   │   ├── cssparser.php
+       │             │                          │   │   │   ├── dbchecker.php
+       │             │                          │   │   │   ├── deletemimetypes.php
+       │             │                          │   │   │   ├── fileinfo.php
+       │             │                          │   │   │   ├── filesystems.php
+       │             │                          │   │   │   ├── firstlogin.php
+       │             │                          │   │   │   ├── friendapplication.php
+       │             │                          │   │   │   ├── friendversion.php
+       │             │                          │   │   │   ├── getlocale.php
+       │             │                          │   │   │   ├── getmimetypes.php
+       │             │                          │   │   │   ├── getsetting.php
+       │             │                          │   │   │   ├── installapplication.php
+       │             │                          │   │   │   ├── installpackage.php
+       │             │                          │   │   │   ├── install.php
+       │             │                          │   │   │   ├── languages.php
+       │             │                          │   │   │   ├── launch.php
+       │             │                          │   │   │   ├── libraries.php
+       │             │                          │   │   │   ├── listlibraries.php
+       │             │                          │   │   │   ├── listuserapplications.php
+       │             │                          │   │   │   ├── modules.php
+       │             │                          │   │   │   ├── package.php
+       │             │                          │   │   │   ├── sandbox.php
+       │             │                          │   │   │   ├── savestate.php
+       │             │                          │   │   │   ├── securitydomains.php
+       │             │                          │   │   │   ├── setfileprivate.php
+       │             │                          │   │   │   ├── setfilepublic.php
+       │             │                          │   │   │   ├── setmimetypes.php
+       │             │                          │   │   │   ├── setsetting.php
+       │             │                          │   │   │   ├── software.php
+       │             │                          │   │   │   ├── systemmail.php
+       │             │                          │   │   │   ├── systempath.php
+       │             │                          │   │   │   ├── theme.php
+       │             │                          │   │   │   ├── themes.php
+       │             │                          │   │   │   ├── uninstallapplication.php
+       │             │                          │   │   │   ├── unzip.php
+       │             │                          │   │   │   ├── updateappdata.php
+       │             │                          │   │   │   ├── updateapppermissions.php
+       │             │                          │   │   │   ├── usersessions.php
+       │             │                          │   │   │   ├── usersetupadd.php
+       │             │                          │   │   │   ├── usersetupdelete.php
+       │             │                          │   │   │   ├── usersetupget.php
+       │             │                          │   │   │   ├── usersetup.php
+       │             │                          │   │   │   ├── usersetupsave.php
+       │             │                          │   │   │   ├── volumeinfo.php
+       │             │                          │   │   │   ├── workgroupadd.php
+       │             │                          │   │   │   ├── workgroupdelete.php
+       │             │                          │   │   │   ├── workgroupget.php
+       │             │                          │   │   │   ├── workgroups.php
+       │             │                          │   │   │   ├── workgroupupdate.php
+       │             │                          │   │   │   ├── zip.php
+       │             │                          │   │   │   ├── znative_kill_app.php
+       │             │                          │   │   │   ├── znative_launch_app.php
+       │             │                          │   │   │   ├── znative_list_apps.php
+       │             │                          │   │   │   ├── znative_list_windows.php
+       │             │                          │   │   │   ├── znative_window_maximize.php
+       │             │                          │   │   │   ├── znative_window_minimize.php
+       │             │                          │   │   │   ├── znative_window_resize.php
+       │             │                          │   │   │   └── znative_window_restore.php
+       │             │                          │   │   └── module.php
+       │             │                          │   └── workstream
+       │             │                          │       ├── applications
+       │             │                          │       │   ├── manager
+       │             │                          │       │   │   └── application.php
+       │             │                          │       │   └── treeroot
+       │             │                          │       │       └── application.php
+       │             │                          │       ├── license.txt
+       │             │                          │       └── module.php
+       │             │                          └── php
+       │             │                              ├── classes
+       │             │                              │   ├── dbio.php
+       │             │                              │   ├── door.php
+       │             │                              │   ├── file.php
+       │             │                              │   ├── friendversion.php
+       │             │                              │   └── logger.php
+       │             │                              ├── include
+       │             │                              │   └── i18n.php
+       │             │                              ├── mylibrary.library
+       │             │                              │   └── testSomething.php
+       │             │                              ├── catch_all.php
+       │             │                              ├── constants.php
+       │             │                              ├── friend.php
+       │             │                              ├── guests.php
+       │             │                              └── hi.php

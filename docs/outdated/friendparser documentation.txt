@@ -1,0 +1,128 @@
+--------------------------------------------------------------------------------
+Friend Parser
+Internal source-code parsing utility
+By FL - 05/12/2016
+--------------------------------------------------------------------------------
+
+Source code located in tools/friendparser
+
+Purpose of this utility
+-----------------------
+- Quick switch between Open Source and Internal headers for all sources of the
+  Friend project
+- Easy communication between developers, with extraction of messages from
+  the source code and creation of a report for each developer at the end of
+  process
+- To be implemented: quick reformat of source spaces and tabs to match Hogne
+  criterias, and perform other source cleanup, in order that they look good
+  for the Open-Source version (and evaluation of the code base for investors),
+  and avoid Hogne from having to do the job every week.
+
+
+Compilation
+-----------
+I do not know (yet) the syntax of normal make files that we use. I have tried
+and could not make it work. And it has been a long day...
+CLion uses CMake. I will put the compiled utility on its Trello card until
+I create a proper make file. If someone could do the conversion and send it
+to me, I could learn from it...
+
+Necessary files
+---------------
+In order to change the licence headers of the sources:
+* friendparser-headerinternal.txt in tools/friendparser
+* friendparser-opensource.txt in tools/friendparser
+WARNING! do not end the header files templates by an empty line: it will be
+added to the sources under the licence each time you use the utility.
+The cursor must *not* go further than the last "*/"
+The templates can be of any length...
+
+Template header for generated reports:
+* friendparser-headerreports.txt in tools/friendparser
+
+
+How to use?
+-----------
+Invoke friendparser in the directory you want to explore. It will deal
+with all the known files (.c, .h, .js, .php). I can add more and have specific
+treatment for each type of file.
+Warning: pathnames to templates are hard coded in this version, friendparser
+must be in the root of the Friend Server code folders to work today...
+
+Options :
+
+-d : explores sub-directories
+-i : replaces the license with the internal version (do not use with -o)
+-o : replaces the license with the open-source version (do not use with -i)
+-r : generates reports for developers. The reports will be created besides
+     friendparser executable.
+
+Note
+
+For the license to be replaced, it must be defined in the original
+sources. I look for character sequence "/*©*" to indicate the beginning
+of the licence to replace, and "*©*" for the end. Licenses can be therefore
+replaced in the middle of a source...
+The replacement is done for all the lines containing these indicators.
+It will therefore work with all the existing licenses present in
+Friend until I came, and will not affect code without license.
+
+Examples of use:
+
+./friendparser -d -i    // Switch all code to internal
+./friendparser -d -r    // Generates reports from whole code base
+./friendparser -d -o -r // Switch all code to open-source and generate reports
+
+Format of the communication messages between developers
+-------------------------------------------------------
+I have entered the following list of people in friendparser:
+"HT" - "Hogne Tildstad"
+"PS" - "Pawel Stefansky",
+"CA" - "Chris Andre Stromland",
+"BU" - "Bartosz Urbaniak",
+"TW" - "Thomas Wollburg",
+"EO" - "Espen Olsen",
+"FL" - "Francois Lionet"
+
+To send a message to another developer, just insert it in the source code,
+using the syntax XX>YY.
+Example FL>PS, PS>HT, EO>TW etc.
+
+The source parser will extract the line where the message is, check that it is
+*not* ">HTTP" (! such a name Hogne :), and will put it in a report for
+the destination developer. For example, a report for Thomas will only contain
+notifications ending by ">TW"
+friendparser stores for each notification the name of the file where it was
+found, and the number of the line where is is located. It then copies the
+line in question (including of course the notification).
+Please note that this system is independent from TODOs, and it does not affect
+them. You can perfectly put XX>YY in the middle of a TODO.
+
+Ideas for the next versions
+---------------------------
+Please send me any idea you would have for improvement. Here is my list...
+
+- Creation of a configuration file instead of hard-coding paths and values
+- Use of names of files or directories as CLI arguments
+- Automatic emailing of the reports to the developers after extraction
+- Extraction of all the "TODO" in a todos.txt files
+- Definition of a notification TODO: TODO>FL will copy the TODO in FL's report,
+  and not conflict with Doxygen or other todo extracting systems
+- Reformatting of code with Hogne's preferences
+- Positioning of all comments after code on the same column when possible
+- System of version for important functions: indicate if the function has
+  been through major changes, and all code calling this function will generate
+  warnings until the changes have been approved by their developers... implies
+  two passes on the code, for later... Important when we are 100 developers.
+
+Feedback welcomed
+-----------------
+Please send me comments on this little utility, I may have made mistakes as it
+is my very first program on Linux.
+It is highly recommended to push all changes to GIT before running it, at
+least until it has be tested for several days.
+It uses the FriendString C "object" that I wrote at the same time. It is
+now dead-easy to deal with strings in C... To be pushed soon.
+My first program in pure C since 15 years... so simple!
+So great to code again! Back to the root... of the server of course!
+:)

@@ -375,6 +375,43 @@ char* json_get_element_string(json_t *json, const char *needle){
 	return return_string;
 }
 
+bool json_get_element_int(json_t *json, const char *needle, int *target_int){
+	int key_index = -1;
+
+	for (int i = 0; i < json->token_count; i++){
+		if (jsoneq(json->string, &(json->tokens[i]), needle) == 0){
+			key_index = i;
+			break;
+		}
+	}
+	if (key_index == -1){ //element not found
+		return false;
+	}
+
+	//there must be at least one more token after the key token
+	if (key_index + 1 >= json->token_count){
+		return false;
+	}
+
+	int return_value_index = key_index + 1;
+
+	if (json->tokens[return_value_index].type != JSMN_PRIMITIVE){ //value token is not an int
+		return false;
+	}
+
+	if (json->tokens[return_value_index].end >= json->string_length){ //parsing error? can't write outside the array...
+		return false;
+	}
+
+	json->string[json->tokens[return_value_index].end] = '\0';
+
+	int status = sscanf(json->string + json->tokens[return_value_index].start, "%d", target_int);
+	if (status != 1){
+		return false;
+	}
+
+	return true;
+}
 char* json_escape_string(const char *string_to_escape){
 	unsigned int characters_to_escape = 0;
 	unsigned int string_length = 0;

@@ -64,6 +64,7 @@
 #include <hardware/network.h>
 #include <libxml2/libxml/xmlversion.h>
 #include <unistd.h>
+#include <mobile_app/notifications_sink_websocket.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -227,6 +228,7 @@ SystemBase *SystemInit( void )
 	char *pass = "root";
 	char *dbname = "FriendMaster";
 	int port = 3306;
+	char *options = NULL;
 	l->sqlpoolConnections = DEFAULT_SQLLIB_POOL_NUMBER;
 	Props *prop = NULL;
 
@@ -299,6 +301,8 @@ SystemBase *SystemInit( void )
 			DEBUG("[SystemBase] port read %d\n", port );
 			l->sqlpoolConnections = plib->ReadInt( prop, "DatabaseUser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
+			options = plib->ReadString( prop, "DatabaseUser:options", NULL );
+			DEBUG("[SystemBase] options %s\n",options );
 			
 			l->sl_CacheFiles = plib->ReadInt( prop, "Options:CacheFiles", 1 );
 			l->sl_UnMountDevicesInDB = plib->ReadInt( prop, "Options:UnmountInDB", 1 );
@@ -360,23 +364,49 @@ SystemBase *SystemInit( void )
 			{
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
+
+			websocket_notifications_set_auth_key(plib->ReadString( prop, "NotificationService:key", "" ));
 		}
 		else
 		{
 			FERROR( "Prop is just NULL!\n" );
 		}
+		
+		Log( FLOG_INFO, "----------------------------------------\n");
+		Log( FLOG_INFO, "-----Database configuration-------------\n");
+		Log( FLOG_INFO, "-----Host: %s\n", host );
+		Log( FLOG_INFO, "-----Port: %d\n", port );
+		Log( FLOG_INFO, "-----DBName: %s\n", dbname );
+		Log( FLOG_INFO, "-----User: %s\n", login );
+		Log( FLOG_INFO, "----------------------------------------\n");
 
 		l->sqlpool = FCalloc( l->sqlpoolConnections, sizeof( SQLConPool) );
 		if( l->sqlpool != NULL )
 		{
 			unsigned int i = 0;
+			int error = 0;
 
 			for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
 			{
-				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l,  l->sl_DefaultDBLib, 0 );
+				l->sqlpool[i ].sqllib = (struct SQLLibrary *)LibraryOpen( l, l->sl_DefaultDBLib, 0 );
 				if( l->sqlpool[i ].sqllib != NULL )
 				{
-					l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
+					error = l->sqlpool[i ].sqllib->SetOption( l->sqlpool[i ].sqllib, options );
+					error = l->sqlpool[i ].sqllib->Connect( l->sqlpool[i ].sqllib, host, dbname, login, pass, port );
+					if( error != 0 )
+					{
+						break;
+					}
+				}
+			}
+			
+			if( error != 0 )
+			{
+				i = 0;
+				for( ; i < (unsigned int)l->sqlpoolConnections; i++ )
+				{
+					LibraryClose( l->sqlpool[ i ].sqllib );
+					l->sqlpool[i ].sqllib = NULL;
 				}
 			}
 		}
@@ -747,6 +777,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize AppSessionManager\n");
 	}
 	
+	l->sl_DOSTM = DOSTokenManagerNew( l );
+	if( l->sl_DOSTM == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize DOSTokenManager\n");
+	}
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -917,6 +953,10 @@ void SystemClose( SystemBase *l )
 	if( l->sl_WDavTokM != NULL )
 	{
 		WebdavTokenManagerDelete( l->sl_WDavTokM );
+	}
+	if( l->sl_DOSTM != NULL )
+	{
+		DOSTokenManagerDelete( l->sl_DOSTM );
 	}
 	
 	// Remove sentinel from active memory
@@ -1166,6 +1206,8 @@ int SystemInitExternal( SystemBase *l )
 		while( usess != NULL )
 		{
 			DEBUG("[SystemBase] Assigning sessions to users by ID %ld\n", usess->us_ID );
+			
+			l->sl_USM->usm_SessionCounter++;
 			
 			// checking if user exist, if not it is created
 			User *usr = l->sl_UM->um_Users;

@@ -1,0 +1,7 @@
+{
+	"type":    "IMAP",
+	"literal": "IMAP File system",
+	"group":   "User",
+	"sharing": "1",
+	"icon": "logo.png"
+}

@@ -280,13 +280,18 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 					$o->DateCreated = $dc[$i]['server_modified'];
 					$o->Filesize = $dc[$i]['size'];
 					
+					$path = ( $subPath && $subPath != '/' ? $subPath . '/' : '' ) . end( explode( '/', $dc[$i]['path_display'] ) );
 					
-					$cleanpath = ( substr( $dc[$i]['path_display'],0,1 ) == '/' ? substr( $dc[$i]['path_display'],1 ) : $dc[$i]['path_display'] ); 
+					$cleanpath = ( substr( $path,0,1 ) == '/' ? substr( $path,1 ) : $path ); 
 					$cleanpath .= ( $dc[$i]['.tag'] == 'folder' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
+					
+					//$cleanpath = ( substr( $dc[$i]['path_display'],0,1 ) == '/' ? substr( $dc[$i]['path_display'],1 ) : $dc[$i]['path_display'] ); 
+					//$cleanpath .= ( $dc[$i]['.tag'] == 'folder' && substr( $cleanpath , -1) != '/' ? '/' : '' ) ;
 					
 					$o->Path = $cleanpath; // . ( $dc[$i]['is_dir'] ? '/' : '' )
 					$ret[] = $o;
 				}
+				
 				return $ret;
 			}
 			else
@@ -459,36 +464,46 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			else if( $args->command == 'write' )
 			{
 				
-				
 				if( $this->state != self::UNAUTHORIZED && isset( $args->tmpfile ) && $this->connectClient()) 
 				{
 					$dropboxpath = end( explode(':', $args->path) );
 					if( substr($dropboxpath,0,1) != '/' ) $dropboxpath = '/' . $dropboxpath; //sometimes the leading trail is missing; like in sometimes when a folder is created at root level
 					
+					//$Logger->log( '$args->command == \'write\' ' . print_r( $args,1 ) . ' [] ' . $dropboxpath );
 
 					//create db file isntance
 					$dbf = new Kunnu\Dropbox\DropboxFile( $args->tmpfile );
 					
-
-					$filesize = filesize( $args->tmpfile  );
-					$chunkSize = $filesize < 4096 ? $filesize : 4096;
+					
+					// TODO: Add chuncked support for files over 8mb ...
+					
+					$filesize = filesize( $args->tmpfile );
+					
+					// 524288 bytes = 0,5mb
+					
+					$chunkSize = ( $filesize < 524288 ? $filesize : 524288 );
+					
+					//$Logger->log( '$this->dbx->uploadChunked( ' . ( $dbf ? 'true' : 'false' ) . ', ' . $dropboxpath . ', ' . $filesize . ', ' . $chunkSize . ', [\'autorename\' => true] );' );
 					
 					$file = $this->dbx->uploadChunked($dbf, $dropboxpath, $filesize, $chunkSize, ['autorename' => true]);
-
+					
 					$newmeta = $file->getData();
-
+					
 					if( is_array($newmeta) && isset( $newmeta['size'] ) )
 					{
 						$this->updateAccountInfo();
+						$Logger->log( 'ok<!--separate-->' . $newmeta['size'] . '<!--separate-->' . $newmeta['path_display'] );
 						return 'ok<!--separate-->' . $newmeta['size'] . '<!--separate-->' . $newmeta['path_display'];
 					}
 					else
 					{
+						$Logger->log( 'fail<!--separate-->Write to dropbobx failed' );
 						return 'fail<!--separate-->Write to dropbobx failed';
 					}
 				}
 				else
 				{
+					$Logger->log( 'fail<!--separate-->Not authorized to write to Dropbox.' );
 					return( 'fail<!--separate-->Not authorized to write to Dropbox.' );
 				}
 			}
@@ -703,7 +718,7 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			$file_to_get = $this->dbx->download( $dropboxpath );
 			
 			fwrite( $fp, $file_to_get->getContents() );
-			fseek($fp, 0);
+			fseek( $fp, 0 );
 			
 			if( $args->mode == 'rb' )
 			{
@@ -720,7 +735,9 @@ if( !class_exists( 'DoorDropboxDrive' ) )
 			{
 				return('ok<!--separate-->' . stream_get_contents($fp) );
 			}
-		
+			
+			$Logger->log( 'return false;' );
+			
 			return false;
 		}
 		

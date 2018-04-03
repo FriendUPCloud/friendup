@@ -948,7 +948,7 @@ int ParseMultipart( Http* http )
 		return -1;
 	}
 
-	INFO("Multipart parsing\n");
+	DEBUG("Multipart parsing, content length %ld\n", http->h_ContentLength);
 	
 	
 	/*
@@ -1029,6 +1029,10 @@ Content-Type: application/octet-stream
 								numOfFiles++;
 							}
 						}
+						//--------- BG-389 ---------
+						dataPtr = endOfFile;
+						continue;
+						//--------------------------
 					}
 				}
 				
@@ -1041,7 +1045,7 @@ Content-Type: application/octet-stream
 				{
 					dataPtr += pos + 20;
 				}
-			}
+			} //end of if( strncmp( nextlineStart, "Content-Type: ", 14 ) == 0 )
 			
 			//
 			// its not file its parameter
@@ -1062,21 +1066,24 @@ Content-Type: application/octet-stream
 				TODO: Enable this when it does something..
 				*/
 				
-				if( HashmapPut( http->parsedPostContent, key, value ) )
+				if( HashmapPut( http->parsedPostContent, key, value ) == MAP_OK )
 				{
 					
 				}
 				
-				INFO("[Http] Parse multipart KEY: %s  VALUE %s---s<<----------\n", key, value );
+				DEBUG("[Http] Parse multipart KEY: <%s> VALUE <%s>\n", key, value );
 				
 				int pos = ( int )( contentDisp - dataPtr ); 
 				dataPtr += pos + 20;
 			}
 		}
-		else break;
+		else {
+			DEBUG("End of parsing");
+			break;
+		}
 	}
 	
-	INFO("Number of files in http request %d\n", numOfFiles );
+	DEBUG("Number of files in http request %d\n", numOfFiles );
 	
 	return 0;
 }
@@ -1889,7 +1896,7 @@ int HttpAddHeader( Http* http, const char* key, char* value )
 		//}
 		
 		// If this fails!
-		if( HashmapPut( http->headers, bkey, value ) == FALSE )
+		if( HashmapPut( http->headers, bkey, value ) == MAP_OK )
 		{
 			FERROR("Cannot push data into hashmap %s\n", value );
 			FFree( bkey ); 

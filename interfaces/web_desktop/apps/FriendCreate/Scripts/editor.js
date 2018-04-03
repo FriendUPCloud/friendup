@@ -26,8 +26,18 @@ settings = {
 	theme: 'twilight'
 };
 
+var resizeColumn = {
+	state: 0,
+	offset: 0
+};
+
+var sasActive = false;
+
 Application.run = function( msg )
 {
+	InitTabs( ge( 'EditorTabs' ) );
+	VisualEditor.init();
+	
 	// Make sure we can run ace
 	function delayedSetupAce()
 	{
@@ -43,10 +53,37 @@ Application.run = function( msg )
 		}
 	}
 
+	ge( 'ResizeColumn' ).onmousedown = function( e )
+	{
+		resizeColumn.offset = e.clientX - ge( 'ResizeColumn' ).offsetLeft;
+		resizeColumn.state = 1;
+		console.log( e.clientX );
+	}
+
 	loadConfig( delayedSetupAce );
 
 	this.sideBarHidden = false;
 };
+
+window.addEventListener( 'mousemove', function( e )
+{
+	if( resizeColumn.state == 1 )
+	{
+		var l = e.clientX - resizeColumn.offset;
+		if( l < 200 ) l = 200;
+		ge( 'ResizeColumn' ).style.left = l + 'px';
+		ge( 'fileslistlabel' ).style.width = l + 'px';
+		ge( 'fileslist' ).style.width = l + 'px';
+		ge( 'filestabs' ).style.width = l + 'px';
+		ge( 'filestatus' ).style.width = l + 'px';
+		ge( 'CodeView' ).style.left = l + ge( 'ResizeColumn' ).offsetWidth + 'px';
+	}
+} );
+
+window.addEventListener( 'mouseup', function( e )
+{
+	resizeColumn.state = 0;
+} );
 
 Application.refreshAceSettings = function( reload )
 {
@@ -309,6 +346,7 @@ Application.handleKeys = function( k, e )
 Application.applySyntaxHighlighting = function ()
 {
 	var cf = this.files[this.currentFile];
+	if( !cf ) return;
 	if( !cf.filetype || ( cf.filetype && cf.filetype.indexOf( ' ' ) > 0 && cf.filename ) )
 	{
 		var ext = cf.filename.split( '.' );
@@ -698,6 +736,7 @@ Application.refreshFilesList = function ()
 		c.ind = t;
 		c.onclick = function ( e )
 		{
+			ge( 'CodeEditorTab' ).onclick();
 			Application.setCurrentFile( this.ind );
 			Application.refreshFilesList ();
 
@@ -753,6 +792,49 @@ Application.checkFileType = function( path )
 			return true;
 		default:
 			return false;
+	}
+}
+
+// Send an event
+function SendSasEvent( event, data )
+{
+	// Only send sas event if sas is active
+	if( sasActive )
+	{
+		Application.sendMessage( { command: 'guievent', event: event, data: data } );
+	}
+}
+
+function ExecuteSasEvent( msg, identity )
+{
+	// Check event
+	switch( msg.event )
+	{
+		case 'initvisualpage':
+			VisualEditor.mode = msg.data;
+			VisualEditor.init();
+			break;
+		case 'visual_addelement':
+			VisualEditor.add( msg.data );
+			break;
+		case 'mousedown':
+			if( ge( msg.data.id ) )
+			{
+				ge( msg.data.id ).events.mouseDown( msg.data.event, true );
+			}
+			break;
+		case 'mouseup':
+			if( ge( msg.data.id ) )
+			{
+				ge( msg.data.id ).events.mouseUp( msg.data.event, true );
+			}
+			break;
+		case 'mousemove':
+			if( ge( msg.data.id ) )
+			{
+				ge( msg.data.id ).events.mouseMove( msg.data.event, true );
+			}
+			break;
 	}
 }
 
@@ -944,7 +1026,7 @@ Application.closeFile = function()
 				filename: this.files[a].filename,
 				touched: this.files[a].touched
 			} );
-			this.currentFile = newFiles.length-1;
+			this.currentFile = newFiles.length - 1;
 	    }
 	}
 
@@ -957,7 +1039,7 @@ Application.closeFile = function()
 		var files = false;
 		for ( var c = 0; c < d.length; c++ )
 		{
-			if ( d[c].className.indexOf ( ' Files' ) > 0 )
+			if ( d[c].classList.contains ( 'Files' ) > 0 )
 			{
 				files = d[c];
 				break;
@@ -967,10 +1049,15 @@ Application.closeFile = function()
 		{
 			return;
 		}
+		
 		this.editor.setValue( '' );
 		this.editor.clearSelection ();
 		this.editor.getSession().setScrollTop ( 0 );
-		this.newFile();
+		
+		if( this.collaboranewFile )
+		{
+			this.collaboranewFile();
+		}
 	}
 	// Close existing file and rebuild files list
 	else
@@ -979,6 +1066,13 @@ Application.closeFile = function()
 		this.editor.setValue( this.files[this.currentFile].content );
 		this.setCurrentFile( this.currentFile );
 	}
+	
+	// We need at least one file
+	if( !this.files.length )
+	{
+		this.newFile();
+	}
+	
 	this.refreshFilesList();
 }
 
@@ -997,6 +1091,18 @@ Application.receiveMessage = function( msg )
 	{
 		switch( msg.command )
 		{
+			case 'guiaction':
+				msg.event.sasIsHost = msg.sasIsHost;
+				ExecuteSasEvent( msg.event, msg.identity );
+				break;
+			case 'refresh_collaborators':
+				if( msg.activeUsers )
+				{
+					sasActive = true;
+				}
+				else sasActive = false;
+				ge( 'Collaborators' ).innerHTML = msg.data;
+				break;
 			case 'incrementloader':
 				loading++; 
 				loadProgress();

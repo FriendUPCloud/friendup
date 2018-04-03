@@ -60,12 +60,7 @@ var mousePointer =
 			windowMouseY = e.clientY;
 			// Skew them
 			if( ge( 'DoorsScreen' ).screenOffsetTop )
-				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;
-			
-			if( globalConfig.workspacecount > 1 )
-			{
-				windowMouseX += window.innerWidth * globalConfig.workspaceCurrent;
-			}			
+				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;			
 			
 			// Check move on window
 			var z = 0;
@@ -432,7 +427,6 @@ var mousePointer =
 	},
 	'pickup': function ( ele )
 	{
-		//console.log( 'pickup', ele );
 		this.testPointer ();
 		// Check multiple (pickup multiple)
 		var multiple = false;
@@ -502,13 +496,62 @@ var mousePointer =
 };
 
 // Get information about theme
-var themeInfo = { loaded: false };
+var themeInfo = { 
+	loaded: false,
+	dynamicClasses: {
+		WindowSnapping: function( e )
+		{
+			var hh = Workspace && Workspace.screen ? ( Workspace.screen.getMaxViewHeight() + 'px' ) : '0';
+			var winw = window.innerWidth + 'px';
+			var ww = Math.floor( window.innerWidth * 0.5 ) + 'px';
+			return `
+html .View.SnapLeft
+{
+	left: 0 !important;
+	top: 0;
+	height: ${hh} !important;
+	width: ${ww} !important;
+}
+html .View.SnapRight
+{
+	left: calc(${winw} - ${ww}) !important;
+	top: 0;
+	height: ${hh} !important;
+	width: ${ww} !important;
+}
+`;
+		}
+	}
+};
+
+// Refresh programmatic classes
+function RefreshDynamicClasses( e )
+{
+	if( !themeInfo.dynamicClasses ) return;
+	var str = '';
+	for( var a in themeInfo.dynamicClasses )
+	{
+		str += themeInfo.dynamicClasses[ a ]( e );
+	}
+	themeInfo.dynCssEle.innerHTML = str;
+}
+function InitDynamicClassSystem()
+{
+	var dynCss = document.createElement( 'style' );
+	document.body.appendChild( dynCss );
+	themeInfo.dynCssEle = dynCss;
+	var ls = [ 'resize', 'mousedown', 'mouseup', 'touchstart', 'touchend' ];
+	for( var a = 0; a < ls.length; a++ )
+		window.addEventListener( ls[a], RefreshDynamicClasses );
+	RefreshDynamicClasses( {} );
+}
+
 function GetThemeInfo( property )
 {
 	if( !Workspace.loginUsername ) return false;
 	if( !themeInfo.loaded )
 	{
-		themeInfo = { loaded: true };
+		themeInfo.loaded = true;
 		// Flush old rules
 		var sheet = false;
 		for( var a = 0; a < document.styleSheets.length; a++ )
@@ -1165,9 +1208,67 @@ movableListener = function( e, data )
 				
 				if( !w.getAttribute( 'moving' ) )
 					w.setAttribute( 'moving', 'moving' );
-				
+								
 				// Move the window
 				ConstrainWindow( w, mx, my )
+
+				// Do the snap!
+				if( !isMobile )
+				{
+					var tsX = w.offsetLeft;
+					var tsY = w.offsetTop;
+					if( windowMouseY > 0 )
+					{
+						var snapOut = false;
+						var hw = window.innerWidth * 0.1;
+						var rhw = window.innerWidth - hw;
+						if( windowMouseX > hw && windowMouseX < rhw )
+						{
+							snapOut = true;
+						}
+						else
+						{
+							if( tsX == 0 )
+							{
+								w.classList.remove( 'SnapRight' );
+								if( !w.classList.contains( 'SnapLeft' ) )
+								{
+									w.classList.add( 'SnapLeft' );
+									RefreshDynamicClasses();
+									if( w.content && w.content.refresh )
+										w.content.refresh();
+								}
+							}
+							else if( tsX + w.offsetWidth == window.innerWidth )
+							{
+								w.classList.remove( 'SnapLeft' );
+								if( !w.classList.contains( 'SnapRight' ) )
+								{
+									w.classList.add( 'SnapRight' );
+									RefreshDynamicClasses();
+									if( w.content && w.content.refresh )
+										w.content.refresh();
+								}
+							}
+							else
+							{
+								snapOut = true;
+							}
+						}
+						if( snapOut )
+						{
+							var cn = w.classList.contains( 'SnapLeft' ) || w.classList.contains( 'SnapRight' );
+							if( cn )
+							{
+								w.classList.remove( 'SnapLeft' );
+								w.classList.remove( 'SnapRight' );
+								RefreshDynamicClasses();
+								if( w.content && w.content.refresh )
+									w.content.refresh();
+							}
+						}
+					}
+				}
 			}
 			
 			// Do resize events
@@ -1608,7 +1709,18 @@ function CheckScreenTitle( screen )
 			WorkspaceMenu.currentView = currentMovable;
 			WorkspaceMenu.currentScreen = currentScreen;
 		}
+		// Nudge workspace menu to right side of screen title 
+		if( !isMobile && ge( 'WorkspaceMenu' ) )
+		{
+			var t = currentScreen.screen._titleBar.getElementsByClassName( 'Info' );
+			if( t ) 
+			{
+				t = t[0];
+				ge( 'WorkspaceMenu' ).style.left = t.offsetWidth + t.offsetLeft + 10 + 'px';
+			}
+		}
 	}
+	
 }
 
 // Let's make gui for movable windows minimize maximize
@@ -1736,6 +1848,7 @@ function PollTaskbar( curr )
 		}
 	}
 	
+	// If we have the 'Taskbar'
 	if( baseElement )
 	{
 		var whw = 0; // whole width
@@ -1795,13 +1908,9 @@ function PollTaskbar( curr )
 				if( pn.windowObject.flags[ 'invisible' ] == true )
 					continue;
 				
-				// Don't care about views on other screens
-				// In native mode, we will list all
-				// TODO: Connect views to screens better (not on dom parentNode)
-				//       so it works in native mode
-				if( Workspace.interfaceMode != 'native' )
+				if( pn && pn.windowObject.flags.screen != Workspace.screen )
 				{
-					if( pn && pn.parentNode.parentNode != doorsScreen ) continue;
+					continue;
 				}
 				
 				// Lets see if the view is a task we manage
@@ -1821,7 +1930,7 @@ function PollTaskbar( curr )
 					d = document.createElement ( 'div' );
 					d.viewId = pn.viewId;
 					d.view = pn;
-					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden' : 'Task';
+					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
 					d.window = pn;
 					pn.taskbarTask = d;
 					d.applicationId = d.window.applicationId;
@@ -1832,14 +1941,17 @@ function PollTaskbar( curr )
 				
 					// Functions on task element
 					// Activate
-					d.setActive = function()
+					d.setActive = function( click )
 					{
 						this.classList.add( 'Active' );
 						_ActivateWindow( this.window );
-						this.window.setAttribute( 'minimized', '' );
-						if( this.window.windowObject.workspace != globalConfig.workspaceCurrent )
+						if( click )
 						{
-							Workspace.switchWorkspace( this.window.windowObject.workspace );
+							this.window.viewContainer.setAttribute( 'minimized', '' );
+							if( this.window.windowObject.workspace != globalConfig.workspaceCurrent )
+							{
+								Workspace.switchWorkspace( this.window.windowObject.workspace );
+							}
 						}
 					}
 					// Deactivate
@@ -1863,13 +1975,13 @@ function PollTaskbar( curr )
 							{
 								if( !this.window.classList.contains( 'Active' ) )
 								{
-									this.setActive();
+									this.setActive( true ); // with click
 									_WindowToFront( this.window );
 								}
 								else
 								{
 									this.setInactive();
-									this.window.setAttribute( 'minimized', 'minimized' );
+									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
 								}
 							}
 							else
@@ -1934,11 +2046,13 @@ function PollTaskbar( curr )
 	{
 		var desklet = __desklets[a];
 		
+		// Assume all launchers represent apps that are not running
 		for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 		{
 			desklet.dom.childNodes[c].running = false;
 		}
 		
+		// Go and check running status
 		for( var b in movableWindows )
 		{
 			if( movableWindows[b].windowObject )
@@ -1975,11 +2089,14 @@ function PollTaskbar( curr )
 // A docked taskbar uses the dock desklet!
 function PollDockedTaskbar()
 {
+	if( Workspace.docksReloading ) return;
+	
 	PollTray();
+	
 	for( var a = 0; a < __desklets.length; a++ )
-	{
+	{	
 		var desklet = __desklets[a];
-		var dom = desklet.dom;
+		
 		var changed = false;
 		
 		if( !desklet.viewList )
@@ -1987,7 +2104,7 @@ function PollDockedTaskbar()
 			var wl = document.createElement( 'div' );
 			desklet.viewList = wl;
 			wl.className = 'ViewList';
-			dom.appendChild( wl );
+			desklet.dom.appendChild( wl );
 		}
 		
 		// Clear existing viewlist items that are removed
@@ -2028,38 +2145,55 @@ function PollDockedTaskbar()
 			desklet.dom.childNodes[c].running = false;
 		}
 		
+		// Go through all movable view windows and check!
 		for( var b in movableWindows )
 		{
-			if( movableWindows[b].windowObject )
+			if( movableWindows[ b ].windowObject )
 			{
 				// Skip invisible windows
-				if( movableWindows[b].windowObject.flags.invisible )
+				if( movableWindows[ b ].windowObject.flags.invisible )
 				{
 					continue;
 				}
-				var app = movableWindows[b].windowObject.applicationName;
+				
+				var app = movableWindows[ b ].windowObject.applicationName;
 				var win = b;
-				var wino = movableWindows[b];
+				var wino = movableWindows[ b ];
 				var found = false;
+				
 				// Try to find view in viewlist
 				for( var c = 0; c < desklet.viewList.childNodes.length; c++ )
 				{
-					if( desklet.viewList.childNodes[c].viewId == win )
+					var cn = desklet.viewList.childNodes[ c ];
+					if( cn.viewId == win )
 					{
-						found = movableWindows[b];
+						found = wino;
+						
+						// Check if it is a directory
+						if( found.content.directoryview )
+						{
+							cn.classList.add( 'Directory' );
+						}
+						else if( found.applicationId )
+						{
+							cn.classList.add( 'Running' );
+						}
 						break;
 					}
 				}
+				
 				// Try to find the application if it is an application window
-				if( !found )
+				if( !found && app )
 				{
 					for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 					{
-						if( app && desklet.dom.childNodes[c].executable == app )
+						var dof = desklet.dom.childNodes[ c ];
+						if( dof.executable == app )
 						{
-							found = desklet.dom.childNodes[c].executable;
-							desklet.dom.childNodes[c].classList.add( 'Running' );
-							desklet.dom.childNodes[c].running = true;
+							found = dof.executable;
+							dof.classList.add( 'Running' );
+							dof.running = true;
+							break;
 						}
 					}
 				}
@@ -2072,16 +2206,17 @@ function PollDockedTaskbar()
 					{
 						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
-							var d = desklet.dom.childNodes[c];
-							if( d.className != 'Launcher' ) continue;
+							var d = desklet.dom.childNodes[ c ];
+							if( !d.classList.contains( 'Launcher' ) ) continue;
 							if( d.executable == found )
 							{
 								if( !d.views ) d.views = [];
-								if( !d.views[win] ) d.views[win] = wino;
+								if( !d.views[ win ] ) d.views[ win ] = wino;
+								
 								// Clear non existing
 								var out = [];
 								for( var i in d.views )
-									if( movableWindows[i] ) out[i] = d.views[i];
+									if( movableWindows[ i ] ) out[ i ] = d.views[ i ];
 								d.views = out;
 							}
 						}
@@ -2096,16 +2231,16 @@ function PollDockedTaskbar()
 					for( var a1 = 0; a1 < tk.length; a1++ )
 					{
 						if( tk[a1].applicationName != app ) continue;
-						var f = tk[a1].parentNode;
+						var f = tk[ a1 ].parentNode;
 						if( f.className && f.className == 'AppSandbox' )
 						{
 							var img = f.getElementsByTagName( 'div' );
 							for( var b1 = 0; b1 < img.length; b1++ )
 							{
-								if( img[b1].style.backgroundImage )
+								if( img[ b1 ].style.backgroundImage )
 								{
 									labelIcon = document.createElement( 'div' );
-									labelIcon.style.backgroundImage = img[b1].style.backgroundImage;
+									labelIcon.style.backgroundImage = img[ b1 ].style.backgroundImage;
 									labelIcon.className = 'LabelIcon';
 									break;
 								}
@@ -2118,7 +2253,8 @@ function PollDockedTaskbar()
 				if( !found )
 				{
 					var viewRep = document.createElement( 'div' );
-					viewRep.className = 'Launcher View';
+					viewRep.className = 'Launcher View MousePointer';
+					
 					if( labelIcon ) viewRep.appendChild( labelIcon );
 					if( app ) viewRep.classList.add( app );
 					viewRep.style.backgroundSize = 'contain';
@@ -2128,7 +2264,7 @@ function PollDockedTaskbar()
 					viewRep.onclick = function( e )
 					{
 						// TODO: Make sure we also have touch
-						if( e.button != '0' ) return;
+						if( !e || e.button != '0' ) return;
 						
 						this.state = this.state == 'visible' ? 'hidden' : 'visible';
 						var wsp = movableWindows[ this.viewId ].windowObject.workspace;
@@ -2139,24 +2275,45 @@ function PollDockedTaskbar()
 						}
 						if( this.state == 'hidden' )
 						{
-							this.classList.add( 'Minimized' );
+							this.viewContainer.classList.add( 'Minimized' );
+							
 						}
 						else
 						{
-							this.classList.remove( 'Minimized' );
+							this.viewContainer.classList.remove( 'Minimized' );
 						}
 						var mv = movableWindows[ this.viewId ];
 						if( mv && mv.windowObject )
 						{
-							movableWindows[this.viewId].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+							movableWindows[ this.viewId ].windowObject.setFlag( 'hidden', this.state == 'hidden' ? true : false );
+							if( this.state == 'hidden' )
+							{
+								if( !this.elementCount )
+								{
+									var d = document.createElement( 'div' );
+									d.className = 'ElementCount';
+									this.elementCount = d;
+									this.appendChild( d );
+								}
+								this.elementCount.innerHTML = '<span>' + 1 + '</span>';
+							}
+							else
+							{
+								if( this.elementCount ) 
+								{
+									this.removeChild( this.elementCount );
+									this.elementCount = null;	
+								}
+							}
 						}
-						_WindowToFront( movableWindows[this.viewId] );
+						_WindowToFront( movableWindows[ this.viewId ] );
 					}
 					desklet.viewList.appendChild( viewRep );
 					changed++;
 				}
 				else
 				{
+					
 				}
 			}
 		}
@@ -2173,6 +2330,25 @@ function PollDockedTaskbar()
 		
 		if( changed ) desklet.render();
 	}
+}
+
+// Make a menu for the current launcher or view list item icon
+// It's only for items that has a group of views!
+var _vlMenu = null;
+function GenerateViewListMenu( win )
+{
+	if( _vlMenu )
+	{
+		_vlMenu.parentNode.removeChild( _vlMenu );
+	}
+	
+	var found = false;
+	for( var a in movableWindows )
+	{
+		//if( movableWindows[
+	}
+	
+	//_vlMenu = document.createElement( 'div' );
 }
 
 // Notify the user!
@@ -2410,6 +2586,7 @@ movableMouseDown = function ( e )
 	);
 	
 	var clickOnView = tar.classList && tar.classList.contains( 'Content' ) && tar.parentNode.classList.contains ( 'View' ); 
+	
 	// Desktop / view selection 
 	if(
 		clickonDesktop || clickOnView
@@ -2436,6 +2613,12 @@ movableMouseDown = function ( e )
 		{
 			CheckScreenTitle();
 		}
+		Workspace.toggleStartMenu( false );
+		
+		// Cover windows if we are clicking on desktop
+		if( clickonDesktop )
+			CoverWindows();
+		
 		return cancelBubble( 2 );
 	}
 }
@@ -2513,7 +2696,6 @@ function contextMenu( e )
 
 function FixWindowDimensions ( mw )
 {
-	console.log( mw.windowObject );
 	SetWindowFlag( mw, 'min-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'max-height', mw.parentNode.offsetHeight );
 	SetWindowFlag( mw, 'min-width', mw.parentNode.offsetWidth );
@@ -2720,6 +2902,4 @@ function FindImageColorProduct( img )
 function HelpBubble( element, text, uniqueid )
 {
 }
-
-
 

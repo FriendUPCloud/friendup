@@ -40,9 +40,9 @@ Application.getLoginCode = function( redirecturl )
 	
 	ret+= '				var token = msg.data.url.split(\'#access_token=\')[1].split(\'&\')[0]; ';
 	
-	ret+= '				var dbx = new Dropbox( { accessToken: token } );	                                                  ';
-	ret+= '				dbx.filesListFolder( { path: \'\' } )         				                                          ';
-	ret+= ' 			.then( function( response ) { 																          ';
+	//ret+= '			var dbx = new Dropbox( { accessToken: token } );	                                                  ';
+	//ret+= '			dbx.filesListFolder( { path: \'\' } )         				                                          ';
+	//ret+= ' 			.then( function( response ) { 																          ';
 	
 	ret+= '			    Application.keyData.save( ( Application.appPath ? Application.appPath.split(\':\')[0].toLowerCase() : \'dropbox\' ), msg.data.url, true, function( e, d ) { ';
 	//ret+= '           console.log( { e:e, d:d } );                                                                         ';
@@ -52,10 +52,10 @@ Application.getLoginCode = function( redirecturl )
 	ret+= '             if( loginwindow ) loginwindow.close(); ';
 	ret+= '             setTimeout( function(){ Application.quit(); }, 1000 );                                               ';
 	
-	ret+= '             } )	                                                                                                 ';
-	ret+= ' 			.catch( function( error ) { console.log( error ); } );		                                         ';
+	//ret+= '           } )	                                                                                                 ';
+	//ret+= ' 			.catch( function( error ) { console.log( error ); } );		                                         ';
 	
-	ret+= '				} } );';
+	ret+= '				} } );                                                                                               ';
 	
 	return ret;
 	

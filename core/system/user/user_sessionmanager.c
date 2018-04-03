@@ -491,7 +491,6 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	
 		s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 		smgr->usm_Sessions = s;
-		smgr->usm_SessionCounter++;
 	}
 	else
 	{
@@ -504,6 +503,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	
 	if( s->us_UserID != 0 )
 	{
+		smgr->usm_SessionCounter++;
 		UserManager *um = (UserManager *)smgr->usm_UM;
 		User *locusr = um->um_Users;
 		

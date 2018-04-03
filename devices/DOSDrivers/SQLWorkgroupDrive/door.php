@@ -827,7 +827,7 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								// Make sure the folder does not already exist!
 								if( $f->Load() )
 								{
-									die( 'fail<!--separate-->Directory already exists.' );
+									die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
 								}
 								$f->UserID = $User->ID;
 								$f->DateModified = date( 'Y-m-d H:i:s' );

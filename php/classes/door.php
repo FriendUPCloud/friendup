@@ -202,17 +202,43 @@ class Door extends dbIO
 		return 0;
 	}
 	
-	function syncFiles( $pathFrom, $pathTo, $log )
+	// Sync directory and file structures
+	function syncFiles( $pathFrom, $pathTo, $log, $depth = 0 )
 	{
 		global $Logger;
 		
+		// Dest is a cleaned up version of the file listing for the destination
+		
 		$dest = [];
+		
+		if( $log ) $log->ok( "Going i on depth $depth.", true );
 		
 		// Destination path ...
 		
+		if( $log ) $log->ok( "Prepping ... [To]   -> " . trim( $pathTo ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
+		
 		if( $dir = $this->dir( trim( $pathTo ) ) )
-		{
-			$dir = array_reverse( $dir );
+		{	
+			// Organize by info files first
+			$outFiles = [];
+			$outDirs = [];
+			$outInfos = [];
+			foreach( $dir as $entry )
+			{
+				if( substr( $entry->Filename, -8, 8 ) == '.dirinfo' )
+				{
+					$outInfos[] = $entry;
+				}
+				else if( substr( $entry->Filename, -1, 1 ) == '/' )
+				{
+					$outDirs[] = $entry;
+				}
+				else
+				{
+					$outFiles[] = $entry;
+				}
+			}
+			$dir = array_merge( $outInfos, $outDirs, $outFiles );
 			
 			foreach( $dir as $k=>$v )
 			{
@@ -220,40 +246,75 @@ class Door extends dbIO
 			}
 		}
 		
-		// Location path ...
+		// Source path ... get a directory listing
+		
+		if( $log ) $log->ok( "Prepping ... [From] -> " . trim( $pathFrom ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
 		
 		if( $dir = $this->dir( trim( $pathFrom ) ) )
 		{
-			$dir = array_reverse( $dir );
+			// Organize by info files first
+			$outFiles = [];
+			$outDirs = [];
+			$outInfos = [];
+			foreach( $dir as $entry )
+			{
+				if( substr( $entry->Filename, -8, 8 ) == '.dirinfo' )
+				{
+					$outInfos[] = $entry;
+				}
+				else if( substr( $entry->Filename, -1, 1 ) == '/' )
+				{
+					$outDirs[] = $entry;
+				}
+				else
+				{
+					$outFiles[] = $entry;
+				}
+			}
+			$dir = array_merge( $outInfos, $outDirs, $outFiles );
 			
 			if( $log ) $log->log( " ", true );
 			
-			if( $log ) $log->ok( "Preping ... [From] -> " . trim( $pathFrom ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
-			if( $log ) $log->ok( "Preping ... [To]   -> " . trim( $pathTo ) . ( count( $dir ) > 2 ? " (" . ( count( $dir ) / 2 ) . ")" : "" ), true );
 			
-			$subs = [];
+			// Process directories and files
+			
+			// TODO: Figure out why dest on properfilename can't FIND / FOUND an existing directory
+			
+			// Do the copy
 			
 			foreach( $dir as $k=>$v )
-			{
+			{	
 				$modified = false;
-				
+			
 				if( $log ) $log->waiting( "Copying ...        -> " . trim( $v->Filename ) );
-				
+			
+				// Prepare destination file / directory path
+			
 				$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
-				
-				if( isset( $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )] ) )
+			
+				$properFilename = str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) );
+			
+				// Check if the file has been modified (source vs dest)
+			
+				if( isset( $dest[ $properFilename ] ) )
 				{
-					$dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->Found = true;
-					
-					if( isset( $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->DateModified ) )
-					{
-						// TODO: Fix this, commented out while DateModified is not fully operational
-						//$modified = $dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )]->DateModified;
-					}
+					$dest[ $properFilename ]->Found = true; // File exists!
+				
+					if( $log ) $log->ok( "File or directory is found ...        -> " . trim( $v->Filename ), true );
+				
+					$modified = $v->DateModified > $dest[ $properFilename ]->DateModified;
 				}
-				
-				if( !$v->DateModified || !$modified || ( strtotime( $v->DateModified ) > strtotime( $modified ) ) )
+				else
 				{
+					//die( 'Not alike: ' . $properFilename . ' = ' . $dest->Properfilename );
+				}
+			
+				// If the file was modified, then copy!
+			
+				if( !$v->DateModified || !$modified )
+				{
+					// Copy from source to destination (that we made proper path for above)
+					
 					if( $this->copyFile( trim( $v->Path ), trim( $v->Destination ) ) )
 					{
 						if( !strstr( trim( $v->Filename ), '.info' ) )
@@ -273,43 +334,43 @@ class Door extends dbIO
 						if( $log ) $log->ok( "Ignored ...        -> " . trim( $v->Filename ), true );
 					}
 				}
-				
-				if( $v->Type == 'Directory' )
-				{
-					$subs[] = $v;
-				}
-			}
 			
-			if( $dest )
-			{
-				foreach( $dest as $des )
+				// See if we have destination files / directories that
+				// should be deleted because they do not exist in source
+			
+				if( count( $dest ) > 0 )
 				{
-					if( !isset( $des->Found ) && $des->Path )
+					foreach( $dest as $des )
 					{
-						// TODO: If it has been deleted return ok when next loop has the same path in regards to .info files
-						
-						if( !strstr( trim( $des->Filename ), '.info' ) )
+						if( !isset( $des->Found ) && $des->Path )
 						{
-							if( $log ) $log->waiting( "Delete  ...        -> " . trim( $des->Filename ) );
+							die( 'Not found: ' . $des->Filename . ' ..' );
+							// TODO: If it has been deleted return ok when next loop has the same path in regards to .info files
 						
-							if( $this->deleteFile( $des->Path ) )
+							$isIcon = substr( $des->Filename, -5, 5 ) == '.info' ||
+								substr( $des->Filename, -8, 8 ) == '.dirinfo';
+							if( !$isIcon )
 							{
-								if( $log ) $log->ok( "Delete  ...        -> " . trim( $des->Filename ), true );
-							}
-							else
-							{
-								if( $log ) $log->error( "Delete  ...        -> " . trim( $des->Filename ), true );
+								if( $log ) $log->waiting( "Delete  ...        -> " . trim( $des->Filename ) );
+						
+								if( $this->deleteFile( $des->Path ) )
+								{
+									if( $log ) $log->ok( "Delete  ...        -> " . trim( $des->Filename ), true );
+								}
+								else
+								{
+									if( $log ) $log->error( "Delete  ...        -> " . trim( $des->Filename ), true );
+								}
 							}
 						}
 					}
 				}
-			}
 			
-			if( $subs )
-			{
-				foreach( $subs as $k=>$v )
+				// We have sub directories
+			
+				if( $v->Type == 'Directory' )
 				{
-					$this->syncFiles( trim( $v->Path ), trim( $v->Destination ), $log );
+					$this->syncFiles( trim( $v->Path ), trim( $v->Destination ), $log, $depth + 1 );
 				}
 			}
 			
@@ -394,15 +455,31 @@ class Door extends dbIO
 		$from = reset( explode( ':', $pathFrom ) );
 		$to   = reset( explode( ':', $pathTo   ) );
 		
-		$fsFrom = new dbIO( 'Filesystem' );
-		$fsFrom->UserID = $User->ID;
-		$fsFrom->Name   = $from;
-		$fsFrom->Load();
-		
-		$fsTo = new dbIO( 'Filesystem' ); 
-		$fsTo->UserID = $User->ID;
-		$fsTo->Name   = $to;
-		$fsTo->Load();
+		// Support caching
+		if( $this->cacheFrom && $this->cacheFrom->Name == $from )
+		{
+			$fsFrom = $this->cacheFrom;
+		}
+		else
+		{
+			$fsFrom = new dbIO( 'Filesystem' );
+			$fsFrom->UserID = $User->ID;
+			$fsFrom->Name   = $from;
+			$fsFrom->Load();
+			$this->cacheFrom = $fsFrom;
+		}
+		if( $this->cacheTo && $this->cacheTo->Name == $to )
+		{
+			$fsTo = $this->cacheTo;
+		}
+		else
+		{
+			$fsTo = new dbIO( 'Filesystem' ); 
+			$fsTo->UserID = $User->ID;
+			$fsTo->Name   = $to;
+			$fsTo->Load();
+			$this->cacheTo = $fsTo;
+		}
 		
 		// We got two filesystems, good!
 		if( $fsTo->ID > 0 && $fsFrom->ID > 0 )
@@ -427,7 +504,7 @@ class Door extends dbIO
 				include( $testFrom );
 				$doorFrom = $door;
 			}
-			if( !file_exists( $testTo   ) )
+			if( !file_exists( $testTo ) )
 			{
 				// Use built-in, will work on local.handler
 				$doorTo = new Door( $pathTo );
@@ -552,7 +629,6 @@ class Door extends dbIO
 	{
 		global $Logger;
 		include_once( 'php/classes/file.php' );
-		//$Logger->log( 'Trying to get file: ' . $path );
 		$f = new File( $path );
 		if( $f->Load() )
 		{

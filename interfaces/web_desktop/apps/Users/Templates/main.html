@@ -6,7 +6,7 @@
 	<div class="ContentFull Pages BackgroundLists" id="UserPages">
 		
 		<div class="Tab IconSmall fa-user" id="UsersTab">
-			{i18n_users}
+			{i18n_users}<span id="UsersCount"></span>
 		</div>
 		
 		<div class="Tab IconSmall fa-list-alt">
@@ -17,12 +17,12 @@
 			{i18n_workgroups}
 		</div>
 		
-		<div class="Tab IconSmall fa-sign-in">
+		<!--<div class="Tab IconSmall fa-sign-in">
 			{i18n_sessions}
-		</div>
+		</div>-->
 		
 		<div class="Page VContentBottom">
-			<div class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 60px">
+			<div onscroll="CheckUserList(this)" class="VContentTop HContentLeft ScrollArea BackgroundLists" style="width: 35%; bottom: 60px">
 				<div id="UserFilter" class="Padding BorderBottom">
 					<input type="text" id="UserFilterInput" class="InputHeight FullWidth" placeholder="{i18n_filter}" onkeyup="FilterUsers()"/>
 				</div>
@@ -72,11 +72,11 @@
 			</div>
 		</div>
 		
-		<div class="Page VContentBottom">
+		<!--<div class="Page VContentBottom">
 			<div class="VContentTop HContentLeft ScrollArea BackgroundLists List" id="Sessions">
 				{i18n_loading}...
 			</div>
-		</div>
+		</div>-->
 		
 	</div>
 	

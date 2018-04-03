@@ -1,0 +1,72 @@
+
+In order for Mitra to run via Apache Proxy httpd conf must contain all this inside a virtualhost:
+
+
+    SetEnv proxy-sendchunked
+
+    SetEnvIf Request_URI "^/guacamole/tunnel" dontlog
+    CustomLog  /var/log/apache2/guac.log common env=!dontlog
+
+    <Location /guacamole/>
+
+            Header set Access-Control-Allow-Origin "*"
+            Header set Access-Control-Allow-Headers "origin, content-type, accept, Guacamole-Status-Code, Guacamole-Error-Message"
+            Header set Access-Control-Allow-Methods "POST, GET, PATCH, DELETE, PUT"
+            Header set Access-Control-Expose-Headers "Guacamole-Status-Code, Guacamole-Error-Message"
+
+            Order allow,deny
+            Allow from all
+            ProxyPass http://127.0.0.1:8080/guacamole/ flushpackets=on
+            ProxyPassReverse http://127.0.0.1:8080/guacamole/
+    </Location>
+
+
+    <Location /guacamole/websocket-tunnel>
+            Order allow,deny
+            Allow from all
+            ProxyPass ws://127.0.0.1:8080/guacamole/websocket-tunnel
+            ProxyPassReverse ws://127.0.0.1:8080/guacamole/websocket-tunnel
+    </Location>
+    
+    SSLEngine on
+
+    SSLCertificateFile    /home/https/server.crt     
+    SSLCertificateKeyFile /home/https/server.key
+    
+    
+Example Settings:
+
+mitra/host
+{"url":"https://192.168.2.160/guacamole/"}
+
+mitra/admin:
+{"admin_username":"guacadmin","admin_password":"guacadmin","connection_container":"1","default_domain":"kingsystems.no","storage_root":"/var/mitra/"}
+
+mitra/database
+{"host":"172.17.0.2","username":"guac_user","password":"guac_pass","database":"guacamole_db"}
+
+
+Apps er koblet til eProvider oppsettet her
+
+mitra/apps
+{"Wordpad":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||wordpad\nremoteapplicationprogram:s:||wordpad\ngatewayhostname:s:\nremoteapplicationname:s:Wordpad\nremoteapplicationcmdline:s:","Calculator":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||calc\nremoteapplicationprogram:s:||calc\ngatewayhostname:s:\nremoteapplicationname:s:Calculator\nremoteapplicationcmdline:s:","Paint":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||mspaint\nremoteapplicationprogram:s:||mspaint\ngatewayhostname:s:\nremoteapplicationname:s:Paint\nremoteapplicationcmdline:s:","Chromefoam":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||chrome\nremoteapplicationprogram:s:||chrome\ngatewayhostname:s:\nremoteapplicationname:s:Google Chrome\nremoteapplicationcmdline:s:","Exploder":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||iexplore\nremoteapplicationprogram:s:||iexplore\ngatewayhostname:s:\nremoteapplicationname:s:Internet Explorer\nremoteapplicationcmdline:s:","settings":"{\"icon_default\":\"/webclient/gfx/icons/64x64/apps/akonadi.png\",\"icon_chrome\":\"/webclient/gfx/icons/64x64/apps/internet-web-browser.png\",\"icon_mspaint\":\"/webclient/gfx/icons/64x64/mimetypes/application-vnd.oasis.opendocument.image.png\",\"icon_iexplore\":\"\",\"icon_calc\":\"/webclient/gfx/icons/64x64/apps/accessories-calculator.png\",\"icon_wordpad\":\"/webclient/gfx/icons/64x64/apps/accessories-text-editor.png\",\"size_default\":\"720x480\",\"size_calc\":\"220x310\",\"icon_winword\":\"/webclient/gfx/icons/64x64/mimetypes/application-msword.png\",\"icon_excel\":\"/webclient/gfx/icons/64x64/mimetypes/application-vnd.ms-excel.png\"}","Winword":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||winword\nremoteapplicationprogram:s:||winword\ngatewayhostname:s:\nremoteapplicationname:s:Word\nremoteapplicationcmdline:s:","Excel":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||excel\nremoteapplicationprogram:s:||excel\ngatewayhostname:s:\nremoteapplicationname:s:Excel\nremoteapplicationcmdline:s:","Powerpoint":"redirectclipboard:i:1\nredirectposdevices:i:0\nredirectprinters:i:1\nredirectcomports:i:1\nredirectsmartcards:i:1\ndevicestoredirect:s:*\ndrivestoredirect:s:*\nredirectdrives:i:1\nsession bpp:i:32\nprompt for credentials on client:i:1\nspan monitors:i:1\nuse multimon:i:1\nremoteapplicationmode:i:1\nserver port:i:3389\nallow font smoothing:i:1\npromptcredentialonce:i:1\nauthentication level:i:2\ngatewayusagemethod:i:2\ngatewayprofileusagemethod:i:0\ngatewaycredentialssource:i:0\nfull address:s:rdp11.eprovider.no\nalternate shell:s:||powerpoint\nremoteapplicationprogram:s:||powerpoint\ngatewayhostname:s:\nremoteapplicationname:s:Powerpoint\nremoteapplicationcmdline:s:"}
+
+
+
+
+
+List over needed non-standard apache confs:
+
+PS: You can also use a2enmod
+
+1576475 lrwxrwxrwx 1 root root   30 Jan 22 20:03 headers.load -> ../mods-available/headers.load
+1576481 lrwxrwxrwx 1 root root   28 Jan 22 20:04 proxy.conf -> ../mods-available/proxy.conf
+1576482 lrwxrwxrwx 1 root root   33 Jan 22 22:31 proxy_html.load -> ../mods-available/proxy_html.load
+1576477 lrwxrwxrwx 1 root root   33 Jan 22 20:21 proxy_http.load -> ../mods-available/proxy_http.load
+1576480 lrwxrwxrwx 1 root root   28 Jan 22 20:04 proxy.load -> ../mods-available/proxy.load
+1576502 lrwxrwxrwx 1 root root   37 Mar  4 08:36 proxy_wstunnel.load -> ../mods-available/proxy_wstunnel.load
+1578623 lrwxrwxrwx 1 root root   30 Apr  3 11:38 rewrite.load -> ../mods-available/rewrite.load
+1576479 lrwxrwxrwx 1 root root   36 Jan 22 18:14 socache_shmcb.load -> ../mods-available/socache_shmcb.load
+1576442 lrwxrwxrwx 1 root root   26 Feb  4 08:25 ssl.conf -> ../mods-available/ssl.conf
+1576357 lrwxrwxrwx 1 root root   26 Feb  4 08:25 ssl.load -> ../mods-available/ssl.load
+1576485 lrwxrwxrwx 1 root root   30 Jan 22 22:31 xml2enc.load -> ../mods-available/xml2enc.load

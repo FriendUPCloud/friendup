@@ -13,6 +13,11 @@
  
 #include <core/types.h>
 
+#define MAP_MISSING -3 // No such element
+#define MAP_FULL -2    // Hashmap is full
+#define MAP_OMEM -1    // Out of Memory
+#define MAP_OK 0       // OK
+
 //
  // TODO:
  //     Case-insensitive keys
@@ -53,7 +58,7 @@ HashmapElement* HashmapIterate( Hashmap* in, unsigned int* iterator );
 // Add an element to the hashmap. Returns false on faliure
 // 'key' MUST BE PERMANENTLY ALLOCATED AND NOT FREED AFTER CALLING THIS FUNCTION
 
-FBOOL HashmapPut( Hashmap* in, char* key, void* value );
+int HashmapPut( Hashmap* in, char* key, void* value );
 
 //
 // Get an element from the hashmap. Return NULL if none found
@@ -83,7 +88,7 @@ int HashmapAdd( Hashmap *src, Hashmap *hm );
 // UNIMPLEMENTED!!!
 //
 
-FBOOL HashmapRemove( Hashmap* in, char* key );
+int HashmapRemove( Hashmap* in, char* key );
 
 //
 // Free the hashmap

@@ -1,0 +1,113 @@
+
+Websockets connection was designed to hold all communication between FC and client.
+
+Below example message how to call file function from systembase.
+
+websocket example call:
+	<!--"MSG"--"760"--"system.library/services/start"-->{ "serviceName":"hello", "sessionid":"8ed922535bc7cb2de39dc9bdafef502e2e20b986" }<--!>
+
+	Command is launching (start) hello (serviceName) service (services) for user pointed by session 8ed922535bc7cb2de39dc9bdafef502e2e20b986 (sessionid).
+	If service command will be launched without problems message will be returned:
+	{ "Status": "ok"}
+
+Below example message which must be send from web to FC when user is logged in. This will setup both side connection.
+
+websocket connection set:
+	<!--"CON"--"0"--"a6e7be6be04d8612eb61f19c2dfe7338e63757dd"-->
+	
+	
+	
+	etwork/http.c:73) 469309184 HTTP_NEW SOCKET SET 0x6a891c0
+  (network/http.c:99) 469309184 Added close
+  (network/http.c:73) 469309184 HTTP_NEW SOCKET SET 0x6a891c0
+ 469309184: 
+INCOMING!-----
+
+|Has come in.....
+ (network/http.c:822) 469309184 RET 0!
+  (network/http.c:1195) 469309184 Free http
+  (network/protocol_http.c:987) 469309184 HTTP parsed, returning response
+  (network/http.c:1579) 469309184 HTTP FREE END
+  (network/socket.c:1452) 469309184 Socket close lock mutex
+  (network/socket.c:1464) 469309184 SSL socket clear
+  (network/socket.c:1470) 469309184 [SocketClose] Closed socket fd.
+  (network/socket.c:1493) 469309184 [SocketClose] Freed socket.
+  (network/socket.c:879) 381179648 [SocketAcceptPair] Accepting incoming!
+  (core/friend_core.c:693) 381179648 Go to next event 0x13daebe0
+  (network/socket.c:908) 381179648 [SocketRead] Start of the voyage.. 0x13daebe0
+  (network/socket.c:1009) 381179648 [SocketAcceptPair] Error syscall error:00000000:lib(0):func(0):reason(0)   errno 0.
+ 381179648: HTTP Callback called
+381179648: Message length<0 http400
+ (network/http.c:73) 381179648 HTTP_NEW SOCKET SET 0x6a891c0
+  (network/http.c:99) 381179648 Added close
+  (network/http.c:73) 381179648 HTTP_NEW SOCKET SET 0x6a891c0
+ 381179648: 
+INCOMING!-----
+
+|Has come in.....
+ (network/http.c:822) 381179648 RET 0!
+  (network/http.c:1195) 381179648 Free http
+  (network/protocol_http.c:987) 381179648 HTTP parsed, returning response
+  (network/http.c:1579) 381179648 HTTP FREE END
+  (network/socket.c:1452) 381179648 Socket close lock mutex
+  (network/socket.c:1464) 381179648 SSL socket clear
+  (network/socket.c:1470) 381179648 [SocketClose] Closed socket fd.
+  (network/socket.c:1493) 381179648 [SocketClose] Freed socket.
+  (network/socket.c:879) 389572352 [SocketAcceptPair] Accepting incoming!
+  (core/friend_core.c:693) 389572352 Go to next event 0x81f9d30
+  (network/socket.c:908) 389572352 [SocketRead] Start of the voyage.. 0x81f9d30
+  (network/socket.c:1009) 389572352 [SocketAcceptPair] Error syscall error:00000000:lib(0):func(0):reason(0)   errno 0.
+ 389572352: HTTP Callback called
+389572352: Message length<0 http400
+ (network/http.c:73) 389572352 HTTP_NEW SOCKET SET 0x6a891c0
+
+	
+	
+	
+	
+	
+
+|Has come in.....
+ (network/http.c:822) 376989440 RET 0!
+  (network/http.c:1195) 376989440 Free http
+  (network/protocol_http.c:987) 376989440 HTTP parsed, returning response
+  (network/http.c:1579) 376989440 HTTP FREE END
+  (network/socket.c:1445) 376989440 Socket close lock mutex
+  (network/socket.c:1457) 376989440 SSL socket clear
+  (network/socket.c:1463) 376989440 [SocketClose] Closed socket fd.
+  (network/socket.c:1486) 376989440 [SocketClose] Freed socket.
+  (network/socket.c:879) 385382144 [SocketAcceptPair] Accepting incoming!
+  (core/friend_core.c:693) 385382144 Go to next event 0x141aa0d0
+  (network/socket.c:906) 385382144 [SocketRead] Start of the voyage.. 0x141aa0d0
+  (network/socket.c:914) 385382144 [SocketRead] Tried to read 0 bytes (0 total read, 0 pending).
+
+ 385382144: HTTP Callback called
+385382144: Message length<0 http400
+ (network/http.c:73) 385382144 HTTP_NEW SOCKET SET 0x6a891c0
+  (network/http.c:99) 385382144 Added close
+  (network/http.c:73) 385382144 HTTP_NEW SOCKET SET 0x6a891c0
+ 385382144: 
+INCOMING!-----
+
+|Has come in.....
+ (network/http.c:822) 385382144 RET 0!
+  (network/http.c:1195) 385382144 Free http
+  (network/protocol_http.c:987) 385382144 HTTP parsed, returning response
+  (network/http.c:1579) 385382144 HTTP FREE END
+  (network/socket.c:1445) 385382144 Socket close lock mutex
+  (network/socket.c:1457) 385382144 SSL socket clear
+  (network/socket.c:1463) 385382144 [SocketClose] Closed socket fd.
+  (network/socket.c:1486) 385382144 [SocketClose] Freed socket.
+  (network/socket.c:879) 494487296 [SocketAcceptPair] Accepting incoming!
+  (core/friend_core.c:693) 494487296 Go to next event 0x14161a60
+  (network/socket.c:906) 494487296 [SocketRead] Start of the voyage.. 0x14161a60
+  (network/socket.c:914) 494487296 [SocketRead] Tried to read 0 bytes (0 total read, 0 pending).
+
+ 494487296: HTTP Callback called
+494487296: Message length<0 http400
+ (network/http.c:73) 494487296 HTTP_NEW SOCKET SET 0x6a891c0
+  (network/http.c:99) 494487296 Added close
+  (network/http.c:73) 494487296 HTTP_NEW SOCKET SET 0x6a891c0
+ 494487296: 
+INCOMING!-----
+

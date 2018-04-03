@@ -94,10 +94,12 @@ typedef struct SQLLibrary
 	int						(*NumberOfRows)( struct SQLLibrary *l, void *res );
 	int						(*QueryWithoutResults)( struct SQLLibrary *l, const char *sel );
 	int						(*SNPrintF)( struct SQLLibrary *l, char *str, size_t stringSize, const char *fmt, ... );
+	int						(*SetOption)( struct SQLLibrary *l, char *params );
 	char					*(*MakeEscapedString)( struct SQLLibrary *l, char *str );
 	int						(*GetStatus)( struct Library *l );
 
 	SQLConnection con;
+	void					*sd;	// special data
 	
 } SQLLibrary;
 

@@ -78,6 +78,10 @@ i18n_files                		 	 : Filer
 i18n_wallpapers                		 : Bakgrunnsbilder
 i18n_settings                		 : Instillinger
 
+i18n_none                            : Ingen
+i18n_select_template                 : Velg mal
+i18n_select_workgroups               : Velg brukergrupper
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norsk

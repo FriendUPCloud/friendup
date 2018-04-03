@@ -724,8 +724,6 @@ AND LOWER(f.Name) = LOWER('%s')",
 					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 					if( sqllib != NULL )
 					{
-						//sprintf( temptext, "
-						
 						sqllib->SNPrintF( sqllib,  temptext, sizeof(temptext),"\
 UPDATE `Filesystem` f SET f.Mounted = '0' \
 WHERE \
@@ -741,6 +739,8 @@ ug.UserID = '%ld' \
 AND LOWER(f.Name) = LOWER('%s')", 
 							loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
 						);
+						
+						Log( FLOG_INFO, "Device was unmounted with success: %s!\n", devname );
 						
 						void *res = sqllib->Query( sqllib, temptext );
 					

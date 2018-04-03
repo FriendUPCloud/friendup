@@ -13,3 +13,6 @@ i18n_no_images_in_folder               : Pas d'image disponible. Veuillez créer
 i18n_add_desc                          : Choisir des images du disque pour les ajouter à l'archive de papier-peints.
 i18n_wp_for                            : Papier-peint pour
 
+
+i18n_from_web                          : Du web
+i18n_from_collection                   : Votre collection

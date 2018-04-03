@@ -1,0 +1,24 @@
+Desktop windows
+---------------
+
+The FriendUP desktop environment, Doors, has all the tools required to create
+basic GUI's. In this document, we're explaining how to use the windowing engine
+and how it works internally.
+
+Using an example
+----------------
+
+var W = new View( {
+	title:  'My window title',
+	width:  400,
+	height: 320
+} );
+
+The above code creates a new div called W. On native platforms, it creates a
+real window. On this window there are added some structures:
+
+ * The content structure
+ * The windowObject structure
+ * ...
+
+

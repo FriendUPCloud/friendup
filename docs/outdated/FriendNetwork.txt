@@ -1,0 +1,14 @@
+How to set up server
+
+1. node/npm must be installed. Using 'n' is advised: https://github.com/tj/n
+   Version must be 4.4.5 or higher.
+
+2.a 'example.config.js' must be COPIED to 'config.js'
+  b Edit 'config.js' to have the correct TLS paths ( uncomment, can use FC key/cert )
+  and domains / ports / proxies
+
+3. make install to move files to build/services/FriendNetwork ( this will change )
+
+4. Go to destination dir and do 'npm install', you should now also have a dir called 'node_modules'
+
+5. run server with 'node fnet.js'

@@ -1,0 +1,45 @@
+First login script options (modules/system/include/firstlogin.php).
+This script is executed only once when the user logs in for the very first time.
+-----------------------------------------
+
+To change the behavior of first login script start the Server App in Friend
+and create an item with type "global" and key "firstlogin".
+
+Then add any of the keys:
+    welcome_app
+    update_info
+    show_system_icon
+    create_home_dir
+    show_eula
+
+The value should be either 0 or 1 (single zero or one).
+
+If a key is missing it will default to 1 (defaults are set at the beginning of firstlogin.php).
+
+-----------------------------------------
+
+App preinstallation
+
+Start the Server App and add a key named "preinstall_apps" to global/firstlogin.
+It should contain the list of app names separated by commas (NO EXTRA SPACES, no quotes).
+
+Example: Mitra,Author,Calculator
+
+The names follow directory names in interfaces/web_desktop/apps/
+
+-----------------------------------------
+
+Dock mode
+
+Some customers want to have a Windows-like taskbar instead of the dock.
+To do that start the Server App and add a key named "dock_windowlist" to global/firstlogin.
+The value should be "dockedlist" (without the quotes).
+
+-----------------------------------------
+
+Dock placement
+As above - add property "dock_settings" with the value of:
+
+{"options":{"position":"aligned","layout":"bottom_center","size":59,"dockx":"0","docky":"0","workspace":"1"}}
+
+Don't worry if it will contain lost of escaped quotes - it is stored just fine in the DB.

@@ -26,7 +26,6 @@ Application.run = function( msg )
 	InitTabs( 'MainTabs' );
 	
 	refreshThemes();	
-	
 }
 
 function getMenuMode()
@@ -96,6 +95,8 @@ function setWindowListMode( mode )
 
 function refreshThemes()
 {
+	window.onSaveThemeConfig = function(){};
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -118,7 +119,7 @@ function refreshThemes()
 			sorted = null; keysor = null;
 			
 			Application.themes = j;
-			var ml = '<div class="List">';
+			var ml = '<div class="List NoPadding">';
 			var sw = 2;
 			
 			var def = Application.themes.length - 1;
@@ -132,6 +133,32 @@ function refreshThemes()
 					}
 				}
 			}
+			
+			// Setup theme gui
+			i18nAddPath( '/themes/' + Application.theme.toLowerCase() + '/Locale/' + Application.language + '.lang', function()
+			{
+				var f = new File( 'System:../themes/' + Application.theme.toLowerCase() + '/config.html' );
+				f.i18n();
+				f.onLoad = function( data )
+				{
+					if( data.indexOf( '<title' ) > 0 )
+						data = '<p><strong>' + i18n( 'i18n_no_theme_config' ) + '</strong></p>';
+				
+					var scripts;
+					var endScripts = [];
+					while( scripts = data.match( /\<script.*?\>([\w\W]*)\<\/script\>/i ) )
+					{
+						data = data.split( scripts[0] ).join( '' );
+						endScripts.push( scripts[1] );
+					}
+					ge( 'ThemeConfig' ).innerHTML = data;
+					for( var c = 0; c < endScripts.length; c++ )
+					{
+						eval( endScripts[c] );
+					}
+				}
+				f.load();
+			} );
 			
 			var img = '/webclient/gfx/theme_preview.jpg';
 			
@@ -182,6 +209,7 @@ function refreshThemes()
 				ge( 'hiddenSystem' ).checked = 'checked';
 			ge( 'workspaceCount' ).value = dd.workspacecount > 0 ? dd.workspacecount : 1;
 			ge( 'scrollDesktopIcons' ).checked = dd.scrolldesktopicons == '1' ? 'checked' : '';
+			ge( 'ThemeConfigData' ).value = JSON.stringify( dd[ 'themedata_' + Application.theme.toLowerCase() ] );
 			return;
 		}
 		setMenuMode( 'pear' );
@@ -190,11 +218,12 @@ function refreshThemes()
 		setWindowListMode( 'separate' );
 		ge( 'workspaceCount' ).value = '1';
 		ge( 'scrollDesktopIcons' ).checked = '';
+		ge( 'ThemeConfigData' ).value = '';
 	}
 	m.execute( 'getsetting', { settings: [ 
 		'menumode', 'navigationmode', 'focusmode', 
 		'windowlist', 'hiddensystem', 'workspacecount',
-		'scrolldesktopicons'
+		'scrolldesktopicons', 'themedata_' + Application.theme.toLowerCase()
 	] } );
 	
 }
@@ -209,6 +238,10 @@ function setActive( num )
 function applyTheme()
 {
 	var currTheme = Application.theme ? Application.theme : 'friendup';
+	
+	// Update data for the theme config
+	if( window.onSaveThemeConfig )
+		window.onSaveThemeConfig();
 	
 	var m = new Module( 'system' );
 	m.onExecuted = function()
@@ -234,18 +267,24 @@ function applyTheme()
 								var m3 = new Module( 'system' );
 								m3.onExecuted = function( e, d )
 								{
-									if( e == 'ok' )
+									// check for extra config
+									var m9 = new Module( 'system' );
+									m.onExecuted = function()
 									{
-										Application.sendMessage( {
-											type: 'system',
-											command: 'refreshtheme',
-											theme: currTheme
-										} );
+										if( e == 'ok' )
+										{
+											Application.sendMessage( {
+												type: 'system',
+												command: 'refreshtheme',
+												theme: currTheme
+											} );
+										}
+										else
+										{
+											console.log( 'Could not set system theme!' );
+										}
 									}
-									else
-									{
-										console.log( 'Could not set system theme!' );
-									}
+									m.execute( 'setsetting', { setting: 'themedata_' + currTheme.toLowerCase(), data: ge( 'ThemeConfigData' ).value } );
 								}
 								m3.execute( 'settheme', { theme: currTheme } );
 							}

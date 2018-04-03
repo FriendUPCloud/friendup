@@ -2,7 +2,7 @@
 
 LIB_DIR = libwebsockets 
 
-ALL:
+ALL: compile
 	@echo "make ALL"
 	#for dir in $(LIB_DIR); do \
 	#	make -C $$dir; \
@@ -22,6 +22,8 @@ endif
 setup:
 	mkdir -p libwebsockets/build
 	cd libwebsockets/build/ ; cmake ../ -DLWS_HAVE_SYS_CAPABILITY_H=OFF ; make DEBUG=0 ; cd ../../
+	mkdir -p libzmq/build
+	cd libzmq/build/ ; cmake ../ ; make DEBUG=0 ; cd ../../
 	#for dir in $(LIB_DIR); do \
 	#	make -C $$dir setup  FRIEND_PATH=$(FRIEND_PATH); \
 	#done
@@ -29,11 +31,13 @@ setup:
 clean:
 	mkdir -p libwebsockets/build
 	cd libwebsockets/build/ && rm -rf * && cd ../../
+	#cd libhttp/ ;make clean ; cd ..
 
 compile:
 	cd libwebsockets/build/ ;make DEBUG=1 ; cd ../../
+	#cd libhttp/ ;make DEBUG=1 ; cd ../
 
 release:
 	cd libwebsockets/build/ ;make DEBUG=0 ; cd ../../
-
+	#cd libhttp/ ;make DEBUG=0 ; cd ..
 

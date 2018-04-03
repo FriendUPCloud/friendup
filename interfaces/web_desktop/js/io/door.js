@@ -17,6 +17,10 @@
 *                                                                              *
 *****************************************************************************©*/
 
+var DoorCache = {
+	dirListing: {}
+};
+
 Door = function( path )
 {
 	this.init();
@@ -30,6 +34,8 @@ Door = function( path )
 
 Door.prototype.getPath = function()
 {
+	if( this.path.indexOf( ':' ) > 0 )
+		return this.path;
 	return this.deviceName + ':' + this.path;
 }
 
@@ -37,8 +43,11 @@ Door.prototype.setPath = function( path )
 {
 	if( path )
 	{
-		this.deviceName = path.split( ':' )[0];
-		this.path = path.split( ':' )[1];
+		path = path.split( ':' );
+		this.deviceName = path[0];
+		if( path.length > 1 )
+			this.path = path[1];
+		else this.path = '';
 	}
 }
 
@@ -61,7 +70,7 @@ Door.prototype.get = function( path )
 		return false;
 	if( path.indexOf( ':' ) < 0 ) return false;
 
-	// An object? Fuck!
+	// An object?
 	if( path && path.Path ) path = path.Path;
 	var vol = path.split( ':' )[0] + ':';
 	// First case sensitive
@@ -79,7 +88,7 @@ Door.prototype.get = function( path )
 	var invol = vol.toLowerCase();
 	for( var a = 0; a < Doors.icons.length; a++ )
 	{
-		if( Doors.icons[a].Volume.toLowerCase() == invol )
+		if( Doors.icons[a].Volume && Doors.icons[a].Volume.toLowerCase() == invol )
 		{
 			// Also set the path
 			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( path ) : new Door( path );
@@ -146,9 +155,8 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 		// If we end up here, we're not using dormant - which is OK! :)
 		if( !dirs || ( !dirs && !dirs.length ) )
 		{
-			// Use standard Friend Core doors
-			var j = new cAjax();
-
+			var cache = DoorCache.dirListing;
+			
 			var updateurl = '/system.library/file/dir?r=1';
 
 			if( Workspace.conf && Workspace.conf.authId )
@@ -162,9 +170,35 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			{
 				updateurl += '&details=true';
 			}
+			
+			// Use cache - used for preventing identical and pending dir requests
+			if( cache[ updateurl ] )
+			{
+				cache[ updateurl ].queue.push( callback );
+				return;
+			}
+			
+			// Setup cache queue
+			cache[ updateurl ] = {
+				queue: []
+			};
+			
+			// Use standard Friend Core doors
+			var j = new cAjax();
 
 			//changed from post to get to get more speed.
 			j.open( 'get', updateurl, true, true );
+			j.parseQueue = function( result, path, purePath )
+			{
+				if( cache[ updateurl ].queue.length )
+				{
+					for( var c = 0; c < cache[ updateurl ].queue.length; c++ )
+					{
+						cache[ updateurl ].queue[ c ]( result, path, purePath );
+					}
+				}
+				delete cache[ updateurl ]; // Flush!
+			}
 			j.onload = function( e, d )
 			{
 				if( e )
@@ -183,7 +217,9 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 								} );
 							}
 						}
-						return callback( false, t.fileInfo.Path, false );
+						var res = callback( false, t.fileInfo.Path, false );
+						this.parseQueue( false, t.fileInfo.Path, false );
+						return res;
 					}
 
 					var list = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
@@ -197,17 +233,20 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						}
 						var pth = list[0].Path.substr( 0, t.fileInfo.Path.length );
 						callback( list, t.fileInfo.Path, pth );
+						this.parseQueue( list, t.fileInfo.Path, pth );
 					}
 					else
 					{
 						// Empty directory
 						callback( [], t.fileInfo.Path, false );
+						this.parseQueue( [], t.fileInfo.Path, false );
 					}
 				}
 				else
 				{
 					// Illegal directory
 					callback( false, t.fileInfo.Path, false );
+					this.parseQueue( false, t.fileInfo.Path, false );
 				}
 			}
 
@@ -340,6 +379,8 @@ Door.prototype.read = function( filename, mode )
 {
 	var dr = this;
 	var j = new cAjax();
+	if( mode == 'rb' )
+		j.forceHTTP = true;
 	j.open( 'post', '/system.library/file/read', true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -352,6 +393,12 @@ Door.prototype.read = function( filename, mode )
 		j.addVar( 'mode', mode );
 	else j.addVar( 'mode', 'r' );
 
+	// Binary mode
+	if( mode == 'rb' )
+	{
+		j.setResponseType( 'arraybuffer' );
+	}
+
 	if( this.vars )
 	{
 		for( var a in this.vars )
@@ -363,10 +410,17 @@ Door.prototype.read = function( filename, mode )
 	{
 		if( dr.onRead )
 		{
-			// Here we test both on separator or without (can vary from fs to fs)
-			if( !d || ( this.rawData + "" ).indexOf( '<!--' ) > 10 )
-				return dr.onRead( this.rawData );
-			dr.onRead( r == 'ok' ? d : false );
+			if( j.proxy.responseType == 'arraybuffer' )
+			{
+				dr.onRead( d );
+			}
+			else
+			{
+				// Here we test both on separator or without (can vary from fs to fs)
+				if( !d || ( this.rawData + "" ).indexOf( '<!--' ) > 10 )
+					return dr.onRead( this.rawData );
+				dr.onRead( r == 'ok' ? d : false );
+			}
 		}
 	}
 	j.send();

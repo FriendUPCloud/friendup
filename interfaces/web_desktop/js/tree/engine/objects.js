@@ -24,392 +24,7 @@
  * @date first pushed on 22/08/2017
  */
 Friend = window.Friend || {};
-Friend.UI = Friend.UI || {};
 Friend.Tree = Friend.Tree || {};
-Friend.Flags = Friend.Flags || {};
-
-/**
- * Tree
- *
- * Inclusion of another tree item
- *
- * @param tree (object) The Tree engine
- * @param name (string) The name of the object
- * @param flags (object) Creation flags
- *
- * Flags
- * tree: (object) tree to display / handle
- * larsen: (number) if the tree already contains a 'Tree' object displaying the
- *         same tree, limits the number of rendering inside the rendering
- *         (default: 1)
- */
-Friend.Tree.Tree = function( tree, name, flags )
-{
-    this.tree = false;
-    this.larsen = 1;
-    this.clip = true;
-    this.borderSize = 0;
-    this.borderColor = '#000000';
-    Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Tree', flags );
-	Object.assign( this, Friend.Tree.Tree );
-
-    this.larsenCounter = 0;
-	this.rotation = 0;
-};
-Friend.Tree.Tree.renderUp = function( flags )
-{
-    if ( flags.z == this.z && this.larsenCounter < this.larsen )
-    {
-        this.larsenCounter++;
-        // Draw border
-        var delta = 0;
-        if ( this.borderSize )
-        {
-            this.rect.drawRectangle( flags, this.borderColor, this.borderSize );
-            delta = this.borderSize;
-        }
-        // Clip rectangle
-        var rect = new Friend.Utilities.Rect( delta, delta, this.width - delta * 2, this.height - delta * 2);
-        flags.renderer.save( flags );
-        rect.clip( flags );
-        // Render the tree
-        var treeFlags =
-        {
-            x: delta,
-            y: delta,
-            zoomX: ( this.width - delta * 2 ) / this.tree.width,
-            zoomY: ( this.height - delta * 2 ) / this.tree.height
-        };
-        this.tree.renderTree( this.tree, treeFlags );
-        // Restore clipping
-        flags.renderer.restore();
-        this.larsenCounter--;
-    }
-	return flags;
-};
-Friend.Tree.Tree.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.Tree.Tree.processUp = function( flags )
-{
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation', 'zoomX', 'zoomY', 'alpha' ] );
-};
-Friend.Tree.Tree.processDown = function( flags )
-{
-    return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation', 'zoomX', 'zoomY', 'alpha' ] );
-};
-
-/**
- * RendererImage
- *
- * Outputs the result of the previous rendering 
- *
- * @param tree (object) The Tree engine
- * @param name (string) The name of the object
- * @param flags (object) Creation flags
- *
- * Flags
- */
-Friend.UI.RendererImage = function( tree, name, flags )
-{    
-    this.rendererType= 'Sprite';
-    Friend.Tree.Items.init( this, tree, name, 'Friend.UI.RendererImage', flags );
-    Object.assign( this, Friend.UI.RendererImage );
-    this.renderer = false;
-    this.image
-};
-Friend.UI.RendererImage.renderUp = function( flags )
-{
-    if ( !this.renderer )
-    {
-        this.renderer = flags.renderer;
-        this.newImage = new Image();
-        this.newImage.width = this.width;
-        this.newImage.height = this.height;
-        this.resources.addImage( this.name, this.newImage, Friend.Flags.HOTSPOT_LEFTTOP );
-        this.image = this.name;
-        flags.renderer.startRenderTo( this.name, 
-        {
-            destination: this.newImage,
-            width: this.width,
-            height: this.height
-        } );
-    }
-    return flags;
-};
-Friend.UI.RendererImage.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.UI.RendererImage.processUp = function( flags )
-{
-    if ( flags.command == 'destroy' && flags.itemEvent == this )
-    {
-        //debugger;
-        if ( this.renderer )        
-            this.renderer.stopRenderTo( this.name );
-    }
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
-};
-Friend.UI.RendererImage.processDown = function( flags )
-{
-    this.doRefresh();
-    this.tree.renderer.updateItem( this );
-    return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
-};
-
-/**
- * Bitmap
- *
- * Moveable graphical object
- *
- * @param tree (object) The Tree engine
- * @param name (string) The name of the object
- * @param flags (object) Creation flags
- *
- * Flags
- * image: (string) name of the image to display
- */
-Friend.UI.Bitmap = function( tree, name, flags )
-{
-    this.image = false;
-    this.rendererType= 'Sprite';
-	this.ignoreImageSize = false;
-	this.hotSpotX = 0;
-	this.hotSpotY = 0;
-    Friend.Tree.Items.init( this, tree, name, 'Friend.UI.Bitmap', flags );
-	Object.assign( this, Friend.UI.Bitmap );
-
-	this.setValue( this.image, true );
-};
-Friend.UI.Bitmap.renderUp = function( flags )
-{
-    return flags;
-};
-Friend.UI.Bitmap.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.UI.Bitmap.processUp = function( flags )
-{
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation', 'image' ] );
-};
-Friend.UI.Bitmap.processDown = function( flags )
-{
-    flags = this.endProcess( flags, [ 'x', 'y', 'z', 'rotation', 'image' ] );
-    if ( flags.refresh && this.image != flags.image )
-    	this.setValue( this.image );
-	return flags;
-};
-Friend.UI.Bitmap.setValue = function( image, force )
-{
-	if ( image != this.image || force )
-	{
-		var img = this.resources.getImage( image );
-		if ( img )
-		{
-			this.image = image;
-			this.width = img.width;
-			this.height = img.height;
-			this.hotSpotX = img.hotSpotX;
-			this.hotSpotY = img.hotSpotY;
-			this.doRefresh();
-		}
-	}
-};
-Friend.UI.Bitmap.getValue = function( image )
-{
-	return this.image;
-};
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Bitmap
- *
- * Simple color rectangle
- *
- * @param tree (object) The Tree engine
- * @param name (string) The name of the object
- * @param flags (object) Creation flags
- *
- * Flags
- * color: (string) color of the rectangle
- */
-Friend.UI.ColorBox = function( tree, name, flags )
-{
-    this.color = false;
-    this.rendererType = 'Canvas';
-    Friend.Tree.Items.init( this, tree, name, 'Friend.UI.ColorBox', flags );
-	Object.assign( this, Friend.UI.ColorBox );
-
-    // Default values
-    if ( typeof color == 'undefined' )
-        color = 0;
-    this.color = color;
-    this.rotation = 0;
-};
-Friend.UI.ColorBox.renderUp = function( flags )
-{
-    this.thisRect.fillRectangle( flags, this.color );
-	return flags;
-};
-Friend.UI.ColorBox.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.UI.ColorBox.processUp = function( flags )
-{
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation', 'color' ] );
-};
-Friend.UI.ColorBox.processDown = function( flags )
-{
-    return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation', 'color' ] );
-};
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Text
- *
- * Simple text
- *
- * @param tree (object) The Tree engine
- * @param name (string) The name of the object
- * @param flags (object) Creation flags
- *
- * Flags
- * text: (string) text to display
- * align: (string) alignement of the tex ('left' (default), 'center', 'right')
- * font: (string) font to use
- * color: (string) color of the text
- * backColor: (string) if defined, draws a rectangle of the color behind the text
- * mouseOverHilight: (string) color to add when mouse over item
- * clickHilight: (string) color to add when clicking on the item
- * data: (*) data to associate with the item
- * onMouseOver: (function) function to call when mouse is over item
- * onClick: (function) function to call in case of click on the item
- * caller: (object) object to call whn mouseover of click
- */
-Friend.UI.Text = function( tree, name, flags )
-{
-    this.clickHilight = '#202020';
-    this.hAlign = 'center';
-    this.vAlign = 'middle';
-    this.forceSx = false;
-    this.forceSy = false;
-    this.active = false;
-    this.data = false;
-    this.color = '#000000';
-    this.colorMouseOver = '#000000';
-    this.colorDown = '#000000';
-    this.backColor = Friend.Flags.NOTINITIALIZED;
-    this.backColorMouseOver = Friend.Flags.NOTINITIALIZED;
-    this.backColorDown = Friend.Flags.NOTINITIALIZED;
-    this.text = 'My text';
-    this.font = '#12px Arial';
-    this.caller = false;
-    this.onClick = false;
-    this.onDoubleClick = false;
-	this.rendererType = 'Canvas';
-    Friend.Tree.Items.init( this, tree, name, 'Friend.UI.Text', flags );
-	Object.assign( this, Friend.UI.Text );
-
-    this.setFont( this.font );
-    this.mouseOver = false;
-    this.down = false;
-    if ( this.backColor !== Friend.Flags.NOTINITIALIZED )
-    {
-        if ( this.backColorMouseOver === Friend.Flags.NOTINITIALIZED )
-            this.backColorMouseOver = this.backColor;
-        if ( this.backColorDown === Friend.Flags.NOTINITIALIZED )
-            this.backColorDown = this.backColor;
-    }
-};
-Friend.UI.Text.renderUp = function( flags )
-{
-    if ( this.backColor !== Friend.Flags.NOTINITIALIZED )
-    {
-        var backColor = this.backColor;
-        if ( this.mouseOver )
-            backColor = this.backColorMouseOver;
-        if ( this.down || this.activated )
-            backColor = this.backColorDown;
-        this.thisRect.fillRectangle( flags, backColor );
-    }
-    var textColor = this.color;
-    if ( this.mouseOver )
-        textColor = this.colorMouseOver;
-    if ( this.down || this.activated )
-        textColor = this.colorDown;
-    this.thisRect.drawText( flags, this.text, this.font, textColor, this.hAlign, this.vAlign );
-	return flags;
-};
-Friend.UI.Text.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.UI.Text.processUp = function( flags )
-{
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation', 'text', 'down', 'mouseOver', 'caller', 'onClick', 'onDoubleClick' ] );
-};
-Friend.UI.Text.processDown = function( flags )
-{
-    return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation', 'text', 'mouseOver', 'down' ] );
-};
-Friend.UI.Text.getValue = function()
-{
-    return this.text;
-};
-
-/**
- * setFont
- *
- * Change the font used to display the text
- *
- * @param (string) new font to use
- */
-Friend.UI.Text.setFont = function( font )
-{
-    this.font = font;
-
-    // Get width and height of text
-    var sizes = this.renderer.measureText( this.text, this.font );
-    if ( ! this.forceSx )
-        this.width = sizes.width;
-    if ( ! this.forceSy )
-        this.height = sizes.height;
-    this.setHotSpot( this.hotSpot );
-    this.doRefresh();
-};
-
-/**
- * setColor
- *
- * Change the color of the text
- *
- * @param (string) new color
- */
-Friend.UI.Text.setColor = function()
-{
-    this.color = color;
-    this.doRefresh();
-};
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 Friend.Tree.Items =
 {
@@ -423,27 +38,35 @@ Friend.Tree.Items =
      * @param (object) tree the Tree engine
      * @param (string) name the name of the object
      * @param (string) className the name of the class of the object
-     * @param (object) flags creation flags
+     * @param (object) properties creation properties
      */
-    init: function( object, tree, name, className, flags )
+    init: function( object, tree, name, className, properties )
     {
         object.tree = tree;
+
+        // If a root (no parent), initialize root arrays
+        if ( !properties.parent )
+            tree.initRoot( object );
+
+        // Assign the functions of the class
+        Friend.Tree.Utilities.assignToObject( object, className );
+
         object.utilities = tree.utilities;
         object.resources = tree.resources;
-        object.controller = tree.controller;
-        object.renderer = tree.renderer;
         object.name = name;
         object.className = className;
-        object.creationFlags = Object.assign( {}, flags );
+
+        object.creationFlags = Object.assign( {}, properties );
 		object.creationFlags.name = name;
 		object.creationFlags.itemName = name;
         object.creationFlags.className = className;
         object.identifier = tree.getNewIdentifier( name );
 		object.application = tree.application;
-        object.root = flags.root;
+        object.root = properties.root;
 
         object.timeOfCreation = tree.time;
         object.items = [ ];
+        object.renderItems = [];
 		object.insertItemsPile = [];
 		object.temporaryFunctionsCount = 0;
         object.onDestroyCallback = null;
@@ -469,12 +92,17 @@ Friend.Tree.Items =
         object.setHotSpot = this.setHotSpot;
         object.controller = tree.controller;
         object.getMouseCoords = this.getMouseCoords;
-        object.findItem = this.findItem;
+        object.findItemFromIdentifier = this.findItemFromIdentifier;
         object.findItemFromName = this.findItemFromName;
+        object.findFromName = this.findFromName;
+        object.findItemFromNameAndClassName = this.findItemFromNameAndClassName;
+        object.findFromNameAndClassName = this.findFromNameAndClassName;
+        object.findItemFromClassName = this.findItemFromClassName;
+        object.findFromClassName = this.findFromClassName;
+        object.findAllItemsFromName = this.findAllItemsFromName;
+        object.findAllNames = this.findAllNames;
         object.findParentItemFromName = this.findParentItemFromName;
-		object.findFirstItemFromName = this.findFirstItemFromName;
-		object.findNextItem = this.findNextItem;
-		object.doFindItemFromName = this.doFindItemFromName;
+	    object.findParentItemFromClassName = this.findParentItemFromClassName;
 		object.getProcess = this.getProcess;
 		object.setTemporaryProperty = this.setTemporaryProperty;
 		object.setAfter = this.setAfter;
@@ -488,26 +116,33 @@ Friend.Tree.Items =
 		object.setModal = this.setModal;
 		object.startInsertItems = this.startInsertItems;
 		object.endInsertItems = this.endInsertItems
-		if ( typeof object.checkCollisions == 'undefined' )
+        object.registerEvents = this.registerEvents;
+        object.setEvent = this.setEvent;
+        object.cancelEvent = this.cancelEvent;
+        object.callAllRenderItems = this.callAllRenderItems;
+        object.callRenderItem = this.callRenderItem;
+        object.getChildWidth = this.getChildWidth;
+        object.getChildHeight = this.getChildHeight;
+   		if ( typeof object.checkCollisions == 'undefined' )
 			object.checkCollisions = this.checkCollisions;
         if ( typeof object.getValue == 'undefined' )
             object.getValue = this.getValue;
         if ( typeof object.getValue == 'undefined' )
             object.setValue = this.setValue;
 
-		// Tranforms the evals in the flags into values
+		// Tranforms the evals in the properties into values
 		if ( tree.previousItem )
 		{
 			var variables =
 			{
-				parentItem: flags.parent,
+				parentItem: properties.parent,
 				previousItem: tree.previousItem,
 				treeWidth: tree.width,
 				treeHeight: tree.height
 			};
-			flags = tree.utilities.computeFlags( flags, object, variables );
+			properties = tree.utilities.computeProperties( properties, object, variables );
 		}
-        // Adds all flags
+        // Adds all properties
         object.collisions = false;
         object.noRotation = 0;
         object.destroyList = [ ];
@@ -517,51 +152,59 @@ Friend.Tree.Items =
 		object.modal = false;
 		object.noOffsets = false;
         if ( typeof object.x == 'undefined' )
-            object.x = Friend.Flags.NOTINITIALIZED2;
+            object.x = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.y == 'undefined' )
-            object.y = Friend.Flags.NOTINITIALIZED2;
+            object.y = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.z == 'undefined' )
-            object.z = Friend.Flags.NOTINITIALIZED2;
+            object.z = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.width == 'undefined' )
-            object.width = Friend.Flags.NOTINITIALIZED2;
+            object.width = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.height == 'undefined' )
-            object.height = Friend.Flags.NOTINITIALIZED2;
+            object.height = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.rotation == 'undefined' )
-            object.rotation = Friend.Flags.NOTINITIALIZED2;
+            object.rotation = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.hotSpot == 'undefined' )
-            object.hotSpot = Friend.Flags.NOTINITIALIZED2;
+            object.hotSpot = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.hotSpotX == 'undefined' )
-            object.hotSpotX = Friend.Flags.NOTINITIALIZED2;
+            object.hotSpotX = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.hotSpotY == 'undefined' )
-            object.hotSpotY = Friend.Flags.NOTINITIALIZED2;
+            object.hotSpotY = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.alpha == 'undefined' )
-            object.alpha = Friend.Flags.NOTINITIALIZED2;
+            object.alpha = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.destroyAfter == 'undefined' )
-            object.destroyAfter = Friend.Flags.NOTINITIALIZED2;
+            object.destroyAfter = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.onProcess == 'undefined' )
-            object.onProcess = Friend.Flags.NOTINITIALIZED2;
+            object.onProcess = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.noPerspective == 'undefined' )
-            object.noPerspective = Friend.Flags.NOTINITIALIZED2;
+            object.noPerspective = Friend.Tree.NOTINITIALIZED2;
+        if ( typeof object.noRotation == 'undefined' )
+            object.noRotation = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.theRoot == 'undefined' )
-            object.theRoot = Friend.Flags.NOTINITIALIZED2;
+            object.theRoot = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.perspective == 'undefined' )
-            object.perspective = Friend.Flags.NOTINITIALIZED2;
+            object.perspective = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.xCenter == 'undefined' )
-            object.xCenter = Friend.Flags.NOTINITIALIZED2;
+            object.xCenter = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.yCenter == 'undefined' )
-            object.yCenter = Friend.Flags.NOTINITIALIZED2;
+            object.yCenter = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.rotation == 'undefined' )
-            object.rotation = Friend.Flags.NOTINITIALIZED2;
+            object.rotation = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.zoomX == 'undefined' )
-            object.zoomX = Friend.Flags.NOTINITIALIZED2;
+            object.zoomX = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.zoomY == 'undefined' )
-            object.zoomY = Friend.Flags.NOTINITIALIZED2;
-        object.utilities.setFlags( object, flags );
+            object.zoomY = Friend.Tree.NOTINITIALIZED2;
+        object.utilities.setFlags( object, properties );
         object.setHotSpot( object.hotSpot );
-        if ( object.width == Friend.Flags.NOTINITIALIZED2 )
-            object.width = 300;
-        if ( object.height == Friend.Flags.NOTINITIALIZED2 )
+        if ( object.width == Friend.Tree.NOTINITIALIZED2 )
+        {
+            object.width = 320;
+            properties.width = 320;
+        }   
+        if ( object.height == Friend.Tree.NOTINITIALIZED2 )
+        {
             object.height = 200;
+            properties.height = 200;
+        }
 		if ( typeof object.x == 'string' )
 		{
 			if ( tree.previousItem )
@@ -610,64 +253,71 @@ Friend.Tree.Items =
 				}
 			}
 		}
-        if ( object.x == Friend.Flags.NOTINITIALIZED2 )
+        if ( object.rotation == Friend.Tree.NOTINITIALIZED2 )
+            object.rotation = 0;
+        if ( object.hotSpotX == Friend.Tree.NOTINITIALIZED2 )
+            object.hotSpotX = 0;
+        if ( object.hotSpotY == Friend.Tree.NOTINITIALIZED2 )
+            object.hotSpotY = 0;
+        if ( object.hotSpot == Friend.Tree.NOTINITIALIZED2 )
+            object.hotSpot = Friend.Tree.HOTSPOT_LEFTTOP;
+        if ( object.alpha == Friend.Tree.NOTINITIALIZED2 )
+            object.alpha = 1;
+        if ( object.destroyAfter == Friend.Tree.NOTINITIALIZED2 )
+            object.destroyAfter = 0;
+        if ( object.onProcess == Friend.Tree.NOTINITIALIZED2 )
+            object.onProcess = null;
+        if ( object.theRoot == Friend.Tree.NOTINITIALIZED2 )
+            object.theRoot = false;
+        if ( object.noPerspective == Friend.Tree.NOTINITIALIZED2 )
+            object.noPerspective = false;
+        if ( object.noRotation == Friend.Tree.NOTINITIALIZED2 )
+            object.noRotation = false;
+        if ( object.perspective == Friend.Tree.NOTINITIALIZED2 )
+            object.perspective = undefined;
+        if ( object.xCenter == Friend.Tree.NOTINITIALIZED2 )
+            object.xCenter = undefined;
+        if ( object.yCenter == Friend.Tree.NOTINITIALIZED2 )
+            object.yCenter = undefined;
+        if ( object.rotation == Friend.Tree.NOTINITIALIZED2 )
+            object.rotation = 0;
+        if ( object.zoomX == Friend.Tree.NOTINITIALIZED2 )
+            object.zoomX = 1;
+        if ( object.zoomY == Friend.Tree.NOTINITIALIZED2 )
+            object.zoomY = 1;
+        object.thisRect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
+        object.rect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
+        
+        // If no X and Y have been defined, center the item in the parent
+        if ( object.x == Friend.Tree.NOTINITIALIZED2 )
 		{
-			if ( flags.parent && !flags.absolute )
-				object.x = flags.parent.width / 2 - object.width / 2;
+			if ( properties.parent )
+				object.x = properties.parent.width / 2 - object.width / 2;
 			else
 				object.x = tree.canvasWidth / 2 - object.width / 2;
 		}
-        if ( object.y == Friend.Flags.NOTINITIALIZED2 )
+        if ( object.y == Friend.Tree.NOTINITIALIZED2 )
 		{
-			if ( flags.parent && !flags.absolute )
-				object.y = flags.parent.height / 2 - object.height / 2;
+			if ( properties.parent )
+				object.y = properties.parent.height / 2 - object.height / 2;
 			else
 				object.y = tree.canvasHeight / 2 - object.height / 2;
 		}
-        if ( object.z == Friend.Flags.NOTINITIALIZED2 )
+        if ( object.z == Friend.Tree.NOTINITIALIZED2 )
         {
-            if ( flags.parent )
-                object.z = flags.parent.z + 1;
+            if ( properties.parent )
+                object.z = properties.parent.z + 1;
         }
-        if ( object.rotation == Friend.Flags.NOTINITIALIZED2 )
-            object.rotation = 0;
-        if ( object.hotSpotX == Friend.Flags.NOTINITIALIZED2 )
-            object.hotSpotX = 0;
-        if ( object.hotSpotY == Friend.Flags.NOTINITIALIZED2 )
-            object.hotSpotY = 0;
-        if ( object.hotSpot == Friend.Flags.NOTINITIALIZED2 )
-            object.hotSpot = Friend.Flags.HOTSPOT_LEFTTOP;
-        if ( object.alpha == Friend.Flags.NOTINITIALIZED2 )
-            object.alpha = 1;
-        if ( object.destroyAfter == Friend.Flags.NOTINITIALIZED2 )
-            object.destroyAfter = 0;
-        if ( object.onProcess == Friend.Flags.NOTINITIALIZED2 )
-            object.onProcess = null;
-        if ( object.theRoot == Friend.Flags.NOTINITIALIZED2 )
-            object.theRoot = false;
-        if ( object.noPerspective == Friend.Flags.NOTINITIALIZED2 )
-            object.noPerspective = 0;
-        if ( object.perspective == Friend.Flags.NOTINITIALIZED2 )
-            object.perspective = undefined;
-        if ( object.xCenter == Friend.Flags.NOTINITIALIZED2 )
-            object.xCenter = undefined;
-        if ( object.yCenter == Friend.Flags.NOTINITIALIZED2 )
-            object.yCenter = undefined;
-        if ( object.rotation == Friend.Flags.NOTINITIALIZED2 )
-            object.rotation = 0;
-        if ( object.zoomX == Friend.Flags.NOTINITIALIZED2 )
-            object.zoomX = 1;
-        if ( object.zoomY == Friend.Flags.NOTINITIALIZED2 )
-            object.zoomY = 1;
-        object.thisRect = new Friend.Utilities.Rect( 0, 0, 0, 0 );
-        object.rect = new Friend.Utilities.Rect( 0, 0, 0, 0 );
+
+        // Default messaging level
+        object.messagesLevel = Friend.Tree.MESSAGELEVEL_EVENTS;
 
         // Add processes
-        if ( flags.processes )
+        if ( properties.processes )
         {
-            for ( var i = 0; i < flags.processes.length; i ++ )
+            for ( var i = 0; i < properties.processes.length; i ++ )
             {
-				var processName = flags.processes[ i ].type;
+				var processName = properties.processes[ i ].type;
 				var previous = 0;
 				var obj = window;
 				var pos = processName.indexOf( '.' );
@@ -677,42 +327,100 @@ Friend.Tree.Items =
 					previous = pos + 1;
 					pos = processName.indexOf( '.', previous );
 				}
-				var process = new obj[ processName.substring( previous ) ]( object.tree, object, flags.processes[ i ].params );
+				var process = new obj[ processName.substring( previous ) ]( object.tree, object, properties.processes[ i ].params );
 	            object.addProcess.apply( object, [ process ] );
 			}
         }
 
         // Insert in parent if defined
-        if ( flags.parent )
+        if ( properties.parent )
 		{
-			if ( !flags.parent.internal )
-			    tree.addItem( object, flags.parent );
+			if ( !properties.parent.internal )
+            {
+			    properties.parent.addItem( object, properties.priority, properties.priorityBase );
+            }
 		}
-		else
-			tree.addTree( object, flags );
+        else
+        {
+            // No parent-> the root of a new tree
+            tree.addTree( object );
+        }
 
 		// Store for the next ones if not an internal object
 		tree.previousItem = object;
+
+        // Default renderItem (sets the width and height in the item)
+        if ( object.renderItemName )
+        {
+            for ( var r = 0; r < tree.renderers.length; r++ )
+            {
+                var klass;
+                var name = tree.renderers[ r ].name;
+                name = name.substring( 9 );     // Removes 'Renderer_'
+                if ( object.renderItemName == 'Friend.Tree.RenderItems.Empty' )
+                {
+                    object.renderItems.push( new Friend.Tree.RenderItems.Empty( tree, object, properties ) );
+                }
+                else 
+                {
+                    var className = object.renderItemName + '_' + name;
+                    klass = object.utilities.getClass( className );
+                    if ( klass )
+                        object.renderItems.push( new klass( tree, object, properties ) );
+                }
+            }
+        }
+
+        // If no X and Y have been defined, center the item in the parent
+        if ( object.x == Friend.Tree.NOTINITIALIZED2 )
+		{
+			if ( properties.parent )
+				object.x = properties.parent.width / 2 - object.width / 2;
+			else
+				object.x = tree.canvasWidth / 2 - object.width / 2;
+		}
+        if ( object.y == Friend.Tree.NOTINITIALIZED2 )
+		{
+			if ( properties.parent )
+				object.y = properties.parent.height / 2 - object.height / 2;
+			else
+				object.y = tree.canvasHeight / 2 - object.height / 2;
+		}
+        if ( object.z == Friend.Tree.NOTINITIALIZED2 )
+        {
+            if ( properties.parent )
+                object.z = properties.parent.z + 1;
+        }
+
+        // Destroy after XXX milliseconds? If yes, set timeout
+        if ( properties.destroyAfter )
+        {
+            window.setTimeout( function()
+            {
+                object.destroy();
+            }, properties.destroyAfter );
+        }
 
 		// Force a refresh all of the tree (TODO: optimize)
 		if ( object.root )
 			object.root.refreshAll = true;
     },
-	startInsertItems: function()
+    
+    // Events
+    //////////////////////////////////////////////////////
+    registerEvents: function( events, properties )
     {
-		this.internal = true;
-		this.insertItemsPile.push(
-		{
-			previousItem: this.tree.previousItem
-		} );
-	},
-	endInsertItems: function()
+        return this.tree.events.registerEvents( this, events, properties );
+    },
+    cancelEvent: function( level, eventName )
     {
-		this.internal = false;
-		var data = this.insertItemsPile.pop();
-		this.tree.previousItem = data.previousItem;
-	},
-
+        return this.tree.events.cancelEvent( this, level );
+    },
+    setEvent: function( eventName, properties )
+    {
+        return this.tree.events.registerEvents( this, eventName, properties );
+    },
+    
     /**
      * getMouseCoords
      *
@@ -842,8 +550,25 @@ Friend.Tree.Items =
         for ( var i = 0; i < this.items.length; i++ )
             this.items[ i ].setRoot( root );
     },
-    addItem: function( item, priority, object )
+    startInsertItems: function()
     {
+		this.internal = true;
+		this.insertItemsPile.push(
+		{
+			previousItem: this.tree.previousItem
+		} );
+    },
+	endInsertItems: function()
+    {
+		this.internal = false;
+		var data = this.insertItemsPile.pop();
+		this.tree.previousItem = data.previousItem;
+	},
+    addItem: function( item, priority, priorityBase )
+    {
+        // Store in main list
+        item.root.allItems[ item.identifier ] = item;
+
         // Set parent item
         item.parent = this;
 		if ( typeof item.z === 'undefined' )
@@ -854,13 +579,12 @@ Friend.Tree.Items =
 
         // Handle priority
         var position = this.items.length;
-        if ( object )
+        if ( priorityBase )
         {
             for ( position = 0; position < this.items.length; position ++ )
             {
-                if ( this.items[ position ] == object )
+                if ( this.items[ position ] == priorityBase )
                 {
-                    position = object;
                     break;
                 }
             }
@@ -873,12 +597,12 @@ Friend.Tree.Items =
                     position = 0;
                     break;
                 case 'before':
-                    position --;
+                    position--;
                     if ( position < 0 )
                         position = 0;
                     break;
                 case 'after':
-                    position ++;
+                    position++;
                     if ( position >= this.items.length )
                         position = this.items.length;
                     break;
@@ -888,24 +612,22 @@ Friend.Tree.Items =
         }
         this.items.splice( position, 0, item );
 
-        // Call all processes for creation
-        // A new object has been created
-        var flags =
-        {
-			command: 'create',
-            itemEvent: item,
-            creationFlags: item.creationFlags,
-            name: item.name,
-            preserve: true
-        }
-
-        // Call the processes of the subitem
-		this.tree.processItem( this, 0, flags );
-
         // Refresh!
         this.doRefresh();
-		if ( this.root )
-			this.root.refreshAll = true;
+        if ( this.root )
+        {
+            // Call all items and processes for creation
+            var message =
+            {
+                command: 'create',
+                type: 'system',
+                creationFlags: item.creationFlags,
+                itemEvent: item,
+                name: item.name
+            }
+            this.tree.sendMessageToTree( this.root, message );
+            this.root.refreshAll = true;
+        }
 		else
 			this.refreshAll = true;
     },
@@ -1001,73 +723,46 @@ Friend.Tree.Items =
         return null;
     },
 
-    /**
-     * startProcess
-     *
-     * Function to call by the objects to start the processes exploration
-     *
-     * @param (delay) delay time since last frame (milliseconds)
-     * @param (number) zoom current zoom factor
-     * @param (object) flags to transøit in the chain
-     * @param (array) sourceFlags list of the names of the properties from the object to copy in the flags
-     */
-    startProcess: function( flags, properties )
-    {
-		// Copy the properties if not a command
-		if ( !flags.command )
+    startProcess: function( message, properties )
+    {        
+        // Copy the properties if not a command
+        message.refresh = false;
+		if ( message.type != 'system' && message.type != 'renderItemToItem')
 		{
 			for ( var p = 0; p < properties.length; p ++ )
 			{
-				if ( typeof flags[ properties[ p ] ] == 'undefined' )
-					flags[ properties[ p ] ] = this[ properties[ p ] ];
+				if ( typeof message[ properties[ p ] ] == 'undefined' )
+                    message[ properties[ p ] ] = this[ properties[ p ] ];
 			}
-		}
-		if ( !flags.refresh )
-			flags.refresh = false;
-
-        // Calls external process
-        if ( this.onProcess && this.caller )
-            this.onProcess.apply( this.caller, [ flags ] );
-
-		return flags;
-    },
-
-    /**
-     * endProcess
-     *
-     * End the processes, pokes the properties in the object
-     *
-     * @param (object) flags the flags at the end of the processes exploration
-     * @param (array) properties the list of properties to look for in the flags
-     */
-    endProcess: function( flags, properties )
-    {
-        // Destroys the object after a while?
-        if ( this.destroyAfter )
-        {
-            if ( this.tree.time - this.timeOfCreation > this.destroyAfter )
-                this.tree.addToDestroy( this );
         }
-
+		return true;
+    },
+    endProcess: function( message, properties )
+    {
 		// Changes the values
-		var refresh = false;
-		if ( flags.refresh && !flags.command )
+        var refresh = false;
+		if ( message.refresh || message.fromNetwork )
 		{
-	        for ( var p = 0; p < properties.length; p ++ )
-	        {
-	            if ( typeof flags[ properties[ p ] ] != 'undefined' )
-	            {
-	                if ( this[ properties[ p ] ] != flags[ properties[ p ] ] )
-	                {
-	                    this[ properties[ p ] ] = flags[ properties[ p ] ];
-	                    refresh = true;
-	                }
-	            }
-	        }
-		}
-		if ( refresh )
-			this.doRefresh();
-		return flags;
+       		if ( message.type != 'system' && message.type != 'renderItemToItem' )
+    		{
+                message.previous = {};                
+                for ( var p = 0; p < properties.length; p ++ )
+                {
+                    if ( typeof message[ properties[ p ] ] != 'undefined' )
+                    {
+                        if ( this[ properties[ p ] ] != message[ properties[ p ] ] )
+                        {
+                            message.previous[ properties[ p ] ] = this[ properties[ p ] ]; 
+                            this[ properties[ p ] ] = message[ properties[ p ] ];
+                            message[ properties[ p ] ] = Friend.Tree.UPDATED;
+                            refresh = true;
+                        }
+                    }
+                }
+                this.doRefresh();
+            }
+        }
+		return refresh;
     },
 
     /**
@@ -1114,76 +809,127 @@ Friend.Tree.Items =
      * @param (string) name name of the item to look for
      * @return (object) the item if found, null if not found
      */
-    findItem: function( identifier )
+    findItemFromIdentifier: function( identifier )
     {
-        return this.tree.findItem( identifier );
+        return this.root.allItems( identifier );
     },
-    findItemFromName: function( name, className )
+
+    findItemFromName: function( name, item )
+    {
+        if ( typeof item == 'undefined' )
+            item = this;
+        return item.findFromName( name );
+    },
+    findFromName: function( name )
     {
         if ( this.name == name )
-		{
-			if ( !className )
-				return this;
-			else
-			{
-				if ( className == this.className )
-					return this;
-			}
-		}
-        for ( var i = 0; i < this.items.length; i ++ )
+			return this;
+
+        for ( var i = 0; i < this.items.length; i++ )
         {
-            var found = this.items[ i ].findItemFromName( name, className );
+            var found = this.items[ i ].findFromName( name );
             if ( found )
                 return found;
         }
         return null;
     },
-	findFirstItemFromName: function( name, className )
-	{
-		this.findItemName = name;
-		this.findItemClassName = className;
-		this.findItemCurrent = null;
-		return this.doFindItemFromName( name, className, this );
-	},
-	findNextItem: function()
+
+    findItemFromNameAndClassName: function( name, className, item )
     {
-		if ( this.findItemCurrent )
-			return this.findItemCurrent.doFindItemFromName( this.findItemName, this.findItemClassName, this );
-		return null;
-	},
-	doFindItemFromName: function( name, className, origin )
+        if ( typeof item == 'undefined' )
+            item = this;
+        return item.findFromNameAndClassName( name, className );
+    },
+    findFromNameAndClassName: function( name, className )
     {
-        if ( this.name == name && origin.findItemCurrent != this )
-		{
-			if ( !className )
-			{
-				origin.findItemCurrent = this;
-				return this;
-			}
-			else if ( className == this.className )
-			{
-				origin.findItemCurrent = this;
-				return this;
-			}
-		}
-        for ( var i = 0; i < this.items.length; i ++ )
+        if ( this.name == name && this.className == className )
+			return this;
+
+        for ( var i = 0; i < this.items.length; i++ )
         {
-			var item = this.items[ i ].doFindItemFromName( name, className, origin );
-			if ( item )
-			{
-				origin.findItemCurrent = item;
-				return item;
-			}
+            var found = this.items[ i ].findFromNameAndClassName( name, className );
+            if ( found )
+                return found;
         }
-		origin.findItemCurrent = null;
         return null;
     },
+
+    findItemFromClassName: function( className, item )
+    {
+        if ( typeof item == 'undefined' )
+            item = this;
+        return this.findFromClassName( className );
+    },
+    findFromClassName: function( className )
+    {
+        if ( this.className == className )
+			return this;
+
+        for ( var i = 0; i < this.items.length; i++ )
+        {
+            var found = this.items[ i ].findFromClassName( className );
+            if ( found )
+                return found;
+        }
+        return null;
+    },
+
+	findAllItemsFromName: function( name, item )
+	{
+        if ( typeof item == 'undefined' )
+            item = this;
+
+        var foundItems = [];
+		item.findAllNames( name, foundItems );
+        return foundItems;
+	},
+	findAllNames: function( name, foundItems )
+	{
+        if ( name == this.name  )
+            foundItems.push( this );
+        for ( var i = 0; i < this.items.length; i++ )
+        {
+			this.items[ i ].findAllNames( name, foundItems );
+        }
+	},
+
+	findAllItemsFromClassName: function( className, item )
+	{
+        if ( typeof item == 'undefined' )
+            item = this;
+
+        var foundItems = [];
+		item.findAllClassNames( className, foundItems );
+        return foundItems;
+	},
+	findAllClassNames: function( className, foundItems )
+	{
+        if ( className == this.className  )
+            foundItems.push( this );
+
+        for ( var i = 0; i < this.items.length; i++ )
+        {
+			this.items[ i ].findAllClassNames( name, foundItems );
+        }
+	},
+
 	findParentItemFromName: function( name )
     {
         var parent = this.parent;
         while( parent )
         {
 			if ( parent.name == name )
+				return parent;
+			parent = parent.parent;
+        }
+        return null;
+    },
+	findParentItemFromClassName: function( className )
+    {
+        var parent = this.parent;
+        while( parent )
+        {
+			if ( parent.className == className )
 				return parent;
 			parent = parent.parent;
         }
@@ -1198,8 +944,13 @@ Friend.Tree.Items =
 			this.onDestroy();
 
 		// Call all the processes of the tree
-		var flags = { itemEvent: this, command: 'destroy', preserve: true };
-        this.tree.processTree( this.root, 0, flags );
+        var flags = 
+        {
+            command: 'destroy',
+            type: 'system',
+            itemEvent: this
+        };
+        this.tree.sendMessageToTree( this.root, message, Friend.Tree.MESSAGELEVEL_LIFE );
 
 		// Calls external process
         if ( this.onProcess && this.caller )
@@ -1275,6 +1026,16 @@ Friend.Tree.Items =
         }
     },
 
+    callAllRenderItems: function( functionName, parameters )
+    {
+        for ( var r = 0; r < this.renderItems.length; r++ )
+            this.renderItems[ r ][ functionName ].apply( this.renderItems[ r ], parameters );
+    },
+    callRenderItem: function( functionName, parameters )
+    {
+        return this.renderItems[ 0 ][ functionName ].apply( this.renderItems[ 0 ], parameters );
+    },
+
     /**
      * setTemporaryProperty
      *
@@ -1310,50 +1071,49 @@ Friend.Tree.Items =
      *
      * Calculates / change the hotspot of an item
      *
-     * @param (number) hotSpot identifier of the hotspot location (defined in Tree, such as Friend.Flags.HOTSPOT_CENTER)
+     * @param (number) hotSpot identifier of the hotspot location (defined in Tree, such as Friend.Tree.HOTSPOT_CENTER)
      */
     setHotSpot: function( hotSpot )
     {
         switch ( hotSpot )
         {
-            case Friend.Flags.HOTSPOT_LEFTTOP:
+            case Friend.Tree.HOTSPOT_LEFTTOP:
                 this.hotSpotX = 0;
                 this.hotSpotY = 0;
                 break;
-            case Friend.Flags.HOTSPOT_CENTERTOP:
+            case Friend.Tree.HOTSPOT_CENTERTOP:
                 this.hotSpotX = this.width / 2;
                 this.hotSpotY = 0;
                 break;
-            case Friend.Flags.HOTSPOT_RIGHTTOP:
+            case Friend.Tree.HOTSPOT_RIGHTTOP:
                 this.hotSpotX = this.width;
                 this.hotSpotY = 0;
                 break;
-            case Friend.Flags.HOTSPOT_LEFTCENTER:
+            case Friend.Tree.HOTSPOT_LEFTCENTER:
                 this.hotSpotX = 0;
                 this.hotSpotY = this.height / 2;
                 break;
-            case Friend.Flags.HOTSPOT_CENTER:
+            case Friend.Tree.HOTSPOT_CENTER:
                 this.hotSpotX = this.width / 2;
                 this.hotSpotY = this.height / 2;
                 break;
-            case Friend.Flags.HOTSPOT_RIGHTCENTER:
+            case Friend.Tree.HOTSPOT_RIGHTCENTER:
                 this.hotSpotX = this.width;
                 this.hotSpotY = this.height / 2;
                 break;
-            case Friend.Flags.HOTSPOT_LEFTBOTTOM:
+            case Friend.Tree.HOTSPOT_LEFTBOTTOM:
                 this.hotSpotX = 0;
                 this.hotSpotY = this.height;
                 break;
-            case Friend.Flags.HOTSPOT_CENTERBOTTOM:
+            case Friend.Tree.HOTSPOT_CENTERBOTTOM:
                 this.hotSpotX = this.width / 2;
                 this.hotSpotY = this.height;
                 break;
-            case Friend.Flags.HOTSPOT_RIGHTBOTTOM:
+            case Friend.Tree.HOTSPOT_RIGHTBOTTOM:
                 this.hotSpotX = this.width;
                 this.hotSpotY = this.height;
                 break;
         }
     },
-
 
 };

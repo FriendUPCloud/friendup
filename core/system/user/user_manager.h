@@ -35,6 +35,7 @@
 #include <core/types.h>
 #include "user_session.h"
 #include "user_group.h"
+#include "user_sessionmanager.h"
 #include "user.h"
 #include "remote_user.h"
 
@@ -173,7 +174,7 @@ int  UMAddUser( UserManager *um,  User *usr );
 //
 //
 
-int  UMRemoveUser( UserManager *um,  User *usr );
+int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager);
 
 //
 //

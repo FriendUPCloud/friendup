@@ -88,7 +88,7 @@ function Root( name, flags )
 	Friend.Tree.Items.init( this, tree, name, 'Tree.Battle', flags );
 
 	// Dialog Definition
-	this.dialog = new Friend.UI.Dialog( this.fTree, 'Interface',
+	this.dialog = new Friend.Tree.UI.Dialog( this.fTree, 'Interface',
 	{
 		width: this.width,
 		height: this.height,
@@ -104,19 +104,15 @@ Root.prototype.onCancel = function ()
 {
 	Application.quit();
 };
-Root.prototype.renderUp = function ( flags )
+Root.prototype.render = function ( flags )
 {
 	return flags;
 };
-Root.prototype.renderDown = function ( flags )
+Root.prototype.messageUp = function ( message )
 {
-    return flags;
+	return this.startProcess( message, [ ] );
 };
-Root.prototype.processUp = function ( flags )
+Root.prototype.messageDown = function ( message )
 {
-	return flags;
-};
-Root.prototype.processDown = function ( flags )
-{
-	return flags;
+	return this.endProcess( message, [ ] );
 };

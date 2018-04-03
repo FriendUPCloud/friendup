@@ -2,13 +2,17 @@
 i18n_look_and_feel_title                : Look and feel
 
 i18n_themes                             : Themes
-i18n_behavior                           : Behavior
+i18n_theme_engines                      : Theme engines
+i18n_desktop                            : Desktop
 i18n_menu_mode                          : Menu mode
 i18n_preview                            : Preview
 i18n_cancel                             : Close
 i18n_save                               : Save
+i18n_customize_theme                    : Theme options
 
-i18n_available_themes                   : Available themes
+i18n_no_theme_config                    : This theme doesn't support customization.
+
+i18n_available_themes                   : Available engines
 i18n_directory_model                    : Directory model
 i18n_window_clicks                      : Click on window mode
 i18n_click_to_front                     : Click to front

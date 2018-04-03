@@ -1,0 +1,153 @@
+[
+	{
+		"type": "Group",
+		"name": "ContainerGroup",
+		"rows": 2,
+		"sizes": [ "calc(100% - 44px)", "44px" ],
+		"show": true,
+		"children": [
+			{
+				"type": "Group",
+				"name": "LayoutGroup",
+				"rows": 1,
+				"show": true,
+				"children": [
+					{
+						"type": "Group",
+						"name": "KeyValueGroup",
+						"height": "119px",
+						"rows": 2,
+						"show": true,
+						"children": [
+							{
+								"type": "Group",
+								"height": "40px",
+								"columns": 2,
+								"valign": "middle",
+								"padding": 8,
+								"sizes": [ "40%", "60%" ],
+								"show": true,
+								"children": [
+									{
+										"type": "Text",
+										"paddingTop": 2,
+										"text": "Key:",
+										"weight": "bold",
+										"show": true
+									},
+									{
+										"type": "Input",
+										"focus": true,
+										"name": "InputKey",
+										"value": "",
+										"show": true
+									}
+								]
+							},
+							{
+								"type": "Group",
+								"height": "35px",
+								"columns": 2,
+								"valign": "middle",
+								"paddingLeft": 8,
+								"paddingRight": 8,
+								"paddingBottom": 8,
+								"sizes": [ "40%", "60%" ],
+								"show": true,
+								"children": [
+									{
+										"type": "Text",
+										"paddingTop": 2,
+										"text": "Value:",
+										"weight": "bold",
+										"show": true
+									},
+									{
+										"type": "Input",
+										"name": "InputValue",
+										"value": "",
+										"show": true
+									}
+								]
+							},
+							{
+								"type": "Group",
+								"height": "44px",
+								"columns": 2,
+								"sizes": [ "60%", "40%" ],
+								"border": "top",
+								"padding": 8,
+								"show": true,
+								"children": [
+									{
+										"type": "Text",
+										"text": "Properties:",
+										"paddingTop": 6,
+										"weight": "bold",
+										"show": true
+									},
+									{
+										"type": "Button",
+										"text": "Add property",
+										"icon": "fa-plus",
+										"event": {
+											"functionName": "addProperty",
+											"arguments": ""
+										},
+										"show": true
+									}
+								]
+							}
+						]
+					},
+					{
+						"type": "Group",
+						"name": "ExistingValues",
+						"height": "calc(100% - 119px)",
+						"rows": 1,
+						"show": true,
+						"children": [
+							{
+								"type": "List",
+								"name": "KeyValueList",
+								"show": true
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Group",
+				"name": "BottomButtonsGroup",
+				"height": "100%",
+				"sizes": [ "33.3%", "33.3%", "33.3%" ],
+				"columns": 2,
+				"padding": 8,
+				"show": true,
+				"children": [
+					{
+						"type": "Button",
+						"text": "Save item",
+						"icon": "fa-save",
+						"event": {
+							"functionName": "saveSettingItem",
+							"arguments": ""
+						},
+						"show": true
+					},
+					{ "type": "Empty", "show": true },
+					{
+						"type": "Button",
+						"text": "Cancel",
+						"icon": "fa-remove",
+						"event": {
+							"functionName": "CloseView",
+							"arguments": ""
+						},
+						"show": true
+					}
+				]
+			}
+		]
+	}
+]

@@ -192,7 +192,7 @@ if( !class_exists( 'GoogleDrive' ) )
 						}
 					}
 					
-					$Logger->log( ' $this->Config ' . $this->Config . "\r\n" );
+					//$Logger->log( ' $this->Config ' . $this->Config . "\r\n" );
 				}
 			}
 			
@@ -337,7 +337,7 @@ if( !class_exists( 'GoogleDrive' ) )
 			}
 			
 			
-			$Logger->log('Google file request ' . json_encode( $args ) . ' [] ' . json_encode( $Config,1 ) . "\r\n");
+			$Logger->log('Google file request ' . json_encode( $args )/* . ' [] ' . json_encode( $Config,1 )*/ . "\r\n");
 		
 			// ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
 			// Do a directory listing
@@ -623,6 +623,8 @@ if( !class_exists( 'GoogleDrive' ) )
 							// our state info must contain user id and our mountname so that we can update the database...
 							// we will also tell our google answer which server to redirect the google request to.
 							
+							$redirect_uri = ( $Config->SSLEnable ? 'https://' : 'http://' ) . $Config->FCHost . ( $Config->FCHost == 'localhost' ? ( $Config->FCPort ? ':'.$Config->FCPort : ':6502' ) : '' ) . '/loginprompt/oauth';
+							
 							$client = new Google_Client();
 							$client->setApplicationName($this->sysinfo['project_id']);
 							$client->setClientId($this->sysinfo['client_id']);
@@ -642,10 +644,10 @@ if( !class_exists( 'GoogleDrive' ) )
 							}
 							else
 							{*/
-								$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : 'http://localhost:6502/loginprompt/oauth' ) . '::' . $this->Type;
+								$statevar = $User->ID . '::' . $this->Name . '::' . $args->sessionid . '::' . ( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] :  $redirect_uri ) . '::' . $this->Type;
 								
 								$client->setState( rawurlencode( bin2hex( $statevar ) ) );
-								$client->setRedirectUri( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : 'http://localhost:6502/loginprompt/oauth' );
+								$client->setRedirectUri( isset( $dconf['redirect_uri'] ) ? $dconf['redirect_uri'] : $redirect_uri );
 							/*}*/
 
 							
@@ -1346,7 +1348,7 @@ if( !class_exists( 'GoogleDrive' ) )
 					{
 						$Logger->log('token expired .... ' . print_r( $confjson['access'],1 ) . ' [] $refreshToken: ' . print_r( $refreshToken,1 ) );
 						
-						$this->error = '{"title":"Google system error","text":"application refresh_token is missing. Please notify your Administrator!"}';
+						//$this->error = '{"title":"Google system error","text":"application refresh_token is missing. Please notify your Administrator!"}';
 						
 						return false;
 						

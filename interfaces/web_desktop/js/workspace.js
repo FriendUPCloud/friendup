@@ -74,7 +74,7 @@ Workspace = {
 		if( this.initialized ) return;
 
 		// Preload some images
-		var imgs = [ 
+		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
 			'/themes/friendup/gfx/loading.gif'
 		];
@@ -151,7 +151,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Friend Workspace v1.1',
+			title: 'Friend Workspace v1.1.1',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -161,7 +161,7 @@ Workspace = {
 		// Make links to screen on this object
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
-		
+
 		// Key grabber
 		if( !ge( 'InputGrabber' ) )
 		{
@@ -173,7 +173,7 @@ Workspace = {
 			i.style.pointerEvents = 'none';
 			ge( 'DoorsScreen' ).appendChild( i );
 		}
-		
+
 		this.initWorkspaces();
 
 		wbscreen.div.addEventListener( 'mousedown', function( e )
@@ -296,7 +296,7 @@ Workspace = {
 			{
 				if( Workspace.mainDock )
 					Workspace.mainDock.closeDesklet();
-					
+
 				ge( 'DoorsScreen' ).classList.add( 'WidgetSlideDown' );
 				document.body.classList.add( 'WidgetSlideDown' );
 				Workspace.widget.setFlag( 'height', window.innerHeight - 112 );
@@ -359,7 +359,7 @@ Workspace = {
 				ex.removeChild( ex.offline );
 				ex.offline = null;
 			}
-			
+
 			// Set the clock
 			var e = '';
 			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
@@ -368,7 +368,7 @@ Workspace = {
 			e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
 					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();
 			ex.time.innerHTML = e;
-			
+
 			// Realign workspaces
 			Workspace.nudgeWorkspacesWidget();
 		}
@@ -395,7 +395,7 @@ Workspace = {
 			{
 				return Workspace.showContextMenu( false, e );
 			}
-			
+
 			var men = [
 				{
 					name: i18n( 'i18n_edit_dock' ),
@@ -405,7 +405,7 @@ Workspace = {
 					}
 				}
 			];
-			
+
 			if( tar.classList && tar.classList.contains( 'Launcher' ) )
 			{
 				men.push( {
@@ -416,7 +416,7 @@ Workspace = {
 					}
 				} );
 			}
-			
+
 			Workspace.showContextMenu( men, e );
 		}
 		this.reloadDocks();
@@ -471,9 +471,9 @@ Workspace = {
 						};
 					}
 				}
-				
+
 				//console.log( '--- Workspace.keys ---', { keys: this.keys } );
-				
+
 				return this.keys;
 			}
 
@@ -538,14 +538,14 @@ Workspace = {
 
 			return false;
 		},
-		
+
 		getServerKey: function( callback )
 		{
 			var k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
 				//console.log( 'getserverkey: ', { e:e, d:d } );
-				
+
 				if( callback )
 				{
 					if( e == 'ok' && d )
@@ -560,7 +560,7 @@ Workspace = {
 			}
 			k.execute( 'getserverkey' );
 		},
-		
+
 		encryptRSA: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -637,7 +637,7 @@ Workspace = {
 			{
 				return this.fcrypt.generateKey( '', 32, 256, 'sha256' );
 			}
-			
+
 			if( typeof( Sha256 ) != 'undefined' )
 			{
 				return Sha256.hash( str );
@@ -652,7 +652,7 @@ Workspace = {
 			{
 				return MD5( this.fcrypt.generateKey( '', 32, 256, 'sha256' ) );
 			}
-			
+
 			if( typeof( MD5 ) != 'undefined' )
 			{
 				return MD5( str );
@@ -666,7 +666,7 @@ Workspace = {
 		// Enable friend book mode
 		if( document.body.getAttribute( 'friendbook' ) == 'true' )
 			window.friendBook = true;
-		
+
 		// Set body to login state
 		document.body.className = 'Login';
 		if( Workspace.interfaceMode && Workspace.interfaceMode == 'native' )
@@ -696,7 +696,7 @@ Workspace = {
 	{
 		delete Workspace.conn;
 		delete Workspace.sessionId;
-		
+
 		if( Workspace.loginUsername && Workspace.loginPassword )
 		{
 			Workspace.reloginInProgress = true;
@@ -814,7 +814,7 @@ Workspace = {
 			if( callback && typeof( callback ) == 'function' ) callback( false );
 			return false;
 		}
-	
+
 		var t = this;
 		this.loginUsername = u;
 
@@ -863,11 +863,11 @@ Workspace = {
 			{
 				this.loginCall.destroy();
 			}
-			
+
 			// Create a new library call object
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
-			
+
 			if( this.loginUsername )
 			{
 				m.addVar( 'username', this.loginUsername );
@@ -918,7 +918,7 @@ Workspace = {
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
-				
+
 					Workspace.reloginInProgress = null;
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev );
 				}
@@ -956,7 +956,7 @@ Workspace = {
 	initUserWorkspace: function( json, callback, ev )
 	{
 		var _this = Workspace;
-		
+
 		// Once we are done
 		function setupWorkspaceData( json, cb )
 		{
@@ -994,12 +994,12 @@ Workspace = {
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
 				_this.renewAllSessionIds();
-				
+
 				// Call back!
 				if( cb ) cb();
 				return;
 			}
-	
+
 			// Set server key
 			// TODO: Find a better place to set server publickey earlier in the process, temporary ... again time restraints makes delivery fast and sloppy ...
 			if( !_this.encryption.keys.server )
@@ -1009,11 +1009,11 @@ Workspace = {
 					_this.encryption.keys.server = ( server ? { publickey: server } : false );
 				} );
 			}
-			
+
 			// Call back!
 			if( cb ) cb();
 		}
-		
+
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;
@@ -1065,7 +1065,7 @@ Workspace = {
 				// Reset some options
 				if( ev && ev.shiftKey )
 				{
-					_this.themeOverride = 'friendup';
+					_this.themeOverride = 'friendup12';
 				}
 
 				if( GetUrlVar( 'interface' ) )
@@ -1084,9 +1084,9 @@ Workspace = {
 				{
 					_this.noLeaveAlert = true;
 				}
-				
+
 				setupWorkspaceData( json );
-				
+
 				// Language
 				_this.locale = 'en';
 				var l = new Module( 'system' );
@@ -1122,26 +1122,10 @@ Workspace = {
 				}
 				l.execute( 'getsetting', { setting: 'locale' } );
 
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e != 'ok' )
-					{
-						if( !json.acceptedEula )
-						{
-							ShowEula();
-						}
-					}
-				}
-				m.execute( 'getsetting', {
-					setting: 'accepteula'
-				} );
-
-
 				if( !_this.workspaceHasLoadedOnceBefore )
-				{ 
-					document.body.classList.add( 'Loading' ); 
-					_this.workspaceHasLoadedOnceBefore = true; 
+				{
+					document.body.classList.add( 'Loading' );
+					_this.workspaceHasLoadedOnceBefore = true;
 				}
 
 
@@ -1173,28 +1157,47 @@ Workspace = {
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
 						{
-							if( e == 'ok' )
+							console.log( 'Er got the user settings.' );
+							
+							var m = new Module( 'system' );
+							m.onExecuted = function( ee, dd )
 							{
-								var s = JSON.parse( d );
-								if( s.Theme && s.Theme.length )
-								{
-									_this.refreshTheme( s.Theme.toLowerCase(), false );
+								console.log( 'Are we to display eula?: ' + ee );
+						        if( ee != 'ok' )
+						        {
+						            ShowEula();
 								}
-								else
-								{
-									_this.refreshTheme( false, false );
-								}
-								_this.mimeTypes = s.Mimetypes;
+					            afterEula( e );								
 							}
-							else _this.refreshTheme( false, false );
-
-							if( _this.loginPrompt )
+							m.execute( 'getsetting', {
+								setting: 'accepteula'
+							} );
+							
+							// When eula is displayed or not
+							function afterEula( e )
 							{
-								_this.loginPrompt.close();
-								_this.loginPrompt = false;
-							}
+								if( e == 'ok' )
+								{
+									var s = JSON.parse( d );
+									if( s.Theme && s.Theme.length )
+									{
+										_this.refreshTheme( s.Theme.toLowerCase(), false );
+									}
+									else
+									{
+										_this.refreshTheme( false, false );
+									}
+									_this.mimeTypes = s.Mimetypes;
+								}
+								else _this.refreshTheme( false, false );
 
-							_this.init();
+								if( _this.loginPrompt )
+								{
+									_this.loginPrompt.close();
+									_this.loginPrompt = false;
+								}
+								_this.init();
+							}
 						}
 						m.execute( 'usersettings' );
 					}, 400 );

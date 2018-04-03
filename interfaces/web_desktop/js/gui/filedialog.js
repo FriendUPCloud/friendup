@@ -301,7 +301,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 
 			var func = function( data )
-			{
+			{	
 				w.inpu.value = dialog.path.split( '%20' ).join( ' ' ).split( ':/' ).join( ':' );
 
 				var container = w.getContainer();
@@ -365,15 +365,18 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 			for( var a = 0; a < objs.length; a++ )
 			{
+				// Skip non-disks on mountlist level
+				if( dialog.path == 'Mountlist:' && objs[a].Type != 'Door' ) continue;
+				
 				sw = sw == 1 ? 2 : 1;
 				var d = document.createElement( 'div' );
 				if( !objs[a].Title && objs[a].Filename )
 					objs[a].Title = objs[a].Filename;
 				d.filename = objs[a].Title;
 
-
 				// TODO: Decide, metatype or type!!
-				objs[a].Title += objs[a].Type.toLowerCase() == 'directory' ? '/' : '';
+				if( objs[a].Title.charAt( objs[a].Title.length - 1 ) != '/' )
+					objs[a].Title += objs[a].Type.toLowerCase() == 'directory' ? '/' : '';
 
 				// Determine the correct file type and info
 				var col2 = objs[a].Type.toLowerCase() == 'directory' ? i18n( 'i18n_directory' ) :

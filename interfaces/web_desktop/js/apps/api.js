@@ -60,11 +60,16 @@ friend.globalConfig = globalConfig;
 friend.application = {
 	doneLoading: function()
 	{
-		document.body.className = 'activated';
+		document.body.classList.remove( 'Loading' );
+		document.body.classList.add( 'activated' );
 		setTimeout( function()
 		{
 			document.body.style.opacity = '';
 		}, 100 );
+		Application.sendMessage( {
+			type: 'view',
+			method: 'doneloadingbody'
+		} );
 	}
 };
 
@@ -93,7 +98,7 @@ var Application =
 				systemWide: ( systemWide ? '*' : false ) 
 			} );
 		},
-		save: function( name, data, encrypt, callback )
+		save: function( name, data, encrypt, callback, systemWide )
 		{
 			Application.sendMessage( {
 				type: 'system', 
@@ -103,6 +108,7 @@ var Application =
 				appPath: Application.appPath, 
 				applicationId: Application.applicationId, 
 				authId: Application.authId, 
+				systemWide: ( systemWide ? '*' : false ), 
 				args: {
 					name: name,
 					data: data,
@@ -232,6 +238,9 @@ var Application =
 	receiveMessage: function( packet )
 	{
 		if( packet.checkDefaultMethod ) return 'yes';
+		
+		//console.log( 'receiveMessage: function( packet ): ', packet );
+		
 		if( !packet.type ) return;
 		switch( packet.type )
 		{
@@ -808,6 +817,7 @@ function receiveEvent( event, queued )
 	
 	switch( dataPacket.command )
 	{
+		
 		// Update clipboard
 		case 'updateclipboard':
 			friend.clipboard = dataPacket.value;
@@ -962,6 +972,21 @@ function receiveEvent( event, queued )
 				Application.handleKeys( dataPacket.key, ev );
 			}
 			break;
+		case 'parseviewflag':
+			console.log( 'Here we got it!', dataPacket );
+			if( dataPacket.flag == 'scrollable' )
+			{
+				if( dataPacket.value === true )
+				{
+					document.body.classList.add( 'Scrolling' );
+				}
+				else
+				{
+					document.body.classList.remove( 'Scrolling' );
+				}
+				console.log( 'Set' );
+			}
+			break;
 		// On opening window
 		case 'viewresponse':
 			// Can't create window? Quit
@@ -969,6 +994,62 @@ function receiveEvent( event, queued )
 			if( dataPacket.data == 'fail' )
 			{
 				Application.quit();
+			}
+			
+			// Get flags
+			var view = Application.windows[ dataPacket.viewId ];
+			if( view && view._flags )
+			{
+				var flags = view._flags;
+			
+				// We have frameworks
+				if( flags.frameworks )
+				{
+					for( var a in flags.frameworks )
+					{
+						switch( a )
+						{
+							case 'tree':
+								if( flags.frameworks.tree.javascript && flags.frameworks.tree.data )
+								{
+									var f = new File( 'System:sandboxed.html' );
+									f.onLoad = function( data )
+									{
+										var javascript = flags.frameworks.tree.javascript;
+										var treeProperties = flags.frameworks.tree.treeInitialisation;
+										view.setContent( 
+`<script src="/webclient/js/tree/tree.js"></script>
+<script src="${javascript}"></script>
+<div id="Application"></div>
+<script type="text/javascript">
+	Friend.Tree.loadJSON( "${flags.frameworks.tree.data}", '${treeProperties}' );
+</script>` 
+										);
+									}
+									f.load();
+								}
+								break;
+							case 'fui':
+								if( flags.frameworks.fui.javascript && flags.frameworks.fui.data )
+								{
+									var f = new File( 'System:sandboxed.html' );
+									f.onLoad = function( data )
+									{
+										var javascript = flags.frameworks.fui.javascript;
+										view.setContent( 
+`<script src="/webclient/js/fui/fui.js"></script>
+<script src="${javascript}"></script>
+<script type="text/javascript">
+	fui.loadJSON( "${flags.frameworks.fui.data}" );
+</script>` 
+										);
+									}
+									f.load();
+								}
+								break;
+						}
+					}
+				}
 			}
 			break;
 		case 'screenresponse':
@@ -989,6 +1070,17 @@ function receiveEvent( event, queued )
 						{
 							var w = Application.windows[dataPacket.viewId];
 							w._flags[dataPacket.flag] = dataPacket.value;
+							if( dataPacket.flag == 'scrollable' )
+							{
+								if( dataPacket.value == true )
+								{
+									document.body.classList.add( 'Scrolling' );
+								}
+								else
+								{
+									document.body.classList.remove( 'Scrolling' );
+								}
+							}
 						}
 						break;
 					case 'servermessage':
@@ -1046,7 +1138,7 @@ function receiveEvent( event, queued )
 					// Activate it
 					case 'activateview':
 						Application.activated = true;
-						document.body.className = document.body.className.split( ' activated' ).join ( '' ) + ' activated';
+						document.body.classList.add( 'activated' );
 						Application.receiveMessage( { type: 'system', command: 'focusview' } );
 						break;
 					// Deactivate it
@@ -1069,7 +1161,7 @@ function receiveEvent( event, queued )
 		case 'setbodycontent':
 
 			window.loaded = false;
-			document.body.className = 'Loading';
+			document.body.classList.add( 'Loading' );
 
 			// We need to set these if possible
 			Application.authId        = dataPacket.authId;
@@ -1091,7 +1183,10 @@ function receiveEvent( event, queued )
 			while( m = data.match( /\$\(document[^{]*?\{([^}]*?)\}\)/i ) )
 				data = data.split( m[0] ).join( '(' + m[1] + ')' );
 
+
+			// Set content
 			document.body.innerHTML = data;
+			
 			if( dataPacket.parentSandboxId )
 			{
 				try
@@ -1249,6 +1344,14 @@ function receiveEvent( event, queued )
 			}
 			else
 			{
+				// Convert from string
+				if( dataPacket.dataFormat == 'string' )
+				{
+					dataPacket.dataFormat = '';
+					dataPacket.data = dataPacket.data.split( ',' );
+					dataPacket.data = ( new Uint8Array( dataPacket.data ) ).buffer;
+					console.log( dataPacket.data );
+				}
 				var out = [];
 				var f = false;
 				var f = extractCallback( dataPacket.fileId );
@@ -1449,6 +1552,18 @@ function receiveEvent( event, queued )
 			}
 			break;
 		case 'authenticate':
+			if ( dataPacket && typeof dataPacket.callbackId !== "undefined" )
+			{
+				var callback = extractCallback( dataPacket.callbackId );
+				callback( dataPacket.data );
+			}
+			break;
+		case 'generatekeys':
+		case 'encrypt':
+		case 'decrypt':
+		case 'publickey':
+		case 'setapplicationkey':
+		case 'getapplicationkey':
 			if ( dataPacket && typeof dataPacket.callbackId !== "undefined" )
 			{
 				var callback = extractCallback( dataPacket.callbackId );
@@ -2045,7 +2160,7 @@ function View( flags )
 		Application.sendMessage( {
 			type:    'view',
 			method:  'sendmessage',
-			viewId: viewId,
+			viewId:   viewId,
 			data:     dataObject
 		} );
 	}
@@ -2862,7 +2977,7 @@ function File( path )
 	{
 		var fid = addCallback( this );
 		if( !mode ) mode = 'r'; else mode = mode.toLowerCase();
-		if(mode=='r'||mode=='rb') this.vars.mode = mode;
+		if( mode=='r' || mode=='rb' ) this.vars.mode = mode;
 		
 		Application.sendMessage( {
 			type:    'file',
@@ -3085,17 +3200,17 @@ FriendNetwork =
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	host: function( name, applicationName, type, identifier, flags, callback )
+	host: function( name, type, applicationName, description, data, callback )
     {
     	var message =
 		{
 			type: 'friendnet',
 			method: 'host',
 			name: name,
-			hostType: type,
-			identifier: identifier,
+			connectionType: type, 
 			applicationName: applicationName,
-			flags: flags
+			description: description,
+			data: data
 		};
     	if ( callback )
 			message.callback = addPermanentCallback( callback );
@@ -4583,7 +4698,7 @@ function clickToActivate()
 			method:   'activate'
 		} );
 		// Add class
-		document.body.className = document.body.className.split( ' activated' ).join ( '' ) + ' activated';
+		document.body.classList.add( 'activated' );
 	}
 }
 

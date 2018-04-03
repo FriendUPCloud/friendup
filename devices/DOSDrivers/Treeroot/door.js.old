@@ -1,0 +1,29 @@
+
+DoorTreeroot = function( path )
+{
+	this.path = path;
+	this.handler = 'void';
+	this.init();
+}
+
+DoorTreeroot.prototype = new Door();
+
+DoorTreeroot.prototype.get = function( path )
+{
+	var vol = path.split( ':' )[0] + ':';
+	for( var a = 0; a < Doors.icons.length; a++ )
+	{
+		if( Doors.icons[a].Volume == vol )
+		{
+			return Doors.icons[a].Door;
+		}
+	}
+	return new DoorTreeroot( path );
+};
+
+// Instantiate a new one!
+DoorTreeroot.prototype.instantiate = function()
+{
+	return new DoorTreeroot();
+}
+

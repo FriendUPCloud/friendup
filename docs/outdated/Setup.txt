@@ -1,0 +1,151 @@
+How to compile
+--------------
+
+To setup FriendUP on a local server, you need to build the Friend Core 
+executable from source, build the web client, and install. This is thusly done.
+
+In the FriendUP source folder:
+
+	make clean - clean all objects and binaries
+	make setup - create required directories and files
+	make compile - compile source in debug mode
+	make install - install all generated components to build directory
+	make release - compile source without debug. Be sure that 'make clean'
+		was called before.
+
+This will generate a build/ folder in the root directory. You then need to run
+Friend Core to access the web client.
+
+	cd build/
+	./FriendCore
+	
+This runs Friend Core with the default settings - as defined in the file:
+	
+	build/cfg/cfg.ini
+
+This file must be setup for Friend Core to successfully run. Check the file
+
+	docs/cfg.ini.example
+
+for an example setup. An example configuration contain:
+
+group [DatabaseUser]
+ login - name of database user
+ password - database user password
+ host - address of database server
+ dbname - name of database
+ port - port on which database is working
+
+group [FriendCore]
+ fchost - name of host on which FriendCore will start
+ port - port number on which FriendCore will start
+ fcupload - path to file upload folder
+
+group [Cores]
+ servers - servers splitted by comma and divided for 2 sections
+  localhost - address of server
+  @ - split char
+  local - name of the server provided to FriendCore
+This configuration is temporary, later all connections will be handled automaticaly.
+
+group [Core]
+ port - friend core port
+ epollevents - epoll event size
+ networkbuffer - network buffer size
+ epolleventscom - epoll event size for communication service
+ networkbuffercom - network buffer size for communication service
+ wsport - websockets port
+ SSLEnable - 1/0 enable/disable SSL
+ WSSSLEnable - 1/0 enable/disable WebSockets SSL
+ DeveloperMode - 1/0 enable/disable developer mode (disable file cache'ing, more debug, etc.).
+
+group [Log]
+ level - indicate which minimal level of log messages should appear in conosole. Below list of
+ levels and their numbers which should be placed in config file:
+	FLOG_LIVE   1
+	FLOG_INFO   2
+	FLOG_WARN   3
+	FLOG_DEBUG  4
+	FLOG_ERROR  5
+	FLOG_FATAL  6
+	FLOG_PANIC  7
+ fileLevel - same information but only for entries which will appear in file log
+ fileName - name of log file (+date will be added automatically)
+
+Dependencies, database
+----------------------
+
+Friend Core requires some components / applications to run. You need to install
+mysql-server and mysql-client v5 or later. Then you need to setup the Friend 
+Core database, using the structure found in the file: 
+
+	docs/FriendCoreDatabase.sql
+
+Here, you need to setup a user account, using an unencrypted password. This will
+later be encrypted by the system, don't worry!
+
+Other dependencies
+------------------
+
+C dependencies (using "apt-get install" as superuser)
+
+	libssh2-1-dev
+	libssh-dev
+	libssl-dev
+	libaio-dev
+	libxml2-dev
+	php5-cli
+	php5-curl
+	php5-mysql
+	php5-gd
+	php5-imap
+	mysql-server
+	libmysqlclient-dev
+	build-essential
+	libmatheval-dev (for testing math service)
+	libmagic-dev
+	libgd-dev
+	libwebsockets-dev
+	rsync
+	valgrind-dbg
+	cmake
+
+	Ex.:
+	sudo apt-get install libssh2-1-dev libssh-dev libssl-dev libaio-dev \
+	php5-cli php5-curl php5-mysql php5-gd php5-imap mysql-server \
+	libmysqlclient-dev build-essential libmatheval-dev libmagic-dev \
+	libgd-dev libwebsockets-dev rsync valgrind-dbg libxml2-dev php5-readline \
+	cmake
+	
+IMPORTANT!
+If during project compilation/setup/cleanup you will see information:
+"Cannot locate header file MagickWand.h during imagick configuring"
+make link to proper include files folder
+ln -s /usr/local/include/ImageMagick-6 /usr/local/include/ImageMagick
+
+Server host configuration
+-------------------------
+
+Friend applications run under serveral domains. This is for security, to make
+full use of the sandboxing technologies in modern web browsers. By default, 
+FriendUP uses two domains - ex.:
+
+	localhost:6502
+	utilities.localhost:6502
+
+So, if your domain is: mydomain.com, then the utility domain would be:
+
+	utilities.mydomain.com
+
+This has to be setup on the host/dns setup where you are serving from.
+
+Setting up PHP modules
+----------------------
+
+Some modules will not be enabled by apt-get automatically. This is the
+way to enable them manually:
+
+phpenmod imap
+
+
+

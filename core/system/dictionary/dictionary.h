@@ -84,8 +84,8 @@ enum Category{
 
 static FULONG DictionaryDesc[] = { SQLT_TABNAME, (FULONG)"FDictionary", SQLT_STRUCTSIZE, sizeof( struct DictEntry ),
 	SQLT_IDINT, (FULONG)"ID", offsetof( DictEntry, de_ID ),
-	SQLT_STR, (FULONG)"DictID", offsetof( DictEntry, de_CategoryID ),
-	SQLT_STR, (FULONG)"CategoryID", offsetof( DictEntry, de_CategoryID ),
+	SQLT_INT, (FULONG)"DictID", offsetof( DictEntry, de_CategoryID ),
+	SQLT_INT, (FULONG)"CategoryID", offsetof( DictEntry, de_CategoryID ),
 	SQLT_STR, (FULONG)"Message", offsetof( DictEntry, de_Message ),
 	SQLT_STR, (FULONG)"Language", offsetof( DictEntry, de_Lang ),
 	SQLT_NODE, (FULONG)"node", offsetof( struct DictEntry, node ),
@@ -162,6 +162,8 @@ enum {
 	DICT_CONNECTION_DELETED,
 	DICT_CANNOT_DELETE_CONNECTION,
 	DICT_CONNECTION_ALREADY_EXIST,
+	DICT_NO_MEMORY_FOR_DOSTOKEN,
+	DICT_CANNOT_ADD_DOSTOKEN,
 	DICT_MAX
 };
 /*
@@ -245,6 +247,8 @@ INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) 
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection deleted', 'ENG', '63');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot delete connection. Internal error: %d', 'ENG', '63');
 INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Connection with that name already exist', 'ENG', '64');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot allocate memory for DOSToken', 'ENG', '65');
+INSERT INTO `FDictionary` (`ID`, `CategoryID`, `Message`, `Language`, `DictID`) VALUES (NULL, '0', 'Cannot add token to list', 'ENG', '66');
 */
 
 // Load dictionary from DB

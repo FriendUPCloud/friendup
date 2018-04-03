@@ -24,9 +24,9 @@ body
 	/*
 	TODO: Figure out why this ruins some apps
 	-webkit-transform: rotateZ(0deg);
-	-moz-transform: rotateZ(0deg);
-	-o-transform: rotateZ(0deg);
-	-ms-transform: rotateZ(0deg);
+   -moz-transform: rotateZ(0deg);
+   -o-transform: rotateZ(0deg);
+   -ms-transform: rotateZ(0deg);
  	transform: rotateZ(0deg);*/
 	overflow: hidden;
 }
@@ -2150,7 +2150,6 @@ body #DeepestField
 {
 	filter: grayscale(100%);
 	-webkit-filter: grayscale(100%);
-	opacity: 0.6;
 }
 
 .Desklet .Launcher.Startmenu:hover
@@ -2227,6 +2226,32 @@ body #DeepestField
 	background-size: contain;
 	background-position: center;
 	background-repeat: no-repeat;
+}
+
+.Desklet .Launcher.View.Directory
+{
+	background-image: url(/iconthemes/friendup/56/drawer_logoblue.png);
+}
+
+.Desklet .Launcher .ElementCount
+{
+	display: none;
+}
+.Desklet .Launcher.Minimized .ElementCount
+{
+	display: block;
+	margin: 5px auto;
+	text-align: center;
+	position: relative;
+}
+.Desklet .Launcher.Minimized .ElementCount > span
+{
+	display: inline-block;
+	color: white;
+	background: rgba(0,0,0,0.5);
+	font-size: 12px;
+	padding: 1px 4px;
+	border-radius: 100%;
 }
 
 /* Desklet widget end ------------------------------------------------------- */
@@ -2367,6 +2392,14 @@ body #DeepestField
 	position: absolute;
 	top: 0px;
 	background-size: cover;
+	background-position: center;
+}
+
+.WorkspaceContainer
+{
+	position: absolute;
+	top: 0;
+	overflow: hidden;
 }
 
 /* Don't show the .Offline thing on the desktop */
@@ -2550,6 +2583,17 @@ body #DeepestField
 	height: 16px;
 }
 
+.Frame .Groove + .Bar > div
+{
+	text-overflow: ellipsis; 
+	text-align: center;
+	line-height: 30px; 
+	color: white;
+	position: absolute;
+	width: 100%;
+	overflow: hidden;
+}
+
 /* Directory view toolbar --------------------------------------------------- */
 
 .DirectoryToolbar
@@ -2571,6 +2615,17 @@ body #DeepestField
 .Active .DirectoryToolbar
 {
 	border-bottom-color: $WinFrameBgActive;
+}
+
+.DirectoryToolbar .ToggleGroup
+{
+	position: absolute;
+	top: 8px;
+}
+
+.DirectoryToolbar .ToggleGroup.center
+{
+	left: calc(50% - 30px);
 }
 
 .DirectoryToolbar button
@@ -2850,6 +2905,54 @@ div.ColumnView .File > .Icon > div,
     width: 100%;
     height: 24px;
     background-size: contain;
+}
+
+.File.Compact > .Icon
+{
+	width: 170px;
+}
+
+.File.Compact > .Icon > div
+{
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	background-size: contain;
+	background-position: left center;
+}
+
+.File.Compact > .Title
+{
+	position: absolute;
+	top: 0px;
+	left: 36px;
+	width: 110px;
+	text-align: left;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.File.Compact > .Icon > .Label,
+.File.Compact > .Icon > .Label.Shared,
+.File.Compact > a.Download
+{
+	width: 16px;
+	height: 16px;
+	top: 0;
+	left: 0;
+	border-width: 1px;
+}
+
+.File.Compact > .Icon > .Label:before,
+.File.Compact > .Icon > .Label.Shared:before,
+.File.Compact > a.Download:before
+{
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	font-size: 10px;
+	line-height: 10px;
 }
 
 /* Columns in listview done */
@@ -3194,6 +3297,13 @@ html #Statusbar > #Taskbar .Task
 #Screens .View
 {
 	position: absolute;
+	transition: opacity 0.2s;
+	opacity: 1;
+}
+
+#Screens .View.Opening
+{
+	opacity: 0;
 }
 
 #Screens .View > .Content > iframe
@@ -3206,6 +3316,13 @@ html #Statusbar > #Taskbar .Task
 	border: 0;
 	margin: 0;
 	outline: none;
+	transition: opacity 0.2s ease-in;
+	opacity: 1;
+}
+
+#Screens .View > .Content > iframe.Loading
+{
+	opacity: 0;
 }
 
 .Screen > div
@@ -3243,6 +3360,11 @@ html #Statusbar > #Taskbar .Task
 	-o-box-shadow: inset 0px 0px 4px 2px rgba(0,0,0,0.1);
 	position: absolute;
 	z-index: 0;
+}
+
+.ScreenContent > #RegionSelector
+{
+	z-index: 2;
 }
 
 /* Deepest field ------------------------------------------------------------ */
@@ -3658,6 +3780,17 @@ div.Red, button.Red
 	color: white;
 	background: #E2452F;
 	border-color: #C23B28;
+}
+
+div.Neutral, button.Neutral, .Button.Neutral
+{
+	background: rgba(155,155,155,0.35);
+	color: #222222;
+}
+
+div.Neutral:hover, button.Neutral:hover, .Button.Neutral:hover
+{
+	color: white;
 }
 
 div.Blue, button.Blue

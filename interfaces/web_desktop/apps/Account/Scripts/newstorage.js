@@ -208,9 +208,9 @@ function deleteFilesystem()
 					{
 						if( e == 'ok' )
 						{
-							Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
 							Application.sendMessage( { command: 'notify', method: 'closeview' } );
-							Application.sendMessage( { command: 'refreshdoors' } );
+							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+							Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
 							return;
 						}
 						return;
@@ -369,9 +369,9 @@ function addDisk()
 		}
 		remountDrive( data, function()
 		{
-			Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
+			Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
 			Application.sendMessage( { command: 'notify', method: 'closeview' } );
-			Application.sendMessage( { command: 'refreshdoors' } );
+			Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
 		} );
 	}
 	// Edit?

@@ -165,7 +165,7 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	pthread_mutex_lock( &(cl->wc_Mutex) );
 	cl->wc_InUseCounter--;
 	pthread_mutex_unlock( &(cl->wc_Mutex) );
-	DEBUG("WSwriteinline END\n");
+	//DEBUG("WSwriteinline END\n");
 	
 	return result;
 }
@@ -221,7 +221,6 @@ void WSThread( void *d )
 				FFree( http->rawRequestPath );
 				http->rawRequestPath = NULL;
 			}
-			
 			HttpFree( http );
 		}
 		
@@ -277,10 +276,6 @@ void WSThread( void *d )
 				}
 			}
 			
-			pthread_mutex_lock( &WSThreadMutex );
-			WSThreadNum--;
-			pthread_mutex_unlock( &WSThreadMutex );
-			
 			FFree( data->requestid );
 			FFree( data->path );
 
@@ -289,6 +284,10 @@ void WSThread( void *d )
 	
 			FFree( data );
 			HttpFree( response );
+			
+			pthread_mutex_lock( &WSThreadMutex );
+			WSThreadNum--;
+			pthread_mutex_unlock( &WSThreadMutex );
 
 #ifdef USE_PTHREAD
 			pthread_exit(0);
@@ -300,8 +299,6 @@ void WSThread( void *d )
 		double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
 		FBOOL fileReadCall = FALSE;
 		
-		//DEBUG("[WS] SysWebRequest took %f seconds\n", secs );
-		
 		if( pathParts[1] != NULL && pathParts[2] != NULL )
 		{
 			if( strcmp( pathParts[1], "file" ) == 0 && strcmp( pathParts[2], "read" ) == 0 )
@@ -310,8 +307,8 @@ void WSThread( void *d )
 				fileReadCall = TRUE;
 			}
 			else
-			{
-				Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%s'\n" , secs, response->errorCode, response->content );
+			{	// we also dont want to have large responses in logs
+				Log( FLOG_INFO, "[WS] B. SysWebRequest took %f seconds, err: %d response: '%.*s'\n" , secs, response->errorCode, 200, response->content );
 			}
 		}
 		else
@@ -657,7 +654,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 	int n = 0;
 	FCWSData *fcd =  (FCWSData *) user;// lws_context_user ( this );
 	int returnError = 0;
+	
+	pthread_mutex_lock( &WSThreadMutex );
 	WSThreadNum++;
+	pthread_mutex_unlock( &WSThreadMutex );
 	
 	//void *in = FCalloc( len, 1 );
 	//memcpy( in, din, len );
@@ -757,7 +757,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						{
 							WebsocketWriteInline( fcd->fcd_WSClient, (buf + LWS_SEND_BUFFER_PRE_PADDING), locmsgsize, LWS_WRITE_TEXT );
 						}
+						
+						pthread_mutex_lock( &WSThreadMutex );
 						WSThreadNum--;
+						pthread_mutex_unlock( &WSThreadMutex );
 						return 0;
 					}
 
@@ -1033,7 +1036,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													
 													if( s != NULL )
 													{
-														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
 														{
 															//DEBUG1("[WS]:New values passed to POST %s\n", s->us_SessionID );
 														}
@@ -1080,7 +1083,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															requestis =  t[i1].end-t[i1].start;
 #endif
 															
-															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 															{
 																//DEBUG1("[WS] New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
 															}
@@ -1131,7 +1134,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															else
 															{
 																// this is path parameter
-																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																{
 
 																}
@@ -1143,12 +1146,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 															authid = in + t[i1].start;
 															authids = t[i1].end-t[i1].start;
 															
-															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 															{
 																//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 															}
 															
-															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+															if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 															{
 																//DEBUG1("[WS]:New values passed to POST %s %s\n", "authid", " " );
 															}
@@ -1165,7 +1168,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 
 															if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 															{
-																if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																{
 																	//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[i1].start) );
 																}
@@ -1466,7 +1469,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 													if( s != NULL )
 													{
 														DEBUG("[WS] Session ptr %p  session %p\n", s, s->us_SessionID );
-														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) )
+														if( HashmapPut( http->parsedPostContent, StringDuplicate( "sessionid" ), StringDuplicate( s->us_SessionID ) ) == MAP_OK )
 														{
 															DEBUG1("[WS] New values passed to POST %s\n", s->us_SessionID );
 														}
@@ -1485,7 +1488,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 																requestid = in + t[i1].start;
 																requestis =  t[i1].end-t[i1].start;
 															
-																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																{
 																	//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 																}
@@ -1527,7 +1530,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 																else
 																{
 																	// this is path parameter
-																	if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																	if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																	{
 																		//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, (char *)(in + t[i].start), t[i1].end-t[i1].start, (char *)(in + t[i1].start) );
 																	}
@@ -1539,12 +1542,12 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 																authid = in + t[i1].start;
 																authids = t[i1].end-t[i1].start;
 															
-																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																{
 																	//DEBUG1("[WS]:New values passed to POST %.*s %.*s\n", t[i].end-t[i].start, in + t[i].start, t[i+1].end-t[i+1].start, in + t[i+1].start );
 																}
 															
-																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																if( HashmapPut( http->parsedPostContent, StringDuplicateN(  "authid", 6 ), StringDuplicateN(  in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																{
 
 																}
@@ -1555,7 +1558,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 																{
 																	if(( i1) < r && t[ i ].type != JSMN_ARRAY )
 																	{
-																		if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) )
+																		if( HashmapPut( http->parsedPostContent, StringDuplicateN( in + t[ i ].start, t[i].end-t[i].start ), StringDuplicateN( in + t[i1].start, t[i1].end-t[i1].start ) ) == MAP_OK )
 																		{
 																			DEBUG1("[WS] New values passed to POST %.*s %.*s\n", (int)(t[i].end-t[i].start), (char *)(in + t[i].start), (int)(t[i1].end-t[i1].start), (char *)(in + t[ i1 ].start) );
 																		}
@@ -1722,7 +1725,10 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		}
 		break;
 	}
+	
+	pthread_mutex_lock( &WSThreadMutex );
 	WSThreadNum--;
+	pthread_mutex_unlock( &WSThreadMutex );
 
 	return returnError;
 }

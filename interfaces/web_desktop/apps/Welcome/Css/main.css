@@ -1,0 +1,303 @@
+body
+{
+	background: #efefef;
+	color: black;
+}
+
+.PaddingSize
+{
+	padding: 35px;
+	box-sizing: border-box;
+}
+
+.PaddingMinor
+{
+	padding: 5px 20px;
+	box-sizing: border-box;
+}
+
+.Stage
+{
+	display: block;
+	height: 269px;
+	background: #159AD2;
+	margin: 0;
+}
+
+.Stage .Social
+{
+	width: 223px;
+	margin: 10px 10px 0 0;
+	float: right;
+	filter: drop-shadow(0px 0px 2px #ffffffaa);
+}
+
+.TheTabs
+{
+	margin: -40px 0 0 0;
+}
+
+.ThePage h1
+{
+	font-size: 24px;
+	font-weight: bold;
+	margin: 15px 0 15px 0;
+}
+
+.ThePage h2
+{
+	font-size: 18px;
+	font-weight: bold;
+	margin: 15px 0 15px 0;
+}
+
+.ThePage p.SideImage
+{
+	transform: translate3d(110%,20px,0);
+	height: 0;
+	margin: 0;
+	font-size: 14px;
+	text-align: center
+	position: relative;
+}
+
+.ThePage p.SideImage .LaunchIt
+{
+	display: block;
+	position: relative;
+	z-index: 2;
+	background: #2481D7;
+	border-radius: 100%;
+	float: right;
+	margin-bottom: -35px;
+	box-shadow: 0px 1px 10px rgba(255,255,255,1);
+	padding: 10px;
+	color: white;
+	font-weight: bold;
+}
+.ThePage p.SideImage .LaunchIt a
+{
+	text-decoration: none;
+	color: white;
+}
+.ThePage p.SideImage .LaunchIt:hover
+{
+	box-shadow: 0px 1px 25px rgba(255,255,255,1);
+}
+
+.ThePage p.SideImage img
+{
+	box-shadow: 0px 5px 10px rgba(0,0,0,0.2);
+	border-radius: 3px;
+}
+
+
+.TheTabs .TheTab
+{
+	display: inline-block;
+	height: 40px;
+	line-height: 23px;
+	background: #efefefaa;
+	padding: 10px;
+	margin: 0 10px 0 0;
+	border-radius: 5px 5px 0 0;
+	font-size: 18px;
+	font-weight: bold;
+}
+.TheTabs .TheTab:first-child
+{
+	margin: 0 10px 0 10px;
+}
+
+.TheTabs .TheTab.Active
+{
+	background: #f3f3f3;
+}
+
+.TheTabs .ThePage
+{
+	display: none;
+	font-size: 16px;
+	font-weight: normal;
+	overflow: auto;
+}
+
+.TheTabs .ThePage:after
+{
+	content: " ";
+	display: block;
+	clear: both;
+}
+
+.TheColumn
+{
+	box-sizing: border-box;
+	width: 50%;
+}
+
+.TheColumn
+{
+	padding: 0 20px 0 0;
+	float: left;
+}
+
+.TheColumn + .TheColumn
+{
+	padding: 0 0 0 20px;
+}
+
+
+.TheTabs .TheTab.Active .ThePage
+{
+	display: block;
+	background: #f3f3f3;
+	position: absolute;
+	left: 35px;
+	top: 310px;
+	width: calc(100% - 70px);
+	height: calc(100% - 341px);
+}
+
+.ColumnImage
+{
+	width: 100%;
+	height: auto;
+}
+
+/* App buttons */
+
+.AppButtonBar
+{
+	position: relative;
+	height: 130px;
+}
+
+.AppButtonBar.Fun .AppButton
+{
+    margin: 0 10px 10px 0;
+    height: 125px;
+ }
+ 
+.AppButton
+{
+	display: block;
+	float: left;
+	position: relative;
+	width: 135px;
+	margin: 0 5px 0 0;
+}
+
+.AppButton:first-child .AppButtonImage img
+{
+	margin-top: 17px;
+}
+
+.AppButtonImage
+{
+	width: 100%;
+	height: 96px;
+	border-radius: 10px;
+	background-color: white;
+	text-align: center;
+}
+.Fun .AppButtonImage
+{
+	background-color: transparent;
+}
+
+.AppButtonImage img
+{
+	display: inline-block;
+	margin: 8px 0;
+}
+
+.AppButtonLabel
+{
+	text-align: center;
+	width: 100%;
+	position: absolute;
+	top: 100px;
+	font-size: 14px;
+}
+
+
+iframe.Youtube
+{
+	width: 47%;
+	margin: 0 3% 0 0;
+	border: 0;
+}
+
+.NeverShow
+{
+	position: absolute;
+	border-radius: 5px;
+	background: white;
+	font-weight: bold;
+	top: 45px;
+	padding: 10px;
+	left: 45px;
+	background: #ffffffdd;
+}
+
+/* Responsive! */
+@media (max-width: 400px)
+{
+	body > div.PaddingSize
+	{
+		padding: 0px;
+	}
+	
+	.Stage
+	{
+		height: 70px;
+	}
+	
+	html .TheTabs .TheTab, html .TheTabs .TheTab.Active
+	{
+		height: 0;
+		background: transparent;
+	}
+	
+	.TheTab > span
+	{
+		display: none;
+	}
+	
+	html .TheTabs .TheTab.Active .ThePage 
+	{
+		top: 70px;
+		width: 100%;
+		left: 0;
+		height: calc(100% - 70px);
+	}
+	
+	html .TheColumn, html .TheColumn + .TheColumn
+	{
+		width: 100%;
+		padding: 0;
+	}
+	
+	html .AppButton, html .AppButtonBar.Fun .AppButton
+	{
+		width: calc(50% - 5px);
+		margin: 0 5px 35px 0;
+	}
+	
+	html .AppButtonBar
+	{
+		height: auto;
+	}
+	
+	html .ThePage h2
+	{
+		clear: both;
+	}
+	
+	html .NeverShow
+	{
+		display: none;
+	}
+	
+}
+

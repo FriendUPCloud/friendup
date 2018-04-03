@@ -373,7 +373,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		{
 			if( S_ISDIR( buf.st_mode ) )
 			{
-				FERROR("You cannot read or write from directory!\n");
+				FERROR("You cannot read or write from directory ' %s'!\n", comm );
 				FFree( comm );
 				return NULL;
 			}

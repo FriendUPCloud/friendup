@@ -1,9 +1,12 @@
-GCC		=	gcc
-OUTPUT	=	bin/image.library
-CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter  -I../../core/ -I../ -fPIC $(shell mysql_config --cflags) -I../../libs-ext/libwebsockets/build/include/ -L../../libs-ext/libwebsockets/lib/
-LFLAGS	=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
-DFLAGS	=	-M $(CFLAGS)  
-FPATH	=	$(shell pwd)
+-include ../../Makefile.defs
+
+CC			=	gcc
+OUTPUT		=	bin/image.library
+CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ -I../../
+LFLAGS		=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ -lpthread  -lgd
+FPATH		=	$(shell pwd)
+
+#CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter  -I../../core/ -I../ -fPIC $(shell mysql_config --cflags) -I../../libs-ext/libwebsockets/build/include/ -L../../libs-ext/libwebsockets/lib/
 
 ifeq ($(DEBUG),1)
 CFLAGS  +=      -D__DEBUG
@@ -33,11 +36,11 @@ ALL:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) ../../core/obj/buffered_string.o ../../core/obj/hashmap.o
+	$(CC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS) ../../core/obj/buffered_string.o ../../core/obj/hashmap.o
 
 obj/%.o: %.c *.h %.d
 	@echo "\033[34mCompile ...\033[0m"
-	gcc $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 #build system
 
@@ -59,14 +62,15 @@ setup:
 	mkdir -p obj bin
 
 test:
-	$(GCC) $(CFLAGS) testlibrary.c ../../core/core/library.c -obin/TestLibrary -ldl -D__DEBUG -L/usr/lib/x86_64-linux-gnu/ 
+	$(CC) $(CFLAGS) testlibrary.c ../../core/core/library.c -obin/TestLibrary -ldl -D__DEBUG -L/usr/lib/x86_64-linux-gnu/ 
 
 # dependency system
 	
 %.d: %.c
 	@set -e; rm -f $@; \
-	$(GCC) -M $(CFLAGS)  $< > $@.$$$$; \
+	$(CC) -M $(CFLAGS)  $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
 -include $(C_FILES:%.c=%.d) 
+

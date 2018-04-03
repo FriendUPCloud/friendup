@@ -43,26 +43,28 @@ Friend.Tree.Processes =
 	 * @param (string) className the name of the process class
 	 * @param (object) flags process creation flags
 	 */
-	init: function ( self, tree, object, className, flags )
+	init: function ( tree, self, item, className, properties )
 	{
-		self.identifier = object.tree.getNewIdentifier( className );
 		self.tree = tree;
-		self.object = object;
-		self.className = className;
-		self.root = object.root;
+		self.isProcess = true;
 		self.utilities = tree.utilities;
+		self.item = item;
+		self.root = item.root;
+		self.className = className;
+		self.utilities.setFlags( self, properties );
 		self.resources = tree.resources;
-		self.controller = tree.controller;
-		self.checkTemporaryFunction = Friend.Tree.Items.checkTemporaryFunction;
+		self.addProcess = Friend.Tree.Items.addProcess;
+		self.removeProcess = Friend.Tree.Items.removeProcess;
 		self.getTemporaryFunctions = Friend.Tree.Items.getTemporaryFunctions;
 		self.getTemporaryFunctionsCount = Friend.Tree.Items.getTemporaryFunctionsCount;
+		self.setTemporaryProperty = Friend.Tree.Items.setTemporaryProperty;
 		self.setAfter = Friend.Tree.Items.setAfter;
 		self.callAfter = Friend.Tree.Items.callAfter;
 		self.temporaryFunctions = [];
-		self.tree.utilities.setFlags( self, flags );
-	},
-	registerEvent: function( purpose, func )
-	{
-		this.tree.registerProcess( purpose, func );
+
+        // Assign the functions of the class
+        Friend.Tree.Utilities.assignToObject( self, className );
 	}
 };
+
+

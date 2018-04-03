@@ -1,0 +1,10 @@
+
+i18n_FriendStoreDrive            : FriendStore Drive
+i18n_FriendStoreDOSdriver        : FriendStore driver for vendors
+i18n_vendor                      : Vendor info
+i18n_vendor_ID                   : Your registered vendor id
+
+#From dos actions
+
+i18n_cannotcreate_deep_directory : You can only create project directories (one level).
+

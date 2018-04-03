@@ -1,0 +1,79 @@
+Introduction
+------------
+
+FUI - or Friend GUI, is the basis for the HTML based GUI engine in FriendUP.
+It uses CSS and some base classes to achieve an uniform look across themes.
+
+HTML
+----
+
+Applications need various GUI elements to be useful, and FriendUP is no 
+different. In FriendUP, we're utilizing the web browser toolkit to render our
+GUI. We've chosen to use CSS and HTML to build graphical interfaces. To do this, 
+we've designed CSS classes that provides you with an expressive GUI.
+
+To create a basic FUI - or Friend(UP) User Interface, you start by making a
+design template for use in your app. If your app is called "demo_app", your
+template will be inn:
+
+	demo_app/Templates/mytemplate.html
+  
+To open it, use a File object, pointing to Progdir:, a shortcut to where your
+app is installed:
+
+// When application runs
+Application.run = function( msg, interface )
+{
+	// Make a view
+	var w = new View( { title: 'MyWindow', width: 640, height: 640 } );
+	
+	// Apply the template on the view
+	var f = new File( 'Progdir:Templates/mytemplate.html' );
+	f.onLoad = function( data )
+	{
+		w.setContent( data );
+	}
+	f.load();
+}
+
+Let's take a look at the template. TODO..
+
+Icons
+-----
+
+FriendUP bases itself on the Font Awesome class set. This makes it easy to use
+icons, depending on theme. The icons are ment for toolbars and buttons, and is
+used this way:
+
+<button class="IconSmall fa-check-circle">
+	This is my accept button
+</button>
+
+This will give a nice checkbox icon before the text.
+
+When using an input field next to the button, the height of the input field
+should be matched. This is done this way:
+
+<input type="text" value="somevalue..." class="IconHeightSmall"/>
+
+The icon height should match the button icon height. The heights are:
+
+IconSmall  - IconHeightSmall
+IconMedium - IconHeightMedium
+IconLarge  - IconHeightLarge
+
+Containers, boxes and layout
+----------------------------
+
+FUI (Friend User Interface) is a very simple GUI setup that uses CSS and HTML5.
+Using some simple classes, you can make almost any user interface you want.
+
+When working with GUI in Friend, you use HTML5 templates with associated CSS.
+Often times, you add the CSS inline - but the most elegant way is to separate
+the layout CSS code in a separate file.
+
+
+
+
+
+

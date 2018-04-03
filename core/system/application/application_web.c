@@ -89,7 +89,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	
 	Http* response = NULL;
 	
-	
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
@@ -117,7 +116,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			remove - remove application \
 			getPermissions - get permissions for application \
 			" );
-
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -205,7 +203,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 	{
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 			{TAG_DONE, TAG_DONE}
 		};
 	
@@ -477,8 +475,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_FUNCTION_RETURNED], "SAS unregister", err );
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_FUNCTION_RETURNED );
 					HttpAddTextContent( response, dictmsgbuf );
-					//int size = sprintf( buffer, "{\"response\":\"%s  %d\"}", "add session problem: ",  err );
-					//HttpAddTextContent( response, buffer );
 				}
 			}
 			else
@@ -486,8 +482,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
-				//int size = sprintf( buffer, "{\"response\":\"%s\"}", "sasid not found" );
-				//HttpAddTextContent( response, buffer );
 			}
 		}
 		
@@ -581,7 +575,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 						
 						if( li->status == SASID_US_INVITED )
 						{
-							li->status == SASID_US_ACCEPTED;
+							li->status = SASID_US_ACCEPTED;
 						}
 						
 						DEBUG("[ApplicationWebRequest] ASN set %s pointer %p\n", li->authid, li );
@@ -614,8 +608,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					char dictmsgbuf[ 256 ];
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
 					HttpAddTextContent( response, dictmsgbuf );
-					//int size = sprintf( buffer, "{\"response\":\"%s\"}", "user not found: " );
-					//HttpAddTextContent( response, buffer );
 				}
 			}
 			else
@@ -623,8 +615,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
-				//int size = sprintf( buffer, "{\"response\":\"%s\"}", "cannot create new  session" );
-				//HttpAddTextContent( response, buffer );
 			}
 		}
 
@@ -854,7 +844,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			
 			if( as != NULL && msg != NULL )
 			{
-			
 				char *resp = AppSessionAddUsersByName( as, loggedSession, userlist, applicationName, msg  );
 				if( resp != NULL )
 				{
@@ -933,13 +922,9 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		if( assid != NULL && userlist != NULL )
 		{
-			char buffer[ 1024 ];
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
-			int i;
-			int errors = 0;
 			
 			DEBUG("[ApplicationWebRequest] UserList passed '%s' as ptr %p\n", userlist, as );
 			
@@ -1016,14 +1001,11 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		el = HashmapGet( request->parsedPostContent, "usernames" );
 		if( el != NULL ) usernames = UrlDecodeToMem( ( char *)el->data );
 		
-		//OST usernames ["stefkos"]
-
 		char buffer[ 1024 ];
 		
 		if( assid != NULL && msg != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
 			
@@ -1054,8 +1036,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
-				//int size = sprintf( buffer, "{\"response\":\"%s\"}", "session doesnt exist " );
-				//HttpAddTextContent( response, buffer );
 			}
 		}
 		else
@@ -1143,8 +1123,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_SEND_MSG_ERR], err );
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_SEND_MSG_ERR );
 					HttpAddTextContent( response, dictmsgbuf );
-					//int size = sprintf( buffer, "{\"response\":\"%s  %d\"}", "cannot send message: ",  err );
-					//HttpAddTextContent( response, buffer );
 				}
 				
 				if( as->as_Obsolete == TRUE )
@@ -1262,11 +1240,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					strcpy( tmpauthid, srcli->authid );
 					UserSession *tmpses = srcli->usersession;
 					int tmpstatus = srcli->status;
-					
-					//strcpy( srcli->authid, dstli->authid );
-					//srcli->usersession = dstli->usersession;
-					//srcli->status = dstli->status;
-					
+
 					char tmp[ 1024 ];
 					//int len = sprintf( tmp, "{\"type\":\"msg\",\"data\": { \"type\":\"%s\", \"data\":{\"type\":\"%llu\", \"data\":{ \"identity\":{\"username\":\"%s\"},\"data\": {\"type\":\"client-decline\",\"data\":\"%s\"}\"}}}}}", le->authid, as->as_ASSID, loggedSession->us_User->u_Name, assid, tmpses->us_User->u_Name );
 					//int msgsndsize += WebSocketSendMessageInt( le->usersession, tmp, len );
@@ -1435,8 +1409,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					char dictmsgbuf[ 256 ];
 					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_NO_USERSESSION_IN_SAS] , DICT_NO_USERSESSION_IN_SAS );
 					HttpAddTextContent( response, dictmsgbuf );
-					//int size = sprintf( buffer, "{\"response\":\"%s\"}", "Current or destination sessions not found!" );
-					//HttpAddTextContent( response, buffer );
 				}
 				
 				pthread_mutex_unlock( &as->as_SessionsMut );
@@ -1446,8 +1418,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				char dictmsgbuf[ 256 ];
 				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_SASID_NOT_FOUND] , DICT_SASID_NOT_FOUND );
 				HttpAddTextContent( response, dictmsgbuf );
-				//int size = sprintf( buffer, "{\"response\":\"%s\"}", "session doesnt exist " );
-				//HttpAddTextContent( response, buffer );
 			}
 		}
 		else
@@ -1457,8 +1427,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "sasid, deviceid" );
 			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 			HttpAddTextContent( response, dictmsgbuf );
-			//int size = sprintf( buffer, "{\"response\":\"%s\"}", "sasid or deviceid parameters are empty" );
-			//HttpAddTextContent( response, buffer );
 		}
 		
 		if( devid != NULL )
@@ -1528,7 +1496,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		if( assid != NULL )
 		{
 			char *end;
-			int assidlen = strlen( assid );
 			FUQUAD asval = strtoull( assid,  &end, 0 );
 			AppSession *as = AppSessionManagerGetSession( l->sl_AppSessionManager, asval );
 			
@@ -1787,9 +1754,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		{
 			
 		}
-		
-		//HttpWriteAndFree( response );
-		
+
 		if( url != NULL )
 		{
 			FFree( url );
@@ -1804,7 +1769,6 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		
 		response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 	
-		//HttpWriteAndFree( response );
 		return response;
 	}
 		

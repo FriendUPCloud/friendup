@@ -554,129 +554,212 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							}
 						}
 					}
-
+	/*				
+					else if( strcmp( path->parts[ 0 ], "loginprompt" ) == 0 )
+					{
+						
+					}
+*/
 					//
 					// login path file
 					//
 
 					else if( strcmp( path->parts[ 0 ], "loginprompt" ) == 0 )
 					{
-						DEBUG("[ProtocolHttp] getting login page for authmodule: %s\n", SLIB->sl_ActiveModuleName );
-
+						
 						//
+						// Check if redirect is required
 						//
-						if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
+						
+						char *newUrl = NULL;
+						
+						/*
+						// only cluster master can switch user to another server
+						if( SLIB->fcm->fcm_ClusterMaster )
 						{
-							FULONG res = 0;
-
-							char command[ 1024 ];
-
-							// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
-							int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
-							if( !( cx >= 0 ) )
+							int minSessions = SLIB->sl_USM->usm_SessionCounter;
+							ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
+						
+							while( clusNode != NULL )
 							{
-								FERROR( "[ProtocolHttp] snprintf\n" );;
+								if( clusNode->cn_Connection != NULL )
+								{
+									DEBUG("Checking sessions on node [%s] number %d\n", clusNode->cn_Address, clusNode->cn_Connection->fc_UserSessionsCount );
+									if( clusNode->cn_Connection->fc_UserSessionsCount < minSessions )
+									{
+										if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
+										{
+											newUrl = clusNode->cn_Url;
+										}
+										else if( clusNode->cn_Address != NULL )
+										{
+											newUrl = clusNode->cn_Address;
+										}
+									}
+								}
+								else
+								{
+									DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
+								}
+								clusNode = (ClusterNode *)clusNode->node.mln_Succ;
+							}
+						}
+						
+						DEBUG("[ProtocolHttp] getting login page for authmodule: %s\n", SLIB->sl_ActiveModuleName );
+						
+						//
+						//
+						//
+						
+						if( newUrl != NULL )
+						{
+							char redirect[ 512 ];
+							int redsize = 0;
+
+							if( SLIB->fcm->fcm_SSLEnabled )
+							{
+								redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/loginprompt", newUrl );
 							}
 							else
 							{
-								FILE *pipe = popen( command, "r" );
-								ListString *ls = NULL;
+								redsize = snprintf( redirect, sizeof( redirect ), "http://%s:6502/loginprompt", newUrl );
+							}
+							
+							DEBUG("Redirected to: [%s]\n", redirect );
+							
+							struct TagItem tags[] = {
+								{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+								{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+								{ HTTP_HEADER_LOCATION, (FULONG )StringDuplicateN( redirect, redsize ) },
+								{ TAG_DONE, TAG_DONE}
+							};
 
-								if( pipe != NULL )
+							response = HttpNewSimple( HTTP_307_TEMPORARY_REDIRECT, tags );
+
+							HttpAddTextContent( response, "Redirection" );
+
+							// write here and set data to NULL!!!!!
+							// retusn response
+							HttpWrite( response, sock );
+							result = 200;
+						}
+						else
+							*/
+						{
+							if( strcmp( SLIB->sl_ActiveModuleName, "fcdb.authmod" ) != 0 )
+							{
+								FULONG res = 0;
+
+								char command[ 1024 ];
+
+								// Make the commandline string with the safe, escaped arguments, and check for buffer overflows.
+								int cx = snprintf( command, sizeof(command), "php \"%s\" \"%s\" \"%s\" \"%s\";", "php/login.php", uri->path->raw, uri->queryRaw, request->content ); // SLIB->sl_ModuleNames
+								if( !( cx >= 0 ) )
 								{
-									ls = ListStringNew();
-									char buffer[ 1024 ];
-
-									while( !feof( pipe ) )
-									{
-										int reads = fread( buffer, sizeof( char ), 1024, pipe );
-										if( reads > 0 )
-										{
-											ListStringAdd( ls, buffer, reads );
-											res += reads;
-										}
-									}
-									pclose( pipe );
+									FERROR( "[ProtocolHttp] snprintf\n" );;
 								}
+								else
+								{
+									FILE *pipe = popen( command, "r" );
+									ListString *ls = NULL;
 
-								ListStringJoin( ls );
+									if( pipe != NULL )
+									{
+										ls = ListStringNew();
+										char buffer[ 1024 ];
 
-								struct TagItem tags[] = {
+										while( !feof( pipe ) )
+										{
+											int reads = fread( buffer, sizeof( char ), 1024, pipe );
+											if( reads > 0 )
+											{
+												ListStringAdd( ls, buffer, reads );
+												res += reads;
+											}
+										}
+										pclose( pipe );
+									}
+
+									ListStringJoin( ls );
+
+									struct TagItem tags[] = {
 										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
 										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 										{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 										{TAG_DONE, TAG_DONE}
-								};
+									};
 
-								response = HttpNewSimple( HTTP_200_OK, tags );
+									response = HttpNewSimple( HTTP_200_OK, tags );
 
-								if( ls->ls_Data != NULL )
-								{
-									HttpSetContent( response, ls->ls_Data, res );
-								}
-								else
-								{
-									HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
-								}
-
-								// write here and set data to NULL!!!!!
-								// retusn response
-								HttpWrite( response, sock );
-								result = 200;
-
-								ls->ls_Data = NULL;
-								ListStringDelete( ls );
-							}
-						}
-
-						//
-						// default login page
-
-						else
-						{
-							FBOOL freeFile = FALSE;
-							//Path *base = PathNew( "resources" );
-							//Path *base = PathNew( "resources/webclient/templates/login_prompt.html" );
-							//Path *base = PathNew( "/webclient/templates/login_prompt.html" );
-							//if( base != NULL )
-							{
-								//Path* completePath = PathJoin( base, "templates/login_prompt.html" );
-								//if( completePath != NULL )
-								{
-									LocFile *file = LocFileNew( "resources/webclient/templates/login_prompt.html", FILE_READ_NOW | FILE_CACHEABLE );
-									if( file != NULL )
+									if( ls->ls_Data != NULL )
 									{
-										freeFile = TRUE;
+										HttpSetContent( response, ls->ls_Data, res );
+									}
+									else
+									{
+										HttpAddTextContent( response, "fail<!--separate-->PHP script return error" );
+									}
 
-										struct TagItem tags[] = {
+									// write here and set data to NULL!!!!!
+									// return response
+									HttpWrite( response, sock );
+									result = 200;
+
+									ls->ls_Data = NULL;
+									ListStringDelete( ls );
+								}
+							}
+
+							//
+							// default login page
+							//
+
+							else
+							{
+								FBOOL freeFile = FALSE;
+								//Path *base = PathNew( "resources" );
+								//Path *base = PathNew( "resources/webclient/templates/login_prompt.html" );
+								//Path *base = PathNew( "/webclient/templates/login_prompt.html" );
+								//if( base != NULL )
+								{
+									//Path* completePath = PathJoin( base, "templates/login_prompt.html" );
+									//if( completePath != NULL )
+									{
+										LocFile *file = LocFileNew( "resources/webclient/templates/login_prompt.html", FILE_READ_NOW | FILE_CACHEABLE );
+										if( file != NULL )
+										{
+											freeFile = TRUE;
+
+											struct TagItem tags[] = {
 												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
 												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 												{ TAG_DONE, TAG_DONE }
-										};
+											};
 
-										response = HttpNewSimple( HTTP_200_OK, tags );
+											response = HttpNewSimple( HTTP_200_OK, tags );
 
-										HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
+											HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 
-										// write here and set data to NULL!!!!!
-										// retusn response
-										HttpWrite( response, sock );
-										result = 200;
+											// write here and set data to NULL!!!!!
+											// retusn response
+											HttpWrite( response, sock );
+											result = 200;
 
-										//INFO("--------------------------------------------------------------%d\n", freeFile );
-										if( freeFile == TRUE )
-										{
-											LocFileDelete( file );
+											//INFO("--------------------------------------------------------------%d\n", freeFile );
+											if( freeFile == TRUE )
+											{
+												LocFileDelete( file );
+											}
+											response->content = NULL;
+											response->sizeOfContent = 0;
+
+											response->h_WriteType = FREE_ONLY;
 										}
-										response->content = NULL;
-										response->sizeOfContent = 0;
-
-										response->h_WriteType = FREE_ONLY;
 									}
 								}
 							}
-						}
+						}	// newUrl == NULL
 					}
 
 					//
@@ -990,16 +1073,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									if( file->lf_Mime == NULL )
 									{
-										//<<<<<<< HEAD
 										char *extension = FCalloc( 7, sizeof( char ) );
 										int pos = 0;
 										int max = 0;
 										int ii = 0;
 
 										for( ii = path->rawSize - 1; ii >= 0 ; ii-- )
-											//=======
-											//										if( max >= 5 || path->raw[ ii ] == '.' )
-											//>>>>>>> 4251cd2360f933e127113aaf3a9da210177edb97
 										{
 											if( path->raw[ ii ] == '.'  || max >= 5 )
 											{
@@ -1184,310 +1263,426 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							}
 							else		// only one file
 							{
-								Path *base = PathNew( "resources" );
-								Path* completePath = PathJoin( base, path );
-								FBOOL freeFile = FALSE;
+								// test
+								
+								char *newUrl = NULL;
+								FBOOL fromUrl = FALSE;
 
-								if( completePath != NULL )
+								if( strcmp( path->parts[ 0 ], "webclient" ) == 0 &&
+									path->parts[ 1 ] != NULL && strcmp( path->parts[ 1 ], "index.html" ) == 0 
+									&&
+									
+									SLIB->fcm->fcm_ClusterMaster )
 								{
-									LocFile* file = NULL;
-
-									if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
-									{	
-										char *decoded = UrlDecodeToMem( completePath->raw );
-										if( SLIB->sl_CacheFiles == 1 )
+									DEBUG("\n\n\n\n===========================\n\n");
+									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
+							
+									int minSessions = SLIB->sl_USM->usm_SessionCounter;
+									ClusterNode *clusNode = SLIB->fcm->fcm_ClusterNodes;
+						
+									while( clusNode != NULL )
+									{
+										DEBUG("Checking sessions on node [%s] number %d min %d connection ptr %p NODEID: %lu\n", clusNode->cn_Address, clusNode->cn_UserSessionsCount, minSessions, clusNode->cn_Connection, clusNode->cn_ID );
+										
+										if( clusNode->cn_Connection != NULL && clusNode->cn_Connection->fc_Socket != NULL )
 										{
-											Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
-											file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
+											if( clusNode->cn_UserSessionsCount < minSessions )
+											{
+												DEBUG("New URL will be generated\n");
+												if( clusNode->cn_Url != NULL )	// we cannot redirect to url which do not exist
+												{
+													fromUrl = TRUE;
+													newUrl = clusNode->cn_Url;
+												}
+												else if( clusNode->cn_Address != NULL )
+												{
+													newUrl = clusNode->cn_Address;
+												}
+											}
+										}
+										else
+										{
+											DEBUG("Connection do not exist [%s]\n", clusNode->cn_Address );
+										}
+										clusNode = (ClusterNode *)clusNode->node.mln_Succ;
+									}
+								}
+						
+								DEBUG("[ProtocolHttp] getting login page for authmodule: %s\n", SLIB->sl_ActiveModuleName );
 
-											if( file == NULL )
+								//
+								//
+								//
+						
+								if( newUrl != NULL )
+								{
+									char redirect[ 1024 ];
+									int redsize = 0;
+							
+									DEBUG("REDIRECT SET TO [%s]\n", newUrl );
+
+									if( SLIB->fcm->fcm_SSLEnabled )
+									{
+//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=https://%s/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"https://%s/webclient/index.html\">https://%s</a>.</body></html>", newUrl, newUrl, newUrl );
+										if( fromUrl == TRUE )
+										{
+											redsize = snprintf( redirect, sizeof( redirect ), "https://%s/webclient/index.html", newUrl );
+										}
+										else
+										{
+											redsize = snprintf( redirect, sizeof( redirect ), "https://%s:6502/webclient/index.html", newUrl );
+										}
+									}
+									else
+									{
+								//redsize = snprintf( redirect, sizeof( redirect ), "<html><head><title>Redirecting...</title><meta http-equiv=\"refresh\" content=\"0;url=http://%s:6502/webclient/index.html\"></head><body> \
+ Attempting to redirect to <a href=\"http://%s:6502/webclient/index.html\">http://%s:6502</a>.</body></html>", newUrl, newUrl, newUrl );
+										if( fromUrl == TRUE )
+										{
+											redsize = snprintf( redirect, sizeof( redirect ), "http://%s/webclient/index.html", newUrl );
+										}
+										else
+										{
+											redsize = snprintf( redirect, sizeof( redirect ), "http://%s:6502/webclient/index.html", newUrl );
+										}
+									}
+							
+									DEBUG("Redirected to: [%s]\n", redirect );
+
+									struct TagItem tags[] = {
+										{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate("text/html") },
+										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+										{ HTTP_HEADER_LOCATION, (FULONG )StringDuplicateN( redirect, redsize ) },
+										{ TAG_DONE, TAG_DONE}
+									};
+
+									//response = HttpNewSimple( HTTP_200_OK, tags );
+									response = HttpNewSimple( HTTP_307_TEMPORARY_REDIRECT, tags );
+
+									//HttpAddTextContent( response, redirect );
+									HttpAddTextContent( response, "Redirection" );
+
+									// write here and set data to NULL!!!!!
+									// retusn response
+									HttpWrite( response, sock );
+									result = 200;
+								}
+								else
+								{
+									Path *base = PathNew( "resources" );
+									Path* completePath = PathJoin( base, path );
+									FBOOL freeFile = FALSE;
+
+									if( completePath != NULL )
+									{
+										LocFile* file = NULL;
+
+										if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+										{	
+											char *decoded = UrlDecodeToMem( completePath->raw );
+											if( SLIB->sl_CacheFiles == 1 )
+											{
+												Log( FLOG_DEBUG, "[ProtocolHttp] Read single file, first from cache %s\n", decoded );
+												file = CacheManagerFileGet( SLIB->cm, decoded, FALSE );
+
+												if( file == NULL )
+												{
+													// Don't allow directory traversal
+													if( !strstr( decoded, ".." ) )
+													{
+														file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
+													}
+
+													if( file != NULL )
+													{
+														if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
+														{
+															freeFile = TRUE;
+														}
+													}
+												}
+												else
+												{
+													struct stat attr;
+													stat( decoded, &attr);
+
+													// if file is new file, reload it
+													Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
+													if( attr.st_mtime != file->lf_Info.st_mtime )
+													{
+														LocFileReload( file, decoded );
+													}
+												}
+											}
+											else
 											{
 												// Don't allow directory traversal
 												if( !strstr( decoded, ".." ) )
 												{
 													file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
 												}
+												freeFile = TRUE;
+											}
+											FFree( decoded );
+											pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+										}
+										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
 
-												if( file != NULL )
-												{
-													if( CacheManagerFilePut( SLIB->cm, file ) != 0 )
-													{
-														freeFile = TRUE;
-													}
-												}
+										// Send reply
+										if( file != NULL )
+										{
+											char *mime = NULL;
+
+											if(  file->lf_Buffer == NULL )
+											{
+												Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
+											}
+
+											DEBUG("GET single file : extension '%s'\n", completePath->extension );
+											if( completePath->extension )
+											{
+												mime = StringDuplicate( MimeFromExtension( completePath->extension ) );
 											}
 											else
 											{
-												struct stat attr;
-												stat( decoded, &attr);
-
-												// if file is new file, reload it
-												Log( FLOG_DEBUG, "[ProtocolHttp] File will be reloaded\n");
-												if( attr.st_mtime != file->lf_Info.st_mtime )
-												{
-													LocFileReload( file, decoded );
-												}
+												mime = StringDuplicate( "text/plain" );
 											}
-										}
-										else
-										{
-											// Don't allow directory traversal
-											if( !strstr( decoded, ".." ) )
-											{
-												file = LocFileNew( decoded, FILE_READ_NOW | FILE_CACHEABLE );
-											}
-											freeFile = TRUE;
-										}
-										FFree( decoded );
-										pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
-									}
-									Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
 
-									// Send reply
-									if( file != NULL )
-									{
-										char *mime = NULL;
-
-										if(  file->lf_Buffer == NULL )
-										{
-											Log( FLOG_ERROR,"File is empty %s\n", completePath->raw );
-										}
-
-										DEBUG("GET single file : extension '%s'\n", completePath->extension );
-										if( completePath->extension )
-										{
-											mime = StringDuplicate( MimeFromExtension( completePath->extension ) );
-										}
-										else
-										{
-											mime = StringDuplicate( "text/plain" );
-										}
-
-										struct TagItem tags[] = {
+											struct TagItem tags[] = {
 												{ HTTP_HEADER_CONTENT_TYPE, (FULONG) StringDuplicate( mime ) },
 												{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 												{ HTTP_HEADER_CACHE_CONTROL, (FULONG )StringDuplicate( "max-age = 3600" ) },
 												{ TAG_DONE, TAG_DONE }
-										};
+											};
 
-										file->lf_Mime = mime;
+											file->lf_Mime = mime;
 
-										response = HttpNewSimple( HTTP_200_OK, tags );
+											response = HttpNewSimple( HTTP_200_OK, tags );
 
-										HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
+											HttpSetContent( response, file->lf_Buffer, file->lf_FileSize );
 
-										// write here and set data to NULL!!!!!
-										// return response
-										HttpWrite( response, sock );
-										result = 200;
+											// write here and set data to NULL!!!!!
+											// return response
+											HttpWrite( response, sock );
+											result = 200;
 
-										response->content = NULL;
-										response->sizeOfContent = 0;
+											response->content = NULL;
+											response->sizeOfContent = 0;
 
-										response->h_WriteType = FREE_ONLY;
+											response->h_WriteType = FREE_ONLY;
 
-										Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
+											Log( FLOG_DEBUG, "[ProtocolHttp] File returned to caller, fsize %lu\n", file->lf_FileSize );
 
-										//INFO("--------------------------------------------------------------%d\n", freeFile );
-										if( freeFile == TRUE )
-										{
-											LocFileDelete( file );
-										}
-									}
-									else
-									{
-										// First try to get tinyurl
-										char *hash = path->parts[0];
-										SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
-
-										char url[ 2048 ]; 
-										memset( url, '\0', 2048 );
-										int hasUrl = 0;
-										if( sqllib != NULL )
-										{
-											char qery[ 1024 ];
-											sqllib->SNPrintF( sqllib, qery, sizeof(qery), "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
-											void *res = sqllib->Query( sqllib, qery );
-											if( res != NULL )
+											//INFO("--------------------------------------------------------------%d\n", freeFile );
+											if( freeFile == TRUE )
 											{
-												char **row;
-												if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-												{
-													if( row[ 0 ] != NULL )
-													{
-														unsigned int len = strlen( row[ 0 ] ) + 1;
-														if( len <= 2047 )
-														{
-															sprintf( url, "%.*s", len, row[ 0 ] );
-															hasUrl = 1;
-														}
-													}
-												}
-												sqllib->FreeResult( sqllib, res );
+												LocFileDelete( file );
 											}
-											SLIB->LibrarySQLDrop( SLIB, sqllib );
 										}
-										// We have tinyurl!
-										if( hasUrl )
-										{
-											Log( FLOG_DEBUG, "TinyURL found: %s\n", url );
-
-											PathFree( path );
-											PathFree( base );
-											PathFree( completePath );
-
-											UriFree( request->uri );
-											request->uri = UriParse( url );
-											if( request->uri->authority )
-											{
-												if( request->uri->authority->user )
-												{
-													FFree( request->uri->authority->user );
-												}
-												if( request->uri->authority->host )
-												{
-													FFree( request->uri->authority->host );
-												}
-												FFree( request->uri->authority );
-											}
-											if( request->uri->scheme )
-											{
-												FFree( request->uri->scheme );
-											}
-											request->uri->authority = NULL;
-											request->uri->scheme = NULL;
-
-											// Override raw query!
-											FFree( request->uri->queryRaw );
-
-											// Insert tinyurl source
-											request->uri->queryRaw = StringDuplicateN( url, strlen( url ) );
-											request->uri->redirect = TRUE;
-
-											// Retry request with our new url
-											goto partialRequest;
-										}
-										// No tiny url! Catch-all
 										else
 										{
+											// First try to get tinyurl
+											char *hash = path->parts[0];
+											SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 
-											Log( FLOG_DEBUG, "[ProtocolHttp] File do not exist as real file, getting it via Modules\n");
-
-											// Try to fall back on module
-											// TODO: Make this behaviour configurable
-											char *command = NULL;
-
-											int clen = strlen( uri->path->raw ) + 256;
-
-											if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
+											char *url = FCalloc( 2048, sizeof(char) );
+											
+											//char url[ 2048 ]; 
+											//memset( url, '\0', 2048 );
+											int hasUrl = 0;
+											if( sqllib != NULL )
 											{
-												snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
-
-												ListString *bs = RunPHPScript( command );
-
-												if( bs && bs->ls_Data != NULL && bs->ls_Size > 0 )
+												char *qery = FMalloc( 1048 );
+												//char qery[ 1048 ];
+												qery[ 1024 ] = 0;
+												sqllib->SNPrintF( sqllib, qery, 1024, "SELECT Source FROM FTinyUrl WHERE `Hash`=\"%s\"", hash ? hash : "-" );
+												void *res = sqllib->Query( sqllib, qery );
+												if( res != NULL )
 												{
-													// Check header and remove from data
-													char *cntype = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Content-Type" );
-													char *code = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Status Code" );
-
-													if( cntype != NULL )
+													char **row;
+													if( ( row = sqllib->FetchRow( sqllib, res ) ) )
 													{
-														bs->ls_Size = StripEmbeddedHeaders( &bs->ls_Data, bs->ls_Size );
+														if( row[ 0 ] != NULL )
+														{
+															unsigned int len = strlen( row[ 0 ] ) + 1;
+															if( len <= 2047 )
+															{
+																snprintf( url, 2048, "%.*s", len, row[ 0 ] );
+																hasUrl = 1;
+															}
+														}
 													}
+													sqllib->FreeResult( sqllib, res );
+												}
+												SLIB->LibrarySQLDrop( SLIB, sqllib );
+												
+												FFree( qery );
+											}
+											
+											// We have tinyurl!
+											if( hasUrl )
+											{
+												Log( FLOG_DEBUG, "TinyURL found: %s\n", url );
 
-													struct TagItem tags[] = {
+												PathFree( path );
+												PathFree( base );
+												PathFree( completePath );
+
+												UriFree( request->uri );
+												request->uri = UriParse( url );
+												if( request->uri->authority )
+												{
+													if( request->uri->authority->user )
+													{
+														FFree( request->uri->authority->user );
+													}
+													if( request->uri->authority->host )
+													{
+														FFree( request->uri->authority->host );
+													}
+													FFree( request->uri->authority );
+												}
+												if( request->uri->scheme )
+												{
+													FFree( request->uri->scheme );
+												}
+												request->uri->authority = NULL;
+												request->uri->scheme = NULL;
+
+												// Override raw query!
+												FFree( request->uri->queryRaw );
+
+												// Insert tinyurl source
+												request->uri->queryRaw = StringDuplicateN( url, strlen( url ) );
+												request->uri->redirect = TRUE;
+
+												// Retry request with our new url
+												goto partialRequest;
+												
+											}
+											// No tiny url! Catch-all
+											else
+											{
+												Log( FLOG_DEBUG, "[ProtocolHttp] File do not exist as real file, getting it via Modules\n");
+
+												// Try to fall back on module
+												// TODO: Make this behaviour configurable
+												char *command = NULL;
+
+												int clen = strlen( uri->path->raw ) + 256;
+
+												if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
+												{
+													snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
+													
+													ListString *bs = RunPHPScript( command );
+
+													if( bs && bs->ls_Data != NULL && bs->ls_Size > 0 )
+													{
+														// Check header and remove from data
+														char *cntype = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Content-Type" );
+														char *code = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Status Code" );
+
+														if( cntype != NULL )
+														{
+															bs->ls_Size = StripEmbeddedHeaders( &bs->ls_Data, bs->ls_Size );
+														}
+
+														struct TagItem tags[] = {
 															{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
 															{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
 															{ TAG_DONE, TAG_DONE }
-													};
+														};
 
-													if( code != NULL )
-													{
-														char *pEnd;
-														int errCode = -1;
-
-														char *next;
-														errCode = strtol ( code, &next, 10);
-														if( ( next == code ) || ( *next != '\0' ) ) 
+														if( code != NULL )
 														{
-															errCode = -1;
-														}
+															char *pEnd;
+															int errCode = -1;
 
-														if( errCode == -1 )
-														{
-															response = HttpNewSimple( HTTP_200_OK, tags );
+															char *next;
+															errCode = strtol ( code, &next, 10);
+															if( ( next == code ) || ( *next != '\0' ) ) 
+															{
+																errCode = -1;
+															}
+
+															if( errCode == -1 )
+															{
+																response = HttpNewSimple( HTTP_200_OK, tags );
+															}
+															else
+															{
+																response = HttpNewSimple( errCode, tags );
+															}
+
+															Log( FLOG_DEBUG, "PHP catch returned err code: %d\n", errCode );
 														}
 														else
 														{
-															response = HttpNewSimple( errCode, tags );
+															response = HttpNewSimple( HTTP_200_OK, tags );
 														}
 
-														Log( FLOG_DEBUG, "PHP catch returned err code: %d\n", errCode );
-													}
-													else
-													{
-														response = HttpNewSimple( HTTP_200_OK, tags );
-													}
-
-													char *resp = bs->ls_Data;
-													if( resp != NULL )
-													{
-														const char *hsearche = "---http-headers-end---\n";
-														const int hsearchLene = 23;
-
-														char *tmp = NULL;
-														if( ( tmp = strstr( resp, hsearche ) ) != NULL )
+														char *resp = bs->ls_Data;
+														if( resp != NULL )
 														{
-															resp = tmp + 23;
+															const char *hsearche = "---http-headers-end---\n";
+															const int hsearchLene = 23;
+
+															char *tmp = NULL;
+															if( ( tmp = strstr( resp, hsearche ) ) != NULL )
+															{
+																resp = tmp + 23;
+															}
 														}
+
+														HttpWrite( response, sock );
+
+														response->content = NULL;
+														response->sizeOfContent = 0;
+
+														response->h_WriteType = FREE_ONLY;
+
+														SocketWrite( sock, resp, (FLONG)(bs->ls_Size - (resp - bs->ls_Data)) );
+
+														if( cntype != NULL ) FFree( cntype );
+														if( code != NULL ) FFree( code );
+
+														result = 200;
+
+														Log( FLOG_ERROR, "Module call returned bytes: %lu\n", bs->ls_Size );
+														//bs->ls_Data = NULL; 
+														ListStringDelete( bs );
 													}
+													else 
+													{
+														Log( FLOG_ERROR,"File do not exist (PHPCall)\n");
 
-													HttpWrite( response, sock );
-
-													response->content = NULL;
-													response->sizeOfContent = 0;
-
-													response->h_WriteType = FREE_ONLY;
-
-													SocketWrite( sock, resp, (FLONG)(bs->ls_Size - (resp - bs->ls_Data)) );
-													//HttpSetContent( response, bs->ls_Data, bs->ls_Size );
-
-													if( cntype != NULL ) FFree( cntype );
-													if( code != NULL ) FFree( code );
-
-													result = 200;
-
-													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", bs->ls_Size );
-													//bs->ls_Data = NULL; 
-													ListStringDelete( bs );
-												}
-												else 
-												{
-													Log( FLOG_ERROR,"File do not exist (PHPCall)\n");
-
-													struct TagItem tags[] = {
+														struct TagItem tags[] = {
 															{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
 															{ TAG_DONE, TAG_DONE }
-													};	
+														};	
 
-													response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+														response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
 
-													result = 404;
+														result = 404;
+													}
+													FFree( command );
 												}
-												FFree( command );
 											}
+											FFree( url );
 										}
-									}
-									Log( FLOG_DEBUG, "[ProtocolHttp] File delivered: %s\n", completePath->raw );
+										Log( FLOG_DEBUG, "[ProtocolHttp] File delivered: %s\n", completePath->raw );
 
-									PathFree( base );
-									PathFree( completePath );
-								}
-								else
-								{
-									Log( FLOG_ERROR,"Cannot create completePath\n");
-								}
+										PathFree( base );
+										PathFree( completePath );
+									}
+									else
+									{
+										Log( FLOG_ERROR,"Cannot create completePath\n");
+									}
+								
+								} // test redirection
 							}		// one-many files read
 						}
 					}

@@ -39,7 +39,7 @@
 			{i18n_level}:
 		</div>
 		<div class="HContent70 FloatLeft">
-			<select id="Level">
+			<select id="Level" class="FullWidth">
 				<option value="Admin">{i18n_level_admin}</option>
 				<option value="User">{i18n_level_user}</option>
 				<option value="Guest">{i18n_level_guest}</option>
@@ -54,7 +54,7 @@
 				{i18n_template}:
 			</div>
 			<div class="HContent70 FloatLeft">
-				<select id="Setup">{setup}</select>
+				<select id="Setup" class="FullWidth">{setup}</select>
 				<!--<button type="button" class="IconSmall fa-save" onclick="ApplySetup({id})">
 					{i18n_apply_template}
 				</button>-->
@@ -67,8 +67,17 @@
 			<div class="HContent30 FloatLeft">
 				{i18n_workgroups}:
 			</div>
+			<div id="pUserWorkgroup" class="HContent70 FloatLeft">
+				<!--<input type="text" class="FullWidth" id="Workgroup" value="{workgroup}" readonly="readonly"/>-->
+			</div>
+		</div>
+		<div class="HRow MarginTop" id="WorkgroupSelect">
+			<div class="HContent30 FloatLeft">&nbsp;&nbsp;&nbsp;</div>
 			<div class="HContent70 FloatLeft">
-				<input type="text" class="FullWidth" id="Workgroup" value="{workgroup}" readonly="readonly"/>
+				<select id="Workgroup" class="HContent55">{workgroup}</select>
+				<button type="button" onclick="AddUserGroup()">
+					{i18n_add_workgroup}
+				</button>
 			</div>
 		</div>
 	</div>
@@ -89,3 +98,16 @@
 			</button>
 		</div>
 	</div>
+	
+	<style>
+		#pUserWorkgroup
+		{
+			height: 168px;
+			overflow: hidden;
+			overflow-y: auto;
+			border: 1px solid #c0c0c0;
+			padding: 2px;
+			box-sizing: border-box;
+		}
+	</style>
+	

@@ -77,6 +77,11 @@ i18n_application_settings           : Editer les préférences
 i18n_save_settings                  : Sauver les préférences
 i18n_load_settings                  : Charger les préférences
 i18n_reset_settings                 : Par défaut
+i18n_initiate_sas                   : Démarrer une session d'application partagée
+
+i18n_sas_window                     : Configurer une session partagée
+
+i18n_join_friendc_session           : Rejoindre un ami Créer une session partagée
 
 i18n_new_filename                   : Nouveau fichier
 i18n_empty_file                     : Fichier vide

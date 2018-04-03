@@ -77,6 +77,11 @@ i18n_application_settings           : Endre innstillinger
 i18n_save_settings                  : Lagre innstillinger
 i18n_load_settings                  : Åpne innstillinger
 i18n_reset_settings                 : Standardverdier
+i18n_initiate_sas                   : Start delt app økt
+
+i18n_sas_window                     : Konfigurer delt økt
+
+i18n_join_friendc_session           : Bli med i en delt Friend Create økt
 
 i18n_new_filename                   : Ny fil
 i18n_empty_file                     : Tom fil
@@ -159,6 +164,14 @@ i18n_could_not_save : Kunne ikke lagre!
 i18n_friend_create_iot_monitor : Friend Create - IOT Monitor
 i18n_search_and_replace : Søk og erstatt
 
+#visual editor
+
+i18n_please_choose_session           : Vennligst velg økt
+i18n_standard_HTML5                  : Standard HTML5
+i18n_tree_engine_HTML5               : Tree Engine HTML5
+i18n_tree_engine_canvas              : Tree Engine Canvas
+i18n_tree_engine_3D                  : Tree Engine 3D
+i18n_start_editing                   : Start å redigere
 
 
 

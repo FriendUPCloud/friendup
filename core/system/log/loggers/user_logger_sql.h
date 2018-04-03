@@ -39,7 +39,7 @@
 
 
 /*
- C RE*ATE TABLE IF NOT EXISTS `FUserLog` (
+ CREATE TABLE IF NOT EXISTS `FUserLog` (
 	 `ID` bigint(32) NOT NULL AUTO_INCREMENT,
 	 `UsersessiondID` varchar(255) DEFAULT NULL,
 	 `UserID` bigint(32) NOT NULL,

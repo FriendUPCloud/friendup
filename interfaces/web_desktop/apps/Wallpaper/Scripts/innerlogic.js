@@ -22,6 +22,7 @@ Application.currentPath = 'Mountlist:';
 Application.run = function( msg, iface )
 {
 	this.sendMessage( { command: 'getimages' } );
+	scrapeImages();
 }
 
 Application.selectedImage = -3;
@@ -49,6 +50,24 @@ Application.addImages = function( images )
 			arr.push( images[a] );
 	}
 	this.showImages();
+}
+
+function scrapeImages()
+{
+	/*var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e == 'ok' )
+		{
+			console.log( d );
+		}
+		else
+		{
+			console.log( e, d );
+		}
+	}
+	m.execute( 'proxyget', { url: 'https://www.pexels.com/new-photos/' } );*/
+	ge( 'Webimages' ).innerHTML = '<h2>' + i18n( 'i18n_unfinished' ) + '</h2>' + '<p>' + i18n( 'i18n_soon' ) + '</p>';
 }
 
 // Show the wallpaper images

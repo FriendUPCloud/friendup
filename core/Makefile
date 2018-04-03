@@ -1,11 +1,12 @@
-GCC			=	gcc
-CPP			=	g++
+
+-include ../Makefile.defs
+
+CC				=	gcc
+CPP				=	g++
 OUTPUT			=	bin/FriendCore
-BUILD_DATE		=	$(shell date +"%Y%m%d_%H%M%S")
-BUILD_VERSION           =       "v1.1"
-GIT_VERSION 		=	$(shell git describe --abbrev --dirty --always --tags)
-CFLAGS			=	-DAPPDATE=\"$(BUILD_DATE)\" -DAPPVERSION=\"$(BUILD_VERSION)\" -DAPPGITVERSION=\"$(GIT_VERSION)\" -D_XOPEN_SOURCE=600 --std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -ggdb -Ofast -funroll-loops -fPIC -I. -Wno-unused -Wno-unused-parameter -I../libs/ -I../libs-ext/libwebsockets/build/include/ $(shell mysql_config --cflags) -I/usr/include/libxml2/  -D__USE_POSIX -DENABLE_SSH -DENABLE_SSL -Wunused-parameter
-LFLAGS			=	../libs-ext/libwebsockets/build/lib/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng -lz
+
+CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../libs/ -I../$(LIBWS_INCLUDE_DIR) $(shell mysql_config --cflags) -I$(LIBXML2_INCLUDE_DIR)
+LFLAGS			=	../$(LIBWS_LIB_DIR)/libwebsockets.a -Lsystem/bin/ -lcrypto -lm -lpthread -ldl -lssh -lrt -lssh_threads -lssl -lmagic -lxml2 `mysql_config --libs` -lpng -lz
 DFLAGS			=	-M $(CFLAGS)  
 FPATH			=	$(shell pwd)
 
@@ -38,7 +39,7 @@ endif
 
 C_FILES := $(wildcard main.c core/*.c system/cache/*.c network/*.c system/services/*.c util/*.c class/*.c ssh/*.c hardware/*.c system/*.c \
 			system/dictionary/*.c system/module/*.c system/fsys/*.c system/json/*.c system/user/*.c util/log/*.c system/inram/*.c system/invar/*.c system/application/*.c system/auth/*.c \
-			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c \
+			hardware/usb/*.c hardware/printer/*.c system/datatypes/images/*.c system/log/*.c system/admin/*.c communication/*.c system/autotask/*.c system/token/*.c \
 			websockets/*.c security/*.c webdav/*.c system/connection/*.c mobile_app/*.c )
 OBJ_FILES := $(addprefix obj/,$(notdir $(C_FILES:.c=.o)))
 
@@ -47,135 +48,139 @@ ALL:	$(OBJ_FILES) $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
 	@echo "\033[34mLinking ...\033[0m"
-	$(GCC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS)
+	$(CC) -o $(OUTPUT) $(OBJ_FILES) $(LFLAGS)
 
 obj/%.o: %.c *.h %.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: core/%.c core/*.h core/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/cache/%.c system/cache/*.h system/cache/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: network/%.c network/*.h network/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/services/%.c system/services/*.h system/services/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: communication/%.c communication/*.h communication/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: util/%.c util/*.h util/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: class/%.c class/*.h class/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: ssh/%.c ssh/*.h ssh/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: hardware/%.c hardware/*.h hardware/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/%.c system/%.h system/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/dictionary/%.c system/dictionary/*.h system/dictionary/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/fsys/%.c system/fsys/*.h system/fsys/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/module/%.c system/module/*.h system/module/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: util/log/%.c util/log/*.h util/log/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/json/%.c system/json/*.h system/json/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/user/%.c system/user/*.h system/user/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/inram/%.c system/inram/*.h system/inram/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/invar/%.c system/invar/*.h system/invar/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/application/%.c system/application/*.h system/application/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/auth/%.c system/auth/*.h system/auth/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: hardware/usb/%.c hardware/usb/*.h hardware/usb/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: hardware/printer/%.c hardware/printer/*.h hardware/printer/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/datatypes/images/%.c system/datatypes/images/*.h system/datatypes/images/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/log/%.c system/log/*.h system/log/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/admin/%.c system/admin/*.h system/admin/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: system/connection/%.c system/connection/*.h system/connection/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: system/autotask/%.c system/autotask/*.h system/autotask/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: websockets/%.c websockets/*.h websockets/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 obj/%.o: security/%.c security/*.h security/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: webdav/%.c webdav/*.h webdav/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 obj/%.o: mobile_app/%.c mobile_app/*.h mobile_app/%.d
 	@echo "\033[34mCompile ...\033[0m"
-	$(GCC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+obj/%.o: system/token/%.c system/token/*.h system/token/%.d
+	@echo "\033[34mCompile ...\033[0m"
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 # build/install
 
@@ -215,7 +220,7 @@ setup:
 	
 %.d: %.c
 	@set -e; rm -f $@; \
-	$(GCC) -M $(CFLAGS)  $< > $@.$$$$; \
+	$(CC) -M $(CFLAGS)  $< > $@.$$$$; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 

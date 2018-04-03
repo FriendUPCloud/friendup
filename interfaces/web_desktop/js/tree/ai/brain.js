@@ -57,11 +57,11 @@ Friend.AI.Brain = function( tree, name, flags )
     this.displayOffsetX = 0;
     this.displayOffsetY = 0;
     this.displayLayerHeight = 100;      // Percentage of the neuron height (can change) 
-    Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Brain', flags );
-	Object.assign( this, Friend.Tree.Brain );
+    Friend.Tree.Items.init( this, tree, name, 'Friend.AI.Brain', flags );
+	this.registerEvents( 'refresh' );
 };
 
-Friend.AI.Brain.renderUp = function( flags )
+Friend.AI.Brain.render = function( flags )
 {
     switch ( this.display )
     {
@@ -75,10 +75,6 @@ Friend.AI.Brain.renderUp = function( flags )
     }
     return flags;
 };
-Friend.AI.Brain.renderDown = function( flags )
-{
-    return flags;
-}
 Friend.AI.Brain.renderDisplayFlatEntry = function( item )
 {
     var z = 0;
@@ -141,23 +137,21 @@ Friend.AI.Brain.renderDisplayFlat = function( flags )
     }
     return flags;
 }
-Friend.AI.Brain.processUp = function( message )
+Friend.AI.Brain.messageUp = function( message )
 {
     if ( message.command )
     {
         switch( message.command )
         {
             case 'start':
-                var count;
-
                 break;
         }
     }
-    return this.startProcess( flags, [ 'x', 'y', 'z' ] );
+    return this.startProcess( message, [ 'x', 'y', 'z' ] );
 };
-Friend.AI.Brain.processDown = function( flags )
+Friend.AI.Brain.messageDown = function( flags )
 {
-    return this.endProcess( flags, [ 'x', 'y', 'z' ] );
+    return this.endProcess( message, [ 'x', 'y', 'z' ] );
 }
 Friend.AI.Brain.understandSentence = function( flags )
 {

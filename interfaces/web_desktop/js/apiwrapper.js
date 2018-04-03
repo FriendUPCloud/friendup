@@ -124,7 +124,7 @@ function apiWrapper( event, force )
 	{
 		msg = typeof( d ) == 'object' ? d : JSON.parse( d );
 	} catch(e) { console.log('Unexpected answer: ' + d, event.data ); }
-
+	
 	if( msg.type )
 	{
 		// Find application iframe
@@ -271,10 +271,10 @@ function apiWrapper( event, force )
 						{
 							message: msg,
 							name: msg.name,
+							connectionType: msg.connectionType,
 							applicationName: msg.applicationName,
-							hostType: msg.hostType,
-							identifier: msg.identifier,
-							flags: msg.flags,
+							description: msg.description,
+							data: msg.data,
 							callback: msg.callback
 						};
 						FriendNetwork.startHosting( newmsg );
@@ -312,7 +312,6 @@ function apiWrapper( event, force )
 			// 2: pull from other exposed apps
 			// - is it possible for applicationId to leak to other applications?
 			case 'dormantmaster':
-
 				switch( msg.method )
 				{
 					case 'execute':
@@ -333,7 +332,7 @@ function apiWrapper( event, force )
 							{
 								path = msg.executable.split('/');
 								path.pop();
-								path = path.join('/');
+								path = path.join('/') + '/';
 							}
 							else
 							{
@@ -346,7 +345,7 @@ function apiWrapper( event, force )
 								{
 									if ((data[b].Path + data[b].Title).toLowerCase() == msg.executable.toLowerCase())
 									{
-										data[b].Dormant.execute(data[b].Title, msg.dormantArgs);
+										data[b].Dormant.execute(data[b], msg.dormantArgs);
 									}
 								}
 								var ret = {
@@ -368,7 +367,10 @@ function apiWrapper( event, force )
 						}
 						break;
 					case 'callback':
-						if( msg.callbackId && msg.data )
+						if ( !msg.callbackId )
+							return;
+						
+						if( msg.data )
 						{
 							//find our door
 							var door = false;
@@ -388,6 +390,9 @@ function apiWrapper( event, force )
 								}
 								runWrapperCallback(msg.callbackId, msg.data);
 							}
+						} else
+						{
+							runWrapperCallback( msg.callbackId, null );
 						}
 						break;
 					case 'addevent':
@@ -423,72 +428,75 @@ function apiWrapper( event, force )
 						while (found);
 
 						var doorObject = {
-							title:         namnum,
-							doorId:        msg.doorId,
-							applicationId: msg.applicationId,
-							getDoor:       function ()
-										   {
-											   var icon = 'apps/' + msg.title + '/icon.png';
-											   if (app && app.config.IconDoor)
-												   icon = app.config.IconDoor;
-											   return {
-												   MetaType: 'Meta',
-												   Title:    namnum + ':', /* remove this from all references*/
-												   Filename: namnum + ':',
-												   IconFile: icon,
-												   Position: 'left',
-												   Module:   'files',
-												   Command:  'dormant',
-												   Filesize: 4096,
-												   Flags:    '',
-												   Type:     'Dormant',
-												   Dormant:  this
-											   };
-										   },
-							addWindow:     function (win)
-										   {
-											   this.windows.push(win);
-										   },
-							getDirectory:  function (t, callback)
-										   {
-											   var id = addWrapperCallback(callback);
-											   // Callback
-											   var ret = {
-												   applicationId: msg.applicationId,
-												   doorId:        msg.doorId,
-												   callbackId:    id,
-												   command:       'dormantmaster',
-												   method:        'getdirectory',
-												   path:          t
-											   };
-											   if (msg.viewId) ret.viewId = msg.viewId;
-											   app.contentWindow.postMessage(
-													   JSON.stringify(ret), '*'
-											   );
-										   },
+							title         : namnum,
+							doorId        : msg.doorId,
+							applicationId : msg.applicationId,
+							getDoor: function ()
+							{
+								var icon = 'apps/' + msg.title + '/icon.png';
+								if (app && app.config.IconDoor)
+									icon = app.config.IconDoor;
+								return {
+									MetaType : 'Meta',
+									Title    : namnum + ':', /* remove this from all references*/
+									Filename : namnum + ':',
+									IconFile : icon,
+									Position : 'left',
+									Module   : 'files',
+									Command  : 'dormant',
+									Filesize : 4096,
+									Flags    : '',
+									Type     : 'Dormant',
+									Dormant  : this
+								};
+							},
+							addWindow: function( win )
+							{
+								this.windows.push( win );
+							},
+							getDirectory: function( t, callback )
+							{
+								var id = addWrapperCallback(callback);
+								// Callback
+								var ret = {
+									applicationId : msg.applicationId,
+									doorId        : msg.doorId,
+									callbackId    : id,
+									command       : 'dormantmaster',
+									method        : 'getdirectory',
+									path          : t
+								};
+								if (msg.viewId) ret.viewId = msg.viewId;
+								app.contentWindow.postMessage(
+										JSON.stringify(ret), '*'
+								);
+							},
 							// Execute a dormant command!
-							execute:       function (command, args)
-										   {
-											   var id = addWrapperCallback(function (data)
-											   {
-												   //
-											   });
-											   // Callback
-											   var ret = {
-												   applicationId:  msg.applicationId,
-												   doorId:         msg.doorId,
-												   callbackId:     id,
-												   command:        'dormantmaster',
-												   method:         'execute',
-												   dormantCommand: command,
-												   dormantArgs:    args
-											   };
-											   if (msg.viewId) ret.viewId = msg.viewId;
-											   app.contentWindow.postMessage(
-													   JSON.stringify(ret), '*'
-											   );
-										   },
-							windows:       []
+							execute: function( fnObj, args )
+							{
+								var path = fnObj.Path;
+								var command = fnObj.Title || fnObj.Filename;
+								var id = addWrapperCallback(function (data)
+								{
+									//
+								});
+								// Callback
+								var ret = {
+									applicationId  : msg.applicationId,
+									doorId         : msg.doorId,
+									callbackId     : id,
+									command        : 'dormantmaster',
+									method         : 'execute',
+									dormantPath    : path,
+									dormantCommand : command,
+									dormantArgs    : args
+								};
+								if (msg.viewId) ret.viewId = msg.viewId;
+								app.contentWindow.postMessage(
+										JSON.stringify(ret), '*'
+								);
+							},
+							windows: []
 
 						};
 						if (msg.viewId) doorObject.viewId = msg.viewId;
@@ -717,11 +725,17 @@ function apiWrapper( event, force )
 				// View ------------------------------------------------------------
 			case 'view':
 				var viewId = msg.viewId;
-				if( msg.method && app.windows && app.windows[msg.viewId] )
+				if( msg.method && app.windows && app.windows[ msg.viewId ] )
 				{
 					var win = app.windows[ msg.viewId ];
 					switch( msg.method )
 					{
+						case 'doneloadingbody':
+							if( win && win.iframe )
+							{
+								win.iframe.classList.remove( 'Loading' );
+							}
+							break;
 						// Pass a message to actual window
 						case 'sendMessage':
 						case 'sendmessage': // inconsistent camel case
@@ -951,12 +965,16 @@ function apiWrapper( event, force )
 						msg.data.screen = null;
 					}
 
+					var postTarget = app;
+
 					var v = new View( msg.data );
 					var win = msg.parentViewId && app.windows ? app.windows[msg.parentViewId] : false;
 					if( win )
 					{
 						v.parentViewId = msg.parentViewId;
+						postTarget = win.content.getElementsByTagName( 'iframe' )[0];
 					}
+					
 					if( v.ready )
 					{
 						if( !app.windows )
@@ -968,17 +986,17 @@ function apiWrapper( event, force )
 
 						// This is the external id
 						v.externViewId = viewId;
-
+						
 						var nmsg = {
 							applicationId: msg.applicationId,
-							viewId:        msg.id ? msg.id : false,
+							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
 							command:       'viewresponse',
 							data:          'ok'
 						};
 						
-						app.contentWindow.postMessage(
-								JSON.stringify( nmsg ), '*'
+						postTarget.contentWindow.postMessage(
+							JSON.stringify( nmsg ), '*'
 						);
 					}
 					// Call back to say the window was not correctly opened
@@ -986,13 +1004,13 @@ function apiWrapper( event, force )
 					{
 						var nmsg = {
 							applicationId: msg.applicationId,
-							viewId:        msg.id ? msg.id : false,
+							viewId:        msg.id ? msg.id : viewId,
 							type:          'callback',
 							command:       'viewresponse',
 							data:          'fail'
 						};
-						app.contentWindow.postMessage(
-								JSON.stringify( nmsg ), '*'
+						postTarget.contentWindow.postMessage(
+							JSON.stringify( nmsg ), '*'
 						);
 					}
 
@@ -1167,15 +1185,16 @@ function apiWrapper( event, force )
 					f.onLoad = function( data )
 					{
 						// Fallback
-						if( !data && this.rawdata )
-							data = this.rawdata;
+						if( !data && this.rawData )
+							data = this.rawData;
 
 						// File loads should remain in their view context
 						var cw = GetContentWindowByAppMessage( app, msg );
 
 						if( app && cw )
 						{
-							var nmsg = { command: 'fileload', fileId: fileId, data: data };
+							var nmsg = { command: 'fileload', fileId: fileId };
+							
 							// Pass window id down
 							if( msg.viewId )
 							{
@@ -1189,6 +1208,18 @@ function apiWrapper( event, force )
 							}
 							if( Workspace.authId )
 								nmsg.authId = Workspace.authId;
+								
+							// Binary data is sent as string..
+							if( typeof( data ) == 'object' )
+							{
+								var v = new Uint8Array( data );
+								nmsg.dataFormat = 'string';
+								nmsg.data = Array.prototype.join.call( v, ',' );
+							}
+							else
+							{
+								nmsg.data = data;
+							}
 							cw.postMessage( JSON.stringify( nmsg ), '*' );
 						}
 					}
@@ -1997,6 +2028,8 @@ function apiWrapper( event, force )
 									nmsg.resp = 'ok';
 									nmsg.data = data;
 									
+									//console.log( 'app.contentWindow.postMessage: ', nmsg );
+									
 									app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 								}
 								else
@@ -2033,7 +2066,7 @@ function apiWrapper( event, force )
 							
 							try 
 							{
-								if( msg.appPath && msg.appPath.indexOf( ':' ) >= 0 && Workspace.encryption.keys.server.publickey )
+								if( !msg.systemWide && msg.appPath && msg.appPath.indexOf( ':' ) >= 0 && Workspace.encryption.keys.server.publickey )
 								{
 									var encryption_key = Workspace.encryption.keys.server.publickey;
 								}
@@ -2063,15 +2096,15 @@ function apiWrapper( event, force )
 								signature : ''
 							}
 							
-							// If it's a device ...
-							if( msg.appPath && msg.appPath.indexOf( ':' ) >= 0 )
+							// If it's a device ... 
+							if( !msg.systemWide && msg.appPath && msg.appPath.indexOf( ':' ) >= 0 )
 							{
 								args.appPath = msg.appPath;
 							}
 							// Else if it's an app
-							else if( msg.authId )
+							else if( msg.authId || msg.systemWide )
 							{
-								args.authId = msg.authId;
+								args.authId = ( msg.systemWide ? '0' : msg.authId );
 							}
 							
 							var nmsg = {};
@@ -2398,8 +2431,13 @@ function apiWrapper( event, force )
 							var nmsg = msg;
 							function cb( response )
 							{
-								nmsg.method = response ? 'applicationexecuted' : 'applicationnotexecuted';
-								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								nmsg.method = response ? 
+									'applicationexecuted' : 
+									'applicationnotexecuted';
+								
+								app.contentWindow.postMessage( 
+									JSON.stringify( nmsg ), '*' 
+								);
 
 								if( nmsg.callback )
 								{
@@ -2410,7 +2448,9 @@ function apiWrapper( event, force )
 							if( msg.path && msg.path.split( ':' )[0] == 'System' )
 							{
 								// Special case!
-								var out = WorkspaceDormant.execute( msg.executable, msg.arguments );
+								var out = WorkspaceDormant.execute( 
+									msg.executable, msg.arguments 
+								);
 								cb( out );
 							}
 							else

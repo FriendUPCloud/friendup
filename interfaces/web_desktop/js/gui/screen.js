@@ -234,8 +234,8 @@ Screen = function ( flags, initObject )
 		this.resize = function(){ resizeScreen(); }
 		
 		// Do a scroll hack!
-		div.onscroll = function(){ this.scrollLeft = 0; };
-		if( cnt ) cnt.onscroll = function(){ this.scrollLeft = 0; }
+		div.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; };
+		if( cnt ) cnt.onscroll = function(){ this.scrollLeft = 0; this.scrollTop = 0; }
 	}
 	
 	if( typeof( this._flags['id'] ) != 'undefined' )

@@ -1,0 +1,13 @@
+i18n_IMAP : IMAP Disk
+
+i18n_connection_details            : Tilkoblings detaljer
+i18n_hostname                      : Vertsnavn
+i18n_port                          : Port
+i18n_host                          : Server
+i18n_notes                         : Notater
+i18n_your_notes                    : Dine notater
+i18n_connection_details            : Tilkoblingsdetaljer
+i18n_username                      : Brukernavn
+i18n_password                      : Passord
+
+

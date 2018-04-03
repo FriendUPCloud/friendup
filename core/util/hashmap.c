@@ -32,11 +32,6 @@
 #define INITIAL_SIZE (256)
 #define MAX_CHAIN_LENGTH (8)
 
-#define MAP_MISSING -3 // No such element
-#define MAP_FULL -2    // Hashmap is full
-#define MAP_OMEM -1    // Out of Memory
-#define MAP_OK 0       // OK
-
 #include "string.h"
 
 //
@@ -250,40 +245,48 @@ int HashmapHash( Hashmap* in, const char* key )
 
 int HashmapRehash( Hashmap* in )
 {
-	// Setup the new elements
-	HashmapElement* temp = (HashmapElement*) calloc( SHIFT_LEFT(in->table_size, 1), sizeof( HashmapElement ) );
-	if(!temp)
+	int i;
+	int oldSize;
+	HashmapElement* curr;
+
+	/* Setup the new elements */
+	Hashmap *m = (Hashmap *) in;
+	HashmapElement* temp = (HashmapElement *) FCalloc( (2 * m->table_size), sizeof( HashmapElement ) );
+	if( temp  == NULL )
 	{
-		FERROR("Cannot allocate memory for temporary hashmap\n");
-		return 0;
+		return MAP_OMEM;
 	}
 
-	// Update the array
-	HashmapElement* curr = in->data;
-	in->data = temp;
+	// Update the array 
+	curr = m->data;
+	m->data = temp;
 
-	// Update the size
-	unsigned int old_size = in->table_size;
-	in->table_size = in->table_size << 1;
-	in->size = 0;
+	// Update the size 
+	oldSize = m->table_size;
+	m->table_size = 2 * m->table_size;
+	m->size = 0;
 
-	// Rehash the elements
-	for( unsigned int i = 0; i < old_size; i++ )
+	/* Rehash the elements */
+	for( i = 0; i < oldSize; i++ )
 	{
-		if( !curr[i].inUse )
-		{
-			continue;
-		}
+        int status;
 
-		if( HashmapPut( in, curr[i].key, curr[i].data ) )
+        if (curr[i].inUse == 0)
 		{
-			return 1;
+            continue;
+		}
+            
+		status = HashmapPut( m, curr[i].key, curr[i].data );
+		if( status != MAP_OK )
+		{
+			FFree(curr);
+			return status;
 		}
 	}
 
-	FFree( curr );
+	FFree(curr);
 
-	return 1;
+	return MAP_OK;
 }
 
 //
@@ -291,28 +294,36 @@ int HashmapRehash( Hashmap* in )
 // No data is copied!
 // 'key' MUST BE PERMANENTLY ALLOCATED AND NOT FREED AFTER CALLING THIS FUNCTION
 
-FBOOL HashmapPut( Hashmap* in, char* key, void* value )
+int HashmapPut( Hashmap* in, char* key, void* value )
 {
 	// Find a place to put our value
 	int index = HashmapHash( in, key );
 	while( index == MAP_FULL )
 	{
-		if( !HashmapRehash( in ) )
+		if( HashmapRehash( in ) == MAP_OMEM )
 		{
-			return FALSE;
+			FFree( key );
+			FFree( value );
+			return MAP_OMEM;
 		}
 		index = HashmapHash( in, key );
 	}
 
 	// Set the data
-	if( in->data[index].data ) free( in->data[index].data );
+	if( in->data[index].data )
+	{
+		FFree( in->data[index].data );
+	}
 	in->data[index].data = value;
-	if( in->data[index].key ) free( in->data[index].key );
+	if( in->data[index].key )
+	{
+		FFree( in->data[index].key );
+	}
 	in->data[index].key = key;
 	in->data[index].inUse = TRUE;
 	in->size++; 
 
-	return TRUE;
+	return MAP_OK;
 }
 
 //
@@ -480,44 +491,50 @@ int HashmapAdd( Hashmap *src, Hashmap *hm )
 	return 0;
 }
 
-/*
- * Remove an element with that key from the map
- */
- /*
-TODO: IMPLEMENT ME!!!
-int hashmap_remove(Map_t in, char* key){
+//
+// Remove an element with that key from the map
+//
+
+int HashmapRemove( Hashmap *in, char* key  )
+{
 	int i;
 	int curr;
-	hashmap_map* m;
+	Hashmap* m;
+	
+	m = (Hashmap *) in;
 
-	// Cast the hashmap
-	m = (hashmap_map *) in;
-
-	// Find key
-	curr = hashmap_hash_int(m, key);
+	// Find key 
+	curr = HashmapHashInt( m, key );
 
 	// Linear probing, if necessary
-	for(i = 0; i<MAX_CHAIN_LENGTH; i++){
+	for(i = 0; i<MAX_CHAIN_LENGTH; i++)
+	{
+		int locInUse = m->data[curr].inUse;
+		if( locInUse == 1 )
+		{
+			if( m->data[curr].key != NULL )
+			{
+				if(  strcmp( m->data[curr].key, key ) == 0 )
+				{
+					// Blank out the fields
+					m->data[curr].inUse = 0;
+					if(	m->data[curr].data != NULL )
+					{
+						m->data[curr].data = NULL;
+					}
+				
+					FFree( m->data[curr].key );
+					m->data[curr].key = NULL;
 
-        int inUse = m->data[curr].inUse;
-        if (inUse == 1){
-            if (strcmp(m->data[curr].key,key)==0){
-                // Blank out the fields
-                m->data[curr].inUse = 0;
-                m->data[curr].data = NULL;
-                m->data[curr].key = NULL;
-
-                // Reduce the size
-                m->size--;
-                return MAP_OK;
-            }
+					// Reduce the size
+					m->size--;
+					return MAP_OK;
+				}
+			}
 		}
 		curr = (curr + 1) % m->table_size;
 	}
 
-	// Data not found
+	// Data not found 
 	return MAP_MISSING;
 }
-*/
-
-

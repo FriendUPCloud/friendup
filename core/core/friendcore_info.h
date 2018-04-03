@@ -43,6 +43,9 @@ typedef struct FriendcoreInfo
 {
 	int 						fci_FCNumber;	///< numbe of the Friend Core to query
 	char						*fci_LocalisationJSON; // localisation string in json format
+	char						*fci_TimeZone; // Europe, North America, etc.
+	char						fci_CountryCode[ 16 ]; // Country
+	char						*fci_City;
 	void						*fci_SLIB; // pointer to system.library
 }FriendcoreInfo;
 

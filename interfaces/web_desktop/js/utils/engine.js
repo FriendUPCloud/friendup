@@ -659,10 +659,10 @@ function i18nReplaceInString( str )
 		if ( pos2 >=0 )
 		{
 			var key = str.substring( pos + 1, pos2 - pos - 1 );
-			var replace = i18n( key );
-			if ( replace != key )
+			var r = i18n( key );
+			if ( r != key )
 			{
-				str = str.substring(0, pos) + replace + str.substring(pos2 + 1);
+				str = str.substring(0, pos) + r + str.substring(pos2 + 1);
 			}
 			pos = pos2 + 1;
 		}
@@ -671,6 +671,7 @@ function i18nReplaceInString( str )
 			break;
 		}
 	}
+	return str;
 }
 // Execute replacements (Note from FL: I'll certainly remove this later)
 function i18nReplace( data, replacements )
@@ -1863,7 +1864,7 @@ VertTabContainer = function( domElement )
 {
 	this.dom = domElement;
 	this.dom.innerHTML = '';
-	this.dom.className = 'VertTabContainer';
+	this.dom.classList.add( 'VertTabContainer', 'ScrollArea' );
 	this.tabs = [];
 	this.initialized = false;
 }
@@ -2065,9 +2066,15 @@ function InitTabs ( pdiv )
 	var tabs = [];
 	var pages = [];
 	var active = 0;
+	var hasContainer = false;
 	for( var a = 0; a < divs.length; a++ )
 	{
 		if( divs[a].parentNode != pdiv ) continue;
+		if( divs[a].classList.contains( 'TabContainer' ) )
+		{
+			hasContainer = true;
+			continue;
+		}
 		if( divs[a].classList.contains( 'Tab' ) )
 		{
 			tabs.push ( divs[a] );
@@ -2139,6 +2146,19 @@ function InitTabs ( pdiv )
 			pages.push( divs[a] );
 		}
 	}
+	// Reorder the tabs
+	if( !hasContainer )
+	{
+		var d = document.createElement( 'div' );
+		d.className = 'TabContainer';
+		tabs[0].parentNode.insertBefore( d, tabs[0] );
+		for( var a = 0; a < tabs.length; a++ )
+		{
+			tabs[a].parentNode.removeChild( tabs[a] );
+			d.appendChild( tabs[a] );
+		}
+	}
+	
 	// Scroll areas
 	for( var a = 0; a < pages.length; a++ )
 	{
@@ -2189,7 +2209,7 @@ function InitTabs ( pdiv )
 						if( ch == ph && !force ) return;
 						
 						// Containing element
-						var hhh = ( GetElementHeight( resizeObject ) - GetElementHeight( n.tab ) );
+						var hhh = ( GetElementHeight( resizeObject ) - n.tab.offsetHeight );
 						
 						// Page scroll height (other elements contained minus page scroll element)
 						var psh = 0;
@@ -2209,20 +2229,16 @@ function InitTabs ( pdiv )
 						}
 						
 						// Page scroll
-						n.style.height = ( hhh - psh - margins ) + 'px';
+						n.style.height = ( hhh - psh - ( margins * 2 ) ) + 'px';
 						
 						// Container
-						page.style.height = hhh + 'px';
+						page.style.height = hhh - margins + 'px';
 						
 						// Refresh again in case height changes
 						setTimeout( function(){ resiz(); }, 25 );
 					}
 					
-					if( wobj.AddEvent )
-					{
-						wobj.AddEvent( 'resize', resiz );
-					}
-					else wobj.addEventListener( 'resize', resiz );
+					window.addEventListener( 'resize', resiz );
 					n.tab.addEventListener( 'click', function(){ resiz( 1 ); } );
 					
 					// Resize now! (in 5ms)
@@ -2235,10 +2251,12 @@ function InitTabs ( pdiv )
 				var n = pag.childNodes[ b ];
 				n.tab = tabs[a];
 				n.style.position = 'relative';
-				n.style.height = ( GetElementHeight( resizeObject ) - GetElementHeight( tabs[a] ) - margins ) + 'px';
 				n.style.overflow = 'auto';
 				n.parentNode.style.height = n.style.height;
-				if( wobj ) addResizeEvent( n, pag );
+				if( wobj )
+				{
+					addResizeEvent( n, pag );
+				}
 			}
 		}
 	}

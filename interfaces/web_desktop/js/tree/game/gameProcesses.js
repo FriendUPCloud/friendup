@@ -24,9 +24,8 @@
  * @date first pushed on 21/08/2017
  */
 Friend = window.Friend || {};
-Friend.Tree = Friend.Tree || {};
-Friend.Game = Friend.Game || {};
-Friend.Flags = Friend.Flags || {};
+Friend.Tree.Game = Friend.Tree.Game || {};
+Friend.Tree.Game.RenderItems = Friend.Tree.Game.RenderItems || {};
 
 /**
  * AnimSimple
@@ -43,31 +42,31 @@ Friend.Flags = Friend.Flags || {};
  * loop: (optional) number of animation loops (default = 1, <=0 infinite)
  * loopTo: (optional) number of the image to loop to (default = 0)
  */
-Friend.Game.AnimSimple = function( tree, object, flags )
+Friend.Tree.Game.AnimSimple = function( tree, item, properties )
 {
 	this.speed = 2;
 	this.final = '';
 	this.loop = 1;
 	this.loopTo = 0;
-	Friend.Tree.Processes.init( this, tree, object, 'Friend.Game.AnimSimple', flags );
-	Object.assign( this, Friend.Game.AnimSimple );
+	Friend.Tree.Processes.init( tree, this, item, 'Friend.Tree.Game.AnimSimple', properties );
+	this.item.registerEvents( 'refresh' );
 	this.setSpeed( this.speed );
 
 	this.images = [ ];
-	if ( typeof flags.imageList != 'undefined' )
+	if ( typeof properties.imageList != 'undefined' )
 	{
-		for ( var i = flags.start; i < flags.end; i++ )
-			this.images.push( flags.imageList + i );
+		for ( var i = properties.start; i < properties.end; i++ )
+			this.images.push( properties.imageList + i );
 	}
 	else
 	{
-		for ( var i = 0; i < flags.images.length; i++ )
-			this.images.push( flags.images[ i ] );
+		for ( var i = 0; i < properties.images.length; i++ )
+			this.images.push( properties.images[ i ] );
 	}
 
 	this.startAnimation();
 };
-Friend.Game.AnimSimple.startAnimation = function ()
+Friend.Tree.Game.AnimSimple.startAnimation = function ()
 {
 	this.imageCount = 0;
 	this.loopCount = this.loop;
@@ -75,35 +74,41 @@ Friend.Game.AnimSimple.startAnimation = function ()
 	this.speedCalc = this.speed / 1000;
 	this.calculation = 0;
 	this.previousCalculation = 0;
+	this.imageCalc = 0;
 };
-Friend.Game.AnimSimple.processUp = function ( flags )
+Friend.Tree.Game.AnimSimple.processUp = function ( message )
 {
-	if ( ! flags.command )
+	if ( message.command == 'refresh' )
     {
 		if ( this.done )
 			return false;
 
-		var change = false;
-		this.calculation += this.speedCalc * flags.delay;
-		var nImages = Math.floor( this.calculation - this.previousCalculation );
-		for ( var i = 0; i < nImages; i ++ )
+		this.imageCalc += this.speedCalc * message.delay;
+		var imageCount = Math.floor( this.imageCalc );
+		if ( imageCount != this.imageCount )
 		{
-			change = true;
-			this.imageCount ++;
-			this.previousCalculation = this.calculation;
-			if ( this.imageCount >= this.images.length )
+			if ( imageCount < this.images.length )
 			{
-				if ( this.loopCount >= 0 )
+				this.imageCount = imageCount;
+				message.imageName = this.images[ this.imageCount ];
+				message.refresh = true;
+			}
+			else
+			{
+				if ( this.loopCount <= 0 )
 				{
-					this.loopCount --;
+					this.imageCalc = this.imageCalc % 1;
+				}
+				else
+				{
+					this.loopCount--;
 					if ( this.loopCount == 0 )
 					{
-						this.imageCount --;
 						switch ( this.final )
 						{
 							case 'destroy':
 								this.done = true;
-								this.object.destroy();
+								this.item.destroy();
 								break;
 							default:
 								this.done = true;
@@ -111,23 +116,18 @@ Friend.Game.AnimSimple.processUp = function ( flags )
 						}
 					}
 					else
-						this.imageCount = 0;
+					{
+						this.imageCalc = this.imageCalc % 1;
+					}
 				}
 			}
-			if ( this.done )
-				break;
-		}
-		if ( change )
-		{
-			flags.image = this.images[ this.imageCount ];
-			flags.refresh = true;
 		}
 	}
-	return flags;
+	return true;
 };
-Friend.Game.AnimSimple.processDown = function ( flags )
+Friend.Tree.Game.AnimSimple.processDown = function ( message )
 {
-	return flags;
+	return message;
 };
 
 /**
@@ -137,7 +137,7 @@ Friend.Game.AnimSimple.processDown = function ( flags )
  *
  * @param (number) new speed, in images per seconds
  */
-Friend.Game.AnimSimple.setSpeed = function ( speed )
+Friend.Tree.Game.AnimSimple.setSpeed = function ( speed )
 {
 	this.speed = speed;
 	this.speedCalc = speed / 1000;
@@ -158,7 +158,7 @@ Friend.Game.AnimSimple.setSpeed = function ( speed )
  * speed: (number) speed of the movement in pixels / second
  * autorisedDirections: (number) mask containing the authorised directions (defined with Controlled.UP/DOWN etc.)
  */
-Friend.Game.MoveJoystick = function( tree, object, flags )
+Friend.Tree.Game.MoveJoystick = function( tree, item, properties )
 {
 	this.x = 0;
 	this.y = 0;
@@ -166,57 +166,57 @@ Friend.Game.MoveJoystick = function( tree, object, flags )
 	this.yPrevious = 0;
 	this.speed = 50;
 	this.directionMask = 0xFFFFFF;
-	Friend.Game.Movements.init( this, tree, 'Friend.Game.MoveJoystick', object, flags );
-	Object.assign( this, Friend.Game.MoveJoystick );
+	Friend.Tree.Game.Movements.init( tree, this, item, 'Friend.Tree.Game.MoveJoystick', properties );
+	this.item.registerEvents( [ 'refresh', 'controller' ] );
 
 	this.setSpeed( this.speed );
 };
-Friend.Game.MoveJoystick.processUp = function ( flags )
+Friend.Tree.Game.MoveJoystick.processUp = function ( message )
 {
-	if ( !this.object.toDestroy && !flags.command )
+	if ( !this.item.toDestroy && message.command == 'refresh' )
 	{
-		if ( ( this.directionMask & Friend.Flags.UP ) != 0 && this.controller.isDown( Friend.Flags.UP ) == true )
+		if ( ( this.directionMask & Friend.Flags.UP ) != 0 && this.item.controller.isDown( Friend.Tree.Controller.UP ) == true )
 		{
-			this.y -= this.speedCalc * flags.delay;
+			this.y -= this.speedCalc * message.delay;
 		}
-		if ( ( this.directionMask & Friend.Flags.DOWN ) != 0 && this.controller.isDown( Friend.Flags.DOWN ) == true )
+		if ( ( this.directionMask & Friend.Flags.DOWN ) != 0 && this.item.controller.isDown( Friend.Tree.Controller.DOWN ) == true )
 		{
-			this.y += this.speedCalc * flags.delay;
+			this.y += this.speedCalc * message.delay;
 		}
-		if ( ( this.directionMask & Friend.Flags.LEFT ) != 0 && this.controller.isDown( Friend.Flags.LEFT ) == true )
+		if ( ( this.directionMask & Friend.Flags.LEFT ) != 0 && this.item.controller.isDown( Friend.Tree.Controller.LEFT ) == true )
 		{
-			this.x -= this.speedCalc * flags.delay;
+			this.x -= this.speedCalc * message.delay;
 		}
-		if ( ( this.directionMask & Friend.Flags.RIGHT ) != 0 && this.controller.isDown( Friend.Flags.RIGHT ) == true )
+		if ( ( this.directionMask & Friend.Flags.RIGHT ) != 0 && this.item.controller.isDown( Friend.Tree.Controller.RIGHT ) == true )
 		{
-			this.x += this.speedCalc * flags.delay;
+			this.x += this.speedCalc * message.delay;
 		}
-		if ( this.checkCollisions( this, flags.x + this.x - this.xPrevious, flags.y + this.y - this.yPrevious ).actions[ 'refresh' ] )
+		if ( this.checkCollisions( this, message.x + this.x - this.xPrevious, message.y + this.y - this.yPrevious ).actions[ 'refresh' ] )
 		{
-			flags.x += this.x - this.xPrevious;
-			flags.y += this.y - this.yPrevious;
-			flags.refresh = true;
+			message.x += this.x - this.xPrevious;
+			message.y += this.y - this.yPrevious;
+			message.refresh = true;
 		}
 		this.xPrevious = this.x;
 		this.yPrevious = this.y;
 	}
-	return flags;
+	return message;
 };
-Friend.Game.MoveJoystick.processDown = function ( flags )
+Friend.Tree.Game.MoveJoystick.processDown = function ( message )
 {
-	return flags;
+	return message;
 };
-Friend.Game.MoveJoystick.setSpeed = function ( speed )
+Friend.Tree.Game.MoveJoystick.setSpeed = function ( speed )
 {
 	this.speed = speed;
 	this.speedCalc = this.speed / 1000;
 };
-Friend.Game.MoveJoystick.getSpeed = function ()
+Friend.Tree.Game.MoveJoystick.getSpeed = function ()
 {
 	return this.speed;
 };
 
-Friend.Game.MoveJoystickStepByStep = function( tree, object, flags )
+Friend.Tree.Game.MoveJoystickStepByStep = function( tree, item, properties )
 {
 	this.x = 0;
 	this.y = 0;
@@ -224,44 +224,44 @@ Friend.Game.MoveJoystickStepByStep = function( tree, object, flags )
 	this.yPrevious = 0;
 	this.speed = 1;
 	this.directionMask = 0xFFFFFF;
-	Friend.Game.Movements.init( this, tree, 'Friend.Game.MoveJoystick', object, flags );
-	Object.assign( this, Friend.Game.MoveJoystickStepByStep );
+	Friend.Tree.Game.Movements.init( tree, this, item, 'Friend.Tree.Game.MoveJoystick', properties );
+	this.item.registerEvents( 'controller' );
 }
-Friend.Game.MoveJoystickStepByStep.processUp = function ( flags )
+Friend.Tree.Game.MoveJoystickStepByStep.processUp = function ( message )
 {
-	if ( !this.object.toDestroy && !flags.command )
+	if ( !this.item.toDestroy && message.command == 'joystickdown' )
 	{
-		if ( ( this.directionMask & Friend.Flags.UP ) != 0 && this.controller.isPressed( Friend.Flags.UP ) == true )
+		if ( ( this.directionMask & Friend.Flags.UP ) != 0 && message.code == Friend.Tree.Controller.UP )
 		{
 			this.y -= this.speed;
 		}
-		if ( ( this.directionMask & Friend.Flags.DOWN ) != 0 && this.controller.isPressed( Friend.Flags.DOWN ) == true )
+		if ( ( this.directionMask & Friend.Flags.DOWN ) != 0 && message.code == Friend.Tree.Controller.DOWN )
 		{
 			this.y += this.speed;
 		}
-		if ( ( this.directionMask & Friend.Flags.LEFT ) != 0 && this.controller.isPressed( Friend.Flags.LEFT ) == true )
+		if ( ( this.directionMask & Friend.Flags.LEFT ) != 0 && message.code == Friend.Tree.Controller.LEFT )
 		{
 			this.x -= this.speed;
 		}
-		if ( ( this.directionMask & Friend.Flags.RIGHT ) != 0 && this.controller.isPressed( Friend.Flags.RIGHT ) == true )
+		if ( ( this.directionMask & Friend.Flags.RIGHT ) != 0 && message.code == Friend.Tree.Controller.RIGHT )
 		{
 			this.x += this.speed;
 		}
-		if ( this.checkCollisions( this, flags.x + this.x - this.xPrevious, flags.y + this.y - this.yPrevious ).actions[ 'refresh' ] )
+		if ( this.checkCollisions( this, message.x + this.x - this.xPrevious, message.y + this.y - this.yPrevious ).actions[ 'refresh' ] )
 		{
-			flags.x += this.x - this.xPrevious;
-			flags.y += this.y - this.yPrevious;
-			console.log( 'Coordinates: ' + flags.x + ' / ' + flags.y );
-			flags.refresh = true;
+			message.x += this.x - this.xPrevious;
+			message.y += this.y - this.yPrevious;
+			console.log( 'Coordinates: ' + message.x + ' / ' + message.y );
+			message.refresh = true;
 		}
 		this.xPrevious = this.x;
 		this.yPrevious = this.y;
 	}
-	return flags;
+	return message;
 };
-Friend.Game.MoveJoystickStepByStep.processDown = function ( flags )
+Friend.Tree.Game.MoveJoystickStepByStep.processDown = function ( message )
 {
-	return flags;
+	return message;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -277,20 +277,20 @@ Friend.Game.MoveJoystickStepByStep.processDown = function ( flags )
  * @param { object } object The object to modifiy
  * @param { object } flags Creation flags
  */
-Friend.Game.MoveStatic = function( tree, object, flags )
+Friend.Tree.Game.MoveStatic = function( tree, item, properties )
 {
-	Friend.Game.Movements.init( this, tree, 'Friend.Game.MoveStatic', object, flags );
-	Object.assign( this, Friend.Game.MoveStatic );
+	Friend.Tree.Game.Movements.init( tree, this, item, 'Friend.Tree.Game.MoveStatic', properties );
+	this.item.registerEvents( 'refresh' );
 }
-Friend.Game.MoveStatic.processUp = function ( flags )
+Friend.Tree.Game.MoveStatic.processUp = function ( message )
 {
-	return flags;
+	return true;
 };
-Friend.Game.MoveStatic.processDown = function ( flags )
+Friend.Tree.Game.MoveStatic.processDown = function ( message )
 {
-	if ( ! flags.command )
-		this.checkCollisions( this, flags.x, flags.y, flags.rotation, true )
-	return flags;
+	if ( message.command == 'refresh' )
+		this.checkCollisions( this, message.x, message.y, message.rotation, true )
+	return message;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -314,72 +314,72 @@ Friend.Game.MoveStatic.processDown = function ( flags )
  * acceleration: (number) intensity of acceleration in pixels / sqaure second, default = 1000 (instant acceleration)
  * deceleration: (number) intensity of deceleration in pixels / sqaure second, default = 1000 (instant stop)
  */
-Friend.Game.MoveTank = function( tree, object, flags )
+Friend.Tree.Game.MoveTank = function( tree, item, properties )
 {
-	this.checkCollisions = Friend.Game.Movements.checkCollisions;
+	this.checkCollisions = Friend.Tree.Game.Movements.checkCollisions;
 	this.speed = 50;
 	this.rotationSpeed = 180;
 	this.acceleration = 1000;
 	this.deceleration = 1000;
-	Friend.Game.Movements.init( this, tree, 'Friend.Game.MoveTank', object, flags );
-	Object.assign( this, Friend.Game.MoveTank );
+	Friend.Tree.Game.Movements.init( tree, this, item, 'Friend.Tree.Game.MoveTank', properties );
+	this.item.registerEvents( [ 'refresh', 'controller' ] );
 
 	this.setSpeed( this.speed );
 	this.setRotationSpeed( this.rotationSpeed );
-	this.x = this.object.x;
-	this.y = this.object.y;
+	this.x = this.item.x;
+	this.y = this.item.y;
 	this.xPrevious = this.x;
 	this.yPrevious = this.y;
-	this.rotation = this.object.rotation;
+	this.rotation = this.item.rotation;
 	this.rotationPrevious = this.rotation;
 }
-Friend.Game.MoveTank.processUp = function ( flags )
+Friend.Tree.Game.MoveTank.processUp = function ( message )
 {
-	if ( !this.object.toDestroy && !flags.command )
+	if ( !this.item.toDestroy && message.command == 'refresh' )
 	{
 		if ( this.collisions == 'stop' )
 		{
-			if ( ! this.controller.isDown( Friend.Flags.UP | Friend.Flags.DOWN ) )
+			if ( ! this.item.controller.isDown( Friend.Tree.Controller.UP | Friend.Tree.Controller.DOWN ) )
 				this.collisions = '';
 		}
 		else
 		{
-			if ( this.controller.isDown( Friend.Flags.UP ) == true )
+			if ( this.item.controller.isDown( Friend.Tree.Controller.UP ) )
 			{
-				this.x = this.x + this.speedCalc * flags.delay * Math.cos( this.rotation * Friend.Flags.DEGREETORADIAN );
-				this.y = this.y - this.speedCalc * flags.delay * Math.sin( this.rotation * Friend.Flags.DEGREETORADIAN );
+				this.x = this.x + this.speedCalc * message.delay * Math.cos( this.rotation * Friend.Tree.DEGREETORADIAN );
+				this.y = this.y - this.speedCalc * message.delay * Math.sin( this.rotation * Friend.Tree.DEGREETORADIAN );
 			}
-			if ( this.controller.isDown( Friend.Flags.DOWN ) == true )
+			if ( this.item.controller.isDown( Friend.Tree.Controller.DOWN ) )
 			{
-				this.x = this.x - this.speedCalc * flags.delay * Math.cos( this.rotation * Friend.Flags.DEGREETORADIAN );
-				this.y = this.y + this.speedCalc * flags.delay * Math.sin( this.rotation * Friend.Flags.DEGREETORADIAN );
+				this.x = this.x - this.speedCalc * message.delay * Math.cos( this.rotation * Friend.Tree.DEGREETORADIAN );
+				this.y = this.y + this.speedCalc * message.delay * Math.sin( this.rotation * Friend.Tree.DEGREETORADIAN );
 			}
-			if ( this.controller.isDown( Friend.Flags.LEFT ) == true )
+			if ( this.item.controller.isDown( Friend.Tree.Controller.LEFT ) )
 			{
-				this.rotation = ( this.rotation + this.rotationSpeedCalc * flags.delay ) % 360;
+				this.rotation = ( this.rotation + this.rotationSpeedCalc * message.delay ) % 360;
 			}
-			if ( this.controller.isDown( Friend.Flags.RIGHT ) == true )
+			if ( this.item.controller.isDown( Friend.Tree.Controller.RIGHT ) )
 			{
-				this.rotation = ( this.rotation - this.rotationSpeedCalc * flags.delay ) % 360;
+				this.rotation = ( this.rotation - this.rotationSpeedCalc * message.delay ) % 360;
 			}
-			this.collisions = this.checkCollisions( this, flags.x + this.x - this.xPrevious, flags.y + this.y - this.yPrevious, this.rotation );
+			this.collisions = this.checkCollisions( this, message.x + this.x - this.xPrevious, message.y + this.y - this.yPrevious, this.rotation );
 			if ( this.collisions.actions[ 'refresh' ] )
 			{
-				flags.x += this.x - this.xPrevious;
-				flags.y += this.y - this.yPrevious;
-				flags.rotation = this.rotation;
-				flags.refresh = true;
+				message.x += this.x - this.xPrevious;
+				message.y += this.y - this.yPrevious;
+				message.rotation = this.rotation;
+				message.refresh = true;
 			}
 			this.xPrevious = this.x;
 			this.yPrevious = this.y;
 			//if ( this.collisions == 'stop' )
 		}
 	}
-	return flags;
+	return message;
 };
-Friend.Game.MoveTank.processDown = function ( flags )
+Friend.Tree.Game.MoveTank.processDown = function ( message )
 {
-	return flags;
+	return message;
 }
 
 /**
@@ -389,7 +389,7 @@ Friend.Game.MoveTank.processDown = function ( flags )
  *
  * @param (number) speed new speed, in pixels/second
  */
-Friend.Game.MoveTank.setSpeed = function ( speed )
+Friend.Tree.Game.MoveTank.setSpeed = function ( speed )
 {
 	this.speed = speed;
 	this.speedCalc = speed / 1000;
@@ -402,7 +402,7 @@ Friend.Game.MoveTank.setSpeed = function ( speed )
  *
  * @return (number) speed
  */
-Friend.Game.MoveTank.getSpeed = function ()
+Friend.Tree.Game.MoveTank.getSpeed = function ()
 {
 	return this.speed;
 };
@@ -414,7 +414,7 @@ Friend.Game.MoveTank.getSpeed = function ()
  *
  * @param (number) new speed, in degrees/second
  */
-Friend.Game.MoveTank.setRotationSpeed = function ( speed )
+Friend.Tree.Game.MoveTank.setRotationSpeed = function ( speed )
 {
 	this.rotationSpeed = speed;
 	this.rotationSpeedCalc = speed / 1000;
@@ -439,53 +439,53 @@ Friend.Game.MoveTank.setRotationSpeed = function ( speed )
  * speed: (number) speed of the movement in pixels / second
  * rotationSpeed: (number) speed of the item's rotationm, in degrees/second. Rotation is triggered by Controller keys LEFT and RIGHT
  */
-Friend.Game.MoveLine = function( tree, object, flags )
+Friend.Tree.Game.MoveLine = function( tree, item, properties )
 {
-	this.x = object.x;
-	this.y = object.y;
+	this.x = item.x;
+	this.y = item.y;
 	this.xPrevious = this.x;
 	this.yPrevious = this.y;
-	this.rotation = object.rotation;
+	this.rotation = item.rotation;
 	this.rotationPrevious = this.rotation;
-	this.checkCollisions = Friend.Game.Movements.checkCollisions;
+	this.checkCollisions = Friend.Tree.Game.Movements.checkCollisions;
 	this.speed = 50;
 	this.rotationSpeed = 0;
-	Friend.Game.Movements.init( this, tree, 'Friend.Game.MoveLine', object, flags );
-	Object.assign( this, Friend.Game.MoveLine );
+	Friend.Tree.Game.Movements.init( tree, this, item, 'Friend.Tree.Game.MoveLine', properties );
+	this.item.registerEvents( [ 'refresh', 'controller' ] );
 
 	this.setSpeed( this.speed );
 	this.setRotationSpeed( this.rotationSpeed );
 };
-Friend.Game.MoveLine.processUp = function ( flags )
+Friend.Tree.Game.MoveLine.processUp = function ( message )
 {
-	if ( !this.object.toDestroy && !flags.command )
+	if ( !this.item.toDestroy && message.command == 'refresh' )
 	{
 		if ( this.rotationSpeed )
 		{
-			if ( this.controller.isDown( Friend.Flags.LEFT ) == true )
-				this.rotation = ( this.rotation + this.rotationSpeedCalc * flags.delay ) % 360;
-			if ( this.controller.isDown( Friend.Flags.RIGHT ) == true )
-				this.rotation = ( this.rotation - this.rotationSpeedCalc * flags.delay ) % 360;
+			if ( this.item.controller.isDown( Friend.Tree.Controller.LEFT ) == true )
+				this.rotation = ( this.rotation + this.rotationSpeedCalc * message.delay ) % 360;
+			if ( this.item.controller.isDown( Friend.Tree.Controller.RIGHT ) == true )
+				this.rotation = ( this.rotation - this.rotationSpeedCalc * message.delay ) % 360;
 		}
-		this.x += Math.cos( this.rotation * Friend.Flags.DEGREETORADIAN ) * this.speedCalc * flags.delay;
-		this.y -= Math.sin( this.rotation * Friend.Flags.DEGREETORADIAN ) * this.speedCalc * flags.delay;
-		if ( this.checkCollisions( this, flags.x + this.x - this.xPrevious, flags.y + this.y - this.yPrevious, this.rotation ).actions[ 'refresh' ] )
+		this.x += Math.cos( this.rotation * Friend.Tree.DEGREETORADIAN ) * this.speedCalc * message.delay;
+		this.y -= Math.sin( this.rotation * Friend.Tree.DEGREETORADIAN ) * this.speedCalc * message.delay;
+		if ( this.checkCollisions( this, message.x + this.x - this.xPrevious, message.y + this.y - this.yPrevious, this.rotation ).actions[ 'refresh' ] )
 		{
-			flags.x += this.x - this.xPrevious;
-			flags.y += this.y - this.yPrevious;
-			flags.rotation += this.rotation - this.rotationPrevious;
-			flags.refresh = true;
+			message.x += this.x - this.xPrevious;
+			message.y += this.y - this.yPrevious;
+			message.rotation += this.rotation - this.rotationPrevious;
+			message.refresh = true;
 		}
 		this.xPrevious = this.x;
 		this.yPrevious = this.y;
 		this.rotationPrevious = this.rotation;
-		flags.refresh = true;
+		message.refresh = true;
 	}
-	return flags;
+	return message;
 };
-Friend.Game.MoveLine.processDown = function ( flags )
+Friend.Tree.Game.MoveLine.processDown = function ( message )
 {
-	return flags;
+	return message;
 }
 
 
@@ -496,7 +496,7 @@ Friend.Game.MoveLine.processDown = function ( flags )
  *
  * @param (number) speed new speed, in pixels/second
  */
-Friend.Game.MoveLine.setSpeed = function ( speed )
+Friend.Tree.Game.MoveLine.setSpeed = function ( speed )
 {
 	this.speed = speed;
 	this.speedCalc = speed / 1000;
@@ -509,7 +509,7 @@ Friend.Game.MoveLine.setSpeed = function ( speed )
  *
  * @return (number) speed
  */
-Friend.Game.MoveLine.getSpeed = function ()
+Friend.Tree.Game.MoveLine.getSpeed = function ()
 {
 	return this.speed;
 };
@@ -521,7 +521,7 @@ Friend.Game.MoveLine.getSpeed = function ()
  *
  * @param (number) new speed, in degrees/second
  */
-Friend.Game.MoveLine.setRotationSpeed = function ( speed )
+Friend.Tree.Game.MoveLine.setRotationSpeed = function ( speed )
 {
 	this.rotationSpeed = speed;
 	this.rotationSpeedCalc = speed / 1000;
@@ -535,7 +535,7 @@ Friend.Game.MoveLine.setRotationSpeed = function ( speed )
 /**
  * Common movement processes functions
  */
-Friend.Game.Movements =
+Friend.Tree.Game.Movements =
 {
 	/**
 	 * Movement processes initialisation
@@ -548,24 +548,10 @@ Friend.Game.Movements =
 	 * @param (object) object the item assigned to the process
 	 * @param (object) flags the creation flags
 	 */
-	init: function ( self, tree, className, object, flags )
+	init: function ( tree, self, item, className, properties )
 	{
-		self.tree = tree;
-		self.utilities = tree.utilities;
-		self.object = object;
-		self.root = object.root;
-		self.className = className;
-		self.utilities.setFlags( self, flags );
-		self.controller = tree.controller;
-		self.addProcess = Friend.Tree.Items.addProcess;
-		self.removeProcess = Friend.Tree.Items.removeProcess;
+		Friend.Tree.Processes.init( tree, self, item, className, properties );
 		self.checkCollisions = this.checkCollisions;
-		self.getTemporaryFunctions = Friend.Tree.Items.getTemporaryFunctions;
-		self.getTemporaryFunctionsCount = Friend.Tree.Items.getTemporaryFunctionsCount;
-		self.setTemporaryProperty = Friend.Tree.Items.setTemporaryProperty;
-		self.setAfter = Friend.Tree.Items.setAfter;
-		self.callAfter = Friend.Tree.Items.callAfter;
-		self.temporaryFunctions = [];
 	},
 
 	/**
@@ -583,18 +569,18 @@ Friend.Game.Movements =
 		var actionsFlag = false;
 		if ( force || xx != self.xBefore || yy != self.yBefore || rotation != self.rotationBefore )
 		{
-			if ( self.object.collisions )
+			if ( self.item.collisions )
 			{
-				for ( var i = 0; i < self.object.collisions.length; i ++ )
+				for ( var i = 0; i < self.item.collisions.length; i ++ )
 				{
-					var collision = self.object.collisions[ i ];
-					var collObjects = Friend.Game.Collisions.checkCollisions( self.object, xx, yy, collision.with );
+					var collision = self.item.collisions[ i ];
+					var collObjects = Friend.Tree.Game.Collisions.checkCollisions( self.item, xx, yy, collision.with );
 					if ( collObjects )
 					{
 						response.push( collObjects );
 						if ( collision.caller )
 						{
-							var action = collision.caller[ collision.function ].apply( collision.caller, [ self.object, collObjects ] );
+							var action = collision.caller[ collision.function ].apply( collision.caller, [ self.item, collObjects ] );
 							if ( action )
 							{
 								collObjects[ 'action' ] = action;
@@ -636,7 +622,7 @@ Friend.Game.Movements =
 
 
 // Default handling of collisions
-Friend.Game.Collisions =
+Friend.Tree.Game.Collisions =
 {
 	init: function ( tree )
 	{
@@ -651,7 +637,7 @@ Friend.Game.Collisions =
 			{
 				var col = false;
 
-				// Collision after a certain time with the object
+				// Collision after a certain time with the item
 				if ( list[ n ].after )
 				{
 					if ( item.tree.time - item.timeOfCreation < list[ n ].after )
@@ -660,9 +646,10 @@ Friend.Game.Collisions =
 				}
 				if ( list[ n ].name )
 				{
-					var item2 = item.root.findFirstItemFromName( list[ n ].name );
-					while( item2 )
+					var items = item.root.findAllItemsFromName( list[ n ].name );
+					for ( var i = 0; i < items.length; i++ )
 					{
+						var item2 = items[ i ];
 						if ( item != item2 && item2.checkCollisions )
 						{
 							col = item2.checkCollisions( x, y, item, list[ n ].params );
@@ -677,7 +664,6 @@ Friend.Game.Collisions =
 								collides.push( response );
 							}
 						}
-						item2 = item.root.findNextItem();
 					}
 				}
 			}

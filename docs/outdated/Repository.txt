@@ -1,0 +1,20 @@
+FriendUP repository
+-------------------
+
+Each Friend Core can host a repository of software. The repositories are set up 
+on each Friend Core database. The repository has an application database, as
+well as a theme and wallpaper database.
+
+The repository resides in the repository/ folder, and has this sturcute, with
+the following descriptions:
+
+	repository/
+		/* zipped themes */
+		themes/
+		/* zipped wallpapers */
+		wallpapers/
+		/* zipped applications and games */
+		software/
+		/* unpacked temporary items */
+		unpacked/
+

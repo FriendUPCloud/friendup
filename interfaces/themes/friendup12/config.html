@@ -1,0 +1,88 @@
+
+	<p class="Layout">
+		<strong id="LabelAWC"></strong>
+	</p>
+	
+	<div class="HRow">
+		<div class="FloatLeft"><input type="text" size="9" value="#008DD4" id="ColorTitle" onchange="setOption(this.id)"/></div>
+		<div class="FloatLeft Box" id="ColorTitlePreview" style="background-color: #008DD4">    </div>
+	</div>
+	
+	<p>
+		<strong id="LabelDBC"></strong>
+	</p>
+	
+	<div class="HRow">
+		<div class="FloatLeft"><input type="text" size="9" value="#008DD4" id="ColorButton" onchange="setOption(this.id)"/></div>
+		<div class="FloatLeft Box" id="ColorButtonPreview" style="background-color: #008DD4">    </div>
+	</div>
+	
+	<p>
+		<button type="button" class="Neutral IconSmall fa-undo" id="UndoButn"></button>
+	</p>
+	
+	<script>
+		window.setOption = function( key )
+		{
+			switch( key )
+			{
+				case 'ColorTitle':
+					if( ge( key + 'Preview' ) )
+					{
+						ge( key + 'Preview' ).style.backgroundColor = ge( key ).value;
+					}
+					break;
+				case 'ColorButton':
+					if( ge( key + 'Preview' ) )
+					{
+						ge( key + 'Preview' ).style.backgroundColor = ge( key ).value;
+					}
+					break;
+			}
+		}
+		
+		ge( 'LabelAWC' ).innerHTML = i18n( 'i18n_active_window_color' ) + ':';
+		ge( 'LabelDBC' ).innerHTML = i18n( 'i18n_default_button_color' ) + ':';
+		ge( 'UndoButn' ).innerHTML = ' ' + i18n( 'i18n_set_defaults' );
+		
+		ge( 'UndoButn' ).onclick = function()
+		{
+			ge( 'ColorTitle' ).value = '#008DD4';
+			ge( 'ColorButton' ).value = '#008DD4';
+			refreshThemeOptions();
+		}
+		
+		window.refreshThemeOptions = function()
+		{
+			var types = [ 'ColorTitle', 'ColorButton' ];
+			for( var a = 0; a < types.length; a++ )
+				setOption( types[a] );
+		}
+		
+		// Update defaults
+		if( ge( 'ThemeConfigData' ).value.length )
+		{
+			var d = ge( 'ThemeConfigData' ).value;
+			try
+			{
+				d = JSON.parse( d );
+				ge( 'ColorTitle' ).value = d.colorWindowActive;
+				ge( 'ColorButton' ).value = d.colorButtonDefault;
+				refreshThemeOptions();
+			}
+			catch( e )
+			{};
+		}
+		
+		// Trigger for Looknfeel!
+		window.onSaveThemeConfig = function()
+		{
+			var data = {
+				colorWindowActive: ge( 'ColorTitle' ).value,
+				colorButtonDefault: ge( 'ColorButton' ).value
+			};
+			ge( 'ThemeConfigData' ).value = JSON.stringify( data );
+		}
+		
+	</script>
+

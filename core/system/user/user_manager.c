@@ -29,8 +29,9 @@
  *  @date created 11/2016
  */
 
-#include "user_manager.h"
 #include "user.h"
+#include "user_manager.h"
+#include "user_sessionmanager.h"
 
 #include <system/systembase.h>
 #include <util/sha256.h>
@@ -775,7 +776,7 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name )
 {
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	char query[ 1024 ];
-	sprintf( query, " FUser where`Name` = '%s'" , name );
+	sprintf( query, " FUser where `Name` = '%s'" , name );
 	
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
@@ -1003,29 +1004,46 @@ int UMAddUser( UserManager *um,  User *usr )
  *
  * @param um pointer to UserManager
  * @param usr user which will be removed from FC user list
+ * @param user_session_manager Session manager of the currently running instance
  * @return 0 when success, otherwise error number
  */
-int UMRemoveUser( UserManager *um, User *usr )
+int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_manager)
 {
-	User *lusr = um->um_Users;
-	User *prevusr = lusr;
-	
-	while( lusr != NULL )
-	{
-		if( lusr == usr )
-		{
-			DEBUG("[UMRemoveUser] UserManagerRemove: user removed\n");
+	User *user_current = um->um_Users; //current element of the linked list, set to the beginning of the list
+	User *user_previous = NULL; //previous element of the linked list
+
+	FULONG user_id = usr->u_ID;
+
+	UserSession *session_to_delete;
+    while ((session_to_delete = USMGetSessionByUserID(user_session_manager, user_id)) != NULL){
+    	int status = USMUserSessionRemove(user_session_manager, session_to_delete);
+    	DEBUG("%s removing session at %p, status %d\n", __func__, session_to_delete, status);
+    }
+
+    unsigned int n = 0;
+    bool found = false;
+	while (user_current != NULL){
+		if (user_current == usr){
+			DEBUG("%s removing user at %p, place in list %d\n", __func__, user_current, n);
+			found = true;
+			n++;
 			break;
 		}
-		prevusr = lusr;
-		lusr = (User *)lusr->node.mln_Succ;
+		user_previous = user_current;
+		user_current = (User *)user_current->node.mln_Succ; //this is the next element in the linked list
 	}
 	
-	if( lusr != NULL )
-	{
-		prevusr->node.mln_Succ = lusr->node.mln_Succ;
-		DEBUG("[UMRemoveUser] User will be removed from memory\n");
-		UserDelete( lusr );
+	if (found){ //the requested user has been found in the list
+
+		if (user_previous){ //we are in the middle or at the end of the list
+
+			DEBUG("Deleting from the middle or end of the list\n");
+			user_previous->node.mln_Succ = user_current->node.mln_Succ;
+
+		} else { //we are at the very beginning of the list
+			um->um_Users = user_current->node.mln_Succ; //set the global start pointer of the list
+		}
+		UserDelete(user_current);
 		
 		return 0;
 	}

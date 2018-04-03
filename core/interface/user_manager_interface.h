@@ -54,7 +54,7 @@ typedef struct UserManagerInterface
 	void				*(*UMUserGetByAuthIDDB)( UserManager *um, const char *authId );
 	User				*(*UMGetAllUsersDB)( UserManager *um );
 	int					(*UMAddUser)( UserManager *um,  User *usr );
-	int					(*UMRemoveUser)( UserManager *um,  User *usr );
+	int					(*UMRemoveUser)( UserManager *um,  User *usr, UserSessionManager *usm);
 	FULONG				(*UMGetAllowedLoginTime)( UserManager *um, const char *name );
 	FBOOL				(*UMGetLoginPossibilityLastLogins)( UserManager *um, const char *name, int numberOfFail, time_t *lastLoginTime );
 	int					(*UMStoreLoginAttempt)( UserManager *um, const char *name, const char *info, const char *failReason );

@@ -1,0 +1,9 @@
+
+i18n_FriendStoreDrive            : FriendStore Disk
+i18n_FriendStoreDOSdriver        : FriendStore driver for selskaper
+i18n_vendor                      : Nøkkel
+i18n_vendor_ID                   : Din registrerte kunde id
+
+#From dos actions
+
+i18n_cannotcreate_deep_directory : Du kan kun lage prosjektmapper (ett nivå).
