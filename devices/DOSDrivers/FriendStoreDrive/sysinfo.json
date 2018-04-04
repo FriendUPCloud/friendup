@@ -1,0 +1,6 @@
+{
+	"type":    "FriendStoreDrive",
+	"literal": "FriendStoreDOSdriver",
+	"group":   "User",
+	"sharing": "1"
+}

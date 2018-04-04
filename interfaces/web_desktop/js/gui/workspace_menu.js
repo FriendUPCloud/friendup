@@ -214,12 +214,11 @@ var WorkspaceMenu =
 		}
 		this.open = true;
 	},
-	close: function()
+	close: function( e )
 	{
 		var m = ge( 'WorkspaceMenu' );
 		if( m )
 		{
-			// Remove open menus
 			var divs = m.getElementsByTagName( 'div' );
 			var lis = m.getElementsByTagName( 'li' );
 			for( var a = 0; a < divs.length; a++ )

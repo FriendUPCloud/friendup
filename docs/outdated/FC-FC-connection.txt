@@ -1,0 +1,18 @@
+
+To setup FC - FC connection you must:
+- Check destination server name and address (ip,name)
+- edit your cfg.ini file and add new server in [Cores] secion
+     servers=localhost@000c2900fffflocalhost000000000000000000000000000000000000000000
+             <name or ip of the server>@<server ID>
+when you will launch FC it should try to setup new connection. Please read logs to see if it fail.
+
+How mount drive avaiable on second core:
+- run Mountlist application
+- create new connection and fill fields
+   Type  - Remote filesystem
+   Device name - your device name on source machine
+   Connection name - ID of destination server
+   Device name - your device name on destination machine
+   Username and Password are obsolete now, remotefs is using your login and password from logged user
+  press 'Save'
+- mount new added device

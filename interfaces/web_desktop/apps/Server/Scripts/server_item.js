@@ -22,7 +22,6 @@ Application.run = function()
 	this.saving = false;
 }
 
-
 // Close window!!!!!!!
 function cancel()
 {

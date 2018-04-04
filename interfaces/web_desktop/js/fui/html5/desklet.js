@@ -17,18 +17,20 @@
 *                                                                              *
 *****************************************************************************©*/
 
-fui.Desklet = fui.inherit( fui.View.prototype );
-
-fui.Desklet.prototype.create = function( flags )
+fui.addClass( function()
 {
-	this.baseClassName = 'FUIDesklet';
-}
+	fui.Desklet = fui.inherit( fui.View.prototype );
 
-fui.Desklet.prototype.addButton = function( button )
-{
-}
+	fui.Desklet.prototype.create = function( flags )
+	{
+		this.baseClassName = 'FUIDesklet';
+	}
 
-fui.Desklet.prototype.addMenu = function( menu )
-{
-}
+	fui.Desklet.prototype.addButton = function( button )
+	{
+	}
 
+	fui.Desklet.prototype.addMenu = function( menu )
+	{
+	}
+}, 'View' );

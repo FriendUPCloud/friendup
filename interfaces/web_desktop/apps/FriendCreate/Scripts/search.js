@@ -17,6 +17,11 @@
 *                                                                              *
 *****************************************************************************©*/
 
+Application.run = function()
+{
+	ge( 'SearchId' ).focus();
+}
+
 function searchFor()
 {
 	var keys = ge( 'SearchId' ).value;

@@ -3,10 +3,19 @@
 	display: block;
 	position: relative;
 }
+
+.TabContainer
+{
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
 .TabActive, .Tab
 {
-	display: block;
-	float: left;
+	display: inline-block;
+	float: none;
 	padding: $PaddingTabs;
 	position: relative;
 	margin: $MarginTabs;
@@ -60,7 +69,6 @@
 
 .PageActive .PageScroll
 {
-	border: 1px solid rgba(0,0,0,0.07);
 	background: $ColorBgTdListTable;
 	border-radius: $BorderBoxRadius;
 }

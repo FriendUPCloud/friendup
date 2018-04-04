@@ -662,7 +662,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			// Failed.. bailing
 			if( retries-- <= 0 )
 			{
-				FERROR( "[fsysnode] [FileOpen] Failed to get exclusive lock on lockfile.\n" );
+				FERROR( "[fsysnode] [FileOpen] Failed to get exclusive lock on lockfile: %s.\n", tmpfilename );
 				FFree( command );
 				FFree( encodedcomm );
 				return NULL;

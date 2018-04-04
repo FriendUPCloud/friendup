@@ -24,21 +24,20 @@
  * @date first pushed on 18/08/2017
  */
 Friend = window.Friend || {};
-Friend.Flags = Friend.Flags || {};
 
-Friend.Utilities = function( flags )
+Friend.Tree.Utilities = function( flags )
 {
     this.tree = flags.tree;
 	this.renderer = flags.renderer;
-	Object.assign( this, Friend.Utilities );
+	Object.assign( this, Friend.Tree.Utilities );
 };
-Friend.Utilities.round = function ( number, decimals )
+Friend.Tree.Utilities.round = function ( number, decimals )
 {
 	var power = Math.pow( 10, decimals );
 	var result = Math.round( number * power ) / power;
 	return result;
 };
-Friend.Utilities.convertToHex = function ( number, decimals, prefix )
+Friend.Tree.Utilities.convertToHex = function ( number, decimals, prefix )
 {
 	var result = number.toString( 16 );
 	while ( decimals && result.length < decimals )
@@ -47,7 +46,7 @@ Friend.Utilities.convertToHex = function ( number, decimals, prefix )
 		result = '0x' + result;
 	return result;
 };
-Friend.Utilities.getPath = function ( path )
+Friend.Tree.Utilities.getPath = function ( path )
 {
 	var doubleDot = path.indexOf( ':' );
 	if ( doubleDot >= 0 )
@@ -57,7 +56,7 @@ Friend.Utilities.getPath = function ( path )
 	}
 	return path;
 };
-Friend.Utilities.getNextPowerOfTwo = function ( v )
+Friend.Tree.Utilities.getNextPowerOfTwo = function ( v )
 {
     v--;
     v |= v >> 1;
@@ -68,11 +67,44 @@ Friend.Utilities.getNextPowerOfTwo = function ( v )
     v++;
     return v;
 };
-Friend.Utilities.isPowerOfTwo=function ( n )
+Friend.Tree.Utilities.isPowerOfTwo=function ( n )
 {
 	return n && (n & (n - 1)) === 0;
 };
-Friend.Utilities.replaceObjectsByNames = function ( root, destination, object, safe )
+Friend.Tree.Utilities.assignToObject = function( destination, source )
+{
+	// Find the class from the name
+	var klass = this.getClass( source );
+
+	// Assigns the values
+	for ( var property in klass )
+		destination[ property ] = klass[ property ];
+
+	return destination;
+};
+Friend.Tree.Utilities.getClass = function( source )
+{
+	// Assign the functions of the class
+	var start = 0;
+	var end = source.indexOf( '.' );
+	if ( end < 0 )
+		end = 10000;
+	var klass = window[ source.substring( start, end ) ];
+	if ( typeof klass == 'undefined' )
+		return null;
+	while( end < source.length )
+	{
+		start = end + 1;
+		end = source.indexOf( '.', start );
+		if ( end < 0 )
+			end = 10000;
+		klass = klass[ source.substring( start, end ) ];
+		if ( typeof klass == 'undefined' )
+			return null;
+	};
+	return klass;
+};
+Friend.Tree.Utilities.replaceObjectsByNames = function ( root, destination, object, safe )
 {
 	for ( var key in object )
 	{
@@ -110,7 +142,7 @@ Friend.Utilities.replaceObjectsByNames = function ( root, destination, object, s
 	}
 	return destination;
 }
-Friend.Utilities.replaceNamesByObjects = function ( root, object, destination )
+Friend.Tree.Utilities.replaceNamesByObjects = function ( root, object, destination )
 {
 	for ( var key in object )
 	{
@@ -121,7 +153,7 @@ Friend.Utilities.replaceNamesByObjects = function ( root, object, destination )
                 destination[ key ] = root;
                 break;
 			case 'caller':
-				destination[ key ] = this.tree.findItemFromName( subObject.name, root );
+				destination[ key ] = root.findItemFromName( subObject.name, root );
 				break;
 			default:
 				if ( this.isObject( subObject ) )
@@ -129,7 +161,7 @@ Friend.Utilities.replaceNamesByObjects = function ( root, object, destination )
 					if ( subObject.className )
 						console.log( 'TODO: replaceNameByObject, replace by the real object...' );
 					else if ( subObject.name && subObject.class )
-					 	destination[ key ] = root.findItemFromName( subObject.name, subObject.class );
+					 	destination[ key ] = root.findItemFromNameAndClassName( subObject.name, subObject.class );
 					else
 						destination[ key ] = this.replaceNamesByObjects( root, subObject, {} );
 				}
@@ -143,15 +175,15 @@ Friend.Utilities.replaceNamesByObjects = function ( root, object, destination )
 	}
 	return destination;
 };
-Friend.Utilities.isObject = function( item )
+Friend.Tree.Utilities.isObject = function( item )
 {
     return typeof item != 'undefined' ? (typeof item === "object" && !Array.isArray(item) && item !== null) : false;
 };
-Friend.Utilities.isArray = function( item )
+Friend.Tree.Utilities.isArray = function( item )
 {
     return typeof item != 'undefined' ? item.constructor == Array : false;
 };
-Friend.Utilities.updateCommonProperties = function( object, flags )
+Friend.Tree.Utilities.updateCommonProperties = function( object, flags )
 {
 	var refresh = false;
     if ( object[ flags[ property ] ] )
@@ -163,8 +195,110 @@ Friend.Utilities.updateCommonProperties = function( object, flags )
         }
 	}
 	return refresh;
+};
+Friend.Tree.Utilities.getPixelColor = function( imageData, x, y, width, height )
+{
+	var precision = 3;
+
+	var red = 0;
+	var green = 0;
+	var blue = 0;
+	var alpha = 0;
+	var imageWidth = imageData.width;
+	var data = imageData.data;
+	for ( var xx = 0; xx < precision; xx += 1 )
+	{
+		for ( var yy = 0; yy < precision; yy += 1 )
+		{
+			//var data = context.getImageData( , , 1, 1 ).data;
+			var xxx = Math.floor( x + ( width / precision ) * xx );
+			var yyy = Math.floor( y + ( height / precision ) * yy );
+			var address = ( xxx + yyy * imageWidth ) * 4; 			
+			red += data[ address ];
+			green += data[ address + 1 ];
+			blue += data[ address + 2 ];
+		}
+	}
+	precision = precision * precision;
+	var result =
+	{
+		red: Math.floor( red / precision ),
+		green: Math.floor( green / precision ),
+		blue: Math.floor( blue / precision )
+	};
+	return result;
+};
+Friend.Tree.Utilities.getColorString = function( r, g, b )
+{
+	var red = r.toString( 16 );
+	if ( red.length == 1 )
+		red = '0' + red;
+	var green = g.toString( 16 );
+	if ( green.length == 1 )
+		green = '0' + green;
+	var blue = b.toString( 16 );
+	if ( blue.length == 1 )
+		blue = '0' + blue;
+	return '#' + red + green +  blue;
 }
 
+Friend.Tree.Utilities.getSizeFromString = function( desiredSize, parentSize )
+{
+	var pos = 0;
+	var c, count;
+	var destination = "" + desiredSize;
+	
+	// Direct size
+	var pos = destination.indexOf( 'px' );
+	while ( pos >= 0 )
+	{
+		// Removes the 'px', leave the number
+		destination = destination.substring( 0, pos ) + destination.substring( pos + 2 );
+		pos = destination.indexOf( 'px' );
+	}
+
+	// Percentages
+	var pos = destination.indexOf( '%' );
+	while ( pos >= 0 )
+	{
+		// Get the number
+		start = pos - 1;
+		while ( start >= 0 )
+		{
+			var c = destination.charAt( start );
+			if ( c < '0' || c > '9' )
+				break;
+			start--;
+		}
+		start++;
+		var s = destination.substring( start, pos );
+		var value = parseInt( s ) / 100;
+		value = value * parentSize;
+
+		// Removes the 'px', leave the number
+		destination = destination.substring( 0, start ) + value + destination.substring( pos + 1 );
+		pos = destination.indexOf( '%' );
+	}
+
+	// Calc -> keep the content in brackets
+	var pos = destination.indexOf( 'calc' );
+	while ( pos >= 0 )
+	{
+		// Finds the closing brackets
+		start = destination.indexOf( '(', pos );
+		if ( start >= 0 )
+		{
+			end = destination.indexOf( ')', start );
+			if ( end > start )
+				destination = destination.substring( 0, pos ) + destination.substring( start + 1, end ) + destination.substring( end + 1 );
+		}		
+		var pos = destination.indexOf( 'calc' );
+	}
+
+	// Calculates the result
+	var result = eval( destination );
+	return result;
+}
 /**
  * rotateCoords
  *
@@ -175,37 +309,37 @@ Friend.Utilities.updateCommonProperties = function( object, flags )
  * @param (number) rotation center y coordinate
  * @param (number) angle rotation angle, in degrees
  */
-Friend.Utilities.rotateCoords = function ( coords, xCenter, yCenter, angle )
+Friend.Tree.Utilities.rotateCoords = function ( coords, xCenter, yCenter, angle )
 {
 	for ( var i = 0; i < coords.length; i ++ )
 	{
 		var x = coords[ i ].x - xCenter;
 		var y = coords[ i ].y - yCenter;
-		coords[ i ].x = x * Math.cos( - angle * Friend.Flags.DEGREETORADIAN ) - y * Math.sin( - angle * Friend.Flags.DEGREETORADIAN ) + xCenter;
-		coords[ i ].y = y * Math.cos( - angle * Friend.Flags.DEGREETORADIAN ) + x * Math.sin( - angle * Friend.Flags.DEGREETORADIAN ) + yCenter;
+		coords[ i ].x = x * Math.cos( - angle * Friend.Tree.DEGREETORADIAN ) - y * Math.sin( - angle * Friend.Tree.DEGREETORADIAN ) + xCenter;
+		coords[ i ].y = y * Math.cos( - angle * Friend.Tree.DEGREETORADIAN ) + x * Math.sin( - angle * Friend.Tree.DEGREETORADIAN ) + yCenter;
 	}
 	return coords;
 };
-Friend.Utilities.rotateCoord = function ( x, y, xCenter, yCenter, angle )
+Friend.Tree.Utilities.rotateCoord = function ( x, y, xCenter, yCenter, angle )
 {
     var coords = { };
     x -= xCenter;
     y -= yCenter;
-    coords.x = x * Math.cos( - angle * Friend.Flags.DEGREETORADIAN ) - y * Math.sin( - angle * Friend.Flags.DEGREETORADIAN ) + xCenter;
-    coords.y = y * Math.cos( - angle * Friend.Flags.DEGREETORADIAN ) + x * Math.sin( - angle * Friend.Flags.DEGREETORADIAN ) + yCenter;
+    coords.x = x * Math.cos( - angle * Friend.Tree.DEGREETORADIAN ) - y * Math.sin( - angle * Friend.Tree.DEGREETORADIAN ) + xCenter;
+    coords.y = y * Math.cos( - angle * Friend.Tree.DEGREETORADIAN ) + x * Math.sin( - angle * Friend.Tree.DEGREETORADIAN ) + yCenter;
     return coords;
 };
-Friend.Utilities.rotateCoordinates = function ( x, y, distance, angle )
+Friend.Tree.Utilities.rotateCoordinates = function ( x, y, distance, angle )
 {
 	var coords = { };
-	coords.x = x + Math.cos( angle * Friend.Flags.DEGREETORADIAN ) * distance;
-	coords.y = y - Math.sin( angle * Friend.Flags.DEGREETORADIAN ) * distance;
+	coords.x = x + Math.cos( angle * Friend.Tree.DEGREETORADIAN ) * distance;
+	coords.y = y - Math.sin( angle * Friend.Tree.DEGREETORADIAN ) * distance;
 	return coords;
 };
-Friend.Utilities.rotate = function ( coords, angle, rayX, rayY )
+Friend.Tree.Utilities.rotate = function ( coords, angle, rayX, rayY )
 {
-	coords.x = coords.x + Math.cos( angle * Friend.Flags.DEGREETORADIAN ) * rayX;
-	coords.y = coords.y - Math.sin( angle * Friend.Flags.DEGREETORADIAN ) * rayY;
+	coords.x = coords.x + Math.cos( angle * Friend.Tree.DEGREETORADIAN ) * rayX;
+	coords.y = coords.y - Math.sin( angle * Friend.Tree.DEGREETORADIAN ) * rayY;
 	return coords;
 };
 
@@ -214,17 +348,17 @@ Friend.Utilities.rotate = function ( coords, angle, rayX, rayY )
  *
  *
  */
-Friend.Utilities.setPositionFromObject = function ( object, parent, distance, angle, flags )
+Friend.Tree.Utilities.setPositionFromObject = function ( object, parent, distance, angle, flags )
 {
 	if ( typeof flags == 'undefined' )
-		flags = Friend.Flags.FLAG_SETX | Friend.Flags.FLAG_SETY | Friend.Flags.FLAG_SETANGLE;
+		flags = Friend.Tree.FLAG_SETX | Friend.Tree.FLAG_SETY | Friend.Tree.FLAG_SETANGLE;
 
 	var x, y, rotation;
-	if ( ( flags & Friend.Flags.FLAG_SETX ) != 0 )
-		x = parent.x + Math.cos( angle * Friend.Flags.DEGREETORADIAN ) * distance;
-	if ( ( flags & Friend.Flags.FLAG_SETY ) != 0 )
-		y = parent.y - Math.sin( angle * Friend.Flags.DEGREETORADIAN ) * distance;
-	if ( ( flags & Friend.Flags.FLAG_SETANGLE ) != 0 )
+	if ( ( flags & Friend.Tree.FLAG_SETX ) != 0 )
+		x = parent.x + Math.cos( angle * Friend.Tree.DEGREETORADIAN ) * distance;
+	if ( ( flags & Friend.Tree.FLAG_SETY ) != 0 )
+		y = parent.y - Math.sin( angle * Friend.Tree.DEGREETORADIAN ) * distance;
+	if ( ( flags & Friend.Tree.FLAG_SETANGLE ) != 0 )
 		rotation = parent.rotation;
 
 	parent.setCoordinates( x, y );
@@ -242,9 +376,9 @@ Friend.Utilities.setPositionFromObject = function ( object, parent, distance, an
  * @param (object) arr the object to clean
  * @return (object) the cleaned object
  */
-Friend.Utilities.cleanArray = function ( arr )
+Friend.Tree.Utilities.cleanArray = function ( arr )
 {
-	var temp = [ ];
+	var temp = {};
 	for ( var key in arr )
 	{
 		if ( arr[ key ] )
@@ -261,7 +395,7 @@ Friend.Utilities.cleanArray = function ( arr )
  * @param (object) object the item to modify
  * @param (object) flags the list of properties
  */
-Friend.Utilities.setFlags = function ( object, flags )
+Friend.Tree.Utilities.setFlags = function ( object, flags )
 {
 	if ( flags )
 	{
@@ -273,7 +407,7 @@ Friend.Utilities.setFlags = function ( object, flags )
 	}
 	return true;
 };
-Friend.Utilities.forceFlags = function ( object, property, flags )
+Friend.Tree.Utilities.forceFlags = function ( object, property, flags )
 {
 	if ( typeof object[ property ] == 'undefined' )
 		object[ property ] = {};	
@@ -288,7 +422,7 @@ Friend.Utilities.forceFlags = function ( object, property, flags )
 	}
 	return true;
 };
-Friend.Utilities.computeFlags = function ( flags, item, variables )
+Friend.Tree.Utilities.computeProperties = function ( flags, item, variables )
 {
 	var previousItem = variables.previousItem;
 	var parentItem = variables.parentItem;
@@ -338,7 +472,7 @@ Friend.Utilities.computeFlags = function ( flags, item, variables )
  * @param height (number) height
  * @return (object) the newly created rect
  */
-Friend.Utilities.Rect = function( xOrRect, y, width, height, flags )
+Friend.Tree.Utilities.Rect = function( xOrRect, y, width, height, flags )
 {
 	if ( typeof xOrRect == 'undefined' )
 	{
@@ -361,7 +495,7 @@ Friend.Utilities.Rect = function( xOrRect, y, width, height, flags )
 		this.width = width;
 		this.height = height;
 	}
-	Object.assign( this, Friend.Utilities.Rect );
+	Object.assign( this, Friend.Tree.Utilities.Rect );
 	return this;
 };
 
@@ -374,12 +508,12 @@ Friend.Utilities.Rect = function( xOrRect, y, width, height, flags )
  * @param (number) y vertical coordinate
  * @return (boolean) true if the point is within the rectangle, false if outside
  */
-Friend.Utilities.Rect.isPointIn = function ( x, y )
+Friend.Tree.Utilities.Rect.isPointIn = function ( x, y )
 {
 	return ( x >= this.x && x < this.x + this.width && y >= this.y && y < this.y + this.height );
 };
 
-Friend.Utilities.Rect.getCenter = function ()
+Friend.Tree.Utilities.Rect.getCenter = function ()
 {
 	var coords = 
 	{
@@ -389,10 +523,10 @@ Friend.Utilities.Rect.getCenter = function ()
 	return coords;
 };
 
-Friend.Utilities.Rect.getRayCoords = function ( flags, angle )
+Friend.Tree.Utilities.Rect.getRayCoords = function ( flags, angle )
 {
 	var center = this.getCenter( flags );
-	var coords = Friend.Utilities.rotate( center, angle, this.width, this.height );
+	var coords = Friend.Tree.Utilities.rotate( center, angle, this.width, this.height );
 	return coords;
 };
 
@@ -404,7 +538,7 @@ Friend.Utilities.Rect.getRayCoords = function ( flags, angle )
  * @param (number) x signed distance to add to horizontal coordinate
  * @param (number) y signed distance to add to the vbertical coordinate
  */
-Friend.Utilities.Rect.move = function ( x, y )
+Friend.Tree.Utilities.Rect.move = function ( x, y )
 {
 	this.x += x;
 	this.y += y;
@@ -417,7 +551,7 @@ Friend.Utilities.Rect.move = function ( x, y )
  *
  * @param (number) zoom multiplication factor
  */
-Friend.Utilities.Rect.zoom = function ( zoom )
+Friend.Tree.Utilities.Rect.zoom = function ( zoom )
 {
 	//this.x *= zoom;
 	//this.y *= zoom;
@@ -433,7 +567,7 @@ Friend.Utilities.Rect.zoom = function ( zoom )
  * @param (number) deltaX horizontal shrink factor
  * @param (number) deltaY vertical shrink factor
  */
-Friend.Utilities.Rect.shrink = function ( deltaX, deltaY )
+Friend.Tree.Utilities.Rect.shrink = function ( deltaX, deltaY )
 {
 	if ( typeof deltaY == ' undefined' )
 		deltaY = deltaX;
@@ -449,7 +583,7 @@ Friend.Utilities.Rect.shrink = function ( deltaX, deltaY )
  *
  * @param (object) context drawing context
  */
-Friend.Utilities.Rect.clip = function ( flags )
+Friend.Tree.Utilities.Rect.clip = function ( flags )
 {
 	flags.rendererItem.beginPath( flags );
 	flags.rendererItem.moveTo( flags, this.x, this.y );
@@ -460,12 +594,19 @@ Friend.Utilities.Rect.clip = function ( flags )
 	flags.rendererItem.closePath( flags );
 	flags.rendererItem.clip( flags );
 };
-
-Friend.Utilities.Rect.drawDiagonal = function ( flags, color, size, directions )
+Friend.Tree.Utilities.Rect.saveContext = function ( flags )
+{
+	flags.rendererItem.save( flags );
+};
+Friend.Tree.Utilities.Rect.restoreContext = function ( flags )
+{
+	flags.rendererItem.restore( flags );
+};
+Friend.Tree.Utilities.Rect.drawDiagonal = function ( flags, color, size, directions )
 {
 	flags.rendererItem.setLineWidth( flags, 1);
 	flags.rendererItem.setStrokeStyle( flags, color );
-	if ( directions & Friend.Flags.DIAGONAL_TOPLEFT_BOTTOMRIGHT )
+	if ( directions & Friend.Tree.DIAGONAL_TOPLEFT_BOTTOMRIGHT )
 	{
 		flags.rendererItem.beginPath( flags );
 		flags.rendererItem.moveTo( flags, this.x, this.y );
@@ -473,7 +614,7 @@ Friend.Utilities.Rect.drawDiagonal = function ( flags, color, size, directions )
 		flags.rendererItem.stroke( flags );
 	    flags.rendererItem.closePath();
 	}
-	if ( directions & Friend.Flags.DIAGONAL_TOPRIGHT_BOTTOMLEFT )
+	if ( directions & Friend.Tree.DIAGONAL_TOPRIGHT_BOTTOMLEFT )
 	{
 		flags.rendererItem.beginPath( flags );
 		flags.rendererItem.moveTo( flags, this.x + this.width, this.y );
@@ -493,7 +634,7 @@ Friend.Utilities.Rect.drawDiagonal = function ( flags, color, size, directions )
  * @param (string) brightColor bright side color
  * @param (string) darkColor dark side color
  */
-Friend.Utilities.Rect.drawHilightedBox = function ( flags, color, brightColor, darkColor )
+Friend.Tree.Utilities.Rect.drawHilightedBox = function ( flags, color, brightColor, darkColor )
 {
 	flags.rendererItem.setFillStyle( flags, color);
 	flags.rendererItem.fillRect( flags, this.x, this.y, this.width, this.height);
@@ -523,7 +664,7 @@ Friend.Utilities.Rect.drawHilightedBox = function ( flags, color, brightColor, d
  * @param (string) borderColor color of the border
  * @param (number) borderSize size of the border in pixels (0 = no border)
  */
-Friend.Utilities.Rect.drawBox = function ( flags, color, borderColor, borderSize )
+Friend.Tree.Utilities.Rect.drawBox = function ( flags, color, borderColor, borderSize )
 {
 	flags.rendererItem.setFillStyle( flags, color );
 	flags.rendererItem.fillRect( flags, this.x, this.y, this.width, this.height );
@@ -533,7 +674,7 @@ Friend.Utilities.Rect.drawBox = function ( flags, color, borderColor, borderSize
 	}
 };
 
-Friend.Utilities.Rect.clear = function ( flags )
+Friend.Tree.Utilities.Rect.clear = function ( flags )
 {
 	flags.rendererItem.clearRect( flags, this.x, this.y, this.width, this.height );
 };
@@ -548,7 +689,7 @@ Friend.Utilities.Rect.clear = function ( flags )
  * @param (string) borderColor color of the border
  * @param (number) borderSize size of the border in pixels (0 = no border)
  */
-Friend.Utilities.Rect.drawEllipse = function ( flags, fillColor, borderColor, borderSize )
+Friend.Tree.Utilities.Rect.drawEllipse = function ( flags, fillColor, borderColor, borderSize )
 {
 	flags.rendererItem.beginPath( flags );
 	flags.rendererItem.ellipse( flags, this.x + this.width / 2, this.y + this.height / 2, this.width / 2, this.height / 2, 0, - Math.PI, Math.PI );
@@ -576,7 +717,7 @@ Friend.Utilities.Rect.drawEllipse = function ( flags, fillColor, borderColor, bo
  * @param (string) color color of the ray
  * @param (string) size of the ray
  */
-Friend.Utilities.Rect.drawRay = function ( flags, angle, color, size )
+Friend.Tree.Utilities.Rect.drawRay = function ( flags, angle, color, size )
 {
 	var center = this.getCenter();
 	var coords = this.rotate( coords, angle, this.width, this.height );
@@ -585,6 +726,16 @@ Friend.Utilities.Rect.drawRay = function ( flags, angle, color, size )
 	flags.rendererItem.beginPath( flags );
 	flags.rendererItem.moveTo( flags, center.x, center.y );
 	flags.rendererItem.lineTo( flags, coords.x, coords.y );
+	flags.rendererItem.stroke( flags );
+	flags.rendererItem.closePath();
+};
+Friend.Tree.Utilities.Rect.drawLine = function ( flags, x1, y1, x2, y2, color, size )
+{
+	flags.rendererItem.setLineWidth( flags, size );
+	flags.rendererItem.setStrokeStyle( flags, color );
+	flags.rendererItem.beginPath( flags );
+	flags.rendererItem.moveTo( flags, x1, y1 );
+	flags.rendererItem.lineTo( flags, x2, y2 );
 	flags.rendererItem.stroke( flags );
 	flags.rendererItem.closePath();
 };
@@ -598,7 +749,7 @@ Friend.Utilities.Rect.drawRay = function ( flags, angle, color, size )
  * @param (string) color drawing color
  * @param (number) size of the pen
  */
-Friend.Utilities.Rect.drawRectangle = function ( flags, color, size )
+Friend.Tree.Utilities.Rect.drawRectangle = function ( flags, color, size )
 {
 	flags.rendererItem.setLineWidth( flags, size );
 	flags.rendererItem.setStrokeStyle( flags, color );
@@ -615,7 +766,7 @@ Friend.Utilities.Rect.drawRectangle = function ( flags, color, size )
  * @param (object) context drawing context
  * @param (string) image
  */
-Friend.Utilities.Rect.drawMosaic = function ( flags, image, xOffset, yOffset )
+Friend.Tree.Utilities.Rect.drawMosaic = function ( flags, image, xOffset, yOffset )
 {
 //    flags.renderer.save( flags );
 //    this.clip( flags );
@@ -645,7 +796,7 @@ Friend.Utilities.Rect.drawMosaic = function ( flags, image, xOffset, yOffset )
  * @param (string) color drawing color
  * @param (number) size of the pen
  */
-Friend.Utilities.Rect.fillRectangle = function ( flags, color )
+Friend.Tree.Utilities.Rect.fillRectangle = function ( flags, color )
 {
 	flags.rendererItem.setFillStyle( flags, color );
 	flags.rendererItem.fillRect( flags, this.x, this.y, this.width, this.height );
@@ -658,7 +809,7 @@ Friend.Utilities.Rect.fillRectangle = function ( flags, color )
  * @param (object) rect the other rect to test
  * @return (boolean) true is intersection, false if not
  */
-Friend.Utilities.Rect.isRectIn = function ( rect )
+Friend.Tree.Utilities.Rect.isRectIn = function ( rect )
 {
 	if ( this.x - this.width > rect.x - rect.hotSpotX )
 	{
@@ -685,7 +836,7 @@ Friend.Utilities.Rect.isRectIn = function ( rect )
  * @param (string) direction of the triangle 'left', 'top', 'bottom', 'right'
  * @param (string) color color of the triangle
  */
-Friend.Utilities.Rect.drawFilledTriangle = function ( flags, direction, color )
+Friend.Tree.Utilities.Rect.drawFilledTriangle = function ( flags, direction, color )
 {
 	flags.rendererItem.beginPath();
 	switch ( direction )
@@ -716,12 +867,57 @@ Friend.Utilities.Rect.drawFilledTriangle = function ( flags, direction, color )
 	flags.rendererItem.fill( flags );
 };
 
+Friend.Tree.Utilities.Rect.drawImage = function ( properties, image, hAlign, vAlign )
+{
+	var width = image.width;
+	var height = image.height;
+	if ( width > this.width )
+	{
+		ratio = this.width / image.width;
+		width = this.width;
+		height = image.height * ratio;
+	}
+	if ( height > this.height )
+	{
+		ratio = this.height / image.height;
+		height = this.height;
+		width = image.width * ratio;
+	}
+
+	var x, y;
+    switch ( hAlign )
+    {
+    case 'left':
+        x = this.x;
+        break;
+    case 'right':
+        x = this.x + this.width - width;
+        break;
+    default:
+        x = this.x + this.width / 2 - width / 2;
+        break;
+    }
+    switch ( vAlign )
+    {
+    case 'top':
+        y = this.y;
+        break;
+    case 'bottom':
+        y = this.y + this.height - height;
+        break;
+    default:
+        y = this.y + this.height / 2 - height / 2;
+        break;
+    }
+	properties.rendererItem.drawImage( properties, image, x, y, width, height );
+};
+
 /**
  * drawText
  *
  * Draws a clipped text in the rectangle
  */
-Friend.Utilities.Rect.drawText = function ( flags, text, font, color, hAlign, vAlign, size )
+Friend.Tree.Utilities.Rect.drawText = function ( flags, text, font, color, hAlign, vAlign, size )
 {
     // Clips to the rectangle
 	flags.rendererItem.save();
@@ -770,7 +966,7 @@ Friend.Utilities.Rect.drawText = function ( flags, text, font, color, hAlign, vA
 
 
 // Extracts the name a file from its path
-Friend.Utilities.getFilenameFromPath = function( path )
+Friend.Tree.Utilities.getFilenameFromPath = function( path )
 {
 	var position = path.lastIndexOf( '/' );
 	if ( position < 0 )
@@ -779,7 +975,7 @@ Friend.Utilities.getFilenameFromPath = function( path )
 };	
 
 // Extracts path from a file
-Friend.Utilities.extractFriendPaths = function( source, tokens )
+Friend.Tree.Utilities.extractFriendPaths = function( source, tokens )
 {
 	if ( typeof tokens == 'undefined' )
 	{
@@ -811,7 +1007,7 @@ Friend.Utilities.extractFriendPaths = function( source, tokens )
 };
 
 // Replace paths in a file
-Friend.Utilities.replaceFriendPaths = function( source, replaceList )
+Friend.Tree.Utilities.replaceFriendPaths = function( source, replaceList )
 {
 	// Replacement loop
 	for ( var r = 0; r < replaceList.length; r++ )
@@ -828,11 +1024,56 @@ Friend.Utilities.replaceFriendPaths = function( source, replaceList )
 	return source;
 };
 
-Friend.Utilities.measureText = function( tree, text )
+Friend.Tree.Utilities.measureText = function( text, font )
 {
 	var canvas = document.createElement( 'canvas' );
 	var context = canvas.getContext( '2d' );
+	context.font = font;
 	return context.measureText( text );
+};
+Friend.Tree.Utilities.getFontFamily = function( font )
+{
+	var pos = font.indexOf( 'px' );
+	if ( pos >= 0 )
+	{
+		pos += 2;
+		while( pos < font.length && font.charAt( pos ) == ' ' )
+			pos++;
+		if ( pos < font.length )
+		{
+			var start = pos;
+			while( pos < font.length && font.charAt( pos ) != ' ' )
+				pos++;	
+			if ( pos > start )
+				return font.substring( start, pos );
+		}
+	}
+	return 'Arial';
+};
+Friend.Tree.Utilities.getFontSize = function( font )
+{
+	var px = font.indexOf( 'px' );
+	return parseInt( font.substring( 0, px ), 10 );
+};
+Friend.Tree.Utilities.getFontWeight = function( font )
+{
+	var weights = [ 'bold', 'bolder', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900' ];
+	for ( var w = 0; w < weights.length; w++ )
+	{
+		if ( font.indexOf( weights[ w ] ) >= 0 )
+			return weigths[ w ];
+	}
+	return '';
+};
+Friend.Tree.Utilities.getFontStyle = function( font )
+{
+	var styles = [ 'normal', 'italic', 'oblique' ];
+	for ( var s = 0; s < styles.length; s++ )
+	{
+		if ( font.indexOf( styles[ s ] ) >= 0 )
+			return styles[ s ];
+	}
+	return 'normal';
 };
 
 
@@ -899,7 +1140,7 @@ Friend.Utilities.measureText = function( tree, text )
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
-Friend.Utilities.MersenneTwister = function(seed) 
+Friend.Tree.Utilities.MersenneTwister = function(seed) 
 {
 	if (seed == undefined) 
 	{
@@ -918,7 +1159,7 @@ Friend.Utilities.MersenneTwister = function(seed)
 	this.init_genrand(seed);
 };
 /* initializes mt[N] with a seed */
-Friend.Utilities.MersenneTwister.prototype.init_genrand = function(s) 
+Friend.Tree.Utilities.MersenneTwister.prototype.init_genrand = function(s) 
 {
 	this.mt[0] = s >>> 0;
 	for (this.mti=1; this.mti<this.N; this.mti++) 
@@ -938,7 +1179,7 @@ Friend.Utilities.MersenneTwister.prototype.init_genrand = function(s)
 /* init_key is the array for initializing keys */
 /* key_length is its length */
 /* slight change for C++, 2004/2/26 */
-Friend.Utilities.MersenneTwister.prototype.init_by_array = function(init_key, key_length) 
+Friend.Tree.Utilities.MersenneTwister.prototype.init_by_array = function(init_key, key_length) 
 {
 	var i, j, k;
 	this.init_genrand(19650218);
@@ -966,7 +1207,7 @@ Friend.Utilities.MersenneTwister.prototype.init_by_array = function(init_key, ke
 };
    
 /* generates a random number on [0,0xffffffff]-interval */
-Friend.Utilities.MersenneTwister.prototype.genrand_int32 = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.genrand_int32 = function() 
 {
 	var y;
 	var mag01 = new Array(0x0, this.MATRIX_A);
@@ -1004,34 +1245,34 @@ Friend.Utilities.MersenneTwister.prototype.genrand_int32 = function()
 };
    
 /* generates a random number on [0,0x7fffffff]-interval */
-Friend.Utilities.MersenneTwister.prototype.genrand_int31 = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.genrand_int31 = function() 
 {
 	return (this.genrand_int32()>>>1);
 };
 
 /* generates a random number on [0,1]-real-interval */
-Friend.Utilities.MersenneTwister.prototype.genrand_real1 = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.genrand_real1 = function() 
 {
 	return this.genrand_int32()*(1.0/4294967295.0); 
 	/* divided by 2^32-1 */ 
 };
 
 /* generates a random number on [0,1)-real-interval */
-Friend.Utilities.MersenneTwister.prototype.random = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.random = function() 
 {
 	return this.genrand_int32()*(1.0/4294967296.0); 
 	/* divided by 2^32 */
 };
 
 /* generates a random number on (0,1)-real-interval */
-Friend.Utilities.MersenneTwister.prototype.genrand_real3 = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.genrand_real3 = function() 
 {
 	return (this.genrand_int32() + 0.5)*(1.0/4294967296.0); 
 	/* divided by 2^32 */
 };
 
 /* generates a random number on [0,1) with 53-bit resolution*/
-Friend.Utilities.MersenneTwister.prototype.genrand_res53 = function() 
+Friend.Tree.Utilities.MersenneTwister.prototype.genrand_res53 = function() 
 { 
 	var a=this.genrand_int32()>>>5, b=this.genrand_int32()>>>6; 
 	return(a*67108864.0+b)*(1.0/9007199254740992.0); 

@@ -1,0 +1,192 @@
+
+	MYSQL.library
+
+	MYSQL.library is a FriendUP library with a collection of functions to help developer with database connection.
+As developer you can setup connection, load, store, update data and do custom queries.
+
+Init and close.
+	Every library in FriendUP must be open and closed before you will do any action on them.
+
+	{
+		struct MYSQLLibrary *lib;
+	
+		lib = (struct MYSQLLibrary *)LibraryOpen( "mysql.library", 0 );	
+		if( lib != NULL )
+		{
+
+		....your code ....
+
+			LibraryClose( (struct Library *)lib );
+		}
+
+	}
+
+	LibraryOpen takes 2 arguments, first library name and second required version and return pointer to our library.
+This function opens connection to database described in configuration file (conf/db.ini) .
+
+Structure and sql mapping
+	First you must have structure what you want to load, store or update in database, let's make one for example:
+
+typedef struct UserT
+{
+	MinNode node;
+	int id;
+	char *name;
+	char *surname;
+	struct tm ts;	
+}UserT;	
+
+	Our structure contain:
+	node - pointers to next/previous structure. REMEMBER - you must always have this entry in your structure
+	id - unique key (not required, but if you want to recognize your objects, you must have it)
+	name - string
+	surname - string
+	ts - timestamp structure
+
+Our structure will be placed in database table described by SQL:
+
+	CREATE TABLE IF NOT EXISTS `Test` ( 
+	   `name` varchar(255),
+	   `surname` varchar(255),
+	   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+	   `borndate` timestamp,
+	   PRIMARY KEY (`id`)
+	 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+	Our descriptors shows how object will looks like in database or in C as structure. C structure should be placed in header file (*.h) with database mapping placed below:
+
+	static ULONG UserTDesc[] = { SQLT_TABNAME, "Test", SQLT_STRUCTSIZE, sizeof( UserT ), 
+		SQLT_STR, "name", offsetof( struct UserT, name ),
+		SQLT_STR, "surname", offsetof( struct UserT, surname ),
+		SQLT_IDINT, "id", offsetof( struct UserT, id ), 
+		SQLT_TIMESTAMP, "borndate", offsetof( struct UserT, ts ), 
+		SQLT_NODE, "node", offsetof( struct UserT, node ),
+		SQLT_END };
+
+	First two entries in our descriptor gives mysql.library information about tablename (SQL_TABLENAME) where data will be holded. Next two entries gives information about structure size in C language. Rest of descriptor contain columns till SQLT_END. One column require type:
+
+	SQLT_STR - string
+	SQLT_IDINT - id as integer (primary key)
+	SQLT_ID - integer
+	SQLT_NODE - node is required to handle more then one object
+	SQLT_TIMESTAMP - timestamp
+
+column name:
+
+	in our example structure entries are mapped to column names "name", "surname", "id", "borndate"
+	REMEMBER: ENTER COLUMN NAMES IN SAME ORDER LIKE IN DATABASE !
+
+offset:
+
+	offset gives library pointer to C structure entries.
+
+Load, Store, Update entries:
+
+	Now when database, C structure and description is done, you can play with library provided functions to:
+
+-	Load data from database
+
+	void	*Load( struct MYSQLLibrary *l, ULONG *descr, char *where );
+
+	l - pointer to library structure
+	descr - pointer to descriptor
+	where - pointer to sql string with "where" command, when NULL is passed all objects from table are loaded
+	function return pointer to object list
+
+	Example:
+
+	struct UserT *ut;
+	ut = sqllib->Load( sqllib, UserTDesc, "name = 'test'" ) );
+
+	ut - pointer to first loaded object
+	sqllib - pointer to library
+	UserTDesc - pointer to User structure descriptor
+	"name = 'test'" - load will return all objects from table which name is equal to 'test'
+
+-	Store data in database
+
+	int	Save( struct MYSQLLibrary *l, ULONG *descr, void *data );
+
+	int - 0 if data was stored otherwise an error appear
+	l - pointer to library
+	descr - pointer to descriptor
+	data - pointer to C structure which will be stored, where key ID will be updated
+	REMEMBER: FUNCTION STORE ONLY ONE STRUCTURE
+	REMEMBER: IF YOU WANT TO STORE ONLY PART OF OBJECT, YOU MUST PROVIDE SPECIALLY PREPARED DESCRIPTOR
+
+	Example:
+
+	UserT luser;
+	luser.name = "test";
+	luser.surname = "surname";
+			
+	memset( &(luser.ts), 0, sizeof( struct tm ) );
+	luser.ts.tm_year = 2015;
+	luser.ts.tm_mon = 4;
+	luser.ts.tm_mday = 2;
+	luser.ts.tm_hour = 12;
+	luser.ts.tm_min = 32;
+	luser.ts.tm_sec = 22;
+			
+	sqllib->Save( sqllib, UserTDesc, &luser );
+
+	This example shows that first we create object, next fill it with data and on the end store it in database.
+
+-	Update data in database
+
+	This function works in similar way to store with a difference:
+	C object and descriptor must contain SQLT_IDINT tag beacouse library is finding object in database by this id 
+
+	int	Update( struct MYSQLLibrary *l, ULONG *descr, void *data );
+
+	int - 0 if success, otherwise error
+	l - pointer to library
+	descr - pointer to descriptor
+	data - pointer to object which will be updated in database
+
+	Example:
+
+	sqllib->Update( sqllib, UserTDesc, su );
+
+	sqllib - pointer to library
+	UserTDesc - pointer to descriptor
+	su - pointer to object which will be updated
+
+-	Delete
+
+	Delete remove entry from database table (provided in descriptor) by ID field (SQLT_IDINT)
+
+	void 	Delete( struct MYSQLLibrary *l, ULONG *descr, void *data );
+
+	l - pointer to library
+	descr - pointer to descriptor
+	data - pointer to object which will be removed from database
+
+	Example:
+
+	sqllib->Delete( sqllib, UserTDesc, usr );
+
+	sqllib - pointer to library
+	UserTDesc - pointer to descriptor
+	usr - pointer to object which will be removed
+	
+-	DeleteWhere
+	
+	DeleteWhere is doing the same job like Delete with one difference. This function do not
+	delete provided object by ID but by other custom fields.
+	
+	void DeleteWhere( struct MYSQLLibrary *l, const ULONG *descr, char *where )
+	
+	l - pointer to library
+	desc - pointer to descriptor
+	where - custom delete command (SQL)
+	
+	Example:
+	
+	sqllib->DeleteWhere( sqllib, UserTDesc, " name like '%Test%' );
+	
+	sqllib - pointer to library
+	UserTDesc - pointer to user database descriptor
+	where - custom SQL command which will be provided to SQL delete call afeter "where" word
+
+more soon.....

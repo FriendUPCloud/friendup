@@ -100,7 +100,9 @@ static const char *DefaultDictionaryMessages[] =
 "Connection not found",
 "Connection deleted",
 "Cannot delete connection. Internal error: %d",
-"Connection with that name already exist"
+"Connection with that name already exist",
+"Cannot allocate memory for DOSToken",
+"Cannot add token to list"
 };
 
 /**
@@ -125,7 +127,7 @@ Dictionary * DictionaryNew( SQLLibrary *mysqllib )
 		int entry = 0;
 		DictEntry *locdic = d->d_DictList = mysqllib->Load( mysqllib, DictionaryDesc, " Language='ENG' ORDER BY DictID", &(d->d_Entries) );
 	
-		d->d_Msg = FMalloc( DICT_MAX * sizeof(char *) );
+		d->d_Msg = FCalloc( DICT_MAX, sizeof(char *) );
 		
 		for( i = 0 ; i < DICT_MAX ; i++ )
 		{
@@ -168,7 +170,10 @@ void DictionaryDelete( Dictionary* d )
 	if( d != NULL )
 	{
 		FFree( d->d_Msg );
+		
 		DictEntryDeleteAll( d->d_DictList );
+		
+		FFree( d );
 	}
 }
 
@@ -182,11 +187,17 @@ void DictEntryDelete( DictEntry* d )
 	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	if( d != NULL )
 	{
-		if( d->de_Lang )
+		if( d->de_Lang != NULL )
 		{
 			FFree( d->de_Lang );
+		}
+		
+		if( d->de_Message != NULL )
+		{
 			FFree( d->de_Message );
 		}
+		
+		FFree( d );
 	}
 }
 

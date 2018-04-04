@@ -1,0 +1,71 @@
+FriendCore usage
+----------------
+
+
+Introduction
+------------
+
+FriendCore can be used in many different ways. This is so that developers and
+users can access its powerful features and functions in various different ways.
+Primarily, access to FriendCore is granted through:
+
+ * HTTP
+ * Shared memory (SHM)
+ * Libraries
+
+Preliminary - configuration
+---------------------------
+
+When installing Friend Core, a build folder is created in the source code 
+archive. Here, a config file must be created. This is done at the root path:
+
+ * cfg/db.ini
+ 
+Please look for the document: db.init.example for the correct formatting of
+the config file. The config file uses a standard .ini format.
+
+The configuration file is required to have access to the MySQL database 
+containing user information. This one needs to be setup before FriendCore can
+function properly as an application server and access node.
+
+FriendUP uses subdomains to properly sandbox its running applications. This is
+handled by having at least one subdomain (ex. utilities.localhost) added to the
+main domain. When setting up Friend Core for running the web desktop, make sure
+to have this extra subdomain setup from the start, as many utilities will
+require it.
+
+Usage with HTTP
+---------------
+
+When using FriendCore through HTTP, it behaves as a web server. You have some
+public access areas (like web sites, templates and javascripts), and you have
+resources and functionality that requires a user account.
+
+Because most people will use FriendCore through HTTP as a developer, specificly
+in relation to this document, we will describe the authentication process first.
+
+When logging into FriendCore, you need to make sure you have a user account. 
+There are modules for automatically registering new users, but as a primary
+rule of thumb, users are setup through a FriendCore super user account.
+
+Once you have found your username and password, you need to send this HTTP 
+request to Friend Core.
+
+ * http://localhost:6502/system.library/login?username=youruser&\
+ 	password=yourpass
+
+You can also post your variables through POST, or through a JSON raw post, 
+see below:
+
+{
+	"username": "youruser",
+	"password": "yourpass"
+}
+
+The server will reply with a JSON string, like below:
+
+{ 
+	"ErrorMessage": "0", 
+	"sessionid": "0b2ea5ec118eda3075bb3be7be9acf8231b924d2"
+}
+

@@ -35,11 +35,9 @@
  *
  * canvas: (object) the canvas to render into
  */
-
 Friend = window.Friend || {};
-Friend.Flags = Friend.Flags || {};
-TreeRenderStopOn = '';
-//TreeRenderStopOn = 'rendererOutput';
+treeRenderStopOn = '';
+treeMessageStopOn = '';
 
 /**
  * Tree engine constructor
@@ -52,7 +50,7 @@ TreeRenderStopOn = '';
  *								width: the width of the rendering area
  * 								height: the height of the rendering area
  *								renderer: (object) the name and properties of the renderer. This value will converted into an array of renderer properties in a next version.
- * 								... name: (string) the name of the renderer to use. Default: 'RendererThree2D'
+ * 								... name: (string) the name of the renderer to use. Default: 'Renderer_Three2D'
  *								... camera: (string) the name of the camera class to use, default is 'perspective', other value can be 'orthogonal'.
  * 								... renderZ: (boolean) set to true to render the content Z-map instead of the picture
  * 								... zBoxed: (boolean) if Z-map, will display square boxes iinstead of the sahpe of the items
@@ -60,52 +58,63 @@ TreeRenderStopOn = '';
  * 								... other flags are not stable yet.
  *  
  */
-Friend.Tree = function( application, flags )
+Friend.Tree = function( application, properties )
 {
 	var self = this;
 	Object.assign( this, Friend.Tree );
 
 	this.debugging = true;
-	flags.tree = this;
+	properties.tree = this;
 	this.application = application;
 	this.title = 'My Application';
 	this.caller = false;
 	this.interval = false;
 	this.xCenter = 0;
 	this.yCenter = 0;
-	this.perspective = 0;
-	this.adaptToCanvasSize = false;
-	this.keepProportions = false;
-	this.barColor = '#000000';
-	this.renderer = 'rendererThree2d';
-	this.VR = false;
-	this.className = 'Friend.Tree'; 
 	this.frameRate = -1;
+	this.className = 'Friend.Tree'; 
 	this.resizeMode  = 'keepProportions';
-	this.utilities = new Friend.Utilities( flags );
-	this.errorLevel = Friend.Flags.ERRORLEVEL_NONE;
+	this.errorLevel = Friend.Tree.ERRORLEVEL_NONE;
 	this.width = 0;
 	this.height = 0;
 	this.userName = false;
-	this.utilities.setFlags( this, flags );
+	this.utilities = new Friend.Tree.Utilities( properties );
+	this.utilities.setFlags( this, properties );
 	this.postProcesses = [ ];
 	this.tabIndex = 0;
 	this.originalWidth = this.width;
 	this.originalHeight = this.height;
 
 	// Initialize components
-	flags.utilities = this.utilities;
-	this.resources = new Friend.Resources.Manager( flags );
-	flags.resources = this.resources;
-	this.controller = new Friend.Game.Controller( flags );
-	flags.controller = this.controller;
-	this.renderZ = flags.renderer.renderZ;
-	if ( typeof flags.renderer != 'undefined' && Friend.Renderers.length )
-		this.renderer = new Friend.Renderers[ flags.renderer.name ]( flags );
-	else
-		this.renderer = new Friend.Renderers.RendererThree2D( flags );
-	flags.renderer = this.renderer;
+	properties.utilities = this.utilities;
+	this.resources = new Friend.Resources.Manager( properties );
+	properties.resources = this.resources;
+	this.events = new Friend.Tree.Events( this, {} );
+	properties.events = this.events;
 
+	// Renderers initialization
+	this.renderers = [];
+	if ( typeof properties.renderers != 'undefined' )
+	{
+		for ( var r = 0; r < properties.renderers.length; r++ )
+		{
+			var rendererDef = properties.renderers[ r ];
+			var renderer = Friend.Renderers[ rendererDef.name ];
+			if ( renderer )
+			{
+				var newProperties = renderer.defaultProperties;
+				this.utilities.setFlags( newProperties, rendererDef.properties );
+				this.renderers.push( new renderer( newProperties, properties ) );
+			}
+		}
+	}
+	else
+	{
+		var newProperties = Friend.Renderers.Renderer_HTML.defaultProperties;
+		this.renderers.push( new Friend.Renderers.Renderer_HTML( newProperties, properties ) );
+	}
+
+	// Local initialization (TODO: clean!)
 	this.zoomX = 1;
 	this.zoomY = 1;
 	this.zoomY = 1;
@@ -113,22 +122,14 @@ Friend.Tree = function( application, flags )
 	this.y = 0;
 	this.drawBar = false;
 	this.debugKeyDown = false;
-	/*if ( this.adaptToCanvasSize )
-	{
-		var body = document.getElementsByTagName( "body")[0];
-		body.onresize = onBodyResize;
-		if ( this.VR )
-			this.keepProportions = false;
-	}
-	*/
 	this.identifierCount = 0;
 	this.trees = [ ];
 	this.timePreviousRefresh = new Date().getTime();
 	this.timeAverage = 0;
-
 	this.refreshCount = 0;
 	this.refresh = true;
 	this.running = false;
+	this.loopCount = 0;
 	this.clear();
 	this.update = callUpdate;
 
@@ -136,11 +137,14 @@ Friend.Tree = function( application, flags )
 	function callUpdate()
 	{
 		// Check mutex
-		if ( !self.updating && !self.renderer.updating )
+		var mutex = false;
+		for ( var r = 0; r < self.renderers.length; r++ )
+			mutex |= self.renderers[ r ].updating;
+		if ( !self.updating && !mutex )
 		{
 			self.updating = true;
 			self.timeCount = 0;
-			var tempTree = self.currentTree;
+			self.loopCount++;
 
 			// Calculates delays before previous loop
 			var delay;
@@ -152,17 +156,14 @@ Friend.Tree = function( application, flags )
 			// Calculates the FPS
 			self.timeAverage = ( self.timeAverage + self.delayPreviousUpdate ) / 2;
 			self.fps = Math.floor( 1000 / self.timeAverage );
-
+			
 			// Call the processes of the trees
 			for ( var t = 0; t < self.trees.length; t ++ )
 			{
-				self.handleAddItem( self.trees[ t ] );
 				self.handleDestroy( self.trees[ t ] );
-				self.processTree( self.trees[ t ], delay );
+				self.checkTemporaryFunctions( self.trees[ t ] );
+				self.processTreeRefresh( self.trees[ t ], delay );
 			}
-
-			// Extra work
-			self.handlePostProcesses( delay );
 
             // Render all trees
 			var refresh = false;
@@ -176,14 +177,14 @@ Friend.Tree = function( application, flags )
 					refresh = true;
                 }
             }
-			if ( refresh )
-				self.renderer.postProcess();
+
+			// Extra work
+			self.handlePostProcesses( delay );
 
 			// Free mutex
-			self.currentTree = tempTree;
 			self.updating = false;
 
-			if ( self.frameRate <= 0 )
+			if ( self.intervalHandle == 'vbl' )
 				window.requestAnimationFrame( callUpdate );
 		}
 	}
@@ -196,200 +197,350 @@ Friend.Tree = function( application, flags )
 	};
 	function onResize()
 	{
-		self.renderer.resize( window.innerWidth, window.innerHeight, self.originalWidth, self.originalHeight, self.resizeMode );
-		self.width = self.renderer.width;
-		self.height = self.renderer.height;
+		for ( var r = 0; r < self.renderers.length; r++ )
+			self.renderers[ r ].resize( window.innerWidth, window.innerHeight );
+		for ( var t = 0; t < self.trees.length; t++ )
+		{
+			self.trees[ t ].width = window.innerWidth;
+			self.trees[ t ].height = window.innerHeight;
+			self.sendMessageToTree( self.trees[ t ], { command: 'resize', type: 'system', width: window.innerWidth, height: window.innerHeight } );
+		}
 		self.refreshTree();
 	}
 	return true;
 };
 
+
 /**
  * Constants
  */
 // Trigonometry
-Friend.Flags.DEGREETORADIAN = 3.141592653589793 / 180;
-// Keep coordinates
-Friend.Flags.FLAG_KEEPX = 0x00000001;
-Friend.Flags.FLAG_KEEPY = 0x00000002;
+Friend.Tree.DEGREETORADIAN = 3.141592653589793 / 180;
 // Flags
-Friend.Flags.FLAG_SETANGLE = 0x00000004;
-Friend.Flags.FLAG_SETX = 0x00000008;
-Friend.Flags.FLAG_SETY = 0x00000010;
+Friend.Tree.FLAG_SETANGLE = 0x00000004;
+Friend.Tree.FLAG_SETX = 0x00000008;
+Friend.Tree.FLAG_SETY = 0x00000010;
 // Non initialised values
-Friend.Flags.NOTINITIALIZED = 0x80000001;
-Friend.Flags.NOTINITIALIZED2 = 0x80000002;
+Friend.Tree.NOTDEFINED = 0x80000001;
+Friend.Tree.NOTINITIALIZED = 0x80000001;
+Friend.Tree.NOTINITIALIZED2 = 0x80000002;
+Friend.Tree.UPDATED = 0x80000004;
 // Hotspot definitions
-Friend.Flags.HOTSPOT_LEFTTOP = 1;
-Friend.Flags.HOTSPOT_CENTERTOP = 2;
-Friend.Flags.HOTSPOT_RIGHTTOP = 3;
-Friend.Flags.HOTSPOT_LEFTCENTER = 4;
-Friend.Flags.HOTSPOT_CENTER = 5;
-Friend.Flags.HOTSPOT_RIGHTCENTER = 6;
-Friend.Flags.HOTSPOT_LEFTBOTTOM = 7;
-Friend.Flags.HOTSPOT_CENTERBOTTOM = 8;
-Friend.Flags.HOTSPOT_RIGHTBOTTOM = 9;
-Friend.Flags.DIRECTION_LEFT = 0;
-Friend.Flags.DIRECTION_RIGHT = 1;
-Friend.Flags.DIRECTION_UP = 2;
-Friend.Flags.DIRECTION_DOWN = 3;
-Friend.Flags.DIAGONAL_TOPLEFT_BOTTOMRIGHT = 0x00000001;
-Friend.Flags.DIAGONAL_TOPRIGHT_BOTTOMLEFT = 0x00000002;
-Friend.Flags.ERRORLEVEL_ALL = 0;
-Friend.Flags.ERRORLEVEL_LOW = 10;
-Friend.Flags.ERRORLEVEL_MEDIUM = 20;
-Friend.Flags.ERRORLEVEL_HIGH = 30;
-Friend.Flags.ERRORLEVEL_BREAK = 100;
-Friend.Flags.ERRORLEVEL_NONE = 100000;
+Friend.Tree.HOTSPOT_LEFTTOP = 1;
+Friend.Tree.HOTSPOT_CENTERTOP = 2;
+Friend.Tree.HOTSPOT_RIGHTTOP = 3;
+Friend.Tree.HOTSPOT_LEFTCENTER = 4;
+Friend.Tree.HOTSPOT_CENTER = 5;
+Friend.Tree.HOTSPOT_RIGHTCENTER = 6;
+Friend.Tree.HOTSPOT_LEFTBOTTOM = 7;
+Friend.Tree.HOTSPOT_CENTERBOTTOM = 8;
+Friend.Tree.HOTSPOT_RIGHTBOTTOM = 9;
+Friend.Tree.DIRECTION_UP = 0;
+Friend.Tree.DIRECTION_DOWN = 1;
+Friend.Tree.DIRECTION_LEFT = 2;
+Friend.Tree.DIRECTION_RIGHT = 3;
+Friend.Tree.DIAGONAL_TOPLEFT_BOTTOMRIGHT = 0x00000001;
+Friend.Tree.DIAGONAL_TOPRIGHT_BOTTOMLEFT = 0x00000002;
+Friend.Tree.ERRORLEVEL_NONE = 0;
+Friend.Tree.ERRORLEVEL_LOW = 10;
+Friend.Tree.ERRORLEVEL_MEDIUM = 20;
+Friend.Tree.ERRORLEVEL_HIGH = 30;
+Friend.Tree.ERRORLEVEL_BREAK = 100;
+Friend.Tree.ERRORREPORT_VERBOSE = 0;
+Friend.Tree.ERRORREPORT_HIGH = 10;
+Friend.Tree.ERRORREPORT_MEDIUM = 20;
+Friend.Tree.ERRORREPORT_LOW = 30;
+Friend.Tree.ERRORLEVEL_BREAK = 100;
+
+// Reserved process and message commands.
+///////////////////////////////////////////////////////////////////
+Friend.Tree.reservedCommands = 
+{
+	create: true,
+	destroy: true
+};
 
 // Processes all the items of the tree
-Friend.Tree.processTree = function( tree, delay, flags )
+Friend.Tree.processTreeRefresh = function( tree, delay )
 {
-	// Handles temporary properties for this item
-	this.checkTemporaryFunctions( tree );
-
 	// Call the processes of the tree, starting with the root
-	if ( !flags )
-		flags = {};
-	this.currentTree = tree;
-	this.processItem( tree, delay, flags );
+	var message = {	command: 'refresh', type: 'refresh', delay: delay };
+	this.sendMessageToTree( tree, message );
 };
-Friend.Tree.processItem = function( item, delay, flags )
+Friend.Tree.sendMessageToTree = function( tree, message )
 {
-	if ( item.active )
+	this.sendMessageToItem( tree, tree, message, true );
+};
+Friend.Tree.sendMessageToItem = function( tree, item, message, recursive )
+{
+	// Debugging entry
+	if ( window.treeMessageStopOn )
 	{
-		flags.delay = delay;
-		var commandFlags = false;
-		if ( flags.command )
-			commandFlags = Object.assign( {}, flags );
+		if ( item.name == window.treeMessageStopOn )
+		{
+			if ( item.root && item.root.keymap[ 66 ] )	// 'B'
+				debugger;
+		}
+	}
 
-		// Calls the processUp of the item
-		if ( item.processUp )
-			flags = item.processUp( commandFlags ? commandFlags : flags );
+	if ( item.active || message.type == 'system' )
+	{
+		var flag = false;	
+		switch ( message.type )
+		{
+			case 'system':
+				flag = true;
+				break;
+			case 'renderItemToItem':
+				if ( !item.toDestroy )
+					flag = true;
+				break;
+		}
+		if ( !flag && tree.events[ message.type ] )
+		{
+			// The item has registered for this events
+			if ( tree.events[ message.type ][ item.identifier ] )
+			{
+				// And is not waiting to be destroyed
+				if ( !item.toDestroy )
+				{
+					if ( !item.modal || ( item.modal && message.command == 'mouseleave' ) )
+						flag = true;
+				}
+			}
+		}
+		if ( flag ) 
+		{
+			var localMessage = Object.assign( {}, message );
+	
+			// Calls the messageUp of the item
+			if ( item.messageUp( localMessage ) )
+			{
+				// Calls the processUp function of the processes one after the other, storing them in a pile
+				var pile = [];
+				var process = item.processes;
+				while( process )
+				{
+					process.processUp( localMessage );
+					pile.push( process );
+					process = process.processes;
+				}
+		
+				// Calls the messageDown in reverse order
+				for ( var p = pile.length - 1; p >= 0; p-- )
+					pile[ p ].processDown( localMessage );
+		
+				// Calls the messageDown of the item
+				item.messageDown( localMessage );
+			}
+			// TODO: eventually stop recursive if refusal of message
+		}
 
+		// Call the processes of the subitems
+		if ( recursive || message.recursive )
+		{
+			for ( var i = 0; i < item.items.length; i++ )
+			{
+				if ( item.items[ i ] )
+					this.sendMessageToItem( tree, item.items[ i ], message, recursive );
+			}
+		}
+	}
+};
+Friend.Tree.sendResizeMessageToItem = function( item, width, height )
+{
+	var message =
+	{
+		command: 'resize',
+		type: 'system',
+		newWidth: width,
+		newHeight: height
+	}
+
+	// Calls the messageUp of the item
+	if ( item.messageUp( message ) )
+	{
+		// Pokes width and height + refresh
+		message.width = width;
+		message.height = height;
+		message.refresh = true;
+		
 		// Calls the processUp function of the processes one after the other, storing them in a pile
 		var pile = [];
 		var process = item.processes;
 		while( process )
 		{
-			flags = process.processUp( commandFlags ? commandFlags : flags );
+			process.processUp( message );
 			pile.push( process );
 			process = process.processes;
 		}
 
-		// Calls the processDown in reverse order
+		// Calls the messageDown in reverse order
 		for ( var p = pile.length - 1; p >= 0; p-- )
-			flags = pile[ p ].processDown( commandFlags ? commandFlags : flags );
+			pile[ p ].processDown( message );
 
-		// Calls the processDown of the item
-		if ( item.processDown )
-			flags = item.processDown( commandFlags ? commandFlags : flags );
-
-		// Call the processes of the subitems
-	    for ( var i = 0; i < item.items.length; i++ )
-			flags = this.processItem( item.items[ i ], delay, commandFlags ? commandFlags : {} );
+		// Calls the messageDown of the item
+		item.messageDown( message );
 	}
-	return flags;
+
+	// Calls all renderItems.onResize
+	for ( var ri = 0; ri < item.renderItems.length; ri++ )
+	{
+		var renderItem = item.renderItems[ ri ];
+		renderItem.width = width;
+		renderItem.height = height;
+		if ( renderItem.onResize )
+			renderItem.onResize( width, height );
+			
+		renderItem.renderer.onResize( renderItem, width, height ); 
+	}
+
+	// Mark tree to redraw
+	item.root.refreshAll = true;
+	item.root.refresh = true;	
 };
+
 // Render a tree with added flags
-Friend.Tree.renderTree = function( tree, baseFlags )
+Friend.Tree.renderTree = function( tree, baseProperties )
 {
-    this.currentTree = tree;
+	var renderer;
+	for ( var r = 0; r < this.renderers.length; r++ )
+	{		
+		renderer = this.renderers[ r ];
 
-	// Prepare the renderer
-	baseFlags.perspective = tree.perspective;
-	baseFlags.xCenter = tree.xCenter;
-	baseFlags.yCenter = tree.yCenter;
-	var flags = this.renderer.getRenderFlags( baseFlags );
-	this.renderer.renderStart( flags );
+		// Prepare the renderer
+		var properties = Object.assign( {}, baseProperties );
+		var rendererProperties = renderer.getRenderFlags( properties );
+		rendererProperties.renderer = renderer;
+		renderer.renderStart( rendererProperties );
 
-	// Rendering
-	if ( tree.refreshCount == 0 || tree.refreshAll )
-	{
-		tree.refreshAll = false;
-		this.renderItem( tree, flags );
-	}
-	else
-	{
-		// Fast rendering, only the items and sub items that need to be refreshed
-		for ( var i in tree.refreshList )
+		// Rendering
+		if ( tree.refreshCount == 0 || tree.refreshAll )
 		{
-			if ( tree.refreshList[ i ] )
+			this.renderItem( tree, rendererProperties );
+		}
+		else
+		{
+			// Fast rendering, only the items and sub items that need to be refreshed
+			for ( var i in tree.refreshList )
 			{
-				this.renderItemFast( tree.refreshList[ i ], flags );
+				if ( tree.refreshList[ i ] )
+				{
+					this.renderItemFast( tree.refreshList[ i ], rendererProperties );
+				}
 			}
 		}
+
+		// End rendering of this tree for this renderer
+		renderer.renderEnd( rendererProperties );
 	}
-	
-	// End rendering of this tree
-	this.renderer.renderEnd( flags );
 
 	// Count the refreshes
+	tree.refreshAll = false;
 	tree.refreshCount++;
 	tree.refreshList = {};
 };
 // Render an item and its sub items
-Friend.Tree.renderItemFast = function( item, flags, render )
+Friend.Tree.renderItemFast = function( item, properties, render )
 {
 	// Debugging entry
-	if ( window.TreeRenderStopOn )
+	if ( window.treeRenderStopOn )
 	{
-		if ( item.name == window.TreeRenderStopOn )
+		if ( item.name == window.treeRenderStopOn )
 		{
-			// debugger;
+			debugger;
 		}
 	}
+	for ( var r = 0; r < item.renderItems.length; r++ )
+	{		
+		var itemProperties;
+		var renderItem = item.renderItems[ r ];
+		if ( renderItem.renderer == properties.renderer )
+		{
+			// Transmit values to the renderItem
+			renderItem.x = item.x;
+			renderItem.y = item.y;
+			renderItem.z = item.z;
+			renderItem.rotation = item.rotation;
 
-	if ( item.renderUp )
-	{
-		var rFlags = flags.renderer.renderUpFast( flags, item );
-		flags = rFlags;
-	}
-	if ( flags )
-	{
-		if ( item.renderUp )
-        	flags = item.renderUp( flags );
-	    for ( var i = 0; i < item.items.length; i++ )
-		{
-			flags = this.renderItem( item.items[ i ], flags );
+			var itemProperties = properties.renderer.renderUpFast( properties, renderItem );
+			if ( itemProperties )
+			{
+				// Render the item
+				itemProperties = renderItem.render( itemProperties );
+
+				// Draws the rendererItem
+				properties.renderer.renderIt( itemProperties, renderItem )
+
+				// Render the sub-items? (TODO: WHAT?)
+				for ( var i = 0; i < item.items.length; i++ )
+					itemProperties = this.renderItem( item.items[ i ], itemProperties );
+
+				itemProperties = properties.renderer.renderDownFast( itemProperties, renderItem );
+
+				return itemProperties;
+			}
+			else
+			{
+				Friend.Tree.log( item, { infos: 'Fast renderer flags not found...', level: Friend.Tree.ERRORLEVEL_BREAK } );
+			}
 		}
-		flags = item.renderDown( flags );
-		flags = flags.renderer.renderDownFast( flags, item );
 	}
-	else
-	{
-		Friend.Tree.log( item, { infos: 'Fast renderer flags not found...', level: Friend.Flags.ERRORLEVEL_CRITICAL } );
-	}
-    return flags;
 };
 
 // Render an item and its sub items
-Friend.Tree.renderItem = function( item, flags, render )
+Friend.Tree.renderItem = function( item, properties, render )
 {
 	// Debugging entry
-	if ( window.TreeRenderStopOn )
+	if ( window.treeRenderStopOn )
 	{
-		if ( item.name == window.TreeRenderStopOn )
+		if ( item.name == window.treeRenderStopOn )
 		{
-			//debugger;
+			debugger;
 		}
 	}
 
-    if ( item.renderUp )
+	// Call only the good ones for this very renderer
+	if ( item.renderItems.length )
 	{
-		flags = flags.renderer.renderUp( flags, item );
-        flags = item.renderUp( flags );
+		for ( var r = 0; r < item.renderItems.length; r++ )
+		{		
+			var renderItem = item.renderItems[ r ];
+			if ( renderItem.renderer == properties.renderer )
+			{
+				// Transmit basic data to the renderItem
+				renderItem.x = item.x;
+				renderItem.y = item.y;
+				renderItem.z = item.z;
+				renderItem.rotation = item.rotation;
+				renderItem.width = item.width;
+				renderItem.height = item.height;
+
+				// Prepare renderer for item
+				properties = properties.renderer.renderUp( properties, renderItem );
+				
+				// Draws the item
+				renderItem.render( properties );
+
+				// Draws the rendererItem
+				properties.renderer.renderIt( properties, renderItem )
+
+				// Draw the sub items
+				for ( var i = 0; i < item.items.length; i++ )
+					properties = this.renderItem( item.items[ i ], properties );
+				
+				// Undo all modifications
+				properties = properties.renderer.renderDown( properties, renderItem );
+			}
+		}
 	}
-    for ( var i = 0; i < item.items.length; i++ )
+	else
 	{
-		flags = this.renderItem( item.items[ i ], flags );
+		// Draw the sub items
+		for ( var i = 0; i < item.items.length; i++ )
+			properties = this.renderItem( item.items[ i ], properties );
 	}
-	if ( item.renderUp )
-    {
-	    flags = item.renderDown( flags );
-		flags = flags.renderer.renderDown( flags, item );
-	}
-    return flags;
+	return properties;
 };
 Friend.Tree.getSubItemsIdentifiers = function( item, result )
 {
@@ -438,6 +589,23 @@ Friend.Tree.addRefresh = function( item )
 			tree.refreshList[ item.identifier ] = item;
 		}
 	}
+};
+/**
+ * FindTreeFromName
+ * 
+ * Returns the root of the tree with the same name
+ * 
+ */
+Friend.Tree.findTreeFromName = function( name )
+{
+	for ( var t = 0; t < this.trees.length; t++ )
+	{
+		if ( this.trees.name == name )
+		{
+			return this.trees[ t ];
+		}
+	}
+	return null;
 };
 
 /**
@@ -617,7 +785,7 @@ Friend.Tree.getNewIdentifier = function ( text )
 		userName = Application.username;
 	else
 		userName = this.userName;
-	return userName + '<userseparator>' + text + this.identifierCount++;
+	return userName + '<|>' + text + this.identifierCount++;
 };
 
 /**
@@ -629,114 +797,107 @@ Friend.Tree.getNewIdentifier = function ( text )
  * You can start the new tree with the 'start' function.
  * This function also initialise a new empty tree ready to welcome items.
  */
-Friend.Tree.clear = function ()
-{
-	this.trees = [ ];
-	this.renderer.clear();
-	if ( this.intervalHandle )
-	{
-		clearInterval( this.intervalHandle );
-		this.intervalHandle = false;
-	}
-	this.updating = false;
-	this.currentTree =
-	{
-		allItems: {},
-		destroyList: {},
-		addList: [],
-		temporaryFunctions: [],
-		refreshList: {},
-		refreshCount: 0,
-		refresh: true,
-		zoomX: 1,
-		zoomY: 1,
-		xCenter: 0,
-		yCenter: 0,
-		perspective: 0,
-	}
-};
-
-/**
- * Starts a tree
- * 
- * Call this function once your tree is ready to start living.
- */
-Friend.Tree.start = function()
-{
-	// Branches updating if not already working
-	if ( !this.intervalHandle )
-	{
-		if ( this.frameRate <= 0 )
-		{
-			this.intervalHandle = requestAnimationFrame( this.update );
-		}
-		else
-		{
-			this.intervalHandle = setInterval( this.update, 1000 / this.frameRate );
-		}		
-	}
-	// Refreshes all the trees
-	this.refreshTree();
-};
-
-// addTree
-// Adds an item to a tree
-Friend.Tree.addTree = function ( tree, flags )
+Friend.Tree.initRoot = function ( tree )
 {
 	tree.allItems = {};
 	tree.destroyList = {};
 	tree.addList = [];
 	tree.refreshList = [];
 	tree.temporaryFunctions = [];
+	tree.renderers = [];
+	tree.parent = null;
+	tree.root = tree;
+	tree.isRoot = true;
 	tree.refreshCount = 0;
 	tree.refresh = true;
-	tree.xCenter = 0;
-	tree.yCenter = 0;
-	tree.perspective = 0;
-	tree.zoomX = 1;
-	tree.zoomY = 1;
-	tree.VR = false;
-	tree.x = 0;
-	tree.y = 0;
-	tree.z = 0;
-	this.utilities.setFlags( tree, flags );
-	tree.parent = null;
-	tree.root = null;
-	tree.isRoot = true;
+	Friend.Tree.Events.initRoot( tree );
+};
+
+Friend.Tree.addTree = function ( tree )
+{
+	this.initRoot( tree );
 	this.trees.push( tree );
-	this.currentTree = tree;
 }
+
+Friend.Tree.start = function()
+{
+	// If still running
+	if ( this.intervalHandle && this.intervalHandle != 'vbl' )
+	{
+		clearInterval( this.intervalHandle );
+		this.intervalHandle = false;
+	}
+
+	// Branches updating if not already working
+	if ( this.frameRate <= 0 )
+	{
+		if ( !this.intervalHandle )
+		{
+			console.log( 'RequesAnimationFrame!' );
+			requestAnimationFrame( this.update );
+			this.intervalHandle = 'vbl';
+		}
+	}
+	else
+		this.intervalHandle = setInterval( this.update, 1000 / this.frameRate );
+
+	// Refreshes all the trees
+	this.refreshTree();
+};
+
+Friend.Tree.clear = function ()
+{
+	this.trees = [ ];
+	for ( var r = 0; r < this.renderers.length; r++ )
+		this.renderers[ r ].clear();
+	if ( this.intervalHandle )
+	{
+		clearInterval( this.intervalHandle );
+		this.intervalHandle = false;
+	}
+	this.updating = false;
+};
+
 Friend.Tree.addItem = function ( item, parent )
 {
 	// Add object to global list of objects
 	var tree = item.root;
 	if ( tree && tree.allItems )
+	{
 		tree.allItems[ item.identifier ] = item;
+		//item.root.addList.push( { item: item, parent: parent } );
+	}
 	else
-		this.currentTree.allItems[ item.identifier ] = item
-
-	// Add object to creation list
-	item.root.addList.push( { item: item, parent: parent } );
+	{
+		Friend.Tree.log( item, { level: Friend.Tree.ERRORLEVEL_HIGH, error: 'Additem, root not defined.' } );
+	}
 };
-Friend.Tree.handleAddItem = function ( tree )
+
+// Pass on modal all the items up to an item
+Friend.Tree.setModal = function ( item, flag )
 {
-	// Adds to parent items
-	for ( var i = 0; i < tree.addList.length; i++ )
-	{
-		var list = tree.addList[ i ];
-		list.parent.addItem( list.item );
-	}
+	// Find the path to the root + 1
+	var parent = item.parent;
+	while( parent.parent != item.root )	
+		parent = parent.parent;
 
-	// If modal, set it!
-	for ( i = 0; i < tree.addList.length; i++ )
-	{
-		var item = tree.addList[ i ].item;
-		if ( item.modal )
-			item.startModal();
-	}
+	// All to modal
+	item.isModal = true;
+	this.doModal( parent, item, flag );
+}
+Friend.Tree.doModal = function ( item, modalRoot, flag )
+{	
+	// The item itself
+	item.modal = flag;
 
-	// No more list!
-	tree.addList = [];
+	// All its children BUT the one that keeps focus
+	for ( var i = 0; i < item.items.length; i++ )
+	{
+		if ( item.items[ i ] != modalRoot )
+		{
+			this.doModal( item.items[ i ], modalRoot, flag );
+		}
+	}
 };
 
 // 
@@ -754,111 +915,104 @@ Friend.Tree.addToDestroy = function ( item )
 // Called at the end of the frame, destroys the items from the list
 Friend.Tree.destroyItem = function ( item, tree )
 {	
+	// Sends a 'destroy' message to the whole Tree
+	var message =
+	{
+		command: 'destroy',
+		type: 'system',
+		itemEvent: item,
+		name: item.name
+	}
+	this.sendMessageToTree( tree, message );
+	
 	// Stops this item
 	item.active = false;
 
-	// Clear the item
-	if ( item.onDestroy )
-		item.onDestroy();
-		
 	// Removes from fast access table
 	tree.allItems[ item.identifier ] = false;
 
-	// Removes from renderer
-	this.renderer.destroy( item );
+	// Remove from the events
+	this.events.cancelAllEvents( item );
+
+	// Remove from parent
+	if ( item.parent )
+	{
+		for ( var i = 0; i < item.parent.items.length; i++ )
+		{
+			if ( item.parent.items[ i ] == item )
+			{
+				item.parent.items[ i ] = false;
+				break;
+			}
+		}
+	}
+
+	// Destroys the renderItems
+	for ( var r = 0; r < item.renderItems.length; r++ )
+		item.renderItems[ r ].onDestroy();
 
 	// Recursive call for subItems
 	for ( var i = 0; i < item.items.length; i++ )
 		this.destroyItem( item.items[ i ], tree );
-
-	// A callback?
-	if ( item.onDestroyCallback )
-	{
-		var func = item.onDestroyCallback;
-		item.onDestroyCallback = null;
-		func();
-	}
 };
 Friend.Tree.handleDestroy = function ( tree )
 {
-	for ( var i in tree.destroyList )
+	var i, callback;	
+	for ( i in tree.destroyList )
+		break;
+	if ( typeof i != 'undefined' )
 	{
-		var item = tree.destroyList[ i ];
+		// Indicates 'start of destroy' to the renderers
+		for ( var r = 0; r < this.renderers.length; r++ )
+			this.renderers[ r ].startDestroy();
 
-		// If item is modal, restart the other items
-		item.stopModal();
-
-		// Removes from renderer
-		this.renderer.startDestroy();
-		this.destroyItem( item, tree );
-		this.renderer.endDestroy();
-
-		// Cleans the tree list of all items
-		tree.allItems = this.utilities.cleanArray( tree.allItems );
-
-		// Removes from the processes
-		for ( var p = 0; p < this.postProcesses.length; p ++ )
+		for ( i in tree.destroyList )
 		{
-			if ( this.postProcesses[ p ].destroyItem )
-				this.postProcesses[ p ].destroyItem( item );
-		}
+			var item = tree.destroyList[ i ];
 
-		// Something to refresh!
-		tree.refresh = true;
-		tree.refreshAll = true;		// TODO: remove when you know why some object do not disappear
+			// A callback? Store!
+			if ( item.onDestroyCallback )
+				callback = item.onDestroyCallback;
+
+			// If item is modal, restart the other items
+			if ( item.isModal )
+				this.setModal( item, false );
+
+			// Destroys the item and its sub-items
+			this.destroyItem( item, tree );
+
+			// Cleans the parent items array
+			var newItems = [];
+			for ( var i = 0; i < item.parent.items.length; i++ )
+			{
+				if ( item.parent.items[ i ] )
+					newItems.push( item.parent.items[ i ] );
+			}
+			item.parent.items = newItems;
+
+			// Cleans the tree list of all items
+			tree.allItems = this.utilities.cleanArray( tree.allItems );
+
+			// Removes from the post-processes
+			for ( var p = 0; p < this.postProcesses.length; p ++ )
+			{
+				if ( this.postProcesses[ p ].destroyItem )
+					this.postProcesses[ p ].destroyItem( item );
+			}
+
+			// Something to refresh!
+			tree.refresh = true;
+			tree.refreshAll = true;		// TODO: remove when you know why some object do not disappear
+		}
+		// 'end of destroy' to renderers
+		for ( var r = 0; r < this.renderers.length; r++ )
+			this.renderers[ r ].endDestroy();
 	}
 	tree.destroyList = {};
+	if ( callback )
+		callback();
 	return true;
 };
-
-
-//
-//
-// Item search and query functions
-//
-///////////////////////////////////////////////////////////////////////////////
-
-/**
- * Finds an item from its name
- * 
- * @param {string} name  The name of the object to find
- * @param {object} tree  The root of the search. 
- * 						 Can be a the first item of a tree (it's root) or any item which is the start of a branch.
- * 						 If not specified, the search is conducted in the current tree.
- * @return {object}		 The item if found.
- * 						 null if not found.
- */
-Friend.Tree.findItemFromName = function ( name, tree )
-{
-	if ( ! tree )
-		tree = this.currentTree;
-	for ( var i in tree.allItems )
-	{
-		if ( tree.allItems[ i ].name == name )
-			return tree.allItems[ i ];
-	}
-	return null;
-}
-
-/**
- * Finds an item from its identifier
- * 
- * @param {string} identifier  	The identifier of the object to find
- * @param {object} tree  		The root of the search. 
- * 						 		Can be a the first item of a tree (it's root) or any item which is the start of a branch.
- * 								If not specified, the search is conducted in the current tree.
- * @return {object}		 		The item if found.
- * 						 		null if not found.
- */
-Friend.Tree.findItem = function ( identifier, tree )
-{
-	if ( !tree )
-		tree = this.currentTree;
-	if ( tree.allItems[ identifier ] )
-		return tree.allItems[ identifier ];
-	return null;
-}
-
 
 
 //
@@ -944,7 +1098,7 @@ Friend.Tree.handlePostProcesses = function ( delay )
 *                      ...result flags will be sibbling flags THEN updated by merge -> the tree can 
 *                      ...have different but similar creation information
 *                  },
-*                  flags: '<!--EVAL-->Friend.Utilities.MergeFlags( self.previousSibbling.identifier, self.creationFlags )'      // I <3 Javascript. Programmming on different levels at the same time...
+*                  flags: '<!--EVAL-->Friend.Tree.Utilities.MergeFlags( self.previousSibbling.identifier, self.creationFlags )'      // I <3 Javascript. Programmming on different levels at the same time...
 *              ]
 *          }
 *      }
@@ -987,13 +1141,13 @@ Friend.Tree.recreateTreeEntry = function ( jsonDescriptionOrArray, parentItem )
 			return null;
 		}
 	}
-	else if ( Friend.Utilities.isArray( jsonDescriptionOrArray ) )
+	else if ( Friend.Tree.Utilities.isArray( jsonDescriptionOrArray ) )
 	{
 		description = jsonDescriptionOrArray;
 	}
 	if ( !description )
 	{
-		Friend.Tree.log( callerItem, { message: 'recreateTree error, bad type of parameter 1.', level: Friend.Flags.ERRORLEVEL_HALT } );
+		Friend.Tree.log( callerItem, { message: 'recreateTree error, bad type of parameter 1.', level: Friend.Tree.ERRORLEVEL_BREAK } );
 		return null;	
 	}
 
@@ -1036,7 +1190,7 @@ Friend.Tree.recreateTreeEntry = function ( jsonDescriptionOrArray, parentItem )
 								}
 								catch( e )
 								{
-									Friend.Tree.log( callerItem, { message: 'Friend.Tree.recreateTree: error in eval.', data: instructions, level: Friend.Flags.ERRORLEVEL_FATAL } );
+									Friend.Tree.log( callerItem, { message: 'Friend.Tree.recreateTree: error in eval.', data: instructions, level: Friend.Tree.ERRORLEVEL_BREAK } );
 									return null;
 								}
 							}
@@ -1112,7 +1266,7 @@ Friend.Tree.recreateTreeEntry = function ( jsonDescriptionOrArray, parentItem )
 		}
 		catch( e )
 		{
-			Friend.Tree.log( parentItem, { message: 'Friend.Tree.recreateTree error, cannot create item.', data: itemDescription.className, level: Friend.Flags.ERRORLEVEL_FATAL } );
+			Friend.Tree.log( parentItem, { message: 'Friend.Tree.recreateTree error, cannot create item.', data: itemDescription.className, level: Friend.Tree.ERRORLEVEL_BREAK } );
 			return null;
 		}
 
@@ -1135,7 +1289,7 @@ Friend.Tree.recreateTreeEntry = function ( jsonDescriptionOrArray, parentItem )
 				}
 				else
 				{
-					Friend.Tree.log( item, { message: 'Friend.Tree.recreateTree returned null.', data: destinationFlags, level: Friend.Flags.ERRORLEVEL_FATAL } );
+					Friend.Tree.log( item, { message: 'Friend.Tree.recreateTree returned null.', data: destinationFlags, level: Friend.Tree.ERRORLEVEL_BREAK } );
 					item = null;
 				}
 			}
@@ -1193,32 +1347,65 @@ Friend.Tree.loaded = false;
  */
 Friend.Tree.init = function( callback )
 {
+	var countToLoad = 0;
+	var countLoaded = 0;
 	var scriptList =
 	[
 		"/webclient/js/tree/renderers/three.js-master/build/three.js",
 		"/webclient/js/media/audio.js",
 		"/webclient/js/tree/engine/utilities.js",
 		"/webclient/js/tree/engine/resources.js",
+		"/webclient/js/tree/engine/events.js",
 		"/webclient/js/tree/engine/controller.js",
 		"/webclient/js/tree/engine/objects.js",
 		"/webclient/js/tree/engine/processes.js",
-		"/webclient/js/tree/engine/sounds.js",
-		"/webclient/js/tree/engine/treeshare.js",
-		"/webclient/js/tree/engine/network.js",
-		"/webclient/js/tree/renderers/rendererThree2D.js",
-		"/webclient/js/tree/game/gameMultiplayer.js",
-		"/webclient/js/tree/game/gameObjects.js",
-		"/webclient/js/tree/game/gameProcesses.js",
-		"/webclient/js/tree/interface/uiDialogs.js",
-		"/webclient/js/tree/interface/uiElements.js",
-		"/webclient/js/tree/interface/uiProcesses.js",
-		"/webclient/js/tree/debugger/debugItems.js"
+		"/webclient/js/tree/engine/renderItems.js",
+		"/webclient/js/tree/engine/fui.js",
+		"/webclient/js/tree/renderers/rendererUtilities.js",
+		"/webclient/js/tree/renderers/renderer_Three2D.js",
+		"/webclient/js/tree/renderers/renderer_HTML.js",
+		"/webclient/js/tree/renderers/renderer_Canvas2D.js",
+		"/webclient/js/tree/debug/debug.js",
+		"/webclient/js/tree/game/game.js",
+		"/webclient/js/tree/network/network.js",
+		"/webclient/js/tree/sounds/sounds.js",
+		"/webclient/js/tree/tree/treeLife.js",
+		"/webclient/js/tree/ui/ui.js",
 	];
+	
 	Friend.Tree.include( scriptList, function( response )
 	{
 		if ( response == 'OK' )
-			Friend.Tree.loaded = true;
-		callback( response );
+		{
+			// Load the various elements
+			countToLoad++;
+			Friend.Tree.Debug.init( oneMore );
+			countToLoad++;
+			Friend.Tree.Game.init( oneMore );
+			countToLoad++;
+			Friend.Tree.Network.init( oneMore );
+			countToLoad++;
+			Friend.Tree.Sounds.init( oneMore );
+			countToLoad++;
+			Friend.Tree.UI.init( oneMore );
+			countToLoad++;
+			Friend.Tree.initTreeLife( oneMore );
+
+			function oneMore( response )
+			{
+				if ( response == 'OK' )
+				{
+					countLoaded++;
+					if ( countLoaded == countToLoad )
+					{
+						Friend.Tree.Loaded = true;
+						callback( 'OK' );
+					}
+					return;
+				}	
+				callback( response );
+			}
+		}
 	} );
 };
 Friend = window.Friend || {};
@@ -1269,17 +1456,20 @@ Friend.Tree.include = function( scripts, callback, timeout )
 			if ( loaded == toLoad )
 			{
 				clearTimeout( handle );
-				callback( 'OK' );
+				if ( callback )
+					callback( 'OK' );
 			}
 		};
 		function onError()
 		{
 			clearTimeout( handle );
-			callback( 'Error' );
+			if ( callback )
+				callback( 'Error' );
 		};
 		function onTimeout()
 		{
-			callback( 'Timeout' );
+			if ( callback )
+				callback( 'Timeout' );
 		};
 		function getPath( path )
 		{
@@ -1313,21 +1503,21 @@ Friend.Tree.log = function( item, data )
 		if ( data.level )
 			level = data.level;
 		else
-			level = Friend.Flags.ERRORLEVEL_HIGH;
+			level = Friend.Tree.ERRORLEVEL_HIGH;
 
 		var levelName;
 		switch ( level )
 		{
-			case Friend.Flags.ERRORLEVEL_LOW:
+			case Friend.Tree.ERRORLEVEL_LOW:
 				levelName = 'low';
 				break;
-			case Friend.Flags.ERRORLEVEL_MEDIUM:
+			case Friend.Tree.ERRORLEVEL_MEDIUM:
 				levelName = 'medium';
 				break;
-			case Friend.Flags.ERRORLEVEL_HIGH:
+			case Friend.Tree.ERRORLEVEL_HIGH:
 				levelName = 'high';
 				break;
-			case Friend.Flags.ERRORLEVEL_BREAK:
+			case Friend.Tree.ERRORLEVEL_BREAK:
 				levelName = 'critical';
 				break;
 			default:
@@ -1343,7 +1533,7 @@ Friend.Tree.log = function( item, data )
 				for ( var i = 0; i < data.infos.length; i++ )
 					console.log( '- ', data.infos[ i ] );
 			}
-			if ( level >= Friend.Flags.ERRORLEVEL_BREAK )
+			if ( level >= Friend.Tree.ERRORLEVEL_BREAK )
 			{
 				//debugger;
 			}
@@ -1354,3 +1544,72 @@ Friend.Tree.log = function( item, data )
 		console.log( 'Tree log, Item ' + item.identifier + ' (' + item.className + '): ' );
 	}
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Interface with FUI
+///////////////////////////////////////////////////////////////////////////////
+
+Friend.Tree.loadJSON = function( jsonPath, jsonTree )
+{
+	var source;
+	var treeProperties;
+	var self = this;
+	var f = new File( jsonPath );
+	f.onLoad = function( json )
+	{
+		try	
+		{ 
+			source = JSON.parse( json ); 
+		}
+		catch( e )
+		{ 
+			document.body.innerHTML = '<div class="Error Box">Could not find File class.</div>'; 
+		}
+		try	
+		{ 
+			treeProperties = JSON.parse( jsonTree ); 
+		}
+		catch( e )
+		{ }
+		 
+		// Initialise the Tree engine
+		Friend.Tree.init( function( response )
+		{
+			// Loaded OK?
+			if ( response != 'OK' )
+			{
+				Application.Quit();
+				return;
+			}
+
+			// Creates a new instance of the Tree engine
+			if ( typeof treeProperties.width == 'undefined' )
+				treeProperties.width = document.body.clientWidth;
+			if ( typeof treeProperties.height == 'undefined' )
+				treeProperties.height = document.body.clientHeight;
+			self.tree = new Friend.Tree( self, treeProperties );
+
+			//  Load the 'root.js' code and call it
+			Friend.Tree.include( 'Progdir:Scripts/root.js', function( response )
+			{
+				if ( response == 'OK' )
+				{
+					// Creates the root object of the tree
+					self.root = new Root( self.tree, 'Root',
+					{
+						x: 0,
+						y: 0,
+						z: 0,
+						zoomX: 1,
+						zoomY: 1,
+						width: treeProperties.width,
+						height: treeProperties.height,
+						fuiJson: source
+					} );
+				}
+			} );
+		} );
+	}
+	f.load();
+}
+

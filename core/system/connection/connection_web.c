@@ -21,9 +21,9 @@
 *****************************************************************************©*/
 /** @file
  * 
- *  Admin Web body
+ *  Connection Web body
  *
- * All functions related to Remote User structure
+ *  All functions related to Remote User structure
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 01/12/2017
@@ -85,7 +85,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 		FERROR( "URL path is NULL!\n" );
 		
 		char dictmsgbuf[ 256 ];
-		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+		snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_PATH_PARAMETER_IS_EMPTY] , DICT_PATH_PARAMETER_IS_EMPTY );
 		HttpAddTextContent( response, dictmsgbuf );
 		
 		goto error;
@@ -195,7 +195,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 	* @return function return information about FriendCore connection
 	*/
 	/// @endcond
-	if( strcmp( urlpath[ 1 ], "listcluster" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "listcluster" ) == 0 )
 	{
 		HashmapElement *el = NULL;
 		char *addr = NULL;
@@ -354,7 +354,7 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 						FConnection *con = CommServiceAddConnection( service, newsock, name, address, NULL, SERVER_CONNECTION_OUTGOING, nodeMaster );
 						if( con != NULL )
 						{
-							SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
+							SQLLibrary *lsqllib = l->LibrarySQLGet( l );
 							if( lsqllib != NULL )
 							{
 								char where[ 1024 ];
@@ -374,7 +374,82 @@ Http *ConnectionWebRequest( void *m, char **urlpath, Http **request, UserSession
 									lsqllib->Save( lsqllib, FConnectionDesc, con );
 								
 									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CONNECTION_CREATED] , DICT_CONNECTION_CREATED );
-								
+									
+									// Send information about attached connection
+									
+									int iname = 6;
+									if( name != NULL )
+									{
+										iname += strlen( name );
+									}
+									int iaddress = 9;
+									if( address != NULL )
+									{
+										iaddress += strlen( address );
+									}
+									
+									char *pname = FCalloc( iname, sizeof(char) );
+									char *paddress = FCalloc( iaddress, sizeof(char) );
+									strcpy( pname, "name=" );
+									if( name != NULL )
+									{
+										strcpy( &pname[ 5 ], name );
+									}
+									strcpy( paddress, "address=" );
+									if( address != NULL )
+									{
+										strcpy( &paddress[ 8 ], address );
+									}
+									
+									ClusterNode *cn = l->fcm->fcm_ClusterNodes;
+									FriendCoreManager *fcm = l->fcm;
+									
+									/*
+									while( cn != NULL )
+									{
+										// send information that new connection was added
+										if( cn->cn_CurrentNode == FALSE && cn->cn_Connection != NULL )
+										{
+											MsgItem tags[] = {
+												{ ID_FCRE, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+													{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE,  (uint64_t)fcm->fcm_ID },
+													{ ID_FRID, (uint64_t)0, MSG_INTEGER_VALUE },
+													{ ID_CMMD, (uint64_t)0, MSG_INTEGER_VALUE },
+													{ ID_ANDE, (uint64_t)0, MSG_INTEGER_VALUE },
+													{ ID_PARM, (FULONG)0, MSG_GROUP_START },
+														{ ID_PRMT, (FULONG) iname,  (FULONG)pname },
+														{ ID_PRMT, (FULONG) iaddress, (FULONG)paddress },
+													{ MSG_GROUP_END, 0,  0 },
+												{ MSG_GROUP_END, 0,  0 },
+												{ TAG_DONE, TAG_DONE, TAG_DONE }
+											};
+	
+											DataForm * df = DataFormNew( tags );
+
+											BufString *result = SendMessageAndWait( con, df );
+											DataFormDelete( df );
+	
+											if( result != NULL )
+											{
+												if( result->bs_Size > 0 )
+												{
+												}
+											}
+										}
+										
+										cn = (ClusterNode *)cn->node.mln_Succ;
+									}
+									*/
+
+									if( paddress != NULL )
+									{
+										FFree( paddress );
+									}
+									
+									if( pname != NULL )
+									{
+										FFree( pname );
+									}
 								}
 								else
 								{

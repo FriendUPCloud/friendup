@@ -315,6 +315,7 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 	// Try websockets!!
 	if( 
 		!this.forceHTTP &&
+		this.proxy.responseType != 'arraybuffer' &&
 		typeof Workspace != 'undefined' && 
 		Workspace.conn && 
 		Workspace.conn.ws && 
@@ -407,6 +408,11 @@ cAjax.prototype.send = function( data )
 {
 	// If we're in the queue, skip
 	if( this.queued ) return;
+	
+	if( this.mode == 'websocket' && this.proxy.responseType == 'arraybuffer' )
+	{
+		this.mode = '';
+	}
 	
 	var self = this;
 	

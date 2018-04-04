@@ -175,13 +175,16 @@ typedef struct FConnection
 	UserGroupAccess				*fc_UserGroupAccess;
 
 	uint64_t					fc_PINGTime;
+	char						*fc_GEOTimeZone; // Europe, North America, etc.
+	char						fc_GEOCountryCode[ 16 ]; // Country
+	char						*fc_GEOCity;
+	
 	pthread_mutex_t				fc_Mutex;
 	FThread						*fc_Thread;
-	void						*fc_Data;
+	void						*fc_Data;				// pointer to user data
 	void 						*fc_Service;			// pointer to communication service
 	
 	int							fc_ReadCommPipe, fc_WriteCommPipe;
-	int							fc_UserSessionsCount;	// number of working user sessions on FC
 }FConnection;
 
 static FULONG FConnectionDesc[] = {

@@ -1,0 +1,82 @@
+Consider this example program:
+------------------------------
+
+input off
+
+set a 10
+
+launch Artisan
+wait 1000
+
+loop:
+
+
+    if $a lesser 20:
+        echo "$a is not 20"
+    stop
+
+    increase a
+    wait 100
+
+    if $a equals 15:
+        enter Artisan
+        	FileNew
+        leave
+    stop
+
+    if $a equals 20:
+        goto end
+    stop
+
+goto loop
+
+end:
+
+    echo "we are done. $a equals 20"
+
+input on
+
+------------------------------
+
+> input off
+
+This turns off output and user input.
+
+> set a 10
+
+This sets the variable 'a' to the value 10. Notice how when we read from 
+variables, we add a $ sign in front; $a - because we're cashing out the value.
+When setting a value, we do it without the $ sign.
+
+> launch Artisan
+
+This launches the Artisan programming application.
+
+> wait 1000
+
+This waits for 1000 milliseconds. (1 second).
+
+> loop:
+
+Notice the colon? This is a label. Further down, you will find "goto loop",
+which points the program to jump back to the "loop" label, effectively creating
+a loop..
+
+> if $a lesser 20:
+
+Here we compare $a to 20 - to see if it is smaller than. Then there is:
+
+> echo "$a is not 20"
+
+We output here "10 is not 20" the first time the loop goes.
+
+> stop
+
+This ends the "if". 'stop' is used as 'end if' in other languages, only we use
+it with other arguments as well, like 'repeat' and 'on'.
+
+
+
+
+
+

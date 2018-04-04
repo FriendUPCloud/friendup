@@ -1,22 +1,3 @@
-/*©agpl*************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*****************************************************************************©*/
-
 var WorkspaceInside = {
 	wallpaperLoaded: false,
 	// We only initialize once
@@ -66,10 +47,11 @@ var WorkspaceInside = {
 	{
 		if( globalConfig.workspacecount <= 1 ) return;
 
-		if( !Workspace.wallpaperLoaded && !loaded ) return;		
+		if( !Workspace.wallpaperLoaded && !loaded ) return;
 		
 		// Check if we already have workspace wallpapers
 		var o = []; // <- result after cleanup
+		var co = [];
 		var m = globalConfig.workspacecount;
 		var scr = ge( 'DoorsScreen' ).screenObject;
 		var url = Workspace.wallpaperImage;
@@ -78,6 +60,18 @@ var WorkspaceInside = {
 		{
 			if( url.indexOf( ':' ) > 0 && url.indexOf( 'http' ) != 0 )
 				url = getImageUrl( url );
+		}
+		
+		var workspacePositions = [];
+		var maxW = Workspace.screen.getMaxViewWidth();
+		for( var a = 0; a < globalConfig.workspacecount; a++ )
+		{
+			workspacePositions.push( a * maxW );
+		}
+		for( var a in movableWindows )
+		{
+			var wo = movableWindows[a].windowObject;
+			movableWindows[a].viewContainer.style.left = workspacePositions[ wo.workspace ] + 'px';
 		}
 		
 		var image = url == 'none' ? url : ( 'url(' + url + ')' );
@@ -194,6 +188,8 @@ var WorkspaceInside = {
 				Workspace.checkWorkspaceWallpapers();
 			}
 		}
+		// Refresh our dynamic classes now..
+		RefreshDynamicClasses();
 	},
 	// Reposition and size
 	repositionWorkspaceWallpapers: function()
@@ -220,7 +216,7 @@ var WorkspaceInside = {
 	},
 	// Update position
 	refreshWorkspaces: function()
-	{		
+	{
 		// Check if something changed
 		if( typeof( globalConfig.workspacepcount ) != 'undefined' )
 		{
@@ -642,9 +638,57 @@ var WorkspaceInside = {
 		*/
 		f.onExecuted = function( e, d )
 		{
+			var str = JSON.stringify(e);
 			Workspace.systemInfo = e;
 		}
 		f.execute( 'admin', {command:'info'} );
+	},
+	// If we have stored a theme config for the current theme, use its setup
+	// TODO: Move to a proper theme parser
+	applyThemeConfig: function()
+	{
+		// No need for mobile!
+		if( isMobile ) return;
+		if( !this.themeData )
+			return;
+		
+		if( this.themeStyleElement )
+			this.themeStyleElement.innerHTML = '';
+		else
+		{
+			this.themeStyleElement = document.createElement( 'style' );
+			document.getElementsByTagName( 'head' )[0].appendChild( this.themeStyleElement );
+		}
+		
+		var str = '';
+		for( var a in this.themeData )
+		{
+			var v = this.themeData[a];
+			switch( a )
+			{
+				case 'colorWindowActive':
+					str += `
+html > body .View.Active > .Title,
+html > body .View.Active > .LeftBar,
+html > body .View.Active > .RightBar,
+html > body .View.Active > .BottomBar
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorButtonDefault':
+					str += `
+html > body .Button,
+html > body button
+{
+	background-color: ${v};
+}
+`;
+					break;
+			}
+		}
+		this.themeStyleElement.innerHTML = str;
 	},
 	refreshUserSettings: function( callback )
 	{
@@ -669,7 +713,30 @@ var WorkspaceInside = {
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
 				}
+				// Check for theme specifics
+				if( dat[ 'themedata_' + Workspace.theme ] )
+				{
+					Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
+				}
+				else
+				{
+					Workspace.themeData = false;
+				}
+				Workspace.applyThemeConfig();
+				
 				// Fallback
+				if( !isMobile )
+				{
+					if( !dat.wizardrun )
+					{
+						if( !Workspace.WizardExecuted )
+						{
+							ExecuteApplication( 'FriendWizard' );
+							Workspace.WizardExecuted = true;
+						}
+					}
+				}
+				
 				if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
 				{
 					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
@@ -727,26 +794,29 @@ var WorkspaceInside = {
 				}
 
 				// Do the startup sequence in sequence (only once)
-				if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+				if( dat.wizardrun && !isMobile )
 				{
-					Workspace.startupsequenceHasRun = true;
-					var l = {
-						index: 0,
-						func: function()
-						{
-							var cmd = dat.startupsequence[this.index++];
-							if( cmd )
+					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+					{
+						Workspace.startupsequenceHasRun = true;
+						var l = {
+							index: 0,
+							func: function()
 							{
-								Workspace.shell.execute( cmd, function()
+								var cmd = dat.startupsequence[this.index++];
+								if( cmd )
 								{
-									l.func();
-									if( Workspace.mainDock )
-										Workspace.mainDock.closeDesklet();
-								} );
+									Workspace.shell.execute( cmd, function()
+									{
+										l.func();
+										if( Workspace.mainDock )
+											Workspace.mainDock.closeDesklet();
+									} );
+								}
 							}
 						}
+						l.func();
 					}
-					l.func();
 				}
 
 				PollTaskbar();
@@ -758,7 +828,12 @@ var WorkspaceInside = {
 			}
 			if( callback && typeof( callback ) == 'function' ) callback();
 		}
-		m.execute( 'getsetting', { settings: [ 'avatar', 'wallpaperdoors', 'wallpaperwindows', 'language', 'menumode', 'startupsequence', 'navigationmode', 'windowlist', 'focusmode', 'hiddensystem', 'workspacecount', 'scrolldesktopicons' ] } );
+		m.execute( 'getsetting', { settings: [ 
+			'avatar', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+			'focusmode', 'hiddensystem', 'workspacecount', 
+			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme
+		] } );
 	},
 	// Called on onunload
 	doLeave: function( e )
@@ -1096,8 +1171,11 @@ var WorkspaceInside = {
 			buildMenu( 'System:', d );
 		}
 	},
+	// Reload docks and readd launchers
 	reloadDocks: function()
 	{
+		Workspace.docksReloading = true;
+		
 		var c = new Module( 'dock' );
 		c.onExecuted = function( cod, dat )
 		{
@@ -1204,6 +1282,8 @@ var WorkspaceInside = {
 					}
 					Workspace.mainDock.initialized();
 					
+					Workspace.docksReloading = null;
+					
 					// Make sure taskbar is polled
 					PollTaskbar();
 					
@@ -1219,6 +1299,10 @@ var WorkspaceInside = {
 					}
 				}
 				dm.execute( 'getdock', { dockid: '0' } );
+			}
+			else
+			{
+				Workspace.docksReloading = null;
 			}
 		}
 		c.execute( 'items', { sessionid: false } );
@@ -1338,8 +1422,24 @@ var WorkspaceInside = {
 	// Refresh an open window by path
 	// TODO: Make less aggressive! Use settimeouts f.ex. so we can abort multiple
 	//       calls to refrash the same path
+	refreshPaths: {},
+	refreshPathTails: {},
 	refreshWindowByPath: function( path, depth, callback )
 	{
+		var self = this;
+		if( !depth ) depth = 0;
+		
+		// Make sure we don't refresh paths already in refresh
+		if( this.refreshPaths[ path ] )
+		{
+			// Add a tail (overwrite if needed) to execute later
+			this.refreshPathTails[ path ] = function()
+			{
+				self.refreshWindowByPath( path, depth, callback );
+			}
+			return;
+		}
+		
 		// Don't allow many parents
 		if( depth && depth > 1 ) return;
 
@@ -1364,15 +1464,36 @@ var WorkspaceInside = {
 			path = o;
 		}
 
+		// Delayed refreshing
 		function executeRefresh( window, callback )
 		{
-			if( window.wRefreshTimeout )
+			// Race condition, cancel existing..
+			if( self.refreshPaths[ path ] )
+				clearTimeout( self.refreshPaths[ path ] );
+			self.refreshPaths[ path ] = setTimeout( function()
 			{
-				clearTimeout( window.wRefreshTimeout );
-			}
-			window.wRefreshTimeout = setTimeout( function()
-			{
-				window.refresh( callback );
+				// Will not need this one, we already got an unexecuted call
+				if( self.refreshPathTails[ path ] )
+					delete self.refreshPathTails[ path ];
+				
+				// Setup a new callback for running after the refresh
+				var cbk = function()
+				{
+					// Remove this one - now we are ready for the next call
+					delete self.refreshPaths[ path ];
+					
+					// Run the actual callback
+					if( callback ) callback();
+					
+					// Execute the tail (if it exists)
+					if( self.refreshPathTails[ path ] )
+					{
+						self.refreshPathTails[ path ]();
+						delete self.refreshPathTails[ path ];
+					}
+				};
+				// Do the actual refresh
+				window.refresh( cbk );
 			}, 250 );
 		}
 
@@ -1397,6 +1518,7 @@ var WorkspaceInside = {
 		}
 
 		// Also refresh parent if possible
+		// We need this in case we copy to a sub path
 		var p = path + '';
 		var o = ''; var mod = 0;
 		for( var b = p.length - 2; b >= 0; b-- )
@@ -1459,43 +1581,9 @@ var WorkspaceInside = {
 		}
 	},
 	// Disk notification!
-	// TODO: Think this through!!!
-	// TODO: Add options, like when to notify etcetc..
 	diskNotification: function( windowList, type )
 	{
-		/*// Check if we already have them!
-		for( var a = 0; a < windowList.length; a++ )
-		{
-			var found = false;
-			for( var w = 0; w < this.diskNotificationList; w++ )
-			{
-				if( this.diskNotificationList[w] == windowList[a] )
-				{
-					found = true;
-					break;
-				}
-			}
-			if( !found )
-			{
-				this.diskNotificationList.push( windowList[a] );
-			}
-		}
-		// We want to do a refresh!
-		if( type == 'refresh' )
-		{
-			if( this.diskNotificationTimeout )
-				clearTimeout( this.diskNotificationTimeout );
-			this.diskNotificationTimeout = setTimeout( function()
-			{
-				for( var z = 0; z < Workspace.diskNotificationList.length; z++ )
-				{
-					var ele = Workspace.diskNotificationList[z];
-					if( ele && ele.refresh ) ele.refresh();
-				}
-				Workspace.diskNotificationList = [];
-				this.diskNotificationTimeout = false;
-			}, 250 );
-		}*/
+		console.log( 'Disk notification!', windowList, type );
 	},
 	// Render all notifications on the deepest field
 	renderNotifications: function()
@@ -1559,6 +1647,8 @@ var WorkspaceInside = {
 	},
 	refreshTheme: function( themeName, update )
 	{
+		var self = this;
+		
 		// Only on force or first time
 		if( this.themeRefreshed && !update )
 			return;
@@ -1567,16 +1657,23 @@ var WorkspaceInside = {
 
 		document.body.classList.add( 'Loading' );
 
-		setTimeout( function()
+		if( !themeName ) themeName = 'friendup12';
+		themeName = themeName.toLowerCase();
+		
+		Workspace.theme = themeName;
+		
+		var m = new File( 'System:../themes/' + themeName + '/settings.json' );
+		m.onLoad = function( rdat )
 		{
+			// Add resources for theme settings --------------------------------
+			rdat = JSON.parse( rdat );
+			// Done resources theme settings -----------------------------------
+			
 			Workspace.themeRefreshed = true;
 			Workspace.refreshUserSettings( function() 
 			{
 				CheckScreenTitle();
-
-				Workspace.theme = themeName ? themeName.toLowerCase() : '';
-				themeName = Workspace.theme;
-				
+			
 				// We only allow two mobile themes
 				if( isMobile )
 				{
@@ -1589,7 +1686,7 @@ var WorkspaceInside = {
 						case 'friendup_pink':
 							break;
 						default:
-							Workspace.theme = themeName = 'friendup';
+							Workspace.theme = themeName = 'friendup12';
 							break;
 					}
 				}
@@ -1633,34 +1730,34 @@ var WorkspaceInside = {
 								{
 									clearInterval( Workspace.insideInterval );
 									Workspace.insideInterval = null;
-									
+								
 									// Set right classes
 									document.body.classList.add( 'Inside' );
 									document.body.classList.add( 'Loaded' );
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
-									
+								
 									// Refresh mountlist
 									Workspace.refreshDesktop( false, true );
-									
+								
 									// Redraw now
 									DeepestField.redraw();
 								}
 							}, 50 );
 						}
-						
+					
 						// Flush theme info
-						themeInfo = { loaded: false };
-			
+						themeInfo.loaded = false;
+		
 						// Init the websocket etc
 						InitWorkspaceNetwork();
-						
+					
 						// Reload the docks
 						Workspace.reloadDocks();
-						
+					
 						// Refresh them
 						Workspace.initWorkspaces();
-						
+					
 						// Redraw icons if they are delayed
 						Workspace.redrawIcons();
 					}
@@ -1691,12 +1788,12 @@ var WorkspaceInside = {
 					};
 					taskIframes[a].ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 				}
-			
+		
 				// Flush theme info
-				themeInfo = { loaded: false };
+				themeInfo.loaded = false;
 			} );
-			
-		}, 500 );
+		}
+		m.load();
 	},
 	// Check for new desktop events too!
 	checkDesktopEvents: function()
@@ -1844,12 +1941,13 @@ var WorkspaceInside = {
 		// Create disposable menu
 		var menu = FullscreenMenu;
 		menu.clear();
-		var items = dp.getElementsByClassName( 'File' );
-		for( var a = 0; a < items.length; a++ )
+		var ics = Workspace.screen.contentDiv.icons;
+		for( var a = 0; a < ics.length; a++ )
 		{
+			if( ics[a].Type != 'Door' ) continue;
 			menu.addMenuItem( {
-				text: items[a].getElementsByClassName( 'Title' )[0].innerHTML,
-				clickItem: items[a]
+				text: ics[a].Title,
+				clickItem: ics[a].domNode
 			} );
 		}
 		menu.show();
@@ -1941,6 +2039,8 @@ var WorkspaceInside = {
 		imgs.push( imgOffline.backgroundImage );
 		function preloadAndRemove( n )
 		{
+			if( !n ) return;
+			
 			var t = false;
 			var i = new Image();
 			i.src = n;
@@ -2309,7 +2409,7 @@ var WorkspaceInside = {
 							literal += pair[0].charAt( c );
 						}
 						
-						// Add marketplace
+						// Add custom icon
 						newIcons.push( {
 							Title: literal,
 							Filename: pair[0],
@@ -2320,6 +2420,7 @@ var WorkspaceInside = {
 							ID: shorts[a].toLowerCase(),
 							Mounted: true,
 							Visible: true,
+							IconClass: literal.split( ' ' ).join( '_' ),
 							Door: 'executable'
 						} );
 					}
@@ -3048,13 +3149,25 @@ var WorkspaceInside = {
 
 			// Load template
 			var filt = ( icon.Type == 'Door' ? 'iconinfo_volume.html' : 'iconinfo.html' );
-			if( icon.Path.split( ':' )[0] == 'System' )
+			if( icon.Path && icon.Path.split( ':' )[0] == 'System' )
 				filt = 'iconinfo_system.html';
-			if( icon.Path.substr( icon.Path.length - 5, 5 ).toLowerCase() != '.info' )
+				
+			if( icon.Path && icon.Path.substr( icon.Path.length - 5, 5 ).toLowerCase() != '.info' )
 			{
-				var mi = new File( icon.Path + '.info' );
+				var finfo = icon.Path;
+				if( icon.Path.substr( icon.Path.length - 1, 1 ) == '/' )
+				{
+					finfo = icon.Path.substr( 0, icon.Path.length - 1 ) + '.dirinfo';
+				}
+				else
+				{
+					finfo += '.info';
+				}
+				var mi = new File( finfo );
+				
 				mi.onLoad = function( fd )
 				{
+					fd = fd.split( '<!--separate-->' )[0];
 					var data = false;
 					if( fd.length && fd.indexOf( '{' ) >= 0 )
 					{
@@ -3103,17 +3216,20 @@ var WorkspaceInside = {
 					info_fields: fdt_out
 				};
 				f.i18n();
-				if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+				if( icon.Path )
 				{
-					f.replacements.i18n_volume_information = i18n( 'i18n_file_information' );
-					f.replacements.i18n_volume_name = i18n( 'i18n_filename' );
-					f.replacements.i18n_volume_size = i18n( 'i18n_filesize' );
+					if( icon.Path.substr( icon.Path.length - 1, 1 ) != ':' )
+					{
+						f.replacements.i18n_volume_information = i18n( 'i18n_file_information' );
+						f.replacements.i18n_volume_name = i18n( 'i18n_filename' );
+						f.replacements.i18n_volume_size = i18n( 'i18n_filesize' );
+					}
 				}
 				f.onLoad = function( d )
 				{
 					// Check file permissions!
-					var dn = icon.Path.split( ':' )[0];
-					var pt = icon.Path;
+					var dn = icon.Path ? icon.Path.split( ':' )[0] : icon.Title;
+					var pt = icon.Path ? icon.Path : '';
 
 					var sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
@@ -4171,10 +4287,10 @@ var WorkspaceInside = {
 						name:	i18n( 'menu_about_friendup' ),
 						command: function(){ AboutFriendUP(); }
 					},
-					{
+					/*{
 						name:	i18n( 'information' ),
 						command: function(){ Workspace.informationWindow( 1 ); }
-					},
+					},*/
 					{
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
@@ -4276,11 +4392,15 @@ var WorkspaceInside = {
 						[
 							{
 								name:	 i18n( 'menu_show_as_icons' ),
-								command: function(){ Workspace.viewDirectory('iconview'); }
+								command: function(){ Workspace.viewDirectory( 'iconview' ); }
+							},
+							{
+								name:	 i18n( 'menu_show_as_compact' ),
+								command: function(){ Workspace.viewDirectory( 'compact' ); }
 							},
 							{
 								name:	 i18n( 'menu_show_as_list' ),
-								command: function(){ Workspace.viewDirectory('listview'); }
+								command: function(){ Workspace.viewDirectory( 'listview' ); }
 							}/*,
 							{
 								name:	i18n( 'menu_show_as_columns' ),
@@ -4305,7 +4425,7 @@ var WorkspaceInside = {
 					}
 				]
 			},
-			{
+			/*{
 				name: i18n( 'menu_edit' ),
 				items:
 				[
@@ -4317,7 +4437,7 @@ var WorkspaceInside = {
 						}
 					}
 				]
-			},
+			},*/
 			{
 				name: i18n( 'menu_icons' ),
 				items:
@@ -4336,10 +4456,6 @@ var WorkspaceInside = {
 						name:	i18n( 'menu_new_weblink' ),
 						command: function() { Workspace.weblink(); },
 						disabled: !iconsAvailable || systemDrive
-					},
-					{
-						name:	i18n( 'menu_buildWebApp' ),
-						command: function(){ Workspace.buildWebApplication(); }
 					},
 					{
 						name:	i18n( 'menu_new_directory' ),
@@ -4445,47 +4561,6 @@ var WorkspaceInside = {
 			}*/
 		];
 
-
-		// Add tools menu
-		// TODO: Readd tools and bookmarks when ready
-		var items = [
-			{
-				name:   i18n( 'menu_looknfeel' ),
-				command: function(){ ExecuteApplication( 'Looknfeel' ); }
-			}
-		];
-		
-		/*if( window.friendBook )
-		{
-			if( !window.nativeWindows )
-				window.nativeWindows = [];
-			items.push( {
-				name: 'Browser',
-				command: function(){
-					var v = new View( { title: 'Test', width: 700, height: 600 } );
-					v.setRichContentUrl( 'https://google.com' );
-				}
-			} );
-		}*/
-
-		if( Workspace.userLevel == 'admin' )
-		{
-			items.push( {
-				name:   i18n( 'menu_mount_filesystem' ),
-				command: function(){ ExecuteApplication( 'DiskCatalog' ); }
-			} );
-		}
-
-		items.push( {
-			name:	i18n( 'software_catalog' ),
-			command: function(){ ExecuteApplication( 'Software' ); }
-		} );
-
-		this.menu.push ( {
-			name: i18n( 'menu_tools' ),
-			items: items
-		} );
-
 		// Generate
 		if( !prohibitworkspaceMenu )
 		{
@@ -4540,6 +4615,14 @@ var WorkspaceInside = {
 		var uid = window.currentMovable.content.uniqueId;
 		var d = GetWindowStorage( uid );
 		d.listMode = mode;
+		
+		// Refresh toggle group
+		var eles = window.currentMovable.getElementsByClassName( 'ToggleGroup' );
+		if( eles )
+		{
+			eles[0].checkActive( mode );
+		}
+		
 		SetWindowStorage( uid, d );
 		window.currentMovable.content.redrawIcons();
 	},
@@ -4936,6 +5019,15 @@ var WorkspaceInside = {
 	},
 	launch: function( app )
 	{
+		var args = false;
+		if( app.indexOf( ' ' ) > 0 )
+		{
+			app = app.split( ' ' );
+			args = '';
+			for( var a = 0; a < app.length; a++ )
+				args += ( a > 0 ? ' ' : '' ) + app[a];
+			app = app[0];
+		}
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -4947,14 +5039,14 @@ var WorkspaceInside = {
 				{
 					if( js[a].Name.toLowerCase() == app.toLowerCase() )
 					{
-						return ExecuteApplication( js[a].Name );
+						return ExecuteApplication( js[a].Name, args );
 					}
 				}
-				ExecuteApplication( app );
+				ExecuteApplication( app, args );
 			}
 			catch( e )
 			{
-				ExecuteApplication( app );
+				ExecuteApplication( app, args );
 			}
 		}
 		m.execute( 'listuserapplications' );
@@ -4966,9 +5058,9 @@ var WorkspaceInside = {
 		var w = new View( {
 			title: i18n( 'menu_execute_command' ),
 			width: 320,
-			height: 130,
-			'min-height': 130,
-			'max-height': 130,
+			height: 80,
+			'min-height': 80,
+			'max-height': 80,
 			resize: false,
 			id: 'launcherview'
 		} );
@@ -5069,26 +5161,94 @@ var WorkspaceInside = {
 				{
 					if( d == true )
 					{
-						var tm = false;
-						var callbackh = function()
+						// Open a window
+						var v = new View( {
+							title: i18n( 'i18n_deleting_files' ),
+							width: 320,
+							height: 100
+						} );
+						
+						// Build the UI
+						var cont = document.createElement( 'div' );
+						cont.className = 'ContentFull Frame';
+						cont.style.top = '10px';
+						cont.style.left = '10px';
+						cont.style.width = 'calc(100% - 20px)';
+						cont.style.height = '30px';
+						
+						var frame = document.createElement( 'div' );
+						frame.className = 'Groove BackgroundHighlight Rounded ContentFull';
+						frame.style.top = '1px';
+						frame.style.left = '1px';
+						frame.style.width = 'calc(100% - 2px)';
+						frame.style.height = 'calc(100% - 2px)';
+						
+						var bar = document.createElement( 'div' );
+						bar.className = 'Bar Rounded ContentFull';
+						bar.style.top = '1px';
+						bar.style.left = '1px';
+						bar.style.width = '0';
+						bar.style.height = 'calc(100% - 2px)';
+						
+						var text = document.createElement( 'div' );
+						bar.appendChild( text );
+						
+						cont.appendChild( frame );						
+						cont.appendChild( bar );
+						
+						var stop = false;
+						
+						var btn = document.createElement( 'button' );
+						btn.innerHTML = i18n( 'i18n_cancel' );
+						btn.className = 'Button IconSmall fa-remove NoMargins';
+						btn.style.position = 'absolute';
+						btn.style.left = '10px';
+						btn.style.top = '55px';
+						btn.onclick = function()
 						{
-							if( tm ) clearTimeout( tm );
-							tm = setTimeout( function()
-							{
-								rObj.refresh();
-							}, 250 );
+							stop = true;
 						}
-
-						// Delete these files!
-						for( var a = 0; a < cnt; a++ )
+						
+						v.content.appendChild( cont );
+						v.content.appendChild( btn );
+						
+						// Actually do the delete
+						function doDeleteFiles( files, index )
 						{
-							// If we have a directory/file ID, then use that instead of a whole path
-							if( files[a].fileInfo.ID )
+							// 
+							if( stop || index == files.length )
 							{
-								files[a].door.dosAction( 'delete', { path: files[a].fileInfo.Path, pathid: files[a].fileInfo.ID + ( files[a].fileInfo.Type == 'Directory' ? '/' : '' ) }, callbackh );
+								// All done!
+								v.close();
+								return;
 							}
-							else files[a].door.dosAction( 'delete', { path: files[a].fileInfo.Path }, callbackh );
+							
+							var file = files[ index ];
+							
+							// callback
+							function nextFile()
+							{ 
+								var pct = Math.floor( ( index + 1 ) / files.length * 100 ) + '%';
+								Workspace.refreshWindowByPath( file.fileInfo.Path );
+								bar.style.width = 'calc(' + pct + ' - 2px)';
+								text.innerHTML = pct;
+								doDeleteFiles( files, index + 1 ); 
+							}
+							
+							// Database ID
+							if( file.fileInfo.ID )
+							{
+								file.door.dosAction( 'delete', { 
+									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
+								}, nextFile );
+							}
+							// Path
+							else
+							{
+								files[a].door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+							}
 						}
+						doDeleteFiles( files, 0 );
 					}
 				} );
 			}
@@ -5590,6 +5750,18 @@ function DoorsKeyDown( e )
 	Workspace.altKey = e.altKey;
 	Workspace.metaKey = e.metaKey;
 	
+	if( e.ctrlKey || e.metaKey )
+	{
+		if( w == 65 )
+		{
+			if( currentMovable && currentMovable.content.directoryview )
+			{
+				currentMovable.content.directoryview.SelectAll();
+				return cancelBubble( e );
+			}
+		}
+	}
+	
 	if( ( e.shiftKey && e.ctrlKey ) || e.metaKey )
 	{
 		if( globalConfig && globalConfig.workspacecount > 1 )
@@ -5803,7 +5975,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.1',
+		title: i18n( 'about_friendup' ) + ' v1.1.1',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -5984,4 +6156,5 @@ function handleServerNotice( e )
 for( var a in WorkspaceInside )
 	Workspace[a] = WorkspaceInside[a];
 delete WorkspaceInside;
+InitDynamicClassSystem();
 

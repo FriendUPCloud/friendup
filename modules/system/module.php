@@ -224,8 +224,6 @@ function curl_exec_follow( $cu, &$maxredirect = null )
 	return false;
 }
 
-
-
 if( isset( $args->command ) )
 {
 	switch( $args->command )
@@ -260,7 +258,7 @@ if( isset( $args->command ) )
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
 				'listuserapplications', 'getmimetypes',  'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
-				'listappcategories', 'systempath', 'listthemes', 'settheme', 'userdelete','userunblock',
+				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
 				'saveserversetting', 'deleteserversetting', 'launch', 'friendversion', 'getserverkey' 
 			);
@@ -272,7 +270,7 @@ if( isset( $args->command ) )
 				require( 'modules/system/include/tinyurl.php' );
 			break;
 		case 'ping':
-			if( isset( $User ) )
+			if( isset( $User ) && isset( $User->ID ) )
 			{
 				$User->Loggedtime = mktime();
 				$User->Save();
@@ -283,9 +281,6 @@ if( isset( $args->command ) )
 		// Get the app image from repository
 		case 'repoappimage':
 			require( 'modules/system/include/repoappimage.php' );
-			break;
-		case 'theme':
-			require( 'modules/system/include/theme.php' );
 			break;
 		case 'getsecuritysettings':
 			if( isset( $configfilesettings[ 'Security' ] ) )
@@ -877,40 +872,80 @@ if( isset( $args->command ) )
 			else
 				$userid = $User->ID;
 
-			if( $row = $SqlDatabase->FetchObject( '
-				SELECT * FROM Filesystem
-				WHERE
-					UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id ) . '\'
-				LIMIT 1
-			' ) )
+			$q = false;
+			if( isset( $args->args->id ) )
 			{
-				if( !$User->SessionID )
+				$q = '
+					SELECT * FROM Filesystem
+					WHERE
+						UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id ) . '\'
+					LIMIT 1
+				';
+			}
+			else if( isset( $args->args->devname ) )
+			{
+				$q = '
+					SELECT * FROM Filesystem
+					WHERE
+						UserID=\'' . $userid . '\' AND `Name`="' . 
+							mysqli_real_escape_string( $SqlDatabase->_link, trim( $args->args->devname ) ) . '"
+					LIMIT 1
+				';
+			}
+			if( $q )
+			{
+				if( $row = $SqlDatabase->FetchObject( $q ) )
 				{
-					die( 'fail<!--separate-->{"response":"deletedoor failed"}'  ); // print_r( $User, 1 )  ???
+					if( !$User->SessionID )
+					{
+						die( 'fail<!--separate-->{"response":"deletedoor failed"}'  ); // print_r( $User, 1 )  ???
+					}
+
+					// Delete encryption keys if they exist
+					if( $row->ID > 0 )
+					{
+						$k = new DbIO( 'FKeys' );
+						$k->RowType         = 'Filesystem';
+						$k->RowID           = $row->ID;
+						$k->UserID          = $userid;
+						$k->IsDeleted 		= 0;
+						if( $k->Load() ) $k->Delete();
+					}
+
+					include_once( 'php/classes/door.php' );
+
+					if( $userid == $User->ID )
+					{
+						$door = new Door( $row->Name . ':' );
+						$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );
+					}
+
+					$q = false;
+					if( isset( $args->args->id ) )
+					{
+						$q = '
+							DELETE FROM 
+								`Filesystem`
+							WHERE UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id, 10 ) . '\'
+						';
+					}
+					else if( isset( $args->args->devname ) )
+					{
+						$q = '
+							DELETE FROM 
+								`Filesystem`
+							WHERE UserID=\'' . $userid . '\' AND `Name`="' . 
+									mysqli_real_escape_string( $SqlDatabase->_link, trim( $args->args->devname ) ) . '"
+						';
+					}
+
+					if( $q )
+					{
+						$SqlDatabase->Query( $q );
+						die( 'ok<!--separate-->{"message":"Successfully deleted disk.","response":1}' );
+					}
 				}
-
-				// Delete encryption keys if they exist
-				if( $args->args->id > 0 )
-				{
-					$k = new DbIO( 'FKeys' );
-					$k->RowType         = 'Filesystem';
-					$k->RowID           = intval( $args->args->id, 10 );
-					$k->UserID          = $userid;
-					$k->IsDeleted 		= 0;
-					if( $k->Load() ) $k->Delete();
-				}
-
-				include_once( 'php/classes/door.php' );
-
-				//$Logger->log( 'Unmounting ' . $row->Name );
-				if( $userid == $User->ID )
-				{
-					$door = new Door( $row->Name . ':' );
-					$door->dosQuery( '/system.library/device/unmount?devname=' . $row->Name );
-				}
-
-				$SqlDatabase->Query( 'DELETE FROM Filesystem WHERE UserID=\'' . $userid . '\' AND ID=\'' . intval( $args->args->id, 10 ) . '\'' );
-				die( 'ok<!--separate-->' );
+				die( 'fail<!--separate-->{"message":"Could not find disk.","response":-1,"q":"' . addslashes( $q ) . '"}' );
 			}
 			break;
 		case 'fileinfo':
@@ -1679,7 +1714,7 @@ if( isset( $args->command ) )
 		case 'userkeysupdate':
 			if( $User->ID )
 			{
-				$fsysid = false;
+				$fsysid = false; $found = false;
 				
 				if( isset( $args->args->appPath ) )
 				{
@@ -1697,6 +1732,8 @@ if( isset( $args->command ) )
 					{
 						die( 'fail' );
 					}
+					
+					$found = true;
 				}
 				else if( isset( $args->args->authId ) && $args->args->authId )
 				{
@@ -1722,6 +1759,8 @@ if( isset( $args->command ) )
 							$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
 							$key->DateCreated = date( 'Y-m-d H:i:s' );
 						}
+						
+						$found = true;
 					}
 					else
 					{
@@ -1779,20 +1818,30 @@ if( isset( $args->command ) )
 							$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
 							$key->DateCreated = date( 'Y-m-d H:i:s' );
 						}
+						
+						$found = true;
 					}
 					else
 					{
 						die( 'fail' );
 					}					
 				}
-				else
+				/*else
 				{
 					$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
 					$key->DateCreated = date( 'Y-m-d H:i:s' );
-				}
+				}*/
 				$key->ApplicationID = ( isset( $args->args->app ) ? $args->args->app : $key->ApplicationID );
 				$key->Name          = ( $args->args->name ? $args->args->name : $key->Type );
 				$key->Type          = ( $args->args->type ? $args->args->type : $key->Type );
+				
+				if( !$found )
+				{
+					$key->Load();
+					$key->UniqueID = hash( 'sha256', ( time().rand(0,999).rand(0,999).rand(0,999) ) );
+					$key->DateCreated = date( 'Y-m-d H:i:s' );
+				}
+				
 				$key->Data          = ( $args->args->key ? $args->args->key : $key->Data );
 				$key->Signature     = ( $args->args->signature ? $args->args->signature : $key->Signature );
 				$key->PublicKey     = $args->args->publickey;
@@ -2051,6 +2100,12 @@ if( isset( $args->command ) )
 		case 'listthemes':
 			require( 'modules/system/include/themes.php' );
 			break;
+		case 'theme':
+			require( 'modules/system/include/theme.php' );
+			break;
+		case 'themesettings':
+			require( 'modules/system/include/themesettings.php' );
+			break;
 		case 'settheme':
 			$o = new dbIO( 'FSetting' );
 			$o->UserID = $User->ID;
@@ -2062,17 +2117,25 @@ if( isset( $args->command ) )
 			if( $o->ID > 0 )
 				die( 'ok' );
 			die( 'fail<!--separate-->{"response":"set theme failed"}'  );
-		case 'userdelete':
-			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"user delete failed"}' );
-			$u = new dbIO( 'FUser' );
-			if( $u->Load( $args->args->id ) )
-			{
-				$SqlDatabase->query( 'DELETE FROM `FSetting` WHERE UserID=\'' . $u->ID . '\'' );
-				$SqlDatabase->query( 'DELETE FROM `DockItem` WHERE UserID=\'' . $u->ID . '\'' );
-				$u->Delete();
-				die( 'ok' );
-			}
-			die( 'fail<!--separate-->{"response":"user delete failed"}'  );
+//-------------------------------------- DEPRECATED ---------------------------------------------
+/* This piece of code handled user deletion, however it did not clear current sessions
+ * (because they are stored in the core). This in turn lead to problems if a user was deleted
+ * and re-created with the same username. The core was confused and the new account has seen
+ * incomplete workspace. User removal is now handled in user_manager_web.c
+ */
+//
+// 		case 'userdelete':
+// 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"user delete failed"}' );
+// 			$u = new dbIO( 'FUser' );
+// 			if( $u->Load( $args->args->id ) )
+// 			{
+// 				$SqlDatabase->query( 'DELETE FROM `FSetting` WHERE UserID=\'' . $u->ID . '\'' );
+// 				$SqlDatabase->query( 'DELETE FROM `DockItem` WHERE UserID=\'' . $u->ID . '\'' );
+// 				$u->Delete();
+// 				die( 'ok' );
+// 			}
+// 			die( 'fail<!--separate-->{"response":"user delete failed"}'  );
+//-----------------------------------------------------------------------------------------------
 		case 'userunblock':
 			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"userunblock failed"}' );
 			$u = new dbIO( 'FUser' );
@@ -2222,6 +2285,11 @@ if( isset( $args->command ) )
 		// Launch an app...
 		case 'launch':
 			require( 'modules/system/include/launch.php' );
+			break;
+
+		// Account maintenance
+		case 'updatefriendaccount':
+			require( 'modules/system/include/updatefriendaccount.php' );
 			break;
 
 

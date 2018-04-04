@@ -413,7 +413,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					{
 						data += COMM_MSG_HEADER_SIZE;
 						unsigned int i;
-						//printf("--------%20s\n", data );
+						DEBUG("--------%20s\n", data );
 						
 						pathParts[ 0 ] = NULL;
 						int part = 1;
@@ -482,7 +482,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 										DEBUG("[CommServiceRemote] Mem allocated for data %p\n",  param );
 									}
 									//char *param = StringDuplicateN( val, parsize );
-									if( HashmapPut( http->parsedPostContent, StringDuplicate( attr ), param ) )
+									if( HashmapPut( http->parsedPostContent, StringDuplicate( attr ), param ) == MAP_OK )
 									{
 										DEBUG("[CommServiceRemote] New values passed to POST - %s - %.10s -\n", attr, val );
 									}

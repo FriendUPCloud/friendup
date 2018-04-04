@@ -85,28 +85,109 @@ document.addEventListener( 'mousemove', function( e )
 } );
 
 // Fui
-fui.init = function( step )
+fui.rootObjects = [];
+fui.parameters = [];
+fui.loadJSON = function( jsonPath )
 {
+	fui.init();
+	var cbk = false;
+	if( fui.onready )
+		cbk = fui.onready;
+	fui.onready = function()
+	{
+		var f = new File( jsonPath );
+		f.onLoad = function( data )
+		{
+			try
+			{
+				// Get JSON data
+				var JSONdata = JSON.parse( data );
+				// Do we have a callback?
+				try
+				{
+					if( cbk ) cbk( fui.build( JSONdata ) );
+					// No callback
+					else
+					{
+						// Look for a member on the root stucture of type Init
+						for( var a in JSONdata )
+						{
+							if( JSONdata[ a ].type == 'Init' )
+							{
+								var d = JSONdata[ a ];
+								if( d.functionName )
+								{
+									// Let's find the function in the window scope
+									if( window[ d.functionName ] )
+									{
+										return window[ d.functionName ]( fui.build( JSONdata ) );
+									}
+								}
+								// We're done
+								break;
+							}
+						}
+					}
+				}
+				catch( e )
+				{
+					document.body.innerHTML = '<div class="Error Box">Could not build FUI based on JSON.</div>';
+				}
+			}
+			catch( e )
+			{
+				document.body.innerHTML = '<div class="Error Box">Could not initialize JSON data.</div>';
+			}
+		}
+		f.load();
+	}
+}
+fui.init = function( params, step )
+{
+	if( params )
+	{
+		this.parameters = params;
+	}
 	if( !step )
 	{
+		var head = document.getElementsByTagName( 'head' )[0];
+		
+		this.classList = []; // To execute them
+		
+		// Add theme
+		var th = document.createElement( 'script' );
+		th.src = '/webclient/js/fui/themes/friendup/theme.js';
+		th.onload = function()
+		{
+			if( --count == 0 )
+				fui.init( false, 'done' );
+		}
+		head.appendChild( th );
+		
+		// The ones to load
 		var classList = [
 			'group', 'silly', 'button', 'input', 'list', 
-			'screen', 'view', 'desklet', 'workspaces', 'windowlist'
+			'screen', 'view', 'desklet', 'workspaces', 'windowlist',
+			'tabs', 'htmltemplate', 'text', 'progressbar'
 		];
-		var head = document.getElementsByTagName( 'head' )[0];
-		var count = classList.length;
+		
+		var count = classList.length + 1; // Plus theme
 		for( var a = 0; a < classList.length; a++ )
 		{
 			var s = document.createElement( 'script' );
 			// Friend mode
 			if( typeof friendup != 'undefined' )
 				s.src = '/webclient/js/fui/' + this.mode + '/' + classList[a] + '.js';
+			else if( typeof friend != 'undefined' )
+			{
+				s.src = '/webclient/js/fui/' + this.mode + '/' + classList[a] + '.js';
+			}
 			// index.html test mode
 			else s.src = this.mode + '/' + classList[a] + '.js';
 			s.onload = function()
 			{
 				if( --count == 0 )
-					fui.init( 'done' );
+					fui.init( false, 'done' );
 			}
 			head.appendChild( s );
 		}
@@ -114,18 +195,92 @@ fui.init = function( step )
 	}
 	else if( step == 'done' )
 	{
+		// Load class list now (but respect dependencies)!
+		var initializedLength = 0;
+		while( initializedLength < this.classList.length )
+		{
+			for( var a = 0; a < this.classList.length; a++ )
+			{
+				var cb = this.classList[a].init;
+				if( !cb ) continue;
+				var deps = this.classList[a].dependencies.split( ',' );
+				var hasDeps = true;
+				for( var b = 0; b < deps.length; b++ )
+				{
+					deps[b] = Trim( deps[b] );
+					if( !fui[deps[b]] )
+					{
+						hasDeps = false;
+						break;
+					}
+				}
+				if( hasDeps )
+				{
+					cb();
+					this.classList[a].init = false;
+					initializedLength++;
+				}
+			}
+		}
+		this.classList = [];
+		
 		// Screens list - populates views - has default screen with views container
-		fui.screens = [ new fui.Screen().create( {
-			marginBottom: 100,
-			show: true
-		} ) ];
+		if( this.parameters.initWorkspace )
+		{
+			fui.screens = [ new fui.Screen().create( {
+				marginBottom: 100,
+				show: true
+			} ) ];
 
-		// Default to first screen
-		fui.currentScreen = fui.screens[ 0 ];
+			// Default to first screen
+			fui.currentScreen = fui.screens[ 0 ];
+		}
+	
+		this.addCSS( `
+.FUIBorderSolid
+{
+	border: ${fui.theme.border.solidSize} solid ${fui.theme.border.solidColor};
+	box-sizing: border-box;
+}
+.FUIBorderLeft
+{
+	border-left: ${fui.theme.border.solidSize} solid ${fui.theme.border.solidColor};
+	box-sizing: border-box;
+}
+.FUIBorderTop
+{
+	border-top: ${fui.theme.border.solidSize} solid ${fui.theme.border.solidColor};
+	box-sizing: border-box;
+}
+.FUIBorderRight
+{
+	border-right: ${fui.theme.border.solidSize} solid ${fui.theme.border.solidColor};
+	box-sizing: border-box;
+}
+.FUIBorderBottom
+{
+	border-bottom: ${fui.theme.border.solidSize} solid ${fui.theme.border.solidColor};
+	box-sizing: border-box;
+}
+		` );
 	
 		// Ready to start FUI!
+		if( !fui.iterated ) fui.iterated = 0;
 		if( fui.onready ) fui.onready();
 	}
+}
+// Add static CSS to the environment
+fui.addCSS = function( css )
+{
+	var d = document.createElement( 'style' );
+	d.type = 'text/css';
+	d.innerHTML = css;
+	document.getElementsByTagName( 'head' )[0].appendChild( d );
+}
+// Async add class, wich string comma separated list of dependencies
+fui.addClass = function( cb, dependencies )
+{
+	this.classList.push( { init: cb, dependencies: dependencies } );
 }
 // Builds a gui on json structures
 fui.build = function( elements, structure, surface )
@@ -133,6 +288,14 @@ fui.build = function( elements, structure, surface )
 	var pObject = surface;
 	if( !surface )
 	{
+		// Create screen if it doesn't exist
+		if( !fui.currentScreen )
+		{
+			var d = document.createElement( 'div' );
+			d.className = 'FUIScreenContainer ContentFull';
+			document.body.appendChild( d );
+			fui.currentScreen = { dom: d };
+		}
 		surface = fui.currentScreen.domContent ? fui.currentScreen.domContent : fui.currentScreen.dom;
 		pObject = fui.currentScreen;
 	}
@@ -152,9 +315,11 @@ fui.build = function( elements, structure, surface )
 		};
 	}
 	// All "JSON" structure elements
+	var child = 0;
 	for( var a in elements )
 	{
 		if( !elements[a].type ) continue;
+		if( elements[a].type == 'Init' ) continue; // The special init is ignored
 		var flags = { surface: surface };
 		for( var b in elements[ a ] )
 		{
@@ -164,16 +329,47 @@ fui.build = function( elements, structure, surface )
 			flags[ b ] = elements[ a ][ b ];
 		}
 		
+		// Defaults
+		if( typeof( flags[ 'show' ] ) == 'undefined' )
+			flags.show = true;
+		if( typeof( flags.height ) == 'undefined' )
+			flags.height = '100%';
+		
 		// Build the ui
+		if( !fui[ elements[ a ].type ] ) 
+		{
+			console.log( 'FUI: Class not found! (' + elements[a].type + ')' );
+			continue;
+		}
 		var ele = new fui[ elements[ a ].type ]().create( flags );
 		ele.parentObject = pObject;
+		if( surface && surface.childProcessor )
+		{
+			surface.childProcessor( ele.dom, child++ );
+		}
 		if( elements[ a ].children )
 		{
 			this.build( elements[ a ].children, structure, ele );
 		}
 		structure.children.push( ele );
 	}
+	if( structure ) this.rootObjects.push( structure );
 	return structure;
+}
+
+// Global get by name
+fui.getByName = function( nam )
+{
+	for( var a = 0; a < this.rootObjects.length; a++ )
+	{
+		for( var b = 0; b < this.rootObjects[a].children.length; b++ )
+		{
+			var child = this.rootObjects[a].children[b];
+			var el = child.getByName( nam );
+			if( el ) return el;
+		}
+	}
+	return false;
 }
 
 // Enable element dragging!
@@ -241,6 +437,13 @@ fui.Base.prototype.build = function( description, parent )
 	for( var a = 0; a < description.length; a++ )
 	{
 		var desc = description[ a ];
+		
+		// Defaults
+		if( typeof( desc.show ) == 'undefined' )
+			desc.show = true;
+		if( typeof( desc.height ) == 'undefined' )
+			desc.height = '100%';
+		
 		switch( desc.type )
 		{
 			case 'div':
@@ -250,7 +453,9 @@ fui.Base.prototype.build = function( description, parent )
 				if( desc.content )
 					d.innerHTML = desc.content;
 				if( desc.children )
+				{
 					this.build( desc.children, d );
+				}
 				if( desc.label ) d.setAttribute( 'label', desc.label );
 				if( desc.name ) d.setAttribute( 'name', desc.name );
 				if( desc.above === true )
@@ -261,6 +466,8 @@ fui.Base.prototype.build = function( description, parent )
 				{
 					d.style.zIndex = 1;
 				}
+				if( desc.lineHeight != 'auto' )
+					d.style.lineHeight = parseInt( desc.lineHeight ) + 'px';
 				if( desc.width >= 0 )
 					d.style.width = desc.width + 'px';
 				if( desc.height >= 0 )
@@ -298,6 +505,14 @@ fui.Base.prototype.build = function( description, parent )
 				if( parent.appendChild ) parent.appendChild( d );
 				else if( parent.domContent ) parent.domContent.appendChild( d );
 				if( !first ) first = d;
+				if( desc.focus )
+				{
+					// Setting delayed to win race condition
+					setTimeout( function()
+					{
+						d.focus();
+					}, 50 );
+				}
 				break;
 			default:
 				break;
@@ -363,6 +578,14 @@ fui.Base.prototype.getByName = function( name, parent )
 			}
 			var test = this.get( name, nod );
 			if( test ) return test;
+		}
+	}
+	if( parent.children )
+	{
+		for( var a = 0; a < parent.children.length; a++ )
+		{
+			var el = this.getByName( name, parent.children[ a ] );
+			if( el ) return el;
 		}
 	}
 	return false;

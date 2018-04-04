@@ -835,14 +835,14 @@ AND f.Name = '%s'",
 								INFO( "[MountFS] -- Could not mount device for user %s. Drive was %s.\n", tmpUser->u_Name ? tmpUser->u_Name : "--nousername--", name ? name : "--noname--" );
 							}
 							
+							// Tell user!
+							UserNotifyFSEvent2( l, tmpUser, "refresh", "Mountlist:" );
+							
 							if( pthread_mutex_lock( &l->sl_InternalMutex ) != 0 )
 							{
 								DEBUG("Go to error\n");
 								goto merror;
 							}
-							DEBUG("lock set\n");
-							// Tell user!
-							UserNotifyFSEvent2( l, tmpUser, "refresh", "Mountlist:" );
 						}
 						tmpUser = (User *)tmpUser->node.mln_Succ;
 					}
@@ -859,8 +859,11 @@ AND f.Name = '%s'",
 			}
 		}
 		
+		pthread_mutex_unlock( &l->sl_InternalMutex );
 		// Send notify to user and all his sessions
 		UserNotifyFSEvent2( l, usr, "refresh", "Mountlist:" );
+		
+		pthread_mutex_lock( &l->sl_InternalMutex );
 		
 		DEBUG("[MountFS] %s - Mount device END\n", usr->u_Name );
 	}
@@ -1082,9 +1085,6 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		struct TagItem *ltl = tl;
 		char *name = NULL;
 		char *type = NULL;
-		//User *usr = NULL;
-		//UserSession *us = NULL;
-		//int found = 0;
 		l->sl_Error = 0;
 
 		//
@@ -1160,7 +1160,7 @@ int UnMountFS( struct SystemBase *l, struct TagItem *tl, UserSession *usrs )
 		{
 			if( remdev->f_Operations < 1 )
 			{
-				DEBUG("[UnMountFS] Device found, unmounting\n");
+				Log( FLOG_INFO, "[UnMountFS] Device found, unmounting\n");
 
 				//FHandler *fsys = (FHandler *)remdev->f_FSys;
 			
@@ -1636,8 +1636,7 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 	// Produce message
 	char *prototype = "{\"type\":\"msg\",\"data\":{\"type\":\"\",\"path\":\"\"}}";
 	int mlen = strlen( prototype ) + strlen( path ) + strlen( evt ) + 1;
-	char message[ mlen ];
-	memset( message, '\0', mlen );
+	char *message = FCalloc( mlen, sizeof(char) );
 
 	if( message != NULL && u != NULL )
 	{
@@ -1663,6 +1662,12 @@ void UserNotifyFSEvent2( SystemBase *sb, User *u, char *evt, char *path )
 		}
 		//pthread_mutex_unlock( &(u->u_Mutex) );
 	}
+	
+	if( message != NULL )
+	{
+		FFree( message );
+	}
+	
 	DEBUG("[UserNotifyFSEvent2] end\n");
 }
 
@@ -2211,7 +2216,9 @@ int DeviceUnMount( SystemBase *l, File *rootDev, User *usr )
 		
 		snprintf( temptext, sizeof(temptext), "UPDATE `FilesystemActivity` SET `StoredBytesLeft`='%ld',`ReadedBytesLeft`='%ld' WHERE `ID` = '%lu'", rootDev->f_Activity.fsa_StoredBytesLeft, rootDev->f_Activity.fsa_ReadedBytesLeft, rootDev->f_Activity.fsa_ID );
 		sqllib->QueryWithoutResults( sqllib, temptext );
-	
+
+		Log( FLOG_INFO, "DeviceUnMount: %s\n", temptext );
+		
 		FHandler *fsys = (FHandler *)rootDev->f_FSys;
 
 		if( fsys != NULL && fsys->UnMount != NULL )

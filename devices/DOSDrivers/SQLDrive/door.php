@@ -99,6 +99,10 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		{
 			global $SqlDatabase, $User, $Config, $Logger;
 		
+			// Sanitized username
+			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+			$wname = $Config->FCUpload . $uname . '/';
+			
 			//$Logger->log( 'Executing a dos action: ' . $args->command );
 			//$Logger->log( 'Pure args: ' . print_r( $args, 1 ) );
 			
@@ -354,7 +358,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				die( 'fail<!--separate-->Could not find file!' );
 			}
 			else if( $args->command == 'write' )
-			{
+			{	
 				// We need to check how much is in our database first
 				$deletable = false;
 				$total = 0;
@@ -413,7 +417,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				{
 					$ofn = $fn;
 					$fna = explode( '.', $ofn ); $fna = end( $fna );
-					while( file_exists( $Config->FCUpload . $fn ) )
+					if( !is_dir( $wname ) ) mkdir( $wname );
+					while( file_exists( $wname . $fn ) )
 					{
 						// Keep extension last
 						if( $fna )
@@ -425,7 +430,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					}
 				}
 				
-				if( $file = fopen( $Config->FCUpload . $fn, 'w+' ) )
+				if( $file = fopen( $wname . $fn, 'w+' ) )
 				{
 					// Delete existing file
 					if( $deletable ) unlink( $deletable );
@@ -457,15 +462,17 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							
 							if( $total + $len < SQLDRIVE_FILE_LIMIT )
 							{
-								rename( $args->tmpfile, $Config->FCUpload . $fn );
+								rename( $args->tmpfile, $wname . $fn );
 							}
 							else
 							{
+								$Logger->log( 'fail<!--separate-->Limit broken' );
 								die( 'fail<!--separate-->Limit broken' );
 							}
 						}
 						else
 						{
+							$Logger->log( 'fail<!--separate-->Tempfile does not exist!' );
 							die( 'fail<!--separate-->Tempfile does not exist!' );
 						}
 					}
@@ -479,18 +486,20 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						else
 						{
 							fclose( $file );
+							$Logger->log( 'fail<!--separate-->Limit broken ' . SQLDRIVE_FILE_LIMIT );
 							die( 'fail<!--separate-->Limit broken' );
 						}
 					}
 					
-					$f->DiskFilename = $fn;
-					$f->Filesize = filesize( $Config->FCUpload . $fn );
+					$f->DiskFilename = $User->Name . '/' . $fn;
+					$f->Filesize = filesize( $wname. $fn );
 					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 					$f->DateModified = date( 'Y-m-d H:i:s' );
 					$f->Save();
 					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 				}
-				return 'fail<!--separate-->Could not write file: ' . $Config->FCUpload . $fn;
+				$Logger->log( 'fail<!--separate-->Could not write file: ' . $wname . $fn );
+				return 'fail<!--separate-->Could not write file: ' . $wname . $fn;
 			}
 			else if( $args->command == 'read' )
 			{
@@ -527,8 +536,8 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				{
 					// Read the file
 					$fn = $f->DiskFilename;
-					
 					$fname = $Config->FCUpload . $fn;
+					
 					if( file_exists( $fname ) )
 					{
 						$info = @getimagesize( $fname );
@@ -600,13 +609,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						$fname = substr( $f, 0, strlen( $f ) - ( strlen( $ext ) + 1 ) );
 						$filename = $fname . '.' . $ext;
 					
-						while( file_exists( $Config->FCUpload . $filename ) )
+						while( file_exists( $wname . $filename ) )
 							$filename = $fname . rand(0,999) . '.' . $ext;
 					
 						$fl->DiskFilename = $filename;
 					
-						copy( 'import/' . $f, $Config->FCUpload . $filename );
-						if( file_exists( $Config->FCUpload . $filename ) )
+						copy( 'import/' . $f, $wname . $filename );
+						if( file_exists( $wname . $filename ) )
 						{
 							unlink( 'import/' . $f );
 					
@@ -619,7 +628,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							}
 							else
 							{
-								unlink( $Config->FCUpload . $filename );
+								unlink( $wname . $filename );
 							}
 						}
 					}
@@ -770,7 +779,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 								// Make sure the folder does not already exist!
 								if( $f->Load() )
 								{
-									die( 'fail<!--separate-->Directory already exists.' );
+									die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
 								}
 								$f->DateModified = date( 'Y-m-d H:i:s' );
 								$f->DateCreated = $f->DateModified;
@@ -996,8 +1005,11 @@ if( !class_exists( 'DoorSQLDrive' ) )
 		*/
 		public function putFile( $path, $fileObject )
 		{
-			global $Config, $User;
-		
+			global $Config, $User, $Logger;
+			
+			// Sanitized username
+			$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+			
 			if( $tmp = $fileObject->Door->getTmpFile( $fileObject->Path ) )
 			{
 				// Remove file from path
@@ -1017,9 +1029,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 				$ext = end( explode( '.', $fi->Filename ) );
 				$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
 				$filename = $fname . '.' . $ext;		
-				while( file_exists( $Config->FCUpload . $filename ) )
+				while( file_exists( $Config->FCUpload . $uname . '/' . $filename ) )
 					$filename = $fname . rand(0,999) . '.' . $ext;
-				$fi->DiskFilename = $filename;
+				$fi->DiskFilename = $uname . '/' . $filename;
 			
 				// Do the copy
 				copy( $tmp, $Config->FCUpload . $fi->DiskFilename );
@@ -1301,11 +1313,20 @@ if( !class_exists( 'DoorSQLDrive' ) )
 			{
 				if( file_exists( $Config->FCUpload . $fi->DiskFilename ) )
 				{
-					$ext = end( explode( '.', $fi->DiskFilename ) );
+					if( strstr( $fi->DiskFilename, '/' ) )
+					{
+						$diskFilename = explode( '/', $fi->DiskFilename );
+						$diskFilename = $diskFilename[ count( $diskFilename ) - 1 ];
+					}
+					else
+					{
+						$diskFilename = $fi->DiskFilename;
+					}
+					$ext = end( explode( '.', $diskFilename ) );
 					$fname = substr( $fi->Filename, 0, strlen( $fi->Filename ) - ( strlen( $ext ) + 1 ) );
-					$filename = $fname . '.' . $ext;		
+					$filename = $fname . '.' . $ext;
 					while( file_exists( $Config->FCTmp . $filename ) )
-						$filename = $fname . rand(0,999) . '.' . $ext;
+						$filename = $fname . rand( 0, 999 ) . '.' . $ext;
 					// Make tmp file
 					copy( $Config->FCUpload . $fi->DiskFilename, $Config->FCTmp . $filename );
 					return $Config->FCTmp . $filename;

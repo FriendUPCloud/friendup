@@ -78,6 +78,10 @@ i18n_files                		 	 : Files
 i18n_wallpapers                		 : Wallpapers
 i18n_settings                		 : Settings
 
+i18n_none                            : None
+i18n_select_template                 : Select template
+i18n_select_workgroups               : Select workgroups
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norwegian

@@ -21,8 +21,6 @@
 * Running Friend Unifying Platform in NODE on a server                         *
 *******************************************************************************/
 
-debugger;
-
 
 // Get sessionId
 

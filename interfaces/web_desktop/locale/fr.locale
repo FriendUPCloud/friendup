@@ -47,6 +47,7 @@ i18n_cancel                          : Annuler
 i18n_accept                          : Accepter
 i18n_understood                      : Compris
 
+i18n_full                            : plein.
 i18n_disk_icon                       : Icône disque
 i18n_choose_disk                     : Choisir un disque
 i18n_run_application                 : Lancer application
@@ -171,6 +172,7 @@ menu_upload_file                        : Importer un fichier
 menu_snapshot                           : Capture d'écran
 menu_snapshot_all                       : Capturer fenètres
 menu_bookmarks                          : Marque pages
+i18n_deleting_files                     : Supprimer des fichiers
 menu_add_bookmark                       : Ajouter marque pages
 menu_mount_filesystem                   : Catalogue des disques
 menu_unmount_filesystem                 : Déconnecter disque
@@ -230,6 +232,7 @@ menu_open_directory                     : Ouvrir répertoire
 menu_open_parent_directory              : Ouvrir répertoire parent
 menu_show_as                            : Montrer commme
 menu_show_as_icons                      : Icônes
+menu_show_as_compact                    : Compact
 menu_show_as_list                       : Liste
 menu_show_as_columns                    : Colonnes
 menu_close_window                       : Fermer
@@ -302,6 +305,7 @@ i18n_public_file                        : Fichier publique
 i18n_public_link                        : Url publique
 i18n_close                              : Fermer
 i18n_file_information                   : Informations générales
+i18n_link_information                   : Informations sur le lien
 i18n_file_permissions                   : Permissions du fichier
 i18n_meta_information                   : Informations du fichier
 i18n_click_to_copy                      : Copier dans le presse-papiers
@@ -345,6 +349,7 @@ i18n_read_only_fs_desc                  : Vous essayez d'écrire sur un système
 i18n_cancel                             : Annuler
 i18n_moving_files                       : Déplacement fichiers
 i18n_copying_files                      : Copie des fichiers
+i18n_filecopy_error                     : Erreur de copie de fichier
 
 i18n_delete_operation                   : Suppression de fichier(s)
 i18n_could_not_delete_files             : Fichier(s) impossible à supprimer.
@@ -390,7 +395,6 @@ i18n_locale_en                          : Anglais
 i18n_locale_de                          : Allemand
 i18n_locale_nl                          : Hollandais
 i18n_locale_fr                          : Français
-i18n_locale_fi                          : Finnish
 
 #Search ------------------------------------------------------------------------
 

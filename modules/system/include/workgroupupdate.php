@@ -20,46 +20,92 @@
 
 if( $level == 'Admin' )
 {
-	// Get the fusergroup object and update the name
-	$o = new dbIO( 'FUserGroup' );
-	if( $o->Load( $args->args->ID ) )
+	if( isset( $args->args->userid ) && $args->args->userid > 0 && isset( $args->args->workgroups ) )
 	{
-		$o->Name = $args->args->Name;
-		$o->Save();
-		
-		if( $o->ID > 0 && $args->args->Setup )
+		if( $wgs = $SqlDatabase->FetchObjects( '
+			SELECT 
+				g.ID, 
+				g.Name, 
+				ug.UserID 
+			FROM 
+				`FUserGroup` g 
+					LEFT JOIN `FUserToGroup` ug ON 
+					(
+							ug.UserID = \'' . $args->args->userid . '\' 
+						AND g.ID = ug.UserGroupID 
+					) 
+			WHERE g.Type = "Workgroup" 
+			ORDER BY g.Name ASC 
+		' ) )
 		{
-			if( $setup = $SqlDatabase->FetchObject( '
-				SELECT g.ID, g.Name, g.UserID 
-				FROM `FUserGroup` g 
-				WHERE g.Type = \'Setup\' AND g.ID = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Setup ) . '\' 
-			' ) )
+			foreach( $wgs as $wg )
 			{
-				$s = new dbIO( 'FUserGroup' );
-				$s->Type = 'SetupGroup';
-				$s->UserID = $o->ID;
-				$s->Load();
-				$s->Name = $args->args->Setup;
-				$s->Save();
+				//
+				
+				if( in_array( $wg->ID, $args->args->workgroups ) )
+				{
+					if( !$wg->UserID )
+					{
+						$SqlDatabase->query( '
+						INSERT INTO FUserToGroup 
+							( UserID, UserGroupID ) 
+							VALUES 
+							( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->userid ) . '\', \'' . $wg->ID . '\' ) 
+						' );
+					}
+				}
+				else if( $wg->UserID > 0 )
+				{
+					$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserID=\'' . $wg->UserID . '\' AND UserGroupID=\'' . $wg->ID . '\'' );
+				}
 			}
+			
+			die( 'ok' );
 		}
-		
-		// Update members, delete old and insert anew
-		$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $o->ID . '\'' );
-		if( $o->ID > 0 && isset( $args->args->Members ) )
+	}
+	else
+	{
+		// Get the fusergroup object and update the name
+		$o = new dbIO( 'FUserGroup' );
+		if( $o->Load( $args->args->ID ) )
 		{
-			$mems = explode( ',', $args->args->Members );
-			foreach( $mems as $m )
+			$o->Name = $args->args->Name;
+			$o->Save();
+		
+			if( $o->ID > 0 && $args->args->Setup )
 			{
-				if( $m <= 0 ) continue;
-				$SqlDatabase->query( '
-				INSERT INTO FUserToGroup 
-					( UserID, UserGroupID ) 
-					VALUES 
-					( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $m ) . '\', \'' . $o->ID . '\' )
-				' );
+				if( $setup = $SqlDatabase->FetchObject( '
+					SELECT g.ID, g.Name, g.UserID 
+					FROM `FUserGroup` g 
+					WHERE g.Type = \'Setup\' AND g.ID = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $args->args->Setup ) . '\' 
+				' ) )
+				{
+					$s = new dbIO( 'FUserGroup' );
+					$s->Type = 'SetupGroup';
+					$s->UserID = $o->ID;
+					$s->Load();
+					$s->Name = $args->args->Setup;
+					$s->Save();
+				}
 			}
-			die( 'ok<!--separate-->' . $o->ID );
+		
+			// Update members, delete old and insert anew
+			$SqlDatabase->query( 'DELETE FROM FUserToGroup WHERE UserGroupID=\'' . $o->ID . '\'' );
+			if( $o->ID > 0 && isset( $args->args->Members ) )
+			{
+				$mems = explode( ',', $args->args->Members );
+				foreach( $mems as $m )
+				{
+					if( $m <= 0 ) continue;
+					$SqlDatabase->query( '
+					INSERT INTO FUserToGroup 
+						( UserID, UserGroupID ) 
+						VALUES 
+						( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $m ) . '\', \'' . $o->ID . '\' )
+					' );
+				}
+				die( 'ok<!--separate-->' . $o->ID );
+			}
 		}
 	}
 }

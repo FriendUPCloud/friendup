@@ -1,0 +1,171 @@
+Writing Javascript Applications for FriendUP
+--------------------------------------------
+
+Introduction
+------------
+
+This is a small tutorial that teaches you how to write FriendUP applications
+using Javascript - using the FriendUP APIs. It will explain how to setup and
+install your FriendUP application, moving through the different phases of 
+development. When you're done, you should know everything required to develop
+and distribute your FriendUP application using standard Linux tools.
+
+
+First steps (this is written like shit!)
+----------------------------------------
+
+When developing a FriendUP website, you can do it in two ways. In this guide
+we're explaining how to use Linux development tools. But before we start, we
+will explain how you can develop apps using FriendUP itself.
+
+In FriendUP, you have the development IDE Artisan. This is the preferred
+integrated development environment in FriendUP. With it, you can easily develop
+FriendUP applications in any language, and of any complexity. But because this
+guide has a focus on using Linux development tools, we will only go into how
+you can develop simple test apps using Artisan.
+
+If you store a script using the .jsx extension, the file will become an 
+executable in FriendUP. This will allow you to quickly test concepts before 
+choosing to develop an advanced FriendUP application. .jsx applications run
+in a sandboxed environment, and has only basic access to the FriendUP 
+environment through the FriendUP APIs.
+
+Setting up your environment
+---------------------------
+
+More brainfarts at nine!
+
+First program
+-------------
+
+The structure of your first program will look like this:
+
+rootpath/apps/myapp
+	Local/
+	Scripts/
+	Stylesheets/
+	Templates/
+	index.html
+
+The index.html file is the center of your application. It combines all the
+resources you might need to run. The index.html file must have one include to
+run. This is the API layer. So each index.html file must have this script
+included:
+
+	<script src="/webclient/js/apps/api.js"></script>
+
+This will ensure that all of the API components are available to you. It also
+initializes secure API communication between the different security layers. 
+Finally, it sets up the Application object, where all your main application
+logic takes place.
+
+The basic structure
+-------------------
+
+A FriendUP javascript application is delivered through the Application object.
+This object gets used by the FriendUP desktop environment, and has hooks to the
+FriendUP API. When a application is executed, the Application.run() function is called.
+
+
+Events
+------
+
+A FriendUP application receives events through the Javascript postMessage()
+technology. Each application object has a receiveMessage() function, where
+message objects are received. Each application can respond with a sendMessage()
+call. This, as with receiveMessage(), sends a message to its parent. FriendUP
+applications are recursive, in that they consist of inherent application objects
+going as deep as there are sublevels in GUI or other application components.
+
+Keyboard events
+---------------
+
+Keyboard events in applications are handled in Application.handleKeys() or in
+a window (f.ex. C) - C.handleKeys(). The syntax is:
+
+function handleKeys( keyCode, event )
+{
+	if( keyCode == 1 )
+		return true;
+	return false;
+}
+
+If your handleKeys() method returns true, all further key events stop bubbling.
+If it returns false, the event is passed along.
+
+Permissions
+-----------
+
+Each Friend application is activated for a user on demand. When activated, 
+the user checks off on which permissions is acceptable, that the application
+requires, or wants.
+
+Permissions are defined according to which subsystem it is using, for example:
+
+ * Modules
+ * Libraries
+ * System functionality
+ * Storage
+ * Friend Application
+ * ... 
+
+A permission structure looks like this:
+
+[
+	Type Identifier
+]
+
+or
+
+[
+	"Door Local",
+	"Door Specific:",
+	"Module System",
+	"Module Files"
+]
+
+Connecting to Friend Core
+-------------------------
+
+There are primarily three ways to connect to Friend Core. One is through ajax
+calls - which is using the basic push and pull tech. The other is through
+Module calls, which is an abstracted ajax call. The third way is through 
+websockets.
+
+- Ajax calls
+
+This is how you connect to Friend Core through Ajax calls. You will use the 
+cAjax class for this. Example underneath:
+
+	// Opening a call to Friend Core using POST
+	var c = new cAjax();
+	// POST mode, path, asyncronous, return code and data
+	c.open( 'post', '/system.library/device', true, true );
+	// What happens on load?
+	c.onload = function( rcode, rdata )
+	{
+		if( rcode == 'ok' )
+			console.log( rdata );
+	}
+	c.send();
+
+- Module calls
+
+This is how you connect to Friend Core through Module calls. This is used to
+connect to Friend Core modules - often written in scripting languages or using
+third party executables. Example:
+
+	var m = new Module( 'system' );
+	m.onExecuted = function( data )
+	{
+		console.log( data );
+	}
+	m.execute( 'friendapplication', { application: myApp, permissions: permArray } );
+
+The module executes a "command" - which is received as $args->command on the
+server side. The object sent as argument two will be json encoded and sent as
+$args->args.
+
+
+
+

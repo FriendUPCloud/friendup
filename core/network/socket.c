@@ -52,6 +52,8 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
+//#define USE_SOCKET_REAPER
+
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte
 
 static int ssl_session_ctx_id = 1;
@@ -69,6 +71,7 @@ static void _socket_remove_from_reaper(const Socket *sock);
 /** Initializes internal socket management structs. Call once at startup
  */
 void socket_init_once(void){
+#ifdef USE_SOCKET_REAPER
 	struct rlimit limit;
 	int status = getrlimit(RLIMIT_NOFILE, &limit);
 	if (status != 0){
@@ -86,11 +89,12 @@ void socket_init_once(void){
 	pthread_mutex_init(&_socket_array_mutex, NULL);
 
 	pthread_create(&_socket_reaper_thread_handle, NULL/*default attributes*/, _socket_reaper_thread, NULL/*extra args*/);
+#endif
 }
 
 static void* _socket_reaper_thread(void *a __attribute__((unused))){
 	while (true){
-
+		//DEBUG("reaper\n");
 		for (unsigned int i = 0; i < _max_sockets; i++){
 			if (_socket_array[i] != NULL){ //there is probably a socket here...
 				pthread_mutex_lock(&_socket_array_mutex);
@@ -289,6 +293,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			return NULL;
 		}
 
+		/*
 		struct timeval t = { 60, 0 };
 
 		if( setsockopt( fd, SOL_SOCKET, SO_SNDTIMEO, ( void *)&t, sizeof( t ) ) < 0 )
@@ -306,6 +311,7 @@ Socket* SocketOpen( void *sb, FBOOL ssl, unsigned short port, int type )
 			SocketFree( sock );
 			return NULL;
 		}
+		*/
 
 		struct sockaddr_in6 server;
 		memset( &server, 0, sizeof( server ) );
@@ -919,7 +925,7 @@ Socket* SocketConnectHost( void *sb, FBOOL ssl, char *host, unsigned short port 
 				{
 					int error = SSL_get_error( sock->s_Ssl, n );
 
-					FERROR( "[SocketConnect] We experienced an error %d.\n", error );
+					//FERROR( "[SocketConnect] We experienced an error %d.\n", error );
 
 					switch( error )
 					{
@@ -1245,14 +1251,14 @@ inline Socket* SocketAccept( Socket* sock )
 		X509_NAME       *certname = NULL;
 
 		cert = SSL_get_peer_certificate( incoming->s_Ssl );
-		if (cert == NULL)
+		if( cert == NULL )
 		{
-			FERROR( "Error: Could not get a certificate from: \n" );
+			INFO( "Error: Could not get a certificate from: \n" );
 		}
 	}
 
 	socket_update_state(incoming, socket_state_accepted);
-	_socket_add_to_reaper(incoming);
+	//_socket_add_to_reaper(incoming);
 
 	DEBUG( "[SocketAccept] Accepting incoming!\n" );
 	return incoming;
@@ -1290,7 +1296,10 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 	}
 
 	// We need a valid file descriptor
-	if( !p->fd ) return NULL;
+	if( !p->fd ){
+		FERROR( "[SocketAcceptPair] NULL fd\n" );
+		return NULL;
+	}
 
 	int fd = p->fd;
 	int retries = 0, srl = 0;
@@ -1298,12 +1307,12 @@ inline Socket* SocketAcceptPair( Socket* sock, struct AcceptPair *p )
 	Socket* incoming = ( Socket *)FCalloc( 1, sizeof( Socket ) );
 	if( incoming != NULL )
 	{
-		DEBUG( "[SocketAcceptPair] We managed to create an incoming socket.\n" );
 		incoming->fd = fd;
 		incoming->port = ntohs( p->client.sin6_port );
 		incoming->ip = p->client.sin6_addr;
 		incoming->s_SSLEnabled = sock->s_SSLEnabled;
 		incoming->s_SB = sock->s_SB;
+		DEBUG("[SocketAcceptPair] We managed to create an incoming socket. fd %d port %d\n", incoming->fd, incoming->port);
 
 		// Not blocking
 		SocketSetBlocking( incoming, FALSE );
@@ -2223,6 +2232,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 
 			while( TRUE )
 			{
+				//DEBUG("Before read\n");
 				//if( read + buf > length ) buf = length - read;
 				if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
 				{
@@ -2337,7 +2347,7 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 					default:
 
 						usleep( 0 );
-						//if( retries++ > 500 )
+						if( retries++ > 500 )
 						{
 							return bs;
 						}
@@ -2347,8 +2357,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 				}
 				else if( res == 0 )
 				{
-					DEBUG("[SocketReadTillEnd] There is nothing to read\n");
-					return bs;
+					if( retries++ > 500 )
+					{
+						return bs;
+					}
+					//DEBUG("[SocketReadTillEnd] There is nothing to read\n");
+					//return bs;
 				}
 			} // while
 		}
@@ -2615,7 +2629,7 @@ void SocketClose( Socket* sock )
 	}
 
 	//DEBUG("[SocketClose] before lock\n");
-	if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	//if( pthread_mutex_lock( &sock->mutex ) == 0 )
 	{
 		//DEBUG("[SocketClose] locked\n");
 		if( sock->s_SSLEnabled == TRUE )
@@ -2722,14 +2736,25 @@ void SocketClose( Socket* sock )
 		// default
 		if( sock->fd )
 		{
-			FERROR( "Closing socket %d\n", sock->fd );
+			fcntl( sock->fd, F_SETFD, FD_CLOEXEC );
+			
+			int optval;
+			socklen_t optlen = sizeof(optval);
+			optval = 0;
+   optlen = sizeof(optval);
+   if(setsockopt(sock->fd, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen) < 0) {
+   }
+			
+			//FERROR( "Closing socket %d\n", sock->fd );
 			//DEBUG("shutdown socket\n");
-			shutdown( sock->fd, SHUT_RDWR );
-			close( sock->fd );
+			int e = 0;//shutdown( sock->fd, SHUT_RDWR );
+			//DEBUG("socked erased: %d\n", e );
+			e = close( sock->fd );
+			DEBUG("socked closed: %d\n", sock->fd );
 			sock->fd = 0;
 		}
 		//DEBUG("[SocketClose] before unlock\n");
-		pthread_mutex_unlock( &sock->mutex );
+		//pthread_mutex_unlock( &sock->mutex );
 		//DEBUG("[SocketClose] mutex unlocked\n");
 		SocketFree( sock );
 		sock = NULL;

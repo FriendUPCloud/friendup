@@ -17,11 +17,12 @@
 *                                                                              *
 *****************************************************************************©*/
 
-fui.Workspaces = fui.inherit( fui.Group.prototype );
-
-fui.Workspaces.prototype.create = function( flags )
+fui.addClass( function()
 {
-	this.baseClassName = 'FUIWorkspaces';
-}
+	fui.Workspaces = fui.inherit( fui.Group.prototype );
 
-
+	fui.Workspaces.prototype.create = function( flags )
+	{
+		this.baseClassName = 'FUIWorkspaces';
+	}
+}, 'Group' );

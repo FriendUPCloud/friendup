@@ -1187,7 +1187,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 					el =  HashmapGet( request->parsedPostContent, "data" );
 					if( el == NULL ) el = HashmapGet( request->query, "data" );
-					if( el != NULL )
+					if( el != NULL && el->data != NULL )
 					{
 						fdata = (char *)UrlDecodeToMem( el->data );
 					}
@@ -1200,7 +1200,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						dataSize = (int)strtol((char *)el->data, &next, 0);
 					}
 					
-					if( dataSize <= 0 )
+					if( dataSize <= 0 && fdata != NULL )
 					{
 						dataSize = strlen( fdata );
 					}
@@ -1310,6 +1310,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
 					
+					
 					char *topath = NULL;
 					el = HashmapGet( request->parsedPostContent, "to" );
 					if( el == NULL ) el = HashmapGet( request->query, "to" );
@@ -1340,20 +1341,29 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							
 							if( havesrc == TRUE )
 							{
+								DEBUG("[FSMWebRequest] We have access to source: %s\n", path );
+							
 								FBOOL havedst = FSManagerCheckAccess( l->sl_FSM, dstpath, actDev->f_ID, loggedSession->us_User, "--W---" );
 								if( havedst == TRUE )
 								{
 									dstrootf->f_Operations++;
 							
+									DEBUG("[FSMWebRequest] We have access to destination: %s\n", topath );
+									
 									dsthand = dstrootf->f_FSys;
 									FHandler *actFS = (FHandler *)actDev->f_FSys;
 									int rsize = 0;
 							
 									if( dstpath[ strlen( dstpath ) - 1 ] != '/' )	// simple copy file
 									{
-										FULONG written = 0;
+										DEBUG("[FSMWebRequest] Copy - executing file open on: %s to %s\n", path, topath );
+										
+										int64_t written = 0;
+										int64_t readall = 0;
+										
 										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
 										File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
+										
 										if( rfp != NULL && wfp != NULL )
 										{
 											// Using a big buffer!
@@ -1363,6 +1373,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
 										
 												int dataread = 0;
+												
 
 												while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
 												{
@@ -1370,6 +1381,9 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													{
 														break;
 													}
+													
+													readall += dataread;
+													
 													if( dataread > 0 )
 													{
 														int bytes = 0;
@@ -1385,13 +1399,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												}
 												FFree( dataBuffer );
 											}
-											DEBUG( "[FSMWebRequest] Wrote %lu bytes.\n", written );
 										}
 										else
 										{
 											DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
 										}
 										int closeError = 0;
+										
+										DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
 										
 										if( rfp )
 										{
@@ -1416,13 +1431,15 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									}
 									else		// make directory
 									{
+										DEBUG("[FSMWebRequest] On copy, make dir first: %s\n", topath );
+										
 										FHandler *dsthand = (FHandler *)dstrootf->f_FSys;
 
 										char tmp[ 128 ];
 								
 										// cutting device name
 										unsigned int i;
-										for( i=0 ; i < strlen(topath ); i++ )
+										for( i=0 ; i < strlen( topath ); i++ )
 										{
 											if( topath[ i ] == '/' )
 											{

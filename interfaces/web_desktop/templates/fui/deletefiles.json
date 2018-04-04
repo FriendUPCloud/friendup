@@ -1,0 +1,32 @@
+[ 
+	{
+		"type": "Init",
+		"functionName": "deleteFiles"
+	},
+	{
+		"type": "Group",
+		"columns": 2,
+		"width": "100%",
+		"height": "100%",
+		"sizes": [ "calc(100% - 120px)", "120px" ],
+		"show": true,
+		"children": [
+			{
+				"type": "Progressbar",
+				"value": 0,
+				"name": "progress",
+				"scope": 100
+			},
+			{
+				"type": "Button",
+				"text": "Cancel",
+				"icon": "fa-remove",
+				"events": {
+					"functionName": "cancelDelete",
+					"arguments": ""
+				},
+				"show": true
+			}
+		]
+	}
+]

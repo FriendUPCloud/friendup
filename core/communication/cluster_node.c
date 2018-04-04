@@ -71,6 +71,11 @@ void ClusterNodeDelete( ClusterNode *cc )
 		{
 			FFree( cc->cn_FCID );
 		}
+		if( cc->cn_Url != NULL )
+		{
+			FFree( cc->cn_Url );
+		}
+		
 		DEBUG("[ClusterNodeDelete] delete %p END\n", cc );
 		FFree( cc );
 	}

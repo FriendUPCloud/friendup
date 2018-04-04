@@ -1,7 +1,7 @@
 
-<div class="Dialog">
+<div class="ContentFull Dialog">
 	<div class="My DialogContent">
-		<div class="WPatternCont BorderRight">
+		<div class="WPatternCont BorderRight VContentTop">
 			<div class="Padding">
 				<p>
 					<strong>{wallpaper_for}:</strong>
@@ -26,17 +26,35 @@
 				</p>
 			</div>
 		</div>
-		<div class="WPatternCont2 ScrollArea">
+		<div class="WPatternCont2 VContentTop">
 			<div class="Padding">
-				<div class="ImageContainer" id="Images">
-					&nbsp;
+				<div id="Pages">
+					<div class="Tab IconSmall fa-image">
+						{i18n_from_collection}
+					</div>
+					<div class="Tab IconSmall fa-folder">
+						{i18n_from_web}
+					</div>
+					<div class="Page">
+						<div class="PageScroll Padding">
+							<div class="ImageContainer" id="Images">
+								&nbsp;
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+						<div class="PageScroll Padding">
+							<div id="Webimages">
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 	<div class="DialogButtons Padding">
 		<div class="FloatRight">
-			<button type="button" class="IconSmall fa-eye CloseButton" onclick="Application.quit()">
+			<button type="button" class="IconSmall fa-remove CloseButton" onclick="Application.quit()">
 				{close}
 			</button>
 		</div>
@@ -48,10 +66,12 @@
 		</button>
 	</div>
 </div>
+<script>
+	InitTabs( 'Pages' );
+</script>
 <style>
 	.WPatternCont, .WPatternCont2
 	{	
-		width: 33%;
 		float: left;
 		height: 100%;
 		position: relative;
@@ -59,10 +79,13 @@
 		top: auto !important;
 		left: auto !important;
 	}
+	.WPatternCont
+	{
+		width: 300px;
+	}
 	.WPatternCont2
 	{
-		width: 67%;
-		/*margin-left: 33%;*/
+		width: calc(100% - 300px);
 	}
 	.ImageContainer:after
 	{
@@ -84,7 +107,7 @@
 	.WPatternCont2 > div
 	{
 		left: 0px;
-		padding-right: 0;
+		padding-top: 0;
 	}
 	.WPImage
 	{
@@ -103,6 +126,42 @@
 		background-color: black;
 		position: relative;
 	}
+	@media only screen and (min-width: 960px)
+	{
+		.WPImage:nth-child(3n-2)
+		{
+			width: calc(33% - 10px);
+			margin: 5px 5px 35px 5px;
+			height: 120px;
+		}
+		.WPImage:nth-child(3n-1)
+		{
+			width: calc(33% - 10px);
+			margin: 5px 5px 35px 5px;
+			height: 120px;
+		}
+		.WPImage:nth-child(3n)
+		{
+			width: calc(33% - 10px);
+			margin: 5px 5px 35px 5px;
+			height: 120px;
+		}
+	}
+	@media only screen and (max-width: 959px)
+	{
+		.WPImage:nth-child(even)
+		{
+			width: calc(50% - 14px);
+			margin: 5px 0 35px 5px;
+			height: 120px;
+		}
+		.WPImage:nth-child(odd)
+		{
+			width: calc(50% - 10px);
+			margin: 5px 5px 35px 5px;
+			height: 120px;
+		}
+	}
 	.WPImage > div
 	{
 		position: absolute;
@@ -119,7 +178,7 @@
 	.WPImage > div > div
 	{
 		position: absolute;
-		bottom: -21px;
+		bottom: -29px;
 		width: 100%;
 		text-align: center;
 		overflow: hidden;
@@ -151,8 +210,7 @@
 	}
 	.WPImage.Selected
 	{
-		margin: 8px 8px 13px -2px;
-		border: 3px dotted rgb(255,255,255);
+		box-shadow: 0px 0px 0px 3px #00000036;
 	}
 	.WPImage.Selected > div > div
 	{

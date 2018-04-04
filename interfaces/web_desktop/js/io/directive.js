@@ -22,6 +22,8 @@ var _appNum = 1;
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
+	if( args ) { Workspace.lastLaunchedAppArgs = args; console.log('.',args); }
+
 	// Check if the app called is found in the singleInstanceApps array
 	if( friend.singleInstanceApps[ app ] )
 	{
@@ -606,7 +608,17 @@ function InstallApplication( app )
 			var w = FindWindowById( 'system_install_' + app );
 			if( w )
 			{
-				ExecuteApplication( app );
+				if( Workspace.lastLaunchedAppArgs )
+				{
+					argstosend = Workspace.lastLaunchedAppArgs;
+					Workspace.lastLaunchedAppArgs = false;
+					ExecuteApplication( app, argstosend + '' );
+				}
+				else
+				{
+					ExecuteApplication( app );	
+				}
+				
 				w.close();
 			}
 		}
@@ -688,14 +700,32 @@ function ExecuteApplicationActivation( app, win, permissions, reactivation )
 					s.onExecuted = function()
 					{
 						// Refresh mountlist (async)
-						ExecuteApplication( app );
+						if( Workspace.lastLaunchedAppArgs )
+						{
+							argstosend = Workspace.lastLaunchedAppArgs;
+							Workspace.lastLaunchedAppArgs = false;
+							ExecuteApplication( app, argstosend + '' );
+						}
+						else
+						{
+							ExecuteApplication( app );	
+						}
 					}
 					s.execute( 'device/refresh', { devname: app.split( ':' )[0] + ':' } );
 				}
 				// Normal activation
 				else
 				{
-					ExecuteApplication( app );
+					if( Workspace.lastLaunchedAppArgs )
+					{
+						argstosend = Workspace.lastLaunchedAppArgs;
+						Workspace.lastLaunchedAppArgs = false;
+						ExecuteApplication( app, argstosend + '' );
+					}
+					else
+					{
+						ExecuteApplication( app );	
+					}
 				}
 			}
 			else

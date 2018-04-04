@@ -1,0 +1,67 @@
+
+OBSOLETE DOCUMENT
+check system.library.txt
+
+
+Structure
+---------
+
+The common JSON file struct in FriendUP looks like this:
+
+{
+	MetaType:     'executable',       // File variant
+	Type:         'file',             // Volume, directory, file?
+	Filesize:     12893,
+	DateModified: 'YYYY-MM-DD HH:II:SS',
+	DateCreated:  'YYYY-MM-DD HH:II:SS',
+	Permissions:  { ... },
+	..
+	
+}
+
+1. Filesystem
+2. DOSDrivers
+3. Web Calls
+4. Writting FS
+
+FriendUP  is a  special  kind of operating  system that works  on many different 
+devices. In this document can find information about how to play with its feautures and
+how to develop new file systems. All management is done through the main FC library, 
+system.library. The library is placed in the libs directory with external stuff:
+
+	emod        - execute modules - small programs which allow to use external 
+	              languages
+	nodejs.emod - execute module for javascript langauge
+	php.emod    - execute module for php
+	sys.emod    - execute module for local machine (system commands)
+	fsys        - filesystems - C lanugage coded handlers used to control files
+	local.fsys  - local disk handler, provide access to local disks
+	php.fsys    - php disk handler, provide access to many web disks like 
+	              websites, sql, etc.
+	ssh.fsys    - ssh disk handler, provide access to disk of external servers 
+	              trough ssh
+ 
+When writing a Friend Core DOS driver, first create a directory. The name of the
+directory must match the name of the DOS driver. So for example, if the DOS 
+driver is called "CowboyNeilDrive", then the directory name must be exactly the
+same, case sensitive.
+
+The directory structure is as follows (languages are examples, and optional):
+
+DOSDrivers/
+	CowboyNeilDrive/
+		Locale/
+			en.lang
+			no.lang
+			pl.lang
+		door.php
+		dosdriver.ini
+		gui.html
+		info.html
+		sysinfo.json
+
+The directory above is a PHP based DOS driver. DOS drivers written in high level
+languages are easy to write and easier to complete in a short amount of time.
+A drawback might be speed. C is much easier to make fast.
+
+

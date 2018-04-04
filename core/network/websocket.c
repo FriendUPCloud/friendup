@@ -1,4 +1,4 @@
-/*©mit**************************************************************************
+/*??mit**************************************************************************
 *                                                                              *
 * Friend Unifying Platform                                                     *
 * ------------------------                                                     *
@@ -47,9 +47,14 @@
 #include <websockets/websocket_req_manager.h>
 #include <network/protocol_websocket.h>
 #define ENABLE_MOBILE_APP_NOTIFICATIONS 0
+#define ENABLE_NOTIFICATIONS_SINK 0
 
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 #include <mobile_app/mobile_app_websocket.h>
+#endif
+
+#if ENABLE_NOTIFICATIONS_SINK == 1
+#include <mobile_app/notifications_sink_websocket.h>
 #endif
 
 extern pthread_mutex_t WSThreadMutex;
@@ -129,6 +134,17 @@ static struct lws_protocols protocols[] = {
 	{
 		"FriendApp-v1",
 		websocket_app_callback,
+		0 /*sizeof( struct FCWSData )*/, //FIXME
+		WS_PROTOCOL_BUFFER_SIZE,
+		1, //id - not used for anything yet
+		NULL,
+		0
+	},
+#endif
+#if ENABLE_NOTIFICATIONS_SINK == 1
+	{
+		"FriendNotifications-v1",
+		websocket_notifications_sink_callback,
 		0 /*sizeof( struct FCWSData )*/, //FIXME
 		WS_PROTOCOL_BUFFER_SIZE,
 		1, //id - not used for anything yet
@@ -657,9 +673,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 			DEBUG("[WS]: Getting connections %p for usersession %p\n", nwsc, us );
 			
 			// remove first entry!
-			//DEBUG("[WS] NWSCPOINTER to WSI %p POINTER provided wsi %p\n" , nwsc->wc_Wsi, wsi );
-
-			//if( nwsc->wc_Wsi == wsi )
 			if( nwsc->wc_WebsocketsData == data )
 			{
 				us->us_WSClients = (WebsocketClient *)us->us_WSClients->node.mln_Succ;
@@ -684,7 +697,6 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 						break;
 					}
 				}
-				
 			}
 		}
 		pthread_mutex_unlock( &(us->us_Mutex) );
@@ -699,93 +711,3 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 
     return 0;
 }
-
-/*
- // original
-int DeleteWebSocketConnection( void *locsb, struct lws *wsi, void *wscl )
-{
-    SystemBase *l = (SystemBase *)locsb;
-	if( wscl == NULL )
-	{
-		return 1;
-	}
-	WebsocketClient *locclient = (WebsocketClient *)wscl;
-    UserSession *us = (UserSession *)locclient->wc_UserSession;
-    
-	//
-	// if user session is attached, then we can remove WebSocketClient from UserSession, otherwise it was already removed from there
-	//
-    if( us != NULL )
-	{
-		WebsocketClient *nwsc = us->us_WSClients;
-        WebsocketClient *owsc = nwsc;
-		
-		// we must remove first Websocket from UserSession list and then from app session
-		
-		if( nwsc != NULL )
-		{
-			DEBUG("[WS]: Getting connections %p for user %s\n", nwsc, us->us_SessionID );
-			
-			// remove first entry!
-			DEBUG("[WS] NWSCPOINTER %p POINTER %p\n" , nwsc->wc_Wsi, wsi );
-
-			//if( nwsc->wc_Wsi == wsi )
-			if( nwsc == wscl )
-			{
-				pthread_mutex_lock( &(us->us_Mutex) );
-				us->us_WSClients = (WebsocketClient *)us->us_WSClients->node.mln_Succ;
-				pthread_mutex_unlock( &(us->us_Mutex) );
-				DEBUG("[WS] Remove single connection  %p  session connections pointer %p\n", owsc, us->us_WSClients );
-            }
-			
-			// remove entry from the list
-			else
-			{
-				DEBUG("[WS] Remove connection from list\n");
-
-				while( nwsc != NULL )
-				{
-					DEBUG("[WS] WS Entry\n");
-					owsc = nwsc;
-					nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
-					
-					if( nwsc != NULL && nwsc->wc_Wsi == wsi )
-					{
-						pthread_mutex_lock( &(us->us_Mutex) );
-						owsc->node.mln_Succ = nwsc->node.mln_Succ;
-						pthread_mutex_unlock( &(us->us_Mutex) );
-						break;
-					}
-				}
-			}
-			
-			if( nwsc != NULL )
-			{
-				while( TRUE )
-				{
-					if( nwsc->wc_InUseCounter <= 0 )
-					{
-						break;
-					}
-					sleep( 1 );
-				}
-				nwsc->wc_Wsi = NULL;
-				
-				AppSessionRemByWebSocket( l->sl_AppSessionManager->sl_AppSessions, locclient );
-				
-				DEBUG("[WS] connection will be removed\n");
-				//WebsocketClientDelete( locclient );
-			}
-            //pthread_mutex_lock( &(SLIB->sl_SessionMutex) );
-		}
-		locclient->wc_UserSession = NULL;
-	}
-	else
-	{
-		FERROR("Cannot remove connection: Pointer to usersession is equal to NULL\n");
-        return -1;
-	}
-
-    return 0;
-}
-*/

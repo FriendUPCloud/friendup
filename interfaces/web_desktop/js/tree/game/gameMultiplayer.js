@@ -24,8 +24,8 @@
  * @date first pushed on 30/08/2017
  */
 Friend = window.Friend || {};
-Friend.Game = Friend.Game || {};
-Friend.Flags = Friend.Flags || {};
+Friend.Tree.Game = Friend.Tree.Game || {};
+Friend.Tree.Game.RenderItems = Friend.Tree.Game.RenderItems || {};
 
 /**
  * Process: MultiPlayerEmitter
@@ -38,16 +38,15 @@ Friend.Flags = Friend.Flags || {};
  *
  * Flags
  */
-Friend.Game.MultiPlayerHandler = function( tree, object, flags )
+Friend.Tree.Game.MultiPlayerHandler = function( tree, item, flags )
 {
 	this.network = false;
-	Friend.Tree.Processes.init( this, tree, object, 'Friend.Game.MultiPlayerHandler', flags );
-	Object.assign( this, Friend.Game.MultiPlayerHandler );
-
+	Friend.Tree.Processes.init( tree, this, item, 'Friend.Tree.Game.MultiPlayerHandler', flags );
+	this.item.registerEvents( 'refresh' );
 	this.created = 0;
-	this.network.registerItem( this.object );
+	this.network.registerItem( this.item );
 };
-Friend.Game.MultiPlayerHandler.cleanFlags = function ( flags )
+Friend.Tree.Game.MultiPlayerHandler.cleanFlags = function ( flags )
 {
 	var temp = {};
 	for ( var p in flags )
@@ -57,60 +56,59 @@ Friend.Game.MultiPlayerHandler.cleanFlags = function ( flags )
 	}
 	return temp;
 };
-Friend.Game.MultiPlayerHandler.processUp = function ( flags )
+Friend.Tree.Game.MultiPlayerHandler.processUp = function ( message )
 {
-	if ( flags.command && flags.itemEvent == this.object )
+	if ( message.itemEvent == this.item )
 	{
-		switch ( flags.command )
+		switch ( message.command )
 		{
 			case 'create':
-				if ( !flags.creationFlags.fromNetwork )
+				if ( !message.creationFlags.fromNetwork )
 				{
-					var creationFlags = Object.assign( {}, flags.creationFlags );
+					var creationFlags = Object.assign( {}, message.creationFlags );
 					creationFlags = this.cleanFlags( creationFlags );
 					var response =
 					{
 						playerNumber: this.network.playerNumber,
 						playerName: Application.username,
-						identifier: this.object.identifier,
-						name: this.object.name,
-						creationFlags: this.utilities.replaceObjectsByNames( this.object.root, {}, creationFlags ) // Transmits the whole object creation flags
+						identifier: this.item.identifier,
+						name: this.item.name,
+						creationFlags: this.utilities.replaceObjectsByNames( this.item.root, {}, creationFlags ) // Transmits the whole item creation flags
 					};
 					this.network.multiPlayerSend( 'create', response );
 				}
 				break;
 			case 'destroy':
-				if ( !this.object.fromNetwork )
+				if ( !this.item.fromNetwork )
 				{
 					var response =
 					{
 						playerNumber: this.network.playerNumber,
 						playerName: Application.username,
-						identifier: this.object.identifier,
-						name: this.object.name
+						identifier: this.item.identifier,
+						name: this.item.name
 					};
 					this.network.multiPlayerSend( 'destroy', response );
 				}
 				break;
 		}
 	}
-	return flags;
+	return true;
 };
-Friend.Game.MultiPlayerHandler.processDown = function ( flags )
+Friend.Tree.Game.MultiPlayerHandler.processDown = function ( message )
 {
 	var flag = false;
 	var response = { };
-	if ( !flags.command && flags.refresh && !flags.fromNetwork )
+	if ( message.command == 'refresh' && message.refresh && !message.fromNetwork )
 	{
-		flag = true;
 		var response =
 		{
-			identifier: this.object.identifier,
-			flags: this.utilities.replaceObjectsByNames( this.object.root, {}, flags )
+			identifier: this.item.identifier,
+			flags: this.utilities.replaceObjectsByNames( this.item.root, {}, message )
 		};
 		this.network.multiPlayerSend( 'update', response );
 	}
-	return flags;
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,21 +131,22 @@ Friend.Game.MultiPlayerHandler.processDown = function ( flags )
  * messages: (function) function of the caller to reroute messages to
  * network: (object) the network object that must have been created before
  */
-Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
+Friend.Tree.Game.MultiWaitForParticipants = function ( tree, name, flags )
 {
 	var self = this;
 	this.caller = false;
 	this.messages = false;
 	this.network = false;
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Game.MultiWaitForParticipants', flags );
-	Object.assign( this, Friend.Game.MultiWaitForParticipants );
+	this.renderItemName = 'Friend.Tree.RenderItems.Empty';
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Game.MultiWaitForParticipants', flags );
+	this.registerEvents( 'refresh' );
 
 	// Branches the network object here
 	this.network.caller = this;
 	this.network.messages = handleMessages;
 
 	// Opens a dialog with the list of hosts
-	this.dialog = new Friend.UI.Dialog( this.tree, 'dialog',
+	this.dialog = new Friend.Tree.UI.Dialog( this.tree, 'dialog',
 	{
 		root: this.root,
 		parent: this,
@@ -161,7 +160,7 @@ Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
 		OK: 'Start game',
 		onOK: onOK
 	} );
-	this.list = new Friend.UI.List( this.tree, 'list',
+	this.list = new Friend.Tree.UI.List( this.tree, 'list',
 	{
 		root: this.root,
 		parent: this.dialog,
@@ -177,6 +176,16 @@ Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
 	{
 		switch ( msg.command )
 		{
+		case 'multiplayer':
+			switch ( msg.subCommand )
+			{
+				case 'playerDisconnected':
+					this.list.removeLineFromValue( msg.key );
+					break;
+				default:
+					break;
+			}
+			break;
 		case 'friendnetwork':
 			switch ( msg.subCommand )
 			{
@@ -188,15 +197,6 @@ Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
 					break;
 			}
 			break;
-		case 'network':
-			switch ( msg.subCommand )
-			{
-				case 'playerDisconnected':
-					this.list.removeLineFromData( msg.key );
-					break;
-				default:
-					break;
-			}
 		}
 	}
 	function onOK()
@@ -233,7 +233,7 @@ Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
 				this.network.hostClients[ key ].playerNumber = count;
 				count ++;
 			}
-
+			
 			// Send information to game
 			var message =
 			{
@@ -258,24 +258,20 @@ Friend.Game.MultiWaitForParticipants = function ( tree, name, flags )
 		} ] );
 	}
 };
-Friend.Game.MultiWaitForParticipants.renderUp = function ( flags )
+Friend.Tree.Game.MultiWaitForParticipants.render = function ( flags )
 {
 	return flags;
 };
-Friend.Game.MultiWaitForParticipants.renderDown = function ( flags )
-{
-    return flags;
-};
-Friend.Game.MultiWaitForParticipants.processUp = function ( flags )
+Friend.Tree.Game.MultiWaitForParticipants.messageUp = function ( message )
 {
 	if ( self.dialog )									// Not the first time
 		self.dialog.enable( 'OK', this.network.checkReady() );
 
-	return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
+	return this.startProcess( message, [ 'x', 'y', 'z', 'rotation' ] );
 };
-Friend.Game.MultiWaitForParticipants.processDown = function ( flags )
+Friend.Tree.Game.MultiWaitForParticipants.messageDown = function ( message )
 {
-	return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
+	return this.endProcess( message, [ 'x', 'y', 'z', 'rotation' ] );
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -298,14 +294,15 @@ Friend.Game.MultiWaitForParticipants.processDown = function ( flags )
  * messages: (function) function of the caller to reroute messages to
  * network: (object) the network object that must have been created before
  */
-Friend.Game.MultiWaitForGame = function ( tree, name, flags )
+Friend.Tree.Game.MultiWaitForGame = function ( tree, name, flags )
 {
 	var self = this;
 	this.caller = false;
 	this.messages = false;
 	this.network = false;
-	Friend.Tree.Items.init( this, tree, 'waitForGame', 'Friend.Game.MultiWaitForGame', flags );
-	Object.assign( this, Friend.Game.MultiWaitForGame );
+	this.renderItemName = 'Friend.Tree.RenderItems.Empty';
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Game.MultiWaitForGame', flags );
+	this.registerEvents( 'refresh' );
 
 	this.updateSpeed = 1 * 1000;
 	this.updateCount = this.updateSpeed;
@@ -346,8 +343,8 @@ Friend.Game.MultiWaitForGame = function ( tree, name, flags )
 			{
 				if ( list[ h ] )
 				{
-					var id = this.list.addLine( list[ h ].name );
-					hosts.push( { identifier: id, hostName: list[ h ].hostName } );
+					var identifier = this.list.addLine( list[ h ].name );
+					hosts.push( { identifier: identifier, hostName: list[ h ].hostName } );
 				}
 			}
 
@@ -364,9 +361,15 @@ Friend.Game.MultiWaitForGame = function ( tree, name, flags )
 		{
 			switch ( msg.subCommand )
 			{
+				case 'hostDisconnected':
+					// Close the current messagebox
+					this.dialog.destroy();
+
+					// Reopen the main dialog
+					this.openDialog();
+					break;
 
 				case 'playerDisconnected':
-
 					// Close the current dialog
 					this.dialog.destroy();
 
@@ -375,7 +378,7 @@ Friend.Game.MultiWaitForGame = function ( tree, name, flags )
 					{
 						if ( msg.hostName == this.hosts[ h ].hostName )
 						{
-							this.list.removeLine( this.hosts[ h ].identifier );
+							this.list.removeLineFromValue( this.hosts[ h ].identifier );
 							break;
 						}
 					}
@@ -401,13 +404,13 @@ Friend.Game.MultiWaitForGame = function ( tree, name, flags )
 		}
 	}
 };
-Friend.Game.MultiWaitForGame.openDialog = function ()
+Friend.Tree.Game.MultiWaitForGame.openDialog = function ()
 {
 	var self = this;
 	this.state = 'waitForGame';
 
 	// Opens a dialog with the list of hosts
-	this.dialog = new Friend.UI.Dialog( this.tree, 'dialog',
+	this.dialog = new Friend.Tree.UI.Dialog( this.tree, 'dialog',
 	{
 		root: this.root,
 		parent: this,
@@ -420,7 +423,7 @@ Friend.Game.MultiWaitForGame.openDialog = function ()
 		onCancel: onCancel,
 		onOK: onOK
 	} );
-	this.list = new Friend.UI.List( this.tree, 'list',
+	this.list = new Friend.Tree.UI.List( this.tree, 'list',
 	{
 		root: this.root,
 		parent: this.dialog,
@@ -445,15 +448,15 @@ Friend.Game.MultiWaitForGame.openDialog = function ()
 		} ] );
 	}
 	// One host has been chosen
-	function doubleClick( item )
+	function doubleClick( option )
 	{
-		self.chosenHost = item.identifier;
+		self.chosenHost = option.identifier;
 		onOK.apply( this );
 	}
 	// One host has been chosen
-	function click( item )
+	function click( option )
 	{
-		self.chosenHost = item.identifier;
+		self.chosenHost = option.identifier;
 	}
 	// OK pressed, check for selected line and validates
 	function onOK()
@@ -470,7 +473,7 @@ Friend.Game.MultiWaitForGame.openDialog = function ()
 					// Displays a message box 'Waiting for connection'
 					self.dialog.destroy();
 					self.state = 'waitForConnection';
-					self.dialog = new Friend.UI.MessageBox( this.tree, 'message',
+					self.dialog = new Friend.Tree.UI.MessageBox( this.tree, 'message',
 					{
 						root: self.root,
 						parent: self,
@@ -498,48 +501,47 @@ Friend.Game.MultiWaitForGame.openDialog = function ()
 		] );
 	}
 };
-Friend.Game.MultiWaitForGame.renderUp = function ( flags )
+Friend.Tree.Game.MultiWaitForGame.render = function ( flags )
 {
 	return flags;
 };
-Friend.Game.MultiWaitForGame.renderDown = function ( flags )
+Friend.Tree.Game.MultiWaitForGame.messageUp = function ( message )
 {
-    return flags;
-};
-Friend.Game.MultiWaitForGame.processUp = function ( flags )
-{
-	this.updateCount += flags.delay;
-	if ( this.updateCount > this.updateSpeed )
+	if ( message.command == 'refresh' )
 	{
-		this.updateCount = 0;
-		switch ( this.state )
+		this.updateCount += message.delay;
+		if ( this.updateCount > this.updateSpeed )
 		{
-			case 'waitForGame':
-				this.network.getHosts( '<treegameseparator>' );
-				break;
-			case 'waitForConnection':
-				if ( this.network.checkReady() )
-				{
-					this.dialog.destroy();
-					this.state = 'waitForGameStart';
-
-					// Opens a message box
-					this.dialog = new Friend.UI.MessageBox( this.tree, 'message',
+			this.updateCount = 0;
+			switch ( this.state )
+			{
+				case 'waitForGame':
+					this.network.getHosts( 'Panzers!' );
+					break;
+				case 'waitForConnection':
+					if ( this.network.checkReady() )
 					{
-						root: this.root,
-						parent: this,
-						title: this.network.appName,
-						text: 'Waiting for start of game...',
-						caller: this,
-						onCancel: onCancelWaitingForGame
-					} );
-				}
-				break;
-			case 'waitForStartGame':
-				break;
+						this.dialog.destroy();
+						this.state = 'waitForGameStart';
+
+						// Opens a message box
+						this.dialog = new Friend.Tree.UI.MessageBox( this.tree, 'message',
+						{
+							root: this.root,
+							parent: this,
+							title: this.network.appName,
+							text: 'Waiting for start of game...',
+							caller: this,
+							onCancel: onCancelWaitingForGame
+						} );
+					}
+					break;
+				case 'waitForStartGame':
+					break;
+			}
 		}
 	}
-	return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
+	return this.startProcess( message, [ 'x', 'y', 'z', 'rotation' ] );
 
 	// Cancel pressed when waiting for game
 	function onCancelWaitingForGame()
@@ -553,7 +555,7 @@ Friend.Game.MultiWaitForGame.processUp = function ( flags )
 		} ] );
 	}
 };
-Friend.Game.MultiWaitForGame.processDown = function ( flags )
+Friend.Tree.Game.MultiWaitForGame.messageDown = function ( message )
 {
-	return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation' ] );
+	return this.endProcess( message, [ 'x', 'y', 'z', 'rotation' ] );
 };

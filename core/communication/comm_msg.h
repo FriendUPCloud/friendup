@@ -57,6 +57,7 @@
 typedef FLONG ID;
 
 #define MAKE_ID32( A, B, C, D ) (0x00000000ffffffff & (( A ) | (B << 8 ) | ( C << 16 ) | ( D << 24 ) ) )
+#define MAKE_ID64( A, B, C, D, E, F, G, H ) (( A ) | (B << 8 ) | ( C << 16 ) | ( D << 24 ) | ( E << 32 ) | ( F << 40 ) | ( G << 48 ) | ( H << 56 ) ) 
 
 #define ID_FCRE MAKE_ID32('F','C','R','E')	// friend host and main header
 #define ID_FCRS MAKE_ID32('F','C','R','S')	// friend cores
@@ -68,21 +69,22 @@ typedef FLONG ID;
 #define ID_FCOR MAKE_ID32('F','C','O','R')	// friend connection response
 #define ID_CLID MAKE_ID32('C','L','I','D')	// cluster ID
 
-#define ID_RDRI MAKE_ID32('R','D','R','I')	// register drive
-#define ID_UDRI MAKE_ID32('U','D','R','I')	// unregister drive
 #define ID_RUSR MAKE_ID32('R','U','S','R')	// register user
 #define ID_UUSR MAKE_ID32('U','U','S','R')	// unregister user
 #define ID_CMMD MAKE_ID32('C','M','M','D')	// command
-#define ID_FNOT MAKE_ID32('F','N','O','T')	// notification
+ #define ID_MUSR MAKE_ID32('M','U','S','R')	// move user session to another FC (in cluster)
+ #define ID_FNOT MAKE_ID32('F','N','O','T')	// notification
+ #define ID_PING MAKE_ID32('P','I','N','G')	// PING
+ #define ID_RDRI MAKE_ID32('R','D','R','I')	// register drive
+ #define ID_UDRI MAKE_ID32('U','D','R','I')	// unregister drive
+ #define ID_ANDE MAKE_ID32('A','N','D','E')  // add Node
 #define ID_FERR MAKE_ID32('F','E','R','R')	// Error
 
-#define ID_PING MAKE_ID32('P','I','N','G')	// PING
-#define ID_SSCN MAKE_ID32('S','S','C','N')	// number of user sessions on FriendCode
+//#define ID_SSCN MAKE_ID32('S','S','C','N')	// number of user sessions on FriendCode
 
 #define ID_CORE MAKE_ID32('C','O','R','E')
 #define ID_SERV MAKE_ID32('S','E','R','V')	
 #define ID_MSER MAKE_ID32('M','S','E','R')		// multi server response
-#define ID_CMND MAKE_ID32('C','M','N','D')	// command
 #define ID_SVIN MAKE_ID32('S','V','I','N')	// service info
 #define ID_FILE MAKE_ID32('F','I','L','E')	// file
 
@@ -105,6 +107,12 @@ typedef FLONG ID;
 #define ID_USER MAKE_ID32('U','S','E','R')		// user
 #define ID_PSWD MAKE_ID32('P','S','W','D')		// password
 #define ID_APID MAKE_ID32('A','P','I','D')			// application id
+
+#define ID_FINF MAKE_ID32('F','I','N','F')		// friend information
+#define ID_WSES MAKE_ID32('W','S','E','S')		// number of working sessions
+#define ID_FGEO MAKE_ID32('F','G','E','O')		// geolocalization
+#define ID_CITY MAKE_ID32('C','I','T','Y')		// geolocalization - city
+#define ID_COUN MAKE_ID32('C','O','U','N')		// geolocalization - country code
 
 #define MSG_END 						0
 #define MSG_GROUP_START					0xf0000001

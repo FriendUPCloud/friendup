@@ -58,7 +58,6 @@ void WebsocketClientDelete( WebsocketClient *cl )
 {
 	if( cl != NULL )
 	{
-		int tries = 0;
 		while( TRUE )
 		{
 			DEBUG("Check in use %d\n", cl->wc_InUseCounter );

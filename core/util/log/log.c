@@ -20,7 +20,7 @@
 *                                                                              *
 *****************************************************************************©*/
 /** @file
- * 
+ *
  *  log body
  *
  *  @author PS (Pawel Stefanski)
@@ -38,8 +38,10 @@
 #include <time.h>
 #include <core/library.h>
 #include <properties/propertieslibrary.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-// Max size of string 
+// Max size of string
 #define MAXMSG 8196
 
 FlogFlags slg;
@@ -57,84 +59,95 @@ FlogFlags slg;
 
 int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, int maxSize )
 {
-	int status = 0;
+    int status = 0;
 
-	slg.ff_Level = lvl;
-	slg.ff_FileLevel = flvl;
-	slg.ff_ToFile = toFile;
-	slg.ff_Pretty = 0;
-	slg.ff_Time = -1;
-	slg.ff_TdSafe = 1;
-	slg.ff_FP = NULL;
-	slg.ff_Fname = NULL;
-	slg.ff_MaxSize = 0;
-	slg.ff_LogNumber = 0;
-	slg.ff_Size = 0;
-	slg.ff_MaxSize = 0;
-	slg.ff_ArchiveFiles = 0;
-	
-	if( maxSize >= 100000 )
-	{
-		slg.ff_MaxSize =  (FUQUAD)maxSize;
-	}
+    slg.ff_Level = lvl;
+    slg.ff_FileLevel = flvl;
+    slg.ff_ToFile = toFile;
+    slg.ff_Pretty = 0;
+    slg.ff_Time = -1;
+    slg.ff_TdSafe = 1;
+    slg.ff_FP = NULL;
+    slg.ff_Fname = NULL;
+    slg.ff_MaxSize = 0;
+    slg.ff_LogNumber = 0;
+    slg.ff_Size = 0;
+    slg.ff_MaxSize = 0;
+    slg.ff_ArchiveFiles = 0;
 
-	PropertiesLibrary *plib = (struct PropertiesLibrary *)LibraryOpen( NULL, "properties.library", 0 );
-	if( plib != NULL )
-	{
-		Props *prop = NULL;
-		char *ptr, path[ 1024 ];
-		path[ 0 ] = 0;
-	
-		ptr = getenv("FRIEND_HOME");
-		if( ptr != NULL )
-		{
-			sprintf( path, "%scfg/cfg.ini", ptr );
-		}
+    if( maxSize >= 100000 )
+    {
+        slg.ff_MaxSize =  (FUQUAD)maxSize;
+    }
 
-		prop = plib->Open( path );
-		if( prop != NULL)
-		{
+    PropertiesLibrary *plib = (struct PropertiesLibrary *)LibraryOpen( NULL, "properties.library", 0 );
+    if( plib != NULL )
+    {
+        Props *prop = NULL;
+        char *ptr, path[ 1024 ];
+        path[ 0 ] = 0;
+
+        ptr = getenv("FRIEND_HOME");
+        if( ptr != NULL )
+        {
+            sprintf( path, "%scfg/cfg.ini", ptr );
+        }
+
+        prop = plib->Open( path );
+        if( prop != NULL)
+        {
+			char *path = NULL;
+			
 			slg.ff_Level = plib->ReadInt( prop, "Log:level", 1 );
 			slg.ff_ArchiveFiles =  plib->ReadInt( prop, "Log:archiveFiles", 0 );
-			
+
 			slg.ff_FileLevel  = plib->ReadInt( prop, "Log:fileLevel", 1 );
 			slg.ff_Fname = plib->ReadString( prop, "Log:fileName", (char *)fname );
+
+			path = plib->ReadString( prop, "Log:filepath", "log/" );
 			
-			plib->Close( prop );
-		}
-	
-		LibraryClose( plib );
-	}
+			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
+			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+			slg.ff_DestinationPath = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
+			
+			strcpy( slg.ff_Path, path );
+			mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+			
+            plib->Close( prop );
+        }
 
-	if ( pthread_mutex_init(&slg.logMutex, NULL) )
-	{
-		printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
-	}
+        LibraryClose( plib );
+    }
 
-	if ( conf != NULL && slg.ff_Fname != NULL ) 
-	{
-		slg.ff_Fname = fname;
-		//status = LogParseConfig(conf);
-	}
-	
+    if ( pthread_mutex_init(&slg.logMutex, NULL) )
+    {
+        printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
+    }
+
+    if ( conf != NULL && slg.ff_Fname != NULL )
+    {
+        slg.ff_Fname = fname;
+        //status = LogParseConfig(conf);
+    }
+
 	if( slg.ff_ArchiveFiles > 0 )
 	{
 		if( ( slg.ff_FileNames = FCalloc( slg.ff_ArchiveFiles, sizeof( char *) ) ) != NULL )
 		{
 			int i;
 			int size = strlen( slg.ff_Fname );
-			
+
 			for( i=0 ; i < slg.ff_ArchiveFiles ; i++ )
 			{
 				if( ( slg.ff_FileNames[ i ] = FCalloc( size*2, sizeof(char) ) ) != NULL )
 				{
-					
+
 				}
 			}
 		}
 	}
-	
-	return 0;
+
+    return 0;
 }
 
 /**
@@ -155,13 +168,23 @@ void LogDelete( )
 			FFree( slg.ff_FileNames );
 		}
 	}
+    
+	if( slg.ff_Path != NULL )
+	{
+		FFree( slg.ff_Path );
+	}
 	
+	if( slg.ff_DestinationPath != NULL )
+	{
+		FFree( slg.ff_DestinationPath );
+	}
+
 	if( slg.ff_FP != NULL )
 	{
 		fclose( slg.ff_FP );
 		slg.ff_FP = NULL;
 	}
-	
+
 	pthread_mutex_destroy( &slg.logMutex );
 }
 
@@ -173,183 +196,190 @@ void LogDelete( )
  * @param ... other parameters
  */
 
-void Log( int lev, char* fmt, ...) 
+void Log( int lev, char* fmt, ...)
 {
-	if( slg.ff_ToFile == TRUE )
-	{
-		time_t rawtime;
-		struct tm timeinfo;
-		rawtime = time(NULL);
-		localtime_r(&rawtime, &timeinfo);
+    if( slg.ff_ToFile == TRUE )
+        //if( 1 == 0 )
+    {
+        if (lev >= slg.ff_FileLevel)
+        {
+            if (pthread_mutex_lock(&slg.logMutex) == 0)
+            {
 
-		// Get System Date 
-		slg.ff_FD.fd_Year = timeinfo.tm_year+1900;
-		slg.ff_FD.fd_Mon = timeinfo.tm_mon+1;
-		slg.ff_FD.fd_Day = timeinfo.tm_mday;
-		slg.ff_FD.fd_Hour = timeinfo.tm_hour;
-		slg.ff_FD.fd_Min = timeinfo.tm_min;
-		slg.ff_FD.fd_Sec = timeinfo.tm_sec;
-		
-		FBOOL changeFileName = FALSE;
-		
-		if( slg.ff_MaxSize != 0 )
-		{
-			if( slg.ff_FD.fd_Day != slg.ff_Time || slg.ff_Size >= slg.ff_MaxSize )
-			{
-				slg.ff_Size = 0;
-				slg.ff_LogNumber++;
-				changeFileName = TRUE;
-			}
-		}
-		else
-		{
-			if( slg.ff_FD.fd_Day != slg.ff_Time )
-			{
-				changeFileName = TRUE;
-			}
-		}
-	
-		if( changeFileName == TRUE )
-		{
-			char fname[ 512 ];
-			
-			if( slg.ff_MaxSize != 0 )
-			{
-				snprintf( fname, sizeof(fname), "%s-%d-%02d-%02d-%02d.log",slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
-			}
-			else
-			{
-				snprintf( fname, sizeof(fname), "%s-%02d-%02d-%02d.log",slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
-			}
-			
-			if( slg.ff_FP != NULL )
-			{
-				fclose( slg.ff_FP );
-				slg.ff_FP = NULL;
-			}
-			slg.ff_FP = fopen( fname, "a");
-			if( slg.ff_FP == NULL )
-			{
-				return;
-			}
-		
-			slg.ff_Time = slg.ff_FD.fd_Day;
-			
-			if( slg.ff_ArchiveFiles > 0 )
-			{
-				// list have reverse order, on the top we have oldest entries
-				if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
-				{
-					Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
-				}
-				
-				int i=0;
-				for( i = 0 ; i < slg.ff_ArchiveFiles-1 ; i++ )
-				{
-					strcpy( slg.ff_FileNames[ i ], slg.ff_FileNames[ i+1 ] );
-				}
-				strcpy( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ], fname );
-			}
-		}
-	
-		if (lev >= slg.ff_FileLevel)
-		{
-			if (pthread_mutex_lock(&slg.logMutex) == 0)
-			{
-				char date[ 256 ];
-				
-				slg.ff_Size  += fprintf( slg.ff_FP, "%ld: %02d.%02d.%02d-%02d:%02d:%02d: ", pthread_self(),
-					slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon , slg.ff_FD.fd_Day , 
-					slg.ff_FD.fd_Hour , slg.ff_FD.fd_Min , slg.ff_FD.fd_Sec );
-				
-				//fprintf( slg.ff_FP, "%s", out);
-				va_list args;
-				va_start(args, fmt);
-				//fprintf( slg.ff_FP, fmt, args);
-				vfprintf( slg.ff_FP, fmt, args);
-				va_end(args);
-				pthread_mutex_unlock(&slg.logMutex);
-			}
-		}
-	}
-	
+                time_t rawtime;
+                struct tm timeinfo;
+                rawtime = time(NULL);
+                localtime_r(&rawtime, &timeinfo);
+
+                // Get System Date
+                slg.ff_FD.fd_Year = timeinfo.tm_year+1900;
+                slg.ff_FD.fd_Mon = timeinfo.tm_mon+1;
+                slg.ff_FD.fd_Day = timeinfo.tm_mday;
+                slg.ff_FD.fd_Hour = timeinfo.tm_hour;
+                slg.ff_FD.fd_Min = timeinfo.tm_min;
+                slg.ff_FD.fd_Sec = timeinfo.tm_sec;
+
+                FBOOL changeFileName = FALSE;
+
+                if( slg.ff_MaxSize != 0 )
+                {
+                    if( slg.ff_FD.fd_Day != slg.ff_Time || slg.ff_Size >= slg.ff_MaxSize )
+                    {
+                        slg.ff_Size = 0;
+                        slg.ff_LogNumber++;
+                        changeFileName = TRUE;
+                    }
+                }
+                else
+                {
+                    if( slg.ff_FD.fd_Day != slg.ff_Time )
+                    {
+						slg.ff_LogNumber = 0;
+                        changeFileName = TRUE;
+                    }
+                }
+
+                if( changeFileName == TRUE )
+                {
+                    //char fname[ 512 ];
+
+                    if( slg.ff_MaxSize != 0 )
+                    {
+						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%d-%02d-%02d-%02d.log", slg.ff_Path, slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+                        //snprintf( fname, sizeof(fname), "%s-%d-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_LogNumber, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+                    }
+                    else
+                    {
+						snprintf( slg.ff_DestinationPath, slg.ff_DestinationPathLength, "%s%s-%02d-%02d-%02d.log", slg.ff_Path, slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+                        //snprintf( fname, sizeof(fname), "%s-%02d-%02d-%02d.log", slg.ff_Fname, slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon, slg.ff_FD.fd_Day );
+                    }
+
+                    if( slg.ff_FP != NULL )
+                    {
+                        fclose( slg.ff_FP );
+                        slg.ff_FP = NULL;
+                    }
+                    slg.ff_FP = fopen( slg.ff_DestinationPath, "a+");
+                    if( slg.ff_FP == NULL )
+                    {
+                        return;
+                    }
+
+                    slg.ff_Time = slg.ff_FD.fd_Day;
+
+                    if( slg.ff_ArchiveFiles > 0 )
+                    {
+                        // list have reverse order, on the top we have oldest entries
+                        if( remove( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] )  == 0 )
+                        {
+                            Log( FLOG_DEBUG, "Old file removed: %s\n", slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ] );
+                        }
+
+                        int i=0;
+                        for( i = 0 ; i < slg.ff_ArchiveFiles-1 ; i++ )
+                        {
+                            strcpy( slg.ff_FileNames[ i ], slg.ff_FileNames[ i+1 ] );
+                        }
+                        strcpy( slg.ff_FileNames[ slg.ff_ArchiveFiles-1 ], slg.ff_DestinationPath );
+                    }
+                }
+
+
+                {
+                    char date[ 256 ];
+
+                    slg.ff_Size  += fprintf( slg.ff_FP, "%ld: %02d.%02d.%02d-%02d:%02d:%02d: ", pthread_self(),
+                                             slg.ff_FD.fd_Year, slg.ff_FD.fd_Mon , slg.ff_FD.fd_Day ,
+                                             slg.ff_FD.fd_Hour , slg.ff_FD.fd_Min , slg.ff_FD.fd_Sec );
+
+                    //fprintf( slg.ff_FP, "%s", out);
+                    va_list args;
+                    va_start(args, fmt);
+                    //fprintf( slg.ff_FP, fmt, args);
+                    vfprintf( slg.ff_FP, fmt, args);
+                    va_end(args);
+
+                }
+                pthread_mutex_unlock(&slg.logMutex);
+            } // pthread lock
+        } // file level
+    } // to file
+
 	// console output will be used for debug
-	if (lev >= slg.ff_Level)
-	{
-		printf("%ld: ", pthread_self() );
-		va_list args;
-		va_start(args, fmt);
-		//printf(fmt, args);
-		vprintf( fmt, args);
-		va_end(args);
-	}
+    if (lev >= slg.ff_Level)
+    {
+        printf("%ld: ", pthread_self() );
+        va_list args;
+        va_start(args, fmt);
+        //printf(fmt, args);
+        vprintf( fmt, args);
+        va_end(args);
+    }
 }
-
-
 //
-// parse_config - Parse config file. Argument cfg_name is path 
-// of config file name to be parsed. Function opens config file 
+// parse_config - Parse config file. Argument cfg_name is path
+// of config file name to be parsed. Function opens config file
 // and parses LOGLEVEL and LOGTOFILE flags from it.
 //
 
 
-/*
-char* strclr(const char* clr, char* str, ...) 
-{
-    // String buffers 
-    static char output[MAXMSG];
-    char string[MAXMSG];
+    /*
+    char* strclr(const char* clr, char* str, ...)
+    {
+        // String buffers
+        static char output[MAXMSG];
+        char string[MAXMSG];
 
-    // Read args 
-    va_list args;
-    va_start(args, str);
-    vsprintf(string, str, args);
-    va_end(args);
+        // Read args
+        va_list args;
+        va_start(args, str);
+        vsprintf(string, str, args);
+        va_end(args);
 
-    // Colorize string 
-    sprintf(output, "%s%s%s", clr, string, CLR_RESET);
+        // Colorize string
+        sprintf(output, "%s%s%s", clr, string, CLR_RESET);
 
-    return output;
-}
+        return output;
+    }
 
 
-int LogParseConfig(const char *cfg_name)
-{
-	FILE *file;
-	char line[ 1024 ];
-	size_t len = 0;
-	ssize_t read;
-	int ret = 0;
+    int LogParseConfig(const char *cfg_name)
+    {
+    	FILE *file;
+    	char line[ 1024 ];
+    	size_t len = 0;
+    	ssize_t read;
+    	int ret = 0;
 
-	file = fopen(cfg_name, "r");
-	if(file == NULL) return 0;
+    	file = fopen(cfg_name, "r");
+    	if(file == NULL) return 0;
 
-	while ((read = getline(&line, &len, file)) != -1)
-	{
-		if(strstr(line, "LOGLEVEL") != NULL)
-		{
-			slg.ff_Level = atoi(line+8);
-			ret = 1;
-		}
-		if(strstr(line, "LOGFILELEVEL") != NULL)
-		{
-			slg.ff_Level = atoi(line+12);
-			ret = 1;
-		}
-		else if(strstr(line, "LOGTOFILE") != NULL)
-		{
-			slg.ff_ToFile = atoi(line+9);
-			ret = 1;
-		}
-		else if(strstr(line, "PRETTYLOG") != NULL)
-		{
-			slg.ff_Pretty = atoi(line+9);
-			ret = 1;
-		}
-	}
-	fclose(file);
-	return ret;
-}*/
+    	while ((read = getline(&line, &len, file)) != -1)
+    	{
+    		if(strstr(line, "LOGLEVEL") != NULL)
+    		{
+    			slg.ff_Level = atoi(line+8);
+    			ret = 1;
+    		}
+    		if(strstr(line, "LOGFILELEVEL") != NULL)
+    		{
+    			slg.ff_Level = atoi(line+12);
+    			ret = 1;
+    		}
+    		else if(strstr(line, "LOGTOFILE") != NULL)
+    		{
+    			slg.ff_ToFile = atoi(line+9);
+    			ret = 1;
+    		}
+    		else if(strstr(line, "PRETTYLOG") != NULL)
+    		{
+    			slg.ff_Pretty = atoi(line+9);
+    			ret = 1;
+    		}
+    	}
+    	fclose(file);
+    	return ret;
+    }*/
 
 
 
@@ -361,107 +391,107 @@ int LogParseConfig(const char *cfg_name)
 // logging level and flag is slog flags defined in slog.h header.
 //
 
-/*
-void slog(int level, int flag, const char *msg, ...)
-{
-    if (slg.td_safe) 
+    /*
+    void slog(int level, int flag, const char *msg, ...)
     {
-        if (pthread_mutex_lock(&slog_mutex))
+        if (slg.td_safe)
         {
-            printf("<%s:%d> %s: [ERROR] Can not lock mutex: %d\n", 
-                __FILE__, __LINE__, __FUNCTION__, errno);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    
-    SlogDate mdate;
-    char string[MAXMSG];
-    char prints[MAXMSG];
-    char color[32], alarm[32];
-    char *output;
-
-    slog_get_date(&mdate);
-    bzero(string, sizeof(string));
-    bzero(prints, sizeof(prints));
-    bzero(color, sizeof(color));
-    bzero(alarm, sizeof(alarm));
-
- 
-    va_list args;
-    va_start(args, msg);
-    vsprintf(string, msg, args);
-    va_end(args);
-
-    if(!level || level <= slg.level || level <= slg.file_level)
-    {
-        switch(flag) 
-        {
-            case SLOG_LIVE:
-                strncpy(color, CLR_NORMAL, sizeof(color));
-                strncpy(alarm, "LIVE", sizeof(alarm));
-                break;
-            case SLOG_INFO:
-                strncpy(color, CLR_GREEN, sizeof(color));
-                strncpy(alarm, "INFO", sizeof(alarm));
-                break;
-            case SLOG_WARN:
-                strncpy(color, CLR_YELLOW, sizeof(color));
-                strncpy(alarm, "WARN", sizeof(alarm));
-                break;
-            case SLOG_DEBUG:
-                strncpy(color, CLR_BLUE, sizeof(color));
-                strncpy(alarm, "DEBUG", sizeof(alarm));
-                break;
-            case SLOG_ERROR:
-                strncpy(color, CLR_RED, sizeof(color));
-                strncpy(alarm, "ERROR", sizeof(alarm));
-                break;
-            case SLOG_FATAL:
-                strncpy(color, CLR_RED, sizeof(color));
-                strncpy(alarm, "FATAL", sizeof(alarm));
-                break;
-            case SLOG_PANIC:
-                strncpy(color, CLR_WHITE, sizeof(color));
-                strncpy(alarm, "PANIC", sizeof(alarm));
-                break;
-            case SLOG_NONE:
-                strncpy(prints, string, sizeof(string));
-                break;
-            default:
-                strncpy(prints, string, sizeof(string));
-                flag = SLOG_NONE;
-                break;
-        }
-
-        if (level <= slg.level || slg.pretty)
-        {
-            if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", strclr(color, alarm), string);
-            if (level <= slg.level) printf("%s", slog_get(&mdate, "%s\n", prints));
-        }
-
-        if (slg.to_file && level <= slg.file_level)
-        {
-            if (slg.pretty) output = slog_get(&mdate, "%s\n", prints);
-            else 
+            if (pthread_mutex_lock(&slog_mutex))
             {
-                if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", alarm, string);
-                output = slog_get(&mdate, "%s\n", prints);
-            } 
-
-            slog_to_file(output, slg.fname, &mdate);
+                printf("<%s:%d> %s: [ERROR] Can not lock mutex: %d\n",
+                    __FILE__, __LINE__, __FUNCTION__, errno);
+                exit(EXIT_FAILURE);
+            }
         }
-    }
 
-    if (slg.td_safe) 
-    {
-        if (pthread_mutex_unlock(&slog_mutex)) 
+
+        SlogDate mdate;
+        char string[MAXMSG];
+        char prints[MAXMSG];
+        char color[32], alarm[32];
+        char *output;
+
+        slog_get_date(&mdate);
+        bzero(string, sizeof(string));
+        bzero(prints, sizeof(prints));
+        bzero(color, sizeof(color));
+        bzero(alarm, sizeof(alarm));
+
+
+        va_list args;
+        va_start(args, msg);
+        vsprintf(string, msg, args);
+        va_end(args);
+
+        if(!level || level <= slg.level || level <= slg.file_level)
         {
-            printf("<%s:%d> %s: [ERROR] Can not deinitialize mutex: %d\n", 
-                __FILE__, __LINE__, __FUNCTION__, errno);
-            exit(EXIT_FAILURE);
+            switch(flag)
+            {
+                case SLOG_LIVE:
+                    strncpy(color, CLR_NORMAL, sizeof(color));
+                    strncpy(alarm, "LIVE", sizeof(alarm));
+                    break;
+                case SLOG_INFO:
+                    strncpy(color, CLR_GREEN, sizeof(color));
+                    strncpy(alarm, "INFO", sizeof(alarm));
+                    break;
+                case SLOG_WARN:
+                    strncpy(color, CLR_YELLOW, sizeof(color));
+                    strncpy(alarm, "WARN", sizeof(alarm));
+                    break;
+                case SLOG_DEBUG:
+                    strncpy(color, CLR_BLUE, sizeof(color));
+                    strncpy(alarm, "DEBUG", sizeof(alarm));
+                    break;
+                case SLOG_ERROR:
+                    strncpy(color, CLR_RED, sizeof(color));
+                    strncpy(alarm, "ERROR", sizeof(alarm));
+                    break;
+                case SLOG_FATAL:
+                    strncpy(color, CLR_RED, sizeof(color));
+                    strncpy(alarm, "FATAL", sizeof(alarm));
+                    break;
+                case SLOG_PANIC:
+                    strncpy(color, CLR_WHITE, sizeof(color));
+                    strncpy(alarm, "PANIC", sizeof(alarm));
+                    break;
+                case SLOG_NONE:
+                    strncpy(prints, string, sizeof(string));
+                    break;
+                default:
+                    strncpy(prints, string, sizeof(string));
+                    flag = SLOG_NONE;
+                    break;
+            }
+
+            if (level <= slg.level || slg.pretty)
+            {
+                if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", strclr(color, alarm), string);
+                if (level <= slg.level) printf("%s", slog_get(&mdate, "%s\n", prints));
+            }
+
+            if (slg.to_file && level <= slg.file_level)
+            {
+                if (slg.pretty) output = slog_get(&mdate, "%s\n", prints);
+                else
+                {
+                    if (flag != SLOG_NONE) sprintf(prints, "[%s] %s", alarm, string);
+                    output = slog_get(&mdate, "%s\n", prints);
+                }
+
+                slog_to_file(output, slg.fname, &mdate);
+            }
+        }
+
+        if (slg.td_safe)
+        {
+            if (pthread_mutex_unlock(&slog_mutex))
+            {
+                printf("<%s:%d> %s: [ERROR] Can not deinitialize mutex: %d\n",
+                    __FILE__, __LINE__, __FUNCTION__, errno);
+                exit(EXIT_FAILURE);
+            }
         }
     }
-}
-*/
+    */
 

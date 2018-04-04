@@ -45,6 +45,12 @@
 #define LIB_VERSION 1
 #define LIB_REVISION 0
 
+// special data
+
+typedef struct SpecialData{
+	int							sd_Protocol;
+}SpecialData;
+
 /**
  * return version of library
  *
@@ -69,7 +75,7 @@ long GetRevision(void)
  * Load data from database
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param where pointer to string which represent "where" part of query. If value is equal to NULL all data are taken from db.
  * @param entries pointer to interger where number of loaded entries will be returned
  * @return pointer to new structure or list of structures.
@@ -340,7 +346,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
  * Update data in database. Structure must contain primaryID key.
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param data pointer to object which will be updated in DB
  * @return 0 when success, otherwise error number
  */
@@ -601,7 +607,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
  * Save data in database. Primary ID will be stored in structure
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param data pointer to object which will be updated in DB
  * @return 0 when success, otherwise error number
  */
@@ -1158,7 +1164,7 @@ MYSQL_ROW FetchRow( struct SQLLibrary *l, MYSQL_RES *res )
  * @param l pointer to mysql.library structure
  * @param res pointer to MYSQL_RES
  */
-void FreeResult( /*struct MYSQLLibrary *l*/ void *unused __attribute__((unused)), MYSQL_RES *res )
+void FreeResult( struct SQLLibrary *l __attribute__((unused)), MYSQL_RES *res )
 {
 	mysql_free_result( res );
 }
@@ -1908,7 +1914,7 @@ int Disconnect( struct SQLLibrary *l )
 /**
  * Create new escaped string
  *
- * @param l pointer to mysql.library structure
+ * @param l pointer to sql.library structure
  * @param str pointer to char table which will be copyed and escaped
  * @return pointer to new string if success, otherwise NULL
  */
@@ -1928,6 +1934,55 @@ char *MakeEscapedString( struct SQLLibrary *l, char *str )
 		return esctext;
 	}
 	return NULL;
+}
+
+/**
+ * Set option
+ * 
+ * @param l poitner to sql.library
+ * @param opts options as string
+ * @return 0 when success, otherwise error number
+ */
+int SetOption( struct SQLLibrary *l, char *opts )
+{
+	if( opts != NULL )
+	{
+		char *par = opts;
+		char *val = opts;
+		char *optsb = opts;
+		
+		while( TRUE )
+		{
+			if( *optsb == ';' || *optsb == 0 )
+			{
+				*optsb = 0;
+				
+				if( strcmp( par, "PROTOCOL" ) == 0 )
+				{
+					if( strcmp( val, "TCP" ) == 0 )
+					{
+						int prot = MYSQL_PROTOCOL_TCP;
+						mysql_options( l->con.sql_Con, MYSQL_OPT_PROTOCOL, &prot );
+					}
+				}
+				
+				if( *optsb == 0 )
+				{
+					break;
+				}
+				
+				par = optsb + 1;
+			}
+			
+			if( *optsb == ',' )
+			{
+				*optsb = 0;
+				val = optsb + 1;
+			}
+			
+			optsb++;
+		}
+	}
 }
 
 /**
@@ -1966,12 +2021,18 @@ void *libInit( void *sb )
 	l->DeleteWhere = dlsym ( l->l_Handle, "DeleteWhere");
 	l->QueryWithoutResults = dlsym ( l->l_Handle, "QueryWithoutResults");
 	l->GetStatus = dlsym ( l->l_Handle, "GetStatus");
+	l->SetOption = dlsym ( l->l_Handle, "SetOption");
 	l->SNPrintF = SNPrintF;
 	l->Connect = Connect;
 	l->Disconnect = Disconnect;
 	l->Reconnect = Reconnect;
 	
-	SystemBase *lsb = (SystemBase *)sb;
+	l->sd = FCalloc( 1, sizeof(SpecialData) );
+	if( l->sd == NULL )
+	{
+		FFree( l );
+		return NULL;
+	}
 
 	return ( void *)l;
 }
@@ -1985,6 +2046,11 @@ void libClose( struct SQLLibrary *l )
 {
 	if( l->con.sql_Con )
 	{
+		if( l->sd )
+		{
+			FFree( l->sd );
+		}
+		
 		if( l->con.sql_Host != NULL ){ FFree( l->con.sql_Host );  l->con.sql_Host = NULL; }
 		if( l->con.sql_DBName != NULL ){ FFree( l->con.sql_DBName );  l->con.sql_DBName = NULL; }
 		if( l->con.sql_User != NULL ){ FFree( l->con.sql_User ); l->con.sql_User = NULL; }

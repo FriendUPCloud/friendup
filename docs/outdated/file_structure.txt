@@ -1,0 +1,1544 @@
+NEW FILE STRUCTURE
+
+├── automatic_tests
+├── friendcore
+│   ├── authmods
+│   │   ├── fcdb
+│   │   └── php
+│   ├── core
+│   │   ├── cache
+│   │   ├── class
+│   │   ├── core
+│   │   ├── hardware
+│   │   │   ├── printer
+│   │   │   └── usb
+│   │   ├── interface
+│   │   ├── network
+│   │   ├── resources
+│   │   ├── commservice
+│   │   ├── ssh
+│   │   ├── system
+│   │   │   ├── application
+│   │   │   ├── auth
+│   │   │   ├── dictionary
+│   │   │   ├── filesystem
+│   │   │   │   ├── nom
+│   │   │   │   └── handler
+│   │   │   ├── inram
+│   │   │   ├── invar
+│   │   │   ├── module
+│   │   │   │   └── moduledyn
+│   │   │   ├── permission
+│   │   │   ├── support
+│   │   │   ├── services
+│   │   │   └── user
+│   │   └── util
+│   │       ├── log
+│   │       └── json
+│   ├── libs
+│   │   ├── application
+│   │   ├── image
+│   │   ├── example
+│   │   ├── mysql
+│   │   ├── properties
+│   │   ├── user
+│   │   └── z
+│   │       ├── aes
+│   │       └── bin
+│   │           ├── directory
+│   │           ├── output
+│   │           │   └── directory
+│   │           └── Test
+│   └── libs-ext
+│       └── libwebsockets
+├── devices
+│   ├── DOSDrivers
+│   │   ├── ArenaCM
+│   │   ├── Assign
+│   │   │   └── Locale
+│   │   ├── DropboxDrive
+│   │   │   └── dropbox-sdk-php
+│   │   │       └── Dropbox
+│   │   │           ├── certs
+│   │   │           ├── Exception
+│   │   │           └── WebAuthException
+│   │   ├── FriendStoreDrive
+│   │   │   └── Locale
+│   │   ├── INRam
+│   │   │   └── Locale
+│   │   ├── Local
+│   │   ├── LocalDrive
+│   │   ├── NodeDrive
+│   │   │   └── Locale
+│   │   ├── Remote
+│   │   │   └── Locale
+│   │   ├── SQLDrive
+│   │   ├── SQLWorkgroupDrive
+│   │   ├── Treeroot
+│   │   ├── Website
+│   │   └── Wordpress
+│   └── Printers
+│       └── LinuxCUPS
+├── docs
+│   ├── 3dobjects
+│   ├── doxygen
+│   │   ├── doxtodoc
+│   │   └── FriendDocInternal
+│   │       ├── html
+│   │       │   └── search
+│   │       └── latex
+│   └── examples
+│       ├── crt
+│       └── module
+├── examples
+│   ├── binsearch.c
+│   ├── popen_pid
+│   ├── properties_test
+│   ├── ramdisk
+│   ├── services
+│   ├── test_popen
+│   ├── thread
+│   ├── tohex
+│   ├── websockets
+│   └── workers
+│       ├── core
+│       └── log
+├── flowcharts
+├── interfaces
+│   ├── iconthemes
+│   │   └── friendup
+│   │       ├── 128
+│   │       │   └── apps
+│   │       ├── 24
+│   │       │   └── apps
+│   │       ├── 256
+│   │       │   └── apps
+│   │       ├── 40
+│   │       │   └── apps
+│   │       ├── 80
+│   │       │   └── apps
+│   │       └── 96
+│   │           └── apps
+│   ├── themes
+│   │   ├── amigadark
+│   │   │   └── fonts
+│   │   ├── borderless
+│   │   │   └── gfx
+│   │   ├── fenster
+│   │   │   ├── fonts
+│   │   │   └── gfx
+│   │   ├── fensterx
+│   │   │   ├── fonts
+│   │   │   └── gfx
+│   │   ├── friendup
+│   │   │   └── gfx
+│   │   │       └── icons
+│   │   │           └── Custom
+│   │   │               ├── apps
+│   │   │               └── busyanim
+│   │   ├── friendup_ambient
+│   │   │   └── gfx
+│   │   ├── friendup_forest
+│   │   │   └── gfx
+│   │   ├── friendup_twilight
+│   │   │   └── gfx
+│   │   │       └── icons
+│   │   │           └── Custom
+│   │   │               ├── apps
+│   │   │               └── busyanim
+│   │   └── randstad
+│   │       ├── fonts
+│   │       │   └── Roboto
+│   │       └── gfx
+│   └── web_desktop
+│       ├── apps
+│       │   ├── Account
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Afww
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── AppBase
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Applicationmgr
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── Archived
+│       │   │   ├── BlenderFriend
+│       │   │   │   ├── Locale
+│       │   │   │   └── Scripts
+│       │   │   ├── Cubedemo
+│       │   │   │   └── Templates
+│       │   │   ├── DemoApp
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   ├── Stylesheets
+│       │   │   │   └── Templates
+│       │   │   ├── DemoHogneApp
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── FriendStore
+│       │   │   │   ├── Gfx
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── Mail
+│       │   │   │   ├── Graphics
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── Microscopix
+│       │   │   │   └── Locale
+│       │   │   └── Photopea
+│       │   │       └── Locale
+│       │   ├── AssidTest
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Astray
+│       │   ├── Author
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── ckeditor
+│       │   │   │       ├── adapters
+│       │   │   │       ├── lang
+│       │   │   │       ├── plugins
+│       │   │   │       │   ├── a11yhelp
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── lang
+│       │   │   │       │   ├── about
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── clipboard
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── dialog
+│       │   │   │       │   ├── image
+│       │   │   │       │   │   ├── dialogs
+│       │   │   │       │   │   └── images
+│       │   │   │       │   ├── link
+│       │   │   │       │   │   ├── dialogs
+│       │   │   │       │   │   └── images
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── magicline
+│       │   │   │       │   │   └── images
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── pastefromword
+│       │   │   │       │   │   └── filter
+│       │   │   │       │   ├── scayt
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── specialchar
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── lang
+│       │   │   │       │   ├── table
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── tabletools
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   └── wsc
+│       │   │   │       │       └── dialogs
+│       │   │   │       ├── samples
+│       │   │   │       │   ├── css
+│       │   │   │       │   ├── img
+│       │   │   │       │   ├── js
+│       │   │   │       │   ├── old
+│       │   │   │       │   │   ├── assets
+│       │   │   │       │   │   │   ├── inlineall
+│       │   │   │       │   │   │   ├── outputxhtml
+│       │   │   │       │   │   │   └── uilanguages
+│       │   │   │       │   │   ├── dialog
+│       │   │   │       │   │   │   └── assets
+│       │   │   │       │   │   ├── enterkey
+│       │   │   │       │   │   ├── htmlwriter
+│       │   │   │       │   │   │   └── assets
+│       │   │   │       │   │   │       └── outputforflash
+│       │   │   │       │   │   ├── magicline
+│       │   │   │       │   │   ├── toolbar
+│       │   │   │       │   │   └── wysiwygarea
+│       │   │   │       │   └── toolbarconfigurator
+│       │   │   │       │       ├── css
+│       │   │   │       │       ├── font
+│       │   │   │       │       ├── js
+│       │   │   │       │       └── lib
+│       │   │   │       │           └── codemirror
+│       │   │   │       └── skins
+│       │   │   │           └── moono
+│       │   │   │               └── images
+│       │   │   │                   └── hidpi
+│       │   │   └── Templates
+│       │   ├── BouncingBall
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Broadcast
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Calculator
+│       │   │   ├── Example
+│       │   │   └── Locale
+│       │   ├── Calendar
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── CompetentCandidate
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── CouchTest
+│       │   │   ├── CSS
+│       │   │   ├── Dep
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── DataSources
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── DiskCatalog
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Dock
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── DocuEditor
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── DoIt
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── DrillBunny
+│       │   │   ├── assets
+│       │   │   └── js
+│       │   ├── Epat
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Friend
+│       │   │   └── Scripts
+│       │   ├── FriendCommunity
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── FriendCreate
+│       │   │   ├── Css
+│       │   │   ├── Gfx
+│       │   │   ├── Libraries
+│       │   │   │   └── Ace
+│       │   │   │       └── snippets
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendJukebox
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendShell
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── FriendStore
+│       │   │   ├── Css
+│       │   │   ├── Images
+│       │   │   ├── Json
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendTracker
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── FriendUPCommunity
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── GuiTester
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Hardware
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── HexGL
+│       │   │   └── Templates
+│       │   ├── House
+│       │   │   ├── Gfx
+│       │   │   ├── Libraries
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── IntroRC2
+│       │   │   ├── intro
+│       │   │   │   ├── resources
+│       │   │   │   └── src
+│       │   │   └── Resources
+│       │   ├── IoTDeck
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Issues
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── JumpAround
+│       │   │   ├── Gfx
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Language
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Looknfeel
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Merkur
+│       │   │   └── Scripts
+│       │   ├── Mimetypes
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Minipaint
+│       │   │   ├── img
+│       │   │   ├── js
+│       │   │   ├── libs
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── styles
+│       │   │   └── Templates
+│       │   ├── Mitra
+│       │   │   ├── Documentation
+│       │   │   ├── Images
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── MitraAdmin
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Packager
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Pat
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── PythonTestSuite
+│       │   │   └── Locale
+│       │   ├── RemoteCall
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── RobasTest
+│       │   │   ├── assets
+│       │   │   │   ├── fonts
+│       │   │   │   ├── icon
+│       │   │   │   └── images
+│       │   │   ├── build
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── RseDemo
+│       │   │   ├── Gfx
+│       │   │   ├── GL
+│       │   │   ├── Locale
+│       │   │   └── Music
+│       │   ├── Sauron
+│       │   │   ├── Data
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Screens
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Security
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Server
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Services
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Software
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── SpaceCrusade
+│       │   │   ├── assets
+│       │   │   │   └── fonts
+│       │   │   ├── img
+│       │   │   └── js
+│       │   ├── SpaceInvaders
+│       │   ├── Startup
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── SVGEdit
+│       │   │   ├── canvg
+│       │   │   ├── contextmenu
+│       │   │   ├── extensions
+│       │   │   │   ├── imagelib
+│       │   │   │   └── shapelib
+│       │   │   ├── images
+│       │   │   ├── jgraduate
+│       │   │   │   ├── css
+│       │   │   │   └── images
+│       │   │   ├── jquerybbq
+│       │   │   ├── jquery-ui
+│       │   │   ├── js-hotkeys
+│       │   │   ├── jspdf
+│       │   │   ├── locale
+│       │   │   ├── spinbtn
+│       │   │   └── svgicons
+│       │   ├── SysDiag
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── View
+│       │   │   └── Templates
+│       │   ├── Titler3
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Treeroot
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── Treeroot2
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Trello
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Updates
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── UserBetaImport
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Users
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── VTiger
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Wallpaper
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── WebsocketToolbox
+│       │   │   └── Locale
+│       │   ├── WebVR
+│       │   │   └── Locale
+│       │   ├── Whiteboard
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── WideWeb
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   └── Workstream
+│       │       ├── Locale
+│       │       ├── Scripts
+│       │       ├── Stylesheets
+│       │       └── Templates
+│       ├── art_original
+│       ├── css
+│       ├── examples
+│       ├── fonts
+│       ├── gfx
+│       │   ├── art
+│       │   ├── bgs
+│       │   ├── icons
+│       │   │   ├── 128x128
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 16x16
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   ├── special
+│       │   │   │   └── status
+│       │   │   ├── 22x22
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   ├── special
+│       │   │   │   └── status
+│       │   │   ├── 256x256
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 32x32
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 48x48
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 64x64
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   └── 8x8
+│       │   │       └── emblems
+│       │   ├── icons_work
+│       │   │   ├── actions
+│       │   │   │   ├── 22
+│       │   │   │   └── 48
+│       │   │   ├── animations
+│       │   │   │   └── 48
+│       │   │   ├── apps
+│       │   │   │   ├── 16
+│       │   │   │   ├── 20
+│       │   │   │   ├── 22
+│       │   │   │   ├── 24
+│       │   │   │   └── 48
+│       │   │   ├── categories
+│       │   │   │   └── 48
+│       │   │   ├── devices
+│       │   │   │   ├── 16
+│       │   │   │   └── 48
+│       │   │   ├── emblems
+│       │   │   │   └── 48
+│       │   │   ├── emotes
+│       │   │   │   └── 48
+│       │   │   ├── mimetypes
+│       │   │   │   └── 48
+│       │   │   ├── places
+│       │   │   │   ├── 16
+│       │   │   │   └── 48
+│       │   │   ├── spinner
+│       │   │   │   └── 48
+│       │   │   ├── status
+│       │   │   │   ├── 16
+│       │   │   │   ├── 24
+│       │   │   │   ├── 32
+│       │   │   │   └── 48
+│       │   │   └── stock
+│       │   │       └── 48
+│       │   ├── system
+│       │   ├── theme
+│       │   └── updates
+│       ├── js
+│       │   ├── apps
+│       │   ├── external
+│       │   ├── gui
+│       │   ├── io
+│       │   ├── media
+│       │   ├── native
+│       │   ├── trash
+│       │   └── utils
+│       │       └── fcrypto
+│       │           └── deps
+│       │               └── cryptojs
+│       │                   ├── components
+│       │                   └── rollups
+│       ├── jsx
+│       │   └── Locale
+│       ├── locale
+│       ├── native
+│       │   └── About
+│       │       └── res
+│       ├── templates
+│       └── theme
+│           └── fonts
+├── modules
+│   ├── competentcandidate
+│   │   └── include
+│   ├── dock
+│   ├── drylab
+│   ├── exchange
+│   ├── files
+│   │   └── include
+│   ├── friendreference
+│   ├── friendstoreadmin
+│   ├── iotdevice
+│   │   └── include
+│   ├── issues
+│   ├── login
+│   │   └── saml
+│   │       └── templates
+│   ├── mail
+│   │   └── include
+│   ├── mitra
+│   ├── pythontest
+│   ├── sauron
+│   │   └── include
+│   ├── system
+│   │   └── include
+│   └── workstream
+│       └── applications
+│           ├── manager
+│           └── treeroot
+├── php
+│   ├── 3rdparty
+│   │   ├── php-ews-master
+│   │   │   ├── examples
+│   │   │   │   ├── assets
+│   │   │   │   ├── autodiscover
+│   │   │   │   ├── contact
+│   │   │   │   ├── event
+│   │   │   │   ├── folder
+│   │   │   │   ├── message
+│   │   │   │   ├── system
+│   │   │   │   └── user
+│   │   │   ├── script
+│   │   │   ├── src
+│   │   │   │   ├── ArrayType
+│   │   │   │   ├── assets
+│   │   │   │   ├── Enumeration
+│   │   │   │   ├── Request
+│   │   │   │   ├── Response
+│   │   │   │   └── Type
+│   │   │   └── templates
+│   │   └── phpmailer
+│   │       ├── docs
+│   │       ├── examples
+│   │       │   ├── images
+│   │       │   ├── scripts
+│   │       │   └── styles
+│   │       ├── extras
+│   │       ├── language
+│   │       └── test
+│   ├── classes
+│   ├── include
+│   └── mylibrary.library
+├── repository
+│   ├── onlinedocs
+│   └── packages
+│       ├── jquery_1.12.2
+│       ├── kiwi1_1.4
+│       ├── mootools_1.6.0
+│       ├── paperjs_0925
+│       ├── prototype_1.7.3
+│       └── three_r75
+├── resources
+│   ├── repository
+│   │   ├── onlinedocs
+│   │   └── packages
+│   │       ├── jquery_1.12.2
+│   │       ├── kiwi1_1.4
+│   │       ├── mootools_1.6.0
+│   │       ├── paperjs_0925
+│   │       ├── prototype_1.7.3
+│   │       └── three_r75
+│   ├── themes
+│   │   ├── amigadark
+│   │   │   └── fonts
+│   │   ├── borderless
+│   │   │   └── gfx
+│   │   ├── fenster
+│   │   │   ├── fonts
+│   │   │   └── gfx
+│   │   ├── fensterx
+│   │   │   ├── fonts
+│   │   │   └── gfx
+│   │   ├── friendup
+│   │   │   └── gfx
+│   │   │       └── icons
+│   │   │           └── Custom
+│   │   │               ├── apps
+│   │   │               ├── busyanim
+│   │   │               └── textures
+│   │   ├── friendup_ambient
+│   │   │   └── gfx
+│   │   ├── friendup_forest
+│   │   │   └── gfx
+│   │   ├── friendup_twilight
+│   │   │   └── gfx
+│   │   │       └── icons
+│   │   │           └── Custom
+│   │   │               ├── apps
+│   │   │               └── busyanim
+│   │   └── randstad
+│   │       ├── fonts
+│   │       │   └── Roboto
+│   │       └── gfx
+│   └── webclient
+│       ├── apps
+│       │   ├── 3dTin
+│       │   │   ├── Locale
+│       │   │   └── Scripts
+│       │   ├── Account
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Afww
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Ampache
+│       │   │   └── Locale
+│       │   ├── AppBase
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Applicationmgr
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── Archived
+│       │   │   ├── BlenderFriend
+│       │   │   │   ├── Locale
+│       │   │   │   └── Scripts
+│       │   │   ├── Cubedemo
+│       │   │   │   └── Templates
+│       │   │   ├── DemoApp
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   ├── Stylesheets
+│       │   │   │   └── Templates
+│       │   │   ├── DemoHogneApp
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── FriendStore
+│       │   │   │   ├── Gfx
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── Mail
+│       │   │   │   ├── Graphics
+│       │   │   │   ├── Locale
+│       │   │   │   ├── Scripts
+│       │   │   │   └── Templates
+│       │   │   ├── Microscopix
+│       │   │   │   └── Locale
+│       │   │   └── Photopea
+│       │   │       └── Locale
+│       │   ├── AssidTest
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Astray
+│       │   ├── Author
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── ckeditor
+│       │   │   │       ├── adapters
+│       │   │   │       ├── lang
+│       │   │   │       ├── plugins
+│       │   │   │       │   ├── a11yhelp
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── lang
+│       │   │   │       │   ├── about
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── clipboard
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── dialog
+│       │   │   │       │   ├── image
+│       │   │   │       │   │   ├── dialogs
+│       │   │   │       │   │   └── images
+│       │   │   │       │   ├── link
+│       │   │   │       │   │   ├── dialogs
+│       │   │   │       │   │   └── images
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── magicline
+│       │   │   │       │   │   └── images
+│       │   │   │       │   │       └── hidpi
+│       │   │   │       │   ├── pastefromword
+│       │   │   │       │   │   └── filter
+│       │   │   │       │   ├── scayt
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── specialchar
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   │       └── lang
+│       │   │   │       │   ├── table
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   ├── tabletools
+│       │   │   │       │   │   └── dialogs
+│       │   │   │       │   └── wsc
+│       │   │   │       │       └── dialogs
+│       │   │   │       ├── samples
+│       │   │   │       │   ├── css
+│       │   │   │       │   ├── img
+│       │   │   │       │   ├── js
+│       │   │   │       │   ├── old
+│       │   │   │       │   │   ├── assets
+│       │   │   │       │   │   │   ├── inlineall
+│       │   │   │       │   │   │   ├── outputxhtml
+│       │   │   │       │   │   │   └── uilanguages
+│       │   │   │       │   │   ├── dialog
+│       │   │   │       │   │   │   └── assets
+│       │   │   │       │   │   ├── enterkey
+│       │   │   │       │   │   ├── htmlwriter
+│       │   │   │       │   │   │   └── assets
+│       │   │   │       │   │   │       └── outputforflash
+│       │   │   │       │   │   ├── magicline
+│       │   │   │       │   │   ├── toolbar
+│       │   │   │       │   │   └── wysiwygarea
+│       │   │   │       │   └── toolbarconfigurator
+│       │   │   │       │       ├── css
+│       │   │   │       │       ├── font
+│       │   │   │       │       ├── js
+│       │   │   │       │       └── lib
+│       │   │   │       │           └── codemirror
+│       │   │   │       └── skins
+│       │   │   │           └── moono
+│       │   │   │               └── images
+│       │   │   │                   └── hidpi
+│       │   │   └── Templates
+│       │   ├── BlenderFriend
+│       │   │   ├── Locale
+│       │   │   └── Scripts
+│       │   ├── BouncingBall
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Broadcast
+│       │   │   ├── CSS
+│       │   │   ├── Deps
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Calculator
+│       │   │   ├── Example
+│       │   │   └── Locale
+│       │   ├── Calendar
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── CompetentCandidate
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── CouchTest
+│       │   │   ├── CSS
+│       │   │   ├── Dep
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Cubedemo
+│       │   │   └── Templates
+│       │   ├── DataSources
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── DemoApp
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── DemoHogneApp
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Dingo
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── DiskCatalog
+│       │   │   ├── Gfx
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Dock
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── DocuEditor
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── DoIt
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── DrillBunny
+│       │   │   ├── assets
+│       │   │   └── js
+│       │   ├── Epat
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Freeciv
+│       │   │   └── Locale
+│       │   ├── Friend
+│       │   │   └── Scripts
+│       │   ├── FriendCommunity
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── FriendCreate
+│       │   │   ├── Css
+│       │   │   ├── Gfx
+│       │   │   ├── Libraries
+│       │   │   │   └── Ace
+│       │   │   │       └── snippets
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendIDE
+│       │   │   ├── Css
+│       │   │   ├── Gfx
+│       │   │   ├── Libraries
+│       │   │   │   └── Ace
+│       │   │   │       └── snippets
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendJukebox
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendReference
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── FriendShell
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── FriendStore
+│       │   │   ├── Css
+│       │   │   ├── Images
+│       │   │   ├── Json
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── FriendStoreAdmin
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── FriendTracker
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── FriendUPCommunity
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── GuiTester
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Hardware
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── HexGL
+│       │   │   └── Templates
+│       │   ├── House
+│       │   │   ├── Gfx
+│       │   │   ├── Libraries
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── IntroRC2
+│       │   │   ├── intro
+│       │   │   │   ├── resources
+│       │   │   │   └── src
+│       │   │   └── Resources
+│       │   ├── IoTDeck
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Issues
+│       │   │   ├── Css
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   └── Templates
+│       │   ├── JumpAround
+│       │   │   ├── Gfx
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Language
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Looknfeel
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Mail
+│       │   │   ├── Graphics
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Merkur
+│       │   │   └── Scripts
+│       │   ├── Microscopix
+│       │   │   └── Locale
+│       │   ├── Mimetypes
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Minipaint
+│       │   │   ├── img
+│       │   │   ├── js
+│       │   │   ├── libs
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── styles
+│       │   │   └── Templates
+│       │   ├── Mitra
+│       │   │   ├── Documentation
+│       │   │   ├── Images
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── MitraAdmin
+│       │   │   ├── Documentation
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Mountlist
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Packager
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Pat
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Photopea
+│       │   │   └── Locale
+│       │   ├── PythonTestSuite
+│       │   │   └── Locale
+│       │   ├── RemoteCall
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── RobasTest
+│       │   │   ├── assets
+│       │   │   │   ├── fonts
+│       │   │   │   ├── icon
+│       │   │   │   └── images
+│       │   │   ├── build
+│       │   │   ├── Css
+│       │   │   ├── Images
+│       │   │   ├── Json
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── RseDemo
+│       │   │   ├── Gfx
+│       │   │   ├── GL
+│       │   │   ├── Locale
+│       │   │   └── Music
+│       │   ├── Sauron
+│       │   │   ├── Data
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Screens
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Security
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Server
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Services
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Software
+│       │   │   ├── Css
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── SpaceCrusade
+│       │   │   ├── assets
+│       │   │   │   └── fonts
+│       │   │   ├── img
+│       │   │   └── js
+│       │   ├── SpaceInvaders
+│       │   ├── Startup
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── SVGEdit
+│       │   │   ├── canvg
+│       │   │   ├── contextmenu
+│       │   │   ├── extensions
+│       │   │   │   ├── imagelib
+│       │   │   │   └── shapelib
+│       │   │   ├── images
+│       │   │   ├── jgraduate
+│       │   │   │   ├── css
+│       │   │   │   └── images
+│       │   │   ├── jquerybbq
+│       │   │   ├── jquery-ui
+│       │   │   ├── js-hotkeys
+│       │   │   ├── jspdf
+│       │   │   ├── locale
+│       │   │   ├── spinbtn
+│       │   │   └── svgicons
+│       │   ├── SysDiag
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── View
+│       │   │   └── Templates
+│       │   ├── Titler3
+│       │   │   ├── CSS
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Treeroot
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   │   └── fcrypto
+│       │   │   │       └── deps
+│       │   │   │           └── cryptojs
+│       │   │   │               └── rollups
+│       │   │   └── Templates
+│       │   ├── Treeroot2
+│       │   │   ├── Scripts
+│       │   │   ├── Stylesheets
+│       │   │   └── Templates
+│       │   ├── Trello
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Updates
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── UserBetaImport
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Users
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── VTiger
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── Wallpaper
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── WebsocketToolbox
+│       │   │   └── Locale
+│       │   ├── WebVR
+│       │   │   └── Locale
+│       │   ├── Whiteboard
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── WideWeb
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   ├── wisdom
+│       │   │   ├── Locale
+│       │   │   ├── Scripts
+│       │   │   └── Templates
+│       │   └── Workstream
+│       │       ├── Locale
+│       │       ├── Scripts
+│       │       ├── Stylesheets
+│       │       └── Templates
+│       ├── art_original
+│       ├── css
+│       ├── examples
+│       ├── fonts
+│       ├── gfx
+│       │   ├── art
+│       │   ├── bgs
+│       │   ├── icons
+│       │   │   ├── 128x128
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 16x16
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   ├── special
+│       │   │   │   └── status
+│       │   │   ├── 22x22
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   ├── special
+│       │   │   │   └── status
+│       │   │   ├── 256x256
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 32x32
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 48x48
+│       │   │   │   ├── actions
+│       │   │   │   ├── animations
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   ├── 64x64
+│       │   │   │   ├── actions
+│       │   │   │   ├── apps
+│       │   │   │   ├── categories
+│       │   │   │   ├── devices
+│       │   │   │   ├── emblems
+│       │   │   │   ├── emotes
+│       │   │   │   ├── mimetypes
+│       │   │   │   ├── places
+│       │   │   │   └── status
+│       │   │   └── 8x8
+│       │   │       └── emblems
+│       │   ├── icons_work
+│       │   │   ├── actions
+│       │   │   │   ├── 22
+│       │   │   │   └── 48
+│       │   │   ├── animations
+│       │   │   │   └── 48
+│       │   │   ├── apps
+│       │   │   │   ├── 16
+│       │   │   │   ├── 20
+│       │   │   │   ├── 22
+│       │   │   │   ├── 24
+│       │   │   │   └── 48
+│       │   │   ├── categories
+│       │   │   │   └── 48
+│       │   │   ├── devices
+│       │   │   │   ├── 16
+│       │   │   │   └── 48
+│       │   │   ├── emblems
+│       │   │   │   └── 48
+│       │   │   ├── emotes
+│       │   │   │   └── 48
+│       │   │   ├── mimetypes
+│       │   │   │   └── 48
+│       │   │   ├── places
+│       │   │   │   ├── 16
+│       │   │   │   └── 48
+│       │   │   ├── spinner
+│       │   │   │   └── 48
+│       │   │   ├── status
+│       │   │   │   ├── 16
+│       │   │   │   ├── 24
+│       │   │   │   ├── 32
+│       │   │   │   └── 48
+│       │   │   └── stock
+│       │   │       └── 48
+│       │   ├── system
+│       │   ├── theme
+│       │   └── updates
+│       ├── js
+│       │   ├── apps
+│       │   ├── external
+│       │   ├── gui
+│       │   ├── io
+│       │   ├── media
+│       │   ├── native
+│       │   ├── trash
+│       │   └── utils
+│       │       └── fcrypto
+│       │           └── deps
+│       │               └── cryptojs
+│       │                   ├── components
+│       │                   └── rollups
+│       ├── jsx
+│       │   └── Locale
+│       ├── locale
+│       ├── native
+│       │   └── About
+│       │       └── res
+│       ├── templates
+│       └── theme
+│           └── fonts
+├── services
+│   └── REST
+├── storage
+├── tools
+│   └── friendparser
+├── trash
+│   ├── BurningRubber
+│   │   └── Locale
+│   ├── Freeciv
+│   │   └── Locale
+│   ├── KingdomRush
+│   │   └── Locale
+│   ├── LostIsland
+│   └── Shell
+│       ├── Locale
+│       ├── Scripts
+│       ├── Stylesheets
+│       └── Templates
+└── windows
+    └── USBInterface
+        ├── Test
+        └── USBInterface
+

@@ -1,0 +1,25 @@
+QuickNG DOS Driver
+
+
+Introduction
+------------
+
+The purpose of the QuickNG DOS Driver is to get a virtual file system that
+allows a user to access products and information from the QuickNG system in an
+easy to use directory structure. This driver can be used for integration and
+abstraction for applications and a plethora of other use cases, like backup.
+
+Prerequisites
+-------------
+
+To use the QuickNG DOS Driver, make sure you have installed these packages on
+your Friend Core linux server (at the moment, the Windows environment is not
+tested):
+
+ * php5-odbc
+ * tdsodbc
+ * tdsodbc-bin
+ * php5-sybase
+ * freetds-bin
+ 
+

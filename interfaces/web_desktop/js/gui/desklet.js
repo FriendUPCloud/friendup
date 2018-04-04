@@ -261,10 +261,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				items.push( this.viewList.childNodes[a] );
 		}
 		
+		var horizontal = this.direction == 'horizontal' ? true : false;
+		
 		var itemWidth = this.conf && this.conf.size ? this.conf.size : 56;
 		var itemHeight = this.conf && this.conf.size ? this.conf.size : 56;
-		var margin = 8;
-		
+		var marginWidth = horizontal ? 12 : 7;
+		var marginHeight = !horizontal ? 12 : 7;
 		
 		var pos = this.conf.layout;
 		var position = this.conf.position;
@@ -370,8 +372,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		}
 		
 		// Do the rendering of icons
-		var sh = ge( 'DoorsScreen' )[ this.direction == 'vertical' ? 'offsetHeight' : 'offsetWidth' ];
-		if( this.direction == 'vertical' )
+		var sh = ge( 'DoorsScreen' )[ !horizontal ? 'offsetHeight' : 'offsetWidth' ];
+		if( !horizontal )
 		{
 			var t = GetThemeInfo( 'ScreenTitle' );
 			sh -= parseInt( t.height );
@@ -380,16 +382,18 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		// With dockwindowlist we allocate a bit more room for tasks
 		var availSpace = sh - ( ge( 'DockWindowList' ) ? 200 : 80 );
 		
-		var calcLength = ( ( ( this.direction == 'vertical' ? itemHeight : itemWidth ) + margin ) * items.length ) - margin;
+		var step = horizontal ? marginWidth : marginHeight;
+		
+		var calcLength = ( ( ( !horizontal ? itemHeight : itemWidth ) + step ) * items.length ) - step;
 		var blocks = Math.ceil( calcLength / availSpace ); // TODO: Make dynamic
 		if( blocks < 1 ) blocks = 1;
 		
 		var currBlock = 0;
 		var len = 0;
-		var itemUnit = ( this.direction == 'vertical' ? itemHeight : itemWidth ) + margin;
+		var itemUnit = ( !horizontal ? itemHeight : itemWidth ) + step;
 		var maxLength = availSpace - itemUnit;
 		
-		var x = margin, y = margin, maxLen = 0;
+		var x = marginWidth, y = marginHeight, maxLen = 0;
 		var cols = rows = 1;
 		this.iconListPixelLength = 0;
 		var comp;
@@ -414,17 +418,13 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				continue;
 			}
 			
-			if( this.direction == 'vertical' )
+			if( !horizontal )
 			{
-				y += itemHeight + margin;
-				if( cn.classList.contains( 'Startmenu' ) )
-					y += margin;
+				y += itemHeight + step;
 			}
 			else
 			{
-				x += itemWidth + margin;
-				if( cn.classList.contains( 'Startmenu' ) )
-					x += margin;
+				x += itemWidth + step;
 			}
 			len += itemUnit;
 			
@@ -433,59 +433,59 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			
 			if( len >= maxLength && a != items.length - 1 )
 			{
-				comp = ( this.direction == 'vertical' ? y : x );
+				comp = ( !horizontal ? y : x );
 				if( !this.iconListPixelLength || this.iconListPixelLength < comp )
 					this.iconListPixelLength = comp;
 				len = 0;
-				if( this.direction == 'vertical' )
+				if( !horizontal )
 				{
 					// Let others be able to read this
-					x += itemWidth + margin;
-					y = margin;
+					x += itemWidth + step;
+					y = step;
 					cols++;
 				}
 				else
 				{
 					// Let others be able to read this
-					x = margin;
-					y += itemHeight + margin;
+					x = step;
+					y += itemHeight + step;
 					rows++;
 				}
 			}
 			else
 			{
-				comp = ( this.direction == 'vertical' ? y : x );
+				comp = ( !horizontal ? y : x );
 				if( !this.iconListPixelLength || this.iconListPixelLength < comp )
 					this.iconListPixelLength = comp;
 			}
 		}
 		
 		// Size of container
-		if( this.direction == 'vertical' )
+		if( !horizontal )
 		{
 			this.dom.classList.remove( 'Horizontal' );
 			this.dom.classList.add( 'Vertical' );
-			this.pixelHeight = maxLen + margin;
+			this.pixelHeight = maxLen + step;
 			// We need a full dock here
 			if( globalConfig.viewList == 'dockedlist' )
 			{
 				this.pixelHeight = sh;
 			}
-			this.dom.style.width = margin + Math.floor( cols * ( itemWidth + margin ) ) + 'px';
+			this.dom.style.width = marginWidth + Math.floor( cols * ( itemWidth + marginWidth ) ) + 'px';
 			this.dom.style.height = this.pixelHeight + 'px';
 		}
 		else
 		{
 			this.dom.classList.remove( 'Vertical' );
 			this.dom.classList.add( 'Horizontal' );
-			this.pixelWidth = maxLen + margin;
+			this.pixelWidth = maxLen + step;
 			// We need a full dock here
 			if( globalConfig.viewList == 'dockedlist' )
 			{
 				this.pixelWidth = document.body.offsetWidth;
 			}
 			this.dom.style.width = this.pixelWidth + 'px';
-			this.dom.style.height = margin + Math.floor( rows * ( itemHeight + margin ) ) + 'px';
+			this.dom.style.height = marginHeight + Math.floor( rows * ( itemHeight + marginHeight ) ) + 'px';
 		}
 		
 		// Position of container
@@ -579,6 +579,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				if( state ) ele.state = state;
 				else ele.state = ele.state == 'hidden' ? 'visible' : 'hidden';
 				
+				var elementCount = 0;
 				for( var i in ele.views )
 				{
 					var s = ele.views[i].windowObject.getFlag( 'screen' );
@@ -586,14 +587,31 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( ele.views[i].windowObject.getFlag( 'invisible' ) ) continue;
 					ele.views[i].windowObject.setFlag( 'hidden', ele.state == 'hidden' ? true : false );
 					_WindowToFront( ele.views[i] );
+					elementCount++;
 				}
 				if( ele.state == 'hidden' )
 				{
 					ele.classList.add( 'Minimized' );
+					if( ele.elementCount )
+					{
+						ele.elementCount.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
+					}
+					else
+					{
+						var d = document.createElement( 'div' );
+						d.className = 'ElementCount';
+						d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
+						ele.appendChild( d );
+						ele.elementCount = d;
+					}
 				}
 				else
 				{
 					ele.classList.remove( 'Minimized' );
+					if( ele.elementCount )
+					{
+						ele.removeChild( ele.elementCount );
+					}
 				}
 				return true;
 			}
@@ -615,6 +633,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 		}
 		var found = false;
+		var elementCount = 0;
+		
 		for( var a = 0; a < Workspace.applications.length; a++ )
 		{
 			var ap = Workspace.applications[a];
@@ -628,6 +648,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				var s = ap.windows[w].getFlag( 'screen' );
 				if( s.div.id != 'DoorsScreen' ) continue;
+				
+				elementCount++; // Count app windows
 				
 				if( st == 'idle' )
 					st = ap.windows[w].getFlag( 'hidden' );
@@ -648,6 +670,18 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					ap.windows[w].setFlag( 'hidden', true );
 				}
 			}
+			if( !ele.elementCount )
+			{
+				var d = document.createElement( 'div' );
+				d.className = 'ElementCount';
+				d.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
+				ele.elementCount = d;
+				ele.appendChild( d );
+			}
+			else
+			{
+				ele.elementCount.innerHTML = '<span>' + ( elementCount > 0 ? elementCount : '' ) + '</span>';
+			}
 			return true;
 		}
 		return false;
@@ -665,7 +699,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 		if ( o.src && ( o.click || o.exe ) )
 		{
 			var div = document.createElement ( 'div' );
-			div.className = 'Launcher';
+			div.className = 'Launcher MousePointer';
 			if( o.className ) div.className += ' ' + o.className;
 			div.style.width = this.width - ( this.margin * 2 ) + 'px';
 			div.style.backgroundSize = 'contain';
@@ -715,7 +749,6 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 									div.innerHTML = '<div style="position: absolute; top: 50%; left: 50%"><img style="position: absolute; left: -' + ( j.width * .5 ) + 'px; top: -' + ( j.height * .5 ) + 'px" src="' + j.src + '"/></div>';
 								}
 								j.src = s;
-								console.log( s );
 							}
 						}
 						catch( e ){};
@@ -744,101 +777,111 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.style.backgroundImage = 'url(\'' + o.src + '\')';
 				div.innerHTML = '<span>' + ( o.displayname ? o.displayname: o.exe ) + '</span>';
 			}
-			if( o.click ) div.onclick = o.click;
-			else div.onclick = function( e )
-			{				
-				// We got views? Just manage them
-				if( !isMobile )
-					if( dk.toggleViewVisibility( this ) ) return;
-
-				if( currentMovable )
-					_DeactivateWindow( currentMovable );
-				
-				var args = '';
-				var executable = o.exe + '';
-
-				if( executable.indexOf( ' ' ) > 0 )
-				{
-					var t = executable.split( ' ' );
-					if( t[0].indexOf( ':' ) == -1)
+			if( o.click )
+			{
+				div.onclick = o.click;
+			}
+			else 
+			{
+				div.onclick = function( e )
+				{				
+					// We got views? Just manage them
+					if( !isMobile )
 					{
-						args = '';
-						for( var a = 1; a < t.length; a++ )
-						{
-							args += t[a];
-							if( a < t.length - 1 )
-								args += ' ';
-						}
-						executable = t[0];	
+						if( dk.toggleViewVisibility( this ) ) return;
 					}
-				}
-				
-				if( o.workspace && o.workspace >= 0 )
-					args += ' workspace=' + o.workspace;
-				
-				// Extension
-				if( executable.indexOf( ':' ) > 0 )
-				{
-					var l = executable.split( ':' )[1];
-					if( l.indexOf( '/' ) > 0 )
-					{
-						l = l.split('/');
-						l = l[l.length-1];
-					}
-					
-					if( l.length > 1 )
-					{
-						var ext = l;
-						ext = '.' + ext[ ext.length - 1 ].toLowerCase();
-		
-						// Check mimetypes
-						for( var a in Workspace.mimeTypes )
-						{
-							var mt = Workspace.mimeTypes[ a ];
 
-							for( var b in mt.types )
+					if( currentMovable )
+						_DeactivateWindow( currentMovable );
+				
+					var args = '';
+					var executable = o.exe + '';
+
+					if( executable.indexOf( ' ' ) > 0 )
+					{
+						var t = executable.split( ' ' );
+						if( t[0].indexOf( ':' ) == -1)
+						{
+							args = '';
+							for( var a = 1; a < t.length; a++ )
 							{
-								if( ext == mt.types[ b ].toLowerCase() )
+								args += t[a];
+								if( a < t.length - 1 )
+									args += ' ';
+							}
+							executable = t[0];	
+						}
+					}
+				
+					if( o.workspace && o.workspace >= 0 )
+						args += ' workspace=' + o.workspace;
+				
+					// Extension
+					if( executable.indexOf( ':' ) > 0 )
+					{
+						var l = executable.split( ':' )[1];
+						if( l.indexOf( '/' ) > 0 )
+						{
+							l = l.split('/');
+							l = l[l.length-1];
+						}
+					
+						if( l.length > 1 )
+						{
+							var ext = l;
+							ext = '.' + ext[ ext.length - 1 ].toLowerCase();
+		
+							// Check mimetypes
+							for( var a in Workspace.mimeTypes )
+							{
+								var mt = Workspace.mimeTypes[ a ];
+
+								for( var b in mt.types )
 								{
-									return ExecuteApplication( mt.executable, executable );
+									if( ext == mt.types[ b ].toLowerCase() )
+									{
+										return ExecuteApplication( mt.executable, executable );
+									}
 								}
 							}
 						}
 					}
-				}
 				
-				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
+					var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 				
-				// If not a single instance app, execute
-				if( !docked && !friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
-				{
-					ExecuteApplication( executable, args );
-				}
-				// Just minimize apps if you find them, if not execute
-				else
-				{
-					if( dk.toggleExecutable( div ) ) 
+					// If not a single instance app, execute
+					if( !docked && !friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
 					{
-						return;
+						ExecuteApplication( executable, args );
 					}
+					// Just minimize apps if you find them, if not execute
+					else
+					{
+						if( dk.toggleExecutable( div ) ) 
+						{
+							return;
+						}
 					
-					// If we didn't find the app, execute
-					ExecuteApplication( executable, args );
-				}
+						// If we didn't find the app, execute
+						ExecuteApplication( executable, args );
+					}
 				
-				// Switch to the workspace of the app
-				Workspace.switchWorkspace( o.workspace );
+					// Switch to the workspace of the app
+					Workspace.switchWorkspace( o.workspace );
 				
-				// Close it for mobile
-				if( window.isMobile )
-				{
-					self.closeDesklet();
-					self.dom.mobileClicked = false;
+					// Close it for mobile
+					if( window.isMobile )
+					{
+						self.closeDesklet();
+						self.dom.mobileClicked = false;
+					}
 				}
 			}
 			div.addEventListener( 'touchstart', div.onclick );
-			if ( o.title )
+			if( o.title )
+			{
 				div.setAttribute( 'title', o.title ? o.title : o.src );
+			}
 			this.dom.appendChild( div );
 			this.refresh ();
 			return true;

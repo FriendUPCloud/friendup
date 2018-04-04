@@ -1226,6 +1226,30 @@ html .Active > .DirectoryToolbar
 	background-color: #204664;
 }
 
+html .View > .DirectoryToolbar .ToggleGroup > button.Active:after
+{
+	background-color: rgba(0,0,0,0.1);
+}
+
+html .View > .DirectoryToolbar .DriveGauge
+{
+    display: none;
+}
+
+html .View > .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
+html .View > .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
+html .View > .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
+html .View > .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
+html .View > .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
+html .View > .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
+html .View > .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
+html .View > .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
+html .View > .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
+html .View > .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
+html .View > .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
+
+}
+
 /* Toolbar icons ------------------------------------------------------------ */
 
 .Toolbar .IconSmall
@@ -1503,6 +1527,11 @@ html .File .Icon .TypeSVG
 	background-image: url(/iconthemes/friendup/80/images_svg.png);
 }
 
+html .File .Icon .TypeEPS
+{
+	background-image: url(/iconthemes/friendup/56/images_eps.png);
+}
+
 html .File .Icon .TypeGoogleDocs
 {
 	background-image: url(/iconthemes/friendup/80/doc_gdoc.png);
@@ -1548,6 +1577,16 @@ html .File .Icon .TypeHTML
 	background-image: url(/iconthemes/friendup/80/doc_html.png);
 }
 
+html .File .Icon .TypeCSS
+{
+	background-image: url(/iconthemes/friendup/80/doc_css.png);
+}
+
+html .File .Icon .TypeBak
+{
+	background-image: url(/iconthemes/friendup/80/doc_bak.png);
+}
+
 html .File .Icon .TApplication
 {
 	background-image: url(/iconthemes/friendup/80/treeapplication.png);
@@ -1556,6 +1595,11 @@ html .File .Icon .TApplication
 html .File .Icon .TypeFPkg
 {
 	background-image: url(/iconthemes/friendup/80/archive_fpkg.png);
+}
+
+html .File .Icon .TypeApf
+{
+	background-image: url(/iconthemes/friendup/80/archive_apf.png);
 }
 
 html .File .Icon .TypeZip

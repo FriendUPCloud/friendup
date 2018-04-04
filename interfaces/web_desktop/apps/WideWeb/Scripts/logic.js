@@ -27,35 +27,6 @@ Application.run = function( msg )
 	document.getElementsByTagName( 'input' )[0].select();
 
 	ge( 'BrowserBox' ).src = getImageUrl( 'Progdir:Templates/about.html' );
-
-	// Opens the Tree engine fgor connexion to other tree via Friend Network
-	var self = this;
-	Friend.Tree.init( function( response )
-	{
-		// Loaded OK?
-		if ( response != 'OK' )
-		{
-			Application.Quit();
-			return;
-		}
-
-		// Creates a new instance of the Tree engine
-		// Will add the rendering ID later if you connect to a Tree
-		Application.tree = new Friend.Tree( self,
-		{
-			title: 'Wideweb',
-			renderer: 'RendererThree2D',
-			width: window.innerWidth,
-			height: window.innerHeight
-		} );
-
-		// Creates the root object of the tree
-		Application.root = new Root( Application.tree, 'Root',
-		{
-			width: window.innerWidth,
-			height: window.innerHeight
-		} );
-	} );
 }
 
 Application.receiveMessage = function( msg )
@@ -302,7 +273,7 @@ function setUrl( uri, move )
 		if ( uri.substring( 0, 9 ) == 'friend://' )
 		{
 			// Calls the Tree network object for connexion
-			Application.root.connectToFriend( uri );
+			Application.connectToTree( uri );
 			Application.sendMessage( { command: 'setcontent', url: uri } );
 		}
 	}
@@ -321,6 +292,34 @@ function registerUrl( uri )
 //
 // tree sharing handling
 //
+function connectToTree( url )
+{
+	// Opens the Tree engine for connexion to other tree via Friend Network
+	var self = this;
+	Friend.Tree.init( function( response )
+	{
+		// Loaded OK?
+		if ( response == 'OK' )		
+		{
+			// Creates a new instance of the Tree engine
+			// Will add the rendering ID later if you connect to a Tree
+			Application.tree = new Friend.Tree( self,
+			{
+				title: 'Wideweb',
+				width: window.innerWidth,
+				height: window.innerHeight
+			} );
+
+			// Creates the root object of the tree
+			Application.root = new Root( Application.tree, 'Root',
+			{
+				width: window.innerWidth,
+				height: window.innerHeight,
+				url: url
+			} );
+		}
+	} );
+}
 function Root( tree, name, flags )
 {
 	var self = this;
@@ -328,10 +327,12 @@ function Root( tree, name, flags )
 	// Initialize the root item
 	this.caller = false;
 	this.messages = false;
+	this.url
+	this.renderItemName = 'Friend.Tree.RenderItems.Empty';
 	Friend.Tree.Items.init( this, tree, 'Wideweb Tree Root', 'Application.Root', flags );
 
-	// Adds a network object (TODO: gameNetwork item should be called "Network" )
-	this.network = new Friend.Network.Manager( this.tree, 'network',
+	// Adds a network object 
+	this.network = new Friend.Tree.Network.Manager( this.tree, 'network',
 	{
 		root: this,
 		parent: this,
@@ -341,23 +342,15 @@ function Root( tree, name, flags )
 		p2p: false
 	} );
 };
-Root.prototype.renderUp = function ( flags )
+Root.prototype.messageUp = function ( message )
 {
-	return flags;
+	// Call the next processes
+	return this.startProcess( message, [ ] );
 };
-Root.prototype.renderDown = function ( flags )
+Root.prototype.messageDown = function ( message )
 {
-    return flags;
-};
-Root.prototype.processUp = function ( flags )
-{
-	// Call the next processes, watching for NO flags
-	return this.startProcess( flags, [ ] );
-};
-Root.prototype.processDown = function ( flags )
-{
-	// End the process, no flags property to handle
-	return this.endProcess( flags, [ ] );
+	// End the processes
+	return this.endProcess( message, [ ] );
 };
 
 Root.prototype.receiveNetworkMessages = function( message )
@@ -369,9 +362,9 @@ Root.prototype.receiveNetworkMessages = function( message )
 			{
 				// Succesfull connection
 				case 'connected':					
-					//debugger;
+					debugger;
 					this.key = message.key;
-					this.network.getWelcomePage( this.key );
+					this.network.connectToTree( this.key );
 					break;
 
 				// Host disconnected
@@ -413,7 +406,7 @@ Root.prototype.receiveNetworkMessages = function( message )
 						var file = new File( index );
 						file.onLoad = function( content )
 						{
-							content = Friend.Utilities.replaceFriendPaths( content, replace );
+							content = Friend.Tree.Utilities.replaceFriendPaths( content, replace );
 							var fr = document.createElement( 'iframe' );
 							fr.className = 'Browser';
 							fr.id = 'BrowserBox';
@@ -435,13 +428,4 @@ Root.prototype.receiveNetworkMessages = function( message )
 			}
 			break;
 	}
-};
-Root.prototype.connectToFriend = function( url )
-{
-	// We want a Friend URL
-	if ( url.substring( 0, 9 ) != 'friend://' )
-		return false;
-//debugger;
-	// Extracts the name of the host and lists the hosts
-	this.network.connectToTree( url );
 };

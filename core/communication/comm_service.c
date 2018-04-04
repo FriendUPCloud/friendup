@@ -361,6 +361,10 @@ void CommServiceSetupOutgoing( CommService *service )
 		
 	}
 	
+	DEBUG("------------------------------------------\n \
+Create outgoing connections\n \
+------------------------------------------\n" );
+	
 	SQLLibrary *lsqllib = SLIB->LibrarySQLGet( SLIB );
 	if( lsqllib != NULL )
 	{
@@ -369,6 +373,10 @@ void CommServiceSetupOutgoing( CommService *service )
 		char where[ 256 ];
 		memcpy( data, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 		data[ 128 ] = 0;
+		
+		//
+		// Get information about cluster and connected nodes
+		//
 	
 		snprintf( where, sizeof(where), "FCID='%s'", data );
 	
@@ -376,40 +384,79 @@ void CommServiceSetupOutgoing( CommService *service )
 		// reading FC connections
 		fcm->fcm_CommService->s_Connections = lsqllib->Load( lsqllib, FConnectionDesc, where, &entries );
 		// reading all cluster nodes
-		fcm->fcm_ClusterNodes = lsqllib->Load( lsqllib, ClusterNodeDesc, where, &entries );
-		if( fcm->fcm_ClusterNodes == NULL )
+		// later we will assign connections to them
+		fcm->fcm_ClusterNodes = lsqllib->Load( lsqllib, ClusterNodeDesc, NULL, &entries );
+		//if( fcm->fcm_ClusterNodes != NULL )
 		{
+			// get current node id from DB
 			ClusterNode *cnode = fcm->fcm_ClusterNodes;
 			while( cnode != NULL )
 			{
-				if( cnode->cn_FCID != NULL &&  memcmp( cnode->cn_FCID, data, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+				if( cnode->cn_FCID != NULL && memcmp( cnode->cn_FCID, data, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
 				{
+					cnode->cn_CurrentNode = TRUE;
 					break;
 				}
 				cnode = (ClusterNode *) cnode->node.mln_Succ;
 			}
 			
-			// node is not registered, we must register it in DB
+			// current node is not registered, we must register it in DB
+			
+			DEBUG("Cluster entry found: %p\n", cnode );
 			
 			if( cnode == NULL )
 			{
-				fcm->fcm_ClusterNodes = ClusterNodeNew();
-				if( fcm->fcm_ClusterNodes != NULL )
+				ClusterNode *ncn = ClusterNodeNew();
+				if( ncn != NULL )
 				{
 					char buffer[ 32 ];
 					memset( buffer, 0, 32 );
+					ncn->cn_CurrentNode = TRUE;
 			
 					if( getPrimaryIp( buffer, 16 ) == 0 )
 					{
-						fcm->fcm_ClusterNodes->cn_Address = StringDuplicateN( buffer, 16 );
+						ncn->cn_Address = StringDuplicateN( buffer, 16 );
 					}
 			
-					fcm->fcm_ClusterNodes->cn_NodeID = fcm->fcm_ClusterMaster;
-					fcm->fcm_ClusterNodes->cn_FCID = StringDuplicateN( data, FRIEND_CORE_MANAGER_ID_SIZE );
+					ncn->cn_NodeID = fcm->fcm_ClusterMaster;
+					ncn->cn_FCID = StringDuplicateN( data, FRIEND_CORE_MANAGER_ID_SIZE );
 			
-					lsqllib->Save( lsqllib, ClusterNodeDesc, fcm->fcm_ClusterNodes );
+					lsqllib->Save( lsqllib, ClusterNodeDesc, ncn );
+					
+					ncn->node.mln_Succ = (MinNode *) fcm->fcm_ClusterNodes;
+					fcm->fcm_ClusterNodes = ncn;
+					
+					DEBUG("Node stored\n");
 				}
 			}
+			
+			// create connections between FC nodes
+			/*
+			cnode = fcm->fcm_ClusterNodes;
+			while( cnode != NULL )
+			{
+				if( memcmp( cnode->cn_FCID, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE ) != 0 )
+				{
+					DEBUG(".......................................................Create cluster connection: [%s]\n", cnode->cn_Address );
+					Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port );
+					if( newsock != NULL )
+					{
+						DEBUG("Create cluster FConnection\n");
+						FConnection *con = CommServiceAddConnection( service, newsock, NULL, cnode->cn_Address, NULL, SERVER_CONNECTION_OUTGOING, 0 );
+						if( con != NULL )
+						{
+							DEBUG("Connection created, registering\n");
+							con->fc_Status = CONNECTION_STATUS_CONNECTED;
+							CommServiceRegisterEvent( con, newsock );
+						
+							con->node.mln_Succ = (MinNode *) fcm->fcm_CommService->s_Connections;
+							fcm->fcm_CommService->s_Connections = con;
+						}
+					}
+				}
+				cnode = (ClusterNode *) cnode->node.mln_Succ;
+			}
+			*/
 		}
 		SLIB->LibrarySQLDrop( SLIB, lsqllib );
 		
@@ -438,13 +485,29 @@ void CommServiceSetupOutgoing( CommService *service )
 						loccon->fc_Socket = newsock;
 					}
 					loccon->fc_Status = CONNECTION_STATUS_CONNECTED;
-					//loccon->fc_Socket = newsock;
-					//newsock->s_Data = loccon;
+					
 					FConnection *con = CommServiceAddConnection( service, newsock, NULL, loccon->fc_Address, NULL, SERVER_CONNECTION_OUTGOING, 0 );
 					if( con != NULL )
 					{
-						con->fc_ServerType = SERVER_TYPE_FRIEND_MASTER;
+						//con->fc_ServerType = SERVER_TYPE_FRIEND_MASTER;
 						CommServiceRegisterEvent( con, newsock );
+						
+						/*
+						if( loccon->fc_ServerType == SERVER_TYPE_NODE || loccon->fc_ServerType == SERVER_TYPE_NODE_MASTER )
+						{
+							// assign connection node
+							ClusterNode *cnode = fcm->fcm_ClusterNodes;
+							while( cnode != NULL )
+							{
+								if( cnode->cn_FCID != NULL &&  memcmp( cnode->cn_FCID, con->fc_DestinationFCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+								{
+									cnode->cn_Connection = con;
+									break;
+								}
+								cnode = (ClusterNode *) cnode->node.mln_Succ;
+							}
+						}
+						*/
 						//lsqllib->Save( lsqllib, FConnectionDesc, con );
 					}
 				}
@@ -456,6 +519,7 @@ void CommServiceSetupOutgoing( CommService *service )
 			
 			if( loccon->fc_ServerType == SERVER_TYPE_FRIEND_MASTER )
 			{
+				INFO("FriendMasterServer found\n");
 				masterFriendFound = TRUE;
 			}
 			
@@ -481,6 +545,35 @@ void CommServiceSetupOutgoing( CommService *service )
 					lsqllib->Save( lsqllib, FConnectionDesc, con );
 				}
 			}
+		}
+		
+		ClusterNode *cnode = fcm->fcm_ClusterNodes;
+		while( cnode != NULL )
+		{
+			// we must create Connections in cluster
+			if( cnode->cn_CurrentNode == FALSE && cnode->cn_Connection == NULL ) //&& memcmp( cnode->cn_FCID, fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE ) != 0 )
+			{
+				DEBUG("[CommServiceSetupOutgoing] -------------------------------------------------- trying to setup node connection: %s - node ID: %lu\n", cnode->cn_Address, cnode->cn_ID );
+			
+				Socket *newsock = SocketConnectHost( service->s_SB, service->s_secured, cnode->cn_Address, service->s_port );
+				//if( newsock != NULL ) // master connection must be always avaiable in list
+				{
+					DEBUG("[CommServiceSetupOutgoing] Connection to '%s' created on port: %d\n", cnode->cn_Address, service->s_port);
+
+					FConnection *con = CommServiceAddConnection( service, newsock, cnode->cn_Address, cnode->cn_Address, NULL, SERVER_CONNECTION_OUTGOING, 0 );
+					if( con != NULL )
+					{
+						DEBUG("Connection created\n");
+						con->fc_ServerType = SERVER_TYPE_NODE;
+						CommServiceRegisterEvent( con, newsock );
+						
+						con->fc_Data = cnode;
+					}
+					
+					cnode->cn_Connection = con;
+				}
+			}
+			cnode = (ClusterNode *) cnode->node.mln_Succ;
 		}
 	}
 	
@@ -620,6 +713,7 @@ int CommServiceThreadServer( FThread *ptr )
 						
 							if( loccon != NULL )
 							{
+								pthread_mutex_lock( &loccon->fc_Mutex );
 								/*
 								if( 0 == CommServiceDelConnection( service, loccon, sock ) )
 								{
@@ -633,8 +727,10 @@ int CommServiceThreadServer( FThread *ptr )
 								sock->s_Data = NULL;
 								loccon->fc_Socket = NULL;
 								loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+								
+								pthread_mutex_unlock( &loccon->fc_Mutex );
 							}
-							SocketClose( sock );
+							//SocketClose( sock );
 						}
 
 						//sock = NULL;
@@ -650,8 +746,6 @@ int CommServiceThreadServer( FThread *ptr )
 						// We have a notification on the listening socket, which means one or more incoming connections.
 						while( TRUE )
 						{
-							//SocketSetBlocking( incomming, TRUE );
-
 							FERROR("-=================RECEIVED========================-\n");
 							
 							Socket *incomming = SocketAccept( service->s_Socket );
@@ -667,6 +761,7 @@ int CommServiceThreadServer( FThread *ptr )
 								FERROR("[COMMSERV] : cannot accept incoming connection\n");
 								break;
 							}
+							//SocketSetBlocking( incomming, TRUE );
 							
 							DEBUG2("[COMMSERV] Socket Connection Accepted\n");
 							
@@ -681,13 +776,16 @@ int CommServiceThreadServer( FThread *ptr )
 							
 							event.data.fd = incomming->fd;//s->s_Socket->fd;
 							event.data.ptr = (void *) incomming;
-							event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+							event.events = EPOLLIN | EPOLLET; // EPOLLRDHUP
+							//event.events = EPOLLIN| EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR; //all flags are necessary, otherwise epoll may not deliver disconnect events and socket descriptors will leak
+							//event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
 							int retval = epoll_ctl( service->s_Epollfd, EPOLL_CTL_ADD, incomming->fd, &event );
 							if( retval == -1 )
 							{
 								FERROR("[CommServiceRemote] EPOLLctrl error\n");
 								return 1;
 							}
+							break;
 						}
 						
 						//
@@ -820,10 +918,59 @@ int CommServiceThreadServer( FThread *ptr )
 
 									FConnection *con = CommServiceAddConnection( service, sock, NULL, NULL, incomingFriendCoreID, SERVER_CONNECTION_INCOMING, nodeID );
 
-									sock->s_Data = con;
-									
 									if( con != NULL )
 									{
+										clusterDF++;
+									if( clusterDF->df_ID == ID_FINF )
+									{
+										int size = clusterDF->df_Size;
+										clusterDF++; // sessions
+										
+										while( size > 0 )
+										{
+											if( clusterDF->df_ID == ID_CITY )
+											{
+												if( con->fc_GEOCity != NULL )
+												{
+													FFree( con->fc_GEOCity );
+												}
+												con->fc_GEOCity = StringDuplicateN( (char *)(clusterDF+1), clusterDF->df_Size );
+												DEBUG("GEOCITY found %s\n", con->fc_GEOCity );
+											}
+											else if( clusterDF->df_ID == ID_COUN )
+											{
+												int i;
+												int max = clusterDF->df_Size;
+												if( max > 9 ) max = 9;
+												char *dptr = (char *)(clusterDF+1);
+												
+												for( i=0 ; i < max; i++ )
+												{
+													con->fc_GEOCountryCode[ i ] = dptr[ i ];
+												}
+												
+												DEBUG("GEOCOUNTRY found %s\n", con->fc_GEOCountryCode );
+											}
+											
+											size -= (COMM_MSG_HEADER_SIZE + clusterDF->df_Size );
+											clusterDF++; // sessions
+										}
+										/*
+										clusterDF++; // geolcation
+										
+										if( clusterDF->df_ID == ID_FGEO )
+										{
+											char *dstring = (char *)(clusterDF+1);
+											printf("Geo sizeL %lu\n", clusterDF->df_Size );
+											dstring[ clusterDF->df_Size-1 ] = 0;
+											DEBUG("Found geolocation: [ %s ]\n", dstring );
+										}
+										*/
+									}
+										
+										sock = con->fc_Socket;
+										sock->s_Data = con;
+									
 										// if we have new connection
 										// we should setup same outgoing connection
 
@@ -1040,7 +1187,7 @@ int CommServiceRegisterEvent( FConnection *con, Socket *socket )
 		
 		event.data.fd = socket->fd;//s->s_Socket->fd;
 		event.data.ptr = (void *) socket;
-		event.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
+		event.events = EPOLLIN | EPOLLET; //EPOLLRDHUP
 		DEBUG("[CommServiceRegisterEvent] cserv ptr %p socket ptr %p\n", cserv, socket );
 		int retval = epoll_ctl( cserv->s_Epollfd, EPOLL_CTL_ADD, socket->fd, &event );
 		if( retval == -1 )
@@ -1105,13 +1252,23 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 	{
 		if( socket != NULL )
 		{
+			if( !lsb->sl_USM )
+				return NULL;
+
 			MsgItem tags[] = {
 				{ ID_FCRE, (FULONG)0, (FULONG)MSG_GROUP_START },
 				{ ID_FCID, (FULONG)FRIEND_CORE_MANAGER_ID_SIZE,  (FULONG)fcm->fcm_ID },
 				{ ID_FCON, (FULONG)0 , MSG_INTEGER_VALUE },
 				{ ID_CLID, (FULONG)cluster, MSG_INTEGER_VALUE },
+				{ ID_FINF, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+					{ ID_WSES, (uint64_t)lsb->sl_USM->usm_SessionCounter , MSG_INTEGER_VALUE },
+					{ ID_COUN, strlen( fcm->fcm_FCI->fci_CountryCode ) + 1, (FULONG)fcm->fcm_FCI->fci_CountryCode },
+					{ ID_CITY, strlen( fcm->fcm_FCI->fci_City ) + 1, (FULONG)fcm->fcm_FCI->fci_City },
+				{ MSG_GROUP_END, 0,  0 },
 				{ TAG_DONE, TAG_DONE, TAG_DONE }
 			};
+			
+			DEBUG("Localisation string size %lu\n", strlen( fcm->fcm_FCI->fci_LocalisationJSON ) );
 		
 			DataForm * df = DataFormNew( tags );
 		
@@ -1169,9 +1326,10 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		// we cannot create same connections (outgoing or incoming)
 		if( con->fc_Type == type )
 		{
-			if( con->fc_FCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 \
-				&& con->fc_DestinationFCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0 )
+			if( ( con->fc_FCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0) \
+				&& (con->fc_DestinationFCID != NULL && memcmp( fcm->fcm_ID, con->fc_FCID, FRIEND_CORE_MANAGER_ID_SIZE ) == 0)  )
 			{
+				DEBUG("Found same connection type: %d trying to find %d\n", con->fc_Type, type );
 				break;
 			}
 		}
@@ -1267,7 +1425,24 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		
 		if( cfcn->fc_Socket != NULL )
 		{
+			DEBUG("Closeing new socket\n");
 			SocketClose( socket );
+			socket = NULL;
+		}
+		else
+		{
+			DEBUG("New socket added\n");
+			cfcn->fc_Socket = socket;
+			if( socket != NULL )
+			{
+				socket->s_Data = cfcn;
+			}
+		}
+		/*
+		if( cfcn->fc_Socket != NULL )
+		{
+			SocketClose( socket );
+			socket = NULL;
 		}
 		else
 		{
@@ -1277,6 +1452,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 				socket->s_Data = cfcn;
 			}
 		}
+		*/
 		//DEBUG("FCID '%s' DSTFCID '%s'\n", cfcn->fc_FCID, cfcn->fc_DestinationFCID );
 		
 		if( socket != NULL && socket->s_SSLEnabled == TRUE )
@@ -1308,23 +1484,23 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 				}
 			} // if cert  = NULL
 		} // SSL
-	}
 	
-	if( cfcn->fc_ClusterID != 1 )
-	{
-		cfcn->fc_ClusterID = clusterID;
+		if( cfcn->fc_ClusterID != 1 )
+		{
+			cfcn->fc_ClusterID = clusterID;
 		
-		SQLLibrary *sqllib  = lsb->LibrarySQLGet( lsb );
-		fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
+			SQLLibrary *sqllib  = lsb->LibrarySQLGet( lsb );
+			//fcm->fcm_ClusterNodes->cn_NodeID = clusterID;
 		
-		// if ClusterID was changed, we must update it
-		char tmpQuery[ 256 ];
-		sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%d' WHERE ID=%lu", fcm->fcm_ClusterNodes->cn_NodeID, fcm->fcm_ClusterNodes->cn_ID );
+			// if ClusterID was changed, we must update it
+			char tmpQuery[ 256 ];
+			sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%d' WHERE ID=%lu", cfcn->fc_ClusterID, cfcn->fc_ID );
 
-		int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
-		DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, fcm->fcm_ClusterNodes->cn_ID );
+			int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
+			DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, cfcn->fc_ClusterID );
 		
-		lsb->LibrarySQLDrop( lsb, sqllib );
+			lsb->LibrarySQLDrop( lsb, sqllib );
+		}
 	}
 	
 	Log( FLOG_INFO, "NodeID assigned: %lu\n", clusterID );
@@ -1528,84 +1704,100 @@ void *InternalPINGThread( void *d )
 	con->fc_PingInProgress = TRUE;
 	
 	CommService* s = (CommService *)con->fc_Service;
-	DEBUG("CS %p\n", s );
+	//DEBUG("CS %p\n", s );
 	SystemBase *lsb = (SystemBase *)s->s_SB;
-	DEBUG("lsb %p\n", lsb );
+	//DEBUG("lsb %p\n", lsb );
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm;
 	
-	DEBUG("ping loop>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%p\n", con );
+	//DEBUG("ping loop>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>%p IP [%s]\n", con, con->fc_Address );
 	
 	uint64_t stime = GetCurrentTimestamp();
 	FBOOL badResp = FALSE;
 	
-	MsgItem tags[] = {
-		{ ID_FCRE, (uint64_t)0, (uint64_t)MSG_GROUP_START },
-		{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE,  (uint64_t)fcm->fcm_ID },
-		{ ID_FRID, (uint64_t)0 , MSG_INTEGER_VALUE },
-		{ ID_CMMD, (uint64_t)0, MSG_INTEGER_VALUE },
-		{ ID_PING, (uint64_t)stime , MSG_INTEGER_VALUE },
-		{ MSG_GROUP_END, 0,  0 },
-		{ TAG_DONE, TAG_DONE, TAG_DONE }
-	};
-	
-	DataForm * df = DataFormNew( tags );
-
-	BufString *result = SendMessageAndWait( con, df );
-	DataFormDelete( df );
-	
-	if( result != NULL )
+	if( con->fc_Socket != NULL )
 	{
-		if( result->bs_Size > 0 )
+		MsgItem tags[] = {
+			{ ID_FCRE, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+			{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE,  (uint64_t)fcm->fcm_ID },
+			{ ID_FRID, (uint64_t)0 , MSG_INTEGER_VALUE },
+			{ ID_CMMD, (uint64_t)0, MSG_INTEGER_VALUE },
+			{ ID_PING, (uint64_t)stime , MSG_INTEGER_VALUE },
+			{ ID_FINF, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+				{ ID_WSES, (uint64_t)lsb->sl_USM->usm_SessionCounter , MSG_INTEGER_VALUE },
+			{ MSG_GROUP_END, 0,  0 },
+			{ MSG_GROUP_END, 0,  0 },
+			{ TAG_DONE, TAG_DONE, TAG_DONE }
+		};
+	
+		DataForm * df = DataFormNew( tags );
+
+		BufString *result = SendMessageAndWait( con, df );
+		DataFormDelete( df );
+	
+		if( result != NULL )
 		{
-			/*
-			{ ID_FCRE,  (uint64_t)0, (uint64_t)MSG_GROUP_START },
-				{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE, (uint64_t)lsb->fcm->fcm_ID },
-				{ ID_FCRI, (uint64_t)reqid , MSG_INTEGER_VALUE },
-				{ ID_PING, (uint64_t)ptime, MSG_INTEGER_VALUE },
-				{ TAG_DONE, TAG_DONE, TAG_DONE }
-			*/
-			char *resbuf = result->bs_Buffer;
-			DataForm *resultDF = (DataForm *)resbuf;
-			if( resultDF->df_ID == ID_FCRE )
+			if( result->bs_Size > 0 )
 			{
-				char *tmp = (char *)(resultDF+3);
-				
-				resbuf = tmp + FRIEND_CORE_MANAGER_ID_SIZE;// + (3 * COMM_MSG_HEADER_SIZE );
-				// get timestamp again!
+				/*
+				{ ID_FCRE,  (uint64_t)0, (uint64_t)MSG_GROUP_START },
+					{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE, (uint64_t)lsb->fcm->fcm_ID },
+					{ ID_FCRI, (uint64_t)reqid , MSG_INTEGER_VALUE },
+					{ ID_PING, (uint64_t)ptime, MSG_INTEGER_VALUE },
+					{ TAG_DONE, TAG_DONE, TAG_DONE }
+				*/
+				char *resbuf = result->bs_Buffer;
 				DataForm *resultDF = (DataForm *)resbuf;
-				if( resultDF->df_ID == ID_PING )
+				if( resultDF->df_ID == ID_FCRE )
 				{
-					uint64_t etime = GetCurrentTimestamp();
-					stime = resultDF->df_Size;
-					con->fc_PINGTime = etime - stime;
+					char *tmp = (char *)(resultDF+3);
+				
+					resbuf = tmp + FRIEND_CORE_MANAGER_ID_SIZE;// + (3 * COMM_MSG_HEADER_SIZE );
+					// get timestamp again!
+					DataForm *resultDF = (DataForm *)resbuf;
+					if( resultDF->df_ID == ID_PING )
+					{
+						uint64_t etime = GetCurrentTimestamp();
+						stime = resultDF->df_Size;
+						con->fc_PINGTime = etime - stime;
 					
-					con->fc_Status = CONNECTION_STATUS_CONNECTED;
+						con->fc_Status = CONNECTION_STATUS_CONNECTED;
+						
+						// Get number of sessions
+						resultDF += 2;
+						
+						if( resultDF->df_ID == ID_WSES && con->fc_Data != NULL )
+						{
+							ClusterNode *cn = (ClusterNode *)con->fc_Data;
+							DEBUG("Number of sessions set: %lu\n", resultDF->df_Size );
+							cn->cn_UserSessionsCount = resultDF->df_Size;
+						}
+					}
+					else if( resultDF->df_ID == ID_FERR )
+					{
+						//con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
+						FERROR("[CommServicePING] Error returned\n");
+					}
+					DEBUG("[CommServicePING] received time %lu ID %x -> diff %lu\n", resultDF->df_Size, (unsigned int)resultDF->df_ID, con->fc_PINGTime );
 				}
-				else if( resultDF->df_ID == ID_FERR )
+				else
 				{
 					con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
-					FERROR("[CommServicePING] Error returned\n");
+					DEBUG("[CommServicePING] bad message received\n");
 				}
-				DEBUG("[CommServicePING] received time %lu ID %x -> diff %lu\n", resultDF->df_Size, (unsigned int)resultDF->df_ID, con->fc_PINGTime );
 			}
 			else
 			{
-				con->fc_Status = CONNECTION_STATUS_DISCONNECTED;
-				DEBUG("[CommServicePING] bad message received\n");
+				badResp = TRUE;
 			}
+			BufStringDelete( result );
 		}
 		else
 		{
 			badResp = TRUE;
 		}
-		BufStringDelete( result );
-	}
-	else
-	{
-		badResp = TRUE;
 	}
 	
-	DEBUG("bad resp %d\n", badResp );
+	//DEBUG("bad resp %d\n", badResp );
 	
 	if( badResp == TRUE )
 	{
@@ -1618,7 +1810,7 @@ void *InternalPINGThread( void *d )
 			Socket *newsock = SocketConnectHost( s->s_SB, s->s_secured, con->fc_Address, s->s_port );
 			if( newsock != NULL )
 			{
-				DEBUG("[CommServicePING] Connection reestabilished\n");
+				//DEBUG("[CommServicePING] Connection reestabilished\n");
 				
 				SocketClose( con->fc_Socket );
 				con->fc_Socket = newsock;
@@ -1662,6 +1854,7 @@ void CommServicePING( CommService* s )
 	
 	while( con != NULL )
 	{
+		//DEBUG("Send ping\n");
 		if( con->fc_PingInProgress == FALSE )
 		{
 			pthread_t t;
@@ -1671,5 +1864,5 @@ void CommServicePING( CommService* s )
 		con = (FConnection *)con->node.mln_Succ;
 	}
 	
-	DEBUG("Mutex released\n");
+	//DEBUG("Mutex released\n");
 }

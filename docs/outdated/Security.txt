@@ -1,0 +1,17 @@
+Security in Friend Core / Friend Workspace
+------------------------------------------
+
+Subdomains for effective sandboxing
+-----------------------------------
+
+Friend Workspace uses iframes for sandboxing applications. This allows developers
+to  use all the HTML5 features they love while at the same time making  sure that
+the applications only have access to the resources they need.
+
+To set this up, add a comma separated list in the config file (cfg.ini) like so:
+
+domains = mydomain1.com, sub.mydomain1.com, other.mydomain1.com
+
+This will make these domains available to Friend Core and Friend Workspace to use
+for secured applications.
+

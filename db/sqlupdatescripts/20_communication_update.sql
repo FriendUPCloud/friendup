@@ -1,5 +1,5 @@
 
-#ALTER TABLE `FCommunicationConnection` ADD COLUMN `DestinationFCID` varchar(128);
+ALTER TABLE `FCommunicationConnection` ADD COLUMN `DestinationFCID` varchar(128);
 
 DROP TABLE IF EXISTS `FCommunicationConnection`;
 

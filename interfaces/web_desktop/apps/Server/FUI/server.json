@@ -1,0 +1,118 @@
+[
+	{
+		"type": "Init",
+		"functionName": "startServer"
+	},
+	{
+		"type": "Group",
+		"name": "mainGroup",
+		"width": "100%",
+		"height": "100%",
+		"rows": 2,
+		"sizes": [ "35px", "calc(100% - 35px)" ],
+		"show": true,
+		"children": [
+			{
+				"type": "TabButtons",
+				"name": "TabButtonsServer",
+				"tabs": [ "Settings", "Software" ],
+				"labels": [ "Settings", "Software" ],
+				"pages": "TabPagesServer",
+				"active": "Settings",
+				"width": "100%",
+				"height": "100%",
+				"show": true
+			},
+			{
+				"type": "TabPages",
+				"name": "TabPagesServer",
+				"width": "100%",
+				"height": "100%",
+				"show": true,
+				"children": [
+					{
+						"type": "TabPage",
+						"name": "Settings",
+						"buttons": "TabButtonsServer",
+						"width": "100%",
+						"height": "100%",
+						"children": [
+							{
+								"type": "Group",
+								"name": "ServerListGroup",
+								"width": "calc(100% - 8px)",
+								"height": "calc(100% - 8px)",
+								"radius": 3,
+								"padding": 4,
+								"margin": 4,
+								"border": "solid",
+								"rows": 2,
+								"sizes": [ "calc(100% - 35px)", "35px" ],
+								"show": true,
+								"children": [
+									{
+										"type": "List",
+										"name": "ServerList",
+										"show": true
+									},
+									{
+										"type": "Group",
+										"name": "ServerListButtons",
+										"width": "100%",
+										"height": "calc(100% - 4px)",
+										"paddingTop": 2,
+										"marginTop": 2,
+										"columns": 3,
+										"sizes": [ "30%", "40%", "30%" ],
+										"show": true,
+										"children": [
+											{
+												"type": "Button",
+												"text": "Add item",
+												"icon": "fa-plus",
+												"event": {
+													"functionName": "addItem",
+													"arguments": ""
+												},
+												"show": true
+											},
+											{
+												"type": "Empty", "show": true
+											},
+											{
+												"type": "Button",
+												"text": "Cancel",
+												"icon": "fa-remove",
+												"event": {
+													"functionName": "cancelView",
+													"arguments": ""
+												},
+												"show": true
+											}
+										]
+									}
+								]
+							}
+						],
+						"show": true
+					},
+					{
+						"type": "TabPage",
+						"buttons": "TabButtonsServer",
+						"name": "Software",
+						"width": "100%",
+						"height": "100%",
+						"children": [
+							{
+								"type": "List",
+								"name": "SoftwareList",
+								"show": true
+							}
+						],
+						"show": true
+					}
+				]
+			}
+		]
+	}
+]

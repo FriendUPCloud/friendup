@@ -20,6 +20,7 @@ i18n_printers                        : Printers
 i18n_network                         : Network
 i18n_language                        : Language
 i18n_bookmarks                       : Bookmarks
+i18n_deleting_files                  : Deleting files
 i18n_bookmarks_add                   : Add
 i18n_bookmarks_close                 : Close
 i18n_bookmarks_select                : Select
@@ -47,6 +48,7 @@ i18n_cancel                          : Cancel
 i18n_accept                          : Accept
 i18n_understood                      : Understood
 
+i18n_full                            : full.
 i18n_disk_icon                       : Disk icon
 i18n_choose_disk                     : Choose disk
 i18n_run_application                 : Run application
@@ -231,6 +233,7 @@ menu_open_directory                     : Open directory
 menu_open_parent_directory              : Open parent directory
 menu_show_as                            : Show as
 menu_show_as_icons                      : Icons
+menu_show_as_compact                    : Compact
 menu_show_as_list                       : List
 menu_show_as_columns                    : Columns
 menu_close_window                       : Close window
@@ -304,6 +307,7 @@ i18n_public_file                        : Public file
 i18n_public_link                        : Public url
 i18n_close                              : Close
 i18n_file_information                   : General information
+i18n_link_information                   : Link information
 i18n_file_permissions                   : File permissions
 i18n_meta_information                   : File information
 i18n_click_to_copy                      : Click to copy to clipboard
@@ -347,6 +351,7 @@ i18n_read_only_fs_desc                  : You are trying to write to a write pro
 i18n_cancel                             : Cancel
 i18n_moving_files                       : Moving files
 i18n_copying_files                      : Copying files
+i18n_filecopy_error                     : Error copying files
 
 i18n_delete_operation                   : Deletion of file(s)
 i18n_could_not_delete_files             : Could not delete file(s).
@@ -394,8 +399,6 @@ i18n_locale_no                          : Norsk
 i18n_locale_en                          : Engelsk
 i18n_locale_de                          : Tysk
 i18n_locale_nl                          : Nederlandsk
-i18n_locale_fr                          : Français
-i18n_locale_fi                          : Finnish
 
 #Search ------------------------------------------------------------------------
 
@@ -419,6 +422,10 @@ i18n_dir_btn_back                       : Back
 i18n_dir_btn_forward                    : Forward
 i18n_dir_btn_reload                     : Reload
 i18n_dir_btn_search                     : Search
+i18n_diskspace                          : Diskspace
+i18n_dir_btn_iconview                   : Normal
+i18n_dir_btn_compact                    : Compact
+i18n_dir_btn_listview                   : List
 
 #Sessions ----------------------------------------------------------------------
 

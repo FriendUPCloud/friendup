@@ -59,7 +59,6 @@ Friend.AI.Neuron = function( tree, name, flags )
     this.handleColor = '#000000'; 
     this.handleSize = 1;
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Neuron', flags );
-	Object.assign( this, Friend.Tree.Neuron );
 
     this.impulseCount = 0;
     this.minFrequency = Friend.Flags.AIFLAG_BASEFREQUENCYSTART;
@@ -93,7 +92,7 @@ Friend.Flags.Neuron.KICKSPEED = 10;                 // In percent. Multiplied by
 Friend.Flags.Neuron.DECAYSPEED = 0.01;              // In percent. Notion will last for longuer is small. Can evolve for very active and positive notions. Will be always active.
 Friend.Flags.neuron.IMPULSIONFADE = 3;              // An impulsion will be displayed during 3 fps
 
-Friend.AI.Neuron.renderUp = function( flags )
+Friend.AI.Neuron.render = function( flags )
 {
     // Change the color when impulsion
     var color = this.color;
@@ -125,10 +124,10 @@ Friend.AI.Neuron.renderUp = function( flags )
                 {
                     // For the mommet, just a dot on the circle
                     // After: draw a ray of light toward the destination (simple with coordinates)
-                    var rect = new Friend.Utilities.rect( this.thisRect );
+                    var rect = new Friend.Tree.Utilities.rect( this.thisRect );
                     rect.shrink( this.impulsionSize );
                     var coords = rect.getRayCoords( flags, impulsion.angle );
-                    rect = new Friend.Utilities.Rect( coords.x - this.impulsionSize / 2, coords.y - this.impulsionSize / 2, this.impulsionSize, this.impulsionSize );
+                    rect = new Friend.Tree.Utilities.Rect( coords.x - this.impulsionSize / 2, coords.y - this.impulsionSize / 2, this.impulsionSize, this.impulsionSize );
                     rect.drawEllipse( flags, this.impulsionColor )
                 }
                 else
@@ -142,11 +141,7 @@ Friend.AI.Neuron.renderUp = function( flags )
     }
 	return flags;
 };
-Friend.AI.Neuron.renderDown = function( flags )
-{
-    return flags;
-};
-Friend.AI.Neuron.processUp = function( message )
+Friend.AI.Neuron.messageUp = function( message )
 {
     // A new impulse coming?
     if ( message.command )
@@ -194,7 +189,7 @@ Friend.AI.Neuron.processUp = function( message )
                 {
                     // Neuron is going to sleep for this path
                     impulse.speed = impulse.minSpeed;
-                    Friend.Tree.log( this, { 'Neuron going to sleep.', level: Friend.Flags.ERRORLEVEL_LOW } );
+                    Friend.Tree.log( this, { 'Neuron going to sleep.', level: Friend.Tree.ERRORLEVEL_LOW } );
                 }
                 if ( impulse.speed > inpulse.maxSpeed )
                 {
@@ -213,14 +208,14 @@ Friend.AI.Neuron.processUp = function( message )
                 var count;
                 for ( count = 0; count < flags.connections; count++ )
                 {
-                    var connectionDef = flags.connections[ count ];
+                    var connectionDef = properties.connections[ count ];
 
                     // Finds target
                     var target;
                     if ( connectionDef.identifier )
-                        target = this.tree.findItem( connectionDef.identifier );
+                        target = this.findItemFromIdentifier( connectionDef.identifier, this.root );
                     else
-                        target = this.tree.findItemFromName( connectionDef.name );
+                        target = this.findItemFromName( connectionDef.name, this.root );
                     if ( !target )
                     {
                         Friend.Tree.log( this, { message: 'Connection not found!', data: connectionDef, level: Friend.flags.ERRORLEVEL_BREAK } );
@@ -262,7 +257,7 @@ Friend.AI.Neuron.processUp = function( message )
         {
             // Rotates the angle, keep difference of angle
             this.oldRotation = impulse.rotation;
-            impulse.rotation += ( this.rotation + this.rotationSpeedCalc * flags.delay );         // Like in a game! :)
+            impulse.rotation += ( this.rotation + this.rotationSpeedCalc * properties.delay );         // Like in a game! :)
             var delta = impulse.rotation - this.oldRotation;
             impulse.rotation %= 360;                        // Stays low (could be free-> overload after a while).
             
@@ -303,18 +298,18 @@ Friend.AI.Neuron.processUp = function( message )
             }
 
             // Do a screen refresh
-            flags.refresh = true;
+            message.refresh = true;
         }
     }
-    return this.startProcess( flags, [ 'x', 'y', 'z', 'rotation', 'color', 'borderColor', 'handleColor' ] );
+    return this.startProcess( message, [ 'x', 'y', 'z', 'rotation', 'color', 'borderColor', 'handleColor' ] );
 };
 
-Friend.AI.Neuron.processDown = function( flags )
+Friend.AI.Neuron.messageDown = function( properties )
 {
-    return this.endProcess( flags, [ 'x', 'y', 'z', 'rotation', 'color', 'borderColor', 'handleColor' ] );
+    return this.endProcess( properties, [ 'x', 'y', 'z', 'rotation', 'color', 'borderColor', 'handleColor' ] );
 };
 
-Friend.AI.Neuron.receiveMessage = function( flags, impulse )
+Friend.AI.Neuron.receiveMessage = function( properties, impulse )
 {
     switch ( message.command )
     {
@@ -357,7 +352,7 @@ Friend.AI.Neuron.receiveMessage = function( flags, impulse )
             {
                 // Neuron is going to sleep for this path
                 this.speed = impulse.minSpeed;
-                Friend.Tree.log( this, { 'Neuron going to sleep.', level: Friend.Flags.ERRORLEVEL_LOW } );
+                Friend.Tree.log( this, { 'Neuron going to sleep.', level: Friend.Tree.ERRORLEVEL_LOW } );
             }
             if ( this.speed > inpulse.maxSpeed )
             {
@@ -381,7 +376,7 @@ Friend.AI.Neuron.receiveMessage = function( flags, impulse )
 // Artificially increase/decrease the weigth of the exit of the decision toward one element, 
 // on all path (or not, just a section, like 'time' -> faster / slower). AI will find
 // solutions that match orientation more.
-Friend.AI.Neuron.sendImpulsion = function( flags, impulse )
+Friend.AI.Neuron.sendImpulsion = function( properties, impulse )
 {
     // Creates an array with the 'distances', based on the weight of each connection
     // Warning: default Javascript random is crap (more around zero)
@@ -430,7 +425,7 @@ Friend.AI.Neuron.sendImpulsion = function( flags, impulse )
             connectionFound.rotationIdentifier = this.rotationIdentifier;
 
             // Sends the message!
-            connectionFound.target.receiveMessage.apply( connectionFound.target, [ flags, impulse ] );
+            connectionFound.target.receiveMessage.apply( connectionFound.target, [ properties, impulse ] );
 
             // Returns infos
             infos = {};
@@ -442,33 +437,33 @@ Friend.AI.Neuron.sendImpulsion = function( flags, impulse )
     return infos;
 };
 
-Friend.AI.Neuron.updateValues = function( flags )
+Friend.AI.Neuron.updateValues = function( properties )
 {
     var refresh = false;
 
     // The properties of the neuron itself (check no common names between all the elements!)
-    refresh |= Friend.Utilities.updateCommonProperties( this, flags );
+    refresh |= Friend.Tree.Utilities.updateCommonProperties( this, properties );
 
     // For all the connections
     var count;
     for ( count = 0; count < this.connnections.length; count++ )
     {
-        refresh |= Friend.Utilities.updateCommonProperties( this.connections[ count ], flags );
+        refresh |= Friend.Tree.Utilities.updateCommonProperties( this.connections[ count ], properties );
     }
 
     // For all the base flags (changing constants = not good! Thank you Javascript! :)
-    refresh |= Friend.Utilities.updateCommonProperties( Friend.Flags.AI.Neuron, flags );
+    refresh |= Friend.Tree.Utilities.updateCommonProperties( Friend.Flags.AI.Neuron, properties );
 
     // For all the current impulses (?)
     for ( var impulse in this.impulses )
-        refresh |= Friend.Utilities.updateCommonProperties( this.impulses[ identifier ], flags );
+        refresh |= Friend.Tree.Utilities.updateCommonProperties( this.impulses[ identifier ], properties );
 
     // Call all children neurons (only). Recursive.
     for ( identifier in this.items )
     {
         var item = this.items[ identifier ];
         if ( item.classname == 'Friend.AI.Neuron' )
-            refresh |= item.updateValues( flags );
+            refresh |= item.updateValues( properties );
     }
 
     // At the end, indicates if 'something' has been updated above -> recalculates everything

@@ -82,12 +82,13 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 			
 			DEBUG("PINGRECV data %lu size %lu id %x\n", df->df_Data, df->df_Size, (unsigned int)df->df_ID );
 			
-			df++;
+			df += 2;
 			// get number of user sessions
-			if( df->df_ID == ID_SSCN )
+			if( df->df_ID == ID_WSES && con->fc_Data != NULL )
 			{
-				con->fc_UserSessionsCount = df->df_Size;
-				DEBUG("[ParseAndExecuteRequest] Number of sessions on another core: %d\n", con->fc_UserSessionsCount );
+				ClusterNode *cn = (ClusterNode *)con->fc_Data;
+				cn->cn_UserSessionsCount = df->df_Size;
+				DEBUG("[ParseAndExecuteRequest] Number of sessions on another core: %d\n", cn->cn_UserSessionsCount );
 			}
 			
 			MsgItem tags[] = {
@@ -95,10 +96,13 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 				{ ID_FCID, (uint64_t)FRIEND_CORE_MANAGER_ID_SIZE, (uint64_t)lsb->fcm->fcm_ID },
 				{ ID_FCRI, (uint64_t)reqid , MSG_INTEGER_VALUE },
 				{ ID_PING, (uint64_t)ptime, MSG_INTEGER_VALUE },
+				{ ID_FINF, (uint64_t)0, (uint64_t)MSG_GROUP_START },
+					{ ID_WSES, (uint64_t)lsb->sl_USM->usm_SessionCounter , MSG_INTEGER_VALUE },
+				{ MSG_GROUP_END, 0,  0 },
 				{ TAG_DONE, TAG_DONE, TAG_DONE }
 			};
 		
-			DEBUG( "[ParseMessage] PING response id: %lu time received: %lu\n", reqid, ptime );
+			DEBUG( "[ParseMessage] PING response id: %lu time received: %lu num of local sessions: %d num of remote sessions %lu\n", reqid, ptime, lsb->sl_USM->usm_SessionCounter, df->df_Size );
 			
 			return DataFormNew( tags );
 		}
@@ -170,7 +174,7 @@ DataForm *ParseAndExecuteRequest( void *sb, FConnection *con, DataForm *df, FULO
 						DEBUG("[ParseAndExecuteRequest] Mem allocated for data %p\n",  param );
 					}
 
-					if( HashmapPut( paramhm, StringDuplicate( attr ), param ) )
+					if( HashmapPut( paramhm, StringDuplicate( attr ), param ) == MAP_OK )
 					{
 						DEBUG("[ParseAndExecuteRequest] New values - %s - %.10s -\n", attr, val );
 					}

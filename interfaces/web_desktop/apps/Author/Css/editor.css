@@ -135,51 +135,26 @@ a.cke_path_item, span.cke_path_empty
 	position: absolute;
 }
 
-.ToolButton, .ToolSelect, .ToolButtonLabel
+.Button, .ToolSelect, .ToolButtonLabel
 {
 	float: left;
-	width: 32px;
-	height: 32px;
-	line-height: 32px;
 	text-align: center;
-	border: 1px solid rgba(0,0,0,0.2);
-	border-radius: 5px;
 	overflow: hidden;
-	cursor: hand;
-	cursor: pointer;
 	margin: 10px 0 0 5px;
 	display: block !important;
-	box-shadow: inset 0px 0px 4px rgba(0,0,0,0.2);
 	box-sizing: border-box;
 	outline: none;
 }
 
 .ToolButtonLabel
 {
-	border-color: white;
 	cursor: default;
 }
 
-.ToolButton em, .ToolSelect em
+.Button em, .ToolSelect em
 {
 	/*text-align: center;*/
 	display: none;
-}
-
-.ToolSelect
-{
-	width: auto;
-	background: #444444;
-	color: white;
-}
-.ToolSelect option
-{
-	color: #000000;
-	background: #ffffff;
-}
-.ToolSelect option:nth-child(odd)
-{
-	background: #f8f8f8;
 }
 
 .ToolDivider

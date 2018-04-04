@@ -26,7 +26,7 @@
 Application.run = function( msg )
 {
 	this.w = new View( {
-		title: 'FriendTracker v0.3',
+		title: 'FriendTracker v0.4',
 		width: 800,
 		height: 500
 	} );

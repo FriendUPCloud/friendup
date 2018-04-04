@@ -247,7 +247,7 @@ function ResizeWindow( div, wi, he, mode, depth )
 	if( !mode ) mode = false;
 	
 	// Find window div
-	if ( div.className == 'Content' )
+	if ( !div.content )
 	{
 		while( div && ( !div.classList || ( div.classList && !div.classList.contains( 'View' ) ) ) && div != document.body )
 			div = div.parentNode;
@@ -411,17 +411,65 @@ function ResizeWindow( div, wi, he, mode, depth )
 	// Set the content width
 	UpdateWindowContentSize( div );
 
+	// Toggle scroll flag
+	function checkScrolling( div )
+	{
+		if( !div.content && div.parentNode && div.parentNode.content )
+			div = div.parentNode;
+		if( !div.content ) return;
+		if( !div.content.firstChild ) return;
+		if( div.content.offsetHeight < div.content.firstChild.scrollHeight )
+		{
+			div.classList.add( 'Scrolling' );
+		}
+		else
+		{
+			div.classList.remove( 'Scrolling' );
+		}
+	};
+
 	// Check resize event
 	if( div.content.events && div.content.events.resize )
 	{
 		for( var a = 0; a < div.content.events.resize.length; a++ )
 		{
-			div.content.events.resize[a]();
+			div.content.events.resize[a]( function(){ checkScrolling( div ) } );
 		}
 	}
 
+	// Check now
+	checkScrolling( div );
+	
 	// refresh
-	if( div.refreshWindow ) div.refreshWindow ();
+	// TODO: Is this ever used? Pls check
+	if( div.refreshWindow )
+	{
+		div.refreshWindow();
+	}
+	
+	// Recalculate toggle group
+	// It will pop out of view if it's overlapped by other buttons
+	if( div.content.directoryview )
+	{
+		var t = div.getElementsByClassName( 'ToggleGroup' );
+		var r = div.getElementsByClassName( 'Reload' );
+		var m = div.getElementsByClassName( 'Makedir' );
+		if( t.length > 0 && r.length > 0 )
+		{
+			var hideCondition = t[0].offsetLeft < r[0].offsetLeft + r[0].offsetWidth || 
+				( m && m[0] && t[0].offsetLeft + t[0].offsetWidth > m[0].offsetLeft );
+			if( hideCondition )
+			{
+				t[0].style.visibility = 'hidden';
+				t[0].style.pointerEvents = 'none';
+			}
+			else
+			{
+				t[0].style.visibility = 'visible';
+				t[0].style.pointerEvents = 'all';
+			}
+		}
+	}
 }
 
 // Get the statusbar height
@@ -464,12 +512,14 @@ function GetStatusbarHeight( screen )
 var _cascadeValue = 0;
 function CascadeWindowPosition( obj )
 {
-	_cascadeValue += 20;
-	if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
-		_cascadeValue = 0;
+	if( !Workspace.screen ) return;
 	
 	obj.dom.style.top = _cascadeValue + obj.y + 'px';
 	obj.dom.style.left = _cascadeValue + obj.x + 'px';
+	
+	_cascadeValue += 20;
+	if( _cascadeValue + obj.x + obj.w > obj.maxw || _cascadeValue + obj.y + obj.h > obj.maxh )
+		_cascadeValue = 0;
 }
 
 // Returns the display margins, taking into consideration the screen, dock etc
@@ -554,18 +604,27 @@ function ConstrainWindow( div, l, t, depth )
 		flagMaxWidth = parseInt( div.windowObject.getFlag( 'max-width' ) );
 		flagMaxHeight = parseInt( div.windowObject.getFlag( 'max-height' ) );
 	}
+	if( !sc ) sc = Workspace.screen;
+	
+	var screenMaxWidth = sc ? sc.getMaxViewWidth() : document.body.offsetWidth;
+	var screenMaxHeight = sc ? sc.getMaxViewHeight() : document.body.offsetHeight;
 	
 	// If the view is inside another container (special case)
-	var insideView = div.parentNode && !div.parentNode.classList.contains( 'ScreenContent' );
+	var specialNesting = div.content ? div : div.parentNode;
+	if( div.viewContainer && div.viewContainer.parentNode )
+	{
+		specialNesting = !div.viewContainer.parentNode.classList.contains( 'ScreenContent' );
+	}
+	else specialNesting = false;
+	var pn = div.parentWindow;
+	var win = pn ? pn.getWindowElement() : div;
+	var cn = win.content ? win.content : win;
 	
 	// Get maximum width / height
-	var win = div.parentWindow ? div.parentWindow.getWindowElement() : div;
-	var maxWidth = div.parentWindow ? div.parentWindow.offsetWidth : 
-		( insideView ? div.parentNode.offsetWidth : 
-			( sc ? sc.getMaxViewWidth() : window.innerWidth ) );
-	var maxHeight = div.parentWindow ? div.parentWindow.offsetHeight : 
-		( insideView ? div.parentNode.offsetHeight : 
-			( sc ? sc.getMaxViewHeight() : window.innerHeight ) );
+	var maxWidth = pn ? pn.offsetWidth : 
+		( specialNesting ? div.viewContainer.parentNode.offsetWidth : screenMaxWidth );
+	var maxHeight = pn ? pn.offsetHeight : 
+		( specialNesting ? div.viewContainer.parentNode.offsetHeight : screenMaxHeight );
 	
 	// Subtract margins
 	maxWidth -= margins.left + margins.right;
@@ -580,46 +639,33 @@ function ConstrainWindow( div, l, t, depth )
 	{
 		div.style.maxHeight = maxHeight + 'px';
 	}
-	
-	var cn = win.content ? win.content : win;
-
-	if( div.parentNode && div.parentNode.className.indexOf( 'Screen' ) >= 0 )
-	{
-		var cnt = div.parentNode.getElementsByTagName( 'div' );
-		var scn = false;
-		for( var a = 0; a < cnt.length; a++ )
-		{
-			if( cnt[a].className && cnt[a].classList.contains( 'ScreenContent' ) )
-			{
-				scn = cnt[a];
-				break;
-			}
-		}
-	}
 
 	var mt = margins.top;
 	var ml = margins.left; // min left
 	var mw = maxWidth;
 	var mh = maxHeight;
 	
-	var scIsWorkspaceScreen = sc == Workspace.screen;
-	
 	var ww = div.offsetWidth;
 	var wh = div.offsetHeight;
 	if( ww <= 0 ) ww = div.content.windowObject.getFlag( 'width' );
 	if( wh <= 0 ) wh = div.content.windowObject.getFlag( 'height' );
+	var mvw = screenMaxWidth;
+	var mvh = screenMaxHeight;
 	
-	// Allow columns of workspaces
-	if( scIsWorkspaceScreen && globalConfig.workspacecount > 1 && div.windowObject.workspace != 0 )
+	// TODO: See if we can move this dock dimension stuff inside getMax..()
+	if( Workspace.mainDock )
 	{
-		var ws = div.windowObject.workspace;
-		var cl = div.windowObject.flags.screen.div.offsetWidth * ws;
-		cl += margins.left;
-		if( cl < ml ) cl = ml;
-		ml = cl;
+		if( Workspace.mainDock.dom.classList.contains( 'Vertical' ) )
+		{
+			mvw -= Workspace.mainDock.dom.offsetWidth;
+		}
+		else
+		{
+			mvh -= Workspace.mainDock.dom.offsetHeight;
+		}
 	}
 	
-	// For window cascading, start comparing (it should never be nan btw!)
+	// For window cascading, start comparing (isNaN means not set)
 	var doCascade = false;
 	if( !l )
 	{
@@ -627,16 +673,16 @@ function ConstrainWindow( div, l, t, depth )
 		if( isNaN( l ) )
 		{
 			doCascade = true;
-			l = ml + ( document.body.offsetWidth >> 1 ) - ( ww >> 1 );
+			l = ( mvw >> 1 ) - ( ww >> 1 );
 		}
 	}
 	if( !t )
 	{
-		t = parseInt( div.style.top  );
+		t = parseInt( div.style.top );
 		if( isNaN( t ) )
 		{
 			doCascade = true;
-			t = ( document.body.offsetHeight >> 1 ) - ( wh >> 1 );
+			t = ( mvh >> 1 ) - ( wh >> 1 );
 		}
 	}
 
@@ -671,9 +717,9 @@ function ConstrainWindow( div, l, t, depth )
 function AutoResizeWindow( div )
 {
 	if( !div ) return;
-	if( div.className == 'Content' )
+	if( !div.content )
 	{
-		while( div.className.indexOf( ' View' ) < 0 && div != document.body )
+		while( !div.classList.contains( 'View' ) && div != document.body )
 			div = div.parentNode;
 	}
 	if( div == document.body ) return;
@@ -755,6 +801,7 @@ function _ActivateWindowOnly( div )
 			else window.currentMovable = div;
 
 			m.classList.add( 'Active' );
+			m.viewContainer.classList.add( 'Active' );
 
 			if( div.windowObject && !div.notifyActivated )
 			{
@@ -862,6 +909,7 @@ function _DeactivateWindow( m, skipCleanUp )
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
+		m.viewContainer.classList.remove( 'Active' );
 		if( m.windowObject && m.notifyActivated )
 		{
 			var iftest = m.getElementsByTagName( _viewType );
@@ -957,7 +1005,7 @@ function _WindowToFront( div )
 	for( var a in movableWindows )
 	{
 		var m = movableWindows[a];
-		var zi = parseInt( m.style.zIndex );
+		var zi = parseInt( m.viewContainer.style.zIndex );
 		if( zi <= low  ) low  = zi;
 		if( zi >= high ) high = zi;
 	}
@@ -968,7 +1016,7 @@ function _WindowToFront( div )
 	{
 		for( var b in movableWindows )
 		{
-			if( div != movableWindows[b] && movableWindows[b].style.zIndex == a )
+			if( div != movableWindows[b] && movableWindows[b].viewContainer.style.zIndex == a )
 			{
 				sorted.push( movableWindows[b] );
 			}
@@ -979,10 +1027,12 @@ function _WindowToFront( div )
 	var sortedInd = 100;
 	for( var a = 0; a < sorted.length; a++ )
 	{
-		sorted[a].style.zIndex = sortedInd++;
+		sorted[a].viewContainer.style.zIndex = sortedInd++;
+		sorted[a].style.zIndex = sorted[a].viewContainer.style.zIndex;
 	}
 
 	// 4. now apply the one we want to front to the front
+	div.viewContainer.style.zIndex = sortedInd;
 	div.style.zIndex = sortedInd;
 }
 
@@ -1110,8 +1160,16 @@ function CloseView( win )
 		{
 			setTimeout( function()
 			{
-				if( div.parentNode )
+				if( div.viewContainer.parentNode )
+					div.viewContainer.parentNode.removeChild( div.viewContainer );
+				else if( div.parentNode )
+				{
 					div.parentNode.removeChild( div );
+				}
+				else
+				{
+					console.log( 'Nothing to remove..' );
+				}
 			}, 500 );
 
 			div.style.opacity = 0;
@@ -1140,7 +1198,9 @@ function CloseView( win )
 					{
 						if( _viewHistory[ a ].applicationId == appId )
 						{
-							_ActivateWindow( _viewHistory[ a ] );
+							// Only activate non minimized views
+							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( _viewHistory[ a ] );
 							break;
 						}
 					}
@@ -1151,7 +1211,9 @@ function CloseView( win )
 					{
 						if( _viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
-							_ActivateWindow( _viewHistory[ a ] );
+							// Only activate non minimized views
+							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( _viewHistory[ a ] );
 							break;
 						}
 					}
@@ -1197,6 +1259,9 @@ function CloseView( win )
 
 	// Check window
 	CheckScreenTitle();
+	
+	if( isMobile )
+		Workspace.redrawIcons();
 
 	// For natives..
 	if( win && win.nativeWindow ) win.nativeWindow.close();
@@ -1340,49 +1405,6 @@ var View = function( args )
 		
 		// Native mode? Creates a new place for the view
 		this.nativeWindow = false;
-		/*if( !this.nativeWindow && Workspace.interfaceMode && Workspace.interfaceMode == 'native' )
-		{
-			var vi = window.open( '', '/webclient/sandboxed.html', titleStr, 'topbar=no,status=no,width=' + width + ',height=' + height + ',scrollbars=no,resize=' + ( flags.resize ? 'yes' : 'no' ), false );
-			vi.titleStr = titleStr;
-			vi.document.write( '<!DOCTYPE html>\
-<html>\
-	<head>\
-		<title>' + titleStr + '</title>\
-		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>\
-		<style>\
-			html body.Loading * { visibility: hidden; }\
-			html body.Loading { background-color: #444444; }\
-		</style>\
-	</head>\
-	<body class="Loading" onload="" onmousedown="clickToActivate()" onmouseup="clickToActivate()">\
-	</body>\
-</html>' );
-			this.nativeWindow = vi;
-			vi.onmessage = function( msg ) { apiWrapper( msg ); }
-			var doc = vi.document;
-			var s = doc.createElement( 'script' );
-			s.src = '/webclient/js/apps/api.js';
-			doc.body.appendChild( s );
-			s.onload = function()
-			{
-				var packet = {
-					applicationId: self.applicationId,
-					authId: self.authId,
-					applicationName: self.applicationName,
-					base: '/webclient/',
-					id: self.viewId,
-					applicationId: self.applicationId,
-					origin: '*',
-					locale: Workspace.locale,
-					theme: Workspace.theme,
-					clipboard: friend.clipboard
-				}
-				vi.initApplicationFrame( packet );
-				vi.Application.receiveMessage( { command: 'register' } );
-				vi.document.body.className = 'Inside';
-				vi.document.body.appendChild( d );
-			}
-		}*/
 
 		// If we're making a movable window with a unique id, the make sure
 		// it doesn't exist, in case, just return the existing window
@@ -1391,7 +1413,23 @@ var View = function( args )
 		var titleStr = '';
 		var transparent = false;
 
-		self.parseFlags( flags );
+		var filter = [
+			'min-width', 'min-height', 'width', 'height', 'id', 'title', 
+			'screen', 'parentView', 'transparent'
+		];
+
+		self.parseFlags( flags, filter );
+		
+		// Set initial workspace
+		if( flags.workspace && flags.workspace > 0 )
+		{
+			self.workspace = flags.workspace;
+		}
+		else
+		{
+			self.workspace = globalConfig.workspaceCurrent;
+		}
+		
 		if( !self.getFlag( 'min-width' ) )
 			this.setFlag( 'min-width', 100 );
 		if( !self.getFlag( 'min-height' ) )
@@ -1429,13 +1467,17 @@ var View = function( args )
 		if( id )
 		{
 			// Existing window!
-			if ( typeof( movableWindows[ id ] ) != 'undefined' )
+			if( typeof( movableWindows[ id ] ) != 'undefined' )
 			{
 				return false;
 			}
-			if ( div == 'CREATE' )
-			{
-				div = document.createElement ( 'div' );
+			// Make a container to put the view div inside of
+			var viewContainer = document.createElement( 'div' );
+			viewContainer.className = 'ViewContainer';
+			
+			if( div == 'CREATE' )
+			{	
+				div = document.createElement( 'div' );
 				if( applicationId ) div.applicationId = applicationId;
 				div.parentWindow = false;
 				if( parentWindow )
@@ -1443,6 +1485,7 @@ var View = function( args )
 					divParent = parentWindow._window;
 					div.parentWindow = parentWindow;
 				}
+				// Defined screen (and we're not in multiple workspaces)
 				else if( contentscreen )
 				{
 					divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
@@ -1451,7 +1494,10 @@ var View = function( args )
 				{
 					divParent = window.currentScreen;
 				}
-				else divParent = document.body;
+				else 
+				{
+					divParent = document.body;
+				}
 			}
 			movableWindows[ id ] = div;
 			div.titleString = titleStr;
@@ -1468,6 +1514,7 @@ var View = function( args )
 				divParent = parentWindow._window;
 				div.parentWindow = parentWindow;
 			}
+			// Defined screen (and we're not in multiple workspaces)
 			else if( contentscreen )
 			{
 				divParent = contentscreen.contentDiv ? contentscreen.contentDiv : contentscreen.div;
@@ -1480,7 +1527,10 @@ var View = function( args )
 			{
 				divParent = document.body;
 			}
-			if( divParent.object && divParent.object._screen ) divParent = divParent.object._screen;
+			if( divParent.object && divParent.object._screen )
+			{
+				divParent = divParent.object._screen;
+			}
 
 			// ID must be unique
 			var num = 0;
@@ -1657,7 +1707,7 @@ var View = function( args )
 		depth.window = div;
 		depth.onclick = function( e )
 		{
-			if( e.button != 0 ) return;
+			if( !window.isTablet && e.button != 0 ) return;
 			
 			// Calculate lowest and highest z-index
 			var low = 99999999;	var high = 0;
@@ -1666,7 +1716,7 @@ var View = function( args )
 				var maxm = movableWindows[a].getAttribute( 'maximized' );
 				if( maxm && maxm.length )
 					continue;
-				var ind = parseInt( movableWindows[a].style.zIndex );
+				var ind = parseInt( movableWindows[a].viewContainer.style.zIndex );
 				if( ind < low ) low = ind;
 				if( ind > high ) high = ind;
 			}
@@ -1675,20 +1725,22 @@ var View = function( args )
 			// If we are below, get us on top
 			if ( movableHighestZindex > parseInt( this.window.style.zIndex ) )
 			{
-				this.window.style.zIndex = ++movableHighestZindex;
+				this.window.viewContainer.style.zIndex = ++movableHighestZindex;
+				this.window.style.zIndex = this.window.viewContainer.style.zIndex;
 			}
 			// If not, don't
 			else
 			{
-				this.window.style.zIndex = 100;
+				this.window.viewContainer.style.zIndex = 100;
 				var highest = 0;
 				for( var a in movableWindows )
 				{
 					if( movableWindows[a] != this.window )
 					{
-						movableWindows[a].style.zIndex = parseInt( movableWindows[a].style.zIndex ) + 1;
-						if ( parseInt( movableWindows[a].style.zIndex ) > highest )
-							highest = parseInt( movableWindows[a].style.zIndex );
+						movableWindows[a].viewContainer.style.zIndex = parseInt( movableWindows[a].viewContainer.style.zIndex ) + 1;
+						movableWindows[a].style.zIndex = movableWindows[a].viewContainer.style.zIndex;
+						if ( parseInt( movableWindows[a].viewContainer.style.zIndex ) > highest )
+							highest = parseInt( movableWindows[a].viewContainer.style.zIndex );
 					}
 				}
 				movableHighestZindex = highest;
@@ -1725,15 +1777,22 @@ var View = function( args )
 			zoom.window = div;
 			zoom.onclick = function ( e )
 			{
-				if( e.button != 0 ) return;
+				if( !window.isTablet && e.button != 0 ) return;
 				
 				// Don't animate
 				div.setAttribute( 'moving', 'moving' );
+				setTimeout( function()
+				{
+					div.removeAttribute( 'moving' );
+				}, 50 );
 			
 				if( this.mode == 'normal' )
 				{
-					if( movableHighestZindex > parseInt( this.window.style.zIndex ) )
-						this.window.style.zIndex = ++movableHighestZindex;
+					if( movableHighestZindex > parseInt( this.window.viewContainer.style.zIndex ) )
+					{
+						this.window.viewContainer.style.zIndex = ++movableHighestZindex;
+						this.window.style.zIndex = this.window.viewContainer.style.zIndex;
+					}
 
 					_ActivateWindow( this.window, false, e );
 
@@ -1745,7 +1804,7 @@ var View = function( args )
 						this.prevWidth = this.window.offsetWidth;
 						this.prevHeight = this.window.offsetHeight;
 						this.window.style.top = '0px';
-						this.window.style.left = globalConfig.workspaceCurrent * self.flags.screen.div.offsetWidth + 'px';
+						this.window.style.left = '0px';
 						var wid = 0; var hei = 0;
 						if( self.flags.screen )
 						{
@@ -1763,7 +1822,7 @@ var View = function( args )
 				else
 				{
 					this.mode = 'normal';
-					this.window.setAttribute( 'maximized', '' );
+					this.window.removeAttribute( 'maximized' );
 					if( !window.isMobile )
 					{
 						this.window.style.top = this.prevTop + 'px';
@@ -1793,7 +1852,7 @@ var View = function( args )
 		resize.window = div;
 		resize.onmousedown = function( e )
 		{
-			if( e.button != 0 ) return;
+			if( !window.isTablet && e.button != 0 ) return;
 			
 			// Offset based on the containing window
 			this.offx = windowMouseX;
@@ -1841,7 +1900,7 @@ var View = function( args )
 		minimize.onselectstart = function ( e ) { return cancelBubble ( e ); }
 		minimize.onclick = function ( e )
 		{
-			if( e.button != 0 ) return;
+			if( !window.isTablet && e.button != 0 ) return;
 			
 			_ActivateWindow( div, false, e );
 			if( 
@@ -1953,7 +2012,7 @@ var View = function( args )
 		close.onselectstart = function( e ) { return cancelBubble( e ); }
 		close.onclick = function( e )
 		{
-			if( !isMobile )
+			if( !isMobile && !window.isTablet )
 				if( e.button != 0 ) return;
 			
 			// On mobile, you get a window menu instead
@@ -1962,6 +2021,7 @@ var View = function( args )
 				if( div.classList && div.classList.contains( 'Active' ) )
 				{
 					_DeactivateWindows();
+					Workspace.redrawIcons();
 					return cancelBubble( e );
 				}
 			}
@@ -2143,7 +2203,8 @@ var View = function( args )
 		var leftSet = false;
 		var topSet = false;
 		var wp = GetWindowStorage( div.uniqueId );
-		if( wp )
+		var leftTopSpecial = flags.top == 'center' || flags.left == 'center'; // Check for special flags
+		if( wp && ( wp.top >= 0 || wp.width >= 0 ) && !leftTopSpecial )
 		{
 			if( window.isMobile )
 			{
@@ -2158,25 +2219,15 @@ var View = function( args )
 			{
 				var sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
 				
-				if( wp.top < hh )
+				if( wp.top >= 0 && wp.top < hh )
 				{
 					var wt = wp.top;
 					div.style.top = wt + 'px';
 					topSet = true;
 				}
-				if( wp.left < ww )
+				if( wp.left >= 0 && wp.left < ww )
 				{
-					var wl = wp.left;
-					if( wl > sw )
-					{
-						if( div.workspace && div.workspace >= 0 && w )
-						{
-							wl -= div.workspace * sw;
-						}
-					}
-					wl += globalConfig.workspaceCurrent * sw;
-					
-					div.style.left = wl + 'px';
+					div.style.left = wp.left + 'px';
 					leftSet = true;
 				}
 
@@ -2190,18 +2241,51 @@ var View = function( args )
 			}
 		}
 		
+		// Let's find the center!
+		var mvw = 0, mvh = 0;
+		if( Workspace && Workspace.screen )
+		{
+			mvw = Workspace.screen.getMaxViewWidth();
+			mvh = Workspace.screen.getMaxViewHeight();
+		}
+	
+		// TODO: See if we can move this dock dimension stuff inside getMax..()
+		if( Workspace.mainDock )
+		{
+			if( Workspace.mainDock.dom.classList.contains( 'Vertical' ) )
+			{
+				mvw -= Workspace.mainDock.dom.offsetWidth;
+			}
+			else
+			{
+				mvh -= Workspace.mainDock.dom.offsetHeight;
+			}
+		}
+		
 		if( !leftSet && self.flags.left )
 		{
 			leftSet = true;
-			var ll = self.flags.left;
-			ll += ( ( self.workspace || self.workspace === 0 ) ? self.workspace : globalConfig.workspaceCurrent ) * self.flags.screen.div.offsetWidth;
-			div.style.left = ll + 'px';
+			if( self.flags.left == 'center' )
+			{
+				div.style.left = ( mvh >> 1 - ( height >> 1 ) ) + 'px';
+			}
+			else
+			{
+				div.style.left = self.flags.left + 'px';
+			}
 		}
 		
 		if( !topSet && self.flags.top )
 		{
 			topSet = true;
-			div.style.top = self.flags.top + 'px';
+			if( self.flags.top == 'center' )
+			{
+				div.style.left = ( mvw >> 1 - ( width >> 1 ) ) + 'px';
+			}
+			else
+			{
+				div.style.top = self.flags.top + 'px';
+			}
 		}
 
 		// Only first window on shared apps, do full width and height
@@ -2218,33 +2302,17 @@ var View = function( args )
 			div.setAttribute( 'maximized', 'true' );
 		}
 
-		// Triggers
+		// Add div to view container
+		viewContainer.appendChild( div );
+		div.viewContainer = viewContainer;
+
+		// Triggers ????? Please review this and add explaining comment
 		if( parentWindow )
 		{
-			parentWindow.addChildWindow( div );
+			
+			parentWindow.addChildWindow( viewContainer );
 		}
 
-		/*// Real window is the real parent!
-		if( this.nativeWindow )
-		{
-			var d = document.createElement( 'div' );
-			d.className = 'NativeViewContainer';
-			divParent = d;
-			parentWindow._window = d;
-			var nw = this;
-			// Tell we are it!
-			this.nativeWindow.onfocus = function()
-			{
-				currentMovable = div;
-				self.focus();
-			}
-			// Clean up
-			this.nativeWindow.onbeforeunload = function()
-			{
-				nw.nativeWindow = false;
-				self.close();
-			}
-		}*/
 		// Make sure it's correctly sized again
 		div.windowObject = this;
 		
@@ -2313,7 +2381,7 @@ var View = function( args )
 		}
 		
 		// Append view window to parent
-		divParent.appendChild( div );
+		divParent.appendChild( viewContainer );
 		if( inGroup )
 		{
 			ResizeWindow( divParent.parentNode );
@@ -2328,9 +2396,9 @@ var View = function( args )
 			( typeof( flags.invisible ) != 'undefined' && flags.invisible )
 		)
 		{
-			div.style.visibility = 'hidden';
-			div.style.pointerEvents = 'none';
-			div.classList.add( 'Hidden' );
+			div.viewContainer.style.visibility = 'hidden';
+			div.viewContainer.style.pointerEvents = 'none';
+			div.viewContainer.classList.add( 'Hidden' );
 		}
 
 		setTimeout( function(){ div.style.opacity = 1; } );
@@ -2512,7 +2580,8 @@ var View = function( args )
 			div.classList.add( 'View' );
 		
 		// (handle z-index)
-		div.style.zIndex = movableHighestZindex++;
+		div.viewContainer.style.zIndex = movableHighestZindex++;
+		div.style.zIndex = div.viewContainer.style.zIndex;
 		
 		// If the current window is an app, move it to front.. (unless new window is a child window)
 		if( !isMobile )
@@ -2542,6 +2611,13 @@ var View = function( args )
 			_ActivateWindow( div );
 			_WindowToFront( div );
 		}
+		
+		// Reparse! We may have forgotten some things
+		self.parseFlags( flags );
+		
+		// Move workspace to designated position	
+		if( self.workspace > 0 )
+			self.sendToWorkspace( self.workspace );
 	}
 
 	// Send window to different workspace
@@ -2549,18 +2625,17 @@ var View = function( args )
 	{
 		if( wsnum > globalConfig.workspacecount - 1 )
 			return;
-		var l = this.getFlag( 'left' );
+		var wn = this._window.parentNode;
+		var pn = wn.parentNode;
+		
+		// Move the viewcontainer
+		wn.viewContainer.style.left = ( Workspace.screen.getMaxViewWidth() * wsnum ) + 'px';
+		
+		// Done moving
 		if( this.flags.screen )
 		{
 			var maxViewWidth = this.flags.screen.getMaxViewWidth();
-			if( this.workspace > 0 )
-			{
-				l -= this.flags.screen.div.offsetWidth * this.workspace;
-			}
 			this.workspace = wsnum;
-			var n = ( ( wsnum * this.flags.screen.div.offsetWidth ) + l ) + 'px';
-			this.content.parentNode.maximizedLeft = n;
-			this.setFlag( 'left', n );
 			_DeactivateWindow( this._window.parentNode );
 			PollTaskbar();
 		}
@@ -2642,7 +2717,7 @@ var View = function( args )
 		ifr.authId = self.authId;
 		ifr.applicationName = self.applicationName;
 		ifr.applicationDisplayName = self.applicationDisplayName;
-		ifr.className = 'Content';
+		ifr.className = 'Content Loading';
 		
 		if( this.flags.transparent )
 		{
@@ -3258,6 +3333,14 @@ var View = function( args )
 					if( value == true )
 						content.className = 'Content IconWindow';
 					else content.className = 'Content';
+					if( value == true )
+					{
+						viewdiv.classList.add( 'Scrolling' );
+					}
+					else
+					{
+						viewdiv.classList.remove( 'Scrolling' );
+					}
 				}
 				this.flags.scrollable = value;
 				break;
@@ -3350,29 +3433,29 @@ var View = function( args )
 						if( value === false )
 						{
 							setTimeout( function(){
-								viewdiv.style.visibility = 'hidden';
-								viewdiv.style.pointerEvents = 'none';
+								viewdiv.viewContainer.style.visibility = 'hidden';
+								viewdiv.viewContainer.style.pointerEvents = 'none';
 							}, 500 );
 						}
 						else
 						{
 							// Don't show the view window if it's hidden
-							viewdiv.style.visibility = 'hidden';
-							viewdiv.style.pointerEvents = 'none';
+							viewdiv.viewContainer.style.visibility = 'hidden';
+							viewdiv.viewContainer.style.pointerEvents = 'none';
 						}
-						viewdiv.style.opacity = 0;
+						viewdiv.viewContainer.style.opacity = 0;
 					}
 					else
 					{
 						// Fade in!!
 						if( value === true )
 						{
-							setTimeout( function(){ viewdiv.style.opacity = 1; }, 1 );
+							setTimeout( function(){ viewdiv.viewContainer.style.opacity = 1; }, 1 );
 						}
 						// Don't show the view window if it's hidden
-						else viewdiv.style.opacity = 1;
-						viewdiv.style.visibility = '';
-						viewdiv.style.pointerEvents = '';
+						else viewdiv.viewContainer.style.opacity = 1;
+						viewdiv.viewContainer.style.visibility = '';
+						viewdiv.viewContainer.style.pointerEvents = '';
 					}
 					ResizeWindow( viewdiv );
 					RefreshWindow( viewdiv );
@@ -3420,12 +3503,16 @@ var View = function( args )
 					viewdiv.setAttribute( 'transparent', value ? 'transparent': '' );
 				}
 				break;
-			default: 
+			// Takes all flags
+			default:
 				this.flags[ flag ] = value;
 				return;
 		}
 
-		// Finally set the value
+		// Some values are not set on application
+		if( flag == 'screen' ) return;
+
+		// Finally set the value on application
 
 		// Notify window if possible
 		// TODO: Real value after its evaluated
@@ -3448,11 +3535,25 @@ var View = function( args )
 			}
 		}
 	}
-	this.parseFlags = function( flags )
+	this.parseFlags = function( flags, filter )
 	{
 		if( !this.flags ) this.flags = {};
 		for( var a in flags )
 		{
+			// Just parse by filter
+			if( filter )
+			{
+				var fnd = false;
+				for( var b in filter )
+				{
+					if( a == filter[b] )
+					{
+						fnd = true;
+						break;
+					}
+				}
+				if( !fnd ) continue;
+			}
 			if( a == 'screen' && !flags[a] )
 			{
 				if( currentScreen )
@@ -3782,7 +3883,6 @@ function _kresize( e )
 	{
 		ConstrainWindow( movableWindows[a] );
 	}
-
 }
 
 function Confirm( title, string, okcallback, oktext, canceltext )

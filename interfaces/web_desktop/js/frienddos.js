@@ -66,7 +66,7 @@ function PadList( str, len, dir, chr, ellipsis )
 }
 
 /*******************************************************************************
-* Shell object - this is the Friend DOS layer in Workspace4!                   *
+* Shell object - this is the Friend DOS layer in Workspace!                    *
 *                                                                              *
 * Callback function argument format:                                           *
 * returncode (true or false),                                                  *
@@ -81,6 +81,8 @@ function PadList( str, len, dir, chr, ellipsis )
 
 window.Shell = function( appObject )
 {
+	var shell = this;
+	
 	this.applicationId = false;
 	this.authId = false;
 	this.sessionId = false;
@@ -767,23 +769,6 @@ window.Shell = function( appObject )
 	
 	this.executeEvaluateInput = function( input, index, callback, mode )
 	{
-		// Only allow 100 iterations and then exit!
-		/*if( index == 0 )
-		{
-			// Reset from line 0
-			window.counter = 0;
-		}
-		else
-		{
-			window.counter++;
-			if( window.counter > 100 )
-			{
-				console.log( 'Maximum execution 100! Abort.' );
-				return false;
-			}
-		}*/
-
-		//console.log( "> Ready to do: " + input[ index ] );
 		// What to do with the ouput?
 		var t = this;
 		var previousCallback = callback;
@@ -981,9 +966,9 @@ window.Shell = function( appObject )
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
 
-		//console.log( ' > Beginning to test: ' + cmd.join( ' ' ) );
-
-		// Go do the real stuff ----------------------------------------------------
+		// Go do the real stuff ------------------------------------------------
+		// This is where we handle Friend DOS scripting ------------------------
+		
 		// Condition block
 		if( cmd[0] == 'if' )
 		{
@@ -1745,7 +1730,13 @@ window.Shell = function( appObject )
 			if ( this.currentPath.substr( this.currentPath.length-1, 1 ) != '/' )
 				this.currentPath += '/';
 		}
-		if( cmd[0] == "\n" )
+		
+		// Start parsing commands
+		if( this.FriendDOSCommands[ cmd[ 0 ] ] )
+		{
+			return this.FriendDOSCommands[ cmd[ 0 ] ]( cmd, dcallback );
+		}
+		else if( cmd[0] == "\n" )
 		{
 			return dcallback( true );
 		}
@@ -2040,32 +2031,6 @@ window.Shell = function( appObject )
 				return ExecuteApplication( cmd[1], args, cbn );
 			}
 			return dcallback( true );
-		}
-		else if( cmd[0] == 'makedir' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Makedir is not authorised by host.' } );
-
-			var cdr = this.currentPath;
-			var chk = cdr.substr( cdr.length - 1, 1 );
-			if( chk != ':' && chk != '/' ) cdr += '/';
-			var npath = cdr;
-			var dir = cmd[1].split( '<!--space--!>' ).join( ' ' );
-			if( dir.indexOf( ':' ) > 0 )
-			{
-				npath = dir;
-				var chark = dir.substr( dir.length - 1, 1 );
-				if( chark != ':' && chark != '/' ) dir += '/';
-				cdr = dir;
-			}
-			else cdr += dir;
-			var d = ( new Door() ).get( npath );
-
-			d.dosAction( 'makedir', { path: cdr }, function()
-			{
-				// TODO: Do some error handling
-				dcallback( true );
-			} );
 		}
 		else if( cmd[0] == 'tinyurl' )
 		{
@@ -2526,6 +2491,36 @@ window.Shell = function( appObject )
 			}
 			l.execute( 'device/mount', { devname: cmd[1], sessionid: Workspace.sessionid } );
 		}
+		else if( cmd[0] == 'deletemount' )
+		{
+			if ( this.restrictedPath )
+				return dcallback( false, { response: 'deletemount is not authorised by host.' } );
+			if( cmd.length != 2 )
+			{
+				return dcallback( false, { response: 'Syntax error. Usage:<br>deletemount [disk:]<br>' } );
+			}
+			else
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{	
+					Workspace.refreshDesktop( false, true ); // Badabish
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, dat )
+					{
+						var ll = new Library( 'system.library' );
+						ll.execute( 'device/refreshlist', { sessionid: Workspace.sessionid } );
+						setTimeout( function()
+						{
+							return dcallback( true, { response: 'Disk mount ' + cmd[1] + ' deleted.<br>' } );
+						}, 250 );
+					}
+					m.execute( 'deletedoor', { devname: cmd[1].split( ':' )[0], sessionid: Workspace.sessionid } );
+				}
+				l.execute( 'device/unmount', { devname: cmd[1].split( ':' )[0], sessionid: Workspace.sessionid } );
+			}
+		}
 		else if( cmd[0] == 'unmount' )
 		{
 			if ( this.restrictedPath )
@@ -2804,7 +2799,11 @@ window.Shell = function( appObject )
 			var m = new Library( 'system.library' );
 			m.onExecuted = function( e, d )
 			{
-				if( e != 'ok' ) return;
+				if( e != 'ok' ) 
+				{
+					dcallback( false, { response: 'Infoget failed to get a workable result.' } );
+					return;
+				}
 
 				d = JSON.parse( d );
 
@@ -3729,6 +3728,101 @@ window.Shell = function( appObject )
 			}
 		}
 		return false;
+	};
+	
+	// All Friend DOS commands hashmap
+	this.FriendDOSCommands = {
+		/*'access': function(){},
+		'add': function(){},*/
+		
+		// Alias a command with another command
+		'alias': function( args, callback )
+		{
+			if( args.length == 3 )
+			{
+				// Already exists
+				if( this[ args[1] ] )
+					return callback( false, { response: 'You can not overwrite ' + args[1] + ' with ' + args[2] + '.' } );
+				if( !this[ args[2] ] )
+					return callback( false, { response: 'Command ' + args[2] + ' does not exist.' } );
+				this[ args[1] ] = this[ args[2] ];
+				return callback( true, { response: 'Command ' + args[1] + ' now points to ' + args[2] + '.' } );
+			}
+			return callback( false, { response: 'Usage: alias {alias} {command}' } );
+		}, /*
+		'assign': function(){},
+		'break': function(){},
+		'cat': function(){},
+		'cd': function(){},
+		'clear': function(){},
+		'copy': function(){},
+		'date': function(){},
+		'decrease': function(){},
+		'delete': function(){},
+		'dir': function(){},
+		'divide': function(){},
+		'echo': function(){},
+		'engage': function(){},
+		'enter': function(){},
+		'execute': function(){},
+		'flush': function(){},
+		'goto': function(){},
+		'help': function(){},
+		'increase': function(){},
+		'infoget': function(){},
+		'infoset': function(){},
+		'info': function(){},
+		'kill': function(){},
+		'launch': function(){},
+		'leave': function(){},
+		'list': function(){},
+		'ls': function(){},*/
+		
+		// Create a new directory!
+		'makedir': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Makedir is not authorised by host.' } );
+
+			var cdr = shell.currentPath;
+			var chk = cdr.substr( cdr.length - 1, 1 );
+			if( chk != ':' && chk != '/' ) cdr += '/';
+			var npath = cdr;
+			var dir = args[1].split( '<!--space--!>' ).join( ' ' );
+			if( dir.indexOf( ':' ) > 0 )
+			{
+				npath = dir;
+				var chark = dir.substr( dir.length - 1, 1 );
+				if( chark != ':' && chark != '/' ) dir += '/';
+				cdr = dir;
+			}
+			else cdr += dir;
+			var d = ( new Door() ).get( npath );
+
+			d.dosAction( 'makedir', { path: cdr }, function()
+			{
+				// TODO: Do some error handling
+				callback( true );
+			} );
+		}/*,
+		'mount': function(){},
+		'mountlist': function(){},
+		'multiply': function(){},
+		'output': function(){},
+		'protect': function(){},
+		'rename': function(){},
+		'repeat': function(){},
+		'say': function(){},
+		'set': function(){},
+		'status': function(){},
+		'stop': function(){},
+		'subtract': function(){},
+		'tinyurl': function(){},
+		'type': function(){},
+		'unmount': function(){},
+		'version': function(){},
+		'wait': function(){},
+		'why':function(){}*/
 	};
 };
 

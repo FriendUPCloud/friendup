@@ -124,7 +124,30 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume + ':' );
 
+	var lmode = this.listMode;
+
 	var buttons = [
+		{
+			element: 'button',
+			className: 'Home IconSmall fa-home',
+			content: i18n( 'i18n_dir_btn_root' ),
+			onclick: function( e )
+			{
+				var path = winobj.fileInfo.Path.split( ':' );
+				var fin = {
+					Volume: path[0] + ':',
+					Path: path[0] + ':',
+					Title: path[0],
+					Type: winobj.fileInfo.Type,
+					Door: Workspace.getDoorByPath( path.join( ':' ) )
+				}
+
+				// Set current ele
+				dw.setHistoryCurrent( fin );
+
+				winobj.refresh();
+			}
+		},
 		// Go up a level
 		{
 			element: 'button',
@@ -214,25 +237,46 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			}
 		},
 		{
-			element: 'button',
-			className: 'Home IconSmall fa-home',
-			content: i18n( 'i18n_dir_btn_root' ),
-			onclick: function( e )
-			{
-				var path = winobj.fileInfo.Path.split( ':' );
-				var fin = {
-					Volume: path[0] + ':',
-					Path: path[0] + ':',
-					Title: path[0],
-					Type: winobj.fileInfo.Type,
-					Door: Workspace.getDoorByPath( path.join( ':' ) )
+			element: 'toggle-group',
+			align: 'center',
+			buttons: [
+				{
+					element: 'button',
+					value: 'iconview',
+					className: 'IconView IconSmall fa-th-large' + ( lmode == 'iconview' ? ' Active' : '' ),
+					content: i18n( 'i18n_dir_btn_iconview' ),
+					onclick: function( e )
+					{
+						winobj.directoryview.listMode = 'iconview';
+						winobj.refresh();
+						this.parentNode.checkActive( this.value );
+					}
+				},
+				{
+					element: 'button',
+					value: 'compact',
+					className: 'IconCompact IconSmall fa-th' + ( lmode == 'compact' ? ' Active' : '' ),
+					content: i18n( 'i18n_dir_btn_compact' ),
+					onclick: function( e )
+					{
+						winobj.directoryview.listMode = 'compact';
+						winobj.refresh();
+						this.parentNode.checkActive( this.value );
+					}
+				},
+				{
+					element: 'button',
+					value: 'listview',
+					className: 'ListView IconSmall fa-list' + ( lmode == 'listview' ? ' Active' : '' ),
+					content: i18n( 'i18n_dir_btn_listview' ),
+					onclick: function( e )
+					{
+						winobj.directoryview.listMode = 'listview';
+						winobj.refresh();
+						this.parentNode.checkActive( this.value );
+					}
 				}
-
-				// Set current ele
-				dw.setHistoryCurrent( fin );
-
-				winobj.refresh();
-			}
+			]
 		},
 		{
 			element: 'button',
@@ -242,6 +286,12 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			{
 				Workspace.showSearch();
 			}
+		},
+		{
+			element: 'button',
+			className: 'DriveGauge FloatRight IconSmall fa-hdd',
+			content: i18n( 'i18n_diskspace' ),
+			onclick: function( e ){}
 		}
 	];
 
@@ -259,15 +309,50 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		} );
 	}
 
+	function renderButton( btn, par )
+	{
+		var d = document.createElement( btn.element );
+		if( btn.content )
+			d.innerHTML = btn.content;
+		d.className = btn.className + ' ' + btn.icon;
+		d.onclick = btn.onclick;
+		if( btn.value )
+			d.value = btn.value;
+		d.addEventListener( 'touchstart', d.onclick, false );
+		par.appendChild( d );
+	}
+
+	// Process!
 	for( var a in buttons )
 	{
-		var d = document.createElement( buttons[a].element );
-		if( buttons[a].content )
-			d.innerHTML = buttons[a].content;
-		d.className = buttons[a].className + ' ' + buttons[a].icon;
-		d.onclick = buttons[a].onclick;
-		d.addEventListener( 'touchstart', d.onclick, false );
-		t.appendChild( d );
+		if( buttons[a].element == 'toggle-group' )
+		{
+			var ele = document.createElement( 'div' );
+			ele.className = 'ToggleGroup';
+			ele.className += ' ' + buttons[a].align;
+			ele.checkActive = function( value )
+			{
+				var eles = this.getElementsByTagName( 'button' );
+				for( var z = 0; z < eles.length; z++ )
+				{
+					if( eles[z].value == value )
+					{
+						eles[z].classList.add( 'Active' );
+					}
+					else eles[z].classList.remove( 'Active' );
+				}
+			}
+			for( var b in buttons[a].buttons )
+			{
+				var bt = buttons[a].buttons[b];
+				renderButton( bt, ele );
+			}
+			t.appendChild( ele );
+		}
+		else
+		{
+			renderButton( buttons[ a ], t );
+		}
 	}
 
 	// Move content and gauge
@@ -335,7 +420,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		friend.iconsSelectedCount = selectedCount;
 	},
 	// -------------------------------------------------------------------------
-	winobj.redrawIcons = function( icons, direction )
+	winobj.redrawIcons = function( icons, direction, callback )
 	{
 		if( winobj.classList && winobj.classList.contains( 'ScreenContent' ) )
 		{
@@ -494,26 +579,51 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					Workspace.refreshMenu();
 				}
 
-				// Check directory listmode
-				switch( self.directoryview.listMode )
+				// Check if window has scroll
+				function checkScrl()
 				{
+					if( !self.content || !self.content.firstChild ) return;
+					if( self.content.offsetHeight < self.content.firstChild.scrollHeight )
+					{
+						self.content.parentNode.classList.add( 'Scrolling' );
+					}
+					else
+					{
+						self.content.parentNode.classList.remove( 'Scrolling' );					
+					}
+				}
+
+				// Check directory listmode
+				var lm = self.directoryview.listMode;
+				switch( lm )
+				{
+					case 'compact':
 					case 'iconview':
 					{
 						setTimeout( function(){ self.redrawing = false; }, 250 );
 						CheckScreenTitle();
-						return self.directoryview.RedrawIconView( self, self.icons, direction );
+						var res = self.directoryview.RedrawIconView( self, self.icons, direction, lm );
+						if( callback ) callback();
+						checkScrl();
+						return res;
 					}
 					case 'listview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 250 );
+						setTimeout( function(){ self.redrawing = false; }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
-						return self.directoryview.RedrawListView( self, self.icons, direction );
+						var res = self.directoryview.RedrawListView( self, self.icons, direction );
+						if( callback ) callback();
+						checkScrl();
+						return res;
 					}
 					case 'columnview':
 					{
 						setTimeout( function(){ self.redrawing = false; }, 250 );
 						CheckScreenTitle();
-						return self.directoryview.RedrawColumnView( self, self.icons, direction );
+						var res = self.directoryview.RedrawColumnView( self, self.icons, direction );
+						if( callback ) callback();
+						checkScrl();
+						return res;
 					}
 				}
 				self.redrawing = false;
@@ -538,7 +648,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	}
 
 	// -------------------------------------------------------------------------
-	// if host support drag & drop we want to use that FOR UPLOAD!!!!.
+	// FOR UPLOAD! if host support drag & drop we want to use that FOR UPLOAD!!!
 	if( window.File && window.FileReader && window.FileList && window.Blob )
 	{
 		function handleHostDragOver( e )
@@ -783,7 +893,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 		m.execute( 'installpackage', { path: fileInfo.Path } );
 	}
 
-	// c heck if this is a special view
+	// Check if this is a special view
 	if( this.fileInfo && this.fileInfo.Path.indexOf( 'System:' ) == 0 )
 	{
 		// Trying to install something!
@@ -865,7 +975,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 		if( !cfo )
 		{
-
 			dview.content.refresh();
 			eles[0].window.refresh();
 			return;
@@ -876,7 +985,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	var winobj = mode == 'view' ? this.windowObject : dview.directoryView.windowObject;
 	Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
 
-	//sanitize input... no folder to be dropped into themselves or their children....
+	// Sanitize input... no folder to be dropped into themselves or their children....
 	var clean = [];
 	for( var i = 0; i < eles.length; i++ )
 	{
@@ -909,27 +1018,40 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 	}
 
 	eles = clean;
+	
+	// Source window
+	var sview = eles[0].window;
 
 	// Info files might be added in the copy as well
 	if( clean && eles[0].window && eles[0].window.allIcons )
 	{
 		var add = [];
+		// Check all icons to be copied
 		for( a = 0; a < eles[0].window.allIcons.length; a++ )
 		{
+			// Loop throught dropped icons
 			for( var b = 0; b < eles.length; b++ )
 			{
 				var f = eles[0].window.allIcons[a];
 				var fn = eles[b].fileInfo.Filename ? eles[b].fileInfo.Filename : eles[b].fileInfo.Title;
 				if( fn.substr( fn.length - 5, 5 ).toLowerCase() == '.info' )
 					continue;
-				if( f.Filename == fn + '.info' )
+				if( fn.substr( fn.length - 8, 8 ).toLowerCase() == '.dirinfo' )
+					continue;
+				if( f.Filename == fn + '.info' || f.Filename == fn + '.dirinfo' )
 				{
 					if( !f.fileInfo ) f.fileInfo = f;
 					add.push( f );
 				}
 			}
 		}
-		if( add.length ) for( a = 0; a < add.length; a++ ) eles.push( add[a] );
+		if( add.length ) 
+		{
+			for( a = 0; a < add.length; a++ )
+			{
+				eles.push( add[a] );
+			}
+		}
 	}
 
 	var destinationFI = mode == 'view' ? dview.content.fileInfo : dview.object.file.fileInfo;
@@ -1095,6 +1217,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					// Get icons on path
 					d.getIcons( folder.ele.fileInfo, function( result )
 					{
+						var files = [];
 						for( var z = 0; z < result.length; z++ )
 						{
 							// We need to have fileInfo
@@ -1102,27 +1225,118 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							if( result[z].Type.toLowerCase() == 'directory' )
 							{
 								var d = Workspace.getDoorByPath( result[z].Path );
-								o.files.push( result[z] );
+								files.push( result[z] );
 								o.findSubFiles( { door: d, ele: result[z] } );
 							}
 							else if( result[z].Type.toLowerCase() == 'file' )
 							{
-								o.files.push( result[z] );
+								files.push( result[z] );
 							}
 						}
+						// Put the files in the right order!
+						o.checkFiles( files );
 						// Done counting!
 						o.processing--;
 						o.checkFinished();
 					} );
 				},
 				// Check all files (type etc)
-				checkFiles: function( eles )
+				checkFiles: function( checkFiles )
 				{
 					// Counting!
 					this.processing++;
-
-					// Collect all files!
-					for( var a = 0; a < eles.length; a++ )
+					var typ, fnam;
+					var eles = [];
+					var files = [];
+					var finFiles = [];
+					var fsorted = [];
+					var a, b, found;
+					
+					// Add dirs and files separately
+					for( a = 0; a < checkFiles.length; a++ )
+					{
+						typ = checkFiles[a].fileInfo.Type.toLowerCase();
+						fnam = checkFiles[a].fileInfo.Filename;
+						if( typ == 'directory' )
+						{
+							eles.push( checkFiles[a] );
+						}
+						else
+						{
+							files.push( checkFiles[a] );
+						}
+					}
+					
+					// Make sure that .info files always comes first
+					for( b = 0; b < 2; b++ )
+					{
+						for( a = 0; a < files.length; a++ )
+						{
+							fnam = files[a].fileInfo.Filename;
+							if( 
+								b == 0 && (
+									fnam.substr( fnam.length - 5, 5 ) == '.info' ||
+									fnam.substr( fnam.length - 8, 8 ) == '.dirinfo' 
+								)
+							)
+							{
+								finFiles.push( files[a] );
+							}
+							else if(
+								b == 1 && (
+									fnam.substr( fnam.length - 5, 5 ) != '.info' &&
+									fnam.substr( fnam.length - 8, 8 ) != '.dirinfo'
+								)
+							)
+							{
+								finFiles.push( files[a] );
+							}
+						}
+					}
+					
+					// Overwrite files with finFiles
+					files = finFiles;
+					
+					// Temp
+					//console.log( 'Sorted files with .info|.dirinfo first.' );
+					
+					// Find .dirinfo files
+					var toPush = [];
+					for( b = 0; b < files.length; b++ )
+					{
+						found = false;
+						for( a = 0; a < eles.length; a++ )
+						{
+							// Does directory + .dirinfo match file (the real dirinfo file)
+							if( eles[a].fileInfo.Filename + '.dirinfo' == files[b].fileInfo.Filename )
+							{
+								// Put .dirinfo file on directory
+								eles[a].infoFile = files[b];
+								//console.log( 'Added a info file: ' + files[b].fileInfo.Filename );
+								found = true;
+								break;
+							}
+						}
+						// We didn't find a directory for this file
+						if( !found )
+						{
+							// Push to files to copy
+							toPush.push( files[b] );
+						}
+					}
+					
+					// Clean up and put files "to push" into files for copy
+					delete files;
+					delete finFiles;
+					if( toPush.length )
+					{
+						for( a = 0; a < toPush.length; a++ )
+							eles.push( toPush[a] );
+					}
+					delete toPush;
+					
+					// File infos first, go through all files for copy
+					for( a = 0; a < eles.length; a++ )
 					{
 						var d = Workspace.getDoorByPath( eles[a].fileInfo.Path );
 						var fin = eles[a].fileInfo;
@@ -1131,16 +1345,17 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							// Make sure we have file info
 							this.fileInfoCheck( fin );
 
-							// Check type, and if folder collect files
+							// Add dirs and files to queue
+							var tt = fin.Type.toLowerCase();
+							if( tt == 'directory' || tt == 'file' )
+							{
+								this.files.push( eles[a] );
+							}
+							// Directories adds sub files subsequently
 							if( fin.Type.toLowerCase() == 'directory' )
 							{
 								// Add folder and make sub paths
-								this.files.push( eles[a] );
 								this.findSubFiles( { door: d, ele: eles[a] } );
-							}
-							else if( fin.Type.toLowerCase() == 'file' )
-							{
-								this.files.push( eles[a] );
 							}
 						}
 					}
@@ -1162,9 +1377,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// No files, abort
 						// Close window
 						w.close();
-
-						// Refresh source and target
-						Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
 						return false;
 					}
 
@@ -1195,9 +1407,13 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 
 						if( i + 1 == stopAt ) initNextBatch = true;
 
+						//console.log( 'Copying from: ' + fl.fileInfo.Path + ', to: ' + toPath );
+
 						// Do the copy - we have files here only...
 						door.dosAction( 'copy', { from: fl.fileInfo.Path, to: toPath }, function( result )
 						{
+							//var result = 'ok<!--separate-->'; // temp!
+							// TODO: Check if we failed the copy with "fail" result and if so stop!
 							if( fob.stop ) return;
 							fileCopyObject.nextStep( result, initNextBatch );
 						} );
@@ -1228,9 +1444,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 					this.barDrawing = true;
 					var size = Math.floor( 100 - ( 100 / bar.total * bar.items ) );
 					bar.style.width = size + '%';
-					bar.innerHTML = '<div class="FullWidth" style="\
-						text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
-						size + '%</div>';
+					bar.innerHTML = '<div>' + size + '%</div>';
 					// Make other processes wait
 					setTimeout( function()
 					{
@@ -1264,19 +1478,70 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						// Sanitation
 						while( toPath.indexOf( ':/' ) >= 0 ) toPath = toPath.split( ':/' ).join ( ':' );
 						while( toPath.indexOf( '//' ) >= 0 ) toPath = toPath.split( '//' ).join ( '/' );
-
-						door.dosAction( 'makedir', { path: toPath }, function( result )
+						
+						// Put it in a func
+						function mkdirhere()
 						{
-							if( fileCopyObject.stop ) return;
-							fileCopyObject.createDirectories( true );
-						});
+							//console.log( 'Makedir: ' + toPath );
+							door.dosAction( 'makedir', { path: toPath }, function( result )
+							{
+								//var result = 'ok<!--separate-->'; // temp!
+								var res = result.split( '<!--separate-->' );
+								if( res[0] == 'ok' && !fileCopyObject.stop )
+								{
+									fileCopyObject.createDirectories( true );
+								}
+								// Failed - alert user
+								else
+								{
+									Notify( { title: i18n( 'i18n_filecopy_error' ), text: i18n( 'i18n_could_not_make_dir' ) + ' (' + toPath + ')' } );
+									w.close();
+									sview.refresh();
+								}
+							});
+						}
+						
+						// If dir has infofile, copy it first
+						if( dir.infoFile )
+						{
+							// Info file is copied to parent of dir
+							var ftPath = toPath.substr( 0, toPath.length - 1 ); // strip /
+							var toParentPath = ftPath.indexOf( '/' ) > 0 ? ftPath.split( '/' ) : ftPath.split( ':' );
+							toParentPath.pop();
+							if( toParentPath.length == 1 ) toParentPath = toParentPath[0] + ':';
+							else toParentPath = toParentPath.join( '/' ) + '/';
+							toParentPath += dir.infoFile.Filename;
+							
+							//console.log( 'Copying from ' + dir.infoFile.fileInfo.Path + ', to: ' + toParentPath );
+							door.dosAction( 'copy', { from: dir.infoFile.fileInfo.Path, to: toParentPath }, function( result )
+							{
+								//var result = 'ok<!--separate-->'; // temp!
+								// TODO: Check result! If it is "fail" then stop
+								var res = result.split( '<!--separate-->' );
+								if( res[0] == 'ok' )
+								{
+									if( fileCopyObject.stop ) return;
+									// Now make dir
+									mkdirhere();
+								}
+								else
+								{
+									Notify( { title: i18n( 'i18n_filecopy_error' ), text: res[1] + ' (' + toPath + ')' } );
+									w.close();
+									sview.refresh();
+								}
+							} );
+						}
+						// Just maked ir
+						else
+						{
+							mkdirhere();
+						}
 					}
 				},
 				nextStep: function( result, initNewRun )
 				{
 					var fob = this;
-					//var d = Doors.getDoorByPath( this.files[0].fileInfo.Path );
-
 					if( initNewRun && fileCopyObject.files.length > this.stepsize )
 					{
 						var f = fileCopyObject.files;
@@ -1332,15 +1597,11 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 										// Close window
 										w.close();
 
-										// Refresh source and target
-										Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
-
+										// Tell Friend Core something changed
 										var l = new Library( 'system.library' );
 										l.execute( 'file/notifychanges', { path: fob.files[0].fileInfo.Path } );
 										var l = new Library( 'system.library' );
 										l.execute( 'file/notifychanges', { path: eles[0].window.fileInfo.Path } );
-
-										console.log( 'Executed file/notifychanges with k path: ' + fob.files[0].fileInfo.Path + ' and ' + eles[0].window.fileInfo.Path );
 									}
 								} );
 							}
@@ -1351,8 +1612,7 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 							// Close window
 							w.close();
 
-							// Refresh source and target
-							Workspace.diskNotification( [ winobj, eles[0].window ], 'refresh' );
+							// Tell Friend Core something changed
 							var l = new Library( 'system.library' );
 							var p = winobj._window ? ( winobj._window.fileInfo.Path ? winobj._window.fileInfo.Path : winobj._window.fileInfo.Volume ) : false;
 							if( p )
@@ -1384,8 +1644,14 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						var allfiles = [];
 						for(var i = 0; i < this.files.length; i++)
 						{
-							if( this.files[i].fileInfo.Type == 'Directory' ) alldirs.push( this.files[i] );
-							else allfiles.push( this.files[i] );
+							if( this.files[i].fileInfo.Type == 'Directory' )
+							{
+								alldirs.push( this.files[i] );
+							}
+							else 
+							{
+								allfiles.push( this.files[i] );
+							}
 						}
 
 						this.directories = alldirs;
@@ -1394,7 +1660,6 @@ DirectoryView.prototype.doCopyOnElement = function( eles, e )
 						//we need to create all directories before we can start tranferring files... w
 						if( this.directories.length > 0 )
 						{
-
 							this.createDirectories();
 						}
 						else
@@ -1440,7 +1705,7 @@ DirectoryView.prototype.GetTitleBar = function ()
 }
 
 // -------------------------------------------------------------------------
-DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
+DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, option )
 {
 	// Remember scroll top
 	var stop = 0;
@@ -1509,13 +1774,30 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 
 	var gridX = window.isMobile ? mobIW : 120;
 	var gridY = window.isMobile ? mobIH : 100;
+	
+	if( option == 'compact' )
+	{
+		gridX = 160;
+		gridY = 40;
+	}
+	
 	var marginTop = 0;
 	var marginLeft = 0;
 	var marginBottom = 5;
 
 	var ue = navigator.userAgent.toLowerCase();
 
+	// Calculate marginLeft to center icons on mobile
+	if( isMobile )
+	{
+		var whWidth = obj.scroller.offsetWidth;
+		var columns = Math.floor( whWidth / gridX );
+		marginLeft = Math.floor( whWidth - ( gridX * columns ) ) >> 1;
+	}
+	
+
 	var iy = marginTop; var ix = marginLeft;
+	
 	var column = 0;
 	var start = false;
 	
@@ -1573,8 +1855,15 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 			var i = icons[a];
 			if( i.Filename )
 			{
+				// Check .info
 				var mInfoname = i.Filename.toLowerCase().indexOf( '.info' ) > 0 ?
 					i.Filename.substr( 0, i.Filename.length - 5 ) : false;
+				// Check .dirinfo
+				if( !mInfoname )
+				{
+					mInfoname = i.Filename.toLowerCase().indexOf( '.dirinfo' ) > 0 ?
+						i.Filename.substr( 0, i.Filename.length - 8 ) : false;
+				}
 				if( mInfoname )
 				{
 					if( typeof( orphanInfoFile[ mInfoname ] ) == 'undefined' )
@@ -1597,6 +1886,8 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
 			if( fn.substr( 0, 1 ) == '.' ) continue;
 			else if( fn.substr( fn.length - 5, 5 ) == '.info' )
+				infoIcons[ fn ] = true;
+			else if( fn.substr( fn.length - 8, 8 ) == '.dirinfo' )
 				infoIcons[ fn ] = true;
 			else continue;
 		}
@@ -1627,7 +1918,7 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 			if( fn.Filename.substr( 0, 1 ) == '.' ) continue;
 
 			// Only show orphan .info files
-			if( fn.Filename.indexOf( '.info' ) > 0 )
+			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
 			{
 				if( !orphanInfoFile[ fn.Filename.substr( 0, fn.Filename.length - 5 ) ] )
 					continue;
@@ -1693,12 +1984,14 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction )
 			else
 			{
 				if( icons[a].Type == 'Door' && !icons[a].Mounted ) continue;
-
+				
 				// Checks if the icon is
-				file = CreateIcon( icons[a] );
+				file = CreateIcon( icons[a], this );
 				file.directoryView = this;
 				file.style.top = iy + 'px';
 				file.style.left = ix + 'px';
+				if( option == 'compact' )
+					file.classList.add( 'Compact' );
 
 				coldom.appendChild( file );
 
@@ -1830,7 +2123,7 @@ DirectoryView.prototype.RedrawColumnView = function( obj, icons, direction )
 		}
 		else d.innerHTML = icons[a].Filename;
 
-		var f = CreateIcon( icons[a] );
+		var f = CreateIcon( icons[a], this );
 		f.directoryView = this;
 		f.associateWithElement( d );
 		d.appendChild( f );
@@ -1856,6 +2149,16 @@ DirectoryView.prototype.RedrawColumnView = function( obj, icons, direction )
 			ds[a].style.top = t + 'px';
 			t += 30;
 		}
+	}
+}
+
+// Select all
+DirectoryView.prototype.SelectAll = function()
+{
+	var ics = this.window.icons;
+	for( var a = 0; a < ics.length; a++ )
+	{
+		ics[a].domNode.classList.add( 'Selected' );
 	}
 }
 
@@ -2030,12 +2333,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 				{
 					case 'filename':
 						if( icons[a].Type == 'Directory' )
-							c.innerHTML = t + '/';
+							c.innerHTML = t;
 						else c.innerHTML = t;
 						r.primaryDom = c;
 						break;
 					case 'size':
-						c.innerHTML = icons[a].Filesize ? humanFilesize ( icons[a].Filesize ) : '&nbsp;';
+						c.innerHTML = icons[a].Filesize > 0 ? humanFilesize ( icons[a].Filesize ) : '&nbsp;';
 						c.style.textAlign = 'right';
 						break;
 					case 'date':
@@ -2061,11 +2364,11 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							var perms = ['-','-','-','-','-'];
 							for( var b = 0; b < p.length; b++ )
 							{
-								for( var c = 0; c < p[b].length; c++ )
+								for( var cc = 0; cc < p[b].length; cc++ )
 								{
-									if( p[b].substr( c, 1 ) != '-' && perms[c] == '-' )
+									if( p[b].substr( cc, 1 ) != '-' && perms[cc] == '-' )
 									{
-										perms[c] = p[b][c];
+										perms[cc] = p[b][cc];
 									}
 								}
 							}
@@ -2086,7 +2389,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			if ( a % 2 == 0 ) r.className += ' Odd';
 
 			// Create icon object to extract FileInfo
-			var f = CreateIcon( icons[a] );
+			var f = CreateIcon( icons[a], this );
 			f.directoryView = this;
 			r.className += ' File';
 			RemoveIconEvents( f ); // Strip events
@@ -2361,7 +2664,6 @@ FileIcon.prototype.Init = function( fileInfo )
 	}
 	else extension = '';
 
-
 	// Create the div that holds the actual icon
 	icon = document.createElement ( 'div' );
 	icon.className = 'Icon';
@@ -2383,6 +2685,8 @@ FileIcon.prototype.Init = function( fileInfo )
 	else if( fileInfo.IconClass )
 	{
 		iconInner.className = fileInfo.IconClass;
+		if( fileInfo.IconFile )
+			iconInner.style.backgroundImage = 'url(' + fileInfo.IconFile + ')';
 	}
 	else if( fileInfo.IconFile != undefined && Trim( fileInfo.IconFile ) )
 	{
@@ -2425,6 +2729,9 @@ FileIcon.prototype.Init = function( fileInfo )
 				break;
 			case 'svg':
 				iconInner.className = 'TypeSVG';
+				break;
+			case 'eps':
+				iconInner.className = 'TypeEPS';
 				break;
 			case 'pdf':
 				iconInner.className = 'TypePDF';
@@ -2477,11 +2784,20 @@ FileIcon.prototype.Init = function( fileInfo )
 			case 'run':
 				iconInner.className = 'TypeRUN';
 				break;
+			case 'css':
+				iconInner.className = 'TypeCSS';
+				break;
 			case 'html':
 				iconInner.className = 'TypeHTML';
 				break;
+			case 'bak':
+				iconInner.className = 'TypeBak';
+				break;
 			case 'fpkg':
 				iconInner.className = 'TypeFPkg';
+				break;
+			case 'apf':
+				iconInner.className = 'TypeApf';
 				break;
 			case 'zip':
 				iconInner.className = 'TypeZip';
@@ -2514,6 +2830,21 @@ FileIcon.prototype.Init = function( fileInfo )
 				break;
 		}
 	}
+	
+	// Check for thumbs
+	if( fileInfo.directoryview.listMode == 'iconview' )
+	{
+		switch( iconInner.className )
+		{
+			case 'TypeJPG':
+			case 'TypeJPEG':
+			case 'TypePNG':
+			case 'TypeGIT':
+				iconInner.style.backgroundImage = 'url(\'' + getImageUrl( fileInfo.Path ) + '\')';
+				iconInner.className = 'Thumbnail';
+				break;
+		}
+	}
 
 	// Create the title
 	title = document.createElement( 'a' );
@@ -2538,7 +2869,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	
 
 	// Display a download button for all files
-	if( !isMobile && !isTablet && fileInfo.Type != 'Directory' && fileInfo.Filename )
+	if( !isMobile && !isTablet && fileInfo.Type != 'Directory' && fileInfo.Filename && fileInfo.Type != 'Executable' )
 	{
 		var download = document.createElement( 'a' );
 		download.className = 'Download MousePointer IconSmall fa-download';
@@ -2785,7 +3116,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	file[ ( window.isMobile && ( fileInfo.Type == 'Door' || fileInfo.Type == 'Dormant' ) ) ? 'onclick' : 'ondblclick' ] = function( event )
 	{
 		if( !event ) event = window.event;
-
+		
 		// File extension
 		if( this.fileInfo && this.fileInfo.Path )
 		{
@@ -2969,6 +3300,19 @@ function RefreshWindowGauge( win, finfo )
 					{
 						// failed...
 					}
+					var eles = win.parentNode.getElementsByClassName( 'DriveGauge' );
+					if( eles )
+					{
+						dj = JSON.parse( d );
+						var factor = 1;
+						if( !isNaN( dj.Used ) || isNaN( dj.Filesize ) )
+						{
+							factor = dj.Used / dj.Filesize;
+							if( isNaN( factor ) ) factor = 1;
+						}
+						eles[0].classList.add( 'Size' + Math.floor( factor * 10 ) );
+						eles[0].setAttribute( 'title', Math.ceil( factor * 100 ) + '% ' + i18n( 'i18n_full' ) );
+					}
 				}
 			}
 			var pth = wt.indexOf( ':' ) > 0 ? wt : ( wt + ':' );
@@ -2999,7 +3343,11 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		};
 	}
 
-	if( fileInfo.Type == 'Dormant' )
+	if( fileInfo.MetaType == 'ExecutableShortcut' )
+	{
+		ExecuteApplication( fileInfo.Filename );
+	}
+	else if( fileInfo.Type == 'Dormant' )
 	{
 		var command = fileInfo.Command ? 'command='+fileInfo.Command : '';
 		var fid = typeof( fileInfo.ID ) != 'undefined' ? fileInfo.ID : '1';
@@ -3049,9 +3397,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				{
 					self.redrawIcons( icons, self.direction );
 					if( self.win.revent ) self.win.removeEvent( 'resize', self.win.revent );
-					self.win.revent = self.win.addEvent( 'resize', function()
+					self.win.revent = self.win.addEvent( 'resize', function( cbk )
 					{
-						self.redrawIcons( self.win.icons, self.direction );
+						self.redrawIcons( self.win.icons, self.direction, cbk );
 					} );
 					if( callback ) callback();
 					RefreshWindowGauge( self.win );
@@ -3067,7 +3415,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	}
 	else if( fileInfo.Type == 'DormantFunction' )
 	{
-		fileInfo.Dormant.execute( fileInfo.Title ? fileInfo.Title : fileInfo.Filename );
+		//fileInfo.Dormant.execute( fileInfo.Title ? fileInfo.Title : fileInfo.Filename );
+		fileInfo.Dormant.execute( fileInfo );
 	}
 	else if( iconObject.extension == 'mp3' || iconObject.extension == 'ogg' )
 	{
@@ -3377,9 +3726,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 							{
 								self.redrawIcons( icons, self.direction );
 								if( w.revent ) w.removeEvent( 'resize', w.revent );
-								w.revent = w.addEvent( 'resize', function()
+								w.revent = w.addEvent( 'resize', function( cbk )
 								{
-									self.redrawIcons( self.icons, self.direction );
+									self.redrawIcons( self.icons, self.direction, cbk );
 								} );
 								RefreshWindowGauge( self );
 							}
@@ -3387,11 +3736,19 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 						// empty
 						else
 						{
-							self.innerHTML = '<div class="loadError">' + i18n('i18n_error_could_not_list_directory') + '</div>';
-							self.parentNode.addEventListener( 'dragleave', noEvent,    false );
-							self.parentNode.addEventListener( 'dragover',  noEvent,   false );
-							self.parentNode.addEventListener( 'drop',      noEvent, false );
-							self.parentNode.drop = noEvent;
+							if( self.parentNode )
+							{
+								self.innerHTML = '<div class="loadError">' + i18n('i18n_error_could_not_list_directory') + '</div>';
+								self.parentNode.addEventListener( 'dragleave', noEvent,    false );
+								self.parentNode.addEventListener( 'dragover',  noEvent,   false );
+								self.parentNode.addEventListener( 'drop',      noEvent, false );
+								self.parentNode.drop = noEvent;
+							}
+							else
+							{
+								// What now?
+								console.log( 'Refresh directory view - Something bad happened..' );
+							}
 						}
 						if( callback ) callback();
 						
@@ -3456,9 +3813,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 						ww.redrawIcons( content, ww.direction );
 						ww.file = this.file;
 						if( w.revent ) ww.RemoveEvent( 'resize', ww.revent );
-						ww.revent = ww.AddEvent ( 'resize', function ()
+						ww.revent = ww.AddEvent ( 'resize', function ( cbk )
 						{
-							ww.redrawIcons( content, ww.direction );
+							ww.redrawIcons( content, ww.direction, cbk );
 						} );
 					}
 					if( callback ) callback();
@@ -3476,11 +3833,13 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			win.refreshTimeout = setTimeout( function()
 			{
 				owp.refresh();
+				PollTaskbar();
 			}, 250 );
 		}
 		else
 		{
 			win.refresh()
+			PollTaskbar();
 		}
 		
 		win = null;
@@ -3544,8 +3903,10 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 }
 
 // Create an icon (fast way) and return the dom element ------------------------
-function CreateIcon( fileInfo )
+function CreateIcon( fileInfo, directoryview )
 {
+	if( directoryview )
+		fileInfo.directoryview = directoryview;
 	var c = new FileIcon( fileInfo );
 	return c.file;
 }

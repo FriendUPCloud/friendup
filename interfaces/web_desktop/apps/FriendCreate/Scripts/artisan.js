@@ -54,6 +54,8 @@ function loadConfig( callback )
 	m.execute( 'getsetting', { setting: 'friendcreate' } );
 }
 
+var appConn = null;
+
 Application.run = function( msg )
 {
 	// Some variables
@@ -73,6 +75,11 @@ Application.run = function( msg )
 	var appl = this;
 	this.isLoading = false; // Make sure we only load one file at once
 	this.loadQueue = [];
+	
+	appConn = new FConn(); // Setup a friend core connection
+	
+	// Initing sas
+	initSas( msg );
 	
 	// Open application window
 	loadConfig( function()
@@ -566,6 +573,18 @@ Application.receiveMessage = function( msg )
 {
 	switch( msg.command )
 	{
+		case 'guievent':
+			aSas.send( { type: 'guiaction', data: { event: msg.event, data: msg.data } } );
+			break;
+		case 'sasidaccept':
+			console.log( 'sasid!', msg );
+			break;
+		case 'invite_users':
+			sasInviteUsers( msg.users );
+			break;
+		case 'sas_window':
+			sasWindow();
+			break;
 		case 'about':
 			this.about();
 			break;
@@ -1347,8 +1366,12 @@ Application.setMenuItems = function( w )
 		name  : i18n( 'i18n_preferences' ),
 		items : [
 			{
-				name    : i18n ( 'i18n_application_settings' ),
+				name    : i18n( 'i18n_application_settings' ),
 				command : 'preferences'
+			},
+			{
+				name    : i18n( 'i18n_initiate_sas' ),
+				command : 'sas_window'
 			}/*,
 			{
 				name    : i18n( 'i18n_save_settings' ),
@@ -1775,6 +1798,231 @@ function pollEvent( ev, data )
 	DormantMaster.pollEvent( msg );
 }
 
+// Shared application sessions! ------------------------------------------------
+var sw = false;
+var aSas = false;
+var sasIsHost = false;
+var sasId = null;
+var sasUsers = {};
+var sasEnabled = false;
+// What to do when we've got the users list
+function usersBack( users )
+{
+	console.log( 'hepp', users );
+}
+// What to do when SAS closes
+function sasClosed( event, identity )
+{
+	var rem = {
+		type : 'user-remove',
+		data : identity,
+	};
+	
+	delete sasUsers[ identity.name ];
+	
+	aSas.send( rem );
+	getSasUserlist( usersBack );
+}
+// Get the user list!
+function getSasUserlist( cb )
+{
+	// ..
+	console.log( 'Get the list' );
+}
+// When we've initialized
+function sasInitCallback( result )
+{
+	if( sasIsHost )
+	{
+		console.log( 'Binding host events' );
+		bindHostEvents();
+	}
+	else
+	{
+		console.log( 'Binding client events' );
+		bindClientEvents();
+	}
+	aSas.on( 'sasid-close', sasClosed );
+}
 
+Application.socketMessage = function( sm )
+{
+	console.log('got a socket message for us...',sm);
+}
+
+// Start initializing
+function initSas( msg )
+{
+	if( msg.hasOwnProperty( 'args' ) && msg.args.hasOwnProperty( 'sasid' ) )
+	{
+		sasId = msg.args.sasid;
+	}
+	else
+	{
+		sasIsHost = true;
+	}
+	
+	
+	var conf = {
+		sasid   : sasId,
+		onevent : Application.socketMessage,
+	};
+	
+	aSas = new SAS( conf, sasInitCallback );
+}
+function sasWindow()
+{
+	if( !aSas ) 
+	{
+		aSas = new SAS();
+	}
+	if( sw ) return;
+	sw = new View( {
+		title: i18n( 'i18n_sas_window' ),
+		width: 500,
+		height: 500
+	} );
+	
+	var f = new File( 'Progdir:Templates/sas_window.html' );
+	f.i18n();
+	f.onLoad = function( data )
+	{
+		if( sw ) 
+		{
+			// Set content and send available users list
+			sw.setContent( data, function()
+			{
+				// Get active users on websocket!
+				appConn.request( {
+					path: 'system.library/user/activewslist/',
+					data: {
+						usersonly: true,
+					}
+				}, reqBack );
+				
+				// Request callback
+				function reqBack( res )
+				{
+					if( !sw ) return;
+					if( !res.userlist ) return;
+					var users = res.userlist.map( getName ).filter( notNull );
+					sw.sendMessage( { command: 'userlist', users: users } );
+					function getName( user )
+					{
+						var name = user.username;
+						if( name === self.username )
+							return null;
+						return user.username;
+					}
+					function notNull( name ) { return !!name; }
+				}
+			} );
+		}
+	}
+	f.load();
+
+	sw.onClose = function()
+	{
+		sw = false;
+	}
+}
+// Client functions
+function sasUserAdded()
+{
+	console.log( 'We got added!' );
+}
+function sasUpdateUserlist()
+{
+	console.log( 'Update userlist' );
+}
+function sasUserRemoved()
+{
+	console.log( 'Remove it!' );
+}
+// Host functions
+function refreshCollaborators()
+{
+	var str = '';
+	var i = 0;
+	var isActive = false;
+	for( var a in sasUsers )
+	{
+		str += '<p>' + sasUsers[a].name + ' (' + sasUsers[a].result + ')</p>';
+		i++;
+		if( sasUsers[ a ].result == 'accepted' )
+			isActive = true;
+	}
+	if( i <= 0 )
+	{
+		str = '<p>You are the only one on this session.</p>';
+	}
+	Application.masterView.sendMessage( {
+		command: 'refresh_collaborators',
+		data: str,
+		activeUsers: isActive
+	} );
+}
+function sasAddInvited( user )
+{
+	for( var a = 0; a < user.length; a++ )
+	{
+		sasUsers[ user[a].name ] = user[a];
+	}
+	refreshCollaborators();
+}
+function sasClientAccepted( event, identity )
+{
+	sasUsers[ identity.username ].result = 'accepted';
+	refreshCollaborators();
+}
+function sasClientDeclined()
+{
+	console.log( 'User declined.' );
+}
+function sasClientClosed()
+{
+	console.log( 'User closed.' );
+}
+function sasInviteUsers( users )
+{
+	for( var a = 0; a < users.length; a++ )
+	{
+		aSas.invite( users[a], i18n('i18n_join_friendc_session'), invBack );
+	}
+	function invBack( res )
+	{
+		if ( !res.invited || !res.invited.length )
+			return;
+		
+		sasAddInvited( res.invited );
+	}
+}
+function sasGuiAction( event, identity )
+{
+	// Send to master
+	Application.masterView.sendMessage( {
+		command: 'guiaction',
+		event: event,
+		identity: identity,
+		sasIsHost: sasIsHost
+	} );
+}
+// Handle events on the client side
+function bindClientEvents()
+{
+	aSas.on( 'user-add', sasUserAdded );
+	aSas.on( 'user-list', sasUpdateUserlist );
+	aSas.on( 'user-remove', sasUserRemoved );
+	aSas.on( 'guiaction', sasGuiAction );
+}
+// Handle events on the host side
+function bindHostEvents()
+{
+	aSas.on( 'client-accept', sasClientAccepted );
+	aSas.on( 'client-decline', sasClientDeclined );
+	aSas.on( 'client-close', sasClientClosed );
+	aSas.on( 'guiaction', sasGuiAction );
+}
+// Done Shared application sessions --------------------------------------------
 
 

@@ -32,6 +32,7 @@
 #include "user_session.h"
 #include <util/string.h>
 #include <system/systembase.h>
+#include <system/token/dos_token.h>
 
 extern SystemBase *SLIB;
 
@@ -102,6 +103,13 @@ void UserSessionDelete( UserSession *us )
 				}
 			}
 			sleep( 1 );
+		}
+		
+		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
+		if( dosToken != NULL )
+		{
+			dosToken->ct_UserSession = NULL;
+			dosToken->ct_UserSessionID = 0;
 		}
 		
         if( us->us_User != NULL )

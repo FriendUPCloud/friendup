@@ -72,6 +72,7 @@ extern SystemBase *SLIB;
 BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 {
 	BufString *bs = NULL;
+	FLONG writebytes = 0;
 	
 	CommService *serv = (CommService *)con->fc_Service;
 	if( serv == NULL || con->fc_Socket == NULL )
@@ -125,19 +126,34 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		return NULL;
 	}
 
-	int blocked = con->fc_Socket->s_Blocked;
+	//int blocked = con->fc_Socket->s_Blocked;
 	
 	if( pthread_mutex_lock( &con->fc_Mutex ) == 0 )
 	{
-		DEBUG("[SendMessageAndWait] mutex locked\n");
-		SocketSetBlocking( con->fc_Socket, TRUE );
+		if( con->fc_Status != CONNECTION_STATUS_DISCONNECTED )
+		{
+			DEBUG("[SendMessageAndWait] mutex locked, msg size to send %lu\n", (FLONG)df->df_Size );
+			//SocketSetBlocking( con->fc_Socket, TRUE );
 	
-		// send request
-		FLONG size = SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
+			// send request
+			writebytes = SocketWrite( con->fc_Socket, (char *)df, (FLONG)df->df_Size );
+		}
+		else
+		{
+			pthread_mutex_unlock( &con->fc_Mutex );
+			return NULL;
+		}
 		pthread_mutex_unlock( &con->fc_Mutex );
 	}
 	else
 	{
+		FFree( cr ); 
+		return NULL;
+	}
+	
+	if( writebytes < 1 )
+	{
+		DEBUG("[SendMessageAndWait] Cannot write message\n");
 		FFree( cr ); 
 		return NULL;
 	}
@@ -157,13 +173,6 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		time_t acttime = time( NULL );
 		if( ( acttime - cr->cr_Time ) > 10 || cr->cr_Bs != NULL )
 		{
-		/*
-			FERROR("Message was not received, timeout!\n");
-			break;
-		}
-		else
-		{
-			*/
 			// remove entry from list
 			DEBUG("[SendMessageAndWait] SendMessageAndWait message : time %lu  cr_bs ptr %p\n", (unsigned long)( acttime - cr->cr_Time ), cr->cr_Bs );
 			bs = cr->cr_Bs;
@@ -171,7 +180,6 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 
 			if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
 			{
-				//DEBUG("[SendMessageAndWait] Remove Socket entry from list\n");
 				if( cr == serv->s_Requests )
 				{
 					CommRequest *next = (CommRequest *)serv->s_Requests->node.mln_Succ;
@@ -212,9 +220,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			break;
 		}
 	}
-	
-	SocketSetBlocking( con->fc_Socket, blocked );
-	
+
 	DEBUG( "[SendMessageAndWait] SendMessageAndWait Done with sending, returning\n" );
 	
 	return bs;
@@ -235,7 +241,7 @@ DataForm *CommServiceSendMsg( CommService *s, DataForm *df )
 	DEBUG("[CommServiceSendMsg] CommunicationSendmesage FCRE size %ld QUERY size  %ld\n", df[0].df_Size, df[1].df_Size );
 	if( s && df )
 	{
-		char buffer[ MAX_SIZE ];
+		//char buffer[ MAX_SIZE ];
 		
 		if( (df[ 0 ].df_ID == (FULONG)(ID_FCRE) ) && (df[ 2 ].df_ID == (FULONG)(ID_QUER) ) )
 		{
@@ -432,6 +438,11 @@ FConnection *FConnectionNew( const char *add, const char *name, int type, void *
 {
 	FConnection *newcon;
 	
+	if( add == NULL )
+	{
+		return NULL;
+	}
+	
 	if( ( newcon = FCalloc( 1, sizeof( FConnection ) ) ) != NULL )
 	{
 		int addlen = strlen( add );
@@ -597,9 +608,8 @@ FConnection *ConnectToServer( CommService *s, char *conname )
 			
 			DataForm * df = DataFormNew( tags );
 
-			FLONG sbytes = SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
+			SocketWrite( newsock, (char *)df, (FLONG)df->df_Size );
 			
-			DEBUG("[CommServClient] Message sent %ld\n", sbytes );
 			DataFormDelete( df );
 			
 			char id[ FRIEND_CORE_MANAGER_ID_SIZE ];

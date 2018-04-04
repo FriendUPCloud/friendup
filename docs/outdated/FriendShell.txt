@@ -1,0 +1,148 @@
+FriendUP Shell Documentation
+----------------------------
+
+Introduction
+------------
+
+This document tells you how to use the FriendUP Shell application to use the
+FriendUP meta operating system. It describes both the default shell commands, 
+as well introducing you to some basic FriendDOS scripting. If you've used a CLI
+(Command Line Interface) before, you might skip this introduction. If not, keep
+reading.
+
+A CLI is a very useful interface for advanced users. It lets you give precise
+instructions to your computer, and can let you automate several tasks. The CLI
+is the ultimate tool to get to the lower levels of the operating system, where
+a GUI only gives you a "birds eye view". Advanced users are often found using
+a CLI to supplement their usage of a GUI. A CLI is expressive, while a GUI is 
+implicit. A GUI usually interacts with the user through default settings, while
+a user can interact through a CLI with custom expressions from task to task.
+
+Basic usage
+-----------
+
+When opening up the Friend Shell, you are presented with a standard CLI prompt.
+Unless you have modified the default Shell settings, you will be greeted by 
+the System: volume when opening the Shell. To see the files and directories that
+are located in this volume, type the following:
+
+	dir
+	
+Then press enter. This will give you a listing of all the directories and files
+located at your current path (which is System:).
+
+
+Shell scripting
+---------------
+
+Friend DOS scripting is a bit different from many other scripting languages.
+We thought long and hard on risking to departure from what people are used to
+in the Unix world (or Windows world for that matter), but we came to the 
+conclusion that - since FriendUP is so different in how it connects to 
+resources, we ought to reflect this in our scripting language.
+
+At a basic level, you can do normal things like:
+
+cd Home:
+dir
+output Readme.txt
+
+This would enter the Home: volume, give you a directory listing and output the
+contents of a file with the name Readme.txt. But we can do more!
+
+cd Home:
+repeat 5 times: output Readme.txt
+
+This would output the contents of the Readme.txt file five times.
+
+But we can do still more.
+
+In FriendUP, applications have their own filesystems. So here, we can use our
+Artisan programmers editor. We'll use it dormantly - using our Dormant 
+technology (for more on Dormant and Artisan, see their own chapters).
+
+Written in the easiest shorthand way:
+
+enter Artisan
+LoadFile Home:Readme.txt
+on Loaded: repeat 5 times n: ReadLine n
+leave
+
+Written in a way that programmers can comprehend:
+
+cd Artisan:Functions/
+LoadFile Home:Readme.txt
+on Loaded:
+	repeat 5 times n:
+		ReadLine n
+leave
+
+Equivalent in javascript would be: TODO: This could be erroneous! Correct it! 
+Beware dragons and all that..
+
+ArtisanObject = new Dormant( 'Artisan:' );
+ArtisanObject.execute( { command: 'LoadFile', args: [ 'Home:Readme.txt' ] }, function( success1 )
+{
+	if( success1 )
+	{
+		ArtisanObject.execute( { command: 'Loaded', false, function( success2 )
+		{
+			if( success2 )
+			{
+				function repeater( n )
+				{
+					if( n < 4 )
+					{
+						ArtisanObject.execute( { command: 'ReadLine', args: [ n ], function( success3 )
+						{
+							if( success3 && n < 4 )
+							{
+								repeater( n + 1 );
+							}
+							else
+							{
+								ArtisanObject.execute( { command: 'Quit' } );
+							}
+						} } );
+					}
+				}
+				repeater( 0 );
+			}
+		} );
+	}
+} );
+
+
+Of course, why do it with all those callbacks when you can do this;
+
+var ShellInstance = new Shell();
+ShellInstance.execute( "\
+enter Artisan\
+LoadFile Home:Readme.txt\
+on Loaded: repeat 5 times n: ReadLine n\
+leave\
+" );
+
+
+Friend Shell command index:
+
+clear                          - Clears the shell
+                      arguments: none
+
+enter                          - Enter a Dormant application namespace
+                      arguments: application name
+	
+leave                          - Leave a Dormant application namespace
+                      arguments: none
+	
+cd                             - Enter a directory
+                      arguments: path
+
+echo                           - Print a message to standard output
+                      arguments: text message
+
+repeat                         - Repeats a loop or a command
+                      arguments: number n - amount of times,
+                                 keyword times - keyword to finish the statement
+                                 variable x - number to hold the cycle number
+

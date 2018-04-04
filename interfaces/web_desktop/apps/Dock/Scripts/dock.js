@@ -29,6 +29,7 @@
 document.title = 'The dock base app.';
 
 Application.selectAfterLoad = false;
+Application.items = false;
 
 function LoadDocks()
 {
@@ -54,8 +55,20 @@ function LoadApplications( win, currentItemId, callback )
 	var m = new Module( 'dock' );
 	m.onExecuted = function( cod, dat )
 	{
-		var eles = JSON.parse( dat );
+		var eles = false;
+		
+		try
+		{
+			eles = JSON.parse( dat );
+		}
+		catch(e)
+		{
+			console.log('error uring dock load...',cod,dat);
+			return;
+			
+		}
 		var ele = '';
+		Application.items = eles;
 		if( !currentItemId )
 		{
 			for( var a = 0; a < eles.length; a++ )
@@ -89,7 +102,7 @@ function LoadApplications( win, currentItemId, callback )
 			if( eles[a].Id == currentItemId ) cl += ' BackgroundNegative Negative';
 			
 			ele += '\
-			<div class="Box' + cl + '" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
+			<div class="Box' + cl + '" id="dockEdit'+ eles[a].Id +'" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
 				<div class="HRow">\
 					<div class="FloatRight HContent50"><img style="float: right; width: 40px; height: auto" src="' + img + '"/></div>\
 					<div class="FloatLeft HContent50">' + eles[a].Name + '</div>\
@@ -177,13 +190,10 @@ Application.newDockItem = function()
 	var w = this.view;
 	m.onExecuted = function( r, dat )
 	{
-		console.log('new dock item... ',r,dat);
 		if(r == 'ok')
 		{
 			Application.selectAfterLoad = dat;
-			console.log('new dockitem id is',dat);
 		}
-		
 		LoadApplications( w );
 	}
 	m.execute( 'additem', {} );
@@ -193,14 +203,27 @@ Application.newDockItem = function()
 Application.activateDockItem = function( id )
 {
 	var w = this.view;
+	if( !id ) return;
+	
 	LoadApplications( w, id, function()
 	{
 		var m = new Module( 'dock' );
 		m.onExecuted = function( r, d )
 		{
+			if( d == 'fail' ) return;
+			
+			try{
+				d = JSON.parse( d );
+			}
+			catch( e )
+			{
+				console.log('invalid dock activate',d,e);
+				return;
+			}
+			
 			w.sendMessage( {
 				command: 'updateitem',
-				item: JSON.parse( d )
+				item: d
 			} );
 			Application.disabled = false;
 		}
@@ -219,13 +242,14 @@ Application.deleteDockItem = function( id )
 			var m = new Module( 'dock' );
 			m.onExecuted = function( r, d )
 			{
-				if( !isMobile )
-				{
+				//console.log(isMobile,'item has been deleted!',Application.items);
+				//if( !isMobile )
+				//{
 					LoadApplications( w, false, function( items )
 					{
 						Application.activateDockItem( items[0].Id );
 					} );
-				}
+				//}
 			}
 			m.execute( 'deleteitem', { itemId: id } );
 		}
@@ -270,6 +294,7 @@ Application.saveItem = function( id, application, displayname, shortdescription,
 		workspace: workspace 
 	};
 	console.log( 'Saving item: ', ms );
+	Application.selectAfterLoad = id;
 	m.execute( 'saveitem', ms );
 }
 
@@ -284,6 +309,7 @@ Application.sortOrder = function( direction )
 	{
 		LoadApplications( w, i );
 	}
+	Application.selectAfterLoad = i;
 	m.execute( 'sortorder', { itemId: this.currentItemId, direction: direction } );
 }
 

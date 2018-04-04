@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			html { color: #f8f8f8; background: #f8f8f8; }
+			html body.Loading * { visibility: hidden; }
+			html body.Loading { background-color: #f8f8f8; }
+			h3 { padding-bottom:12px !important; }
+			#SamlFormFrame { width:100%; height:30px; }
+		</style>
+		<script src="/webclient/js/apps/api.js"></script>
+	</head>
+	<body class="Loading" onload="document.getElementById('LoginElement').style.visible = 'visible'; Application.init();">
+		<div id="LoginElement" style="visible: hidden">
+			<div class="VContentTop">
+				<div class="Box">
+					<div class="HRow"><h3>{welcome}</h3></div>
+					<div class="HRow">
+						<iframe id="SamlFormFrame" style="border:none; {additionaliframestyles}" src="{samlendpoint}"></iframe>
+					</div>
+					<div class="HRow">
+						<p><br /><a href="{scriptpath}?module=fcdb" style="{additionalfriendlinkstyle}">{friendlinktext}</a></p>
+					</div>
+					<div class="HRow">
+						<div id="invalidLogin"><p></p></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<style>#invalidLogin { color:#F00; }</style>
+		<script>
+			Application = {
+				failedAttempt: false,
+				uName: false,
+				uPass: false,
+				logoutURL: false,
+				loginAttempts: 0,
+				init: function( data )
+				{
+					//parent.Workspace.loginPrompt.setFlag( 'height', 290 );
+					//console.log('set it and will try again in half a second');
+					//setTimeout( 'parent.Workspace.loginPrompt.setFlag( \'height\', 290 );',500 );
+				},
+				doLogin: function( e )
+				{
+				
+					console.log('execute login...');
+					
+				},
+				checkKeys: function( e )
+				{
+					var k = e.which ? e.which : e.keyCode;
+					if( k == 13 )
+					{
+						this.doLogin( e );
+					}
+				},
+				receiveMessage: function( msg )
+				{
+					if( msg.cmd && msg.command == 'error' )
+					{
+						showLoginError();
+					}
+					else if( msg.cmd && msg.cmd == 'login' )
+					{
+						Application.uName = msg.username;
+						Application.uPass = msg.password;
+						Application.logoutURL = msg.logouturl;
+						
+					
+						Application.loginUser();
+					}
+					
+					if ( msg.samldata ) {
+						console.log( 'modules/login/saml/templates/login.html - storing saml data on Workspace.samlData', msg );
+						parent.Workspace.samlData = msg.samldata;
+					}
+				},
+				loginUser: function()
+				{
+					if( parent && parent.Workspace )
+					{
+						parent.Workspace.setLogoutURL( Application.logoutURL );
+						parent.Workspace.login( htmlentities( Application.uName ), htmlentities( Application.uPass ), false, function( result )
+						{
+							if( result == false )
+							{
+								console.log('Could NOT logg in... why...?' +  Application.uName + ':' +  Application.uPass + ':' + result);
+								showLoginError();
+							}
+							else if( result == 0 )
+							{
+								setTimeout( showLoginError, 1000 );
+							}
+							else
+							{
+								Application.busy = false;
+							}
+						} );
+					}
+					else
+					{
+						Application.loginAttempts++;
+						if( Application.loginAttempts < 10 ) setTimeout(Application.loginUser, 500 );
+						else showLoginError('Could not login');
+					}
+				}				
+			};
+			
+
+			
+			function showLoginError(msg)
+			{
+				document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = (msg ? msg : 'Invalid credentials. Please check you  input.' );
+				Application.failedAttempt = true;
+				Application.busy = false;
+			}
+		</script>
+	</body>
+</html>

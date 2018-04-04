@@ -172,7 +172,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 		if( (cm->cm_CacheSize + lf->lf_FileSize) > cm->cm_CacheMax )
 		{
 			FERROR("Cannot add file to cache, cache is FULL\n");
-			return 1;
+			return -3;
 		}
 		else
 		{
@@ -208,6 +208,12 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 					lf->lf_FileUsed++;
 			
 					cm->cm_CacheSize += lf->lf_FileSize;
+				}
+				else
+				{
+					FERROR("[CacheManagerFilePut] No file provided\n");
+					pthread_mutex_unlock( &(cm->cm_Mutex) );
+					return -2;
 				}
 				pthread_mutex_unlock( &(cm->cm_Mutex) );
 			}

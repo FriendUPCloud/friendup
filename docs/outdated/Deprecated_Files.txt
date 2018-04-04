@@ -1,0 +1,7 @@
+This is a list of files and functionality therein which have become
+deprecated. These files has to be removed and all their dependencies.
+
+modules/drylab/module.php
+modules/system/include/unzip.php
+modules/system/include/zip.php
+

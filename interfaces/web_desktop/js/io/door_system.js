@@ -43,6 +43,10 @@ var WorkspaceDormant = {
 	},
 	execute: function( func, args )
 	{
+		if( typeof( func ) == 'object' )
+		{
+			func = func.Filename;
+		}
 		switch( func.toLowerCase() )
 		{
 			case 'fullscreen':
@@ -270,7 +274,9 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	
 	// Fix path
 	if( fileInfo.Path.indexOf( ':' ) < 0 )
+	{
 		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
+	}
 	
 	var dirPrefs         = 'System:' + i18n( 'i18n_directory_Prefs') + '/';
 	var dirRepositories  = 'System:' + i18n( 'i18n_directory_Repositories') + '/';
@@ -301,7 +307,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Prefs' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/categories/preferences-system.png',
 					IconClass: 'System_Settings',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' )
 				},
@@ -313,7 +318,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/categories/applications-utilities.png',
 					IconClass: 'System_Repositories',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' )
 				},
@@ -327,7 +331,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Path     : 'System:' + i18n( 'i18n_directory_Modules' ) + '/',
 					Type     : 'Directory',
 					Module   : 'files',
-					IconFile : 'gfx/icons/128x128/places/folder-activities.png',
 					IconClass: 'System_Modules',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Modules' ) + '/' )
 				},
@@ -341,7 +344,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Path     : 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
 					Type     : 'Directory',
 					Module   : 'files',
-					IconFile : 'gfx/icons/128x128/places/folder-print.png',
 					IconClass: 'System_Devices',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Devices' ) + '/' )
 				},
@@ -353,7 +355,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/places/folder-favorites.png',
 					IconClass: 'System_Libraries',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Libraries' ) + '/' )
 				},
@@ -365,7 +366,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Software' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/places/folder-green.png',
 					IconClass: 'System_Software',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Software' ) + '/' )
 				},
@@ -377,7 +377,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/categories/system-help.png',
 					IconClass: 'System_Documentation',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' )
 				},
@@ -389,7 +388,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Filesize: 16,
 					Path     : 'System:' + i18n( 'i18n_directory_Functions' ) + '/',
 					Type     : 'Directory',
-					IconFile : 'gfx/icons/128x128/places/folder-development.png',
 					IconClass: 'System_Functions',
 					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Functions' ) + '/' )
 				}
@@ -407,7 +405,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Title: files[a],
 					Permissions: '-r---,-r---,-r---',
 					DateModified: dateh,
-					/*IconFile: 'gfx/icons/128x128/mimetypes/text-enriched.png',*/
 					Path: path,
 					Position: 'left',
 					Module: 'files',
@@ -465,7 +462,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Title: funcs[a],
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
-					IconFile: 'gfx/icons/128x128/mimetypes/application-octet-stream.png',
 					Path: path,
 					Position: 'left',
 					Module: 'files',
@@ -646,7 +642,6 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						Filename: pref,
 						Permissions: '-r-e-,-r-e-,-r-e-',
 						Filesize: 16,
-						//IconFile: icon.length ? ( 'gfx/icons/128x128/' + icon ) : 'apps/' + pref + '/icon.png',
 						IconClass: 'Prefs_' + pref,
 						Position: 'left',
 						Type: 'Executable'

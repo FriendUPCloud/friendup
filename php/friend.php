@@ -265,7 +265,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 	              'FCHost', 'FCPort', 'FCUpload', 'FCPort', 
 	              'SSLEnable', 'FCOnLocalhost', 'Domains', 'friendnetwork', 
-	              'WorkspaceShortcuts' 
+	              'WorkspaceShortcuts', 'preventWizard'
 	);
 
 	// Shortcuts
@@ -275,22 +275,26 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	if( isset( $configfilesettings[ 'Security' ] ) )
 		$security = $configfilesettings[ 'Security' ];
 	else $security = [];
-	$frindNet = $configfilesettings[ 'FriendNetwork' ];
-
+	if( isset( $configfilesettings[ 'FriendNetwork' ] ) )
+	{
+		$frindNet = $configfilesettings[ 'FriendNetwork' ];
+	}
+	else $frindNet = [];
+	
 	foreach( array(
 		'host', 'login', 'password', 'dbname', 
 		'fchost', 'fcport', 'fcupload', 'port', 
 		'SSLEnable', 'fconlocalhost', 'domains','friendnetwork',
-		'workspaceshortcuts'
+		'workspaceshortcuts', 'preventwizard'
 	) as $k=>$type )
 	{
 		$val = '';
 		
-		switch( $type )
+		switch( strtolower( $type ) )
 		{
 			case 'workspaceshortcuts':
 				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : [];
-				if( $val )
+				if( is_string( $val ) )
 				{
 					$val = trim( $val );
 					$o = array();
@@ -312,13 +316,18 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				if( substr( $val, 0, 1 ) != '/' )
 					$val = getcwd() . '/' . $val;
 				break;
+			case 'preventwizard':
 			case 'port':
-			case 'fchost':
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
+				break;
 			case 'fcport':
+				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
+				break;
+			case 'fchost':
 			case 'fconlocalhost':
 				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				break;
-			case 'SSLEnable':	
+			case 'sslenable':	
 				$val = isset( $dataCore[ $type ] ) ? $dataCore[ $type ] : '';
 				// Check in deprecated location
 				if( !$val )
@@ -337,8 +346,15 @@ if( file_exists( 'cfg/cfg.ini' ) )
 				$val = '';
 				break;	
 		}
-		$Config->{$car[$k]} = $val;
+		// Make sure the value is valid
+		if( isset( $val ) && $val )
+		{
+			//$Logger->log( 'Setting: ' . $car[$k] . ' = ' . $val );
+			$Config->{$car[$k]} = $val;
+		}
 	}
+	
+	//$Logger->log( print_r( $Config, 1 ) );
 	
 	// Don't need these now
 	$dataUser = null;

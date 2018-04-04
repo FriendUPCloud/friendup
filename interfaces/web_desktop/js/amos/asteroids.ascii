@@ -1,0 +1,527 @@
+' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+'                                  AMOSTEROIDS   
+'
+'                                By P.J. Hickman     
+'
+'                           © 1990 Mandarin Software     
+'
+' ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Default 
+Screen Close 0
+Led Off 
+Update Off 
+Synchro Off 
+' -----------------------------------------------------------------------
+'                             Global variables 
+' -----------------------------------------------------------------------
+Dir$="Amos_Data:"
+If Chip Free>250000
+   ENOUGH_MEM=True
+Else 
+   ENOUGH_MEM=False
+   Close Editor 
+End If 
+BIGANIM$="Let R0=2 ; Anim 0,(25,R0)(26,R0)(27,R0)(28,R0)(29,R0)(30,R0)"
+BIGANIM$=BIGANIM$+"(31,R0)(32,R0)(33,R0) "
+SMALLANIM$="Let R0=1 ; Anim 0,(34,R0)(35,R0)(36,R0)(37,R0)(38,R0)(39,R0)"
+SMALLANIM$=SMALLANIM$+"(40,R0)(41,R0)(42,R0) "
+INIT1
+' -----------------------------------------------------------------------
+'                                 Main loop
+' -----------------------------------------------------------------------
+Repeat 
+   ' -------------------------------------------------------------------- 
+   '                      Do titlepage & reset levels 
+   ' -------------------------------------------------------------------- 
+   TITLE_PAGE
+   LEVEL=0
+   SCORE=0
+   SHIELD_WEIGHTING=20
+   Repeat 
+      ' -----------------------------------------------------------------
+      '                      Set up the level data 
+      ' -----------------------------------------------------------------
+      Add LEVEL,1,1 To 9
+      PASS=0
+      LEVEL_START
+      Repeat 
+         ' -------------------------------------------------------------- 
+         '       Perform checks on ship speed and shield strength 
+         ' -------------------------------------------------------------- 
+         Add PASS,1,0 To 15
+         If PASS=0 Then Amreg(23)=Amreg(23)-1
+         Amreg(23)=Max(0,Min(7,Amreg(23)))
+         If Amreg(21)=8 Then Dec STRENGTH
+         If STRENGTH=0 Then Amreg(22)=5
+         ' -------------------------------------------------------------- 
+         '         Check AMAL registers for possible collision(s)   
+         ' -------------------------------------------------------------- 
+         For LOP=0 To 20
+            TEMP=Amreg(LOP)
+            If TEMP>499 or Amreg(22)=8
+               Sam Raw 8,Start(12),13086,2500+(TEMP*2)
+               Amreg(LOP)=0
+               If Amreg(22)=8
+                  Amreg(22)=5
+               End If 
+            Else 
+               If TEMP>0
+                  Dec AMOUNT
+                  If TEMP mod 3=1
+                     For LOP2=1 To 2
+                        Bob TEMP+LOP2,X Bob(TEMP),Y Bob(TEMP),34
+                        Amal On TEMP+LOP2
+                     Next LOP2
+                     Bob Off TEMP
+                     Amreg(LOP)=0
+                     Add SCORE,50
+                  Else 
+                     Bob Off TEMP
+                     Amreg(LOP)=0
+                     Add SCORE,100
+                  End If 
+               End If 
+            End If 
+         Next LOP
+         ' -------------------------------------------------------------- 
+         '                     Do score & shield updates  
+         ' -------------------------------------------------------------- 
+         Screen 5
+         Print At(24,0);"SCORE:";SCORE;At(44,0);"SHIELD:";Max(0,STRENGTH);" ";
+         Screen 6
+         ' -------------------------------------------------------------- 
+         '               Perform interrupt & screen update  
+         ' -------------------------------------------------------------- 
+         Synchro 
+         If Inkey$="p" Then PAUSE
+         Update 
+      Until AMOUNT=0 or Amreg(22)=10
+      ' -----------------------------------------------------------------
+      '                        Tidy up screen display
+      ' -----------------------------------------------------------------
+      For LOP=0 To 2 : Synchro : Update : Wait 2 : Next LOP
+      For LOP=0 To 20
+         Synchro 
+         TEMP=Amreg(LOP)
+         If TEMP<499
+            Bob Off TEMP
+         End If 
+         If Amreg(22)=10
+            Bob Off 60
+         End If 
+         Update 
+         Wait 2
+      Next LOP
+      ' -----------------------------------------------------------------
+      '                Remove game screens from display
+      ' -----------------------------------------------------------------
+      ZIP_OFF
+      Amal Off 
+      ' -----------------------------------------------------------------
+      ' If the player gets past nine levels then decrease shield strength
+      ' -----------------------------------------------------------------
+      If LEVEL=9 Then Add SHIELD_WEIGHTING,-10
+   Until Amreg(22)=10
+   Screen Close 6
+   Screen Close 5
+Until False
+End 
+'
+Procedure SET_BOB_BACKGROUNDS
+   For LOP=1 To 64
+      Set Bob LOP,1,,
+   Next LOP
+End Proc
+'
+Procedure LEVEL_START
+   Shared ROCKS,AMOUNT,STRENGTH,LEVEL,ENOUGH_MEM
+   For LOP=0 To 25 : Amreg(LOP)=0 : Next LOP
+   If ENOUGH_MEM
+      DISPLAY_LEVEL
+   Else 
+      MAIN_SCREEN_SETUP
+   End If 
+   SET_UP
+   ZIP_ON
+End Proc
+'
+Procedure TITLE_PAGE
+   Shared ENOUGH_MEM
+   If ENOUGH_MEM
+      Music 1
+      Tempo 18
+   End If 
+   Rainbow Del 
+   If Not ENOUGH_MEM
+      Load "Amosteroids/Amosteroids_Title_Page.Abk",10
+      Unpack 10 To 3
+      Erase 10
+   Else 
+      Unpack 10 To 3
+   End If 
+   Hide On 
+   Set Rainbow 2,8,60,"","","(2,1,15)(2,-1,15)"
+   View 
+   Rainbow 2,32,45,80
+   View 
+   Repeat 
+      Wait Vbl 
+   Until Fire(1) or Asc(Inkey$)<>0 or Mouse Click
+   If ENOUGH_MEM Then Music Off 
+   Fade 3
+   Wait 28
+   Screen Close 3
+   Rainbow Del 
+End Proc
+'
+Procedure ZIP_OFF
+   For LOP=45 To -295 Step -10
+      Screen Display 6,,LOP,320,200
+      Screen Display 5,,247-LOP,640,18
+      Wait Vbl 
+   Next LOP
+End Proc
+'
+Procedure ZIP_ON
+   For LOP=-295 To 45 Step 10
+      Screen Display 6,,LOP,320,200
+      Screen Display 5,,292-LOP,640,18
+      Wait Vbl 
+   Next LOP
+End Proc
+'
+'
+Procedure DISPLAY_LEVEL
+   Shared STRENGTH,ROCKS,AMOUNT,LEVEL,SHIELD_WEIGHTING,ENOUGH_MEM
+   Set Rainbow 0,6,60,"(2,1,15)(2,-1,15)","","(2,1,15)(2,-1,15)"
+   Rainbow 0,0,40,215
+   Unpack 11 To 3
+   Hide On 
+   Double Buffer 
+   Autoback 0
+   Load "music/Amosteroids_intermediate.abk"
+   Music 1
+   Tempo 19
+   Update On 
+   For LOP=-100 To 60 Step 20
+      Bob 63,70,LOP,44
+      Wait Vbl 
+   Next LOP
+   For LOP=200 To 60 Step -20
+      Bob 62,210,LOP,44+LEVEL
+      Wait Vbl 
+   Next LOP
+   Update Off 
+   Timer=0
+   MAIN_SCREEN_SETUP
+   TEMP=Timer
+   Timer=0
+   Repeat 
+   Until Timer=>655-TEMP or Mouse Click or Fire(1)
+   Screen 3
+   Update On 
+   Music Off 
+   Load "music/amosteroids_title.abk"
+   For LOP=60 To 200 Step 20
+      Bob 62,210,LOP,44+LEVEL
+      Wait Vbl 
+   Next LOP
+   For LOP=60 To -100 Step -20
+      Bob 63,70,LOP,44
+      Wait Vbl 
+   Next LOP
+   Bob Off 62
+   Bob Off 63
+   Fade 3
+   Wait 28
+   Screen Close 3
+   Update Off 
+End Proc
+'
+Procedure MAIN_SCREEN_SETUP
+   Shared STRENGTH,ROCKS,AMOUNT,LEVEL,SHIELD_WEIGHTING,ENOUGH_MEM
+   If ENOUGH_MEM
+      Unpack 9 To 6
+      Screen Display 6,,-500,320,200
+      Double Buffer 
+      Autoback 0
+   Else 
+      Screen Open 6,320,200,16,Lowres
+      Screen Display 6,,-500,320,200
+      Hide On 
+      Flash Off 
+      Curs Off 
+      Cls 0
+      Palette $0,$BBB,$888,$555,$222,$FFF,$200,$E30,$910,$600,$B0,$70,$40,$69B,$247,$13
+      Set Rainbow 0,0,60,"(2,1,15)(2,-1,15)","","(2,1,15)(2,-1,15)"
+      Rainbow 0,0,45,200
+      Set Rainbow 2,0,16,"","","(1,1,8)"
+      Rainbow 2,0,241,15
+      Double Buffer 
+      Autoback 0
+      SET_BOB_BACKGROUNDS
+   End If 
+   STRENGTH=(LEVEL*SHIELD_WEIGHTING)+(SHIELD_WEIGHTING*10)
+   ROCKS=((LEVEL-1)*3)+1
+   AMOUNT=ROCKS+2
+   SET_CHANNELS
+   INIT_ASTEROIDS[ROCKS]
+   SET_SHIP_AMAL
+End Proc
+'
+Procedure PAUSE
+   Shared ENOUGH_MEM
+   If ENOUGH_MEM
+      Music 1
+      Tempo 18
+   End If 
+   Update On 
+   TEMP=Rnd(3)
+   If TEMP=0
+      For LOP=-60 To 60 Step 20
+         Bob 63,90,LOP,43
+         Wait Vbl 
+      Next LOP
+   Else 
+      If TEMP=1
+         For LOP=200 To 60 Step -20
+            Bob 63,90,LOP,43
+            Wait Vbl 
+         Next LOP
+      Else 
+         If TEMP=2
+            For LOP=-90 To 90 Step 20
+               Bob 63,LOP,60,43
+               Wait Vbl 
+            Next LOP
+         Else 
+            If TEMP=3
+               For LOP=330 To 90 Step -20
+                  Bob 63,LOP,60,43
+                  Wait Vbl 
+               Next LOP
+            End If 
+         End If 
+      End If 
+   End If 
+   Repeat 
+   Until Inkey$="p"
+   If TEMP=0
+      For LOP=60 To -60 Step -20
+         Bob 63,90,LOP,43
+         Wait Vbl 
+      Next LOP
+   Else 
+      If TEMP=1
+         For LOP=60 To 200 Step 20
+            Bob 63,90,LOP,43
+            Wait Vbl 
+         Next LOP
+      Else 
+         If TEMP=2
+            For LOP=90 To -90 Step -20
+               Bob 63,LOP,60,43
+               Wait Vbl 
+            Next LOP
+         Else 
+            If TEMP=3
+               For LOP=90 To 330 Step 20
+                  Bob 63,LOP,60,43
+                  Wait Vbl 
+               Next LOP
+            End If 
+         End If 
+      End If 
+   End If 
+   Wait Vbl 
+   Update Off 
+   Bob Off 63
+   Clear Key 
+   If ENOUGH_MEM Then Music Off 
+End Proc
+'
+Procedure INIT1
+   Shared XLEN,YLEN,ENOUGH_MEM
+   If ENOUGH_MEM
+      Load "Amosteroids/back.abk",9
+      Unpack 9 To 6
+      Screen Hide 6
+      XLEN=Screen Width
+      YLEN=Screen Height
+      Screen Close 6
+      Load "Music/Amosteroids_Title.Abk"
+      Load "Amosteroids/Amosteroids_Title_Page.Abk",10
+      Load "Amosteroids/Intermediate_Still.Abk",11
+   Else 
+      XLEN=320
+      YLEN=200
+   End If 
+   Load "Sprites/Amosteroids.Abk"
+   Make Mask 
+   Load "Samples/Boom.Abk",12
+End Proc
+'
+'
+Procedure SET_UP
+   Shared STRENGTH,SCORE,AMOUNT
+   Screen Open 5,640,18,2,Hires
+   Screen Display 5,,500,640,18
+   Colour 1,$FFF
+   Curs Off 
+   Cls 0
+   Print At(24,0);"SCORE:";SCORE;At(44,0);"SHIELD:";STRENGTH;" ";
+End Proc
+'
+'
+'
+Procedure SET_CHANNELS
+   ' Players Ship 
+   Channel 60 To Bob 60
+   ' Asteroids
+   For LOP=1 To 59
+      Channel LOP To Bob LOP
+   Next LOP
+End Proc
+'
+'
+'
+Procedure INIT_ASTEROIDS[ROCKS]
+   Shared XLEN,YLEN,BIGANIM$,SMALLANIM$
+   REG=-1
+   For LOP=1 To ROCKS Step 3
+      Inc REG
+      ROCKX=Rnd(XLEN)
+      If Rnd(1)
+         ROCKY=-30
+      Else 
+         ROCKY=201
+      End If 
+      FIND_ROCK_SPEED[2]
+      ROCKSPEEDX=Param
+      FIND_ROCK_SPEED[2]
+      ROCKSPEEDY=Param
+      Bob LOP,ROCKX,ROCKY,25
+      T$=Right$(Chr$(REG+65),1)
+      TEMP$="Start: "+BIGANIM$+" ; "
+      TEMP$=TEMP$+"Loop: "
+      TEMP$=TEMP$+"If BC("+Right$(Str$(LOP),Len(Str$(LOP))-1)+",60,61) Jump D ; "
+      TEMP$=TEMP$+"Let X=X+"+Str$(ROCKSPEEDX)+" ; "
+      TEMP$=TEMP$+"Let Y=Y+"+Str$(ROCKSPEEDY)+" ; P "
+      TEMP$=TEMP$+"If X>"+Str$(XLEN+25)+" Jump M ; "
+      TEMP$=TEMP$+"If X<-25 Jump N ; "
+      TEMP$=TEMP$+"If Y>"+Str$(YLEN+29)+" Jump G ; "
+      TEMP$=TEMP$+"If Y<-29 Jump T ; Jump Loop ; "
+      TEMP$=TEMP$+"M: Let X=-25 ; Jump Loop ; "
+      TEMP$=TEMP$+"N: Let X="+Str$(XLEN+25)+" ; Jump Loop ; "
+      TEMP$=TEMP$+"G: Let Y=-29 ; Jump Loop"
+      TEMP$=TEMP$+"T: Let Y="+Str$(YLEN+29)+" ; Jump Loop ; "
+      TEMP$=TEMP$+"D: Let R"+T$+"="+Str$(LOP+500)+"Anim 1,(17,1)(18,1)(19,1)(20,1)(21,1)"
+      TEMP$=TEMP$+"(22,1)(23,1)(24,1) P P P P P P P P P ; "
+      TEMP$=TEMP$+"Let R"+T$+"="+Str$(LOP)+" ; "
+      '   Print At(0,0);"big asteroid:";LOP;"  regnum:";REG
+      '   Wait Key 
+      Amal LOP,TEMP$
+      Amal On LOP
+      ' -----------------------------------------------------
+      '                   Do small asteroids 
+      ' -----------------------------------------------------
+      For LOP1=0 To 1
+         ROCKIMAGE=33
+         ROCKTYPE=0
+         FIND_ROCK_SPEED[4]
+         ROCKSPEEDX=Param
+         FIND_ROCK_SPEED[4]
+         ROCKSPEEDY=Param
+         Bob LOP+(LOP1+1),-200,-200,33
+         SMALL_ASTEROIDS[LOP+(LOP1+1),ROCKSPEEDX,ROCKSPEEDY,REG+LOP1]
+         '      Print At(0,1);"little";LOP1;": ";LOP+(LOP1+1);"  regnum:";REG+LOP1
+         '     Wait Key 
+      Next LOP1
+      Inc REG
+   Next LOP
+End Proc
+'
+'
+Procedure SMALL_ASTEROIDS[LOP,ROCKSPEEDX,ROCKSPEEDY,REGNUM]
+   Shared SMALLANIM$,YLEN,XLEN
+   T$=Right$(Chr$(REGNUM+65),1)
+   TEMP$="Start: "+SMALLANIM$+" ; "
+   TEMP$=TEMP$+"Loop:                                "
+   TEMP$=TEMP$+"If BC("+Right$(Str$(LOP),Len(Str$(LOP))-1)+",60,61) Jump D ; "
+   TEMP$=TEMP$+"      Let X=X+"+Str$(ROCKSPEEDX)+" ; "
+   TEMP$=TEMP$+"      Let Y=Y+"+Str$(ROCKSPEEDY)+" ; "
+   TEMP$=TEMP$+"      If X>"+Str$(XLEN+25)+" Jump M ; "
+   TEMP$=TEMP$+"      If X<-25 Jump N ; "
+   TEMP$=TEMP$+"      If Y>"+Str$(YLEN+29)+" Jump G ; "
+   TEMP$=TEMP$+"      If Y<-29 Jump T ; P ;"
+   TEMP$=TEMP$+"Jump Loop ; "
+   TEMP$=TEMP$+"M: Let X=-25 ; Jump Loop ; "
+   TEMP$=TEMP$+"N: Let X="+Str$(XLEN+25)+" ; Jump Loop ; "
+   TEMP$=TEMP$+"G: Let Y=-29 ; Jump Loop"
+   TEMP$=TEMP$+"T: Let Y="+Str$(YLEN+29)+" ; Jump Loop ; "
+   TEMP$=TEMP$+"D: Let R"+T$+"="+Str$(LOP+2000)+"Anim 1,(17,1)(18,1)(19,1)(20,1)(21,1) "
+   TEMP$=TEMP$+"(22,1)(23,1)(24,1) P P P P P P P P ; "
+   TEMP$=TEMP$+"Let R"+(Right$(Chr$(REGNUM+65),1))+"="+Str$(LOP)+" ; "
+   Amal LOP,TEMP$
+End Proc
+'
+'
+Procedure FIND_ROCK_SPEED[MX]
+   Repeat 
+      TEMP=-MX+Rnd(MX+MX)
+   Until TEMP<>0
+End Proc[TEMP]
+'
+'
+Procedure SET_SHIP_AMAL
+   Shared XLEN,YLEN
+   Bob 60,50,50,1
+   T$="Let R3=2 ; Let RX=0 ; Let RZ=0 ; Let RY=0 ; Let RV=0 ; Let R3=0"
+   T$=T$+"Loop: Let R1=Joy1 ; "
+   T$=T$+"      Let R9=RV=0 ; Let R8=RW=5 ; Let R7=R9&BC(60,1,59) ; If R7 Jump U ; If R8 Jump U ; P ;"
+   T$=T$+"      Let A=R3+RV ; "
+   T$=T$+"      Let X=X+RZ  ; Let Y=Y+RY ;  ;"
+   T$=T$+"      If X>"+Str$(XLEN)+" Jump R ; "
+   T$=T$+"      If X<-31 Jump Q ; "
+   T$=T$+"      If Y>"+Str$(YLEN)+" Jump T ; "
+   T$=T$+"      If Y<-31 Jump S ; "
+   T$=T$+"W:    If R1&8  Jump A ; ### rotate right ###"
+   T$=T$+"      If R1&4  Jump C ; ### rotate left  ###"
+   T$=T$+"      If R1&1  Jump D ; ###  ship move   ###"
+   T$=T$+"Y:    If R1&16 Jump P ; ###              ###"
+   T$=T$+"      Let RV=0        ; ###              ###"
+   T$=T$+"V:    If R3>8  Jump E ; ### limit right  ###"
+   T$=T$+"      If R3<1  Jump F ; ### limit left   ###"
+   T$=T$+"      If R3=1  Jump G ; ### straight up  ###"
+   T$=T$+"      If R3=5  Jump H ; ###straight down ###"
+   T$=T$+"      If R3=3  Jump I ; ###    right     ###"
+   T$=T$+"      If R3=7  Jump J ; ###    left      ###"
+   T$=T$+"      If R3=2  Jump K ; ###   up right   ###"
+   T$=T$+"      If R3=4  Jump M ; ###  down right  ###"
+   T$=T$+"      If R3=6  Jump N ; ###  down left   ###"
+   T$=T$+"      If R3=8  Jump O ; ###   up left    ###"
+   T$=T$+"Jump Loop ; "
+   T$=T$+"A: Let R3=R3+1               ; Jump Y ; "
+   T$=T$+"C: Let R3=R3-1               ; Jump Y ; "
+   T$=T$+"D: Let RX=RX+1               ;        ; "
+   T$=T$+" Jump Y ; "
+   T$=T$+"E: Let R3=1                  ; Jump Loop ; "
+   T$=T$+"F: Let R3=8                  ; Jump Loop ; "
+   T$=T$+"G: Let RZ=0    ; Let RY=0-RX ; Jump Loop ; "
+   T$=T$+"H: Let RZ=0    ; Let RY=RX   ; Jump Loop ; "
+   T$=T$+"I: Let RZ=RX   ; Let RY=0    ; Jump Loop ; "
+   T$=T$+"J: Let RZ=0-RX ; Let RY=0    ; Jump Loop ; "
+   T$=T$+"K: Let RZ=RX   ; Let RY=0-RX ; Jump Loop ; "
+   T$=T$+"M: Let RZ=RX   ; Let RY=RX   ; Jump Loop ; "
+   T$=T$+"N: Let RZ=0-RX ; Let RY=RX   ; Jump Loop ; "
+   T$=T$+"O: Let RZ=0-RX ; Let RY=0-RX ; Jump Loop ; "
+   T$=T$+"P: Let RV=8    ;             ; Jump V ; "
+   T$=T$+"Q: Let X="+Str$(XLEN)+"      ; Jump W"
+   T$=T$+"R: Let X=-31                 ; Jump W"
+   T$=T$+"S: Let Y="+Str$(YLEN)+"      ; Jump W"
+   T$=T$+"T: Let Y=-31                 ; Jump W"
+   T$=T$+"U: Let RW=8 Anim 1,(17,1)(18,1)(19,1)(20,1)(21,1)"
+   T$=T$+"(22,1)(23,1)(24,1) ; P P P P P P P P P ; Let RW=10"
+   Amal 60,T$
+   Amal On 60
+End Proc

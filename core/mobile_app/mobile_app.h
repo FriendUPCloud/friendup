@@ -52,13 +52,15 @@
 #include <stdbool.h>
 
 typedef enum {
-	MN_force_all_devices, //show on all devices, regardless of app state
+	//0 - undefined
 
-	MN_force_last_device, //show only on most recently used device, regardless of app state
+	MN_force_all_devices = 1, //show on all devices, regardless of app state
 
-	MN_all_devices, //show on all devices that have the app suspended
+	MN_force_last_device = 2, //show only on most recently used device, regardless of app state
 
-	MN_last_device, //show only on most recently used device that has the app suspended
+	MN_all_devices = 3, //show on all devices that have the app suspended
+
+	MN_last_device = 4, //show only on most recently used device that has the app suspended
 } mobile_notification_type_t;
 
 

@@ -77,6 +77,10 @@ i18n_application_settings           : Edit preferences
 i18n_save_settings                  : Save preferences
 i18n_load_settings                  : Load preferences
 i18n_reset_settings                 : Defaults
+i18n_initiate_sas                   : Start shared app session
+
+i18n_sas_window                     : Configure shared session
+i18n_join_friendc_session           : Join a Friend Create shared session
 
 i18n_new_filename                   : New file
 i18n_empty_file                     : Empty file
@@ -159,4 +163,15 @@ i18n_you_havent_opened_up            : You haven't opened up a project yet.
 i18n_category                        : Category
 i18n_could_not_save : Could not save!
 i18n_friend_create_iot_monitor : Friend Create - IOT Monitor
-i18n_search_and_replace : Search and replace
+i18n_search_and_replace : Find and replace
+
+#visual editor
+
+i18n_please_choose_session           : Please choose session
+i18n_standard_HTML5                  : Standard HTML5
+i18n_tree_engine_HTML5               : Tree Engine HTML5
+i18n_tree_engine_canvas              : Tree Engine Canvas
+i18n_tree_engine_3D                  : Tree Engine 3D
+i18n_start_editing                   : Start editing
+
+

@@ -69,10 +69,13 @@ typedef struct ClusterNode
 	FULONG						cn_ID;
 	char						*cn_FCID;
 	char						*cn_Address;
+	char						*cn_Url;
 	struct tm					cn_DateCreated;
 	int							cn_NodeID;
 	int							cn_Status;
 	FConnection					*cn_Connection;
+	FBOOL						cn_CurrentNode;
+	int							cn_UserSessionsCount;	// number of working user sessions on FC
 	
 }ClusterNode;
 
@@ -82,6 +85,7 @@ static FULONG ClusterNodeDesc[] = {
 	SQLT_IDINT,   (FULONG)"ID",          offsetof( struct ClusterNode, cn_ID ),
 	SQLT_STR,     (FULONG)"FCID",    offsetof( struct ClusterNode, cn_FCID ),
 	SQLT_STR,     (FULONG)"Address",    offsetof( struct ClusterNode, cn_Address ),
+	SQLT_STR,     (FULONG)"Url",    offsetof( struct ClusterNode, cn_Url ),
 	SQLT_DATETIME,(FULONG)"DateCreated", offsetof( struct ClusterNode, cn_DateCreated ),
 	SQLT_INT,     (FULONG)"NodeID", offsetof( struct ClusterNode, cn_NodeID ),
 	SQLT_INT,     (FULONG)"Status", offsetof( struct ClusterNode, cn_Status ),

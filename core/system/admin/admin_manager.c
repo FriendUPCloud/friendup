@@ -86,9 +86,10 @@ int VerifyPeer( int ok, X509_STORE_CTX* ctx )
      */
     if (!ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT))
     {
-X509 *err_cert;
-err_cert = X509_STORE_CTX_get_current_cert(ctx);
-X509_NAME_oneline( X509_get_issuer_name(err_cert), buf, 256 );
+		X509 *err_cert;		//ADD
+err_cert = X509_STORE_CTX_get_current_cert(ctx);		//ADD
+X509_NAME_oneline( X509_get_issuer_name(err_cert), buf, 256 );		//ADD
+//X509_NAME_oneline( X509_get_issuer_name(ctx->current_cert), buf, 256 );		//DISABLE
       //X509_NAME_oneline( X509_get_issuer_name(ctx->current_cert), buf, 256 );
       printf("issuer= %s\n", buf);
     }

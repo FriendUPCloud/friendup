@@ -45,6 +45,7 @@ typedef struct WorkerManager
 	Worker							**wm_Workers;			// array of  workers
 	int 								wm_MaxWorkers;
 	int 								wm_LastWorker;
+	pthread_mutex_t						wm_Mutex;
 	
 	float								w_AverageWorkSeconds;
 } WorkerManager;

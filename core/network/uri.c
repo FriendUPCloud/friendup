@@ -410,7 +410,7 @@ Hashmap* UriParseQuery( char* query )
 				if( key )
 				{
 					// TODO: Add support for ?arr[]=something&arr[]=more
-					if( HashmapPut( map, key, value ) )
+					if( HashmapPut( map, key, value ) == MAP_OK )
 					{
 					}
 					// Couldn't add hto hashmap sadly..

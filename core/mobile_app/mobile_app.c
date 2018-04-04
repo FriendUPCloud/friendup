@@ -127,18 +127,10 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 		unsigned int connection_index = app_connection->user_connection_index;
 		DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
 		_mobile_app_remove_app_connection(user_connections, connection_index);
-		pthread_mutex_unlock(&_session_removal_mutex);
 
-		/* ----------------- MEMORY LEAK AND DRAGONS HERE ----------------- */
-		/* FIXME: memory leak here! HashmapRemove is unimplemented!
-		 * The socket-to-user mapping should be removed from the hashmap
-		 * HashmapRemove(_websocket_to_user_connections_map, websocket_hash);
-		 *
-		 * There is a risk that if a websocket pointer has identical value (address)
-		 * as a previously used websocket connection pointer then  a HashmapPut
-		 * will somehow do a double free and crash the whole application.
-		 */
-		/* ----------------- MEMORY LEAK AND DRAGONS HERE ----------------- */
+		HashmapRemove(_websocket_to_user_connections_map, websocket_hash);
+
+		pthread_mutex_unlock(&_session_removal_mutex);
 
 		FFree(websocket_hash);
 		return 0;
@@ -370,7 +362,7 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 			//by our internal sturcts and within hashmap structs
 
 			//add the new connections struct to global users' connections map
-			if ( !HashmapPut(_user_to_app_connections_map, permanent_username, user_connections)){
+			if ( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK ){
 				DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
 				FFree(user_connections);
@@ -517,6 +509,7 @@ bool mobile_app_notify_user(const char *username,
 			}
 		} break;
 
+	default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 
 	}
 	return true;

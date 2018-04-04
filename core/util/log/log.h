@@ -76,6 +76,9 @@ typedef struct FlogDate{
 // Flags 
 typedef struct FlogFlags{
 	const char			*ff_Fname;
+	char				*ff_Path;
+	char				*ff_DestinationPath;
+	int					ff_DestinationPathLength;
 	short				ff_FileLevel;
 	short				ff_Level;
 	short				ff_ToFile;

@@ -66,7 +66,7 @@
 #define WORKERS_MIN 8
 #endif
 #ifndef EPOLL_MAX_EVENTS
-#define EPOLL_MAX_EVENTS 1024
+#define EPOLL_MAX_EVENTS 512
 #endif
 #ifndef BUFFER_READ_SIZE
 #define BUFFER_READ_SIZE 1024 * 8

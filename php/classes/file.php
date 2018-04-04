@@ -59,8 +59,6 @@ class File
 		else if( isset( $User->SessionID ) )
 			$url .= '&sessionid=' . $User->SessionID;
 
-		//$Logger->log( '[File::Load] Url to load: ' . $url );
-
 		$c = curl_init();
 		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
@@ -68,7 +66,7 @@ class File
 		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
 		$r = curl_exec( $c );
 		curl_close( $c );
-
+		
 		if( $r != false )
 		{
 			$this->_content = $r;

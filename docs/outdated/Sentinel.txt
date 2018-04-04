@@ -1,0 +1,49 @@
+
+
+                          ** FriendCore Sentinel **
+                          
+In  FriendCore, a  system sentinel  is available  to do  gatekeeper and  ganitor 
+tasks. He will distribute access to shared data as a central node.
+
+To activate the sentinel, add a user of any level to your users database and
+generate a session for him. After this, add the username and password in plain
+text to your config file like this:
+
+--
+
+[Core]
+
+SentinelUsername = "myusername";
+SentinelPassword = "mypassword";
+
+--
+
+This will make sure that the sentinel is authenticated and activated when Friend 
+Core is initialized.
+
+To administrate the resources  available to the sentinel,  just log in with  his
+username  and password to access his desktop. He is, essentially, a normal user.
+This allows you to connect  remote fs drives  to him,  and other resources, that
+may be shared between users on the same Friend Core.
+
+To generate a session for the sentinel user, just log in as him. Do not log out.
+Just close the tab or reload it without logging out using the menu item. You can
+also generate a session id using the Sessions tab in the Users app.
+
+--
+
+Sentinel is defined in systembase.h,  friendcore.c and user_sessionmanager.c for
+those developer who dares inspect him.
+
+--
+
+Permissions
+
+The system sentinel is not a  normal user,  even though  it  has a  normal  user 
+account in the database. The system sentinel has some restrictions. For example,
+it  can  share  resources  between  users  on  the  network.  But  only with the 
+restrictions  applied. If  a system sentinel shares a drive using remote fs, the
+user can mount the drive without any username or password. But the user will not
+get  write  or delete  permissions. This  is  because  these  privileges are not 
+permitted for  the  sentinel user, even if the sentinel user is of role "admin".
+

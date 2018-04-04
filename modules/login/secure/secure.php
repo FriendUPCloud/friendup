@@ -1,30 +1,12 @@
 <?php
-/*©lgpl*************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Lesser General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*****************************************************************************©*/
+	
+	error_reporting( E_ALL & ~E_NOTICE & ~E_DEPRECATED );
+	ini_set( 'display_errors', '1' );
 	
 	// TODO Simplify this on cleanup !!! ....
 	
 	if( isset( $GLOBALS['request_variables']['encrypted'] ) )
 	{
-		//error_reporting( E_ALL );
-		//ini_set( 'display_errors', '1' );
-		
 		include_once( 'php/3rdparty/fcrypto/fcrypto.class.php' );
 		
 		if( file_exists( 'cfg/crt/key.pem' ) )
@@ -48,7 +30,7 @@
 							include_once( 'php/classes/dbio.php' );
 							
 							// Set config object
-							$Config = new Object();
+							$Config = new stdClass();
 							$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 										  'FCHost', 'FCPort', 'FCUpload', 
 										  'SSLEnable', 'FCOnLocalhost', 'Domains' );
@@ -211,7 +193,7 @@
 				include_once( 'php/classes/dbio.php' );
 				
 				// Set config object
-				$Config = new Object();
+				$Config = new stdClass();
 				$car = array( 'Hostname', 'Username', 'Password', 'DbName',
 							  'FCHost', 'FCPort', 'FCUpload', 
 							  'SSLEnable', 'FCOnLocalhost', 'Domains' );
@@ -367,10 +349,12 @@
 		$provider = false;
 		$lp = '';		
 	
-	
-		foreach( $GLOBALS['login_modules']['saml']['Providers'] as $pk => $pv );
+		if( isset( $GLOBALS['login_modules']['saml']['Providers'] ) )
 		{
-			//do some checks here
+			foreach( $GLOBALS['login_modules']['saml']['Providers'] as $pk => $pv );
+			{
+				//do some checks here
+			}
 		}
 		
 		if( file_exists(dirname(__FILE__) . '/templates/login.html') )

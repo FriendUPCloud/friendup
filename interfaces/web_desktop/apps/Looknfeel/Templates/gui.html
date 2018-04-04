@@ -1,31 +1,41 @@
 
+	<input type="hidden" id="ThemeConfigData" value=""/>
+
 	<div class="ContentFull">
 		<div class="Padding VContentTop">
 			<div id="MainTabs">
 				<div class="IconSmall fa-list-ul Tab">
-					{i18n_themes}
+					{i18n_theme_engines}
+				</div>
+				<div class="IconSmall fa-wrench Tab">
+					{i18n_customize_theme}
 				</div>
 				<div class="IconSmall fa-mouse-pointer Tab">
-					{i18n_behavior}
+					{i18n_desktop}
 				</div>
 				<div class="Page">
 					<div class="PageScroll">
 						<div class="HRow">
 							<div class="HContent40 FloatLeft Relative Padding ThemeList">
-								<p>
+								<p class="Layout">
 									<strong>{i18n_available_themes}:</strong>
 								</p>
 								<div class="BackgroundLists ColorLists" style="min-height: 400px" id="ThemeList">
 								</div>
 							</div>
 							<div class="HContent60 FloatLeft Relative Padding ThemePreview">
-								<p>
+								<p class="Layout">
 									<strong>{i18n_preview}:</strong>
 								</p>
 								<div style="position: relative; width: 100%; min-height:400px; border-radius: 7px; background: black; border: 1px solid rgba(0,0,0,0.5)" id="ThemePreview">
 								</div>
 							</div>
 						</div>
+					</div>
+				</div>
+				<div class="Page">
+					<div class="PageScroll">
+						<div class="Padding" id="ThemeConfig"></div>
 					</div>
 				</div>
 				<div class="Page">
@@ -97,7 +107,7 @@
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
-			<button class="IconSmall fa-remove FloatRight" type="button" onclick="Application.sendMessage( { command: 'quit' } )">
+			<button class="NoMargins IconSmall fa-remove FloatRight" type="button" onclick="Application.sendMessage( { command: 'quit' } )">
 				{i18n_cancel}
 			</button>
 			<button class="IconSmall fa-save" type="button" onclick="applyTheme()">

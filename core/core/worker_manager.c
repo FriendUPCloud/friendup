@@ -58,6 +58,7 @@ WorkerManager *WorkerManagerNew( int number )
 		
 		wm->wm_LastWorker = 0;
 		wm->wm_MaxWorkers = number;
+		pthread_mutex_init( &wm->wm_Mutex, NULL );
 		
 		if( ( wm->wm_Workers = FCalloc( wm->wm_MaxWorkers, sizeof(Worker *) ) ) != NULL )
 		{
@@ -104,6 +105,8 @@ void WorkerManagerDelete( WorkerManager *wm )
 			}
 			FFree( wm->wm_Workers );
 		}
+		pthread_mutex_destroy( &wm->wm_Mutex );
+		
 		FFree( wm );
 	}
 }
@@ -124,8 +127,12 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 			{
 				w->w_Function = foo;
 				w->w_Data = d;
-				pthread_cond_signal( &(w->w_Cond) );
 				
+				if( pthread_mutex_lock( &(w->w_Mut) ) == 0 )
+				{
+					pthread_cond_signal( &(w->w_Cond) );
+					pthread_mutex_unlock( &(w->w_Mut) );
+				}
 				int wait = 0;
 				
 				while( TRUE )
@@ -178,12 +185,14 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 	if( wm == NULL )
 	{
 		FERROR("Work manager is NULL!\n");
+		return -1;
 	}
 	
 	while( TRUE )
 	{
 		wrk = NULL;
 
+		pthread_mutex_lock( &wm->wm_Mutex );
 		max++; wm->wm_LastWorker++;
 		if( wm->wm_LastWorker >= wm->wm_MaxWorkers )
 		{ 
@@ -193,7 +202,9 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		// Safely test the state of the worker
 		//if( pthread_mutex_trylock( &wm->wm_Workers[ wm->wm_LastWorker ]->w_Mut ) == 0 )
 		{
-			if( wm->wm_Workers[ wm->wm_LastWorker ]->w_State == W_STATE_WAITING )
+			int lw = wm->wm_LastWorker;
+			Worker *w1 = wm->wm_Workers[ lw ];
+			if( w1->w_State == W_STATE_WAITING )
 			{
 				wrk = wm->wm_Workers[ wm->wm_LastWorker ];
 			
@@ -218,11 +229,13 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			wrk->w_Request = wrkinfo;
 			WorkerRunCommand( wrk, foo, d );
 			testquit = 0;
+			pthread_mutex_unlock( &wm->wm_Mutex );
 			
 			break;
 		}
 		else
 		{
+			pthread_mutex_unlock( &wm->wm_Mutex );
 			Log( FLOG_INFO, "[WorkManagerRun] Worker is busy, waiting\n");
 			usleep( 100 );
 		}
@@ -233,17 +246,18 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 			testquit++;
 			if( testquit > 25 )
 			{
-				//
-				FERROR("Worker dispatch timeout, dropping client\n");
+				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
 				return -1;
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
 				usleep( 15000 );
 				//sleep( 2 );
 			}
+			usleep( 100 );
 			max = 0;
+			return -1;
 		}
-	}
+	} //end of infinite loop
 	
 	return 0;
 }

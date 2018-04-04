@@ -63,6 +63,7 @@
 #include <system/fsys/door_notification.h>
 #include <system/admin/admin_web.h>
 #include <system/connection/connection_web.h>
+#include <system/token/token_web.h>
 #include <system/dictionary/dictionary.h>
 
 #define LIB_NAME "system.library"
@@ -98,10 +99,10 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
-	char *allArgs = FCalloc( fullsize, sizeof(char) );
+	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
-		allArgsNew = FCalloc( fullsize+100, sizeof(char) );
+		allArgsNew = FCallocAlign( fullsize+100, sizeof(char) );
 	
 		if( both == TRUE )
 		{
@@ -173,6 +174,53 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 		{
 			strcpy( allArgsNew, allArgs );
 		}
+		
+		// get values from POST 
+		
+		if( request->h_RequestSource == HTTP_SOURCE_HTTP && request->parsedPostContent != NULL )
+		{
+			Hashmap *hm = request->parsedPostContent;
+			unsigned int i = 0;
+			FBOOL quotationFound = FALSE;
+			
+			DEBUG("Add parameters from POST request: '%s'\n", allArgsNew );
+			
+			if( strstr( allArgsNew, "?" ) != NULL )
+			{
+				quotationFound = TRUE;
+			}
+			
+			for( ; i < hm->table_size; i++ )
+			{
+				if( hm->data[ i ].inUse == TRUE && hm->data[ i ].key != NULL && hm->data[ i ].data != NULL )
+				{
+					// if parameter was not passed, it must be taken from POST
+					if( strstr( allArgsNew, hm->data[ i ].key ) == NULL )
+					{
+						DEBUG("Parameter not found, FC will use one from POST: %s\n", hm->data[ i ].key );
+						int size = 10 + strlen( hm->data[ i ].key ) + strlen ( hm->data[ i ].data );
+						char *buffer;
+						
+						if( ( buffer = FCalloc( size, sizeof(char) ) ) != NULL )
+						{
+							if( quotationFound == TRUE )
+							{
+								sprintf( buffer, "&%s=%s", hm->data[ i ].key, (char *)hm->data[ i ].data );
+							}
+							else
+							{
+								sprintf( buffer, "?%s=%s", hm->data[ i ].key, (char *)hm->data[ i ].data );
+								quotationFound = TRUE;
+							}
+							
+							strcat( allArgsNew, buffer );
+							FFree( buffer );
+						}
+					}
+				}
+			}
+		}
+		
 		FFree( allArgs );
 	}
 	return allArgsNew;
@@ -213,7 +261,7 @@ Webreq func: %s\n \
     if( urlpath[ 0 ] == NULL )
     {
         FERROR("urlpath is equal to NULL!\n");
-			
+		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/html" ) },
 			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
@@ -528,14 +576,67 @@ Webreq func: %s\n \
 		(*request)->h_UserSession = loggedSession;
 	}
 	
-	if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+	if( strcmp( urlpath[ 0 ], "file" ) == 0 )
 	{
-		DEBUG(" request %p  uri %p\n", (*request),(*request)->uri );
-		UserLoggerStore( l->sl_ULM, loggedSession, (*request)->uri->queryRaw , loggedSession->us_UserActionInfo );
+		HashmapElement *el = HttpGetPOSTParameter( *request, "path" );
+		if( el == NULL ) el = HashmapGet( (*request)->query, "path" );
+		int size = 64;
+		
+		if( el != NULL && el->data != NULL )
+		{
+			char *data = NULL;
+			size += strlen( el->data );
+			
+			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+			{
+				size += strlen( (*request)->uri->queryRaw );
+				if( ( data = FMalloc( size ) ) != NULL )
+				{
+					int pos = snprintf( data, size, "%s Path: ", (*request)->uri->queryRaw );
+					UrlDecode( &data[ pos ], (char *)el->data );
+					UserLoggerStore( l->sl_ULM, loggedSession, data, loggedSession->us_UserActionInfo );
+					FFree( data );
+				}
+			}
+			else
+			{
+				DEBUG("Check request pointer %p and requeest path %p\n", (*request), (*request)->rawRequestPath );
+				if( (*request)->rawRequestPath != NULL )
+				{
+					size += strlen( (*request)->rawRequestPath );
+					if( ( data = FMalloc( size ) ) != NULL )
+					{
+						int pos = snprintf( data, size, "%s Path: ", (*request)->rawRequestPath );
+						UrlDecode( &data[ pos ], (char *)el->data );
+						UserLoggerStore( l->sl_ULM, loggedSession, data, (*request)->h_UserActionInfo );
+						FFree( data );
+					}
+				}
+			}
+		}
+		else
+		{
+			if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+			{
+				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->uri->queryRaw , loggedSession->us_UserActionInfo );
+			}
+			else
+			{
+				UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
+			}
+		}
 	}
 	else
 	{
-		UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
+		if( (*request)->h_RequestSource == HTTP_SOURCE_WS )
+		{
+			DEBUG(" request %p  uri %p\n", (*request),(*request)->uri );
+			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->uri->queryRaw , loggedSession->us_UserActionInfo );
+		}
+		else
+		{
+			UserLoggerStore( l->sl_ULM, loggedSession, (*request)->rawRequestPath, (*request)->h_UserActionInfo );
+		}
 	}
 	
 	/// @cond WEB_CALL_DOCUMENTATION
@@ -1474,7 +1575,7 @@ Webreq func: %s\n \
 	
 	else if( strcmp( urlpath[ 0 ], "admin" ) == 0 )
 	{
-		response =  AdminWebRequest( l, urlpath, request, loggedSession, result );
+		response = AdminWebRequest( l, urlpath, request, loggedSession, result );
 		
 	}
 	
@@ -1484,7 +1585,7 @@ Webreq func: %s\n \
 	
 	else if( strcmp( urlpath[ 0 ], "connection" ) == 0 )
 	{
-		response =  ConnectionWebRequest( l, urlpath, request, loggedSession, result );
+		response = ConnectionWebRequest( l, urlpath, request, loggedSession, result );
 		
 	}
 
@@ -1495,7 +1596,17 @@ Webreq func: %s\n \
 	else if( strcmp( urlpath[ 0 ], "invar" ) == 0 )
 	{
 		INFO("INRAM called\n");
-		response =  INVARManagerWebRequest( l->nm, &(urlpath[1]), *request );
+		response = INVARManagerWebRequest( l->nm, &(urlpath[1]), *request );
+	}
+	
+	//
+	// DOS Token
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "token" ) == 0 )
+	{
+		INFO("Token called\n");
+		response = TokenWebRequest( l, urlpath, request, loggedSession, result );
 	}
 	
 	//

@@ -24,7 +24,15 @@ global $SqlDatabase;
 if( $level != 'Admin' ) die( '404' );
 
 if( $rows = $SqlDatabase->FetchObjects( '
-	SELECT u.FullName, u.Name, u.SessionID, u.ID FROM FUser u
+	SELECT u.FullName, u.Name, u.SessionID, u.ID 
+	FROM FUser u 
+	' . ( isset( $args->args->userid ) && $args->args->userid ? '
+	WHERE u.ID IN (' . $args->args->userid . ') 
+	' : '' ) . '
+	ORDER BY u.FullName ASC 
+	' . ( isset( $args->args->limit ) && $args->args->limit ? '
+	LIMIT ' . $args->args->limit . ' 
+	' : '' ) . '
 ' ) )
 {
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
