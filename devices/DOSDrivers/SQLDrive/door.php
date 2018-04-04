@@ -409,6 +409,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$fn = $f->Filename;
 					$f->DiskFilename = '';
 				}
+				
+				// Sanitize!
+				if( strstr( $fn, '/' ) )
+				{
+					$fn = explode( '/', $fn );
+					$fn = $fn[1];
+				}
 	
 				// Write the file
 				
