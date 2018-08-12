@@ -114,7 +114,8 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 					(const struct lws_protocol_vhost_options *)in;
 			while (pvo) {
 				if (!strcmp(pvo->name, "fifo-path"))
-					strncpy(vhd->fifo_path, pvo->value, sizeof(vhd->fifo_path) - 1);
+					lws_strncpy(vhd->fifo_path, pvo->value,
+							sizeof(vhd->fifo_path));
 				pvo = pvo->next;
 			}
 			if (vhd->fifo_path[0] == '\0') {
@@ -127,7 +128,7 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 			lwsl_err("mkfifo failed\n");
 			return 1;
 		}
-		vhd->fifo = open(vhd->fifo_path, O_NONBLOCK | O_RDONLY);
+		vhd->fifo = lws_open(vhd->fifo_path, O_NONBLOCK | O_RDONLY);
 		if (vhd->fifo == -1) {
 			lwsl_err("opening fifo failed\n");
 			unlink(vhd->fifo_path);
@@ -135,7 +136,8 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 		}
 		lwsl_notice("FIFO %s created\n", vhd->fifo_path);
 		u.filefd = vhd->fifo;
-		if (!lws_adopt_descriptor_vhost(vhd->vhost, 0, u,
+		if (!lws_adopt_descriptor_vhost(vhd->vhost,
+						LWS_ADOPT_RAW_FILE_DESC, u,
 						"protocol-lws-raw-test",
 						NULL)) {
 			lwsl_err("Failed to adopt fifo descriptor\n");
@@ -148,7 +150,7 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		if (!vhd)
 			break;
-		if (vhd->fifo >- 0) {
+		if (vhd->fifo >= 0) {
 			close(vhd->fifo);
 			unlink(vhd->fifo_path);
 		}
@@ -201,7 +203,7 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason,
 			vhd->zero_length_read = 0;
 			close(vhd->fifo);
 			/* the wsi that adopted the fifo file is closing... reopen the fifo and readopt */
-			vhd->fifo = open(vhd->fifo_path, O_NONBLOCK | O_RDONLY);
+			vhd->fifo = lws_open(vhd->fifo_path, O_NONBLOCK | O_RDONLY);
 			if (vhd->fifo == -1) {
 				lwsl_err("opening fifo failed\n");
 				return 1;

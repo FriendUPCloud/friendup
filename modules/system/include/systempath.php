@@ -146,16 +146,19 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 					$o->Filename = $app->Filename;
 					$o->Type = 'Executable';
 					$o->MetaType = 'File';
-					if( file_exists( $path . $app->Filename . '/icon.png' ) )
+					$ipath = $path;
+					if( substr( $ipath, 0, 9 ) == 'resources' )
+						$ipath = substr( $ipath, 9, strlen( $ipath ) - 9 ); 
+					$svgPath = $ipath . $app->Filename . '/icon.svg';
+					$pngPath = $ipath . $app->Filename . '/icon.png';
+					$picon = file_exists( 'resources' . $svgPath ) ? $svgPath : $pngPath;
+					if( $path == 'repository/' )
 					{
-						if( $path == 'repository/' )
-						{
-							$o->IconFile = '/system.library/module/?sessionid=' . $User->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
-						}
-						else
-						{
-							$o->IconFile = '/webclient/apps/' . $app->Filename . '/icon.png';
-						}
+						$o->IconFile = '/system.library/module/?sessionid=' . $User->SessionID . '&module=system&command=repoappimage&i=' . $app->Filename;
+					}
+					else if( file_exists( 'resources' . $picon ) )
+					{
+						$o->IconFile = $picon;
 					}
 					$o->Path = 'System:Software/' . $app->Cat . '/';
 					$o->Permissions = '';

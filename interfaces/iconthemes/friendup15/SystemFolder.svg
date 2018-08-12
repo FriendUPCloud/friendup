@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="44px" height="36px" viewBox="0 0 44 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>SystemFolder</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <text id="text-1" font-family="FontAwesome" font-size="18" font-weight="normal" fill="#455155">
+            <tspan x="12.3571429" y="25"></tspan>
+        </text>
+        <filter x="-2.5%" y="-8.3%" width="105.0%" height="111.1%" filterUnits="objectBoundingBox" id="filter-2">
+            <feGaussianBlur stdDeviation="0.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="0" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+        <filter x="-2.5%" y="-8.3%" width="105.0%" height="111.1%" filterUnits="objectBoundingBox" id="filter-3">
+            <feGaussianBlur stdDeviation="0.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="0" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Desktop-HD-Copy" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-559.000000, -539.000000)">
+        <g id="Icons" transform="translate(229.000000, 99.000000)">
+            <g id="Folders" transform="translate(169.000000, 246.000000)">
+                <g id="SystemFolder" transform="translate(161.000000, 194.000000)">
+                    <path d="M0.948527,1.92186 L0.948527,5.2044656 L0.948527,7.17451223 C0.948527,8.1856201 2.652859,9 4.768438,9 L25.192311,9 C27.314911,8.98602186 26.871223,7.55511978 29.01026,6.74639816 L39.290865,6.74639816 C41.203125,6.74639816 43.106854,5.2044656 43.047994,5.2044656 L43.047994,4.17546184 C43.047994,3.62317709 42.6002787,3.17546184 42.047994,3.17546184 L24.992193,3.17546184 C23.6528246,2.54674683 22.5013244,0.92186 21.174242,0.92186 L1.948527,0.92186 C1.39624225,0.92186 0.948527,1.36957525 0.948527,1.92186 Z" id="rect4177-9-7-2-2-48" fill="#455155" fill-rule="nonzero"></path>
+                    <path d="M0.939453,4.98047 L0.939453,8.52167 L0.939453,34.50781 C0.939453,35.0600947 1.38716825,35.50781 1.939453,35.50781 L42.0402506,35.50781 C42.5925354,35.50781 43.0402506,35.0600947 43.0402506,34.50781 L43.0402506,13.85955 L43.0402506,8.52167 L43.0402506,4.98047 L39.2052919,4.98047 L4.77635927,4.98047 L0.939453,4.98047 Z" id="rect4177-9-7-2-0" fill="#7B8D93" fill-rule="nonzero"></path>
+                    <g id="" opacity="0.8" fill="#455155" fill-opacity="1">
+                        <use filter="url(#filter-2)" xlink:href="#text-1"></use>
+                        <use filter="url(#filter-3)" xlink:href="#text-1"></use>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

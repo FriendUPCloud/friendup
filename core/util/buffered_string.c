@@ -99,13 +99,13 @@ unsigned int BufStringAdd(BufString *bs, const char *string_to_append)
 
 unsigned int BufStringAddSize(BufString *bs, const char *string_to_append, unsigned int string_to_append_length)
 {
-	if (string_to_append == NULL)
+	if ( string_to_append == NULL || string_to_append_length < 1 )
 	{
 		FERROR("Cannot add NULL text!\n");
 		return 1;
 	}
 
-	if (string_to_append_length + bs->bs_Size > bs->bs_Bufsize){ //not enough place in buffer - reallocate
+	if ( (string_to_append_length + bs->bs_Size) >= bs->bs_Bufsize){ //not enough place in buffer - reallocate
 
 		unsigned int increment = string_to_append_length;
 

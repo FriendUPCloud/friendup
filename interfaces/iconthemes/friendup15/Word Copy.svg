@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>Word Copy</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-255.000000, -355.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)">
+            <g id="Appicons" transform="translate(97.000000, 264.000000)">
+                <g id="Word-Copy" transform="translate(111.000000, 77.000000)">
+                    <path d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#2980B9" fill-rule="nonzero"></path>
+                    <g id="Group" transform="translate(6.000000, 5.000000)" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8">
+                        <rect id="rect4175-59" x="12" y="5.6" width="16" height="2"></rect>
+                        <rect id="rect4175-59" x="12" y="0" width="16" height="2"></rect>
+                        <rect id="rect4175-5-62" x="0" y="11.2" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-1" x="0" y="16.8" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-2-7" x="0" y="22.4" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-2-7" x="0" y="28" width="28" height="2"></rect>
+                    </g>
+                    <text id="W" fill="#FFFFFF" font-family="Assistant-Bold, Assistant" font-size="10" font-weight="bold">
+                        <tspan x="5" y="12">W</tspan>
+                    </text>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

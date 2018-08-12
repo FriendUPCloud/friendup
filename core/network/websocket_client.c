@@ -45,6 +45,8 @@ WebsocketClient *WebsocketClientNew()
 	if( cl != NULL )
 	{
 		pthread_mutex_init( &(cl->wc_Mutex), NULL );
+		
+		FQInit( &(cl->wc_MsgQueue) );
 	}
 	return cl;
 }
@@ -78,7 +80,7 @@ void WebsocketClientDelete( WebsocketClient *cl )
 		
 		AppSessionRemByWebSocket( SLIB->sl_AppSessionManager->sl_AppSessions, cl );
 		
-		pthread_mutex_lock( &(cl->wc_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cl->wc_Mutex) );
 		
 		//DEBUG("[WS] connection will be removed %p\n", cl );
 		Log(FLOG_DEBUG, "WebsocketClient delete %p\n", cl );
@@ -86,7 +88,7 @@ void WebsocketClientDelete( WebsocketClient *cl )
 		cl->wc_UserSession = NULL;
 		cl->wc_Wsi = NULL;
 		//cl->wc_WebsocketsData = NULL;
-		pthread_mutex_unlock( &(cl->wc_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cl->wc_Mutex) );
 		
 		pthread_mutex_destroy( &(cl->wc_Mutex) );
 		FFree( cl );

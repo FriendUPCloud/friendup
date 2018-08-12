@@ -36,7 +36,10 @@
 #include <core/nodes.h>
 #include <libwebsockets.h>
 
-#define WS_PROTOCOL_BUFFER_SIZE 0xffff
+//#define WS_PROTOCOL_BUFFER_SIZE 0xffff
+#define WS_PROTOCOL_BUFFER_SIZE 65535
+//#define WS_PROTOCOL_BUFFER_SIZE 10048
+//#define WS_PROTOCOL_BUFFER_SIZE 4096
 #define WSREQ_ID_SIZE 128
 
 //

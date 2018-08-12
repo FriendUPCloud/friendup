@@ -247,7 +247,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o = new stdClass();
 									$len = strlen( trim( $groupName ) );
 									$trimmed = trim( substr( $groupName, strlen( $filter ), $len - strlen( $filter ) ) );
-									$o->Filename = str_replace( '/', '&nbsp;-&nbsp;', $trimmed );
+									$o->Filename = str_replace( '/', '→', $trimmed );
 									$o->Filesize = 16;
 									$o->Type = 'Directory';
 									$o->MetaType = 'Directory';
@@ -255,7 +255,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o->DateModifed = date ( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
 									$o->ID = utf8_encode( $row['ID'] );
 									$o->Path = $this->Name . ':' . i18n( 'i18n_products' ) . 
-										'/' . $subPath . str_replace( '/', '&nbsp;-&nbsp;', $o->Filename ) . '/';
+										'/' . $subPath . str_replace( '/', '→', $o->Filename ) . '/';
 									$o->Shared = '';
 									$o->SharedLink = '';
 									$out[] = $o;
@@ -263,7 +263,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 									// Create .info file for directory
 									$o = new stdClass();
 									$len = strlen( $groupName );
-									$o->Filename = str_replace( '/', '&nbsp;-&nbsp;', $trimmed ) . '.dirinfo';
+									$o->Filename = str_replace( '/', '→', $trimmed ) . '.dirinfo';
 									$o->Filesize = 16;
 									$o->Type = 'File';
 									$o->MetaType = 'DirectoryInformation';
@@ -271,7 +271,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 									$o->DateModifed = date ( 'Y-m-d H:i:s', strtotime( $row['ChTime'] ) );
 									$o->ID = utf8_encode( $row['ID'] );
 									$o->Path = $this->Name . ':' . i18n( 'i18n_products' ) . 
-										'/' . $subPath . ( str_replace( '/', '&nbsp;-&nbsp;', $trimmed ) . '.dirinfo' );
+										'/' . $subPath . ( str_replace( '/', '→', $trimmed ) . '.dirinfo' );
 									$o->Shared = '';
 									$o->SharedLink = '';
 									$out[] = $o;
@@ -572,7 +572,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						VKAT k, 
 						VUnderkat u 
 					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $cats ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						v.WEBAKTIV > 0           AND 
@@ -588,7 +588,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						VUnderkat u,
 						MLVarenavn n 
 					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $cats ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						v.WEBAKTIV > 0           AND 
@@ -612,7 +612,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 								v.ID = b.VareID
 							)
 					WHERE 
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $cats ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $cats ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						v.WEBAKTIV > 0           AND 
@@ -643,14 +643,9 @@ if( !class_exists( 'DoorQuickNG' ) )
 							}
 						}*/
 						
-						//die( print_r( $row,1 ) . ' --' );
-						
 						// TODO: Make a list of non active products on "AKTIVVARE" for hiding them or for deleting them.
 						
-						//$cname = ( trim( $row['Webvarenavn'] ) ? trim( $row['Webvarenavn'] ) : trim( $row['VARENAVN'] ) );
-						$cname = trim( /*$row['Varenavn'] ? $row['Varenavn'] : */$row['VARENAVN'] );
-						
-						//if( !$row['Varenavn'] ) continue;
+						$cname = trim( trim( $row['Varenavn'] ) ? $row['Varenavn'] : $row['VARENAVN'] );
 						
 						if( $row['VARENAVN'] && trim( $row['VARENR'] ) && ( !$row['VariantAvID'] || $row['VariantAvID'] == $row['ID'] ) /* && $cname && !in_array( $cname, $files )*/ )
 						{
@@ -658,9 +653,9 @@ if( !class_exists( 'DoorQuickNG' ) )
 							
 							// Original state of the file
 							$o = new stdClass();
-							//$o->Title = str_replace( '/', '&nbsp;-&nbsp;', ucfirst( strtolower( utf8_encode( $cname ) ) ) );
-							$o->Title = str_replace( '/', '&nbsp;-&nbsp;', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' );
-							//$o->Title = str_replace( '/', '&nbsp;-&nbsp;', trim( $row['ID'] ) );
+							//$o->Title = str_replace( '/', '→', ucfirst( strtolower( utf8_encode( $cname ) ) ) );
+							$o->Title = str_replace( '/', '→', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' );
+							//$o->Title = str_replace( '/', '→', trim( $row['ID'] ) );
 							$o->Filename = $o->Title;
 							$o->Filesize = '16';
 							$o->Type = 'File';
@@ -692,9 +687,9 @@ if( !class_exists( 'DoorQuickNG' ) )
 							
 							// File info
 							$o = new stdClass();
-							//$o->Title = str_replace( '/', '&nbsp;-&nbsp;', ucfirst( strtolower( utf8_encode( $cname ) ) ) ) . '.info';
-							//$o->Title = str_replace( '/', '&nbsp;-&nbsp;', trim( $row['ID'] ) ) . '.info';
-							$o->Title = str_replace( '/', '&nbsp;-&nbsp;', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' ) . '.info';
+							//$o->Title = str_replace( '/', '→', ucfirst( strtolower( utf8_encode( $cname ) ) ) ) . '.info';
+							//$o->Title = str_replace( '/', '→', trim( $row['ID'] ) ) . '.info';
+							$o->Title = str_replace( '/', '→', utf8_encode( $cname ) . ' (-' . $row['ID'] . '-)' ) . '.info';
 							$o->Filename = $o->Title;
 							$o->Filesize = '16';
 							$o->Type = 'File';
@@ -781,7 +776,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						$category = implode( ' -> ', $p );
 					}
 						 
-					$Logger->log( 'Directory mode: ' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $category ) ) ) );
+					$Logger->log( 'Directory mode: ' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) );
 				
 					// TODO: Perhaps put this code into a GetCategory function
 					
@@ -801,7 +796,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						FROM  
 							VUnderkat u LEFT JOIN WebBilder AS b ON u.ID = b.VUnderkatID 
 						WHERE 
-							UPPER(u.UKATNAVN) = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $category ) ) ) . '\') AND u.Webaktiv > 0 
+							UPPER(u.UKATNAVN) = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND u.Webaktiv > 0 
 					' ) )
 					{
 						$imgname = ''; $imgmime = '';
@@ -818,7 +813,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 							}
 							
 							$cid   = $row['ID'];
-							$cname = str_replace( '/', '&nbsp;-&nbsp;', trim( $row['UKATNAVN'] ) );
+							$cname = str_replace( '/', '→', trim( $row['UKATNAVN'] ) );
 							
 							if( $cname = explode( ' -> ', $cname ) )
 							{
@@ -909,7 +904,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 				
 				if( $productName )
 				{
-					$prodparts = explode( ' (-', utf8_decode( trim( str_replace( '.info', '', str_replace( '&nbsp;-&nbsp;', '/', $productName ) ) ) ) );
+					$prodparts = explode( ' (-', utf8_decode( trim( str_replace( '.info', '', str_replace( '→', '/', $productName ) ) ) ) );
 				}
 				
 				$prodnam = ( isset( $prodparts[0] ) ? $prodparts[0] : $prodparts );
@@ -932,7 +927,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 						varereg h, 
 						VUnderkat u LEFT JOIN WebBilder AS b ON u.ID = b.VUnderkatID 
 					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $category ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						h.WEBAKTIV > 0           AND 
@@ -959,7 +954,7 @@ if( !class_exists( 'DoorQuickNG' ) )
 								u.ID = b.VUnderkatID 
 							) 
 					WHERE 						
-						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '&nbsp;-&nbsp;', '/', $category ) ) ) . '\') AND
+						UPPER(u.UKATNAVN)      = UPPER(\'' . utf8_decode( urldecode( str_replace( '→', '/', $category ) ) ) . '\') AND
 						u.Webaktiv > 0           AND 
 						u.HovedGrpID = k.ID      AND 
 						h.WEBAKTIV > 0           AND 
@@ -1107,8 +1102,8 @@ if( !class_exists( 'DoorQuickNG' ) )
 										
 										if( !$row['VariantAvID'] || $row['VariantAvID'] == $row['ID'] )
 										{
-											$cname1 = str_replace( '/', '&nbsp;-&nbsp;', trim( $row['Varenavn'] ) );
-											$cname2 = str_replace( '/', '&nbsp;-&nbsp;', trim( $row['VARENAVN'] ) );
+											$cname1 = str_replace( '/', '→', trim( $row['Varenavn'] ) );
+											$cname2 = str_replace( '/', '→', trim( $row['VARENAVN'] ) );
 										}
 										
 										$webinfo = ( !$webinfo ? str_replace( '#CRLF', "\n", $row['WEBINFO'] ) : $webinfo );

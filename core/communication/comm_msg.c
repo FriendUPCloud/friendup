@@ -163,7 +163,7 @@ DataForm *DataFormNew( MsgItem *mi )
 			uint64_t oldsize = (uint64_t)DataFormWriteGroup( &tmpptr, &mi );
 			lmi->mi_Size = oldsize;
 
-			Log( FLOG_INFO, "NEWMSG Created package size %lu\n", size ); 
+			//Log( FLOG_INFO, "NEWMSG Created package size %lu\n", size ); 
 		}
 		else
 		{

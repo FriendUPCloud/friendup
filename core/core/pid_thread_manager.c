@@ -37,6 +37,7 @@
 #include <core/nodes.h>
 #include <network/http.h>
 #include "pid_thread_manager.h"
+#include <mutex/mutex_manager.h>
 
 /**
  * Create new PIDThreadManager
@@ -71,7 +72,7 @@ void PIDThreadManagerDelete( PIDThreadManager *ptm )
 		PIDThread *thr = ptm->ptm_Threads;
 		PIDThread *thrdel;
 		
-		pthread_mutex_lock( &ptm->ptm_Mutex );
+		FRIEND_MUTEX_LOCK( &ptm->ptm_Mutex );
 		
 		while( thr != NULL )
 		{
@@ -81,7 +82,7 @@ void PIDThreadManagerDelete( PIDThreadManager *ptm )
 			PIDThreadDelete( thrdel );
 		}
 		
-		pthread_mutex_unlock( &ptm->ptm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 		
 		pthread_mutex_destroy( &ptm->ptm_Mutex );
 		
@@ -104,7 +105,7 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 	
 	DEBUG("[PIDThreadManager] RemoteThreads\n");
 	
-	pthread_mutex_lock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_LOCK( &ptm->ptm_Mutex );
 	
 	while( thr != NULL )
 	{
@@ -128,7 +129,7 @@ int PIDThreadManagerRemoveThreads( PIDThreadManager *ptm )
 		}
 	}
 	
-	pthread_mutex_unlock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 	
 	DEBUG("[PIDThreadManager] RemoteThreads end\n");
 	
@@ -215,7 +216,7 @@ FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **u
 		
 		if( pidt->pt_Thread != NULL )
 		{
-			pthread_mutex_lock( &ptm->ptm_Mutex );
+			FRIEND_MUTEX_LOCK( &ptm->ptm_Mutex );
 			
 			if( ptm->ptm_Threads != NULL )
 			{
@@ -229,7 +230,7 @@ FUQUAD PIDThreadManagerRunThread( PIDThreadManager *ptm, Http *request, char **u
 				ptm->ptm_Threads = pidt;
 			}
 			
-			pthread_mutex_unlock( &ptm->ptm_Mutex );
+			FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 		}
 		return pidt->pt_PID;
 	}
@@ -258,7 +259,7 @@ BufString *PIDThreadManagerGetThreadList( PIDThreadManager *ptm )
 	
 	BufStringAdd( bs, "{\"result\":[" );
 	
-	pthread_mutex_lock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_LOCK( &ptm->ptm_Mutex );
 	int pos = 0;
 	
 	while( thr != NULL )
@@ -279,7 +280,7 @@ BufString *PIDThreadManagerGetThreadList( PIDThreadManager *ptm )
 		pos++;
 	}
 	
-	pthread_mutex_unlock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 	
 	BufStringAddSize( bs, "]", 1 );
 	
@@ -303,7 +304,7 @@ int PIDThreadManagerKillPID( PIDThreadManager *ptm, FUQUAD pid )
 	
 	DEBUG("[PIDThreadManager] KillPID\n");
 	
-	pthread_mutex_lock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_LOCK( &ptm->ptm_Mutex );
 	
 	while( thr != NULL )
 	{
@@ -327,12 +328,12 @@ int PIDThreadManagerKillPID( PIDThreadManager *ptm, FUQUAD pid )
 			
 			PIDThreadDelete( thrdel );
 			
-			pthread_mutex_unlock( &ptm->ptm_Mutex );
+			FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 			return 0;
 		}
 	}
 	
-	pthread_mutex_unlock( &ptm->ptm_Mutex );
+	FRIEND_MUTEX_UNLOCK( &ptm->ptm_Mutex );
 	
 	DEBUG("[PIDThreadManager] KillPID end\n");
 	return 1;

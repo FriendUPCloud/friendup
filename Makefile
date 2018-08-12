@@ -24,6 +24,7 @@ cleanfiles:
 	rm -fr $(FRIEND_PATH)/resources/webclient/
 	rm -fr $(FRIEND_PATH)/resources/themes/
 	rm -fr $(FRIEND_PATH)/resources/iconthemes/
+	rm -fr $(FRIEND_PATH)/resources/graphics/
 	rm -fr $(FRIEND_PATH)/devices/
 	rm -fr $(FRIEND_PATH)/resources/repository/
 	rm -fr $(FRIEND_PATH)/services/
@@ -49,6 +50,7 @@ updatefiles:
 	rsync -ravl interfaces/web_desktop/* $(FRIEND_PATH)/resources/webclient/
 	rsync -ravl interfaces/themes/* $(FRIEND_PATH)/resources/themes/
 	rsync -ravl interfaces/iconthemes/* $(FRIEND_PATH)/resources/iconthemes/
+	rsync -ravl interfaces/graphics/* $(FRIEND_PATH)/resources/graphics/
 	rsync -ravl devices/* $(FRIEND_PATH)/devices/
 	rsync -ravl repository/* $(FRIEND_PATH)/resources/repository/
 	rsync -ravl services/* $(FRIEND_PATH)/services/
@@ -117,6 +119,7 @@ install:
 	rsync -ravl interfaces/web_desktop/favicon.ico $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/themes $(FRIEND_PATH)/resources/
 	rsync -ravl interfaces/iconthemes/* $(FRIEND_PATH)/resources/iconthemes/
+	rsync -ravl interfaces/graphics/* $(FRIEND_PATH)/resources/graphics/
 
 	rsync -ravl php $(FRIEND_PATH)/
 	rsync -ravl modules $(FRIEND_PATH)/
@@ -130,6 +133,10 @@ install:
 	make -C authmods install CYGWIN_BUILD=$(CYGWIN_BUILD) FRIEND_PATH=$(FRIEND_PATH)
 	cp scripts/*.sh $(FRIEND_PATH)/
 
+goinstall: install
+	rm -f build/resources/webclient/index.html
+	ln -s build/resources/webclient/go.html build/resources/webclient/index.html
+	
 sync:
 	@echo "Synchronization in progress."
 	rsync -ravl resources $(FRIEND_PATH)/
@@ -141,8 +148,3 @@ internaldoc:
 	@echo "Documentation ready in docs/core/webcalls/"
 	doxygen docs/doxygen/core/coreInternal
 	@echo "Documentation ready in docs/core/internal/"
-
-gitclean:
-	git clean -d -x -f
-
-

@@ -121,7 +121,7 @@ LocFile* LocFileNew( char* path, unsigned int flags )
 	FILE* fp = fopen( path, "rb" );
 	if( fp == NULL )
 	{
-		FERROR("Cannot open file %s (file does not exist?)..\n", path );
+		Log( FLOG_ERROR, "Cannot open file %s (file does not exist?)..\n", path );
 		return NULL;
 	}
 	

@@ -192,6 +192,46 @@ char * dictionary_get(dictionary * d, const char * key, char * def)
     return def ;
 }
 
+// same + no case sensitive
+#include <ctype.h>
+
+char * dictionary_get_ncs(dictionary * d, const char * key, char * def)
+{
+    unsigned    hash ;
+    int         i ;
+
+    hash = dictionary_hash(key);
+    for (i=0 ; i<d->size ; i++)
+	{
+		if (d->key[i]==NULL)
+            continue ;
+		
+		int keysize = strlen( key );
+		int dickeycpysize = strlen(d->key[i]);
+		
+		if( keysize == dickeycpysize )
+		{
+			int z;
+			int same = 1;
+			
+			for( z = 0 ; z < keysize ; z++ )
+			{
+				if( toupper( key[ z ] ) != toupper( d->key[ i ][ z ] ) )
+				{
+					same = 0;
+					break;
+				}
+			}
+			
+			if( same == 1 )
+			{
+				return d->val[i];
+			}
+		}
+    }
+    return def ;
+}
+
 /*-------------------------------------------------------------------------*/
 /**
   @brief    Set a value in a dictionary.

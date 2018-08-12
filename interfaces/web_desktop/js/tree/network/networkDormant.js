@@ -29,7 +29,7 @@ Friend.Tree.Network.RenderItems = Friend.Tree.Network.RenderItems || {};
 
 Friend.Tree.Network.Dormant = function( tree, name, properties )
 {
-	this.appName = false;
+	this.nameApplication = false;
 	this.functions = false;
 	this.caller = false;
 	this.execute = false;
@@ -43,7 +43,7 @@ Friend.Tree.Network.Dormant = function( tree, name, properties )
 	{
 		command: 'dormant', 
 		subCommand: 'addAppDoor',
-		appName: this.appName,
+		appName: this.nameApplication,
 		functions: this.functions
 	};
 	Application.sendMessage( message );

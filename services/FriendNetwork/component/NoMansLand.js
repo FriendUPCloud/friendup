@@ -176,22 +176,32 @@ ns.NoMansLand.prototype.sendSession = function( cid, sessionId ) {
 ns.NoMansLand.prototype.validate = function( bundle, callback ) {
 	const self = this;
 	log( 'validate', bundle );
-	if ( 'sessionid' === bundle.type ) {
+	if ( 'workspace' === bundle.type ) {
 		checkSessionId( bundle.data );
+		return;
+	}
+	
+	if ( 'application' === bundle.type ) {
+		checkAuthId( bundle.data );
 		return;
 	}
 	
 	callback( 'ERR_AUTH_UNKNOWN_TYPE', null );
 	
 	function checkSessionId( data ) {
-		getFCUser( data.sessionId, userBack );
+		let req = {
+			module    : 'system',
+			command   : 'userinfoget',
+			sessionid : data.token,
+		};
+		getFCUser( req, userBack );
 		function userBack( err, res ) {
 			if ( err ) {
 				callback( err, null );
 				return;
 			}
 			
-			log( 'userBack', res );
+			log( 'sessionId.userBack', res );
 			if ( !res || !res.Name ) {
 				callback( 'ERR_AUTH_INVALID_SESSIONID', null );
 				return;
@@ -208,16 +218,34 @@ ns.NoMansLand.prototype.validate = function( bundle, callback ) {
 		}
 	}
 	
-	function getFCUser( sessionId, reqBack ) {
-		var data = {
-			module    : 'system',
-			command   : 'userinfoget',
-			sessionid : sessionId,
+	function checkAuthId( data ) {
+		log( 'checkAuthId', data );
+		let req = {
+			module  : 'system',
+			command : 'userinfoget',
+			authid  : data.token,
 		};
-		
+		getFCUser( req, userBack );
+		function userBack( err, res ) {
+			if ( err ) {
+				callback( err, null );
+				return;
+			}
+			
+			log( 'authId.userBack', res );
+			if ( !res || !res.Name ) {
+				callback( 'ERR_AUTH_INVALID_AUTHID', null );
+				return;
+			}
+			
+			callback( null, res );
+		}
+	}
+	
+	function getFCUser( auth, reqBack ) {
 		var req = {
 			path : '/system.library/module/',
-			data : data,
+			data : auth,
 			success : success,
 			error : error,
 		};

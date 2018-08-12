@@ -21,7 +21,7 @@
 
 	UserLibrary code
 
-*/
+ */
 
 #include <core/types.h>
 #include <core/library.h>
@@ -35,17 +35,17 @@
 #include "echo.h"
 
 #define LIB_NAME "echo.library"
-#define LIB_VERSION 0.1
+#define LIB_VERSION 1
 
 void *libInit( void )
 {
+	FERROR("************* library init");
 	struct EchoLibrary* l;
 
 	if( ( l = calloc( sizeof( struct EchoLibrary ), 1 ) ) == NULL )
 	{
 		return NULL;
 	}
-
 
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
@@ -58,41 +58,35 @@ void *libInit( void )
 
 void libClose( struct EchoLibrary *l )
 {
+	FERROR("************* library close");
 }
 
-double 	GetVersion(void)
+long GetVersion(void)
 {
 	return LIB_VERSION;
 }
 
-unsigned int WebRequest( char* func, Http_t* request, Socket_t* sock )
+
+Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *request)
 {
+	FERROR("************* Func is <%s>", func);
+
+	struct TagItem tags[] = {
+			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/plain" ) },
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{TAG_DONE, TAG_DONE}
+	};
+
 	if( strcmp( func, "echo" ) == 0 )
 	{
-		char* text = "*crickets*";
-		if( request->uri->query )
-		{
-			HashmapElement_t* e = HashmapGet( request->uri->query, "text" );
-			if( e )
-			{
-				printf("%s\n", e->data);
-				text = e->data;
-			}
-		}
-
-		Http_t* response = HttpNewSimple( 
-			HTTP_200_OK, 4,
-			"Content-Type", StringDuplicate( "text/plain" ),
-			"Connection", StringDuplicate( "close" )
-		);
-		HttpAddTextContent( response, text );
-		HttpWriteAndFree( response, sock );
-		return 200;
+		Http *response = HttpNewSimple(HTTP_200_OK, tags);
+		HttpAddTextContent( response, request->uri->path->raw );
+		return response;
 	}
 	else
 	{
-		Http404( sock );
-		return 404;
+		Http* response = HttpNewSimple(HTTP_404_NOT_FOUND, tags);
+		HttpAddTextContent( response, "404 response text :)" );
+		return response;
 	}
-
 }

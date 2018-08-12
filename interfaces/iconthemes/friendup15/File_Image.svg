@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Image</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.145155422" offset="72.5777111%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.152214625" offset="76.1073126%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.152214625" offset="76.1073126%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-448.000000, -55.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Image" transform="translate(336.615385, 2.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#E74C3C" fill-rule="nonzero"></path>
+                            <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="48" height="56"></rect>
+                            <g id="Group-4" transform="translate(7.200000, 8.960000)" fill="#FFFFFF" fill-rule="nonzero">
+                                <g id="cloud-4" transform="translate(10.800000, 0.000000)" fill-opacity="0.7">
+                                    <path d="M6.47386364,2.45318182 C6.38946818,2.44600364 6.30384545,2.44363636 6.21818182,2.44363636 C4.52556818,2.44363636 3.30272823,3.53439803 2.9192055,5.00680349 C1.28157368,5.72507985 0,7.27004727 0,9.01090909 C0,11.4533618 2.12854091,13.44 4.74545455,13.44 L15.6272727,13.44 C18.5599636,13.44 20.9454545,11.2135036 20.9454545,8.47636364 C20.9454545,5.89668545 18.8258318,3.77045455 16.1258318,3.53418545 C15.4700182,1.47954545 13.4399045,0 11.0454545,0 C9.12272727,0 7.40965909,0.949772727 6.47386364,2.45318182 Z" id="Shape"></path>
+                                </g>
+                                <polygon id="rect4396-8" fill-opacity="0.9" points="13.4171075 31.8644055 7.75937549 23.896755 0 35.84 4.48234857 35.84 30.3176514 35.84 34.8 35.84 20.7349826 20.16"></polygon>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

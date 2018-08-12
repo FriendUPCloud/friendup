@@ -83,7 +83,7 @@ void FriendCoreProcess( void *fcv );
 
 int accept4(int sockfd, struct sockaddr *addr,            socklen_t *addrlen, int flags);
 
-static int nothreads = 0;					/// threads coutner @todo to rewrite
+int nothreads = 0;					/// threads coutner @todo to rewrite
 #define MAX_CALLHANDLER_THREADS 256			///< maximum number of simulatenous handlers
 
 /* HTTP requests above this thresholds are saved to temporary files
@@ -111,11 +111,11 @@ static void ssl_locking_function( int mode, int n, const char *file __attribute_
 { 
 	if( mode & CRYPTO_LOCK )
 	{
-		pthread_mutex_lock( &ssl_mutex_buf[ n ] );
+		FRIEND_MUTEX_LOCK( &ssl_mutex_buf[ n ] );
 	}
 	else
 	{
-		pthread_mutex_unlock( &ssl_mutex_buf[ n ] );
+		FRIEND_MUTEX_UNLOCK( &ssl_mutex_buf[ n ] );
 	}
 }
 
@@ -236,9 +236,9 @@ void FriendCoreShutdown( FriendCoreInstance* fc )
 	
 	// Destroy listen mutex
 	DEBUG("[FriendCoreShutdown] Waiting for listen mutex\n" );
-	if( pthread_mutex_lock( &fc->fci_ListenMutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &fc->fci_ListenMutex ) == 0 )
 	{
-		pthread_mutex_unlock( &fc->fci_ListenMutex );
+		FRIEND_MUTEX_UNLOCK( &fc->fci_ListenMutex );
 		pthread_mutex_destroy( &fc->fci_ListenMutex );
 	}
 	
@@ -265,25 +265,25 @@ static char *dividerStr = "\r\n\r\n";
 
 static void DecreaseThreads()
 {
-	if( pthread_mutex_lock( &maxthreadmut ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &maxthreadmut ) == 0 )
 	{
 		nothreads--;
 #ifdef __DEBUG
 		//LOG( FLOG_DEBUG,"DecreaseThreadsDecreaseThreadsDecreaseThreads %d %d\n", pthread_self(), nothreads );
 #endif
-		pthread_mutex_unlock( &maxthreadmut );
+		FRIEND_MUTEX_UNLOCK( &maxthreadmut );
 	}
 }
 
 static void IncreaseThreads()
 {
-	if( pthread_mutex_lock( &maxthreadmut ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &maxthreadmut ) == 0 )
 	{
 		nothreads++;
 #ifdef __DEBUG
 		//LOG( FLOG_DEBUG,"IncreaseThreadsIncreaseThreadsIncreaseThreads %d %d\n", pthread_self(), nothreads );
 #endif
-		pthread_mutex_unlock( &maxthreadmut );
+		FRIEND_MUTEX_UNLOCK( &maxthreadmut );
 	}
 }
 
@@ -926,7 +926,7 @@ void FriendCoreProcess( void *fcv )
 					headerLength + bodyLength - count :
 					0;
 
-		res = SocketRead( th->sock, locBuffer, bufferSize, expected );
+				res = SocketRead( th->sock, locBuffer, bufferSize, expected );
 				if( res > 0 )
 				{
 					if( tmp_file_handle >= 0 )
@@ -1183,7 +1183,7 @@ void FriendCoreProcess( void *fcv )
 				{
 					DEBUG( "regular processing" );
 				}
-				
+
 				// ------------------------------------------------------- 
 				Http *resp = ProtocolHttp( th->sock, incoming_buffer_ptr, incoming_buffer_length );
 
@@ -1556,7 +1556,11 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 		{
 			currentEvent = &events[i];
 			Socket *sock = ( Socket *)currentEvent->data.ptr;
-			FERROR("epoll event %d sock %p fd %d - listen %d\n", currentEvent->events, sock, sock->fd, fc->fci_Sockets->fd );
+			if( fc->fci_Sockets != NULL )
+			{
+				//FERROR("epoll event %d sock %p fd %d - listen %d\n", currentEvent->events, sock, sock->fd, fc->fci_Sockets->fd );
+				FERROR("epoll event %d sock %p - listen %d\n", currentEvent->events, sock, fc->fci_Sockets->fd );
+			}
 			
 			// Ok, we have a problem with our connection
 			if( 
@@ -1659,7 +1663,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 #else
 #ifdef USE_WORKERS
 						SystemBase *locsb = (SystemBase *)fc->fci_SB;
-						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL ) != 0 )
+						if( WorkerManagerRun( locsb->sl_WorkerManager,  FriendCoreProcess, pre, NULL, "FriendCoreProcess" ) != 0 )
 						{
 							SocketClose( sock );
 						}
@@ -1721,7 +1725,7 @@ static inline void FriendCoreEpoll( FriendCoreInstance* fc )
 	// Free epoll events
 	FFree( events );
 	
-	DEBUG( "[FriendCoreEpoll] Done freeing events" );
+	LOG( FLOG_INFO, "[FriendCoreEpoll] Done freeing events" );
 	events = NULL;
 	
 	// Free pipes!
@@ -1777,6 +1781,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( fc->fci_Sockets == NULL )
 	{
+		FERROR("Cannot create socket on port: %d!\n", fc->fci_Port );
 		fc->fci_Closed = TRUE;
 		return -1;
 	}
@@ -1784,6 +1789,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	// Non blocking listening!
 	if( SocketSetBlocking( fc->fci_Sockets, FALSE ) == -1 )
 	{
+		FERROR("Cannot set socket to blocking state!\n");
 		SocketClose( fc->fci_Sockets );
 		fc->fci_Closed = TRUE;
 		return -1;
@@ -1791,6 +1797,7 @@ int FriendCoreRun( FriendCoreInstance* fc )
 	
 	if( SocketListen( fc->fci_Sockets ) != 0 )
 	{
+		FERROR("Cannot setup socket!\nCheck if port: %d\n", fc->fci_Port );
 		SocketClose( fc->fci_Sockets );
 		fc->fci_Closed= TRUE;
 		return -1;
@@ -1844,10 +1851,6 @@ int FriendCoreRun( FriendCoreInstance* fc )
 		{
 			DEBUG( "[FriendCore] Closing library at address %lld\n", ( long long int )e->data );
 			LibraryClose( (Library*)e->data );
-			if( e->data != NULL )
-			{
-				FFree( e->data );
-			}
 			e->data = NULL;
 			FFree( e->key );
 			e->key = NULL;

@@ -56,6 +56,8 @@ struct per_session_data__esplws_scan {
 	unsigned char changed_partway:1;
 };
 
+#define max_aps 12
+
 struct per_vhost_data__esplws_scan {
 	wifi_ap_record_t ap_records[10];
 	TimerHandle_t timer, reboot_timer;
@@ -63,15 +65,21 @@ struct per_vhost_data__esplws_scan {
 	struct lws_context *context;
 	struct lws_vhost *vhost;
 	const struct lws_protocols *protocol;
+	struct lws_wifi_scan *known_aps_list;
 
 	const esp_partition_t *part;
 	esp_ota_handle_t otahandle;
 	long file_length;
 	long content_length;
 
+	int cert_remaining_days;
+
 	struct lws *cwsi;
-	char json[1024];
+	char json[2048];
 	int json_len;
+
+	int acme_state;
+	char acme_msg[256];
 
 	uint16_t count_ap_records;
 	char count_live_pss;
@@ -115,6 +123,9 @@ static const char * const param_names[] = {
 	"pri",
 	"serial",
 	"opts",
+	"group",
+	"role",
+	"updsettings",
 };
 
 enum enum_param_names {
@@ -123,6 +134,9 @@ enum enum_param_names {
 	EPN_PRI,
 	EPN_SERIAL,
 	EPN_OPTS,
+	EPN_GROUP,
+	EPN_ROLE,
+	EPN_UPDSETTINGS,
 };
 
 
@@ -157,6 +171,12 @@ scan_start(struct per_vhost_data__esplws_scan *vhd)
 	if (vhd->scan_ongoing)
 		return;
 
+	if (lws_esp32.acme)
+		return;
+
+	if (lws_esp32.upload)
+		return;
+
 	vhd->scan_ongoing = 1;
 	lws_esp32.scan_consumer = scan_finished;
 	lws_esp32.scan_consumer_arg = vhd;
@@ -165,9 +185,24 @@ scan_start(struct per_vhost_data__esplws_scan *vhd)
 		lwsl_err("scan start failed %d\n", n);
 }
 
+static int  scan_defer;
+
 static void timer_cb(TimerHandle_t t)
 {
 	struct per_vhost_data__esplws_scan *vhd = pvTimerGetTimerID(t);
+
+//	if (!lws_esp32.inet && ((scan_defer++) & 1))
+/*
+ * AP mode + scan does not work well on ESP32... if we didn't connect to an AP
+ * ourselves, just scan once at boot.  Then leave us on the AP channel.
+ *
+ * Do the callback for everyone to keep the heartbeat alive.
+ */
+	if (!lws_esp32.inet && scan_defer++) {
+		 lws_callback_on_writable_all_protocol(vhd->context, vhd->protocol);
+
+		 return;
+	}
 
 	scan_start(vhd);
 }
@@ -180,7 +215,7 @@ static void reboot_timer_cb(TimerHandle_t t)
 static int
 client_connection(struct per_vhost_data__esplws_scan *vhd, const char *file)
 {
-#if CONFIG_LWS_IS_FACTORY_APPLICATION == 'y' && defined(CONFIG_LWS_OTA_SERVER_BASE_URL) && \
+#if defined(CONFIG_LWS_IS_FACTORY_APPLICATION)  && defined(CONFIG_LWS_OTA_SERVER_BASE_URL) && \
     defined(CONFIG_LWS_OTA_SERVER_FQDN)
 	static struct lws_client_connect_info i;
 	char path[256];
@@ -212,11 +247,101 @@ client_connection(struct per_vhost_data__esplws_scan *vhd, const char *file)
 	return 0; /* ongoing */
 }
 
+static int
+lws_wifi_scan_rssi(struct lws_wifi_scan *p)
+{
+	if (!p->count)
+		return -127;
+
+	return p->rssi / p->count;
+}
+
+/*
+ * Insert new lws_wifi_scan into linkedlist in rssi-sorted order, trimming the
+ * list if needed to keep it at or below max_aps entries.
+ */
+
+static int
+lws_wifi_scan_insert_trim(struct lws_wifi_scan **list, struct lws_wifi_scan *ns)
+{
+	int count = 0, ins = 1, worst;
+	struct lws_wifi_scan *newlist, **pworst, *pp1;
+
+	lws_start_foreach_llp(struct lws_wifi_scan **, pp, *list) {
+		/* try to find existing match */
+		if (!strcmp((*pp)->ssid, ns->ssid) &&
+		    !memcmp((*pp)->bssid, ns->bssid, 6)) {
+			if ((*pp)->count > 127) {
+				(*pp)->count /= 2;
+				(*pp)->rssi /= 2;
+			}
+			(*pp)->rssi += ns->rssi;
+			(*pp)->count++;
+			ins = 0;
+			break;
+		}
+	} lws_end_foreach_llp(pp, next);
+
+	if (ins) {
+		lws_start_foreach_llp(struct lws_wifi_scan **, pp, *list) {
+			/* trim any excess guys */
+			if (count++ >= max_aps - 1) {
+				pp1 = *pp;
+				*pp = (*pp)->next;
+				free(pp1);
+				continue; /* stay where we are */
+			}
+		} lws_end_foreach_llp(pp, next);
+
+		/* we are inserting... so alloc a copy of him */
+		pp1 = malloc(sizeof(*pp1));
+		if (!pp1)
+			return -1;
+
+		memcpy(pp1, ns, sizeof(*pp1));
+		pp1->next = *list;
+		*list = pp1;
+	}
+
+	/* sort the list ... worst first, but added at the newlist head */
+
+	newlist = NULL;
+
+	/* while anybody left on the old list */
+	while (*list) {
+		worst = 0;
+		pworst = NULL;
+
+		/* who is the worst guy still left on the old list? */
+		lws_start_foreach_llp(struct lws_wifi_scan **, pp, *list) {
+			if (lws_wifi_scan_rssi(*pp) <= worst) {
+				worst = lws_wifi_scan_rssi(*pp);
+				pworst = pp;
+			}
+		} lws_end_foreach_llp(pp, next);
+
+		if (pworst) {
+			/* move the worst to the head of the new list */
+			pp1 = *pworst;
+			*pworst = (*pworst)->next;
+			pp1->next = newlist;
+			newlist = pp1;
+		}
+	}
+
+	*list = newlist;
+
+	return 0;
+}
+
 static void
 scan_finished(uint16_t count, wifi_ap_record_t *recs, void *v)
 {
 	struct per_vhost_data__esplws_scan *vhd = v;
 	struct per_session_data__esplws_scan *p = vhd->live_pss_list;
+	struct lws_wifi_scan lws;
+	wifi_ap_record_t *r;
+	int m;
 
 	lwsl_notice("%s: count %d\n", __func__, count);
 
@@ -230,11 +355,28 @@ scan_finished(uint16_t count, wifi_ap_record_t *recs, void *v)
 	memcpy(vhd->ap_records, recs, vhd->count_ap_records * sizeof(*recs));
 	
 	while (p) {
-		if (p->scan_state != SCAN_STATE_INITIAL && p->scan_state != SCAN_STATE_NONE)
+		if (p->scan_state != SCAN_STATE_INITIAL &&
+		    p->scan_state != SCAN_STATE_NONE)
 			p->changed_partway = 1;
 		else
 			p->scan_state = SCAN_STATE_INITIAL;
 		p = p->next;
+	}
+
+	/* convert to generic, cumulative scan results */
+
+	for (m = 0; m < vhd->count_ap_records; m++) {
+
+		r = &vhd->ap_records[m];
+
+		lws.authmode = r->authmode;
+		lws.channel = r->primary;
+		lws.rssi = r->rssi;
+		lws.count = 1;
+		memcpy(&lws.bssid, r->bssid, 6);
+		lws_strncpy(lws.ssid, (const char *)r->ssid, sizeof(lws.ssid));
+
+		lws_wifi_scan_insert_trim(&vhd->known_aps_list, &lws);
 	}
 
 	lws_callback_on_writable_all_protocol(vhd->context, vhd->protocol);
@@ -249,7 +391,7 @@ scan_finished(uint16_t count, wifi_ap_record_t *recs, void *v)
                esp_wifi_connect();
 }
 
-static const char *ssl_names[] = { "ssl-pub.pem", "ssl-pri.pem" };
+static const char *ssl_names[] = { "ap-cert.pem", "ap-key.pem" };
 
 static int
 file_upload_cb(void *data, const char *name, const char *filename,
@@ -265,7 +407,7 @@ file_upload_cb(void *data, const char *name, const char *filename,
 			return -1;
 
 		lwsl_notice("LWS_UFS_OPEN Filename %s\n", filename);
-		strncpy(pss->filename, filename, sizeof(pss->filename) - 1);
+		lws_strncpy(pss->filename, filename, sizeof(pss->filename));
 		if (!strcmp(name, "pub") || !strcmp(name, "pri")) {
 			if (nvs_open("lws-station", NVS_READWRITE, &pss->nvh))
 				return 1;
@@ -292,6 +434,7 @@ file_upload_cb(void *data, const char *name, const char *filename,
 		n = 0;
 		if (!strcmp(name, "pri"))
 			n = 1;
+		lwsl_notice("writing %s\n", ssl_names[n]);
 		n = nvs_set_blob(pss->nvh, ssl_names[n], pss->buffer, pss->file_length);
 		if (n == ESP_OK)
 			nvs_commit(pss->nvh);
@@ -316,7 +459,9 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 					lws_get_protocol(wsi));
 	unsigned char *start = pss->buffer + LWS_PRE - 1, *p = start,
 		      *end = pss->buffer + sizeof(pss->buffer) - 1;
-	wifi_ap_record_t *r;
+	union lws_tls_cert_info_results ir;
+	struct lws_wifi_scan *lwscan;
+	char subject[64];
 	int n, m;
 	nvs_handle nvh;
 	size_t s;
@@ -335,7 +480,7 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			  (TimerCallbackFunction_t)timer_cb);
 		vhd->scan_ongoing = 0;
 		strcpy(vhd->json, " { }");
-		scan_start(vhd);
+	//	scan_start(vhd);
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
@@ -348,21 +493,20 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_ESTABLISHED:
 		lwsl_notice("%s: ESTABLISHED\n", __func__);
 		if (!vhd->live_pss_list) {
-			scan_start(vhd);
+		//	scan_start(vhd);
 			xTimerStart(vhd->timer, 0);
 		}
 		vhd->count_live_pss++;
 		pss->next = vhd->live_pss_list;
 		vhd->live_pss_list = pss;
 		/* if we have scan results, update them.  Otherwise wait */
-		if (vhd->count_ap_records) {
+//		if (vhd->count_ap_records) {
 			pss->scan_state = SCAN_STATE_INITIAL;
 			lws_callback_on_writable(wsi);
-		}
+//		}
 		break;
 
 	case LWS_CALLBACK_SERVER_WRITEABLE:
-
 		if (vhd->autonomous_update_sampled) {
 			p += snprintf((char *)p, end - p,
 				      " {\n \"auton\":\"1\",\n \"pos\": \"%ld\",\n"
@@ -381,11 +525,15 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			char img_factory[384], img_ota[384], group[16], role[16];
 			int grt;
 
+		case SCAN_STATE_NONE:
+
+			/* fallthru */
+
 		case SCAN_STATE_INITIAL:
 
 			gettimeofday(&t, NULL);
-			if (t.tv_sec - pss->last_send.tv_sec < 10)
-				return 0;
+		//	if (t.tv_sec - pss->last_send.tv_sec < 10)
+		//		return 0;
 
 			pss->last_send = t;
 
@@ -394,9 +542,9 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 				return -1;
 			}
 			n = 0;
-			if (nvs_get_blob(nvh, "ssl-pub.pem", NULL, &s) == ESP_OK)
+			if (nvs_get_blob(nvh, "ap-cert.pem", NULL, &s) == ESP_OK)
 				n = 1;
-			if (nvs_get_blob(nvh, "ssl-pri.pem", NULL, &s) == ESP_OK)
+			if (nvs_get_blob(nvh, "ap-key.pem", NULL, &s) == ESP_OK)
 				n |= 2;
 			s = sizeof(group) - 1;
 			group[0] = '\0';
@@ -405,6 +553,26 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			nvs_get_str(nvh, "role", role, &s);
 
 			nvs_close(nvh);
+
+			ir.ns.name[0] = '\0';
+			subject[0] = '\0';
+
+			if (t.tv_sec > 1464083026 &&
+			    !lws_tls_vhost_cert_info(vhd->vhost,
+				       LWS_TLS_CERT_INFO_VALIDITY_TO, &ir, 0)) {
+				vhd->cert_remaining_days =
+					     (ir.time - t.tv_sec) / (24 * 3600);
+				ir.ns.name[0] = '\0';
+				lws_tls_vhost_cert_info(vhd->vhost,
+					LWS_TLS_CERT_INFO_COMMON_NAME, &ir,
+						sizeof(ir.ns.name));
+				lws_strncpy(subject, ir.ns.name, sizeof(subject));
+
+				ir.ns.name[0] = '\0';
+				lws_tls_vhost_cert_info(vhd->vhost,
+					LWS_TLS_CERT_INFO_ISSUER_NAME, &ir,
+						sizeof(ir.ns.name));
+			}
 
 			/*
 			 * this value in the JSON is just
@@ -418,7 +586,7 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			strcpy(img_factory, " { \"date\": \"Empty\" }");
 			strcpy(img_ota, " { \"date\": \"Empty\" }");
 
-			if (grt != LWS_MAGIC_REBOOT_TYPE_FORCED_FACTORY_BUTTON) {
+	//		if (grt != LWS_MAGIC_REBOOT_TYPE_FORCED_FACTORY_BUTTON) {
 				lws_esp32_get_image_info(esp_partition_find_first(ESP_PARTITION_TYPE_APP,
 					ESP_PARTITION_SUBTYPE_APP_FACTORY, NULL), &i,
 					img_factory, sizeof(img_factory) - 1);
@@ -432,7 +600,7 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 				img_ota[sizeof(img_ota) - 1] = '\0';
 				if (img_ota[0] == 0xff || strlen(img_ota) < 8)
 					strcpy(img_ota, " { \"date\": \"Empty\" }");
-			}
+	//		}
 
 			p += snprintf((char *)p, end - p,
 				      "{ \"model\":\"%s\",\n"
@@ -448,6 +616,15 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 				      " \"conn_ip\":\"%s\",\n"
 				      " \"conn_mask\":\"%s\",\n"
 				      " \"conn_gw\":\"%s\",\n"
+				      " \"certdays\":\"%d\",\n"
+				      " \"unixtime\":\"%llu\",\n"
+				      " \"certissuer\":\"%s\",\n"
+				      " \"certsubject\":\"%s\",\n"
+				      " \"le_dns\":\"%s\",\n"
+				      " \"le_email\":\"%s\",\n"
+				      " \"acme_state\":\"%d\",\n"
+				      " \"acme_msg\":\"%s\",\n"
+				      " \"button\":\"%d\",\n"
 				      " \"group\":\"%s\",\n"
 				      " \"role\":\"%s\",\n",
 				      lws_esp32.model,
@@ -462,6 +639,14 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 				      lws_esp32.sta_ip,
 				      lws_esp32.sta_mask,
 				      lws_esp32.sta_gw,
+				      vhd->cert_remaining_days,
+				      (unsigned long long)t.tv_sec,
+				      ir.ns.name, subject,
+				      lws_esp32.le_dns,
+				      lws_esp32.le_email,
+				      vhd->acme_state,
+				      vhd->acme_msg,
+				      ((volatile struct lws_esp32 *)(&lws_esp32))->button_is_down,
 				      group, role);
 			p += snprintf((char *)p, end - p,
 				      " \"img_factory\": %s,\n"
@@ -499,7 +684,7 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			}
 
 			for (m = 0; m < 4; m++) {
-				char name[10], ssid[32];
+				char name[10], ssid[65];
 				unsigned int pp = 0, use = 0;
 
 				if (m)
@@ -523,6 +708,7 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 					ssid, pp, use);
 			}
 			nvs_close(nvh);
+			pss->ap_record = 0;
 
 			p += snprintf((char *)p, end - p,
                                       "], \"aps\":[\n");
@@ -532,27 +718,36 @@ callback_esplws_scan(struct lws *wsi, enum lws_callback_reasons reason,
 			break;
 
 		case SCAN_STATE_LIST:
+			lwscan = vhd->known_aps_list;
+
+			n = pss->ap_record;
+			while (lwscan && n--)
+				lwscan = lwscan->next;
+
 			for (m = 0; m < 6; m++) {
 				n = LWS_WRITE_CONTINUATION | LWS_WRITE_NO_FIN;
-				if (pss->ap_record >= vhd->count_ap_records)
+				if (!lwscan)
 					goto scan_state_final;
 
 				if (pss->subsequent)
 					*p++ = ',';
 				pss->subsequent = 1;
+				pss->ap_record++;
 
-				r = &vhd->ap_records[(int)pss->ap_record++];
 				p += snprintf((char *)p, end - p,
 					      "{\"ssid\":\"%s\",\n"
 					       "\"bssid\":\"%02X:%02X:%02X:%02X:%02X:%02X\",\n"
 					       "\"rssi\":\"%d\",\n"
 					       "\"chan\":\"%d\",\n"
 					       "\"auth\":\"%d\"}\n",
-						r->ssid,
-						r->bssid[0], r->bssid[1], r->bssid[2],
-						r->bssid[3], r->bssid[4], r->bssid[5],
-						r->rssi, r->primary, r->authmode);
-				if (pss->ap_record >= vhd->count_ap_records)
+					       lwscan->ssid,
+					       lwscan->bssid[0], lwscan->bssid[1], lwscan->bssid[2],
+					       lwscan->bssid[3], lwscan->bssid[4], lwscan->bssid[5],
+					       lws_wifi_scan_rssi(lwscan),
+					       lwscan->channel, lwscan->authmode);
+
+				lwscan = lwscan->next;
+				if (!lwscan)
 					pss->scan_state = SCAN_STATE_FINAL;
 			}
 			break;
@@ -562,6 +757,7 @@ scan_state_final:
 			n = LWS_WRITE_CONTINUATION;
 			p += sprintf((char *)p, "]\n}\n");
 			if (pss->changed_partway) {
+				pss->changed_partway = 0;
 				pss->subsequent = 0;
 				pss->scan_state = SCAN_STATE_INITIAL;
 			} else {
@@ -573,8 +769,6 @@ scan_state_final:
 			return 0;
 		}
 issue:
-//		lwsl_notice("issue: %d (%d)\n", p - start, n);
-		lwsl_hexdump(start, p - start);
 		m = lws_write(wsi, (unsigned char *)start, p - start, n);
 		if (m < 0) {
 			lwsl_err("ERROR %d writing to di socket\n", m);
@@ -584,6 +778,16 @@ issue:
 		if (pss->scan_state != SCAN_STATE_NONE)
 			lws_callback_on_writable(wsi);
 
+		break;
+
+	case LWS_CALLBACK_VHOST_CERT_UPDATE:
+		lwsl_notice("LWS_CALLBACK_VHOST_CERT_UPDATE: %d\n", (int)len);
+		vhd->acme_state = (int)len;
+		if (in) {
+			lws_strncpy(vhd->acme_msg, in, sizeof(vhd->acme_msg));
+			lwsl_notice("acme_msg: %s\n", (char *)in);
+		}
+		lws_callback_on_writable_all_protocol_vhost(vhd->vhost, vhd->protocol);
 		break;
 
 	case LWS_CALLBACK_RECEIVE:
@@ -608,6 +812,10 @@ issue:
 			if (strstr((const char *)in, "\"reset\""))
 				goto sched_reset;
 
+			if (!strncmp((const char *)in, "{\"job\":\"start-le\"", 17))
+				goto start_le;
+
+
 			if (nvs_open("lws-station", NVS_READWRITE, &nvh) != ESP_OK) {
 				lwsl_err("Unable to open nvs\n");
 				break;
@@ -626,16 +834,6 @@ issue:
 				if (n == 8 && lws_esp32_get_reboot_type() != LWS_MAGIC_REBOOT_TYPE_FORCED_FACTORY_BUTTON)
 					continue;
 
-				//lwsl_notice("%s: %s '%s'\n", __func__, store_json[n].nvs, p);
-				if (n == 9) {
-					strncpy(lws_esp32.group, p, sizeof(lws_esp32.group) - 1);
-					lws_esp32.group[sizeof(lws_esp32.group) - 1] = '\0';
-				}
-				if (n == 10) {
-					strncpy(lws_esp32.role, p, sizeof(lws_esp32.role) - 1);
-					lws_esp32.role[sizeof(lws_esp32.role) - 1] = '\0';
-				}
-
 				if (lws_nvs_set_str(nvh, store_json[n].nvs, p) != ESP_OK) {
 					lwsl_err("Unable to store %s in nvm\n", store_json[n].nvs);
 					goto bail_nvs;
@@ -643,20 +841,15 @@ issue:
 
 				if (si != -1 && n < 8) {
 					if (!(n & 1)) {
-						strncpy(lws_esp32.ssid[(n >> 1) & 3], p,
+						lws_strncpy(lws_esp32.ssid[(n >> 1) & 3], p,
 								sizeof(lws_esp32.ssid[0]));
-						lws_esp32.ssid[(n >> 1) & 3]
-							[sizeof(lws_esp32.ssid[0]) - 1] = '\0';
 						lws_snprintf(use, sizeof(use) - 1, "%duse", si);
 						lwsl_notice("resetting %s to 0\n", use);
 						nvs_set_u32(nvh, use, 0);
 
-					} else {
-						strncpy(lws_esp32.password[(n >> 1) & 3], p,
+					} else
+						lws_strncpy(lws_esp32.password[(n >> 1) & 3], p,
 								sizeof(lws_esp32.password[0]));
-						lws_esp32.password[(n >> 1) & 3]
-							[sizeof(lws_esp32.password[0]) - 1] = '\0';
-					}
 				}
 
 			}
@@ -731,6 +924,75 @@ auton:
 				vhd->autonomous_update = 0;
 
 			break;
+
+start_le:
+			lws_esp32.acme = 1; /* hold off scanning */
+			puts(in);
+			/*
+			 * {"job":"start-le","cn":"home.warmcat.com",
+			 * "email":"andy@warmcat.com", "staging":"true"}
+			 */
+
+			if (nvs_open("lws-station", NVS_READWRITE, &nvh) != ESP_OK) {
+				lwsl_err("Unable to open nvs\n");
+				break;
+			}
+
+			n = 0;
+			b = strstr(in, ",\"cn\":\"");
+			if (b) {
+				b += 7;
+				while (*b && *b != '\"' && n < sizeof(lws_esp32.le_dns) - 1)
+					lws_esp32.le_dns[n++] = *b++;
+			}
+			lws_esp32.le_dns[n] = '\0';
+
+			lws_nvs_set_str(nvh, "acme-cn", lws_esp32.le_dns);
+			n = 0;
+			b = strstr(in, ",\"email\":\"");
+			if (b) {
+				b += 10;
+				while (*b && *b != '\"' && n < sizeof(lws_esp32.le_email) - 1)
+					lws_esp32.le_email[n++] = *b++;
+			}
+			lws_esp32.le_email[n] = '\0';
+			lws_nvs_set_str(nvh, "acme-email", lws_esp32.le_email);
+			nvs_commit(nvh);
+
+			nvs_close(nvh);
+
+			n = 1;
+			b = strstr(in, ",\"staging\":\"");
+			if (b)
+				lwsl_notice("staging: %s\n", b);
+			if (b && b[12] == 'f')
+				n = 0;
+
+			lwsl_notice("cn: %s, email: %s, staging: %d\n", lws_esp32.le_dns, lws_esp32.le_email, n);
+
+			{
+				struct lws_acme_cert_aging_args caa;
+
+				memset(&caa, 0, sizeof(caa));
+				caa.vh = vhd->vhost;
+
+				caa.element_overrides[LWS_TLS_REQ_ELEMENT_COMMON_NAME] = lws_esp32.le_dns;
+				caa.element_overrides[LWS_TLS_REQ_ELEMENT_EMAIL] = lws_esp32.le_email;
+
+				if (n)
+					caa.element_overrides[LWS_TLS_SET_DIR_URL] =
+							"https://acme-staging.api.letsencrypt.org/directory"; /* staging */
+				else
+					caa.element_overrides[LWS_TLS_SET_DIR_URL] =
+						"https://acme-v01.api.letsencrypt.org/directory"; /* real */
+
+				lws_callback_vhost_protocols_vhost(vhd->vhost,
+						LWS_CALLBACK_VHOST_CERT_AGING,
+							(void *)&caa, 0);
+			}
+
+			break;
+
 		}
 
 	case LWS_CALLBACK_CLOSED:
@@ -756,7 +1018,6 @@ auton:
 
 	case LWS_CALLBACK_HTTP_BODY:
 		/* create the POST argument parser if not already existing */
-		lwsl_notice("LWS_CALLBACK_HTTP_BODY (scan)\n");
 		if (!pss->spa) {
 			pss->spa = lws_spa_create(wsi, param_names,
 					ARRAY_SIZE(param_names), 1024,
@@ -767,7 +1028,7 @@ auton:
 			pss->filename[0] = '\0';
 			pss->file_length = 0;
 		}
-
+		//puts((const char *)in);
 		/* let it parse the POST data */
 		if (lws_spa_process(pss->spa, in, len))
 			return -1;
@@ -777,6 +1038,14 @@ auton:
 		lwsl_notice("LWS_CALLBACK_HTTP_BODY_COMPLETION (scan)\n");
 		/* call to inform no more payload data coming */
 		lws_spa_finalize(pss->spa);
+
+		for (n = 0; n < ARRAY_SIZE(param_names); n++)
+			if (lws_spa_get_string(pss->spa, n))
+				lwsl_notice(" Param %s: %s\n", param_names[n],
+					    lws_spa_get_string(pss->spa, n));
+			else
+				lwsl_notice(" Param %s: (none)\n",
+					    param_names[n]);
 
 		if (nvs_open("lws-station", NVS_READWRITE, &nvh) != ESP_OK) {
 			lwsl_err("Unable to open nvs\n");
@@ -803,12 +1072,29 @@ auton:
 				nvs_commit(nvh);
 			}
 		}
+
+		if (lws_spa_get_string(pss->spa, EPN_GROUP)) {
+			if (lws_nvs_set_str(nvh, "group", lws_spa_get_string(pss->spa, EPN_GROUP)) != ESP_OK) {
+				lwsl_err("Unable to store group in nvm\n");
+				goto bail_nvs;
+			}
+
+			nvs_commit(nvh);
+		}
+
+		if (lws_spa_get_string(pss->spa, EPN_ROLE)) {
+			if (lws_nvs_set_str(nvh, "role", lws_spa_get_string(pss->spa, EPN_ROLE)) != ESP_OK) {
+				lwsl_err("Unable to store group in nvm\n");
+				goto bail_nvs;
+			}
+
+			nvs_commit(nvh);
+		}
+
 		nvs_close(nvh);
 
 		pss->result_len = snprintf(pss->result + LWS_PRE, sizeof(pss->result) - LWS_PRE - 1,
-				"<html>Rebooting after storing certs...<br>connect to AP '<b>config-%s-%s</b>' and continue here: "
-				"<a href=\"https://192.168.4.1\">https://192.168.4.1</a></html>",
-				lws_esp32.model, lws_spa_get_string(pss->spa, EPN_SERIAL));
+				"<html>OK</html>");
 
 		if (lws_add_http_header_status(wsi, HTTP_STATUS_OK, &p, end))
 			goto bail;
@@ -822,15 +1108,13 @@ auton:
 			goto bail;
 
 		n = lws_write(wsi, start, p - start, LWS_WRITE_HTTP_HEADERS);
-		if (n < 0)
-			goto bail;
-
-		lws_callback_on_writable(wsi);
-		break;
+		goto bail;
 
 	case LWS_CALLBACK_HTTP_WRITEABLE:
 		lwsl_debug("LWS_CALLBACK_HTTP_WRITEABLE: sending %d\n",
 			   pss->result_len);
+		if (!pss->result_len)
+			break;
 		n = lws_write(wsi, (unsigned char *)pss->result + LWS_PRE,
 			      pss->result_len, LWS_WRITE_HTTP);
 		if (n < 0)

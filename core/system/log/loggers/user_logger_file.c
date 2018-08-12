@@ -82,7 +82,7 @@ void init( struct UserLogger *s )
 				DEBUG("[UserLogger] reading file name\n");
 				
 				// get filename
-				fname = plib->ReadString( prop, "Logger:filename", "action_logger" );
+				fname = plib->ReadStringNCS( prop, "Logger:filename", "action_logger" );
 				if( fname == NULL )
 				{
 					strcpy( sd->sd_FileName, "action_logger" );
@@ -93,7 +93,7 @@ void init( struct UserLogger *s )
 				}
 				
 				// get file path
-				fpath = plib->ReadString( prop, "Logger:filepath", "log/" );
+				fpath = plib->ReadStringNCS( prop, "Logger:filepath", "log/" );
 				int size = 5;
 				if( fpath == NULL )
 				{
@@ -214,7 +214,7 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 	
 	if( sd->sd_FP != NULL )
 	{
-		pthread_mutex_lock( &(sd->sd_Mutex) );
+		FRIEND_MUTEX_LOCK( &(sd->sd_Mutex) );
 		// change file name every day
 		if( sd->sd_Day != timeinfo.tm_mday )
 		{
@@ -232,7 +232,7 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 		
 		fprintf( sd->sd_FP, "Date: %s, UserID: %lu, UserSessionID: %s, Action: %s, Information: %s\n",  datestring, logEntry.ul_UserID, logEntry.ul_UserSessionID, actions, information );
 		
-		pthread_mutex_unlock( &(sd->sd_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(sd->sd_Mutex) );
 	}
 	
 	return 0;

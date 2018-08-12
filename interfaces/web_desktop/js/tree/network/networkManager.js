@@ -33,661 +33,274 @@ Friend.Tree.Network.Manager = function ( tree, name, flags )
 	this.caller = false;
 	this.messages = false;
 	this.appName = 'My application';
-	this.password = false;
-	this.treePassword = 'A_fucking_complex_password_not_in_clear_in_the_code_6545465!';
-	this.clients = [ ];
-	this.hostClients = [ ];
-    this.treeClients = [ ];
-	this.treeHostClients = [ ];
-    this.treeHosting = false;
-    this.hosting = false;
-    this.playerCount = 0;
+	this.password = 'A_fucking_complex_password_not_in_clear_in_the_code_6545465!';
+	this.appInformation = false;
+	this.userInformation = false;
+    this.userCount = 0;
 	this.objects = [ ];
-	this.index = false;
+	this.running = false;
+	this.onReady = false;
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Network.Manager', flags );
-};
-Friend.Tree.Network.Manager.getHosts = function ( type )
-{
-	var self = this;
-	FriendNetwork.list( function ( msg )
-	{
-		var list = [ ];
+	this.users = {};
+	this.ready = false;
+	this.hostReady = false;
+	this.applicationReady = false;
+	this.applicationRunning = false;
 
-		// Computes the response of Friend Network, filtering with the name of the application
-		for ( var a = 0; a < msg.hosts.length; a ++ )
+	var appInformation = this.appInformation;
+	if ( !appInformation )
+		appInformation = {};
+	if ( !appInformation.name )
+		appInformation.name = this.root.name;
+	if ( !appInformation.title )
+		appInformation.name = 'An application created with the Tree engine!';
+	if ( !appInformation.image )
+		appInformation.image = this.resources.getApplicationIcon();
+	if ( !appInformation.version )
+		appInformation.version = this.root.version;
+	if ( !appInformation.running )
+		appInformation.running = false;
+	this.appInformation = appInformation;
+
+	var userInformation = this.userInformation;
+	if ( !userInformation )
+		userInformation = {};
+
+	FriendNetwork.isReady( function( msg ) 
+	{
+		if ( msg.ready )
 		{
-			if ( msg.hosts[a].apps )
+			FriendNetwork.getUserInformation( function( message )
 			{
-				var apps = msg.hosts[a].apps;
-				for ( var b = 0; b < apps.length; b ++ )
-				{
-					if ( apps[ b ].type == type )
-					{
-						var hostName = apps[ b ].name;
-						list.push(
-						{
-							name: msg.hosts[ a ].name,
-							hostName: hostName + '@' + msg.hosts[ a ].name
-						} );
-					}
-				}
-			}
-		}
+				var userInfos = message.information;
+				if ( !userInformation.name )
+					userInformation.name = userInfos.name;
+				if ( !userInformation.fullName )
+					userInformation.fullName = userInfos.fullName;
+				if ( !userInformation.description )
+					userInformation.description = userInfos.description;
+				if ( !userInformation.image )
+					userInformation.image = userInfos.image;
+				self.userInformation = userInformation;
 
-		// Sends to caller
-		var data =
-		{
-			command: 'network',
-			subCommand: 'gethosts',
-			list: list
-		};
-		self.messages.apply( self.caller, [ data ] );
-	} );
-};
-Friend.Tree.Network.Manager.checkReady = function ()
-{
-	for ( var key in this.clients )
-	{
-		if ( ! this.clients[ key ].ready )
-			return false;
-	}
-	for ( key in this.hostClients )
-	{
-		if ( ! this.hostClients[ key ].ready )
-			return false;
-	}
-	return true;
-};
-Friend.Tree.Network.Manager.getCreationFlags = function ()
-{
-	var flags = { };
-	flags.clients = this.clients;
-	flags.hostClients = this.hostClients;
-	flags.appName = this.appName;
-	flags.playerCount = this.playerCount;
-	return flags;
-};
-Friend.Tree.Network.Manager.getTrees = function ()
-{
-    return this.getHosts( '<treeShare>' );
-};
-Friend.Tree.Network.Manager.hostTree = function ( name, applicationName, description, properties )
-{
-	debugger;
-	properties.password = this.treePassword;
-	FriendNetwork.host( name, 'tree', applicationName, description, properties, handleHost );
-
-	var self = this;
-    function handleHost( msg )
-    {
-        switch ( msg.command )
-        {
-            case 'friendnetwork':
-                switch ( msg.subCommand )
-                {
-                    case 'host':
-                        self.treeHosting =
-                        {
-                            key: msg.hostKey,
-                            hostName: msg.name
-						};
-						self.treeHostName = msg.name;
-                        break;
-
-					case 'clientConnected':
-                        // Add new client to the host
-                        self.treeHostClients[ msg.key ] =
-                        {
-                            key: msg.key,
-                            name: msg.name,
-							ready: false
-						};
-						
-                        // Relays to the application
-                        self.treeShareClientCount++;
-                        var message =
-                        {
-                            command: 'treeSharing',
-                            subCommand: 'clientConnected',
-                            numberOfClients: self.treeShareClientCount,
-                            key: key
-                        };
-                        if ( self.caller && self.messages )
-                            self.messages.apply( self.caller, [ message ] );
-
-						// Send the welcome page
-						self.sendHTML( msg.key, 'Progdir:Shared/index.html', 'Home:', msg.name );
-                        break;
-
-                    case 'clientDisconnected':
-                        for ( var key in self.treeHostClients )
-                        {
-                            if ( key == msg.key )
-                            {
-                                self.treeShareClientCount--;
-                                var message =
-                                {
-                                    command: 'treeSharing',
-                                    subCommand: 'clientDisconnected',
-                                    numberOfClients: self.treeShareClientCount,
-                                    key: key
-                                };
-                                if ( self.caller && self.messages )
-                                    self.messages.apply( self.caller, [ message ] );
-                                self.treeHostClients[ key ] = false;
-                            }
-                            self.treeHostClients = self.utilities.cleanArray( self.treeHostClients );
-                        }
-                        break;
-
-					// Private message : relays to the application
-					case 'messageFromClient':
-						if ( self.caller && self.messages )
-							self.messages.apply( self.caller, [ msg.data ] );
-						break;
-
-					case 'fileTransfer':
-						switch ( msg.response )
-						{
-							default:
-								break;
-						};
-						if ( self.caller && self.messages )
-							self.messages.apply( self.caller, [ msg.data ] );
-						break;
-
-                    default:
-                        // Relays the message to application
-                        if ( self.caller && self.messages )
-                            self.messages.apply( self.caller, [ msg ] );
-                        break;
-                }
-                break;
-        }
-    }
-};
-
-// Send files to the connected tree
-Friend.Tree.Network.Manager.sendFiles = function( key, list, destinationPath, hostName, finalReponse )
-{
-	if ( !finalResponse )
-		finalResponse = 'fileTransferSuccessfull';
-	FriendNetwork.transferFiles( key, list, destinationPath, finalResponse );
-};
-
-// Ask for files to the connected tree
-Friend.Tree.Network.Manager.getFiles = function( key, list, destinationPath, hostName, finalResponse )
-{
-	if ( !finalResponse )
-		finalResponse = 'fileTransferSuccessfull';
-	FriendNetwork.demandFileTransfer( key, list, destinationPath, finalResponse );
-};
-
-// Send a HTML file and all the files associated with it
-Friend.Tree.Network.Manager.getWelcomePage = function( key )
-{
-	this.getFiles( key, [],	'Home:', 'Welcome' );
-};
-
-// Send a HTML file and all the files associated with it
-Friend.Tree.Network.Manager.sendHTML = function( key, path, destinationPath, hostName )
-{
-	// Extracts the name of the file
-	var name = Friend.Tree.Utilities.getFilenameFromPath( path );
-
-	// Loads the file
-	var html = new File( path );
-	html.onLoad = function( source )
-	{
-		// Get the list of links to external files
-		var list = Friend.Tree.Utilities.extractFriendPaths( source );
-		
-		// Add the current file first position in the list of files to transmit
-		var copy = [];
-		copy.push(  
-		{
-			name: name,
-			path: path,
-			data: source,
-			destinationPath: 'Home:'
-		} );
-	
-		// Converts the list for FriendNetwork
-		for ( var f = 0; f < list.length; f++ )
-		{
-			copy.push( 
-			{
-				name: Friend.Tree.Utilities.getFilenameFromPath( list[ f ] ),
-				path: getImageUrl( list[ f ] ),				
-				destinationPath: 'Home:',
-				info: list[ f ]
+				// Register the application
+				FriendNetworkApps.registerApplication( self.appInformation, self.userInformation, self.password, handleMessages );
 			} );
 		}
-
-		// Call FriendNetwork
-		FriendNetwork.transferFiles( key, copy, destinationPath, 'welcome' );
-	}
-	html.load();
-};
-
-Friend.Tree.Network.Manager.connectToTree = function ( name, flags )
-{
-	debugger;
-	var self = this;
-	var flags = { p2p: this.p2p };
-	FriendNetwork.connect( name, 'tree', flags, handleClients );
-
-	function handleClients( msg )
-	{
-		if ( msg.command == 'friendnetwork' )
+		else
 		{
-			switch ( msg.subCommand )
-			{
-				case 'getCredentials':
-					FriendNetwork.sendCredentials( msg.key, self.treePassword );
-					break;
-				case 'connected':
-					var client =
-					{
-						key: msg.key,
-						hostName: msg.hostName,
-						ready: false
-					};
-					self.treeClients[ msg.key ] = client;
-					self.treeClients[ msg.key ].ready = true;
-
-					// Relays to the application
-                    var message =
-                    {
-                        command: 'treeSharing',
-                        subCommand: 'connected',
-                        key: msg.key,
-                        hostName: msg.hostName
-                    };
-					if ( self.caller && self.messages )
-						self.messages.apply( self.caller, [ msg ] );
-					break;
-				case 'hostDisconnected':
-					for ( var key in self.treeClients )
-					{
-						if ( key == msg.key )
-						{
-							var message =
-							{
-								command: 'treeSharing',
-								subCommand: 'hostDisconnected',
-								key: key,
-								hostName: self.treeClients[ key ].hostName
-							};
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ message ] );
-							self.treeClients[ c ] = false;
-						}
-						this.treeClients = self.utilities.cleanArray( this.treeClients );
-					}
-					break;
-
-				case 'messageFromHost':
-					switch ( msg.data.subCommand )
-					{
-						case 'create':
-							self.itemCreate( msg.data );
-							break;
-						case 'update':
-							self.doUpdate( msg.data );
-							break;
-						case 'destroy':
-							self.itemDestroy( msg.data );
-							break;
-						default:
-							// Private message : relays to the application
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ msg.data ] );
-							break;
-					}
-					break;
-
-				case 'fileTransfer':
-					switch ( msg.response )
-					{
-						case 'fileDownloadProgress':
-							console.log( 'Friend.Tree.Network.Manager - fileTransfer downloading: ' +  msg.fileProgress, msg );
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ msg ] );
-							break;
-						default:
-							console.log( 'Friend.Tree.Network.Manager - File transfer: ' + msg.response, msg );
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ msg ] );
-							break;
-					};
-					break;
-
-				case 'treeShare':
-					switch ( msg.response )
-					{
-						default:
-							console.log( 'Friend.Tree.Network.Manager.connectToTree - treeShare: ' + msg.response, msg );
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ msg ] );
-							break;
-					};
-					break;
-				
-				default:
-					// Relays to the application
-					if ( self.caller && self.messages )
-						self.messages.apply( self.caller, [ msg ] );
-					break;
-			}
+			self.ready = false;
+			self.messages.apply( self.caller, [ 'ready', false ] );
 		}
-	}
-};
+	} );
 
-// Multiplayer game handling
-Friend.Tree.Network.Manager.host = function ( mainHost )
-{
-	var self = this;
-	if ( typeof mainHost == 'undefined' )
+	// All messages from FriendNetworkApps will arrive here
+	handleMessages = function ( message )
 	{
-		this.hostName = this.appName + '<treeHost>' + Math.random() * 1000000 + Math.random() * 1000000;
-		this.mainHost = true;
-	}
-	else
-	{
-		this.hostName = this.appName + '<treeClient>' + Math.random() * 1000000 + Math.random() * 1000000;
-		this.mainHost = false;
-	}
-	FriendNetwork.host( this.hostName, 'Panzers!', this.appName, "", { password: this.password }, handleHost );
+		var command = message.command;
+		var data = message.data;
 
-	function handleHost( msg )
-	{
-		switch ( msg.command )
+		switch ( command )
 		{
-			case 'friendnetwork':
-				switch ( msg.subCommand )
+			case 'registerApplicationResponse':
+				self.appIdentifier = message.data;
+				self.ready = true;
+				self.messages.apply( self.caller, [ 'ready', true ] );
+				break;
+
+			case 'openHost':	
+				self.hostReady = data ? true : false;
+				self.messages.apply( self.caller, [ 'openHost', self.hostReady ] );
+				break;
+
+			case 'newUser':
+				user = 
 				{
-					case 'host':
-						self.hosting =
-						{
-							key: msg.hostKey,
-							hostName: msg.name
-						};
-						break;
+					identifier: data.identifier,
+					name: data.name,
+					userInformation: data.userInformation,
+					ready: false
+				};
+				self.users[ data.identifier ] = user;
+				self.messages.apply( self.caller, [ 'newUser', user ] );
+				break;
 
-					case 'clientConnected':
+			case 'connectToUser':
+				if ( data.identifier )
+				{
+					user =
+					{
+						identifier: data.identifier,
+						isHost: data.isHost,
+						userInformation: data.userInformation,
+						name: data.name
+					};
+					self.users[ data.identifier ] = user;
+					if ( data.isHost )
+						self.messages.apply( self.caller, [ 'connectToHost', { identifier: user.identifier, name: user.name, userInformation: user.userInformation } ] );
+					else
+						self.messages.apply( self.caller, [ 'connectToUser', { identifier: user.identifier, name: user.name, userInformation: user.userInformation } ] );				
+				}
+				else
+				{
+					self.messages.apply( self.caller, [ 'connectToHost', { identifier: false } ] );									
+				}
+				break;
+			
+			case 'runningUserDisconnected':
+				if ( !self.establishingConnections )
+				{
+					user = self.usersList[ data.userNumber ];
+					if ( user )
+					{
+						// Clean the arrays
+						self.usersList.splice( data.userNumber, 1 );
+						self.messages.apply( self.caller, [ 'runningUserDisconnected', { userNumber: data.userNumber, userInformation: data.userInformation } ] );
+					}
+				}
+				break;
 
-						// Sends the name of hosts to connect to to the new client
-						var ready = true;
-						if ( self.mainHost )
-						{
-							var list = [ ];
-							for ( var key in self.hostClients )
-								list.push( self.hostClients[ key ].hostName );
-							if ( list.length > 0 )
-							{
-								var data =
-								{
-									command: 'multiplayer',
-									subCommand: 'hostsToConnect',
-									hostNames: list
-								};
-								FriendNetwork.send( msg.key, data );
-								ready = false;							// hostClient will only be ready when connected to all the other hosts
-							}
-						}
-						// Add new client to the host
-						self.hostClients[ msg.key ] =
-						{
-							key: msg.key,
-							name: msg.name,
-							ready: ready,
-							number: self.playerCount
-						};
-						msg.number = self.playerCount ++;
+			case 'userDisconnected':
+				identifier = data.identifier;
+				user = self.users[ identifier ];
+				if ( user )
+				{
+					self.users = self.tree.utilities.cleanArray( self.users, user );
+					self.messages.apply( self.caller, [ 'userDisconnected', { identifier: identifier, userInformation: user.userInformation } ] );					
+				}
+				break;
 
-						// Send his own player number
-						var data =
-						{
-							command: 'multiplayer',
-							subCommand: 'iamplayer',
-							playerNumber: self.playerCount
-						};
-						FriendNetwork.send( msg.key, data );
+			case 'applicationReady':
+				self.establishingConnections = false;
+				self.userNumber = data.userNumber;
+				self.usersNumber = data.usersNumber;
+				self.usersList = data.users;
+				self.applicationReady = true;
+				self.messages.apply( self.caller, [ command, { userNumber: data.userNumber, usersNumber: data.usersNumber, users: data.users } ] );					
+				break;
 
-						// Relays to the application
-						if ( self.caller && self.messages )
-							self.messages.apply( self.caller, [ msg ] );
-						break;
+			case 'applicationStart':
+				self.applicationRunning = true;
+				self.messages.apply( self.caller, [ command, false ] );
+				break;
 
-					case 'clientDisconnected':
-						for ( var key in self.hostClients )
-						{
-							if ( key == msg.key )
-							{
-								var message =
-								{
-									command: 'multiplayer',
-									subCommand: 'playerDisconnected',
-									playerNumber: self.hostClients[ key ].playerNumber,
-									key: key
-								};
-								if ( self.caller && self.messages )
-									self.messages.apply( self.caller, [ message ] );
-								self.hostClients[ key ] = false;
-							}
-							self.hostClients = self.utilities.cleanArray( self.hostClients );
-						}
-						break;
+			case 'create':
+				self.itemCreate( data.data );
+				break;
 
-					case 'messageFromClient':
-						if ( msg.data.command == 'multiplayer' )
-						{
-							switch ( msg.data.subCommand )
-							{
-								case 'ready':
-									self.hostClients[ msg.key ].ready = true;
-									break;
-								case 'hereIsMyHost':
-									self.hostClients[ msg.key ].hostName = msg.data.hostName;
-									break;
-								case 'create':
-									self.itemCreate( msg.data );
-									break;
-								case 'update':
-									self.doUpdate( msg.data );
-									break;
-								case 'destroy':
-									self.itemDestroy( msg.data );
-									break;
-								default:
-									// Private message : relays to the application
-									if ( self.caller && self.messages )
-										self.messages.apply( self.caller, [ msg.data ] );
-									break;
-							}
-						}
-						break;
-					default:
-						// Relays the message to application
-						if ( self.caller && self.messages )
-							self.messages.apply( self.caller, [ msg ] );
-						break;
+			case 'update':
+				self.doUpdate( data.data );
+				break;
+
+			case 'destroy':
+				self.itemDestroy( data.data );
+				break;
+				
+			default:
+				// Other message. An error?
+				if ( command.substring( 0, 4 ) == 'ERR_' )
+				{
+					debugger;
+				}
+				else
+				{
+					// Private message
+					self.messages.apply( self.caller, [ command, data ] );
 				}
 				break;
 		}
+	};
+};
+Friend.Tree.Network.Manager.closeApplication = function ()
+{
+	FriendNetworkApps.closeApplication( this.appIdentifier );
+	this.objects = [];
+	this.ready = false;
+};
+Friend.Tree.Network.Manager.closeConnections = function ()
+{
+	FriendNetworkApps.closeConnections( this.appIdentifier );
+	this.objects = [];
+	this.users = {};
+	this.hostReady = false;
+};
+Friend.Tree.Network.Manager.closeRunningConnections = function ()
+{
+	FriendNetworkApps.closeRunningConnections( this.appIdentifier );
+	this.objects = [];
+	this.ready = false;
+};
+Friend.Tree.Network.Manager.openHost = function()
+{
+	FriendNetworkApps.openHost( this.appIdentifier );
+};
+Friend.Tree.Network.Manager.closeHost = function()
+{
+	if ( this.hostReady )
+	{
+		FriendNetworkApps.closeHost( this.appIdentifier );
+		this.hostReady = false;
 	}
 };
-Friend.Tree.Network.Manager.connect = function ( name, mainClient, openHost )
+Friend.Tree.Network.Manager.isReady = function ()
+{
+	return this.ready;
+};
+Friend.Tree.Network.Manager.getHosts = function ( filters, callback )
 {
 	var self = this;
-	FriendNetwork.connect( name, 'Panzers!', this.p2p, handleClients );
-
-	function handleClients( msg )
+	FriendNetworkApps.getHosts( self.appIdentifier, filters, true, function( message )
 	{
-		if ( msg.command == 'friendnetwork' )
-		{
-			switch ( msg.subCommand )
-			{
-				case 'getCredentials':
-					FriendNetwork.sendCredentials( msg.key, self.password );
-					break;
-				case 'connected':
-					var client =
-					{
-						key: msg.key,
-						hostName: msg.hostName,
-						mainClient: mainClient,
-						ready: false
-					};
-					self.clients[ msg.key ] = client;
-					if ( mainClient )
-						self.mainClient = client;
-					if ( openHost )
-					{
-						// Open host
-						self.hostName = self.appName + '<fgameclient>' + Math.random() * 1000000 + Math.random() * 1000000;
-						self.host.apply( self, [ true ] );
+		callback.apply( self.caller, [ 'getHostsResponse', message.data ] );
+	} );
+};
+Friend.Tree.Network.Manager.connectToHost = function ( nameHost )
+{
+	var self = this;
+	if ( self.connected )
+		return false;
 
-						// Wait for host to be established
-						var interval = setInterval( checkHostCreation, 200 );
-						function checkHostCreation()
-						{
-							if ( self.hosting )
-							{
-								FriendNetwork.send( client.key,
-								{
-									command: 'multiplayer',
-									subCommand: 'hereIsMyHost',
-									hostName: self.hosting.hostName
-								} );
-								self.clients[ msg.key ].ready = true;
-								clearInterval( interval );
-							}
-						}
-					}
-					else
-					{
-						self.clients[ msg.key ].ready = true;
-					}
-					// Relays to the application
-					if ( self.caller && self.messages )
-						self.messages.apply( self.caller, [ msg ] );
-					break;
-				case 'hostDisconnected':
-					for ( var key in self.clients )
-					{
-						if ( key == msg.key )
-						{
-							var message =
-							{
-								command: 'multiplayer',
-								subCommand: 'hostDisconnected',
-								playerNumber: self.clients[ key ].playerNumber,
-								key: key,
-								hostName: self.clients[ key ].hostName
-							};
-							if ( self.caller && self.messages )
-								self.messages.apply( self.caller, [ message ] );
-							self.clients[ key ] = false;
-						}
-						this.clients = self.utilities.cleanArray( this.clients );
-					}
-					break;
-				case 'messageFromHost':
-					if ( msg.data.command == 'multiplayer' )
-					{
-						switch ( msg.data.subCommand )
-						{
-							case 'iamplayer':
-								if ( self.clients[ msg.key ] )
-									self.clients[ msg.key ].playerNumber = msg.data.playerNumber;
-								break;
-							case 'startgame':
-								// Current player
-								self.playerNumber = msg.data.playerNumber;
-								self.numberOfPlayers = msg.data.numberOfPlayers;
-								// Prepare the message for application
-								var message =
-								{
-									command: 'multiplayer',
-									subCommand: 'startgame',
-									playerNumber: msg.data.playerNumber,
-									numberOfPlayers: msg.data.numberOfPlayers,
-									multiPlayer: self
-								};
-								// Relays to the application
-								if ( self.caller && self.messages )
-									self.messages.apply( self.caller, [ message ] );
-								break;
-							case 'hostsToConnect':
-								var numberToConnect = msg.data.hostNames.length;
-								for ( var i = 0; i < msg.data.hostNames.length; i++ )
-									self.connect.apply( self, [ msg.data.hostNames[ i ], false, false ] );
-								self.clients[ msg.key ].ready = false;
-								var interval = setInterval( checkHostConnection, 200 );
-								function checkHostConnection()
-								{
-									for ( var key in self.clients )
-									{
-										if ( ! self.clients[ key ].checked )
-										{
-											for ( var j = 0; j < msg.data.hostNames.length; j ++ )
-											{
-												if ( msg.data.hostNames[ j ] == self.clients[ key ].hostName )
-												{
-													self.clients[ key ].checked = true;
-													numberToConnect --;
-													if ( numberToConnect == 0 )
-													{
-														FriendNetwork.send( msg.key,
-														{
-															command: 'multiplayer',
-															subCommand: 'ready'
-														} );
-														self.clients[ msg.key ].ready = true;
-														clearInterval( interval );
-													}
-												}
-											}
-										}
-									}
-								}
-								break;
-							case 'create':
-								self.itemCreate( msg.data );
-								break;
-							case 'update':
-								self.doUpdate( msg.data );
-								break;
-							case 'destroy':
-								self.itemDestroy( msg.data );
-								break;
-							default:
-								// Private message : relays to the application
-								if ( self.caller && self.messages )
-									self.messages.apply( self.caller, [ msg.data ] );
-								break;
-						}
-					}
-					break;
-				default:
-					// Relays to the application
-					if ( self.caller && self.messages )
-						self.messages.apply( self.caller, [ msg ] );
-					break;
-			}
-		}
+	FriendNetworkApps.connectToUser( this.appIdentifier, nameHost );
+};
+Friend.Tree.Network.Manager.disconnectFromUser = function( userIdentifier )
+{
+	if ( this.users[ userIdentifier ] )
+	{
+		FriendNetworkApps.disconnectFromUser( userIdentifier );
+		this.users = Friend.Tree.Utilities.cleanArray( this.users, this.users[ userIdentifier ] );
 	}
 };
-Friend.Tree.Network.Manager.multiPlayerSend = function ( subCommand, message )
+Friend.Tree.Network.Manager.establishConnections = function ()
 {
-	message.command = 'multiplayer';
-	message.subCommand = subCommand;
-	for ( var key in this.hostClients )
-		FriendNetwork.send( key, message );
-	for ( key in this.clients )
-		FriendNetwork.send( key, message );
+	if ( this.appIdentifier && this.hostReady && this.getNumberOfUsers() > 0 )
+	{
+		var self = this;
+		this.establishingConnections = true;
+		FriendNetworkApps.establishConnections( this.appIdentifier );
+	}
+};
+Friend.Tree.Network.Manager.getNumberOfUsers = function ()
+{
+	var count = 0;
+	for ( var u in this.users )
+		count++;
+	return count;
+};
+Friend.Tree.Network.Manager.sendMessageToAll = function ( command, message )
+{
+	var msg;
+	if ( typeof message != 'object' )
+		msg = { command: command, data: message };
+	else
+	{
+		msg = message;
+		msg.command = command;
+	}
+	FriendNetworkApps.sendMessageToAll( this.appIdentifier, this.userIdentifier, msg );
+};
+Friend.Tree.Network.Manager.startApplication = function ()
+{
+	FriendNetworkApps.startApplication( this.appIdentifier );
 };
 Friend.Tree.Network.Manager.registerItem = function ( item )
 {
@@ -700,34 +313,31 @@ Friend.Tree.Network.Manager.itemCreate = function ( data )
 	data.creationFlags.fromNetwork = true;
 	data.creationFlags.identifier = this.getLocalIdentifier( data.identifier );
 	data.creationFlags.currentTree  = this.findItemFromName( data.creationFlags.root, this.root );
-	var message =
-	{
-		command: 'multiplayer',
-		subCommand: 'create',
-		data: data
-	};
 
 	// Have the application create the object
-	var item = this.messages.apply( this.caller, [ message ] );
+	var item = this.messages.apply( this.caller, [ 'create', data ] );
 };
 Friend.Tree.Network.Manager.getLocalIdentifier = function ( identifier )
 {
-	var pos = identifier.indexOf( '<userseparator>' );
+	var pos = identifier.indexOf( '<|>' );
 	if ( pos )
 		return Application.username + identifier.substring( pos );
 };
 Friend.Tree.Network.Manager.doUpdate = function ( data )
 {
 	// Turns the names of objects into real objects
-	var message = this.utilities.replaceNamesByObjects( this.root, data.flags, {} );
+	data.flags = this.utilities.replaceNamesByObjects( this.root, data.flags, {} );
 
 	// Update: call the processes of the object with the flags
-	message.delay = 0;
 	var identifier = this.getLocalIdentifier( data.identifier );
 	if ( this.objects[ identifier ] )
 	{
-		message.fromNetwork = true;
-		this.tree.sendMessageToItem( this.root, this.objects[ identifier ], message );
+		data.command = 'network';
+		data.subCommand = 'update';
+		data.type = 'network';
+		data.fromNetwork = true;
+	
+		this.tree.sendMessageToItem( this.root, this.objects[ identifier ], data );
 	}
 };
 Friend.Tree.Network.Manager.itemDestroy = function ( data )
@@ -741,34 +351,19 @@ Friend.Tree.Network.Manager.itemDestroy = function ( data )
 		this.objects = this.utilities.cleanArray( this.objects );
 
 		// Tell the application about it
-		var message =
-		{
-			command: 'multiplayer',
-			subCommand: 'destroy',
-			data: data
-		};
-		var item = this.messages.apply( this.caller, [ message ] );
+		var item = this.messages.apply( this.caller, [ 'destroy', data ] );
 	}
 };
+
 Friend.Tree.Network.Manager.messageUp = function ( message )
 {
-	if ( message.command == 'destroy' && message.itemEvent == this )
+	if ( message.command == 'quit' || ( message.command == 'destroy' && message.itemEvent == this ) )
 	{
-		this.close();
+		FriendNetworkApps.closeApplication( this.appIdentifier );
 	}
 	return this.startProcess( message, [ ] );
 };
 Friend.Tree.Network.Manager.messageDown = function ( message )
 {
 	return this.endProcess( message, [ ] );
-};
-Friend.Tree.Network.Manager.close = function ()
-{
-	if ( this.hosting )
-		FriendNetwork.dispose( this.hosting.key );
-	for ( var key in this.clients )
-		FriendNetwork.disconnect( key );
-	this.hostClients = [];
-	this.hosting = false;
-	this.clients = [];
 };

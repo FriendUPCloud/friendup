@@ -82,6 +82,9 @@
 	$ColorLEDAlert:          #ff5308;
 	$ColorLEDOff:            #e2e2e2;
 	$ColorLEDText:           #000000;
+	$BackgroundHeavy:        rgba(0,0,0,0.01);
+	$BackgroundHeavier:      rgba(0,0,0,0.1);
+	$BackgroundHeaviest:     rgba(0,0,0,0.25);
 	
 	/* Special colors */
 	$ColorBgStError:         #990000;

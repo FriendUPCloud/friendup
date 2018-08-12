@@ -66,6 +66,19 @@ ns.Hub.prototype.disconnect = function( sessionId )
 	self.release( sessionId );
 	delete self.sessions[ sessionId ];
 	self.sessionIds = Object.keys( self.sessions );
+	
+	const closed = {
+		type : 'host-closed',
+		data : {
+			hostId : sessionId,
+		},
+	};
+	self.sessionIds.forEach( toId => {
+		if ( toId === sessionId )
+			return;
+		
+		self.send( null, closed, toId );
+	});
 }
 
 // Priv
@@ -121,6 +134,7 @@ ns.Hub.prototype.release =  function( sid )
 	if ( !session )
 		return;
 	
+	log( 'release' );
 	delete session._emitterEventSink;
 	session.release( 'request' );
 	//session.release( 'expose' );
@@ -153,8 +167,6 @@ ns.Hub.prototype.handleHosts = function( e, rid, sid )
 		hosts = self.sessionIds.map( buildHostInfo );
 	
 	hosts = hosts.filter( item => !!item );
-	log( 'hosts', hosts );
-	
 	self.respond( rid, null, hosts, sid );
 	
 	function buildHostInfo( sid ) {
@@ -162,10 +174,13 @@ ns.Hub.prototype.handleHosts = function( e, rid, sid )
 		if ( !session )
 			return null;
 		
+		return session.getMeta();
+		/*
 		const meta = session.meta;
 		meta.hostId = sid;
 		meta.isPublic = session.isPublic;
 		return meta;
+		*/
 	}
 }
 
@@ -370,12 +385,22 @@ ns.Hub.prototype.handleDisconnect = function( event, rid, sid )
 ns.Hub.prototype.handleMeta = function( conf, sid )
 {
 	const self = this;
-	log( 'handleMeta', conf );
 	const session = self.sessions[ sid ];
 	if ( !session )
 		return;
 	
 	session.updateMeta( conf );
+	
+	const update = {
+		type : 'host-update',
+		data : session.getMeta(),
+	};
+	self.sessionIds.forEach( toId => {
+		if ( toId === sid )
+			return;
+		
+		self.send( null, update, toId );
+	});
 }
 
 ns.Hub.prototype.toHost = function( host, event, sid )

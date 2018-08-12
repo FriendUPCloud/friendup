@@ -64,8 +64,14 @@ typedef struct PropertiesLibrary
 	void                 (*Close)( Props *p );
 	// get string from property file
 	char                 *(*ReadString)( Props *p, char *name, char *def );
+	//
+	char				*(*ReadStringNCS)( Props *p, char *name, char *def );
+	//
+	char				*(*ReadStringNCSUpper)( Props *p, char *name, char *def );
 	// read integer from property file
 	int                  (*ReadInt)( Props *p, const char *name, int def );
+	//
+	int                  (*ReadIntNCS)( Props *p, const char *name, int def );
 	// read double variable from property file
 	double               (*ReadDouble)( Props *p, const char *name, double def );
 	// read bool variable from property file

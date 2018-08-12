@@ -28,7 +28,7 @@ FriendConnection = function( conf )
 	
 	self.protocol = '';
 	self.host = '';
-	self.wsPort = 6500;
+	self.wsPort = ( parseInt( conf.wsPort ) > 0 ? parseInt( conf.wsPort ) : 6500 );
 	self.reqPort = null;
 	self.ws = null;
 	
@@ -168,6 +168,9 @@ FriendConnection.prototype.connectWebSocket = function()
 	if ( self.wsPort )
 		url += ':' + self.wsPort;
 	
+	
+	url += '/fcws';
+	
 	var conf = {
 		url : url,
 		sessionId : Workspace.sessionId,
@@ -196,6 +199,7 @@ FriendConnection.prototype.setId = function( event, conf )
 FriendConnection.prototype.onWsMessage = function( msg )
 {
 	var self = this;
+	
 	if ( 'response' === msg.type )
 	{
 		handleResponse( msg );

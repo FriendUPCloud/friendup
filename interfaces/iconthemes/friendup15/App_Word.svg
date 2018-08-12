@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>App_Word</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-255.000000, -406.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)">
+            <g id="Appicons" transform="translate(97.000000, 264.000000)">
+                <g id="App_Word" transform="translate(111.000000, 128.000000)">
+                    <path d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#2980B9" fill-rule="nonzero"></path>
+                    <path d="M20.27,22.246 L22.808,22.246 L23.69,27.88 L24.194,31.606 L24.266,31.606 L24.986,27.88 L26.318,22.246 L28.424,22.246 L29.738,27.88 L30.152,29.968 L30.476,31.606 L30.548,31.606 C30.7760011,29.8419912 30.9439995,28.6000036 31.052,27.88 L31.934,22.246 L34.292,22.246 L32.15,34 L29.054,34 L27.812,28.384 C27.619999,27.4839955 27.4580007,26.5780046 27.326,25.666 L27.254,25.666 L27.11,26.494 C26.9659993,27.3340042 26.8460005,27.9639979 26.75,28.384 L25.544,34 L22.502,34 L20.27,22.246 Z" id="W" fill="#FFFFFF"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -17,7 +17,7 @@
 *                                                                              *
 *****************************************************************************©*/
 
-document.title = 'Friend Create v1.0';
+document.title = 'Friend Create';
 
 settings = {
 	wordWrap: true,
@@ -58,6 +58,14 @@ var appConn = null;
 
 Application.run = function( msg )
 {
+	var f = new File( 'Progdir:Templates/search.html' );
+	f.onLoad = function( data )
+	{
+		Application.searchReplaceTemplate = data;
+	}
+	f.i18n();
+	f.load();
+	
 	// Some variables
 	this.project = {
 		ProjectName: '',
@@ -433,7 +441,6 @@ Application.save = function( mode )
 						f.filename = f.filename_backup;
 						f.filename_backup = false;
 					}
-					// Application.syncFilesList();
 				}
 				Application.savedlg = false;
 			}, sf, 'save' );
@@ -453,13 +460,6 @@ Application.getCurrentContent = function( callback )
 Application.saveAs = function()
 {
 	Application.save( 'saveAs' );
-
-	// Sync the current status down
-/*	Application.syncFilesListDown( function()
-	{
-		Application.save( 'saveAs' );
-	} );
-*/
 };
 
 // Do the actual saving of the file
@@ -494,7 +494,7 @@ Application.saveFile = function( filename, content, mode )
 			oldFile.load();
 		}
 
-		var f = new File(filename);
+		var f = new File( filename );
 		f.onSave = function ()
 		{
 			// Tell something went wrong!
@@ -507,16 +507,18 @@ Application.saveFile = function( filename, content, mode )
 			files[currentFile].filetype = files[currentFile].filename.split('.').pop().toLowerCase();
 			files[currentFile].touched = true;
 			
+			// Make sure we have a project title
+			Application.setProjectTitle();
+			
 			// Sync the new files down
 			Application.sendFileListToEditor(files, currentFile);
 			
 			// Update status with text..
-			Application.masterView.sendMessage({
+			Application.masterView.sendMessage( {
 				command: 'updateStatus',
 				data:    ''
-			});
-			
-			Application.setProjectTitle();
+			} );
+			Application.masterView.sendMessage( { command: 'checkfileinproject' } );
 		};
 		f.save( ( content.length === 0 ? ' ' : content ), filename );
 	});
@@ -573,6 +575,17 @@ Application.receiveMessage = function( msg )
 {
 	switch( msg.command )
 	{
+		case 'help':
+			Application.sendMessage( {
+				type: 'system',
+				command: 'executeapplication',
+				executable: 'FriendBrowser',
+				arguments: 'System:Software/Programming/FriendCreate'
+			} );
+			break;
+		case 'settitle':
+			this.masterView.setFlag( 'title', document.title + ( Trim( msg.title ) ? ( ' - ' + msg.title ) : '' ) );
+			break;
 		case 'guievent':
 			aSas.send( { type: 'guiaction', data: { event: msg.event, data: msg.data } } );
 			break;
@@ -950,6 +963,37 @@ Application.receiveMessage = function( msg )
 			};
 			this.setProjectTitle();
 			break;
+		case 'project_fromweb':
+			Application.newProjectFromWebSite();
+			break;
+		case 'fromwebsite_closewin':
+			if( Application.fromWebSite )
+				Application.fromWebSite.close();
+			Application.fromWebSite = false;
+			break;			
+		case 'project_loadfromweb':
+			var project = {};
+			if( msg.data )
+			{
+				for( var a in msg.data )
+				{
+					project[a] = msg.data[ a ];
+					Application.project[ a ] = msg.data[ a ];
+				}
+			}		
+			Application.projectFilename = msg.filename;
+
+			var f = new File( Application.projectFilename );
+			f.save( JSON.stringify( project ) );
+			Application.receiveMessage( { command: 'fromwebsite_closewin' } );
+			this.setProjectTitle();
+			Application.masterView.sendMessage( 
+			{
+				command: 'projectinfo',
+				data: project
+			} );
+			Application.receiveMessage( { command: 'open_project_files' } );			
+			break;
 		case 'project_save_as':
 			if( Application.projectFilename )
 				Application.prevFilename = Application.projectFilename;
@@ -995,6 +1039,8 @@ Application.receiveMessage = function( msg )
 					
 					Application.setProjectTitle();
 					
+					Application.setProjectPath( savefile );
+					
 				}, Application.currentPath, 'save', pfn ? pfn : 'unnamed_project.apf', 'Save project' );
 			}
 			// Update it!
@@ -1030,12 +1076,16 @@ Application.setProjectPath = function( fp )
 // Show project properties
 Application.showProjectProperties = function()
 {
-	if( this.prwin ) return;
+	if( this.prwin ) 
+	{
+		this.prwin.activate();
+		return;
+	}
 	
 	var fl = {
 		title: 'Project properties',
-		width: 800,
-		height: 500
+		width: 500,
+		height: 600
 	};
 	if( Application.screen ) fl.screen = Application.screen;
 	this.prwin = new View( fl );
@@ -1169,9 +1219,11 @@ Application.checkFileType = function( path )
 		case 'lang':
 		case 'txt':
 		case 'js':
+		case 'md':
 		case 'sol':
 		case 'url':
 		case 'json':
+		case 'pls':
 		case 'tpl':
 		case 'ptpl':
 		case 'xml':
@@ -1244,6 +1296,10 @@ Application.setMenuItems = function( w )
 			{
 				name:    i18n( 'i18n_project_new' ),
 				command: 'project_new'
+			},
+			{
+				name:    i18n( 'i18n_project_fromweb' ),
+				command: 'project_fromweb'
 			},
 			{
 				name:    i18n( 'i18n_project_properties' ),
@@ -1385,6 +1441,15 @@ Application.setMenuItems = function( w )
 				name    : i18n( 'i18n_reset_settings' ),
 				command : function(){}
 			}*/
+		]
+	},
+	{
+		name : i18n( 'i18n_help' ),
+		items: [
+			{
+				name: i18n( 'i18n_documentation' ),
+				command: 'help'
+			}
 		]
 	}
 	] );
@@ -1732,6 +1797,32 @@ Application.addAppDoor = function()
 	} );
 };
 
+/* New project from web site ---------------------------------------------- */
+
+Application.newProjectFromWebSite = function()
+{
+	if( Application.fromWebSite ) return;
+
+	var fl = {
+		title: i18n('i18n_waTitle'),
+		width: 400,
+		height: 580
+	};
+	if( Application.screen ) fl.screen = Application.screen;
+	var f = new View( fl );
+	
+	var fs = new File( 'Progdir:Templates/fromwebsite.html' );
+	fs.onLoad = function( data )
+	{
+		f.setContent( data );
+	}
+	fs.i18n();
+	fs.load();
+	
+	Application.fromWebSite = f;
+}
+
+
 /* IOT Monitor -------------------------------------------------------------- */
 
 function iotMonitor()
@@ -1753,7 +1844,7 @@ function iotMonitor()
 	fs.i18n();
 	fs.load();
 	
-	Application.monitor = f;
+	Application.monitorView = f;
 }
 
 /* Search and replace ------------------------------------------------------- */
@@ -1761,7 +1852,10 @@ function iotMonitor()
 function searchRepl()
 {
 	if( Application.searchWin )
+	{
+		Application.searchWin.activate();
 		return;
+	}
 	var fl = {
 		title: i18n('i18n_search_and_replace'),
 		width: 400,
@@ -1772,13 +1866,11 @@ function searchRepl()
 	
 	Application.searchWin = v;
 	
-	var f = new File( 'Progdir:Templates/search.html' );
-	f.onLoad = function( data )
+	console.log( 'Setting template' );
+	v.setContent( Application.searchReplaceTemplate, function()
 	{
-		v.setContent( data );
-	}
-	f.i18n();
-	f.load();
+		console.log( 'That took a while.' );
+	} );
 	
 	v.onClose = function()
 	{

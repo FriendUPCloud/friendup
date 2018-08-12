@@ -457,7 +457,10 @@ fui.Base.prototype.build = function( description, parent )
 					this.build( desc.children, d );
 				}
 				if( desc.label ) d.setAttribute( 'label', desc.label );
-				if( desc.name ) d.setAttribute( 'name', desc.name );
+				if( desc.name )
+				{
+					d.setAttribute( 'name', desc.name );
+				}
 				if( desc.above === true )
 				{
 					d.style.zIndex = 2147483647 - 100; // 100 for overlays

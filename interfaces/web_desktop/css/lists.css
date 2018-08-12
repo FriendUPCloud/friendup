@@ -96,6 +96,10 @@
 	background: $ColorBgListSw1;
 	color: $ColorListSw1;
 }
+.ZebraList > tr .PadBorder,
+.ZebraList > div .PadBorder {
+	border-color : $ColorBgListSw1;
+}
 
 .ZebraList > tr:nth-child( 2n ),
 .ZebraList > div:nth-child( 2n )
@@ -103,11 +107,22 @@
 	background: $ColorBgListSw2;
 	color: $ColorListSw2;
 }
+.ZebraList > tr:nth-child( 2n ) .PadBorder,
+.ZebraList > div:nth-child( 2n ) .PadBorder
+{
+	border-color : $ColorBgListSw2;
+}
 
 .ZebraList.Interactive > tr:hover,
 .ZebraList.Interactive > div:hover
 {
 	background-color : $ColorBgListSwHover;
+}
+
+.ZebraList.Interactive > tr:hover .PadBorder,
+.ZebraList.Interactive > div:hover .PadBorder
+{
+	border-color : $ColorBgListSwHover;
 }
 
 .ZebraList > div, .BackgroundLists > div

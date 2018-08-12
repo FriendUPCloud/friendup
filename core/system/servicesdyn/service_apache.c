@@ -44,6 +44,7 @@
 #include <sys/mman.h>
 #include <util/log/log.h>
 #include <dlfcn.h>
+#include <system/systembase.h>
 
 #define NAME "apache"
 #define VERSION 		1
@@ -52,7 +53,8 @@
 typedef struct ApacheService
 {
 	int					hs_PID;
-	FThread			*hs_Thread;
+	FThread				*hs_Thread;
+	SystemBase			*hs_SB;
 }ApacheService;
 
 //
@@ -80,6 +82,7 @@ Service *ServiceNew( void *sysbase, char *command )
 		if( hs != NULL )
 		{
 			service->s_SpecialData = hs;
+			hs->hs_SB = sysbase;
 		}
 		
 		service->s_State = SERVICE_STOPPED;
@@ -131,26 +134,21 @@ int thread( FThread *t )
 	{
 		unsigned char *buf;
 		
-		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + 2048 +LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
+		buf = (unsigned char *)FCalloc( 2048 + 128, sizeof( char ) );
 		if( buf != NULL )
 		{
-			
-			//DEBUG1("[WS]:Wrote to websockets %d, string %s size %d\n", n, response->content, strlen( response->content ) );
-			//n = lws_write( wsi,  response->content, response->sizeOfContent, LWS_WRITE_TEXT);
-
 			while( ( fgets( data, 2048, file ) ) != NULL )
 			{
-				
-				printf("100%s \n", data );
 				if( s->s_WSI != NULL )
 				{
 					int len = strlen( data );
 					
 					DEBUG1( "Apache service WS pointer %p\n", s->s_WSI ); 
 					
-					memcpy( buf+LWS_SEND_BUFFER_PRE_PADDING, data,  len );
-					int n = lws_write( s->s_WSI, buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT);
+					memcpy( buf, data,  len );
 					
+					hs->hs_SB->WebsocketWrite( s->s_WSI, buf , len, LWS_WRITE_TEXT );
+
 					DEBUG1("Wrote to websockets %d bytes\n", n );
 				}
 				else

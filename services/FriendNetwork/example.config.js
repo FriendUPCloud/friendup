@@ -24,8 +24,8 @@
 
 var server = {
 	tls : {
-		//keyPath : 'path_to_key.pem',
-		//certPath : 'path_to_certificate.pem',
+		keyPath : 'path_to_key.pem',
+		certPath : 'path_to_cert.pem',
 		key : null,
 		cert : null,
 	},

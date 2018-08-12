@@ -35,6 +35,7 @@ if( !$t->load() )
 	 `TimeTo` varchar(8) DEFAULT NULL,
 	 `Date` varchar(255) DEFAULT NULL,
 	 `Source` varchar(255) NOT NULL,
+	 `MetaData` text NOT NULL default \"\",
 	 `RemoteID` varchar(255) NOT NULL,
 	 PRIMARY KEY (`ID`)
 	)

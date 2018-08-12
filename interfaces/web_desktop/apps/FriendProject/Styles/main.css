@@ -1,0 +1,27 @@
+.Project .ProjectRow
+{
+
+}
+
+.Project .ProjectRow:nth-child(odd)
+{
+	background: rgba(0,0,0,0.1);
+}
+
+.Project .ProjectRow .ProjectColumn
+{
+	display: inline-block;
+	padding: 10px;
+	box-sizing: border-box;
+}
+
+.Project .ProjectRow .ProjectColumn:nth-child(2)
+{
+	text-align: center;
+}
+
+#Status
+{
+	display: inline-block;
+}
+

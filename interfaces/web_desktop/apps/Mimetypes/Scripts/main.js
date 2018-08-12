@@ -208,6 +208,7 @@ function SaveMimetype()
 	{
 		ge( 'NewMimetype' ).parentNode.removeChild( ge( 'NewMimetype' ) );
 		doRefresh();
+		Notify( { title: i18n( 'i18n_mimetype_updated' ), text: i18n( 'i18n_correctly_set_mimetype' ) + ', ' + ge( 'NewMimetype' ).getElementsByTagName( 'input' )[0].value } );
 	}
 	m.execute( 'setmimetypes', { types: ge( 'NewMimetype' ).getElementsByTagName( 'input' )[0].value } );
 }
@@ -306,6 +307,7 @@ function doLink()
 	{
 		// Remove types from apps that have these elsewhere
 		var apps = Application.apps;
+		var mimes = [];
 		for( var a = 0; a < apps.length; a++ )
 		{
 			if( apps[a].Name == app.Name ) continue;
@@ -322,6 +324,7 @@ function doLink()
 						if( app.mimes[c] == apps[a].mimes[b] )
 						{
 							found = true;
+							mimes.push( app.mimes[c] );
 							break;
 						}
 					}
@@ -336,6 +339,7 @@ function doLink()
 			type: 'system',
 			command: 'reloadmimetypes'
 		} );
+		Notify( { title: i18n( 'i18n_mimetype_updated' ), text: i18n( 'i18n_correctly_set_mimetype' ) + '. ' + mimes.join( ', ' ) } );
 	}
 	m.execute( 'setmimetypes', { types: app.mimes.join( ',' ), executable: app.Name } );
 }

@@ -64,10 +64,10 @@
 	
 	<div id="WorkgroupContainer">
 		<div class="HRow MarginTop">
-			<div class="HContent30 FloatLeft">
+			<div class="HContent30 FloatLeft Box">
 				{i18n_workgroups}:
 			</div>
-			<div id="pUserWorkgroup" class="HContent70 FloatLeft">
+			<div id="pUserWorkgroup" class="HContent70 FloatLeft BorderTop BorderLeft BorderRight BorderBottom">
 				<!--<input type="text" class="FullWidth" id="Workgroup" value="{workgroup}" readonly="readonly"/>-->
 			</div>
 		</div>
@@ -75,14 +75,14 @@
 			<div class="HContent30 FloatLeft">&nbsp;&nbsp;&nbsp;</div>
 			<div class="HContent70 FloatLeft">
 				<select id="Workgroup" class="HContent55">{workgroup}</select>
-				<button type="button" onclick="AddUserGroup()">
+				<button type="button" class="IconSmall fa-plus" onclick="AddUserGroup()">
 					{i18n_add_workgroup}
 				</button>
 			</div>
 		</div>
 	</div>
 	
-	<div class="HRow MarginTop BorderTop PaddingTop">
+	<div class="HRow MarginTop BorderTop PaddingTop PaddingBottom">
 		<div class="HContent100 FloatLeft">
 			<button type="button" class="IconSmall fa-save" onclick="SaveUser({id})">
 				{i18n_save_user}
@@ -105,7 +105,6 @@
 			height: 168px;
 			overflow: hidden;
 			overflow-y: auto;
-			border: 1px solid #c0c0c0;
 			padding: 2px;
 			box-sizing: border-box;
 		}

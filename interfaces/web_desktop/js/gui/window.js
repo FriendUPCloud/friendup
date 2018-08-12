@@ -69,14 +69,14 @@ function GetWindowById( id )
 function SaveWindowStorage( callback )
 {
 	var m = new Module( 'system' );
-	m.onExecuted = function( e )
-	{
-		if( e == 'ok' )
-		{
-		}
-		if( callback ) callback();
-	}
 	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( _windowStorage ) ) } );
+	if( callback )
+	{
+		setTimeout( function()
+		{
+			callback();
+		}, 500 );
+	}
 }
 
 function LoadWindowStorage()
@@ -218,12 +218,27 @@ function SetWindowTitle( div, titleStr )
 	var title = false;
 	for( var a = 0; a < divz.length; a++ )
 	{
-		if( divz[a].className == 'Title' )
+		if( divz[a].classList.contains( 'Title' ) )
 			title = divz[a];
 	}
 	if ( !title ) return false;
 	title.getElementsByTagName ( 'span' )[0].innerHTML = titleStr;
 	div.titleString = titleStr;
+	
+	// Also check tasks
+	var baseElement = GetTaskbarElement();
+	if( !baseElement ) return;
+	if( baseElement.tasks )
+	{
+		for( var a in baseElement.tasks )
+		{
+			if( div.viewId == baseElement.tasks[ a ].viewId )
+			{
+				baseElement.tasks[a].dom.innerHTML = titleStr;
+				break;
+			}
+		}
+	}
 }
 
 // Do it!
@@ -587,13 +602,21 @@ function GetViewDisplayMargins( div )
 }
 
 // Constrain position (optionally providing left and top)
-function ConstrainWindow( div, l, t, depth )
+function ConstrainWindow( div, l, t, depth, caller )
 {
 	if( window.isMobile ) return;
 	if( !depth ) depth = 0;
 	else if( depth > 4 ) return;
 	
+	div.setAttribute( 'moving', 'moving' );
 	var margins = GetViewDisplayMargins( div );
+	
+	// Track caller
+	if( !caller ) caller = div;
+	
+	// l and t needs to be numbers
+	if( isNaN( l ) ) l = parseInt( l );
+	if( isNaN( t ) ) t = parseInt( t );
 	
 	// Get some information through flags
 	var sc = null;
@@ -700,17 +723,70 @@ function ConstrainWindow( div, l, t, depth )
 
 	// When cascading, the view is moved
 	if( doCascade )
+	{
 		return CascadeWindowPosition( { x: l, y: t, w: ww, h: wh, maxw: mw, maxh: mh, dom: div } );
+	}
 	
 	// Final constraint
 	if( l + ww > ml + mw ) l = ( ml + mw ) - ww;
 	if( l < ml ) l = ml;
+	
 	if( t + wh > mt + mh ) t = ( mt + mh ) - wh;
 	if( t < mt ) t = mt;
+	
+	// Set previous position
+	div.prevPositionLeft = div.windowObject.getFlag( 'left' );
+	div.prevPositionTop = div.windowObject.getFlag( 'top' );
 
 	// Set the actual position
 	div.windowObject.setFlag( 'left', l );
 	div.windowObject.setFlag( 'top', t );
+	
+	// Only test if we're currently moving an open window
+	// Skip when we're in snapping mode..
+	if( currentMovable && !currentMovable.snapping )
+	{
+		// Check attached (snapped) windows
+		if( div.attached )
+		{
+			for( var a = 0; a < div.attached.length; a++ )
+			{
+				// Skip if we're the current movable or caller
+				if( div.attached[a] == caller || div.attached[a] == currentMovable ) continue;
+			
+				div.attached[a].setAttribute( 'moving', 'moving' );
+				ConstrainWindow( div.attached[ a ], div.offsetLeft - div.attached[a].snapCoords.x, div.offsetTop - div.attached[a].snapCoords.y, depth + 1, caller );
+			}
+		}
+		// Check attached window if we're attached to
+		if( div == caller && div.snapObject && div.snapObject != caller )
+		{
+			var ll = false, tt = false;
+			if( div.snap == 'up' )
+			{
+				ll = l + div.snapCoords.x;
+				tt = t - div.snapObject.offsetHeight;
+			}
+			// TODO: Make this work
+			else if( div.snap == 'down' )
+			{
+				ll = l + div.snapCoords.x;
+				tt = t + div.offsetHeight;
+			}
+			else if( div.snap == 'right' )
+			{
+				ll = l + div.offsetWidth;
+				tt = t + div.snapCoords.y;
+			}
+			else if( div.snap == 'left' )
+			{
+				ll = l - div.snapObject.offsetWidth;
+				tt = t + div.snapCoords.y;
+			}
+			if( ll !== false && tt !== false )
+				ConstrainWindow( div.snapObject, ll, tt, depth + 1, caller );
+		}
+	}
 }
 
 // Make window autoresize
@@ -845,6 +921,23 @@ function _ActivateWindowOnly( div )
 // "Private" function to activate a window
 function _ActivateWindow( div, nopoll, e )
 {
+	// Don't reactivate
+	if( div.classList.contains( 'Active' ) ) 
+	{
+		if( window.currentMovable != div )
+			window.currentMovable = div;
+		return;
+	}
+	
+	// Blur previous window
+	if( window.currentMovable )
+	{
+		if( currentMovable != div )
+		{
+			currentMovable.windowObject.sendMessage( { type: 'view', command: 'blur' } );
+		}
+	}
+
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
 	{
@@ -906,6 +999,7 @@ function _ActivateWindow( div, nopoll, e )
 function _DeactivateWindow( m, skipCleanUp )
 {
 	var ret = false;
+	
 	if( m.className && m.classList.contains( 'Active' ) )
 	{
 		m.classList.remove( 'Active' );
@@ -924,7 +1018,7 @@ function _DeactivateWindow( m, skipCleanUp )
 				msg.applicationId = iftest[0].applicationId;
 			}
 			m.windowObject.sendMessage( {
-					command: 'blur'
+				command: 'blur'
 			} );
 			m.windowObject.sendMessage( msg );
 			m.notifyActivated = false;
@@ -960,19 +1054,19 @@ function _DeactivateWindows()
 	var windowsDeactivated = 0;
 	window.currentMovable = null;
 
+	if( isMobile )
+	{
+		_viewHistory = [];
+	}
+
 	var a = null;
 	for( a in movableWindows )
 	{
 		var m = movableWindows[a];
 		windowsDeactivated += _DeactivateWindow( m, true );
 	}
-	
-	if( isMobile )
-	{
-		_viewHistory = [];
-	}
 
-	if( windowsDeactivated > 0 ) PollTaskbar ();
+	//if( windowsDeactivated > 0 ) PollTaskbar ();
 	
 	// For mobiles and tablets
 	hideKeyboard();
@@ -991,9 +1085,11 @@ function CloseAllWindows()
     movableWindows = [];
 }
 
-function _WindowToFront( div )
+function _WindowToFront( div, flags )
 {
 	if( !div || !div.style ) return;
+
+	if( !flags ) flags = {};
 
 	// Could be we did this on content!
 	if( div.parentNode && div.parentNode.content )
@@ -1034,6 +1130,59 @@ function _WindowToFront( div )
 	// 4. now apply the one we want to front to the front
 	div.viewContainer.style.zIndex = sortedInd;
 	div.style.zIndex = sortedInd;
+	
+	// 5. Check if we are snapped
+	if( !flags.sourceElements )
+	{
+		flags.sourceElements = [];
+	}
+	// Don't check snap objects etc if we're already affected
+	for( var a = 0; a < flags.sourceElements.length; a++ )
+	{
+		if( flags.sourceElements[a] == div )
+			return;
+	}
+	if( flags.source != 'attachment' )
+	{
+		if( div.snap && div.snapObject )
+		{
+
+			// Tell window to front that we're an object in its attachment list
+			flags.sourceElements.push( div );
+			_WindowToFront( div.snapObject, { source: 'attachment', sourceElements: flags.sourceElements } );
+		}
+	}
+	if( flags.source != 'snapobject' )
+	{
+		if( div.attached )
+		{
+			for( var a = 0; a < div.attached.length; a++ )
+			{
+				var found = false;
+				for( var b = 0; b < flags.sourceElements.length; b++ )
+				{
+					if( flags.sourceElements[b] == div.attached[a] )
+					{
+						found = true;
+						break;
+					}
+				}
+				if( !found )
+				{
+					flags.sourceElements.push( div.attached[ a ] );
+				}
+			}
+			for( var a = 0; a < div.attached.length; a++ )
+			{
+				if( div.attached[a] == flags.sourceElement )
+				{
+					continue;
+				}
+				// Tell window to front that we're the snap object
+				_WindowToFront( div.attached[a], { source: 'snapobject', sourceElements: flags.sourceElements } );
+			}
+		}
+	}
 }
 
 // Sets a window loading animation on content
@@ -1120,6 +1269,7 @@ function CloseView( win )
 {
 	if( !win && window.currentMovable )
 		win = window.currentMovable;
+	
 	if( win )
 	{
 		// Clean up!
@@ -1150,6 +1300,18 @@ function CloseView( win )
 
 		var div = win;
 
+		// Unsnap
+		if( win.unsnap ) win.unsnap();
+		
+		if( win.attached )
+		{
+			for( var a = 0; a < win.attached.length; a++ )
+			{
+				if( win.attached[a].unsnap )
+					win.attached[a].unsnap();
+			}
+		}
+		
 		var appId = win.windowObject ? win.windowObject.applicationId : false;
 
 		// Clear reference
@@ -1441,6 +1603,7 @@ var View = function( args )
 		
 		id = self.getFlag( 'id' );
 		titleStr = self.getFlag( 'title' );
+		if( !titleStr ) titleStr = 'Unnamed window';
 		contentscreen = self.getFlag( 'screen' );
 		parentWindow = self.getFlag( 'parentView' );
 		transparent = self.getFlag( 'transparent' );
@@ -1586,6 +1749,7 @@ var View = function( args )
 		div.content = contn;
 		self.content = contn;
 		
+		// Title
 		var titleSpan = document.createElement ( 'span' );
 		titleSpan.innerHTML = titleStr ? titleStr : '- unnamed -';
 
@@ -1598,6 +1762,32 @@ var View = function( args )
 		}
 
 		div.innerHTML = '';
+
+		// Register mouse over and out
+		if( !window.isMobile )
+		{
+			div.addEventListener( 'mouseover', function()
+			{
+				// Keep track of the previous
+				if( typeof( friend.currentWindowHover ) != 'undefined' && friend.currentWindowHover )
+					friend.previousWindowHover = friend.currentWindowHover;
+				friend.currentWindowHover = div;
+			
+				// Focus on desktop if we're not over a window.
+				if( friend.previousWindowHover != div )
+				{
+					window.focus();
+				}
+			
+			} );
+			div.addEventListener( 'mouseout', function()
+			{
+				// Keep track of the previous
+				if( friend.currentWindowHover )
+					friend.previousWindowHover = friend.currentWindowHover;
+				friend.currentWindowHover = null;
+			} );
+		}
 
 		if ( !div.id )
 		{
@@ -1620,6 +1810,12 @@ var View = function( args )
 			div.volumeGauge = gauge.getElementsByTagName( 'div' )[0];
 		}
 
+		// Snap elements
+		var snap = document.createElement( 'div' );
+		snap.className = 'Snap';
+		snap.innerHTML = '<div class="SnapLeft"></div><div class="SnapRight"></div>' +
+			'<div class="SnapUp"></div><div class="SnapDown"></div>';
+
 		// Moveoverlay
 		var molay = document.createElement ( 'div' );
 		molay.className = 'MoveOverlay';
@@ -1631,6 +1827,8 @@ var View = function( args )
 		// Title
 		var title = document.createElement ( 'div' );
 		title.className = 'Title';
+		if( flags.resize == false )
+			title.className += ' NoResize';
 
 		// Resize
 		var resize = document.createElement ( 'div' );
@@ -1658,7 +1856,7 @@ var View = function( args )
 				_ActivateWindow ( div.content.blocker.getWindowElement().parentNode, false, e );
 				return cancelBubble ( e );
 			}
-
+			
 			// Use correct button
 			if( e.button != 0 && !mode ) return cancelBubble( e );
 
@@ -1668,6 +1866,12 @@ var View = function( args )
 			this.parentNode.offx = x - this.parentNode.offsetLeft;
 			this.parentNode.offy = y - this.parentNode.offsetTop;
 			_ActivateWindow( div, false, e );
+			
+			if( e.shiftKey && div.snapObject )
+			{
+				div.unsnap();
+			}
+			
 			return cancelBubble( e );
 		}
 
@@ -1696,6 +1900,7 @@ var View = function( args )
 		if( flags.transparent )
 		{
 			contn.style.background = 'transparent';
+			contn.style.backgroundColor = 'transparent';
 		}
 
 		// Depth gadget
@@ -1901,76 +2106,105 @@ var View = function( args )
 		minimize.onclick = function ( e )
 		{
 			if( !window.isTablet && e.button != 0 ) return;
+			if( div.minimized ) return;
+			div.minimized = true;
 			
-			_ActivateWindow( div, false, e );
-			if( 
-				div.windowObject && 
-				( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
-				ge( 'Taskbar' )
-			)
+			
+			if( !window.isMobile )
 			{
-				var t = ge( 'Taskbar' );
-				for( var tel = 0; tel < t.childNodes.length; tel++ )
+				_ActivateWindow( div, false, e );
+				var escapeFlag = 0;
+				if( 
+					div.windowObject && 
+					( !globalConfig.viewList || globalConfig.viewList == 'separate' ) && 
+					ge( 'Taskbar' )
+				)
 				{
-					if( t.childNodes[tel].window == div )
+					var t = ge( 'Taskbar' );
+					for( var tel = 0; tel < t.childNodes.length; tel++ )
 					{
-						t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-						return true;
-					}
-				}
-			}
-			else if( ge( 'DockWindowList' ) )
-			{
-				var t = ge( 'DockWindowList' );
-				for( var tel = 0; tel < t.childNodes.length; tel++ )
-				{
-					if( t.childNodes[tel].window == div )
-					{
-						t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
-						return true;
-					}
-				}
-			}
-			// Try to use the dock
-			if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
-			{
-				for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
-				{
-					var ch = Workspace.mainDock.dom.childNodes[ u ];
-					// Check the view list
-					if( ch.classList.contains( 'ViewList' ) )
-					{
-						for( var z = 0; z < ch.childNodes.length; z++ )
+						if( t.childNodes[tel].window == div )
 						{
-							var cj = ch.childNodes[ z ];
-							if( cj.viewId && movableWindows[ cj.viewId ] == div )
-							{
-								cj.onclick();
-								return true;
-							}
+							t.childNodes[tel].mousedown = true;
+							e.button = 0;
+							t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+							return true;
 						}
 					}
-					// Check applications
-					if( ch.executable )
+				}
+				else if( ge( 'DockWindowList' ) )
+				{
+					var t = ge( 'DockWindowList' );
+					for( var tel = 0; tel < t.childNodes.length; tel++ )
 					{
-						for( var r = 0; r < Workspace.applications.length; r++ )
+						if( t.childNodes[tel].window == div )
 						{
-							var app = Workspace.applications[ r ];
-							if( app.applicationName == ch.executable )
+							t.childNodes[tel].mousedown = true;
+							e.button = 0;
+							t.childNodes[tel].onmouseup( e, t.childNodes[tel] );
+							escapeFlag++;
+							break;
+						}
+					}
+				}
+				// Try to use the dock		
+				if( escapeFlag == 0 )
+				{
+					if( globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist' )
+					{
+						for( var u = 0; u < Workspace.mainDock.dom.childNodes.length; u++ )
+						{
+							var ch = Workspace.mainDock.dom.childNodes[ u ];
+							// Check the view list
+							if( ch.classList.contains( 'ViewList' ) )
 							{
-								if( app.windows )
+								for( var z = 0; z < ch.childNodes.length; z++ )
 								{
-									for( var t in app.windows )
+									var cj = ch.childNodes[ z ];
+									if( cj.viewId && movableWindows[ cj.viewId ] == div )
 									{
-										if( app.windows[t] == div.windowObject )
+										cj.mousedown = true;
+										cj.onclick( { button: 0 } );
+										escapeFlag++;
+										break;
+									}
+								}
+							}
+							if( escapeFlag == 0 )
+							{
+								// Check applications
+								if( ch.executable )
+								{
+									for( var r = 0; escapeFlag == 0 && r < Workspace.applications.length; r++ )
+									{
+										var app = Workspace.applications[ r ];
+										if( app.applicationName == ch.executable )
 										{
-											Workspace.mainDock.toggleExecutable( ch.executable );
-											return true;
+											if( app.windows )
+											{
+												for( var t in app.windows )
+												{
+													if( app.windows[t] == div.windowObject )
+													{
+														Workspace.mainDock.toggleExecutable( ch.executable );
+														escapeFlag++;
+														break;
+													}
+												}
+											}
 										}
 									}
 								}
 							}
 						}
+					}
+				}
+				if( div.attached )
+				{
+					for( var a = 0; a < div.attached.length; a++ )
+					{
+						div.attached[ a ].minimized = true;
+						div.attached[ a ].parentNode.setAttribute( 'minimized', 'minimized' );
 					}
 				}
 			}
@@ -2078,6 +2312,8 @@ var View = function( args )
 		div.appendChild( bottombar );
 		div.appendChild( leftbar );
 		div.appendChild( rightbar );
+		
+		div.appendChild( snap );
 
 		// Empty the window menu
 		contn.menu = false;
@@ -2247,6 +2483,13 @@ var View = function( args )
 		{
 			mvw = Workspace.screen.getMaxViewWidth();
 			mvh = Workspace.screen.getMaxViewHeight();
+			
+			if( ge( 'desklet_0' ) )
+			{
+				var att = ge( 'desklet_0' ).getAttribute( 'position' );
+				if( att && ( att.indexOf( 'bottom' ) >= 0 || att.indexOf( 'top' ) >= 0 ) )
+					mvh -= ge( 'desklet_0' ).offsetHeight;
+			}
 		}
 	
 		// TODO: See if we can move this dock dimension stuff inside getMax..()
@@ -2584,33 +2827,10 @@ var View = function( args )
 		div.style.zIndex = div.viewContainer.style.zIndex;
 		
 		// If the current window is an app, move it to front.. (unless new window is a child window)
-		if( !isMobile )
-		{
-			if( window.currentMovable )
-			{
-				// We are moving!
-				if( currentMovable.getAttribute( 'moving' ) == 'moving' )
-				{
-					_WindowToFront( currentMovable );
-				}
-				else
-				{
-					_ActivateWindow( div );
-					_WindowToFront( div );
-				}
-			}
-			// No current, activate
-			else
-			{
-				_ActivateWindow( div );
-				_WindowToFront( div );
-			}
-		}
-		else
-		{
-			_ActivateWindow( div );
-			_WindowToFront( div );
-		}
+		if( window.friend && friend.currentWindowHover )
+			friend.currentWindowHover = false;
+		_ActivateWindow( div );
+		_WindowToFront( div );
 		
 		// Reparse! We may have forgotten some things
 		self.parseFlags( flags );
@@ -2623,7 +2843,7 @@ var View = function( args )
 	// Send window to different workspace
 	this.sendToWorkspace = function( wsnum )
 	{
-		if( wsnum > globalConfig.workspacecount - 1 )
+		if( wsnum < 0 || wsnum > globalConfig.workspacecount - 1 )
 			return;
 		var wn = this._window.parentNode;
 		var pn = wn.parentNode;
@@ -2683,9 +2903,18 @@ var View = function( args )
 		// Oh we have a conf?
 		if( this.conf )
 		{
-			domain += '/system.library/module/?module=system&command=sandbox' +
-				'&sessionid=' + Workspace.sessionId +
-				'&conf=' + JSON.stringify( this.conf );
+			if ( Workspace.sessionId )
+			{
+				domain += '/system.library/module/?module=system&command=sandbox' +
+					'&sessionid=' + Workspace.sessionId +
+					'&conf=' + JSON.stringify( this.conf );
+			}
+			else
+			{
+				domain += '/system.library/module/?module=system&command=sandbox' +
+					'&authid=' + this.authId +
+					'&conf=' + JSON.stringify( this.conf );
+			}
 			if( this.getFlag( 'noevents' ) ) domain += '&noevents=true';
 		}
 		else if( domain.indexOf( 'sandboxed.html' ) <= 0 )
@@ -2774,7 +3003,13 @@ var View = function( args )
 
 			// Override the theme
 			if( view.getFlag( 'theme' ) )
+			{
 				msg.theme = view.getFlag( 'theme' );
+			}
+			if( Workspace.themeData )
+			{
+				msg.themeData = Workspace.themeData;
+			}
 
 			// Authid is important, should not be left out if it is available
 			if( !msg.authId )
@@ -2947,6 +3182,9 @@ var View = function( args )
 			// Set theme
 			if( w.getFlag( 'theme' ) )
 				msg.theme = w.getFlag( 'theme' );
+			if( Workspace.themeData )
+				msg.themeData = Workspace.themeData;
+			
 
 			ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 		}
@@ -2970,7 +3208,10 @@ var View = function( args )
 		var ifr = false;
 		var w = this;
 		if( eles[0] ) ifr = eles[0];
-		else ifr = document.createElement( _viewType );
+		else
+		{
+			ifr = document.createElement( _viewType );
+		}
 
 		// Register the app id so we can talk
 		this._window.applicationId = appId;
@@ -3061,6 +3302,8 @@ var View = function( args )
 				// Override the theme
 				if( view.getFlag( 'theme' ) )
 					msg.theme = view.getFlag( 'theme' );
+				if( Workspace.themeData )
+					msg.themeData = Workspace.themeData;
 
 				ifr.contentWindow.postMessage( JSON.stringify( msg ), Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				ifr.loaded = true;
@@ -3113,6 +3356,7 @@ var View = function( args )
 				dataObject.applicationDisplayName = this.iframe.applicationDisplayName;
 			}
 			if( !dataObject.type ) dataObject.type = 'system';
+			
 			this.iframe.contentWindow.postMessage( 
 				JSON.stringify( dataObject ), origin 
 			);
@@ -3918,25 +4162,35 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	{
 		v.setContent( data );
 		var eles = v._window.getElementsByTagName( 'button' );
-		eles[1].onclick = function()
+
+		// FL-6/06/2018: correction so that it does not take the relative position of OK/Cancel in the box 
+		for ( var e = 0; e < eles.length; e++ )
 		{
-			v.close();
-			okcallback( true );
-		}
-		eles[1].focus();
-		eles[0].onclick = function()
-		{
-			v.close();
-			okcallback( false );
-		}
-		
+			if ( eles[ e ].id == 'ok' )
+			{
+				eles[ e ].onclick = function()
+				{
+					v.close();
+					okcallback( true );
+				}
+				eles[ e ].focus();
+			}
+			else if ( eles[ e ].id == 'cancel' )
+			{
+				eles[ e ].onclick = function()
+				{
+					v.close();
+					okcallback( false );
+				}
+			}
+		}		
 		_ActivateWindow( v._window.parentNode );
 		_WindowToFront( v._window.parentNode );
 	}
 	f.load();
 }
 
-function Alert( title, string, cancelstring )
+function Alert( title, string, cancelstring, callback )
 {
 
 	if(!title) title = 'Untitled';
@@ -3979,6 +4233,7 @@ function Alert( title, string, cancelstring )
 		eles[0].onclick = function()
 		{
 			v.close();
+			if( callback ) callback();
 		}
 		
 		_ActivateWindow( v._window.parentNode );

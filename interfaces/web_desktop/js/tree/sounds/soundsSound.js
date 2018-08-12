@@ -30,7 +30,6 @@ Friend.Tree.Sounds.RenderItems = Friend.Tree.Sounds.RenderItems || {};
 
 Friend.Tree.Sounds.Sound = function( tree, name, properties )
 {
-	var self = this;
 	this.destroyAtEnd = false;
 	this.onEnd = false;
 	this.onLoop = false;
@@ -96,13 +95,19 @@ Friend.Tree.Sounds.Sound.messageUp = function ( message )
 };
 Friend.Tree.Sounds.Sound.messageDown = function ( message )
 {
-	if ( this.endProcess( message, [ 'soundName', 'volume', 'loop' ] ) )
+	// Stop the sound if the item is destroyed
+	if ( message.command == 'destroyed' )
 	{
-		if ( message.soundName == Friend.Tree.UPDATED )
-			this.setSample();
-		if ( message.sample == Friend.Tree.UPDATED )
-			this.setVolume();
+		if ( this.sound )
+			this.sound.stop();
 	}
+
+	// Update changes from the processes
+	this.endProcess( message, [ 'soundName', 'volume', 'loop' ] );
+	if ( message.soundName == Friend.Tree.UPDATED )
+		this.setSample();
+	if ( message.sample == Friend.Tree.UPDATED )
+		this.setVolume();
 };
 
 /**

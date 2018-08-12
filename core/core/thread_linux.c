@@ -63,7 +63,7 @@ FThread *ThreadNew( void *func, void *data, FBOOL autos, pthread_attr_t *attr )
 	nt->t_Launched = FALSE;
 	
 	//uuid_generate( nt->t_uuid );
-	nt->t_pid = (FUQUAD)nt;
+	nt->t_PID = (FUQUAD)nt;
 	
 	if( autos == TRUE )
 	{

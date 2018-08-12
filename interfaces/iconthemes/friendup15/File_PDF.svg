@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48px" height="56px" viewBox="0 0 48 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_PDF</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="23.6483005%" y1="85.4285738%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.00385959355" offset="1.92979677%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.00385959355" offset="1.92979677%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.1" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-1205.000000, -53.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_PDF" transform="translate(1093.000000, 0.000000)">
+                        <g id="PDF">
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#E85546" fill-rule="nonzero"></path>
+                            <path d="M0,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L0,56 L0,0 Z" id="Rectangle" fill="url(#linearGradient-1)"></path>
+                            <path d="M24.1592848,30.1954204 C25.165684,26.957252 27.0453588,23.9544798 27.2360207,20.5004147 C27.876467,18.1201315 28.2191004,13.9146878 25.0464674,13.44 C22.3290168,13.606724 21.3996554,16.7278199 21.3633781,19.0347629 C21.2973881,22.4112331 22.0809309,25.7733944 23.1413116,28.9372214 C24.3059725,32.1085348 27.7663083,32.8266056 30.64926,33.5232293 C33.6004548,34.3864898 37.6995328,32.9612514 38.3330256,29.6127353 C38.9065898,26.7629439 35.6670403,25.8562885 33.5467936,26.6797886 C27.3664911,27.6879343 22.086878,31.7297988 17.7660873,36.1326192 C16.4147215,37.6860943 14.2503404,41.0320641 16.7427045,42.4324387 C19.5124668,43.2059717 21.4999671,40.3058432 22.1078301,37.9307395 C22.9841936,35.3082159 24.272074,32.7140708 24.1897523,29.8855632" id="path5849-8" stroke="#FFFFFF" stroke-width="1.20000005"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

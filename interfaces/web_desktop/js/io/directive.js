@@ -22,7 +22,12 @@ var _appNum = 1;
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
-	if( args ) { Workspace.lastLaunchedAppArgs = args; console.log('.',args); }
+	if( args )
+	{ 
+		Workspace.lastLaunchedAppArgs = args; 
+	}
+
+	mousePointer.clear();
 
 	// Check if the app called is found in the singleInstanceApps array
 	if( friend.singleInstanceApps[ app ] )
@@ -38,6 +43,10 @@ function ExecuteApplication( app, args, callback )
 		}
 		// If it is found, send the message directly to the app instead of relaunching
 		friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
+		for( var a in friend.singleInstanceApps[ app ].windows )
+		{
+			_WindowToFront( friend.singleInstanceApps[ app ].windows[ a ].content );
+		}
 		return;
 	}
 
@@ -121,6 +130,16 @@ function ExecuteApplication( app, args, callback )
 					hideView = true;
 				}
 
+				
+				// Just use callback
+				if( callback )
+				{
+					if( !callback( { error: 2, errorMessage: i18n( 'install_question_title' ) } ) )
+					{
+						return;
+					}
+				}
+				
 				var title = i18n( 'install_question_mintitle' ) + ': ' + app;
 				var w = new View( {
 					title:  title,
@@ -140,8 +159,7 @@ function ExecuteApplication( app, args, callback )
 					w.setContent( data );
 					if( hideView )
 					{
-						console.log('view is hidden == trusted app == click install');
-						InstallApplication(app);
+						InstallApplication( app );
 
 					}
 				}
@@ -149,14 +167,27 @@ function ExecuteApplication( app, args, callback )
 			}
 			else if( r == 'fail' && conf && conf.response == 'application not signed' )
 			{
+				// Just use callback
+				if( callback )
+				{
+					return callback( { error: 1, errorMessage: i18n( 'application_not_signed' ) } );
+				}
 				Ac2Alert( i18n( 'application_not_signed' ) );
 			}
 			else if( r == 'fail' && conf && conf.response == 'application not validated' )
 			{
+				if( callback )
+				{
+					return callback( { error: 1, errorMessage: i18n( 'application_not_validated' ) } );
+				}
 				Ac2Alert( i18n( 'application_not_validated' ) );
 			}
 			else
 			{
+				if( callback )
+				{
+					return callback( { error: 1, errorMessage: i18n( 'application_not_found' ) } );
+				}
 				Ac2Alert( i18n( 'application_not_found' ) );
 			}
 			if( callback ) callback( false );
@@ -168,6 +199,10 @@ function ExecuteApplication( app, args, callback )
 		{
 			if( typeof( conf.API ) == 'undefined' )
 			{
+				if( callback )
+				{
+					return callback( { error: 1, errorMessage: 'Can not run v0 applications.' } );
+				}
 				Ac2Alert( 'Can not run v0 applications.' );
 				if( callback ) callback( false );
 				return false;
@@ -190,6 +225,24 @@ function ExecuteApplication( app, args, callback )
 			SubSubDomains.reserveSubSubDomain( applicationId );
 			var sdomain = GetDomainFromConf( conf, applicationId );
 			
+			// Open the Dormant drive of the application
+			var drive = null;
+			if ( conf.DormantDisc )
+			{
+				var options =
+				{
+					name: conf.DormantDisc.name ? conf.DormantDisc.name : app,
+					type: 'applicationDisc',
+					capacity: conf.DormantDisc.size ? conf.DormantDisc.size : 1024 * 1024,
+					persistent: conf.DormantDisc.persistent,
+					automount: 'yes' // conf.DormantDisc.automount ? conf.DormantDisc.automount : false
+				}				
+				drive = Friend.Doors.Dormant.Drive.createDrive( options, function( response, data, extra )
+				{
+					// Do something?
+				} );
+			}
+			
 			// Load application into a sandboxed iframe
 			var ifr = document.createElement( 'iframe' );
 			// Only sandbox when it's on another domain
@@ -200,6 +253,7 @@ function ExecuteApplication( app, args, callback )
 			// Set the conf
 			ifr.conf = conf && conf.ConfFilename ? conf.ConfFilename : false;
 			ifr.config = conf ? conf : false; // Whole object
+			ifr.drive = drive;
 
 			// Proper way to run by conf.init
 			if( conf.Init )
@@ -260,8 +314,41 @@ function ExecuteApplication( app, args, callback )
 						this.widgets[a].close( level );
 					}
 				}
+				
+				// Flush notifications
+				if( Workspace.appFilesystemEvents )
+				{
+					// Check if we need to handle events for apps
+					if( Workspace.appFilesystemEvents[ 'filesystem-change' ] )
+					{
+						var evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
+						var outEvents = [];
+						for( var a = 0; a < evList.length; a++ )
+						{
+							if( evList[a].applicationId != this.applicationId )
+							{
+								outEvents.push( found );
+							}
+						}
+						// Update events
+						Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
+					}
+				}
 
 				FlushSingleApplicationLock( this.applicationName );
+
+				// Tell the Dormant disc to finish tasks and destroy itself
+				if ( this.drive )
+				{
+					debugger;
+					Friend.Doors.Dormant.Drive.destroyDrive( this.drive, { completeAndDie: true, timeout: 1000 * 60 * 60 }, function( response, data, extra ) 
+					{
+						if ( data == 'killed' )
+						{
+							console.log( 'Dormant disc destroyed before end of tasks: ' + extra );
+						};
+					}, this.applicationName )
+				}
 
 				// On level, destroy app immediately
 				if( level )
@@ -299,6 +386,7 @@ function ExecuteApplication( app, args, callback )
 				SubSubDomains.freeSubSubDomain( this.applicationId );
 			}
 
+			// FIXME: Francois here we close the iframe!
 			// Close method
 			ifr.close = function()
 			{
@@ -345,6 +433,8 @@ function ExecuteApplication( app, args, callback )
 					workspace: workspace,
 					locale: Workspace.locale,
 					theme: Workspace.theme,
+					themeData: Workspace.themeData,
+					workspaceMode: Workspace.workspacemode,
 					filePath: sdomain + filepath,
 					domain:   sdomain,
 					registerCallback: cid,
@@ -369,6 +459,11 @@ function ExecuteApplication( app, args, callback )
 
 			// Add application
 			Workspace.applications.push( ifr );
+			
+			if( callback )
+			{
+				callback( false );
+			}
 		}
 		else
 		{
@@ -635,6 +730,11 @@ function InstallApplication( app )
 function ExecuteApplicationActivation( app, win, permissions, reactivation )
 {
 	var pelement = win.getWindowElement();
+	if( !pelement ) 
+	{
+		console.log( 'No parent element: ', win, win.windowObject );
+		return;
+	}
 	var eles = pelement.getElementsByTagName( 'input' );
 	var out = [];
 	var hasOptions = 0;
@@ -752,19 +852,24 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	{
 		if( data )
 		{
-			var app = path.split( ':' )[1];
-			if( app.indexOf( '/' ) > 0 )
+			// An error?
+			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
-				app = app.split( '/' );
-				app = app[app.length-1];
+				var app = path.split( ':' )[1];
+				if( app.indexOf( '/' ) > 0 )
+				{
+					app = app.split( '/' );
+					app = app[app.length-1];
+				}
+				var r = ExecuteJSX( data, app, args, path, callback, conf ? conf.ConfFilename : false );
+				// Uncommented running callback, it is already running in executeJSX!
+				// Perhaps 'r' should tell us if it was run, and then run it if not?
+				//if( callback ) callback( true );
+				return r;
 			}
-			var r = ExecuteJSX( data, app, args, path, callback, conf ? conf.ConfFilename : false );
-			if( callback ) callback( true );
-			return r;
-
 		}
 		if( callback ) callback( false );
-	}
+	};
 	f.load();
 }
 
@@ -782,7 +887,12 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 		if( d )
 		{
 			// Check if d.Config is empty or not set
-			if( !d.Config || ( d.Config && d.Config == '{}' ) || JSON.stringify( d.Config ) == '{}' )
+			if( d.dormantDoor && !d.Config && d.dormantGetConfig )
+			{
+				conf = d.dormantGetConfig();
+				conf = JSON.stringify( conf );
+			}
+			else if( !d.Config || ( d.Config && d.Config == '{}' ) || JSON.stringify( d.Config ) == '{}' )
 			{
 				return ActivateApplication( path, { type: 'disk' } );
 			}
@@ -806,7 +916,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			// Special case, we have a conf
 			var sid = false;
 			var confObject = false;
-			var applicationId = app + '-' + (new Date()).getTime();
+			var applicationId = app + '-' + ( new Date() ).getTime();
 			if( conf )
 			{
 				var dom = GetDomainFromConf( conf, applicationId );
@@ -822,18 +932,23 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 				{
 					confObject = JSON.parse( conf );
 				}
+				
 				sid = confObject && confObject.authid ? true : false;
 				var svalu = sid ? confObject.authid : Workspace.sessionId;
 				var stype = sid ? 'authid' : 'sessionid';
 				if( stype == 'sessionid' ) ifr.sessionId = svalu;
 
 				// Use path to figure out config
-				if( conf.indexOf( '{' ) >= 0 )
+				if( !d.dormantDoor && conf.indexOf( '{' ) >= 0 )
 					conf = encodeURIComponent( path.split( ':' )[0] + ':' );
+
+				var extra = '';
+				if( stype == 'authid')
+					extra = '&theme=borderless';
 
 				ifr.src = dom + '/system.library/module/?module=system&command=sandbox' +
 					'&' + stype + '=' + svalu +
-					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' );
+					'&conf=' + conf + '&' + ( args ? ( 'args=' + args ) : '' ) + extra;
 				ifr.conf = confObject;
 			}
 			// Just give a dumb sandbox
@@ -846,8 +961,15 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 			ifr.userId = Workspace.userId;
 			ifr.username = Workspace.loginUsername;
 			ifr.applicationType = 'jsx';
-			if( sid ) ifr.sessionId = Workspace.sessionId; // JSX has sessionid
-			else ifr.authId = conf.authid;
+			if( sid ) 
+				ifr.sessionId = Workspace.sessionId; // JSX has sessionid
+			else 
+			{
+				if ( conf.authid )
+					ifr.authId = conf.authid;
+				else
+					ifr.sessionId = Workspace.sessionId;
+			}
 
 			// Quit the application
 			ifr.quit = function( level )
@@ -943,46 +1065,16 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						data = data.split( /system\:/i ).join ( document.location.href.split( /[^\/].*\.html/i ).join ( '' ) + '/webclient/' );
 					}
 
-					/*
-					var content =
-					'// This is the main run function for jsx files and FriendUP js apps' +
-					' Application.run = function( msg )' +
-					'{' +
-						'// Make a new window with some flags' +
-						'this.mainView = new View(' +
-						'{' +
-						'	title: i18n("Ceci est un titre"),' +
-						'	width: 384,' +
-						'	height: 600' +
-						'} );' +
-						'// Load a file from the same dir as the jsx file is located' +
-						'var content = '
-						'var self = this;' +
-						'var f = new File( "Progdir:Templates/index.html" );' +
-						'f.onLoad = function( data )' +
-						'{' +
-						'	// Set it as window content' +
-						'	self.mainView.setContent( data );' +
-						'}' +
-						'f.load();' +
-						'// On closing the window, quit.' +
-						'this.mainView.onClose = function()' +
-						'{' +
-						'	Application.quit();' +
-						'}' +
-					'};';
-					*/
-
 					jsx.innerHTML = data;
 
 					ifr.contentWindow.document.getElementsByTagName( 'head' )[0].appendChild( jsx );
-
+					ifr.appPath = dpath;
 
 					var cid = addWrapperCallback( function()
 					{
 						if( callback )
 						{
-							callback( "\n", { response: 'Executable has run.' } );
+							callback( "\n", { response: 'Executable has run.' }, ifr );
 						}
 					} );
 
@@ -993,13 +1085,15 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						userId:           ifr.userId,
 						username:         ifr.username,
 						theme:            Workspace.theme,
+						themeData:        Workspace.themeData,
+						workspaceMode:    Workspace.mode,
 						locale:           Workspace.locale,
 						filePath:         '/webclient/jsx/',
 						appPath:          dpath ? dpath : '',
 						authId:           ifr.authId, // JSX may have authid
 						sessionId:        ifr.sessionId, // or JSX has sessionid
 						origin:           document.location.href,
-						viewId:         false,
+						viewId:           false,
 						registerCallback: cid,
 						clipboard:        friend.clipboard,
 						args:			  args
@@ -1017,14 +1111,9 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 				}
 				catch( e )
 				{
-					Notify({'title':i18n('i18n_error'),'description':i18n('i18n_could_not_run_jsx')});
+					Notify( { 'title': i18n( 'i18n_error' ), 'description': i18n( 'i18n_could_not_run_jsx' ) } );
 				}
 			}
-
-			// Fix to prevent Tree application from launching in a loop
-			if ( !Workspace.treeRunningApplications )
-				Workspace.treeRunningApplications = [];
-			Workspace.treeRunningApplications.push( path );
 
 			// Add application iframe to body
 			AttachAppSandbox( ifr );

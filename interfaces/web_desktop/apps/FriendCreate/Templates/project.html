@@ -9,25 +9,25 @@
 					<strong>{i18n_project_name}:</strong>
 				</p>
 				<p class="Layout">
-					<input class="FullWidth" id="tProjectName"/>
+					<input type="text" class="FullWidth" id="tProjectName"/>
 				</p>
 				<p class="Layout">
 					<strong>{i18n_author}:</strong>
 				</p>
 				<p class="Layout">
-					<input class="FullWidth" id="tAuthor"/>
+					<input type="text" class="FullWidth" id="tAuthor"/>
 				</p>
 				<p class="Layout">
 					<strong>{i18n_version}:</strong>
 				</p>
 				<p class="Layout">
-					<input class="FullWidth" id="tVersion"/>
+					<input type="text" class="FullWidth" id="tVersion"/>
 				</p>
 				<p class="Layout">
 					<strong>{i18n_category}:</strong>
 				</p>
 				<p class="Layout">
-					<input class="FullWidth" id="tCategory"/>
+					<select id="tCategory"></select>
 				</p>
 				<p class="Layout">
 					<strong>{i18n_desc}:</strong>
@@ -55,7 +55,7 @@
 			<input type="hidden" id="Files" value=""/>
 			<input type="hidden" id="Libraries" value=""/>
 		</div>
-		<div class="ContentFull RightSide BorderLeft">
+		<div id="Disabled" class="ContentFull RightSide BorderLeft">
 			<div class="ContentFull Padding ScrollArea" id="Librarylist">
 				<div id="ExtraTabs" class="Tabs">
 					<div class="Tab IconSmall fa-shopping-cart">
@@ -88,11 +88,8 @@
 		</div>
 	</div>
 	<div class="VContentBottom BottomCnt BorderTop Padding">
-		<button type="button" class="Button IconSmall fa-check" onclick="saveProject()">
+		<button type="button" class="FloatRight Button IconSmall fa-check" onclick="saveProject()">
 			{i18n_save}
-		</button>
-		<button type="button" class="Button IconSmall fa-close" onclick="closewin()">
-			{i18n_cancel}
 		</button>
 	</div>
 
@@ -129,13 +126,14 @@
 		}
 		.ContentFull.LeftSide
 		{
-			width: 50%;
+			width: 100%;
+			/*width: 50%;*/
 		}
-		.ContentFull.RightSide
+		/*.ContentFull.RightSide
 		{
 			width: 50%;
 			left: 50%;
-		}
+		}*/
 		
 		#tDescription
 		{
@@ -190,6 +188,14 @@
 		.Package.Active > .Label
 		{
 			color: #004466;
+		}
+		
+		#Disabled
+		{
+			pointer-events: none;
+			visibility: hidden;
+			width: 0px;
+			overflow: hidden;
 		}
 		
 	</style>

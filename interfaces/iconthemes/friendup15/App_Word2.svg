@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>App_Word2</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-255.000000, -355.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)">
+            <g id="Appicons" transform="translate(97.000000, 264.000000)">
+                <g id="App_Word2" transform="translate(111.000000, 77.000000)">
+                    <path d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#2980B9" fill-rule="nonzero"></path>
+                    <g id="Group" transform="translate(6.000000, 5.000000)" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8">
+                        <rect id="rect4175-59" x="12" y="5.6" width="16" height="2"></rect>
+                        <rect id="rect4175-59" x="12" y="0" width="16" height="2"></rect>
+                        <rect id="rect4175-5-62" x="0" y="11.2" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-1" x="0" y="16.8" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-2-7" x="0" y="22.4" width="28" height="2"></rect>
+                        <rect id="rect4175-5-6-2-7" x="0" y="28" width="28" height="2"></rect>
+                    </g>
+                    <path d="M5.15,5.47 L6.56,5.47 L7.05,8.6 L7.33,10.67 L7.37,10.67 L7.77,8.6 L8.51,5.47 L9.68,5.47 L10.41,8.6 L10.64,9.76 L10.82,10.67 L10.86,10.67 C10.9866673,9.6899951 11.0799997,9.000002 11.14,8.6 L11.63,5.47 L12.94,5.47 L11.75,12 L10.03,12 L9.34,8.88 C9.2333328,8.3799975 9.1433337,7.8766692 9.07,7.37 L9.03,7.37 L8.95,7.83 C8.8699996,8.296669 8.8033336,8.6466655 8.75,8.88 L8.08,12 L6.39,12 L5.15,5.47 Z" id="W" fill="#FFFFFF"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -5,6 +5,128 @@ cmake_minimum_required(VERSION 2.8.9)
 # For selecting between DEBUG / RELEASE, use -DCMAKE_BUILD_TYPE=DEBUG or =RELEASE
 #   debug builds include source level debug info and extra logging
 
+set(LWS_WITH_BUNDLED_ZLIB_DEFAULT OFF)
+if(WIN32)
+	set(LWS_WITH_BUNDLED_ZLIB_DEFAULT ON)
+endif()
+
+set(LWS_ROLE_RAW 1)
+set(LWS_WITH_POLL 1)
+
+#
+# Select features recommended for PC distro packaging
+#
+option(LWS_WITH_DISTRO_RECOMMENDED "Enable features recommended for distro packaging" OFF)
+
+#
+# Major individual features
+#
+option(LWS_ROLE_H1 "Compile with support for http/1 (needed for ws)" ON)
+option(LWS_ROLE_WS "Compile with support for websockets" ON)
+option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" OFF)
+option(LWS_WITH_LWSWS "Libwebsockets Webserver" OFF)
+option(LWS_WITH_CGI "Include CGI (spawn process with network-connected stdin/out/err) APIs" OFF)
+option(LWS_IPV6 "Compile with support for ipv6" OFF)
+option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" OFF)
+option(LWS_WITH_PLUGINS "Support plugins for protocols and extensions" OFF)
+option(LWS_WITH_HTTP_PROXY "Support for rewriting HTTP proxying (requires libhubbub)" OFF)
+option(LWS_WITH_ZIP_FOPS "Support serving pre-zipped files" OFF)
+option(LWS_WITH_SOCKS5 "Allow use of SOCKS5 proxy on client connections" OFF)
+option(LWS_WITH_GENERIC_SESSIONS "With the Generic Sessions plugin" OFF)
+option(LWS_WITH_PEER_LIMITS "Track peers and restrict resources a single peer can allocate" OFF)
+option(LWS_WITH_ACCESS_LOG "Support generating Apache-compatible access logs" OFF)
+option(LWS_WITH_RANGES "Support http ranges (RFC7233)" OFF)
+option(LWS_WITH_SERVER_STATUS "Support json + jscript server monitoring" OFF)
+option(LWS_WITH_ACME "Enable support for ACME automatic cert acquisition + maintenance (letsencrypt etc)" OFF)
+#
+# TLS library options... all except mbedTLS are basically OpenSSL variants.
+#
+option(LWS_WITH_SSL "Include SSL support (defaults to OpenSSL or similar, mbedTLS if LWS_WITH_MBEDTLS is set)" ON)
+option(LWS_WITH_MBEDTLS "Use mbedTLS (>=2.0) replacement for OpenSSL. When setting this, you also may need to specify LWS_MBEDTLS_LIBRARIES and LWS_MBEDTLS_INCLUDE_DIRS" OFF)
+option(LWS_WITH_BORINGSSL "Use BoringSSL replacement for OpenSSL" OFF)
+option(LWS_WITH_CYASSL "Use CyaSSL replacement for OpenSSL. When setting this, you also need to specify LWS_CYASSL_LIBRARIES and LWS_CYASSL_INCLUDE_DIRS" OFF)
+option(LWS_WITH_WOLFSSL "Use wolfSSL replacement for OpenSSL. When setting this, you also need to specify LWS_WOLFSSL_LIBRARIES and LWS_WOLFSSL_INCLUDE_DIRS" OFF)
+option(LWS_SSL_CLIENT_USE_OS_CA_CERTS "SSL support should make use of the OS-installed CA root certs" ON)
+#
+# Event library options (may select multiple, or none for default poll()
+#
+option(LWS_WITH_LIBEV "Compile with support for libev" OFF)
+option(LWS_WITH_LIBUV "Compile with support for libuv" OFF)
+option(LWS_WITH_LIBEVENT "Compile with support for libevent" OFF)
+#
+# Static / Dynamic build options
+#
+option(LWS_WITH_STATIC "Build the static version of the library" ON)
+option(LWS_WITH_SHARED "Build the shared version of the library" ON)
+option(LWS_LINK_TESTAPPS_DYNAMIC "Link the test apps to the shared version of the library. Default is to link statically" OFF)
+option(LWS_STATIC_PIC "Build the static version of the library with position-independent code" OFF)
+#
+# Specific platforms
+#
+option(LWS_WITH_ESP32 "Build for ESP32" OFF)
+option(LWS_PLAT_OPTEE "Build for OPTEE" OFF)
+#
+# Client / Server / Test Apps build control
+#
+option(LWS_WITHOUT_CLIENT "Don't build the client part of the library" OFF)
+option(LWS_WITHOUT_SERVER "Don't build the server part of the library" OFF)
+option(LWS_WITHOUT_TESTAPPS "Don't build the libwebsocket-test-apps" OFF)
+option(LWS_WITHOUT_TEST_SERVER "Don't build the test server" OFF)
+option(LWS_WITHOUT_TEST_SERVER_EXTPOLL "Don't build the test server version that uses external poll" OFF)
+option(LWS_WITHOUT_TEST_PING "Don't build the ping test application" OFF)
+option(LWS_WITHOUT_TEST_CLIENT "Don't build the client test application" OFF)
+#
+# Extensions (permessage-deflate)
+#
+option(LWS_WITHOUT_EXTENSIONS "Don't compile with extensions" ON)
+option(LWS_WITH_ZLIB "Include zlib support (required for extensions)" OFF)
+option(LWS_WITH_BUNDLED_ZLIB "Use bundled zlib version (Windows only)" ${LWS_WITH_BUNDLED_ZLIB_DEFAULT})
+#
+# Helpers + misc
+#
+option(LWS_WITHOUT_BUILTIN_GETIFADDRS "Don't use the BSD getifaddrs implementation from libwebsockets if it is missing (this will result in a compilation error) ... The default is to assume that your libc provides it. On some systems such as uclibc it doesn't exist." OFF)
+option(LWS_FALLBACK_GETHOSTBYNAME "Also try to do dns resolution using gethostbyname if getaddrinfo fails" OFF)
+option(LWS_WITHOUT_BUILTIN_SHA1 "Don't build the lws sha-1 (eg, because openssl will provide it" OFF)
+option(LWS_WITH_LATENCY "Build latency measuring code into the library" OFF)
+option(LWS_WITHOUT_DAEMONIZE "Don't build the daemonization api" ON)
+option(LWS_SSL_SERVER_WITH_ECDH_CERT "Include SSL server use ECDH certificate" OFF)
+option(LWS_WITH_LEJP "With the Lightweight JSON Parser" OFF)
+option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" OFF)
+option(LWS_WITH_SQLITE3 "Require SQLITE3 support" OFF)
+option(LWS_WITH_SMTP "Provide SMTP support" OFF)
+option(LWS_WITH_NO_LOGS "Disable all logging from being compiled in" OFF)
+option(LWS_AVOID_SIGPIPE_IGN "Android 7+ reportedly needs this" OFF)
+option(LWS_WITH_STATS "Keep statistics of lws internal operations" OFF)
+option(LWS_WITH_JWS "JSON Web Signature (RFC7515) API" OFF)
+option(LWS_WITH_GENHASH "Enable support for Generic Hash (SHA1 + SHA2 with api independent of TLS backend)" OFF)
+option(LWS_WITH_GENRSA "Enable support for Generic RSA (RSA with api independent of TLS backend)" OFF)
+option(LWS_WITH_SELFTESTS "Selftests run at context creation" OFF)
+option(LWS_WITH_GCOV "Build with gcc gcov coverage instrumentation" OFF)
+option(LWS_WITH_EXPORT_LWSTARGETS "Export libwebsockets CMake targets.  Disable if they conflict with an outer cmake project." ON)
+option(LWS_REPRODUCIBLE "Build libwebsockets reproducible. It removes the build user and hostname from the build" ON)
+option(LWS_WITH_MINIMAL_EXAMPLES "Also build the normally standalone minimal examples, for QA" OFF)
+#
+# End of user settings
+#
+
+
+if(LWS_WITH_DISTRO_RECOMMENDED)
+	set(LWS_WITH_HTTP2 1)
+	set(LWS_WITH_LWSWS 1)
+	set(LWS_WITH_CGI 1)
+	set(LWS_IPV6 1)
+	set(LWS_WITH_ZIP_FOPS 1)
+	set(LWS_WITH_SOCKS5 1)
+	set(LWS_WITH_RANGES 1)
+	set(LWS_WITH_ACME 1)
+	set(LWS_WITH_SERVER_STATUS 1)
+	set(LWS_WITH_LIBUV 1)
+	set(LWS_WITH_LIBEV 1)
+	# libev + libevent cannot coexist at build-time
+	set(LWS_WITH_LIBEVENT 0)
+	set(LWS_WITHOUT_EXTENSIONS 0)
+endif()
+
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
 endif()
@@ -13,13 +135,13 @@ project(libwebsockets C)
 
 set(PACKAGE "libwebsockets")
 set(CPACK_PACKAGE_NAME "${PACKAGE}")
-set(CPACK_PACKAGE_VERSION_MAJOR "2")
-set(CPACK_PACKAGE_VERSION_MINOR "4")
-set(CPACK_PACKAGE_VERSION_PATCH "1")
+set(CPACK_PACKAGE_VERSION_MAJOR "3")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "99")
 set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_PACKAGE_VENDOR "andy@warmcat.com")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE} ${PACKAGE_VERSION}")
-set(SOVERSION "12")
+set(SOVERSION "13")
 if(NOT CPACK_GENERATOR)
     if(UNIX)
         set(CPACK_GENERATOR "TGZ")
@@ -40,99 +162,59 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 message(STATUS "CMAKE_TOOLCHAIN_FILE='${CMAKE_TOOLCHAIN_FILE}'")
 
+if(WIN32)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/win32port/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/win32port/version.rc @ONLY)
+	set(RESOURCES ${CMAKE_CURRENT_BINARY_DIR}/win32port/version.rc)
+endif()
+
 # Try to find the current Git hash.
 find_package(Git)
 if(GIT_EXECUTABLE)
 	execute_process(
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMAND "${GIT_EXECUTABLE}" describe
-    OUTPUT_VARIABLE GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-	execute_process(
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMAND "whoami"
-    OUTPUT_VARIABLE GIT_USER
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-	execute_process(
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMAND "hostname"
-    OUTPUT_VARIABLE GIT_HOST
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-	string(REGEX REPLACE "([^\\])[\\]([^\\])" "\\1\\\\\\\\\\2" GIT_USER ${GIT_USER})
-    set(LWS_BUILD_HASH ${GIT_USER}@${GIT_HOST}-${GIT_HASH})
-    message("Git commit hash: ${LWS_BUILD_HASH}")
-endif()
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		COMMAND "${GIT_EXECUTABLE}" describe --tags
+		OUTPUT_VARIABLE GIT_HASH
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		)
+	set(LWS_BUILD_HASH ${GIT_HASH})
 
-set(LWS_WITH_BUNDLED_ZLIB_DEFAULT OFF)
-if(WIN32)
-	set(LWS_WITH_BUNDLED_ZLIB_DEFAULT ON)
-endif()
-
-option(LWS_WITH_STATIC "Build the static version of the library" ON)
-option(LWS_WITH_SHARED "Build the shared version of the library" ON)
-option(LWS_WITH_SSL "Include SSL support (default OpenSSL, wolfSSL if LWS_WITH_WOLFSSL is set)" ON)
-option(LWS_WITH_BORINGSSL "Use BoringSSL replacement for OpenSSL" OFF)
-option(LWS_WITH_CYASSL "Use CyaSSL replacement for OpenSSL. When setting this, you also need to specify LWS_CYASSL_LIBRARIES and LWS_CYASSL_INCLUDE_DIRS" OFF)
-option(LWS_WITH_WOLFSSL "Use wolfSSL replacement for OpenSSL. When setting this, you also need to specify LWS_WOLFSSL_LIBRARIES and LWS_WOLFSSL_INCLUDE_DIRS" OFF)
-option(LWS_WITH_MBEDTLS "Use mbedTLS (>=2.0) replacement for OpenSSL. When setting this, you also need to specify LWS_MBEDTLS_LIBRARIES and LWS_MBEDTLS_INCLUDE_DIRS" OFF)
-option(LWS_WITH_ZLIB "Include zlib support (required for extensions)" ON)
-option(LWS_WITH_LIBEV "Compile with support for libev" OFF)
-option(LWS_WITH_LIBUV "Compile with support for libuv" OFF)
-option(LWS_WITH_LIBEVENT "Compile with support for libevent" OFF)
-option(LWS_WITH_BUNDLED_ZLIB "Use bundled zlib version (Windows only)" ${LWS_WITH_BUNDLED_ZLIB_DEFAULT})
-option(LWS_SSL_CLIENT_USE_OS_CA_CERTS "SSL support should make use of the OS-installed CA root certs" ON)
-option(LWS_WITHOUT_BUILTIN_GETIFADDRS "Don't use the BSD getifaddrs implementation from libwebsockets if it is missing (this will result in a compilation error) ... The default is to assume that your libc provides it. On some systems such as uclibc it doesn't exist." OFF)
-option(LWS_WITHOUT_BUILTIN_SHA1 "Don't build the lws sha-1 (eg, because openssl will provide it" OFF)
-option(LWS_WITHOUT_CLIENT "Don't build the client part of the library" OFF)
-option(LWS_WITHOUT_SERVER "Don't build the server part of the library" OFF)
-option(LWS_LINK_TESTAPPS_DYNAMIC "Link the test apps to the shared version of the library. Default is to link statically" OFF)
-option(LWS_WITHOUT_TESTAPPS "Don't build the libwebsocket-test-apps" OFF)
-option(LWS_WITHOUT_TEST_SERVER "Don't build the test server" OFF)
-option(LWS_WITHOUT_TEST_SERVER_EXTPOLL "Don't build the test server version that uses external poll" OFF)
-option(LWS_WITHOUT_TEST_PING "Don't build the ping test application" OFF)
-option(LWS_WITHOUT_TEST_ECHO "Don't build the echo test application" OFF)
-option(LWS_WITHOUT_TEST_CLIENT "Don't build the client test application" OFF)
-option(LWS_WITHOUT_TEST_FRAGGLE "Don't build the ping test application" OFF)
-option(LWS_WITHOUT_EXTENSIONS "Don't compile with extensions" OFF)
-option(LWS_WITH_LATENCY "Build latency measuring code into the library" OFF)
-option(LWS_WITHOUT_DAEMONIZE "Don't build the daemonization api" ON)
-option(LWS_IPV6 "Compile with support for ipv6" OFF)
-option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" OFF)
-option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" OFF)
-option(LWS_SSL_SERVER_WITH_ECDH_CERT "Include SSL server use ECDH certificate" OFF)
-option(LWS_WITH_CGI "Include CGI (spawn process with network-connected stdin/out/err) APIs" OFF)
-option(LWS_WITH_HTTP_PROXY "Support for rewriting HTTP proxying (requires libhubbub)" OFF)
-option(LWS_WITH_LWSWS "Libwebsockets Webserver" OFF)
-option(LWS_WITH_PLUGINS "Support plugins for protocols and extensions" OFF)
-option(LWS_WITH_ACCESS_LOG "Support generating Apache-compatible access logs" OFF)
-option(LWS_WITH_SERVER_STATUS "Support json + jscript server monitoring" OFF)
-option(LWS_WITH_LEJP "With the Lightweight JSON Parser" OFF)
-option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" OFF)
-option(LWS_WITH_GENERIC_SESSIONS "With the Generic Sessions plugin" OFF)
-option(LWS_WITH_SQLITE3 "Require SQLITE3 support" OFF)
-option(LWS_WITH_SMTP "Provide SMTP support" OFF)
-option(LWS_WITH_ESP8266 "Build for ESP8266" OFF)
-option(LWS_WITH_ESP32 "Build for ESP32" OFF)
-option(LWS_PLAT_OPTEE "Build for OPTEE" OFF)
-option(LWS_WITH_NO_LOGS "Disable all logging from being compiled in" OFF)
-option(LWS_STATIC_PIC "Build the static version of the library with position-independent code" OFF)
-option(LWS_WITH_RANGES "Support http ranges (RFC7233)" ON)
-option(LWS_FALLBACK_GETHOSTBYNAME "Also try to do dns resolution using gethostbyname if getaddrinfo fails" OFF)
-option(LWS_WITH_ZIP_FOPS "Support serving pre-zipped files" ON)
-option(LWS_AVOID_SIGPIPE_IGN "Android 7+ seems to need this" OFF)
-option(LWS_WITH_STATS "Keep statistics of lws internal operations" OFF)
-option(LWS_WITH_SOCKS5 "Allow use of SOCKS5 proxy on client connections" OFF)
-option(LWS_WITH_PEER_LIMITS "Track peers and restrict resources a single peer can allocate" OFF)
-
-macro(confirm_command CMD NOCMD)
-	find_program (HAVE_CMD_${CMD} ${CMD} )
-	if (NOT HAVE_CMD_${CMD})
-		message(FATAL_ERROR "Missing command ${CMD} required for build: ${NOCMD}" )
+	# append the build user and hostname
+	if(NOT LWS_REPRODUCIBLE)
+		execute_process(
+			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+			COMMAND "whoami"
+			OUTPUT_VARIABLE GIT_USER
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			)
+		execute_process(
+			WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+			COMMAND "hostname"
+			OUTPUT_VARIABLE GIT_HOST
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			)
+		string(REGEX REPLACE "([^\\])[\\]([^\\])" "\\1\\\\\\\\\\2" GIT_USER ${GIT_USER})
+		set(LWS_BUILD_HASH ${GIT_USER}@${GIT_HOST}-${GIT_HASH})
 	endif()
-endmacro()
+
+	message("Git commit hash: ${LWS_BUILD_HASH}")
+endif()
+
+# translate old functionality enables to set up ROLE enables so nothing changes
+if (LWS_WITH_HTTP2)
+	set(LWS_ROLE_H2 1)
+endif()
+if (LWS_WITH_CGI)
+	set(LWS_ROLE_CGI 1)
+endif()
+
+if (NOT LWS_ROLE_WS)
+	set(LWS_WITHOUT_EXTENSIONS 1)
+endif()
+
+if (LWS_WITH_HTTP2 AND LWS_WITHOUT_SERVER)
+	message(FATAL_ERROR "HTTP2 can only be used with server at the moment")
+endif()
+
 
 
 if (LWS_WITH_LWSWS)
@@ -146,6 +228,18 @@ if (LWS_WITH_LWSWS)
  set(LWS_WITH_PEER_LIMITS 1)
 endif()
 
+if (LWS_WITH_ACME)
+ set (LWS_WITHOUT_CLIENT 0)
+ set (LWS_WITHOUT_SERVER 0)
+ set (LWS_WITH_JWS 1)
+endif()
+
+if (LWS_WITH_JWS)
+ set(LWS_WITH_LEJP 1)
+ set(LWS_WITH_GENHASH 1)
+ set(LWS_WITH_GENRSA 1)
+endif()
+
 if (LWS_WITH_PLUGINS AND NOT LWS_WITH_LIBUV)
 message(STATUS "LWS_WITH_PLUGINS --> Enabling LWS_WITH_LIBUV")
  set(LWS_WITH_LIBUV 1)
@@ -154,6 +248,12 @@ endif()
 if (LWS_WITH_SMTP AND NOT LWS_WITH_LIBUV)
 message(STATUS "LWS_WITH_SMTP --> Enabling LWS_WITH_LIBUV")
  set(LWS_WITH_LIBUV 1)
+endif()
+
+if (LWS_WITH_PLUGINS OR LWS_WITH_CGI)
+	# sshd plugin
+ set(LWS_WITH_GENHASH 1)
+ set(LWS_WITH_GENRSA 1)
 endif()
 
 if (LWS_WITH_GENERIC_SESSIONS)
@@ -166,28 +266,7 @@ message(STATUS "LWS_WITH_SMTP --> Enabling LWS_WITH_LIBUV")
  set(LWS_WITH_LIBUV 1)
 endif()
 
-if (LWS_WITH_ESP8266)
- set(LWS_WITH_SHARED OFF)
- set(LWS_WITH_SSL OFF)
- set(LWS_WITH_ZLIB OFF)
- set(LWS_WITHOUT_CLIENT ON)
- set(LWS_WITHOUT_TESTAPPS ON)
- set(LWS_WITHOUT_EXTENSIONS ON)
- set(LWS_WITH_PLUGINS OFF)
- set(LWS_WITH_RANGES OFF)
- # this implies no pthreads in the lib
- set(LWS_MAX_SMP 1)
- set(LWS_HAVE_MALLOC 1)
- set(LWS_HAVE_REALLOC 1)
- set(LWS_HAVE_GETIFADDRS 1)
- set(LWS_WITH_ZIP_FOPS 0)
-endif()
-
 if (LWS_WITH_ESP32)
-
-	confirm_command(xxd "usually found in vim package")
-	confirm_command(genromfs "install genromfs package")
-
  set(LWS_WITH_SHARED OFF)
  set(LWS_WITH_MBEDTLS ON)
   # set(LWS_WITHOUT_CLIENT ON)
@@ -205,7 +284,6 @@ endif()
 
 
 if (WIN32)
-# this implies no pthreads in the lib
 set(LWS_MAX_SMP 1)
 endif()
 
@@ -213,6 +291,40 @@ endif()
 if (LWS_WITHOUT_SERVER)
 set(LWS_WITH_LWSWS OFF)
 endif()
+
+
+# confirm H1 relationships
+
+if (NOT LWS_ROLE_H1 AND LWS_ROLE_H2)
+	message(FATAL_ERROR "H2 requires LWS_ROLE_H1")
+endif()
+
+if (NOT LWS_ROLE_H1 AND LWS_ROLE_WS)
+	message(FATAL_ERROR "WS requires LWS_ROLE_H1")
+endif()
+
+if (NOT LWS_ROLE_H1 AND LWS_ROLE_CGI)
+	message(FATAL_ERROR "CGI requires LWS_ROLE_H1")
+endif()
+
+# confirm HTTP relationships
+
+if (NOT LWS_ROLE_H1 AND NOT LWS_ROLE_H2 AND LWS_WITH_HTTP_PROXY)
+	message(FATAL_ERROR "LWS_WITH_LWSWS requires LWS_ROLE_H1")
+endif()
+
+if (NOT LWS_ROLE_H1 AND NOT LWS_ROLE_H2 AND LWS_WITH_HTTP_PROXY)
+	message(FATAL_ERROR "LWS_WITH_HTTP_PROXY requires LWS_ROLE_H1")
+endif()
+
+if (NOT LWS_ROLE_H1 AND NOT LWS_ROLE_H2 AND LWS_WITH_RANGES)
+	message(FATAL_ERROR "LWS_WITH_RANGES requires LWS_ROLE_H1")
+endif()
+
+if (NOT LWS_ROLE_H1 AND NOT LWS_ROLE_H2 AND LWS_WITH_ACCESS_LOG)
+	message(FATAL_ERROR "LWS_WITH_ACCESS_LOG requires LWS_ROLE_H1")
+endif()
+
 
 if (LWS_WITH_HTTP_PROXY AND (LWS_WITHOUT_CLIENT OR LWS_WITHOUT_SERVER))
 	message(FATAL_ERROR "You have to enable both client and server for http proxy")
@@ -243,10 +355,8 @@ if (NOT (LWS_WITH_STATIC OR LWS_WITH_SHARED))
 	message(FATAL_ERROR "Makes no sense to compile with neither static nor shared libraries.")
 endif()
 
-if (NOT LWS_WITHOUT_EXTENSIONS)
-	if (NOT LWS_WITH_ZLIB)
-		message(FATAL_ERROR "zlib is required for extensions.")
-	endif()
+if (NOT LWS_WITHOUT_EXTENSIONS OR LWS_WITH_ZIP_FOPS)
+	set(LWS_WITH_ZLIB 1)
 endif()
 
 set(LWS_ZLIB_LIBRARIES CACHE PATH "Path to the zlib library")
@@ -295,6 +405,7 @@ if (LWS_WITH_SSL AND LWS_WITH_WOLFSSL)
 		set(WOLFSSL_FOUND 1)
 	endif()
 	set(USE_WOLFSSL 1)
+	set(LWS_WITH_TLS 1)
 	if (LWS_WITH_CYASSL)
 		set(USE_OLD_CYASSL 1)
 	endif()
@@ -373,6 +484,10 @@ if (LWS_WITH_SQLITE3)
 endif()
 
 
+if (LWS_WITH_LIBEV AND LWS_WITH_LIBEVENT)
+	message(FATAL_ERROR "Sorry libev and libevent conflict with each others' namespace, you can only have one or the other")
+endif()
+
 # The base dir where the test-apps look for the SSL certs.
 set(LWS_OPENSSL_CLIENT_CERTS ../share CACHE PATH "Server SSL certificate directory")
 if (WIN32)
@@ -386,12 +501,10 @@ else()
 	set(LWS_OPENSSL_CLIENT_CERTS /etc/pki/tls/certs/ CACHE PATH "Client SSL certificate directory")
 endif()
 
-if (LWS_WITHOUT_EXTENSIONS)
-	set(LWS_NO_EXTENSIONS 1)
-endif()
-
-if (LWS_WITH_SSL)
+# LWS_OPENSSL_SUPPORT deprecated... use LWS_WITH_TLS
+if (LWS_WITH_SSL OR LWS_WITH_MBEDTLS)
 	set(LWS_OPENSSL_SUPPORT 1)
+	set(LWS_WITH_TLS 1)
 endif()
 
 if (LWS_SSL_CLIENT_USE_OS_CA_CERTS)
@@ -443,13 +556,10 @@ if ("${LWS_MAX_SMP}" STREQUAL "")
 endif()
 
 
-if (LWS_WITH_ESP8266)
-set(CMAKE_C_FLAGS "-nostdlib ${CMAKE_C_FLAGS}")
-endif()
-
 if (MINGW)
 	set(LWS_MINGW_SUPPORT 1)
 	set(CMAKE_C_FLAGS "-D__USE_MINGW_ANSI_STDIO ${CMAKE_C_FLAGS}")
+	add_definitions(-DWINVER=0x0601 -D_WIN32_WINNT=0x0601)
 endif()
 
 if (LWS_SSL_SERVER_WITH_ECDH_CERT)
@@ -497,6 +607,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckTypeSize)
+include(CheckCSourceCompiles)
 
 if (LWS_WITHOUT_BUILTIN_SHA1)
 	set(LWS_SHA1_USE_OPENSSL_NAME 1)
@@ -535,7 +646,6 @@ endif()
 CHECK_INCLUDE_FILE(dlfcn.h LWS_HAVE_DLFCN_H)
 CHECK_INCLUDE_FILE(fcntl.h LWS_HAVE_FCNTL_H)
 CHECK_INCLUDE_FILE(in6addr.h LWS_HAVE_IN6ADDR_H)
-CHECK_INCLUDE_FILE(inttypes.h LWS_HAVE_INTTYPES_H)
 CHECK_INCLUDE_FILE(memory.h LWS_HAVE_MEMORY_H)
 CHECK_INCLUDE_FILE(netinet/in.h LWS_HAVE_NETINET_IN_H)
 CHECK_INCLUDE_FILE(stdint.h LWS_HAVE_STDINT_H)
@@ -550,11 +660,18 @@ CHECK_INCLUDE_FILE(sys/types.h LWS_HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILE(unistd.h LWS_HAVE_UNISTD_H)
 CHECK_INCLUDE_FILE(vfork.h LWS_HAVE_VFORK_H)
 CHECK_INCLUDE_FILE(sys/capability.h LWS_HAVE_SYS_CAPABILITY_H)
+CHECK_INCLUDE_FILE(malloc.h LWS_HAVE_MALLOC_H)
+CHECK_INCLUDE_FILE(pthread.h LWS_HAVE_PTHREAD_H)
 
 CHECK_LIBRARY_EXISTS(cap cap_set_flag "" LWS_HAVE_LIBCAP) 
 
 if (LWS_WITH_LIBUV)
 CHECK_INCLUDE_FILE(uv-version.h LWS_HAVE_UV_VERSION_H)
+  # libuv changed the location in 1.21.0. Retain both
+  # checks temporarily to ensure a smooth transition.
+  if(NOT LWS_HAVE_UV_VERSION_H)
+    CHECK_INCLUDE_FILE(uv/version.h LWS_HAVE_NEW_UV_VERSION_H)
+  endif()
 endif()
 
 
@@ -606,7 +723,7 @@ include_directories("${PROJECT_SOURCE_DIR}/lib")
 # Group headers and sources.
 # Some IDEs use this for nicer file structure.
 set(HDR_PRIVATE
-	lib/private-libwebsockets.h)
+	lib/core/private.h)
 
 set(HDR_PUBLIC
 	"${PROJECT_SOURCE_DIR}/lib/libwebsockets.h"
@@ -615,94 +732,175 @@ set(HDR_PUBLIC
 	)
 
 set(SOURCES
+	lib/core/alloc.c
+	lib/core/context.c
+	lib/core/libwebsockets.c
+	lib/core/output.c
+	lib/core/pollfd.c
+	lib/core/service.c
 	lib/misc/base64-decode.c
-	lib/handshake.c
-	lib/libwebsockets.c
-	lib/service.c
-	lib/pollfd.c
-	lib/output.c
-	lib/server/parsers.c
-	lib/context.c
-	lib/alloc.c
-	lib/header.c
-	lib/misc/lws-ring.c)
+	lib/misc/lws-ring.c
+	lib/roles/pipe/ops-pipe.c)
 
-if (LWS_WITH_CGI)
+if (LWS_ROLE_H1 OR LWS_ROLE_H2)
 	list(APPEND SOURCES
-		lib/server/cgi.c)
+		lib/roles/http/header.c
+		lib/roles/http/server/parsers.c)
+endif()
+
+if (LWS_ROLE_H1)
+	list(APPEND SOURCES
+		lib/roles/h1/ops-h1.c)
+endif()
+
+if (LWS_ROLE_WS)
+	list(APPEND SOURCES
+		lib/roles/ws/ops-ws.c)
+	if (NOT LWS_WITHOUT_CLIENT)
+		list(APPEND SOURCES
+			lib/roles/ws/client-ws.c
+			lib/roles/ws/client-parser-ws.c)
+	endif()
+	if (NOT LWS_WITHOUT_SERVER)
+		list(APPEND SOURCES
+			lib/roles/ws/server-ws.c)
+	endif()
+endif()
+
+if (LWS_ROLE_RAW)
+	list(APPEND SOURCES
+		lib/roles/raw-skt/ops-raw-skt.c
+		lib/roles/raw-file/ops-raw-file.c)
+endif()
+
+if (LWS_ROLE_CGI)
+	list(APPEND SOURCES
+		lib/roles/cgi/cgi-server.c
+		lib/roles/cgi/ops-cgi.c)
 endif()
 
 if (LWS_WITH_ACCESS_LOG)
 	list(APPEND SOURCES
-		lib/server/access-log.c)
+		lib/roles/http/server/access-log.c)
 endif()
 
 if (LWS_WITH_PEER_LIMITS)
 	list(APPEND SOURCES
-		lib/server/peer-limits.c)
+		lib/misc/peer-limits.c)
 endif()
 
 if (NOT LWS_WITHOUT_CLIENT)
 	list(APPEND SOURCES
-		lib/client/client.c
-		lib/client/client-handshake.c
-		lib/client/client-parser.c)
+		lib/core/connect.c
+		lib/roles/http/client/client.c
+		lib/roles/http/client/client-handshake.c)
+endif()
+
+if (NOT LWS_WITHOUT_SERVER)
+	list(APPEND SOURCES
+		lib/core/adopt.c
+		lib/roles/listen/ops-listen.c)
 endif()
 
 if (LWS_WITH_MBEDTLS)
  	set(LWS_WITH_SSL ON)
+ 	
+	list(APPEND HDR_PRIVATE
+		lib/tls/mbedtls/wrapper/include/internal/ssl3.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_cert.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_code.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_dbg.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_lib.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_methods.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_pkey.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_stack.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_types.h
+		lib/tls/mbedtls/wrapper/include/internal/ssl_x509.h
+		lib/tls/mbedtls/wrapper/include/internal/tls1.h
+		lib/tls/mbedtls/wrapper/include/internal/x509_vfy.h)
 
 	list(APPEND HDR_PRIVATE
-		lib/mbedtls_wrapper/include/internal/ssl3.h
-		lib/mbedtls_wrapper/include/internal/ssl_cert.h
-		lib/mbedtls_wrapper/include/internal/ssl_code.h
-		lib/mbedtls_wrapper/include/internal/ssl_dbg.h
-		lib/mbedtls_wrapper/include/internal/ssl_lib.h
-		lib/mbedtls_wrapper/include/internal/ssl_methods.h
-		lib/mbedtls_wrapper/include/internal/ssl_pkey.h
-		lib/mbedtls_wrapper/include/internal/ssl_stack.h
-		lib/mbedtls_wrapper/include/internal/ssl_types.h
-		lib/mbedtls_wrapper/include/internal/ssl_x509.h
-		lib/mbedtls_wrapper/include/internal/tls1.h
-		lib/mbedtls_wrapper/include/internal/x509_vfy.h)
+		lib/tls/mbedtls/wrapper/include/openssl/ssl.h)
 
 	list(APPEND HDR_PRIVATE
-		lib/mbedtls_wrapper/include/openssl/ssl.h)
+		lib/tls/mbedtls/wrapper/include/platform/ssl_pm.h
+		lib/tls/mbedtls/wrapper/include/platform/ssl_port.h)
 
-	list(APPEND HDR_PRIVATE
-		lib/mbedtls_wrapper/include/platform/ssl_pm.h
-		lib/mbedtls_wrapper/include/platform/ssl_port.h)
-
-	include_directories(lib/mbedtls_wrapper/include)
-	include_directories(lib/mbedtls_wrapper/include/platform)
-	include_directories(lib/mbedtls_wrapper/include/internal)
-	include_directories(lib/mbedtls_wrapper/include/openssl)
+	include_directories(lib/tls/mbedtls/wrapper/include)
+	include_directories(lib/tls/mbedtls/wrapper/include/platform)
+	include_directories(lib/tls/mbedtls/wrapper/include/internal)
+	include_directories(lib/tls/mbedtls/wrapper/include/openssl)
 
 	list(APPEND SOURCES
-		lib/mbedtls_wrapper/library/ssl_cert.c
-		lib/mbedtls_wrapper/library/ssl_lib.c
-		lib/mbedtls_wrapper/library/ssl_methods.c
-		lib/mbedtls_wrapper/library/ssl_pkey.c
-		lib/mbedtls_wrapper/library/ssl_stack.c
-		lib/mbedtls_wrapper/library/ssl_x509.c)
+		lib/tls/mbedtls/wrapper/library/ssl_cert.c
+		lib/tls/mbedtls/wrapper/library/ssl_lib.c
+		lib/tls/mbedtls/wrapper/library/ssl_methods.c
+		lib/tls/mbedtls/wrapper/library/ssl_pkey.c
+		lib/tls/mbedtls/wrapper/library/ssl_stack.c
+		lib/tls/mbedtls/wrapper/library/ssl_x509.c)
 
 	list(APPEND SOURCES
-		lib/mbedtls_wrapper/platform/ssl_pm.c
-		lib/mbedtls_wrapper/platform/ssl_port.c)
+		lib/tls/mbedtls/wrapper/platform/ssl_pm.c
+		lib/tls/mbedtls/wrapper/platform/ssl_port.c)
 endif()
 
 if (LWS_WITH_SSL)
 	list(APPEND SOURCES
-		lib/ssl.c
-		lib/misc/lws-genhash.c)
+		lib/tls/tls.c
+	)
+		
+		if (LWS_WITH_MBEDTLS)
+			list(APPEND SOURCES
+				lib/tls/mbedtls/ssl.c
+			)
+			if (LWS_WITH_GENHASH)
+				list(APPEND SOURCES
+					lib/tls/mbedtls/lws-genhash.c
+				)
+			endif()
+			if (LWS_WITH_GENRSA)
+				list(APPEND SOURCES
+					lib/tls/mbedtls/lws-genrsa.c
+				)
+			endif()
+		else()
+			list(APPEND SOURCES
+				lib/tls/openssl/ssl.c
+			)
+			if (LWS_WITH_GENHASH)
+				list(APPEND SOURCES
+					lib/tls/openssl/lws-genhash.c
+				)
+			endif()
+			if (LWS_WITH_GENRSA)
+				list(APPEND SOURCES
+					lib/tls/openssl/lws-genrsa.c
+				)
+			endif()
+		endif()
 		
 	if (NOT LWS_WITHOUT_SERVER)
 		list(APPEND SOURCES
-		lib/server/ssl-server.c)
+			lib/tls/tls-server.c)
+		if (LWS_WITH_MBEDTLS)
+			list(APPEND SOURCES
+				lib/tls/mbedtls/mbedtls-server.c)
+		else()
+			list(APPEND SOURCES
+				lib/tls/openssl/openssl-server.c)
+		endif()
 	endif()
 	if (NOT LWS_WITHOUT_CLIENT)
 		list(APPEND SOURCES
-		lib/client/ssl-client.c)
+			lib/tls/tls-client.c)
+		if (LWS_WITH_MBEDTLS)
+			list(APPEND SOURCES
+				lib/tls/mbedtls/mbedtls-client.c)
+		else()
+			list(APPEND SOURCES
+				lib/tls/openssl/openssl-client.c)
+		endif()
+		
 	endif()
 endif()
 
@@ -711,83 +909,106 @@ if (NOT LWS_WITHOUT_BUILTIN_SHA1)
 		lib/misc/sha-1.c)
 endif()
 
-if (LWS_WITH_HTTP2)
+if (LWS_WITH_HTTP2 AND NOT LWS_WITHOUT_SERVER)
 	list(APPEND SOURCES
-		lib/http2/http2.c
-		lib/http2/hpack.c
-		lib/http2/ssl-http2.c)
+		lib/roles/h2/http2.c
+		lib/roles/h2/hpack.c
+		lib/roles/h2/ops-h2.c)
 endif()
 # select the active platform files
 
 if (WIN32)
 	list(APPEND SOURCES
-		lib/plat/lws-plat-win.c)
+		lib/plat/windows/windows-fds.c
+		lib/plat/windows/windows-file.c
+		lib/plat/windows/windows-init.c
+		lib/plat/windows/windows-misc.c
+		lib/plat/windows/windows-pipe.c
+		lib/plat/windows/windows-service.c
+		lib/plat/windows/windows-sockets.c
+		)
 else()
 
-	if (LWS_WITH_ESP8266)
+	if (LWS_PLAT_OPTEE)
 		list(APPEND SOURCES
-			lib/plat/lws-plat-esp8266.c)
+			lib/plat/optee/lws-plat-optee.c)
 	else()
-		if (LWS_PLAT_OPTEE)
+		if (LWS_WITH_ESP32)
 			list(APPEND SOURCES
-				lib/plat/lws-plat-optee.c)
+				lib/plat/esp32/esp32-fds.c
+				lib/plat/esp32/esp32-file.c
+				lib/plat/esp32/esp32-helpers.c
+				lib/plat/esp32/esp32-init.c
+				lib/plat/esp32/esp32-misc.c
+				lib/plat/esp32/esp32-pipe.c
+				lib/plat/esp32/esp32-service.c
+				lib/plat/esp32/esp32-sockets.c
+				lib/misc/romfs.c)
 		else()
-			if (LWS_WITH_ESP32)
-				list(APPEND SOURCES
-					lib/plat/lws-plat-esp32.c
-					lib/misc/romfs.c)
-			else()
-				list(APPEND SOURCES
-					lib/plat/lws-plat-unix.c)
+			list(APPEND SOURCES
+				lib/plat/unix/unix-caps.c
+				lib/plat/unix/unix-fds.c
+				lib/plat/unix/unix-file.c
+				lib/plat/unix/unix-misc.c
+				lib/plat/unix/unix-init.c
+				lib/plat/unix/unix-pipe.c
+				lib/plat/unix/unix-service.c
+				lib/plat/unix/unix-sockets.c
+			)
+				
+			if (LWS_WITH_PLUGINS AND LWS_WITH_LIBUV)
+				list(APPEND SOURCES lib/plat/unix/unix-plugins.c)
 			endif()
 		endif()
 	endif()
 endif()
 
-if (NOT LWS_WITHOUT_SERVER)
+if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_SERVER)
 	list(APPEND SOURCES
-		lib/server/server.c
-		lib/server/lws-spa.c
-		lib/server/server-handshake.c)
+		lib/roles/http/server/server.c
+		lib/roles/http/server/lws-spa.c)
 endif()
 
-if (NOT LWS_WITHOUT_EXTENSIONS)
+if (LWS_ROLE_WS AND NOT LWS_WITHOUT_EXTENSIONS)
 	list(APPEND HDR_PRIVATE
-		lib/ext/extension-permessage-deflate.h)
+		lib/roles/ws/ext/extension-permessage-deflate.h)
 	list(APPEND SOURCES
-		lib/ext/extension.c
-		lib/ext/extension-permessage-deflate.c)
+		lib/roles/ws/ext/extension.c
+		lib/roles/ws/ext/extension-permessage-deflate.c)
 endif()
 
 if (LWS_WITH_HTTP_PROXY)
 	list(APPEND SOURCES
-		lib/server/rewrite.c)
+		lib/roles/http/server/rewrite.c)
 endif()
 
-if (LWS_WITH_LIBEV)
+if (LWS_WITH_POLL)
 	list(APPEND SOURCES
-		lib/event-libs/libev.c)
+		lib/event-libs/poll/poll.c)
 endif()
 
 if (LWS_WITH_LIBUV)
 	list(APPEND SOURCES
-		lib/event-libs/libuv.c)
+		lib/event-libs/libuv/libuv.c)
 endif()
 
 if (LWS_WITH_LIBEVENT)
 	list(APPEND SOURCES
-		lib/event-libs/libevent.c)
+		lib/event-libs/libevent/libevent.c)
+endif()
+
+if (LWS_WITH_LIBEV)
+	list(APPEND SOURCES
+		lib/event-libs/libev/libev.c)
 endif()
 
 if (LWS_WITH_LEJP)
 	list(APPEND SOURCES
 		lib/misc/lejp.c)
-	list(APPEND HDR_PUBLIC
-		lib/misc/lejp.h)
 endif()	
 if (LWS_WITH_LEJP_CONF)
 		list(APPEND SOURCES
-			"lib/server/lejp-conf.c"
+			"lib/roles/http/server/lejp-conf.c"
 		)
 endif()
 
@@ -798,16 +1019,22 @@ endif()
 
 if (LWS_WITH_RANGES)
 	list(APPEND SOURCES
-		lib/server/ranges.c)
+		lib/roles/http/server/ranges.c)
 endif()
 
 if (LWS_WITH_ZIP_FOPS)
        if (LWS_WITH_ZLIB)
                list(APPEND SOURCES
-                       lib/server/fops-zip.c)
+                       lib/roles/http/server/fops-zip.c)
        else()
                message(FATAL_ERROR "Pre-zipped file support (LWS_WITH_ZIP_FOPS) requires ZLIB (LWS_WITH_ZLIB)")
        endif()
+endif()
+
+if (LWS_WITH_JWS)
+	list(APPEND SOURCES
+		lib/misc/jws/jwk.c
+		lib/misc/jws/jws.c)
 endif()
 
 # Add helper files for Windows.
@@ -829,7 +1056,7 @@ else()
 	# Unix.
 	if (NOT LWS_WITHOUT_DAEMONIZE)
 		list(APPEND SOURCES
-			lib/server/daemonize.c)
+			lib/misc/daemonize.c)
 	endif()
 endif()
 
@@ -846,15 +1073,25 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_C_COMPILER_ID 
     if (LWS_HAVE_VISIBILITY)
                 set(VISIBILITY_FLAG -fvisibility=hidden)
     endif()
-    if ((UNIX OR LWS_WITH_ESP8266) AND NOT LWS_WITH_ESP32)
-	    set(CMAKE_C_FLAGS "-Wall -Werror ${VISIBILITY_FLAG} -Wundef ${CMAKE_C_FLAGS}" )
+    if (LWS_WITH_GCOV)
+	    set (GCOV_FLAGS "-fprofile-arcs -ftest-coverage -O0")
+    endif()
+
+    if (CMAKE_BUILD_TYPE MATCHES "DEBUG")
+		set(CMAKE_C_FLAGS "-O0 ${CMAKE_C_FLAGS}")
     else()
-               set(CMAKE_C_FLAGS "-Wall ${VISIBILITY_FLAG} ${CMAKE_C_FLAGS}" )
+		set(CMAKE_C_FLAGS "-O3 ${CMAKE_C_FLAGS}")
+    endif()
+
+    if (UNIX AND NOT LWS_WITH_ESP32)
+	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wignored-qualifiers -Wtype-limits -Wuninitialized -Werror ${VISIBILITY_FLAG} -Wundef ${GCOV_FLAGS} ${CMAKE_C_FLAGS}" )
+    else()
+	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wignored-qualifiers -Wtype-limits -Wuninitialized -Werror ${VISIBILITY_FLAG} ${GCOV_FLAGS} ${CMAKE_C_FLAGS}" )
     endif()
 endif ()
 
 if ((CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX) AND NOT LWS_WITHOUT_TESTAPPS)
-	if (UNIX AND LWS_MAX_SMP GREATER 1)
+	if (UNIX AND LWS_HAVE_PTHREAD_H)
 	# jeez clang understands -pthread but dies if he sees it at link time!
 	# http://stackoverflow.com/questions/2391194/what-is-gs-pthread-equiv-in-clang
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread" )
@@ -869,6 +1106,7 @@ endif()
 source_group("Headers Private"  FILES ${HDR_PRIVATE})
 source_group("Headers Public"   FILES ${HDR_PUBLIC})
 source_group("Sources"          FILES ${SOURCES})
+source_group("Resources"        FILES ${RESOURCES})
 
 #
 # Create the lib.
@@ -909,7 +1147,8 @@ if (LWS_WITH_SHARED)
 	add_library(websockets_shared SHARED
 				${HDR_PRIVATE}
 				${HDR_PUBLIC}
-				${SOURCES})
+				${SOURCES}
+				${RESOURCES})
 	list(APPEND LWS_LIBRARIES websockets_shared)
 
 	# We want the shared lib to be named "libwebsockets"
@@ -973,8 +1212,6 @@ if (LWS_WITH_ZLIB)
 				${WIN32_ZLIB_PATH}/compress.c
 				${WIN32_ZLIB_PATH}/crc32.c
 				${WIN32_ZLIB_PATH}/deflate.c
-				${WIN32_ZLIB_PATH}/gzclose.c
-				${WIN32_ZLIB_PATH}/gzio.c
 				${WIN32_ZLIB_PATH}/gzlib.c
 				${WIN32_ZLIB_PATH}/gzread.c
 				${WIN32_ZLIB_PATH}/gzwrite.c
@@ -1153,6 +1390,10 @@ elseif (WIN32)
 	list(APPEND LIB_LIST ws2_32.lib userenv.lib psapi.lib iphlpapi.lib)
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "QNX")
+	list(APPEND LIB_LIST socket)
+endif()
+
 if (UNIX)
 	list(APPEND LIB_LIST m)
 endif()
@@ -1188,7 +1429,13 @@ CHECK_FUNCTION_EXISTS(SSL_CTX_set1_param LWS_HAVE_SSL_CTX_set1_param)
 CHECK_FUNCTION_EXISTS(SSL_set_info_callback LWS_HAVE_SSL_SET_INFO_CALLBACK)
 CHECK_FUNCTION_EXISTS(X509_VERIFY_PARAM_set1_host LWS_HAVE_X509_VERIFY_PARAM_set1_host)
 CHECK_FUNCTION_EXISTS(RSA_set0_key LWS_HAVE_RSA_SET0_KEY)
-
+CHECK_FUNCTION_EXISTS(X509_get_key_usage LWS_HAVE_X509_get_key_usage)
+CHECK_FUNCTION_EXISTS(SSL_CTX_get0_certificate LWS_HAVE_SSL_CTX_get0_certificate)
+CHECK_FUNCTION_EXISTS(SSL_get0_alpn_selected LWS_HAVE_SSL_get0_alpn_selected)
+CHECK_FUNCTION_EXISTS(SSL_set_alpn_protos LWS_HAVE_SSL_set_alpn_protos)
+if (LWS_WITH_SSL AND NOT LWS_WITH_MBEDTLS)
+CHECK_SYMBOL_EXISTS(SSL_CTX_get_extra_chain_certs_only openssl/ssl.h LWS_HAVE_SSL_EXTRA_CHAIN_CERTS)
+endif()
 if (LWS_WITH_MBEDTLS)
 	set(LWS_HAVE_TLS_CLIENT_METHOD 1)
 	if (NOT LWS_WITH_ESP32)
@@ -1199,6 +1446,16 @@ else()
 CHECK_FUNCTION_EXISTS(TLS_client_method LWS_HAVE_TLS_CLIENT_METHOD)
 CHECK_FUNCTION_EXISTS(TLSv1_2_client_method LWS_HAVE_TLSV1_2_CLIENT_METHOD)
 endif()
+
+# ideally we want to use pipe2()
+
+CHECK_C_SOURCE_COMPILES("#define _GNU_SOURCE\n#include <unistd.h>\nint main(void) {int fd[2];\n return pipe2(fd, 0);\n}\n" LWS_HAVE_PIPE2)
+
+# tcp keepalive needs this on linux to work practically... but it only exists
+# after kernel 2.6.37
+
+CHECK_C_SOURCE_COMPILES("#include <netinet/tcp.h>\nint main(void) { return TCP_USER_TIMEOUT; }\n" LWS_HAVE_TCP_USER_TIMEOUT)
+
 set(CMAKE_REQUIRED_LIBRARIES ${temp})
 # Generate the lws_config.h that includes all the public compilation settings.
 configure_file(
@@ -1227,7 +1484,7 @@ endif()
 
 set(GENCERTS 0)
 
-if (LWS_WITH_SSL AND OPENSSL_EXECUTABLE AND NOT LWS_WITHOUT_TEST_SERVER)
+if (LWS_WITH_SSL AND OPENSSL_EXECUTABLE AND NOT LWS_WITHOUT_TEST_SERVER AND NOT LWS_WITHOUT_SERVER AND NOT LWS_WITHOUT_TESTAPPS)
 	set(GENCERTS 1)
 endif()
 if (LWS_WITH_ESP32)
@@ -1304,7 +1561,7 @@ endif()
 # Test applications
 #
 set(TEST_APP_LIST)
-if (NOT LWS_WITHOUT_TESTAPPS)
+if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 	#
 	# Helper function for adding a test app.
 	#
@@ -1380,12 +1637,15 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 
 	if (UNIX AND LWS_WITH_PLUGINS)
 		set(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
-		if(NOT(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD"))
+		if(NOT((${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD") OR (${CMAKE_SYSTEM_NAME} MATCHES "QNX")))
 			target_link_libraries(websockets dl)
 		endif()
 	endif()
 
-
+	if (LWS_WITH_LIBEV)
+		# libev generates a big mess of warnings with gcc, maintainer claims gcc to blame
+		set_source_files_properties( lib/event-libs/libev/libev.c PROPERTIES COMPILE_FLAGS "-Wno-error" )
+	endif()
 
 
 	if (NOT LWS_WITHOUT_SERVER)
@@ -1394,8 +1654,8 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 		#
 		if (NOT LWS_WITHOUT_TEST_SERVER)
 			create_test_app(test-server "test-apps/test-server.c"
-				"test-apps/test-server-http.c"
-				"test-apps/test-server-dumb-increment.c"
+				""
+				""
 				""
 				""
 				"")
@@ -1419,56 +1679,16 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 					""
 					"")
 			endif()
-			if (UNIX AND NOT ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) AND LWS_MAX_SMP GREATER 1)
-				create_test_app(test-server-pthreads
-					"test-apps/test-server-pthreads.c"
-					"test-apps/test-server-http.c"
-					"test-apps/test-server-dumb-increment.c"
-					""
-					""
-					"")
-			endif()
-			if (NOT ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-				AND LWS_WITH_LIBEV)
-				create_test_app(test-server-libev
-					"test-apps/test-server-libev.c"
-					"test-apps/test-server-http.c"
-					"test-apps/test-server-dumb-increment.c"
-					""
-					""
-					"")
-				# libev generates a big mess of warnings with gcc, maintainers blame gcc
-				set_source_files_properties( test-apps/test-server-libev.c PROPERTIES COMPILE_FLAGS "-Wno-error" )
-			endif()
-			if (NOT ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-				AND LWS_WITH_LIBUV)
-				create_test_app(test-server-libuv
-					"test-apps/test-server-libuv.c"
-					"test-apps/test-server-http.c"
-					""
-					""
-					""
-					"")
-			endif()
-			if (NOT ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-				AND LWS_WITH_LIBEVENT)
-				create_test_app(test-server-libevent
-					"test-apps/test-server-libevent.c"
-					"test-apps/test-server-http.c"
-					"test-apps/test-server-dumb-increment.c"
-					""
-					""
-					"")
-			endif()
 		endif()
 
 		#
 		# test-server-extpoll
 		#
-		if (NOT LWS_WITHOUT_TEST_SERVER_EXTPOLL)
-			create_test_app(test-server-extpoll "test-apps/test-server.c"
-				"test-apps/test-server-http.c"
-				"test-apps/test-server-dumb-increment.c"
+		if (NOT LWS_WITHOUT_TEST_SERVER_EXTPOLL AND NOT WIN32)
+			create_test_app(test-server-extpoll
+				"test-apps/test-server.c"
+				""
+				""
 				""
 				""
 				"")
@@ -1486,13 +1706,10 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 			endif(WIN32)
 		endif()
 
-		#
-		# test-server-v2.0
-		#
-		if (LWS_WITH_PLUGINS)
+		if (LWS_WITH_LEJP)
 			create_test_app(
-				test-server-v2.0
-				"test-apps/test-server-v2.0.c"
+				test-lejp
+				"test-apps/test-lejp.c"
 				""
 				""
 				""
@@ -1501,12 +1718,13 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 		endif()
 
 		# Data files for running the test server.
-		set(TEST_SERVER_DATA
+		list(APPEND TEST_SERVER_DATA
 			"${PROJECT_SOURCE_DIR}/test-apps/favicon.ico"
 			"${PROJECT_SOURCE_DIR}/test-apps/leaf.jpg"
 			"${PROJECT_SOURCE_DIR}/test-apps/candide.zip"
 			"${PROJECT_SOURCE_DIR}/test-apps/libwebsockets.org-logo.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/http2.png"
+			"${PROJECT_SOURCE_DIR}/test-apps/wss-over-h2.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/lws-common.js"
 			"${PROJECT_SOURCE_DIR}/test-apps/test.html")
 
@@ -1531,26 +1749,6 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 		#
 		if (NOT LWS_WITHOUT_TEST_CLIENT)
 			create_test_app(test-client "test-apps/test-client.c" "" "" "" "" "")
-		endif()
-
-		#
-		# test-fraggle
-		#
-		if (NOT LWS_WITHOUT_TEST_FRAGGLE)
-			create_test_app(test-fraggle "test-apps/test-fraggle.c" "" "" "" "" "")
-		endif()
-
-		#
-		# test-ping
-		#
-		if (NOT LWS_WITHOUT_TEST_PING)
-			create_test_app(test-ping "test-apps/test-ping.c" "" "" "" "" "")
-		endif()
-		#
-		# test-echo
-		#
-		if (NOT LWS_WITHOUT_TEST_ECHO)
-			create_test_app(test-echo "test-apps/test-echo.c" "" "" "" "" "")
 		endif()
 
 	endif(NOT LWS_WITHOUT_CLIENT)
@@ -1605,27 +1803,15 @@ if (NOT LWS_WITHOUT_TESTAPPS)
 
 		endmacro()
 		
-
-		create_plugin(protocol_lws_meta ""
-			      "plugins/protocol_lws_meta.c" "" "")
+if (LWS_ROLE_WS)
 		create_plugin(protocol_dumb_increment ""
 			      "plugins/protocol_dumb_increment.c" "" "")
 		create_plugin(protocol_lws_mirror ""
 			      "plugins/protocol_lws_mirror.c" "" "")
 		create_plugin(protocol_lws_status ""
 			      "plugins/protocol_lws_status.c" "" "")
-		create_plugin(protocol_post_demo ""
-			      "plugins/protocol_post_demo.c" "" "")
 		create_plugin(protocol_lws_table_dirlisting ""
 			      "plugins/generic-table/protocol_table_dirlisting.c" "" "")
-if (LWS_WITH_SSL)
-		create_plugin(protocol_lws_ssh_base "plugins/ssh-base/include"
-			      "plugins/ssh-base/sshd.c;plugins/ssh-base/telnet.c;plugins/ssh-base/kex-25519.c" "plugins/ssh-base/crypto/chacha.c;plugins/ssh-base/crypto/ed25519.c;plugins/ssh-base/crypto/fe25519.c;plugins/ssh-base/crypto/ge25519.c;plugins/ssh-base/crypto/poly1305.c;plugins/ssh-base/crypto/sc25519.c;plugins/ssh-base/crypto/smult_curve25519_ref.c" "")
-		create_plugin(protocol_lws_sshd_demo "plugins/ssh-base/include" "plugins/protocol_lws_sshd_demo.c" "" "")
-
-		include_directories("${PROJECT_SOURCE_DIR}/plugins/ssh-base/include")
-endif()
-
 		if (NOT WIN32)
 			create_plugin(protocol_lws_raw_test ""
 			      "plugins/protocol_lws_raw_test.c" "" "")
@@ -1639,9 +1825,29 @@ endif()
 if (NOT LWS_WITHOUT_CLIENT)
 		create_plugin(protocol_client_loopback_test ""
                               "plugins/protocol_client_loopback_test.c" "" "")
-endif(NOT LWS_WITHOUT_CLIENT)
+endif()
 
-if (LWS_WITH_GENERIC_SESSIONS)
+endif()
+
+		create_plugin(protocol_post_demo ""
+			      "plugins/protocol_post_demo.c" "" "")
+
+if (LWS_WITH_SSL)
+		create_plugin(protocol_lws_ssh_base "plugins/ssh-base/include"
+			      "plugins/ssh-base/sshd.c;plugins/ssh-base/telnet.c;plugins/ssh-base/kex-25519.c" "plugins/ssh-base/crypto/chacha.c;plugins/ssh-base/crypto/ed25519.c;plugins/ssh-base/crypto/fe25519.c;plugins/ssh-base/crypto/ge25519.c;plugins/ssh-base/crypto/poly1305.c;plugins/ssh-base/crypto/sc25519.c;plugins/ssh-base/crypto/smult_curve25519_ref.c" "")
+		create_plugin(protocol_lws_sshd_demo "plugins/ssh-base/include" "plugins/protocol_lws_sshd_demo.c" "" "")
+
+		include_directories("${PROJECT_SOURCE_DIR}/plugins/ssh-base/include")
+endif()
+
+
+
+if (LWS_WITH_ACME)
+		create_plugin(protocol_lws_acme_client ""
+			      "plugins/acme-client/protocol_lws_acme_client.c" "" "")
+endif()
+
+if (LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS)
 	create_plugin(protocol_generic_sessions ""
                       "plugins/generic-sessions/protocol_generic_sessions.c"
 		      "plugins/generic-sessions/utils.c"
@@ -1661,7 +1867,7 @@ if (LWS_WITH_GENERIC_SESSIONS)
 		target_link_libraries(protocol_lws_messageboard sqlite3 )
 	endif(WIN32)
 
-endif(LWS_WITH_GENERIC_SESSIONS)
+endif(LWS_WITH_GENERIC_SESSIONS AND LWS_ROLE_WS)
 
 
 	endif(LWS_WITH_PLUGINS AND LWS_WITH_SHARED)
@@ -1683,10 +1889,20 @@ endif(LWS_WITH_GENERIC_SESSIONS)
 				add_custom_command(TARGET ${TARGET_BIN}
 					POST_BUILD
 					COMMAND "${CMAKE_COMMAND}" -E copy "${SSLEAY_BIN}" "$<TARGET_FILE_DIR:${TARGET_BIN}>" VERBATIM)
+
+				#
+				# Win32: if we are using libuv, also need to copy it in the output dir
+				#
+				if (WIN32 AND LWS_WITH_LIBUV)
+					STRING(REPLACE ".lib" ".dll" LIBUV_BIN ${LIBUV_LIBRARIES})
+					add_custom_command(TARGET ${TARGET_BIN}
+						POST_BUILD
+						COMMAND "${CMAKE_COMMAND}" -E copy "${LIBUV_BIN}" "$<TARGET_FILE_DIR:${TARGET_BIN}>" VERBATIM)
+				endif()
 			endforeach()
 		endif()
 	endif()
-endif(NOT LWS_WITHOUT_TESTAPPS)
+endif((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 
 if (LWS_WITH_LWSWS)
 		list(APPEND LWSWS_SRCS
@@ -1775,8 +1991,11 @@ endif()
 set(LWS_INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
 
 # Export targets (This is used for other CMake projects to easily find the libraries and include files).
-export(TARGETS ${LWS_LIBRARIES}
-        FILE "${PROJECT_BINARY_DIR}/LibwebsocketsTargets.cmake")
+if (LWS_WITH_EXPORT_LWSTARGETS)
+    export(TARGETS ${LWS_LIBRARIES}
+            FILE "${PROJECT_BINARY_DIR}/LibwebsocketsTargets.cmake")
+endif()
+
 export(PACKAGE libwebsockets)
 
 # Generate the config file for the build-tree.
@@ -1860,9 +2079,12 @@ if (LWS_WITH_CGI)
 	endif()
 endif()
 
-install(FILES test-apps/lws-ssh-test-keys;test-apps/lws-ssh-test-keys.pub
-	DESTINATION share/libwebsockets-test-server
-	COMPONENT examples)
+
+if (NOT LWS_WITHOUT_TEST_SERVER AND NOT LWS_WITHOUT_SERVER AND NOT LWS_WITHOUT_TESTAPPS)
+	install(FILES test-apps/lws-ssh-test-keys;test-apps/lws-ssh-test-keys.pub
+		DESTINATION share/libwebsockets-test-server
+		COMPONENT examples)
+endif()
 
 # plugins
 
@@ -1916,19 +2138,21 @@ install(FILES
                DESTINATION "${LWS_INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 # Install exports for the install-tree.
-install(EXPORT LibwebsocketsTargets
-		DESTINATION "${LWS_INSTALL_CMAKE_DIR}" COMPONENT dev)
+if (LWS_WITH_EXPORT_LWSTARGETS)
+    install(EXPORT LibwebsocketsTargets
+            DESTINATION "${LWS_INSTALL_CMAKE_DIR}" COMPONENT dev)
+endif()
 
 # build subdir is not part of sources
-set(CPACK_SOURCE_IGNORE_FILES $(CPACK_SOURCE_IGNORE_FILES) ".git" "build" "tgz" "tar.gz")
+set(CPACK_SOURCE_IGNORE_FILES $(CPACK_SOURCE_IGNORE_FILES) "/.git/" "/build/" "\\\\.tgz$" "\\\\.tar\\\\.gz$")
 
 # Most people are more used to "make dist" compared to "make package_source"
 add_custom_target(dist COMMAND "${CMAKE_MAKE_PROGRAM}" package_source)
 
-#include(UseRPMTools)
-#if (RPMTools_FOUND)
-#	RPMTools_ADD_RPM_TARGETS(libwebsockets scripts/libwebsockets.spec)
-#endif()
+include(UseRPMTools)
+if (RPMTools_FOUND)
+	RPMTools_ADD_RPM_TARGETS(libwebsockets scripts/libwebsockets.spec)
+endif()
 
 message("---------------------------------------------------------------------")
 message("  Settings:  (For more help do cmake -LH <srcpath>)")
@@ -1952,9 +2176,7 @@ message(" LWS_WITHOUT_TESTAPPS = ${LWS_WITHOUT_TESTAPPS}")
 message(" LWS_WITHOUT_TEST_SERVER = ${LWS_WITHOUT_TEST_SERVER}")
 message(" LWS_WITHOUT_TEST_SERVER_EXTPOLL = ${LWS_WITHOUT_TEST_SERVER_EXTPOLL}")
 message(" LWS_WITHOUT_TEST_PING = ${LWS_WITHOUT_TEST_PING}")
-message(" LWS_WITHOUT_TEST_ECHO = ${LWS_WITHOUT_TEST_ECHO}")
 message(" LWS_WITHOUT_TEST_CLIENT = ${LWS_WITHOUT_TEST_CLIENT}")
-message(" LWS_WITHOUT_TEST_FRAGGLE = ${LWS_WITHOUT_TEST_FRAGGLE}")
 message(" LWS_WITHOUT_EXTENSIONS = ${LWS_WITHOUT_EXTENSIONS}")
 message(" LWS_WITH_LATENCY = ${LWS_WITH_LATENCY}")
 message(" LWS_WITHOUT_DAEMONIZE = ${LWS_WITHOUT_DAEMONIZE}")
@@ -1966,6 +2188,7 @@ message(" LWS_UNIX_SOCK = ${LWS_UNIX_SOCK}")
 message(" LWS_WITH_HTTP2 = ${LWS_WITH_HTTP2}")
 message(" LWS_SSL_SERVER_WITH_ECDH_CERT = ${LWS_SSL_SERVER_WITH_ECDH_CERT}")
 message(" LWS_MAX_SMP = ${LWS_MAX_SMP}")
+message(" LWS_HAVE_PTHREAD_H = ${LWS_HAVE_PTHREAD_H}")
 message(" LWS_WITH_CGI = ${LWS_WITH_CGI}")
 message(" LWS_HAVE_OPENSSL_ECDH_H = ${LWS_HAVE_OPENSSL_ECDH_H}")
 message(" LWS_HAVE_SSL_CTX_set1_param = ${LWS_HAVE_SSL_CTX_set1_param}")
@@ -1994,6 +2217,7 @@ message(" LWS_HAVE_ATOLL = ${LWS_HAVE_ATOLL}")
 message(" LWS_HAVE__ATOI64 = ${LWS_HAVE__ATOI64}")
 message(" LWS_HAVE_STAT32I64 = ${LWS_HAVE_STAT32I64}")
 message(" LWS_HAS_INTPTR_T = ${LWS_HAS_INTPTR_T}")
+message(" LWS_WITH_EXPORT_LWSTARGETS = ${LWS_WITH_EXPORT_LWSTARGETS}")
 
 message("---------------------------------------------------------------------")
 
@@ -2005,6 +2229,33 @@ endif()
 if (LWS_WITH_SHARED)
 	set(LIBWEBSOCKETS_LIBRARIES_SHARED websockets_shared CACHE STRING "Libwebsocket shared library")
 endif()
+
+if (LWS_WITH_MINIMAL_EXAMPLES)
+	MACRO(SUBDIRLIST result curdir)
+	  FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
+	  SET(dirlist "")
+
+	  FOREACH(child ${children})
+	    IF(IS_DIRECTORY ${curdir}/${child})
+		LIST(APPEND dirlist ${child})
+	    ENDIF()
+	  ENDFOREACH()
+
+	  SET(${result} ${dirlist})
+	ENDMACRO()
+
+	SUBDIRLIST(SUBDIRS "${PROJECT_SOURCE_DIR}/minimal-examples")
+	FOREACH(subdir ${SUBDIRS})
+
+		SUBDIRLIST(SUBDIRS2 "${PROJECT_SOURCE_DIR}/minimal-examples/${subdir}")
+		FOREACH(subdir2 ${SUBDIRS2})
+			if (EXISTS "${PROJECT_SOURCE_DIR}/minimal-examples/${subdir}/${subdir2}/CMakeLists.txt")
+				message("Processing ${PROJECT_SOURCE_DIR}/minimal-examples/${subdir}/${subdir2}")
+				add_subdirectory("${PROJECT_SOURCE_DIR}/minimal-examples/${subdir}/${subdir2}")
+			endif()
+		ENDFOREACH()
+	ENDFOREACH()
+ENDIF()
 
 # This must always be last!
 include(CPack)

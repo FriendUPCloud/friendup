@@ -23,6 +23,86 @@ Application.run = function( msg, iface )
 	this.popWindows = {};
 	reloadSettings();
 	reloadSoftware();
+	reloadServices();
+	reloadApplicationPermissions();
+}
+
+function reloadServices()
+{
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
+	{
+		if( e != 'ok' ) 
+		{
+			ge( 'Services' ).innerHTML = '<h2>' + i18n( 'i18n_service_report' ) + '</h2><p>' + i18n( 'i18n_no_services_to_manage' ) + '</p>';
+			return;
+		}
+		try
+		{
+			var list = JSON.parse( d );
+			var str = '<h2>' + i18n( 'i18n_service_report' ) + '</h2>';
+			str += `
+				<div class="Padding HRow BorderBottom">
+					<div class="FloatLeft HContent30">
+						<strong>Name:</strong>
+					</div>
+					<div class="FloatLeft HContent45">
+						<strong>Configurable:</strong>
+					</div>
+					<div class="FloatLeft HContent25">
+						<strong>Info:</strong>
+					</div>
+				</div>
+			`;
+			str += '<div class="List">';
+			var sw = 2;
+			for( var a = 0; a < list.length; a++ )
+			{
+				sw = sw == 2 ? 1 : 2;
+				var functionality = false;
+				if( list[a].Functionality )
+				{
+					functionality = '';
+					if( list[a].Functionality.status )
+					{
+						if( list[a].Functionality.status == 'running' )
+						{
+							functionality += '<button type="button">' + i18n( 'i18n_stop' ) + '</button>';
+						}
+						else
+						{
+							functionality += '<button type="button">' + i18n( 'i18n_start' ) + '</button>';
+						}
+					}
+					if( list[a].Functionality.update )
+					{
+						functionality += '<button type="button">' + i18n( 'i18n_update' ) + '</button>';
+					}
+				}
+				var info = list[a].Info ? list[a].Info.version : '-';
+				var configurable = functionality ? functionality : i18n( 'i18n_no' );
+				str += `<div class="Padding sw${sw} HRow">
+					<div class="FloatLeft HContent30">
+						${list[a].Name}
+					</div>
+					<div class="FloatLeft HContent45">
+						${configurable}
+					</div>
+					<div class="FloatLeft HContent25">
+						${info}
+					</div>
+				</div>
+				`;
+			}
+			str += '</div>';
+			ge( 'Services' ).innerHTML = str;
+		}
+		catch( e )
+		{
+			ge( 'Services' ).innerHTML = '<h2>' + i18n( 'i18n_service_report' ) + '</h2><p>' + i18n( 'i18n_no_services_to_manage' ) + '</p>';
+		}
+	}
+	m.execute( 'getservices' );
 }
 
 function reloadSettings()
@@ -98,6 +178,64 @@ function validate( pckg )
 function downloadPackage( fn )
 {
 	var v = window.open( '/system.library/module/?module=system&command=repositorysoftware&packageget=' + fn + '&authid=' + Application.authId, '', '' );
+}
+
+// Reload software with permissions
+function reloadApplicationPermissions()
+{
+	var w = new Module( 'system' );
+	w.onExecuted = function( we, wd )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			var workgroups = [];
+			try
+			{
+				workgroups = JSON.parse( wd );
+			}
+			catch( e )
+			{
+				workgroups = [];
+			}
+			
+			if( e != 'ok' )
+			{
+				ge( 'SoftwarePermissions' ).innerHTML = '<p>No applications available.</p>';
+				return;
+			}
+			try
+			{
+				var j = JSON.parse( d );
+				var dv = document.createElement( 'div' );
+				dv.className = 'List';
+				var sw = 2;
+				for( var a = 0; a < j.length; a++ )
+				{
+					var sels = '<div class="HContent40 FloatLeft"><select id="app_' + j[a].Name + '">';
+					sels += '<option value="">' + i18n( 'i18n_no_workgroup' ) + '</option>';
+					for( var x = 0; x < workgroups.length; x++ )
+					{
+						sels += '<option value="' + workgroups[x].ID + '">' + workgroups[x].Name + '</option>';
+					}
+					sels += '</select></div>';
+			
+					sw = sw == 2 ? 1 : 2;
+					var o = document.createElement( 'div' );
+					o.className = 'PaddingSmall sw' + sw;
+					o.innerHTML = '<div class="HRow"><div class="HContent30 FloatLeft">' + j[a].Name + '</div>' + sels + '</div>';
+					dv.appendChild( o );
+				}
+				ge( 'SoftwarePermissions' ).appendChild( dv );
+			}
+			catch( e )
+			{
+				ge( 'SoftwarePermissions' ).innerHTML = '<p>Error loading applications list.</p>';
+			}
+		}
+		m.execute( 'software', { mode: 'global_permissions' } );
+	}
+	w.execute( 'workgroups' );
 }
 
 // Reload all software

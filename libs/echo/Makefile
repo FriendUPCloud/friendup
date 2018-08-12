@@ -8,8 +8,8 @@ FPATH		=	$(shell pwd)
 
 #CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC 
 
-if $(DEBUG) == 1
-CFLAGS	+=	-D__DEBUG
+ifeq ($(DEBUG),1)
+CFLAGS  +=      -D__DEBUG
 endif
 
 C_FILES := $(wildcard echo.c)
@@ -26,6 +26,9 @@ obj/%.o: %.c *h
 	@echo "\033[34mCompile ...\033[0m"
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+install:
+	@echo "\033[34mInstalling library\033[0m"
+	cp $(OUTPUT) $(FRIEND_PATH)/libs/
 
 clean:
 	@echo "\033[34mCleaning\033[0m"

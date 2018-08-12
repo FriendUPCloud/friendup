@@ -181,7 +181,7 @@ int CommServiceThreadConnection( FThread *ptr )
 					{
 						DEBUG("[COMMSERV-s] Response received!\n");
 						
-						pthread_mutex_lock( &service->s_Mutex );
+						FRIEND_MUTEX_LOCK( &service->s_Mutex );
 						CommRequest *cr = service->s_Requests;
 						while( cr != NULL )
 						{
@@ -195,7 +195,7 @@ int CommServiceThreadConnection( FThread *ptr )
 							}
 							cr = (CommRequest *) cr->node.mln_Succ;
 						}
-						pthread_mutex_unlock( &service->s_Mutex );
+						FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 					}
 					else if( df[ 2 ].df_ID == ID_QUER )
 					{

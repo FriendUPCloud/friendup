@@ -44,8 +44,6 @@
 //	library
 //
 
-// DONT FORGET TO USE THAT AS TEMPLATE
-
 typedef struct ImageLibrary
 {
 	char                 *l_Name;	// library name
@@ -67,9 +65,20 @@ typedef struct ImageLibrary
 	int 				(*ResizeImage)( struct ImageLibrary *im, gdImagePtr *image, int w, int h );
 #endif
 	Http 				*(*WebRequest)( struct ImageLibrary *l, UserSession *usr, char **func, Http* request );
-
-	
 } ImageLibrary;
+
+//
+//
+//
+
+File *IMGGetRootDeviceByPath( struct ImageLibrary *lib, User *usr, char **dstpath, const char *path );
+
+//
+//
+//
+
+int FResizeImage( struct ImageLibrary *im, gdImagePtr *image, int w, int h );
+
 
 // 
 

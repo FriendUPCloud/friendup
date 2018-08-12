@@ -20,6 +20,10 @@
 
 global $SqlDatabase, $Config, $User;
 
+$mode = false;
+if( $args->args->mode )
+	$mode = $args->args->mode;
+
 // Fetch installed applications
 $installed = $SqlDatabase->fetchObjects( 'SELECT * FROM FApplication WHERE UserID=\'' . $User->ID . '\'' );
 $byName = [];
@@ -28,6 +32,46 @@ foreach( $installed as $inst )
 	$byName[ $inst->Name ] = $inst;
 }
 unset( $installed );
+
+// Get visible apps
+$metadata = false;
+if( $metadata = $SqlDatabase->fetchObjects( 'SELECT * FROM FMetaData WHERE `Key` LIKE "application_%" AND `ValueString` = "Visible" && `ValueNumber`=\'1\'' ) )
+{
+	$m = new stdClass();
+	foreach( $metadata as $me )
+	{
+		$k = explode( 'application_', $me->Key );
+		$m->{$k[1]} = $me->ValueNumber;
+	}
+	$metadata = $m;
+	unset( $m );
+}
+
+// Get workgroup setups
+if( $mode == 'global_permissions' )
+{
+	$wsql = 'SELECT * FROM FMetaData WHERE `Key` LIKE "workgroup_application_%" AND `ValueNumber`=\'0\'';
+}
+/*else
+{
+	$wsql = 'SELECT * FROM FMetaData WHERE `Key` LIKE "workgroup_application_%" AND `ValueNumber`=\'' . $User->ID . '\'';
+}*/
+
+$organizedWorkgroups = array();
+
+if( $wgroupdata = $SqlDatabase->fetchObjects( $wsql ) )
+{
+	if( $mode == 'global_permissions' )
+	{
+		foreach( $wgroupdata as $wd )
+		{
+			if( $appName = preg_match( $wd->Key, '/workgroup\_application\_(*?)/i' ) )
+			{
+				$organizedWorkgroups[ $appName[1] ] = $wd->ValueString;
+			}
+		}
+	}
+}
 
 // Fetch locally available software
 $apps = [];
@@ -59,16 +103,20 @@ foreach( $paths as $path )
 			if( !$f ) continue;
 			if( isset( $f->HideInCatalog ) && $f->HideInCatalog == 'yes' ) continue;
 			
-			$stat = stat( $path . $file . '/Config.conf' );
-		
 		
 			$o = new stdClass();
-			$o->Name = $file;
+			$o->Name = str_replace( '_', ' ', $file );
+			if( ( !$metadata || !isset( $metadata->{$o->Name} ) ) && $level != 'Admin' ) continue;
 			$o->Preview = file_exists( $path . $file . '/preview.png' ) ? true : false;
 			$o->Category = $f->Category;
 			$o->Description = isset( $f->Description ) ? $f->Description : '';
+			$stat = stat( $path . $file . '/Config.conf' );
 			$o->DateModifiedUnix = $stat[9];
 			$o->DateModified = date( 'Y-m-d H:i:s', $stat[9] );
+			$o->Visible = $f->Visible == 'true' ? true : false;
+			
+			// If this application is associated with a workgroup
+			$o->Workgroups = isset( $organizedWorkgroups[ $file ] ) ? $organizedWorkgroups[ $file ] : '';
 		
 			if( isset( $byName[ $o->Name ] ) )
 			{

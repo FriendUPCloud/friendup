@@ -3,3 +3,8 @@ i18n_invite : Invite other users
 i18n_quit   : Quit
 i18n_file   : File
 i18n_join_whiteboard : Do you want to join the whiteboard session?
+
+i18n_pasting_files : Pasting files
+i18n_cancel : Cancel
+i18n_pasted_file : File pasted
+i18n_pasted_to_downloads : File was pasted into your downloads folder

@@ -7,42 +7,49 @@
 	<body class="Loading" onload="">
 		<div id="LoginElement" style="visibility: hidden">
 			<div class="VContentTop">
+				<div class="Logo" style="cursor: pointer" onclick="document.location.reload()">
+					FriendUP
+				</div>
+				<h1>
+					Login to your Workspace
+				</h1>
 				<div class="Box">
-					<h1>
-						Please log in with your account
-					</h1>
 					<form method="post" onsubmit="return false">
 						<div class="HRow">
-							<div class="HContent45 FloatLeft">
-								<label id="UsernameLabel" for="Username">Your username:</label>
-							</div>
-							<div class="HContent55 FloatLeft">
-								<input type="text" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" />
-							</div>
+							<p>
+								<label id="UsernameLabel" for="Username">Login</label>
+							</p>
+							<p>
+								<input type="username" id="Username" class="FullWidth" onkeydown="Application.checkKeys(event)" autocapitalize="none" autocorrect="none" />
+							</p>
 						</div>
 						<div class="HRow MarginTop HideForPass">
-							<div class="HContent45 FloatLeft">
-								<label id="PasswordLabel" for="Password">Password:</label>
-							</div>
-							<div class="HContent55 FloatLeft">
+							<p>
+								<label id="PasswordLabel" for="Password">Password</label>
+							</p>
+							<p>
 								<input type="password" id="Password" class="FullWidth" onkeydown="Application.checkKeys(event)" />
-							</div>
+							</p>
+						</div>
+						<div class="HRow MarginTop HideForPass">
+							<p>
+								<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
+							</p>
 						</div>
 						<div class="HRow MarginTop">
 							<div class="HContent100">
-								<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
-									<label id="rememberLabel" for="remember">Remember me</label>
-								</p>
-								<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
-									<input type="checkbox" id="remember"/>
-								</p>
 								<button id="loginButton" type="submit" class="IconSmall fa-unlock" onclick="Application.doLogin(event)">
-									Log in
+									Sign in
 								</button>
+								<div id="RememberMe">
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 5px">
+										<label id="rememberLabel" for="remember">Remember me</label>
+									</p>
+									<p class="Layout HideForPass" style="float: right; position: relative; top: 7px">
+										<input type="checkbox" id="remember"/>
+									</p>
+								</div>
 								<div id="invalidLogin" class="Padding"><p>&nbsp;</p></div>
-								<p>
-									<a id="forgotPassword" href="javascript:Application.forgotPassword()">Forgot password</a>
-								</p>
 							</div>
 						</div>
 						<input type="hidden" id="publickey" value="{publickey}"/>
@@ -50,17 +57,11 @@
 					<hr/>
 					<div id="compatability" class="HRow MarginTop BorderTop HideForPass">
 						<p><strong>Compatibility information:</strong></p>
-						<p>Please use Google Chrome or Samsung Internet. Experimental support for Firefox and MS Edge.</p>
+						<p>Please use Google Chrome or Samsung Internet. Experimental support for Safari, Opera, Firefox and MS Edge.</p>
 					</div>
 				</div>
 			</div>
 		</div>
-		<style>
-			label { font-weight:bold; }
-			#invalidLogin { color:#F00; padding-top:6px; }
-			#invalidLogin p { margin:0 0 6px 0; }
-			button, .Button { margin:0; }
-		</style>
 		<script>
 			Application = {
 				failedAttempt: false,
@@ -185,11 +186,12 @@
 						Application.passwordRecoveryMode = false;
 						document.getElementById('loginButton').classList.remove('FloatRight');
 						document.getElementById('loginButton').innerHTML = ' &nbsp; Log in';
-						document.getElementById('UsernameLabel').innerHTML = 'Your username:';
+						document.getElementById('UsernameLabel').innerHTML = 'Login';
 						document.getElementById('forgotPassword').innerHTML = 'Forgot password';
 						document.querySelectorAll('.HideForPass').forEach(function( thisNode ) {
 							thisNode.style.display = thisNode.dataset.oldDisplay;
 						});	
+						document.getElementById('loginButton').classList.remove( 'Forgot' );
 						
 						return;
 					}
@@ -201,6 +203,7 @@
 					});	
 					document.getElementById('loginButton').classList.add('FloatRight');
 					document.getElementById('loginButton').innerHTML = ' &nbsp; Request new password';
+					document.getElementById('loginButton').classList.add( 'Forgot' );
 					document.getElementById('UsernameLabel').innerHTML = 'Username / e-mail:';
 					document.getElementById('forgotPassword').innerHTML = 'Return to login form';
 				}

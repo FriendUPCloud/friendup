@@ -323,6 +323,8 @@ f.Name ASC";
 	* @param type - filesystem type
 	* @param execute - point to application which will be launched when mount function will be called
 	* @param visible - set to 'true' if you want to make device visible for users
+	* @param userid - if 0 then device will be added to current user device list, otherwise to user pointed by ID
+	* @param usergroupid - if value is different then zero then it will be mounted to user group device list
 	* @return { Response: Mounted successfully. } when success, otherwise error number
 	*/
 	/// @endcond
@@ -334,6 +336,7 @@ f.Name ASC";
 		char *visible = NULL;
 		char *execute = NULL;
 		char *enc = NULL; // if enc = 'yes' the whole transmission is encoded by private key
+		UserGroup *usrgrp = NULL;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -438,6 +441,7 @@ f.Name ASC";
 		}
 		else
 		{
+			FULONG userID = 0;
 			char *host = NULL;
 			char *port = NULL;
 			
@@ -470,6 +474,38 @@ f.Name ASC";
 				module = (char *)el->data;
 			}
 			
+			el = HttpGetPOSTParameter( request, "userid" );
+			if( el != NULL )
+			{
+				char *next;
+				userID = (FLONG)strtol(( char *)el->data, &next, 0);
+			}
+			
+			el = HttpGetPOSTParameter( request, "usergroupid" );
+			if( el != NULL )
+			{
+				char *next;
+				FULONG locid = (FLONG)strtol(( char *)el->data, &next, 0);
+				if( locid > 0 )
+				{
+					UserGroup *lg = l->sl_UM->um_UserGroups;
+					while( lg != NULL )
+					{
+						if( locid == lg->ug_ID )
+						{
+							usrgrp = lg;
+							break;
+						}
+						lg = (UserGroup *)lg->node.mln_Succ;
+					}
+				}
+			}
+			
+			/*
+			 * sage: {"type":"msg","data":{"type":"request","requestid":"fconn-req-jlvisbkv-ja2ufn3z-fxlv2z81","path":"system.library/module/","data":{"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d","module":"system","args":"%7B%22ID%22%3A%22%22%2C%22Name%22%3A%22Projects%22%2C%22ShortDescription%22%3A%22%22%2C%22Type%22%3A%22SQLDrive%22%2C%22KeysID%22%3A%22%22%2C%22conf.DiskSize%22%3A%221000MB%22%2C%22userid%22%3A%222981%22%7D","command":"addfilesystem"},"sessionid":"9b9d2f7e7ead5bd01ee57f57be2cff47e09dc82d"}}
+
+			 */
+			
 			if( loggedSession->us_User != NULL )
 			{
 				struct TagItem tags[] = {
@@ -484,7 +520,9 @@ f.Name ASC";
 					{ FSys_Mount_UserName, (FULONG)loggedSession->us_User->u_Name },
 					{ FSys_Mount_Mount,          (FULONG)TRUE },
 					{ FSys_Mount_SysBase,        (FULONG)l },
+					{ FSys_Mount_UserGroup,      (FULONG)usrgrp },
 					{ FSys_Mount_Visible,        visible == NULL ? (FULONG)1 : (FULONG)0 },
+					{ FSys_Mount_UserID,         userID },
 					//{ FSys_Mount_Execute,        execute == NULL ? (FULONG)NULL : (FULONG)execute },
 					{ TAG_DONE, TAG_DONE }
 				};
@@ -552,8 +590,22 @@ f.Name ASC";
 					
 						if( temptext != NULL )
 						{
-							sqllib->SNPrintF( sqllib,  temptext, 512,"\
-UPDATE `Filesystem` f SET f.Mounted = '1' \
+							// if user is mounting shared drive across usergroup
+							// owner and groupID parameter must be set
+							if( usrgrp != NULL )
+							{
+								sqllib->SNPrintF( sqllib,  temptext, 512,"\
+UPDATE `Filesystem` f SET f.Mounted = '1', f.Owner='%lu', f.GroupID='%lu' \
+WHERE \
+`UserID` = '%ld' \
+AND LOWER(f.Name) = LOWER('%s')", 
+									loggedSession->us_User->u_ID, usrgrp->ug_ID, loggedSession->us_User->u_ID, devname 
+								);
+							}
+							else
+							{
+								sqllib->SNPrintF( sqllib,  temptext, 512,"\
+UPDATE `Filesystem` f SET f.Mounted = '1', f.Owner='0' \
 WHERE \
 ( \
 `UserID` = '%ld' OR \
@@ -565,8 +617,9 @@ ug.UserID = '%ld' \
 ) \
 ) \
 AND LOWER(f.Name) = LOWER('%s')", 
-								loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
-							);
+									loggedSession->us_User->u_ID, loggedSession->us_User->u_ID, devname 
+								);
+							}
 
 							void *res = sqllib->Query( sqllib, temptext );
 
@@ -638,6 +691,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 		HashmapElement *el = HttpGetPOSTParameter( request, "devname" );
 		if( !el ) el = HashmapGet( request->query, "devname" );
 		
+		// get device name from string
 		if( el != NULL )
 		{
 			char *ldevname = NULL;
@@ -697,6 +751,40 @@ AND LOWER(f.Name) = LOWER('%s')",
 						type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
 						ldevname = f->f_Name;
 						// please check Types next time
+						break;
+					}
+				}
+				
+				// check also device attached to groups
+				
+				int gr;
+				for( gr = 0 ; gr < loggedSession->us_User->u_GroupsNr ; gr++ )
+				{
+					UserGroup *ug = loggedSession->us_User->u_Groups[ gr ];
+					if( ug != NULL )
+					{
+						File *f = NULL;
+						LIST_FOR_EACH( ug->ug_MountedDevs, f, File * )
+						{
+							FBOOL owner = FALSE;
+							if( f->f_User != NULL )
+							{
+								User *u = (User *)f->f_User;
+								if( u->u_ID == loggedSession->us_User->u_ID )
+								{
+									owner = TRUE;
+								}
+							}
+							
+							if( owner == TRUE && strcmp( devname, f->f_Name ) == 0 )
+							{
+								mountError = 0;
+								f->f_Mounted = FALSE;
+								fid = f->f_ID; // Need the ID too!
+								type = ( char *) f->f_FSysName;//   f->f_Type; // Copy the type, we need it
+								ldevname = f->f_Name;
+							}
+						}
 					}
 				}
 				
@@ -767,6 +855,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 	/**
 	* 
 	* <HR><H2>system.library/device/refresh</H2>Refresh user drive in FriendCore
+	* ATM function only refresh Config property in Device, but this can be easly improved
 	*
 	* @param sessionid - (required) session id of logged user
 	* @param devname - (required) device name. Parameter and logged user id is used to get user device parameters from Filesystem table.
@@ -926,6 +1015,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 	{
 		char *devname = NULL;
 		char *username = NULL;
+		char *usergroupname = NULL;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( DEFAULT_CONTENT_TYPE ) },
@@ -956,6 +1046,12 @@ AND LOWER(f.Name) = LOWER('%s')",
 			username = (char *)el->data;
 		}
 		
+		el = HttpGetPOSTParameter( request, "usergroup" );
+		if( el != NULL )
+		{
+			usergroupname = (char *)el->data;
+		}
+		
 		if( devname == NULL || username == NULL )
 		{
 			char dictmsgbuf[ 256 ];
@@ -972,10 +1068,19 @@ AND LOWER(f.Name) = LOWER('%s')",
 			// to which user we will share our device
 			
 			User *user = NULL;
+			UserGroup *usergroup = NULL;
 			
 			LIST_FOR_EACH( l->sl_UM->um_Users, user, User * )
 			{
 				if( strcmp( username, user->u_Name ) == 0 )
+				{
+					break;
+				}
+			}
+			
+			LIST_FOR_EACH( l->sl_UM->um_UserGroups, usergroup, UserGroup * )
+			{
+				if( strcmp( usergroupname, usergroup->ug_Name ) == 0 )
 				{
 					break;
 				}
@@ -989,14 +1094,15 @@ AND LOWER(f.Name) = LOWER('%s')",
 				{
 					LIST_ADD_HEAD( l->sl_UM->um_Users, user );
 				}
-				else
-				{
-					FERROR("Cannot find user with name %s in database\n", username );
-					char dictmsgbuf[ 256 ];
-					snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
-					HttpAddTextContent( response, dictmsgbuf );
-					goto error;
-				}
+			}
+			
+			if( user == NULL && usergroup == NULL )
+			{
+				FERROR("Cannot find user or usergroup with name %s/%s in database\n", username, usergroupname );
+				char dictmsgbuf[ 256 ];
+				snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_USER_NOT_FOUND] , DICT_USER_NOT_FOUND );
+				HttpAddTextContent( response, dictmsgbuf );
+				goto error;
 			}
 			
 			File *rootDev = NULL;
@@ -1011,52 +1117,59 @@ AND LOWER(f.Name) = LOWER('%s')",
 			}
 			
 			
-			if( user != NULL && rootDev != NULL )
+			if( rootDev != NULL )
 			{
-				DEBUG("[DeviceMWebRequest] Sharing device in progress\n");
+				//
+				// share drive with another user
+				//
 				
-				if( user->u_InitialDevMount == FALSE )
+				if( user != NULL )
 				{
-					DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
-					
-					SQLLibrary *sqllib  = l->LibrarySQLGet( l );
-					if( sqllib != NULL )
-					{
-						UserDeviceMount( l, sqllib, user, 0, TRUE );
-						l->LibrarySQLDrop( l, sqllib );
-					}
-					else
-					{
-						FERROR("Cannot get sql.library slot\n");
-					}
-				}
+					DEBUG("[DeviceMWebRequest] Sharing device in progress\n");
 				
-				File *file = FCalloc( 1, sizeof( File ) );
-				if( file != NULL )
-				{
-					char fileName[ 512 ];
-					sprintf( fileName, "%s_%s", loggedSession->us_User->u_Name, devname );
-					
-					file->f_Name = StringDuplicate( fileName );	// shared name
-					file->f_SharedFile = rootDev;
-					file->f_User =  loggedSession->us_User;		// user which is sharing device
-					
-					LIST_ADD_HEAD( user->u_MountedDevs, file );
-					
-					int err;
-					if( ( err = DeviceMountDB( l, file, TRUE ) ) != 0 )
+					if( user->u_InitialDevMount == FALSE )
 					{
-						FERROR("[DeviceMWebRequest] Cannot share device, error %d\n", err );
-						char dictmsgbuf[ 256 ];
-						char dictmsgbuf1[ 196 ];
-						snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
-						snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
-						HttpAddTextContent( response, dictmsgbuf );
+						DEBUG("[DeviceMWebRequest] Devices were not mounted for user. They will be mounted now\n");
+					
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							UserDeviceMount( l, sqllib, user, 0, TRUE );
+							l->LibrarySQLDrop( l, sqllib );
+						}
+						else
+						{
+							FERROR("Cannot get sql.library slot\n");
+						}
 					}
-					else
+				
+					File *file = FCalloc( 1, sizeof( File ) );
+					if( file != NULL )
 					{
-						INFO("[DeviceMWebRequest] Device %s shared successfully\n", devname );
-						HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Device shared successfully\"}" );
+						char fileName[ 512 ];
+						sprintf( fileName, "%s_%s", loggedSession->us_User->u_Name, devname );
+					
+						file->f_Name = StringDuplicate( fileName );	// shared name
+						file->f_SharedFile = rootDev;
+						file->f_User =  loggedSession->us_User;		// user which is sharing device
+					
+						LIST_ADD_HEAD( user->u_MountedDevs, file );
+					
+						int err;
+						if( ( err = DeviceMountDB( l, file, TRUE ) ) != 0 )
+						{
+							FERROR("[DeviceMWebRequest] Cannot share device, error %d\n", err );
+							char dictmsgbuf[ 256 ];
+							char dictmsgbuf1[ 196 ];
+							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_DEVICE_CANNOT_BE_SHARED], err );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_DEVICE_CANNOT_BE_SHARED );
+							HttpAddTextContent( response, dictmsgbuf );
+						}
+						else
+						{
+							INFO("[DeviceMWebRequest] Device %s shared successfully\n", devname );
+							HttpAddTextContent( response, "ok<!--separate-->{ \"Result\": \"Device shared successfully\"}" );
+						}
 					}
 				}
 			}
@@ -1133,9 +1246,14 @@ AND LOWER(f.Name) = LOWER('%s')",
 				char *executeCmd = NULL;
 				char *configEscaped = NULL;
 				
+				//
+				// get information about user drives
+				//
+				
 				while( dev != NULL )
 				{
 					FHandler *sys = (FHandler *)dev->f_FSys;
+					Filesystem *fsys = ( Filesystem *)dev->f_DOSDriver;
 					
 					// Escape config
 					int len = dev->f_Config ? strlen( dev->f_Config ) : 0, k = 0;
@@ -1188,7 +1306,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 					if( devnr == 0 )
 					{
-						snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\"}\n", 
+						snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 							dev->f_Name ? dev->f_Name : "", 
 							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
@@ -1198,13 +1316,13 @@ AND LOWER(f.Name) = LOWER('%s')",
 							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
 							isLimited,
 							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort
+							dev->f_DevPort,
+							dev->f_UserGroupID
 						);
-						
 					}
 					else
 					{
-						snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\"}\n", 
+						snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 							dev->f_Name ? dev->f_Name : "",
 							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
@@ -1214,7 +1332,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 							executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
 							isLimited,
 							dev->f_DevServer ? dev->f_DevServer : "",
-							dev->f_DevPort
+							dev->f_DevPort,
+							dev->f_UserGroupID
 						);
 					}
 					
@@ -1228,6 +1347,125 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 					devnr++;
 					dev = (File *)dev->node.mln_Succ;
+				}
+				
+				//
+				// get information about shared group drives
+				//
+				
+				int gr = 0;
+				for( gr = 0 ; gr < curusr->u_GroupsNr ; gr++ )
+				{
+					//DEBUG("\n\n\n\nGROUP: %s\n\n\n\n\n", curusr->u_Groups[ gr ]->ug_Name );
+					dev = NULL;
+					if( curusr->u_Groups[ gr ] != NULL )
+					{
+						dev = curusr->u_Groups[ gr ]->ug_MountedDevs;
+					}
+					while( dev != NULL )
+					{
+						// if this is shared drive and user want details we must point to original drive
+						if( dev->f_SharedFile != NULL )
+						{
+							dev = dev->f_SharedFile;
+						}
+						
+						FHandler *sys = (FHandler *)dev->f_FSys;
+					
+						// Escape config
+						int len = dev->f_Config ? strlen( dev->f_Config ) : 0, k = 0;
+						//dev->f_Visible = 1; // Special case, default is visible
+					
+						DEBUG( "[DeviceMWebRequest] Getting config (length: %d).\n", len );
+						if( len > 2 )
+						{
+							if( configEscaped ) FFree( configEscaped );
+							configEscaped = FCalloc( len * 2 + 2, sizeof( char ) );
+							int n = 0; for( ; n < len; n++ )
+							{
+								if( dev->f_Config[n] == '"' )
+								{
+									configEscaped[k++] = '\\';
+								}
+								configEscaped[k++] = dev->f_Config[n];
+							}
+							// Find executable
+							DEBUG( "[DeviceMWebRequest] Looking in: %s\n", dev->f_Config );
+							executeCmd = FCalloc( 256, sizeof( char ) );
+							int mo = 0, im = 0, imrun = 1;
+							for( ; imrun == 1 && im < len - 14; im++ )
+							{
+								if( strncmp( dev->f_Config + im, "\"Executable\"", 12 ) == 0 )
+								{
+									im += 14;
+									imrun = 0;
+									for( ; im < len; im++ )
+									{
+										// Next quote is end of string
+										if( dev->f_Config[im] == '"' ) break;
+										executeCmd[mo++] = dev->f_Config[ im ];
+									}
+								}
+							}
+						}
+					
+						memset( tmp, '\0', TMP_SIZE-1 );
+					
+						FBOOL isLimited = FALSE;
+					
+						if( UMUserIsAdmin( l->sl_UM, request, loggedSession->us_User ) == FALSE )
+						{
+							if( strcmp( dev->f_FSysName, "Local" ) == 0 )
+							{
+								isLimited = TRUE;
+							}
+						}
+					
+						if( devnr == 0 )
+						{
+							snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "", 
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "", 
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
+						
+						}
+						else
+						{
+							snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+								dev->f_Name ? dev->f_Name : "",
+								dev->f_FSysName ? dev->f_FSysName : "", 
+								dev->f_Path ? dev->f_Path : "",
+								sys && sys->Name ? sys->Name : "",
+								configEscaped ? configEscaped: "{}",
+								dev->f_Visible == 1 ? "true" : "false",
+								executeCmd != NULL && strlen( executeCmd ) ? executeCmd : "",
+								isLimited,
+								dev->f_DevServer ? dev->f_DevServer : "",
+								dev->f_DevPort,
+								dev->f_UserGroupID
+							);
+						}
+					
+						if( executeCmd ) FFree( executeCmd );
+						executeCmd = NULL;
+					
+						if( configEscaped ) FFree( configEscaped );
+						configEscaped = NULL;
+					
+						BufStringAdd( bs, tmp );
+					
+						devnr++;
+						dev = (File *)dev->node.mln_Succ;
+					}
 				}
 				
 				FFree( tmp );

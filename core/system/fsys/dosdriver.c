@@ -91,8 +91,8 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 			if( prop != NULL)
 			{
 				DEBUG("[SYSTEMLibrary] reading login\n");
-				type = plib->ReadString( prop, "DOSDriver:type", "null" );
-				handler = plib->ReadString( prop, "DOSDriver:handler", "null" );
+				type = plib->ReadStringNCS( prop, "DOSDriver:type", "null" );
+				handler = plib->ReadStringNCS( prop, "DOSDriver:handler", "null" );
 				
 				ddrive->dd_Type = StringDuplicateN( type, strlen( type ) );
 

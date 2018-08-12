@@ -1,3 +1,104 @@
+/* 
+
+	Directory views
+
+*/
+
+.IconWindow .Content > .FileBrowserContainer + .Listview,
+.IconWindow .Content > .FileBrowserContainer + .Scroller
+{
+	left: 200px;
+	width: calc(100% - 200px);
+}
+
+.IconWindow .Content > .FileBrowserContainer
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 200px;
+	height: 100%;
+	padding: $PaddingBox;
+	box-sizing: border-box;
+}
+
+/* File browser */
+
+.FileBrowser
+{
+	overflow-y: auto;
+	background-color: $BackgroundHeavier;
+}
+
+.FileBrowser div.Name
+{
+	padding: 5px;
+}
+
+.FileBrowser div.Name.Active, 
+.FileBrowser div.Name.Active
+{
+	background: $ColorBgButton;
+	color: $ColorButton;
+	border-radius: 5px;
+}
+
+.FileBrowser .DiskItem:not(.Open) > .SubItems,
+.FileBrowser .FolderItem:not(.Open) > .SubItems
+{
+	display: none;
+}
+
+.FileBrowser .DiskItem.Open > .SubItems,
+.FileBrowser .FolderItem.Open > .SubItems
+{
+	display: block;
+}
+
+.FileBrowser .IconDisk:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/Disk.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
+.FileBrowser .IconFolder:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/Folder.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
+.FileBrowser .IconFolder.Open:before
+{
+	background-image: url(/iconthemes/friendup15/FolderOpen.svg);
+}
+
+.FileBrowser .IconFile:before
+{
+	content: " ";
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background-image: url(/iconthemes/friendup15/File_Code.svg);
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;	
+}
+
 /* -------------------------------------------------------------------------- *\
 
 Icon styles for the workbench
@@ -227,7 +328,8 @@ html .Launcher .File div *
 #DoorsScreen > .ScreenContent > .Scroller > div > .File > .Title
 {
 	color: white;
-	text-shadow: 0px 1px 1px black;
+	font-weight: bold;
+	text-shadow: 0px 1px 1px rgba(0,0,0,0.4);
 }
 
 /* Small icons -------------------------------------------------------------- */
@@ -281,59 +383,48 @@ html .Launcher .File div *
 
 .File .Icon .File
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/unknown.png);
 }
 
 .File .Icon .Drive
 {
-	background-image: url(/webclient/gfx/icons/64x64/devices/drive-harddisk.png);
 }
 
 .File .Icon .Directory
 {
-	background-image: url(/webclient/gfx/icons/64x64/places/folder.png);
 }
 
 .File .Icon .Directory.Upload
 {
-	background-image: url(/webclient/gfx/icons/64x64/places/folder-downloads.png);
 }
 
 .File .Icon .NetworkDirectory
 {
-	background-image: url(/webclient/gfx/icons/64x64/places/folder-network.png);
 }
 
 .File .Icon .Arena
 {
-	background-image: url(/webclient/gfx/icons/64x64/apps/kjournal.png);
 }
 
 .File .Icon .System
 {
-	background-image: url(/webclient/gfx/icons/64x64/devices/computer.png);
 }
 
 
 .File .Icon .Home
 {
-	background-image: url(/webclient/gfx/icons/64x64/places/user-home.png);
 }
 
 .File .Icon .Application
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-desktop.png);
 }
 
 .File .Icon .Trashcan
 {
-	background-image: url(/webclient/gfx/icons/64x64/status/user-trash-full.png);
 	background-size: contain;
 }
 
 .File .Icon .Ram
 {
-	background-image: url(/webclient/gfx/icons/64x64/devices/media-flash.png);
 }
 
 .File .Icon .Custom
@@ -342,54 +433,46 @@ html .Launcher .File div *
 
 .File .Icon .Door
 {
-	background-image: url(/webclient/gfx/icons/64x64/devices/drive-harddisk.png);
 }
 
 .File .Icon .SystemDisk
 {
-	background-image: url(/webclient/gfx/icons/128x128/devices/computer.png);
 	background-size: contain;
 }
 
 .File .Icon .Door.Assign
 {
-	background-image: url(/webclient/gfx/icons/64x64/places/folder-bookmark.png);
+
 }
 
 .File .Icon .article
 {
-	background-image: url(/webclient/gfx/icons/64x64/apps/knewsticker.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeJPG, .File .Icon .TypeJPEG, .File .Icon .TypePNG, 
 .File .Icon .TypeGIF
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/image-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeDOC
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-msword.png);
 	background-size: contain;
 }
 
 .File .Icon .TypePDF
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-pdf.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeTXT
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/text-plain.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeRUN
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-executable-script.png);
 	background-size: contain;
 }
 
@@ -397,79 +480,66 @@ html .Launcher .File div *
 .File .Icon .TypeOGG,
 .File .Icon .TypeWAV
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/audio-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeHTML
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/text-html.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeZip
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-zip.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeJS, .File .Icon .TypeJSX
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/application-x-javascript.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeAVI
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeMPG, .File .Icon .TypeMPEG
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .TypeMOV, .File .Icon .TypeMP4
 {
-	background-image: url(/webclient/gfx/icons/64x64/mimetypes/video-x-generic.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Repositories
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/applications-utilities.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Prefs
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/preferences-system.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Plugins
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/preferences-other.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Docs
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/system-help.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Modules
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/applications-system.png);
 	background-size: contain;
 }
 
 .File .Icon .Application.System_Applications
 {
-	background-image: url(/webclient/gfx/icons/64x64/categories/applications-other.png);
 	background-size: contain;
 }
 

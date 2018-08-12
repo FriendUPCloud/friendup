@@ -83,10 +83,17 @@ if( $rows = $SqlDatabase->fetchObjects( $q = '
 		$ob->TimeFrom = $row->TimeFrom;
 		$ob->Date = $row->Date;
 		$ob->Type = $row->Type;
+		$ob->MetaData = $row->MetaData;
 		$os[] = $ob;
 	}
+}
+if( !count( $os ) )
+{
+	die( 'fail<!--separate-->' );
+}
+else
+{
 	die( 'ok<!--separate-->' . json_encode( $os, 1 ) );
 }
-die( 'fail<!--separate-->' . $q );
 
 ?>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="42px" height="47px" viewBox="0 0 42 47" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>SystemDisk</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="17.385817%" y1="82.5072707%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.4" offset="100%"></stop>
+        </linearGradient>
+        <text id="text-2" font-family="FontAwesome" font-size="18" font-weight="normal" fill="#34495E">
+            <tspan x="11.3571429" y="26"></tspan>
+        </text>
+        <filter x="-5.0%" y="-11.1%" width="110.0%" height="116.7%" filterUnits="objectBoundingBox" id="filter-3">
+            <feGaussianBlur stdDeviation="0.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="1" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+        <filter x="-5.0%" y="-11.1%" width="110.0%" height="116.7%" filterUnits="objectBoundingBox" id="filter-4">
+            <feGaussianBlur stdDeviation="0.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="1" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-634.000000, -886.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)">
+            <g id="Disks" transform="translate(360.000000, 673.000000)">
+                <g id="SystemDisk" transform="translate(227.000000, 199.000000)">
+                    <g id="Disk-Master">
+                        <g>
+                            <rect id="rect5355-1-0" fill="#BDC3C7" fill-rule="nonzero" x="0" y="0.36218" width="42" height="46" rx="3.0000222"></rect>
+                            <rect id="rect5355-2-0-2" fill="#34495E" fill-rule="nonzero" x="0" y="37.59619" width="42" height="8.7659817" rx="3.0000222"></rect>
+                            <rect id="rect5355-2-6-6-9" fill="#F2C57C" fill-rule="nonzero" x="28.18529" y="40.88904" width="9.8147163" height="2.0484672" rx="1.0242336"></rect>
+                            <path d="M0,0 C0,11.1321596 0,26.2725148 0,38.326087 C0,39.8074437 2.67598,41 6,41 L36,41 C39.32402,41 42,39.8074437 42,38.326087 L42,2.67391304 C42,1.1925563 39.32402,0 36,0 L0,0 Z" id="rect5355-1-3-9-4-8-1-2-6" fill="url(#linearGradient-1)" fill-rule="nonzero"></path>
+                        </g>
+                    </g>
+                    <g id="" opacity="0.8" fill="#34495E" fill-opacity="1">
+                        <use filter="url(#filter-3)" xlink:href="#text-2"></use>
+                        <use filter="url(#filter-4)" xlink:href="#text-2"></use>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

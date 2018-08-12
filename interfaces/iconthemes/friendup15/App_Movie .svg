@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>App_Movie </title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-202.000000, -304.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)" fill-rule="nonzero">
+            <g id="Appicons" transform="translate(97.000000, 264.000000)">
+                <g id="App_Movie-" transform="translate(58.000000, 26.000000)">
+                    <path d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#3498DB"></path>
+                    <polygon id="rect4775-2" fill="#FFFFFF" points="16 13 16 27.36764 29.02666 19.89647"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

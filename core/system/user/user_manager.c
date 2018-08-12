@@ -36,6 +36,7 @@
 #include <system/systembase.h>
 #include <util/sha256.h>
 #include <system/fsys/device_handling.h>
+#include <util/session_id.h>
 
 /**
  * Create UserManager
@@ -128,8 +129,10 @@ void UMDelete( UserManager *smgr )
 	
 	RemoteUserDeleteAll( smgr->um_RemoteUsers );
 	
-	if( smgr != NULL )
+	//if( smgr != NULL )
 	{
+		UserGroupDeleteAll( smgr->um_SB, smgr->um_UserGroups );
+		/*
 		UserGroup *g = smgr->um_UserGroups, *rg;
 		DEBUG("[UMDelete] Cleaning groups\n");
 		while( g!= NULL )	// remove global groups
@@ -150,6 +153,7 @@ void UMDelete( UserManager *smgr )
 				FFree( rg );
 			}
 		}
+		*/
 		smgr->um_UserGroups = NULL;
 		
 		FFree( smgr );
@@ -166,7 +170,6 @@ void UMDelete( UserManager *smgr )
 int UMAssignGroupToUser( UserManager *smgr, User *usr )
 {
 	char tmpQuery[ 512 ];
-	struct User *user = NULL;
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
@@ -192,7 +195,6 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 
 		char **row;
 		int j = 0;
-		int actgroup = 0;
 	
 		if( usr->u_Groups )
 		{
@@ -238,6 +240,7 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 								isAPI = TRUE;
 							}
 							
+							UserGroupAddUser( g, usr );
 							DEBUG("[UMAssignGroupToUser] Added group %s to user %s\n", g->ug_Name, usr->u_Name );
 							usr->u_Groups[ pos++ ] = g;
 						}
@@ -500,6 +503,36 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
 	return actapp;
+}
+
+/**
+ * Get User structure from by his name
+ *
+ * @param um pointer to UserManager
+ * @param name user name
+ * @return User structure or NULL value when problem appear
+ */
+User * UMUserGetByName( UserManager *um, const char *name )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib == NULL )
+	{
+		FERROR("Cannot get user, mysql.library was not open\n");
+		return NULL;
+	}
+
+	User *user = sb->sl_UM->um_Users;
+	while( user != NULL )
+	{
+		if( strcmp( user->u_Name, name ) == 0 )
+		{
+			break;
+		}
+		user = (User *)user->node.mln_Succ;
+	}
+	return user;
 }
 
 /**
@@ -882,6 +915,49 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 }
 
 /**
+ * Get user from database by ID
+ *
+ * @param um pointer to UserManager
+ * @param id ID of the user
+ * @return User or NULL when error will appear
+ */
+User *UMGetUserByIDDB( UserManager *um, FULONG id )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	char where[ 128 ];
+	where[ 0 ] = 0;
+	
+	DEBUG("[UMGetUserByNameDB] start\n");
+	
+	if( sqlLib == NULL )
+	{
+		FERROR("Cannot get user, mysql.library was not open\n");
+		return NULL;
+	}
+
+	sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `ID` = '%lu'", id );
+	
+	struct User *user = NULL;
+	int entries;
+	
+	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+	sb->LibrarySQLDrop( sb, sqlLib );
+	
+	User *tmp = user;
+	while( tmp != NULL )
+	{
+		UMAssignGroupToUser( um, tmp );
+		UMAssignApplicationsToUser( um, tmp );
+		
+		tmp = (User *)tmp->node.mln_Succ;
+	}
+	
+	DEBUG("[UMGetUserByNameDB] end\n");
+	return user;
+}
+
+/**
  * Get User structure from database by authentication id
  *
  * @param um pointer to UserManager
@@ -1041,7 +1117,7 @@ int UMRemoveUser(UserManager *um, User *usr, UserSessionManager *user_session_ma
 			user_previous->node.mln_Succ = user_current->node.mln_Succ;
 
 		} else { //we are at the very beginning of the list
-			um->um_Users = user_current->node.mln_Succ; //set the global start pointer of the list
+			um->um_Users = (User *)user_current->node.mln_Succ; //set the global start pointer of the list
 		}
 		UserDelete(user_current);
 		
@@ -1205,6 +1281,73 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 		
 		sb->LibrarySQLDrop( sb, sqlLib );
 	}
-	
 	return canILogin;
+}
+
+/**
+ * Check and set API user if thats neccessary
+ *
+ * @param um pointer to UserManager
+ * @return 0 when success, otherwise error number
+ */
+int UMCheckAndLoadAPIUser( UserManager *um )
+{
+	SystemBase *sb = (SystemBase *)um->um_SB;
+	DEBUG("[UMCheckAndLoadAPIUser] Start\n" );
+	
+	User *tuser = um->um_Users;
+	while( tuser != NULL )
+	{
+		// Check both username and password
+		if( tuser->u_IsAPI && strcmp( tuser->u_Name, "apiuser" ) == 0 )
+		{
+			um->um_APIUser = tuser;
+			return 0;
+		}
+		tuser = (User *)tuser->node.mln_Succ;
+	}
+	
+	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
+	
+	if( sqlLib != NULL )
+	{
+		User *user = NULL;
+
+		int entries;
+		user = sqlLib->Load( sqlLib, UserDesc, "Name = 'apiuser'", &entries );
+		sb->LibrarySQLDrop( sb, sqlLib );
+
+		if( user != NULL )
+		{
+			/*
+			char temptext[ 2048 ];
+			char *sesid = session_id_generate( );
+			if( user->u_MainSessionID != NULL )
+			{
+				FFree( user->u_MainSessionID );
+			}
+			user->u_MainSessionID = sesid;
+			
+			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
+			sqlLib->QueryWithoutResults( sqlLib, temptext );
+			*/
+			
+			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
+			UMAssignGroupToUser( um, user );
+			UMAssignApplicationsToUser( um, user );
+			user->u_MountedDevs = NULL;
+			
+			user->node.mln_Succ  = (MinNode *) um->um_Users;
+			if( um->um_Users != NULL )
+			{
+				um->um_Users->node.mln_Pred = (MinNode *)user;
+			}
+			um->um_Users = user;
+			
+			um->um_APIUser = user;
+			
+			return 0;
+		}
+	}
+	return 1;
 }

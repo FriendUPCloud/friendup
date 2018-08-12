@@ -2,7 +2,7 @@
 USER=`whoami`
 PWD=`pwd`
 FRIEND_RUN_DIRECTORY=$PWD/build
-TMP=/tmp/friendcore.service.tmp
+TMP=/tmp/friendcore.service
 
 echo "Writing systemd script to temporary file $TMP"
 

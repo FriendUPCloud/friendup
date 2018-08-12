@@ -29,7 +29,10 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.ColorBox = function( tree, name, flags )
 {
-    this.color = false;
+    this.color = '#808080';
+    this.sizeBorder = 0;
+    this.colorBorder = '#FFFFFF';
+    this.renderSubItems = false;
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.ColorBox';
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.ColorBox', flags );
 };
@@ -43,32 +46,71 @@ Friend.Tree.UI.ColorBox.messageDown = function( message )
 };
 
 
-Friend.Tree.UI.RenderItems.ColorBox_Three2D = function( tree, name, properties )
-{
-    this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-    Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ColorBox_Three2D', properties );
-};
-Friend.Tree.UI.RenderItems.ColorBox_Three2D.render = function( properties )
-{
-    this.thisRect.fillRectangle( properties, this.parent.color );
-	return properties;
-};
-
 Friend.Tree.UI.RenderItems.ColorBox_HTML = function( tree, name, properties )
 {
+	this.color = false;
+    this.sizeBorder = false;
+	this.colorBorder = false;
+	
     this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_HTML';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ColorBox_HTML', properties );
+
+	this.width = 32;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.ColorBox_HTML.render = Friend.Tree.UI.RenderItems.ColorBox_Three2D.render;
+Friend.Tree.UI.RenderItems.ColorBox_HTML.render = function( properties )
+{
+	this.thisRect.drawBox( properties, this.item.color, this.item.colorBorder, this.item.sizeBorder );
+
+	// Allow rendering in parent
+	if ( this.item.renderSubItems )
+        properties.renderInParent = properties.rendererItem;
+
+	return properties;
+};
+Friend.Tree.UI.RenderItems.ColorBox_HTML.message = function ( message )
+{
+	switch ( message.command )
+	{
+		/*
+		case 'resize':
+			if ( message.width )
+			{
+				this.width = message.width;
+				this.item.width = message.width;
+			}
+			if ( message.height )
+			{
+				this.height = message.height;
+				this.item.height = message.height;
+			}
+            this.item.doRefresh();
+			break;
+		*/
+		default:
+			break;
+	}
+	return false;
+}
 
 
 Friend.Tree.UI.RenderItems.ColorBox_Canvas2D = function( tree, name, properties )
 {
+	this.color = false;
+    this.sizeBorder = false;
+	this.colorBorder = false;
+	
     this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ColorBox_Canvas2D', properties );
 	this.render = Friend.Tree.UI.RenderItems.ColorBox_Three2D.render;
+
+	this.width = 32;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.ColorBox_Canvas2D.render = Friend.Tree.UI.RenderItems.ColorBox_Three2D.render;
+Friend.Tree.UI.RenderItems.ColorBox_Canvas2D.render = Friend.Tree.UI.RenderItems.ColorBox_HTML.render;

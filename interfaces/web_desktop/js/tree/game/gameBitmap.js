@@ -29,55 +29,68 @@ Friend.Tree.Game.RenderItems = Friend.Tree.Game.RenderItems || {};
 
 Friend.Tree.Game.Bitmap = function( tree, name, properties )
 {
-    this.imageName = '';
-	this.imageFit = 'stretch';
+    this.nameImage = '';
+	this.fitImage = 'stretch';
 	this.renderItemName = 'Friend.Tree.Game.RenderItems.Bitmap';
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Game.Bitmap', properties );
 };
 Friend.Tree.Game.Bitmap.messageUp = function( message )
 {
-    return this.startProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'rotation', 'imageName' ] );
+    return this.startProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'rotation', 'nameImage' ] );
 };
 Friend.Tree.Game.Bitmap.messageDown = function( message )
 {
-    this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'rotation', 'imageName' ] );    
-    if ( message.imageName == Friend.Tree.UPDATED )
-        this.callAllRenderItems( 'setImage', [] );
+    var ret = this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'rotation', 'nameImage' ] );    
+	return ret;
 };
 
-Friend.Tree.Game.RenderItems.Bitmap_Three2D = function( tree, item, properties )
+
+
+Friend.Tree.Game.RenderItems.Bitmap_HTML = function( tree, item, properties )
 {
-	this.imageFit = 'adapt';
-	this.rendererName = 'Renderer_Three2D';	
+	this.nameImage = false;
+
+	this.rendererName = 'Renderer_HTML';	
 	this.rendererType = 'Sprite';
-    Friend.Tree.RenderItems.init( this, tree, item, 'Friend.Tree.Game.RenderItems.Bitmap_Three2D', properties );
-	this.imageName = '';
+	Friend.Tree.RenderItems.init( this, tree, item, 'Friend.Tree.Game.RenderItems.Bitmap_HTML', properties );
+	this.nameImage = ''; 	// Enforce loading the image
+	this.setImage();
+
+	this.item.width = this.image.width;
+	this.item.height = this.image.height;
+};
+Friend.Tree.Game.RenderItems.Bitmap_HTML.render = function( properties )
+{	
 	this.setImage();
 };
-Friend.Tree.Game.RenderItems.Bitmap_Three2D.render = function( properties )
+Friend.Tree.Game.RenderItems.Bitmap_HTML.message = function( message )
 {	
-	this.setImage();
-}
-Friend.Tree.Game.RenderItems.Bitmap_Three2D.setImage = function()
-{	
-	if ( this.imageName != this.parent.imageName )
+	switch ( message.command )
 	{
-		var image = this.resources.getImage( this.parent.imageName );
+		case 'resize':
+			if ( typeof message.width != 'undefined')
+				this.width = message.width;
+			if ( typeof message.height != 'undefined' )
+				this.height = message.height;
+			this.renderer.resizeItem( this, message.width, message.height );
+            this.item.doRefresh();
+			break;
+		default:
+			break;
+	}
+};
+Friend.Tree.Game.RenderItems.Bitmap_HTML.setImage = function()
+{	
+	if ( this.nameImage != this.item.nameImage )
+	{
+		this.image = this.resources.getImage( this.item.nameImage );
 		if ( image )
 		{
-			this.imageName = this.parent.imageName;
-			if ( this.imageFit == 'adapt' )
-			{
-				// Size = image size
-				this.width = image.width;
-				this.height = image.height;
-
-				// Pokes in parent
-				this.parent.width = this.width;
-				this.parent.height = this.height;
-			}
+			this.nameImage = this.item.nameImage;
 			this.hotSpotX = image.hotSpotX;
 			this.hotSpotY = image.hotSpotY;
+			this.width = image.width;
+			this.height = image.height;		
 			return true; 
 		}
 		else
@@ -88,28 +101,20 @@ Friend.Tree.Game.RenderItems.Bitmap_Three2D.setImage = function()
     return false;
 };
 
-
-Friend.Tree.Game.RenderItems.Bitmap_HTML = function( tree, item, properties )
-{
-	this.imageFit = 'adapt';
-	this.rendererName = 'Renderer_HTML';	
-	this.rendererType = 'Sprite';
-    Friend.Tree.RenderItems.init( this, tree, item, 'Friend.Tree.Game.RenderItems.Bitmap_HTML', properties );
-    this.imageName = '';
-	this.setImage();
-};
-Friend.Tree.Game.RenderItems.Bitmap_HTML.setImage = Friend.Tree.Game.RenderItems.Bitmap_Three2D.setImage;
-Friend.Tree.Game.RenderItems.Bitmap_HTML.render = Friend.Tree.Game.RenderItems.Bitmap_Three2D.render;
-
 Friend.Tree.Game.RenderItems.Bitmap_Canvas2D = function( tree, item, properties )
 {
-	this.imageFit = 'adapt';
+	this.nameImage = false;
+
 	this.rendererName = 'Renderer_Canvas2D';	
 	this.rendererType = 'Sprite';
     Friend.Tree.RenderItems.init( this, tree, item, 'Friend.Tree.Game.RenderItems.Bitmap_Canvas2D', properties );
-    this.imageName = '';
+    this.nameImage = '';
 	this.setImage();
+
+	this.item.width = this.image.width;
+	this.item.height = this.image.height;
 };
 Friend.Tree.Game.RenderItems.Bitmap_Canvas2D.setImage = Friend.Tree.Game.RenderItems.Bitmap_Three2D.setImage;
 Friend.Tree.Game.RenderItems.Bitmap_Canvas2D.render = Friend.Tree.Game.RenderItems.Bitmap_Three2D.render;
+Friend.Tree.Game.RenderItems.Bitmap_Canvas2D.message = Friend.Tree.Game.RenderItems.Bitmap_Three2D.message;
 

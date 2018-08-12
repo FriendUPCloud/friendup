@@ -57,6 +57,12 @@ int MountFS( struct SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 //
 //
 
+int UserGroupDeviceMount( SystemBase *l, SQLLibrary *sqllib, UserGroup *usrgrp, User *usr );
+
+//
+//
+//
+
 int MountFSNoUser( struct SystemBase *l, struct TagItem *tl, File **mfile );
 
 //
@@ -138,59 +144,10 @@ static inline int ColonPosition( const char *c )
 	return res;
 }
 
-/**
- * Get root device by name
- *
- * @param usr user to which device belong
- * @param devname device name
- * @return pointer to device (File *)
- */
+//
+//
+//
 
-static inline File *GetRootDeviceByName( User *usr, char *devname )
-{
-	//
-	// Check mounted devices for user
-	
-	if( usr == NULL )
-	{
-		FERROR("GetRootDEviceByName: user == NULL\n");
-		return NULL;
-	}
-
-	File *lDev = usr->u_MountedDevs;
-	File *actDev = NULL;
-	
-	if( !usr->u_MountedDevs )
-	{
-		FERROR( "Looks like we have NO mounted devs..\n" );
-	}
-	
-	while( lDev != NULL )
-	{
-		if( lDev->f_Name && strcmp( devname, lDev->f_Name ) == 0 ) //&& lDev->f_Mounted == TRUE )
-		{
-			if( lDev->f_SharedFile == NULL )
-			//if( usr == lDev->f_User )		// if its our current user then we compare name
-			{
-				actDev = lDev;
-			}
-			else
-			{
-				actDev = lDev->f_SharedFile;
-			}
-			INFO("Found file name '%s' path '%s' (%s)\n", actDev->f_Name, actDev->f_Path, actDev->f_FSysName );
-			break;
-		}
-		
-		lDev = (File *)lDev->node.mln_Succ;
-	}
-	
-	if( actDev == NULL )
-	{
-		FERROR( "Cannot find mounted device by name: %s\n", devname );
-	}
-	
-	return actDev;
-}
+File *GetRootDeviceByName( User *usr, char *devname );
 
 #endif // __SYSTEM_FSYS_DEVICE_HANDLING_H__

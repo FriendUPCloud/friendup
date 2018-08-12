@@ -111,6 +111,8 @@ var system = window.system || {};
 				Encoding : self.encoding
 			}
 			
+			console.log( 'self.request( uIdReq ) ', uIdReq );
+			
 			self.request( uIdReq )
 				.then( haveUniqueId )
 				.catch( uniqueIdFailed );
@@ -185,6 +187,8 @@ var system = window.system || {};
 				tmpPassReq[ 'RecoveryKey' ] = self.recoverykey;
 			}
 			
+			console.log( 'self.request( tmpPassReq ) ', tmpPassReq );
+			
 			self.request( tmpPassReq )
 				.then( gotTmpPass )
 				.catch( tmpPassFailed );
@@ -218,12 +222,16 @@ var system = window.system || {};
 				Source : self.source,
 				Encoding : self.encoding
 			};
+			
+			console.log( 'self.request( signedPassReq ) ', signedPassReq );
+			
 			self.request( signedPassReq )
 				.then( authSuccess )
 				.catch( authFailed );
 				
 			function authSuccess( data )
 			{
+				console.log( 'authSuccess( data ) ', data );
 				loggedIn( data.sessionid );
 			}
 			
@@ -274,7 +282,7 @@ var system = window.system || {};
 	ns.Account.prototype.request = function( req )
 	{
 		var self = this;
-		console.log( 'request', req );
+		console.log( 'request ...', req );
 		if ( self.sessionId )
 			req[ 'SessionID' ] = self.sessionId;
 		

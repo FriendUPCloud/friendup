@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>App_Word1</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-255.000000, -304.000000)">
+        <g id="Icons" transform="translate(47.000000, 14.000000)">
+            <g id="Appicons" transform="translate(97.000000, 264.000000)">
+                <g id="App_Word1" transform="translate(111.000000, 26.000000)">
+                    <path d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#2980B9" fill-rule="nonzero"></path>
+                    <path d="M3.1875,10.8375 L4.95,10.8375 L5.5625,14.75 L5.9125,17.3375 L5.9625,17.3375 L6.4625,14.75 L7.3875,10.8375 L8.85,10.8375 L9.7625,14.75 L10.05,16.2 L10.275,17.3375 L10.325,17.3375 C10.4833341,16.1124939 10.5999996,15.2500025 10.675,14.75 L11.2875,10.8375 L12.925,10.8375 L11.4375,19 L9.2875,19 L8.425,15.1 C8.291666,14.4749969 8.17916713,13.8458365 8.0875,13.2125 L8.0375,13.2125 L7.9375,13.7875 C7.8374995,14.3708362 7.754167,14.8083319 7.6875,15.1 L6.85,19 L4.7375,19 L3.1875,10.8375 Z" id="W" fill="#FFFFFF"></path>
+                    <g id="Group" transform="translate(19.000000, 10.000000)" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8">
+                        <rect id="rect4175-59" x="0" y="0" width="15" height="2"></rect>
+                        <rect id="rect4175-5-62" x="0" y="6" width="15" height="2"></rect>
+                        <rect id="rect4175-5-6-1" x="0" y="12" width="15" height="2"></rect>
+                        <rect id="rect4175-5-6-2-7" x="0" y="18" width="15" height="2"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

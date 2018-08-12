@@ -37,4 +37,7 @@
 
 Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result );
 
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
+
+
 #endif

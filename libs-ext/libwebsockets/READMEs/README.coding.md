@@ -44,7 +44,7 @@ clients).
 If you want to send something, do NOT just send it but request a callback
 when the socket is writeable using
 
- - `lws_callback_on_writable(context, wsi)` for a specific `wsi`, or
+ - `lws_callback_on_writable(wsi)` for a specific `wsi`, or
  
  - `lws_callback_on_writable_all_protocol(protocol)` for all connections
 using that protocol to get a callback when next writeable.
@@ -67,6 +67,25 @@ or our connection to him, cannot handle anything new, we should not generate
 anything new for him.  This is how unix shell piping works, you may have
 `cat a.txt | grep xyz > remote", but actually that does not cat anything from
 a.txt while remote cannot accept anything new. 
+
+@section oneper Only one lws_write per WRITEABLE callback
+
+From v2.5, lws strictly enforces only one lws_write() per WRITEABLE callback.
+
+You will receive a message about "Illegal back-to-back write of ... detected"
+if there is a second lws_write() before returning to the event loop.
+
+This is because with http/2, the state of the network connection carrying a
+wsi is unrelated to any state of the wsi.  The situation on http/1 where a
+new request implied a new tcp connection and new SSL buffer, so you could
+assume some window for writes is no longer true.  Any lws_write() can fail
+and be buffered for completion by lws; it will be auto-completed by the
+event loop.
+
+Note that if you are handling your own http responses, writing the headers
+needs to be done with a separate lws_write() from writing any payload.  That
+means after writing the headers you must call `lws_callback_on_writable(wsi)`
+and send any payload from the writable callback.
 
 @section otherwr Do not rely on only your own WRITEABLE requests appearing
 
@@ -122,44 +141,93 @@ all the server resources.
 
 @section evtloop Libwebsockets is singlethreaded
 
-Libwebsockets works in a serialized event loop, in a single thread.
+Libwebsockets works in a serialized event loop, in a single thread.  It supports
+not only the default poll() backend, but libuv, libev, and libevent event loop
+libraries that also take this locking-free, nonblocking event loop approach that
+is not threadsafe.  There are several advantages to this technique, but one
+disadvantage, it doesn't integrate easily if there are multiple threads that
+want to use libwebsockets.
 
-Directly performing websocket actions from other threads is not allowed.
-Aside from the internal data being inconsistent in `forked()` processes,
-the scope of a `wsi` (`struct websocket`) can end at any time during service
-with the socket closing and the `wsi` freed.
+However integration to multithreaded apps is possible if you follow some guidelines.
 
-Websocket write activities should only take place in the
-`LWS_CALLBACK_SERVER_WRITEABLE` callback as described below.
+1) Aside from two APIs, directly calling lws apis from other threads is not allowed.
 
-[This network-programming necessity to link the issue of new data to
-the peer taking the previous data is not obvious to all users so let's
-repeat that in other words:
+2) If you want to keep a list of live wsi, you need to use lifecycle callbacks on
+the protocol in the service thread to manage the list, with your own locking.
+Typically you use an ESTABLISHED callback to add ws wsi to your list and a CLOSED
+callback to remove them.
 
-***ONLY DO LWS_WRITE FROM THE WRITEABLE CALLBACK***
+3) LWS regulates your write activity by being able to let you know when you may
+write more on a connection.  That reflects the reality that you cannot succeed to
+send data to a peer that has no room for it, so you should not generate or buffer
+write data until you know the peer connection can take more.
 
-There is another network-programming truism that surprises some people which
-is if the sink for the data cannot accept more:
+Other libraries pretend that the guy doing the writing is the boss who decides
+what happens, and absorb as much as you want to write to local buffering.  That does
+not scale to a lot of connections, because it will exhaust your memory and waste
+time copying data around in memory needlessly.
 
-***YOU MUST PERFORM RX FLOW CONTROL*** to stop taking new input.  TCP will make
-this situation known to the upstream sender by making it impossible for him to
-send anything more on the connection until we start accepting things again.
+The truth is the receiver, along with the network between you, is the boss who
+decides what will happen.  If he stops accepting data, no data will move.  LWS is
+designed to reflect that.
+
+If you have something to send, you call `lws_callback_on_writable()` on the
+connection, and when it is writeable, you will get a `LWS_CALLBACK_SERVER_WRITEABLE`
+callback, where you should generate the data to send and send it with `lws_write()`.
+
+You cannot send data using `lws_write()` outside of the WRITEABLE callback.
+
+4) For multithreaded apps, this corresponds to a need to be able to provoke the
+`lws_callback_on_writable()` action and to wake the service thread from its event
+loop wait (sleeping in `poll()` or `epoll()` or whatever).  The rules above
+mean directly sending data on the connection from another thread is out of the
+question.
+
+Therefore the two apis mentioned above that may be used from another thread are
+
+ - For LWS using the default poll() event loop, `lws_callback_on_writable()`
+
+ - For LWS using libuv/libev/libevent event loop, `lws_cancel_service()`
+
+If you are using the default poll() event loop, one "foreign thread" at a time may
+call `lws_callback_on_writable()` directly for a wsi.  You need to use your own
+locking around that to serialize multiple thread access to it.
+
+If you implement LWS_CALLBACK_GET_THREAD_ID in protocols[0], then LWS will detect
+when it has been called from a foreign thread and automatically use
+`lws_cancel_service()` to additionally wake the service loop from its wait.
+
+For libuv/libev/libevent event loop, they cannot handle being called from other
+threads.  So there is a slightly different scheme, you may call `lws_cancel_service()` 
+to force the event loop to end immediately.  This then broadcasts a callback (in the
+service thread context) `LWS_CALLBACK_EVENT_WAIT_CANCELLED`, to all protocols on all
+vhosts, where you can perform your own locking and walk a list of wsi that need
+`lws_callback_on_writable()` calling on them.
+
+`lws_cancel_service()` is very cheap to call.
+
+5) The obverse of this truism about the receiver being the boss is the case where
+we are receiving.  If we get into a situation we actually can't usefully
+receive any more, perhaps because we are passing the data on and the guy we want
+to send to can't receive any more, then we should "turn off RX" by using the
+RX flow control API, `lws_rx_flow_control(wsi, 0)`.  When something happens where we
+can accept more RX, (eg, we learn our onward connection is writeable) we can call
+it again to re-enable it on the incoming wsi.
+
+LWS stops calling back about RX immediately you use flow control to disable RX, it
+buffers the data internally if necessary.  So you will only see RX when you can
+handle it.  When flow control is disabled, LWS stops taking new data in... this makes
+the situation known to the sender by TCP "backpressure", the tx window fills and the
+sender finds he cannot write any more to the connection.
 
 See the mirror protocol implementations for example code.
-
-Only live connections appear in the user callbacks, so this removes any
-possibility of trying to used closed and freed wsis.
 
 If you need to service other socket or file descriptors as well as the
 websocket ones, you can combine them together with the websocket ones
 in one poll loop, see "External Polling Loop support" below, and
-still do it all in one thread / process context.
-
-If you insist on trying to use it from multiple threads, take special care if
-you might simultaneously create more than one context from different threads.
-
-SSL_library_init() is called from the context create api and it also is not
-reentrant.  So at least create the contexts sequentially.
+still do it all in one thread / process context.  If the need is less
+architectural, you can also create RAW mode client and serving sockets; this
+is how the lws plugin for the ssh server works.
 
 @section anonprot Working without a protocol name
 
@@ -321,10 +389,9 @@ external polling array.  That's needed if **libwebsockets** will
 cooperate with an existing poll array maintained by another
 server.
 
-Four callbacks `LWS_CALLBACK_ADD_POLL_FD`, `LWS_CALLBACK_DEL_POLL_FD`,
-`LWS_CALLBACK_SET_MODE_POLL_FD` and `LWS_CALLBACK_CLEAR_MODE_POLL_FD`
-appear in the callback for protocol 0 and allow interface code to
-manage socket descriptors in other poll loops.
+Three callbacks `LWS_CALLBACK_ADD_POLL_FD`, `LWS_CALLBACK_DEL_POLL_FD`
+and `LWS_CALLBACK_CHANGE_MODE_POLL_FD` appear in the callback for protocol 0
+and allow interface code to manage socket descriptors in other poll loops.
 
 You can pass all pollfds that need service to `lws_service_fd()`, even
 if the socket or file does not belong to **libwebsockets** it is safe.
@@ -541,7 +608,7 @@ other reasons, if any of that happens you'll get a
 After attempting the connection and getting back a non-`NULL` `wsi` you should
 loop calling `lws_service()` until one of the above callbacks occurs.
 
-As usual, see [test-client.c](test-apps/test-client.c) for example code.
+As usual, see [test-client.c](../test-apps/test-client.c) for example code.
 
 Notice that the client connection api tries to progress the connection
 somewhat before returning.  That means it's possible to get callbacks like
@@ -676,7 +743,9 @@ callbacks on the named protocol
 
 starting with LWS_CALLBACK_RAW_ADOPT_FILE.
 
-`protocol-lws-raw-test` plugin provides a method for testing this with
+The minimal example `raw/minimal-raw-file` demonstrates how to use it.
+
+`protocol-lws-raw-test` plugin also provides a method for testing this with
 `libwebsockets-test-server-v2.0`:
 
 The plugin creates a FIFO on your system called "/tmp/lws-test-raw"
@@ -760,6 +829,46 @@ and in another window, connect to it using the test client
 The connection should succeed, and text typed in the netcat window (including a CRLF)
 will be received in the client.
 
+@section rawudp RAW UDP socket integration
+
+Lws provides an api to create, optionally bind, and adopt a RAW UDP
+socket (RAW here means an uninterpreted normal UDP socket, not a
+"raw socket").
+
+```
+LWS_VISIBLE LWS_EXTERN struct lws *
+lws_create_adopt_udp(struct lws_vhost *vhost, int port, int flags,
+		     const char *protocol_name, struct lws *parent_wsi);
+```
+
+`flags` should be `LWS_CAUDP_BIND` if the socket will receive packets.
+
+The callbacks `LWS_CALLBACK_RAW_ADOPT`, `LWS_CALLBACK_RAW_CLOSE`,
+`LWS_CALLBACK_RAW_RX` and `LWS_CALLBACK_RAW_WRITEABLE` apply to the
+wsi.  But UDP is different than TCP in some fundamental ways.
+
+For receiving on a UDP connection, data becomes available at
+`LWS_CALLBACK_RAW_RX` as usual, but because there is no specific
+connection with UDP, it is necessary to also get the source address of
+the data separately, using `struct lws_udp * lws_get_udp(wsi)`.
+You should take a copy of the `struct lws_udp` itself (not the
+pointer) and save it for when you want to write back to that peer.
+
+Writing is also a bit different for UDP.  By default, the system has no
+idea about the receiver state and so asking for a `callback_on_writable()`
+always believes that the socket is writeable... the callback will
+happen next time around the event loop.
+
+With UDP, there is no single "connection".  You need to write with sendto() and
+direct the packets to a specific destination.  To return packets to a
+peer who sent something earlier and you copied his `struct lws_udp`, you
+use the .sa and .salen members as the last two parameters of the sendto().
+
+The kernel may not accept to buffer / write everything you wanted to send.
+So you are responsible to watch the result of sendto() and resend the
+unsent part next time (which may involve adding new protocol headers to
+the remainder depending on what you are doing).
+
 @section ecdh ECDH Support
 
 ECDH Certs are now supported.  Enable the CMake option
@@ -832,35 +941,74 @@ You can set fd_limit_per_thread to a nonzero number to control this manually, eg
 the overall supported fd limit is less than the process allowance.
 
 You can control the context basic data allocation for multithreading from Cmake
-using -DLWS_MAX_SMP=, if not given it's set to 32.  The serv_buf allocation
+using -DLWS_MAX_SMP=, if not given it's set to 1.  The serv_buf allocation
 for the threads (currently 4096) is made at runtime only for active threads.
 
 Because lws will limit the requested number of actual threads supported
 according to LWS_MAX_SMP, there is an api lws_get_count_threads(context) to
 discover how many threads were actually allowed when the context was created.
 
-It's required to implement locking in the user code in the same way that
-libwebsockets-test-server-pthread does it, for the FD locking callbacks.
+See the test-server-pthreads.c sample for how to use.
 
-There is no knowledge or dependency in lws itself about pthreads.  How the
-locking is implemented is entirely up to the user code.
+@section smplocking SMP Locking Helpers
+
+Lws provide a set of pthread mutex helpers that reduce to no code or
+variable footprint in the case that LWS_MAX_SMP == 1.
+
+Define your user mutex like this
+
+```
+	lws_pthread_mutex(name);
+```
+
+If LWS_MAX_SMP > 1, this produces `pthread_mutex_t name;`.  In the case
+LWS_MAX_SMP == 1, it produces nothing.
+
+Likewise these helpers for init, destroy, lock and unlock
 
 
-@section libevuv Libev / Libuv support
+```
+	void lws_pthread_mutex_init(pthread_mutex_t *lock)
+	void lws_pthread_mutex_destroy(pthread_mutex_t *lock)
+	void lws_pthread_mutex_lock(pthread_mutex_t *lock)
+	void lws_pthread_mutex_unlock(pthread_mutex_t *lock)
+```
+
+resolve to nothing if LWS_MAX_SMP == 1, otherwise produce the equivalent
+pthread api.
+
+pthreads is required in lws only if LWS_MAX_SMP > 1.
+
+
+@section libevuv libev / libuv / libevent support
 
 You can select either or both
 
 	-DLWS_WITH_LIBEV=1
 	-DLWS_WITH_LIBUV=1
+	-DLWS_WITH_LIBEVENT=1
 
 at cmake configure-time.  The user application may use one of the
 context init options flags
 
 	LWS_SERVER_OPTION_LIBEV
 	LWS_SERVER_OPTION_LIBUV
+	LWS_SERVER_OPTION_LIBEVENT
 
-to indicate it will use either of the event libraries.
+to indicate it will use one of the event libraries at runtime.
 
+libev has some problems, its headers conflict with libevent, they both define
+critical constants like EV_READ to different values.  Attempts
+to discuss clearing that up with libevent and libev did not get anywhere useful.
+
+In addition building anything with libev using gcc spews warnings, the
+maintainer is aware of this for many years, and blames gcc.  We worked
+around this by disabling -Werror on the parts of lws that use libev.
+
+For these reasons and the response I got trying to raise these issues with
+them, if you have a choice about event loop, I would gently encourage you
+to avoid libev.  Where lws uses an event loop itself, eg in lwsws, we use
+libuv.
 
 @section extopts Extension option control from user code
 
@@ -932,7 +1080,41 @@ prepare the client SSL context for the vhost after creating the vhost, since
 this is not normally done if the vhost was set up to listen / serve.  Call
 the api lws_init_vhost_client_ssl() to also allow client SSL on the vhost.
 
+@section clipipe Pipelining Client Requests to same host
 
+If you are opening more client requests to the same host and port, you
+can give the flag LCCSCF_PIPELINE on `info.ssl_connection` to indicate
+you wish to pipeline them.
+
+Without the flag, the client connections will occur concurrently using a
+socket and tls wrapper if requested for each connection individually.
+That is fast, but resource-intensive.
+
+With the flag, lws will queue subsequent client connections on the first
+connection to the same host and port.  When it has confirmed from the
+first connection that pipelining / keep-alive is supported by the server,
+it lets the queued client pipeline connections send their headers ahead
+of time to create a pipeline of requests on the server side.
+
+In this way only one tcp connection and tls wrapper is required to transfer
+all the transactions sequentially.  It takes a little longer but it
+can make a significant difference to resources on both sides.
+
+If lws learns from the first response header that keepalive is not possible,
+then it marks itself with that information and detaches any queued clients
+to make their own individual connections as a fallback.
+
+Lws can also intelligently combine multiple ongoing client connections to
+the same host and port into a single http/2 connection with multiple
+streams if the server supports it.
+
+Unlike http/1 pipelining, with http/2 the client connections all occur
+simultaneously using h2 stream multiplexing inside the one tcp + tls
+connection.
+
+You can turn off the h2 client support either by not building lws with
+`-DLWS_WITH_HTTP2=1` or giving the `LCCSCF_NOT_H2` flag in the client
+connection info struct `ssl_connection` member.
 
 @section vhosts Using lws vhosts
 

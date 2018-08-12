@@ -38,7 +38,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//#include <class/rootclass.h>
 #include <class/phpproxyclass.h>
 #include <time.h>
 
@@ -46,6 +45,8 @@
 #include <application/applicationlibrary.h>
 #include <db/sqllib.h>
 #include <properties/propertieslibrary.h>
+
+char CRASH_LOG_FILENAME[ 92 ];
 
 //
 //
@@ -66,7 +67,7 @@ static int addr2line(char const * const program_name, void const * const addr, F
  * Called when a system interruption happens. This function cleans everything
  * and exits with an error number.
  *
- * @return system error number
+ * @param signum signal number
  */
 void InterruptSignalHandler(int signum)
 {
@@ -108,6 +109,17 @@ int main( int argc __attribute__((unused)), char *argv[])
 	signal( SIGABRT, crash_handler);
 
 	srand( time( NULL ) );
+	
+	{
+		time_t rawtime;
+		struct tm timeinfo;
+		rawtime = time(NULL);
+		localtime_r(&rawtime, &timeinfo);
+
+		snprintf( CRASH_LOG_FILENAME, sizeof(CRASH_LOG_FILENAME), "log/crash-%d-%02d-%02d_%02d-%02d-%02d.log", timeinfo.tm_year+1900, (int)(timeinfo.tm_mon+1), timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec );
+		
+		mkdir( "log", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	}
 
 	char *cwd = NULL;
 	char *envvar = NULL;
@@ -117,17 +129,18 @@ int main( int argc __attribute__((unused)), char *argv[])
 		cwd = FCalloc( 1024, sizeof(char) );
 		envvar = FCalloc( 1048, sizeof(char) );
 
-		if( getcwd(cwd, 1024 ) != NULL )
+		if( getcwd( cwd, 1023 ) != NULL )
 		{
 			if( cwd[ strlen( cwd ) - 1 ] == '/' )
 			{
-				sprintf( envvar, "FRIEND_HOME=%s", cwd );
+				snprintf( envvar, 1048, "FRIEND_HOME=%s", cwd );
 			}
 			else
 			{
-				sprintf( envvar, "FRIEND_HOME=%s/", cwd );
+				snprintf( envvar, 1048, "FRIEND_HOME=%s/", cwd );
 			}
 
+			//setenv("FRIEND_HOME", cwd, 1 );
 			putenv( envvar );
 			INFO("FRIEND_HOME set to: %s\n", cwd );
 		}
@@ -157,7 +170,10 @@ int main( int argc __attribute__((unused)), char *argv[])
 		return 1;
 	}
 
-	FFree( envvar );
+	if( envvar != NULL )
+	{
+		FFree( envvar );
+	}
 	FFree( cwd );
 
 	return 0;
@@ -165,7 +181,7 @@ int main( int argc __attribute__((unused)), char *argv[])
 
 //Based on https://spin.atomicobject.com/2013/01/13/exceptions-stack-traces-c/
 static void crash_handler(int sig __attribute__((unused))){
-	FILE *crash_log_file_handle = fopen("crash.log", "w");
+	FILE *crash_log_file_handle = fopen( CRASH_LOG_FILENAME, "w");
 
 	fprintf(crash_log_file_handle, "\n************ CRASH INFO ************\n");
 #ifdef APPVERSION
@@ -221,10 +237,12 @@ static void crash_handler(int sig __attribute__((unused))){
 	printf("\n\n"
 			"#######################################################\n"
 			"           Sorry - FriendCore has crashed\n"
-			"            log saved to file crash.log\n"
+			"            log saved to file %s\n"
 			"#######################################################\n"
-			"\n\n");
-	_exit(1);
+			"\n\n", CRASH_LOG_FILENAME );
+	//_exit(1);
+	signal( sig, SIG_DFL );
+	kill( getpid(), sig );
 }
 
 /* Resolve symbol name and source location given the path to the executable

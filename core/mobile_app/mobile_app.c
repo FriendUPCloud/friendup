@@ -121,7 +121,7 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 			DEBUG("Websocket close - no user session found for this socket\n");
 			return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_NO_SESSION);
 		}
-		pthread_mutex_lock(&_session_removal_mutex);
+		FRIEND_MUTEX_LOCK(&_session_removal_mutex);
 		//remove connection from user connnection struct
 		user_mobile_app_connections_t *user_connections = app_connection->user_connections;
 		unsigned int connection_index = app_connection->user_connection_index;
@@ -130,7 +130,7 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 
 		HashmapRemove(_websocket_to_user_connections_map, websocket_hash);
 
-		pthread_mutex_unlock(&_session_removal_mutex);
+		FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
 
 		FFree(websocket_hash);
 		return 0;
@@ -289,6 +289,7 @@ static int _mobile_app_handle_login(struct lws *wsi, json_t *json){
 }
 
 static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
+	pthread_detach( pthread_self() );
 	DEBUG("App ping thread started\n");
 
 	while (1){
@@ -336,6 +337,7 @@ static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
 		}
 	}
 
+	pthread_exit(0);
 	return NULL; //should not exit anyway
 }
 
@@ -453,7 +455,8 @@ bool mobile_app_notify_user(const char *username,
 		const char *channel_id,
 		const char *title,
 		const char *message,
-		mobile_notification_type_t notification_type){
+		mobile_notification_type_t notification_type,
+		const char *extra_string){
 
 	user_mobile_app_connections_t *user_connections = HashmapGetData(_user_to_app_connections_map, username);
 	if (user_connections == NULL){
@@ -464,19 +467,36 @@ bool mobile_app_notify_user(const char *username,
 	char *escaped_channel_id = json_escape_string(channel_id);
 	char *escaped_title = json_escape_string(title);
 	char *escaped_message = json_escape_string(message);
+	char *escaped_extra_string = NULL;
 
 	unsigned int required_length = strlen(escaped_channel_id)
-						+ strlen(escaped_message)
-						+ strlen(escaped_message)
-						+ LWS_PRE + 128/*some slack*/;
+								+ strlen(escaped_message)
+								+ strlen(escaped_message)
+								+ LWS_PRE + 128/*some slack*/;
+
+	if (extra_string){
+		escaped_extra_string = json_escape_string(extra_string);
+		required_length += strlen(escaped_extra_string);
+	}
 
 	char json_message[required_length];
 
-	snprintf(json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}",
-			escaped_channel_id,
-			escaped_message,
-			escaped_title);
+	if (extra_string){ //TK-1039
+		snprintf(json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
+				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}",
+				escaped_channel_id,
+				escaped_message,
+				escaped_title,
+				escaped_extra_string);
+
+		FFree(escaped_extra_string);
+	} else {
+		snprintf(json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
+				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}",
+				escaped_channel_id,
+				escaped_message,
+				escaped_title);
+	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
 
@@ -532,7 +552,8 @@ void mobile_app_test_signal_handler(int signum __attribute__((unused))){
 			"test_app",
 			title,
 			message,
-			MN_all_devices);
+			MN_all_devices,
+			NULL/*no extras*/);
 
 	signal(SIGUSR1, mobile_app_test_signal_handler);
 }

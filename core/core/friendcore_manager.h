@@ -128,9 +128,12 @@ typedef struct FriendCoreManager
 	int							fcm_NodeIDGenerator; // node ID, used to attach numbers to new nodes
 	FBOOL						fcm_SSLEnabled; // SSL enabled for http
 	FBOOL						fcm_WSSSLEnabled; // SSL enabled for WS
+	FBOOL						fcm_DisableWS;	// Disable websockets
 	FBOOL						fcm_SSLEnabledCommuncation; // SSL enabled for communication
 	FBOOL						fcm_Shutdown;									///< Shutdown FCM
 	FBOOL						fcm_ClusterMaster;		// if server is cluster master
+	char						*fcm_SSHRSAKey; // path to RSH ssh key
+	char						*fcm_SSHDSAKey;	// path to DSA ssh key
 	
 	int							fcm_ClusterID;			// cluster ID (1 if its master)
 	//ConnectionInfo				*fcm_ConnectionsInformation;					// connection information

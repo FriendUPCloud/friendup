@@ -13,9 +13,15 @@ if( isset( $args->args->devname ) )
 		LIMIT 1
 	' ) )
 	{
-		$SqlDatabase->Query( 'UPDATE `Filesystem` SET `Mounted`=\'-1\' WHERE ID=\'' . $row->ID . '\'' );
-		
-		die( 'ok<!--separate-->{"response":"1","message":"Disk was disabled"}' );
+		$l = new dbIO( 'Filesystem' );
+		$l->UserID = $User->ID;
+		$l->ID = $row->ID;
+		if( $l->load() )
+		{
+			$l->Mounted = '-1';
+			$l->save();
+			die( 'ok<!--separate-->{"response":"1","message":"Disk was disabled"}' );
+		}		
 	}
 }
 

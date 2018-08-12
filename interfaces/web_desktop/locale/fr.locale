@@ -20,6 +20,7 @@ i18n_printers                        : Imprimantes
 i18n_network                         : Réseau
 i18n_language                        : Langage
 i18n_bookmarks                       : Marque pages
+i18n_upload_a_file                   : Télécharger
 i18n_bookmarks_add                   : Ajouter
 i18n_bookmarks_close                 : Fermer
 i18n_bookmarks_select                : Selectionner
@@ -120,6 +121,8 @@ clear_cache                             : Vider le cache
 documentation_on                        : Documentation sur
 i18n_sharewith                          : Partager avec
 i18n_sharename                          : Nom de partage
+i18n_share_with_workgroup               : Partager avec le groupe de travail
+i18n_no_workgroup_sharing               : Ne partagez pas avec un groupe de travail
 my_account                              : Mon compte
 i18n_account_setup                      : Mon compte - installation
 
@@ -154,12 +157,16 @@ i18n_printers                           : Imprimantes
 
 #Menu
 
+i18n_favorites                          : Favoris
+i18n_menu                               : Menu
+
 i18n_close_menu                         : Fermer menu
 
 menu_workspace                          : Workspace
 menu_system                             : Système
 menu_new_shell                          : Nouveau terminal
 menu_about_friendup                     : A propos de FriendUP
+menu_examine_system                     : Explorer le système
 menu_refresh_desktop                    : Rafraichir le bureau
 menu_add_storage                        : Ajouter un disque
 menu_run_command                        : Executer une commande
@@ -184,6 +191,8 @@ menu_unzip                              : Décompresser fichier(s)
 menu_looknfeel                          : Préférences visuelles
 menu_backdrop                           : Montrer vue d'ensemble
 menu_buildwebapp                        : Construire application web
+menu_download                           : Télécharger
+menu_share								: Partager
 
 menu_edit_wallpaper                     : Editer le papier-peint
 i18n_edit_dock                          : Editer le dock
@@ -294,6 +303,7 @@ application_not_validated               : L'application n'a pu être validée. V
 
 i18n_icon_information                   : Informations sur l'icône
 i18n_volumeicon_information             : Informations sur le volume
+i18n_volume_sharing                     : Partage
 i18n_volume_name                        : Info volume
 i18n_volume_size                        : Taille du volume
 i18n_protection                         : Protection
@@ -317,6 +327,7 @@ i18n_edit_attribute                     : Editer attribut
 i18n_icon_image                         : Image de l'icône
 i18n_no_field_information               : Pas de donnée attribut disponible.
 i18n_non_compatible_field_information   : Impossible de montrer les données du champ.
+i18n_open_with                          : Ouvrir avec
 
 
 #File dialogs ------------------------------------------------------------------
@@ -350,6 +361,8 @@ i18n_cancel                             : Annuler
 i18n_moving_files                       : Déplacement fichiers
 i18n_copying_files                      : Copie des fichiers
 i18n_filecopy_error                     : Erreur de copie de fichier
+i18n_do_you_want_copy                   : Voulez-vous vraiment copier ces fichiers?
+i18n_do_you_want_move                   : Voulez-vous vraiment déplacer ces fichiers?
 
 i18n_delete_operation                   : Suppression de fichier(s)
 i18n_could_not_delete_files             : Fichier(s) impossible à supprimer.
@@ -387,6 +400,28 @@ i18n_testing_camera_desc                : Caméra Web en cours de test : est-ell
 
 i18n_active_fnet_connections            : Friend Network
 i18n_active_network_connections         : Connexions actives
+
+#TODO: Francois
+i18n_add_a_friend                       : Ajouter un ami
+i18n_waiting_for_connection             : Attente de connexion
+i18n_remove_friend                      : Supprimer un ami
+i18n_shares_with_community              : partage avec la communauté...
+i18n_open                               : Ouvrir
+i18n_application                        : Application
+i18n_remove                             : Retirer
+i18n_download_file                      : Télécharger un fichier
+i18n_refuse_file                        : Refuser le fichier
+i18n_shares_with_you                    : spartage avec vous...
+i18n_refuse_message                     : Refuser un message
+i18n_messages                           : Messages
+i18n_delete                             : Effacer
+i18n_stop_sharing                       : Arrêter le partage
+i18n_folder                             : Dossier
+i18n_what_you_share_with                : Ce que vous partagez avec
+i18n_mark_as_read                       : Mark as read
+i18n_messages_sent                      : Messages sent...
+i18n_notifications_sent                 : Notifications sent...
+#ENDTODO
 
 #Locale ------------------------------------------------------------------------
 
@@ -442,11 +477,17 @@ i18n_cal_btn_add                        : Sauver événement
 i18n_from                               : De
 i18n_to                                 : A
 
+i18n_cal_evt_type                       : Choisissez le calendrier
+i18n_cal_private_calendar               : Votre calendrier privé
+
 i18n_evt_added                          : Calendrier mis a jour
 i18n_evt_addeddesc                      : L'événement a été ajouté à votre calendrier.
 i18n_evt_delete_desc                    : Ceci va détruire l'événement de votre calendrier.
 i18n_evt_delete_failed                  : Destruction impossible
 i18n_evt_delete_failed_desc             : La destruction de l'événement a échoué.
+i18n_cannotRename						: Action impossible
+i18n_cannotDelete						: Destruction impossible
+i18n_noWritePermission					: Vous n'avez pas la permission d'écrire sur ce disque.
 
 month_january                           : janvier
 month_february                          : février

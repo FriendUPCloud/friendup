@@ -133,6 +133,10 @@ Friend.Renderers.Utilities.Canvas2D =
 	{
  		this.context.scale( x, y );
 	},
+	setAlpha: function( flags, alpha )
+	{
+ 		this.context.globalAlpha = alpha;
+	},
 	setLineCap: function( flags, cap )
 	{
  		this.context.lineCap = cap;

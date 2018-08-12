@@ -56,11 +56,57 @@
 #  include <utime.h>
 #endif
 
+#include <string.h>
+#include <limits.h>     /* PATH_MAX */
+#include <sys/stat.h>   /* mkdir(2) */
+#include <errno.h>
+
+int mkdir_p(const char *path)
+{
+    /* Adapted from http://stackoverflow.com/a/2336245/119527 */
+    const size_t len = strlen(path);
+    char _path[PATH_MAX];
+    char *p; 
+
+    errno = 0;
+
+    /* Copy string so its mutable */
+    if (len > sizeof(_path)-1) {
+        errno = ENAMETOOLONG;
+        return -1; 
+    }   
+    strcpy(_path, path);
+
+    /* Iterate the string */
+    for (p = _path + 1; *p; p++) {
+        if (*p == '/') {
+            /* Temporarily truncate */
+            *p = '\0';
+
+            if (mkdir(_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+                if (errno != EEXIST)
+                    return -1; 
+            }
+
+            *p = '/';
+        }
+    }   
+
+    if (mkdir(_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+        if (errno != EEXIST)
+            return -1; 
+    }   
+
+    return 0;
+}
+
+//#  define MKDIR(d) mkdir(d, 0777)
+//#  define MKDIR(d) mkdir(d, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
 #ifdef _WIN32
 #  define MKDIR(d) _mkdir(d)
 #  define CHDIR(d) _chdir(d)
 #else
-#  define MKDIR(d) mkdir(d, 0775)
+#  define MKDIR(d) mkdir_p(d)
 #  define CHDIR(d) chdir(d)
 #endif
 
@@ -352,10 +398,8 @@ int do_extract_currentfile(unzFile uf, const char *directory,  int opt_extract_w
         printf("error %d with zipfile in unzGetCurrentFileInfo\n",err);
         return err;
     }
-    
-    printf("\n\nextract %s\n", filename_inzip );
-    
-    dstname = malloc( strlen(directory)+strlen(filename_inzip) +64 );
+
+    dstname = malloc( strlen(directory)+strlen(filename_inzip) +128 ); //+64
 
     p = filename_withoutpath = filename_inzip;
     while (*p != 0)
@@ -364,20 +408,29 @@ int do_extract_currentfile(unzFile uf, const char *directory,  int opt_extract_w
             filename_withoutpath = p+1;
         p++;
     }
-    
-    //printf("\n\n----information filename_inzip %s filename_withoutpath %d\n", filename_inzip, filename_withoutpath, opt_extract_without_path );
 
     /* If zip entry is a directory then create it on disk */
     if (*filename_withoutpath == 0)
     {
         if (opt_extract_without_path == 0)
         {
-            DEBUG("creating directory: %s\n", filename_inzip);
-			
 			strcpy( dstname, directory );
 			strcat( dstname, "/" );
-			strcat( dstname, filename_inzip );
-			MKDIR(dstname);
+			
+			int len = strlen(filename_inzip )-1;
+
+			if( filename_inzip[ len ] != '/' )
+			{
+				strcat( dstname, filename_inzip );
+			}
+			else
+			{
+				filename_inzip[ len ] = 0;
+				strcat( dstname, filename_inzip );
+			}
+
+			int e = MKDIR(dstname);
+
             //MKDIR(filename_inzip);
 			//printf("ERROR: makedir %s\n", dstname );
         }

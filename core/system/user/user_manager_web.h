@@ -23,7 +23,7 @@
  * 
  *  User Manager Web header
  *
- * All functions related to Remote User structure
+ * All functions related to User Manager web calls
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 29/05/2017

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="42px"
+   height="42px"
+   viewBox="0 0 42 42"
+   version="1.1"
+   id="svg4784"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="OutlookWebAccess.svg"
+   inkscape:export-filename="/home/espandis/Projects/friendup/interfaces/web_desktop/apps/Epat/icon.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <metadata
+     id="metadata4807">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1005"
+     id="namedview4805"
+     showgrid="false"
+     inkscape:zoom="8"
+     inkscape:cx="13.45114"
+     inkscape:cy="30.656054"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg4784">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4829" />
+  </sodipodi:namedview>
+  <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+  <title
+     id="title4786">FriendChat</title>
+  <desc
+     id="desc4788">Created with Sketch.</desc>
+  <defs
+     id="defs4790" />
+  <g
+     id="Desktop-HD-Copy"
+     stroke="none"
+     stroke-width="1"
+     fill="none"
+     fill-rule="evenodd"
+     transform="translate(-702.000000, -674.000000)">
+    <g
+       id="Icons"
+       transform="translate(229.000000, 99.000000)">
+      <g
+         id="Appicons"
+         transform="translate(366.000000, 576.000000)">
+        <g
+           id="FriendChat"
+           transform="translate(108.000000, 0.000000)">
+          <path
+             d="M1,0 L39,0 C39.5522847,-1.01453063e-16 40,0.44771525 40,1 L40,39 C40,39.5522847 39.5522847,40 39,40 L1,40 C0.44771525,40 6.76353751e-17,39.5522847 0,39 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z"
+             id="rect4177-7"
+             stroke="#FFFFFF"
+             fill="#A382B8"
+             fill-rule="nonzero"
+             style="fill:#1487bf;fill-opacity:0.94117647;stroke:none" />
+          <g
+             transform="translate(8.000000, 11.000000)"
+             id="g4797">
+            <g
+               id="phone"
+               stroke-width="1"
+               fill-rule="evenodd"
+               transform="translate(8.996768, 10.025045) rotate(-314.000000) translate(-8.996768, -10.025045) translate(5.770962, 6.792721)"
+               fill="#FFFFFF" />
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g
+     id="g4840"
+     transform="translate(45,-2)"
+     style="stroke:#ffffff;stroke-width:1.89999998;stroke-miterlimit:4;stroke-dasharray:none">
+    <rect
+       ry="1.0677966"
+       y="15"
+       x="-30"
+       height="16"
+       width="20"
+       id="rect4809"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       inkscape:connector-curvature="0"
+       id="path4831"
+       d="m -29,15.377119 5,8 8,0 5,-8"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="path4835"
+       d="M -29.266949,30.622881 -25,22"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="path4837"
+       d="M -10.733051,30.444915 -15,22"
+       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.20000005;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 10,16.625 0,10"
+     id="path5646"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="m 6.375,16.625 0,10"
+     id="path5646-6"
+     inkscape:connector-curvature="0" />
+</svg>

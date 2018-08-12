@@ -117,8 +117,20 @@ if( isset( $args->command ) )
 					$o->Title = trim( $row->ShortDescription ) ? $row->ShortDescription : '';
 					$o->Workspace = $row->Workspace;
 					$apath = 'apps/' . $row->Application . '/';
-					if( !strstr( $o->Icon, ':' ) && !strstr( $o->Icon, '/system.library' ) )
-						$o->Icon = file_exists( $path . '/icon_dock.png' ) ? ( $apath . 'icon_dock.png' ) : '';
+					if( !$row->Icon )
+					{
+						if( file_exists( 'repository/' . $row->Application . '/icon.png' ) )
+							$o->Icon = '/system.library/module/?module=system&command=repoappimage&sessionid=' . $User->SessionID . '&i=' . $row->Application;
+						else if( !strstr( $o->Icon, ':' ) && !strstr( $o->Icon, '/system.library' ) )
+							$o->Icon = file_exists( $path . '/icon_dock.png' ) ? ( $apath . 'icon_dock.png' ) : '';
+					}
+					else
+					{
+						if( substr( $o->Icon, 0, 10 ) == 'resources/' )
+						{
+							$o->Icon = '/' . substr( $row->Icon, 10, strlen( $o->Icon ) - 10 );
+						}
+					}
 					$o->Image = '';
 					
 					// Get config
@@ -274,6 +286,12 @@ if( isset( $args->command ) )
 
 				if( $exe == '' ) continue;
 				
+				// No duplicate!
+				$l = new dbIO( 'DockItem' );
+				$l->UserID = $userid;
+				$l->Application = $exe;
+				if( $l->load() ) continue;
+				
 				$addquery =  '
 					INSERT INTO DockItem 
 						( UserID, `Type`, Application, DisplayName, ShortDescription, Icon, Parent, SortOrder, Workspace ) 
@@ -304,11 +322,20 @@ if( isset( $args->command ) )
 				$type = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->type );
 				if( $args->args->icon )
 					$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->icon );
+				else if( $args->args->src )
+					$icon = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->src );
 				else $icon = '';
 				if( $args->args->workspace )
 					$work = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->workspace );
 				else $work = '0';
 				$dname = mysqli_real_escape_string( $SqlDatabase->_link, $args->args->displayname );
+				
+				// No duplicate!
+				$l = new dbIO( 'DockItem' );
+				$l->UserID = $User->ID;
+				$l->Application = $exe;
+				if( $l->load() ) die( 'fail<!--separate-->{"response":"0","message":"Application is already added."}' );
+				
 				$SqlDatabase->Query( '
 					INSERT INTO DockItem 
 						( UserID, `Type`, Application, DisplayName, ShortDescription, Icon, Parent, SortOrder, Workspace ) 

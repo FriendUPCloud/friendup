@@ -58,13 +58,15 @@ Autotask *AutotaskNew( char *command, char *arguments )
 		int pid = fork();
 		if( pid == 0 )
 		{
-			at->at_Launched = TRUE;
+			Autotask *lat = at;
+
+			lat->at_Launched = TRUE;
 			
 			int val = execv( at->at_Command, args );
 			//int val = execv( "friend_process", args );
 			DEBUG("[AutotaskNew] Autostart command returned %d\n", val );
 			
-			at->at_Launched = FALSE;
+			lat->at_Launched = FALSE;
 		}
 		else if( pid < 0 )
 		{

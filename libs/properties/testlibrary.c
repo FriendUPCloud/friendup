@@ -40,8 +40,8 @@ int main()
 		{
 			printf("TEST.................\n");
 			
-			char *t = plib->ReadString( prop, "Database:test", "default" );
-			int val = plib->ReadInt( prop, "Database:number", 223 );
+			char *t = plib->ReadStringNCS( prop, "Database:test", "default" );
+			int val = plib->ReadIntNCS( prop, "Database:number", 223 );
 			if( t )
 			{
 				printf("plib %s  %d\n", t, val );

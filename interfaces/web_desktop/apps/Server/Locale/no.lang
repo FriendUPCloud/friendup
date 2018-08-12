@@ -36,3 +36,15 @@ i18n_revalidate                         : Revalider
 
 i18n_no_software_to_verify              : Ingen programvare å verifisere.
 
+# Services
+
+i18n_services                           : Tjenester
+i18n_service_report                     : Tjenesterapport
+i18n_no_services_to_manage              : Ingen tjenester å administrere.
+i18n_no                                 : Nei
+
+
+# Permissions
+
+i18n_app_permissions                    : App rettigheter
+i18n_no_workgroup                       : Ingen arbeidsgruppe

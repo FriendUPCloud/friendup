@@ -222,8 +222,12 @@ if( !class_exists( 'DoorNodeDrive' ) )
 		{
 			global $Logger, $SqlDatabase;
 			
+			// Overwrite ... something is wrong somewhere else in the system -_-
+			$trash = false;
+			
 			if( $subPath && substr( $subPath, 0, 6 ) == 'Trash/' )
 			{
+				$trash = ( !$trash ? true : $trash ); 
 				$subPath = str_replace( 'Trash/', '', $subPath );
 			}
 			
@@ -288,6 +292,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 							n.Name = \'' . $finalPath[0] . '\' 
 						AND r.RelationID = n.ID 
 						AND r.NodeID = \'' . $parID . '\' 
+						' . ( $trash ? 'AND n.IsDeleted = "1"' : 'AND n.IsDeleted = "0"' ) . '
 				' );
 				if( $do && $do->ID > 0 )
 				{
@@ -298,6 +303,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 					$out = [];
 					for( $a = 1; $a < count( $finalPath ); $a++ )
 					{
+						//$Logger->log('stuck here? ...' . $a);
 						$out[] = $finalPath[$a];
 					}
 					$finalPath = $out;
@@ -311,14 +317,14 @@ if( !class_exists( 'DoorNodeDrive' ) )
 				else
 				{
 					// If this last joint might be a file, return parent id
-					$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD NodeDrive Folder // FilesystemID: ' . $this->ID .  ' // FolderID ' . $fo->DirectoryID . ' // Name ' . $fo->Name );
+					$Logger->log('Not a real folder "' . $finalPath[0] . '"? -> COULD NOT LOAD NodeDrive Folder // FilesystemID: ' . $this->ID .  ' // FolderID ' . $fo->DirectoryID . ' // Name ' . $fo->Name . ' // ParID ' . $parID . ' // Trash ' . $trash );
 					//return false;
 					return $fo;
 				}
-				//$Logger->log('Our current folder ID is '. $fo->ID);
+				//$Logger->log('Our current folder ID is '. $fo->ID . ' || ' . $fo->Name . ' || ' . json_encode($finalPath));
 			}
 			
-			//$Logger->log('We return the folder ID ' . $fo->ID . ' for the original input ' . $inputPath );
+			$Logger->log('We return the folder ID ' . $fo->ID . ' for the original input ' . $inputPath );
 			return $fo;
 		}
 		
@@ -1694,6 +1700,8 @@ if( !class_exists( 'DoorNodeDrive' ) )
 				$deletable = false;
 				$total = 0;
 				
+				$Logger->log( 'write => ' . $args->path );
+				
 				// If we have Blob database use the blob
 				$d = new DbTable( 'Blob', $this->_NodeDatabase );
 				if( $d->LoadTable() )
@@ -1725,7 +1733,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 							$subPath = implode( '/', $subPath ) . '/';
 						}
 						
-						$Logger->log( 'We will try to find the folder ID for this path now ' . $subPath );
+						$Logger->log( '[1] We will try to find the folder ID for this path now ' . $subPath );
 						if( $fo = $this->getSubFolder( $subPath ) )
 						{
 							$f->NodeID = $fo->ID;
@@ -1735,7 +1743,8 @@ if( !class_exists( 'DoorNodeDrive' ) )
 					// Check if file exists
 					if( $f->Load() )
 					{
-						die( 'fail<!--separate-->File exists' );
+						// Just overwrite file...
+						//die( 'fail<!--separate-->File exists' );
 					}
 					
 					$len = 0;
@@ -1787,7 +1796,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 					$f->Filesize = $len;
 					$f->Timestamp = date( 'Y-m-d H:i:s' );
 					$f->Save();
-					//$Logger->log( 'Write: wrote new file with id: ' . $f->ID );
+					$Logger->log( '[1] Write: wrote new file with id: ' . $f->ID . ' [] ' . $f->_lastError );
 					return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 				}
 				// Use default FSFile for storage of files
@@ -1825,7 +1834,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 							$subPath = implode( '/', $subPath ) . '/';
 						}
 						
-						$Logger->log( 'We will try to find the folder ID for this path now ' . $subPath );
+						$Logger->log( '[2] We will try to find the folder ID for this path now ' . $subPath );
 						if( $fo = $this->getSubFolder( $subPath ) )
 						{
 							$f->FolderID = $fo->ID;	
@@ -1929,7 +1938,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 						if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 						$f->DateModified = date( 'Y-m-d H:i:s' );
 						$f->Save();
-						//$Logger->log( 'Write: wrote new file with id: ' . $f->ID );
+						$Logger->log( '[2] Write: wrote new file with id: ' . $f->ID );
 						return 'ok<!--separate-->' . $len . '<!--separate-->' . $f->ID;
 					}
 				}
@@ -1966,7 +1975,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 							$subPath = implode( '/', $subPath ) . '/';
 						}
 						
-						$Logger->log( 'We will try to find the folder ID for this path now ' . $subPath );
+						$Logger->log( '[3] We will try to find the folder ID for this path now ' . $subPath );
 						
 						if( $fo = $this->getSubFolder( $subPath ) )
 						{
@@ -2371,8 +2380,9 @@ if( !class_exists( 'DoorNodeDrive' ) )
 										AND r.NodeID = \'' . ( $fo ? $fo->ID : '0' ) . '\' 
 								' ) )
 								{
-									$Logger->log( 'Directory already exists. ' . $newFolder . ' (in ' . $path . ') id ' . ( $fo ? $fo->ID : '0' ) );
-									die( 'fail<!--separate-->Directory already exists.' );
+									$Logger->log( 'Directory already exists. ' . $newFolder . ' (in ' . $path . ') did ' . ( $fo ? $fo->ID : '0' ) );
+									//die( 'fail<!--separate-->Directory already exists.' );
+									die( 'ok<!--separate-->{"message":"Directory already exists","response":-2}' );
 								}
 								else
 								{
@@ -2862,6 +2872,7 @@ if( !class_exists( 'DoorNodeDrive' ) )
 				
 				$this->_NodeDatabase->query( 'DELETE FROM `Node` WHERE ID = \'' . $fo->ID . '\'' );
 				$this->_NodeDatabase->query( 'DELETE FROM `NodeRelation` WHERE RelationID = \'' . $fo->ID . '\'' );
+				$this->_NodeDatabase->query( 'DELETE FROM `Blob` WHERE NodeID = \'' . $fo->ID . '\'' );
 			}
 			else
 			{

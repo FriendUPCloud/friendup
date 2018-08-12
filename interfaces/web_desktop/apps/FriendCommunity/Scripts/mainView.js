@@ -23,6 +23,8 @@ Application.run = function()
 	send({
 		type : 'main-loaded',
 	});
+	
+	this.sent = false;
 }
 
 function bindAdd()
@@ -67,25 +69,27 @@ function open( data )
 {
 	hideAdd();
 	
+	// Check session before showing window ...
+	
 	// A hack ....
 	
 	data.host = ( data.host == 'store.openfriendup.net' ? 'friendup.world' : data.host );
 	
 	var src = 'https://'
-			+ data.host
-			+ '?component=authentication&action=login'
+			+ data.host;
+			/*+ '?component=authentication&action=login'
 			//+ '&excludecomponent=chat'
 			//+ '&rendermodule=' + data.config.module
 			//+ '&displaymode=' + data.config.display
 			+ '&UniqueID=' + data.uniqueId
 			+ '&PublicKey=' + data.pubKey
-			+ '&SessionID=' + data.sessionId;
+			+ '&SessionID=' + data.sessionId;*/
 	
 	if( data.param )
 	{
 		for( var k in data.param )
 		{
-			src += ( '&' + k + '=' + data.param[k] );
+			src += ( ( src.indexOf( '?' ) >= 0 ? '&' : '?' ) + k + '=' + data.param[k] );
 		}
 	}
 	
@@ -112,6 +116,8 @@ function sendToTreeroot()
 {
 	var conf = Application.conf;
 	
+	//console.log( 'conf ', conf );
+	
 	var iframe = document.getElementById( 'main' );
 	
 	if( conf && iframe )
@@ -124,7 +130,22 @@ function sendToTreeroot()
 				'uniqueid' : conf.uniqueId 
 			}
 		};
+		
 		iframe.contentWindow.postMessage( msg, '*' );
+		
+		Application.sent = true;
+		
+		/*var src = 'https://' + conf.host + '/home/';
+	
+		if( conf.param )
+		{
+			for( var k in conf.param )
+			{
+				src += ( ( src.indexOf( '?' ) >= 0 ? '&' : '?' ) + k + '=' + conf.param[k] );
+			}
+		}
+		
+		iframe.src = src;*/
 	}
 }
 
@@ -140,6 +161,14 @@ Application.receiveMessage = function( e )
 			case 'account_edit_profile':
 			case 'account_settings':
 			case 'global_settings':
+			case 'nav_home':
+				
+				var conf = Application.conf;
+				
+				var iframe = document.getElementById( 'main' );
+				
+				iframe.src = 'https://' + conf.host;
+				
 			case 'nav_newsfeed':
 			case 'nav_messages':
 			case 'nav_calendar':
@@ -156,19 +185,23 @@ Application.receiveMessage = function( e )
 	
 	if( 'showadd' === msg.type )
 	{
+		console.log( 'showAdd() ' );
 		showAdd();
 		return;
 	}
 	
 	if( 'open' === msg.type )
 	{
+		console.log( 'open( msg.data ) ', msg.data );
 		open( msg.data );
 		return;
 	}
 	
 	if( 'treeroot' === msg.type )
 	{
-		if( msg.loaded )
+		console.log( 'sendToTreeroot() ', msg.loaded );
+		
+		if( msg.loaded && !Application.sent )
 		{
 			sendToTreeroot();
 		}

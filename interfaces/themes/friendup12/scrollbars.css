@@ -1,16 +1,19 @@
 /* For scrollbars ----------------------------------------------------------- */
 
 /* addresses the background of the bar itself. It is usually covered by the other elements */
-::-webkit-scrollbar
+::-webkit-scrollbar,
+html body ::-webkit-scrollbar-track,
+.View.IconWindow ::-webkit-scrollbar-track,
+html body.activated ::-webkit-scrollbar-track
 {
-	width: 16px;
-	height: 16px;
-	background: #e0e0e0;
+	width: 8px;
+	height: 8px;
+	background-color: #e8e8e8;
 }
 
-.View.Active ::-webkit-scrollbar
+::-webkit-scrollbar-thumb
 {
-	background: #0072AB;
+	background-color: #c8c8c8;
 }
 
 ::-webkit-scrollbar:vertical
@@ -23,18 +26,20 @@
 }
 
 /* addresses the empty space “below” the progress bar */
-::-webkit-scrollbar-track,
-.View.Active ::-webkit-scrollbar-track,
-body.activated ::-webkit-scrollbar-track
+
+html body div > div .View.Active.Scrolling > .Resize
 {
-	background: #e0e0e0;
-	box-shadow: none;
+	background-color: transparent !important;
 }
-.View.Active.IconWindow ::-webkit-scrollbar-track
+
+html body div .View.Active ::-webkit-scrollbar-track,
+html body div .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background: #0072AB;
-	box-shadow: none;
+	background-color: #c8c8c8 !important;
+	background-image: none;
+	border: 0;
 }
+
 /* is the top-most layer of the the progress bar not covered by the draggable scrolling element (thumb) */
 ::-webkit-scrollbar-track-piece
 {
@@ -45,32 +50,111 @@ body.activated ::-webkit-scrollbar-track
 .View.Scrolling ::-webkit-scrollbar-track-piece,
 body.Scrolling ::-webkit-scrollbar-track-piece
 {
-	margin-bottom: 12px;
+	margin-bottom: 14px;
 }
 /* addresses the draggable scrolling element that resizes depending on the size of the scrollable element */
 ::-webkit-scrollbar-thumb
 {
-	left: 1px;
-	right: 1px;
+	left: 0px;
+	right: 0px;
 	background-clip: padding-box;
 	background-image: none;
 	background-position: center center;
 	background-repeat: no-repeat;
-	border-radius: 0;
-	border: 1px solid rgba(0,0,0,0.05);
+	border-radius: 6px;
+	border: 0;
 }
-.View.Active ::-webkit-scrollbar-thumb,
-body.activated ::-webkit-scrollbar-thumb
+html body .View.Active ::-webkit-scrollbar-thumb,
+html body.activated ::-webkit-scrollbar-thumb,
+html body .View.Active ::-webkit-scrollbar-thumb, 
+html body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 {
-	background-color: #b0b0b0;
 	background-image: none;
 	border: 0;
 }
+
+/* Dark scheme */
+
+body.Dark::-webkit-scrollbar
+body.Dark .View.Active ::-webkit-scrollbar
+{
+	background-color: hsla(210, 29%, 20%, 1);
+}
+
+html body.Dark ::-webkit-scrollbar-track,
+html body.Dark .View.Active ::-webkit-scrollbar-track,
+.Dark .View.Active.IconWindow ::-webkit-scrollbar-track,
+.Dark .View.IconWindow ::-webkit-scrollbar-track,
+html body.Dark.activated ::-webkit-scrollbar-track,
+html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: #243342 !important;
+	border: 0;
+}
+
+html body.Dark ::-webkit-scrollbar-thumb
+{
+	background-color: #34495e !important;
+	border-color: #314559;
+}
+
+html body.Dark .View.Active ::-webkit-scrollbar-thumb,
+html body.Dark.activated ::-webkit-scrollbar-thumb,
+html body.Dark .View.Active ::-webkit-scrollbar-thumb, 
+html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: #34495e !important;
+	border-color: #314559;
+}  
+
+/* End dark scheme */
+
+/* Charcoal scheme */
+
+body.Charcoal::-webkit-scrollbar
+body.Charcoal .View.Active ::-webkit-scrollbar
+{
+	background-color: #333333;
+}
+
+html body.Charcoal ::-webkit-scrollbar-track,
+html body.Charcoal .View.Active ::-webkit-scrollbar-track,
+.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track,
+.Charcoal .View.IconWindow ::-webkit-scrollbar-track,
+html body.Charcoal.activated ::-webkit-scrollbar-track,
+html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: #303030 !important;
+	border-color: #303030 !important;
+}
+
+html body.Charcoal ::-webkit-scrollbar-thumb
+{
+	background-color: #383838 !important;
+	border-color: #303030;
+}
+
+html body.Charcoal .View.Active ::-webkit-scrollbar-thumb,
+html body.Charcoal.activated ::-webkit-scrollbar-thumb,
+html body.Charcoal .View.Active ::-webkit-scrollbar-thumb, 
+html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: #404040 !important;
+	border-color: #383838;
+}
+
+/* End Charcoal scheme */
+
 .View.Active.IconWindow ::-webkit-scrollbar-thumb
 {
-	background-color: #008DD4;
-	background-image: url(/themes/friendup/gfx/win_scrollbutton_active.png);
-	border: 1px solid rgba(0,0,0,0.05);
+	/*background-color: #afafaf;
+	background-image: none;*/
+	border: 0px;
+}
+
+::-webkit-scrollbar-button
+{
+	display: none;
 }
 
 /* addresses the (usually) bottom corner of the scrollable element, where two scrollbars might meet */
@@ -98,7 +182,7 @@ body.activated ::-webkit-scrollbar-thumb
 	.View.Active ::-webkit-scrollbar-track,
 	body.activated ::-webkit-scrollbar-track
 	{
-		background: #444444;
+		background-color: #444444;
 	}
 }
 

@@ -205,7 +205,8 @@ ssh_ops_rx(void *_priv, struct lws *wsi, const uint8_t *buf, uint32_t len)
 		if (write(fd, buf, len) != len)
 			return -1;
 		if (priv->pty_in_echo) {
-			lws_ring_insert(priv->ring_stdout, buf, 1);
+			if (!lws_ring_insert(priv->ring_stdout, buf, 1))
+				lwsl_notice("dropping...\n");
 			lws_callback_on_writable(wsi);
 		}
 	} else {
@@ -217,7 +218,8 @@ ssh_ops_rx(void *_priv, struct lws *wsi, const uint8_t *buf, uint32_t len)
 		if (priv->pty_in_echo) {
 			bbuf[0] = 0x0d;
 			bbuf[1] = 0x0a;
-			lws_ring_insert(priv->ring_stdout, bbuf, 2);
+			if (!lws_ring_insert(priv->ring_stdout, bbuf, 2))
+				lwsl_notice("dropping...\n");
 			lws_callback_on_writable(wsi);
 		}
 	}
@@ -230,7 +232,7 @@ ssh_ops_rx(void *_priv, struct lws *wsi, const uint8_t *buf, uint32_t len)
 static size_t
 ssh_ops_get_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 {
-	int fd = open(TEST_SERVER_KEY_PATH, O_RDONLY), n;
+	int fd = lws_open(TEST_SERVER_KEY_PATH, O_RDONLY), n;
 
 	if (fd == -1) {
 		lwsl_err("%s: unable to open %s for read: %s\n", __func__,
@@ -253,7 +255,7 @@ ssh_ops_get_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 static size_t
 ssh_ops_set_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 {
-	int fd = open(TEST_SERVER_KEY_PATH, O_CREAT | O_TRUNC | O_RDWR, 0600);
+	int fd = lws_open(TEST_SERVER_KEY_PATH, O_CREAT | O_TRUNC | O_RDWR, 0600);
 	int n;
 
 	lwsl_notice("%s: %d\n", __func__, fd);
@@ -341,7 +343,7 @@ ssh_ops_is_pubkey_authorized(const char *username, const char *type,
 	 */
 
 	if (memcmp(peer, ps, peer_len)) {
-		lwsl_notice("factors mismatch\n");
+		lwsl_info("factors mismatch\n");
 		goto bail;
 	}
 
@@ -377,7 +379,7 @@ ssh_cgi_env_add(struct sshd_instance_priv *priv, const char *name,
 		return 1;
 	}
 
-	pvo->value = malloc(strlen(name) + 1);
+	pvo->value = malloc(strlen(value) + 1);
 	if (!pvo->value) {
 		free((char *)pvo->name);
 		free(pvo);
@@ -483,7 +485,7 @@ ssh_ops_child_process_io(void *_priv, struct lws *wsi,
 				n = bytes / 2;
 			else
 				n = 1;
-			if (n > sizeof(buf))
+			if (n > (int)sizeof(buf))
 				n = sizeof(buf);
 
 			if (!n)
@@ -513,7 +515,7 @@ ssh_ops_child_process_io(void *_priv, struct lws *wsi,
 				*p++ = *d++;
 			}
 			n = (void *)p - rp;
-			if (n < bytes && priv->insert_lf) {
+			if (n < (int)bytes && priv->insert_lf) {
 				priv->insert_lf = 0;
 				*p++ = 0x0d;
 				n++;
@@ -545,7 +547,7 @@ ssh_ops_child_process_terminated(void *priv, struct lws *wsi)
 }
 
 static int
-ssh_ops_exec(void *_priv, struct lws *wsi, const char *command)
+ssh_ops_exec(void *_priv, struct lws *wsi, const char *command, lws_ssh_finish_exec finish, void *finish_handle)
 {
 	lwsl_notice("%s: EXEC %s\n", __func__, command);
 
@@ -554,7 +556,7 @@ ssh_ops_exec(void *_priv, struct lws *wsi, const char *command)
 }
 
 static int
-ssh_ops_shell(void *_priv, struct lws *wsi)
+ssh_ops_shell(void *_priv, struct lws *wsi, lws_ssh_finish_exec finish, void *finish_handle)
 {
 	struct sshd_instance_priv *priv = _priv;
 	const char *cmd[] = {
@@ -578,12 +580,12 @@ ssh_ops_shell(void *_priv, struct lws *wsi)
 static size_t
 ssh_ops_banner(char *buf, size_t max_len, char *lang, size_t max_lang_len)
 {
-	int n = snprintf(buf, max_len, "\n"
+	int n = lws_snprintf(buf, max_len, "\n"
 		      " |\\---/|  lws-ssh Test Server\n"
 		      " | o_o |  SSH Terminal Server\n"
 		      "  \\_^_/   Copyright (C) 2017 Crash Barrier Ltd\n\n");
 
-	snprintf(lang, max_lang_len, "en/US");
+	lws_snprintf(lang, max_lang_len, "en/US");
 
 	return n;
 }
@@ -614,7 +616,7 @@ static const struct lws_ssh_ops ssh_ops = {
 	.banner				= ssh_ops_banner,
 	.disconnect_reason		= ssh_ops_disconnect_reason,
 	.server_string			= "SSH-2.0-Libwebsockets",
-	.api_version			= 1,
+	.api_version			= 2,
 };
 
 /*

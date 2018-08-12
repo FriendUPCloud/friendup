@@ -279,6 +279,18 @@ char* UriGetPath( char* str, unsigned int strLen, char** next )
 	char* ptrEnd = str + strLen;
 	for( unsigned int i = 0; i < strLen; i++ )
 	{
+		// %3C <  %3E >
+		if( str[i] == '%' )
+		{
+			if( str[i+1] == '3' && (str[i+2] == 'C' || str[i+2] == 'E') )
+			{
+				str[i] = ' ';
+			}
+			else if( str[i+1] == '2' && str[i+2] == '2' )
+			{
+				str[i] = ' ';
+			}
+		}
 		if( str[i] == '?' || str[i] == '#' )
 		{
 			ptrEnd = str + i;
@@ -379,8 +391,75 @@ Hashmap* UriParseQuery( char* query )
 	unsigned int keySize = 0;
 	char* valuePtr = NULL;
 	bool inValue = false;
+	int braces = 0;
+	int qbraces = 0;
+	
 	for( unsigned int i = 0 ;; i++ )
 	{
+		// getting json ( data inside braces {} )
+		if( query[i] == '{' )
+		{
+			int spos = i;	// start position
+			braces++;
+			
+			while( braces > 0 )
+			{
+				if( query[i] == '}' )
+				{
+					braces--;
+				}
+				else if( query[i] == '{' )
+				{
+					braces++;
+				}
+				else if( query[i] == 0 || query[i] == '\r' )
+				{
+					braces = 0;
+					break;
+				}
+				i++;
+			}
+			
+			char *c = StringDuplicateN( &(query[spos]), i-spos );
+			if( HashmapPut( map, StringDuplicate("post_json"), c ) == MAP_OK )
+			{
+				DEBUG("POSTJSON1 - %s -\n", c );
+			}
+			i++;
+		}
+		
+		// getting json ( data inside braces [] )
+		if( query[i] == '[' )
+		{
+			int spos = i;	// start position
+			qbraces++;
+			
+			while( qbraces > 0 )
+			{
+				if( query[i] == ']' )
+				{
+					qbraces--;
+				}
+				else if( query[i] == '[' )
+				{
+					qbraces++;
+				}
+				else if( query[i] == 0 || query[i] == '\r' )
+				{
+					qbraces = 0;
+					break;
+				}
+				i++;
+			}
+			
+			char *c = StringDuplicateN( &(query[spos]), i-spos );
+			if( HashmapPut( map, StringDuplicate("post_json_tab"), c ) == MAP_OK )
+			{
+				DEBUG("POSTJSON1 - %s -\n", c );
+			}
+			i++;
+		}
+		
 		// The first = is a sub-separator. Any more ='s will be assumed part of the value
 		if( !inValue && query[i] == '=' )
 		{

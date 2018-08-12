@@ -31,6 +31,8 @@ Friend.Tree.Game.Sprite = function( tree, name, flags )
 {
     this.end = false;
     this.imageName = false;
+    this.positionMode = 'none';
+    this.resizeMode = 'none';
 	this.renderItemName = 'Friend.Tree.Game.RenderItems.Sprite';
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Game.Sprite', flags );
 };
@@ -63,12 +65,12 @@ Friend.Tree.Game.RenderItems.Sprite_Three2D.render = function( properties )
 };
 Friend.Tree.Game.RenderItems.Sprite_Three2D.setImage = function()
 {
-    if ( this.parent.imageName != this.imageName )
+    if ( this.item.imageName != this.imageName )
     {
-        var image = this.resources.getImage( this.parent.imageName );
+        var image = this.resources.getImage( this.item.imageName );
         if ( image )
         {
-            this.imageName = this.parent.imageName;
+            this.imageName = this.item.imageName;
 
             this.width = image.width;
             this.height = image.height;
@@ -76,7 +78,7 @@ Friend.Tree.Game.RenderItems.Sprite_Three2D.setImage = function()
             this.hotSpotY = image.hotSpotY;
 
             // Set item width and height
-            this.tree.sendMessageToItem( this.parent.root, this.parent, 
+            this.tree.sendMessageToItem( this.item.root, this.item, 
             {
                 command: 'setSize',
                 type: 'renderItemToItem',
@@ -87,7 +89,7 @@ Friend.Tree.Game.RenderItems.Sprite_Three2D.setImage = function()
         }        
         else
         {
-            Friend.Tree.log( this.parent,
+            Friend.Tree.log( this.item,
             {
                 level: Friend.Tree.ERRORLEVEL_HIGH,
                 error: 'Image does not exist: ' + this.imageName

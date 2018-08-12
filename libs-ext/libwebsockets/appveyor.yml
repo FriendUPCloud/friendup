@@ -1,5 +1,8 @@
 environment:
   matrix:
+    - LWS_METHOD: x64
+      CMAKE_ARGS: -DCMAKE_GENERATOR_PLATFORM=x64 -DLWS_WITH_HTTP2=1 -DLWS_WITH_PLUGINS=1 -DLIBUV_INCLUDE_DIRS=C:\assets\libuv64\include -DLIBUV_LIBRARIES=C:\assets\libuv64\libuv.lib
+
     - LWS_METHOD: lwsws
       CMAKE_ARGS: -DLWS_WITH_LWSWS=1 -DSQLITE3_INCLUDE_DIRS=C:\assets\sqlite3 -DSQLITE3_LIBRARIES=C:\assets\sqlite3\sqlite3.lib -DLIBUV_INCLUDE_DIRS=C:\assets\libuv\include -DLIBUV_LIBRARIES=C:\assets\libuv\libuv.lib
 
@@ -16,18 +19,25 @@ environment:
 
     - LWS_METHOD: nossl
       CMAKE_ARGS: -DLWS_WITH_SSL=OFF
+
 install:
   - appveyor DownloadFile https://libwebsockets.org:444/win-libuv.zip
   - mkdir c:\assets
   - mkdir c:\assets\libuv
   - 7z x -oc:\assets\libuv win-libuv.zip
+  - appveyor DownloadFile https://libwebsockets.org:444/win-libuv64.zip
+  - mkdir c:\assets\libuv64
+  - 7z x -oc:\assets\libuv64 win-libuv64.zip
   - appveyor DownloadFile https://libwebsockets.org:444/nsis-3.0rc1-setup.exe
   - cmd /c start /wait nsis-3.0rc1-setup.exe /S /D=C:\nsis
   - appveyor DownloadFile https://libwebsockets.org:444/sqlite-dll-win32-x86-3130000.zip
   - mkdir c:\assets\sqlite3
   - 7z x -oc:\assets\sqlite3 sqlite-dll-win32-x86-3130000.zip
   - SET PATH=C:\Program Files\NSIS\;C:\Program Files (x86)\NSIS\;c:\nsis;%PATH%
+
 build:
+  parallel: true
+  verbosity: minimal
 
 build_script:
   - md build
@@ -36,12 +46,32 @@ build_script:
   - cmake --build . --config Release
 
 after_build:
-   - 7z a lws.zip %APPVEYOR_BUILD_FOLDER%\build\lib\Release\websockets.lib %APPVEYOR_BUILD_FOLDER%\build\lib\Release\websockets.exp %APPVEYOR_BUILD_FOLDER%\build\bin\Release\websockets.dll %APPVEYOR_BUILD_FOLDER%\lib\libwebsockets.h  %APPVEYOR_BUILD_FOLDER%\build\lws_config.h  %APPVEYOR_BUILD_FOLDER%\build\bin\Release\*.exe
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - mkdir staging
+  - mkdir staging\include
+  - cp -r %APPVEYOR_BUILD_FOLDER%\build\bin %APPVEYOR_BUILD_FOLDER%\build\lib staging
+  - if EXIST staging\bin\share mv staging\bin\share staging
+  - if NOT EXIST staging\share\libwebsockets-test-server mkdir staging\share\libwebsockets-test-server
+  - IF EXIST %APPVEYOR_BUILD_FOLDER%\build\libwebsockets-test-server.pem cp %APPVEYOR_BUILD_FOLDER%\build\libwebsockets-test-server.pem staging\share\libwebsockets-test-server
+  - IF EXIST %APPVEYOR_BUILD_FOLDER%\build\libwebsockets-test-server.key.pem cp %APPVEYOR_BUILD_FOLDER%\build\libwebsockets-test-server.key.pem staging\share\libwebsockets-test-server
+  - IF EXIST %APPVEYOR_BUILD_FOLDER%\build\lws_config.h cp %APPVEYOR_BUILD_FOLDER%\build\lws_config.h staging\include
+  - cp %APPVEYOR_BUILD_FOLDER%\lib\libwebsockets.h staging\include
+  - 7z a build\lws-%LWS_METHOD%-%APPVEYOR_BUILD_ID%.zip %APPVEYOR_BUILD_FOLDER%\staging\*
 
 artifacts:
-  - path: lws.zip
-    name: lws.zip
-    type: Zip
+  - path: build\lws-%LWS_METHOD%-%APPVEYOR_BUILD_ID%.zip
+
+deploy:
+- provider: BinTray
+  username: lws-team
+  api_key:
+    secure: nDpZ7P/wrk98DwJPMC6KpCC23QrVP8f3RxvKzBaqOmb9LiVrg1IyO1cc5vcgShZC
+  subject: lws-team
+  repo: libwebsockets
+  package: windows
+  publish: true
+  override: true
+  explode: false
 
 matrix:
   fast_finish: true

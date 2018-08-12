@@ -39,6 +39,11 @@ var FriendLibrary = function ( library, encryption )
 		this.args = null;
 		this.method = null;
 		this.vars = null;
+		if( this.currentRequest )
+		{
+			this.currentRequest.destroy();
+			this.currentRequest = null;
+		}
 		delete this;
 	}
 
@@ -49,10 +54,13 @@ var FriendLibrary = function ( library, encryption )
 		
 		var data = '';
 		
-		var j = new cAjax ();		
+		var j = new cAjax ();	
+		this.currentRequest = j;	
 		
 		if( this.forceHTTP )
 			j.forceHTTP = true;
+		if( this.forceSend )
+			j.forceSend = true;
 		
 		var ex = '';
 		

@@ -18,7 +18,8 @@
 *****************************************************************************©*/
 /** @file
  *
- * Tree engine Tree management elements
+ * RendererImage item
+ * Renders the current application into an image.
  *
  * @author FL (Francois Lionet)
  * @date first pushed on 04/03/2018
@@ -28,11 +29,11 @@ Friend.Tree.RenderItems = Friend.Tree.RenderItems || {};
 
 Friend.Tree.RendererImage = function( tree, name, properties )
 {    
-    this.imageName = false;
+    this.nameImage = false;
     this.renderItemName = 'Friend.Tree.RenderItems.RendererImage';
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.RendererImage', properties );
-    if ( !this.imageName )
-        this.imageName = name;
+    if ( !this.nameImage )
+        this.nameImage = name;
     this.registerEvents( 'refresh' );
 };
 Friend.Tree.RendererImage.messageUp = function( message )
@@ -45,56 +46,38 @@ Friend.Tree.RendererImage.messageDown = function( message )
     return this.endProcess( message, [ 'x', 'y', 'z', 'rotation' ] );
 };
 
-Friend.Tree.RenderItems.RendererImage_Three2D = function( tree, name, properties )
-{    
-    this.rendererName = 'Renderer_Three2D';
-    this.rendererType = 'Sprite';    
-    Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.RenderItems.RendererImage_Three2D', properties );
-    this.imageName = this.parent.imageName;
-
-    this.canvas = document.createElement( 'canvas' );
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
-    this.resources.addImage( this.imageName, this.canvas, Friend.Tree.HOTSPOT_LEFTTOP );   
-    this.renderer.startRenderTo( this.imageName, this.canvas );
-};
-Friend.Tree.RenderItems.RendererImage_Three2D.render = function( properties )
-{
-    return properties;
-};
-Friend.Tree.RenderItems.RendererImage_Three2D.onDestroy = function()
-{
-    this.renderer.stopRenderTo( this.imageName );
-};
-
 Friend.Tree.RenderItems.RendererImage_HTML = function( tree, name, properties )
 {    
+	this.nameImage = false;
+
     this.rendererName = 'Renderer_HTML';
     this.rendererType = 'Sprite';    
     Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.RenderItems.RendererImage_HTML', properties );
-    this.imageName = this.parent.imageName;
-
-    this.canvas = document.createElement( 'canvas' );
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
-    this.resources.addImage( this.imageName, this.canvas, Friend.Tree.HOTSPOT_LEFTTOP );   
-    this.renderer.startRenderTo( this.imageName, this.canvas );
 };
-Friend.Tree.RenderItems.RendererImage_HTML.render = Friend.Tree.RenderItems.RendererImage_Three2D.render;
-Friend.Tree.RenderItems.RendererImage_HTML.onDestroy = Friend.Tree.RenderItems.RendererImage_Three2D.onDestroy;
+Friend.Tree.RenderItems.RendererImage_HTML.render = function( properties )
+{
+	if ( !this.canvas )
+	{
+		this.canvas = document.createElement( 'canvas' );
+		this.canvas.width = this.width;
+		this.canvas.height = this.height;
+		this.resources.addImage( this.item.nameImage, this.canvas, Friend.Tree.HOTSPOT_LEFTTOP );   
+		this.renderer.startRenderTo( this.item.nameImage, this.canvas );
+	}
+    return properties;
+};
+Friend.Tree.RenderItems.RendererImage_HTML.onDestroy = function()
+{
+    this.renderer.stopRenderTo( this.item.nameImage );
+};
 
 Friend.Tree.RenderItems.RendererImage_Canvas2D = function( tree, name, properties )
 {    
+	this.nameImage = false;
+
     this.rendererName = 'Renderer_Canvas2D';
     this.rendererType = 'Sprite'; 
     Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.RenderItems.RendererImage_Canvas2D', properties );
-    this.imageName = this.parent.imageName;
-
-    this.canvas = document.createElement( 'canvas' );
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
-    this.resources.addImage( this.imageName, this.canvas, Friend.Tree.HOTSPOT_LEFTTOP );   
-    this.renderer.startRenderTo( this.imageName, this.canvas );
 };
 Friend.Tree.RenderItems.RendererImage_Canvas2D.render = Friend.Tree.RenderItems.RendererImage_Three2D.render;
 Friend.Tree.RenderItems.RendererImage_Canvas2D.onDestroy = Friend.Tree.RenderItems.RendererImage_Three2D.onDestroy;

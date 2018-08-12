@@ -82,15 +82,15 @@ void init( struct UserLogger *s )
 			if( prop != NULL)
 			{
 				DEBUG("[UserLogger] reading login\n");
-				login = plib->ReadString( prop, "Logger:sqllogin", "root" );
+				login = plib->ReadStringNCS( prop, "Logger:sqllogin", "root" );
 				DEBUG("[UserLogger] user %s\n", login );
-				pass = plib->ReadString( prop, "Logger:sqlpassword", "root" );
+				pass = plib->ReadStringNCS( prop, "Logger:sqlpassword", "root" );
 				DEBUG("[UserLogger] password %s\n", pass );
-				host = plib->ReadString( prop, "Logger:sqlhost", "localhost" );
+				host = plib->ReadStringNCS( prop, "Logger:sqlhost", "localhost" );
 				DEBUG("[UserLogger] host %s\n", host );
-				dbname = plib->ReadString( prop, "Logger:sqldbname", "FriendMaster" );
+				dbname = plib->ReadStringNCS( prop, "Logger:sqldbname", "FriendMaster" );
 				DEBUG("[UserLogger] dbname %s\n",dbname );
-				port = plib->ReadInt( prop, "Logger:sqlport", 3306 );
+				port = plib->ReadIntNCS( prop, "Logger:sqlport", 3306 );
 				DEBUG("[UserLogger] port read %d\n", port );
 			}
 			else
@@ -145,7 +145,7 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 	logEntry.ul_Action = actions;
 	logEntry.ul_Information = information;
 	
-	pthread_mutex_lock( &(sd->sd_Mutex) );
+	FRIEND_MUTEX_LOCK( &(sd->sd_Mutex) );
 	
 	if( session != NULL )
 	{
@@ -162,7 +162,7 @@ int StoreInformation( struct UserLogger *s, UserSession *session, char *actions,
 		sd->sd_LibSQL->Save( sd->sd_LibSQL, UserLogDesc, &logEntry );
 	}
 	
-	pthread_mutex_unlock( &(sd->sd_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(sd->sd_Mutex) );
 	
 	return 0;
 }

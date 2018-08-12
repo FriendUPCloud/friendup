@@ -1552,7 +1552,7 @@ window.Shell = function( appObject )
 		// Handle scripts!
 		else if( cmd[0] == 'version' )
 		{
-			callback( true, { response: 'Friend Shell version 1.1' } );
+			callback( true, { response: 'Friend Shell version 1.2rc1' } );
 			return this.evaluateInput( input, index + 1, callback, mode );
 		}
 		// Handle gotos!
@@ -1720,6 +1720,7 @@ window.Shell = function( appObject )
 
 		var parsedObject = this.parseInput( cmd );
 		cmd = parsedObject.args; // Just the fin_args
+		this.parsedObj = parsedObject;
 
 		// Let's do lowercase
 		cmd[0] = cmd[0].toLowerCase();
@@ -1739,1638 +1740,6 @@ window.Shell = function( appObject )
 		else if( cmd[0] == "\n" )
 		{
 			return dcallback( true );
-		}
-		else if ( cmd[0] == 'friendnetwork' || cmd[0] == 'fnet' )
-		{
-			switch ( cmd[1] )
-			{
-				case 'list':
-					return dcallback('friendnetworklist');
-				case 'host':
-					if (cmd.length < 3)
-						return dcallback(false, {response: 'Syntax: friendnetwork host "hostname".'});
-					return dcallback(false, {
-						command: 'friendnetworkhost',
-						name:    cmd[2],
-						password: cmd[3]
-					});
-				case 'dispose':
-					if (cmd.length < 3)
-						return dcallback(false, {response: 'Syntax: friendnetwork dispose "hostname".'});
-					return dcallback(false, {
-						command: 'friendnetworkdispose',
-						name:    cmd[2]
-					});
-				case 'connect':
-					if (cmd.length < 3)
-						return dcallback(false, {response: 'Syntax: friendnetwork connect "hostname".'});
-					var p2p = false;
-					if ( cmd.length == 4 && cmd[ 3 ] == 'p2p' )
-						p2p = true;
-					return dcallback(false, {
-						command: 'friendnetworkconnect',
-						name:    cmd[2],
-						p2p:	 p2p
-					});
-				case 'password':
-					if (cmd.length < 4)
-						return dcallback(false, {response: 'Syntax: friendnetwork dispose "hostname".'});
-					return dcallback(false, {
-						command: 'friendnetworksetpassword',
-						name:    cmd[2],
-						password: cmd[3]
-					});
-					break;
-				case 'disconnect':
-					this.skipClient = true;
-					return dcallback(false, { command: 'friendnetworkdisconnect' });
-				case 'status':
-					return dcallback(false, { command: 'friendnetworkstatus' });
-				default:
-					return dcallback(false, {response: 'Syntax error.'});
-			}
-		}
-		// Engage with an application (message port and pipe)
-		else if( cmd[0] == 'engage' )
-		{
-			var preposition = 'with';
-			var subject = false;
-			var number = -1;
-			for( b = 1; b < cmd.length; b++ )
-			{
-				if( cmd[b] == 'with' )
-					preposition = cmd[b];
-				else if( !isNaN( cmd[b] ) )
-					number = parseInt( cmd[b] );
-				else subject = cmd[b];
-			}
-
-			// Add number specification
-			if( subject && number > 0 ) subject = subject + ' ' + number;
-
-			if( subject && preposition )
-			{
-				// Check if subject exists!
-				var candidates = [];
-				var appObjects = [];
-				var i = 0;
-				for( a in Workspace.applications )
-				{
-					i++;
-					var appNr = Workspace.applications[a].applicationName + ' ' + i;
-					if( Workspace.applications[a].applicationName == subject || subject == appNr )
-					{
-						candidates.push( Workspace.applications[a].applicationName );
-						appObjects.push( Workspace.applications[a] );
-					}
-				}
-				if( candidates.length > 1 )
-				{
-					for( a = 0; a < candidates.length; a++ )
-					{
-						candidates[a] += ' ' + ( 1 + a );
-					}
-					return dcallback( false, { response: 'Please specify which target: "' + candidates.join( '", "' ) + '".' } );
-				}
-				// Found the target
-				else if( candidates.length == 1 )
-				{
-					nsp = '';
-					if( number > 0 ) nsp = ' (' + number + ').';
-					this.pipe = appObjects[0];
-
-					// Tell it we're engaging!
-					return this.execute( 'engage', dcallback );
-				}
-			}
-			return dcallback( false, { response: 'Could not engage with ' + ( subject ? subject : 'unknown target.' ) } );
-		}
-		else if( cmd[0] == 'say' )
-		{
-			var args = [];
-			for( a = 1; a < cmd.length; a++ )
-				args.push( cmd[a].split( '<!--space--!>' ).join( ' ' ) );
-			var str = args.join( ' ' );
-			SayWithText( this.parseVariables( str ) );
-			return dcallback( true );
-		}
-		else if( cmd[0] == 'cd' || cmd[0] == 'enter' )
-		{
-			if( cmd.length <= 1 || ( cmd.length > 1 && !cmd[1].length ) )
-			{
-				return dcallback( true );
-			}
-
-			// Get path string (and fix spaces)
-			var str = cmd[1];
-			if( cmd.length > 2 )
-			{
-				var args = [];
-				for( a = 1; a < cmd.length; a++ )
-					args.push( cmd[a].split( '<!--space--!>' ).join( ' ' ) );
-				str = args.join( ' ' );
-			}
-
-			var fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ), 'left' );
-
-			// Go to root
-			if( fullPath == ':' )
-			{
-				fullPath = this.currentPath.split( ':' )[0] + ':';
-			}
-
-			// Go to parent
-			if( fullPath.substr( 0, 1 ) == '/' && this.currentPath )
-			{
-				var tmp = this.currentPath;
-				// Remove trailing forward slash
-				if( tmp.substr( tmp.length - 1, 1 ) == '/' )
-					tmp = tmp.substr( 0, tmp.length - 1 );
-				while( fullPath.substr( 0, 1 ) == '/' )
-				{
-					// Split up a folder
-					if( tmp.indexOf( '/' ) > 0 )
-					{
-						tmp = tmp.split( '/' );
-						tmp.pop();
-						tmp = tmp.join( '/' );
-					}
-					// Toplevel
-					else if( tmp.indexOf( ':' ) > 0 )
-					{
-						tmp = tmp.split( ':' )[0] + ':';
-					}
-					if( fullPath.length > 1 )
-					{
-						fullPath = fullPath.substr( 1, fullPath.length - 1 );
-					}
-					else break;
-				}
-				fullPath = tmp;
-			}
-
-			// Fix path
-			if( fullPath.indexOf( ':' ) < 0 )
-			{
-				fullPath = this.currentPath;
-				var ll = fullPath.substr( fullPath.length - 1, 1 );
-				if( ll != ':' && ll != '/' )
-					fullPath += '/';
-				fullPath = fullPath + str.split( '<!--space--!>' ).join( ' ' );
-				ll = fullPath.substr( fullPath.length - 1, 1 );
-				if( ll != '/' )
-					fullPath += '/';
-			}
-			// Not a door volume name
-			else if ( fullPath.substr( fullPath.length - 1, 1 ) != ':' )
-			{
-				var ll = fullPath.substr( fullPath.length - 1, 1 );
-				if( ll != '/' )
-					fullPath += '/';
-			}
-
-
-			// No volume written by name!
-			// TODO: enter must imply mount or running a dormant app with a callback??
-			if( cmd[0] == 'enter' )
-			{
-				if( cmd.length != 2 )
-				{
-					return dcallback( true );
-				}
-				else if( cmd[1].indexOf( ':' ) > 0 || cmd[1].indexOf( '/' ) > 0 )
-				{
-					return dcallback( true );
-				}
-				fullPath = cmd[1] + ':' + i18n('i18n_directory_Functions') + '/';
-				if( this.currentPath )
-				{
-					this.previousPath = this.currentPath;
-				}
-			}
-
-			// First check dormant
-			// TODO: Implement "evaluate path"
-			this.checkDormantDoors( fullPath, function( dirs )
-			{
-				// Use standard doors
-				if( !dirs || ( !dirs && !dirs.length ) )
-				{
-					var door = ( new Door() ).get( fullPath );
-					door.getIcons( false, function( data, path )
-					{
-						if( typeof( data ) == 'object' && path )
-						{
-							// Restricted path (for use with FriendNetwork)
-							if ( t.restrictedPath )
-								if ( fullPath.indexOf( t.restrictedPath ) < 0 )
-									return dcallback( false, { response: 'Path is restricted by host to ' + t.restrictedPath } );
-
-							t.currentPath = path;
-						}
-						// Error never should be here.
-						else
-						{
-							return dcallback( false, { response: 'Could not change directory.' } );
-						}
-						dcallback( false, { path: path } );
-					} );
-				}
-				else
-				{
-					// Restricted path (for use with FriendNetwork)
-					if ( this.restrictedPath )
-						if ( fullPath.indexOf( this.restrictedPath ) < 0 )
-							return dcallback( false, { response: 'Path is restricted by host to ' + this.restrictedPath } );
-
-					// TODO: Fix that these are arrays!
-					var count = 0;
-					for( a in dirs ) count++;
-					if( dirs || count > 0 )
-					{
-						t.currentPath = fullPath;
-					}
-					else
-					{
-						return dcallback( false, { response: 'Could not change directory.' } );
-					}
-					dcallback( false, { path: fullPath } );
-				}
-			} );
-		}
-		else if( cmd[0] == 'leave' )
-		{
-			if( this.previousPath )
-			{
-				// Restricted path (for use with FriendNetwork)
-				if ( this.restrictedPath )
-					if ( this.previousPath.indexOf( this.restrictedPath ) < 0 )
-						return dcallback( false, { response: 'Host forbids to leave ' + this.currentPath } );
-
-				// TODO: Perhaps have a history here!
-				var tp = this.currentPath;
-				this.currentPath = this.previousPath;
-				this.previousPath = tp;
-				return dcallback( false, { path: this.currentPath } );
-			}
-			return dcallback( true );
-		}
-		// Launch an application without knowing where it is at
-		else if( cmd[0] == 'launch' )
-		{
-			if( cmd.length >= 2 )
-			{
-				function cbn( msg )
-				{
-					dcallback( msg.data, msg.error );
-				}
-				var args = '';
-				for( var z = 2; z < cmd.length; z++ )
-					args += ( z > 2 ? ' ' : '' ) + cmd[z];
-
-				return ExecuteApplication( cmd[1], args, cbn );
-			}
-			return dcallback( true );
-		}
-		else if( cmd[0] == 'tinyurl' )
-		{
-			if( cmd.length >= 2 )
-			{
-				var post = { source: cmd[1] };
-				if( cmd.length > 2 )
-					post.expire = cmd[2];
-
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					var r = false;
-					try
-					{
-						r = JSON.parse( d );
-					}
-					catch( e ){};
-
-					if( e != 'ok' )
-					{
-						dcallback( false, { response: 'Failed to set tinyurl: ' + ( r ? r.response : 'unknown error' ) } );
-					}
-					else
-					{
-						dcallback( false, { response: 'Generated unique hash for url: ' + ( r ? r.hash : 'unknown error' ) } );
-					}
-				}
-				m.execute( 'tinyurl', post );
-			}
-			else
-			{
-				dcallback( false, { response: "Syntax: tinyurl url boolean_expire" } );
-			}
-		}
-		else if( cmd[0] == 'cat' || cmd[0] == 'output')
-		{
-			if( cmd.length == 2 )
-			{
-				var p = cmd[1];
-				if( p.indexOf( ':' ) <= 0 )
-					p = this.currentPath + p;
-
-				// Get a door object and get file information about image
-				var pp = p.indexOf( ':' );
-				pp = p.substr(0, pp + 1);
-				var d = new Door( pp );
-				d.dosAction( 
-					'file/info', 
-					{ path: p },
-					function( data )
-					{
-						var res = data.split( "<!--separate-->" );
-						if( res[0] != "ok" )
-							return false;
-						var d = JSON.parse( res[1] );
-						if (d.Filesize > 1024*100)
-						{
-							dcallback(false, {response: 'File too large: ' + d.Filesize/1024 +' kb.'})
-							return false;
-						}
-						var f = new File( p );
-						f.onLoad = function( data )
-						{
-							dcallback( false, { response: data.split( "\n" ).join( "<br>" ) } );
-						}
-						f.load();
-					}
-				);
-			}
-			else
-			{
-				dcallback( false, { response: 'Usage: cat filename' } );
-			}
-		}
-		// Rename a file
-		else if( cmd[0] == 'rename' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Rename is not authorised by host.' } );
-
-			if( cmd.length == 3 || ( cmd.length == 4 && cmd[2] == 'to' ) )
-			{
-				var src = cmd[1];
-				var dst = cmd[2];
-				if( cmd.length == 4 && cmd[2] == 'to' )
-					dst = cmd[3];
-
-				var dstVolume = '';
-				var srcVolume = '';
-
-				if( dst.indexOf( ':' ) > 0 )
-					dstVolume = dst.split( ':' )[0] + ':';
-				else dst = this.currentPath + dst;
-				if( src.indexOf( ':' ) > 0 )
-					srcVolume = src.split( ':' )[0] + ':';
-				else src = this.currentPath + src;
-
-				// Make sure we convert space placeholder
-				src = src.split( '<!--space--!>' ).join( ' ' );
-				dst = dst.split( '<!--space--!>' ).join( ' ' );
-
-				if( dstVolume == srcVolume || !dstVolume )
-				{
-					var newname = dst.split( ':' )[1];
-					newname = newname.split( '/' );
-					newname = newname[newname.length-1];
-
-					var doorSrc = ( new Door() ).get( src );
-
-					doorSrc.dosAction( 'rename', { path: src, newname: newname }, function()
-					{
-						dcallback( false, { response: 'Renamed file to ' + dst + '..' } );
-					} );
-				}
-				else
-				{
-					dcallback( false, { response: 'Could not understand source and/or destination filename.' } );
-				}
-			}
-			else
-			{
-				dcallback( false, { response: 'Usage: rename source:path/file (to) destination:path/' } );
-			}
-		}
-		else if( cmd[0] == 'info' )
-		{
-			var path = cmd[1];
-			if( path.indexOf( ':' ) <= 0 )
-			{
-				var l = this.currentPath.substr( this.currentPath.length - 1 );
-				if( l == ':' )
-					path = this.currentPath + path;
-				else if( l != '/' )
-					path = this.currentPath + '/' + path;
-			}
-			if( path.indexOf( ':' ) <= 0 ) path = this.currentPath;
-
-			FriendDOS.getFileInfo( path, function( e, d )
-			{
-				if( !e )
-				{
-					return dcallback( false, { response: 'Could not get file information.' } );
-				}
-				else
-				{
-					try
-					{
-						d = JSON.parse( d );
-						var output = '';
-						for( var z in d )
-						{
-							output += '<div class="Container">' + z + ': ';
-							switch( z )
-							{
-								default:
-									output += d[z];
-									break;
-							}
-							output += '</div>';
-						}
-						return dcallback( true, { response: output } );
-					}
-					catch( e )
-					{
-						return dcallback( false, { response: 'Could not parse file information.' } );
-					}
-				}
-			} );
-		}
-		// Copy some files
-		else if( cmd[0] == 'copy' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Copy is not authorised by host.' } );
-
-			if( cmd.length >= 3 )
-			{
-				this.terminate = true;
-
-				var start = 1;
-				var recursive = false;
-
-				// check recursive
-				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'copy all' )
-				{
-					start++;
-					recursive = true;
-				}
-
-				var src = cmd[start];
-
-				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-
-				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-
-				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-
-				// 'all' on the end
-				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
-
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result, done )
-				{
-					if( !done ) done = false;
-					dcallback( false, { response: result, done: done } );
-				} );
-			}
-			else
-			{
-				dcallback( false, { response: 'Usage: copy (all) source:path/or/file (to) destination:path/' } );
-			}
-		}
-		// Link folders
-		else if( cmd[0] == 'ln' || cmd[0] == 'link' || cmd[0] == 'symlink' )
-		{
-			if( cmd.length >= 3 )
-			{
-				var start = 1;
-
-				var src = cmd[start];
-
-				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-
-				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-
-				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-
-				if( dst )
-				{
-					var d = ( new Door() ).get( dst );
-					if( d )
-					{
-						return d.dosAction( 'link', { from: src, to: dst }, function( e )
-						{
-							if( e )
-							{
-								return dcallback( true, false );
-							}
-							return dcallback( false, { response: 'Failed to execute.' } );
-						} );
-					}
-				}
-
-			}
-			return dcallback( false, { response: 'Command not recognized.' } );
-		}
-		else if( cmd[0] == 'move' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Move is not authorised by host.' } );
-
-			if( cmd.length >= 3 )
-			{
-				this.terminate = true;
-
-				var start = 1;
-				var recursive = false;
-
-				// check recursive
-				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'move all' )
-				{
-					start++;
-					recursive = true;
-				}
-
-				var src = cmd[start];
-
-				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-
-				var dst = cmd[start+1].toLowerCase() == 'to' ? cmd[start+2] : cmd[start+1];
-
-				if( dst.indexOf( ':' ) < 0 ) dst = this.currentPath + dst;
-
-				// 'all' on the end
-				if( !recursive ) recursive = cmd[cmd.length-1].toLowerCase() == 'all' ? true : false;
-
-				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
-				{
-					if( !done ) done = false;
-					dcallback( false, { response: result, done: done } );
-				} );
-			}
-			else
-			{
-				dcallback( false, { response: 'Usage: move (all) source:path/or/file (to) destination:path/' } );
-			}
-		}
-		// Just get the date..
-		else if( cmd[0] == 'date' )
-		{
-			var td = new Date();
-			dcallback( true, {
-				response: td.getFullYear() + '-' +
-				StrPad( ( td.getMonth() + 1 ), 2, '0' ) + '-' +
-				StrPad( td.getDate(), 2, '0' ) + ' ' +
-				StrPad( td.getHours(), 2, '0' ) + ':' +
-				StrPad( td.getMinutes(), 2, '0' ) + ':' +
-				StrPad( td.getSeconds(), 2, '0' )
-			} );
-		}
-		else if( cmd[0] == 'help' )
-		{
-			var commands = [
-				'ls', 'info', 'list', 'dir', 'cat', 'type', 'why', 'copy', 'delete', 'makedir', 'tinyurl',
-				'protect', 'access', 'execute', 'launch', 'output', /*'infoget', 'infoset',*/ 'wait',
-				'rename', /*'mind',*/ 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
-				'say', 'leave', 'status', 'break', 'kill', 'assign', 'mount', 'unmount', 'mountlist',
-				'repeat', /*'on',*/ 'increase', 'decrease', 'multiply', 'divide', 'add', 'subtract',
-				'stop', 'version', 'goto', 'help'
-			].sort();
-			if ( cmd.length == 1 )
-			{
-				dcallback( false, { command: 'help', text: commands.join( ', ' ) } );
-			}
-			else if ( cmd.length == 2)
-			{
-				for ( var a = 0; a < commands.length; a++ )
-				{
-					if ( commands[a] == cmd[1] )
-					{
-						return dcallback( false, { command: 'help', name: cmd[1] } );
-					}
-				}
-			}
-			else
-			{
-				dcallback( false, {response: 'Syntax error.'});
-			}
-			switch( cmd[1] )
-			{
-				default:
-					dcallback( true, { response: 'Friend DOS has the following commands available:<br><br>' + commands.join( ', ' ) + '<br><br>Please try "help {commandname}".' } );
-					break;
-			}
-		}
-		else if( cmd[0] == 'metainfo' )
-		{
-			// Get command
-			var command = false;
-			var options = [ 'get', 'set', 'list' ];
-			for( a = 0; a < options.length; a++ )
-			{
-				if( cmd[1] == options[a] )
-				{
-					command = options[a];
-					break;
-				}
-			}
-			if( !command )
-				return dcallback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
-
-			var filename = false;
-			var variable = false;
-			var data = false;
-
-			// Get the rest
-			for( a = 2; a < cmd.length; a++ )
-			{
-				if( cmd[a].indexOf( '=' ) > 0 )
-				{
-					var pair = cmd[a].split( '=' );
-					variable = pair[0];
-					pair[0] = '';
-					pair = pair.join( '=' );
-					pair = pair.substr( 1, pair.length - 1 );
-					data = pair.split( '<!--space--!>' ).join( ' ' );
-				}
-				else filename = cmd[a];
-			}
-
-			if( filename && filename.indexOf( ':' ) < 0 )
-			{
-				filename = this.currentPath + filename;
-			}
-
-			if( filename )
-			{
-				var d = ( new Door() ).get( filename );
-				if( d )
-				{
-					return d.dosAction( 'metainfo', { path: filename, command: command, variable: variable, data: data }, function( e )
-					{
-						if( e )
-						{
-							return dcallback( true, false );
-						}
-						return dcallback( false, { response: 'Failed to execute.' } );
-					} );
-				}
-			}
-			return dcallback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
-		}
-		else if( cmd[0] == 'delete' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Delete is not authorised by host.' } );
-
-			this.terminate = true;
-
-			if( cmd.length >= 2 )
-			{
-				var start = 1;
-				var recursive = false;
-				var notrash = false;
-
-				// check recursive (if we have at least three fin_args)
-				if( ( cmd[0] + ' ' + cmd[1] ).toLowerCase() == 'delete all' && typeof( cmd[2] ) != 'undefined' )
-				{
-					start++;
-					recursive = true;
-				}
-
-
-				// Find source path
-				var src = cmd[start++];
-				src = src.split( '&nbsp;' ).join( ' ' ).split( '<!--space--!>' ).join( ' ' );
-				if( src.indexOf( ':' ) < 0 ) src = this.currentPath + src;
-
-				// Find other keywords after filename
-				for( ; start < cmd.length; start++ )
-				{
-					if( cmd[start] == 'all' )
-						recursive = true;
-					if( cmd[start] == 'notrash' )
-						notrash = true;
-				}
-
-				// Finally delete
-				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
-				{
-					dcallback( false, { response: result, done: true } );
-				} );
-			}
-		}
-		else if( cmd[0] == 'clear' )
-		{
-			// TODO: Do we have an internal buffer to clear?
-			return dcallback( 'clear' );
-		}
-		else if( cmd[0] == 'mount' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Mount is not authorised by host.' } );
-
-			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
-			{
-				return dcallback( false, { response: 'Syntax error. Usage:<br>mount [disk:]<br>' } );
-			}
-			var l = new Library( 'system.library' );
-			l.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-				{
-					return dcallback( false, { response: 'Could not mount disk ' + cmd[1] + '<br>' } );
-				}
-				Workspace.getMountlist();
-				return dcallback( true, { response: 'Disk ' + cmd[1] + ' mounted.<br>' } );
-			}
-			l.execute( 'device/mount', { devname: cmd[1], sessionid: Workspace.sessionid } );
-		}
-		else if( cmd[0] == 'deletemount' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'deletemount is not authorised by host.' } );
-			if( cmd.length != 2 )
-			{
-				return dcallback( false, { response: 'Syntax error. Usage:<br>deletemount [disk:]<br>' } );
-			}
-			else
-			{
-				var l = new Library( 'system.library' );
-				l.onExecuted = function( e, d )
-				{	
-					Workspace.refreshDesktop( false, true ); // Badabish
-					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, dat )
-					{
-						var ll = new Library( 'system.library' );
-						ll.execute( 'device/refreshlist', { sessionid: Workspace.sessionid } );
-						setTimeout( function()
-						{
-							return dcallback( true, { response: 'Disk mount ' + cmd[1] + ' deleted.<br>' } );
-						}, 250 );
-					}
-					m.execute( 'deletedoor', { devname: cmd[1].split( ':' )[0], sessionid: Workspace.sessionid } );
-				}
-				l.execute( 'device/unmount', { devname: cmd[1].split( ':' )[0], sessionid: Workspace.sessionid } );
-			}
-		}
-		else if( cmd[0] == 'unmount' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Unmount is not authorised by host.' } );
-
-			if( cmd.length < 2 || ( cmd.length == 2 && cmd[1].indexOf( ':' ) < 0 ) )
-			{
-				return dcallback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
-			}
-			var l = new Library( 'system.library' );
-			l.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-				{
-					return dcallback( false, { response: 'Could not unmount disk ' + cmd[1] + '<br>' } );
-				}
-				Workspace.refreshDesktop( false, true ); // Badabish
-				return dcallback( true, { response: 'Disk ' + cmd[1] + ' unmounted.<br>' } );
-			}
-			l.execute( 'device/unmount', { devname: cmd[1], sessionid: Workspace.sessionid } );
-		}
-		else if( cmd[0] == 'mountlist' )
-		{
-			if( cmd.length > 2 || ( cmd.length == 2 && cmd[1] != 'unmounted' ) )
-				return dcallback( false, { response: 'Syntax error. Usage:<br>mountlist [unmounted]<br>' } );
-
-			if( cmd.length == 2 && cmd[1] == 'unmounted' )
-			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e != 'ok' )
-					{
-						return dcallback( false, { response: 'No unmounted disks available.' } );
-					}
-					var rows = JSON.parse( d );
-					var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-						        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
-					disks +=   '<br>';
-					var diskcount = 0;
-					for( a = 0; a < rows.length; a++ )
-					{
-						var cfg = false;
-						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
-							cfg = JSON.parse( rows[a].Config );
-						if( rows[a].Mounted == '1' ) continue;
-						disks += '<div class="Container">' +
-						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							PadList( rows[a].Type, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
-							PadList( cfg && cfg.Invisible == 'Yes' ? 'hidden' : 'yes', 10, 'right', '&nbsp;' ) + '</div>';
-						diskcount++;
-					}
-					dcallback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' unmounted disk(s) in mountlist.' } );
-				}
-				m.execute( 'mountlist', {} );
-			}
-			else
-			{
-				Workspace.getMountlist( function( rows )
-				{
-					if ( !t.workspace )
-					{
-						var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							        PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-							        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
-						disks +=   '<br>';
-						var diskcount = 0;
-						for( var a = 0; a < rows.length; a++ )
-						{
-							if( rows[a].Mounted != '1' ) continue;
-							disks += '<div class="Container">' +
-							    PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
-								PadList( rows[a].Handler, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
-								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
-							diskcount++;
-						}
-						dcallback( true, { response: disks + '<br>' + 'Found ' + rows.length + ' disk(s) in mountlist.' } );
-					}
-					else
-					{
-						dcallback( true, rows );
-					}
-				} );
-			}
-		}
-		// Protect command sets file permissions!
-		else if( cmd[0] == 'protect' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Protect is not authorised by host.' } );
-
-			var t = this;
-
-			// Find filename, then flags
-			// Usage: protect myfile rwd
-			var fn = '';
-			var flags = '';
-			for( a = 1; a < cmd.length; a++ )
-			{
-				if( !fn && cmd[a].indexOf( '=' ) < 0 )
-				{
-					fn = cmd[a];
-				}
-				// current user flags straight forward
-				else if( !flags && cmd[a].indexOf( '=' ) < 0 )
-				{
-					flags = cmd[a];
-					break;
-				}
-			}
-
-			if( fn.indexOf( ':' ) < 0 )
-			{
-				fn = this.currentPath + fn;
-			}
-
-			var uf = false, gf = false, of = false;
-
-			if( parsedObject.vars.user )
-				uf = parsedObject.vars.user;
-			if( parsedObject.vars.group )
-				gf = parsedObject.vars.group;
-			if( parsedObject.vars.others )
-				of = parsedObject.vars.others;
-
-			if( fn && ( flags || uf || gf || of ) )
-			{
-				// Put the flags in the right format
-				var finalFlags = '';
-
-				var data = {
-					user: ( flags ? flags : ( uf ? uf : '' ) ).toLowerCase(),
-					group: ( gf ? gf : '' ).toLowerCase(),
-					others: ( of ? of : '' ).toLowerCase()
-				};
-
-				var all = {};
-
-				// Go through users-others
-				for( var g in data )
-				{
-					if( !data[g].length ) continue;
-					all[g] = '';
-					var perms = { a: '-', r: '-', w: '-', e: '-', d: '-' };
-					for( a = 0; a < data[g].length; a++ )
-					{
-						perms[data[g][a]] = data[g][a] ? data[g][a] : '-';
-					}
-					for( a in perms )
-					{
-						all[g] += perms[a];
-					}
-					all[g] = Trim( all[g] ); // Remove whitespace
-				}
-
-				all.path = fn;
-
-				// Execute!
-				var l = new Library( 'system.library' );
-				l.onExecuted = function( e, d )
-				{
-					if( e == 'ok' )
-					{
-						t.lastErrorMessage = 'Your last call succeeded.';
-						return dcallback( true, { response: "Permissions were set." } );
-					}
-					t.lastErrorMessage = 'Your attempt to change the permissions on the file failed because of an access restriction.';
-					return dcallback( false, { response: "Could not set permissions on file." } );
-				}
-				l.execute( 'file/protect', all );
-				return;
-			}
-			t.lastErrorMessage = 'Your protect call had a syntax error.';
-			return dcallback( false, { response: "Error in protect query." } );
-		}
-		// Get access info about file
-		else if( cmd[0] == 'access' )
-		{
-			var t = this;
-			if( cmd.length < 2 )
-			{
-				this.lastErrorMessage = 'The access command needs a filename to get the access privileges from.';
-				return dcallback( false, { response: "Not enough fin_args." } );
-			}
-			if( cmd[1].indexOf( ':' ) < 0 ) cmd[1] = this.currentPath + cmd[1];
-			this.fileExists( cmd[1], function( result, data )
-			{
-				if( result )
-				{
-					var nl = new Library( 'system.library' );
-					nl.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							t.lastErrorMessage = 'Your last call succeeded.';
-
-							d = JSON.parse( d );
-
-							var str2ar = function( str ){ var o = []; for( var a = 0; a < str.length; a++ ) o.push( str[a] ); return o };
-							var res = { user: '', group: '', others: '' };
-							var combined = [ '-', '-', '-', '-', '-' ];
-							var a = 0;
-							for( ; a < d.length; a++ )
-							{
-								if( !d[a].access ) continue;
-								d[a].access = str2ar( d[a].access ); // To string!
-								if( !res[ d[a].type ] )
-								{
-									// Copy
-									res[ d[a].type ] = str2ar( d[a].access.join( '' ).toLowerCase() );
-								}
-								else
-								{
-									// Merge
-									for( var c = 0; c < res[ d[a].type ].length; c++ )
-									{
-										if( d[a].access[c] != '-' && res[ d[a].type ][c] == '-' )
-											res[ d[a].type ][c] = d[a].access[c].toLowerCase();
-									}
-								}
-								// Merge with combined
-								for( var b = 0; b < d[a].access.length; b++ )
-								{
-									if( d[a].access[b] != '-' && combined[b] == '-' )
-										combined[b] = d[a].access[b];
-								}
-							}
-							var out = '';
-							for( a in res )
-								out += a + ': ' + ( typeof( res[a] ) == 'object' ? res[a].join( '' ) : '-----' ) + "&nbsp;&nbsp;&nbsp;&nbsp;";
-							out += '<br>combined: ' + combined.join( '' ).toLowerCase();
-
-							return dcallback( true, { response: "Access privileges found:<br>" + out } );
-						}
-						t.lastErrorMessage = 'Could not get a list of access privileges from this file.';
-						return dcallback( false, { response: "This file is unprotected." } );
-					}
-					nl.execute( 'file/access', { path: cmd[1] } );
-					return;
-				}
-				t.lastErrorMessage = 'The file you entered does not exist on disk.';
-				return dcallback( false, { response: "The file does not exist." } );
-			} );
-		}
-		// Tell me why?
-		else if( cmd[0] == 'why' )
-		{
-			if( this.lastErrorMessage )
-			{
-				dcallback( false, { response: this.lastErrorMessage } );
-				this.lastErrorMessage = '';
-				return;
-			}
-			return dcallback( false, { response: 'No explanation available.' } );
-		}
-		// Get information from a file
-		else if( cmd[0] == 'infoget' )
-		{
-			var t = this;
-
-			if( cmd.length < 2 )
-			{
-				return dcallback( false, { response: "Could not get info. Please specify file." } );
-			}
-			var o = new Object();
-
-			var path = cmd[1];
-			if( path.indexOf( ':' ) < 0 )
-			{
-				var cp = t.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
-				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
-			}
-
-			var m = new Library( 'system.library' );
-			m.onExecuted = function( e, d )
-			{
-				if( e != 'ok' ) 
-				{
-					dcallback( false, { response: 'Infoget failed to get a workable result.' } );
-					return;
-				}
-
-				d = JSON.parse( d );
-
-				var fn = path.split( path.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
-				var info = false;
-
-				for( var a = 0; a < d.length; a++ )
-				{
-					if( d[a].Filename == fn )
-					{
-						info = d[a];
-						break;
-					}
-				}
-
-				if( !info )
-				{
-					return dcallback( false, { response: "File " + o.path + " does not exist.." } );
-				}
-
-				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
-					path += '/';
-
-				o.path = path.split( '<!--space--!>' ).join( ' ' );
-
-				if( typeof( cmd[2] ) != 'undefined' )
-					o.key = cmd[2];
-
-				var l = new Library( 'system.library' );
-				l.onExecuted = function( e, d )
-				{
-					if( e == 'ok' )
-					{
-						return dcallback( true, { response: t.generateOutputFromObjects( JSON.parse( d ) ) } );
-					}
-					return dcallback( false, { response: "Could not get info about " + o.path } );
-				}
-				l.execute( 'file/infoget', o );
-			}
-			m.execute( 'file/dir', { path: t.currentPath } );
-		}
-		else if( cmd[0] == 'infoset' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Infoset is not authorised by host.' } );
-
-			var t = this;
-
-			if( cmd.length < 2 )
-			{
-				return dcallback( false, { response: "Could not get info. Please specify file." } );
-			}
-			var o = new Object();
-
-			var path = cmd[1];
-			if( path.indexOf( ':' ) < 0 )
-			{
-				var cp = t.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
-				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
-			}
-
-			var m = new Library( 'system.library' );
-			m.onExecuted = function( e, d )
-			{
-				if( e != 'ok' ) return;
-
-				d = JSON.parse( d );
-
-				var np = path;
-				if( np.substr( np.length - 1, 1 ) == '/' )
-					np = np.substr( 0, np.length - 1 );
-				var fn = np.split( np.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
-				var info = false;
-
-				for( var a = 0; a < d.length; a++ )
-				{
-					if( d[a].Filename == fn )
-					{
-						info = d[a];
-						break;
-					}
-				}
-
-				if( !info )
-				{
-					return dcallback( false, { response: "File " + o.path + " does not exist.." } );
-				}
-
-				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
-					path += '/';
-
-				o.path = path.split( '<!--space--!>' ).join( ' ' );
-
-				// Get args
-				var ind = cmd[2].indexOf( '=' );
-				if( ind < 0 )
-					return dcallback( false, { response: "Could not set info. Please specify file, key and value." } );
-				o.key = cmd[2].substr( 0, ind );
-				o.value = cmd[2].substr( ind + 1, cmd[2].length - ind );
-
-				// Execute!
-				var l = new Library( 'system.library' );
-				l.onExecuted = function( e, d )
-				{
-					if( e == 'ok' )
-					{
-						return dcallback( true, { response: "Info was set." } );
-					}
-					return dcallback( false, { response: "Could not set info on " + o.path } );
-				}
-				l.execute( 'file/infoset', o );
-			}
-			m.execute( 'file/dir', { path: t.currentPath } );
-		}
-		else if( cmd[0] == 'ls' || cmd[0] == 'list' )
-		{
-			var path = ( typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
-
-			if( path.indexOf( ':' ) < 0 )
-			{
-				var cp = t.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
-				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
-			}
-			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
-				path += '/';
-
-
-			path = path.split( '<!--space--!>' ).join( ' ' );
-
-			this.getDirectory( path, function( doorItem, data )
-			{
-				// We got data
-				if( data && data.length )
-				{
-					var str = '';
-					var now = new Date();
-					now = now.getFullYear() + '-' + PadList( now.getMonth() + 1, 2, 'right', '0' )  + '-' + PadList( now.getDay(), 2, 'right', '0' ) + ' 00:00:00';
-					for( var c = 0; c <= 1; c++ )
-					{
-						for( var a = 0; a < data.length; a++ )
-						{
-							if( !data[a].DateCreated )
-								if( data[a].DateModified )
-									data[a].DateCreated = data[a].DateModified;
-							else
-								data[a].DateCreated = now;
-
-							var fnam = '';
-							if( data[a].Type != 'Directory' )
-							{
-								fnam = data[a].Filename ? data[a].Filename : data[a].Title;
-							}
-							else
-							{
-								fnam = data[a].Title ? data[a].Title : data[a].Filename;
-							}
-							var date = data[a].DateCreated.split( ' ' );
-							var today = ( new Date() ); today = today.getFullYear() + '-' + ( PadList( today.getMonth() + 1 + '', 2, 'right', '0', false ) ) + '-' + PadList( today.getDate() + '', 2, 'right', '0', false );
-							if( today == date[0] )
-								date[0] = i18n( 'i18n_today' );
-							date = PadList( date[0], 10, 'right', '&nbsp;', false ) + ' &nbsp;' + date[1];
-
-							var permz = '-----';
-							if( data[a].Permissions )
-							{
-								if( typeof( data[a].Permissions ) == 'string' )
-								{
-									permz = data[a].Permissions.toLowerCase();
-								}
-								else
-								{
-									permz = '*****'; // Not supported yet..
-								}
-
-								// Flatten permissions (user,group,others -> combined)
-								permz = permz.split( ',' );
-								var out = '-----';
-								for( var i = 0; i < permz.length; i++ )
-								{
-									var tmp = '';
-									for( var f = 0; f < permz[i].length; f++ )
-									{
-										if( out.substr( f, 1 ) == '-' && permz[i].substr( f, 1 ) != '-' )
-										{
-											tmp += permz[i].substr( f, 1 );
-										}
-										else
-										{
-											tmp += out.substr( f, 1 );
-										}
-									}
-									out = tmp;
-								}
-								permz = out;
-							}
-
-							if( c === 0 && data[a].Type == 'Directory' )
-							{
-								str += '<div class="Container">' + PadList( fnam + '/', 30 ) + ' ' + PadList( 'Dir', 13, 'right' ) + '&nbsp; ' + permz + ' &nbsp;' + date + "</div>";
-							}
-							else if ( c == 1 && data[a].Type != 'Directory' )
-							{
-								str += '<div class="File">' + PadList( fnam, 30 ) + ' ' + PadList( humanFilesize( data[a].Filesize ), 13, 'right' ) + '&nbsp; ' + permz + ' &nbsp;' + date + "</div>";
-							}
-						}
-					}
-					return dcallback( true, { response: str } );
-				}
-				// We have empty list
-				else if( data )
-				{
-					return dcallback( false, { response: 'Empty directory.' } );
-				}
-				// Error never should be here.
-				else
-				{
-					return dcallback( false, { response: 'Invalid path.' } );
-				}
-				return dcallback( false, { response: 'Invalid path.' } );
-			}, { details: true } );
-		}
-		else if( cmd[0] == 'dir' )
-		{
-			var path = ( typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
-
-			if( path.indexOf( ':' ) < 0 )
-			{
-				var cp = t.currentPath;
-				var ssign = cp.substr( cp.length - 1 );
-				path = t.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
-			}
-			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
-				path += '/';
-
-			path = path.split( '<!--space--!>' ).join( ' ' );
-
-			this.getDirectory( path, function( doorItem, data )
-			{
-				if( data && data.length )
-				{
-					return dcallback( data );
-				}
-				// We have empty list
-				else if( data )
-				{
-					return dcallback( false, { response: 'Empty directory.' } );
-				}
-				// Error never should be here.
-				else
-				{
-					return dcallback( false, { response: 'Invalid path.' } );
-				}
-				return dcallback( false );
-			} );
-		}
-		// Flush variables
-		else if( cmd[0] == 'flush' )
-		{
-			this.variables = [];
-			dcallback( true, { flush: true } );
-		}
-		else if( cmd[0] == 'endcli' || cmd[0] == 'exit' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Endcli/Exit is not authorised by host.' } );
-
-			FriendDOS.delSession( this.uniqueId );
-			return dcallback( true, 'quit' );
-		}
-		else if( cmd[0] == 'cli' || cmd[0] == 'newcli' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Cli/Newcli is not authorised by host.' } );
-
-			apiWrapper( { data: JSON.stringify( {
-				applicationName: this.app.applicationName,
-				applicationId: this.app.applicationId,
-				type: 'system',
-				command: 'executeapplication',
-				executable: 'Shell',
-				fin_args: ''
-			} ) } );
-			return dcallback( true, { response: 'New shell launched.' } );
-		}
-		else if( cmd[0] == 'status' )
-		{
-			apiWrapper( { data: JSON.stringify( {
-				applicationName: this.app.applicationName,
-				applicationId: this.app.applicationId,
-				type: 'system', command: 'listapplications', callbackId: addWrapperCallback( dcallback )
-			} ) } );
-			return;
-		}
-		else if( cmd[0] == 'kill' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Kill is not authorised by host.' } );
-
-			apiWrapper( { data: JSON.stringify( {
-				applicationName: this.app.applicationName,
-				applicationId: this.app.applicationId,
-				type: 'system', command: 'kill', appName: cmd[1], callbackId: addWrapperCallback( dcallback )
-			} ) } );
-			return dcallback( false, { response: 'Killed ' + cmd[1] + '.' } );
-		}
-		else if( cmd[0] == 'install' )
-		{
-			if ( this.restrictedPath )
-				return dcallback( false, { response: 'Install is not authorised by host.' } );
-
-			if( cmd.length <= 1 )
-			{
-				return dcallback( false, 'Please tell me which application you wish to install.' );
-			}
-			else
-			{
-				// We are installing a friend package
-				if( cmd[1] == 'package' && cmd.length == 3 )
-				{
-					var p = cmd[2];
-					if( p.indexOf( ':' ) <= 0 )
-						p = this.currentPath + p;
-					
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e != 'ok' )
-						{
-							dcallback( false, { response: 'Failed to install package ' + cmd[2] } );
-						}
-						else
-						{
-							dcallback( true, { response: 'The package, ' + cmd[2] + ', was successfully installed.' } );
-						}
-					}
-					m.execute( 'installpackage', { path: p } );
-				}
-				else
-				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							return dcallback( true, 'Installed or upgraded in the future.' );
-						}
-						else
-						{
-							return dcallback( false, 'Failed to install ' + cmd[1] + '.' );
-						}
-					}
-					m.execute( 'install', { application: cmd[1] } );
-				}
-			}
-		}
-		else if( cmd[0] == 'break' )
-		{
-			apiWrapper( { data: JSON.stringify( {
-				applicationName: this.app.applicationName,
-				applicationId: this.app.applicationId,
-				type: 'system', command: 'break', appNum: cmd[1], callbackId: addWrapperCallback( dcallback )
-			} ) } );
-			// TODO: Find out why callback by callbackId doesn't work on 'break'
-			dcallback( true );
-		}
-		else if( cmd[0] == 'execute' )
-		{
-			if( cmd.length > 1 && cmd[1].substr( cmd[1].length - 4, 4 ).toLowerCase() == '.run' )
-			{
-				var fname = cmd[1];
-				if( fname.indexOf( ':' ) < 0 )
-				{
-					fname = t.currentPath + fname;
-				}
-				var tt = this;
-				var f = new File( fname );
-				f.onLoad = function( data )
-				{
-					tt.parseShellScript( data, dcallback );
-				}
-				f.load();
-			}
-			return dcallback( false, 'Could not execute script ' + cmd[1] );
-		}
-		else if( cmd[0] == 'echo' && cmd.length > 1 )
-		{
-			// TODO: Support pipes to other destinations
-			return dcallback( true, { response: this.parseVariables( cmd[1] ).split( '<!--space--!>' ).join( ' ' ) } );
-		}
-		else if( cmd[0] == 'input' )
-		{
-			if( cmd[1] == 'on' )
-			{
-				this.input = null;
-				return dcallback( false, { input: 'on' } );
-			}
-			else if( cmd[1] == 'off' )
-			{
-				this.input = 'off';
-				return dcallback( false, { input: 'off' } );
-			}
-			return dcallback( false );
-		}
-		else if( cmd[0] == 'wait' )
-		{
-			time = 0;
-			if( parseInt( cmd[1] ) > 0 )
-				time = parseInt( cmd[1] );
-			return setTimeout( function()
-			{
-				dcallback();
-			}, time );
-		}
-		else if( cmd[0] == 'type' )
-		{
-			if( cmd.length == 2 )
-			{
-				var p = cmd[1];
-				if( p.indexOf( ':' ) <= 0 )
-					p = this.currentPath + p;
-
-				var f = new File( p );
-				f.onLoad = function( data )
-				{
-					dcallback( false, { response: data.split( "\n" ).join( "<br>" ) } );
-				}
-				f.load();
-			}
-			else
-			{
-				dcallback( false, { response: 'Usage: cat filename' } );
-			}
-		}
-		// Connect devices for replication
-		else if( cmd[0] == 'unify' )
-		{
-			dcallback( false, { response: 'Please wait for this feature!' } );
-		}
-		// Assign a path to virtual device
-		else if( cmd[0] == 'assign' )
-		{
-			var mode = 'new';
-
-			if( cmd.length >= 2 )
-			{
-				var path = cmd[1];
-				var assign = cmd[2];
-
-				for( a = 2; a < cmd.length; a++ )
-				{
-					var cm = cmd[a].toLowerCase();
-					if( cm == 'add' ) mode = 'add';
-					if( ( cm == 'to' || cm == 'from' ) && a+1 < cmd.length )
-					{
-						assign = cmd[ a+1 ];
-						a++;
-						continue;
-					}
-					if( cm == 'remove' ) mode = 'remove';
-					if( cmd[a].indexOf( ':' ) > 0 )
-						assign = cmd[a];
-				}
-
-				// Keep the whole path!
-				if( path.indexOf( ':' ) < 0 )
-					path = t.currentPath + path;
-
-				if( path.indexOf( ':' ) <= 0 || assign.indexOf( ':' ) <= 0 )
-				{
-					this.lastErrorMessage = 'Could not understand your assign syntax as there was no valid path and assign drive.';
-					return dcallback( false, { response: 'Unknown assign syntax.' } );
-				}
-
-				// Let us validate
-				if( path.indexOf( ':' ) > 0 && assign.indexOf( ':' ) > 0 && assign.split( ':' )[1].length <= 0 && mode != 'remove' )
-				{
-					// Let's check the path! (must be a directory or volume)
-					var lch = path.substr( path.length - 1, 1 );
-					if( lch != '/' && lch != ':' ) path += '/';
-					t.getDirectory( path, function( directory, children )
-					{
-						if( directory && directory.Type && ( directory.Type == 'Directory' || directory.Type == 'Volume' ) )
-						{
-							var m = new Module( 'system' );
-							m.onExecuted = function( e, d )
-							{
-								if( e == 'ok' )
-								{
-									mstr = mode == 'add' ? 'added' : 'assigned';
-									dosobj.execute( 'mount ' + assign, function()
-									{
-										dcallback( true, { response: 'Path ' + path + ' ' + mstr + ' to ' + assign + '.' } );
-									} );
-								}
-								else
-								{
-									return dcallback( false, { response: 'Assigning ' + path + ' to ' + assign + ' failed.' } );
-								}
-							}
-							m.execute( 'assign', {
-								path: path,
-								assign: assign,
-								mode: mode
-							} );
-						}
-						else
-						{
-							return dcallback( false, { response: 'Failed to find assign ' + path + '...' } );
-						}
-					} );
-					return;
-				}
-				else if( mode == 'remove' )
-				{
-					var assignPath = path;
-					if( assign.indexOf( ':' ) > 0 )
-						assignPath = assign;
-
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e == 'ok' )
-						{
-							dosobj.execute( 'unmount ' + assignPath, function()
-							{
-								return dcallback( true, { response: 'Assign ' + assignPath + ' removed.' } );
-							} );
-							return;
-						}
-						else
-						{
-							return dcallback( false, { response: 'Failed to remove assign ' + assignPath + '..' } );
-						}
-					}
-					m.execute( 'assign', {
-						assign: assignPath,
-						mode: mode
-					} );
-				}
-				else
-				{
-					dcallback( true, { response: 'Assign syntax error.' } );
-				}
-			}
-			// Just give a list
-			else
-			{
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e == 'fail' )
-					{
-						return dcallback( true, { response: 'No available assign devices.' } );
-					}
-					var list = JSON.parse( d );
-					var out = '';
-					for( var y = 0; y < list.length; y++ )
-					{
-						out += "&nbsp;&nbsp;" + list[y].Name + ":" + ( list[y].Mounted == 1 ? " mounted..." : "<br>" );
-					}
-
-					return dcallback( true, { response: 'List of assigned devices:' + "<br><br>" + out } );
-				}
-				m.execute( 'assign' );
-			}
 		}
 		else if( cmd[0] == '' )
 		{
@@ -3406,15 +1775,38 @@ window.Shell = function( appObject )
 				//	executable: command,
 				//	fin_args: args
 				//} );
-				return dcallback( false, 'Command not found.' );
+				return dcallback( false, { response: 'Command not found.' } );
 			}
 
+			// Construct path var
+			var path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
+
+			// We're just entering a path
+			if( cmd.length == 1 && cmd[0].indexOf( ':' ) >= 0 )
+			{
+				path = cmd[0];
+				if( path.charAt( path.length - 1 ) != ':' && path.charAt( path.length - 1 ) != '/' )
+				{
+					// Subdir or...
+					var s = path.indexOf( '/' );
+					if( s > 0 )
+					{
+						path = path.split( '/' );
+						path.pop();
+						path = path.join( '/' );
+					}
+					// ...root
+					else
+					{
+						path = path.split( ':' )[0] + ':';
+					}
+				}
+			}
+			
 			// Try to see if there is an executable in the current directory
 			var dirs = false;
 			var door = false;
 			var tt = this;
-
-			var path = ( cmd[0] == 'cd' && typeof(cmd[1]) != 'undefined' && cmd[1].length ) ? cmd[1] : this.currentPath;
 
 			// Check dormant first!
 			// TODO: Make uniform!
@@ -3425,6 +1817,13 @@ window.Shell = function( appObject )
 				{
 					// Use standard doors
 					var door = ( new Door() ).get( path );
+					
+					var filename = cmd[0];
+					if( filename.indexOf( '/' ) > 0 || filename.indexOf( ':' ) > 0 )
+					{
+						filename = cmd[0].indexOf( '/' ) > 0 ? cmd[0].split( '/' ).pop() : cmd[0].split( ':' ).pop();
+					}
+					
 					door.getIcons( false, function( data )
 					{
 						if( data.length )
@@ -3433,8 +1832,19 @@ window.Shell = function( appObject )
 							{
 								var f = data[a].Filename ? data[a].Filename : data[a].Title;
 								if( !f ) continue;
-								if( f.toLowerCase() == cmd[0] )
+								
+								// Match it!
+								if( data[a].Type == 'Directory' && filename == f.toLowerCase() )
 								{
+									return dosobj.execute( 'cd ' + cmd[0], ecallback );
+								}
+								else if( f.toLowerCase() == cmd[0] )
+								{
+									if( data[a].Type == 'Directory' )
+									{
+										return dosobj.execute( 'cd ' + f, ecallback );
+									}
+									
 									var args = [];
 									for( var aa = 1; aa < cmd.length; aa++ )
 										args.push( cmd[aa].split( '<!--space--!>' ).join( ' ' ) );
@@ -3461,7 +1871,7 @@ window.Shell = function( appObject )
 												{
 													var str = '<strong>Commands:</strong><br><br>';
 													str += o.Commands.join( ', ' ) + '.';
-													dcallback( true, { response: str } );
+													
 												}
 												else
 												{
@@ -3509,7 +1919,7 @@ window.Shell = function( appObject )
 										m.execute( call, args );
 										return;
 									}
-
+									
 									var cid = addWrapperCallback( function( msg )
 									{
 										var resp = msg ? ( msg.response ? msg.response : msg ) : false;
@@ -3732,8 +2142,90 @@ window.Shell = function( appObject )
 	
 	// All Friend DOS commands hashmap
 	this.FriendDOSCommands = {
-		/*'access': function(){},
-		'add': function(){},*/
+		/*
+		'add': function(){},
+		'goto': function(){},
+		'increase': function(){},
+		'decrease': function(
+			
+		){},
+		'divide': function(){},
+		'multiply': function(){},
+		'subtract': function(){},
+		'stop': function(){},
+		'version': function(){},
+		'repeat': function(){},
+		'set': function(){},
+		*/
+
+		'access': function( args, callback )
+		{
+			if( args.length < 2 )
+			{
+				shell.lastErrorMessage = 'The access command needs a filename to get the access privileges from.';
+				return callback( false, { response: "Not enough fin_args." } );
+			}
+			if( args[ 1 ].indexOf( ':' ) < 0 ) 
+				args[ 1 ] = shell.currentPath + args[ 1 ];
+			shell.fileExists( args[ 1 ], function( result, data )
+			{
+				if( result )
+				{
+					var nl = new Library( 'system.library' );
+					nl.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							shell.lastErrorMessage = 'Your last call succeeded.';
+
+							d = JSON.parse( d );
+
+							var str2ar = function( str ){ var o = []; for( var a = 0; a < str.length; a++ ) o.push( str[a] ); return o };
+							var res = { user: '', group: '', others: '' };
+							var combined = [ '-', '-', '-', '-', '-' ];
+							var a = 0;
+							for( ; a < d.length; a++ )
+							{
+								if( !d[ a ].access ) continue;
+								d[ a ].access = str2ar( d[ a ].access ); // To string!
+								if( !res[ d[ a ].type ] )
+								{
+									// Copy
+									res[ d[ a ].type ] = str2ar( d[ a ].access.join( '' ).toLowerCase() );
+								}
+								else
+								{
+									// Merge
+									for( var c = 0; c < res[ d[ a ].type ].length; c++ )
+									{
+										if( d[ a ].access[ c ] != '-' && res[ d[ a ].type ][ c ] == '-' )
+											res[ d[ a ].type ][ c ] = d[ a ].access[ c ].toLowerCase();
+									}
+								}
+								// Merge with combined
+								for( var b = 0; b < d[ a ].access.length; b++ )
+								{
+									if( d[ a ].access[ b ] != '-' && combined[ b ] == '-' )
+										combined[ b ] = d[ a ].access[ b ];
+								}
+							}
+							var out = '';
+							for( a in res )
+								out += a + ': ' + ( typeof( res[ a ] ) == 'object' ? res[a].join( '' ) : '-----' ) + "&nbsp;&nbsp;&nbsp;&nbsp;";
+							out += '<br>combined: ' + combined.join( '' ).toLowerCase();
+
+							return callback( true, { response: "Access privileges found:<br>" + out } );
+						}
+						shell.lastErrorMessage = 'Could not get a list of access privileges from this file.';
+						return callback( false, { response: "This file is unprotected." } );
+					}
+					nl.execute( 'file/access', { path: args[ 1 ] } );
+					return;
+				}
+				shell.lastErrorMessage = 'The file you entered does not exist on disk.';
+				return callback( false, { response: "The file does not exist." } );
+			} );
+		},
 		
 		// Alias a command with another command
 		'alias': function( args, callback )
@@ -3749,35 +2241,934 @@ window.Shell = function( appObject )
 				return callback( true, { response: 'Command ' + args[1] + ' now points to ' + args[2] + '.' } );
 			}
 			return callback( false, { response: 'Usage: alias {alias} {command}' } );
-		}, /*
-		'assign': function(){},
-		'break': function(){},
-		'cat': function(){},
-		'cd': function(){},
-		'clear': function(){},
-		'copy': function(){},
-		'date': function(){},
-		'decrease': function(){},
-		'delete': function(){},
-		'dir': function(){},
-		'divide': function(){},
-		'echo': function(){},
-		'engage': function(){},
-		'enter': function(){},
-		'execute': function(){},
-		'flush': function(){},
-		'goto': function(){},
-		'help': function(){},
-		'increase': function(){},
-		'infoget': function(){},
-		'infoset': function(){},
-		'info': function(){},
-		'kill': function(){},
-		'launch': function(){},
-		'leave': function(){},
-		'list': function(){},
-		'ls': function(){},*/
-		
+		}, 
+		'assign': function( args, callback )
+		{
+			var mode = 'new';
+
+			if( args.length >= 2 )
+			{
+				var path = args[1];
+				var assign = args[2];
+
+				for( a = 2; a < args.length; a++ )
+				{
+					var cm = args[a].toLowerCase();
+					if( cm == 'add' ) mode = 'add';
+					if( ( cm == 'to' || cm == 'from' ) && a+1 < args.length )
+					{
+						assign = args[ a+1 ];
+						a++;
+						continue;
+					}
+					if( cm == 'remove' ) mode = 'remove';
+					if( args[a].indexOf( ':' ) > 0 )
+						assign = args[a];
+				}
+
+				// Keep the whole path!
+				if( path.indexOf( ':' ) < 0 )
+					path = shell.currentPath + path;
+
+				if( path.indexOf( ':' ) <= 0 || assign.indexOf( ':' ) <= 0 )
+				{
+					shell.lastErrorMessage = 'Could not understand your assign syntax as there was no valid path and assign drive.';
+					return callback( false, { response: 'Unknown assign syntax.' } );
+				}
+
+				// Let us validate
+				if( path.indexOf( ':' ) > 0 && assign.indexOf( ':' ) > 0 && assign.split( ':' )[1].length <= 0 && mode != 'remove' )
+				{
+					// Let's check the path! (must be a directory or volume)
+					var lch = path.substr( path.length - 1, 1 );
+					if( lch != '/' && lch != ':' ) path += '/';
+					shell.getDirectory( path, function( directory, children )
+					{
+						if( directory && directory.Type && ( directory.Type == 'Directory' || directory.Type == 'Volume' ) )
+						{
+							var m = new Module( 'system' );
+							m.onExecuted = function( e, d )
+							{
+								if( e == 'ok' )
+								{
+									mstr = mode == 'add' ? 'added' : 'assigned';
+									shell.execute( 'mount ' + assign, function()
+									{
+										callback( true, { response: 'Path ' + path + ' ' + mstr + ' to ' + assign + '.' } );
+									} );
+								}
+								else
+								{
+									return callback( false, { response: 'Assigning ' + path + ' to ' + assign + ' failed.' } );
+								}
+							}
+							m.execute( 'assign', {
+								path: path,
+								assign: assign,
+								mode: mode
+							} );
+						}
+						else
+						{
+							return callback( false, { response: 'Failed to find assign ' + path + '...' } );
+						}
+					} );
+				}
+				else if( mode == 'remove' )
+				{
+					var assignPath = path;
+					if( assign.indexOf( ':' ) > 0 )
+						assignPath = assign;
+
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							shell.execute( 'unmount ' + assignPath, function()
+							{
+								return callback( true, { response: 'Assign ' + assignPath + ' removed.' } );
+							} );
+							return;
+						}
+						else
+						{
+							return callback( false, { response: 'Failed to remove assign ' + assignPath + '..' } );
+						}
+					}
+					m.execute( 'assign', {
+						assign: assignPath,
+						mode: mode
+					} );
+				}
+				else
+				{
+					callback( true, { response: 'Assign syntax error.' } );
+				}
+			}
+			// Just give a list
+			else
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'fail' )
+					{
+						return callback( true, { response: 'No available assign devices.' } );
+					}
+					var list = JSON.parse( d );
+					var out = '';
+					for( var y = 0; y < list.length; y++ )
+					{
+						out += "&nbsp;&nbsp;" + list[y].Name + ":" + ( list[y].Mounted == 1 ? " mounted..." : "<br>" );
+					}
+
+					return callback( true, { response: 'List of assigned devices:' + "<br><br>" + out } );
+				}
+				m.execute( 'assign' );
+			}
+		},
+		'break': function( args, callback )
+		{
+			apiWrapper( { data: JSON.stringify( {
+				applicationName: shell.app.applicationName,
+				applicationId: shell.app.applicationId,
+				type: 'system', command: 'break', appNum: parseInt( args[1] ), callbackId: addWrapperCallback( callback )
+			} ) } );
+			callback( true, { response: 'Broke process ' + args[1] + '.' } );
+		},
+		'cat': function( args, callback )
+		{
+			if( args.length == 2 )
+			{
+				var p = args[ 1 ];
+				if( p.indexOf( ':' ) <= 0 )
+					p = shell.currentPath + p;
+
+				// Get a door object and get file information about image
+				var pp = p.indexOf( ':' );
+				pp = p.substr(0, pp + 1);
+				var d = new Door( pp );
+				d.dosAction( 
+					'file/info', 
+					{ path: p },
+					function( data )
+					{
+						var res = data.split( "<!--separate-->" );
+						if( res[0] != "ok" )
+						{
+							callback( false, { response: 'File not found.' } )
+							return false;
+						}
+						var d = JSON.parse( res[1] );
+						if ( d.Filesize > 1024 * 100 )
+						{
+							callback( false, { response: 'File too large: ' + d.Filesize / 1024 +' kb.' } );
+							return false;
+						}
+						var f = new File( p );
+						f.onLoad = function( data )
+						{
+							callback( false, { response: data.split( "\n" ).join( "<br>" ) } );
+						}
+						f.load();
+					}
+				);
+			}
+			else
+			{
+				callback( false, { response: 'Usage: cat filename' } );
+			}
+		},
+		'output': function( args, callback )
+		{
+			this[ 'cat' ]( args, callback );
+		},
+		'cd': function( args, callback )
+		{
+			if( args.length <= 1 || ( args.length > 1 && !args[1].length ) )
+			{
+				return callback( true );
+			}
+
+			// Get path string (and fix spaces)
+			var str = args[1];
+			if( args.length > 2 )
+			{
+				var args2 = [];
+				for( a = 1; a < args.length; a++ )
+					args2.push( args[a].split( '<!--space--!>' ).join( ' ' ) );
+				str = args2.join( ' ' );
+			}
+
+			var fullPath = Trim( str.split( '<!--space--!>' ).join( ' ' ), 'left' );
+
+			// Go to root
+			if( fullPath == ':' )
+			{
+				fullPath = shell.currentPath.split( ':' )[0] + ':';
+			}
+
+			// Go to parent
+			if( fullPath.substr( 0, 1 ) == '/' && shell.currentPath )
+			{
+				var tmp = shell.currentPath;
+				
+				// Remove trailing forward slash
+				if( tmp.substr( tmp.length - 1, 1 ) == '/' )
+					tmp = tmp.substr( 0, tmp.length - 1 );
+				while( fullPath.substr( 0, 1 ) == '/' )
+				{
+					// Split up a folder
+					if( tmp.indexOf( '/' ) > 0 )
+					{
+						tmp = tmp.split( '/' );
+						tmp.pop();
+						tmp = tmp.join( '/' );
+					}
+					// Toplevel
+					else if( tmp.indexOf( ':' ) > 0 )
+					{
+						tmp = tmp.split( ':' )[0] + ':';
+					}
+					if( fullPath.length > 1 )
+					{
+						fullPath = fullPath.substr( 1, fullPath.length - 1 );
+					}
+					else
+					{ 
+						break;
+					}
+				}
+				fullPath = tmp;
+			}
+
+			// Fix path
+			if( fullPath.indexOf( ':' ) < 0 )
+			{
+				fullPath = shell.currentPath;
+				var ll = fullPath.substr( fullPath.length - 1, 1 );
+				if( ll != ':' && ll != '/' )
+					fullPath += '/';
+				fullPath = fullPath + str.split( '<!--space--!>' ).join( ' ' );
+				ll = fullPath.substr( fullPath.length - 1, 1 );
+				if( ll != '/' )
+					fullPath += '/';
+			}
+			// Not a door volume name
+			else if ( fullPath.substr( fullPath.length - 1, 1 ) != ':' )
+			{
+				var ll = fullPath.substr( fullPath.length - 1, 1 );
+				if( ll != '/' )
+					fullPath += '/';
+			}
+
+
+			// No volume written by name!
+			// TODO: enter must imply mount or running a dormant app with a callback??
+			if( args[0] == 'enter' )
+			{
+				if( args.length != 2 )
+				{
+					return callback( true );
+				}
+				else if( args[1].indexOf( ':' ) > 0 || args[1].indexOf( '/' ) > 0 )
+				{
+					return callback( true );
+				}
+				fullPath = args[1] + ':' + i18n('i18n_directory_Functions') + '/';
+				if( shell.currentPath )
+				{
+					shell.previousPath = shell.currentPath;
+				}
+			}
+
+			// First check dormant
+			// TODO: Implement "evaluate path"
+			shell.checkDormantDoors( fullPath, function( dirs )
+			{
+				// Use standard doors
+				if( !dirs || ( !dirs && !dirs.length ) )
+				{
+					var door = ( new Door() ).get( fullPath );
+					door.getIcons( false, function( data, path )
+					{
+						if( typeof( data ) == 'object' && path )
+						{
+							// Restricted path (for use with FriendNetwork)
+							if ( shell.restrictedPath )
+								if ( fullPath.indexOf( shell.restrictedPath ) < 0 )
+									return callback( false, { response: 'Path is restricted by host to ' + shell.restrictedPath } );
+
+							shell.currentPath = path;
+						}
+						// Error never should be here.
+						else
+						{
+							return callback( false, { response: 'Could not change directory.' } );
+						}
+						callback( false, { path: path } );
+					} );
+				}
+				else
+				{
+					// Restricted path (for use with FriendNetwork)
+					if ( shell.restrictedPath )
+						if ( fullPath.indexOf( shell.restrictedPath ) < 0 )
+							return callback( false, { response: 'Path is restricted by host to ' + shell.restrictedPath } );
+
+					// TODO: Fix that these are arrays!
+					var count = 0;
+					for( a in dirs ) count++;
+					if( dirs || count > 0 )
+					{
+						shell.currentPath = fullPath;
+					}
+					else
+					{
+						return callback( false, { response: 'Could not change directory.' } );
+					}
+					callback( false, { path: fullPath } );
+				}
+			} );
+		},
+		'enter': function( args, callback )
+		{
+			this[ 'cd' ]( args, callback );
+		},		
+		'clear': function( args, callback )
+		{
+			// TODO: Do we have an internal buffer to clear?
+			return callback( 'clear' );			
+		},		
+		'copy': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Copy is not authorised by host.' } );
+
+			if( args.length >= 3 )
+			{
+				shell.terminate = true;
+
+				var start = 1;
+				var recursive = false;
+
+				// check recursive
+				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'copy all' )
+				{
+					start++;
+					recursive = true;
+				}
+
+				var src = args[ start ];
+
+				if( src.indexOf( ':' ) < 0 ) src = shell.currentPath + src;
+
+				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+
+				if( dst.indexOf( ':' ) < 0 ) dst = shell.currentPath + dst;
+
+				// 'all' on the end
+				if( !recursive ) recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
+
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: false }, function( result, done )
+				{
+					if( !done ) done = false;
+					callback( false, { response: result, done: done } );
+				} );
+			}
+			else
+			{
+				callback( false, { response: 'Usage: copy (all) source:path/or/file (to) destination:path/' } );
+			}
+		},		
+		'date': function( args, callback )
+		{
+			var td = new Date();
+			callback( true, {
+				response: td.getFullYear() + '-' +
+				StrPad( ( td.getMonth() + 1 ), 2, '0' ) + '-' +
+				StrPad( td.getDate(), 2, '0' ) + ' ' +
+				StrPad( td.getHours(), 2, '0' ) + ':' +
+				StrPad( td.getMinutes(), 2, '0' ) + ':' +
+				StrPad( td.getSeconds(), 2, '0' )
+			} );
+		},
+		'delete': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Delete is not authorised by host.' } );
+
+			shell.terminate = true;
+
+			if( args.length >= 2 )
+			{
+				var start = 1;
+				var recursive = false;
+				var notrash = false;
+
+				// check recursive (if we have at least three fin_args)
+				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'delete all' && typeof( args[ 2 ] ) != 'undefined' )
+				{
+					start++;
+					recursive = true;
+				}
+
+				// Find source path
+				var src = args[ start++ ];
+				src = src.split( '&nbsp;' ).join( ' ' ).split( '<!--space--!>' ).join( ' ' );
+				if( src.indexOf( ':' ) < 0 ) src = shell.currentPath + src;
+
+				// Find other keywords after filename
+				for( ; start < args.length; start++ )
+				{
+					if( args[ start ] == 'all' )
+						recursive = true;
+					if( args[ start ] == 'notrash' )
+						notrash = true;
+				}
+
+				// Finally delete
+				FriendDOS.deleteFiles( src, { recursive: recursive, notrash: notrash }, function( result )
+				{
+					callback( false, { response: result, done: true } );
+				} );
+			}
+		},
+		'dir': function( args, callback )
+		{
+			var path = ( typeof( args[ 1 ] ) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
+ 
+			if( path.indexOf( ':' ) < 0 )
+			{
+				var cp = shell.currentPath;
+				var ssign = cp.substr( cp.length - 1 );
+				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
+			}
+			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
+				path += '/';
+
+			path = path.split( '<!--space--!>' ).join( ' ' );
+
+			shell.getDirectory( path, function( doorItem, data )
+			{
+				if( data && data.length )
+				{
+					return callback( data );
+				}
+				// We have empty list
+				else if( data )
+				{
+					return callback( false, { response: 'Empty directory.' } );
+				}
+				// Error never should be here.
+				else
+				{
+					return callback( false, { response: 'Invalid path.' } );
+				}
+				return callback( false );
+			} );
+		},	
+		'echo': function( args, callback )
+		{
+			// TODO: Support pipes to other destinations
+			return callback( true, { response: shell.parseVariables( args[ 1 ] ).split( '<!--space--!>' ).join( ' ' ) } );
+		},
+		// TODO: test in real!
+		'engage': function( args, callback )
+		{
+			var preposition = 'with';
+			var subject = false;
+			var number = -1;
+			for( b = 1; b < args.length; b++ )
+			{
+				if( args[ b ] == 'with' )
+					preposition = args[ b ];
+				else if( !isNaN( args[ b ] ) )
+					number = parseInt( args[ b ] );
+				else subject = args[ b ];
+			}
+
+			// Add number specification
+			if( subject && number > 0 ) subject = subject + ' ' + number;
+
+			if( subject && preposition )
+			{
+				// Check if subject exists!
+				var candidates = [];
+				var appObjects = [];
+				var i = 0;
+				for( a in Workspace.applications )
+				{
+					i++;
+					var appNr = Workspace.applications[a].applicationName + ' ' + i;
+					if( Workspace.applications[a].applicationName == subject || subject == appNr )
+					{
+						candidates.push( Workspace.applications[a].applicationName );
+						appObjects.push( Workspace.applications[a] );
+					}
+				}
+				if( candidates.length > 1 )
+				{
+					for( a = 0; a < candidates.length; a++ )
+					{
+						candidates[a] += ' ' + ( 1 + a );
+					}
+					return callback( false, { response: 'Please specify which target: "' + candidates.join( '", "' ) + '".' } );
+				}
+				// Found the target
+				else if( candidates.length == 1 )
+				{
+					nsp = '';
+					if( number > 0 ) nsp = ' (' + number + ').';
+					shell.pipe = appObjects[0];
+
+					// Tell it we're engaging!
+					return shell.execute( 'engage', callback );
+				}
+			}
+			return callback( false, { response: 'Could not engage with ' + ( subject ? subject : 'unknown target.' ) } );
+		},
+		'execute': function( args, callback )
+		{
+			if( args.length > 1 && args[ 1 ].substr( args[ 1 ].length - 4, 4 ).toLowerCase() == '.run' )
+			{
+				var fname = args[ 1 ];
+				if( fname.indexOf( ':' ) < 0 )
+				{
+					fname = shell.currentPath + fname;
+				}
+				var f = new File( fname );
+				f.onLoad = function( data )
+				{
+					shell.parseShellScript( data, callback );
+				}
+				f.load();
+			}
+			return callback( false, 'Could not execute script ' + args[ 1 ] );
+		},		
+		'flush': function( args, callback )
+		{
+			shell.variables = [];
+			callback( true, { flush: true } );
+		},
+		'help': function( args, callback )
+		{
+			var commands = [
+				'ls', 'info', 'list', 'dir', 'cat', 'type', 'why', 'copy', 'delete', 'makedir', 'tinyurl',
+				'protect', 'access', 'execute', 'launch', 'output', 'infoget', 'infoset', 'wait',
+				'rename', /*'mind',*/ 'enter', 'engage', 'date', 'clear', 'flush', 'cd', 'set', 'echo',
+				'say', 'leave', 'status', 'break', 'kill', 'assign', 'mount', 'unmount', 'deletemount', 'mountlist',
+				'repeat', /*'on',*/ 'increase', 'decrease', 'multiply', 'divide', 'add', 'subtract',
+				'stop', 'version', 'goto', 'help'
+			].sort();
+			if ( args.length == 1 )
+			{
+				callback( false, { command: 'help', text: commands.join( ', ' ) } );
+			}
+			else if ( args.length == 2 )
+			{
+				for ( var a = 0; a < commands.length; a++ )
+				{
+					if ( commands[ a ] == args[ 1 ] )
+					{
+						return callback( false, { command: 'help', name: args[ 1 ] } );
+					}
+				}
+			}
+			else
+			{
+				callback( false, { response: 'Syntax error.' } );
+			}
+			switch( args[ 1 ] )
+			{
+				default:
+					callback( true, { response: 'Friend DOS has the following commands available:<br><br>' + commands.join( ', ' ) + '<br><br>Please try "help {commandname}".' } );
+					break;
+			}
+		},		
+		// TODO: infoget cannot find information about StdAfx.h
+		'infoget': function( args, callback )
+		{
+			if( args.length < 2 )
+			{
+				return callback( false, { response: "Could not get info. Please specify file." } );
+			}
+			var o = new Object();
+
+			var path = args[ 1 ];
+			if( path.indexOf( ':' ) < 0 )
+			{
+				var cp = shell.currentPath;
+				var ssign = cp.substr( cp.length - 1 );
+				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
+			}
+
+			var m = new Library( 'system.library' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' ) 
+				{
+					callback( false, { response: 'Infoget failed to get a workable result.' } );
+					return;
+				}
+
+				d = JSON.parse( d );
+
+				var fn = path.split( path.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
+				var info = false;
+
+				for( var a = 0; a < d.length; a++ )
+				{
+					if( d[a].Filename == fn )
+					{
+						info = d[a];
+						break;
+					}
+				}
+
+				if( !info )
+				{
+					return callback( false, { response: "File " + o.path + " does not exist.." } );
+				}
+
+				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
+					path += '/';
+
+				o.path = path.split( '<!--space--!>' ).join( ' ' );
+
+				if( typeof( args[ 2 ] ) != 'undefined' )
+					o.key = args[ 2 ];
+
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						return callback( true, { response: shell.generateOutputFromObjects( JSON.parse( d ) ) } );
+					}
+					return callback( false, { response: "Could not get info about " + o.path } );
+				}
+				l.execute( 'file/infoget', o );
+			}
+			m.execute( 'file/dir', { path: shell.currentPath } );
+		},		
+		// TODO: see with Hogne if this instruction is to be kept
+		'infoset': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Infoset is not authorised by host.' } );
+
+			if( args.length < 2 )
+			{
+				return callback( false, { response: "Could not get info. Please specify file." } );
+			}
+			var o = new Object();
+
+			var path = args[ 1 ];
+			if( path.indexOf( ':' ) < 0 )
+			{
+				var cp = shell.currentPath;
+				var ssign = cp.substr( cp.length - 1 );
+				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
+			}
+
+			var m = new Library( 'system.library' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' ) return;
+
+				d = JSON.parse( d );
+
+				var np = path;
+				if( np.substr( np.length - 1, 1 ) == '/' )
+					np = np.substr( 0, np.length - 1 );
+				var fn = np.split( np.indexOf( '/' ) > 0 ? '/' : ':' ).pop();
+				var info = false;
+
+				for( var a = 0; a < d.length; a++ )
+				{
+					if( d[a].Filename == fn )
+					{
+						info = d[a];
+						break;
+					}
+				}
+
+				if( !info )
+				{
+					return callback( false, { response: "File " + o.path + " does not exist.." } );
+				}
+
+				if( info && info.Type == 'Directory' && path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
+					path += '/';
+
+				o.path = path.split( '<!--space--!>' ).join( ' ' );
+
+				// Get args
+				var ind = args[ 2 ].indexOf( '=' );
+				if( ind < 0 )
+					return callback( false, { response: "Could not set info. Please specify file, key and value." } );
+				o.key = args[ 2 ].substr( 0, ind );
+				o.value = args[ 2 ].substr( ind + 1, args[ 2 ].length - ind );
+
+				// Execute!
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						return callback( true, { response: "Info was set." } );
+					}
+					return callback( false, { response: "Could not set info on " + o.path } );
+				}
+				l.execute( 'file/infoset', o );
+			}
+			m.execute( 'file/dir', { path: shell.currentPath } );
+		},
+		'info': function( args, callback )
+		{
+			var path = args[ 1 ];
+			
+			if( !path || path.indexOf( ':' ) <= 0 )
+			{
+				var l = shell.currentPath.substr( shell.currentPath.length - 1 );
+				if( l == ':' )
+					path = shell.currentPath + path;
+				else if( l != '/' )
+					path = shell.currentPath + '/' + path;
+			}
+			if( path.indexOf( ':' ) <= 0 ) path = shell.currentPath;
+
+			FriendDOS.getFileInfo( path, function( e, d )
+			{
+				if( !e )
+				{
+					return callback( false, { response: 'Could not get file information.' } );
+				}
+				else
+				{
+					try
+					{
+						d = JSON.parse( d );
+						var output = '';
+						for( var z in d )
+						{
+							output += '<div class="Container">' + z + ': ';
+							switch( z )
+							{
+								default:
+									output += d[z];
+									break;
+							}
+							output += '</div>';
+						}
+						return callback( true, { response: output } );
+					}
+					catch( e )
+					{
+						return callback( false, { response: 'Could not parse file information.' } );
+					}
+				}
+			} );
+		},		
+		'kill': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Kill is not authorised by host.' } );
+
+			apiWrapper( { data: JSON.stringify( {
+				applicationName: shell.app.applicationName,
+				applicationId: shell.app.applicationId,
+				type: 'system', command: 'kill', appName: args[ 1 ], callbackId: addWrapperCallback( callback )
+			} ) } );
+			return callback( false, { response: 'Killed ' + args[ 1 ] + '.' } );
+		},		
+		'launch': function( args, callback )
+		{
+			if( args.length >= 2 )
+			{
+				function cbn( msg )
+				{
+					callback( msg.data, msg.error );
+				}
+				var args2 = '';
+				for( var z = 2; z < args.length; z++ )
+					args2 += ( z > 2 ? ' ' : '' ) + args[ z ];
+
+				return ExecuteApplication( args[ 1 ], args2, cbn );
+			}
+			return callback( true );
+		},
+		'leave': function( args, callback )
+		{
+			if( shell.previousPath )
+			{
+				// Restricted path (for use with FriendNetwork)
+				if ( shell.restrictedPath )
+					if ( shell.previousPath.indexOf( shell.restrictedPath ) < 0 )
+						return callback( false, { response: 'Host forbids to leave ' + shell.currentPath } );
+
+				// TODO: Perhaps have a history here!
+				var tp = shell.currentPath;
+				shell.currentPath = shell.previousPath;
+				shell.previousPath = tp;
+				return callback( false, { path: shell.currentPath } );
+			}
+			return callback( true );
+		},
+		'list': function( args, callback )
+		{
+			var path = ( typeof( args[ 1 ]) != 'undefined' && args[ 1 ].length ) ? args[ 1 ] : shell.currentPath;
+ 
+			if( path.indexOf( ':' ) < 0 )
+			{
+				var cp = shell.currentPath;
+				var ssign = cp.substr( cp.length - 1 );
+				path = shell.currentPath + ( ( ssign != ':' && ssign != '/' ) ? '/' : '' ) + path;
+			}
+			if( path.substr( path.length - 1, 1 ) != ':' && path.substr( path.length - 1, 1 ) != '/' )
+				path += '/';
+
+
+			path = path.split( '<!--space--!>' ).join( ' ' );
+
+			shell.getDirectory( path, function( doorItem, data )
+			{
+				// We got data
+				if( data && data.length )
+				{
+					var str = '';
+					var now = new Date();
+					now = now.getFullYear() + '-' + PadList( now.getMonth() + 1, 2, 'right', '0' )  + '-' + PadList( now.getDay(), 2, 'right', '0' ) + ' 00:00:00';
+					for( var c = 0; c <= 1; c++ )
+					{
+						for( var a = 0; a < data.length; a++ )
+						{
+							if( !data[a].DateCreated )
+								if( data[a].DateModified )
+									data[a].DateCreated = data[a].DateModified;
+							else
+								data[a].DateCreated = now;
+
+							var fnam = '';
+							if( data[a].Type != 'Directory' )
+							{
+								fnam = data[a].Filename ? data[a].Filename : data[a].Title;
+							}
+							else
+							{
+								fnam = data[a].Title ? data[a].Title : data[a].Filename;
+							}
+							var date = data[a].DateCreated.split( ' ' );
+							var today = ( new Date() ); today = today.getFullYear() + '-' + ( PadList( today.getMonth() + 1 + '', 2, 'right', '0', false ) ) + '-' + PadList( today.getDate() + '', 2, 'right', '0', false );
+							if( today == date[0] )
+								date[0] = i18n( 'i18n_today' );
+							date = PadList( date[0], 10, 'right', '&nbsp;', false ) + ' &nbsp;' + date[1];
+
+							var permz = '-----';
+							if( data[a].Permissions )
+							{
+								if( typeof( data[a].Permissions ) == 'string' )
+								{
+									permz = data[a].Permissions.toLowerCase();
+								}
+								else
+								{
+									permz = '*****'; // Not supported yet..
+								}
+
+								// Flatten permissions (user,group,others -> combined)
+								permz = permz.split( ',' );
+								var out = '-----';
+								for( var i = 0; i < permz.length; i++ )
+								{
+									var tmp = '';
+									for( var f = 0; f < permz[i].length; f++ )
+									{
+										if( out.substr( f, 1 ) == '-' && permz[i].substr( f, 1 ) != '-' )
+										{
+											tmp += permz[i].substr( f, 1 );
+										}
+										else
+										{
+											tmp += out.substr( f, 1 );
+										}
+									}
+									out = tmp;
+								}
+								permz = out;
+							}
+
+							if( c === 0 && data[a].Type == 'Directory' )
+							{
+								str += '<div class="Container">' + PadList( fnam + '/', 30 ) + ' ' + PadList( 'Dir', 13, 'right' ) + '&nbsp; ' + permz + ' &nbsp;' + date + "</div>";
+							}
+							else if ( c == 1 && data[a].Type != 'Directory' )
+							{
+								str += '<div class="File">' + PadList( fnam, 30 ) + ' ' + PadList( humanFilesize( data[a].Filesize ), 13, 'right' ) + '&nbsp; ' + permz + ' &nbsp;' + date + "</div>";
+							}
+						}
+					}
+					return callback( true, { response: str } );
+				}
+				// We have empty list
+				else if( data )
+				{
+					return callback( false, { response: 'Empty directory.' } );
+				}
+				// Error never should be here.
+				else
+				{
+					return callback( false, { response: 'Invalid path.' } );
+				}
+				return callback( false, { response: 'Invalid path.' } );
+			}, { details: true } );
+		},
+		'ls': function( args, callback )
+		{
+			this[ 'list' ]( args, callback );
+		},
 		// Create a new directory!
 		'makedir': function( args, callback )
 		{
@@ -3804,25 +3195,675 @@ window.Shell = function( appObject )
 				// TODO: Do some error handling
 				callback( true );
 			} );
-		}/*,
-		'mount': function(){},
-		'mountlist': function(){},
-		'multiply': function(){},
-		'output': function(){},
-		'protect': function(){},
-		'rename': function(){},
-		'repeat': function(){},
-		'say': function(){},
-		'set': function(){},
-		'status': function(){},
-		'stop': function(){},
-		'subtract': function(){},
-		'tinyurl': function(){},
-		'type': function(){},
-		'unmount': function(){},
-		'version': function(){},
-		'wait': function(){},
-		'why':function(){}*/
+		},
+		'mount': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Mount is not authorised by host.' } );
+
+			if( args.length < 2 || ( args.length == 2 && args[ 1 ].indexOf( ':' ) < 0 ) )
+			{
+				return callback( false, { response: 'Syntax error. Usage:<br>mount [disk:]<br>' } );
+			}
+			var l = new Library( 'system.library' );
+			l.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+				{
+					return callback( false, { response: 'Could not mount disk ' + args[ 1 ] + '<br>' } );
+				}
+				Workspace.getMountlist();
+				return callback( true, { response: 'Disk ' + args[ 1 ] + ' mounted.<br>' } );
+			}
+			l.execute( 'device/mount', { devname: args[ 1 ], sessionid: Workspace.sessionid } );
+		},
+		'mountlist': function( args, callback )
+		{
+			if( args.length > 2 || ( args.length == 2 && args[ 1 ] != 'unmounted' ) )
+				return callback( false, { response: 'Syntax error. Usage:<br>mountlist [unmounted]<br>' } );
+
+			if( args.length == 2 && args[ 1 ] == 'unmounted' )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e != 'ok' )
+					{
+						return callback( false, { response: 'No unmounted disks available.' } );
+					}
+					var rows = JSON.parse( d );
+					var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+						        PadList( 'Type:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+						        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
+					disks +=   '<br>';
+					var diskcount = 0;
+					for( a = 0; a < rows.length; a++ )
+					{
+						var cfg = false;
+						if( rows[a].Config && rows[a].Config.indexOf( '{' ) >= 0 )
+							cfg = JSON.parse( rows[a].Config );
+						if( rows[a].Mounted == '1' ) continue;
+						disks += '<div class="Container">' +
+						    PadList( rows[a].Name + ':', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							PadList( rows[a].Type, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
+							PadList( cfg && cfg.Invisible == 'Yes' ? 'hidden' : 'yes', 10, 'right', '&nbsp;' ) + '</div>';
+						diskcount++;
+					}
+					callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' unmounted disk(s) in mountlist.' } );
+				}
+				m.execute( 'mountlist', {} );
+			}
+			else
+			{
+				Workspace.getMountlist( function( rows )
+				{
+					if ( !shell.workspace )
+					{
+						var disks = PadList( 'Volumes:', 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							        PadList( 'Handler:', 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+							        PadList( 'Visible:', 11, 'left', '&nbsp;' ) + '<br>';
+						disks +=   '<br>';
+						var diskcount = 0;
+						for( var a = 0; a < rows.length; a++ )
+						{
+							if( rows[a].Mounted != '1' ) continue;
+							if( !rows[a].Volume ) continue;
+							disks += '<div class="Container">' +
+							    PadList( rows[a].Volume, 25, 'left', '&nbsp;' ) + '&nbsp;&nbsp;' +
+								PadList( rows[a].Handler, 20, 'left', '&nbsp;' ) + '&nbsp;&nbsp' +
+								PadList( rows[a].Visible ? 'yes' : 'hidden', 10, 'right', '&nbsp;' ) + '</div>';
+							diskcount++;
+						}
+						callback( true, { response: disks + '<br>' + 'Found ' + diskcount + ' disk(s) in mountlist.' } );
+					}
+					else
+					{
+						callback( true, rows );
+					}
+				} );
+			}
+		},
+		'protect': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Protect is not authorised by host.' } );
+
+			// Find filename, then flags
+			// Usage: protect myfile rwd
+			var fn = '';
+			var flags = '';
+			for( a = 1; a < args.length; a++ )
+			{
+				if( !fn && args[ a ].indexOf( '=' ) < 0 )
+				{
+					fn = args[ a ];
+				}
+				// current user flags straight forward
+				else if( !flags && args[ a ].indexOf( '=' ) < 0 )
+				{
+					flags = args[ a ];
+					break;
+				}
+			}
+
+			if( fn.indexOf( ':' ) < 0 )
+			{
+				fn = shell.currentPath + fn;
+			}
+
+			var uf = false, gf = false, of = false;
+
+			if( shell.parsedObj.vars.user )
+				uf = shell.parsedObj.vars.user;
+			if( shell.parsedObj.vars.group )
+				gf = shell.parsedObj.vars.group;
+			if( shell.parsedObj.vars.others )
+				of = shell.parsedObj.vars.others;
+
+			if( fn && ( flags || uf || gf || of ) )
+			{
+				// Put the flags in the right format
+				var finalFlags = '';
+
+				var data = {
+					user: ( flags ? flags : ( uf ? uf : '' ) ).toLowerCase(),
+					group: ( gf ? gf : '' ).toLowerCase(),
+					others: ( of ? of : '' ).toLowerCase()
+				};
+
+				var all = {};
+
+				// Go through users-others
+				for( var g in data )
+				{
+					if( !data[ g ].length ) continue;
+					all[ g ] = '';
+					var perms = { a: '-', r: '-', w: '-', e: '-', d: '-' };
+					for( a = 0; a < data[ g ].length; a++ )
+					{
+						perms[ data[ g ][ a ] ] = data[ g ][ a ] ? data[ g ][ a ] : '-';
+					}
+					for( a in perms )
+					{
+						all[ g ] += perms[ a ];
+					}
+					all[ g ] = Trim( all[ g ] ); // Remove whitespace
+				}
+
+				all.path = fn;
+
+				// Execute!
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						shell.lastErrorMessage = 'Your last call succeeded.';
+						return callback( true, { response: "Permissions were set." } );
+					}
+					shell.lastErrorMessage = 'Your attempt to change the permissions on the file failed because of an access restriction.';
+					return callback( false, { response: "Could not set permissions on file." } );
+				}
+				l.execute( 'file/protect', all );
+				return;
+			}
+			shell.lastErrorMessage = 'Your protect call had a syntax error.';
+			return callback( false, { response: "Error in protect query." } );
+		},
+		'rename': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Rename is not authorised by host.' } );
+
+			if( args.length == 3 || ( args.length == 4 && args[ 2 ] == 'to' ) )
+			{
+				var src = args[ 1 ];
+				var dst = args[ 2 ];
+				if( args.length == 4 && args[ 2 ] == 'to' )
+					dst = args[ 3 ];
+
+				var dstVolume = '';
+				var srcVolume = '';
+
+				if( dst.indexOf( ':' ) > 0 )
+					dstVolume = dst.split( ':' )[0] + ':';
+				else dst = shell.currentPath + dst;
+				if( src.indexOf( ':' ) > 0 )
+					srcVolume = src.split( ':' )[0] + ':';
+				else src = shell.currentPath + src;
+
+				// Make sure we convert space placeholder
+				src = src.split( '<!--space--!>' ).join( ' ' );
+				dst = dst.split( '<!--space--!>' ).join( ' ' );
+
+				if( dstVolume == srcVolume || !dstVolume )
+				{
+					var newname = dst.split( ':' )[ 1 ];
+					newname = newname.split( '/' );
+					newname = newname[ newname.length - 1 ];
+
+					var doorSrc = ( new Door() ).get( src );
+
+					doorSrc.dosAction( 'rename', { path: src, newname: newname }, function()
+					{
+						callback( false, { response: 'Renamed file to ' + dst + '..' } );
+					} );
+				}
+				else
+				{
+					callback( false, { response: 'Could not understand source and/or destination filename.' } );
+				}
+			}
+			else
+			{
+				callback( false, { response: 'Usage: rename source:path/file (to) destination:path/' } );
+			}
+		},
+		'say': function( args, callback )
+		{
+			var args2 = [];
+			for( a = 1; a < args.length; a++ )
+				args2.push( args[ a ].split( '<!--space--!>' ).join( ' ' ) );
+			var str = args2.join( ' ' );
+			SayWithText( shell.parseVariables( str ) );
+			return callback( true );
+		},
+		'status': function( args, callback )
+		{
+			apiWrapper( { data: JSON.stringify( {
+				applicationName: shell.app.applicationName,
+				applicationId: shell.app.applicationId,
+				type: 'system', command: 'listapplications', callbackId: addWrapperCallback( callback )
+			} ) } );
+		},
+		'tinyurl': function( args, callback )
+		{
+			if( args.length >= 2 )
+			{
+				var post = { source: args[ 1 ] };
+				if( args.length > 2 )
+					post.expire = args[ 2 ];
+
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					var r = false;
+					try
+					{
+						r = JSON.parse( d );
+					}
+					catch( e ){};
+
+					if( e != 'ok' )
+					{
+						callback( false, { response: 'Failed to set tinyurl: ' + ( r ? r.response : 'unknown error' ) } );
+					}
+					else
+					{
+						callback( false, { response: 'Generated unique hash for url: ' + ( r ? r.hash : 'unknown error' ) } );
+					}
+				}
+				m.execute( 'tinyurl', post );
+			}
+			else
+			{
+				dcallback( false, { response: "Syntax: tinyurl url boolean_expire" } );
+			}
+		},
+		'type': function( args, callback )
+		{
+			if( args.length == 2 )
+			{
+				var p = args[ 1 ];
+				if( p.indexOf( ':' ) <= 0 )
+					p = shell.currentPath + p;
+
+				var f = new File( p );
+				f.onLoad = function( data )
+				{
+					callback( false, { response: data.split( "\n" ).join( "<br>" ) } );
+				}
+				f.load();
+			}
+			else
+			{
+				
+				callback( false, { response: 'Usage: cat filename' } );
+			}
+		},
+		'unmount': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Unmount is not authorised by host.' } );
+
+			if( args.length < 2 || ( args.length == 2 && args[ 1 ].indexOf( ':' ) < 0 ) )
+			{
+				return callback( false, { response: 'Syntax error. Usage:<br>unmount [disk:]<br>' } );
+			}
+			var l = new Library( 'system.library' );
+			l.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+				{
+					return callback( false, { response: 'Could not unmount disk ' + args[ 1 ] + '<br>' } );
+				}
+				Workspace.refreshDesktop( false, true ); // Badabish
+				return callback( true, { response: 'Disk ' + args[ 1 ] + ' unmounted.<br>' } );
+			}
+			l.execute( 'device/unmount', { devname: args[ 1 ], sessionid: Workspace.sessionid } );
+		},
+		'wait': function( args, callback )
+		{
+			time = 0;
+			if( parseInt( args[ 1 ] ) > 0 )
+				time = parseInt( args[ 1 ] );
+			return setTimeout( function()
+			{
+				callback();
+			}, time );
+		},
+		'why':function( args, callback )
+		{
+			if( shell.lastErrorMessage )
+			{
+				callback( false, { response: shell.lastErrorMessage } );
+				shell.lastErrorMessage = '';
+				return;
+			}
+			return callback( false, { response: 'No explanation available.' } );
+		},
+		'input': function( args, callback )
+		{
+			if( args[ 1 ] == 'on' )
+			{
+				shell.input = null;
+				return callback( false, { input: 'on' } );
+			}
+			else if( args[ 1 ] == 'off' )
+			{
+				shell.input = 'off';
+				return callback( false, { input: 'off' } );
+			}
+			return callback( false );
+		},
+		'install': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Install is not authorised by host.' } );
+
+			if( args.length <= 1 )
+			{
+				return callback( false, 'Please tell me which application you wish to install.' );
+			}
+			else
+			{
+				// We are installing a friend package
+				if( args[ 1 ] == 'package' && args.length == 3 )
+				{
+					var p = args[ 2 ];
+					if( p.indexOf( ':' ) <= 0 )
+						p = shell.currentPath + p;
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e != 'ok' )
+						{
+							callback( false, { response: 'Failed to install package ' + args[ 2 ] } );
+						}
+						else
+						{
+							callback( true, { response: 'The package, ' + args[ 2 ] + ', was successfully installed.' } );
+						}
+					}
+					m.execute( 'installpackage', { path: p } );
+				}
+				else
+				{
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, d )
+					{
+						if( e == 'ok' )
+						{
+							return callback( true, 'Installed or upgraded in the future.' );
+						}
+						else
+						{
+							return callback( false, 'Failed to install ' + args[ 1 ] + '.' );
+						}
+					}
+					m.execute( 'install', { application: args[ 1 ] } );
+				}
+			}
+		},		
+		'endcli': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Endcli/Exit is not authorised by host.' } );
+
+			FriendDOS.delSession( shell.uniqueId );
+			return callback( true, 'quit' );
+		},
+		'exit': function( args, callback )
+		{
+			this[ 'endcli' ]( args, callback );
+		},
+		'cli': function( args, callback ) 
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Cli/Newcli is not authorised by host.' } );
+
+			apiWrapper( { data: JSON.stringify( {
+				applicationName: shell.app.applicationName,
+				applicationId: shell.app.applicationId,
+				type: 'system',
+				command: 'executeapplication',
+				executable: 'Shell',
+				fin_args: ''
+			} ) } );
+			return callback( true, { response: 'New shell launched.' } );
+		},
+		'newcli': function( args, callback )
+		{
+			this[ 'cli' ]( args, callback );
+		},
+		'deletemount': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'deletemount is not authorised by host.' } );
+			
+			if( args.length != 2 )
+			{
+				return callback( false, { response: 'Syntax error. Usage:<br>deletemount [disk:]<br>' } );
+			}
+			else
+			{
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{	
+					Workspace.refreshDesktop( false, true ); // Badabish
+					
+					var m = new Module( 'system' );
+					m.onExecuted = function( e, dat )
+					{
+						var ll = new Library( 'system.library' );
+						ll.execute( 'device/refreshlist', { sessionid: Workspace.sessionid } );
+						setTimeout( function()
+						{
+							return callback( true, { response: 'Disk mount ' + args[ 1 ] + ' deleted.<br>' } );
+						}, 250 );
+					}
+					m.execute( 'deletedoor', { devname: args[ 1 ].split( ':' )[ 0 ], sessionid: Workspace.sessionid } );
+				}
+				l.execute( 'device/unmount', { devname: args[ 1 ].split( ':' )[ 0 ], sessionid: Workspace.sessionid } );
+			}
+		},
+		'metainfo': function( args, callback )
+		{
+			// Get command
+			var command = false;
+			var options = [ 'get', 'set', 'list' ];
+			for( a = 0; a < options.length; a++ )
+			{
+				if( args[ 1 ] == options[ a ] )
+				{
+					command = options[ a ];
+					break;
+				}
+			}
+			if( !command )
+				return callback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
+
+			var filename = false;
+			var variable = false;
+			var data = false;
+
+			// Get the rest
+			for( a = 2; a < args.length; a++ )
+			{
+				if( args[ a ].indexOf( '=' ) > 0 )
+				{
+					var pair = args[ a ].split( '=' );
+					variable = pair[ 0 ];
+					pair[ 0 ] = '';
+					pair = pair.join( '=' );
+					pair = pair.substr( 1, pair.length - 1 );
+					data = pair.split( '<!--space--!>' ).join( ' ' );
+				}
+				else filename = args[ a ];
+			}
+
+			if( filename && filename.indexOf( ':' ) < 0 )
+			{
+				filename = shell.currentPath + filename;
+			}
+
+			if( filename )
+			{
+				var d = ( new Door() ).get( filename );
+				if( d )
+				{
+					return d.dosAction( 'metainfo', { path: filename, command: command, variable: variable, data: data }, function( e )
+					{
+						if( e )
+						{
+							return callback( true, false );
+						}
+						return callback( false, { response: 'Failed to execute.' } );
+					} );
+				}
+			}
+			return callback( false, { response: 'Command not recognized. Usage: metainfo get|set|list filename (key=value)' } );
+		},
+		'move': function( args, callback )
+		{
+			if ( shell.restrictedPath )
+				return callback( false, { response: 'Move is not authorised by host.' } );
+
+			if( args.length >= 3 )
+			{
+				shell.terminate = true;
+
+				var start = 1;
+				var recursive = false;
+
+				// check recursive
+				if( ( args[ 0 ] + ' ' + args[ 1 ] ).toLowerCase() == 'move all' )
+				{
+					start++;
+					recursive = true;
+				}
+
+				var src = args[ start ];
+
+				if( src.indexOf( ':' ) < 0 ) 
+					src = shell.currentPath + src;
+
+				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+
+				if( dst.indexOf( ':' ) < 0 ) 
+					dst = shell.currentPath + dst;
+
+				// 'all' on the end
+				if( !recursive ) 
+					recursive = args[ args.length - 1 ].toLowerCase() == 'all' ? true : false;
+
+				FriendDOS.copyFiles( src, dst, { recursive: recursive, move: true }, function( result, done )
+				{
+					if( !done ) 
+						done = false;
+					callback( false, { response: result, done: done } );
+				} );
+			}
+			else
+			{
+				callback( false, { response: 'Usage: move (all) source:path/or/file (to) destination:path/' } );
+			}
+		},
+		'ln': function( args, callback )
+		{
+			if( args.length >= 3 )
+			{
+				var start = 1;
+
+				var src = args[ start ];
+
+				if( src.indexOf( ':' ) < 0 ) 
+					src = shell.currentPath + src;
+
+				var dst = args[ start + 1 ].toLowerCase() == 'to' ? args[ start + 2 ] : args[ start + 1 ];
+
+				if( dst.indexOf( ':' ) < 0 ) 
+					dst = shell.currentPath + dst;
+
+				if( dst )
+				{
+					var d = ( new Door() ).get( dst );
+					if( d )
+					{
+						return d.dosAction( 'link', { from: src, to: dst }, function( e )
+						{
+							if( e )
+							{
+								return callback( true, false );
+							}
+							return callback( false, { response: 'Failed to execute.' } );
+						} );
+					}
+				}
+			}
+			return callback( false, { response: 'Command not recognized.' } );
+		},
+		'link': function( args, callback )
+		{
+			this[ 'ln' ]( args, callback );
+		},
+		'symlink': function( args, callback )
+		{
+			this[ 'ln' ]( args, callback );
+		},
+		'fnet': function( args, callback )
+		{
+			switch ( args[ 1 ] )
+			{
+				case 'list':
+					return callback('friendnetworklist');
+				case 'host':
+					if ( args.length < 3 )
+						return callback( false, { response: 'Syntax: friendnetwork host "hostname".' } );
+					return callback( false, 
+					{
+						command: 'friendnetworkhost',
+						name:    args[ 2 ],
+						password: args[ 3 ]
+					});
+				case 'dispose':
+					if ( args.length < 3 )
+						return callback( false, { response: 'Syntax: friendnetwork dispose "hostname".' } );
+					return ( false, 
+					{
+						command: 'friendnetworkdispose',
+						name:    args[ 2 ]
+					});
+				case 'connect':
+					if ( args.length < 3 )
+						return callback( false, { response: 'Syntax: friendnetwork connect "hostname".' } );
+					var p2p = false;
+					if ( args.length == 4 && args[ 3 ] == 'p2p' )
+						p2p = true;
+					return callback(false, 
+					{
+						command: 'friendnetworkconnect',
+						name:    args[ 2 ],
+						p2p:	 p2p
+					});
+				case 'password':
+					if ( args.length < 4 )
+						return callback(false, { response: 'Syntax: friendnetwork dispose "hostname".' } );
+					return callback( false, 
+					{
+						command: 'friendnetworksetpassword',
+						name:    args[ 2 ],
+						password: args[ 3 ]
+					});
+					break;
+				case 'disconnect':
+					shell.skipClient = true;
+					return callback(false, { command: 'friendnetworkdisconnect' });
+				case 'status':
+					return callback(false, { command: 'friendnetworkstatus' });
+				default:
+					return callback(false, { response: 'Syntax error.' } );
+			}
+		},
+		'friendnetwork': function( args, callback )
+		{
+			this[ 'fnet' ]( args, callback );
+		},
+		'unify': function( args, callback )
+		{
+			callback( false, { response: 'Please wait for this feature!' } );
+		}
 	};
 };
 
@@ -4077,7 +4118,6 @@ window.FriendDOS =
 							{
 								if( move )
 								{
-									window.moveFiles.counter--;
 									callback( 'Moved ' + src + ' to ' + destination + '..' );
 								}
 								else
@@ -4231,7 +4271,7 @@ window.FriendDOS =
 				// Delete five directories at a time
 				var ceiling = 5;
 				var out = [];
-				if( this._dirsToDelete )
+				if( this._dirsToDelete && this._dirsToDelete.length )
 				{
 					for( var a = this._dirsToDelete.length - 1; a >= 0; a-- )
 					{
@@ -4259,6 +4299,10 @@ window.FriendDOS =
 						}
 					}
 					this._dirsToDelete = out;
+				}
+				else
+				{
+					flags._originalCallback( 'Delete completed.' );
 				}
 			}
 		}

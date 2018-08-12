@@ -117,7 +117,11 @@ static int _process_incoming_request(struct lws *wsi, char *data, size_t len){
 			return _reply_error(wsi, 9);
 		}
 
-		bool status = mobile_app_notify_user(username, channel_id, title, message, (mobile_notification_type_t)notification_type);
+		bool status = mobile_app_notify_user(username, channel_id,
+				title,
+				message,
+				(mobile_notification_type_t)notification_type,
+				NULL/*no extras*/);
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);

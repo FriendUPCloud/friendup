@@ -237,7 +237,7 @@ function setActive( num )
 
 function applyTheme()
 {
-	var currTheme = Application.theme ? Application.theme : 'friendup';
+	var currTheme = Application.theme ? Application.theme : 'friendup12';
 	
 	// Update data for the theme config
 	if( window.onSaveThemeConfig )
@@ -273,11 +273,14 @@ function applyTheme()
 									{
 										if( e == 'ok' )
 										{
-											Application.sendMessage( {
+											var dt = {
 												type: 'system',
 												command: 'refreshtheme',
 												theme: currTheme
-											} );
+											};
+											if( ge( 'ThemeConfigData' ) )
+												dt.themeConfig = ge( 'ThemeConfigData' ).value;
+											Application.sendMessage( dt );
 										}
 										else
 										{

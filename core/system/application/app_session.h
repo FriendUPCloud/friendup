@@ -66,25 +66,25 @@ typedef struct SASUList
 typedef struct AppSession
 {
 	MinNode					node;
-	char							as_AuthID[ 255 ];			// ID of applicaton from UserApplication
+	char					as_AuthID[ 255 ];			// ID of applicaton from UserApplication
 	FUQUAD					as_AppID;						// application ID
 	FUQUAD					as_SASID;						// Application session ID
-	SASUList					*as_UserSessionList;					// first user is always owner
-	int							as_UserNumber;
-	pthread_mutex_t		as_SessionsMut;
+	SASUList				*as_UserSessionList;					// first user is always owner
+	int						as_UserNumber;
+	pthread_mutex_t			as_SessionsMut;
 	
 	FThread					*as_Thread;
-	int							as_WritePipe;
-	time_t						as_Timer;						// session timer
+	int						as_WritePipe;
+	time_t					as_Timer;						// session timer
 	
-	FBOOL						as_Obsolete;					// if session is obsolete, remove it
+	FBOOL					as_Obsolete;					// if session is obsolete, remove it
 	FULONG					as_NumberGenerator;		// generate ID for every entry in session list
 	
 	INVAREntry				*as_Variables;
 	FULONG					as_VariablesNumGenerator;
-	pthread_mutex_t		as_VariablesMut;
+	pthread_mutex_t			as_VariablesMut;
 	
-	void 							*as_SB;
+	void 					*as_SB;
 }AppSession;
 
 //

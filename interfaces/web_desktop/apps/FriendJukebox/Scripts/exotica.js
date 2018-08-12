@@ -54,14 +54,66 @@ Application.run = function( msg, iface )
 	
 	this.redrawMenu();
 	
-	// We start with a bang!
-	// TODO: Fix bug
-	if( msg.args && msg.args.toLowerCase().indexOf( '.mp3' ) > 0 )
+	// Started with arguments
+	if( msg.args )
+		this.handleFiles( msg.args );
+}
+
+// Add the files of as playlist
+Application.addPlaylist = function ( fname )
+{
+	var f = new File( fname );
+	f.onLoad = function( data )
 	{
-		this.receiveMessage( {
-			command: 'append_to_playlist_and_play',
-			items: [ { Filename: msg.args } ]
-		} );
+		try
+		{
+			var js = JSON.parse( data );
+			Application.receiveMessage( { 
+				command: 'append_to_playlist_and_play',
+				items: js
+			} );
+		}
+		catch( e )
+		{
+			Notify( { title: 'Could not handle file', text: 'File was corrupted or not a valid playlist.' } );
+		}
+	}
+	f.load();
+}
+
+
+// Handle files by path
+Application.handleFiles = function( args )
+{
+	// We start with a bang!
+	if( args )
+	{
+		var ext = args.split( '.' ).pop();
+		if( ext.length )
+		{
+			switch( ext.toLowerCase() )
+			{
+				case 'mp3':
+				case 'ogg':
+				case 'flac':
+				case 'wav':
+					var fn = args.split( ':' )[1];
+					if( fn.indexOf( '/' ) > 0 )
+						fn = fn.split( '/' ).pop();
+					this.receiveMessage( {
+						command: 'append_to_playlist_and_play',
+						items: [ { Filename: fn, Path: args } ]
+					} );
+					break;
+				case 'pls':
+					this.addPlaylist( args );
+					break;
+			}
+		}
+		else
+		{
+			Notify( { title: 'Unhandled file format', text: 'Could not read ' + args } );
+		}
 	}
 }
 
@@ -95,7 +147,9 @@ Application.redrawMenu = function()
 				},
 				{
 					name: i18n( 'i18n_toggle_mini_playlist' + ( this.miniplaylist ? '_hide' : '_show' ) ),
-					command: 'toggle_miniplaylist'
+					command: 'toggle_miniplaylist',
+					playlist: this.playlist,
+					index: this.index
 				}
 			]
 		}
@@ -237,11 +291,16 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'add_source':
+			if( this.playlistWindow )
+				this.playlistWindow.sendMessage( msg );
+			break;
+			
 		// Toggle the visibility of the mini playlist
 		case 'toggle_miniplaylist':
 			this.miniplaylist = this.miniplaylist ? false : true;
 			this.mainView.sendMessage( { command: 'toggle_miniplaylist' } );
-			this.receiveMessage( { command: 'mini_playlist' } );
+			this.receiveMessage( { command: 'mini_playlist', index: this.index } );
 			this.redrawMenu();
 			break;
 		// Redraw the mini playlist
@@ -251,7 +310,7 @@ Application.receiveMessage = function( msg )
 			this.mainView.setFlag( 'max-height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'height', this.miniplaylist ? 360 : 160 );
 			this.mainView.setFlag( 'resize', false );
-			this.mainView.sendMessage( { command: 'miniplaylist', visibility: this.miniplaylist } );
+			this.mainView.sendMessage( { command: 'miniplaylist', playlist: this.playlist, index: this.index, visibility: this.miniplaylist } );
 			break;
 		case 'about_exotica':
 			this.openAbout();
@@ -262,6 +321,13 @@ Application.receiveMessage = function( msg )
 				playlist: this.playlist,
 				index:    this.index
 			} );
+			if( this.playlistWindow )
+			{
+				this.playlistWindow.sendMessage( {
+					command: 'refresh',
+					items: this.playlist
+				} );
+			}
 			break;
 		case 'edit_playlist':
 			this.editPlaylist();
@@ -270,7 +336,13 @@ Application.receiveMessage = function( msg )
 			this.openPlaylist();
 			break;
 		case 'add_to_playlist':
-			this.addToPlaylist();
+			if( msg.items )
+			{
+				for( var a in msg.items )
+					Application.playlist.push( msg.items[a] );
+				Application.receiveMessage( { command: 'get_playlist' } );
+			}
+			else this.addToPlaylist();
 			break;
 		case 'clear_playlist':
 			Application.playlist = [];
@@ -304,6 +376,16 @@ Application.receiveMessage = function( msg )
 				} );
 			}
 			Application.receiveMessage( { command: 'get_playlist' } );
+			break;
+		// Comes from playlist editor
+		case 'set_playlist':
+			this.playlist = msg.items;
+			this.index = msg.index;
+			this.mainView.sendMessage( {
+				command:  'updateplaylist',
+				playlist: this.playlist,
+				index:    this.index
+			} );
 			break;
 		case 'append_to_playlist_and_play':
 			if( msg.items.length )
@@ -363,8 +445,8 @@ Application.receiveMessage = function( msg )
 										items: Application.playlist
 									} );
 								}
-								Application.receiveMessage( { command: 'get_playlist' } );
 							}
+							Application.receiveMessage( { command: 'get_playlist' } );
 						}
 						f.load();
 					}
@@ -392,15 +474,20 @@ Application.receiveMessage = function( msg )
 			if( this.playlistWindow )
 				this.playlistWindow.close();
 			break;
+		case 'resizemainwindow':
+			this.mainView.setFlag( 'min-height', msg.size );
+			break;
+		case 'playsongindex':
+			this.index = msg.index;
 		case 'playsong':
-			this.mainView.sendMessage( { command: 'play', item: this.playlist[this.index] } );
+			this.mainView.sendMessage( { command: 'play', index: this.index, item: this.playlist[this.index] } );
 			break;
 		case 'seek':
 			this.index += msg.dir;
 			if( this.index < 0 ) this.index = this.playlist.length - 1;
 			else if( this.index >= this.playlist.length )
 				this.index = 0;
-			this.mainView.sendMessage( { command: 'play', item: this.playlist[this.index] } );
+			this.mainView.sendMessage( { command: 'play', item: this.playlist[this.index], index: this.index } );
 			break;
 		case 'quit':
 			Application.quit();

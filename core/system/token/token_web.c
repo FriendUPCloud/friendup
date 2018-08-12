@@ -196,23 +196,43 @@ Http *TokenWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	/// @cond WEB_CALL_DOCUMENTATION
 	/**
 	*
-	* <HR><H2>system.library/connection/add</H2>add new FCConnection
+	* <HR><H2>system.library/token/delete</H2>delete DOSToken
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param address - (required) internet address (ip or DNS name)
-	* @param name - (required) name which describe new connection
-	* @param type - type of connection, avaiable values are: 
-	* 	0 - normal server,
-		1 - cluster node,
-		2 - cluster master,
-		3 - master of Friend servers
-	* @return return code 59 if everything was created without problems, otherwise error number
+	* @param dostokenid - (required) DOSToken unique ID
+	* @return return code 0 if entry was deleted without problems, otherwise error number
 	*/
 	/// @endcond
-	else if( strcmp( urlpath[ 1 ], "add" ) == 0 )
+	else if( strcmp( urlpath[ 1 ], "delete" ) == 0 )
 	{
+		HashmapElement *el = NULL;
+		char *tokenid = NULL;		//
+		
+		el = GetHEReq( *request, "dostokenid" );
+		if( el != NULL && el->data )
+		{
+			tokenid = UrlDecodeToMem( (char *)el->data );
+		}
+		
+		int error = DOSTokenManagerDeleteToken( l->sl_DOSTM, tokenid );
+		
+		if( error == 0 )
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "ok<!--separate-->{ \"response\": \"success\", \"dostoken\":\"%s\" }", tokenid );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
+		else
+		{
+			char dictmsgbuf[ 256 ];
+			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_REMOVE_DOSTOKEN] , DICT_CANNOT_REMOVE_DOSTOKEN );
+			HttpAddTextContent( response, dictmsgbuf );
+		}
 
-
+		if( tokenid != NULL )
+		{
+			FFree( tokenid );
+		}
 	}
 	
 		//

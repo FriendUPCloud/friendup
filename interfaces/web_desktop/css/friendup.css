@@ -16,6 +16,26 @@ body
 	visibility: hidden;
 }
 
+body.Login
+{
+	background-image: url(/graphics/dew.jpg);
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+body.Login .View
+{
+	box-shadow: none;
+	border: 0;
+	background: transparent;
+}
+
+body.Login .View > .Content:before
+{
+	display: none;
+}
+
 body > #FocusGrabber
 {
 	position: fixed;
@@ -182,16 +202,46 @@ html body.Login #Login
 {
 	max-width: 96% !important;
 	min-width: 400px !important;
-	height: 500px !important;
+	height: 540px !important;
 	top: calc(50% - 250px) !important;
 	left: calc(50% - 200px) !important;
 	background: #3c7db8;
 	transition: opacity !important;
 	-webkit-transition: opacity !important;
 	-moz-transition: opacity !important;
-	animation: fadeIn 4s;
-	-webkit-animation: fadeIn 4s;
+	animation: fadeIn 0.5s;
+	-webkit-animation: fadeIn 0.5s;
 }
+
+/* Nice dade */
+
+body:before
+{
+	transition: opacity 1.5s;
+	content: " ";
+	display: block;
+}
+
+body.Loading:before,
+body.Login:before
+{
+	opacity: 1;
+	position: fixed;
+	z-index: 999999999;
+	background: white;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+}
+
+body.Login:before
+{
+	opacity: 0;
+}
+
+/* End nice fade */
 
 @media (max-width: 420px)
 {

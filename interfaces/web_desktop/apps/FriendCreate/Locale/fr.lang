@@ -31,6 +31,7 @@ tb_find                             : Trouver/Remplacer
 #project menu
 i18n_project                        : Projet
 i18n_project_new                    : Nouveau projet
+i18n_project_fromweb				: Nouveau projet site web
 i18n_project_properties             : Propriétés du projet
 i18n_open_project_files             : Ouvrir fichiers du projet
 i18n_load_project                   : Charger projet
@@ -165,7 +166,48 @@ i18n_could_not_save : Sauvegarde impossible!
 i18n_friend_create_iot_monitor : Friend Create - Moniteur IOT
 i18n_search_and_replace : Chercher et remplacer
 
-
+i18n_waCreateWebApp					    : Créer
+i18n_waCancel							: Annuler
+i18n_waTitle							: Créer un projet web-app
+i18n_waUrl								: URL (doit commencer par 'https')
+i18n_waName								: Nom du projet
+i18n_waAuthor							: Votre nom
+i18n_waEmail							: Votre email
+i18n_waDescription						: Informations sur le projet
+i18n_waWidth							: Largeur
+i18n_waHeight							: Hauteur
+i18n_waCategory							: Catégorie
+i18n_waWindow							: Fenètre
+i18n_typeWebApp							: Type
+i18n_waWrongUrl							: L'URL doit être de la forme 'http://www.website.com' ou 'https://www.website.com'
+i18n_waWrongName						: Entrez un nom pour le projet
+i18n_waWrongWidth						: La largeur de la fenètre doit être un nombre positif
+i18n_waWrongHeight						: La hauteur de la fenètre doit être un nombre positif
+i18n_waGames							: Games
+i18n_waOffice							: Office
+i18n_waGraphics							: Graphics
+i18n_waProgramming						: Programming
+i18n_waInternet							: Internet
+i18n_waAbout0							: A propos
+i18n_waAbout1							: Cette application a été créée par
+i18n_waAboutBlank						: Cette application a été créée avec Friend Create
+i18n_waFile								: Fichier
+i18n_waFileSelectorTitle				: Sauver le projet...
+i18n_waIcon								: Icone de l'application
+i18n_waPreview							: Prévisualisation
+i18n_waChange							: Changer
+i18n_waChangeWebAppPreviewTitle			: Choisissez une image PNG
+i18n_waChangeWebAppIconTitle			: Choisissez une image PNG
+i18n_waPleaseFill						: Definition de l'application
+i18n_waClose							: Fermer
+i18n_waCreateProject					: Créer projet
+i18n_waAlert                            : Alerte
+i18n_waSuccess                          : Succès
+i18n_waProjectCreated					: Le projet a été créé. 
+i18n_waNeedAFolder						: Vous ne pouvez pas construire un projet à la racine d'un disque.
+i18n_waBlankAuthor						: Votre nom
+i18n_waBlankEmail						: votremail@votreserveur.com
+i18n_waBlankDescription					: Une description de cette application
 
 
 

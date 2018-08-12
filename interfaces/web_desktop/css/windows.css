@@ -39,6 +39,103 @@
 	pointer-events: all;
 }
 
+/* Snapping */
+
+html .View[viewsnap] .Title > div > div
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+.View > .Snap > div
+{
+	transition: opacity,background-color 0.25s,0.25s;
+	opacity: 0;
+}
+
+.View > .Snap > .SnapLeft
+{
+	position: absolute;
+	width: 5px;
+	height: 80px;
+	border-radius: 10px 0 0 10px;
+	background-color: rgba(255,255,255,0.2);
+	right: 0px;
+	top: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[attach_left] > .Snap > .SnapLeft,
+.View[viewsnap=right] > .Snap > .SnapLeft
+{
+	opacity: 1;
+}
+
+.View > .Snap > .SnapRight
+{
+	position: absolute;
+	width: 5px;
+	height: 80px;
+	border-radius: 0 10px 10px 0;
+	background-color: rgba(255,255,255,0.2);
+	left: 0px;
+	top: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[attach_right] > .Snap > .SnapRight,
+.View[viewsnap=left] > .Snap > .SnapRight
+{
+	opacity: 1;
+}
+
+.View[attach_up] > .Snap > .SnapUp:hover,
+.View[attach_down] > .Snap > .SnapDown:hover,
+.View[attach_left] > .Snap > .SnapLeft:hover,
+.View[attach_right] > .Snap > .SnapRight:hover
+{
+	background-color: rgba(255,255,255,0.8);
+}
+
+.View > .Snap > .SnapDown
+{
+	position: absolute;
+	width: 80px;
+	height: 5px;
+	border-radius: 0 0 10px 10px;
+	background-color: rgba(255,255,255,0.2);
+	top: 0px;
+	left: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[attach_down] > .Snap > .SnapDown,
+.View[viewsnap=up] > .Snap > .SnapDown
+{
+	opacity: 1;
+}
+
+.View > .Snap > .SnapUp
+{
+	position: absolute;
+	width: 80px;
+	height: 5px;
+	border-radius: 10px 10px 0 0;
+	background-color: rgba(255,255,255,0.2);
+	bottom: 0px;
+	left: calc(50% - 40px);
+	z-index: 10;
+}
+
+.View[attach_up] > .Snap > .SnapUp,
+.View[viewsnap=down] > .Snap > .SnapUp
+{
+	opacity: 1;
+}
+
+/* Done snapping */
+
+
 .View.Virtual
 {
 	display: none;
@@ -144,7 +241,13 @@
 
 .View[transparent=transparent]
 {
+	box-shadow: none !important;
 	background: none;
+}
+
+.View[transparent=transparent] > div
+{
+	border: 0 !important;
 }
 
 /* Always on top */
@@ -281,6 +384,11 @@ _:-ms-fullscreen, :root .View > .Title { border-top-width: 1px; } /* IE11 */
 	left: 10px;
 }
 
+html .View .Title > div > div
+{
+	transition: opacity 0.25s;
+	opacity: 1;
+}
 
 .View > .Title > div > span:hover
 {
@@ -655,7 +763,7 @@ _:-ms-fullscreen, :root .View.Active > .Title { border-top-width: 1px; } /* IE11
 
 html .Screen > .TitleBar.Busy:after
 {
-	background-image: url(/themes/friendup/gfx/loading_corner.gif);
+	background-image: url(/themes/friendup12/gfx/loading_corner.gif);
 	clip-path: ellipse(12px 12px at 12px 12px);
 	-webkit-clip-path: ellipse(12px 12px at 12px 12px);
 }
@@ -871,7 +979,7 @@ body #WorkspaceMenu .Open ul > li.CloseButton
     text-align: left;
     padding: 0 20px;
     display: block;
-    z-index: 2147483647;
+    z-index: 2147483647 !important;
     font-size: 24px;
     transition: top 0.15s,0.15s;
     -moz-transition: top 0.15s,0.15s;
@@ -880,14 +988,20 @@ body #WorkspaceMenu .Open ul > li.CloseButton
     text-shadow: none;
 }
 
+html body[mobile=mobile].ViewMaximized #WorkspaceMenu.Open
+{
+	z-index: 2147483647 !important;
+	overflow: visible !important;
+}
+
 body[mobile=mobile] > .MobileMenuClose:before,
 body #WorkspaceMenu .Open ul > li.CloseButton:before
 {
 	position: relative;
     top: -1px;
     margin: 0 10px 0 0;
-	
 }
+
 
 /* NativeViewContainer ------------------------------------------------------ */
 

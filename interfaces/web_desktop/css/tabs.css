@@ -12,6 +12,23 @@
 	white-space: nowrap;
 }
 
+.Tabs.Centered
+{
+	text-align: center;
+}
+
+.Tabs.Centered .TabActive, .Tabs.Centered .Tab
+{
+	display: inline-block;
+	margin-right: 10px;
+	padding: 5px 10px;
+}
+
+.Tabs.Centered .TabActive:last-child, .Tabs.Centered .Tab:last-child
+{
+	margin-right: 0;
+}
+
 .TabActive, .Tab
 {
 	display: inline-block;
@@ -26,6 +43,17 @@
 	border: $BorderPageActive;
 	border-bottom: 0;
 }
+
+.TabActive.Tall:before, .Tab.Tall:before
+{
+	font-size: 20px;
+	color: $ColorBgButton;
+	clear: both;
+	display: block;
+	text-align: center;
+	margin: 4px auto 6px auto;
+}
+
 .Tab img, .TabActive img
 {
 	position: relative;

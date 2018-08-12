@@ -69,7 +69,7 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 			if( prop != NULL)
 			{
 				DEBUG("reading actLogger\n");
-				actLogger = plib->ReadString( prop, "Logger:active", NULL );
+				actLogger = plib->ReadStringNCS( prop, "Logger:active", NULL );
 				DEBUG("actLogger %s\n", actLogger );
 			}
 

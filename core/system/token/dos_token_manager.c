@@ -51,7 +51,7 @@ DOSTokenManager *DOSTokenManagerNew( void *sb )
 /**
  * Release DOSTokenManager
  *
- * @param pointer to DOSTokenManager which will be deleted
+ * @param d pointer to DOSTokenManager which will be deleted
  */
 void DOSTokenManagerDelete( DOSTokenManager *d )
 {
@@ -76,16 +76,71 @@ int DOSTokenManagerAddDOSToken( DOSTokenManager *d, DOSToken *dt )
 {
 	if( d != NULL && dt != NULL )
 	{
-		pthread_mutex_lock( &d->dtm_Mutex );
+		FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
 		
 		dt->node.mln_Succ = (MinNode *)d->dtm_Tokens;
 		d->dtm_Tokens = dt;
 		
-		pthread_mutex_unlock( &d->dtm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
 		
 		return 0;
 	}
 	return 1;
+}
+
+/**
+ * Remove DOSToken
+ *
+ * @param d pointer to DOSTokenManager
+ * @param id DOSTokenID
+ * @return 0 when token will be deleted, otherwise error number
+ */
+int DOSTokenManagerDeleteToken( DOSTokenManager *d, char *id )
+{
+	int err = 1;
+	if( d != NULL )
+	{
+		DEBUG("DOSTokenManagerDeleteToken\n");
+		
+		FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
+		time_t now = time( NULL );
+		
+		DOSToken *newTokenList = NULL;
+		
+		DOSToken *dt = d->dtm_Tokens;
+		
+		while( dt != NULL )
+		{
+			DOSToken *oldToken = NULL;
+			FBOOL remove = FALSE;
+			
+			// if token is not valid, we remove it
+			
+			if( strcmp( id, dt->ct_TokenID ) == 0 )
+			{
+				remove = TRUE;
+			}
+			
+			oldToken = dt;
+			dt = (DOSToken *)dt->node.mln_Succ;
+			
+			if( remove == TRUE )
+			{
+				DOSTokenDelete( oldToken );
+				err = 0;
+			}
+			else
+			{
+				oldToken->node.mln_Succ = (MinNode *)newTokenList;
+				newTokenList = oldToken;
+			}
+		}
+		
+		d->dtm_Tokens = newTokenList;
+		
+		FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
+	}
+	return err;
 }
 
 /**
@@ -101,9 +156,11 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 	
 	if( d != NULL )
 	{
-		pthread_mutex_lock( &d->dtm_Mutex );
+		FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
 		
 		dt = d->dtm_Tokens;
+		
+		DEBUG("GetDosToken\n");
 		
 		while( dt != NULL )
 		{
@@ -112,6 +169,8 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 			// if token was found we are checking how many times it was used
 			if( dt->ct_UsedTimes != 0 && strcmp( tokenID, dt->ct_TokenID ) == 0 )
 			{
+				DEBUG("GetDosToken, used files %d\n", dt->ct_UsedTimes );
+				
 				if( dt->ct_UsedTimes > 0 )
 				{
 					dt->ct_UsedTimes--;
@@ -157,12 +216,14 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 						{
 							FERROR("Cannot store session\n");
 							
-							/*
-							if( ( loggedSession = USMUserSessionAdd( l->sl_USM, loggedSession ) ) != NULL )
-						{
-							if( loggedSession->us_User == NULL )
+							FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
+							if( ( us = USMUserSessionAdd( sb->sl_USM, us ) ) != NULL )
 							{
-							 */
+								if( us->us_User == NULL )
+								{
+								}
+							}
+							FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
 						}
 						else
 						{
@@ -173,8 +234,7 @@ DOSToken *DOSTokenManagerGetDOSToken( DOSTokenManager *d, const char *tokenID )
 				}
 			}
 		}
-		
-		pthread_mutex_unlock( &d->dtm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
 	}
 	
 	return dt;
@@ -195,7 +255,7 @@ BufString *DOSTokenManagerList( DOSTokenManager *dtm )
 	
 	if( dtm != NULL )
 	{
-		pthread_mutex_lock( &dtm->dtm_Mutex );
+		FRIEND_MUTEX_LOCK( &dtm->dtm_Mutex );
 		
 		BufStringAddSize( bs, "ok<!--separate-->[", 18 );
 		
@@ -205,8 +265,8 @@ BufString *DOSTokenManagerList( DOSTokenManager *dtm )
 			if( pos > 0 )
 			{
 				BufStringAddSize( bs, ",", 1 );
-				DOSTokenJSONDescription( dt, bs );
 			}
+			DOSTokenJSONDescription( dt, bs );
 			
 			pos++;
 			dt = (DOSToken *)dt->node.mln_Succ;
@@ -214,7 +274,7 @@ BufString *DOSTokenManagerList( DOSTokenManager *dtm )
 		
 		BufStringAddSize( bs, "]", 1 );
 		
-		pthread_mutex_unlock( &dtm->dtm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &dtm->dtm_Mutex );
 	}
 	return bs;
 }
@@ -232,7 +292,7 @@ int DOSTokenManagerEraseUserSession( DOSTokenManager *dtm, UserSession *s )
 	
 	if( dtm != NULL )
 	{
-		pthread_mutex_lock( &dtm->dtm_Mutex );
+		FRIEND_MUTEX_LOCK( &dtm->dtm_Mutex );
 		
 		dt = dtm->dtm_Tokens;
 		
@@ -242,13 +302,13 @@ int DOSTokenManagerEraseUserSession( DOSTokenManager *dtm, UserSession *s )
 			{
 				dt->ct_UserSession = NULL;
 				dt->ct_UserSessionID = 0;
-				pthread_mutex_unlock( &dtm->dtm_Mutex );
+				FRIEND_MUTEX_UNLOCK( &dtm->dtm_Mutex );
 				return 0;
 			}
 			dt = (DOSToken *)dt->node.mln_Succ;
 		}
 		
-		pthread_mutex_unlock( &dtm->dtm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &dtm->dtm_Mutex );
 	}
 	return 1;
 }
@@ -262,11 +322,12 @@ void DOSTokenManagerAutoDelete( DOSTokenManager *d )
 {
 	if( d != NULL )
 	{
-		pthread_mutex_lock( &d->dtm_Mutex );
+		DEBUG("DOSTokenManagerAutoDelete\n");
+		
+		FRIEND_MUTEX_LOCK( &d->dtm_Mutex );
 		time_t now = time( NULL );
 		
 		DOSToken *newTokenList = NULL;
-		
 		DOSToken *dt = d->dtm_Tokens;
 		
 		while( dt != NULL )
@@ -297,7 +358,7 @@ void DOSTokenManagerAutoDelete( DOSTokenManager *d )
 		
 		d->dtm_Tokens = newTokenList;
 		
-		pthread_mutex_unlock( &d->dtm_Mutex );
+		FRIEND_MUTEX_UNLOCK( &d->dtm_Mutex );
 	}
 }
 

@@ -67,6 +67,10 @@ Workspace = {
 
 		var si = GetUrlVar( 'sessionid' );
 		var au = GetUrlVar( 'authid' );
+		var th = GetUrlVar( 'theme' );
+		if( th )
+			this.themeOverride = th;
+		
 		var authType = si ? 'sessionId' : 'authId';
 		var authValue = si ? si : au;
 
@@ -110,7 +114,7 @@ Workspace = {
 					{
 						// Setup default Doors screen
 						var wbscreen = new Screen( {
-								title: 'Friend Workspace v1.0.0',
+								title: 'Friend Workspace v1.1.2',
 								id:	'DoorsScreen',
 								extra: Workspace.fullName,
 								taskbar: false
@@ -143,7 +147,7 @@ Workspace = {
 
 
 						document.body.style.visibility = 'visible';
-
+						
 						if( t.conf.app )
 						{
 							return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function()
@@ -189,79 +193,15 @@ Workspace = {
 			else window.attachEvent( 'onmessage', listener, true );
 		}
 
-		// Set theme
-		if( typeof( this.conf.theme ) != 'undefined' )
-			this.refreshTheme( this.conf.theme );
-
 		// Init security subdomains
 		SubSubDomains.initSubSubDomains();
-	},
-	refreshTheme: function( themeName, update )
-	{
-		// Only on force or first time
-		if( this.themeRefreshed && !update )
-			return;
-		this.themeRefreshed = true;
-
-		Workspace.theme = themeName ? themeName.toLowerCase() : '';
-		themeName = Workspace.theme;
-
-		var h = document.getElementsByTagName( 'head' );
-		if( h )
-		{
-			h = h[0];
-
-			// New css!
-			var styles = document.createElement( 'link' );
-			styles.rel = 'stylesheet';
-			styles.type = 'text/css';
-			styles.onload = function(){ document.body.className = 'Inside'; }
-
-			if( themeName && themeName != 'default' )
-			{
-				AddCSSByUrl( '/themes/' + Workspace.theme + '/scrollbars.css' );
-				if( !Workspace.sessionId )
-					styles.href = '/themes/' + Workspace.theme + '/theme_compiled.css';
-				else styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
-			}
-			else
-			{
-				AddCSSByUrl( '/webclient/theme/scrollbars.css' );
-				if( !Workspace.sessionId )
-					styles.href = '/themes/friendup/theme_compiled.css';
-				else styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup"}' ) + '&sessionid=' + Workspace.sessionId;
-			}
-
-			// Remove old one
-			var l = h.getElementsByTagName( 'link' );
-			for( var b = 0; b < l.length; b++ )
-			{
-				if( l[b].parentNode != h ) continue;
-				l[b].href = '';
-				l[b].parentNode.removeChild( l[b] );
-			}
-
-			// Add new one
-			h.appendChild( styles );
-		}
-
-		// TODO: Loop through all apps and update themes...
-
-
 	},
 	// Get a door by path
 	getDoorByPath: function( path )
 	{
 		if( !path ) return false;
-		var list = Workspace.icons;
-		var part = path.split( ':' )[0] + ':';
-		for( var a = 0; a < list.length; a++ )
-		{
-			if( list[a].Volume == part )
-			{
-				return list[a].Dormant ? list[a].Dormant : list[a].Door;
-			}
-		}
+		if( d = ( new Door() ).get( path ) )
+			return d;
 		return false;
 	},
 	// Fetch mountlist from database
@@ -379,11 +319,11 @@ Workspace = {
 	// Dummy functions here
 	relogin: function( us, ps ){},
 	updateTasks: function(){},
-	refreshDesktop: function(){},
+	refreshDesktop: function( callback ){ if ( callback ) callback(); },
 	refreshMenu: function(){},
 	// Objects and arrays
 	icons: [],
-	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
+	menuMode: 'pear',
 	initialized: true,
 	protocol: _protocol,
 	menu: [],
@@ -409,6 +349,8 @@ Workspace = {
 		}
 	],
 	directoryView: false,
+	conn: null,
+	websocketsOffline: true,
 	//set an additional URL to call on logout
 	setLogoutURL: function( logoutURL )
 	{

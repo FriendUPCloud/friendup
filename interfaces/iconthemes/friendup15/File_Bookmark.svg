@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Bookmark</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-1121.000000, -53.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Bookmark" transform="translate(1009.846154, 0.000000)">
+                        <g>
+                            <path d="M1,2.15384615 L47,2.15384615 C47.5522847,2.15384615 48,2.6015614 48,3.15384615 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 3.99185455e-15,55.5522847 0,55 L0,3.15384615 C-6.76353751e-17,2.6015614 0.44771525,2.15384615 1,2.15384615 Z" id="rect4177-7" fill="#35B36A" fill-rule="nonzero"></path>
+                            <g id="Bookmark" transform="translate(6.153846, 8.615385)">
+                                <rect id="rect4175-5-0-6-7" fill="#A7A5C6" fill-rule="nonzero" opacity="0.8" x="0.939083871" y="10.5599365" width="36.0609197" height="2.05625"></rect>
+                                <rect id="rect4175-5-6-6-1-5" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="0.939083871" y="17.6099365" width="36.0609197" height="2.05625"></rect>
+                                <rect id="rect4175-5-6-2-1-1-6" fill="#A7A5C6" fill-rule="nonzero" opacity="0.8" x="0.939083871" y="24.6599365" width="36.0609197" height="2.05625"></rect>
+                                <polygon id="rect5731-9" fill="#F1C40F" fill-rule="nonzero" points="20.2903226 -9.4 20.2903226 8.52748025 29.0927419 3.53896368 37.8951613 8.52748025 37.8951613 -9.4"></polygon>
+                                <polygon id="Star" stroke="#F1C40F" stroke-width="1" fill="#F1C40F" fill-rule="evenodd" points="5.96774194 5.2875 3.86309152 6.37678491 4.26504398 4.06964245 2.56234602 2.43571509 4.91541673 2.09910755 5.96774194 0 7.02006715 2.09910755 9.37313785 2.43571509 7.67043989 4.06964245 8.07239235 6.37678491"></polygon>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

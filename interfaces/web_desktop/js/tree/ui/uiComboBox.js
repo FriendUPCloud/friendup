@@ -29,18 +29,24 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.ComboBox = function ( tree, name, properties )
 {
-	this.text = false;
-	this.font = '12px Arial';
+	this.text = 'Combo box';
+	this.font = '16px sans serif';
+	this.color = '#000000';
+	this.colorBack = '#808080';
+	this.colorBright = '#C0C0C0';
+	this.colorDark = '#404040';
+	this.colorDown = '#C0C0C0';
+	this.colorMouseOver = '#A0A0A0';
+	this.value = -1;
+	this.readOnly = false;
+	this.lines = false;
+	this.defaultValue = -1;
+	this.numberOfLines = 10;
+	this.type = 'list';
+
 	this.caller = false;
 	this.onClick = false;
 	this.onChange = false;
-	this.readOnly = false;
-	this.lines = false;
-	this.text = '';
-	this.defaultValue = -1;
-	this.value = -1;
-	this.numberOfLines = 10;
-	this.type = 'list';
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.ComboBox';	
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.ComboBox', properties );
 
@@ -176,33 +182,63 @@ Friend.Tree.UI.ComboBox.getValue = function ()
 };
 
 
-Friend.Tree.UI.RenderItems.ComboBox = function ( tree, name, flags )
+Friend.Tree.UI.RenderItems.ComboBox_Canvas2D = function ( tree, name, properties )
 {
-	this.textColor = '#000000';
-	this.backColor = '#808080';
-	this.brightColor = '#C0C0C0';
-	this.darkColor = '#404040';
-	this.downColor = '#C0C0C0';
-	this.mouseOverColor = '#A0A0A0';
-	this.font = '12px Arial';
+	this.text = false;
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.colorDown = false;
+	this.colorMouseOver = false;
+	this.value = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ComboBox', flags );
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ComboBox', properties );
+
+	this.width = 200;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.ComboBox.render = function ( properties )
+Friend.Tree.UI.RenderItems.ComboBox_Canvas2D.render = function ( properties )
 {
-	var color = this.backColor;
+	var color = this.item.colorBack;
 	if ( this.parent.mouseOver )
-		color = this.mouseOverColor;
+		color = this.item.colorMouseOver;
 	if ( this.parent.down )
-		color = this.downColor;
-	this.thisRect.drawHilightedBox( properties, color, this.brightColor, this.darkColor );
-	if ( this.parent.value >= 0 )
+		color = this.item.colorDown;
+	this.thisRect.drawHilightedBox( properties, color, this.item.colorBright, this.item.colorDark );
+	if ( this.value >= 0 )
 	{
 		var rect = new Friend.Tree.Utilities.Rect( this.thisRect );
 		rect.x += 8;
 		rect.width -= 16;
-		rect.drawText( properties, this.parent.text, this.font, this.textColor, 'left', 'center' );
+		rect.drawText( properties, this.item.text, this.item.font, this.item.color, 'left', 'center' );
 	}
 	return properties;
+};
+
+Friend.Tree.UI.RenderItems.ComboBox_HTML = function ( tree, name, properties )
+{
+	this.text = false;
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.colorDown = false;
+	this.colorMouseOver = false;
+	this.value = false;
+	
+	this.rendererType = 'Canvas';
+	this.rendererName = 'Renderer_Three2D';
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ComboBox', properties );
+
+	this.width = 200;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };

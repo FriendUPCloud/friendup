@@ -26,6 +26,9 @@ insert_image                      : Sett inn bilde
 i18n_print_alert                  : Utskriftsvarsel
 i18n_not_saved_cant_print         : Dokumentet er ikke lagret. Vennligst lagre dokumentet først og prøv igjen.
 
+i18n_close                        : Lukk
+i18n_accept                       : Aksepter
+
 i18n_set_bold                     : Sett fet skrift
 i18n_set_italic                   : Kursiv sett
 i18n_set_underline                : Sett understreke

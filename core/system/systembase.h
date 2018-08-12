@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <mutex/mutex_manager.h>
 
 #include <core/types.h>
 #include <core/library.h>
@@ -95,6 +96,16 @@
 #define DEFAULT_SESSION_ID_SIZE 256
 
 //
+// Exit code list
+//
+
+enum { 
+	EXIT_CODE_DUMMY = 0,
+	EXIT_CODE_LOCK,
+	EXIT_CODE_CONTROLLED
+};
+
+//
 // Devices
 //
 
@@ -145,6 +156,9 @@ typedef struct Device
 #define FSys_Mount_Execute				(FSys_Mount_Dummy + 17 ) // Can we execute something on mount?
 #define FSys_Mount_AdminRights			(FSys_Mount_Dummy + 18 ) // If functiona was called by admin
 #define FSys_Mount_UserName				(FSys_Mount_Dummy+19)		// name of device
+#define FSys_Mount_UserID				(FSys_Mount_Dummy+20)		// userID - this will allow admin to mount drives to other users
+#define FSys_Mount_UserGroupID			(FSys_Mount_Dummy+21)		// user group id
+#define FSys_Mount_UserGroup			(FSys_Mount_Dummy+22)		// user group
  
 //
 // system.library errors
@@ -162,6 +176,7 @@ typedef struct Device
 #define FSys_Error_NODevForUser				(FSYS_Error_Dummy+9)
 #define FSys_Error_SelectFail				(FSYS_Error_Dummy+10)
 #define FSys_Error_OpsInProgress			(FSYS_Error_Dummy+11)
+#define FSys_Error_WrongID					(FSYS_Error_Dummy+12)
  
 //
 //	library
@@ -215,6 +230,7 @@ typedef struct SystemBase
 	FKeyManager						*sl_KeyM;			// Key Maanager
 	WebdavTokenManager				*sl_WDavTokM;		// WebdavTokenManager
 	DOSTokenManager					*sl_DOSTM;			// DOSToken Manager
+	MutexManager					*sl_MutexManager;	// Mutex Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -226,6 +242,7 @@ typedef struct SystemBase
 	char 							*sl_ActiveModuleName;	// name of active module
 	char							*sl_DefaultDBLib;		// default DB library name
 	time_t							sl_RemoveSessionsAfterTime;	// time after which session will be removed
+	int								sl_MaxLogsInMB;			// Maximum size of logs in log folder in MB ( if > then old ones will be removed)
 	
 	//
 	// 60 seconds
@@ -277,6 +294,7 @@ typedef struct SystemBase
 	int								sl_SocketTimeout;
 	FBOOL 							sl_CacheFiles;
 	FBOOL							sl_UnMountDevicesInDB;
+	char							*sl_XFrameOption;
 	FLONG							sl_USFCacheMax; // User Shared File Manager cache max (per device)
 	Sentinel 						*sl_Sentinel;
 
@@ -338,6 +356,8 @@ typedef struct SystemBase
 	
 	void							(*Log)( int lev, char* fmt, ...) ;
 	
+	File							*(*GetRootDeviceByName)( User *usr, char *devname );
+	
 	char							RSA_SERVER_CERT[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_KEY[ CERT_PATH_SIZE ];
 	char							RSA_SERVER_CA_CERT[ CERT_PATH_SIZE ];
@@ -347,6 +367,7 @@ typedef struct SystemBase
 	
 	int								fdPool[ 1024 ];
 	char							*l_InitError;	// if NULL then there was no error
+	FBOOL							l_EnableHTTPChecker;
 } SystemBase;
 
 

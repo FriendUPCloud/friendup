@@ -37,6 +37,7 @@
 #include <util/log/log.h>
 #include <sys/time.h>
 #include <time.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * Create new worker
@@ -50,7 +51,7 @@ Worker *WorkerNew( int nr )
 	
 	if( wrk != NULL )
 	{
-		DEBUG("[WorkerThread] Worker CREATED %d\n", nr );
+		//DEBUG("[WorkerThread] Worker CREATED %d\n", nr );
 		
 		wrk->w_State = W_STATE_CREATED;
 		wrk->w_Nr = nr;
@@ -70,8 +71,7 @@ Worker *WorkerNew( int nr )
 /**
  * Create new worker
  *
- * @param nr id of new worker
- * @return pointer to new Worker structure when success, otherwise NULL
+ * @param w pointer to worker
  */
 void WorkerDelete( Worker *w )
 {
@@ -84,13 +84,13 @@ void WorkerDelete( Worker *w )
 
 			while( w->w_State != W_STATE_TO_REMOVE )
 			{
-				if( pthread_mutex_lock( &(w->w_Mut) ) == 0 )
+				if( FRIEND_MUTEX_LOCK( &(w->w_Mut) ) == 0 )
 				{
 					pthread_cond_signal( &(w->w_Cond) ); // <- wake up!!
-					pthread_mutex_unlock( &(w->w_Mut) );
+					FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
 				}
 				
-				DEBUG("[WorkerThread] State %d quit %d WRKID %d\n", w->w_State, w->w_Quit, w->w_Nr );
+				//DEBUG("[WorkerThread] State %d quit %d WRKID %d\n", w->w_State, w->w_Quit, w->w_Nr );
 				if( count++ > 1 )
 				{
 					usleep( 10000 );
@@ -106,7 +106,7 @@ void WorkerDelete( Worker *w )
 			pthread_mutex_destroy( &(w->w_Mut) );
 		}
 		
-		DEBUG("[WorkerThread] Worker deleted: %d\n", w->w_Nr );
+		//DEBUG("[WorkerThread] Worker deleted: %d\n", w->w_Nr );
 		FFree( w );
 	}
 }
@@ -120,7 +120,7 @@ void WorkerThread( void *w );
 /**
  * Run Worker
  *
- * @param nr id of worker which will be launched
+ * @param wrk pointer to Worker
  * @return 0 when success, otherwise error number
  */
 int WorkerRun( Worker *wrk )
@@ -165,6 +165,8 @@ void WorkerThread( void *w )
 	FThread *thread = (FThread *)w;
 	Worker *wrk = (Worker *)thread->t_Data;
 	wrk->w_State = W_STATE_RUNNING;
+	
+	wrk->w_ThreadPTR = pthread_self();
 
 	// Run until quit
 	while( TRUE )
@@ -174,25 +176,25 @@ void WorkerThread( void *w )
 			break;
 		}
 
-		if( pthread_mutex_lock( &(wrk->w_Mut) ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 		{
 			wrk->w_State = W_STATE_WAITING;
 
 			pthread_cond_wait( &(wrk->w_Cond), &(wrk->w_Mut) );
 
 			wrk->w_State = W_STATE_COMMAND_CALLED;
-			pthread_mutex_unlock( &(wrk->w_Mut) );
+			FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );
 			
 			if( wrk->w_Function != NULL && wrk->w_Data != NULL )
 			{
 				wrk->w_Function( wrk->w_Data );
 
-				if( pthread_mutex_lock( &(wrk->w_Mut) ) == 0 )
+				if( FRIEND_MUTEX_LOCK( &(wrk->w_Mut) ) == 0 )
 				{
 					wrk->w_Data = NULL;
 					wrk->w_Function = NULL;
 					
-					pthread_mutex_unlock( &(wrk->w_Mut) );				
+					FRIEND_MUTEX_UNLOCK( &(wrk->w_Mut) );				
 				}
 			}
 			else

@@ -32,6 +32,9 @@
 				<button type="button" class="IconSmall fa-user-plus" onclick="AddUser()">
 					{i18n_add_user}
 				</button>
+				<button type="button" class="IconSmall fa-refresh" onclick="RefreshList()">
+					{i18n_refresh_list}
+				</button>
 			</div>
 			<div class="HContentRight BorderLeft ScrollArea" style="width: 65%; left: 35%">
 				<div class="FullContent">
@@ -86,17 +89,9 @@
 	</script>
 	
 	<style>
-		.Pages > .Tab, .Pages > .TabActive
-		{
-			margin: 10px 0 0 10px;
-		}
 		.Pages > .Page.VContentBottom, .Pages > .PageActive.VContentBottom
 		{
 			height: calc(100% - 47px);
-		}
-		html .Pages > .Page
-		{
-			display: none;
 		}
 		#UserList > div, #WorkgroupList > div, #UserList > div, #SetupList > div
 		{

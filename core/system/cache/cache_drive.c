@@ -30,6 +30,7 @@
 #include "cache_drive.h"
 #include <util/string.h>
 #include <util/murmurhash3.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * Create new CacheDrive structure
@@ -62,13 +63,13 @@ void CacheDriveDelete( CacheDrive* dr )
 {
 	if( dr != NULL )
 	{
-		pthread_mutex_lock( &(dr->cd_Mutex) );
+		FRIEND_MUTEX_LOCK( &(dr->cd_Mutex) );
 		if( dr->cd_File != NULL )
 		{
 			CacheFileDeleteAll( dr->cd_File );
 			dr->cd_File = NULL;
 		}
-		pthread_mutex_unlock( &(dr->cd_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(dr->cd_Mutex) );
 		
 		pthread_mutex_destroy( &(dr->cd_Mutex) );
 		

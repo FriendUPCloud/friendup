@@ -122,13 +122,13 @@ int HttpStringAdd( HttpString *bs, const char *ntext, int len )
 		return 0;
 	}
 	
-	FERROR("\n\n\n\n\requestnot null!!!%p\n\n\n\n\n", bs->ht_Reqest);
+	//FERROR("\n\n\n\n\requestnot null!!!%p\n\n\n\n\n", bs->ht_Reqest);
 	if( bs->ht_Reqest != NULL )
 	{
-		FERROR("\n\n\n\n\requestnot null!!!\n\n\n\n\n");
+		//FERROR("\n\n\n\n\requestnot null!!!\n\n\n\n\n");
 		if( bs->ht_Reqest->h_ContentType == HTTP_CONTENT_TYPE_MULTIPART )
 		{
-			FERROR("\n\n\n\n\nMULTIPART!!!\n\n\n\n\n");
+			//FERROR("\n\n\n\n\nMULTIPART!!!\n\n\n\n\n");
 		}
 	}
 		

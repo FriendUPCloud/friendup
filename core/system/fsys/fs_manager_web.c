@@ -151,12 +151,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 	}
 	
 	// Some commands take "files" instead of path
+	/*
 	if( !path )
 	{
 		HashmapElement *el = HttpGetPOSTParameter( request, "files" );
 		if( el == NULL ) el = HashmapGet( request->query, "files" );
 		if( el != NULL ) path = ( char *)el->data;
 	}
+	*/
 	
 	// Target (for upload f.ex.) Home:MyPath/myfile.zip
 	el = HttpGetPOSTParameter( request, "target" );
@@ -470,6 +472,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							}
 						}
 						
+						actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 						BufString *resp = actFS->Dir( actDev, path );
 
 						if( resp != NULL)
@@ -546,6 +549,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
 						if( have == TRUE )
 						{
+							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 							int error = actFS->Rename( actDev, path, tmpname );
 							sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 						
@@ -672,6 +676,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						
 						if( have == TRUE )
 						{
+							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 							int error = actFS->MakeDir( actDev, lpath );
 						
 							if( error != 0 )
@@ -842,6 +847,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 												   HTTP_HEADER_CONTENT_DISPOSITION, (FULONG)StringDuplicate( temp ),
 												   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),
 												   TAG_DONE, TAG_DONE );
+						
+						if( fallbackMime != NULL )
+						{
+							FFree( fallbackMime );
+						}
 					}
 					else
 					{
@@ -855,7 +865,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( have == TRUE )
 					{
 						if( mode != NULL && strcmp( mode, "rs" ) == 0 )		// read stream
-						{ 
+						{
+							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 							File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, mode );
 						
 							// Success?
@@ -921,6 +932,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					
 						else if( mode != NULL && mode[0] == 'r' )
 						{
+							actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+							
 							DEBUG( "[FSMWebRequest] Reading path: %s\n", origDecodedPath );
 							File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, mode );
 						
@@ -1227,58 +1240,70 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				int dataSize = flength > 0 ? flength : strlen( fdata );
 				*/
 					
-					if( mode != NULL && fdata != NULL )
+					if( mode != NULL )
 					{
-						FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
-						if( have == TRUE )
+						if( fdata != NULL )
 						{
-							File *fp = (File *)actFS->FileOpen( actDev, path, mode );
-						
-							if( fp != NULL )
+							FBOOL have = FSManagerCheckAccess( l->sl_FSM, path, actDev->f_ID, loggedSession->us_User, "--W---" );
+							if( have == TRUE )
 							{
-								int size = 0;
+								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 								
-								dataSize = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), dataSize );
-								
-								size = actFS->FileWrite( fp, fdata, dataSize );
-								actDev->f_BytesStored += size;
-								
-								if( size > 0 )
+								File *fp = (File *)actFS->FileOpen( actDev, path, mode );
+						
+								if( fp != NULL )
 								{
-									char tmp[ 128 ];
-									sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" }", size );
-									HttpAddTextContent( response, tmp );
+									int size = 0;
+								
+									dataSize = FileSystemActivityCheckAndUpdate( l, &(actDev->f_Activity), dataSize );
+								
+									size = actFS->FileWrite( fp, fdata, dataSize );
+									actDev->f_BytesStored += size;
+								
+									if( size > 0 )
+									{
+										char tmp[ 128 ];
+										sprintf( tmp, "ok<!--separate-->{ \"FileDataStored\" : \"%d\" }", size );
+										HttpAddTextContent( response, tmp );
+									}
+									else
+									{
+										char dictmsgbuf[ 256 ];
+										snprintf( dictmsgbuf, sizeof( dictmsgbuf ), 
+											"fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", 
+											l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , 
+											DICT_CANNOT_ALLOCATE_MEMORY 
+										);
+										HttpAddTextContent( response, dictmsgbuf );
+									}
+									actFS->FileClose( actDev, fp );
+							
+									DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
 								}
 								else
 								{
 									char dictmsgbuf[ 256 ];
-									snprintf( dictmsgbuf, sizeof( dictmsgbuf ), 
-										"fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", 
-										l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , 
-										DICT_CANNOT_ALLOCATE_MEMORY 
-									);
+									char dictmsgbuf1[ 196 ];
+									snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_OPEN_FILE], path );
+									snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_OPEN_FILE );
 									HttpAddTextContent( response, dictmsgbuf );
 								}
-
-								actFS->FileClose( actDev, fp );
-							
-								DoorNotificationCommunicateChanges( l, loggedSession, actDev, path );
 							}
 							else
 							{
 								char dictmsgbuf[ 256 ];
 								char dictmsgbuf1[ 196 ];
-								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_CANNOT_OPEN_FILE], path );
-								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_CANNOT_OPEN_FILE );
+								snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
+								snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ACCESS_TO );
 								HttpAddTextContent( response, dictmsgbuf );
 							}
 						}
 						else
 						{
 							char dictmsgbuf[ 256 ];
-							char dictmsgbuf1[ 196 ];
-							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_NO_ACCESS_TO], path );
-							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_NO_ACCESS_TO );
+							char dictmsgbuf1[ 256 ];
+							snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "data" );
+							snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", dictmsgbuf1 , DICT_PARAMETERS_MISSING );
 							HttpAddTextContent( response, dictmsgbuf );
 						}
 					}
@@ -1361,60 +1386,61 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 										int64_t written = 0;
 										int64_t readall = 0;
 										
+										actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 										File *rfp = (File *)actFS->FileOpen( actDev, path, "rb" );
-										File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
-										
-										if( rfp != NULL && wfp != NULL )
-										{
-											// Using a big buffer!
-											char *dataBuffer = FCalloc( 524288, sizeof(char) );
-											if( dataBuffer != NULL )
-											{
-												DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
-										
-												int dataread = 0;
-												
-
-												while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
-												{
-													if( request->h_ShutdownPtr != NULL &&  *(request->h_ShutdownPtr) == TRUE )
-													{
-														break;
-													}
-													
-													readall += dataread;
-													
-													if( dataread > 0 )
-													{
-														int bytes = 0;
-														
-														dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
-
-														bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
-
-														written += bytes;
-
-														dstrootf->f_BytesStored += bytes;
-													}
-												}
-												FFree( dataBuffer );
-											}
-										}
-										else
-										{
-											DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
-										}
 										int closeError = 0;
 										
-										DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
+										if( rfp != NULL )
+										{
+											dstrootf->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+											
+											File *wfp = (File *)dsthand->FileOpen( dstrootf, dstpath, "w+" );
+											
+											if( wfp != NULL )
+											{
+												// Using a big buffer!
+												char *dataBuffer = FCalloc( 524288, sizeof(char) );
+												if( dataBuffer != NULL )
+												{
+													DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
 										
-										if( rfp )
-										{
+													int dataread = 0;
+												
+
+													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
+													{
+														if( request->h_ShutdownPtr != NULL &&  *(request->h_ShutdownPtr) == TRUE )
+														{
+															break;
+														}
+													
+														readall += dataread;
+													
+														if( dataread > 0 )
+														{
+															int bytes = 0;
+														
+															dataread = FileSystemActivityCheckAndUpdate( l, &(dstrootf->f_Activity), dataread );
+
+															bytes = dsthand->FileWrite( wfp, dataBuffer, dataread );
+
+															written += bytes;
+
+															dstrootf->f_BytesStored += bytes;
+														}
+													}
+													FFree( dataBuffer );
+												}
+												else
+												{
+													DEBUG( "[FSMWebRequest] We could not do anything with the bad file pointers..\n" );
+												}
+												closeError = dsthand->FileClose( dstrootf, wfp );
+											}
+											
+											DEBUG( "[FSMWebRequest] Wrote %lu bytes. Read: %lu. Read file pointer %p. Write file pointer %p.\n", written, readall, rfp, wfp );
+											
 											actFS->FileClose( actDev, rfp );
-										}
-										if( wfp )
-										{
-											closeError = dsthand->FileClose( dstrootf, wfp );
 										}
 								
 										char tmp[ 128 ];
@@ -1448,6 +1474,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 											}
 										}
 								
+										dstrootf->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
 										int error = dsthand->MakeDir( dstrootf, topath );
 										sprintf( tmp, "ok<!--separate-->{ \"response\": \"%d\"}", error );
 								
@@ -1570,6 +1597,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 							FBOOL have = FSManagerCheckAccess( l->sl_FSM, tmpPath, actDev->f_ID, loggedSession->us_User, "--W---" );
 							if( have == TRUE )
 							{
+								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								
 								File *fp = (File *)actFS->FileOpen( actDev, tmpPath, "wb" );
 								if( fp != NULL )
 								{
@@ -1788,6 +1817,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						{
 							size = snprintf( tmp, 2048, "fail<!--separate-->{ \"response\": \"%s\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_SHARE_FILE] );
 						}
+						
+						DEBUG("RESPONSE : '%s'\n", tmp );
 						
 						HttpSetContent( response, tmp, size );
 						*result = 200;
@@ -2222,6 +2253,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					char *archiver = NULL;
 					char *archpath = NULL;
 					char *files    = NULL;
+					char *source   = NULL;
 					
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 											   HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
@@ -2241,6 +2273,14 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						files = UrlDecodeToMem( (char *)el->data );
 					}
 					
+					// source directory
+					el = HttpGetPOSTParameter( request, "source" );
+					if( el == NULL ) el = HashmapGet( request->query, "source" );
+					if( el != NULL )
+					{
+						source = UrlDecodeToMem( (char *)el->data );
+					}
+					
 					// Where archive should be stored
 					el = HttpGetPOSTParameter( request, "destination" );
 					if( el == NULL ) el = HashmapGet( request->query, "destination" );
@@ -2249,11 +2289,12 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						archpath = UrlDecodeToMem( (char *)el->data );
 					}
 					
-					if( archiver != NULL && files != NULL && archpath != NULL )
+					if( archiver != NULL && files != NULL && archpath != NULL && source != NULL )
 					{
+						//DEBUG("\n\n\n\n\n\n\n\nORIGINAL PATH: %s archpath %s\n\n\n\n\n\n", path, archpath );
 						{
 							char *dirname = FCalloc( 1024, sizeof(char) );
-							snprintf( dirname, 1024, "/tmp/%s_decomp_%d%d", loggedSession->us_SessionID, rand()%9999, rand()%9999 );
+							snprintf( dirname, 1024, "%s%s_decomp_%d%d", DEFAULT_TMP_DIRECTORY, loggedSession->us_SessionID, rand()%9999, rand()%9999 );
 
 							mkdir( dirname, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 						
@@ -2269,7 +2310,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							int numberOfFiles = 0;
 							request->h_SB = l;
-							int error = FileDownloadFilesOrFolder( request, loggedSession, dstname, files, &numberOfFiles );
+							int error = FileDownloadFilesOrFolder( request, loggedSession, source, dstname, files, &numberOfFiles );
 						
 							if( strcmp( archiver, "zip" ) == 0 )
 							{
@@ -2280,7 +2321,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 								{
 									int compressedFiles = zlib->Pack( zlib, tmpfilename, dstname, strlen( dstname ), NULL, request, numberOfFiles );
 									
-									DEBUG("[FSMWebRequest] pack archive %s to %s pack fnct poiter %p, compressed files %d\n", tmpfilename, dstname, zlib->Pack, compressedFiles );
+									DEBUG("[FSMWebRequest] pack archive %s to %s pack fnct poiter %p, compressed files %d all files will go to: %s\n", tmpfilename, dstname, zlib->Pack, compressedFiles, archpath );
 
 									l->LibraryZDrop( l, zlib );
 								}
@@ -2308,6 +2349,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 									
 										if( ( readfile = fopen( tmpfilename, "rb" ) ) != NULL )
 										{
+											actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+											
 											File *fp = (File *)fsys->FileOpen( dstdevice, archpath, "wb" );
 											if( fp != NULL )
 											{
@@ -2388,6 +2431,11 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 						FFree( archiver );
 					}
 					
+					if( source != NULL )
+					{
+						FFree( source );
+					}
+					
 					if( archpath != NULL )
 					{
 						FFree( archpath );
@@ -2456,6 +2504,8 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 
 							if( actFS != NULL )
 							{
+								actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+								
 								File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "rb" );
 								// Success?
 								if( fp != NULL )

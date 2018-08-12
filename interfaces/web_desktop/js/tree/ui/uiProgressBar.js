@@ -29,19 +29,24 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.ProgressBar = function ( tree, name, properties )
 {
+	this.color = '#FFFF00';
+	this.colorBack = '#FF0000';
+	this.colorBorder = '#000000';
+	this.sizeBorder = 1;
 	this.position = 50;
 	this.size = 100;
 	this.direction = Friend.Tree.DIRECTION_RIGHT;
+
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.ProgressBar';
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.ProgressBar', properties );
 };
 Friend.Tree.UI.ProgressBar.messageUp = function ( message )
 {
-	return this.startProcess( message, [ 'x', 'y', 'z', 'color', 'backColor', 'borderColor', 'borderSize', 'rotation', 'image' ] );
+	return this.startProcess( message, [ 'x', 'y', 'z', 'color', 'colorBack', 'colorBorder', 'sizeBorder', 'rotation', 'image' ] );
 };
 Friend.Tree.UI.ProgressBar.messageDown = function ( message )
 {
-	return this.endProcess( message, [ 'x', 'y', 'z', 'rotation', 'color', 'backColor', 'borderColor', 'borderSize' ] );
+	return this.endProcess( message, [ 'x', 'y', 'z', 'rotation', 'color', 'colorBack', 'colorBorder', 'sizeBorder' ] );
 };
 Friend.Tree.UI.ProgressBar.setPosition = function ( position )
 {
@@ -69,67 +74,67 @@ Friend.Tree.UI.ProgressBar.getSize = function ()
 	return this.size;
 }
 
-Friend.Tree.UI.RenderItems.ProgressBar_Three2D = function ( tree, name, properties )
+
+Friend.Tree.UI.RenderItems.ProgressBar_HTML = function ( tree, name, properties )
 {
-	this.backColor = '#FF0000';
-	this.color = '#FFFF00';
-	this.borderColor = '#000000';
-	this.borderSize = '1';
+	this.color = false;
+	this.colorBack = false;
+	this.colorBorder = false;
+	this.sizeBorder = false;
+	this.position = false;
+	this.size = false;
+
 	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ProgressBar_Three2D', properties );
+	this.rendererName = 'Renderer_HTML';
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ProgressBar_HTML', properties );
+
+	this.width = 320;
+	this.height = 200;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.ProgressBar_Three2D.render = function ( properties )
+Friend.Tree.UI.RenderItems.ProgressBar_HTML.render = function ( properties )
 {
 	var rect = new Friend.Tree.Utilities.Rect( this.thisRect );
-	if ( this.borderSize && typeof this.borderColor != 'undefined' )
+	if ( this.item.sizeBorder && typeof this.item.colorBorder != 'undefined' )
 	{
-		rect.drawRectangle( properties, this.borderColor, this.borderSize );
-		rect.shrink( - this.borderSize, - this.borderSize )
+		rect.drawRectangle( properties, this.item.colorBorder, this.item.sizeBorder );
+		rect.shrink( - this.item.sizeBorder, - this.item.sizeBorder )
 	}
-	if ( typeof this.backColor != 'undefined' )
-		rect.drawBox( properties, this.backColor );
+	if ( typeof this.item.colorBack != 'undefined' )
+		rect.drawBox( properties, this.item.colorBack );
 
-	switch ( this.parent.direction )
+	switch ( this.item.direction )
 	{
 		case Friend.Tree.DIRECTION_RIGHT:
-			rect.width = this.parent.position / this.parent.size * rect.width;
+			rect.width = this.item.position / this.item.size * rect.width;
 			break;
 		case Friend.Tree.DIRECTION_LEFT:
-			rect.x = rect.x + rect.width - ( this.parent.position / this.parent.size * rect.width );
-			rect.width = this.parent.position / this.parent.size * rect.width;
+			rect.x = rect.x + rect.width - ( this.item.position / this.item.size * rect.width );
+			rect.width = this.item.position / this.item.size * rect.width;
 			break;
 		case Friend.Tree.DIRECTION_DOWN:
-			rect.height = this.parent.position / this.parent.size * rect.height;
+			rect.height = this.item.position / this.item.size * rect.height;
 			break;
 		case Friend.Tree.DIRECTION_UP:
-			rect.y = rect.y + rect.height - ( this.parent.position / this.parent.size * rect.height );
-			rect.height = this.parent.position / this.parent.size * rect.height;
+			rect.y = rect.y + rect.height - ( this.item.position / this.item.size * rect.height );
+			rect.height = this.item.position / this.item.size * rect.height;
 			break;
 	}
-	rect.drawBox( properties, this.color );
+	rect.drawBox( properties, this.item.color );
 
 	return properties;
 };
 
-Friend.Tree.UI.RenderItems.ProgressBar_HTML = function ( tree, name, properties )
-{
-	this.backColor = '#FF0000';
-	this.color = '#FFFF00';
-	this.borderColor = '#000000';
-	this.borderSize = '1';
-	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_HTML';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ProgressBar_HTML', properties );
-};
-Friend.Tree.UI.RenderItems.ProgressBar_HTML.render = Friend.Tree.UI.RenderItems.ProgressBar_Three2D.render;
-
 Friend.Tree.UI.RenderItems.ProgressBar_Canvas2D = function ( tree, name, properties )
 {
-	this.backColor = '#FF0000';
-	this.color = '#FFFF00';
-	this.borderColor = '#000000';
-	this.borderSize = '1';
+	this.color = false;
+	this.colorBack = false;
+	this.colorBorder = false;
+	this.sizeBorder = false;
+	this.position = false;
+	this.size = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.ProgressBar_Canvas2D', properties );

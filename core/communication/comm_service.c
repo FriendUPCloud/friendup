@@ -138,7 +138,7 @@ void CommServiceDelete( CommService *s )
 		}
 		
 		pthread_cond_broadcast( &s->s_DataReceivedCond );
-		pthread_mutex_lock( &s->s_Mutex );
+		FRIEND_MUTEX_LOCK( &s->s_Mutex );
 
 		CommRequest *cr = s->s_Requests;
 		while( cr != NULL )
@@ -151,7 +151,7 @@ void CommServiceDelete( CommService *s )
 		
 		pthread_cond_broadcast( &s->s_DataReceivedCond );
 		
-		pthread_mutex_unlock( &s->s_Mutex );
+		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 		
 		DEBUG2("[COMMSERV] : Quit set to TRUE, sending signal\n");
 		
@@ -196,7 +196,7 @@ void CommServiceDelete( CommService *s )
 			Log( FLOG_ERROR,"Cannot close pipe\n");
 		}
 		
-		pthread_mutex_lock( &s->s_Mutex );
+		FRIEND_MUTEX_LOCK( &s->s_Mutex );
 		SystemBase *lsb = (SystemBase *)s->s_SB;
 		FriendCoreManager *fcm = lsb->fcm;
 		
@@ -215,7 +215,7 @@ void CommServiceDelete( CommService *s )
 		}
 		s->s_Connections = NULL;
 		
-		pthread_mutex_unlock( &s->s_Mutex );
+		FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 		
 		DEBUG2("[COMMSERV] : pipes closed\n");
 		
@@ -678,11 +678,11 @@ int CommServiceThreadServer( FThread *ptr )
 				
 				if( eventCount == 0 )
 				{
-					if( pthread_mutex_lock( &service->s_Mutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &service->s_Mutex ) == 0 )
 					{
 						pthread_cond_broadcast( &service->s_DataReceivedCond );
 						
-						pthread_mutex_unlock( &service->s_Mutex );
+						FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 					}
 					continue;
 				}
@@ -713,7 +713,7 @@ int CommServiceThreadServer( FThread *ptr )
 						
 							if( loccon != NULL )
 							{
-								pthread_mutex_lock( &loccon->fc_Mutex );
+								FRIEND_MUTEX_LOCK( &loccon->fc_Mutex );
 								/*
 								if( 0 == CommServiceDelConnection( service, loccon, sock ) )
 								{
@@ -728,7 +728,7 @@ int CommServiceThreadServer( FThread *ptr )
 								loccon->fc_Socket = NULL;
 								loccon->fc_Status = CONNECTION_STATUS_DISCONNECTED;
 								
-								pthread_mutex_unlock( &loccon->fc_Mutex );
+								FRIEND_MUTEX_UNLOCK( &loccon->fc_Mutex );
 							}
 							//SocketClose( sock );
 						}
@@ -874,7 +874,7 @@ int CommServiceThreadServer( FThread *ptr )
 								{
 									DEBUG("[COMMSERV] Response received!\n");
 									
-									pthread_mutex_lock( &service->s_Mutex );
+									FRIEND_MUTEX_LOCK( &service->s_Mutex );
 									DEBUG("[COMMSERV] lock set\n");
 									CommRequest *cr = service->s_Requests;
 									while( cr != NULL )
@@ -889,7 +889,7 @@ int CommServiceThreadServer( FThread *ptr )
 										}
 										cr = (CommRequest *) cr->node.mln_Succ;
 									}
-									pthread_mutex_unlock( &service->s_Mutex );
+									FRIEND_MUTEX_UNLOCK( &service->s_Mutex );
 								}
 								
 								// Another FC is trying to connect
@@ -1579,7 +1579,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 	FConnection *con  = NULL, *prevcon;
 	
 	DEBUG("[CommServiceDelConnection] Start\n");
-	pthread_mutex_lock( &s->s_Mutex );
+	FRIEND_MUTEX_LOCK( &s->s_Mutex );
 	//
 	// connection is server
 	//
@@ -1600,7 +1600,7 @@ int CommServiceDelConnection( CommService* s, FConnection *loccon, Socket *sock 
 		con =  (FConnection *)con->node.mln_Succ;
 	}
 	
-	pthread_mutex_unlock( &s->s_Mutex );
+	FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 	
 	DEBUG("[COMMSERV] Remove socket connection\n");
 	
@@ -1848,9 +1848,9 @@ void CommServicePING( CommService* s )
 	SystemBase *lsb = (SystemBase *)s->s_SB;
 	FriendCoreManager *fcm = (FriendCoreManager *)lsb->fcm; //s->s_FCM;
 	
-	pthread_mutex_lock( &s->s_Mutex );
+	FRIEND_MUTEX_LOCK( &s->s_Mutex );
 	FConnection *con = s->s_Connections;
-	pthread_mutex_unlock( &s->s_Mutex );
+	FRIEND_MUTEX_UNLOCK( &s->s_Mutex );
 	
 	while( con != NULL )
 	{

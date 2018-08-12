@@ -2,7 +2,7 @@
 	<input type="hidden" id="ThemeConfigData" value=""/>
 
 	<div class="ContentFull">
-		<div class="Padding VContentTop">
+		<div class="TheContainer VContentTop">
 			<div id="MainTabs">
 				<div class="IconSmall fa-list-ul Tab">
 					{i18n_theme_engines}
@@ -107,10 +107,7 @@
 			</div>
 		</div>
 		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
-			<button class="NoMargins IconSmall fa-remove FloatRight" type="button" onclick="Application.sendMessage( { command: 'quit' } )">
-				{i18n_cancel}
-			</button>
-			<button class="IconSmall fa-save" type="button" onclick="applyTheme()">
+			<button class="FloatRight IconSmall fa-save" type="button" onclick="applyTheme()">
 				{i18n_save}
 			</button>
 		</div>

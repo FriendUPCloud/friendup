@@ -80,22 +80,6 @@ DormantMaster =
 {
 	appDoors: [],
 	events: {}, // Events from all applications, based on type
-	// Connect application to Friend Network
-	connectFriendNetworkTo: function( msg )
-	{
-		if( msg.callback )
-		{
-			msg.callback( { command: 'connect', response: 'ok'} );
-		}
-	},
-	// Disconnect application from Friend Network
-	disconnectFriendNetworkFrom: function( msg )
-	{
-		if( msg.callback )
-		{
-			msg.callback( { command: 'disconnect', response: 'ok' } );
-		}
-	},
 	// Add an application to the dormant master
 	addAppDoor: function( dormantDoorObject )
 	{
@@ -144,12 +128,23 @@ DormantMaster =
 			return callback( doors );
 		return doors;
 	},
-	delAppDoor: function( door )
+	delAppDoor: function( doorOrTitle )
 	{
 		var newd = [];
 		for ( var a = 0; a < this.appDoors.length; a++ )
 		{
-			if ( this.appDoors[a].title == door )
+			var found = false;
+			if ( typeof doorOrTitle == 'object' )
+			{
+				if ( this.appDoors[ a ] == doorOrTitle )
+					found = true;
+			}
+			else
+			{
+				if ( this.appDoors[ a ].title == doorOrTitle )
+					found = true;
+			}
+			if ( found )
 			{
 				for ( var b = 0; b < this.appDoors[a].windows.length; b++ )
 				{

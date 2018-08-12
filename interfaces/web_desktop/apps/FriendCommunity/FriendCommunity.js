@@ -446,8 +446,11 @@ window.config = {
 				keys	 : account.keys*/
 			};
 			
+			console.log( 'self.saveAccount()' );
 			self.saveAccount();
+			console.log( 'self.setLastHost()' );
 			self.setLastHost();
+			console.log( 'self.main.open( self.host, account ) ', { host: self.host, account: account } );
 			self.main.open( self.host, account );
 		}
 		
@@ -590,6 +593,7 @@ window.config = {
 		
 		function initMain()
 		{
+			console.log( 'initMain()' );
 			self.main = new system.Main();
 			window.mainSystem = self.main; // <- breaks espens back
 			if ( self.account )
@@ -873,7 +877,7 @@ window.config = {
 		function result( e, d )
 		{
 			console.log( 'load result', { e : e, d : d, s : setting });
-			if( e !== 'ok' )
+			if( e !== 'ok' || d === 'fail' )
 			{
 				done( false );
 				return;
@@ -1042,8 +1046,12 @@ window.config = {
 		var keys = getKeys( account );
 		//var pubKey = getPubKey( account );
 		
+		console.log( 'ns.Main.prototype.open = function( host, account )' );
+		
 		getServerSettings( function( param )
 		{
+			
+			console.log( 'param: ', param );
 			
 			self.loadedEvent = {
 				type : 'open',
@@ -1057,6 +1065,8 @@ window.config = {
 					param : ( param ? param : false ) 
 				},
 			};
+			
+			console.log( 'self.showMain() ' );
 			
 			self.showMain();
 			
@@ -1095,10 +1105,26 @@ window.config = {
 		
 		function getServerSettings( callback )
 		{
+			//console.log( 'getServerSettings( callback ) ', callback );
+			
+			//console.log( 'bypassing getServerSettings() since there is none ... and it\'s not working ...' );
+			
+			// Bypassing getting settings somehow it doesn't work ...
+			//if( callback ) return callback( false );
+			
+			var timeout = setTimeout( function()
+			{
+				if( callback ) return callback( false );
+			}, 3000 );
+			
 			//host settings...
 			var m2 = new Module( 'system' );
 			m2.onExecuted = function( e, d )
 			{
+				console.log( { e:e, d:d } );
+				
+				clearTimeout( timeout );
+				
 				if( e == 'ok' )
 				{
 					var tmp;
@@ -1126,6 +1152,8 @@ window.config = {
 				if( callback ) return callback( false );
 			}
 			m2.execute( 'getsystemsetting', {'type':'friendcommunity','key':'parameters'} );
+			
+			//console.log( '... ??? ... ' );
 		}
 	}
 	

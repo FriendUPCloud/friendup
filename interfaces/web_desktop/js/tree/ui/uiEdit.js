@@ -29,10 +29,14 @@ Friend.UI = Friend.UI || {};
 
 Friend.Tree.UI.Edit = function ( tree, name, flags )
 {
-	this.text = false;
-	this.caller = false;
+	this.value = false;
+	this.border = false;
+	this.placeholder = false;
+	this.onClick = false;
+	this.onChange = false;
 	this.onClose = false;
 	this.closeOnClick = false;
+	this.caller = false;
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.Edit';
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.Edit', flags );
     this.registerEvents( 'mouse' );
@@ -59,24 +63,29 @@ Friend.Tree.UI.Edit.messageDown = function ( message )
 };
 Friend.Tree.UI.Edit.getValue = function()
 {
-	return this.callRenderItem( 'getValue', [] );
+	return this.value;
 };
 Friend.Tree.UI.Edit.setValue = function( value )
 {
-	this.callRenderItem( 'setValue', [ value ] );
+	this.updateProperty( 'value', value );
+	this.doRefresh();
 };
 
 
-Friend.Tree.UI.RenderItems.Edit_HTML = function ( tree, name, flags )
+Friend.Tree.UI.RenderItems.Edit_HTML = function ( tree, name, properties )
 {
-	this.caller = false;
-	this.onClick = false;
-	this.onChange = false;
-    this.onReturn = false;
+	this.value = false;
+	this.placeholder = false;
+	this.maxLength = false;
+	this.border = false;
+
 	this.rendererName = 'Renderer_HTML';
 	this.rendererType = 'Element';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Edit_HTML', flags );
-
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Edit_HTML', properties );
+	this.initialize( properties );
+};
+Friend.Tree.UI.RenderItems.Edit_HTML.initialize = function ()
+{
     this.element = document.createElement( 'TEXTAREA' );
 	this.element.type = 'text';
 	this.element.resize = 'none';
@@ -84,26 +93,27 @@ Friend.Tree.UI.RenderItems.Edit_HTML = function ( tree, name, flags )
 	this.element.overflowX = 'scroll';
 	this.element.tabIndex = tree.tabIndex++;
 	this.element.contentEditable = 'true';
-	this.element.defaultValue = this.parent.text;
-	this.element.maxLength = this.parent.maxLength;
-    this.element.style.border = this.border;
+	this.element.defaultValue = this.value;
+	this.element.placeholder = this.item.placeholder;
+	this.element.maxLength = this.item.maxLength;
+    this.element.style.border = this.item.border;
 	this.element.style.position = 'absolute';
 
     var self = this;
     this.element.onkeyup = function()
     {
-        var pos = this.value.indexOf( '\n' )
         if ( this.type == 'number' )
-            this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-        if ( self.caller && self.onChange )
-            self.caller[ self.onChange ].apply( self.caller, [ this.value ] );
+			this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+		self.item.updateProperty( 'value', this.value, self );
+        if ( self.item.caller && self.item.onChange )
+            self.item.caller[ self.item.onChange ].apply( self.item.caller, [ this.value ] );
     };
     this.element.onkeydown = function( event )
     {
         if ( event.which == 13 )
         {
-            if ( self.caller && self.onReturn )
-                self.caller[ self.onReturn ].apply( self.caller, [ this.value ] );
+            if ( self.item.caller && self.item.onReturn )
+                self.caller[ self.item.onReturn ].apply( self.item.caller, [ this.value ] );
         }
     };
     this.element.onclick = function()
@@ -111,102 +121,25 @@ Friend.Tree.UI.RenderItems.Edit_HTML = function ( tree, name, flags )
 		if ( self.caller && self.onClick )
 			self.onClick.apply( self.caller, [ this ] );
 	};
+
+	this.width = 200;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
 Friend.Tree.UI.RenderItems.Edit_HTML.render = function ( properties )
 {
 	return properties;
 };
-Friend.Tree.UI.RenderItems.Edit_HTML.getValue = function()
+Friend.Tree.UI.RenderItems.Edit_HTML.message = function ( message )
 {
-	return this.element.value;
-};
-Friend.Tree.UI.RenderItems.Edit_HTML.setValue = function( value )
-{
-	this.element.value = value;
-};
-
-
-Friend.Tree.UI.RenderItems.Edit_Three2D = function ( tree, name, properties )
-{
-	this.text = false;
-	this.font = '12px Arial';
-	this.caller = false;
-	this.onClick = false;
-	this.onChange = false;
-	this.onReturn = false;
-	this.numberOfLines = 1;
-	this.disabled = false;
-	this.readOnly = false;
-    this.maxLength = 256;
-    this.border = 'black';
-	this.closeOnClick = false;
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Edit_Three2D', properties );
-    this.initialize( properties );
-}
-Friend.Tree.UI.RenderItems.Edit_Three2D.initialize = function ( properties )
-{
-	if ( this.numberOfLines == 1 )
-		this.height = this.renderer.getFontSize( this.font ) + 2;
-	this.element = document.createElement( 'TEXTAREA' );
-	this.element.type = 'text';
-	this.element.resize = 'none';
-	this.element.whiteSpace = 'nowrap';
-	this.element.overflowX = 'scroll';
-	this.element.tabIndex = this.tree.tabIndex++;
-	this.element.contentEditable = 'true';
-	this.element.defaultValue = this.parent.text;
-	this.element.style.visibility = 'hidden';
-	this.element.maxLength = this.parent.maxLength;
-	this.element.style.position = 'absolute';
-    var self = this;
-    this.element.onkeyup = function()
-    {
-        var pos = this.value.indexOf( '\n' )
-        if ( this.type == 'number' )
-            this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-        if ( self.caller && self.onChange )
-            self.caller[ self.onChange ].apply( self.caller, [ this.value ] );
-    };
-    this.element.onkeydown = function( event )
-    {
-        if ( event.which == 13 )
-        {
-            if ( self.caller && self.onReturn )
-                self.caller[ self.onReturn ].apply( self.caller, [ this.value ] );
-        }
-    };
-    this.element.onclick = function()
+	if ( message.command == 'value_changed' )
 	{
-		if ( self.caller && self.onClick )
-			self.onClick.apply( self.caller, [ this ] );
-	};
-	document.body.appendChild( this.element );
+		this.element.value = this.value;
+	}
+	return false;
 };
-Friend.Tree.UI.RenderItems.Edit_Three2D.render = function ( properties )
-{
-    this.element.style.left = this.rect.x + 'px';
-    this.element.style.top = this.rect.y + 'px';
-    this.element.style.width = this.width + 'px';
-    this.element.style.height = this.height + 4 + 'px';
-    this.element.style.border = this.border;
-    this.element.style.zIndex = '999';
-    this.element.style.opacity = properties.alpha.toString();
-    if ( this.visible )
-        this.element.style.visibility = 'visible';
-    else
-        this.element.style.visibility = 'hidden';
-    return properties;
-};
-Friend.Tree.UI.RenderItems.Edit_Three2D.getValue = function()
-{
-	return this.element.value;
-};
-Friend.Tree.UI.RenderItems.Edit_Three2D.setValue = function( value )
-{
-	this.element.value = value;
-};
-Friend.Tree.UI.RenderItems.Edit_Three2D.onDestroy = function ( flags )
+Friend.Tree.UI.RenderItems.Edit_HTML.onDestroy = function ( flags )
 {
 	document.body.removeChild( this.element );
 };
@@ -214,24 +147,14 @@ Friend.Tree.UI.RenderItems.Edit_Three2D.onDestroy = function ( flags )
 
 Friend.Tree.UI.RenderItems.Edit_Canvas2D = function ( tree, name, properties )
 {
-    debugger;
-	this.text = false;
-	this.font = '12px Arial';
-	this.caller = false;
-	this.onClick = false;
-	this.onChange = false;
-	this.onReturn = false;
-	this.numberOfLines = 1;
-	this.disabled = false;
-	this.readOnly = false;
-	this.maxLength = 256;
-	this.closeOnClick = false;
-	this.rendererName = 'Renderer_Canvas2D';
+	this.rendererName = 'Renderer_HTML';
+	this.rendererType = 'Element';
+	this.value = false;
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Edit_Canvas2D', properties );
-    this.initialize( properties );
-}
-Friend.Tree.UI.RenderItems.Edit_Canvas2D.render = Friend.Tree.UI.RenderItems.Edit_Three2D.render;
-Friend.Tree.UI.RenderItems.Edit_Canvas2D.initialize = Friend.Tree.UI.RenderItems.Edit_Three2D.initialize;
-Friend.Tree.UI.RenderItems.Edit_Canvas2D.getValue = Friend.Tree.UI.RenderItems.Edit_Three2D.getValue;
-Friend.Tree.UI.RenderItems.Edit_Canvas2D.setValue = Friend.Tree.UI.RenderItems.Edit_Three2D.setValue;
-Friend.Tree.UI.RenderItems.Edit_Canvas2D.onDesitroy = Friend.Tree.UI.RenderItems.Edit_Three2D.onDestroy;
+	this.initialize( properties );
+};
+Friend.Tree.UI.RenderItems.Edit_Canvas2D.render = Friend.Tree.UI.RenderItems.Edit_HTML.render;
+Friend.Tree.UI.RenderItems.Edit_Canvas2D.message = Friend.Tree.UI.RenderItems.Edit_HTML.message;
+Friend.Tree.UI.RenderItems.Edit_Canvas2D.onDestroy = Friend.Tree.UI.RenderItems.Edit_HTML.onDestroy;
+
+

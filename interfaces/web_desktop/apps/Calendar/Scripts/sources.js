@@ -106,7 +106,7 @@ function CloseSource()
 
 function Source(id)
 {
-	var callback = function(data)
+	var callback = function( data )
 	{
 		var s = new File( 'Progdir:Templates/sources_gui.html' );
 		s.replacements = {
@@ -115,16 +115,28 @@ function Source(id)
 			'desc'               : i18n( 'i18n_desc' ),
 			'cancel'             : i18n( 'i18n_cancel' ),
 			'name'               : data.Name ? data.Name : '',
-			'description'        : data.Name ? data.Description : '',
-			'server'             : data.Name ? data.Server : '',
-			'type'               : data.Name ? data.Type : '',
-			'username'           : data.Name ? data.Username : '',
-			'password'           : data.Name ? '********' : '',
+			'description'        : data.Description ? data.Description : '',
+			'server'             : data.Server ? data.Server : '',
+			'type'               : data.Type ? data.Type : '',
+			'username'           : data.Username ? data.Username : '',
+			'password'           : data.Password ? '********' : '',
 			'session'            : data.ApiSession ? data.ApiSession : ''
 		};
-		s.onLoad = function( data )
+		s.onLoad = function( dcnt )
 		{
-			ge( 'GUI' ).innerHTML = data;
+			ge( 'GUI' ).innerHTML = dcnt;			
+
+			// Set option
+			if( data.Type != '' )
+			{
+				var t = ge( 'InpType' ).getElementsByTagName( 'option' );
+				for( var a = 0; a < t.length; a++ )
+				{
+					if( t[a].value == data.Type )
+						t[a].selected = 'selected';
+				}
+			}
+
 		}
 		s.load();
 	}

@@ -41,7 +41,6 @@
 
 typedef struct WorkerManager
 {
-	
 	Worker							**wm_Workers;			// array of  workers
 	int 								wm_MaxWorkers;
 	int 								wm_LastWorker;
@@ -66,7 +65,7 @@ void WorkerManagerDelete( WorkerManager *wm );
 // add worker to list
 //
 
-int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *wrkinfo );
+int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *wrkinfo, char *path );
 
 //
 //

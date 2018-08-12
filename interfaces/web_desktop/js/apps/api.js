@@ -488,7 +488,6 @@ document.addEventListener( 'keyup', function( e )
 	friend.macCommand = false;
 } );
 
-
 /*document.addEventListener( 'paste', function(evt)
 {
 	if( friend && typeof friend.pasteClipboard == 'function' ) friend.pasteClipboard( evt );
@@ -511,7 +510,6 @@ document.addEventListener( 'copy', function(evt)
 	}
 	//console.log('copy event fired',friend,evt);
 } );*/
-
 
 /**
 	paste handler. check Friend CB vs System CB.
@@ -823,6 +821,9 @@ function receiveEvent( event, queued )
 			friend.clipboard = dataPacket.value;
 			break;
 
+		case 'dos':
+			return Dos.receiveMessage( dataPacket );
+
 		case 'friendnetwork':
 			return FriendNetwork.receiveMessage( dataPacket );
 
@@ -854,9 +855,9 @@ function receiveEvent( event, queued )
 				}
 				else
 				{
-					AddCSSByUrl( '/themes/friendup/scrollbars.css' );
+					AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 					styles.href = '/system.library/module/?module=system&command=theme&args=' +
-						encodeURIComponent( '{"theme":"friendup"}' ) + '&authid=' + Application.authId;
+						encodeURIComponent( '{"theme":"friendup12"}' ) + '&authid=' + Application.authId;
 				}
 				
 				// Remove old one
@@ -881,6 +882,12 @@ function receiveEvent( event, queued )
 				// Add new one
 				h.appendChild( styles );
 			}
+			
+			// Apply theme config if possible
+			if( dataPacket.themeData )
+			{
+				Application.applyThemeConfig( dataPacket.themeData );
+			}
 
 			// Refresh subviews
 			if( Application.windows )
@@ -894,9 +901,23 @@ function receiveEvent( event, queued )
 						viewId: a,
 						applicationId: Application.applicationId
 					};
+					if( dataPacket.themeData )
+						msg.themeData = dataPacket.themeData;
 					Application.windows[a].sendMessage( msg );
 				}
 			}
+			
+			// Trigger a resize event to clean up the tabs
+			setTimeout( function()
+			{
+				if( friend.resizeTabs )
+				{
+					for( var i = 0; i < friend.resizeTabs.length; i++ )
+					{
+						friend.resizeTabs[ i ].resize();
+					}
+				}
+			}, 250 );
 			break;
 		// Blur all elements!
 		case 'blur':
@@ -973,7 +994,6 @@ function receiveEvent( event, queued )
 			}
 			break;
 		case 'parseviewflag':
-			console.log( 'Here we got it!', dataPacket );
 			if( dataPacket.flag == 'scrollable' )
 			{
 				if( dataPacket.value === true )
@@ -984,7 +1004,6 @@ function receiveEvent( event, queued )
 				{
 					document.body.classList.remove( 'Scrolling' );
 				}
-				console.log( 'Set' );
 			}
 			break;
 		// On opening window
@@ -1212,6 +1231,7 @@ function receiveEvent( event, queued )
 						callback:      dataPacket.callback,
 						applicationId: dataPacket.applicationId,
 						theme:         dataPacket.theme,
+						themeData:     dataPacket.themeData,
 						locale:        dataPacket.locale,
 						authId:        dataPacket.authId,
 						sessionId:     dataPacket.sessionId,
@@ -1313,7 +1333,6 @@ function receiveEvent( event, queued )
 				// Normal callback by callback id
 				else if( dataPacket.callbackId )
 				{
-					console.log( 'Normal callback:', dataPacket );
 					var f = extractCallback( dataPacket.callbackId, keep );
 					if( f )
 					{
@@ -1348,12 +1367,11 @@ function receiveEvent( event, queued )
 				if( dataPacket.dataFormat == 'string' )
 				{
 					dataPacket.dataFormat = '';
-					dataPacket.data = dataPacket.data.split( ',' );
-					dataPacket.data = ( new Uint8Array( dataPacket.data ) ).buffer;
-					console.log( dataPacket.data );
+					//dataPacket.data = dataPacket.data.split( ',' );
+					//dataPacket.data = ( new Uint8Array( dataPacket.data ) ).buffer;
+					dataPacket.data = ConvertStringToArrayBuffer( dataPacket.data, 'base64' );
 				}
 				var out = [];
-				var f = false;
 				var f = extractCallback( dataPacket.fileId );
 				if( f )
 				{
@@ -1371,7 +1389,7 @@ function receiveEvent( event, queued )
 							}
 						}
 						// For jsx files and others
-						if( Application.appPath )
+						if( Application.appPath && !Application.noFilePathConversion )
 						{
 							if( !Application.authId && getUrlVar( 'authid' ) )
 								Application.authId = getUrlVar( 'authid' );
@@ -1484,13 +1502,115 @@ function receiveEvent( event, queued )
 					// Execute and give callback
 					if( DormantMaster.doors[ dataPacket.doorId ] )
 					{
-						var items = DormantMaster.doors[ dataPacket.doorId ].getDirectory( dataPacket.path );
-						Application.sendMessage( {
-							type: 'dormantmaster',
-							method: 'callback',
-							doorId: dataPacket.doorId,
-							callbackId: dataPacket.callbackId,
-							data: items
+						var items = DormantMaster.doors[ dataPacket.doorId ].getDirectory( dataPacket.path, function( items )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: items
+							} );
+						} );
+						if ( items )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: items
+							} );
+						}
+					}
+				}
+				// Get File Information
+				else if( dataPacket.method == 'getFileInformation' )
+				{
+					// Execute and give callback
+					if( DormantMaster.doors[ dataPacket.doorId ] )
+					{
+						var items = DormantMaster.doors[ dataPacket.doorId ].getFileInformation( dataPacket.path, function( data )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: data
+							} );
+						} );
+					}
+				}
+				// Set File Information
+				else if( dataPacket.method == 'setFileInformation' )
+				{
+					// Execute and give callback
+					if( DormantMaster.doors[ dataPacket.doorId ] )
+					{
+						var items = DormantMaster.doors[ dataPacket.doorId ].setFileInformation( dataPacket.perm, function( data )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: data
+							} );
+						} );
+					}
+				}
+				// Read
+				else if( dataPacket.method == 'read' )
+				{
+					// Execute and give callback
+					if( DormantMaster.doors[ dataPacket.doorId ] )
+					{
+						var items = DormantMaster.doors[ dataPacket.doorId ].read( dataPacket.path, dataPacket.mode, function( data )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: data
+							} );
+						} );
+					}
+				}
+				// Write
+				else if( dataPacket.method == 'write' )
+				{
+					// Execute and give callback
+					if( DormantMaster.doors[ dataPacket.doorId ] )
+					{
+						var items = DormantMaster.doors[ dataPacket.doorId ].write( dataPacket.path, dataPacket.data, function( data )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: data
+							} );
+						} );
+					}
+				}
+				// DosActions
+				else if( dataPacket.method == 'dosAction' )
+				{
+					// Execute and give callback
+					if( DormantMaster.doors[ dataPacket.doorId ] )
+					{
+						var items = DormantMaster.doors[ dataPacket.doorId ].dosAction( dataPacket.func, dataPacket.args, function( data )
+						{
+							Application.sendMessage( {
+								type: 'dormantmaster',
+								method: 'callback',
+								doorId: dataPacket.doorId,
+								callbackId: dataPacket.callbackId,
+								data: data
+							} );
 						} );
 					}
 				}
@@ -1541,7 +1661,6 @@ function receiveEvent( event, queued )
 			break;
 		// Messages for doors
 		case 'door':
-			console.log( 'api.js - we got a door message:' );
 			console.log( dataPacket );
 			break;
 		case 'applicationstorage':
@@ -1666,9 +1785,7 @@ function receiveEvent( event, queued )
 	{
 		// Run callbacks and clean up
 		if( dataPacket.callback )
-		{
-			//console.log( 'This is where the callbacks end ... ', dataPacket );
-			
+		{	
 			// Ok, we will try to execute the callback we found here!
 			var f;
 			if( dataPacket.resp && ( f = extractCallback( dataPacket.callback ) ) )
@@ -1685,8 +1802,15 @@ function receiveEvent( event, queued )
 				}
 			}
 			else if( ( f = extractCallback( dataPacket.callback ) ) )
-			{
-				f( dataPacket );
+			{	
+				try
+				{
+					f( dataPacket );
+				}
+				catch( e )
+				{
+					console.log( e, f );
+				}
 				return true;
 			}
 			// Aha, we have a window to send to (see if it's at this level)
@@ -1768,6 +1892,48 @@ function FriendWebSocket( config )
 			data: { url: url, protocol: protocol }
 		} );
 	}
+}
+
+// Filesystem related
+function AddFilesystemEvent( path, event, callback )
+{
+	if( path && event && callback )
+	{
+		var msg = {
+			type: 'system',
+			command: 'addfilesystemevent',
+			path: path,
+			event: event
+		};
+		if( callback )
+		{
+			var cid = addPermanentCallback( callback );
+			msg.callback = cid;
+		}
+		Application.sendMessage( msg );
+		return true;
+	}
+	return false;
+}
+
+function RemoveFilesystemEvent( path, event, callback )
+{
+	if( path && event )
+	{
+		var msg = {
+			type: 'system',
+			command: 'removefilesystemevent',
+			path: path,
+			event: event
+		};
+		if( callback )
+		{
+			var cid = addCallback( callback );
+			msg.callback = cid;
+		}
+		Application.sendMessage( msg );
+	}
+	return false;
 }
 
 // Open a new widget -----------------------------------------------------------
@@ -1914,6 +2080,11 @@ function View( flags )
 		data:    flags,
 		viewId: viewId
 	};
+	
+	if( Application.viewId )
+	{
+		msg.parentViewId = Application.viewId;
+	}
 
 	// Bring a window to front
 	this.toFront = function()
@@ -2214,14 +2385,12 @@ function View( flags )
 
 		// Kill slot
 		var w = [];
-		var count = 0;
 		for( var a in Application.windows )
 		{
 			if( a == viewId ) continue;
 			else
 			{
 				w[a] = Application.windows[a];
-				count++;
 			}
 		}
 		Application.windows = w;
@@ -2614,15 +2783,17 @@ Shell = function()
 // TODO: Make this global for the Doors space (use proxy!)
 var __audioContext = false;
 
-WebAudioLoader = function(
-
-		Path, callback )
+WebAudioLoader = function( filePath, callback )
 {
 	if( !__audioContext )
-		__audioContext = new AudioContext();
+	{
+		var au = window.AudioContext || window.webkitAudioContext;
+		__audioContext = new au();
+	}           
 
 	this.audioGraph =
 	{
+		volume: 0.5,
 		context: __audioContext,                                                //this is the container for your entire audio graph
 		bufferCache: null,                                                      //buffer needs to be re-initialized before every play, so we'll cache what we've loaded here
 		playTime: 0,
@@ -2654,20 +2825,25 @@ WebAudioLoader = function(
 		{
 			if( this.started )
 			{
-				this.source.stop();                                             //call noteOff to stop any instance already playing before we play ours
+				this.source.stop();                                             // call noteOff to stop any instance already playing before we play ours
 				this.started = false;
 			}
-			this.gainNode.gain.value = 1.0;
-			this.source = this.context.createBufferSource();                    //init the source
-			this.setBuffer( this.bufferCache );                                 //re-set the buffer
-			this.source.playbackRate.value = this.pitch;                        //here's your playBackRate check
-			this.source.connect( this.context.destination );                    //connect to the speakers
+			this.source = this.context.createBufferSource();                    // init the source
+			this.setBuffer( this.bufferCache );                                 // re-set the buffer
+			this.source.playbackRate.value = this.pitch;                        // here's your playBackRate check
+			this.source.connect( this.context.destination );                    // connect to the speakers
 			this.source.connect( this.gainNode );
+			this.setVolume( this.volume );
 			this.gainNode.connect( this.context.destination );
-			this.source.start();                                                //pass in 0 to play immediately
+			this.source.start();                                                // pass in 0 to play immediately
 			this.started = Date.now();
 			this.pausedPos = 0;
 			this.playTime = this.context.currentTime;                           // offset
+		},
+		setVolume: function( volume )
+		{
+			this.volume = volume;
+			this.gainNode.gain.setValueAtTime( this.volume, this.context.currentTime );
 		},
 		pause: function()
 		{
@@ -2680,11 +2856,12 @@ WebAudioLoader = function(
 				this.source = this.context.createBufferSource();                //init the source
 				this.source.connect( this.gainNode );
 				this.gainNode.connect( this.context.destination );
+				this.gainNode.gain.setValueAtTime( this.volume, this.context.currentTime - ( this.pausedPos / 1000 ) );
 				this.setBuffer( this.bufferCache );                             //re-set the buffer
 				this.source.playbackRate.value = this.pitch;                    //here's your playBackRate check
 				this.source.connect( this.context.destination );                //connect to the speakers
 				this.source.start( 0, this.pausedPos / 1000 );
-				this.gainNode.gain.value = 1.0;
+				this.gainNode.gain.value = this.volume;
 				this.playTime = this.context.currentTime - ( this.pausedPos / 1000 );
 			}
 			else
@@ -2723,33 +2900,55 @@ WebAudioLoader = function(
 		_handleRequest = function( url )
 		{
 			var useDumbAudio = false;
-			if( ( url.substr( 0, 5 ) == 'http:' || url.substr( 0, 6 ) == 'https:' )
-				&& url.substr( 0, document.location.protocol.length ) != document.location.protocol )
+			if( ( url.substr( 0, 5 ) == 'http:' || url.substr( 0, 6 ) == 'https:' ) )
 			{
 				useDumbAudio = true;
+			}
+			else
+			{
+				filePath = getImageUrl( filePath );
 			}
 
 			if( !useDumbAudio )
 			{
-				_request.open( 'GET', url, true );
+				_request.open( 'POST', url, true );
 				_request.responseType = 'arraybuffer';
 				_request.onload = function()
 				{
 					// Decode
-					t.audioGraph.context.decodeAudioData(
-						_request.response,
-						function( buf )
-						{
-							t._loadedBuffer = buf;
-							t.audioGraph.setBuffer( buf );
-							t.audioGraph.setBufferCache( buf );
-							if( callback ) callback();
-						},
-						function()
-						{
-							// error;
-						}
-					);
+					try
+					{
+						t.audioGraph.context.decodeAudioData(
+							_request.response,
+							function( buf )
+							{
+								try
+								{
+									t._loadedBuffer = buf;
+									t.audioGraph.setBuffer( buf );
+									t.audioGraph.setBufferCache( buf );
+									if( callback ) callback( true );
+								}
+								catch( e )
+								{
+									console.log( 'No buffer yet.', _request.response );
+									if( callback ) callback( true, { response: 0, message: 'Could not set buffer yet.' } );
+								}
+							},
+							function()
+							{
+								console.log( 'Totally failed to decode..' );
+								// error;
+								if( callback )
+									callback( false );
+							}
+						);
+					}
+					catch( e )
+					{
+						if( callback )
+							callback( false );
+					}
 				}
 				_request.send();
 			}
@@ -2759,22 +2958,19 @@ WebAudioLoader = function(
 			{
 				var o = document.createElement( 'audio' );
 				o.style.position = 'absolute';
-				//o.style.top = '-100000px';
+				o.style.top = '-100000px';
 				o.style.zIndex = 100;
-				o.setAttribute( 'crossorigin', 'anonymous' );
+				o.setAttribute( 'crossOrigin', 'anonymous' );
 				o.setAttribute( 'controls', '' );
 				o.setAttribute( 'autoplay', 'autoplay' );
 				o.src = url;
 				document.body.appendChild( o );
 				t.audioObject = o;
-				/*var src = t.audioGraph.context.createMediaElementSource( o );
-				src.connect( t.audioGraph*/
+				var src = t.audioGraph.context.createMediaElementSource( o );
+				src.connect( t.audioGraph );
 				o.play();
 			}
 		}
-
-		if( !( filePath.substr( 0, 5 ) == 'http:' || filePath.substr( 0, 6 ) == 'https:' ) )
-			filePath = getImageUrl( filePath );
 		_handleRequest( filePath );
 	}());//loader
 };
@@ -2783,7 +2979,7 @@ var __audioLoaders = [];
 var __maxAudioLoaders = 1;
 var __currentAudioLoader = 0;
 
-function AudioObject( sample )
+function AudioObject( sample, callback )
 {
 	this.loaded = false;
 	this.loadSample = function( path )
@@ -2791,14 +2987,23 @@ function AudioObject( sample )
 		var t = this;
 		if( !( path.substr( 0, 5 ) == 'http:' || path.substr( 0, 6 ) == 'https:' ) )
 			path = getImageUrl( path );
-		this.loader = new WebAudioLoader( path, function(){
-			t.loaded = true;
-			if( t.loader )
+		this.loader = new WebAudioLoader( path, function( result ){
+			if( result )
 			{
-				t.loader.audioGraph.setRate( 1 );
-				t.loader.audioGraph.setPlaybackRate( 1 );
+				t.loaded = true;
+				if( t.loader )
+				{
+					t.loader.audioGraph.setRate( 1 );
+					t.loader.audioGraph.setPlaybackRate( 1 );
+				}
+				if( t.onload ) t.onload();
+				if( callback ) callback( true );
 			}
-			if( t.onload ) t.onload();
+			else
+			{
+				if( callback )
+					callback( result );
+			}
 		} );
 		this.path = path;
 	}
@@ -2853,6 +3058,13 @@ function AudioObject( sample )
 		this.loader.audioGraph.playSound();
 	}
 
+	// Uses -2 to 2
+	this.setVolume = function( vol )
+	{
+		if( this.loader && this.loader.audioGraph )
+			this.loader.audioGraph.setVolume( ( vol * 4 ) - 2 );
+	}
+
 	// Plays notes!
 	this.play = function()
 	{
@@ -2871,7 +3083,10 @@ function AudioObject( sample )
 			}
 			if( t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 			{
-				t.onplaying( ( t.getContext().currentTime - t.loader.audioGraph.playTime ) / t.loader.audioGraph.source.buffer.duration );
+				var ct = t.getContext().currentTime;
+				var pt = t.loader.audioGraph.playTime;
+				var dr = t.loader.audioGraph.source.buffer.duration;
+				t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
 			}
 		}, 100 );
 	}
@@ -2885,8 +3100,10 @@ function AudioObject( sample )
 
 // File object abstraction -----------------------------------------------------
 
-function getImageUrl( path )
+function getImageUrl( path, mode )
 {
+	if( !mode ) mode = 'rs';
+	
 	// TODO: Determine from Doors!
 	var apath = Application.appPath ? Application.appPath : Application.filePath;
 
@@ -2907,15 +3124,20 @@ function getImageUrl( path )
 		return path;
 	}
 
+	if( path.indexOf( ':' ) > 0 )
+	{
+		path = encodeURIComponent( path );
+	}
+
 	var prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
 	var u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
 	return u;
 }
 // Alias
-function getWebUrl( path )
+function getWebUrl( path, mode )
 {
-	return getImageUrl( path );
+	return getImageUrl( path, mode );
 }
 
 function File( path )
@@ -3003,14 +3225,23 @@ function File( path )
 		} );
 	}
 
-	this.save = function( data, filename )
+	this.save = function( data, filename, mode )
 	{
 		if( !filename ) filename = this.path;
 
 		var fid = addCallback( this );
+
+		var dataMode = 'raw';
+		if( ( mode && mode == 'wb' ) || ( this.vars && this.vars.mode == 'wb' ) )
+		{
+			dataMode = 'string';
+			data = ConvertArrayBufferToString( data, 'base64' );
+		}
+
 		Application.sendMessage( {
 			type:    'file',
 			data:    { path: filename, data: data },
+			dataFormat: dataMode,
 			method:  'save',
 			filePath: apath,
 			vars:    this.vars,
@@ -3051,18 +3282,81 @@ function Module( module )
 // TODO: Remove keys / sessions on quit!
 FriendNetwork =
 {
-	list: function( callback )
-    {
+	isReady: function( callback, extra )
+	{
     	var message =
 		{
 			type:   'friendnet',
-			method: 'list'
+			method: 'isReady',
+			extra: extra ? extra : false
 		};
 		if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	connect: function( url, hostType, flags, callback )
+	list: function( callback, extra )
+    {
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'list',
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	subscribeToHostListUpdates: function( callback, extra )
+    {
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'subscribeToHostListUpdates',
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	unsubscribeFromHostListUpdates: function( identifier, callback, extra )
+    {
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'unsubscribeFromHostListUpdates',
+			identifier: identifier,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	subscribeToHostUpdates: function( callback, extra )
+    {
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'subscribeToHostUpdates',
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	unsubscribeFromHostListUpdates: function( key, callback, extra )
+    {
+    	var message =
+		{
+			type:   'friendnet',
+			method: 'unsubscribeFromHostUpdates',
+			key: key,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	connect: function( url, hostType, flags, callback, extra )
     {
 		var message =
 		{
@@ -3071,136 +3365,54 @@ FriendNetwork =
 			url: url,
 			hostType: hostType,
 			flags: flags,
+			extra: extra ? extra : false
 		};
 		if ( callback )
 			message.callback = addPermanentCallback( callback );
 		Application.sendMessage( message );
 	},
-	initFileTransfer: function( key, onOff, infos )
+	sendFile: function( key, file, infos, callback, extra )
     {
 		var message =
 		{
 			type: 'friendnet',
-			method: 'initFileTransfer',
+			method: 'sendFile',
 			key: key,
-			onOff: onOff,
-			infos: infos
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	acceptFileTransfer: function( key, transferId, accept, infos, callback )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'acceptFileTransfer',
-			key: key,
-			accept: accept,
+			file: file,
 			infos: infos,
-			transferId: transferId
+			extra: extra ? extra : false
 		};
 		if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	refuseFileTransfer: function( key, infos )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'refuseFileTransfer',
-			key: key,
-			infos: infos
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	demandFileTransfer: function( key, list, infos, finalResponse )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'demandFileTransfer',
-			key: key,
-			infos: infos,
-			list: list,
-			finalResponse: finalResponse
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	authoriseFileTransfer: function( key, response, transferId )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'authoriseFileTransfer',
-			key: key,
-			response: response,
-			transferId: transferId
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	transferFiles: function( key, list, destinationPath, finalResponse, callback )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'transferFiles',
-			key: key,
-			list: list,
-			finalResponse: finalResponse,
-			destinationPath: destinationPath
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	deleteTransferedFiles: function( key, transferId, callback )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'deleteTransferedFiles',
-			key: key,
-			transferId: transferId
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	closeFileTransfer: function( key, transferId, callback )
-    {
-		var message =
-		{
-			type: 'friendnet',
-			method: 'deleteTransferedFiles',
-			key: key,
-			transferId: transferId
-		};
-		if ( callback )
-			message.callback = addCallback( callback );
-		Application.sendMessage( message );
-	},
-	disconnect: function ( key, callback )
+	disconnect: function ( key, callback, extra )
 	{
 		var message =
 		{
 			type: 'friendnet',
 			method: 'disconnect',
-			key: key
+			key: key,
+			extra: extra ? extra : false
 		};
 		if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	host: function( name, type, applicationName, description, data, callback )
+	disconnectByName: function ( hostName, callback, extra )
+	{
+		var message =
+		{
+			type: 'friendnet',
+			method: 'disconnectByName',
+			hostName: hostName,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	host: function( name, type, applicationName, password, description, data, callback, extra )
     {
     	var message =
 		{
@@ -3210,83 +3422,92 @@ FriendNetwork =
 			connectionType: type, 
 			applicationName: applicationName,
 			description: description,
-			data: data
+			password: password,
+			data: data,
+			extra: extra ? extra : false
 		};
     	if ( callback )
 			message.callback = addPermanentCallback( callback );
 		Application.sendMessage( message );
 	},
-	dispose: function( key, callback )
+	dispose: function( key, callback, extra )
     {
 		var message =
 		{
 			type: 'friendnet',
 			method: 'dispose',
-			key: key
+			key: key,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	sendCredentials: function( key, password, callback )
+	sendCredentials: function( key, password, encrypted, callback, extra )
 	{
 		var message =
 		{
 			type: 'friendnet',
 			method: 'sendCredentials',
 			key: key,
-			password: password
+			password: password,
+			encrypted: encrypted,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	setHostPassword: function( key, password, callback )
+	setHostPassword: function( key, password, callback, extra )
 	{
 		var message =
 		{
 			type: 'friendnet',
 			method: 'setHostPassword',
 			key: key,
-			password: password
+			password: password,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
 	},
-	send: function( key, data, callback )
+	send: function( key, data, callback, extra )
     {
 		var message =
 		{
 			type: 'friendnet',
 			method: 'send',
 			key: key,
-			data: data
+			data: data,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
     },
-	setPassword: function( key, password, callback )
+	updateHostPassword: function( key, password, callback, extra )
     {
 		var message =
 		{
 			type: 'friendnet',
-			method: 'setPassword',
+			method: 'updateHostPassword',
 			key: key,
-			password: password
+			password: password,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
 		Application.sendMessage( message );
     },
-	closeSession: function( key, callback )
+	closeSession: function( key, callback, extra )
     {
 		var message =
 		{
 			type: 'friendnet',
 			method: 'closeSession',
-			key: key
+			key: key,
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
@@ -3299,12 +3520,25 @@ FriendNetwork =
 			method: 'closeApplication'
 		} );
   	},
-	status: function( callback )
+	status: function( callback, extra )
 	{
 		var message =
 		{
 			type: 'friendnet',
-			method: 'status'
+			method: 'status',
+			extra: extra ? extra : false
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getUserInformation: function( callback, extra )
+	{
+		var message =
+		{
+			type: 'friendnet',
+			method: 'getUserInformation',
+			extra: extra ? extra : false
 		};
 	 	if ( callback )
 			message.callback = addCallback( callback );
@@ -3323,6 +3557,423 @@ FriendNetwork =
 			if ( f )
 				f( dataPacket );
 		}
+	},
+	listToConsole: function( callback, extra )
+	{
+		var message =
+		{
+			type: 'friendnet',
+			method: 'listToConsole',
+			extra: extra ? extra : false
+		};
+	 	if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	}
+};
+FriendNetworkDrive =
+{
+	activate: function( activate, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkShare',
+			method: 'activate',
+			activate: activate,
+			extra: extra ? extra : false
+		};
+		Application.sendMessage( message );
+	},
+	changeFriendNetworkSettings: function( settings, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDrive',
+			method: 'changeFriendNetworkSettings',
+			settings: settings,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	}
+};
+
+FriendNetworkShare =
+{
+	activate: function( activate, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkShare',
+			method: 'activate',
+			activate: activate,
+			extra: extra ? extra : false
+		};
+		Application.sendMessage( message );
+	},
+	changeWorkgroupPassword: function( password, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkShare',
+			method: 'changeWorkgroupPassword',
+			password: password,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	changeFriendNetworkSettings: function( settings, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkShare',
+			method: 'changeFriendNetworkSettings',
+			settings: settings,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	relocateHTML: function( html, sourceDrive, linkReplacement, linkFunction, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkShare',
+			method: 'relocateHTML',
+			html: html,
+			sourceDrive: sourceDrive,
+			linkReplacement: linkReplacement,
+			linkFunction: linkFunction,
+			callback: addCallback( callback ),
+			extra: extra ? extra : false
+		};
+		Application.sendMessage( message );
+	},
+};
+FriendNetworkFriends =
+{
+	listCommunities: function( url, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkFriends',
+			method: 'listCommunities',
+			url: url,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	changeFriendNetworkSettings: function( settings, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkFriends',
+			method: 'changeFriendNetworkSettings',
+			settings: settings,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getUniqueDeviceIdentifier: function( callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkFriends',
+			method: 'getUniqueDeviceIdentifier',
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getDeviceInformation: function( flags, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkFriends',
+			method: 'getDeviceInformation',
+			flags: flags,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	}
+};
+FriendNetworkDoor =
+{
+	activate: function( activate, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'activate',
+			activate: activate,
+			extra: extra ? extra : false
+		};
+		Application.sendMessage( message );
+	},
+	relocateHTML: function( html, sourceDrive, linkReplacement, linkFunction, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'relocateHTML',
+			html: html,
+			sourceDrive: sourceDrive,
+			linkReplacement: linkReplacement,
+			linkFunction: linkFunction,
+			callback: addCallback( callback ),
+			extra: extra ? extra : false
+		};
+		Application.sendMessage( message );
+	},
+	shareDoor: function( door, parameters, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'shareDoor',
+			door: door,
+			parameters: parameters,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeSharedDoor: function( hostName, shareName, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'shareDoor',
+			hostName: hostName,
+			shareName: shareName,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	connectToDoor: function( hostName, appName, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'connectToDoor',
+			hostName: hostName,
+			appName: appName,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	disconnectFromDoor: function( hostName, appName, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'disconnectFromDoor',
+			hostName: hostName,
+			appName: appName,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	changeFriendNetworkSettings: function( settings, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkDoor',
+			method: 'changeFriendNetworkSettings',
+			settings: settings,
+			extra: extra ? extra : false
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	}
+};
+FriendNetworkApps =
+{
+	registerApplication: function( appInformation, userInformation, password, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'registerApplication',
+			appInformation: appInformation,
+			userInformation: userInformation,
+			password: password,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addPermanentCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeApplication: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'closeApplication',
+			appIdentifier: appIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeConnections: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'closeConnections',
+			appIdentifier: appIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeRunningConnections: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'closeRunningConnections',
+			appIdentifier: appIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	openHost: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'openHost',
+			appIdentifier: appIdentifier
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	closeHost: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'closeHost',
+			appIdentifier: appIdentifier
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	connectToUser: function( appIdentifier, nameHost, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'connectToUser',
+			appIdentifier: appIdentifier,
+			nameHost: nameHost,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getHosts: function( appIdentifier, filters, registerToUpdates, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'getHosts',
+			appIdentifier: appIdentifier,
+			filters: filters,
+			registerToUpdates: registerToUpdates,
+			extra: extra
+		};
+		if ( callback )
+		{
+			if ( registerToUpdates )
+				message.callback = addPermanentCallback( callback );
+			else
+				message.callback = addCallback( callback );
+		}
+		Application.sendMessage( message );
+	},
+	closeUser: function( appIdentifier, playerIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'closeUser',
+			appIdentifier: appIdentifier,
+			playerIdentifier: playerIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	establishConnections: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'establishConnections',
+			appIdentifier: appIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	sendMessageToAll: function( appIdentifier, userIdentifier, message, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'sendMessageToAll',
+			appIdentifier: appIdentifier,
+			userIdentifier: userIdentifier,
+			message: message,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	startApplication: function( appIdentifier, callback, extra )
+	{
+    	var message =
+		{
+			type:   'friendNetworkApps',
+			method: 'startApplication',
+			appIdentifier: appIdentifier,
+			extra: extra
+		};
+		if ( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
 	}
 };
 
@@ -3965,6 +4616,118 @@ Doors = {
 	}
 }
 
+// DOS abstraction : easy commands to manage files -----------------------------
+DOS =
+{
+	getDirectory: function( path, flags, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'getDirectory',
+			path: path,
+			flags: flags,
+			extra: extra ? extra : false				// protection
+		};
+		if( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getDisks: function( flags, callback, extra )
+	{
+		var message = 
+		{
+			type: 'dos',
+			method: 'getDisks',
+			flags: flags,
+			extra: extra ? extra : false
+		};
+		if( callback )
+			message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	executeJSX: function( path, args, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'executeJSX',
+			path: path,
+			args: args,
+			extra: extra ? extra : false				// protection
+		};
+		message.callback = addCallback( callback );
+
+		// If we are injecting in an iframe - use app.html to load up an empty workspace instance
+		if( extra && extra.iframe )
+		{
+			extra.iframe.src = '/webclient/app.html?authid=' + Application.authId;
+			extra.iframe.onload = function()
+			{
+				var i = extra.iframe;
+				delete message.extra.iframe;
+				message.viewId = null;
+				message.applicationId = null;
+				i.contentWindow.postMessage( JSON.stringify( message ), '*' );
+			}
+			return;
+		}
+		Application.sendMessage( message );
+	},
+	loadHTML: function( path, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'loadHTML',
+			path: path,
+			extra: extra ? extra : false				// protection
+		};
+		message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	fileExist: function( path, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'fileAccess',
+			path: path,
+			extra: extra ? extra : false				// protection
+		};
+		message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getAccess: function( path, callback, extra )
+	{
+		fileExist( path, callback, extra );
+	},
+	getDriveInfo: function( path, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'getDriveInfo',
+			path: path,
+			extra: extra ? extra : false
+		};
+		message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	getFileInfo: function( path, callback, extra )
+	{
+		var message =
+		{
+			type: 'dos',
+			method: 'getFileInfo',
+			path: path,
+			extra: extra ? extra : false
+		};
+		message.callback = addCallback( callback );
+		Application.sendMessage( message );
+	}
+};
+
 // Door abstraction ------------------------------------------------------------
 
 function Door( path )
@@ -4209,6 +4972,19 @@ function setupMessageFunction( dataPacket, origin )
 
 	function _sendMessage( msg, callback )
 	{
+		// Convert some data formats in a JSON complient structure
+		for( var a in msg )
+		{
+			if( msg[ a ] instanceof ArrayBuffer || toString.call( msg[ a ] ) === '[object ArrayBuffer]' )
+			{
+				//var v = new Uint8Array( msg[ a ] );
+				//msg[ a ] = Array.prototype.join.call( v, ',' );
+				//msg[ a + '_format' ] = 'binaryString';
+				msg[ a ] = ConvertArrayBufferToString( msg[ a ], 'base64' );
+				msg[ a + '_format' ] = 'base64';
+			}
+		}
+
 		// Set info that determines where the message belongs unless already set
 		if( !msg.applicationId )
 		{
@@ -4321,6 +5097,11 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		return;
 	}
 
+	// Disable debugging now
+	if( packet.workspaceMode == 'normal' || packet.workspaceMode == 'gamified' )
+		console.log = function(){};
+	Application.workspaceMode = packet.workspaceMode ? packet.workspaceMode : 'developer';
+
 	// Don't do this twice
 	document.body.style.opacity = '0';
 	window.frameInitialized = true;
@@ -4409,17 +5190,155 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 		}
 		j.send();
 	}
+	
+	// If we have stored a theme config for the current theme, use its setup
+	// TODO: Move to a proper theme parser
+	function ApplyThemeConfig( themeData )
+	{
+		if( !themeData ) return;
+		
+		// No need for mobile!
+		if( isMobile ) return;
+		
+		if( themeData && typeof( themeData ) == 'string' )
+		{
+			try
+			{
+				themeData = JSON.parse( themeData );
+			}
+			catch( e )
+			{
+				console.log( 'Bad theme data: ', themeData );
+				return;
+			}
+		}
+		
+		if( friend.themeStyleElement )
+			friend.themeStyleElement.innerHTML = '';
+		else
+		{
+			friend.themeStyleElement = document.createElement( 'style' );
+			document.getElementsByTagName( 'head' )[0].appendChild( friend.themeStyleElement );
+		}
+		
+		var shades = [ 'dark', 'charcoal' ];
+		for( var c in shades )
+		{
+			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
+			if( themeData[ 'colorSchemeText' ] == shades[c] )
+				document.body.classList.add( uf );
+			else document.body.classList.remove( uf );
+		}
+		
+		if( themeData[ 'buttonSchemeText' ] == 'windows' )
+			document.body.classList.add( 'MSW' );
+		else document.body.classList.remove( 'MSW' );
+		
+		var str = '';
+		for( var a in themeData )
+		{
+			if( !themeData[a] ) continue;
+			var v = themeData[a];
+			switch( a )
+			{
+				case 'colorWindowActive':
+					str += `
+html > body .View.Active > .Title,
+html > body .View.Active > .LeftBar,
+html > body .View.Active > .RightBar,
+html > body .View.Active > .BottomBar
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorButtonBackground':
+					str += `
+html > body .Button, html > body button
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorWindowBackground':
+					str += `
+html > body, html body .View > .Content
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorWindowText':
+					str += `
+html > body, html body .View > .Content, html > body .Tab
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorFileToolbarBackground':
+					str += `
+html > body .View > .DirectoryToolbar
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorFileToolbarText':
+					str += `
+html > body .View > .DirectoryToolbar button:before, 
+html > body .View > .DirectoryToolbar button:after
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorFileIconText':
+					str += `
+html > body .File a
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorScrollBackground':
+					str += `
+body .View.Active ::-webkit-scrollbar,
+body .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorScrollButton':
+					str += `
+html body .View.Active.Scrolling > .Resize,
+body .View.Active ::-webkit-scrollbar-thumb,
+body .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: ${v} !important;
+}
+`;
+					break;
+			}
+		}
+		friend.themeStyleElement.innerHTML = str;
+	};
+	Application.applyThemeConfig = ApplyThemeConfig;
+	
 
 	// On page load
 	function onLoaded()
 	{
+		checkMobileBrowser();
+		
 		// We need to wait for all functions to be available
 		if( typeof( ge ) == 'undefined' || typeof( Trim ) == 'undefined' || typeof( cAjax ) == 'undefined' )
 		{
 			return setTimeout( onLoaded, 50 );
 		}
 
-		var tpath = '/webclient/theme/theme.css';
+		var tpath = '/themes/friendup12/theme.css';
 		if( packet && packet.theme )
 		{
 			tpath = '/themes/' + packet.theme + '/theme.css';
@@ -4441,6 +5360,12 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			}
 			document.getElementsByTagName('head')[0].appendChild( s );
 			totalLoadingResources++;
+		}
+		
+		// Load advanced theme config
+		if( packet.themeData )
+		{
+			Application.applyThemeConfig( packet.themeData );
 		}
 
 		var activat = [];
@@ -4608,7 +5533,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 
 	if( packet && packet.theme )
 		AddCSSByUrl( '/themes/' + packet.theme + '/scrollbars.css' );
-	else AddCSSByUrl( '/webclient/theme/scrollbars.css' );
+	else AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
 
 	var js = [
 		[
@@ -4701,6 +5626,149 @@ function clickToActivate()
 		document.body.classList.add( 'activated' );
 	}
 }
+
+// Just add a slider for an input field
+friend.currentSliderElement = false;
+function CreateSlider( inputField, flags )
+{
+	var self = this;
+	
+	if( typeof( inputField ) == 'string' )
+		inputField = ge( inputField );
+	if( !inputField ) return;
+	
+	var d = document.createElement( 'div' );
+	d.className = 'SliderElement';
+	if( flags && flags.vertical )
+		d.className += ' SliderVertical';
+	var g = document.createElement( 'div' );
+	g.className = 'SliderGroove';
+	var b = document.createElement( 'div' );
+	b.className = 'SliderButton';
+	g.appendChild( b );
+	d.appendChild( g );
+	
+	if( !flags ) flags = {};
+	if( !flags.min ) flags.min = 0;
+	if( !flags.max ) flags.max = 100;
+	
+	if( inputField.getAttribute( 'min' ) )
+		flags.min = parseInt( inputField.getAttribute( 'min' ) );
+	
+	if( inputField.getAttribute( 'max' ) )
+		flags.max = parseInt( inputField.getAttribute( 'max' ) );
+	
+	// Add the slider
+	inputField.parentNode.appendChild( d );
+	
+	var def = inputField.value ? parseInt( inputField.value ) : 0;
+	
+	if( def > flags.max ) def = flags.max;
+	if( def < flags.min ) def = flags.min;
+	
+	// To set value
+	function setSliderValue( val )
+	{
+		if( val < flags.min ) val = flags.min;
+		if( val > flags.max ) val = flags.max;
+		
+		inputField.value = val;
+		 
+		if( !flags || !flags.vertical )
+		{
+			b.style.left = Math.floor( ( ( val - flags.min ) / flags.max ) * ( GetElementWidth( g ) - b.offsetWidth ) ) + 'px';
+		}
+		else
+		{
+			b.style.top = Math.floor( ( ( val - flags.min ) / flags.max ) * ( GetElementHeight( g ) - b.offsetHeight ) ) + 'px';
+		}
+		if( inputField.getAttribute( 'onchange' ) )
+		{
+			var str = inputField.getAttribute( 'onchange' );
+			inputField.eval = function( s )
+			{
+				eval( s );
+			}
+			inputField.eval( str );
+		}
+		return val;
+	}
+	setSliderValue( def );
+	
+	// Set the slider position!
+	function setSliderPosition( val )
+	{
+		if( !flags || !flags.vertical )
+		{
+			var x = val;
+			if( x < 0 ) x = 0;
+			else if( x + b.offsetWidth >= GetElementWidth( g ) )
+				x = GetElementWidth( g ) - b.offsetWidth;
+			b.style.left = x + 'px';
+			inputField.value = Math.floor( ( x / ( GetElementWidth( g ) - b.offsetWidth ) * ( flags.max - flags.min ) ) - flags.min ) + flags.min;
+		}
+		else
+		{
+			var y = val;
+			if( y < 0 ) y = 0;
+			if( y + b.offsetHeight > GetElementHeight( g ) )
+				y = GetElementHeight( g ) - b.offsetHeight;
+			b.style.top = y + 'px';
+			inputField.value = Math.floor( ( y / ( GetElementHeight( g ) - b.offsetHeight ) * ( flags.max - flags.min ) ) - flags.min ) + flags.min;
+		}
+		if( inputField.getAttribute( 'onchange' ) )
+		{
+			var str = inputField.getAttribute( 'onchange' );
+			inputField.eval = function( s )
+			{
+				eval( s );
+			}
+			inputField.eval( str );
+		}
+		// Update display object
+		if( flags.displayElementId )
+		{
+			if( ge( flags.displayElementId ) )
+			{
+				ge( flags.displayElementId ).value = inputField.value;
+			}
+		}
+	}
+	
+	// Start setting slider position
+	b.onmousedown = function( e )
+	{
+		this.offsetX = e.clientX - b.offsetLeft;
+		this.offsetY = e.clientY - b.offsetTop;
+		friend.mouseMoveFunc = function( f )
+		{
+			if( !flags || !flags.vertical )
+			{
+				setSliderPosition( f.clientX - b.offsetX );
+			}
+			else
+			{
+				setSliderPosition( f.clientY - b.offsetY );
+			}
+		}
+	}
+	if( flags.displayElementId )
+	{
+		if( ge( flags.displayElementId ) )
+		{
+			ge( flags.displayElementId ).value = def;
+			ge( flags.displayElementId ).onchange = function( e )
+			{
+				var val = setSliderValue( this.value );
+			}
+			ge( flags.displayElementId ).onkeyup = function( e )
+			{
+				var val = setSliderValue( this.value );
+			}
+		}
+	}
+}
+// End slider
 
 // Initializes tab system on the subsequent divs one level under parent div
 function InitTabs ( pdiv )
@@ -4818,6 +5886,17 @@ if( typeof( Say ) == 'undefined' )
 // Handle keys in iframes too!
 if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {	
+	function _kmousedown( e )
+	{
+		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
+	}
+	function _kmouseup( e )
+	{
+		if( friend.mouseMoveFunc )
+			friend.mouseMoveFunc = null;
+		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
+	}
+	
 	// Handle keys
 	function _kresponse( e )
 	{	
@@ -4918,11 +5997,15 @@ if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	{
 		window.addEventListener( 'keydown', _kresponse,   false );
 		window.addEventListener( 'keyup',   _kresponseup, false );
+		window.addEventListener( 'mousedown', _kmousedown, false );
+		window.addEventListener( 'mouseup', _kmouseup, false );
 	}
 	else
 	{
 		window.attachEvent( 'onkeydown', _kresponse,   false );
 		window.attachEvent( 'onkeyup',  _kresponseup, false );
+		window.attachEvent( 'onmousedown', _kmousedown, false );
+		window.attachEvent( 'onmouseup', _kmouseup, false );
 	}
 
 	window._keysAdded = true;
@@ -4962,6 +6045,9 @@ if( typeof( windowMouseX ) == 'undefined' )
 
 			windowMouseX = mx;
 			windowMouseY = my;
+			
+			if( friend.mouseMoveFunc )
+				friend.mouseMoveFunc( e );
 		}
 		if( window.addEventListener )
 			window.addEventListener( 'mousemove', mouseEvt, false );
@@ -5000,6 +6086,19 @@ function Alert( title, string, callback )
 		string: string
 	} );
 }
+
+// Contextmenu -----------------------------------------------------------------
+
+function ShowContextMenu( header, menu )
+{
+	Application.sendMessage( {
+		type: 'system',
+		header: header,
+		command: 'showcontextmenu',
+		menu: menu
+	} );
+}
+
 
 // Share element events --------------------------------------------------------
 
@@ -5111,6 +6210,10 @@ function ShareElementEvents( ele, recursive )
 /* Replace Progdir: etc with real paths ------------------------------------- */
 friend.convertFriendPaths = function( string )
 {
+	if( typeof( string ) != 'string' )
+	{
+		return string;
+	}
 	var apath = Application.appPath ? Application.appPath : Application.filePath;
 	if( !apath )
 	{
@@ -6031,7 +7134,7 @@ AssidRequest.prototype.sendEvent = function( e )
 friend.orphanElementSeed = 1;
 friend.rerouteAssidEventsToRoot = function( sasid )
 {
-	console.log( 'rerouteAssidEventsToRoot', sasid );
+	//console.log( 'rerouteAssidEventsToRoot', sasid );
 	// Filter out some event data
 	var illegalKeys = [
 		'location', 'repeat', 'keyIdentifier', 'code',
@@ -6104,7 +7207,7 @@ friend.rerouteAssidEventsToRoot = function( sasid )
 		o.oldListener = o.addEventListener;
 		o.addEventListener = function( type, listener )
 		{
-			this.oldListener( type, function( e )
+			function ev( e )
 			{
 				if( !this.id ) this.id = this.nodeName + friend.orphanElementSeed++;
 				// Generate a limited set of event data to send further
@@ -6138,7 +7241,7 @@ friend.rerouteAssidEventsToRoot = function( sasid )
 					o[a] = e[a];
 				}
 
-				console.log( 'captureevent', event );
+				//console.log( 'captureevent', event );
 				Application.sendMessage( {
 					command: 'captureevent',
 					elementType: event,
@@ -6146,10 +7249,11 @@ friend.rerouteAssidEventsToRoot = function( sasid )
 					sasid: sasid,
 					elementData: JSON.stringify( o )
 				} );
-			} );
+			};
+			this.oldListener( type, ev );
 			if( !this.trappedEvents ) this.trappedEvents = { 'ontest': 'testing' };
-			if( !this.trappedEvents[ t ] ) this.trappedEvents[ t ] = [];
-			this.trappedEvents[t].push( c );
+			if( !this.trappedEvents[ type ] ) this.trappedEvents[ type ] = [];
+			this.trappedEvents[ type ].push( ev );
 		}
 		return o;
 	}
@@ -6171,7 +7275,8 @@ AssidRequest.prototype.distributeSharedEvent = function( type, edata )
 {
 	// TODO: Support screens
 	// Send it to all windows (we don't know what is what.. :( ..)
-	console.log( 'distributeSharedEvent', type );
+	if( typeof( type ) == 'undefined' ) return;
+	//console.log( 'distributeSharedEvent', type );
 	for( var a in Application.windows )
 	{
 		Application.windows[a].sendMessage( {
@@ -6545,3 +7650,300 @@ GuiDesklet = function()
 	}
 
 })( window );
+
+// Paste handler handles pasting of files and media ----------------------------
+( function( ns, undefined )
+{
+	ns.PasteHandler = function()
+	{
+		
+	}
+	
+	// Initiate paste handler
+	ns.PasteHandler.prototype.paste = function( evt, callback )
+	{
+		var self = this;
+		
+		function DirectoryContainsFile( filename, directoryContents )
+		{
+			if( !filename ) return false;
+			if( !directoryContents || directoryContents.length == 0 ) return false;
+	
+			for(var i = 0; i < directoryContents.length; i++ )
+			{
+				if( directoryContents[i].Filename == filename ) return true;
+			}
+			return false;
+		}
+		
+		function uploadPastedFile( file )
+		{
+			//get directory listing for Home:Downloads - create folder if it does not exist...
+			var j = new cAjax ();
+		
+			var updateurl = '/system.library/file/dir?wr=1'
+			updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
+			updateurl += '&authid=' + encodeURIComponent( Application.authId );
+			
+			var wholePath = 'Home:Downloads/';
+			
+			j.open( 'get', updateurl, true, true );
+			j.onload = function ()
+			{
+				console.log( 'The response was: ' + this.returnCode, this.returnData );
+				var content;
+				// New mode
+				if ( this.returnCode == 'ok' )
+				{
+					try
+					{
+						content = JSON.parse(this.returnData||"null");
+					}
+					catch ( e ){};
+				}
+				// Legacy mode..
+				// TODO: REMOVE FROM ALL PLUGINS AND MODS!
+				else
+				{
+					try
+					{
+						content = JSON.parse(this.responseText() || "null");
+					}
+					catch ( e ){}
+				}
+		
+				if( content )
+				{
+					var newfilename = file.name;
+					var i = 0;
+					while( DirectoryContainsFile( newfilename, content ) )
+					{
+						i++;
+						//find a new name
+						var tmp = file.name.split('.');
+						var newfilename = file.name;
+						if( tmp.length > 1 )
+						{
+							var suffix = tmp.pop();				
+							newfilename = tmp.join('.');
+							newfilename += '_' + i + '.' + suffix;
+						}
+						else
+						{
+							newfilename += '_' + i;
+						}
+						if( i > 100 )
+						{
+							Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted too many files.'});
+							if( callback ) callback( { response: false, message: 'Too many files pasted.' } );
+							break; // no endless loop please	
+						}
+					}
+					uploadFileToDownloadsFolder( file, newfilename, wholePath + newfilename );
+				}
+				else
+				{
+					Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. Contact your Friendly administrator.'});
+					if( callback ) callback( { response: false, message: 'Unexpected error occured.' } );
+				}
+			}
+			j.send ();
+		}
+		
+		// end of uploadPastedFile
+		function uploadFileToDownloadsFolder( file, filename, path )
+		{
+			// Setup a file copying worker
+			var url = document.location.protocol + '//' + document.location.host + '/webclient/';
+			var uworker = new Worker( url + 'js/io/filetransfer.js' );
+
+			// Open window
+			var w = new View( {
+				title:  i18n( 'i18n_pasting_files' ),
+				width:  320,
+				height: 100,
+				id:     'fileops'
+			} );
+
+			var uprogress = new File( 'System:templates/file_operation_apilevel.html' );
+
+			uprogress.connectedworker = uworker;
+
+			//upload dialog...
+			uprogress.onLoad = function( data )
+			{
+				var self = this;
+				data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+				w.setContent( data );
+
+				w.connectedworker = this.connectedworker;
+				w.onClose = function()
+				{
+					if( this.connectedworker ) this.connectedworker.postMessage( { 'terminate': 1 } );
+					if( callback )
+					{
+						if( self.progress == 100 )
+						{
+							callback( { response: true, message: 'Upload was completed.', path: path } );
+							callback = false;
+						}
+						else
+						{
+							callback( { response: false, message: 'Upload was terminated.', progress: self.progress } );
+							callback = false;
+						}
+					}
+				}
+				uprogress.myview = w;
+			}
+
+			// For the progress bar
+			uprogress.setProgress = function( percent )
+			{
+				this.progress = percent;
+				// only update display if we are loaded...
+				// otherwise just drop and wait for next call to happen ;)
+				if( uprogress.loaded )
+				{
+					w.sendMessage( { command: 'progress', value: Math.floor( Math.max( 1, percent ) ) } );
+				}
+			};
+
+			// show notice that we are transporting files to the server....
+			uprogress.setUnderTransport = function()
+			{
+				w.sendMessage( { command: 'progress_information', data: 'Transferring files to target volume...' } );
+				uprogress.myview.setFlag( 'height', 125 );
+			}
+
+			// An error occurred
+			uprogress.displayError = function( msg )
+			{
+				w.sendMessage( { command: 'progress_error', data: msg } );
+				uprogress.myview.setFlag( 'height', 140 );
+			}
+
+			// Error happened!
+			uworker.onerror = function( err )
+			{
+				console.log( 'Upload worker error #######' );
+				console.log( err );
+				console.log( '###########################' );
+			}
+			
+			uworker.onmessage = function( e )
+			{
+				if( e.data['progressinfo'] == 1 )
+				{
+					if( e.data['uploadscomplete'] == 1 )
+					{
+						uprogress.setProgress( 100 );
+						w.close();
+						Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_downloads') + '(' + filename +')' });
+						if( callback ) callback( { response: true, message: 'Upload completed.', path: path } );
+						return true;
+					}
+					else if( e.data['progress'] )
+					{
+						uprogress.setProgress( e.data['progress'] );
+						if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+						{
+							uprogress.setUnderTransport();
+						}
+					}
+
+				}
+				else if( e.data['error'] == 1 )
+				{
+					uprogress.displayError(e.data['errormessage']);
+					if( callback ) callback( { response: false, message: 'Received error 1.' } );
+				}
+
+			}
+
+			uprogress.load();
+
+			//hardcoded pathes here!! TODO!
+			var fileMessage = {
+				'authid': Application.authId,
+				'targetPath': 'Home:Downloads/',
+				'targetVolume': 'Home',
+				'files': [ file ],
+				'filenames': [ filename ]
+			};
+			
+			uworker.postMessage( fileMessage );		
+		}
+		
+		var pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
+		for( i in pastedItems )
+		{
+			var item = pastedItems[i];
+			if( item.kind === 'file' )
+			{
+				var blob = item.getAsFile();
+				filetype = ( blob.type == '' ? 'application/octet-stream' : blob.type );
+				
+				self.uploadBlob = blob;
+				
+				var m = new Library( 'system.library' );
+				m.onExecuted = function( e, d )
+				{
+					//we have a downloads dir in home
+					if( e == 'ok' )
+					{
+						uploadPastedFile( self.uploadBlob );
+					}
+					else
+					{
+						//no downloads dir - try to make one
+						var m2 = new Library( 'system.library' );
+						m2.onExecuted = function( e, d )
+						{
+							//home drive found. create directory
+							if( e == 'ok' )
+							{
+								var shell = new Shell();
+								shell.onReady = function()
+								{
+									shell.execute( 'makedir Home:Downloads/', function( result )
+									{
+										shell.close();
+										
+										var res = result.split( '<!--separate-->' );
+										if( res[0] == 'ok' )
+										{
+											uploadPastedFile( self.uploadBlob );
+										}
+										// Failed - alert user
+										else
+										{
+											Notify( {
+												'title': i18n('i18n_paste_error'),
+												'text': i18n('i18n_could_not_create_downloads')
+											} );
+											if( callback ) callback( { response: false, message: 'Could not create Downloads/ directory.' } );
+											return;
+										}
+									} );
+								}
+							}
+							else
+							{
+								Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_no_home_drive')});
+								if( callback ) callback( { response: false, message: 'No home disk.' } );
+								return;
+							}
+						};						
+						m2.execute( 'file/dir', { path: 'Home:' } );
+					}
+				}
+				m.execute( 'file/dir', { path: 'Home:Downloads/' } );
+			} // if file item
+		} // each pasted iteam
+	}
+	
+} )( window );
+
+// End paste handler -----------------------------------------------------------
+

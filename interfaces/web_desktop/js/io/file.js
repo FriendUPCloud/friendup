@@ -154,6 +154,7 @@ File = function( filename )
 		var t = this;
 		var jax = new cAjax ();
 
+		var noRelocatePath = false;
 		for( var a in this.vars )
 		{
 			jax.addVar( a, this.vars[a] );
@@ -180,6 +181,7 @@ File = function( filename )
 			}
 			if( Workspace.conf && Workspace.conf.authId )
 				theDoor.addVar( 'authid', Workspace.conf.authId );
+			
 			theDoor.onRead = function( data )
 			{
 				if( !( jax.mode == 'rb' || typeof( data ) == 'object' ) )
@@ -212,11 +214,17 @@ File = function( filename )
 			theDoor.read( filename, mode );
 			//console.log( 'Read filename: ' + filename );
 		}
-		// Old fallback (should never happen)
+		// Old fallback on static and standard unix paths (with domain name etc)
 		else
 		{
 			jax.open( 'post', filename, true, true );
 
+			if( mode == 'rb' )
+			{
+				jax.addVar( 'mode', 'rb' );
+				jax.setResponseType( 'arraybuffer' );
+			}
+			
 			//console.log('PATH ' + filename );
 			// File description
 			if ( typeof( filename ) == 'string' )
@@ -229,25 +237,31 @@ File = function( filename )
 			}
 			jax.addVar( 'sessionid', Doors.sessionId );
 
-			jax.onload = function()
+			jax.onload = function( r, d )
 			{
 				t.data = false;
 				t.rawdata = false;
 				if( this.returnCode == 'ok' )
 				{
-					try{ t.data = decodeURIComponent( this.returnData ); }
-					catch( e ){ t.data = this.returnData; }
-
-					if( t.replacements )
+					// Binary mode
+					if( mode == 'rb' || jax.proxy.responseType == 'arraybuffer' )
 					{
-						for( var a in t.replacements )
-							t.data = t.data.split ( '{'+a+'}' ).join ( t.replacements[a] );
+						t.data = d;
 					}
-
-					// Use encryption!
-					if( t.useEncryption )
+					else
 					{
-						data = t.decrypt( data );
+						try{ t.data = decodeURIComponent( this.returnData ); }
+						catch( e ){ t.data = this.returnData; }
+						if( t.replacements )
+						{
+							for( var a in t.replacements )
+								t.data = t.data.split ( '{'+a+'}' ).join ( t.replacements[a] );
+						}
+						// Use encryption!
+						if( t.useEncryption )
+						{
+							data = t.decrypt( data );
+						}
 					}
 
 					if( typeof ( t.onLoad ) != 'undefined' )
@@ -472,7 +486,7 @@ File = function( filename )
 	}
 
 	// Save data to a file
-	this.save = function( rawdata, filename )
+	this.save = function( rawdata, filename, mode )
 	{
 		if( !filename ) filename = this.path;
 
@@ -494,7 +508,8 @@ File = function( filename )
 			// Copy vars
 			for( var a in this.vars )
 				theDoor.addVar( a, this.vars[a] );
-
+			if( ( mode && mode == 'wb' ) || this.vars['mode'] == 'wb' )
+				theDoor.mode = 'wb';
 			theDoor.onWrite = function( data )
 			{
 				if( typeof ( t.onSave ) != 'undefined' )

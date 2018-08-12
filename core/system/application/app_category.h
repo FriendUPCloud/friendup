@@ -46,11 +46,11 @@
 
 typedef struct AppCategory
 {
-	struct MinNode 		node;
+	struct MinNode 			node;
 	FULONG 					ac_ID;				// id of cathegory
 	FULONG 					ac_DictID;		// ID from dictionary ID
 	Dictionary				*ac_Dict;
-	char 						*ac_Name;			// pointer to string from dictionary
+	char 					*ac_Name;			// pointer to string from dictionary
 	
 }AppCategory;
 

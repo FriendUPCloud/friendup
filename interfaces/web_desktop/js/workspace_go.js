@@ -30,7 +30,9 @@ var _protocol = document.location.href.split( '://' )[0];
 window.go = true;
 
 Workspace = {
+	noLeaveAlert: true,
 	icons: [],
+	reloginAttempts: 0,
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
 	initialized: false,
 	protocol: _protocol,
@@ -70,6 +72,12 @@ Workspace = {
 		{
 			Workspace.init();
 		}
+		
+		if( window.friendApp )
+		{
+			document.body.classList.add( 'friendapp' );
+		}
+
 	},
 	init: function()
 	{
@@ -77,9 +85,9 @@ Workspace = {
 		if( this.initialized ) return;
 
 		// Preload some images
-		var imgs = [ 
+		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup/gfx/loading.gif'
+			'/themes/friendup12/gfx/loading.gif'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -103,12 +111,11 @@ Workspace = {
 		}
 
 		// Show the login prompt if we're not logged in!
-		if( !this.login() )
-		{
-			this.showLoginPrompt();
-			return;
-		}
-
+		this.login();
+	},
+	// Ready after init
+	postInit: function()
+	{
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
 		{
@@ -154,9 +161,10 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Friend Workspace v1.1',
+			title: 'Workspace',
 			id:	'DoorsScreen',
-			extra: Workspace.fullName,
+			extra: 'Sign up',
+			extraClickHref: 'AboutGoServer()',
 			taskbar: true,
 			scrolling: false
 		} );
@@ -164,7 +172,7 @@ Workspace = {
 		// Make links to screen on this object
 		this.screen = wbscreen;
 		this.screenDiv = wbscreen.div;
-		
+
 		// Key grabber
 		if( !ge( 'InputGrabber' ) )
 		{
@@ -176,7 +184,7 @@ Workspace = {
 			i.style.pointerEvents = 'none';
 			ge( 'DoorsScreen' ).appendChild( i );
 		}
-		
+
 		this.initWorkspaces();
 
 		wbscreen.div.addEventListener( 'mousedown', function( e )
@@ -299,7 +307,7 @@ Workspace = {
 			{
 				if( Workspace.mainDock )
 					Workspace.mainDock.closeDesklet();
-					
+
 				ge( 'DoorsScreen' ).classList.add( 'WidgetSlideDown' );
 				document.body.classList.add( 'WidgetSlideDown' );
 				Workspace.widget.setFlag( 'height', window.innerHeight - 112 );
@@ -362,22 +370,20 @@ Workspace = {
 				ex.removeChild( ex.offline );
 				ex.offline = null;
 			}
-			
+
 			// Set the clock
 			var e = '';
 			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-					   StrPad( d.getMinutes(), 2, '0' ) + ':' +
-					   StrPad( d.getSeconds(), 2, '0' );
-			e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();
+					   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+					   StrPad( d.getSeconds(), 2, '0' );*/
+			/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
 			ex.time.innerHTML = e;
-			
+
 			// Realign workspaces
 			Workspace.nudgeWorkspacesWidget();
 		}
 		this.clockInterval = setInterval( clock, 1000 );
-
-		setTimeout( function(){ Workspace.informationWindow(); }, 1000 );
 
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
@@ -398,7 +404,7 @@ Workspace = {
 			{
 				return Workspace.showContextMenu( false, e );
 			}
-			
+
 			var men = [
 				{
 					name: i18n( 'i18n_edit_dock' ),
@@ -408,6 +414,53 @@ Workspace = {
 					}
 				}
 			];
+
+			if( tar.classList && tar.classList.contains( 'Launcher' ) )
+			{
+				men.push( {
+					name: i18n( 'i18n_remove_from_dock' ),
+					command: function()
+					{
+						Workspace.removeFromDock( tar.executable );
+					}
+				} );
+			}
+			
+			if( movableWindowCount > 0 )
+			{
+				men.push( {
+					name: i18n( 'i18n_minimize_all_windows' ),
+					command: function( e )
+					{
+						var t = GetTaskbarElement();
+						var lW = null;
+						for( var a = 0; a < t.childNodes.length; a++ )
+						{
+							if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+							{
+								t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+							}
+						}
+						_DeactivateWindows();
+					}
+				} );
+				men.push( {
+					name: i18n( 'i18n_show_all_windows' ),
+					command: function( e )
+					{
+						var t = GetTaskbarElement();
+						for( var a = 0; a < t.childNodes.length; a++ )
+						{
+							if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+							{
+								t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+							}
+						}
+						_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
+					}
+				} );
+			}
+
 			Workspace.showContextMenu( men, e );
 		}
 		this.reloadDocks();
@@ -462,9 +515,6 @@ Workspace = {
 						};
 					}
 				}
-
-				//console.log( '--- Workspace.keys ---', { base64: this.keys, plain: keys } );
-
 				return this.keys;
 			}
 
@@ -529,14 +579,12 @@ Workspace = {
 
 			return false;
 		},
-		
+
 		getServerKey: function( callback )
 		{
 			var k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
-				//console.log( 'getserverkey: ', { e:e, d:d } );
-				
 				if( callback )
 				{
 					if( e == 'ok' && d )
@@ -551,7 +599,7 @@ Workspace = {
 			}
 			k.execute( 'getserverkey' );
 		},
-		
+
 		encryptRSA: function( str, publickey )
 		{
 			if( typeof( this.fcrypt ) != 'undefined' )
@@ -628,7 +676,7 @@ Workspace = {
 			{
 				return this.fcrypt.generateKey( '', 32, 256, 'sha256' );
 			}
-			
+
 			if( typeof( Sha256 ) != 'undefined' )
 			{
 				return Sha256.hash( str );
@@ -643,7 +691,7 @@ Workspace = {
 			{
 				return MD5( this.fcrypt.generateKey( '', 32, 256, 'sha256' ) );
 			}
-			
+
 			if( typeof( MD5 ) != 'undefined' )
 			{
 				return MD5( str );
@@ -654,49 +702,88 @@ Workspace = {
 	},
 	showLoginPrompt: function()
 	{
-		// Enable friend book mode
-		if( document.body.getAttribute( 'friendbook' ) == 'true' )
-			window.friendBook = true;
-		
-		// Set body to login state
-		document.body.className = 'Login';
-		if( Workspace.interfaceMode && Workspace.interfaceMode == 'native' )
-			return;
-
-		var lp = new View( {
-			id: 'Login',
-			width: 320,
-			'min-width': 290,
-			'max-width': 320,
-			height: 220,
-			'min-height': 220,
-			'resize': false,
-			title: 'Login to FriendUP',
-			close: false,
-			login: true,
-			theme: 'login'
-		} );
-		lp.setRichContentUrl( '/loginprompt' );
-		Workspace.loginPrompt = lp;
-
 		// Show it
 		this.showDesktop();
 	},
 	// When session times out, use log in again...
 	relogin: function()
 	{
-		delete Workspace.conn;
-		delete Workspace.sessionId;
+		var self = this;
 		
-		if( Workspace.loginUsername && Workspace.loginPassword )
+		// Only allow one relogin attempt at a time!
+		if( this.reloginAttempts > 1 )
 		{
-			Workspace.reloginInProgress = true;
-			Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
+			return;
 		}
-		else
+		this.reloginAttempts++;
+		
+		function executeCleanRelogin()
 		{
-			Workspace.logout();
+			if( Workspace.conn )
+			{
+				try
+				{
+					Workspace.conn.close();
+				}
+				catch( e )
+				{
+					console.log( 'Could not close conn.' );
+				}
+				delete Workspace.conn;
+			}
+			Workspace.sessionId = null;
+
+			if( Workspace.loginUsername && Workspace.loginPassword )
+			{
+				Workspace.reloginInProgress = true;
+				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
+			}
+			else
+			{
+				Workspace.logout();
+			}
 		}
+		// See if we are alive!
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			self.reloginAttempts--;
+			
+			if( e == 'ok' )
+			{
+				console.log( 'We do not need to relogin..: ' + Workspace.sessionId );
+				return;
+			}
+			else
+			{
+				try
+				{
+					var js = JSON.parse( d );
+					if( parseInt( d.code ) == 3 )
+					{
+						console.log( 'Session was wrong or expired.' );
+						Workspace.sessionId = null;
+						//return;
+					}
+				}
+				catch( e )
+				{
+				}
+				console.log( 'This was the error: (' + Workspace.sessionId + ')', e, d );
+			}
+			if( Workspace.serverIsThere )
+			{
+				console.log( 'Execute clean relogin' );
+				executeCleanRelogin();
+			}
+			else
+			{
+				console.log( 'Won\'t try to relogin until the server is back.' );
+			}
+		}
+		m.forceHTTP = true;
+		m.forceSend = true;
+		m.execute( 'usersettings' );
 		return;
 	},
 	renewAllSessionIds: function()
@@ -857,11 +944,11 @@ Workspace = {
 			{
 				this.loginCall.destroy();
 			}
-			
+
 			// Create a new library call object
 			var m = new FriendLibrary( 'system' );
 			this.loginCall = m;
-			
+
 			if( this.loginUsername )
 			{
 				m.addVar( 'username', this.loginUsername );
@@ -912,7 +999,7 @@ Workspace = {
 					// See if we can start host integration
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
-				
+
 					Workspace.reloginInProgress = null;
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev );
 				}
@@ -924,10 +1011,26 @@ Workspace = {
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
 
 				}
-				document.body.className = 'Login';
+				document.body.classList.add( 'Login' );
 			}
 			m.forceHTTP = true;
+			m.forceSend = true;
 			m.execute( 'login' );
+			
+			// Timeout login request
+			if( Workspace.workspaceInside )
+			{
+				m.loginTimeout = setTimeout( function()
+				{
+					if( Workspace.reloginInProgress )
+					{
+						console.log( 'Destroying.' );
+						m.destroy();
+						Workspace.reloginInProgress = false;
+					}
+					m.loginTimeout = false;
+				}, 2500 );
+			}
 		}
 
 		// Show it
@@ -950,7 +1053,7 @@ Workspace = {
 	initUserWorkspace: function( json, callback, ev )
 	{
 		var _this = Workspace;
-		
+
 		// Once we are done
 		function setupWorkspaceData( json, cb )
 		{
@@ -988,12 +1091,12 @@ Workspace = {
 					document.body.removeChild( ge( 'SessionBlock' ) );
 				}
 				_this.renewAllSessionIds();
-				
+
 				// Call back!
 				if( cb ) cb();
 				return;
 			}
-	
+
 			// Set server key
 			// TODO: Find a better place to set server publickey earlier in the process, temporary ... again time restraints makes delivery fast and sloppy ...
 			if( !_this.encryption.keys.server )
@@ -1003,11 +1106,11 @@ Workspace = {
 					_this.encryption.keys.server = ( server ? { publickey: server } : false );
 				} );
 			}
-			
+
 			// Call back!
 			if( cb ) cb();
 		}
-		
+
 		if( !this.userWorkspaceInitialized )
 		{
 			this.userWorkspaceInitialized = true;
@@ -1021,11 +1124,19 @@ Workspace = {
 				'webclient/js/io/directive.js;' +
 				'webclient/js/io/door.js;' +
 				'webclient/js/io/dormant.js;' +
+				'webclient/js/io/dormantramdisc.js;' +
 				'webclient/js/io/door_system.js;' +
 				'webclient/js/io/module.js;' +
 				'webclient/js/io/file.js;' +
 				'webclient/js/io/progress.js;' +
 				'webclient/js/io/friendnetwork.js;' +
+				'webclient/js/io/friendnetworkshare.js;' +
+				'webclient/js/io/friendnetworkfriends.js;' +
+				'webclient/js/io/friendnetworkdrive.js;' +
+				'webclient/js/io/friendnetworkextension.js;' +
+				'webclient/js/io/friendnetworkdoor.js;' +
+				'webclient/js/io/friendnetworkapps.js;' +
+				'webclient/js/io/DOS.js;' +
 				'webclient/js/gui/widget.js;' +
 				'webclient/js/gui/listview.js;' +
 				'webclient/js/gui/directoryview.js;' +
@@ -1059,7 +1170,7 @@ Workspace = {
 				// Reset some options
 				if( ev && ev.shiftKey )
 				{
-					_this.themeOverride = 'friendup';
+					_this.themeOverride = 'friendup12';
 				}
 
 				if( GetUrlVar( 'interface' ) )
@@ -1078,9 +1189,9 @@ Workspace = {
 				{
 					_this.noLeaveAlert = true;
 				}
-				
+
 				setupWorkspaceData( json );
-				
+
 				// Language
 				_this.locale = 'en';
 				var l = new Module( 'system' );
@@ -1088,12 +1199,15 @@ Workspace = {
 				{
 					// New translations
 					i18n_translations = [];
+					
+					var decoded = JSON.parse( d );
 
 					// Add it!
 					i18nClearLocale();
 					if( e == 'ok' )
 					{
-						_this.locale = JSON.parse( d ).locale;
+						if( decoded && typeof( decoded.locale ) != 'undefined' )
+							_this.locale = decoded.locale;
 						//load english first and overwrite with localised values afterwards :)
 						i18nAddPath( 'locale/en.locale', function(){
 							if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
@@ -1106,36 +1220,22 @@ Workspace = {
 
 					try
 					{
-						var res = JSON.parse( d );
-						if( res.response == 'Failed to load user.' )
+						if( decoded.response == 'Failed to load user.' )
 						{
 							_this.logout();
 						}
 					}
 					catch( e ){};
+					
+					// Current stored Friend version
+					Workspace.friendVersion = decoded.friendversion;
 				}
-				l.execute( 'getsetting', { setting: 'locale' } );
-
-				var m = new Module( 'system' );
-				m.onExecuted = function( e, d )
-				{
-					if( e != 'ok' )
-					{
-						if( !json.acceptedEula )
-						{
-							ShowEula();
-						}
-					}
-				}
-				m.execute( 'getsetting', {
-					setting: 'accepteula'
-				} );
-
+				l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 
 				if( !_this.workspaceHasLoadedOnceBefore )
-				{ 
-					document.body.classList.add( 'Loading' ); 
-					_this.workspaceHasLoadedOnceBefore = true; 
+				{
+					document.body.classList.add( 'Loading' );
+					_this.workspaceHasLoadedOnceBefore = true;
 				}
 
 
@@ -1194,6 +1294,7 @@ Workspace = {
 					}, 400 );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
+				Workspace.postInit();
 				return 1;
 			}
 			document.body.appendChild( s );
@@ -1229,4 +1330,24 @@ Workspace = {
 		Workspace.logoutURL = logoutURL;
 	}
 };
+
+
+// About the go server..
+function AboutGoServer()
+{
+	if( !Workspace.sessionId ) return;
+	var v = new View( {
+		title: '',
+		width: 640,
+		height: 530,
+		top: 'center',
+		left: 'center',
+		transparent: true,
+		id: 'about_go_server'
+	} );
+	
+	var f = new File( '/webclient/templates/about_go.html' );
+	f.onLoad = function( data ){ v.setContent( data ); }
+	f.load();
+}
 

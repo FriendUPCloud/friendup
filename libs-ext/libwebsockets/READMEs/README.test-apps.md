@@ -2,7 +2,7 @@ Overview of lws test apps
 =========================
 
 Are you building a client?  You just need to look at the test client
-[libwebsockets-test-client](test-apps/test-client.c).
+[libwebsockets-test-client](../test-apps/test-client.c).
 
 If you are building a standalone server, there are three choices, in order of
 preferability.
@@ -13,12 +13,12 @@ Lws provides a generic web server app that can be configured with JSON
 config files.  https://libwebsockets.org itself uses this method.
 
 With lwsws handling the serving part, you only need to write an lws protocol
-plugin.  See [plugin-standalone](plugin-standalone) for an example of how
+plugin.  See [plugin-standalone](../plugin-standalone) for an example of how
 to do that outside lws itself, using lws public apis.
 
  $ cmake .. -DLWS_WITH_LWSWS=1
 
-See [README.lwsws.md](READMEs/README.lwsws.md) for information on how to configure
+See [README.lwsws.md](../READMEs/README.lwsws.md) for information on how to configure
 lwsws.
 
 NOTE this method implies libuv is used by lws, to provide crossplatform
@@ -28,11 +28,13 @@ implementations of timers, dynamic lib loading etc for plugins and lwsws.
 
 This method lets you configure web serving in code, instead of using lwsws.
 
-Plugins are still used, which implies libuv needed.
+Plugins are still used, but you have a choice whether to dynamically load
+them or statically include them.  In this example, they are dynamically
+loaded.
 
  $ cmake .. -DLWS_WITH_PLUGINS=1
 
-See [test-server-v2.0.c](test-apps/test-server-v2.0.c)
+See [test-server-v2.0.c](../test-apps/test-server-v2.0.c)
 
 3) protocols in the server app
 
@@ -43,13 +45,23 @@ combined code is all squidged together and is much less maintainable.
 This method is still supported in lws but all ongoing and future work is
 being done in protocol plugins only.
 
+You can simply include the plugin contents and have it buit statically into
+your server, just define this before including the plugin source
+
+```
+#define LWS_PLUGIN_STATIC
+```
+
+This gets you most of the advantages without needing dynamic loading +
+libuv.
+
 
 Notes about lws test apps
 =========================
 
 @section tsb Testing server with a browser
 
-If you run [libwebsockets-test-server](test-apps/test-server.c) and point your browser
+If you run [libwebsockets-test-server](../test-apps/test-server.c) and point your browser
 (eg, Chrome) to
 
 	http://127.0.0.1:7681
@@ -74,7 +86,7 @@ terminates.
 
 To stop the daemon, do
 ```
-	$ kill cat /tmp/.lwsts-lock 
+       $ kill \`cat /tmp/.lwsts-lock\`
 ```
 If it finds a stale lock (the pid mentioned in the file does not exist
 any more) it will delete the lock and create a new one during startup.
@@ -82,6 +94,60 @@ any more) it will delete the lock and create a new one during startup.
 If the lock is valid, the daemon will exit with a note on stderr that
 it was already running.
 
+@section clicert Testing Client Certs
+
+Here is a very quick way to create a CA, and a client and server cert from it,
+for testing.
+
+```
+$ cp -rp ./scripts/client-ca /tmp
+$ cd /tmp/client-ca
+$ ./create-ca.sh
+$ ./create-server-cert.sh server
+$ ./create-client-cert.sh client
+```
+
+The last step wants an export password, you will need this password again to
+import the p12 format certificate into your browser.
+
+This will get you the following
+
+|name|function|
+|----|--------|
+|ca.pem|Your Certificate Authority cert|
+|ca.key|Private key for the CA cert|
+|client.pem|Client certificate, signed by your CA|
+|client.key|Client private key|
+|client.p12|combined client.pem + client.key in p12 format for browsers|
+|server.pem|Server cert, signed by your CA|
+|server.key|Server private key|
+
+You can confirm yourself the client and server certs are signed by the CA.
+
+```
+ $ openssl verify -verbose -trusted ca.pem server.pem
+ $ openssl verify -verbose -trusted ca.pem client.pem
+```
+
+Import the client.p12 file into your browser.  In FFOX57 it's
+
+ - preferences
+ - Privacy & Security
+ - Certificates | View Certificates
+ - Certificate Manager | Your Certificates | Import...
+ - Enter the password you gave when creating client1.p12
+ - Click OK.
+
+You can then run the test server like this:
+
+```
+ $ libwebsockets-test-server -s -A ca.pem -K server.key -C server.pem -v
+```
+
+When you connect your browser to https://localhost:7681 after accepting the
+selfsigned server cert, your browser will pop up a prompt to send the server
+your client cert (the -v switch enables this).  The server will only accept
+a client cert that has been signed by ca.pem.
 
 @section sssl Using SSL on the server side
 
@@ -100,7 +166,7 @@ certificates in the browser and the connection will proceed
 in first https and then websocket wss, acting exactly the
 same.
 
-[test-server.c](test-apps/test-server.c) is all that is needed to use libwebsockets for
+[test-server.c](../test-apps/test-server.c) is all that is needed to use libwebsockets for
 serving both the script html over http and websockets.
 
 @section lwstsdynvhost Dynamic Vhosts
@@ -110,6 +176,28 @@ to toggle the creation and destruction of an identical second vhost on port + 1.
 
 This is intended as a test and demonstration for how to bring up and remove
 vhosts dynamically.
+
+@section unixskt Testing Unix Socket Server support
+
+Start the test server with -U and the path to create the unix domain socket
+
+```
+ $ libwebsockets-test-server -U /tmp/uds
+```
+
+On exit, lws will delete the socket inode.
+
+To test the client side, eg
+
+```
+ $ nc -C -U /tmp/uds -i 30
+```
+
+and type
+
+`GET / HTTP/1.1`
+
+followed by two ENTER.  The contents of test.html should be returned.
 
 @section wscl Testing websocket client support
 
@@ -149,30 +237,6 @@ user callback code (other than what's needed in the protocol plugin).
 For those two options libuv is needed to support the protocol plugins, if
 that's not possible then the other variations with their own protocol code
 should be considered.
-
-
-@section echo Testing simple echo
-
-You can test against `echo.websockets.org` as a sanity test like
-this (the client connects to port `80` by default):
-
-```
-	$ libwebsockets-test-echo --client echo.websocket.org
-```
-
-This echo test is of limited use though because it doesn't
-negotiate any protocol.  You can run the same test app as a
-local server, by default on localhost:7681
-```
-	$ libwebsockets-test-echo
-```
-and do the echo test against the local echo server
-```
-	$ libwebsockets-test-echo --client localhost --port 7681
-```
-If you add the `--ssl` switch to both the client and server, you can also test
-with an encrypted link.
-
 
 @section tassl Testing SSL on the client side
 
@@ -348,37 +412,25 @@ treatment to the other app during that call.
 
 @section autobahn Autobahn Test Suite
 
-Lws can be tested against the autobahn websocket fuzzer.
+Lws can be tested against the autobahn websocket fuzzer in both client and
+server modes
 
 1) pip install autobahntestsuite
 
-2) wstest -m fuzzingserver
+2) From your build dir: cmake .. -DLWS_WITH_MINIMAL_EXAMPLES=1 && make
 
-3) Run tests like this
+3) ../scripts/autobahn-test.sh
 
-libwebsockets-test-echo --client localhost --port 9001 -u "/runCase?case=20&agent=libwebsockets" -v -d 65535 -n 1
+4) In a browser go to the directory you ran wstest in (eg, /projects/libwebsockets)
 
-(this runs test 20)
-
-4) In a browser, go here
-
-http://localhost:8080/test_browser.html
-
-fill in "libwebsockets" in "User Agent Identifier" and press "Update Reports (Manual)"
-
-5) In a browser go to the directory you ran wstest in (eg, /projects/libwebsockets)
-
-file:///projects/libwebsockets/reports/clients/index.html
+file:///projects/libwebsockets/build/reports/clients/index.html
 
 to see the results
 
 
 @section autobahnnotes Autobahn Test Notes
 
-1) Autobahn tests the user code + lws implementation.  So to get the same
-results, you need to follow test-echo.c in terms of user implementation.
-
-2) Two of the tests make no sense for Libwebsockets to support and we fail them.
+1) Two of the tests make no sense for Libwebsockets to support and we fail them.
 
  - Tests 2.10 + 2.11: sends multiple pings on one connection.  Lws policy is to
 only allow one active ping in flight on each connection, the rest are dropped.
@@ -386,5 +438,7 @@ The autobahn test itself admits this is not part of the standard, just someone's
 random opinion about how they think a ws server should act.  So we will fail
 this by design and it is no problem about RFC6455 compliance.
 
- 
+2) Currently two parts of autobahn are broken and we skip them
+
+https://github.com/crossbario/autobahn-testsuite/issues/71
  

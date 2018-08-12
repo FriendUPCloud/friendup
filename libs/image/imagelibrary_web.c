@@ -90,7 +90,7 @@ Http* WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Http
 		if( tst != NULL  )
 		{
 			path = UrlDecodeToMem(  (char *) tst->data );
-			pathRoot = GetRootDeviceByPath( usr->us_User, &oPath, path );
+			pathRoot = IMGGetRootDeviceByPath( l, usr->us_User, &oPath, path );
 			
 			DEBUG("[ImageLibrary] Found PATH parameter %s root %s\n", path, oPath );
 		}
@@ -100,7 +100,7 @@ Http* WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Http
 		if( tst != NULL  )
 		{
 			toPath = UrlDecodeToMem(  (char *) tst->data );
-			toRoot = GetRootDeviceByPath( usr->us_User, &otoPath, toPath );
+			toRoot = IMGGetRootDeviceByPath( l, usr->us_User, &otoPath, toPath );
 			
 			//DEBUG("[ImageLibrary] Found DESTINATION PATH parameter %s root %s\n", toPath, toRoot );
 		}

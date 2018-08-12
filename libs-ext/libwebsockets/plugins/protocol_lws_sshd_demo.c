@@ -27,6 +27,8 @@
 #include <lws-ssh.h>
 
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #define TEST_SERVER_KEY_PATH "/etc/lws-test-sshd-server-key"
 
@@ -101,7 +103,7 @@ enter_state(struct sshd_instance_priv *priv, enum states state)
 	priv->state = state;
 	priv->ptr = strings[state];
 	priv->pos = 0;
-	priv->len = strlen(priv->ptr);
+	priv->len = (int)strlen(priv->ptr);
 
 	lws_callback_on_writable(priv->wsi);
 }
@@ -160,14 +162,14 @@ ssh_ops_tx(void *_priv, int stdch, uint8_t *buf, size_t len)
 	if (stdch != LWS_STDOUT)
 		return 0;
 
-	if (priv->len - priv->pos < chunk)
+	if ((size_t)(priv->len - priv->pos) < chunk)
 		chunk = priv->len - priv->pos;
 
 	if (!chunk)
 		return 0;
 
 	memcpy(buf, priv->ptr + priv->pos, chunk);
-	priv->pos += chunk;
+	priv->pos += (int)chunk;
 
 	if (priv->state == SSH_TEST_DONE && priv->pos == priv->len) {
 		/*
@@ -207,7 +209,7 @@ ssh_ops_get_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 	int n;
 
 	lseek(vhd->privileged_fd, 0, SEEK_SET);
-	n = read(vhd->privileged_fd, buf, len);
+	n = read(vhd->privileged_fd, buf, (int)len);
 	if (n < 0) {
 		lwsl_err("%s: read failed: %d\n", __func__, n);
 		n = 0;
@@ -225,7 +227,7 @@ ssh_ops_set_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 						 lws_get_protocol(wsi));
 	int n;
 
-	n = write(vhd->privileged_fd, buf, len);
+	n = write(vhd->privileged_fd, buf, (int)len);
 	if (n < 0) {
 		lwsl_err("%s: read failed: %d\n", __func__, errno);
 		n = 0;
@@ -241,7 +243,7 @@ ssh_ops_is_pubkey_authorized(const char *username, const char *type,
 				 const uint8_t *peer, int peer_len)
 {
 	char *aps = NULL, *p, *ps;
-	int n = strlen(type), alen = 2048, ret = 2, len;
+	int n = (int)strlen(type), alen = 2048, ret = 2, len;
 	size_t s = 0;
 
 	lwsl_info("%s: checking pubkey for %s\n", __func__, username);
@@ -298,7 +300,7 @@ ssh_ops_is_pubkey_authorized(const char *username, const char *type,
 	 * <len32>E<len32>N that the peer sends us
 	 */
 	if (memcmp(peer, ps, peer_len)) {
-		lwsl_info("factors mismatch\n");
+		lwsl_info("%s: factors mismatch, rejecting key\n", __func__);
 		goto bail;
 	}
 
@@ -318,7 +320,7 @@ bail_p1:
 }
 
 static int
-ssh_ops_shell(void *_priv, struct lws *wsi)
+ssh_ops_shell(void *_priv, struct lws *wsi, lws_ssh_finish_exec finish, void *finish_handle)
 {
 	struct sshd_instance_priv *priv = _priv;
 
@@ -334,12 +336,12 @@ ssh_ops_shell(void *_priv, struct lws *wsi)
 static size_t
 ssh_ops_banner(char *buf, size_t max_len, char *lang, size_t max_lang_len)
 {
-	int n = snprintf(buf, max_len, "\n"
+	int n = lws_snprintf(buf, max_len, "\n"
 		      " |\\---/|  lws-ssh Test Server\n"
 		      " | o_o |  SSH Terminal Server\n"
 		      "  \\_^_/   Copyright (C) 2017 Crash Barrier Ltd\n\n");
 
-	snprintf(lang, max_lang_len, "en/US");
+	lws_snprintf(lang, max_lang_len, "en/US");
 
 	return n;
 }
@@ -371,7 +373,7 @@ static const struct lws_ssh_ops ssh_ops = {
 	.banner				= ssh_ops_banner,
 	.disconnect_reason		= ssh_ops_disconnect_reason,
 	.server_string			= "SSH-2.0-Libwebsockets",
-	.api_version			= 1,
+	.api_version			= 2,
 };
 
 static int
@@ -395,9 +397,9 @@ callback_lws_sshd_demo(struct lws *wsi, enum lws_callback_reasons reason,
 		 * deal with it down /etc/.. when just after this we will lose
 		 * the privileges needed to read / write /etc/...
 		 */
-		vhd->privileged_fd = open(TEST_SERVER_KEY_PATH, O_RDONLY);
+		vhd->privileged_fd = lws_open(TEST_SERVER_KEY_PATH, O_RDONLY);
 		if (vhd->privileged_fd == -1)
-			vhd->privileged_fd = open(TEST_SERVER_KEY_PATH,
+			vhd->privileged_fd = lws_open(TEST_SERVER_KEY_PATH,
 					O_CREAT | O_TRUNC | O_RDWR, 0600);
 		if (vhd->privileged_fd == -1) {
 			lwsl_err("%s: Can't open %s\n", __func__,
@@ -408,6 +410,9 @@ callback_lws_sshd_demo(struct lws *wsi, enum lws_callback_reasons reason,
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
 		close(vhd->privileged_fd);
+		break;
+
+	case LWS_CALLBACK_VHOST_CERT_AGING:
 		break;
 
 	default:

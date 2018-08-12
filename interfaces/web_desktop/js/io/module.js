@@ -77,6 +77,8 @@ var Module = function( mod )
 		// Force http!
 		if( this.forceHTTP )
 			j.forceHTTP = true;
+		if( this.forceSend )
+			j.forceSend = true;
 		
 		if( this.onExecuted )
 		{

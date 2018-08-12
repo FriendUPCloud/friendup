@@ -49,6 +49,11 @@ Friend.Tree.UI.init = function( callback )
         "/webclient/js/tree/ui/uiGroup.js",
         "/webclient/js/tree/ui/uiEdit.js",
         "/webclient/js/tree/ui/uiTabs.js",
+        "/webclient/js/tree/ui/uiTool.js",
+        "/webclient/js/tree/ui/uiToolbar.js",
+        "/webclient/js/tree/ui/uiResizeBar.js",
+        "/webclient/js/tree/ui/uiMenu.js",
+        "/webclient/js/tree/ui/uiHint.js",
     ];
 	Friend.Tree.include( scriptList, function( response )
 	{

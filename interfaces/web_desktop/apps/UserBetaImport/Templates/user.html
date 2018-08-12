@@ -1,0 +1,59 @@
+
+	<input id="ID" type="hidden" value="{id}"/>
+	
+	<div class="HRow">
+		<div class="HContent30 FloatLeft">
+			Full name:
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="text" class="FullWidth" id="FullName" value="{fullname}"/>
+		</div>
+	</div>
+	<div class="HRow MarginTop">
+		<div class="HContent30 FloatLeft">
+			E-mail:
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="text" class="FullWidth" id="Email" value="{email}"/>
+		</div>
+	</div>
+	<div class="HRow MarginTop">
+		<div class="HContent30 FloatLeft">
+			Username:
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="text" class="FullWidth" id="Name" value="{username}"/>
+		</div>
+	</div>
+	<div class="HRow MarginTop">
+		<div class="HContent30 FloatLeft">
+			Password:
+		</div>
+		<div class="HContent70 FloatLeft">
+			<input type="text" class="FullWidth" id="Password" value="{password}"/>
+		</div>
+	</div>
+	<div class="HRow MarginTop">
+		<div class="HContent30 FloatLeft">
+			Level:
+		</div>
+		<div class="HContent70 FloatLeft">
+			<select id="Level">
+				<option selected="selected" value="{level}">{level}</option>
+				<option value="Admin">Admin</option>
+				<option value="User">User</option>
+				<option value="API">API User</option>
+			</select>
+		</div>
+	</div>
+	
+	<div class="HRow MarginTop BorderTop PaddingTop">
+		<div class="HContent100 FloatLeft">
+			<button type="button" class="IconSmall fa-save" onclick="SaveUser()">
+				Add user
+			</button>
+			<button type="button" class="IconSmall fa-close" onclick="CancelEditing()">
+				Cancel
+			</button>
+		</div>
+	</div>

@@ -25,6 +25,7 @@
 
 #include <sqlite3.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct per_vhost_data__gs_mb {
 	struct lws_vhost *vh;
@@ -40,6 +41,7 @@ struct per_session_data__gs_mb {
 	struct lws_spa *spa;
 	unsigned long last_idx;
 	unsigned int our_form:1;
+	char second_http_part;
 };
 
 static const char * const param_names[] = {
@@ -83,23 +85,19 @@ lookup_cb(void *priv, int cols, char **col_val, char **col_name)
 			continue;
 		}
 		if (!strcmp(col_name[n], "username")) {
-			strncpy(m->username, col_val[n], sizeof(m->username) - 1);
-			m->username[sizeof(m->username) - 1] = '\0';
+			lws_strncpy(m->username, col_val[n], sizeof(m->username));
 			continue;
 		}
 		if (!strcmp(col_name[n], "email")) {
-			strncpy(m->email, col_val[n], sizeof(m->email) - 1);
-			m->email[sizeof(m->email) - 1] = '\0';
+			lws_strncpy(m->email, col_val[n], sizeof(m->email));
 			continue;
 		}
 		if (!strcmp(col_name[n], "ip")) {
-			strncpy(m->ip, col_val[n], sizeof(m->ip) - 1);
-			m->ip[sizeof(m->ip) - 1] = '\0';
+			lws_strncpy(m->ip, col_val[n], sizeof(m->ip));
 			continue;
 		}
 		if (!strcmp(col_name[n], "content")) {
-			strncpy(m->content, col_val[n], sizeof(m->content) - 1);
-			m->content[sizeof(m->content) - 1] = '\0';
+			lws_strncpy(m->content, col_val[n], sizeof(m->content));
 			continue;
 		}
 	}
@@ -212,7 +210,7 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_PROTOCOL_DESTROY:
-		if (vhd->pdb)
+		if (vhd && vhd->pdb)
 			sqlite3_close(vhd->pdb);
 		goto passthru;
 
@@ -308,6 +306,16 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 		}
 		break;
 
+	case LWS_CALLBACK_HTTP_WRITEABLE:
+		if (!pss->second_http_part)
+			break;
+		s[0] = '0';
+		n = lws_write(wsi, (unsigned char *)s, 1, LWS_WRITE_HTTP);
+		if (n != 1)
+			return -1;
+
+		goto try_to_reuse;
+
 	case LWS_CALLBACK_HTTP_BODY_COMPLETION:
 		if (!pss->our_form)
 			goto passthru;
@@ -333,12 +341,10 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 			lwsl_err("_write returned %d from %ld\n", n, (long)(p - start));
 			return -1;
 		}
-		s[0] = '0';
-		n = lws_write(wsi, (unsigned char *)s, 1, LWS_WRITE_HTTP);
-		if (n != 1)
-			return -1;
+		pss->second_http_part = 1;
 
-		goto try_to_reuse;
+		lws_callback_on_writable(wsi);
+		break;
 
 	case LWS_CALLBACK_HTTP_BIND_PROTOCOL:
 		if (!pss || pss->pss_gs)
@@ -367,7 +373,7 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 
 	default:
 passthru:
-		if (!pss)
+		if (!pss || !vhd)
 			break;
 		return vhd->gsp->callback(wsi, reason, pss->pss_gs, in, len);
 	}

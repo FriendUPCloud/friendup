@@ -509,7 +509,7 @@ if( !class_exists( 'DoorWordpress' ) )
 						
 						if( $catobj = $this->getPathData( $path, 0, $log ) )
 						{
-							$Logger->log( 'CatOBJ: ' . print_r( $catobj, 1 ) );
+							//$Logger->log( 'CatOBJ: ' . print_r( $catobj, 1 ) );
 							
 							foreach( $catobj as $obj )
 							{
@@ -593,27 +593,35 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								// TODO: Remove this or rewrite search doesn't work that well with the WP Api
 								
+								// Pure text search (no signs please! no html encode)
 								$catjson = $this->query( '/products?search=' . urlencode( str_replace( '.info', '', $name ) ) . '&category=' . $parent->id );
 								
 								//if( $log ) $Logger->log( '[[[[[[[[[[ catjson: ]]]]]]]]]] Query: ' . '/products?search=' . urlencode( str_replace( '.info', '', $name ) ) . '&category=' . $parent->id . ' [] Json: ' . $catjson . "\r\n" );
 								
 								if( $catobj = json_decode( $catjson ) )
 								{
-									if( isset( $catobj[0] ) )
+									//$Logger->log( 'Product objects: ' . print_r( $catobj, 1 ) );
+								
+									// Find with the correct name
+									$foundcatobj = false;
+									foreach( $catobj as $c )
 									{
-										$catobj[0]->pathname = $name;
-										$catobj[0]->path = $path;
-										$catobj[0]->parent = $parent->id;
+										if( html_entity_decode( $c->name ) == $name )
+											$foundcatobj = $c;
+									}
+									if( $foundcatobj )
+									{
+										$foundcatobj->pathname = $name;
+										$foundcatobj->path = $path;
+										$foundcatobj->parent = $parent->id;
 										
 										//if( $log ) $Logger->log( '[[[[[[[[[[ File[1]: ]]]]]]]]]] Subpath' . ' (' . count($subpath) . '): ' . print_r( $subpath,1 ) . ' [] IsFile: ' . $isfile . ' [] File: ' . json_encode( $catobj[0] ) . ' [] Path: ' . $path . "\r\n" );
 										
 										
-										$Logger->log( '[Wordpress getSubPath: End with catobj ' . print_r( $catobj[0], 1 ) );
+										$Logger->log( '[Wordpress getSubPath: End with catobj ' . print_r( $foundcatobj, 1 ) );
 										
-										return $catobj[0];
+										return $foundcatobj;
 									}
-									
-									return '';
 								}
 								
 								//if( $log ) $Logger->log( '[[[[[[[[[[ File[2]: ]]]]]]]]]] Subpath' . ' (' . count($subpath) . '): ' . print_r( $subpath,1 ) . ' [] IsFile: ' . $isfile . ' [] File: ' . json_encode( $catobj[0] ) . ' [] Path: ' . $path . "\r\n" );
@@ -1449,7 +1457,7 @@ if( !class_exists( 'DoorWordpress' ) )
 					// Get file object
 					if( $file = $this->getSubPath( $path, $log ) )
 					{
-						//$Logger->log( 'We got a file objecT: ' . print_r( $file, 1 ) );
+						$Logger->log( 'We got a file objecT: ' . print_r( $file, 1 ) );
 						
 						$prodid = 0; $len = 0; $data = false;
 						
@@ -1604,7 +1612,10 @@ if( !class_exists( 'DoorWordpress' ) )
 								
 								$Logger->log( 'File object: ' . print_r( $obj, 1 ) );
 								
-								$Logger->log( 'Wordpress object: ' . print_r( $catobj, 1 ) );
+								foreach( $catobj as $v )
+								{
+									$Logger->log( '> Wordpress object: ' . $v[ 'name' ] );
+								}
 								
 								if( $catobj && isset( $catobj[0]->id ) )
 								{
@@ -1714,6 +1725,8 @@ if( !class_exists( 'DoorWordpress' ) )
 										return 'ok<!--separate-->' . $len . '<!--separate-->'/* . print_r( json_decode( $json ), 1 )*/;
 									}
 								}
+								
+								$Logger->Log( 'Response: ' . $json );
 								
 							}
 						}
@@ -2104,17 +2117,6 @@ if( !class_exists( 'DoorWordpress' ) )
 								{
 									return 'ok';
 								}
-								
-								/*if( $cat = $this->getSubPath( $path, true ) )
-								{
-									if( $cat->id )
-									{
-										if( $this->DeleteCategoriesWP( $cat ) )
-										{
-											return 'ok';
-										}
-									}
-								}*/
 							}
 							else if( $this->pathIsFile( $path ) )
 							{
@@ -2122,17 +2124,6 @@ if( !class_exists( 'DoorWordpress' ) )
 								{
 									return 'ok';
 								}
-								
-								/*if( $file = $this->getSubPath( $path ) )
-								{
-									if( $file->id )
-									{
-										if( $this->DeleteProductWP( $file ) )
-										{
-											return 'ok';
-										}
-									}
-								}*/
 							}
 						}
 						
@@ -2223,7 +2214,7 @@ if( !class_exists( 'DoorWordpress' ) )
 			{
 				$json = $this->query( $server . '/media/' . $ids . '?force=true', false, 'DELETE' );
 				
-				//$Logger->log( '[[[[[[[[[[[[[[[[[[[[[[[ DeletedFiles: ' . $json . ' [] ' . $server . '/media/' . $ids . '?force=true ]]]]]]]]]]]]]]]]]]]]]]]' );
+				$Logger->log( '[[[[[[[[[[[[[[[[[[[[[[[ DeletedFiles: ' . $json . ' [] ' . $server . '/media/' . $ids . '?force=true ]]]]]]]]]]]]]]]]]]]]]]]' );
 				
 				if( $json && $filobj = json_decode( trim( $json ) ) )
 				{
@@ -2809,9 +2800,15 @@ if( !class_exists( 'DoorWordpress' ) )
 		
 		private function DeleteProductWP( $data )
 		{
+			global $Logger;
+			
+			$Logger->log( 'DeleteProductWP: Preparing to delete.' );
+			
 			if( $data && is_object( $data ) && $data->id )
 			{
 				$json = $this->query( '/products/' . $data->id . '?force=true', false, 'DELETE' );
+				
+				$Logger->log( 'DeleteProductWP: Here is the JSON data: ' . $json . "\nDONE with DeleteProductWP.\n" );
 				
 				if( $json && json_decode( trim( $json ) ) )
 				{
@@ -3306,8 +3303,11 @@ if( !class_exists( 'DoorWordpress' ) )
 		
 		function _deleteFile( $path )
 		{
+			global $Logger;
+			$Logger->log( '_deleteFile: Checking path: ' . $path );
 			if( $this->pathIsFile( $path ) )
 			{
+				$Logger->log( '_deleteFile: Yes, path is file.' );
 				if( $file = $this->getSubPath( $path ) )
 				{
 					if( $file->id )

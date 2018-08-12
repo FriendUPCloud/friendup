@@ -14,6 +14,7 @@ i18n_sessions                        : Økter
 i18n_regenerate                      : Regenerer
 i18n_add                        	 : Legg til
 i18n_add_user                        : Legg til bruker
+i18n_refresh_list                    : Oppdater utlisting
 i18n_add_setup                       : Legg til oppsett
 i18n_add_template                    : Legg til mal
 i18n_add_workgroup                   : Legg til arbeidsgruppe
@@ -89,3 +90,7 @@ i18n_locale_en                          : Engelsk
 i18n_locale_de                          : Tysk
 i18n_locale_nl                          : Nederlandsk
 i18n_locale_fr                          : Fransk
+
+i18n_useravatar							: Avatar
+i18n_changeavatar						: Endring
+i18n_fileselectoravatar					: Vennligst velg et PNG-bilde

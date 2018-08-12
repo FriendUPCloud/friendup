@@ -94,18 +94,18 @@ void USMDelete( UserSessionManager *smgr )
  */
 User *USMGetUserBySessionID( UserSessionManager *usm, char *sessionid )
 {
-	pthread_mutex_lock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
-			pthread_mutex_unlock( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			return us->us_User;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -124,18 +124,18 @@ UserSession *USMGetSessionBySessionID( UserSessionManager *usm, char *sessionid 
         FERROR("Sessionid is NULL!\n");
         return NULL;
     }
-	pthread_mutex_lock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( strcmp( sessionid, us->us_SessionID ) == 0 )
 		{
-			pthread_mutex_unlock( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -181,18 +181,18 @@ UserSession *USMGetSessionBySessionIDFromDB( UserSessionManager *smgr, char *id 
  */
 UserSession *USMGetSessionByDeviceIDandUser( UserSessionManager *usm, char *devid, FULONG uid )
 {
-	pthread_mutex_lock( &(usm->usm_Mutex) );
+ 	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( us->us_UserID == uid && strcmp( devid, us->us_SessionID ) == 0 )
 		{
-			pthread_mutex_unlock( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			return us;
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -242,18 +242,21 @@ UserSession *USMGetSessionByDeviceIDandUserDB( UserSessionManager *smgr, char *d
 UserSession *USMGetSessionByUserID( UserSessionManager *usm, FULONG id )
 {
 	//  we  will take only first session of that user
-	pthread_mutex_lock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *us = usm->usm_Sessions;
 	while( us != NULL )
 	{
 		if( us->us_User  != NULL  && us->us_User->u_ID == id )
 		{
-			pthread_mutex_unlock( &(usm->usm_Mutex) );
-			return us->us_User->u_SessionsList->us;
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+			if( us->us_User->u_SessionsList != NULL )
+			{
+				return us->us_User->u_SessionsList->us;
+			}
 		}
 		us = (UserSession *) us->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	return NULL;
 }
 
@@ -431,13 +434,13 @@ UserSession *USMUserSessionAddToList( UserSessionManager *smgr, UserSession *s )
 {
 	DEBUG("[USMUserSessionAddToList] start\n");
 	
-	pthread_mutex_lock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 
 	s->node.mln_Succ = (MinNode *)smgr->usm_Sessions;
 	smgr->usm_Sessions = s;
 	smgr->usm_SessionCounter++;
 	
-	pthread_mutex_unlock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	DEBUG("[USMUserSessionAddToList] end\n");
 	
@@ -459,7 +462,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 	FBOOL userHaveMoreSessions = FALSE;
 	FBOOL duplicateMasterSession = FALSE;
 	
-	pthread_mutex_lock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 	UserSession  *ses =  smgr->usm_Sessions;
 	while( ses != NULL )
 	{
@@ -497,7 +500,7 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		duplicateMasterSession = TRUE;
 		s = ses;
 	}
-	pthread_mutex_unlock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	DEBUG("[USMUserSessionAdd] Checking session id %lu\n",  s->us_UserID );
 	
@@ -542,20 +545,27 @@ UserSession *USMUserSessionAdd( UserSessionManager *smgr, UserSession *s )
 		{
 			DEBUG("[USMUserSessionAdd] User added to user %s main sessionid %s\n", locusr->u_Name, locusr->u_MainSessionID );
 			
-			pthread_mutex_lock( &(smgr->usm_Mutex) );
 			UserAddSession( locusr, s );
+			FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 			s->us_User = locusr;
 			
-			if( userHaveMoreSessions == FALSE )
+			DEBUG("[USMUserSessionAdd] have more sessions: %d mainsessionid: '%s'\n", userHaveMoreSessions, locusr->u_MainSessionID );
+			
+			if( userHaveMoreSessions == FALSE && ( locusr->u_MainSessionID == NULL || ( strlen( locusr->u_MainSessionID ) <= 0 ) ) )
 			{
-				if( locusr != NULL )
+				DEBUG("[USMUserSessionAdd] is api: %d\n", locusr->u_IsAPI );
+				if( locusr != NULL && locusr->u_IsAPI == FALSE )
 				{
-					UserRegenerateSessionID( locusr, NULL );
+					// we cannot regenerate session because drives are using this sessionid
+					//if( locusr->u_MainSessionID == NULL )
+					{
+						UserRegenerateSessionID( locusr, NULL );
+					}
 				}
 				
 				DEBUG("[USMUserSessionAdd] SessionID will be overwriten\n");
 			}
-			pthread_mutex_unlock( &(smgr->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 		}
 	}
 	else
@@ -586,7 +596,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 	
 	DEBUG("[USMUserSessionRemove] UserSessionRemove\n");
 	
-	pthread_mutex_lock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 	
 	if( remsess == smgr->usm_Sessions )
 	{
@@ -621,7 +631,7 @@ int USMUserSessionRemove( UserSessionManager *smgr, UserSession *remsess )
 			}
 		}
 	}
-	pthread_mutex_unlock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	if( sessionRemoved == TRUE )
 	{
@@ -778,8 +788,8 @@ int USMRemoveOldSessions( void *lsb )
 	UserSessionManager *smgr = sb->sl_USM;
 	
 	// we are conting maximum number of sessions
-	//pthread_mutex_lock( &(smgr->usm_Mutex) );
-    pthread_mutex_lock( &(smgr->usm_Mutex) );
+	//FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
+    FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
 	int nr = 0;
 	UserSession *cntses = smgr->usm_Sessions;
 	while( cntses != NULL )
@@ -787,14 +797,14 @@ int USMRemoveOldSessions( void *lsb )
 		nr++;
 		cntses = (UserSession *)cntses->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(smgr->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
 	
 	// now we are adding entries  which will be removed to array
 	
 	UserSession **remsessions = FCalloc( nr, sizeof(UserSession *) );
 	if( remsessions != NULL )
 	{
-		pthread_mutex_lock( &(smgr->usm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(smgr->usm_Mutex) );
         
 		UserSession *actSession = smgr->usm_Sessions;
 		UserSession *remSession = actSession;
@@ -833,7 +843,7 @@ int USMRemoveOldSessions( void *lsb )
 		}
 		BufStringAddSize( sqlreq, ")", 1 );
 		
-        pthread_mutex_unlock( &(smgr->usm_Mutex) );
+        FRIEND_MUTEX_UNLOCK( &(smgr->usm_Mutex) );
         
 		int i;
 		for( i=0 ; i < nr ; i++ )
@@ -888,7 +898,6 @@ int USMRemoveOldSessionsinDB( void *lsb )
 	 SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
 	 if( sqllib != NULL )
 	 {
-		DEBUG("\n");
 		char temp[ 1024 ];
 	 
 		// we remove old entries older then 6 hours 43200
@@ -923,7 +932,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		return FALSE;
 	}
     
-    //pthread_mutex_lock( &(usm->usm_Mutex) );
+    //FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	User *usr = sb->sl_UM->um_Users;
 	while( usr != NULL )
 	{
@@ -1014,10 +1023,10 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 		}
 		usr = (User *)usr->node.mln_Succ;
 	}
-	//pthread_mutex_unlock( &(usm->usm_Mutex) );
+	//FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	
     /*
-	pthread_mutex_lock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 	UserSession *uses = usm->usm_Sessions;
 	while( uses != NULL )
 	{
@@ -1030,7 +1039,7 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 				uname = uses->us_User->u_Name;
 			}
 			
-			pthread_mutex_unlock( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 			uses->us_NRConnections++;
 			
 			int len = snprintf( tmpmsg, 2048, "{ \"type\":\"msg\", \"data\":{\"type\":\"filesystem-change\",\"data\":{\"deviceid\":\"%lu\",\"devname\":\"%s\",\"path\":\"%s\",\"owner\":\"%s\" }}}", device->f_ID, device->f_Name, path, uname  );
@@ -1111,13 +1120,13 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 			} // if ->usr == NULL
 			
 			uses->us_NRConnections--;
-			//pthread_mutex_unlock( &(uses->us_Mutex) );
+			//FRIEND_MUTEX_UNLOCK( &(uses->us_Mutex) );
 			
-			pthread_mutex_lock( &(usm->usm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
 		}
 		uses = (UserSession *)uses->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(usm->usm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
 	*/
     
 	FFree( tmpmsg );

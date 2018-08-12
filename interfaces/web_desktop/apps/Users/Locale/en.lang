@@ -14,6 +14,7 @@ i18n_sessions                        : Sessions
 i18n_regenerate                      : Regenerate
 i18n_add                        	 : Add
 i18n_add_user                        : Add user
+i18n_refresh_list                    : Refresh list
 i18n_add_setup                       : Add setup
 i18n_add_template                    : Add template
 i18n_add_workgroup                   : Add workgroup
@@ -89,3 +90,8 @@ i18n_locale_en                          : English
 i18n_locale_de                          : German
 i18n_locale_nl                          : Dutch
 i18n_locale_nl                          : Dutch
+i18n_locale_pl				: Polski
+
+i18n_useravatar							: Avatar
+i18n_changeavatar						: Change
+i18n_fileselectoravatar					: Please choose a PNG image

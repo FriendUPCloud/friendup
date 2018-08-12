@@ -32,6 +32,15 @@ Friend.Tree.UI.MessageBox = function ( tree, name, flags )
 	this.title = 'My title';
 	this.text = 'My message box text';
 	this.cancel = 'Cancel';
+	this.font = '16px sans serif';
+	this.colorBack = '#C0C0C0';
+	this.colorBright = '#E0E0E0';
+	this.colorDark = '#808080';
+	this.colorText = '#000000';
+	this.colorTitle = '#FF0000';
+	this.widthButton = 80;
+	this.heightButton = 32;
+
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.MessageBox';
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.MessageBox', flags );
 };
@@ -50,132 +59,103 @@ Friend.Tree.UI.MessageBox.click = function ( )
 	this.destroy();
 };
 
-Friend.Tree.UI.RenderItems.MessageBox_Three2D = function ( tree, name, flags )
-{
-	this.font = '16px Arial';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
-	this.textColor = '#000000';
-	this.titleColor = '#FF0000';
-	this.onCancel = false;
-	this.caller = false;
-	this.buttonWidth = 80;
-	this.buttonHeight = 32;
-	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.MessageBox_Three2D', flags );
-
-	this.parent.startInsertItems();
-	var button = new Friend.Tree.UI.Button( this.tree, 'cancel',
-	{
-		root: this.parent.root,
-		parent: this.parent,
-		x: this.width - this.buttonWidth - 8,
-		y: this.height - this.buttonHeight - 8,
-		width: this.buttonWidth,
-		height: this.buttonHeight,
-		text: this.parent.cancel,
-		caller: this,
-		onClick: onClick
-	} );
-	this.parent.addItem( button );
-	this.parent.endInsertItems();
-
-	function onClick()
-	{
-		this.parent.destroy();
-		if ( this.caller && this.onCancel )
-			this.onCancel.apply( this.caller, [] );
-	}
-};
-Friend.Tree.UI.RenderItems.MessageBox_Three2D.render = function ( properties )
-{
-	this.thisRect.drawHilightedBox( properties, this.backColor, this.brightColor, this.darkColor );
-	properties.rendererItem.drawText( properties, this.rect.width / 2, this.rect.height / 15, this.parent.title, this.font, this.titleColor, 'center', 'middle', 20 );
-	properties.rendererItem.drawText( properties, this.rect.width / 2, this.rect.height / 2, this.parent.text, this.font, this.textColor, 'center', 'middle', 20 );
-	return properties;
-};
 
 Friend.Tree.UI.RenderItems.MessageBox_HTML = function ( tree, name, flags )
 {
-	this.font = '16px Arial';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
-	this.textColor = '#000000';
-	this.titleColor = '#FF0000';
-	this.onCancel = false;
-	this.caller = false;
-	this.buttonWidth = 80;
-	this.buttonHeight = 32;
+	this.font = false;
+	this.text = false;
+	this.title = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.colorText = false;
+	this.colorTitle = false;
+	this.widthButton = false;
+	this.heightButton = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_HTML';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.MessageBox_HTML', flags );
 
-	this.parent.startInsertItems();
+	this.width = 320;
+	this.height = 200;
+	this.item.width = this.width;
+	this.item.height = this.height;
+
+	this.item.startInsertItems();
 	var button = new Friend.Tree.UI.Button( this.tree, 'cancel',
 	{
-		root: this.parent.root,
-		parent: this.parent,
-		x: this.width - this.buttonWidth - 8,
-		y: this.height - this.buttonHeight - 8,
-		width: this.buttonWidth,
-		height: this.buttonHeight,
-		text: this.parent.cancel,
+		root: this.item.root,
+		parent: this.item,
+		font: this.utilities.setFontSize( this.item.font, 14 ),
+		text: this.item.cancel,
 		caller: this,
-		onClick: onClick
+		onClick: onClick,
+		theme: this.item.theme
 	} );
-	this.parent.addItem( button );
-	this.parent.endInsertItems();
+	button.x = this.width - button.width - 8;
+	button.y = this.height - button.height - 8;
+	this.item.addItem( button );
+	this.item.endInsertItems();
 
 	function onClick()
 	{
-		debugger;
-		this.parent.destroy();
-		if ( this.caller && this.onCancel )
-			this.onCancel.apply( this.caller, [] );
+		this.item.destroy();
+		if ( this.item.caller && this.item.onCancel )
+			this.item.onCancel.apply( this.item.caller, [] );
 	}
 };
-Friend.Tree.UI.RenderItems.MessageBox_HTML.render = Friend.Tree.UI.RenderItems.MessageBox_Three2D.render;
+Friend.Tree.UI.RenderItems.MessageBox_HTML.render = function ( properties )
+{
+	this.thisRect.drawHilightedBox( properties, this.item.colorBack, this.item.colorBright, this.item.colorDark );
+	properties.rendererItem.drawText( properties, this.rect.width / 2, this.rect.height / 12, this.item.title, this.item.font, this.item.colorTitle, 'center', 'middle', 20 );
+	properties.rendererItem.drawText( properties, this.rect.width / 2, this.rect.height / 2, this.item.text, this.item.font, this.item.colorText, 'center', 'middle', 20 );
+	return properties;
+};
+
 
 Friend.Tree.UI.RenderItems.MessageBox_Canvas2D = function ( tree, name, flags )
 {
-	this.font = '16px Arial';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
-	this.textColor = '#000000';
-	this.titleColor = '#FF0000';
-	this.onCancel = false;
-	this.caller = false;
-	this.buttonWidth = 80;
-	this.buttonHeight = 32;
+	this.font = false;
+	this.text = false;
+	this.title = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.colorText = false;
+	this.colorTitle = false;
+	this.widthButton = false;
+	this.heightButton = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.MessageBox_Canvas2D', flags );
 
-	this.parent.startInsertItems();
+	this.width = 320;
+	this.height = 200;
+	this.item.width = this.width;
+	this.item.height = this.height;
+
+	this.item.startInsertItems();
 	var button = new Friend.Tree.UI.Button( this.tree, 'cancel',
 	{
-		root: this.parent.root,
-		parent: this.parent,
-		x: this.width - this.buttonWidth - 8,
-		y: this.height - this.buttonHeight - 8,
-		width: this.buttonWidth,
-		height: this.buttonHeight,
-		text: this.parent.cancel,
+		root: this.item.root,
+		parent: this.item,
+		text: this.item.cancel,
+		font: this.utilities.setFontSize( this.item.font, 14 ),
 		caller: this,
 		onClick: onClick
 	} );
-	this.parent.addItem( button );
-	this.parent.endInsertItems();
+	button.x = this.width - button.width - 8;
+	button.y = this.height - button.height - 8;
+	this.item.addItem( button );
+	this.item.endInsertItems();
 	
 	function onClick()
 	{
-		this.parent.destroy();
-		if ( this.caller && this.onCancel )
-			this.onCancel.apply( this.caller, [] );
+		this.item.destroy();
+		if ( this.item.caller && this.item.onCancel )
+			this.item.onCancel.apply( this.item.caller, [] );
 	}
 };
 Friend.Tree.UI.RenderItems.MessageBox_Canvas2D.render = Friend.Tree.UI.RenderItems.MessageBox_Three2D.render;

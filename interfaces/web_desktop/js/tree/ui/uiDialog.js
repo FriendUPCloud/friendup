@@ -29,51 +29,58 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.Dialog = function ( tree, name, properties )
 {
-	this.font = '13px Arial';
+	this.font = '16px sans serif';
+	this.color = '#000000';
+	this.colorBack = '#C0C0C0';
+	this.colorBright = '#E0E0E0';
+	this.colorDark = '#808080';
 	this.title = 'My title';
 	this.cancel = 'Cancel';
 	this.OK = 'OK';
 	this.cancelEnabled = true;
 	this.OKEnabled = true;
-	this.buttonHeight = 32;
-	this.buttonWidth = 80;
+	this.buttonHeight = 0;
+	this.buttonWidth = 0;
 	this.caller = false;
 	this.onOK = false;
 	this.onCancel = false;
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.Dialog';
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.Dialog', properties );
 
+	var button;
 	this.startInsertItems();
 	if ( this.onCancel )
 	{
-		var button = new Friend.Tree.UI.Button( this.tree, 'cancel',
+		button = new Friend.Tree.UI.Button( this.tree, 'cancel',
 		{
 			root: this.root,
 			parent: this,
-			x: this.width - this.buttonWidth - 8,
-            y: this.height - this.buttonHeight - 8,
-			width: this.buttonWidth,
-			height: this.buttonHeight,
+			width: this.buttonWidth ? this.buttonWidth : undefined,
+			height: this.buttonHeight ? this.buttonHeight : undefined,
 			text: this.cancel,
 			caller: this.caller,
-			onClick: this.onCancel
+			onClick: this.onCancel,
+			theme: this.theme
 		} );
+		button.x = this.width - button.width - 8;
+		button.y = this.height - button.height - 8;
 		this.addItem( button );
 	}
 	if ( this.onOK )
 	{
-		var button = new Friend.Tree.UI.Button( this.tree, 'OK',
+		button = new Friend.Tree.UI.Button( this.tree, 'OK',
 		{
 			root: this.root,
 			parent: this,
-			x: 8,
-			y: this.height - this.buttonHeight - 8,
-			width: this.buttonWidth,
-			height: this.buttonHeight,
+			width: this.buttonWidth ? this.buttonWidth : undefined,
+			height: this.buttonHeight ? this.buttonHeight : undefined,
 			text: this.OK,
 			caller: this.caller,
-			onClick: this.onOK
+			onClick: this.onOK,
+			theme: this.theme
 		} );
+		button.x = 8;
+		button.y = this.height - button.height - 8;
 		this.addItem( button );
 	}
 	this.endInsertItems();
@@ -88,58 +95,53 @@ Friend.Tree.UI.Dialog.messageDown = function ( message )
 	return this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
 };
 
-// Hand drawn dialog
-Friend.Tree.UI.RenderItems.Dialog_Three2D = function ( tree, name, properties )
-{
-	this.font = '13px Arial';
-	this.color = '#000000';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
-	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Dialog_Three2D', properties );
-	this.tree.tabIndex = 0;
-};
-Friend.Tree.UI.RenderItems.Dialog_Three2D.render = function ( properties )
-{
-	// Draw box
-	this.thisRect.drawHilightedBox( properties, this.backColor, this.brightColor, this.darkColor );
-
-	// Draw title
-	if ( this.parent.title )
-		properties.context.drawText( properties, this.rect.width / 2, 20, this.parent.title, this.parent.font, this.color, 'center', 'middle', 25 );
-
-	return properties;
-};
 
 Friend.Tree.UI.RenderItems.Dialog_Canvas2D = function ( tree, name, properties )
 {
-	this.font = '13px Arial';
-	this.color = '#000000';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.title = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Dialog_Canvas2D', properties );
 	this.tree.tabIndex = 0;
 };
-Friend.Tree.UI.RenderItems.Dialog_Canvas2D.render = Friend.Tree.UI.RenderItems.Dialog_Three2D.render;
+Friend.Tree.UI.RenderItems.Dialog_Canvas2D.render = function ( properties )
+{
+	// Draw box
+	this.thisRect.drawHilightedBox( properties, this.item.colorBack, this.item.colorBright, this.item.colorDark );
+
+	// Draw title
+	if ( this.title )
+		properties.context.drawText( properties, this.rect.width / 2, 20, this.item.title, this.item.font, this.item.color, 'center', 'middle', 25 );
+
+	return properties;
+};
 
 
 // HTML rendering of the dialog
 Friend.Tree.UI.RenderItems.Dialog_HTML = function ( tree, name, properties )
 {
-	this.font = '13px Arial';
-	this.color = '#000000';
-	this.backColor = '#C0C0C0';
-	this.brightColor = '#E0E0E0';
-	this.darkColor = '#808080';
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.title = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_HTML';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Dialog_HTML', properties );
 	this.render = Friend.Tree.UI.RenderItems.Dialog_Three2D.render;
 	this.tree.tabIndex = 0;
+
+	this.width = 320;
+	this.height = 480;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.Dialog_HTML.render = Friend.Tree.UI.RenderItems.Dialog_HTML.render;
+Friend.Tree.UI.RenderItems.Dialog_HTML.render = Friend.Tree.UI.RenderItems.Dialog_Canvas2D.render;

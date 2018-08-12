@@ -44,6 +44,13 @@ Friend.Resources.Manager = function ( flags )
 	this.toLoad = 0;
 	this.loaded = 0;
 	Object.assign( this, Friend.Resources.Manager );
+
+	// Try to load the icon of the application
+	var self = this;
+	this.loadSingleImage( 'applicationIcon', 'Progdir:icon.png', Friend.Tree.HOTSOPT_LEFTTOP, function( image )
+	{
+		self.applicationIcon = image;
+	} );
 	return this;
 };
 Friend.Resources.Manager.isLoaded = function ()
@@ -61,7 +68,9 @@ Friend.Resources.Manager.checkCompletion = function ()
 		if ( this.loaded == this.toLoad )
 		{
 			if ( this.loadCompleted )
+			{
 				this.loadCompleted.apply( this.caller, [ this.loaded ] );
+			}
 		}
 		else
 		{
@@ -116,7 +125,7 @@ Friend.Resources.Manager.checkCompletion = function ()
 		 if ( imageDef.start )
 		 {
 			 comboImage = [];
-			 this.images[ imageDef.name ] =
+			 self.images[ imageDef.name ] =
 			 {
 				 name: imageDef.name,
 				 images: comboImage
@@ -124,59 +133,98 @@ Friend.Resources.Manager.checkCompletion = function ()
 			 var dot = imageDef.path.lastIndexOf( '.' );
 			 for ( var z = imageDef.start; z <= imageDef.end; z++ )
 			 {
-				image = new Image();
-				var name = imageDef.name + z;
-				image.treeName = name;
-				image.hotSpot = imageDef.hotSpot;
-				image.hotSpotX = 0;
-				image.hotSpotY = 0;
-				if ( typeof imageDef.hotSpotX != 'undefined' )
-					image.hotSpotX = imageDef.hotSpotX;
-				if ( typeof imageDef.hotSpotY != 'undefined' )
-					image.hotSpotY = imageDef.hotSpotY;
-				comboImage.push(
+				var transmit =
 				{
-					name: name,
-					image: image,
-					z: z - imageDef.start
-				} );
-				// Adds the single image to the list
-				this.images[ name ] =
+					imageDef: imageDef,
+					comboImage: comboImage,
+					z: z
+				}
+				var file = new File( imageDef.path.substring( 0, dot ) + z + imageDef.path.substring( dot ) );
+				file.transmit = transmit;
+				file.onLoad = function( data )
 				{
-					name: name,
-					image: image
-				};
-				image.onload = onLoaded;
-				image.src = this.tree.utilities.getPath( imageDef.path.substring( 0, dot ) + z + imageDef.path.substring( dot ) );
+					var image = new Image();
+					image.transmit = this.transmit;
+					image.onload = function()
+					{
+						var def = this.transmit.imageDef;
+						var combo = this.transmit.comboImage;
+						var z = this.transmit.z;
+						var name = def.name + z;
+						this.treeName = name;
+						this.hotSpot = def.hotSpot;
+						this.hotSpotX = 0;
+						this.hotSpotY = 0;
+						if ( typeof imageDef.hotSpotX != 'undefined' )
+							this.hotSpotX = def.hotSpotX;
+						if ( typeof imageDef.hotSpotY != 'undefined' )
+							this.hotSpotY = def.hotSpotY;
+
+						combo.push(
+						{
+							name: name,
+							image: image,
+							z: z - def.start
+						} );
+						self.images[ name ] =
+						{
+							name: name,
+							image: image
+						};
+						self.finishImage( image );
+					}
+					image.src = imageUrl;
+				}
+				file.load( 'rb' );
 			}
 		}
 		else
 		{
 			// A single image
-			image = new Image();
-			image.treeName = imageDef.name;
-			image.treeWidth = imageDef.width;
-			image.treeHeight = imageDef.height;
-			image.hotSpot = imageDef.hotSpot;
-			image.hotSpotX = 0;
-			image.hotSpotY = 0;
-			if ( typeof imageDef.hotSpotX != 'undefined' )
-				image.hotSpotX = imageDef.hotSpotX;
-			if ( typeof imageDef.hotSpotY != 'undefined' )
-				image.hotSpotY = imageDef.hotSpotY;
-			this.images[ imageDef.name ] =
+			var file = new File( imageDef.path );
+			file.transmit = imageDef;
+			file.onLoad = function( data )
 			{
-				name: imageDef.name,
-				image: image
-			};
-			image.onload = onLoaded;
-			image.src = this.tree.utilities.getPath( imageDef.path );
-		}
+				// Check for error
+				if ( typeof data == 'string' )
+				{
+					if( str.substr( 0, 19 ) == 'fail<!--separate-->' )
+					{
+						return;
+					}
+				}
 
-		// When an image is loaded
-		function onLoaded()
-		{
-			self.finishImage( this );
+				// Create the blob, load the image
+				var arrayBufferView = new Uint8Array( data );
+				var blob = new Blob( [ arrayBufferView ], { type: "image/jpeg" } );
+				var urlCreator = window.URL || window.webkitURL;
+				var imageUrl = urlCreator.createObjectURL( blob );
+				var image = new Image();
+				image.transmit = this.transmit;
+				image.onload = function()
+				{
+					var def = this.transmit;
+					this.treeName = def.name;
+					this.treeWidth = def.width;
+					this.treeHeight = def.height;
+					this.hotSpot = def.hotSpot;
+					this.hotSpotX = 0;
+					this.hotSpotY = 0;
+					if ( typeof def.hotSpotX != 'undefined' )
+						this.hotSpotX = def.hotSpotX;
+					if ( typeof def.hotSpotY != 'undefined' )
+						this.hotSpotY = def.hotSpotY;
+
+					self.images[ def.name ] =
+					{
+						name: def.name,
+						image: this
+					};
+					self.finishImage( this );
+				}
+				image.src = imageUrl;
+			};
+			file.load( 'rb' );
 		}
 	}
 	return true;
@@ -198,11 +246,7 @@ Friend.Resources.Manager.finishImage = function ( image, callback )
 			newImage.hotSpot = image.hotSpot;
 			newImage.hotSpotX = image.hotSpotX;
 			newImage.hotSpotY = image.hotSpotY;
-			self.images[ newImage.treeName ] =
-			{
-				name: newImage.treeName,
-				image: newImage
-			};
+			self.images[ image.treeName ].image = newImage;
 			newImage.onload = onLoaded;
 			newImage.src = canvas.toDataURL( "image/png" );
 			return;
@@ -252,30 +296,41 @@ Friend.Resources.Manager.finishImage = function ( image, callback )
 Friend.Resources.Manager.loadSingleImage = function( name, path, hotSpot, callback, width, height )
 {
 	var self = this;
-
-	if ( !callback )
-		this.toLoad++;
-
-	image = new Image();
-	self.images[ name ] =
+	if ( callback )
 	{
-		name: name,
-		image: image
-	};
-	image.treeName = name;
-	if ( typeof width != 'undefined' )
-		image.treeWidth = width;
-	if ( typeof height != 'undefined' )
-		image.treeHeight = height;
-	image.hotSpot = hotSpot;
-	image.onload = onLoaded;
-	image.src = this.tree.utilities.getPath( path );;
+		// Image already loaded?
+		if ( self.images[ name ] )
+		{
+			callback( self.images[ name ] );
+			return;
+		}
 
-	function onLoaded()
-	{
-		self.finishImage( this, callback );
+		image = new Image();
+		self.images[ name ] =
+		{
+			name: name,
+			image: image
+		};
+		image.treeName = name;
+		if ( typeof width != 'undefined' )
+			image.treeWidth = width;
+		if ( typeof height != 'undefined' )
+			image.treeHeight = height;
+		image.hotSpot = hotSpot;
+		image.onload = onLoaded;
+		image.src = this.tree.utilities.getPath( path );
+
+		function onLoaded()
+		{
+			self.finishImage( this, callback );
+		}
 	}
 };
+Friend.Resources.Manager.getApplicationIcon = function ()
+{
+	return this.applicationIcon; 	// Can be undefined at start, or if icon is not present!
+};
+
 Friend.Resources.Manager.setImageHotSpot = function ( image, hotSpot )
 {
 	switch ( hotSpot )
@@ -381,7 +436,7 @@ Friend.Resources.Manager.loadSounds = function ( soundList, flags )
 	{
 		var soundDef = soundList[ i ];
 
-		var path = this.tree.utilities.getPath( soundDef.path );
+		var path = soundDef.path;
 		sound = new SoundObject( path, loaded );
 		sound.name = soundDef.name;
 		sound.volume = 1;

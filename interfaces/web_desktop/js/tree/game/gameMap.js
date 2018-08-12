@@ -209,7 +209,7 @@ Friend.Tree.Game.RenderItems.Map_Three2D.prepareMap = function( properties )
     }
 
     // Set item width and height
-    this.tree.sendMessageToItem( this.parent.root, this.parent, 
+    this.tree.sendMessageToItem( this.item.root, this.item, 
     {
         command: 'setSize',
         type: 'renderItemToItem',
@@ -219,10 +219,10 @@ Friend.Tree.Game.RenderItems.Map_Three2D.prepareMap = function( properties )
 };
 Friend.Tree.Game.RenderItems.Map_Three2D.render = function( properties )
 {
-	this.offsetX = this.parent.offsetX;
-	this.offsetY = this.parent.offsetY;
-    properties.offsetX = -this.parent.offsetX;
-    properties.offsetY = -this.parent.offsetY;
+	this.offsetX = this.item.offsetX;
+	this.offsetY = this.item.offsetY;
+    properties.offsetX = -this.item.offsetX;
+    properties.offsetY = -this.item.offsetY;
     properties.xCenter = this.xCenter;
     properties.yCenter = this.yCenter;
     properties.perspective = this.perspective;

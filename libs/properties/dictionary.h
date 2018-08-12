@@ -104,7 +104,8 @@ void dictionary_del(dictionary * vd);
  */
 /*--------------------------------------------------------------------------*/
 char * dictionary_get(dictionary * d, const char * key, char * def);
-
+// no case sensitive
+char * dictionary_get_ncs(dictionary * d, const char * key, char * def);
 
 /*-------------------------------------------------------------------------*/
 /**

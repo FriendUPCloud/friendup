@@ -21,8 +21,8 @@ Application.run = function( msg )
 {
 	var w = new View ( {
 		'title'      : i18n('Wallpaper'), 
-		'width'      : 720, 
-		'height'     : 480, 
+		'width'      : 960, 
+		'height'     : 600, 
 		'id'         : 'wallpaper'
 	} );
 	

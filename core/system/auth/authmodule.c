@@ -172,8 +172,8 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 			
 			if( prop != NULL)
 			{
-				blockAccountTimeout = plib->ReadInt( prop, "Security:blocktimeout", 3600 );
-				blockAccountAttempts = plib->ReadInt( prop, "Security:blockattempts", 3 );
+				blockAccountTimeout = plib->ReadIntNCS( prop, "Security:blocktimeout", 3600 );
+				blockAccountAttempts = plib->ReadIntNCS( prop, "Security:blockattempts", 3 );
 			}
 			else
 			{

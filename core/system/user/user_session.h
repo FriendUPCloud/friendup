@@ -40,6 +40,7 @@
 #include <network/websocket_client.h>
 #include <system/user/user.h>
 #include <websockets/websocket_req_manager.h>
+#include <util/friendqueue.h>
 
 enum 
 {

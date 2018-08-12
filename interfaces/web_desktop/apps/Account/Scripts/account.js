@@ -21,7 +21,7 @@ Application.run = function( msg, iface )
 {
 	var wflags = {
 		title: i18n( 'i18n_account' ),
-		width: 1000,
+		width: 720,
 		height: 600
 	};
 
@@ -45,6 +45,40 @@ Application.run = function( msg, iface )
 	{
 		var s = JSON.parse( d );
 		var f = new File( 'Progdir:Templates/main.html' );
+		
+		// Inject available languages in template
+		var availLangs = {
+			'en': 'English',
+			'fr': 'French',
+			'no': 'Norwegian',
+			'fi': 'Finnish',
+			'pl': 'Polish'
+		};
+		var languages = '';
+		for( var a in availLangs )
+		{
+			var sel = a == Application.language ? ' selected="selected"' : '';
+			languages += '<option value="' + a + '"' + sel + '>' + availLangs[ a ] + '</option>';
+		}
+		
+		// Inject possible Workspace modes
+		var modes = {
+			normal: i18n( 'i18n_mode_normal' ),
+			developer: i18n( 'i18n_mode_developer' ),
+			gamified: i18n( 'i18n_mode_gamified' )
+		};
+		var modeOut = '';
+		for( var a in modes )
+		{
+			var sel = a == Application.useMode ? ' selected="selected"' : '';
+			modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
+		}
+		
+		f.replacements = {
+			languages: languages,
+			modes: modeOut
+		};
+		
 		//f.replacements = {
 		//	'username' : s.Name,
 		//	'fullname' : s.FullName,

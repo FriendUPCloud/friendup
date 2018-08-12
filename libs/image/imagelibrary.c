@@ -417,10 +417,11 @@ int colonPosition( const char *c )
 // Get DOSDrive and path by path
 //
 
-File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
+File *IMGGetRootDeviceByPath( struct ImageLibrary *lib, User *usr, char **dstpath, const char *path )
 {
 	File *fhand = NULL;
 	char ddrivename[ 256 ];
+	SystemBase *sb = (SystemBase *)lib->sb;
 	
 	int dpos = colonPosition( path );
 	strncpy( ddrivename, path, dpos );
@@ -445,6 +446,8 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 	
 	*dstpath = (char *)&path[ dpos + 1 ];
 
+	fhand = sb->GetRootDeviceByName( usr, ddrivename );
+	/*
 	File *ldr = usr->u_MountedDevs;
 	while( ldr != NULL )
 	{ 
@@ -456,6 +459,7 @@ File *GetRootDeviceByPath( User *usr, char **dstpath, const char *path )
 		
 		ldr = (File *) ldr->node.mln_Succ;
 	}
+	*/
 	
 	return fhand;
 }

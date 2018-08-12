@@ -997,7 +997,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	}
 	
 	// we should use flag or u_WebDAVDevs
-	
+	rootDev = GetRootDeviceByName( usr, devname );
+	/*
 	LIST_FOR_EACH( usr->u_MountedDevs, rootDev, File * )
 	{
 		if(  strcmp(rootDev->f_Name, devname ) == 0 )
@@ -1006,6 +1007,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 			break;
 		}
 	}
+	*/
 	
 	if( rootDev == NULL )
 	{
@@ -1182,6 +1184,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
+			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
+			
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
 			{
@@ -1329,6 +1333,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
+			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 			if( fp != NULL )
 			{
@@ -1347,7 +1352,7 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 	
 	else if( strcmp( req->method, "PUT" ) == 0 )
 	{
-		DEBUG("\n\n\n-----------------------------------------------------------PUT---------------------------------------------\n\n");
+		//DEBUG("\n\n\n-----------------------------------------------------------PUT---------------------------------------------\n\n");
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/xml" ) },
@@ -1373,6 +1378,8 @@ Http *HandleWebDav( void *lsb, Http *req, char *data, int len )
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
+			
+			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 			File *fp = (File *)actFS->FileOpen( rootDev, filePath, "wb" );
 			if( fp != NULL )
 			{
@@ -1461,6 +1468,7 @@ Host: 192.168.153.138:6502
 			}
 			DEBUG("RENAME, srcname %s dstname %s\n", filePath, dstpath );
 			
+			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 			int err = actFS->Rename( rootDev, filePath, dstpath );
 			
 			DEBUG("RENAME, err %d\n", err );
@@ -1498,6 +1506,7 @@ Host: 192.168.153.138:6502
 		if( have == TRUE )
 		{
 			FHandler *actFS = (FHandler *)rootDev->f_FSys;
+			rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 			actFS->MakeDir( rootDev, filePath );
 		}
 		
@@ -1531,7 +1540,7 @@ Host: 192.168.153.138:6502
 		
 		if( have == TRUE )
 		{
-			DEBUG("\nDELETE WEBDAV FUNCTION: '%s'\n\n", filePath );
+			DEBUG("DELETE WEBDAV FUNCTION: '%s'\n\n", filePath );
 			actFS->Delete( rootDev, filePath );
 			
 			//int deleteFiles = 0;
@@ -1565,6 +1574,8 @@ Host: 192.168.153.138:6502
 			{
 				int read;
 				FHandler *actFS = (FHandler *)rootDev->f_FSys;
+				
+				rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 			
 				File *rfp = (File *)actFS->FileOpen( rootDev, filePath, "rb" );
 				if( rfp != NULL )
@@ -1680,6 +1691,8 @@ Host: 192.168.153.138:6502
 				{
 					BufString *locdirresp;
 					
+					//stefkos
+					rootDev->f_SessionIDPTR = usr->u_MainSessionID;
 					if( filePath == NULL )
 					{
 						locdirresp = actFS->Dir( rootDev, "" );
@@ -1913,7 +1926,7 @@ Host: 192.168.153.138:6502
 		char *respContent = FCalloc( respsize, sizeof(char) );
 		if( respContent != NULL )
 		{
-			DEBUG("\n\n\nLOCK!\n");
+			DEBUG("Webdav lock!\n");
 			
 			if( owner != NULL && type != NULL && scope != NULL )
 			{

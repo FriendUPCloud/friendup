@@ -41,14 +41,27 @@ if( isset( $args->conf ) )
 			$vol = explode( ':', $conf );
 			if( $vol && ( !isset( $vol[1] ) || !trim( $vol[1] ) ) )
 			{
-				$f = new dbIO( 'Filesystem' );
-				$f->Name = $vol[0];
-				$f->UserID = $User->ID;
-				if( $f->Load() )
+				if( $f = $SqlDatabase->fetchRow( $q = '
+				SELECT f.* FROM Filesystem f
+				WHERE
+					(
+						f.UserID=\'' . mysqli_real_escape_string( $SqlDatabase->_link, $User->ID ) . '\' OR
+						f.GroupID IN (
+							SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g
+							WHERE
+								g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND
+								ug.UserID = \'' . $User->ID . '\'
+						)
+					)
+					AND f.Name = \'' . mysqli_real_escape_string( $SqlDatabase->_link, $vol[0] ) . '\'
+					AND f.Mounted = \'1\'
+				ORDER BY
+					f.Name ASC' )
+				)
 				{
 					$conf = json_decode( $f->Config );
 				}
-				else die( 'fail' );
+				else die( 'fail<!--separate-->{"response":"Could not find file system."}' );
 			}
 			// No it's actually a path
 			else

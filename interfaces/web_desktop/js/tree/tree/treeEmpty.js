@@ -26,6 +26,22 @@
 Friend = window.Friend || {};
 Friend.Tree.RenderItems = Friend.Tree.RenderItems || {};
 
+// Fake item
+Friend.Tree.Empty = function( tree, name, properties )
+{    
+    this.imageName = false;
+    this.renderItemName = 'Friend.Tree.RenderItems.Empty';
+    Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Empty', properties );
+};
+Friend.Tree.Empty.messageUp = function( message )
+{
+    return this.startProcess( message, [ ] );
+};
+Friend.Tree.Empty.messageDown = function( message )
+{
+    return this.endProcess( message, [] );
+};
+
 // Fake renderitem
 Friend.Tree.RenderItems.Empty = function( tree, item, properties )
 {
@@ -35,4 +51,25 @@ Friend.Tree.RenderItems.Empty = function( tree, item, properties )
 Friend.Tree.RenderItems.Empty.render = function()
 {	
 };
+Friend.Tree.RenderItems.Empty.message = function ( message )
+{
+	switch ( message.command )
+	{
+		case 'resize':
+			if ( message.width )
+			{
+				this.width = message.width;
+				this.item.width = message.width;
+			}
+			if ( message.height )
+			{
+				this.height = message.height;
+				this.item.height = message.height;
+            }
+            this.item.doRefresh();
+			break;
+		default:
+			break;
+	}
+}
 

@@ -12,7 +12,7 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_time_from}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input class="InputHeight" size="5" placeholder="08:00" value="08:00" id="calTimeFrom"/>
+			<input type="time" class="InputHeight" size="5" placeholder="08:00" value="08:00" id="calTimeFrom"/>
 		</div>
 	</div>
 	<div class="HRow MarginBottom">
@@ -20,7 +20,17 @@
 			<p class="InputHeight"><strong>{i18n_cal_evt_time_to}:</strong></p>
 		</div>
 		<div class="HContent70 FloatLeft">
-			<input class="InputHeight" size="5" placeholder="16:00" value="16:00" id="calTimeTo"/>
+			<input type="time" class="InputHeight" size="5" placeholder="16:00" value="16:00" id="calTimeTo"/>
+		</div>
+	</div>
+	<div class="HRow MarginBottom">
+		<div class="HContent30 FloatLeft">
+			<p class="InputHeight"><strong>{i18n_cal_evt_type}:</strong></p>
+		</div>
+		<div class="HContent70 FloatLeft">
+			<select class="InputHeight" id="calType">
+				<option value="built-in">{i18n_cal_private_calendar}</option>
+			</select>
 		</div>
 	</div>
 	<div class="HRow">
@@ -30,7 +40,7 @@
 	</div>
 	<div class="HRow">
 		<div class="HContent100 FloatLeft">
-			<textarea class="FullWidth" style="height: 200px" id="calDescription"></textarea>
+			<textarea class="FullWidth" style="height: 160px" id="calDescription"></textarea>
 		</div>
 	</div>
 	<div class="HRow">

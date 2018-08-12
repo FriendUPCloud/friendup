@@ -74,19 +74,19 @@ Friend.Tree.Game.RenderItems.Sprite3D_Three2D.render = function( properties )
 };
 Friend.Tree.Game.RenderItems.Sprite3D_Three2D.setImage = function()
 {
-    if ( this.parent.imageName != this.imageName )
+    if ( this.item.imageName != this.imageName )
     {
-        var image = this.resources.getImage( this.parent.imageName );
+        var image = this.resources.getImage( this.item.imageName );
         if ( image )
         {
-            this.imageName = this.parent.imageName;
+            this.imageName = this.item.imageName;
             this.hotSpotX = image.hotSpotX;
             this.hotSpotY = image.hotSpotY;
             this.width = image.width;
             this.height = image.height;
 
             // Set item width and height
-            this.tree.sendMessageToItem( this.parent.root, this.parent, 
+            this.tree.sendMessageToItem( this.item.root, this.item, 
             {
                 command: 'setSize',
                 type: 'renderItemToItem',
@@ -97,7 +97,7 @@ Friend.Tree.Game.RenderItems.Sprite3D_Three2D.setImage = function()
         }
         else
         {
-            Friend.Tree.log( this.parent,
+            Friend.Tree.log( this.item,
             {
                 level: Friend.Tree.ERRORLEVEL_HIGH,
                 error: 'Image does not exist: ' + this.imageName

@@ -698,6 +698,11 @@ html .Screen > .TitleBar:after
 	background: url(/themes/friendup/gfx/logo_20px.png);
 }
 
+html .ScreenContent, html #DoorsScreen > .ScreenContent
+{
+	top: 0px !important;
+}
+
 html #WorkspaceMenu
 {
 	background: transparent;

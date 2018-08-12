@@ -5,5 +5,6 @@ i18n_link_types                    : Lier à l'application
 i18n_add_mimetype                  : Ajouter un type Mime
 i18n_cancel                        : Annuler
 
-
+i18n_correctly_set_mimetype        : Définir correctement le type mime
+i18n_mimetype_updated              : Mimetype mis à jour
 

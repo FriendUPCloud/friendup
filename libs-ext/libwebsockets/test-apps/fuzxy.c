@@ -354,7 +354,7 @@ fuzxy_tok(const char **src, unsigned char **buf, int *len)
 				return -1;
 			rlen = *buf - start;
 			while (count--) {
-				if (*len < rlen) {
+				if (*len < (int)rlen) {
 					lwsl_err("out of space\n");
 					return -1;
 				}
@@ -587,7 +587,7 @@ inject:
 
 		case FZY_FP_INJECT:
 			out[m++] = s->buf[s->fuzc++];
-			if (s->fuzc == s->inject_len)
+			if (s->fuzc == (int)s->inject_len)
 				s->fp = FZY_FP_PENDING;
 			break;
 
@@ -672,7 +672,6 @@ handle_accept(int n)
 			memset (&ai, 0, sizeof ai);
 			ai.ai_family = PF_UNSPEC;
 			ai.ai_socktype = SOCK_STREAM;
-			ai.ai_flags = AI_CANONNAME;
 
 			if (getaddrinfo(s->address, NULL, &ai, &result)) {
 				lwsl_notice("failed to lookup %s\n",
@@ -795,8 +794,7 @@ main(int argc, char **argv)
 			port_local = atoi(optarg);
 			break;
 		case 'i':
-			strncpy(interface_name, optarg, sizeof interface_name);
-			interface_name[(sizeof interface_name) - 1] = '\0';
+			lws_strncpy(interface_name, optarg, sizeof interface_name);
 			break;
 		case 'h':
 			fprintf(stderr, "Usage: libwebsockets-test-fuzxy "

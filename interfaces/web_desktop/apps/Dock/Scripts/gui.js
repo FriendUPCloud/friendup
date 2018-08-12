@@ -55,7 +55,7 @@ Application.receiveMessage = function( msg )
 			ge( 'Icon' ).value = typeof( msg.item.Icon ) != 'undefined' ? msg.item.Icon : '';
 			ge( 'Workspace' ).value = typeof( msg.item.Workspace ) != 'undefined' ? msg.item.Workspace : '';
 			ge( 'Settings' ).classList.remove( 'Disabled' );
-			
+		 	
 		 	document.body.classList.add( 'DockEdit' );
 		 	
 		 	var opts = ge( 'ApplicationSelection' ).getElementsByTagName( 'option' );
@@ -64,7 +64,6 @@ Application.receiveMessage = function( msg )
 		 		if( a == 0 ) opts[a].selected = 'selected';
 		 		else opts[a].selected = '';
 		 	}
-		 	
 		 	if( ge( 'Application' ).value.length <= 0 )
 		 	{ 
 		 		document.body.classList.remove( 'SelectedApp' ); 
@@ -74,13 +73,25 @@ Application.receiveMessage = function( msg )
 		 	{
 		 		document.body.classList.add( 'SelectedApp' );
 		 	}
+		 	
+		 	if( msg.scroll == 'scrolldown' )
+		 	{
+		 		console.log( 'Going!' );
+		 		ge( 'Applications' ).scroll( 0, ge( 'Applications' ).offsetHeight );
+		 	}
 			break;
 		case 'refreshapps':
 			ge( 'Applications' ).innerHTML = msg.data;
-			document.body.classList.remove( 'DockEdit' );
+			if( msg.current )
+			{
+				var cr = ge( 'dockEdit' + msg.current );
+				if( cr.offsetTop + cr.offsetHeight - ge( 'Applications' ).offsetHeight > ge( 'Applications' ).scrollTop )
+					ge( 'Applications' ).scrollTop = cr.offsetTop + cr.offsetHeight - ge( 'Applications' ).offsetHeight; 
+			}
 			break;
 		case 'close':
 			document.body.classList.remove( 'DockEdit' );
+			deactivateSelectedDockItems();
 			break;
 		case 'setdocks':
 			if( msg.docks == false )
@@ -139,6 +150,19 @@ function setSelectValue( sel, val )
 		}
 	}
 	return false;
+}
+
+function deactivateSelectedDockItems()
+{
+	var eles = ge( 'Applications' ).getElementsByClassName( 'Box' );
+	var sw = 2;
+	for( var a = 0; a < eles.length; a++ )
+	{
+		sw = sw == 1 ? 2 : 1;
+		eles[a].className = 'Box sw' + sw;
+		if( a > 0 )
+			eles[a].classList.add( 'MarginTop' );
+	}
 }
 
 function LoadDock( callback )

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="13px" height="13px" viewBox="0 0 13 13" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>Window</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-941.000000, -590.000000)">
+        <g id="Navigation" transform="translate(882.000000, 282.000000)" stroke="#FFFFFF">
+            <g id="Window" transform="translate(59.000000, 308.000000)">
+                <g id="Rectangle-2">
+                    <path d="M1,0.5 C0.723857625,0.5 0.5,0.723857625 0.5,1 L0.5,9 C0.5,9.27614237 0.723857625,9.5 1,9.5 L2.00573953,9.5 C2.28188191,9.5 2.50573953,9.27614237 2.50573953,9 L2.50573953,4.96271685 C2.50573953,4.13428972 3.17731241,3.46271685 4.00573953,3.46271685 L10,3.46271685 C10.2761424,3.46271685 10.5,3.23885922 10.5,2.96271685 L10.5,1 C10.5,0.723857625 10.2761424,0.5 10,0.5 L1,0.5 Z"></path>
+                    <rect x="2.5" y="3.5" width="10" height="9" rx="1"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

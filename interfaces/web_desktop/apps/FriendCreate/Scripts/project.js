@@ -29,6 +29,8 @@ Application.run = function( msg, iface )
 		Permissions: [],
 		Libraries: []
 	};
+	
+	refreshCategories();
 }
 
 Application.receiveMessage = function( msg )
@@ -114,7 +116,7 @@ Application.receiveMessage = function( msg )
 						ge( 'tAuthor' ).value = msg.data[a];
 						break;
 					case 'Category':
-						ge( 'tCategory' ).value = msg.data[a];
+						refreshCategories( msg.data[a] );
 						break;
 					case 'Version':
 						ge( 'tVersion' ).value = msg.data[a];
@@ -131,6 +133,25 @@ Application.receiveMessage = function( msg )
 			redrawLibraries();
 			redrawScreenshots();
 			break;
+	}
+}
+
+function refreshCategories( value )
+{
+	var cats = [
+		'Office', 'Games', 'Demonstration', 'Internet', 'Graphics', 'Audio',
+		'Programming', 'System', 'Educational', 'Tools'
+	];
+	var sel = ge( 'tCategory' );
+	sel.innerHTML = '';
+	for( var a = 0; a < cats.length; a++ )
+	{
+		var o = document.createElement( 'option' );
+		o.value = cats[a];
+		if( value && value == o.value )
+			o.selected = 'selected';
+		o.innerHTML = cats[a];
+		sel.appendChild( o );
 	}
 }
 
@@ -205,7 +226,11 @@ function setupLibraryHTML( command, data )
 
 function addPrivileges()
 {
-	if( Application.pa ) return;
+	if( Application.pa )
+	{
+		Application.pa.activate();
+		return;
+	}
 	
 	var v = new View( {
 		title: 'Add permission',

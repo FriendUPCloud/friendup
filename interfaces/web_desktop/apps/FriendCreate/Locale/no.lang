@@ -31,6 +31,7 @@ tb_find                             : Finn/Erstatt
 #project menu
 i18n_project                        : Prosjekt
 i18n_project_new                    : Nytt prosjekt
+i18n_project_fromweb				: Nytt prosjekt fra nettsiden
 i18n_project_properties             : Prosjektegenskaper
 i18n_open_project_files             : Åpne prosjektfiler
 i18n_load_project                   : Åpne prosjekt

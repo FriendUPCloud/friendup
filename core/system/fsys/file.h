@@ -63,12 +63,15 @@ typedef struct File
 {
 	FULONG						f_ID;               // ID in database
 	FULONG						f_KeysID;			// link to FKeys
+	FULONG						f_UserGroupID;			// information to which group file is assigned
+	void						*f_UserGroup;		// pointer to UserGroup
 	struct MinNode				node;               // link to another files, used by Mount
 	
 	char						*f_Name;            // name of file
 	//char						*f_SharedName;		// when device is shared then name = mail+devname
 	char						*f_Path;            // path
-	char						*f_SessionID;
+	//char						*f_SessionID;
+	char						*f_SessionIDPTR;	// pointer to sessionid
 	char						*f_Config;          // The config of the file system
 	int							f_Visible;         // Visible?
 	char						*f_Execute;         // Execute something?
@@ -201,7 +204,7 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
 //
 //
 
-int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *src, int *numberFiles );
+int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, const char *dst, char *src, int *numberFiles );
 
 //
 //

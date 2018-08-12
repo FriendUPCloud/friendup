@@ -5,31 +5,45 @@
 			<!--<iframe id="player" class="FullContent" style="border: 0"></iframe>-->
 			<audio id="player" class="ContentFull"></audio>
 			<div id="scroll"></div>
+			<div id="time"></div>
 			<div id="progress"></div>
 		</div>
-		<div class="VContentTop ScrollArea BackgroundLists BorderBottom BorderTop" id="MiniPlaylist"></div>
-		<div class="VContentBottom BackgroundLists" style="height: 47px">
-			<div class="HContent30 FloatRight Padding TextRight">
-				<button type="button" class="IconSmall fa-list BtnPlaylist" onclick="EditPlaylist()">
-					{i18n_playlist}
-				</button>
+		<div class="VContentTop ScrollArea BackgroundLists" id="MiniPlaylist"></div>
+		<div class="VContentBottom BackgroundLists BorderTop" style="height: 47px" id="BottomButtons">
+			<div class="HContent10 FloatRight Padding">
+				<button type="button" class="IconButton IconSmall fa-list BtnPlaylist" onclick="EditPlaylist()"></button>
 			</div>
-			<div class="HContent70 FloatLeft Padding">
-				<button type="button" class="IconSmall fa-backward BtnPrevious" onclick="Seek(-1)">
+			<div class="HContent90 FloatLeft Padding">
+				<div class="HRow">
+					<button type="button" class="HContent10 IconButton IconSmall fa-backward BtnPrevious FloatLeft NoMargins" onclick="Seek(-1)">
 					
-				</button>
-				<button type="button" class="IconSmall fa-stop BtnStop" onclick="StopSong()">
+					</button>
+					<button type="button" class="HContent10 IconButton IconSmall fa-stop BtnStop FloatLeft NoMargins" onclick="StopSong()">
 					
-				</button>
-				<button id="playbutton" type="button" class="IconSmall fa-play BtnPlay" onclick="PlaySong()">
+					</button>
+					<button id="playbutton" type="button" class="HContent10 IconButton IconSmall fa-play BtnPlay FloatLeft NoMargins" onclick="PlaySong()">
 					
-				</button>
-				<button id="pausebutton" type="button" class="IconSmall fa-pause BtnPause" onclick="PauseSong()">
+					</button>
+					<button id="pausebutton" type="button" class="HContent10 IconButton IconSmall fa-pause BtnPause FloatLeft NoMargins" onclick="PauseSong()">
 					
-				</button>
-				<button type="button" class="IconSmall fa-forward BtnNext" onclick="Seek(+1)">
+					</button>
+					<button type="button" class="HContent10 IconButton IconSmall fa-forward BtnNext FloatLeft NoMargins" onclick="Seek(+1)">
 					
-				</button>
+					</button>
+					<div class="HContent50 FloatLeft">
+						<div class="HContent5 FloatLeft">
+							&nbsp;
+						</div>
+						<div class="HContent95 FloatLeft">
+							<div class="HContent95 FloatLeft VolumeSlider">
+								<input type="hidden" value="64" min="0" max="255" id="Volume" onchange="Application.setVolume(this.value)"/>
+							</div>
+							<div class="HContent5 FloatLeft">
+								&nbsp;
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -37,12 +51,34 @@
 	<script src="Progdir:Scripts/player.js"></script>
 
 	<style>
-		#miniplaylist
+		@keyframes playing
+		{
+			0% {
+				opacity: 0.7;
+			}
+			50% {
+				opacity: 1;
+			}
+			100% {
+				opacity: 0.7;
+			}
+		}
+	
+	
+		tr.Playing
+		{
+			animation: playing 1.5s infinite;
+		}
+		
+		.VolumeSlider > div
+		{
+			width: 100%;
+			margin-top: 4px;
+		}
+		#MiniPlaylist
 		{
 			visibility: hidden;
-			input-events: none;
-			font-size: 13px;
-			font-family: monospace, courier new, courier;
+			opacity: 0;
 		}
 		#visualizer
 		{
@@ -53,14 +89,29 @@
 			height: 77px;
 			background: #0F2336;
 		}
+		#visualizer.Fullscreen
+		{
+			height: 100%;
+		}
+		#time 
+		{
+			position: absolute;
+			line-height: 25px;
+			height: 35px;
+			right: 6px;
+			top: 75px;
+			font-family: monospace, courier;
+			font-size: 0.9em;
+			color: white;
+		}
 		#scroll, #progress
 		{
 			position: absolute;
 			bottom: 0;
-			background: #505050;
+			background: #0f2336;
 			color: white;
 			text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
-			box-shadow: inset 0px 0px 10px rgba(0,0,0,0.5);
+			box-shadow: inset 0px 0px 40px rgba(0,0,0,0.5);
 			height: 35px;
 			line-height: 25px;
 			left: 0;
@@ -71,12 +122,27 @@
 			padding: 5px 8px;
 			box-sizing: border-box;
 		}
+		#scroll > div
+		{
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 87%;
+			height: 100%;
+			line-height: 25px;
+			padding: 5px 8px;
+			box-sizing: border-box;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			overflow: hidden;
+		}
 		#progress
 		{
-			background: rgba(255,255,255,0.2);
+			background-color: #41185f;
 			width: 0;
-			transition: width,opacity 0.25s,0.5s;
+			transition: width,opacity 0.25s,0.1s;
 			opacity: 0;
+			mix-blend-mode: screen;
 		}
 		#playbutton.active, #pausebutton.active
 		{
@@ -86,6 +152,7 @@
 			animation:         flash 2s infinite;
 			text-shadow: 0 0 3px rgba(255,255,255,0.5);
 		}
+		
 		@-webkit-keyframes flash {
 		  0%   { color: #666666; }
 		  50%  { color: #ffffff; }

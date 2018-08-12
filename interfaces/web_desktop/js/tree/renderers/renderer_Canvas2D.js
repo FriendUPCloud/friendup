@@ -79,15 +79,13 @@ Friend.Renderers.Renderer_Canvas2D.defaultProperties =
 	height: Friend.Tree.NOTDEFINED,
 	defaultFont: '12px Verdana',
 	antialias: true,
-	resize:
-	{
-		mode: 'keepProportions',
-		borderColor: 0xFF0000
-	}
 };
 
-Friend.Renderers.Renderer_Canvas2D.prototype.resize = function( width, height, originalWidth, originalHeight, mode )
+Friend.Renderers.Renderer_Canvas2D.prototype.resize = function( newWidth, newHeight, mode )
 {
+	this.canvas.width = newWidth;
+	this.canvas.height = newHeight;
+	this.refresh = true;
 };
 
 Friend.Renderers.Renderer_Canvas2D.prototype.changeExposed = function( info )
@@ -259,23 +257,19 @@ Friend.Renderers.Renderer_Canvas2D.prototype.measureText = function( text, font 
 	return coords;
 }
 
-Friend.Renderers.Renderer_Canvas2D.prototype.updateItem = function( item )
+Friend.Renderers.Renderer_Canvas2D.prototype.updateItem = function( renderItem )
 {
-	if ( item.rendererItems )
+	if ( renderItem.rendererItem )
 	{
-		var rendererItem = item.rendererItems[ this.className ];
-		if ( rendererItem )
-			rendererItem.needsUpdate = true;
+		if ( renderItem.rendererItem )
+			renderItem.rendererItem.needsUpdate = true;
 	}
 };
-
-Friend.Renderers.Renderer_Canvas2D.resizeItem = function( item, width, height )
+Friend.Renderers.Renderer_Canvas2D.prototype.resizeItem = function( renderItem, width, height )
 {
-	if ( item.rendererItems )
+	if ( renderItem.rendererItem )
 	{
-		var rendererItem = item.rendererItems[ this.className ];
-		if ( rendererItem )
-			rendererItem.onResize( width, height );
+		renderItem.rendererItem.resize( width, height );
 	}
 };
 
@@ -329,18 +323,16 @@ Friend.Renderers.Renderer_Canvas2D.prototype.renderUp = function( properties, it
 	properties.renderer.refresh = true;
 
 	// Creates the renderingItem if it does not exist
-	if ( !item.rendererItems )
-		item.rendererItems = {};
-        properties.rendererItem = item.rendererItems[ this.className ];
-	if ( !properties.rendererItem )
+	if ( !item.rendererItem )
 	{
-		properties.rendererItem = new Friend.Renderers.Renderer_Canvas2D[ 'RendererItem' + item.rendererType ]( this, item, properties );
-		item.rendererItems[ this.className ] = properties.rendererItem;
-		this.add( item, properties.rendererItem );
-		properties.rendererItem.visible = true;
+		item.rendererItem = new Friend.Renderers.Renderer_Canvas2D[ 'RendererItem' + item.rendererType ]( this, item, properties );
+		item.rendererItem.renderItem = item;
+		this.add( item, item.rendererItem );
+		item.rendererItem.visible = true;
 	}
 
 	// Context = rendererItem
+	properties.rendererItem = item.rendererItem;
 	properties.context = properties.rendererItem;
 	this.pile.push( Object.assign( {}, properties ) );
 	this.renderFlags[ item.identifier ] = Object.assign( {}, properties );
@@ -386,6 +378,8 @@ Friend.Renderers.Renderer_Canvas2D.prototype.renderPrepare = function( propertie
 	properties.xReal = properties.x;
 	properties.yReal = properties.y;
 	properties.z = item.z;
+	properties.width = item.width;
+	properties.height = item.height;
 	item.rect.x = properties.x;
 	item.rect.y = properties.y;
 	item.rect.width = item.width;
@@ -409,7 +403,7 @@ Friend.Renderers.Renderer_Canvas2D.prototype.renderIt = function( properties, it
 	{
 		// Visible or not?
 		if ( item.visible != properties.rendererItem.visible )
-        properties.rendererItem.setVisible( item.visible );
+        	properties.rendererItem.setVisible( item.visible );
 
 		// Refreshes item if it has changed
 		properties.rendererItem.update( properties );
@@ -496,16 +490,16 @@ Friend.Renderers.Renderer_Canvas2D.prototype.renderDisplayList = function( conte
 			context.globalAlpha = element.alpha;
 			if ( element.angle == 0 )
 				context.drawImage( element.image, 
-								   element.x - element.hotSpotX * element.zoomX, 
-								   element.y - element.hotSpotY * element.zoomY, 
-					               element.image.width * element.zoomX, element.image.height * element.zoomY );
+								   element.x - element.hotSpotX, 
+								   element.y - element.hotSpotY, 
+					               element.width, element.height );
 			else
 			{
 				context.save();
 				context.translate( element.x, element.y );
 				if ( element.angle != 0)
 					context.rotate( -element.angle * 0.0174532925);	
-				context.scale( Math.max( 0.001, element.zoomX ), Math.max( 0.001, element.zoomY ) );
+				//context.scale( Math.max( 0.001, element.zoomX ), Math.max( 0.001, element.zoomY ) );
 				context.translate( -element.hotSpotX, -element.hotSpotY );
 				context.drawImage( element.image, 0, 0, element.width, element.height );
 				context.restore();
@@ -536,7 +530,7 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite = function( renderer, item
 	this.utilities.setFlags( this, flags );
 
 	// Adds the element
-	this.image = 
+	this.element = 
 	{
 		image: null,
 		x: 0,
@@ -552,10 +546,10 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite = function( renderer, item
 		alpha: 1,
 		visible: false,
 		refresh: false
-	}
-	this.renderer.appendChild( this.image );
+	};
+	this.checkImage();
 
-	this.checkImage();    
+	this.renderer.appendChild( this.element );
     this.toRefresh = true;
 }
 Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.reset = function()
@@ -566,30 +560,28 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.checkImage = function( z )
 {
 	if ( this.item.imageName && ( this.imageName != this.item.imageName || this.needsUpdate ) || this.forceReset )
 	{
-        var image = this.resources.getImage( this.item.imageName );
-        if ( image )
+        this.image = this.resources.getImage( this.item.imageName );
+        if ( this.image )
         {
-			this.image.image = image;
+			this.element.image = this.image;
             this.imageName = this.item.imageName;
-            this.width = image.width;
-			this.height = image.height;
-			this.image.hotSpotX = image.hotSpotX;
-			this.image.hotSpotY = image.hotSpotY;
+			this.element.hotSpotX = this.image.hotSpotX;
+			this.element.hotSpotY = this.image.hotSpotY;
        }
 	}
 };
 Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.update = function( properties )
 {
 	this.checkImage();
-	this.image.x = properties.x;
-	this.image.y = properties.y;
-	this.image.z = properties.z;
-	this.image.angle = properties.rotation;
-	this.image.alpha = properties.alpha;
-	this.image.visible = this.visible;
-	this.image.width = this.width;
-	this.image.height = this.height;
-	this.image.refresh = true;
+	this.element.x = properties.x;
+	this.element.y = properties.y;
+	this.element.z = properties.z;
+	this.element.angle = properties.rotation;
+	this.element.alpha = properties.alpha;
+	this.element.visible = this.visible;
+	this.element.width = properties.width;
+	this.element.height = properties.height;
+	this.element.refresh = true;
 };
 Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.destroy = function( flags )
 {
@@ -608,8 +600,12 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.getVector = function()
 {
     return { x: 0, y: 0 };
 };
-Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.onResize = function( width, height )
+Friend.Renderers.Renderer_Canvas2D.RendererItemSprite.resize = function( width, height )
 {
+	if ( typeof width != 'undefined' )
+		this.width = width;
+	if ( typeof height != 'undefined' )
+		this.height = height;
 };
 
 
@@ -736,6 +732,8 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite3D.update = function( prope
 			element.x = properties.x + deltaX;
 			element.y = properties.y + deltaY;
 			element.z = properties.z + 0.1 * z;
+			element.with = properties.width;
+			element.height = properties.height;
 			element.zoomX = properties.zoomX;
 			element.zoomY = properties.zoomY;
 			element.alpha = properties.alpha;
@@ -772,8 +770,12 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemSprite3D.getVector = function()
 {
     return { x: 0, y: 0 };
 };
-Friend.Renderers.Renderer_Canvas2D.RendererItemSprite3D.onResize = function( width, height )
+Friend.Renderers.Renderer_Canvas2D.RendererItemSprite3D.resize = function( width, height )
 {
+	if ( typeof width != 'undefined' )
+		this.width = width;
+	if ( typeof height != 'undefined' )
+		this.height = height;
 };
 
 
@@ -979,6 +981,8 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemMap.reset = function()
 								hotSpotX: 0,
 								hotSpotY: 0,
 								alpha: 1,
+								width: image.width,
+								height: image.height,
 								visible: false,
 								refresh: false
 							}
@@ -996,7 +1000,7 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemMap.reset = function()
 		}
 	}
 };
-Friend.Renderers.Renderer_Canvas2D.RendererItemMap.onResize = function( width, height )
+Friend.Renderers.Renderer_Canvas2D.RendererItemMap.resize = function( width, height )
 {
 };
 
@@ -1020,10 +1024,10 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas = function( renderer, item
 	this.utilities.setFlags( this, flags );
 	this.width = this.item.width;
 	this.height = this.item.height;
-	var canvas = this.renderer.createCanvas( this.item.width, this.item.height, 'canvasItem', this.item, this );
+	this.canvas = this.renderer.createCanvas( this.item.width, this.item.height, 'canvasItem', this.item, this );
 	this.element = 
 	{
-		image: canvas,
+		image: this.canvas,
 		x: 0,
 		y: 0,
 		z: 0,
@@ -1032,6 +1036,8 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas = function( renderer, item
 		zoomY: 1,
 		hotSpotX: 0,
 		hotSpotY: 0,
+		width: this.item.width,
+		height: this.item.height,
 		alpha: 1,
 		visible: false,
 		refresh: false
@@ -1049,6 +1055,8 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas.update = function( propert
     this.element.x = properties.x;
 	this.element.y = properties.y;
 	this.element.z = properties.z;
+	this.element.width = properties.width;
+	this.element.height = properties.height;
 	this.element.angle = properties.rotation;
     this.element.alpha = properties.alpha;
 	this.element.visible = this.visible;
@@ -1071,12 +1079,18 @@ Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas.getVector = function()
 {
     return { x: 0, y: 0 };
 };
-Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas.onResize = function( width, height )
+Friend.Renderers.Renderer_Canvas2D.RendererItemCanvas.resize = function( width, height )
 {
-	this.canvas.width = width;
-	this.canvas.height = height;
-	this.width = width;
-	this.height = height;
-	this.element.width = width;
-	this.element.height = height;
+	if ( typeof width != 'undefined' )
+	{
+		this.canvas.width = width;
+		this.width = width;
+		this.element.width = width;
+	}
+	if ( typeof height != 'undefined' )
+	{
+		this.canvas.height = height;
+		this.height = height;
+		this.element.height = height;
+	}
 };

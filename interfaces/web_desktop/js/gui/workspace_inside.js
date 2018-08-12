@@ -1,4 +1,10 @@
 var WorkspaceInside = {
+	// Tray icons
+	trayIcons: {},
+	workspaceInside: true,
+	refreshDesktopIconsRetries: 0,
+	serverIsThere: true, // Assume we have a server!
+	// Did we load the wallpaper?
 	wallpaperLoaded: false,
 	// We only initialize once
 	insideInitialized: false,
@@ -31,6 +37,215 @@ var WorkspaceInside = {
 		}
 		if( ge( 'InputGrabber' ) )
 			ge( 'InputGrabber' ).blur();
+	},
+
+	// Updates the text
+	refreshTrayIconBubble: function( identifier )
+	{
+		if ( this.trayIcons[ identifier ] )
+		{
+			var struct = this.trayIcons[ identifier ];
+			if ( struct.bubble && struct.getBubbleText )
+			{
+				struct.bubbleText = struct.getBubbleText();
+				struct.bubble.innerHTML = '<div>' + struct.bubbleText + '</div>';
+			}
+		}
+	},
+	// Changes the icon
+	setTrayIconImage: function( identifier, image )
+	{
+		if ( this.trayIcons[ identifier ] )
+		{
+			var ele = this.trayIcons[ identifier ].dom;
+
+			// Support image icon
+			var iconFile;
+			if ( image.substr( 0, 5 ) == 'data:' )
+				iconFile = image;
+			else if( image.indexOf( ':' ) > 0 && image.substr( 0, 5 ) != 'http:' && image.substr( 0, 6 ) != 'https:' )
+				iconFile = getImageUrl( image );
+			// Support font-awesome classic
+			else if( image.substr( 0, 3 ) == 'fa-' )
+				structIcon = image;
+			else
+				iconFile = image;
+			ele.style.backgroundImage = 'url(\'' + iconFile + '\')';
+		}
+	},
+	addTrayIcon: function( struct )
+	{
+		if( !struct.name ) return false;
+		for( var a in this.trayIcons )
+		{
+			if( this.trayIcons[ a ].name == struct.name ) return false;
+		}
+		if( !struct.icon )
+			return false;
+
+		var iconFile = structIcon = null;
+		// Support image icon
+		if ( struct.icon.substr( 0, 5 ) == 'data:' )
+		{
+			iconFile = struct.icon;
+		}
+		else if( struct.icon.indexOf( ':' ) > 0 && struct.icon.substr( 0, 5 ) != 'http:' && struct.icon.substr( 0, 6 ) != 'https:' )
+		{
+			iconFile = getImageUrl( struct.icon );
+		}
+		// Support font-awesome classic
+		else if( struct.icon.substr( 0, 3 ) == 'fa-' )
+		{
+			structIcon = struct.icon;
+		}
+		else
+		{
+			iconFile = struct.icon;
+		}
+
+		// Base64 string
+
+		var uniqueId = window.MD5( Math.random() * 9999 + struct.name + ( new Date() ).getTime() );
+		var ele = document.createElement( 'div' );
+		ele.className = 'TrayElement IconSmall';
+		if ( typeof struct.className == 'string' )
+			ele.className += ' ' + struct.className;
+		
+		// Add icon image
+		if( iconFile )
+		{
+			ele.style.backgroundImage = 'url(\'' + iconFile + '\')';
+			ele.style.backgroundSize = 'contain';
+			ele.style.backgroundPosition = 'center';
+			ele.style.backgroundRepeat = 'no-repeat';
+		}
+		// Add font-awesome classic
+		else if( structIcon )
+		{
+			ele.className += ' ' + structIcon;
+			ele.style.lineHeight = '25px';
+		}
+		
+		if( struct.label )
+		{
+			ele.setAttribute( 'label', struct.label );
+		}
+		
+		ge( 'Tray' ).appendChild( ele );
+		
+		if( struct.getBubbleText || struct.onOpenBubble || struct.onDrop )
+		{
+			struct.bubble = document.createElement( 'div' );
+			struct.bubble.className = 'BubbleInfo';
+			ele.struct = struct;
+			ele.appendChild( struct.bubble );
+			ele.onmouseover = function( e )
+			{
+				// Check if other elements are sticky
+				for( var a = 0; a < this.childNodes.length; a++ )
+				{
+					if( this.childNodes[a].sticky )
+						return;
+				}
+				
+				this.open = true;
+				if( struct.onOpenBubble )
+					struct.onOpenBubble();
+				var text = struct.getBubbleText();
+				// Return if the bubble is set AND we have no new text then return
+				if( struct.bubbleSet && text == this.bubbleText )
+					return;
+				this.bubbleText = text;
+				struct.bubble.innerHTML = '<div>' + this.bubbleText + '</div>';
+				struct.bubbleSet = true;
+			};
+			if ( struct.onDrop )
+			{
+				ele.ondrop = function( elements )
+				{
+					struct.onDrop( elements );
+				};
+			}
+			// Look when the bubble is closing
+			ele.onmouseout = function( e )
+			{
+				var node = e.target;
+				var pnode = e.target.parentNode;
+				if( !node || !pnode )
+					return;
+				if( pnode.className == 'BubbleInfo' )
+					node = pnode.parentNode;
+
+				if( node && node.open )
+				{
+					node.open = false;
+					setTimeout( function()
+					{
+						if( node && !node.open )
+						{
+							if( struct.onCloseBubble )
+								struct.onCloseBubble();
+						}
+					}, 500 );
+				}
+			}
+		}
+		else
+		{
+			ele.onmouseover = function( e )
+			{
+				if( struct.bubbleSet ) return;
+				/*if( struct.application )
+				{
+				}
+				else*/ if( struct.onmouseover )
+				{
+					struct.onmouseover( e );
+				}
+				struct.bubbleSet = true;
+			}
+		}
+		ele.onclick = function( e )
+		{
+			/*if( struct.application )
+			{
+				struct.application.sendMessage( {
+					
+				} );
+			}
+			else*/ if( struct.onclick )
+			{
+				struct.onclick( e );
+			}
+		}
+		
+		struct.dom = ele;
+		this.trayIcons[ uniqueId ] = struct;
+		return uniqueId;
+	},
+	getTrayIcon: function( identifier )
+	{
+		return this.trayIcons[ identifier ];
+	},
+	// Remove tray icon from the Workspace
+	removeTrayIcon: function( uniqueId )
+	{
+		if( !this.trayIcons[ uniqueId ] )
+		{
+			return false;
+		}
+		var ele = {};
+		for( var a in this.trayIcons )
+		{
+			if( a == uniqueId ) 
+			{
+				// Remove dom node
+				this.trayIcons[ a ].dom.parentNode.removeChild( this.trayIcons[ a ].dom );
+				continue;
+			}
+			ele[ a ] = this.trayIcons[ a ];
+		}
+		this.trayIcons = ele;
 	},
 	// Clear all wallpapers
 	clearWorkspaceWallpapers: function()
@@ -244,14 +459,12 @@ var WorkspaceInside = {
 			var work = ge( 'DoorsScreen' ).getElementsByClassName( 'VirtualWorkspaces' )[0];
 			if( work )
 			{
-				work.style.right = extr.offsetWidth + swit.offsetWidth + 'px';
+				work.style.right = GetElementWidth( extr ) + GetElementWidth( swit ) - 2 + 'px';
 			}
 		}
 	},
 	initWebSocket: function()
-	{
-		if( Workspace.conn ) return;
-		
+	{	
 		if( Workspace.reloginInProgress )
 			return;
 		
@@ -264,7 +477,20 @@ var WorkspaceInside = {
 			onstate: onState,
 			onend  : onEnd,
 		};
+
+        //we assume we are being proxied - set the websocket to use the same port as we do
+        if( document.location.port == '')
+        {
+            conf.wsPort = ( document.location.protocol == 'https:' ? 443 : 80 )
+            console.log('webproxy set to be tunneled as well.');
+        }
 		
+		// Clean up previous
+		if( this.conn )
+		{
+			this.conn.close();
+			delete this.conn;
+		}
 		this.conn = new FriendConnection( conf );
 		this.conn.on( 'sasid-request', handleSASRequest ); // Shared Application Session
 		this.conn.on( 'server-notice', handleServerNotice );
@@ -275,6 +501,10 @@ var WorkspaceInside = {
 		} );
 		this.conn.on( 'icon-change', handleIconChange );
 		this.conn.on( 'filesystem-change', handleFilesystemChange );
+		
+		// Reference for handler
+		var selfConn = this.conn;
+
 
 		function onState( e )
 		{
@@ -292,11 +522,22 @@ var WorkspaceInside = {
 				//if we get a ping we have a websocket.... no need to do the http server check
 				clearInterval( Workspace.httpCheckConnectionInterval );
 				Workspace.httpCheckConnectionInterval = false;
+				if( Workspace.websocketsOffline )
+				{
+					// Refresh mountlist
+					Workspace.refreshDesktop( false, true );
+				}
 				Workspace.websocketsOffline = false;
 
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
 				Workspace.workspaceIsDisconnected = false;
+				
+				// Reattach
+				if( !Workspace.conn && selfConn )
+				{
+					Workspace.conn = selfConn;
+				}
 			}
 			else
 			{
@@ -312,73 +553,116 @@ var WorkspaceInside = {
 
 		function handleIconChange( e ){ console.log( 'icon-change event', e ); }
 		function handleFilesystemChange( msg )
-		{
-			// if we get the same message within 5s we just ignore it.
-			if(
-				Workspace.lastfileSystemChangeMessage
-				&& Workspace.lastfileSystemChangeMessage.path == msg.path
-				&& Workspace.lastfileSystemChangeMessage.devname == msg.devname
-				&& Workspace.lastfileSystemChangeMessage.arrived + 5000 > Date.now()
-			) return;
-
-			Workspace.lastfileSystemChangeMessage = JSON.parse(JSON.stringify(msg));
-			Workspace.lastfileSystemChangeMessage.arrived = Date.now();
-
-
-			if( msg.path || msg.devname )
+		{	
+			// Prevent hitting the same thing over and over
+			// Maximum two requests a second on the same path
+			if( !Workspace.filesystemChangeTimeouts )
 			{
-				// Filename stripped!
-				var p = msg.devname + ':' + msg.path;
-				if( p.indexOf( '/' ) > 0 )
-				{
-					p = p.split( '/' );
-					if( Trim( p[ p.length - 1 ] ) != '' )
-						p[ p.length - 1 ] = '';
-					p = p.join( '/' );
-				}
-				else
-				{
-					p = p.split( ':' );
-					p = p[0] + ':';
-				}
-				//console.log( '[handleFilesystemChange] Updating path: ' + p );
-				Workspace.refreshWindowByPath( p );
-				if( p.substr( p.length - 1, 1 ) == ':' )
-				{
-					//console.log( '[handleFilesystemChange] Refreshing desktop.' );
-					Workspace.refreshDesktop();
-				}
-				return;
+				Workspace.filesystemChangeTimeouts = {};
 			}
-			console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+			var t = msg.devname + ( msg.path ? msg.path : '' );
+			if( Workspace.filesystemChangeTimeouts[ t ] )
+			{
+				clearTimeout( Workspace.filesystemChangeTimeouts[ t ] );
+			}
+			Workspace.filesystemChangeTimeouts[ t ] = setTimeout( function()
+			{
+				hcbk( msg );
+			}, 500 );
+			
+			// Handle the actual filesystem change
+			function hcbk()
+			{
+				if( msg.path || msg.devname )
+				{
+					// Filename stripped!
+					var p = msg.devname + ':' + msg.path;
+					if( p.indexOf( '/' ) > 0 )
+					{
+						p = p.split( '/' );
+						if( Trim( p[ p.length - 1 ] ) != '' )
+							p[ p.length - 1 ] = '';
+						p = p.join( '/' );
+					}
+					else
+					{
+						p = p.split( ':' );
+						p = p[0] + ':';
+					}
+				
+					if( Workspace.appFilesystemEvents )
+					{
+						// Check if we need to handle events for apps
+						if( Workspace.appFilesystemEvents[ 'filesystem-change' ] )
+						{
+							var evList = Workspace.appFilesystemEvents[ 'filesystem-change' ];
+							var outEvents = [];
+							for( var a = 0; a < evList.length; a++ )
+							{
+								var found = false;
+								if( evList[a].applicationId )
+								{
+									var found = evList[a];
+									var app = findApplication( evList[a].applicationId );
+									if( app )
+									{
+										if( evList[a].viewId && app.windows[ evList[a].viewId ] )
+										{
+											app.windows[ evList[a].viewId ].sendMessage( {
+												command: 'callback', type: 'callback', callback: evList[a].callback, path: msg.devname + ':' + msg.path
+											} );
+										}
+										else
+										{
+											app.sendMessage( { 
+												command: 'callback', type: 'callback', callback: evList[a].callback, path: msg.devname + ':' + msg.path
+											} );
+										}
+									}
+								}
+								// App doesn't exist, flush event
+								if( found )
+								{
+									outEvents.push( found );
+								}
+							}
+							// Update events
+							Workspace.appFilesystemEvents[ 'filesystem-change' ] = outEvents;
+						}
+					}
+				
+					Workspace.refreshWindowByPath( p );
+					
+					if( p.substr( p.length - 1, 1 ) == ':' )
+					{
+						//console.log( '[handleFilesystemChange] Refreshing desktop.' );
+						Workspace.refreshDesktop();
+					}
+					return;
+				}
+				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+			}
 		}
 	},
 	checkFriendNetwork: function()
 	{
+		var self = this;
+		if ( window.isMobile )
+		{
+			ClearCache(); 		// TODO: remove!
+		}
+		
 		var m = new Module('system');
 		m.onExecuted = function( e,d )
 		{
-			if( e == 'ok' && parseInt( d ) == 1)
+			if ( e == 'ok' && parseInt( d ) == 1 )
 			{
 				console.log('init friend network');
+
 				// connect to FriendNetwork
 				if( Workspace.sessionId && window.FriendNetwork )
 				{
-					var host = document.location.hostname + ':6514';
-					if ( 'http:' === document.location.protocol )
-						host = 'ws://' + host;
-					else
-						host = 'wss://' + host;
-
-					var hostMeta =
-					{
-						name        : Workspace.loginUsername,
-						description : Workspace.loginUsername + "'s machine",
-						apps        : [],
-						imagePath   : 'friend://path.to/image?', // ( not what a real path// looks like, probably? )
-					};
-					console.log( 'Connecting to FriendNetwork.', hostMeta );
-					window.FriendNetwork.init( host, Workspace.sessionId, hostMeta );
+					self.connectToFriendNetwork();
 				}
 			}
 			else
@@ -387,6 +671,39 @@ var WorkspaceInside = {
 			}
 		}
 		m.execute( 'checkfriendnetwork' );
+	},
+	connectToFriendNetwork: function()
+	{
+		var self = this;
+		this.friendNetworkEnabled = true;
+		if ( !FriendNetwork.conn )
+		{
+			var host = document.location.hostname + ':6514';
+			if ( 'http:' === document.location.protocol )
+				host = 'ws://' + host;
+			else
+				host = 'wss://' + host;
+
+			// Will get the information entered in Friend Network settings panel
+			window.FriendNetwork.init( host, 'workspace', Workspace.sessionId, false );
+
+			// Start Friend Network Share when Friend Network is established
+			setTimeout( function()
+			{
+				window.FriendNetworkShare.start();
+				window.FriendNetworkDoor.start();
+				window.FriendNetworkFriends.start();
+				window.FriendNetworkDrive.start();
+			}, 1000 );
+		}
+	},
+	closeFriendNetwork: function()
+	{
+		FriendNetworkShare.close();
+		FriendNetworkDoor.close();
+		FriendNetworkFriends.close();
+		FriendNetworkDrive.close();
+		FriendNetwork.close();
 	},
 	terminateSession: function( sess, dev, e )
 	{
@@ -483,9 +800,12 @@ var WorkspaceInside = {
 			';
 
 			var wid = Workspace.widget ? Workspace.widget : m.widget;
-			wid.showing = true;
+			if( wid )
+			{
+				wid.showing = true;
+			}
 
-			if( !wid.initialized )
+			if( wid && !wid.initialized )
 			{
 				wid.initialized = true;
 
@@ -497,14 +817,17 @@ var WorkspaceInside = {
 				newBtn.onclick = function()
 				{
 					if( calendar.eventWin ) return;
+					
 					var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
 					var dateForm = date.split( '-' );
 					dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+					
 					calendar.eventWin = new View( {
 						title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
 						width: 500,
 						height: 405
 					} );
+					
 					calendar.eventWin.onClose = function()
 					{
 						calendar.eventWin = false;
@@ -525,7 +848,7 @@ var WorkspaceInside = {
 				}
 				calendar.addButton( newBtn );
 
-				var geBtn = calendar.createButton( 'fa-gear' );
+				var geBtn = calendar.createButton( 'fa-wrench' );
 				geBtn.onclick = function()
 				{
 					ExecuteApplication( 'Calendar' );
@@ -582,10 +905,14 @@ var WorkspaceInside = {
 			}
 			else
 			{
-				m.calendar.render();
-				m.sessions.innerHTML = d;
+				if( m.calendar )
+				{
+					m.calendar.render();
+					m.sessions.innerHTML = d;
+				}
 			}
-			wid.autosize();
+			if( wid )
+				wid.autosize();
 		}
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
 	},
@@ -660,13 +987,29 @@ var WorkspaceInside = {
 			document.getElementsByTagName( 'head' )[0].appendChild( this.themeStyleElement );
 		}
 		
+		var shades = [ 'dark', 'charcoal' ];
+		for( var c in shades )
+		{
+			var uf = shades[c].charAt( 0 ).toUpperCase() + shades[c].substr( 1, shades[c].length - 1 );
+			if( this.themeData[ 'colorSchemeText' ] == shades[c] )
+				document.body.classList.add( uf );
+			else document.body.classList.remove( uf );
+		}
+		
+		if( this.themeData[ 'buttonSchemeText' ] == 'windows' )
+			document.body.classList.add( 'MSW' );
+		else document.body.classList.remove( 'MSW' );
+		
 		var str = '';
+		
 		for( var a in this.themeData )
 		{
+			if( !this.themeData[a] ) continue;
 			var v = this.themeData[a];
+			
 			switch( a )
 			{
-				case 'colorWindowActive':
+				case 'colorTitleActive':
 					str += `
 html > body .View.Active > .Title,
 html > body .View.Active > .LeftBar,
@@ -677,12 +1020,72 @@ html > body .View.Active > .BottomBar
 }
 `;
 					break;
-				case 'colorButtonDefault':
+				case 'colorButtonBackground':
 					str += `
-html > body .Button,
-html > body button
+html > body .Button, html > body button,
+html > body #DockWindowList .Task.Active, html > body #Statusbar .Task.Active
 {
 	background-color: ${v};
+}
+`;
+					break;
+				case 'colorWindowBackground':
+					str += `
+html > body, html body .View > .Content
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorWindowText':
+					str += `
+html > body, html body .View > .Content, html > body .Tab
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorFileToolbarBackground':
+					str += `
+html > body .View > .DirectoryToolbar
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorFileToolbarText':
+					str += `
+html > body .View > .DirectoryToolbar button:before, 
+html > body .View > .DirectoryToolbar button:after
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorFileIconText':
+					str += `
+html > body .File a
+{
+	color: ${v};
+}
+`;
+					break;
+				case 'colorScrollBackground':
+					str += `
+body .View.Active ::-webkit-scrollbar,
+body .View.Active.IconWindow ::-webkit-scrollbar-track
+{
+	background-color: ${v};
+}
+`;
+					break;
+				case 'colorScrollButton':
+					str += `
+html body .View.Active.Scrolling > .Resize,
+body .View.Active ::-webkit-scrollbar-thumb,
+body .View.Active.IconWindow ::-webkit-scrollbar-thumb
+{
+	background-color: ${v} !important;
 }
 `;
 					break;
@@ -695,151 +1098,189 @@ html > body button
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			if( e == 'ok' && d )
+			function initFriendWorkspace()
 			{
-				var dat = JSON.parse( d );
-				if( dat.wallpaperdoors )
+				// Make sure we have loaded
+				if( !Workspace.screen.contentDiv )
+					if( Workspace.screen.contentDiv.offsetHeight < 100 )
+						return setTimeout( initFriendWorkspace, 50 );
+				if( e == 'ok' && d )
 				{
-					if( dat.wallpaperdoors.substr(0,5) == 'color' )
+					var dat = JSON.parse( d );
+					if( dat.wallpaperdoors )
 					{
-						Workspace.wallpaperImage = 'color';
+						if( dat.wallpaperdoors.substr(0,5) == 'color' )
+						{
+							Workspace.wallpaperImage = 'color';
+						}
+						else if( dat.wallpaperdoors.length )
+						{
+							Workspace.wallpaperImage = dat.wallpaperdoors;
+						}
+						else 
+						{
+							Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+						}
 					}
-					else if( dat.wallpaperdoors.length )
+					// Check for theme specifics
+					if( dat[ 'themedata_' + Workspace.theme ] )
 					{
-						Workspace.wallpaperImage = dat.wallpaperdoors;
+						Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
 					}
-					else 
+					else
+					{
+						Workspace.themeData = false;
+					}
+					Workspace.applyThemeConfig();
+				
+					// Fallback
+					if( !isMobile )
+					{
+						if( !dat.wizardrun )
+						{
+							if( !Workspace.WizardExecuted )
+							{
+								//ExecuteApplication( 'FriendWizard' );
+								Workspace.WizardExecuted = true;
+							}
+						}
+					}
+				
+					if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
 					{
 						Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
 					}
-				}
-				// Check for theme specifics
-				if( dat[ 'themedata_' + Workspace.theme ] )
-				{
-					Workspace.themeData = dat[ 'themedata_' + Workspace.theme ];
-				}
-				else
-				{
-					Workspace.themeData = false;
-				}
-				Workspace.applyThemeConfig();
-				
-				// Fallback
-				if( !isMobile )
-				{
-					if( !dat.wizardrun )
+					if( dat.wallpaperwindows )
 					{
-						if( !Workspace.WizardExecuted )
-						{
-							ExecuteApplication( 'FriendWizard' );
-							Workspace.WizardExecuted = true;
-						}
+						Workspace.windowWallpaperImage = dat.wallpaperwindows;
 					}
-				}
-				
-				if( !Workspace.wallpaperImage || Workspace.wallpaperImage == '""' )
-				{
-					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-				}
-				if( dat.wallpaperwindows )
-				{
-					Workspace.windowWallpaperImage = dat.wallpaperwindows;
-				}
 
-				if( dat.language )
-				{
-					globalConfig.language = dat.language.spokenLanguage;
-					globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
-				}
-				if( dat.menumode )
-				{
-					globalConfig.menuMode = dat.menumode;
-				}
-				if( dat.focusmode )
-				{
-					globalConfig.focusMode = dat.focusmode;
-					document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
-				}
-				if( dat.navigationmode )
-				{
-					globalConfig.navigationMode = dat.navigationmode;
-				}
-				if( dat.hiddensystem )
-				{
-					globalConfig.hiddenSystem = dat.hiddensystem;
-				}
-				if( window.isMobile )
-				{
-					globalConfig.viewList = 'separate';
-				}
-				else if( dat.windowlist )
-				{
-					globalConfig.viewList = dat.windowlist;
-					document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
-				}
-				if( dat.scrolldesktopicons )
-				{
-					globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
-				}
-				else globalConfig.scrolldesktopicons = 0;
-				// Can only have workspaces on mobile
-				// TODO: Implement dynamic workspace count for mobile (one workspace per app)
-				if( dat.workspacecount >= 0 && !window.isMobile )
-				{
-					globalConfig.workspacecount = dat.workspacecount;
-				}
-				else
-				{
-					globalConfig.workspacecount = 1;
-				}
-
-				// Do the startup sequence in sequence (only once)
-				if( dat.wizardrun && !isMobile )
-				{
-					if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+					if( dat.language )
 					{
-						Workspace.startupsequenceHasRun = true;
-						var l = {
-							index: 0,
-							func: function()
-							{
-								var cmd = dat.startupsequence[this.index++];
-								if( cmd )
+						globalConfig.language = dat.language.spokenLanguage;
+						globalConfig.alternateLanguage = dat.language.spokenAlternate ? dat.language.spokenAlternate : 'en-US';
+					}
+					if( dat.menumode )
+					{
+						globalConfig.menuMode = dat.menumode;
+					}
+					if( dat.focusmode )
+					{
+						globalConfig.focusMode = dat.focusmode;
+						document.body.setAttribute( 'focusmode', dat.focusmode ); // Register for styling
+					}
+					if( dat.navigationmode )
+					{
+						globalConfig.navigationMode = dat.navigationmode;
+					}
+					if( dat.hiddensystem )
+					{
+						globalConfig.hiddenSystem = dat.hiddensystem;
+					}
+					if( window.isMobile )
+					{
+						globalConfig.viewList = 'separate';
+					}
+					else if( dat.windowlist )
+					{
+						globalConfig.viewList = dat.windowlist;
+						document.body.setAttribute( 'viewlist', dat.windowlist ); // Register for styling
+					}
+					if( dat.scrolldesktopicons )
+					{
+						globalConfig.scrolldesktopicons = dat.scrolldesktopicons;
+					}
+					else globalConfig.scrolldesktopicons = 0;
+					// Can only have workspaces on mobile
+					// TODO: Implement dynamic workspace count for mobile (one workspace per app)
+					if( dat.workspacecount >= 0 && !window.isMobile )
+					{
+						globalConfig.workspacecount = dat.workspacecount;
+					}
+					else
+					{
+						globalConfig.workspacecount = 1;
+					}
+
+					if( dat.workspacemode )
+					{
+						Workspace.workspacemode = dat.workspacemode;
+					}
+					else
+					{
+						Workspace.workspacemode = 'developer';
+					}
+				
+					// Disable console log now..
+					if( Workspace.workspacemode == 'normal' || Workspace.workspacemode == 'gamified' )
+					{
+						console.log = function(){};
+					}
+
+					// Do the startup sequence in sequence (only once)
+					if( dat.wizardrun && !isMobile )
+					{
+						if( dat.startupsequence && dat.startupsequence.length && !Workspace.startupsequenceHasRun )
+						{
+							Workspace.startupsequenceHasRun = true;
+							var l = {
+								index: 0,
+								func: function()
 								{
-									Workspace.shell.execute( cmd, function()
+									var cmd = dat.startupsequence[this.index++];
+									if( cmd )
 									{
-										l.func();
-										if( Workspace.mainDock )
-											Workspace.mainDock.closeDesklet();
-									} );
+										Workspace.shell.execute( cmd, function()
+										{
+											l.func();
+											if( Workspace.mainDock )
+												Workspace.mainDock.closeDesklet();
+										} );
+									}
 								}
 							}
+							l.func();
 						}
-						l.func();
 					}
-				}
 
-				PollTaskbar();
+					PollTaskbar();
+				}
+				else
+				{
+					Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
+					Workspace.windowWallpaperImage = '';
+				}
+				if( callback && typeof( callback ) == 'function' ) callback();
 			}
-			else
-			{
-				Workspace.wallpaperImage = '/webclient/gfx/theme/default_login_screen.jpg';
-				Workspace.windowWallpaperImage = '';
-			}
-			if( callback && typeof( callback ) == 'function' ) callback();
+			initFriendWorkspace();
 		}
 		m.execute( 'getsetting', { settings: [ 
-			'avatar', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+			'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
 			'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
 			'focusmode', 'hiddensystem', 'workspacecount', 
-			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme
+			'scrolldesktopicons', 'wizardrun', 'themedata_' + Workspace.theme,
+			'workspacemode'
 		] } );
 	},
 	// Called on onunload
-	doLeave: function( e )
+	unloadFriendNetwork: function( e )
  	{
-		FriendNetwork.close();
-		return Workspace.leave( e );
+		// Close all connections
+		if ( this.friendNetworkEnabled && !this.fnetCloseOn )
+		{
+			this.fnetCloseOn = true;
+			Workspace.closeFriendNetwork();
+			var self = this;
+			setTimeout( function() 
+			{
+				var handle = setInterval( function()
+				{
+					self.fnetCloseOn = false;
+					Workspace.connectToFriendNetwork();
+					clearInterval( handle );
+				}, 50 );
+			}, 1000 )
+		}
  	},
 	// Do you want to leave?
 	leave: function( e )
@@ -850,6 +1291,7 @@ html > body button
 		}
 		if( !Workspace.sessionId ) return true;
 		RemoveDragTargets();
+		Workspace.unloadFriendNetwork();
 		if( e )
 		{
 			e.returnValue = i18n( 'i18n_leave_question' )
@@ -868,20 +1310,28 @@ html > body button
 		this.toggleStartMenu( false );
 	},
 	toggleStartMenu: function( show, e )
-	{
+	{	
 		// Force state
 		if( show === true )
 		{
-			this.smenu.visible = false;
+			this.smenu.visible = true;
+			window.focus();
+			if( window.WorkspaceMenu )
+				WorkspaceMenu.close();
 		}
 		// Force hide / remove
 		else if( show === false )
 		{
-			this.smenu.visible = true;
+			this.smenu.visible = false;
 		}
-
-		// Hide start menu
-		if( this.smenu.visible )
+		// Normal toggle behavior
+		else
+		{
+			this.smenu.visible = this.smenu.visible ? false : true;
+		}
+		
+		// Hide start menu when it's set to not show
+		if( !this.smenu.visible )
 		{
 			if( this.smenu.dom )
 			{
@@ -895,13 +1345,8 @@ html > body button
 					{
 						sm.dom.parentNode.removeChild( sm.dom );
 						sm.dom = false;
-						sm.visible = false;
 					}
 				}, 250 );
-			}
-			else
-			{
-				this.smenu.visible = false;
 			}
 		}
 		// Build start menu
@@ -910,26 +1355,28 @@ html > body button
 			// Non clean
 			if( this.smenu.dom && this.smenu.dom.parentNode )
 				this.smenu.dom.parentNode.removeChild( this.smenu.dom );
-				
+			this.smenu.currentItem = false;
+			
 			var d = document.createElement( 'div' );
 			d.className = 'DockMenu';
 			Workspace.mainDock.dom.appendChild( d );
 			d.onclick = function( e )
 			{
-				Workspace.toggleStartMenu( true );
+				Workspace.toggleStartMenu( false );
 			};
 			this.smenu.dom = d;
 			this.smenu.dom.style.height = '0px';
 			this.smenu.dom.style.top = '0px';
-			this.smenu.visible = true;
 
 			// We don't show the menu at first, we need to build!
 			var delayedBuildTime = false;
 			var delayedBuildFunc = false;
 
 			// Add menu items
-			function buildMenu( path, parent )
+			function buildMenu( path, parent, depth )
 			{
+				if( !depth ) depth = 1;
+				
 				var dr = new Door().get( path );
 				dr.getIcons( false, function( data )
 				{
@@ -981,14 +1428,107 @@ html > body button
 						topInfo = 'Top';
 					}
 
+					// Add favorites
+					// TODO: Dynamic desklets!
+					if( parent.classList.contains( 'DockMenu' ) && ge( 'desklet_0' ) )
+					{
+						var eles = ge( 'desklet_0' ).getElementsByClassName( 'Launcher' );
+						var out = [];
+						for( var b = 0; b < eles.length; b++ )
+						{
+							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
+							var nam = eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var im = eles[b].style.backgroundImage ? 
+								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
+							if( im && im[1] )
+							{
+								im = im[1];
+							}
+							else im = false;
+							out.push( {
+								Title: nam,
+								Path: 'Mountlist:',
+								Filename: nam,
+								Type: 'Executable',
+								Icon: im ? im : null
+							} );
+						}
+						if( out.length )
+						{
+							out = ( [ { Title: i18n( 'i18n_favorites' ) + ':', Path: 'Mountlist:', Type: 'Header' } ] ).concat( out );
+							out.push( { Title: i18n( 'i18n_menu' ) + ':', Path: 'Mountlist:', Type: 'Header' } );
+							for( var a = 0; a < data.length; a++ )
+							{
+								out.push( data[a] );
+							}
+							data = out;
+						}
+					}
+					
+					// Duplicates patch
+					var dupTest = [];
+					
+					// On the first depth, filter on some priority
+					if( depth == 1 )
+					{
+						var frs = [];
+						var out = [];
+						var end = [];
+						var filter = [ 'Software', 'Settings' ];
+						var i = 0;
+						for( var a = 0; i < filter.length && a < data.length; a++ )
+						{
+							if( data[ a ].Title == filter[ i ] )
+							{
+								out.push( data[ a ] );
+								i++;
+								a = 0;
+							}
+						}
+						for( var a = 0; a < data.length; a++ )
+						{
+							var found = false;
+							for( var b = 0; b < filter.length; b++ )
+							{
+								if( filter[ b ] == data[ a ].Title )
+								{
+									found = true;
+									break;
+								}
+							}
+							if( !found ) 
+							{
+								if( data[ a ].Type == 'Directory' )
+									end.push( data[ a ] );
+								else frs.push( data[ a ] );
+							}
+						}
+						data = frs.concat( out, end );
+					}
+					
 					// Menu items
 					for( var a = 0; a < data.length; a++ )
 					{
+						if( data[a].Type == 'Header' )
+						{
+							var s = document.createElement( 'div' );
+							s.className = 'DockMenuSubHeader';
+							s.innerHTML = data[a].Title;
+							dd.appendChild( s );
+							continue;
+						}
+						
+						if( data[a].Type == 'Directory' )
+						{
+							data[a].Icon = '/iconthemes/friendup15/FolderGradient.svg';
+						}
+						
 						var p = data[a].Path.split( ':' )[1];
 						if( p == 'Repositories/' || p == 'Modules/' || p == 'Functions/' || p == 'Libraries/' || p == 'Devices/' )
 							continue;
 						if( data[a].Title == 'Preferences' || data[a].Filename == 'Preferences' )
 							continue;
+						
 						var s = document.createElement( 'div' );
 						s.className = 'DockMenuItem MousePointer ' + data[a].Type;
 						s.addEventListener( 'mouseover', function( e )
@@ -1016,10 +1556,56 @@ html > body button
 							}, 1000 );
 						} );
 						s.innerHTML = data[a].Title ? data[a].Title : data[a].Filename;
+						
+						if( !data[a].Icon && !data[a].IconFile )
+							data[a].Icon = '/iconthemes/friendup15/File_Binary.svg';
+						if( !data[a].IconFile )
+							data[a].IconFile = '/iconthemes/friendup15/File_Binary.svg';
+	
+						if( data[a].Icon )
+							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + data[a].Icon + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+						else if( data[a].IconFile )
+						{
+							var i = data[a].IconFile;
+							if( i.indexOf( 'resources/' ) == 0 )
+								i = i.substr( 9, i.length - 9 );
+							s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="' + i + '" alt="' + s.innerHTML + '"/> ' + s.innerHTML;
+							data[a].Icon = i;
+						}
+						
 						// Sub menu
 						if( data[a].Type == 'Directory' )
 						{
-							buildMenu( data[a].Path, s );
+							// Skip if we already added
+							var found = false;
+							for( var b = 0; b < dupTest.length; b++ )
+							{
+								if( dupTest[b] == data[a].Path )
+								{
+									found = true;
+									break;
+								}
+							}
+							if( found ) continue;
+							dupTest.push( data[a].Path );
+							buildMenu( data[a].Path, s, depth + 1 );
+							s.onclick = function( e )
+							{
+								this.classList.add( 'Over' );
+								var eles = this.parentNode.getElementsByClassName( 'DockMenuItem' );
+								for( var z = 0; z < eles.length; z++ )
+								{
+									if( eles[z].parentNode != this.parentNode )
+										continue;
+									if( eles[z] != this )
+									{
+										eles[z].classList.remove( 'Over' );
+									}
+								}
+								if( this.leaveTimeout )
+									clearTimeout( this.leaveTimeout );
+								return cancelBubble( e );
+							}
 						}
 						else
 						{
@@ -1035,7 +1621,11 @@ html > body button
 
 							if( !executable )
 							{
-								s.executable = data[a].Path + data[a].Filename;
+								s.executable = data[a].Filename;
+								if( s.executable.indexOf( '.' ) > 0 )
+								{
+									s.executable = data[a].Path + s.executable;
+								}
 								s.filename = data[a].Filename;
 							}
 
@@ -1044,6 +1634,7 @@ html > body button
 							{
 								Workspace.toggleStartMenu( false );
 								// PDFs
+								if( !this.filename ) this.filename = this.executable;
 								if( this.filename && this.filename.substr( this.filename.length - 4, 4 ) == '.pdf' )
 								{
 									var v = new View( {
@@ -1060,25 +1651,37 @@ html > body button
 								}
 							}
 							// Drag fileinfo
-							s.fi = data[ a ];
+							s.fi = {
+								Filename: data[ a ].Filename,
+								Title: data[ a ].Title ? data[ a ].Title : data[ a ].Filename,
+								IconFile: data[a].Icon,
+								Path: data[ a ].Path,
+								Type: data[ a ].Type,
+								MetaType: data[ a ].MetaType ? data[ a ].MetaType : false
+							};
 							s.onmousedown = function( e )
 							{
 								this.slideX = 0;
 								this.offX = e.clientX;
+								this.offY = e.clientY;
 								window.mouseDown = FUI_MOUSEDOWN_PICKOBJ;
 							}
 							s.onmousemove = function( e )
 							{
-								if( this.offX )
+								if( this.offX && this.offY )
 								{
-									this.slidex = e.clientX - this.offX;
-									if( this.slidex > 10 )
+									var dx = this.offX - e.clientX;
+									var dy = this.offY - e.clientY;
+									var dist = Math.sqrt( ( this.offX * this.offX ) + ( this.offY * this.offY ) );;
+									if( dist > 20 )
 									{
 										var n = CreateIcon( this.fi );
 										mousePointer.pickup( n );
-										this.offX = null;
+										this.offX = false;
+										this.offY = false;
 										window.mouseDown = null;
 									}
+									return cancelBubble( e );
 								}
 							}
 						}
@@ -1089,7 +1692,7 @@ html > body button
 					{
 						var s = document.createElement( 'div' );
 						s.className = 'DockMenuItem MousePointer Executable';
-						s.innerHTML = i18n( 'menu_run_command' );
+						s.innerHTML = '<img ondragstart="return cancelBubble( event )" src="/iconthemes/friendup15/Run.svg" alt="' + s.innerHTML + '"/> ' + i18n( 'menu_run_command' );
 						s.onclick = function()
 						{
 							Workspace.toggleStartMenu( false );
@@ -1125,6 +1728,11 @@ html > body button
 							{
 								parent.style.top = parent.parentNode.offsetHeight + 'px';
 							}
+							else if( depth > 1 )
+							{
+								dd.style.bottom = '0px';
+								dd.style.top = 'auto';
+							}
 							else
 							{
 								parent.style.top = 0 - dd.offsetHeight + 'px';
@@ -1148,6 +1756,11 @@ html > body button
 							else if( topInfo == 'Top' )
 							{
 								dd.style.top = s.style.top;
+							}
+							else if( depth > 1 )
+							{
+								dd.style.bottom = '0px';
+								dd.style.top = 'auto';
 							}
 							else
 							{
@@ -1254,6 +1867,7 @@ html > body button
 							ext = ext.split( '.' )[1];
 							icon = '.' + ( ext ? ext : 'txt' );
 						}
+						
 						if( ele.Icon )
 						{
 							ele.Icon = ele.Icon.split( /sessionid\=[^&]+/i ).join( 'sessionid=' + Workspace.sessionId );
@@ -1280,6 +1894,38 @@ html > body button
 
 						Workspace.mainDock.addLauncher( ob );
 					}
+					
+					// Add desktop shortcuts too for mobile
+					if( window.isMobile )
+					{
+						for( var a = 0; a < Workspace.icons.length; a++ )
+						{
+							if( Workspace.icons[a].Type == 'Executable' && Workspace.icons[a].MetaType == 'ExecutableShortcut' )
+							{
+								var el = Workspace.icons[a];
+								var ob = {
+									exe:  el.Filename,
+									type: 'Executable',
+									src:  el.IconFile,
+									displayname: el.Title,
+									title: el.Title
+								};
+								Workspace.mainDock.addLauncher( ob );
+							}
+						}
+						var fmenu = {
+							click: function( e )
+							{
+								Workspace.openDrivePanel();
+							},
+							type: 'Executable',
+							displayname: i18n( 'i18n_files' ),
+							src: '/iconthemes/friendup15/Folder_Smaller.svg',
+							title: i18n( 'i18n_files' ),
+						};
+						Workspace.mainDock.addLauncher( fmenu );
+					}
+					
 					Workspace.mainDock.initialized();
 					
 					Workspace.docksReloading = null;
@@ -1423,22 +2069,10 @@ html > body button
 	// TODO: Make less aggressive! Use settimeouts f.ex. so we can abort multiple
 	//       calls to refrash the same path
 	refreshPaths: {},
-	refreshPathTails: {},
 	refreshWindowByPath: function( path, depth, callback )
 	{
 		var self = this;
 		if( !depth ) depth = 0;
-		
-		// Make sure we don't refresh paths already in refresh
-		if( this.refreshPaths[ path ] )
-		{
-			// Add a tail (overwrite if needed) to execute later
-			this.refreshPathTails[ path ] = function()
-			{
-				self.refreshWindowByPath( path, depth, callback );
-			}
-			return;
-		}
 		
 		// Don't allow many parents
 		if( depth && depth > 1 ) return;
@@ -1467,30 +2101,25 @@ html > body button
 		// Delayed refreshing
 		function executeRefresh( window, callback )
 		{
+			// Make sure that the view is unique
+			var ppath = path;
+			if( self.refreshPaths[ ppath ] )
+				ppath = path + window.viewId;
+			
 			// Race condition, cancel existing..
-			if( self.refreshPaths[ path ] )
-				clearTimeout( self.refreshPaths[ path ] );
-			self.refreshPaths[ path ] = setTimeout( function()
+			if( self.refreshPaths[ ppath ] )
+				clearTimeout( self.refreshPaths[ ppath ] );
+			
+			self.refreshPaths[ ppath ] = setTimeout( function()
 			{
-				// Will not need this one, we already got an unexecuted call
-				if( self.refreshPathTails[ path ] )
-					delete self.refreshPathTails[ path ];
-				
 				// Setup a new callback for running after the refresh
 				var cbk = function()
 				{
 					// Remove this one - now we are ready for the next call
-					delete self.refreshPaths[ path ];
+					delete self.refreshPaths[ ppath ];
 					
 					// Run the actual callback
 					if( callback ) callback();
-					
-					// Execute the tail (if it exists)
-					if( self.refreshPathTails[ path ] )
-					{
-						self.refreshPathTails[ path ]();
-						delete self.refreshPathTails[ path ];
-					}
 				};
 				// Do the actual refresh
 				window.refresh( cbk );
@@ -1600,7 +2229,7 @@ html > body button
 				var d = ( new Date( no.date ) );
 				var d = d.getFullYear() + '-' + StrPad( d.getMonth(), 2, '0' ) + '-' +
 					StrPad( d.getDate(), 2, '0' ) + ' ' + StrPad( d.getHours(), 2, '0' ) +
-					':' + StrPad( d.getMinutes(), 2, '0' ) + ':' + StrPad( d.getSeconds(), 2, '0' );
+					':' + StrPad( d.getMinutes(), 2, '0' ); // + ':' + StrPad( d.getSeconds(), 2, '0' );
 				var n = document.createElement( 'div' );
 				n.className = 'MarginBottom';
 				n.innerHTML = '\
@@ -1645,7 +2274,7 @@ html > body button
 		if( DeepestField.updateNotificationInformation )
 			DeepestField.updateNotificationInformation();
 	},
-	refreshTheme: function( themeName, update )
+	refreshTheme: function( themeName, update, themeConfig )
 	{
 		var self = this;
 		
@@ -1658,6 +2287,10 @@ html > body button
 		document.body.classList.add( 'Loading' );
 
 		if( !themeName ) themeName = 'friendup12';
+		
+		// Only friendup12 for now.
+		themeName = 'friendup12';
+		
 		themeName = themeName.toLowerCase();
 		
 		Workspace.theme = themeName;
@@ -1737,11 +2370,56 @@ html > body button
 									document.body.classList.remove( 'Login' );
 									document.body.classList.remove( 'Loading' );
 								
-									// Refresh mountlist
-									Workspace.refreshDesktop( false, true );
+									// Remove splash screen
+									if( window.friendApp )
+									{
+										window.friendApp.hide_splash_screen();
+									}
+									
+									// Remove the overlay when inside
+									Workspace.screen.hideOverlay();
+								
+									// Refresh widgets
+									Workspace.refreshExtraWidgetContents();
 								
 									// Redraw now
 									DeepestField.redraw();
+									
+									if( location.hash && location.hash.indexOf("clean") ) Workspace.goDialogShown = true;
+									// Show about dialog
+									if( !isMobile && window.go && !Workspace.goDialogShown )
+									{
+										AboutGoServer();
+										Workspace.goDialogShown = true;
+									}
+									
+									// Make sure we update icons...
+									Workspace.redrawIcons();
+									
+									// New version of Friend?
+									if( Workspace.loginUsername != 'go' )
+									{
+										if( !Workspace.friendVersion )
+										{
+											Workspace.upgradeWorkspaceSettings( function(){
+												setTimeout( function()
+												{
+													var n = Notify( 
+														{ 
+															title: 'Your Workspace has been upgraded', 
+															text: 'We have updated your settings to match the default profile of the latest update of Friend. This only happens on each major upgrade of the Friend Workspace.', 
+															sticky: true
+														}, 
+														false, 
+														function()
+														{
+															CloseNotification( n );
+														} 
+													);
+												}, 1000 );
+											} );
+										}
+									}
 								}
 							}, 50 );
 						}
@@ -1764,13 +2442,13 @@ html > body button
 
 					if( themeName && themeName != 'default' )
 					{
-						AddCSSByUrl( '/themes/' + Workspace.theme + '/scrollbars.css' );
+						AddCSSByUrl( '/themes/' + themeName + '/scrollbars.css' );
 						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"' + themeName + '"}' ) + '&sessionid=' + Workspace.sessionId;
 					}
 					else
 					{
-						AddCSSByUrl( '/themes/friendup/scrollbars.css' );
-						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup"}' ) + '&sessionid=' + Workspace.sessionId;
+						AddCSSByUrl( '/themes/friendup12/scrollbars.css' );
+						styles.href = '/system.library/module/?module=system&command=theme&args=' + encodeURIComponent( '{"theme":"friendup12"}' ) + '&sessionid=' + Workspace.sessionId;
 					}
 
 					// Add new one
@@ -1786,6 +2464,8 @@ html > body button
 						command: 'refreshtheme',
 						theme: themeName
 					};
+					if( themeConfig )
+						msg.themeData = themeConfig;
 					taskIframes[a].ifr.contentWindow.postMessage( JSON.stringify( msg ), '*' );
 				}
 		
@@ -2032,43 +2712,47 @@ html > body button
 	refreshDesktop: function( callback, forceRefresh )
 	{
 		// Check some images we need to preload and preload them
-		var imgs = [];
 		if( !window.preloader )
 			window.preloader = [];
 		var imgOffline = GetThemeInfo( 'OfflineIcon' );
-		imgs.push( imgOffline.backgroundImage );
-		function preloadAndRemove( n )
+		if( !Workspace.iconsPreloaded )
 		{
-			if( !n ) return;
+			var imgs = [];
+			imgs.push( imgOffline.backgroundImage );
+			function preloadAndRemove( n )
+			{
+				if( !n ) return;
 			
-			var t = false;
-			var i = new Image();
-			i.src = n;
-			var out = [];
-			for( var a = 0; a < window.preloader.length; a++ )
-			{
-				if( window.preloader[a].src == i.src )
+				var t = false;
+				var i = new Image();
+				i.src = n;
+				var out = [];
+				for( var a = 0; a < window.preloader.length; a++ )
 				{
-					document.body.removeChild( window.preloader[a] );
+					if( window.preloader[a].src == i.src )
+					{
+						document.body.removeChild( window.preloader[a] );
+					}
+					else out.push( window.preloader[a] );
 				}
-				else out.push( window.preloader[a] );
+				window.preloader = out;
+				document.body.appendChild( i );
+				window.preloader.push( i );
 			}
-			window.preloader = out;
-			document.body.appendChild( i );
-			window.preloader.push( i );
-		}
-		for( var a = 0; a < imgs.length; a++ )
-		{
-			if( imgs[a] && imgs[a].length )
+			for( var a = 0; a < imgs.length; a++ )
 			{
-				if( imgs[a].indexOf( 'url(' ) == 0 )
+				if( imgs[a] && imgs[a].length )
 				{
-					imgs[a] = imgs[a].split( 'url(' )[1].split( ')' );
-					imgs[a].pop(); imgs[a] = imgs[a].join( ')' );
+					if( imgs[a].indexOf( 'url(' ) == 0 )
+					{
+						imgs[a] = imgs[a].split( 'url(' )[1].split( ')' );
+						imgs[a].pop(); imgs[a] = imgs[a].join( ')' );
+					}
+					imgs[a] = imgs[a].split( '"' ).join( '' );
 				}
-				imgs[a] = imgs[a].split( '"' ).join( '' );
+				preloadAndRemove( imgs[a] );
 			}
-			preloadAndRemove( imgs[a] );
+			Workspace.iconsPreloaded = true;
 		}
 		
 		// Oh yeah, update windows
@@ -2090,42 +2774,49 @@ html > body button
 		this.getMountlist( function( data )
 		{
 			if( callback && typeof( callback ) == 'function' ) callback( data );
-			
+
 			// make drive list behave like a desklet... copy paste som code back and forth ;)
-			window.setupDriveClicks = function( delayed )
+			if( !window.setupDriveClicks )
 			{
-				// TODO: Remove this and implement a real fix for this race condition!
-				// without having a delay, it finds the eles nodes, but not a .length and no data on the array members...
-				if( !delayed ) return setTimeout( "setupDriveClicks(1)", 50 );
-
-				// Drive clicks for mobile
-				var ue = navigator.userAgent.toLowerCase();
-				if( !window.isMobile )
-					return;
-
-				// Add an action to override the touch start action
-				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
-				if( !eles.length ) return;
-				eles[0].onTouchStartAction = function( e )
+				window.setupDriveClicks = function( delayed )
 				{
-					var dd = eles[0].getElementsByTagName( 'div' )[0];
-					var t = e.target ? e.target : e.srcElement;
-
-					Workspace.drivePanel = dd;
-					if( t.className && dd == t )
+					if( !window.driveClicksSetup )
 					{
-						if( dd.open )
+						// TODO: Remove this and implement a real fix for this race condition!
+						// without having a delay, it finds the eles nodes, but not a .length and no data on the array members...
+						if( !delayed ) return setTimeout( "setupDriveClicks(1)", 50 );
+
+						// Drive clicks for mobile
+						var ue = navigator.userAgent.toLowerCase();
+						if( !window.isMobile )
+							return;
+
+						// Add an action to override the touch start action
+						var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
+						if( !eles.length ) return;
+						eles[0].onTouchStartAction = function( e )
 						{
-							Workspace.closeDrivePanel();
+							var dd = eles[0].getElementsByTagName( 'div' )[0];
+							var t = e.target ? e.target : e.srcElement;
+
+							Workspace.drivePanel = dd;
+							if( t.className && dd == t )
+							{
+								if( dd.open )
+								{
+									Workspace.closeDrivePanel();
+									return false;
+								}
+								else
+								{
+									Workspace.openDrivePanel();
+									return true;
+								}
+							}
 							return false;
 						}
-						else
-						{
-							Workspace.openDrivePanel();
-							return true;
-						}
+						window.driveClicksSetup = true;
 					}
-					return false;
 				}
 			}
 
@@ -2136,13 +2827,16 @@ html > body button
 				if( eles.length )
 				{
 					// Check if we have a loadable image!
-					var p = self.wallpaperImage.split( ':' )[0] + ':';
+					var p = self.wallpaperImage.split( ':' )[0];
 					var found = false;
 					for( var a = 0; a < self.icons.length; a++ )
 					{
 						if( self.icons[a].Title == p )
+						{
 							found = true;
+						}
 					}
+					
 					// Load image
 					var ext = false;
 					if( self.wallpaperImage.indexOf( '.' ) > 0 )
@@ -2231,8 +2925,8 @@ html > body button
 								{
 									// Set the wallpaper
 									eles[0].style.backgroundImage = 'url(' + this.src + ')';
-									Workspace.wallpaperLoaded = true;
 								}
+								Workspace.wallpaperLoaded = this.src;
 							};
 							if( found )
 							{
@@ -2355,9 +3049,10 @@ html > body button
 			dd.className = 'sw' + sw;
 			dd.innerHTML = found[a].Title;
 			dd.f = found[a];
-			dd.onclick = function()
+			dd.onclick = function( e )
 			{
 				OpenWindowByFileinfo( this.f );
+				return cancelBubble( e );
 			}
 			d.appendChild( dd );
 		}
@@ -2366,7 +3061,7 @@ html > body button
 		dom.bubble.appendChild( d );
 	},
 	// Fetch mountlist from database
-	getMountlist: function( callback, forceRefresh )
+	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this;
 		var mo = new Module( 'system' );
@@ -2379,11 +3074,12 @@ html > body button
 
 				// Add system on top (after Ram: if it exists)
 				newIcons.push( {
-					Title:	'System:',
+					Title:	'System',
 					Volume:   'System:',
 					Path:	 'System:',
 					Type:	 'Door',
 					Handler: 'built-in',
+					Driver: 'Dormant',
 					MetaType: 'Directory',
 					IconClass: 'SystemDisk',
 					ID:	   'system', // TODO: fix
@@ -2416,6 +3112,7 @@ html > body button
 							Type: 'Executable',
 							IconFile: '/' + pair[1],
 							Handler: 'built-in',
+							Driver: 'Shortcut',
 							MetaType: 'ExecutableShortcut',
 							ID: shorts[a].toLowerCase(),
 							Mounted: true,
@@ -2423,6 +3120,32 @@ html > body button
 							IconClass: literal.split( ' ' ).join( '_' ),
 							Door: 'executable'
 						} );
+					}
+				}
+
+				// Add DormantDrives to the list (automount)
+				var dormantDoors = DormantMaster.getDoors();
+				for ( var d = 0; d < dormantDoors.length; d++ )
+				{
+					var dormantDoor = dormantDoors[ d ];
+					if ( dormantDoor.AutoMount )
+					{
+						newIcons.push( 
+						{
+							Title: dormantDoor.Title,
+							Volume: dormantDoor.Volume,
+							Path: dormantDoor.Path,
+							Type: dormantDoor.Type,
+							Handler: dormantDoor.Handler,
+							Driver: dormantDoor.Drive,
+							MetaType: dormantDoor.MetaType,
+							IconClass: 'SystemDisk',
+							ID: 'local', // TODO: fix
+							Mounted:  true,
+							Visible: true,
+							Door: dormantDoor,
+							Dormant: dormantDoor.Dormant
+						} );						
 					}
 				}
 
@@ -2512,7 +3235,7 @@ html > body button
 						d.permissions[3] = 'd';
 
 						var o = {
-							Title: r.Name.split(':').join('') + ':',
+							Title: r.Name.split(':').join(''),
 							Volume: r.Name.split(':').join('') + ':',
 							Path: r.Name.split(':').join('') + ':',
 							Handler: r.FSys,
@@ -2520,6 +3243,7 @@ html > body button
 							MetaType: 'Directory',
 							ID: r.ID,
 							Mounted: true,
+							Driver: r.Type,
 							Door: d,
 							Visible: r.Visible != "false" ? true : false,
 							Config: r.Config
@@ -2581,6 +3305,8 @@ html > body button
 			}
 			m.execute( 'device/list' );
 		}
+		mo.forceHTTP = true;
+		mo.forceSend = true;
 		mo.execute( 'workspaceshortcuts' );
 
 		return true;
@@ -2601,6 +3327,9 @@ html > body button
 		wb.redrawIcons( this.getIcons(), 'vertical' );
 		if ( RefreshDesklets ) RefreshDesklets();
 
+		// Check dormant too
+		var dormants = DormantMaster.getDoors();
+
 		// Cleanup windows of filesystems that are unmounted
 		var close = [];
 		for( var a in movableWindows )
@@ -2613,7 +3342,17 @@ html > body button
 				for( var b in this.icons )
 				{
 					// TODO: The colon thing... :)
-					if( w.fileInfo.Volume.split( ':' )[0] == this.icons[b].Title.split( ':' )[0] )
+					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == this.icons[b].Title.split( ':' )[0] )
+					{
+						found = true;
+						break;
+					}
+				}
+				// Check dormant
+				for( var b in dormants )
+				{
+					// TODO: The colon thing... :)
+					if( w.fileInfo.Volume && w.fileInfo.Volume.split( ':' )[0] == dormants[b].Title.split( ':' )[0] )
 					{
 						found = true;
 						break;
@@ -2622,9 +3361,9 @@ html > body button
 				// Clean up!
 				if( !found )
 				{
-					var s = movableWindows[a];
+					var s = w;
 					if( s.content ) s = s.content;
-					close.push( movableWindows[a] );
+					close.push( w );
 				}
 			}
 		}
@@ -2756,7 +3495,12 @@ html > body button
 			var inputButton = d.getByClass( 'NetContainerButton' )[0];
 
 			var fi = directoryWindow.content.fileInfo;
-			var dr = fi.Door ? fi.Door : Workspace.getDoorByPath( fi.Path );
+			var dr;
+
+			if ( fi.Dormant && fi.Dormant.dosAction )
+				dr = fi.Dormant;
+			else
+				dr = fi.Door ? fi.Door : Workspace.getDoorByPath( fi.Path );
 			var i = fi.ID
 			var p = fi.Path;
 
@@ -2937,6 +3681,28 @@ html > body button
 	// Use a door and execute a filesystem function, rename
 	executeRename: function( nam, icon, win )
 	{
+		if ( icon.Dormant )
+		{
+			if ( icon.Dormant.dosAction )
+			{
+				icon.Dormant.dosAction( 'rename', 
+				{
+					newname: nam,
+					path: icon.Path
+				}, function()
+				{
+					if( win && win.content.refresh )
+						win.content.refresh();
+					Workspace.renameWindow.close();
+				} );
+			}
+			else
+			{
+				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
+				Workspace.renameWindow.close();
+			}
+			return;
+		}
 		icon.Door.dosAction( 'rename', {
 			newname: nam,
 			path: icon.Path
@@ -3027,8 +3793,15 @@ html > body button
 			var domains = [];
 			if( e == 'ok' )
 			{
-				var data = JSON.parse( da );
-				domains = data.domains;
+				try
+				{
+					var data = JSON.parse( da );
+					domains = data.domains;
+				}
+				catch( e )
+				{
+					domains = [];
+				}
 			}
 			if( ge( 'SecurityDomains' + keyStr ) )
 			{
@@ -3050,6 +3823,17 @@ html > body button
 		m.execute( 'securitydomains' );
 	},
 	seed: 0,
+	setMimetype: function( filename, executable )
+	{
+		var ext = filename.split( '.' );
+		ext = '.' + ext[ ext.length - 1 ].toLowerCase();
+		var m = new Module( 'system' );
+		m.onExecuted = function()
+		{
+			Workspace.reloadMimeTypes();
+		}
+		m.execute( 'setmimetype', { type: ext, executable: executable } );
+	},
 	// Show file info dialog
 	fileInfo: function( icon )
 	{
@@ -3164,9 +3948,9 @@ html > body button
 					finfo += '.info';
 				}
 				var mi = new File( finfo );
-				
 				mi.onLoad = function( fd )
 				{
+					if ( !fd ) fd = '';
 					fd = fd.split( '<!--separate-->' )[0];
 					var data = false;
 					if( fd.length && fd.indexOf( '{' ) >= 0 )
@@ -3199,6 +3983,12 @@ html > body button
 					fdt_out += '<option value="' + a + '" encoding="' + fdt[a].Encoding + '" type="' + fdt[a].Type + '">' + fdt[a].Title + '</option>';
 				}
 
+				var ext = '';
+				if( icon.Filename )
+				{
+					ext = icon.Filename.split( '.' ); ext = ext[ ext.length - 1 ].toLowerCase();
+				}
+
 				var f = new File( '/webclient/templates/' + filt );
 				f.replacements = {
 					filename: icon.Filename ? icon.Filename : ( icon.Title.split( ':' )[0] ),
@@ -3213,7 +4003,8 @@ html > body button
 					sharewith: i18n( 'i18n_sharewith'),
 					public_disabled: '',
 					instance: ( icon.Filename ? icon.Filename : ( icon.Title.split( ':' )[0] ) ).split( /[^a-z]+/i ).join( '' ),
-					info_fields: fdt_out
+					info_fields: fdt_out,
+					ext: '.' + ext
 				};
 				f.i18n();
 				if( icon.Path )
@@ -3228,8 +4019,18 @@ html > body button
 				f.onLoad = function( d )
 				{
 					// Check file permissions!
-					var dn = icon.Path ? icon.Path.split( ':' )[0] : icon.Title;
+					var dn = icon.Path ? icon.Path.split( ':' )[ 0 ] : icon.Title;
 					var pt = icon.Path ? icon.Path : '';
+
+					// File on Dormant drive?
+					if ( icon.Dormant )
+					{
+						icon.Dormant.getFileInformation( icon.Path, function( infos )
+						{
+							setInformation( infos );
+						} );
+						return;
+					} 
 
 					var sn = new Library( 'system.library' );
 					sn.onExecuted = function( returnCode, returnData )
@@ -3256,7 +4057,12 @@ html > body button
 								}
 							];
 						}
+						setInformation( rd );
+					}
+					sn.execute( 'file/access', { devname: dn, path: pt } ); 
 
+					function setInformation( rd )
+					{
 						w.setContent( d.split( '!!' ).join( Workspace.seed ) );
 
 						Workspace.iconInfoDataField( w.getWindowElement(), true );
@@ -3377,7 +4183,15 @@ html > body button
 						// Now we're ready to find these permissions!
 
 						// Setup public / private file
-						eles = w.getElementsByTagName( 'input' );
+						var inps = w.getElementsByTagName( 'input' );
+						var sels = w.getElementsByTagName( 'select' );
+						eles = [];
+						for( var n = 0; n < inps.length; n++ )
+							eles.push( inps[n] );
+						for( var n = 0; n < sels.length; n++ )
+							eles.push( sels[n] );
+						
+						
 						for( var a in eles )
 						{
 							// Skip non numeric element keys!
@@ -3395,6 +4209,64 @@ html > body button
 								var letr = attrname.substr( attrname.length - 1, 1 ).toLowerCase();
 								var mode = attrname.substr( 1, attrname.length - 2 ).toLowerCase();
 								eles[a].checked = permSettings[ mode ].indexOf( letr ) >= 0 ? 'checked' : '';
+							}
+							// Open with (mimetype integration)
+							else if( attrname == 'MimetypeIntegration' )
+							{
+								( function( ele ) {
+									var mn = new Module( 'system' );
+									mn.onExecuted = function( re, rd )
+									{
+										try
+										{
+											var appForMimetype;
+											var extension = icon.Filename.split( '.' );
+											extension = '.' + extension[ extension.length - 1 ].toLowerCase();
+											var apps = JSON.parse( rd );
+											for( var mi = 0; mi < apps.length; mi++ )
+											{
+												for( var ty = 0; ty < apps[mi].types.length; ty++ )
+												{
+													if( apps[mi].types[ty] == extension )
+													{
+														appForMimetype = apps[mi].executable;
+														break;
+													}
+												}
+											}
+											var m = new Module( 'system' );
+											m.onExecuted = function( e, d )
+											{
+												if( ele )
+												{
+													try
+													{
+														var apps = JSON.parse( d );
+														var str = '<option value="">Friend Workspace</option>';
+														for( var j = 0; j < apps.length; j++ )
+														{
+															var ex = '';
+															if( apps[j].Name == appForMimetype )
+																ex = ' selected="selected"';
+															str += '<option' + ex + ' value="' + apps[j].Name + '">' + apps[j].Name + '</option>';
+														}
+														ele.innerHTML = str;
+													}
+													catch( e )
+													{
+														ele.innerHTML = '<option value="">No applications available.</option>';
+													}
+												}
+											}
+											m.execute( 'listuserapplications' );
+										}
+										catch( e )
+										{
+											ele.innerHTML = '<option value="">Unrecognizable file format.</option>';
+										}
+									}
+									mn.execute( 'getmimetypes' );
+								} )( eles[ a ] );
 							}
 							// The public file functionality
 							else if( attrname == 'PublicLink' )
@@ -3523,11 +4395,77 @@ html > body button
 								}
 							}
 						}
+						
+						/*
+						// Add 
+						var wg = new Module( 'system' );
+						wg.onExecuted = function( returnCode, returnData )
+						{
+							if( returnCode != 'ok' )
+							{
+								return;
+							}
+							var wgselect = w.getWindowElement().getElementsByTagName( 'select' );
+							var wgfound = false;
+							for( var a = 0; a < wgselect.length; a++ )
+							{
+								if( wgselect[a].getAttribute( 'name' ) == 'workgroup_sharing' )
+								{
+									wgselect = wgselect[a];
+									wgfound = true;
+									break;
+								}
+							}
+							if( !wgfound ) return;
+							var js = JSON.parse( returnData );
+							if( !js ) return;
+							for( var a = 0; a < js.length; a++ )
+							{
+								var opt = document.createElement( 'option' );
+								opt.innerHTML = i18n( 'i18n_sharewith' ) + ' ' + js[a].Name;
+								opt.value = js[a].ID;
+								wgselect.appendChild( opt );
+							}
+							wgselect.addEventListener( 'change', function( e )
+							{
+								var v = this.value;
+								var u = new Library( 'system.library' );
+								u.onExecuted = function( suc, sdt )
+								{
+									var l = new Library( 'system.library' );
+									l.onExecuted = function( ret, dat )
+									{
+										if( ret == 'ok' )
+										{
+											console.log( 'We got ' + dat );
+										}
+										else
+										{
+											console.log( 'Failed to mount: ', dat, icon );
+										}
+									}
+									l.execute( 'device', {
+										command: 'mount',
+										devname: dn,
+										usergroupid: v,
+										type: icon.Driver
+									} );
+								}
+								u.execute( 'device', {
+									command: 'unmount',
+									devname: dn
+								} );
+							} );
+							return;
+						}
+						wg.execute( 'workgroups' );
+						*/
+
 
 						// Initialize tab system
 						InitTabs( ge( 'IconInfo_' + Workspace.seed ) );
 					}
-					sn.execute( 'file/access', { devname: dn, path: pt } );
+
 				}
 				f.load();
 			}
@@ -3741,9 +4679,35 @@ html > body button
 			if( Trim( permInputs.others ) )
 				perm.others = Trim( permInputs.others );
 			perm.path = args.Path;
-			var la = new Library( 'system.library' );
-			la.onExecuted = function(){};
-			la.execute( 'file/protect', perm );
+
+			// Is this a dormant drive?
+			var drive = args.Path.split( ':' )[ 0 ] + ':';
+			var done = false;
+			var doors = DormantMaster.getDoors();
+			if( doors )
+			{
+				for( var d in doors )
+				{
+					var door = doors[ d ];
+					if( door.Title == drive )
+					{
+						if ( door.Dormant )
+						{
+							done = true;
+							door.Dormant.setFileInformation( perm, function( response )
+							{
+							} );
+						}
+					}
+				}
+			}
+			// Normal drive
+			if ( !done )
+			{
+				var la = new Library( 'system.library' );
+				la.onExecuted = function(){};
+				la.execute( 'file/protect', perm );
+			}
 		}
 
 		// Security domain
@@ -3948,8 +4912,9 @@ html > body button
 	logout: function()
 	{
 		// FIXME: implement
-		DelCookie( 'loginUsername' );
-		DelCookie( 'loginPassword' );
+		window.localStorage.removeItem( 'WorkspaceUsername' );
+		window.localStorage.removeItem( 'WorkspacePassword' );
+		window.localStorage.removeItem( 'WorkspaceSessionID' );
 
 		var keys = parent.ApplicationStorage.load( { applicationName : 'Workspace' } );
 
@@ -4011,6 +4976,10 @@ html > body button
 				Workspace.logout();
 			}
 		});
+	},
+	handleBackButton: function()
+	{
+		Notify({'title':'Back button pressed.','text':'Handle this in workspace_inside line 4660.'});
 	},
 	// Get a list of all applications ------------------------------------------
 	listApplications: function()
@@ -4102,6 +5071,8 @@ html > body button
 	// Compress files
 	zipFiles: function()
 	{
+		var zipPath = currentMovable.content.fileInfo.Path;
+		
 		Notify( { title: i18n( 'i18n_zip_start' ), text: i18n( 'i18n_zip_startdesc' ) } );
 		var ic = currentMovable.content.icons;
 		var f = [];
@@ -4154,7 +5125,17 @@ html > body button
 					Notify( { title: i18n( 'i18n_zip_not_completed' ), text: i18n( 'i18n_zip_not_comdesc' ) + ': ' +  ( files.split( ';' ).join( ', ' ) ) } );
 				}
 			}
-			s.execute( 'file/compress', { files: files, archiver: 'zip', destination: dest } );
+			var lpath = dest;
+
+			if( lpath.lastIndexOf( '/' ) > 0 )
+			{
+				lpath = lpath.slice( 0, lpath.lastIndexOf( '/' )+1 );
+			}
+			else if( lpath.lastIndexOf( ':' ) > 0 )
+			{
+				lpath = lpath.slice( 0, lpath.lastIndexOf( ':' )+1 );
+			}
+			s.execute( 'file/compress', { source: zipPath, files: files, archiver: 'zip', destination: dest, path: lpath } );
 		}
 	},
 	// Uncompress files
@@ -4175,6 +5156,7 @@ html > body button
 			for( var a = 0; a < f.length; a++ )
 			{
 				var s = new Library( 'system.library' );
+				s.file = f[a].Path;
 				s.onExecuted = function( e, d )
 				{
 					if( e == 'ok' )
@@ -4231,6 +5213,13 @@ html > body button
 		var iconsInClipboard = ( friend.workspaceClipBoard && friend.workspaceClipBoard.length > 0 );
 
 		var canUnmount = false;
+		var cannotWrite = false;
+		var dormant = false;
+		var canBeShared = false;
+		var shareIcon = null;
+		var downloadIcon = null;
+		var directoryIcon = false;
+		var shareCount = 0;
 		if( iconsSelected )
 		{
 			canUnmount = true;
@@ -4245,6 +5234,35 @@ html > body button
 						{
 							volumeIcon = true;
 						}
+						if ( ics[ a ].Type == 'File' || ics[ a ].Type == 'Directory' )
+						{
+							var drive = ics[ a ].Path.split( ':' )[ 0 ];
+						
+							// Share option only if Friend Network is on and not in the system disk
+							if ( Workspace.friendNetworkEnabled )
+							{
+								
+								if ( drive != 'System' )
+								{
+									shareIcon = ics[ a ];
+									shareCount++;
+									canBeShared = true;
+									if( ics[a].Type == 'Directory' )
+										directoryIcon = true;
+								}
+							}
+							
+							if( drive != 'System' )
+								downloadIcon = ics[a];
+
+							// File or directory on a Dormant drive? Check if write-only
+							if ( ics[ a ].Dormant )
+							{
+								dormant = true;
+								if ( !ics[ a ].Dormant.dosActions )
+									cannotWrite = false;
+							}
+						}
 						if( ics[a].Volume == 'System:' )
 						{
 							canUnmount = false;
@@ -4253,6 +5271,8 @@ html > body button
 				}
 			}
 		}
+		if ( shareCount > 1 )
+			canBeShared = false;
 
 		// Init menu -----------------------------------------------------------
 		var tools = '';
@@ -4281,19 +5301,35 @@ html > body button
 		this.menu = [
 			{
 				name: i18n( 'menu_system' ),
+				icon: 'MenuSystem',
 				items:
 				[
 					{
 						name:	i18n( 'menu_about_friendup' ),
 						command: function(){ AboutFriendUP(); }
 					},
-					/*{
-						name:	i18n( 'information' ),
-						command: function(){ Workspace.informationWindow( 1 ); }
-					},*/
 					{
 						name:	i18n( 'my_account' ),
 						command: function(){ Workspace.accountSetup(); }
+					},
+					{
+						name:	i18n( 'menu_examine_system' ),
+						command: function()
+						{ 
+							var d = false;
+							for( var a = 0; a < Workspace.icons.length; a++ )
+							{
+								if( Workspace.icons[a].Volume == 'System:' )
+								{
+									d = Workspace.icons[a];
+									break;
+								}
+							}
+							if( d )
+							{
+								OpenWindowByFileinfo( d, false );
+							}
+						}
 					},
 					{
 						divider: true
@@ -4306,21 +5342,17 @@ html > body button
 						divider: true
 					},
 					{
-						name:	i18n( 'clear_cache' ),
-						command: function(){ ClearCache(); }
-					},
-					{
 						name:	i18n( 'menu_refresh_desktop' ),
 						command: function(){ Workspace.refreshDesktop( false, true ); }
 					},
-					{
+					!( window.isMobile || window.isTablet ) ? {
 						name:   i18n( 'menu_backdrop' ),
 						command: function(){ Workspace.backdrop(); }
-					},
-					{
+					} : false,
+					!( window.isMobile || window.isTablet || window.isSettopBox ) ? {
 						name:	i18n( 'menu_fullscreen' ),
 						command: function(){ Workspace.fullscreen(); }
-					},
+					}: false,
 					{
 						divider: true
 					},
@@ -4357,74 +5389,6 @@ html > body button
 					}
 				]
 			},
-			{
-				name: i18n( 'menu_window' ),
-				items:
-				[
-					/*{
-						name:	i18n( 'menu_open_parent_directory' ),
-						command: function(){ Workspace.openParentDirectory(); },
-						disabled: !iconsAvailable || volumeIcon
-					},*/
-					{
-						name:	i18n( 'menu_refresh_directory' ),
-						command: function(){ Workspace.refreshDirectory(); },
-						disabled: !iconsAvailable
-					},
-					{
-						name:   i18n( 'menu_hide_all_views' ),
-						command: function(){ Workspace.hideAllViews(); },
-						disabled: !windowsOpened
-					},
-					{
-						name:   i18n( 'menu_hide_inactive_views' ),
-						command: function(){ Workspace.hideInactiveViews(); },
-						disabled: !windowsOpened
-					},
-					/*{
-						name:	i18n( 'menu_open_directory' ),
-						command: function(){ Workspace.openDirectory(); },
-						disabled: !iconsSelected
-					},*/
-					iconsAvailable ? {
-						name: i18n( 'menu_show_as' ),
-						items:
-						[
-							{
-								name:	 i18n( 'menu_show_as_icons' ),
-								command: function(){ Workspace.viewDirectory( 'iconview' ); }
-							},
-							{
-								name:	 i18n( 'menu_show_as_compact' ),
-								command: function(){ Workspace.viewDirectory( 'compact' ); }
-							},
-							{
-								name:	 i18n( 'menu_show_as_list' ),
-								command: function(){ Workspace.viewDirectory( 'listview' ); }
-							}/*,
-							{
-								name:	i18n( 'menu_show_as_columns' ),
-								command: function(){ Workspace.viewDirectory('columnview'); }
-							}*/
-						]
-					} : false,
-					/*{
-						name:	i18n( 'menu_snapshot' ),
-						items:
-						[
-							{
-								name:	i18n( 'menu_snapshot_all' ),
-								command: function(){ SaveWindowStorage(); }
-							}
-						]
-					},*/
-					{
-						name:	i18n( 'menu_close_window' ),
-						command: function(){ CloseWindow( window.currentMovable ) },
-						disabled: !windowsOpened
-					}
-				]
-			},
 			/*{
 				name: i18n( 'menu_edit' ),
 				items:
@@ -4440,6 +5404,7 @@ html > body button
 			},*/
 			{
 				name: i18n( 'menu_icons' ),
+				icon: 'MenuFile',
 				items:
 				[
 					{
@@ -4450,17 +5415,17 @@ html > body button
 					{
 						name:	i18n( 'menu_paste' ),
 						command: function() { Workspace.pasteFiles(); },
-						disabled: !iconsInClipboard || systemDrive
+						disabled: !iconsInClipboard || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_new_weblink' ),
 						command: function() { Workspace.weblink(); },
-						disabled: !iconsAvailable || systemDrive
+						disabled: !iconsAvailable || systemDrive || dormant
 					},
 					{
 						name:	i18n( 'menu_new_directory' ),
 						command: function() { Workspace.newDirectory(); },
-						disabled: !iconsAvailable || systemDrive
+						disabled: !iconsAvailable || systemDrive || cannotWrite
 					},
 					{
 						name:	i18n( 'menu_show_icon_information' ),
@@ -4470,27 +5435,27 @@ html > body button
 					{
 						name:	i18n( 'menu_edit_filename' ),
 						command: function() { Workspace.renameFile(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive )
+						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite )
 					},
 					{
 						name:	i18n( 'menu_zip' ),
 						command: function() { Workspace.zipFiles(); },
-						disabled: ( !iconsSelected || volumeIcon || systemDrive )
+						disabled: ( !iconsSelected || volumeIcon || systemDrive || cannotWrite || dormant )
 					},
 					{
 						name:	i18n( 'menu_unzip' ),
 						command: function() { Workspace.unzipFiles(); },
-						disabled: !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive
+						disabled: !iconsSelected || !Workspace.selectedIconByType( 'zip' ) || systemDrive || cannotWrite || dormant
 					},
-					{
-						name:	i18n( 'menu_openfolder' ),
-						command: function( event ) { Workspace.openFolder( event ); },
-						disabled: ( !iconsSelected || volumeIcon  || systemDrive )
-					},
+					//{
+					//	name:	i18n( 'menu_openfolder' ),
+					//	command: function( event ) { Workspace.openFolder( event ); },
+					//	disabled: ( !iconsSelected || volumeIcon  || systemDrive )
+					//},
 					{
 						name:	i18n( 'menu_delete' ),
 						command: function() { Workspace.deleteFile(); },
-						disabled: ( !iconsSelected || volumeIcon ) || systemDrive
+						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite
 					},
 					{
 						divider: true
@@ -4552,9 +5517,90 @@ html > body button
 							}
 						},
 						disabled: _cajax_process_count <= 0
+					},
+					{
+						name:	i18n( 'menu_share' ),
+						command: function() { FriendNetworkShare.sharePath( shareIcon.Path, shareIcon.Type ); },
+						disabled: ( !iconsSelected || volumeIcon ) || systemDrive || cannotWrite || !canBeShared
+					},
+					{
+						name:	i18n( 'menu_download' ),
+						command: function() { Workspace.download( downloadIcon.Path ); },
+						disabled: ( !iconsSelected || volumeIcon || systemDrive || dormant || directoryIcon )
 					}
 				]
-			}/*,
+			},
+			{
+				name: i18n( 'menu_window' ),
+				icon: 'MenuWindow',
+				items:
+				[
+					/*{
+						name:	i18n( 'menu_open_parent_directory' ),
+						command: function(){ Workspace.openParentDirectory(); },
+						disabled: !iconsAvailable || volumeIcon
+					},*/
+					{
+						name:	i18n( 'menu_refresh_directory' ),
+						command: function(){ Workspace.refreshDirectory(); },
+						disabled: !iconsAvailable
+					},
+					isMobile ? false : {
+					
+						name:   i18n( 'menu_hide_all_views' ),
+						command: function(){ Workspace.hideAllViews(); },
+						disabled: !windowsOpened
+					},
+					isMobile ? false : {
+						name:   i18n( 'menu_hide_inactive_views' ),
+						command: function(){ Workspace.hideInactiveViews(); },
+						disabled: !windowsOpened
+					},
+					/*{
+						name:	i18n( 'menu_open_directory' ),
+						command: function(){ Workspace.openDirectory(); },
+						disabled: !iconsSelected
+					},*/
+					iconsAvailable ? {
+						name: i18n( 'menu_show_as' ),
+						items:
+						[
+							{
+								name:	 i18n( 'menu_show_as_icons' ),
+								command: function(){ Workspace.viewDirectory( 'iconview' ); }
+							},
+							{
+								name:	 i18n( 'menu_show_as_compact' ),
+								command: function(){ Workspace.viewDirectory( 'compact' ); }
+							},
+							{
+								name:	 i18n( 'menu_show_as_list' ),
+								command: function(){ Workspace.viewDirectory( 'listview' ); }
+							}/*,
+							{
+								name:	i18n( 'menu_show_as_columns' ),
+								command: function(){ Workspace.viewDirectory('columnview'); }
+							}*/
+						]
+					} : false,
+					/*{
+						name:	i18n( 'menu_snapshot' ),
+						items:
+						[
+							{
+								name:	i18n( 'menu_snapshot_all' ),
+								command: function(){ SaveWindowStorage(); }
+							}
+						]
+					},*/
+					{
+						name:	i18n( 'menu_close_window' ),
+						command: function(){ CloseWindow( window.currentMovable ) },
+						disabled: !windowsOpened
+					}
+				]
+			}
+			/*,
 			{
 				name: i18n( 'menu_bookmarks' ),
 				items: Workspace.getBookmarks()
@@ -4582,6 +5628,31 @@ html > body button
 				}
 			]
 		} );*/
+	},
+	download: function( path )
+	{
+		var fn = path.split( ':' )[1];
+		if( fn.indexOf( '/' ) > 0 )
+			fn = fn.split( '/' ).pop();
+		
+		var dowloadURI = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fn + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( path ) + '&download=1';
+		
+		//check if we are inside one of our apps with a custom download handler....
+		if( typeof( friendApp ) != 'undefined' && typeof friendApp.download == 'function' )
+		{
+			friendApp.download( dowloadURI );			
+		}
+		else
+		{
+			var i = document.createElement( 'iframe' );
+			i.src = dowloadURI;
+			setTimeout( function()
+				{
+					document.body.removeChild( i );
+				}
+			, 250 );
+			document.body.appendChild( i );			
+		}
 	},
 	// Show the backdrop
 	backdrop: function()
@@ -4626,33 +5697,39 @@ html > body button
 		SetWindowStorage( uid, d );
 		window.currentMovable.content.redrawIcons();
 	},
-	showContextMenu: function( menu, e )
+	showContextMenu: function( menu, e, extra )
 	{
 		if( window.isMobile ) return;
 
 		var tr = e.target ? e.target : e.srcElement;
-
+		
+		if( tr == window )
+			tr = document.body;
+		
 		var findView = false;
 		var el = tr;
-		while( el != document.body )
+		if( el )
 		{
-			if( el.classList && el.classList.contains( 'Content' ) )
-				break;
-			if( el.classList && el.classList.contains( 'View' ) )
+			while( el != document.body )
 			{
-				findView = el;
-				break;
+				if( el.classList && el.classList.contains( 'Content' ) )
+					break;
+				if( el.classList && el.classList.contains( 'View' ) )
+				{
+					findView = el;
+					break;
+				}
+				else if( el.classList && el.classList.contains( 'Task' ) )
+				{
+					findView = el.view;
+					break;
+				}
+				el = el.parentNode;
 			}
-			else if( el.classList && el.classList.contains( 'Task' ) )
-			{
-				findView = el.view;
-				break;
-			}
-			el = el.parentNode;
 		}
 
 		// Check for the window context menu
-		if( !menu && tr.classList && findView && globalConfig.workspacecount > 1 )
+		if( !menu && tr.classList && findView )
 		{
 			menu = [];
 			function addWSMenuItem( m, a )
@@ -4666,10 +5743,15 @@ html > body button
 				} );
 			}
 			
-			for( var a = 0; a < globalConfig.workspacecount; a++ )
+			// For multiple workspaces
+			if( globalConfig.workspacecount > 1 )
 			{
-				addWSMenuItem( menu, a );
+				for( var a = 0; a < globalConfig.workspacecount; a++ )
+				{
+					addWSMenuItem( menu, a );
+				}
 			}
+			
 			menu.push( {
 				name: i18n( 'menu_close_window' ),
 				command: function()
@@ -4690,13 +5772,6 @@ html > body button
 					}
 				},
 				{
-					name: i18n( 'menu_manage_disks' ),
-					command: function()
-					{
-						ExecuteApplication( 'DiskCatalog' );
-					}
-				},
-				{
 					name: i18n( 'menu_add_storage' ),
 					command: function()
 					{
@@ -4709,7 +5784,7 @@ html > body button
 					{
 						Workspace.refreshDesktop();
 					}
-				},
+				}
 			];
 		}
 		else if( !menu )
@@ -4728,8 +5803,6 @@ html > body button
 				if( Workspace.menu[z].name == i18n( 'menu_icons' ) )
 				{
 					menu = Workspace.menu[z].items;
-					
-					
 					break;
 				}
 			}
@@ -4737,6 +5810,26 @@ html > body button
 
 		if( menu )
 		{
+			// Allow a 300 ms delay for mouseup'ing
+			Workspace.contextMenuAllowMouseUp = false;
+			setTimeout( function()
+			{
+				Workspace.contextMenuAllowMouseUp = true;
+			}, 300 );
+			
+			// Applications uses global X&Y coords
+			if( extra && extra.applicationId )
+			{
+				e.clientY = windowMouseY;
+				e.clientX = windowMouseX;
+			}
+			
+			if( isTablet || isMobile )
+			{
+				e.clientX = e.touches[0].pageX;
+				e.clientY = e.touches[0].pageY;
+			}
+			
 			var flg = {
 				width: 200,
 				height: 100,
@@ -4750,13 +5843,24 @@ html > body button
 				v = Workspace.iconContextMenu;
 			}
 			else v = Workspace.iconContextMenu = new Widget( flg );
+			
+			this.contextMenuShowing = v;
+			
 			v.dom.innerHTML = '';
 			var menuout = document.createElement( 'div' );
 			menuout.className = 'MenuItems';
 			
 			var head = document.createElement( 'p' );
 			head.className = 'MenuHeader';
-			head.innerHTML = i18n( 'menu_icons' );
+			// Custom header?
+			if( extra && extra.header )
+			{
+				head.innerHTML = extra.header;
+			}
+			else
+			{
+				head.innerHTML = i18n( 'menu_icons' );
+			}
 			menuout.appendChild( head );
 
 			for( var z = 0; z < menu.length; z++ )
@@ -4770,16 +5874,43 @@ html > body button
 				}
 				else
 				{
-					p.cmd = menu[z].command;
+					if( extra && extra.applicationId )
+					{
+						( function( m ){
+							p.cmd = function( e )
+							{
+								var app = findApplication( extra.applicationId );
+								if( extra.viewId && app.windows[ extra.viewId ] )
+								{
+									app.windows[ extra.viewId ].sendMessage( { command: m.command, data: m.data } );
+								}
+								else app.postMessage( { command: m.command, data: m.data }, '*' );
+							}
+						} )( menu[ z ] );
+					}
+					else
+					{
+						p.cmd = menu[z].command;
+					}
 					p.onclick = function( event )
 					{
+						if( !v.shown ) return;
 						this.cmd( event );
 						v.hide();
+						Workspace.contextMenuShowing = false;
+						return cancelBubble( event );
 					}
+					// Mouse up on context menus has timeout
 					p.onmouseup = function( event )
 					{
-						this.cmd( event );
-						v.hide();
+						if( Workspace.contextMenuAllowMouseUp )
+						{ 
+							if( !v.shown ) return;
+							this.cmd( event );
+							v.hide();
+							Workspace.contextMenuShowing = false;
+							return cancelBubble( event );
+						}
 					}
 				}
 				p.innerHTML = menu[z].name;
@@ -4816,14 +5947,20 @@ html > body button
 		}
 		f.load();
 	},
+	maxSearchProcesses: 5,
 	// Do the actual searching
 	searchExecute: function()
 	{
 		if( !this.searchView ) return;
+		var self = this;
+
+		// Abort existing search runs!
+		KillcAjaxByContext( 'workspace_search' );
 
 		ge( 'WorkspaceSearchResults' ).innerHTML = '';
 		this.searching = true;
 		this.searchPaths = [];
+		this.queuedSearches = [];
 		this.searchMatches = [];
 		var keyz = ge( 'WorkspaceSearchKeywords' ).value.split( ',' ).join( ' ' ).split( ' ' );
 		this.searchKeywords = [];
@@ -4839,39 +5976,61 @@ html > body button
 		ge( 'WorkspaceSearchStop' ).style.visibility = 'visible';
 		ge( 'WorkspaceSearchGo' ).style.display = 'none';
 
-		var searchProcesses = false;
+		var searchProcesses = 0;
+		var maxSearchProcesses = this.maxSearchProcesses;
+		
 		var insensitive = ge( 'SearchCaseSensitive' ).checked ? false : true;
 		var doSearch = function( path )
 		{
 			// Abort!
 			if( !Workspace.searching ) return;
 
+			if( typeof( path ) == 'undefined' )
+			{
+				return;
+			}
+
 			// Don't search this twice
 			for( var y = 0; y < Workspace.searchPaths.length; y++ )
 			{
 				if( Workspace.searchPaths[y] == path )
 				{
-					found = true;
 					return;
 				}
 			}
-			Workspace.searchPaths.push( path );
+			
+			// Respect limit
+			if( searchProcesses > maxSearchProcesses )
+			{
+				self.queuedSearches.push( path );
+				//console.log( '  - Too many processes (' + searchProcesses + ') - waiting with ' + path );
+				return;
+			}
 
 			// Go!
+			Workspace.searchPaths.push( path );
 			searchProcesses++;
 			var d = ( new Door() ).get( path );
 			if( !d || !d.getIcons )
 			{
 				searchProcesses--;
-				if( searchProcesses == 0 ) Workspace.searchStop();
+				if( searchProcesses == 0 )
+				{
+					Workspace.searchStop( 'check', doSearch );
+				}
 				return;
 			}
+			d.context = 'workspace_search';
 			d.getIcons( false, function( data )
 			{
 				if( !data.length )
 				{
 					searchProcesses--;
-					if( searchProcesses == 0 ) Workspace.searchStop();
+					if( searchProcesses == 0 )
+					{
+						Workspace.searchStop( 'check', doSearch );
+					}
+					return;
 				}
 				for( var u = 0; u < data.length; u++ )
 				{
@@ -4918,15 +6077,19 @@ html > body button
 				}
 				Workspace.searchRefreshMatches();
 				searchProcesses--;
-				if( searchProcesses == 0 ) Workspace.searchStop();
+				if( searchProcesses == 0 )
+				{
+					Workspace.searchStop( 'check', doSearch );
+				}
 			} );
 		}
+		// Search by disks
 		this.getMountlist(function(data)
 		{
-			var p;
-			for ( p = 0; p < data.length; p++ )
+			var p = 0;
+			for( ; p < data.length; p++ )
 			{
-				doSearch(data[p].Path);
+				doSearch( data[p].Path );
 			}
 		});
 	},
@@ -5011,13 +6174,40 @@ html > body button
 		}
 		this.searchView.setFlag( 'height', oh );
 	},
-	searchStop: function()
+	searchStop: function( reason, callback )
 	{
+		// We stopped because we have finished all active processes
+		// Check queue
+		if( reason && reason == 'check' && Workspace.queuedSearches.length > 0 )
+		{
+			var copy = [];
+			for( var a = 0; a < Workspace.queuedSearches.length; a++ )
+			{
+				copy.push( Workspace.queuedSearches[a] );
+			}
+			Workspace.queuedSearches = [];
+			if( copy.length > 0 )
+			{
+				for( var a = 0; a < copy.length; a++ )
+					callback( copy[ a ] );
+				return;
+			}
+		}
+		
+		// Abort existing search runs!
+		KillcAjaxByContext( 'workspace_search' );
+		
 		this.searching = false;
 		ge( 'WorkspaceSearchStop' ).style.display = 'none';
 		ge( 'WorkspaceSearchGo' ).style.display = '';
 	},
-	launch: function( app )
+	hideLauncherError: function()
+	{
+		Workspace.launcherWindow.setFlag( 'max-height', 80 );
+		Workspace.launcherWindow.setFlag( 'height', 80 );
+		ge( 'launch_error' ).innerHTML = '';
+	},
+	launch: function( app, hidecallback )
 	{
 		var args = false;
 		if( app.indexOf( ' ' ) > 0 )
@@ -5028,6 +6218,36 @@ html > body button
 				args += ( a > 0 ? ' ' : '' ) + app[a];
 			app = app[0];
 		}
+		
+		// Error handling
+		function cbk( message )
+		{
+			if( !message || ( message && !message.error ) )
+			{
+				return hidecallback();
+			}
+			var ww = Workspace.launcherWindow;
+			if( ww && ge( 'launch_error' ) )
+			{
+				ww.setFlag( 'max-height', 140 );
+				ww.setFlag( 'height', 140 );
+				ge( 'launch_error' ).innerHTML = '<p id="launchErrorWarning" class="Danger Rounded PaddingSmall">' + message.errorMessage + '</p>';
+				var b = document.createElement( 'span' );
+				b.className = 'FloatRight IconSmall fa-remove';
+				b.innerHTML = '&nbsp;';
+				ge( 'launchErrorWarning' ).appendChild( b );
+				b.onclick = function()
+				{
+					ww.setFlag( 'max-height', 80 );
+					ww.setFlag( 'height', 80 );
+					ge( 'launch_error' ).innerHTML = '';
+				}
+			}
+			if( message.error == 2 )
+				return true;
+			return false;
+		}
+		
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
@@ -5039,14 +6259,14 @@ html > body button
 				{
 					if( js[a].Name.toLowerCase() == app.toLowerCase() )
 					{
-						return ExecuteApplication( js[a].Name, args );
+						return ExecuteApplication( js[a].Name, args, cbk );
 					}
 				}
-				ExecuteApplication( app, args );
+				ExecuteApplication( app, args, cbk );
 			}
 			catch( e )
 			{
-				ExecuteApplication( app, args );
+				ExecuteApplication( app, args, cbk );
 			}
 		}
 		m.execute( 'listuserapplications' );
@@ -5242,10 +6462,15 @@ html > body button
 									path: file.fileInfo.Path, pathid: file.fileInfo.ID + ( file.fileInfo.Type == 'Directory' ? '/' : '' ) 
 								}, nextFile );
 							}
+							// Dormant?
+							else if ( file.fileInfo.Dormant )
+							{
+								file.fileInfo.Dormant.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+							}
 							// Path
 							else
 							{
-								files[a].door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
+								file.door.dosAction( 'delete', { path: file.fileInfo.Path }, nextFile );
 							}
 						}
 						doDeleteFiles( files, 0 );
@@ -5294,113 +6519,6 @@ html > body button
 	{
 		DeepestField.redraw();
 	},
-	// Let's get some updates available to the user from Friend Software Labs!
-	informationWindow: function( force )
-	{
-		if( !Workspace.sessionId ) return;
-
-		if( this.infoWindow )
-			return;
-
-		function showitnow()
-		{
-			var w = new View( {
-				title: "Updates from Friend Software Labs",
-				width: 800,
-				height: 500,
-				screen: Workspace.screen
-			} );
-			w.onClose = function()
-			{
-				Workspace.infoWindow = null;
-			}
-			Workspace.infoWindow = w;
-
-			var j = new File( '/webclient/updates.html' );
-			j.onLoad = function( data )
-			{
-				var rels = document.getElementsByTagName( 'link' );
-				var replaced = false;
-				for( var a = 0; a < rels.length; a++ )
-				{
-					if( rels[a].href.indexOf( 'theme' ) > 0 )
-					{
-						data = data.split( '{baseStyle}' ).join( '<link rel="stylesheet" href="' + rels[a].href + '"/>' );
-						data = data.split('{hideOnLoad}' ).join( ( Workspace.hideInfoWindow ? ' checked="checked"' : '' ) );
-						replaced = true;
-						break;
-					}
-				}
-				if( !replaced ) data = data.split( '{baseStyle}' ).join( '' );
-				w.setRichContent( data );
-			}
-			j.load();
-		}
-
-		if( force )
-			return showitnow();
-
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'fail' )
-			{
-				showitnow();
-			}
-
-			var infosetting = false;
-			try{
-				infosetting = JSON.parse( d );
-			}
-			catch(e)
-			{
-				return;
-			}
-
-			Workspace.hideInfoWindow = infosetting.infowindow == 'false' ? true : false;
-
-		}
-		m.execute( 'getsetting', { setting: 'infowindow' } );
-	},
-	disableInfoWindow: function()
-	{
-		var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e == 'ok' )
-			{
-				//dont close it...
-				//Workspace.infoWindow.close();
-				//Workspace.infoWindow = null;
-			}
-		}
-		m.execute( 'setsetting', { setting: 'infowindow', data: 'false' } );
-	},
-	informationWindowArchive: function()
-	{
-		if( !Workspace.sessionId ) return;
-
-		if( this.infoWindowArchive )
-			return;
-		var w = new View( {
-			title: "Updates archive",
-			width: 800,
-			height: 500,
-			screen: Workspace.screen
-		} );
-		w.onClose = function()
-		{
-			Workspace.infoWindowArchive = null;
-		}
-		this.infoWindowArchive = w;
-
-		var j = new File( '/webclient/updates_archive.html' );
-		j.onLoad = function( data )
-		{
-			w.setContent( data );
-		}
-		j.load();
-	},
 	fullscreen: function( ele, e )
 	{
 		// Fullscreen enabled?
@@ -5447,31 +6565,76 @@ html > body button
 		this.fullscreenObject = el.fullscreenEnabled ? el : null;
 	},
 	// Set up user account
-	accountSetup: function( what )
+	accountSetup: function( args )
 	{
-		ExecuteApplication( 'Account' );
+		ExecuteApplication( 'Account', args );
 	},
 	//try to run a call and if does not get back display offline message....
 	checkServerConnectionHTTP: function()
 	{
+		// No home disk? Try to refresh the desktop
+		// Limit two times..
+		if( Workspace.icons.length <= 1 && Workspace.refreshDesktopIconsRetries < 2 )
+		{
+			Workspace.refreshDesktopIconsRetries++;
+			Workspace.refreshDesktop( function()
+			{
+				Workspace.redrawIcons();
+			}, true );
+		}
+		
 		// Just make sure we don't pile on somehow...
 		if( Workspace.serverHTTPCheckModule )
 		{
 			Workspace.serverHTTPCheckModule.destroy();
 			Workspace.serverHTTPCheckModule = null;
 		}
+		
+		var inactiveTimeout = false;
 		var m = new Module('system');
 		m.onExecuted = function( e, d )
 		{
+			if( inactiveTimeout )
+				clearTimeout( inactiveTimeout );
+			inactiveTimeout = false;
+			
+			try
+			{
+				var js = JSON.parse( d );
+				if( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 )
+				{
+					//console.log( 'The session has gone away! Relogin using login().' );
+					Workspace.sessionId = 0;
+					Workspace.login(); // Try login using local storage
+				}
+				else
+				{
+					console.log( js, this.jax.proxy.responseText );
+				}
+			}
+			catch( e )
+			{
+				console.log( 'I do not understand the result. Server may be down.' );
+			}
+			
+			//console.log( 'Response from connection checker: ', e, d );
 			if( e == 'fail' ) 
 			{
-				if( d == false ) return;
+				if( d == false ) 
+				{
+					Workspace.serverIsThere = false;
+					Workspace.workspaceIsDisconnected = true;
+					return;
+				}
 			}
 			Workspace.serverIsThere = true;
 			Workspace.workspaceIsDisconnected = false;
 		}
-		Workspace.serverIsThere = false;
+		// Only set serverIsThere if we don't have a response from the server
+		inactiveTimeout = setTimeout( function(){ Workspace.serverIsThere = false; }, 1000 );
+		
 		Workspace.serverHTTPCheckModule = m;
+		
 		m.forceHTTP = true;
 		m.execute( 'getsetting', { setting: 'infowindow' } );
 		return setTimeout( 'Workspace.checkServerConnectionResponse();', 1000 );
@@ -5493,231 +6656,326 @@ html > body button
 			Workspace.workspaceIsDisconnected = false;
 		}
 	},
-	buildWebApplication: function()
+	// Upgrade settings (for new versions)
+	upgradeWorkspaceSettings: function( cb )
 	{
-		var self = Workspace;
-
-		if ( self.createWebAppView )
-			return;
-
-		var v = new View(
+		var a1 = new Module( 'system' );
+		a1.onExecuted = function( a1r, a1d )
 		{
-			title: i18n( 'i18n_buildWebApp' ),
-			width: 384,
-			height: 680,
-			id: 'build_web_app'
-		} );
-		v.onClose = function(){ self.createWebAppView = false; }
-		self.createWebAppView = v;
-		self.createWebAppView.iconPath = '/webclient/gfx/icons/waIcon.png';
-		self.createWebAppView.previewPath = '/webclient/gfx/icons/waPreview.png';
-
-		var f = new File( 'System:templates/build_webapp.html' );
-		f.i18n();
-		f.onLoad = function( data )
-		{
-			v.setContent( data );
+			if( !a1r || a1r == 'fail' ) return;
+			var response = JSON.parse( a1d );
+			if( response.response == 1 )
+			{
+				Workspace.refreshTheme( response.themeName, true, response.themeConfig );
+				Workspace.reloadDocks();
+				Workspace.refreshDesktop( cb, true );
+			}
 		}
-		f.load();
+		a1.execute( 'upgradesettings' );
 	},
-	changeWebAppIcon: function()
+	handlePasteEvent: function( evt )
 	{
-		var self = Workspace;
-		var description =
+		var pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
+		for (i in pastedItems)
 		{
-			triggerFunction: function( item )
+			var item = pastedItems[i];
+			if (item.kind === 'file')
 			{
-				if ( item )
+			
+				var blob = item.getAsFile();
+				filetype = ( blob.type == '' ? 'application/octet-stream' : blob.type );
+				
+				Workspace.uploadBlob = blob;
+				console.log('Upload this file...',filetype,blob);
+				
+				var m = new Library( 'system.library' );
+				m.onExecuted = function( e, d )
 				{
-					self.createWebAppView.iconPath = item[ 0 ].Path;
-					document.getElementById( 'waIcon' ).src = item[ 0 ].Path;
-				}
-			},
-			path: "Home:Icons/Apps",
-			type: "load",
-			title: i18n( 'i18n_waChangeWebAppIconTitle' ),
-			filename: ""
-		}
-		var d = new Filedialog( description );
-
-	},
-	changeWebAppPreview: function()
-	{
-		var self = Workspace;
-		var description =
-		{
-			triggerFunction: function( item )
-			{
-				if ( item )
-				{
-					self.createWebAppView.previewPath = item[ 0 ].Path;
-					document.getElementById( 'waPreview' ).src = item[ 0 ].Path;
-				}
-			},
-			path: "Home:Icons/Previews",
-			type: "load",
-			title: i18n( 'i18n_waChangeWebAppPreviewTitle' ),
-			filename: ""
-		}
-		var d = new Filedialog( description );
-	},
-	createWebApplication: function()
-	{
-		var self = Workspace;
-		var f = new File( 'System:js/webapp_template.js' );
-		f.onLoad = function( data )
-		{
-			var template = data;
-
-			// Gets values from dialog box
-			var url = document.getElementById( 'waUrl' ).value;
-			var name = document.getElementById( 'waName' ).value;
-			var width = document.getElementById( 'waWidth' ).value;
-			var height = document.getElementById( 'waHeight' ).value;
-			var type  = document.getElementById( 'waType' ).value;
-			var author  = document.getElementById( 'waAuthor' ).value;
-			var description  = document.getElementById( 'waDescription' ).value;
-			var email  = document.getElementById( 'waEmail' ).value;
-
-			// Checks values
-			var OK = false;
-			do
-			{
-				if ( url.substring( 0, 7 ) != 'http://' && url.substring( 0, 8 ) != 'https://' )
-				{
-					Alert( i18n( 'i18n_waAlert' ), i18n( 'i18n_waWrongUrl' ) );
-					break;
-				}
-				if ( name.length == 0 )
-				{
-					Alert( i18n( 'i18n_waAlert' ), i18n( 'i18n_waWrongName' ) );
-					break;
-				}
-				var flag = true;
-				if ( width.length > 0 )
-				{
-					if ( parseInt( width, 10 ) < 32 )
-						flag = false;
-				}
-				if ( !flag )
-				{
-					Alert( i18n( 'i18n_waAlert' ), i18n( 'i18n_waWrongWidth' ) );
-					break;
-				}
-				if ( height.length > 0 )
-				{
-					if ( parseInt( height, 10 ) < 32 )
-						flag = false;
-				}
-				if ( !flag )
-				{
-					Alert( i18n( 'i18n_waAlert' ), i18n( 'i18n_waWrongHeight' ) );
-					break;
-				}
-				OK = true;
-			} while( false );
-			if ( OK )
-			{
-				var types =
-				[
-					'Internet',
-					'Games',
-					'Office',
-					'Graphics',
-					'Programming'
-				];
-
-				// Replace strings in template
-				var about0 = i18n( 'i18n_waAbout0' );
-				var about1 = i18n( 'i18n_waAbout1' );
-				var close = i18n( 'i18n_close' );
-				var file = i18n( 'menu_file' );
-				template = Workspace.replaceString( template, 'title_holder', name );
-				template = Workspace.replaceString( template, 'url_holder', url );
-				template = Workspace.replaceString( template, 'width_holder', width );
-				template = Workspace.replaceString( template, 'height_holder', height );
-				template = Workspace.replaceString( template, 'category_holder', types[ type ] );
-				template = Workspace.replaceString( template, 'author_holder', author );
-				template = Workspace.replaceString( template, 'about0_holder', about0 );
-				template = Workspace.replaceString( template, 'about1_holder', about1 );
-				template = Workspace.replaceString( template, 'about2_holder', author );
-				template = Workspace.replaceString( template, 'close_holder', close );
-				template = Workspace.replaceString( template, 'description_holder', description );
-				template = Workspace.replaceString( template, 'email_holder', email );
-				template = Workspace.replaceString( template, 'file_holder', file );
-				template = Workspace.replaceString( template, 'screen_holder', 'false' );
-
-				// Open a path file dialog and return selected files
-				var description =
-				{
-					triggerFunction: function( path )
+					//we have a downloads dir in home
+					if( e == 'ok' )
 					{
-						if ( typeof path === 'string' )
+						Workspace.uploadPastedFile( Workspace.uploadBlob );
+					}
+					else
+					{
+						//no downloads dir - try to make one
+						var m2 = new Library( 'system.library' );
+						m2.onExecuted = function( e, d )
 						{
-							// Cut and save files
-							var cut = Workspace.cutString( template, '<CUTMAIN>', '<ENDCUTMAIN>' );
-							var fl = new File( path + name + '.jsx' );
-							fl.save( cut );
-							cut = Workspace.cutString( template, '<CUTINDEX>', '<ENDCUTINDEX>' );
-							var fl = new File( path + 'index.html' );
-							fl.save( cut );
-							cut = Workspace.cutString( template, '<CUTABOUT>', '<ENDCUTABOUT>' );
-							var fl = new File( path + 'about.html' );
-							fl.save( cut );
-							cut = Workspace.cutString( template, '<CUTCONFIG>', '<ENDCUTCONFIG>' );
-							var fl = new File( path + 'Config.conf' );
-							fl.save( cut );
+							//home drive found. create directory
+							if( e == 'ok' )
+							{
+								var door = Workspace.getDoorByPath( 'Home:Downloads/' );
+								door.dosAction( 'makedir', { path: 'Home:Downloads/' }, function( result )
+								{
+									var res = result.split( '<!--separate-->' );
+									if( res[0] == 'ok' )
+									{
+										Workspace.uploadPastedFile( Workspace.uploadBlob );
+									}
+									// Failed - alert user
+									else
+									{
+										Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_could_not_create_downloads')});
+										return;
+									}
+								});
 							
-							// Copy the icon
-							var srcePath = self.createWebAppView.iconPath;
-							var door = new Door( srcePath );
-							var destPath = path + 'icon.png';
-							door.dosAction( 'copy', { from: srcePath, to: destPath } );
-
-							// Copy the preview
-							srcePath = self.createWebAppView.previewPath;
-							door = new Door( srcePath );
-							destPath = path + 'preview.png';
-							door.dosAction( 'copy', { from: srcePath, to: destPath } );
-
-							// Information message
-							Alert( i18n( 'i18n_waAlert' ), i18n( 'i18n_waCreated' ) );
-						}
-					},
-					path: "Mountlist:",
-					type: "path",
-					title: i18n( 'i18n_waFileSelectorTitle' ),
-					filename: ""
-					//mainView: 'build_web_app'
+							}
+							else
+							{
+								Notify({'title':i18n('i18n_paste_error'),'text':i18n('i18n_no_home_drive')});
+								return;
+							}
+						};						
+						m2.execute( 'file/dir', { path: 'Home:' } );
+					}
 				}
-				var d = new Filedialog( description );
-			}
-		}
-		f.load();
+				m.execute( 'file/dir', { path: 'Home:Downloads/' } );
+
+			} // if file item
+		} // each pasted iteam
 	},
-	replaceString: function( template, search, replace )
+	uploadPastedFile: function( file )
 	{
-		var pos = template.indexOf( search );
-		while( pos >= 0 )
+		//get directory listing for Home:Downloads - create folder if it does not exist...
+		var j = new cAjax ();
+		
+		var updateurl = '/system.library/file/dir?wr=1'
+		updateurl += '&path=' + encodeURIComponent( 'Home:Downloads' );
+		updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+		
+		j.open( 'get', updateurl, true, true );
+		j.onload = function ()
 		{
-			template = template.substring( 0, pos ) + replace + template.substring( pos + search.length );
-			pos = template.indexOf( search );
-		}
-		return template;
-	},
-	cutString: function( template, start, end )
-	{
-		var pStart = template.indexOf( start );
-		if ( pStart >= 0)
-		{
-			var pEnd = template.indexOf( end );
-			if ( pEnd >= 0 )
+			var content;
+			// New mode
+			if ( this.returnCode == 'ok' )
 			{
-				return template.substring( pStart + start.length, pEnd );
+				try
+				{
+					content = JSON.parse(this.returnData||"null");
+				}
+				catch ( e ){};
+			}
+			// Legacy mode..
+			// TODO: REMOVE FROM ALL PLUGINS AND MODS!
+			else
+			{
+				try
+				{
+					content = JSON.parse(this.responseText() || "null");
+				}
+				catch ( e ){}
+			}
+		
+			if( content )
+			{
+				var newfilename = file.name;
+				var i = 0;
+				while( DirectoryContainsFile( newfilename, content ) )
+				{
+					i++;
+					//find a new name
+					var tmp = file.name.split('.');
+					var newfilename = file.name;
+					if( tmp.length > 1 )
+					{
+						var suffix = tmp.pop();				
+						newfilename = tmp.join('.');
+						newfilename += '_' + i + '.' + suffix;
+					}
+					else
+					{
+						newfilename += '_' + i;
+					}
+					if( i > 100 )
+					{
+						Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. You have pasted many many files.'});
+						break; // no endless loop please	
+					}
+				}
+				Workspace.uploadFileToDownloadsFolder( file, newfilename );
+			}
+			else
+			{
+				Notify({'title':i18n('i18n_paste_error'),'text':'Really unexpected error. Contact your Friendly administrator.'});
 			}
 		}
-		return false;
+		j.send ();
+
+
+	}, // end of uploadPastedFile
+	uploadFileToDownloadsFolder: function( file, filename )
+	{
+		// Setup a file copying worker
+		var uworker = new Worker( 'js/io/filetransfer.js' );
+
+		// Open window
+		var w = new View( {
+			title:  i18n( 'i18n_copying_files' ),
+			width:  320,
+			height: 100,
+			id:     'fileops'
+		} );
+
+		var uprogress = new File( 'templates/file_operation.html' );
+
+		uprogress.connectedworker = uworker;
+
+		//upload dialog...
+		uprogress.onLoad = function( data )
+		{
+			data = data.split( '{cancel}' ).join( i18n( 'i18n_cancel' ) );
+			w.setContent( data );
+
+			w.connectedworker = this.connectedworker;
+			w.onClose = function()
+			{
+				if( this.connectedworker ) this.connectedworker.postMessage({'terminate':1});
+			}
+
+			uprogress.myview = w;
+
+			// Setup progress bar
+			var eled = w.getWindowElement().getElementsByTagName( 'div' );
+			var groove = false, bar = false, frame = false, progressbar = false;
+			for( var a = 0; a < eled.length; a++ )
+			{
+				if( eled[a].className )
+				{
+					var types = [ 'ProgressBar', 'Groove', 'Frame', 'Bar', 'Info' ];
+					for( var b = 0; b < types.length; b++ )
+					{
+						if( eled[a].className.indexOf( types[b] ) == 0 )
+						{
+							switch( types[b] )
+							{
+								case 'ProgressBar': progressbar    = eled[a]; break;
+								case 'Groove':      groove         = eled[a]; break;
+								case 'Frame':       frame          = eled[a]; break;
+								case 'Bar':         bar            = eled[a]; break;
+								case 'Info':		uprogress.info = eled[a]; break;
+							}
+							break;
+						}
+					}
+				}
+			}
+
+
+			//activate cancel button... we assume we only hav eone button in the template
+			var cb = w.getWindowElement().getElementsByTagName( 'button' )[0];
+
+			cb.mywindow = w;
+			cb.onclick = function( e )
+			{
+				uworker.terminate(); // End the copying process
+				this.mywindow.close();
+			}
+
+			// Only continue if we have everything
+			if( progressbar && groove && frame && bar )
+			{
+				progressbar.style.position = 'relative';
+				frame.style.width = '100%';
+				frame.style.height = '40px';
+				groove.style.position = 'absolute';
+				groove.style.width = '100%';
+				groove.style.height = '30px';
+				groove.style.top = '0';
+				groove.style.left = '0';
+				bar.style.position = 'absolute';
+				bar.style.width = '2px';
+				bar.style.height = '30px';
+				bar.style.top = '0';
+				bar.style.left = '0';
+
+				// Preliminary progress bar
+				bar.total = 1;
+				bar.items = 1;
+				uprogress.bar = bar;
+			}
+			uprogress.loaded = true;
+			uprogress.setProgress( 0 );
+		}
+
+		// For the progress bar
+		uprogress.setProgress = function( percent )
+		{
+			// only update display if we are loaded...
+			// otherwise just drop and wait for next call to happen ;)
+			if( uprogress.loaded )
+			{
+				uprogress.bar.style.width = Math.floor( Math.max(1,percent ) ) + '%';
+				uprogress.bar.innerHTML = '<div class="FullWidth" style="text-overflow: ellipsis; text-align: center; line-height: 30px; color: white">' +
+				Math.floor( percent ) + '%</div>';
+			}
+		};
+
+		// show notice that we are transporting files to the server....
+		uprogress.setUnderTransport = function()
+		{
+			uprogress.info.innerHTML = '<div id="transfernotice" style="padding-top:10px;">' +
+				'Transferring files to target volume...</div>';
+			uprogress.myview.setFlag( 'height', 125 );
+		}
+
+		// An error occurred
+		uprogress.displayError = function( msg )
+		{
+			uprogress.info.innerHTML = '<div style="color:#F00; padding-top:10px; font-weight:700;">'+ msg +'</div>';
+			uprogress.myview.setFlag( 'height', 140 );
+		}
+
+		// Error happened!
+		uworker.onerror = function( err )
+		{
+			console.log( 'Upload worker error #######' );
+			console.log( err );
+			console.log( '###########################' );
+		};
+		uworker.onmessage = function( e )
+		{
+			if( e.data['progressinfo'] == 1 )
+			{
+				if( e.data['uploadscomplete'] == 1 )
+				{
+					w.close();
+					Notify({'title':i18n('i18n_pasted_file'),'text':i18n('i18n_pasted_to_downloads') + '(' + filename +')' });
+					return true;
+				}
+				else if( e.data['progress'] )
+				{
+					uprogress.setProgress( e.data['progress'] );
+					if( e.data['filesundertransport'] && e.data['filesundertransport'] > 0 )
+					{
+						uprogress.setUnderTransport();
+					}
+				}
+
+			}
+			else if( e.data['error'] == 1 )
+			{
+				uprogress.displayError(e.data['errormessage']);
+			}
+
+		}
+
+		uprogress.load();
+
+		//hardcoded pathes here!! TODO!
+		var fileMessage = {
+			'session': Workspace.sessionId,
+			'targetPath': 'Home:Downloads/',
+			'targetVolume': 'Home',
+			'files': [ file ],
+			'filenames': [ filename ]
+		};
+		console.log('trying to upload here...',fileMessage);
+		uworker.postMessage( fileMessage );		
 	}
+
 };
 
 Doors = Workspace;
@@ -5758,6 +7016,151 @@ function DoorsKeyDown( e )
 			{
 				currentMovable.content.directoryview.SelectAll();
 				return cancelBubble( e );
+			}
+		}
+		else if( w == 77 || w == 27 )
+		{
+			Workspace.toggleStartMenu();
+			return cancelBubble( e );
+		}
+	}
+	
+	// Start menu key navigation
+	if( Workspace.smenu.visible )
+	{
+		var m = Workspace.smenu;
+		var move = false;
+		switch( e.which )
+		{
+			case 38:
+				move = 'up';
+				break;
+			case 40:
+				move = 'down';
+				break;
+			case 37:
+				move = 'right';
+				break;
+			case 39:
+				move = 'left';
+				break;
+			case 13:
+				move = 'enter';
+				break;
+		}
+		if( move )
+		{
+			// Cycle
+			if( !m.currentItem )
+			{
+				var cm = m.dom.getElementsByTagName( '*' )[0];
+				if( !cm )
+					return;
+				var itms = cm.getElementsByClassName( 'DockMenuItem' );
+				if( move == 'up' )
+				{
+					for( var a = 0; a < itms.length; a++ )
+					{
+						if( itms[a].parentNode != cm ) continue;
+					}
+					m.currentItem = itms[ a - 1 ];
+				}
+				else if( move == 'down' )
+				{
+					m.currentItem = itms[0];
+				}
+			}
+			// Cycle
+			else
+			{
+				var itms = m.currentItem.parentNode.getElementsByClassName( 'DockMenuItem' );
+				if( move == 'enter' )
+				{
+					m.currentItem.onclick( e );
+				}
+				else if( move == 'left' )
+				{
+					var ts = m.currentItem.getElementsByClassName( 'DockMenuItem' );
+					for( var a = 0; a < ts.length; a++ )
+					{
+						if( ts[a].parentNode != ts[0].parentNode ) continue;
+						m.currentItem = ts[a];
+					}
+				}
+				else if( move == 'right' )
+				{
+					m.currentItem = m.currentItem.parentNode.parentNode;
+				}
+				else if( move == 'up' )
+				{
+					var sameLevel = [];
+					for( var a = 0; a < itms.length; a++ )
+					{
+						if( itms[a].parentNode != m.currentItem.parentNode )
+							continue;
+						sameLevel.push( itms[a] );
+					}
+					for( var a = 0; a < sameLevel.length; a++ )
+					{
+						if( sameLevel[a] == m.currentItem )
+						{
+							if( a > 0 )
+							{
+								m.currentItem = sameLevel[ a - 1 ];
+								break;
+							}
+							else
+							{
+								m.currentItem = sameLevel[ sameLevel.length - 1 ];
+								break;
+							}
+						}
+					}
+				}
+				else if( move == 'down' )
+				{
+					var sameLevel = [];
+					for( var a = 0; a < itms.length; a++ )
+					{
+						if( itms[a].parentNode != m.currentItem.parentNode )
+							continue;
+						sameLevel.push( itms[a] );
+					}
+					for( var a = 0; a < sameLevel.length; a++ )
+					{
+						if( sameLevel[a] == m.currentItem )
+						{
+							if( a < sameLevel.length - 1 )
+							{
+								m.currentItem = sameLevel[ a + 1 ];
+								break;
+							}
+							else
+							{
+								m.currentItem = sameLevel[ 0 ];
+								break;
+							}
+						}
+					}
+				}
+			}
+			if( m.currentItem )
+			{
+				var itms = Workspace.smenu.dom.getElementsByTagName( '*' );
+				for( var a = 0; a < itms.length; a++ )
+				{
+					if( itms[a] != m.currentItem )
+					{
+						if( itms[a].classList ) itms[a].classList.remove( 'Active' );
+					}
+				}
+				var t = m.currentItem;
+				while( t && t != Workspace.smenu )
+				{
+					if( t.classList && t.classList.contains( 'DockMenuItem' ) )
+						t.classList.add( 'Active' );
+					t = t.parentNode;
+				}
 			}
 		}
 	}
@@ -5917,6 +7320,11 @@ function WindowResizeFunc()
 	Workspace.repositionWorkspaceWallpapers();
 	if( isMobile && Workspace.widget )
 		Workspace.widget.setFlag( 'width', window.innerWidth );
+	for( var a in movableWindows )
+	{
+		if( movableWindows[a].content && movableWindows[a].content.redrawIcons )
+			movableWindows[a].content.redrawIcons();
+	}
 }
 
 function InitWorkspaceEvents()
@@ -5955,7 +7363,7 @@ function InitWorkspaceNetwork()
 	}
 
 	wsp.checkFriendNetwork();
-
+	
 	if( window.PouchManager && !this.pouchManager )
 		this.pouchManager = new PouchManager();
 }
@@ -5975,7 +7383,7 @@ function AboutFriendUP()
 {
 	if( !Workspace.sessionId ) return;
 	var v = new View( {
-		title: i18n( 'about_friendup' ) + ' v1.1.1',
+		title: i18n( 'about_friendup' ) + ' v1.2rc1',
 		width: 540,
 		height: 560,
 		id: 'about_friendup'
@@ -6006,6 +7414,11 @@ function ClearCache()
 {
 	var m = new FriendLibrary( 'system.library' );
 	m.execute( 'clearcache' );
+	
+	if( typeof friendApp != 'undefined' && typeof friendApp.clear_cache == 'function')
+	{
+		friendApp.clear_cache();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -6134,6 +7547,9 @@ function handleServerMessage( e )
 	}
 }
 
+/*
+	handle notification that comes from another user via websocket
+*/
 function handleServerNotice( e )
 {
 	var msg = {
@@ -6157,4 +7573,11 @@ for( var a in WorkspaceInside )
 	Workspace[a] = WorkspaceInside[a];
 delete WorkspaceInside;
 InitDynamicClassSystem();
+
+
+document.addEventListener( 'paste', function( evt )
+{
+	console.log('paste event received',evt);
+	Workspace.handlePasteEvent( evt );
+});
 

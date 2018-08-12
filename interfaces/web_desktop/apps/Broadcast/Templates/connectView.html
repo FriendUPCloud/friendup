@@ -1,0 +1,64 @@
+<link rel="stylesheet" href="Progdir:CSS/flex.css"/>
+<link rel="stylesheet" href="Progdir:CSS/common.css"/>
+<link rel="stylesheet" href="Progdir:CSS/connect.css"/>
+
+<div id="connect" class="bar column pad-it BackgroundDefault">
+	<div id="invite" class="fortify">
+		<div class="title">
+			{i18n_invite_by_username}
+		</div>
+		<form id="inv-form" class="group row">
+			<div class="input-wrap expand">
+				<input type="text" placeholder="i18n_username">
+			</div>
+			<button type="submit" class="button fortify">
+				<i class="fa fa-fw fa-user"></i>
+				{i18n_invite}
+			</button>
+		</form>
+	</div>
+	<div id="group" class="expand bar column">
+		<div class="title fortify">
+			{i18n_invite_logged_in_users}
+		</div>
+		<div class="expand flex-reset">
+			<div id="users-list" class="group row start left wrap">
+			
+			</div>
+		</div>
+		<div class="fortify group row tighten">
+			<button id="refresh-list" class="button" type="button">
+				<i class="fa fa-fw fa-refresh"></i>
+				{i18n_refresh_list}
+			</button>
+			<button id="select-all" class="button" type="button">
+				<i class="fa fa-fw fa-list"></i>
+				{i18n_select_all}
+			</button>
+			<button id="group-invite" class="button" type="button">
+				<i class="fa fa-fw fa-users"></i>
+				{i18n_invite}
+			</button>
+		</div>
+	</div>
+</div>
+<div id="fragments" class="hidden">
+
+<!-- user
+username
+-->
+<script id="user-tmpl" type="text/html">
+<div class="user-item group row Interactive">
+	<input type="checkbox" id="<%= id %>" class="user-check fortify">
+	<label for="<%= id %>" class="user-label expand">
+		<%= username %>
+	</label>
+</div>
+</script>
+
+</div> <!-- closing fragments -->
+
+<script src="/webclient/js/gui/template.js"></script>
+<script src="Progdir:Scripts/view.js"></script>
+<script src="Progdir:Scripts/connectView.js"></script>
+

@@ -806,8 +806,8 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 					sqllib->FreeResult( sqllib, res );
 				}
-				l->LibrarySQLDrop( l, sqllib );
 			}
+			l->LibrarySQLDrop( l, sqllib );
 		}
 		
 		if( as == NULL  )
@@ -1207,7 +1207,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			{
 				// finding our current session on list
 				
-				pthread_mutex_lock( &as->as_SessionsMut );
+				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 				
 				SASUList *srcli = as->as_UserSessionList;
 				while( srcli != NULL )
@@ -1259,7 +1259,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 				
-				pthread_mutex_unlock( &as->as_SessionsMut );
+				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{
@@ -1338,7 +1338,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			FERROR("AS %p  asval %lu\n", as, asval );
 			if( as != NULL )
 			{
-				pthread_mutex_lock( &as->as_SessionsMut );
+				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 				// finding our current session on list
 				
 				SASUList *srcli = as->as_UserSessionList;
@@ -1411,7 +1411,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					HttpAddTextContent( response, dictmsgbuf );
 				}
 				
-				pthread_mutex_unlock( &as->as_SessionsMut );
+				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 			}
 			else
 			{
@@ -1505,7 +1505,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				// trying to find existing variable, because ID was passed
 				
-				pthread_mutex_lock( &as->as_VariablesMut );
+				FRIEND_MUTEX_LOCK( &as->as_VariablesMut );
 				if( varid != NULL )
 				{
 					FULONG varidlong = strtoull( varid,  &end, 0 );
@@ -1569,7 +1569,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 				}
 				
-				pthread_mutex_unlock( &as->as_VariablesMut );
+				FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 				
 				if( le != NULL )
 				{
@@ -1648,7 +1648,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 				
 				// trying to find existing variable, because ID was passed
 				
-				pthread_mutex_lock( &as->as_VariablesMut );
+				FRIEND_MUTEX_LOCK( &as->as_VariablesMut );
 				if( varid != NULL )
 				{
 					FULONG varidlong = strtoull( varid,  &end, 0 );
@@ -1664,7 +1664,7 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 					}
 				}
 				
-				pthread_mutex_unlock( &as->as_VariablesMut );
+				FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 				
 				if( le != NULL )
 				{

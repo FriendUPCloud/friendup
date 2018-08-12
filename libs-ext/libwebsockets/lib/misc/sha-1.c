@@ -32,7 +32,7 @@
  * implemented by Jun-ichiro itojun Itoh <itojun@itojun.org>
  */
 
-#include "private-libwebsockets.h"
+#include "core/private.h"
 
 #ifdef LWS_HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -45,7 +45,7 @@ struct sha1_ctxt {
 	} h;
 	union {
 		unsigned char		b8[8];
-		u_int64_t		b64[1];
+		uint64_t		b64[1];
 	} c;
 	union {
 		unsigned char		b8[64];

@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head mobile="mobile" sharedapp="sharedapp">
-		<title>Friend UP</title>
+		<title>Friend Workspace</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 		<style>
 			html body.Loading * { visibility: hidden; }
 			html body.Loading { background-color: #444444; }
 		</style>
-		<link rel="stylesheet" href="css/friendup.css;/webclient/theme/scrollbars.css;webclient/theme/theme_compiled.css;/webclient/css/sharedapp.css"/>
+		<link rel="stylesheet" href="css/friendup.css;/themes/borderless/scrollbars.css;/themes/borderless/theme_compiled.css;/webclient/css/sharedapp.css"/>
 		<script src="
 			/webclient/js/namespace.js;
 			webclient/3rdparty/adapter.js;
@@ -29,6 +29,13 @@
 			webclient/js/utils/sha256.js;
 			webclient/js/io/authenticate.js;
 			webclient/js/io/friendnetwork.js;
+			webclient/js/io/friendnetworkshare.js;
+			webclient/js/io/friendnetworkdoor.js;
+			webclient/js/io/friendnetworkfriends.js;
+			webclient/js/io/friendnetworkdrive.js;
+			webclient/js/io/friendnetworkextension.js;
+			webclient/js/io/friendnetworkapps.js;
+			webclient/js/io/DOS.js;
 			webclient/js/utils/md5.js;
 			webclient/js/utils/tool.js;
 			webclient/js/utils/speech-input.js;
@@ -37,9 +44,11 @@
 			webclient/js/io/directive.js;
 			webclient/js/io/coreSocket.js;
 			webclient/js/io/networkSocket.js;
+			webclient/js/io/p2p.js;
 			webclient/js/io/connection.js;
 			webclient/js/io/door.js;
 			webclient/js/io/dormant.js;
+			webclient/js/io/dormantramdisc.js;
 			webclient/js/io/door_system.js;
 			webclient/js/io/module.js;
 			webclient/js/io/friendlibrary.js;
@@ -59,6 +68,7 @@
 			webclient/js/gui/filedialog.js;
 			webclient/js/gui/desklet.js;
 			webclient/js/gui/calendar.js;
+			webclient/js/gui/filebrowser.js;
 			webclient/js/media/audio.js;
 			webclient/js/apiwrapper.js;
 			webclient/js/friendmind.js;

@@ -1494,7 +1494,7 @@ Workspace = {
 				Mounted:  true,
 				Door:	  new DoorSystem( 'System:' )
 			});
-			
+
 			// Check dormant
 			if( DormantMaster )
 			{
@@ -1512,7 +1512,30 @@ Workspace = {
 							isfound = true;
 					if( !isfound )
 					{
-						newIcons.push( doors[a] );
+						var dormantDoor = doors[ a ];
+						if ( dormantDoor.AutoMount )
+						{
+							newIcons.push( 
+							{
+								Title:	dormantDoor.Title,
+								Volume:   dormantDoor.Volume,
+								Path:	 dormantDoor.Path,
+								Type:	 dormantDoor.Type,
+								Handler: 'built-in',
+								Driver: 'Dormant',
+								MetaType: 'Directory',
+								IconClass: 'SystemDisk',
+								ID:	   'local', // TODO: fix
+								Mounted:  true,
+								Visible: true,
+								Door: dormantDoor,
+								Dormant: dormantDoor.Dormant
+							} );						
+						}
+						else
+						{
+							newIcons.push( doors[a] );
+						}
 					}
 					found.push( doors[a] );
 				}

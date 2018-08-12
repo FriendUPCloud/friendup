@@ -1,0 +1,12 @@
+<h1>Send notification to your mobile apps</h1>
+<div class="Box Padding">
+Title:<input type="text" id="notification_title">
+</div>
+
+<div class="Box Padding">
+Message:<input type="text" id="notification_message">
+</div>
+
+<div class="Box Padding">
+<input type="button" value="Send" onClick="new Library('notifications.library').execute('notify?message='+encodeURIComponent(document.getElementById('notification_message').value)+'&title='+encodeURIComponent(document.getElementById('notification_title').value));">
+</div>

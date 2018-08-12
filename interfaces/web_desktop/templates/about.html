@@ -1,137 +1,178 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<script src="
-		/webclient/js/apps/api.js;
-		/repository/packages/three_r75/three.min.js;
-		/webclient/js/native/ftheory.js"
-	></script>
-	<style>
-		body,html
-		{ 
-			margin: 0;
-			padding: 0; 
-			background: #000; 
-		}
-		#fc-info
-		{
-			position: relative;
-			color: white;
-			padding-top : 0.3em;
-		}
-		#buildInfo
-		{
-			background: rgba( 230, 230, 230, 0.6 );
-			padding:12px;
-		}
-		#buildInfo .item,
-		.contributorBlock
-		{
-			float: left; 
-			min-width:156px; 
-			width: 33%; 
-			color: white; 
-			text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
-		}
-		#buildInfo .label
-		{
-			opacity:0.8;
-			display:block;
-		}
-		#contributors
-		{
-			padding:12px;
-			background: rgba( 230, 230, 230, 0.3 ); 
-			color: white; 
-			text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
-			position: relative;
-			overflow: auto;
-			transform : scale( 1 );
-			opacity: 1;
-			transition: all 2s;
-		}
+	<head>
+		<script src="
+			/webclient/js/apps/api.js;
+			/repository/packages/three_r75/three.min.js;
+			/webclient/js/native/ftheory.js;
+			/webclient/js/about_effect.js"
+		></script>
+		<style>
+			body,html
+			{ 
+				margin: 0;
+				padding: 0; 
+				overflow: hidden;
+			}
+			#fc-info
+			{
+				position: relative;
+				color: white;
+				padding-top : 0.3em;
+			}
+			#buildInfo
+			{
+				background: rgba( 230, 230, 230, 0.6 );
+				padding:12px;
+			}
+			#buildInfo .item,
+			.contributorBlock
+			{
+				float: left; 
+				min-width:156px; 
+				width: 33%; 
+				color: white; 
+				text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+			}
+			#buildInfo .label
+			{
+				opacity:0.8;
+				display:block;
+			}
+			#contributors
+			{
+				position: absolute;
+				box-sizing: border-box;
+				top: 0;
+				left: 0;
+				width: 100%; 
+				height: 100%;
+				padding: 0;
+				background: rgba( 230, 230, 230, 0.3 ); 
+				color: white; 
+				text-shadow: 0px 1px 1px rgba(0,0,0,0.6);
+				position: relative;
+				overflow: hidden;
+				transform : scale( 1 );
+				opacity: 1;
+				transition: all 1s;
+			}
+			#contributors_inside
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				padding: 15px;
+				transition: top 1.5s;
+				box-sizing: border-box;
+				width: 100%;
+			}
 		
-		#contributors a {
-			text-decoration: none;
-			color : white;
-			border-bottom : 1px solid white;
-		}
+			#contributors a {
+				text-decoration: none;
+				color : white;
+				border-bottom : 1px solid white;
+			}
 		
-		.Loading #contributors
-		{
-			transform : scale( 0.5 );
-			opacity: 0;
-		}
+			.Loading #contributors
+			{
+				transform : scale( 0.5 );
+				background: black;
+				opacity: 0;
+			}
 		
-		#FTheoryCanvasContainer {
-			position: absolute;
-			top: 0;
-			left: 0;
-			bottom: 0;
-			right: 0;
-			background: #222
-		}
+			#FTheoryCanvasContainer
+			{
+				position: absolute;
+				top: 0;
+				left: 0;
+				bottom: 0;
+				right: 0;
+				background: #222
+			}
 		
-		#content {
-			height: 100%;
-			width: 100%;
-			display: flex;
-			flex-direction: column;
-		}
+			#content 
+			{
+				overflow: hidden;
+				height: 100%;
+				width: 100%;
+			}
 		
-		#logo {
-			position: relative;
-			width: 100%;
-			flex : 1 1 auto;
-		}
+			#logo {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 280px;
+			}
 		
-		#logo img {
-			position: absolute;
-			top : 50%;
-			left: 50%;
-			transform: translate( -50%, -50% );
-			max-width:calc( 100% - 40px );
-			display:block;
-			margin:0 auto;
-		}
+			#logo img {
+				position: absolute;
+				top : 50%;
+				left: 50%;
+				transform: translate( -50%, -50% );
+				max-width:calc( 100% - 40px );
+				display:block;
+				margin:0 auto;
+			}
 		
-		#info {
-			flex : 0 0 auto;
-		}
+			#info {
+				position: absolute;
+				top: 280px;
+				left: 0;
+				width: 100%;
+				height: calc(100% - 280px);
+			}
 		
-		html body.Loading > * { visibility: hidden; }
-		html body.Loading { background-color: #444444; }
-	</style>
-</head>
-<body class="Loading">
-	<div id="FTheoryCanvasContainer" style=""></div>
-	<div id="content" class="ScrollArea" style="">
-		<div id="logo" style="">
-			<img src="/webclient/gfx/system/logo_480_light.png" style=""/>
-		</div>
-		<div id="info">
-			<div id="fc-info"></div>
-			<div id="contributors" style="">
-				<p class="Layout"><strong>Developers:</strong></p>
-				<p>
-					Chris André Strømland, 
-					Espen Olsen, 
-					Francois Lionet, 
-					Hogne Titlestad, 
-					Michael Nilsen, 
-					Paul Lassa, 
-					Pawel Stefanski,
-					Thomas Wollburg,
-					Artur Langner.
-				<p>
-					Please remember to visit our website for more information:
-				</p>
-				<p>
-					<a href="https://friendup.cloud/" target="_blank">friendup.cloud</a>
-				</p>
-				<div style="clear: both"></div>
+			html body.Loading > * { visibility: hidden; }
+			html body.Loading { background-color: #444444; }
+		</style>
+	</head>
+	<body class="Loading">
+		<div id="FTheoryCanvasContainer" style=""></div>
+		<div id="content" class="ScrollArea" style="">
+			<div id="logo" style="">
+				<img src="/webclient/gfx/system/logo_480_light.png" style=""/>
+			</div>
+			<div id="info">
+				<div id="fc-info"></div>
+				<div id="contributors" style="">
+					<div id="contributors_inside">
+						<p>
+							<strong>Welcome to your first cloud computer operating system!</strong>
+						</p>
+						<p>
+							Friend has been in development since February, 2014 by Friend Software Labs.
+							It is now a global project with participators from all over the world.
+							We hope you will enjoy using this platform, which aims to give you; Freedom,
+							Empowerment, Privacy, Intelligence and Integration.
+						</p>
+						<p class="Layout"><strong>Developers:</strong></p>
+						<p>
+							Chris André Strømland, 
+							Espen Olsen, 
+							Francois Lionet, 
+							Hogne Titlestad, 
+							Michael Nilsen, 
+							Paul Lassa, 
+							Pawel Stefanski,
+							Thomas Wollburg,
+							Artur Langner.
+						</p>
+						<p class="Layout"><strong>UX Design:</strong></p>
+						<p>
+							Torbjørn Rott, Hogne Titlestad, Owen Barnes
+						</p>
+						<p>
+							Please remember to visit our websites for more information:
+						</p>
+						<p>
+							<a href="https://friendsoftware.cloud/" target="_blank">Corporate</a> | <a href="https://friendup.tech/" target="_blank">OSS Project</a> | <a href="https://friendup.cloud/" target="_blank">Friend Network</a>
+						</p>
+						<br style="clear: both"/>
+					</div>
+				</div>
 			</div>
 		</div>
-	</div>
-</body>
+	</body>
 </html>

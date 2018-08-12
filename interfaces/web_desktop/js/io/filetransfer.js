@@ -31,6 +31,7 @@ var files = [];
 var volume;
 var path;
 var session;
+var authid;
 var totals = 0;
 var filecounter = [];
 var filesundertransport = 0;
@@ -107,10 +108,12 @@ self.checkVolume = function()
 	xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
 	
 	var data = [];
-	data.push( 'sessionid=' + encodeURIComponent( self.session ) );
+	data.push( self.session ? ( 'sessionid=' + encodeURIComponent( self.session ) ) : ( 'authid=' + self.authid ) );
 	data.push( 'module=system' );
 	data.push( 'command=volumeinfo' );
 	data.push( 'args=' + encodeURIComponent( '{"path":"' + self.volume + ':"}' ) );
+	
+	console.log( 'Here: ' + data.join( '&' ) );
 
 	xhr.send( data.join( '&' ) );
 } // end of checkVolumne
@@ -126,6 +129,7 @@ self.uploadFiles = function()
 		if( typeof self.files[ f ] != 'object' ) continue;
 		
 		var file = self.files[ f ];
+		var filename = ( self.filenames && self.filenames[ f ] ? self.filenames[ f ] : file.name );
 		
 		xhrs[f] = new XMLHttpRequest();
 		xhrs[f].upload.uploadfileindex = xhrs[ f ].uploadfileindex = f;
@@ -185,17 +189,20 @@ self.uploadFiles = function()
 				} );
 			}
 		}
+		
 		xhrs[f].open( 'POST', '/system.library/file/upload', true );
 		xhrs[f].setRequestHeader( 'Method', 'POST /system.library/file/upload HTTP/1.1' );
 		xhrs[f].setRequestHeader( 'Content-Type', 'multipart/form-data;' );
 		
 		// add request data...
 		var fd = new FormData();
-		fd.append( 'sessionid',self.session );
+		if( self.session )
+			fd.append( 'sessionid',self.session );
+		else fd.append( 'authid', self.authid );
 		fd.append( 'module','files' );
 		fd.append( 'command','uploadfile' );
 		fd.append( 'path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
-		fd.append( 'file', file );
+		fd.append( 'file', file, filename );
 		
 		//get the party started
 		xhrs[f].send( fd );
@@ -210,14 +217,17 @@ self.onmessage = function( e )
 	if( e.data && e.data.files && e.data.targetVolume && e.data.targetPath )
 	{
 		self.files = e.data.files;
+		self.filenames = ( e.data.filenames ? e.data.filenames : false );
 		self.volume = e.data.targetVolume;
 		self.path = e.data.targetPath.split( ':/' ).join( ':' );
 		self.session = e.data.session;
+		self.authid = e.data.authid;
 		self.checkVolume();
 	}
 	// Do a copy using objecturl instead of file!
 	else if( e.data.objectdata )
 	{
+		self.authid = e.data.authid;
 		self.session = e.data.session;
 		self.volume = e.data.targetVolume;
 		self.path = e.data.targetPath;

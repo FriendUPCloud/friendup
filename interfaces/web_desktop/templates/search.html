@@ -4,7 +4,7 @@
 			<div id="SearchGuiContainer">
 				<div class="HRow MarginBottom">
 					<div class="HContent100">
-						<input type="text" class="FullWidth InputHeight" id="WorkspaceSearchKeywords" placeholder="{i18n_search_keywords}"/>
+						<input type="text" class="FullWidth InputHeight" id="WorkspaceSearchKeywords" placeholder="{i18n_search_keywords}" onkeydown="if( event.which == 13 ){ Workspace.searchExecute(); }"/>
 					</div>
 				</div>
 				<div class="HRow MarginBottom">

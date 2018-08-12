@@ -256,7 +256,7 @@ if( isset( $args->command ) )
 				'usersetup', 'usersetupadd', 'usersetupapply', 'usersetupsave', 'usersetupdelete',
 				'usersetupget', 'workgroups', 'workgroupadd', 'workgroupupdate', 'workgroupdelete',
 				'workgroupget', 'setsetting', 'getsetting', 'listlibraries', 'listmodules',
-				'listuserapplications', 'getmimetypes',  'setmimetypes', 'deletemimetypes',
+				'listuserapplications', 'getmimetypes',  'setmimetype', 'setmimetypes', 'deletemimetypes',
 				'deletecalendarevent', 'getcalendarevents', 'addcalendarevent',
 				'listappcategories', 'systempath', 'listthemes', 'settheme', /* DEPRECATED - look for comment below 'userdelete',*/'userunblock',
 				'usersettings', 'listsystemsettings', 'savestate', 'getsystemsetting',
@@ -297,8 +297,21 @@ if( isset( $args->command ) )
 		case 'systempath':
 			require( 'modules/system/include/systempath.php' );
 			break;
+		case 'setmetadata':
+			require( 'modules/system/include/setmetadata.php' );
+			break;
+		case 'getmetadata':
+			require( 'modules/system/include/getmetadata.php' );
+			break;
+		case 'resetguisettings':
+			require( 'modules/system/include/resetguisettings.php' );
+			break;
 		case 'software':
 			require( 'modules/system/include/software.php' );
+			break;
+		// Upgrade Friend!
+		case 'upgradesettings':
+			require( 'modules/system/include/upgradesettings.php' );
 			break;
 		// Check a proxy connection
 		case 'proxycheck':
@@ -1302,7 +1315,7 @@ if( isset( $args->command ) )
 				$s->Delete();
 				die( 'ok' );
 			}
-			die( 'fail<!--separate-->' . $s->_lastQuery );
+			die( 'fail<!--separate-->' ); //. $s->_lastQuery );
 			break;
 		// Add a filesystem bookmark
 		case 'addbookmark':
@@ -1391,6 +1404,9 @@ if( isset( $args->command ) )
 				die( 'ok<!--separate-->' . json_encode( $out ) );
 			}
 			die( 'fail<!--separate-->' );
+			break;
+		case 'applicationdetails':
+			require( 'modules/system/include/applicationdetails.php' );
 			break;
 		case 'finddocumentation':
 			if( isset( $args->args->path ) && substr( strtolower( $args->args->path ), 0, 7 ) == 'system:' )
@@ -2073,6 +2089,9 @@ if( isset( $args->command ) )
 		case 'getmimetypes':
 			require( 'modules/system/include/getmimetypes.php' );
 			break;
+		case 'setmimetype':
+			require( 'modules/system/include/setmimetype.php' );
+			break;
 		case 'setmimetypes':
 			require( 'modules/system/include/setmimetypes.php' );
 			break;
@@ -2210,11 +2229,12 @@ if( isset( $args->command ) )
 
 
 		case 'listsystemsettings':
+			if( $level != 'Admin' ) die('fail<!--separate-->{"response":"unauthorized access to system settings"}' );
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM FSetting s
 				WHERE
 					s.UserID = \'-1\'
-				ORDER BY s.Key ASC
+				ORDER BY s.Type ASC, s.Key ASC
 			' ) )
 			{
 				die( 'ok<!--separate-->' . json_encode( $rows ) );
@@ -2293,9 +2313,18 @@ if( isset( $args->command ) )
 			break;
 
 
-		// handle FriendUp version
+		// Handle FriendUP version
 		case 'friendversion':
 			require( 'modules/system/include/friendversion.php' );
+			break;
+		
+		// List server services
+		case 'getservices':
+			if( $level == 'Admin' )
+			{
+				require( 'modules/system/include/getservices.php' );
+			}
+			die( 'fail' );
 			break;
 		
 		// get server publickey, create keypairs if not found

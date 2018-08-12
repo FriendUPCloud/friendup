@@ -1,0 +1,41 @@
+i18n_waCreateWebApp					    : Create
+i18n_waCancel							: Cancel
+i18n_waTitle							: Build a web Application
+i18n_waUrl								: Web site URL (must start with 'http' or 'https')
+i18n_waName								: Name of the application
+i18n_waAuthor							: Your name
+i18n_waEmail							: Your email address
+i18n_waDescription						: Information about this application
+i18n_waWidth							: Width
+i18n_waHeight							: Height
+i18n_waCategory							: Application's category
+i18n_waWindow							: Window
+i18n_typeWebApp							: Type
+i18n_waWrongUrl							: Enter the URL in the form of 'http://www.website.com' or 'https://www.website.com'
+i18n_waWrongName						: Enter a name for the new applicationName
+i18n_waWrongWidth						: Window width must be a positive number
+i18n_waWrongHeight						: Window height must be a positive number
+i18n_waGames							: Games
+i18n_waOffice							: Office
+i18n_waGraphics							: Graphics
+i18n_waProgramming						: Programming
+i18n_waInternet							: Internet
+i18n_waCreated							: Web application successfully created.
+i18n_waAbout0							: About
+i18n_waAbout1							: This application has been created by
+i18n_waFile								: File
+i18n_waFileSelectorTitle				: Please choose where to save the new application...
+i18n_waIcon								: Application icon
+i18n_waPreview							: Application preview image
+i18n_waChange							: Change
+i18n_waChangeWebAppPreviewTitle			: Please choose a png image to use a preview
+i18n_waChangeWebAppIconTitle			: Please choose a png image to use as icon
+i18n_waPleaseFill						: Application definition
+i18n_waClose							: Close
+i18n_waAlert                            : Alert
+i18n_waSuccess                          : Success
+i18n_waCannotCreatePackage				: An error has occured while creating the package.
+i18n_waPackageCreated					: Package created. You can now install it on your Friend machine.
+i18n_waBlankAuthor						: Your name
+i18n_waBlankEmail						: yourmail@yourserver.com
+i18n_waBlankDescription					: A description of this application

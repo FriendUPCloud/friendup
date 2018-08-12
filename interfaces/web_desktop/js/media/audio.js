@@ -21,20 +21,68 @@
 SoundObject = function( filename, callback )
 {
 	var self = this;
-	this.audio = document.createElement ( 'audio' );
 	this.callback = callback;
 
-	// Load an audio file
-	this.audio.src = filename;
-	this.audio.onloadeddata = loaded;
-	this.audio.load ();
-	this.audio.onended = onEnded;
-	this.audio.onplaying = onPlaying;
-	this.audio.onpause = onPause;
-	this.loops = 0;
-	this.volume = 1;
-	this.playing = false;
-	this.paused = true;
+	var file = new File( filename );
+	file.onLoad = function( data )
+	{
+		// Check for error
+		if ( typeof data == 'string' )
+		{
+			if( str.substr( 0, 19 ) == 'fail<!--separate-->' )
+			{
+				return;
+			}
+		}
+
+		// Get the mimetype
+		var ext, mime = 'audio/x-wav';
+		var pos = filename.lastIndexOf( '.' );
+		if ( pos )
+		{
+			ext = filename.substring( pos + 1 );
+			switch ( ext.toLowerCase() )
+			{
+				case 'mp3':
+					mime = 'audio/mpeg';
+					break;
+				case 'weba':
+					mime = 'audio/webm';
+					break;
+				case 'ogg':
+				case 'oga':
+					mime = 'audio/ogg';
+					break;
+				case 'aac':
+					mime = 'audio/aac';
+					break;
+				case 'wav':
+					mime = 'audio/x-wav';
+					break;			
+			}
+		}
+		
+		// Create the blob, load the image
+		var arrayBufferView = new Uint8Array( data );
+		var blob = new Blob( [ arrayBufferView ], { type: mime } );
+		var urlCreator = window.URL || window.webkitURL;
+		var url = urlCreator.createObjectURL( blob );
+
+		self.audio = document.createElement ( 'audio' );
+		self.audio.onloadeddata = function()
+		{
+			self.audio.onended = onEnded;
+			self.audio.onplaying = onPlaying;
+			self.audio.onpause = onPause;
+			self.loops = 0;
+			self.volume = 1;
+			self.playing = false;
+			self.paused = true;
+			self.callback( true );
+		}
+		self.audio.src = url;
+	};
+	file.load( 'rb' );
 
 	// On file loaded
 	function loaded()

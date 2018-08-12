@@ -120,7 +120,7 @@ void UserSessionDelete( UserSession *us )
 	
 		DEBUG("[UserSessionDelete] Remove session %p\n", us );
 
-		pthread_mutex_lock( &(us->us_Mutex) );
+		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 		
 		WebsocketClient *nwsc = us->us_WSClients;
 		us->us_WSClients = NULL;
@@ -137,13 +137,13 @@ void UserSessionDelete( UserSession *us )
 			{
 				rws = nwsc;
 				
-				pthread_mutex_lock( &(rws->wc_Mutex) );
+				FRIEND_MUTEX_LOCK( &(rws->wc_Mutex) );
 				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
 				rws->wc_UserSession = NULL;
-				pthread_mutex_unlock( &(rws->wc_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(rws->wc_Mutex) );
 			}
 		}
 
@@ -164,7 +164,7 @@ void UserSessionDelete( UserSession *us )
 		{
 			FFree( us->us_SessionID );
 		}
-		pthread_mutex_unlock( &(us->us_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(us->us_Mutex) );
 		pthread_mutex_destroy( &(us->us_Mutex) );
 	
 		FFree( us );

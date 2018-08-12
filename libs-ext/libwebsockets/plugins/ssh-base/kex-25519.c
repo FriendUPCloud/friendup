@@ -109,7 +109,7 @@ lws_mpint_rfc4251(uint8_t *dest, const uint8_t *src, int bytes, int uns)
 	while (bytes--)
 		*dest++ = *src++;
 
-	return dest - odest;
+	return lws_ptr_diff(dest, odest);
 }
 
 int
@@ -146,17 +146,16 @@ ed25519_key_parse(uint8_t *p, size_t len, char *type, size_t type_len,
 		return 6;
 
 	publ = lws_g32(&p); /* length of pubkey block */
-	if ((p - op) + publ >= len)
+	if ((size_t)((p - op) + publ) >= len)
 		return 7;
 
 	l = lws_g32(&p); /* key type length */
 	if (l > 31)
 		return 8;
 	m = l;
-	if (m > type_len)
-		m = type_len -1 ;
-	strncpy(type, (const char *)p, m);
-	type[m] = '\0';
+	if (m >= type_len)
+		m = (uint32_t)type_len -1 ;
+	lws_strncpy(type, (const char *)p, m + 1);
 
 	p += l;
 	l = lws_g32(&p); /* pub key length */
@@ -166,7 +165,7 @@ ed25519_key_parse(uint8_t *p, size_t len, char *type, size_t type_len,
 	p += l;
 
 	publ = lws_g32(&p); /* length of private key block */
-	if ((p - op) + publ != len)
+	if ((size_t)((p - op) + publ) != len)
 		return 11;
 
 	l = lws_g32(&p); /* checkint 1 */
@@ -198,7 +197,7 @@ _genhash_update_len(struct lws_genhash_ctx *ctx, const void *input, size_t ilen)
 {
 	uint32_t be;
 
-	lws_p32((uint8_t *)&be, ilen);
+	lws_p32((uint8_t *)&be, (uint32_t)ilen);
 
 	if (lws_genhash_update(ctx, (uint8_t *)&be, 4))
 		return 1;
@@ -315,7 +314,7 @@ kex_ecdh(struct per_session_data__sshd *pss, uint8_t *reply, uint32_t *plen)
 	char keyt[33];
 	int r, c;
 
-	r = get_gen_server_key_25519(pss, servkey, sizeof(servkey));
+	r = (int)get_gen_server_key_25519(pss, servkey, (int)sizeof(servkey));
 	if (!r) {
 		lwsl_err("%s: Failed to get or gen server key\n", __func__);
 
@@ -363,7 +362,7 @@ kex_ecdh(struct per_session_data__sshd *pss, uint8_t *reply, uint32_t *plen)
 	crypto_scalarmult_curve25519(kex->Q_S, kex->eph_pri_key, basepoint);
 
 	a = 0;
-	for (r = 0; r < sizeof(kex->Q_S); r++)
+	for (r = 0; r < (int)sizeof(kex->Q_S); r++)
 		a |= kex->Q_S[r];
 	if (!a) {
 		lwsl_notice("all zero pubkey\n");
@@ -426,7 +425,7 @@ kex_ecdh(struct per_session_data__sshd *pss, uint8_t *reply, uint32_t *plen)
 	 * name length: name
 	 * key length: key
 	 * ---> */
-	lws_p32((uint8_t *)&be, 8 + strlen(keyt) + LWS_SIZE_EC25519);
+	lws_p32((uint8_t *)&be, 8 + (int)strlen(keyt) + LWS_SIZE_EC25519);
 	if (lws_genhash_update(&ctx, (void *)&be, 4))
 		goto hash_probs;
 
@@ -481,9 +480,9 @@ kex_ecdh(struct per_session_data__sshd *pss, uint8_t *reply, uint32_t *plen)
 
 	lp = p;
 	p +=4;
-	lws_sized_blob(&p, keyt, strlen(keyt));
+	lws_sized_blob(&p, keyt, (int)strlen(keyt));
 	lws_sized_blob(&p, pss->K_S, LWS_SIZE_EC25519);
-	lws_p32(lp, p - lp - 4);
+	lws_p32(lp, lws_ptr_diff(p, lp) - 4);
 
 	/* Q_S (exchange value sent by the server) */
 	
@@ -493,14 +492,14 @@ kex_ecdh(struct per_session_data__sshd *pss, uint8_t *reply, uint32_t *plen)
 
 	lp = p;
 	p +=4;
-	lws_sized_blob(&p, keyt, strlen(keyt));
+	lws_sized_blob(&p, keyt, (int)strlen(keyt));
 	lws_sized_blob(&p, payload_sig, 64);
-	lws_p32(lp, p - lp - 4);
+	lws_p32(lp, lws_ptr_diff(p, lp) - 4);
 
 	/* end of message */
 
 	lws_pad_set_length(pss, reply, &p, &pss->active_keys_stc);
-	*plen = p - reply;
+	*plen = lws_ptr_diff(p, reply);
 
 	if (!pss->active_keys_stc.valid)
 		memcpy(pss->session_id, temp, LWS_SIZE_EC25519);

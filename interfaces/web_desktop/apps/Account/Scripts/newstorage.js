@@ -21,6 +21,13 @@ Application.run = function( msg )
 {
 	var mode = ge( 'mode' ).value;
 	var devname = ge( 'devname' ).value;
+	
+	if( ge( 'mountedDisk' ).value == 'mounted' )
+	{
+		console.log( 'Unmount disk!' );
+		ge( 'mounter' ).innerHTML = '&nbsp;' + i18n( 'i18n_unmount_disk' );
+	}
+	
 	if( typeof( mode ) != 'undefined' && mode == 'edit' )
 	{
 		var m = new Module( 'system' );
@@ -119,7 +126,7 @@ function storageForm( type, id, data )
 			if( ge( 'mode' ).value == 'edit' )
 			{
 				ge( 'FormHeading' ).innerHTML = '<h2 class="MarginBottom PaddingBottom BorderBottom">' + 
-					i18n( 'i18n_edit' ) + ' ' + type + ' ' + i18n( 'i18n_disk' ) + '</h2>' ;
+					i18n( 'i18n_edit_storage' ) + '</h2>' ;
 			}
 			else
 			{
@@ -201,22 +208,28 @@ function deleteFilesystem()
 			var devname = ge( 'devname' ).value;
 			unmountFilesystem( devname, function( e )
 			{
-				if( e == 'ok' )
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
 				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
+					if( e == 'ok' )
 					{
-						if( e == 'ok' )
-						{
-							Application.sendMessage( { command: 'notify', method: 'closeview' } );
-							Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
-							Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
-							return;
-						}
+						Application.sendMessage( { command: 'notify', method: 'closeview' } );
+						Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+						Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
 						return;
 					}
-					m.execute( 'deletefilesystem', { devname: devname } );
+					try
+					{
+						var r = JSON.parse( d );						
+						Notify( { title: 'An error occured', text: r.message } );
+					}
+					catch( e )
+					{
+						Notify( { title: 'An error occured', text: 'Could not delete this disk.' } );
+					}
+					return;
 				}
+				m.execute( 'deletefilesystem', { devname: devname } );
 			} );
 		}
 	} );
@@ -234,6 +247,28 @@ function unmountFilesystem( devname, callback )
 	
 	var args = {
 		command: 'unmount',
+		devname: devname
+	};
+	
+	f.execute( 'device', args );
+}
+
+function mountDisk( devname )
+{
+	var f = new Library( 'system.library' );
+	
+	f.onExecuted = function( e, d )
+	{	
+		Application.sendMessage( { command: 'refresh', destinationViewId: ge( 'vid' ).value } );
+		Application.sendMessage( { type: 'system', command: 'refreshdoors' } );
+		setTimeout( function()
+		{
+			CloseView();
+		}, 5 );
+	}
+	
+	var args = {
+		command: ge( 'mountedDisk' ).value == 'mounted' ? 'unmount' : 'mount',
 		devname: devname
 	};
 	

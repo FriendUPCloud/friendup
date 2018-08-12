@@ -10,10 +10,18 @@ i18n_current_password                : Nåværende passord
 i18n_new_password                    : Nytt passord
 i18n_confirm                         : bekreftelse
 
+i18n_language                        : Språk
+i18n_workspace_mode                  : Arbeidsbord modus
+i18n_mode_gamified                   : Spillifisert
+i18n_mode_normal                     : Normal
+i18n_mode_developer                  : Utvikler
+
 i18n_are_you_sure                    : Er du sikker?
 i18n_this_will_remove                : Dette vil fjerne disken fra listen.
 
 i18n_delete_disk                     : Slett
+
+i18n_storage                         : Lagringsmedia
 
 i18n_key_type              			 : Nøkkel type
 i18n_key_name              			 : Nøkkel navn
@@ -33,7 +41,8 @@ i18n_publickey                       : Fellesnøkkel
 
 i18n_key_information                 : Nøkkel informasjon
 
-i18n_available_storage               : Available storage
+i18n_available_storage               : Tilgjengelige disker
+i18n_unmounted_storage               : Frakoblede disker
 i18n_your_apps                       : Dine applikasjoner
 
 i18n_no_apps                         : Status
@@ -46,9 +55,10 @@ i18n_no_storage                      : Du har ikke lagringsplass.
 
 i18n_get_storage                     : Mer lagringsplass
 
-i18n_toggle_public_key_visibility    : Vis/gjem offentlig nøkkel
+i18n_toggle_public_key_visibility    : Offentlig nøkkel
 
-i18n_get_apps                        : Flere apper
+i18n_password                        : Passord
+i18n_edit_password                   : Endre passord
 
 i18n_descheading                     : Legg til mer lagring 
 i18n_description                     : Vennligst velg hvilken type disk du ønsker å legge til. Noen tilbydere kan komme til å kreve en registrering.
@@ -102,3 +112,37 @@ i18n_devices                         : Enheter
 
 i18n_generate_key                    : Generer nøkkel
 
+i18n_useravatar							: Avatar
+i18n_changeavatar						: Endring
+i18n_fileselectoravatar					: Vennligst velg et PNG-bilde
+
+i18n_your_public_key                 : Din offentlige nøkkel
+
+i18n_deleting_key                 : Sletting av nøkkel
+
+i18n_friendNetwork					 : Friend Network
+i18n_fnetActivate					 : Aktiver Friend Network
+i18n_fnetWorkgroup					 : Samfunnet
+i18n_fnetPassword					 : Samfunnet passord
+i18n_fnetRepeatPassword				 : Gjenta passord
+i18n_workgroupPlaceHolder			 : Skriv inn navnet på arbeidsgruppen, eller la det være tomt
+i18n_passwordNoMatch				 : Venne Nettverk arbeidsgruppe passord stemmer ikke overens.
+i18n_fnetAcceptFromAny				 : Godta meldinger fra personer som ikke er merket som venner
+i18n_fnetDescription                 : Beskriv deg selv
+i18n_fnetDownloadFiles				 : Last ned delte filer umiddelbart
+i18n_fnetDownloadPath				 : Sti
+i18n_fnetDownloadButton				 : Velg katalog
+i18n_fnetPleaseChooseDirectory		 : Vennligst velg en katalog...
+i18n_fnetShareLocalDrives			 : Monter lokale stasjoner på Friend Network
+i18n_fnetDeviceDescription			 : Enhetsbeskrivelse
+i18n_fnetDeviceName					 : Enhetsnavn
+i18n_fnetChangeDeviceAvatar			 : Endre bilde
+i18n_nameOfDevice					 : Skriv inn navnet på enheten her
+i18n_descriptionOfDevice			 : Skriv inn en beskrivelse
+i18n_device_information				 : Enhet
+i18n_deviceNotice					 : Denne informasjonssiden er spesifikk for enheten du bruker akkurat nå. Friend Network vil bruke det til å vise de forskjellige enhetene du bruker på et øyeblikk.
+i18n_fnetMountDrive					 : Monter vennenettverksdisken som sovende stasjon
+i18n_fnetAutoMountDrive				 : Vis vennenettverksikonet på arbeidsområdet
+
+i18n_update_language_warning         : Oppdaterer språk
+i18n_update_language_desc            : Når språkinnstillingen oppdateres må Friend Workspace startes på ny. Du vil miste alt som ikke er lagret i din nåværende økt. Er du sikker på at du ønsker å fortsette?

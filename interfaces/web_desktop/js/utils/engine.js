@@ -303,6 +303,10 @@ function hideKeyboard()
 			}, 200);
 		};
 		field.focus();
+		setTimeout( function()
+		{
+			document.body.removeChild( field );
+		}, 500 );
 	}, 50 );
 }
 
@@ -1242,23 +1246,23 @@ function NumberFormat ( string, decimals )
 
 function GetElementTop ( ele )
 {
-	var t = ele.offsetTop;
-	while ( ele.offsetParent && ele.offsetParent != document.body )
+	var t = 0;
+	do
 	{
 		t += ele.offsetTop;
 		ele = ele.offsetParent;
-	}
+	} while( ele && ele.offsetParent != document.body );
 	return t;
 }
 
 function GetElementLeft ( ele )
 {
-	var l = ele.offsetLeft;
-	while ( ele.offsetParent && ele.offsetParent != document.body )
+	var l = 0;
+	do 
 	{
 		l += ele.offsetLeft;
 		ele = ele.offsetParent;
-	}
+	} while ( ele && ele.offsetParent != document.body );
 	return l;
 }
 
@@ -1371,6 +1375,20 @@ function GetScrollPosition ()
 	}
 }
 
+function FixServerUrl( url )
+{
+	var ur = url.match( /http[s]{0,1}\:\/\/.*?\/(.*)/i );
+	if( ur )
+	{
+		var l = document.location.href.match( /(http[s]{0,1}\:\/\/)(.*?\/).*/i );
+		if( l )
+		{
+			return l[1] + l[2]+ ur[1];
+		}
+	}
+	return url;
+}
+
 function GetUrlVar ( vari )
 {
 	var line = document.location.href.split ( '#' )[0].split ( '?' );
@@ -1445,7 +1463,7 @@ function StringToObject ( str )
 }
 
 // Run scripts found in string
-function RunScripts( str )
+function RunScripts( str, context )
 {
 	if( !str ) return;
 	if ( !str.length ) return;
@@ -1453,7 +1471,18 @@ function RunScripts( str )
 	while ( scripts = str.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
 	{
 		str = str.split ( scripts[0] ).join ( '' );
-		eval ( scripts[1] );
+		if( context )
+		{
+			context.doEvaluate = function( scriptCode )
+			{
+				context.eval( scriptCode );
+			}
+			context.doEvaluate( scripts[ 1 ] );
+		}
+		else
+		{
+			eval ( scripts[1] );
+		}
 	}
 }
 
@@ -2040,7 +2069,7 @@ function InitSliders( pdiv )
 
 // Initializes tab system on the subsequent divs one level under parent div
 friend.horizontalTabs = {};
-function InitTabs ( pdiv )
+function InitTabs( pdiv, tabCallback )
 {
 	if( typeof( pdiv ) == 'string' )
 		pdiv = ge( pdiv );
@@ -2072,20 +2101,19 @@ function InitTabs ( pdiv )
 		if( divs[a].parentNode != pdiv ) continue;
 		if( divs[a].classList.contains( 'TabContainer' ) )
 		{
-			hasContainer = true;
+			hasContainer = divs[a];
 			continue;
 		}
 		if( divs[a].classList.contains( 'Tab' ) )
 		{
-			tabs.push ( divs[a] );
+			tabs.push( divs[a] );
 			divs[a].pdiv = pdiv;
 			divs[a].tabs = tabs; 
 			divs[a].pages = pages;
 			divs[a].index = tabs.length - 1;
 			divs[a].onclick = function ()
 			{
-				SetCookie ( 'Tabs'+this.pdiv.id, this.index );
-				this.classList.remove( 'Tab' );
+				SetCookie ( 'Tabs' + this.pdiv.id, this.index );
 				this.classList.add( 'TabActive' );
 				var ind;
 				for( var b = 0; b < this.tabs.length; b++ )
@@ -2093,35 +2121,41 @@ function InitTabs ( pdiv )
 					if( this.tabs[b] != this )
 					{
 						this.tabs[b].classList.remove( 'TabActive' );
-						this.tabs[b].classList.add( 'Tab' );
 					}
 					else ind = b;
 				}
-				for( var b = 0; b < this.pages.length; b++ )
+				var result = true;
+				if( tabCallback )
 				{
-					if( b != ind )
+					result = tabCallback( this.pages );
+				}
+				// Only continue if the tab callback has a positive result or doesn't exist
+				if( result )
+				{
+					for( var b = 0; b < this.pages.length; b++ )
 					{
-						this.pages[b].classList.remove( 'PageActive' );
-						this.pages[b].classList.add( 'Page' );
-					}
-					else 
-					{
-						this.pages[b].classList.remove( 'Page' );
-						this.pages[b].classList.add( 'PageActive' );
-						if( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
+						if( b != ind )
 						{
-							this.pages[b].style.display = 'none';
-							var idz = 1;
-							if( !this.pages[b].id )
+							this.pages[b].classList.remove( 'PageActive' );
+						}
+						else 
+						{
+							this.pages[b].classList.add( 'PageActive' );
+							if( navigator.userAgent.indexOf ( 'MSIE' ) > 0 )
 							{
-								var bs = 'page';
-								idz++;
-								while ( ge ( bs ) )
-									bs = [ bs, idz ].join ( '' );
-								this.pages[b].id = bs;
+								this.pages[b].style.display = 'none';
+								var idz = 1;
+								if( !this.pages[b].id )
+								{
+									var bs = 'page';
+									idz++;
+									while ( ge ( bs ) )
+										bs = [ bs, idz ].join ( '' );
+									this.pages[b].id = bs;
+								}
+								var bid = this.pages[b].id;
+								setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
 							}
-							var bid = this.pages[b].id;
-							setTimeout ( 'ge(\'' + bid + '\').style.display = \'\'', 50 );
 						}
 					}
 				}
@@ -2157,6 +2191,7 @@ function InitTabs ( pdiv )
 			tabs[a].parentNode.removeChild( tabs[a] );
 			d.appendChild( tabs[a] );
 		}
+		hasContainer = d;
 	}
 	
 	// Scroll areas
@@ -2186,9 +2221,6 @@ function InitTabs ( pdiv )
 				cr = cr.parentNode;
 			}
 			
-			// TODO: Get margins from theme..
-			var margins = 15;
-			
 			// Resize pagescroll and set resize event
 			var cl = pag.childNodes[ b ].classList;
 			if( cl && cl.contains( 'PageScroll' ) )
@@ -2209,7 +2241,7 @@ function InitTabs ( pdiv )
 						if( ch == ph && !force ) return;
 						
 						// Containing element
-						var hhh = ( GetElementHeight( resizeObject ) - n.tab.offsetHeight );
+						var hhh = GetElementHeight( resizeObject ) - ( hasContainer ? GetElementHeight( hasContainer ) : n.tab.offsetHeight );
 						
 						// Page scroll height (other elements contained minus page scroll element)
 						var psh = 0;
@@ -2228,18 +2260,41 @@ function InitTabs ( pdiv )
 							}
 						}
 						
+						// See if containing page has padding
+						var css = window.getComputedStyle( page, null );
+						var targets = [ 'paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth' ];
+						for( var zz = 0; zz < targets.length; zz++ )
+						{
+							if( css[ targets[ zz ] ] ) psh += parseInt( css[ targets[ zz ] ] );
+						}
+						
+						// See if page scroller has margin
+						css = window.getComputedStyle( n, null );
+						var targets = [ 'marginTop', 'marginBottom', 'borderTopWidth', 'borderBottomWidth' ];
+						for( var zz = 0; zz < targets.length; zz++ )
+						{
+							if( css[ targets[ zz ] ] ) psh += parseInt( css[ targets[ zz ] ] );
+						}
+						
 						// Page scroll
-						n.style.height = ( hhh - psh - ( margins * 2 ) ) + 'px';
+						n.style.height = hhh - psh + 'px';
 						
 						// Container
-						page.style.height = hhh - margins + 'px';
+						page.style.height = hhh + 'px';
 						
 						// Refresh again in case height changes
 						setTimeout( function(){ resiz(); }, 25 );
 					}
 					
+					// Add events and 
 					window.addEventListener( 'resize', resiz );
+					if( !friend.resizeTabs )
+						friend.resizeTabs = [];
 					n.tab.addEventListener( 'click', function(){ resiz( 1 ); } );
+					friend.resizeTabs.push( { element: pdiv, resize: function()
+					{
+						resiz( 1 );
+					} } );
 					
 					// Resize now! (in 5ms)
 					setTimeout( function()
@@ -2282,30 +2337,50 @@ function touchDoubleClick( element, callback, e )
 	}, 500 );
 }
 
+function checkMobile()
+{
+	var check = false;
+	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+	return check;
+}
+
+function checkTablet() 
+{
+	var check = false;
+	(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+	return check;
+}
+
 // Are we on a mobile browser?
 function checkMobileBrowser()
 {
 	if( !document.body ) return setTimeout( checkMobileBrowser, 50 );
-	if( !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
+	window.isMobile = checkMobile();
+	window.isTablet = checkTablet();
+	if( window.isMobile ) window.isTablet = false;
+	if( !window.isMobile && !window.isTablet )
 	{
-		window.isMobile = window.innerWidth <= 760 ||
-			navigator.userAgent.toLowerCase().indexOf( 'android' ) > 0 ||
-			navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
-			navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
-			navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0;
-		if( window.isMobile && window.innerWidth >= 1024 )
+		if( window.isTouch || !document.getElementsByTagName( 'head' )[0].getAttribute( 'touchdesktop' ) )
 		{
-			window.isTablet = true;
-			window.isMobile = false;
+			window.isMobile = ( window.Workspace && window.innerWidth <= 760 ) && (
+				navigator.userAgent.toLowerCase().indexOf( 'android' ) > 0 ||
+				navigator.userAgent.toLowerCase().indexOf( 'phone' ) > 0 ||
+				navigator.userAgent.toLowerCase().indexOf( 'pad' ) > 0 ||
+				navigator.userAgent.toLowerCase().indexOf( 'bowser' ) > 0 );
+	
+			if( ( window.isMobile || navigator.userAgent.indexOf( 'Mobile' ) > 0 ) && window.innerWidth >= 1024 )
+			{
+				window.isTablet = true;
+				window.isMobile = false;
+			}
 		}
 	}
-	else 
-	{
-		window.isMobile = false;
-		window.isTablet = false;
-	}
 	window.isTouch = !!('ontouchstart' in window);
-	if( window.isTablet )
+	if( window.isMobile )
+	{
+		document.body.setAttribute( 'mobile', 'mobile' );
+	}
+	else if( window.isTablet )
 	{
 		document.body.setAttribute( 'tablet', 'tablet' );
 	}
@@ -2313,8 +2388,177 @@ function checkMobileBrowser()
 	{
 		document.body.removeAttribute( 'tablet' );
 	}
-	
+	if( navigator.userAgent.toLowerCase().indexOf( 'playstation' ) > 0 )
+	{
+		document.body.setAttribute( 'settopbox', 'playstation' );
+		window.isSettopBox = 'playstation';
+		if (typeof console  != "undefined") 
+			if (typeof console.log != 'undefined')
+				console.olog = console.log;
+			else
+				console.olog = function() {};
+		console.log = function(message) {
+			console.olog(message);
+			Notify( { title: 'Playstation error', text: message } );
+		};
+		console.error = console.debug = console.info =  console.log
+	}
 	return window.isMobile;
+}
+
+// Binary to string conversions for transport in postmessage
+function ConvertArrayBufferToString( arraybuffer, method )
+{
+	if( !method || method == 'binaryString' )
+	{
+		var v = new Uint8Array( arraybuffer );
+		return Array.prototype.join.call( v, ',' );
+	}
+	else if ( method == 'base64' )
+	{
+		var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+		var bytes = new Uint8Array( arraybuffer ),
+		i, len = bytes.length, base64 = "";
+
+		for (i = 0; i < len; i+=3) 
+		{
+			base64 += chars[bytes[i] >> 2];
+			base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
+			base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
+			base64 += chars[bytes[i + 2] & 63];
+		}
+
+		if ((len % 3) === 2) 
+		{
+			base64 = base64.substring(0, base64.length - 1) + "=";
+		} 
+		else if (len % 3 === 1) 
+		{
+			base64 = base64.substring(0, base64.length - 2) + "==";
+		}
+	    return base64;
+	}
+	return false;
+}
+function ConvertStringToArrayBuffer( str, method )
+{
+	if( !method || method == 'binaryString' )
+	{
+		var data = str.split( ',' );
+		return ( new Uint8Array( data ) ).buffer;
+	}
+	else if ( method == 'base64' )
+	{
+		var lookup = window.base64Lookup;
+		if ( !lookup )
+		{
+			var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			lookup = new Uint8Array(256);
+			for ( var i = 0; i < chars.length; i++ ) 
+			{
+				lookup[ chars.charCodeAt( i ) ] = i;
+			}
+			window.base64Lookup = lookup;		
+		}
+
+		var bufferLength = str.length * 0.75, len = str.length, i, p = 0, encoded1, encoded2, encoded3, encoded4;
+		if ( str[ str.length - 1 ] === "=") 
+		{
+			bufferLength--;
+			if ( str[ str.length - 2 ] === "=") 
+			{
+				bufferLength--;
+			}
+		}
+
+		var arraybuffer = new ArrayBuffer( bufferLength ),
+		bytes = new Uint8Array( arraybuffer );
+
+		for ( i = 0; i < len; i += 4 ) 
+		{
+			encoded1 = lookup[str.charCodeAt(i)];
+			encoded2 = lookup[str.charCodeAt(i+1)];
+			encoded3 = lookup[str.charCodeAt(i+2)];
+			encoded4 = lookup[str.charCodeAt(i+3)];
+
+			bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+			bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+			bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+		}
+		return arraybuffer;
+	}
+	return false;
+}
+function ConvertBase64StringToString( str )
+{
+	var arrayBuffer = ConvertStringToArrayBuffer( str, 'base64' );
+	var bytes = new Uint8Array( arrayBuffer );
+	var len = bytes.length;
+	var result = '';
+	for ( var c = 0; c < len; c++ )
+		result += String.fromCharCode( bytes[ c ] );
+	return result;
+}
+function ConvertStringToBase64String( input )
+{
+	// private property
+	var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+	
+	// public method for encoding
+	var output = "";
+	var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+	var i = 0;
+
+	while ( i < input.length ) 
+	{
+		chr1 = input.charCodeAt(i++);
+		chr2 = input.charCodeAt(i++);
+		chr3 = input.charCodeAt(i++);
+
+		enc1 = chr1 >> 2;
+		enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+		enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+		enc4 = chr3 & 63;
+
+		if (isNaN(chr2)) 
+		{
+			enc3 = enc4 = 64;
+		} 
+		else if (isNaN(chr3)) 
+		{
+			enc4 = 64;
+		}
+
+		output = output + keyStr.charAt(enc1) + keyStr.charAt(enc2) + keyStr.charAt(enc3) + keyStr.charAt(enc4);
+	};
+	return output;
+}
+// Extract the name of a file from a path
+function GetFilename( path )
+{
+	if ( path.charAt( path.length - 1 ) == '/' )
+		path = path.substring( 0, path.length - 1 );
+
+	var slash = path.lastIndexOf( '/' );
+	if ( slash >= 0 )
+		return path.substring( slash + 1 );
+
+	var split = path.split( ':' );
+	if ( split[ 1 ] && split[ 1 ].length )
+		return split[ 1 ];
+	return split[ 0 ];		
+}
+
+// Clean the properties of a Javascript object
+function CleanArray( keys, exclude )
+{
+	var out = [ ];
+	for ( var key in keys )
+	{
+		if ( keys[ key ] && keys[ key ] != exclude )
+			out[ key ] = keys[ key ];
+	}
+	return out;
 }
 
 var __randDevId = false;

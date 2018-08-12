@@ -1095,6 +1095,7 @@ int QueryWithoutResults( struct SQLLibrary *l, const char *sel )
 	{
 		if( l->con.sql_Con != NULL )
 		{
+			DEBUG("[QueryWithoutResults] sql: %s\n", sel );
 			int err = mysql_query( l->con.sql_Con, sel );
 
 			if( err != 0 )
@@ -1983,6 +1984,7 @@ int SetOption( struct SQLLibrary *l, char *opts )
 			optsb++;
 		}
 	}
+	return 0;
 }
 
 /**

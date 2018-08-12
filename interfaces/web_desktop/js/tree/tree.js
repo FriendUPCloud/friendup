@@ -36,7 +36,7 @@
  * canvas: (object) the canvas to render into
  */
 Friend = window.Friend || {};
-treeRenderStopOn = '';
+treeRenderStopOn = 'hGrouploll';
 treeMessageStopOn = '';
 
 /**
@@ -73,7 +73,7 @@ Friend.Tree = function( application, properties )
 	this.yCenter = 0;
 	this.frameRate = -1;
 	this.className = 'Friend.Tree'; 
-	this.resizeMode  = 'keepProportions';
+	this.resizeMode  = 'responsive';
 	this.errorLevel = Friend.Tree.ERRORLEVEL_NONE;
 	this.width = 0;
 	this.height = 0;
@@ -195,21 +195,198 @@ Friend.Tree = function( application, properties )
 		for ( var i = 0; i < item.items.length; i++ )
 			setRoot( item.items[ i ], root );
 	};
+
 	function onResize()
 	{
-		for ( var r = 0; r < self.renderers.length; r++ )
-			self.renderers[ r ].resize( window.innerWidth, window.innerHeight );
-		for ( var t = 0; t < self.trees.length; t++ )
-		{
-			self.trees[ t ].width = window.innerWidth;
-			self.trees[ t ].height = window.innerHeight;
-			self.sendMessageToTree( self.trees[ t ], { command: 'resize', type: 'system', width: window.innerWidth, height: window.innerHeight } );
+		for ( var t = 0; t < self.trees.length; t ++ )
+		{ 
+			var root = self.trees[ t ];
+			for ( var r in root.renderers )
+				root.renderers[ r ].resize( window.innerWidth, window.innerHeight );
+			self.resizeTree( root, window.innerWidth, window.innerHeight );
 		}
-		self.refreshTree();
 	}
 	return true;
 };
+Friend.Tree.resizeTree = function( root, newWidth, newHeight )
+{
+	// All the objects, recursive from the root
+	this.resizeItem( root, newWidth, newHeight );
+	root.doRefresh( -1 );
+};
+Friend.Tree.resizeItem = function( item, newWidth, newHeight, noPositionning )
+{
+	// Calculates the new size of the item
+	var width, height;
+	if ( item.resizeModeX != 'none' )
+	{
+		width = newWidth * item.resizeModeX;
+	}
+	if ( item.resizeModeY != 'none' )
+	{
+		width = newHeight * item.resizeModeY;
+	}
 
+	// Send a 'resize' message to the item
+	if ( item.messageUp )
+	{
+		var message =
+		{
+			command: 'resize',
+			type: 'system',
+			width: width,
+			height: height,
+			refresh: true,				// Forces refresh
+			recursion: true
+		};
+		item.messageUp( message );		// X and Y will be transmitted
+
+		// Call the processUp function of the processes one after the other
+		var pile = [];
+		var process = item.processes;
+		while( process )
+		{
+			process.processUp( message );
+			pile.push( process );
+			process = process.processes;
+		}
+
+		// Call the messageDown in reverse order
+		for ( var p = pile.length - 1; p >= 0; p-- )
+			pile[ p ].processDown( message );
+
+		// Call the messageDown of the item
+		item.messageDown( message );
+		width = item.width;
+		height = item.height;
+
+		// If width or height have changed, update the renderItems!
+		if ( message.refresh || ( item.root && item.root.firstResize ) )
+		{
+			// Call all renderItems
+			message.width = item.width;
+			message.height = item.height;
+			for ( var ri = 0; ri < item.renderItems.length; ri++ )
+			{
+				var renderItem = item.renderItems[ ri ];
+				if ( renderItem.message )
+					renderItem.message( message );
+			}
+
+			// Reposition the item
+			if ( !noPositionning && item.parent && item.positionMode && item.resizeMode != 'none' )
+			{
+				var x, y;
+				switch ( item.positionModeX )
+				{
+					case 'center':
+						x = item.parent.width / 2 - item.width / 2;
+						break;
+					case 'right':
+						x = item.parent.width - item.width / 2;
+						break;
+					case 'left':
+						x = 0;
+						break;
+					default:
+						x = item.x;
+						break;
+				}
+				switch ( item.positionModeY )
+				{
+					case 'center':
+						y = item.parent.height / 2 - item.height / 2;
+						break;
+					case 'right':
+						y = item.parent.height - item.height / 2;
+						break;
+					case 'left':
+						y = 0;
+						break;
+					default:
+						y = item.y;
+						break;
+				}
+				Friend.Tree.positionItem( item, x, y );
+			}
+
+			// Recursive will be false for subItems of groups for example
+			if ( message.recursion )
+			{
+				for ( var i = 0; i < item.items.length; i++ )
+				{
+					var subItem = item.items[ i ];
+					Friend.Tree.resizeItem( subItem, width, height );
+				}
+			}
+		}
+	}
+	else
+	{
+		item.width = width;
+		item.height = height;
+		switch ( item.positionModeX )
+		{
+			case 'center':
+				x = item.parent.width / 2 - item.width / 2;
+				break;
+			case 'right':
+				x = item.parent.width - item.width / 2;
+				break;
+			case 'left':
+				x = 0;
+				break;
+			default:
+				x = item.x;
+				break;
+		}
+		switch ( item.positionModeY )
+		{
+			case 'center':
+				y = item.parent.height / 2 - item.height / 2;
+				break;
+			case 'right':
+				y = item.parent.height - item.height / 2;
+				break;
+			case 'left':
+				y = 0;
+				break;
+			default:
+				y = item.y;
+				break;
+		}
+
+	}
+};
+Friend.Tree.positionItem = function( item, x, y )
+{
+	if ( item.messageUp )
+	{
+		// Send 'position' message to the item
+		message = 
+		{
+			command: 'position',
+			type: 'system',
+			x: x,
+			y: y,
+			refresh: true		// Forces refresh
+		};
+
+		item.messageUp( message );
+
+		pile = [];
+		process = item.processes;
+		while( process )
+		{
+			process.processUp( message );
+			pile.push( process );
+			process = process.processes;
+		}
+		for ( p = pile.length - 1; p >= 0; p-- )
+			pile[ p ].processDown( message );
+		item.messageDown( message );
+	}
+}
 
 /**
  * Constants
@@ -288,9 +465,11 @@ Friend.Tree.sendMessageToItem = function( tree, item, message, recursive )
 		var flag = false;	
 		switch ( message.type )
 		{
+			case 'network':
 			case 'system':
 				flag = true;
 				break;
+			case 'toParent':
 			case 'renderItemToItem':
 				if ( !item.toDestroy )
 					flag = true;
@@ -347,59 +526,6 @@ Friend.Tree.sendMessageToItem = function( tree, item, message, recursive )
 		}
 	}
 };
-Friend.Tree.sendResizeMessageToItem = function( item, width, height )
-{
-	var message =
-	{
-		command: 'resize',
-		type: 'system',
-		newWidth: width,
-		newHeight: height
-	}
-
-	// Calls the messageUp of the item
-	if ( item.messageUp( message ) )
-	{
-		// Pokes width and height + refresh
-		message.width = width;
-		message.height = height;
-		message.refresh = true;
-		
-		// Calls the processUp function of the processes one after the other, storing them in a pile
-		var pile = [];
-		var process = item.processes;
-		while( process )
-		{
-			process.processUp( message );
-			pile.push( process );
-			process = process.processes;
-		}
-
-		// Calls the messageDown in reverse order
-		for ( var p = pile.length - 1; p >= 0; p-- )
-			pile[ p ].processDown( message );
-
-		// Calls the messageDown of the item
-		item.messageDown( message );
-	}
-
-	// Calls all renderItems.onResize
-	for ( var ri = 0; ri < item.renderItems.length; ri++ )
-	{
-		var renderItem = item.renderItems[ ri ];
-		renderItem.width = width;
-		renderItem.height = height;
-		if ( renderItem.onResize )
-			renderItem.onResize( width, height );
-			
-		renderItem.renderer.onResize( renderItem, width, height ); 
-	}
-
-	// Mark tree to redraw
-	item.root.refreshAll = true;
-	item.root.refresh = true;	
-};
-
 // Render a tree with added flags
 Friend.Tree.renderTree = function( tree, baseProperties )
 {
@@ -455,35 +581,51 @@ Friend.Tree.renderItemFast = function( item, properties, render )
 	{		
 		var itemProperties;
 		var renderItem = item.renderItems[ r ];
-		if ( renderItem.renderer == properties.renderer )
+		if ( renderItem.renderer )
 		{
-			// Transmit values to the renderItem
+			if ( renderItem.renderer == properties.renderer )
+			{
+				// Transmit values to the renderItem
+				renderItem.x = item.x;
+				renderItem.y = item.y;
+				renderItem.z = item.z;
+				renderItem.width = item.width;
+				renderItem.height = item.height;
+				renderItem.rotation = item.rotation;
+
+				var itemProperties = properties.renderer.renderUpFast( properties, renderItem );
+				if ( itemProperties )
+				{
+					// Render the item
+					itemProperties = renderItem.render( itemProperties );
+
+					// Draws the rendererItem
+					properties.renderer.renderIt( itemProperties, renderItem )
+
+					// Render the sub-items? (TODO: WHAT?)
+					for ( var i = 0; i < item.items.length; i++ )
+						itemProperties = this.renderItem( item.items[ i ], itemProperties );
+
+					itemProperties = properties.renderer.renderDownFast( itemProperties, renderItem );
+
+					return itemProperties;
+				}
+				else
+				{
+					Friend.Tree.log( item, { infos: 'Fast renderer flags not found...', level: Friend.Tree.ERRORLEVEL_BREAK } );
+				}
+			}
+		}
+		else
+		{
+			// RenderItem not linked to a renderer
 			renderItem.x = item.x;
 			renderItem.y = item.y;
 			renderItem.z = item.z;
+			renderItem.width = item.width;
+			renderItem.height = item.height;
 			renderItem.rotation = item.rotation;
-
-			var itemProperties = properties.renderer.renderUpFast( properties, renderItem );
-			if ( itemProperties )
-			{
-				// Render the item
-				itemProperties = renderItem.render( itemProperties );
-
-				// Draws the rendererItem
-				properties.renderer.renderIt( itemProperties, renderItem )
-
-				// Render the sub-items? (TODO: WHAT?)
-				for ( var i = 0; i < item.items.length; i++ )
-					itemProperties = this.renderItem( item.items[ i ], itemProperties );
-
-				itemProperties = properties.renderer.renderDownFast( itemProperties, renderItem );
-
-				return itemProperties;
-			}
-			else
-			{
-				Friend.Tree.log( item, { infos: 'Fast renderer flags not found...', level: Friend.Tree.ERRORLEVEL_BREAK } );
-			}
+			renderItem.render();
 		}
 	}
 };
@@ -506,31 +648,45 @@ Friend.Tree.renderItem = function( item, properties, render )
 		for ( var r = 0; r < item.renderItems.length; r++ )
 		{		
 			var renderItem = item.renderItems[ r ];
-			if ( renderItem.renderer == properties.renderer )
+			if ( renderItem.renderer )
 			{
-				// Transmit basic data to the renderItem
+				if ( renderItem.renderer == properties.renderer )
+				{
+					// Transmit basic data to the renderItem
+					renderItem.x = item.x;
+					renderItem.y = item.y;
+					renderItem.z = item.z;
+					renderItem.rotation = item.rotation;
+					renderItem.width = item.width;
+					renderItem.height = item.height;
+	
+					// Prepare renderer for item
+					properties = properties.renderer.renderUp( properties, renderItem );
+					
+					// Draws the item
+					renderItem.render( properties );
+	
+					// Draws the rendererItem
+					properties.renderer.renderIt( properties, renderItem )
+	
+					// Draw the sub items
+					for ( var i = 0; i < item.items.length; i++ )
+						properties = this.renderItem( item.items[ i ], properties );
+					
+					// Undo all modifications
+					properties = properties.renderer.renderDown( properties, renderItem );
+				}
+			}
+			else
+			{
+				// RenderItem not linked to a renderer
 				renderItem.x = item.x;
 				renderItem.y = item.y;
 				renderItem.z = item.z;
-				renderItem.rotation = item.rotation;
 				renderItem.width = item.width;
 				renderItem.height = item.height;
-
-				// Prepare renderer for item
-				properties = properties.renderer.renderUp( properties, renderItem );
-				
-				// Draws the item
-				renderItem.render( properties );
-
-				// Draws the rendererItem
-				properties.renderer.renderIt( properties, renderItem )
-
-				// Draw the sub items
-				for ( var i = 0; i < item.items.length; i++ )
-					properties = this.renderItem( item.items[ i ], properties );
-				
-				// Undo all modifications
-				properties = properties.renderer.renderDown( properties, renderItem );
+				renderItem.rotation = item.rotation;
+				renderItem.render();
 			}
 		}
 	}
@@ -841,6 +997,14 @@ Friend.Tree.start = function()
 	else
 		this.intervalHandle = setInterval( this.update, 1000 / this.frameRate );
 
+	// Calculates all positions and sizes (work to do here!)
+	for ( var t = 0; t < this.trees.length; t++ )
+	{
+		this.trees[ t ].firstResize = true;
+		this.resizeTree( this.trees[ t ], this.trees[ t ].width, this.trees[ t ].height );
+		this.trees[ t ].firstResize = false;
+	}
+
 	// Refreshes all the trees
 	this.refreshTree();
 };
@@ -915,6 +1079,16 @@ Friend.Tree.addToDestroy = function ( item )
 // Called at the end of the frame, destroys the items from the list
 Friend.Tree.destroyItem = function ( item, tree )
 {	
+	// Sends a 'destroyed' message to the item
+	var message =
+	{
+		command: 'destroyed',
+		type: 'system',
+		itemEvent: item,
+		name: item.name
+	}
+	this.sendMessageToItem( tree, item, message );
+
 	// Sends a 'destroy' message to the whole Tree
 	var message =
 	{
@@ -1371,6 +1545,7 @@ Friend.Tree.init = function( callback )
 		"/webclient/js/tree/sounds/sounds.js",
 		"/webclient/js/tree/tree/treeLife.js",
 		"/webclient/js/tree/ui/ui.js",
+		"/webclient/js/tree/misc/misc.js",
 	];
 	
 	Friend.Tree.include( scriptList, function( response )
@@ -1388,6 +1563,8 @@ Friend.Tree.init = function( callback )
 			Friend.Tree.Sounds.init( oneMore );
 			countToLoad++;
 			Friend.Tree.UI.init( oneMore );
+			countToLoad++;
+			Friend.Tree.Misc.init( oneMore );
 			countToLoad++;
 			Friend.Tree.initTreeLife( oneMore );
 
@@ -1440,52 +1617,73 @@ Friend.Tree.include = function( scripts, callback, timeout )
 	var handle = setTimeout( onError, timeout );
 	for ( var s = 0; s < scripts.length; s++ )
 	{
+		var path = scripts[ s ];
+
 		// Get the correct URL
-		var script = getPath( scripts[ s ] );
-
-		// Creates a DOM element
-		var element = document.createElement( 'script' );
-		element.onload = onLoad;
-		element.onError = onError;					// Not on all browsers
-		element.src = script;
-		document.head.appendChild( element ); 		// Adds to the document
-
-		function onLoad()
+		if ( isSystem( path ) )
 		{
-		    loaded++;
-			if ( loaded == toLoad )
+			// System file: direct load
+			var element = document.createElement( 'script' );
+			element.onload = onLoad;
+			element.onError = onError;					// Not on all browsers
+			element.src = path;
+			document.head.appendChild( element ); 		// Adds to the document
+
+			function onLoad()
+			{
+				loaded++;
+				if ( loaded == toLoad )
+				{
+					clearTimeout( handle );
+					if ( callback )
+						callback( 'OK' );
+				}
+			};
+			function onError()
 			{
 				clearTimeout( handle );
 				if ( callback )
-					callback( 'OK' );
-			}
-		};
-		function onError()
+					callback( 'Error' );
+			};
+		}
+		else
 		{
-			clearTimeout( handle );
-			if ( callback )
-				callback( 'Error' );
-		};
+			// File in Progdir, load with File object
+			var element = document.createElement( 'script' );
+			document.head.appendChild( element ); 		// Adds to the document
+
+			// Replace Progdir by the drive name
+			var apath = Application.appPath ? Application.appPath : Application.filePath;
+			Application.noFilePathConversion = true;
+			path = apath + path.substring( path.indexOf( ':' ) + 1 ); 
+			var file = new File( path );
+			file.treeElement = element;
+			file.onLoad = function( data )
+			{
+				this.treeElement.innerHTML = data;
+				eval( this.treeElement.innerHTML );
+
+				loaded++;
+				if ( loaded == toLoad )
+				{
+					clearTimeout( handle );
+					if ( callback )
+						callback( 'OK' );
+				}
+			}
+			file.load();
+		}
 		function onTimeout()
 		{
 			if ( callback )
 				callback( 'Timeout' );
 		};
-		function getPath( path )
+		function isSystem( path )
 		{
-			if( path.indexOf( 'https://' ) == 0 || path.indexOf( 'http://' ) == 0 )
-				return path;
-			
-			var doubleDot = path.indexOf( ':' );
-			if ( doubleDot >= 0 )
-			{
-				if ( path.substring( 0, doubleDot ).toLowerCase() == 'progdir' )
-				{
-					path = getImageUrl( path );
-				}
-			}
-			return path;
-		};
+			if ( path.substring( 0, 8 ).toLowerCase() == 'progdir:' )
+				return false;
+			return true;
+		}
 	}
 };
 

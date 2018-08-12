@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="10px" height="2px" viewBox="0 0 10 2" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>minus</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-1431.000000, -438.000000)" opacity="0.8">
+        <g id="Navigation" transform="translate(882.000000, 282.000000)" fill="#FFFFFF">
+            <g id="Blue" transform="translate(0.000000, 147.000000)">
+                <g id="Taskbar">
+                    <g id="minus" transform="translate(549.000000, 9.000000)">
+                        <g id="Shape">
+                            <path d="M8.66666667,1.92155612 L0.857142857,1.92155612 C0.383755929,1.92155612 5.79731787e-17,1.53780019 0,1.06441327 L0,1.06441327 C-5.79731787e-17,0.591026337 0.383755929,0.207270408 0.857142857,0.207270408 L8.66666667,0.207270408 C9.1400536,0.207270408 9.52380952,0.591026337 9.52380952,1.06441327 L9.52380952,1.06441327 C9.52380952,1.53780019 9.1400536,1.92155612 8.66666667,1.92155612 Z" fill-rule="nonzero"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

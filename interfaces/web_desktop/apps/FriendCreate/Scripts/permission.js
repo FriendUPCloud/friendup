@@ -39,6 +39,11 @@ Application.receiveMessage = function( msg )
 	Application.sendMessage( o );
 }
 
+function cancelPermission()
+{
+	CloseView( Application.viewId );
+}
+
 function addPermission()
 {
 	Application.sendMessage( {

@@ -31,6 +31,7 @@ tb_find                             : Etsi/Korvaa
 #project menu
 i18n_project                        : Projekti
 i18n_project_new                    : Uusi projekti
+i18n_project_fromweb				: Uusi projekti verkkosivuilta
 i18n_project_properties             : Projektin ominaisuudet
 i18n_open_project_files             : Avaa kaikki projekti tiedostot
 i18n_load_project                   : Lataa projekti

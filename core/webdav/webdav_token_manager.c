@@ -34,6 +34,7 @@
 #include <string.h>
 #include "webdav_token_manager.h"
 #include <system/user/user.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * Create new WebdavTokenManager
@@ -60,9 +61,9 @@ void WebdavTokenManagerDelete( WebdavTokenManager *tm )
 {
 	if( tm != NULL )
 	{
-		pthread_mutex_lock( &(tm->wtm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(tm->wtm_Mutex) );
 		WebdavTokenDeleteAll( tm->wtm_Tokens );
-		pthread_mutex_unlock( &(tm->wtm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(tm->wtm_Mutex) );
 		
 		pthread_mutex_destroy( &(tm->wtm_Mutex) );
 		FFree( tm );
@@ -80,10 +81,10 @@ int WebdavTokenManagerAddToken( WebdavTokenManager *tm, WebdavToken *tok )
 {
 	if( tm != NULL )
 	{
-		pthread_mutex_lock( &(tm->wtm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(tm->wtm_Mutex) );
 		tok->node.mln_Succ = (MinNode *)tm->wtm_Tokens;
 		tm->wtm_Tokens = tok;
-		pthread_mutex_unlock( &(tm->wtm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(tm->wtm_Mutex) );
 	}
 	return 0;
 }
@@ -137,10 +138,10 @@ WebdavToken *WebdavTokenManagerGenerateToken( WebdavTokenManager *tm )
 			
 			// Add token to list
 			
-			pthread_mutex_lock( &(tm->wtm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(tm->wtm_Mutex) );
 			tok->node.mln_Succ = (MinNode *)tm->wtm_Tokens;
 			tm->wtm_Tokens = tok;
-			pthread_mutex_unlock( &(tm->wtm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(tm->wtm_Mutex) );
 		}
 	}
 	return tok;
@@ -160,19 +161,19 @@ WebdavToken *WebdavTokenManagerGetTokenNonce( WebdavTokenManager *tm, char *nonc
 	{
 		return NULL;
 	}
-	pthread_mutex_lock( &(tm->wtm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(tm->wtm_Mutex) );
 	WebdavToken *tok = tm->wtm_Tokens;
 	while( tok != NULL )
 	{
 		DEBUG("WebdavTokenManagerGetTokenNonce: nonce %s pointer %p\n", nonce, tok->wt_Nonce );
 		if( memcmp( tok->wt_Nonce, nonce, WEBDAV_TOKEN_LENGTH ) == 0 )
 		{
-			pthread_mutex_unlock( &(tm->wtm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(tm->wtm_Mutex) );
 			return tok;
 		}
 		tok = (WebdavToken *) tok->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &(tm->wtm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(tm->wtm_Mutex) );
 	return NULL;
 }
 
@@ -183,7 +184,7 @@ WebdavToken *WebdavTokenManagerGetTokenNonce( WebdavTokenManager *tm, char *nonc
  */
 void WebdavTokenManagerDeleteOld( WebdavTokenManager *wtm )
 {
-	pthread_mutex_lock( &(wtm->wtm_Mutex) );
+	FRIEND_MUTEX_LOCK( &(wtm->wtm_Mutex) );
 	time_t curTime = time( NULL );
 	
 	#define MINS360 6*4600
@@ -216,5 +217,5 @@ void WebdavTokenManagerDeleteOld( WebdavTokenManager *wtm )
 		}
 	}
 	wtm->wtm_Tokens = nroot;
-	pthread_mutex_unlock( &(wtm->wtm_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(wtm->wtm_Mutex) );
 }

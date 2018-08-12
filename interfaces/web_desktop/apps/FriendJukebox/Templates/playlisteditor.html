@@ -1,13 +1,19 @@
 
 	<div class="ContentFull">
-		<div class="VContentTop BackgroundLists Padding" style="bottom: 47px" id="items">
+		<div class="VContentTop ScrollArea" style="bottom: 50px" id="items">
 			
 		</div>
-		<div class="VContentBottom BorderTop Padding" style="height: 46px">
-			<button class="IconSmall fa-arrow-circle-o-up" type="button">
+		<div class="VContentBottom BackgroundDefault BorderTop Padding" style="height: 50px">
+			<!--<button class="FloatRight IconSmall fa-mixcloud NoMargins" type="button" onclick="addSource()">
+				{i18n_add_source}
+			</button>-->
+			<button class="NoMargins FloatRight IconSmall fa-plus" type="button" onclick="Application.sendMessage( { command: 'add_to_playlist' } )">
+				{i18n_add_to_playlist}
+			</button>
+			<button class="IconSmall fa-arrow-circle-o-up" type="button" onclick="Application.moveElement(-1)">
 				{i18n_up}
 			</button>
-			<button class="IconSmall fa-arrow-circle-o-down" type="button">
+			<button class="IconSmall fa-arrow-circle-o-down" type="button" onclick="Application.moveElement(+1)">
 				{i18n_down}
 			</button>
 		</div>

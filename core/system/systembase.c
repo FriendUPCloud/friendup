@@ -65,6 +65,9 @@
 #include <libxml2/libxml/xmlversion.h>
 #include <unistd.h>
 #include <mobile_app/notifications_sink_websocket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <security/server_checker.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -90,7 +93,19 @@ void SystemClose( struct SystemBase *l );
 
 Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserSession *loggedSession, int *result );
 
+void RemoveOldLogs( SystemBase *l );
+
 FBOOL skipDBUpdate = FALSE;
+
+// internal
+
+void handle_sigchld( int sig )
+{
+	int saved_errno = errno;
+	DEBUG("SIGCHLD handled!\n");
+	while( waitpid( (pid_t)(-1), 0, WNOHANG) > 0 ){ }
+	errno = saved_errno;
+}
 
 /**
  * SystemBase init function
@@ -129,6 +144,17 @@ SystemBase *SystemInit( void )
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 		Log( FLOG_INFO, "[SystemBase] Starting autoscripts\n");
 		Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
+		
+		// internal
+
+		struct sigaction sa;
+		sa.sa_handler = &handle_sigchld;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+		if( sigaction(SIGCHLD, &sa, 0) == -1 )
+		{
+			perror(0);
+		}
 		
 		if( getcwd( l->sl_AutotaskPath, sizeof ( tempString ) ) == NULL )
 		{
@@ -209,6 +235,7 @@ SystemBase *SystemInit( void )
 	l->WebSocketSendMessageInt = WebSocketSendMessageInt;
 	l->WebsocketWrite = WebsocketWrite;
 	l->SendProcessMessage = SendProcessMessage;
+	l->GetRootDeviceByName = GetRootDeviceByName;
 	l->SystemInitExternal = SystemInitExternal;
 	l->RunMod = RunMod;
 	l->GetSentinelUser = GetSentinelUser;
@@ -246,7 +273,8 @@ SystemBase *SystemInit( void )
 	l->sl_WorkersNumber = WORKERS_MAX;
 	l->sl_USFCacheMax = 102400000;
 	l->sl_DefaultDBLib = StringDuplicate("mysql.library");
-	
+	l->sl_XFrameOption = NULL;
+	l->l_EnableHTTPChecker = 0;
 	
 	strcpy( l->RSA_CLIENT_KEY_PEM, "/home/stefkos/development/friendup/build/testkeys/client.pem" );
 	l->RSA_CLIENT_KEY_PEM[ 0 ] = 0;
@@ -254,11 +282,11 @@ SystemBase *SystemInit( void )
 	if( plib != NULL && plib->Open != NULL )
 	{
 		char *ptr = getenv("FRIEND_HOME");
-		char *path = FCalloc( 1000, sizeof( char ) );
+		char *path = FCalloc( 1024, sizeof( char ) );
 		
 		if( ptr != NULL )
 		{
-			sprintf( path, "%scfg/cfg.ini", ptr );
+			snprintf( path, 1024, "%scfg/cfg.ini", ptr );
 		}
 		
 		DEBUG( "[SystemBase] Opening config file: %s\n", path );
@@ -273,7 +301,7 @@ SystemBase *SystemInit( void )
 		
 		if( prop != NULL)
 		{
-			char *skipUpdate = plib->ReadString( prop, "Core:skipDBUpdate", "false" );
+			char *skipUpdate = plib->ReadStringNCS( prop, "Core:skipDBUpdate", "false" );
 			if( skipUpdate != NULL )
 			{
 				if( strcmp( skipUpdate, "true" ) == 0 )
@@ -281,7 +309,7 @@ SystemBase *SystemInit( void )
 					skipDBUpdate = TRUE;
 				}
 			}
-			char *tmp = plib->ReadString( prop, "Core:DBLib", "mysql.library" );
+			char *tmp = plib->ReadStringNCS( prop, "core:DBLib", "mysql.library" );
 			if( tmp != NULL )
 			{
 				if( l->sl_DefaultDBLib != NULL ){ FFree( l->sl_DefaultDBLib ); }
@@ -289,33 +317,35 @@ SystemBase *SystemInit( void )
 			}
 			
 			DEBUG("[SystemBase] reading login\n");
-			login = plib->ReadString( prop, "DatabaseUser:login", "root" );
+			login = plib->ReadStringNCS( prop, "databaseuser:login", "root" );
 			DEBUG("[SystemBase] user %s\n", login );
-			pass = plib->ReadString( prop, "DatabaseUser:password", "root" );
+			pass = plib->ReadStringNCS( prop, "databaseuser:password", "root" );
 			DEBUG("[SystemBase] password %s\n", pass );
-			host = plib->ReadString( prop, "DatabaseUser:host", "localhost" );
+			host = plib->ReadStringNCS( prop, "databaseuser:host", "localhost" );
 			DEBUG("[SystemBase] host %s\n", host );
-			dbname = plib->ReadString( prop, "DatabaseUser:dbname", "FriendMaster" );
+			dbname = plib->ReadStringNCS( prop, "databaseuser:dbname", "FriendMaster" );
 			DEBUG("[SystemBase] dbname %s\n",dbname );
-			port = plib->ReadInt( prop, "DatabaseUser:port", 3306 );
+			port = plib->ReadIntNCS( prop, "databaseuser:port", 3306 );
 			DEBUG("[SystemBase] port read %d\n", port );
-			l->sqlpoolConnections = plib->ReadInt( prop, "DatabaseUser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
+			l->sqlpoolConnections = plib->ReadIntNCS( prop, "databaseuser:connections", DEFAULT_SQLLIB_POOL_NUMBER );
 			DEBUG("[SystemBase] connections read %d\n", l->sqlpoolConnections );
-			options = plib->ReadString( prop, "DatabaseUser:options", NULL );
+			options = plib->ReadStringNCS( prop, "databaseuser:options", NULL );
 			DEBUG("[SystemBase] options %s\n",options );
 			
-			l->sl_CacheFiles = plib->ReadInt( prop, "Options:CacheFiles", 1 );
-			l->sl_UnMountDevicesInDB = plib->ReadInt( prop, "Options:UnmountInDB", 1 );
-			l->sl_SocketTimeout  = plib->ReadInt( prop, "Core:SSLSocketTimeout", 10000 );
-			l->sl_USFCacheMax = plib->ReadInt( prop, "Core:USFCachePerDevice", 102400000 );
+			l->sl_CacheFiles = plib->ReadIntNCS( prop, "Options:CacheFiles", 1 );
+			l->sl_UnMountDevicesInDB = plib->ReadIntNCS( prop, "Options:UnmountInDB", 1 );
+			l->sl_SocketTimeout  = plib->ReadIntNCS( prop, "core:SSLSocketTimeout", 10000 );
+			l->sl_USFCacheMax = plib->ReadIntNCS( prop, "core:USFCachePerDevice", 102400000 );
 			
-			char *tptr  = plib->ReadString( prop, "Core:ClientCert", NULL );
+			l->l_EnableHTTPChecker = plib->ReadIntNCS( prop, "Options:HttpChecker", 0 );
+			
+			char *tptr  = plib->ReadStringNCS( prop, "core:ClientCert", NULL );
 			if( tptr != NULL )
 			{
 				strcpy( l->RSA_CLIENT_KEY_PEM, tptr );
 			}
 			
-			int val = plib->ReadInt( prop, "Core:RequireClientCert", 0 );
+			int val = plib->ReadIntNCS( prop, "core:RequireClientCert", 0 );
 			if( val == 1 )
 			{
 				l->l_SSLAcceptFlags = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
@@ -325,7 +355,7 @@ SystemBase *SystemInit( void )
 				l->l_SSLAcceptFlags = SSL_VERIFY_PEER;
 			}
 			
-			tptr  = plib->ReadString( prop, "Core:Certpath", "cfg/crt/" );
+			tptr  = plib->ReadStringNCS( prop, "Core:Certpath", "cfg/crt/" );
 			if( tptr != NULL )
 			{
 				if( tptr[ 0 ] == '/' )
@@ -344,7 +374,7 @@ SystemBase *SystemInit( void )
 				}
 			}
 			
-			l->sl_WorkersNumber = plib->ReadInt( prop, "Core:Workers", WORKERS_MAX );
+			l->sl_WorkersNumber = plib->ReadIntNCS( prop, "Core:Workers", WORKERS_MAX );
 			if( l->sl_WorkersNumber < WORKERS_MIN )
 			{
 				l->sl_WorkersNumber = WORKERS_MIN;
@@ -355,7 +385,7 @@ SystemBase *SystemInit( void )
 				FFree( l->sl_ActiveModuleName );
 			}
 			
-			tptr  = plib->ReadString( prop, "LoginModules:use", "fcdb.authmod" );
+			tptr  = plib->ReadStringNCS( prop, "LoginModules:use", "fcdb.authmod" );
 			if( tptr != NULL )
 			{
 				l->sl_ActiveModuleName = StringDuplicate( tptr );
@@ -365,7 +395,23 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			websocket_notifications_set_auth_key(plib->ReadString( prop, "NotificationService:key", "" ));
+			const char *notifications_auth_key = plib->ReadStringNCS( prop, "NotificationService:key", NULL );
+			if (notifications_auth_key){
+				if (strlen(notifications_auth_key) > 10){
+					websocket_notifications_set_auth_key(notifications_auth_key);
+				} else {
+					Log( FLOG_INFO, "Mobile notifications service - auth key is too short!\n");
+					return NULL;
+				}
+			} else {
+				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
+			}
+			
+			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
+			if( tptr != NULL )
+			{
+				l->sl_XFrameOption = StringDuplicate( tptr );
+			}
 		}
 		else
 		{
@@ -428,23 +474,6 @@ SystemBase *SystemInit( void )
 		return NULL;
 	}
 	
-	l->fcm = FriendCoreManagerNew();
-
-	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
-	FriendCoreManagerInit( l->fcm );
-	
-	Log( FLOG_INFO,  "[SystemBase] Systembase: Initialize interfaces\n" );
-	
-	SocketInterfaceInit( &(l->sl_SocketInterface) );
-	StringInterfaceInit( &(l->sl_StringInterface) );
-	ListStringInterfaceInit( &(l->sl_ListStringInterface) );
-	UserSessionManagerInterfaceInit( &(l->sl_UserSessionManagerInterface) );
-	UserManagerInterfaceInit( &(l->sl_UserManagerInterface) );
-	CommServiceInterfaceInit( &(l->sl_CommServiceInterface) );
-	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
-
-	l->alib = l->LibraryApplicationGet( l );
-	
 	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
 	if( lsqllib != NULL )
 	{
@@ -464,10 +493,36 @@ SystemBase *SystemInit( void )
 				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
 			
 				FLONG tmp = atol( row[ 2 ] );
-				if( tmp < 20 )
+				if( tmp > 30 )
 				{
 					l->sl_RemoveSessionsAfterTime = tmp;
 				}
+				else
+				{
+					l->sl_RemoveSessionsAfterTime = 30;
+				}
+			}
+			lsqllib->FreeResult( lsqllib, res );
+		}
+		
+		// Log size
+		
+		l->sl_MaxLogsInMB = 0;
+		
+		snprintf( query, sizeof(query), "SELECT * FROM `FGlobalVariables` WHERE `Key`='MAX_MB_LOGS_SIZE'" );
+		
+		res = lsqllib->Query( lsqllib, query );
+		if( res != NULL )
+		{
+			char **row;
+			while( ( row = lsqllib->FetchRow( lsqllib, res ) ) ) 
+			{
+				// Id, Key, Value, Comment, date
+			
+				DEBUG("[SystemBase] \tFound database entry-> ID '%s' Key '%s', Value '%s', Comment '%s', Date '%s'\n", row[ 0 ], row[ 1 ], row[ 2 ], row[ 3 ], row[ 4 ] );
+			
+				FLONG tmp = atol( row[ 2 ] );
+				l->sl_MaxLogsInMB = tmp;
 			}
 			lsqllib->FreeResult( lsqllib, res );
 		}
@@ -475,13 +530,50 @@ SystemBase *SystemInit( void )
 		// dictionary
 		
 		l->sl_Dictionary = DictionaryNew( lsqllib );
+		l->LibrarySQLDrop( l, lsqllib );
 	}
 	else
 	{
 		FERROR("Cannot open 'mysql.library' instance!\n");
 		return NULL;
 	}
-	l->LibrarySQLDrop( l, lsqllib );
+	
+	
+	l->fcm = FriendCoreManagerNew();
+
+	l->sl_WorkerManager = WorkerManagerNew( l->sl_WorkersNumber );
+	if( FriendCoreManagerInit( l->fcm ) != 0 )
+	{
+		FriendCoreInstance *fci = l->fcm->fcm_FriendCores;
+		while( fci != NULL )
+		{
+			fci->fci_Closed = TRUE;
+			
+			fci = (FriendCoreInstance *) fci->node.mln_Succ;
+		}
+		
+		if( l->fcm->fcm_WebSocket != NULL )
+		{
+			WebSocketDelete( l->fcm->fcm_WebSocket );
+			l->fcm->fcm_WebSocket = NULL;
+		}
+		
+		FERROR("FriendCoreManagerInit fail!\n");
+		SystemClose( l );
+		return NULL;
+	}
+	
+	Log( FLOG_INFO,  "[SystemBase] Systembase: Initialize interfaces\n" );
+	
+	SocketInterfaceInit( &(l->sl_SocketInterface) );
+	StringInterfaceInit( &(l->sl_StringInterface) );
+	ListStringInterfaceInit( &(l->sl_ListStringInterface) );
+	UserSessionManagerInterfaceInit( &(l->sl_UserSessionManagerInterface) );
+	UserManagerInterfaceInit( &(l->sl_UserManagerInterface) );
+	CommServiceInterfaceInit( &(l->sl_CommServiceInterface) );
+	CommServiceRemoteInterfaceInit( &(l->sl_CommServiceRemoteInterface) );
+
+	l->alib = (struct ApplicationLibrary *)LibraryOpen( l, "application.library", 0 ); //l->LibraryApplicationGet( l );
 
 	l->ilib = l->LibraryImageGet( l );
 	
@@ -649,6 +741,17 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
+	if( skipDBUpdate == FALSE )
+	{
+		CheckAndUpdateDB( l );
+	}
+	else
+	{
+		DEBUG("----------------------------------------------------\n");
+		DEBUG("---------Autoupdatedatabase process skipped---------\n");
+		DEBUG("----------------------------------------------------\n");
+	}
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -801,6 +904,8 @@ SystemBase *SystemInit( void )
 	#define MINS30 1800
 	#define MINS60 MINS6*10
 	#define MINS360 6*MINS60
+	#define HOUR12 12*MINS60
+	#define DAYS1 24*MINS60
 	#define DAYS5 5*24*MINS60
 
 	EventAdd( l->sl_EventManager, DoorNotificationRemoveEntries, l, time( NULL )+MINS30, MINS30, -1 );
@@ -812,6 +917,15 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, WebdavTokenManagerDeleteOld, l->sl_WDavTokM, time( NULL )+MINS360, MINS360, -1 );
 	
 	EventAdd( l->sl_EventManager, CommServicePING, l->fcm->fcm_CommService, time( NULL )+MINS1, MINS1, -1 );
+	
+	EventAdd( l->sl_EventManager, DOSTokenManagerAutoDelete, l->sl_DOSTM, time( NULL )+MINS5, MINS5, -1 );
+	
+	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
+	
+	if( l->l_EnableHTTPChecker == 1 )
+	{
+		EventAdd( l->sl_EventManager, CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
+	}
 	
 	l->sl_USM->usm_UM = l->sl_UM;
 	l->sl_UM->um_USM = l->sl_USM;
@@ -988,6 +1102,7 @@ void SystemClose( SystemBase *l )
 	Log( FLOG_INFO,  "[SystemBase] Release filesystems\n");
 	// release fsystems
 	FHandler *lsys = l->sl_Filesystems;
+
 	while( lsys != NULL )
 	{
 		FHandler *rems = lsys;
@@ -1031,6 +1146,7 @@ void SystemClose( SystemBase *l )
 	
 	Log( FLOG_INFO,  "[SystemBase] Closing application.library\n");
 	// Application lib
+	
 	if( l->alib != NULL )
 	{
 		LibraryClose( l->alib );
@@ -1109,7 +1225,11 @@ void SystemClose( SystemBase *l )
 	if( l->sl_DefaultDBLib != NULL )
 	{ 
 		FFree( l->sl_DefaultDBLib ); 
-		
+	}
+	
+	if( l->sl_XFrameOption != NULL )
+	{
+		FFree( l->sl_XFrameOption );
 	}
 	
 	xmlCleanupParser();
@@ -1130,11 +1250,6 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
-	
-	if( skipDBUpdate == FALSE )
-	{
-		CheckAndUpdateDB( l );
-	}
 	
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -1161,14 +1276,14 @@ int SystemInitExternal( SystemBase *l )
 			if( prop != NULL )
 			{
 				// Do we even want a sentinel?
-				char *userTest = SLIB->plib->ReadString( prop, "Core:SentinelUsername", NULL );
+				char *userTest = SLIB->plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
 				if( userTest != NULL )
 				{
 					l->sl_Sentinel = FCalloc( 1, sizeof( Sentinel ) );
 					if( l->sl_Sentinel != NULL )
 					{
 						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( userTest );
-						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( SLIB->plib->ReadString( prop, "Core:SentinelPassword", NULL ) );
+						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( SLIB->plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
 					
 						memcpy( l->sl_Sentinel->s_FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 					}
@@ -1378,6 +1493,12 @@ int SystemInitExternal( SystemBase *l )
 				UserRegenerateSessionID( l->sl_Sentinel->s_User, NULL );
 			}
 		}
+		
+		UMCheckAndLoadAPIUser( l->sl_UM );
+		
+		DEBUG("----------------------------------------------------\n");
+		DEBUG("---------Mount user devices-------------------------\n");
+		DEBUG("----------------------------------------------------\n");
 	
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
@@ -1386,6 +1507,25 @@ int SystemInitExternal( SystemBase *l )
 			UserDeviceMount( l, sqllib, tmpUser, 1, TRUE );
 			DEBUG( "[SystemBase] DONE FINDING DRIVES FOR USER %s\n", tmpUser->u_Name );
 			tmpUser = (User *)tmpUser->node.mln_Succ;
+		}
+		
+		DEBUG("----------------------------------------------------\n");
+		DEBUG("---------Mount user group devices-------------------\n");
+		DEBUG("----------------------------------------------------\n");
+		
+		UserGroup *ug = l->sl_UM->um_UserGroups;
+		/*
+		User *sentUser = NULL;
+		if( l->sl_Sentinel != NULL )
+		{
+			sentUser = l->sl_Sentinel->s_User;
+		}*/
+		
+		while( ug != NULL )
+		{
+			//UserGroupDeviceMount( l, sqllib, ug, NULL );
+			UserGroupDeviceMount( l, sqllib, ug, l->sl_UM->um_APIUser );
+			ug = (UserGroup *)ug->node.mln_Succ;
 		}
 		
 		l->LibrarySQLDrop( l, sqllib );
@@ -1430,7 +1570,7 @@ typedef struct DBUpdateEntry
 void CheckAndUpdateDB( struct SystemBase *l )
 {
 	DEBUG("----------------------------------------------------\n");
-	DEBUG("---------Autoupdatedatabase process-----------------\n");
+	DEBUG("---------Autoupdatedatabase process start-----------\n");
 	DEBUG("----------------------------------------------------\n");
 	
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -1609,7 +1749,7 @@ void CheckAndUpdateDB( struct SystemBase *l )
 											}
 										}
 									}
-									
+									// error: Duplicate column name
 									DEBUG("[SystemBase] Running script : %s from file: %s on database\n", command, scriptfname ); 
 									if( strlen( command ) > 10 )
 									{
@@ -1672,7 +1812,6 @@ void CheckAndUpdateDB( struct SystemBase *l )
 UserGroup *LoadGroups( struct SystemBase *sb )
 {
 	UserGroup *groups = NULL;
-	UserGroup *newGroup = NULL, *lastGroup = NULL;
 	
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
 	if( sqlLib != NULL )
@@ -1719,7 +1858,7 @@ SELECT \
 FROM `Filesystem` f \
 WHERE \
 ( \
-f.UserID = '%ld' OR \
+f.UserID = '%lu' OR ( \
 f.GroupID IN ( \
 SELECT ug.UserGroupID FROM FUserToGroup ug, FUserGroup g \
 WHERE \
@@ -1727,8 +1866,8 @@ g.ID = ug.UserGroupID AND g.Type = \'Workgroup\' AND \
 ug.UserID = '%ld' \
 ) \
 ) \
-AND f.Mounted = \'1\'", 
-usr->u_ID , usr->u_ID
+)AND ( (f.Owner='0' OR f.Owner IS NULL) AND f.Mounted=\'1\')", 
+usr->u_ID , usr->u_ID, usr->u_ID
 	);
 	DEBUG("[UserDeviceMount] Finding drives in DB\n");
 	void *res = sqllib->Query( sqllib, temptext );
@@ -1739,7 +1878,7 @@ usr->u_ID , usr->u_ID
 	}
 	DEBUG("[UserDeviceMount] Finding drives in DB no error during select:\n\n");
 	
-	if( pthread_mutex_lock( &l->sl_InternalMutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &l->sl_InternalMutex ) == 0 )
 	{
 		char **row;
 		while( ( row = sqllib->FetchRow( sqllib, res ) ) ) 
@@ -1767,13 +1906,13 @@ usr->u_ID , usr->u_ID
 				{TAG_DONE, TAG_DONE}
 			};
 
-			pthread_mutex_unlock( &l->sl_InternalMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 
 			File *device = NULL;
 			DEBUG("[UserDeviceMount] Before mounting\n");
 			int err = MountFS( l, (struct TagItem *)&tags, &device, usr );
 
-			pthread_mutex_lock( &l->sl_InternalMutex );
+			FRIEND_MUTEX_LOCK( &l->sl_InternalMutex );
 
 			if( err != 0 && err != FSys_Error_DeviceAlreadyMounted )
 			{
@@ -1817,7 +1956,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 
 		usr->u_InitialDevMount = TRUE;
 
-		pthread_mutex_unlock( &l->sl_InternalMutex );
+		FRIEND_MUTEX_UNLOCK( &l->sl_InternalMutex );
 	}
 	
 	return 0;
@@ -1852,6 +1991,9 @@ int UserDeviceUnMount( SystemBase *l, SQLLibrary *sqllib __attribute__((unused))
 				FFree( remdev );
 			}
 		}
+		
+		//TODO
+		// unmount also disks shared by usergroups
 	}
 	else
 	{
@@ -1961,20 +2103,20 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 	
 	while( TRUE )
 	{
-		if( pthread_mutex_lock( &l->sl_ResourceMutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex ) == 0 )
 		{
 			if( l->sqlpool[ l->MsqLlibCounter ].inUse == FALSE )
 			{
-				pthread_mutex_unlock( &l->sl_ResourceMutex );
+				//FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 			
-				pthread_mutex_lock( &l->sl_ResourceMutex );
+				//FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
 				retlib = l->sqlpool[l->MsqLlibCounter ].sqllib;
 				if( retlib == NULL || retlib->GetStatus( (void *)retlib ) != SQL_STATUS_READY ) //retlib->con.sql_Con->status != MYSQL_STATUS_READY )
 				{
 					FERROR( "[LibraryMYSQLGet] We found a NULL pointer on slot %d!\n", l->MsqLlibCounter );
 					// Increment and check
 					if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
-					pthread_mutex_unlock( &l->sl_ResourceMutex );
+					FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 					continue;
 				}
 				l->sqlpool[ l->MsqLlibCounter ].inUse = TRUE;
@@ -1988,12 +2130,12 @@ SQLLibrary *LibrarySQLGet( SystemBase *l )
 			
 				// Increment and check
 				if( ++l->MsqLlibCounter >= l->sqlpoolConnections ) l->MsqLlibCounter = 0;
-				pthread_mutex_unlock( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 				break;
 			}
 			else
 			{
-				pthread_mutex_unlock( &l->sl_ResourceMutex );
+				FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 			}
 		}
 		
@@ -2043,9 +2185,9 @@ void LibrarySQLDrop( SystemBase *l, SQLLibrary *mclose )
 	{
 		if( l->sqlpool[ i ].sqllib == mclose )
 		{
-			pthread_mutex_lock( &l->sl_ResourceMutex );
+			FRIEND_MUTEX_LOCK( &l->sl_ResourceMutex );
 			l->sqlpool[ i ].inUse = FALSE;
-			pthread_mutex_unlock( &l->sl_ResourceMutex );
+			FRIEND_MUTEX_UNLOCK( &l->sl_ResourceMutex );
 			closed = i;
 		}
 		
@@ -2276,11 +2418,10 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 	int bytes = 0;
 	
 	{
-		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( unsigned char ) );
+		buf = (unsigned char *)FCalloc( len + 128, sizeof( unsigned char ) );
 		if( buf != NULL )
 		{
-			usersession->us_InUseCounter++;
-			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, msg,  len );
+			memcpy( buf, msg, len );
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 
@@ -2289,13 +2430,16 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wc_Wsi );
 
-				bytes += WebsocketWrite( wsc , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+				FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) );
+
+				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
+
+				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
-		
+			
 			FFree( buf );
-			usersession->us_InUseCounter--;
 		}
 		else
 		{
@@ -2323,11 +2467,10 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 	int bytes = 0;
 	
 	{
-		buf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING + 128+24, sizeof( unsigned char ) );
+		buf = (unsigned char *)FCalloc( len + 128+24, sizeof( unsigned char ) );
 		if( buf != NULL )
 		{
-			usersession->us_InUseCounter++;
-			memcpy( buf + LWS_SEND_BUFFER_PRE_PADDING, msg,  len );
+			memcpy( buf, msg,  len );
 
 			WebsocketClient *wsc = usersession->us_WSClients;
 		
@@ -2335,12 +2478,11 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		
 			while( wsc != NULL )
 			{
-				bytes += WebsocketWrite( wsc , buf + LWS_SEND_BUFFER_PRE_PADDING , len, LWS_WRITE_TEXT );
+				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 				wsc = (WebsocketClient *)wsc->node.mln_Succ;
 			}
 		
 			FFree( buf );
-			usersession->us_InUseCounter--;
 		}
 		else
 		{
@@ -2392,4 +2534,122 @@ int SendProcessMessage( Http *request, char *data, int len )
 	DEBUG("SendProcessMessage end\n");
 	
 	return 0;
+}
+
+#define NORMAL_COLOR  "\x1B[0m"
+#define GREEN  "\x1B[32m"
+#define BLUE  "\x1B[34m"
+
+
+typedef struct LFile
+{
+	char		lf_Name[ 256 ];
+	size_t		lf_Size;
+	size_t		lf_ModDate;
+}LFile;
+
+static int LFileCompare(const void * a, const void * b)
+{
+    LFile *aa = (LFile *)a;
+	LFile *bb = (LFile *)b;
+	if( aa->lf_ModDate > bb->lf_ModDate ) return -1;
+	else return 1;
+}
+
+/**
+ * Remove old logs from log directory
+ *
+ * @param l pointer to SystemBase
+ */
+
+void RemoveOldLogs( SystemBase *l )
+{
+ 	//l->sl_MaxLogsInMB = 40; // test 40MB
+	if( l->sl_MaxLogsInMB > 0 )
+	{
+		int numberOfFiles = 0;
+		int64_t bytes = 0;
+		
+		DIR * d; // open the path
+		if( ( d = opendir("log/")) != NULL )
+		{
+			struct dirent * dir;
+			while( (dir = readdir(d)) != NULL ) 
+			{
+				if( strcmp( dir->d_name,".")==0 || strcmp(dir->d_name,"..") ==0 )continue;
+			
+				if( dir->d_type == 0x8 && (strncmp( dir->d_name, "friend_core", 11 ) == 0) ) // if the type is not directory just print it with blue
+				{
+					char path[ 1024 ];
+					snprintf( path, sizeof(path), "log/%s", dir->d_name );
+				
+					struct stat attr;
+					stat( path, &attr );
+				
+					numberOfFiles++;
+					bytes += attr.st_size;
+				}
+			}
+			closedir( d ); // finally close the directory
+		} // opendir
+		
+		int maxLogsBytes = l->sl_MaxLogsInMB * 1024 * 1000;
+		// too much logs (in MB)
+		if( bytes > maxLogsBytes )
+		{
+			LFile *files = FCalloc( numberOfFiles, sizeof(LFile) );
+			if( files != NULL )
+			{
+				LFile **filesPtr = FCalloc( numberOfFiles, sizeof(LFile *) );
+				if( filesPtr != NULL )
+				{
+					int pos = 0;
+					if( ( d = opendir("log/")) != NULL )
+					{
+						struct dirent * dir;
+						while( (dir = readdir(d)) != NULL ) 
+						{
+							if( strcmp( dir->d_name,".")==0 || strcmp(dir->d_name,"..") ==0 )continue;
+	   
+							if( dir->d_type == 0x8 && (strncmp( dir->d_name, "friend_core", 11 ) == 0) ) // if the type is not directory just print it with blue
+							{
+								snprintf( files[ pos ].lf_Name, sizeof(files[ pos ].lf_Name), "log/%s", dir->d_name );
+								struct stat attr;
+								stat( files[ pos ].lf_Name, &attr );
+								files[ pos ].lf_Size = attr.st_size;
+								files[ pos ].lf_ModDate = attr.st_mtime;
+								filesPtr[ pos ] = &files[ pos ];
+								pos++;
+							}
+						}
+						closedir( d ); // finally close the directory
+						
+						qsort( filesPtr, (sizeof(filesPtr)/sizeof(LFile **)), sizeof (LFile *), LFileCompare);
+					} // opendir
+					
+					int i;
+					for( i = 0 ; i < numberOfFiles ; i++ )
+					{
+						
+						DEBUG1("maxbytes %d will survive %d MB %d\n", bytes, maxLogsBytes, (bytes/(1024*1000)) );
+						if( bytes > maxLogsBytes )
+						{
+							DEBUG1("Delete file %s modification date %lu\n", filesPtr[ i ]->lf_Name, filesPtr[ i ]->lf_ModDate );
+							remove( filesPtr[ i ]->lf_Name );
+							bytes -= filesPtr[ i ]->lf_Size;
+						}
+						else
+						{
+							DEBUG("No more files to remove\n");
+							break;
+						}
+					}
+					
+					FFree( filesPtr );
+				}
+				FFree( files );
+			}
+		}
+		
+	}
 }

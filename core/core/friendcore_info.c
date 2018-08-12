@@ -85,12 +85,12 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 		
 		if( prop != NULL)
 		{
-			char *loctmp = plib->ReadString( prop, "Global:GEOProvider", "freegeoip.net" );
+			char *loctmp = plib->ReadStringNCS( prop, "Global:GEOProvider", "api.ipstack.com" );
 			if( loctmp != NULL )
 			{
 				geoProvider = StringDuplicate( loctmp );
 			}
-			loctmp = plib->ReadString( prop, "Global:GEOFormat", "json" );
+			loctmp = plib->ReadStringNCS( prop, "Global:GEOFormat", "json" );
 			if( loctmp != NULL )
 			{
 				geoFormat = StringDuplicate( loctmp );
@@ -104,7 +104,7 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 	
 	if( geoProvider == NULL )
 	{
-		geoProvider = StringDuplicate( "freegeoip.net" );
+		geoProvider = StringDuplicate( "api.ipstack.com" );
 	}
 	
 	if( geoFormat == NULL )
@@ -115,15 +115,16 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 	if( ( fci = FCalloc( 1, sizeof( FriendcoreInfo ) ) ) != NULL )
 	{
 		fci->fci_SLIB = slib;
-		char tmp[ 128 ];
-		snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
+		char tmp[ 256 ];
+		//snprintf( tmp, sizeof(tmp), "/%s/", geoFormat );
+		snprintf( tmp, sizeof(tmp), "/82.177.144.226?access_key=6c03cf0550f249596f97dd9aa3203fb3" );
 		
 		HttpClient *c = HttpClientNew( FALSE, tmp );
 		if( c != NULL )
 		{
 			//freegeoip.net/xml/
 			
-			BufString *bs = HttpClientCall( c, geoProvider );
+			BufString *bs = HttpClientCall( c, geoProvider, 80, FALSE );
 			if( bs != NULL )
 			{
 				char *pos = strstr( bs->bs_Buffer, "\r\n\r\n" );
@@ -307,7 +308,7 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		// add geo location
 	
 		BufStringAddSize( bs, ",\"GeoLocation\":", 15 );
-		
+		/*
 		if( sb->fcm->fcm_FCI->fci_LocalisationJSON != NULL )
 		{
 			if( strlen( sb->fcm->fcm_FCI->fci_LocalisationJSON ) < 2 )
@@ -321,8 +322,9 @@ BufString *FriendCoreInfoGet( FriendcoreInfo *fci )
 		}
 		else
 		{
+		*/
 			BufStringAdd( bs, "\"not available\"" );
-		}
+		//}
 
 		BufStringAdd( bs, "}" );
 	}

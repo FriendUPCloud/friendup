@@ -904,7 +904,6 @@ Application.receiveMessage = function( object )
 				case 'list':
 					var output = false;
 					var count = 1;
-					debugger;
 					for (var a = 0; a < object.hosts.length; a++)
 					{
 						if ( object.hosts[a].apps )

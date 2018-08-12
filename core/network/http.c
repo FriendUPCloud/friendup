@@ -42,6 +42,8 @@
 #include <system/systembase.h>
 #include <arpa/inet.h>
 
+extern SystemBase *SLIB;
+
 /**
  * sprintf function used by Http messages. (Pretty inefficient, but what the heck...)
  *
@@ -84,6 +86,11 @@ Http *HttpNew( )
 		return NULL;
 	}
 	h->headers = HashmapNew();
+	
+	if( SLIB->sl_XFrameOption != NULL )
+	{
+		h->h_RespHeaders[ HTTP_HEADER_X_FRAME_OPTIONS ] = SLIB->sl_XFrameOption;//StringDuplicate( SLIB->sl_XFrameOption );
+	}
 
 	// Set default version to HTTP/1.1
 	h->versionMajor = 1;
@@ -532,12 +539,17 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 							currentToken[j] = HttpAlphaToLow( currentToken[j] );
 						}
 						lookForFieldName = FALSE;
-
+						
 						if( strcmp( currentToken, "content-type" ) == 0 )
 						{
 							http->h_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
 							
 							char *eptr = strstr( lineStartPtr + tokenLength, ";" );
+							if( eptr == NULL )
+							{
+								eptr = strstr( lineStartPtr + tokenLength, "\r" );
+							}
+							
 							if( eptr != NULL )
 							{
 								int toksize = eptr - (lineStartPtr + tokenLength);
@@ -547,18 +559,23 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 								{
 									app = StringDuplicateN( lineStartPtr + tokenLength + 2, toksize - 2 );
 								}
-								
+
 								//
 								// getting content type
 								//
 
 								if( app != NULL )
 								{
-									if( strcmp( app, "application/x-www-form-urlencoded" ) == 0 ||  strcmp( app, "application/json" )  == 0 )
+									if( strcmp( app, "application/x-www-form-urlencoded" ) == 0 )// ||  strcmp( app, "application/json" )  == 0 )
 									{
 										http->h_ContentType = HTTP_CONTENT_TYPE_DEFAULT;
 									}
 
+									else if( strcmp( app, "application/json" )  == 0 )
+									{
+										http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_JSON;
+									}
+									
 									else if( strcmp( app, "multipart/form-data" ) == 0 )
 									{
 										http->h_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
@@ -1240,6 +1257,9 @@ static inline int HttpParsePartialRequestChunked( Http* http, char* data, unsign
 	return 0;
 }
 
+// we need this information in Log
+extern int nothreads;
+
 int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 {
 	if( data == NULL || http == NULL )
@@ -1252,7 +1272,7 @@ int HttpParsePartialRequest( Http* http, char* data, unsigned int length )
 	if( !http->partialRequest )
 	{
 		http->partialRequest = TRUE;
-		Log( FLOG_INFO,"INCOMING Request length: %d data: %.*s\n", length, 512, data );
+		Log( FLOG_INFO,"INCOMING Request threads: %d length: %d data: %.*s\n", nothreads, length, 512, data );
 		
 		// Check if the recieved data exceeds the maximum header size. If it does, 404 dat bitch~
 		// TODO
@@ -1618,7 +1638,7 @@ void HttpFree( Http* http )
 	int i;
 	for( i = 0; i < HTTP_HEADER_END ; i++ )
 	{
-		if( http->h_RespHeaders[ i ] != NULL )
+		if( (http->h_RespHeaders[ i ] != NULL) && (i != HTTP_HEADER_X_FRAME_OPTIONS) )
 		{
 			FFree( http->h_RespHeaders[ i ]  );
 			http->h_RespHeaders[ i ] = NULL;
@@ -1990,8 +2010,11 @@ char *HttpBuild( Http* http )
 						snprintf( tmp, 512, "%s: %s\r\n", HEADERS[ i ], http->h_RespHeaders[ i ] );
 						strings[ stringPos++ ] = tmp;
 						//INFO("ADDDDDDDDDDDD %s   AND FREE %s\n", tmp, http->h_RespHeaders[ i ] );
-						FFree( http->h_RespHeaders[ i ] );
-						http->h_RespHeaders[ i ] = NULL;
+						if( i != HTTP_HEADER_X_FRAME_OPTIONS )
+						{
+							FFree( http->h_RespHeaders[ i ] );
+							http->h_RespHeaders[ i ] = NULL;
+						}
 					}
 					else
 					{

@@ -10,6 +10,12 @@ i18n_current_password                : Nykyinen salasana
 i18n_new_password                    : Uusi salasana
 i18n_confirm                         : varmista
 
+i18n_language                        : Kieli
+i18n_workspace_mode                  : Työtilan tila
+i18n_mode_gamified                   : Pelimaailmaan
+i18n_mode_normal                     : Normaali
+i18n_mode_developer                  : Kehittäjä
+
 i18n_are_you_sure                    : Oletko varma?
 i18n_this_will_remove                : Tämä poistaa levyn levyasemalistastasi.
 
@@ -101,3 +107,34 @@ i18n_devices                         : Laitteet
 
 i18n_generate_key                    : Luo avain
 
+i18n_useravatar							: Avatar
+i18n_changeavatar						: Muuttaa
+i18n_fileselectoravatar					: Valitse PNG-kuva
+
+i18n_friendNetwork					 : Friend Network
+i18n_fnetActivate					 : Aktivoida Friend Network
+i18n_fnetWorkgroup					 : Yhteisö
+i18n_fnetPassword					 : Yhteisö salasana
+i18n_fnetRepeatPassword				 : Toista salasana
+i18n_workgroupPlaceHolder			 : Syötä työryhmän nimi tai jätä tyhjäksi
+i18n_passwordNoMatch				 : Friend Network -työryhmän salasanat eivät täsmää.
+i18n_fnetAcceptFromAny				 : Hyväksy viestit henkilöiltä, joita ei ole merkitty ystävinä
+i18n_fnetDescription                 : Kuvaile itseäsi
+i18n_fnetDownloadFiles				 : Lataa jaetut tiedostot välittömästi
+i18n_fnetDownloadPath				 : Polku
+i18n_fnetDownloadButton				 : Valitse hakemisto
+i18n_fnetPleaseChooseDirectory		 : Valitse hakemisto...
+i18n_fnetShareLocalDrives			 : Asenna paikalliset asemat Friend Networkiin
+i18n_fnetDeviceDescription			 : Laitekuvaus
+i18n_fnetDeviceName					 : Laitteen nimi
+i18n_fnetChangeDeviceAvatar			 : Muuta kuvaa
+i18n_device_information				 : Laite
+i18n_nameOfDevice					 : Anna laitteen nimi tähän
+i18n_deviceNotice					 : Tämä tietosivu koskee juuri käyttämääsi laitetta. Friend Network käyttää sitä näyttämään eri laitteita, joita käytät hetkessä.
+i18n_fnetMountDrive					 : Mount Friend Network -levy asuntolevyasemaksi
+i18n_fnetAutoMountDrive				 : Näytä Friend Network -kuvake työpisteessä
+
+i18n_descriptionOfDevice			 : Anna kuvaus
+
+i18n_update_language_warning         : Kielen päivittäminen
+i18n_update_language_desc            : Kun päivität kielen asetusta, Friendin pitää ladata työtila uudelleen. Menetät mitä ei tallenneta. Haluatko varmasti jatkaa?

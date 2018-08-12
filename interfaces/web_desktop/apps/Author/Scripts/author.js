@@ -329,6 +329,9 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'applystyle':
+			this.mainView.sendMessage( msg );
+			break;
 		case 'togglevr':
 			this.toggleVR();
 			break;

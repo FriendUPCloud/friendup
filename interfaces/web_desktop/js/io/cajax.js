@@ -32,11 +32,36 @@ var _cajax_file_process_count = 0;
 var _c_count = 0;
 var _c_destroyed = 0;
 
+// Kill all ajax calls by context
+// TODO: Test if it is dangerous!
+function KillcAjaxByContext( context )
+{
+	var q = [];
+	for( var a = 0; a < _cajax_queue; a++ )
+	{
+		if( _cajax_queue[ a ].context == context )
+		{
+			_cajax_queue[ a ].destroy();
+		}
+		else q.push( _cajax_queue[ a ] );
+	}
+	_cajax_queue = q;
+}
+
 function AddToCajaxQueue( ele )
 {
-	ele.destroy();
+	// Don't add to queue if we are offline
+	if( !Workspace.serverIsThere )
+	{
+		console.log( 'Do not add to ajax queue: we\'re offline.' );
+		return ele.destroy();
+	}
+	else
+	{
+		console.log( 'Server is still there! It\'s great!' );
+	}
+	
 	// TODO: Support a nice queue.. :-)
-	/*
 	if( !window.friend || !window.friend.cajax )
 	{
 		console.log( 'Impossible error' );
@@ -47,13 +72,15 @@ function AddToCajaxQueue( ele )
 		// Already there
 		if( friend.cajax[a] == ele ) return false;
 	}
-	friend.cajax.push( ele );*/
+	friend.cajax.push( ele );
 }
 
 // A simple ajax function
 cAjax = function()
 {
 	this.openFunc = null;
+	this.opened = false;
+	this.context = false; // Named contexts, so that we can kill an entire context
 	
 	//_c_count++;
 	//console.log( 'cAjax: Created ' + _c_count );
@@ -217,6 +244,11 @@ cAjax = function()
 					this.returnCode = 'ok';
 					this.returnData = this.rawData;
 				}
+				else
+				{
+					this.returnCode = 'false';
+					this.returnData = null;
+				}
 			}
 			
 			// Clean out possible queue
@@ -276,6 +308,8 @@ cAjax.prototype.destroy = function()
 
 	// No more activity here!
 	this.decreaseProcessCount();
+	if( this.opened )
+		this.close();
 	if( this.df && this.df.available ) this.df.delConnection( this.connectionId );
 	
 	// Null all attributes
@@ -303,6 +337,7 @@ cAjax.prototype.destroy = function()
 	this.queued = null;
 	this.openFunc = null;
 	this.fileQueue = null;
+	
 	// finally
 	delete this;
 }
@@ -311,6 +346,8 @@ cAjax.prototype.destroy = function()
 cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 {
 	var self = this;
+	
+	this.opened = true;
 	
 	// Try websockets!!
 	if( 
@@ -368,9 +405,12 @@ cAjax.prototype.open = function( method, url, syncing, hasReturnCode )
 // Close it!
 cAjax.prototype.close = function()
 {
-	// Abort connection
-	this.proxy.abort();	
-	this.destroy();
+	if( this.opened )
+	{
+		// Abort connection
+		this.proxy.abort();
+		this.opened = false;
+	}
 }
 
 // Add a variable to ajax query
@@ -406,6 +446,15 @@ cAjax.prototype.responseText = function()
 // Send ajax query
 cAjax.prototype.send = function( data )
 {
+	var self = this;
+
+	// Wait in case of relogin
+	if( typeof( Workspace ) != 'undefined' && Workspace.reloginInProgress && !this.forceSend )
+	{
+		AddToCajaxQueue( self );
+		return;
+	}
+
 	// If we're in the queue, skip
 	if( this.queued ) return;
 	
@@ -414,7 +463,6 @@ cAjax.prototype.send = function( data )
 		this.mode = '';
 	}
 	
-	var self = this;
 	
 	// Which queue this goes into
 	this.fileQueue = this.url && this.url.substr( this.url.length - 5, 5 ) == '/copy';
@@ -493,34 +541,45 @@ cAjax.prototype.send = function( data )
 			}, 100 );
 		}
 		
-		// Copy goes in the file queue
-		var of = function()
+		// Copy goes in the file queue if server is there
+		if( Workspace.serverIsThere )
 		{
-			self.queued = false;
-			self.send( data, true );
+			var of = function()
+			{
+				self.queued = false;
+				self.send( data, true );
+			}
+			this.queued = true;
+			queue.push( of );
 		}
-		this.queued = true;
-		queue.push( of );
+		else
+		{
+			console.log( 'Server isn\'t there.' );
+			this.destroy();
+		}
 		return;
 	}
 	
 	// Only if successful
-	function successfulSend()
+	function successfulSend( addBusy )
 	{
 		// Update process count and set loading
 		if( self.fileQueue )
 			_cajax_file_process_count++;
 		else _cajax_process_count++;
-		if( ge( 'Screens' ) )
+		if( addBusy )
 		{
-			var titleBars = document.getElementsByClassName( 'TitleBar' );
-			for( var b = 0; b < titleBars.length; b++ )
+			if( ge( 'Screens' ) )
 			{
-				if( !titleBars[b].classList.contains( 'Busy' ) )
-					titleBars[b].classList.add( 'Busy' );
+				var titleBars = document.getElementsByClassName( 'TitleBar' );
+				for( var b = 0; b < titleBars.length; b++ )
+				{
+					if( !titleBars[b].classList.contains( 'Busy' ) )
+						titleBars[b].classList.add( 'Busy' );
+				}
+				if( !document.body.classList.contains( 'Busy' ) )
+					document.body.classList.add( 'Busy' );
 			}
-			if( !document.body.classList.contains( 'Busy' ) )
-				document.body.classList.add( 'Busy' );
 		}
 	}
 
@@ -572,7 +631,13 @@ cAjax.prototype.send = function( data )
 				self.df.addConnection( self.connectionId, self.url, self );
 			}, 500 );
 		}
-		successfulSend();
+		// Not for module calls
+		var addBusy = true;
+		if( self.url.indexOf( 'module/' ) < 0 ) 
+		{
+			addBusy = false;
+		}
+		successfulSend( addBusy );
 		return;
 	}
 
@@ -735,6 +800,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
+					Workspace.sessionId = false;
 					return Workspace.relogin();
 				}
 			}
@@ -746,6 +812,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					AddToCajaxQueue( self );
+					Workspace.sessionId = false;
 					return Workspace.relogin();
 				}
 			}
@@ -760,6 +827,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			if( r.response == 'user session not found' )
 			{
 				AddToCajaxQueue( self );
+				Workspace.sessionId = false;
 				return Workspace.relogin();
 			}
 		}

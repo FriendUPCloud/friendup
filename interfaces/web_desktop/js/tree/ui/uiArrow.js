@@ -29,98 +29,99 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.Arrow = function ( tree, name, properties )
 {
+	this.colorBack = '#808080';
+	this.colorBright = '#C0C0C0';
+	this.colorDark = '#404040';
+	this.color = 'black';
+	this.colorDown = '#C0C0C0';
+	this.colorMouseOver = '#A0A0A0';
+	this.direction = 'top';
+	this.size = 6;
 	this.onClick = false;
+	this.onChange = false;
 	this.caller = false;
-	this.renderItemName = 'Friend.Tree.UI.RenderItems.Arrow';
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.D2Arrow', properties );
 	this.down = false;
 	this.mouseOver = false;
+
+	this.renderItemName = 'Friend.Tree.UI.RenderItems.Arrow';
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.D2Arrow', properties );
 
 	// Add default Gesture process
 	this.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this, properties ) );
 };
 Friend.Tree.UI.Arrow.messageUp = function ( message )
 {
-	return this.startProcess( message, [ 'x', 'y', 'z', 'color', 'backColor', 'brightColor', 'darkColor', 'size', 'direction', 'down', 'mouseOver', 'caller', 'onClick' ] );
+	return this.startProcess( message, [ 'x', 'y', 'z', 'color', 'colorBack', 'colorBright', 'colorDark', 'size', 'direction', 'down', 'mouseOver', 'caller', 'onClick' ] );
 };
 Friend.Tree.UI.Arrow.messageDown = function ( message )
 {
-	return this.endProcess( message, [ 'x', 'y', 'z', 'color', 'backColor', 'brightColor', 'darkColor', 'size', 'direction', 'down', 'mouseOver' ] );
+	return this.endProcess( message, [ 'x', 'y', 'z', 'color', 'colorBack', 'colorBright', 'colorDark', 'size', 'direction', 'down', 'mouseOver' ] );
 };
 Friend.Tree.UI.Arrow.getValue = function ()
 {
 	return this.down;
 };
 
-Friend.Tree.UI.RenderItems.Arrow_Three2D = function ( tree, name, flags )
-{
-	this.backColor = '#808080';
-	this.brightColor = '#C0C0C0';
-	this.darkColor = '#404040';
-	this.color = 'black';
-	this.downColor = '#C0C0C0';
-	this.mouseOverColor = '#A0A0A0';
-	this.direction = 'top';
-	this.size = 6;
-	this.onClick = false;
-	this.onChange = false;
-	this.caller = false;
-	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Arrow_Three2D', flags );
-};
 
-Friend.Tree.UI.RenderItems.Arrow_Three2D.render = function ( properties )
+Friend.Tree.UI.RenderItems.Arrow_HTML = function ( tree, name, properties )
 {
-	// Draw the box
-	var color = this.backColor;
-	if ( this.parent.mouseOver )
-		color = this.mouseOverColor;
-	if ( this.parent.down )
-		color = this.downColor;
-	this.thisRect.drawHilightedBox( properties, color, this.brightColor, this.darkColor );
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.color = false;
+	this.colorDown = false;
+	this.colorMouseOver = false;
+	this.direction = false;
+	this.size = false;
 
-	// Draw the arrow
-	var rect = new Friend.Tree.Utilities.Rect( this.thisRect );
-	rect.shrink( this.width - this.size, this.height - this.size );
-	rect.drawFilledTriangle( properties, this.direction, this.color );
-	return properties;
-};
-
-Friend.Tree.UI.RenderItems.Arrow_HTML = function ( tree, name, flags )
-{
-	this.backColor = '#808080';
-	this.brightColor = '#C0C0C0';
-	this.darkColor = '#404040';
-	this.color = 'black';
-	this.downColor = '#C0C0C0';
-	this.mouseOverColor = '#A0A0A0';
-	this.direction = 'top';
-	this.size = 6;
 	this.onClick = false;
 	this.onChange = false;
 	this.caller = false;
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_HTML';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Arrow_HTML', flags );
-};
-Friend.Tree.UI.RenderItems.Arrow_HTML.render = Friend.Tree.UI.RenderItems.Arrow_Three2D.render;
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Arrow_HTML', properties );
 
-Friend.Tree.UI.RenderItems.Arrow_Canvas2D = function ( tree, name, flags )
+	// Default size
+	this.width = 16;						// To be stored in theme!
+	this.item.width = this.width;
+	this.height = 16;
+	this.item.height = this.height;
+};
+Friend.Tree.UI.RenderItems.Arrow_HTML.render = function ( properties )
 {
-	this.backColor = '#808080';
-	this.brightColor = '#C0C0C0';
-	this.darkColor = '#404040';
-	this.color = 'black';
-	this.downColor = '#C0C0C0';
-	this.mouseOverColor = '#A0A0A0';
-	this.direction = 'top';
-	this.size = 6;
-	this.onClick = false;
-	this.onChange = false;
-	this.caller = false;
+	// Draw the box
+	var color = this.item.colorBack;
+	if ( this.item.mouseOver )
+		color = this.item.colorMouseOver;
+	if ( this.item.down )
+		color = this.item.colorDown;
+	this.thisRect.drawHilightedBox( properties, color, this.item.colorBright, this.item.colorDark );
+
+	// Draw the arrow
+	var rect = new Friend.Tree.Utilities.Rect( this.thisRect );
+	rect.shrink( this.width - this.size, this.height - this.size );
+	rect.drawFilledTriangle( properties, this.item.direction, this.item.color );
+
+	// Allow rendering in parent
+	if ( this.item.renderSubItems )
+		properties.renderInParent = properties.rendererItem;
+
+	return properties;
+};
+
+Friend.Tree.UI.RenderItems.Arrow_Canvas2D = function ( tree, name, properties )
+{
+	this.color = false;
+	this.colorBack = false;
+	this.colorBright = false;
+	this.colorDark = false;
+	this.colorDown = false;
+	this.colorMouseOver = false;
+	this.direction = false;
+	this.size = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Arrow_Canvas2D', flags );
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Arrow_Canvas2D', properties );
 };
-Friend.Tree.UI.RenderItems.Arrow_Canvas2D.render = Friend.Tree.UI.RenderItems.Arrow_Three2D.render;
+Friend.Tree.UI.RenderItems.Arrow_Canvas2D.render = Friend.Tree.UI.RenderItems.Arrow_HTML.render;

@@ -38,17 +38,27 @@
 	height: 300px;
 }
 
-#UserList
+#Userlist
 {
-	float: right;
+	top: 10px;
+	right: 10px;
+	position: absolute;
+	z-index: 2;
 }
 
-#UserList p
+#Userlist p
 {
 	margin: 0;
 }
 
-#UserList select
+#Userlist p strong
+{
+	display: block;
+	float: left;
+	padding: 5px 10px;
+}
+
+#Userlist select
 {
 	padding: 2px 5px;
 }
@@ -138,3 +148,4 @@
 	display: block;
 	clear: both;
 }
+

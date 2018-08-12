@@ -99,8 +99,6 @@ if( $app->ID )
 		}
 	}
 	
-	
-	
 	// TODO: Permissions?
 	$str = '<!DOCTYPE html>
 <html>

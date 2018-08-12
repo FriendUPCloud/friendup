@@ -58,7 +58,7 @@ void HttpClientDelete( HttpClient *htc );
 //
 //
 
-BufString *HttpClientCall( HttpClient *c, char *host );
+BufString *HttpClientCall( HttpClient *c, char *host, int port, FBOOL secured );
 
 
 #endif // __NETWORK_HTTP_CLIENT_H__

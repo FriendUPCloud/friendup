@@ -97,7 +97,7 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 		//DEBUG("reaper\n");
 		for (unsigned int i = 0; i < _max_sockets; i++){
 			if (_socket_array[i] != NULL){ //there is probably a socket here...
-				pthread_mutex_lock(&_socket_array_mutex);
+				FRIEND_MUTEX_LOCK(&_socket_array_mutex);
 				bool unlock_mutex = true;
 				if (_socket_array[i] != NULL){ //there is still a socket here, let's have a look!
 
@@ -117,14 +117,14 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 									state_persistance_time_s);
 							Socket* tmp = _socket_array[i];
 							_socket_array[i] = NULL;
-							pthread_mutex_unlock(&_socket_array_mutex); //release mutex, otherwise _socket_remove_from_reaper called from SocketFree will block
+							FRIEND_MUTEX_UNLOCK(&_socket_array_mutex); //release mutex, otherwise _socket_remove_from_reaper called from SocketFree will block
 							unlock_mutex = false;
 							close( tmp->fd ); //brutally the socket here, rest of error handling will happen in the epoll function
 						} break;
 					} //end of switch
 				}
 				if (unlock_mutex){
-					pthread_mutex_unlock(&_socket_array_mutex);
+					FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
 				}
 			}
 		} //end of loop
@@ -136,7 +136,7 @@ static void* _socket_reaper_thread(void *a __attribute__((unused))){
 
 static void _socket_add_to_reaper(Socket *sock){
 	sock->state_update_timestamp = time(NULL);
-	pthread_mutex_lock(&_socket_array_mutex);
+	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
 	//find a place in the global table to hold pointer to new socket
 	for (unsigned int i = 0; i < _max_sockets; i++){
 		if (_socket_array[i] == NULL){
@@ -144,11 +144,11 @@ static void _socket_add_to_reaper(Socket *sock){
 			break;
 		}
 	}
-	pthread_mutex_unlock(&_socket_array_mutex);
+	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
 }
 
 static void _socket_remove_from_reaper(const Socket *sock){
-	pthread_mutex_lock(&_socket_array_mutex);
+	FRIEND_MUTEX_LOCK(&_socket_array_mutex);
 	//find a place in the global table to hold pointer to new socket
 	for (unsigned int i = 0; i < _max_sockets; i++){
 		if (_socket_array[i] == sock){
@@ -156,14 +156,14 @@ static void _socket_remove_from_reaper(const Socket *sock){
 			break;
 		}
 	}
-	pthread_mutex_unlock(&_socket_array_mutex);
+	FRIEND_MUTEX_UNLOCK(&_socket_array_mutex);
 }
 
 void socket_update_state(Socket *sock, socket_state_t state){
-	pthread_mutex_lock(&sock->mutex);
+	FRIEND_MUTEX_LOCK(&sock->mutex);
 	sock->state = state;
 	sock->state_update_timestamp = time(NULL);
-	pthread_mutex_unlock(&sock->mutex);
+	FRIEND_MUTEX_UNLOCK(&sock->mutex);
 }
 
 /**
@@ -1051,11 +1051,11 @@ int SocketSetBlocking( Socket* sock, FBOOL block )
 		flags &= ~O_NONBLOCK;
 	}
 
-	if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 	{
 		sock->s_Blocked = block;
 		s = fcntl( sock->fd, F_SETFL, flags );
-		pthread_mutex_unlock( &sock->mutex );
+		FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
 	if( s < 0 )
@@ -1743,15 +1743,14 @@ int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int 
 			FD_SET( app->outfd[1] , &(app->writefd) );
 	 */
 
-	if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 	{
 		FD_ZERO( &rset );
 		//FD_SET( 0,  &rset );
 		FD_SET( sock->fd,  &rset );
 		//wset = rset;
 
-		pthread_mutex_unlock( &sock->mutex );
-
+		FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
 	SocketSetBlocking( sock, TRUE );
@@ -1828,12 +1827,12 @@ int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int 
 					// no data available right now, wait a few seconds in case new data arrives...
 					//printf("SSL_ERROR_WANT_READ %i\n", count);
 
-					if( pthread_mutex_lock( &sock->mutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 					{
 						FD_ZERO( &fds );
 						FD_SET( sock->fd, &fds );
 
-						pthread_mutex_unlock( &sock->mutex );
+						FRIEND_MUTEX_UNLOCK( &sock->mutex );
 					}
 
 					timeout.tv_sec = sock->s_Timeouts;
@@ -1864,12 +1863,12 @@ int SocketWaitRead( Socket* sock, char* data, unsigned int length, unsigned int 
 				case SSL_ERROR_WANT_WRITE:
 					FERROR( "[SocketWaitRead] Want write.\n" );
 
-					if( pthread_mutex_lock( &sock->mutex ) == 0 )
+					if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 					{
 						FD_ZERO( &fds );
 						FD_SET( sock->fd, &fds );
 
-						pthread_mutex_unlock( &sock->mutex );
+						FRIEND_MUTEX_UNLOCK( &sock->mutex );
 					}
 
 					timeout.tv_sec = sock->s_Timeouts;
@@ -1981,7 +1980,7 @@ BufString *SocketReadPackage( Socket *sock )
 		do
 		{
 			INFO( "[SocketReadPackage] Start of the voyage.. %p\n", sock );
-			if( pthread_mutex_lock( &sock->mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 			{
 				//if( read + buf > length ) buf = length - read;
 				if( ( res = SSL_read( sock->s_Ssl, locbuffer, locbuffersize ) ) >= 0 )
@@ -1998,11 +1997,11 @@ BufString *SocketReadPackage( Socket *sock )
 
 					if( fullPackageSize > 0 && read >= (unsigned int) fullPackageSize )
 					{
-						pthread_mutex_unlock( &sock->mutex );	
+						FRIEND_MUTEX_UNLOCK( &sock->mutex );	
 						return bs;
 					}
 				}
-				pthread_mutex_unlock( &sock->mutex );	
+				FRIEND_MUTEX_UNLOCK( &sock->mutex );	
 			}
 
 			struct timeval timeout;
@@ -2182,14 +2181,14 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 			FD_SET( app->outfd[1] , &(app->writefd) );
 	 */
 
-	//if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 	{
 		FD_ZERO( &rset );
 		//FD_SET( 0,  &rset );
 		FD_SET( sock->fd,  &rset );
 		//wset = rset;
 
-		//pthread_mutex_unlock( &sock->mutex );
+		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
 	tv.tv_sec = sec;
@@ -2277,12 +2276,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						// no data available right now, wait a few seconds in case new data arrives...
 						//printf("SSL_ERROR_WANT_READ %i\n", count);
 
-						if( pthread_mutex_lock( &sock->mutex ) == 0 )
+						if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 						{
 							FD_ZERO( &fds );
 							FD_SET( sock->fd, &fds );
 
-							pthread_mutex_unlock( &sock->mutex );
+							FRIEND_MUTEX_UNLOCK( &sock->mutex );
 						}
 
 						timeout.tv_sec = sock->s_Timeouts;
@@ -2313,12 +2312,12 @@ BufString *SocketReadTillEnd( Socket* sock, unsigned int pass __attribute__((unu
 						/*
 							FERROR( "[SocketReadTillEnd] Want write.\n" );
 
-							if( pthread_mutex_lock( &sock->mutex ) == 0 )
+							if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 							{
 								FD_ZERO( &fds );
 								FD_SET( sock->fd, &fds );
 
-								pthread_mutex_unlock( &sock->mutex );
+								FRIEND_MUTEX_UNLOCK( &sock->mutex );
 							}
 
 							timeout.tv_sec = sock->s_Timeouts;
@@ -2477,12 +2476,12 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 			if( res < 0 )
 			{
 				// TODO: For select?
-				/*if( pthread_mutex_lock( &sock->mutex ) == 0 )
+				/*if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 				{
 					FD_ZERO( &fdstate );
 					FD_SET( sock->fd, &fdstate );
 
-					pthread_mutex_unlock( &sock->mutex );
+					FRIEND_MUTEX_UNLOCK( &sock->mutex );
 				}*/
 
 				err = SSL_get_error( sock->s_Ssl, res );
@@ -2589,7 +2588,7 @@ void SocketFree( Socket *sock )
 		FERROR("Passed socket structure is empty\n");
 		return;
 	}
-	if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 	{
 		if( sock->s_SSLEnabled == TRUE )
 		{
@@ -2607,7 +2606,7 @@ void SocketFree( Socket *sock )
 
 		_socket_remove_from_reaper(sock);
 
-		pthread_mutex_unlock( &sock->mutex );
+		FRIEND_MUTEX_UNLOCK( &sock->mutex );
 	}
 
 	pthread_mutex_destroy( &sock->mutex );
@@ -2629,7 +2628,7 @@ void SocketClose( Socket* sock )
 	}
 
 	//DEBUG("[SocketClose] before lock\n");
-	//if( pthread_mutex_lock( &sock->mutex ) == 0 )
+	//if( FRIEND_MUTEX_LOCK( &sock->mutex ) == 0 )
 	{
 		//DEBUG("[SocketClose] locked\n");
 		if( sock->s_SSLEnabled == TRUE )
@@ -2754,7 +2753,7 @@ void SocketClose( Socket* sock )
 			sock->fd = 0;
 		}
 		//DEBUG("[SocketClose] before unlock\n");
-		//pthread_mutex_unlock( &sock->mutex );
+		//FRIEND_MUTEX_UNLOCK( &sock->mutex );
 		//DEBUG("[SocketClose] mutex unlocked\n");
 		SocketFree( sock );
 		sock = NULL;

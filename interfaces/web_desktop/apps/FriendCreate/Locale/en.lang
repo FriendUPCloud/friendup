@@ -16,6 +16,9 @@ i18n_paste                          : Paste
 i18n_new                            : New file
 i18n_about_codeeditor               : About Friend Create
 
+i18n_your_devices                   : Your devices
+i18n_bookmarks                      : Bookmarks
+
 i18n_autosaved                      : Autosaved.
 i18n_no_project                     : Could not find project
 i18n_cant_project_filename          : Found no project filename.
@@ -28,9 +31,25 @@ tb_close                            : Close file
 tb_project                          : Project properties
 tb_find                             : Find/Replace
 
+#help menu
+i18n_help                           : Help
+i18n_documentation                  : Documentation
+
+#context menus
+
+i18n_file_menu                      : File menu
+i18n_open_directory                 : Open folder
+i18n_close_directory                : Close folder
+i18n_open_file                      : Load file
+i18n_create_folder                  : Create folder
+i18n_create_file                    : Create empty file
+i18n_open_volume                    : Open disk
+i18n_close_volume                   : Close disk
+
 #project menu
 i18n_project                        : Project
 i18n_project_new                    : New project
+i18n_project_fromweb				: New web-application
 i18n_project_properties             : Project properties
 i18n_open_project_files             : Open all project files
 i18n_load_project                   : Load project
@@ -111,7 +130,8 @@ i18n_cancel                         : Cancel
 i18n_sure_remove                     : Are you sure?
 i18n_sure_remove_desc                : Are you sure you want to remove this screenshot from the list?
 
-i18n_files                           : Files
+i18n_files                           : Open files
+i18n_file_browser                    : File browser
 i18n_tab_width                       : Tab width
 i18n_php                             : PHP
 i18n_css                             : CSS
@@ -174,4 +194,45 @@ i18n_tree_engine_canvas              : Tree Engine Canvas
 i18n_tree_engine_3D                  : Tree Engine 3D
 i18n_start_editing                   : Start editing
 
-
+i18n_waCreateWebApp					    : Create
+i18n_waCancel							: Cancel
+i18n_waTitle							: Create a project from a web-site
+i18n_waUrl								: Web site URL (must start with 'https')
+i18n_waName								: Name of the project
+i18n_waAuthor							: Your name
+i18n_waEmail							: Your email address
+i18n_waDescription						: Information about this project
+i18n_waWidth							: Width
+i18n_waHeight							: Height
+i18n_waCategory							: Project's category
+i18n_waWindow							: Window
+i18n_typeWebApp							: Type
+i18n_waWrongUrl							: Enter the URL in the form of 'http://www.website.com' or 'https://www.website.com'
+i18n_waWrongName						: Enter a name for the new project
+i18n_waWrongWidth						: Window width must be a positive number
+i18n_waWrongHeight						: Window height must be a positive number
+i18n_waGames							: Games
+i18n_waOffice							: Office
+i18n_waGraphics							: Graphics
+i18n_waProgramming						: Programming
+i18n_waInternet							: Internet
+i18n_waAbout0							: About
+i18n_waAbout1							: This application has been created by
+i18n_waAboutBlank						: This application has been created with Friend Create
+i18n_waFile								: File
+i18n_waFileSelectorTitle				: Please choose where to save the new application...
+i18n_waIcon								: Application icon
+i18n_waPreview							: Application preview image
+i18n_waChange							: Change
+i18n_waChangeWebAppPreviewTitle			: Please choose a png image to use a preview
+i18n_waChangeWebAppIconTitle			: Please choose a png image to use as icon
+i18n_waPleaseFill						: Application definition
+i18n_waClose							: Close
+i18n_waCreateProject					: Create project
+i18n_waAlert                            : Alert
+i18n_waSuccess                          : Success
+i18n_waProjectCreated					: The project has been created. 
+i18n_waNeedAFolder						: You cannot build a project on the root of a drive.
+i18n_waBlankAuthor						: Your name
+i18n_waBlankEmail						: yourmail@yourserver.com
+i18n_waBlankDescription					: A description of this application

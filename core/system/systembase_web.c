@@ -86,7 +86,7 @@ extern int UserDeviceMount( SystemBase *l, SQLLibrary *sqllib, User *usr, int fo
  * @return pointer to memory where arguments are stored
  */
 
-static inline char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession )
 {
 	// Send both get and post
 	int size = 0;
@@ -99,6 +99,12 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 	//INFO("\t\t--->request->content %s raw %s \n\n", request->content, request->uri->queryRaw );
 	
 	int fullsize = size + ( both ? 2 : 1 );
+	
+	if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+	{
+		fullsize += (int)request->h_ContentLength;
+	}
+	
 	char *allArgs = FCallocAlign( fullsize, sizeof(char) );
 	if( allArgs != NULL )
 	{
@@ -106,19 +112,34 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 	
 		if( both == TRUE )
 		{
-			sprintf( allArgs, "%s&%s", request->content, request->uri->queryRaw );
+			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+			{
+				sprintf( allArgs, "%s", request->uri->queryRaw );
+			}
+			else
+			{
+				sprintf( allArgs, "%s&%s", request->content, request->uri->queryRaw );
+			}
 		}
 		else if( request->content )
 		{
-			sprintf( allArgs, "%s", request->content );
+			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+			{
+				
+			}
+			else
+			{
+				sprintf( allArgs, "%s", request->content );
+			}
 		}
 		else
 		{
 			sprintf( allArgs, "%s", request->uri->queryRaw );
 		}
 	
+		// application/json are used to communicate with another tools like onlyoffce
 		char *sessptr = NULL;
-		if( ( sessptr = strstr( allArgs, "sessionid" ) ) != NULL )
+		if( request->h_ContentType != HTTP_CONTENT_TYPE_APPLICATION_JSON && ( sessptr = strstr( allArgs, "sessionid" ) ) != NULL )
 		{
 			int i=0;
 			int j=0;
@@ -182,8 +203,8 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 			Hashmap *hm = request->parsedPostContent;
 			unsigned int i = 0;
 			FBOOL quotationFound = FALSE;
-			
-			DEBUG("Add parameters from POST request: '%s'\n", allArgsNew );
+			DEBUG("AllAgrsNews : '%s' after parsing headers, contentType: %d\n", allArgsNew, request->h_ContentType );
+			DEBUG("Now POST parameters will be added module request. Number of post parameters '%d'\n", hm->table_size );
 			
 			if( strstr( allArgsNew, "?" ) != NULL )
 			{
@@ -213,12 +234,32 @@ static inline char *GetArgsAndReplaceSession( Http *request, UserSession *logged
 								quotationFound = TRUE;
 							}
 							
+							DEBUG("Added param '%s'\n", buffer );
 							strcat( allArgsNew, buffer );
 							FFree( buffer );
 						}
 					}
 				}
 			}
+			
+			/*
+			if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
+			{
+				//char *t = strstr( allArgsNew, "?" );
+				//DEBUG("APPJSON, checking ? '%s' -> ?ptr %p\n", allArgsNew, t );
+				
+				//if( t != NULL )
+				{
+					strcat( allArgsNew, "&post_json=" );
+				}
+				//else
+				//{
+				//	strcat( allArgsNew, "?post_json=" );
+				//}
+				DEBUG("Post content added to args: %s\n", request->content );
+				strcat( allArgsNew, request->content );
+			}
+			*/
 		}
 		
 		FFree( allArgs );
@@ -244,10 +285,7 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	FBOOL userAdded = FALSE;
 	FBOOL detachTask = FALSE;
 	
-	Log( FLOG_INFO, \
-"--------------------------------------------------------------------------------\n \
-Webreq func: %s\n \
----------------------------------------------------------------------------------\n", urlpath[ 0 ] );
+	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func: %s\n", urlpath[ 0 ] );
 	
 	//
 	// DEBUG
@@ -459,7 +497,7 @@ Webreq func: %s\n \
 			}
 			else
 			{
-				pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
+				FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
 				while( curusrsess != NULL )
 				{
 					if( curusrsess->us_SessionID != NULL && curusrsess->us_User && curusrsess->us_User->u_MainSessionID != NULL )
@@ -498,7 +536,7 @@ Webreq func: %s\n \
 					}
 					curusrsess = (UserSession *)curusrsess->node.mln_Succ;
 				}
-				pthread_mutex_unlock( &(l->sl_USM->usm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 			}
 		}
 		
@@ -556,6 +594,69 @@ Webreq func: %s\n \
 			}
 		}
 	}
+	
+	//
+		// Check dos token
+		//
+		
+		//if( loggedSession == NULL )
+		{
+			HashmapElement *tokid = GetHEReq( *request, "dostoken" );
+			
+			DEBUG("Found DOSToken parameter, tokenid %p\n", tokid );
+			
+			if( tokid != NULL && tokid->data != NULL )
+			{
+				DEBUG("Found DOSToken parameter\n");
+				
+				DOSToken *dt = DOSTokenManagerGetDOSToken( l->sl_DOSTM, tokid->data );
+				if( dt != NULL && dt->ct_UserSession != NULL && dt->ct_Commands != NULL )
+				{
+					DEBUG("Found DOSToken\n");
+					
+					int i;
+					FBOOL accessGranted = FALSE;
+					
+					// we are going through all access rights  file/read , file/write , file/open, etc.
+					
+					for( i = 0 ; i < dt->ct_MaxAccess ; i++ )
+					{
+						int pathPos = 0;
+						char *pathPosPtr = dt->ct_AccessPath[ i ].path[ pathPos ];
+						accessGranted = TRUE;
+						
+						DEBUG("Checking access [ %d ] \n", i );
+						// we are going through all paths
+						while( urlpath[ pathPos ] != NULL )
+						{
+							DEBUG("PathPosition %d pathposptr %s'\n", pathPos, pathPosPtr );
+							if( pathPosPtr != NULL && strcmp( urlpath[ pathPos ], pathPosPtr ) != 0 )
+							{
+								accessGranted = FALSE;
+							}
+							
+							pathPos++;
+							pathPosPtr = dt->ct_AccessPath[ i ].path[ pathPos ];
+							
+							// if there is no subpath all functions are allowed
+							if( pathPosPtr == NULL )
+							{
+								break;
+							}
+						}
+						
+						if( accessGranted == TRUE )
+						{
+							loggedSession = dt->ct_UserSession;
+							break;
+						}
+					} // check all access rights
+					
+					DEBUG("Access granted? [ %d ]\n", accessGranted );
+					
+				} // check null values
+			} // check hashmap
+		}
 	
 	//
 	// check detach task parameter
@@ -719,7 +820,13 @@ Webreq func: %s\n \
 			if( el != NULL )
 			{
 				//usrname = (char *)el->data;
-				usrname = UrlDecodeToMem( (char *)el->data );
+				if( el->data != NULL )
+				{
+					//if( strcmp( (char *)el->data, "apiuser" ) != 0 )
+					{
+						usrname = UrlDecodeToMem( (char *)el->data );
+					}
+				}
 			}
 			
 			// Fetch public key
@@ -792,7 +899,7 @@ Webreq func: %s\n \
 						SQLLibrary *sqlLib =  l->LibrarySQLGet( l );
 						if( sqlLib != NULL )
 						{
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID` = '%s", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE `FUserSession` SET LoggedTime = %lld, DeviceIdentity='%s' WHERE `SessionID`='%s", (long long)loggedSession->us_LoggedTime, deviceid,  loggedSession->us_SessionID );
 							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 							{ 
 								
@@ -802,7 +909,7 @@ Webreq func: %s\n \
 							// update user
 							//
 							
-							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime = '%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
+							sqlLib->SNPrintF( sqlLib, tmpQuery, sizeof(tmpQuery), "UPDATE FUser SET LoggedTime='%lld', SessionID='%s' WHERE `Name` = '%s'",  (long long)loggedSession->us_LoggedTime, loggedSession->us_User->u_MainSessionID, loggedSession->us_User->u_Name );
 							if( sqlLib->QueryWithoutResults( sqlLib, tmpQuery ) )
 							{ 
 								
@@ -863,6 +970,25 @@ Webreq func: %s\n \
 			{
 				DEBUG("Found logged user under address uanem %s pass %s deviceid %s\n", usrname, pass, deviceid );
 				
+				if( strcmp( usrname, "apiuser" ) == 0 )
+				{
+					if( strcmp( deviceid, "loving-crotch-grabbing-espen" ) == 0 )
+					{
+						
+					}
+					else // if its not our apiuser, do not allow him to login!!
+					{
+						if( usrname != NULL )
+						{
+							FFree( usrname );
+						}
+						
+						*result = 200;
+						return NULL;
+					}
+					//FERROR("\n\n\nUSERNAME %s\nPASS %s\nDEVICE %s\n\n\n", usrname, pass, deviceid );
+				}
+				
 				//
 				// first we must find user
 				// if sessionid is not provided we must create new session
@@ -875,7 +1001,7 @@ Webreq func: %s\n \
 					
 					FBOOL isUserSentinel = FALSE;
 					
-					pthread_mutex_lock( &(l->sl_USM->usm_Mutex) );
+					FRIEND_MUTEX_LOCK( &(l->sl_USM->usm_Mutex) );
 					
 					if( deviceid == NULL )
 					{
@@ -940,7 +1066,7 @@ Webreq func: %s\n \
 							tusers = (UserSession *)tusers->node.mln_Succ;
 						}
 					}
-					pthread_mutex_unlock( &(l->sl_USM->usm_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(l->sl_USM->usm_Mutex) );
 					
 					if( dstusrsess == NULL )
 					{
@@ -1062,6 +1188,7 @@ Webreq func: %s\n \
 								{ 
 
 								}
+								DEBUG("[SystembaseWeb] user login\n");
 
 								UMAddUser( l->sl_UM, loggedSession->us_User );
 
@@ -1228,6 +1355,8 @@ Webreq func: %s\n \
 					char runfile[ 512 ];
 					snprintf( runfile, sizeof(runfile), "modules/%s/module.php", module );
 					
+					DEBUG("Run module: '%s'\n", runfile );
+					
 					if( stat( runfile, &f ) != -1 )
 					{
 						DEBUG("MODRUNPHP %s\n", runfile );
@@ -1326,6 +1455,8 @@ Webreq func: %s\n \
 							)
 							{
 								char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
+								
+								DEBUG("Calling module '%s' allargs '%s'\n", modulePath, allArgsNew );
 
 								// Execute
 								data = l->RunMod( l, modType, modulePath, allArgsNew, &dataLength );
@@ -1776,11 +1907,13 @@ Webreq func: %s\n \
 		response = HttpNewSimple( HTTP_200_OK, tags );
 	}
 	
+	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func END: %s\n", urlpath[ 0 ] );
+	
 	return response;
 	
 error:
 	
-	FERROR("WebRequest end ERROR\n");
+	Log( FLOG_INFO, "\t\t\tWEB REQUEST FUNCTION func EERROR END: %s\n", urlpath[ 0 ] );
 
 	return response;
 }

@@ -38,7 +38,7 @@
 #include <openssl/sha.h>
 #include <string.h>
 #include <propertieslibrary.h>
-#include <user/user.h>
+#include <system/user/user.h>
 #include <util/sha256.h>
 #include <util/session_id.h>
 #include <network/websocket_client.h>
@@ -274,7 +274,7 @@ int UpdatePassword( struct AuthMod *l, Http *r __attribute__((unused)), User *us
 			{
 				sqlLib->FreeResult( sqlLib, res );
 			}
-						
+			
 			sb->LibrarySQLDrop( sb, sqlLib );
 		}
 	}

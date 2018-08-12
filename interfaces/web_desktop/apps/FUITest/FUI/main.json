@@ -1,0 +1,70 @@
+[
+	{	
+		"type": "Init",
+		"functionName": "startGUI"
+	},
+	{
+		"type": "Group",
+		"rows": 3,
+		"sizes": [ "40px", "calc(100% - 80px)", "40px" ],
+		"children": [
+			{
+				"type": "TabButtons",
+				"name": "MainTabs",
+				"tabs": [ "Main", "Lists" ],
+				"labels": [ "Main", "Lists" ],
+				"pages": "MainTabPages",
+				"active": "Main"
+			},
+			{
+				"type": "TabPages",
+				"name": "MainTabPages",
+				"children": [
+					{
+						"type": "TabPage",
+						"name": "Main",
+						"buttons": "MainTabs",
+						"children": [
+							{
+								"type": "Group",
+								"rows": 5,
+								"sizes": [ "20%", "20%", "20%", "20%", "20%" ],
+								"children": [
+									{
+										"type": "Progressbar",
+										"name": "progress1"
+									}
+								]
+							}
+						]
+					},
+					{
+						"type": "TabPage",
+						"name": "Lists",
+						"buttons": "MainTabs",
+						"children": [
+							{
+								"type": "Group",
+								"rows": 1,
+								"sizes": [ "100%" ],
+								"children": [
+									{
+										"type": "Text",
+										"text": "test 123"
+									}
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				"type": "Button",
+				"name": "Newbutton",
+				"lineHeight": 30,
+				"text": "Click me!"
+			}
+		]
+	}
+]
+

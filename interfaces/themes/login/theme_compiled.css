@@ -1,66 +1,135 @@
-@font-family
-{
-	font-face: 'Raleway';
-	font-weight: normal;
-	src: url(themes/friendup/fonts/Raleway-Regular.ttf);
-}
-@font-family
-{
-	font-face: 'Raleway';
-	font-weight: bold;
-	src: url(themes/friendup/fonts/Raleway-SemiBold.ttf);
+@font-face {
+    font-family: 'assistant';
+    src: url('/themes/friendup12/fonts/Assistant-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
 }
 
+@font-face {
+    font-family: 'assistant';
+    src: url('/themes/friendup12/fonts/Assistant-SemiBold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: bold;
+}
 /* Tags */
 
 html
 {
 	margin: 0;
 	padding: 0;
-	background: #efefef;
+	background: #ffffff;
 }
 
 body
 {
 	margin: 0;
 	padding: 0;
-	color: #000000;
-	font-family: 'Raleway', sans-serif;
+	color: #95A5A6;
+	font-family: 'assistant', sans-serif;
 	font-size: 15px;
 }
 
-h1
+#RememberMe
 {
-	background-image: url(/webclient/gfx/system/logo_480.png);
-	background-size: 80% auto;
-	background-position: top;
+	float: right;
+	margin: -5px 10px 0 0;
+	clear: left;
+}
+
+#loginButton
+{
+	float: right;
+	width: 100px;
+}
+
+
+#LoginElement label
+{ 
+	text-transform: uppercase; 
+	font-size: 0.9em;
+	color: #95A5A6;
+}
+
+#LoginElement h1
+{
+	text-transform: uppercase;
+	text-align: left;
+	color: #34495E;
+	font-size: 1.1em;
+	font-weight: bold;
+	margin: 0 0 10px 0;
+}
+
+#LoginElement
+{
+	text-align: left;
+}
+
+#invalidLogin { color:#F00; padding-top:6px; }
+#invalidLogin p { margin:0 0 6px 0; }
+button, .Button { margin:0; font-family: 'assistant'; }
+
+div.Logo
+{
+	color: transparent;
+	background-image: url(/graphics/logoblue.png);
+	background-size: 60% auto;
 	background-repeat: no-repeat;
-	height: 110px;
+	height: 60px;
 	box-sizing: border-box;
-	padding-top: 90px;
 	font-size: 18px;
-	margin: 10px 0 25px 0;
+	background-position: center 30px;
+	background-color: #F0F1F2;
+	padding: 70px 40px 50px 40px;
+	margin: -20px -20px 20px -20px;
 	text-align: center;
 }
 
 hr
 {
-	height: 5px;
+	height: 20px;
 	border: 0;
-	border-top: 1px solid rgba(0,0,0,0.2);
+	border-top: 1px solid rgba(0,0,0,0.0);
 	clear: both;
 }
 
 p
 {
-	margin: 0 0 19px 0;
+	margin: 0 0 10px 0;
 }
 
 a, a:hover, a:visited, a:focus, a:active
 {
-	color: #3C7DB8;
+	color: #3498DB;
 	text-decoration: none;
-	font-weight: bold;
+	font-weight: normal;
+}
+
+html input[type=text], html input[type=username], html input[type=password],
+html input[type=text]:focus, html input[type=username]:focus, html input[type=password]:focus
+{
+	box-sizing: border-box;
+	width: 100%;
+	outline: 0;
+	border-radius: 0;
+	box-shadow: none;
+	height: 35px;
+	line-height: 30px;
+	border: 1px solid #BDC3C7;
+	background: white;
+	font-size: 1em;
+	padding: 4px 8px;
+	transition: border 0.5s;
+}
+
+html input[type=text]:focus, html input[type=username]:focus, html input[type=password]:focus
+{
+	border: 1px solid #404040;
+}
+
+#forgotPassword
+{
+	font-size: 0.9em;
 }
 
 button
@@ -68,15 +137,20 @@ button
 	display: block;
 	font-size: 15px;
 	width: 100%;
-	background: #4B9CE6;
-	border-radius: 5px;
+	background-color: #F4F7F7;
+	color: #95A5A6;
 	padding: 0px 10px;
 	height: 30px;
 	line-height: 28px;
-	color: #ffffff;
-	border: 2px solid rgba(0,0,0,0.2);
+	border: 0;
 	text-transform: uppercase;
 	font-weight: bold;
+	border-radius: 0;
+}
+
+#loginButton.Forgot
+{
+	width: 200px;
 }
 
 input[type=checkbox]
@@ -96,7 +170,7 @@ input[type=text], input[type=password]
 	border: 0;
 	border-radius: 5px;
 	font-size: 15px;
-	font-family: 'Raleway', sans-serif;
+	font-family: 'assistant', sans-serif;
 	font-weight: bold;
 	color: #4B9CE6;
 	box-shadow: 0px 0px 1px 2px rgba(0,0,0,0.1);
@@ -119,7 +193,7 @@ label
 
 .HRow
 {
-	min-height: 40px;
+	min-height: 0px;
 	clear: both;
 }
 

@@ -30,6 +30,7 @@
 #include "cache_manager.h"
 #include <util/murmurhash3.h>
 #include <system/user/user.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * create new CacheManager
@@ -77,7 +78,7 @@ void CacheManagerDelete( CacheManager *cm )
 	{
 		int i = 0;
 		
-		pthread_mutex_lock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 		
 		for( ; i < CACHE_GROUP_MAX; i++ )
 		{
@@ -95,7 +96,7 @@ void CacheManagerDelete( CacheManager *cm )
 			FFree( cm->cm_CacheFileGroup );
 		}
 		
-		pthread_mutex_unlock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 		
 		pthread_mutex_destroy( &(cm->cm_Mutex) );
 		/*
@@ -120,7 +121,7 @@ void CacheManagerClearCache( CacheManager *cm )
 {
 	if( cm != NULL )
 	{
-		pthread_mutex_lock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 		int i = 0;
 		
 		for( ; i < CACHE_GROUP_MAX; i++ )
@@ -151,7 +152,7 @@ void CacheManagerClearCache( CacheManager *cm )
 			
 		cm->cm_LocFileCache = NULL;
 		
-		pthread_mutex_unlock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 	}
 }
 
@@ -187,7 +188,7 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 				}
 				*/
 				
-				pthread_mutex_lock( &(cm->cm_Mutex) );
+				FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				
 				if( cm->cm_LocFileCache != NULL )
 				{
@@ -212,10 +213,10 @@ int CacheManagerFilePut( CacheManager *cm, LocFile *lf )
 				else
 				{
 					FERROR("[CacheManagerFilePut] No file provided\n");
-					pthread_mutex_unlock( &(cm->cm_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 					return -2;
 				}
-				pthread_mutex_unlock( &(cm->cm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 			}
 			else
 			{
@@ -320,7 +321,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 		
 		LocFile *lf = NULL;
 
-		pthread_mutex_lock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cm_Mutex) );
 				
 		if( cm->cm_LocFileCache != NULL )
 		{
@@ -339,7 +340,7 @@ LocFile *CacheManagerFileGet( CacheManager *cm, char *path, FBOOL checkByPath __
 			}
 		}
 		
-		pthread_mutex_unlock( &(cm->cm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cm_Mutex) );
 		
 		/*
 		LocFile *lf = cm->cm_LocFileCache;

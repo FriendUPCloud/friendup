@@ -94,8 +94,8 @@ ns.TCPClient.prototype.unsetSession = function( callback ) {
 
 ns.TCPClient.prototype.close = function() {
 	const self = this;
+	log( 'tcp-close' );
 	self.clearTimeouts();
-	log( 'close' );
 	if ( self.socket ) {
 		self.releaseSocket();
 		self.socket.destroy();
@@ -201,6 +201,7 @@ ns.TCPClient.prototype.startPingTimeout = function() {
 	self.stopPing();
 	self.pingTimeoutId = setTimeout( pingTimeout, self.sessionTimeout );
 	function pingTimeout() {
+		log( 'pingTimeout' );
 		self.kill();
 	}
 }
@@ -268,7 +269,9 @@ ns.TCPClient.prototype.handleClosed = function() {
 
 ns.TCPClient.prototype.kill = function() {
 	const self = this;
+	log( 'kill' );
 	self.emit( 'close', null );
+	//self.close();
 }
 
 ns.TCPClient.prototype.handleSocketData = function( str ) {
@@ -304,8 +307,9 @@ ns.TCPClient.prototype.handleConnMsg = function( event ) {
 	handler( event.data );
 }
 
-ns.TCPClient.prototype.handleSession = function( sessionId ) { 
+ns.TCPClient.prototype.handleSession = function( sessionId ) {
 	const self = this;
+	log( 'handleSession', sessionId );
 	if ( !sessionId )
 		self.kill();
 	else
@@ -370,6 +374,8 @@ util.inherits( ns.WSClient, ns.TCPClient );
 
 ns.WSClient.prototype.close = function() {
 	const self = this;
+	log( 'ws-close' );
+	self.clearTimeouts();
 	if ( self.socket ) {
 		self.releaseSocket();
 		self.socket.close();

@@ -27,106 +27,111 @@ Friend = window.Friend || {};
 Friend.Tree.UI = Friend.Tree.UI || {};
 Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
-Friend.Tree.UI.Group = function ( tree, name, flags )
+Friend.Tree.UI.HorizontalGroup = function ( tree, name, flags )
 {
-    this.rows = 0;
-    this.columns = 0;
     this.sizes = false;
+    this.children = false;
     this.renderItemName = 'Friend.Tree.RenderItems.Empty';
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.Group', flags );
-};
-Friend.Tree.UI.Group.messageUp = function ( message )
-{
-    if ( message.command == 'organize' )
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.HorizontalGroup', flags );
+    if ( this.sizes.length != this.children.length )
     {
-        var x = 0;
-        var y = 0;
-        if ( this.columns )
+        console.log( 'HorizontalGroup: Number of children does not match number of sizes!' );
+        debugger;
+    }
+};
+Friend.Tree.UI.HorizontalGroup.messageUp = function ( message )
+{
+   	return this.startProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
+};
+Friend.Tree.UI.HorizontalGroup.messageDown = function ( message )
+{
+	this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
+    if ( message.command == 'resize' )
+    {
+        if ( message.height == Friend.Tree.UPDATED || this.root.firstResize )
         {
-            if ( this.sizes )
-            {
-                // Size string interpretation
-                for ( var c = 0; c < this.columns; c++ )
-                {
-                    if ( this.sizes[ c ] )
-                    {
-                        var width = this.utilities.getSizeFromString( this.sizes[ c ], this.width );
-                        if ( this.items[ c ] )
-                        {
-                            var item = this.items[ c ];
-                            item.x = x;
-                            item.width = width;
-                        } 
-                        x += width;
-                    }
-                }
-            }
-            else
-            {
-                // No size string -> everyone equal
-                for ( var i = 0; i < this.items.length; i++ )
-                {
-                    this.items[ i ].x = x;
-                    this.items[ i ].width = Math.floor( this.width / this.items.length );
-                    x += this.width / this.items.length;
-                }
-            }
-        }
-        else
-        {
-            // Full width
-            for ( var i = 0; i < this.items.length; i++ )
-            {
-                this.items[ i ].x = 0;
-                this.items[ i ].width = this.width;
-            }
+            this.doRefresh();
         }
 
-        // Vertical
-        if ( this.rows )
+        if ( message.width == Friend.Tree.UPDATED || this.root.firstResize )
         {
-            if (this.sizes )
+            var x = 0;
+
+            // Size string interpretation
+            for ( var c = 0; c < this.children.length; c++ )
             {
-                // Size string interpretation
-                for ( var c = 0; c < this.rows; c++ )
+                var width = this.utilities.getSizeFromString( this, this.sizes[ c ], this.width );
+                if ( this.children[ c ] != '' )
                 {
-                    if ( this.sizes[ c ] )
+                    var item = this.findFromName( this.children[ c ] );
+                    if ( item )
                     {
-                        var height = this.utilities.getSizeFromString( this.sizes[ c ], this.height );
-                        if ( this.items[ c ] )
-                        {
-                            var item = this.items[ c ];
-                            item.y = y;
-                            item.height = height;
-                        } 
-                        y += height;
+                        this.tree.resizeItem( item, width, this.height, true );
+                        this.tree.positionItem( item, x, item.y );
                     }
                 }
+                x += width;
             }
-            else
-            {
-                // No size string -> everyone equal
-                for ( var i = 0; i < this.items.length; i++ )
-                {
-                    this.items[ i ].y = y;
-                    this.items[ i ].height = Math.floor( this.height / this.items.height );
-                    y += this.height / this.item.length;            
-                }
-            }
+            this.doRefresh();
         }
-        else
-        {
-            // Full height
-            for ( var i = 0; i < this.items.length; i++ )
-            {
-                this.items[ i ].y = 0;
-                this.items[ i ].height = this.height;
-            }
-        }
+
+        // Prevent automatic resize process to touch the subItem: they are already done!
+        message.recursion = false;
     }
+    return true;
+};
+
+Friend.Tree.UI.VerticalGroup = function ( tree, name, flags )
+{
+    this.sizes = false;
+    this.children = false;
+    this.renderItemName = 'Friend.Tree.RenderItems.Empty';
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.VerticalGroup', flags );
+    if ( this.sizes.length != this.children.length )
+    {
+        console.log( 'VerticalGroup: Number of children does not match number of sizes!' );
+        debugger;
+    }
+};
+Friend.Tree.UI.VerticalGroup.messageUp = function ( message )
+{
 	return this.startProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
 };
-Friend.Tree.UI.Group.messageDown = function ( message )
+Friend.Tree.UI.VerticalGroup.messageDown = function ( message )
 {
-	return this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
+    // Resize messages are grabbed after treatment by processes
+    this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height' ] );
+    if ( message.command == 'resize' )
+    {
+        var y = 0;
+
+        if ( message.width == Friend.Tree.UPDATED || this.root.firstResize )        
+        {
+            this.doRefresh();
+        }
+
+        if ( message.height == Friend.Tree.UPDATED || this.root.firstResize )        
+        {
+            // Size string interpretation
+            for ( var c = 0; c < this.children.length; c++ )
+            {
+                var height = this.utilities.getSizeFromString( this, this.sizes[ c ], this.height );
+                if ( this.children[ c ] != '' )
+                {
+                    var item = this.findFromName( this.children[ c ] );
+                    if ( item )
+                    {
+                        this.tree.resizeItem( item, this.width, height, true );
+                        this.tree.positionItem( item, item.x, y );
+                    }
+                }
+                y += height;
+            }
+            this.doRefresh();
+        }
+
+        // Prevent automatic resize process to touch the subItem: they are already done!
+        message.recursion = false;
+    }
+    return true;
 };

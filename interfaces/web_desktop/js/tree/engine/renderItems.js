@@ -59,6 +59,20 @@ Friend.Tree.RenderItems =
 		self.noRotation = false;
 		self.visible = true; 
 
+		// Is a theme defined?
+		var theme = false;
+		var theme2 = false;
+		if ( properties.theme )
+		{
+			// Find the class in the theme
+			if ( properties.theme[ item.className ] )
+			{
+				theme = properties.theme[ item.className ];
+				self.utilities.setFlags( self, theme );
+				if ( theme.fromName && theme.fromName[ item.name ] )
+					self.utilities.setFlags( self, theme.fromName[ item.name ] );
+			}
+		}
 		self.utilities.setFlags( self, properties );
 		self.thisRect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
         self.rect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
@@ -69,23 +83,27 @@ Friend.Tree.RenderItems =
 		
 		// Values for itself
 		self.tree = tree;
-		self.parent = item;
+		self.item = item;
 		item.renderItem = self;
 		self.className = className;
 		self.name = '<RI>' + item.name;
 		self.identifier = '<RI' + tree.identifierCount++ + '>' + item.identifier;
-		
+	
 		// Assign the renderer. 
-		if ( typeof self.rendererName == 'string' )
-			assignRenderer( self.rendererName );
-		else
+		if ( self.rendererName )
 		{
-			for ( var rr = 0; rr < self.rendererName; rr++ )
+			if ( typeof self.rendererName == 'string' )
+				assignRenderer( self.rendererName );
+			else
 			{
-				if ( assignRenderer( self.rendererName[ rr ] ) )
-					break;
+				for ( var rr = 0; rr < self.rendererName; rr++ )
+				{
+					if ( assignRenderer( self.rendererName[ rr ] ) )
+						break;
+				}
 			}
 		}
+
 		function assignRenderer( name )
 		{
 			for ( var r = 0; r < tree.renderers.length; r++ )
@@ -93,6 +111,11 @@ Friend.Tree.RenderItems =
 				if ( self.rendererName == '*' || name == tree.renderers[ r ].name )
 				{
 					self.renderer = tree.renderers[ r ];
+					
+					// Append to the list of renderers in the root of the tree
+					if ( !self.item.root.renderers )
+						self.item.root.renderers = {};
+					self.item.root.renderers[ tree.renderers[ r ].className ] = tree.renderers[ r ];
 					return true;
 				}
 			}

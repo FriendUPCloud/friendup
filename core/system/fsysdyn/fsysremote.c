@@ -1114,9 +1114,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				strcat( tmpremotepath, &(path[ doub ]) );
 			}
 			
-			DEBUG("\nREMOTE FOPEN %s - path %s\n", tmpremotepath, path );
-	
-			
+			//DEBUG("\nREMOTE FOPEN %s - path %s\n", tmpremotepath, path );
+
 			sd->remotepathi = strlen( tmpremotepath ) + 1;
 	
 			MsgItem tags[] = {
@@ -1213,7 +1212,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 
 									localsd->sb = sd->sb;
 									localsd->remotepath = StringDuplicate( path );
-									locfil->f_SessionID = StringDuplicate( s->f_SessionID );
+									//locfil->f_SessionID = StringDuplicate( s->f_SessionID );
+									locfil->f_SessionIDPTR = s->f_SessionIDPTR;
 									strcpy( localsd->fileptr, pointer );
 									localsd->fileptri = pointeri+1;
 					
@@ -1316,7 +1316,7 @@ int FileClose( struct File *root, void *fp )
 		
 		if( f != NULL )
 		{
-			if( f->f_SessionID != NULL ) FFree( f->f_SessionID );
+			//if( f->f_SessionID != NULL ) FFree( f->f_SessionID );
 			if( f->f_Path != NULL )
 			{
 				FFree( f->f_Path );

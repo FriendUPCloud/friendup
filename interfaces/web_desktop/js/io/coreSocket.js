@@ -45,7 +45,7 @@ FriendWebSocket = function( conf )
 		length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
 		If the blob byte size is above maxFCBytes, the event is chunked before sending.
 	*/
-	self.maxFCBytes = 65535; // FriendCore ws packet max bytes
+	self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
 	self.metaReserve = 512;
 	self.maxStrLength = ( Math.floor( self.maxFCBytes / 4 )) - self.metaReserve;
 		// worst case scenario its all 4 byte unicode
@@ -147,8 +147,13 @@ FriendWebSocket.prototype.connect = function()
 	if( self.state == 'connecting' ) { console.log('ongoing connect. we will wait for this to finish.'); return; }
 	self.setState( 'connecting' );
 	try {
+		if( self.ws )
+		{
+			self.cleanup();
+		}
 		self.ws = new window.WebSocket( self.url, 'FC-protocol' );
-	} catch( e )
+	} 
+	catch( e )
 	{
 		self.logEx( e, 'connect' );
 	}
@@ -288,15 +293,8 @@ FriendWebSocket.prototype.handleOpen = function( e )
 	this.reconnectAttempt = 0;
 	this.setSession();
 	this.setReady();
-	/*
-	if ( self.sessionId )
-	{
-		self.restartSession();
-		return;
-	}
 	
-	self.sendAuth();
-	*/
+	
 }
 
 FriendWebSocket.prototype.handleClose = function( e )
@@ -365,7 +363,6 @@ FriendWebSocket.prototype.handleEvent = function( msg )
 		return;
 	}
 	
-	//console.log( 'FriendWebSocket - msg', msg );
 	if( 'msg' === msg.type )
 	{
 		this.onmessage( msg.data );
@@ -514,7 +511,12 @@ FriendWebSocket.prototype.sendOnSocket = function( msg, force )
 	function checkMustChunk( str )
 	{
 		if ( str.length < self.maxStrLength )
+		{
+			//console.log( 'No need to chunk this one: ' + str.length );
 			return false;
+		}
+		
+		//console.log( 'We need to chunk this one! ' + str.length + ' >= ' + self.maxStrLength );
 		
 		var realString = new String( str );
 		strBlob = new Blob( realString );
@@ -622,7 +624,6 @@ FriendWebSocket.prototype.wsSend = function( str )
 	var self = this;
 	try
 	{
-		//console.log( 'sending on ws ', str );
 		self.ws.send( str );
 	}
 	catch( e )
@@ -701,7 +702,7 @@ FriendWebSocket.prototype.handlePong = function( timeSent )
 }
 
 FriendWebSocket.prototype.handleChunk = function( chunk )
-{
+{	
 	var self = this;
 	chunk.total = parseInt( chunk.total, 10 );
 	chunk.part = parseInt( chunk.part, 10 );

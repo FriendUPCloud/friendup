@@ -54,12 +54,32 @@ Friend.Tree.Items =
         object.utilities = tree.utilities;
         object.resources = tree.resources;
         object.name = name;
-        object.className = className;
+		object.className = className;
 
+		// Is a theme defined?
+		var theme;
+		var theme2;
+		if ( properties.theme )
+		{
+            object.theme = properties.theme;
+
+			// Find the class in the theme
+			if ( properties.theme[ className ] )
+			{
+				theme = properties.theme[ className ];
+                if ( theme.fromName && theme.fromName[ name ] )
+					theme2 = theme.fromName[ name ];
+			}
+		}
         object.creationFlags = Object.assign( {}, properties );
 		object.creationFlags.name = name;
 		object.creationFlags.itemName = name;
         object.creationFlags.className = className;
+        if ( theme )
+            object.utilities.setFlags( object.creationFlags, theme );
+        if ( theme2 )
+            object.utilities.setFlags( object.creationFlags, theme2 );
+
         object.identifier = tree.getNewIdentifier( name );
 		object.application = tree.application;
         object.root = properties.root;
@@ -70,12 +90,17 @@ Friend.Tree.Items =
 		object.insertItemsPile = [];
 		object.temporaryFunctionsCount = 0;
         object.onDestroyCallback = null;
+        object.caller = false;
 
         object.active = true;
         object.visible = true;
         object.colorDisabled = '#000000';
         object.refresh = true;
 
+        if ( typeof object.positionModeX == 'undefined' )
+            object.positionModeX = 'left';
+        if ( typeof object.positionModeY == 'undefined' )
+            object.positionModeX = 'top';
         object.setCoordinates = this.setCoordinates;
         object.destroy = this.destroy;
         object.handleDestroy = this.handleDestroy;
@@ -84,7 +109,6 @@ Friend.Tree.Items =
         object.addProcess = this.addProcess;
         object.removeProcess = this.removeProcess;
         object.removeItem = this.removeItem;
-        object.renderSubItems = this.renderSubItems;
         object.doRefresh = this.doRefresh;
         object.enable = this.enable;
         object.startProcess = this.startProcess;
@@ -123,6 +147,8 @@ Friend.Tree.Items =
         object.callRenderItem = this.callRenderItem;
         object.getChildWidth = this.getChildWidth;
         object.getChildHeight = this.getChildHeight;
+        object.updateProperty = this.updateProperty;
+        object.resize = this.resize;
    		if ( typeof object.checkCollisions == 'undefined' )
 			object.checkCollisions = this.checkCollisions;
         if ( typeof object.getValue == 'undefined' )
@@ -150,7 +176,10 @@ Friend.Tree.Items =
 		object.offsetY = 0;
 		object.toDestroy = false;
 		object.modal = false;
-		object.noOffsets = false;
+        object.noOffsets = false;
+        object.onDestroyed = false;
+        object.resizeX = Friend.Tree.NOTINITIALIZED2;
+        object.resizeY = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.x == 'undefined' )
             object.x = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.y == 'undefined' )
@@ -193,66 +222,12 @@ Friend.Tree.Items =
             object.zoomX = Friend.Tree.NOTINITIALIZED2;
         if ( typeof object.zoomY == 'undefined' )
             object.zoomY = Friend.Tree.NOTINITIALIZED2;
+        if ( theme )
+            object.utilities.setFlags( object, theme );
+        if ( theme2 )
+            object.utilities.setFlags( object, theme2 );
         object.utilities.setFlags( object, properties );
-        object.setHotSpot( object.hotSpot );
-        if ( object.width == Friend.Tree.NOTINITIALIZED2 )
-        {
-            object.width = 320;
-            properties.width = 320;
-        }   
-        if ( object.height == Friend.Tree.NOTINITIALIZED2 )
-        {
-            object.height = 200;
-            properties.height = 200;
-        }
-		if ( typeof object.x == 'string' )
-		{
-			if ( tree.previousItem )
-			{
-				switch ( object.x )
-				{
-					case 'left':
-						object.x = tree.previousItem.x + tree.previousItem.width;
-						break;
-					case 'over':
-						object.x = tree.previousItem.x;
-						break;
-					case 'right':
-						object.x = tree.previousItem.x - object.width;
-						break;
-					default:
-						try
-						{
-							object.x = eval( object.x );
-						} catch (e) { } finally { }
-						break;
-				}
-			}
-		}
-		if ( typeof object.y == 'string' )
-		{
-			if ( tree.previousItem )
-			{
-				switch ( object.y )
-				{
-					case 'under':
-						object.y = tree.previousItem.y + tree.previousItem.height;
-						break;
-					case 'over':
-						object.y = tree.previousItem.y;
-						break;
-					case 'above':
-						object.y = tree.previousItem.y - object.height;
-						break;
-					default:
-						try
-						{
-							object.y = eval( object.y );
-						} catch (e) { } finally { }
-						break;
-				}
-			}
-		}
+
         if ( object.rotation == Friend.Tree.NOTINITIALIZED2 )
             object.rotation = 0;
         if ( object.hotSpotX == Friend.Tree.NOTINITIALIZED2 )
@@ -288,25 +263,58 @@ Friend.Tree.Items =
         object.thisRect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
         object.rect = new Friend.Tree.Utilities.Rect( 0, 0, 0, 0 );
         
-        // If no X and Y have been defined, center the item in the parent
-        if ( object.x == Friend.Tree.NOTINITIALIZED2 )
-		{
-			if ( properties.parent )
-				object.x = properties.parent.width / 2 - object.width / 2;
-			else
-				object.x = tree.canvasWidth / 2 - object.width / 2;
-		}
-        if ( object.y == Friend.Tree.NOTINITIALIZED2 )
-		{
-			if ( properties.parent )
-				object.y = properties.parent.height / 2 - object.height / 2;
-			else
-				object.y = tree.canvasHeight / 2 - object.height / 2;
-		}
+        // Z position, over the parent
         if ( object.z == Friend.Tree.NOTINITIALIZED2 )
         {
             if ( properties.parent )
                 object.z = properties.parent.z + 1;
+        }
+
+        // Width.
+        // 'auto': get the size from the object, then 100% of parent
+        // 'XXX%': percentage of the parent's width
+        // 'XXXpx': fixed size
+        // 'undefined': size of the item
+        var pos;
+        if ( object.resizeX == Friend.Tree.NOTINITIALIZED2 )
+        {
+            if ( typeof object.width == 'number' && object.width != Friend.Tree.NOTINITIALIZED2 )
+            {
+                object.resizeX = 'none';
+            }
+            else if ( typeof object.width == 'string' )
+            {
+                object.resizeX = object.width;
+                object.width = 200;                 // Security
+                property.width = undefined;
+            }
+            else
+            {
+                object.resizeX = '100%';
+                object.width = 200;
+                properties.width = undefined;
+            }
+        }
+
+        // Height
+        if ( object.resizeY == Friend.Tree.NOTINITIALIZED2 )
+        {
+            if ( typeof object.height == 'number' && object.height != Friend.Tree.NOTINITIALIZED2 )
+            {
+                object.resizeY = 'none';
+            }
+            else if ( typeof object.height == 'string' )
+            {
+                object.resizeY = object.height;
+                object.height = 200;                // Security
+                property.height = undefined;
+            }
+            else
+            {
+                object.resizeY = '100%';
+                object.height = 200;
+                properties.height = undefined;
+            }
         }
 
         // Default messaging level
@@ -343,13 +351,17 @@ Friend.Tree.Items =
         else
         {
             // No parent-> the root of a new tree
+            object.mouseX = 0;
+            object.mouseY = 0;
+            object.mouseButtons = 0;
+            object.mouseInside = false;
             tree.addTree( object );
         }
 
 		// Store for the next ones if not an internal object
 		tree.previousItem = object;
 
-        // Default renderItem (sets the width and height in the item)
+		// Default renderItem (sets the width and height in the item)
         if ( object.renderItemName )
         {
             for ( var r = 0; r < tree.renderers.length; r++ )
@@ -364,32 +376,13 @@ Friend.Tree.Items =
                 else 
                 {
                     var className = object.renderItemName + '_' + name;
-                    klass = object.utilities.getClass( className );
-                    if ( klass )
+					klass = object.utilities.getClass( className );
+					if ( klass )
+					{
                         object.renderItems.push( new klass( tree, object, properties ) );
+					}
                 }
             }
-        }
-
-        // If no X and Y have been defined, center the item in the parent
-        if ( object.x == Friend.Tree.NOTINITIALIZED2 )
-		{
-			if ( properties.parent )
-				object.x = properties.parent.width / 2 - object.width / 2;
-			else
-				object.x = tree.canvasWidth / 2 - object.width / 2;
-		}
-        if ( object.y == Friend.Tree.NOTINITIALIZED2 )
-		{
-			if ( properties.parent )
-				object.y = properties.parent.height / 2 - object.height / 2;
-			else
-				object.y = tree.canvasHeight / 2 - object.height / 2;
-		}
-        if ( object.z == Friend.Tree.NOTINITIALIZED2 )
-        {
-            if ( properties.parent )
-                object.z = properties.parent.z + 1;
         }
 
         // Destroy after XXX milliseconds? If yes, set timeout
@@ -401,11 +394,24 @@ Friend.Tree.Items =
             }, properties.destroyAfter );
         }
 
+        // renderItem has calculated the width and height, carry on with initialisation
+        object.width = Friend.Tree.Utilities.getSizeFromString( object, object.parent, 'width', object.resizeX );
+        object.height = Friend.Tree.Utilities.getSizeFromString( object, object.parent, 'height', object.resizeY );
+        // if 3D -> do depth
+
+        // RenderItem has set its sizes by default, compute the position
+        object.x = Friend.Tree.Utilities.getPositionFromString( object, object.parent, 'x', object.positionX );
+        object.y = Friend.Tree.Utilities.getPositionFromString( object, object.parent, 'y', object.positionY );
+        // if 3D -> do z
+
+        // Set the hotspot of the object
+        object.setHotSpot( object.hotSpot );
+
 		// Force a refresh all of the tree (TODO: optimize)
 		if ( object.root )
 			object.root.refreshAll = true;
     },
-    
+
     // Events
     //////////////////////////////////////////////////////
     registerEvents: function( events, properties )
@@ -420,7 +426,54 @@ Friend.Tree.Items =
     {
         return this.tree.events.registerEvents( this, eventName, properties );
     },
-    
+    setModal: function( flag )
+    {
+        this.tree.setModal( this, flag );
+    },
+    resize: function( width, height )
+    {
+        if ( typeof width != 'undefined' )
+            this.width = width;
+        if ( typeof height != 'undefined' )
+            this.height = height;
+
+        var message = 
+        { 
+            command: 'resize',
+            width: width,
+            height: height 
+        };
+        for ( var r = 0; r < this.renderItems.length; r++ )
+        {
+            var renderItem = this.renderItems[ r ];
+            if ( renderItem.message )
+                renderItem.message( message );
+            
+            // Update the renderer
+            renderItem.renderer.resizeItem( renderItem, message.width, message.height );
+        }
+        this.doRefresh();
+    },
+
+	// Updates a property in the item and transfers the modification to '
+	// the renderItems. Try that with another language thaqn Javascript. 10 pages!
+	updateProperty: function( nameProperty, value, renderItem )
+    {
+		this[ nameProperty ] = value;
+		for ( var r = 0; r < this.renderItems.length; r++ )
+		{
+			var ri = this.renderItems[ r ];
+			if ( !renderItem || renderItem != ri )
+			{
+				if ( typeof renderItem[ nameProperty ] != 'undefined' )
+				{
+					renderItem[ nameProperty ] = value;
+					renderItem[ nameProperty + '_changed' ] = true;
+				}
+			}
+		}
+	},
+	
     /**
      * getMouseCoords
      *
@@ -451,45 +504,6 @@ Friend.Tree.Items =
 
         // Returns coordinates
         return coords;
-    },
-
-    /**
-     * startModal
-     *
-     * Sets all the items to inactive expect the ones given as parameters
-     * Pushes the current state for restoration
-     *
-     * @param (array of objects) objects array of objects to keep active
-     */
-    setModal: function ( item, skipItem, active, notFirst )
-    {
-		if ( notFirst )
-		{
-			item.active = active;
-			item.refresh = true;
-		}
-    	for ( var i = 0; i < item.items.length; i++ )
-        {
-            if ( item.items[ i ] != skipItem )
-                item.setModal( item.items[ i ], false, active, true );
-        }
-		return;
-	},
-    startModal: function()
-    {
-		if ( !this.isModal )
-		{
-	    	this.isModal = true;
-	    	this.setModal( this.parent, this, false );
-		}
-    },
-    stopModal: function ()
-    {
-		if ( this.isModal )
-		{
-	        this.isModal = false;
-			this.setModal( this.parent, this, true );
-		}
     },
 
     /**
@@ -726,7 +740,9 @@ Friend.Tree.Items =
     startProcess: function( message, properties )
     {        
         // Copy the properties if not a command
-        message.refresh = false;
+        this.processProperties = properties;
+        if ( typeof message.refresh == 'undefined' )
+            message.refresh = false;
 		if ( message.type != 'system' && message.type != 'renderItemToItem')
 		{
 			for ( var p = 0; p < properties.length; p ++ )
@@ -737,14 +753,15 @@ Friend.Tree.Items =
         }
 		return true;
     },
-    endProcess: function( message, properties )
+    endProcess: function( message )
     {
 		// Changes the values
-        var refresh = false;
+        var properties = this.processProperties;
 		if ( message.refresh || message.fromNetwork )
 		{
-       		if ( message.type != 'system' && message.type != 'renderItemToItem' )
+       		//if ( message.type != 'system' && message.type != 'renderItemToItem' )
     		{
+                message.refresh = false;
                 message.previous = {};                
                 for ( var p = 0; p < properties.length; p ++ )
                 {
@@ -753,16 +770,17 @@ Friend.Tree.Items =
                         if ( this[ properties[ p ] ] != message[ properties[ p ] ] )
                         {
                             message.previous[ properties[ p ] ] = this[ properties[ p ] ]; 
-                            this[ properties[ p ] ] = message[ properties[ p ] ];
-                            message[ properties[ p ] ] = Friend.Tree.UPDATED;
-                            refresh = true;
+							this.updateProperty( p, message[ properties[ p ] ] );
+							message[ properties[ p ] ] = Friend.Tree.UPDATED;
+                            message.refresh = true;
                         }
                     }
                 }
-                this.doRefresh();
+                if ( message.refresh )
+                    this.doRefresh();
             }
         }
-		return refresh;
+		return message.refresh;
     },
 
     /**
@@ -778,6 +796,8 @@ Friend.Tree.Items =
         this.tree.addToDestroy( this );
         if ( callback )
             this.onDestroyCallback = callback;
+        if ( this.caller && this.onDestroyed )   
+            this.onDestroyed.apply( this.caller, [ this ] );
     },
 
 	checkCollisions: function ( x, y, item )

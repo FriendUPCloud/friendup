@@ -58,17 +58,17 @@ enum
 
 typedef struct PIDThread
 {
-	MinNode         node;
-	FThread          *pt_Thread;
-	FUQUAD         pt_PID;   // thread ID
-	void                 *( *pt_Function)( void *, char **, Http* , void *, int * );
-	char                *pt_Url[ PID_URL_MAX_DEPTH ];   //
-	int                   pt_UrlDepth;
-	Http                *pt_Request;
-	void                 *pt_UserSession;
-	void                 *pt_SB;
-	int                   pt_Status;
-	void                 *pt_PTM;   // PIDThreadManager
+	MinNode					node;
+	FThread					*pt_Thread;
+	FUQUAD					pt_PID;   // thread ID
+	void					*( *pt_Function)( void *, char **, Http* , void *, int * );
+	char					*pt_Url[ PID_URL_MAX_DEPTH ];   //
+	int						pt_UrlDepth;
+	Http					*pt_Request;
+	void					*pt_UserSession;
+	void					*pt_SB;
+	int						pt_Status;
+	void					*pt_PTM;   // PIDThreadManager
 }PIDThread;
 
 //

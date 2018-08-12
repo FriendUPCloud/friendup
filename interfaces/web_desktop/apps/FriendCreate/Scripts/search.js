@@ -19,7 +19,18 @@
 
 Application.run = function()
 {
-	ge( 'SearchId' ).focus();
+	setTimeout( function()
+	{
+		ge( 'SearchId' ).focus();
+	}, 20 );
+	
+	window.addEventListener( 'keydown', function( e )
+	{
+		if( e.which == 27 )
+		{
+			CloseView();
+		}
+	}, false );
 }
 
 function searchFor()
@@ -57,7 +68,6 @@ function replaceNum( what )
 	}
 }
 
-ge( 'SearchId' ).focus();
 ge( 'SearchId' ).onkeydown = function( e )
 {
 	var w = e.which ? e.which : e.keyCode;

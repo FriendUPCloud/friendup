@@ -378,6 +378,19 @@ char * iniparser_getstring(dictionary * d, const char * key, char * def)
     return sval ;
 }
 
+char * iniparser_getstring_ncs(dictionary * d, const char * key, char * def)
+{
+    char * lc_key ;
+    char * sval ;
+
+    if (d==NULL || key==NULL)
+        return def ;
+
+    lc_key = strlwc(key);
+    sval = dictionary_get_ncs(d, lc_key, def);
+    return sval ;
+}
+
 /*-------------------------------------------------------------------------*/
 /**
   @brief    Get the string associated to a key, convert to an int
@@ -410,6 +423,15 @@ int iniparser_getint(dictionary * d, const char * key, int notfound)
     char    *   str ;
 
     str = iniparser_getstring(d, key, INI_INVALID_KEY);
+    if (str==INI_INVALID_KEY) return notfound ;
+    return (int)strtol(str, NULL, 0);
+}
+
+int iniparser_getint_ncs(dictionary * d, const char * key, int notfound)
+{
+    char    *   str ;
+
+    str = iniparser_getstring_ncs(d, key, INI_INVALID_KEY);
     if (str==INI_INVALID_KEY) return notfound ;
     return (int)strtol(str, NULL, 0);
 }
@@ -645,7 +667,7 @@ dictionary * iniparser_load(const char * ininame)
 
     if ((in=fopen(ininame, "r"))==NULL)
     {
-        fprintf(stderr, "iniparser: cannot open %s\n", ininame);
+        fprintf(stderr, "iniparser: cannot open '%s'\n", ininame);
         return NULL ;
     }
 

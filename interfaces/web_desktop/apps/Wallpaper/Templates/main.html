@@ -1,7 +1,7 @@
 
 <div class="ContentFull Dialog">
 	<div class="My DialogContent">
-		<div class="WPatternCont BorderRight VContentTop">
+		<!--<div class="WPatternCont BorderRight VContentTop">
 			<div class="Padding">
 				<p>
 					<strong>{wallpaper_for}:</strong>
@@ -25,27 +25,25 @@
 					</button>
 				</p>
 			</div>
-		</div>
+		</div>-->
 		<div class="WPatternCont2 VContentTop">
-			<div class="Padding">
-				<div id="Pages">
-					<div class="Tab IconSmall fa-image">
-						{i18n_from_collection}
-					</div>
-					<div class="Tab IconSmall fa-folder">
-						{i18n_from_web}
-					</div>
-					<div class="Page">
-						<div class="PageScroll Padding">
-							<div class="ImageContainer" id="Images">
-								&nbsp;
-							</div>
+			<div id="Pages">
+				<div class="Tab IconSmall fa-image">
+					{i18n_from_collection}
+				</div>
+				<div class="Tab IconSmall fa-folder">
+					{i18n_from_web}
+				</div>
+				<div class="Page">
+					<div class="PageScroll Padding">
+						<div class="ImageContainer" id="Images">
+							&nbsp;
 						</div>
 					</div>
-					<div class="Page">
-						<div class="PageScroll Padding">
-							<div id="Webimages">
-							</div>
+				</div>
+				<div class="Page">
+					<div class="PageScroll Padding">
+						<div id="Webimages">
 						</div>
 					</div>
 				</div>
@@ -53,16 +51,14 @@
 		</div>
 	</div>
 	<div class="DialogButtons Padding">
-		<div class="FloatRight">
-			<button type="button" class="IconSmall fa-remove CloseButton" onclick="Application.quit()">
-				{close}
-			</button>
-		</div>
-		<button type="button" class="IconSmall fa-eye UseButton" onclick="Application.operationUse()">
-			{use}
+		<button type="button" class="IconSmall fa-plus" onclick="Application.addImage()">
+			{add_image}
 		</button>
-		<button type="button" class="IconSmall fa-check SaveButton" onclick="Application.operationSave()">
+		<button type="button" class="FloatRight IconSmall fa-check SaveButton" onclick="Application.operationSave()">
 			{save}
+		</button>
+		<button type="button" class="FloatRight IconSmall fa-eye UseButton" onclick="Application.operationUse()">
+			{use}
 		</button>
 	</div>
 </div>
@@ -79,13 +75,25 @@
 		top: auto !important;
 		left: auto !important;
 	}
-	.WPatternCont
+	/*.WPatternCont
 	{
 		width: 300px;
 	}
 	.WPatternCont2
 	{
 		width: calc(100% - 300px);
+	}*/
+	#Pages
+	{
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.WPatternCont2
+	{
+		width: 100%;
 	}
 	.ImageContainer:after
 	{
@@ -132,19 +140,19 @@
 		{
 			width: calc(33% - 10px);
 			margin: 5px 5px 35px 5px;
-			height: 120px;
+			height: 150px;
 		}
 		.WPImage:nth-child(3n-1)
 		{
 			width: calc(33% - 10px);
 			margin: 5px 5px 35px 5px;
-			height: 120px;
+			height: 150px;
 		}
 		.WPImage:nth-child(3n)
 		{
 			width: calc(33% - 10px);
 			margin: 5px 5px 35px 5px;
-			height: 120px;
+			height: 150px;
 		}
 	}
 	@media only screen and (max-width: 959px)
@@ -153,13 +161,13 @@
 		{
 			width: calc(50% - 14px);
 			margin: 5px 0 35px 5px;
-			height: 120px;
+			height: 150px;
 		}
 		.WPImage:nth-child(odd)
 		{
 			width: calc(50% - 10px);
 			margin: 5px 5px 35px 5px;
-			height: 120px;
+			height: 150px;
 		}
 	}
 	.WPImage > div

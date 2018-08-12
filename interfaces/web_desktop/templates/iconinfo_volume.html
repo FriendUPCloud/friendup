@@ -17,6 +17,11 @@
 							&nbsp; {i18n_volume_information}
 						</div>
 					</div>
+					<!--<div class="Tab">
+						<div class="IconSmall fa-share-alt">
+							&nbsp; {i18n_volume_sharing}
+						</div>
+					</div>-->
 					<div class="Tab">
 						<div class="IconSmall fa-file-photo-o">
 							&nbsp; {i18n_volume_permissions}
@@ -93,6 +98,20 @@
 							</div>
 						</div>
 					</div>
+					<!--<div class="Page">
+						<div class="PageScroll">
+							<div class="Padding">
+								<p class="Layout">
+									<strong>{i18n_share_with_workgroup}:</strong>
+								</p>
+								<p>
+									<select name="workgroup_sharing">
+										<option value="0">{i18n_no_workgroup_sharing}</option>
+									</select>
+								</p>
+							</div>
+						</div>
+					</div>-->
 					<div class="Page">
 						<div class="PageScroll">
 							<div class="Padding">
@@ -111,10 +130,7 @@
 			</div>
 		</div>
 		<div class="VContentBottom Padding BackgroundDefault BorderTop" style="height: 50px">
-			<button type="button" class="FloatRight IconSmall fa-remove" onclick="Workspace.closeFileInfo(this)">
-				{i18n_close}
-			</button>
-			<button type="button" class="IconSmall fa-save" instance="{instance}" onclick="Workspace.saveFileInfo(this,'{instance}')">
+			<button type="button" class="IconSmall fa-save FloatRight" instance="{instance}" onclick="Workspace.saveFileInfo(this,'{instance}')">
 				{Save}
 			</button>
 		</div>

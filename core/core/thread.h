@@ -61,13 +61,12 @@ typedef struct FMutex
 
 typedef struct FThread
 {
-	pthread_t      t_Thread;
-	FBOOL          t_Quit;
-	void               *( *t_Function)( void * );
-	void              *t_Data;
-	FBOOL         t_Launched;
-	//uuid_t           t_uuid;
-	FUQUAD       t_pid;
+	pthread_t			t_Thread;
+	FBOOL				t_Quit;
+	void				*( *t_Function)( void * );
+	void				*t_Data;
+	FBOOL				t_Launched;
+	uint64_t			t_PID;
 }FThread;
 
 //

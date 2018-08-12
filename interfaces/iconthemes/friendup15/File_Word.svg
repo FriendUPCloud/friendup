@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Word</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.1" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-196.000000, -55.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Word" transform="translate(84.153846, 2.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#2980B9" fill-rule="nonzero"></path>
+                            <path d="M5.16,7.602 L6.315,7.602 L7.395,12.712 L7.995,15.694 L8.055,15.694 C8.20500075,15.03133 8.4399984,14.03734 8.76,12.712 L10.185,7.602 L11.205,7.602 L12.615,12.712 C12.7350006,13.2160025 12.8299996,13.5939987 12.9,13.846 L13.35,15.694 L13.41,15.694 L13.575,14.868 C13.7450009,13.9813289 13.8849994,13.2626694 13.995,12.712 L15.075,7.602 L16.155,7.602 L14.07,16.8 L12.75,16.8 L11.175,11.074 C11.1349998,10.8966658 11.0975002,10.7380007 11.0625,10.598 C11.0274998,10.4579993 11.0000001,10.3366672 10.98,10.234 C10.8999996,9.89799832 10.8050005,9.48266914 10.695,8.988 L10.635,8.988 L10.125,11.074 L8.595,16.8 L7.29,16.8 L5.16,7.602 Z" id="tspan4173-7" fill="#FFFFFF" opacity="0.8"></path>
+                            <g id="Group" transform="translate(25.200000, 21.280000)" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8">
+                                <rect id="rect4175-59" x="0" y="0" width="18" height="2.24"></rect>
+                                <rect id="rect4175-5-62" x="0" y="6.72" width="18" height="2.24"></rect>
+                                <rect id="rect4175-5-6-1" x="0" y="13.44" width="18" height="2.24"></rect>
+                                <rect id="rect4175-5-6-2-7" x="0" y="20.16" width="18" height="2.24"></rect>
+                            </g>
+                            <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="48" height="56"></rect>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

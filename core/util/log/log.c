@@ -40,6 +40,7 @@
 #include <properties/propertieslibrary.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <mutex/mutex_manager.h>
 
 // Max size of string
 #define MAXMSG 8196
@@ -98,13 +99,13 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
         {
 			char *path = NULL;
 			
-			slg.ff_Level = plib->ReadInt( prop, "Log:level", 1 );
-			slg.ff_ArchiveFiles =  plib->ReadInt( prop, "Log:archiveFiles", 0 );
+			slg.ff_Level = plib->ReadIntNCS( prop, "Log:level", 1 );
+			slg.ff_ArchiveFiles =  plib->ReadIntNCS( prop, "Log:archiveFiles", 0 );
 
-			slg.ff_FileLevel  = plib->ReadInt( prop, "Log:fileLevel", 1 );
-			slg.ff_Fname = plib->ReadString( prop, "Log:fileName", (char *)fname );
+			slg.ff_FileLevel  = plib->ReadIntNCS( prop, "Log:fileLevel", 1 );
+			slg.ff_Fname = plib->ReadStringNCS( prop, "Log:fileName", (char *)fname );
 
-			path = plib->ReadString( prop, "Log:filepath", "log/" );
+			path = plib->ReadStringNCS( prop, "Log:filepath", "log/" );
 			
 			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
 			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
@@ -203,7 +204,7 @@ void Log( int lev, char* fmt, ...)
     {
         if (lev >= slg.ff_FileLevel)
         {
-            if (pthread_mutex_lock(&slg.logMutex) == 0)
+            if (FRIEND_MUTEX_LOCK( &slg.logMutex ) == 0)
             {
 
                 time_t rawtime;
@@ -300,7 +301,7 @@ void Log( int lev, char* fmt, ...)
                     va_end(args);
 
                 }
-                pthread_mutex_unlock(&slg.logMutex);
+                FRIEND_MUTEX_UNLOCK( &slg.logMutex );
             } // pthread lock
         } // file level
     } // to file
@@ -396,7 +397,7 @@ void Log( int lev, char* fmt, ...)
     {
         if (slg.td_safe)
         {
-            if (pthread_mutex_lock(&slog_mutex))
+            if (FRIEND_MUTEX_LOCK(&slog_mutex))
             {
                 printf("<%s:%d> %s: [ERROR] Can not lock mutex: %d\n",
                     __FILE__, __LINE__, __FUNCTION__, errno);
@@ -485,7 +486,7 @@ void Log( int lev, char* fmt, ...)
 
         if (slg.td_safe)
         {
-            if (pthread_mutex_unlock(&slog_mutex))
+            if (FRIEND_MUTEX_UNLOCK(&slog_mutex))
             {
                 printf("<%s:%d> %s: [ERROR] Can not deinitialize mutex: %d\n",
                     __FILE__, __LINE__, __FUNCTION__, errno);

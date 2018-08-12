@@ -30,7 +30,15 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 Friend.Tree.UI.CheckBox = function ( tree, name, properties )
 {
 	this.text = 'CheckBox';
-	this.font = '12px Arial';
+	this.font = '16px sans serif';
+	this.color = '#000000';
+	this.colorBack = '#FFFFFF';
+	this.colorMouseOver = '#C0C0C0';
+	this.colorDown = '#000000';
+	this.colorBorder = '#000000';
+	this.sizeBorder = 1;
+	this.sizeCheckmark = 12;
+
 	this.caller = false;
 	this.onChange = false;
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.CheckBox';
@@ -64,81 +72,85 @@ Friend.Tree.UI.CheckBox.getValue = function ( message )
 	return this.state;
 };
 
-Friend.Tree.UI.RenderItems.CheckBox_Three2D = function ( tree, name, properties )
+
+
+Friend.Tree.UI.RenderItems.CheckBox_HTML = function ( tree, name, properties )
 {
-	this.color = '#000000';
-	this.backColor = '#FFFFFF';
-	this.mouseOverColor = '#C0C0C0';
-	this.downColor = '#000000';
-	this.borderColor = '#000000';
-	this.borderSize = 1;
-	this.checkSize = 12;
-	this.font = '16px Arial';
+	this.text = false;
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorMouseOver = false;
+	this.colorDown = false;
+	this.colorBorder = false;
+	this.sizeBorder = false;
+	this.sizeCheckmark = false;
+	this.value = false;
+
 	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_Three2D';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.CheckBox_Three2D', properties );
-	this.parent.addProcess( new Friend.Tree.UI.GestureCheckBox( this.tree, this.parent, { } ) );
+	this.rendererName = 'Renderer_HTML';
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.CheckBox_HTML', properties );
+	this.item.addProcess( new Friend.Tree.UI.GestureCheckBox( this.tree, this.item, { } ) );
+
+	this.width = 200;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.CheckBox_Three2D.render = function ( properties )
+Friend.Tree.UI.RenderItems.CheckBox_HTML.render = function ( properties )
 {
 	// Clears the canvas
 	this.thisRect.clear( properties );
 
 	// Checkbox
-	var rect = new Friend.Tree.Utilities.Rect( 0, this.rect.height / 2 - this.checkSize / 2, this.checkSize, this.checkSize );
-	var backColor = this.backColor;
-	if ( this.parent.mouseOver )
+	var rect = new Friend.Tree.Utilities.Rect( 0, this.rect.height / 2 - this.item.sizeCheckmark / 2, this.item.sizeCheckmark, this.item.sizeCheckmark );
+	var colorBack = this.item.colorBack;
+	if ( this.item.mouseOver )
 	{
-		backColor = this.mouseOverColor;
+		colorBack = this.item.colorMouseOver;
 	}
-	rect.drawBox( properties, backColor, this.borderColor, this.borderSize );
+	rect.drawBox( properties, colorBack, this.item.colorBorder, this.item.sizeBorder );
 
 	// Checkmark
-	if ( this.parent.value )
+	if ( this.item.value )
 	{
-		rect.drawDiagonal( properties, this.downColor, 1, Friend.Tree.DIAGONAL_TOPLEFT_BOTTOMRIGHT | Friend.Tree.DIAGONAL_TOPRIGHT_BOTTOMLEFT );
+		rect.drawDiagonal( properties, this.item.colorDown, 1, Friend.Tree.DIAGONAL_TOPLEFT_BOTTOMRIGHT | Friend.Tree.DIAGONAL_TOPRIGHT_BOTTOMLEFT );
 	}
 
 	// Text
 	rect = new Friend.Tree.Utilities.Rect( this.thisRect );
-	rect.x += this.checkSize + 4;
-	rect.drawText( properties, this.parent.text, this.font, this.color, 'left', 'middle' );
+	rect.x += this.item.sizeCheckmark + 4;
+	rect.drawText( properties, this.item.text, this.item.font, this.item.color, 'left', 'middle' );
+
+	// Allow rendering in parent
+	if ( this.item.renderSubItems )
+        properties.renderInParent = properties.rendererItem;
 
 	return properties;
 };
 
-
-Friend.Tree.UI.RenderItems.CheckBox_HTML = function ( tree, name, properties )
-{
-	this.color = '#000000';
-	this.backColor = '#FFFFFF';
-	this.mouseOverColor = '#C0C0C0';
-	this.downColor = '#000000';
-	this.borderColor = '#000000';
-	this.borderSize = 1;
-	this.checkSize = 12;
-	this.font = '16px Arial';
-	this.rendererType = 'Canvas';
-	this.rendererName = 'Renderer_HTML';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.CheckBox_HTML', properties );
-	this.parent.addProcess( new Friend.Tree.UI.GestureCheckBox( this.tree, this.parent, { } ) );
-};
-Friend.Tree.UI.RenderItems.CheckBox_HTML.render = Friend.Tree.UI.RenderItems.CheckBox_Three2D.render;
-
 Friend.Tree.UI.RenderItems.CheckBox_Canvas2D = function ( tree, name, properties )
 {
-	this.color = '#000000';
-	this.backColor = '#FFFFFF';
-	this.mouseOverColor = '#C0C0C0';
-	this.downColor = '#000000';
-	this.borderColor = '#000000';
-	this.borderSize = 1;
-	this.checkSize = 12;
-	this.font = '16px Arial';
+	this.text = false;
+	this.font = false;
+	this.color = false;
+	this.colorBack = false;
+	this.colorMouseOver = false;
+	this.colorDown = false;
+	this.colorBorder = false;
+	this.sizeBorder = false;
+	this.sizeCheckmark = false;
+	this.value = false;
+
 	this.rendererType = 'Canvas';
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.CheckBox_Canvas2D', properties );
-	this.parent.addProcess( new Friend.Tree.UI.GestureCheckBox( this.tree, this.parent, { } ) );
+	this.item.addProcess( new Friend.Tree.UI.GestureCheckBox( this.tree, this.item, { } ) );
 	this.render = Friend.Tree.UI.RenderItems.CheckBox_Three2D.render;
+
+	this.width = 200;
+	this.height = 32;
+	this.item.width = this.width;
+	this.item.height = this.height;
 };
-Friend.Tree.UI.RenderItems.CheckBox_Canvas2D.render = Friend.Tree.UI.RenderItems.CheckBox_Three2D.render;
+Friend.Tree.UI.RenderItems.CheckBox_Canvas2D.render = Friend.Tree.UI.RenderItems.CheckBox_HTML.render;

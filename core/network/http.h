@@ -82,6 +82,7 @@ enum {
 	HTTP_HEADER_DEPTH,
 	HTTP_HEADER_EXPECTED_CONTENT_LENGTH,
 	HTTP_HEADER_RANGE,
+	HTTP_HEADER_X_FRAME_OPTIONS,
 	HTTP_HEADER_END
 };
 
@@ -112,7 +113,8 @@ static const char *HEADERS[] = {
 	"destination",
 	"x-expected-entity-length",
 	"depth",
-	"range"
+	"range",
+	"x-frame-options"
 };
 
 //
@@ -244,7 +246,8 @@ enum {
 	HTTP_CONTENT_TYPE_DEFAULT = 0,
 	HTTP_CONTENT_TYPE_MULTIPART,
 	HTTP_CONTENT_TYPE_APPLICATION_XML,
-	HTTP_CONTENT_TYPE_TEXT_XML
+	HTTP_CONTENT_TYPE_TEXT_XML,
+	HTTP_CONTENT_TYPE_APPLICATION_JSON
 };
 
 //

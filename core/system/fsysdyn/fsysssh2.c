@@ -191,7 +191,14 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 		}
 	
 		libssh2_session_disconnect( sd->session,  "Normal Shutdown, Thank you for playing" );
-		libssh2_session_free( sd->session );
+		while( TRUE )
+		{
+			if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN )
+			{
+				break;
+			}
+			usleep( 1000 );
+		}
 		sd->session = NULL;
 	}
 	
@@ -227,7 +234,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 		if( libssh2_session_handshake( sd->session, sd->sock ) < 0 ) 
 		{
 			DEBUG("Failure establishing SSH session\n");
-			libssh2_session_free( sd->session );
+			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -242,7 +249,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 		if( sd->fingerprint == NULL )
 		{
 			DEBUG("Failure establishing SSH session\n");
-			libssh2_session_free( sd->session );
+			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -276,7 +283,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 			if( sd->rc != 0 )
 			{
 				FERROR("User not authenticated\n");
-				libssh2_session_free( sd->session );
+				while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 				sd->session = NULL;
 				shutdown( sd->sock, SHUT_RDWR );
 				close( sd->sock );
@@ -292,7 +299,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 			if (libssh2_userauth_publickey_fromfile( sd->session, sd->sd_LoginUser, sd->sd_privkeyFileName, NULL, sd->sd_LoginPass ) ) 
 			{	
 				FERROR("User not authenticated\n");
-				libssh2_session_free( sd->session );
+				while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 				sd->session = NULL;
 				shutdown( sd->sock, SHUT_RDWR );
 				close( sd->sock );
@@ -307,7 +314,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 		else
 		{
 			FERROR("User not authenticated\n");
-			libssh2_session_free( sd->session );
+			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -325,7 +332,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 			
 			FERROR("Unable to init SFTP session %d\n", err );
 			
-			libssh2_session_free( sd->session );
+			while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 			sd->session = NULL;
 			shutdown( sd->sock, SHUT_RDWR );
 			close( sd->sock );
@@ -365,7 +372,7 @@ int UnMount( struct FHandler *s, void *f )
 				}
 			
 				libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing" );
-				libssh2_session_free( sdat->session );
+				while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 				sdat->session = NULL;
 			}
 
@@ -598,6 +605,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 		if( strstr( userauthlist, "password" ) != NULL )
 		{
 			authpw |= 1;
+			DEBUG( "Now going into userauthlist.\n" );
 		}
 		if( strstr( userauthlist, "keyboard-interactive" ) != NULL )
 		{
@@ -657,28 +665,37 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 			if( sdat->rc != 0 )
 			{
 				FERROR("User not authenticated\n");
-				goto shutdown;
+				//goto shutdown;
 			}
 		}
-		else if ( authpw & 4 )
+		
+		
+		if( authpw & 4 )
 		{
-			// Or by public key  
-			//if( libssh2_userauth_publickey_frommem( sdat->session, sdat->sd_LoginUser, strlen(sdat->sd_LoginUser), NULL, 0, privkey, strlen(privkey), NULL ) )
-			//{
-			if (libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, sdat->sd_privkeyFileName, NULL, sdat->sd_LoginPass ) ) 
-			{	
-				FERROR( "\tAuthentication by public key failed!\n");
-				goto shutdown;
-			}
-			else
+			if( sdat->rc != 0 )	// there is no need to check authentication again
 			{
-				DEBUG( "\tAuthentication by public key succeeded.\n");
+				DEBUG("Password login fail or PubKey authorisation will be used\n");
+				// Or by public key  
+				//if( libssh2_userauth_publickey_frommem( sdat->session, sdat->sd_LoginUser, strlen(sdat->sd_LoginUser), NULL, 0, privkey, strlen(privkey), NULL ) )
+				//{
+				if (libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, /*sdat->sd_privkeyFileName*/ "/home/stefkos/.ssh/id_rsa.pub", "/home/stefkos/.ssh/id_rsa", sdat->sd_LoginPass ) ) 
+				{	
+					FERROR( "\tAuthentication by public key failed!\n");
+					goto shutdown;
+				}
+				else
+				{
+					DEBUG( "\tAuthentication by public key succeeded.\n");
+				}
 			}
 		}
 		else
 		{
-			FERROR( "No supported authentication methods found!\n");
-			goto shutdown;
+			if( sdat->rc != 0 )
+			{
+				FERROR( "No supported authentication methods found!\n");
+				goto shutdown;
+			}
 		}
 		
 		DEBUG("Auth %s %s ret %d\n", sdat->sd_LoginUser, sdat->sd_LoginPass, sdat->rc );
@@ -713,7 +730,7 @@ shutdown:
 			libssh2_sftp_shutdown( sdat->sftp_session);
 	
 			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
-			libssh2_session_free(sdat->session);
+			while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 		}
 		
 		if( sdat->sock != 0 )
@@ -762,7 +779,7 @@ int Release( struct FHandler *s, void *f )
 			libssh2_sftp_shutdown( sdat->sftp_session);
 			
 			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
-			libssh2_session_free( sdat->session );
+			while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
 			
 			pthread_mutex_unlock( &hd->hd_Mutex );
 

@@ -1,0 +1,41 @@
+i18n_waCreateWebApp					    : Créer
+i18n_waCancel							: Annuler
+i18n_waTitle							: Construire une web-app
+i18n_waUrl								: URL du site web (doit commencer par 'http' or 'https')
+i18n_waName								: Nom de l'application
+i18n_waAuthor							: Votre nom
+i18n_waEmail							: Votre adresse email
+i18n_waDescription						: Informations sur l'application
+i18n_waWidth							: Largeur
+i18n_waHeight							: Hauteur
+i18n_waCategory							: Catégorie
+i18n_waWindow							: Fenètre
+i18n_typeWebApp							: Type
+i18n_waWrongUrl							: Entrez une URL de la forme 'http://www.website.com' ou 'https://www.website.com'
+i18n_waWrongName						: Entrew un nom pour l'application
+i18n_waWrongWidth						: La largeur doit être un nombre positif
+i18n_waWrongHeight						: La hauteur doit être un nombre positif
+i18n_waGames							: Games
+i18n_waOffice							: Office
+i18n_waGraphics							: Graphics
+i18n_waProgramming						: Programming
+i18n_waInternet							: Internet
+i18n_waCreated							: Web-app créée avec succès.
+i18n_waAbout0							: A propos
+i18n_waAbout1							: Cette application a été créée par
+i18n_waFile								: Fichier
+i18n_waFileSelectorTitle				: Sauver l'application...
+i18n_waIcon								: Icône application
+i18n_waPreview							: Previsualisation application
+i18n_waChange							: Changer
+i18n_waChangeWebAppPreviewTitle			: Veuillez choisir une image png
+i18n_waChangeWebAppIconTitle			: Veuillez choisir une image png
+i18n_waPleaseFill						: Définition de l'application
+i18n_waClose							: Fermer
+i18n_waAlert                            : Alerte
+i18n_waSuccess                          : Succès
+i18n_waCannotCreatePackage				: Une erreur est survenue pendant la création du package.
+i18n_waPackageCreated					: Package créé. Vous pouvez maintenant l'installer sur votre machine.
+i18n_waBlankAuthor						: Votre nom
+i18n_waBlankEmail						: votremail@votreserveur.com
+i18n_waBlankDescription					: Une description de l'application

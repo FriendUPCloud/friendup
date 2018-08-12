@@ -143,7 +143,7 @@ typedef struct User
 	time_t						u_CreatedTime;
 	time_t						u_LoginTime;			// last login time
 	
-	File						*u_MountedDevs;     // root file]
+	File						*u_MountedDevs;     // root file
 	int							u_MountedDevsNr;		// number of mounted devices
 	File						*u_WebDAVDevs;		// shared webdav resources 
 	int							u_WebDAVDevsNr;		// number of mounted webdav drives

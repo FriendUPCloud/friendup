@@ -1,1 +1,1 @@
-ALTER TABLE `DockItem` ADD `Workspace` int(11) DEFAULT 0 AFTER `Icon`
+ALTER TABLE `DockItem` ADD `Workspace` int(11) DEFAULT 0

@@ -72,7 +72,8 @@ lwsgs_handler_confirm(struct per_vhost_data__gs *vhd, struct lws *wsi,
 	a.event = LWSGSE_CREATED;
 	a.username = u.username;
 	a.email = u.email;
-	lws_callback_vhost_protocols(wsi, LWS_CALLBACK_GS_EVENT, &a, 0);
+	lws_callback_vhost_protocols_vhost(lws_get_vhost(wsi),
+					   LWS_CALLBACK_GS_EVENT, &a, 0);
 
 	lws_snprintf(pss->onward, sizeof(pss->onward),
 		 "%s/post-verify-ok.html", vhd->email_confirm_url);
@@ -261,9 +262,10 @@ reply:
 		lwsl_err("_write returned %d from %ld\n", n, (long)(p - start));
 		return -1;
 	}
-	n = lws_write(wsi, (unsigned char *)s, 1, LWS_WRITE_HTTP);
-	if (n != 1)
-		return -1;
+	pss->check_response_value = s[0];
+	pss->check_response = 1;
+
+	lws_callback_on_writable(wsi);
 
 	return 0;
 }
@@ -289,7 +291,7 @@ lwsgs_handler_change_password(struct per_vhost_data__gs *vhd, struct lws *wsi,
 				return 1;
 
 			/* did a forgot pw ? */
-			if (u.last_forgot_validated > lws_now_secs() - 300) {
+			if (u.last_forgot_validated > (time_t)lws_now_secs() - 300) {
 				n |= LWSGS_AUTH_FORGOT_FLOW;
 				lwsl_debug("within forgot password flow\n");
 			}
@@ -311,8 +313,8 @@ lwsgs_handler_change_password(struct per_vhost_data__gs *vhd, struct lws *wsi,
 
 		lwsl_debug("current pw checks out\n");
 
-		strncpy(u.username, lws_spa_get_string(pss->spa, FGS_USERNAME), sizeof(u.username) - 1);
-		u.username[sizeof(u.username) - 1] = '\0';
+		lws_strncpy(u.username, lws_spa_get_string(pss->spa, FGS_USERNAME),
+			    sizeof(u.username));
 	}
 
 	/* does he want to delete his account? */
@@ -325,7 +327,8 @@ lwsgs_handler_change_password(struct per_vhost_data__gs *vhd, struct lws *wsi,
 		a.event = LWSGSE_DELETED;
 		a.username = u.username;
 		a.email = "";
-		lws_callback_vhost_protocols(wsi, LWS_CALLBACK_GS_EVENT, &a, 0);
+		lws_callback_vhost_protocols_vhost(lws_get_vhost(wsi),
+						   LWS_CALLBACK_GS_EVENT, &a, 0);
 
 		lws_snprintf(s, sizeof(s) - 1,
 			 "delete from users where username='%s';"

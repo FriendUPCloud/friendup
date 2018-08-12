@@ -52,7 +52,7 @@ fui.addClass( function()
 	}
 	fui.TabButtons.prototype.shown = function( ele )
 	{
-		self = this;
+		var self = this;
 		if( this.flags.tabs.length )
 		{
 			var width = 100 / this.flags.tabs.length;
@@ -63,6 +63,7 @@ fui.addClass( function()
 				d.style.width = width + '%';
 				d.index = a;
 				d.pageName = this.flags.tabs[ a ];
+				
 				d.innerHTML = '<span>' + ( this.flags.labels ? this.flags.labels[a] : this.flags.tabs[a] ) + '</span>';
 				ele.appendChild( d );
 				d.onclick = function( e )
@@ -121,15 +122,45 @@ fui.addClass( function()
 			}
 		}
 	};
-	fui.addCSS( "" +
-	".FUITabButtons { width: 100%; }" +
-	".FUITabButtons:after { display: block; content: ' '; clear: both; }" +
-	".FUITabButton { transition: border-radius,box-shadow,color,background 0.25s; border-radius: 0 0 3px 3px; box-shadow: inset 0px 0px 20px rgba(0,0,0,0.2); position: relative; float: left; height: 100%; padding: 4px; box-sizing: border-box; background: gray; color: white; }" +
-	".FUITabButton:first-child { border-bottom-left-radius: 0; }" +
-	".FUITabButton:last-child { border-bottom-right-radius: 0; }" +
-	".FUITabButton > span { width: 100%; text-align: center; position: absolute; top: 50%; margin-top: -9px; }" +
-	".FUITabButton.Active { border-radius: 0; box-shadow: none; background: #f0f0f0; color: black; }" +
-	"" );
+	fui.addCSS( `
+	.FUITabButtons { width: 100%; }
+	.FUITabButtons:after
+	{
+		display: block; 
+		content: ' '; 
+		clear: both;
+	}
+	.FUITabButton
+	{
+		transition: border-radius,box-shadow,color,background 0.25s; 
+		border-radius: 0 0 3px 3px; 
+		box-shadow: inset 0px 0px 20px rgba(0,0,0,0.2); 
+		position: relative; 
+		float: left; 
+		height: 100%; 
+		padding: 4px; 
+		box-sizing: border-box; 
+		background: gray; 
+		color: white;
+	}
+	.FUITabButton:first-child { border-bottom-left-radius: 0; }
+	.FUITabButton:last-child { border-bottom-right-radius: 0; }
+	.FUITabButton > span
+	{
+		width: 100%; 
+		text-align: center; 
+		position: absolute; 
+		top: 50%; 
+		margin-top: -9px;
+	}
+	.FUITabButton.Active
+	{
+		border-radius: 0; 
+		box-shadow: none; 
+		background: #f0f0f0; 
+		color: black;
+	}
+	` );
 }, 'Group' );
 
 // Add TabPages class

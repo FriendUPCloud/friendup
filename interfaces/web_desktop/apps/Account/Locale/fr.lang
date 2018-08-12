@@ -10,10 +10,18 @@ i18n_current_password                : Mot de passe actuel
 i18n_new_password                    : Nouveau mot de passe
 i18n_confirm                         : Confirmer
 
+i18n_language                        : La langue
+i18n_workspace_mode                  : Mode d'espace de travail
+i18n_mode_gamified                   : Gamifié
+i18n_mode_normal                     : Ordinaire
+i18n_mode_developer                  : Développeur
+
 i18n_are_you_sure                    : Êtes-vous sûr?
 i18n_this_will_remove                : Cela supprimera le disque de votre liste de montage.
 
 i18n_delete_disk                     : Supprimer
+
+i18n_storage                         : Espace de rangement
 
 i18n_key_name              			 : Nom cle
 i18n_key_password             	     : Mot de passe cle
@@ -48,9 +56,10 @@ i18n_no_storage                      : Pas d'espace de stockage disponible.
 
 i18n_get_storage                     : Obtenir plus d'espace
 
-i18n_toggle_public_key_visibility    : Montrer / cacher la clé publique
+i18n_toggle_public_key_visibility    : Clé publique
 
-i18n_get_apps                        : Ajouter application
+i18n_password                        : Mot de passe
+i18n_edit_password                   : Modifier mot de passe
 
 i18n_descheading : Ajouter de l'espace de stockage à votre système
 i18n_description : Choisissez quel type de disque vous voulez ajouter. Certains fournisseurs peuvent vous demander d'enregistrer un compte.
@@ -74,6 +83,10 @@ i18n_workgroup                    : Groupe de travail
 i18n_device_name                  : Nom du disque
 i18n_placeholder_connection       : Mondisque
 
+i18n_your_public_key              : Votre clé publique
+
+i18n_deleting_key                 : Suppression de la touche
+
 i18n_add_storage                  : Ajouter
 i18n_update_disk                  : Mettre à jour
 i18_account2                      : Compte
@@ -82,3 +95,35 @@ i18n_settings_saved               : Préférences sauvegardées
 i18n_key_password_confirm         : Confirm password
 i18n_pass_mis_desc                : The passwords need to match.
 i18n_password_mismatch            : Password mismatch!
+
+i18n_useravatar                      : Avatar
+i18n_changeavatar                    : Changer
+i18n_fileselectoravatar              : Choisissez une image PNG
+
+i18n_friendNetwork					 : Friend Network
+i18n_fnetActivate					 : Activer Friend Network
+i18n_fnetWorkgroup					 : Communauté
+i18n_fnetPassword					 : Mot de passe communauté
+i18n_fnetRepeatPassword				 : Répéter mot de passe
+i18n_workgroupPlaceHolder			 : Entrez le nom du Workgroup ou laissez vide
+i18n_passwordNoMatch				 : Les mots de passe du Workgroup Friend Network ne correspondent pas
+i18n_fnetAcceptFromAny				 : Accepter les messages des personnes qui ne sont pas mes amis
+i18n_fnetDescription                 : Décrivez vous
+i18n_fnetDownloadFiles				 : Télécharger les fichiers partagés immédiatement
+i18n_fnetDownloadPath				 : Répertoire de sauvergarde
+i18n_fnetDownloadButton				 : Choisissez un répertoire
+i18n_fnetPleaseChooseDirectory		 : Choisissez un dossier...
+i18n_fnetShareLocalDrives			 : Monter les disques locaux dans Friend Network
+i18n_fnetDeviceDescription			 : Description de l'appareil
+i18n_fnetDeviceName					 : Nom de l'appareil
+i18n_fnetChangeDeviceAvatar			 : Changer l'image
+i18n_device_information				 : Appareil
+i18n_nameOfDevice					 : Entrez le nom de l'appareil
+i18n_descriptionOfDevice			 : Entrez une description de l'appareil
+i18n_deviceNotice					 : Cette page d'information est spécifique à l'appareil que vous utilisez maintenant. Friend Network l'utilisera pour vous tenir au courant de toutes les machines sur lesquelles votre session de Friend est ouverte.
+i18n_fnetMountDrive					 : Monter le disque Friend Network au démarrage
+i18n_fnetAutoMountDrive				 : Afficher le disque Friend Network sur le Workspace
+
+i18n_update_language_warning         : Mise à jour de la langue
+i18n_update_language_desc            : Lors de la mise à jour de votre paramètre de langue, Friend doit recharger l'espace de travail. Vous allez perdre tout ce qui n'est pas sauvegardé. Êtes-vous sur de vouloir continuer?
+

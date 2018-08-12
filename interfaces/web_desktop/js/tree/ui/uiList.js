@@ -30,8 +30,12 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 /**
  * List object
  */
-Friend.Tree.UI.List = function ( tree, name, flags )
+Friend.Tree.UI.List = function ( tree, name, properties )
 {
+	this.font = '14px sans serif';
+	this.colorBack = '#FFFFFF';
+	this.color = '#000000';
+
 	this.multipleSelections = false;
 	this.defaultSelected = -1;
 	this.lines = [];
@@ -39,7 +43,7 @@ Friend.Tree.UI.List = function ( tree, name, flags )
 	this.caller = false;
 	this.onClick = false;
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.List';
-	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.List', flags );
+	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.List', properties );
 	this.identifierCount = 1;
 	this.addLines( this.lines );
 };
@@ -130,14 +134,19 @@ Friend.Tree.UI.List.getItemFromIdentifier = function ( identifier )
 	}
 	return null;
 };
+Friend.Tree.UI.List.getNumberOfLines = function()
+{
+	return this.options.length;
+};
 
 
 Friend.Tree.UI.RenderItems.List_HTML = function ( tree, name, properties )
 {
-	this.rendererName = '*';
-	this.caller = false;
-	this.onClick = false;
-	this.onDoubleClick = false;
+	this.font = false;
+	this.colorBack = false;
+	this.color = false;
+	this.options = false;
+
 	this.rendererName = 'Renderer_HTML';
 	this.rendererType = 'Element';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.List_HTML', properties );
@@ -148,17 +157,20 @@ Friend.Tree.UI.RenderItems.List_HTML.prepareElement = function ( properties )
 	this.element = document.createElement( 'select' );
 	this.element.style.position = 'absolute';
 	this.element.style.visibility = 'hidden';
+	this.element.style.fontSize = this.utilities.getFontSize( this.item.font ) + 'px';
+	this.element.style.fontFamily = this.utilities.getFontFamily( this.item.font );
+	this.element.style.backgroundColor = this.item.colorBack;
 
 	var self = this;
 	this.element.onclick = function()
 	{
-		if ( self.caller && self.onClick )
-			self.onClick.apply( self.caller, [ self.parent.options[ this.selectedIndex ] ] );
+		if ( self.item.caller && self.item.onClick )
+			self.item.onClick.apply( self.item.caller, [ self.item.options[ this.selectedIndex ] ] );
 	};
 	this.element.ondblclick = function()
 	{
-		if ( self.caller && self.onDoubleClick )
-			self.onDoubleClick.apply( self.caller, [ self.parent.options[ this.selectedIndex ] ] );
+		if ( self.item.caller && self.item.onDoubleClick )
+			self.item.onDoubleClick.apply( self.item.caller, [ self.item.options[ this.selectedIndex ] ] );
 	};
 };
 Friend.Tree.UI.RenderItems.List_HTML.render = function ( properties )
@@ -173,8 +185,11 @@ Friend.Tree.UI.RenderItems.List_HTML.reset = function (  )
 };
 Friend.Tree.UI.RenderItems.List_HTML.addLine = function ( source )
 {
-	var option = document.createElement( 'option' );
-	this.element.add( new Option( source.text, source.value, false, false ) );
+	var option = new Option( source.text, source.value, false, false );
+	option.style.color = this.item.color;
+	option.style.fontSize = this.utilities.getFontSize( this.item.font ) + 'px';
+	option.style.fontFamily = this.utilities.getFontFamily( this.item.font );
+	this.element.add( option );
 };
 Friend.Tree.UI.RenderItems.List_HTML.removeLine = function ( number )
 {
@@ -185,10 +200,10 @@ Friend.Tree.UI.RenderItems.List_HTML.removeLine = function ( number )
 
 Friend.Tree.UI.RenderItems.List_Canvas2D = function ( tree, name, properties )
 {
-	this.rendererName = '*';
-	this.caller = false;
-	this.onClick = false;
-	this.onDoubleClick = false;
+	this.font = false;
+	this.colorBack = false;
+	this.color = false;
+
 	this.rendererName = 'Renderer_Canvas2D';
 	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.List_Canvas2D', properties );
 	Friend.Tree.UI.RenderItems.List_HTML.prepareElement.apply( this, [ properties ] );
@@ -219,7 +234,7 @@ Friend.Tree.UI.RenderItems.List_Canvas2D.removeLine = Friend.Tree.UI.RenderItems
 Friend.Tree.UI.RenderItems.List_Three2D = function ( tree, name, flags )
 {
 	this.font = '12px Arial';
-	this.backColor = '#FFFFFF';
+	this.colorBack = '#FFFFFF';
 	this.brightColor = '#000000';
 	this.darkColor = '#000000';
 	this.color = '#000000';
@@ -261,7 +276,7 @@ Friend.Tree.UI.RenderItems.List_Three2D = function ( tree, name, flags )
 Friend.Tree.UI.RenderItems.List_Three2D.render = function ( properties )
 {
 	// Draw box
-	this.thisRect.drawHilightedBox( properties, this.backColor, this.brightColor, this.darkColor, this.borderSize );
+	this.thisRect.drawHilightedBox( properties, this.colorBack, this.brightColor, this.darkColor, this.borderSize );
 	var rect = new Friend.Tree.Utilities.Rect( this.rect );
 	rect.shrink( this.borderSize, this.borderSize );
 	rect.save( properties );
@@ -270,16 +285,16 @@ Friend.Tree.UI.RenderItems.List_Three2D.render = function ( properties )
 	// Draw the lines	
 	var count = 0;
 	this.rects = [];
-	for ( var o = this.position; o < this.parent.options.length && o < this.nLines; o++ )
+	for ( var o = this.position; o < this.item.options.length && o < this.nLines; o++ )
 	{
-		var option = this.parent.options[ o ];
-		var color = this.backColor;
+		var option = this.item.options[ o ];
+		var color = this.colorBack;
 		if ( option.mouseOver )
 			color = this.mouseOverColor;
 		if ( option.down )
 			color = this.downColor;
 		rect.drawBox( properties, color );
-		rect.drawText( properties, this.parent.options[ o ].text, this.font, textColor, 'left', 'center' );
+		rect.drawText( properties, this.item.options[ o ].text, this.font, textColor, 'left', 'center' );
 		this.rects.push( rect );
 		rect.y += this.lineHeight;
 	}
@@ -307,9 +322,9 @@ Friend.Tree.UI.RenderItems.List_Three2D.addLine = function ( option )
 		height: this.lineHeight,
 		text: option.text,
 		color: this.textColor,
-		backColor: this.backColor,
-        backColorMouseOver: this.renderer.addColor( this.backColor, '#181818', -1 ),
-        backColorDown: this.renderer.addColor( this.backColor, '#303030', -1 ),
+		colorBack: this.colorBack,
+        colorBackMouseOver: this.renderer.addColor( this.colorBack, '#181818', -1 ),
+        colorBackDown: this.renderer.addColor( this.colorBack, '#303030', -1 ),
 		font: this.font,
         multipleSelections: false,
 		forceWidth: true,
@@ -367,7 +382,7 @@ Friend.Tree.UI.D2List = function ( tree, name, flags )
 	this.tree = tree;
 
 	this.font = '16px Arial';
-	this.backColor = '#FFFFFF';
+	this.colorBack = '#FFFFFF';
 	this.brightColor = '#000000';
 	this.darkColor = '#000000';
 	this.textColor = '#000000';
@@ -406,7 +421,7 @@ Friend.Tree.UI.D2List = function ( tree, name, flags )
 Friend.Tree.UI.D2List.render = function ( flags )
 {
 	// Draw box
-	this.thisRect.drawHilightedBox( flags, this.backColor, this.brightColor, this.darkColor, this.borderSize );
+	this.thisRect.drawHilightedBox( flags, this.colorBack, this.brightColor, this.darkColor, this.borderSize );
 	var rect = new Friend.Tree.Utilities.Rect( this.rect );
 	rect.shrink( 3, 3 );
 	rect.clip( flags );
@@ -441,9 +456,9 @@ Friend.Tree.UI.D2List.addLine = function ( text, data )
 		height: this.lineHeight,
 		text: text,
 		color: this.textColor,
-		backColor: this.backColor,
-        backColorMouseOver: this.renderer.addColor( this.backColor, '#181818', -1 ),
-        backColorDown: this.renderer.addColor( this.backColor, '#303030', -1 ),
+		colorBack: this.colorBack,
+        colorBackMouseOver: this.renderer.addColor( this.colorBack, '#181818', -1 ),
+        colorBackDown: this.renderer.addColor( this.colorBack, '#303030', -1 ),
 		font: this.font,
         multipleSelections: false,
 		forceSx: true,

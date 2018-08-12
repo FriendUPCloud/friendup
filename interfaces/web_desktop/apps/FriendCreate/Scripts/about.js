@@ -23,15 +23,15 @@ for ( var a = 0; a < 20; a++ )
 	var j = document.createElement ( 'div' );
 	j.x = Math.random () * 320;
 	j.y = Math.random () * 174;
-	j.s = ( Math.random () * 3 + 1 ) / 4;
+	j.s = ( Math.random () * 3 + 1 ) / 2;
 	j.time = ( new Date () ).getTime ();
 	j.style.position = 'absolute';
 	j.style.top = Math.floor ( j.y ) + 'px';
 	j.style.left = Math.floor ( j.x ) + 'px';
 	j.style.width = '2px';
 	j.style.height = '2px';
-	j.style.background = '#D8D8D8';
-	j.style.boxShadow = '0px 0px 10px 3px #D8D8D8';
+	j.style.background = '#ffff99';
+	j.style.boxShadow = '0px 0px 10px 3px #ff8800';
 	
 	// Add to window
 	document.body.appendChild ( j );

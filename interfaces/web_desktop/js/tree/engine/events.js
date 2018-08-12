@@ -430,7 +430,7 @@ Friend.Tree.Events = function( tree, flags )
 				var list = root.events[ 'mouse' ];
 				for ( var identifier in list )
 				{					
-					var item = self.allItems[ identifier ];
+					var item = root.allItems[ identifier ];
 					if ( item.renderItem )
 					{
 						item.mouse.x = root.mouseX - item.renderItem.rect.x;
@@ -454,6 +454,7 @@ Friend.Tree.Events = function( tree, flags )
 				}
 			}
 		}
+		event.cancelBubble = true;
 	}
 
 	function onKeyDown( event )
@@ -579,6 +580,7 @@ Friend.Tree.Events.KEYS = 0x00003000;
 Friend.Tree.Events.JOYSTICKDOWN = 0x00004000;
 Friend.Tree.Events.JOYSTICKUP = 0x00008000;
 Friend.Tree.Events.JOYSTICK = 0x0000C000;
+Friend.Tree.Events.DORMANTEXECUTE = 0x00010000;
 
 /**
  * initRoot
@@ -656,7 +658,7 @@ Friend.Tree.Events.prototype.registerEvents = function( item, eventNames, flags 
 		}
 	}
 }
-Friend.Tree.Events.prototype.cancelEvent = function( item, event )
+Friend.Tree.Events.prototype.cancelEvent = function( item, eventName )
 {
 	var root = item.root;
 	if ( root )
@@ -667,7 +669,7 @@ Friend.Tree.Events.prototype.cancelEvent = function( item, event )
 			{
 				if ( root.events[ eventName ][ item.identifier ] )
 				{
-					root.events[ eventName ][ destination.identifier ] = false;
+					root.events[ eventName ][ item.identifier ] = false;
 					root.events[ eventName ] = Friend.Tree.Utilities.cleanArray( root.events[ eventName ] );
 				}	
 			}
@@ -713,7 +715,37 @@ Friend.Tree.Events.prototype.setEvent = function( item, eventName, flags )
 			}
 		}
 	}
-}
+};
+
+Friend.Tree.Events.prototype.sendEvent = function( eventName, flag, message )
+{
+	for ( var t = 0; t < this.tree.trees.length; t++ )
+	{
+		var root = this.tree.trees[ t ];
+
+		// For each item registered to event
+		var list = root.events[ eventName ];
+		for ( var identifier in list )
+		{					
+			var item = root.allItems[ identifier ];
+			if ( ( list[ item.identifier ] & flag ) != 0 )
+			{
+				this.tree.sendMessageToItem( root, item, message );
+			}
+		}
+	}
+};
+
+Friend.Tree.Events.prototype.sendSystemEvent = function( message )
+{
+	message.type = 'system';
+	for ( var t = 0; t < this.tree.trees.length; t++ )
+	{
+		var root = this.tree.trees[ t ];
+		this.tree.sendMessageToTree( root, message );
+	}
+};
+
 
 
 

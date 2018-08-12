@@ -1,0 +1,9 @@
+
+i18n_set_host_please            : Veuillez enter votre nom d'hôte.
+i18n_no_hosting                 : Impossible de lancer l'hôte
+
+i18n_start_hosting              : Lancer hôte
+i18n_stop_hosting               : Arréter hôte
+i18n_localpath                  : Chemin serveur
+i18n_hostname                   : Votre nom
+

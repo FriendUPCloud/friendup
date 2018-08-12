@@ -1,0 +1,21 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop Padding" style="bottom: 50px">
+			<div class="HRow">
+				<div class="HContent30 FloatLeft">
+					<p class="InputHeight">
+						<strong>{i18n_web_url}:</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft">
+					<input type="text" class="FullWidth InputHeight" id="Source" value="" placeholder="https://addy.io:8080/stream.m3u"/>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom Padding BorderTop BackgroundDefault TextRight" style="height: 50px">
+			<button type="button" class="IconSmall Button fa-check NoMargins" onclick="Application.sendMessage( { command: 'add_source', source: ge( 'Source' ).value } )">
+				{i18n_add_source}
+			</button>
+		</div>
+	</div>
+

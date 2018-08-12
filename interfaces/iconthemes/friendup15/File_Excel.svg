@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Excel</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="95.6553798%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-280.000000, -55.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Excel" transform="translate(168.307692, 2.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#27AE60" fill-rule="nonzero"></path>
+                            <polygon id="E" fill="#FFFFFF" opacity="0.8" points="6.18 7.602 11.775 7.602 11.775 8.484 7.29 8.484 7.29 11.522 11.07 11.522 11.07 12.39 7.29 12.39 7.29 15.918 11.925 15.918 11.925 16.8 6.18 16.8"></polygon>
+                            <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="48" height="56"></rect>
+                            <rect id="rect4175-0-4" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="25.2" y="21.28" width="18" height="2.24"></rect>
+                            <rect id="rect4175-5-9-1" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="25.2" y="28" width="18" height="2.24"></rect>
+                            <rect id="rect4175-5-6-3-8" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="25.2" y="34.72" width="18" height="2.24"></rect>
+                            <rect id="rect4175-5-6-2-6-5" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="25.2" y="41.44" width="18" height="2.24"></rect>
+                            <rect id="rect4175-0-0-97" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="25.2" y="22.4" width="1.2" height="20.16"></rect>
+                            <rect id="rect4175-0-0-6-5" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="42" y="21.28" width="1.2" height="21.28"></rect>
+                            <rect id="rect4175-0-0-2-3" fill="#FFFFFF" fill-rule="nonzero" opacity="0.8" x="33.6" y="22.4" width="1.2" height="19.04"></rect>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -154,7 +154,7 @@ void AppSessionDelete( AppSession *as )
 	DEBUG("[AppSession] Delete app session\n");
 	if( as != NULL )
 	{
-		pthread_mutex_lock( &as->as_SessionsMut );
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *ali = as->as_UserSessionList;
 		SASUList *rml = ali;
@@ -168,11 +168,11 @@ void AppSessionDelete( AppSession *as )
 			rml = NULL;
 		}
 		
-		pthread_mutex_unlock( &as->as_SessionsMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		
 		pthread_mutex_destroy( &as->as_SessionsMut );
 		
-		pthread_mutex_lock( &as->as_VariablesMut );
+		FRIEND_MUTEX_LOCK( &as->as_VariablesMut );
 		
 		INVAREntry *le = as->as_Variables;
 		INVAREntry *re = le;
@@ -184,7 +184,7 @@ void AppSessionDelete( AppSession *as )
 			INVAREntryDelete( re );
 		}
 		
-		pthread_mutex_unlock( &as->as_VariablesMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_VariablesMut );
 		
 		pthread_mutex_destroy( &as->as_VariablesMut );
 		
@@ -209,7 +209,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 	FBOOL userAdded = FALSE;
 	if( as != NULL && u != NULL )
 	{
-		pthread_mutex_lock( &as->as_SessionsMut );
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *lali = (SASUList *)as->as_UserSessionList;
 		SASUList *endli =lali;
@@ -226,7 +226,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			lali = (SASUList *) lali->node.mln_Succ;
 		}
 		
-		pthread_mutex_unlock( &as->as_SessionsMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		
 		DEBUG("[AppSession] last sessionptr %p\n", endli );
 		
@@ -245,7 +245,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 			}
 		}
 		
-		pthread_mutex_lock( &as->as_SessionsMut );
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		SASUList *ali =  FCalloc( 1, sizeof( SASUList ) );
 		
 		if( ali != NULL )
@@ -261,7 +261,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
 				strcpy( ali->authid, authid );
 			}
 		}
-		pthread_mutex_unlock( &as->as_SessionsMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		
 		as->as_Timer = time( NULL );
 	}
@@ -272,7 +272,7 @@ int AppSessionAddUser( AppSession *as, UserSession *u, char *authid )
  * Remove user session from application session
  *
  * @param as application session
- * @param us user session which will be removed from application session
+ * @param u user session which will be removed from application session
  * @return 0 if success, otherwise error number
  */
 
@@ -280,9 +280,16 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 {
 	if( as != NULL )
 	{
-		DEBUG("[AppSession] AppSessionRemUsersession %s\n", u->us_SessionID );
+		if( u != NULL )
+		{
+			DEBUG("[AppSession] AppSessionRemUsersession %s\n", u->us_SessionID );
+		}
+		else
+		{
+			return -1;
+		}
 		
-		pthread_mutex_lock( &as->as_SessionsMut );
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
 		SASUList *prevali = as->as_UserSessionList;
@@ -312,7 +319,7 @@ int AppSessionRemUsersession( AppSession *as, UserSession *u )
 			ali = (SASUList *) ali->node.mln_Succ;
 		}
 		
-		pthread_mutex_unlock( &as->as_SessionsMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 		as->as_Timer = time( NULL );
 	}
 	
@@ -333,7 +340,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 {
 	if( as != NULL )
 	{
-		pthread_mutex_lock( &as->as_SessionsMut );
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 		
 		SASUList *ali = (SASUList *)as->as_UserSessionList->node.mln_Succ; // we cannot remove owner
 		SASUList *prevali = as->as_UserSessionList;
@@ -359,7 +366,7 @@ int AppSessionRemUser( AppSession *as, User *u )
 			ali = (SASUList *) ali->node.mln_Succ;
 		}
 		
-		pthread_mutex_unlock( &as->as_SessionsMut );
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 	}
 	
 	return 0;
@@ -445,7 +452,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 				// we must check if  user is already in application session
 				//
 
-				pthread_mutex_lock( &as->as_SessionsMut );
+				FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 				
 				SASUList *curgusr = as->as_UserSessionList;
 				while( curgusr != NULL )
@@ -461,7 +468,7 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 					}
 					curgusr = (SASUList *) curgusr->node.mln_Succ;
 				}
-				pthread_mutex_unlock( &as->as_SessionsMut );
+				FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 
 				//
 				// user was not added  we must find it in system sessions
@@ -653,7 +660,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 	// find user sessions by username
 	// and send message
 	
-	pthread_mutex_lock( &as->as_SessionsMut );
+	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 	
 	UserSession *adminSession = NULL;
 	char tmp[ 1024 ];
@@ -708,7 +715,7 @@ BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession,
 		}
 	}
 	
-	pthread_mutex_unlock( &as->as_SessionsMut );
+	FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 	
 	//
 	// we want to remove admin
@@ -775,7 +782,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	DEBUG("[AppSession] App session remove by WS\n");
 	
 	/*
-	pthread_mutex_lock( &(as->as_SessionsMut) );
+	FRIEND_MUTEX_LOCK( &(as->as_SessionsMut) );
 	
 	while( as != NULL )
 	{
@@ -785,7 +792,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 			DEBUG("[AppSession] Going through User Sessions\n");
 			if( le->usersession != NULL )
 			{
-				pthread_mutex_lock( &(le->usersession->us_Mutex) );
+				FRIEND_MUTEX_LOCK( &(le->usersession->us_Mutex) );
 				WebsocketClient *lws = le->usersession->us_WSClients;
 				while( lws != NULL )
 				{
@@ -794,7 +801,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 						RWSCon *ne = FCalloc( 1, sizeof( RWSCon ) );
 						if( ne != NULL )
 						{
-							//pthread_mutex_lock( &as->as_SessionsMut );
+							//FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 							ne->as = as;
 							ne->sasuentry = le;
 							
@@ -809,7 +816,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 								rwsentr = ne;
 							}
 						}
-						//pthread_mutex_unlock( &as->as_SessionsMut );
+						//FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 						
 						break;
 					}
@@ -820,14 +827,14 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 					
 					lws = (WebsocketClient *)lws->node.mln_Succ;
 				}
-				pthread_mutex_unlock( &(le->usersession->us_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(le->usersession->us_Mutex) );
 			}
 			le = (SASUList *)le->node.mln_Succ;
 		}
 		as = (AppSession *)as->node.mln_Succ;
 	}
 	
-	pthread_mutex_unlock( &(as->as_SessionsMut) );
+	FRIEND_MUTEX_UNLOCK( &(as->as_SessionsMut) );
 	
 	rwsentr = root;
 	while( rwsentr != NULL )
@@ -1085,7 +1092,7 @@ int AppSessionSendPureMessage( AppSession *as, UserSession *sender, char *msg, i
 
 SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 {
-	pthread_mutex_lock( &as->as_SessionsMut );
+	FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
 	SASUList *li = as->as_UserSessionList;
 		
 	// Find invitee user with authid from user list in allowed users
@@ -1098,7 +1105,7 @@ SASUList *GetListEntryBySession( AppSession *as, UserSession *ses )
 		}
 		li = ( SASUList * )li->node.mln_Succ;
 	}
-	pthread_mutex_unlock( &as->as_SessionsMut );
+	FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
 	
 	return li;
 }

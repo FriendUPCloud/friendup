@@ -1,20 +1,6 @@
 .Gui label
 {
-	width: 40%;
-	float: left;
-	display: block;
-	box-sizing: border-box;
-	margin: 0 5px 5px 0;
 	font-weight: bold;
-}
-
-.Gui label + input
-{
-	width: calc(60% - 5px);
-	float: left;
-	display: block;
-	box-sizing: border-box;
-	margin: 0 0 5px 0;
 }
 
 .Gui .Box
@@ -30,6 +16,22 @@
 .Gui .Box:last-child
 {
 	margin: 0;
+}
+
+.CenteredComponent
+{
+	text-align: center;
+}
+
+.CenteredComponent button
+{
+	margin: 0 5px 0 0;
+	display: inline-block;
+}
+
+.CenteredComponent button:last-child
+{
+	margin-right: 0;
 }
 
 #UserAccImage

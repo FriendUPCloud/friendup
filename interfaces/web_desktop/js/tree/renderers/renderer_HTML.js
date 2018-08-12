@@ -87,7 +87,7 @@ Friend.Renderers.Renderer_HTML.changeExposed = function( info )
             break;
 	}
 };
-Friend.Renderers.Renderer_HTML.getScreenCoordinates = function( item )
+Friend.Renderers.Renderer_HTML.getScreenCoordinates = function( renderItem )
 {
     return rendererItem.getVector();
 }
@@ -97,9 +97,9 @@ Friend.Renderers.Renderer_HTML.startRenderTo = function( name, flags )
 Friend.Renderers.Renderer_HTML.stopRenderTo = function( id )
 {
 };
-Friend.Renderers.Renderer_HTML.add = function( item, rendererItem )
+Friend.Renderers.Renderer_HTML.add = function( renderItem, rendererItem )
 {
-	this.items[ item.identifier ] = rendererItem;
+	this.items[ renderItem.identifier ] = rendererItem;
 };
 Friend.Renderers.Renderer_HTML.clear = function()
 {
@@ -111,21 +111,21 @@ Friend.Renderers.Renderer_HTML.clear = function()
 		this.items[ i ].destroy();
 	this.items = {};
 };
-Friend.Renderers.Renderer_HTML.refreshItem = function( item )
+Friend.Renderers.Renderer_HTML.refreshItem = function( renderItem )
 {
-	if ( this.items[ item.identifier ] )
-		this.items[ item.identifier ].doRefresh();
+	if ( this.items[ renderItem.identifier ] )
+		this.items[ renderItem.identifier ].doRefresh();
 };
 Friend.Renderers.Renderer_HTML.startDestroy = function()
 {
 };
-Friend.Renderers.Renderer_HTML.destroy = function( item )
+Friend.Renderers.Renderer_HTML.destroy = function( renderItem )
 {
-	if ( this.items[ item.identifier ] )
+	if ( this.items[ renderItem.identifier ] )
 	{
-        this.deleteItemImages( item );
-		this.items[ item.identifier ].destroy();
-		this.items[ item.identifier ] = false;
+        this.deleteItemImages( renderItem );
+		this.items[ renderItem.identifier ].destroy();
+		this.items[ renderItem.identifier ] = false;
 	}
 };
 Friend.Renderers.Renderer_HTML.endDestroy = function()
@@ -136,10 +136,10 @@ Friend.Renderers.Renderer_HTML.setImage = function( srcImage, callback )
 {
 	callback( srcImage );
 };
-Friend.Renderers.Renderer_HTML.getCanvasFromImage = function( name, item, qualifier )
+Friend.Renderers.Renderer_HTML.getCanvasFromImage = function( name, renderItem, qualifier )
 {
 	// Get the id of image
-	var id = item.identifier;
+	var id = renderItem.identifier;
 	if ( qualifier )
 		id = name + qualifier;
 
@@ -158,16 +158,16 @@ Friend.Renderers.Renderer_HTML.getCanvasFromImage = function( name, item, qualif
         canvas.height = image.height;
         var context = canvas.getContext( '2d' );
         context.drawImage( image, 0, 0 );
-        this.images[ item.identifier ][ name ] = canvas;
+        this.images[ renderItem.identifier ][ name ] = canvas;
         return canvas;
     }
     return null;
 };
-Friend.Renderers.Renderer_HTML.deleteItemImages = function( item )
+Friend.Renderers.Renderer_HTML.deleteItemImages = function( renderItem )
 {
-    if ( this.images[ item.identifier ] )
+    if ( this.images[ renderItem.identifier ] )
     {
-        this.images[ item.identifier ] = false;
+        this.images[ renderItem.identifier ] = false;
         this.images = this.utilities.cleanArray( this.images );
     }
 };
@@ -178,9 +178,9 @@ Friend.Renderers.Renderer_HTML.getCanvas = function( id )
 		return canvas;
 	return false;
 };
-Friend.Renderers.Renderer_HTML.createCanvas = function( width, height, name, item, rendererItem, force )
+Friend.Renderers.Renderer_HTML.createCanvas = function( width, height, name, renderItem, rendererItem, force )
 {
-	var id = item.identifier + '<>' + name;
+	var id = renderItem.identifier + '<>' + name;
 	var canvas = this.canvasses[ id ];
 	if ( !canvas || force  )
 	{
@@ -217,18 +217,15 @@ Friend.Renderers.Renderer_HTML.getFontSize = function( font )
 {
  	if ( typeof font == 'undefined' )
 		font = this.defaultFont;
-	var pos = font.indexOf( 'px' );
-	if ( pos > 0 )
+	var end = font.indexOf( 'px' );
+	if ( end > 0 )
 	{
-		var end = pos--;
-		while ( pos >= 0 && font.charAt( pos ) == ' ' )
-			pos--;
-		while ( pos >= 0 && font.charAt( pos ) != ' ' )
-			pos--;
-		pos++;
-		return parseInt( font.substring( pos, end ), 10 );
+		var start = end;
+		while ( start >= 0 && font.charAt( start ) != ' ' )
+			start--;
+		return parseInt( font.substring( start + 1, end ), 10 );
 	}
-	return 16;
+	return 12;
 };
 Friend.Renderers.Renderer_HTML.addColor = function( color, modification, direction )
 {
@@ -264,22 +261,19 @@ Friend.Renderers.Renderer_HTML.measureText = function( text, font )
 }
 
 
-Friend.Renderers.Renderer_HTML.updateItem = function( item )
+Friend.Renderers.Renderer_HTML.updateItem = function( renderItem )
 {
-	if ( item.rendererItems )
+	if ( renderItem.rendererItem )
 	{
-		var rendererItem = item.rendererItems[ this.className ];
-		if ( rendererItem )
-			rendererItem.needsUpdate = true;
+		if ( renderItem.rendererItem )
+			renderItem.rendererItem.needsUpdate = true;
 	}
 };
-Friend.Renderers.Renderer_HTML.resizeItem = function( item, width, height )
+Friend.Renderers.Renderer_HTML.resizeItem = function( renderItem, width, height )
 {
-	if ( item.rendererItems )
+	if ( renderItem.rendererItem )
 	{
-		var rendererItem = item.rendererItems[ this.className ];
-		if ( rendererItem )
-			rendererItem.onResize( width, height );
+		renderItem.rendererItem.resize( width, height );
 	}
 };
 
@@ -315,17 +309,17 @@ Friend.Renderers.Renderer_HTML.renderStart = function( properties )
 {
 };
 
-Friend.Renderers.Renderer_HTML.renderUp = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderUp = function( properties, renderItem )
 {
-	properties.item = item;
+	properties.renderItem = renderItem;
 
 	// Nothing to draw (security)
-	if ( !item.rendererType )
+	if ( !renderItem.rendererType )
 	{
         properties.rendererItem = false;
 		this.pile.push( Object.assign( {}, properties ) );
-        this.renderFlags[ item.identifier ] = Object.assign( {}, properties );
-		properties = this.renderPrepare( properties, item );
+        this.renderFlags[ renderItem.identifier ] = Object.assign( {}, properties );
+		properties = this.renderPrepare( properties, renderItem );
 		return properties;
 	}
 
@@ -333,32 +327,45 @@ Friend.Renderers.Renderer_HTML.renderUp = function( properties, item )
 	properties.renderer.refresh = true;
 
 	// Creates the renderingItem if it does not exist
-	if ( !item.rendererItems )
-		item.rendererItems = {};
-	properties.rendererItem = item.rendererItems[ this.className ];
-	if ( !properties.rendererItem )
+	if ( renderItem.renderInParent && properties.renderInParent )
 	{
-		properties.rendererItem = new Friend.Renderers.Renderer_HTML[ 'RendererItem' + item.rendererType ]( this, item, properties );
-		item.rendererItems[ this.className ] = properties.rendererItem;
-		this.add( item, properties.rendererItem );
-		properties.rendererItem.visible = true;
+		if ( !properties.renderingInParent )
+		{
+			properties.rendererItem = properties.renderInParent;
+			
+			properties.renderInParentX = 0;
+			properties.renderInParentY = 0;
+			properties.renderingInParent = true;
+		}
+	}
+	else
+	{
+		properties.renderingInParent = false;
+		if ( !renderItem.rendererItem )
+		{
+			renderItem.rendererItem = new Friend.Renderers.Renderer_HTML[ 'RendererItem' + renderItem.rendererType ]( this, renderItem, properties );
+			renderItem.rendererItem.renderItem = renderItem;
+			this.add( renderItem, renderItem.rendererItem );
+			renderItem.rendererItem.visible = true;
+		}
+		properties.rendererItem = renderItem.rendererItem;
 	}
 
 	// Context = rendererItem
 	properties.context = properties.rendererItem;
 	this.pile.push( Object.assign( {}, properties ) );
-	this.renderFlags[ item.identifier ] = Object.assign( {}, properties );
+	this.renderFlags[ renderItem.identifier ] = Object.assign( {}, properties );
 
 	// Calculates coordinates
-	properties = this.renderPrepare( properties, item );
+	properties = this.renderPrepare( properties, renderItem );
 
 	return properties;
 };
-Friend.Renderers.Renderer_HTML.renderPrepare = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderPrepare = function( properties, renderItem )
 {
-	var xx = item.x;
-	var yy = item.y;
-	if ( !item.noOffsets )
+	var xx = renderItem.x;
+	var yy = renderItem.y;
+	if ( !renderItem.noOffsets )
 	{
 		xx += properties.offsetX;
 		yy += properties.offsetY;
@@ -372,76 +379,85 @@ Friend.Renderers.Renderer_HTML.renderPrepare = function( properties, item )
 		xx += ( xx - properties.xCenter ) * properties.perspective;
 		yy += ( yy - properties.yCenter ) * properties.perspective;
 
-		// Specific perspective for the children of the item?
-		if ( item.perspective  )
+		// Specific perspective for the children of the renderItem?
+		if ( renderItem.perspective  )
 		{
-			properties.perspective = item.perspective;
-			if ( typeof item.xCenter != 'undefined' )
-				properties.xCenter = item.xCenter;
-			if ( typeof item.yCenter != 'undefined' )
-				properties.yCenter = item.yCenter;
+			properties.perspective = renderItem.perspective;
+			if ( typeof renderItem.xCenter != 'undefined' )
+				properties.xCenter = renderItem.xCenter;
+			if ( typeof renderItem.yCenter != 'undefined' )
+				properties.yCenter = renderItem.yCenter;
 		}
-		if ( typeof item.noPerspective != 'undefined' )
-		properties.noPerspective = item.noPerspective;
+		if ( typeof renderItem.noPerspective != 'undefined' )
+		properties.noPerspective = renderItem.noPerspective;
 	}
 
-	properties.x += Math.floor( xx ) 
+	properties.x += Math.floor( xx ); 
 	properties.y += Math.floor( yy );
-	properties.z = item.z;
-	item.rect.x = properties.x;
-	item.rect.y = properties.y;
-	item.rect.width = item.width;
-	item.rect.height = item.height;
-	item.thisRect.x = 0;
-	item.thisRect.y = 0;
-	item.thisRect.width = item.width;
-	item.thisRect.height = item.height;
-	if ( !item.noRotation )
-        properties.rotation += item.rotation;
+	properties.z = renderItem.z;
+	properties.width = renderItem.width;
+	properties.height = renderItem.height;
+	renderItem.rect.x = properties.x;
+	renderItem.rect.y = properties.y;
+	renderItem.rect.width = renderItem.width;
+	renderItem.rect.height = renderItem.height;
+	renderItem.thisRect.x = 0;
+	renderItem.thisRect.y = 0;
+	renderItem.thisRect.width = renderItem.width;
+	renderItem.thisRect.height = renderItem.height;
+	if ( properties.renderingInParent )
+	{
+		properties.renderInParentX += Math.floor( xx ); 
+		properties.renderInParentY += Math.floor( yy );
+		renderItem.thisRect.x = properties.renderInParentX;
+		renderItem.thisRect.y = properties.renderInParentY;
+	}
+	if ( !renderItem.noRotation )
+        properties.rotation += renderItem.rotation;
 	else
         properties.rotation = 0;
-	properties.zoomX *= item.zoomX;
-    properties.zoomY *= item.zoomY;
-	properties.alpha *= item.alpha;
+	properties.zoomX *= renderItem.zoomX;
+    properties.zoomY *= renderItem.zoomY;
+	properties.alpha *= renderItem.alpha;
 	return properties;
 };
-Friend.Renderers.Renderer_HTML.renderIt = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderIt = function( properties, renderItem )
 {
-	if ( properties.rendererItem )
+	if ( properties.rendererItem && !properties.renderingInParent )
 	{
 		// Visible or not?
-		if ( item.visible != properties.rendererItem.visible )
-        properties.rendererItem.setVisible( item.visible );
+		if ( renderItem.visible != properties.rendererItem.visible )
+        	properties.rendererItem.setVisible( renderItem.visible );
 
-		// Refreshes item if it has changed
+		// Refreshes renderItem if it has changed
 		properties.rendererItem.update( properties );
 	}
 	return properties;
 };
-Friend.Renderers.Renderer_HTML.renderDown = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderDown = function( properties, renderItem )
 {
-	item.refresh = false;
+	renderItem.refresh = false;
 	return this.pile.pop();
 };
-Friend.Renderers.Renderer_HTML.renderUpFast = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderUpFast = function( properties, renderItem )
 {
-	if ( this.renderFlags[ item.identifier ] )
+	if ( this.renderFlags[ renderItem.identifier ] )
 	{
-		properties = Object.assign( {}, this.renderFlags[ item.identifier ] );
-		properties = this.renderPrepare( properties, item );
+		properties = Object.assign( {}, this.renderFlags[ renderItem.identifier ] );
+		properties = this.renderPrepare( properties, renderItem );
 		return properties;
 	}
 	return false;
 };
-Friend.Renderers.Renderer_HTML.renderDownFast = function( properties, item )
+Friend.Renderers.Renderer_HTML.renderDownFast = function( properties, renderItem )
 {
-	item.refresh = false;
+	renderItem.refresh = false;
 	return properties;
 };
 Friend.Renderers.Renderer_HTML.renderEnd = function ()
 {
 };
-Friend.Renderers.Renderer_HTML.postProcess = function( imageOrCanvas, item )
+Friend.Renderers.Renderer_HTML.postProcess = function( imageOrCanvas, renderItem )
 {
 };
 
@@ -452,12 +468,12 @@ Friend.Renderers.Renderer_HTML.postProcess = function( imageOrCanvas, item )
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-Friend.Renderers.Renderer_HTML.RendererItemDiv = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemDiv = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemDiv );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemDiv';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
@@ -465,12 +481,11 @@ Friend.Renderers.Renderer_HTML.RendererItemDiv = function( renderer, item, flags
 	this.height = false;
 	this.utilities.setFlags( this, flags );
 	this.div = document.createElement( 'div' );
-	this.div.innerHTML = item.HTML;
 	this.div.style.position = 'absolute';
-	this.div.style.zIndex = this.item.z;
+	this.div.style.zIndex = this.renderItem.z;
 	this.div.style.visibility = 'hidden';
-	document.body.appendChild( this.div );        
 	this.checkHTML();
+	document.body.appendChild( this.div );        
 	this.toRefresh = true;
 }
 Friend.Renderers.Renderer_HTML.RendererItemDiv.reset = function()
@@ -479,20 +494,21 @@ Friend.Renderers.Renderer_HTML.RendererItemDiv.reset = function()
 };
 Friend.Renderers.Renderer_HTML.RendererItemDiv.checkHTML = function( z )
 {
-	if ( this.item.HTML && ( this.HTML != this.item.HTML || this.needsUpdate ) || this.forceReset )
+	if ( this.renderItem.HTML && ( this.HTML != this.renderItem.HTML || this.needsUpdate ) || this.forceReset )
 	{
-		this.HTML = this.item.HTML;
-		this.div.innerHTML = this.item.HTML;
+		this.HTML = this.renderItem.HTML;
+		this.div.innerHTML = this.renderItem.HTML;
 	}
 };
 Friend.Renderers.Renderer_HTML.RendererItemDiv.update = function( properties )
 {
+	this.checkHTML();
 	this.div.style.zIndex = properties.z;
     this.div.style.left = Math.floor( properties.x ) + 'px';
     this.div.style.top = Math.floor( properties.y ) + 'px';
-    this.div.style.width = Math.floor( this.item.width ) + 'px';
-    this.div.style.height = Math.floor( this.item.height ) + 'px';
-    this.div.style.opacity = properties.alpha.toString();
+    this.div.style.width = Math.floor( this.renderItem.width ) + 'px';
+    this.div.style.height = Math.floor( this.renderItem.height ) + 'px';
+	this.div.style.opacity = properties.alpha.toString();
     this.div.style.visibility = this.visible ? 'visible' : 'hidden';		
 };
 Friend.Renderers.Renderer_HTML.RendererItemDiv.destroy = function( flags )
@@ -513,19 +529,19 @@ Friend.Renderers.Renderer_HTML.RendererItemDiv.getVector = function()
     return { x: 0, y: 0 };
 };
 
-Friend.Renderers.Renderer_HTML.RendererItemElement = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemElement = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemElement );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemElement';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
 	this.width = false;
 	this.height = false;
 	this.utilities.setFlags( this, flags );
-	this.element = item.element;
+	this.element = renderItem.element;
 	document.body.appendChild( this.element );        
     this.toRefresh = true;
 }
@@ -538,8 +554,8 @@ Friend.Renderers.Renderer_HTML.RendererItemElement.update = function( properties
 	this.element.style.zIndex = properties.z;
     this.element.style.left = Math.floor( properties.x ) + 'px';
     this.element.style.top = Math.floor( properties.y ) + 'px';
-    this.element.style.width = Math.floor( this.item.width ) + 'px';
-    this.element.style.height = Math.floor( this.item.height ) + 'px';
+    this.element.style.width = Math.floor( this.renderItem.width ) + 'px';
+    this.element.style.height = Math.floor( this.renderItem.height ) + 'px';
     this.element.style.opacity = properties.alpha.toString();
     this.element.style.visibility = this.visible ? 'visible' : 'hidden';		
 };
@@ -563,12 +579,12 @@ Friend.Renderers.Renderer_HTML.RendererItemElement.getVector = function()
 
 
 
-Friend.Renderers.Renderer_HTML.RendererItemSprite = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemSprite = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemSprite );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemSprite';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
@@ -584,9 +600,9 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite.reset = function()
 };
 Friend.Renderers.Renderer_HTML.RendererItemSprite.checkImage = function( z )
 {
-	if ( this.item.imageName && ( this.imageName != this.item.imageName || this.needsUpdate ) || this.forceReset )
+	if ( this.renderItem.imageName && ( this.imageName != this.renderItem.imageName || this.needsUpdate ) || this.forceReset )
 	{
-        var canvas = this.renderer.getCanvasFromImage( this.item.imageName, this.item );
+        var canvas = this.renderer.getCanvasFromImage( this.renderItem.imageName, this.renderItem );
         if ( canvas )
         {
             // Removes from document
@@ -595,7 +611,7 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite.checkImage = function( z )
 
             // Change image
             this.canvas = canvas;
-            this.imageName = this.item.imageName;
+            this.imageName = this.renderItem.imageName;
             this.width = this.canvas.width;
             this.height = this.canvas.height;
 
@@ -611,8 +627,8 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite.update = function( properties 
 	this.canvas.style.zIndex = properties.z;
     this.canvas.style.left = Math.floor( properties.x ) + 'px';
     this.canvas.style.top = Math.floor( properties.y ) + 'px';
-    this.canvas.style.width = Math.floor( this.width ) + 'px';
-    this.canvas.style.height = Math.floor( this.height ) + 'px';
+    this.canvas.style.width = Math.floor( this.renderItem.width ) + 'px';
+    this.canvas.style.height = Math.floor( this.renderItem.height ) + 'px';
     this.canvas.style.opacity = properties.alpha.toString();
     this.canvas.style.visibility = this.visible ? 'visible' : 'hidden';		
 };
@@ -633,7 +649,7 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite.getVector = function()
 {
     return { x: 0, y: 0 };
 };
-Friend.Renderers.Renderer_HTML.RendererItemSprite.onResize = function( width, height )
+Friend.Renderers.Renderer_HTML.RendererItemSprite.resize = function( width, height )
 {
 };
 
@@ -642,12 +658,12 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite.onResize = function( width, he
 
 
 
-Friend.Renderers.Renderer_HTML.RendererItemSprite3D = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemSprite3D = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemSprite3D );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemSprite3D';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
@@ -666,11 +682,11 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite3D.reset = function()
 Friend.Renderers.Renderer_HTML.RendererItemSprite3D.checkImages = function( zBase )
 {
 	var maxLayers = this.maxLayers;
-	if ( !this.layerList[ this.item.imageName ] || this.imageName != this.item.imageName || this.forceReset )
+	if ( !this.layerList[ this.renderItem.imageName ] || this.imageName != this.renderItem.imageName || this.forceReset )
 	{
 		this.forceReset = false;
-		this.imageName = this.item.imageName;
-		this.layerList[ this.item.imageName ] = [];
+		this.imageName = this.renderItem.imageName;
+		this.layerList[ this.renderItem.imageName ] = [];
 		
 		// Removes the previous images from the document
 		for ( var l = 0; l < this.layerList.length; l++ )
@@ -684,10 +700,10 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite3D.checkImages = function( zBas
 		}
 
 		// Creates the new ones
-		var imageList = this.resources.getImage( this.item.imageName, this.item );
+		var imageList = this.resources.getImage( this.renderItem.imageName, this.renderItem );
 		for ( var z = 0; z < imageList.images.length; z ++ )
 		{
-			var image = this.renderer.getCanvasFromImage( imageList.images[ z ].name, this.item );
+			var image = this.renderer.getCanvasFromImage( imageList.images[ z ].name, this.renderItem );
 			var layer =
 			{
 				element: image,
@@ -707,7 +723,7 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite3D.checkImages = function( zBas
 			document.body.appendChild( image );
 
 			//Add to table
-			this.layerList[ this.item.imageName ].push( layer );
+			this.layerList[ this.renderItem.imageName ].push( layer );
 			this.maxLayers = Math.max( this.maxLayers, z );
 		}
 	}
@@ -723,13 +739,13 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite3D.checkImages = function( zBas
 			}
 		}
 	}
-	return this.layerList[ this.item.imageName ];
+	return this.layerList[ this.renderItem.imageName ];
 }
 Friend.Renderers.Renderer_HTML.RendererItemSprite3D.update = function( properties )
 {
 	this.checkImages();
 	var z = 0;
-	var layerList = this.layerList[ this.item.imageName ];
+	var layerList = this.layerList[ this.renderItem.imageName ];
 	if ( layerList )
 	{
 		// All the layers one above the other by changing the Z order up, and adding perspective
@@ -775,35 +791,35 @@ Friend.Renderers.Renderer_HTML.RendererItemSprite3D.getVector = function()
 {
     return { x: 0, y: 0 };
 };
-Friend.Renderers.Renderer_HTML.RendererItemSprite3D.onResize = function( width, height )
+Friend.Renderers.Renderer_HTML.RendererItemSprite3D.resize = function( width, height )
 {
 };
 
 
 
-Friend.Renderers.Renderer_HTML.RendererItemMap = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemMap = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemMap );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemMap';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
 	this.utilities.setFlags( this, flags );
 
-	this.tileWidth = this.item.tileWidth;
-	this.tileHeight = this.item.tileHeight;
-	this.mapWidth = this.item.mapWidth;
-	this.mapHeight = this.item.mapHeight;
+	this.tileWidth = this.renderItem.tileWidth;
+	this.tileHeight = this.renderItem.tileHeight;
+	this.mapWidth = this.renderItem.mapWidth;
+	this.mapHeight = this.renderItem.mapHeight;
 	this.tileCount = 0;
 	this.reset();
 	return this;
 }
 Friend.Renderers.Renderer_HTML.RendererItemMap.update = function( properties )
 {
-	var offsetX = this.item.offsetX;
-	var offsetY = this.item.offsetY;
+	var offsetX = this.renderItem.offsetX;
+	var offsetY = this.renderItem.offsetY;
 
 	var xx = properties.x - offsetX * properties.zoomX;
 	var yy = properties.y - offsetY * properties.zoomY;
@@ -844,7 +860,7 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.update = function( properties )
 				element.style.visibility = this.visible ? 'visible' : 'hidden';		
 				
 				// Culling
-				/*if ( x2 >= this.item.x && x1 < this.item.width && y2 >= this.item.y && y1 < this.item.height )
+				/*if ( x2 >= this.renderItem.x && x1 < this.renderItem.width && y2 >= this.renderItem.y && y1 < this.renderItem.height )
 				{
 					if ( !pDefinition.inScene )
 					{
@@ -895,9 +911,9 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.reset = function()
 {
 	// Computes the tiles definition
 	this.tiles = [];
-    for ( var i = 0; i < this.item.tiles.length; i ++ )
+    for ( var i = 0; i < this.renderItem.tiles.length; i ++ )
     {
-		var tile = this.item.tiles[ i ];
+		var tile = this.renderItem.tiles[ i ];
 		var tileDefinition = {};
 		if ( tile.imageName )
 		{
@@ -930,12 +946,12 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.reset = function()
 	// Creates the static ground layer canvas
 	this.width = this.mapWidth * this.tileWidth;
 	this.height = this.mapHeight * this.tileHeight;
-	this.backgroundCanvas = this.renderer.createCanvas( this.width, this.height, 'mapBackground', this.item, this );
+	this.backgroundCanvas = this.renderer.createCanvas( this.width, this.height, 'mapBackground', this.renderItem, this );
 
 	// Draw the background if defined
-	if ( this.item.background )
+	if ( this.renderItem.background )
 	{
-		var backImage = this.resources.getImage( this.item.background, this.item );
+		var backImage = this.resources.getImage( this.renderItem.background, this.renderItem );
 		var repeatX = Math.floor( ( this.mapWidth * this.tileWidth ) / backImage.width ) + 1;
 		var repeatY = Math.floor( ( this.mapHeight * this.tileHeight ) / backImage.height ) + 1;
 		for ( var x = 0; x < repeatX; x++ )
@@ -953,7 +969,7 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.reset = function()
 	document.body.appendChild( this.backgroundCanvas );
 
 	// Draw the tiles, and creates the animated sprites columns
-	this.map = this.item.map;
+	this.map = this.renderItem.map;
 	this.sprites = [];
 	this.spriteList = [];
 	var x = 0;
@@ -985,7 +1001,7 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.reset = function()
 							if ( !this.sprites[ y ][ x ] )
 								this.sprites[ y ][ x ] = [];
 							
-							var element = this.renderer.getCanvasFromImage( tile.images[ m ].imageName, this.item, this.tileCount++ );
+							var element = this.renderer.getCanvasFromImage( tile.images[ m ].imageName, this.renderItem, this.tileCount++ );
 							var spriteDefinition =
 							{
 								element: element,
@@ -1004,13 +1020,13 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.reset = function()
 				}
 				else
 				{
-					this.renderer.error( 'Map ' + this.item.identifier + ' error: tile not defined X ' + x + ', Y ' + y + ', Value ' + tileNumber );
+					this.renderer.error( 'Map ' + this.renderItem.identifier + ' error: tile not defined X ' + x + ', Y ' + y + ', Value ' + tileNumber );
 				}
 			}
 		}
 	}
 };
-Friend.Renderers.Renderer_HTML.RendererItemMap.onResize = function( width, height )
+Friend.Renderers.Renderer_HTML.RendererItemMap.resize = function( width, height )
 {
 };
 
@@ -1019,27 +1035,27 @@ Friend.Renderers.Renderer_HTML.RendererItemMap.onResize = function( width, heigh
 
 
 
-Friend.Renderers.Renderer_HTML.RendererItemCanvas = function( renderer, item, flags )
+Friend.Renderers.Renderer_HTML.RendererItemCanvas = function( renderer, renderItem, flags )
 {
 	Object.assign( this, Friend.Renderers.Renderer_HTML.RendererItemCanvas );
 	Object.assign( this, Friend.Renderers.Utilities.Canvas2D );
 	this.renderer = renderer;
-	this.item = item;
-	this.name = item.name;
+	this.renderItem = renderItem;
+	this.name = renderItem.name;
 	this.className = 'Friend.Renderers.Renderer_HTML.RendererItemCanvas';
 	this.utilities = this.renderer.utilities;
 	this.resources = this.renderer.resources;
 	this.width = false;
 	this.height = false;
 	this.utilities.setFlags( this, flags );
-	this.canvas = this.renderer.createCanvas( this.item.width, this.item.height, 'canvasItem', this.item, this );
+	this.canvas = this.renderer.createCanvas( this.renderItem.width, this.renderItem.height, 'canvasItem', this.renderItem, this );
 	this.width = this.canvas.width;
 	this.height = this.canvas.height;
     
 	this.canvas.style.position = 'absolute';
 	//this.canvas.style.width = this.width + 'px';
 	//this.canvas.style.height = this.height + 'px';
-	this.canvas.style.zIndex = item.z;
+	this.canvas.style.zIndex = renderItem.z;
 	this.canvas.style.visibility = 'hidden';
     document.body.appendChild( this.canvas );
     this.toRefresh = true;
@@ -1067,12 +1083,18 @@ Friend.Renderers.Renderer_HTML.RendererItemCanvas.setVisible = function( flag )
 {
 	this.visible = flag;
 };
-Friend.Renderers.Renderer_HTML.RendererItemCanvas.onResize = function( width, height )
+Friend.Renderers.Renderer_HTML.RendererItemCanvas.resize = function( width, height )
 {
-	this.canvas.width = width;
-	this.canvas.height = height;
-	this.width = width;
-	this.height = height;
+	if ( typeof width != 'undefined' )
+	{
+		this.canvas.width = width;
+		this.width = width;
+	}
+	if ( typeof heigght != 'undefined' )
+	{
+		this.canvas.height = height;
+		this.height = height;
+	}
 };
 Friend.Renderers.Renderer_HTML.RendererItemCanvas.doRefresh = function( flags )
 {

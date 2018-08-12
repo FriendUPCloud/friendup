@@ -29,15 +29,25 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 Friend.Tree.UI.Text = function( tree, name, properties )
 {
-    this.hAlign = 'center';
+	this.hAlign = 'center';
     this.vAlign = 'middle';
+	this.color = '#000000';
+    this.colorMouseOver = 'none';
+    this.colorDown = 'none';
+    this.colorBack = 'none';
+    this.colorBackMouseOver = 'none';
+    this.colorBackDown = 'none';
+    this.font = '12px sans serif';
+    this.text = 'My text';
+
 	this.text = 'Text';
     this.forceWidth = false;
     this.forceHeight = false;
     this.value = false;
     this.caller = false;
     this.onClick = false;
-    this.onDoubleClick = false;
+	this.onDoubleClick = false;
+	
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.Text';
     Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.Text', properties );
     this.mouseOver = false;
@@ -45,11 +55,6 @@ Friend.Tree.UI.Text = function( tree, name, properties )
 };
 Friend.Tree.UI.Text.messageUp = function( message )
 {
-	if ( message.command == 'setSize' )
-	{
-		this.width = message.width;
-		this.height = message.height;
-	}
     return this.startProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'rotation', 'text', 'font', 'down', 'mouseOver', 'caller', 'onClick', 'onDoubleClick'] );
 };
 Friend.Tree.UI.Text.messageDown = function( message )
@@ -58,7 +63,7 @@ Friend.Tree.UI.Text.messageDown = function( message )
 };
 Friend.Tree.UI.Text.setValue = function( text )
 {
-    this.text = text;
+	this.updateProperty( 'text', text );
     this.doRefresh();
 };
 Friend.Tree.UI.Text.getValue = function()
@@ -66,121 +71,72 @@ Friend.Tree.UI.Text.getValue = function()
     return this.text;
 };
 
-// Default RenderItem
-Friend.Tree.UI.RenderItems.Text_Three2D = function( tree, name, flags )
-{
-	this.color = '#000000';
-    this.colorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.colorDown = Friend.Tree.NOTINITIALIZED;
-    this.backColor = Friend.Tree.NOTINITIALIZED;
-    this.backColorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.backColorDown = Friend.Tree.NOTINITIALIZED;
-    this.clickHilight = '#202020';
-    this.font = '#12px Arial';
-    this.text = 'My text';
-    this.caller = false;
-    this.onClick = false;
-	this.rendererName = 'Renderer_Three2D';
-	this.rendererType = 'Canvas';
-    Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Text_Three2D', flags );
-
-	// Add default Gesture process
-    if ( this.caller && this.onClick )
-    	this.parent.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this.parent, properties ) );
-    this.setFont();
-};
-Friend.Tree.UI.RenderItems.Text_Three2D.render = function( properties )
-{
-	this.setFont( this.parent.font );
-    if ( this.backColor != Friend.Tree.NOTINITIALIZED )
-    {
-        var backColor = this.backColor;
-        if ( this.parent.mouseOver && this.backColorMouseOver != Friend.Tree.NOTINITIALIZED )
-            backColor = this.backColorMouseOver;
-        if ( ( this.parent.down || this.parent.activated ) && this.backColorDown != Friend.Tree.NOTINITIALIZED )
-            backColor = this.backColorDown;
-        this.thisRect.fillRectangle( properties, backColor );
-    }
-    var textColor = this.color;
-    if ( this.parent.mouseOver && this.colorMouseOver != Friend.Tree.NOTINITIALIZED )
-        textColor = this.colorMouseOver;
-    if ( ( this.parent.down || this.parent.activated ) && this.colorDown != Friend.Tree.NOTINITIALIZED )
-        textColor = this.colorDown;
-    this.thisRect.drawText( properties, this.parent.text, this.font, textColor, this.parent.hAlign, this.parent.vAlign );
-	return properties;
-};
-Friend.Tree.UI.RenderItems.Text_Three2D.setFont = function( font )
-{    
-    // Get width and height of text
-	if ( font != this.font )
-	{
-		this.font = font;
-		var sizes = this.renderer.measureText( this.text, this.font );
-		if ( !this.forceSize )
-		{
-			this.width = sizes.width;
-			this.height = sizes.height;
-			this.tree.sendMessageToItem( this.parent.root, this.parent, 
-			{
-				command: 'setSize',
-				type: 'renderItemToItem',
-				width: this.width,
-				height: this.height
-			});
-		}
-	}
-};
-
 
 
 
 Friend.Tree.UI.RenderItems.Text_HTML = function( tree, name, flags )
 {
-	this.color = '#000000';
-    this.colorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.colorDown = Friend.Tree.NOTINITIALIZED;
-    this.backColor = Friend.Tree.NOTINITIALIZED;
-    this.backColorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.backColorDown = Friend.Tree.NOTINITIALIZED;
-    this.clickHilight = '#202020';
-    this.font = '#12px Arial';
-    this.text = 'My text';
-    this.caller = false;
-    this.onClick = false;
+    this.hAlign = false;
+    this.vAlign = false;
+	this.color = false;
+    this.colorMouseOver = false;
+    this.colorDown = false;
+    this.colorBack = false;
+    this.colorBackMouseOver = false;
+    this.colorBackDown = false;
+    this.font = false;
+    this.text = false;
+
 	this.rendererName = 'Renderer_HTML';
 	this.rendererType = 'Canvas';
     Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Text_HTML', flags );
 
 	// Add default Gesture process
-    if ( this.caller && this.onClick )
-    	this.parent.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this.parent, properties ) );
+    if ( this.item.caller && ( this.item.onClick || this.item.onDoubleClick ) )
+    	this.item.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this.item, properties ) );
     this.setFont();
 };
-Friend.Tree.UI.RenderItems.Text_HTML.render = Friend.Tree.UI.RenderItems.Text_Three2D.render;
-Friend.Tree.UI.RenderItems.Text_HTML.setFont = Friend.Tree.UI.RenderItems.Text_Three2D.setFont;
+Friend.Tree.UI.RenderItems.Text_HTML.render = function( properties )
+{
+    if ( this.item.colorBack != 'none' )
+    {
+        var colorBack = this.item.colorBack;
+        if ( this.item.mouseOver && this.item.colorBackMouseOver != 'none' )
+            colorBack = this.item.colorBackMouseOver;
+        if ( ( this.item.down || this.item.activated ) && this.item.colorBackDown != 'none' )
+            colorBack = this.item.backColorDown;
+        this.thisRect.fillRectangle( properties, colorBack );
+	}
+	
+    var textColor = this.item.color;
+    if ( this.item.mouseOver && this.item.colorMouseOver != 'none' )
+        textColor = this.item.colorMouseOver;
+    if ( ( this.item.down || this.item.activated ) && this.item.colorDown != 'none' )
+        textColor = this.item.colorDown;
+    this.thisRect.drawText( properties, this.item.text, this.item.font, textColor, this.item.hAlign, this.item.vAlign );
+	return properties;
+};
 
 
 Friend.Tree.UI.RenderItems.Text_Canvas2D = function( tree, name, flags )
 {
-	this.color = '#000000';
-    this.colorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.colorDown = Friend.Tree.NOTINITIALIZED;
-    this.backColor = Friend.Tree.NOTINITIALIZED;
-    this.backColorMouseOver = Friend.Tree.NOTINITIALIZED;
-    this.backColorDown = Friend.Tree.NOTINITIALIZED;
-    this.clickHilight = '#202020';
-    this.font = '#12px Arial';
-    this.text = 'My text';
-    this.caller = false;
-    this.onClick = false;
+    this.hAlign = false;
+    this.vAlign = false;
+	this.color = false;
+    this.colorMouseOver = false;
+    this.colorDown = false;
+    this.colorBack = false;
+    this.colorBackMouseOver = false;
+    this.colorBackDown = false;
+    this.font = false;
+    this.text = false;
+
 	this.rendererName = 'Renderer_Canvas2D';
 	this.rendererType = 'Canvas';
     Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.Text_Canvas2D', flags );
 
 	// Add default Gesture process
-    if ( this.caller && this.onClick )
-	    this.parent.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this.parent, properties ) );
-    this.setFont();
+    if ( this.item.caller && this.item.onClick )
+	    this.item.addProcess( new Friend.Tree.UI.GestureButton( this.tree, this.item, properties ) );
 };
 Friend.Tree.UI.RenderItems.Text_Canvas2D.render = Friend.Tree.UI.RenderItems.Text_Three2D.render;
-Friend.Tree.UI.RenderItems.Text_Canvas2D.setFont = Friend.Tree.UI.RenderItems.Text_Three2D.setFont;

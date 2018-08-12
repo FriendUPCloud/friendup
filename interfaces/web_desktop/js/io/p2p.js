@@ -93,7 +93,7 @@ Peer.prototype.send = function( event ) {
 		return;
 	}
 	
-	console.log( 'Peer.send event', event );
+	//console.log( 'Peer.send event', event );
 	var msg = {
 		type : 'msg',
 		data : event
@@ -167,7 +167,7 @@ Peer.prototype.startSync = function() {
 		if ( !self.syncInterval )
 			return;
 		
-		console.log( 'sending sync', sync.data );
+		//console.log( 'sending sync', sync.data );
 		self.signal.send( sync );
 	}
 }
@@ -355,13 +355,13 @@ Peer.prototype.bindConn = function( conn ) {
 
 Peer.prototype.handleMsg = function( event ) {
 	var self = this;
-	console.log( 'Peer.handleMsg', event );
+	//console.log( 'Peer.handleMsg', event );
 	self.emit( event.type, event.data );
 }
 
 Peer.prototype.executeSendQueue = function() {
 	var self = this;
-	console.log( 'execute send queue', self.sendQueue );
+	//console.log( 'execute send queue', self.sendQueue );
 	self.sendQueue.forEach( send );
 	function send( event ) {
 		self.send( event );
@@ -423,7 +423,7 @@ Peer.prototype.handlePong = function( stamp ) {
 	
 	stamp = parseInt( stamp, 10 );
 	var pingTime = now - stamp;
-	console.log( 'handlePong - pingTime', pingTime );
+	//console.log( 'handlePong - pingTime', pingTime );
 	//self.emit( 'ping', pingTime );
 }
 

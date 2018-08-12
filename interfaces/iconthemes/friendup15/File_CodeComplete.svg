@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_CodeComplete</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-196.000000, -177.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_CodeComplete" transform="translate(84.200000, 124.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#ECF0F1" fill-rule="nonzero"></path>
+                            <path d="M0,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L0,56 L0,0 Z" id="Rectangle" fill="url(#linearGradient-1)"></path>
+                            <rect id="rect861-7" fill="#34495E" fill-rule="nonzero" transform="translate(24.266680, 22.942401) rotate(15.000000) translate(-24.266680, -22.942401) " x="22.9966801" y="13.4224007" width="2.53999987" height="19.04"></rect>
+                            <g id="Code" transform="translate(8.400000, 19.040000)"></g>
+                            <polygon id="rect4775-2" fill="#34495E" fill-rule="nonzero" points="26.4 32.48 26.4 48.16 42 40.0064031"></polygon>
+                            <polygon id="path857-3" fill="#34495E" fill-rule="nonzero" points="28.8 12.32 28.8 15.9199968 34.875076 20.7199773 28.8 25.5200032 28.8 29.12 39.6 20.8793523"></polygon>
+                            <polygon id="path859-6" fill="#34495E" fill-rule="nonzero" points="19.2 16.8 19.2 20.4000065 13.124924 25.2 19.2 29.9999935 19.2 33.6 8.4 25.3593754"></polygon>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,19 @@
+
+
+#SettingsTabs
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 200px;
+	height: 100%;
+}
+
+#Pages
+{
+	position: absolute;
+	top: 0;
+	left: 200px;
+	width: calc(100% - 200px);
+	height: 100%;
+}

@@ -52,18 +52,17 @@ ERR_REQUEST_TIMEOUT          : Request has timed out. No reply from the network.
 
 NetworkConn = function(
 	host,
-	sessionId,
+	authType,
+	authToken,
 	eventSink,
 	onOpen,
 	onEnd,
 	hostMeta
 ) {
-	if ( !( this instanceof NetworkConn ))
-		return new NetworkConn( host, sessionId, onend );
-	
-	var self = this;
+	const self = this;
 	self.host = host;
-	self.sessionId = sessionId;
+	self.authType = authType,
+	self.authToken = authToken,
 	self.onopen = onOpen;
 	self.onend = onEnd;
 	
@@ -88,6 +87,18 @@ NetworkConn.prototype = Object.create( window.EventEmitter.prototype );
 .once
 .off
 .release
+
+These events are emitted:
+
+'host-update' - when a host updates its meta info.
+	This happens on connect. Can also happen later.
+	Event data is host meta.
+	
+'host-closed' - when a host disconnects from the network.
+	Event data is host id.
+	
+'connect' - when a remote host wishes to connect p2p.
+'disconnect' - when a remote host disconnects p2p.
 
 */
 
@@ -169,7 +180,7 @@ NetworkConn.prototype.expose = function( app, callback )
 
 /* conceal - tell listening host that apps are no longer publicly available
 
-id      : id of app that is no longer available
+id       : id of app that is no longer available
 callback : receives complete list held by server
 */
 NetworkConn.prototype.conceal = function( appId, callback )
@@ -190,6 +201,7 @@ conf : <map>
 */
 NetworkConn.prototype.updateMeta = function( conf )
 {
+	console.log( 'updateMeta', conf );
 	var self = this;
 	var meta = {
 		type : 'meta',
@@ -334,14 +346,17 @@ NetworkConn.prototype.send = function( hostId, event, callback )
 NetworkConn.prototype.close = function()
 {
 	var self = this;
+	console.log( 'NetworkConn.close', self.conn );
 	self.closeEventEmitter();
 	
+	if ( self.conn )
+		self.conn.close();
+	
+	delete self.conn;
 	delete self.onend;
 	delete self.host;
 	delete self.sessionId;
 	
-	if ( self.conn )
-		self.conn.close();
 }
 
 // Private
@@ -351,7 +366,8 @@ NetworkConn.prototype.init = function( hostMeta )
 	var self = this;
 	self.conn = new NetworkSocket(
 		self.host,
-		self.sessionId,
+		self.authType,
+		self.authToken,
 		onState,
 		onEvent,
 		onEnd
@@ -409,9 +425,10 @@ This is the signaling connection, webrtc data connection is in networkRTC.js
 // Constructor arguments
 
 host      : signal server address.
-sessionId : workspace sessionId, used by the signal server to identify and
-	validate the connection with FriendCore
-		
+authType  : 'workspace' | 'application'
+authToken : a security token relevant to the authType.
+	'worksapce' requires sessionId and 
+	'application' requires authId
 onstate   : listener, when connection state changes, events are emitted here
 onevent   : listener, all network events will be sent here
 onend     : when the connection closes, an event is emitted here
@@ -435,25 +452,18 @@ var friendUP = window.friendUP || {};
 
 NetworkSocket = function(
 	host,
-	sessionId,
+	authType,
+	authToken,
 	onstate,
 	onevent,
 	onend
 ) {
-	if ( !( this instanceof NetworkSocket ))
-		return new NetworkSocket(
-			host,
-			sessionId,
-			onstate,
-			onevent,
-			onend
-		);
-	
-	var self = this;
+	const self = this;
 	
 	// REQUIRED
 	self.host = host;
-	self.sessionId = sessionId;
+	self.authType = authType;
+	self.authToken = authToken;
 	self.onstate = onstate;
 	self.onevent = onevent;
 	self.onend = onend;
@@ -493,10 +503,10 @@ NetworkSocket = function(
 NetworkSocket.prototype.send = function( event, callback )
 {
 	var self = this;
-	console.log( 'NetworkSocket.send', {
+	/*console.log( 'NetworkSocket.send', {
 		e : event,
 		cb : callback, });
-	
+	*/
 	var wrap = {
 		type : 'event',
 		data : event,
@@ -505,12 +515,12 @@ NetworkSocket.prototype.send = function( event, callback )
 }
 
 // force reconnect, recycling the websocket
-// sessionId : optional.
-NetworkSocket.prototype.reconnect = function( sessionId )
+// authToken : optional.
+NetworkSocket.prototype.reconnect = function( authToken )
 {
 	var self = this;
-	if ( null != sessionId )
-		self.sessionId = sessionId;
+	if ( null != authToken )
+		self.authToken = authToken;
 	
 	self.allowReconnect = true;
 	self.doReconnect();
@@ -634,7 +644,10 @@ NetworkSocket.prototype.doReconnect = function()
 	var delay = calcDelay();
 	var showIsReconnectingLimit = 1000 * 5; // 5 seconds
 	if ( delay > showIsReconnectingLimit )
+	{
+		console.log( 'Delay: ' + delay + ' is > than ' + showIsReconnectingLimit );
 		self.setState( 'reconnect', delay );
+	}
 	
 	console.log( 'doReconnect - delay', delay );
 	self.reconnectTimer = window.setTimeout( reconnect, delay );
@@ -657,7 +670,7 @@ NetworkSocket.prototype.doReconnect = function()
 		var checks = {
 			allow : self.allowReconnect,
 			hasTriesLeft : !tooManyTries(),
-			hasSession : !!self.socketSession,
+			hasSession : !!self.socketSession
 		};
 		
 		var allow = !!( true
@@ -850,17 +863,17 @@ NetworkSocket.prototype.unsetSession = function()
 
 NetworkSocket.prototype.sendAuth = function()
 {
-	var self = this;
+	const self = this;
 	if ( self.socketSession ) {
 		self.restartSession();
 		return;
 	}
 	
 	var bundle = {
-		type : 'sessionid',
+		type : self.authType,
 		data : {
-			sessionId : self.sessionId,
-		},
+			token : self.authToken
+		}
 	};
 	console.log( 'sendauth', bundle );
 	var authMsg = {

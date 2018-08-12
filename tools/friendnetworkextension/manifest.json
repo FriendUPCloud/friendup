@@ -1,0 +1,32 @@
+{
+	"name"                   : "Friend Network",
+	"author"                 : "Friend Software Labs",
+	"version"                : "1.0.0",
+	"manifest_version"       : 2,
+	"minimum_chrome_version" : "34",
+	"description"            : "Share your drives, access your local machine within Friend",
+	"homepage_url"           : "https://friendup.cloud/",
+	"background"             : {
+		"scripts"                : [ "background.js" ],
+		"persistent"             : true
+	},
+	"externally_connectable" : {
+		"matches": [
+			"*://*.localfriend.com/*",
+			"https://volatile.friendup.cloud/*",
+			"https://*.friendsky.cloud/*",
+			"https://*.friendup.no/*"
+	]
+	},
+	"permissions"            : [
+		"nativeMessaging",
+		"tabs",
+		"https://*.friendup.cloud/*",
+		"https://*.friendsky.cloud/*",
+		"https://*.friendup.no/*"
+	],
+	"icons" : {
+		"16"  : "icon_16.png",
+		"128" : "icon_128.png"
+	}
+}

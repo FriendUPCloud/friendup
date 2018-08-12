@@ -1,0 +1,9 @@
+{
+	"name": "cloud.friendup.friendnativeapplication",
+	"description": "Friend Network support",
+	"path": "PATH_TO_APPLICATION",
+	"type": "stdio",
+	"allowed_origins": [
+	  "chrome-extension://okahidaepcpocpncmkmdeophajjjckco/"
+	]
+}

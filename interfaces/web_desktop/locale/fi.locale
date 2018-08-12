@@ -181,7 +181,7 @@ menu_zip                                : Pakkaa tiedosto(t)
 menu_unzip                              : Pura tiedosto(t)
 menu_looknfeel                          : Ulkoasu
 menu_backdrop                           : Näytä yleiskatsaus
-
+menu_share								: Jaa
 menu_close_idle_connections             : Sulje idle yhteydet
 
 menu_edit_wallpaper                     : Muokkaa taustakuvaa
@@ -315,6 +315,7 @@ i18n_edit_attribute                     : Muokkaa ominaisuutta
 i18n_icon_image                         : Ikoni kuva
 i18n_no_field_information               : Ei ominaisuus tietoja saatavilla.
 i18n_non_compatible_field_information   : Ei voida esikatsella kenttä tietoja.
+i18n_open_with                          : Avaa
 
 
 #File dialogs ------------------------------------------------------------------
@@ -388,6 +389,26 @@ i18n_testing_camera_desc                : Testataan onko web kamera liitetty ja 
 i18n_active_fnet_connections            : Friend verkko
 i18n_active_network_connections         : Aktiiviset yhteydet
 
+i18n_add_a_friend                       : Lisää ystävä
+i18n_waiting_for_connection             : Odottaa yhteyttä
+i18n_remove_friend                      : Poista ystävä
+i18n_shares_with_community              : jakaa yhteisön kanssa...
+i18n_open                               : Avata
+i18n_application                        : Hakemus
+i18n_remove                             : Poistaa
+i18n_download_file                      : Lataa tiedosto
+i18n_refuse_file                        : Jäte-tiedosto
+i18n_shares_with_you                    : osakkeet kanssasi...
+i18n_refuse_message                     : Hylkäysviesti
+i18n_messages                           : Viestien
+i18n_delete                             : Poistaa
+i18n_stop_sharing                       : Lopeta jakaminen
+i18n_folder                             : Kansio
+i18n_what_you_share_with                : Mitä jaat
+i18n_mark_as_read                       : Merkitse luetuksi
+i18n_messages_sent                      : Lähetetyt viestit...
+i18n_notifications_sent                 : Ilmoitukset lähetettiin...
+
 #Locale ------------------------------------------------------------------------
 
 i18n_locale_no                          : Norsk
@@ -453,6 +474,9 @@ i18n_evt_addeddesc                      : Tapahtuma lisätty kalenteriisi.
 i18n_evt_delete_desc                    : Tämä poistaa kalenteri tapahtuman.
 i18n_evt_delete_failed                  : Poistaminen epäonnistui
 i18n_evt_delete_failed_desc             : Kalenteri tapahtuman poistaminen epäonnistui.
+i18n_cannotRename						: Nimeä uudelleen epäonnistui
+i18n_cannotDelete						: Poisto epäonnistui
+i18n_noWritePermission					: Du har ikke skrive tillatelse på denne platen.
 
 month_january                           : tammikuu
 month_february                          : helmikuu

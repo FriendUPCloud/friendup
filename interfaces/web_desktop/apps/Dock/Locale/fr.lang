@@ -40,7 +40,9 @@ i18n_large                            : Large
 i18n_medium                           : Medium
 i18n_small                            : Petit
 i18n_dock_editor                      : Editeur Dock
+i18n_close                            : Sortie
 i18n_display_name                     : Afficher un nom
+i18n_dock_layout_settings             : Paramètres de mise en page
 
 i18n_preferred_workspace              : Preferred workspace
 

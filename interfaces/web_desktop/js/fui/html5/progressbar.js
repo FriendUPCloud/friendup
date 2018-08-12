@@ -20,7 +20,7 @@
 fui.addClass( function()
 {
 	// Inherit from the base class
-	fui.Progressbar = fui.inherit( fui.Group.prototype, fui.Silly.prototype );
+	fui.Progressbar = fui.inherit( fui.Group.prototype );
 
 	fui.Progressbar.prototype.create = function( flags )
 	{
@@ -215,4 +215,4 @@ fui.addClass( function()
 	height: 100%;
 }
 	` );
-}, 'Group,Silly' );
+}, 'Group' );

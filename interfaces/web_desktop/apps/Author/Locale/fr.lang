@@ -26,6 +26,9 @@ insert_image                      : Insérer une image
 i18n_print_alert                  : Alerte impression
 i18n_not_saved_cant_print         : Le document n'est pas sauvé. Veuillez le sauver d'abord et ré-essayer.
 
+i18n_close                        : Sortie
+i18n_accept                       : Acceptez
+
 i18n_set_bold                     : Gras
 i18n_set_italic                   : Italique
 i18n_set_underline                : Souligné

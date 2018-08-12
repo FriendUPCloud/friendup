@@ -103,7 +103,7 @@ char *GetFileName( const char *path )
 		}
 	}
 	
-	return p;
+	return (char *)path;
 }
 
 //
@@ -740,7 +740,7 @@ FLONG RemoveDirectoryLocal(const char *path)
 		struct dirent *p;
 		r = 0;
 
-		while( !r && ( p = readdir( d ) ) )
+		while( ( p = readdir( d ) ) != NULL )
 		{
 			char *buf;
 			size_t len;
@@ -759,8 +759,16 @@ FLONG RemoveDirectoryLocal(const char *path)
 			if( buf != NULL )
 			{
 				struct stat statbuf;
+				int plen = strlen( path );
 
-				snprintf(buf, len, "%s/%s", path, p->d_name);
+				if( path[ plen-1 ] == '/' )
+				{
+					snprintf(buf, len, "%s%s", path, p->d_name);
+				}
+				else
+				{
+					snprintf(buf, len, "%s/%s", path, p->d_name);
+				}
 				DEBUG("To delete: %s\n", buf );
 
 				if (!stat(buf, &statbuf))
@@ -1104,60 +1112,66 @@ char *Execute( struct File *s, const char *path, const char *args )
 // Fill buffer with data from stat
 //
 
+#define TMP_SIZE 2048
+#define TMP_SIZEM1 2047
+
 void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 {
-	char tmp[ 1024 ];
+	char *tmp = FCalloc( TMP_SIZE, sizeof(char) );
+	if( tmp == NULL )
+	{
+		return;
+	}
 	int rootSize = strlen( d->f_Path );
 	int pathSize = strlen( path );
 	
 	//DEBUG("FILLSTAT path '%s' rootpath '%s'  %d\n", path, d->f_Path, path[ strlen( d->f_Path ) ] );
 			
-	BufStringAdd( bs, "{" );
-	snprintf( tmp, 1023, " \"Filename\":\"%s\",", GetFileName( path ) );
+	BufStringAddSize( bs, "{", 1 );
+	char *tptr = GetFileName( path );
+	snprintf( tmp, TMP_SIZEM1, " \"Filename\":\"%s\",", tptr );
+	
 	BufStringAdd( bs, tmp );
 	
-	//DEBUG( "FILLSTAT filename set\n");
+	int ls = 0;
 	
 	if( rootSize != pathSize )
 	{
 		if( S_ISDIR( s->st_mode ) )
 		{
-			snprintf( tmp, 1023, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
+			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
 		}
 		else
 		{
-			snprintf( tmp, 1023, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
+			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
 		}
 	}
 	else
 	{
-		snprintf( tmp, 1023, "\"Path\":\"%s:\",", d->f_Name );
+		ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s:\",", d->f_Name );
 	}
 	
-	//DEBUG( "FILLSTAT fullname set\n");
+	BufStringAddSize( bs, tmp, ls );
+	ls = snprintf( tmp, TMP_SIZEM1, "\"Filesize\": %d,",(int) s->st_size );
+	BufStringAddSize( bs, tmp, ls );
 	
-	BufStringAdd( bs, tmp );
-	snprintf( tmp, 1023, "\"Filesize\": %d,",(int) s->st_size );
-	BufStringAdd( bs, tmp );
-	
-	char *timeStr = FCalloc( 40, sizeof( char ) );
-	strftime( timeStr, 36, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
-	snprintf( tmp, 1023, "\"DateModified\": \"%s\",", timeStr );
-	BufStringAdd( bs, tmp );
+	char *timeStr = FCalloc( 64, sizeof( char ) );
+	strftime( timeStr, 54, "%Y-%m-%d %H:%M:%S", localtime( &s->st_mtime ) );
+	ls = snprintf( tmp, TMP_SIZEM1, "\"DateModified\": \"%s\",", timeStr );
+	BufStringAddSize( bs, tmp, ls );
 	FFree( timeStr );
 	
 	//DEBUG( "FILLSTAT filesize set\n");
 	
 	if( S_ISDIR( s->st_mode ) )
 	{
-		BufStringAdd( bs,  "\"MetaType\":\"Directory\",\"Type\":\"Directory\" }" );
+		BufStringAdd( bs, "\"MetaType\":\"Directory\",\"Type\":\"Directory\" }" );
 	}
 	else
 	{
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
 	}
-	
-	//DEBUG( "FILLSTAT END\n");
+	FFree( tmp );
 }
 
 //
@@ -1214,19 +1228,15 @@ BufString *Info( File *s, const char *path )
 		{
 			strcat( comm, path );
 		}
-			
-		DEBUG("PATH created %s\n", comm );
-	
+
 		struct stat ls;
 		
 		if( stat( comm, &ls ) == 0 )
 		{
-			DEBUG("LOCAL file stat %s\n", comm );
 			FillStatLocal( bs, &ls, s, comm );
 		}
 		else
 		{
-			DEBUG("LOCAL file stat FAIL %s\n", comm );
 			SpecialData *locsd = (SpecialData *)s->f_SpecialData;
 			SystemBase *l = (SystemBase *)locsd->sb;
 			
@@ -1266,7 +1276,12 @@ BufString *Dir( File *s, const char *path )
 {
 	BufString *bs = BufStringNew();
 	
-	int rspath = strlen( s->f_Path );
+	int psize = 0;
+	if( path != NULL )
+	{
+		psize = strlen( path );
+	}
+	int rspath = strlen( s->f_Path ) + psize + 512;
 	
 	DEBUG("Dir!\n");
 	
@@ -1276,9 +1291,9 @@ BufString *Dir( File *s, const char *path )
 	int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
-	char *tempString = FCalloc( rspath +512, sizeof(char) );
+	char *tempString = FCalloc( rspath, sizeof(char) );
 	
-	if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
+	if( ( comm = FCalloc( rspath, sizeof(char) ) ) != NULL )
 	{
 		strcpy( comm, s->f_Path );
 		if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
@@ -1294,7 +1309,6 @@ BufString *Dir( File *s, const char *path )
 		
  		if( comm[ strlen( comm ) -1 ] != '/' )
 		{
-			DEBUG("end was not endeed /\n");
 			strcat( comm, "/" );
 		}
 	
@@ -1309,20 +1323,20 @@ BufString *Dir( File *s, const char *path )
 		{
 			int pos = 0;
 			
-			BufStringAdd( bs, "ok<!--separate-->");
+			BufStringAddSize( bs, "ok<!--separate-->", 17 );
 			
 			//BufStringAdd( bs, "ok<!--separate-->[" );
-			BufStringAdd( bs, "[" );
+			BufStringAddSize( bs, "[", 1 );
 			while ((dir = readdir(d)) != NULL)
 			{
 				
 				if( dir->d_name[ 0 ] == '/' )
 				{
-					sprintf( tempString, "%s%s", comm, &(dir->d_name[1]) );
+					snprintf( tempString, rspath, "%s%s", comm, &(dir->d_name[1]) );
 				}
 				else
 				{
-					sprintf( tempString, "%s%s", comm, dir->d_name );
+					snprintf( tempString, rspath, "%s%s", comm, dir->d_name );
 				}
 				
 				struct stat ls;
@@ -1335,14 +1349,14 @@ BufString *Dir( File *s, const char *path )
 					{
 						if( pos != 0 )
 						{
-							BufStringAdd( bs, "," );
+							BufStringAddSize( bs, ",", 1 );
 						}
 						FillStatLocal( bs, &ls, s, tempString );
 						pos++;
 					}
 				}
 			}
-			BufStringAdd( bs, "]" );
+			BufStringAddSize( bs, "]", 1 );
 			
 			closedir( d );
 		}
@@ -1386,9 +1400,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 		}
 	}
 	deviceEndPtr++;
-	
-	DEBUG("MetaGet!\n");
-	
+
 	// user is trying to get access to not his directory
 	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, f->f_Path, f->f_Name );
 	
@@ -1412,8 +1424,6 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 		
 		strcat( comm, ".info" );
 		
-		DEBUG("PATH created %s\n", comm );
-		
 		FImage *img = ImageLoadPNG( comm );
 		if( img != NULL )
 		{
@@ -1434,11 +1444,9 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 					size += strlen( comment->value );
 				}
 				
-				DEBUG("Compare %s - %s\n", key, comment->key );
 				if( strcmp( key, comment->key ) == 0 )
 				{
 					BufStringAdd( bs, comment->value );
-					DEBUG("Added %s\n", bs->bs_Buffer );
 					break;
 				}
 				// return ALL values
@@ -1501,7 +1509,6 @@ int InfoSet( File *f, const char *path, const char *key, const char *value )
 	}
 	int rspath = strlen( f->f_Path );
 	
-	DEBUG("MetaSet!\n");
 	while( *deviceEndPtr != ':' )
 	{
 		deviceEndPtr++;
@@ -1534,9 +1541,7 @@ int InfoSet( File *f, const char *path, const char *key, const char *value )
 		}
 		
 		strcat( comm, ".info" );
-		
-		DEBUG("PATH created %s\n", comm );
-		
+
 		char *parameters = NULL;
 		unsigned int msgsize = strlen( key );
 		

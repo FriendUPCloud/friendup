@@ -36,7 +36,6 @@ Application.run = function( msg )
 	window.addEventListener( 'resize', ResizeScreen );
 	
 	// Refresh the screen
-	this.refresh = setInterval( RedrawScreen, 25 );
 	function drawUsers()
 	{
 		for( var a in Application.playerPool )
@@ -44,9 +43,20 @@ Application.run = function( msg )
 			var pl = Application.playerPool[a];
 			pl.draw();
 		}
+		RedrawScreen();
 		requestAnimationFrame( drawUsers );
 	};
 	requestAnimationFrame( drawUsers );
+	
+	document.body.onclick = function( e )
+	{
+		gameKeydown( { which: 38, targetId: false } );
+		setTimeout( function( e )
+		{
+			gameKeyup( { which: 38, targetId: false } );
+		}, 250 );
+		return cancelBubble( e );
+	}
 }
 
 ge( 'GameScreen' ).onclick = function()

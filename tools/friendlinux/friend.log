@@ -1,0 +1,183 @@
+Friend helper application log
+----------------------------------------------------------
+By Francois Lionet
+Copyright (c) 2014 - 2018 Friend Software Labs AS
+--
+>>> Response: { "command": "ready" }
+>>> Sent message: { "command": "ready" }
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"214715.1059760767|83864.72322555361\"}"
+Command received: init
+Identifier214715.1059760767|83864.72322555361
+>>> Response: { "command":"initResponse", "identifier":"214715.1059760767|83864.72322555361", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"214715.1059760767|83864.72322555361", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"482811.9134700621|761707.1076591604\"}"
+Command received: getDrives
+Identifier482811.9134700621|761707.1076591604
+>>> Response: { "command":"getDrivesResponse", "identifier":"482811.9134700621|761707.1076591604", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"482811.9134700621|761707.1076591604", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"405478.1516774215|897988.5134646029\"}"
+Command received: getDirectory
+Identifier405478.1516774215|897988.5134646029
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"405478.1516774215|897988.5134646029", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"405478.1516774215|897988.5134646029", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"command\":\"dosAction\",\"action\":\"delete\",\"arg0\":\"home:killfriend2.sh\",\"identifier\":\"878601.5850113351|62403.459207554464\"}"
+Command received: dosAction
+Identifier878601.5850113351|62403.459207554464
+Converted Friend path to local path: /home/francois/killfriend2.sh
+Delete /home/francois/killfriend2.sh
+>>> Response: { "command":"dosActionResponse", "identifier":"878601.5850113351|62403.459207554464"} 
+>>> Sent message: { "command":"dosActionResponse", "identifier":"878601.5850113351|62403.459207554464"} 
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"694734.8289342592|885864.3274902952\"}"
+Command received: getDirectory
+Identifier694734.8289342592|885864.3274902952
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"694734.8289342592|885864.3274902952", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"694734.8289342592|885864.3274902952", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"command\":\"dosAction\",\"action\":\"makedir\",\"arg0\":\"home:Essai\",\"identifier\":\"330250.61804094625|978495.6347099503\"}"
+Command received: dosAction
+Identifier330250.61804094625|978495.6347099503
+Converted Friend path to local path: /home/francois/Essai
+Makedir /home/francois/Essai
+>>> Response: { "command":"dosActionResponse", "identifier":"330250.61804094625|978495.6347099503"} 
+>>> Sent message: { "command":"dosActionResponse", "identifier":"330250.61804094625|978495.6347099503"} 
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"799321.7752645309|96217.68749687276\"}"
+Command received: getDirectory
+Identifier799321.7752645309|96217.68749687276
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"799321.7752645309|96217.68749687276", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"799321.7752645309|96217.68749687276", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:Essai/\",\"identifier\":\"931707.8827747921|563835.0821295506\"}"
+Command received: getDirectory
+Identifier931707.8827747921|563835.0821295506
+Converted Friend path to local path: /home/francois/Essai/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"931707.8827747921|563835.0821295506", "files":[ ] }
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"931707.8827747921|563835.0821295506", "files":[ ] }
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"896179.4856853299|586171.2176879402\"}"
+Command received: getDirectory
+Identifier896179.4856853299|586171.2176879402
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"896179.4856853299|586171.2176879402", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"896179.4856853299|586171.2176879402", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"83864.72322555361|458462.38848990767\"}"
+Command received: init
+Identifier83864.72322555361|458462.38848990767
+>>> Response: { "command":"initResponse", "identifier":"83864.72322555361|458462.38848990767", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"83864.72322555361|458462.38848990767", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"685660.9214291815|967995.8539790764\"}"
+Command received: getDrives
+Identifier685660.9214291815|967995.8539790764
+>>> Response: { "command":"getDrivesResponse", "identifier":"685660.9214291815|967995.8539790764", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"685660.9214291815|967995.8539790764", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"897988.5134646029|24905.25195486296\"}"
+Command received: getDirectory
+Identifier897988.5134646029|24905.25195486296
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"897988.5134646029|24905.25195486296", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"897988.5134646029|24905.25195486296", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"685660.9214291815|967995.8539790764\"}"
+Command received: init
+Identifier685660.9214291815|967995.8539790764
+>>> Response: { "command":"initResponse", "identifier":"685660.9214291815|967995.8539790764", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"685660.9214291815|967995.8539790764", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"482811.9134700621|761707.1076591604\"}"
+Command received: getDrives
+Identifier482811.9134700621|761707.1076591604
+>>> Response: { "command":"getDrivesResponse", "identifier":"482811.9134700621|761707.1076591604", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"482811.9134700621|761707.1076591604", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"405478.1516774215|897988.5134646029\"}"
+Command received: getDirectory
+Identifier405478.1516774215|897988.5134646029
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"405478.1516774215|897988.5134646029", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"405478.1516774215|897988.5134646029", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"37375.32603810151|559670.8556399964\"}"
+Command received: init
+Identifier37375.32603810151|559670.8556399964
+>>> Response: { "command":"initResponse", "identifier":"37375.32603810151|559670.8556399964", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"37375.32603810151|559670.8556399964", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"587589.3533140089|736559.282442167\"}"
+Command received: getDrives
+Identifier587589.3533140089|736559.282442167
+>>> Response: { "command":"getDrivesResponse", "identifier":"587589.3533140089|736559.282442167", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"587589.3533140089|736559.282442167", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"991378.8503418075|197412.98058718108\"}"
+Command received: getDirectory
+Identifier991378.8503418075|197412.98058718108
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"991378.8503418075|197412.98058718108", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"991378.8503418075|197412.98058718108", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"83864.72322555361|458462.38848990767\"}"
+Command received: init
+Identifier83864.72322555361|458462.38848990767
+>>> Response: { "command":"initResponse", "identifier":"83864.72322555361|458462.38848990767", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"83864.72322555361|458462.38848990767", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"736559.282442167|498256.9589476224\"}"
+Command received: getDrives
+Identifier736559.282442167|498256.9589476224
+>>> Response: { "command":"getDrivesResponse", "identifier":"736559.282442167|498256.9589476224", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"736559.282442167|498256.9589476224", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"897988.5134646029|24905.25195486296\"}"
+Command received: getDirectory
+Identifier897988.5134646029|24905.25195486296
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"897988.5134646029|24905.25195486296", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"897988.5134646029|24905.25195486296", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"type\":\"friendnetwork\",\"command\":\"init\",\"identifier\":\"679895.8624790568|214715.1059760767\"}"
+Command received: init
+Identifier679895.8624790568|214715.1059760767
+>>> Response: { "command":"initResponse", "identifier":"679895.8624790568|214715.1059760767", "status":"ready"}
+>>> Sent message: { "command":"initResponse", "identifier":"679895.8624790568|214715.1059760767", "status":"ready"}
+>>> Received: "{\"command\":\"getDrives\",\"identifier\":\"967995.8539790764|482811.9134700621\"}"
+Command received: getDrives
+Identifier967995.8539790764|482811.9134700621
+>>> Response: { "command":"getDrivesResponse", "identifier":"967995.8539790764|482811.9134700621", "drives":["home"]}
+>>> Sent message: { "command":"getDrivesResponse", "identifier":"967995.8539790764|482811.9134700621", "drives":["home"]}
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"24905.25195486296|991378.8503418075\"}"
+Command received: getDirectory
+Identifier24905.25195486296|991378.8503418075
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"24905.25195486296|991378.8503418075", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"24905.25195486296|991378.8503418075", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory":
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:Documents/\",\"identifier\":\"261925.51366470268|320171.7236753493\"}"
+Command received: getDirectory
+Identifier261925.51366470268|320171.7236753493
+Converted Friend path to local path: /home/francois/Documents/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"261925.51366470268|320171.7236753493", "files":[ ] }
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"261925.51366470268|320171.7236753493", "files":[ ] }
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"507386.1753494314|210611.52644072656\"}"
+Command received: getDirectory
+Identifier507386.1753494314|210611.52644072656
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"507386.1753494314|210611.52644072656", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"507386.1753494314|210611.52644072656", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:android-studio/\",\"identifier\":\"994186.8373211849|619399.831740277\"}"
+Command received: getDirectory
+Identifier994186.8373211849|619399.831740277
+Converted Friend path to local path: /home/francois/android-studio/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"994186.8373211849|619399.831740277", "files":[{"name":"jre", "path":"home:android-studio/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47:22", "isDirect
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"994186.8373211849|619399.831740277", "files":[{"name":"jre", "path":"home:android-studio/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47:22", "isDirect
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:android-studio/gradle/\",\"identifier\":\"578903.6006428613|646444.7097807054\"}"
+Command received: getDirectory
+Identifier578903.6006428613|646444.7097807054
+Converted Friend path to local path: /home/francois/android-studio/gradle/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"578903.6006428613|646444.7097807054", "files":[{"name":"gradle-4.4", "path":"home:android-studio/gradle/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"578903.6006428613|646444.7097807054", "files":[{"name":"gradle-4.4", "path":"home:android-studio/gradle/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:android-studio/\",\"identifier\":\"345258.0026894593|432799.8881976981\"}"
+Command received: getDirectory
+Identifier345258.0026894593|432799.8881976981
+Converted Friend path to local path: /home/francois/android-studio/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"345258.0026894593|432799.8881976981", "files":[{"name":"jre", "path":"home:android-studio/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47:22", "isDirec
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"345258.0026894593|432799.8881976981", "files":[{"name":"jre", "path":"home:android-studio/", "length":0, "atime":"2018-07-12 03:35:02", "mtime":"2018-07-06 13:47:22", "ctime":"2018-07-06 13:47:22", "isDirec
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:\",\"identifier\":\"199037.26267850623|227035.5403717423\"}"
+Command received: getDirectory
+Identifier199037.26267850623|227035.5403717423
+Converted Friend path to local path: /home/francois/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"199037.26267850623|227035.5403717423", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"199037.26267850623|227035.5403717423", "files":[{"name":".gitconfig", "path":"home:", "length":100, "atime":"2018-07-12 09:40:14", "mtime":"2018-07-12 09:40:14", "ctime":"2018-07-12 09:40:14", "isDirectory"
+>>> Received: "{\"command\":\"getDirectory\",\"path\":\"home:friendup/\",\"identifier\":\"241340.49565810824|798958.9129511825\"}"
+Command received: getDirectory
+Identifier241340.49565810824|798958.9129511825
+Converted Friend path to local path: /home/francois/friendup/
+>>> Response: { "command":"getDirectoryResponse", "identifier":"241340.49565810824|798958.9129511825", "files":[{"name":"stress_test_scripts", "path":"home:friendup/", "length":0, "atime":"2018-07-12 09:49:39", "mtime":"2018-07-12 09:35:02", "ctime":"2018-07-12 09:35:02
+>>> Sent message: { "command":"getDirectoryResponse", "identifier":"241340.49565810824|798958.9129511825", "files":[{"name":"stress_test_scripts", "path":"home:friendup/", "length":0, "atime":"2018-07-12 09:49:39", "mtime":"2018-07-12 09:35:02", "ctime":"2018-07-12 09:35:02

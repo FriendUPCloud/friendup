@@ -100,6 +100,88 @@ Friend.Tree.UI.GestureButton.processDown = function ( message )
 	return true;
 };
 
+Friend.Tree.UI.GestureHint = function( tree, item, flags )
+{
+	this.timeoutAppear = 300;
+	Friend.Tree.Processes.init( tree, this, item, 'Friend.Tree.UI.GestureHint', flags );
+	this.item.registerEvents( 'mouse' );
+	this.hint = false;
+}
+Friend.Tree.UI.GestureHint.processUp = function ( message )
+{
+	switch( message.command )
+	{
+		case 'mouseenter':
+			if ( !this.hint )
+			{
+				var self = this;
+				this.timeoutHandle = setTimeout( function()
+				{
+					// Still OK?
+					if ( self.item.mouse.inside )
+					{
+						// Creates the hint
+						self.item.startInsertItems();
+						self.hint = new Friend.Tree.UI.Hint( self.tree, self.item.name + '-hint', 
+						{
+							root: self.item.root,
+							parent: self.item,
+							text: self.item.textHint
+						} );
+						self.item.addItem( self.hint );
+						self.item.endInsertItems();
+
+						// Timeout for closure (security)
+						self.hintHandle = setInterval( function()
+						{
+							if ( !self.item.mouse.inside )
+							{
+								self.closeHint();
+							}
+						}, 50000 );
+					}
+				}, this.timeoutAppear );
+
+				// Send recursive message to parent of item
+				var msg =
+				{
+					command: 'closeHints',
+					type: 'toParent',
+					item: this.item
+				}
+				this.tree.sendMessageToItem( this.tree, this.item.parent, msg, true );
+			}
+			break;
+		case 'mouseleave':
+			this.closeHint();
+			break;
+		case 'closeHints':
+			if ( message.item != this.item && this.hint )
+			{
+				this.closeHint();
+			}
+			break;
+	}
+	return true;
+};
+Friend.Tree.UI.GestureHint.closeHint = function ( message )
+{
+	if ( this.timeoutHandle )
+	{
+		clearTimeout( this.timeoutHandle );
+		this.timeoutHandle = false;
+	}
+	if ( this.hint )
+	{
+		this.hint.destroy();
+		this.hint = false;
+		clearInterval( this.hintHandle );
+	}
+};
+Friend.Tree.UI.GestureHint.processDown = function ( message )
+{
+	return true;
+};
 
 
 Friend.Tree.UI.GestureCheckBox = function( tree, item, flags )
@@ -185,7 +267,6 @@ Friend.Tree.UI.GestureList.processUp = function ( message )
 	var options = this.item.options;
 	if ( message.type == 'mouse' )
 	{
-		debugger;
 		switch( message.command )
 		{
 			case 'mouseleave':

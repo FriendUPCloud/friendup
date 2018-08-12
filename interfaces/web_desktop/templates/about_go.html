@@ -1,0 +1,110 @@
+<div id="AboutFriend" style="opacity: 0; height: 0px">
+	
+	<div class="SignupPane">
+		<p class="Welcome">
+			Get your Friend account absolutely free.
+		</p>
+		<p class="FormPar">
+			<label for="email">E-mail address:</label>
+			<input type="text" name="email" placeholder="email@domain.com" class="FullWidth"/>
+		</p>
+		<p class="FormPar">
+			<label for="name">Name:</label>
+			<input type="username" name="name" placeholder="Person Glad" class="FullWidth"/>
+		</p>
+		<p class="FormPar">
+			<label for="password">Password:</label>
+			<input type="password" name="password" placeholder="6+ characters" class="FullWidth"/>
+		</p>
+		<div class="Checks">
+			<p>
+				<input name="check1" type="checkbox"/> I have read and agreed with Friend's  <a href="javascript:void(0)" onclick="AboutFriendTerms()">Terms of Service</a>
+			</p>
+			<p>
+				<input name="check2" type="checkbox"/> I want to be informed about Friend's products and services | <a href="javascript:void(0)" onclick="AboutFriendPolicy()">Privacy policy</a>
+			</p>
+			<p>
+				<input name="check3" type="checkbox"/> I have read and agree with Friend's <a href="javascript:void(0)" onclick="AboutFriendCookie()">Cookie Policy</a>
+			</p>
+		</div>
+		<p class="Signup">
+			<button type="button" onclick="ge('AboutFriend').className = 'First'">
+				Back
+			</button>
+			<button type="button" onclick="ConfirmSignupForm()">
+				Next
+			</button>
+		</p>
+	</div>
+	
+	<div class="ConfirmPane">
+		<div class="Confirmed" id="ConfirmContent">
+			<br/>
+			<center>Confirming data...</center>
+		</div>
+	</div>
+	
+	<div class="Container">
+		<p class="Logo">
+			<img src="/graphics/logoblue.png" alt="Friend"/>
+		</p>
+		<p class="Welcome">
+			Welcome to the Friend Workspace!
+		</p>
+		<p class="Description">
+			This is our demonstration server which has a <strong>read only</strong>
+			home disk and some pre-installed applications you can try out.
+			All changes here will be reset on regular intervals.<br/>
+			<br/>
+			If you want to enjoy the full Friend experience, please sign up
+			for a free user account.<br/>
+			<span class="HoverText MousePointer" onclick="ge('AboutFriend').className = 'Next'">Check what you are missing out on.</span>
+		</p>
+		<p class="Signup">
+			<button type="button" onclick="ge( 'AboutFriend' ).className = 'SignupStep';">
+				Sign up
+			</button>
+		</p>
+	</div>
+	
+	<div class="MissingOut">
+		<p class="Welcome">
+			What you get with a Friend account
+		</p>
+		<p>
+			FriendUP has a lot on offer. It is a complete cloud office, collaboration
+			and gaming platform for everyone. Here are some of the features available
+			in the full version:
+		</p>
+		<div class="HRow">
+			<div class="FloatLeft HContent33">
+				<ul>
+					<li><strong>Friend Chat</strong><br/>video, audio and text chat</li>
+					<li><strong>Friend Network</strong><br/>collaborate and form communities</li>
+				</ul>
+			</div>
+			<div class="FloatLeft HContent33">
+				<ul>
+					<li><strong>Cloud storage</strong><br/>store your files in disks</li>
+					<li><strong>Liberator</strong><br/>legacy (Windows) applications</li>
+				</ul>
+			</div>
+			<div class="FloatLeft HContent33">
+				<ul>
+					<li><strong>Mobile app</strong><br/>Friend on your phone</li>
+					<li><strong>Marketplace</strong><br/>full app store</li>
+				</ul>
+			</div>
+		</div>
+		<p class="Signup">
+			<button type="button" onclick="ge('AboutFriend').className = 'First'">
+				Back
+			</button>
+			<button type="button" onclick="ge( 'AboutFriend' ).className = 'SignupStep';">
+				Sign up
+			</button>
+		</p>
+	</div>
+</div>
+<link rel="stylesheet" href="/webclient/templates/about_go.css"/>
+

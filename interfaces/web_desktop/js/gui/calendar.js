@@ -235,7 +235,7 @@ Calendar.prototype.drawMonthname = function()
 
 	var mn = this.monthNames[ month-1 ];
 	mn = mn.substr( 0, 1 ).toUpperCase() + mn.substr( 1, mn.length - 1 );
-	this.monthName.innerHTML = mn + ' ' + year + '<div class="Navigation">' + nav + '</div>';
+	this.monthName.innerHTML = ( isMobile ? 'Friend Workspace' : ( mn + ' ' + year ) ) + '<div class="Navigation">' + nav + '</div>';
 	
 	// Add extra buttons
 	if( this.buttons )
@@ -377,7 +377,8 @@ CalendarEvent.prototype.bind = function()
 	{
 		window.mouseDown = self.element;
 		self.pickupTimer = window.setTimeout( doPickup, 100 );
-		function doPickup() {
+		function doPickup()
+		{
 			self.pickupTimer = null;
 			self.hasPickup = true;
 			mousePointer.pickup( self.element );
@@ -386,10 +387,11 @@ CalendarEvent.prototype.bind = function()
 	
 	self.element.onmouseup = function()
 	{
-		if ( self.pickupTimer )
+		if( self.pickupTimer )
 			window.clearTimeout( self.pickupTimer );
 		
-		if ( self.hasPickup ) {
+		if( self.hasPickup )
+		{
 			window.targetMovable = false;
 			self.hasPickup = false;
 		}

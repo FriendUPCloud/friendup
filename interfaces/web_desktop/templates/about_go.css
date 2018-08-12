@@ -1,0 +1,163 @@
+#AboutFriend
+{
+	position: absolute;
+	left: 0%;
+	top: 0%;
+	width: 200%;
+	height: 200% !important;
+	transition: top,left,height,opacity 1s,1s,0.5s,1s;
+	opacity: 1 !important;
+}
+
+#AboutFriend .HoverText
+{
+	font-weight: bold;
+	color: #418ec1;
+	text-align: center;
+	display: block;
+	margin-top: 26px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+#AboutFriend .HoverText:hover
+{
+	color: #236e9f;
+}
+
+#AboutFriend.Next
+{
+	left: -100%;
+}
+
+#AboutFriend.SignupStep
+{
+	left: 0;
+	top: -100%;
+}
+
+#AboutFriend.Confirm
+{
+	left: -100%;
+	top: -100%;
+}
+
+#AboutFriend .Container,
+#AboutFriend .MissingOut,
+#AboutFriend .SignupPane,
+#AboutFriend .ConfirmPane
+{
+	box-sizing: border-box;
+	color: #131c25;
+	padding: 30px 89px;
+	font-size: 1.2em;
+	position: absolute;
+	top: 0; 
+	left: 0;
+	width: 50%;
+	height: 50%;
+	background: #e2e2e2;
+	line-height: 25px;
+}
+
+#AboutFriend:not(.SignupStep):not(.First) .SignupPane
+{
+	display: none;
+}
+
+#AboutFriend .Checks
+{
+	font-size: 0.8em;
+}
+
+#AboutFriend .FormPar label
+{
+	font-size: 0.8em;
+	text-transform: uppercase;
+}
+
+#AboutFriend .Logo
+{
+	text-align: center;
+	height: auto;
+	display: block;
+}
+
+#AboutFriend .Welcome
+{
+	text-align: center;
+	font-size: 1.1em;
+	font-weight: bold;
+}
+
+#AboutFriend .Description
+{
+	
+}
+
+#AboutFriend .Signup
+{
+	padding-top: 20px;
+	text-align: center;
+}
+
+#AboutFriend .Signup button
+{
+	background: #263545;
+	color: white;
+	font-size: 1.1em;
+	padding: 10px 30px;
+	border-radius: 2px;
+	border: 0;
+}
+
+html #AboutFriend .MissingOut
+{
+	left: 50%;
+}
+
+html #AboutFriend .SignupPane
+{
+	left: 0;
+	top: 50%;
+}
+
+html #AboutFriend .ConfirmPane
+{
+	left: 50%;
+	top: 50%;
+}
+
+html #AboutFriend .ConfirmPane > div
+{
+	transition: opacity 1s;
+}
+
+html #AboutFriend .ConfirmPane > div
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+html #AboutFriend.Confirm .ConfirmPane > div
+{
+	opacity: 1;
+	pointer-events: all;
+}
+
+#AboutFriend ul 
+{
+	margin: 0;
+	padding: 0 10px 0 20px;
+}
+
+#AboutFriend ul li
+{
+	margin: 0 0 20px 0;
+}
+
+#AboutFriend #confirm_captcha div
+{
+	margin: auto;
+}
+

@@ -53,7 +53,7 @@ void *libInit( void *sb )
 	struct ApplicationLibrary *l;
 	DEBUG("[Application.library] libinit\n");
 
-	if( ( l = calloc( sizeof( struct ApplicationLibrary ), 1 ) ) == NULL )
+	if( ( l = FCalloc( sizeof( struct ApplicationLibrary ), 1 ) ) == NULL )
 	{
 		return NULL;
 	}
@@ -86,9 +86,7 @@ void *libInit( void *sb )
 
 void libClose( struct ApplicationLibrary *l )
 {
-	
 	DEBUG("[Application.library] Closing\n");
-
 	
 	Application *ar = l->al_ApplicationList;
 	Application *an = ar;
@@ -195,7 +193,7 @@ char* StringDuplicate( const char* str )
 	}
 	int size = strlen( str );
 	
-	char *tmp = calloc( size + 1, sizeof( char ) );
+	char *tmp = FCallocAlign( size + 1, sizeof( char ) );
 	if( tmp == NULL )
 	{
 		return NULL;
@@ -211,7 +209,7 @@ char* StringDuplicate( const char* str )
 char *MakeString ( int length )
 {
 	length++;
-	char *c = calloc ( length, sizeof ( char ) );
+	char *c = FCallocAlign( length, sizeof ( char ) );
 	if ( c != NULL )
 	{
 		memset( c, 0, length );

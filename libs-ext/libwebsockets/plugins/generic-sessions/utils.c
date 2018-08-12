@@ -20,6 +20,7 @@
  */
 
 #include "private-lwsgs.h"
+#include <stdlib.h>
 
 void
 sha1_to_lwsgw_hash(unsigned char *hash, lwsgw_hash *shash)
@@ -145,7 +146,7 @@ lwsgw_session_from_cookie(const char *cookie, lwsgw_hash *sid)
 		return 1;
 	}
 
-	for (n = 0; n < sizeof(sid->id) - 1 && *p; n++) {
+	for (n = 0; n < (int)sizeof(sid->id) - 1 && *p; n++) {
 		/* our SID we issue only has these chars */
 		if ((*p >= '0' && *p <= '9') ||
 		    (*p >= 'a' && *p <= 'f'))
@@ -156,7 +157,7 @@ lwsgw_session_from_cookie(const char *cookie, lwsgw_hash *sid)
 		}
 	}
 
-	if (n < sizeof(sid->id) - 1) {
+	if (n < (int)sizeof(sid->id) - 1) {
 		lwsl_info("cookie id too short\n");
 		return 1;
 	}
@@ -205,8 +206,7 @@ lwsgs_lookup_callback(void *priv, int cols, char **col_val, char **col_name)
 	if (cols)
 		lla->results = 0;
 	if (col_val && col_val[0]) {
-		strncpy(lla->username, col_val[0], lla->len);
-		lla->username[lla->len - 1] = '\0';
+		lws_strncpy(lla->username, col_val[0], lla->len + 1);
 		lwsl_info("%s: %s\n", __func__, lla->username);
 	}
 
@@ -245,13 +245,11 @@ lwsgs_lookup_callback_user(void *priv, int cols, char **col_val, char **col_name
 
 	for (n = 0; n < cols; n++) {
 		if (!strcmp(col_name[n], "username")) {
-			strncpy(u->username, col_val[n], sizeof(u->username) - 1);
-			u->username[sizeof(u->username) - 1] = '\0';
+			lws_strncpy(u->username, col_val[n], sizeof(u->username));
 			continue;
 		}
 		if (!strcmp(col_name[n], "ip")) {
-			strncpy(u->ip, col_val[n], sizeof(u->ip) - 1);
-			u->ip[sizeof(u->ip) - 1] = '\0';
+			lws_strncpy(u->ip, col_val[n], sizeof(u->ip));
 			continue;
 		}
 		if (!strcmp(col_name[n], "creation_time")) {
@@ -266,8 +264,7 @@ lwsgs_lookup_callback_user(void *priv, int cols, char **col_val, char **col_name
 			continue;
 		}
 		if (!strcmp(col_name[n], "email")) {
-			strncpy(u->email, col_val[n], sizeof(u->email) - 1);
-			u->email[sizeof(u->email) - 1] = '\0';
+			lws_strncpy(u->email, col_val[n], sizeof(u->email));
 			continue;
 		}
 		if (!strcmp(col_name[n], "verified")) {
@@ -275,18 +272,15 @@ lwsgs_lookup_callback_user(void *priv, int cols, char **col_val, char **col_name
 			continue;
 		}
 		if (!strcmp(col_name[n], "pwhash")) {
-			strncpy(u->pwhash.id, col_val[n], sizeof(u->pwhash.id) - 1);
-			u->pwhash.id[sizeof(u->pwhash.id) - 1] = '\0';
+			lws_strncpy(u->pwhash.id, col_val[n], sizeof(u->pwhash.id));
 			continue;
 		}
 		if (!strcmp(col_name[n], "pwsalt")) {
-			strncpy(u->pwsalt.id, col_val[n], sizeof(u->pwsalt.id) - 1);
-			u->pwsalt.id[sizeof(u->pwsalt.id) - 1] = '\0';
+			lws_strncpy(u->pwsalt.id, col_val[n], sizeof(u->pwsalt.id));
 			continue;
 		}
 		if (!strcmp(col_name[n], "token")) {
-			strncpy(u->token.id, col_val[n], sizeof(u->token.id) - 1);
-			u->token.id[sizeof(u->token.id) - 1] = '\0';
+			lws_strncpy(u->token.id, col_val[n], sizeof(u->token.id));
 			continue;
 		}
 	}
@@ -375,7 +369,7 @@ lwsgs_get_auth_level(struct per_vhost_data__gs *vhd,
 		if ((u.verified & 0xff) == LWSGS_VERIFIED_ACCEPTED)
 			n |= LWSGS_AUTH_VERIFIED;
 
-		if (u.last_forgot_validated > lws_now_secs() - 300)
+		if (u.last_forgot_validated > (time_t)lws_now_secs() - 300)
 			n |= LWSGS_AUTH_FORGOT_FLOW;
 	}
 

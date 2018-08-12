@@ -4,6 +4,12 @@ body
 	color: black;
 }
 
+body > div
+{
+	background: #efefef;
+	color: black;
+}
+
 .PaddingSize
 {
 	padding: 35px;

@@ -61,6 +61,10 @@
 
 extern SystemBase *SLIB;
 
+// external
+
+char *GetArgsAndReplaceSession( Http *request, UserSession *loggedSession );
+
 // 
 //	TODO: This should be moved
 //It is to help us with fallback PHP support
@@ -150,7 +154,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 	FBOOL freeFile = FALSE;
 
 	LocFile* file = NULL;
-	if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 	{
 		if( SLIB->sl_CacheFiles == 1 )
 		{
@@ -211,7 +215,7 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 				freeFile = TRUE;
 			}
 		}
-		pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+		FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 	}
 
 	// Send reply
@@ -237,6 +241,8 @@ static inline int ReadServerFile( Uri *uri __attribute__((unused)), char *locpat
 		// Try to fall back on module
 		// TODO: Make this behaviour configurable
 		char *command;
+		
+		DEBUG("CatchALL 230\n");
 
 		int loclen = strlen( locpath ) + 256;
 		if( ( command = FCalloc( loclen, sizeof( char ) ) ) != NULL )
@@ -906,10 +912,17 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 										if( tuser != NULL )
 										{
 											char *sess = USMUserGetFirstActiveSessionID( SLIB->sl_USM, tuser );
+											/*
 											if( sess && rootDev->f_SessionID )
 											{
 												FFree( rootDev->f_SessionID );
 												rootDev->f_SessionID = StringDuplicate( tuser->u_MainSessionID );
+												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
+											}
+											*/
+											if( sess )
+											{
+												rootDev->f_SessionIDPTR = tuser->u_MainSessionID;
 												DEBUG("[ProtocolHttp] Session %s tusr ptr %p\n", sess, tuser );
 											}
 										}
@@ -1274,7 +1287,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									
 									SLIB->fcm->fcm_ClusterMaster )
 								{
-									DEBUG("\n\n\n\n===========================\n\n");
+									//DEBUG("\n\n\n\n===========================\n\n");
 									DEBUG("Checking connections, number sessions %d\n", SLIB->sl_USM->usm_SessionCounter );
 							
 									int minSessions = SLIB->sl_USM->usm_SessionCounter;
@@ -1378,7 +1391,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 									{
 										LocFile* file = NULL;
 
-										if( pthread_mutex_lock( &SLIB->sl_ResourceMutex ) == 0 )
+										if( FRIEND_MUTEX_LOCK( &SLIB->sl_ResourceMutex ) == 0 )
 										{	
 											char *decoded = UrlDecodeToMem( completePath->raw );
 											if( SLIB->sl_CacheFiles == 1 )
@@ -1425,7 +1438,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												freeFile = TRUE;
 											}
 											FFree( decoded );
-											pthread_mutex_unlock( &SLIB->sl_ResourceMutex );
+											FRIEND_MUTEX_UNLOCK( &SLIB->sl_ResourceMutex );
 										}
 										Log( FLOG_DEBUG, "[ProtocolHttp] Return file content: file ptr %p\n", file );
 
@@ -1569,105 +1582,192 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 												// Try to fall back on module
 												// TODO: Make this behaviour configurable
 												char *command = NULL;
+												ListString *phpResp = NULL;
 
 												int clen = strlen( uri->path->raw ) + 256;
-
-												if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
+												
+												if( request->h_ContentType == HTTP_CONTENT_TYPE_APPLICATION_JSON )
 												{
-													snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
-													
-													ListString *bs = RunPHPScript( command );
+													/*
+													HashmapElement *he = HttpGetPOSTParameter( request, "module" );
+													if( he == NULL ) he = HashmapGet( request->query, "module" );
 
-													if( bs && bs->ls_Data != NULL && bs->ls_Size > 0 )
+													if( he != NULL && he->data != NULL )
 													{
-														// Check header and remove from data
-														char *cntype = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Content-Type" );
-														char *code = CheckEmbeddedHeaders( bs->ls_Data, bs->ls_Size, "Status Code" );
-
-														if( cntype != NULL )
+														struct stat f;
+														char runfile[ 512 ];
+														snprintf( runfile, sizeof(runfile), "php \"php/catch_all.php\" \"%s\";", (char *)he->data );
+					
+														DEBUG("Run module: '%s'\n", runfile );
+					
+														if( stat( runfile, &f ) != -1 )
 														{
-															bs->ls_Size = StripEmbeddedHeaders( &bs->ls_Data, bs->ls_Size );
-														}
-
-														struct TagItem tags[] = {
-															{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
-															{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
-															{ TAG_DONE, TAG_DONE }
-														};
-
-														if( code != NULL )
-														{
-															char *pEnd;
-															int errCode = -1;
-
-															char *next;
-															errCode = strtol ( code, &next, 10);
-															if( ( next == code ) || ( *next != '\0' ) ) 
+															FULONG dataLength;
+															DEBUG("MODRUNPHP %s\n", runfile );
+															char *allArgsNew = GetArgsAndReplaceSession( *request, NULL );
+															if( allArgsNew != NULL )
 															{
-																errCode = -1;
+																data = SLIB->sl_PHPModule->Run( SLIB->sl_PHPModule, runfile, allArgsNew, &dataLength );
+																
+																phpResp = ListStringNew();
+																if( data != NULL )
+																{
+																	ListStringAdd( phpResp, data, dataLength );
+																	ListStringJoin( phpResp );
+																}
 															}
-
-															if( errCode == -1 )
-															{
-																response = HttpNewSimple( HTTP_200_OK, tags );
-															}
-															else
-															{
-																response = HttpNewSimple( errCode, tags );
-															}
-
-															Log( FLOG_DEBUG, "PHP catch returned err code: %d\n", errCode );
 														}
 														else
 														{
+															FERROR("Module do not eixst %s\n", runfile );
+														}
+													}
+													*/
+													
+													DEBUG("MODRUNPHP %s\n", "php/catch_all.php" );
+													char *allArgsNew = GetArgsAndReplaceSession( request, NULL );
+													if( allArgsNew != NULL )
+													{
+														int argssize = strlen( allArgsNew );
+														char *runFile = FCalloc( ( argssize * 2 ) + 512 + strlen( uri->path->raw ), sizeof(char) );
+														if( runFile != NULL )
+														{
+															int rawLength = strlen( uri->path->raw );
+															
+															strcpy( runFile, "php \"php/catch_all.php\" \"" );
+															
+															strcpy( runFile + 25, uri->path->raw );
+															
+															strcpy( runFile + 25 + rawLength, "\" \"" );
+															
+															char *src = allArgsNew;
+															char *dst = runFile + strlen( runFile );
+															
+															while( *src != 0 )
+															{
+																if( *src == '"' )
+																{
+																	*dst = '\\';
+																	dst++;
+																}
+																*dst = *src;
+																
+																src++;
+																dst++;
+															}
+															*dst++ = '\"';
+															
+															//snprintf( runFile, argssize + 512, "php \"php/catch_all.php\" \"%s\";", allArgsNew );
+															DEBUG("MODRUNPHP '%s'\n", runFile );
+															
+															phpResp = RunPHPScript( runFile );
+														
+															FFree( runFile );
+														}
+													}
+												}
+												
+												if( phpResp == NULL )
+												{
+													DEBUG("CatchALL 1621\n");
+													if( ( command = FCalloc( clen, sizeof(char) ) ) != NULL )
+													{
+														snprintf( command, clen, "php \"php/catch_all.php\" \"%s\";", uri->path->raw ); 
+													
+														phpResp = RunPHPScript( command );
+														
+														FFree( command );
+													}
+												} // content-type json
+
+												if( phpResp && phpResp->ls_Data != NULL && phpResp->ls_Size > 0 )
+												{
+													// Check header and remove from data
+													char *cntype = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Content-Type" );
+													char *code = CheckEmbeddedHeaders( phpResp->ls_Data, phpResp->ls_Size, "Status Code" );
+
+													if( cntype != NULL )
+													{
+														phpResp->ls_Size = StripEmbeddedHeaders( &phpResp->ls_Data, phpResp->ls_Size );
+													}
+
+													struct TagItem tags[] = {
+														{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( cntype ? cntype : "text/html" ) },
+														{ HTTP_HEADER_CONNECTION,   (FULONG)StringDuplicate( "close" ) },
+														{ TAG_DONE, TAG_DONE }
+													};
+
+													if( code != NULL )
+													{
+														char *pEnd;
+														int errCode = -1;
+
+														char *next;
+														errCode = strtol ( code, &next, 10);
+														if( ( next == code ) || ( *next != '\0' ) ) 
+														{
+															errCode = -1;
+														}
+
+														if( errCode == -1 )
+														{
 															response = HttpNewSimple( HTTP_200_OK, tags );
 														}
-
-														char *resp = bs->ls_Data;
-														if( resp != NULL )
+														else
 														{
-															const char *hsearche = "---http-headers-end---\n";
-															const int hsearchLene = 23;
-
-															char *tmp = NULL;
-															if( ( tmp = strstr( resp, hsearche ) ) != NULL )
-															{
-																resp = tmp + 23;
-															}
+															response = HttpNewSimple( errCode, tags );
 														}
 
-														HttpWrite( response, sock );
-
-														response->content = NULL;
-														response->sizeOfContent = 0;
-
-														response->h_WriteType = FREE_ONLY;
-
-														SocketWrite( sock, resp, (FLONG)(bs->ls_Size - (resp - bs->ls_Data)) );
-
-														if( cntype != NULL ) FFree( cntype );
-														if( code != NULL ) FFree( code );
-
-														result = 200;
-
-														Log( FLOG_ERROR, "Module call returned bytes: %lu\n", bs->ls_Size );
-														//bs->ls_Data = NULL; 
-														ListStringDelete( bs );
+														Log( FLOG_DEBUG, "PHP catch returned err code: %d\n", errCode );
 													}
-													else 
+													else
 													{
-														Log( FLOG_ERROR,"File do not exist (PHPCall)\n");
-
-														struct TagItem tags[] = {
-															{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-															{ TAG_DONE, TAG_DONE }
-														};	
-
-														response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
-
-														result = 404;
+														response = HttpNewSimple( HTTP_200_OK, tags );
 													}
-													FFree( command );
+
+													char *resp = phpResp->ls_Data;
+													if( resp != NULL )
+													{
+														const char *hsearche = "---http-headers-end---\n";
+														const int hsearchLene = 23;
+
+														char *tmp = NULL;
+														if( ( tmp = strstr( resp, hsearche ) ) != NULL )
+														{
+															resp = tmp + 23;
+														}
+													}
+
+													HttpWrite( response, sock );
+
+													response->content = NULL;
+													response->sizeOfContent = 0;
+
+													response->h_WriteType = FREE_ONLY;
+
+													SocketWrite( sock, resp, (FLONG)(phpResp->ls_Size - (resp - phpResp->ls_Data)) );
+
+													if( cntype != NULL ) FFree( cntype );
+													if( code != NULL ) FFree( code );
+
+													result = 200;
+
+													Log( FLOG_ERROR, "Module call returned bytes: %lu\n", phpResp->ls_Size );
+													//bs->ls_Data = NULL; 
+													ListStringDelete( phpResp );
+												}
+												else 
+												{
+													Log( FLOG_ERROR,"File do not exist (PHPCall)\n");
+
+													struct TagItem tags[] = {
+														{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+														{ TAG_DONE, TAG_DONE }
+													};	
+
+													response = HttpNewSimple( HTTP_404_NOT_FOUND,  tags );
+
+													result = 404;
 												}
 											}
 											FFree( url );

@@ -24,6 +24,8 @@ var windowMouseX = -1;
 var windowMouseY = -1;
 var mousePointer = 
 {
+	prevMouseX: -1,
+	prevMouseY: -1,
 	'elements': [],
 	'dom': false,
 	'testPointer': function ()
@@ -56,8 +58,17 @@ var mousePointer =
 			var moveWin = false;
 			
 			// Get mouse coords
-			windowMouseX = e.clientX;
-			windowMouseY = e.clientY;
+			if( window.isTablet || window.isMobile )
+			{
+				windowMouseX = e.touches[0].pageX;
+				windowMouseY = e.touches[0].pageY;
+			}
+			else
+			{
+				windowMouseX = e.clientX;
+				windowMouseY = e.clientY;
+			}
+			
 			// Skew them
 			if( ge( 'DoorsScreen' ).screenOffsetTop )
 				windowMouseY -= ge( 'DoorsScreen' ).screenOffsetTop;			
@@ -76,12 +87,34 @@ var mousePointer =
 					wnZ >= z
 				)
 				{
-					moveWin = wn;
+					if( wn.content && wn.content.fileBrowser )
+					{
+						if( !wn.content.fileBrowser.dom.classList.contains( 'Hidden' ) )
+						{
+							var fb = wn.content.fileBrowser.dom;
+							if( windowMouseX < wn.offsetLeft + fb.offsetWidth && windowMouseY < wn.offsetTop + fb.offsetHeight )
+							{
+								moveWin = wn.content.fileBrowser;
+							}
+						}
+					}
+					if( !moveWin )
+					{
+						moveWin = wn;
+					}
 					z = wnZ;
 				}
 			}
 			if( moveWin )
 			{
+				// Roll over filebrowser
+				if( moveWin && moveWin.dom && moveWin.dom.classList.contains( 'FileBrowser' ) )
+				{
+					if( moveWin.rollOver )
+					{
+						moveWin.rollOver( this.elements );
+					}
+				}
 				// Add mouse actions on window ->
 				if( moveWin.windowObject && moveWin.windowObject.sendMessage )
 				{
@@ -139,6 +172,22 @@ var mousePointer =
 				var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
 				var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
 				
+				// Add file browser offset
+				if( w.fileBrowser )
+				{
+					if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
+					{
+						var fb = w.fileBrowser.dom;
+						mx -= fb.offsetWidth;
+					}
+				}
+				
+				
+				if( isListview )
+				{
+					my -= 56;
+				}
+				
 				for( var a = 0; a < w.icons.length; a++ )
 				{
 					var ic = w.icons[a].domNode;
@@ -158,22 +207,22 @@ var mousePointer =
 					// Done exclude
 					
 					// Don't rotate icon on listviews
-					if( !isListview )
+					
+					if( 
+						!mover &&
+						( isScreen || ( moveWin && w == moveWin.content ) ) &&
+						ic.offsetTop < my && ic.offsetLeft < mx &&
+						ic.offsetTop + ic.offsetHeight > my &&
+						ic.offsetLeft + ic.offsetWidth > mx
+					)
 					{
-						if( 
-							!mover &&
-							( isScreen || ( moveWin && w == moveWin.content ) ) &&
-							ic.offsetTop < my && ic.offsetLeft < mx &&
-							ic.offsetTop + ic.offsetHeight > my &&
-							ic.offsetLeft + ic.offsetWidth > mx
-						)
-						{
-							ic.classList.add( 'Selected' );
-						}
-						else if( !mover || mover != icon )
-						{
-							ic.classList.remove( 'Selected' );
-						}
+						ic.classList.add( 'Selected' );
+						ic.selected = true;
+					}
+					else if( !mover || mover != icon )
+					{
+						ic.classList.remove( 'Selected' );
+						ic.selected = false;
 					}
 				}
 			}
@@ -199,6 +248,11 @@ var mousePointer =
 			if ( wn.rollOut ) wn.rollOut ( e );
 		}
 	},
+	'clear': function()
+	{
+		this.elements = [];
+		this.dom.innerHTML = '';	
+	},
 	'drop': function ( e )
 	{
 		if ( !e ) e = window.event;
@@ -207,6 +261,44 @@ var mousePointer =
 		{
 			var dropper = false;
 			
+			// Check drop on tray icon
+			if( !dropper )
+			{
+				var titems = ge( 'Tray' ).childNodes;
+				for( var a = 0; a < titems.length; a++ )
+				{
+					var tr = titems[a];
+					var l = GetElementLeft( tr ); // left
+					var t = GetElementTop( tr ); // bottom
+					var r = l + tr.offsetWidth; // right
+					var b = t + tr.offsetHeight; // bottom
+					if( windowMouseX >= l && windowMouseX < r && windowMouseY >= t && windowMouseY < b )
+					{
+						dropper = tr;
+						var objs = [];
+						for( var k = 0; k < this.elements.length; k++ )
+						{
+							var e = this.elements[k];
+							if ( e.fileInfo.getDropInfo ) {
+								var info = e.fileInfo.getDropInfo();
+								objs.push( info );
+							} else {
+								objs.push( {
+									Path: e.fileInfo.Path,
+									Type: e.fileInfo.Type,
+									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
+									Filesize: e.fileInfo.fileSize,
+									Icon: e.fileInfo.Icon
+								});
+							}
+						}
+						if ( dropper.ondrop )
+							dropper.ondrop( objs );
+						break;
+					}
+				}
+			}
+
 			// Check screens and view windows
 			var screens = [];
 			var screenl = ge( 'Screens' );
@@ -222,92 +314,17 @@ var mousePointer =
 				ars.push( movableWindows[a] );
 			ars = ars.concat( screens );
 			
-			// Check drop on view
+			var dropped = 0;
 			var dropWin = 0;
-			var z = 0;
-			for ( var a in ars )
-			{
-				var wn = ars[a];
-				var wnZ = parseInt ( wn.style.zIndex );
-				if( isNaN( wnZ ) ) wnZ = 0;
-				if ( 
-					wn.offsetTop < windowMouseY && wn.offsetLeft < windowMouseX &&
-					wn.offsetTop + wn.offsetHeight > windowMouseY &&
-					wn.offsetLeft + wn.offsetWidth > windowMouseX &&
-					wnZ >= z
-				)
-				{
-					dropWin = wn;
-					z = wnZ;
-				}
-			}
-			if ( dropWin )
-			{
-				if( dropWin.icons || dropWin.content )
-				{
-					dropper = dropWin;
-				}
-			}
+			var skipDropCheck = false;
 			
-			// Find what we dropped on
-			for( var c in ars )
-			{
-				var w = ars[c].icons ? ars[c] : ars[c].content;
-				if( !w || !w.icons ) continue; // No icons? Skip!
-				
-				// If we have a dropped on view, skip icons on other views
-				if( dropper && ( w != dropper.content && w != dropper ) )
-					continue;
-				
-				// Add scroll top!
-				var sctop = w.getElementsByClassName( 'Scroller' );
-				var scleft = 0;
-				if( sctop && sctop.length ) 
-				{
-					scleft = sctop[0].scrollLeft;
-					sctop = sctop[0].scrollTop;
-				}
-				else sctop = 0;
-				
-				var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
-				var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
-				
-				// Drop on icon
-				for ( var a = 0; a < w.icons.length; a++ )
-				{
-					var ic = w.icons[a].domNode;
-				
-					// Exclude elements dragged
-					var found = false;
-					for( var b = 0; b < this.dom.childNodes.length; b++ )
-					{
-						if( ic == this.dom.childNodes[b] )
-							found = true;
-					}
-					if( found ) continue;
-					// Done exclude
-				
-					var icon = w.icons[a];
-					if ( 
-						ic.offsetTop < my && ic.offsetLeft < mx &&
-						ic.offsetTop + ic.offsetHeight > my &&
-						ic.offsetLeft + ic.offsetWidth > mx
-					)
-					{
-						dropper = icon;
-						break;
-					}
-				}
-			}
-			
-			// Check drop on desklet
-			if( !dropper || ( dropper.classList && dropper.classList.contains( 'ScreenContent' ) ) )
+			// Check drop on view
+			if ( !dropper )
 			{
 				var z = 0;
-				var dropWin = 0;
-				for( var a = 0; a < __desklets.length; a++ )
+				for ( var a in ars )
 				{
-					var wn = __desklets[a].dom;
+					var wn = ars[a];
 					var wnZ = parseInt ( wn.style.zIndex );
 					if( isNaN( wnZ ) ) wnZ = 0;
 					if ( 
@@ -318,30 +335,134 @@ var mousePointer =
 					)
 					{
 						dropWin = wn;
-						z = wnZ
-					}
-					else
-					{
+						z = wnZ;
+						console.log( 'Dropped on ' + dropWin.className );
 					}
 				}
-				if ( dropWin && dropWin.drop )
+				if( dropWin )
 				{
-					dropper = dropWin;
+					// Did we drop on a file browser?
+					if( dropWin.content && dropWin.content.fileBrowser )
+					{
+						var fb = dropWin.content.fileBrowser.dom;
+						if( windowMouseX < dropWin.offsetLeft + fb.offsetWidth && windowMouseY < dropWin.offsetTop + fb.offsetHeight )
+						{
+							dropper = dropWin.content.fileBrowser;
+							skipDropCheck = true;
+						}
+					}
+					if( !skipDropCheck && !dropped && ( dropWin.icons || dropWin.content ) )
+					{
+						dropper = dropWin;
+					}
+				}
+			}
+
+			if( !skipDropCheck )
+			{
+				// Find what we dropped on
+				for( var c in ars )
+				{
+					var w = ars[c].icons ? ars[c] : ars[c].content;
+					if( !w || !w.icons ) continue; // No icons? Skip!
+				
+					// If we have a dropped on view, skip icons on other views
+					if( dropper && ( w != dropper.content && w != dropper ) )
+						continue;
+				
+					// Add scroll top!
+					var sctop = w.getElementsByClassName( 'Scroller' );
+					var scleft = 0;
+					if( sctop && sctop.length ) 
+					{
+						scleft = sctop[0].scrollLeft;
+						sctop = sctop[0].scrollTop;
+					}
+					else sctop = 0;
+				
+					var my = windowMouseY - w.offsetTop - w.parentNode.offsetTop + sctop;
+					var mx = windowMouseX - w.offsetLeft - w.parentNode.offsetLeft + scleft;
+				
+					// Add file browser offset
+					if( w.fileBrowser )
+					{
+						if( !w.fileBrowser.dom.classList.contains( 'Hidden' ) )
+						{
+							var fb = w.fileBrowser.dom;
+							mx -= fb.offsetWidth;
+						}
+					}
+				
+					// Drop on icon
+					for ( var a = 0; a < w.icons.length; a++ )
+					{
+						var ic = w.icons[a].domNode;
+				
+						// Exclude elements dragged
+						var found = false;
+						for( var b = 0; b < this.dom.childNodes.length; b++ )
+						{
+							if( ic == this.dom.childNodes[b] )
+								found = true;
+						}
+						if( found ) continue;
+						// Done exclude
+				
+						var icon = w.icons[a];
+						if ( 
+							ic.offsetTop < my && ic.offsetLeft < mx &&
+							ic.offsetTop + ic.offsetHeight > my &&
+							ic.offsetLeft + ic.offsetWidth > mx
+						)
+						{
+							dropper = icon;
+							break;
+						}
+					}
+				}
+			
+				// Check drop on desklet
+				if( !dropper || ( dropper.classList && dropper.classList.contains( 'ScreenContent' ) ) )
+				{
+					var z = 0;
+					var dropWin = 0;
+					for( var a = 0; a < __desklets.length; a++ )
+					{
+						var wn = __desklets[a].dom;
+						var wnZ = parseInt ( wn.style.zIndex );
+						if( isNaN( wnZ ) ) wnZ = 0;
+						if ( 
+							wn.offsetTop < windowMouseY && wn.offsetLeft < windowMouseX &&
+							wn.offsetTop + wn.offsetHeight > windowMouseY &&
+							wn.offsetLeft + wn.offsetWidth > windowMouseX &&
+							wnZ >= z
+						)
+						{
+							dropWin = wn;
+							z = wnZ
+						}
+						else
+						{
+						}
+					}
+					if ( dropWin && dropWin.drop )
+					{
+						dropper = dropWin;
+					}
 				}
 			}
 			
-			var dropped = 0;
 			if( dropper )
 			{
 				// Check if dropper object has a drop method, and execute it
 				// with the supplied elements
 				if( dropper.drop )
 				{
-					dropped = dropper.drop( this.elements );
+					dropped = dropper.drop( this.elements, e, dropWin.content );
 				}
 				else if( dropper.domNode && dropper.domNode.drop )
 				{
-					dropper.domNode.drop( this.elements );
+					dropper.domNode.drop( this.elements, e );
 				}
 				else
 				{
@@ -349,10 +470,13 @@ var mousePointer =
 					for( var k = 0; k < this.elements.length; k++ )
 					{
 						var e = this.elements[k];
-						if ( e.fileInfo.getDropInfo ) {
+						if( e.fileInfo.getDropInfo )
+						{
 							var info = e.fileInfo.getDropInfo();
 							objs.push( info );
-						} else {
+						}
+						else
+						{
 							objs.push( {
 								Path: e.fileInfo.Path,
 								Type: e.fileInfo.Type,
@@ -1117,8 +1241,17 @@ movableListener = function( e, data )
 	if( !e ) e = window.event;
 	var ww = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 	var wh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-	var y = e.clientY ? e.clientY : e.pageY;
-	var x = e.clientX ? e.clientX : e.pageX;
+	var x, y;
+	if( ( typeof( e.touches ) != 'undefined' && typeof( e.touches[0] ) != 'undefined' ) && ( window.isTablet || window.isMobile ) )
+	{
+		x = e.touches[0].pageX;
+		y = e.touches[0].pageY;
+	}
+	else
+	{
+		x = e.clientX ? e.clientX : e.pageX;
+		y = e.clientY ? e.clientY : e.pageY;
+	}
 	var sh = e.shiftKey || e.ctrlKey;
 	
 	// Injection
@@ -1130,7 +1263,6 @@ movableListener = function( e, data )
 	
 	windowMouseX = x;
 	windowMouseY = y;
-	
 
 	mousePointer.poll();
 	mousePointer.move( e );
@@ -1163,16 +1295,250 @@ movableListener = function( e, data )
 		var mx = x - ( window.currentMovable.offx ? window.currentMovable.offx : 0 );
 		var my = y - ( window.currentMovable.offy ? window.currentMovable.offy : 0 );
 		
-		// 8 px grid
+		var lockY = false;
+		var lockX = false;
+		
+		// 8 px grid + snapping
 		if( e.shiftKey )
+		{	
+			// Mouse coords changed
+			if( window.mouseDown )
+			{
+				if( mousePointer.prevMouseX != x || mousePointer.prevMouseY != y )
+				{
+					// Window snapping! Attach to window
+					if( currentMovable )
+					{
+						// Check current movable intersections
+						var directionY = windowMouseY - mousePointer.prevMouseY;
+						var directionX = windowMouseX - mousePointer.prevMouseX;
+						if( directionX != 0 || directionY != 0 )
+						{
+							var direction = directionX < 0 ? 'left' : 'right';
+							if( Math.abs( directionY ) > Math.abs( directionX ) )
+							direction = directionY < 0 ? 'up' : 'down';
+				
+							var curWinRight  = currentMovable.offsetLeft + currentMovable.offsetWidth;
+							var curWinLeft   = currentMovable.offsetLeft;
+							var curWinTop    = currentMovable.offsetTop;
+							var curWinBottom = currentMovable.offsetTop + currentMovable.offsetHeight;
+							
+							for( var z in movableWindows )
+							{
+								var mw = movableWindows[ z ];
+
+								if( mw == currentMovable ) continue;
+								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
+								{
+									continue;
+								}
+						
+								var mWR = mw.offsetLeft + mw.offsetWidth;
+								var mWL = mw.offsetLeft;
+								var mWT = mw.offsetTop;
+								var mWB = mw.offsetTop + mw.offsetHeight;
+								var doSnap = false;
+						
+								// Snap to the right
+								if( direction == 'right' && ( !currentMovable.snap || currentMovable.snap == 'right' ) )
+								{
+									if( curWinRight > mWL && curWinRight <= mWL + 20 && ( ( curWinTop >= mWT && curWinTop <= mWB ) || ( curWinBottom >= mWT && curWinBottom <= mWB ) ) )
+									{
+										if( mWL - currentMovable.offsetWidth < 0 )
+										{
+											currentMovable.style.width = mWL + 'px';
+										}
+										currentMovable.style.left = mWL - currentMovable.offsetWidth + 'px';
+										currentMovable.snap = 'right';
+										currentMovable.snapObject = mw;
+								
+										doSnap = true;
+										lockX = true;
+									}
+								}
+								// Snap to the left
+								else if( direction == 'left' && ( !currentMovable.snap || currentMovable.snap == 'left' ) )
+								{
+									if( curWinLeft < mw.offsetWidth + mWL && curWinLeft >= mw.offsetWidth + mWL - 20 && ( ( curWinTop >= mWT && curWinTop <= mWB ) || ( curWinBottom >= mWT && curWinBottom <= mWB ) ) )
+									{
+										if( mWR + currentMovable.offsetWidth > Workspace.screen.getMaxViewWidth() )
+										{
+											currentMovable.style.width = Workspace.screen.getMaxViewWidth() - mWR + 'px';
+										}
+										currentMovable.style.left = mWR + 'px';
+										currentMovable.snap = 'left';
+										currentMovable.snapObject = mw;
+								
+										doSnap = true;
+										lockX = true;
+									}
+								}
+								else if( direction == 'up' && ( !currentMovable.snap || currentMovable.snap == 'up' ) )
+								{
+									if( curWinTop >= mWB - 20 && curWinTop < mWB && ( ( curWinLeft >= mWL && curWinLeft <= mWR ) || ( curWinRight >= mWL && curWinRight <= mWR ) ) )
+									{
+										if( mWB + currentMovable.offsetHeight > Workspace.screen.getMaxViewHeight() )
+										{
+											currentMovable.style.height = Workspace.screen.getMaxViewHeight() + 'px';
+										}
+										currentMovable.style.top = mWB + 'px';
+										currentMovable.snap = 'up';
+										currentMovable.snapObject = mw;
+								
+										doSnap = true;
+										lockY = true;
+									}
+								}
+								else if( direction == 'down' &&  ( !currentMovable.snap || currentMovable.snap == 'down' ) )
+								{
+									if( curWinBottom >= mWT && curWinBottom <= mWT + 20 && ( ( curWinLeft >= mWL && curWinLeft <= mWR ) || ( curWinRight >= mWL && curWinRight <= mWR ) ) )
+									{
+										if( mWT - currentMovable.offsetHeight < 0 )
+										{
+											currentMovable.style.height = mWT + 'px';
+										}
+										currentMovable.style.top = mWT - currentMovable.offsetHeight + 'px';
+										currentMovable.snap = 'down';
+										currentMovable.snapObject = mw;
+								
+										doSnap = true;
+										lockY = true;
+									}
+								}
+								
+								
+								if( doSnap )
+								{
+									var cx = mw.offsetLeft - currentMovable.offsetLeft;
+									var cy = mw.offsetTop - currentMovable.offsetTop;
+									currentMovable.snapCoords = { 
+										x: cx,
+										y: cy,
+										mx: windowMouseX - cx,
+										my: windowMouseY - cy
+									};
+									if( !mw.attached )
+									{
+										mw.attached = [ currentMovable ];
+									}
+									else
+									{
+										mw.attached.push( currentMovable );
+									}
+									mw.setAttribute( 'attach_' + direction, 'attached' );
+									
+									// Unsnap
+									currentMovable.unsnap = function()
+									{
+										// Unsnap
+										this.snap = null;
+										this.snapDistanceX = 0;
+										this.snapDistanceY = 0;
+										this.snapCoords = null;
+										this.removeAttribute( 'viewsnap' );
+			
+										// Clean up snap object attached list and detach
+										if( this.snapObject )
+										{
+											var o = [];
+											var left = right = up = down = false
+											for( var a = 0; a < this.snapObject.attached.length; a++ )
+											{
+												var att = this.snapObject.attached[ a ];
+												if( att != this )
+												{
+						
+													o.push( att );
+													if( att.snap == 'right' )
+														right = true;
+													else if( att.snap == 'left' )
+														left = true;
+													else if( att.snap == 'up' )
+														up = true;
+													else if( att.snap == 'down' )
+														down = true;
+												}
+											}
+											this.snapObject.attached = o;
+											if( !up )
+												this.snapObject.removeAttribute( 'attach_up' );
+											if( !down )
+												this.snapObject.removeAttribute( 'attach_down' );
+											if( !left )
+												this.snapObject.removeAttribute( 'attach_left' );
+											if( !right )
+												this.snapObject.removeAttribute( 'attach_right' );
+											this.snapObject = null;
+										}
+										this.unsnap = null;
+										
+										PollTaskbar();
+									}
+									
+									PollTaskbar();
+									
+									break;
+								}
+							}
+						}
+					}
+				}
+				// We are in snapped mode
+				if( currentMovable.snap )
+				{
+					currentMovable.setAttribute( 'viewsnap', currentMovable.snap );
+					
+					if( currentMovable.snapObject )
+					{
+						var mw = currentMovable.snapObject;
+						currentMovable.snapCoords.x = mw.offsetLeft - currentMovable.offsetLeft;
+						currentMovable.snapCoords.y = mw.offsetTop - currentMovable.offsetTop;
+					}
+					if( currentMovable.snap == 'right' || currentMovable.snap == 'left' )
+					{
+						lockX = true;
+						
+						if( Math.abs( windowMouseX - currentMovable.snapCoords.x - currentMovable.snapCoords.mx ) > 40 )
+						{
+							currentMovable.style.top = currentMovable.snapObject.style.top;
+							currentMovable.style.height = currentMovable.snapObject.style.height;
+							lockY = true;
+						}
+					}
+					else
+					{
+						lockY = true;
+						
+						if( Math.abs( windowMouseY - currentMovable.snapCoords.y - currentMovable.snapCoords.my ) > 40 )
+						{
+							currentMovable.style.left = currentMovable.snapObject.style.left;
+							currentMovable.style.width = currentMovable.snapObject.style.width;
+							lockX = true;
+						}
+					}
+				}
+			}
+		}
+		
+		mousePointer.prevMouseX = windowMouseX;
+		mousePointer.prevMouseY = windowMouseY;
+		
+		// Tell other processes that we're snapping or not
+		if( lockY || lockX )
 		{
-			mx = ( mx >> 3 ) << 3;
-			my = ( my >> 3 ) << 3;
+			currentMovable.snapping = true;
+		}
+		else
+		{
+			currentMovable.snapping = false;
 		}
 		
 		// Moving a window..
 		if ( window.mouseDown == 1 )
 		{
+			if( ( !lockX && !lockY ) && currentMovable.snap && currentMovable.unsnap && currentMovable.shiftKey )
+				currentMovable.unsnap();
+			
 			var w = window.currentMovable;
 
 			// Make sure the inner overlay is over screens
@@ -1201,8 +1567,10 @@ movableListener = function( e, data )
 							vy = wds[z].dom.parentNode.offsetHeight - wds[z].dom.offsetHeight;
 						wds[z].dom.style.right = 'auto';
 						wds[z].dom.style.bottom = 'auto';
-						wds[z].dom.style.left = vx + 'px';
-						wds[z].dom.style.top = vy + 'px';
+						if( !lockX )
+							wds[z].dom.style.left = vx + 'px';
+						if( !lockY )
+							wds[z].dom.style.top = vy + 'px';
 					}
 				}
 				
@@ -1210,7 +1578,10 @@ movableListener = function( e, data )
 					w.setAttribute( 'moving', 'moving' );
 								
 				// Move the window
-				ConstrainWindow( w, mx, my )
+				ConstrainWindow( w, 
+					lockX ? currentMovable.offsetLeft : mx, 
+					lockY ? currentMovable.offsetTop : my 
+				);
 
 				// Do the snap!
 				if( !isMobile )
@@ -1304,7 +1675,25 @@ movableListener = function( e, data )
 				ry = Math.floor( ry / 8 ) << 3;
 			}
 			
-			ResizeWindow( w, r.wwid - w.marginHoriz + rx, r.whei - w.marginVert + ry );
+			if( !w.getAttribute( 'moving' ) )
+				w.setAttribute( 'moving', 'moving' );
+			
+			var resizeX = r.wwid - w.marginHoriz + rx;
+			var resizeY = r.whei - w.marginVert + ry;
+			
+			if( w.snap )
+			{
+				if( w.snap == 'up' || w.snap == 'down' )
+				{
+					resizeX = w.offsetWidth;
+				}
+				if( w.snap == 'left' || w.snap == 'right' )
+				{
+					resizeY = w.offsetHeight;
+				}
+			}
+			
+			ResizeWindow( w, resizeX, resizeY );
 			
 			// Do resize events (and make sure we have the overlay to speed things up)
 			CoverWindows();
@@ -1362,7 +1751,7 @@ function DrawRegionSelector( e )
 	
 	// In icon windows or new screens
 	if ( rwc && ( rwc.contains( 'Content' ) || rwc.contains( 'ScreenContent' ) ) )
-	{
+	{	
 		// Window offset
 		ex = -window.regionWindow.parentNode.offsetLeft;
 		ey = -window.regionWindow.parentNode.offsetTop;
@@ -1484,16 +1873,30 @@ function DrawRegionSelector( e )
 		var icos = window.regionWindow.icons;
 		if ( icos )
 		{
+			var exOffx = 0;
+			var exOffy = 0;
+			
+			if( window.regionWindow.windowObject )
+			{
+				if( window.regionWindow.windowObject.content.fileBrowser )
+				{
+					if( !window.regionWindow.windowObject.content.fileBrowser.dom.classList.contains( 'Hidden' ) )
+					{
+						imx -= window.regionWindow.windowObject.content.fileBrowser.dom.offsetWidth;
+					}
+				}
+			}
+			
 			for ( var a = 0; a < icos.length; a++ )
 			{
 				var ics = icos[a].domNode;
 				// Coords on icon
 				if( ics )
 				{
-					var ix1 = ics.offsetLeft;
-					var iy1 = ics.offsetTop;
-					var ix2 = ics.offsetWidth+ix1;
-					var iy2 = ics.offsetHeight+iy1;
+					var ix1 = ics.offsetLeft + exOffx;
+					var iy1 = ics.offsetTop + exOffy;
+					var ix2 = ics.offsetWidth+ix1 + exOffx;
+					var iy2 = ics.offsetHeight+iy1 + exOffy;
 			
 					// check overlapping icon
 					var overlapping = ix1 >= imx && iy1 >= imy && ix2 <= imx+dw && iy2 <= imy+dh;
@@ -1599,6 +2002,7 @@ movableMouseUp = function( e )
 	
 	window.fileMenuElement = null;
 	window.mouseDown = false;
+	if( window.currentMovable ) currentMovable.snapping = false;
 	window.mouseMoveFunc = false;
 	document.body.style.cursor = '';
 	
@@ -1615,16 +2019,30 @@ movableMouseUp = function( e )
 		window.currentMovable.removeAttribute( 'moving' );
 	}
 	
-	if( WorkspaceMenu.open || ( target && target.classList && ( target.classList.contains( 'ScreenContent' ) ) ) )
+	if( WorkspaceMenu.open || 
+		( 
+			target && target.classList && ( 
+				target.classList.contains( 'ScreenContent' ) ||
+				target.classList.contains( 'Scroller' ) ||
+				target.classList.contains( 'Content' ) ||
+				target.classList.contains( 'MoveOverlay' ) ||
+				target.classList.contains( 'ScreenOverlay' )
+			) 
+		) 
+	)
 	{
 		if( !isMobile )
+		{
 			WorkspaceMenu.close();
+		}
 	
 		// Hide start menu
 		if( Workspace.toggleStartMenu )
 			Workspace.toggleStartMenu( false );
 	}
-	ExposeScreens(); ExposeWindows();
+	
+	ExposeScreens(); 
+	ExposeWindows();
 	
 	// Workbench menu is now hidden (only miga style)
 	if( Workspace && Workspace.menuMode == 'miga' )
@@ -1634,6 +2052,7 @@ movableMouseUp = function( e )
 	}
 	
 	// If we selected icons, clear the select region
+	
 	ClearSelectRegion();
 	
 	// Execute drop function on mousepointer (and stop moving!)
@@ -1641,9 +2060,12 @@ movableMouseUp = function( e )
 	mousePointer.stopMove( e );
 	RemoveDragTargets();
 	
-	if( Workspace.iconContextMenu )
+	if( e.button == 0 )
 	{
-		Workspace.iconContextMenu.hide();
+		if( Workspace.iconContextMenu )
+		{
+			Workspace.iconContextMenu.hide();
+		}
 	}
 }
 
@@ -1723,6 +2145,13 @@ function CheckScreenTitle( screen )
 	
 }
 
+// Get the taskbar element
+function GetTaskbarElement()
+{
+	if( ge( 'DockWindowList' ) ) return ge( 'DockWindowList' );
+	return ge( 'Taskbar' );
+}
+
 // Let's make gui for movable windows minimize maximize
 pollingTaskbar = false;
 function PollTaskbar( curr )
@@ -1791,20 +2220,40 @@ function PollTaskbar( curr )
 			baseElement = ge( 'DockWindowList' );
 		}
 		
-		if( !baseElement ) return;
+		if( !baseElement )
+		{
+			pollingTaskbar = false;
+			return;
+		}
 		
 		// Make into a HasWindowlist element
 		var dock = baseElement.parentNode.desklet;
 		baseElement.parentNode.classList.add( 'HasWindowlist' );
 		
+		var dlength = Workspace.mainDock.iconListPixelLength;
+		
 		if( baseElement.parentNode.classList.contains( 'Vertical' ) )
 		{
-			baseElement.style.height = 'calc(100% - ' + ( Workspace.mainDock.iconListPixelLength ) + 'px)';
+			baseElement.style.height = 'calc(100% - ' + dlength + 'px)';
 			baseElement.style.width = '100%';
 		}
 		else
 		{
-			baseElement.style.width = 'calc(100% - ' + ( Workspace.mainDock.iconListPixelLength ) + 'px)';
+			var right = '0';
+			if( ge( 'Tray' ) )
+			{
+				if( Workspace.mainDock && Workspace.mainDock.conf.size )
+				{
+					var rems = [ 'Size80', 'Size59', 'Size32', 'Size16' ];
+					for( var a = 0; a < rems.length; a++ )
+						ge( 'Tray' ).classList.remove( rems[a] );
+					ge( 'Tray' ).classList.add( 'Size' + Workspace.mainDock.conf.size );
+				}
+				dlength += ge( 'Tray' ).offsetWidth;
+				right = ge( 'Tray' ).offsetWidth;
+			}
+			baseElement.style.width = 'calc(100% - ' + dlength + 'px)';
+			baseElement.style.right = right + 'px';
 			baseElement.style.height = '100%';
 		}
 		
@@ -1817,7 +2266,11 @@ function PollTaskbar( curr )
 	// Normal taskbar
 	else
 	{
-		if( !baseElement ) return;
+		if( !baseElement ) 
+		{
+			pollingTaskbar = false;
+			return;
+		}
 		if( baseElement.childNodes.length )
 		{
 			var lastTask = baseElement.childNodes[ baseElement.childNodes.length - 1 ];
@@ -1855,7 +2308,6 @@ function PollTaskbar( curr )
 		var swi = baseElement.offsetWidth;
 		
 		var t = baseElement;
-		var queue = Math.floor( Math.random() * 65 );
 		
 		// When activated normally
 		
@@ -1873,7 +2325,8 @@ function PollTaskbar( curr )
 				var f = false;
 				for( var a in movableWindows )
 				{
-					if( movableWindows[ a ].viewId == t.tasks[ b ].viewId )
+					// Skip snapped windows
+					if( !movableWindows[ a ].snap && movableWindows[ a ].viewId == t.tasks[ b ].viewId )
 					{
 						f = true;
 						break;
@@ -1899,14 +2352,21 @@ function PollTaskbar( curr )
 			{
 				var d = false;
 				
+				// Skip snapped windows
+				if( movableWindows[ a ].snap ) continue;
+				
 				// Movable windows
 				var pn = movableWindows[a];
 				
 				// Skip hidden ones
-				if( pn.windowObject.flags[ 'hidden' ] == true )
+				if( pn.windowObject.flags.hidden == true )
+				{
 					continue;
-				if( pn.windowObject.flags[ 'invisible' ] == true )
+				}
+				if( pn.windowObject.flags.invisible == true )
+				{
 					continue;
+				}
 				
 				if( pn && pn.windowObject.flags.screen != Workspace.screen )
 				{
@@ -1919,6 +2379,8 @@ function PollTaskbar( curr )
 					if ( t.tasks[c].viewId == pn.viewId )
 					{
 						d = t.tasks[ c ].dom; // don't add twice
+						if( pn.content.directoryview )
+							d.classList.add( 'Directory' );
 						break;
 					}
 				}
@@ -1931,6 +2393,10 @@ function PollTaskbar( curr )
 					d.viewId = pn.viewId;
 					d.view = pn;
 					d.className = pn.getAttribute( 'minimized' ) == 'minimized' ? 'Task Hidden MousePointer' : 'Task MousePointer';
+					if( pn.content.directoryview )
+					{
+						d.classList.add( 'Directory' );
+					}
 					d.window = pn;
 					pn.taskbarTask = d;
 					d.applicationId = d.window.applicationId;
@@ -1943,14 +2409,26 @@ function PollTaskbar( curr )
 					// Activate
 					d.setActive = function( click )
 					{
-						this.classList.add( 'Active' );
 						_ActivateWindow( this.window );
 						if( click )
 						{
-							this.window.viewContainer.setAttribute( 'minimized', '' );
-							if( this.window.windowObject.workspace != globalConfig.workspaceCurrent )
+							var div = this.window;
+							div.viewContainer.setAttribute( 'minimized', '' );
+							div.minimized = false;
+							if( div.windowObject.workspace != globalConfig.workspaceCurrent )
 							{
-								Workspace.switchWorkspace( this.window.windowObject.workspace );
+								Workspace.switchWorkspace( div.windowObject.workspace );
+							}
+							if( div.attached )
+							{
+								for( var a = 0; a < div.attached.length; a++ )
+								{
+									if( div.attached[ a ].minimize )
+									{
+										div.attached[ a ].minimized = false;
+										div.attached[ a ].viewContainer.removeAttribute( 'minimized' );
+									}
+								}
 							}
 						}
 					}
@@ -1961,8 +2439,23 @@ function PollTaskbar( curr )
 						_DeactivateWindow( this.window );
 					}
 					// Click event
+					d.onmousedown = function()
+					{
+						this.mousedown = true;
+					}
+					d.onmouseout = function()
+					{
+						this.mousedown = false;
+					}
 					d.onmouseup = function( e, extarg )
 					{
+						if( !this.mousedown )
+							return;
+						if( e.button != 0 ) return;
+						
+						// Not needed anymore
+						this.mousedown = false;
+							
 						if ( !e ) e = window.event;
 						var targ = e ? ( e.target ? e.target : e.srcElement ) : false;
 						if( extarg ) targ = extarg;
@@ -1982,6 +2475,18 @@ function PollTaskbar( curr )
 								{
 									this.setInactive();
 									this.window.viewContainer.setAttribute( 'minimized', 'minimized' );
+									var div = this.window;
+									if( div.attached )
+									{
+										for( var a = 0; a < div.attached.length; a++ )
+										{
+											if( !div.attached[ a ].minimized )
+											{
+												div.attached[ a ].minimized = true;
+												div.attached[ a ].viewContainer.setAttribute( 'minimized', 'minimized' );
+											}
+										}
+									}
 								}
 							}
 							else
@@ -2016,7 +2521,10 @@ function PollTaskbar( curr )
 		else
 		{
 			// Update existing tasks
-			if( curr && curr.taskbarTask ) curr.taskbarTask.setActive();
+			if( curr && curr.taskbarTask && curr.parentNode )
+			{
+				curr.taskbarTask.setActive();
+			}
 			for( var c = 0; c < t.tasks.length; c++ )
 			{
 				var d = t.tasks[ c ].dom;
@@ -2082,6 +2590,19 @@ function PollTaskbar( curr )
 		}
 	}
 	
+	// Final test, just flush suddenly invisible or hidden view windows
+	var out = [];
+	for( var a = 0; a < t.tasks.length; a++ )
+	{
+		var v = t.tasks[a].dom;
+		if( v.view.windowObject.flags.hidden || v.view.windowObject.flags.invisible )
+		{
+			t.tasks[a].dom.parentNode.removeChild( t.tasks[a].dom );
+		}
+		else out.push( t.tasks[a] );
+	}
+	t.tasks = out;
+	
 	PollTray();
 	pollingTaskbar = false;
 }
@@ -2090,6 +2611,8 @@ function PollTaskbar( curr )
 function PollDockedTaskbar()
 {
 	if( Workspace.docksReloading ) return;
+	
+	pollingTaskbar = true;
 	
 	PollTray();
 	
@@ -2150,7 +2673,11 @@ function PollDockedTaskbar()
 		{
 			if( movableWindows[ b ].windowObject )
 			{
-				// Skip invisible windows
+				// Skip hidden and invisible windows
+				if( movableWindows[ b ].windowObject.flags.hidden )
+				{
+					continue;
+				}
 				if( movableWindows[ b ].windowObject.flags.invisible )
 				{
 					continue;
@@ -2330,6 +2857,8 @@ function PollDockedTaskbar()
 		
 		if( changed ) desklet.render();
 	}
+	
+	pollingTaskbar = false;
 }
 
 // Make a menu for the current launcher or view list item icon
@@ -2353,9 +2882,31 @@ function GenerateViewListMenu( win )
 
 // Notify the user!
 // format: msg{ title: 'sffs', text: 'fslkjsl' }
+function CallFriendApp( func, param1, param2, param3 )
+{
+	if( typeof friendApp != 'undefined' )
+	{
+		switch ( func )
+		{
+			case 'show_notification':
+				if ( typeof friendApp.show_notification == 'function' )
+				{
+					friendApp.show_notification( param1, param2 );
+					return '';
+				}
+				break;
+			case 'onFriendNetworkMessage':
+				if ( typeof friendApp.onFriendNetworkMessage == 'function' )
+					return friendApp.onFriendNetworkMessage( param1 );
+				break;
+		}
+	}
+	return false;
+}
 function Notify( msg, callback, clickcallback )
 {
 	if( !Workspace.notifications ) return;
+	if( !msg ) return;
 	
 	var n = {
 		msg: msg,
@@ -2363,62 +2914,173 @@ function Notify( msg, callback, clickcallback )
 		application: msg.application
 	};
 	
+	if( !msg.text ) msg.text = 'untexted';
+	if( !msg.title ) msg.title = 'untitled';
+	
+	
 	// Add dom element
 	var d = document.createElement( 'div' );
-	d.className = 'BubbleInfo';
+	d.className = msg.label ? 'PopInfo' : 'BubbleInfo';
+	if( msg.sticky )
+		d.sticky = true;
 	var i = document.createElement( 'div' );
 	i.innerHTML = '<p class="Layout"><strong>' + msg.title + '</strong></p><p class="Layout">' + msg.text + '</p>';
 	d.appendChild( i );
 	d.style.opacity = 0;
 	
-	// Find notification
-	var chn = ge( 'Tray' ).childNodes;
 	var notification = false;
-	for( var a = 0; a < chn.length; a++ )
+
+	//check for app interface and push notification out...
+	if( typeof friendApp != 'undefined' && typeof friendApp.show_notification == 'function')
 	{
-		if( chn[a].className && chn[a].classList.contains( 'Notification' ) )
+		friendApp.show_notification( msg.title, msg.text  );
+	}
+
+	// On mobile, we always show the notification on the Workspace screen
+	if( isMobile )
+	{
+		if( !ge( 'MobileNotifications' ) )
 		{
-			notification = chn[a];
-			break;
+			var d = document.createElement( 'div' );
+			d.className = 'Notification Mobile';
+			d.id = 'MobileNotifications';
+			ge( 'DoorsScreen' ).appendChild( d );
+		}
+		var n = document.createElement( 'div' );
+		n.className = 'MobileNotification BackgroundDefault ColorDefault';
+		n.innerHTML = '<div class="Title">' + msg.title + '</div><div class="Text">' + msg.text + '</div>';
+		ge( 'MobileNotifications' ).appendChild( n );
+		setTimeout( function(){ n.classList.add( 'Showing' ); }, 50 );
+		n.close = function()
+		{
+			this.classList.remove( 'Showing' );
+			setTimeout( function()
+			{
+				n.parentNode.removeChild( n );
+			}, 250 );
+		}
+		
+		if( msg.flags && msg.flags.sticky )
+		{
+			n.onclick = function(){ n.close(); }
+		}
+		else
+		{
+			setTimeout( function(){ n.close(); }, 3000 );
+		}
+		
+		return;
+	}
+	else
+	{
+		// Find notification
+		var chn = ge( 'Tray' ).childNodes;
+
+		// Named tray element
+		if( msg.label )
+		{
+			for( var a = 0; a < chn.length; a++ )
+			{
+				if( chn[a].getAttribute( 'label' ) && chn[a].getAttribute( 'label' ) == msg.label )
+				{
+					notification = chn[a];
+					notification.classList.add( 'PopNotification' );
+					break;
+				}
+			}
+			if( !notification ) return;
+		}
+
+		// Get existing notification element
+		if( !notification )
+		{
+			for( var a = 0; a < chn.length; a++ )
+			{
+				if( chn[a].className && chn[a].classList.contains( 'Notification' ) )
+				{
+					notification = chn[a];
+					break;
+				}
+			}
+		}
+	
+		// Create parent node
+		if( !notification )
+		{
+			notification = document.createElement( 'div' );
+			notification.className = 'TrayElement Notification IconSmall';
+			ge( 'Tray' ).appendChild( notification );
 		}
 	}
-	
-	// Create parent node
-	if( !notification )
-	{
-		notification = document.createElement( 'div' );
-		notification.className = 'TrayElement Notification IconSmall';
-		ge( 'Tray' ).appendChild( notification );
-	}
-	
+		
 	// Add notification bubble
-	notification.appendChild( d );
+	// But are we the first?
+	if( d.className == 'PopInfo' && notification.childNodes.length )
+	{
+		notification.insertBefore( d, notification.childNodes[0] );
+	}
+	else notification.appendChild( d );
 	
 	// When clicking the bubble
 	// :)
 	if( clickcallback )
+	{
 		d.onclick = clickcallback;
+		d.ontouchdown = clickcallback;
+	}
 	
 	// Do the fading
 	setTimeout( function()
 	{
 		d.style.opacity = 1;
-		setTimeout( function(){ d.style.opacity = 0; }, 4000 );
-		setTimeout( function(){ 
-			notification.removeChild( d ); 
-			if( !notification.getElementsByTagName( 'div' ).length )
-			{
-				ge( 'Tray' ).removeChild( notification );
-			}
-			if( callback && typeof( callback ) == 'function' ) callback();
-		}, 4750 );
+		if ( !msg.sticky )
+		{
+			setTimeout( function(){ d.style.opacity = 0; }, 4000 );
+			setTimeout( function(){ 
+				notification.removeChild( d ); 
+				if( notification.getAttribute( 'label' ) )
+				{
+					notification.classList.remove( 'PopNotification' );
+				}
+				if( !notification.getElementsByTagName( 'div' ).length )
+				{
+					ge( 'Tray' ).removeChild( notification );
+				}
+				// Standard notifications can reply to notification origin
+				// that the bubble did close
+				if( d.struct && d.struct.onCloseBubble )
+				{
+					d.struct.onCloseBubble();
+				}
+				if( callback && typeof( callback ) == 'function' ) callback();
+			}, 4750 );
+		}
 	}, 25 );
 	
 	// Add to global notification stack
 	Workspace.notifications.push( n );
 	Workspace.renderNotifications();
+	return notification;
 }
-
+function CloseNotification( notification )
+{
+	var d = notification.childNodes[ 0 ];
+	notification.removeChild( d ); 
+	if( notification.getAttribute( 'label' ) )
+	{
+		notification.classList.remove( 'PopNotification' );
+	}
+	if( !notification.getElementsByTagName( 'div' ).length )
+	{
+		ge( 'Tray' ).removeChild( notification );
+	}
+	// Standard notifications can reply to notification origin
+	// that the bubble did close
+	if( d.struct && d.struct.onCloseBubble )
+	{
+		d.struct.onCloseBubble();
+	}
+}
 // Poll the tray for elements
 function PollTray()
 {
@@ -2545,14 +3207,34 @@ movableMouseDown = function ( e )
 {
 	if ( !e ) e = window.event;
 	
+	window.focus();
+	
 	// Menu trigger
 	var rc = 0;
 	if ( e.which ) rc = ( e.which == 3 );
 	else if ( e.button ) rc = ( e.button == 2 );
 	
+	// Get target
+	var tar = e.srcElement ? e.srcElement : e.target;
+	
+	if( ( window.isTablet || window.isMobile ) && Workspace.iconContextMenu )
+	{
+		Workspace.iconContextMenu.hide();
+		DefaultToWorkspaceScreen( tar );
+	}
+	
 	// TODO: Allow context menus!
-	if ( rc || e.button != 0 ) 
-		return cancelBubble ( e );
+	if( !window.isMobile && !window.isTablet && ( rc || e.button != 0 ) )
+	{
+		try
+		{
+			return cancelBubble ( e );
+		}
+		catch( e )
+		{
+			return;
+		}
+	}
 	
 	if( Workspace.iconContextMenu )
 	{
@@ -2560,9 +3242,6 @@ movableMouseDown = function ( e )
 	}
 	
 	var sh = e.shiftKey || e.ctrlKey;
-	
-	// Get target
-	var tar = e.srcElement ? e.srcElement : e.target;
 	
 	// Zero scroll
 	window.regionScrollLeft = 0;
@@ -2665,6 +3344,7 @@ function clearRegionIcons()
 
 function contextMenu( e )
 {
+	if( e.defaultBehavior ) return;
 	if ( !e ) e = window.event;
 	var tar = e.target ? e.target : e.srcEvent;
 	if ( !tar ) return;
@@ -2719,25 +3399,34 @@ function ElementWindow ( ele )
 
 function InitGuibaseEvents()
 {
-	if ( document.attachEvent )
-		document.attachEvent ( 'onmousemove', movableListener, false );
-	else window.addEventListener ( 'mousemove', movableListener, false );
-	if ( document.attachEvent )
-		document.attachEvent ( 'onresize', movableListener, false );
+	if( window.isTablet || window.isMobile )
+	{
+		window.addEventListener( 'touchstart', movableMouseDown, false );
+		window.addEventListener( 'touchmove', movableListener, false );
+		window.addEventListener( 'touchend', movableMouseUp, false );
+	}
+	else
+	{
+		if ( window.attachEvent )
+			window.attachEvent ( 'onmouseup', movableMouseUp, false );
+		else window.addEventListener ( 'mouseup', movableMouseUp, false );	
+		
+		if ( window.attachEvent )
+			window.attachEvent ( 'onmousemove', movableListener, false );
+		else window.addEventListener ( 'mousemove', movableListener, false );
+		if ( window.attachEvent )
+			window.attachEvent ( 'onmousedown', movableMouseDown, false );
+		else window.addEventListener ( 'mousedown', movableMouseDown, false );
+
+		if ( window.attachEvent )
+			window.attachEvent ( 'oncontextmenu', contextMenu, false );
+		else window.addEventListener ( 'contextmenu', contextMenu, false );
+	}
+	
+	if ( window.attachEvent )
+		window.attachEvent ( 'onresize', movableListener, false );
 	else window.addEventListener ( 'resize', movableListener, false );
 
-	if ( document.attachEvent )
-		document.attachEvent ( 'onmouseup', movableMouseUp, false );
-	else window.addEventListener ( 'mouseup', movableMouseUp, false );	
-	window.addEventListener( 'touchend', movableMouseUp, false );
-
-	if ( document.attachEvent )
-		document.attachEvent ( 'onmousedown', movableMouseDown, false );
-	else window.addEventListener ( 'mousedown', movableMouseDown, false );
-
-	if ( document.attachEvent )
-		document.attachEvent ( 'oncontextmenu', contextMenu, false );
-	else window.addEventListener ( 'contextmenu', contextMenu, false );
 	document.oncontextmenu = contextMenu;
 }
 
@@ -2777,6 +3466,8 @@ function FocusOnNothing()
 	var eles = document.getElementsByTagName( '*' );
 	for( var a = 0; a < eles.length; a++ )
 		eles[a].blur();
+	// Why not focus on window!?
+	window.focus();
 }
 
 // Alert box, blocking a window
@@ -2898,8 +3589,104 @@ function FindImageColorProduct( img )
 
 /* Bubble emitter for tutorials and help ------------------------------------ */
 /* This is bubbles for showing localized help on Workspace scoped elements.   */
+/* TODO: Support API scoped elements...                                       */
 
-function HelpBubble( element, text, uniqueid )
+function CreateHelpBubble( element, text, uniqueid )
 {
+	if( isMobile || isTablet ) return;
+	if( !element || !text ) return;
+	
+	if( element.helpBubble )
+	{
+		element.helpBubble.close();
+	}
+	var helpBubble = {
+		destroy: function()
+		{
+			if( helpBubble )
+			{
+				helpBubble.close();
+				helpBubble.widget = null;
+			}
+			if( element && element.parentNode )
+			{
+				element.removeEventListener( 'mouseover', element.helpBubble.overListener );
+				element.removeEventListener( 'mouseover', element.helpBubble.outListener );
+			}
+		},
+		close: function()
+		{
+			if( helpBubble.widget )
+			{
+				helpBubble.widget.close();
+				helpBubble.widget = null;
+			}
+		},
+		overListener: function( e )
+		{
+			if( !element || !element.parentNode )
+			{
+				helpBubble.destroy();
+				return;
+			}
+			var mx = windowMouseX;
+			var my = windowMouseY;
+			var mt = GetElementTop( element ) - 50;
+			
+			var c = document.createElement( 'canvas' );
+			var d = c.getContext( '2d' );
+			d.font = '1em default';
+			var textWidth = d.measureText( text );
+			
+			// Normal operation
+			mx = GetElementLeft( element ) + ( GetElementWidth( element ) >> 1 ) - ( textWidth.width >> 1 ) - 30;
+			
+			// Check element position
+			var attr = element.parentNode.getAttribute( 'position' );
+			if( attr )
+			{
+				if( attr.indexOf( 'right' ) == 0 )
+				{
+					mt = GetElementTop( element );
+					mx = GetElementLeft( element ) - ( textWidth.width + 20 );
+					posset = true;
+				}
+				else if( attr.indexOf( 'left' ) == 0 )
+				{
+					mt = GetElementTop( element );
+					mx = GetElementLeft( element ) + GetElementWidth( element.parentNode );
+					posset = true;
+				}
+				else if( attr.indexOf( 'top' ) == 0 )
+				{
+					mt = GetElementTop( element.parentNode ) + GetElementHeight( element.parentNode );
+				}
+			}
+			
+			var v = new Widget( {
+				left: mx,
+				top: mt,
+				width: 200,
+				height: 40,
+				'border-radius': 20,
+				above: true
+			} );
+			
+			d.innerHTML = text;
+			v.setFlag( 'width', textWidth.width + 60 );
+			v.setContent( '<div class="TextCenter Padding Ellipsis">' + text + '</div>' );
+			v.dom.addEventListener( 'mouseout', element.helpBubble.outListener );
+			v.show();
+			element.helpBubble.widget = v;
+		},
+		outListener: function( e )
+		{
+			if( helpBubble && helpBubble.widget )
+				helpBubble.widget.hide( function(){ helpBubble.widget.close(); } );
+		}
+	};
+	element.helpBubble = helpBubble;
+	element.addEventListener( 'mouseover', element.helpBubble.overListener );
+	element.addEventListener( 'mouseout', element.helpBubble.outListener );
 }
 

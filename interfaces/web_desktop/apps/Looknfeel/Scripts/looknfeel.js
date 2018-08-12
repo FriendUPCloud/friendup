@@ -40,4 +40,3 @@ Application.run = function( msg, iface )
 		Application.quit();
 	}
 }
-

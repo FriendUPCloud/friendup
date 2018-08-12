@@ -102,6 +102,23 @@ var WorkspaceMenu =
 				ge( 'WorkspaceMenu' ).style.display = '';
 		}
 		
+		wm.ontouchstart = function( e )
+		{
+			var t = e.target ? e.target : e.srcObject;
+			
+			if( t.id && t.id == 'WorkspaceMenu' )
+			{
+				if( this.classList.contains( 'Open' ) )
+				{
+					this.classList.remove( 'Open' );
+				}
+				else
+				{
+					this.classList.add( 'Open' );
+				}
+			}
+		}
+		
 		// Mobile mode
 		if( isMobile || IsSharedApp() )
 		{
@@ -110,7 +127,7 @@ var WorkspaceMenu =
 			{
 				var mm = document.createElement( 'div' );
 				mm.id = 'MobileMenu';
-				mm.className = 'MobileMenu';
+				mm.className = 'MobileMenu ScrollBarSmall';
 				document.body.appendChild( mm );
 			}
 		}
@@ -243,6 +260,12 @@ var WorkspaceMenu =
 		this.open = false;
 		
 		// Expose them!
+		document.body.classList.add( 'nontouch' );
+		setTimeout( function()
+		{
+			document.body.classList.remove( 'nontouch' );
+		}, 50 );
+
 		ExposeScreens();
 		ExposeWindows();
 	},
@@ -338,6 +361,10 @@ var WorkspaceMenu =
 				n.setAttribute( 'name', menuItems[ i ].name );
 				n.innerHTML = menuItems[ i ].name;
 				d.appendChild ( n );
+				if( menuItems[i].icon )
+				{
+					n.setAttribute( 'icon', menuItems[i].icon );
+				}
 				d = n;
 			}
 			var ul = document.createElement ( 'ul' );
@@ -375,7 +402,7 @@ var WorkspaceMenu =
 						li.scope = it.scope;
 					
 						// Sends command to application
-						var mode = isMobile ? 'ontouchend' : 'onmouseup';
+						var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
 						li[mode] = function( e ) 
 						{
 							if( WorkspaceMenu.scrolling ) 
@@ -429,7 +456,7 @@ var WorkspaceMenu =
 					else if( it.command )
 					{
 						li.commandMethod = it.command;
-						var mode = isMobile ? 'ontouchend' : 'onmouseup';
+						var mode = ( isTablet || isMobile ) ? 'ontouchend' : 'onmouseup';
 						li[mode] = function( e )
 						{
 							if( WorkspaceMenu.scrolling ) 
@@ -487,16 +514,21 @@ var WorkspaceMenu =
 	{
 		wm.isActivated = true; // This menu is activated!
 		this.isActive = true;
+
 		
 		// Cover movable windows to avoid mouse collision
-		CoverWindows();
-		CoverScreens();
+		if( !isMobile )
+		{
+			CoverWindows();
+			CoverScreens();
+		}
 	},
 	// Setup the menu input events on wm (dom element)
 	setMenuEvents: function( wm )
 	{
 		if( !wm ) return;
 		var mode = ( Workspace && Workspace.menuMode == 'miga' ) ? 'onmouseover' : 'onmousedown';
+		if( isMobile ) mode = 'ontouchend';
 		
 		// We generated a new menu?
 		var menus = wm.getElementsByTagName( 'div' );
@@ -546,6 +578,9 @@ var WorkspaceMenu =
 			}
 			menus[a][mode] = function( e, state )
 			{
+				Workspace.toggleStartMenu( false );
+				mousePointer.clear();
+				
 				var t = e.target ? e.target : e.srcElement;
 	
 				// Double click closes menu

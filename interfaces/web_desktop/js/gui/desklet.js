@@ -123,10 +123,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 		}
 	}
-	this.dom.onclick = function ( e )
+	
+	this.dom.clickFunc = function( e )
 	{
 		if ( !e ) e = window.event;
-		if ( typeof ( this.events['click'] ) != 'undefined' )
+		if ( this.events && typeof ( this.events['click'] ) != 'undefined' )
 		{
 			for ( var a = 0; a < this.events['click'].length; a++ )
 			{
@@ -145,11 +146,33 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			}
 		}
 	}
-	// For touch devices
-	this.dom.addEventListener( 'touchstart', function( e )
+	
+	if( !isMobile )
 	{
-		this.onclick( e );
-	}, false );
+		this.dom.onclick = this.clickFunc;
+	}
+	else
+	{
+		// For touch devices
+		this.dom.addEventListener( 'touchstart', function( e )
+		{
+			this.touchX = e.touches[0].pageX;
+			this.touchY = e.touches[0].pageY;
+		}, false );
+		this.dom.addEventListener( 'touchend', function( e )
+		{
+			if( !e.changedTouches ) return
+			
+			var px = e.changedTouches[0].clientX;
+			var py = e.changedTouches[0].clientY;
+			
+			var dist = Math.sqrt( Math.pow( this.touchX - px, 2 ) + Math.pow( this.touchY - py, 2 ) );
+			if( dist > 40 || !this.classList.contains( 'Open' ) )
+			{
+				this.clickFunc( e );
+			}
+		}, false );
+	}
 	this.dom.onmouseup = function ( e )
 	{
 		if ( !e ) e = window.event;
@@ -188,6 +211,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			if( !Workspace.appPanel )
 				Workspace.appPanel = ge( 'DoorsScreen' ).getElementsByClassName( 'ScreenContent' )[0].getElementsByTagName( 'div' )[0];
 		
+			if( isMobile )
+			{
+				this.dom.style.overflowY = 'auto';
+				this.dom.classList.add( 'ScrollBarSmall' );
+			}
+		
 			var dp = Workspace.appPanel;
 		
 			if( Workspace && typeof Workspace.closeDrivePanel == 'function' )
@@ -203,6 +232,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				d.classList.add( 'Opened' );
 			}, 5 );
 			document.body.classList.add( 'AppsShowing' );
+			if( Workspace.widget ) Workspace.widget.slideUp();
 			return cancelBubble( e );
 		}
 	}
@@ -216,6 +246,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			setTimeout( function()
 			{
 				d.classList.remove( 'Open' );
+				d.style.overflowY = 'visible';
 			}, 250 );
 			document.body.classList.remove( 'AppsShowing' );
 			this.open = false;
@@ -777,110 +808,146 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				div.style.backgroundImage = 'url(\'' + o.src + '\')';
 				div.innerHTML = '<span>' + ( o.displayname ? o.displayname: o.exe ) + '</span>';
 			}
-			if( o.click )
+			
+			function clickFunc( e )
 			{
-				div.onclick = o.click;
-			}
-			else 
-			{
-				div.onclick = function( e )
-				{				
-					// We got views? Just manage them
-					if( !isMobile )
-					{
-						if( dk.toggleViewVisibility( this ) ) return;
-					}
-
-					if( currentMovable )
-						_DeactivateWindow( currentMovable );
+				if( div.helpBubble ) div.helpBubble.close();
 				
-					var args = '';
-					var executable = o.exe + '';
+				// We got views? Just manage them
+				if( !isMobile )
+				{
+					if( dk.toggleViewVisibility( this ) ) return;
+				}
 
-					if( executable.indexOf( ' ' ) > 0 )
+				if( currentMovable )
+					_DeactivateWindow( currentMovable );
+			
+				var args = '';
+				var executable = o.exe + '';
+
+				if( executable.indexOf( ' ' ) > 0 )
+				{
+					var t = executable.split( ' ' );
+					if( t[0].indexOf( ':' ) == -1)
 					{
-						var t = executable.split( ' ' );
-						if( t[0].indexOf( ':' ) == -1)
+						args = '';
+						for( var a = 1; a < t.length; a++ )
 						{
-							args = '';
-							for( var a = 1; a < t.length; a++ )
-							{
-								args += t[a];
-								if( a < t.length - 1 )
-									args += ' ';
-							}
-							executable = t[0];	
+							args += t[a];
+							if( a < t.length - 1 )
+								args += ' ';
 						}
+						executable = t[0];	
+					}
+				}
+			
+				if( o.workspace && o.workspace >= 0 )
+					args += ' workspace=' + o.workspace;
+			
+				// Extension
+				if( executable.indexOf( ':' ) > 0 )
+				{
+					var l = executable.split( ':' )[1];
+					if( l.indexOf( '/' ) > 0 )
+					{
+						l = l.split('/');
+						l = l[l.length-1];
 					}
 				
-					if( o.workspace && o.workspace >= 0 )
-						args += ' workspace=' + o.workspace;
-				
-					// Extension
-					if( executable.indexOf( ':' ) > 0 )
+					if( l.length > 1 )
 					{
-						var l = executable.split( ':' )[1];
-						if( l.indexOf( '/' ) > 0 )
+						var ext = l;
+						ext = '.' + ext[ ext.length - 1 ].toLowerCase();
+	
+						// Check mimetypes
+						for( var a in Workspace.mimeTypes )
 						{
-							l = l.split('/');
-							l = l[l.length-1];
-						}
-					
-						if( l.length > 1 )
-						{
-							var ext = l;
-							ext = '.' + ext[ ext.length - 1 ].toLowerCase();
-		
-							// Check mimetypes
-							for( var a in Workspace.mimeTypes )
-							{
-								var mt = Workspace.mimeTypes[ a ];
+							var mt = Workspace.mimeTypes[ a ];
 
-								for( var b in mt.types )
+							for( var b in mt.types )
+							{
+								if( ext == mt.types[ b ].toLowerCase() )
 								{
-									if( ext == mt.types[ b ].toLowerCase() )
-									{
-										return ExecuteApplication( mt.executable, executable );
-									}
+									return ExecuteApplication( mt.executable, executable );
 								}
 							}
 						}
 					}
-				
-					var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
-				
-					// If not a single instance app, execute
-					if( !docked && !friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
+				}
+			
+				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
+			
+				// If not a single instance app, execute
+				if( !docked && !friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
+				{
+					ExecuteApplication( executable, args );
+				}
+				// Just minimize apps if you find them, if not execute
+				else
+				{
+					if( dk.toggleExecutable( div ) ) 
 					{
-						ExecuteApplication( executable, args );
-					}
-					// Just minimize apps if you find them, if not execute
-					else
-					{
-						if( dk.toggleExecutable( div ) ) 
-						{
-							return;
-						}
-					
-						// If we didn't find the app, execute
-						ExecuteApplication( executable, args );
+						return;
 					}
 				
-					// Switch to the workspace of the app
-					Workspace.switchWorkspace( o.workspace );
-				
-					// Close it for mobile
-					if( window.isMobile )
-					{
-						self.closeDesklet();
-						self.dom.mobileClicked = false;
-					}
+					// If we didn't find the app, execute
+					ExecuteApplication( executable, args );
+				}
+			
+				// Switch to the workspace of the app
+				Workspace.switchWorkspace( o.workspace );
+			
+				// Close it for mobile
+				if( window.isMobile )
+				{
+					self.closeDesklet();
+					self.dom.mobileClicked = false;
 				}
 			}
-			div.addEventListener( 'touchstart', div.onclick );
+			
+			var evt = window.isMobile || window.isTablet ? 'ontouchend' : 'onclick';
+			
+			if( window.isMobile )
+			{
+				// You have 0.25s to click
+				div.ontouchstart = function( e )
+				{
+					this.touchTime = ( new Date() ).getTime();
+					setTimeout( function()
+					{
+						div.touchTime = null;
+					}, 250 );
+				}
+			}
+			
+			if( o.click )
+			{
+				div[ evt ] = function( e )
+				{
+					var t = e.target ? e.target : e.srcElement;
+					if( t != div ) return;
+					if( window.isMobile && !dk.open ) return;
+					o.click( e );
+					if( div.helpBubble ) div.helpBubble.close();
+				}
+			}
+			else 
+			{
+				div[ evt ] = function( e )
+				{				
+					if( window.isMobile && !this.touchTime )
+						return;
+					
+					var t = e.target ? e.target : e.srcElement;
+					if( t != div ) return;
+					if( window.isMobile && !dk.open ) return;
+					clickFunc( e );
+					if( div.helpBubble ) div.helpBubble.close();
+				}
+			}
 			if( o.title )
 			{
-				div.setAttribute( 'title', o.title ? o.title : o.src );
+				CreateHelpBubble( div, o.title ? o.title : o.src );
 			}
 			this.dom.appendChild( div );
 			this.refresh ();

@@ -5,3 +5,5 @@ i18n_link_types                    : Bind typer til applikasjon
 i18n_add_mimetype                  : Ny mimetype
 i18n_cancel                        : Avbryt
 
+i18n_correctly_set_mimetype        : Satt mimetypen
+i18n_mimetype_updated              : Mime type oppdatert

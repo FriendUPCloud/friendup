@@ -39,7 +39,7 @@ Friend.Tree.Debug.Debugger.messageUp = function ( message )
 {
     if ( message.command == 'keydown' )
     {
-        // Debugger keys
+        // De bugger keys
         var refreshAll = false;
         if ( message.code = 90 )            			    // Display Z Map?
         {

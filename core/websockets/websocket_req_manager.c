@@ -35,6 +35,7 @@
 #include "websocket_req.h"
 #include "websocket_req_manager.h"
 #include <util/string.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * Create new WebsocketReqManager structure
@@ -62,10 +63,10 @@ void WebsocketReqManagerDelete( WebsocketReqManager *wrm )
 {
 	if( wrm != NULL )
 	{
-		pthread_mutex_lock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 		WebsocketReqDeleteAll( wrm->wrm_WRWaiting );
 		WebsocketReqDeleteAll( wrm->wrm_WRQueue );
-		pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		
 		pthread_mutex_destroy( &(wrm->wrm_Mutex) );
 		
@@ -89,7 +90,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 	if( wrm != NULL )
 	{
 		// we must find first if request with provided ID exist
-		pthread_mutex_lock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 		WebsocketReq *req = wrm->wrm_WRWaiting;
 		WebsocketReq *prevreq = NULL;
 		while( req != NULL )
@@ -101,7 +102,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			prevreq = req;
 			req = (WebsocketReq *)req->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		
 		DEBUG("[WebsocketReqPutData] req pointer %p chunk %d/%d , datasize %d\n", req, chunk, total, datasize );
 		
@@ -112,7 +113,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			DEBUG("[WebsocketReqPutData] pointer to last chunk %p\n", oreq );
 			if( oreq != NULL )
 			{
-				pthread_mutex_lock( &(wrm->wrm_Mutex) );
+				FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 				// chunks were connected to one message
 				// message is removed from Waiting messages
 				if( oreq == wrm->wrm_WRWaiting )
@@ -137,7 +138,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 				}
 				wrm->wrm_WRLastInQueue = oreq;
 				*/
-				pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 				
 				DEBUG("[WebsocketReqPutData] Request message %s  \n\n%d\n", req->wr_Message, req->wr_MessageSize );
 				
@@ -148,7 +149,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 		{
 			WebsocketReq *nreq = WebsocketReqNew( id, chunk, total, data, datasize );
 			
-			pthread_mutex_lock( &(wrm->wrm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 			
 			// We must remove old WebsocketReqests
 			time_t currTime = time( NULL );
@@ -187,7 +188,7 @@ WebsocketReq *WebsocketReqManagerPutChunk( WebsocketReqManager *wrm, char *id, i
 			
 			nreq->node.mln_Succ = (MinNode *)wrm->wrm_WRWaiting;
 			wrm->wrm_WRWaiting = nreq;
-			pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
 	}
 	return NULL;
@@ -209,7 +210,7 @@ WebsocketReq *WebsocketReqManagerPutRawData( WebsocketReqManager *wrm, char *dat
 		DEBUG("[WebsocketReqPutRawData] pointer to last chunk %p\n", oreq );
 		if( oreq != NULL )
 		{
-			pthread_mutex_lock( &(wrm->wrm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 			
 			// add to queue, to last place
 			if( wrm->wrm_WRLastInQueue != NULL )
@@ -222,7 +223,7 @@ WebsocketReq *WebsocketReqManagerPutRawData( WebsocketReqManager *wrm, char *dat
 			}
 			wrm->wrm_WRLastInQueue = oreq;
 			
-			pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 		}
 		return oreq;
 	}
@@ -239,7 +240,7 @@ WebsocketReq *WebsocketReqManagerGetFromQueue( WebsocketReqManager *wrm )
 	WebsocketReq *req = NULL;
 	if( wrm != NULL )
 	{
-		pthread_mutex_lock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(wrm->wrm_Mutex) );
 		
 		req = wrm->wrm_WRQueue;
 		if( req != NULL )
@@ -255,7 +256,7 @@ WebsocketReq *WebsocketReqManagerGetFromQueue( WebsocketReqManager *wrm )
 			}
 		}
 		
-		pthread_mutex_unlock( &(wrm->wrm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(wrm->wrm_Mutex) );
 	}
 	return req;
 }

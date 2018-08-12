@@ -51,6 +51,7 @@ typedef struct UserManager
 	UserGroup							*um_UserGroups;			// all user groups
 	void 								*um_USM;
 	RemoteUser							*um_RemoteUsers;		// remote users and their connections
+	User								*um_APIUser;	// API user
 } UserManager;
 
 
@@ -90,6 +91,12 @@ int UMUserUpdateDB( UserManager *um, User *usr );
 
 
 int UMAssignApplicationsToUser( UserManager *smgr, User *usr );
+
+//
+//
+//
+
+User * UMUserGetByName( UserManager *um, const char *name );
 
 //
 //
@@ -150,6 +157,12 @@ User *UMGetUserByNameDB( UserManager *um, const char *name );
 //
 //
 
+User *UMGetUserByIDDB( UserManager *um, FULONG id );
+
+//
+//
+//
+
 User *UMGetUserByID( UserManager *um, FULONG id );
 
 //
@@ -193,5 +206,11 @@ FBOOL UMGetLoginPossibilityLastLogins( UserManager *um, const char *name, int nu
 //
 
 int UMStoreLoginAttempt( UserManager *um, const char *name, const char *info, const char *failReason );
+
+//
+//
+//
+
+int UMCheckAndLoadAPIUser( UserManager *um );
 
 #endif //__SYSTEM_USER_USER_MANAGER_H__

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Code</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-832.000000, -81.000000)">
+        <g id="Icons" transform="translate(75.000000, 53.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Code" transform="translate(757.384615, 2.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#ECF0F1" fill-rule="nonzero"></path>
+                            <path d="M0,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L0,56 L0,0 Z" id="Rectangle" fill="url(#linearGradient-1)"></path>
+                            <g id="Group" transform="translate(8.000000, 17.000000)" fill="#34495E" fill-rule="nonzero">
+                                <polygon id="path857-3" points="20.8 0.0419047619 20.8 3.81332994 26.875076 8.841881 20.8 13.8704796 20.8 17.6419048 31.6 9.00884526"></polygon>
+                                <polygon id="path859-6" points="11.2 3.56190476 11.2 7.33334012 5.12492404 12.3619048 11.2 17.3904694 11.2 21.1619048 0.4 12.5288695"></polygon>
+                                <rect id="rect861-7" transform="translate(16.108504, 10.902605) rotate(15.000000) translate(-16.108504, -10.902605) " x="14.8385038" y="0.929271792" width="2.53999987" height="19.9466667"></rect>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

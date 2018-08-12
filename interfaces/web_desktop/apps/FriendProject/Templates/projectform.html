@@ -1,0 +1,58 @@
+
+	<input type="hidden" id="ID" value="{ID}"/>
+	<div class="ContentFull LayoutButtonbarBottom">
+		<div class="VContentTop ScrollArea">
+			<div class="HRow">
+				<div class="HContent30 FloatLeft Padding">
+					<p class="InputHeight">
+						<strong>Project name:</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft Padding">
+					<input type="text" class="InputHeight FullWidth" id="Name" value="{Name}"/>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft Padding">
+					<p class="InputHeight">
+						<strong>Status:</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft Padding">
+					<select class="FullWidth" id="Status">{Status}</select>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft Padding">
+					<p class="InputHeight">
+						<strong>Description:</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft Padding">
+					<textarea class="FullWidth" style="height: 100px" id="Description">{Description}</textarea>
+				</div>
+			</div>
+			<div class="HRow">
+				<div class="HContent30 FloatLeft Padding">
+					<p class="InputHeight">
+						<strong>Date:</strong>
+					</p>
+				</div>
+				<div class="HContent70 FloatLeft Padding">
+					<input type="text" class="InputHeight FullWidth" id="DateCreated" value="{DateCreated}"/>
+				</div>
+			</div>
+		</div>
+		<div class="VContentBottom BackgroundDefault Padding BorderTop">
+			<button type="button" onclick="saveProject()">
+				Save project
+			</button>
+			<button type="button" onclick="closeView()">
+				Cancel
+			</button>
+		</div>
+	</div>
+	
+	<script src="Progdir:Scripts/projectform.js"></script>
+	<link rel="stylesheet" href="Progdir:Styles/main.css"/>
+

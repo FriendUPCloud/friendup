@@ -19,6 +19,7 @@ i18n_printers                        : Printere
 i18n_network                         : Nettverk
 i18n_language                        : Språk
 i18n_bookmarks                       : Bokmerker
+i18n_upload_a_file                   : Last opp fil
 i18n_deleting_files                  : Sletter filer
 i18n_bookmarks_add                   : Legg til
 i18n_bookmarks_close                 : Lukk
@@ -124,6 +125,8 @@ clear_cache                             : Tøm mellomlager
 documentation_on                        : Dokumentasjon om
 i18n_sharewith                          : Del med
 i18n_sharename                          : Del navn
+i18n_share_with_workgroup               : Del i en arbeidsgruppe
+i18n_no_workgroup_sharing               : Ikke del med arbeidsgruppe
 my_account                              : Min konto
 i18n_account_setup                      : Min konto - oppsett
 
@@ -158,12 +161,16 @@ i18n_printers                           : Printere
 
 #Menu
 
+i18n_favorites                          : Favoritter
+i18n_menu                               : Meny
+
 i18n_close_menu                         : Lukk meny
 
 menu_workspace                          : Workspace
 menu_system                             : System
 menu_new_shell                          : Ny terminal
 menu_about_friendup                     : Om Friend UP
+menu_examine_system                     : Utførsk systemet
 menu_refresh_desktop                    : Frisk opp
 menu_add_storage                        : Tilføy disk
 menu_run_command                        : Kjør kommando
@@ -187,6 +194,8 @@ menu_unzip                              : Dekomprimer fil(er)
 menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
+menu_share								: Dele
+menu_download                           : Last ned
 
 menu_close_idle_connections             : Fjern nettverksprosesser
 
@@ -242,7 +251,7 @@ i18n_follow_link                        : Åpne web lenke
 i18n_open_link                          : Gå til
 i18n_follow_link_desc                   : Klikk på lenken under for å gå til lenken
 
-menu_icons                              : Handlinger
+menu_icons                              : File
 menu_new_directory                      : Ny mappe
 menu_new_weblink                        : Ny web lenke
 menu_show_icon_information              : Vis informasjon
@@ -296,8 +305,9 @@ application_not_validated               : Programmet er ikke godkjent. Vennligst
 
 #Icon info ---------------------------------------------------------------------
 
-i18n_icon_information                   : Ikoninformasjon
+i18n_icon_information                   : Egenskaper
 i18n_volumeicon_information             : Enhetsinformasjon
+i18n_volume_sharing                     : Deling
 i18n_volume_name                        : Disknavn
 i18n_volume_size                        : Diskstørrelse
 i18n_protection                         : Rettigheter
@@ -305,6 +315,7 @@ i18n_used_space                         : brukt
 i18n_filename                           : Filnavn
 i18n_permissions                        : Rettigheter
 i18n_filesize                           : Filstørrelse
+i18n_files                              : Filer
 i18n_public_file                        : Public file
 i18n_public_link                        : Public url
 i18n_close                              : Lukk
@@ -321,6 +332,7 @@ i18n_edit_attribute                     : Rediger attributt
 i18n_icon_image                         : Ikonbilde
 i18n_no_field_information               : Ingen attributtdata tilgjengelig.
 i18n_non_compatible_field_information   : Kan ikke vise forhåndsvisning.
+i18n_open_with                          : Åpne med
 
 #File dialogs ------------------------------------------------------------------
 
@@ -353,6 +365,8 @@ i18n_cancel                             : Avbryt
 i18n_moving_files                       : Flytt filer
 i18n_copying_files                      : Kopier filer
 i18n_filecopy_error                     : Feil ved filkopiering
+i18n_do_you_want_copy                   : Vil du virkelig kopiere disse filene?
+i18n_do_you_want_move                   : Vil du virkelig flytte disse filene?
 
 i18n_delete_operation                   : Sletting av fil(er)
 i18n_could_not_delete_files             : Kunne ikke slette fil(er).
@@ -390,6 +404,26 @@ i18n_testing_camera_desc                : Tester om kameraet er tilgjengelig og 
 
 i18n_active_fnet_connections            : Friend Nettverket
 i18n_active_network_connections         : Aktive tilkoblinger
+
+i18n_add_a_friend                       : Legg til en venn
+i18n_waiting_for_connection             : Venter på tilkobling
+i18n_remove_friend                      : Fjern venn
+i18n_shares_with_community              : deler med gruppe...
+i18n_open                               : Åpne
+i18n_application                        : Applikasjon
+i18n_remove                             : Fjern
+i18n_download_file                      : Last ned fil
+i18n_refuse_file                        : Avslå fil
+i18n_shares_with_you                    : deler med deg...
+i18n_refuse_message                     : Avslå melding
+i18n_messages                           : Meldinger
+i18n_delete                             : Slett
+i18n_stop_sharing                       : Slutt å dele
+i18n_folder                             : Mappe
+i18n_what_you_share_with                : Hva du deler med
+i18n_mark_as_read                       : Merk som lest
+i18n_messages_sent                      : Meldingene ble sendt...
+i18n_notifications_sent                 : Varslene ble sendt...
 
 #Locale ------------------------------------------------------------------------
 
@@ -449,11 +483,17 @@ i18n_cal_btn_add                        : Lagre hendelse
 i18n_from                               : Fra
 i18n_to                                 : Til
 
+i18n_cal_evt_type                       : Velg kalender
+i18n_cal_private_calendar               : Din private kalender
+
 i18n_evt_added                          : Kalender oppdatert
 i18n_evt_addeddesc                      : Hendelsen ble lagt til din kalender.
 i18n_evt_delete_desc                    : Dette vil slette kalender hendelsen.
 i18n_evt_delete_failed                  : Kunne ikke slette
 i18n_evt_delete_failed_desc             : Kunne ikke slette din kalender hendelse.
+i18n_cannotRename						: Kunne ikke gi nytt navn
+i18n_cannotDelete						: Kunne ikke slette
+i18n_noWritePermission					: Du har ikke skrive tillatelse på denne platen.
 
 month_january                           : januar
 month_february                          : februar
@@ -558,3 +598,5 @@ menu_move_view_to_workspace_8           : Flytt til arbeidsbord 8
 menu_move_view_to_workspace_9           : Flytt til arbeidsbord 9
 menu_move_view_to_workspace_10          : Flytt til arbeidsbord 10
 
+i18n_minimize_all_windows               : Gjem alle vinduer
+i18n_show_all_windows                   : Vis alle vinduer

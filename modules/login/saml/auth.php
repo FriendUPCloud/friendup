@@ -15,7 +15,7 @@
 			$configpath = __DIR__ . '/../../../cfg/cfg.ini';
 			$samlconfig = __DIR__ . '/../../../cfg/saml.ini';
 
-			if( !(file_exists($dbiopath)&&file_exists($configpath)&&file_exists($samlconfig)) ) die('CORRUPT FRIEND INSTALL!');
+			if( !(file_exists($dbiopath)&&file_exists($configpath)&&file_exists($samlconfig)) ) die('CORRUPT FRIEND INSTALL! Cfg files are off.');
 
 			//get some files
 			include_once( $dbiopath );
@@ -85,9 +85,33 @@
 				//get users data...
 				$userdata = $dbo->fetchObject( $getuserquery );
 				
+				
+				
 			}
-			if(!$userdata) { die('CORRUPT FRIEND INSTALL!'); }
+			if(!$userdata) { die('CORRUPT FRIEND INSTALL! Could not get user data.'); }
 			
+			
+			$getfirstloginsetting = 'SELECT Data FROM FSetting WHERE `UserID` = -1 AND `Type` = "global" AND `Key` = "firstlogin"';
+			if( $set = $dbo->fetchObject( $getfirstloginsetting ) )
+			{
+				try{
+					$tmp = json_decode( $set->Data );
+				}
+				catch(Exception $e)
+				{
+					$tmp = false;
+				}
+				
+				if( $tmp && isset( $tmp->locale ) )
+				{
+					$localequery = 'INSERT INTO `FSetting` (`UserID`,`Type`,`Key`,`Data`) VALUES ('. intval( $udata->ID ) .', "system","locale","'. $tmp->locale .'");';
+					$rs = $dbo->Query($localequery);
+				}
+				else
+				{
+					// no locale... defaults to english
+				}
+			}			
 			
 			$udata = [];
 			$udata['userid'] = $friend_user_id;

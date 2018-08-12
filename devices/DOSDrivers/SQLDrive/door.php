@@ -409,6 +409,13 @@ if( !class_exists( 'DoorSQLDrive' ) )
 					$fn = $f->Filename;
 					$f->DiskFilename = '';
 				}
+				
+				// Sanitize!
+				if( strstr( $fn, '/' ) )
+				{
+					$fn = explode( '/', $fn );
+					$fn = $fn[1];
+				}
 	
 				// Write the file
 				
@@ -491,7 +498,9 @@ if( !class_exists( 'DoorSQLDrive' ) )
 						}
 					}
 					
-					$f->DiskFilename = $User->Name . '/' . $fn;
+					// Sanitize username
+					$uname = str_replace( array( '..', '/', ' ' ), '_', $User->Name );
+					$f->DiskFilename = $uname . '/' . $fn;
 					$f->Filesize = filesize( $wname. $fn );
 					if( !$f->DateCreated ) $f->DateCreated = date( 'Y-m-d H:i:s' );
 					$f->DateModified = date( 'Y-m-d H:i:s' );

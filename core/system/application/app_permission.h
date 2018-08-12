@@ -47,11 +47,11 @@
 
 typedef struct AppPermission
 {
-	struct MinNode 		node;
+	struct MinNode 			node;
 	FULONG 					p_ID;					// id of permission
 	FULONG 					p_DictID;				// ID from dictionary ID
 	Dictionary				*p_Dict;				// pointer to dictionary entry
-	char 	 					*p_Name;			// pointer to string from dictionary
+	char 	 				*p_Name;			// pointer to string from dictionary
 }AppPermission;
 
 //static FULONG AppPermissionDesc[] = { SQLT_TABNAME, (FULONG)"FAppPermission", SQLT_STRUCTSIZE, sizeof( struct AppPermission ),

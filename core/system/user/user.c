@@ -129,7 +129,7 @@ void UserRemoveSession( User *usr, void *ls )
 		return;
 	}
 	
-	pthread_mutex_lock( &(usr->u_Mutex) );
+	FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 	
 	UserSessListEntry *us = (UserSessListEntry *)usr->u_SessionsList;
 	UserSessListEntry *prev = us;
@@ -183,7 +183,7 @@ void UserRemoveSession( User *usr, void *ls )
 			FFree( us );
 		}
 	}
-	pthread_mutex_unlock( &(usr->u_Mutex) );
+	FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 }
 
 /**
@@ -195,7 +195,8 @@ void UserDelete( User *usr )
 {
 	if( usr != NULL )
 	{
-		pthread_mutex_lock( &(usr->u_Mutex) );
+		int i;
+		FRIEND_MUTEX_LOCK( &(usr->u_Mutex) );
 		
 		if( usr->u_Printers != NULL )
 		{
@@ -230,6 +231,11 @@ void UserDelete( User *usr )
 		// remove all remote users and drives
 		
 		RemoteUserDeleteAll( usr->u_RemoteUsers );
+		
+		for( i=0 ; i < usr->u_GroupsNr ; i++ )
+		{
+			UserGroupRemoveUser( usr->u_Groups[ i ], usr );
+		}
 
 		if( usr->u_Groups != NULL )
 		{
@@ -261,7 +267,7 @@ void UserDelete( User *usr )
 		{
 			FFree( usr->u_MainSessionID );
 		}
-		pthread_mutex_unlock( &(usr->u_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		
 		pthread_mutex_destroy( &(usr->u_Mutex) );
 		
@@ -394,6 +400,7 @@ File *UserRemDeviceByName( User *usr, const char *name, int *error )
 						lastone->node.mln_Succ = (struct MinNode *)next;
 					}
 				}
+
 				return remdev;
 			}
 			else
@@ -450,11 +457,14 @@ int UserRegenerateSessionID( User *usr, char *newsess )
 		{
 			while( lDev != NULL )
 			{
+				/*
 				if( lDev->f_SessionID )
 				{
 					FFree( lDev->f_SessionID );
 				}
-				lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
+				*/
+				//lDev->f_SessionID = StringDuplicate( usr->u_MainSessionID );
+				lDev->f_SessionIDPTR = usr->u_MainSessionID;
 				lDev = (File *)lDev->node.mln_Succ;
 			}
 		}

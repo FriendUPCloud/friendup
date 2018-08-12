@@ -34,6 +34,16 @@ i18n_software                           : Software
 i18n_validate                           : Validate
 i18n_revalidate                         : Re-validate
 
-
 i18n_no_software_to_verify              : No software to verify.
 
+# Services
+
+i18n_services                           : Services
+i18n_service_report                     : Service report
+i18n_no_services_to_manage              : No services to manage.
+i18n_no                                 : No
+
+# Permissions
+
+i18n_app_permissions                    : App permissions
+i18n_no_workgroup                       : No workgroup

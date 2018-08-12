@@ -60,6 +60,7 @@ class File
 			$url .= '&sessionid=' . $User->SessionID;
 
 		$c = curl_init();
+		
 		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
 		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
 		curl_setopt( $c, CURLOPT_URL,            $url                );
@@ -139,7 +140,6 @@ class File
 			
 			$ch = curl_init();
 			curl_setopt( $ch, CURLOPT_URL, $url    );
-			curl_setopt( $ch, CURLOPT_PORT, $Config->FCPort );
 			curl_setopt( $ch, CURLOPT_POSTFIELDS, $postfields );
 			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
 			if( $Config->SSLEnable == 1 )
@@ -160,6 +160,25 @@ class File
 			return $result;
 		}
 		return false;
+	}
+}
+
+if( !function_exists('jsUrlEncode') )
+{
+	function jsUrlEncode( $in )
+	{ 
+		$out = '';
+		for( $i = 0; $i < strlen( $in ); $i++ )
+		{
+			$hex = dechex( ord( $in[ $i ] ) );
+			if( $hex == '' ) $out = $out . urlencode( $in[ $i ] );
+			else $out = $out . '%' . ( ( strlen( $hex ) == 1 ) ? ( '0' . strtoupper( $hex ) ) : ( strtoupper( $hex ) ) );
+		}
+		return str_replace(
+			array( '+', '_', '.', '-' ),
+			array( '%20', '%5F', '%2E', '%2D' ),
+			$out
+		);
 	}
 }
 

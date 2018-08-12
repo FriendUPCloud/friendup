@@ -94,7 +94,9 @@ fui.addClass( function()
 		// Check supported flags
 		switch( key )
 		{
-			case 'title':      this.flags.title = value + ''; return true;
+			case 'title':      
+				this.flags.title = value + ''; 
+				return true;
 			case 'resize':
 				if( value === true || value === false )
 				{

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="49px" height="56px" viewBox="0 0 49 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>File_Music</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="100%" x2="100%" y2="0%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-616.000000, -55.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Filetypes">
+                <g id="FiletypesGradient" transform="translate(0.000000, 26.000000)">
+                    <g id="File_Music" transform="translate(504.923077, 2.000000)">
+                        <g>
+                            <path d="M1,0 L47,0 C47.5522847,-1.01453063e-16 48,0.44771525 48,1 L48,55 C48,55.5522847 47.5522847,56 47,56 L1,56 C0.44771525,56 6.76353751e-17,55.5522847 0,55 L0,1 C-6.76353751e-17,0.44771525 0.44771525,1.01453063e-16 1,0 Z" id="rect4177-7" fill="#8E44AD" fill-rule="nonzero"></path>
+                            <rect id="Rectangle" fill="url(#linearGradient-1)" x="0" y="0" width="48" height="56"></rect>
+                            <path d="M18.7732821,19.1088086 L18.7732821,26.2220427 L18.7732821,37.0879823 C17.9039014,36.6498 16.8222297,36.4103981 15.7066287,36.4092404 C12.9967706,36.4092404 10.8,37.7861357 10.8,39.4846202 C10.8,41.1831047 12.9967706,42.56 15.7066287,42.56 C18.2955704,42.557752 20.4370834,41.2963595 20.598887,39.6768364 L20.613353,39.6768364 L20.613353,26.2220427 L36.5599171,21.6089786 L36.5599171,32.4749182 C35.6905364,32.036736 34.6088647,31.7973341 33.4932757,31.7961763 C30.7834176,31.7961763 28.586647,33.1730716 28.586647,34.8715449 C28.586647,36.5700294 30.7834176,37.9469359 33.4932757,37.9469359 C36.0822055,37.9446879 38.2237304,36.6832841 38.385534,35.063761 L38.4,35.063761 L38.4,21.6089786 L38.4,13.44 L36.5600128,13.9205348 L20.6134486,18.5335988 L18.7732821,19.1088086 Z M20.5621602,20.8401365 L36.6109425,16.2270612 L36.6109425,18.5335988 L20.5621602,23.1466629 L20.5621602,20.8401365 Z" id="rect4467-7" fill="#FFFFFF" fill-rule="nonzero"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -23,7 +23,7 @@
  * 
  *  User Manager Web body
  *
- * All functions related to Remote User structure
+ * All functions related to User Manager web calls
  *
  *  @author PS (Pawel Stefanski)
  *  @date created 29/05/2017
@@ -200,6 +200,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 		* @param msg - (required) message which will be send (JSON or string in quotes)
 		* @param dstsessionid - destination sessionid of user
 		* @param appname - application name string
+		* @param dstauthid - application authentication ID
 		* @return { sendmsg: sucess } when success, otherwise error with code
 		*/
 		/// @endcond
@@ -217,6 +218,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			char *sessionid = NULL;
 			char *msg = NULL;
 			char *appname = NULL;
+			char *authid = NULL;
 		
 			FERROR( "[UMWebRequest] send message" );
 		
@@ -237,6 +239,14 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			{
 				appname = UrlDecodeToMem( (char *)el->data );
 			}
+			
+			el = HttpGetPOSTParameter( request, "dstauthid" );
+			if( el != NULL )
+			{
+				authid = UrlDecodeToMem( (char *)el->data );
+			}
+			
+			User *u = loggedSession->us_User;
 		
 			if( msg != NULL )
 			{
@@ -247,7 +257,38 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				char *tmpmsg = FMalloc( msgsize );
 				if( tmpmsg != NULL )
 				{
-					UserSessListEntry *ses = loggedSession->us_User->u_SessionsList;
+					if( authid != NULL )
+					{
+						FULONG userId = 0;
+						
+						SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+						if( sqllib != NULL )
+						{
+							char q[ 1024 ];
+							
+							sqllib->SNPrintF( sqllib, q, sizeof(q), "SELECT `UserId` FROM `FApplication` a  WHERE ua.AuthID=\"%s\" and ua.ApplicationID = a.ID LIMIT 1", authid );
+
+							void *res = sqllib->Query( sqllib, q );
+							if( res != NULL )
+							{
+								char **row;
+								if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+								{
+									char *next;
+									userId = strtol ( (char *)row[ 0 ], &next, 0 );
+								}
+								sqllib->FreeResult( sqllib, res );
+							}
+							l->LibrarySQLDrop( l, sqllib );
+						}
+						
+						if( userId > 0 )
+						{
+							u = UMGetUserByID( l->sl_UM, userId );
+						}
+					}
+
+					UserSessListEntry *ses = u->u_SessionsList;
 					while( ses != NULL )
 					{
 						FBOOL sendMsg = FALSE;
@@ -268,7 +309,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						if( sendMsg == TRUE ) //&& uses != loggedSession )	// do not send message to same session
 						{
 							int lenmsg = 0;
-							
+						
 							if( appname != NULL )
 							{
 								lenmsg = snprintf( tmpmsg, msgsize, "{\"type\":\"msg\",\"data\":{\"type\":\"server-msg\",\"session\": {\"message\":%s, \"appname\":\"%s\" }}}", msg, appname );
@@ -284,7 +325,6 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 						}
 						ses = (UserSessListEntry *)ses->node.mln_Succ;
 					}
-			
 					FFree( tmpmsg );
 				}
 
@@ -311,6 +351,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 			if( sessionid != NULL )
 			{
 				FFree( sessionid );
+			}
+			
+			if( authid != NULL )
+			{
+				FFree( authid );
 			}
 			
 			if( appname != NULL )
@@ -953,7 +998,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					}
 					
 					// Logout must be last action called on UserSession
+					FRIEND_MUTEX_LOCK( &(sess->us_Mutex) );
 					sess->us_InUseCounter--;
+					FRIEND_MUTEX_UNLOCK( &(sess->us_Mutex) );
+					
 					error = USMUserSessionRemove( l->sl_USM, sess );
 				}
 				//
@@ -1040,7 +1088,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					{
 						BufString *bs = BufStringNew();
 						
-						pthread_mutex_lock( &(logusr->u_Mutex) );
+						FRIEND_MUTEX_LOCK( &(logusr->u_Mutex) );
 					
 						UserSessListEntry *sessions = logusr->u_SessionsList;
 						BufStringAdd( bs, "ok<!--separate-->[" );
@@ -1079,7 +1127,7 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							sessions = (UserSessListEntry *) sessions->node.mln_Succ;
 						}
 						
-						pthread_mutex_unlock( &(logusr->u_Mutex) );
+						FRIEND_MUTEX_UNLOCK( &(logusr->u_Mutex) );
 					
 						BufStringAdd( bs, "]" );
 					
@@ -1188,7 +1236,11 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 					
 				DEBUG("[UMWebRequest] user %s session %s will be removed by user %s msglength %d\n", uname, ses->us_SessionID, uname, msgsndsize );
 				
+				
+				FRIEND_MUTEX_LOCK( &(ses->us_Mutex) );
 				ses->us_InUseCounter--;
+				FRIEND_MUTEX_UNLOCK( &(ses->us_Mutex) );
+				
 				error = USMUserSessionRemove( l->sl_USM, ses );
 			}
 		}
@@ -1209,7 +1261,10 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 							
 						int msgsndsize = WebSocketSendMessageInt( s, tmpmsg, lenmsg );
 						
+						FRIEND_MUTEX_LOCK( &(s->us_Mutex) );
 						s->us_InUseCounter--;
+						FRIEND_MUTEX_UNLOCK( &(s->us_Mutex) );
+						
 						error = USMUserSessionRemove( l->sl_USM, s );
 						
 						DEBUG("Bytes send: %d\n", msgsndsize );

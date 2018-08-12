@@ -242,7 +242,7 @@ class Door extends dbIO
 			
 			foreach( $dir as $k=>$v )
 			{
-				$dest[str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) )] = $v;
+				$dest[str_replace( array( '→', ' - ' ), '', trim( $v->Filename ) )] = $v;
 			}
 		}
 		
@@ -292,7 +292,7 @@ class Door extends dbIO
 			
 				$v->Destination = ( trim( $pathTo ) . trim( $v->Filename ) . ( $v->Type == 'Directory' ? '/' : '' ) );
 			
-				$properFilename = str_replace( array( '&nbsp;-&nbsp;', ' - ' ), '', trim( $v->Filename ) );
+				$properFilename = str_replace( array( '→', ' - ' ), '', trim( $v->Filename ) );
 			
 				// Check if the file has been modified (source vs dest)
 			
@@ -344,7 +344,7 @@ class Door extends dbIO
 					{
 						if( !isset( $des->Found ) && $des->Path )
 						{
-							die( 'Not found: ' . $des->Filename . ' ..' );
+							//die( 'Not found: ' . $des->Filename . ' ..' );
 							// TODO: If it has been deleted return ok when next loop has the same path in regards to .info files
 						
 							$isIcon = substr( $des->Filename, -5, 5 ) == '.info' ||

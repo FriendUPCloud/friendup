@@ -33,6 +33,7 @@
 #include <string.h>
 #include <util/string.h>
 #include "propertieslibrary.h"
+#include <ctype.h>
 
 #define LIB_NAME "properties.library"
 #define LIB_VERSION			1
@@ -62,7 +63,10 @@ void *libInit( void *sb )
 	l->Open               = dlsym( l->l_Handle, "Open");
 	l->Close              = dlsym( l->l_Handle, "Close");
 	l->ReadString         = dlsym( l->l_Handle, "ReadString");
+	l->ReadStringNCS      = dlsym( l->l_Handle, "ReadStringNCS");
+	l->ReadStringNCSUpper = dlsym( l->l_Handle, "ReadStringNCSUpper");
 	l->ReadInt            = dlsym( l->l_Handle, "ReadInt");
+	l->ReadIntNCS         = dlsym( l->l_Handle, "ReadIntNCS");
 	l->ReadDouble         = dlsym( l->l_Handle, "ReadDouble");
 	l->ReadBool           = dlsym( l->l_Handle, "ReadBool" );
 	l->GetConfigDirectory = dlsym( l->l_Handle, "GetConfigDirectory" );
@@ -130,7 +134,12 @@ Props *Open( const char *path )
 	if( ( prop = FCalloc( 1, sizeof( Props ) ) ) != NULL )
 	{
 		prop->p_Dict = iniparser_load( path );
+
+		// If you ever need to debug cfg.ini uncomment the line below
+		// and you will get all the values to standard output.
 		
+		//iniparser_dump(prop->p_Dict, stdout);
+
 		if( prop->p_Dict == NULL )
 		{
 			FFree( prop );
@@ -176,11 +185,61 @@ char *ReadString( Props *p, char *name, char *def )
 //
 //
 
+char *ReadStringNCS( Props *p, char *name, char *def )
+{
+	if( p != NULL )
+	{
+		return iniparser_getstring_ncs( p->p_Dict, name, def );
+	}
+
+	return NULL;
+}
+
+//
+//
+//
+
+char *ReadStringNCSUpper( Props *p, char *name, char *def )
+{
+	if( p != NULL )
+	{
+		char *t = iniparser_getstring_ncs( p->p_Dict, name, def );
+		int len = strlen( t );
+		int i;
+		
+		for( i=0 ; i < len ; i++ )
+		{
+			t[ i ] = toupper( t[ i ] );
+		}
+		return t;
+	}
+
+	return NULL;
+}
+
+//
+//
+//
+
 int ReadInt( Props *p, const char *name, int def )
 {
 	if( p != NULL )
 	{
 		return iniparser_getint( p->p_Dict, name, def );
+	}
+
+	return 0;
+}
+
+//
+//
+//
+
+int ReadIntNCS( Props *p, const char *name, int def )
+{
+	if( p != NULL )
+	{
+		return iniparser_getint_ncs( p->p_Dict, name, def );
 	}
 
 	return 0;

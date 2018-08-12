@@ -69,10 +69,10 @@ void FileDelete( File *f )
 			FFree( f->f_Execute );
 		}
 		
-		if( f->f_SessionID != NULL)
-		{
-			FFree( f->f_SessionID );
-		}
+		//if( f->f_SessionID != NULL)
+		//{
+		//	FFree( f->f_SessionID );
+		//}
 		
 		if( f->f_Config != NULL )
 		{
@@ -441,11 +441,12 @@ int FileUploadFileOrDirectory( Http *request, void *us, const char *dst, const c
  * @param srcdev pointer to source Friend root File
  * @param dst pointer to destination path
  * @param src pointer to source path
+ * @param cutPos point to place from which source path should be readed
  * @param fod file or directory flag. When you know if you want to process file or directory place values 1 for File and 2 for Directory
  * @return 0 when success, otherwise error number
  */
 
-int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst, const char *src, int fod, int *numberFiles )
+int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst, const char *src, int cutPos, int fod, int *numberFiles )
 {
 	FHandler *fsys = srcdev->f_FSys;
 	char *fname = NULL;
@@ -453,14 +454,14 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 	int oldfod = fod;
 	BufString *bs = NULL;
 	
-	DEBUG("[FileUploadFileOrDirectoryRec]  start fod %d\n", fod );
+	DEBUG("[FileDownloadFileOrDirectoryRec]  start fod %d   dst: %s\n", fod, dst );
 	
 	if( fod <= 0 )
 	{
 		bs = fsys->Info( srcdev, src );
 		if( bs != NULL )
 		{
-			DEBUG("[FileUploadFileOrDirectoryRec] Info result %s\n", bs->bs_Buffer );
+			//DEBUG("[FileDownloadFileOrDirectoryRec] Info result %s\n", bs->bs_Buffer );
 		
 			//ok<!--separate-->{"Type":"File","MetaType":"File","Path":"Home:aaaaa","Filesize":"5","Filename":"aaaaa","DateCreated":"2016-10-19 16:54:53","DateModified":"2016-10-19 16:54:53"}
 			if( strncmp( "ok<!--separate-->", bs->bs_Buffer, 17 ) == 0 )
@@ -533,13 +534,13 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 		newsrc = FCalloc( 512 + strlen( src ), sizeof(char) );
 		newdst = FCalloc( 512 + strlen( dst ), sizeof(char) );
 		
-		DEBUG("[FileUploadFileOrDirectoryRec] found directory 1\n");
+		DEBUG("[FileDownloadFileOrDirectoryRec] found directory 1\n");
 		
 		mkdir( dst, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH );
 		
 		if( bsdir != NULL && newsrc != NULL && newdst != NULL )
 		{
-			DEBUG("[FileUploadFileOrDirectoryRec] Received %s for path %s\n", bsdir->bs_Buffer, src );
+			//DEBUG("[FileDownloadFileOrDirectoryRec] Received %s for path %s\n", bsdir->bs_Buffer, src );
 			if( strncmp( "ok<!--separate-->", bsdir->bs_Buffer, 17 ) == 0 )
 			{
 				int i;
@@ -604,20 +605,39 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 									if( locname != NULL && loctype != NULL )
 									{
 										int srclen = strlen( src );
+										
+										//DEBUG("SRC %s\n", src );
+										
 										strcpy( newsrc, src );
 										if( src[ srclen-1 ] != '/' && src[ srclen-1 ] != ':' )
 										{
 											strcat( newsrc, "/" );
 										}
+										//DEBUG("NSRC %s\n", newsrc );
 										strcat( newsrc, locname );
+										//DEBUG("NSRC1 %s\n", newsrc );
 									
 										int dstlen = strlen( dst );
 										strcpy( newdst, dst );
+										//DEBUG("NDST %s\n", newdst );
 										if( dst[ dstlen-1 ] != '/' && dst[ dstlen-1 ] != ':' )
 										{
 											strcat( newdst, "/" );
 										}
+										//DEBUG("NDST1 %s\n", newdst );
+										
+										/*
+										if( strlen( &src[ cutPos ] ) > 1 )
+										{
+											strcat( newdst, &src[ cutPos ] );
+										}
+										*/
+										//DEBUG("NDST2 %s\n", newdst );
+										
+										mkdir( newdst, 0777 );
+										
 										strcat( newdst, locname );
+										//DEBUG("--------------------------newdst : %s\n ---------------- locname: %s\nsrc+cut : %s\n dst : %s\n", newdst, locname, &src[ cutPos ], dst );
 
 										if( strcmp( "File", loctype ) == 0 )
 										{
@@ -628,6 +648,8 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 											if( ( storefile = fopen( newdst, "wb" ) ) != NULL )
 											{
 												char dbuf[ 32768 ];
+												
+												//DEBUG("\n\n\n\n--->STOREFILE srcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
 											
 												File *srcfp = (File *)fsys->FileOpen( srcdev, newsrc, "rb" );
 												if( srcfp != NULL )
@@ -670,8 +692,10 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 										{
 											strcat( newsrc, "/" );
 											
+											mkdir( newdst, 0777 );
+											
 											//DEBUG("Directory will be downloaded  newdst %s newsrc %s\n\n\n", newdst, newsrc );
-											FileDownloadFileOrDirectoryRec( request, srcdev, newdst, newsrc, 2, numberFiles );
+											FileDownloadFileOrDirectoryRec( request, srcdev, newdst, newsrc, cutPos, 2, numberFiles );
 										}
 									}
 								
@@ -734,6 +758,8 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 					FFree( nname );
 				}
 			}
+			
+			//DEBUG("\n\n\nsrcdev  : %s changed: %s NEWDST %s\n\n", src, &src[ cutPos ], newdst );
 
 			if( ( storefile = fopen( newdst, "wb" ) ) != NULL )
 			{
@@ -793,18 +819,21 @@ int FileDownloadFileOrDirectoryRec( Http *request, File *srcdev, const char *dst
 /**
  * Function which scans Friend folder and download it (Start function)
  *
+ * @param request pointer to http request
  * @param us pointer to UserSession
+ * @param basepath path from which files are downloaded
  * @param dst pointer to destination path
  * @param src pointer to source path
  * @return 0 when success, otherwise error number
  */
 
-int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *src, int *numberFiles )
+int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, const char *dst, char *src, int *numberFiles )
 {
 	UserSession *loggedSession = (UserSession *)us;
 	File *actDev = NULL;
 	char devname[ 256 ];
 	memset( devname, '\0', sizeof(devname) );
+	int basePos = strlen( basepath );
 	
 	DEBUG("[FileDownloadFilesOrFolder] start\n");
 	
@@ -817,12 +846,15 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 	{
 		if( src[ i ] == ':' )
 		{
+			basePos -= (i+1);
 			break;
 		}
 		devname[ i ] = src[ i ];
 	}
 	
-	DEBUG("[FileDownloadFilesOrFolder] getdevbyname\n");
+	//DEBUG("[FileDownloadFilesOrFolder] getdevbyname\n");
+	
+	DEBUG("\n============================================================\n\n\n dst: %s\nsrc: %s\nbasepath: %s\nbasepos: %d\n\n\n\n\n", dst, src, basepath, basePos );
 	
 	if( ( actDev = GetRootDeviceByName( loggedSession->us_User, devname ) ) != NULL )
 	{
@@ -857,8 +889,10 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 				{
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
+					
+					DEBUG("\n\n\nCOPY------------> %s   dst %s\n\n\n", tmpdst, dst );
 
-					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], -1, numberFiles );
+					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], basePos, -1, numberFiles );
 					FFree( tmpdst );
 				}
 				lfile = &src[ i+1 ];
@@ -870,8 +904,9 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 		{
 			int coma = 0;
 			int end = 0;
-			unsigned int j;
-			for( j = 1 ; j < strlen( lfile )-1 ; j++ )
+			int j;
+			int flen = strlen( lfile )-1;
+			for( j = 1 ; j < flen ; j++ )
 			{
 				if( lfile[ j ] == ':' )
 				{
@@ -890,7 +925,10 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 				strcpy( tmpdst, dst );
 				strcat( tmpdst, &lfile[ end+1 ] );
 				
-				FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ coma+1 ], -1, numberFiles );
+				DEBUG("============= dst %s\n========= tmpdst %s\n", &lfile[ end+1 ], tmpdst );
+				
+				actDev->f_SessionIDPTR = loggedSession->us_User->u_MainSessionID;
+				FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ coma+1 ], basePos, -1, numberFiles );
 				FFree( tmpdst );
 			}
 		}
@@ -903,6 +941,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *dst, char *s
 	}
 	
 	DEBUG("[FileDownloadFilesOrFolder] end\n");
+	DEBUG("============================================================================\n");
 	
 	return 0;
 }

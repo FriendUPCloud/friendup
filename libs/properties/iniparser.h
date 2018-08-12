@@ -154,6 +154,8 @@ char ** iniparser_getseckeys(dictionary * d, char * s);
 /*--------------------------------------------------------------------------*/
 char * iniparser_getstring(dictionary * d, const char * key, char * def);
 
+char * iniparser_getstring_ncs(dictionary * d, const char * key, char * def);
+
 /*-------------------------------------------------------------------------*/
 /**
   @brief    Get the string associated to a key, convert to an int

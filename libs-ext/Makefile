@@ -21,9 +21,9 @@ endif
 
 setup:
 	mkdir -p libwebsockets/build
-	cd libwebsockets/build/ ; cmake ../ -DLWS_HAVE_SYS_CAPABILITY_H=OFF ; make DEBUG=0 ; cd ../../
-	mkdir -p libzmq/build
-	cd libzmq/build/ ; cmake ../ ; make DEBUG=0 ; cd ../../
+	cd libwebsockets/build/ ; cmake ../ -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG ; make DEBUG=0 ; cd ../../
+	#mkdir -p libzmq/build
+	#cd libzmq/build/ ; cmake ../ ; make DEBUG=0 ; cd ../../
 	#for dir in $(LIB_DIR); do \
 	#	make -C $$dir setup  FRIEND_PATH=$(FRIEND_PATH); \
 	#done

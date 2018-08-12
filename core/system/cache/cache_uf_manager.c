@@ -30,6 +30,7 @@
 #include "cache_uf_manager.h"
 #include <util/murmurhash3.h>
 #include <system/user/user.h>
+#include <mutex/mutex_manager.h>
 
 /**
  * create new CacheUFManager
@@ -64,9 +65,9 @@ void CacheUFManagerDelete( CacheUFManager *cm )
 {
 	if( cm != NULL )
 	{
-		pthread_mutex_lock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 		CacheUserFilesDeleteAll( cm->cufm_CacheUserFiles );
-		pthread_mutex_unlock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 		
 		pthread_mutex_destroy( &(cm->cufm_Mutex) );
 	
@@ -87,7 +88,7 @@ int CacheUFManagerFilePut( CacheUFManager *cm, FULONG uid, FULONG did, CacheFile
 {
 	if( cm != NULL )
 	{
-		pthread_mutex_lock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 		CacheUserFiles *cuf =  cm->cufm_CacheUserFiles;
 		while( cuf != NULL )
 		{
@@ -97,16 +98,16 @@ int CacheUFManagerFilePut( CacheUFManager *cm, FULONG uid, FULONG did, CacheFile
 			}
 			cuf = (CacheUserFiles *)cuf->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 		
 		// cache for user exist, there is no need to create one
 		if( cuf == NULL )
 		{
 			cuf = CacheUserFilesNew( uid, cm->cufm_CacheMax );
-			pthread_mutex_lock( &(cm->cufm_Mutex) );
+			FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 			cuf->node.mln_Succ = (MinNode *)cm->cufm_CacheUserFiles;
 			cm->cufm_CacheUserFiles = cuf;
-			pthread_mutex_unlock( &(cm->cufm_Mutex) );
+			FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 			DEBUG("[CacheUFManagerFilePut] new cache for user %lu created\n", cuf->cuf_UsrID );
 		}
 		
@@ -127,10 +128,10 @@ int CacheUFManagerFilePut( CacheUFManager *cm, FULONG uid, FULONG did, CacheFile
 			if( cdev == NULL )
 			{
 				cdev = CacheDriveNew( did, cm->cufm_CacheMax );
-				pthread_mutex_lock( &(cuf->cuf_Mutex) );
+				FRIEND_MUTEX_LOCK( &(cuf->cuf_Mutex) );
 				cdev->node.mln_Succ = (MinNode *)cuf->cuf_Drive;
 				cuf->cuf_Drive = cdev;
-				pthread_mutex_unlock( &(cuf->cuf_Mutex) );
+				FRIEND_MUTEX_UNLOCK( &(cuf->cuf_Mutex) );
 				DEBUG("[CacheUFManagerFilePut] new cache drive (id %lu) for user created\n", did );
 			}
 		
@@ -144,10 +145,10 @@ int CacheUFManagerFilePut( CacheUFManager *cm, FULONG uid, FULONG did, CacheFile
 			{
 				if( lf != NULL )
 				{
-					pthread_mutex_lock( &(cdev->cd_Mutex) );
+					FRIEND_MUTEX_LOCK( &(cdev->cd_Mutex) );
 					lf->node.mln_Succ = (MinNode *)cdev->cd_File;
 					cdev->cd_File = lf;
-					pthread_mutex_unlock( &(cdev->cd_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(cdev->cd_Mutex) );
 				
 					lf->cf_FileUsed++;
 			
@@ -188,7 +189,7 @@ CacheFile *CacheUFManagerFileGet( CacheUFManager *cm, FULONG uid, FULONG did, ch
 		uint64_t hash[ 2 ];
 		MURMURHASH3( path, strlen(path), hash );
 		
-		pthread_mutex_lock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 		CacheUserFiles *cuf =  cm->cufm_CacheUserFiles;
 		while( cuf != NULL )
 		{
@@ -200,7 +201,7 @@ CacheFile *CacheUFManagerFileGet( CacheUFManager *cm, FULONG uid, FULONG did, ch
 			}
 			cuf = (CacheUserFiles *)cuf->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 		
 		if( cuf != NULL )
 		{
@@ -209,7 +210,7 @@ CacheFile *CacheUFManagerFileGet( CacheUFManager *cm, FULONG uid, FULONG did, ch
 			{
 				if( cd->cd_DeviceId == did )
 				{
-					pthread_mutex_lock( &(cd->cd_Mutex) );
+					FRIEND_MUTEX_LOCK( &(cd->cd_Mutex) );
 					CacheFile *cf = cd->cd_File;
 					while( cf != NULL )
 					{
@@ -218,12 +219,12 @@ CacheFile *CacheUFManagerFileGet( CacheUFManager *cm, FULONG uid, FULONG did, ch
 						{
 							cf->cf_FileUsed++;
 							DEBUG("[CacheManagerFileGet] File returned\n");
-							pthread_mutex_unlock( &(cd->cd_Mutex) );
+							FRIEND_MUTEX_UNLOCK( &(cd->cd_Mutex) );
 							return cf;
 						}
 						cf = (CacheFile *)cf->node.mln_Succ;
 					}	// find file
-					pthread_mutex_unlock( &(cd->cd_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(cd->cd_Mutex) );
 				}
 				cd = (CacheDrive *)cd->node.mln_Succ;
 			}	// find device
@@ -256,7 +257,7 @@ int CacheUFManagerFileDelete( CacheUFManager *cm, FULONG uid, FULONG did, char *
 		uint64_t hash[ 2 ];
 		MURMURHASH3( path, strlen(path), hash );
 		
-		pthread_mutex_lock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 		CacheUserFiles *cuf =  cm->cufm_CacheUserFiles;
 		while( cuf != NULL )
 		{
@@ -268,7 +269,7 @@ int CacheUFManagerFileDelete( CacheUFManager *cm, FULONG uid, FULONG did, char *
 			}
 			cuf = (CacheUserFiles *)cuf->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 		
 		if( cuf != NULL )
 		{
@@ -277,7 +278,7 @@ int CacheUFManagerFileDelete( CacheUFManager *cm, FULONG uid, FULONG did, char *
 			{
 				if( cd->cd_DeviceId == did )
 				{
-					pthread_mutex_lock( &(cd->cd_Mutex) );
+					FRIEND_MUTEX_LOCK( &(cd->cd_Mutex) );
 					CacheFile *cf = cd->cd_File;
 					CacheFile *prevcf = cd->cd_File;
 					while( cf != NULL )
@@ -297,13 +298,13 @@ int CacheUFManagerFileDelete( CacheUFManager *cm, FULONG uid, FULONG did, char *
 							CacheFileDelete( cf );
 								
 							DEBUG("[CacheUFManagerFileDelete] File returned\n");
-							pthread_mutex_unlock( &(cd->cd_Mutex) );
+							FRIEND_MUTEX_UNLOCK( &(cd->cd_Mutex) );
 							return 0;
 						}
 						prevcf = cf;
 						cf = (CacheFile *)cf->node.mln_Succ;
 					}	// find file
-					pthread_mutex_unlock( &(cd->cd_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(cd->cd_Mutex) );
 				}
 				cd = (CacheDrive *)cd->node.mln_Succ;
 			}	// find device
@@ -321,7 +322,7 @@ void CacheUFManagerRefresh( CacheUFManager *cm )
 {
 	if( cm != NULL )
 	{
-		pthread_mutex_lock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_LOCK( &(cm->cufm_Mutex) );
 		CacheUserFiles *cuf =  cm->cufm_CacheUserFiles;
 		while( cuf != NULL )
 		{
@@ -372,6 +373,6 @@ void CacheUFManagerRefresh( CacheUFManager *cm )
 			
 			cuf = (CacheUserFiles *)cuf->node.mln_Succ;
 		}
-		pthread_mutex_unlock( &(cm->cufm_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(cm->cufm_Mutex) );
 	}
 }

@@ -48,6 +48,7 @@
 #include <system/systembase.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <system/systembase.h>
 
 #define NAME "php"
 #define VERSION 		1
@@ -71,19 +72,19 @@ enum {
 
 typedef struct PHPInstance
 {
-	void                  *pi_PHPService;
+	void				*pi_PHPService;
 	
-	pid_t                 pi_PID;
+	pid_t				pi_PID;
 	
-	FULONG           pi_Ptr;
-	FBOOL              pi_TaskClosed;
-	char                 *pi_Command;
-	int                    pi_CommandLen;
-	int                    pi_State;
-	struct lws       *pi_WSI;				// pointer to websocket connection
+	FULONG				pi_Ptr;
+	FBOOL				pi_TaskClosed;
+	char				*pi_Command;
+	int					pi_CommandLen;
+	int					pi_State;
+	struct lws			*pi_WSI;				// pointer to websocket connection
 	
-	FThread           *pi_Thread;
-	MinNode          node;
+	FThread				*pi_Thread;
+	MinNode				node;
 }PHPInstance;
 
 //
@@ -92,13 +93,13 @@ typedef struct PHPInstance
 
 typedef struct PHPService
 {
-	SystemBase                  *ps_SB;
+	SystemBase				*ps_SB;
 	//FThread						*ps_Thread;
 	pthread_mutex_t			ps_Mutex; 
 	pthread_cond_t 			ps_StartCond;	// start condition
 	
 	PHPInstance 			*ps_Instances;
-	int 								ps_ModsNumber;
+	int 					ps_ModsNumber;
 }PHPService;
 
 //
@@ -344,17 +345,16 @@ int thread( FThread *t )
 		return -2;
 	}*/
 	DEBUG("Before cond wait\n");
-	//pthread_mutex_lock( &pserv->ps_Mutex );
+	//FRIEND_MUTEX_LOCK( &pserv->ps_Mutex );
 	//pthread_cond_wait( &pserv->ps_StartCond, &pserv->ps_Mutex );
-	//pthread_mutex_unlock( &pserv->ps_Mutex );
+	//FRIEND_MUTEX_UNLOCK( &pserv->ps_Mutex );
 	
 	DEBUG("[PHPmod] command launched: %.*s\n", si->pi_CommandLen+8, command );
 	
 #define MY_BUF_SIZE 10024
 	
 	char *buf = FCalloc( MY_BUF_SIZE, sizeof( char ) );
-	unsigned char *sendbuf = (unsigned char *)FCalloc( LWS_SEND_BUFFER_PRE_PADDING + MY_BUF_SIZE +LWS_SEND_BUFFER_POST_PADDING + 128, sizeof( char ) );
-	
+
 	SystemBase *sb = (SystemBase *)pserv->ps_SB;
 	FriendCoreManager *fcm = NULL;
 	if( sb != NULL )
@@ -362,7 +362,7 @@ int thread( FThread *t )
 		fcm = sb->fcm;
 	}
 	
-	if( sendbuf != NULL && buf != NULL )
+	if( buf != NULL )
 	{
 		while( TRUE )// !feof( outid ) )
 		{
@@ -382,8 +382,7 @@ int thread( FThread *t )
 				
 				if( si->pi_WSI != NULL )
 				{
-					memcpy( sendbuf+LWS_SEND_BUFFER_PRE_PADDING, buf,  reads );
-					res = lws_write( si->pi_WSI, sendbuf + LWS_SEND_BUFFER_PRE_PADDING , reads, LWS_WRITE_TEXT);
+					sb->WebsocketWrite( si->pi_WSI , buf, reads, LWS_WRITE_TEXT );
 			
 					DEBUG1("Wrote to websockets %lu bytes\n", res );
 				}
@@ -410,9 +409,6 @@ int thread( FThread *t )
 	{
 		FERROR("Cannot allocate memory for sendbuffer or buffer\n");
 	}
-
-	if( buf ) FFree( buf );
-	if( sendbuf ) FFree( sendbuf );
 
 	pclose2( si->pi_PID );
 	
@@ -589,7 +585,7 @@ char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hash
 		PHPService *hs =(PHPService *) s->s_SpecialData;
 		if( hs != NULL )
 		{
-			pthread_mutex_lock( &hs->ps_Mutex );
+			FRIEND_MUTEX_LOCK( &hs->ps_Mutex );
 			
 			phpi->node.mln_Succ = (MinNode *)hs->ps_Instances;
 			hs->ps_Instances = phpi;
@@ -597,7 +593,7 @@ char *ServiceCommand( struct Service *s, const char *serv, const char *cmd, Hash
 			phpi->pi_WSI = s->s_WSI;
 			phpi->pi_PHPService = hs;
 			
-			pthread_mutex_unlock( &hs->ps_Mutex );
+			FRIEND_MUTEX_UNLOCK( &hs->ps_Mutex );
 			
 			phpi->pi_Thread = ThreadNew( thread, phpi, TRUE, NULL );
 			

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="62px" height="46px" viewBox="0 0 62 46" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>FolderOpen</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="2 4 31.5264615 14.6095241 52.1026119 15 58 9.86076546 33.3140447 9.86076546 27.5551374 4"></polygon>
+        <filter x="-5.4%" y="-27.3%" width="110.7%" height="154.5%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="0" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="1" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <linearGradient x1="32.7007869%" y1="65.850525%" x2="92.5454176%" y2="8.8561342%" id="linearGradient-3">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0132762408" offset="6.63812042%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0132762408" offset="6.63812042%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0294366915" offset="14.7183458%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0387950468" offset="19.3975234%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0711830929" offset="35.5915464%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0711830929" offset="35.5915464%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0711830929" offset="35.5915464%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0711830929" offset="35.5915464%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.0711830929" offset="35.5915464%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.1" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="FolderOpen">
+            <g transform="translate(0.000000, 3.000000)">
+                <path d="M3,1 L3,17.1646673 C3,21.5045302 5.26700199,25 8.08102051,25 L35.2476528,25 C38.0710102,24.9400032 37.4808426,18.7983056 40.3260636,15.3271222 L54.0007185,15.3271222 C56.5442941,15.3271222 59.0765222,8.70886111 58.9982301,8.70886111 L58.9982301,1 C58.9982301,0.44771525 58.5505148,6.02455021e-13 57.9982301,5.98632255e-13 L34.9814676,6.40590012e-13 C24.6543118,4.33736687e-13 14.3271559,2.26883363e-13 4,2.0030038e-14 L4,-2.22044605e-16 C3.44771525,-1.14027217e-14 3,0.44771525 3,1 Z" id="rect4177-9-7-2-2-48" fill="#C88C35" fill-rule="nonzero"></path>
+                <g id="rect4177-9-7-2-2-48" fill-rule="nonzero">
+                    <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                    <use fill="#000000" fill-rule="evenodd" xlink:href="#path-1"></use>
+                </g>
+                <path d="M0.00770416438,4.07011931 L2.67881271,42.0701193 C2.71563053,42.5939008 3.15127741,43 3.67635132,43 L56.8182377,43 C57.3204212,43 57.7447158,42.6275559 57.809803,42.1296082 L61.9811806,10.2165648 C62.0527612,9.66893837 61.6668499,9.16697189 61.1192235,9.09539124 C61.0762492,9.08977404 61.0329552,9.08695652 60.9896153,9.08695652 L52.6904726,9.08695652 L33.1765873,9.08695652 C33.0391207,9.08695652 32.9077178,9.03035959 32.8132738,8.93047261 L27.3539169,3.15648391 C27.2594729,3.05659694 27.12807,3 26.9906034,3 L1.00524278,3 C0.452958026,3 0.0052427761,3.44771525 0.0052427761,4 C0.0052427761,4.0233947 0.00606374404,4.0467822 0.00770416438,4.07011931 Z" id="rect4177-9-7-2-0" fill="#E7B66F" fill-rule="nonzero"></path>
+                <path d="M3,0 L58,0 C58.5522847,-1.01453063e-16 59,0.44771525 59,1 L59,42 C59,42.5522847 58.5522847,43 58,43 L3,43 L3,0 Z" id="Rectangle-6" fill="url(#linearGradient-3)"></path>
+            </g>
+        </g>
+    </g>
+</svg>

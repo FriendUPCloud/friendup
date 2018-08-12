@@ -131,7 +131,6 @@ FullscreenMenuClass.prototype.show = function( heading, men ) // With an optiona
 	root.innerHTML = heading ? heading : ( this.heading ? this.heading : i18n( 'i18n_choose_disk' ) );
 	var menuCn = document.createElement( 'ul' );
 	root.appendChild( menuCn );
-	
 	// Set items to display
 	var items = this.items;
 	if( men ) items = men;

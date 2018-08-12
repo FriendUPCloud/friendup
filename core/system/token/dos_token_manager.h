@@ -64,6 +64,12 @@ void DOSTokenManagerDelete( DOSTokenManager *d );
 int DOSTokenManagerAddDOSToken( DOSTokenManager *d, DOSToken *dt );
 
 //
+// delete DOSToken
+//
+
+int DOSTokenManagerDeleteToken( DOSTokenManager *d, char *id );
+
+//
 // get DOSToken
 //
 

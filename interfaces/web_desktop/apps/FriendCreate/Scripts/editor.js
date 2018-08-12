@@ -32,10 +32,82 @@ var resizeColumn = {
 };
 
 var sasActive = false;
+var FileBrowser;
+
+var filebrowserCallbacks = {
+	// Check a file on file extension
+	checkFile( path, extension )
+	{
+		if( extension == 'apf' )
+		{
+			Confirm( 'Loading project', 'Do you want to load this project? If you click cancel, Friend Create will just load the project file.', function( info )
+			{
+				if( info.data == true )
+				{
+					Application.sendMessage( {
+						command: 'project_load',
+						path: path
+					} );
+				}
+				// Just load it
+				else
+				{
+					Application.sendMessage( {
+						command: 'loadfiles',
+						paths: [ path ]
+					} );
+				}
+			} );
+		}
+		else
+		{
+			// Just switch to existing
+			for( var a in Application.files )
+			{
+				if( Application.files[a].filename == path )
+				{
+					return Application.setCurrentFile( a );
+				}
+			}
+			Application.sendMessage( {
+				command: 'loadfiles',
+				paths: [ path ]
+			} );
+		}
+	},
+	// Load a file
+	loadFile( path )
+	{
+		// Just switch to existing
+		for( var a in Application.files )
+		{
+			if( Application.files[a].filename == path )
+			{
+				return Application.setCurrentFile( a );
+			}
+		}
+		Application.sendMessage( {
+			command: 'loadfiles',
+			paths: [ path ]
+		} );
+	},
+	// Do we permit?
+	permitFiletype( path )
+	{
+		return Application.checkFileType( path );
+	}
+};
 
 Application.run = function( msg )
 {
 	InitTabs( ge( 'EditorTabs' ) );
+	InitTabs( ge( 'filelisttabs' ) );	
+	
+	// Render the file browser
+	var FileBrowser = new friend.FileBrowser( ge( 'filebrowser' ), { displayFiles: true }, filebrowserCallbacks );
+	FileBrowser.render();
+	this.fileBrowser = FileBrowser;
+	
 	VisualEditor.init();
 	
 	// Make sure we can run ace
@@ -57,7 +129,6 @@ Application.run = function( msg )
 	{
 		resizeColumn.offset = e.clientX - ge( 'ResizeColumn' ).offsetLeft;
 		resizeColumn.state = 1;
-		console.log( e.clientX );
 	}
 
 	loadConfig( delayedSetupAce );
@@ -72,7 +143,7 @@ window.addEventListener( 'mousemove', function( e )
 		var l = e.clientX - resizeColumn.offset;
 		if( l < 200 ) l = 200;
 		ge( 'ResizeColumn' ).style.left = l + 'px';
-		ge( 'fileslistlabel' ).style.width = l + 'px';
+		ge( 'filelisttabs' ).style.width = l + 'px';
 		ge( 'fileslist' ).style.width = l + 'px';
 		ge( 'filestabs' ).style.width = l + 'px';
 		ge( 'filestatus' ).style.width = l + 'px';
@@ -151,7 +222,6 @@ function loadConfig( callback )
 			try
 			{
 				o = JSON.parse( d );
-				console.log( 'Settings retrieved.' );
 			}
 			catch( e )
 			{ 
@@ -373,8 +443,10 @@ Application.applySyntaxHighlighting = function ()
 			extension = 'jsx';
 			mode = 'ace/mode/javascript';
 			break;
+		case 'apf':
 		case 'info':
 		case 'json':
+		case 'pls':
 		case 'js':
 		case 'url':
 			extension = 'js';
@@ -401,12 +473,12 @@ Application.applySyntaxHighlighting = function ()
 			extension = 'c';
 			mode = 'ace/mode/c_cpp';
 			break;
-		case 'apf':
 		case 'conf':
 			extension = 'conf';
 			mode = 'ace/mode/plain_text';
 			break;
 		case 'lang':
+		case 'md':
 		default:
 			extension = 'txt';
 			mode = 'ace/mode/plain_text';
@@ -619,6 +691,9 @@ Application.loadFile = function( data, path, cb )
 			if( this.files[a].filename == path )
 			{
 				if( cb ) cb();
+				// Activate it
+				this.setCurrentFile( a );
+				this.refreshFilesList();
 				return;
 			}
 		}
@@ -712,8 +787,21 @@ Application.refreshFilesList = function ()
 
 	files.innerHTML = '';
 
+	// Tab support
+	// TODO: Reenable
+	/*var tabcontainer = ge( 'EditorTabs' );
+	var tabs = [];
+	tabcontainer = tabcontainer.getElementsByClassName( 'TabContainer' );
+	if( tabcontainer.length )
+	{
+		tabcontainer = tabcontainer[ 0 ];
+		tabs = tabcontainer.getElementsByClassName( 'Tab' );
+	}
+	else tabcontainer = null;*/
+	
 	// Loop through the files
 	var sw = 2;
+	
 	for( var t = 0; t < this.files.length; t++ )
 	{
 		var c = document.createElement ( 'div' );
@@ -737,8 +825,8 @@ Application.refreshFilesList = function ()
 		c.onclick = function ( e )
 		{
 			ge( 'CodeEditorTab' ).onclick();
+			
 			Application.setCurrentFile( this.ind );
-			Application.refreshFilesList ();
 
 			// Close when clicking on close icon
 			var t = e.target ? e.target : e.srcElement;
@@ -746,9 +834,44 @@ Application.refreshFilesList = function ()
 			{
 				Application.closeFile();
 			}
+			else
+			{
+				Application.refreshFilesList();
+			}
 		};
 		files.appendChild ( c );
+		
+		// Update tabs
+		// TODO: Enable tab support
+		/*if( tabcontainer )
+		{
+			var found = false;
+			for( var b = 0; b < tabs.length; b++ )
+			{
+				if( tabs[b].filename == fullfile )
+				{
+					found = true;
+					break;
+				}
+			}
+			// New tab!
+			if( !found )
+			{
+				var d = document.createElement( 'div' );
+				d.className = 'Tab IconSmall fa-code';
+				d.filename = fullfile;
+				d.innerHTML = fullfile;
+				tabcontainer.appendChild( d );
+			}
+		}*/
 	}
+	
+	// TODO: Enable tab support
+	/*InitTabs( ge( 'EditorTabs' ), function( pages )
+	{
+		console.log( pages );
+		return true;
+	} );*/
 	
 	this.applySyntaxHighlighting();
 	
@@ -772,6 +895,7 @@ Application.checkFileType = function( path )
 		case 'txt':
 		case 'js':
 		case 'lang':
+		case 'pls':
 		case 'json':
 		case 'tpl':
 		case 'ptpl':
@@ -811,6 +935,8 @@ function ExecuteSasEvent( msg, identity )
 	switch( msg.event )
 	{
 		case 'initvisualpage':
+			// TODO: fix this later
+			return;
 			VisualEditor.mode = msg.data;
 			VisualEditor.init();
 			break;
@@ -918,7 +1044,7 @@ Application.setCurrentFile = function( curr )
 		var f = this.files[this.currentFile];
 		if( curr != this.currentFile )
 		{
-			f.content = Application.editor.getValue ();
+			f.content = Application.editor.getValue();
 		}
 	}
 
@@ -927,6 +1053,8 @@ Application.setCurrentFile = function( curr )
 	{
 		this.currentFile = curr;
 	}
+	
+	ge( 'CodeEditorTab' ).innerHTML = this.files[ this.currentFile ].filename;
 
 	// Manage undo
 	if( this.files[this.currentFile].session )
@@ -950,67 +1078,96 @@ Application.setCurrentFile = function( curr )
 	// Show stuff to user
 	this.updateStatusbar();
 
-
-	// Check if this file is part of your project
-	if( this.files[ this.currentFile ] && this.projectFilename )
-	{
-		var ftabs = ge( 'filestabs' );
-		ftabs.innerHTML = i18n( 'i18n_checking_file' );
-		this.sendMessage( {
-			command: 'checkfile',
-			file: this.files[ this.currentFile ],
-			callbackId: addCallback( function( data )
-			{
-				if( data.data )
-				{
-					var d = data.data;
-					if( d.str == '' )
-						ftabs.innerHTML = '';
-					else if( d.str == 'exists' )
-					{
-						ftabs.innerHTML = '';
-					}
-					else if( d.str == 'unknown' )
-					{
-						ftabs.innerHTML = '<p class="Layout">' + i18n( 'i18n_add_file_to_project' ) + 
-							'</p><p><button type="button" class="Button IconSmall fa-plus"> ' + 
-								i18n( 'i18n_add_to_project' ) + '</button>';
-						var b = ftabs.getElementsByTagName( 'button' )[0];
-						b.onclick = function()
-						{
-							Application.sendMessage( {
-								command: 'addtoproject',
-								file: Application.files[ Application.currentFile ],
-								callbackId: addCallback( function( data )
-								{
-									if( data.response == 'ok' )
-									{
-										ftabs.innerHTML = '';
-									}
-									else
-									{
-										ftabs.innerHTML = i18n( 'i18n_could_not_add_file' );
-									}
-								} )
-							} );
-						}
-					}
-					else
-					{
-						ftabs.innerHTML = '';
-					}
-				}
-				else
-				{
-					ftabs.innerHTML = '';
-				}
-			} )
-		} );
-	}
+	FileInProjectCheck( this.currentFile );
 
 	// Enable word wrapping
 	this.refreshAceSettings();
 };
+
+// Check if file is to be added to project
+function FileInProjectCheck( currentFile )
+{
+	var app = Application;
+	
+	// Check if this file is part of your project
+	if( !app.files[ currentFile ] )
+	{
+		Notify( { title: 'File check failed', text: 'Current file doesn\'t exist in files list.' } );
+		return false;
+	}
+	if( !app.projectFilename )
+	{
+		console.log( 'No project filename' );
+		return false;
+	}
+
+	var ftabs = ge( 'filestabs_content' );
+	ftabs.innerHTML = i18n( 'i18n_checking_file' );
+	app.sendMessage( {
+		command: 'checkfile',
+		file: app.files[ currentFile ],
+		callbackId: addCallback( function( data )
+		{	
+			if( data.data )
+			{
+				var d = data.data;
+				if( d.str == '' )
+				{
+					ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+					ftabs.innerHTML = '';
+				}
+				else if( d.str == 'exists' )
+				{
+					ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+					ftabs.innerHTML = '';
+				}
+				else if( d.str == 'unknown' )
+				{
+					ftabs.parentNode.parentNode.classList.add( 'StatusPane' );
+					ftabs.innerHTML = '<p class="Layout">' + i18n( 'i18n_add_file_to_project' ) + 
+						'</p><p><button type="button" class="Button IconSmall fa-plus"> ' + 
+							i18n( 'i18n_add_to_project' ) + '</button>';
+					var b = ftabs.getElementsByTagName( 'button' )[0];
+					b.onclick = function()
+					{
+						Application.sendMessage( {
+							command: 'addtoproject',
+							file: Application.files[ Application.currentFile ],
+							callbackId: addCallback( function( data )
+							{
+								if( data.response == 'ok' )
+								{
+									ftabs.innerHTML = '';
+									ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+								}
+								else
+								{
+									ftabs.innerHTML = i18n( 'i18n_could_not_add_file' );
+									setTimeout( function()
+									{
+										ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+									}, 2000 );
+								}
+							} )
+						} );
+					}
+				}
+				else
+				{
+					ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+					ftabs.innerHTML = '';
+				}
+			}
+			else
+			{
+				ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
+				ftabs.innerHTML = '';
+			}
+		} )
+	} );
+	
+	return true;
+}
 
 // Close a file
 Application.closeFile = function()
@@ -1085,12 +1242,149 @@ Application.closeAllFiles = function()
 	this.newFile();
 }
 
+function findDirectoryElement( p, path, doreturn )
+{
+	var eles = p.getElementsByTagName( 'div' );
+	for( var a = 0; a < eles.length; a++ )
+	{
+		var test = eles[a].path;
+		
+		if( eles[a].path == path )
+		{
+			if( doreturn ) return eles[a];
+			eles[a].ondblclick();
+			a = eles.length;
+			break;
+		}
+	}
+}
+
+// Show gui to create parent path
+Application.createDirectoryGUI = function( parentPath )
+{
+	var ele = findDirectoryElement( ge( 'filebrowser' ), parentPath, true );
+	if( ele )
+	{
+		var subs = ele.getElementsByClassName( 'SubItems' );
+		if( subs && subs.length )
+		{
+			subs = subs[0];
+			var d = document.createElement( 'div' );
+			d.className = 'FileItem';
+			var inp = document.createElement( 'input' );
+			inp.setAttribute( 'type', 'text' );
+			inp.className = 'FullWidth';
+			d.appendChild( inp );
+			subs.appendChild( d );
+			if( !ele.classList.contains( 'Open' ) )
+				ele.ondblclick();
+			inp.addEventListener( 'keydown', function( e )
+			{
+				var wh = e.which ? e.which : e.keyCode;
+				if( wh == 27 )
+				{
+					subs.removeChild( d );
+				}
+				// Try to create directory
+				else if( wh == 13 )
+				{
+					var sh = new Shell();
+					sh.onReady = function()
+					{
+						sh.execute( 'makedir ' + parentPath + inp.value, function()
+						{
+							sh.close();
+							subs.removeChild( d );
+							Application.fileBrowser.refresh();
+						} );
+					}
+				}
+			} );
+			setTimeout( function()
+			{
+				inp.focus();
+			}, 50 );
+		}
+	}
+	else
+	{
+		console.log( 'Got no element on path: ' + parentPath );
+	}
+}
+
+// Show gui to create parent path
+Application.createFileGUI = function( parentPath )
+{
+	var ele = findDirectoryElement( ge( 'filebrowser' ), parentPath, true );
+	if( ele )
+	{
+		var subs = ele.getElementsByClassName( 'SubItems' );
+		if( subs && subs.length )
+		{
+			subs = subs[0];
+			var d = document.createElement( 'div' );
+			d.className = 'FileItem';
+			var inp = document.createElement( 'input' );
+			inp.setAttribute( 'type', 'text' );
+			inp.className = 'FullWidth';
+			d.appendChild( inp );
+			subs.appendChild( d );
+			if( !ele.classList.contains( 'Open' ) )
+				ele.ondblclick();
+			inp.addEventListener( 'keydown', function( e )
+			{
+				var wh = e.which ? e.which : e.keyCode;
+				if( wh == 27 )
+				{
+					subs.removeChild( d );
+				}
+				// Try to create directory
+				else if( wh == 13 )
+				{
+					var pp = parentPath;
+					if( pp.substr( pp.length - 1, 1 ) != '/' && pp.substr( pp.length - 1, 1 ) != ':' )
+					{
+						pp += '/';
+					}
+						
+					var f = new File( pp + inp.value );
+					f.onSave = function()
+					{
+						subs.removeChild( d );
+						Application.fileBrowser.clear();
+						Application.fileBrowser.refresh();
+					}
+					f.save( ' ' );
+				}
+			} );
+			setTimeout( function()
+			{
+				inp.focus();
+			}, 50 );
+		}
+	}
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( msg.command )
 	{
 		switch( msg.command )
 		{
+			// For file directories >
+			case 'opendirectory':
+				findDirectoryElement( ge( 'filebrowser' ), msg.data.path );
+				break;
+			case 'createfile':
+				this.createFileGUI( msg.data.path );
+				break;
+			case 'createdirectory':
+				this.createDirectoryGUI( msg.data.path );
+				break;
+			// End for file directories <
+			case 'checkfileinproject':
+				FileInProjectCheck( Application.currentFile );
+				break;
 			case 'guiaction':
 				msg.event.sasIsHost = msg.sasIsHost;
 				ExecuteSasEvent( msg.event, msg.identity );
@@ -1166,12 +1460,24 @@ Application.receiveMessage = function( msg )
 				// Copy project information
 				this.project = {};
 				for( var a in msg.data ) this.project[a] = msg.data[a];
-				this.projectFilename = msg.filename;
+				if( msg.filename )
+				{
+					this.projectFilename = msg.filename;
+				}
 				if( msg.data.ProjectName )
 				{
-					ge( 'Filelist' ).innerHTML = 'Files in ' + msg.data.ProjectName + ':';
+					Application.sendMessage( {
+						command: 'settitle',
+						title: 'Files in ' + msg.data.ProjectName
+					} );
 				}
-				else ge( 'Filelist' ).innerHTML = 'Files:';
+				else 
+				{
+					Application.sendMessage( {
+						command: 'settitle',
+						title: ''
+					} );
+				}
 				break;
 			// Make a new file slot in the list
 			case 'newfile':
@@ -1239,6 +1545,7 @@ Application.receiveMessage = function( msg )
 				if( msg.callback ) meg.callback = msg.callback;
 				this.sendMessage( meg );
 				this.refreshFilesList();
+				this.setCurrentFile( this.currentFile );
 				this.syncing = false;
 				break;
 			// Just passes current editor content
@@ -1248,6 +1555,9 @@ Application.receiveMessage = function( msg )
 					data:     Application.editor.getSession().getValue(),
 					callback: msg.callback
 				} );
+				break;
+			case 'menuloadfile':
+				Application.sendMessage( { command: 'loadfiles', paths: [ msg.data.path ] } );
 				break;
 			case 'loadfile':
 				var cb = msg.callbackId;
@@ -1311,4 +1621,5 @@ document.oncontextmenu = function( e )
 {
 	cancelBubble( e );
 }
+
 

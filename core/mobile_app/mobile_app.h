@@ -73,10 +73,13 @@ typedef enum {
  * @param title title of the notification
  * @param message message string to be displayed
  * @param notification_type option flag, see mobile_notification_type_t
+ * @param extra_string additional information for workspace
+ *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
  * @return true when success
  */
 bool mobile_app_notify_user(const char *username,
 		const char *channel_id,
 		const char *title,
 		const char *message,
-		mobile_notification_type_t notification_type);
+		mobile_notification_type_t notification_type,
+		const char *extra_string);

@@ -2,7 +2,7 @@
 
 i18n_account                         : My account
 
-i18n_basic_information               : Basic information
+i18n_basic_information               : General
 i18n_full_name                       : Your full name
 i18n_username                        : Username
 i18n_change_password                 : Change password
@@ -10,10 +10,18 @@ i18n_current_password                : Current password
 i18n_new_password                    : New password
 i18n_confirm                         : confirm
 
+i18n_language                        : Language
+i18n_workspace_mode                  : Workspace mode
+i18n_mode_gamified                   : Gamified
+i18n_mode_normal                     : Normal
+i18n_mode_developer                  : Developer
+
 i18n_are_you_sure                    : Are you sure?
 i18n_this_will_remove                : This will remove the disk from your mountlist.
 
 i18n_delete_disk                     : Delete disk
+
+i18n_storage                         : Storage
 
 i18n_key_type              			 : Key type
 i18n_key_name              			 : Key name
@@ -34,6 +42,7 @@ i18n_publickey                       : Public key
 i18n_key_information                 : Key information
 i18n_your_apps                       : Your apps
 i18n_available_storage               : Available storage
+i18n_unmounted_storage               : Disconnected storage
 
 i18n_no_apps                         : Status
 i18n_no_apps_desc                    : None installed.
@@ -45,9 +54,10 @@ i18n_no_storage                      : No storage space available.
 
 i18n_get_storage                     : Get more storage
 
-i18n_toggle_public_key_visibility    : Toggle public key visibility
+i18n_toggle_public_key_visibility    : Public key
 
-i18n_get_apps                        : Get applications
+i18n_password                        : Password
+i18n_edit_password                   : Change password
 
 i18n_descheading : Add more storage to your system
 i18n_description : Please choose which disk type you want to add to your system. Some providers may ask you to register an account.
@@ -78,6 +88,8 @@ i18n_placeholder_connection          : Mydisk
 
 i18n_add_storage                     : Add storage
 i18n_update_disk                     : Update disk
+i18n_mount_disk                      : Mount disk
+i18n_unmount_disk                    : Unmount disk
 i18_account2                         : Account
 i18n_settings_saved                  : Settings saved
 
@@ -100,4 +112,39 @@ i18n_system_wide                     : System wide
 i18n_devices                         : Devices
 
 i18n_generate_key                    : Generate key
+
+i18n_useravatar                      : User avatar
+i18n_changeavatar                    : Change avatar
+i18n_fileselectoravatar              : Please choose a PNG image
+
+i18n_your_public_key                 : Your public key
+
+i18n_deleting_key                    : Deleting key
+
+i18n_friendNetwork					 : Friend Network
+i18n_fnetActivate					 : Activate Friend Network
+i18n_fnetWorkgroup					 : Community
+i18n_fnetPassword					 : Community password
+i18n_fnetRepeatPassword				 : Repeat password
+i18n_workgroupPlaceHolder			 : Enter the name of the workgroup, or leave empty
+i18n_passwordNoMatch				 : Friend Network workgroup passwords do not match.
+i18n_fnetAcceptFromAny				 : Accept messages from people not marked as friends
+i18n_fnetDescription                 : Describe yourself
+i18n_fnetDownloadFiles				 : Download shared files immediately
+i18n_fnetDownloadPath				 : Path
+i18n_fnetDownloadButton				 : Choose directory
+i18n_fnetPleaseChooseDirectory		 : Please choose a directory...
+i18n_fnetMountDrive					 : Mount Friend Network disc at start
+i18n_fnetAutoMountDrive				 : Display Friend Network icon on Workspace
+
+i18n_update_language_warning         : Updating language
+i18n_update_language_desc            : When updating your language setting, Friend needs to reload the Workspace. You will lose anything that is unsaved. Are you sure you want to proceed?
+i18n_fnetShareLocalDrives			 : Mount local drives on Friend Network
+i18n_fnetDeviceDescription			 : Device description
+i18n_fnetDeviceName					 : Device name
+i18n_fnetChangeDeviceAvatar			 : Change image
+i18n_device_information				 : Device
+i18n_nameOfDevice					 : Enter the name of the device here
+i18n_descriptionOfDevice			 : Enter a description
+i18n_deviceNotice					 : This information page is specific to the device you are using right now. Friend Network will use it to show the various devices you are using at one moment.
 

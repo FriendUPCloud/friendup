@@ -49,7 +49,7 @@ i18n_subtract                       : Syntax 'subtract variable value_to_subtrac
 i18n_stop                           : Syntax 'stop'<br><br>Indicates the end of a multi line loop. Loops can be nested.
 i18n_version                        : Syntax 'version'<br><br>Displays the current version of the Shell.
 i18n_goto                           : Syntax 'goto label:'<br><br>Set the execution of the next instruction in a Shell script to the given label. Label are just names followed by a semi-colon (cannot be numbers).
-
+i18n_deletemount                    : Syntax 'deletemount drive_name'<br><br>Deletes a disk from your account, and all contents.
 
 
 

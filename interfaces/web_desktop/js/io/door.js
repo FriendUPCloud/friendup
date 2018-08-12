@@ -23,6 +23,7 @@ var DoorCache = {
 
 Door = function( path )
 {
+	this.networkConnections = [];
 	this.init();
 	this.setPath( path );
 	this.vars = {};
@@ -39,6 +40,18 @@ Door.prototype.getPath = function()
 	return this.deviceName + ':' + this.path;
 }
 
+// Stop all network activity!
+Door.prototype.stop = function()
+{
+	// Kill all bajax!
+	for( var a = 0; a < this.networkConnections.length; a++ )
+	{
+		if( this.networkConnections[ a ].destroy )
+			this.networkConnections[ a ].destroy();
+	}
+	this.networkConnections = [];
+}
+
 Door.prototype.setPath = function( path )
 {
 	if( path )
@@ -48,7 +61,40 @@ Door.prototype.setPath = function( path )
 		if( path.length > 1 )
 			this.path = path[1];
 		else this.path = '';
+
+		// Is this a dormant drive?
+		var doors = DormantMaster.getDoors();
+		if( doors )
+		{
+			for( var d in doors )
+			{
+				var door = doors[ d ];
+				var title = door.Title.split( ':' )[ 0 ];
+				if( title == this.deviceName )
+				{
+					this.dormantDoor = true;
+					this.dormantRead = door.Dormant.read;
+					this.dormantWrite = door.Dormant.write;
+					this.dormantDosAction = door.Dormant.dosAction;
+					this.dormantGetConfig = door.Dormant.getConfig;
+					if ( door.Dormant.setPath )
+						door.Dormant.setPath( this.path );
+					return true;
+				}
+			}
+		}
+		// Check normal doors
+		for( var a = 0; a < Workspace.icons.length; a++ )
+		{
+			if( Workspace.icons[a].Title == this.deviceName )
+			{
+				return true;
+			}
+		}
 	}
+	// Fail!
+	this.path = null;
+	return false;
 }
 
 // Add a variable
@@ -73,34 +119,48 @@ Door.prototype.get = function( path )
 	// An object?
 	if( path && path.Path ) path = path.Path;
 	var vol = path.split( ':' )[0] + ':';
+	
 	// First case sensitive
-	for( var a = 0; a < Doors.icons.length; a++ )
+	for( var a = 0; a < Workspace.icons.length; a++ )
 	{
-		if( Doors.icons[a].Volume == vol )
+		if( Workspace.icons[a].Volume == vol )
 		{
 			// Also set the path
-			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( path ) : new Door( path );
+			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
+			d.setPath( path );
 			d.Config = Workspace.icons[a].Config;
 			return d;
 		}
 	}
+	
 	// Then insensitive
 	var invol = vol.toLowerCase();
-	for( var a = 0; a < Doors.icons.length; a++ )
+	for( var a = 0; a < Workspace.icons.length; a++ )
 	{
-		if( Doors.icons[a].Volume && Doors.icons[a].Volume.toLowerCase() == invol )
+		if( Workspace.icons[a].Volume && Workspace.icons[a].Volume.toLowerCase() == invol )
 		{
 			// Also set the path
-			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( path ) : new Door( path );
+			var v = Workspace.icons[a].Volume;
+			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( v ) : new Door( v );
+			var fixPath = v + path.substr( v.length, path.length - v.length );
+			d.setPath( fixPath );
 			d.Config = Workspace.icons[a].Config;
 			return d;
 		}
 	}
-	return new Door( path );
+
+	var door = new Door( path );
+
+	return door;
 };
 
 Door.prototype.getIcons = function( fileInfo, callback, flags )
 {
+	if( !this.path && this.deviceName )
+	{
+		this.path = this.deviceName + ':';
+	}
+	
 	var finfo = false;
 
 	if( fileInfo )
@@ -118,7 +178,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			this.fileInfo.path = this.deviceName + ':';
 		}
 	}
-	else if( !this.path && !this.deviceName )
+	else if( !this.deviceName )
 	{
 		if( callback ) callback( false );
 		return false;
@@ -132,7 +192,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			ID:       false,
 			MetaType: 'Meta',
 			Path:     this.deviceName + ':' + this.path,
-			Title:    this.deviceName + ':',
+			Title:    this.deviceName,
 			Volume:   this.deviceName
 		};
 	}
@@ -153,7 +213,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 		var deviceName = t.fileInfo.Path.split( ':' )[0] + ':';
 
 		// If we end up here, we're not using dormant - which is OK! :)
-		if( !dirs || ( !dirs && !dirs.length ) )
+		if( !dirs || ( dirs && !dirs.length ) )
 		{
 			var cache = DoorCache.dirListing;
 			
@@ -185,6 +245,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			
 			// Use standard Friend Core doors
 			var j = new cAjax();
+			if( t.context ) j.context = t.context;
 
 			//changed from post to get to get more speed.
 			j.open( 'get', updateurl, true, true );
@@ -222,7 +283,25 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 						return res;
 					}
 
-					var list = d.indexOf( '{' ) > 0 ? JSON.parse( d ) : {};
+					
+					var parsed = '';
+					// Clear last bit
+					for( var tries = 0; tries < 2; tries++ )
+					{
+						try
+						{
+							parsed = JSON.parse( d );
+							tries = 2;
+						}
+						catch( e )
+						{
+							parsed = false;
+							d = d.substr( 0, d.length - 1 );
+						}
+					}
+					
+					var list = d.indexOf( '{' ) && parsed ? parsed : {};
+					
 					if( typeof( list ) == 'object' && list.length )
 					{
 						// Fix paths
@@ -251,6 +330,9 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 			}
 
 			j.send();
+			
+			// Register network connection
+			t.networkConnections.push( j );
 		}
 		else if( callback )
 		{
@@ -332,10 +414,55 @@ Door.prototype.instantiate = function()
 }
 
 // Writes to file
-Door.prototype.write = function( filename, data )
+Door.prototype.write = function( filename, data, mode, extraData )
 {
 	var dr = this;
+
+	// Interface with dormant drive
+	if ( typeof extraData == 'undefined' )
+		extraData = false;
+	if ( this.dormantWrite )
+	{
+		return this.dormantWrite( filename, data, function( size )
+		{
+			if ( dr.onWrite )
+			{
+				dr.onWrite( size, extraData );
+			}
+		} );
+	}
+
+	// Specific binary mode - always over HTTP
+	if( this.mode == 'wb' || mode == 'wb' )
+	{
+		// Session or auth id
+		var s = ( Workspace.conf && Workspace.conf.authId ) ? ( 'authid=' + Workspace.conf.authId ) :
+			( 'sessionid=' + Workspace.sessionId );
+		var f = new FormData();
+		
+		var blob = new Blob( [ data ], { type: 'application/octet-stream' } );
+		f.append( 'data', blob, "" );
+		var url = '/system.library/file/upload/?' + s + '&path=' + filename;
+		var poster = new XMLHttpRequest();
+		
+		poster.open( 'POST', url, true );
+		poster.onload = function( oEvent )
+		{
+			// Uploaded.
+			
+			// Do the refreshing
+			Workspace.refreshWindowByPath( filename );;
+			if( dr.onWrite )
+				dr.onWrite( blob.size, extraData );
+		};
+		
+		poster.send( f );
+
+		return;
+	}
+	
 	var j = new cAjax();
+	if( this.context ) j.context = this.context;
 	
 	//var old = Workspace.websocketsOffline;
 	//Workspace.websocketsOffline = true;
@@ -369,16 +496,33 @@ Door.prototype.write = function( filename, data )
 		}
 
 		if( dr.onWrite )
-			dr.onWrite( dat );
+			dr.onWrite( dat, extraData );
 	}
 	j.send();
+	
+	// Register network connection
+	this.networkConnections.push( j );
 }
 
 // Reads a file
-Door.prototype.read = function( filename, mode )
+Door.prototype.read = function( filename, mode, extraData )
 {
+	if ( typeof extraData == 'undefined' )
+		extraData = false;
+
 	var dr = this;
+	if ( this.dormantRead )
+	{
+		return this.dormantRead( filename, mode, function( data )
+		{
+			if ( dr.onRead )
+			{
+				dr.onRead( data, extraData );
+			}
+		} );
+	}
 	var j = new cAjax();
+	if( this.context ) j.context = this.context;
 	if( mode == 'rb' )
 		j.forceHTTP = true;
 	j.open( 'post', '/system.library/file/read', true, true );
@@ -412,25 +556,85 @@ Door.prototype.read = function( filename, mode )
 		{
 			if( j.proxy.responseType == 'arraybuffer' )
 			{
-				dr.onRead( d );
+				if( d.byteLength < 256 )
+				{
+					var str = ConvertArrayBufferToString( d );
+					if( str && str.length )
+					{
+						if( str.substr( 0, 19 ) == 'fail<!--separate-->' )
+						{
+							return dr.onRead( false, extraData );
+						}
+					}
+				}			
+				dr.onRead( r == 'ok' ? d : false, extraData );
 			}
 			else
 			{
 				// Here we test both on separator or without (can vary from fs to fs)
 				if( !d || ( this.rawData + "" ).indexOf( '<!--' ) > 10 )
 					return dr.onRead( this.rawData );
-				dr.onRead( r == 'ok' ? d : false );
+				dr.onRead( r == 'ok' ? d : false, extraData );
 			}
 		}
 	}
 	j.send();
+	
+	// Register network connection
+	this.networkConnections.push( j );
 }
 
 // Execute a dos action now..
 Door.prototype.dosAction = function( ofunc, args, callback )
 {
-	// Alterations depending on command format
 	var func = ofunc;
+
+	if ( this.dormantDosAction )
+	{
+		return this.dormantDosAction( ofunc, args, function( responseText )
+		{
+			refresh();
+			if ( callback )
+				callback( responseText );
+		} );
+	}
+
+	// Special case for 'copy' if destination is a Dormant drive
+	var dr = this;
+	if ( ofunc == 'copy' )
+	{
+		var drive = args[ 'to' ].split( ':' )[ 0 ] + ':';
+		var doors = DormantMaster.getDoors();
+		if( doors )
+		{
+			for( var d in doors )
+			{
+				var door = doors[ d ];
+				var title = door.Title.split( ':' )[ 0 ] + ':';
+				if( title == drive )
+				{
+					// Loads the file in binary mode
+					var file = new File( args[ 'from' ] );
+					file.onLoad = function( data )
+					{
+						door.Dormant.write( args[ 'to' ], data, function( response )
+						{
+							refresh();
+							if ( response == 0 )
+								doAlert();
+							else
+								response = 'ok';
+							if ( callback )
+								callback( response, dr );
+						} );
+					}
+					file.load( 'rb' );
+					return;
+				}
+			}
+		}
+	}
+	// Alterations depending on command format
 	switch( ofunc )
 	{
 		case 'metainfo':
@@ -450,8 +654,8 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	if( !args.path ) args.path = this.deviceName + ':' + this.path;
 
 	// Do the request
-	var dr = this;
 	var j = new cAjax();
+	if( this.context ) j.context = this.context;
 	j.open( 'post', '/system.library/' + func, true, true );
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
@@ -473,49 +677,59 @@ Door.prototype.dosAction = function( ofunc, args, callback )
 	{
 		if( ofunc != 'info' )
 		{
-			// Do the refreshing
-			var possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
-			for( var b = 0; b < possibilities.length; b++ )
-			{
-				if( args[possibilities[b]] )
-				{
-					if( func.indexOf('delete') > -1 )
-						Workspace.closeWindowByPath( args[possibilities[b]] );
-					else Workspace.refreshWindowByPath( args[possibilities[b]] );
-				}
-			}
+			refresh();
 			var s = this.responseText().split( '<!--separate-->' );
 			if( s && s[0] != 'ok' )
 			{
-				switch( ofunc )
-				{
-					case 'delete':
-						Notify( { title: i18n( 'i18n_delete_operation' ), text: i18n( 'i18n_could_not_delete_files' ) } );
-						break;
-					case 'copy':
-						Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_could_not_copy_files' ) } );
-						break;
-					case 'link':
-						Notify( { title: i18n( 'i18n_link_operation' ), text: i18n( 'i18n_could_not_link_dirs' ) } );
-						break;
-					case 'rename':
-						Notify( { title: i18n( 'i18n_rename_operation' ), text: i18n( 'i18n_could_not_rename_file' ) } );
-						break;
-					case 'stat':
-						Notify( { title: i18n( 'i18n_stat_operation' ), text: i18n( 'i18n_could_not_stat_file' ) } );
-						break;
-					case 'protect':
-						Notify( { title: i18n( 'i18n_protect_operation' ), text: i18n( 'i18n_could_not_protect_files' ) } );
-						break;
-					case 'makedir':
-						Notify( { title: i18n( 'i18n_makedir_operation' ), text: i18n( 'i18n_could_not_make_dir' ) } );
-						break;
-				}
+				doAlert();
 			}
 		}
-		if( callback ) callback( this.responseText() );
+		if( callback ) callback( this.responseText(), dr );
 	}
 	j.send();
+	
+	this.networkConnections.push( j );
+	
+	function refresh()
+	{
+		var possibilities = [ 'from', 'From', 'to', 'To', 'path', 'Path' ];
+		for( var b = 0; b < possibilities.length; b++ )
+		{
+			if( args[possibilities[b]] )
+			{
+				if( func.indexOf('delete') > -1 )
+					Workspace.closeWindowByPath( args[possibilities[b]] );
+				else Workspace.refreshWindowByPath( args[possibilities[b]] );
+			}
+		}
+	}
+	function doAlert()
+	{
+		switch( ofunc )
+		{
+			case 'delete':
+				Notify( { title: i18n( 'i18n_delete_operation' ), text: i18n( 'i18n_could_not_delete_files' ) } );
+				break;
+			case 'copy':
+				Notify( { title: i18n( 'i18n_copy_operation' ), text: i18n( 'i18n_could_not_copy_files' ) } );
+				break;
+			case 'link':
+				Notify( { title: i18n( 'i18n_link_operation' ), text: i18n( 'i18n_could_not_link_dirs' ) } );
+				break;
+			case 'rename':
+				Notify( { title: i18n( 'i18n_rename_operation' ), text: i18n( 'i18n_could_not_rename_file' ) } );
+				break;
+			case 'stat':
+				Notify( { title: i18n( 'i18n_stat_operation' ), text: i18n( 'i18n_could_not_stat_file' ) } );
+				break;
+			case 'protect':
+				Notify( { title: i18n( 'i18n_protect_operation' ), text: i18n( 'i18n_could_not_protect_files' ) } );
+				break;
+			case 'makedir':
+				Notify( { title: i18n( 'i18n_makedir_operation' ), text: i18n( 'i18n_could_not_make_dir' ) } );
+				break;
+		}
+	}
 }
 
 // Mount a device
@@ -555,4 +769,115 @@ Door.prototype.Unmount = function( callback )
 		if( callback ) callback( data );
 	}
 	f.execute( 'device', args );
+};
+function IsPathOnDormantDoor( path )
+{
+	// Extract the drive from path
+	var drive = path.split( ':' )[ 0 ] + ':';
+
+	// Is this a dormant drive?
+	var doors = DormantMaster.getDoors();
+	if( doors )
+	{
+		for( var d in doors )
+		{
+			var door = doors[ d ];
+			var title = door.Title.split( ':' )[ 0 ] + ':';
+			if ( title == drive )
+				return true;
+		}
+	}
+	return false;
+}
+function GetURLFromPath( path, callback, type, toAdd )
+{
+	if ( IsPathOnDormantDoor( path ) )
+	{
+		// Type not defined, get type from file extension
+		if ( typeof type == 'undefined' )
+		{
+			var extension = '';
+			var pos = path.lastIndexOf( '.' );
+			if ( pos >= 0 )
+				extension = path.substring( pos + 1 ).toLowerCase();
+			switch( extension )
+			{
+				case 'txt':
+				case 'asc':
+				case 'ascii':
+					type = 'text/plain';
+					break;
+				case 'css':
+					type = 'text/css';
+					break;
+				case 'html':
+					type = 'text/html';
+					break;
+				case 'js':
+					type = 'text/javascript';
+					break;
+				case 'jpg':
+				case 'jpeg':
+					type = 'image/jpeg';
+					break;
+				case 'png':
+					type = 'image/png';
+					break;
+				case 'gif':
+					type = 'image/gif';
+					break;
+				case 'mp3':
+					type = 'audio/mpeg';
+					break;
+				case 'midi':
+				case 'mid':
+					type = 'audio/midi';
+					break;
+				case 'wav':
+					type = 'audio/wav';
+					break;
+				case 'ogg':
+					type = 'audio/ogg';					
+					break;
+				case 'webm':
+					type = 'video/webm';					
+					break;
+				case 'pdf':
+					type = 'application/pdf';
+					break;
+				default:
+					type = 'application/octet-stream';					
+					break;
+			}
+		}
+
+		// Load the file in binary
+		var file = new File( path );
+		file.onLoad = function( data )
+		{
+			// Check for error
+			if ( typeof data == 'string' )
+			{
+				if( str.substr( 0, 19 ) == 'fail<!--separate-->' )
+				{
+					callback(false );
+				}
+			}
+
+			// Create a blob and return it's URL
+			var arrayBufferView = new Uint8Array( data );
+			var blob = new Blob( [ arrayBufferView ], { type: type } );
+			var urlCreator = window.URL || window.webkitURL;
+			var imageUrl = urlCreator.createObjectURL( blob );
+			callback( imageUrl );
+		};
+		file.load( 'rb' );
+	}
+	else
+	{
+		if ( !toAdd )
+			toAdd = ' ';
+		var imageUrl = '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + path + toAdd;
+		callback( imageUrl );
+	}
 }

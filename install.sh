@@ -474,7 +474,9 @@ export MYSQL_PWD=""
 clear
 
 # Make a copy of the configuration file
-$SUDO cp "$FRIEND_BUILD/cfg/cfg.ini" "$FRIEND_BUILD/cfg/cfg.bak"
+if [ "$cfgFound" = "yes" ]; then
+    $SUDO cp "$FRIEND_BUILD/cfg/cfg.ini" "$FRIEND_BUILD/cfg/cfg.bak"
+fi
 
 # Creates or updates the build/cfg/cfg.ini file
 echo ";" | $SUDO tee "$FRIEND_BUILD/cfg/cfg.ini" >> installation.log

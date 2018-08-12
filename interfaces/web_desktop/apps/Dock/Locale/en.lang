@@ -40,9 +40,10 @@ i18n_large                            : Large
 i18n_medium                           : Medium
 i18n_small                            : Small
 i18n_dock_editor                      : Dock editor
-i18n_close                            : Close dock editor
+i18n_close                            : Close
 i18n_select_application               : Select application
 i18n_display_name                     : Display name
+i18n_dock_layout_settings             : Layout settings
 
 i18n_preferred_workspace              : Preferred workspace
 

@@ -28,6 +28,7 @@ var _protocol = document.location.href.split( '://' )[0];
 
 Workspace = {
 	icons: [],
+	reloginAttempts: 0,
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
 	initialized: false,
 	protocol: _protocol,
@@ -67,6 +68,12 @@ Workspace = {
 		{
 			Workspace.init();
 		}
+		
+		if( window.friendApp )
+		{
+			document.body.classList.add( 'friendapp' );
+		}
+
 	},
 	init: function()
 	{
@@ -76,7 +83,7 @@ Workspace = {
 		// Preload some images
 		var imgs = [
 			'/webclient/gfx/system/offline_16px.png',
-			'/themes/friendup/gfx/loading.gif'
+			'/themes/friendup12/gfx/loading.gif'
 		];
 		this.imgPreload = [];
 		for( var a = 0; a < imgs.length; a++ )
@@ -92,6 +99,7 @@ Workspace = {
 			return setTimeout( 'Workspace.init()', 50 );
 		}
 
+		checkMobileBrowser();
 		if( !this.addedMobileCSS && window.isMobile )
 		{
 			document.body.setAttribute( 'mobile', 'mobile' );
@@ -100,12 +108,11 @@ Workspace = {
 		}
 
 		// Show the login prompt if we're not logged in!
-		if( !this.login() )
-		{
-			this.showLoginPrompt();
-			return;
-		}
-
+		this.login();
+	},
+	// Ready after init
+	postInit: function()
+	{
 		// Everything must be ready
 		if( typeof( ge ) == 'undefined' || !document.body.classList.contains( 'Inside' ) )
 		{
@@ -151,7 +158,7 @@ Workspace = {
 
 		// Setup default Doors screen
 		var wbscreen = new Screen( {
-			title: 'Friend Workspace v1.1.1',
+			title: 'Workspace',
 			id:	'DoorsScreen',
 			extra: Workspace.fullName,
 			taskbar: true,
@@ -363,18 +370,16 @@ Workspace = {
 			// Set the clock
 			var e = '';
 			e +=    StrPad( d.getHours(), 2, '0' ) + ':' +
-					   StrPad( d.getMinutes(), 2, '0' ) + ':' +
-					   StrPad( d.getSeconds(), 2, '0' );
-			e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
-					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();
+					   StrPad( d.getMinutes(), 2, '0' ); /* + ':' +
+					   StrPad( d.getSeconds(), 2, '0' );*/
+			/*e +=    ' ' + StrPad( d.getDate(), 2, '0' ) + '/' +
+					   StrPad( d.getMonth() + 1, 2, '0' ) + '/' + d.getFullYear();*/
 			ex.time.innerHTML = e;
 
 			// Realign workspaces
 			Workspace.nudgeWorkspacesWidget();
 		}
 		this.clockInterval = setInterval( clock, 1000 );
-
-		setTimeout( function(){ Workspace.informationWindow(); }, 1000 );
 
 		// Recall wallpaper from settings
 		this.refreshUserSettings( function(){ Workspace.refreshDesktop(); } );
@@ -413,6 +418,41 @@ Workspace = {
 					command: function()
 					{
 						Workspace.removeFromDock( tar.executable );
+					}
+				} );
+			}
+			
+			if( movableWindowCount > 0 )
+			{
+				men.push( {
+					name: i18n( 'i18n_minimize_all_windows' ),
+					command: function( e )
+					{
+						var t = GetTaskbarElement();
+						var lW = null;
+						for( var a = 0; a < t.childNodes.length; a++ )
+						{
+							if( t.childNodes[a].view && !t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) )
+							{
+								t.childNodes[a].view.parentNode.setAttribute( 'minimized', 'minimized' );
+							}
+						}
+						_DeactivateWindows();
+					}
+				} );
+				men.push( {
+					name: i18n( 'i18n_show_all_windows' ),
+					command: function( e )
+					{
+						var t = GetTaskbarElement();
+						for( var a = 0; a < t.childNodes.length; a++ )
+						{
+							if( t.childNodes[a].view && t.childNodes[a].view.parentNode.getAttribute( 'minimized' ) == 'minimized' )
+							{
+								t.childNodes[a].view.parentNode.removeAttribute( 'minimized' );
+							}
+						}
+						_ActivateWindow( t.childNodes[t.childNodes.length-1].view );
 					}
 				} );
 			}
@@ -471,9 +511,6 @@ Workspace = {
 						};
 					}
 				}
-
-				//console.log( '--- Workspace.keys ---', { keys: this.keys } );
-
 				return this.keys;
 			}
 
@@ -544,8 +581,6 @@ Workspace = {
 			var k = new Module( 'system' );
 			k.onExecuted = function( e, d )
 			{
-				//console.log( 'getserverkey: ', { e:e, d:d } );
-
 				if( callback )
 				{
 					if( e == 'ok' && d )
@@ -674,11 +709,11 @@ Workspace = {
 
 		var lp = new View( {
 			id: 'Login',
-			width: 320,
+			width: 432,
 			'min-width': 290,
-			'max-width': 320,
-			height: 220,
-			'min-height': 220,
+			'max-width': 432,
+			height: 480,
+			'min-height': 280,
 			'resize': false,
 			title: 'Login to FriendUP',
 			close: false,
@@ -694,18 +729,82 @@ Workspace = {
 	// When session times out, use log in again...
 	relogin: function()
 	{
-		delete Workspace.conn;
-		delete Workspace.sessionId;
+		var self = this;
+		
+		// Only allow one relogin attempt at a time!
+		if( this.reloginAttempts > 1 )
+		{
+			return;
+		}
+		this.reloginAttempts++;
+		
+		function executeCleanRelogin()
+		{
+			if( Workspace.conn )
+			{
+				try
+				{
+					Workspace.conn.close();
+				}
+				catch( e )
+				{
+					console.log( 'Could not close conn.' );
+				}
+				delete Workspace.conn;
+			}
+			Workspace.sessionId = null;
 
-		if( Workspace.loginUsername && Workspace.loginPassword )
-		{
-			Workspace.reloginInProgress = true;
-			Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
+			if( Workspace.loginUsername && Workspace.loginPassword )
+			{
+				Workspace.reloginInProgress = true;
+				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
+			}
+			else
+			{
+				Workspace.logout();
+			}
 		}
-		else
+		// See if we are alive!
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
 		{
-			Workspace.logout();
+			self.reloginAttempts--;
+			
+			if( e == 'ok' )
+			{
+				console.log( 'We do not need to relogin..: ' + Workspace.sessionId );
+				return;
+			}
+			else
+			{
+				try
+				{
+					var js = JSON.parse( d );
+					if( parseInt( d.code ) == 3 )
+					{
+						console.log( 'Session was wrong or expired.' );
+						Workspace.sessionId = null;
+						//return;
+					}
+				}
+				catch( e )
+				{
+				}
+				console.log( 'This was the error: (' + Workspace.sessionId + ')', e, d );
+			}
+			if( Workspace.serverIsThere )
+			{
+				console.log( 'Execute clean relogin' );
+				executeCleanRelogin();
+			}
+			else
+			{
+				console.log( 'Won\'t try to relogin until the server is back.' );
+			}
 		}
+		m.forceHTTP = true;
+		m.forceSend = true;
+		m.execute( 'usersettings' );
 		return;
 	},
 	renewAllSessionIds: function()
@@ -761,6 +860,8 @@ Workspace = {
 
 				Workspace.userLevel = json.level;
 
+				console.log( 'Session JSON: ' + json );
+
 				var hasSessionID = ( json.sessionid && json.sessionid.length > 1 );
 				var hasLoginID = ( json.loginid && json.loginid.length > 1 );
 
@@ -789,13 +890,32 @@ Workspace = {
 
 	},
 	login: function( u, p, r, callback, ev )
-	{
+	{	
+		var self = this;
+		
+		// Test if we have a stored session
+		var sess = localStorage.getItem( 'WorkspaceSessionID' );
+		if( sess && sess.length )
+		{
+			this.sessionId = sess;
+		}
+	
 		// TODO: If we have sessionid - verify it through ajax.
 
 		if( this.sessionId )
 		{
 			if( callback && typeof( callback ) == 'function' ) callback( true );
+			Workspace.reloginInProgress = false;
 			return true;
+		}
+		
+		// Check local storage
+		var ru = window.localStorage.getItem( 'WorkspaceUsername' );
+		var rp = window.localStorage.getItem( 'WorkspacePassword' );
+		if( ru && rp )
+		{
+			u = ru;
+			p = rp;
 		}
 
 		// Require username and pw to login
@@ -812,7 +932,7 @@ Workspace = {
 			}
 			Workspace.reloginInProgress = false;
 			if( callback && typeof( callback ) == 'function' ) callback( false );
-			return false;
+			return this.showLoginPrompt();
 		}
 
 		var t = this;
@@ -829,9 +949,9 @@ Workspace = {
 
 		if( this.loginUsername && this.loginPassword )
 		{
-
+			// FIXME: Speed this up for the Edge browser
 			this.encryption.setKeys( this.loginUsername, this.loginPassword );
-
+			
 			/*
 				r = remember me set....
 			*/
@@ -845,16 +965,6 @@ Workspace = {
 						recoverykey : this.encryption.keys.client.recovery
 					},
 					{ applicationName : 'Workspace' } );
-
-					//console.log( '--- localStorage --- ', window.localStorage );
-				}
-
-				// TODO: Do we need to store anything in cookie, this is unsafe??? use localStorage instead, works the same way but only for client storing, remove this ...
-
-				if( this.loginUsername && this.loginPassword )
-				{
-					SetCookie( 'loginUsername', this.loginUsername );
-					SetCookie( 'loginPassword', this.loginPassword );
 				}
 			}
 
@@ -919,21 +1029,48 @@ Workspace = {
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
 
-					Workspace.reloginInProgress = null;
+					// Store username and password in local storage
+					if( r && self.loginUsername && self.loginPassword )
+					{
+						window.localStorage.setItem( 'WorkspaceUsername', self.loginUsername );
+						window.localStorage.setItem( 'WorkspacePassword', self.loginPassword );
+					}
+
+					Workspace.reloginInProgress = false;
 					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev );
 				}
 				else
 				{
-					Workspace.reloginInProgress = null;
+					// Remove from localstorage
+					window.localStorage.removeItem( 'WorkspaceUsername' );
+					window.localStorage.removeItem( 'WorkspacePassword' );
+					
+					Workspace.reloginInProgress = false;
 					if( t.loginPrompt )
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
 
 				}
-				document.body.className = 'Login';
+				document.body.classList.add( 'Login' );
 			}
 			m.forceHTTP = true;
+			m.forceSend = true;
 			m.execute( 'login' );
+			
+			// Timeout login request
+			if( Workspace.workspaceInside )
+			{
+				m.loginTimeout = setTimeout( function()
+				{
+					if( Workspace.reloginInProgress )
+					{
+						console.log( 'Destroying.' );
+						m.destroy();
+						Workspace.reloginInProgress = false;
+					}
+					m.loginTimeout = false;
+				}, 2500 );
+			}
 		}
 
 		// Show it
@@ -1027,11 +1164,19 @@ Workspace = {
 				'webclient/js/io/directive.js;' +
 				'webclient/js/io/door.js;' +
 				'webclient/js/io/dormant.js;' +
+				'webclient/js/io/dormantramdisc.js;' +
 				'webclient/js/io/door_system.js;' +
 				'webclient/js/io/module.js;' +
 				'webclient/js/io/file.js;' +
 				'webclient/js/io/progress.js;' +
 				'webclient/js/io/friendnetwork.js;' +
+				'webclient/js/io/friendnetworkshare.js;' +
+				'webclient/js/io/friendnetworkfriends.js;' +
+				'webclient/js/io/friendnetworkdrive.js;' +
+				'webclient/js/io/friendnetworkextension.js;' +
+				'webclient/js/io/friendnetworkdoor.js;' +
+				'webclient/js/io/friendnetworkapps.js;' +
+				'webclient/js/io/DOS.js;' +
 				'webclient/js/gui/widget.js;' +
 				'webclient/js/gui/listview.js;' +
 				'webclient/js/gui/directoryview.js;' +
@@ -1094,12 +1239,15 @@ Workspace = {
 				{
 					// New translations
 					i18n_translations = [];
+					
+					var decoded = JSON.parse( d );
 
 					// Add it!
 					i18nClearLocale();
 					if( e == 'ok' )
 					{
-						_this.locale = JSON.parse( d ).locale;
+						if( decoded && typeof( decoded.locale ) != 'undefined' )
+							_this.locale = decoded.locale;
 						//load english first and overwrite with localised values afterwards :)
 						i18nAddPath( 'locale/en.locale', function(){
 							if( _this.locale != 'en' ) i18nAddPath( 'locale/' + _this.locale + '.locale' );
@@ -1112,15 +1260,17 @@ Workspace = {
 
 					try
 					{
-						var res = JSON.parse( d );
-						if( res.response == 'Failed to load user.' )
+						if( decoded.response == 'Failed to load user.' )
 						{
 							_this.logout();
 						}
 					}
 					catch( e ){};
+					
+					// Current stored Friend version
+					Workspace.friendVersion = decoded.friendversion;
 				}
-				l.execute( 'getsetting', { setting: 'locale' } );
+				l.execute( 'getsetting', { settings: [ 'locale', 'friendversion' ] } );
 
 				if( !_this.workspaceHasLoadedOnceBefore )
 				{
@@ -1156,13 +1306,10 @@ Workspace = {
 					{
 						var m = new Module( 'system' );
 						m.onExecuted = function( e, d )
-						{
-							console.log( 'Er got the user settings.' );
-							
+						{	
 							var m = new Module( 'system' );
 							m.onExecuted = function( ee, dd )
 							{
-								console.log( 'Are we to display eula?: ' + ee );
 						        if( ee != 'ok' )
 						        {
 						            ShowEula();
@@ -1203,6 +1350,7 @@ Workspace = {
 					}, 400 );
 				}
 				if( callback && typeof( callback ) == 'function' ) callback();
+				Workspace.postInit();
 				return 1;
 			}
 			document.body.appendChild( s );

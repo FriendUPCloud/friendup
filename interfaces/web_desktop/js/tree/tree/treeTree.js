@@ -26,15 +26,19 @@
 Friend = window.Friend || {};
 Friend.Tree.RenderItems = Friend.Tree.RenderItems || {};
 
-Friend.Tree.Tree = function( tree, name, flags )
+Friend.Tree.Tree = function( tree, name, properties )
 {
-    this.treeName = false;
-    this.larsen = 1;
-    Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Tree', flags );
+	this.treeName = false;
+	this.tree = false;
+    this.clip = true;
+    this.sizeBorder = 0;
+    this.colorBorder = '#000000';
+	this.larsen = 1;
+	
+    Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.Tree', properties );
 	this.registerEvents( 'refresh' );
     if ( this.treeName == false )
         this.treeName = this.root.name;
-
 };
 Friend.Tree.Tree.messageUp = function( message )
 {
@@ -45,33 +49,32 @@ Friend.Tree.Tree.messageDown = function( message )
     return this.endProcess( message, [ 'x', 'y', 'z', 'rotation', 'zoomX', 'zoomY', 'alpha', 'treeName' ] );
 };
 
-// Default renderItem[name of item]
-Friend.Tree.RenderItems.Tree = function( tree, name, properties )
+Friend.Tree.RenderItems.Tree_HTML = function( tree, name, properties )
 {
     this.tree = false;
     this.clip = true;
-    this.borderSize = 0;
-    this.borderColor = '#000000';
+    this.sizeBorder = 0;
+    this.colorBorder = '#000000';
     Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.RenderItems.Tree', properties );
 
     this.larsenCounter = 0;
 };
 Friend.Tree.RenderItems.Tree.render = function( properties )
 {
-    if ( properties.z == this.z && this.larsenCounter < this.parent.larsen )
+    if ( properties.z == this.z && this.larsenCounter < this.item.larsen )
     {
         // Look for tree
-        var root = this.tree.findTreeFromName( this.parent.treeName );
+        var root = this.tree.findTreeFromName( this.item.treeName );
         if ( root )
         {          
             this.larsenCounter++;
 
             // Draw border
             var delta = 0;
-            if ( this.borderSize )
+            if ( this.item.sizeBorder )
             {
-                this.rect.drawRectangle( properties, this.borderColor, this.borderSize );
-                delta = this.borderSize;
+                this.rect.drawRectangle( properties, this.item.colorBorder, this.item.sizeBorder );
+                delta = this.item.sizeBorder;
             }
 
             // Clip rectangle

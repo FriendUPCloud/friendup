@@ -46,7 +46,10 @@ Screen = function ( flags, initObject )
 	// Maximum height available for view windows
 	this.getMaxViewHeight = function()
 	{
-		if( this.div ) return this.contentDiv.offsetHeight;
+		if( this.div )
+		{
+			return this.contentDiv.offsetHeight;
+		}
 		return 0;
 	}
 	
@@ -125,6 +128,14 @@ Screen = function ( flags, initObject )
 	}
 	
 	var div;
+	
+	// When we need it
+	this.hideOverlay = function()
+	{
+		div._screenoverlay.style.display = 'none';
+		div._screenoverlay.style.pointerEvents = 'none';
+	}	
+	
 	if ( initObject ) div = initObject;
 	else 
 	{
@@ -143,7 +154,12 @@ Screen = function ( flags, initObject )
 		
 		var ex = '';
 		if( flags.id == 'DoorsScreen' )
-			ex = "\n		<div class=\"Extra\">" + this._flags['extra'] + "</div>";
+		{
+			var extra = this._flags['extra'];
+			if( this._flags[ 'extraClickHref' ] )
+				extra = '<span class="ExtraClick" onclick="' + this._flags[ 'extraClickHref' ] + '; return cancelBubble( event )">' + extra + '</span>';
+			ex = "\n		<div class=\"Extra\">" + extra + "</div>";
+		}
 		
 		div.innerHTML = "" +
 		"<div class=\"TitleBar\">" +
@@ -763,6 +779,8 @@ Screen = function ( flags, initObject )
 			}
 			// Override the theme
 			if( scrn.getFlag( 'theme' ) ) msg.theme = scrn.getFlag( 'theme' );
+			if( Workspace.themeData )
+				msg.themeData = Workspace.themeData;
 			// Use this if the packet has it
 			if( !msg.sessionId )
 			{

@@ -51,6 +51,16 @@
 								</div>
 								<div class="HRow MarginTop FileInfo">
 									<div class="FloatLeft HContent30">
+										<strong>{i18n_open_with}({ext}):</strong>
+									</div>
+									<div class="FloatLeft HContent5">&nbsp;</div>
+									<div class="FloatLeft HContent65">
+										<select name="MimetypeIntegration" onchange="Workspace.setMimetype( '{filename}', this.value )">
+										</select>
+									</div>
+								</div>
+								<div class="HRow MarginTop FileInfo">
+									<div class="FloatLeft HContent30">
 										<strong>{i18n_public_file}:</strong>
 									</div>
 									<div class="FloatLeft HContent5">&nbsp;</div>
@@ -251,10 +261,7 @@
 			</div>
 		</div>
 		<div class="VContentBottom Padding BackgroundDefault BorderTop">
-			<button type="button" class="FloatRight IconSmall fa-remove" onclick="Doors.closeFileInfo(this)">
-				{i18n_close}
-			</button>
-			<button type="button" class="IconSmall fa-save" onclick="Doors.saveFileInfo(this)">
+			<button type="button" class="FloatRight IconSmall fa-save" onclick="Doors.saveFileInfo(this)">
 				{Save}
 			</button>
 		</div>

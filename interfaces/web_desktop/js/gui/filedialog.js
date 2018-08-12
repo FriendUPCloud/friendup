@@ -59,6 +59,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( !path ) path = 'Mountlist:';
 	if ( !triggerfunction ) return;
 	if ( !type ) type = 'open';
+	if( !mainview )
+	{
+		if( currentMovable )
+		{
+			mainview = currentMovable.windowObject;
+		}
+	}
 
 	var dialog = this;
 	if( !filename ) filename = '';
@@ -98,7 +105,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	w.onClose = function()
 	{
 		if( w.md ) w.md.close();
-		triggerfunction( false );
+		//triggerfunction( false );
 	}
 
 	// Default path
@@ -111,7 +118,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	// Block main view while this dialog is open!
 	if( mainview ) mainview.setBlocker( w );
-
+	
 	// Select an element
 	w.select = function( ele )
 	{
@@ -182,6 +189,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			w.close();
 			return;
 		}
+		
 		if( ele && ele.obj )
 		{
 			triggerfunction ( [ ele.obj ] );
@@ -209,6 +217,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			else
 			{
+				triggerfunction( '' );
 				console.log( 'Nothing selected...' );
 			}
 		}
@@ -221,13 +230,49 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		// Check bookmarks etc
 		if( dialog.sidebar )
 		{
+			dialog.sidebar.refresh = function()
+			{
+				w.refreshView();
+			}
+			if( !dialog.sidebar.id )
+			{
+				dialog.sidebar.id = window.MD5( ( new Date() ).getTime() + '' + Math.random() );
+				dialog.sidebar.refreshView = function()
+				{
+					w.refreshView();
+				}
+				dialog.sidebar.hasPath = function()
+				{
+					var inp = this.parentNode.getElementsByTagName( 'input' );
+					var found = false;
+					for( var a = 0; a < inp.length; a++ )
+					{
+						if( inp[a].name && inp[a].name == 'Path' )
+						{
+							found = inp[a];
+							break;
+						}
+					}
+					if( !found ) return;
+					if( found.value == 'Mountlist:' || found.value == 'System:' )
+					{
+						Alert( 'Error uploading', 'Please choose a disk with write privileges.' );
+						return false;
+					}
+					ge( 'UploadDialogPath' + dialog.sidebar.id ).action = '/system.library/file/upload/?sessionid=' + Workspace.sessionId + '&path=' + found.value;
+					return true;
+				}
+			}
+			var uploads = '<div class="PaddingLeft PaddingRight"><p class="Layout" style="line-height: 50px"><strong>' + i18n( 'i18n_upload_a_file' ) + ':</strong></p></div>' +
+				'<div class="PaddingLeft PaddingRight Relative" style="overflow-x: hidden; width: 100%; height: 50px"><button class="Button IconSmall fa-cloud-upload" style="position: absolute; pointer-events: none">' + i18n( 'i18n_choose_file' ) + '</button><form id="UploadDialogPath' + dialog.sidebar.id + '" action="/system.library/file/upload/?sessionid=' + Workspace.sessionId + '&path=Home:" method="post" enctype="multipart/form-data" target="diagifr" onload="ge( \'' + dialog.sidebar.id + '\' ).refresh()"><input name="file" style="position: absolute; opacity: 0.0" type="file" onchange="if( ge( \'' + dialog.sidebar.id + '\' ).hasPath() ){ submit(); this.value = \'\'; }"/></form><iframe name="diagifr" style="opacity: 0; pointer-events; none; width: 10px; height: 10px; position: absolute"></iframe></div>';
+			
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' )
 				{
 					var str = '<div class="VContentTop PaddingLeft PaddingRight BorderBottom" style="height: 50px"><p class="Layout" style="line-height: 50px"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p></div>';
-					str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative"><li>' + i18n( 'i18n_no_bookmarks' ) + '</li></ul></div>';
+					str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative"><li>' + i18n( 'i18n_no_bookmarks' ) + '</li></ul>' + uploads + '</div>';
 					dialog.sidebar.innerHTML = str;
 					return;
 				}
@@ -241,7 +286,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					listr += '<li><span class="MousePointer" path="' + list[a].path + '">' + list[a].name + '</span></li>';
 				}
 
-				str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative">' + listr + '</ul></div>';
+				str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative">' + 
+					listr + '</ul>' + uploads + '</div>';
 				dialog.sidebar.innerHTML = str;
 
 				var spans = dialog.sidebar.getElementsByTagName( 'span' );
@@ -357,8 +403,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			var files = [];
 			for( var a = 0; a < objs.length; a++ )
 			{
-				if( objs[a].Type == 'Directory' ) dirs.push( objs[a] );
-				else files.push( objs[a] );
+				if( objs[a].Type == 'Directory' ) 
+					dirs.push( objs[a] );
+				else 
+					files.push( objs[a] );
 			}
 			objs = dirs.concat( files );
 			var sw = 2;
@@ -366,7 +414,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			for( var a = 0; a < objs.length; a++ )
 			{
 				// Skip non-disks on mountlist level
-				if( dialog.path == 'Mountlist:' && objs[a].Type != 'Door' ) continue;
+				if( dialog.path == 'Mountlist:' && !( objs[a].Type == 'Door' || objs[a].Type == 'Dormant' ) ) continue;
 				
 				sw = sw == 1 ? 2 : 1;
 				var d = document.createElement( 'div' );
@@ -409,9 +457,12 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				if( objs[a].Type.toLowerCase() == 'directory' )
 					align = 'TextLeft';
 
+				// Make sure we have title
+				var title = objs[a].Title;
+
 				d.className = 'FullWidth MousePointer BorderBottom sw' + sw;
 				d.innerHTML = '<div class="HRow">' +
-					'<div class="Padding BorderRight Filename HContent55 FloatLeft Ellipsis">'   + objs[a].Title    + '</div>' +
+					'<div class="Padding BorderRight Filename HContent55 FloatLeft Ellipsis">'   + title + '</div>' +
 					'<div class="Padding BorderRight Filesize HContent25 FloatLeft ' + align + '">'  + ( col2.length ? col2 : '&nbsp;' ) + '</div>' +
 					'<div class="Padding Flags HContent20 FloatLeft TextCenter">' + ( col3.length ? col3 : '&nbsp;' ) + '</div>' +
 					'<br style="clear: both"/>' +

@@ -1,162 +1,320 @@
 
-
-
 	<div class="Gui LayoutButtonbarBottom">
-		<div class="VContentTop">
-			<div class="HContentLeft HContent60 ScrollArea BorderBottom BackgroundWindow" id="MainContainer">
-				<div class="Padding">
-					<div id="MTabs" class="Tabs">
-						<div class="Tab">
-							{i18n_basic_information}
-						</div>
-						<div class="Tab">
-							{i18n_extended_information}
-						</div>
-						<div class="Tab">
-							{i18n_key_management}
-						</div>
-						<div class="Page">
+		<div class="VContentTop" style="top: 10px; left: 10px; bottom: 50px; right: 10px">
+			<div class="HContentLeft HContent100 ScrollArea BackgroundWindow" id="MainContainer">
+				<div id="MTabs" class="Tabs">
+					<div class="Tab IconSmall fa-address-card-o">
+						{i18n_basic_information}
+					</div>
+					<div class="Tab IconSmall fa-laptop">
+						{i18n_device_information}
+					</div>
+					<div class="Tab IconSmall fa-address-card">
+						{i18n_storage}
+					</div>
+					<div class="Tab IconSmall fa-key">
+						{i18n_key_management}
+					</div>
+					<div class="Tab IconSmall fa-institution">
+						{i18n_friendNetwork}
+					</div>
+					<div class="Page ScrollBarSmall">
+						<div class="PageScroll">
 							<div class="HRow Padding">
-								<div id="UserImageRect">
-
-								</div>
-								<div>
-									<p class="Layout">
-										<label class="InputHeight">{i18n_full_name}:</label>
-										<input type="text" class="InputHeight" value="" id="UserAccFullname" value="{fullname}"/>
-									</p>
-									<p class="Layout">
-										<label class="InputHeight">{i18n_username}:</label>
-										<input type="text" class="InputHeight" value="" disabled="disabled" id="UserAccUsername" value="{username}"/>
-									</p>
-									<p class="Layout" id="PublicKeyContainer" style="display:none;">
-										<label>{i18n_publickey}:</label>
-										<button type="button" class="IconSmall fa-certificate Button" onclick="var p = Ge('UserAccPublicKey'); if( p.style.visibility != 'visible' ){ p.style.visibility = 'visible'; p.style.height = '132px'; p.style.pointerEvents = ''; } else { p.style.height = '1px'; p.style.visibility = 'hidden'; p.style.pointerEvents = 'none'; }">
-											{i18n_toggle_public_key_visibility}
-										</button>
-										<textarea class="FullWidth" value="" readonly="readonly" id="UserAccPublicKey" placeholder="{publickey}" onclick="this.focus();this.select();" style="visibility: hidden; pointer-events: none; height: 1px"></textarea>
-									</p>
-
-									<div id="ChangePassTrigger">
-										<button type="button" class="Button IconSmall fa-lock" onclick="toggleChangePass()">
-											{i18n_change_password}
-										</button>
-									</div>
-
-									<div id="ChangePassContainer">
-										<div id="PassError"></div>
-										<p class="Layout">
-											<label>{i18n_current_password}:</label>
-											<input type="password" value="" id="UserCurrentPassword"/>
-										</p>
-										<p class="Layout">
-											<label>{i18n_new_password}:</label>
-											<input type="password" value="" placeholder="*****" id="UserAccPassword"/>
-										</p>
-										<p class="Layout">
-											<label>{i18n_new_password} ({i18n_confirm}):</label>
-											<input type="password" value="" placeholder="*****" id="UserAccPasswordConfirm"/>
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="Page">
-							<div class="HRow Padding">
-								<div>
-									<p class="Layout" style="display:none;">
-										<label>{i18n_telephone}:</label>
-										<input type="text" value="" id="UserAccPhone"/>
-									</p>
-									<p class="Layout">
-										<label>{i18n_email_address}:</label>
-										<input type="text" value="" id="UserAccEmail" value="{email}"/>
-									</p>
-									<!--<p class="Layout">
-										<label>{i18n_account_image}:</label>
-										<input type="text" value="" id="UserAccImage"/>
-									</p>-->
-								</div>
-								<!--<div id="KeyStorage">
-									
-									<p class="Layout">
-										<label>{i18n_key_information}:</label>
-										<input style="visibility:hidden"/>
-									</p>
-								
-									<p class="Layout">
-										<label>{i18n_key_type}:</label>
-										<select id="NewKeyType">
-											<option value="rsa1024">RSA1024</option>
-											<option value="sha256">SHA256</option>
-											<option value="md5">MD5</option>
-											<option value="token">Token</option>
-											<option value="plain">Plain</option>
-										</select>
-									</p>
-									<p class="Layout">
-										<label>{i18n_key_name}:</label>
-										<input type="text" id="NewKeyName" value=""/>
-									</p>
-									<p class="Layout">
-										<label>{i18n_key_password}:</label>
-										<input type="password" id="NewKeyPassword" value=""/>
-									</p>
-									<p class="Layout">
-										<label>{i18n_key_password_confirm}:</label>
-										<input type="password" id="NewKeyPasswordConfirm" value=""/>
-									</p>
-									
-									<div>
-										<button type="button" class="Button IconSmall fa-lock" onclick="generateKeypair()">
-											{i18n_generate}
-										</button>
-									</div>
-									
-									<div id="Keys"></div>
-									
-								</div>-->
-							</div>
-						</div>
-						<div class="Page">
-						
-							<!-- some new stuff here -->
 							
-							<div class="HRow Padding" id="KeysList"></div>
-						
+								<br/>
+							
+								<div style="text-align: center" class="MarginTop MarginBottom">
+									<img src="Progdir:iconAvatar.png" style="width:160px; height:160px;" id="Avatar"><br/>
+									<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeAvatar()">
+										{i18n_changeavatar}
+									</button>
+								</div>
+								
+								<br/>
+								
+								<hr class="Divider"/>
+								
+								<div class="HRow">
+									<div class="FloatLeft HContent55">
+										<div class="HRow MarginBottom">
+											<div class="FloatLeft HContent30">
+												<label class="InputHeight">{i18n_full_name}:</label>
+											</div>
+											<div class="FloatLeft HContent70">
+												<input type="text" class="FullWidth InputHeight" value="" id="UserAccFullname" value="{fullname}"/>
+											</div>
+										</div>
+										<div class="HRow MarginBottom">
+											<div class="FloatLeft HContent30">
+												<label class="InputHeight">{i18n_username}:</label>
+											</div>
+											<div class="FloatLeft HContent70">
+												<input type="username" class="FullWidth InputHeight" value="" disabled="disabled" id="UserAccUsername" value="{username}"/>
+											</div>
+										</div>
+
+										<div class="HRow MarginBottom">
+											<div class="FloatLeft HContent30">
+												<label class="InputHeight">{i18n_password}:</label>
+											</div>
+											<div class="FloatLeft HContent70">
+												<button class="fa-edit IconSmall Button" onclick="toggleChangePass()" id="passToggle">
+													{i18n_edit_password}
+												</button>
+											</div>
+										</div>
+
+										<div id="ChangePassContainer" class="closed">
+											<hr class="Divider"/>
+											<div id="PassError"></div>
+											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent30">
+													<label>{i18n_current_password}:</label>
+												</div>
+												<div class="FloatLeft HContent70">
+													<input class="FullWidth" type="password" value="" id="UserCurrentPassword"/>
+												</div>
+											</div>
+											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent30">
+													<label>{i18n_new_password}:</label>
+												</div>
+												<div class="FloatLeft HContent70">
+													<input class="FullWidth" type="password" value="" placeholder="*****" id="UserAccPassword"/>
+												</div>
+											</div>
+											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent30">
+													<label>{i18n_new_password} ({i18n_confirm}):</label>
+												</div>
+												<div class="FloatLeft HContent70">
+													<input class="FullWidth" type="password" value="" placeholder="*****" id="UserAccPasswordConfirm"/>
+												</div>
+											</div>
+										</div>
+								
+										<hr class="Divider"/>
+								
+										<div class="HRow MarginBottom">
+											<div class="FloatLeft HContent30">
+												<label class="InputHeight">{i18n_email_address}:</label>
+											</div>
+											<div class="FloatLeft HContent70">
+												<input type="email" class="InputHeight FullWidth" value="" id="UserAccEmail" value="{email}"/>
+											</div>
+										</div>
+									</div>
+									<div class="FloatLeft HContent45">
+										<div class="FloatLeft HContent5">
+											&nbsp;
+										</div>
+										<div class="FloatLeft HContent95">
+											<div class="HRow MarginBottom">
+												<div class="FloatLeft HContent45">
+													<label class="InputHeight">{i18n_language}:</label>
+												</div>
+												<div class="FloatLeft HContent55">
+													<select class="InputHeight FullWidth" id="UserLanguage">
+														{languages}
+													</select>
+												</div>
+											</div>
+											<div class="HRow MarginBottom">
+												<p class="NoMargins">
+													<label class="InputHeight">{i18n_workspace_mode}:</label>
+												</p>
+											</div>
+											<div class="HRow MarginBottom">
+												<p class="NoMargins">
+													<select class="InputHeight FullWidth" id="UserMode">
+														{modes}
+													</select>
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+							</div>
 						</div>
 					</div>
-					<script> InitTabs( 'MTabs' ); </script>
-					<div class="BorderTop MarginTop Padding">
-						<h3 class="InputHeight">
-							{i18n_available_storage}:
-						</h3>
-						<div id="StorageList"></div>
+					<div class="Page">
+						<div class="HRow Padding PageScroll">
+							<br/>
+						
+							<div style="text-align: center" class="MarginTop MarginBottom">
+								<img style="width:160px; height:160px;" id="fnetDeviceAvatar"><br/>
+								<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeDeviceAvatar()">
+									{i18n_fnetChangeDeviceAvatar}
+								</button>
+							</div>
+							
+							<br/>
+							
+							<hr class="Divider"/>
+
+							<div class="HRow MarginBottom">
+								<p><strong>Notice:</strong>
+								<p>
+									{i18n_deviceNotice}
+								</p>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetDeviceName}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="text" class="FullWidth" value="" id="fnetDeviceName" placeholder="{i18n_nameOfDevice}"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetDeviceDescription}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="text" class="FullWidth" value="" id="fnetDeviceDescription" placeholder="{i18n_descriptionOfDevice}"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetShareLocalDrives}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetMountLocalCheck""/>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+						<div class="HRow Padding PageScroll">
+							
+							<h3 class="InputHeight">
+								{i18n_available_storage}:
+							</h3>
+							<div id="StorageList"></div>
+							<br style="clear: both"/>
+							<div id="Unmounted" class="MarginTop BorderTop PaddingTop">
+								<h3 class="InputHeight">
+									{i18n_unmounted_storage}:
+								</h3>
+								<div id="StorageListUnmounted"></div>
+							</div>
+						</div>
+					</div>
+					<div class="Page">
+					
+						<!-- some new stuff here -->
+						<div class="HRow Padding PageScroll" id="KeysList"></div>
+						
+					</div>
+					<div class="Page">
+						<div class="HRow Padding PageScroll">
+							<div class="HRow MarginBottom">
+								<p><strong>Notice:</strong>
+								<p>
+									Friend Network is under heavy development and can be considered
+									as a prototype and beta feature. Please keep this in mind. It is
+									safe to test, but you will experience some UX and functional issues at this
+									time. Now have fun testing the Friend Network!
+								</p>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetActivate}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetActivate" onclick="activateFriendNetwork();"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetWorkgroup}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="text" class="FullWidth" value="" id="fnetWorkgroup"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetPassword}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="password" value="" id="fnetPassword"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetRepeatPassword}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="password" value="" id="fnetRepeatPassword"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetDescription}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="text" class="FullWidth" value="" id="fnetDescription"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetMountDrive}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetMountDriveCheck" onclick="mountDriveCheck();"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetAutoMountDrive}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetMountOnWorkspaceCheck""/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetDownloadFiles}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetDownloadCheck" onclick="downloadCheck();"/>
+								</div>
+							</div>
+							<div class="HRow MarginBottom">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetDownloadPath}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="text" class="FullWidth" value="" id="fnetDownloadPath"/>
+								</div>
+								<div class="FloatLeft HContent30">
+									<label>&nbsp</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<button type="button" id="fnetDownloadButton" style="vertical-align:top" class="fa-image Button IconSmall" onclick="downloadButton()">
+										{i18n_fnetDownloadButton}
+									</button>
+								</div>
+							</div>
+							<div class="HRow">
+								<div class="FloatLeft HContent30">
+									<label>{i18n_fnetAcceptFromAny}:</label>
+								</div>
+								<div class="FloatLeft HContent70">
+									<input type="checkbox" id="fnetAcceptAny"/>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="HContentRight HContent40 BorderBottom BorderLeft BackgroundWindow" id="AppsContainer">
-				<div class="VContentTop" style="height: 50px">
-					<div class="Padding">
-						<button type="button" class="IconSmall fa-cloud-download Button FloatRight" onclick="getAppsNow()">
-							{i18n_get_apps}
-						</button>
-						<h3 class="InputHeight">
-							{i18n_your_apps}:
-						</h3>
-					</div>
-				</div>
-				<div class="VContentBottom ScrollArea BorderTop" style="top: 50px; bottom: 0px">
-					<div class="ZebraList FullWidth" id="Applist">
-					</div>
-				</div>
+				<script> InitTabs( 'MTabs' ); </script>
 			</div>
 		</div>
-		<div class="VContentBottom Padding BackgroundToolbar" style="height: 50px">
-			<button type="button" class="FloatRight Button IconSmall fa-times" onclick="cancelDia()">
-				{i18n_cancel}
-			</button>
-			<button type="button" class="Button IconSmall fa-check" onclick="saveDia()">
+		<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">
+			<button type="button" class="FloatRight Button IconSmall fa-save" onclick="saveDia()">
 				{i18n_save}
 			</button>
 		</div>
@@ -174,9 +332,12 @@
 		{
 			width: 40px;
 			height: 40px;
-			background: url(/iconthemes/friendup/40/disk.png);
+			background-image: url(/iconthemes/friendup15/Disk.svg);
+			background-size: contain;
+			background-position: center;
+			background-repeat: no-repeat;
 			position: relative;
-			margin: 0 20px 30px 20px;
+			margin: 0 25px 40px 25px;
 		}
 		
 		.BigButton

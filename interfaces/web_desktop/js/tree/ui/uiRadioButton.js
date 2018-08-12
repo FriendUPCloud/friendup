@@ -29,13 +29,16 @@ Friend.Tree.UI.RenderItems = Friend.Tree.UI.RenderItems || {};
 
 /**
  * RadioButton
+ */
 
 Friend.Tree.UI.RadioButton = function ( tree, name, flags )
 {
-	this.font = '16px Arial';
+	this.font = '16px sans serif';
 	this.caller = false;
 	this.onChange = false;
 	this.list = [ 'Radio Button' ];
+	this.value = 0;
+
 	this.renderItemName = 'Friend.Tree.UI.RenderItems.RadioButton';
 	Friend.Tree.Items.init( this, tree, name, 'Friend.Tree.UI.RadioButton', flags );
 };
@@ -47,24 +50,36 @@ Friend.Tree.UI.RadioButton.messageDown = function ( message )
 {
 	return this.endProcess( message, [ 'x', 'y', 'z', 'width', 'height', 'text', 'font', 'value' ] );
 };
-
-Friend.Tree.UI.RenderItems.RadioButton = function ( tree, name, flags )
+Friend.Tree.UI.RadioButton.getValue = function ( )
 {
+	return this.value;
+};
+Friend.Tree.UI.RadioButton.setValue = function ( value )
+{
+	this.updateProperty( 'value', value );
+	this.doRefresh();
+};
+
+Friend.Tree.UI.RenderItems.RadioButton_HTML = function ( tree, name, properties )
+{
+	this.list = false;
 	this.font = false;
 	this.caller = false;
 	this.onClick = false;
-	this.rendererName = '*';
-	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.RadioButton', flags );
+	this.value = false;
+
+	this.rendererType = 'Canvas';
+	this.rendererName = 'Renderer_HTML';
+	Friend.Tree.RenderItems.init( this, tree, name, 'Friend.Tree.UI.RenderItems.RadioButton', properties );
 
 	this.buttons = [];
 	
 	this.div = document.createElement( 'div' );
-	this.div.innerHTML = html;
 	this.div.style.position = 'absolute';
 	this.div.style.zIndex = this.z;
 	this.div.style.visibility = 'hidden';
 	document.body.appendChild( this.div );
-	for ( var l = 0; l < this.parent.list.length; l++ )
+	for ( var l = 0; l < this.item.list.length; l++ )
 	{
 		var radio = document.createElement( 'input' );
 		radio.type = 'radio';
@@ -73,42 +88,37 @@ Friend.Tree.UI.RenderItems.RadioButton = function ( tree, name, flags )
 		this.div.appendChild( radio );
 		this.buttons[ l ] = radio;
 		var div = document.createElement( 'div' );
-		div.style.fontFamily = this.utilities.getFontFamily( this.font );
-		div.style.fontSize = this.utilities.getFontSize( this.font ) + 'px';
-		div.style.fontWeight = this.utilities.getFontWeight( this.font );
+		div.style.fontFamily = this.utilities.getFontFamily( this.item.font );
+		div.style.fontSize = this.utilities.getFontSize( this.item.font ) + 'px';
+		div.style.fontWeight = this.utilities.getFontWeight( this.item.font );
 		div.style.zIndex = this.z + 1;
-		div.innerHTML = this.parent.lines[ l ] + '<br>';
+		div.innerHTML = this.item.lines[ l ] + '<br>';
 		this.div.appendChild( div );
 	}
 	var self = this;
-	for ( var l = 0; this.parent.list.length; l++ )
+	for ( var l = 0; this.item.list.length; l++ )
 	{
 		this.buttons[ l ].onclick = function()
 		{
 			var value = parseInt( this.value );
-			self.tree.sendMessageToItem( self.parent.root, self.parent, 
-			{
-				command: 'setValue',
-				type: 'renderItemToItem',
-				value: value
-			});
-			if ( self.caller && self.onClick )
-				self.onClick.apply( self.caller, [ value ] );
+			self.item.updateProperty( 'value', value );
+			if ( self.item.caller && self.item.onClick )
+				self.item.onClick.apply( self.item.caller, [ value ] );
 		}
 	};
 };
-Friend.Tree.UI.RenderItems.RadioButton.render = function ( properties )
+Friend.Tree.UI.RenderItems.RadioButton_HTML.render = function ( properties )
 {
 	this.div.style.left = properties.xReal + 'px';
 	this.div.style.top = properties.yReal + 'px';
-	this.div.style.width = this.parent.width + 'px';
-	this.div.style.height = this.parent.height + 'px';
+	this.div.style.width = this.item.width + 'px';
+	this.div.style.height = this.item.height + 'px';
 	this.div.style.opacity = properties.alpha.toString();
-	this.div.style.visibility = this.parent.visible ? 'visible' : 'hidden';
+	this.div.style.visibility = this.item.visible ? 'visible' : 'hidden';
 	return properties;
 };
-Friend.Tree.UI.RenderItems.RadioButton.onDestroy = function ()
+Friend.Tree.UI.RenderItems.RadioButton_HTML.onDestroy = function ()
 {
 	document.body.removeChild( this.div );
 }
-*/
+

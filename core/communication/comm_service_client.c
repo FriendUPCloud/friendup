@@ -105,7 +105,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		return NULL;
 	}
 	
-	if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
 	{
 		if( serv->s_Requests == NULL )
 		{
@@ -117,7 +117,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			cr->node.mln_Succ = (MinNode *)serv->s_Requests;
 			serv->s_Requests = cr;
 		}
-		pthread_mutex_unlock( &serv->s_Mutex );
+		FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
 	}
 	else
 	{
@@ -128,7 +128,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 
 	//int blocked = con->fc_Socket->s_Blocked;
 	
-	if( pthread_mutex_lock( &con->fc_Mutex ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &con->fc_Mutex ) == 0 )
 	{
 		if( con->fc_Status != CONNECTION_STATUS_DISCONNECTED )
 		{
@@ -140,10 +140,10 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 		}
 		else
 		{
-			pthread_mutex_unlock( &con->fc_Mutex );
+			FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
 			return NULL;
 		}
-		pthread_mutex_unlock( &con->fc_Mutex );
+		FRIEND_MUTEX_UNLOCK( &con->fc_Mutex );
 	}
 	else
 	{
@@ -163,10 +163,10 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 	FBOOL quit = FALSE;
 	while( quit != TRUE )
 	{
-		if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
+		if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
 		{
 			pthread_cond_wait( &serv->s_DataReceivedCond, &serv->s_Mutex );
-			pthread_mutex_unlock( &serv->s_Mutex );
+			FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
 		}
 		else break;
 
@@ -178,7 +178,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 			bs = cr->cr_Bs;
 			quit = TRUE;
 
-			if( pthread_mutex_lock( &serv->s_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &serv->s_Mutex ) == 0 )
 			{
 				if( cr == serv->s_Requests )
 				{
@@ -215,7 +215,7 @@ BufString *SendMessageAndWait( FConnection *con, DataForm *df )
 					FFree( cr );
 					cr = NULL;
 				}
-				pthread_mutex_unlock( &serv->s_Mutex );
+				FRIEND_MUTEX_UNLOCK( &serv->s_Mutex );
 			}
 			break;
 		}

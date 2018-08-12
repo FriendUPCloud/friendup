@@ -1,6 +1,8 @@
 ESP32 Support
 =============
 
+See \ref esp32 for details on how to build lws as a component in an ESP-IDF project.
+
 Lws provides a "factory" application
 
 https://github.com/warmcat/lws-esp32-factory
@@ -20,4 +22,16 @@ State|Image|AP SSID|Port|URL|Mode
 Factory Reset or Uninitialized|Factory|AP: ESP_012345|80|http://192.168.4.1|factory.html - to set certificates and serial
 User configuration|Factory|AP: config-model-serial|443|https://192.168.4.1|index.html - user set up his AP information
 Operation|OTA|Station only|443|https://model-serial.local|OTA application
+
+## Basic Auth
+
+The lws-esp32-test-server-demos app also demos basic auth.
+
+On a normal platform this is done by binding a mount to a text file somewhere in the filesystem, which
+contains user:password information one per line.
+
+On ESP32 there is not necessarily any generic VFS in use.  So instead, the basic auth lookup is bound to
+a given nvs domain, where the username is the key and the password the value.  main/main.c in the test
+demos app shows how to both make the mount use basic auth, and how to set a user:password combination
+using nvs.
 

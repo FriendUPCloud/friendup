@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="21px" height="18px" viewBox="0 0 21 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>DL_GDrive</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M19.9689031,11.362268 L13.4387629,0.00556701031 L7.00329897,0.00556701031 L13.5334392,11.362268 L19.9689031,11.362268 Z M8.0443299,12.3086598 L4.82659794,17.9870103 L17.2243299,17.9870103 L20.442099,12.3086598 L8.0443299,12.3086598 Z M6.15154639,1.42515464 L0,12.3086598 L3.21773196,17.9870103 L9.46391753,7.10350515 L6.15154639,1.42515464 Z" id="path-1"></path>
+        <filter x="-4.9%" y="-5.6%" width="109.8%" height="111.1%" filterUnits="objectBoundingBox" id="filter-2">
+            <feGaussianBlur stdDeviation="0.5" in="SourceAlpha" result="shadowBlurInner1"></feGaussianBlur>
+            <feOffset dx="0" dy="1" in="shadowBlurInner1" result="shadowOffsetInner1"></feOffset>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="shadowInnerInner1"></feComposite>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowInnerInner1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-334.000000, -889.000000)" opacity="0.8">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Disks" transform="translate(0.000000, 815.000000)">
+                <g id="DL_GDrive" transform="translate(222.000000, 47.000000)">
+                    <g id="google-drive-logo">
+                        <g id="Shape" fill-rule="nonzero">
+                            <use fill="#34495E" fill-rule="evenodd" xlink:href="#path-1"></use>
+                            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

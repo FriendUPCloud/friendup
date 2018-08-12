@@ -124,26 +124,24 @@ static inline int WorkerRunCommand( Worker *w, void (*foo)( void *), void *d )
 	{
 		if( w->w_Thread != NULL )
 		{
+			w->w_Function = foo;
+			w->w_Data = d;
+			
+			if( FRIEND_MUTEX_LOCK( &(w->w_Mut) ) == 0 )
 			{
-				w->w_Function = foo;
-				w->w_Data = d;
-				
-				if( pthread_mutex_lock( &(w->w_Mut) ) == 0 )
+				pthread_cond_signal( &(w->w_Cond) );
+				FRIEND_MUTEX_UNLOCK( &(w->w_Mut) );
+			}
+			int wait = 0;
+			
+			while( TRUE )
+			{
+				if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
 				{
-					pthread_cond_signal( &(w->w_Cond) );
-					pthread_mutex_unlock( &(w->w_Mut) );
+					break;
 				}
-				int wait = 0;
-				
-				while( TRUE )
-				{
-					if( w->w_State == W_STATE_WAITING || w->w_State == W_STATE_COMMAND_CALLED )
-					{
-						break;
-					}
-					DEBUG("[WorkerRunCommand] --------waiting for running state: %d\n", wait++ );
-					usleep( 10 );
-				}
+				DEBUG("[WorkerRunCommand] --------waiting for running state: %d\n", wait++ );
+				usleep( 10 );
 			}
 		}
 		else
@@ -172,11 +170,12 @@ static int testquit = 0;
  * @param wm pointer to the Worker-Manager structure
  * @param foo pointer to the message-handler
  * @param d pointer to the data associated with the call
+ * @param path request path
  * @return 0
  * @todo FL>PS debug code still present here, exits Friend Core if some workers
  * 		are stuck!
  */
-int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *wrkinfo )
+int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *wrkinfo, char *path )
 {
 	int i = 0;
 	int max = 0;
@@ -227,6 +226,9 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 				wm->w_AverageWorkSeconds /= 2;
 			}
 			wrk->w_Request = wrkinfo;
+			
+			strncpy( wrk->w_FunctionString, path, WORKER_FUNCTION_STRING_SIZE_MIN1 );
+			
 			WorkerRunCommand( wrk, foo, d );
 			testquit = 0;
 			pthread_mutex_unlock( &wm->wm_Mutex );
@@ -243,19 +245,20 @@ int WorkerManagerRun( WorkerManager *wm,  void (*foo)( void *), void *d, void *w
 		if( max > wm->wm_MaxWorkers )
 		{
 			//Log( FLOG_INFO, "[WorkManagerRun] All workers are busy, waiting\n");
-			testquit++;
-			if( testquit > 25 )
+
+			if( testquit++ > 10 )
 			{
 				Log( FLOG_ERROR, "[WorkManagerRun] Worker dispatch timeout, dropping client\n");
-				return -1;
+				
 				//exit( 0 ); // <- die! only for debug
 				testquit = 0;
-				usleep( 15000 );
+				//usleep( 15000 );
 				//sleep( 2 );
+				return -1;
 			}
 			usleep( 100 );
 			max = 0;
-			return -1;
+			//return -1;
 		}
 	} //end of infinite loop
 	

@@ -48,7 +48,7 @@ Application.run = function( msg, iface )
 			} );
 			Application.contentTimeout = false;
 		}, 250 );
-	}
+	}	
 }
 
 Application.checkWidth = function()
@@ -954,12 +954,105 @@ function metaSearch( keywords )
 	m.execute( 'metasearch', { keywords: keywords } );
 }
 
+// Apply style from style information
+var styleElement = null;
+function ApplyStyle( styleObject, depth )
+{
+	if( !depth ) depth = 0;
+	if( !styleElement )
+	{
+		styleElement = document.createElement( 'style' );
+		var d = document.getElementsByTagName( 'iframe' )[0].contentWindow.document;
+		d.getElementsByTagName( 'head' )[0].appendChild( styleElement );
+	}
+	var style = '';
+	for( var a in styleObject )
+	{
+		var el = styleObject[a];
+		if( depth > 0 )
+		{
+			switch( a )
+			{
+				case 'Standard format':
+					style += "html body {\n";
+					break;
+				case 'Headings':
+					style += ApplyStyle( styleObject[a], depth + 1 );
+					break;
+				case 'Heading 1':
+					style += "html h1 {\n";
+					break;
+				case 'Heading 2':
+					style += "html h2 {\n";
+					break;
+				case 'Heading 3':
+					style += "html h3 {\n";
+					break;
+				case 'Heading 4':
+					style += "html h4 {\n";
+					break;
+				case 'Heading 5':
+					style += "html h5 {\n";
+					break;
+				case 'Heading 6':
+					style += "html h6 {\n";
+					break;
+				case 'Paragraph':
+					style += "html p {\n";
+					break;
+				default:
+					style += a + " {\n";
+					break;
+			}
+			for( var b in el )
+			{
+				switch( b )
+				{
+					case 'border':
+						style += 'border: ' + el.border.borderSize + ' ' + el.border.borderStyle + ' ' + el.border.borderColor + ";\n";
+						break;
+					case 'color':
+						style += 'color: ' + el.color + ";\n";
+						break;
+					case 'fontFamily':
+						style += 'font-family: ' + el.fontFamily + ";\n";
+						break;
+					case 'textDecoration':
+						style += 'text-decoration: ' + el.textDecoration + ";\n";
+						break;
+					case 'fontSize':
+						style += 'font-size: ' + el.fontSize + ";\n";
+					case 'fontStyle':
+						style += 'font-style: ' + el.fontStyle + ";\n";
+						break;
+					case 'fontWeight':
+						style += 'font-weight: ' + el.fontWeight + ";\n";
+						break;
+				}
+			}
+			style += "}\n";
+		}
+		else
+		{
+			style += ApplyStyle( styleObject[a], depth + 1 );
+		}
+	}
+	if( depth > 0 ) return style;
+	styleElement.innerHTML = style;
+}
+
 Application.receiveMessage = function( msg )
 {
 	if( !msg.command ) return;
 	
 	switch( msg.command )
 	{
+		case 'applystyle':
+			if( msg.style )
+			{
+				ApplyStyle( msg.style );
+			}
+			break;
 		case 'print_iframe':
 			var f = document.getElementsByTagName( 'iframe' )[0];
 			f.contentWindow.document.title = 'Document';
@@ -1239,6 +1332,81 @@ function editorCommand( command, value )
 	}
 }
 
+var documentStyles = [
+	{
+		name: 'Headings',
+		children: [
+			{
+				name: 'Heading 1',
+				rule: 'h1',
+				data: ''
+			},
+			{
+				name: 'Heading 2',
+				rule: 'h2',
+				data: ''
+			},
+			{
+				name: 'Heading 3',
+				rule: 'h3',
+				data: ''
+			},
+			{
+				name: 'Heading 4',
+				rule: 'h4',
+				data: ''
+			},
+			{
+				name: 'Heading 5',
+				rule: 'h5',
+				data: ''
+			},
+			{
+				name: 'Heading 6',
+				rule: 'h6',
+				data: ''
+			}
+		]
+	},
+	{
+		name: 'Standard format',
+		rule: 'html body',
+		data: ''
+	},
+	{
+		name: 'Paragraph',
+		rule: 'p',
+		data: ''
+	}
+];
+var styleView = null;
+function editStyles()
+{
+	if( styleView ) return;
+	var v = new View( {
+		title: i18n( 'i18n_edit_styles' ),
+		width: 600,
+		height: 500
+	} );
+	v.onClose = function()
+	{
+		styleView = null;
+	};
+	var f = new File( 'Progdir:Templates/style_editor.html' );
+	f.i18n();
+	f.onLoad = function( data )
+	{
+		v.setContent( data, function()
+		{
+			v.sendMessage( {
+				command: 'renderstyles',
+				styles: JSON.stringify( documentStyles )
+			} );
+		} );
+	}
+	f.load();
+};
+
 // 
 function imageWindow( currentImage )
 {
@@ -1258,5 +1426,4 @@ function imageWindow( currentImage )
 	
 	Application.sendMessage( { command: 'insertimage' } );
 }
-
 

@@ -1,6 +1,9 @@
+
+-include ../../Makefile.defs
+
 GCC		=	gcc
 OUTPUT		=	bin/fcdb.authmod
-CFLAGS		=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ $(shell mysql_config --cflags)  -I../../libs-ext/libwebsockets/build/include/ -I../../libs-ext/libwebsockets/build/  -L../../libs-ext/libwebsockets/lib/ -Wunused-parameter
+CFLAGS		+=	-I../../core/ -I../../libs/properties/ -I../../libs/application/ -I../../libs/ -fPIC -I../../libs-ext/libwebsockets/build/include/
 LFLAGS		=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
 DFLAGS		=	-M $(CFLAGS)  
 FPATH		=	$(shell pwd)

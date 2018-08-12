@@ -36,6 +36,7 @@
 #include <core/nodes.h>
 #include <db/sql_defs.h>
 #include <stddef.h>
+#include <system/fsys/file.h>
 
 /*
 
@@ -54,14 +55,32 @@ CREATE TABLE `FUserGroup` (
 
 */
 
+typedef struct UserGroupAUser
+{
+	MinNode				node;
+	void				*ugau_User;
+	FULONG				ugau_UserID;
+}UserGroupAUser;
+
+//
+
 typedef struct UserGroup
 {
-	struct MinNode 		node;
-	FULONG 					ug_ID;
-	char 						*ug_Name;
-	FULONG 					ug_UserID;
-	char 						*ug_Type;
+	MinNode 			node;
+	FULONG 				ug_ID;
+	char 				*ug_Name;
+	FULONG 				ug_UserID;
+	char 				*ug_Type;
+	
+	UserGroupAUser		*ug_UserList;		// users assigned to group 
+	File				*ug_MountedDevs;	// root file
+	// this is list of UserGroupDevices, all devices are shared to users by group
+	// if we want to share this device across another groups we must share it
 }UserGroup;
+
+//
+//
+//
 
 static FULONG GroupDesc[] = { SQLT_TABNAME, (FULONG)"FUserGroup", SQLT_STRUCTSIZE, sizeof( struct UserGroup ), 
 	SQLT_IDINT, (FULONG)"ID", offsetof( struct UserGroup, ug_ID ), 
@@ -81,12 +100,30 @@ UserGroup *UserGroupNew( FULONG id, char *name, FULONG uid, char *type );
 //
 //
 
-int UserGroupDelete( UserGroup *ug );
+int UserGroupDelete( void *sb, UserGroup *ug );
 
 //
 //
 //
 
-int UserGroupDeleteAll(UserGroup* ug);
+int UserGroupDeleteAll( void *sb, UserGroup* ug );
+
+//
+//
+//
+
+File *UserGroupRemDeviceByName( UserGroup *ugrlist, const char *name, int *error );
+
+//
+//
+//
+
+int UserGroupAddUser( UserGroup *ug, void *u );
+
+//
+//
+//
+
+int UserGroupRemoveUser( UserGroup *ug, void *u );
 
 #endif // __USER_GROUP_H__

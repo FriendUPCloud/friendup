@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="52px" height="57px" viewBox="0 0 52 57" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>Disk Master</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="50%" x2="100%" y2="50%" id="linearGradient-1">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.2" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Alt-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-112.000000, -875.000000)">
+        <g id="Icons" transform="translate(112.000000, 27.000000)">
+            <g id="Disks" transform="translate(0.000000, 815.000000)">
+                <g id="Disk-Master" transform="translate(0.000000, 33.000000)">
+                    <g>
+                        <rect id="rect5355-1-0" fill="#B1B8BB" fill-rule="nonzero" x="0" y="0.441551356" width="51.2042546" height="56.0808503" rx="3.0000222"></rect>
+                        <path d="M25.6021273,0 C25.6021273,15.226853 25.6021273,35.9362188 25.6021273,52.4234036 C25.6021273,54.4496413 27.2333364,56.0808503 29.2595741,56.0808503 L47.5468079,56.0808503 C49.5730456,56.0808503 51.2042546,54.4496413 51.2042546,52.4234036 L51.2042546,3.65744676 C51.2042546,1.63120906 49.5730456,0 47.5468079,0 L25.6021273,0 Z" id="rect5355-1-3-9-4-8-1-2-6" fill="url(#linearGradient-1)" fill-rule="nonzero"></path>
+                        <rect id="rect5355-2-0-2" fill="#455155" fill-rule="nonzero" x="0" y="45.8353544" width="51.2042546" height="10.6870371" rx="3.0000222"></rect>
+                        <rect id="rect5355-2-6-6-9" fill="#F2C57C" fill-rule="nonzero" x="34.3620659" y="49.849829" width="11.9656008" height="2.49738657" rx="1.24869329"></rect>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

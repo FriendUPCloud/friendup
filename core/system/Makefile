@@ -1,7 +1,7 @@
 
 -include ../../Makefile.defs
 
-CC				=	gcc
+CC			=	gcc
 CFLAGS			=	$(GLOBAL_CFLAGS) -I. -I../../core/ -I../properties/ -I/usr/include/mysql/ -fPIC -I../ -I../../libs/ -I../../$(LIBWS_INCLUDE_DIR) -I$(SAMBA_INCLUDE_DIR)
 LFLAGS			=	-shared -fPIC ../../$(LIBWS_LIB_DIR)/libwebsockets.a
 DFLAGS			=	-M $(CFLAGS)
@@ -11,11 +11,11 @@ MODS			=	phpmod sysmod nodejsmod pythonmod javamod
 FSYS			=	fsyslocal fsysssh2 fsysphp fsysnode fsysinram fsysremote fsyssmb
 LOGGERS			=	sql.ulogger file.ulogger
 SERVICES		=	apacheserv mysqlserv nodejsserv phpserv
-SERVICEFLAGS	=  --std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
-MATHLIB	=
+SERVICEFLAGS		=	--std=c11 -Wall -W -D_FILE_OFFSET_BITS=64 -Ofast -funroll-loops -I. -Wno-unused  -shared -fPIC
+MATHLIB			=
 
 ifeq ($(DEBUG),1)
-CFLAGS	+=	-D__DEBUG
+CFLAGS	+=	-D__DEBUG -g
 endif
 
 ifeq ($(PROFILE),1)

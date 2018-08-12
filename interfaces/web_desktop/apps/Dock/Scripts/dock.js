@@ -63,7 +63,7 @@ function LoadApplications( win, currentItemId, callback )
 		}
 		catch(e)
 		{
-			console.log('error uring dock load...',cod,dat);
+			console.log( 'Error during dock load...', cod, dat );
 			return;
 			
 		}
@@ -81,12 +81,18 @@ function LoadApplications( win, currentItemId, callback )
 		}
 		Application.currentItemId = currentItemId;
 		
+		var sw = 2;
+		
 		for( var a = 0; a < eles.length; a++ )
 		{
 			var cl = '';
-			if( a > 0 ) cl = ' MarginTop';
-			//console.log( eles[a] );
-			var img = eles[a].Image ? ( '/webclient/' + eles[a].Image ) : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
+			
+			var img = '';
+			if( eles[a].Name != 'Unnamed' )
+			{
+				img = eles[a].Image ? ( '/webclient/' + eles[a].Image ) : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
+			}
+			
 			if( eles[a].Icon )
 			{
 				if( eles[a].Icon.indexOf( ':' ) > 0 )
@@ -95,17 +101,30 @@ function LoadApplications( win, currentItemId, callback )
 				{
 					img = eles[a].Icon.split( /sessionid\=[^&]+/ ).join( 'authid=' + Application.authId );
 				}
-				else img = '/webclient/' + eles[a].Icon;
+				else if( eles[a].Icon.indexOf( '/webclient' ) != 0 )
+				{
+					img = '/webclient/' + eles[a].Icon;
+				}
 			}
 			
 			// Activate the current selected
-			if( eles[a].Id == currentItemId ) cl += ' BackgroundNegative Negative';
+			if( eles[a].Id == currentItemId ) cl += ' Selected';
+			
+			// Double check image.
+			var im = '<div class="Empty"></div>';
+			if( img && img.length )
+			{
+				im = '<img style="float: right; width: 40px; height: auto" src="' + img + '"/>';
+			}
+			
+			sw = sw == 1 ? 2 : 1;
+			cl += ' sw' + sw;
 			
 			ele += '\
-			<div class="Box' + cl + '" id="dockEdit'+ eles[a].Id +'" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
+			<div class="Padding' + cl + '" id="dockEdit'+ eles[a].Id +'" onclick="Application.sendMessage( { command: \'select\', id: \'' + eles[a].Id + '\' } )">\
 				<div class="HRow">\
-					<div class="FloatRight HContent50"><img style="float: right; width: 40px; height: auto" src="' + img + '"/></div>\
-					<div class="FloatLeft HContent50">' + eles[a].Name + '</div>\
+					<div class="FloatRight" style="width: 60px">' + im + '</div>\
+					<div class="FloatLeft PaddingLeft" style="width: calc(100%-60px)">' + eles[a].Name + '</div>\
 				</div>\
 			</div>\
 			';
@@ -117,7 +136,7 @@ function LoadApplications( win, currentItemId, callback )
 		
 		Application.appCache = eles;
 		
-		Application.view.sendMessage( { command: 'refreshapps', data: ele } );
+		Application.view.sendMessage( { command: 'refreshapps', data: ele, current: currentItemId } );
 		Application.sendMessage( { type: 'system', command: 'refreshdocks' } );
 		if( Application.selectAfterLoad )
 		{
@@ -137,7 +156,7 @@ Application.run = function( packet )
 
 	var w = new View( {
 		title:  i18n('i18n_dock_editor'),
-		width:  520, 
+		width:  720, 
 		height: 480,
 		id:     'dock_editor'
 	} );
@@ -190,7 +209,7 @@ Application.newDockItem = function()
 	var w = this.view;
 	m.onExecuted = function( r, dat )
 	{
-		if(r == 'ok')
+		if( r == 'ok' )
 		{
 			Application.selectAfterLoad = dat;
 		}
@@ -200,7 +219,7 @@ Application.newDockItem = function()
 }
 
 // Activate a dock item
-Application.activateDockItem = function( id )
+Application.activateDockItem = function( id, scroll )
 {
 	var w = this.view;
 	if( !id ) return;
@@ -223,7 +242,8 @@ Application.activateDockItem = function( id )
 			
 			w.sendMessage( {
 				command: 'updateitem',
-				item: d
+				item: d,
+				scroll: scroll ? scroll : 'no'
 			} );
 			Application.disabled = false;
 		}

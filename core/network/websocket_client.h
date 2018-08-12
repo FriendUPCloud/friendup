@@ -35,6 +35,7 @@
 #include <core/types.h>
 #include <core/nodes.h>
 #include <libwebsockets.h>
+#include <util/friendqueue.h>
 
 //
 //
@@ -48,6 +49,7 @@ typedef struct WebsocketClient
 	void							*wc_UserSession;
 	void 							*wc_WebsocketsData;
 	pthread_mutex_t					wc_Mutex;
+	FQueue							wc_MsgQueue;
 }WebsocketClient;
 
 //

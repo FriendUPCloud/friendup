@@ -64,9 +64,36 @@ clients must be made or how a client should react.
 #include <util/sha256.h>
 #include <sys/resource.h>
 
+// stack trace
+#include <execinfo.h>
+#include <stdlib.h>
+
+#include <pthread.h>
+#include <signal.h>
+
 #define ENABLE_SSH 1
 
 extern struct SystemBase *SLIB;
+
+void printTrace( void )
+{
+  void *array[10];
+  size_t size;
+  char **strings;
+  size_t i;
+
+  size = backtrace (array, 10);
+  strings = backtrace_symbols (array, size);
+
+  printf ("Obtained %zd stack frames.\n", size);
+
+  for (i = 0; i < size; i++)
+  {
+     printf ("%s\n", strings[i]);
+  }
+
+  free (strings);
+}
 
 /**
  * Create new SSHServer
@@ -75,22 +102,75 @@ extern struct SystemBase *SLIB;
  * @return SSHServer structure or NULL when error appear
  */
 
-SSHServer *SSHServerNew( void *lsb __attribute__((unused)) )
+SSHServer *SSHServerNew( void *lsb, char *rsaKey, char *dsaKey )
 {
 	SSHServer *ts = NULL;
 
 	if( ( ts = FCalloc( 1, sizeof( SSHServer ) ) ) != NULL )
 	{
-	/*
+		ts->sshs_FriendHome = getenv( "FRIEND_HOME" );
+	
+		
+		int len = strlen( ts->sshs_FriendHome );
+		
+		if( rsaKey == NULL )
+		{
+			ts->sshs_RSAKeyHome = FCalloc( len+64, sizeof(char) );
+			strcpy( ts->sshs_RSAKeyHome, "cfg/crt/ssh_host_rsa_key" );
+		}
+		else
+		{
+			ts->sshs_RSAKeyHome = StringDuplicate( rsaKey );
+		}
+		
+		if( dsaKey == NULL )
+		{
+			ts->sshs_DSAKeyHome = FCalloc( len+64, sizeof(char) );
+			strcpy( ts->sshs_DSAKeyHome, "cfg/crt/ssh_host_dsa_key" );
+		}
+		else
+		{
+			ts->sshs_DSAKeyHome = StringDuplicate( dsaKey );
+		}
+		/*
+		if( rsaKey == NULL )
+		{
+			ts->sshs_RSAKeyHome = FCalloc( len+64, sizeof(char) );
+			strcpy( ts->sshs_RSAKeyHome, "/etc/ssh/ssh_host_rsa_key" );
+		}
+		else
+		{
+			ts->sshs_RSAKeyHome = StringDuplicate( rsaKey );
+		}
+		
+		if( dsaKey == NULL )
+		{
+			ts->sshs_DSAKeyHome = FCalloc( len+64, sizeof(char) );
+			strcpy( ts->sshs_DSAKeyHome, "/etc/ssh/ssh_host_dsa_key" );
+		}
+		else
+		{
+			ts->sshs_DSAKeyHome = StringDuplicate( dsaKey );
+		}
+		*/
+
+		//strcpy( ts->sshs_RSAKeyHome, ts->sshs_FriendHome );
+		//strcpy( ts->sshs_DSAKeyHome, ts->sshs_FriendHome );
+		//strcat( ts->sshs_RSAKeyHome, "keys/ssh_host_rsa_key" );
+		//strcat( ts->sshs_DSAKeyHome, "keys/ssh_host_dsa_key" );
+	
+		
+		
+	
 		ssh_threads_set_callbacks( ssh_threads_get_pthread() );
 		ssh_init();
-		
+	
 		ts->sshs_SB = lsb;
-		
+	
 		DEBUG("Starting SSH thread\n");
 	
-		ts->sshs_Thread = ThreadNew( SSHThread, ts, TRUE );
-		*/
+		ts->sshs_Thread = ThreadNew( SSHThread, ts, TRUE, NULL );
+		
 	}
 	return ts;
 }
@@ -105,14 +185,20 @@ void SSHServerDelete( SSHServer *ts )
 {
 	if( ts != NULL )
 	{
+		DEBUG("SSH Server delete\n");
 		ts->sshs_Quit = TRUE;
-		/*
+		DEBUG("SSH Server delete %d\n", ts->sshs_Quit );
+		
+		pthread_kill( ts->sshs_Thread->t_Thread, SIGINT );  
 		if( ts->sshs_Thread )
 		{
 			ThreadDelete( ts->sshs_Thread );
 		}
+		
 		ssh_finalize();
-		*/
+		
+		if( ts->sshs_RSAKeyHome ) FFree( ts->sshs_RSAKeyHome );
+		if( ts->sshs_DSAKeyHome ) FFree( ts->sshs_DSAKeyHome );
 		
 		FFree( ts );
 	}
@@ -169,7 +255,24 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 	if( uname != NULL && password != NULL )
 	{
 		DEBUG("[SSH] uname %s password %s ulib %p\n", uname, password, ulib );
-		s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
+		
+		s->sshs_Usr = UMUserGetByName( sb->sl_UM, uname );
+		
+		if( s->sshs_Usr == NULL )
+		{
+			s->sshs_Usr = UMUserGetByNameDB( sb->sl_UM, uname );
+			
+			if( s->sshs_Usr != NULL )
+			{
+				SQLLibrary *sqllib = sb->LibrarySQLGet( sb );
+				if( sqllib != NULL )
+				{
+					UserDeviceMount( sb, sqllib, s->sshs_Usr, 1, TRUE );
+					
+					sb->LibrarySQLDrop( sb, sqllib );
+				}
+			}
+		}
 		
 		DEBUG("[SSH] User %p\n", s->sshs_Usr );
 		if( s->sshs_Usr != NULL )
@@ -182,8 +285,11 @@ static int auth_password( ssh_session session, const char *uname, const char *pa
 			{
 				FCSHA256_CTX ctx;
 				unsigned char hash[ 32 ];
-				char hashTarget[ 64 ];
+				char hashTarget[ 128 ];
 				char newPassword[ 128 ];
+				
+				memset( hashTarget, 0, sizeof(hashTarget) );
+				memset( newPassword, 0, sizeof(newPassword) );
 				
 				strcpy( newPassword, "HASHED" );
 		
@@ -359,36 +465,118 @@ static ssh_channel new_session_channel( ssh_session session, void *userdata )
 	return s->sshs_Chan;
 }
 
+#define WRITE_MSG( CHAN, MSG ) ssh_channel_write( CHAN, MSG , strlen(MSG) )
+
 /**
  * handle all Friend SSH commands
  *
  * @param sess pointer to SSHSession
  * @param buf received data
- * @param size of received data
+ * @param len of received data
  * @return 0 when success, otherwise error number
  */
 
 int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attribute__((unused)))
 {	
 	char outbuf[ 2048 ];
+	int i;
 	
 	if( strncmp( buf, "help", 4 ) == 0 )
 	{
 		strcpy( outbuf, 	"Main commands:\n" \
 			" logout - logout user from current session\n" \
+			" printtrace - print trace\n" \
+			" info/workers - print information about workers\n" \
+			" info/users - print information about users\n" \
+			" info/devices - print information about devices\n" \
+			" crash - crash FC to get informationabout stacktrace\n" \
 			" cd - change current directory\n" \
 			" shutdown - shutdown FriendCore\n" \
 			);
-		
-		ssh_channel_write( sess->sshs_Chan, outbuf, strlen( buf ) );
+
+		ssh_channel_write( sess->sshs_Chan, outbuf, strlen( outbuf ) );
 	
-	}else if( strncmp( buf, "logout", 6 ) == 0 )
+	}
+	else if( strncmp( buf, "logout", 6 ) == 0 )
 	{
 		sess->sshs_Quit = TRUE;
-	}else if( strncmp( buf, "cd", 2 ) == 0 )
+	}
+	else if( strncmp( buf, "printtrace", 10 ) == 0 )
+	{
+		printTrace();
+	}
+	else if( strncmp( buf, "info/workers", 12 ) == 0 )
+	{
+		SystemBase *sb = (SystemBase *)sess->sshs_SB;
+		WorkerManager *wm = sb->sl_WorkerManager;
+		
+		if( sess->sshs_Usr->u_IsAdmin == TRUE )
+		{
+			for( i=0 ; i < wm->wm_MaxWorkers ; i++ )
+			{
+				Worker *wrk = wm->wm_Workers[ i ];
+			
+				int s = 0;
+			
+				DEBUG("worker state %d\n", wrk->w_State );
+			
+				if( wrk->w_State != W_STATE_COMMAND_CALLED )
+				{
+					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %x Function: \n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR );
+				}
+				else
+				{
+					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %x Function: %s\n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR, wrk->w_FunctionString );
+				}
+			
+				ssh_channel_write( sess->sshs_Chan, outbuf, s );
+			}
+		}
+		else
+		{
+			WRITE_MSG( sess->sshs_Chan, "You need admin rights to get this\n" );
+		}
+	}
+	else if( strncmp( buf, "info/devices", 12 ) == 0 )
+	{
+		File *f = sess->sshs_Usr->u_MountedDevs;
+		while( f != NULL )
+		{
+			int s = snprintf( outbuf, sizeof( outbuf ), "Device name: %s ID: %lu Type: %d\n", f->f_Name, f->f_ID, f->f_Type );
+			ssh_channel_write( sess->sshs_Chan, outbuf, s );
+			
+			f = (File *) f->node.mln_Succ;
+		}
+	}
+	else if( strncmp( buf, "info/users", 10 ) == 0 )
+	{
+		SystemBase *sb = (SystemBase *)sess->sshs_SB;
+		
+		if( sess->sshs_Usr->u_IsAdmin == TRUE )
+		{
+			User *u = sb->sl_UM->um_Users;
+			while( u != NULL )
+			{
+				int s = snprintf( outbuf, sizeof( outbuf ), "User name: %s ID: %lu Full name: %s\n", u->u_Name, u->u_ID, u->u_FullName );
+				ssh_channel_write( sess->sshs_Chan, outbuf, s );
+			
+				u = (User *) u->node.mln_Succ;
+			}
+		}
+		else
+		{
+			WRITE_MSG( sess->sshs_Chan, "You need admin rights to get this\n" );
+		}
+	}else if( strncmp( buf, "crash", 5 ) == 0 )
+	{
+		//memcpy( NULL, buf, 1000 );
+		exit( EXIT_CODE_CONTROLLED );
+	}
+	else if( strncmp( buf, "cd", 2 ) == 0 )
 	{
 			
-	}else if( strncmp( buf, "shutdown", 8 ) == 0 )
+	}
+	else if( strncmp( buf, "shutdown", 8 ) == 0 )
 	{
 		if( UMUserIsAdmin( SLIB->sl_UM, NULL, sess->sshs_Usr )  == TRUE )
 		{
@@ -472,20 +660,8 @@ int SSHThread( FThread *ptr )
 		FERROR("TS = NULL\n");
 		return 0;
 	}
-
-	ts->sshs_FriendHome = getenv( "FRIEND_HOME" );
-		
-	int len = strlen( ts->sshs_FriendHome );
-	ts->sshs_RSAKeyHome = FCalloc( len+64, sizeof(char) );
-	ts->sshs_DSAKeyHome = FCalloc( len+64, sizeof(char) );
-
-	//strcpy( ts->sshs_RSAKeyHome, ts->sshs_FriendHome );
-	//strcpy( ts->sshs_DSAKeyHome, ts->sshs_FriendHome );
-	//strcat( ts->sshs_RSAKeyHome, "keys/ssh_host_rsa_key" );
-	//strcat( ts->sshs_DSAKeyHome, "keys/ssh_host_dsa_key" );
 	
-	strcpy( ts->sshs_RSAKeyHome, "/etc/ssh/ssh_host_rsa_key" );
-	strcpy( ts->sshs_DSAKeyHome, "/etc/ssh/ssh_host_dsa_key" );
+	SystemBase *sb = (SystemBase *)ts->sshs_SB;
 
 	sshbind = ssh_bind_new();
 		
@@ -500,11 +676,10 @@ int SSHThread( FThread *ptr )
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_LOG_VERBOSITY_STR, "2" );
 	ssh_bind_options_set( sshbind, SSH_BIND_OPTIONS_BINDADDR, "127.0.0.1" );
 		
-	if( ts->sshs_RSAKeyHome ) free( ts->sshs_RSAKeyHome );
-	if( ts->sshs_DSAKeyHome ) free( ts->sshs_DSAKeyHome );
+
 	
 	// TODO: ts->sshs_Quit sometimes can not be read!
-	while( ts != NULL && !ts->sshs_Quit )
+	while( ts->sshs_Quit != TRUE )
 	{
 		DEBUG("[SSH] Server options set\n");
 	
@@ -512,7 +687,20 @@ int SSHThread( FThread *ptr )
 		set_pcap(session);
 	#endif
 		
-		DEBUG("[SSH] Server before bind\n");
+		if( ts->sshs_Quit )
+		{
+			break;
+		}
+		
+		DEBUG("[SSH] Server before bind, quit %d shutdown %d\n", ts->sshs_Quit, sb->fcm->fcm_Shutdown );
+		if( sb->fcm->fcm_FriendCores != NULL )
+		{
+			if( sb->fcm->fcm_FriendCores->fci_Shutdown == TRUE )
+			{
+				DEBUG("FriendCore shutdown process in progress\n");
+				break;
+			}
+		}
 		if( ssh_bind_listen( sshbind )<0 )
 		{
 			FERROR("Error listening to socket: %s\n",ssh_get_error(sshbind) );

@@ -2,10 +2,11 @@
 <input type="hidden" id="mode" value="{mode}"/>
 <input type="hidden" id="devname" value="{devname}"/>
 <input type="hidden" id="diskId" value=""/>
+<input type="hidden" id="mountedDisk" value="{mounted}"/>
 
 <div class="ContentFull LayoutButtonbarBottom">
 	<div class="VContentTop">
-		<div class="ContentFull ScrollArea BackgroundNegative Negative BorderLeft Padding" id="Form">
+		<div class="ContentFull ScrollArea BorderLeft Padding" id="Form">
 			<div id="FormHeading"></div>
 			<div class="HRow">
 				<div class="HContent30 FloatLeft">
@@ -26,15 +27,21 @@
 		</div>
 	</div>
 	<div class="VContentBottom Padding BackgroundDefault BorderTop">
-		<button type="button" class="IconSmall fa-remove FloatRight" onclick="Application.sendMessage( { command: 'notify', method: 'closeview' } )"">
-			&nbsp;{i18n_cancel}
-		</button>
-		<button onclick="verifyForm()" type="button" class="IconSmall fa-check FloatLeft">
-			&nbsp;{i18n_update_disk}
-		</button>
-		<button onclick="deleteFilesystem()" type="button" class="IconSmall fa-trash FloatLeft Danger">
-			&nbsp;{i18n_delete_disk}
-		</button>
+		<div class="HRow">
+			<div class="HContent35 FloatLeft">
+				<button onclick="mountDisk(ge('Name').value)" type="button" class="IconSmall fa-plug" id="mounter">
+					&nbsp;{i18n_mount_disk}
+				</button>
+			</div>
+			<div class="HContent65 FloatLeft TextRight">
+				<button onclick="verifyForm()" type="button" class="IconSmall fa-check">
+					&nbsp;{i18n_update_disk}
+				</button>
+				<button onclick="deleteFilesystem()" type="button" class="IconSmall fa-trash Danger">
+					&nbsp;{i18n_delete_disk}
+				</button>
+			</div>
+		</div>
 	</div>
 </div>
 

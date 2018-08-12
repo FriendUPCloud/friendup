@@ -189,7 +189,7 @@ Application.listUsers = function( current, mode )
 		
 		updateuserlist = true;
 		
-		console.log( 'listusers: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
+		console.log( 'listusers result: ', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query, res: e, num: i } );
 	}
 	// Execute the "get user list"
 	m.execute( 'listusers', { limit: ( !current ? limit : '' ), userid: current, count: true, query: query } );
@@ -417,7 +417,7 @@ function EditUser( id, mode )
 				'email'     : (dat.Email ? dat.Email : ''),
 				'level'     : dat.Level,
 				'setup' 	: str,
-				'workgroup' : ugs 
+				'workgroup' : ugs
 			};
 			f.i18n();
 			f.onLoad = function( data )
@@ -548,6 +548,9 @@ function DeleteUser( id )
     args.command ='delete';
     args.id = id;
 
+
+	if( ge( 'UserListID_' + id ) ) ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+
     f.onExecuted = function( e, d )
     {
         if( e == 'ok' )
@@ -555,7 +558,10 @@ function DeleteUser( id )
             CancelEditing();
             startlimit = 0;
             limit = ( startlimit + ', ' + maxlimit );
+            
+            ge( 'UserList' ).innerHTML = '';
             Application.listUsers();
+            console.log('User deleted. List refreshed?');
         }
         else
         {
@@ -676,6 +682,7 @@ function AddUserGroup()
 	}
 }
 
+
 function UnblockUser( id )
 {
 	var m = new Module( 'system' );
@@ -716,6 +723,12 @@ function AddUser()
 		}
 	}
 	m.execute( 'useradd' );
+}
+
+function RefreshList()
+{
+    ge( 'UserList' ).innerHTML = '';
+    Application.listUsers();
 }
 
 /* Setup -------------------------------------------------------------------- */

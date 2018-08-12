@@ -155,6 +155,12 @@ Widget.prototype.setFlag = function( flag, val )
 		case 'margin-top':
 			if( !isNaN( val ) ) this.marginTop = val;
 			break;
+		case 'fadeIn': 
+			this.fadeIn = val;
+			break;
+		case 'fadeOut':
+			this.fadeOut = val;
+			break;
 		case 'animate':
 			if( val ) this.dom.style.transition = 'width,height 0.25s,0.25s';
 			else this.dom.style.transition = '';
@@ -186,9 +192,9 @@ Widget.prototype.setFlag = function( flag, val )
 		case 'border-radius':
 			if( val )
 			{
-				this.style.borderRadius = val;
+				this.dom.style.borderRadius = val;
 			}
-			else this.style.borderRadius = '';
+			else this.dom.style.borderRadius = '';
 			break;
 		// it's a view window?
 		case 'originObject':
@@ -282,7 +288,24 @@ Widget.prototype.lower = function( callback )
 
 Widget.prototype.show = function( callback )
 {
+	var self = this;
+	this.shown = true;
 	this.calcPosition();
+	if( this.fadeIn )
+	{
+		if( this.fadeTimeout ) clearTimeout( this.fadeTimeout );
+		var fader = 0;
+		this.fadeMotion = 'in';
+		function fade()
+		{
+			if( self.fadeMotion != 'in' ) return;
+			self.dom.style.opacity = ++fader;
+			if( fader < 255 )
+				requestAnimationFrame( function(){ fade(); } );
+			console.log( fader );
+		}
+		fade();
+	}
 	this.dom.style.visibility = 'visible';
 	this.dom.style.pointerEvents = 'all';
 	if( callback ) callback();
@@ -290,9 +313,34 @@ Widget.prototype.show = function( callback )
 
 Widget.prototype.hide = function( callback )
 {
-	this.dom.style.visibility = 'hidden';
-	this.dom.style.pointerEvents = 'none';
-	if( callback ) callback();
+	var self = this;
+	function doHide()
+	{
+		self.shown = false;
+		self.dom.style.visibility = 'hidden';
+		self.dom.style.pointerEvents = 'none';
+		if( callback ) callback();
+	}
+	if( this.fadeOut )
+	{
+		if( this.fadeTimeout ) clearTimeout( this.fadeTimeout );
+		var fader = 255;
+		this.fadeMotion = 'out';
+		function fade()
+		{
+			if( self.fadeMotion != 'out' ){ doHide(); return; }
+			self.dom.style.opacity = --fader;
+			if( fader > 0 )
+				requestAnimationFrame( function(){ fade(); } );
+			else
+			{
+				doHide();
+				self.fadeTimeout = null;
+			}
+		}
+		fade();
+	}
+	else doHide();
 }
 
 Widget.prototype.setContent = function( cont, callback )

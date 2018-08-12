@@ -102,7 +102,8 @@ static const char *DefaultDictionaryMessages[] =
 "Cannot delete connection. Internal error: %d",
 "Connection with that name already exist",
 "Cannot allocate memory for DOSToken",
-"Cannot add token to list"
+"Cannot add token to list",
+"Cannot remove token from list"
 };
 
 /**
@@ -166,7 +167,7 @@ Dictionary * DictionaryNew( SQLLibrary *mysqllib )
  */
 void DictionaryDelete( Dictionary* d )
 {
-	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
+	//DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	if( d != NULL )
 	{
 		FFree( d->d_Msg );
@@ -184,7 +185,7 @@ void DictionaryDelete( Dictionary* d )
  */
 void DictEntryDelete( DictEntry* d )
 {
-	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
+	//DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	if( d != NULL )
 	{
 		if( d->de_Lang != NULL )
@@ -208,7 +209,7 @@ void DictEntryDelete( DictEntry* d )
  */
 void DictEntryDeleteAll( DictEntry* d )
 {
-	DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
+	//DEBUG("[DictionaryDelete] Remove dictionary from memory\n");
 	while( d != NULL )
 	{
 		DictEntry *temp = d;

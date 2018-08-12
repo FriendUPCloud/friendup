@@ -32,7 +32,7 @@ ns.Session = function( id, onclose ) {
 	self.id = id;
 	self.onclose = onclose;
 	
-	self.sessionTimeout = 1000 * 60;
+	self.sessionTimeout = 1000 * 1;
 	self.sessionTimer = null;
 	self.connections = {};
 	self.connIds = [];
@@ -98,6 +98,14 @@ ns.Session.prototype.detach = function( cid, callback ) {
 	function checkConns() {
 		self.checkConns();
 	}
+}
+
+ns.Session.prototype.getMeta = function() {
+	const self = this;
+	let meta = self.meta || {};
+	meta.hostId = self.id;
+	meta.isPublic = self.isPublic;
+	return meta;
 }
 
 ns.Session.prototype.updateMeta = function( conf ) {
