@@ -82,7 +82,7 @@ make clean setup release install
 Default login
 -------------
 
-Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: *fadmin*/*securefassword*. The first thiing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
+Once the installation script is finished and your local FriendCore is up and running use these credentials to log in: *fadmin*/*securefassword*. The first thing you may want to do, is add a new user : run the 'users' application that can be found in the 'System:Software/System' directory.
 
 FriendNetwork
 -------------
