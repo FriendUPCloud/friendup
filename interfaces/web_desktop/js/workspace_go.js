@@ -103,6 +103,7 @@ Workspace = {
 			return setTimeout( 'Workspace.init()', 50 );
 		}
 
+		checkMobileBrowser();
 		if( !this.addedMobileCSS && window.isMobile )
 		{
 			document.body.setAttribute( 'mobile', 'mobile' );
@@ -708,17 +709,13 @@ Workspace = {
 	// When session times out, use log in again...
 	relogin: function()
 	{
+		// While relogging in or in a real login() call, just skip
+		if( this.reloginInProgress || this.loginCall ) return;
+		
 		var self = this;
 		
-		// Only allow one relogin attempt at a time!
-		if( this.reloginAttempts > 1 )
-		{
-			return;
-		}
-		this.reloginAttempts++;
-		
 		function executeCleanRelogin()
-		{
+		{	
 			if( Workspace.conn )
 			{
 				try
@@ -731,8 +728,8 @@ Workspace = {
 				}
 				delete Workspace.conn;
 			}
-			Workspace.sessionId = null;
-
+			Workspace.flushSession();
+			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
 				Workspace.reloginInProgress = true;
@@ -743,15 +740,17 @@ Workspace = {
 				Workspace.logout();
 			}
 		}
+		
+		this.reloginAttempts = true;
+		
 		// See if we are alive!
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
-			self.reloginAttempts--;
+			self.reloginAttempts = false;
 			
 			if( e == 'ok' )
 			{
-				console.log( 'We do not need to relogin..: ' + Workspace.sessionId );
 				return;
 			}
 			else
@@ -759,32 +758,23 @@ Workspace = {
 				try
 				{
 					var js = JSON.parse( d );
-					if( parseInt( d.code ) == 3 )
+					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						console.log( 'Session was wrong or expired.' );
-						Workspace.sessionId = null;
-						//return;
+						Workspace.flushSession() = null;
 					}
 				}
-				catch( e )
+				catch( n )
 				{
 				}
-				console.log( 'This was the error: (' + Workspace.sessionId + ')', e, d );
 			}
 			if( Workspace.serverIsThere )
 			{
-				console.log( 'Execute clean relogin' );
 				executeCleanRelogin();
-			}
-			else
-			{
-				console.log( 'Won\'t try to relogin until the server is back.' );
 			}
 		}
 		m.forceHTTP = true;
 		m.forceSend = true;
 		m.execute( 'usersettings' );
-		return;
 	},
 	renewAllSessionIds: function()
 	{
@@ -868,6 +858,7 @@ Workspace = {
 	},
 	login: function( u, p, r, callback, ev )
 	{
+		var self = this;
 		// TODO: If we have sessionid - verify it through ajax.
 
 		// Go mode
@@ -876,6 +867,7 @@ Workspace = {
 		if( this.sessionId )
 		{
 			if( callback && typeof( callback ) == 'function' ) callback( true );
+			Workspace.reloginInProgress = false;
 			return true;
 		}
 
@@ -962,7 +954,6 @@ Workspace = {
 
 			m.onExecuted = function( json, serveranswer )
 			{
-				t.loginCall = null;
 				if( typeof( json ) != 'object' )
 				{
 					try
@@ -1000,12 +991,20 @@ Workspace = {
 					if( typeof( FriendBook ) != 'undefined' )
 						FriendBook.init();
 
-					Workspace.reloginInProgress = null;
-					return Workspace.initUserWorkspace( json, ( callback && typeof( callback ) == 'function' ? callback( true, serveranswer ) : false ), ev );
+					Workspace.reloginInProgress = false;
+					Workspace.serverIsThere = true;
+					Workspace.workspaceIsDisconnected = false;
+					var cl = function()
+					{
+						t.loginCall = null;
+						if( callback && typeof( callback ) == 'function' )
+							callback( true, serveranswer );
+					}
+					return Workspace.initUserWorkspace( json, cl, ev );
 				}
 				else
 				{
-					Workspace.reloginInProgress = null;
+					Workspace.reloginInProgress = false;
 					if( t.loginPrompt )
 						t.loginPrompt.sendMessage( { command: 'error', other: 'test' } );
 					if( callback && typeof( callback ) == 'function' ) callback( false, serveranswer );
@@ -1024,7 +1023,6 @@ Workspace = {
 				{
 					if( Workspace.reloginInProgress )
 					{
-						console.log( 'Destroying.' );
 						m.destroy();
 						Workspace.reloginInProgress = false;
 					}
