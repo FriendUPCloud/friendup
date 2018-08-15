@@ -6601,20 +6601,20 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			try
 			{
 				var js = JSON.parse( d );
-				if( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 )
+				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					//console.log( 'The session has gone away! Relogin using login().' );
-					Workspace.sessionId = 0;
-					Workspace.login(); // Try login using local storage
+					console.log( 'The session has gone away! Relogin using login().' );
+					Workspace.flushSession();
+					Workspace.relogin(); // Try login using local storage
 				}
 				else
 				{
 					console.log( js, this.jax.proxy.responseText );
 				}
 			}
-			catch( e )
+			catch( b )
 			{
-				console.log( 'I do not understand the result. Server may be down.' );
+				console.log( 'I do not understand the result. Server may be down.', e, d );
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
@@ -6624,6 +6624,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					Workspace.serverIsThere = false;
 					Workspace.workspaceIsDisconnected = true;
+					Workspace.flushSession(); 
+					Workspace.relogin();
 					return;
 				}
 			}
@@ -6676,10 +6678,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	handlePasteEvent: function( evt )
 	{
 		var pastedItems = ( evt.clipboardData || evt.originalEvent.clipboardData ).items;
-		for (i in pastedItems)
+		for( var i in pastedItems )
 		{
 			var item = pastedItems[i];
-			if (item.kind === 'file')
+			if( item.kind === 'file' )
 			{
 			
 				var blob = item.getAsFile();

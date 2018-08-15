@@ -51,14 +51,13 @@ function KillcAjaxByContext( context )
 function AddToCajaxQueue( ele )
 {
 	// Don't add to queue if we are offline
-	if( !Workspace.serverIsThere )
+	if( !Workspace.serverIsThere || Workspace.workspaceIsDisconnected )
 	{
-		console.log( 'Do not add to ajax queue: we\'re offline.' );
+		if( ele.onload )
+		{
+			ele.onload( false );
+		}
 		return ele.destroy();
-	}
-	else
-	{
-		console.log( 'Server is still there! It\'s great!' );
 	}
 	
 	// TODO: Support a nice queue.. :-)
@@ -554,7 +553,6 @@ cAjax.prototype.send = function( data )
 		}
 		else
 		{
-			console.log( 'Server isn\'t there.' );
 			this.destroy();
 		}
 		return;
@@ -800,7 +798,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				{
 					// Add to queue
 					AddToCajaxQueue( self );
-					Workspace.sessionId = false;
+					Workspace.flushSession();
 					return Workspace.relogin();
 				}
 			}
@@ -812,7 +810,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 				if( Workspace )
 				{
 					AddToCajaxQueue( self );
-					Workspace.sessionId = false;
+					Workspace.flushSession();
 					return Workspace.relogin();
 				}
 			}
@@ -827,7 +825,7 @@ cAjax.prototype.handleWebSocketResponse = function( wsdata )
 			if( r.response == 'user session not found' )
 			{
 				AddToCajaxQueue( self );
-				Workspace.sessionId = false;
+				Workspace.flushSession();
 				return Workspace.relogin();
 			}
 		}
