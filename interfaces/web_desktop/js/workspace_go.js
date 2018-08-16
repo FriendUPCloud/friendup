@@ -706,6 +706,11 @@ Workspace = {
 		// Show it
 		this.showDesktop();
 	},
+	flushSession: function()
+	{
+		this.sessionId = null;
+		localStorage.removeItem( 'WorkspaceSessionID' );
+	},
 	// When session times out, use log in again...
 	relogin: function()
 	{
@@ -732,12 +737,13 @@ Workspace = {
 			
 			if( Workspace.loginUsername && Workspace.loginPassword )
 			{
-				Workspace.reloginInProgress = true;
 				Workspace.login( Workspace.loginUsername, Workspace.loginPassword, false, Workspace.initWebSocket );
 			}
 			else
 			{
+				// We're exiting!
 				Workspace.logout();
+				Workspace.reloginInProgress = false;
 			}
 		}
 		
@@ -748,6 +754,7 @@ Workspace = {
 		m.onExecuted = function( e, d )
 		{
 			self.reloginAttempts = false;
+			Workspace.reloginInProgress = true;
 			
 			if( e == 'ok' )
 			{
@@ -770,6 +777,14 @@ Workspace = {
 			if( Workspace.serverIsThere )
 			{
 				executeCleanRelogin();
+			}
+			else
+			{
+				// Wait a second before trying again
+				setTimeout( function()
+				{
+					Workspace.reloginInProgress = false;
+				}, 1000 );
 			}
 		}
 		m.forceHTTP = true;

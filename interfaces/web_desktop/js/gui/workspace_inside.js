@@ -488,7 +488,21 @@ var WorkspaceInside = {
 		// Clean up previous
 		if( this.conn )
 		{
-			this.conn.close();
+			try
+			{
+				this.conn.close();
+			}
+			catch( ez )
+			{
+				try
+				{
+					this.conn.cleanup();
+				}
+				catch( ez2 )
+				{
+					console.log( 'Conn is dead.' );
+				}
+			}
 			delete this.conn;
 		}
 		this.conn = new FriendConnection( conf );

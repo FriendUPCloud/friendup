@@ -202,6 +202,7 @@ cAjax = function()
 									return;
 								// Add to queue
 								AddToCajaxQueue( jax );
+								Workspace.flushSession();
 								return Workspace.relogin();
 							}
 						}
@@ -228,6 +229,7 @@ cAjax = function()
 						if( res == 'user session not found' )
 						{
 							AddToCajaxQueue( jax );
+							Workspace.flushSession();
 							return Workspace.relogin();
 						}
 					}
