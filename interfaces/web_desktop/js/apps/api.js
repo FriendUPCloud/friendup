@@ -1,19 +1,12 @@
 /*©agpl*************************************************************************
 *                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -608,7 +601,7 @@ Friend.generateUniqueId = function( arrayBuffer, postfix )
 	}
 	while( typeof( arrayBuffer[uid + postfix ] ) != 'undefined' );
 	return uid + postfix;
-}
+};
 
 generateUniqueId = Friend.generateUniqueId;
 
@@ -617,7 +610,7 @@ Friend.uniqueIdString = function()
 	return ( Math.random() * 9999 ) + '' +
 		( ( Math.random() * 9999 ) + ( Math.random() * 9999 ) ) +
 		'' + ( new Date() ).getTime();
-}
+};
 uniqueIdString = Friend.uniqueIdString;
 
 // Extract a callback element and return it
@@ -8198,7 +8191,7 @@ CallLowLevelAPI = function( args, functionPath, argumentNames, flags )
 	Application.sendMessage( message );
 };
 
-if ( Friend )
+if( Friend )
 {
 	// To be called at first pass of Javascript
 	Friend.addToAPI = function( functionPath, argumentNames, properties, parentClass )
@@ -8238,7 +8231,7 @@ if ( Friend )
 		}
 
 		// Add to API!
-		if ( functionClass )
+		if( functionClass )
 		{
 			definition.klass = functionClass;
 			parentClass.APIDefinition[ functionPath ] = definition;

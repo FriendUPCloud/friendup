@@ -1,24 +1,17 @@
 /*©agpl*************************************************************************
 *                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Friend Unifying Platform                                                     *
+* ------------------------                                                     *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+* Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+* Tel.: (+47) 40 72 96 56                                                      *
+* Mail: info@friendos.com                                                      *
 *                                                                              *
 *****************************************************************************©*/
 
-if ( window.friendUP )
-	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed');
+if( window.friendUP )
+	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed' );
 
 window.friendUP = {
 	app : {},

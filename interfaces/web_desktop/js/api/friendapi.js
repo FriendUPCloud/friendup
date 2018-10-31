@@ -1,21 +1,14 @@
-/*©agpl*************************************************************************
-*                                                                              *
-* This file is part of FRIEND UNIFYING PLATFORM.                               *
-*                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
-*                                                                              *
-*****************************************************************************©*/
+/*©agpl**************************************************************************
+ *                                                                              *
+ * Friend Unifying Platform                                                     *
+ * ------------------------                                                     *
+ *                                                                              *
+ * Copyright 2014-2017 Friend Software Labs AS, all rights reserved.            *
+ * Hillevaagsveien 14, 4016 Stavanger, Norway                                   *
+ * Tel.: (+47) 40 72 96 56                                                      *
+ * Mail: info@friendos.com                                                      *
+ *                                                                              *
+ *****************************************************************************©*/
 /** @file
  *
  * Friend New API definition - Low level
@@ -267,7 +260,7 @@ Friend.getAPI = function( applicationId, options, callback, extra )
 			var name = definition.functionPath.substring( 0, dot );
 			if ( source.indexOf( name + '.' ) < 0 )
 			{
-				source += name + ' = {} || window.' + name + ';\n'; 
+				source += name + ' = window.' + name + ' || {};\n'; 
 			}
 			dot = definition.functionPath.indexOf( '.', dot + 1 );
 		}
@@ -301,11 +294,11 @@ Friend.callAPIFunction = function( msg )
 {
 	// Get information from message
 	var messageInfo = {};
-	if ( msg.applicationId )
+	if( msg.applicationId )
 	{
 		messageInfo.view = GetContentWindowByAppMessage( findApplication( msg.applicationId ), msg );
 		messageInfo.applicationId = msg.applicationId;
-		if ( msg.applicationName )
+		if( msg.applicationName )
 			messageInfo.applicationName = msg.applicationName;
 		messageInfo.viewId = msg.viewId;
 		messageInfo.callback = msg.callback;
@@ -313,14 +306,14 @@ Friend.callAPIFunction = function( msg )
 
 	// Call the function
 	var definition = Friend.APIDefinition[ msg.method ];
-	if ( definition )
+	if( definition )
 	{
 		// Replace callback by local callback
-		if ( definition.callbackPosition >= 0 )
+		if( definition.callbackPosition >= 0 )
 			msg.arguments[ definition.callbackPosition ] = thisCallback;
 
 		// Up to 10 arguments (Javascript -> pass more in objects)
-		switch ( definition.numberOfArguments )
+		switch( definition.numberOfArguments )
 		{
 			case 0:
 				ret = definition.klass();
@@ -403,10 +396,10 @@ Friend.callAPIFunction = function( msg )
 		}
 
 		// If value is by return, send the message back...
-		if ( definition.isDirect )
+		if( definition.isDirect )
 		{
 			// Except for double access functions, when it is returned by callback.
-			if ( ret != Friend.NORETURN )
+			if( ret != Friend.NORETURN )
 			{
 				var nmsg = 
 				{
