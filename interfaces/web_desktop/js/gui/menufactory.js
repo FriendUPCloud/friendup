@@ -124,7 +124,7 @@ FullscreenMenuClass.prototype.show = function( heading, men ) // With an optiona
 		if( !f ) men = false;
 	}
 	
-	friend.currentMenuItems = false; // <- make it regenerate
+	Friend.currentMenuItems = false; // <- make it regenerate
 	this.dom.innerHTML = '';
 	var root = document.createElement( 'div' );
 	root.className = 'Menu';

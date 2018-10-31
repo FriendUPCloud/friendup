@@ -146,17 +146,26 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 {
 	if( req != NULL )
 	{
+		int pos = 0;
 		req->wr_Chunks++;
-		int pos = chunk * req->wr_ChunkSize;
+		
+		if( datasize > WS_PROTOCOL_BUFFER_SIZE )
+		{
+			req->wr_IsBroken = 1;
+		}
+		else
+		{
+			pos = chunk * req->wr_ChunkSize;
 
-		memcpy( &(req->wr_Message[ pos ]), data, datasize );
+			memcpy( &(req->wr_Message[ pos ]), data, datasize );
+			
+			INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
+		}
 		req->wr_MessageSize += datasize;
-		INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
 		
 		if( req->wr_Chunks == req->wr_Total )
 		{
 			int len = 0;
-			//char *dst = basedecode64( req->wr_Message, req->wr_MessageSize, &len );
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{

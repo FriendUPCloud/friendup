@@ -681,9 +681,7 @@ NetworkSocket.prototype.doReconnect = function()
 		
 		if ( !allow )
 		{
-			//console.log( 'not allowed to reconnect', checks )
-			// Try to reconnect!
-			Workspace.relogin();
+			// TODO: Here, we should do something - but not using Workspace.relogin()
 			return false;
 		}
 		return true;

@@ -1,7 +1,7 @@
-
 # default variables
-FRIEND_PATH 			=	$(PWD)/build
-
+FRIEND_PATH 			?=	$(PWD)/build
+FRIEND_DEB_DEBIAN_TGT_PATH=$(PWD)/packaging/debian/debian/friendup/opt/friendup
+FRIEND_DEB_UBUNTU_TGT_PATH=$(PWD)/packaging/ubuntu/debian/friendup/opt/friendup
 FRIEND_CORE_BIN			= core/bin/FriendCore
 
 # include custom configuration
@@ -11,6 +11,39 @@ FRIEND_CORE_BIN			= core/bin/FriendCore
 #compilation
 all: compile
 	@echo "Making default compilation with debug."
+
+deb-debian:
+	@echo "Valid targets are: make deb-ubuntu"
+	cd packaging/debian && dpkg-buildpackage -b -uc
+
+deb-ubuntu:
+	@echo "Make package"
+	cd packaging/ubuntu && dpkg-buildpackage -b -uc
+
+installforpackage-debian:
+	@echo "Make install for package"
+	#mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)
+	make FRIEND_PATH=$(FRIEND_DEB_DEBIAN_TGT_PATH) clean setup release install
+	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/../../etc/systemd/system/
+	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/db
+	cp $(PWD)/docs/cfg.ini.example $(FRIEND_DEB_DEBIAN_TGT_PATH)/cfg/cfg.ini.example
+	cp $(PWD)/docs/README.txt $(FRIEND_DEB_DEBIAN_TGT_PATH)/
+	cp $(PWD)/scripts/friendup.service $(FRIEND_DEB_DEBIAN_TGT_PATH)/../../etc/systemd/system/
+	cp $(PWD)/db/FriendCoreDatabase.sql $(FRIEND_DEB_DEBIAN_TGT_PATH)/db/
+
+
+installforpackage-ubuntu:
+	@echo "Make install for package"
+	mkdir -p $(FRIEND_DEB_UBUNTU_TGT_PATH)
+	make FRIEND_PATH=$(FRIEND_DEB_UBUNTU_TGT_PATH) clean setup release install
+	mkdir -p $(FRIEND_DEB_UBUNTU_TGT_PATH)/../../etc/systemd/system/
+	mkdir -p $(FRIEND_DEB_UBUNTU_TGT_PATH)/db
+	cp $(PWD)/scripts/friendup.service $(FRIEND_DEB_UBUNTU_TGT_PATH)/../../etc/systemd/system/
+	cp $(PWD)/docs/cfg.ini.example $(FRIEND_DEB_UBUNTU_TGT_PATH)/cfg/cfg.ini.example
+	cp $(PWD)/docs/README.txt $(FRIEND_DEB_UBUNTU_TGT_PATH)/
+	cp $(PWD)/db/FriendCoreDatabase.sql $(FRIEND_DEB_UBUNTU_TGT_PATH)/db/
+#	make FRIEND_PATH=$(FRIEND_DEB_TGT_PATH) release install
+#FIXME: cruft is copied to the target directory (eg. FriendNetwork server logs)
 
 chrome_extension:
 	@echo "Making the Chrome Extension."
@@ -72,7 +105,7 @@ flush:
 	rm -f $(FRIEND_CORE_BIN)
 	rm -fr $(FRIEND_HOME)
 
-setup: cleanws
+setup: #cleanws
 	@echo "Setup in progress."
 	mkdir -p $(FRIEND_PATH)/docs/internal/webcalls
 	mkdir -p $(FRIEND_PATH)/docs/internal/core
@@ -106,7 +139,7 @@ release:
 	make -C authmods DEBUG=0 release WEBSOCKETS_THREADS=$(WEBSOCKETS_THREADS) USE_SELECT=$(USE_SELECT) NO_VALGRIND=$(NO_VALGRIND) CYGWIN_BUILD=$(CYGWIN_BUILD)
 
 install:
-	@echo "Installation in progress."
+	@echo "Installing to: $(FRIEND_PATH)"
 	mkdir -p $(FRIEND_PATH)
 	mkdir -p storage
 	mkdir -p $(FRIEND_PATH)/libs $(FRIEND_PATH)/cfg

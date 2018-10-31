@@ -3,7 +3,7 @@
 CC			=	gcc
 OUTPUT		=	bin/sqlite.library
 CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ -I../../
-LFLAGS		=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt -lcrypt -lssl -lsqlite3 ../../core/obj/buffered_string.o ../../core/obj/list_string.o
+LFLAGS		=	-shared -fPIC -Wl,--no-as-needed -lz -lpthread -lrt -lcrypt -lssl -lsqlite3 ../../core/obj/buffered_string.o ../../core/obj/list_string.o
 FPATH		=	$(shell pwd)
 
 #CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC -I../ -I../properties/ -I../system/ -I../../libs-ext/libwebsockets/build/include/  -L../../libs-ext/libwebsockets/lib/

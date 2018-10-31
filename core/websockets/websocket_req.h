@@ -37,9 +37,10 @@
 #include <libwebsockets.h>
 
 //#define WS_PROTOCOL_BUFFER_SIZE 0xffff
-#define WS_PROTOCOL_BUFFER_SIZE 65535
+//#define WS_PROTOCOL_BUFFER_SIZE 65535
 //#define WS_PROTOCOL_BUFFER_SIZE 10048
 //#define WS_PROTOCOL_BUFFER_SIZE 4096
+#define WS_PROTOCOL_BUFFER_SIZE 8192
 #define WSREQ_ID_SIZE 128
 
 //
@@ -57,6 +58,7 @@ typedef struct WebsocketReq
 	char							*wr_Message;	// encoded data from chunks (if chunksize == totalsize == 0 message is in data)
 	int								wr_MessageSize;	// meessage size
 	time_t							wr_CreatedTime;
+	int								wr_IsBroken;	// if package is broken, flag is set to 1
 }WebsocketReq;
 
 //

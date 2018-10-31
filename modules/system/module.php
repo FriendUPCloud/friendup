@@ -1027,7 +1027,7 @@ if( isset( $args->command ) )
 				$fs->GroupID = $groupID;
 				if( !$fs->Load() )
 				{
-					$keys = array( 'Server', 'Name', 'Path', 'Type', 'ShortDescription', 'Username', 'Password', 'Mounted', 'PublicKey', 'KeysID' );
+					$keys = array( 'Server', 'Name', 'Path', 'Type', 'ShortDescription', 'Username', 'Password', 'Mounted', 'PrivateKey', 'KeysID' );
 					foreach( $keys as $kkey )
 						if( !isset( $obj->$kkey ) )
 							$obj->$kkey = '';
@@ -2094,6 +2094,9 @@ if( isset( $args->command ) )
 			break;
 		case 'setmimetypes':
 			require( 'modules/system/include/setmimetypes.php' );
+			break;
+		case 'checkmimeapplication':
+			require( 'modules/system/include/checkmimeapplication.php' );
 			break;
 		case 'deletemimetypes':
 			require( 'modules/system/include/deletemimetypes.php' );

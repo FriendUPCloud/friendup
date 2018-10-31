@@ -89,6 +89,8 @@ i18n_placeholder_connection          : Mindisk
 
 i18n_add_storage                     : Tilføy disk
 i18n_update_disk                     : Oppdater
+i18n_mount_disk                      : Monter disk
+i18n_unmount_disk                    : Avmonter disk
 i18_account2                         : Konto
 i18n_settings_saved                  : Instillinger lagret
 
@@ -146,3 +148,19 @@ i18n_fnetAutoMountDrive				 : Vis vennenettverksikonet på arbeidsområdet
 
 i18n_update_language_warning         : Oppdaterer språk
 i18n_update_language_desc            : Når språkinnstillingen oppdateres må Friend Workspace startes på ny. Du vil miste alt som ikke er lagret i din nåværende økt. Er du sikker på at du ønsker å fortsette?
+
+i18n_fnetActivatePower				 : Aktiver strømdeling via vennnettverk
+i18n_fnetShareThisDevice			 : Del denne enheten
+i18n_fnetMaximumPercentage			 : Maksimalt antall maskintid for deling
+i18n_fnetAllowPowerApplications		 : Tillat applikasjoner å be om ekstern strøm
+i18n_fnetNumberOfMachines 			 : Optimal antall maskiner å be om
+i18n_fnetMinimalNumberOfMachines	 : Minimal antall maskiner
+i18n_fnetAskOnlyToFriends 			 : Spør bare til venner
+i18n_friendNetworkPowerSharing		 : Power Sharing
+i18n_fnetShareOnlyWithCommunity		 : Bare i ditt fellesskap
+i18n_fnetShareOnlyWithFriends 		 : Del kun med venner
+i18n_fnetAskOnlyToCommunity			 : Spør bare til ditt hovedsamfunn
+i18n_fnetAskOnlyToFriends			 : Spør bare til venner
+i18n_fnetSharingPower				 : Del strømmen din
+i18n_fnetAskForPower				 : Be om kraft
+

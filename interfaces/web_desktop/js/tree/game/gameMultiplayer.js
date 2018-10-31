@@ -378,14 +378,12 @@ Friend.Tree.Game.MultiWaitForGame.handleUserConnection = function ( command, dat
 	}
 	function onCancelWaitingForInitialization()
 	{
-		debugger;
 		this.network.disconnectFromUser();
 		this.messages.apply( this.caller, 'aborted', [ response ] );
 		this.destroy();
 	}
 	function onCancelWaitingForStartOfGame()
 	{
-		debugger;
 		this.network.disconnectFromUser();
 		this.messages.apply( this.caller, 'aborted', [ response ] );
 		this.destroy();
@@ -481,7 +479,6 @@ Friend.Tree.Game.MultiWaitForGame.openDialog = function ()
 	// Cancel pressed during wait for connection
 	function onCancelWaitingForConnection()
 	{
-		debugger;
 		this.destroy();
 		this.network.disconnectFromUser();
 		this.messages.apply( this.caller, [ 'aborted' ] );

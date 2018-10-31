@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "systembase.h"
+//#include "systembase.h"
 #include <util/log/log.h>
 #include <sys/stat.h>
 #include <util/buffered_string.h>
@@ -100,13 +100,14 @@ typedef struct SpecialData
 	LIBSSH2_KNOWNHOSTS *nh;
 	int type;
 	
-	char										*sd_LoginUser;		// login user
-	char										*sd_LoginPass;		// login password
-	int 										sd_Port;				// port
-	char										*sd_Host;			// host
+	char									*sd_LoginUser;		// login user
+	char									*sd_LoginPass;		// login password
+	int 									sd_Port;				// port
+	char									*sd_Host;			// host
 	SystemBase *sb;
-	LIBSSH2_SFTP_HANDLE *sd_FileHandle;
-	char                                     sd_privkeyFileName[ 512 ];
+	LIBSSH2_SFTP_HANDLE						*sd_FileHandle;
+	char                                    sd_privkeyFileName[ 512 ];
+	int										sd_LoginType;
 }SpecialData;
 
 typedef struct HandlerData
@@ -130,7 +131,7 @@ const char *GetPrefix()
 //
 
 
-char* StringDup( const char* str )
+static char* StringDup( const char* str )
 {
 	if( str == NULL)
 	{
@@ -156,6 +157,7 @@ char* StringDup( const char* str )
 void init( struct FHandler *s )
 {
 	int rc = libssh2_init( 0 );
+	DEBUG("LIBSSH init %d\n", rc );
 	s->fh_SpecialData = FCalloc( 1, sizeof( HandlerData ) );
 	HandlerData *hd = (HandlerData *)s->fh_SpecialData;
 	hd->initialized = 0;
@@ -180,7 +182,7 @@ void deinit( struct FHandler *s )
 //
 //
 
-int ServerReconnect( SpecialData *sd, HandlerData *hd )
+static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unused)) )
 {
 	if( sd->session != NULL )
 	{
@@ -277,7 +279,7 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 			authpw |= 4;
 		}
 		
-		if ( authpw & 1 )
+		if( sd->sd_LoginType == 1 )
 		{
 			sd->rc = libssh2_userauth_password( sd->session, sd->sd_LoginUser, sd->sd_LoginPass );
 			if( sd->rc != 0 )
@@ -291,12 +293,12 @@ int ServerReconnect( SpecialData *sd, HandlerData *hd )
 				return -3;
 			}
 		}
-		else if ( authpw & 4 )
+		else if ( sd->sd_LoginType == 4 )
 		{
 			// Or by public key  
 			//if( libssh2_userauth_publickey_frommem( sdat->session, sdat->sd_LoginUser, strlen(sdat->sd_LoginUser), NULL, 0, privkey, strlen(privkey), NULL ) )
 			//{
-			if (libssh2_userauth_publickey_fromfile( sd->session, sd->sd_LoginUser, sd->sd_privkeyFileName, NULL, sd->sd_LoginPass ) ) 
+			if (libssh2_userauth_publickey_fromfile( sd->session, sd->sd_LoginUser, NULL, sd->sd_privkeyFileName, sd->sd_LoginPass ) ) 
 			{	
 				FERROR("User not authenticated\n");
 				while( TRUE ){ if( libssh2_session_free( sd->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
@@ -404,7 +406,7 @@ int UnMount( struct FHandler *s, void *f )
 // Mount device
 //
 
-void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
+void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((unused)) )
 {
 	File *dev = NULL;
 	char *path = NULL;
@@ -501,10 +503,14 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 	SpecialData *sdat = (SpecialData *) dev->f_SpecialData;
 	if( sdat != NULL )
 	{
+		FBOOL noUserLogin = TRUE;
 		sdat->sd_Host = StringDup( host );
 		sdat->sd_Port = port;
 		sdat->sd_LoginUser = StringDup( ulogin );
-		sdat->sd_LoginPass = StringDup( upass );
+		if( upass != NULL && strlen( upass ) > 0 )
+		{
+			sdat->sd_LoginPass = StringDup( upass );
+		}
 		sdat->sb = sb;
 		
 		// Ultra basic "connect to port 22 on localhost".  Your code is
@@ -616,14 +622,16 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 			authpw |= 4;
 		}
 		
+		DEBUG("CONFIG: '%s'\n", config );
+
 		if( config != NULL )
 		{
-			int cfglen = strlen( config );
+			//int cfglen = strlen( config );
 			
-			char *lockey = strstr( config, "PublicKey" );
+			char *lockey = strstr( config, "PrivateKey" );
 			if( lockey != NULL )
 			{
-				lockey += 12; // add "PublicKey":"
+				lockey += 13; // add "PrivateKey":"
 				char *endptr = lockey;
 				char *lastchar = endptr;
 				while( TRUE )
@@ -637,12 +645,40 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 					{
 						int len = endptr - lockey;
 						
-						snprintf( sdat->sd_privkeyFileName, sizeof(sdat->sd_privkeyFileName), "/tmp/%lu_tke_%d%d%d%d", (unsigned long)sdat, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+						snprintf( sdat->sd_privkeyFileName, sizeof(sdat->sd_privkeyFileName), "/tmp/Friendup/%lu_tke_%d%d%d%d", (unsigned long)sdat, rand()%9999, rand()%9999, rand()%9999, rand()%9999 );
+						
+						DEBUG("PrivateKey : %s\n", sdat->sd_privkeyFileName );
 						
 						FILE *fp;
 						if( ( fp = fopen( sdat->sd_privkeyFileName, "wb") ) != NULL )
 						{
-							fwrite( lockey, len, sizeof(char), fp);
+							int p;
+							for( p=0 ; p < len ; p++ )
+							{
+								if( lockey[ p ] == '\\' )
+								{
+									if( lockey[ p+1 ] == '/' )
+									{
+										fputc( '/', fp );
+										p++;
+									}
+									else if( lockey[ p+1 ] == 'n' )
+									{
+										fputc( '\n', fp );
+										p++;
+									}
+									else
+									{
+										fputc( lockey[ p+1 ], fp );
+										p++;
+									}
+								}
+								else
+								{
+									fputc( lockey[ p ], fp );
+								}
+							}
+							//fwrite( lockey, len, sizeof(char), fp);
 							fclose(fp);
 						}
 						
@@ -659,7 +695,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 			}
 		}
 		
-		if ( authpw & 1 )
+		DEBUG("Authpw %d log '%s' pass '%s'\n", authpw, sdat->sd_LoginUser, sdat->sd_LoginPass );
+		
+		if( authpw & 1 && sdat->sd_LoginPass != NULL )
 		{
 			sdat->rc = libssh2_userauth_password( sdat->session, sdat->sd_LoginUser, sdat->sd_LoginPass );
 			if( sdat->rc != 0 )
@@ -667,18 +705,33 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 				FERROR("User not authenticated\n");
 				//goto shutdown;
 			}
+			else
+			{
+				sdat->sd_LoginType = 1;
+				noUserLogin = FALSE;
+			}
 		}
-		
 		
 		if( authpw & 4 )
 		{
-			if( sdat->rc != 0 )	// there is no need to check authentication again
+			if( noUserLogin == TRUE )	// there is no need to check authentication again
 			{
+				sdat->sd_LoginType = 4;
 				DEBUG("Password login fail or PubKey authorisation will be used\n");
 				// Or by public key  
-				//if( libssh2_userauth_publickey_frommem( sdat->session, sdat->sd_LoginUser, strlen(sdat->sd_LoginUser), NULL, 0, privkey, strlen(privkey), NULL ) )
+				/*
+				if( libssh2_userauth_publickey_frommem( sdat->session, sdat->sd_LoginUser, strlen(sdat->sd_LoginUser), NULL, 0, privkey, strlen(privkey), NULL ) )
 				//{
-				if (libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, /*sdat->sd_privkeyFileName*/ "/home/stefkos/.ssh/id_rsa.pub", "/home/stefkos/.ssh/id_rsa", sdat->sd_LoginPass ) ) 
+					*/
+				
+				//printf("sdat->sd_LoginUser %s, publickey %s, sdat->sd_privkeyFileName '%s', sdat->sd_LoginPass %s\n", sdat->sd_LoginUser, NULL, sdat->sd_privkeyFileName, sdat->sd_LoginPass );
+				
+				//if( libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, NULL, "/tmp/Friendup/rsa_4096.pem", sdat->sd_LoginPass ) )
+				
+				if( libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, NULL, sdat->sd_privkeyFileName, sdat->sd_LoginPass ) )
+				/*
+				if (libssh2_userauth_publickey_fromfile( sdat->session, sdat->sd_LoginUser, "/home/stefkos/.ssh/id_rsa.pub", "/home/stefkos/.ssh/id_rsa", sdat->sd_LoginPass ) ) 
+					*/
 				{	
 					FERROR( "\tAuthentication by public key failed!\n");
 					goto shutdown;
@@ -702,7 +755,7 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs )
 
 		sdat->sftp_session = libssh2_sftp_init( sdat->session );
 
-		if (!sdat->sftp_session) 
+		if( !sdat->sftp_session ) 
 		{
 			int err = libssh2_session_last_errno( sdat->session );
 			
@@ -727,15 +780,19 @@ shutdown:
 	
 		if( sdat->session != NULL )
 		{
-			libssh2_sftp_shutdown( sdat->sftp_session);
+			libssh2_sftp_shutdown( sdat->sftp_session );
+			sdat->sftp_session = NULL;
 	
 			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
 			while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+			
+			sdat->session = NULL;
 		}
 		
 		if( sdat->sock != 0 )
 		{
-			close( sdat->sock);
+			close( sdat->sock );
+			sdat->sock = 0;
 		}
 		DEBUG("all done!\n");
 		
@@ -775,12 +832,20 @@ int Release( struct FHandler *s, void *f )
 			
 			DEBUG("release locked %p\n", &hd->hd_Mutex );
 			pthread_mutex_lock( &hd->hd_Mutex );
-			
-			libssh2_sftp_shutdown( sdat->sftp_session);
-			
-			libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
-			while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
-			
+			if( sdat->session != NULL )
+			{
+				if( sdat->sftp_session != NULL )
+				{
+					//libssh2_sftp_shutdown( sdat->sftp_session );
+					sdat->sftp_session = NULL;
+				}
+				//libssh2_session_disconnect( sdat->session,  "Normal Shutdown, Thank you for playing");
+				if( sdat->session != NULL )
+				{
+					//while( TRUE ){ if( libssh2_session_free( sdat->session ) != LIBSSH2_ERROR_EAGAIN ){ break; } usleep( 1000 ); }
+					//sdat->session = NULL;
+				}
+			}
 			pthread_mutex_unlock( &hd->hd_Mutex );
 
 			DEBUG("all done!\n");
@@ -884,7 +949,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		
 		DEBUG("open1 locked %p\n", &hd->hd_Mutex );
 		pthread_mutex_lock( &hd->hd_Mutex );
-		int off = 0, slash = 0;
+		int slash = 0;
 		for( i = 0; i < spath; i++ )
 		{
 			if( path[i] == '/' )
@@ -896,7 +961,8 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				{
 					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, cleanPath );
 					
-					int err =libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+					libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+					
 					
 					FFree( directory );
 				}
@@ -1017,7 +1083,7 @@ int FileClose( struct File *s, void *fp )
 {
 	if( fp != NULL )
 	{
-		SpecialData *sdat = (SpecialData *)s->f_SpecialData;
+		//SpecialData *sdat = (SpecialData *)s->f_SpecialData;
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
 		int close = 0;
@@ -1160,7 +1226,7 @@ int FileSeek( struct File *s, int pos )
 // GetDiskInfo
 //
 
-int GetDiskInfo( struct File *s, int64_t *used, int64_t *size )
+int GetDiskInfo( struct File *s __attribute__((unused)), int64_t *used, int64_t *size )
 {
 	*used = 0;
 	*size = 0;
@@ -1213,7 +1279,7 @@ int MakeDir( struct File *s, const char *path )
 			
 			if( slashes > 0 )
 			{
-				int off = 0, slash = 0;
+				int slash = 0;
 				for( i = 0; i < spath; i++ )
 				{
 					if( path[i] == '/' )
@@ -1242,7 +1308,7 @@ int MakeDir( struct File *s, const char *path )
 			// We created directories to sign '/'
 			// Now we create directory for fullpath
 			
-			struct stat filest;
+			//struct stat filest;
 			
 			sprintf( directory, "%s%s", newPath, path );
 			error = libssh2_sftp_mkdir( sdat->sftp_session, directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
@@ -1264,7 +1330,7 @@ int MakeDir( struct File *s, const char *path )
 // rm files/dirs
 //
 
-FLONG RemoveDirectory( SpecialData *sdat, const char *path )
+static FLONG RemoveDirectory( SpecialData *sdat, const char *path )
 {
 	LIBSSH2_SFTP_HANDLE *sftphandle;
 	FLONG r = 0;
@@ -1399,7 +1465,7 @@ FLONG Delete( struct File *s, const char *path )
 int Rename( struct File *s, const char *path, const char *nname )
 {
 	DEBUG("Rename!  from %s to %s\n", path, nname );
-	char *newname = NULL;
+
 	int spath = strlen( path );
 	int rspath = strlen( s->f_Path );
 	
@@ -1475,7 +1541,7 @@ int Rename( struct File *s, const char *path, const char *nname )
 // Rename
 //
 
-int Copy( struct File *s, const char *dst, const char *src )
+int Copy( struct File *s __attribute__((unused)), const char *dst __attribute__((unused)), const char *src __attribute__((unused)) )
 {
 	DEBUG("Copy!\n");
 
@@ -1487,7 +1553,7 @@ int Copy( struct File *s, const char *dst, const char *src )
 //
 //
 
-BufString *Execute( struct File *s, const char *dst, const char *src )
+BufString *Execute( struct File *s __attribute__((unused)), const char *dst __attribute__((unused)), const char *src __attribute__((unused)) )
 {
 	BufString *bs = BufStringNew();
 	
@@ -1540,7 +1606,7 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 	// user is trying to get access to not his directory
 	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
 	
-	int doub = strlen( s->f_Name );
+	//int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
 	char *tempString = FCalloc( rspath +512, sizeof(char) );
@@ -1579,7 +1645,7 @@ FLONG GetChangeTimestamp( struct File *s, const char *path )
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			
 			int err = libssh2_sftp_fstat( handle, &attrs);
-			if( err != 0 )
+			if( err == 0 )
 			{
 				rettime = attrs.mtime;
 			}
@@ -1630,7 +1696,7 @@ BufString *Info( File *s, const char *path )
 	// user is trying to get access to not his directory
 	DEBUG("Check access for path '%s' in root path '%s'  name '%s'\n", path, s->f_Path, s->f_Name );
 	
-	int doub = strlen( s->f_Name );
+	//int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
 	char *tempString = FCalloc( rspath +512, sizeof(char) );
@@ -1664,12 +1730,15 @@ BufString *Info( File *s, const char *path )
 			handle = libssh2_sftp_open( sdat->sftp_session, comm, LIBSSH2_FXF_READ, 0 );
 		}
 		
+		DEBUG("info handle %p\n", handle );
+		
 		if( handle != NULL )
 		{
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			
 			int err = libssh2_sftp_fstat( handle, &attrs);
-			if( err != 0 )
+			DEBUG("FStat success %d\n", err );
+			if( err == 0 )
 			{
 				BufStringAdd( bs, "{ \"Filename\":\"");
 
@@ -1764,7 +1833,7 @@ BufString *Info( File *s, const char *path )
 // Call a library
 //
 
-BufString *Call( File *s, const char *path, char *args )
+BufString *Call( File *s __attribute__((unused)), const char *path __attribute__((unused)), char *args __attribute__((unused)) )
 {
 	DEBUG("Info!\n");
 	BufString *bs = BufStringNew();
@@ -1787,7 +1856,7 @@ BufString *Dir( File *s, const char *path )
 	
 	// user is trying to get access to not his directory
 	
-	int doub = strlen( s->f_Name );
+	//int doub = strlen( s->f_Name );
 	
 	char *comm = NULL;
 	char *tempString = FCalloc( rspath +512, sizeof(char) );
@@ -1817,6 +1886,7 @@ BufString *Dir( File *s, const char *path )
 		SpecialData *sd = (SpecialData *)s->f_SpecialData;
 		FHandler *fh = (FHandler *)s->f_FSys;
 		HandlerData *hd = (HandlerData *)fh->fh_SpecialData;
+		SystemBase *sb = (SystemBase *)sd->sb;
 		
 		DEBUG("locking %p\n", &hd->hd_Mutex );
 		
@@ -1867,6 +1937,7 @@ BufString *Dir( File *s, const char *path )
 		{
 			char mem[512];
 			char longentry[512];
+			char *fname = NULL;
 			LIBSSH2_SFTP_ATTRIBUTES attrs;
 			
 			DEBUG("dir\n");
@@ -1875,6 +1946,7 @@ BufString *Dir( File *s, const char *path )
 			int rc = libssh2_sftp_readdir_ex( sftphandle, mem, sizeof(mem), longentry, sizeof(longentry), &attrs);
 			if( rc > 0 )//&&  > 0 && strcmp( mem, ".." ) > 0 )
 			{
+				DEBUG("FILE/DIR >%s<\n", mem );
 				if( strcmp( mem, ".") == 0 )
 				{
 					continue;
@@ -1885,6 +1957,16 @@ BufString *Dir( File *s, const char *path )
 					continue;
 				}
 				
+				if( ( fname = sb->sl_StringInterface.EscapeStringToJSON( mem ) ) == NULL )
+				{
+					fname = mem;
+				}
+				
+				if( fname != mem )
+				{
+					DEBUG("==============================================New file name: %s\n", fname );
+				}
+				
 				if( pos == 0 )
 				{
 					BufStringAdd( bs, "{ \"Filename\":\"");
@@ -1893,7 +1975,7 @@ BufString *Dir( File *s, const char *path )
 				{
 					BufStringAdd( bs, ",{ \"Filename\":\"");
 				}
-				BufStringAdd( bs, mem );
+				BufStringAdd( bs, fname );
 				BufStringAdd( bs, "\",");
 				
 				int isDir = 0;
@@ -1906,11 +1988,11 @@ BufString *Dir( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s%s", &path[ 1 ], mem );
+						size = sprintf( tempString, "%s%s", &path[ 1 ], fname );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s%s", path, mem );
+						size = sprintf( tempString, "%s%s", path, fname );
 					}
 					BufStringAddSize( bs, tempString, size );
 					BufStringAdd( bs, "/\",");
@@ -1921,11 +2003,11 @@ BufString *Dir( File *s, const char *path )
 					int size = 0;
 					if( path[ 0 ] == '/' )
 					{
-						size = sprintf( tempString, "%s%s", &path[ 1 ], mem );
+						size = sprintf( tempString, "%s%s", &path[ 1 ], fname );
 					}
 					else
 					{
-						size = sprintf( tempString, "%s%s", path, mem );
+						size = sprintf( tempString, "%s%s", path, fname );
 					}
 					BufStringAddSize( bs, tempString, size );
 					//BufStringAdd( bs, tempString );
@@ -1982,11 +2064,18 @@ BufString *Dir( File *s, const char *path )
 					 //printf("%s\n", mem);
 				 }
 				 pos++;
+				 
+				if( fname != mem )
+				{
+					FFree( fname );
+					fname = NULL;
+				}
 			}
 			else
 			{
 				break;
 			}
+			
 		} while (1);
 		
 		libssh2_sftp_closedir( sftphandle );
@@ -2008,7 +2097,7 @@ BufString *Dir( File *s, const char *path )
 // Get metadata
 //
 
-char *InfoGet( struct File *f, const char *path, const char *key )
+char *InfoGet( struct File *f __attribute__((unused)), const char *path __attribute__((unused)), const char *key __attribute__((unused)) )
 {
 
 	
@@ -2019,7 +2108,7 @@ char *InfoGet( struct File *f, const char *path, const char *key )
 // set metadata
 //
 
-int InfoSet( File *f, const char *path, const char *key, const char *value )
+int InfoSet( File *f __attribute__((unused)), const char *path __attribute__((unused)), const char *key __attribute__((unused)), const char *value __attribute__((unused)) )
 {
 	
 	

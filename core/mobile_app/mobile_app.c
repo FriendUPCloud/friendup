@@ -33,7 +33,7 @@
 #include <util/session_id.h>
 
 #define MAX_CONNECTIONS_PER_USER 5
-#define KEEPALIVE_TIME_s 10 //ping time
+#define KEEPALIVE_TIME_s 180 //ping time (10 before)
 #define ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL 1
 
 #define CKPT DEBUG("====== %d\n", __LINE__)
@@ -48,8 +48,14 @@ void mobile_app_test_signal_handler(int signum);
 typedef struct user_mobile_app_connections_s user_mobile_app_connections_t;
 typedef struct mobile_app_connection_s mobile_app_connection_t;
 
-struct mobile_app_connection_s {
+//
+// Mobile Application global structure
+//
+
+struct mobile_app_connection_s
+{
 	struct lws *websocket_ptr;
+	void *user_data;
 	char *session_id;
 	time_t last_communication_timestamp;
 	user_mobile_app_connections_t *user_connections;
@@ -59,7 +65,12 @@ struct mobile_app_connection_s {
 	time_t most_recent_pause_timestamp;
 };
 
-struct user_mobile_app_connections_s {
+//
+// single user connection structure
+//
+
+struct user_mobile_app_connections_s
+{
 	char *username;
 	mobile_app_connection_t *connection[MAX_CONNECTIONS_PER_USER];
 };
@@ -73,20 +84,50 @@ static pthread_t _ping_thread;
 static void  _mobile_app_init(void);
 static int   _mobile_app_reply_error(struct lws *wsi, int error_code);
 static int   _mobile_app_handle_login(struct lws *wsi, json_t *json);
-static int   _mobile_app_add_new_user_connection(struct lws *wsi, const char *username);
+static int   _mobile_app_add_new_user_connection(struct lws *wsi, const char *username, void *udata );
 static void* _mobile_app_ping_thread(void *a);
 static char* _mobile_app_get_websocket_hash(struct lws *wsi);
 static void  _mobile_app_remove_app_connection(user_mobile_app_connections_t *connections, unsigned int connection_index);
 
-static void _mobile_app_init(void){
+/**
+ * Write message to websocket
+ *
+ * @param mac pointer to mobile connection structure
+ * @param msg pointer to string where message is stored
+ * @param len length of message
+ * @return number of bytes written to websocket
+ */
+static inline int write_message( struct mobile_app_connection_s *mac, unsigned char *msg, int len )
+{
+	mobile_app_notif *man = (mobile_app_notif *) mac->user_data;
+	if( man != NULL )
+	{
+		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		if( en != NULL )
+		{
+			en->fq_Data = FMalloc( len+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+			en->fq_Size = LWS_PRE+len;
+	
+			FQPushFIFO( &(man->man_Queue), en );
+			lws_callback_on_writable( mac->websocket_ptr );
+		}
+	}
+}
+
+/**
+ * Initialize Mobile App
+ */
+static void _mobile_app_init( void )
+{
 	DEBUG("Initializing mobile app module\n");
 
 	_user_to_app_connections_map = HashmapNew();
 	_websocket_to_user_connections_map = HashmapNew();
 
-	pthread_mutex_init(&_session_removal_mutex, NULL);
+	pthread_mutex_init( &_session_removal_mutex, NULL );
 
-	pthread_create(&_ping_thread, NULL/*default attributes*/, _mobile_app_ping_thread, NULL/*extra args*/);
+	pthread_create( &_ping_thread, NULL/*default attributes*/, _mobile_app_ping_thread, NULL/*extra args*/ );
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
 	signal(SIGUSR1, mobile_app_test_signal_handler);
@@ -104,24 +145,36 @@ static void _mobile_app_init(void){
  * @param len size of 'message'
  * @return 0 when success, otherwise error number
  */
-int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user __attribute__((unused)), void *in, size_t len){
-
+int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user __attribute__((unused)), void *in, size_t len )
+{
 	DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	mobile_app_notif *man = (mobile_app_notif *) user;
 
-	if (reason == LWS_CALLBACK_PROTOCOL_INIT){
+	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
+	{
 		_mobile_app_init();
 		return 0;
 	}
+	
+	DEBUG1("-------------------\nwebsocket_app_callback\n------------------\nreasond: %d\n", reason );
 
-	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE){
+	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
+	{
 		char *websocket_hash = _mobile_app_get_websocket_hash(wsi);
 		mobile_app_connection_t *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
 
-		if (app_connection == NULL){
+		if (app_connection == NULL)
+		{
 			DEBUG("Websocket close - no user session found for this socket\n");
 			return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_NO_SESSION);
 		}
 		FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+		
+		if( man != NULL && man->man_Initialized == 1 )
+		{
+			FQDeInitFree( &(man->man_Queue) );
+		}
+		
 		//remove connection from user connnection struct
 		user_mobile_app_connections_t *user_connections = app_connection->user_connections;
 		unsigned int connection_index = app_connection->user_connection_index;
@@ -136,18 +189,70 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 		return 0;
 	}
 
-	if (reason != LWS_CALLBACK_RECEIVE){
-		DEBUG("Unimplemented callback, reason %d\n", reason);
+	if (reason != LWS_CALLBACK_RECEIVE)
+	{
+		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
+		{
+			FQEntry *e = NULL;
+			FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+			FQueue *q = &(man->man_Queue);
+			
+			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+			
+			if( ( e = FQPop( q ) ) != NULL )
+			{
+				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
+				t[ e->fq_Size+1 ] = 0;
+
+				int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
+				DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+
+				lws_send_pipe_choked( wsi );
+				
+				if( e != NULL )
+				{
+					DEBUG("Release: %p\n", e->fq_Data );
+					FFree( e->fq_Data );
+					FFree( e );
+				}
+			}
+			else
+			{
+				DEBUG("[websocket_app_callback] No message in queue\n");
+				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+			}
+		}
+		else
+		{
+			DEBUG("Unimplemented callback, reason %d\n", reason);
+		}
+		
+		if( man != NULL && man->man_Queue.fq_First != NULL )
+		{
+			DEBUG("We have message to send, calling writable\n");
+			lws_callback_on_writable( wsi );
+		}
+		
 		return 0;
 	}
 
-	if (len == 0){
+	if( len == 0 )
+	{
 		DEBUG("Empty websocket frame (reason %d)\n", reason);
 		return 0;
 	}
 
 	char *data = (char*)in;
-
+	if( man != NULL )
+	{
+		if( man->man_Initialized == 0 )
+		{
+			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
+			FQInit( &(man->man_Queue) );
+			man->man_Initialized = 1;
+		}
+	}
 
 	DEBUG("Mobile app data: <%*s>\n", (unsigned int)len, data);
 
@@ -159,7 +264,8 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 
 	DEBUG("JSON tokens found %d\n", tokens_found);
 
-	if (tokens_found < 1){
+	if (tokens_found < 1)
+	{
 		return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_NO_JSON);
 	}
 
@@ -172,45 +278,83 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 	mobile_app_connection_t *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
 	FFree(websocket_hash);
 
-	if (msg_type_string){
-
+	if( msg_type_string )
+	{
 		//due to uniqueness of "t" field values only first letter has to be evaluated
 		char first_type_letter = msg_type_string[0];
 		DEBUG("Type letter <%c>\n", first_type_letter);
 
-		if (first_type_letter == 'l'/*login*/){
+		if (first_type_letter == 'l'/*login*/)
+		{
 			return _mobile_app_handle_login(wsi, &json);
-		} else {
-
-			if (app_connection == NULL){
+		}
+		else
+		{
+			if (app_connection == NULL)
+			{
 				DEBUG("Session not found for this connection\n");
 				return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_NO_SESSION);
 			}
 
 			app_connection->last_communication_timestamp = time(NULL);
 
-			switch (first_type_letter){
+			switch (first_type_letter)
+			{
 
-			case 'p': do { //pause
-				DEBUG("App is paused\n");
-				app_connection->app_status = MOBILE_APP_STATUS_PAUSED;
-				app_connection->most_recent_pause_timestamp = time(NULL);
-				char response[LWS_PRE+64];
-				strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
-				DEBUG("Response: %s\n", response+LWS_PRE);
-				lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-			} while (0);
+			case 'p': 
+				do
+				{ //pause
+					DEBUG("App is paused\n");
+					app_connection->app_status = MOBILE_APP_STATUS_PAUSED;
+					app_connection->most_recent_pause_timestamp = time(NULL);
+					//char response[LWS_PRE+64];
+					//strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
+					//DEBUG("Response: %s\n", response+LWS_PRE);
+					//lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					if( en != NULL )
+					{
+						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
+						en->fq_Size = LWS_PRE+64;
+						
+						DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+			
+						FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+						FQPushFIFO( &(man->man_Queue), en );
+						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+						lws_callback_on_writable( wsi );
+					}
+				}
+				while (0);
 			break;
 
-			case 'r': do { //resume
-				DEBUG("App is resumed\n");
-				app_connection->app_status = MOBILE_APP_STATUS_RESUMED;
-				app_connection->most_recent_resume_timestamp = time(NULL);
-				char response[LWS_PRE+64];
-				strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
-				DEBUG("Response: %s\n", response+LWS_PRE);
-				lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-			} while (0);
+			case 'r': 
+				do
+				{ //resume
+					DEBUG("App is resumed\n");
+					app_connection->app_status = MOBILE_APP_STATUS_RESUMED;
+					app_connection->most_recent_resume_timestamp = time(NULL);
+					//char response[LWS_PRE+64];
+					//strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
+					//DEBUG("Response: %s\n", response+LWS_PRE);
+					//lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					if( en != NULL )
+					{
+						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+						memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"resume\",\"status\":1}", 25 );
+						en->fq_Size = LWS_PRE+64;
+						
+						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+			
+						FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+						FQPushFIFO( &(man->man_Queue), en );
+						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+						lws_callback_on_writable( wsi );
+					}
+				}
+				while (0);
 			break;
 
 			case 'e': //echo
@@ -222,7 +366,9 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 			}
 
 		}
-	} else {
+	}
+	else
+	{
 		return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_NO_TYPE);
 	}
 
@@ -235,7 +381,8 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
  * @param wsi pointer to a Websockets struct
  * @param error_code numerical value of the error code
  */
-static int _mobile_app_reply_error(struct lws *wsi, int error_code){
+static int _mobile_app_reply_error(struct lws *wsi, int error_code)
+{
 	char response[LWS_PRE+32];
 	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"error\", \"status\":%d}", error_code);
 	DEBUG("Error response: %s\n", response+LWS_PRE);
@@ -246,7 +393,8 @@ static int _mobile_app_reply_error(struct lws *wsi, int error_code){
 	char *websocket_hash = _mobile_app_get_websocket_hash(wsi);
 	mobile_app_connection_t *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
 	FFree(websocket_hash);
-	if (app_connection){
+	if( app_connection )
+	{
 		DEBUG("Cleaning up before closing socket\n");
 		user_mobile_app_connections_t *user_connections = app_connection->user_connections;
 		unsigned int connection_index = app_connection->user_connection_index;
@@ -257,17 +405,26 @@ static int _mobile_app_reply_error(struct lws *wsi, int error_code){
 	return -1;
 }
 
-static int _mobile_app_handle_login(struct lws *wsi, json_t *json){
-
+/**
+ * User login handler
+ *
+ * @param wsi pointer to Websocket structure
+ * @param json to json structure with login entry
+ * @return 0 when success, otherwise error number
+ */
+static int _mobile_app_handle_login( struct lws *wsi, json_t *json )
+{
 	char *username_string = json_get_element_string(json, "user");
 
-	if (username_string == NULL){
+	if( username_string == NULL )
+	{
 		return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
 	}
 
 	char *password_string = json_get_element_string(json, "pass");
 
-	if (password_string == NULL){
+	if( password_string == NULL )
+	{
 		return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
 	}
 
@@ -279,20 +436,31 @@ static int _mobile_app_handle_login(struct lws *wsi, json_t *json){
 
 	AuthMod *a = SLIB->AuthModuleGet(SLIB);
 
-	if (a->CheckPassword(a, NULL/*no HTTP request*/, user, password_string, &block_time) == FALSE){
+	if( a->CheckPassword(a, NULL/*no HTTP request*/, user, password_string, &block_time) == FALSE )
+	{
 		DEBUG("Check = false\n");
-		return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS);
-	} else {
+		return _mobile_app_reply_error( wsi, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
+	}
+	else
+	{
 		DEBUG("Check = true\n");
-		return _mobile_app_add_new_user_connection(wsi, username_string);
+		return _mobile_app_add_new_user_connection( wsi, username_string, user );
 	}
 }
 
-static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
+/**
+ * Mobile App Ping thread
+ *
+ * @param a pointer to thread data (not used)
+ * @return NULL
+ */
+static void* _mobile_app_ping_thread( void *a __attribute__((unused)) )
+{
 	pthread_detach( pthread_self() );
 	DEBUG("App ping thread started\n");
 
-	while (1){
+	while (1)
+	{
 		DEBUG("Checking app communication times\n");
 
 		int users_count = HashmapLength(_user_to_app_connections_map);
@@ -301,9 +469,11 @@ static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
 		unsigned int index = 0;
 
 		HashmapElement *element = NULL;
-		while ((element = HashmapIterate(_user_to_app_connections_map, &index)) != NULL){
+		while( (element = HashmapIterate(_user_to_app_connections_map, &index)) != NULL )
+		{
 			user_mobile_app_connections_t *user_connections = element->data;
-			if (user_connections == NULL){
+			if( user_connections == NULL )
+			{
 				//the hashmap was invalidated while we were reading it? let's try another ping session....
 				check_okay = false;
 				break;
@@ -314,25 +484,41 @@ static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
 			//so a race condition would lead to null-pointers and stuff...
 
 			//iterate through all user connections
-			for (int i = 0; i < MAX_CONNECTIONS_PER_USER; i++){
-				if (user_connections->connection[i]){ //see if a connection exists
-
-					if (time(NULL) - user_connections->connection[i]->last_communication_timestamp > KEEPALIVE_TIME_s){
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+			{
+				if (user_connections->connection[i])
+				{ //see if a connection exists
+					if( time(NULL) - user_connections->connection[i]->last_communication_timestamp > KEEPALIVE_TIME_s)
+					{
 						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
 
 						//send ping
-						char request[LWS_PRE+64];
-						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
-						DEBUG("Request: %s\n", request+LWS_PRE);
-						lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
-
+						//char request[LWS_PRE+64];
+						//strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
+						//DEBUG("Request: %s\n", request+LWS_PRE);
+						//lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
+						mobile_app_notif *man = (mobile_app_notif *) user_connections->connection[i]->user_data;
+						if( man != NULL )
+						{
+							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+							if( en != NULL )
+							{
+								en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+								memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
+								en->fq_Size = LWS_PRE+64;
+			
+								FQPushFIFO( &(man->man_Queue), en );
+								lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
+							}
+						}
 					}
 				}
 			} //end of user connection loops
 			pthread_mutex_unlock(&_session_removal_mutex);
 		} //end of users loop
 
-		if (check_okay){
+		if (check_okay)
+		{
 			sleep(KEEPALIVE_TIME_s);
 		}
 	}
@@ -341,7 +527,16 @@ static void* _mobile_app_ping_thread(void *a __attribute__((unused))){
 	return NULL; //should not exit anyway
 }
 
-static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *username){
+/**
+ * Add user connectiono to global list
+ *
+ * @param wsi pointer to Websocket connection
+ * @param username name of user which passed login
+ * @param user_data pointer to user data
+ * @return 0 when success, otherwise error number
+ */
+static int _mobile_app_add_new_user_connection( struct lws *wsi, const char *username, void *user_data )
+{
 	char *session_id = session_id_generate();
 
 	user_mobile_app_connections_t *user_connections = HashmapGetData(_user_to_app_connections_map, username);
@@ -351,10 +546,13 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 		//create a new connections struct
 		user_connections = FCalloc(sizeof(user_mobile_app_connections_t), 1);
 
-		if (user_connections == NULL){
+		if( user_connections == NULL )
+		{
 			DEBUG("Allocation failed\n");
 			return _mobile_app_reply_error(wsi, MOBILE_APP_ERR_INTERNAL);
-		} else {
+		}
+		else
+		{
 			DEBUG("Creating new struct for user <%s>\n", username);
 			char *permanent_username = FCalloc(strlen(username)+1, 1); //TODO: error handling
 			strcpy(permanent_username, username);
@@ -364,7 +562,8 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 			//by our internal sturcts and within hashmap structs
 
 			//add the new connections struct to global users' connections map
-			if ( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK ){
+			if ( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK )
+			{
 				DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
 				FFree(user_connections);
@@ -382,22 +581,28 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 
 	//add this struct to user connections struct
 	int connection_to_replace_index = -1;
-	for (int i = 0; i < MAX_CONNECTIONS_PER_USER; i++){
-		if (user_connections->connection[i] == NULL){ //got empty slot
+	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+	{
+		if( user_connections->connection[i] == NULL )
+		{ //got empty slot
 			connection_to_replace_index = i;
 			DEBUG("Will use slot %d for this connection\n", connection_to_replace_index);
 			break;
 		}
 	}
 
-	if (connection_to_replace_index == -1){ //no empty slots found - drop the oldest connection
+	if( connection_to_replace_index == -1 )
+	{ //no empty slots found - drop the oldest connection
 
 		connection_to_replace_index = 0;
 		unsigned int oldest_timestamp = user_connections->connection[0]->last_communication_timestamp;
 
-		for (int i = 1; i < MAX_CONNECTIONS_PER_USER; i++){
-			if (user_connections->connection[i] == NULL){
-				if (user_connections->connection[i]->last_communication_timestamp < oldest_timestamp){
+		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
+		{
+			if( user_connections->connection[i] == NULL )
+			{
+				if( user_connections->connection[i]->last_communication_timestamp < oldest_timestamp )
+				{
 					oldest_timestamp = user_connections->connection[i]->last_communication_timestamp;
 					connection_to_replace_index = i;
 					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connection_to_replace_index, oldest_timestamp);
@@ -406,13 +611,15 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 		}
 	}
 
-	if (user_connections->connection[connection_to_replace_index] != NULL){
+	if( user_connections->connection[connection_to_replace_index] != NULL )
+	{
 		_mobile_app_remove_app_connection(user_connections, connection_to_replace_index);
 	}
 
 	DEBUG("Adding connection to slot %d\n", connection_to_replace_index);
 	user_connections->connection[connection_to_replace_index] = new_connection;
 
+	new_connection->user_data = user_data;
 	new_connection->user_connections = user_connections; //provide back reference that will map websocket to a user
 	new_connection->user_connection_index = connection_to_replace_index;
 
@@ -421,27 +628,61 @@ static int _mobile_app_add_new_user_connection(struct lws *wsi, const char *user
 	HashmapPut(_websocket_to_user_connections_map, websocket_hash, new_connection); //TODO: error handling here
 	//websocket_hash now belongs to the hashmap, don't free it here
 
-
 	char response[LWS_PRE+64];
-	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s);
+	int msgsize = snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s) + LWS_PRE;
 	DEBUG("Response: %s\n", response+LWS_PRE);
-	lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-
+	//lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
+	mobile_app_notif *man = (mobile_app_notif *) user_data;
+	if( man != NULL )
+	{
+		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		if( en != NULL )
+		{
+			en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
+			en->fq_Size = LWS_PRE+64;
+			DEBUG("Its time to send message: %s !\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+	
+			FQPushFIFO( &(man->man_Queue), en );
+			
+			DEBUG("Added %p\n", man->man_Queue.fq_First );
+			
+			lws_callback_on_writable( wsi );
+		}
+	}
+	else
+	{
+		FERROR("Cannot get access to userdata!\n");
+	}
 	return 0;
 }
 
-static char* _mobile_app_get_websocket_hash(struct lws *wsi){
+/**
+ * Get websocket hash
+ *
+ * @param wsi pointer to Websocket connection
+ * @return pointer to string with generated hash
+ */
+static char* _mobile_app_get_websocket_hash( struct lws *wsi )
+{
 	/*FIXME: this is a dirty workaround for currently used hashmap module. It accepts
 	 * only strings as keys, so we'll use the websocket pointer printed out as
 	 * string for the key. Eventually there should be a hashmap implementation available
 	 * that can use ints (or pointers) as keys!
 	 */
-	char *hash = FCalloc(16, 1);
-	snprintf(hash, 16, "%p", wsi);
+	char *hash = FCalloc( 16, 1 );
+	snprintf( hash, 16, "%p", wsi );
 	return hash;
 }
 
-static void  _mobile_app_remove_app_connection(user_mobile_app_connections_t *connections, unsigned int connection_index){
+/**
+ * Remove Connection from global list
+ *
+ * @param connections pointer to global list with connections
+ * @param connection_index number of entry which will be removed from list
+ */
+static void  _mobile_app_remove_app_connection( user_mobile_app_connections_t *connections, unsigned int connection_index )
+{
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n",
 			connection_index,
 			connections->connection[connection_index]->last_communication_timestamp);
@@ -451,15 +692,27 @@ static void  _mobile_app_remove_app_connection(user_mobile_app_connections_t *co
 	connections->connection[connection_index] = NULL;
 }
 
-bool mobile_app_notify_user(const char *username,
+/**
+ * Notify user
+ *
+ * @param username pointer to string with user name
+ * @param channel_id number of channel
+ * @param title title of message which will be send to user
+ * @param message message which will be send to user
+ * @param notification_type type of notification
+ * @param extra_string additional string which will be send to user
+ * @return true when message was send
+ */
+bool mobile_app_notify_user( const char *username,
 		const char *channel_id,
 		const char *title,
 		const char *message,
 		mobile_notification_type_t notification_type,
-		const char *extra_string){
-
+		const char *extra_string )
+{
 	user_mobile_app_connections_t *user_connections = HashmapGetData(_user_to_app_connections_map, username);
-	if (user_connections == NULL){
+	if( user_connections == NULL )
+	{
 		DEBUG("User <%s> does not have any app connections\n", username);
 		return false;
 	}
@@ -474,69 +727,93 @@ bool mobile_app_notify_user(const char *username,
 								+ strlen(escaped_message)
 								+ LWS_PRE + 128/*some slack*/;
 
-	if (extra_string){
-		escaped_extra_string = json_escape_string(extra_string);
+	if( extra_string )
+	{
+		escaped_extra_string = json_escape_string( extra_string );
 		required_length += strlen(escaped_extra_string);
 	}
 
 	char json_message[required_length];
 
-	if (extra_string){ //TK-1039
-		snprintf(json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
+	if( extra_string )
+	{ //TK-1039
+		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
 				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}",
 				escaped_channel_id,
 				escaped_message,
 				escaped_title,
-				escaped_extra_string);
+				escaped_extra_string );
 
 		FFree(escaped_extra_string);
-	} else {
-		snprintf(json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
+	}
+	else
+	{
+		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
 				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}",
 				escaped_channel_id,
 				escaped_message,
-				escaped_title);
+				escaped_title );
 	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
 
-	FFree(escaped_channel_id);
-	FFree(escaped_title);
-	FFree(escaped_message);
+	FFree( escaped_channel_id );
+	FFree( escaped_title );
+	FFree( escaped_message );
 
 	DEBUG("Send: <%s>\n", json_message + LWS_PRE);
 
-	switch (notification_type){
-	case MN_force_all_devices:
-		for (int i = 0; i < MAX_CONNECTIONS_PER_USER; i++){
-			if (user_connections->connection[i]){
-				lws_write(
-						user_connections->connection[i]->websocket_ptr,
-						(unsigned char*)json_message+LWS_PRE,
-						json_message_length,
-						LWS_WRITE_TEXT);
+	switch( notification_type )
+	{
+		case MN_force_all_devices:
+		for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+		{
+			if( user_connections->connection[i] )
+			{
+				write_message(
+						user_connections->connection[i],
+						(unsigned char*)json_message,
+						json_message_length );
+				//lws_write(
+				//		user_connections->connection[i]->websocket_ptr,
+				//		(unsigned char*)json_message+LWS_PRE,
+				//		json_message_length,
+				//		LWS_WRITE_TEXT);
 			}
-		} break;
+		}
+		break;
 
-	case MN_all_devices:
-		for (int i = 0; i < MAX_CONNECTIONS_PER_USER; i++){
-			if (user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED){
-				lws_write(
-						user_connections->connection[i]->websocket_ptr,
-						(unsigned char*)json_message+LWS_PRE,
-						json_message_length,
-						LWS_WRITE_TEXT);
+		case MN_all_devices:
+		for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+		{
+			if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+			{
+				write_message(
+						user_connections->connection[i],
+						(unsigned char*)json_message,
+						json_message_length );
+				//lws_write(
+				//		user_connections->connection[i]->websocket_ptr,
+				//		(unsigned char*)json_message+LWS_PRE,
+				//		json_message_length,
+				//		LWS_WRITE_TEXT);
 			}
-		} break;
-
-	default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
-
+		}
+		break;
+		default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 	}
 	return true;
 }
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
-void mobile_app_test_signal_handler(int signum __attribute__((unused))){
+
+/**
+ * Test signal handler
+ *
+ * @param signum signal number
+ */
+void mobile_app_test_signal_handler( int signum __attribute__((unused)))
+{
 	DEBUG("******************************* sigusr handler\n");
 
 	static unsigned int counter = 0;
@@ -548,13 +825,13 @@ void mobile_app_test_signal_handler(int signum __attribute__((unused))){
 	sprintf(title, "Fancy title %d", counter);
 	sprintf(message, "Fancy message %d", counter);
 
-	bool status = mobile_app_notify_user("fadmin",
+	bool status = mobile_app_notify_user( "fadmin",
 			"test_app",
 			title,
 			message,
 			MN_all_devices,
 			NULL/*no extras*/);
 
-	signal(SIGUSR1, mobile_app_test_signal_handler);
+	signal( SIGUSR1, mobile_app_test_signal_handler );
 }
 #endif

@@ -200,4 +200,10 @@ User *UserGetByTimeout( UserSessionManager *usm, const FULONG timeout );
 
 User *UserGetByID( UserSessionManager *usm, FULONG id );
 
+//
+// Close unused Websocket connection
+//
+
+void USMCloseUnusedWebSockets( UserSessionManager *usm );
+
 #endif //__SYSTEM_USER_USER_SESSIONMANAGER_H__

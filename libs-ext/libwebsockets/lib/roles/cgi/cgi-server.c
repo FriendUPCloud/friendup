@@ -164,7 +164,8 @@ lws_cgi(struct lws *wsi, const char * const *exec_array, int script_uri_path_len
 
 	for (n = 0; n < 3; n++) {
 		if (wsi->context->event_loop_ops->accept)
-			wsi->context->event_loop_ops->accept(cgi->stdwsi[n]);
+			if (wsi->context->event_loop_ops->accept(cgi->stdwsi[n]))
+				goto bail3;
 
 		if (__insert_wsi_socket_into_fds(wsi->context, cgi->stdwsi[n]))
 			goto bail3;
@@ -228,7 +229,7 @@ lws_cgi(struct lws *wsi, const char * const *exec_array, int script_uri_path_len
 		};
 
 		if (script_uri_path_len >= 0)
-			for (m = 0; m < (int)ARRAY_SIZE(meths); m++)
+			for (m = 0; m < (int)LWS_ARRAY_SIZE(meths); m++)
 				if (lws_hdr_total_length(wsi, meths[m]) >=
 						script_uri_path_len) {
 					uritok = meths[m];
@@ -885,7 +886,9 @@ agin:
 
 	/* payload processing */
 
-	m = !wsi->http.cgi->implied_chunked && !wsi->http2_substream && !wsi->http.cgi->explicitly_chunked && !wsi->http.cgi->content_length;
+	m = !wsi->http.cgi->implied_chunked && !wsi->http2_substream &&
+	    !wsi->http.cgi->explicitly_chunked &&
+	    !wsi->http.cgi->content_length;
 	n = lws_get_socket_fd(wsi->http.cgi->stdwsi[LWS_STDOUT]);
 	if (n < 0)
 		return -1;
@@ -904,15 +907,14 @@ agin:
 		return 0;
 	}
 
-	n = read(n, start, sizeof(buf) - LWS_PRE -
-			   (m ? LWS_HTTP_CHUNK_HDR_SIZE : 0));
+	n = read(n, start, sizeof(buf) - LWS_PRE);
 
 	if (n < 0 && errno != EAGAIN) {
 		lwsl_debug("%s: stdout read says %d\n", __func__, n);
 		return -1;
 	}
 	if (n > 0) {
-
+/*
 		if (!wsi->http2_substream && m) {
 			char chdr[LWS_HTTP_CHUNK_HDR_SIZE];
 			m = lws_snprintf(chdr, LWS_HTTP_CHUNK_HDR_SIZE - 3,
@@ -922,6 +924,7 @@ agin:
 			memcpy(start + m + n, "\x0d\x0a", 2);
 			n += m + 2;
 		}
+		*/
 		cmd = LWS_WRITE_HTTP;
 		if (wsi->http.cgi->content_length_seen + n == wsi->http.cgi->content_length)
 			cmd = LWS_WRITE_HTTP_FINAL;
@@ -981,7 +984,7 @@ lws_cgi_kill(struct lws *wsi)
 				if (n < 0) {
 					n = kill(wsi->http.cgi->pid, SIGKILL);
 					if (n < 0)
-						lwsl_err("%s: SIGKILL PID %d "
+						lwsl_info("%s: SIGKILL PID %d "
 							 "failed errno %d "
 							 "(maybe zombie)\n",
 							 __func__,

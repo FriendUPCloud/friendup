@@ -138,3 +138,18 @@ i18n_descriptionOfDevice			 : Anna kuvaus
 
 i18n_update_language_warning         : Kielen päivittäminen
 i18n_update_language_desc            : Kun päivität kielen asetusta, Friendin pitää ladata työtila uudelleen. Menetät mitä ei tallenneta. Haluatko varmasti jatkaa?
+
+i18n_fnetActivatePower				 : Ota käyttöön Friend Network Power Sharing
+i18n_fnetShareThisDevice			 : Jaa tämä laite
+i18n_fnetMaximumPercentage			 : Suurin prosenttiosuus koneen ajasta jakamiseen
+i18n_fnetAllowPowerApplications		 : Salli sovellusten pyytää ulkoista virtaa
+i18n_fnetNumberOfMachines 			 : Optimaalinen koneiden määrä pyynnöstä
+i18n_fnetMinimalNumberOfMachines	 : Minimaalinen koneiden lukumäärä
+i18n_fnetAskOnlyToFriends 			 : Kysy vain ystäviltä
+i18n_friendNetworkPowerSharing		 : Power Sharing
+i18n_fnetShareOnlyWithCommunity		 : Vain yhteisössäsi
+i18n_fnetShareOnlyWithFriends 		 : Jaa vain ystävien kanssa
+i18n_fnetAskOnlyToCommunity			 : Kysy vain pääyhteisöäsi
+i18n_fnetAskOnlyToFriends			 : Kysy vain ystäviltä
+i18n_fnetSharingPower				 : Jaa voimaa
+i18n_fnetAskForPower				 : Pyydä valtaa

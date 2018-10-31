@@ -61,7 +61,7 @@ void init( struct UserLogger *s )
 		Props *prop = NULL;
 		
 		// Get a copy of the properties.library
-		struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+		struct PropertiesInterface *plib = &(sb->sl_PropertiesInterface);
 		if( plib != NULL )
 		{
 			char *ptr = getenv("FRIEND_HOME");

@@ -170,7 +170,7 @@ function storageForm( type, id, data )
 				
 				var fields = [
 					'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
-					'Password', 'Path', 'Type', 'Workgroup', 'PublicKey'
+					'Password', 'Path', 'Type', 'Workgroup', 'PrivateKey'
 				];
 				for( var a = 0; a < fields.length; a++ )
 				{
@@ -363,9 +363,9 @@ function addDisk()
 	if( ge( 'conf.Executable' ) )
 		data.Invisible = ge( 'conf.Executable' ).value;
 	
-	if( ge( 'PublicKey' ) )
+	if( ge( 'PrivateKey' ) )
 	{
-		data.PublicKey = ge( 'PublicKey' ).value;
+		data.PrivateKey = ge( 'PrivateKey' ).value;
 	}
 	if( ge( 'EncryptedKey' ) )
 	{

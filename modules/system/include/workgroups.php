@@ -19,10 +19,29 @@
 *****************************************************************************©*/
 
 if( $rows = $SqlDatabase->FetchObjects( '
-	SELECT ID, `Name`, `UserID` FROM FUserGroup WHERE `Type`=\'Workgroup\'
-	ORDER BY `Name` ASC
+	SELECT 
+		g.ID, g.Name, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
+	FROM 
+		FUserGroup g 
+			LEFT JOIN FUserToGroup u ON 
+			( 
+					u.UserID = \'' . $User->ID . '\' 
+				AND u.UserGroupID = g.ID 
+			) 
+			LEFT JOIN FMetaData m ON 
+			( 
+					m.DataTable = "FUserGroup" 
+				AND m.DataID = g.ID 
+			) 
+	WHERE `Type`=\'Workgroup\' 
+	ORDER BY `Name` ASC 
 ' ) )
 {
+	foreach( $rows as $row )
+	{
+		// TODO: Find out what variables are needed to be able to display when the doormanoffice employee is currently at work showing and hiding workgroups ...
+	}	
+	
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }
 die( 'ok<!--separate-->[]' );

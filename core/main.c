@@ -44,7 +44,7 @@
 #include <system/systembase.h>
 #include <application/applicationlibrary.h>
 #include <db/sqllib.h>
-#include <properties/propertieslibrary.h>
+#include <config/properties.h>
 
 char CRASH_LOG_FILENAME[ 92 ];
 
@@ -109,6 +109,12 @@ int main( int argc __attribute__((unused)), char *argv[])
 	signal( SIGABRT, crash_handler);
 
 	srand( time( NULL ) );
+	
+	if( PropertiesCheck() != 0 )
+	{
+		FERROR("cfg.ini have errors, please fix them and re-run FriendCore\n");
+		return 1;
+	}
 	
 	{
 		time_t rawtime;
@@ -241,6 +247,9 @@ static void crash_handler(int sig __attribute__((unused))){
 			"#######################################################\n"
 			"\n\n", CRASH_LOG_FILENAME );
 	//_exit(1);
+	
+	FriendCoreLockRelease();
+	
 	signal( sig, SIG_DFL );
 	kill( getpid(), sig );
 }

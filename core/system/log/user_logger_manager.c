@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <util/buffered_string.h>
 #include <dirent.h>
+#include <system/systembase.h>
 
 /**
  * Create new UserLoggerManager
@@ -52,15 +53,16 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 	{
 		char loggerPath[ 1024 ];
 		char loadLoggerPath[ 2048 ];
+		SystemBase *locsb = (SystemBase *)sb;
 		ulm->ulm_SB = sb;
 		
 		// read from configuration active logger
 		
-		struct PropertiesLibrary *plib = NULL;
+		struct PropertiesInterface *plib = NULL;
 		char *actLogger = NULL;
 		Props *prop = NULL;
 		
-		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( sb, "properties.library", 0 ) ) != NULL )
+		plib = &( locsb->sl_PropertiesInterface );
 		{
 			char coresPath[ 1024 ];
 			sprintf( coresPath, "%s/cfg/cfg.ini", getenv( "FRIEND_HOME" ) );
@@ -122,8 +124,6 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 			}
 		
 			plib->Close( prop );
-			
-			LibraryClose( plib );
 		}
 	}
 	

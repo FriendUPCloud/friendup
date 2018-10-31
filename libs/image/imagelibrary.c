@@ -38,6 +38,7 @@
 #include <ctype.h>
 #include <system/systembase.h>
 #include <system/fsys/fsys_activity.h>
+#include "imagelibrary_web.h"
 
 #define LIB_NAME "image.library"
 #define LIB_VERSION			1
@@ -52,14 +53,17 @@ void *libInit( void *sb )
 	struct ImageLibrary *l = NULL;
 	DEBUG("[ImageLibrary] Init\n");
 
-	if( ( l = calloc( 1, sizeof( struct ImageLibrary ) ) ) == NULL )
+	if( ( l = FCalloc( 1, sizeof( struct ImageLibrary ) ) ) == NULL )
+	{
 		return NULL;
+	}
 
 	l->l_Name = LIB_NAME;
 	l->l_Version = LIB_VERSION;
 	l->libClose           = dlsym( l->l_Handle, "libClose");
 	l->GetVersion         = dlsym( l->l_Handle, "GetVersion");
 	l->GetRevision        = dlsym( l->l_Handle, "GetRevision");
+	l->WebRequest        = dlsym( l->l_Handle, "WebRequest");
 
 	// user.library structure
 	l->ResizeImage               = dlsym( l->l_Handle, "FResizeImage");

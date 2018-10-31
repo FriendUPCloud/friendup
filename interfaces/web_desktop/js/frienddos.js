@@ -1864,14 +1864,27 @@ window.Shell = function( appObject )
 										var m = new Module( s[ s.length - 2 ] );
 										m.onExecuted = function( e, d )
 										{
+											var o = false;
+											try
+											{
+												o = JSON.parse( d );
+											}
+											catch( e )
+											{
+												o = false;
+											}
 											if( e == 'ok' )
 											{
-												var o = JSON.parse( d );
+												
 												if( call == 'help' )
 												{
 													var str = '<strong>Commands:</strong><br><br>';
 													str += o.Commands.join( ', ' ) + '.';
-													
+													dcallback( false, { response: str } );
+												}
+												else if( o.message )
+												{
+													dcallback( true, { response: o.message } );
 												}
 												else
 												{
@@ -1897,6 +1910,10 @@ window.Shell = function( appObject )
 													dcallback( true, { response: outd( o ).split( "\n" ).join( "<br>" ).split( "\t" ).join( "&nbsp;&nbsp;&nbsp;&nbsp;")  } );
 												}
 											}
+											else if( e == 'fail' && o.message )
+											{
+												dcallback( false, { response: o.message } );
+											}
 											else
 											{
 												dcallback( false, { response: 'No output from this module.' } );
@@ -1905,11 +1922,13 @@ window.Shell = function( appObject )
 										var args = {};
 										for( var f = 1; f < cmd.length; f++ )
 										{
-											if( cmd[f].indexOf( '=' ) )
+											// Named variable
+											if( cmd[f].indexOf( '=' ) > 0 )
 											{
 												var d = cmd[f].split( '=' );
 												args[d[0]] = d[1];
 											}
+											// Just use the variable as a bool
 											else
 											{
 												args[cmd[f]] = 1;

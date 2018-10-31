@@ -35,7 +35,7 @@
 #include <core/friend_core.h>
 #include <ssh/ssh_server.h>
 #include <hardware/network.h>
-#include <properties/propertieslibrary.h>
+//#include <interface/properties_interface.h>
 #include <system/systembase.h>
 #include <hardware/machine_info.h>
 
@@ -129,10 +129,9 @@ FriendCoreManager *FriendCoreManagerNew()
 		
 		fcm->fcm_NodeIDGenerator = 2;
 		
-		struct PropertiesLibrary *plib = NULL;
 		Props *prop = NULL;
-	
-		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
+		PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
+		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( SLIB, "properties.library", 0 ) ) != NULL )
 		{
 			char *ptr, path[ 1024 ];
 			path[ 0 ] = 0;
@@ -206,8 +205,6 @@ FriendCoreManager *FriendCoreManagerNew()
 				
 				plib->Close( prop );
 			}
-			
-			LibraryClose( ( struct Library *)plib );
 		}
 		
 		fcm->fcm_ServiceManager = ServiceManagerNew( fcm );

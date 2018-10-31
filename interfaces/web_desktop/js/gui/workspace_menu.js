@@ -295,7 +295,7 @@ var WorkspaceMenu =
 		ExposeWindows();
 	
 		// Don't know which menu items we have?
-		friend.currentMenuItems = false;
+		Friend.currentMenuItems = false;
 	},
 	// Generates menu html, sets up events and chooses menu container element
 	generate: function( menudiv, menuItems, depth, appid )
@@ -319,11 +319,11 @@ var WorkspaceMenu =
 		{
 			if( menudiv )
 			{
-				friend.lastMenuDiv = menudiv;	
+				Friend.lastMenuDiv = menudiv;	
 			}
-			else if( !menudiv && friend.lastMenuDiv )
+			else if( !menudiv && Friend.lastMenuDiv )
 			{
-				menudiv = friend.lastMenuDiv;
+				menudiv = Friend.lastMenuDiv;
 			}
 		}
 
@@ -338,13 +338,13 @@ var WorkspaceMenu =
 		if( depth == 0 )
 		{
 			var test = JSON.stringify( menuItems );
-			if( friend.currentMenuItems == test )
+			if( Friend.currentMenuItems == test )
 			{
 				return false;
 			}
 			else
 			{
-				friend.currentMenuItems = test;
+				Friend.currentMenuItems = test;
 				menudiv.innerHTML = '';
 			}
 		}

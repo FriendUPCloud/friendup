@@ -3,6 +3,13 @@ html, body
 	position: relative;
 }
 
+/* Preload images */
+body.Inside > img
+{
+	visibility: hidden;
+	pointer-events: none;
+}
+
 /* Main screen */
 
 #Screens
@@ -172,7 +179,7 @@ body:not([tablet]) #Screens .View
 	top: auto !important;
 	height: 35px !important;
 	width: 100% !important;
-	max-width:100%;
+	max-width: 100%;
 	clear: both;
 	float: left;
 	overflow: hidden;
@@ -267,12 +274,17 @@ html .View > .Title > div > .Zoom
 /* Icons for mobile */
 body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File
 {
-	width: 110px;
+	width: 88px;
 }
 body:not([tablet])[mobile=mobile] .IconWindow .File > .Icon
 {
 	left: 0;
 }
+body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File > .Title
+{
+	left: 0;
+}
+
 /* Done icons for mobile */
 
 #Screens .Listview .File

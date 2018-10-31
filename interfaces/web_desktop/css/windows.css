@@ -65,6 +65,12 @@ html .View[viewsnap] .Title > div > div
 	z-index: 10;
 }
 
+.View[hardsnap] > .Snap > .SnapLeft
+{
+	height: 120px;
+	top: calc(50% - 60px);
+}
+
 .View[attach_left] > .Snap > .SnapLeft,
 .View[viewsnap=right] > .Snap > .SnapLeft
 {
@@ -81,6 +87,12 @@ html .View[viewsnap] .Title > div > div
 	left: 0px;
 	top: calc(50% - 40px);
 	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapRight
+{
+	height: 120px;
+	top: calc(50% - 60px);
 }
 
 .View[attach_right] > .Snap > .SnapRight,
@@ -109,6 +121,12 @@ html .View[viewsnap] .Title > div > div
 	z-index: 10;
 }
 
+.View[hardsnap] > .Snap > .SnapDown
+{
+	width: 120px;
+	left: calc(50% - 60px);
+}
+
 .View[attach_down] > .Snap > .SnapDown,
 .View[viewsnap=up] > .Snap > .SnapDown
 {
@@ -125,6 +143,12 @@ html .View[viewsnap] .Title > div > div
 	bottom: 0px;
 	left: calc(50% - 40px);
 	z-index: 10;
+}
+
+.View[hardsnap] > .Snap > .SnapUp
+{
+	width: 120px;
+	left: calc(50% - 60px);
 }
 
 .View[attach_up] > .Snap > .SnapUp,

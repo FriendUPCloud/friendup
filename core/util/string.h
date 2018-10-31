@@ -107,6 +107,8 @@ void HashedString ( char **str );
 
 char *GetStringFromJSON( char *text, char *token );
 
+char *EscapeStringToJSON( char *str );
+
 int StringNToInt( char *s, int len );
 
 void string_escape_quotes(const char *src, char *dst); //destination has to be at least twice as long as src (in worst case)

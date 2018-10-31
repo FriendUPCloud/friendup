@@ -157,6 +157,12 @@ char *AppSessionAddUsersByName( AppSession *as, UserSession *loggedSession, char
 //
 //
 
+FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg );
+
+//
+//
+//
+
 BufString *AppSessionRemUserByNames( AppSession *as, UserSession *loggedSession, char *userlist );
 
 //

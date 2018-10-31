@@ -38,6 +38,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include<stdio.h> //printf
+#include<string.h>    //memset
+#include<errno.h> //errno
+#include<sys/socket.h>
+#include<netdb.h>
+#include<ifaddrs.h>
+#include<stdlib.h>
+#include<unistd.h>
+
 /**
  * Get mac address
  *
@@ -160,5 +169,74 @@ int getPrimaryIp( char* buffer, size_t buflen )
 		}
 		close( sock );
 	}
+	return 0;
+}
+
+/**
+ * Get local IP address
+ *
+ * @param buffer buffer where IP will be stored
+ * @param buflen buffer size where data will be stored
+ * @return 0 when success, otherwise error number
+ */
+int getLocalIP( char* buffer, size_t buflen )
+{
+	FILE *f;
+	char line[100] , *p , *c;
+     
+	f = fopen("/proc/net/route" , "r");
+	
+    while( fgets(line , 100 , f ) )
+	{
+		p = strtok(line , " \t");
+		c = strtok(NULL , " \t");
+         
+		if(p!=NULL && c!=NULL)
+		{
+			if(strcmp(c , "00000000") == 0)
+			{
+				printf("Default interface is : %s \n" , p);
+				break;
+			}
+		}
+	}
+     
+	//which family do we require , AF_INET or AF_INET6
+	int fm = AF_INET;
+	struct ifaddrs *ifaddr, *ifa;
+	int family;
+ 
+	if( getifaddrs(&ifaddr) == -1 )
+	{
+		//perror("getifaddrs");
+		//exit(EXIT_FAILURE);
+		return 1;
+	}
+ 
+	//Walk through linked list, maintaining head pointer so we can free list later
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) 
+	{
+		if (ifa->ifa_addr == NULL)
+		{
+			continue;
+		}
+ 
+		family = ifa->ifa_addr->sa_family;
+ 
+		if(strcmp( ifa->ifa_name , p) == 0)
+		{
+			if (family == fm) 
+			{
+				int s = getnameinfo( ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6) , buffer , buflen , NULL , 0 , NI_NUMERICHOST );
+				if( s != 0 ) 
+				{
+					DEBUG("getnameinfo() failed: %s\n", gai_strerror(s));
+					return 2;
+				}
+				printf("address: %s", buffer );
+			}
+		}
+	}
+	freeifaddrs(ifaddr);
 	return 0;
 }

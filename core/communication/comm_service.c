@@ -48,7 +48,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
@@ -174,7 +174,7 @@ void CommServiceDelete( CommService *s )
 			ThreadDelete( s->s_Thread );
 		}
 		
-		DEBUG2("[COMMSERV]  closeing pipes\n");
+		DEBUG2("[COMMSERV] Closing pipes\n");
 
 		if( close(  s->s_sendPipe[0]  ) != 0 )
 		{
@@ -1425,7 +1425,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		
 		if( cfcn->fc_Socket != NULL )
 		{
-			DEBUG("Closeing new socket\n");
+			DEBUG("Closing new socket\n");
 			SocketClose( socket );
 			socket = NULL;
 		}
@@ -1494,7 +1494,7 @@ FConnection *CommServiceAddConnection( CommService* s, Socket* socket, char *nam
 		
 			// if ClusterID was changed, we must update it
 			char tmpQuery[ 256 ];
-			sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%d' WHERE ID=%lu", cfcn->fc_ClusterID, cfcn->fc_ID );
+			sprintf( tmpQuery, "UPDATE `FClusterNode` SET NodeID='%lu' WHERE ID=%lu", cfcn->fc_ClusterID, cfcn->fc_ID );
 
 			int error = sqllib->QueryWithoutResults( sqllib, tmpQuery );
 			DEBUG("CluserID updated: %lu for ID %lu\n", clusterID, cfcn->fc_ClusterID );

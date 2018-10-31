@@ -3,7 +3,7 @@
 CC			=	gcc
 OUTPUT		=	bin/echo.library
 CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ -I../../
-LFLAGS		=	-shared -fPIC -Wl,--no-as-needed  -lstdc++ -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
+LFLAGS		=	-shared -fPIC -Wl,--no-as-needed  -lz -lpthread -lrt -lcrypt -lssl $(shell mysql_config --libs)
 FPATH		=	$(shell pwd)
 
 #CFLAGS	=	--std=c99 -Wall -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused -I../../core/ -fPIC 

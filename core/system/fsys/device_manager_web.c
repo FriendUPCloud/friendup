@@ -1241,7 +1241,8 @@ AND LOWER(f.Name) = LOWER('%s')",
 				BufStringAdd( bs, "ok<!--separate-->[" );
 				int devnr = 0;
 				
-#define TMP_SIZE 2048
+#define TMP_SIZE 8112//2048
+#define TMP_SIZE_MIN1 (TMP_SIZE-1)
 				char *tmp = FCalloc( TMP_SIZE, sizeof( char ) ); 
 				char *executeCmd = NULL;
 				char *configEscaped = NULL;
@@ -1290,9 +1291,31 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 							}
 						}
+						
+						// remove private user data
+						{
+							char *lockey = strstr( configEscaped, "PrivateKey" );
+							if( lockey != NULL )
+							{
+								// add  PrivateKey"="
+								lockey += 15;
+								int pos = 0;
+								while( TRUE )
+								{
+									//printf("inside '%c'\n", *lockey );
+									if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+									{
+										break;
+									}
+									*lockey = ' ';
+									lockey++;
+									pos++;
+								}
+							}
+						}
 					}
 					
-					memset( tmp, '\0', TMP_SIZE-1 );
+					memset( tmp, '\0', TMP_SIZE );
 					
 					FBOOL isLimited = FALSE;
 					
@@ -1306,7 +1329,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 					if( devnr == 0 )
 					{
-						snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+						snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 							dev->f_Name ? dev->f_Name : "", 
 							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
@@ -1322,7 +1345,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					}
 					else
 					{
-						snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+						snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 							dev->f_Name ? dev->f_Name : "",
 							dev->f_FSysName ? dev->f_FSysName : "", 
 							dev->f_Path ? dev->f_Path : "",
@@ -1408,8 +1431,26 @@ AND LOWER(f.Name) = LOWER('%s')",
 								}
 							}
 						}
+						
+						char *lockey = strstr( configEscaped, "PrivateKey" );
+						if( lockey != NULL )
+						{
+							// add  PrivateKey"="
+							lockey += 15;
+							int pos = 0;
+							while( TRUE )
+							{
+								if( *lockey == 0 || (lockey[ 0 ] == '\\' && lockey[ 1 ] == '"' ) )
+								{
+									break;
+								}
+								*lockey = ' ';
+								lockey++;
+								pos++;
+							}
+						}
 					
-						memset( tmp, '\0', TMP_SIZE-1 );
+						memset( tmp, '\0', TMP_SIZE );
 					
 						FBOOL isLimited = FALSE;
 					
@@ -1423,7 +1464,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 						if( devnr == 0 )
 						{
-							snprintf( tmp, TMP_SIZE, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+							snprintf( tmp, TMP_SIZE_MIN1, "{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 								dev->f_Name ? dev->f_Name : "", 
 								dev->f_FSysName ? dev->f_FSysName : "", 
 								dev->f_Path ? dev->f_Path : "",
@@ -1440,7 +1481,7 @@ AND LOWER(f.Name) = LOWER('%s')",
 						}
 						else
 						{
-							snprintf( tmp, TMP_SIZE, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
+							snprintf( tmp, TMP_SIZE_MIN1, ",{\"Name\":\"%s\",\"Type\":\"%s\",\"Path\":\"%s\",\"FSys\":\"%s\",\"Config\":\"%s\",\"Visible\":\"%s\",\"Execute\":\"%s\",\"IsLimited\":\"%d\",\"Server\":\"%s\",\"Port\":\"%d\",\"GroupID\":\"%lu\"}\n", 
 								dev->f_Name ? dev->f_Name : "",
 								dev->f_FSysName ? dev->f_FSysName : "", 
 								dev->f_Path ? dev->f_Path : "",
@@ -1460,8 +1501,29 @@ AND LOWER(f.Name) = LOWER('%s')",
 					
 						if( configEscaped ) FFree( configEscaped );
 						configEscaped = NULL;
+						
+						// remove private user data
+						int size = strlen( tmp );
+
+						{
+							char *lockey = strstr( tmp, "PublicKey" );
+							if( lockey != NULL )
+							{
+								// add  PublicKey"="
+								lockey += 13;
+								while( *lockey != '"' )
+								{
+									if( *lockey == 0 || *lockey == ',' )
+									{
+										break;
+									}
+									*lockey = ' ';
+									lockey++;
+								}
+							}
+						}
 					
-						BufStringAdd( bs, tmp );
+						BufStringAddSize( bs, tmp, size );
 					
 						devnr++;
 						dev = (File *)dev->node.mln_Succ;

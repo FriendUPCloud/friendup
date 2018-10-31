@@ -51,7 +51,6 @@
 #include <util/buffered_string.h>
 #include <db/sqllib.h>
 #include <application/applicationlibrary.h>
-#include <properties/propertieslibrary.h>
 #include <system/dictionary/dictionary.h>
 #include <z/zlibrary.h>
 #include <image/imagelibrary.h>
@@ -77,6 +76,8 @@
 #include <system/user/user_manager_web.h>
 #include <system/token/dos_token_manager.h>
 #include <system/autotask/autotask.h>
+#include <system/mobile/mobile_manager.h>
+#include <system/calendar/calendar_manager.h>
 
 #include <interface/socket_interface.h>
 #include <interface/string_interface.h>
@@ -85,6 +86,7 @@
 #include <interface/user_manager_interface.h>
 #include <interface/comm_service_interface.h>
 #include <interface/comm_service_remote_interface.h>
+#include <interface/properties_interface.h>
 #include <core/event_manager.h>
 #include <system/cache/cache_uf_manager.h>
 #include <db/sqllib.h>
@@ -92,6 +94,7 @@
 #include <security/fkey_manager.h>
 #include <webdav/webdav_token_manager.h>
 #include <communication/cluster_node.h>
+#include <config/properties.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -177,6 +180,7 @@ typedef struct Device
 #define FSys_Error_SelectFail				(FSYS_Error_Dummy+10)
 #define FSys_Error_OpsInProgress			(FSYS_Error_Dummy+11)
 #define FSys_Error_WrongID					(FSYS_Error_Dummy+12)
+#define FSys_Error_CustomError			 	(FSYS_Error_Dummy+13)
  
 //
 //	library
@@ -231,6 +235,8 @@ typedef struct SystemBase
 	WebdavTokenManager				*sl_WDavTokM;		// WebdavTokenManager
 	DOSTokenManager					*sl_DOSTM;			// DOSToken Manager
 	MutexManager					*sl_MutexManager;	// Mutex Manager
+	MobileManager					*sl_MobileManager;	// Mobile Manager
+	CalendarManager					*sl_CalendarManager;	// Calendar Manager
 
 	pthread_mutex_t 				sl_ResourceMutex;	// resource mutex
 	pthread_mutex_t					sl_InternalMutex;		// internal slib mutex
@@ -254,7 +260,6 @@ typedef struct SystemBase
 	struct SQLConPool				*sqlpool;			// mysql.library pool
 	int								sqlpoolConnections;	// number of database connections
 	struct ApplicationLibrary		*alib;				// application library
-	struct PropertiesLibrary		*plib;				// properties library
 	struct ZLibrary					*zlib;						// z.library
 	struct ImageLibrary				*ilib;						// image.library
 
@@ -274,6 +279,7 @@ typedef struct SystemBase
 	UserManagerInterface			sl_UserManagerInterface;	// user manager interface
 	CommServiceInterface			sl_CommServiceInterface;	// communication interface
 	CommServiceRemoteInterface		sl_CommServiceRemoteInterface;	// communication remote interface
+	PropertiesInterface				sl_PropertiesInterface;	// communication remote interface
 	
 	EModule							*sl_PHPModule;
 
@@ -322,10 +328,6 @@ typedef struct SystemBase
 
 	void							(*LibraryApplicationDrop)( struct SystemBase *l, struct ApplicationLibrary * );
 
-	struct PropertiesLibrary		*(*LibraryPropertiesGet)( struct SystemBase *sb );
-
-	void							(*LibraryPropertiesDrop)( struct SystemBase *sb, PropertiesLibrary *pl );
-
 	struct ZLibrary					*(*LibraryZGet)( struct SystemBase *sb );
 
 	void							(*LibraryZDrop)( struct SystemBase *sb, ZLibrary *pl );
@@ -368,6 +370,11 @@ typedef struct SystemBase
 	int								fdPool[ 1024 ];
 	char							*l_InitError;	// if NULL then there was no error
 	FBOOL							l_EnableHTTPChecker;
+	
+	// apple
+	char							*l_AppleServerHost;
+	int								l_AppleServerPort;
+	char							*l_AppleKeyAPI;
 } SystemBase;
 
 
@@ -399,13 +406,7 @@ void LibraryApplicationDrop( struct SystemBase *l, ApplicationLibrary *aclose );
 //
 //
 
-struct PropertiesLibrary *LibraryPropertiesGet( struct SystemBase *l );
-
-//
-//
-//
-
-void LibraryPropertiesDrop( struct SystemBase *l, PropertiesLibrary *pclose );
+struct Properties *PropertiesGet( struct SystemBase *l );
 
 //
 //
@@ -514,6 +515,18 @@ int SendProcessMessage( Http *request, char *data, int len );
 //
 
 void CheckAndUpdateDB( struct SystemBase *sb );
+
+//
+//
+//
+
+FBOOL FriendCoreLockCheckOrCreate( );
+
+//
+//
+//
+
+void FriendCoreLockRelease();
 
 //
 // THIS IS OUR GLOBAL LIBRARY

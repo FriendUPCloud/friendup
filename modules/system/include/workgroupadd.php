@@ -18,7 +18,47 @@
 *                                                                              *
 *****************************************************************************©*/
 
-if( $level == 'Admin' )
+if( isset( $args->args->ValueNumber ) && isset( $args->args->ValueString ) )
+{
+	$m = new dbIO( 'FMetaData' );
+	$m->DataTable = 'FUserGroup';
+	$m->ValueNumber = $args->args->ValueNumber;
+	$m->ValueString = $args->args->ValueString;
+	if( !$m->Load() )
+	{
+		// Get the fusergroup object
+		$o = new dbIO( 'FUserGroup' );
+		$o->Type = 'Workgroup';
+		$o->Name = $args->args->Name;
+		$o->UserID = $User->ID;
+		$o->Save();
+	
+		if( $o->ID > 0 )
+		{
+			// Add external data relation to workgroups
+		
+			$m->DataID = $o->ID;
+			$m->Save();
+			
+			if( $args->args->MetaData && $m->ID )
+			{
+				// TODO: Find out what variables are needed to be able to display when the doormanoffice employee is currently at work showing and hiding workgroups ...
+			}
+			
+			// Add user connected to this workgroup
+		
+			$SqlDatabase->query( '
+			INSERT INTO FUserToGroup 
+				( UserID, UserGroupID ) 
+				VALUES 
+				( \'' . mysqli_real_escape_string( $SqlDatabase->_link, $User->ID ) . '\', \'' . $o->ID . '\' )
+			' );
+		
+			die( 'ok<!--separate-->' . $o->ID );
+		}
+	}
+}
+else if( $level == 'Admin' )
 {
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );

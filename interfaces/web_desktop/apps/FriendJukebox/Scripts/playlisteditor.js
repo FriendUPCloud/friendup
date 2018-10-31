@@ -17,9 +17,45 @@
 *                                                                              *
 *****************************************************************************©*/
 
+
+
 Application.run = function( msg, iface )
 {
 	
+}
+
+function searchPlaylists()
+{
+	var kvs = ge( 'Keywords' ).value;
+	if( !kvs.length )
+	{
+		ge( 'Keywords' ).focus();
+		return;
+	}
+	
+	// Build archive of podcasts in dataarchive
+	var m = new Module( 'dataarchive' );
+	m.onExecuted = function( e, d )
+	{
+		console.log( 'Getting podcasts: ', e, d );
+		if( e != 'ok' )
+		{
+			return;
+		}
+		var o = new Module( 'dataarchive' );
+		m.onExecuted = function( e2, d2 )
+		{
+			if( e2 != 'ok' )
+			{
+				return;
+			}
+			console.log( 'Yeah! Stuff happens.' );
+		}
+		m.execute( 'searchindex', { indexName: 'podcasts', keywords: kvs } );
+	}
+	m.execute( 'buildindex', { sources: [
+		'http://media.luxuriamusic.com/files/streams/Mp3/winamp.pls'
+	], indexName: 'podcasts' } );
 }
 
 Application.receiveMessage = function( msg )

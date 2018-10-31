@@ -30,10 +30,25 @@
 
 const char* MimeFromExtension( char* extension )
 {
-	if( !extension ) return "text/plain";
+	if( extension == NULL )
+	{
+		return "text/plain";
+	}
 	unsigned int hash = 0;
-	DEBUG("Check mime for extension: '%s'\n", extension );
-	MurmurHash3_32( extension, strlen( extension ), 0, &hash );
+	char extCopy[ 32 ];
+	memset( extCopy, 0, 32 );
+	
+	int i;
+	int size = strlen( extension );
+	if( size > 31 ) size = 31;
+	for( i=0 ; i < size ; i++ )
+	{
+		extCopy[ i ] = tolower( extension[ i ] );
+	}
+	extension[ i ] = 0;
+	
+	DEBUG("Check mime for extension: '%s'\n", extCopy );
+	MurmurHash3_32( extCopy, strlen( extCopy ), 0, &hash );
 	/*
 #ifdef IS_BIG_ENDIAN
 	unsigned int hashppc = 0;

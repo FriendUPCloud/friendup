@@ -50,6 +50,8 @@
  * App:     {"t":"echo"}
  */
 #include <stdbool.h>
+#include <util/friendqueue.h>
+#include <network/websocket_client.h>
 
 typedef enum {
 	//0 - undefined
@@ -63,6 +65,18 @@ typedef enum {
 	MN_last_device = 4, //show only on most recently used device that has the app suspended
 } mobile_notification_type_t;
 
+enum {
+	MOBILE_APP_TYPE_ANDROID = 0,
+	MOBILE_APP_TYPE_IOS
+};
+
+typedef struct mobile_app_notif
+{
+	FQueue					man_Queue;
+	int						man_Initialized;
+	int						man_Type;
+	WebsocketClient			*mans_Connection;
+}mobile_app_notif;
 
 /**
  * Sends notification to a user

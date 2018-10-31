@@ -42,7 +42,7 @@ lws_read_h1(struct lws *wsi, unsigned char *buf, lws_filepos_t len)
 	lws_filepos_t body_chunk_len;
 	size_t n;
 
-	// lwsl_notice("%s: h1 path: wsi state 0x%x\n", __func__, lwsi_state(wsi));
+	lwsl_debug("%s: h1 path: wsi state 0x%x\n", __func__, lwsi_state(wsi));
 
 	switch (lwsi_state(wsi)) {
 
@@ -225,7 +225,7 @@ ws_mode:
 		break;
 
 	case LRS_DEFERRING_ACTION:
-		lwsl_debug("%s: LRS_DEFERRING_ACTION\n", __func__);
+		lwsl_notice("%s: LRS_DEFERRING_ACTION\n", __func__);
 		break;
 
 	case LRS_SSL_ACK_PENDING:
@@ -449,10 +449,9 @@ try_pollout:
 
 	if (lwsi_state(wsi) != LRS_ISSUING_FILE) {
 
-		if (wsi->trunc_len) {
+		if (lws_has_buffered_out(wsi)) {
 			//lwsl_notice("%s: completing partial\n", __func__);
-			if (lws_issue_raw(wsi, wsi->trunc_alloc + wsi->trunc_offset,
-					  wsi->trunc_len) < 0) {
+			if (lws_issue_raw(wsi, NULL, 0) < 0) {
 				lwsl_info("%s signalling to close\n", __func__);
 				goto fail;
 			}
@@ -463,7 +462,7 @@ try_pollout:
 					LWSSTATS_C_WRITEABLE_CB, 1);
 #if defined(LWS_WITH_STATS)
 		if (wsi->active_writable_req_us) {
-			uint64_t ul = time_in_microseconds() -
+			uint64_t ul = lws_time_in_microseconds() -
 					wsi->active_writable_req_us;
 
 			lws_stats_atomic_bump(wsi->context, pt,
@@ -518,6 +517,58 @@ rops_handle_POLLIN_h1(struct lws_context_per_thread *pt, struct lws *wsi,
 	if (wsi->http.cgi && (pollfd->revents & LWS_POLLOUT)) {
 		if (lws_handle_POLLOUT_event(wsi, pollfd))
 			return LWS_HPI_RET_PLEASE_CLOSE_ME;
+
+		return LWS_HPI_RET_HANDLED;
+	}
+#endif
+
+#if 0
+
+	/*
+	 * !!! lws_serve_http_file_fragment() seems to duplicate most of
+	 * lws_handle_POLLOUT_event() in its own loop...
+	 */
+	lwsl_debug("%s: %d %d\n", __func__, (pollfd->revents & LWS_POLLOUT),
+			lwsi_state_can_handle_POLLOUT(wsi));
+
+	if ((pollfd->revents & LWS_POLLOUT) &&
+	    lwsi_state_can_handle_POLLOUT(wsi) &&
+	    lws_handle_POLLOUT_event(wsi, pollfd)) {
+		if (lwsi_state(wsi) == LRS_RETURNED_CLOSE)
+			lwsi_set_state(wsi, LRS_FLUSHING_BEFORE_CLOSE);
+		/* the write failed... it's had it */
+		wsi->socket_is_permanently_unusable = 1;
+
+		return LWS_HPI_RET_PLEASE_CLOSE_ME;
+	}
+#endif
+
+
+	/* Priority 2: pre- compression transform */
+
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	if (wsi->http.comp_ctx.buflist_comp ||
+	    wsi->http.comp_ctx.may_have_more) {
+		enum lws_write_protocol wp = LWS_WRITE_HTTP;
+
+		lwsl_info("%s: completing comp partial (buflist_comp %p, may %d)\n",
+				__func__, wsi->http.comp_ctx.buflist_comp,
+				wsi->http.comp_ctx.may_have_more
+				);
+
+		if (wsi->role_ops->write_role_protocol(wsi, NULL, 0, &wp) < 0) {
+			lwsl_info("%s signalling to close\n", __func__);
+			return LWS_HPI_RET_PLEASE_CLOSE_ME;
+		}
+		lws_callback_on_writable(wsi);
+
+		if (!wsi->http.comp_ctx.buflist_comp &&
+		    !wsi->http.comp_ctx.may_have_more &&
+		    wsi->http.deferred_transaction_completed) {
+			wsi->http.deferred_transaction_completed = 0;
+			if (lws_http_transaction_completed(wsi))
+				return LWS_HPI_RET_PLEASE_CLOSE_ME;
+		}
 
 		return LWS_HPI_RET_HANDLED;
 	}
@@ -612,19 +663,68 @@ static int
 rops_write_role_protocol_h1(struct lws *wsi, unsigned char *buf, size_t len,
 			    enum lws_write_protocol *wp)
 {
-#if 0
-	/* if not in a state to send stuff, then just send nothing */
+	size_t olen = len;
+	int n;
 
-	if ((lwsi_state(wsi) != LRS_RETURNED_CLOSE &&
-	     lwsi_state(wsi) != LRS_WAITING_TO_SEND_CLOSE &&
-	     lwsi_state(wsi) != LRS_AWAITING_CLOSE_ACK)) {
-		//assert(0);
-		lwsl_debug("binning %d %d\n", lwsi_state(wsi), *wp);
-		return 0;
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	if (wsi->http.lcs && (((*wp) & 0x1f) == LWS_WRITE_HTTP_FINAL ||
+			      ((*wp) & 0x1f) == LWS_WRITE_HTTP)) {
+		unsigned char mtubuf[1400 + LWS_PRE +
+				     LWS_HTTP_CHUNK_HDR_MAX_SIZE +
+				     LWS_HTTP_CHUNK_TRL_MAX_SIZE],
+			      *out = mtubuf + LWS_PRE +
+				     LWS_HTTP_CHUNK_HDR_MAX_SIZE;
+		size_t o = sizeof(mtubuf) - LWS_PRE -
+			   LWS_HTTP_CHUNK_HDR_MAX_SIZE -
+			   LWS_HTTP_CHUNK_TRL_MAX_SIZE;
+
+		n = lws_http_compression_transform(wsi, buf, len, wp, &out, &o);
+		if (n)
+			return n;
+
+		lwsl_info("%s: %p: transformed %d bytes to %d "
+			   "(wp 0x%x, more %d)\n", __func__, wsi, (int)len,
+			   (int)o, (int)*wp, wsi->http.comp_ctx.may_have_more);
+
+		if (!o)
+			return olen;
+
+		if (wsi->http.comp_ctx.chunking) {
+			char c[LWS_HTTP_CHUNK_HDR_MAX_SIZE + 2];
+			/*
+			 * this only needs dealing with on http/1.1 to allow
+			 * pipelining
+			 */
+			n = lws_snprintf(c, sizeof(c), "%X\x0d\x0a", (int)o);
+			lwsl_info("%s: chunk (%d) %s", __func__, (int)o, c);
+			out -= n;
+			o += n;
+			memcpy(out, c, n);
+			out[o++] = '\x0d';
+			out[o++] = '\x0a';
+
+			if (((*wp) & 0x1f) == LWS_WRITE_HTTP_FINAL) {
+				lwsl_info("%s: final chunk\n", __func__);
+				out[o++] = '0';
+				out[o++] = '\x0d';
+				out[o++] = '\x0a';
+				out[o++] = '\x0d';
+				out[o++] = '\x0a';
+			}
+		}
+
+		buf = out;
+		len = o;
 	}
 #endif
 
-	return lws_issue_raw(wsi, (unsigned char *)buf, len);
+	n = lws_issue_raw(wsi, (unsigned char *)buf, len);
+	if (n < 0)
+		return n;
+
+	/* hide there may have been compression */
+
+	return (int)olen;
 }
 
 static int
@@ -670,6 +770,10 @@ rops_destroy_role_h1(struct lws *wsi)
 		ah = ah->next;
 	}
 
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	lws_http_compression_destroy(wsi);
+#endif
+
 #ifdef LWS_ROLE_WS
 	lws_free_set_NULL(wsi->ws);
 #endif
@@ -694,7 +798,7 @@ rops_adoption_bind_h1(struct lws *wsi, int type, const char *vh_prot_name)
 		return 1;
 	}
 
-	lws_role_transition(wsi, LWSIFR_SERVER, type & LWS_ADOPT_ALLOW_SSL ?
+	lws_role_transition(wsi, LWSIFR_SERVER, (type & LWS_ADOPT_ALLOW_SSL) ?
 			    LRS_SSL_INIT : LRS_HEADERS, &role_ops_h1);
 
 	if (!vh_prot_name)
@@ -803,6 +907,93 @@ fail_wsi:
 }
 #endif
 
+#if 0
+static int
+rops_perform_user_POLLOUT_h1(struct lws *wsi)
+{
+	volatile struct lws *vwsi = (volatile struct lws *)wsi;
+	int n;
+
+	/* priority 1: post compression-transform buffered output */
+
+	if (lws_has_buffered_out(wsi)) {
+		lwsl_debug("%s: completing partial\n", __func__);
+		if (lws_issue_raw(wsi, NULL, 0) < 0) {
+			lwsl_info("%s signalling to close\n", __func__);
+			return -1;
+		}
+		n = 0;
+		vwsi->leave_pollout_active = 1;
+		goto cleanup;
+	}
+
+	/* priority 2: pre compression-transform buffered output */
+
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	if (wsi->http.comp_ctx.buflist_comp ||
+	    wsi->http.comp_ctx.may_have_more) {
+		enum lws_write_protocol wp = LWS_WRITE_HTTP;
+
+		lwsl_info("%s: completing comp partial"
+			   "(buflist_comp %p, may %d)\n",
+			   __func__, wsi->http.comp_ctx.buflist_comp,
+			    wsi->http.comp_ctx.may_have_more);
+
+		if (rops_write_role_protocol_h1(wsi, NULL, 0, &wp) < 0) {
+			lwsl_info("%s signalling to close\n", __func__);
+			lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS,
+					   "comp write fail");
+		}
+		n = 0;
+		vwsi->leave_pollout_active = 1;
+		goto cleanup;
+	}
+#endif
+
+	/* priority 3: if no buffered out and waiting for that... */
+
+	if (lwsi_state(wsi) == LRS_FLUSHING_BEFORE_CLOSE) {
+		wsi->socket_is_permanently_unusable = 1;
+		return -1;
+	}
+
+	/* priority 4: user writeable callback */
+
+	vwsi = (volatile struct lws *)wsi;
+	vwsi->leave_pollout_active = 0;
+
+	n = lws_callback_as_writeable(wsi);
+
+cleanup:
+	vwsi->handling_pollout = 0;
+
+	if (vwsi->leave_pollout_active)
+		lws_change_pollfd(wsi, 0, LWS_POLLOUT);
+
+	return n;
+}
+#endif
+
+static int
+rops_close_kill_connection_h1(struct lws *wsi, enum lws_close_status reason)
+{
+#if defined(LWS_WITH_HTTP_PROXY)
+	struct lws *wsi_eff = lws_client_wsi_effective(wsi);
+
+	if (!wsi_eff->http.proxy_clientside)
+		return 0;
+
+	wsi_eff->http.proxy_clientside = 0;
+
+	if (user_callback_handle_rxflow(wsi_eff->protocol->callback, wsi_eff,
+					LWS_CALLBACK_COMPLETED_CLIENT_HTTP,
+					wsi_eff->user_space, NULL, 0))
+		return 0;
+#endif
+	return 0;
+}
+
+
 struct lws_role_ops role_ops_h1 = {
 	/* role name */			"h1",
 	/* alpn id */			"http/1.1",
@@ -822,7 +1013,7 @@ struct lws_role_ops role_ops_h1 = {
 	/* alpn_negotiated */		rops_alpn_negotiated_h1,
 	/* close_via_role_protocol */	NULL,
 	/* close_role */		NULL,
-	/* close_kill_connection */	NULL,
+	/* close_kill_connection */	rops_close_kill_connection_h1,
 	/* destroy_role */		rops_destroy_role_h1,
 #if !defined(LWS_NO_SERVER)
 	/* adoption_bind */		rops_adoption_bind_h1,
@@ -838,5 +1029,9 @@ struct lws_role_ops role_ops_h1 = {
 					  LWS_CALLBACK_HTTP_WRITEABLE },
 	/* close cb clnt, srv */	{ LWS_CALLBACK_CLOSED_CLIENT_HTTP,
 					  LWS_CALLBACK_CLOSED_HTTP },
+	/* protocol_bind cb c, srv */	{ LWS_CALLBACK_CLIENT_HTTP_BIND_PROTOCOL,
+					  LWS_CALLBACK_HTTP_BIND_PROTOCOL },
+	/* protocol_unbind cb c, srv */	{ LWS_CALLBACK_CLIENT_HTTP_DROP_PROTOCOL,
+					  LWS_CALLBACK_HTTP_DROP_PROTOCOL },
 	/* file_handle */		0,
 };

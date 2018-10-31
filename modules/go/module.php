@@ -97,7 +97,7 @@ switch( $args->command )
 			array( 'Your Friend account confirmation code', $hash, 'https://friendup.cloud/privacy.html', 'https://github.com/friendupcloud/friendup/' ),
 			$template
 		);
-		mail( $args->args->email, 'Your Friend account confirmation code', $template, 'Content-type: text/html; charset=utf-8', '-fsupport@friendup.cloud -FFriendUP' );
+		$result = mail( $args->args->email, 'Your Friend account confirmation code', $template, 'Content-type: text/html; charset=utf-8', '-fsupport@friendup.cloud -FFriendUP' );
 		
 		$rawConfig = parse_ini_file( 'cfg/cfg.ini', true );
 		$key = '';

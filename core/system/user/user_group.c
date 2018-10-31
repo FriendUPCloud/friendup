@@ -270,10 +270,15 @@ int UserGroupAddUser( UserGroup *ug, void *u )
  *
  * @param ug pointer to UserGroup to which user will be removed
  * @param u pointer to User structure which will be removed from list
- * @return 0 when ssuccess, otherwise error number
+ * @return 0 when success, otherwise error number
  */
 int UserGroupRemoveUser( UserGroup *ug, void *u )
 {
+	if( ug == NULL || u == NULL )
+	{
+		DEBUG("One value is equal to NULL. ug %p u %p\n", ug, u );
+		return -1;
+	}
 	User *locu = (User *)u;
 	
 	UserGroupAUser *au = ug->ug_UserList;

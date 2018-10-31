@@ -518,6 +518,8 @@ int SocketConnectClient(const char *hostname, int port, int family __attribute__
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
+	
+	DEBUG("[SocketConnectClient] host: %s\n", hostname );
 
 	if (!hostname) 
 	{
@@ -526,7 +528,7 @@ int SocketConnectClient(const char *hostname, int port, int family __attribute__
 	}
 	else
 	{
-		if ( (phe = (struct hostent *)gethostbyname(hostname) ) != NULL ) 
+		if ( (phe = (struct hostent *)gethostbyname( hostname ) ) != NULL ) 
 		{
 			DEBUG("[SocketConnectClient] Gethostbyname used\n");
 			memcpy(&sin.sin_addr, phe->h_addr, phe->h_length);
@@ -2438,7 +2440,7 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 {
 	if( sock == NULL || length < 1 )
 	{
-		FERROR("Socket is NULL or length < 1: %lu\n", length );
+		//FERROR("Socket is NULL or length < 1: %lu\n", length );
 		return -1;
 	}
 	if( sock->s_SSLEnabled == TRUE )

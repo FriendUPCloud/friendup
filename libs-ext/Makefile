@@ -21,7 +21,10 @@ endif
 
 setup:
 	mkdir -p libwebsockets/build
+	mkdir -p libssh2/build
 	cd libwebsockets/build/ ; cmake ../ -DLWS_HAVE_SYS_CAPABILITY_H=OFF -DLWS_IPV6=ON -DCMAKE_BUILD_TYPE=DEBUG ; make DEBUG=0 ; cd ../../
+	cp -r libwebsockets/include/* libwebsockets/build/include/
+	cd libssh2/build/ ; cmake ../ -DCMAKE_C_FLAGS=-fPIC ; make DEBUG=0 ; cd ../../
 	#mkdir -p libzmq/build
 	#cd libzmq/build/ ; cmake ../ ; make DEBUG=0 ; cd ../../
 	#for dir in $(LIB_DIR); do \
@@ -30,14 +33,18 @@ setup:
 
 clean:
 	mkdir -p libwebsockets/build
+	mkdir -p libssh2/build
 	cd libwebsockets/build/ && rm -rf * && cd ../../
+	cd libssh2/build/ && rm -rf * && cd ../../
 	#cd libhttp/ ;make clean ; cd ..
 
 compile:
 	cd libwebsockets/build/ ;make DEBUG=1 ; cd ../../
+	cd libssh2/build/ ;make DEBUG=1 ; cd ../../
 	#cd libhttp/ ;make DEBUG=1 ; cd ../
 
 release:
 	cd libwebsockets/build/ ;make DEBUG=0 ; cd ../../
+	cd libssh2/build/ ;make DEBUG=0 ; cd ../../
 	#cd libhttp/ ;make DEBUG=0 ; cd ..
 

@@ -63,7 +63,7 @@ void init( struct UserLogger *s )
 		Props *prop = NULL;
 		
 		// Get a copy of the properties.library
-		struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+		struct PropertiesInterface *plib = &(sb->sl_PropertiesInterface);
 		if( plib != NULL )
 		{
 			char *ptr = getenv("FRIEND_HOME");
@@ -102,8 +102,6 @@ void init( struct UserLogger *s )
 			sd->sd_LibSQL->Connect( sd->sd_LibSQL, host, dbname, login, pass, port );
 			
 			if( prop ) plib->Close( prop );
-			
-			sb->LibraryPropertiesDrop( sb, plib );
 		}
 		
 		s->ul_SD = sd;

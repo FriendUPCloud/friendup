@@ -51,7 +51,7 @@ void *libInit( void *systembase )
 	_library_handle->sb = systembase;
 	_library_handle->libClose = dlsym ( _library_handle->handle, "libClose");
 	_library_handle->GetVersion = dlsym ( _library_handle->handle, "GetVersion");
-	_library_handle->WebRequest = dlsym ( _library_handle->handle, "WebRequest");
+	_library_handle->WebRequest = dlsym ( _library_handle->handle, "WebRequestNotification");
 
 	return _library_handle;
 }
@@ -67,7 +67,7 @@ long GetVersion(void)
 }
 
 
-Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *request)
+Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* func, Http *request)
 {
 	INFO("Func is <%s>", func);
 

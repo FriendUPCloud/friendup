@@ -82,7 +82,7 @@ i18n_new_container                      : New directory
 i18n_create_container                   : Make directory
 i18n_name                               : Name
 i18n_make_a_new_container               : Make a new directory
-i18n_error_could_not_list_directory     : Could not retrieve a directory listing
+i18n_error_could_not_list_directory     : Empty directory
 
 i18n_error                              : Error
 i18n_could_not_run_jsx                  : Could not execute JSX.
@@ -317,6 +317,7 @@ i18n_used_space                         : used
 i18n_filename                           : Filename
 i18n_permissions                        : Permissions
 i18n_filesize                           : Filesize
+i18n_filedate                           : Date modified
 i18n_files                              : Files
 i18n_public_file                        : Public file
 i18n_public_link                        : Public url

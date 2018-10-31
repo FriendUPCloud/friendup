@@ -36,7 +36,6 @@ Friend.Tree.UI.HorizontalGroup = function ( tree, name, flags )
     if ( this.sizes.length != this.children.length )
     {
         console.log( 'HorizontalGroup: Number of children does not match number of sizes!' );
-        debugger;
     }
 };
 Friend.Tree.UI.HorizontalGroup.messageUp = function ( message )
@@ -90,7 +89,6 @@ Friend.Tree.UI.VerticalGroup = function ( tree, name, flags )
     if ( this.sizes.length != this.children.length )
     {
         console.log( 'VerticalGroup: Number of children does not match number of sizes!' );
-        debugger;
     }
 };
 Friend.Tree.UI.VerticalGroup.messageUp = function ( message )

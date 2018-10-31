@@ -67,7 +67,8 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 	
 	Props *prop = NULL;
 
-	struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+	//struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+	PropertiesInterface *plib = &(sb->sl_PropertiesInterface);
 	char *geoProvider = NULL;
 	char *geoFormat = NULL;
 
@@ -98,8 +99,6 @@ FriendcoreInfo *FriendCoreInfoNew( void *slib )
 		}
 		
 		if( prop ) plib->Close( prop );
-	
-		sb->LibraryPropertiesDrop( sb, plib );
 	}
 	
 	if( geoProvider == NULL )

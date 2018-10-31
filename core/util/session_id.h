@@ -17,3 +17,5 @@
  * @return Pointer to random string, NULL after failure.
  */
 char* session_id_generate(void);
+
+FBOOL generate_uuid( char **dst );

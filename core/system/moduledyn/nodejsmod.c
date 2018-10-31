@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "systembase.h"
+#include <system/systembase.h>
 #include <util/log/log.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/library.h>
 
 #define SUFFIX "njs"

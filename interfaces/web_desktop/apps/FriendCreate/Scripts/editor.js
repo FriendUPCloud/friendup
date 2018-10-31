@@ -104,7 +104,7 @@ Application.run = function( msg )
 	InitTabs( ge( 'filelisttabs' ) );	
 	
 	// Render the file browser
-	var FileBrowser = new friend.FileBrowser( ge( 'filebrowser' ), { displayFiles: true }, filebrowserCallbacks );
+	var FileBrowser = new Friend.FileBrowser( ge( 'filebrowser' ), { displayFiles: true }, filebrowserCallbacks );
 	FileBrowser.render();
 	this.fileBrowser = FileBrowser;
 	
@@ -355,6 +355,7 @@ Application.handleKeys = function( k, e )
 			Application.open();
 			return true;
 		}
+		// Control save
 		else if( wo == 83 )
 		{
 			Application.save( 'withbackup' );
@@ -388,7 +389,10 @@ Application.handleKeys = function( k, e )
 	}
 
 	// Every second, after clicking a key, autosave ticks in
-	var fn = Application.files[Application.currentFile];
+	var fn = Application.files[ Application.currentFile ];
+	if( !fn )
+		return;
+		
 	if( fn.touched && fn.filename.indexOf( ':' ) > 0 )
 	{
 		if( Application.autoSaveTimeout )
@@ -422,6 +426,7 @@ Application.applySyntaxHighlighting = function ()
 		var ext = cf.filename.split( '.' );
 		cf.filetype = ext[ext.length-1];
 	}
+	
 	var mode = '';
 	var extension = this.files[this.currentFile].filetype.toLowerCase();
 
@@ -671,36 +676,25 @@ Application.loadFile = function( data, path, cb )
 		this.files = [ {} ];
 		this.currentFile = 0;
 	}
-	// Ok, we have the first file
-	if( this.files[this.currentFile].content.length <= 0 && this.files[this.currentFile].touched == false )
-	{
-		var f = this.files[this.currentFile];
-		f.touched = true;
-		f.filename = path;
-		this.setCurrentFile( this.currentFile );
-		f.content = data;
-		this.editor.setValue( data );
-	}
+	
 	// Add a new file
-	else
+	for( var a = 0; a < this.files.length; a++ )
 	{
-		// Make sure it is not already loaded
-		for( var a = 0; a < this.files.length; a++ )
+		// It already exists..
+		if( this.files[a].filename == path )
 		{
-			// It already exists..
-			if( this.files[a].filename == path )
-			{
-				if( cb ) cb();
-				// Activate it
-				this.setCurrentFile( a );
-				this.refreshFilesList();
-				return;
-			}
+			if( cb ) cb();
+			// Activate it
+			this.setCurrentFile( a );
+			this.refreshFilesList();
+			return;
 		}
-		// Set it
-		this.files.push( { content: data, filename: path, touched: true } );
-		this.setCurrentFile( this.files.length - 1 );
 	}
+	
+	// Set it
+	this.files.push( { content: data, filename: path, touched: true } );
+	this.setCurrentFile( this.files.length - 1 );
+	
 	// Refresh so we can see it in the list
 	this.refreshFilesList();
 	if( cb ) cb();
@@ -732,6 +726,27 @@ Application.save = function( mode )
 			}, 1000 );
 		}
 		f.save( this.editor.getValue() );
+		
+		var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+		
+		// Update tab
+		for( var a = 0; a < tabs.length; a++ )
+		{
+			if( tabs[a].uniqueId == this.files[ this.currentFile ].uniqueId )
+			{
+				var fn = this.files[ this.currentFile ].filename;
+				if( fn.indexOf( ':' ) > 0 )
+				{
+					fn = fn.split( ':' )[1];
+					if( fn.indexOf( '/' ) > 0 )
+					{
+						fn = fn.split( '/' ).pop();
+					}
+				}
+				tabs[a].innerHTML = fn;
+				break;
+			}
+		}
 	}
 	else
 	{
@@ -768,6 +783,15 @@ Application.refreshFilesList = function ()
 	}
 	this.refreshingFiles = true;
 	
+	// Check files for unique ids
+	for( var a = 0; a < this.files.length; a++ )
+	{
+		if( !this.files[a].uniqueId )
+		{
+			this.files[a].uniqueId = md5( this.files[a].filename + ( Math.random() % 9999 ) + ( Math.random() % 9999 ) + ( Math.random() % 9999 ) );
+		}
+	}
+	
 	// Get all elements
 	var d = document.getElementsByTagName( 'div' );
 	var files = false;
@@ -786,21 +810,13 @@ Application.refreshFilesList = function ()
 	}
 
 	files.innerHTML = '';
-
-	// Tab support
-	// TODO: Reenable
-	/*var tabcontainer = ge( 'EditorTabs' );
-	var tabs = [];
-	tabcontainer = tabcontainer.getElementsByClassName( 'TabContainer' );
-	if( tabcontainer.length )
-	{
-		tabcontainer = tabcontainer[ 0 ];
-		tabs = tabcontainer.getElementsByClassName( 'Tab' );
-	}
-	else tabcontainer = null;*/
 	
 	// Loop through the files
 	var sw = 2;
+	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+	var tabContainer = ge( 'EditorTabs' ).getElementsByClassName( 'TabContainer' );
+	if( tabContainer.length ) tabContainer = tabContainer[0];
+	else tabContainer = false;
 	
 	for( var t = 0; t < this.files.length; t++ )
 	{
@@ -823,9 +839,7 @@ Application.refreshFilesList = function ()
 		if ( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
 		c.onclick = function ( e )
-		{
-			ge( 'CodeEditorTab' ).onclick();
-			
+		{	
 			Application.setCurrentFile( this.ind );
 
 			// Close when clicking on close icon
@@ -841,37 +855,60 @@ Application.refreshFilesList = function ()
 		};
 		files.appendChild ( c );
 		
-		// Update tabs
-		// TODO: Enable tab support
-		/*if( tabcontainer )
+		// Check for missing tab
+		// TODO: Add unique file id
+		if( tabContainer )
 		{
-			var found = false;
-			for( var b = 0; b < tabs.length; b++ )
+			var tabFound = false;
+			for( var z = 0; z < tabs.length; z++ )
 			{
-				if( tabs[b].filename == fullfile )
+				if( tabs[z].uniqueId == this.files[t].uniqueId )
 				{
-					found = true;
+					tabFound = true;
 					break;
 				}
 			}
-			// New tab!
-			if( !found )
+			if( !tabFound )
 			{
-				var d = document.createElement( 'div' );
-				d.className = 'Tab IconSmall fa-code';
-				d.filename = fullfile;
-				d.innerHTML = fullfile;
-				tabcontainer.appendChild( d );
+				var tab = document.createElement( 'div' );
+				tab.className = 'Tab IconSmall fa-code';
+				tab.uniqueId = this.files[t].uniqueId;
+				if( this.files[t].filename.indexOf( ':' ) > 0 )
+				{
+					var lastPart = this.files[t].filename.split( ':' )[1];
+					if( lastPart.indexOf( '/' ) > 0 )
+					{
+						lastPart = lastPart.split( '/' ).pop();
+					}
+					tab.innerHTML = lastPart;
+				}
+				else
+				{
+					tab.innerHTML = this.files[t].filename;
+				}
+				tab.page = ge( 'CodeTabPage' ); // Use this one for all content
+				tabContainer.appendChild( tab );
+				
+				// Find tabs anew
+				tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
 			}
-		}*/
+		}
 	}
 	
-	// TODO: Enable tab support
-	/*InitTabs( ge( 'EditorTabs' ), function( pages )
+	// Reinitialize tabs with proper callback
+	InitTabs( ge( 'EditorTabs' ), function( self, pages )
 	{
-		console.log( pages );
-		return true;
-	} );*/
+		ge( 'CodeTabPage' ).className = 'Page PageActive';
+		for( var a = 0; a < Application.files.length; a++ )
+		{
+			if( Application.files[a].uniqueId == self.uniqueId )
+			{
+				Application.setCurrentFile( a );
+				return;
+			}
+		}
+		return false;
+	} );
 	
 	this.applySyntaxHighlighting();
 	
@@ -1020,28 +1057,11 @@ Application.setCurrentFile = function( curr )
 		this.files[ this.currentFile ].content = this.editor.getValue();
 		this.files[ this.currentFile ].session = this.getStorableSession( sess );
 	}
-
-	// Make sure we have files
-	if ( !this.files || !this.files[ this.currentFile ] )
-	{
-		if( this.files )
-		{
-			for( var a = 0; a < this.files.length; a++ )
-			{
-				this.currentFile = a;
-			}
-		}
-		// No files now? Make new empty file..
-		else
-		{
-			this.newFile();
-		}
-	}
 	
 	// Store current scroll top and values etc
 	if( sess && ( curr || curr === 0 ) && this.files[ this.currentFile ] )
 	{
-		var f = this.files[this.currentFile];
+		var f = this.files[ this.currentFile ];
 		if( curr != this.currentFile )
 		{
 			f.content = Application.editor.getValue();
@@ -1054,7 +1074,29 @@ Application.setCurrentFile = function( curr )
 		this.currentFile = curr;
 	}
 	
-	ge( 'CodeEditorTab' ).innerHTML = this.files[ this.currentFile ].filename;
+	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+	var foundTab = false;
+	for( var a = 0; a < tabs.length; a++ )
+	{
+		if( tabs[a].uniqueId == this.files[ this.currentFile ].uniqueId )
+		{
+			if( !tabs[a].classList.contains( 'TabActive' ) )
+			{
+				tabs[a].onclick();
+			}
+			var fn = this.files[ this.currentFile ].filename;
+			if( fn.indexOf( ':' ) > 0 )
+			{
+				fn = fn.split( ':' )[1];
+				if( fn.indexOf( '/' ) > 0 )
+				{
+					fn = fn.split( '/' ).pop();
+				}
+			}
+			tabs[a].innerHTML = fn;
+			break;
+		}
+	}
 
 	// Manage undo
 	if( this.files[this.currentFile].session )
@@ -1082,6 +1124,9 @@ Application.setCurrentFile = function( curr )
 
 	// Enable word wrapping
 	this.refreshAceSettings();
+	
+	// Syntax highlighting
+	this.applySyntaxHighlighting();
 };
 
 // Check if file is to be added to project
@@ -1172,6 +1217,9 @@ function FileInProjectCheck( currentFile )
 // Close a file
 Application.closeFile = function()
 {
+	// Remember current file
+	var currId = this.files[ this.currentFile ].uniqueId;
+	
 	var newFiles = [];
 	var pick = this.currentFile;
 	for ( var a = 0; a < this.files.length; a++ )
@@ -1181,7 +1229,8 @@ Application.closeFile = function()
 			newFiles.push( {
 				content: this.files[a].content,
 				filename: this.files[a].filename,
-				touched: this.files[a].touched
+				touched: this.files[a].touched,
+				uniqueId: this.files[a].uniqueId
 			} );
 			this.currentFile = newFiles.length - 1;
 	    }
@@ -1230,12 +1279,36 @@ Application.closeFile = function()
 		this.newFile();
 	}
 	
+	// Remove the previous current file
+	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+	for( var a = 0; a < tabs.length; a++ )
+	{
+		if( tabs[a].uniqueId == currId )
+		{
+			tabs[a].parentNode.removeChild( tabs[a] );
+		}
+	}
+	
 	this.refreshFilesList();
 }
 
 Application.closeAllFiles = function()
 {
 	this.files = [];
+	
+	// Flush the tabs
+	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+	var removes = [];
+	for( var a = 0; a < tabs.length; a++ )
+	{
+		removes.push( tabs[a] );
+	}
+	for( var a = 0; a < removes.length; a++ )
+	{
+		removes[ a ].parentNode.removeChild( removes[a] );
+	}
+	delete removes;
+	
 	this.editor.setValue ( '' );
 	this.editor.clearSelection ();
 	this.editor.getSession().setScrollTop ( 0 );
@@ -1351,7 +1424,6 @@ Application.createFileGUI = function( parentPath )
 					f.onSave = function()
 					{
 						subs.removeChild( d );
-						Application.fileBrowser.clear();
 						Application.fileBrowser.refresh();
 					}
 					f.save( ' ' );

@@ -83,6 +83,7 @@ enum {
 	HTTP_HEADER_EXPECTED_CONTENT_LENGTH,
 	HTTP_HEADER_RANGE,
 	HTTP_HEADER_X_FRAME_OPTIONS,
+	HTTP_HEADER_UPGRADE,
 	HTTP_HEADER_END
 };
 
@@ -114,7 +115,8 @@ static const char *HEADERS[] = {
 	"x-expected-entity-length",
 	"depth",
 	"range",
-	"x-frame-options"
+	"x-frame-options",
+	"upgrade"
 };
 
 //

@@ -1733,7 +1733,7 @@ Friend.Tree.log = function( item, data )
 			}
 			if ( level >= Friend.Tree.ERRORLEVEL_BREAK )
 			{
-				//debugger;
+				console.log( 'Bad error in the tree!' );
 			}
 		}
 	}

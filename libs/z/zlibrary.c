@@ -34,7 +34,7 @@
 #include <util/string.h>
 #include <network/http.h>
 #include <openssl/sha.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <util/buffered_string.h>
 #include <system/json/json_converter.h>
 #include <system/user/user_session.h>

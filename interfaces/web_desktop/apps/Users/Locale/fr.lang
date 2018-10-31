@@ -30,6 +30,8 @@ i18n_preinstall                      : préinstaller
 
 i18n_startup-sequence                : Séquence de démarrage
 
+i18n_include_in_dock                 : Place in dock
+
 i18n_add_applications                : Ajouter applications
 i18n_add_apps        		         : Ajouter applications
 i18n_add_selected_apps        		 : Ajouter apps sélectionnées

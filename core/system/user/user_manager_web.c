@@ -35,6 +35,7 @@
 #include <system/systembase.h>
 #include <system/fsys/device_handling.h>
 #include <system/user/user_sessionmanager.h>
+#include <util/session_id.h>
 
 /**
  * Http web call processor
@@ -918,6 +919,8 @@ Http *UMWebRequest( void *m, char **urlpath, Http* request, UserSession *loggedS
 				if( logusr != NULL && canChange == TRUE )
 				{
 					DEBUG("[UMWebRequest] FC will do a change\n");
+					
+					generate_uuid( &( logusr->u_UUID ) );
 					
 					UMUserUpdateDB( l->sl_UM, logusr );
 					

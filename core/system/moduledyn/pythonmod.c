@@ -32,7 +32,7 @@
 #else
 #define ARG_MAX 20000
 #endif
-#include "systembase.h"
+#include <system/systembase.h>
 
 #define SUFFIX "py"
 #define LBUFFER_SIZE 8192

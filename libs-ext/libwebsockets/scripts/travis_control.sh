@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 if [ "$COVERITY_SCAN_BRANCH" != 1 -a "$TRAVIS_OS_NAME" = "osx" ]; then
 	if [ "$LWS_METHOD" != "mbedtls" ] ; then
@@ -15,6 +15,7 @@ else
 			cmake --build . &&
 			sudo make install &&
 			../minimal-examples/selftests.sh &&
+			../scripts/test-dbus-proxy.sh &&
 			../scripts/h2spec.sh &&
 			../scripts/attack.sh &&
 			../scripts/h2load.sh &&

@@ -22,6 +22,8 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 {
 	var self = this;
 	var mainview = false;
+	var multiSelect = true;
+	
 	// We have a view
 	if( object && object.setBlocker )
 	{
@@ -36,6 +38,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				case 'triggerFunction':
 					triggerfunction = object[a];
+					break;
+				case 'multiSelect':
+					multiSelect = object[a];
 					break;
 				case 'path':
 					path = object[a];
@@ -56,9 +61,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 	}
 
+	// Save never has multiselect
+	if( type == 'save' )
+	{
+		multiSelect = false;
+	}
+
 	if( !path ) path = 'Mountlist:';
-	if ( !triggerfunction ) return;
-	if ( !type ) type = 'open';
+	if( !triggerfunction ) return;
+	if( !type ) type = 'open';
 	if( !mainview )
 	{
 		if( currentMovable )
@@ -71,6 +82,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if( !filename ) filename = '';
 
 	var ftitle = '';
+	
 	switch ( type )
 	{
 		case 'path':  ftitle = i18n( 'file_open_path' );     break;
@@ -105,7 +117,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	w.onClose = function()
 	{
 		if( w.md ) w.md.close();
-		//triggerfunction( false );
 	}
 
 	// Default path
@@ -113,18 +124,15 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	if ( typeof ( path ) == 'object' )
 		this.path = path.path;
 
-	// Some default vars
-	this.single = true;
-
 	// Block main view while this dialog is open!
 	if( mainview ) mainview.setBlocker( w );
 	
 	// Select an element
 	w.select = function( ele )
-	{
+	{	
 		var cont = this.getContainer ();
 		var eles = cont.getElementsByTagName( 'div' );
-		for ( var a = 0; a < eles.length; a++ )
+		for( var a = 0; a < eles.length; a++ )
 		{
 			if ( eles[a].parentNode != cont )
 				continue;
@@ -132,20 +140,24 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				eles[a].isselected = eles[a].isselected ? false : true;
 			}
-			else if ( !dialog.single && eles[a] != ele )
-			{
-				eles[a].isselected = false;
-			}
 		}
+		
 		// Second pass, color
-		for ( var a = 0; a < eles.length; a++ )
+		for( var a = 0; a < eles.length; a++ )
 		{
 			if ( eles[a].parentNode != cont )
 				continue;
+			
 			// Remove class
 			eles[a].className = eles[a].className.split ( ' Selected' ).join ( '' );
+			
 			// Add class on selected
-			if ( eles[a].isselected == true )
+			if( !multiSelect && eles[a].isselected == true && eles[a] != ele  )
+			{
+				eles[a].classList.remove( 'Selected' );
+				eles[a].isselected = false;
+			}
+			else if( eles[a].isselected == true )
 			{
 				if( !eles[a].classList.contains( 'Selected' ) )
 					eles[a].classList.add( 'Selected' );
@@ -153,7 +165,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			else if( eles[a].classList.contains( 'Selected' ) )
 				eles[a].classList.remove( 'Selected' );
 		}
-		if ( dialog.type == 'save' )
+		if( dialog.type == 'save' )
 		{
 			dialog.saveinput.value = ele.filename;
 		}
@@ -199,13 +211,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		var cont = this.getContainer ();
 		var eles = cont.getElementsByTagName ( 'div' );
 		var out = [];
-		for ( var a = 0; a < eles.length; a++ )
+		for( var a = 0; a < eles.length; a++ )
 		{
 			if ( eles[a].parentNode != cont ) continue;
 			if ( eles[a].isselected )
 				out.push ( eles[a].obj );
 		}
-		if ( out.length )
+		if( out.length )
 		{
 			triggerfunction( out );
 		}
@@ -528,7 +540,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			w.books = false;
 		}
 	} );
-
+	
 	if( type != 'open' && type != 'save' )
 		type = 'open';
 

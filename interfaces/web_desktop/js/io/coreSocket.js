@@ -45,7 +45,8 @@ FriendWebSocket = function( conf )
 		length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
 		If the blob byte size is above maxFCBytes, the event is chunked before sending.
 	*/
-	self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
+	//self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
+	self.maxFCBytes = 8192;
 	self.metaReserve = 512;
 	self.maxStrLength = ( Math.floor( self.maxFCBytes / 4 )) - self.metaReserve;
 		// worst case scenario its all 4 byte unicode
@@ -62,8 +63,8 @@ FriendWebSocket = function( conf )
 	self.reconnectAttempt = 0; // delay is multiplied with attempts to find how long the next delay is
 	self.reconnectMaxAttempts = 0; // 0 to keep hammering
 	self.reconnectScale = {
-		min : 5,
-		max : 8,
+		min: 5,
+		max: 8
 	}; // random in range, makes sure not all the sockets
 	   // in the world reconnect at the same time
 	
@@ -597,12 +598,21 @@ FriendWebSocket.prototype.chunkSend = function( str )
 	function chunkData( str )
 	{
 		var parts = [];
+		const numChunks = Math.ceil(str.length / self.chunkDataLength );
+		for (let i = 0, o = 0; i < numChunks; ++i, o += self.chunkDataLength ) 
+		{
+			var d = str.substr(o, self.chunkDataLength);
+			parts.push( d );
+		}
+		/*
+		var parts = [];
 		for( var i = 0; i * self.chunkDataLength < str.length; i++ )
 		{
 			var startIndex = self.chunkDataLength * i;
 			var part = str.substr( startIndex, self.chunkDataLength );
 			parts.push( part );
 		}
+		*/
 		
 		return parts;
 	}

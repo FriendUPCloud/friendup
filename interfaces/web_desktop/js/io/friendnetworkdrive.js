@@ -26,6 +26,7 @@
  */
 
 Friend = window.Friend || {};
+
 FriendNetworkDrive =
 {
 	activated: false,
@@ -306,8 +307,8 @@ FriendNetworkDrive =
 				Filesize: 4096,
 				Flags: '',
 				Type: 'Dormant',
-				Path: path ,
-				Volume: door.title,
+				Path: path,
+				Volume: door.title + ':',
 				Dormant: door,
 				AutoMount: true
 			};
@@ -328,7 +329,7 @@ FriendNetworkDrive =
 			return conf;
 		};
 		function doGetDirectory( path, callback )
-		{			
+		{	
 			self.getDirectory( path, function( response, directories ) 
 			{
 				if ( response )
@@ -379,7 +380,7 @@ FriendNetworkDrive =
 				}
 			} );
 		};
-		function doSetFileInformation( permissions, callback )
+		function doSetFileInformation( path, permissions, callback )
 		{
 			self.setFileInformation( path, permissions, function( response )
 			{
@@ -745,12 +746,12 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.updateTree = function( callbac
 							for ( u = 0; u < community.users.length; u++ )
 							{
 								var parentPath = 'Friend Network:Communities/' + community.name;
-								var friend = new Friend.FriendNetworkDrive.FriendRoot( community.users[ u ], parentPath, community, users );
-								friend.init( function( response, friend, extra )
+								var netfriend = new Friend.FriendNetworkDrive.FriendRoot( community.users[ u ], parentPath, community, users );
+								netfriend.init( function( response, nfriend, extra )
 								{
 									if ( response )
 									{
-										extra.friends[ friend.name ] = friend;
+										extra.friends[ nfriend.name ] = nfriend;
 									}
 								}, community );
 							}
@@ -832,8 +833,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.getDirectory = function( path,
 					var extraPath = path.substring( community.name.length + 1 + friendName.length + 1 );
 					if ( community.friends[ friendName ] )
 					{
-						var friend = community.friends[ friendName ];
-						friend.getDirectory( extraPath, function( response, directory, extra )
+						var nfriend = community.friends[ friendName ];
+						nfriend.getDirectory( extraPath, function( response, directory, extra )
 						{
 							// Add the name of the community to the path
 							for ( var d = 0; d < directory.length; d++ )
@@ -891,8 +892,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.read = function( path, mode, c
 					var extraPath = path.substring( community.name.length + 1 + friendName.length + 1 );
 					if ( community.friends[ friendName ] )
 					{
-						var friend = community.friends[ friendName ];
-						friend.read( extraPath, mode, function( response, data, extra )
+						var nfriend = community.friends[ friendName ];
+						nfriend.read( extraPath, mode, function( response, data, extra )
 						{
 							callback( response, data, extra );							
 						}, extra );
@@ -944,8 +945,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.write = function( path, data, 
 					var extraPath = path.substring( community.name.length + 1 + friendName.length + 1 );
 					if ( community.friends[ friendName ] )
 					{
-						var friend = community.friends[ friendName ];
-						friend.write( extraPath, data, function( response, data, extra )
+						var nfriend = community.friends[ friendName ];
+						nfriend.write( extraPath, data, function( response, data, extra )
 						{
 							callback( response, data, extra );							
 						}, extra );
@@ -1001,8 +1002,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.getFileInformation = function(
 		var extraPath = path.substring( community.name.length + 1 + friendName.length + 1 );
 		if ( community.friends[ friendName ] )
 		{
-			var friend = community.friends[ friendName ];
-			friend.getFileInformation( extraPath, function( response, data, extra )
+			var nfriend = community.friends[ friendName ];
+			nfriend.getFileInformation( extraPath, function( response, data, extra )
 			{
 				callback( response, data, extra );							
 			}, extra );
@@ -1040,8 +1041,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.setFileInformation = function(
 		var extraPath = path.substring( community.name.length + 1 + friendName.length + 1 );
 		if ( community.friends[ friendName ] )
 		{
-			var friend = community.friends[ friendName ];
-			friend.setFileInforation( extraPath, permissions, function( response, data, extra )
+			var nfriend = community.friends[ friendName ];
+			nfriend.setFileInforation( extraPath, permissions, function( response, data, extra )
 			{
 				callback( response, data, extra );							
 			}, extra );
@@ -1108,8 +1109,8 @@ Friend.FriendNetworkDrive.CommunityRoot.prototype.dosAction = function( action, 
 		}
 		if ( friendName && community.friends[ friendName ] )
 		{
-			var friend = community.friends[ friendName ];
-			friend.dosAction( action, newParameters, function( response, data, extra )
+			var nfriend = community.friends[ friendName ];
+			nfriend.dosAction( action, newParameters, function( response, data, extra )
 			{
 				callback( response, data, extra );							
 			}, extra );

@@ -34,6 +34,7 @@ Workspace = {
 	icons: [],
 	reloginAttempts: 0,
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
+	mode: 'default',
 	initialized: false,
 	protocol: _protocol,
 	menu: [],
@@ -794,15 +795,15 @@ Workspace = {
 	renewAllSessionIds: function()
 	{
 		// Check if there's a queue of objects waiting to run
-		if( friend.cajax && friend.cajax.length )
+		if( Friend.cajax && Friend.cajax.length )
 		{
-			for( var a = 0; a < friend.cajax.length; a++ )
+			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
-				friend.cajax[a].open();
-				friend.cajax[a].send();
+				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
+				Friend.cajax[a].open();
+				Friend.cajax[a].send();
 			}
-			friend.cajax = [];
+			Friend.cajax = [];
 		}
 	},
 	loginSessionId: function( sessionid, callback, ev )
@@ -1134,6 +1135,7 @@ Workspace = {
 				'webclient/3rdparty/adapter.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
+				'webclient/js/utils/utilities.js;' +
 				'webclient/js/io/directive.js;' +
 				'webclient/js/io/door.js;' +
 				'webclient/js/io/dormant.js;' +
@@ -1146,10 +1148,12 @@ Workspace = {
 				'webclient/js/io/friendnetworkshare.js;' +
 				'webclient/js/io/friendnetworkfriends.js;' +
 				'webclient/js/io/friendnetworkdrive.js;' +
+				'webclient/js/io/friendnetworkpower.js;' +
 				'webclient/js/io/friendnetworkextension.js;' +
 				'webclient/js/io/friendnetworkdoor.js;' +
 				'webclient/js/io/friendnetworkapps.js;' +
 				'webclient/js/io/DOS.js;' +
+				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 				'webclient/js/gui/widget.js;' +
 				'webclient/js/gui/listview.js;' +
 				'webclient/js/gui/directoryview.js;' +

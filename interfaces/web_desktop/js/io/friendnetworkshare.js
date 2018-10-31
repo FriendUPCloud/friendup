@@ -25,7 +25,7 @@
  * @date first pushed on 12/04/2018
  */
  
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetworkShare =
 {

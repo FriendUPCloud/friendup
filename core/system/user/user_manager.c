@@ -699,6 +699,8 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 			}
 		}
 	}
+	
+	generate_uuid( &( usr->u_UUID ) );
 
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
 	sb->LibrarySQLDrop( sb, sqlLib );
@@ -1319,7 +1321,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 
 		if( user != NULL )
 		{
-			/*
+			// Generate the API user session
 			char temptext[ 2048 ];
 			char *sesid = session_id_generate( );
 			if( user->u_MainSessionID != NULL )
@@ -1330,7 +1332,6 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			
 			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
 			sqlLib->QueryWithoutResults( sqlLib, temptext );
-			*/
 			
 			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
 			UMAssignGroupToUser( um, user );

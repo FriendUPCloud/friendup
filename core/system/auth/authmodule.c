@@ -154,7 +154,7 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 		
 		SystemBase *sb = (SystemBase *) lsb;
 		// Get a copy of the properties.library
-		struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)sb->LibraryPropertiesGet( sb );
+		struct PropertiesInterface *plib = &(sb->sl_PropertiesInterface);
 		if( plib != NULL )
 		{
 			char *ptr = getenv("FRIEND_HOME");
@@ -181,8 +181,6 @@ AuthMod *AuthModNew( void *lsb, const char *path, const char* name, long version
 			}
 			
 			if( prop ) plib->Close( prop );
-			
-			sb->LibraryPropertiesDrop( sb, plib );
 		}
 		
 		

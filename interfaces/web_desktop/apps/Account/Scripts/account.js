@@ -74,41 +74,83 @@ Application.run = function( msg, iface )
 			modeOut += '<option value="' + a + '"' + sel + '>' + modes[a] + '</option>';
 		}
 		
-		f.replacements = {
+		f.replacements = 
+		{
 			languages: languages,
 			modes: modeOut
 		};
-		
-		//f.replacements = {
-		//	'username' : s.Name,
-		//	'fullname' : s.FullName,
-		//	'email'    : s.Email
-		//};
-		f.i18n();
-		f.onLoad = function( data )
+
+		// If FriendNetwork is enabled, add the options		
+		var m = new Module('system');
+		m.onExecuted = function( e,d )
 		{
-			v.setContent( data );
-			s.command = 'userinfo';
-			v.sendMessage( s );
-			
-			if( msg.args == 'addstorage' )
+			if ( e == 'ok' && parseInt( d ) == 1 )
 			{
-				v.sendMessage( { command: 'addstorage' } );
-			}
-			
-			
-			//Authenticate.load( 'publickey', displayPublicKey );
-			
-			Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( data )
-			{
-				if( data && data.publickey )
+				f.replacements.friendNetwork1 = '\
+<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetwork' ) + '</div>\
+<div class="Tab IconSmall fa-institution">' + i18n( 'i18n_friendNetworkPowerSharing' ) + '</div>';
+
+				f.replacements.friendNetwork3 = '\
+<div class="Tab IconSmall fa-laptop">' + i18n( 'i18n_device_information' ) + '</div>';
+
+				var ff = new File( 'Progdir:Templates/friendnetwork1.html' );
+				ff.onLoad = function( data )
 				{
-					displayPublicKey( data.publickey );
-				}
-			} );
+					f.replacements.friendNetwork2 = data;
+
+					var fff = new File( 'Progdir:Templates/friendnetwork2.html' );
+					fff.onLoad = function( data )
+					{
+						f.replacements.friendNetwork4 = data;
+						finish();
+					};
+					fff.load();
+				};
+				ff.load();
+			}				
+			else
+			{
+				f.replacements.friendNetwork1 = '';
+				f.replacements.friendNetwork2 = '';
+				f.replacements.friendNetwork3 = '';
+				f.replacements.friendNetwork4 = '';
+				finish();
+			}
+		};
+		m.execute( 'checkfriendnetwork' );
+
+		function finish()
+		{
+			//f.replacements = {
+			//	'username' : s.Name,
+			//	'fullname' : s.FullName,
+			//	'email'    : s.Email
+			//};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				v.setContent( data );
+				s.command = 'userinfo';
+				v.sendMessage( s );
+				
+				if( msg.args == 'addstorage' )
+				{
+					v.sendMessage( { command: 'addstorage' } );
+				}				
+				
+				//Authenticate.load( 'publickey', displayPublicKey );
+				
+				Application.sendMessage( { type: 'encryption', command: 'publickey', args: { encoded: false } }, function( data )
+				{
+					if( data && data.publickey )
+					{
+						displayPublicKey( data.publickey );
+					}
+				} );
+			};
+			f.load();
 		}
-		f.load();
-	}
+	};
 	m.execute( 'userinfoget', { id: msg.userId } );	
 }
 

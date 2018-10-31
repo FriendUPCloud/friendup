@@ -34,7 +34,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <util/string.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/nodes.h>
 #include <time.h>
 #include <system/systembase.h>

@@ -511,7 +511,7 @@ Application.saveFile = function( filename, content, mode )
 			Application.setProjectTitle();
 			
 			// Sync the new files down
-			Application.sendFileListToEditor(files, currentFile);
+			Application.sendFileListToEditor( files, currentFile );
 			
 			// Update status with text..
 			Application.masterView.sendMessage( {
@@ -705,33 +705,43 @@ Application.receiveMessage = function( msg )
 			// Make sure it's up to date!
 			Application.getCurrentPath();
 			
-			var f = new Filedialog( Application.masterView, function( files )
-			{
-				if( !files || !files.length || !files[0].Path )
-					return;
-				
-				// Close existing
-				Application.closeAllFiles();
-				
-				Application.prevFilename = Application.projectFilename;
-				Application.projectFilename = files[0].Path;
-				Application.setProjectPath( files[0].Path );
-				
-				// Update path again
-				Application.getCurrentPath();
-				
-				var f = new File( files[0].Path );
-				f.onLoad = function( data )
+			var flags = {
+				type: 'load',
+				mainView: Application.masterView,
+				filename: false,
+				path: Application.currentPath,
+				title: i18n( 'i18n_load_project' ),
+				multiSelect: false,
+				triggerFunction: function( files )
 				{
-					var proj = JSON.parse( data );
-					Application.project = {}; // Clear the project
-					for( var a in proj ) Application.project[a] = proj[a];
-					Application.setProjectTitle();
+					if( !files || !files.length || !files[0].Path )
+						return;
+				
+					// Close existing
+					Application.closeAllFiles();
+				
+					Application.prevFilename = Application.projectFilename;
 					Application.projectFilename = files[0].Path;
-					Application.sendMessage( { command: 'open_project_files' } );
+					Application.setProjectPath( files[0].Path );
+				
+					// Update path again
+					Application.getCurrentPath();
+				
+					var f = new File( files[0].Path );
+					f.onLoad = function( data )
+					{
+						var proj = JSON.parse( data );
+						Application.project = {}; // Clear the project
+						for( var a in proj ) Application.project[a] = proj[a];
+						Application.setProjectTitle();
+						Application.projectFilename = files[0].Path;
+						Application.sendMessage( { command: 'open_project_files' } );
+					}
+					f.load();
 				}
-				f.load();
-			}, Application.currentPath, 'load', false, i18n( 'i18n_load_project' ) );
+			};
+			
+			var f = new Filedialog( flags );
 			break;
 		case 'project_load':
 			Application.projectFilename = msg.path;

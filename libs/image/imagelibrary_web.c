@@ -43,7 +43,7 @@
 // Handle webrequest calls
 //
 
-Http* WebRequest( struct ImageLibrary *l, UserSession *usr, char **urlpath, Http* request, Socket* sock )
+Http* WebRequestImage( struct ImageLibrary *l, UserSession *usr, char **urlpath, Http* request, Socket* sock )
 {
 	Http* response = NULL;
 	

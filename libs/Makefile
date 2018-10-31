@@ -1,5 +1,5 @@
 
-LIB_DIR = properties mysql sqlite echo notifications
+LIB_DIR = mysql sqlite echo notifications
 
 ifeq ($(CYGWIN_BUILD),0)
 LIB_DIR  +=      z image application

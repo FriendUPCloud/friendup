@@ -25,11 +25,11 @@
  * @date first pushed on 12/04/2018
  */
 
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetworkFriends =
 {
-	configVersion: 23,
+	configVersion: 25,
 	loadConfigs:
 	{
 		friends: true,
@@ -158,6 +158,7 @@ FriendNetworkFriends =
 					self.workgroupPassword = fnet.password;
 					self.acceptMessagesFromAny = fnet.acceptAny;
 					self.downloadPath = fnet.downloadPath ? fnet.downloadPath : '';
+					self.powerSharing = fnet.powerSharing;
 					
 					// Load 'unknown' image
 					var unknown = new Image();
@@ -201,38 +202,38 @@ FriendNetworkFriends =
 									// Creates necessary arrays
 									for ( var f = 0; f < self.friends.length; f++ )
 									{
-										var friend = self.friends[ f ];
+										var netfriend = self.friends[ f ];
 
 										// Creates remaining structures if not defined (should not happen)
-										if ( !self.loadConfigs[ 'pending' ] || !friend.pending )
-											friend.pending = [];
-										if ( !self.loadConfigs[ 'waiting' ] || !friend.waiting )
-											friend.waiting = [];
-										if ( !self.loadConfigs[ 'sharing' ] || !friend.shared )
-											friend.shared = [];
-										if ( !self.loadConfigs[ 'messages' ] || !friend.messages )
-											friend.messages = [];
+										if ( !self.loadConfigs[ 'pending' ] || !netfriend.pending )
+											netfriend.pending = [];
+										if ( !self.loadConfigs[ 'waiting' ] || !netfriend.waiting )
+											netfriend.waiting = [];
+										if ( !self.loadConfigs[ 'sharing' ] || !netfriend.shared )
+											netfriend.shared = [];
+										if ( !self.loadConfigs[ 'messages' ] || !netfriend.messages )
+											netfriend.messages = [];
 
 										// Clear 'sending' state of pending messages
-										for ( var p = 0; p < friend.pending.length; p++ )
-											friend.pending[ p ].sending = false;
+										for ( var p = 0; p < netfriend.pending.length; p++ )
+											netfriend.pending[ p ].sending = false;
 
 										// Creates the icon image
-										if ( friend.icon )
+										if ( netfriend.icon )
 										{
 											var image = new Image();
-											image.fnetFriend = friend;
+											image.fnetFriend = netfriend;
 											image.onload = function()
 											{
 												this.fnetFriend.iconImage = this;
 												self.refreshFriendWidgets( true );
 											};
-											image.src = friend.icon;
+											image.src = netfriend.icon;
 										}
 										else
 										{
-											friend.icon = self.unknownIcon;
-											friend.iconImage = self.unknownIconImage;
+											netfriend.icon = self.unknownIcon;
+											netfriend.iconImage = self.unknownIconImage;
 											self.forceWidgetsRefresh = true;
 										}
 
@@ -247,9 +248,9 @@ FriendNetworkFriends =
 											{
 												clearInterval( handle );
 
-												for ( var m = 0; m < friend.waiting.length; m++ )
+												for ( var m = 0; m < netriend.waiting.length; m++ )
 												{
-													var message = friend.waiting[ m ];
+													var message = netriend.waiting[ m ];
 													switch ( message.subject )
 													{
 														case '<---folder--->':
@@ -283,7 +284,7 @@ FriendNetworkFriends =
 																	type: 'application (private)',
 																	description: message.content,
 																	password: message.password,
-																	friend: friend
+																	friend: netfriend
 																} );
 															}
 															break;
@@ -293,7 +294,6 @@ FriendNetworkFriends =
 										}, 100 );
 									}
 								}
-
 							}
 
 							// Register for hosts list update
@@ -337,11 +337,11 @@ FriendNetworkFriends =
 								// Make the icons flash again
 								for ( var f = 0; f < self.friends.length; f++ )
 								{
-									var friend = self.friends[ f ];
-									if ( friend.toFlash )
+									var netfriend = self.friends[ f ];
+									if ( netfriend.toFlash )
 									{
-										friend.toFlash = false;
-										self.flashFriendWidget( friend )
+										netfriend.toFlash = false;
+										self.flashFriendWidget( netfriend )
 									}
 								}
 
@@ -366,7 +366,7 @@ FriendNetworkFriends =
 								{
 									self.watchDog();
 								}, 500 );
-							}
+							}							
 						};
 						m.execute( 'getsetting', { 'setting': 'friendnetworkfriends' } );
 					};
@@ -574,27 +574,27 @@ FriendNetworkFriends =
 			var friends = [];
 			for ( var f = 0; f < self.friends.length; f++ )
 			{
-				var friend = self.friends[ f ];
-				if ( friend.session )
+				var netfriend = self.friends[ f ];
+				if ( netfriend.session )
 					continue;
 				var data = {};
 				if ( self.saveConfigs[ 'friends' ] )
 				{
-					data.name = friend.name;
-					data.hostName = friend.hostName;
-					data.icon = friend.icon ? friend.icon : false;
-					data.fullName = friend.fullName ? friend.fullName : false;
-					data.temporary = friend.temporary ? true : false;
-					data.keepOpen = friend.keepOpen ? true : false;
-					data.toFlash = friend.handleFlash ? true : false;
+					data.name = netfriend.name;
+					data.hostName = netfriend.hostName;
+					data.icon = netfriend.icon ? netfriend.icon : false;
+					data.fullName = netfriend.fullName ? netfriend.fullName : false;
+					data.temporary = netfriend.temporary ? true : false;
+					data.keepOpen = netfriend.keepOpen ? true : false;
+					data.toFlash = netfriend.handleFlash ? true : false;
 					if ( self.saveConfigs[ 'pending' ] )
-						data.pending = friend.pending;
+						data.pending = netfriend.pending;
 					if ( self.saveConfigs[ 'waiting' ] )
-						data.waiting = friend.waiting;
+						data.waiting = netfriend.waiting;
 					if ( self.saveConfigs[ 'sharing' ] )
-						data.shared = friend.shared;
+						data.shared = netfriend.shared;
 					if ( self.saveConfigs[ 'messages' ] )
-						data.messages = friend.messages;
+						data.messages = netfriend.messages;
 					friends.push( data );
 				}
 			}
@@ -635,6 +635,11 @@ FriendNetworkFriends =
 		}
 
 		// Open the host
+		var tags = [];
+		if ( self.powerSharing && self.powerSharing.enabled )
+		{
+			tags.push( '###power ' );
+		}
 		self.communicationHostName = self.communicationHostBase + ':::)' + Math.random() * 1000000;		// Add random to the name
 		FriendNetwork.startHosting
 		(
@@ -647,7 +652,8 @@ FriendNetworkFriends =
 				{
 					workgroup: self.workgroup,
 					machineInfos: self.machineInfos,
-					image: self.machineInfos.icon
+					image: self.machineInfos.icon,
+					tags: tags
 				},
 				callback: self.handleCommunicationHost
 			}
@@ -721,7 +727,7 @@ FriendNetworkFriends =
 						var connected = self.connectedFriends[ msg.key ];
 						if ( connected )
 						{
-							var friend = self.getFriendFromName( connected.name );
+							var netfriend = self.getFriendFromName( connected.name );
 							switch ( msg.data.command )
 							{
 								case 'sessionToSession':
@@ -730,11 +736,11 @@ FriendNetworkFriends =
 									{
 										// A garder!
 										case 'knockKnock?':
-											if ( friend )
+											if( netfriend )
 											{
-												if ( !friend.sharingLocalDoors )
+												if ( !netfriend.sharingLocalDoors )
 												{
-													friend.sharingLocalDoors = true;
+													netfriend.sharingLocalDoors = true;
 
 													// Scan the localdoors
 													for ( var d = 0; d < FriendNetworkDoor.localDoors.length; d++ )
@@ -744,13 +750,13 @@ FriendNetworkFriends =
 														if ( door )
 														{
 															localDoor.checkDoor = door;
-															var title = localDoor.title + ' on ' + friend.name
+															var title = localDoor.title + ' on ' + netfriend.name
 															FriendNetworkDoor.shareDoor( door,
 															{
 																name : localDoor.title,
 																type: 'drive (session)',
 																password: '' + Math.random() * 1000000 + Math.random() * 1000000,
-																friend: friend
+																friend: netffriend
 															} );			
 														}
 													}
@@ -787,7 +793,7 @@ FriendNetworkFriends =
 																)
 																localDoor.checkDoor = false;
 															}		
-															self.pushPending( friend,
+															self.pushPending( netfriend,
 															{
 																type: 'sessionToSession',
 																id: msg.data.id,
@@ -800,10 +806,10 @@ FriendNetworkFriends =
 											break;
 											
 										case 'knockKnock?Response':
-											friend.knockKnock = false;
-											friend.sessionConnecting = false;
-											friend.sessionConnected = true;
-											self.activateSessionFriend( friend );
+											netfriend.knockKnock = false;
+											netfriend.sessionConnecting = false;
+											netfriend.sessionConnected = true;
+											self.activateSessionFriend( netfriend );
 											var handle = setInterval( function()
 											{
 												for ( var d = 0; d < message.doors.length; d++ )
@@ -812,7 +818,7 @@ FriendNetworkFriends =
 													if ( !door.connecting && !door.connected )
 													{
 														door.connecting = true;
-														FriendNetworkDoor.connectToDoor( friend.name, door.name, 'drive (session)', door.password, function( response, connection, extra )
+														FriendNetworkDoor.connectToDoor( netfriend.name, door.name, 'drive (session)', door.password, function( response, connection, extra )
 														{
 															if ( response == 'connected' )
 															{
@@ -870,11 +876,10 @@ FriendNetworkFriends =
 											break;
 
 										default:
-										debugger;
 											FriendNetworkExtension.sendMessageToExtension( message, function( response )
 											{
 												// Send the answer back to the friend who asked for it
-												self.pushPending( friend,
+												self.pushPending( netfriend,
 												{
 													type: 'sessionToSession',
 													id: msg.data.id,
@@ -887,22 +892,22 @@ FriendNetworkFriends =
 								case 'message':
 									var accepted = false;
 									var message = msg.data.message;
-									if ( friend )
+									if ( netfriend )
 									{
 										var noFlash = false;
 
 										// If notification -> push in messages
 										if ( message.subject == '<---notification--->' )
 										{
-											self.pushMessage( friend, message );
-											friend.notification = message;
+											self.pushMessage( netfriend, message );
+											netfriend.notification = message;
 										}
 										else if ( message.subject == '<---file--->' )
 										{
 											if ( self.downloadPath != '' )
 											{
 												var fileName = self.getFileName( message.path );
-												self.pushPending( friend,
+												self.pushPending( netfriend,
 												{
 													type: 'getFile',
 													id: message.id,
@@ -911,7 +916,7 @@ FriendNetworkFriends =
 												} );
 												noFlash = true;
 											}
-											self.pushMessage( friend, message );
+											self.pushMessage( netfriend, message );
 										}
 										else if ( message.subject != '<---file--->' && message.subject != '<---folder--->' && message.subject != '<---application--->' )
 										{
@@ -919,16 +924,16 @@ FriendNetworkFriends =
 												self.conversations[ message.conversationId ] = [];
 											self.conversations[ message.conversationId ].push( message );
 											// Update conversations. If conversation open, do not push the message
-											if ( !self.updateOpenConversations( friend, message.id, message.conversationId ) )
-												self.pushMessage( friend, message );
+											if ( !self.updateOpenConversations( netfriend, message.id, message.conversationId ) )
+												self.pushMessage( netfriend, message );
 										}
 										else
 										{
 											// Store the message in friend shared array
-											self.pushShared( friend, message );
+											self.pushShared( netfriend, message );
 										}
 										if ( !noFlash )
-											self.flashFriendWidget( friend );
+											self.flashFriendWidget( netfriend );
 										accepted = true;
 									}
 									else
@@ -997,9 +1002,9 @@ FriendNetworkFriends =
 									FriendNetwork.send( { key: msg.key, data: { command: 'messageResponse', id: msg.data.id, accepted: accepted } } );
 									return;
 								case 'getFile':
-									if ( friend )
+									if ( netfriend )
 									{
-										self.removeWaiting( friend, msg.data.id );
+										self.removeWaiting( netfriend, msg.data.id );
 
 										// Load the file
 										var file = new File( msg.data.path )
@@ -1035,15 +1040,15 @@ FriendNetworkFriends =
 									FriendNetwork.send( { key: msg.key, data: { command: 'getInformationResponse', id: msg.data.id, information: information } } );
 									return;
 								case 'refuseMessage':
-									if ( friend && friend.waiting )
+									if ( netfriend && netfriend.waiting )
 									{
-										for ( var m = 0; m < friend.waiting.length; m++ )
+										for ( var m = 0; m < netfriend.waiting.length; m++ )
 										{
-											if ( friend.waiting[ m ].id == msg.data.id )
+											if ( netfriend.waiting[ m ].id == msg.data.id )
 											{
-												friend.waiting[ m ].refused = true;
+												netfriend.waiting[ m ].refused = true;
 												self.storeFriends();
-												self.refreshTrayIconBubble( friend );
+												self.refreshTrayIconBubble( netfriend );
 												break;
 											}
 										}
@@ -1051,22 +1056,22 @@ FriendNetworkFriends =
 									}
 									break;
 								case 'messageRead':
-									if ( friend )
+									if ( netfriend )
 									{
-										self.removeWaiting( friend, msg.data.id );
+										self.removeWaiting( netfriend, msg.data.id );
 										FriendNetwork.send( { key: msg.key, data: { command: 'messageReadResponse', id: msg.data.id } } );
 									}
 									break;
 								case 'stopShare':
 									// Closes the door
-									FriendNetworkDoor.closeSharedDoor( friend.name, msg.data.name );
+									FriendNetworkDoor.closeSharedDoor( netfriend.name, msg.data.name );
 
 									// Removes from 'shared' list
-									for ( var s = 0; s < friend.shared.length; s++ )
+									for ( var s = 0; s < netfriend.shared.length; s++ )
 									{
-										if ( friend.shared[ s ].name == msg.data.name )
+										if ( netfriend.shared[ s ].name == msg.data.name )
 										{
-											self.removeShared( friend, s );
+											self.removeShared( netfriend, s );
 											break;
 										}
 									}
@@ -1075,12 +1080,12 @@ FriendNetworkFriends =
 									break;
 								case 'stopShareFile':
 									// Removed from message list
-									for ( var s = 0; s < friend.messages.length; s++ )
+									for ( var s = 0; s < netfriend.messages.length; s++ )
 									{
-										var mes = friend.messages[ s ];
+										var mes = netfriend.messages[ s ];
 										if ( mes.subject == '<---file--->' && mes.name == msg.data.name )
 										{
-											self.removeMessage( friend, s );
+											self.removeMessage( netfriend, s );
 											break;
 										}
 									}
@@ -1089,11 +1094,11 @@ FriendNetworkFriends =
 									break;
 								case 'stopShareApplication':
 									// Removed from 'shared' list
-									for ( var s = 0; s < friend.shared.length; s++ )
+									for ( var s = 0; s < netfriend.shared.length; s++ )
 									{
-										if ( friend.shared[ s ].name == msg.data.name )
+										if ( netfriend.shared[ s ].name == msg.data.name )
 										{
-											self.removeShared( friend, s );
+											self.removeShared( netfriend, s );
 											break;
 										}
 									}
@@ -1117,79 +1122,79 @@ FriendNetworkFriends =
 		// Look for non connected
 		for ( var f = 0; f < self.friends.length; f++ )
 		{
-			var friend = self.friends[ f ];
+			var netfriend = self.friends[ f ];
 
 			// Trying to connect? Timeout!
 			/*
-			if ( !friend.connected && friend.connecting && !friend.badPassword )
+			if ( !Friend.connected && Friend.connecting && !Friend.badPassword )
 			{
 				var time = new Date().getTime();
-				if ( time - friend.connectingTime > 1000 * 10 )			// 10 seconds timeout
+				if ( time - Friend.connectingTime > 1000 * 10 )			// 10 seconds timeout
 				{
-					friend.connecting = false;
+					Friend.connecting = false;
 
 					// Kills the connection
-					FriendNetwork.disconnectFromHostByName( { hostName: friend.name } );
+					FriendNetwork.disconnectFromHostByName( { hostName: Friend.name } );
 				}
 			}
 			*/
 
 			// Not connected yet online? Try to connect!
-			if ( friend.listedInHosts && !friend.connected && !friend.connecting )
+			if( netfriend.listedInHosts && !netfriend.connected && !netfriend.connecting )
 			{
 				// Find the name
-				if ( friend.badPassword )
+				if( netfriend.badPassword )
 				{
-					friend.connectingTime = new Date().getTime();
-					friend.badPasswordDelay++;
-					if ( friend.badPasswordDelay > 30 )
-						self.connectFriend( friend );
+					netfriend.connectingTime = new Date().getTime();
+					netfriend.badPasswordDelay++;
+					if( netfriend.badPasswordDelay > 30 )
+						self.connectFriend( netfriend );
 				}
 				else
 				{
-					friend.connectingTime = new Date().getTime();
-					self.connectFriend( friend );
+					netfriend.connectingTime = new Date().getTime();
+					self.connectFriend( netfriend );
 				}
 			}
 
 			// Connected? Send eventual pending messages
-			if ( friend.connected )
+			if( netfriend.connected )
 			{
-				self.sendPendingMessages( friend );
+				self.sendPendingMessages( netfriend );
 			}
 		}
 	},
 
 	// Disconnects from a friend
-	disconnectFriend: function( friend )
+	disconnectFriend: function( netfriend )
 	{
 		var self = FriendNetworkFriends;
-		if ( self.connected )
+		if( self.connected )
 		{
-			if ( friend.connected )
+			if( netfriend.connected )
 			{
-				FriendNetwork.disconnectFromHost( { key: friend.communicationKey } );
+				FriendNetwork.disconnectFromHost( { key: netfriend.communicationKey } );
 			}
 		}
-		else if ( friend.connecting )
+		else if( netfriend.connecting )
 		{
-			FriendNetwork.disconnectFromHostByName( { hostName: friend.name } );
+			FriendNetwork.disconnectFromHostByName( { hostName: netfriend.name } );
 		}
-		friend.connected = false;
-		friend.connecting = false;
-		friend.communicationKey = false;
+		netfriend.connected = false;
+		netfriend.connecting = false;
+		netfriend.communicationKey = false;
 	},
 
 	// Friend client handling
-	connectFriend: function( friend )
+	connectFriend: function( netfriend )
 	{
 		var self = FriendNetworkFriends;
 
-		friend.connecting = true;
-		friend.passwordCount = 0;
+		netfriend.connecting = true;
+		netfriend.passwordCount = 0;
 
 		// Get the root of the host name (removing the random value)
-		var hostName = self.cleanHostName( friend.hostName );
+		var hostName = self.cleanHostName( netfriend.hostName );
 		FriendNetwork.connectToHost( { url: hostName, hostType: 'communication', p2p: true, encryptMessages: true, callback: handleMessages } );
 
 		// Handles FriendNetwork messages
@@ -1202,15 +1207,15 @@ FriendNetworkFriends =
 					break;
 
 				case 'connected':
-					var friend = self.getFriendFromHostName( msg.hostName );
-					if ( friend )
+					var nf = self.getFriendFromHostName( msg.hostName );
+					if( nf )
 					{
-						friend.communicationKey = msg.key;
-						friend.connecting = false;
-						friend.connected = true;
+						nf.communicationKey = msg.key;
+						nf.connecting = false;
+						nf.connected = true;
 
 						// Ask for icon and name
-						self.pushPending( friend,
+						self.pushPending( nf,
 						{
 							type: 'getInformation',
 							id: self.getUniqueIdentifier( 'getInfo' )
@@ -1221,50 +1226,49 @@ FriendNetworkFriends =
 						console.log( 'Friend Network Friends: connected to ' + msg.hostName );
 
 						// If a new password has been entered, update the settings
-						if ( friend.newPassword )
+						if( nf.newPassword )
 						{
-							friend.newPassword = false;
-							FriendNetworkFriends.updateWorkgroupPassword( friend.newPassword );
+							nf.newPassword = false;
+							FriendNetworkFriends.updateWorkgroupPassword( nf.newPassword );
 						}
 					}
 					break;
 
 				case 'hostDisconnected':
-					var friend = self.getFriendFromKey( msg.key );
-					if ( friend )
+					var nf = self.getFriendFromKey( msg.key );
+					if( nf )
 					{
-						console.log( 'Friend Network Share: communication host of ' + friend.name + ' disconnected.' );
-						friend.connecting = false;
-						friend.connected = false;
-						friend.communicationKey = false;
-						if ( !friend.session )
+						console.log( 'Friend Network Share: communication host of ' + nf.name + ' disconnected.' );
+						nf.connecting = false;
+						nf.connected = false;
+						nf.communicationKey = false;
+						if( !nf.session )
 							self.refreshFriendWidgets( true );
 						else
-							self.closeSessionFriend( friend );
+							self.closeSessionFriend( nf );
 					}
 					break;
 
 				case 'messageFromHost':
-					var friend = self.getFriendFromKey( msg.key );
-					if ( friend )
+					var nf = self.getFriendFromKey( msg.key );
+					if( nf )
 					{
 						// Find the pending structure
 						var pending;
-						for ( var pendingNum = 0; pendingNum < friend.pending.length; pendingNum++ )
+						for( var pendingNum = 0; pendingNum < nf.pending.length; pendingNum++ )
 						{
-							if ( msg.data.id == friend.pending[ pendingNum ].id )
+							if( msg.data.id == nf.pending[ pendingNum ].id )
 							{
-								pending = friend.pending[ pendingNum ];
+								pending = nf.pending[ pendingNum ];
 								break;
 							}
 						}
-						if ( pending )
+						if( pending )
 						{
 							switch ( msg.data.command )
 							{
 								case 'sessionToSession':
 									var message = msg.data.message;
-									debugger;
 									break;
 
 								// Message received: add to conversation, store in friend 'Waiting' list
@@ -1279,36 +1283,36 @@ FriendNetworkFriends =
 											if ( !self.conversations[ message.conversationId ] )
 												self.conversations[ message.conversationId ] = [];
 											self.conversations[ message.conversationId ].push( message );
-											self.updateOpenConversations( friend, message.id, message.conversationId );
+											self.updateOpenConversations( nf, message.id, message.conversationId );
 										}
 									}
 									else
 										message.refused = true;
 
 									// Add message to 'waiting' list
-									self.pushWaiting( friend, message );
+									self.pushWaiting( nf, message );
 
 									// Remove from pending list
-									self.removePending( friend, pendingNum );
+									self.removePending( nf, pendingNum );
 									break;
 
 								// Information demand callback: store data into friend
 								case 'getInformationResponse':
-									friend.fullName = msg.data.information.fullName;
-									friend.icon = msg.data.information.icon;
+									nf.fullName = msg.data.information.fullName;
+									nf.icon = msg.data.information.icon;
 
 									// Create the image for widget display
 									var image = new Image();
 									image.onload = function()
 									{
-										friend.iconImage = this;
+										nf.iconImage = this;
 										self.refreshFriendWidgets( true );
 									}
-									image.src = friend.icon;
+									image.src = nf.icon;
 									self.storeFriends();
 
 									// Remove from pending list
-									self.removePending( friend, pendingNum );
+									self.removePending( nf, pendingNum );
 									self.forceWidgetsRefresh = true;
 									break;
 
@@ -1319,7 +1323,7 @@ FriendNetworkFriends =
 								case 'messageReadResponse':
 								case 'refuseMessageResponse':
 									// Remove from pending list
-									self.removePending( friend, pendingNum );
+									self.removePending( nf, pendingNum );
 									break;
 
 							}
@@ -1328,16 +1332,16 @@ FriendNetworkFriends =
 					break;
 
 				case 'fileFromHost':
-					var friend = self.getFriendFromKey( msg.key );
-					if ( friend )
+					var nf = self.getFriendFromKey( msg.key );
+					if( nf )
 					{
 						// Find the pending structure
 						var pending;
-						for ( var pendingNum = 0; pendingNum < friend.pending.length; pendingNum++ )
+						for ( var pendingNum = 0; pendingNum < nf.pending.length; pendingNum++ )
 						{
-							if ( msg.infos.id == friend.pending[ pendingNum ].id )
+							if ( msg.infos.id == nf.pending[ pendingNum ].id )
 							{
-								pending = friend.pending[ pendingNum ];
+								pending = nf.pending[ pendingNum ];
 								break;
 							}
 						}
@@ -1345,7 +1349,7 @@ FriendNetworkFriends =
 						// Save the file
 						var type = '';
 						var data = msg.file;
-						if ( msg.infos.type == 'binaryString' || msg.infos.type == 'base64' )
+						if( msg.infos.type == 'binaryString' || msg.infos.type == 'base64' )
 						{
 							data = ConvertStringToArrayBuffer( data, msg.infos.type );
 							type = 'wb';
@@ -1355,19 +1359,19 @@ FriendNetworkFriends =
 						save.save( data, null, type );
 
 						// Remove from pending
-						self.removePending( friend, pendingNum );
+						self.removePending( nf, pendingNum );
 
 						// Mark file as downloaded
-						for ( var m = 0; m < friend.messages.length; m++ )
+						for( var m = 0; m < nf.messages.length; m++ )
 						{
-							if ( friend.messages[ m ].id == msg.infos.id )
+							if( nf.messages[ m ].id == msg.infos.id )
 							{
-								friend.messages[ m ].loaded = true;
-								friend.messages[ m ].loading = false;
-								friend.messages[ m ].saveTo = pending.saveTo;
+								nf.messages[ m ].loaded = true;
+								nf.messages[ m ].loading = false;
+								nf.messages[ m ].saveTo = pending.saveTo;
 								setTimeout( function()
 								{
-									self.notifyFriend( friend, 'Friend Network', 'File ' + self.getFileName( friend.messages[ m ].path ) + ' successfully saved.' );
+									self.notifyFriend( nf, 'Friend Network', 'File ' + self.getFileName( nf.messages[ m ].path ) + ' successfully saved.' );
 								}, 2000 );
 								break;
 							}
@@ -1377,16 +1381,16 @@ FriendNetworkFriends =
 					break;
 
 				case 'fileDownloading':
-					var friend = self.getFriendFromKey( msg.key );
-					if ( friend )
+					var nf = self.getFriendFromKey( msg.key );
+					if( nf )
 					{
 						// Mark file as downloaded
-						for ( var m = 0; m < friend.messages.length; m++ )
+						for( var m = 0; m < nf.messages.length; m++ )
 						{
-							if ( friend.messages[ m ].id == msg.infos.id )
+							if( nf.messages[ m ].id == msg.infos.id )
 							{
-								friend.messages[ m ].loading = true;
-								friend.messages[ m ].percentLoaded = msg.infos.percentLoaded;
+								nf.messages[ m ].loading = true;
+								nf.messages[ m ].percentLoaded = msg.infos.percentLoaded;
 								break;
 							}
 						}
@@ -1394,54 +1398,54 @@ FriendNetworkFriends =
 					break;
 
 				case 'error':
-					var friend = self.getFriendFromHostName( msg.response );
-					if ( friend )
+					var nf = self.getFriendFromHostName( msg.response );
+					if( nf )
 					{
-						if ( msg.error == 'ERR_WRONG_CREDENTIALS' )
+						if( msg.error == 'ERR_WRONG_CREDENTIALS' )
 						{
 							// Keep quiet if trying to reconnect
-							if ( friend.badPassword )
+							if( nf.badPassword )
 							{
 								FriendNetwork.sendCredentials( { key: msg.key, password: '<---aborted--->', encrypted: true } );
 								return;
 							}
 							// Ask for password
-							friend.passwordKey = msg.key;
+							nf.passwordKey = msg.key;
 							var title;
-							if ( friend.passwordCount == 0 )
+							if( nf.passwordCount == 0 )
 								title = i18n( 'i18n_connectinTo' ) + name + i18n( 'i18n_pleaseEnterPassword' );
 							else
 								title = i18n( 'i18n_passwordsDoNotMatch' );
-							self.getPassword( title, friend.name, 'onWrongPassword' );
-							friend.passwordCount++;
+							self.getPassword( title, Friend.name, 'onWrongPassword' );
+							nf.passwordCount++;
 							return;
 						}
-						else if ( msg.error == 'ERR_FAILED_CREDENTIALS' )
+						else if( msg.error == 'ERR_FAILED_CREDENTIALS' )
 						{
 							Alert( i18n( 'i18n_FriendNetwork' ), i18n( 'i18n_connectionFailed' ) );
-							friend.badPassword = true;
-							friend.badPasswordDelay = 0;
+							nf.badPassword = true;
+							nf.badPasswordDelay = 0;
 						}
-						else if ( msg.error == 'ERR_CONNECTION_ABORTED' )
+						else if( msg.error == 'ERR_CONNECTION_ABORTED' )
 						{
-							if ( !friend.badPassword )
+							if( !nf.badPassword )
 								Alert( i18n ( 'i18n_FriendNetwork' ), i18n( 'i18n_connectionAborted' ) );
-							friend.badPassword = true;
-							friend.badPasswordDelay = 0;
+							nf.badPassword = true;
+							nf.badPasswordDelay = 0;
 						}
 						console.log( 'Friend Network Share: connection attempt to ' + hostName + ' failed...' );
-						friend.connecting = false;
-						friend.connected = false;
-						friend.communicationKey = false;
-						if ( !friend.session )
+						nf.connecting = false;
+						nf.connected = false;
+						nf.communicationKey = false;
+						if ( !nf.session )
 							self.refreshFriendWidgets( true );
 						else
-							self.closeSessionFriend( friend );
+							self.closeSessionFriend( nf );
 					}
 					else
 					{
 						// should not happen!
-						debugger;
+						console.log( 'Should NOT happen!' );
 					}
 					break;
 
@@ -1483,53 +1487,59 @@ FriendNetworkFriends =
 		}
 	},
 
+	// Same but different! :) TODO: cleanup!
+	getHostsList: function( callback, extra )
+	{
+		return this.currentHosts;
+	},
+
 	// Send all the pending messages of a friend
-	sendPendingMessages: function( friend )
+	sendPendingMessages: function( netfriend )
 	{
 		var self = FriendNetworkFriends;
-		if ( friend.pending && friend.pending.length )
+		if ( netfriend.pending && netfriend.pending.length )
 		{
-			for ( var p = 0; p < friend.pending.length; p++ )
+			for ( var p = 0; p < netfriend.pending.length; p++ )
 			{
-				var pending = friend.pending[ p ];
+				var pending = netfriend.pending[ p ];
 				if ( !pending.sending )
 				{
 					switch( pending.type )
 					{
 						case 'sessionToSession':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'sessionToSession', id: pending.id, type: pending.type, message: pending.message } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'sessionToSession', id: pending.id, type: pending.type, message: pending.message } } );
 							pending.sending = true;
 							break;
 						case 'message':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'message', id: pending.id, type: pending.type, message: pending.message } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'message', id: pending.id, type: pending.type, message: pending.message } } );
 							pending.sending = true;
 							break;
 						case 'getInformation':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'getInformation', id: pending.id, type: pending.type } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'getInformation', id: pending.id, type: pending.type } } );
 							pending.sending = true;
 							break;
 						case 'refuseMessage':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'refuseMessage', id: pending.id, type: pending.type } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'refuseMessage', id: pending.id, type: pending.type } } );
 							pending.sending = true;
 							break;
 						case 'messageRead':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'messageRead', id: pending.id, type: pending.type } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'messageRead', id: pending.id, type: pending.type } } );
 							pending.sending = true;
 							break;
 						case 'getFile':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'getFile', id: pending.id, type: pending.type, path: pending.path, saveTo: pending.saveTo } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'getFile', id: pending.id, type: pending.type, path: pending.path, saveTo: pending.saveTo } } );
 							pending.sending = true;
 							break;
 						case 'stopShare':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'stopShare', id: pending.id, name: pending.name } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'stopShare', id: pending.id, name: pending.name } } );
 							pending.sending = true;
 							break;
 						case 'stopShareApplication':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'stopShareApplication', id: pending.id, type: pending.type, name: pending.name, path: pending.path } } );
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'stopShareApplication', id: pending.id, type: pending.type, name: pending.name, path: pending.path } } );
 							pending.sending = true;
 							break;
 						case 'stopShareFile':
-							FriendNetwork.send( { key: friend.communicationKey, data: { command: 'stopShareFile', id: pending.id, type: pending.type, name: pending.name, path: pending.path } } );							pending.sending = true;
+							FriendNetwork.send( { key: netfriend.communicationKey, data: { command: 'stopShareFile', id: pending.id, type: pending.type, name: pending.name, path: pending.path } } );							pending.sending = true;
 							break;
 						default:
 							break;
@@ -1604,15 +1614,15 @@ FriendNetworkFriends =
 	onWrongPassword: function( response, name, password )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 		if ( response )
 		{
-			friend.newPassword = password;
-			FriendNetwork.sendCredentials( { key: friend.passwordKey, password: password, encrypted: true } );
+			netfriend.newPassword = password;
+			FriendNetwork.sendCredentials( { key: netfriend.passwordKey, password: password, encrypted: true } );
 		}
 		else
 		{
-			FriendNetwork.sendCredentials( { key: friend.passwordKey, password: '<---aborted--->', encrypted: true } );
+			FriendNetwork.sendCredentials( { key: netfriend.passwordKey, password: '<---aborted--->', encrypted: true } );
 		}
 	},
 
@@ -1642,23 +1652,23 @@ FriendNetworkFriends =
 			// For each friend
 			for ( var f = 0; f < self.friends.length; f++ )
 			{
-				var friend = self.friends[ f ];
-				if ( friend.session )
+				var netfriend = self.friends[ f ];
+				if ( netfriend.session )
 					continue;
 
-				friend.online = false;
-				friend.listedInHosts = false;
+				netfriend.online = false;
+				netfriend.listedInHosts = false;
 
 				// Is the friend still present in the hosts?
 				var friendFound = false;
 				for ( var h = 0; h < hosts.length; h++ )
 				{
-					if ( hosts[ h ].name == friend.name )
+					if ( hosts[ h ].name == netfriend.name )
 					{
 						// Register for modifications in apps list for this host
-						if ( !friend.hostSubscribed )
+						if ( !netfriend.hostSubscribed )
 						{
-							friend.hostSubscribed = hosts[ h ].hostId;
+							netfriend.hostSubscribed = hosts[ h ].hostId;
 							FriendNetwork.subscribeToHostUpdates( { key: hosts[ h ].hostId, callback: self.updateHost } );
 						}
 
@@ -1668,30 +1678,30 @@ FriendNetworkFriends =
 							// Set a timeout to retry
 							setTimeout( function()
 							{
-								console.log( 'Waiting for apps in host ' + friend.name );
+								console.log( 'Waiting for apps in host ' + netfriend.name );
 								self.updateHostsList();
 							}, 1000 );
 						}
 						else
 						{
-							friend.apps = hosts[ h ].apps;
-							friend.listedInHosts = true;
+							netfriend.apps = hosts[ h ].apps;
+							netfriend.listedInHosts = true;
 
 							// Look for communication channel
-							if ( friend.connected )
+							if( netfriend.connected )
 							{
 								friendFound = true;
-								friend.online = true;
+								netfriend.online = true;
 
-								var apps = friend.apps;
+								var apps = netfriend.apps;
 								for ( var a = 0; a < apps.length; a++ )
 								{
 									if ( apps[ a ].type == 'communication' )
 									{
 										// Remove 'shared' entries if the folders are no shared anymore
-										for ( var s = 0; s < friend.shared.length; s++ )
+										for ( var s = 0; s < netfriend.shared.length; s++ )
 										{
-											var share = friend.shared[ s ];
+											var share = netfriend.shared[ s ];
 											var found = false;
 											for ( var aa = 0; aa < apps.length; aa++ )
 											{
@@ -1703,7 +1713,7 @@ FriendNetworkFriends =
 											}
 											if ( !found )
 											{
-												FriendNetworkDoor.disconnectFromDoor( friend.name, share.name );
+												FriendNetworkDoor.disconnectFromDoor( netfriend.name, share.name );
 											}
 										}
 									}
@@ -1711,13 +1721,13 @@ FriendNetworkFriends =
 							}
 
 							// Close connections if they are established
-							if ( !friend.online )
+							if ( !netfriend.online )
 							{
-								FriendNetworkDoor.disconnectFromDoor( friend.name );
+								FriendNetworkDoor.disconnectFromDoor( netfriend.name );
 							}
 
 							// Friend disconnected
-							if ( !friendFound && friend.online )
+							if ( !friendFound && netfriend.online )
 								toChange = true;
 
 							break;
@@ -1731,8 +1741,8 @@ FriendNetworkFriends =
 					for ( var h = 0; h < hosts.length; h++ )
 					{
 						// Is host a friend?
-						var friend = self.getFriendFromName( hosts[ h ].name );
-						if ( friend && !friend.session && !friend.online )
+						var nf = self.getFriendFromName( hosts[ h ].name );
+						if ( nf && !nf.session && !nf.online )
 						{
 							// Not displayed: display it!
 							toChange = true;
@@ -1752,17 +1762,17 @@ FriendNetworkFriends =
 			// Add the friends
 			for ( var f = 0; f < self.friends.length; f++ )
 			{
-				var friend = self.friends[ f ];
-				if ( friend.session )
+				var netfriend = self.friends[ f ];
+				if ( netfriend.session )
 					continue;
 
-				friend.widget = false;
+				netfriend.widget = false;
 
 				// Creates the icon
-				var icon = friend.icon;
-				if ( icon && friend.iconImage )
+				var icon = netfriend.icon;
+				if ( icon && netfriend.iconImage )
 				{
-					if ( !friend.online )
+					if ( !netfriend.online )
 					{
 						var canvas = document.createElement( 'canvas' );
 						canvas.width = 32;
@@ -1770,7 +1780,7 @@ FriendNetworkFriends =
 						var context = canvas.getContext( '2d' );
 						// Draw the friend icon
 						context.globalAlpha = 0.55;			// Friend icon fade
-						context.drawImage( friend.iconImage, 0, 0, 32, 32 );
+						context.drawImage( Friend.iconImage, 0, 0, 32, 32 );
 						context.globalAlpha = 0.70;
 						// Paste the 'non connected' sign
 						if ( self.friendNotConnectedIcon )
@@ -1778,22 +1788,22 @@ FriendNetworkFriends =
 						context.globalAlpha = 1;
 						icon = canvas.toDataURL();
 					}
-					friend.flashIcon = icon;
+					netfriend.flashIcon = icon;
 
 					// Create the widget
 					var widget =
 					{
-						label: 'Friend Network Friend ' + friend.name,
-						name: 'Friend Network Friend ' + friend.name,
+						label: 'Friend Network Friend ' + netfriend.name,
+						name: 'Friend Network Friend ' + netfriend.name,
 						className: 'Rounded',
 						icon: icon,
 						getBubbleText: self.getFriendText,
 						onOpenBubble: self.onOpenFriendText,
 						onCloseBubble: self.onCloseFriendText,
 						onDrop: self.onDropFriend,
-						friend: friend
+						friend: netfriend
 					};
-					friend.widget = widget;
+					netfriend.widget = widget;
 					widget.identifier = Workspace.addTrayIcon( widget );
 					self.friendWidgets.push( widget );
 				}
@@ -1822,18 +1832,18 @@ FriendNetworkFriends =
 	},
 
 	// Removes the widget of a specific friend
-	removeFriendWidget: function( friend )
+	removeFriendWidget: function( netfriend )
 	{
-		if ( friend.widget )
+		if ( netfriend.widget )
 		{
 			// Find in array
 			for ( var w = 0; w < self.friendWidgets.length; w++ )
 			{
-				if ( friend.widget == self.friendWidgets[ w ] )
+				if ( netfriend.widget == self.friendWidgets[ w ] )
 				{
-					Workspace.removeTrayIcon( friend.widget.identifier );
+					Workspace.removeTrayIcon( netfriend.widget.identifier );
 					self.friendWidgets.splice( w, 1 );
-					friend.widget = false;
+					netfriend.widget = false;
 					break;
 				}
 			}
@@ -1844,14 +1854,14 @@ FriendNetworkFriends =
 	removeFriendWidgets: function()
 	{
 		var self = FriendNetworkFriends;
-		for ( var f = 0; f < self.friendWidgets.length; f++ )
+		for( var f = 0; f < self.friendWidgets.length; f++ )
 		{
-			var friend = self.friendWidgets[ f ].friend;
-			friend.widget = false;
+			var netfriend = self.friendWidgets[ f ].friend;
+			netfriend.widget = false;
 			Workspace.removeTrayIcon( self.friendWidgets[ f ].identifier );
 		}
 		self.friendWidgets = [];
-		if ( self.addFriendWidget )
+		if( self.addFriendWidget )
 		{
 			Workspace.removeTrayIcon( self.addFriendWidget );
 			self.addFriendWidget = false;
@@ -1859,18 +1869,18 @@ FriendNetworkFriends =
 	},
 
 	// Force the refresh of the bubble text of a friend (TODO: cleanup! Not necessary anymore)
-	refreshTrayIconBubble: function( friend )
+	refreshTrayIconBubble: function( netfriend )
 	{
-		if ( friend.widget )
+		if( netfriend.widget )
 		{
-			Workspace.refreshTrayIconBubble( friend.widget.identifier );
+			Workspace.refreshTrayIconBubble( netfriend.widget.identifier );
 		}
 	},
-	forceTrayIconBubbleRefresh: function( friend )
+	forceTrayIconBubbleRefresh: function( netfriend )
 	{
-		if ( friend.widget )
+		if( netfriend.widget )
 		{
-			friend.widget.bubbleSet = false;
+			netfriend.widget.bubbleSet = false;
 		}
 	},
 
@@ -1881,13 +1891,13 @@ FriendNetworkFriends =
 		var done = false;
 		for ( var f = 0; f < self.friends.length; f++ )
 		{
-			var friend = self.friends[ f ];
-			if ( friend.icon && friend.iconImage )
+			var netfriend = self.friends[ f ];
+			if ( netfriend.icon && netfriend.iconImage )
 			{
 				// If temporary friend, check that nothing is left to see or send
-				if ( friend.temporary && !friend.keepOpen && friend.messages.length == 0 && friend.waiting.length == 0 && friend.pending.length == 0 && friend.shared.length == 0 )
+				if ( netfriend.temporary && !netfriend.keepOpen && netfriend.messages.length == 0 && netfriend.waiting.length == 0 && netfriend.pending.length == 0 && netfriend.shared.length == 0 )
 				{
-					self.disconnectFriend( friend );
+					self.disconnectFriend( netfriend );
 					self.friends.splice( f, 1 );
 					done = true;
 				}
@@ -1907,28 +1917,28 @@ FriendNetworkFriends =
 	},
 
 	// Makes a friend widget flash
-	flashFriendWidget: function( friend, duration )
+	flashFriendWidget: function( netfriend, duration )
 	{
 		var self = FriendNetworkFriends;
-		if ( !friend.handleFlash )
+		if( !netfriend.handleFlash )
 		{
-			friend.flash = 1;
+			netfriend.flash = 1;
 			var start = new Date().getTime();
-			friend.handleFlash = setInterval( function()
+			netfriend.handleFlash = setInterval( function()
 			{
-				if ( friend.widget )
+				if( netfriend.widget )
 				{
-					friend.flash = 1 - friend.flash;
-					if ( friend.flash )
-						Workspace.setTrayIconImage( friend.widget.identifier, friend.flashIcon );
+					netfriend.flash = 1 - netfriend.flash;
+					if( netfriend.flash )
+						Workspace.setTrayIconImage( netfriend.widget.identifier, netfriend.flashIcon );
 					else
-						Workspace.setTrayIconImage( friend.widget.identifier, '/webclient/gfx/fnetFlashFriend.png' );
+						Workspace.setTrayIconImage( netfriend.widget.identifier, '/webclient/gfx/fnetFlashFriend.png' );
 
-					if ( typeof duration != 'undefined' )
+					if( typeof duration != 'undefined' )
 					{
 						var time = new Date().getTime();
 						if ( time - start > duration )
-							self.stopFriendWidgetFlash( friend );
+							self.stopFriendWidgetFlash( netfriend );
 					}
 				}
 			}, 500 );
@@ -1937,21 +1947,21 @@ FriendNetworkFriends =
 	},
 
 	// Stops the flash of a friend widget
-	stopFriendWidgetFlash: function( friend )
+	stopFriendWidgetFlash: function( netfriend )
 	{
-		if ( friend.handleFlash )
+		if( netfriend.handleFlash )
 		{
-			clearInterval( friend.handleFlash );
-			friend.handleFlash = false;
-			Workspace.setTrayIconImage( friend.widget.identifier, friend.flashIcon );
+			clearInterval( netfriend.handleFlash );
+			netfriend.handleFlash = false;
+			Workspace.setTrayIconImage( netfriend.widget.identifier, netfriend.flashIcon );
 		}
 	},
 
 	// Displays a system notification above a friend widget
-	notifyFriend: function( friend, title, text )
+	notifyFriend: function( netfriend, title, text )
 	{
-		this.flashFriendWidget( friend, 5000 );
-		Notify( { title: title, text: text, label: friend.widget.label } );
+		this.flashFriendWidget( netfriend, 5000 );
+		Notify( { title: title, text: text, label: netfriend.widget.label } );
 	},
 
 	// Click on ADD FRIEND
@@ -2086,10 +2096,10 @@ FriendNetworkFriends =
 	onPlusOK: function( name )
 	{
 		var self = FriendNetworkFriends;
-		for ( var friendName in self.currentPlusFriends )
+		for( var friendName in self.currentPlusFriends )
 		{
 			var app = self.currentPlusApps[ friendName ];
-			var friend =
+			var netfriend =
 			{
 				name: friendName,
 				hostName: app.name + '@' + friendName,
@@ -2102,7 +2112,7 @@ FriendNetworkFriends =
 				icon: self.unknownIcon,
 				iconImage: self.unknownIconImage
 			};
-			self.friends.push( friend );
+			self.friends.push( netfriend );
 			self.storeFriends();
 			self.refreshFriendWidgets( true );
 		}
@@ -2116,12 +2126,12 @@ FriendNetworkFriends =
 	clickSetTemporaryFriendAsFriend: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName ( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName ( name );
+		if( netfriend )
 		{
-			friend.temporary = false;
-			friend.keepOpen = false;
-			self.refreshTrayIconBubble( friend );
+			netfriend.temporary = false;
+			netfriend.keepOpen = false;
+			self.refreshTrayIconBubble( netfriend );
 		}
 	},
 
@@ -2129,20 +2139,20 @@ FriendNetworkFriends =
 	clickForgetFriend: function( name )
 	{
 		var self = FriendNetworkFriends;
-		for ( var f = 0; f < self.friends.length; f++ )
+		for( var f = 0; f < self.friends.length; f++ )
 		{
-			var friend = self.friends[ f ];
-			if ( friend.name == name )
+			var netfriend = self.friends[ f ];
+			if( netfriend.name == name )
 			{
 				// Remove the widget
-				self.removeFriendWidget( friend );
+				self.removeFriendWidget( netfriend );
 
 				// Remove from friend list
 				self.friends.splice( f, 1 );
 
 				// Update display
 				self.refreshFriendWidgets( true );
-				self.disconnectFriend( friend );
+				self.disconnectFriend( netfriend );
 				self.storeFriends();
 				break;
 			}
@@ -2157,11 +2167,11 @@ FriendNetworkFriends =
 	onOpenFriendText: function()
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;			// Friend contained in the Bubble object (this)
-		if ( friend )
+		var netfriend = this.friend;			// Friend contained in the Bubble object (this)
+		if( netfriend )
 		{
 			// If the friend is flashing, stop the flash!
-			self.stopFriendWidgetFlash( friend );
+			self.stopFriendWidgetFlash( netfriend );
 		}
 	},
 
@@ -2169,11 +2179,11 @@ FriendNetworkFriends =
 	onCloseFriendText: function()
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;			// Friend contained in the Bubble object (this)
-		if ( friend )
+		var netfriend = this.friend;			// Friend contained in the Bubble object (this)
+		if( friend )
 		{
 			// Forces a redemand of the text next time
-			friend.widget.bubbleSet = false;
+			netfriend.widget.bubbleSet = false;
 		}
 	},
 
@@ -2181,16 +2191,16 @@ FriendNetworkFriends =
 	getFriendText: function()
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;
+		var netfriend = this.friend;
 
 		// If session friend -> call session friend display
-		if ( friend.session )
-			return self.getSessionText( friend );
+		if ( netfriend.session )
+			return self.getSessionText( netfriend );
 
 		// Title of the bubble
 		var html = '';
 		var title = '';
-		if ( !friend.fullName )
+		if ( !netfriend.fullName )
 		{
 			html = '<div>\
 						<div class="HRow">\
@@ -2198,14 +2208,14 @@ FriendNetworkFriends =
 								<h3>' + i18n( 'i18n_waiting_for_connection' ) + '</h3>\
 							</div>\
 							<div class="FloatRight">\
-								<span class="fa fa-times HoverFeedback" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickForgetFriend(\'' + friend.name + '\');" title="' + i18n( 'i18n_remove_friend' ) + '"></span>\
+								<span class="fa fa-times HoverFeedback" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickForgetFriend(\'' + netfriend.name + '\');" title="' + i18n( 'i18n_remove_friend' ) + '"></span>\
 							</div>\
 						</div>\
 					</div>';
 		}
 		else
 		{
-			var friendName = friend.fullName;
+			var friendName = netfriend.fullName;
 			var pos = friendName.indexOf( ' ' );
 			if ( pos > 0 )
 				friendName = friendName.substring( 0, pos );			// Only keep first name
@@ -2213,21 +2223,21 @@ FriendNetworkFriends =
 			title += '<div>\
 						<div class="HRow">\
 							<div class="FloatLeft">\
-								<h3>' + friend.fullName;
-			if ( !friend.online )
+								<h3>' + netfriend.fullName;
+			if ( !netfriend.online )
 				title += 			'';				// No space in bubble for long names, see with Hogne
 			title += 			'</h3>\
 							</div>';
-			if ( friend.temporary )
+			if ( netfriend.temporary )
 			{
 				title += 	'<div class="FloatRight">\
-								<span class="fa fa-plus Buttons" aria-hidden="true" style="font-size:16px;" title="Add as friend." onclick="FriendNetworkFriends.clickSetTemporaryFriendAsFriend(\'' + friend.name + '\');"></span>\
+								<span class="fa fa-plus Buttons" aria-hidden="true" style="font-size:16px;" title="Add as friend." onclick="FriendNetworkFriends.clickSetTemporaryFriendAsFriend(\'' + netfriend.name + '\');"></span>\
 							</div>';
 			}
 			else
 			{
 				title += 	'<div class="FloatRight">\
-								<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickForgetFriend(\'' + friend.name + '\');" title="Forget friend."></span>\
+								<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickForgetFriend(\'' + netfriend.name + '\');" title="Forget friend."></span>\
 							</div>';
 			}
 			title += '	</div>\
@@ -2237,18 +2247,18 @@ FriendNetworkFriends =
 			var shared = '';
 			var privateShared = '';
 			var files = 0;
-			if ( friend.online )
+			if( netfriend.online )
 			{
-				if ( friend.apps )
+				if( netfriend.apps )
 				{
-					for ( var a = 0; a < friend.apps.length; a++ )
+					for ( var a = 0; a < netfriend.apps.length; a++ )
 					{
-						var app = friend.apps[ a ];
+						var app = netfriend.apps[ a ];
 						switch( app.type )
 						{
 							case 'drive':
 							case 'folder':
-								shared +=  '<div class="HRow HoverRow Padding" onclick="FriendNetworkFriends.clickFriendOpen(\'' + friend.name + '\', \'' + app.name + '\');">\
+								shared +=  '<div class="HRow HoverRow Padding" onclick="FriendNetworkFriends.clickFriendOpen(\'' + netfriend.name + '\', \'' + app.name + '\');">\
 												<div class="FloatLeft">\
 													' + ( app.type == 'drive' ? 'Drive: ' : 'Folder: ' ) + app.name + '\
 												</div>\
@@ -2274,29 +2284,29 @@ FriendNetworkFriends =
 				}
 
 				// List the shared folders and applications
-				for ( var s = 0; s < friend.shared.length; s++ )
+				for ( var s = 0; s < netfriend.shared.length; s++ )
 				{
-					var share = friend.shared[ s ];
+					var share = netfriend.shared[ s ];
 					var OK, call;
-					if ( share.subject == '<---folder--->' )
+					if( share.subject == '<---folder--->' )
 					{
-						OK = self.checkFriendOpen( friend.name, share.name );
+						OK = self.checkFriendOpen( netfriend.name, share.name );
 						call = '';
 						if ( OK )
-							call = 'onclick="FriendNetworkFriends.clickFriendOpen(\'' + friend.name + '\', \'' + share.name + '\', \'' + share.executable + '\');" ';
+							call = 'onclick="FriendNetworkFriends.clickFriendOpen(\'' + netfriend.name + '\', \'' + share.name + '\', \'' + share.executable + '\');" ';
 						privateShared += '<div class="HRow HoverRow" ' + call + '>\
 												<div class="FloatLeft">\
 													Folder: ' + share.name + '\
 										  		</div>';
-						if ( self.checkFriendOpen( friend.name, share.name ) )
+						if( self.checkFriendOpen( netfriend.name, share.name ) )
 						{
 							if ( OK )
 							{
 								privateShared +='<div class="FloatRight">\
-													<span class="fa fa-folder-open-o Buttons" aria-hidden="true" style="font-size:16px;" onclick="FriendNetworkFriends.clickFriendOpen(\'' + friend.name + '\', \'' + share.name + '\');" title="' + i18n( 'i18n_open' ) + '"></span>\
+													<span class="fa fa-folder-open-o Buttons" aria-hidden="true" style="font-size:16px;" onclick="FriendNetworkFriends.clickFriendOpen(\'' + netfriend.name + '\', \'' + share.name + '\');" title="' + i18n( 'i18n_open' ) + '"></span>\
 												</div>';
 							}
-							if ( share.content != '' )
+							if( share.content != '' )
 							{
 								privateShared+='<div class="HRow FNetText">\
 													' + share.content.substring( 0, 80 ) + '\
@@ -2305,17 +2315,17 @@ FriendNetworkFriends =
 						}
 						privateShared += '</div>';
 					}
-					else if ( share.subject == '<---application--->' )
+					else if( share.subject == '<---application--->' )
 					{
-						OK = self.checkFriendOpen( friend.name, share.name );
+						OK = self.checkFriendOpen( netfriend.name, share.name );
 						call = '';
 						if ( OK )
-							call = 'onclick="FriendNetworkFriends.clickFriendOpen(\'' + friend.name + '\', \'' + share.name + '\', \'' + share.executable + '\');" ';
+							call = 'onclick="FriendNetworkFriends.clickFriendOpen(\'' + netfriend.name + '\', \'' + share.name + '\', \'' + share.executable + '\');" ';
 						privateShared += '<div class="HRow" ' + call + '>\
 												<div class="FloatLeft">\
 													' + i18n( 'i18n_application' ) + ': ' + share.name + '\
 											  	</div>';
-						if ( self.checkFriendOpen( friend.name, share.name ) )
+						if( self.checkFriendOpen( netfriend.name, share.name ) )
 						{
 							if ( OK )
 							{
@@ -2335,20 +2345,20 @@ FriendNetworkFriends =
 				}
 
 				// List the files contained in the messages
-				for ( var m = 0; m < friend.messages.length; m++ )
+				for( var m = 0; m < netfriend.messages.length; m++ )
 				{
-					var message = friend.messages[ m ];
-					if ( message.subject == '<---file--->' )
+					var message = netfriend.messages[ m ];
+					if( message.subject == '<---file--->' )
 					{
-						if ( message.loaded )
+						if( message.loaded )
 						{
-							privateShared += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendOpenFile(\'' + friend.name + '\', \'' + message.id + '\');" >\
+							privateShared += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendOpenFile(\'' + netfriend.name + '\', \'' + message.id + '\');" >\
 												<div class="FloatLeft">\
 													File: ' + self.getFileName( message.path ) + '\
 												</div>\
 												<div class="FloatRight">\
 													<span class="fa fa-folder-open-o Buttons" aria-hidden="true" style="font-size:16px;" title="Open file"></span>\
-													<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRemoveMessage(\'' + friend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_remove' ) + '"></span>\
+													<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRemoveMessage(\'' + netfriend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_remove' ) + '"></span>\
 												</div>';
 							if ( message.content != '' )
 							{
@@ -2368,13 +2378,13 @@ FriendNetworkFriends =
 						}
 						else
 						{
-							privateShared += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendSaveFile(\'' + friend.name + '\', \'' + message.id + '\');">\
+							privateShared += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendSaveFile(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 												<div class="FloatLeft">\
 													File: ' + self.getFileName( message.path ) + '\
 												</div>\
 												<div class="FloatRight">\
 													<span class="fa fa-cloud-download Buttons" aria-hidden="true" style="font-size:16px;" title="' + i18n( 'i18n_download_file' ) + '"></span></span>\
-													<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRefuseMessage(\'' + friend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_refuse_file' ) + '"></span></span>\
+													<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRefuseMessage(\'' + netfriend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_refuse_file' ) + '"></span></span>\
 												</div>';
 							if ( message.content != '' )
 							{
@@ -2400,16 +2410,16 @@ FriendNetworkFriends =
 
 			// List the messages
 			var messages = '';
-			for ( var m = 0; m < friend.messages.length; m++ )
+			for ( var m = 0; m < netfriend.messages.length; m++ )
 			{
-				var message = friend.messages[ m ];
+				var message = netfriend.messages[ m ];
 				if ( message.subject != '<---folder--->' && message.subject != '<---file--->' && message.subject != '<---application--->' && message.subject != '<---notification--->' )
 				{
-					messages += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendOpenMessage(\'' + friend.name + '\', \'' + message.id + '\');">\
+					messages += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendOpenMessage(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 									<div class="FloatLeft">' + message.subject + '</div>\
 									<div class="FloatRight">\
 										<span class="fa fa-folder-open-o Buttons" aria-hidden="true" style="font-size:16px;" title="Open message"></span>\
-										<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRefuseMessage(\'' + friend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_refuse_message' ) + '"></span>\
+										<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px" onclick="FriendNetworkFriends.clickFriendRefuseMessage(\'' + netfriend.name + '\', \'' + message.id + '\'); return cancelBubble( event );" title="' + i18n( 'i18n_refuse_message' ) + '"></span>\
 									</div>\
 									<div class="HRow FNetText">\
 										' + message.content.substring( 0, 80 ) + '\
@@ -2430,12 +2440,12 @@ FriendNetworkFriends =
 
 			// You are sharing
 			var youShare = '';
-			for ( var w = 0; w < friend.waiting.length; w++ )
+			for ( var w = 0; w < netfriend.waiting.length; w++ )
 			{
-				var message = friend.waiting[ w ];
+				var message = netfriend.waiting[ w ];
 				if ( message.subject == '<---file--->' )
 				{
-					youShare += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendStopSharingFile(\'' + friend.name + '\', \'' + message.id + '\');">\
+					youShare += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendStopSharingFile(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 									<div class="FloatLeft">File: ' + self.getFileName( message.path );
 					if ( message.refused )
 					{
@@ -2455,7 +2465,7 @@ FriendNetworkFriends =
 				}
 				else if ( message.subject == '<---folder--->' )
 				{
-					youShare += '<div class="HRow HoverRow"onclick="FriendNetworkFriends.clickFriendStopSharing(\'' + friend.name + '\', \'' + message.id + '\');">\
+					youShare += '<div class="HRow HoverRow"onclick="FriendNetworkFriends.clickFriendStopSharing(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 									<div class="FloatLeft">\
 										' + i18n( 'i18n_folder' ) + ': ' + self.getFileName( message.path ) + '\
 									</div>\
@@ -2466,7 +2476,7 @@ FriendNetworkFriends =
 				}
 				else if ( message.subject == '<---application--->' )
 				{
-					youShare += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendStopSharingApplication(\'' + friend.name + '\', \'' + message.id + '\');" >\
+					youShare += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.clickFriendStopSharingApplication(\'' + netfriend.name + '\', \'' + message.id + '\');" >\
 									<div class="FloatLeft">\
 										' + i18n( 'i18n_application' ) + ': ' + self.getFileName( message.path ) + '\
 									</div>\
@@ -2489,12 +2499,12 @@ FriendNetworkFriends =
 
 			// Messages waiting to be read
 			var waiting = '';
-			for ( var w = 0; w < friend.waiting.length; w++ )
+			for ( var w = 0; w < netfriend.waiting.length; w++ )
 			{
-				var message = friend.waiting[ w ];
+				var message = netfriend.waiting[ w ];
 				if ( message.subject != '<---file--->' && message.subject != '<---folder--->' && message.subject != '<---application--->' && message.subject != '<---notification--->' )
 				{
-					waiting += '<div class="HRow HoverRow"onclick="FriendNetworkFriends.removeWaitingMessage(\'' + friend.name + '\', \'' + message.id + '\');">\
+					waiting += '<div class="HRow HoverRow"onclick="FriendNetworkFriends.removeWaitingMessage(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 									<div class="FloatLeft">' + message.subject;
 					if ( message.refused )
 					{
@@ -2527,14 +2537,14 @@ FriendNetworkFriends =
 
 			// Notifications waiting to be read
 			var notificationWaiting = '';
-			if ( friend.waiting.length )
+			if ( netfriend.waiting.length )
 			{
-				for ( var w = 0; w < friend.waiting.length; w++ )
+				for ( var w = 0; w < Friend.waiting.length; w++ )
 				{
-					var message = friend.waiting[ w ];
+					var message = netfriend.waiting[ w ];
 					if ( message.subject == '<---notification--->' )
 					{
-						notificationWaiting += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.removeWaitingMessage(\'' + friend.name + '\', \'' + message.id + '\');">\
+						notificationWaiting += '<div class="HRow HoverRow" onclick="FriendNetworkFriends.removeWaitingMessage(\'' + netfriend.name + '\', \'' + message.id + '\');">\
 													<div class="FloatLeft">\
 														' + message.content + ' (not read)\
 													</div>\
@@ -2558,11 +2568,11 @@ FriendNetworkFriends =
 
 			// Messages waiting to be sent
 			var pending = '';
-			if ( friend.pending.length )
+			if ( netfriend.pending.length )
 			{
 				pending += '<div class="HRow">\
 								<div class="FloatLeft">\
-									<strong>' + friend.pending.length + ' pending message(s)</strong>\
+									<strong>' + netfriend.pending.length + ' pending message(s)</strong>\
 								</div>\
 							</div>';
 			}
@@ -2571,14 +2581,14 @@ FriendNetworkFriends =
 			html += title + messages + notificationWaiting + waiting + privateShared + shared + youShare + pending;
 
 			// Add the icons
-			// <span class="Button fa fa-bell-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendNotification(\'' + friend.name + '\');" title="Send a notification"></span>\
-			// <span class="Button fa fa-video-camera HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickOpenLive(\'' + friend.name + '\');" title="Open live chat"></span>\
+			// <span class="Button fa fa-bell-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendNotification(\'' + Friend.name + '\');" title="Send a notification"></span>\
+			// <span class="Button fa fa-video-camera HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickOpenLive(\'' + Friend.name + '\');" title="Open live chat"></span>\
 			html = '<div class="FNetBubble">' + html + '</br>\
 						<div class="HRow">\
-							<span class="Button fa fa-paper-plane-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendMessage(\'' + friend.name + '\');" title="Send a message"></span>\
-							<span class="Button fa fa-file-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFile(\'' + friend.name + '\');" title="Share a file"></span>\
-							<span class="Button fa fa-folder-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFolder(\'' + friend.name + '\');" title="Share disk or folder"></span>\
-							<span class="Button fa fa-share-square-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendApplication(\'' + friend.name + '\');" title="Share an application"></span>\
+							<span class="Button fa fa-paper-plane-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendMessage(\'' + Friend.name + '\');" title="Send a message"></span>\
+							<span class="Button fa fa-file-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFile(\'' + Friend.name + '\');" title="Share a file"></span>\
+							<span class="Button fa fa-folder-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFolder(\'' + Friend.name + '\');" title="Share disk or folder"></span>\
+							<span class="Button fa fa-share-square-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendApplication(\'' + Friend.name + '\');" title="Share an application"></span>\
 						</div>\
 					</div>';
 		}
@@ -2592,31 +2602,31 @@ FriendNetworkFriends =
 	displayNotifications: function()
 	{
 		var self = FriendNetworkFriends;
-		for ( var f = 0; f < self.friends.length; f++ )
+		for( var f = 0; f < self.friends.length; f++ )
 		{
-			var friend = self.friends[ f ];
-			if ( friend.fullName && friend.notification )
+			var netfriend = self.friends[ f ];
+			if( netfriend.fullName && netfriend.notification )
 			{
-				friend.widget.block = true;
-				friend.notificationBubble = Notify(
+				netfriend.widget.block = true;
+				netfriend.notificationBubble = Notify(
 				{
-					title: 'Notification from ' + friend.fullName,
-					text: self.getNotificationText( friend, friend.notification.id ),
-					label: friend.widget.label,
+					title: 'Notification from ' + netfriend.fullName,
+					text: self.getNotificationText( netfriend, netfriend.notification.id ),
+					label: netfriend.widget.label,
 					sticky: true
 				} );
-				friend.notification = false;
+				netfriend.notification = false;
 			}
 		}
 	},
 
 	// Returns the HTML of a notification bubble
-	getNotificationText: function( friend, id )
+	getNotificationText: function( netfriend, id )
 	{
 		var notification = '';
-		for ( var m = 0; m < friend.messages.length; m++ )
+		for ( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			var message = friend.messages[ m ];
+			var message = netfriend.messages[ m ];
 			if ( message.id == id )
 			{
 				if ( message.subject == '<---notification--->' )
@@ -2629,10 +2639,10 @@ FriendNetworkFriends =
 					if ( message.live )
 					{
 						notification +=	'<div class="FloatLeft">\
-											<button type="button" onclick="FriendNetworkFriends.clickCloseNotification(\'' + friend.name + '\', \'' + message.id + '\');">Refuse</button>\
+											<button type="button" onclick="FriendNetworkFriends.clickCloseNotification(\'' + netfriend.name + '\', \'' + message.id + '\');">Refuse</button>\
 										 </div>\
 										 <div class="FloatRight">\
-											<button type="button" onclick="FriendNetworkFriends.clickAcceptLive(\'' + friend.name + '\', \'' + message.id + '\');">Accept</button>\
+											<button type="button" onclick="FriendNetworkFriends.clickAcceptLive(\'' + netfriend.name + '\', \'' + message.id + '\');">Accept</button>\
 										 </div>';
 					}
 					else 
@@ -2640,11 +2650,11 @@ FriendNetworkFriends =
 						if ( !message.reply )
 						{
 							notification +=	'<div class="FloatLeft">\
-												<button type="button" onclick="FriendNetworkFriends.clickSendNotification(\'' + friend.name + '\', \'' + message.id + '\');">Reply</button>\
+												<button type="button" onclick="FriendNetworkFriends.clickSendNotification(\'' + netfriend.name + '\', \'' + message.id + '\');">Reply</button>\
 											 </div>';
 						}
 						notification += 	'<div class="FloatRight">\
-												<button type="button" onclick="FriendNetworkFriends.clickCloseNotification(\'' + friend.name + '\', \'' + message.id + '\');">OK</button>\
+												<button type="button" onclick="FriendNetworkFriends.clickCloseNotification(\'' + netfriend.name + '\', \'' + message.id + '\');">OK</button>\
 											 </div>';
 					}
 					notification +=  	'</div>';
@@ -2659,25 +2669,25 @@ FriendNetworkFriends =
 	clickCloseNotification: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend.notificationBubble )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend.notificationBubble )
 		{
-			CloseNotification( friend.notificationBubble );
-			friend.notificationBubble = false;
+			CloseNotification( netfriend.notificationBubble );
+			netfriend.notificationBubble = false;
 
 			// Enable normal bubble
-			friend.widget.block = false;
+			netfriend.widget.block = false;
 
 			// Indicate to the other side that the notification has been seen
-			for ( var m = 0; m < friend.messages.length; m++ )
+			for ( var m = 0; m < netfriend.messages.length; m++ )
 			{
-				var message = friend.messages[ m ];
+				var message = netfriend.messages[ m ];
 				if ( message.id == messageId )
 				{
 					if ( !message.readSent )
 					{
 						message.readSent = true;
-						self.sendMessageRead( friend, messageId );
+						self.sendMessageRead( netfriend, messageId );
 					}
 				}
 			}
@@ -2686,7 +2696,7 @@ FriendNetworkFriends =
 			self.clickFriendRemoveMessage( name, messageId );
 
 			// Stop friend flashing (if flashing)
-			self.stopFriendWidgetFlash( friend );
+			self.stopFriendWidgetFlash( netfriend );
 		}
 	},
 
@@ -2694,19 +2704,19 @@ FriendNetworkFriends =
 	clickSendNotification: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
-		if ( friend && !self.sendNotificationView )
+		if ( netfriend && !self.sendNotificationView )
 		{
-			friend.keepOpen = true;
+			netfriend.keepOpen = true;
 			var notification = false;
 			if ( messageId )
 			{
-				for ( var m = 0; m < friend.messages.length; m++ )
+				for ( var m = 0; m < netfriend.messages.length; m++ )
 				{
-					if ( friend.messages[ m ].id == messageId )
+					if ( netfriend.messages[ m ].id == messageId )
 					{
-						notification = friend.messages[ m ];
+						notification = netfriend.messages[ m ];
 						break;
 					}
 				}
@@ -2714,7 +2724,7 @@ FriendNetworkFriends =
 			self.sendNotificationReply = notification;
 			self.sendNotificationView = new View(
 			{
-				title: notification ? 'Reply to notification' : 'Send notification to ' + friend.fullName,
+				title: notification ? 'Reply to notification' : 'Send notification to ' + netfriend.fullName,
 				width: 400,
 				height: notification ? 105 : 60,
 				resize: false
@@ -2730,10 +2740,10 @@ FriendNetworkFriends =
 							</div>\
 						</div>\
 						<div class="VContentBottom BorderTop Padding BackgroundDefault" style="height: 50px">\
-							<button type="button" class="FloatRight Button IconSmall fa-times" onclick="FriendNetworkFriends.onSendNotificationCancel(\'' + friend.name + '\')">\
+							<button type="button" class="FloatRight Button IconSmall fa-times" onclick="FriendNetworkFriends.onSendNotificationCancel(\'' + netfriend.name + '\')">\
 								Cancel\
 							</button>\
-							<button type="button" class="Button IconSmall fa-check" onclick="FriendNetworkFriends.onSendNotificationSend(\'' + friend.name + '\')">\
+							<button type="button" class="Button IconSmall fa-check" onclick="FriendNetworkFriends.onSendNotificationSend(\'' + netfriend.name + '\')">\
 								Send\
 							</button>\
 						</div>\
@@ -2746,7 +2756,7 @@ FriendNetworkFriends =
 			{
 				if ( e.which == 13 || e.keyCode == 13 )
 				{
-					self.onSendNotificationSend( friend.name );
+					self.onSendNotificationSend( netfriend.name );
 				}
 			};
 			setTimeout( function()
@@ -2758,7 +2768,7 @@ FriendNetworkFriends =
 			self.clickCloseNotification( name, messageId );
 
 			// Stop friend flashing (if it was flashing)
-			self.stopFriendWidgetFlash( friend );
+			self.stopFriendWidgetFlash( netfriend );
 		}
 	},
 
@@ -2766,14 +2776,14 @@ FriendNetworkFriends =
 	onSendNotificationCancel: function( name )
 	{
 		var self = FriendNetworkFriends;
-		if ( self.sendNotificationView )
+		if( self.sendNotificationView )
 		{
 			// Make a temporary friend dissappear
-			if ( name )
+			if( name )
 			{
-				var friend = self.getFriendFromName( name );
-				if ( friend )
-					friend.keepOpen = false;
+				var netfriend = self.getFriendFromName( name );
+				if( netfriend )
+					netfriend.keepOpen = false;
 			}
 
 			// Close the view
@@ -2786,8 +2796,8 @@ FriendNetworkFriends =
 	onSendNotificationSend: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend )
 		{
 			var content = self.getViewElement( self.sendNotificationView, 'input', 'text' ).value;
 			var id;
@@ -2802,14 +2812,14 @@ FriendNetworkFriends =
 				from: Workspace.loginUsername,
 				fromName: Workspace.fullName,
 				hostName: self.communicationHostBase,
-				recipient: friend.name,
+				recipient: netfriend.name,
 				subject: '<---notification--->',
 				content: content,
 				reply: self.sendNotificationReply ? true : false,
 				sent: time
 			}
 			// Send when possible
-			self.pushPending( friend,
+			self.pushPending( netfriend,
 			{
 				type: 'message',
 				id: id,
@@ -2826,9 +2836,9 @@ FriendNetworkFriends =
 	clickOpenLive: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
-		if ( friend )
+		if( friend )
 		{
 			// Send a notification to the other side
 			var id = this.getUniqueIdentifier( 'live' );
@@ -2839,15 +2849,15 @@ FriendNetworkFriends =
 				from: Workspace.loginUsername,
 				fromName: Workspace.fullName,
 				hostName: self.communicationHostBase,
-				recipient: friend.name,
+				recipient: netfriend.name,
 				subject: '<---notification--->',
-				content: friend.name + ' invites you to a live video chat.',
+				content: netfriend.name + ' invites you to a live video chat.',
 				live: true,
 				sent: time
 			}
 
 			// Send when possible
-			self.pushPending( friend,
+			self.pushPending( netfriend,
 			{
 				type: 'message',
 				id: id,
@@ -2888,7 +2898,7 @@ FriendNetworkFriends =
 	clickAcceptLive: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
 		// Open Friend Chat live video on the sikrit ruum
 		self.sendDormantCommand( 'FriendChat:Functions/OpenLive', 'sikrit ruum ???', function( response, data )
@@ -2918,13 +2928,13 @@ FriendNetworkFriends =
 	clickFriendSaveFile: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.messages.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			if ( friend.messages[ m ].id == id )
+			if ( netfriend.messages[ m ].id == id )
 			{
-				var message = friend.messages[ m ];
-				self.saveFileFriend = friend;
+				var message = netfriend.messages[ m ];
+				self.saveFileFriend = netfriend;
 				self.saveFileMessage = message;
 				self.onSaveFilePassword();
 			}
@@ -2961,18 +2971,18 @@ FriendNetworkFriends =
 	clickFriendStopSharingFile: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.waiting.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.waiting.length; m++ )
 		{
-			if ( friend.waiting[ m ].id == id )
+			if ( netfriend.waiting[ m ].id == id )
 			{
-				var message = friend.waiting[ m ];
+				var message = netfriend.waiting[ m ];
 
 				// Remove from 'waiting'
-				self.removeWaiting( friend, m );
+				self.removeWaiting( netfriend, m );
 
 				// Send a message to the other side
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'stopShareFile',
 					id: self.getUniqueIdentifier( 'stopShareFile' ),
@@ -2988,13 +2998,13 @@ FriendNetworkFriends =
 	clickFriendOpenFile: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.messages.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			if ( friend.messages[ m ].id == id )
+			if ( netfriend.messages[ m ].id == id )
 			{
-				var message = friend.messages[ m ];
-				DOS.getFileInfo( message.saveTo, function( response, fileinfo, extra )
+				var message = netfriend.messages[ m ];
+				Friend.DOS.getFileInfo( message.saveTo, {}, function( response, fileinfo, extra )
 				{
 					if ( response )
 						OpenWindowByFileinfo( fileinfo );
@@ -3007,11 +3017,11 @@ FriendNetworkFriends =
 	onDropFriend: function( elements )
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;
+		var netfriend = this.friend;
 		var time = '' + new Date().getTime();
 		if ( elements.length > 1 )
 		{
-			Confirm( 'Friend Network', 'Are you sure you want to send ' + elements.length + ' elements to ' + friend.name + '?', function( response )
+			Confirm( 'Friend Network', 'Are you sure you want to send ' + elements.length + ' elements to ' + netfriend.name + '?', function( response )
 			{
 			}, 'Yes', 'No' );
 		}
@@ -3033,7 +3043,7 @@ FriendNetworkFriends =
 					from: Workspace.loginUsername,
 					fromName: Workspace.fullName,
 					hostName: self.communicationHostBase,
-					recipient: friend.name,
+					recipient: netfriend.name,
 					subject: '<---file--->',
 					path: element.Path,
 					content: '',
@@ -3041,7 +3051,7 @@ FriendNetworkFriends =
 					sent: time
 				}
 				// Send when possible
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'message',
 					id: id,
@@ -3060,7 +3070,7 @@ FriendNetworkFriends =
 					from: Workspace.loginUsername,
 					fromName: Workspace.fullName,
 					hostName: self.communicationHostBase,
-					recipient: friend.name,
+					recipient: netfriend.name,
 					subject: '<---folder--->',
 					path: element.Path,
 					name: name,
@@ -3070,7 +3080,7 @@ FriendNetworkFriends =
 				}
 
 				// Send when possible
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'message',
 					id: id,
@@ -3089,7 +3099,7 @@ FriendNetworkFriends =
 							name : name,
 							type: 'folder (private)',
 							password: doorPassword,
-							friend: friend
+							friend: netfriend
 						} );
 					}
 				}
@@ -3101,14 +3111,14 @@ FriendNetworkFriends =
 	checkFriendOpen: function( hostName, appName )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( hostName );
+		var netfriend = self.getFriendFromName( hostName );
 		var ret = false;
-		if ( friend )
+		if( netfriend )
 		{
 			// Check if the app is shared in Friend Network
-			for ( var a = 0; a < friend.apps.length; a++ )
+			for( var a = 0; a < netfriend.apps.length; a++ )
 			{
-				if ( friend.apps[ a ].name == appName )
+				if( netfriend.apps[ a ].name == appName )
 				{
 					ret = true;
 					break;
@@ -3125,12 +3135,12 @@ FriendNetworkFriends =
 	clickSendFolder: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend && !self.sendFolderView )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend && !self.sendFolderView )
 		{
 			new Filedialog( false, function( path )
 			{
-				if ( path && typeof path == 'string' && path.indexOf( 'Mountlist:' ) < 0 )
+				if( path && typeof path == 'string' && path.indexOf( 'Mountlist:' ) < 0 )
 				{
 					self.sendFolderView = new View(
 					{
@@ -3145,7 +3155,7 @@ FriendNetworkFriends =
 							<table border="0" class="FullWidth">\
 								<tr>\
 									<td align="left"><strong>To: </strong></td>\
-									<td align="left"><input type="text" size="40" id="to" value="' + friend.name + '"></tr>\
+									<td align="left"><input type="text" size="40" id="to" value="' + netfriend.name + '"></tr>\
 								<tr>\
 									<td>Message:</td>\
 									<td><input type="text" size="40" id="description"></td>\
@@ -3208,7 +3218,7 @@ FriendNetworkFriends =
 
 		// Check the recipients
 		var recipients = self.checkRecipientList( list );
-		if ( recipients && recipients.length )
+		if( recipients && recipients.length )
 		{
 			// Identifier for message
 			var id = this.getUniqueIdentifier( 'message' );
@@ -3247,7 +3257,7 @@ FriendNetworkFriends =
 			}
 			// Start sharing the folder
 			var door = ( new Door() ).get( path );
-			if ( door )
+			if( door )
 			{
 				FriendNetworkDoor.shareDoor( door,
 				{
@@ -3255,7 +3265,7 @@ FriendNetworkFriends =
 					type: 'folder (private)',
 					description: description,
 					password: password,
-					friend: friend
+					friend: this.friend
 				} );
 			}
 		}
@@ -3266,21 +3276,21 @@ FriendNetworkFriends =
 	clickFriendStopSharing: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.waiting.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.waiting.length; m++ )
 		{
-			if ( friend.waiting[ m ].id == id )
+			if ( netfriend.waiting[ m ].id == id )
 			{
-				var message = friend.waiting[ m ];
+				var message = netfriend.waiting[ m ];
 
 				// Stop the actual sharing
 				FriendNetworkDoor.closeSharedDoor( message.name );
 
 				// Remove from 'waiting'
-				self.removeWaiting( friend, m );
+				self.removeWaiting( netfriend, m );
 
 				// Send a message to the other side
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'stopShare',
 					id: self.getUniqueIdentifier( 'stopShare' ),
@@ -3295,25 +3305,25 @@ FriendNetworkFriends =
 	clickFriendOpen: function( hostName, appName, executable, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( hostName );
-		if ( friend )
+		var netfriend = self.getFriendFromName( hostName );
+		if( netfriend )
 		{
 			// Find the type of the app
 			var type;
-			for ( var a = 0; a < friend.apps.length; a++ )
+			for ( var a = 0; a < netfriend.apps.length; a++ )
 			{
-				if ( friend.apps[ a ].name == appName )
+				if ( netfriend.apps[ a ].name == appName )
 				{
-					type = friend.apps[ a ].type;
+					type = netfriend.apps[ a ].type;
 					break;
 				}
 			}
 
-			// Get the password from the friend.shared list
+			// Get the password from the netfriend.shared list
 			var password = 'public';
-			for ( var s = 0; s < friend.shared.length; s++ )
+			for ( var s = 0; s < netfriend.shared.length; s++ )
 			{
-				var share = friend.shared[ s ];
+				var share = netfriend.shared[ s ];
 				if ( share.subject == '<---folder--->' || share.type == '<---application--->' )
 				{
 					if ( share.name == appName )
@@ -3322,7 +3332,7 @@ FriendNetworkFriends =
 						if ( !type )
 						{
 							console.log( 'FriendNetworkFriends.clickOnOpen app not found!' );
-							self.removeShared( friend, s );
+							self.removeShared( netfriend, s );
 							return false;
 						}
 
@@ -3388,8 +3398,8 @@ FriendNetworkFriends =
 	clickSendApplication: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend && !self.sendApplicationView )
+		var netfriend = self.getFriendFromName( name );
+		if ( netfriend && !self.sendApplicationView )
 		{
 			new Filedialog( false, function( list )
 			{
@@ -3413,7 +3423,7 @@ FriendNetworkFriends =
 								<table border="0" class="FullWidth">\
 									<tr>\
 										<td align="left"><strong>To: </strong></td>\
-										<td align="left"><input type="text" size="40" id="to" value="' + friend.name + '"></tr>\
+										<td align="left"><input type="text" size="40" id="to" value="' + netfriend.name + '"></tr>\
 									<tr>\
 										<td>Message:</td>\
 										<td><input type="text" size="40" id="description"></td>\
@@ -3457,7 +3467,7 @@ FriendNetworkFriends =
 		var self = FriendNetworkFriends;
 		var list = self.getViewElement( self.sendApplicationView, 'input', 'to' ).value;
 		var description = self.getViewElement( self.sendApplicationView, 'input', 'description' ).value;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
 		// Check file extension
 		var OK = false;
@@ -3536,7 +3546,7 @@ FriendNetworkFriends =
 					type: 'application (private)',
 					description: description,
 					password: password,
-					friend: friend
+					friend: netfriend
 				} );
 			}
 		}
@@ -3547,21 +3557,21 @@ FriendNetworkFriends =
 	clickFriendStopSharingApplication: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.waiting.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.waiting.length; m++ )
 		{
-			if ( friend.waiting[ m ].id == id )
+			if ( netfriend.waiting[ m ].id == id )
 			{
-				var message = friend.waiting[ m ];
+				var message = netfriend.waiting[ m ];
 
 				// Close the shared door
 				FriendNetworkDoor.closeSharedDoor( message.name );
 
 				// Remove from 'waiting'
-				self.removeWaiting( friend, m );
+				self.removeWaiting( netfriend, m );
 
 				// Send a message to the other side
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'stopShareApplication',
 					id: self.getUniqueIdentifier( 'stopShareApp' ),
@@ -3581,8 +3591,8 @@ FriendNetworkFriends =
 	clickSendFile: function( name )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend && !self.sendFileView )
+		var netfriend = self.getFriendFromName( name );
+		if ( netfriend && !self.sendFileView )
 		{
 			new Filedialog( false, function( files )
 			{
@@ -3603,7 +3613,7 @@ FriendNetworkFriends =
 							<table border="0" class="FullWidth">\
 								<tr>\
 									<td align="left"><strong>To: </strong></td>\
-									<td align="left"><input type="text" size="40" id="to" value="' + friend.name + '"></tr>\
+									<td align="left"><input type="text" size="40" id="to" value="' + netfriend.name + '"></tr>\
 								<tr>\
 									<td>Message:</td>\
 									<td><input type="text" size="40" id="description"></td>\
@@ -3663,7 +3673,7 @@ FriendNetworkFriends =
 
 		// Check the recipients
 		var recipients = self.checkRecipientList( list );
-		if ( recipients && recipients.length )
+		if( recipients && recipients.length )
 		{
 			// Identifier for message
 			var id = this.getUniqueIdentifier( 'message' );
@@ -3709,11 +3719,11 @@ FriendNetworkFriends =
 	clickSendMessage: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
-		if ( friend && !self.sendMessageViews[ name ] )
+		if( netfriend && !self.sendMessageViews[ name ] )
 		{
-			var conversationId = self.getConversationIdFromMessageId( friend, messageId );
+			var conversationId = self.getConversationIdFromMessageId( netfriend, messageId );
 			var title = 'Send message to ' + name;
 			if ( conversationId )
 				title = 'Conversation with ' + name;
@@ -3735,29 +3745,29 @@ FriendNetworkFriends =
 			self.sendMessageViews[ name ].view.onClose =	function()
 			{
 				// Remove 'hold temporary friend' flag
-				var friend = self.getFriendFromName( name );
-				friend.keepOpen = false;
+				var nf = self.getFriendFromName( name );
+				nf.keepOpen = false;
 			};
 
 			var html = self.getSendMessageHTML( name, messageId, conversationId );
 			view.setContent( html );
-			if ( friend.temporary )
-				friend.keepOpen = true;
+			if ( netfriend.temporary )
+				netfriend.keepOpen = true;
 
 			// Set focus and keyboard events
-			self.finishMessageDialog( friend, messageId );
+			self.finishMessageDialog( netfriend, messageId );
 		}
 	},
 
 	// Set shortcuts and focus in the conversation dialog
-	finishMessageDialog: function ( friend, messageId )
+	finishMessageDialog: function ( netfriend, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var name = friend.name;
+		var name = netfriend.name;
 		if ( self.sendMessageViews[ name ] )
 		{
 			var theView = self.sendMessageViews[ name ];
-			var conversationId = self.getConversationIdFromMessageId( friend, messageId );
+			var conversationId = self.getConversationIdFromMessageId( netfriend, messageId );
 
 			// Set keyboard events to
 			var focus;
@@ -3765,7 +3775,7 @@ FriendNetworkFriends =
 			theView.contentElement = content;
 			content.onkeydown = function( e )
 			{
-				self.stopFriendWidgetFlash( friend );
+				self.stopFriendWidgetFlash( netfriend );
 
 				if ( !e.shiftKey && ( e.which == 13 || e.keyCode == 13 ) )
 				{
@@ -3792,7 +3802,7 @@ FriendNetworkFriends =
 			theView.subjectElement = subject;
 			subject.onkeydown = function( e )
 			{
-				self.stopFriendWidgetFlash( friend );
+				self.stopFriendWidgetFlash( netfriend );
 				if ( e.which == 27 || e.keyCode == 27 )
 				{
 					self.onSendMessageCancel( name );
@@ -3819,7 +3829,7 @@ FriendNetworkFriends =
 	},
 
 	// Update all open conversations with the content of a new message
-	updateOpenConversations: function( friend, messageId, conversationId )
+	updateOpenConversations: function( netfriend, messageId, conversationId )
 	{
 		var self = FriendNetworkFriends;
 		var ret = false;
@@ -3831,7 +3841,7 @@ FriendNetworkFriends =
 				// Increase the height of the view
 				var view = theView.view;
 				view.setFlag( 'height', 380 );
-				view.setFlag( 'title', 'Conversation with ' + friend.name );
+				view.setFlag( 'title', 'Conversation with ' + netfriend.name );
 
 				// Recenter the window
 				if ( !theView.alreadyRepositionned )
@@ -3842,7 +3852,7 @@ FriendNetworkFriends =
 				}
 
 				// Update the HTML
-				var html = self.getSendMessageHTML( friend.name, messageId, conversationId );
+				var html = self.getSendMessageHTML( netfriend.name, messageId, conversationId );
 				view.setContent( html );
 
 				// Show last message
@@ -3851,11 +3861,11 @@ FriendNetworkFriends =
 					eles[ 0 ].scrollTop = eles[ 0 ].offsetHeight;
 
 				// Set focus and keyboard events
-				self.finishMessageDialog( friend, messageId );
+				self.finishMessageDialog( netfriend, messageId );
 
 				// Message read!
-				self.sendMessageRead( friend, messageId );
-				self.removeMessageFromId( friend, messageId );
+				self.sendMessageRead( netfriend, messageId );
+				self.removeMessageFromId( netfriend, messageId );
 				ret = true;
 			}
 		}
@@ -3866,9 +3876,9 @@ FriendNetworkFriends =
 	getSendMessageHTML: function( name, messageId, conversationId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
-		var c = self.getConversationText( friend, conversationId, true );
+		var c = self.getConversationText( netfriend, conversationId, true );
 		var conversation = c.conversation;
 		var subject = c.subject;
 		var text = c.text;
@@ -3887,7 +3897,7 @@ FriendNetworkFriends =
 							</div>\
 						</div>';
 
-		if ( conversation )
+		if( conversation )
 		{
 			html += 	'<div class="ConversationArea VContentTop ScrollArea Padding" style="top: 85px; height: calc(100% - 245px)">' + text + '</div>';
 		}
@@ -3902,7 +3912,7 @@ FriendNetworkFriends =
 		html += 		   '<button type="button" class="FloatRight Button IconSmall" onclick="FriendNetworkFriends.onSendMessageSendAndClose(\'' + name + '\', \'' + messageId + '\')">\
 								Send and close\
 							</button>';
-		if ( friend.online )
+		if( netfriend.online )
 		{
 			html += 	   '<button type="button" class="FloatRight Button IconSmall" onclick="FriendNetworkFriends.onSendMessageSend(\'' + name + '\', \'' + messageId + '\')">\
 								Send\
@@ -3917,15 +3927,15 @@ FriendNetworkFriends =
 	onSendMessageCancel: function( name )
 	{
 		var self = FriendNetworkFriends;
-		if ( self.sendMessageViews[ name ] )
+		if( self.sendMessageViews[ name ] )
 		{
 			// Remove 'hold temporary friend' flag
-			var friend = self.getFriendFromName( name );
-			if ( friend )
+			var netfriend = self.getFriendFromName( name );
+			if( netfriend )
 			{
-				friend.keepOpen = false;
+				netfriend.keepOpen = false;
 				// Stop flashing of icon
-				self.stopFriendWidgetFlash( friend );
+				self.stopFriendWidgetFlash( netfriend );
 			}
 
 			// Close the view
@@ -3939,14 +3949,14 @@ FriendNetworkFriends =
 	onSendMessageSendAndClose: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( self.onSendMessageSend( name, messageId ) )
+		var netfriend = self.getFriendFromName( name );
+		if( self.onSendMessageSend( name, messageId ) )
 			self.onSendMessageCancel( name );
-		if ( friend )
+		if( netfriend )
 		{
 			// Remove message
-			self.sendMessageRead( friend, messageId );
-			self.removeMessageFromId( friend, messageId );
+			self.sendMessageRead( netfriend, messageId );
+			self.removeMessageFromId( netfriend, messageId );
 		}
 	},
 
@@ -4003,16 +4013,16 @@ FriendNetworkFriends =
 	onSendMessageSend: function( name, messageId )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 
 		if ( self.sendMessageViews[ name ] )
 		{
 			// Stop flashing of icon
-			self.stopFriendWidgetFlash( friend );
+			self.stopFriendWidgetFlash( netfriend );
 
 			// Remove message
-			self.sendMessageRead( friend, messageId );
-			self.removeMessageFromId( friend, messageId );
+			self.sendMessageRead( netfriend, messageId );
+			self.removeMessageFromId( netfriend, messageId );
 
 			// Get the content of the dialog
 			var view = self.sendMessageViews[ name ].view;
@@ -4080,10 +4090,10 @@ FriendNetworkFriends =
 	clickFriendOpenMessage: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.messages.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			if ( friend.messages[ m ].id == id )
+			if ( netfriend.messages[ m ].id == id )
 			{
 				self.clickSendMessage( name, id )
 			}
@@ -4094,13 +4104,13 @@ FriendNetworkFriends =
 	clickFriendRemoveMessage: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.messages.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			if ( friend.messages[ m ].id == id )
+			if( netfriend.messages[ m ].id == id )
 			{
 				// Removes message from list
-				self.removeMessage( friend, m );
+				self.removeMessage( netfriend, m );
 
 				// Update the widgets
 				self.refreshFriendWidgets();
@@ -4114,18 +4124,18 @@ FriendNetworkFriends =
 	clickFriendRefuseMessage: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.messages.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for( var m = 0; m < netfriend.messages.length; m++ )
 		{
-			if ( friend.messages[ m ].id == id )
+			if( netfriend.messages[ m ].id == id )
 			{
-				var message = friend.messages[ m ];
+				var message = netfriend.messages[ m ];
 
 				// Removes message from list
-				self.removeMessage( friend, m );
+				self.removeMessage( netfriend, m );
 
 				// Send refusal
-				self.pushPending( friend,
+				self.pushPending( netfriend,
 				{
 					type: 'refuseMessage',
 					id: message.id
@@ -4138,19 +4148,19 @@ FriendNetworkFriends =
 	},
 
 	// Returns a conversation from its identifier
-	getConversationIdFromMessageId: function( friend, messageId )
+	getConversationIdFromMessageId: function( netfriend, messageId )
 	{
 		var self = FriendNetworkFriends;
-		if ( messageId && messageId != 'none' )
+		if( messageId && messageId != 'none' )
 		{
 			// Find the conversation id
-			for ( var c in self.conversations )
+			for( var c in self.conversations )
 			{
 				var conversation = self.conversations[ c ];
-				for ( var m = 0; m < self.conversations[ c ].length; m++ )
+				for( var m = 0; m < self.conversations[ c ].length; m++ )
 				{
 					var message = conversation[ m ];
-					if ( message.id == messageId )
+					if( message.id == messageId )
 					{
 						return c;
 					}
@@ -4161,14 +4171,14 @@ FriendNetworkFriends =
 	},
 
 	// Returns the text of a conversation
-	getConversationText: function( friend, conversationId, getText )
+	getConversationText: function( netfriend, conversationId, getText )
 	{
 		var self = FriendNetworkFriends;
 
 		var conversation;
 		var subject = '';
 		var text = '';
-		if ( conversationId && self.conversations[ conversationId ] )
+		if( conversationId && self.conversations[ conversationId ] )
 		{
 			conversation = self.conversations[ conversationId ];
 			subject = 're ' + conversation[ 0 ].subject;
@@ -4198,13 +4208,13 @@ FriendNetworkFriends =
 	},
 
 	// Send a 'read' message to the originator of a message
-	sendMessageRead: function( friend, messageId )
+	sendMessageRead: function( netfriend, messageId )
 	{
 		var self = FriendNetworkFriends;
 		if ( messageId && messageId != 'none' )
 		{
 			// Send 'messageRead' to message originator
-			self.pushPending( friend,
+			self.pushPending( netfriend,
 			{
 				type: 'messageRead',
 				id: messageId
@@ -4213,17 +4223,17 @@ FriendNetworkFriends =
 	},
 
 	// Removes a message from its id
-	removeMessageFromId: function( friend, messageId )
+	removeMessageFromId: function( netfriend, messageId )
 	{
 		var self = FriendNetworkFriends;
 		if ( messageId && messageId != 'none' )
 		{
 			// Remove the origin message from the message list
-			for ( var m = 0; m < friend.messages.length; m++ )
+			for ( var m = 0; m < netfriend.messages.length; m++ )
 			{
-				if ( friend.messages[ m ].id == messageId )
+				if ( netfriend.messages[ m ].id == messageId )
 				{
-					self.removeMessage( friend, m );
+					self.removeMessage( netfriend, m );
 					break;
 				}
 			}
@@ -4499,12 +4509,12 @@ FriendNetworkFriends =
 	removeWaitingMessage: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.waiting.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.waiting.length; m++ )
 		{
-			if ( friend.waiting[ m ].id == id )
+			if ( netfriend.waiting[ m ].id == id )
 			{
-				self.removeWaiting( friend, m );
+				self.removeWaiting( netfriend, m );
 				break;
 			}
 		}
@@ -4514,22 +4524,22 @@ FriendNetworkFriends =
 	removePendingMessage: function( name, id )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		for ( var m = 0; m < friend.pending.length; m++ )
+		var netfriend = self.getFriendFromName( name );
+		for ( var m = 0; m < netfriend.pending.length; m++ )
 		{
-			if ( friend.pending[ m ].id == id )
+			if ( netfriend.pending[ m ].id == id )
 			{
-				self.removePending( friend, m );
+				self.removePending( netfriend, m );
 				break;
 			}
 		}
 	},
 
 	// Removes an element from the array of a friend (from its number of identifier)
-	removeFromArray: function( friend, name, idOrNumber )
+	removeFromArray: function( netfriend, name, idOrNumber )
 	{
 		var found = true;
-		var arr = friend[ name ];
+		var arr = netfriend[ name ];
 		if ( typeof idOrNumber == 'string' )
 		{
 			found = false;
@@ -4551,77 +4561,77 @@ FriendNetworkFriends =
 	},
 
 	// Push a message in the list of messages of a friend
-	pushMessage: function( friend, message )
+	pushMessage: function( netfriend, message )
 	{
 		var self = FriendNetworkFriends;
-		friend.messages.push( message );
+		netfriend.messages.push( message );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Removes a message from the message list of a friend
-	removeMessage: function( friend, idOrNumber )
+	removeMessage: function( netfriend, idOrNumber )
 	{
 		var self = FriendNetworkFriends;
-		self.removeFromArray( friend, 'messages', idOrNumber );
+		self.removeFromArray( netfriend, 'messages', idOrNumber );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Push an entry in the list of waiting messages of a friend
-	pushWaiting: function( friend, message )
+	pushWaiting: function( netfriend, message )
 	{
 		var self = FriendNetworkFriends;
-		friend.waiting.push( message );
+		netfriend.waiting.push( message );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Removes a entry in the list of waiting messages of a friend
-	removeWaiting: function( friend, idOrNumber )
+	removeWaiting: function( netfriend, idOrNumber )
 	{
 		var self = FriendNetworkFriends;
-		self.removeFromArray( friend, 'waiting', idOrNumber );
+		self.removeFromArray( netfriend, 'waiting', idOrNumber );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Push an entry in the shared list of a friend
-	pushShared: function( friend, message )
+	pushShared: function( netfriend, message )
 	{
 		var self = FriendNetworkFriends;
-		friend.shared.push( message );
+		netfriend.shared.push( message );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Removes an entry in the shared list of a friend
-	removeShared: function( friend, idOrNumber )
+	removeShared: function( netfriend, idOrNumber )
 	{
 		var self = FriendNetworkFriends;
-		self.removeFromArray( friend, 'shared', idOrNumber );
+		self.removeFromArray( netfriend, 'shared', idOrNumber );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Push a pending message
-	pushPending: function( friend, message )
+	pushPending: function( netfriend, message )
 	{
 		var self = FriendNetworkFriends;
 		if ( !message.id )
-			message.id = friend.name + Math.random() * 1000000 + '|' + Math.random() * 1000000;
-		friend.pending.push( message );
+			message.id = netfriend.name + Math.random() * 1000000 + '|' + Math.random() * 1000000;
+		netfriend.pending.push( message );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Remove a pending message
-	removePending: function( friend, idOrNumber )
+	removePending: function( netfriend, idOrNumber )
 	{
 		var self = FriendNetworkFriends;
-		self.removeFromArray( friend, 'pending', idOrNumber );
+		self.removeFromArray( netfriend, 'pending', idOrNumber );
 		self.storeFriends();
-		self.refreshTrayIconBubble( friend );
+		self.refreshTrayIconBubble( netfriend );
 	},
 
 	// Find an element in a view
@@ -4654,13 +4664,13 @@ FriendNetworkFriends =
 		var self = FriendNetworkFriends;
 
 		var hName = self.cleanHostName( hostName );
-		var friend, fHostName;
+		var netfriend, fHostName;
 		for ( var f = 0; f < self.friends.length; f++ )
 		{
-			friend = self.friends[ f ];
-			fHostName = self.cleanHostName( friend.hostName );
+			netfriend = self.friends[ f ];
+			fHostName = self.cleanHostName( netfriend.hostName );
 			if ( fHostName == hName )
-				return friend;
+				return netfriend;
 		}
 		return false;
 	},
@@ -4671,9 +4681,9 @@ FriendNetworkFriends =
 		var self = FriendNetworkFriends;
 		for ( var c = 0; c < self.friends.length; c++ )
 		{
-			var friend = self.friends[ c ];
-			if ( friend.communicationKey == key )
-				return friend;
+			var netfriend = self.friends[ c ];
+			if ( netfriend.communicationKey == key )
+				return netfriend;
 		}
 		return false;
 	},
@@ -4753,7 +4763,7 @@ FriendNetworkFriends =
 			var hosts = self.currentHosts;
 
 			// Mark all the apps of all the hosts as 'not used'
-			var host, apps, app, a, h, s, friend;
+			var host, apps, app, a, h, s, netfriend;
 			if( hosts && hosts.length )
 			{
 				for ( h = 0; h < hosts.length; h++ )
@@ -4779,13 +4789,13 @@ FriendNetworkFriends =
 			// Checks that an existing session is still online...
 			for ( var s = 0; s < self.friends.length; s++ )
 			{
-				friend = self.friends[ s ];
-				if ( !friend.session )
+				netfriend = self.friends[ s ];
+				if ( !netfriend.session )
 					continue;
 
 				// Is the session still present in the hosts?
 				var friendFound = false;
-				var appName = friend.hostName.split( '@' )[ 0 ];
+				var appName = netfriend.hostName.split( '@' )[ 0 ];
 				if( typeof( hosts ) != 'undefined' && hosts.length )
 				{
 					for ( h = 0; h < hosts.length; h++ )
@@ -4793,14 +4803,14 @@ FriendNetworkFriends =
 						host = hosts[ h ];
 						if ( host.name == FriendNetworkShare.userInformation.name )
 						{
-							friend.listedInHosts = false;
+							netfriend.listedInHosts = false;
 
 							// Store the apps of the friend
 							if ( host.apps )
 							{
 								apps = hosts[ h ].apps;
-								friend.apps = apps;
-								friend.listedInHosts = true;
+								netfriend.apps = apps;
+								netfriend.listedInHosts = true;
 
 								// Look for communication channel that matches this one
 								for ( a = 0; a < apps.length; a++ )
@@ -4827,16 +4837,16 @@ FriendNetworkFriends =
 				if ( !friendFound )
 				{
 					var toDelete = true;
-					if ( friend.connecting || friend.connected )
+					if ( netfriend.connecting || netfriend.connected )
 						toDelete = false;
-					if ( friend.timeOfCreation )
+					if ( netfriend.timeOfCreation )
 					{
 						var time = new Date().getTime();
-						if ( time - friend.timeOfCreation < 1000 * 5 )
+						if ( time - netfriend.timeOfCreation < 1000 * 5 )
 							toDelete = false;
 					}
 					if ( toDelete )
-						self.closeSessionFriend( friend );
+						self.closeSessionFriend( netfriend );
 				}
 			}
 
@@ -4867,7 +4877,7 @@ FriendNetworkFriends =
 											{
 												if ( hostName == self.friends[ f ].hostName )
 												{
-													friend = self.friends[ f ];
+													netfriend = self.friends[ f ];
 													found = true;
 													break;
 												}
@@ -4879,7 +4889,7 @@ FriendNetworkFriends =
 											}
 											else
 											{
-												self.activateSessionFriend( friend );
+												self.activateSessionFriend( netfriend );
 											}
 										}
 									}
@@ -4950,7 +4960,7 @@ FriendNetworkFriends =
 			if ( self.friendNotConnectedIcon )
 				context.drawImage( self.friendNotConnectedIcon, 16, 16, 16, 16 );
 			context.globalAlpha = 1;
-			friend.flashIcon = canvas.toDataURL();
+			newFriend.flashIcon = canvas.toDataURL();
 
 			// Add a widget (Hogne you should create a priority system for the widgets)
 			var widget =
@@ -4958,7 +4968,7 @@ FriendNetworkFriends =
 				label: 'Friend Network Session ' + app.name,
 				name: app.name,
 				className: '',
-				icon: friend.flashIcon,
+				icon: newFriend.flashIcon,
 				getBubbleText: self.getSessionText,
 				onOpenBubble: self.onOpenSessionText,
 				onCloseBubble: self.onCloseSessionText,
@@ -5006,12 +5016,12 @@ FriendNetworkFriends =
 	},
 
 	// Activate session friend widget
-	activateSessionFriend: function( friend )
+	activateSessionFriend: function( netfriend )
 	{
-		if ( friend.sessionConnected )
-			Workspace.setTrayIconImage( friend.widget.identifier, friend.icon );
+		if ( netfriend.sessionConnected )
+			Workspace.setTrayIconImage( netfriend.widget.identifier, netfriend.icon );
 		else
-			Workspace.setTrayIconImage( friend.widget.identifier, friend.flashIcon );
+			Workspace.setTrayIconImage( netfriend.widget.identifier, netfriend.flashIcon );
 	},
 
 	// Close an existing session
@@ -5025,17 +5035,17 @@ FriendNetworkFriends =
 			count = 0;
 			for ( var f = 0; f < self.friends.length; f++ )
 			{
-				var friend = self.friends[ f ];
-				if ( friend.session )
+				var netfriend = self.friends[ f ];
+				if ( netfriend.session )
 				{
-					self.closeSessionFriend( friend );
+					self.closeSessionFriend( netfriend );
 					count++;
 					break;
 				}
 			}
 		} while( count != 0 );
 	},
-	closeSessionFriend: function( friend )
+	closeSessionFriend: function( netfriend )
 	{
 		var self = FriendNetworkFriends;
 
@@ -5043,7 +5053,7 @@ FriendNetworkFriends =
 		var found = false;
 		for ( var f = 0; f < self.friends.length; f++ )
 		{
-			if ( self.friends[ f ] == friend )
+			if ( self.friends[ f ] == netfriend )
 			{
 				found = true;
 				break;
@@ -5051,33 +5061,33 @@ FriendNetworkFriends =
 		}
 
 		// Destroy!
-		if ( found && friend.session )
+		if ( found && netfriend.session )
 		{
 			// Disconnects friend
-			self.disconnectFriend( friend );
+			self.disconnectFriend( netfriend );
 
 			// Removes widget
-			if ( friend.widget )
+			if ( netfriend.widget )
 			{
 				// Remove from Workspace
-				Workspace.removeTrayIcon( friend.widget.identifier );
+				Workspace.removeTrayIcon( netfriend.widget.identifier );
 
 				// Remove from second list
 				for ( var w = 0; w < self.sessionWidgets.length; w++ )
 				{
-					if ( self.sessionWidgets[ w ] == friend.widget )
+					if ( self.sessionWidgets[ w ] == netfriend.widget )
 					{
 						self.sessionWidgets.splice( w );
 						break;
 					}
 				}
-				friend.widget = false;
+				netfriend.widget = false;
 			}
 
 			// Stop interval
-			if ( friend.handleConnecting )
+			if( netfriend.handleConnecting )
 			{
-				clearInterval( friend.handleConnecting );
+				clearInterval( netfriend.handleConnecting );
 			}
 
 			// Remove from list of friends
@@ -5089,11 +5099,11 @@ FriendNetworkFriends =
 	onOpenSessionText: function()
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;			// Friend contained in the Bubble object (this)
-		if ( friend )
+		var netfriend = this.friend;			// Friend contained in the Bubble object (this)
+		if( netfriend )
 		{
 			// If the friend is flashing, stop the flash!
-			self.stopFriendWidgetFlash( friend );
+			self.stopFriendWidgetFlash( netfriend );
 		}
 	},
 
@@ -5101,11 +5111,11 @@ FriendNetworkFriends =
 	onCloseSessionText: function()
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;			// Friend contained in the Bubble object (this)
-		if ( friend )
+		var netfriend = this.friend;			// Friend contained in the Bubble object (this)
+		if ( netfriend )
 		{
 			// Forces a redemand of the text next time
-			friend.widget.bubbleSet = false;
+			netfriend.widget.bubbleSet = false;
 		}
 	},
 	
@@ -5113,8 +5123,8 @@ FriendNetworkFriends =
 	getSessionText: function( friend )
 	{
 		var self = FriendNetworkFriends;
-		var friend = this.friend;
-		if ( !friend.session )
+		var netfriend = this.friend;
+		if ( !netfriend.session )
 			return;
 
 		// Title of the bubble
@@ -5123,10 +5133,10 @@ FriendNetworkFriends =
 		title += '<div>\
 					<div class="HRow">\
 						<div class="FloatLeft">\
-							<h3>' + friend.machineInfos.os + '</h3>\
+							<h3>' + netfriend.machineInfos.os + '</h3>\
 						</div>';
 		title += 	   '<div class="FloatRight">\
-							<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px;" title="Turn off computer." onclick="FriendNetworkFriend.clickShutSession(\'' + friend.hostName + '\');"></span>\
+							<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px;" title="Turn off computer." onclick="FriendNetworkFriend.clickShutSession(\'' + netfriend.hostName + '\');"></span>\
 						</div>';
 		title +=   '</div>\
 				</div>';
@@ -5489,27 +5499,30 @@ FriendNetworkFriends =
 		return identifier;		
 	},
 
+
+
+
 	//
 	// API for FriendNetworkDrive
 	//////////////////////////////////////////////////////////////////////////////
 	getFriendDirectory: function( name, path, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
+		var netfriend = self.getFriendFromName( name );
 		var response = [];
-		if ( friend )
+		if( netfriend )
 		{
 			var paths = path.split( '/' );
 			if ( path =="" )
 			{
 				// What is the friend sharing?
-				if ( friend.online )
+				if( netfriend.online )
 				{
-					if ( friend.apps )
+					if( netfriend.apps )
 					{
-						for ( var a = 0; a < friend.apps.length; a++ )
+						for ( var a = 0; a < netfriend.apps.length; a++ )
 						{
-							var app = friend.apps[ a ];
+							var app = netfriend.apps[ a ];
 							switch( app.type )
 							{
 								case 'drive':
@@ -5540,13 +5553,13 @@ FriendNetworkFriends =
 							}
 						}
 						// List the shared folders and applications
-						for ( var s = 0; s < friend.shared.length; s++ )
+						for ( var s = 0; s < netfriend.shared.length; s++ )
 						{
-							var share = friend.shared[ s ];
+							var share = netfriend.shared[ s ];
 							var OK;
 							if ( share.subject == '<---folder--->' )
 							{
-								OK = self.checkFriendOpen( friend.name, share.name );
+								OK = self.checkFriendOpen( netfriend.name, netshare.name );
 								if ( OK )
 								{
 									response.push(
@@ -5562,7 +5575,7 @@ FriendNetworkFriends =
 							}
 							else if ( share.subject == '<---application--->' )
 							{
-								OK = self.checkFriendOpen( friend.name, share.name );
+								OK = self.checkFriendOpen( netfriend.name, share.name );
 								if ( OK )
 								{
 									response.push(
@@ -5578,9 +5591,9 @@ FriendNetworkFriends =
 							}
 						}
 						// List the files contained in the messages
-						for ( var m = 0; m < friend.messages.length; m++ )
+						for ( var m = 0; m < netfriend.messages.length; m++ )
 						{
-							var message = friend.messages[ m ];
+							var message = netfriend.messages[ m ];
 							if ( message.subject == '<---file--->' )
 							{
 								if ( !message.loading )
@@ -5627,7 +5640,7 @@ FriendNetworkFriends =
 									{
 										name: icon.Filename,
 										length: icon.Filesize,
-										path: friend.name + '/' + icon.Filename,
+										path: netfriend.name + '/' + icon.Filename,
 										icon: icon.Metatype == 'Directory' ? self.friendNetworkDriveFolderIcon : self.friendNetworkDriveFileIcon,
 										iconBase64: icon.Metatype == 'Directory' ? self.friendNetworkDriveFolderIconBase64 : self.friendNetworkDriveFileIconBase64,
 										description: '',
@@ -5653,8 +5666,8 @@ FriendNetworkFriends =
 	friendRead: function( name, path, mode, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if ( netfriend )
 		{
 			var paths = path.split( '/' );
 			if ( path =="" )
@@ -5663,14 +5676,14 @@ FriendNetworkFriends =
 			}
 			else
 			{
-				if ( friend.online )
+				if ( netfriend.online )
 				{
 					// Call the shared door
 					var doorName = paths[ 0 ];
 					var extraPath = path.substring( doorName.length + 1 );
 					self.clickFriendOpen( name, doorName, false, function( response, connection )
 					{
-						if ( response )
+						if( response )
 						{
 							var door = connection.door;
 							var finalPath = door.title + ':' + extraPath;
@@ -5699,8 +5712,8 @@ FriendNetworkFriends =
 	friendWrite: function( name, path, data, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend )
 		{
 			var paths = path.split( '/' );
 			if ( path =="" )
@@ -5709,7 +5722,7 @@ FriendNetworkFriends =
 			}
 			else
 			{
-				if ( friend.online )
+				if ( netfriend.online )
 				{
 					// Call the shared door
 					var doorName = paths[ 0 ];
@@ -5746,8 +5759,8 @@ FriendNetworkFriends =
 	friendGetFileInformation: function( name, path, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend )
 		{
 			var paths = path.split( '/' );
 			if ( path == "" )
@@ -5771,7 +5784,7 @@ FriendNetworkFriends =
 			}
 			else
 			{
-				if ( friend.online )
+				if( netfriend.online )
 				{
 					// Call the shared door
 					var doorName = paths[ 0 ];
@@ -5807,17 +5820,17 @@ FriendNetworkFriends =
 	friendSetFileInformation: function( name, path, information, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend )
 		{
 			var paths = path.split( '/' );
-			if ( path =="" )
+			if( path == '' )
 			{
 				callback( false, 'ERROR - Impossible operation.', extra );
 			}
 			else
 			{
-				if ( friend.online )
+				if( netfriend.online )
 				{
 					// Call the shared door
 					var doorName = paths[ 0 ];
@@ -5853,8 +5866,8 @@ FriendNetworkFriends =
 	friendDosAction: function( name, action, parameters, callback, extra )
 	{
 		var self = FriendNetworkFriends;
-		var friend = self.getFriendFromName( name );
-		if ( friend )
+		var netfriend = self.getFriendFromName( name );
+		if( netfriend )
 		{
 			var paths = path.split( '/' );
 			if ( path == "" )
@@ -5863,7 +5876,7 @@ FriendNetworkFriends =
 			}
 			else
 			{
-				if ( friend.online )
+				if( netfriend.online )
 				{
 					var doorName;
 					var newParameters = {};
@@ -5930,6 +5943,335 @@ FriendNetworkFriends =
 		{
 			callback( false, 'ERROR - Not a friend.', extra );
 		}
-	}
+	},
 
+
+
+
+
+
+	// Power Sharing Widget
+	///////////////////////////////////////////////////////////////////////////
+
+	// Power Sharing widget, always on screen, activatewd or not, mouse over
+	// Indicates how many are at work now
+	createPowerWidget: function( options )
+	{
+		var self = FriendNetworkFriends;
+
+		var width = 32;
+		var height = 32;
+		var powerSharingImages =
+		{
+			'System:gfx/friendnetwork/fnetPowerSharing.png': { width: width, height: height, base64: true },
+			'System:gfx/friendnetwork/fnetPowerSharingOnline.png': { width: width, height: height, base64: true },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running0.png': { width: width, height: height, base64: true },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running1.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running2.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running3.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running4.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running5.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running6.png': { width: width, height: height, base64: true  },
+			'System:gfx/friendnetwork/PowerSharing_Icon_Running7.png': { width: width, height: height, base64: true  },
+		};
+
+		// Load the images
+		Friend.Utilities.loadImages( powerSharingImages, {}, function( response, data, extra )
+		{
+			if ( response )
+			{
+				//  Widget base
+				self.powerFriend =
+				{
+					images: powerSharingImages,
+					currentImage: 0
+				};
+
+				// Add a widget (Hogne you should create a priority system for the widgets)
+				var widget =
+				{
+					label: 'Friend Network Power Widget',
+					name: 'Friend Network Power Sharing',
+					className: '',
+					icon: powerSharingImages[ 'System:gfx/friendnetwork/fnetPowerSharing.png' ],
+					getBubbleText: self.getPowerWidgetText,
+					onOpenBubble: self.onOpenPowerWidgetText,
+					onCloseBubble: self.onClosePowerWidgetText,
+					//onDrop: self.onDropFriend,
+					powerFriend: self.powerFriend
+				};
+				self.powerFriend.widget = widget;
+				widget.identifier = Workspace.addTrayIcon( widget );
+
+				// Branch the animation of the power widget
+				self.powerFriend.handleAnimation = setInterval( function()
+				{
+					self.animatePowerWidget();
+				}, 20 );
+			}
+		} );
+	},
+
+	// Close power widget
+	closePowerWidget: function()
+	{
+		var self = FriendNetworkFriends;
+
+		if ( self.powerFriend && self.powerFriend.widget )
+		{
+			// Close the animation
+			if ( self.powerFriend.handleAnimation )
+			{
+				clearInterval( self.powerFriend.handleAnimation );
+				self.powerFriend.handleAnimation = false;
+			}
+
+			// Remove from Workspace
+			Workspace.removeTrayIcon( self.powerFriend.widget.identifier );
+			self.powerFriend.widget = null;				// Security if new code inserted under! :)
+
+			// Eventually do some cleanup!
+			self.powerFriend = null;
+		}
+	},
+
+	// Animate power widget
+	animatePowerWidget: function()
+	{
+		var self = FriendNetworkFriends;
+		var powerFriend = self.powerFriend;
+		var widget = powerFriend.widget;
+
+		// Ask for info to Power sharing
+		var infos = Friend.Network.Power.getInformation( {} );
+		var imageName = 'System:gfx/friendnetwork/fnetPowerSharing.png';
+		var connectedTo = 0;
+		var running = 0;		
+		if ( infos.sharing )
+		{
+			connectedTo += infos.sharing.connectedTo;
+			running += infos.sharing.running;
+		}
+		if ( infos.using.length )
+		{
+			for ( var u = 0; u < infos.using.length; u++ )
+			{
+				connectedTo += infos.using[ u ].connectedTo;
+				running += infos.using[ u ].running;
+			}
+		}
+		if( connectedTo )
+		{
+			imageName = 'System:gfx/friendnetwork/fnetPowerSharingOnline.png';
+			if ( running )
+			{
+				if( !powerFriend.currentImage_info || powerFriend.currentImage_info == 'idle' )
+				{	
+					powerFriend.currentImage = 0;
+					Friend.MagicMemory.reachValue( powerFriend, 'currentImage', 7, { type: 'linear', loop: -1, oneWay: true, duration: 750, integer: true } );
+				}
+			}
+			else
+			{
+				if( powerFriend.currentImage_info && powerFriend.currentImage_info != 'idle' )
+					powerFriend.currentImage_info = 'stop';
+			}
+		}
+		else
+		{
+			if( powerFriend.currentImage_info && powerFriend.currentImage_info != 'idle' )
+				powerFriend.currentImage_info = 'stop';
+		}
+		if( powerFriend.currentImage_info == 'running' )
+		{
+			imageName = 'System:gfx/friendnetwork/PowerSharing_Icon_Running' + powerFriend.currentImage + '.png';
+		}
+		if( imageName != widget.currentImageName )
+		{
+			widget.currentImageName = imageName;
+			Workspace.setTrayIconImage( widget.identifier, powerFriend.images[ imageName ] );
+		}
+	},
+	
+	// Called when the bubble is open
+	onOpenPowerWidgetText: function()
+	{
+		var self = FriendNetworkFriends;
+
+		if ( !self.powerFriend.handleRefreshWidget )
+		{
+			self.powerFriend.handleRefreshWidget = setInterval( function()
+			{
+				Workspace.refreshTrayIconBubble( self.powerFriend.widget.identifier );
+			}, 500 );
+		}
+	}
+	,
+	// Called when the bubble is close: force a redemand of the text for the next time
+	onClosePowerWidgetText: function()
+	{
+		var self = FriendNetworkFriends;
+
+		// Stop the update
+		clearInterval( self.powerFriend.handleRefreshWidget );
+		self.powerFriend.handleRefreshWidget = false;
+
+		// Forces a redemand of the text next time
+		self.powerFriend.widget.bubbleSet = false;
+	},
+
+	// Builds the text of the Power Widget bubble
+	getPowerWidgetText: function()
+	{
+		var self = FriendNetworkFriends;
+		
+		// Ask for info to Power sharing
+		var infos = Friend.Network.Power.getInformation( {} );
+
+		// Title of the bubble
+		var html = '';
+		html += '<div>\
+					<div class="HRow">\
+						<div class="FloatLeft">\
+							<h3>Power Sharing</h3>\
+						</div>';
+		html += 	   '<div class="FloatRight">\
+							<span class="fa fa-times Buttons" aria-hidden="true" style="font-size:16px;" title="Turn off." onclick="FriendNetworkFriend.clickTurnOffPower();"></span>\
+						</div>';
+		html +=   '</div>\
+				</div>';
+
+		// You are sharing
+		var youShare = '';
+		if ( infos.sharing )
+		{
+			if ( infos.sharing.online )
+			{
+				if ( infos.sharing.connectedTo == 0 )
+				{
+					youShare +='<div class="HRow HoverRow Padding">\
+									<div class="FloatLeft">\
+										- idle.' + '\
+									</div>\
+								</div>';
+				}
+				else
+				{
+					youShare +='<div class="HRow HoverRow Padding">\
+									<div class="FloatLeft">\
+										- ' + infos.sharing.connectedTo + ' application(s) connected.' + '\
+									</div>\
+								</div>';
+					youShare +='<div class="HRow HoverRow Padding">\
+									<div class="FloatLeft">\
+										- ' + infos.sharing.percentageShared + '% of your power shared.' + '\
+									</div>\
+								</div>';
+				}
+				youShare +='<div class="HRow HoverRow Padding">\
+								<div class="FloatLeft">\
+									- ' + infos.sharing.earned.toFixed( 3 ) + ' FRND earned.' + '\
+								</div>\
+							</div>';
+			}
+			else
+			{
+				youShare +='<div class="HRow HoverRow Padding">\
+								<div class="FloatLeft">\
+									offline.' + '\
+								</div>\
+							</div>';
+			}
+			youShare = '<div>\
+							<div class="HRow">\
+								<div class="FloatLeft">\
+									<strong>Sharing...</strong>\
+								</div>\
+							</div>' + youShare + '\
+						</div>';
+		}
+
+		// You are using...
+		var youUse = '';
+		var connectedTo = 0;
+		var running = 0;
+		var cost = 0;
+		if ( infos.using.length )
+		{
+			for ( var u = 0; u < infos.using.length; u++ )
+			{
+				connectedTo += infos.using[ u ].connectedTo;
+				running += infos.using[ u ].running;
+				cost += infos.using[ u ].cost;
+			}
+			if ( connectedTo == 0 )
+			{
+				youUse +='	<div class="HRow HoverRow Padding">\
+								<div class="FloatLeft">\
+									- idle\
+								</div>\
+							</div>';
+			}
+			else
+			{
+				youUse +='	<div class="HRow HoverRow Padding">\
+								<div class="FloatLeft">\
+									- ' + connectedTo + ' machine(s) connected.' + '\
+								</div>\
+							</div>';
+			}
+			if ( running )
+			{
+				youUse +='	<div class="HRow HoverRow Padding">\
+								<div class="FloatLeft">\
+									- ' + running + ' workers running.' + '\
+								</div>\
+							</div>';
+
+			}
+		}
+		else
+		{
+			youUse +='	<div class="HRow HoverRow Padding">\
+							<div class="FloatLeft">\
+								- idle.\
+							</div>\
+						</div>';		
+		}
+		youUse +='	<div class="HRow HoverRow Padding">\
+						<div class="FloatLeft">\
+							- ' + cost.toFixed( 3 ) + ' FRND spent.' + '\
+						</div>\
+					</div>';
+		youUse = '<div>\
+					<div class="HRow">\
+						<div class="FloatLeft">\
+							<strong>Using...</strong>\
+						</div>\
+					</div>' + youUse + '\
+				</div>';
+		
+		// Create the whole text
+		if ( youShare != '' )
+			html += youShare;
+		if ( youUse != '' )
+			html += youUse;
+
+		// Add the icons
+		// <span class="Button fa fa-bell-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendNotification(\'' + friend.name + '\');" title="Send a notification"></span>\
+		// <span class="Button fa fa-paper-plane-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendMessage(\'' + friend.name + '\');" title="Send a message"></span>\
+		// <span class="Button fa fa-file-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFile(\'' + friend.name + '\');" title="Share a file"></span>\
+		// <span class="Button fa fa-folder-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendFolder(\'' + friend.name + '\');" title="Share disk or folder"></span>\
+		// <span class="Button fa fa-share-square-o HoverFeedback" aria-hidden="true" style="font-size:24px" onclick="FriendNetworkFriends.clickSendApplication(\'' + friend.name + '\');" title="Share an application"></span>\
+		html = '<div class="FNetBubble">' + html + '</br>\
+					<div class="HRow">\
+					</div>\
+				</div>';
+		return html;
+	}
 };
+
+
+
+
+

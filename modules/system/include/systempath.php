@@ -169,6 +169,13 @@ if( isset( $args->args ) && substr( $args->args->path, 0, $len ) == 'System:Soft
 			}
 		}
 	}
+	
+	// Add Mitra apps if available
+	if( file_exists( 'modules/mitra' ) && is_dir( 'modules/mitra' ) && file_exists( 'modules/mitra/inclide' ) )
+	{
+		require( 'modules/mitra/include/listsoftware.php' );
+	}
+	
 	if( count( $out ) > 0 )
 		die( 'ok<!--separate-->' . json_encode( $out ) );
 }

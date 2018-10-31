@@ -49,7 +49,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
@@ -124,7 +124,7 @@ void CommServiceRemoteDelete( CommServiceRemote *s )
 			ThreadDelete( s->csr_Thread );
 		}
 		
-		DEBUG2("[CommServiceRemote] closeing pipes\n");
+		DEBUG2("[CommServiceRemote] closing pipes\n");
 		
 		if( close(  s->csr_sendPipe[0]  ) != 0 )
 		{
@@ -363,7 +363,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					http->parsedPostContent = HashmapNew();
 					char temp[ 1024 ];
 					char *pathParts[ 1024 ];
-					memset( pathParts, 0, 1024 );
+					memset( pathParts, 0, 1024*sizeof(char *) );
 					
 					data += COMM_MSG_HEADER_SIZE;
 					df = (DataForm *)data;

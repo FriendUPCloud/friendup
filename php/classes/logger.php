@@ -23,7 +23,7 @@
 
 class Logger
 {
-	var $path = 'log.txt';
+	var $path = 'log/php_log.txt';
 	function log( $string )
 	{
 		if( $f = fopen( $this->path, 'a+' ) )

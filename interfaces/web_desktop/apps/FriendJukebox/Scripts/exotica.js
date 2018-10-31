@@ -185,7 +185,7 @@ Application.editPlaylist = function()
 	if( this.playlistWindow ) return;
 	this.playlistWindow = new View( {
 		title: i18n( 'i18n_edit_playlist' ),
-		width: 600,
+		width: 900,
 		height: 600
 	} );
 	var p = this.playlistWindow;

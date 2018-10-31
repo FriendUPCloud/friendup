@@ -1,5 +1,6 @@
 #include "core/private.h"
 
+#if defined(LWS_WITH_HUBBUB)
 
 LWS_EXTERN struct lws_rewrite *
 lws_rewrite_create(struct lws *wsi, hubbub_callback_t cb, const char *from, const char *to)
@@ -37,7 +38,7 @@ LWS_EXTERN int
 lws_rewrite_parse(struct lws_rewrite *r,
 		  const unsigned char *in, int in_len)
 {
-	if (hubbub_parser_parse_chunk(r->parser, in, in_len) != HUBBUB_OK)
+	if (r && hubbub_parser_parse_chunk(r->parser, in, in_len) != HUBBUB_OK)
 		return -1;
 
 	return 0;
@@ -50,3 +51,4 @@ lws_rewrite_destroy(struct lws_rewrite *r)
 	lws_free(r);
 }
 
+#endif

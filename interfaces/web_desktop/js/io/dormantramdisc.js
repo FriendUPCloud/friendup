@@ -43,9 +43,7 @@
 
 Friend = window.Friend || {};
 Friend.Doors = Friend.Doors || {};
-Friend.Doors.Dormant = Friend.Doors.Dormant || {};
-
-Friend.Doors.Dormant.Drive =
+Friend.Doors.Dormant = Friend.Doors.Dormant ||
 {
 	activated: false,
 	connected: false,
@@ -57,7 +55,7 @@ Friend.Doors.Dormant.Drive =
 	// Add a drive
 	createDrive: function( options, callback, extra )
 	{
-		var self = Friend.Doors.Dormant.Drive;
+		var self = Friend.Doors.Dormant;
 		for ( var d in self.doors )
 		{
 			if ( self.doors[ name ] == options.name )
@@ -120,7 +118,7 @@ Friend.Doors.Dormant.Drive =
 							DormantMaster.addAppDoor( door );
 							if ( options.automount == 'yes' )
 								mount();
-							callback( true, fileInfo, extra );
+							callback( true, driveId, extra );
 						}
 						else
 						{
@@ -343,7 +341,7 @@ Friend.Doors.Dormant.Drive =
 	// Remove a drive
 	destroyDrive: function( driveId, options, callback, extra )
 	{
-		var self = Friend.Doors.Dormant.Drive;
+		var self = Friend.Doors.Dormant;
 
 		var root = self.roots[ driveId ];
 		var door = self.doors[ driveId ];
@@ -421,6 +419,12 @@ Friend.Doors.Dormant.Drive =
 				}, extra );
 			}
 		}
+	},
+	getDoor: function( options, callback, extra )
+	{
+		var door = self.doors[ options.driveId ];
+		callback( typeof door != 'undefined', { door: door }, extra );
+		return door;
 	}
 };
 

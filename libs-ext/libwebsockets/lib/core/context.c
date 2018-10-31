@@ -35,6 +35,9 @@ const struct lws_role_ops *available_roles[] = {
 #if defined(LWS_ROLE_WS)
 	&role_ops_ws,
 #endif
+#if defined(LWS_ROLE_DBUS)
+	&role_ops_dbus,
+#endif
 	NULL
 };
 
@@ -185,7 +188,7 @@ lws_protocol_vh_priv_get(struct lws_vhost *vhost,
 {
 	int n = 0;
 
-	if (!vhost || !vhost->protocol_vh_privs)
+	if (!vhost || !vhost->protocol_vh_privs || !prot)
 		return NULL;
 
 	while (n < vhost->count_protocols && &vhost->protocols[n] != prot)
@@ -316,6 +319,8 @@ lws_protocol_init(struct lws_context *context)
 				vh->protocol_vh_privs[n] = NULL;
 				lwsl_err("%s: protocol %s failed init\n", __func__,
 					 vh->protocols[n].name);
+
+				return 1;
 			}
 		}
 
@@ -337,342 +342,6 @@ next:
 	return 0;
 }
 
-LWS_VISIBLE int
-lws_callback_http_dummy(struct lws *wsi, enum lws_callback_reasons reason,
-		    void *user, void *in, size_t len)
-{
-	struct lws_ssl_info *si;
-#ifdef LWS_WITH_CGI
-	struct lws_cgi_args *args;
-#endif
-#if defined(LWS_WITH_CGI) || defined(LWS_WITH_HTTP_PROXY)
-	char buf[128];
-	int n;
-#endif
-
-	switch (reason) {
-#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
-	case LWS_CALLBACK_HTTP:
-#ifndef LWS_NO_SERVER
-		if (lws_return_http_status(wsi, HTTP_STATUS_NOT_FOUND, NULL))
-			return -1;
-
-		if (lws_http_transaction_completed(wsi))
-#endif
-			return -1;
-		break;
-#if !defined(LWS_NO_SERVER)
-	case LWS_CALLBACK_HTTP_BODY_COMPLETION:
-	case LWS_CALLBACK_HTTP_FILE_COMPLETION:
-		if (lws_http_transaction_completed(wsi))
-			return -1;
-		break;
-#endif
-
-	case LWS_CALLBACK_HTTP_WRITEABLE:
-#ifdef LWS_WITH_CGI
-		if (wsi->reason_bf & (LWS_CB_REASON_AUX_BF__CGI_HEADERS |
-				      LWS_CB_REASON_AUX_BF__CGI)) {
-			n = lws_cgi_write_split_stdout_headers(wsi);
-			if (n < 0) {
-				lwsl_debug("AUX_BF__CGI forcing close\n");
-				return -1;
-			}
-			if (!n)
-				lws_rx_flow_control(
-					wsi->http.cgi->stdwsi[LWS_STDOUT], 1);
-
-			if (wsi->reason_bf & LWS_CB_REASON_AUX_BF__CGI_HEADERS)
-				wsi->reason_bf &=
-					~LWS_CB_REASON_AUX_BF__CGI_HEADERS;
-			else
-				wsi->reason_bf &= ~LWS_CB_REASON_AUX_BF__CGI;
-
-			if (wsi->http.cgi && wsi->http.cgi->cgi_transaction_over)
-				return -1;
-			break;
-		}
-
-		if (wsi->reason_bf & LWS_CB_REASON_AUX_BF__CGI_CHUNK_END) {
-			if (!wsi->http2_substream) {
-				memcpy(buf + LWS_PRE, "0\x0d\x0a\x0d\x0a", 5);
-				lwsl_debug("writing chunk term and exiting\n");
-				n = lws_write(wsi, (unsigned char *)buf +
-						   LWS_PRE, 5, LWS_WRITE_HTTP);
-			} else
-				n = lws_write(wsi, (unsigned char *)buf +
-						   LWS_PRE, 0,
-						   LWS_WRITE_HTTP_FINAL);
-
-			/* always close after sending it */
-			return -1;
-		}
-#endif
-#if defined(LWS_WITH_HTTP_PROXY)
-		if (wsi->reason_bf & LWS_CB_REASON_AUX_BF__PROXY) {
-			char *px = buf + LWS_PRE;
-			int lenx = sizeof(buf) - LWS_PRE;
-
-			/*
-			 * our sink is writeable and our source has something
-			 * to read.  So read a lump of source material of
-			 * suitable size to send or what's available, whichever
-			 * is the smaller.
-			 */
-			wsi->reason_bf &= ~LWS_CB_REASON_AUX_BF__PROXY;
-			if (!lws_get_child(wsi))
-				break;
-			if (lws_http_client_read(lws_get_child(wsi), &px,
-						 &lenx) < 0)
-				return -1;
-			break;
-		}
-#endif
-		break;
-
-#if defined(LWS_WITH_HTTP_PROXY)
-	case LWS_CALLBACK_RECEIVE_CLIENT_HTTP:
-		assert(lws_get_parent(wsi));
-		if (!lws_get_parent(wsi))
-			break;
-		lws_get_parent(wsi)->reason_bf |= LWS_CB_REASON_AUX_BF__PROXY;
-		lws_callback_on_writable(lws_get_parent(wsi));
-		break;
-
-	case LWS_CALLBACK_RECEIVE_CLIENT_HTTP_READ:
-		assert(lws_get_parent(wsi));
-		n = lws_write(lws_get_parent(wsi), (unsigned char *)in,
-				len, LWS_WRITE_HTTP);
-		if (n < 0)
-			return -1;
-		break;
-
-	case LWS_CALLBACK_ESTABLISHED_CLIENT_HTTP: {
-		unsigned char *p, *end;
-		char ctype[64], ctlen = 0;
-	
-		p = (unsigned char *)buf + LWS_PRE;
-		end = p + sizeof(buf) - LWS_PRE;
-
-		if (lws_add_http_header_status(lws_get_parent(wsi),
-					       HTTP_STATUS_OK, &p, end))
-			return 1;
-		if (lws_add_http_header_by_token(lws_get_parent(wsi),
-				WSI_TOKEN_HTTP_SERVER,
-			    	(unsigned char *)"libwebsockets",
-				13, &p, end))
-			return 1;
-
-		ctlen = lws_hdr_copy(wsi, ctype, sizeof(ctype),
-				     WSI_TOKEN_HTTP_CONTENT_TYPE);
-		if (ctlen > 0) {
-			if (lws_add_http_header_by_token(lws_get_parent(wsi),
-				WSI_TOKEN_HTTP_CONTENT_TYPE,
-				(unsigned char *)ctype, ctlen, &p, end))
-				return 1;
-		}
-
-		if (lws_finalize_http_header(lws_get_parent(wsi), &p, end))
-			return 1;
-
-		*p = '\0';
-		n = lws_write(lws_get_parent(wsi),
-			      (unsigned char *)buf + LWS_PRE,
-			      p - ((unsigned char *)buf + LWS_PRE),
-			      LWS_WRITE_HTTP_HEADERS);
-		if (n < 0)
-			return -1;
-
-		break; }
-
-#endif
-
-#ifdef LWS_WITH_CGI
-	/* CGI IO events (POLLIN/OUT) appear here, our default policy is:
-	 *
-	 *  - POST data goes on subprocess stdin
-	 *  - subprocess stdout goes on http via writeable callback
-	 *  - subprocess stderr goes to the logs
-	 */
-	case LWS_CALLBACK_CGI:
-		args = (struct lws_cgi_args *)in;
-		switch (args->ch) { /* which of stdin/out/err ? */
-		case LWS_STDIN:
-			/* TBD stdin rx flow control */
-			break;
-		case LWS_STDOUT:
-			/* quench POLLIN on STDOUT until MASTER got writeable */
-			lws_rx_flow_control(args->stdwsi[LWS_STDOUT], 0);
-			wsi->reason_bf |= LWS_CB_REASON_AUX_BF__CGI;
-			/* when writing to MASTER would not block */
-			lws_callback_on_writable(wsi);
-			break;
-		case LWS_STDERR:
-			n = lws_get_socket_fd(args->stdwsi[LWS_STDERR]);
-			if (n < 0)
-				break;
-			n = read(n, buf, sizeof(buf) - 2);
-			if (n > 0) {
-				if (buf[n - 1] != '\n')
-					buf[n++] = '\n';
-				buf[n] = '\0';
-				lwsl_notice("CGI-stderr: %s\n", buf);
-			}
-			break;
-		}
-		break;
-
-	case LWS_CALLBACK_CGI_TERMINATED:
-		lwsl_debug("LWS_CALLBACK_CGI_TERMINATED: %d %" PRIu64 "\n",
-				wsi->http.cgi->explicitly_chunked,
-				(uint64_t)wsi->http.cgi->content_length);
-		if (!wsi->http.cgi->explicitly_chunked &&
-		    !wsi->http.cgi->content_length) {
-			/* send terminating chunk */
-			lwsl_debug("LWS_CALLBACK_CGI_TERMINATED: ending\n");
-			wsi->reason_bf |= LWS_CB_REASON_AUX_BF__CGI_CHUNK_END;
-			lws_callback_on_writable(wsi);
-			lws_set_timeout(wsi, PENDING_TIMEOUT_CGI, 3);
-			break;
-		}
-		return -1;
-
-	case LWS_CALLBACK_CGI_STDIN_DATA:  /* POST body for stdin */
-		args = (struct lws_cgi_args *)in;
-		args->data[args->len] = '\0';
-		if (!args->stdwsi[LWS_STDIN])
-			return -1;
-		n = lws_get_socket_fd(args->stdwsi[LWS_STDIN]);
-		if (n < 0)
-			return -1;
-
-#if defined(LWS_WITH_ZLIB)
-		if (wsi->http.cgi->gzip_inflate) {
-				/* gzip handling */
-
-				if (!wsi->http.cgi->gzip_init) {
-					lwsl_err("inflating gzip\n");
-
-					memset(&wsi->http.cgi->inflate, 0, sizeof(wsi->http.cgi->inflate));
-
-					if (inflateInit2(&wsi->http.cgi->inflate, 16 + 15) != Z_OK) {
-						lwsl_err("%s: iniflateInit failed\n", __func__);
-						return -1;
-					}
-
-					wsi->http.cgi->gzip_init = 1;
-				}
-
-				wsi->http.cgi->inflate.next_in = args->data;
-				wsi->http.cgi->inflate.avail_in = args->len;
-
-				do {
-
-					wsi->http.cgi->inflate.next_out = wsi->http.cgi->inflate_buf;
-					wsi->http.cgi->inflate.avail_out = sizeof(wsi->http.cgi->inflate_buf);
-
-					n = inflate(&wsi->http.cgi->inflate, Z_SYNC_FLUSH);
-					lwsl_err("inflate: %d\n", n);
-					switch (n) {
-					case Z_NEED_DICT:
-					case Z_STREAM_ERROR:
-					case Z_DATA_ERROR:
-					case Z_MEM_ERROR:
-						inflateEnd(&wsi->http.cgi->inflate);
-						wsi->http.cgi->gzip_init = 0;
-						lwsl_err("zlib error inflate %d\n", n);
-						return -1;
-					}
-
-					if (wsi->http.cgi->inflate.avail_out != sizeof(wsi->http.cgi->inflate_buf)) {
-						int written;
-
-//				                lwsl_hexdump_notice(wsi->http.cgi->inflate_buf,
-  //                                                      sizeof(wsi->http.cgi->inflate_buf) - wsi->http.cgi->inflate.avail_out);
-
-				                written = write(args->stdwsi[LWS_STDIN]->desc.filefd, wsi->http.cgi->inflate_buf,
-							sizeof(wsi->http.cgi->inflate_buf) - wsi->http.cgi->inflate.avail_out);
-
-						if (written != (int)(sizeof(wsi->http.cgi->inflate_buf) - wsi->http.cgi->inflate.avail_out)) {
-				                        lwsl_notice("LWS_CALLBACK_CGI_STDIN_DATA: "
-                                    				"sent %d only %d went", n, args->len);
-						}
-						lwsl_err("send inflated on fd %d says %d\n", args->stdwsi[LWS_STDIN]->desc.filefd, written);
-
-						if (n == Z_STREAM_END) {
-							lwsl_err("gzip inflate end\n");
-							inflateEnd(&wsi->http.cgi->inflate);
-							wsi->http.cgi->gzip_init = 0;
-
-							//compatible_close(args->stdwsi[LWS_STDIN]->desc.filefd);
-							//args->stdwsi[LWS_STDIN]->desc.filefd = -1;
-							break;
-						}
-
-					} else
-						break;
-
-					if (wsi->http.cgi->inflate.avail_out)
-						break;
-
-				} while (1);
-
-				return args->len;
-		}
-#endif /* WITH_ZLIB */
-
-		n = write(n, args->data, args->len);
-//		lwsl_hexdump_notice(args->data, args->len);
-		if (n < args->len)
-			lwsl_notice("LWS_CALLBACK_CGI_STDIN_DATA: "
-				    "sent %d only %d went", n, args->len);
-
-		if (wsi->http.cgi->post_in_expected && args->stdwsi[LWS_STDIN] &&
-		    args->stdwsi[LWS_STDIN]->desc.filefd > 0) {
-			wsi->http.cgi->post_in_expected -= n;
-			if (!wsi->http.cgi->post_in_expected) {
-				struct lws *siwsi = args->stdwsi[LWS_STDIN];
-
-				lwsl_debug("%s: expected POST in end: "
-					   "closing stdin wsi %p, fd %d\n",
-					   __func__, siwsi, siwsi->desc.sockfd);
-
-				__remove_wsi_socket_from_fds(siwsi);
-				lwsi_set_state(siwsi, LRS_DEAD_SOCKET);
-				siwsi->socket_is_permanently_unusable = 1;
-				lws_remove_child_from_any_parent(siwsi);
-				if (wsi->context->event_loop_ops->
-							close_handle_manually) {
-					wsi->context->event_loop_ops->
-						close_handle_manually(siwsi);
-					siwsi->told_event_loop_closed = 1;
-				} else {
-					compatible_close(siwsi->desc.sockfd);
-					__lws_free_wsi(siwsi);
-				}
-				wsi->http.cgi->pipe_fds[LWS_STDIN][1] = -1;
-
-				args->stdwsi[LWS_STDIN] = NULL;
-			}
-		}
-
-		return n;
-#endif /* WITH_CGI */
-#endif /* ROLE_ H1 / H2 */
-	case LWS_CALLBACK_SSL_INFO:
-		si = in;
-
-		(void)si;
-		lwsl_notice("LWS_CALLBACK_SSL_INFO: where: 0x%x, ret: 0x%x\n",
-			    si->where, si->ret);
-		break;
-
-	default:
-		break;
-	}
-
-	return 0;
-}
 
 /* list of supported protocols and callbacks */
 
@@ -862,15 +531,15 @@ lws_create_vhost(struct lws_context *context,
 		lws_free(lwsp);
 	}
 
-	vh->same_vh_protocol_list = (struct lws **)
-			lws_zalloc(sizeof(struct lws *) * vh->count_protocols,
-				   "same vh list");
+	vh->same_vh_protocol_heads = (struct lws_dll_lws *)
+			lws_zalloc(sizeof(struct lws_dll_lws) *
+				   vh->count_protocols, "same vh list");
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	vh->http.mount_list = info->mounts;
 #endif
 
 #ifdef LWS_WITH_UNIX_SOCK
-	if (LWS_UNIX_SOCK_ENABLED(context)) {
+	if (LWS_UNIX_SOCK_ENABLED(vh)) {
 		lwsl_notice("Creating Vhost '%s' path \"%s\", %d protocols\n",
 				vh->name, vh->iface, vh->count_protocols);
 	} else
@@ -1117,7 +786,8 @@ lws_create_event_pipes(struct lws_context *context)
 		lwsl_debug("event pipe fd %d\n", wsi->desc.sockfd);
 
 		if (context->event_loop_ops->accept)
-			context->event_loop_ops->accept(wsi);
+			if (context->event_loop_ops->accept(wsi))
+				return 1;
 
 		if (__insert_wsi_socket_into_fds(context, wsi))
 			return 1;
@@ -1135,6 +805,7 @@ lws_destroy_event_pipe(struct lws *wsi)
 	if (wsi->context->event_loop_ops->wsi_logical_close) {
 		wsi->context->event_loop_ops->wsi_logical_close(wsi);
 		lws_plat_pipe_close(wsi);
+		wsi->context->count_wsi_allocated--;
 		return;
 	}
 
@@ -1162,9 +833,6 @@ lws_create_context(const struct lws_context_creation_info *info)
 
 	lwsl_info("Initial logging level %d\n", log_level);
 	lwsl_info("Libwebsockets version: %s\n", library_version);
-#if defined(GCC_VER)
-	lwsl_info("Compiled with  %s\n", GCC_VER);
-#endif
 
 #ifdef LWS_WITH_IPV6
 	if (!lws_check_opt(info->options, LWS_SERVER_OPTION_DISABLE_IPV6))
@@ -1208,7 +876,7 @@ lws_create_context(const struct lws_context_creation_info *info)
 	if (info->pt_serv_buf_size)
 		context->pt_serv_buf_size = info->pt_serv_buf_size;
 	else
-		context->pt_serv_buf_size = 65535; //stefkos - internal frame buffer size
+		context->pt_serv_buf_size = 4096;
 
 #if defined(LWS_ROLE_H2)
 	role_ops_h2.init_context(context, info);
@@ -1417,16 +1085,17 @@ lws_create_context(const struct lws_context_creation_info *info)
 		return NULL;
 	}
 
-
 #if defined(LWS_WITH_PEER_LIMITS)
 	/* scale the peer hash table according to the max fds for the process,
 	 * so that the max list depth averages 16.  Eg, 1024 fd -> 64,
 	 * 102400 fd -> 6400
 	 */
+
 	context->pl_hash_elements =
 		(context->count_threads * context->fd_limit_per_thread) / 16;
 	context->pl_hash_table = lws_zalloc(sizeof(struct lws_peer *) *
 			context->pl_hash_elements, "peer limits hash table");
+
 	context->ip_limit_ah = info->ip_limit_ah;
 	context->ip_limit_wsi = info->ip_limit_wsi;
 #endif
@@ -1570,7 +1239,6 @@ LWS_VISIBLE LWS_EXTERN void
 lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 {
 	struct lws_vhost *vh = context->vhost_list, *vh1;
-	struct lws *wsi;
 
 	/*
 	 * "deprecation" means disable the context from accepting any new
@@ -1584,7 +1252,8 @@ lws_context_deprecate(struct lws_context *context, lws_reload_func cb)
 	/* for each vhost, close his listen socket */
 
 	while (vh) {
-		wsi = vh->lserv_wsi;
+		struct lws *wsi = vh->lserv_wsi;
+
 		if (wsi) {
 			wsi->socket_is_permanently_unusable = 1;
 			lws_close_free_wsi(wsi, LWS_CLOSE_STATUS_NOSTATUS, "ctx deprecate");
@@ -1660,13 +1329,14 @@ lws_vhost_destroy1(struct lws_vhost *vh)
 				assert(v->lserv_wsi == NULL);
 				v->lserv_wsi = vh->lserv_wsi;
 
+				lwsl_notice("%s: listen skt from %s to %s\n",
+					    __func__, vh->name, v->name);
+
 				if (v->lserv_wsi) {
 					lws_vhost_unbind_wsi(vh->lserv_wsi);
 					lws_vhost_bind_wsi(v, v->lserv_wsi);
 				}
 
-				lwsl_notice("%s: listen skt from %s to %s\n",
-					    __func__, vh->name, v->name);
 				break;
 			}
 		} lws_end_foreach_ll(v, vhost_next);
@@ -1780,7 +1450,7 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 	if (vh->protocol_vh_privs)
 		lws_free(vh->protocol_vh_privs);
 	lws_ssl_SSL_CTX_destroy(vh);
-	lws_free(vh->same_vh_protocol_list);
+	lws_free(vh->same_vh_protocol_heads);
 
 	if (context->plugin_list ||
 	    (context->options & LWS_SERVER_OPTION_EXPLICIT_VHOSTS))
@@ -1805,7 +1475,7 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 #endif
 
 #if defined(LWS_WITH_UNIX_SOCK)
-	if (LWS_UNIX_SOCK_ENABLED(context)) {
+	if (LWS_UNIX_SOCK_ENABLED(vh)) {
 		n = unlink(vh->iface);
 		if (n)
 			lwsl_info("Closing unix socket %s: errno %d\n",
@@ -1851,7 +1521,7 @@ lws_check_deferred_free(struct lws_context *context, int tsi, int force)
 
 	lws_context_lock(context, "check deferred free"); /* ------ context { */
 
-	lws_start_foreach_ll(struct lws_vhost *, v, context->vhost_list) {
+	lws_start_foreach_ll_safe(struct lws_vhost *, v, context->vhost_list, vhost_next) {
 		if (v->being_destroyed
 #if LWS_MAX_SMP > 1
 			&& !v->close_flow_vs_tsi[tsi]
@@ -1882,7 +1552,7 @@ lws_check_deferred_free(struct lws_context *context, int tsi, int force)
 
 			lws_pt_unlock(pt); /* } pt -------------- */
 		}
-	} lws_end_foreach_ll(v, vhost_next);
+	} lws_end_foreach_ll_safe(v);
 
 
 	lws_context_unlock(context); /* } context ------------------- */
@@ -1959,11 +1629,12 @@ static void
 lws_context_destroy3(struct lws_context *context)
 {
 	struct lws_context **pcontext_finalize = context->pcontext_finalize;
-	struct lws_context_per_thread *pt;
 	int n;
 
 	for (n = 0; n < context->count_threads; n++) {
-		pt = &context->pt[n];
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
+		struct lws_context_per_thread *pt = &context->pt[n];
+#endif
 
 		if (context->event_loop_ops->destroy_pt)
 			context->event_loop_ops->destroy_pt(context, n);
@@ -1994,7 +1665,6 @@ lws_context_destroy2(struct lws_context *context)
 #if defined(LWS_WITH_PEER_LIMITS)
 	uint32_t nu;
 #endif
-	int n;
 
 	lwsl_info("%s: ctx %p\n", __func__, context);
 
@@ -2052,14 +1722,19 @@ lws_context_destroy2(struct lws_context *context)
 
 	if (context->event_loop_ops->destroy_context2)
 		if (context->event_loop_ops->destroy_context2(context)) {
+			lws_context_unlock(context); /* } context ----------- */
 			context->finalize_destroy_after_internal_loops_stopped = 1;
 			return;
 		}
 
-	if (!context->pt[0].event_loop_foreign)
+	if (!context->pt[0].event_loop_foreign) {
+		int n;
 		for (n = 0; n < context->count_threads; n++)
-			if (context->pt[n].inside_service)
+			if (context->pt[n].inside_service) {
+				lws_context_unlock(context); /* } context --- */
 				return;
+			}
+	}
 
 	lws_context_unlock(context); /* } context ------------------- */
 
@@ -2075,7 +1750,6 @@ lws_context_destroy(struct lws_context *context)
 {
 	volatile struct lws_foreign_thread_pollfd *ftp, *next;
 	volatile struct lws_context_per_thread *vpt;
-	struct lws_context_per_thread *pt;
 	struct lws_vhost *vh = NULL;
 	struct lws wsi;
 	int n, m;
@@ -2121,7 +1795,7 @@ lws_context_destroy(struct lws_context *context)
 #endif
 
 	while (m--) {
-		pt = &context->pt[m];
+		struct lws_context_per_thread *pt = &context->pt[m];
 		vpt = (volatile struct lws_context_per_thread *)pt;
 
 		ftp = vpt->foreign_pfd_list;

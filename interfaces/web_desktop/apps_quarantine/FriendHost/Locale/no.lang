@@ -1,9 +1,0 @@
-
-i18n_set_host_please            : Vennligst sett ditt hosting navn.
-i18n_no_hosting                 : Kan ikke starte server
-
-i18n_start_hosting              : Start server
-i18n_stop_hosting               : Stopp server
-i18n_localpath                  : Server sti
-i18n_hostname                   : Server navn
-

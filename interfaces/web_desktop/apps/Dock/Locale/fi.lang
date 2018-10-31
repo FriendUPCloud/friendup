@@ -41,6 +41,7 @@ i18n_medium                           : Keskikoko
 i18n_small                            : Pieni
 i18n_dock_editor                      : Telakka muokkaus
 i18n_close                            : Sulje telakka muokkaus
+i18n_abort                            : Peruuttaa
 i18n_select_application               : Valitse ohjelma
 i18n_display_name                     : Näyttö nimi
 

@@ -37,7 +37,7 @@
  * @date first pushed on 23/04/2018
  */
  
-var friend = window.friend || {};
+var Friend = window.Friend || {};
  
 FriendNetworkApps =
 {
@@ -387,7 +387,6 @@ FriendNetworkApps =
 
                         // Client disconnected
                         case 'clientDisconnected':
-                        debugger;
                             connected = application.connected[ msg.key ];
                             if ( connected )
                             {
@@ -406,7 +405,6 @@ FriendNetworkApps =
                 
                         // Error: removes host
                         case 'error':
-                        debugger;
                             application.onLine = false;
                             application.hostKey = false;
                         
@@ -810,7 +808,6 @@ FriendNetworkApps =
 
                         // Client disconnected
                         case 'clientDisconnected':
-                        debugger;
                             runningUser = application.runningUsers[ msg.key ];
                             if ( runningUser )
                             {
@@ -829,7 +826,6 @@ FriendNetworkApps =
                 
                         // Error: removes host
                         case 'error':
-                        debugger;
                             runningUser = application.runningUsers[ msg.key ];
                             if ( runningUser )
                             {
@@ -1097,7 +1093,6 @@ FriendNetworkApps =
                 }
                 if ( connectedNumber > 2 )
                 {
-                    debugger;
                     application.connectToHostsCount = 0;
                     for ( c = 0; c < connectedList.length; c++  )
                     {
@@ -1340,7 +1335,6 @@ FriendNetworkApps =
             }
             else if ( msg.subCommand == 'hostsUpdate' )
             {
-                debugger;
                 doListHosts( [ msg.host ] );
             }
         }

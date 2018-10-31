@@ -37,7 +37,7 @@
 #include <util/string.h>
 #include <openssl/sha.h>
 #include <string.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <system/user/user.h>
 #include <util/sha256.h>
 #include <util/session_id.h>

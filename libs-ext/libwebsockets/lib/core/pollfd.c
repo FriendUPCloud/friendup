@@ -182,7 +182,7 @@ _lws_change_pollfd(struct lws *wsi, int _and, int _or, struct lws_pollargs *pa)
 			ret = -1;
 			goto bail;
 		}
-		sampled_tid = context->service_tid;
+		sampled_tid = pt->service_tid;
 		if (sampled_tid && wsi->vhost) {
 			tid = wsi->vhost->protocols[0].callback(wsi,
 				     LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
@@ -335,6 +335,7 @@ __remove_wsi_socket_from_fds(struct lws *wsi)
 		pt->fds[m] = pt->fds[pt->fds_count - 1];
 		/* this decrements pt->fds_count */
 		lws_plat_delete_socket_from_fds(context, wsi, m);
+		pt->count_conns--;
 		v = (int) pt->fds[m].fd;
 		/* end guy's "position in fds table" is now the deletion guy's old one */
 		end_wsi = wsi_from_fd(context, v);
@@ -433,7 +434,7 @@ lws_callback_on_writable(struct lws *wsi)
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB_REQ, 1);
 #if defined(LWS_WITH_STATS)
 	if (!wsi->active_writable_req_us) {
-		wsi->active_writable_req_us = time_in_microseconds();
+		wsi->active_writable_req_us = lws_time_in_microseconds();
 		lws_stats_atomic_bump(wsi->context, pt,
 				      LWSSTATS_C_WRITEABLE_CB_EFF_REQ, 1);
 	}
@@ -471,64 +472,33 @@ lws_callback_on_writable(struct lws *wsi)
 void
 lws_same_vh_protocol_insert(struct lws *wsi, int n)
 {
-	if (wsi->same_vh_protocol_prev || wsi->same_vh_protocol_next) {
-		lws_same_vh_protocol_remove(wsi);
-		lwsl_notice("Attempted to attach wsi twice to same vh prot\n");
-	}
-
 	lws_vhost_lock(wsi->vhost);
 
-	wsi->same_vh_protocol_prev = &wsi->vhost->same_vh_protocol_list[n];
-	/* old first guy is our next */
-	wsi->same_vh_protocol_next =  wsi->vhost->same_vh_protocol_list[n];
-	/* we become the new first guy */
-	wsi->vhost->same_vh_protocol_list[n] = wsi;
+	if (!lws_dll_is_null(&wsi->same_vh_protocol))
+		lws_dll_lws_remove(&wsi->same_vh_protocol);
 
-	if (wsi->same_vh_protocol_next)
-		/* old first guy points back to us now */
-		wsi->same_vh_protocol_next->same_vh_protocol_prev =
-				&wsi->same_vh_protocol_next;
-
-	wsi->on_same_vh_list = 1;
+	lws_dll_lws_add_front(&wsi->same_vh_protocol,
+			      &wsi->vhost->same_vh_protocol_heads[n]);
 
 	lws_vhost_unlock(wsi->vhost);
 }
 
 void
+__lws_same_vh_protocol_remove(struct lws *wsi)
+{
+	if (!lws_dll_is_null(&wsi->same_vh_protocol))
+		lws_dll_lws_remove(&wsi->same_vh_protocol);
+}
+
+void
 lws_same_vh_protocol_remove(struct lws *wsi)
 {
-	/*
-	 * detach ourselves from vh protocol list if we're on one
-	 * A -> B -> C
-	 * A -> C , or, B -> C, or A -> B
-	 *
-	 * OK to call on already-detached wsi
-	 */
-	lwsl_info("%s: removing same prot wsi %p\n", __func__, wsi);
-
-	if (!wsi->vhost || !wsi->on_same_vh_list)
+	if (!wsi->vhost)
 		return;
 
 	lws_vhost_lock(wsi->vhost);
 
-	if (wsi->same_vh_protocol_prev) {
-		assert (*(wsi->same_vh_protocol_prev) == wsi);
-		lwsl_info("have prev %p, setting him to our next %p\n",
-			 wsi->same_vh_protocol_prev,
-			 wsi->same_vh_protocol_next);
-
-		/* guy who pointed to us should point to our next */
-		*(wsi->same_vh_protocol_prev) = wsi->same_vh_protocol_next;
-	}
-
-	/* our next should point back to our prev */
-	if (wsi->same_vh_protocol_next)
-		wsi->same_vh_protocol_next->same_vh_protocol_prev =
-				wsi->same_vh_protocol_prev;
-
-	wsi->same_vh_protocol_prev = NULL;
-	wsi->same_vh_protocol_next = NULL;
-	wsi->on_same_vh_list = 0;
+	__lws_same_vh_protocol_remove(wsi);
 
 	lws_vhost_unlock(wsi->vhost);
 }
@@ -536,9 +506,10 @@ lws_same_vh_protocol_remove(struct lws *wsi)
 
 LWS_VISIBLE int
 lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
-				      const struct lws_protocols *protocol)
+				           const struct lws_protocols *protocol)
 {
 	struct lws *wsi;
+	int n;
 
 	if (protocol < vhost->protocols ||
 	    protocol >= (vhost->protocols + vhost->count_protocols)) {
@@ -549,18 +520,16 @@ lws_callback_on_writable_all_protocol_vhost(const struct lws_vhost *vhost,
 		return -1;
 	}
 
-	wsi = vhost->same_vh_protocol_list[protocol - vhost->protocols];
-	while (wsi) {
-		assert(wsi->protocol == protocol);
-		assert(*wsi->same_vh_protocol_prev == wsi);
-		if (wsi->same_vh_protocol_next)
-			assert(wsi->same_vh_protocol_next->
-					same_vh_protocol_prev ==
-					&wsi->same_vh_protocol_next);
+	n = (int)(protocol - vhost->protocols);
 
+	lws_start_foreach_dll_safe(struct lws_dll_lws *, d, d1,
+				   vhost->same_vh_protocol_heads[n].next) {
+		wsi = lws_container_of(d, struct lws, same_vh_protocol);
+
+		assert(wsi->protocol == protocol);
 		lws_callback_on_writable(wsi);
-		wsi = wsi->same_vh_protocol_next;
-	}
+
+	} lws_end_foreach_dll_safe(d, d1);
 
 	return 0;
 }

@@ -539,16 +539,16 @@ Screen = function ( flags, initObject )
 	{
 		var t = e.target ? e.target : e.srcElement;
 		if( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) return;
-		
+	
 		var ct = scrn.contentDiv.parentNode.screenOffsetTop;
 		if( !ct ) ct = '0px';
-		
+	
 		var tp = e.changedTouches[0];
 		scrn.touch.mx = tp.clientX;
 		scrn.touch.my = tp.clientY;
 		var diffy = scrn.touch.ty + ( scrn.touch.my - scrn.touch.oy );
 		var diffx = scrn.touch.tx + ( scrn.touch.mx - scrn.touch.ox );
-		
+	
 		if( !scrn.touchCycled && Math.abs( diffx ) > ( window.innerWidth * 0.8 ) )
 		{
 			scrn.touchCycled = true;
@@ -557,12 +557,13 @@ Screen = function ( flags, initObject )
 		// Show the dock!
 		else if( diffy < 0 && parseInt( ct ) == 0 )
 		{
-			if( !scrn.touch.moved && diffy < -60 )
+			if( !scrn.touch.moved && diffy < -60 && !Workspace.mainDock.open )
 			{
 				Workspace.mainDock.openDesklet( e );
 			}
 		}
-		else if( Math.abs( diffy ) > 5 ) 
+		// Don't do this on mobile
+		else if( !window.isMobile && Math.abs( diffy ) > 5 ) 
 		{
 			var top = scrn.touch.oy + diffy;
 			if( top < 0 ) 
@@ -585,7 +586,7 @@ Screen = function ( flags, initObject )
 				scrn.contentDiv.parentNode.screenOffsetTop = top;
 				scrn.touch.moved = true;
 			}
-			
+		
 			// No need for menu here
 			if( scrn.clickTimeout )
 			{
@@ -894,7 +895,7 @@ Screen = function ( flags, initObject )
 					origin:        document.location.href,
 					screenId:      w.externScreenId,
 					theme:         Workspace.theme,
-					clipboard:     friend.clipboard
+					clipboard:     Friend.clipboard
 				} );
 				ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				ifr.loaded = true;

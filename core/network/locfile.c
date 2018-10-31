@@ -294,6 +294,7 @@ void LocFileDelete( LocFile* file )
 	if( file->lf_Filename != NULL )
 	{
 		FFree( file->lf_Filename );
+		file->lf_Filename = NULL;
 	}
 	/*
 	if( file->lf_Fp )

@@ -23,8 +23,8 @@
 
 /******************************************************************************\
 *                                                                              *
-* FriendUP PHP API v1.0                                                        *
-* (c) 2015, Friend Software Labs AS                                            *
+* FriendUP PHP API v1.2                                                        *
+* (c) 2015-2018, Friend Software Labs AS                                       *
 * mail: info@friendup.no                                                       *
 *                                                                              *
 \******************************************************************************/
@@ -203,9 +203,11 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	{
 		//include_once( 'classes/logger.php' );
 		//$Logger->log( 'Here are the received args: ' . $argv[1]  . print_r( $args, 1 ) );
+		$num = 0;
 		$kvdata = new stdClass();
 		foreach ( $args as $arg )
 		{
+			// Keyed value
 			if( trim( $arg ) && strstr( $arg, '=' ) )
 			{
 				list( $key, $value ) = explode( '=', $arg );
@@ -404,6 +406,8 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
 	
+	$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
+	
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
 	if( isset( $User->ID ) && $User->ID > 0 )
@@ -422,7 +426,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	)
 	{
 		// Login success
-		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(

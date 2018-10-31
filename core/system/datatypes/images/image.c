@@ -31,6 +31,14 @@
 #include <stdlib.h>
 #include "image.h"
 #include <util/string.h>
+#include <system/fsys/file.h>
+#include <system/fsys/device_handling.h>
+
+#ifdef USE_IMAGE_MAGICK
+#include <wand/magick_wand.h>
+#else
+#include <gd.h>
+#endif
 
 /**
  * Function create new FImage structure
@@ -155,3 +163,73 @@ int ImageCleanComments( FImage *img )
 	}
 	return 0;
 }
+
+
+
+//
+//
+//
+
+gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
+{
+	gdImagePtr img = NULL;
+	FHandler *fh = rootDev->f_FSys;
+	File *rfp = (File *)fh->FileOpen( rootDev, path, "rb" );
+	if( rfp != NULL )
+	{
+		BufString *bs = BufStringNew( );
+		char buffer[ 20048 ];
+		int len = 0;
+
+		while( ( len = fh->FileRead( rfp, buffer, 20048 ) ) > 0 )
+		{
+			BufStringAddSize( bs, buffer, len );
+		}
+		
+		img = gdImageCreateFromJpegPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+		if( img == NULL )
+		{
+			if( img == NULL )
+			{
+				img = gdImageCreateFromBmpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+				if( img == NULL )
+				{
+					img = gdImageCreateFromGifPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+					if( img == NULL )
+					{
+						img = gdImageCreateFromPngPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+						if( img == NULL )
+						{
+							img = gdImageCreateFromTgaPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+							if( img == NULL )
+							{
+								img = gdImageCreateFromTiffPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+								if( img == NULL )
+								{
+									img = gdImageCreateFromWBMPPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+									if( img == NULL )
+									{
+										img = gdImageCreateFromWebpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if( img == NULL )
+		{
+			FERROR("Graphics format not recognized\n");
+		}
+		
+		gdImageDestroy( img );
+	}
+	else
+	{
+		FERROR("Cannot open file: %s to read\n", path );
+	}
+	return img;
+}
+	

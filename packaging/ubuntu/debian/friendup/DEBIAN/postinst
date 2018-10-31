@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+adduser --system friendup --home /opt/friendup
+chown -R friendup /opt/friendup
+systemctl daemon-reload
+
+echo "Displaying /opt/friendup/README.txt"
+cat /opt/friendup/README.txt
+
+exit 0

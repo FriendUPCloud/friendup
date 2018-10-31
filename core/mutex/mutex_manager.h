@@ -81,7 +81,7 @@ int PthreadTimedLock( pthread_mutex_t *mut, char *file, int line );
 //
 //
 
-inline int MutexManagerAcquire( MutexManager *mm, void *mutPointer, char *inCode )
+inline int MutexManagerAcquire( MutexManager *mm __attribute__((unused)), void *mutPointer, char *inCode __attribute__((unused)) )
 {
 #ifdef LOCK_TIMER
 	struct timespec MUTEX_TIMEOUT;
@@ -96,7 +96,7 @@ inline int MutexManagerAcquire( MutexManager *mm, void *mutPointer, char *inCode
 #endif
 }
 
-inline void MutexManagerRelease( MutexManager *mm, void *mutPointer )
+inline void MutexManagerRelease( MutexManager *mm __attribute__((unused)), void *mutPointer __attribute__((unused)) )
 {
 
 }
@@ -115,13 +115,13 @@ inline void MutexManagerRelease( MutexManager *mm, void *mutPointer )
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	pthread_mutex_lock( mutPointer )
 #endif
+
 /*
 #ifndef FRIEND_MUTEX_LOCK
 #define FRIEND_MUTEX_LOCK( mutPointer ) \
 	PthreadTimedLock( mutPointer, __FILE__, __LINE__ )
 #endif
-	*/
-
+*/
 //if (rc != EBUSY) { LOG( FLOG_ERRROR, "Cannot lock mutex" ); } rc; })
 
 #ifndef FRIEND_MUTEX_UNLOCK

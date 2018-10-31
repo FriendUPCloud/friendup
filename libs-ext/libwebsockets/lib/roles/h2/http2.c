@@ -219,6 +219,8 @@ bail1:
 	parent_wsi->h2.child_list = wsi->h2.sibling_list;
 	parent_wsi->h2.child_count--;
 
+	vh->context->count_wsi_allocated--;
+
 	if (wsi->user_space)
 		lws_free_set_NULL(wsi->user_space);
 	vh->protocols[0].callback(wsi, LWS_CALLBACK_WSI_DESTROY, NULL, NULL, 0);
@@ -380,6 +382,9 @@ lws_h2_rst_stream(struct lws *wsi, uint32_t err, const char *reason)
 	struct lws *nwsi = lws_get_network_wsi(wsi);
 	struct lws_h2_netconn *h2n = nwsi->h2.h2n;
 	struct lws_h2_protocol_send *pps;
+
+	if (!h2n)
+		return 0;
 
 	if (h2n->type == LWS_H2_FRAME_TYPE_COUNT)
 		return 0;
@@ -1176,7 +1181,6 @@ static int
 lws_h2_parse_end_of_frame(struct lws *wsi)
 {
 	struct lws_h2_netconn *h2n = wsi->h2.h2n;
-	struct lws_h2_protocol_send *pps;
 	struct lws *eff_wsi = wsi;
 	const char *p;
 	int n;
@@ -1210,6 +1214,7 @@ lws_h2_parse_end_of_frame(struct lws *wsi)
 #if !defined(LWS_NO_CLIENT)
 		if (wsi->client_h2_alpn &&
 		    !(h2n->flags & LWS_H2_FLAG_SETTINGS_ACK)) {
+			struct lws_h2_protocol_send *pps;
 
 			/* migrate original client ask on to substream 1 */
 
@@ -1424,6 +1429,10 @@ lws_h2_parse_end_of_frame(struct lws *wsi)
 			}
 		}
 
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+		lws_http_compression_validate(h2n->swsi);
+#endif
+
 		wsi->vhost->conn_stats.h2_trans++;
 		p = lws_hdr_simple_ptr(h2n->swsi, WSI_TOKEN_HTTP_COLON_METHOD);
 		if (!strcmp(p, "POST"))
@@ -1490,10 +1499,13 @@ lws_h2_parse_end_of_frame(struct lws *wsi)
 	case LWS_H2_FRAME_TYPE_PING:
 		if (h2n->flags & LWS_H2_FLAG_SETTINGS_ACK) { // ack
 		} else {/* they're sending us a ping request */
-			lwsl_info("rx ping, preparing pong\n");
-			pps = lws_h2_new_pps(LWS_H2_PPS_PONG);
+			struct lws_h2_protocol_send *pps =
+					lws_h2_new_pps(LWS_H2_PPS_PONG);
 			if (!pps)
 				return 1;
+
+			lwsl_info("rx ping, preparing pong\n");
+
 			memcpy(pps->u.ping.ping_payload, h2n->ping_payload, 8);
 			lws_pps_schedule(wsi, pps);
 		}
@@ -2073,7 +2085,7 @@ lws_h2_client_handshake(struct lws *wsi)
 
 	if (lws_add_http_header_by_token(wsi,
 				WSI_TOKEN_HTTP_COLON_SCHEME,
-				(unsigned char *)"http", 4,
+				(unsigned char *)"https", 4,
 				&p, end))
 		goto fail_length;
 
@@ -2124,7 +2136,7 @@ fail_length:
 int
 lws_h2_ws_handshake(struct lws *wsi)
 {
-	uint8_t buf[LWS_PRE + 384], *p = buf + LWS_PRE, *start = p,
+	uint8_t buf[LWS_PRE + 2048], *p = buf + LWS_PRE, *start = p,
 		*end = &buf[sizeof(buf) - 1];
 	const struct lws_http_mount *hit;
 	const char * uri_ptr;
@@ -2184,7 +2196,6 @@ lws_read_h2(struct lws *wsi, unsigned char *buf, lws_filepos_t len)
 {
 	unsigned char *oldbuf = buf;
 	lws_filepos_t body_chunk_len;
-	int m;
 
 	// lwsl_notice("%s: h2 path: wsistate 0x%x len %d\n", __func__,
 	//		wsi->wsistate, (int)len);
@@ -2200,6 +2211,8 @@ lws_read_h2(struct lws *wsi, unsigned char *buf, lws_filepos_t len)
 	 * case.
 	 */
 	while (len) {
+		int m;
+
 		/*
 		 * we were accepting input but now we stopped doing so
 		 */

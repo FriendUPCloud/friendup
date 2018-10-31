@@ -40,23 +40,36 @@ Workspace = {
 
 		// Interpret directive
 		var urlVars = {};
-		var url = document.location.href.split( '?' )[1].split( '&' );
-		for( var a = 0; a < url.length; a++ )
+		var url = document.location.href;
+		if( url.indexOf( '?' ) > 0 )
 		{
-			var pair = url[a].split( '=' );
-			urlVars[pair[0]] = decodeURIComponent( pair[1] );
-			if( urlVars[pair[0]].indexOf( ':' ) > 0 )
+			url = url.split( '?' )[1];
+			if( url.indexOf( '&' ) > 0 )
 			{
-				// JSON?
-				try
+				url = url.split( '&' );
+			}
+			else
+			{
+				url = [ url ];
+			}
+			
+			for( var a = 0; a < url.length; a++ )
+			{
+				var pair = url[a].split( '=' );
+				urlVars[pair[0]] = decodeURIComponent( pair[1] );
+				if( urlVars[pair[0]].indexOf( ':' ) > 0 )
 				{
-					var o = JSON.parse( urlVars[pair[0]] );
-					if( o ) urlVars[pair[0]] = o;
-				}
-				// No, a path maybe
-				catch( e )
-				{
-					// Good
+					// JSON?
+					try
+					{
+						var o = JSON.parse( urlVars[pair[0]] );
+						if( o ) urlVars[pair[0]] = o;
+					}
+					// No, a path maybe
+					catch( e )
+					{
+						// Good
+					}
 				}
 			}
 		}
@@ -89,11 +102,23 @@ Workspace = {
 		}
 		j.onload = function( r, d )
 		{
+			var error = false;
+			
 			var o = false;
 			if( r )
 			{
-				try{ o = JSON.parse( r ); } catch( e )
-				{ console.log( 'Result is not in JSON format.' ); }
+				try
+				{ 
+					o = JSON.parse( r ); 
+				} 
+				catch( e )
+				{ 
+					if( r == 'fail' )
+					{
+						error = 'The Friend API user is unavailable or does not exist.';
+					}
+					console.log( 'Result is not in JSON format.', r, d ); 
+				}
 			}
 
 			// Either guest user or real user
@@ -101,82 +126,135 @@ Workspace = {
 			{
 				if( ( ( si || au ) && ( !o || typeof( o ) == 'undefined' ) ) || o.result == '0' || o.result == 3 )
 				{
-					// Register no Workspace object
-					if( !si && o && o.sessionid ) Workspace.sessionId = o.sessionid;
-					if( au || si ) Workspace[authType] = authValue;
-
-					// Ping every 10 seconds
-					if( !window.pingInt ) window.pingInt = setInterval( Workspace.pingAccount, 10000 );
-					Workspace.pingAccount();
-
-					// Get available drives
-					return Workspace.getMountlist( function()
+					// Loading remaining scripts
+					var s = document.createElement( 'script' );
+					s.src = '/webclient/js/api/friendapi.js;' +
+						'webclient/js/gui/workspace_inside.js;' +
+						'webclient/3rdparty/adapter.js;' +
+						'webclient/js/utils/speech-input.js;' +
+						'webclient/js/utils/events.js;' +
+						'webclient/js/utils/utilities.js;' +
+						'webclient/js/io/directive.js;' +
+						'webclient/js/io/door.js;' +
+						'webclient/js/io/dormant.js;' +
+						'webclient/js/io/dormantramdisc.js;' +
+						'webclient/js/io/door_system.js;' +
+						'webclient/js/io/module.js;' +
+						'webclient/js/io/file.js;' +
+						'webclient/js/io/progress.js;' +
+						'webclient/js/io/friendnetwork.js;' +
+						'webclient/js/io/friendnetworkshare.js;' +
+						'webclient/js/io/friendnetworkfriends.js;' +
+						'webclient/js/io/friendnetworkdrive.js;' +
+						'webclient/js/io/friendnetworkpower.js;' +
+						'webclient/js/io/friendnetworkextension.js;' +
+						'webclient/js/io/friendnetworkdoor.js;' +
+						'webclient/js/io/friendnetworkapps.js;' +
+						'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
+						'webclient/js/gui/widget.js;' +
+						'webclient/js/gui/listview.js;' +
+						'webclient/js/gui/directoryview.js;' +
+						'webclient/js/gui/menufactory.js;' +
+						'webclient/js/gui/workspace_menu.js;' +
+						'webclient/js/gui/deepestfield.js;' +
+						'webclient/js/gui/filedialog.js;' +
+						'webclient/js/gui/desklet.js;' +
+						'webclient/js/gui/calendar.js;' +
+						'webclient/js/media/audio.js;' +
+						'webclient/js/io/p2p.js;' +
+						'webclient/js/io/request.js;' +
+						'webclient/js/io/coreSocket.js;' +
+						'webclient/js/io/networkSocket.js;' +
+						'webclient/js/io/connection.js;' +
+						'webclient/js/friendmind.js;' +
+						'webclient/js/frienddos.js;' +
+						'webclient/js/oo.js';
+					s.onload = function()
 					{
-						// Setup default Doors screen
-						var wbscreen = new Screen( {
-								title: 'Friend Workspace v1.1.2',
-								id:	'DoorsScreen',
-								extra: Workspace.fullName,
-								taskbar: false
-							}
-						);
+						// Register no Workspace object
+						if( !si && o && o.sessionid ) Workspace.sessionId = o.sessionid;
+						if( ( au || si ) && authType && authValue ) Workspace[authType] = authValue;
 
-						// Touch start show menu!
-						wbscreen.contentDiv.addEventListener( 'click', function( e )
+						// Ping every 10 seconds
+						if( !window.pingInt ) window.pingInt = setInterval( Workspace.pingAccount, 10000 );
+						Workspace.pingAccount();
+
+						// Get available drives
+						return Workspace.getMountlist( function()
 						{
-							var t = e.target ? e.target : e.srcElement;
-							if( t == wbscreen.contentDiv )
-							{
-								// You need to click two times! And within 500 ms
-								setTimeout( function()
-								{
-									wbscreen.canShowMenu = false;
-								}, 500 );
-								if( !wbscreen.canShowMenu )
-								{
-									wbscreen.canShowMenu = true;
-									return;
+							// Setup default Doors screen
+							var wbscreen = new Screen( {
+									title: 'Friend Workspace v1.2-rc1',
+									id:	'DoorsScreen',
+									extra: Workspace.fullName,
+									taskbar: false
 								}
-								setTimeout( function()
-								{
-									WorkspaceMenu.show();
-									ge( 'MobileMenu' ).classList.add( 'Visible' );
-								}, 100 );
-							}
-						}, true );
+							);
 
-
-						document.body.style.visibility = 'visible';
-						
-						if( t.conf.app )
-						{
-							return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function()
+							// Touch start show menu!
+							wbscreen.contentDiv.addEventListener( 'click', function( e )
 							{
-								setTimeout( function()
+								var t = e.target ? e.target : e.srcElement;
+								if( t == wbscreen.contentDiv )
 								{
-									var jo = new cAjax();
-									jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-									jo.onload = function()
+									// You need to click two times! And within 500 ms
+									setTimeout( function()
 									{
-										var ele = document.createElement( 'div' );
-										ele.className = 'ThankYou Padding';
-										ele.innerHTML = this.responseText();
-										var s = GeByClass( 'ScreenContent' );
-										if( s )
-										{
-											if( s.length ) s = s[0];
-											s.appendChild( ele );
-										}
-										else document.body.appendChild( s );
+										wbscreen.canShowMenu = false;
+									}, 500 );
+									if( !wbscreen.canShowMenu )
+									{
+										wbscreen.canShowMenu = true;
+										return;
 									}
-									jo.send();
-								}, 2000 );
-							} );
-						}
-					} );
+									setTimeout( function()
+									{
+										WorkspaceMenu.show();
+										ge( 'MobileMenu' ).classList.add( 'Visible' );
+									}, 100 );
+								}
+							}, true );
+
+
+							document.body.style.visibility = 'visible';
+							
+							if( t.conf.app )
+							{
+								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
+								{
+									setTimeout( function()
+									{
+										var jo = new cAjax();
+										jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+										jo.onload = function()
+										{
+											var ele = document.createElement( 'div' );
+											ele.className = 'ThankYou Padding';
+											ele.innerHTML = this.responseText();
+											var s = GeByClass( 'ScreenContent' );
+											if( s )
+											{
+												if( s.length ) s = s[0];
+												s.appendChild( ele );
+											}
+											else document.body.appendChild( s );
+										}
+										jo.send();
+									}, 2000 );
+								} );
+							}
+						} );
+					}
+					document.body.appendChild( s );
+					return;
 				}
 			}
-			document.body.innerHTML = '<h1>Error with call</h1><p>FriendUP can not interpret application call.</p>';
+			if( !error ) error = 'FriendUP can not interpret application call.';
+			var d = document.createElement( 'div' );
+			d.className = 'DialogError';
+			d.innerHTML = '<p>' + error + '</p>';
+			document.body.appendChild( d );
+			document.body.classList.add( 'Error' );
 		}
 		j.send();
 
@@ -194,7 +272,8 @@ Workspace = {
 		}
 
 		// Init security subdomains
-		SubSubDomains.initSubSubDomains();
+		if( window.SubSubDomains )
+			SubSubDomains.initSubSubDomains();
 	},
 	// Get a door by path
 	getDoorByPath: function( path )
@@ -323,6 +402,7 @@ Workspace = {
 	refreshMenu: function(){},
 	// Objects and arrays
 	icons: [],
+	reloginAttempts: 0,
 	menuMode: 'pear',
 	initialized: true,
 	protocol: _protocol,

@@ -21,7 +21,7 @@
 
 #define LWS_DLL
 #define LWS_INTERNAL
-#include "../lib/libwebsockets.h"
+#include <libwebsockets.h>
 
 #include <sqlite3.h>
 #include <string.h>
@@ -294,7 +294,7 @@ callback_messageboard(struct lws *wsi, enum lws_callback_reasons reason,
 			break;
 		if (!pss->spa) {
 			pss->spa = lws_spa_create(wsi, param_names,
-						ARRAY_SIZE(param_names),
+					LWS_ARRAY_SIZE(param_names),
 						MAX_MSG_LEN + 1024, NULL, NULL);
 			if (!pss->spa)
 				return -1;
@@ -408,7 +408,7 @@ init_protocol_lws_messageboard(struct lws_context *context,
 	}
 
 	c->protocols = protocols;
-	c->count_protocols = ARRAY_SIZE(protocols);
+	c->count_protocols = LWS_ARRAY_SIZE(protocols);
 	c->extensions = NULL;
 	c->count_extensions = 0;
 

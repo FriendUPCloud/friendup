@@ -20,7 +20,7 @@
 // Network class that handles Friend Core to Friend Core connections as well as
 // our encrypted WebRTC based peer-to-peer network
 
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetwork = {
 	// Vars
@@ -216,6 +216,22 @@ FriendNetwork = {
 				callback( false );
 		}
 
+	},
+
+	// Low level utilities
+	getHostNameFromURL: function( URL )
+	{
+		var pos = URL.indexOf( '@');
+		if ( pos > 0 )
+			return URL.substring( pos + 1 );
+		return null;
+	},
+	getAppNameFromURL: function( URL )
+	{
+		var pos = URL.indexOf( '@');
+		if ( pos > 0 )
+			return URL.substring( 0, pos );
+		return null;
 	},
 
 	// Closes the current connection

@@ -78,7 +78,7 @@ int ImageSavePNG( FImage *img, const char *filename )
 	}
 
 #if PNG_LIBPNG_VER_MINOR < 5
-	if (setjmp(png_ptr->jmpbuf))
+	if( setjmp( png_ptr->jmpbuf ) )
 	{
 		/* If we get here, we had a problem reading the file */
 		fclose(fp);
@@ -86,7 +86,7 @@ int ImageSavePNG( FImage *img, const char *filename )
 		return 0;
 	}
 #else
-	if (setjmp(png_ptr))
+	if( setjmp( png_ptr ) )
 	{
 		/* If we get here, we had a problem reading the file */
 		fclose(fp);
@@ -206,7 +206,9 @@ int ImageSavePNG( FImage *img, const char *filename )
 
 			for (y = 0; y < img->fi_Height; y++)
 			{
-				png_write_rows(png_ptr, &img->fi_Data[ y*img->fi_Width ], 1);
+				png_bytepp p = (png_bytepp)&(img->fi_Data[ y*img->fi_Width ]);
+				//png_write_rows( png_ptr, &p, 1);
+				png_write_row(png_ptr, (unsigned char *)p );
 			}
 		}
 	}
@@ -215,11 +217,12 @@ int ImageSavePNG( FImage *img, const char *filename )
 		for (pass = 0; pass < number_passes; pass++)
 		{
 			int y;
+			int w = img->fi_Width * 4;
 			
 			for (y = 0; y < img->fi_Height; y++)
 			{
 				//png_write_rows(png_ptr, (png_bytepp) &(img->fi_Data[  y * img->fi_Width * 4 ]), 1);
-				png_write_row(png_ptr, (png_bytepp) &(img->fi_Data[  y * img->fi_Width * 4 ]) );
+				png_write_row(png_ptr, &(img->fi_Data[  y * w ]) );
 			}
 		}
 	}

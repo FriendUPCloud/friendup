@@ -20,7 +20,7 @@
 if ( window.friendUP )
 	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed');
 
-var friendUP = {
+window.friendUP = {
 	app : {},
 	component : {},
 	gui : {},
@@ -30,5 +30,5 @@ var friendUP = {
 	tool : {},
 	util : {}
 };
+window.Friend = window.Friend || {};
 
-window.friendUP = friendUP;

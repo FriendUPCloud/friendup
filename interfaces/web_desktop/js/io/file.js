@@ -607,11 +607,19 @@ File = function( filename )
 // TODO: Use Door to resolve proper path
 function getImageUrl( path )
 {
+	console.log( 'Here is the path: ' + path );
+	
+	
 	if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
 		return path.split( /system\:/i ).join( '/webclient/' );
 
 	if( path.toLowerCase().substr( 0, 5 ) == 'libs:' )
 		return path.split( /libs\:/i ).join( '/webclient/' );
+	
+	if( path.substr( 0, 11 ) == '/webclient/' )
+	{
+		return path;
+	}
 
 
 	var sid = Workspace.sessionId && Workspace.sessionId != 'undefined';

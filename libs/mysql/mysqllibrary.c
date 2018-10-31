@@ -34,7 +34,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <util/string.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/nodes.h>
 #include <time.h>
 #include <system/systembase.h>
@@ -311,7 +311,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 						case SQLT_INIT_FUNCTION:
 						{
-							DEBUG("[MYSQLLibrary] Init function found, calling it\n");
+							//DEBUG("[MYSQLLibrary] Init function found, calling it\n");
 							if( ((void *)dptr[2]) != NULL && data != NULL )
 							{
 								void (*funcptr)( void * ) = (void *)(void *)dptr[2];

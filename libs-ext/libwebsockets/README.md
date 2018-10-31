@@ -1,11 +1,13 @@
-[![Travis Build Status](https://travis-ci.org/warmcat/libwebsockets.svg)](https://travis-ci.org/warmcat/libwebsockets)
-[![Appveyor Build status](https://ci.appveyor.com/api/projects/status/qfasji8mnfnd2r8t?svg=true)](https://ci.appveyor.com/project/lws-team/libwebsockets)
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/3576/badge.svg)](https://scan.coverity.com/projects/3576)
+[![Travis Build Status](https://travis-ci.org/warmcat/libwebsockets.svg)](https://travis-ci.org/warmcat/libwebsockets) [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/qfasji8mnfnd2r8t?svg=true)](https://ci.appveyor.com/project/lws-team/libwebsockets) [![Coverity Scan Build Status](https://scan.coverity.com/projects/3576/badge.svg)](https://scan.coverity.com/projects/3576) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2266/badge)](https://bestpractices.coreinfrastructure.org/projects/2266) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/144fb195a83046e484a75c8b4c6cfc99)](https://www.codacy.com/app/lws-team/libwebsockets?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=warmcat/libwebsockets&amp;utm_campaign=Badge_Grade)
 
-![lws-overview](./doc-assets/lws-overview.png)
+![overview](./doc-assets/lws-overview.svg)
 
 News
 ----
+
+## v3.0.1 released
+
+See the git log for the list of fixes.
 
 ## v3.0.0 released
 
@@ -36,7 +38,7 @@ keep it that way.
 
 ## Lws has the first official ws-over-h2 server support
 
-![wss-over-h2](https://libwebsockets.org/sc-wss-over-h2.png)
+![wss-over-h2](./doc-assets/wss2.png)
 
 There's a new standard on the RFC track that enables multiplexing ws connections
 over an http/2 link.  Compared to making individual tcp and tls connections for
@@ -58,14 +60,17 @@ but the other browsers will catch up soon.
 
 https://libwebsockets.org/git/libwebsockets/tree/minimal-examples
 
-These are like the test apps, but focus on doing one thing, the best way, with the minimum amount of code.  For example the minimal-http-server serves the cwd on http/1 or http/2 in 50 LOC.  Same thing with tls is just three more lines.
+These are like the test apps, but focus on doing one thing, the best way, with the
+minimum amount of code.  For example the minimal-http-server serves the cwd on
+http/1 or http/2 in 50 LOC.  Same thing with tls is just three more lines.
 
 They build standalone, so it's easier to copy them directly to start your own project; they
 are CC0 licensed (public domain) to facilitate that.
 
 ## Windows binary builds
 
-32- and 64-bit Windows binary builds are available via Appveyor.  Visit [lws on Appveyor](https://ci.appveyor.com/project/lws-team/libwebsockets),
+32- and 64-bit Windows binary builds are available via Appveyor.  Visit
+[lws on Appveyor](https://ci.appveyor.com/project/lws-team/libwebsockets),
 click on a build, the ARTIFACTS, and unzip the zip file at `C:\Program Files (x86)/libwebsockets`.
 
 ## ESP32 is supported

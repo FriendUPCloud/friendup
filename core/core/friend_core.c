@@ -326,6 +326,123 @@ struct fcThreadInstance
 
 #endif
 
+//
+// internal
+//
+
+static inline void moveToHttp( int fd )
+{
+	char redirectURL[ 1024 ];
+	Http *response;
+	
+	char buf[ 1024 ];
+	int re = 0;
+	
+	while( TRUE )
+	{
+		int r = recv( fd, buf, 1024, 0 );
+		if( r  <= 0 )
+		{
+			break;
+		}
+		re += r;
+		DEBUG("Received from socket '%s' size %d\n", buf, re );
+		sleep( 1 );
+	}
+
+	strcpy( redirectURL, "https://" );
+	
+	// get Host
+	char *f = strstr( buf, "Host:" );
+	char *tmp = NULL;
+	if( f != NULL )
+	{
+		f += 6; // + "Host: "
+		tmp = f;
+		while( *f != '\r' )
+		{
+			f++;
+		}
+		*f = 0;
+		strcat( redirectURL, tmp );
+	}
+
+	strcat( redirectURL, "/webclient/index.html" );
+	
+	Log( FLOG_DEBUG, "[ProtocolHttp] Redirect : '%s'\n", redirectURL );
+	struct TagItem tags[] = {
+		{ HTTP_HEADER_LOCATION, (FULONG)StringDuplicateN( redirectURL, strlen( redirectURL ) ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+		{ TAG_DONE, TAG_DONE }
+	};
+	response = HttpNewSimple( HTTP_307_TEMPORARY_REDIRECT, tags );
+
+	/*
+	struct TagItem tags[] = {
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "Upgrade" ) },
+		{ HTTP_HEADER_UPGRADE, (FULONG)StringDuplicate("TLS/1.1" ) },
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+		{ TAG_DONE, TAG_DONE }
+	};
+	response = HttpNewSimple( HTTP_426_UPGRADE_REQUIRED, tags );
+	*/
+	
+	if( response != NULL )
+	{
+		HttpAddTextContent( response, StringDuplicate("<html>please change to https!</html>") );
+		
+		if( HttpBuild( response ) != NULL )
+		{
+			int s;
+			s = send( fd, response->response, response->responseLength, 0 );
+			//close( fd );
+		}
+		HttpFree( response );
+	}
+}
+
+static inline void moveToHttps( Socket *sock )
+{
+	Http *response;
+	
+	char buf[ 1024 ];
+	int re = 0;
+	
+	/*
+	while( TRUE )
+	{
+		int r = recv( fd, buf, 1024, 0 );
+		if( r  <= 0 )
+		{
+			break;
+		}
+		re += r;
+		DEBUG("Received from socket '%s' size %d\n", buf, re );
+		sleep( 1 );
+	}
+	*/
+	
+	struct TagItem tags[] = {
+		{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+		{ TAG_DONE, TAG_DONE }
+	};
+	response = HttpNewSimple( HTTP_400_BAD_REQUEST, tags );
+	
+	if( response != NULL )
+	{
+		HttpAddTextContent( response, StringDuplicate("<html>please change to https!</html>") );
+		
+		if( HttpBuild( response ) != NULL )
+		{
+			int s;
+			//s = SSL_write( sock->s_Ssl, response->response, response->responseLength );
+			s = send( sock->fd, response->response, response->responseLength, 0 );
+			DEBUG("Response send!!!\n\n\n %s\n\n\n%d\n\n\n", response->response, response->responseLength );
+			//close( fd );
+		}
+		HttpFree( response );
+	}
+}
 
 /**
 * Accept FriendCore http connections
@@ -348,7 +465,6 @@ void *FriendCoreAcceptPhase2( void *d )
 	
 	while( ( fd = accept4( fc->fci_Sockets->fd, ( struct sockaddr* )&client, &clientLen, SOCK_NONBLOCK    ) ) > 0 )
 	{
-		//DEBUG("Accepted: %d\n", fd );
 		if( fd == -1 )
 		{
 			// Get some info about failure..
@@ -421,6 +537,7 @@ void *FriendCoreAcceptPhase2( void *d )
 		if( fc->fci_Sockets->s_SSLEnabled == TRUE )
 		{
 			int srl;
+			
 			incoming->s_Ssl = SSL_new( fc->fci_Sockets->s_Ctx );
 
 			if( incoming->s_Ssl == NULL )
@@ -451,7 +568,7 @@ void *FriendCoreAcceptPhase2( void *d )
 			
 			// setup SSL session
 			int err = 0;
-			
+
 			while( 1 )
 			{
 				if( ( err = SSL_accept( incoming->s_Ssl ) ) == 1 )
@@ -492,14 +609,24 @@ void *FriendCoreAcceptPhase2( void *d )
 							SocketClose( incoming );
 							goto accerror;
 						case SSL_ERROR_SSL:
-							FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( ERR_get_error(), NULL ) );
-							SocketClose( incoming );
-							goto accerror;
+						{
+							int enume = ERR_get_error();
+							FERROR( "[SocketAcceptPair] SSL_ERROR_SSL: %s.\n", ERR_error_string( enume, NULL ) );
+							lbreak = 2;
+							
+							// HTTP to HTTPS redirection code
+							if( enume == 336027804 ) // http redirect
+							{
+								moveToHttp( fd );
+							}
+							//SocketClose( incoming );
+							//goto accerror;
+							break;
+						}
 					}
 				}
 				if( lbreak >= 1 )
 				{
-					//DEBUG("break = 1\n");
 					break;
 				}
 				usleep( 0 );
@@ -513,7 +640,6 @@ void *FriendCoreAcceptPhase2( void *d )
 		// We got incoming!
 		if( incoming != NULL )
 		{
-			DEBUG("Add to epoll: %d\n", incoming->fd );
 			// Add instance reference
 			incoming->s_Data = fc;
 		#ifdef USE_SELECT
@@ -1001,7 +1127,37 @@ void FriendCoreProcess( void *fcv )
 				// No data?
 				else
 				{
+					
+					//
+					//  if server is handling http and messages coming in "bad format"
+					//  we must report to client that he must switch (or error)
+					//
+					
 					DEBUG("No data, res %d\n", res );
+					if( th->sock->s_SSLEnabled == TRUE )
+					{
+						char buf[ 1024 ];
+						int res;
+						if( ( res = SSL_read( th->sock->s_Ssl, buf, sizeof(buf) ) ) > 0 )
+						{
+							
+						}
+						else
+						{
+							int error = SSL_get_error( th->sock->s_Ssl, res );
+							
+							int enume = ERR_get_error();
+							if( error == 1 && enume == 336027804 )
+							{
+								moveToHttp( th->sock->fd );
+							}
+							FERROR( "[FriendCoreProcess] SSL_ERROR_SSL: %s enume %d.\n", ERR_error_string( enume, NULL ), enume );
+						}
+					}
+					else
+					{
+						moveToHttps( th->sock );
+					}
 					break;
 				}
 				DEBUG("Socket read: %d\n", res );

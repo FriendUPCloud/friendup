@@ -1,8 +1,35 @@
-friend = window.friend || {};
+/*©agpl*************************************************************************
+*                                                                              *
+* This file is part of FRIEND UNIFYING PLATFORM.                               *
+*                                                                              *
+* This program is free software: you can redistribute it and/or modify         *
+* it under the terms of the GNU Affero General Public License as published by  *
+* the Free Software Foundation, either version 3 of the License, or            *
+* (at your option) any later version.                                          *
+*                                                                              *
+* This program is distributed in the hope that it will be useful,              *
+* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
+* GNU Affero General Public License for more details.                          *
+*                                                                              *
+* You should have received a copy of the GNU Affero General Public License     *
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+*                                                                              *
+*****************************************************************************©*/
+
+/** @file
+ *
+ * File browser class
+ * 
+ *
+ * @author HT (Hogne Titlestad)
+ */
+
+Friend = window.Friend || {};
 
 // File browser ----------------------------------------------------------------
 
-friend.FileBrowserEntry = function()
+Friend.FileBrowserEntry = function()
 {
 };
 
@@ -24,7 +51,7 @@ friend.FileBrowserEntry = function()
 */
 
 
-friend.FileBrowser = function( initElement, flags, callbacks )
+Friend.FileBrowser = function( initElement, flags, callbacks )
 {
 	var self = this;
 	this.dom = initElement;
@@ -33,19 +60,19 @@ friend.FileBrowser = function( initElement, flags, callbacks )
 	this.callbacks = callbacks;
 	this.flags = flags ? flags : { displayFiles: false };
 };
-friend.FileBrowser.prototype.clear = function()
+Friend.FileBrowser.prototype.clear = function()
 {
 	this.dom.innerHTML = '';
 	this.headerDisks = false;
 	this.bookmarksHeader = false;
 }
-friend.FileBrowser.prototype.render = function()
+Friend.FileBrowser.prototype.render = function()
 {
 	var self = this;
 	
 	this.refresh();
 };
-friend.FileBrowser.prototype.drop = function( elements, e, win )
+Friend.FileBrowser.prototype.drop = function( elements, e, win )
 {
 	var drop = 0;
 	var self = this;
@@ -76,18 +103,22 @@ friend.FileBrowser.prototype.drop = function( elements, e, win )
 	}
 	return drop;
 };
-friend.FileBrowser.prototype.rollOver = function( elements )
+Friend.FileBrowser.prototype.rollOver = function( elements )
 {
 	// Do some user feedback later
 };
-friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth )
+Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, depth )
 {
 	var self = this;
 	
 	if( !rootElement ) rootElement = this.dom;
 	if( !path ) path = this.currentPath;
 	if( !depth ) depth = 1;
-	
+
+	// Fix column problem
+	if ( path.indexOf( ':' ) < 0 )
+		path += ':';
+
 	if( !this.headerDisks )
 	{
 		this.headerDisks = document.createElement( 'div' );
@@ -99,6 +130,9 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 	{
 		ele.onclick = function( e )
 		{
+			if ( ppath.indexOf( ':' ) < 0 )
+				ppath += ':';
+
 			if( type == 'File' )
 			{
 				
@@ -230,7 +264,7 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( window.Workspace )
 			{
-				DOS.getDisks( 'Mountlist:', flags, function( response, msg )
+				Friend.DOS.getDisks( flags, function( response, msg )
 				{
 					callback( response ? {
 						list: msg
@@ -239,11 +273,11 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
-				DOS.getDisks( flags, callback );
+				Friend.DOS.getDisks( flags, callback );
 			}
 		}
 		func( { sort: true }, function( msg )
-		{
+		{	
 			if( !msg || !msg.list ) return;
 			
 			function done()
@@ -252,6 +286,7 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 				var eles = rootElement.childNodes;
 				var found = [];
 				var foundElements = [];
+				var removers = [];
 				for( var a = 0; a < eles.length; a++ )
 				{
 					var elFound = false;
@@ -260,29 +295,46 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( eles[a].id == 'diskitem_' + msg.list[b].Title )
 						{
 							createOnclickAction( eles[a], msg.list[a].Volume, 'volume', depth + 1 );
-							found.push( msg.list[b].Title );
-							foundElements.push( eles[a] );
+							// Don't add twice
+							if( !found.find( function( ele ){ ele == msg.list[b].Title } ) )
+							{
+								found.push( msg.list[b].Title );
+								foundElements.push( eles[a] );
+							}
 							elFound = true;
 						}
 					}
 					// Deleted element
-					if( !elFound && eles[a] != self.headerDisks )
+					if( !elFound && eles[a] != self.headerDisks && eles[a] != self.bookmarksHeader )
 					{
-						rootElement.removeChild( eles[a] );
+						removers.push( eles[a] );
 					}
 				}
+				if( removers.length )
+				{
+					for( var a = 0; a < removers.length; a++ )
+					{
+						rootElement.removeChild( removers[a] );
+					}
+					delete removers;
+				}
+				
 				// Iterate through the resulting list
 				for( var a = 0; a < msg.list.length; a++ )
 				{
 					if( msg.list[a].Volume == 'System:' ) continue;
+					
+					// Add the bookmark header if it doesn't exist
 					if( msg.list[a].Type && msg.list[a].Type == 'header' && !self.bookmarksHeader )
 					{
-						self.bookmarksHeader = true;
 						var d = document.createElement( 'div' );
+						self.bookmarksHeader = d;
 						d.innerHTML = '<p class="Layout BorderBottom PaddingTop BorderTop PaddingBottom"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p>';
 						rootElement.appendChild( d );
 						continue;
 					}
+					
+					// Check if this item already exists
 					var foundItem = false;
 					for( var b = 0; b < found.length; b++ )
 					{
@@ -342,14 +394,14 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( foundItem.classList.contains( 'Open' ) )
 						{
 							var s = foundItem.getElementsByClassName( 'SubItems' );
-							if( s && s.length )
+							if( s && s.length && msg.list[a].Volume )
 							{
 								self.refresh( msg.list[a].Volume, s[0], false, depth + 1 );
 							}
 						}
 					}
 				}
-				// Checkers
+				// Add checkers classes
 				var sw = 2;
 				for( var a = 0; a < eles.length; a++ )
 				{
@@ -408,7 +460,7 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 		{
 			if( window.Workspace )
 			{
-				DOS.getDirectory( path, flags, function( response, msg )
+				Friend.DOS.getDirectory( path, flags, function( response, msg )
 				{
 					callback( response ? {
 						list: msg
@@ -417,7 +469,7 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
-				DOS.getDirectory( path, flags, callback );
+				Friend.DOS.getDirectory( path, flags, callback );
 			}
 		}
 	
@@ -427,6 +479,8 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			
 			// Get existing
 			var eles = rootElement.childNodes;
+			
+			var removers = [];
 			var found = [];
 			var foundElements = [];
 			for( var a = 0; a < eles.length; a++ )
@@ -440,17 +494,27 @@ friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( msg.list[b].Type == 'Directory' )
 							fn += '/';
 						createOnclickAction( eles[a], path + fn, msg.list[b].Type, depth + 1 );
-						found.push( msg.list[b].Filename );
-						foundElements.push( eles[a] );
+						// Don't add twice
+						if( !found.find( function( ele ){ ele == msg.list[b].Filename } ) )
+						{
+							found.push( msg.list[b].Filename );
+							foundElements.push( eles[a] );
+						}
 						elFound = true;
 					}
 				}
 				// Deleted item
 				if( !elFound )
 				{
-					rootElement.removeChild( eles[a] );
+					removers.push( eles[a] );
 				}
 			}
+			for( var a = 0; a < removers.length; a++ )
+			{
+				rootElement.removeChild( removers[a] );
+			}
+			delete removers;
+			
 			//
 			for( var a = 0; a < msg.list.length; a++ )
 			{

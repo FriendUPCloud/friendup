@@ -24,7 +24,7 @@
  * @author FL (Francois Lionet)
  * @date first pushed on 10/07/2018
  */
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetworkExtension =
 {	
@@ -63,28 +63,28 @@ FriendNetworkExtension =
 			}
 			else if ( window.isMobile )
 			{
-				self.mobile = true;
-				//var handle = setInterval( function()
-				//{				
-					self.sendMessage( message, function( response ) 
+				self.mobile = false;
+				callback( false );
+				/*
+				self.sendMessage( message, function( response ) 
+				{
+					if ( response )
 					{
-						if ( response )
+						//clearInterval( handle );
+						if ( response.command == 'initResponse' && response.status == 'ready' )
 						{
-							//clearInterval( handle );
-							if ( response.command == 'initResponse' && response.status == 'ready' )
-							{
-								self.connected = true;
-								if ( callback )
-									callback( true );
-							}
-							else
-							{
-								if ( callback )
-									callback( false );
-							} 
+							self.connected = true;
+							if ( callback )
+								callback( true );
 						}
-					}, { force: true } );
-				//}, 1000 );
+						else
+						{
+							if ( callback )
+								callback( false );
+						} 
+					}
+				}, { force: true } );
+				*/
 			}
 			else
 			{
@@ -111,6 +111,7 @@ FriendNetworkExtension =
 			self.messageCallbacks[ message.identifier ] = callback;			
 			if ( self.mobile )
 			{
+				/*
 				var json = CallFriendApp( 'onFriendNetworkMessage', JSON.stringify( message ) );
 				var response;
 				try
@@ -130,6 +131,7 @@ FriendNetworkExtension =
 				{
 					console.log( 'JSON error in response from Friend Android App:' + json );
 				}
+				*/
 			}
 			else
 			{

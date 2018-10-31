@@ -37,7 +37,7 @@
 
 #include <db/sql_defs.h>
 #include <system/user/user_application.h>
-#include <network/websocket_client.h>
+#include <network/websocket_server_client.h>
 #include <system/user/user.h>
 #include <websockets/websocket_req_manager.h>
 #include <util/friendqueue.h>
@@ -70,7 +70,7 @@ typedef struct UserSession
 	MinNode					node;
 	
 	FULONG					us_ID;
-	WebsocketClient			*us_WSClients;
+	WebsocketServerClient	*us_WSClients;
 	pthread_mutex_t			us_Mutex;
 	
 	FULONG					us_UserID;					//

@@ -10,10 +10,17 @@
 		</div>
 		<div class="VContentTop ScrollArea BackgroundLists" id="MiniPlaylist"></div>
 		<div class="VContentBottom BackgroundLists BorderTop" style="height: 47px" id="BottomButtons">
-			<div class="HContent10 FloatRight Padding">
-				<button type="button" class="IconButton IconSmall fa-list BtnPlaylist" onclick="EditPlaylist()"></button>
+			<div class="HContent15 FloatRight">
+				<div class="HRow">
+					<div class="HContent50 FloatLeft">
+						<button type="button" class="IconButton IconSmall fa-list BtnPlaylist" onclick="Application.sendMessage( { command: 'toggle_miniplaylist' } );"></button>
+					</div>
+					<div class="HContent50 FloatLeft">
+						<button type="button" class="IconButton IconSmall fa-edit BtnEditPlaylist" onclick="EditPlaylist()"></button>
+					</div>
+				</div>
 			</div>
-			<div class="HContent90 FloatLeft Padding">
+			<div class="HContent85 FloatLeft Padding">
 				<div class="HRow">
 					<button type="button" class="HContent10 IconButton IconSmall fa-backward BtnPrevious FloatLeft NoMargins" onclick="Seek(-1)">
 					

@@ -34,7 +34,7 @@
 #include <string.h>
 #include <util/string.h>
 #include <openssl/sha.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <system/auth/authmodule.h>
 #include <system/application/application.h>
 #include <util/buffered_string.h>

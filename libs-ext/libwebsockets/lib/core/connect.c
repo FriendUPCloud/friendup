@@ -42,9 +42,12 @@ lws_client_stash_destroy(struct lws *wsi)
 LWS_VISIBLE struct lws *
 lws_client_connect_via_info(const struct lws_client_connect_info *i)
 {
-	struct lws *wsi;
+	struct lws *wsi, *safe = NULL;
 	const struct lws_protocols *p;
 	const char *local = i->protocol;
+#if LWS_MAX_SMP > 1
+	int n, tid;
+#endif
 
 	if (i->context->requested_kill)
 		return NULL;
@@ -67,8 +70,47 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi->context = i->context;
 	wsi->desc.sockfd = LWS_SOCK_INVALID;
 
+	wsi->vhost = NULL;
+	if (!i->vhost)
+		lws_vhost_bind_wsi(i->context->vhost_list, wsi);
+	else
+		lws_vhost_bind_wsi(i->vhost, wsi);
+
+	if (!wsi->vhost) {
+		lwsl_err("%s: No vhost in the context\n", __func__);
+
+		goto bail;
+	}
+
 	/*
-	 * PHASE 2: Choose an initial role for the wsi and do role-specific init
+	 * PHASE 2: if SMP, bind the client to whatever tsi the current thread
+	 * represents
+	 */
+
+#if LWS_MAX_SMP > 1
+	tid = wsi->vhost->protocols[0].callback(wsi,
+				     LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
+
+	lws_context_lock(i->context, "client find tsi");
+
+	for (n = 0; n < i->context->count_threads; n++)
+		if (i->context->pt[n].service_tid == tid) {
+			lwsl_info("%s: client binds to caller tsi %d\n",
+				  __func__, n);
+			wsi->tsi = n;
+			break;
+		}
+
+	/*
+	 * this binding is sort of provisional, since when we try to insert
+	 * into the pt fds, there may be no space and it will fail
+	 */
+
+	lws_context_unlock(i->context);
+#endif
+
+	/*
+	 * PHASE 3: Choose an initial role for the wsi and do role-specific init
 	 *
 	 * Note the initial role may not reflect the final role, eg,
 	 * we may want ws, but first we have to go through h1 to get that
@@ -77,7 +119,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	lws_role_call_client_bind(wsi, i);
 
 	/*
-	 * PHASE 3: fill up the wsi with stuff from the connect_info as far as
+	 * PHASE 4: fill up the wsi with stuff from the connect_info as far as
 	 * it can go.  It's uncertain because not only is our connection
 	 * going to complete asynchronously, we might have bound to h1 and not
 	 * even be able to get ahold of an ah immediately.
@@ -87,34 +129,33 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	wsi->pending_timeout = NO_PENDING_TIMEOUT;
 	wsi->position_in_fds_table = LWS_NO_FDS_POS;
 	wsi->c_port = i->port;
-	wsi->vhost = i->vhost;
-	if (!wsi->vhost)
-		wsi->vhost = i->context->vhost_list;
-
-	if (!wsi->vhost) {
-		lwsl_err("%s: No vhost in the context\n", __func__);
-
-		goto bail;
-	}
-
-	lws_vhost_bind_wsi(wsi->vhost, wsi);
 
 	wsi->protocol = &wsi->vhost->protocols[0];
 	wsi->client_pipeline = !!(i->ssl_connection & LCCSCF_PIPELINE);
+
+	/*
+	 * PHASE 5: handle external user_space now, generic alloc is done in
+	 * role finalization
+	 */
+
+	if (!wsi->user_space && i->userdata) {
+		wsi->user_space_externally_allocated = 1;
+		wsi->user_space = i->userdata;
+	}
 
 	if (local) {
 		lwsl_info("%s: protocol binding to %s\n", __func__, local);
 		p = lws_vhost_name_to_protocol(wsi->vhost, local);
 		if (p)
-			wsi->protocol = p;
+			lws_bind_protocol(wsi, p, __func__);
 	}
 
 	/*
-	 * PHASE 4: handle external user_space now, generic alloc is done in
+	 * PHASE 5: handle external user_space now, generic alloc is done in
 	 * role finalization
 	 */
 
-	if (wsi && !wsi->user_space && i->userdata) {
+	if (!wsi->user_space && i->userdata) {
 		wsi->user_space_externally_allocated = 1;
 		wsi->user_space = i->userdata;
 	}
@@ -129,7 +170,7 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 #endif
 
 	/*
-	 * PHASE 5: stash the things from connect_info that we can't process
+	 * PHASE 6: stash the things from connect_info that we can't process
 	 * right now, eg, if http binding, without an ah.  If h1 and no ah, we
 	 * will go on the ah waiting list and process those things later (after
 	 * the connect_info and maybe the things pointed to have gone out of
@@ -179,12 +220,33 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	}
 
 	/*
-	 * PHASE 6: Do any role-specific finalization processing.  We can still
+	 * at this point user callbacks like
+	 * LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER will be interested to
+	 * know the parent... eg for proxying we can grab extra headers from
+	 * the parent's incoming ah and add them to the child client handshake
+	 */
+
+	if (i->parent_wsi) {
+		lwsl_info("%s: created child %p of parent %p\n", __func__,
+			  wsi, i->parent_wsi);
+		wsi->parent = i->parent_wsi;
+		safe = wsi->sibling_list = i->parent_wsi->child_list;
+		i->parent_wsi->child_list = wsi;
+	}
+
+	/*
+	 * PHASE 7: Do any role-specific finalization processing.  We can still
 	 * see important info things via wsi->stash
 	 */
 
 	if (wsi->role_ops->client_bind) {
 		int n = wsi->role_ops->client_bind(wsi, NULL);
+
+		if (n && i->parent_wsi) {
+			/* unpick from parent */
+
+			i->parent_wsi->child_list = safe;
+		}
 
 		if (n < 0)
 			/* we didn't survive, wsi is freed */
@@ -200,14 +262,8 @@ lws_client_connect_via_info(const struct lws_client_connect_info *i)
 	if (i->pwsi)
 		*i->pwsi = wsi;
 
-	if (i->parent_wsi) {
-		lwsl_info("%s: created child %p of parent %p\n", __func__,
-			  wsi, i->parent_wsi);
-		wsi->parent = i->parent_wsi;
-		wsi->sibling_list = i->parent_wsi->child_list;
-		i->parent_wsi->child_list = wsi;
-	}
-#ifdef LWS_WITH_HTTP_PROXY
+
+#if defined(LWS_WITH_HUBBUB)
 	if (i->uri_replace_to)
 		wsi->http.rw = lws_rewrite_create(wsi, html_parser_cb,
 					     i->uri_replace_from,

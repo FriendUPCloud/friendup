@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+clean:
+	#make clean
+
+build:
+	cd ../../ && make
+
+binary:
+	cd ../../ && make installforpackage-debian
+	dh_makeshlibs
+	dh_gencontrol
+	dh_builddeb

@@ -341,6 +341,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 				if( strcmp( urlpath[ 1 ], "info" ) == 0 )
 				{
 					FHandler *actFS = (FHandler *)actDev->f_FSys;
+					FBOOL details = FALSE;
+					
+					el = HttpGetPOSTParameter( request, "details" );
+					if( el == NULL ) el = HashmapGet( request->query, "details" );
+					if( el != NULL )
+					{
+						if( strcmp( (char *)el->data, "true" ) == 0 )
+						{
+							details = TRUE;
+						}
+					}
 
 					response = HttpNewSimpleA( HTTP_200_OK, request,  HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicateN( DEFAULT_CONTENT_TYPE, 24 ),
 						HTTP_HEADER_CONNECTION, (FULONG)StringDuplicateN( "close", 5 ),TAG_DONE, TAG_DONE );
@@ -349,10 +360,170 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 					if( have == TRUE )
 					{
 						BufString *resp = actFS->Info( actDev, path );
+
 						DEBUG("info command on FSYS: %s called\n", actFS->GetPrefix() );
+						
+						// we must check extension
+						// if this is gfx file we can read details from it and put before ,\"Type\" string
+						//  , "Details":[ "Width":xxx, "Height":yyyy ....
 					
 						if( resp != NULL )
 						{
+							if( details == TRUE )
+							{
+								char *extension = GetExtension( path );
+
+								// Use the extension if possible
+								if( extension != NULL && strlen( extension ) )
+								{
+									const char *type = MimeFromExtension( extension );
+									if( strncmp( "image", type, 5 ) == 0 )
+									{
+										char *tmpfilename = FCalloc( 1024, sizeof(char) );
+										if( tmpfilename != NULL )
+										{
+											snprintf( tmpfilename, 1024, "/tmp/Friendup/_file_info_%d%d.%s", rand()%9999, rand()%9999, extension );
+										
+											int readbytes = 10240;
+											int dataread = 0;
+											uint64_t totalBytes = 0;
+											char *dataBuffer = FCalloc( readbytes, sizeof( char ) );
+											FILE *dstFp;
+									
+											// download file to server to check it
+											if( ( dstFp = fopen( tmpfilename, "wb" ) ) != NULL )
+											{
+												File *fp = (File *)actFS->FileOpen( actDev, origDecodedPath, "r" );
+												if( fp != NULL )
+												{
+													while( ( dataread = actFS->FileRead( fp, dataBuffer, readbytes ) ) != -1 )
+													{
+														if( request->h_ShutdownPtr != NULL && *(request->h_ShutdownPtr) == TRUE )
+														{
+															break;
+														}
+												
+														if( dataread == 0 )
+														{
+															break;
+														}
+														fwrite( dataBuffer, dataread, 1, dstFp );
+										
+														totalBytes += readbytes;
+													}
+													actFS->FileClose( actDev, fp );
+													
+													// image was created, getting details
+												}
+												fclose( dstFp );
+
+												// trying to figure out what kind of image it is
+												gdImagePtr img = NULL;
+												dstFp = fopen( tmpfilename, "rb" );
+												if( dstFp != NULL )
+												{
+													img = gdImageCreateFromPng( dstFp );
+													if( img == NULL )
+													{
+														fseek( dstFp, 0, SEEK_SET );
+														img = gdImageCreateFromJpeg( dstFp );
+														if( img == NULL )
+														{
+															fseek( dstFp, 0, SEEK_SET );
+															img = gdImageCreateFromBmp( dstFp );
+															if( img == NULL )
+															{
+																fseek( dstFp, 0, SEEK_SET );
+																img = gdImageCreateFromGif( dstFp );
+																if( img == NULL )
+																{
+																	fseek( dstFp, 0, SEEK_SET );
+																	img = gdImageCreateFromWebp( dstFp );
+																	if( img == NULL )
+																	{
+																		fseek( dstFp, 0, SEEK_SET );
+																		img = gdImageCreateFromTga( dstFp );
+																		if( img == NULL )
+																		{
+																			fseek( dstFp, 0, SEEK_SET );
+																			img = gdImageCreateFromTiff( dstFp );
+																			if( img == NULL )
+																			{
+																				fseek( dstFp, 0, SEEK_SET );
+																				img = gdImageCreateFromWBMP( dstFp );
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+													fclose( dstFp );
+												}
+
+												// add details to result string
+												if( img != NULL )
+												{
+													char tmpBuffer[ 1024 ];
+													BufString *dstBs = BufStringNew();
+													
+													DEBUG("Image found\n");
+													
+													int textLen = snprintf( tmpBuffer, sizeof( tmpBuffer ), "\"Details\":[\"type\":\"%s\",\"width\":%d,\"height\":%d],", type, img->sx, img->sy );
+													char *textFound = strstr( resp->bs_Buffer, "\"Type\"" );
+													if( textFound != NULL )
+													{
+														int len = textFound-resp->bs_Buffer;
+														BufStringAddSize( dstBs, resp->bs_Buffer, len );
+														BufStringAddSize( dstBs, tmpBuffer, textLen );
+														BufStringAdd( dstBs, textFound );
+														
+														DEBUG("DSTString: %s\n", dstBs->bs_Buffer );
+														
+														BufStringDelete( resp );
+														resp = dstBs;
+													}
+
+													gdImageDestroy( img );
+												}
+												
+												// remove temporary file on the end
+												remove( tmpfilename );
+											}
+											FFree( tmpfilename );
+										}
+									}
+								}
+								
+								if( extension != NULL )
+								{
+									FFree( extension );
+								}
+							}
+							
+							// add FS id and FSType
+							
+							{
+								char tmpBuffer[ 1024 ];
+								BufString *dstBs = BufStringNew();
+								//FHandler *fh = (FHandler *)actDev->f_FSys
+								
+								int textLen = snprintf( tmpBuffer, sizeof( tmpBuffer ), "\"fsid\":\"%lu\",\"fstype\":\"%s\",", actDev->f_ID, actDev->f_FSysName );
+								char *textFound = strstr( resp->bs_Buffer, "\"Type\"" );
+								if( textFound != NULL )
+								{
+									int len = textFound-resp->bs_Buffer;
+									BufStringAddSize( dstBs, resp->bs_Buffer, len );
+									BufStringAddSize( dstBs, tmpBuffer, textLen );
+									BufStringAdd( dstBs, textFound );
+									
+									DEBUG("DSTString: %s\n", dstBs->bs_Buffer );
+									
+									BufStringDelete( resp );
+									resp = dstBs;
+								}
+							}
+
 							HttpAddTextContent( response, resp->bs_Buffer );
 						
 							BufStringDelete( resp );
@@ -1405,7 +1576,7 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 													DEBUG("[FSMWebRequest] file/copy - files opened, copy in progress\n");
 										
 													int dataread = 0;
-												
+													int readTr = 0;
 
 													while( ( dataread = actFS->FileRead( rfp, dataBuffer, 524288 ) ) > 0 )
 													{
@@ -1427,6 +1598,17 @@ Http *FSMWebRequest( void *m, char **urlpath, Http *request, UserSession *logged
 															written += bytes;
 
 															dstrootf->f_BytesStored += bytes;
+															
+															readTr = 0;
+														}
+														else
+														{
+															readTr++;
+															if( readTr > 25 )
+															{
+																DEBUG("Cannot read data from source!\n");
+																break;
+															}
 														}
 													}
 													FFree( dataBuffer );

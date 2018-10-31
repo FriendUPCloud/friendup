@@ -453,7 +453,7 @@ Peer.prototype.stopPing = function( ) {
 
 Peer.prototype.setConnectionTimeout = function() {
 	var self = this;
-	console.log( 'setConnectionTimeout' );
+	//console.log( 'setConnectionTimeout' );
 }
 
 Peer.prototype.handleReconnect = function( sid ) {

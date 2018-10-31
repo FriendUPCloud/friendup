@@ -856,10 +856,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 
 									if( cacheState == CACHE_FILE_CAN_BE_USED )
 									{
-										response = HttpNewSimple( HTTP_200_OK, tags );
-
-										HttpWrite( response, request->h_Socket );
-
+										int resp = 0;
 										int dataread;
 
 										cf->cf_Fp = fopen( cf->cf_StorePath, "rb" );
@@ -870,6 +867,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											{
 												while( !feof( cf->cf_Fp ) )
 												{
+													if( resp == 0 && dataread > 0 )
+													{
+														response = HttpNewSimple( HTTP_200_OK, tags );
+														HttpWrite( response, request->h_Socket );
+														resp = 1;
+													}
 													dataread = fread( tbuffer, 1, SHARING_BUFFER_SIZE, cf->cf_Fp );
 													SocketWrite( request->h_Socket, tbuffer, dataread );
 												}
@@ -878,6 +881,11 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											fclose( cf->cf_Fp );
 										}
 
+										if( resp == 0 )
+										{
+											response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+											HttpWrite( response, request->h_Socket );
+										}
 
 										result = 200;
 
@@ -903,7 +911,6 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											cf->cf_FileSize = 0;
 											cffp = cf->cf_Fp;
 										}
-
 
 										// We need to get the sessionId if we can!
 										// currently from table we read UserID
@@ -946,22 +953,35 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											File *fp = ( File *)actFS->FileOpen( rootDev, filePath, "rs" );
 											if( fp != NULL )
 											{
-												fp->f_Stream = request->h_Stream;
-												fp->f_Socket = request->h_Socket;
-												fp->f_WSocket =  request->h_WSocket;
-												fp->f_Stream = TRUE;
-
-												response = HttpNewSimple( HTTP_200_OK, tags );
-
-												HttpWrite( response, request->h_Socket );
+												int resp = 0;
+												
+												//fp->f_Stream = request->h_Stream;
+												//fp->f_Socket = request->h_Socket;
+												//fp->f_WSocket = request->h_WSocket;
+												//fp->f_Stream = TRUE;
 
 												int dataread;
 
 												char *tbuffer = FMalloc( SHARING_BUFFER_SIZE );
 												if( tbuffer != NULL )
 												{
+													DEBUG("tbuffer\n");
 													while( ( dataread = actFS->FileRead( fp, tbuffer, SHARING_BUFFER_SIZE ) ) != -1 )
 													{
+														DEBUG("inside of loop: readed %d\n", dataread );
+														if( resp == 0 && dataread > 0 )
+														{
+															response = HttpNewSimple( HTTP_200_OK, tags );
+															HttpWrite( response, request->h_Socket );
+															resp = 1;
+															
+															SocketWrite( request->h_Socket, tbuffer, dataread );
+														}
+														else
+														{
+															SocketWrite( request->h_Socket, tbuffer, dataread );
+														}
+														
 														if( cffp != NULL )
 														{
 															DEBUG("Store %d\n", dataread );
@@ -970,6 +990,13 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 														}
 													}
 													FFree( tbuffer );
+												}
+												DEBUG("should I send fail? %d\n", resp );
+												
+												if( resp == 0 )
+												{
+													response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+													HttpWrite( response, request->h_Socket );
 												}
 
 												result = 200;
@@ -981,12 +1008,16 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 											}
 											else
 											{
+												response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+												
 												result = 404;
 												Log( FLOG_ERROR,"Cannot open file %s!\n", filePath );
 											}
 										}
 										else
 										{
+											response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+											
 											result = 404;
 											Log( FLOG_ERROR,"Cannot find filesystem for device!\n");
 										}
@@ -1006,6 +1037,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								}
 								else
 								{
+									struct TagItem tags[] = {
+										{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+										{ TAG_DONE, TAG_DONE }
+									};
+									response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+									
 									result = 404;
 									Log( FLOG_ERROR,"Cannot get root device\n");
 								}
@@ -1013,6 +1050,12 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 							}
 							else
 							{
+								struct TagItem tags[] = {
+									{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+									{ TAG_DONE, TAG_DONE }
+								};
+								response = HttpNewSimple( HTTP_403_FORBIDDEN, tags );
+								
 								SLIB->LibrarySQLDrop( SLIB, sqllib );
 								result = 404;
 								Log( FLOG_ERROR,"Fileshared entry not found in DB: sql %s\n", query );
@@ -1141,7 +1184,7 @@ Http *ProtocolHttp( Socket* sock, char* data, unsigned int length )
 								{
 									char *multipath = NULL, *pathTable[ MAX_FILES_TO_LOAD ];
 
-									memset( pathTable, 0, MAX_FILES_TO_LOAD );
+									memset( pathTable, 0, MAX_FILES_TO_LOAD*sizeof(char *) );
 									unsigned int pathSize = path->rawSize + 1;
 
 									// split path 

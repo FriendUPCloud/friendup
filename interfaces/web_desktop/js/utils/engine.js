@@ -18,7 +18,7 @@
 *****************************************************************************©*/
 
 // We need friend!
-friend = window.friend || {}
+Friend = window.Friend || {};
 
 // Get elements or an element by id
 ge = function( el )
@@ -320,7 +320,7 @@ function MakeArray ( objs )
 /**
  * HTML Entity map
  */
-friend.HTMLEntities = {
+Friend.HTMLEntities = {
 	"'": "&apos;",
 	"&lt;": "&lt;",
 	"&gt;": "&gt;",
@@ -577,11 +577,11 @@ function EntityEncode( string )
 	for( var a = string.length - 1; a >= 0; a-- )
 	{
 		var k = string[a];
-		for( var b in friend.HTMLEntities )
+		for( var b in Friend.HTMLEntities )
 		{
 			if( b == string[a] )
 			{
-				k = friend.HTMLEntities[b];
+				k = Friend.HTMLEntities[b];
 				break;
 			}
 		}
@@ -598,9 +598,9 @@ function EntityDecode( string )
 {
 	return string.replace( /(\&[^;]*?\;)/g, function( m, decoded )
 	{
-		for( var b in friend.HTMLEntities )
+		for( var b in Friend.HTMLEntities )
 		{
-			if( friend.HTMLEntities[b] == decoded )
+			if( Friend.HTMLEntities[b] == decoded )
 				return b; 
 		}
 		return decoded;
@@ -1007,11 +1007,18 @@ function ActivateAutocomplete ( ele, completeurl )
 }
 
 // Include a javascript source and eval it globally
-function Include ( url )
+function Include ( url, callback )
 {
 	var ele = document.createElement ( "script" );
 	ele.type = "text/javascript";
 	ele.src = url;
+	if( callback )
+	{
+		ele.onload = function( e )
+		{
+			callback( e );
+		}
+	}
 	document.body.appendChild ( ele );
 }
 
@@ -1946,15 +1953,15 @@ VertTabContainer.prototype.initialize = function( ele )
 
 function InitSliders( pdiv )
 {
-	if( !friend.slidersInitialized )
+	if( !Friend.slidersInitialized )
 	{
-		friend.slidersInitialized = true;
+		Friend.slidersInitialized = true;
 		// Move func
-		friend.sliderMove = function( e )
+		Friend.sliderMove = function( e )
 		{
-			if( friend.sliderCurrent )
+			if( Friend.sliderCurrent )
 			{
-				var el = friend.sliderCurrent;
+				var el = Friend.sliderCurrent;
 				// Mind the direction of the slider
 				if( el.parentNode.direction == 'horizontal' )
 				{
@@ -1988,13 +1995,13 @@ function InitSliders( pdiv )
 				}
 			}
 		}
-		friend.sliderMouseUp = function( e )
+		Friend.sliderMouseUp = function( e )
 		{
-			friend.sliderCurrent = false;
+			Friend.sliderCurrent = false;
 		}
 		// Getister events
-		window.addEventListener( 'mousemove', friend.sliderMove, true );
-		window.addEventListener( 'mouseup', friend.sliderMouseUp, true );
+		window.addEventListener( 'mousemove', Friend.sliderMove, true );
+		window.addEventListener( 'mouseup', Friend.sliderMouseUp, true );
 	}
 	if( typeof( pdiv ) == 'string' )
 		pdiv = ge( pdiv );
@@ -2057,7 +2064,7 @@ function InitSliders( pdiv )
 					el.posy = GetElementTop( el );
 					el.clickX = e.clientX - ( el.posx + el.offsetLeft ); // Mouse click offset
 					el.clickY = e.clientY - ( el.posy + el.offsetTop );
-					friend.sliderCurrent = this;
+					Friend.sliderCurrent = this;
 				}
 				slider.childNodes[b].ontouchstart = slider.childNodes[b].onmousedown;
 			}
@@ -2068,14 +2075,14 @@ function InitSliders( pdiv )
 /* Standard tabs ------------------------------------------------------------ */
 
 // Initializes tab system on the subsequent divs one level under parent div
-friend.horizontalTabs = {};
+Friend.horizontalTabs = {};
 function InitTabs( pdiv, tabCallback )
 {
 	if( typeof( pdiv ) == 'string' )
 		pdiv = ge( pdiv );
 	
 	// Save these
-	friend.horizontalTabs[ pdiv.id ] = pdiv;
+	Friend.horizontalTabs[ pdiv.id ] = pdiv;
 	
 	// Find window
 	var wobj = pdiv;
@@ -2095,13 +2102,27 @@ function InitTabs( pdiv, tabCallback )
 	var tabs = [];
 	var pages = [];
 	var active = 0;
-	var hasContainer = false;
+	
+	var tabContainer = pdiv.getElementsByClassName( 'TabContainer' );
+	if( !tabContainer.length || tabContainer[0].parentNode != pdiv )
+	{
+		tabContainer = false;
+	}
+	else tabContainer = tabContainer[0];
+	
+	var hasContainer = tabContainer;
+	
 	for( var a = 0; a < divs.length; a++ )
 	{
-		if( divs[a].parentNode != pdiv ) continue;
+		// Skip orphan tabs and out of bounds subelements
+		if( ( divs[a].classList.contains( 'Tab' ) && hasContainer && divs[a].parentNode != tabContainer ) || ( !hasContainer && divs[a].parentNode != pdiv ) )
+		{
+			continue;
+		}
 		if( divs[a].classList.contains( 'TabContainer' ) )
 		{
 			hasContainer = divs[a];
+			tabContainer = divs[a];
 			continue;
 		}
 		if( divs[a].classList.contains( 'Tab' ) )
@@ -2127,7 +2148,7 @@ function InitTabs( pdiv, tabCallback )
 				var result = true;
 				if( tabCallback )
 				{
-					result = tabCallback( this.pages );
+					result = tabCallback( this, this.pages );
 				}
 				// Only continue if the tab callback has a positive result or doesn't exist
 				if( result )
@@ -2168,7 +2189,7 @@ function InitTabs( pdiv, tabCallback )
 						AutoResizeWindow ( pdiv );
 				}
 			}
-			if( GetCookie ( 'Tabs'+pdiv.id ) == divs[a].index )
+			if( GetCookie ( 'Tabs' + pdiv.id ) == divs[a].index )
 			{
 				active = divs[a].index;
 			}
@@ -2183,6 +2204,11 @@ function InitTabs( pdiv, tabCallback )
 	// Reorder the tabs
 	if( !hasContainer )
 	{
+		// Abort!
+		if( !tabs.length )
+		{
+			return;
+		}
 		var d = document.createElement( 'div' );
 		d.className = 'TabContainer';
 		tabs[0].parentNode.insertBefore( d, tabs[0] );
@@ -2192,6 +2218,44 @@ function InitTabs( pdiv, tabCallback )
 			d.appendChild( tabs[a] );
 		}
 		hasContainer = d;
+	}
+	
+	if( hasContainer )
+	{
+		// Scroll on mouse move
+		hasContainer.addEventListener( 'mousemove', function( e )
+		{
+			if( this.scrollWidth <= this.offsetWidth )
+				return;
+			var rest = this.scrollWidth - this.offsetWidth;
+			var position = ( e.clientX - GetElementLeft( this ) );
+			if( position > this.offsetWidth ) position = this.offsetWidth;
+			else if( position < 0 ) position = 0;
+			position /= this.offsetWidth;
+			this.scrollLeft = Math.round( position * rest );
+		} );
+		// Allow touch slide
+		hasContainer.addEventListener( 'touchstart', function( e )
+		{
+			this.touchDownX = this.scrollLeft;
+			this.touchX = e.touches[0].clientX;
+		} );
+		hasContainer.addEventListener( 'touchmove', function( e )
+		{
+			if( this.scrollWidth <= this.offsetWidth )
+				return;
+			var diff = this.touchX - e.touches[0].clientX;
+			var rest = this.scrollWidth - this.offsetWidth;
+			var position = this.touchDownX + diff;
+			if( position > rest ) position = rest;
+			else if( position < 0 ) position = 0;
+			this.scrollLeft = position;
+		} );
+		hasContainer.addEventListener( 'touchend', function( e )
+		{
+			this.touchDownX = false;
+			this.touchX = false;
+		} );
 	}
 	
 	// Scroll areas
@@ -2288,10 +2352,10 @@ function InitTabs( pdiv, tabCallback )
 					
 					// Add events and 
 					window.addEventListener( 'resize', resiz );
-					if( !friend.resizeTabs )
-						friend.resizeTabs = [];
+					if( !Friend.resizeTabs )
+						Friend.resizeTabs = [];
 					n.tab.addEventListener( 'click', function(){ resiz( 1 ); } );
-					friend.resizeTabs.push( { element: pdiv, resize: function()
+					Friend.resizeTabs.push( { element: pdiv, resize: function()
 					{
 						resiz( 1 );
 					} } );
@@ -2308,14 +2372,17 @@ function InitTabs( pdiv, tabCallback )
 				n.style.position = 'relative';
 				n.style.overflow = 'auto';
 				n.parentNode.style.height = n.style.height;
-				if( wobj )
+				if( wobj && n.tab )
 				{
 					addResizeEvent( n, pag );
 				}
 			}
 		}
 	}
-	tabs[active].onclick();
+	if( tabs.length && tabs[active] )
+	{
+		tabs[active].onclick();
+	}
 }
 
 // Double click simulator for youch
@@ -2569,7 +2636,10 @@ function GetDeviceId()
 	if( ck ) return ck;
 	
 	if( !__randDevId )
-		__randDevId = window.MD5( ( Math.random() % 999 ) + ( Math.random() % 999 ) + ( Math.random() % 999 ) + '' );
+	{
+		var md5 = deps ? deps.MD5 : window.MD5;
+		__randDevId = md5( ( Math.random() % 999 ) + ( Math.random() % 999 ) + ( Math.random() % 999 ) + '' );
+	}
 	
 	var id = !!('ontouchstart' in window) ? 'touch' : 'wimp';
 	var ua = navigator.userAgent.toLowerCase()
@@ -2584,7 +2654,13 @@ function GetDeviceId()
 	if( !platform ) platform = 'Generic';
 	
 	var r = id + '_' + type + '_' + platform + '_' + __randDevId;
-	
+
+	//application token is needed for iOS push notifications
+	if (typeof window.friendApp != "undefined"){
+                if (typeof window.friendApp.appToken != "undefined"){
+                        r = id + "_ios_app_" + friendApp.appToken;
+                }
+        }
 	// Store the cookie for later use
 	SetCookie( 'deviceId', r );
 	

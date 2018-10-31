@@ -69,16 +69,16 @@ lws_ssl_capable_read(struct lws *wsi, unsigned char *buf, int len)
 	errno = 0;
 	n = SSL_read(wsi->tls.ssl, buf, len);
 #if defined(LWS_WITH_ESP32)
-	if (!n && errno == ENOTCONN) {
+	if (!n && errno == LWS_ENOTCONN) {
 		lwsl_debug("%p: SSL_read ENOTCONN\n", wsi);
 		return LWS_SSL_CAPABLE_ERROR;
 	}
 #endif
 #if defined(LWS_WITH_STATS)
-	if (!wsi->seen_rx) {
+	if (!wsi->seen_rx && wsi->accept_start_us) {
                 lws_stats_atomic_bump(wsi->context, pt,
                 		      LWSSTATS_MS_SSL_RX_DELAY,
-				time_in_microseconds() - wsi->accept_start_us);
+				lws_time_in_microseconds() - wsi->accept_start_us);
                 lws_stats_atomic_bump(wsi->context, pt,
                 		      LWSSTATS_C_SSL_CONNS_HAD_RX, 1);
 		wsi->seen_rx = 1;
@@ -189,7 +189,7 @@ lws_ssl_capable_write(struct lws *wsi, unsigned char *buf, int len)
 
 		if (m == SSL_ERROR_WANT_WRITE || SSL_want_write(wsi->tls.ssl)) {
 			lws_set_blocking_send(wsi);
-			lwsl_notice("%s: want write\n", __func__);
+			lwsl_debug("%s: want write\n", __func__);
 
 			return LWS_SSL_CAPABLE_MORE_SERVICE;
 		}

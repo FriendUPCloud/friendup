@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <time.h>
 #include <core/library.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <mutex/mutex_manager.h>
@@ -81,31 +81,29 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
         slg.ff_MaxSize =  (FUQUAD)maxSize;
     }
 
-    PropertiesLibrary *plib = (struct PropertiesLibrary *)LibraryOpen( NULL, "properties.library", 0 );
-    if( plib != NULL )
     {
-        Props *prop = NULL;
-        char *ptr, path[ 1024 ];
-        path[ 0 ] = 0;
+		Props *prop = NULL;
+		char *ptr, path[ 1024 ];
+		path[ 0 ] = 0;
 
-        ptr = getenv("FRIEND_HOME");
-        if( ptr != NULL )
-        {
-            sprintf( path, "%scfg/cfg.ini", ptr );
-        }
+		ptr = getenv("FRIEND_HOME");
+		if( ptr != NULL )
+		{
+			sprintf( path, "%scfg/cfg.ini", ptr );
+		}
 
-        prop = plib->Open( path );
-        if( prop != NULL)
-        {
+		prop = PropertiesOpen( path );
+		if( prop != NULL)
+		{
 			char *path = NULL;
 			
-			slg.ff_Level = plib->ReadIntNCS( prop, "Log:level", 1 );
-			slg.ff_ArchiveFiles =  plib->ReadIntNCS( prop, "Log:archiveFiles", 0 );
+			slg.ff_Level = ReadIntNCS( prop, "Log:level", 1 );
+			slg.ff_ArchiveFiles =  ReadIntNCS( prop, "Log:archiveFiles", 0 );
 
-			slg.ff_FileLevel  = plib->ReadIntNCS( prop, "Log:fileLevel", 1 );
-			slg.ff_Fname = plib->ReadStringNCS( prop, "Log:fileName", (char *)fname );
+			slg.ff_FileLevel  = ReadIntNCS( prop, "Log:fileLevel", 1 );
+			slg.ff_Fname = ReadStringNCS( prop, "Log:fileName", (char *)fname );
 
-			path = plib->ReadStringNCS( prop, "Log:filepath", "log/" );
+			path = ReadStringNCS( prop, "Log:filepath", "log/" );
 			
 			slg.ff_DestinationPathLength = strlen( slg.ff_Fname ) + strlen( path ) + 32;
 			slg.ff_Path = FCalloc( slg.ff_DestinationPathLength, sizeof(char) );
@@ -114,16 +112,14 @@ int LogNew( const char* fname, const char* conf, int toFile, int lvl, int flvl, 
 			strcpy( slg.ff_Path, path );
 			mkdir( slg.ff_Path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 			
-            plib->Close( prop );
-        }
+            PropertiesClose( prop );
+		}
+	}
 
-        LibraryClose( plib );
-    }
-
-    if ( pthread_mutex_init(&slg.logMutex, NULL) )
-    {
-        printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
-    }
+	if ( pthread_mutex_init(&slg.logMutex, NULL) )
+	{
+		printf("<%s:%d> %s: [ERROR] Cannot initialize mutex: %d\n",  __FILE__, __LINE__, __FUNCTION__, errno );
+	}
 
     if ( conf != NULL && slg.ff_Fname != NULL )
     {
@@ -199,6 +195,7 @@ void LogDelete( )
 
 void Log( int lev, char* fmt, ...)
 {
+	if( !fmt ) return;
     if( slg.ff_ToFile == TRUE )
         //if( 1 == 0 )
     {
@@ -208,7 +205,7 @@ void Log( int lev, char* fmt, ...)
             {
 
                 time_t rawtime;
-                struct tm timeinfo;
+                struct tm timeinfo; memset( &timeinfo, 0, sizeof( struct tm ) );
                 rawtime = time(NULL);
                 localtime_r(&rawtime, &timeinfo);
 

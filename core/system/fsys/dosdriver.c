@@ -46,7 +46,7 @@
 #include <util/buffered_string.h>
 #include <db/sqllib.h>
 #include <application/applicationlibrary.h>
-#include <properties/propertieslibrary.h>
+//#include <interface/properties_interface.h>
 #include <system/systembase.h>
 #include "dosdriver.h"
 
@@ -79,10 +79,10 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 		ddrive->dd_Name = StringDuplicateN( name, strlen( name ) );
 		ddrive->dd_Type = NULL;
 		
-		struct PropertiesLibrary *plib = NULL;
+		struct PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
 		Props *prop = NULL;
 	
-		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( sl, "properties.library", 0 ) ) != NULL )
+		//if( ( plib = (struct PropertiesLibrary *)LibraryOpen( sl, "properties.library", 0 ) ) != NULL )
 		{
 			char fileName[ 1024 ];
 			sprintf( fileName, "%s/dosdriver.ini", path );
@@ -111,9 +111,6 @@ DOSDriver *DOSDriverCreate( SystemBase *sl, const char *path, char *name )
 
 				plib->Close( prop );
 			}
-		
-			DEBUG("[DOSDriverCreate] property.library close!\n");
-			LibraryClose( (struct Library *)plib );
 		}
 
 		if( ddrive->dd_Handler == NULL )

@@ -154,10 +154,10 @@ function checkFCConfig()
 
 function renderDefaultLogin()
 {
-	if( file_exists('../build/resources/webclient/templates/login_prompt.html') )
+	if( file_exists('./resources/webclient/templates/login_prompt.html') )
 	{
 		FriendHeader('Content-Type: text/html');
-		die( file_get_contents('../build/resources/webclient/templates/login_prompt.html') );
+		die( file_get_contents('./resources/webclient/templates/login_prompt.html') );
 	}
 	die('<h1>Server error. Please inform your administrator.</h1>');	
 }

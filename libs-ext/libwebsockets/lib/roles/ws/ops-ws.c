@@ -976,7 +976,7 @@ rops_handle_POLLIN_ws(struct lws_context_per_thread *pt, struct lws *wsi,
 #if defined(LWS_WITH_HTTP2)
 	if (wsi->http2_substream || wsi->upgraded_to_http2) {
 		wsi1 = lws_get_network_wsi(wsi);
-		if (wsi1 && wsi1->trunc_len)
+		if (wsi1 && lws_has_buffered_out(wsi1))
 			/* We cannot deal with any kind of new RX
 			 * because we are dealing with a partial send
 			 * (new RX may trigger new http_action() that
@@ -1401,9 +1401,12 @@ rops_periodic_checks_ws(struct lws_context *context, int tsi, time_t now)
 		lws_vhost_lock(vh);
 
 		for (n = 0; n < vh->count_protocols; n++) {
-			struct lws *wsi = vh->same_vh_protocol_list[n];
 
-			while (wsi) {
+			lws_start_foreach_dll_safe(struct lws_dll_lws *, d, d1,
+					  vh->same_vh_protocol_heads[n].next) {
+				struct lws *wsi = lws_container_of(d,
+						struct lws, same_vh_protocol);
+
 				if (lwsi_role_ws(wsi) &&
 				    !wsi->socket_is_permanently_unusable &&
 				    !wsi->ws->send_check_ping &&
@@ -1420,8 +1423,8 @@ rops_periodic_checks_ws(struct lws_context *context, int tsi, time_t now)
 					lws_callback_on_writable(wsi);
 					wsi->ws->time_next_ping_check = now;
 				}
-				wsi = wsi->same_vh_protocol_next;
-			}
+
+			} lws_end_foreach_dll_safe(d, d1);
 		}
 
 		lws_vhost_unlock(vh);
@@ -1464,6 +1467,9 @@ rops_service_flag_pending_ws(struct lws_context *context, int tsi)
 static int
 rops_close_via_role_protocol_ws(struct lws *wsi, enum lws_close_status reason)
 {
+	if (!wsi->ws)
+		return 0;
+
 	if (!wsi->ws->close_in_ping_buffer_len && /* already a reason */
 	     (reason == LWS_CLOSE_STATUS_NOSTATUS ||
 	      reason == LWS_CLOSE_STATUS_NOSTATUS_CONTEXT_DESTROY))
@@ -1492,7 +1498,11 @@ rops_close_via_role_protocol_ws(struct lws *wsi, enum lws_close_status reason)
 static int
 rops_close_role_ws(struct lws_context_per_thread *pt, struct lws *wsi)
 {
+	if (!wsi->ws)
+		return 0;
+
 #if !defined(LWS_WITHOUT_EXTENSIONS)
+
 	if (wsi->ws->rx_draining_ext) {
 		struct lws **w = &pt->ws.rx_draining_ext_list;
 
@@ -1524,10 +1534,6 @@ rops_close_role_ws(struct lws_context_per_thread *pt, struct lws *wsi)
 	}
 #endif
 	lws_free_set_NULL(wsi->ws->rx_ubuf);
-
-	if (wsi->trunc_alloc)
-		/* not going to be completed... nuke it */
-		lws_free_set_NULL(wsi->trunc_alloc);
 
 	wsi->ws->ping_payload_len = 0;
 	wsi->ws->ping_pending_flag = 0;
@@ -1988,5 +1994,9 @@ struct lws_role_ops role_ops_ws = {
 					  LWS_CALLBACK_SERVER_WRITEABLE },
 	/* close cb clnt, srv */	{ LWS_CALLBACK_CLIENT_CLOSED,
 					  LWS_CALLBACK_CLOSED },
+	/* protocol_bind cb c, srv */	{ LWS_CALLBACK_WS_CLIENT_BIND_PROTOCOL,
+					  LWS_CALLBACK_WS_SERVER_BIND_PROTOCOL },
+	/* protocol_unbind cb c, srv */	{ LWS_CALLBACK_WS_CLIENT_DROP_PROTOCOL,
+					  LWS_CALLBACK_WS_SERVER_DROP_PROTOCOL },
 	/* file handles */		0
 };

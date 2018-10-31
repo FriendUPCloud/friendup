@@ -30,7 +30,7 @@ lws_callback_as_writeable(struct lws *wsi)
 	lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_WRITEABLE_CB, 1);
 #if defined(LWS_WITH_STATS)
 	if (wsi->active_writable_req_us) {
-		uint64_t ul = time_in_microseconds() -
+		uint64_t ul = lws_time_in_microseconds() -
 			      wsi->active_writable_req_us;
 
 		lws_stats_atomic_bump(wsi->context, pt,
@@ -74,12 +74,13 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 	 * Priority 1: pending truncated sends are incomplete ws fragments
 	 *	       If anything else sent first the protocol would be
 	 *	       corrupted.
+	 *
+	 *	       These are post- any compression transform
 	 */
 
-	if (wsi->trunc_len) {
+	if (lws_has_buffered_out(wsi)) {
 		//lwsl_notice("%s: completing partial\n", __func__);
-		if (lws_issue_raw(wsi, wsi->trunc_alloc + wsi->trunc_offset,
-				  wsi->trunc_len) < 0) {
+		if (lws_issue_raw(wsi, NULL, 0) < 0) {
 			lwsl_info("%s signalling to close\n", __func__);
 			goto bail_die;
 		}
@@ -90,6 +91,28 @@ lws_handle_POLLOUT_event(struct lws *wsi, struct lws_pollfd *pollfd)
 			wsi->socket_is_permanently_unusable = 1;
 			goto bail_die; /* retry closing now */
 		}
+
+	/* Priority 2: pre- compression transform */
+
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	if (wsi->http.comp_ctx.buflist_comp ||
+	    wsi->http.comp_ctx.may_have_more) {
+		enum lws_write_protocol wp = LWS_WRITE_HTTP;
+
+		lwsl_info("%s: completing comp partial (buflist_comp %p, may %d)\n",
+				__func__, wsi->http.comp_ctx.buflist_comp,
+				wsi->http.comp_ctx.may_have_more
+				);
+
+		if (wsi->role_ops->write_role_protocol(wsi, NULL, 0, &wp) < 0) {
+			lwsl_info("%s signalling to close\n", __func__);
+			goto bail_die;
+		}
+		lws_callback_on_writable(wsi);
+
+		goto bail_ok;
+	}
+#endif
 
 #ifdef LWS_WITH_CGI
 	/*
@@ -209,7 +232,9 @@ static int
 __lws_service_timeout_check(struct lws *wsi, time_t sec)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	int n = 0;
+#endif
 
 	(void)n;
 
@@ -221,9 +246,11 @@ __lws_service_timeout_check(struct lws *wsi, time_t sec)
 	    lws_compare_time_t(wsi->context, sec, wsi->pending_timeout_set) >
 			       wsi->pending_timeout_limit) {
 
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 		if (wsi->desc.sockfd != LWS_SOCK_INVALID &&
 		    wsi->position_in_fds_table >= 0)
 			n = pt->fds[wsi->position_in_fds_table].events;
+#endif
 
 		lws_stats_atomic_bump(wsi->context, pt, LWSSTATS_C_TIMEOUTS, 1);
 
@@ -311,9 +338,10 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
 
-	/* Figure out if we really want to wait in poll()
-	 * We only need to wait if really nothing already to do and we have
-	 * to wait for something from network
+	/*
+	 * Figure out if we really want to wait in poll()... we only need to
+	 * wait if really nothing already to do and we have to wait for
+	 * something from network
 	 */
 #if defined(LWS_ROLE_WS) && !defined(LWS_WITHOUT_EXTENSIONS)
 	/* 1) if we know we are draining rx ext, do not wait in poll */
@@ -324,11 +352,12 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 	/* 2) if we know we have non-network pending data, do not wait in poll */
 
 	if (pt->context->tls_ops &&
-	    pt->context->tls_ops->fake_POLLIN_for_buffered)
-		if (pt->context->tls_ops->fake_POLLIN_for_buffered(pt))
+	    pt->context->tls_ops->fake_POLLIN_for_buffered &&
+	    pt->context->tls_ops->fake_POLLIN_for_buffered(pt))
 			return 0;
 
-	/* 3) If there is any wsi with rxflow buffered and in a state to process
+	/*
+	 * 3) If there is any wsi with rxflow buffered and in a state to process
 	 *    it, we should not wait in poll
 	 */
 
@@ -337,6 +366,12 @@ lws_service_adjust_timeout(struct lws_context *context, int timeout_ms, int tsi)
 
 		if (lwsi_state(wsi) != LRS_DEFERRING_ACTION)
 			return 0;
+
+	/*
+	 * 4) If any guys with http compression to spill, we shouldn't wait in
+	 *    poll but hurry along and service them
+	 */
+
 
 	} lws_end_foreach_dll(d);
 
@@ -543,18 +578,21 @@ lws_service_periodic_checks(struct lws_context *context,
 			    struct lws_pollfd *pollfd, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
+	struct lws_timed_vh_protocol *tmr;
 	lws_sockfd_type our_fd = 0, tmp_fd;
 	struct lws *wsi;
 	int timed_out = 0;
 	time_t now;
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	struct allocated_headers *ah;
-	int m;
+	int n, m;
 #endif
 
 	if (!context->protocol_init_done)
-		if (lws_protocol_init(context))
+		if (lws_protocol_init(context)) {
+			lwsl_err("%s: lws_protocol_init failed\n", __func__);
 			return -1;
+		}
 
 	time(&now);
 
@@ -742,30 +780,115 @@ lws_service_periodic_checks(struct lws_context *context,
 	 * Phase 3: vhost / protocol timer callbacks
 	 */
 
-	wsi = NULL;
+	/* 3a: lock, collect, and remove vh timers that are pending */
+
+	lws_context_lock(context, "expired vh timers"); /* context ---------- */
+
+	n = 0;
+
+	/*
+	 * first, under the context lock, get a count of the number of
+	 * expired timers so we can allocate for them (or not, cleanly)
+	 */
+
 	lws_start_foreach_ll(struct lws_vhost *, v, context->vhost_list) {
-		struct lws_timed_vh_protocol *nx;
+
 		if (v->timed_vh_protocol_list) {
-			lws_start_foreach_ll(struct lws_timed_vh_protocol *,
-					q, v->timed_vh_protocol_list) {
-				if (now >= q->time) {
-					if (!wsi)
-						wsi = lws_zalloc(sizeof(*wsi), "cbwsi");
-					wsi->context = context;
-					wsi->vhost = v; /* not a real bound wsi */
-					wsi->protocol = q->protocol;
-					lwsl_debug("timed cb: vh %s, protocol %s, reason %d\n", v->name, q->protocol->name, q->reason);
-					q->protocol->callback(wsi, q->reason, NULL, NULL, 0);
-					nx = q->next;
-					lws_timed_callback_remove(v, q);
-					q = nx;
-					continue; /* we pointed ourselves to the next from the now-deleted guy */
-				}
-			} lws_end_foreach_ll(q, next);
+
+			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
+					q, v->timed_vh_protocol_list, next) {
+				if (now >= q->time)
+					n++;
+			} lws_end_foreach_ll_safe(q);
 		}
+
 	} lws_end_foreach_ll(v, vhost_next);
-	if (wsi)
+
+	/* if nothing to do, unlock and move on to the next vhost */
+
+	if (!n) {
+		lws_context_unlock(context); /* ----------- context */
+		goto vh_timers_done;
+	}
+
+	/*
+	 * attempt to do the wsi and timer info allocation
+	 * first en bloc.  If it fails, we can just skip the rest and
+	 * the timers will still be pending next time.
+	 */
+
+	wsi = lws_zalloc(sizeof(*wsi), "cbwsi");
+	if (!wsi) {
+		/*
+		 * at this point, we haven't cleared any vhost
+		 * timers.  We can fail out and retry cleanly
+		 * next periodic check
+		 */
+		lws_context_unlock(context); /* ----------- context */
+		goto vh_timers_done;
+	}
+	wsi->context = context;
+
+	tmr = lws_zalloc(sizeof(*tmr) * n, "cbtmr");
+	if (!tmr) {
+		/* again OOM here can be handled cleanly */
 		lws_free(wsi);
+		lws_context_unlock(context); /* ----------- context */
+		goto vh_timers_done;
+	}
+
+	/* so we have the allocation for n pending timers... */
+
+	m = 0;
+	lws_start_foreach_ll(struct lws_vhost *, v, context->vhost_list) {
+
+		if (v->timed_vh_protocol_list) {
+
+			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
+					q, v->timed_vh_protocol_list, next) {
+
+				/* only do n */
+				if (m == n)
+					break;
+
+				if (now >= q->time) {
+
+					/*
+					 * tmr is an allocated array.
+					 * Ignore the linked-list.
+					 */
+					tmr[m].vhost = v;
+					tmr[m].protocol = q->protocol;
+					tmr[m++].reason = q->reason;
+
+					/* take the timer out now we took
+					 * responsibility */
+					lws_timed_callback_remove(v, q);
+				}
+
+			} lws_end_foreach_ll_safe(q);
+		}
+
+	} lws_end_foreach_ll(v, vhost_next);
+	lws_context_unlock(context); /* ---------------------------- context */
+
+	/* 3b: call the vh timer callbacks outside any lock */
+
+	for (m = 0; m < n; m++) {
+
+		wsi->vhost = tmr[m].vhost; /* not a real bound wsi */
+		wsi->protocol = tmr[m].protocol;
+
+		lwsl_debug("%s: timed cb: vh %s, protocol %s, reason %d\n",
+			   __func__, tmr[m].vhost->name, tmr[m].protocol->name,
+			   tmr[m].reason);
+		tmr[m].protocol->callback(wsi, tmr[m].reason, NULL, NULL, 0);
+	}
+
+	lws_free(tmr);
+	lws_free(wsi);
+
+vh_timers_done:
 
 	/*
 	 * Phase 4: check for unconfigured vhosts due to required
@@ -805,7 +928,7 @@ lws_service_periodic_checks(struct lws_context *context,
 	    context->tls_ops->periodic_housekeeping)
 		context->tls_ops->periodic_housekeeping(context, now);
 
-	return timed_out;
+	return 0;
 }
 
 LWS_VISIBLE int
@@ -820,7 +943,7 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd,
 
 	/* the socket we came to service timed out, nothing to do */
 	if (lws_service_periodic_checks(context, pollfd, tsi) || !pollfd)
-		return 0;
+		return -2;
 
 	/* no, here to service a socket descriptor */
 	wsi = wsi_from_fd(context, pollfd->fd);

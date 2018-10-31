@@ -20,17 +20,10 @@
  */
 
 #include "core/private.h"
-#include "freertos/timers.h"
-#include <esp_attr.h>
-#include <esp_system.h>
 
-#include "apps/sntp/sntp.h"
-
-#include <lwip/sockets.h>
-#include <esp_task_wdt.h>
-
-void lws_plat_apply_FD_CLOEXEC(int n)
+int lws_plat_apply_FD_CLOEXEC(int n)
 {
+	return 0;
 }
 
 

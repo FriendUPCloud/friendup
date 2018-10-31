@@ -74,7 +74,7 @@
 					//now get mail template and out everything together
 					try
 					{
-						$mailtemplate = file_get_contents('../build/resources/webclient/templates/mail_forgotpassword.html');
+						$mailtemplate = file_get_contents('./resources/webclient/templates/mail_forgotpassword.html');
 					}
 					catch(Exception $e)	
 					{
@@ -168,7 +168,7 @@
 				//now get mail template and out everything together
 				try
 				{
-					$mailtemplate = file_get_contents('../build/resources/webclient/templates/mail_newpasswordmail.html');
+					$mailtemplate = file_get_contents('./resources/webclient/templates/mail_newpasswordmail.html');
 				}
 				catch(Exception $e)	
 				{
@@ -233,7 +233,7 @@
 				//now get mail template and out everything together
 				try
 				{
-					$output = file_get_contents('../build/resources/webclient/templates/mail_resetconfirmation.html');
+					$output = file_get_contents('./resources/webclient/templates/mail_resetconfirmation.html');
 				}
 				catch(Exception $e)	
 				{
@@ -255,5 +255,3 @@
 		die('go away');
 	}
 	die('fail') ;
-	
-?>

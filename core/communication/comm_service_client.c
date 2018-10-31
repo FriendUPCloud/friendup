@@ -50,7 +50,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/friendcore_manager.h>
 
 #include <communication/comm_msg.h>

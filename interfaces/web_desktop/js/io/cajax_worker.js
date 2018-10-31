@@ -77,7 +77,7 @@ var AjaxWorker = {
 								if( jax.url.indexOf( 'file/info' ) > 0 )
 									return;
 								// Add to queue
-								friend.cajax.push( jax );
+								Friend.cajax.push( jax );
 								return Workspace.relogin();
 							}
 						}
@@ -88,7 +88,7 @@ var AjaxWorker = {
 						{
 							if( Workspace )
 							{
-								friend.cajax.push( jax );
+								Friend.cajax.push( jax );
 								return Workspace.relogin();
 							}
 						}
@@ -103,7 +103,7 @@ var AjaxWorker = {
 						var res = r ? r.response.toLowerCase() : '';
 						if( res == 'user session not found' )
 						{
-							friend.cajax.push( jax );
+							Friend.cajax.push( jax );
 							return Workspace.relogin();
 						}
 					}
@@ -114,12 +114,12 @@ var AjaxWorker = {
 			
 				// Clean out possible queue
 				var o = [];
-				for( var a = 0; a < friend.cajax.length; a++ )
+				for( var a = 0; a < Friend.cajax.length; a++ )
 				{
-					if( friend.cajax[a] != jax )
-						o.push( friend.cajax[a] );
+					if( Friend.cajax[a] != jax )
+						o.push( Friend.cajax[a] );
 				}
-				friend.cajax = o;
+				Friend.cajax = o;
 				// End clean queue
 			
 				// Register send time
@@ -150,12 +150,12 @@ var AjaxWorker = {
 			
 				// Clean out possible queue
 				var o = [];
-				for( var a = 0; a < friend.cajax.length; a++ )
+				for( var a = 0; a < Friend.cajax.length; a++ )
 				{
-					if( friend.cajax[a] != jax )
-						o.push( friend.cajax[a] );
+					if( Friend.cajax[a] != jax )
+						o.push( Friend.cajax[a] );
 				}
-				friend.cajax = o;
+				Friend.cajax = o;
 				// End clean queue
 
 				// tell our caller...

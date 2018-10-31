@@ -353,7 +353,7 @@ int thread( FThread *t )
 	
 #define MY_BUF_SIZE 10024
 	
-	char *buf = FCalloc( MY_BUF_SIZE, sizeof( char ) );
+	unsigned char *buf = FCalloc( MY_BUF_SIZE, sizeof( char ) );
 
 	SystemBase *sb = (SystemBase *)pserv->ps_SB;
 	FriendCoreManager *fcm = NULL;

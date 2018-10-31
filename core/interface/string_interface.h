@@ -66,6 +66,7 @@ typedef struct StringInterface
 	void				(*HashedString)( char **str );
 	char				*(*StringDuplicateEOL)( const char* str );
 	int					(*StringNToInt)( char *s, int len );
+	char				*(*EscapeStringToJSON)( char *str );
 }StringInterface;
 
 //
@@ -107,6 +108,7 @@ static inline void StringInterfaceInit( StringInterface *si )
 	si->FindInBinarySimple = FindInBinarySimple;
 	si->HashedString = HashedString;
 	si->StringDuplicateEOL = StringDuplicateEOL;
+	si->EscapeStringToJSON = EscapeStringToJSON;
 }
 
 #endif

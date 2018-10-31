@@ -63,7 +63,7 @@ typedef struct FriendCoreInstance
 {
 	MinNode					node;				///< list of cores
 	
-	char 					fci_CoreID[ 32 ];	///< id of the core
+	char 					fci_CoreID[ 64 ];	///< id of the core, it has 32 bytes, but we are extending it to hold more chars like \n \r etc.
 	char					fci_IP[ 256 ]; // ip or hostname of FriendCoreInstance
 	
 	int 					fci_Epollfd;            ///< File descriptor for epoll

@@ -1132,3 +1132,32 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
 	FFree( tmpmsg );
 	return TRUE;
 }
+
+/**
+ * Remove unused websockets connections
+ *
+ * @param usm pointer to UserSessionManager
+ */
+void USMCloseUnusedWebSockets( UserSessionManager *usm )
+{
+	time_t actTime = time( NULL );
+	DEBUG("[USMCloseUnusedWebSockets] start\n");
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+	UserSession *ses = usm->usm_Sessions;
+	while( ses != NULL )
+	{
+		WebsocketServerClient *cl = ses->us_WSClients;
+		if( cl != NULL )
+		{
+			if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
+			{
+				lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
+				DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
+			}
+		}
+		
+		ses = (UserSession *)ses->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	DEBUG("[USMCloseUnusedWebSockets] end\n");
+}

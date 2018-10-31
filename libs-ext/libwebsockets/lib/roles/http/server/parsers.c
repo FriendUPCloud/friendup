@@ -501,6 +501,10 @@ LWS_VISIBLE int lws_hdr_copy(struct lws *wsi, char *dst, int len,
 	int toklen = lws_hdr_total_length(wsi, h);
 	int n;
 
+	*dst = '\0';
+	if (!toklen)
+		return 0;
+
 	if (toklen >= len)
 		return -1;
 
@@ -529,6 +533,9 @@ char *lws_hdr_simple_ptr(struct lws *wsi, enum lws_token_indexes h)
 {
 	int n;
 
+	if (!wsi->http.ah)
+		return NULL;
+
 	n = wsi->http.ah->frag_index[h];
 	if (!n)
 		return NULL;
@@ -539,6 +546,9 @@ char *lws_hdr_simple_ptr(struct lws *wsi, enum lws_token_indexes h)
 static int LWS_WARN_UNUSED_RESULT
 lws_pos_in_bounds(struct lws *wsi)
 {
+	if (!wsi->http.ah)
+		return -1;
+
 	if (wsi->http.ah->pos <
 	    (unsigned int)wsi->context->max_http_header_data)
 		return 0;
@@ -563,7 +573,7 @@ int LWS_WARN_UNUSED_RESULT
 lws_hdr_simple_create(struct lws *wsi, enum lws_token_indexes h, const char *s)
 {
 	wsi->http.ah->nfrag++;
-	if (wsi->http.ah->nfrag == ARRAY_SIZE(wsi->http.ah->frags)) {
+	if (wsi->http.ah->nfrag == LWS_ARRAY_SIZE(wsi->http.ah->frags)) {
 		lwsl_warn("More hdr frags than we can deal with, dropping\n");
 		return -1;
 	}
@@ -599,7 +609,8 @@ issue_char(struct lws *wsi, unsigned char c)
 	 * If we haven't hit the token limit, just copy the character into
 	 * the header
 	 */
-	if (frag_len < wsi->http.ah->current_token_limit) {
+	if (!wsi->http.ah->current_token_limit ||
+	    frag_len < wsi->http.ah->current_token_limit) {
 		wsi->http.ah->data[wsi->http.ah->pos++] = c;
 		if (c)
 			wsi->http.ah->frags[wsi->http.ah->nfrag].len++;
@@ -682,7 +693,7 @@ lws_parse_urldecode(struct lws *wsi, uint8_t *_c)
 			/* link to next fragment */
 			ah->frags[ah->nfrag].nfrag = ah->nfrag + 1;
 			ah->nfrag++;
-			if (ah->nfrag >= ARRAY_SIZE(ah->frags))
+			if (ah->nfrag >= LWS_ARRAY_SIZE(ah->frags))
 				goto excessive;
 			/* start next fragment after the & */
 			ah->post_literal_equal = 0;
@@ -785,7 +796,7 @@ lws_parse_urldecode(struct lws *wsi, uint8_t *_c)
 
 		/* move to using WSI_TOKEN_HTTP_URI_ARGS */
 		ah->nfrag++;
-		if (ah->nfrag >= ARRAY_SIZE(ah->frags))
+		if (ah->nfrag >= LWS_ARRAY_SIZE(ah->frags))
 			goto excessive;
 		ah->frags[ah->nfrag].offset = ++ah->pos;
 		ah->frags[ah->nfrag].len = 0;
@@ -850,10 +861,10 @@ lws_parse(struct lws *wsi, unsigned char *buf, int *len)
 			    c == ' ')
 				break;
 
-			for (m = 0; m < ARRAY_SIZE(methods); m++)
+			for (m = 0; m < LWS_ARRAY_SIZE(methods); m++)
 				if (ah->parser_state == methods[m])
 					break;
-			if (m == ARRAY_SIZE(methods))
+			if (m == LWS_ARRAY_SIZE(methods))
 				/* it was not any of the methods */
 				goto check_eol;
 
@@ -981,7 +992,7 @@ nope:
 			if (ah->lextable_pos < 0 && lwsi_role_h1(wsi) &&
 			    lwsi_role_server(wsi)) {
 				/* this is not a header we know about */
-				for (m = 0; m < ARRAY_SIZE(methods); m++)
+				for (m = 0; m < LWS_ARRAY_SIZE(methods); m++)
 					if (ah->frag_index[methods[m]]) {
 						/*
 						 * already had the method, no idea what
@@ -994,7 +1005,7 @@ nope:
 				 * hm it's an unknown http method from a client in fact,
 				 * it cannot be valid http
 				 */
-				if (m == ARRAY_SIZE(methods)) {
+				if (m == LWS_ARRAY_SIZE(methods)) {
 					/*
 					 * are we set up to accept raw in these cases?
 					 */
@@ -1023,7 +1034,7 @@ nope:
 						lextable[ah->lextable_pos + 1];
 
 				lwsl_parser("known hdr %d\n", n);
-				for (m = 0; m < ARRAY_SIZE(methods); m++)
+				for (m = 0; m < LWS_ARRAY_SIZE(methods); m++)
 					if (n == methods[m] &&
 					    ah->frag_index[methods[m]]) {
 						lwsl_warn("Duplicated method\n");
@@ -1059,7 +1070,7 @@ nope:
 start_fragment:
 			ah->nfrag++;
 excessive:
-			if (ah->nfrag == ARRAY_SIZE(ah->frags)) {
+			if (ah->nfrag == LWS_ARRAY_SIZE(ah->frags)) {
 				lwsl_warn("More hdr frags than we can deal with\n");
 				return -1;
 			}
@@ -1116,6 +1127,7 @@ excessive:
 set_parsing_complete:
 	if (ah->ues != URIES_IDLE)
 		goto forbid;
+
 	if (lws_hdr_total_length(wsi, WSI_TOKEN_UPGRADE)) {
 		if (lws_hdr_total_length(wsi, WSI_TOKEN_VERSION))
 			wsi->rx_frame_type = /* temp for ws version index */

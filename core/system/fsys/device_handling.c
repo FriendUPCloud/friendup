@@ -235,6 +235,7 @@ int MountFS( SystemBase *l, struct TagItem *tl, File **mfile, User *usr )
 	FLONG storedBytesLeft = 0;
 	FLONG readedBytesLeft = 0;
 	struct tm activityTime;
+	memset( &activityTime, 0, sizeof( struct tm ) );
 	
 	if( usr != NULL )
 	{
@@ -855,7 +856,7 @@ AND f.Name = '%s'",
 			}
 			else
 			{
-				l->sl_Error = FSys_Error_NOFSAvaiable;
+				l->sl_Error = FSys_Error_CustomError;
 				FERROR("[MountFS] %s - Device not mounted name %s type %s\n", usr->u_Name, name, type );
 				
 				goto merror;

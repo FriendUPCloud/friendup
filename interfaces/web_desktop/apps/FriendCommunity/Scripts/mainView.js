@@ -97,6 +97,7 @@ function open( data )
 	//src += '&redirect=groups/55/';
 	
 	var iframe = document.getElementById( 'main' );
+	iframe.style.visibility = 'hidden';
 	iframe.src = src;
 	
 	// Save config data to Application
@@ -135,6 +136,8 @@ function sendToTreeroot()
 		
 		Application.sent = true;
 		
+		console.log( '[1] Application.sent: ' + Application.sent );
+		
 		/*var src = 'https://' + conf.host + '/home/';
 	
 		if( conf.param )
@@ -167,7 +170,14 @@ Application.receiveMessage = function( e )
 				
 				var iframe = document.getElementById( 'main' );
 				
-				iframe.src = 'https://' + conf.host;
+				iframe.src = 'https://' + conf.host + '/home/';
+				
+				iframe.onload = function() 
+				{
+					iframe.style.visibility = 'visible';
+				}
+				
+				break;
 				
 			case 'nav_newsfeed':
 			case 'nav_messages':
@@ -199,10 +209,22 @@ Application.receiveMessage = function( e )
 	
 	if( 'treeroot' === msg.type )
 	{
-		console.log( 'sendToTreeroot() ', msg.loaded );
+		var iframe = document.getElementById( 'main' );
 		
-		if( msg.loaded && !Application.sent )
+		console.log( 'iframe.src: ' + iframe.src );
+		
+		console.log( '[1] Application.sent: ' + Application.sent );
+		
+		if( msg.loaded && msg.loaded.indexOf( '/home/' ) >= 0 )
 		{
+			var iframe = document.getElementById( 'main' );
+			
+			iframe.style.visibility = 'visible';
+		}
+		else if( msg.loaded && !Application.sent )
+		{
+			console.log( '[2] sendToTreeroot() ', { loaded: msg.loaded, sent: Application.sent } );
+			
 			sendToTreeroot();
 		}
 		return;

@@ -52,6 +52,7 @@ i18n_startup_sequence                : Oppstartsekvens
 i18n_cancel                          : Avbryt
 i18n_accept                          : Aksepter
 i18n_understood                      : Forstått
+i18n_your_devices                    : Dine enheter
 
 i18n_full                            : full.
 i18n_disk_icon                       : Diskikon
@@ -81,7 +82,7 @@ i18n_new_container                   : Ny container
 i18n_create_container                : Lag container
 i18n_name                            : Navn
 i18n_make_a_new_container            : Lag en ny container
-i18n_error_could_not_list_directory  : Kunne ikke laste inn innholdet
+i18n_error_could_not_list_directory  : Tom mappe
 
 i18n_error                              : Feil
 i18n_could_not_run_jsx                  : Kunne ikke kjøre JSX.
@@ -194,32 +195,33 @@ menu_unzip                              : Dekomprimer fil(er)
 menu_looknfeel                          : Utseende
 menu_backdrop                           : Vis oversikt
 menu_buildwebapp                        : Bygg webapplikasjon
-menu_share								: Dele
+menu_share				: Del
 menu_download                           : Last ned
-
 menu_close_idle_connections             : Fjern nettverksprosesser
 
 menu_edit_wallpaper                     : Endre skrivebordsbakgrunn
 i18n_edit_dock                          : Rediger docken
 i18n_remove_from_dock                   : Fjern fra docken
 
-i18n_choose_file_to_upload              : Velg fil for opplastning
+i18n_choose_file_to_upload              : Velg en fil for opplasting
 i18n_upload_target                      : Målsti
+i18n_upload_completed                   : Opplastning fullførte.
 i18n_browse                             : Utforsk
 i18n_upload_the_file                    : Start opplasting
 i18n_file_upload                        : Filopplasting
-i18n_upload_completed                   : Opplastning fullførte.
+i18n_upload_completed                   : Opplasting fullført.
 i18n_upload_failed                      : Opplastning feilet.
 i18n_upload_completed_description       : Din fil ble lastet opp til målmappen.
 i18n_upload_failed_description          : Din fil kunne ikke lastes opp.
+
 
 i18n_unzip_completed                    : Ferdig å pakke ut.
 i18n_unzip_comdesc                      : Systemet fullførte utpakkingen av filen(e)
 i18n_unzip_failed                       : Kunne ikke pakke ut.
 i18n_unzip_failed_desc                  : Systemet kunne ikke fullføre utpakking av filen(e)
+
 i18n_zip_not_completed                  : Pakking feilet.
 i18n_zip_not_comdesc                    : Systemet kunne ikke fullføre pakkingen av filen(e)
-
 i18n_zip_completed                      : Pakkingen fullført.
 i18n_zip_comdesc                        : Systemet fullførte pakkingen av filen(e).
 
@@ -251,7 +253,7 @@ i18n_follow_link                        : Åpne web lenke
 i18n_open_link                          : Gå til
 i18n_follow_link_desc                   : Klikk på lenken under for å gå til lenken
 
-menu_icons                              : File
+menu_icons                              : Fil
 menu_new_directory                      : Ny mappe
 menu_new_weblink                        : Ny web lenke
 menu_show_icon_information              : Vis informasjon
@@ -315,6 +317,7 @@ i18n_used_space                         : brukt
 i18n_filename                           : Filnavn
 i18n_permissions                        : Rettigheter
 i18n_filesize                           : Filstørrelse
+i18n_filedate                           : Dato endret
 i18n_files                              : Filer
 i18n_public_file                        : Public file
 i18n_public_link                        : Public url

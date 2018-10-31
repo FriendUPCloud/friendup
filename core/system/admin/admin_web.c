@@ -515,6 +515,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	* <HR><H2>system.library/admin/servermessage</H2>Send message to all sessions
 	*
 	* @param sessionid - (required) session id of logged user
+	* @param usersession - additional parameter which say to which user session message should go
 	* @return remote functions response
 	*/
 	/// @endcond
@@ -522,81 +523,160 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 	{
 		HashmapElement *el = NULL;
 		char *msg = NULL;
+		char *usersession = NULL;
 		
-		el =  HashmapGet( (*request)->parsedPostContent, "message" );
+		el = HttpGetPOSTParameter( (*request), "message" );
+		if( el == NULL ) el = HashmapGet( (*request)->query, "message" );
+		//el =  HashmapGet( (*request)->parsedPostContent, "message" );
 		if( el != NULL )
 		{
 			msg = UrlDecodeToMem( ( char *)el->data );
 		}
 		
-		if( UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+		el = HttpGetPOSTParameter( (*request), "usersession" );
+		if( el == NULL ) el = HashmapGet( (*request)->query, "usersession" );
+		//el =  HashmapGet( (*request)->parsedPostContent, "usersession" );
+		if( el != NULL )
 		{
-			BufString *bs = BufStringNew();
-			
-			BufStringAdd( bs, "{\"userlist\":[");
-			
-			// we are going through users and their sessions
-			// if session is active then its returned
-			
-			time_t  timestamp = time( NULL );
-			
-			int msgsndsize = 0; 
-			int pos = 0;
-			User *usr = l->sl_UM->um_Users;
-			while( usr != NULL )
-			{
-				UserSessListEntry  *usl = usr->u_SessionsList;
-				while( usl != NULL )
-				{
-					UserSession *locses = (UserSession *)usl->us;
-					if( locses != NULL )
-					{
-						DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
-						
-						if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
-						{
-							char tmp[ 512 ];
-							int tmpsize = 0;
-
-							if( pos == 0 )
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							else
-							{
-								tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
-							}
-							
-							char tmpmsg[ 2048 ];
-							int lenmsg = sprintf( tmpmsg, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
-												  loggedSession->us_User->u_Name , msg );
-							
-							msgsndsize += WebSocketSendMessageInt( locses, tmpmsg, lenmsg );
-							//int err = AppSessionSendPureMessage( as, loggedSession, tmp, len );
-							
-							BufStringAddSize( bs, tmp, tmpsize );
-							
-							pos++;
-						}
-					}
-					usl = (UserSessListEntry *)usl->node.mln_Succ;
-				}
-				usr = (User *)usr->node.mln_Succ;
-			}
-			
-			BufStringAdd( bs, "]}");
-			
-			HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
-			bs->bs_Buffer = NULL;
-			
-			BufStringDelete( bs );
+			usersession = UrlDecodeToMem( ( char *)el->data );
 		}
-		else	//is admin
+		
+		BufString *bs = BufStringNew();
+		
+		// we are going through users and their sessions
+		// if session is active then its returned
+		
+		time_t  timestamp = time( NULL );
+		
+		int msgsndsize = 0; 
+		int pos = 0;
+		int msgsize = 1024;
+		
+		if( msg != NULL )
 		{
-			char dictmsgbuf[ 256 ];
-			snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
-			HttpAddTextContent( response, dictmsgbuf );
-			//HttpAddTextContent( response, "ok<!--separate-->{\"response\":\"access denied\"}" );
+			msgsize += strlen( msg )+1024;
+		
+			if( usersession == NULL && UMUserIsAdmin( l->sl_UM, (*request), loggedSession->us_User ) == TRUE )
+			{
+				BufStringAdd( bs, "{\"userlist\":[");
+			
+				char *sndbuffer = FCalloc( msgsize, sizeof(char) );
+				if( sndbuffer != NULL )
+				{
+					User *usr = l->sl_UM->um_Users;
+					while( usr != NULL )
+					{
+						UserSessListEntry  *usl = usr->u_SessionsList;
+						while( usl != NULL )
+						{
+							UserSession *locses = (UserSession *)usl->us;
+							if( locses != NULL )
+							{
+								DEBUG("[AdminWebRequest] Going through sessions, device: %s\n", locses->us_DeviceIdentity );
+						
+								if( ( (timestamp - locses->us_LoggedTime) < l->sl_RemoveSessionsAfterTime ) )
+								{
+									char tmp[ 512 ];
+									int tmpsize = 0;
+								
+									if( pos == 0 )
+									{
+										tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+									}
+									else
+									{
+										tmpsize = snprintf( tmp, sizeof(tmp), ",{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, locses->us_DeviceIdentity );
+									}
+							
+									int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+										loggedSession->us_User->u_Name , msg );
+							
+									if( usersession != NULL && strcmp( usersession, locses->us_SessionID ) == 0 )
+									{
+										msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+									}
+									else
+									{
+										msgsndsize += WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
+									}
+							
+									BufStringAddSize( bs, tmp, tmpsize );
+							
+									pos++;
+								}
+							}
+							usl = (UserSessListEntry *)usl->node.mln_Succ;
+						}
+						usr = (User *)usr->node.mln_Succ;
+					}
+					FFree( sndbuffer );
+				}
+				BufStringAdd( bs, "]}");
+			}
+			else	//is admin
+			{
+				DEBUG("Send server msg: usersession %s\n", usersession );
+				if( usersession != NULL )
+				{
+					BufStringAdd( bs, "{\"userlist\":[");
+				
+					int msgsize = strlen( msg )+1024;
+					char *sndbuffer = FCalloc( msgsize, sizeof(char) );
+				
+					User *usr = (User *)loggedSession->us_User;
+					UserSessListEntry *usle = (UserSessListEntry *)usr->u_SessionsList;
+					int msgsndsize = 0;
+					while( usle != NULL )
+					{
+						UserSession *ls = (UserSession *)usle->us;
+						if( ls != NULL )
+						{
+							DEBUG("Going through all usersessions: %lu, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+							if( strcmp( usersession, ls->us_SessionID ) == 0 )
+							{
+								DEBUG("Found same session, sending msg\n");
+								char tmp[ 512 ];
+								int tmpsize = 0;
+						
+								tmpsize = snprintf( tmp, sizeof(tmp), "{\"username\":\"%s\", \"deviceidentity\":\"%s\"}", usr->u_Name, ls->us_DeviceIdentity );
+							
+								int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"server-notice\",\"data\":{\"username\":\"%s\",\"message\":\"%s\"}}}", 
+								loggedSession->us_User->u_Name , msg );
+						
+								msgsndsize = WebSocketSendMessageInt( ls, sndbuffer, lenmsg );
+							}
+						}
+						usle = (UserSessListEntry *)usle->node.mln_Succ;
+					}
+				
+					if( msgsndsize > 0 )
+					{
+						BufStringAdd( bs, usr->u_Name );
+					}
+				
+					BufStringAdd( bs, "]}");
+				}
+				else
+				{
+					char dictmsgbuf[ 256 ];
+					int size = snprintf( dictmsgbuf, sizeof(dictmsgbuf), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_ADMIN_RIGHT_REQUIRED] , DICT_ADMIN_RIGHT_REQUIRED );
+					BufStringAddSize( bs, dictmsgbuf, size );
+				}
+			}
+		}
+		else	//message is empty
+		{
+			
+		}
+		
+		HttpSetContent( response, bs->bs_Buffer, bs->bs_Size );
+		bs->bs_Buffer = NULL;
+		
+		BufStringDelete( bs );
+		
+		if( usersession != NULL )
+		{
+			FFree( usersession );
 		}
 		
 		if( msg != NULL )

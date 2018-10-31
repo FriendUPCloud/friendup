@@ -267,6 +267,12 @@ void UserDelete( User *usr )
 		{
 			FFree( usr->u_MainSessionID );
 		}
+		
+		if( usr->u_UUID )
+		{
+			FFree( usr->u_UUID );
+		}
+		
 		FRIEND_MUTEX_UNLOCK( &(usr->u_Mutex) );
 		
 		pthread_mutex_destroy( &(usr->u_Mutex) );

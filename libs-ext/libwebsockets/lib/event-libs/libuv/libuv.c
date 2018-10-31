@@ -79,9 +79,7 @@ lws_uv_idle(uv_idle_t *handle
 static void
 lws_io_cb(uv_poll_t *watcher, int status, int revents)
 {
-	struct lws_io_watcher *lws_io = lws_container_of(watcher,
-					struct lws_io_watcher, uv.watcher);
-	struct lws *wsi = lws_container_of(lws_io, struct lws, w_read);
+	struct lws *wsi = (struct lws *)((uv_handle_t *)watcher)->data;
 	struct lws_context *context = wsi->context;
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	struct lws_pollfd eventfd;
@@ -153,7 +151,7 @@ lws_libuv_stop(struct lws_context *context)
 		pt = &context->pt[m];
 
 		if (pt->pipe_wsi) {
-			uv_poll_stop(&pt->pipe_wsi->w_read.uv.watcher);
+			uv_poll_stop(pt->pipe_wsi->w_read.uv.pwatcher);
 			lws_destroy_event_pipe(pt->pipe_wsi);
 			pt->pipe_wsi = NULL;
 		}
@@ -311,18 +309,13 @@ lws_uv_getloop(struct lws_context *context, int tsi)
 	return NULL;
 }
 
-static void
-lws_libuv_closewsi_m(uv_handle_t* handle)
-{
-	lws_sockfd_type sockfd = (lws_sockfd_type)(lws_intptr_t)handle->data;
-	lwsl_debug("%s: sockfd %d\n", __func__, sockfd);
-	compatible_close(sockfd);
-}
-
 int
 lws_libuv_check_watcher_active(struct lws *wsi)
 {
-	uv_handle_t *h = (void *)&wsi->w_read.uv.watcher;
+	uv_handle_t *h = (uv_handle_t *)wsi->w_read.uv.pwatcher;
+
+	if (!h)
+		return 0;
 
 	return uv_is_active(h);
 }
@@ -441,6 +434,8 @@ lws_plat_plugins_destroy(struct lws_context *context)
 	int pofs = 0;
 	void *v;
 	int m;
+
+//	return 0;
 
 #if  defined(__MINGW32__) || !defined(WIN32)
 	pofs = 3;
@@ -568,7 +563,7 @@ elops_wsi_logical_close_uv(struct lws *wsi)
 	if (wsi->listener || wsi->event_pipe) {
 		lwsl_debug("%s: %p: %d %d stop listener / pipe poll\n",
 			   __func__, wsi, wsi->listener, wsi->event_pipe);
-		uv_poll_stop(&wsi->w_read.uv.watcher);
+		uv_poll_stop(wsi->w_read.uv.pwatcher);
 	}
 	lwsl_debug("%s: lws_libuv_closehandle: wsi %p\n", __func__, wsi);
 	/*
@@ -591,28 +586,61 @@ elops_check_client_connect_ok_uv(struct lws *wsi)
 }
 
 static void
-elops_close_handle_manually_uv(struct lws *wsi)
+lws_libuv_closewsi_m(uv_handle_t* handle)
 {
-	uv_handle_t *h = (void *)&wsi->w_read.uv.watcher;
-
-	lwsl_debug("%s: lws_libuv_closehandle: wsi %p\n", __func__, wsi);
-	h->data = (void *)(lws_intptr_t)wsi->desc.sockfd;
-	/* required to defer actual deletion until libuv has processed it */
-	uv_close((uv_handle_t*)&wsi->w_read.uv.watcher, lws_libuv_closewsi_m);
+	lws_sockfd_type sockfd = (lws_sockfd_type)(lws_intptr_t)handle->data;
+	lwsl_debug("%s: sockfd %d\n", __func__, sockfd);
+	compatible_close(sockfd);
+	lws_free(handle);
 }
 
 static void
+elops_close_handle_manually_uv(struct lws *wsi)
+{
+	uv_handle_t *h = (uv_handle_t *)wsi->w_read.uv.pwatcher;
+
+	lwsl_debug("%s: lws_libuv_closehandle: wsi %p\n", __func__, wsi);
+
+	/*
+	 * the "manual" variant only closes the handle itself and the
+	 * related fd.  handle->data is the fd.
+	 */
+	h->data = (void *)(lws_intptr_t)wsi->desc.sockfd;
+
+	/*
+	 * We take responsibility to close / destroy these now.
+	 * Remove any trace from the wsi.
+	 */
+
+	wsi->desc.sockfd = LWS_SOCK_INVALID;
+	wsi->w_read.uv.pwatcher = NULL;
+
+	uv_close(h, lws_libuv_closewsi_m);
+}
+
+static int
 elops_accept_uv(struct lws *wsi)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
 
 	wsi->w_read.context = wsi->context;
+
+	wsi->w_read.uv.pwatcher =
+		lws_malloc(sizeof(*wsi->w_read.uv.pwatcher), "uvh");
+	if (!wsi->w_read.uv.pwatcher)
+		return -1;
+
 	if (wsi->role_ops->file_handle)
-		uv_poll_init(pt->uv.io_loop, &wsi->w_read.uv.watcher,
+		uv_poll_init(pt->uv.io_loop, wsi->w_read.uv.pwatcher,
 			     (int)(long long)wsi->desc.filefd);
 	else
-		uv_poll_init_socket(pt->uv.io_loop, &wsi->w_read.uv.watcher,
-				    wsi->desc.sockfd);
+		uv_poll_init_socket(pt->uv.io_loop,
+				      wsi->w_read.uv.pwatcher,
+				      wsi->desc.sockfd);
+
+	((uv_handle_t *)wsi->w_read.uv.pwatcher)->data = (void *)wsi;
+
+	return 0;
 }
 
 static void
@@ -644,7 +672,7 @@ elops_io_uv(struct lws *wsi, int flags)
 		if (flags & LWS_EV_READ)
 			current_events |= UV_READABLE;
 
-		uv_poll_start(&w->uv.watcher, current_events, lws_io_cb);
+		uv_poll_start(w->uv.pwatcher, current_events, lws_io_cb);
 	} else {
 		if (flags & LWS_EV_WRITE)
 			current_events &= ~UV_WRITABLE;
@@ -653,9 +681,9 @@ elops_io_uv(struct lws *wsi, int flags)
 			current_events &= ~UV_READABLE;
 
 		if (!(current_events & (UV_READABLE | UV_WRITABLE)))
-			uv_poll_stop(&w->uv.watcher);
+			uv_poll_stop(w->uv.pwatcher);
 		else
-			uv_poll_start(&w->uv.watcher, current_events,
+			uv_poll_start(w->uv.pwatcher, current_events,
 				      lws_io_cb);
 	}
 
@@ -678,14 +706,23 @@ elops_init_vhost_listen_wsi_uv(struct lws *wsi)
 		return 0;
 
 	wsi->w_read.context = wsi->context;
-	n = uv_poll_init_socket(pt->uv.io_loop,
-				&wsi->w_read.uv.watcher, wsi->desc.sockfd);
+
+	wsi->w_read.uv.pwatcher =
+		lws_malloc(sizeof(*wsi->w_read.uv.pwatcher), "uvh");
+	if (!wsi->w_read.uv.pwatcher)
+		return -1;
+
+	n = uv_poll_init_socket(pt->uv.io_loop, wsi->w_read.uv.pwatcher,
+				   wsi->desc.sockfd);
 	if (n) {
-		lwsl_err("uv_poll_init failed %d, sockfd=%p\n",
-				 n, (void *)(lws_intptr_t)wsi->desc.sockfd);
+		lwsl_err("uv_poll_init failed %d, sockfd=%p\n", n,
+				(void *)(lws_intptr_t)wsi->desc.sockfd);
 
 		return -1;
 	}
+
+	((uv_handle_t *)wsi->w_read.uv.pwatcher)->data = (void *)wsi;
+
 	elops_io_uv(wsi, LWS_EV_START | LWS_EV_READ);
 
 	return 0;
@@ -720,7 +757,7 @@ elops_destroy_pt_uv(struct lws_context *context, int tsi)
 	if (!pt->event_loop_foreign) {
 		uv_signal_stop(&pt->w_sigint.uv.watcher);
 
-		ns = ARRAY_SIZE(sigs);
+		ns = LWS_ARRAY_SIZE(sigs);
 		if (lws_check_opt(context->options,
 				  LWS_SERVER_OPTION_UV_NO_SIGSEGV_SIGFPE_SPIN))
 			ns = 2;
@@ -781,13 +818,13 @@ elops_init_pt_uv(struct lws_context *context, void *_loop, int tsi)
 		LWS_UV_REFCOUNT_STATIC_HANDLE_NEW(&pt->uv.idle, context);
 
 
-		ns = ARRAY_SIZE(sigs);
+		ns = LWS_ARRAY_SIZE(sigs);
 		if (lws_check_opt(context->options,
 				  LWS_SERVER_OPTION_UV_NO_SIGSEGV_SIGFPE_SPIN))
 			ns = 2;
 
 		if (!pt->event_loop_foreign) {
-			assert(ns <= (int)ARRAY_SIZE(pt->uv.signals));
+			assert(ns <= (int)LWS_ARRAY_SIZE(pt->uv.signals));
 			for (n = 0; n < ns; n++) {
 				uv_signal_init(loop, &pt->uv.signals[n]);
 				LWS_UV_REFCOUNT_STATIC_HANDLE_NEW(&pt->uv.signals[n],
@@ -829,8 +866,7 @@ elops_init_pt_uv(struct lws_context *context, void *_loop, int tsi)
 static void
 lws_libuv_closewsi(uv_handle_t* handle)
 {
-	struct lws *n = NULL, *wsi = (struct lws *)(((char *)handle) -
-			  (char *)(&n->w_read.uv.watcher));
+	struct lws *wsi = (struct lws *)handle->data;
 	struct lws_context *context = lws_get_context(wsi);
 	struct lws_context_per_thread *pt = &context->pt[(int)wsi->tsi];
 	int lspd = 0, m;
@@ -851,6 +887,9 @@ lws_libuv_closewsi(uv_handle_t* handle)
 	lws_pt_lock(pt, __func__);
 	__lws_close_free_wsi_final(wsi);
 	lws_pt_unlock(pt);
+
+	/* it's our job to close the handle finally */
+	lws_free(handle);
 
 	if (lspd == 2 && context->deprecation_cb) {
 		lwsl_notice("calling deprecation callback\n");
@@ -896,6 +935,11 @@ lws_libuv_closewsi(uv_handle_t* handle)
 void
 lws_libuv_closehandle(struct lws *wsi)
 {
+	uv_handle_t* handle;
+
+	if (!wsi->w_read.uv.pwatcher)
+		return;
+
 	if (wsi->told_event_loop_closed) {
 		assert(0);
 		return;
@@ -905,8 +949,18 @@ lws_libuv_closehandle(struct lws *wsi)
 
 	wsi->told_event_loop_closed = 1;
 
-	/* required to defer actual deletion until libuv has processed it */
-	uv_close((uv_handle_t*)&wsi->w_read.uv.watcher, lws_libuv_closewsi);
+	/*
+	 * The normal close path attaches the related wsi as the
+	 * handle->data.
+	 */
+
+	handle = (uv_handle_t *)wsi->w_read.uv.pwatcher;
+
+	/* ensure we can only do this once */
+
+	wsi->w_read.uv.pwatcher = NULL;
+
+	uv_close(handle, lws_libuv_closewsi);
 }
 
 struct lws_event_loop_ops event_loop_ops_uv = {

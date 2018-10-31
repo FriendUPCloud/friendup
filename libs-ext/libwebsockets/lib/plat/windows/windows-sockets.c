@@ -6,16 +6,23 @@
 
 LWS_VISIBLE int
 lws_send_pipe_choked(struct lws *wsi)
-{	struct lws *wsi_eff = wsi;
+{	struct lws *wsi_eff;
 
 #if defined(LWS_WITH_HTTP2)
 	wsi_eff = lws_get_network_wsi(wsi);
+#else
+	wsi_eff = wsi;
 #endif
 	/* the fact we checked implies we avoided back-to-back writes */
 	wsi_eff->could_have_pending = 0;
 
 	/* treat the fact we got a truncated send pending as if we're choked */
-	if (wsi_eff->trunc_len)
+	if (lws_has_buffered_out(wsi_eff)
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	    ||wsi->http.comp_ctx.buflist_comp ||
+	      wsi->http.comp_ctx.may_have_more
+#endif
+	)
 		return 1;
 
 	return (int)wsi_eff->sock_send_blocking;
@@ -36,7 +43,8 @@ lws_poll_listen_fd(struct lws_pollfd *fd)
 }
 
 int
-lws_plat_set_socket_options(struct lws_vhost *vhost, lws_sockfd_type fd)
+lws_plat_set_socket_options(struct lws_vhost *vhost, lws_sockfd_type fd,
+			    int unix_skt)
 {
 	int optval = 1;
 	int optlen = sizeof(optval);

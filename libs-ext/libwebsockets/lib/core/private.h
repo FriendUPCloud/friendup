@@ -136,6 +136,20 @@
 
 #include "tls/private.h"
 
+#if defined(WIN32) || defined(_WIN32)
+	 // Visual studio older than 2015 and WIN_CE has only _stricmp
+	#if (defined(_MSC_VER) && _MSC_VER < 1900) || defined(_WIN32_WCE)
+	#define strcasecmp _stricmp
+	#elif !defined(__MINGW32__)
+	#define strcasecmp stricmp
+	#endif
+	#define getdtablesize() 30000
+#endif
+
+#ifndef LWS_ARRAY_SIZE
+#define LWS_ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -372,6 +386,9 @@ struct lws_context_per_thread {
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 	struct lws_pt_role_http http;
 #endif
+#if defined(LWS_ROLE_DBUS)
+	struct lws_pt_role_dbus dbus;
+#endif
 
 	/* --- event library based members --- */
 
@@ -393,6 +410,15 @@ struct lws_context_per_thread {
 
 	unsigned long count_conns;
 	unsigned int fds_count;
+
+	/*
+	 * set to the Thread ID that's doing the service loop just before entry
+	 * to poll indicates service thread likely idling in poll()
+	 * volatile because other threads may check it as part of processing
+	 * for pollfd event change.
+	 */
+	volatile int service_tid;
+	int service_tid_detected;
 
 	volatile unsigned char inside_poll;
 	volatile unsigned char foreign_spinlock;
@@ -416,6 +442,7 @@ lws_sum_stats(const struct lws_context *ctx, struct lws_conn_stats *cs);
 struct lws_timed_vh_protocol {
 	struct lws_timed_vh_protocol *next;
 	const struct lws_protocols *protocol;
+	struct lws_vhost *vhost; /* only used for pending processing */
 	time_t time;
 	int reason;
 };
@@ -484,7 +511,7 @@ struct lws_vhost {
 	void **protocol_vh_privs;
 	const struct lws_protocol_vhost_options *pvo;
 	const struct lws_protocol_vhost_options *headers;
-	struct lws **same_vh_protocol_list;
+	struct lws_dll_lws *same_vh_protocol_heads;
 	struct lws_vhost *no_listener_vhost_list;
 #if !defined(LWS_NO_CLIENT)
 	struct lws_dll_lws dll_active_client_conns;
@@ -607,6 +634,11 @@ struct lws_context {
 	struct lws_vhost *vhost_pending_destruction_list;
 	struct lws_plugin *plugin_list;
 	struct lws_deferred_free *deferred_free_list;
+
+#if defined(LWS_WITH_THREADPOOL)
+	struct lws_threadpool *tp_list_head;
+#endif
+
 #if defined(LWS_WITH_PEER_LIMITS)
 	struct lws_peer **pl_hash_table;
 	struct lws_peer *peer_wait_list;
@@ -691,14 +723,6 @@ struct lws_context {
 	unsigned int doing_protocol_init:1;
 	unsigned int done_protocol_destroy_cb:1;
 	unsigned int finalize_destroy_after_internal_loops_stopped:1;
-	/*
-	 * set to the Thread ID that's doing the service loop just before entry
-	 * to poll indicates service thread likely idling in poll()
-	 * volatile because other threads may check it as part of processing
-	 * for pollfd event change.
-	 */
-	volatile int service_tid;
-	int service_tid_detected;
 
 	short count_threads;
 	short plugin_protocol_count;
@@ -828,6 +852,9 @@ struct lws {
 #if defined(LWS_ROLE_WS)
 	struct _lws_websocket_related *ws; /* allocated if we upgrade to ws */
 #endif
+#if defined(LWS_ROLE_DBUS)
+	struct _lws_dbus_mode_related dbus;
+#endif
 
 	const struct lws_role_ops *role_ops;
 	lws_wsi_state_t	wsistate;
@@ -851,11 +878,15 @@ struct lws {
 	struct lws *sibling_list; /* subsequent children at same level */
 
 	const struct lws_protocols *protocol;
-	struct lws **same_vh_protocol_prev, *same_vh_protocol_next;
+	struct lws_dll_lws same_vh_protocol;
 
 	struct lws_dll_lws dll_timeout;
 	struct lws_dll_lws dll_hrtimer;
 	struct lws_dll_lws dll_buflist; /* guys with pending rxflow */
+
+#if defined(LWS_WITH_THREADPOOL)
+	struct lws_threadpool_task *tp_task;
+#endif
 
 #if defined(LWS_WITH_PEER_LIMITS)
 	struct lws_peer *peer;
@@ -872,10 +903,8 @@ struct lws {
 	void *user_space;
 	void *opaque_parent_data;
 
-	struct lws_buflist *buflist;
-
-	/* truncated send handling */
-	unsigned char *trunc_alloc; /* non-NULL means buffering in progress */
+	struct lws_buflist *buflist;		/* input-side buflist */
+	struct lws_buflist *buflist_out;	/* output-side buflist */
 
 #if defined(LWS_WITH_TLS)
 	struct lws_lws_tls tls;
@@ -900,9 +929,7 @@ struct lws {
 	/* ints */
 #define LWS_NO_FDS_POS (-1)
 	int position_in_fds_table;
-	unsigned int trunc_alloc_len; /* size of malloc */
-	unsigned int trunc_offset; /* where we are in terms of spilling */
-	unsigned int trunc_len; /* how much is buffered */
+
 #ifndef LWS_NO_CLIENT
 	int chunk_remaining;
 #endif
@@ -935,12 +962,13 @@ struct lws {
 	unsigned int seen_zero_length_recv:1;
 	unsigned int rxflow_will_be_applied:1;
 	unsigned int event_pipe:1;
-	unsigned int on_same_vh_list:1;
 	unsigned int handling_404:1;
 	unsigned int protocol_bind_balance:1;
+	unsigned int unix_skt:1;
 
 	unsigned int could_have_pending:1; /* detect back-to-back writes */
 	unsigned int outer_will_close:1;
+	unsigned int shadow:1; /* we do not control fd lifecycle at all */
 
 #ifdef LWS_WITH_ACCESS_LOG
 	unsigned int access_log_pending:1;
@@ -1047,6 +1075,9 @@ lws_latency(struct lws_context *context, struct lws *wsi, const char *action,
 	    int ret, int completion);
 #endif
 
+static LWS_INLINE int
+lws_has_buffered_out(struct lws *wsi) { return !!wsi->buflist_out; }
+
 LWS_EXTERN int LWS_WARN_UNUSED_RESULT
 lws_ws_client_rx_sm(struct lws *wsi, unsigned char c);
 
@@ -1132,7 +1163,8 @@ user_callback_handle_rxflow(lws_callback_function, struct lws *wsi,
 			    void *in, size_t len);
 
 LWS_EXTERN int
-lws_plat_set_socket_options(struct lws_vhost *vhost, lws_sockfd_type fd);
+lws_plat_set_socket_options(struct lws_vhost *vhost, lws_sockfd_type fd,
+			    int unix_skt);
 
 LWS_EXTERN int
 lws_plat_check_connection_error(struct lws *wsi);
@@ -1320,7 +1352,7 @@ lws_handshake_server(struct lws *wsi, unsigned char **buf, size_t len);
 LWS_EXTERN int
 lws_access_log(struct lws *wsi);
 LWS_EXTERN void
-lws_prepare_access_log_info(struct lws *wsi, char *uri_ptr, int meth);
+lws_prepare_access_log_info(struct lws *wsi, char *uri_ptr, int len, int meth);
 #else
 #define lws_access_log(_a)
 #endif
@@ -1335,7 +1367,8 @@ int
 lws_protocol_init(struct lws_context *context);
 
 int
-lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p);
+lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p,
+		  const char *reason);
 
 const struct lws_http_mount *
 lws_find_mount(struct lws *wsi, const char *uri_ptr, int uri_len);
@@ -1368,7 +1401,7 @@ lws_plat_pipe_close(struct lws *wsi);
 int
 lws_create_event_pipes(struct lws_context *context);
 
-void
+int
 lws_plat_apply_FD_CLOEXEC(int n);
 
 const struct lws_plat_file_ops *
@@ -1409,13 +1442,13 @@ lws_plat_init(struct lws_context *context,
 	      const struct lws_context_creation_info *info);
 LWS_EXTERN void
 lws_plat_drop_app_privileges(const struct lws_context_creation_info *info);
-LWS_EXTERN unsigned long long
-time_in_microseconds(void);
 LWS_EXTERN const char * LWS_WARN_UNUSED_RESULT
 lws_plat_inet_ntop(int af, const void *src, char *dst, int cnt);
 LWS_EXTERN int LWS_WARN_UNUSED_RESULT
 lws_plat_inet_pton(int af, const char *src, void *dst);
 
+LWS_EXTERN int
+lws_check_byte_utf8(unsigned char state, unsigned char c);
 LWS_EXTERN int LWS_WARN_UNUSED_RESULT
 lws_check_utf8(unsigned char *state, unsigned char *buf, size_t len);
 LWS_EXTERN int alloc_file(struct lws_context *context, const char *filename, uint8_t **buf,
@@ -1424,6 +1457,8 @@ LWS_EXTERN int alloc_file(struct lws_context *context, const char *filename, uin
 
 LWS_EXTERN void
 lws_same_vh_protocol_remove(struct lws *wsi);
+LWS_EXTERN void
+__lws_same_vh_protocol_remove(struct lws *wsi);
 LWS_EXTERN void
 lws_same_vh_protocol_insert(struct lws *wsi, int n);
 
@@ -1468,11 +1503,13 @@ void
 lws_peer_dump_from_wsi(struct lws *wsi);
 #endif
 
-#ifdef LWS_WITH_HTTP_PROXY
+#ifdef LWS_WITH_HUBBUB
 hubbub_error
 html_parser_cb(const hubbub_token *token, void *pw);
 #endif
 
+int
+lws_threadpool_tsi_context(struct lws_context *context, int tsi);
 
 void
 __lws_remove_from_timeout_list(struct lws *wsi);
@@ -1497,7 +1534,7 @@ lws_buflist_aware_consume(struct lws *wsi, struct lws_tokens *ebuf, int used,
 
 
 char *
-lws_generate_client_ws_handshake(struct lws *wsi, char *p);
+lws_generate_client_ws_handshake(struct lws *wsi, char *p, const char *conn1);
 int
 lws_client_ws_upgrade(struct lws *wsi, const char **cce);
 int

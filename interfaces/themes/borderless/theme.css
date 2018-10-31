@@ -672,7 +672,7 @@ html .View.Active > .Resize
 
 html .Screen > .TitleBar .ScreenList
 {
-	background-image: url(/themes/friendup/gfx/screen_switch.png);
+	background-image: url(/themes/friendup12/gfx/screen_switch.png);
 	background-repeat: no-repeat;
 	background-position: center;
 	border-left: 1px solid rgba(0,0,0,0.1);

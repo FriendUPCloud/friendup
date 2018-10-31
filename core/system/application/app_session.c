@@ -373,6 +373,94 @@ int AppSessionRemUser( AppSession *as, User *u )
 }
 
 /**
+ * Add usersession provided as string
+ *
+ * @param as application session
+ * @param loggedSession session of user who is adding other users to application session
+ * @param sessid invited session
+ * @param appname application name string
+ * @param msg message string which will appear in invitation
+ * @return TRUE if session was added
+ */
+
+FBOOL AppSessionAddUsersBySession( AppSession *as, UserSession *loggedSession, char *sessid, char *appname, char *msg )
+{
+	// remove spaces and 'weird' chars from entry
+	unsigned int i, j=0;
+	int  pos = 0;
+	unsigned int usersi  = 0;
+	char *upositions[ 128 ];
+	memset( upositions, 0, sizeof( upositions ) );
+	FBOOL uadded = FALSE;
+	
+	SystemBase *l = (SystemBase *)as->as_SB;
+	
+	DEBUG("[AppSession] sessid %s\n", sessid );
+	
+	if( sessid != NULL )
+	{
+		UserSession *usrses;
+
+		//
+		// we must check if  user is already in application session
+		//
+
+		FRIEND_MUTEX_LOCK( &as->as_SessionsMut );
+		
+		SASUList *curgusr = as->as_UserSessionList;
+		while( curgusr != NULL )
+		{
+			//DEBUG("[AppSession] Check users  '%s'='%s'\n", upositions[ i ], curgusr->usersession->us_User->u_Name );
+			if( strcmp( sessid, curgusr->usersession->us_SessionID  ) == 0  )
+			{
+				if( curgusr->status == SASID_US_STATUS_NEW )
+				{
+					curgusr->status = SASID_US_INVITED;
+				}
+				break;
+			}
+			curgusr = (SASUList *) curgusr->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &as->as_SessionsMut );
+
+		usrses = USMGetSessionBySessionID( l->sl_USM, sessid );
+		
+		//
+		// user was not added  we must find it in system sessions
+		//
+
+		if( curgusr == NULL )
+		{
+			if( usrses != NULL )
+			{
+				int err = AppSessionAddUser( as, usrses, NULL );
+
+				DEBUG("[AppSession] newsession will be added %p\n", usrses );
+
+				if( err == 0 )
+				{
+					char tmp[ 512 ];
+					int tmpsize = snprintf( tmp, sizeof(tmp), "{\"name\":\"%s\",\"deviceid\":\"%s\",\"result\":\"invited\"}", usrses->us_User->u_Name, usrses->us_DeviceIdentity );
+
+					char tmpmsg[ 2048 ];
+					int len = sprintf( tmpmsg, "{ \"type\":\"msg\", \"data\":{\"type\":\"sasid-request\",\"data\":{\"sasid\":\"%lu\",\"message\":\"%s\",\"owner\":\"%s\" ,\"appname\":\"%s\"}}}", as->as_SASID, msg, loggedSession->us_User->u_Name , appname );
+
+					WebSocketSendMessageInt( usrses, tmpmsg, len );
+					
+					uadded = TRUE;
+				}
+				
+			} // if( usrses != NULL )
+		}	// check if userlistadded != NULL
+	}
+	else
+	{
+		DEBUG("[AppSession] Userlist is equal to NULL\n");
+	}
+	return uadded;
+}
+
+/**
  * Add user or user list provided as string
  *
  * @param as application session
@@ -775,7 +863,7 @@ typedef struct RWSCon
 
 int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 {
-	WebsocketClient *ws = (WebsocketClient *) lwsc;
+	WebsocketServerClient *ws = (WebsocketServerClient *) lwsc;
 	RWSCon *root = NULL;
 	RWSCon *rwsentr = NULL;
 	
@@ -870,7 +958,7 @@ int AppSessionRemByWebSocket( AppSession *as,  void *lwsc )
 	}
 	*/
 	
-	int err = AppSessionRemUsersession( as, ws->wc_UserSession );
+	int err = AppSessionRemUsersession( as, ws->wsc_UserSession );
 	
 	return 0;
 }

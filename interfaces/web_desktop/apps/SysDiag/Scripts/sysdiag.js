@@ -66,9 +66,9 @@ lib.system = lib.system || {};
 		
 		// connect to FC over ws
 		self.fconn = new window.FConn();
-		console.log( 'friend.conn', {
-			fc : friend.conn,
-			sc : self.fconn,
+		console.log( 'Friend.conn', {
+			fc : Friend.conn,
+			sc : self.fconn
 		});
 		
 		// lets get

@@ -85,7 +85,7 @@ void MutexManagerDelete( MutexManager *mm )
 			}
 		}
 		
-		SystemBase *lsb = (SystemBase *)lsb->sl_MutexManager->mm_SB;
+		SystemBase *lsb = (SystemBase *)mm->mm_SB;
 		FFree( mm );
 		lsb->sl_MutexManager = NULL;
 	}

@@ -39,7 +39,6 @@
 #include "util/hashmap.h"
 #include "network/socket.h"
 #include "network/http.h"
-//#include "system/systembase.h"
 
 
 //
@@ -48,15 +47,15 @@
 
 typedef struct Library
 {
-	char*        l_Name;    // library name
-	FULONG       l_Version; // version information
-	void*        handle;
-	void *sb;			// pointer to systembase
-	void*        (*libInit)( void *sb );
-	void         (*libClose)( struct Library* l );
-	long		(*GetVersion)( void );
-	long		(*GetRevision)( void );
-	Http 	*(*WebRequest)( struct Library *l, char* func, Http *request ); // Return HTTP code. 0 means Internal Server Error.
+	char*			l_Name;    // library name
+	FULONG			l_Version; // version information
+	void			*handle;
+	void			*sb;			// pointer to systembase
+	void			*(*libInit)( void *sb );
+	void			(*libClose)( struct Library* l );
+	long			(*GetVersion)( void );
+	long			(*GetRevision)( void );
+	Http 			*(*WebRequest)( struct Library *l, char* func, Http *request ); // Return HTTP code. 0 means Internal Server Error.
 } Library;
 
 //

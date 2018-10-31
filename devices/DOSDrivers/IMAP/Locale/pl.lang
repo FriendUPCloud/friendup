@@ -1,0 +1,11 @@
+i18n_IMAP : IMAP Disk
+
+i18n_connection_details            : Szczegóły połączenia
+i18n_hostname                      : Nazwa hosta
+i18n_port                          : Port
+i18n_host                          : Host
+i18n_notes                         : Uwagi
+i18n_your_notes                    : Twoje uwagi
+i18n_connection_details            : Szczegóły połączenia
+i18n_username                      : Nazwa Użytkownika
+i18n_password                      : Hasło

@@ -102,7 +102,7 @@ void UserSessionDelete( UserSession *us )
 					break;
 				}
 			}
-			sleep( 1 );
+			//sleep( 1 );		// FRANCOIS: Really annoying when you force quit!
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -122,7 +122,7 @@ void UserSessionDelete( UserSession *us )
 
 		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 		
-		WebsocketClient *nwsc = us->us_WSClients;
+		WebsocketServerClient *nwsc = us->us_WSClients;
 		us->us_WSClients = NULL;
 		
 		Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
@@ -131,19 +131,19 @@ void UserSessionDelete( UserSession *us )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
 
-			WebsocketClient *rws = nwsc;
+			WebsocketServerClient *rws = nwsc;
 			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
 			while( nwsc != NULL )
 			{
 				rws = nwsc;
 				
-				FRIEND_MUTEX_LOCK( &(rws->wc_Mutex) );
-				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
+				FRIEND_MUTEX_LOCK( &(rws->wsc_Mutex) );
+				nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
-				rws->wc_UserSession = NULL;
-				FRIEND_MUTEX_UNLOCK( &(rws->wc_Mutex) );
+				rws->wsc_UserSession = NULL;
+				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
 			}
 		}
 

@@ -754,11 +754,12 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 		char *assid = NULL;
 		char *userlist = NULL;
 		char *msg = NULL;
+		char *sessid = NULL;
 		
 		struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)  StringDuplicate( "text/html" ) },
-			{	HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
-			{TAG_DONE, TAG_DONE}
+			{ HTTP_HEADER_CONNECTION, (FULONG)StringDuplicate( "close" ) },
+			{ TAG_DONE, TAG_DONE}
 		};
 		
 		response = HttpNewSimple( HTTP_200_OK,  tags );
@@ -834,22 +835,53 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			msg = UrlDecodeToMem( ( char *)el->data );
 		}
 		
+		// Get sessionid
+		
+		el = HashmapGet( request->parsedPostContent, "sessid" );
+		if( el != NULL )
+		{
+			sessid = UrlDecodeToMem( ( char *)el->data );
+		}
+		
 		// Get list of usernames
 		el = HashmapGet( request->parsedPostContent, "users" );
 		if( el != NULL )
 		{
 			userlist = UrlDecodeToMem( ( char *)el->data );
-			
+		}
+		
+		if( userlist != NULL || sessid != NULL )
+		{
 			DEBUG("[ApplicationWeb] share: %s  as %p msg %s\n", userlist, as, msg );
 			
 			if( as != NULL && msg != NULL )
 			{
-				char *resp = AppSessionAddUsersByName( as, loggedSession, userlist, applicationName, msg  );
-				if( resp != NULL )
+				if( userlist != NULL )
 				{
-					HttpAddTextContent( response, resp );
+					char *resp = AppSessionAddUsersByName( as, loggedSession, userlist, applicationName, msg  );
+					if( resp != NULL )
+					{
+						HttpAddTextContent( response, resp );
 					
-					FFree( resp );
+						FFree( resp );
+					}
+					else
+					{
+						HttpAddTextContent( response, "{ \"invited\":[\"\"] }" );
+					}
+				}
+				else if( sessid != NULL )
+				{
+					if( AppSessionAddUsersBySession( as, loggedSession, sessid, applicationName, msg  ) == TRUE )
+					{
+						char tmp[ 512 ];
+						snprintf( tmp, sizeof(tmp), "{ \"invited\":[\"%s\"] }", sessid );
+						HttpAddTextContent( response, tmp );
+					}
+					else
+					{
+						HttpAddTextContent( response, "{ \"invited\":[\"\"] }" );
+					}
 				}
 				else
 				{
@@ -869,6 +901,10 @@ Http* ApplicationWebRequest( SystemBase *l, char **urlpath, Http* request, UserS
 			FERROR("users parameter is missing!\n");
 		}
 		
+		if( sessid != NULL )
+		{
+			FFree( sessid );
+		}
 		if( msg != NULL )
 		{
 			FFree( msg );

@@ -37,7 +37,7 @@
 #include <util/string.h>
 #include <openssl/sha.h>
 #include <string.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <system/systembase.h>
 #include <util/sha256.h>
 #include <network/websocket_client.h>

@@ -27,7 +27,7 @@
 #include <string.h>
 #include <math.h>
 #include <fcntl.h>
-#include "systembase.h"
+#include <system/systembase.h>
 #include <util/log/log.h>
 #include <util/list.h>
 #include <util/buffered_string.h>
@@ -205,7 +205,7 @@ ListString *PHPCall( const char *command, int *length )
 	// Set the length
 	if( length != NULL ) *length = data->ls_Size;
 	
-	//DEBUG( "[fsysphp] Finished PHP call...(%d length)--------------------------%s\n", data->ls_Size, data->ls_Data );
+	DEBUG( "[fsysphp] Finished PHP call...(%lu length)-\n", data->ls_Size );
 	return data;
 }
 
@@ -677,7 +677,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 	else if( mode[0] == 'r' || strcmp( mode, "rb" ) == 0 )
 	{
 		char tmpfilename[ 712 ];
-		int lockf;
+		int lockf = -1;
 
 		// Make sure we can make the tmp file unique with lock!
 		int retries = 100;
@@ -702,6 +702,15 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 		while( TRUE );
 
+		if( lockf == -1 )
+		{
+			FERROR( "[fsysphp] [FileOpen] Failed to get exclusive lock on lockfile (2).\n" );
+			FFree( command );
+			FFree( encodedcomm );
+			return NULL;
+		}
+		
+		
 		DEBUG( "[fsysphp] Success in locking %s\n", tmpfilename );
 
 		// Open the tmp file and get a file lock!
@@ -738,12 +747,13 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 				ListStringDelete( result ); result = NULL;
 
 				// Remove lock!
-				FILE *locfp = NULL;
-				fcntl( lockf, F_SETLKW, F_UNLCK );
+				//fcntl( lockf, F_SETLKW ); // TODO: Why the hell was this here? :-D
+				fcntl( lockf, F_UNLCK );
 				fchmod( lockf, 0755 );
 				close( lockf );
 				lockf = -1;
-	
+				
+				FILE *locfp = NULL;
 				if( ( locfp = fopen( tmpfilename, mode ) ) != NULL )
 				{
 					// Flick the lock off!
@@ -797,7 +807,7 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 			FERROR("[fsysphp] Cannot create temporary file %s\n", tmpfilename );
 		}
 		// Close lock
-		if( lockf >= 0 ) 
+		if( lockf != -1 )
 		{
 			DEBUG( "[fsysphp] Closing lock..\n" );
 			close( lockf );

@@ -23,7 +23,8 @@
 #include "core/private.h"
 
 
-unsigned long long time_in_microseconds(void)
+uint64_t
+lws_time_in_microseconds(void)
 {
 	struct timeval tv;
 
@@ -68,7 +69,8 @@ lws_plat_write_cert(struct lws_vhost *vhost, int is_key, int fd, void *buf,
 	n = write(fd, buf, len);
 
 	fsync(fd);
-	lseek(fd, 0, SEEK_SET);
+	if (lseek(fd, 0, SEEK_SET) < 0)
+		return 1;
 
 	return n != len;
 }

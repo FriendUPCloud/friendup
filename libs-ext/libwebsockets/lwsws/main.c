@@ -45,7 +45,7 @@ int fork(void)
 }
 #endif
 
-#include "../lib/libwebsockets.h"
+#include <libwebsockets.h>
 
 #include <uv.h>
 
@@ -183,7 +183,7 @@ reload_handler(int signum)
 		fprintf(stderr, "root process receives reload\n");
 		if (!do_reload) {
 			fprintf(stderr, "passing HUP to child processes\n");
-			for (m = 0; m < (int)ARRAY_SIZE(pids); m++)
+			for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 				if (pids[m])
 					kill(pids[m], SIGHUP);
 			sleep(1);
@@ -196,7 +196,7 @@ reload_handler(int signum)
 		fprintf(stderr, "master process waiting 2s...\n");
 		sleep(2); /* give children a chance to deal with the signal */
 		fprintf(stderr, "killing service processes\n");
-		for (m = 0; m < (int)ARRAY_SIZE(pids); m++)
+		for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 			if (pids[m])
 				kill(pids[m], SIGTERM);
 		exit(0);
@@ -208,10 +208,10 @@ reload_handler(int signum)
 
 int main(int argc, char **argv)
 {
-	int n = 0, budget = 100, debug_level = 7;
+	int n = 0, budget = 100, debug_level = 1024 + 7;
 #ifndef _WIN32
 	int m;
-	int status, syslog_options = LOG_PID | LOG_PERROR;
+	int status;//, syslog_options = LOG_PID | LOG_PERROR;
 #endif
 
 	strcpy(config_dir, "/etc/lwsws");
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
 				break;
 			/* old */
 			if (n > 0)
-				for (m = 0; m < (int)ARRAY_SIZE(pids); m++)
+				for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 					if (!pids[m]) {
 						// fprintf(stderr, "added child pid %d\n", n);
 						pids[m] = n;
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
 
 		n = waitpid(-1, &status, WNOHANG);
 		if (n > 0)
-			for (m = 0; m < (int)ARRAY_SIZE(pids); m++)
+			for (m = 0; m < (int)LWS_ARRAY_SIZE(pids); m++)
 				if (pids[m] == n) {
 					// fprintf(stderr, "reaped child pid %d\n", pids[m]);
 					pids[m] = 0;
@@ -281,11 +281,11 @@ int main(int argc, char **argv)
 
 #ifndef _WIN32
 	/* we will only try to log things according to our debug_level */
-	setlogmask(LOG_UPTO (LOG_DEBUG));
-	openlog("lwsws", syslog_options, LOG_DAEMON);
+//	setlogmask(LOG_UPTO (LOG_DEBUG));
+//	openlog("lwsws", syslog_options, LOG_DAEMON);
 #endif
 
-	lws_set_log_level(debug_level, lwsl_emit_syslog);
+	lws_set_log_level(debug_level, NULL); // lwsl_emit_syslog);
 
 	lwsl_notice("lwsws libwebsockets web server - license CC0 + LGPL2.1\n");
 	lwsl_notice("(C) Copyright 2010-2018 Andy Green <andy@warmcat.com>\n");

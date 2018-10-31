@@ -1,3 +1,4 @@
+#!/bin/bash
 
 if [ -z "$1" -o -z "$2" ] ; then
 	echo "required args missing"
@@ -56,7 +57,7 @@ dotest() {
 	T=$3
 	(
 		{
-			/usr/bin/time -p $1/lws-$MYTEST $4 $5 $6 $7 > $2/$MYTEST/$T.log 2> $2/$MYTEST/$T.log ;
+			/usr/bin/time -p $1/lws-$MYTEST $4 $5 $6 $7 $8 $9 > $2/$MYTEST/$T.log 2> $2/$MYTEST/$T.log ;
 			echo $? > $2/$MYTEST/$T.result
 		} 2> $2/$MYTEST/$T.time >/dev/null
 	) >/dev/null 2> /dev/null &

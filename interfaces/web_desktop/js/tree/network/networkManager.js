@@ -200,7 +200,7 @@ Friend.Tree.Network.Manager = function ( tree, name, flags )
 				// Other message. An error?
 				if ( command.substring( 0, 4 ) == 'ERR_' )
 				{
-					debugger;
+					console.log( 'This has not beedn tested, and should be looed at FL!' );
 				}
 				else
 				{

@@ -67,7 +67,7 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 				lws_get_protocol(wsi));
 	const struct msg *pmsg;
 	struct msg amsg;
-	int n, m, flags;
+	int n, flags;
 
 	switch (reason) {
 
@@ -104,6 +104,8 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 
 		lwsl_user("LWS_CALLBACK_SERVER_WRITEABLE\n");
 		do {
+			int m;
+
 			pmsg = lws_ring_get_element(pss->ring, &pss->tail);
 			if (!pmsg) {
 				lwsl_user(" (nothing in ring)\n");
@@ -115,7 +117,8 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 				    pmsg->first, pmsg->final);
 
 			/* notice we allowed for LWS_PRE in the payload already */
-			m = lws_write(wsi, pmsg->payload + LWS_PRE, pmsg->len, flags);
+			m = lws_write(wsi, ((unsigned char *)pmsg->payload) +
+				      LWS_PRE, pmsg->len, flags);
 			if (m < (int)pmsg->len) {
 				lwsl_err("ERROR %d writing to ws socket\n", m);
 				return -1;
@@ -229,7 +232,7 @@ callback_minimal_server_echo(struct lws *wsi, enum lws_callback_reasons reason,
 /* boilerplate needed if we are built as a dynamic plugin */
 
 static const struct lws_protocols protocols[] = {
-	LWS_PLUGIN_PROTOCOL_MINIMAL_server_echo
+	LWS_PLUGIN_PROTOCOL_MINIMAL_SERVER_ECHO
 };
 
 LWS_EXTERN LWS_VISIBLE int
@@ -243,7 +246,7 @@ init_protocol_minimal_server_echo(struct lws_context *context,
 	}
 
 	c->protocols = protocols;
-	c->count_protocols = ARRAY_SIZE(protocols);
+	c->count_protocols = LWS_ARRAY_SIZE(protocols);
 	c->extensions = NULL;
 	c->count_extensions = 0;
 

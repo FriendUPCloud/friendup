@@ -48,6 +48,7 @@ if( isset( $argv ) && isset( $argv[1] ) )
 	
 	if( is_string( $argv[1] ) )
 	{
+		// Are we in the wrong place?
 		if( str_replace( array( '/', '.' ), '', $argv[1] ) == '' )
 		{
 			$host = '';
@@ -58,6 +59,15 @@ if( isset( $argv ) && isset( $argv[1] ) )
 				if( $conf['Core'][ 'SSLEnable' ] )
 					$host = 'https://' . $host;
 				else $host = 'http://' . $host;
+			}
+			
+			// If we're not using a proxy, add the designated Friend Core port
+			if( 
+				isset( $conf['FriendCore']['fcnoproxy'] ) && $conf['FriendCore']['fcnoproxy'] == true &&
+				isset( $conf['FriendCore']['port'] )
+			)
+			{
+				$host .= ':' . $conf[ 'FriendCore' ][ 'port' ];
 			}
 			
 			die( '<script>document.location.href=\'' . $host . '/webclient/index.html\';</script>' );

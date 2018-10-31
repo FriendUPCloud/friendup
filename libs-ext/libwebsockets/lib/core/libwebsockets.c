@@ -28,7 +28,7 @@
 #ifdef LWS_WITH_IPV6
 #if defined(WIN32) || defined(_WIN32)
 #include <wincrypt.h>
-#include <Iphlpapi.h>
+#include <iphlpapi.h>
 #else
 #include <net/if.h>
 #endif
@@ -53,6 +53,7 @@ static const char * const log_level_names[] = {
 	"CLIENT",
 	"LATENCY",
 	"USER",
+	"THREAD",
 	"?",
 	"?"
 };
@@ -105,7 +106,11 @@ int lws_open(const char *__file, int __oflag, ...)
 		n = open(__file, __oflag);
 	va_end(ap);
 
-	lws_plat_apply_FD_CLOEXEC(n);
+	if (n != -1 && lws_plat_apply_FD_CLOEXEC(n)) {
+		close(n);
+
+		return -1;
+	}
 
 	return n;
 }
@@ -113,6 +118,8 @@ int lws_open(const char *__file, int __oflag, ...)
 void
 lws_vhost_bind_wsi(struct lws_vhost *vh, struct lws *wsi)
 {
+	if (wsi->vhost == vh)
+		return;
 	wsi->vhost = vh;
 	vh->count_bound_wsi++;
 	lwsl_info("%s: vh %s: count_bound_wsi %d\n",
@@ -164,13 +171,24 @@ __lws_free_wsi(struct lws *wsi)
 		lws_free(wsi->user_space);
 
 	lws_buflist_destroy_all_segments(&wsi->buflist);
-	lws_free_set_NULL(wsi->trunc_alloc);
+	lws_buflist_destroy_all_segments(&wsi->buflist_out);
 	lws_free_set_NULL(wsi->udp);
 
 	if (wsi->vhost && wsi->vhost->lserv_wsi == wsi)
 		wsi->vhost->lserv_wsi = NULL;
+#if !defined(LWS_NO_CLIENT)
+	lws_dll_lws_remove(&wsi->dll_active_client_conns);
+#endif
+	wsi->context->count_wsi_allocated--;
 
-	// lws_peer_dump_from_wsi(wsi);
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
+	__lws_header_table_detach(wsi, 0);
+#endif
+	__lws_same_vh_protocol_remove(wsi);
+#if !defined(LWS_NO_CLIENT)
+	lws_client_stash_destroy(wsi);
+	lws_free_set_NULL(wsi->client_hostname_copy);
+#endif
 
 	if (wsi->role_ops->destroy_role)
 		wsi->role_ops->destroy_role(wsi);
@@ -192,7 +210,6 @@ __lws_free_wsi(struct lws *wsi)
 
 	lws_vhost_unbind_wsi(wsi);
 
-	wsi->context->count_wsi_allocated--;
 	lwsl_debug("%s: %p, remaining wsi %d\n", __func__, wsi,
 			wsi->context->count_wsi_allocated);
 
@@ -368,6 +385,15 @@ __lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs)
 //	lws_dll_dump(&pt->dll_head_hrtimer, "after set_timer_usec");
 }
 
+LWS_VISIBLE lws_usec_t
+lws_now_usecs(void)
+{
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	return (now.tv_sec * 1000000ll) + now.tv_usec;
+}
+
 LWS_VISIBLE void
 lws_set_timer_usecs(struct lws *wsi, lws_usec_t usecs)
 {
@@ -430,7 +456,7 @@ __lws_set_timeout(struct lws *wsi, enum pending_timeout reason, int secs)
 
 	time(&now);
 
-	lwsl_debug("%s: %p: %d secs\n", __func__, wsi, secs);
+	lwsl_debug("%s: %p: %d secs (reason %d)\n", __func__, wsi, secs, reason);
 	wsi->pending_timeout_limit = secs;
 	wsi->pending_timeout_set = now;
 	wsi->pending_timeout = reason;
@@ -531,15 +557,16 @@ lws_remove_child_from_any_parent(struct lws *wsi)
 }
 
 int
-lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p)
+lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p, const char *reason)
 {
 //	if (wsi->protocol == p)
 //		return 0;
 	const struct lws_protocols *vp = wsi->vhost->protocols, *vpo;
 
 	if (wsi->protocol && wsi->protocol_bind_balance) {
-		wsi->protocol->callback(wsi, LWS_CALLBACK_HTTP_DROP_PROTOCOL,
-					wsi->user_space, NULL, 0);
+		wsi->protocol->callback(wsi,
+		       wsi->role_ops->protocol_unbind_cb[!!lwsi_role_server(wsi)],
+					wsi->user_space, (void *)reason, 0);
 		wsi->protocol_bind_balance = 0;
 	}
 	if (!wsi->user_space_externally_allocated)
@@ -575,7 +602,8 @@ lws_bind_protocol(struct lws *wsi, const struct lws_protocols *p)
 				 __func__, p, wsi->vhost->name);
 	}
 
-	if (wsi->protocol->callback(wsi, LWS_CALLBACK_HTTP_BIND_PROTOCOL,
+	if (wsi->protocol->callback(wsi, wsi->role_ops->protocol_bind_cb[
+				    !!lwsi_role_server(wsi)],
 				    wsi->user_space, NULL, 0))
 		return 1;
 
@@ -715,14 +743,24 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason, const char *
 		goto just_kill_connection;
 
 	case LRS_FLUSHING_BEFORE_CLOSE:
-		if (wsi->trunc_len) {
+		if (lws_has_buffered_out(wsi)
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+		    || wsi->http.comp_ctx.buflist_comp ||
+		    wsi->http.comp_ctx.may_have_more
+#endif
+		 ) {
 			lws_callback_on_writable(wsi);
 			return;
 		}
 		lwsl_info("%p: end LRS_FLUSHING_BEFORE_CLOSE\n", wsi);
 		goto just_kill_connection;
 	default:
-		if (wsi->trunc_len) {
+		if (lws_has_buffered_out(wsi)
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+				|| wsi->http.comp_ctx.buflist_comp ||
+		    wsi->http.comp_ctx.may_have_more
+#endif
+		) {
 			lwsl_info("%p: LRS_FLUSHING_BEFORE_CLOSE\n", wsi);
 			lwsi_set_state(wsi, LRS_FLUSHING_BEFORE_CLOSE);
 			__lws_set_timeout(wsi,
@@ -736,15 +774,13 @@ __lws_close_free_wsi(struct lws *wsi, enum lws_close_status reason, const char *
 	    lwsi_state(wsi) == LRS_H1C_ISSUE_HANDSHAKE)
 		goto just_kill_connection;
 
-	if (!wsi->told_user_closed && lwsi_role_http(wsi) &&
-	    lwsi_role_server(wsi)) {
-		if (wsi->user_space && wsi->protocol &&
-		    wsi->protocol_bind_balance) {
-			wsi->protocol->callback(wsi,
-						LWS_CALLBACK_HTTP_DROP_PROTOCOL,
-					       wsi->user_space, NULL, 0);
-			wsi->protocol_bind_balance = 0;
-		}
+	if (!wsi->told_user_closed && wsi->user_space && wsi->protocol &&
+	    wsi->protocol_bind_balance) {
+		wsi->protocol->callback(wsi,
+				wsi->role_ops->protocol_unbind_cb[
+				       !!lwsi_role_server(wsi)],
+				       wsi->user_space, (void *)__func__, 0);
+		wsi->protocol_bind_balance = 0;
 	}
 
 	/*
@@ -775,8 +811,10 @@ just_kill_connection:
 	    wsi->protocol_bind_balance) {
 		lwsl_debug("%s: %p: DROP_PROTOCOL %s\n", __func__, wsi,
 		       wsi->protocol->name);
-		wsi->protocol->callback(wsi, LWS_CALLBACK_HTTP_DROP_PROTOCOL,
-				        wsi->user_space, NULL, 0);
+		wsi->protocol->callback(wsi,
+				wsi->role_ops->protocol_unbind_cb[
+				       !!lwsi_role_server(wsi)],
+				       wsi->user_space, (void *)__func__, 0);
 		wsi->protocol_bind_balance = 0;
 	}
 
@@ -849,12 +887,16 @@ just_kill_connection:
 	lwsl_debug("%s: real just_kill_connection: %p (sockfd %d)\n", __func__,
 		   wsi, wsi->desc.sockfd);
 	
-#ifdef LWS_WITH_HTTP_PROXY
+#ifdef LWS_WITH_HUBBUB
 	if (wsi->http.rw) {
 		lws_rewrite_destroy(wsi->http.rw);
 		wsi->http.rw = NULL;
 	}
 #endif
+
+	if (wsi->http.pending_return_headers)
+		lws_free_set_NULL(wsi->http.pending_return_headers);
+
 	/*
 	 * we won't be servicing or receiving anything further from this guy
 	 * delete socket from the internal poll list if still present
@@ -871,7 +913,7 @@ just_kill_connection:
 	if (wsi->desc.sockfd != LWS_SOCK_INVALID)
 		__remove_wsi_socket_from_fds(wsi);
 	else
-		lws_same_vh_protocol_remove(wsi);
+		__lws_same_vh_protocol_remove(wsi);
 
 	lwsi_set_state(wsi, LRS_DEAD_SOCKET);
 	lws_buflist_destroy_all_segments(&wsi->buflist);
@@ -882,7 +924,9 @@ just_kill_connection:
 
 	/* tell the user it's all over for this guy */
 
-	if (lwsi_state_est_PRE_CLOSE(wsi) && !wsi->told_user_closed &&
+	if ((lwsi_state_est_PRE_CLOSE(wsi) ||
+	     lwsi_state_PRE_CLOSE(wsi) == LRS_WAITING_SERVER_REPLY) &&
+	    !wsi->told_user_closed &&
 	    wsi->role_ops->close_cb[lwsi_role_server(wsi)]) {
 		const struct lws_protocols *pro = wsi->protocol;
 
@@ -918,7 +962,8 @@ __lws_close_free_wsi_final(struct lws *wsi)
 {
 	int n;
 
-	if (lws_socket_is_valid(wsi->desc.sockfd) && !lws_ssl_close(wsi)) {
+	if (!wsi->shadow &&
+	    lws_socket_is_valid(wsi->desc.sockfd) && !lws_ssl_close(wsi)) {
 		lwsl_debug("%s: wsi %p: fd %d\n", __func__, wsi, wsi->desc.sockfd);
 		n = compatible_close(wsi->desc.sockfd);
 		if (n)
@@ -1522,7 +1567,7 @@ lws_vfs_select_fops(const struct lws_plat_file_ops *fops, const char *vfs_path,
 		pf = fops->next;
 		while (pf) {
 			n = 0;
-			while (n < (int)ARRAY_SIZE(pf->fi) && pf->fi[n].sig) {
+			while (n < (int)LWS_ARRAY_SIZE(pf->fi) && pf->fi[n].sig) {
 				if (p >= vfs_path + pf->fi[n].len)
 					if (!strncmp(p - (pf->fi[n].len - 1),
 						    pf->fi[n].sig,
@@ -1596,7 +1641,7 @@ lws_latency(struct lws_context *context, struct lws *wsi, const char *action,
 	unsigned long long u;
 	char buf[256];
 
-	u = time_in_microseconds();
+	u = lws_time_in_microseconds();
 
 	if (!action) {
 		wsi->latency_start = u;
@@ -1664,7 +1709,8 @@ lws_rx_flow_control(struct lws *wsi, int _enable)
 	    wsi->rxflow_change_to)
 		goto skip;
 
-	wsi->rxflow_change_to = LWS_RXFLOW_PENDING_CHANGE | !wsi->rxflow_bitmap;
+	wsi->rxflow_change_to = LWS_RXFLOW_PENDING_CHANGE |
+				(!wsi->rxflow_bitmap);
 
 	lwsl_info("%s: %p: bitmap 0x%x: en 0x%x, ch 0x%x\n", __func__, wsi,
 		  wsi->rxflow_bitmap, en, wsi->rxflow_change_to);
@@ -1805,7 +1851,9 @@ lws_set_proxy(struct lws_vhost *vhost, const char *proxy)
 
 		lwsl_info(" Proxy auth in use\n");
 
+#if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 		proxy = p + 1;
+#endif
 	} else
 		vhost->proxy_basic_auth_token[0] = '\0';
 
@@ -1952,7 +2000,9 @@ LWS_VISIBLE int
 lwsl_timestamp(int level, char *p, int len)
 {
 #ifndef LWS_PLAT_OPTEE
+#ifndef _WIN32_WCE
 	time_t o_now = time(NULL);
+#endif
 	unsigned long long now;
 	struct tm *ptm = NULL;
 #ifndef WIN32
@@ -1972,7 +2022,7 @@ lwsl_timestamp(int level, char *p, int len)
 	for (n = 0; n < LLL_COUNT; n++) {
 		if (level != (1 << n))
 			continue;
-		now = time_in_microseconds() / 100;
+		now = lws_time_in_microseconds() / 100;
 		if (ptm)
 			n = lws_snprintf(p, len,
 				"[%04d/%02d/%02d %02d:%02d:%02d:%04d] %s: ",
@@ -2009,20 +2059,21 @@ static const char * const colours[] = {
 	"[33m", /* LLL_CLIENT */
 	"[33;1m", /* LLL_LATENCY */
 	"[30;1m", /* LLL_USER */
+	"[31m", /* LLL_THREAD */
 };
 
 LWS_VISIBLE void lwsl_emit_stderr(int level, const char *line)
 {
 	char buf[50];
 	static char tty = 3;
-	int n, m = ARRAY_SIZE(colours) - 1;
+	int n, m = LWS_ARRAY_SIZE(colours) - 1;
 
 	if (!tty)
 		tty = isatty(2) | 2;
 	lwsl_timestamp(level, buf, sizeof(buf));
 
 	if (tty == 3) {
-		n = 1 << (ARRAY_SIZE(colours) - 1);
+		n = 1 << (LWS_ARRAY_SIZE(colours) - 1);
 		while (n) {
 			if (level & n)
 				break;
@@ -2046,8 +2097,14 @@ LWS_VISIBLE void _lws_logv(int filter, const char *format, va_list vl)
 	n = vsnprintf(buf, sizeof(buf) - 1, format, vl);
 	(void)n;
 	/* vnsprintf returns what it would have written, even if truncated */
-	if (n > (int)sizeof(buf) - 1)
-		n = sizeof(buf) - 1;
+	if (n > (int)sizeof(buf) - 1) {
+		n = sizeof(buf) - 5;
+		buf[n++] = '.';
+		buf[n++] = '.';
+		buf[n++] = '.';
+		buf[n++] = '\n';
+		buf[n] = '\0';
+	}
 	if (n > 0)
 		buf[n] = '\0';
 
@@ -2080,9 +2137,7 @@ LWS_VISIBLE void
 lwsl_hexdump_level(int hexdump_level, const void *vbuf, size_t len)
 {
 	unsigned char *buf = (unsigned char *)vbuf;
-	unsigned int n, m, start;
-	char line[80];
-	char *p;
+	unsigned int n;
 
 	if (!lwsl_visible(hexdump_level))
 		return;
@@ -2096,8 +2151,8 @@ lwsl_hexdump_level(int hexdump_level, const void *vbuf, size_t len)
 	_lws_log(hexdump_level, "\n");
 
 	for (n = 0; n < len;) {
-		start = n;
-		p = line;
+		unsigned int start = n, m;
+		char line[80], *p = line;
 
 		p += sprintf(p, "%04X: ", start);
 
@@ -2156,12 +2211,14 @@ lws_get_ssl(struct lws *wsi)
 LWS_VISIBLE int
 lws_partial_buffered(struct lws *wsi)
 {
-	return !!wsi->trunc_len;
+	return lws_has_buffered_out(wsi);
 }
 
 LWS_VISIBLE lws_fileofs_t
 lws_get_peer_write_allowance(struct lws *wsi)
 {
+	if (!wsi->role_ops->tx_credit)
+		return -1;
 	return wsi->role_ops->tx_credit(wsi);
 }
 
@@ -2304,36 +2361,60 @@ __lws_rx_flow_control(struct lws *wsi)
 	return 0;
 }
 
+static const unsigned char e0f4[] = {
+	0xa0 | ((2 - 1) << 2) | 1, /* e0 */
+	0x80 | ((4 - 1) << 2) | 1, /* e1 */
+	0x80 | ((4 - 1) << 2) | 1, /* e2 */
+	0x80 | ((4 - 1) << 2) | 1, /* e3 */
+	0x80 | ((4 - 1) << 2) | 1, /* e4 */
+	0x80 | ((4 - 1) << 2) | 1, /* e5 */
+	0x80 | ((4 - 1) << 2) | 1, /* e6 */
+	0x80 | ((4 - 1) << 2) | 1, /* e7 */
+	0x80 | ((4 - 1) << 2) | 1, /* e8 */
+	0x80 | ((4 - 1) << 2) | 1, /* e9 */
+	0x80 | ((4 - 1) << 2) | 1, /* ea */
+	0x80 | ((4 - 1) << 2) | 1, /* eb */
+	0x80 | ((4 - 1) << 2) | 1, /* ec */
+	0x80 | ((2 - 1) << 2) | 1, /* ed */
+	0x80 | ((4 - 1) << 2) | 1, /* ee */
+	0x80 | ((4 - 1) << 2) | 1, /* ef */
+	0x90 | ((3 - 1) << 2) | 2, /* f0 */
+	0x80 | ((4 - 1) << 2) | 2, /* f1 */
+	0x80 | ((4 - 1) << 2) | 2, /* f2 */
+	0x80 | ((4 - 1) << 2) | 2, /* f3 */
+	0x80 | ((1 - 1) << 2) | 2, /* f4 */
+
+	0,			   /* s0 */
+	0x80 | ((4 - 1) << 2) | 0, /* s2 */
+	0x80 | ((4 - 1) << 2) | 1, /* s3 */
+};
+
+LWS_EXTERN int
+lws_check_byte_utf8(unsigned char state, unsigned char c)
+{
+	unsigned char s = state;
+
+	if (!s) {
+		if (c >= 0x80) {
+			if (c < 0xc2 || c > 0xf4)
+				return -1;
+			if (c < 0xe0)
+				return 0x80 | ((4 - 1) << 2);
+			else
+				return e0f4[c - 0xe0];
+		}
+
+		return s;
+	}
+	if (c < (s & 0xf0) || c >= (s & 0xf0) + 0x10 + ((s << 2) & 0x30))
+		return -1;
+
+	return e0f4[21 + (s & 3)];
+}
+
 LWS_EXTERN int
 lws_check_utf8(unsigned char *state, unsigned char *buf, size_t len)
 {
-	static const unsigned char e0f4[] = {
-		0xa0 | ((2 - 1) << 2) | 1, /* e0 */
-		0x80 | ((4 - 1) << 2) | 1, /* e1 */
-		0x80 | ((4 - 1) << 2) | 1, /* e2 */
-		0x80 | ((4 - 1) << 2) | 1, /* e3 */
-		0x80 | ((4 - 1) << 2) | 1, /* e4 */
-		0x80 | ((4 - 1) << 2) | 1, /* e5 */
-		0x80 | ((4 - 1) << 2) | 1, /* e6 */
-		0x80 | ((4 - 1) << 2) | 1, /* e7 */
-		0x80 | ((4 - 1) << 2) | 1, /* e8 */
-		0x80 | ((4 - 1) << 2) | 1, /* e9 */
-		0x80 | ((4 - 1) << 2) | 1, /* ea */
-		0x80 | ((4 - 1) << 2) | 1, /* eb */
-		0x80 | ((4 - 1) << 2) | 1, /* ec */
-		0x80 | ((2 - 1) << 2) | 1, /* ed */
-		0x80 | ((4 - 1) << 2) | 1, /* ee */
-		0x80 | ((4 - 1) << 2) | 1, /* ef */
-		0x90 | ((3 - 1) << 2) | 2, /* f0 */
-		0x80 | ((4 - 1) << 2) | 2, /* f1 */
-		0x80 | ((4 - 1) << 2) | 2, /* f2 */
-		0x80 | ((4 - 1) << 2) | 2, /* f3 */
-		0x80 | ((1 - 1) << 2) | 2, /* f4 */
-
-		0,			   /* s0 */
-		0x80 | ((4 - 1) << 2) | 0, /* s2 */
-		0x80 | ((4 - 1) << 2) | 1, /* s3 */
-	};
 	unsigned char s = *state;
 
 	while (len--) {
@@ -2366,7 +2447,7 @@ lws_parse_uri(char *p, const char **prot, const char **ads, int *port,
 	      const char **path)
 {
 	const char *end;
-	static const char *slash = "/";
+	char unix_skt = 0;
 
 	/* cut up the location into address, port and path */
 	*prot = p;
@@ -2380,32 +2461,32 @@ lws_parse_uri(char *p, const char **prot, const char **ads, int *port,
 		*p = '\0';
 		p += 3;
 	}
+	if (*p == '+') /* unix skt */
+		unix_skt = 1;
+
 	*ads = p;
 	if (!strcmp(*prot, "http") || !strcmp(*prot, "ws"))
 		*port = 80;
 	else if (!strcmp(*prot, "https") || !strcmp(*prot, "wss"))
 		*port = 443;
 
-       if (*p == '[')
-       {
-               ++(*ads);
-               while (*p && *p != ']')
-                       p++;
-               if (*p)
-                       *p++ = '\0';
-       }
-       else
-       {
-               while (*p && *p != ':' && *p != '/')
-                       p++;
-       }
+	if (*p == '[') {
+		++(*ads);
+		while (*p && *p != ']')
+			p++;
+		if (*p)
+			*p++ = '\0';
+	} else
+		while (*p && *p != ':' && (unix_skt || *p != '/'))
+			p++;
+
 	if (*p == ':') {
 		*p++ = '\0';
 		*port = atoi(p);
 		while (*p && *p != '/')
 			p++;
 	}
-	*path = slash;
+	*path = "/";
 	if (*p) {
 		*p++ = '\0';
 		if (*p)
@@ -2480,7 +2561,9 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 	struct sockaddr_storage sin;
 	struct sockaddr *v;
 
-#ifdef LWS_WITH_UNIX_SOCK
+	memset(&sin, 0, sizeof(sin));
+
+#if defined(LWS_WITH_UNIX_SOCK)
 	if (LWS_UNIX_SOCK_ENABLED(vhost)) {
 		v = (struct sockaddr *)&serv_unix;
 		n = sizeof(struct sockaddr_un);
@@ -2496,6 +2579,8 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 		strcpy(serv_unix.sun_path, iface);
 		if (serv_unix.sun_path[0] == '@')
 			serv_unix.sun_path[0] = '\0';
+		else
+			unlink(serv_unix.sun_path);
 
 	} else
 #endif
@@ -2558,7 +2643,7 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 #ifdef LWS_WITH_UNIX_SOCK
 	if (n < 0 && LWS_UNIX_SOCK_ENABLED(vhost)) {
 		lwsl_err("ERROR on binding fd %d to \"%s\" (%d %d)\n",
-				sockfd, iface, n, LWS_ERRNO);
+			 sockfd, iface, n, LWS_ERRNO);
 		return -1;
 	} else
 #endif
@@ -2567,6 +2652,14 @@ lws_socket_bind(struct lws_vhost *vhost, lws_sockfd_type sockfd, int port,
 				sockfd, port, n, LWS_ERRNO);
 		return -1;
 	}
+
+#if defined(LWS_WITH_UNIX_SOCK)
+	if (LWS_UNIX_SOCK_ENABLED(vhost) && vhost->context->uid)
+		if (chown(serv_unix.sun_path, vhost->context->uid,
+			    vhost->context->gid))
+			lwsl_notice("%s: chown for unix skt %s failed\n",
+				    __func__, serv_unix.sun_path);
+#endif
 
 #ifndef LWS_PLAT_OPTEE
 	if (getsockname(sockfd, (struct sockaddr *)&sin, &len) == -1)
@@ -2729,6 +2822,27 @@ lws_json_purify(char *escaped, const char *string, int len)
 	}
 
 	while (*p && len-- > 6) {
+		if (*p == '\t') {
+			p++;
+			*q++ = '\\';
+			*q++ = 't';
+			continue;
+		}
+
+		if (*p == '\n') {
+			p++;
+			*q++ = '\\';
+			*q++ = 'n';
+			continue;
+		}
+
+		if (*p == '\r') {
+			p++;
+			*q++ = '\\';
+			*q++ = 'r';
+			continue;
+		}
+
 		if (*p == '\"' || *p == '\\' || *p < 0x20) {
 			*q++ = '\\';
 			*q++ = 'u';
@@ -2865,6 +2979,13 @@ lws_finalize_startup(struct lws_context *context)
 	return 0;
 }
 
+LWS_VISIBLE LWS_EXTERN void
+lws_get_effective_uid_gid(struct lws_context *context, int *uid, int *gid)
+{
+	*uid = context->uid;
+	*gid = context->gid;
+}
+
 int
 lws_snprintf(char *str, size_t size, const char *format, ...)
 {
@@ -2891,6 +3012,245 @@ lws_strncpy(char *dest, const char *src, size_t size)
 	dest[size - 1] = '\0';
 
 	return dest;
+}
+
+
+typedef enum {
+	LWS_TOKZS_LEADING_WHITESPACE,
+	LWS_TOKZS_QUOTED_STRING,
+	LWS_TOKZS_TOKEN,
+	LWS_TOKZS_TOKEN_POST_TERMINAL
+} lws_tokenize_state;
+
+int
+lws_tokenize(struct lws_tokenize *ts)
+{
+	const char *rfc7230_delims = "(),/:;<=>?@[\\]{}";
+	lws_tokenize_state state = LWS_TOKZS_LEADING_WHITESPACE;
+	char c, num = -1, flo = 0;
+	int utf8 = 0;
+
+	ts->token = NULL;
+	ts->token_len = 0;
+
+	while (ts->len) {
+		c = *ts->start++;
+		ts->len--;
+
+		utf8 = lws_check_byte_utf8((unsigned char)utf8, c);
+		if (utf8 < 0)
+			return LWS_TOKZE_ERR_BROKEN_UTF8;
+
+		lwsl_debug("%s: %c (%d) %d\n", __func__, c, state, (int)ts->len);
+
+		if (!c)
+			break;
+
+		/* whitespace */
+
+		if (c == ' ' || c == '\t' || c == '\n' || c == '\r' ||
+		    c == '\f') {
+			switch (state) {
+			case LWS_TOKZS_LEADING_WHITESPACE:
+			case LWS_TOKZS_TOKEN_POST_TERMINAL:
+				continue;
+			case LWS_TOKZS_QUOTED_STRING:
+				ts->token_len++;
+				continue;
+			case LWS_TOKZS_TOKEN:
+				/* we want to scan forward to look for = */
+
+				state = LWS_TOKZS_TOKEN_POST_TERMINAL;
+				continue;
+			}
+		}
+
+		/* quoted string */
+
+		if (c == '\"') {
+			if (state == LWS_TOKZS_QUOTED_STRING)
+				return LWS_TOKZE_QUOTED_STRING;
+
+			/* starting a quoted string */
+
+			if (ts->flags & LWS_TOKENIZE_F_COMMA_SEP_LIST) {
+				if (ts->delim == LWSTZ_DT_NEED_DELIM)
+					return LWS_TOKZE_ERR_COMMA_LIST;
+				ts->delim = LWSTZ_DT_NEED_DELIM;
+			}
+
+			state = LWS_TOKZS_QUOTED_STRING;
+			ts->token = ts->start;
+			ts->token_len = 0;
+
+			continue;
+		}
+
+		/* token= aggregation */
+
+		if (c == '=' && (state == LWS_TOKZS_TOKEN_POST_TERMINAL ||
+				 state == LWS_TOKZS_TOKEN)) {
+			if (num == 1)
+				return LWS_TOKZE_ERR_NUM_ON_LHS;
+			/* swallow the = */
+			return LWS_TOKZE_TOKEN_NAME_EQUALS;
+		}
+
+		/* optional token: aggregation */
+
+		if ((ts->flags & LWS_TOKENIZE_F_AGG_COLON) && c == ':' &&
+		    (state == LWS_TOKZS_TOKEN_POST_TERMINAL ||
+		     state == LWS_TOKZS_TOKEN))
+			/* swallow the : */
+			return LWS_TOKZE_TOKEN_NAME_COLON;
+
+		/* aggregate . in a number as a float */
+
+		if (c == '.' && state == LWS_TOKZS_TOKEN && num == 1) {
+			if (flo)
+				return LWS_TOKZE_ERR_MALFORMED_FLOAT;
+			flo = 1;
+			ts->token_len++;
+			continue;
+		}
+
+		/*
+		 * Delimiter... by default anything that:
+		 *
+		 *  - isn't matched earlier, or
+		 *  - is [A-Z, a-z, 0-9, _], and
+		 *  - is not a partial utf8 char
+		 *
+		 * is a "delimiter", it marks the end of a token and is itself
+		 * reported as a single LWS_TOKZE_DELIMITER each time.
+		 *
+		 * However with LWS_TOKENIZE_F_RFC7230_DELIMS flag, tokens may
+		 * contain any noncontrol character that isn't defined in
+		 * rfc7230_delims, and only characters listed there are treated
+		 * as delimiters.
+		 */
+
+		if (!utf8 &&
+		     ((ts->flags & LWS_TOKENIZE_F_RFC7230_DELIMS &&
+		     strchr(rfc7230_delims, c) && c > 32) ||
+		    ((!(ts->flags & LWS_TOKENIZE_F_RFC7230_DELIMS) &&
+		     (c < '0' || c > '9') && (c < 'A' || c > 'Z') &&
+		     (c < 'a' || c > 'z') && c != '_') && !(c == '-' &&
+			(ts->flags & LWS_TOKENIZE_F_MINUS_NONTERM))) ||
+		    (c == '-' && !(ts->flags & LWS_TOKENIZE_F_MINUS_NONTERM))
+		    )) {
+			switch (state) {
+			case LWS_TOKZS_LEADING_WHITESPACE:
+				if (ts->flags & LWS_TOKENIZE_F_COMMA_SEP_LIST) {
+					if (c != ',' ||
+					    ts->delim != LWSTZ_DT_NEED_DELIM)
+						return LWS_TOKZE_ERR_COMMA_LIST;
+					ts->delim = LWSTZ_DT_NEED_NEXT_CONTENT;
+				}
+
+				ts->token = ts->start - 1;
+				ts->token_len = 1;
+				return LWS_TOKZE_DELIMITER;
+
+			case LWS_TOKZS_QUOTED_STRING:
+				ts->token_len++;
+				continue;
+
+			case LWS_TOKZS_TOKEN_POST_TERMINAL:
+			case LWS_TOKZS_TOKEN:
+				/* report the delimiter next time */
+				ts->start--;
+				ts->len++;
+				goto token_or_numeric;
+			}
+		}
+
+		/* anything that's not whitespace or delimiter is payload */
+
+		switch (state) {
+		case LWS_TOKZS_LEADING_WHITESPACE:
+
+			if (ts->flags & LWS_TOKENIZE_F_COMMA_SEP_LIST) {
+				if (ts->delim == LWSTZ_DT_NEED_DELIM)
+					return LWS_TOKZE_ERR_COMMA_LIST;
+				ts->delim = LWSTZ_DT_NEED_DELIM;
+			}
+
+			state = LWS_TOKZS_TOKEN;
+			ts->token = ts->start - 1;
+			ts->token_len = 1;
+			if (c < '0' || c > '9')
+				num = 0;
+			else
+				if (num < 0)
+					num = 1;
+			continue;
+		case LWS_TOKZS_QUOTED_STRING:
+		case LWS_TOKZS_TOKEN:
+			if (c < '0' || c > '9')
+				num = 0;
+			else
+				if (num < 0)
+					num = 1;
+			ts->token_len++;
+			continue;
+		case LWS_TOKZS_TOKEN_POST_TERMINAL:
+			/* report the new token next time */
+			ts->start--;
+			ts->len++;
+			goto token_or_numeric;
+		}
+	}
+
+	/* we ran out of content */
+
+	if (utf8) /* ended partway through a multibyte char */
+		return LWS_TOKZE_ERR_BROKEN_UTF8;
+
+	if (state == LWS_TOKZS_QUOTED_STRING)
+		return LWS_TOKZE_ERR_UNTERM_STRING;
+
+	if (state != LWS_TOKZS_TOKEN_POST_TERMINAL &&
+	    state != LWS_TOKZS_TOKEN) {
+		if ((ts->flags & LWS_TOKENIZE_F_COMMA_SEP_LIST) &&
+		     ts->delim == LWSTZ_DT_NEED_NEXT_CONTENT)
+			return LWS_TOKZE_ERR_COMMA_LIST;
+
+		return LWS_TOKZE_ENDED;
+	}
+
+	/* report the pending token */
+
+token_or_numeric:
+
+	if (num != 1)
+		return LWS_TOKZE_TOKEN;
+	if (flo)
+		return LWS_TOKZE_FLOAT;
+
+	return LWS_TOKZE_INTEGER;
+}
+
+
+LWS_VISIBLE LWS_EXTERN int
+lws_tokenize_cstr(struct lws_tokenize *ts, char *str, int max)
+{
+	if (ts->token_len + 1 >= max)
+		return 1;
+
+	memcpy(str, ts->token, ts->token_len);
+	str[ts->token_len] = '\0';
+
+	return 0;
+}
+
+LWS_VISIBLE LWS_EXTERN void
+lws_tokenize_init(struct lws_tokenize *ts, const char *start, int flags)
+{
+	ts->start = start;
+	ts->len = 0x7fffffff;
+	ts->flags = flags;
+	ts->delim = LWSTZ_DT_NEED_FIRST_CONTENT;
 }
 
 #if LWS_MAX_SMP > 1
@@ -2973,6 +3333,21 @@ lws_pvo_search(const struct lws_protocol_vhost_options *pvo, const char *name)
 	}
 
 	return pvo;
+}
+
+int
+lws_pvo_get_str(void *in, const char *name, const char **result)
+{
+	const struct lws_protocol_vhost_options *pv =
+		lws_pvo_search((const struct lws_protocol_vhost_options *)in,
+				name);
+
+	if (!pv)
+		return 1;
+
+	*result = (const char *)pv->value;
+
+	return 0;
 }
 
 void
@@ -3289,9 +3664,10 @@ LWS_VISIBLE LWS_EXTERN void
 lws_stats_log_dump(struct lws_context *context)
 {
 	struct lws_vhost *v = context->vhost_list;
-	int n, m;
-
-	(void)m;
+	int n;
+#if defined(LWS_WITH_PEER_LIMITS)
+	int m;
+#endif
 
 	if (!context->updated)
 		return;
@@ -3432,7 +3808,7 @@ lws_stats_log_dump(struct lws_context *context)
 		wl = pt->http.ah_wait_list;
 		while (wl) {
 			m++;
-			wl = wl->ah_wait_list;
+			wl = wl->http.ah_wait_list;
 		}
 
 		lwsl_notice("  AH wait list count / actual:      %d / %d\n",
@@ -3469,7 +3845,8 @@ lws_stats_log_dump(struct lws_context *context)
 					strcpy(buf, "unknown");
 #if defined(LWS_ROLE_H1) || defined(LWS_ROLE_H2)
 				lwsl_notice("  peer %s: count wsi: %d, count ah: %d\n",
-					    buf, df->count_wsi, df->count_ah);
+					    buf, df->count_wsi,
+					    df->http.count_ah);
 #else
 				lwsl_notice("  peer %s: count wsi: %d\n",
 					    buf, df->count_wsi);
