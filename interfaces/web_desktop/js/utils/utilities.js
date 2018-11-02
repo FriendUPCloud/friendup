@@ -16,6 +16,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
 *                                                                              *
 *****************************************************************************©*/
+
 /** @file
  *
  * Utilities: ORGANIZED utilities
@@ -30,9 +31,6 @@ Friend.Utilities = Friend.Utilities || {};
 
 
 // APIDIRECTCODESTART
-
-Friend.Utilities = {} || Friend.Utilities;
-
 Friend.Utilities.getClass = function( source )
 {
 	// Assign the functions of the class
@@ -131,7 +129,7 @@ Friend.Utilities.getNextPowerOfTwo = function ( v )
     return v;
 };
 
-Friend.Utilities.isPowerOfTwo=function ( n )
+Friend.Utilities.isPowerOfTwo = function( n )
 {
 	return n && (n & (n - 1)) === 0;
 };

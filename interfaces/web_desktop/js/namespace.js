@@ -17,8 +17,8 @@
 *                                                                              *
 *****************************************************************************©*/
 
-if ( window.friendUP )
-	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed');
+if( window.friendUP )
+	throw new Error( 'namespace.js - friendUP namespace is already defined, make sure this is the first script executed' );
 
 window.friendUP = {
 	app : {},

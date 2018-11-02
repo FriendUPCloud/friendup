@@ -267,7 +267,7 @@ Friend.getAPI = function( applicationId, options, callback, extra )
 			var name = definition.functionPath.substring( 0, dot );
 			if ( source.indexOf( name + '.' ) < 0 )
 			{
-				source += name + ' = {} || window.' + name + ';\n'; 
+				source += name + ' = window.' + name + ' || {};\n'; 
 			}
 			dot = definition.functionPath.indexOf( '.', dot + 1 );
 		}
@@ -301,11 +301,11 @@ Friend.callAPIFunction = function( msg )
 {
 	// Get information from message
 	var messageInfo = {};
-	if ( msg.applicationId )
+	if( msg.applicationId )
 	{
 		messageInfo.view = GetContentWindowByAppMessage( findApplication( msg.applicationId ), msg );
 		messageInfo.applicationId = msg.applicationId;
-		if ( msg.applicationName )
+		if( msg.applicationName )
 			messageInfo.applicationName = msg.applicationName;
 		messageInfo.viewId = msg.viewId;
 		messageInfo.callback = msg.callback;
@@ -313,14 +313,14 @@ Friend.callAPIFunction = function( msg )
 
 	// Call the function
 	var definition = Friend.APIDefinition[ msg.method ];
-	if ( definition )
+	if( definition )
 	{
 		// Replace callback by local callback
-		if ( definition.callbackPosition >= 0 )
+		if( definition.callbackPosition >= 0 )
 			msg.arguments[ definition.callbackPosition ] = thisCallback;
 
 		// Up to 10 arguments (Javascript -> pass more in objects)
-		switch ( definition.numberOfArguments )
+		switch( definition.numberOfArguments )
 		{
 			case 0:
 				ret = definition.klass();
@@ -403,10 +403,10 @@ Friend.callAPIFunction = function( msg )
 		}
 
 		// If value is by return, send the message back...
-		if ( definition.isDirect )
+		if( definition.isDirect )
 		{
 			// Except for double access functions, when it is returned by callback.
-			if ( ret != Friend.NORETURN )
+			if( ret != Friend.NORETURN )
 			{
 				var nmsg = 
 				{

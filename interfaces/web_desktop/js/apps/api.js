@@ -608,7 +608,7 @@ Friend.generateUniqueId = function( arrayBuffer, postfix )
 	}
 	while( typeof( arrayBuffer[uid + postfix ] ) != 'undefined' );
 	return uid + postfix;
-}
+};
 
 generateUniqueId = Friend.generateUniqueId;
 
@@ -617,7 +617,7 @@ Friend.uniqueIdString = function()
 	return ( Math.random() * 9999 ) + '' +
 		( ( Math.random() * 9999 ) + ( Math.random() * 9999 ) ) +
 		'' + ( new Date() ).getTime();
-}
+};
 uniqueIdString = Friend.uniqueIdString;
 
 // Extract a callback element and return it
@@ -8198,7 +8198,7 @@ CallLowLevelAPI = function( args, functionPath, argumentNames, flags )
 	Application.sendMessage( message );
 };
 
-if ( Friend )
+if( Friend )
 {
 	// To be called at first pass of Javascript
 	Friend.addToAPI = function( functionPath, argumentNames, properties, parentClass )
@@ -8238,7 +8238,7 @@ if ( Friend )
 		}
 
 		// Add to API!
-		if ( functionClass )
+		if( functionClass )
 		{
 			definition.klass = functionClass;
 			parentClass.APIDefinition[ functionPath ] = definition;

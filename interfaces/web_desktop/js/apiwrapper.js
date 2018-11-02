@@ -706,7 +706,6 @@ function apiWrapper( event, force )
 
 			// Automatic API System...
 			case 'Friend':
-				console.log( 'Got a Friend api call: ', msg );
 				Friend.callAPIFunction( msg );
 				msg.callback = false;
 				break;
