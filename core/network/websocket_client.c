@@ -128,7 +128,7 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 		default:
 			break;
 	}
-	DEBUG("[WebsocketClientCallback] end\n" );
+	//DEBUG("[WebsocketClientCallback] end\n" );
 
 	return 0;
 }
@@ -136,7 +136,7 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 static struct lws_protocols protocols[] =
 {
 	{
-		"friend",
+		NULL,//"friend",
 		WebsocketClientCallback,
 		sizeof( WClientData ),
 		WSCLIENT_RX_BUFFER_BYTES,
@@ -179,7 +179,7 @@ void WebsocketClientLoop( void *data )
 		lws_service( cl->ws_Context, 250 );
 		
 		sleep( 2 );
-		WebsocketClientSendMessage( cl, "aa", 2 );
+		//WebsocketClientSendMessage( cl, "aa", 2 );
 	}
 	th->t_Launched = FALSE;
 	DEBUG("[WebsocketClientLoop] end\n" );
@@ -238,16 +238,16 @@ void WebsocketClientDelete( WebsocketClient *cl )
 			usleep( 1000 );
 		}
 		
-		if( cl->wc_WSData != NULL )
-		{
-			FFree( cl->wc_WSData );
-		}
-		
  		FQDeInitFree( &(cl->wc_MsgQueue) );
 		
 		pthread_mutex_destroy( &(cl->wc_Mutex) );
 		
 		lws_context_destroy( cl->ws_Context );
+		
+		if( cl->wc_WSData != NULL )
+		{
+			FFree( cl->wc_WSData );
+		}
 		
 		FFree( cl );
 		DEBUG("[WebsocketClientDelete] start\n" );
@@ -276,10 +276,12 @@ int WebsocketClientConnect( WebsocketClient *cl )
 		
 		if( cl->ws_Context != NULL )
 		{
+			DEBUG("[WebsocketClientConnect] Connect to: %s port %d\n", cl->wc_Host, cl->wc_Port );
+			
 			cl->ws_Ccinfo.context = cl->ws_Context;
-			cl->ws_Ccinfo.address = cl->wc_Host;
+			cl->ws_Ccinfo.address = "127.0.0.1";// cl->wc_Host;
 			cl->ws_Ccinfo.port = cl->wc_Port;
-			cl->ws_Ccinfo.path = "/ws";
+			cl->ws_Ccinfo.path = "/";//NULL;//"/ws";
 			cl->ws_Ccinfo.host = lws_canonical_hostname( cl->ws_Context );
 			cl->ws_Ccinfo.origin = "origin";
 			cl->ws_Ccinfo.protocol = protocols[ PROTOCOL_FRIEND ].name;

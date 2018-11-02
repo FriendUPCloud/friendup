@@ -923,12 +923,6 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize DOSTokenManager\n");
 	}
 	
-	l->sl_MobileManager = MobileManagerNew( l );
-	if( l->sl_MobileManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
-	}
-	
 	l->sl_CalendarManager = CalendarManagerNew( l );
 	if( l->sl_CalendarManager == NULL )
 	{
@@ -1007,6 +1001,17 @@ void SystemClose( SystemBase *l )
 		return;
 	}
 	
+	if( l->l_APNSConnection != NULL )
+	{
+		WebsocketClientDelete( l->l_APNSConnection );
+		l->l_APNSConnection = NULL;
+	}
+	
+	if( l->sl_MobileManager != NULL )
+	{
+		MobileManagerDelete( l->sl_MobileManager );
+	}
+	
 	DEBUG("[SystemBase] close event manager\n");
 	if( l->sl_EventManager != NULL )
 	{
@@ -1050,11 +1055,6 @@ void SystemClose( SystemBase *l )
 			INVARManagerDelete( l->nm );
 		}
 	}*/
-	
-	if( l->sl_MobileManager != NULL )
-	{
-		MobileManagerDelete( l->sl_MobileManager );
-	}
 	
 	if( l->cm != NULL )
 	{
@@ -1316,6 +1316,21 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
+	
+	DEBUG("[SystembaseInitExternal]APNS init\n" );
+	
+	l->l_APNSConnection = WebsocketClientNew( l->l_AppleServerHost, l->l_AppleServerPort, NULL );
+	if( l->l_APNSConnection != NULL )
+	{
+		if( WebsocketClientConnect( l->l_APNSConnection ) > 0 )
+		{
+			DEBUG("APNS server connected\n");
+		}
+		else
+		{
+			DEBUG("APNS server not connected\n");
+		}
+	}
 	
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -1598,6 +1613,13 @@ int SystemInitExternal( SystemBase *l )
 		l->LibrarySQLDrop( l, sqllib );
 	}
 	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
 	
 	// mount INRAM drive
 	/*
@@ -1614,6 +1636,9 @@ int SystemInitExternal( SystemBase *l )
 		Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", "INRAM", err );
 		//l->sl_INRAM->f_Mounted = TRUE;
 	}*/
+	
+	
+	// test websocket client connection
 	
 	return 0;
 }

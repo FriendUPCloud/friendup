@@ -47,6 +47,7 @@ typedef struct UserMobileApp
 	MinNode			node;
 	FULONG			uma_ID;
 	FULONG			uma_UserID;
+	User			*uma_User;
 	char			*uma_AppToken;
 	char			*uma_AppVersion;
 	char			*uma_Platform;
@@ -54,6 +55,8 @@ typedef struct UserMobileApp
 	char			*uma_Core;
 	time_t			uma_CreateTS;
 	time_t			uma_LastStartTS;
+	
+	WebsocketClient	*uma_WSClient;
 }UserMobileApp;
 
 //
