@@ -103,9 +103,20 @@ function storageForm( type, id, data )
 		}
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
-		{	
+		{
+			var scripts = [];
+			
 			if( e == 'ok' )
 			{
+				// collect scripts
+				
+				var scr;
+				while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+				{
+					d = d.split( scr[0] ).join( '' );
+					scripts.push( scr[1] );
+				}
+				
 				var mch;
 				var i = 0;
 				while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
@@ -192,6 +203,18 @@ function storageForm( type, id, data )
 			}
 			
 			verifyForm( null, 'show' );
+			
+			// Run scripts at the end ...
+			if( scripts )
+			{
+				for( var key in scripts )
+				{
+					if( scripts[key] )
+					{
+						eval( scripts[key] );
+					}
+				}
+			}
 		}
 		m.execute( 'dosdrivergui', { type: type, id: id } );
 	}

@@ -62,7 +62,7 @@
 					</p>
 				</div>
 				<div class="HContent70 FloatLeft">
-					<p class="Layout InputHeight">
+					<p class="Layout InputHeight" id="WorkgroupContainer">
 						<input type="text" id="Workgroup" class="FullWidth" value="" placeholder="{i18n_workgroup_name}..."/>
 					</p>
 				</div>
@@ -81,4 +81,45 @@
 					</p>
 				</div>
 			</div>
-
+			
+			<!--<script src="devices/DOSDrivers/SQLWorkgroupDrive/gui.js"></script>-->
+			
+			<script>
+				
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e == 'ok' && d )
+					{
+						try
+						{
+							d = JSON.parse( d );
+							
+							if( d )
+							{
+								var value = ge( 'Workgroup' ).value;
+								
+								var str = '';
+								
+								str += '<select id="Workgroup" class="FullWidth"><option value="">{i18n_choose_workgroup}</option>';
+								
+								for( var k in d )
+								{
+									if( d[k] && d[k].Name )
+									{
+										str += '<option value="' + d[k].Name + '"' + ( value == d[k].Name ? ' selected="selected"' : '' ) + '>' + d[k].Name + '</option>';
+									}
+								}
+								
+								str += '</select>';
+								
+								ge( 'WorkgroupContainer' ).innerHTML = str;
+							}
+						}
+						catch( e ) {}
+					}
+				}
+				m.execute( 'workgroups' );
+				
+			</script>
+			

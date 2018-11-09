@@ -7,6 +7,7 @@ if( !function_exists( 'findInSearchPaths' ) )
 	function findInSearchPaths( $app )
 	{
 		$ar = array(
+			'repository/',
 			'resources/webclient/apps/'
 		);
 		foreach ( $ar as $apath )
