@@ -56,6 +56,14 @@ void UserMobileAppDelete( UserMobileApp *app )
 {
 	if( app != NULL )
 	{
+		/*
+		if( app->uma_WSClient != NULL )
+		{
+			WebsocketClientDelete( app->uma_WSClient );
+			app->uma_WSClient = NULL;
+		}
+		*/
+		
 		if( app->uma_AppToken != NULL )
 		{
 			FFree( app->uma_AppToken );

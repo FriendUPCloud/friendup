@@ -41,6 +41,7 @@
 MobileManager *MobileManagerNew( void *sb )
 {
 	MobileManager *mm;
+	DEBUG("[MobileManagerNew] new\n");
 	
 	if( ( mm = FCalloc( 1, sizeof(MobileManager) ) ) != NULL )
 	{
@@ -58,7 +59,42 @@ MobileManager *MobileManagerNew( void *sb )
 		
 			sb->LibrarySQLDrop( sb, lsqllib );
 		}
+		
+		UserMobileApp *lma = mm->mm_UMApps;
+		while( lma != NULL )
+		{
+			char msg[ 2048 ];
+			
+			if( lma->uma_UserID > 0 )
+			{
+				lma->uma_User = UMGetUserByID( sb->sl_UM, lma->uma_UserID );
+			}
+			lma->uma_WSClient = sb->l_APNSConnection;
+			
+			int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+			
+			WebsocketClientSendMessage( lma->uma_WSClient, msg, msgsize );
+			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
+			/*
+			DEBUG("[MobileManagerNew] create connection\n");
+			lma->uma_WSClient = WebsocketClientNew( sb->l_AppleServerHost, sb->l_AppleServerPort, NULL );
+			if( lma->uma_WSClient != NULL )
+			{
+				if( WebsocketClientConnect( lma->uma_WSClient ) > 0 )
+				{
+					DEBUG("[MobileManagerNew] connected\n");
+				}
+				else
+				{
+					DEBUG("[MobileManagerNew] not connected\n");
+				}
+			}
+			DEBUG("Going to next pointer %p\n", lma );
+			*/
+			lma = (UserMobileApp *)lma->node.mln_Succ;
+		}
 	}
+	DEBUG("[MobileManagerNew] end\n");
 	return mm;
 }
 
@@ -320,5 +356,4 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
-	return uma;
 }

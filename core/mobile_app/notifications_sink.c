@@ -183,7 +183,7 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 		lws_write(wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT);
 		
 		mobile_app_notif *man = (mobile_app_notif *)udata;
-		man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, websocket_notification_conn_callback );
+		//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, websocket_notification_conn_callback );
 		return 0;
 
 	}

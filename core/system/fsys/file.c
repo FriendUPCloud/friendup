@@ -863,12 +863,16 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 		char *lfile = src;
 		int lastslash = 0;
 		unsigned int length = strlen( src )-1;
+		int locbpath = strlen( basepath );
 		
 		for( i=1 ; i < length ; i++ )
 		{
 			if( src[ i ] == ':' || src[ i ] == '/' )
 			{
-				lastslash = i;
+				if( src[ i+1 ] != ';' )
+				{
+					lastslash = i;
+				}
 			}
 			else if( src[ i ] == ';' )
 			{
@@ -890,7 +894,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
 					
-					DEBUG("\n\n\nCOPY------------> %s   dst %s\n\n\n", tmpdst, dst );
+					DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
 
 					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], basePos, -1, numberFiles );
 					FFree( tmpdst );
