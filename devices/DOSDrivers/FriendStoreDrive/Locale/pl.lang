@@ -1,0 +1,9 @@
+
+i18n_FriendStoreDrive            : Dysk FriendStore
+i18n_FriendStoreDOSdriver        : Sterownik FriendStore dla dostawców
+i18n_vendor                      : Informacje o dostawcy
+i18n_vendor_ID                   : Twój zarejestrowany identyfikator dostawcy
+
+#From dos actions
+
+i18n_cannotcreate_deep_directory : Możesz tworzyć tylko katalogi projektów (jeden poziom).

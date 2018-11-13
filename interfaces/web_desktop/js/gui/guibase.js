@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -87,6 +78,7 @@ var mousePointer =
 					wnZ >= z
 				)
 				{
+					moveWin = false;
 					if( wn.content && wn.content.fileBrowser )
 					{
 						if( !wn.content.fileBrowser.dom.classList.contains( 'Hidden' ) )
@@ -218,11 +210,13 @@ var mousePointer =
 					{
 						ic.classList.add( 'Selected' );
 						ic.selected = true;
+						ic.fileInfo.selected = true;
 					}
 					else if( !mover || mover != icon )
 					{
 						ic.classList.remove( 'Selected' );
 						ic.selected = false;
+						ic.fileInfo.selected = false;
 					}
 				}
 			}
@@ -282,17 +276,19 @@ var mousePointer =
 							if ( e.fileInfo.getDropInfo ) {
 								var info = e.fileInfo.getDropInfo();
 								objs.push( info );
-							} else {
+							} 
+							else 
+							{
 								objs.push( {
 									Path: e.fileInfo.Path,
 									Type: e.fileInfo.Type,
 									Filename: e.fileInfo.Filename ? e.fileInfo.Filename : e.fileInfo.Title,
 									Filesize: e.fileInfo.fileSize,
 									Icon: e.fileInfo.Icon
-								});
+								} );
 							}
 						}
-						if ( dropper.ondrop )
+						if( dropper.ondrop )
 							dropper.ondrop( objs );
 						break;
 					}
@@ -311,7 +307,11 @@ var mousePointer =
 			}
 			var ars = [];
 			for( var a in movableWindows )
+			{
+				// Don't check minimized windows
+				if( movableWindows[a].parentNode.getAttribute( 'minimized' ) ) continue;
 				ars.push( movableWindows[a] );
+			}
 			ars = ars.concat( screens );
 			
 			var dropped = 0;
@@ -336,7 +336,6 @@ var mousePointer =
 					{
 						dropWin = wn;
 						z = wnZ;
-						console.log( 'Dropped on ' + dropWin.className );
 					}
 				}
 				if( dropWin )
@@ -551,6 +550,9 @@ var mousePointer =
 	},
 	'pickup': function ( ele )
 	{
+		// Do not allow pickup for mobile
+		if( window.isMobile ) return;
+		
 		this.testPointer ();
 		// Check multiple (pickup multiple)
 		var multiple = false;
@@ -1235,6 +1237,9 @@ function _NewSelectBoxRadio ( pid, ele )
 
 /* For movable windows ------------------------------------------------------ */
 
+var dragDistance = 0;
+var dragDistanceX = 0, dragDistanceY = 0;
+
 // Moves windows on mouse move
 movableListener = function( e, data )
 {
@@ -1298,12 +1303,13 @@ movableListener = function( e, data )
 		var lockY = false;
 		var lockX = false;
 		
+		
 		// 8 px grid + snapping
 		if( e.shiftKey )
 		{	
 			// Mouse coords changed
 			if( window.mouseDown )
-			{
+			{	
 				if( mousePointer.prevMouseX != x || mousePointer.prevMouseY != y )
 				{
 					// Window snapping! Attach to window
@@ -1318,10 +1324,25 @@ movableListener = function( e, data )
 							if( Math.abs( directionY ) > Math.abs( directionX ) )
 							direction = directionY < 0 ? 'up' : 'down';
 				
+							if( currentMovable.shiftX !== false )
+							{
+								clx = currentMovable.shiftX;
+								cly = currentMovable.shiftY;
+								dragDistance = Math.sqrt( Math.pow( clx - x, 2 ) + Math.pow( cly - y, 2 ) );
+								dragDistanceX = clx - x;
+								dragDistanceY = cly - y;
+							}
+				
 							var curWinRight  = currentMovable.offsetLeft + currentMovable.offsetWidth;
 							var curWinLeft   = currentMovable.offsetLeft;
 							var curWinTop    = currentMovable.offsetTop;
 							var curWinBottom = currentMovable.offsetTop + currentMovable.offsetHeight;
+							
+							var snapInfo = {
+								view: false,
+								direction: false,
+								z: 0
+							};
 							
 							for( var z in movableWindows )
 							{
@@ -1329,9 +1350,7 @@ movableListener = function( e, data )
 
 								if( mw == currentMovable ) continue;
 								if( mw.parentNode && mw.parentNode && mw.parentNode.getAttribute( 'minimized' ) == 'minimized' ) 
-								{
 									continue;
-								}
 						
 								var mWR = mw.offsetLeft + mw.offsetWidth;
 								var mWL = mw.offsetLeft;
@@ -1344,16 +1363,13 @@ movableListener = function( e, data )
 								{
 									if( curWinRight > mWL && curWinRight <= mWL + 20 && ( ( curWinTop >= mWT && curWinTop <= mWB ) || ( curWinBottom >= mWT && curWinBottom <= mWB ) ) )
 									{
-										if( mWL - currentMovable.offsetWidth < 0 )
+										if( parseInt( mw.style.zIndex ) > snapInfo.z )
 										{
-											currentMovable.style.width = mWL + 'px';
+											snapInfo.view = mw;
+											snapInfo.direction = 'right';
+											snapInfo.extra = mWL;
+											snapInfo.z = parseInt( mw.style.zIndex );
 										}
-										currentMovable.style.left = mWL - currentMovable.offsetWidth + 'px';
-										currentMovable.snap = 'right';
-										currentMovable.snapObject = mw;
-								
-										doSnap = true;
-										lockX = true;
 									}
 								}
 								// Snap to the left
@@ -1361,52 +1377,107 @@ movableListener = function( e, data )
 								{
 									if( curWinLeft < mw.offsetWidth + mWL && curWinLeft >= mw.offsetWidth + mWL - 20 && ( ( curWinTop >= mWT && curWinTop <= mWB ) || ( curWinBottom >= mWT && curWinBottom <= mWB ) ) )
 									{
-										if( mWR + currentMovable.offsetWidth > Workspace.screen.getMaxViewWidth() )
+										if( parseInt( mw.style.zIndex ) > snapInfo.z )
 										{
-											currentMovable.style.width = Workspace.screen.getMaxViewWidth() - mWR + 'px';
+											snapInfo.view = mw;
+											snapInfo.direction = 'left';
+											snapInfo.extra = mWR;
+											snapInfo.z = parseInt( mw.style.zIndex );
 										}
-										currentMovable.style.left = mWR + 'px';
-										currentMovable.snap = 'left';
-										currentMovable.snapObject = mw;
-								
-										doSnap = true;
-										lockX = true;
 									}
 								}
 								else if( direction == 'up' && ( !currentMovable.snap || currentMovable.snap == 'up' ) )
 								{
 									if( curWinTop >= mWB - 20 && curWinTop < mWB && ( ( curWinLeft >= mWL && curWinLeft <= mWR ) || ( curWinRight >= mWL && curWinRight <= mWR ) ) )
 									{
-										if( mWB + currentMovable.offsetHeight > Workspace.screen.getMaxViewHeight() )
+										if( parseInt( mw.style.zIndex ) > snapInfo.z )
 										{
-											currentMovable.style.height = Workspace.screen.getMaxViewHeight() + 'px';
+											snapInfo.view = mw;
+											snapInfo.direction = 'up';
+											snapInfo.extra = mWB;
+											snapInfo.z = parseInt( mw.style.zIndex );
 										}
-										currentMovable.style.top = mWB + 'px';
-										currentMovable.snap = 'up';
-										currentMovable.snapObject = mw;
-								
-										doSnap = true;
-										lockY = true;
 									}
 								}
 								else if( direction == 'down' &&  ( !currentMovable.snap || currentMovable.snap == 'down' ) )
 								{
 									if( curWinBottom >= mWT && curWinBottom <= mWT + 20 && ( ( curWinLeft >= mWL && curWinLeft <= mWR ) || ( curWinRight >= mWL && curWinRight <= mWR ) ) )
 									{
-										if( mWT - currentMovable.offsetHeight < 0 )
+										if( parseInt( mw.style.zIndex ) > snapInfo.z )
 										{
-											currentMovable.style.height = mWT + 'px';
+											snapInfo.view = mw;
+											snapInfo.direction = 'down';
+											snapInfo.extra = mWT;
+											snapInfo.z = parseInt( mw.style.zIndex );
 										}
-										currentMovable.style.top = mWT - currentMovable.offsetHeight + 'px';
-										currentMovable.snap = 'down';
-										currentMovable.snapObject = mw;
-								
-										doSnap = true;
-										lockY = true;
 									}
 								}
+							}
+							
+							if( snapInfo.view )
+							{
+								if( currentMovable.shiftX === false )
+								{
+									currentMovable.shiftX = x;
+									currentMovable.shiftY = y;
+								}
 								
+								var mw = snapInfo.view;
 								
+								if( snapInfo.direction == 'right' )
+								{
+									if( snapInfo.extra - currentMovable.offsetWidth < 0 )
+									{
+										currentMovable.style.width = mWL + 'px';
+									}
+									currentMovable.style.left = snapInfo.extra - currentMovable.offsetWidth + 'px';
+									currentMovable.snap = 'right';
+									currentMovable.snapObject = snapInfo.view;
+							
+									doSnap = true;
+									lockX = true;
+								}
+								else if( snapInfo.direction == 'left' )
+								{
+									if( snapInfo.extra + currentMovable.offsetWidth > Workspace.screen.getMaxViewWidth() )
+									{
+										currentMovable.style.width = Workspace.screen.getMaxViewWidth() - snapInfo.extra + 'px';
+									}
+									currentMovable.style.left = snapInfo.extra + 'px';
+									currentMovable.snap = 'left';
+									currentMovable.snapObject = snapInfo.view;
+							
+									doSnap = true;
+									lockX = true;
+								}
+								else if( snapInfo.direction == 'up' )
+								{
+									if( snapInfo.extra + currentMovable.offsetHeight > Workspace.screen.getMaxViewHeight() )
+									{
+										currentMovable.style.height = Workspace.screen.getMaxViewHeight() + 'px';
+									}
+									currentMovable.style.top = snapInfo.extra + 'px';
+									currentMovable.snap = 'up';
+									currentMovable.snapObject = snapInfo.view;
+							
+									doSnap = true;
+									lockY = true;
+								}
+								else if( snapInfo.direction == 'down' )
+								{
+									if( snapInfo.extra - currentMovable.offsetHeight < 0 )
+									{
+										currentMovable.style.height = snapInfo.extra + 'px';
+									}
+									currentMovable.style.top = snapInfo.extra - currentMovable.offsetHeight + 'px';
+									currentMovable.snap = 'down';
+									currentMovable.snapObject = mw;
+							
+									doSnap = true;
+									lockY = true;
+								}
+								
+								// Do we snap?
 								if( doSnap )
 								{
 									var cx = mw.offsetLeft - currentMovable.offsetLeft;
@@ -1417,6 +1488,7 @@ movableListener = function( e, data )
 										mx: windowMouseX - cx,
 										my: windowMouseY - cy
 									};
+									
 									if( !mw.attached )
 									{
 										mw.attached = [ currentMovable ];
@@ -1438,7 +1510,7 @@ movableListener = function( e, data )
 										this.removeAttribute( 'viewsnap' );
 			
 										// Clean up snap object attached list and detach
-										if( this.snapObject )
+										if( this.snapObject && this.snapObject.attached )
 										{
 											var o = [];
 											var left = right = up = down = false
@@ -1476,8 +1548,6 @@ movableListener = function( e, data )
 									}
 									
 									PollTaskbar();
-									
-									break;
 								}
 							}
 						}
@@ -1493,30 +1563,51 @@ movableListener = function( e, data )
 						var mw = currentMovable.snapObject;
 						currentMovable.snapCoords.x = mw.offsetLeft - currentMovable.offsetLeft;
 						currentMovable.snapCoords.y = mw.offsetTop - currentMovable.offsetTop;
-					}
-					if( currentMovable.snap == 'right' || currentMovable.snap == 'left' )
-					{
-						lockX = true;
-						
-						if( Math.abs( windowMouseX - currentMovable.snapCoords.x - currentMovable.snapCoords.mx ) > 40 )
+					
+						var dir = currentMovable.snap;
+					
+						if( dir == 'right' || dir == 'left' )
 						{
-							currentMovable.style.top = currentMovable.snapObject.style.top;
-							currentMovable.style.height = currentMovable.snapObject.style.height;
-							lockY = true;
-						}
-					}
-					else
-					{
-						lockY = true;
-						
-						if( Math.abs( windowMouseY - currentMovable.snapCoords.y - currentMovable.snapCoords.my ) > 40 )
-						{
-							currentMovable.style.left = currentMovable.snapObject.style.left;
-							currentMovable.style.width = currentMovable.snapObject.style.width;
 							lockX = true;
+						
+							if( ( dir == 'left' && dragDistanceX > 150 ) || ( dir == 'right' && dragDistanceX < -150 ) )
+							{
+								currentMovable.style.top = currentMovable.snapObject.style.top;
+								currentMovable.style.height = currentMovable.snapObject.style.height;
+								lockY = true;
+								currentMovable.setAttribute( 'hardsnap', 'hardsnap' );
+							}
+							else
+							{
+								currentMovable.removeAttribute( 'hardsnap' );
+							}
+						}
+						else
+						{
+							lockY = true;
+						
+							if( ( dir == 'up' && dragDistanceY > 150 ) || ( dir == 'down' && dragDistanceY < -150 ) )
+							{
+								currentMovable.style.left = currentMovable.snapObject.style.left;
+								currentMovable.style.width = currentMovable.snapObject.style.width;
+								lockX = true;
+								currentMovable.setAttribute( 'hardsnap', 'hardsnap' );
+							}
+							else
+							{
+								currentMovable.removeAttribute( 'hardsnap' );
+							}
 						}
 					}
 				}
+			}
+		}
+		else
+		{
+			if( window.currentMovable )
+			{
+				currentMovable.shiftX = false;
+				currentMovable.shiftY = false;
 			}
 		}
 		
@@ -1711,8 +1802,17 @@ movableListener = function( e, data )
 		}
 	}
 	// Mouse down on desktop (regions)
-	if( window.mouseDown == 4 && window.regionWindow )
+	if( !window.isMobile && window.mouseDown == 4 && window.regionWindow )
 	{
+		// Prime
+		var scrl = window.regionWindow.directoryview.scroller;
+		if( !scrl.scrolling )
+		{
+			scrl.scrollTopStart  = scrl.scrollTop;
+			scrl.scrollLeftStart = scrl.scrollLeft;
+			scrl.scrolling = true;
+		}
+		// Draw
 		if( DrawRegionSelector( e ) )
 		{		
 			return cancelBubble( e );
@@ -1727,12 +1827,12 @@ function DrawRegionSelector( e )
 	var sh = e.shiftKey || e.ctrlKey;
 	
 	// Create region selector if it doesn't exist!
-	if( !ge ( 'RegionSelector' ) )
+	if( !ge( 'RegionSelector' ) )
 	{
-		var d = document.createElement ( 'div' );
+		var d = document.createElement( 'div' );
 		d.id = 'RegionSelector';
 		
-		window.regionWindow.appendChild ( d );
+		window.regionWindow.appendChild( d );
 		if( document.body.attachEvent )
 		{
 			d.style.border = '1px solid #000000';
@@ -1747,9 +1847,10 @@ function DrawRegionSelector( e )
 	var ex = 0; var ey = 0;
 	var eh = 0; var ew = 0;
 	var rwc = window.regionWindow.classList;
-	var scrwn = window.regionWindow.scroller;
+	var scrwn = window.regionWindow.directoryview ? window.regionWindow.directoryview.scroller : false;
 	
 	// In icon windows or new screens
+	
 	if ( rwc && ( rwc.contains( 'Content' ) || rwc.contains( 'ScreenContent' ) ) )
 	{	
 		// Window offset
@@ -1781,23 +1882,13 @@ function DrawRegionSelector( e )
 		// Do we have a scroll area?
 		if( scrwn )
 		{
-			// Make sure the scrolling rects adapt on scroll! (first time!)
-			if( !scrwn.onscroll )
-			{
-				scrwn.scrollTopStart  = scrwn.scrollTop;
-				scrwn.scrollLeftStart = scrwn.scrollLeft;
-				scrwn.onscroll = DrawRegionSelector;
-			}
-			// Calculate the diff on scroll
-			else
-			{
-				diffy = scrwn.scrollTopStart - scrwn.scrollTop;
-				diffx = scrwn.scrollLeftStart - scrwn.scrollLeft;
-			}
+			diffy = scrwn.scrollTopStart - scrwn.scrollTop;
+			diffx = scrwn.scrollLeftStart - scrwn.scrollLeft;
 		
 			// If mouse pointer is far down, do some scrolling
 			var ty = my - window.regionWindow.parentNode.offsetTop;
 			var tx = mx - window.regionWindow.parentNode.offsetLeft;
+			
 			if( ty < 40 )
 				scrwn.scrollTop -= 10;
 			else if ( ty - 30 > scrwn.offsetHeight - 30 )
@@ -1863,26 +1954,27 @@ function DrawRegionSelector( e )
 		var imy = dy;
 		
 		// Scrolled window..
-		if ( window.regionWindow.scroller && window.regionWindow.scroller.style )
+		var scroller = regionWindow.directoryview.scroller;
+		if ( scroller && scroller.style )
 		{
-			var scr = parseInt ( window.regionWindow.scroller.scrollTop );
+			var scr = parseInt ( scroller.scrollTop );
 			if ( isNaN ( scr )) scr = 0;
 			imy += scr;
 		}
 		
-		var icos = window.regionWindow.icons;
+		var icos = regionWindow.icons;
 		if ( icos )
 		{
 			var exOffx = 0;
 			var exOffy = 0;
 			
-			if( window.regionWindow.windowObject )
+			if( regionWindow.windowObject )
 			{
-				if( window.regionWindow.windowObject.content.fileBrowser )
+				if( regionWindow.fileBrowser )
 				{
-					if( !window.regionWindow.windowObject.content.fileBrowser.dom.classList.contains( 'Hidden' ) )
+					if( !regionWindow.fileBrowser.dom.classList.contains( 'Hidden' ) )
 					{
-						imx -= window.regionWindow.windowObject.content.fileBrowser.dom.offsetWidth;
+						imx -= regionWindow.fileBrowser.dom.offsetWidth;
 					}
 				}
 			}
@@ -1917,9 +2009,14 @@ function DrawRegionSelector( e )
 				
 					if ( overlapping || intersecting )
 					{
-						ics.className = ics.className.split ( ' Selected' ).join ( '' ) + ' Selected';
+						ics.classList.add( 'Selected' );
+						ics.fileInfo.selected = true;
 					}
-					else if ( !sh ) ics.className = ics.className.split ( ' Selected' ).join ( '' );
+					else if ( !sh )
+					{
+						ics.classList.remove( 'Selected' );
+						ics.fileInfo.selected = false;
+					}
 				}
 			}
 		}
@@ -2017,6 +2114,9 @@ movableMouseUp = function( e )
 	if( window.currentMovable )
 	{
 		window.currentMovable.removeAttribute( 'moving' );
+		// Remove where we shiftclicked
+		window.currentMovable.shiftX = false;
+		window.currentMovable.shiftY = false; 
 	}
 	
 	if( WorkspaceMenu.open || 
@@ -2066,6 +2166,12 @@ movableMouseUp = function( e )
 		{
 			Workspace.iconContextMenu.hide();
 		}
+	}
+	
+	if( window.regionWindow && window.regionWindow.directoryview )
+	{
+		var scrl = window.regionWindow.directoryview.scroller;
+		scrl.scrolling = false;
 	}
 }
 
@@ -2729,7 +2835,7 @@ function PollDockedTaskbar()
 				if( found && typeof( found ) == 'string' )
 				{
 					// Single instance apps handle themselves
-					if( !friend.singleInstanceApps[ found ] )
+					if( !Friend.singleInstanceApps[ found ] )
 					{
 						for( var c = 0; c < desklet.dom.childNodes.length; c++ )
 						{
@@ -3236,6 +3342,20 @@ movableMouseDown = function ( e )
 		}
 	}
 	
+	// Remove menu on calendar slide and menu click
+	if( isMobile && tar.id && tar.id == 'WorkspaceMenu' )
+	{
+		 if( ge( 'CalendarWidget' ) && document.body.classList.contains( 'WidgetSlideDown' ) )
+		 {
+		 	if( Workspace.widget )
+		 	{
+		 		tar.classList.remove( 'Open' );
+		 		Workspace.widget.slideUp();
+			 	return;
+		 	}
+		 }
+	}
+	
 	if( Workspace.iconContextMenu )
 	{
 		Workspace.iconContextMenu.hide();
@@ -3272,7 +3392,13 @@ movableMouseDown = function ( e )
 	)
 	{
 		if( !sh )
-			clearRegionIcons();
+		{
+			// Don't count scrollbar
+			if( ( ( e.clientX - GetElementLeft( tar ) ) < tar.offsetWidth - 16 ) )
+			{
+				clearRegionIcons();
+			}
+		}
 		
 		window.mouseDown = 4;
 		window.regionX = windowMouseX;
@@ -3312,7 +3438,7 @@ function DefaultToWorkspaceScreen( tar ) // tar = click target
 function clearRegionIcons()
 {
 	// No icons selected now..
-	friend.iconsSelectedCount = 0;
+	Friend.iconsSelectedCount = 0;
 
 	// Clear all icons
 	for( var a in movableWindows )
@@ -3326,7 +3452,10 @@ function clearRegionIcons()
 			{
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
+				{
 					ic.className = ic.className.split ( ' Selected' ).join ( '' );
+					w.icons[a].selected = false;
+				}
 			}
 		}
 	}
@@ -3335,9 +3464,11 @@ function clearRegionIcons()
 	{
 		for( var a = 0; a < Doors.screen.contentDiv.icons.length; a++ )
 		{
-			var ic = Doors.screen.contentDiv.icons[a].domNode;
+			var icon = Doors.screen.contentDiv.icons[a];
+			var ic = icon.domNode;
 			if( !ic ) continue;
 			ic.className = ic.className.split ( ' Selected' ).join ( '' );
+			icon.selected = false;
 		}
 	}
 }

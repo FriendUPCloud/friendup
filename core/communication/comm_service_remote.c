@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -49,7 +37,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/friendcore_manager.h>
 #include <communication/comm_msg.h>
 #include <system/systembase.h>
@@ -124,7 +112,7 @@ void CommServiceRemoteDelete( CommServiceRemote *s )
 			ThreadDelete( s->csr_Thread );
 		}
 		
-		DEBUG2("[CommServiceRemote] closeing pipes\n");
+		DEBUG2("[CommServiceRemote] closing pipes\n");
 		
 		if( close(  s->csr_sendPipe[0]  ) != 0 )
 		{
@@ -363,7 +351,7 @@ DataForm *ParseMessageCSR( CommServiceRemote *serv, Socket *socket, FBYTE *data,
 					http->parsedPostContent = HashmapNew();
 					char temp[ 1024 ];
 					char *pathParts[ 1024 ];
-					memset( pathParts, 0, 1024 );
+					memset( pathParts, 0, 1024*sizeof(char *) );
 					
 					data += COMM_MSG_HEADER_SIZE;
 					df = (DataForm *)data;

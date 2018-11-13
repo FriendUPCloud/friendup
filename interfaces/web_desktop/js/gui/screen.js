@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -539,16 +530,16 @@ Screen = function ( flags, initObject )
 	{
 		var t = e.target ? e.target : e.srcElement;
 		if( t != scrn.contentDiv && t != scrn.contentDiv.parentNode ) return;
-		
+	
 		var ct = scrn.contentDiv.parentNode.screenOffsetTop;
 		if( !ct ) ct = '0px';
-		
+	
 		var tp = e.changedTouches[0];
 		scrn.touch.mx = tp.clientX;
 		scrn.touch.my = tp.clientY;
 		var diffy = scrn.touch.ty + ( scrn.touch.my - scrn.touch.oy );
 		var diffx = scrn.touch.tx + ( scrn.touch.mx - scrn.touch.ox );
-		
+	
 		if( !scrn.touchCycled && Math.abs( diffx ) > ( window.innerWidth * 0.8 ) )
 		{
 			scrn.touchCycled = true;
@@ -557,12 +548,13 @@ Screen = function ( flags, initObject )
 		// Show the dock!
 		else if( diffy < 0 && parseInt( ct ) == 0 )
 		{
-			if( !scrn.touch.moved && diffy < -60 )
+			if( !scrn.touch.moved && diffy < -60 && !Workspace.mainDock.open )
 			{
 				Workspace.mainDock.openDesklet( e );
 			}
 		}
-		else if( Math.abs( diffy ) > 5 ) 
+		// Don't do this on mobile
+		else if( !window.isMobile && Math.abs( diffy ) > 5 ) 
 		{
 			var top = scrn.touch.oy + diffy;
 			if( top < 0 ) 
@@ -585,7 +577,7 @@ Screen = function ( flags, initObject )
 				scrn.contentDiv.parentNode.screenOffsetTop = top;
 				scrn.touch.moved = true;
 			}
-			
+		
 			// No need for menu here
 			if( scrn.clickTimeout )
 			{
@@ -894,7 +886,7 @@ Screen = function ( flags, initObject )
 					origin:        document.location.href,
 					screenId:      w.externScreenId,
 					theme:         Workspace.theme,
-					clipboard:     friend.clipboard
+					clipboard:     Friend.clipboard
 				} );
 				ifr.contentWindow.postMessage( msg, Workspace.protocol + '://' + ifr.src.split( '//' )[1].split( '/' )[0] );
 				ifr.loaded = true;

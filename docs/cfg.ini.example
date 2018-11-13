@@ -11,7 +11,7 @@ port = 6502
 fcupload = storage/
 
 [Core]
-SSLEnable=1
+SSLEnable=0
 port=6502
 
 [FriendNetwork]

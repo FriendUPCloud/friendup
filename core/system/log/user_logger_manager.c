@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -37,6 +25,7 @@
 #include <sys/stat.h>
 #include <util/buffered_string.h>
 #include <dirent.h>
+#include <system/systembase.h>
 
 /**
  * Create new UserLoggerManager
@@ -52,15 +41,16 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 	{
 		char loggerPath[ 1024 ];
 		char loadLoggerPath[ 2048 ];
+		SystemBase *locsb = (SystemBase *)sb;
 		ulm->ulm_SB = sb;
 		
 		// read from configuration active logger
 		
-		struct PropertiesLibrary *plib = NULL;
+		struct PropertiesInterface *plib = NULL;
 		char *actLogger = NULL;
 		Props *prop = NULL;
 		
-		if( ( plib = (struct PropertiesLibrary *)LibraryOpen( sb, "properties.library", 0 ) ) != NULL )
+		plib = &( locsb->sl_PropertiesInterface );
 		{
 			char coresPath[ 1024 ];
 			sprintf( coresPath, "%s/cfg/cfg.ini", getenv( "FRIEND_HOME" ) );
@@ -122,8 +112,6 @@ UserLoggerManager *UserLoggerManagerNew( void *sb )
 			}
 		
 			plib->Close( prop );
-			
-			LibraryClose( plib );
 		}
 	}
 	

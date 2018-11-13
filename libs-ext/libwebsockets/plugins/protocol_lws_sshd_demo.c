@@ -21,7 +21,7 @@
 #if !defined (LWS_PLUGIN_STATIC)
 #define LWS_DLL
 #define LWS_INTERNAL
-#include "../lib/libwebsockets.h"
+#include <libwebsockets.h>
 #endif
 
 #include <lws-ssh.h>
@@ -208,7 +208,8 @@ ssh_ops_get_server_key(struct lws *wsi, uint8_t *buf, size_t len)
 						 lws_get_protocol(wsi));
 	int n;
 
-	lseek(vhd->privileged_fd, 0, SEEK_SET);
+	if (lseek(vhd->privileged_fd, 0, SEEK_SET) < 0)
+		return 0;
 	n = read(vhd->privileged_fd, buf, (int)len);
 	if (n < 0) {
 		lwsl_err("%s: read failed: %d\n", __func__, n);
@@ -242,7 +243,7 @@ static int
 ssh_ops_is_pubkey_authorized(const char *username, const char *type,
 				 const uint8_t *peer, int peer_len)
 {
-	char *aps = NULL, *p, *ps;
+	char *aps, *p, *ps;
 	int n = (int)strlen(type), alen = 2048, ret = 2, len;
 	size_t s = 0;
 
@@ -415,6 +416,9 @@ callback_lws_sshd_demo(struct lws *wsi, enum lws_callback_reasons reason,
 	case LWS_CALLBACK_VHOST_CERT_AGING:
 		break;
 
+	case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
+		break;
+
 	default:
 		if (!vhd->ssh_base_protocol) {
 			vhd->ssh_base_protocol = lws_vhost_name_to_protocol(
@@ -462,7 +466,7 @@ init_protocol_lws_sshd_demo(struct lws_context *context,
 	}
 
 	c->protocols = protocols;
-	c->count_protocols = ARRAY_SIZE(protocols);
+	c->count_protocols = LWS_ARRAY_SIZE(protocols);
 	c->extensions = NULL;
 	c->count_extensions = 0;
 

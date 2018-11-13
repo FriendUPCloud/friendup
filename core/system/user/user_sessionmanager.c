@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -1131,4 +1119,33 @@ FBOOL USMSendDoorNotification( UserSessionManager *usm, void *notif, File *devic
     
 	FFree( tmpmsg );
 	return TRUE;
+}
+
+/**
+ * Remove unused websockets connections
+ *
+ * @param usm pointer to UserSessionManager
+ */
+void USMCloseUnusedWebSockets( UserSessionManager *usm )
+{
+	time_t actTime = time( NULL );
+	DEBUG("[USMCloseUnusedWebSockets] start\n");
+	FRIEND_MUTEX_LOCK( &(usm->usm_Mutex) );
+	UserSession *ses = usm->usm_Sessions;
+	while( ses != NULL )
+	{
+		WebsocketServerClient *cl = ses->us_WSClients;
+		if( cl != NULL )
+		{
+			if( ( actTime - cl->wsc_LastPingTime ) < 150 )		// if last call was done 150 secs ago, we can close it
+			{
+				lws_close_reason( cl->wsc_Wsi, LWS_CLOSE_STATUS_NORMAL, (unsigned char *)"CLOSE", 5 );
+				DEBUG("[USMCloseUnusedWebSockets] close WS connection\n");
+			}
+		}
+		
+		ses = (UserSession *)ses->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &(usm->usm_Mutex) );
+	DEBUG("[USMCloseUnusedWebSockets] end\n");
 }

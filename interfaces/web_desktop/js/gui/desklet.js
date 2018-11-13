@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -202,10 +193,11 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.openDesklet = function( e )
 	{
-		if( !this.open )
+		var self = this;
+		if( !this.open && !this.opening )
 		{
+			this.opening = true;
 			hideKeyboard();
-			this.open = true;
 			
 			// New drivepanel alike method
 			if( !Workspace.appPanel )
@@ -230,6 +222,8 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			setTimeout( function()
 			{
 				d.classList.add( 'Opened' );
+				self.opening = false;
+				self.open = true;
 			}, 5 );
 			document.body.classList.add( 'AppsShowing' );
 			if( Workspace.widget ) Workspace.widget.slideUp();
@@ -239,6 +233,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.closeDesklet = function( e )
 	{
+		var self = this;
 		if( this.open )
 		{
 			this.dom.className = 'Desklet Open';
@@ -247,9 +242,9 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				d.classList.remove( 'Open' );
 				d.style.overflowY = 'visible';
+				self.open = false;
 			}, 250 );
 			document.body.classList.remove( 'AppsShowing' );
-			this.open = false;
 			Workspace.redrawIcons();
 			return cancelBubble( e );
 		}
@@ -261,8 +256,22 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 	
 	this.render = function( forceRefresh )
 	{
+		var self = this;
+		
 		// Setup the container for the launcher icons
 		this.dom.style.position = 'absolute';
+		
+		if( window.isMobile )
+		{
+			// Create hider
+			var hider = document.createElement( 'div' );
+			hider.className = 'Hider';
+			hider.onclick = function()
+			{
+				self.closeDesklet();
+			}
+			this.dom.appendChild( hider );
+		}
 		
 		// Move window list
 		var viewList = false;
@@ -807,6 +816,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			{
 				div.style.backgroundImage = 'url(\'' + o.src + '\')';
 				div.innerHTML = '<span>' + ( o.displayname ? o.displayname: o.exe ) + '</span>';
+				div.setAttribute('data-exename', o.exe);
+				div.setAttribute('data-workspace', ( o.workspace ? o.workspace : 0 ) );
+				div.setAttribute('data-displayname', ( o.displayname ? o.displayname: o.exe ) );
+				div.setAttribute('id', 'dockItem_' + o.exe );
 			}
 			
 			function clickFunc( e )
@@ -878,7 +891,7 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 				var docked = globalConfig.viewList == 'docked' || globalConfig.viewList == 'dockedlist';
 			
 				// If not a single instance app, execute
-				if( !docked && !friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
+				if( !docked && !Friend.singleInstanceApps[ executable ] || o.exe.indexOf( ' ' ) > 0 )
 				{
 					ExecuteApplication( executable, args );
 				}
@@ -945,9 +958,12 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 					if( div.helpBubble ) div.helpBubble.close();
 				}
 			}
-			if( o.title )
+			
+			var bubbletext = o.displayname ? o.displayname : ( o.title ? o.title : o.src );
+			
+			if( bubbletext )
 			{
-				CreateHelpBubble( div, o.title ? o.title : o.src );
+				CreateHelpBubble( div, bubbletext );
 			}
 			this.dom.appendChild( div );
 			this.refresh ();

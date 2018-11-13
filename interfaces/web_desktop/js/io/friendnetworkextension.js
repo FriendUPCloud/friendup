@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -24,7 +15,7 @@
  * @author FL (Francois Lionet)
  * @date first pushed on 10/07/2018
  */
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetworkExtension =
 {	
@@ -63,28 +54,28 @@ FriendNetworkExtension =
 			}
 			else if ( window.isMobile )
 			{
-				self.mobile = true;
-				//var handle = setInterval( function()
-				//{				
-					self.sendMessage( message, function( response ) 
+				self.mobile = false;
+				callback( false );
+				/*
+				self.sendMessage( message, function( response ) 
+				{
+					if ( response )
 					{
-						if ( response )
+						//clearInterval( handle );
+						if ( response.command == 'initResponse' && response.status == 'ready' )
 						{
-							//clearInterval( handle );
-							if ( response.command == 'initResponse' && response.status == 'ready' )
-							{
-								self.connected = true;
-								if ( callback )
-									callback( true );
-							}
-							else
-							{
-								if ( callback )
-									callback( false );
-							} 
+							self.connected = true;
+							if ( callback )
+								callback( true );
 						}
-					}, { force: true } );
-				//}, 1000 );
+						else
+						{
+							if ( callback )
+								callback( false );
+						} 
+					}
+				}, { force: true } );
+				*/
 			}
 			else
 			{
@@ -111,6 +102,7 @@ FriendNetworkExtension =
 			self.messageCallbacks[ message.identifier ] = callback;			
 			if ( self.mobile )
 			{
+				/*
 				var json = CallFriendApp( 'onFriendNetworkMessage', JSON.stringify( message ) );
 				var response;
 				try
@@ -130,6 +122,7 @@ FriendNetworkExtension =
 				{
 					console.log( 'JSON error in response from Friend Android App:' + json );
 				}
+				*/
 			}
 			else
 			{

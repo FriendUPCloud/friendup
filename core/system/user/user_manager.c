@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -512,7 +500,7 @@ int UMAssignApplicationsToUser( UserManager *smgr, User *usr )
  * @param name user name
  * @return User structure or NULL value when problem appear
  */
-User * UMUserGetByName( UserManager *um, const char *name )
+User *UMUserGetByName( UserManager *um, const char *name )
 {
 	SystemBase *sb = (SystemBase *)um->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
@@ -699,6 +687,8 @@ int UMUserCreate( UserManager *smgr, Http *r __attribute__((unused)), User *usr 
 			}
 		}
 	}
+	
+	generate_uuid( &( usr->u_UUID ) );
 
 	int val = sqlLib->Save( sqlLib, UserDesc, usr );
 	sb->LibrarySQLDrop( sb, sqlLib );
@@ -1319,7 +1309,7 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 
 		if( user != NULL )
 		{
-			/*
+			// Generate the API user session
 			char temptext[ 2048 ];
 			char *sesid = session_id_generate( );
 			if( user->u_MainSessionID != NULL )
@@ -1330,7 +1320,6 @@ int UMCheckAndLoadAPIUser( UserManager *um )
 			
 			sqlLib->SNPrintF( sqlLib, temptext, 2048, "UPDATE `FUser` f SET f.SessionID = '%s' WHERE`ID` = '%ld'",  user->u_MainSessionID, user->u_ID );
 			sqlLib->QueryWithoutResults( sqlLib, temptext );
-			*/
 			
 			DEBUG("[UMCheckAndLoadAPIUser] User found %s  id %ld\n", user->u_Name, user->u_ID );
 			UMAssignGroupToUser( um, user );

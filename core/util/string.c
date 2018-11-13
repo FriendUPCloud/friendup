@@ -894,6 +894,40 @@ char *GetStringFromJSON( char *text, char *token )
 	return NULL;
 }
 
+//
+// Escape string to JSON
+//
+
+char *EscapeStringToJSON( char *str )
+{
+	if( strstr( str, "\\" ) != NULL )
+	{
+		int size = strlen( str );
+		char *ret = FMalloc( (size*2)+1 );
+		if( ret != NULL )
+		{
+			char *dst = ret;
+			char *src = str;
+			
+			while( *src != 0 )
+			{
+				if( *src == '\\' )
+				{
+					*dst = '\\';
+					dst++;
+				}
+				
+				*dst = *src;
+				src++;
+				dst++;
+			}
+			*dst = 0;
+		}
+		return ret;
+	}
+	
+	return NULL; // there is no need to escape string
+}
 
 int StringNToInt( char *s, int len )
 {

@@ -20,14 +20,6 @@
  */
 
 #include "core/private.h"
-#include "freertos/timers.h"
-#include <esp_attr.h>
-#include <esp_system.h>
-
-#include "apps/sntp/sntp.h"
-
-#include <lwip/sockets.h>
-#include <esp_task_wdt.h>
 
 int
 lws_send_pipe_choked(struct lws *wsi)
@@ -44,7 +36,12 @@ lws_send_pipe_choked(struct lws *wsi)
 	wsi_eff->could_have_pending = 0;
 
 	/* treat the fact we got a truncated send pending as if we're choked */
-	if (wsi_eff->trunc_len)
+	if (lws_has_buffered_out(wsi)
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	    || wsi->http.comp_ctx.buflist_comp ||
+	       wsi->http.comp_ctx.may_have_more
+#endif
+	)
 		return 1;
 
 	FD_ZERO(&writefds);
@@ -77,7 +74,7 @@ lws_plat_check_connection_error(struct lws *wsi)
 
 
 int
-lws_plat_set_socket_options(struct lws_vhost *vhost, int fd)
+lws_plat_set_socket_options(struct lws_vhost *vhost, int fd, int unix_skt)
 {
 	int optval = 1;
 	socklen_t optlen = sizeof(optval);

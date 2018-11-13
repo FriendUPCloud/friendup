@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -25,80 +16,133 @@
  * @author FL (Francois Lionet)
  * @date first pushed on 12/04/2018
  */
+Friend.DOS = Friend.DOS || {};
 
-DOS =
+/**
+ * Friend.DOS.getDisks
+ * 
+ * Returns the list of drives currently mounted
+ * 
+ * @param options (object) various options
+ * 	#object 
+ * 		#string #todo filter if defined, filter the names of the drives. MSDOS-like syntax (name*, n?me)
+ * 		#boolean sort sort the result in alphabetical order
+ * 		#boolean types array of strings with the type of disks to scan, ex 'Dormant' or 'Door' (case sensitive, exact match on the name)
+ *  
+ * @return (array) An array of objects containing information about the disks
+ * 	#array #object
+ * 		#string title the name of the disk
+ *		#string volume the name of the volume
+ */
+Friend.DOS.getDisks = function( options, callback, extra )
 {
-	getDisks: function( path, flags, callback, extra )
+	var out = [];
+	for( var a = 0; a < Workspace.icons.length; a++ )
 	{
-		var out = [];
-		for( var a = 0; a < Workspace.icons.length; a++ )
+		var disk = Workspace.icons[ a ];
+		if( disk.Type != 'Door' ) continue;
+		 
+		if ( options.type )
 		{
-			if( Workspace.icons[a].Type != 'Door' )
-				continue;
-			out.push( {
-				Title: Workspace.icons[a].Title,
-				Volume: Workspace.icons[a].Volume
-			} );
-		}
-		if( flags.sort )
-		{
-			out.sort( compare );
-		}
-		
-		if( callback )
-		{
-			callback( out.length ? true : false, out );
-		}
-		
-		// Comparaison function
-		function compare( iconA, iconB )
-		{
-			if ( iconA.Title < iconB.Title )
-				return -1;
-			if ( iconA.Title > iconB.Title )
-				return 1;
-			return 0;
-		}
-	},
-	getDirectory: function( path, srcFlags, callback, extra )
-	{
-		// Remove flags that could interfere with the door 
-		var flags = {};
-		for ( var f in srcFlags )
-		{
-			if ( f == 'recursive' || f == 'sort' )
-				flags[ f ] = srcFlags[ f ];
-		}
-
-		// Star recursion
-		var list = [];
-		var depth = 0;
-		getDir( list, path, flags );
-
-		// Watchdog for the end of recursion
-		var response = true;
-		var handle = setInterval( function()
-		{
-			if ( depth <= 0 )
+			var found = false;
+			for ( var t = 0; t < options.type.length; t++ )
 			{
-				clearInterval( handle );
-				callback( response, response ? list : [], extra );
-			}
-		}, 10 );
-
-		// Recursive function
-		function getDir( listDir, path, flags )
-		{
-			depth++;
-			var door = ( new Door().get( path ) );
-			if ( door )
-			{
-				door.getIcons( null, function( icons, path, pth )
+				if ( options.types[ t ] == disk.type )
 				{
-					depth--;
+					found = true;
+					break;
+				}
+			}
+			if ( !found )
+				continue;
+		}
+		out.push
+		( 
+			{
+				Title: disk.Title,
+				Volume: disk.Volume
+			} 
+		);
+	}
+	if ( options.sort )
+	{
+		out.sort( compare );
+	}
+	if( callback ) callback( true, out );
+	return out;
+	
+	// Comparaison function
+	function compare( iconA, iconB )
+	{
+		if ( iconA.Title < iconB.Title )
+			return -1;
+		if ( iconA.Title > iconB.Title )
+			return 1;
+		return 0;
+	}
+};
 
-					// No error?
-					if ( icons )
+/**
+ * Friend.DOS.getDirectory
+ * 
+ * Returns the list of files in a directory
+ * 
+ * @param path (string) path to the directory to scan
+ * @param options (object) various options
+ *  #object
+ * 		#boolean recursive explores sub-directories
+ * 		#boolean sort sort the result in alphabetical order
+ * 		#boolean noDirectories do not list the directories
+ * 		#boolean noFiles do not list the files
+ * 		#stringarray #todo fileTypes array of strings with the types of files to list, starting with a dot (example: [ '.txt', '.doc' ])
+ * 		#stringarray #todo fileMimes array of strings with the mime types of the files (example: [ 'video/jpeg', 'image/bmp' ] )
+ * 		#boolean types array of strings with the type of disks to scan, ex 'Dormant' or 'Door' (case sensitive, exact match on the name)
+ * 
+ * @callback
+ * 	#array 
+ * 		#fileInfo
+ */
+Friend.DOS.getDirectory = function( path, options, callback, extra )
+{
+	// Remove flags that could interfere with the door 
+	var flags = {};
+	for ( var f in options )
+	{
+		if ( f == 'recursive' || f == 'sort' )
+			flags[ f ] = options[ f ];
+	}
+
+	// Star recursion
+	var list = [];
+	var depth = 0;
+	getDir( list, path, flags );
+
+	// Watchdog for the end of recursion
+	var response = true;
+	var handle = setInterval( function()
+	{
+		if ( depth <= 0 )
+		{
+			clearInterval( handle );
+			callback( response, response ? list : [], extra );
+		}
+	}, 20 );
+
+	// Recursive function
+	function getDir( listDir, path, flags )
+	{
+		depth++;
+		var door = ( new Door().get( path ) );
+		if ( door )
+		{
+			door.getIcons( null, function( icons, path, pth )
+			{
+				depth--;
+
+				// No error?
+				if ( icons )
+				{
+					if ( !options.noDirectories )
 					{
 						// Look for directories
 						var icon;
@@ -119,14 +163,17 @@ DOS =
 						}
 
 						// Sort?
-						if ( flags.sort )
+						if ( options.sort )
 							listDir.sort( compare );
+					}
 
-						// Look for files
-						var listTemp = [];
-						for ( i = 0; i < icons.length; i++ )
+					// Look for files
+					var listTemp = [];
+					if ( !options.noFiles )
+					{
+						for ( var i = 0; i < icons.length; i++ )
 						{
-						 	icon = icons[ i ];
+							icon = icons[ i ];
 							if ( icon.Type == 'File' )
 							{
 								if ( icon.Dormant )
@@ -136,109 +183,179 @@ DOS =
 						}
 
 						// Sort?
-						if ( flags.sort )
+						if ( options.sort )
 							listTemp.sort( compare );
-						
-						// Adds to the main array
+					}
+					
+					// Adds to the main array
+					if ( !options.filesFirst )
+					{
 						for ( i = 0; i < listTemp.length; i++ )
 							listDir.push( listTemp[ i ] );
 					}
 					else
 					{
-						response = false;
-					}			
-				}, flags );
-
-			}
-			else
-			{
-				depth--;
-			}
-		}
-		// Comparaison function
-		function compare( iconA, iconB )
-		{
-			if ( iconA.Filename < iconB.Filename )
-				return -1;
-			if ( iconA.Filename > iconB.Filename )
-				return 1;
-			return 0;
-		}
-	},
-	executeJSX: function( path, args, callback, extra )
-	{
-		ExecuteJSXByPath( path, args, function( response, message, iframe )
-		{
-			if ( callback )
-				callback( response, message, iframe, extra );
-		} );
-	},
-	getApplicationPath: function( applicationId, path )
-	{
-		// Get the application path
-		var aPath;
-		for( var a = 0; a < Workspace.applications.length; a++ )
-		{
-			if( Workspace.applications[ a ].applicationId == applicationId )
-			{
-				application = Workspace.applications[ a ];
-				aPath = application.appPath ? application.appPath : application.filePath;
-				break;
-			}
-		}
-		if( path.toLowerCase().substr( 0, 8 ) == 'progdir:' )
-		{
-			path = aPath + path.substr( 8, path.length - 8 );
-		}
-		else if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
-		{
-			path = path.split( /system\:/i ).join( '/webclient/' );
-		}
-		else if( path.toLowerCase().substr( 0, 5 ) == 'libs:' )
-		{
-		 	path = path.split( /libs\:/i ).join( '/webclient/' );
-		}
-		return path;
-		//if( path.indexOf( 'http:' ) == 0 || path.indexOf( 'https:' ) == 0 )
-		//{
-		//	return path;
-		//}
-	},
-	isFriendNetworkDrive: function( path )
-	{
-		// Is the path on a Friend Network drive?
-		var drive;
-		var pos = path.indexOf( ':' );
-		if ( pos >= 0 )
-			drive = path.substring( 0, pos + 1 );
-		if ( drive )
-		{
-			var friendNetwork = false;
-			var doors = DormantMaster.getDoors();
-			if( doors )
-			{
-				for( var d in doors )
-				{
-					var door = doors[ d ];
-					if( door.Title == drive )
-					{
-						return true;
+						for ( i = 0; i < listTemp.length; i++ )
+							listDir.unshift( listTemp[ i ] );
 					}
+				}
+				else
+				{
+					response = false;
+				}			
+			}, flags );
+
+		}
+		else
+		{
+			depth--;
+		}
+	}
+	// Comparaison function
+	function compare( iconA, iconB )
+	{
+		if ( iconA.Filename < iconB.Filename )
+			return -1;
+		if ( iconA.Filename > iconB.Filename )
+			return 1;
+		return 0;
+	}
+};
+
+/**
+ * Friend.DOS.executeJSX
+ * 
+ * launches a JSX application
+ * 
+ * @param path (string) path to the JSX file
+ * @param options (object) various options
+ *  #object
+ * 		#array #string args arguments to transmit to the function
+ * 
+ * @callback
+ * 	#object
+ * 		#iFrame iFrame
+ */
+Friend.DOS.executeJSX = function( path, options, callback, extra )
+{
+	ExecuteJSXByPath( path, options.args, function( response, message, iframe )
+	{
+		if ( callback )
+		{
+			callback( response, 
+			{
+				iFrame: iframe
+			}, extra );
+		}
+	} );
+};
+
+/**
+ * Friend.DOS.getServerPath
+ * 
+ * Converts a symbolic path to actual path to the Friend server
+ * 
+ * @param applicationId (string) identifier of the application
+ * @param path (string) path to convert
+ * @param options (object) various options
+ *  #object
+ * 		#array #string args arguments to transmit to the function
+ * 
+ * @return
+ * 	#string the converted path
+ */
+Friend.DOS.getServerPath = function( applicationId, path, options )
+{
+	// Get the application path
+	var aPath;
+	for( var a = 0; a < Workspace.applications.length; a++ )
+	{
+		if( Workspace.applications[ a ].applicationId == applicationId )
+		{
+			application = Workspace.applications[ a ];
+			aPath = application.appPath ? application.appPath : application.filePath;
+			break;
+		}
+	}
+	if( path.toLowerCase().substr( 0, 8 ) == 'progdir:' )
+	{
+		path = aPath + path.substr( 8, path.length - 8 );
+	}
+	else if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
+	{
+		path = path.split( /system\:/i ).join( '/webclient/' );
+	}
+	else if( path.toLowerCase().substr( 0, 5 ) == 'libs:' )
+	{
+		path = path.split( /libs\:/i ).join( '/webclient/' );
+	}
+	return path;
+	//if( path.indexOf( 'http:' ) == 0 || path.indexOf( 'https:' ) == 0 )
+	//{
+	//	return path;
+	//}
+};
+
+/**
+ * Friend.DOS.isFriendNetworkDrive
+ * 
+ * Checks if a path points to the Friend Network drive
+ * 
+ * @param path (string) path to convert
+ * @param options (object) various options
+ * 
+ * @return
+ * 	#boolean true if it is, false if it not
+ */
+Friend.DOS.isFriendNetworkDrive = function( path, options )
+{
+	// Is the path on a Friend Network drive?
+	var drive;
+	var pos = path.indexOf( ':' );
+	if ( pos >= 0 )
+		drive = path.substring( 0, pos + 1 );
+	if ( drive )
+	{
+		var friendNetwork = false;
+		var doors = DormantMaster.getDoors();
+		if( doors )
+		{
+			for( var d in doors )
+			{
+				var door = doors[ d ];
+				if( door.Title == drive )
+				{
+					return true;
 				}
 			}
 		}
-		return false;
-	},
-	loadHTML: function( applicationId, path, callback, extra )
-	{
-		// Get the application path
-		path = this.getApplicationPath( applicationId, path );
-		var isFriendNetwork = this.isFriendNetworkDrive( path );
+	}
+	return false;
+};
 
-		// Load the file
-		var file = new File( path );
-		file.onLoad = function( html )
+/**
+ * Friend.DOS.loadHTML
+ * 
+ * Load an HTML file and relocates it so that it can be displayed in an iFrame
+ * 
+ * @param applicationId (string) identifier of the application
+ *  #string
+ * @param path (string) path to the HTML file
+ * 	#string
+ * @param options (object) various options
+ * 	#object
+ * 
+ * @callback
+ * 	#string the relocated file
+ */
+Friend.DOS.loadHTML = function( applicationId, path, options, callback, extra )
+{
+	// Load the file
+	this.loadFile( path, {}, function( response, data, extra ) 
+	{
+		if ( response )
 		{
+			var isFriendNetwork = Friend.DOS.isFriendNetworkDrive( path );
 			if ( isFriendNetwork )
 			{
 				var drive = path.substring( 0, path.indexOf( ':' ) + 1 );
@@ -253,83 +370,173 @@ DOS =
 			{
 				callback( true, html, extra );
 			}
-		};
-		file.load();
-	},
-	getDriveInfo: function( path, callback, extra )
-	{
-		if ( path.substring( path.length - 1 ) == ':' ) 
-			path = path.substring( 0, path.length - 1 )
-		var icon;
-		for( var a = 0; a < Workspace.icons.length; a++ )
-		{
-			if( Workspace.icons[a].Volume == path )
-			{
-				icon = Workspace.icons[ a ];
-				break;
-			}
 		}
-		callback( icon ? true : false, icon, extra );
-	},
-	getFileAccess: function( path, callback, extra )
+	}, extra );
+};
+
+/**
+ * Friend.DOS.loadFile
+ * 
+ * Load an HTML file and relocates it so that it can be displayed in an iFrame
+ * 
+ * @param path (string) path to the file
+ * 	#string
+ * @param options (object) various options
+ * 	#object
+ * 		#boolean binary indicates that the file should be loaded as binary
+ * 
+ * @callback
+ * 	#string #or #arrayBuffer 
+ * 		if not binary, a string containing the content of the file,
+ * 		if binary, an arrayBuffer with the file
+ */
+Friend.DOS.loadFile = function( path, options, callback, extra )
+{
+	var file = new File( path );
+	file.onLoad = function( data )
 	{
-		var sn = new Library( 'system.library' );
-		sn.onExecuted = function( returnCode, returnData )
-		{						
-			// If we got an OK result, then parse the return data (json data)
-			var rd = false;
-			if( returnCode == 'ok' )
-			{
-				rd = JSON.parse( returnData );
-				callback( true, rd, extra );
-			}
-			else
-			{
-				// Default permissions. TODO: not normal!
-				rd = 
-				[
-					{
-						access: '-rwed',
-						type: 'user'
-					},
-					{
-						access: '-rwed',
-						type: 'group'
-					},
-					{
-						access: '-rwed',
-						type: 'others'
-					}
-				];
-				callback( true, rd, extra );
-			}
-		};
-		sn.execute( 'file/access', { path: path } ); 
-	},
-	getFileInfo: function( path, callback, extra )
-	{
-		var l = new Library( 'system.library' );
-		l.onExecuted = function( e, d )
+		// Check for error
+		if ( typeof data == 'string' && data.indexOf( '404 - File not found!') >= 0 )
 		{
-			if ( e == 'ok' )
-			{
-				var fileinfo;
-				try
-				{
-					fileinfo = JSON.parse( d );
-				}
-				catch( e )
-				{
-					callback( false, null, extra );
-					return;
-				}
-				callback( true, fileinfo, extra );
-			}
-			else
-			{
-				callback( false, null, extra );
-			}
-		};
-		l.execute( 'file/info', { path: path } );
+			callback( false, { error: 'ERROR - File not found.' }, extra );
+		}
+		else
+		{
+			// OK!
+			callback( true, data, extra );
+		}		
+	};
+	var mode = '';
+	if ( options && options.binary )
+		mode = 'rb';
+	file.load( mode );
+};
+
+/**
+ * Friend.DOS.getDriveInfo
+ * 
+ * Returns information about the disk pointed to by a path
+ * 
+ * @param path (string) path to the file
+ * 	#string
+ * @param options (object) various options
+ * 	#object
+ * 		#boolean binary indicates that the file should be loaded as binary
+ * 
+ * @return
+ * 	#fileInfo
+ */
+Friend.DOS.getDriveInfo = function( path, options, callback, extra )
+{
+	if ( path.substring( path.length - 1 ) == ':' ) 
+		path = path.substring( 0, path.length - 1 )
+	var icon;
+	for( var a = 0; a < Workspace.icons.length; a++ )
+	{
+		if( Workspace.icons[a].Volume == path )
+		{
+			icon = Workspace.icons[ a ];
+			break;
+		}
 	}
+	return ( icon ? icon : Friend.ERROR );
+};
+
+
+/**
+ * Friend.DOS.getFileAccess
+ * 
+ * Returns the file access information of a file or directory pointed to by a path
+ * 
+ * @param path (string) path to the file
+ * 	#string
+ * @param options (object) various options
+ * 	#object
+ * 		#boolean binary indicates that the file should be loaded as binary
+ * 
+ * @return
+ * 	#fileInfo
+ */
+Friend.DOS.getFileAccess = function( path, options, callback, extra )
+{
+	var sn = new Library( 'system.library' );
+	sn.onExecuted = function( returnCode, returnData )
+	{						
+		// If we got an OK result, then parse the return data (json data)
+		var rd = false;
+		if( returnCode == 'ok' )
+		{
+			rd = JSON.parse( returnData );
+			callback( true, rd, extra );
+		}
+		else
+		{
+			// Default permissions. HOGNE: not normal, it always returns not ok
+			rd = 
+			[
+				{
+					access: '-rwed',
+					type: 'user'
+				},
+				{
+					access: '-rwed',
+					type: 'group'
+				},
+				{
+					access: '-rwed',
+					type: 'others'
+				}
+			];
+			callback( true, rd, extra );
+		}
+	};
+	sn.execute( 'file/access', { path: path } ); 
+};
+
+/** 
+ * Friend.DOS.getFileInfo
+ * 
+ * Returns the file access information of a file or directory pointed to by a path
+ * 
+ * @param path (string) path to the file
+ * 	#string
+ * @param options (object) various options
+ * 	#object
+ * 
+ * @return
+ * 	#fileInfo
+ */
+Friend.DOS.getFileInfo = function( path, options, callback, extra )
+{
+	// FRANCOIS: TODO! handle Dormant drives!
+	var l = new Library( 'system.library' );
+	l.onExecuted = function( e, d )
+	{
+		if ( e == 'ok' )
+		{
+			var fileinfo;
+			try
+			{
+				fileinfo = JSON.parse( d );
+			}
+			catch( e )
+			{
+				callback( false, 'ERROR - Bad response from server.', extra );
+				return;
+			}
+			callback( true, fileinfo, extra );
+		}
+		else
+		{
+			callback( false, 'ERROR - File not found.', extra );
+		}
+	};
+	l.execute( 'file/info', { path: path } );
+};
+
+Friend.DOS.getServerURL = function( path, options, callback, extra )
+{
+	var path = getImageUrl( path );
+	callback( true, path, extra );
+	return path;
 };

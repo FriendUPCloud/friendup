@@ -161,7 +161,8 @@ callback_minimal_client_echo(struct lws *wsi, enum lws_callback_reasons reason,
 				    pmsg->first, pmsg->final);
 
 			/* notice we allowed for LWS_PRE in the payload already */
-			m = lws_write(wsi, pmsg->payload + LWS_PRE, pmsg->len, flags);
+			m = lws_write(wsi, ((unsigned char *)pmsg->payload) +
+				      LWS_PRE, pmsg->len, flags);
 			if (m < (int)pmsg->len) {
 				lwsl_err("ERROR %d writing to ws socket\n", m);
 				return -1;
@@ -294,7 +295,7 @@ init_protocol_minimal_client_echo(struct lws_context *context,
 	}
 
 	c->protocols = protocols;
-	c->count_protocols = ARRAY_SIZE(protocols);
+	c->count_protocols = LWS_ARRAY_SIZE(protocols);
 	c->extensions = NULL;
 	c->count_extensions = 0;
 

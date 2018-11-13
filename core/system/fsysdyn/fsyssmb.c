@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -25,7 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "systembase.h"
+#include <system/systembase.h>
 #include <util/log/log.h>
 #include <sys/stat.h>
 #include <util/buffered_string.h>
@@ -52,13 +40,13 @@ typedef struct SpecialData
 	int					fd;
 	SMBCCTX				*ctx;
 	
-	char *temp;
-	char *server;
-	char *share;
-	char *workgroup;
-	char *username;
-	char *password;
-	int port;
+	char				*temp;
+	char				*server;
+	char				*share;
+	char				*workgroup;
+	char				*username;
+	char				*password;
+	int					port;
 } SpecialData;
 
 //
@@ -158,14 +146,14 @@ static void get_auth_data_fn( SMBCCTX * context, const char * pServer,
 		return;
 	}
 
-	DEBUG("Workgroup: [%s] ", pWorkgroup);
+	DEBUG("Workgroup: [%s] \n", pWorkgroup);
 
 	if( sd->workgroup != NULL )
 	{
 		strncpy(pWorkgroup, sd->workgroup, maxLenWorkgroup - 1);
 	}
 	
-	DEBUG( "Username: [%s] ", pUsername);
+	DEBUG( "Username: [%s] \n", pUsername);
 	if( sd->username != NULL )
 	{
 		strncpy( pUsername, sd->username, maxLenUsername - 1 );
@@ -323,9 +311,9 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
 		
 		//
 		
-		if( path == NULL || host == NULL || strlen( path ) == 0 )
+		if( host == NULL )//path == NULL || host == NULL || strlen( path ) == 0 )
 		{
-			FERROR("[ERROR]: Path option not found!\n");
+			FERROR("[ERROR]: Host option not found!\n");
 			FFree( dev );
 			return NULL;
 		}
@@ -389,25 +377,43 @@ void *Mount( struct FHandler *s, struct TagItem *ti, UserSession *usrs )
 		
 		if( ( dev->f_Path = FCalloc( plen+hlen+16, sizeof(char) ) ) != NULL )
 		{
-			snprintf( dev->f_Path, plen+hlen+16, "smb://%s/%s/", host, path );
+			if( path != NULL )
+			{
+				if( strlen( path ) > 0 )
+				{
+					snprintf( dev->f_Path, plen+hlen+16, "smb://%s/%s/", host, path );
+				}
+				else
+				{
+					snprintf( dev->f_Path, plen+hlen+16, "smb://%s/", host );
+				}
+			}
+			else
+			{
+				snprintf( dev->f_Path, plen+hlen+16, "smb://%s/", host );
+			}
 		}
 		
 		DEBUG("[SAMBA] HOST %s PATH %s both %s\n", host, path, dev->f_Path );
 		
-		SMBCFILE *dh = 0;
+		//SMBCFILE *dh = NULL;
+		int dh;
 		
 		smbc_opendir_fn opdir = smbc_getFunctionOpendir( locsd->ctx );
 		smbc_closedir_fn closef = smbc_getFunctionClosedir( locsd->ctx );
 		
-		if( ( dh = opdir( locsd->ctx, dev->f_Path ) ) != 0 )
-		//if( ( dh = smbc_opendir( dev->f_Path ) ) < 0 )
+		//if( ( dh = opdir( locsd->ctx, dev->f_Path ) ) == NULL )
+		if( ( dh = smbc_opendir( dev->f_Path ) ) < 0 )
 		{
+			//sb->sl_Error;
+			
+			FERROR("[SAMBA] Opendir fail! Path: %s\n", dev->f_Path );
 			SDDelete( locsd );
 			FFree( dev );
 			return NULL;
 		}
-		//smbc_closedir( dh );
-		closef( locsd->ctx, dh );
+		smbc_closedir( dh );
+		//closef( locsd->ctx, dh );
 		
 		DEBUG("[SAMBA] path is ok '%s'\n", dev->f_Path );
 		dev->f_FSys = s;
@@ -533,31 +539,34 @@ void *FileOpen( struct File *s, const char *path, char *mode )
 		}
 
 		int off = 0, slash = 0;
-		for( i = 0; i < spath; i++ )
+		if( mode[ 0 ] == 'w' )
 		{
-			if( commClean[i] == '/' )
+			for( i = 0; i < spath; i++ )
 			{
-				int alsize = rspath + i + 1;
-				char *directory = FCalloc( alsize , sizeof( char ) );
-				if( directory != NULL )
+				if( commClean[i] == '/' )
 				{
-					snprintf( directory, alsize, "%s%.*s", s->f_Path, i, commClean );
-
-					struct stat filest;
-				
-					// Create if not exist!
-					//DEBUG( "Testing if directory exists: %s\n", directory );
-					if( smbc_stat( directory, &filest ) == -1 )
-					//if( stat( directory, &filest ) == -1 )
+					int alsize = rspath + i + 1;
+					char *directory = FCalloc( alsize , sizeof( char ) );
+					if( directory != NULL )
 					{
-						//DEBUG( "Didn't exist: creating dir: %s\n", directory );
-						//mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
-						smbc_mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
-					}
+						snprintf( directory, alsize, "%s%.*s", s->f_Path, i, commClean );
+
+						struct stat filest;
 				
-					FFree( directory );
+						// Create if not exist!
+						DEBUG( "Testing if directory exists: %s\n", directory );
+						if( smbc_stat( directory, &filest ) == -1 )
+						//if( stat( directory, &filest ) == -1 )
+						{
+							//DEBUG( "Didn't exist: creating dir: %s\n", directory );
+							//mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+							smbc_mkdir( directory, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+						}
+				
+						FFree( directory );
+					}
+					slash++;
 				}
-				slash++;
 			}
 		}
 		
@@ -677,10 +686,16 @@ int FileRead( struct File *f, char *buffer, int rsize )
 	if( sd != NULL )
 	{
 		result = smbc_read( sd->fd, buffer, rsize );
+		DEBUG("[SMBFS]:File Read %d\n", result );
 		
 		if( f->f_Stream == TRUE )
 		{
 			sd->sb->sl_SocketInterface.SocketWrite( f->f_Socket, buffer, (FLONG)result );
+		}
+		
+		if( result == 0 )	// if smb return 0 then its the end of the file
+		{
+			return -1;
 		}
 	}
 	
@@ -1068,27 +1083,57 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	char tmp[ 1024 ];
 	int rootSize = strlen( d->f_Path );
 	int pathSize = strlen( path );
-		
+	
+	SpecialData *sd = (SpecialData *)d->f_SpecialData;
+	SystemBase *sb = (SystemBase *)sd->sb;
+	
+	char *fname;
+	char *tptr = GetFileName( path );
+	
+	if( ( fname = sb->sl_StringInterface.EscapeStringToJSON( tptr ) ) == NULL )
+	{
+		fname = tptr;
+	}
+	
 	BufStringAdd( bs, "{" );
-	snprintf( tmp, 1023, " \"Filename\":\"%s\",", GetFileName( path ) );
+	snprintf( tmp, 1023, " \"Filename\":\"%s\",",fname );
 	BufStringAdd( bs, tmp );
 	
 	//DEBUG( "FILLSTAT filename set\n");
 	
 	if( rootSize != pathSize )
 	{
+		char *tmpname;
+		char *pptr = (char *)&path[ strlen( d->f_Path ) ];
+		if( ( tmpname = sb->sl_StringInterface.EscapeStringToJSON( pptr ) ) == NULL )
+		{
+			tmpname = pptr;
+		}
 		if( S_ISDIR( s->st_mode ) )
 		{
-			snprintf( tmp, 1023, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
+			snprintf( tmp, 1023, "\"Path\":\"%s/\",", tmpname );
 		}
 		else
 		{
-			snprintf( tmp, 1023, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
+			snprintf( tmp, 1023, "\"Path\":\"%s\",", tmpname );
+		}
+		if( tmpname != pptr )
+		{
+			FFree( tmpname );
 		}
 	}
 	else
 	{
-		snprintf( tmp, 1023, "\"Path\":\"%s:\",", d->f_Name );
+		char *tmpname;
+		if( ( tmpname = sb->sl_StringInterface.EscapeStringToJSON( d->f_Name ) ) == NULL )
+		{
+			tmpname = d->f_Name;
+		}
+		snprintf( tmp, 1023, "\"Path\":\"%s:\",", tmpname );
+		if( tmpname != d->f_Name )
+		{
+			FFree( tmpname );
+		}
 	}
 
 	BufStringAdd( bs, tmp );
@@ -1108,6 +1153,11 @@ void FillStatSAMBA( BufString *bs, struct stat *s, File *d, const char *path )
 	else
 	{
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
+	}
+	
+	if( fname != tptr )
+	{
+		FFree( fname );
 	}
 }
 
@@ -1279,6 +1329,7 @@ BufString *Dir( File *s, const char *path )
 	
 	if( ( comm = FCalloc( rspath +512, sizeof(char) ) ) != NULL )
 	{
+		DEBUG("-------------- %s-----------\n", s->f_Path );
 		strcpy( comm, s->f_Path );
 		if( comm[ strlen( comm ) -1 ] != '/' && s->f_Path[ strlen(s->f_Path)-1 ] != '/' )
 		{
@@ -1297,13 +1348,15 @@ BufString *Dir( File *s, const char *path )
 			strcat( comm, "/" );
 		}
 	
-		int dh;
+		//SMBCFILE *dh = NULL;
+		int dh = 0;
 		struct smbc_dirent *sdir = NULL;
 		
 		DEBUG("[SAMBA] DIR -> directory '%s' for path '%s' devname '%s' double %d devpath '%s'\n", comm, path, s->f_Name, doub, s->f_Path );
 		
 		dh = smbc_opendir( comm );
 		
+		//if( dh != NULL )
 		if( dh >= 0 )
 		{
 			int pos = 0;

@@ -20,7 +20,7 @@
 			</span>
 		</p>
 		
-		<div id="pSetupApplications">{applications}</div>
+		<div id="pSetupApplications" class="BordersDefault">{applications}</div>
 		
 		<div class="Buttons Padding">
 			<!--<button type="button">{i18n_add_to_dock}</button>
@@ -38,7 +38,7 @@
 			<strong>{i18n_startup-sequence}:</strong>
 		</p>
 		
-		<div id="pSetupStartup">{startups}</div>
+		<div id="pSetupStartup" class="BordersDefault">{startups}</div>
 		
 		<div class="Buttons Padding">
 			<button type="button" onclick="AddStartup()">{i18n_add_commands}</button>
@@ -48,7 +48,7 @@
 			<strong>{i18n_language}:</strong>
 		</p>
 		
-		<select id="pSetupLanguages" class="FullWidth">{languages}</select>
+		<select id="pSetupLanguages" class="FullWidth BordersDefault">{languages}</select>
 		
 		<br><br>
 		
@@ -95,8 +95,6 @@
 			height: 168px;
 			overflow: hidden;
 			overflow-y: auto;
-			border: 1px solid #c0c0c0;
-			padding: 2px;
 			box-sizing: border-box;
 		}
 		#pSetupApplications
@@ -120,8 +118,6 @@
 			right: 0;
 			text-align: center;
 			box-sizing: border-box;
-			border-radius: 0 0 5px 5px;
-			/*min-height: 40px;*/
 			color: white;
 		}
 		#TopForm

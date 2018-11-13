@@ -1,19 +1,10 @@
 /*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Lesser General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -36,6 +27,11 @@
 
 static NotificationsLibrary_t *_library_handle;
 
+/**
+ * Library initialization
+ *
+ * @param systembase pointer to SystemBase
+ */
 void *libInit( void *systembase )
 {
 	FERROR("************* library init, systembase %p", systembase);
@@ -51,7 +47,7 @@ void *libInit( void *systembase )
 	_library_handle->sb = systembase;
 	_library_handle->libClose = dlsym ( _library_handle->handle, "libClose");
 	_library_handle->GetVersion = dlsym ( _library_handle->handle, "GetVersion");
-	_library_handle->WebRequest = dlsym ( _library_handle->handle, "WebRequest");
+	_library_handle->WebRequest = dlsym ( _library_handle->handle, "WebRequestNotification");
 
 	return _library_handle;
 }
@@ -66,8 +62,15 @@ long GetVersion(void)
 	return LIB_VERSION;
 }
 
-
-Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *request)
+/**
+ * WebRequest notification handler
+ *
+ * @param l pointer to notification.library
+ * @param func path passed
+ * @param request pointer to Http structure
+ * @return response in Http structure
+ */
+Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* func, Http *request)
 {
 	INFO("Func is <%s>", func);
 
@@ -86,13 +89,14 @@ Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *r
 		HashmapElement *session_element = GetHEReq(request, "sessionid");
 		HashmapElement *extra_element = GetHEReq(request, "extra");
 
-		if (message_element && title_element && session_element && extra_element){
-
+		if( message_element && title_element && session_element && extra_element )
+		{
 			User *user = USMGetUserBySessionID(((SystemBase*)(_library_handle->sb))->sl_USM, session_element->data);
-			if (user){
-				char *message = UrlDecodeToMem(message_element->data);
-				char *title = UrlDecodeToMem(title_element->data);
-				char *extra = UrlDecodeToMem(extra_element->data);
+			if( user )
+			{
+				char *message = UrlDecodeToMem( message_element->data );
+				char *title = UrlDecodeToMem( title_element->data );
+				char *extra = UrlDecodeToMem( extra_element->data );
 				char *username = user->u_Name;
 
 				/* Small bug: JavaScript call
@@ -103,24 +107,23 @@ Http* WebRequest (struct Library *l __attribute__((unused)), char* func, Http *r
 				 */
 				title[strlen(title)-1] = '\0';
 
-				bool status = mobile_app_notify_user(username,
-						"lib"/*channel id*/,
-						title,
-						message,
-						MN_force_all_devices,
-						extra);
+				bool status = mobile_app_notify_user( username, "lib"/*channel id*/, title, message, MN_force_all_devices, extra );
 
-				FFree(message);
-				FFree(title);
-				FFree(extra);
+				FFree( message );
+				FFree( title );
+				FFree( extra );
 
 				HttpAddTextContent( response, "OK" );
 				INFO("sending OK");
-			} else {
+			}
+			else
+			{
 				HttpAddTextContent( response, "no session" );
 				INFO("sending no session");
 			}
-		} else {
+		}
+		else
+		{
 			HttpAddTextContent( response, "missing data" );
 			INFO("sending missing data");
 		}

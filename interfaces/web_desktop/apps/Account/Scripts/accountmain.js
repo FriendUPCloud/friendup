@@ -1,26 +1,20 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
 Application.run = function( msg, iface )
 {
-	getStorage();
-	getUnmounted();
+	Friend.exportAPI( Application.applicationId, {}, function( response, data, extra )
+	{
+		getStorage();
+		getUnmounted();
+	} );
 }
 
 Application.receiveMessage = function( msg )
@@ -92,61 +86,128 @@ Application.receiveMessage = function( msg )
 
 			// Friend Network settings
 			var self = this;
-			var sm = new Module( 'system' );
-			sm.onExecuted = function( e, d ) 
+			self.friendNetwork = false;
+			var m = new Module('system');
+			m.onExecuted = function( e,d )
 			{
-				var fnet;
-				if( e == 'ok' )
+				if ( e == 'ok' && parseInt( d ) == 1 )
 				{
-					if( d )
+					self.friendNetwork = true;
+				}				
+				if ( self.friendNetwork )
+				{
+					var sm = new Module( 'system' );
+					sm.onExecuted = function( e, d ) 
 					{
-						try
+						var fnet;
+						if( e == 'ok' )
 						{
-							d = JSON.parse( d );
-							if ( d.friendNetwork != [] )
-								fnet = d.friendNetwork;
+							if( d )
+							{
+								try
+								{
+									d = JSON.parse( d );
+									if ( d.friendNetwork != [] )
+										fnet = d.friendNetwork;
+								}
+								catch( e )
+								{
+									d = null;
+								}
+							}
 						}
-						catch( e )
+						var activate = ge( 'fnetActivate' );
+						var workgroup = ge( 'fnetWorkgroup' );
+						var password = ge( 'fnetPassword' );
+						var repeat = ge( 'fnetRepeatPassword' );
+						var description = ge( 'fnetDescription' );
+						var any = ge( 'fnetAcceptAny' );
+						var downloadCheck = ge( 'fnetDownloadCheck' );
+						var downloadPath = ge( 'fnetDownloadPath' );
+						var mountDriveCheck = ge( 'fnetMountDriveCheck' );
+						var mountOnWorkspace = ge( 'fnetMountOnWorkspaceCheck' );
+						var fnetActivatePower = ge( 'fnetActivatePower' );
+						var fnetShareThisDevice = ge( 'fnetShareThisDevice' );
+						var fnetMaximumPercentage = ge( 'fnetMaximumPercentage' );
+						var fnetAllowPowerApplications = ge( 'fnetAllowPowerApplications' );
+						var fnetOptimalNumberOfMachines = ge( 'fnetOptimalNumberOfMachines' );
+						var fnetMinimalNumberOfMachines = ge( 'fnetMinimalNumberOfMachines' );
+						var fnetShareOnlyWithCommunity = ge( 'fnetShareOnlyWithCommunity' );
+						var fnetShareOnlyWithFriends = ge( 'fnetShareOnlyWithFriends' );
+						var fnetAskOnlyToFriends = ge( 'fnetAskOnlyToFriends' );
+						var fnetAskOnlyToCommunity = ge( 'fnetAskOnlyToCommunity' );
+						
+						var pass = fnet ? fnet.password : '';
+						if ( pass == 'public' || ( fnet && fnet.workgroup == 'friend' ) )
+							pass = '';
+						workgroup.placeholder = i18n( 'i18n_workgroupPlaceHolder' );
+
+						if ( !fnet )
 						{
-							d = null;
+							// Friend Network page
+							activate.checked = false;
+							workgroup.value = '';
+							password.value = '';
+							repeat.value = '';
+							description.value = '';
+							any.checked = false;
+							downloadCheck.checked = true;
+							mountDriveCheck.checked = true;
+							mountOnWorkspace.checked = false;
+							downloadPath.value = 'Home:Downloads'
 						}
-					}
+						else
+						{
+							// Friend Network page
+							activate.checked = fnet.activated;
+							workgroup.value = fnet.workgroup == 'friend' ? '' : fnet.workgroup;
+							password.value = pass;
+							repeat.value = pass;
+							description.value = fnet.description;
+							any.checked = fnet.acceptAny;
+							downloadCheck.checked = ( typeof fnet.downloadPath != 'undefined' && fnet.downloadPath != '' ) ? true : false;
+							mountDriveCheck.checked = ( typeof fnet.mountDrive != 'undefined' ) ? fnet.mountDrive : false;
+							mountOnWorkspace.checked = ( typeof fnet.mountOnWorkspace != 'undefined' ) ? fnet.mountOnWorkspace : false;
+							downloadPath.value = ( typeof fnet.downloadPath != 'undefined' && fnet.downloadPath != '' ) ? fnet.downloadPath : '';
+							if ( !mountDriveCheck.checked )
+								mountOnWorkspace.checked = false;
+						}
+
+						// Power sharing
+						if( typeof fnet == 'undefined' || typeof fnet.powerSharing == 'undefined' )
+						{	
+							// Power sharing page
+							fnetActivatePower.checked = false;
+							fnetShareThisDevice.checked = true;
+							fnetMaximumPercentage.value = '33';
+							fnetAllowPowerApplications.checked = true;
+							fnetOptimalNumberOfMachines.value = '1000';
+							fnetMinimalNumberOfMachines.value = '1';					
+							fnetShareOnlyWithFriends.checked = false;
+							fnetShareOnlyWithCommunity.checked = true;					
+							fnetAskOnlyToCommunity.checked = true;					
+							fnetAskOnlyToFriends.checked = false;					
+						}
+						else
+						{
+							fnetActivatePower.checked = fnet.powerSharing.enabled;
+							fnetShareThisDevice.checked = fnet.powerSharing.shareDevice;
+							fnetMaximumPercentage.value = fnet.powerSharing.percentageShared;
+							fnetAllowPowerApplications.checked = fnet.powerSharing.useHelpers;
+							fnetOptimalNumberOfMachines.value = fnet.powerSharing.optimalNumberOfHelpers;
+							fnetMinimalNumberOfMachines.value = fnet.powerSharing.minimalNumberOfHelpers;
+							fnetShareOnlyWithCommunity.checked = fnet.powerSharing.shareOnlyWithCommunity;
+							fnetShareOnlyWithFriends.checked = fnet.powerSharing.shareOnlyWithFriends;
+							fnetAskOnlyToCommunity.checked = fnet.powerSharing.askOnlyToCommunity;
+							fnetAskOnlyToFriends.checked = fnet.powerSharing.askOnlyToFriends;
+						}
+						activateFriendNetwork();
+						clickFriendNetworkPower()
+					};
+					sm.execute( 'getsetting', { setting: 'friendNetwork' } );
 				}
-				var activate = ge( 'fnetActivate' );
-				var workgroup = ge( 'fnetWorkgroup' );
-				var password = ge( 'fnetPassword' );
-				var repeat = ge( 'fnetRepeatPassword' );
-				var description = ge( 'fnetDescription' );
-				var any = ge( 'fnetAcceptAny' );
-				var downloadCheck = ge( 'fnetDownloadCheck' );
-				var downloadPath = ge( 'fnetDownloadPath' );
-				var mountDriveCheck = ge( 'fnetMountDriveCheck' );
-				var mountOnWorkspace = ge( 'fnetMountOnWorkspaceCheck' );
-				var pass = fnet ? fnet.password : '';
-				if ( pass == 'public' || ( fnet && fnet.workgroup == 'friend' ) )
-					pass = '';
-				if ( fnet )
-				{
-					activate.checked = fnet.activated;
-					workgroup.value = fnet.workgroup == 'friend' ? '' : fnet.workgroup;
-					password.value = pass;
-					repeat.value = pass;
-					description.value = fnet.description;
-					any.checked = fnet.acceptAny;
-					downloadCheck.checked = ( typeof fnet.downloadPath != 'undefined' && fnet.downloadPath != '' ) ? true : false;
-					mountDriveCheck.checked = ( typeof fnet.mountDrive != 'undefined' ) ? fnet.mountDrive : false;
-					mountOnWorkspace.checked = ( typeof fnet.mountOnWorkspace != 'undefined' ) ? fnet.mountOnWorkspace : false;
-					downloadPath.value = ( typeof fnet.downloadPath != 'undefined' && fnet.downloadPath != '' ) ? fnet.downloadPath : '';
-					if ( !mountDriveCheck.checked )
-						mountOnWorkspace.checked = false;
-				}
-				else
-				{
-					workgroup.placeholder = i18n( 'i18n_workgroupPlaceHolder' );
-				}
-				activateFriendNetwork();
-			}
-			sm.execute( 'getsetting', { setting: 'friendNetwork' } );
+			};
+			m.execute( 'checkfriendnetwork' );
 
 			// Device information settings
 			FriendNetworkFriends.getUniqueDeviceIdentifier( function( message )
@@ -197,7 +258,7 @@ Application.receiveMessage = function( msg )
 							ge( 'fnetDeviceAvatar' ).src = infos.icon;
 						} );
 					}
-				}
+				};
 				sm.execute( 'getsetting', { setting: message.identifier } );
 			});
 			break;
@@ -320,6 +381,38 @@ function downloadButton( disable )
 	}, 'Mountlist:', 'path', '', i18n( 'i18n_fnetPleaseChooseDirectory' ) );
 }
 
+function clickFriendNetworkPower()
+{
+	var enabled = !ge( 'fnetActivatePower' ).checked;
+
+	// I love when it looks nice like that! :)
+	ge( 'fnetShareThisDevice' ).disabled = enabled;
+	ge( 'fnetMaximumPercentage' ).disabled = enabled;
+	ge( 'fnetAllowPowerApplications' ).disabled = enabled;
+	ge( 'fnetOptimalNumberOfMachines' ).disabled = enabled;
+	ge( 'fnetMinimalNumberOfMachines' ).disabled = enabled;
+	ge( 'fnetAskOnlyToCommunity' ).disabled = enabled;
+	ge( 'fnetAskOnlyToFriends' ).disabled = enabled;
+	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
+	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
+}
+function clickShareThisDevice()
+{
+	var enabled = !ge( 'fnetShareThisDevice' ).checked;
+
+	ge( 'fnetMaximumPercentage' ).disabled = enabled;
+	ge( 'fnetShareOnlyWithCommunity' ).disabled = enabled;
+	ge( 'fnetShareOnlyWithFriends' ).disabled = enabled;
+}
+function clickAllowPowerApplications()
+{
+	var enabled = !ge( 'fnetAllowPowerApplications' ).checked;
+
+	ge( 'fnetOptimalNumberOfMachines' ).disabled = enabled;
+	ge( 'fnetMinimalNumberOfMachines' ).disabled = enabled;
+	ge( 'fnetAskOnlyToCommunity' ).disabled = enabled;
+	ge( 'fnetAskOnlyToFriends' ).disabled = enabled;
+}
 function drawKeyList( list )
 {
 	var str = '';
@@ -841,101 +934,123 @@ function cancelDia()
 
 function saveDia()
 {
-	// Save device information 
-	var image = ge( 'fnetDeviceAvatar' );
-	var canvas = document.createElement( 'canvas' );
-	canvas.width = 128;
-	canvas.height = 128;
-	var context = canvas.getContext( '2d' );
-	context.drawImage( image, 0, 0, 128, 128 );
-	var image = canvas.toDataURL();
-	var deviceName = ge( 'fnetDeviceName' ).value;
-	var deviceDescription = ge( 'fnetDeviceDescription' ).value;
-	var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
+	// Save Friend Network
+	if ( Application.friendNetwork )
+	{
+		// Save device information 
+		var image = ge( 'fnetDeviceAvatar' );
+		var canvas = document.createElement( 'canvas' );
+		canvas.width = 128;
+		canvas.height = 128;
+		var context = canvas.getContext( '2d' );
+		context.drawImage( image, 0, 0, 128, 128 );
+		var image = canvas.toDataURL();
+		var deviceName = ge( 'fnetDeviceName' ).value;
+		var deviceDescription = ge( 'fnetDeviceDescription' ).value;
+		var mountLocalDrives = ge( 'fnetMountLocalCheck' ).checked;
 
-	var save = 
-	{
-		version: 1,
-		image: image,
-		name: deviceName,
-		description: deviceDescription,
-		mountLocalDrives: mountLocalDrives
-	};
-	FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
-	{
+		var save = 
+		{
+			version: 1,
+			image: image,
+			name: deviceName,
+			description: deviceDescription,
+			mountLocalDrives: mountLocalDrives
+		};
+		FriendNetworkFriends.getUniqueDeviceIdentifier( function( message ) 
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+					console.log( 'Device information saving failed.' );
+			};
+			m.execute( 'setsetting', { setting: message.identifier, data: save } );
+		} );
+
+		// Saves the avatar
+		var image = ge( 'Avatar' );
+		canvas = document.createElement( 'canvas' );
+		canvas.width = 64;
+		canvas.height = 64;
+		context = canvas.getContext( '2d' );
+		context.drawImage( image, 0, 0, 64, 64 );
+		var base64 = canvas.toDataURL();
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
 		{
 			if( e != 'ok' )
-				console.log( 'Device information saving failed.' );
+				console.log( 'Avatar saving failed.' );
 		};
-		m.execute( 'setsetting', { setting: message.identifier, data: save } );
-	} );
+		m.execute( 'setsetting', { setting: 'avatar', data: base64 } );
 
-	// Saves the avatar
-	var image = ge( 'Avatar' );
-	var canvas = document.createElement( 'canvas' );
-	canvas.width = 64;
-	canvas.height = 64;
-	var context = canvas.getContext( '2d' );
-	context.drawImage( image, 0, 0, 64, 64 );
-	var base64 = canvas.toDataURL();
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( e != 'ok' )
-			console.log( 'Avatar saving failed.' );
-	};
-	m.execute( 'setsetting', { setting: 'avatar', data: base64 } );
+		// Save Friend Network settings...
+		var activate = ge( 'fnetActivate' );
+		var workgroup = ge( 'fnetWorkgroup' );
+		var password = ge( 'fnetPassword' );
+		var repeat = ge( 'fnetRepeatPassword' );
+		var description = ge( 'fnetDescription' );
+		var any = ge( 'fnetAcceptAny' );
+		var downloadPath = ge( 'fnetDownloadPath' ).value;
+		var downloadChecked = ge( 'fnetDownloadCheck' ).checked;
+		var mountDriveChecked = ge( 'fnetMountDriveCheck' ).checked;
+		var mountOnWorkspaceChecked = ge( 'fnetMountOnWorkspaceCheck' ).checked;
 
-	// Save Friend Network
-	var activate = ge( 'fnetActivate' );
-	var workgroup = ge( 'fnetWorkgroup' );
-	var password = ge( 'fnetPassword' );
-	var repeat = ge( 'fnetRepeatPassword' );
-	var description = ge( 'fnetDescription' );
-	var any = ge( 'fnetAcceptAny' );
-	var downloadPath = ge( 'fnetDownloadPath' ).value;
-	var downloadChecked = ge( 'fnetDownloadCheck' ).checked;
-	var mountDriveChecked = ge( 'fnetMountDriveCheck' ).checked;
-	var mountOnWorkspaceChecked = ge( 'fnetMountOnWorkspaceCheck' ).checked;
-	if ( downloadPath == '' )
-		downloadChecked = false;
-	if ( workgroup == '' )								// Empty workgroup-> global 'friend' space
-	{
-		workgroup = 'friend';
-		password = 'public';
-	}
-	if ( password.value != repeat.value )
-	{
-		Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
-		return;
-	}
-	var fnet = 
-	{
-		activated: activate.checked,
-		workgroup: workgroup.value,
-		password: ( password.value == '' ? 'public' : password.value ),
-		acceptAny: any.checked,
-		downloadPath: downloadChecked ? downloadPath : '',
-		description: description.value,
-		mountDrive: mountDriveChecked,
-		mountOnWorkspace: mountOnWorkspaceChecked
-	}
-	var m = new Module( 'system' );
-	m.onExecuted = function( e, d )
-	{
-		if( e != 'ok' )
-			console.log( 'Friend Network saving failed.' );
-		else
+		if ( downloadPath == '' )
+			downloadChecked = false;
+		if ( workgroup == '' )								// Empty workgroup-> global 'friend' space
 		{
-			FriendNetworkShare.changeFriendNetworkSettings( fnet );
-			FriendNetworkDoor.changeFriendNetworkSettings( fnet );
-			FriendNetworkFriends.changeFriendNetworkSettings( fnet );
-			FriendNetworkDrive.changeFriendNetworkSettings( fnet );
+			workgroup = 'friend';
+			password = 'public';
 		}
+		if ( password.value != repeat.value )
+		{
+			Alert( i18n( 'i18n_account' ), i18n( 'i18n_passwordNoMatch' ) );
+			return;
+		}
+		
+		var fnet = 
+		{
+			configVersion: FriendNetworkFriends.configVersion,
+			activated: activate.checked,
+			workgroup: workgroup.value,
+			password: ( password.value == '' ? 'public' : password.value ),
+			acceptAny: any.checked,
+			downloadPath: downloadChecked ? downloadPath : '',
+			description: description.value,
+			mountDrive: mountDriveChecked,
+			mountOnWorkspace: mountOnWorkspaceChecked,
+			powerSharing:
+			{
+				enabled: ge( 'fnetActivatePower' ).checked,
+				shareDevice: ge( 'fnetShareThisDevice' ).checked,
+				percentageShared: parseInt( ge( 'fnetMaximumPercentage' ).value ),
+				shareOnlyWithCommunity: ge( 'fnetShareOnlyWithCommunity' ).checked,
+				shareOnlyWithFriends: ge( 'fnetShareOnlyWithFriends' ).checked,
+				useHelpers: ge( 'fnetAllowPowerApplications' ).checked,
+				optimalNumberOfHelpers: parseInt( ge( 'fnetOptimalNumberOfMachines' ).value ),
+				minimalNumberOfHelpers: Math.max( parseInt( ge( 'fnetMinimalNumberOfMachines' ).value ), 1 ),
+				askOnlyToCommunity: ge( 'fnetAskOnlyToCommunity' ).checked, 
+				askOnlyToFriends: ge( 'fnetAskOnlyToFriends' ).checked
+			}
+		};
+
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+				console.log( 'Friend Network saving failed.' );
+			else
+			{
+				FriendNetworkShare.changeFriendNetworkSettings( fnet );
+				FriendNetworkDoor.changeFriendNetworkSettings( fnet );
+				FriendNetworkFriends.changeFriendNetworkSettings( fnet );
+				FriendNetworkDrive.changeFriendNetworkSettings( fnet );
+				Friend.Network.Power.changeFriendNetworkSettings( fnet );
+			}
+		};
+		m.execute( 'setsetting', { setting: 'friendNetwork', data: fnet } );
 	}
-	m.execute( 'setsetting', { setting: 'friendNetwork', data: fnet } );
 	
 	// Get save object
 	var obj = {

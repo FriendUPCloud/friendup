@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -511,7 +502,7 @@ Application.saveFile = function( filename, content, mode )
 			Application.setProjectTitle();
 			
 			// Sync the new files down
-			Application.sendFileListToEditor(files, currentFile);
+			Application.sendFileListToEditor( files, currentFile );
 			
 			// Update status with text..
 			Application.masterView.sendMessage( {
@@ -705,33 +696,43 @@ Application.receiveMessage = function( msg )
 			// Make sure it's up to date!
 			Application.getCurrentPath();
 			
-			var f = new Filedialog( Application.masterView, function( files )
-			{
-				if( !files || !files.length || !files[0].Path )
-					return;
-				
-				// Close existing
-				Application.closeAllFiles();
-				
-				Application.prevFilename = Application.projectFilename;
-				Application.projectFilename = files[0].Path;
-				Application.setProjectPath( files[0].Path );
-				
-				// Update path again
-				Application.getCurrentPath();
-				
-				var f = new File( files[0].Path );
-				f.onLoad = function( data )
+			var flags = {
+				type: 'load',
+				mainView: Application.masterView,
+				filename: false,
+				path: Application.currentPath,
+				title: i18n( 'i18n_load_project' ),
+				multiSelect: false,
+				triggerFunction: function( files )
 				{
-					var proj = JSON.parse( data );
-					Application.project = {}; // Clear the project
-					for( var a in proj ) Application.project[a] = proj[a];
-					Application.setProjectTitle();
+					if( !files || !files.length || !files[0].Path )
+						return;
+				
+					// Close existing
+					Application.closeAllFiles();
+				
+					Application.prevFilename = Application.projectFilename;
 					Application.projectFilename = files[0].Path;
-					Application.sendMessage( { command: 'open_project_files' } );
+					Application.setProjectPath( files[0].Path );
+				
+					// Update path again
+					Application.getCurrentPath();
+				
+					var f = new File( files[0].Path );
+					f.onLoad = function( data )
+					{
+						var proj = JSON.parse( data );
+						Application.project = {}; // Clear the project
+						for( var a in proj ) Application.project[a] = proj[a];
+						Application.setProjectTitle();
+						Application.projectFilename = files[0].Path;
+						Application.sendMessage( { command: 'open_project_files' } );
+					}
+					f.load();
 				}
-				f.load();
-			}, Application.currentPath, 'load', false, i18n( 'i18n_load_project' ) );
+			};
+			
+			var f = new Filedialog( flags );
 			break;
 		case 'project_load':
 			Application.projectFilename = msg.path;

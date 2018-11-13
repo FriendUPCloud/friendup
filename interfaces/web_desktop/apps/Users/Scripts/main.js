@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -40,6 +31,15 @@ Application.run = function( msg, iface )
 	this.guiHTML = '\
 	<div class="Padding"><h1>' + i18n( 'i18n_idle_title' ) + '</h1><p>' + i18n( 'i18n_idle_desc' ) + '</p></div>';
 	ge( 'UserGui' ).innerHTML = this.guiHTML;
+	
+	var tabs = document.getElementsByClassName( 'Tab' );
+	this.tabs = {};
+	for( var a = 0; a < tabs.length; a++ )
+	{
+		if( tabs[a].id )
+			this.tabs[ tabs[a].id ] = tabs[a];
+	}
+	
 }
 
 Application.receiveMessage = function( msg )
@@ -47,6 +47,22 @@ Application.receiveMessage = function( msg )
 	if( !msg.command ) return;
 	switch( msg.command )
 	{
+		case 'users_add':
+			this.tabs[ 'UsersTab' ].click();
+			AddUser();
+			break;
+		case 'templates_add':
+			this.tabs[ 'TemplatesTab' ].click();
+			AddSetup();
+			break;
+		case 'workgroups_add':
+			this.tabs[ 'WorkgroupsTab' ].click();
+			AddWorkgroup();
+			break;
+		case 'activate_tab':
+			if( this.tabs[ msg.tab ] )
+				this.tabs[ msg.tab ].click();
+			break;
 		case 'renewedsession':
 			if( msg.sessionid )
 			{
@@ -486,7 +502,7 @@ function SaveUser( id )
 		}
 		else if ( inps[a] == 'Username' || inps[a] == 'FullName' )
 		{
-			args[ inps[a].toLowerCase() ] = htmlentities( Trim( ge(inps[a]).value ) );
+			args[ inps[a].toLowerCase() ] = Trim( ge(inps[a]).value );
 		}
 		else if ( inps[a] == 'Password' )
 		{
@@ -543,34 +559,41 @@ function SaveUser( id )
 
 function DeleteUser( id )
 {
-    var f = new Library( 'system.library' );
-    var args = {};
-    args.command ='delete';
-    args.id = id;
+	Confirm( i18n( 'i18n_deleting_user' ), i18n( 'i18n_deleting_verify' ), function( result )
+	{
+		// Confirmed!
+		if( result.data == true )
+		{
+			var f = new Library( 'system.library' );
+			var args = {};
+			args.command ='delete';
+			args.id = id;
 
 
-	if( ge( 'UserListID_' + id ) ) ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
+			if( ge( 'UserListID_' + id ) ) ge( 'UserListID_' + id ).parentNode.removeChild( ge( 'UserListID_' + id ) );
 
-    f.onExecuted = function( e, d )
-    {
-        if( e == 'ok' )
-        {
-            CancelEditing();
-            startlimit = 0;
-            limit = ( startlimit + ', ' + maxlimit );
-            
-            ge( 'UserList' ).innerHTML = '';
-            Application.listUsers();
-            console.log('User deleted. List refreshed?');
-        }
-        else
-        {
-	        console.log('delete user gave unexpected response',e,d);
-        }
-        //RefreshSessions( id );
-    }
+			f.onExecuted = function( e, d )
+			{
+				if( e == 'ok' )
+				{
+				    CancelEditing();
+				    startlimit = 0;
+				    limit = ( startlimit + ', ' + maxlimit );
+				    
+				    ge( 'UserList' ).innerHTML = '';
+				    Application.listUsers();
+				    console.log('User deleted. List refreshed?');
+				}
+				else
+				{
+					console.log('delete user gave unexpected response',e,d);
+				}
+				//RefreshSessions( id );
+			}
 
-    f.execute( 'user', args );
+			f.execute( 'user', args );
+		}
+	} );
 }
 
 function RefreshUserGroups( groups )
@@ -868,12 +891,12 @@ function RefreshSoftware( apps )
 				{
 					if ( sfw[apps[k][0]] )
 					{
-						str += '<div value="' + sfw[apps[k][0]].Name + '" class="HBox GuiContainer MarginBottom Padding">' +
+						str += '<div value="' + sfw[apps[k][0]].Name + '" class="HBox Box MarginBottom Padding">' +
 						'<h2>' + sfw[apps[k][0]].Name + '<span onclick="RemoveSoftware(this)" class="MousePointer IconSmall fa-remove"></span></h2>' + 
 						'<p class="Layout"><strong>' + sfw[apps[k][0]].Category + '</strong></p>' +
 						'<p class="Layout">No description available for this title.</p>' +
 						'<div class="TheButton BackgroundNegative Padding">' +
-						'<span>include in dock&nbsp;</span><input type="checkbox"' + ( apps[k][1] != '0' ? ' checked="checked"' : '' ) + '/>' + 
+						'<span>' + i18n( 'i18n_include_in_dock' ) + '&nbsp;</span><input type="checkbox"' + ( apps[k][1] != '0' ? ' checked="checked"' : '' ) + '/>' + 
 						'</div>' +
 						'</div>';
 					}

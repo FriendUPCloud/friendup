@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file file.c
@@ -863,12 +851,16 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 		char *lfile = src;
 		int lastslash = 0;
 		unsigned int length = strlen( src )-1;
+		int locbpath = strlen( basepath );
 		
 		for( i=1 ; i < length ; i++ )
 		{
 			if( src[ i ] == ':' || src[ i ] == '/' )
 			{
-				lastslash = i;
+				if( src[ i+1 ] != ';' )
+				{
+					lastslash = i;
+				}
 			}
 			else if( src[ i ] == ';' )
 			{
@@ -890,7 +882,7 @@ int FileDownloadFilesOrFolder( Http *request, void *us, const char *basepath, co
 					strcpy( tmpdst, dst );
 					strcat( tmpdst, &src[ lastslash+1 ] );
 					
-					DEBUG("\n\n\nCOPY------------> %s   dst %s\n\n\n", tmpdst, dst );
+					DEBUG("\n\n\nCOPY------------>TMPDST %s   dst %s\n\n\n", tmpdst, &lfile[ j+1 ] );
 
 					FileDownloadFileOrDirectoryRec( request, actDev, tmpdst, &lfile[ j+1 ], basePos, -1, numberFiles );
 					FFree( tmpdst );

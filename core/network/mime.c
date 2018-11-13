@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -30,10 +18,25 @@
 
 const char* MimeFromExtension( char* extension )
 {
-	if( !extension ) return "text/plain";
+	if( extension == NULL )
+	{
+		return "text/plain";
+	}
 	unsigned int hash = 0;
-	DEBUG("Check mime for extension: '%s'\n", extension );
-	MurmurHash3_32( extension, strlen( extension ), 0, &hash );
+	char extCopy[ 32 ];
+	memset( extCopy, 0, 32 );
+	
+	int i;
+	int size = strlen( extension );
+	if( size > 31 ) size = 31;
+	for( i=0 ; i < size ; i++ )
+	{
+		extCopy[ i ] = tolower( extension[ i ] );
+	}
+	extension[ i ] = 0;
+	
+	DEBUG("Check mime for extension: '%s'\n", extCopy );
+	MurmurHash3_32( extCopy, strlen( extCopy ), 0, &hash );
 	/*
 #ifdef IS_BIG_ENDIAN
 	unsigned int hashppc = 0;

@@ -75,7 +75,7 @@ i18n_new_container                      : Uusi kansio
 i18n_create_container                   : Luo kansio
 i18n_name                               : Nimi
 i18n_make_a_new_container               : Luo uusi kansio
-i18n_error_could_not_list_directory     : Kansiolistauksen teko ei onnistunut
+i18n_error_could_not_list_directory     : Tyhjä hakemisto
 
 i18n_error                              : Virhe
 i18n_could_not_run_jsx                  : Ei voitu suorittaa JSX.

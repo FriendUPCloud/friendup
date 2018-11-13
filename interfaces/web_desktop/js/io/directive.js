@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -27,10 +18,16 @@ function ExecuteApplication( app, args, callback )
 		Workspace.lastLaunchedAppArgs = args; 
 	}
 
+	// Hide current app
+	if( window.FriendVR )
+	{
+		window.FriendVR.hideCurrentApplication();
+	}
+
 	mousePointer.clear();
 
 	// Check if the app called is found in the singleInstanceApps array
-	if( friend.singleInstanceApps[ app ] )
+	if( Friend.singleInstanceApps[ app ] )
 	{
 		var msg = {
 			command: 'cliarguments',
@@ -42,10 +39,10 @@ function ExecuteApplication( app, args, callback )
 			msg.type = 'callback';
 		}
 		// If it is found, send the message directly to the app instead of relaunching
-		friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
-		for( var a in friend.singleInstanceApps[ app ].windows )
+		Friend.singleInstanceApps[ app ].contentWindow.postMessage( JSON.stringify( msg ), '*' );
+		for( var a in Friend.singleInstanceApps[ app ].windows )
 		{
-			_WindowToFront( friend.singleInstanceApps[ app ].windows[ a ].content );
+			_WindowToFront( Friend.singleInstanceApps[ app ].windows[ a ].content );
 		}
 		return;
 	}
@@ -237,7 +234,7 @@ function ExecuteApplication( app, args, callback )
 					persistent: conf.DormantDisc.persistent,
 					automount: 'yes' // conf.DormantDisc.automount ? conf.DormantDisc.automount : false
 				}				
-				drive = Friend.Doors.Dormant.Drive.createDrive( options, function( response, data, extra )
+				drive = Friend.Doors.Dormant.createDrive( options, function( response, data, extra )
 				{
 					// Do something?
 				} );
@@ -269,6 +266,7 @@ function ExecuteApplication( app, args, callback )
 						Workspace.sessionId : Workspace.conf.authId;
 					var svalu = sid ? Workspace.sessionId : Workspace.conf.authId;
 					var stype = sid ? 'sessionid' : 'authid';
+					console.log( 'Launching with stype: ' + stype + ' and svalu: ' + svalu + ' and session ' + Workspace.sessionId );
 					ifr.src = sdomain + '/system.library/module?module=system&' +
 						stype + '=' + svalu + '&command=launch&app=' +
 						app + '&friendup=' + Doors.runLevels[0].domain;
@@ -293,6 +291,12 @@ function ExecuteApplication( app, args, callback )
 			// Quit the application
 			ifr.quit = function( level )
 			{
+				// Check vr
+				if( window.FriendVR )
+				{
+					window.FriendVR.killApplication( this.applicationId );
+				}
+				
 				if( this.windows )
 				{
 					for( var a in this.windows )
@@ -327,7 +331,7 @@ function ExecuteApplication( app, args, callback )
 						{
 							if( evList[a].applicationId != this.applicationId )
 							{
-								outEvents.push( found );
+								outEvents.push( evList[a] );
 							}
 						}
 						// Update events
@@ -340,8 +344,7 @@ function ExecuteApplication( app, args, callback )
 				// Tell the Dormant disc to finish tasks and destroy itself
 				if ( this.drive )
 				{
-					debugger;
-					Friend.Doors.Dormant.Drive.destroyDrive( this.drive, { completeAndDie: true, timeout: 1000 * 60 * 60 }, function( response, data, extra ) 
+					Friend.Doors.Dormant.destroyDrive( this.drive, { completeAndDie: true, timeout: 1000 * 60 * 60 }, function( response, data, extra ) 
 					{
 						if ( data == 'killed' )
 						{
@@ -403,6 +406,9 @@ function ExecuteApplication( app, args, callback )
 			// Register application
 			ifr.onload = function()
 			{
+				// Make sure pickup items are cleared
+				mousePointer.clear();
+				
 				var cid = addWrapperCallback( function()
 				{
 					if( callback )
@@ -438,7 +444,7 @@ function ExecuteApplication( app, args, callback )
 					filePath: sdomain + filepath,
 					domain:   sdomain,
 					registerCallback: cid,
-					clipboard: friend.clipboard
+					clipboard: Friend.clipboard
 				};
 				if( conf.State ) o.state = conf.State;
 
@@ -464,6 +470,14 @@ function ExecuteApplication( app, args, callback )
 			{
 				callback( false );
 			}
+			
+			// Register this app as the last executed
+			// Register this app as the last executed
+			if( Workspace.currentExecutedApplication )
+			{
+				Workspace.prevExecutedApplication = Workspace.currentExecutedApplication;
+			}
+			Workspace.currentExecutedApplication = ifr.applicationId;
 		}
 		else
 		{
@@ -480,10 +494,10 @@ function FlushSingleApplicationLock( app )
 {
 	// Flush single instance app!
 	var out = [];
-	for( var a in friend.singleInstanceApps )
+	for( var a in Friend.singleInstanceApps )
 		if( a != app )
-			out[a] = friend.singleInstanceApps[a];
-	friend.singleInstanceApps = out;
+			out[a] = Friend.singleInstanceApps[a];
+	Friend.singleInstanceApps = out;
 }
 
 // Kill an app by name or PID
@@ -852,6 +866,7 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	{
 		if( data )
 		{
+			console.log( 'Here\'s the response: ' + data );
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
@@ -867,6 +882,10 @@ function ExecuteJSXByPath( path, args, callback, conf )
 				//if( callback ) callback( true );
 				return r;
 			}
+		}
+		else
+		{
+			console.log( 'Failed to load data: ', data, path );
 		}
 		if( callback ) callback( false );
 	};
@@ -1095,7 +1114,7 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 						origin:           document.location.href,
 						viewId:           false,
 						registerCallback: cid,
-						clipboard:        friend.clipboard,
+						clipboard:        Friend.clipboard,
 						args:			  args
 					};
 
@@ -1120,6 +1139,13 @@ function ExecuteJSX( data, app, args, path, callback, conf )
 
 			// Add application
 			Workspace.applications.push( ifr );
+			
+			// Register this app as the last executed
+			if( Workspace.currentExecutedApplication )
+			{
+				Workspace.prevExecutedApplication = Workspace.currentExecutedApplication;
+			}
+			Workspace.currentExecutedApplication = ifr.applicationId;
 		}
 	}, true );
 }

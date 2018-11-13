@@ -35,7 +35,7 @@
 #include <unistd.h>
 #endif
 
-#include "../lib/libwebsockets.h"
+#include <libwebsockets.h>
 
 struct lws_poly_gen {
 	uint32_t cyc[2];
@@ -83,12 +83,12 @@ enum demo_protocols {
 static uint8_t
 lws_poly_rand(struct lws_poly_gen *p)
 {
-	p->cyc[0] = p->cyc[0] & 1 ? (p->cyc[0] >> 1) ^ 0xb4bcd35c :
-				    p->cyc[0] >> 1;
-	p->cyc[0] = p->cyc[0] & 1 ? (p->cyc[0] >> 1) ^ 0xb4bcd35c :
-				    p->cyc[0] >> 1;
-	p->cyc[1] = p->cyc[1] & 1 ? (p->cyc[1] >> 1) ^ 0x7a5bc2e3 :
-				    p->cyc[1] >> 1;
+	p->cyc[0] = (p->cyc[0] & 1) ? (p->cyc[0] >> 1) ^ 0xb4bcd35c :
+				      p->cyc[0] >> 1;
+	p->cyc[0] = (p->cyc[0] & 1) ? (p->cyc[0] >> 1) ^ 0xb4bcd35c :
+				      p->cyc[0] >> 1;
+	p->cyc[1] = (p->cyc[1] & 1) ? (p->cyc[1] >> 1) ^ 0x7a5bc2e3 :
+				      p->cyc[1] >> 1;
 
 	return p->cyc[0] ^ p->cyc[1];
 }
@@ -151,7 +151,7 @@ callback_dumb_increment(struct lws *wsi, enum lws_callback_reasons reason,
 			wsi_mirror = NULL;
 		}
 
-		for (n = 0; n < (int)ARRAY_SIZE(wsi_multi); n++)
+		for (n = 0; n < (int)LWS_ARRAY_SIZE(wsi_multi); n++)
 			if (wsi == wsi_multi[n]) {
 				sprintf(which_wsi, "multi %d", n);
 				which = which_wsi;
@@ -672,15 +672,20 @@ int main(int argc, char **argv)
 		goto usage;
 
 	/* add back the leading / on path */
-	path[0] = '/';
-	lws_strncpy(path + 1, p, sizeof(path) - 1);
-	i.path = path;
+	if (p[0] != '/') {
+		path[0] = '/';
+		lws_strncpy(path + 1, p, sizeof(path) - 1);
+		i.path = path;
+	} else
+		i.path = p;
 
 	if (!strcmp(prot, "http") || !strcmp(prot, "ws"))
 		use_ssl = 0;
 	if (!strcmp(prot, "https") || !strcmp(prot, "wss"))
 		if (!use_ssl)
 			use_ssl = LCCSCF_USE_SSL;
+
+	lwsl_debug("'%s' %p '%s' %p\n", i.address, i.address, i.path, i.path);
 
 	/*
 	 * create the websockets context.  This tracks open connections and
@@ -786,7 +791,7 @@ int main(int argc, char **argv)
 	while (!force_exit) {
 
 		if (do_multi) {
-			for (n = 0; n < (int)ARRAY_SIZE(wsi_multi); n++) {
+			for (n = 0; n < (int)LWS_ARRAY_SIZE(wsi_multi); n++) {
 				if (!wsi_multi[n] && ratelimit_connects(&rl_multi[n], 2u)) {
 					lwsl_notice("dumb %d: connecting\n", n);
 					i.protocol = protocols[PROTOCOL_DUMB_INCREMENT].name;

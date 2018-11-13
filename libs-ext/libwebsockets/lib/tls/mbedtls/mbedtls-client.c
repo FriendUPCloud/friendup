@@ -30,7 +30,6 @@ OpenSSL_client_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
 int
 lws_ssl_client_bio_create(struct lws *wsi)
 {
-	X509_VERIFY_PARAM *param;
 	char hostname[128], *p;
 	const char *alpn_comma = wsi->context->tls.alpn_default;
 	struct alpn_ctx protos;
@@ -63,7 +62,7 @@ lws_ssl_client_bio_create(struct lws *wsi)
 		SSL_set_info_callback(wsi->tls.ssl, lws_ssl_info_callback);
 
 	if (!(wsi->tls.use_ssl & LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK)) {
-		param = SSL_get0_param(wsi->tls.ssl);
+		X509_VERIFY_PARAM *param = SSL_get0_param(wsi->tls.ssl);
 		/* Enable automatic hostname checks */
 	//	X509_VERIFY_PARAM_set_hostflags(param,
 	//				X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
@@ -188,6 +187,8 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 				    const struct lws_context_creation_info *info,
 				    const char *cipher_list,
 				    const char *ca_filepath,
+				    const void *ca_mem,
+				    unsigned int ca_mem_len,
 				    const char *cert_filepath,
 				    const char *private_key_filepath)
 {
@@ -214,16 +215,20 @@ lws_tls_client_create_vhost_context(struct lws_vhost *vh,
 		return 1;
 	}
 
-	if (!ca_filepath)
+	if (!ca_filepath && (!ca_mem || !ca_mem_len))
 		return 0;
 
-	if (alloc_file(vh->context, ca_filepath, &buf, &len)) {
-		lwsl_err("Load CA cert file %s failed\n", ca_filepath);
-		return 1;
+	if (ca_filepath) {
+		if (alloc_file(vh->context, ca_filepath, &buf, &len)) {
+			lwsl_err("Load CA cert file %s failed\n", ca_filepath);
+			return 1;
+		}
+		vh->tls.x509_client_CA = d2i_X509(NULL, buf, len);
+		free(buf);
+	} else {
+		vh->tls.x509_client_CA = d2i_X509(NULL, (uint8_t*)ca_mem, ca_mem_len);
 	}
 
-	vh->tls.x509_client_CA = d2i_X509(NULL, buf, len);
-	free(buf);
 	if (!vh->tls.x509_client_CA) {
 		lwsl_err("client CA: x509 parse failed\n");
 		return 1;

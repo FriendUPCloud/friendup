@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file systembase.c
@@ -45,11 +33,11 @@
 #include <dirent.h> 
 #include <stdio.h> 
 #include <system/services/service_manager.h>
-#include <properties/propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
-#include <network/websocket_client.h>
+#include <network/websocket_server_client.h>
 #include <system/fsys/device_handling.h>
 #include <core/functions.h>
 #include <util/md5.h>
@@ -68,6 +56,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <security/server_checker.h>
+#include <network/websocket_client.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -96,6 +85,8 @@ Http *SysWebRequest( struct SystemBase *l, char **urlpath, Http **request, UserS
 void RemoveOldLogs( SystemBase *l );
 
 FBOOL skipDBUpdate = FALSE;
+
+int globalFriendCorePort = 0;
 
 // internal
 
@@ -127,6 +118,8 @@ SystemBase *SystemInit( void )
 	{
 		return NULL;
 	}
+	
+	PropertiesInterfaceInit( &(l->sl_PropertiesInterface) );
 	
 	LIBXML_TEST_VERSION;
 	
@@ -225,8 +218,6 @@ SystemBase *SystemInit( void )
 	l->LibrarySQLDrop = LibrarySQLDrop;
 	l->LibraryApplicationGet = LibraryApplicationGet;
 	l->LibraryApplicationDrop = LibraryApplicationDrop;
-	l->LibraryPropertiesGet = LibraryPropertiesGet;
-	l->LibraryPropertiesDrop = LibraryPropertiesDrop;
 	l->LibraryZGet = LibraryZGet;
 	l->LibraryZDrop = LibraryZDrop;
 	l->LibraryImageGet = LibraryImageGet;
@@ -260,7 +251,8 @@ SystemBase *SystemInit( void )
 	Props *prop = NULL;
 
 	// Get a copy of the properties.library
-	struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)l->LibraryPropertiesGet( l );
+	//struct PropertiesLibrary *plib = ( struct PropertiesLibrary *)l->LibraryPropertiesGet( l );
+	PropertiesInterface *plib = &(l->sl_PropertiesInterface);
 	
 	if( l->sl_ActiveModuleName )
 	{
@@ -407,16 +399,45 @@ SystemBase *SystemInit( void )
 				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
 			}
 			
+			l->l_AppleServerHost = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:host", NULL ) );
+			
+			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
+
+			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:AppleKeyAPI", NULL ) );
+			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
 			{
 				l->sl_XFrameOption = StringDuplicate( tptr );
 			}
+			
+			globalFriendCorePort = plib->ReadIntNCS( prop, "core:port", FRIEND_CORE_PORT );
 		}
 		else
 		{
 			FERROR( "Prop is just NULL!\n" );
 		}
+		
+		/*
+		if( FriendCoreLockCheckOrCreate() == FALSE )
+		{
+			char *ptr = getenv("FRIEND_HOME");
+			char path[ 2048 ];
+			if( ptr != NULL )
+			{
+				snprintf( path, sizeof(path), "%s.friend_lock%d", ptr, globalFriendCorePort );
+			}
+			else
+			{
+				snprintf( path, sizeof(path), ".friend_lock%d", globalFriendCorePort );
+			}
+			
+			FERROR("Cannot run FriendCore instance on same port\nPlease check if FriendCore is running on same server/port\nPlease check and remove file/dir: '%s' if neccessary\n", path );
+			FFree( l );
+			LogDelete();
+			return NULL;
+		}
+		*/
 		
 		Log( FLOG_INFO, "----------------------------------------\n");
 		Log( FLOG_INFO, "-----Database configuration-------------\n");
@@ -458,7 +479,7 @@ SystemBase *SystemInit( void )
 		}
 		if( prop ) plib->Close( prop );
 	
-		l->LibraryPropertiesDrop( l, plib );
+		//l->LibraryPropertiesDrop( l, plib );
 	}
 	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -472,6 +493,17 @@ SystemBase *SystemInit( void )
 		FFree( l );
 		LogDelete();
 		return NULL;
+	}
+	
+	if( skipDBUpdate == FALSE )
+	{
+		CheckAndUpdateDB( l );
+	}
+	else
+	{
+		Log( FLOG_INFO, "----------------------------------------------------\n");
+		Log( FLOG_INFO, "---------Autoupdatedatabase process skipped---------\n");
+		Log( FLOG_INFO, "----------------------------------------------------\n");
 	}
 	
 	SQLLibrary *lsqllib  = l->LibrarySQLGet( l );
@@ -741,17 +773,6 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create authentication modules END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
-	if( skipDBUpdate == FALSE )
-	{
-		CheckAndUpdateDB( l );
-	}
-	else
-	{
-		DEBUG("----------------------------------------------------\n");
-		DEBUG("---------Autoupdatedatabase process skipped---------\n");
-		DEBUG("----------------------------------------------------\n");
-	}
-	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create filesystem handlers\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -772,11 +793,15 @@ SystemBase *SystemInit( void )
 	Log( FLOG_INFO, "[SystemBase] Create DOSDrivers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	
+#ifdef __DEBUG
 	if( ( l->sl_Magic = magic_open(MAGIC_CHECK|MAGIC_MIME_TYPE) ) != NULL )
+#else
+	if( ( l->sl_Magic = magic_open(MAGIC_NONE|MAGIC_MIME_TYPE) ) != NULL )
+#endif
 	{
-		int err = magic_load( l->sl_Magic, "/usr/share/file/magic.mgc" );
+		int err = magic_load( l->sl_Magic, NULL/*use default database*/ ); // @BG-655
 		DEBUG("[SystemBase] Magic load return %d\n", err );
-		err = magic_compile( l->sl_Magic, "/usr/share/file/magic.mgc" );
+		err = magic_compile( l->sl_Magic, NULL/*use default database*/ ); // @BG-655
 		DEBUG("[SystemBase] Magic compile return %d\n", err );
 	}
 	else
@@ -886,6 +911,12 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize DOSTokenManager\n");
 	}
 	
+	l->sl_CalendarManager = CalendarManagerNew( l );
+	if( l->sl_CalendarManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -922,6 +953,9 @@ SystemBase *SystemInit( void )
 	
 	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
+	//@BG-678 
+	EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
+	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
 		EventAdd( l->sl_EventManager, CheckServerAndRestart, l, time( NULL )+30, 30, -1 );
@@ -953,6 +987,17 @@ void SystemClose( SystemBase *l )
 	{
 		FERROR("SystemBase is NULL\n");
 		return;
+	}
+	
+	if( l->l_APNSConnection != NULL )
+	{
+		WebsocketClientDelete( l->l_APNSConnection );
+		l->l_APNSConnection = NULL;
+	}
+	
+	if( l->sl_MobileManager != NULL )
+	{
+		MobileManagerDelete( l->sl_MobileManager );
 	}
 	
 	DEBUG("[SystemBase] close event manager\n");
@@ -1028,6 +1073,10 @@ void SystemClose( SystemBase *l )
 	}
 
 	DEBUG("Delete Managers\n");
+	if( l->sl_CalendarManager != NULL )
+	{
+		CalendarManagerDelete( l->sl_CalendarManager );
+	}
 	if( l->sl_USM != NULL )
 	{
 		USMDelete( l->sl_USM );
@@ -1183,13 +1232,6 @@ void SystemClose( SystemBase *l )
 		l->sl_FSysPath = NULL;
 	}
 	
-	// Close properties.library
-	if( l->plib ) 
-	{
-		DEBUG( "[SystemBase] Seems we still have the properties library. Remove it.\n" );
-		LibraryClose( l->plib );
-	}
-	
 	// close magic door of awesomeness!
 	if( l->sl_Magic != NULL )
 	{
@@ -1232,9 +1274,21 @@ void SystemClose( SystemBase *l )
 		FFree( l->sl_XFrameOption );
 	}
 	
+	if( l->l_AppleServerHost != NULL )
+	{
+		FFree( l->l_AppleServerHost );
+	}
+
+	if( l->l_AppleKeyAPI != NULL )
+	{
+		FFree( l->l_AppleKeyAPI );
+	}
+	
 	xmlCleanupParser();
 	
 	Log( FLOG_INFO,  "[SystemBase] Systembase closed.\n");
+	
+	FriendCoreLockRelease();
 }
 
 /**
@@ -1250,6 +1304,21 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
+	
+	DEBUG("[SystembaseInitExternal]APNS init\n" );
+	
+	l->l_APNSConnection = WebsocketClientNew( l->l_AppleServerHost, l->l_AppleServerPort, NULL );
+	if( l->l_APNSConnection != NULL )
+	{
+		if( WebsocketClientConnect( l->l_APNSConnection ) > 0 )
+		{
+			DEBUG("APNS server connected\n");
+		}
+		else
+		{
+			DEBUG("APNS server not connected\n");
+		}
+	}
 	
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
@@ -1272,23 +1341,24 @@ int SystemInitExternal( SystemBase *l )
 		if( l->sl_Sentinel == NULL )
 		{
 			DEBUG( "[SystemBase] Creating sentinel.\n" );
-			Props *prop = SLIB->plib->Open( "cfg/cfg.ini" );
+			PropertiesInterface *plib = &(SLIB->sl_PropertiesInterface);
+			Props *prop = plib->Open( "cfg/cfg.ini" );
 			if( prop != NULL )
 			{
 				// Do we even want a sentinel?
-				char *userTest = SLIB->plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
+				char *userTest = plib->ReadStringNCS( prop, "Core:SentinelUsername", NULL );
 				if( userTest != NULL )
 				{
 					l->sl_Sentinel = FCalloc( 1, sizeof( Sentinel ) );
 					if( l->sl_Sentinel != NULL )
 					{
 						l->sl_Sentinel->s_ConfigUsername = StringDuplicate( userTest );
-						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( SLIB->plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
+						l->sl_Sentinel->s_ConfigPassword = StringDuplicate( plib->ReadStringNCS( prop, "Core:SentinelPassword", NULL ) );
 					
 						memcpy( l->sl_Sentinel->s_FCID, l->fcm->fcm_ID, FRIEND_CORE_MANAGER_ID_SIZE );
 					}
 				}
-				SLIB->plib->Close( prop );
+				plib->Close( prop );
 			}
 			
 			if( l->sl_Sentinel != NULL )
@@ -1496,9 +1566,9 @@ int SystemInitExternal( SystemBase *l )
 		
 		UMCheckAndLoadAPIUser( l->sl_UM );
 		
-		DEBUG("----------------------------------------------------\n");
-		DEBUG("---------Mount user devices-------------------------\n");
-		DEBUG("----------------------------------------------------\n");
+		Log( FLOG_INFO, "----------------------------------------------------\n");
+		Log( FLOG_INFO, "---------Mount user devices-------------------------\n");
+		Log( FLOG_INFO, "----------------------------------------------------\n");
 	
 		User *tmpUser = l->sl_UM->um_Users;
 		while( tmpUser != NULL )
@@ -1509,9 +1579,9 @@ int SystemInitExternal( SystemBase *l )
 			tmpUser = (User *)tmpUser->node.mln_Succ;
 		}
 		
-		DEBUG("----------------------------------------------------\n");
-		DEBUG("---------Mount user group devices-------------------\n");
-		DEBUG("----------------------------------------------------\n");
+		Log( FLOG_INFO, "----------------------------------------------------\n");
+		Log( FLOG_INFO, "---------Mount user group devices-------------------\n");
+		Log( FLOG_INFO, "----------------------------------------------------\n");
 		
 		UserGroup *ug = l->sl_UM->um_UserGroups;
 		/*
@@ -1531,6 +1601,13 @@ int SystemInitExternal( SystemBase *l )
 		l->LibrarySQLDrop( l, sqllib );
 	}
 	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
 	
 	// mount INRAM drive
 	/*
@@ -1547,6 +1624,9 @@ int SystemInitExternal( SystemBase *l )
 		Log( FLOG_ERROR,"Cannot mount device, device '%s' will be unmounted. FERROR %d\n", "INRAM", err );
 		//l->sl_INRAM->f_Mounted = TRUE;
 	}*/
+	
+	
+	// test websocket client connection
 	
 	return 0;
 }
@@ -1569,9 +1649,9 @@ typedef struct DBUpdateEntry
 
 void CheckAndUpdateDB( struct SystemBase *l )
 {
-	DEBUG("----------------------------------------------------\n");
-	DEBUG("---------Autoupdatedatabase process start-----------\n");
-	DEBUG("----------------------------------------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Autoupdatedatabase process start-----------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
 	
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
@@ -1797,9 +1877,9 @@ void CheckAndUpdateDB( struct SystemBase *l )
 		l->LibrarySQLDrop( l, sqllib );
 	}
 	
-	DEBUG("----------------------------------------------------\n");
-	DEBUG("---------Autoupdatedatabase process END-------------\n");
-	DEBUG("----------------------------------------------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
+	Log( FLOG_INFO, "---------Autoupdatedatabase process END-------------\n");
+	Log( FLOG_INFO, "----------------------------------------------------\n");
 }
 
 /**
@@ -2246,53 +2326,6 @@ void LibraryApplicationDrop( SystemBase *l, ApplicationLibrary *aclose __attribu
 }
 
 /**
- * Get properties.library from SystemBase
- *
- * @param l pointer to SystemBase
- * @return pointer to properties.library
- */
-
-PropertiesLibrary *LibraryPropertiesGet( SystemBase *l )
-{
-	if( l->PropLibCounter == 0 )
-	{
-		l->plib = (PropertiesLibrary *)LibraryOpen( l, "properties.library", 0 );
-		if( l->plib == NULL )
-		{
-			DEBUG("[SystemBase] CANNOT OPEN properties.library!\n");
-			return NULL;
-		}
-		DEBUG("[SystemBase] properties.library opened %p (count %d)!\n", l->plib, l->PropLibCounter );
-		
-		l->PropLibCounter = 1;
-	}
-	l->PropLibCounter++;
-
-	return l->plib;
-}
-
-/**
- * Drop properties.library to pool
- *
- * @param l pointer to SystemBase
- * @param pclose pointer to properties.library which will be returned to pool UNUSED
- */
-
-void LibraryPropertiesDrop( SystemBase *l, PropertiesLibrary *pclose __attribute__((unused)))
-{
-	if( l->PropLibCounter > 0 )
-	{
-		l->PropLibCounter--;
-	}
-	else if ( l->PropLibCounter == 0 )
-	{
-		DEBUG( "[SystemBase] Close properties.library\n" );
-		LibraryClose( (struct Library *)l->plib );
-		l->plib = NULL;
-	}
-}
-
-/**
  * Get z.library from SystemBase
  *
  * @param l pointer to SystemBase
@@ -2425,10 +2458,10 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d\n",msg, len );
 
-			WebsocketClient *wsc = usersession->us_WSClients;
+			WebsocketServerClient *wsc = usersession->us_WSClients;
 			while( wsc != NULL )
 			{
-				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wc_Wsi );
+				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
 
 				FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) );
 
@@ -2436,7 +2469,7 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 
 				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
 
-				wsc = (WebsocketClient *)wsc->node.mln_Succ;
+				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 			}
 			
 			FFree( buf );
@@ -2472,14 +2505,14 @@ int WebSocketSendMessageInt( UserSession *usersession, char *msg, int len )
 		{
 			memcpy( buf, msg,  len );
 
-			WebsocketClient *wsc = usersession->us_WSClients;
+			WebsocketServerClient *wsc = usersession->us_WSClients;
 		
 			DEBUG("[SystemBase] Writing to websockets, string '%s' size %d ptr to websocket connection %p\n",msg, len, wsc );
 		
 			while( wsc != NULL )
 			{
 				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-				wsc = (WebsocketClient *)wsc->node.mln_Succ;
+				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 			}
 		
 			FFree( buf );
@@ -2536,17 +2569,59 @@ int SendProcessMessage( Http *request, char *data, int len )
 	return 0;
 }
 
+/**
+ * Check if another FriendCore is working or launch it and create lock which prevent to launch another FriendCore on same port.
+ * 
+ * @return TRUE if lock can be created
+ */
+
+FBOOL FriendCoreLockCheckOrCreate( )
+{
+	char *ptr = getenv("FRIEND_HOME");
+	char path[ 2048 ];
+	if( ptr != NULL )
+	{
+		int size = snprintf( path, sizeof(path), "%s.friend_lock%d", ptr, globalFriendCorePort );
+		if( mkdir( path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) == 0 )
+		{
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+
+	return FALSE;
+}
+
+/**
+ * Release FriendCore lock
+ */
+void FriendCoreLockRelease()
+{
+	char *ptr = getenv("FRIEND_HOME");
+	char path[ 2048 ];
+	if( ptr != NULL )
+	{
+		int size = snprintf( path, sizeof(path), "%s.friend_lock%d", ptr, globalFriendCorePort );
+		LocFileDeleteWithSubs( path );
+	}
+}
+
 #define NORMAL_COLOR  "\x1B[0m"
 #define GREEN  "\x1B[32m"
 #define BLUE  "\x1B[34m"
 
+#define LFILENAME_MAX_LENGTH 256
 
 typedef struct LFile
 {
-	char		lf_Name[ 256 ];
+	char		lf_Name[ LFILENAME_MAX_LENGTH ];
 	size_t		lf_Size;
 	size_t		lf_ModDate;
 }LFile;
+
 
 static int LFileCompare(const void * a, const void * b)
 {
@@ -2613,7 +2688,7 @@ void RemoveOldLogs( SystemBase *l )
 	   
 							if( dir->d_type == 0x8 && (strncmp( dir->d_name, "friend_core", 11 ) == 0) ) // if the type is not directory just print it with blue
 							{
-								snprintf( files[ pos ].lf_Name, sizeof(files[ pos ].lf_Name), "log/%s", dir->d_name );
+								snprintf( files[ pos ].lf_Name, LFILENAME_MAX_LENGTH, "log/%.250s", dir->d_name );
 								struct stat attr;
 								stat( files[ pos ].lf_Name, &attr );
 								files[ pos ].lf_Size = attr.st_size;

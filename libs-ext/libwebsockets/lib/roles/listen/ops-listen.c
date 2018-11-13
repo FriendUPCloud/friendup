@@ -93,7 +93,7 @@ rops_handle_POLLIN_listen(struct lws_context_per_thread *pt, struct lws *wsi,
 			break;
 		}
 
-		lws_plat_set_socket_options(wsi->vhost, accept_fd);
+		lws_plat_set_socket_options(wsi->vhost, accept_fd, 0);
 
 #if defined(LWS_WITH_IPV6)
 		lwsl_debug("accepted new conn port %u on fd=%d\n",
@@ -180,5 +180,7 @@ struct lws_role_ops role_ops_listen = {
 	/* client_bind */		NULL,
 	/* writeable cb clnt, srv */	{ 0, 0 },
 	/* close cb clnt, srv */	{ 0, 0 },
+	/* protocol_bind_cb c,s */	{ 0, 0 },
+	/* protocol_unbind_cb c,s */	{ 0, 0 },
 	/* file_handle */		0,
 };

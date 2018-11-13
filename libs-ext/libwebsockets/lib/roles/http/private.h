@@ -22,10 +22,14 @@
  *  enabled
  */
 
-#if defined(LWS_WITH_HTTP_PROXY)
+#if defined(LWS_WITH_HUBBUB)
   #include <hubbub/hubbub.h>
   #include <hubbub/parser.h>
  #endif
+
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+#include "roles/http/compression/private.h"
+#endif
 
 #define lwsi_role_http(wsi) (lwsi_role_h1(wsi) || lwsi_role_h2(wsi))
 
@@ -35,7 +39,7 @@ enum http_version {
 	HTTP_VERSION_2
 };
 
-enum http_connection_type {
+enum http_conn_type {
 	HTTP_CONNECTION_CLOSE,
 	HTTP_CONNECTION_KEEP_ALIVE
 };
@@ -133,7 +137,7 @@ struct allocated_headers {
 
 
 
-#if defined(LWS_WITH_HTTP_PROXY)
+#if defined(LWS_WITH_HUBBUB)
 struct lws_rewrite {
 	hubbub_parser *parser;
 	hubbub_parser_optparams params;
@@ -192,8 +196,14 @@ struct lws_access_log {
 };
 #endif
 
+#define LWS_HTTP_CHUNK_HDR_MAX_SIZE (6 + 2) /* 6 hex digits and then CRLF */
+#define LWS_HTTP_CHUNK_TRL_MAX_SIZE (2 + 5) /* CRLF, then maybe 0 CRLF CRLF */
+
 struct _lws_http_mode_related {
 	struct lws *new_wsi_list;
+
+	unsigned char *pending_return_headers;
+	size_t pending_return_headers_len;
 
 #if defined(LWS_WITH_HTTP_PROXY)
 	struct lws_rewrite *rw;
@@ -216,9 +226,14 @@ struct _lws_http_mode_related {
 #ifdef LWS_WITH_CGI
 	struct lws_cgi *cgi; /* wsi being cgi master have one of these */
 #endif
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	struct lws_compression_support *lcs;
+	lws_comp_ctx_t comp_ctx;
+	unsigned char comp_accept_mask;
+#endif
 
 	enum http_version request_version;
-	enum http_connection_type connection_type;
+	enum http_conn_type conn_type;
 	lws_filepos_t tx_content_length;
 	lws_filepos_t tx_content_remain;
 	lws_filepos_t rx_content_length;
@@ -226,8 +241,12 @@ struct _lws_http_mode_related {
 
 #if defined(LWS_WITH_HTTP_PROXY)
 	unsigned int perform_rewrite:1;
+	unsigned int proxy_clientside:1;
+	unsigned int proxy_parent_chunked:1;
 #endif
 	unsigned int deferred_transaction_completed:1;
+	unsigned int content_length_explicitly_zero:1;
+	unsigned int did_stream_close:1;
 };
 
 

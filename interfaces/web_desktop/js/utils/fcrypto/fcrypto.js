@@ -1,28 +1,16 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
 /*******************************************************************************
 *                                                                              *
-* Friend Crypto (fcrypt) v0.5                                                  *
+* Friend Crypto (fcrypt) v0.6                                                  *
 *                                                                              *
 * @dependency                                                                  *
 *                                                                              *
@@ -80,6 +68,21 @@
 *   fcrypt.setKey( key );                                                      * 
 *                                                                              *
 *******************************************************************************/
+
+// TODO: Make support for WebCryptoAPI when there is "ALLOWED TIME FOR IT TO BE IMPLEMENTED" ... 
+// (Also check if generateKey can be seeded with a passphrase, not just random generated keys)
+// https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/generateKey
+// https://github.com/diafygi/webcrypto-examples#rsassa-pkcs1-v1_5---generatekey 
+
+var cryptoObj = window.crypto || window.msCrypto;
+
+if( cryptoObj !== "undefined" )
+{
+	//console.log( 'WebCryptoAPI', cryptoObj );
+}
+
+
+var deps = ( typeof cryptodeps !== 'undefined' ? ( window.cryptodeps || cryptodeps ) : '' );
 
 fcrypt = {
 	
@@ -150,6 +153,9 @@ fcrypt = {
 	
 	b64to16: function ( s )
 	{
+        // Which one to use?
+        var int2ch = deps ? deps.int2char : int2char;
+        
         var ret = '';
         var i;
         var k = 0;
@@ -161,31 +167,31 @@ fcrypt = {
             if ( v < 0 ) continue;
             if ( k == 0 )
             {
-                ret += int2char( v >> 2 );
+                ret += int2ch( v >> 2 );
                 slop = v & 3;
                 k = 1;
             }
             else if ( k == 1 )
             {
-                ret += int2char( (slop << 2) | (v >> 4) );
+                ret += int2ch( (slop << 2) | (v >> 4) );
                 slop = v & 0xf;
                 k = 2;
             }
             else if ( k == 2 )
             {
-                ret += int2char( slop );
-                ret += int2char( v >> 2 );
+                ret += int2ch( slop );
+                ret += int2ch( v >> 2 );
                 slop = v & 3;
                 k = 3;
             }
             else
             {
-                ret += int2char( (slop << 2) | (v >> 4) );
-                ret += int2char( v & 0xf );
+                ret += int2ch( (slop << 2) | (v >> 4) );
+                ret += int2ch( v & 0xf );
                 k = 0;
             }
         }
-        if ( k == 1 ) ret += int2char( slop << 2 );
+        if ( k == 1 ) ret += int2ch( slop << 2 );
         return ret;
     },
 	
@@ -316,7 +322,7 @@ fcrypt = {
 		if ( key )
 		{
 			Math.seedrandom( key );
-			var keysObject = new RSAKey();
+			var keysObject = ( deps ? new deps.RSAKey() : new RSAKey() );
 			keysObject.generate( keySize, keyType );
 			
 			if( keysObject && typeof keysObject === 'object' )
@@ -433,7 +439,7 @@ fcrypt = {
 		str = this.decodeKeyHeader( str );
 		
 		str = this.stripHeader( str );
-        var privKeyObject = new RSAKey();
+        var privKeyObject = ( deps ? new deps.RSAKey() : new RSAKey() );
         privKeyObject.parseKey( str );
 		
 		if ( privKeyObject && typeof privKeyObject === 'object' )
@@ -450,7 +456,7 @@ fcrypt = {
 		str = this.decodeKeyHeader( str );
 		
 		str = this.stripHeader( str );
-		var pubKeyObject = new RSAKey();
+		var pubKeyObject = ( deps ? new deps.RSAKey() : new RSAKey() );
         pubKeyObject.parseKey( str );
 		
 		if ( pubKeyObject && typeof pubKeyObject === 'object' )
@@ -474,7 +480,7 @@ fcrypt = {
 		{
 			str = this.decodeKeyHeader( str );
 			
-			return MD5( str );
+			return ( deps? deps.MD5( str ) : MD5( str ) );
 		}
 		
 		return false;
@@ -489,14 +495,14 @@ fcrypt = {
 		if ( !passPhrase )
 		{
 			passPhrase = new Array(32);
-			var r = new SecureRandom();
+			var r = ( deps ? new deps.SecureRandom() : new SecureRandom() );
 			r.nextBytes( passPhrase );
 			passPhrase = this.bytes2string( passPhrase );
 		}
 		
 		if ( keyType == 'sha256' )
 		{
-			var key = sha256.hex( passPhrase );
+			var key = ( deps ? deps.sha256.hex( passPhrase ) : sha256.hex( passPhrase ) );
 			
 			if( key )
 			{
@@ -505,13 +511,13 @@ fcrypt = {
 		}
 		else
 		{
-			var salt = CryptoJS.lib.WordArray.random(128/8); 
-			var key = CryptoJS.PBKDF2( passPhrase, salt, { keySize: 256/32, iterations: 500 } );
-			//var iv  = CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f'); // usually random
+			var salt = ( deps? deps.CryptoJS.lib.WordArray.random(128/8) : CryptoJS.lib.WordArray.random(128/8) ); 
+			var key = ( deps ? deps.CryptoJS.PBKDF2( passPhrase, salt, { keySize: 256/32, iterations: 500 } ) : CryptoJS.PBKDF2( passPhrase, salt, { keySize: 256/32, iterations: 500 } ) );
+			//var iv  = ( deps ? deps.CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f') : CryptoJS.enc.Hex.parse('101112131415161718191a1b1c1d1e1f') ); // usually random
 			var iv  = salt;
 			
-			var key_base64  = key.toString(CryptoJS.enc.Base64);
-			var iv_base64   = iv.toString(CryptoJS.enc.Base64);
+			var key_base64  = key.toString( deps? deps.CryptoJS.enc.Base64 : CryptoJS.enc.Base64 );
+			var iv_base64   = iv.toString( deps? deps.CryptoJS.enc.Base64 : CryptoJS.enc.Base64 );
 			
 			if ( key_base64 && iv_base64 )
 			{
@@ -594,16 +600,16 @@ fcrypt = {
 	{
 		if( !plaintext || !key || !iv ) return false;
 		
-		var key_binary = CryptoJS.enc.Base64.parse(key);
-        var iv_binary = CryptoJS.enc.Base64.parse(iv);
+		var key_binary = ( deps ? deps.CryptoJS.enc.Base64.parse(key) : CryptoJS.enc.Base64.parse(key) );
+        var iv_binary = ( deps ? deps.CryptoJS.enc.Base64.parse(iv) : CryptoJS.enc.Base64.parse(iv) );
 		
-        var encrypted = CryptoJS.AES.encrypt( plaintext, key_binary, { iv: iv_binary } );
+        var encrypted = ( deps ? deps.CryptoJS.AES.encrypt( plaintext, key_binary, { iv: iv_binary } ) : CryptoJS.AES.encrypt( plaintext, key_binary, { iv: iv_binary } ) );
 		
         if( encrypted )
 		{
-			var data_base64 = encrypted.ciphertext.toString(CryptoJS.enc.Base64); 
-			var iv_base64   = encrypted.iv.toString(CryptoJS.enc.Base64);       
-			var key_base64  = encrypted.key.toString(CryptoJS.enc.Base64);
+			var data_base64 = encrypted.ciphertext.toString( deps ? deps.CryptoJS.enc.Base64 : CryptoJS.enc.Base64 ); 
+			var iv_base64   = encrypted.iv.toString( deps ? deps.CryptoJS.enc.Base64 : CryptoJS.enc.Base64 );       
+			var key_base64  = encrypted.key.toString( deps ? deps.CryptoJS.enc.Base64 : CryptoJS.enc.Base64 );
 			
 			if ( this.debug )
 			{
@@ -624,11 +630,11 @@ fcrypt = {
 	{
 		if( !encryptedText || !key || !iv ) return false;
 		
-		data_binary = CryptoJS.enc.Base64.parse(encryptedText);
-        key_binary = CryptoJS.enc.Base64.parse(key);
-        iv_binary = CryptoJS.enc.Base64.parse(iv);
+		data_binary = ( deps ? deps.CryptoJS.enc.Base64.parse(encryptedText) : CryptoJS.enc.Base64.parse(encryptedText) );
+        key_binary = ( deps ? deps.CryptoJS.enc.Base64.parse(key) : CryptoJS.enc.Base64.parse(key) );
+        iv_binary = ( deps ? deps.CryptoJS.enc.Base64.parse(iv) : CryptoJS.enc.Base64.parse(iv) );
 		
-        var decrypted = CryptoJS.AES.decrypt( { ciphertext: data_binary }, key_binary, { iv: iv_binary } );
+        var decrypted = ( deps ? deps.CryptoJS.AES.decrypt( { ciphertext: data_binary }, key_binary, { iv: iv_binary } ) : CryptoJS.AES.decrypt( { ciphertext: data_binary }, key_binary, { iv: iv_binary } ) );
 		
 		if ( this.debug )
 		{
@@ -636,12 +642,12 @@ fcrypt = {
 			console.log( 'key: ' + key_binary );
 			console.log( 'iv: ' + iv_binary );
 			console.log( 'decrypted text: ' + decrypted );
-			console.log( 'decrypted text (utf8): ' + decrypted.toString(CryptoJS.enc.Utf8) );
+			console.log( 'decrypted text (utf8): ' + decrypted.toString( deps ? deps.CryptoJS.enc.Utf8 : CryptoJS.enc.Utf8 ) );
 		}
 		
 		if( decrypted )
 		{
-			var plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+			var plaintext = decrypted.toString( deps ? deps.CryptoJS.enc.Utf8 : CryptoJS.enc.Utf8 );
 			plaintext = this.trimWhitespaceTrail( plaintext );
 			return plaintext;
 		}
@@ -891,3 +897,14 @@ fcrypt = {
 		return false;
 	}
 };
+
+// Clone scope
+if( !window.MD5 && deps )
+{
+	for( var a in deps )
+	{
+		if( !window[ a ] )
+			window[ a ] = deps[ a ];
+	}
+}
+

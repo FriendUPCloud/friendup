@@ -148,3 +148,17 @@ i18n_nameOfDevice					 : Enter the name of the device here
 i18n_descriptionOfDevice			 : Enter a description
 i18n_deviceNotice					 : This information page is specific to the device you are using right now. Friend Network will use it to show the various devices you are using at one moment.
 
+i18n_fnetActivatePower				 : Enable Friend Network Power Sharing
+i18n_fnetShareThisDevice			 : Share this device
+i18n_fnetMaximumPercentage			 : Maximum percentage of machine time for share
+i18n_fnetAllowPowerApplications		 : Allow applications to ask for external power
+i18n_fnetNumberOfMachines 			 : Optimal number of machines to request
+i18n_fnetMinimalNumberOfMachines	 : Minimal number of machines
+i18n_fnetAskOnlyToFriends 			 : Ask only to friends
+i18n_friendNetworkPowerSharing		 : Power Sharing
+i18n_fnetShareOnlyWithFriends 		 : Share only with friends
+i18n_fnetShareOnlyWithCommunity		 : Share only within your main community
+i18n_fnetAskOnlyToCommunity			 : Ask only to your main community
+i18n_fnetAskOnlyToFriends			 : Ask only to friends
+i18n_fnetSharingPower				 : Share your power
+i18n_fnetAskForPower				 : Ask for power

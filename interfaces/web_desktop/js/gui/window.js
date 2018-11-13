@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -26,8 +17,8 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Make movable box --------------------------------------------------------- */
 
-friend    = window.friend || {};
-friend.io = friend.io     || {};
+Friend    = window.Friend || {};
+Friend.io = Friend.io     || {};
 
 // Lets remember values
 var _windowStorage = [];
@@ -159,7 +150,7 @@ function SetWindowContent( win, data )
 {
 	if( !win ) return;
 	if( win.content ) win = win.content;
-	win.innerHTML = friend.view.cleanHTMLData( data );
+	win.innerHTML = Friend.view.cleanHTMLData( data );
 }
 
 // Refresh the window and add/remove features
@@ -224,6 +215,9 @@ function SetWindowTitle( div, titleStr )
 	if ( !title ) return false;
 	title.getElementsByTagName ( 'span' )[0].innerHTML = titleStr;
 	div.titleString = titleStr;
+	
+	// Update window
+	document.title = titleStr + ' - ' + Friend.windowBaseString;
 	
 	// Also check tasks
 	var baseElement = GetTaskbarElement();
@@ -316,8 +310,18 @@ function ResizeWindow( div, wi, he, mode, depth )
 	}
 	
 	var cl = document.body.classList.contains( 'Inside' );
-	var maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
-	var maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+	
+	var maxVWidt, maxVHeig;
+	if( Workspace.mode != 'vr' )
+	{
+		maxVWidt = cl ? div.windowObject.flags.screen.getMaxViewWidth() : GetWindowWidth();
+		maxVHeig = cl ? div.windowObject.flags.screen.getMaxViewHeight() : GetWindowHeight();
+	}
+	else
+	{
+		maxVWidt = window.innerWidth;
+		maxVHeig = window.innerHeight;
+	}
 
 	var maximized = div.getAttribute( 'maximized' ) == 'true' || 
 		div.windowObject.flags.maximized;
@@ -609,6 +613,11 @@ function ConstrainWindow( div, l, t, depth, caller )
 	else if( depth > 4 ) return;
 	
 	div.setAttribute( 'moving', 'moving' );
+	setTimeout( function()
+	{
+		div.removeAttribute( 'moving' );
+	}, 250 );
+	
 	var margins = GetViewDisplayMargins( div );
 	
 	// Track caller
@@ -744,7 +753,7 @@ function ConstrainWindow( div, l, t, depth, caller )
 	
 	// Only test if we're currently moving an open window
 	// Skip when we're in snapping mode..
-	if( currentMovable && !currentMovable.snapping )
+	if( window.currentMovable && !currentMovable.snapping )
 	{
 		// Check attached (snapped) windows
 		if( div.attached )
@@ -937,6 +946,9 @@ function _ActivateWindow( div, nopoll, e )
 			currentMovable.windowObject.sendMessage( { type: 'view', command: 'blur' } );
 		}
 	}
+	
+	// Update window title
+	document.title = div.windowObject.getFlag( 'title' ) + ' - ' + Friend.windowBaseString;
 
 	// If it has a window blocker, activate that instead
 	if ( div && div.content && typeof ( div.content.blocker ) == 'object' )
@@ -1070,6 +1082,9 @@ function _DeactivateWindows()
 	
 	// For mobiles and tablets
 	hideKeyboard();
+
+	// Set window title
+	document.title = Friend.windowBaseString;
 
 	// Check window
 	CheckScreenTitle();
@@ -1422,6 +1437,11 @@ function CloseView( win )
 	// Check window
 	CheckScreenTitle();
 	
+	if( !window.currentMovable )
+	{
+		document.title = Friend.windowBaseString;
+	}
+	
 	if( isMobile )
 		Workspace.redrawIcons();
 
@@ -1469,7 +1489,7 @@ function WindowScrolling ( e )
 // The View class begins -------------------------------------------------------
 
 // Attach view class to friend
-friend.view = {
+Friend.view = {
 	create: View,
 	removeScriptsFromData: function( data )
 	{
@@ -1490,7 +1510,7 @@ friend.view = {
 	cleanHTMLData: function( data )
 	{
 		// Allow for "script" template assets
-		data = friend.view.removeScriptsFromData( data );
+		data = Friend.view.removeScriptsFromData( data );
 		data = data.split( /\<style[^>]*?\>[\w\W]*?\<\/style[^>]*?\>/i ).join ( '' );
 		return data;
 	}
@@ -1550,8 +1570,8 @@ var View = function( args )
 	}
 
 	// Clean data
-	this.cleanHTMLData = friend.view.cleanHTMLData;
-	this.removeScriptsFromData = friend.view.removeScriptsFromData;
+	this.cleanHTMLData = Friend.view.cleanHTMLData;
+	this.removeScriptsFromData = Friend.view.removeScriptsFromData;
 
 	// Setup the dom elements
 	// div = existing DIV dom element or 'CREATE'
@@ -1769,12 +1789,12 @@ var View = function( args )
 			div.addEventListener( 'mouseover', function()
 			{
 				// Keep track of the previous
-				if( typeof( friend.currentWindowHover ) != 'undefined' && friend.currentWindowHover )
-					friend.previousWindowHover = friend.currentWindowHover;
-				friend.currentWindowHover = div;
+				if( typeof( Friend.currentWindowHover ) != 'undefined' && Friend.currentWindowHover )
+					Friend.previousWindowHover = Friend.currentWindowHover;
+				Friend.currentWindowHover = div;
 			
 				// Focus on desktop if we're not over a window.
-				if( friend.previousWindowHover != div )
+				if( Friend.previousWindowHover != div )
 				{
 					window.focus();
 				}
@@ -1783,9 +1803,9 @@ var View = function( args )
 			div.addEventListener( 'mouseout', function()
 			{
 				// Keep track of the previous
-				if( friend.currentWindowHover )
-					friend.previousWindowHover = friend.currentWindowHover;
-				friend.currentWindowHover = null;
+				if( Friend.currentWindowHover )
+					Friend.previousWindowHover = Friend.currentWindowHover;
+				Friend.currentWindowHover = null;
 			} );
 		}
 
@@ -2827,8 +2847,8 @@ var View = function( args )
 		div.style.zIndex = div.viewContainer.style.zIndex;
 		
 		// If the current window is an app, move it to front.. (unless new window is a child window)
-		if( window.friend && friend.currentWindowHover )
-			friend.currentWindowHover = false;
+		if( window.friend && Friend.currentWindowHover )
+			Friend.currentWindowHover = false;
 		_ActivateWindow( div );
 		_WindowToFront( div );
 		
@@ -3176,7 +3196,7 @@ var View = function( args )
 				filePath:      '/webclient/jsx/',
 				origin:        document.location.href,
 				viewId:      w.externViewId ? w.externViewId : w.viewId,
-				clipboard:     friend.clipboard
+				clipboard:     Friend.clipboard
 			};
 
 			// Set theme
@@ -3295,7 +3315,7 @@ var View = function( args )
 					authId            : self.authId,
 					theme             : Workspace.theme,
 					fullscreenenabled : conf.fullscreenenabled,
-					clipboard         : friend.clipboard,
+					clipboard         : Friend.clipboard,
 					viewConf          : self.args.viewConf
 				};
 
@@ -3800,7 +3820,7 @@ var View = function( args )
 			}
 			if( a == 'screen' && !flags[a] )
 			{
-				if( currentScreen )
+				if( typeof( currentScreen ) != 'undefined' && currentScreen )
 					flags[a] = currentScreen.screenObject;
 			}
 			this.setFlag( a, flags[a] );
@@ -3833,7 +3853,7 @@ var View = function( args )
 					var fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' )
+					if( fl == 'max' && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewWidth();
 					}
@@ -3842,7 +3862,7 @@ var View = function( args )
 					var fl = this.flags[flag];
 					if( fl.indexOf && fl.indexOf( '%' ) > 0 )
 						return fl;
-					if( fl == 'max' )
+					if( fl == 'max' && this.flags.screen )
 					{
 						fl = this.flags.screen.getMaxViewHeight();
 					}

@@ -77,7 +77,7 @@ i18n_new_container                      : Nouveau répertoire
 i18n_create_container                   : Créer répertoire
 i18n_name                               : Nom
 i18n_make_a_new_container               : Créer un nouveau répertoire
-i18n_error_could_not_list_directory     : Impossible de trouver la liste de fichiers
+i18n_error_could_not_list_directory     : Répertoire vide
 
 i18n_error                              : Erreur
 i18n_could_not_run_jsx                  : Impossible d'executer le JSX.

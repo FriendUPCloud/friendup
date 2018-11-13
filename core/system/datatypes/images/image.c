@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -31,6 +19,14 @@
 #include <stdlib.h>
 #include "image.h"
 #include <util/string.h>
+#include <system/fsys/file.h>
+#include <system/fsys/device_handling.h>
+
+#ifdef USE_IMAGE_MAGICK
+#include <wand/magick_wand.h>
+#else
+#include <gd.h>
+#endif
 
 /**
  * Function create new FImage structure
@@ -155,3 +151,73 @@ int ImageCleanComments( FImage *img )
 	}
 	return 0;
 }
+
+
+
+//
+//
+//
+
+gdImagePtr ImageRead( struct ImageLibrary *im, File *rootDev, const char *path )
+{
+	gdImagePtr img = NULL;
+	FHandler *fh = rootDev->f_FSys;
+	File *rfp = (File *)fh->FileOpen( rootDev, path, "rb" );
+	if( rfp != NULL )
+	{
+		BufString *bs = BufStringNew( );
+		char buffer[ 20048 ];
+		int len = 0;
+
+		while( ( len = fh->FileRead( rfp, buffer, 20048 ) ) > 0 )
+		{
+			BufStringAddSize( bs, buffer, len );
+		}
+		
+		img = gdImageCreateFromJpegPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+		if( img == NULL )
+		{
+			if( img == NULL )
+			{
+				img = gdImageCreateFromBmpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+				if( img == NULL )
+				{
+					img = gdImageCreateFromGifPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+					if( img == NULL )
+					{
+						img = gdImageCreateFromPngPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+						if( img == NULL )
+						{
+							img = gdImageCreateFromTgaPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+							if( img == NULL )
+							{
+								img = gdImageCreateFromTiffPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+								if( img == NULL )
+								{
+									img = gdImageCreateFromWBMPPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+									if( img == NULL )
+									{
+										img = gdImageCreateFromWebpPtr( bs->bs_Size, (void *)bs->bs_Buffer ) ;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		if( img == NULL )
+		{
+			FERROR("Graphics format not recognized\n");
+		}
+		
+		gdImageDestroy( img );
+	}
+	else
+	{
+		FERROR("Cannot open file: %s to read\n", path );
+	}
+	return img;
+}
+	

@@ -135,7 +135,7 @@ lws_jwk_import(struct lws_jwk *s, const char *in, size_t len)
 	cbs.b64 = b64;
 	cbs.b64max = b64max;
 	cbs.pos = 0;
-	lejp_construct(&jctx, cb_jwk, &cbs, jwk_tok, ARRAY_SIZE(jwk_tok));
+	lejp_construct(&jctx, cb_jwk, &cbs, jwk_tok, LWS_ARRAY_SIZE(jwk_tok));
 	m = (int)(signed char)lejp_parse(&jctx, (uint8_t *)in, len);
 	lejp_destruct(&jctx);
 
@@ -158,7 +158,7 @@ LWS_VISIBLE int
 lws_jwk_export(struct lws_jwk *s, int private, char *p, size_t len)
 {
 	char *start = p, *end = &p[len - 1];
-	int n, m, limit = LWS_COUNT_RSA_ELEMENTS;
+	int n, limit = LWS_COUNT_RSA_ELEMENTS;
 
 	/* RFC7638 lexicographic order requires
 	 *  RSA: e -> kty -> n
@@ -202,6 +202,8 @@ lws_jwk_export(struct lws_jwk *s, int private, char *p, size_t len)
 			limit = JWK_KEY_N + 1;
 
 		for (n = 0; n < limit; n++) {
+			int m;
+
 			if (!s->el.e[n].buf)
 				continue;
 			lwsl_info("%d: len %d\n", n, s->el.e[n].len);

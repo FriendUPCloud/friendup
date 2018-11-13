@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -25,7 +16,7 @@
  * @date first pushed on 12/04/2018
  */
 
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetworkDoor =
 {
@@ -153,7 +144,7 @@ FriendNetworkDoor =
 									var toShare = stored[ s ];
 									if ( !toShare.friendName || ( toShare.friendName && FriendNetworkFriends.inUse ) )
 									{
-										DOS.getDirectory( toShare.path, {}, function( response, list, shareIt )
+										Friend.DOS.getDirectory( toShare.path, {}, function( response, list, shareIt )
 										{
 											if ( response )
 											{
@@ -318,7 +309,7 @@ FriendNetworkDoor =
 	shareDoor: function( door, parameters )
 	{
 		var self = this;
-		var name, type, description, password, icon, data, friend, callback, base64;
+		var name, type, description, password, icon, data, netfriend, callback, base64;
 
 		// FriendNetwork open? If name is not already used
 		if ( self.connected )
@@ -354,7 +345,7 @@ FriendNetworkDoor =
 					password = parameters.password;
 
 				// The friend
-				friend = parameters.friend;
+				netfriend = parameters.friend;
 
 				// Callback
 				callback = parameters.callback;
@@ -912,10 +903,8 @@ FriendNetworkDoor =
 			{
 				if ( self.connections[ c ].key )
 				{
-					var temp = self.connections[ c ].door.windows;
 					self.connections[ c ].door.windows = [];			// So that JSON does not complain about circular structures!
 					callback( 'connected', self.connections[ c ], extra );
-					self.connections[ c ].door.windows = temp;
 				}
 				else
 					callback( 'failed', false, extra );
@@ -1206,7 +1195,9 @@ FriendNetworkDoor =
 		{
 			return {
 				MetaType: 'Meta',
-				Title: connection.door.title + ':',
+				Title: connection.door.title,
+				Path: connection.door.title + ':',
+				Volume: connection.door.title + ':',
 				IconFile: 'apps/WideWeb/icondoor.png',
 				Position: 'left',
 				Module: 'files',
@@ -1214,7 +1205,6 @@ FriendNetworkDoor =
 				Filesize: 4096,
 				Flags: '',
 				Type: 'Dormant',
-				Path: connection.door.title + ':',
 				Dormant: connection.door
 			};
 		};
@@ -1694,7 +1684,7 @@ FriendNetworkDoor =
 	 *                                 user who originate the call to this function)
 	 * @param authId (string) the authId of the application who made the call.
 	 */
-	runRemoteApplication: function( hostName, appName, doorName, path, userInformation, authId )
+	runRemoteApplication: function( options, callback, extra  )
 	{
 		var self = FriendNetworkDoor;
 
@@ -1707,34 +1697,52 @@ FriendNetworkDoor =
 
 		var hostMeta =
 		{
-			name: userInformation.name + Math.random() * 1000000,
-			description: userInformation.description,
+			name: options.userInformation.name + Math.random() * 1000000,
+			description: options.userInformation.description,
 			imagePath: '',
 			info:
 			{
 				internal: true,
-				fullName: userInformation.fullName,
-				image: userInformation.image
+				fullName: options.userInformation.fullName,
+				image: options.userInformation.image
 			},
 			apps: [],
 		};
-		FriendNetwork.init( host, 'application', authId, hostMeta, function( response )
+		var id = options.authId;
+		if ( !id )
+			id = options.sessionId;
+		FriendNetwork.init( host, 'application', options.authId, hostMeta, function( response )
 		{
 			if ( response )
 			{
-				// Wait for Friend Network to be initilized
-				var handle = setTimeout( function()
-				{
-					self.connectToDoor( hostName, appName, 'folder', function( response, connection )
-					{
-						if ( response == 'connected' )
-						{
-							ExecuteJSXByPath( path, '', function()
-							{
+				window.FriendNetworkDoor.start();				// Open the door...
 
-							} );
-						}
-					}, authId );
+				// Wait for Friend Network to be initilized
+				setTimeout( function()
+				{
+					self.connectToDoor
+					( 
+						FriendNetwork.getHostNameFromURL( self.doorURL ),
+						FriendNetwork.getAppNameFromURL( self.doorURL ),
+						'folder', 
+						function( response, connection )
+						{
+							if ( response == 'connected' )
+							{
+								ExecuteJSXByPath( options.path, '', function( response )
+								{
+									if ( response )
+										callback( true, { command: 'runRemoteApplicationResponse' }, extra );
+									else
+										callback( false, 
+										{
+											command: 'runRemoteApplicationResponse',
+											error: 'ERROR - Application cannot be ran.'
+										}, extra );
+								} );
+							}
+						}, 
+					authId );
 				}, 1000 );
 			}
 		} );

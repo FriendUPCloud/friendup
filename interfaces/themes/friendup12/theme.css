@@ -337,6 +337,11 @@ html .Screen > .TitleBar > .Left > .Info
 	margin: 0 8px 0 8px;
 }
 
+html #Screens > div
+{
+	background: #34495E;
+}
+
 html #DoorsScreen > .ScreenContent,
 html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
@@ -494,7 +499,8 @@ html #RegionSelector
 	border-radius: 2px;
 }
 
-html .File.Selected .Title
+html .File.Selected .Title,
+html #Screens .File.Selected .Title
 {
 	background-color: #e0e0e0;
 	border: 0;
@@ -503,7 +509,7 @@ html .File.Selected .Title
 	border-radius: 2px;
 }
 
-.ScreenContent > div > div > .File.Selected .Title
+html #DoorsScreen > .ScreenContent > div > div > .File.Selected .Title
 {
 	border: 0;
 	background: rgba(0,0,0,0.5);
@@ -767,9 +773,14 @@ html .DockMenu .DockMenuHeader
 	border-radius: 2px 2px 0 0;
 }
 
+html .DockMenu .DockMenuItem
+{
+	border-top: 1px solid rgba(0,0,0,0.15);
+}
+
 html .DockMenu .DockMenuItem:hover
 {
-	background: #34495E99;
+	background: rgba(52,73,94,0.5);
 }
 
 /* Extra styling just for this theme ---------------------------------------- */
@@ -811,7 +822,6 @@ body[mobile=mobile] #Screens .View
 
 html .View.Active > .Title
 {
-	text-shadow: 1px 1px 1px rgb(47,102,153);
 	border-top: none;
 	border-left: none;
 	border-right: none;
@@ -1099,6 +1109,19 @@ html .Desklet #DockWindowList
 	padding: 5px;
 }
 
+.Desklet.Open .Hider 
+{
+    position: absolute;
+    bottom: 20px;
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 20px;
+    background: url(/iconthemes/friendup15/Arrow_Down.svg);
+    background-size: 30px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 .Desklet .Launcher
 {
 	background-size: 90% !important;
@@ -1229,6 +1252,12 @@ html > body:not(.Inside):not(.Loading), html body .View:not([transparent]) .View
 html body.Dark a, html body a.Dark:visited
 {
 	color: #6DC5FF;
+}
+
+html [mobile=mobile].Dark.ViewMaximized.HasMenu #WorkspaceMenu,
+html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
+{
+	background: #455155;
 }
 
 body.Dark .SliderElement .SliderGroove
@@ -1498,6 +1527,12 @@ html body.Dark .Screen > .TitleBar .ScreenList
 html body.Charcoal a, html body a.Charcoal:visited
 {
 	color: #ffbe85;
+}
+
+html [mobile=mobile].Charcoal.ViewMaximized.HasMenu #WorkspaceMenu,
+html [mobile=mobile].Charcoal.WidgetSlideDown.HasMenu #WorkspaceMenu
+{
+	background: #303030;
 }
 
 body.Charcoal .SliderElement .SliderGroove
@@ -1961,7 +1996,7 @@ html #WorkspaceMenu .Open ul > li
 html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu,
 html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
-	background: #455155;
+	background: #34495E;
 }
 html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu, 
 html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
@@ -2127,11 +2162,6 @@ html [mobile=mobile].ViewMaximized #WorkspaceMenu
 	overflow: hidden;
 }
 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu
-{
-	background-color: #2980B9;
-}
-
 html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open
 {
 	width: 100% !important;
@@ -2143,7 +2173,8 @@ html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open > div
 	pointer-events: all;
 }
 
-html [mobile=mobile].ViewMaximized #WorkspaceMenu:after
+html [mobile=mobile].ViewMaximized #WorkspaceMenu:after,
+html [mobile=mobile].HasMenu #WorkspaceMenu:after
 {
 	content: "\f0c9";
 	font-weight: bold;
@@ -2156,6 +2187,12 @@ html [mobile=mobile].ViewMaximized #WorkspaceMenu:after
     height: 18px !important;
     font-size: 1.0em;
 	color: white;
+}
+
+html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open:after,
+html [mobile=mobile]:not(.ViewMaximized).HasMenu #WorkspaceMenu:after
+{
+	content: "\f104";
 }
 
 /* Mobile popup menu fixes */
@@ -2201,6 +2238,19 @@ html [mobile=mobile].ViewMaximized #CalendarWidget
 	width: 0px !important;
 	overflow: hidden;
 	white-space: nowrap;
+}
+
+html [mobile=mobile].WidgetSlideDown #CalendarWidget.Raised .Hider
+{
+	position: absolute;
+    bottom: 20px;
+    left: calc(50% - 15px);
+    width: 30px;
+    height: 20px;
+    background: url(/iconthemes/friendup15/Arrow_Up.svg);
+    background-size: 30px;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent
@@ -2384,11 +2434,6 @@ html .View > .Title > div > span
 	width: calc(100% - 180px);
 	max-width: 100%;
 	text-align: center;
-}
-
-html body:not([tablet])[mobile] .View > .Title
-{
-	background-color: #2980B9;
 }
 
 html body[mobile=mobile] .View > .Title > div > span
@@ -2938,6 +2983,26 @@ html .File .Icon
 	-webkit-filter: none;
 	filter: none;
 }
+
+html .File.Selected
+{
+	z-index: 3;
+}
+
+html .File .Title
+{
+	-webkit-mask-image: -webkit-gradient(linear, left 70%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
+	min-height: 50px;
+	transition: height 0.2s;
+}
+
+html .File.Selected .Title
+{
+	-webkit-mask-image: none;
+	min-height: auto;
+	max-height: 200px !important;
+}
+
 
 @media (max-width: 320px)
 {
@@ -3994,11 +4059,6 @@ body:not([tablet]) .View:not(.Active)[mobile=mobile][maximized=true] > .Content
 {
 	display: none;
 }
-body .View.Active[maximized=true] > .Title,
-body:not([tablet])[mobile=mobile] .View.Active > .Title
-{
-	background-color: #2980B9;
-}
 body:not([tablet])[mobile=mobile] .View.Active > .Title > div > span
 {
 	left: 40px;
@@ -4080,18 +4140,18 @@ html body[mobile=mobile] > #MobileMenu.Visible
 body[mobile=mobile] .Desklet.Open:before,
 body[mobile=mobile] .Desklet:not(.Open):before
 {
-    font-size: 32px;
-    width: 42px;
-    height: 42px;
-    line-height: 42px;
+    font-size: 20px;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
     color: #ffffff;
-    border-radius: 2px;
+    border-radius: 100%;
 }
 
 body[mobile=mobile] .Desklet:not(.Open):before
 {
-	top: -65px;
-	left: 5px;
+	top: -74px;
+	left: -2px;
 }
 
 body[mobile=mobile].AppsShowing #DoorsScreen .Scroller:before
@@ -4112,12 +4172,12 @@ body .Desklet.Open:before
 
 body[mobile=mobile] #DoorsScreen > .ScreenContent > .Scroller:before 
 {
-    font-size: 32px;
-    width: 42px;
-    height: 42px;
-    line-height: 42px;
+    font-size: 20px;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
     color: #ffffff;
-    border-radius: 2px;
+    border-radius: 100%;
 }
 
 

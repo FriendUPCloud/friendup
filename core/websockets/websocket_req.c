@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -146,17 +134,26 @@ WebsocketReq *WebsocketReqAddChunk( WebsocketReq *req, int chunk, char *data, in
 {
 	if( req != NULL )
 	{
+		int pos = 0;
 		req->wr_Chunks++;
-		int pos = chunk * req->wr_ChunkSize;
+		
+		if( datasize > WS_PROTOCOL_BUFFER_SIZE )
+		{
+			req->wr_IsBroken = 1;
+		}
+		else
+		{
+			pos = chunk * req->wr_ChunkSize;
 
-		memcpy( &(req->wr_Message[ pos ]), data, datasize );
+			memcpy( &(req->wr_Message[ pos ]), data, datasize );
+			
+			INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
+		}
 		req->wr_MessageSize += datasize;
-		INFO("[WebsocketReqAddChunk] chunk added %d/%d datasize %d message size %d stored data in position %d last char %c\n", chunk, req->wr_Total, datasize, req->wr_MessageSize, pos, req->wr_Message[ (chunk * req->wr_ChunkSize)-1 ] );
 		
 		if( req->wr_Chunks == req->wr_Total )
 		{
 			int len = 0;
-			//char *dst = basedecode64( req->wr_Message, req->wr_MessageSize, &len );
 			char *dst = Base64Decode( (const unsigned char *)req->wr_Message, req->wr_MessageSize, &len );
 			if( dst != NULL )
 			{

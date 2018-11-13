@@ -52,17 +52,16 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	if (context->event_loop_ops->run_pt)
 		context->event_loop_ops->run_pt(context, tsi);
 
-	if (!context->service_tid_detected) {
+	if (!pt->service_tid_detected) {
 		struct lws _lws;
 
 		memset(&_lws, 0, sizeof(_lws));
 		_lws.context = context;
 
-		context->service_tid_detected =
+		pt->service_tid  =
 			context->vhost_list->protocols[0].callback(
 			&_lws, LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
-		context->service_tid = context->service_tid_detected;
-		context->service_tid_detected = 1;
+		pt->service_tid_detected = 1;
 	}
 
 	/*
@@ -167,8 +166,11 @@ faked_service:
 		c--;
 
 		m = lws_service_fd_tsi(context, &pt->fds[n], tsi);
-		if (m < 0)
+		if (m < 0) {
+			lwsl_err("%s: lws_service_fd_tsi returned %d\n",
+				 __func__, m);
 			return -1;
+		}
 		/* if something closed, retry this slot */
 		if (m)
 			n--;

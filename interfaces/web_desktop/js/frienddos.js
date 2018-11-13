@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -1864,14 +1855,27 @@ window.Shell = function( appObject )
 										var m = new Module( s[ s.length - 2 ] );
 										m.onExecuted = function( e, d )
 										{
+											var o = false;
+											try
+											{
+												o = JSON.parse( d );
+											}
+											catch( e )
+											{
+												o = false;
+											}
 											if( e == 'ok' )
 											{
-												var o = JSON.parse( d );
+												
 												if( call == 'help' )
 												{
 													var str = '<strong>Commands:</strong><br><br>';
 													str += o.Commands.join( ', ' ) + '.';
-													
+													dcallback( false, { response: str } );
+												}
+												else if( o.message )
+												{
+													dcallback( true, { response: o.message } );
 												}
 												else
 												{
@@ -1897,6 +1901,10 @@ window.Shell = function( appObject )
 													dcallback( true, { response: outd( o ).split( "\n" ).join( "<br>" ).split( "\t" ).join( "&nbsp;&nbsp;&nbsp;&nbsp;")  } );
 												}
 											}
+											else if( e == 'fail' && o.message )
+											{
+												dcallback( false, { response: o.message } );
+											}
 											else
 											{
 												dcallback( false, { response: 'No output from this module.' } );
@@ -1905,11 +1913,13 @@ window.Shell = function( appObject )
 										var args = {};
 										for( var f = 1; f < cmd.length; f++ )
 										{
-											if( cmd[f].indexOf( '=' ) )
+											// Named variable
+											if( cmd[f].indexOf( '=' ) > 0 )
 											{
 												var d = cmd[f].split( '=' );
 												args[d[0]] = d[1];
 											}
+											// Just use the variable as a bool
 											else
 											{
 												args[cmd[f]] = 1;

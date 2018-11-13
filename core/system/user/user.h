@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -113,6 +101,7 @@ CREATE TABLE IF NOT EXISTS `FriendMaster.FUser` (
   `LoggedTime` bigint(32) NOT NULL,
   `CreatedTime` bigint(32) NOT NULL,
   `LoginTime` bigint(32) NOT NULL,
+  `UUID` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`ID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
@@ -169,6 +158,8 @@ typedef struct User
 	
 	FLONG						u_MaxBytesStoredPerDevice;		// maximum bytes stored per device (0-unlimited)
 	FLONG						u_MaxBytesReadedPerDevice;		// maximum bytes readed per device
+	
+	char						*u_UUID;	//
 } User;
 
 //
@@ -249,6 +240,7 @@ static FULONG UserDesc[] = {
 	SQLT_INT,     (FULONG)"LoginTime", offsetof( struct User, u_LoginTime ),
 	SQLT_INT,     (FULONG)"MaxStoredBytes", offsetof( struct User, u_MaxBytesStoredPerDevice ),
 	SQLT_INT,     (FULONG)"MaxReadedBytes", offsetof( struct User, u_MaxBytesReadedPerDevice ),
+	SQLT_STR,     (FULONG)"UniqueID",    offsetof( struct User, u_UUID ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&UserInit,
 	SQLT_NODE,    (FULONG)"node",        offsetof( struct User, node ),
 	SQLT_END 

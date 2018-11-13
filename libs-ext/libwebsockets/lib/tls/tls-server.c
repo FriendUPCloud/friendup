@@ -312,8 +312,9 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 		/* normal SSL connection processing path */
 
 #if defined(LWS_WITH_STATS)
+		/* only set this the first time around */
 		if (!wsi->accept_start_us)
-			wsi->accept_start_us = time_in_microseconds();
+			wsi->accept_start_us = lws_time_in_microseconds();
 #endif
 		errno = 0;
 		lws_stats_atomic_bump(wsi->context, pt,
@@ -340,10 +341,11 @@ lws_server_socket_service_ssl(struct lws *wsi, lws_sockfd_type accept_fd)
 		lws_stats_atomic_bump(wsi->context, pt,
 				      LWSSTATS_C_SSL_CONNECTIONS_ACCEPTED, 1);
 #if defined(LWS_WITH_STATS)
-		lws_stats_atomic_bump(wsi->context, pt,
+		if (wsi->accept_start_us)
+			lws_stats_atomic_bump(wsi->context, pt,
 				      LWSSTATS_MS_SSL_CONNECTIONS_ACCEPTED_DELAY,
-				      time_in_microseconds() - wsi->accept_start_us);
-		wsi->accept_start_us = time_in_microseconds();
+				      lws_time_in_microseconds() - wsi->accept_start_us);
+		wsi->accept_start_us = lws_time_in_microseconds();
 #endif
 
 accepted:

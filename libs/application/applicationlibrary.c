@@ -1,19 +1,10 @@
 /*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Lesser General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -34,7 +25,7 @@
 #include <string.h>
 #include <util/string.h>
 #include <openssl/sha.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <system/auth/authmodule.h>
 #include <system/application/application.h>
 #include <util/buffered_string.h>

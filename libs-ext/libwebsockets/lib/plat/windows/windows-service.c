@@ -34,7 +34,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	struct lws *wsi;
 	unsigned int i;
 	DWORD ev;
-	int n, m;
+	int n;
 
 	/* stay dead once we are dead */
 	if (context == NULL || !context->vhost_list)
@@ -42,23 +42,23 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 	pt = &context->pt[tsi];
 
-	if (!context->service_tid_detected) {
+	if (!pt->service_tid_detected) {
 		struct lws _lws;
 
 		memset(&_lws, 0, sizeof(_lws));
 		_lws.context = context;
 
-		context->service_tid_detected = context->vhost_list->
+		pt->service_tid = context->vhost_list->
 			protocols[0].callback(&_lws, LWS_CALLBACK_GET_THREAD_ID,
 						  NULL, NULL, 0);
-		context->service_tid = context->service_tid_detected;
-		context->service_tid_detected = 1;
+		pt->service_tid_detected = 1;
 	}
 
 	if (timeout_ms < 0) {
 		if (lws_service_flag_pending(context, tsi)) {
 			/* any socket with events to service? */
 			for (n = 0; n < (int)pt->fds_count; n++) {
+				int m;
 				if (!pt->fds[n].revents)
 					continue;
 
@@ -83,23 +83,21 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 			continue;
 
 		wsi = wsi_from_fd(context, pfd->fd);
-		if (wsi->listener)
+		if (!wsi || wsi->listener)
 			continue;
-		if (!wsi || wsi->sock_send_blocking)
+		if (wsi->sock_send_blocking)
 			continue;
 		pfd->revents = LWS_POLLOUT;
 		n = lws_service_fd(context, pfd);
 		if (n < 0)
 			return -1;
+
+		/* Force WSAWaitForMultipleEvents() to check events and then return immediately. */
+		timeout_ms = 0;
+
 		/* if something closed, retry this slot */
 		if (n)
 			i--;
-
-		/*
-		 * any wsi has truncated, force him signalled
-		 */
-		if (wsi->trunc_len)
-			WSASetEvent(pt->events);
 	}
 
 	/*
@@ -128,7 +126,7 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 
 	ev = WSAWaitForMultipleEvents(1, &pt->events, FALSE, timeout_ms, FALSE);
 	if (ev == WSA_WAIT_EVENT_0) {
-		unsigned int eIdx, err;
+		unsigned int eIdx;
 
 		WSAResetEvent(pt->events);
 
@@ -137,6 +135,8 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 			pt->context->tls_ops->fake_POLLIN_for_buffered(pt);
 
 		for (eIdx = 0; eIdx < pt->fds_count; ++eIdx) {
+			unsigned int err;
+
 			if (WSAEnumNetworkEvents(pt->fds[eIdx].fd, 0,
 					&networkevents) == SOCKET_ERROR) {
 				lwsl_err("WSAEnumNetworkEvents() failed "
@@ -166,12 +166,12 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 			if (pfd->revents & LWS_POLLHUP)
 				--eIdx;
 
-			if (pfd->revents)
+			if (pfd->revents) {
+				recv(pfd->fd, NULL, 0, 0);
 				lws_service_fd_tsi(context, pfd, tsi);
+			}
 		}
 	}
-
-	context->service_tid = 0;
 
 	if (ev == WSA_WAIT_TIMEOUT)
 		lws_service_fd(context, NULL);

@@ -20,16 +20,9 @@
  */
 
 #include "core/private.h"
-#include "freertos/timers.h"
-#include <esp_attr.h>
-#include <esp_system.h>
 
-#include "apps/sntp/sntp.h"
-
-#include <lwip/sockets.h>
-#include <esp_task_wdt.h>
-
-unsigned long long time_in_microseconds(void)
+uint64_t
+lws_time_in_microseconds(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);

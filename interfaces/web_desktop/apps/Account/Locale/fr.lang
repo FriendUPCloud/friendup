@@ -127,3 +127,17 @@ i18n_fnetAutoMountDrive				 : Afficher le disque Friend Network sur le Workspace
 i18n_update_language_warning         : Mise à jour de la langue
 i18n_update_language_desc            : Lors de la mise à jour de votre paramètre de langue, Friend doit recharger l'espace de travail. Vous allez perdre tout ce qui n'est pas sauvegardé. Êtes-vous sur de vouloir continuer?
 
+i18n_fnetActivatePower				 : Autoriser le partage de puissance via Friend Network
+i18n_fnetShareThisDevice			 : Partager cet appareil
+i18n_fnetMaximumPercentage			 : Pourcentage maximum de puissance à partager
+i18n_fnetAllowPowerApplications		 : Autoriser les application a demander de la pouissance extérieur
+i18n_fnetNumberOfMachines 			 : Nombre optimal de machine à utiliser
+i18n_fnetMinimalNumberOfMachines	 : Nombre minimal de machines
+i18n_fnetAskOnlyToFriends 			 : Ne demander qu'aux amis
+i18n_friendNetworkPowerSharing		 : Partage de puissance
+i18n_fnetShareOnlyWithCommunity		 : Seulement dans votre communauté
+i18n_fnetShareOnlyWithFriends 		 : Ne partager qu'avec les amis
+i18n_fnetAskOnlyToCommunity			 : Ne demander de la puissance que dans votre communauté
+i18n_fnetAskOnlyToFriends			 : Ne demander de la puissance qu'à des amis
+i18n_fnetSharingPower				 : Partager votre puissance
+i18n_fnetAskForPower				 : Demander de la puissance

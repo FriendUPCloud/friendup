@@ -2,22 +2,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -27,7 +15,7 @@
 	Originally created for OnlyOffice integration
 */
 
-faLog( 'all data we got ' . print_r( $argv, 1 ) );
+//faLog( 'all data we got ' . print_r( $argv, 1 ) );
 
 if( $argv[1] )
 {
@@ -35,7 +23,7 @@ if( $argv[1] )
 
 	if( !isset( $tmp[1] ) ) { friend404(); } // dies...
 	
-	//faLog( print_r( $tmp,1  ) );
+	faLog('complete request: ' .  print_r( $tmp,1  ) );
 	
 	ob_clean();
 	switch( strtolower( $tmp[2] ) ) 
@@ -43,14 +31,13 @@ if( $argv[1] )
 		case 'newfile':
 			if( strtolower( $tmp[4] ) == 'user' )
 			{
-				faLog( 'We are saving a new file.' );
+				if( isset( $tmp[6] ) ) faLog('Our authID is' . $tmp[6] );
 			}
 			break;
 		case 'getfile':
 			if( strtolower( $tmp[4] ) == 'user' )
 			{
-				faLog( 'We are loading the user file.' );
-				/* SECURITY HOLE! WE CIRCUMVENT ALL SECURITY HERE */
+				/* SECURITY HOLE! WE MIGHT CIRCUMVENT ALL SECURITY HERE */
 				loadUserFile( $tmp[5] , rawurldecode( $tmp[3] ) );
 			}
 			break;
@@ -58,11 +45,13 @@ if( $argv[1] )
 		case 'callback':
 			if( strtolower( $tmp[3] ) == 'file' )
 			{
-				faLog( 'We\'re asked for a file.' );
-				/* SECURITY HOLE! WE CIRCUMVENT ALL SECURITY HERE */
+				
+				/* SECURITY HOLE! WE MIGHT CIRCUMVENT ALL SECURITY HERE */
 				$filepath = rawurldecode( $tmp[4] );
-				$user = $tmp[6];
-				handleFileCallback( $user, $filepath, ( isset( $argv[2] ) ? $argv[2] : false ) );
+				$user = isset( $tmp[6] ) ? $tmp[6]  : false;
+				$authID = isset( $tmp[7] ) ? $tmp[7]  : false;
+				$windowID = isset( $tmp[8] ) ? $tmp[8]  : false; 
+				if( $user ) handleFileCallback( $user, $filepath, ( isset( $argv[2] ) ? $argv[2] : false ), $authID, $windowID );
 			}
 			break;
 			
@@ -74,10 +63,8 @@ if( $argv[1] )
 	
 }
 
-faLog( print_r( $argv,1  ) );
+//faLog( print_r( $argv,1  ) );
 die( '<pre>' . print_r( $argv,1  ) );	
-
-
 
 
 
@@ -85,7 +72,7 @@ die( '<pre>' . print_r( $argv,1  ) );
 /*
 	Handle a "callback" from third party application.	
 */	
-function handleFileCallback( $user, $filepath, $requestjson, $authid = false )
+function handleFileCallback( $user, $filepath, $requestjson, $authid = false, $windowid = false )
 {	
 	if( $requestjson == false )
 	{
@@ -116,47 +103,50 @@ function handleFileCallback( $user, $filepath, $requestjson, $authid = false )
 			// Check if this is just a callback on an as of yet not saved file
 			if( $filepath == 'newpresentation' || $filepath == 'newsheet' || $filepath == 'newdocument' )
 			{
-				if( $authid )
+				//we pretend everything is ok to the Document server but send a message to the app to open a save as dialog at the same time - that forces
+				// the user to choose a location which in return will result in a proper save :)
+				faLog('new file... do we have a windowid ? ' . $windowid );
+				if( $windowid )
 				{
-					tellApplication( 'Please save the file before quicksaving.', $authid );
+					tellApplication( 'open_save_as', $user, $windowid, $authid );
+					die( '{"error":0}' );
 				}
-				faLog( 'Could not save previously unsaved file.' );
-				die( '{"error":3}' );
+				else
+				{
+					die( '{"error":3}' );					
+				}
 				break;
 			}
+			
 			// Ok, go ahead and save the file
-			saveUserFile( $user, $filepath, $json );
-			faLog( 'save the file... ' . $filepath . ' for user ' . $user .'  to ..' . print_r( $json,1  ) );
+			saveUserFile( $user, $filepath, $json, $windowid, $authid );
 			break;
 	}
-
-	faLog( 'filecallback... cleaned..' . print_r( $pr,1  ) );
-
 	die( '{"error":0}');
 }
 
-function tellApplication( $message, $authid = false )
+function tellApplication( $command, $user, $windowid, $authid )
 {
 	global $SqlDatabase, $Config, $User;
 	
-	if( !$authid ) return false;
+	if( !$windowid ) return false;
+	if( !$Config ) faConnectDB( $user );
 	
-	if( $rec = $SqlDatabase->fetchObject( 'SELECT * FROM FUserApplication WHERE AuthID=\'' . $authid . '\' AND UserID=\'' . $User->ID . '\'' ) )
-	{
-		// The message must always be in JSON format
-		if( !is_object( $message ) )
-		{
-			$c = new stdClass();
-			$c->message = $message;
-			$message = $c;
-		}
-		
-		// Send the GET request
-		/*$response = file_get_contents( $Config->FCHost . ':' . $Config->FCPort . 
-			'/system.library/user/session/sendmsg/?authid=' . $authid . '&message=' . json_encode( $message );
-		return $response;*/
-	}
 	
+	$messagestring = '/system.library/admin/servermessage?message=' . rawurlencode( addslashes( '{"msgtype":"applicationmessage","targetapp":"' .  $windowid . '","applicationcommand":"'. $command .'"}' ) );
+
+	$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
+		( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $messagestring;
+	$url .= '&sessionid=' . $User->SessionID;
+
+	$c = curl_init();
+	curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
+	curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
+	curl_setopt( $c, CURLOPT_URL,            $url                );
+	curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+	$r = curl_exec( $c );
+	curl_close( $c );
+
 	return false;
 }
 
@@ -194,49 +184,22 @@ function getUserFile( $username, $filePath )
 		return $o;
 	}
 	
-	faConnectDB();
+	faConnectDB( $username );
 	
-	//we log the user in here and load the requested file if he has access
-	faLog( 'Get file at ' . $filePath . ' :: for user ' . $username );
-	
-	/* SECURITY HOLE! */ 
-	global $User;
-	$User = new dbIO( 'FUser' );
-	$User->Name = $username;
-	if( !$User->Load() ){ faLog('Could not load user: ' . $username ); friend404(); }
 
-	define( 'FRIEND_USERNAME', $username );
-	define( 'FRIEND_PASSWORD', 'NOT_THE_REAL_PASSWORD' );
-
-	global $GLOBALS;
-	if( !isset( $GLOBALS[ 'args' ] ) )
-	{
-		$GLOBALS[ 'args' ] = (object) array('sessionid' => $User->SessionID);
-	}
-	else
-	{
-		$GLOBALS[ 'args' ]->sessionid = $User->SessionID;
-	}
 	
 	include_once( 'classes/file.php' );
 	include_once( 'classes/door.php' );
 
-	faLog('Trying tp load file from ' . $filePath );
-
 	
 	$f = new File( $filePath );
 	
-	
-	faLog('File object is now ' . print_r( $f, 1 ) );
-	
 	if( $f->Load() )
 	{
-		//faLog( 'Did it loaD? ' . $f->ID . ' ' . $f->_content );
 		return $f;
 	}
 	else
 	{
-		//faLog( 'Did not load... :(' );
 		return false;
 	}
 }
@@ -246,21 +209,74 @@ function getUserFile( $username, $filePath )
 */
 function loadUserFile( $username, $filePath )
 {
-	faLog( "Running getUserFile( $username, $filePath );" );
+	//faLog( "Running getUserFile( $username, $filePath );" );
 	$file = getUserFile( $username, $filePath );
 	
 	// New file?
 	if( isset( $file->type ) && $file->type == 'newfile' )
 	{
-		faLog( 'Setting content..' . strlen( $file->content ) );
 		die( $file->content );
 	}
-	
-	faLog( 'Not caught..' ); // ' . print_r( $file, 1 ) );
-		
+
 	// Loaded file
 	if( $file )
+	{
+		//we need to set the correct header for our file...
+		//copied form catch_all lines 143ff
+		print( "---http-headers-begin---\n" );
+		switch( strtolower( end( explode( '.', $file->Filename ) ) ) )
+		{
+			case 'css':
+				print( "Content-Type: text/css\n" );
+				break;
+			case 'js':
+				print( "Content-Type: text/javascript\n" );
+				break;
+			case 'html':
+			case 'htm':
+				print( "Content-Type: text/html\n" );
+				break;
+			case 'xml':
+				print( "Content-Type: text/xml\n" );
+				break;
+			case 'jpeg':
+			case 'jpg':
+				print( "Content-Type: image/jpeg\n" );
+				break;
+			case 'png':
+				print( "Content-Type: image/png\n" );
+				break;
+			case 'gif':
+				print( "Content-Type: image/gif\n" );
+				break;
+			case 'svg':
+				print( "Content-Type: image/svg\n" );
+				break;
+			case 'log':
+			case 'txt':
+				print( "Content-Type: text/plain\n" );
+				break;
+			case 'mp3':
+				print( "Content-Type: audio/mp3\n" );
+				break;
+			case 'wav':
+				print( "Content-Type: audio/wav\n" );
+				break;
+			case 'ogg':
+				print( "Content-Type: audio/ogg\n" );
+				break;
+			//dont do anything for office types... seemed to work without.
+			case 'docx':
+			case 'xlsx':
+			case 'pptx':
+				break;
+			default:
+				print( "Content-Type: application/octet-stream\n" );
+				break;
+		}
+		print( "---http-headers-end---\n" );
 		die( $file->GetContent() ); 
+	}
 	else
 	{
 		faLog( 'Could not find file : ' . $filePath . '!' );
@@ -271,8 +287,11 @@ function loadUserFile( $username, $filePath )
 /*
 	save a user file
 */
-function saveUserFile( $username, $filePath, $json )
+function saveUserFile( $username, $filePath, $json, $windowid = false, $authid = false )
 {
+	global $SqlDatabase, $Config, $User;
+
+
 	if( isset(  $json->url ) )
 	{
 		/*$contextOptions = array(
@@ -292,11 +311,11 @@ function saveUserFile( $username, $filePath, $json )
 		$fc = curl_exec( $c );
 		curl_close( $c );
 		
-		
 		$file = getUserFile( $username, $filePath );
+		
 		if( !$fc )
 		{
-			faLog( 'Could not find load file from document server : ' . print_r($json,1) .  '!' . print_r( $c ,1 ) );
+			//faLog( 'Could not find load file from document server : ' . print_r($json,1) .  '!' . print_r( $c ,1 ) );
 			die( '{"error":1}');
 		}
 		if( $file )
@@ -304,19 +323,24 @@ function saveUserFile( $username, $filePath, $json )
 			$result = $file->Save( $fc );
 			if( $result )
 			{
-				faLog( 'File saved :) ' . $filePath . '!' . $result );
+				//faLog( 'File saved :) ' . $filePath . '!' . $result );
+				if( !$Config ) faConnectDB( $username );		
+				if( $windowid )
+				{
+					tellApplication( 'file_saved', $username, $windowid, $authid);
+				}
 				die( '{"error":0}');					
 			}
 			else
 			{
-				faLog( 'File saved FAILED!' . $filePath . '!' . print_r( $file,1 ) );
+				//faLog( 'File saved FAILED!' . $filePath . '!' . print_r( $file,1 ) );
 				die( '{"error":1}');					
 			}
 
 		}
 		else
 		{
-			faLog( 'Could not find file : ' . $filePath . '!' );
+			//faLog( 'Could not find file : ' . $filePath . '!' );
 			die( '{"error":1}');
 		}
 	}
@@ -374,7 +398,7 @@ if( !function_exists('jsUrlEncode') )
 */
 function faLog( $stringtolog )
 {
-	file_put_contents('log.txt', $stringtolog.PHP_EOL , FILE_APPEND | LOCK_EX);
+	file_put_contents('log/php_log.txt', $stringtolog.PHP_EOL , FILE_APPEND | LOCK_EX);
 }
 
 
@@ -383,7 +407,7 @@ function faLog( $stringtolog )
 /**
 	Connect to our database
 */
-function faConnectDB()
+function faConnectDB( $username )
 {
 	global $SqlDatabase, $Config;
 	
@@ -483,7 +507,7 @@ function faConnectDB()
 			$Config->{$car[$k]} = $val;
 		
 		}		
-	}
+	}	
 	
 	faLog('Config set ' . print_r( $Config,1 ) );
 	
@@ -503,6 +527,26 @@ function faConnectDB()
 		faLog('Could not find cfg from fileaccess.php');
 		friend404();
 	}
+
+	/* SECURITY HOLE!? */ 
+	global $User;
+	$User = new dbIO( 'FUser' );
+	$User->Name = $username;
+	if( !$User->Load() ){ faLog('Could not load user: ' . $username ); friend404(); }
+
+	define( 'FRIEND_USERNAME', $username );
+	define( 'FRIEND_PASSWORD', 'NOT_THE_REAL_PASSWORD' );
+
+	global $GLOBALS;
+	if( !isset( $GLOBALS[ 'args' ] ) )
+	{
+		$GLOBALS[ 'args' ] = (object) array('sessionid' => $User->SessionID);
+	}
+	else
+	{
+		$GLOBALS[ 'args' ]->sessionid = $User->SessionID;
+	}
+
 }
 
 ?>

@@ -20,14 +20,6 @@
  */
 
 #include "core/private.h"
-#include "freertos/timers.h"
-#include <esp_attr.h>
-#include <esp_system.h>
-
-#include "apps/sntp/sntp.h"
-
-#include <lwip/sockets.h>
-#include <esp_task_wdt.h>
 
 #include "misc/romfs.h"
 #include <esp_ota_ops.h>
@@ -269,7 +261,7 @@ get_txt_param(const mdns_result_t *mr, const char *param, char *result, int len)
 
 static void lws_esp32_mdns_timer_cb(TimerHandle_t th)
 {
-	uint64_t now = time_in_microseconds();
+	uint64_t now = lws_time_in_microseconds();
 	struct lws_group_member *p, **p1;
 	const mdns_result_t *r = mdns_results_head;
 
@@ -412,7 +404,7 @@ end_scan()
 	uint16_t count_ap_records;
 	int n, m;
 
-	count_ap_records = ARRAY_SIZE(ap_records);
+	count_ap_records = LWS_ARRAY_SIZE(ap_records);
 	if (esp_wifi_scan_get_ap_records(&count_ap_records, ap_records)) {
 		lwsl_err("%s: failed\n", __func__);
 		return;
@@ -492,7 +484,7 @@ passthru:
 static void
 lws_set_genled(int n)
 {
-	lws_esp32.genled_t = time_in_microseconds();
+	lws_esp32.genled_t = lws_time_in_microseconds();
 	lws_esp32.genled = n;
 }
 
@@ -502,7 +494,7 @@ lws_esp32_leds_network_indication(void)
 	uint64_t us, r;
 	int n, fadein = 100, speed = 1199, div = 1, base = 0;
 
-	r = time_in_microseconds();
+	r = lws_time_in_microseconds();
 	us = r - lws_esp32.genled_t;
 
 	switch (lws_esp32.genled) {
@@ -551,7 +543,6 @@ esp_err_t lws_esp32_event_passthru(void *ctx, system_event_t *event)
 	struct lws_group_member *mem;
 	int n;
 #endif
-	char slot[8];
 	nvs_handle nvh;
 	uint32_t use;
 
@@ -595,6 +586,8 @@ esp_err_t lws_esp32_event_passthru(void *ctx, system_event_t *event)
 				(uint8_t *)&event->event_info.got_ip.ip_info.gw);
 
 		if (!nvs_open("lws-station", NVS_READWRITE, &nvh)) {
+			char slot[8];
+
 			lws_snprintf(slot, sizeof(slot) - 1, "%duse", try_slot);
 			use = 0;
 			nvs_get_u32(nvh, slot, &use);
@@ -636,7 +629,7 @@ esp_err_t lws_esp32_event_passthru(void *ctx, system_event_t *event)
 
 			mdns_service_add(lws_esp32.group,
 					 "_lwsgrmem", "_tcp", 443, txta,
-					 ARRAY_SIZE(txta));
+					 LWS_ARRAY_SIZE(txta));
 
 			mem = lws_esp32.first;
 			while (mem) {
@@ -1040,14 +1033,12 @@ lws_esp_ota_get_boot_partition(void)
 	                	}
 			}
 
-			/* destroy our OTA image header */
-			spi_flash_erase_range(ota->address, 4096);
-
 			/*
-			 * with no viable OTA image, we will come back up in
+			 * We send a message to the bootloader to erase the OTA header, we will come back up in
 			 * factory where the user can reload the OTA image
 			 */
 			lwsl_notice("  FACTORY copy successful, rebooting\n");
+			lws_esp32_restart_guided(LWS_MAGIC_REBOOT_TYPE_REQ_FACTORY_ERASE_OTA);
 retry:
 			esp_restart();
 		}
@@ -1164,6 +1155,7 @@ lws_esp32_selfsigned(struct lws_vhost *vhost)
 	nvs_close(nvh);
 	if (n == 3) {
 		lwsl_notice("%s: certs exist\n", __func__);
+		free(buf);
 		return 0; /* certs already exist */
 	}
 

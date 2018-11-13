@@ -1,19 +1,10 @@
 /*©lgpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Lesser General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Lesser General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Lesser   *
+* General Public License, found in the file license_lgpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -34,7 +25,7 @@
 #include <dlfcn.h>
 #include <string.h>
 #include <util/string.h>
-#include <propertieslibrary.h>
+#include <interface/properties_interface.h>
 #include <core/nodes.h>
 #include <time.h>
 #include <system/systembase.h>
@@ -311,7 +302,7 @@ void *Load( struct SQLLibrary *l, FULONG *descr, char *where, int *entries )
 					
 						case SQLT_INIT_FUNCTION:
 						{
-							DEBUG("[MYSQLLibrary] Init function found, calling it\n");
+							//DEBUG("[MYSQLLibrary] Init function found, calling it\n");
 							if( ((void *)dptr[2]) != NULL && data != NULL )
 							{
 								void (*funcptr)( void * ) = (void *)(void *)dptr[2];
@@ -895,7 +886,7 @@ int Save( struct SQLLibrary *l, const FULONG *descr, void *data )
  * Delete data in database. Structure must contain primaryID key.
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param data pointer to object which will be updated in DB
  */
 void Delete( struct SQLLibrary *l, FULONG *descr, void *data )
@@ -926,7 +917,7 @@ void Delete( struct SQLLibrary *l, FULONG *descr, void *data )
  * Delete data in database. Call is using custom "where"
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param where pointer to custom "where" part of query
  */
 void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
@@ -955,7 +946,7 @@ void DeleteWhere( struct SQLLibrary *l, FULONG *descr, char *where )
  * Return number of entries in database
  *
  * @param l pointer to mysql.library structure
- * @param desc pointer to taglist which represent DB to C structure conversion
+ * @param descr pointer to taglist which represent DB to C structure conversion
  * @param where pointer to custom "where" part of query
  * @return number of entries found in database
  */
@@ -1020,7 +1011,7 @@ int NumberOfRecords( struct SQLLibrary *l, FULONG *descr, char *where )
  * Return number of entries in database. Function is using custom query
  *
  * @param l pointer to mysql.library structure
- * @param where pointer to custom query
+ * @param query pointer to custom query
  * @return number of entries found in database
  */
 int NumberOfRecordsCustomQuery( struct SQLLibrary *l, const char *query )

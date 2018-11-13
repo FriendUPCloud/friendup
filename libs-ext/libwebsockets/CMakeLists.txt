@@ -23,13 +23,14 @@ option(LWS_WITH_DISTRO_RECOMMENDED "Enable features recommended for distro packa
 #
 option(LWS_ROLE_H1 "Compile with support for http/1 (needed for ws)" ON)
 option(LWS_ROLE_WS "Compile with support for websockets" ON)
+option(LWS_ROLE_DBUS "Compile with support for DBUS" OFF)
 option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" OFF)
 option(LWS_WITH_LWSWS "Libwebsockets Webserver" OFF)
 option(LWS_WITH_CGI "Include CGI (spawn process with network-connected stdin/out/err) APIs" OFF)
 option(LWS_IPV6 "Compile with support for ipv6" OFF)
-option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" OFF)
+option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" ON)
 option(LWS_WITH_PLUGINS "Support plugins for protocols and extensions" OFF)
-option(LWS_WITH_HTTP_PROXY "Support for rewriting HTTP proxying (requires libhubbub)" OFF)
+option(LWS_WITH_HTTP_PROXY "Support for HTTP proxying" ON)
 option(LWS_WITH_ZIP_FOPS "Support serving pre-zipped files" OFF)
 option(LWS_WITH_SOCKS5 "Allow use of SOCKS5 proxy on client connections" OFF)
 option(LWS_WITH_GENERIC_SESSIONS "With the Generic Sessions plugin" OFF)
@@ -37,7 +38,12 @@ option(LWS_WITH_PEER_LIMITS "Track peers and restrict resources a single peer ca
 option(LWS_WITH_ACCESS_LOG "Support generating Apache-compatible access logs" OFF)
 option(LWS_WITH_RANGES "Support http ranges (RFC7233)" OFF)
 option(LWS_WITH_SERVER_STATUS "Support json + jscript server monitoring" OFF)
+option(LWS_WITH_THREADPOOL "Managed worker thread pool support (relies on pthreads)" ON)
+option(LWS_WITH_HTTP_STREAM_COMPRESSION "Support HTTP stream compression" OFF)
+option(LWS_WITH_HTTP_BROTLI "Also offer brotli http stream compression (requires LWS_WITH_HTTP_STREAM_COMPRESSION)" OFF)
 option(LWS_WITH_ACME "Enable support for ACME automatic cert acquisition + maintenance (letsencrypt etc)" OFF)
+option(LWS_WITH_HUBBUB "Enable libhubbub rewriting support" OFF)
+option(LWS_WITH_FTS "Full Text Search support" ON)
 #
 # TLS library options... all except mbedTLS are basically OpenSSL variants.
 #
@@ -90,8 +96,8 @@ option(LWS_WITHOUT_BUILTIN_SHA1 "Don't build the lws sha-1 (eg, because openssl 
 option(LWS_WITH_LATENCY "Build latency measuring code into the library" OFF)
 option(LWS_WITHOUT_DAEMONIZE "Don't build the daemonization api" ON)
 option(LWS_SSL_SERVER_WITH_ECDH_CERT "Include SSL server use ECDH certificate" OFF)
-option(LWS_WITH_LEJP "With the Lightweight JSON Parser" OFF)
-option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" OFF)
+option(LWS_WITH_LEJP "With the Lightweight JSON Parser" ON)
+option(LWS_WITH_LEJP_CONF "With LEJP configuration parser as used by lwsws" ON)
 option(LWS_WITH_SQLITE3 "Require SQLITE3 support" OFF)
 option(LWS_WITH_SMTP "Provide SMTP support" OFF)
 option(LWS_WITH_NO_LOGS "Disable all logging from being compiled in" OFF)
@@ -105,6 +111,7 @@ option(LWS_WITH_GCOV "Build with gcc gcov coverage instrumentation" OFF)
 option(LWS_WITH_EXPORT_LWSTARGETS "Export libwebsockets CMake targets.  Disable if they conflict with an outer cmake project." ON)
 option(LWS_REPRODUCIBLE "Build libwebsockets reproducible. It removes the build user and hostname from the build" ON)
 option(LWS_WITH_MINIMAL_EXAMPLES "Also build the normally standalone minimal examples, for QA" OFF)
+option(LWS_WITH_LWSAC "lwsac Chunk Allocation api" ON)
 #
 # End of user settings
 #
@@ -125,10 +132,29 @@ if(LWS_WITH_DISTRO_RECOMMENDED)
 	# libev + libevent cannot coexist at build-time
 	set(LWS_WITH_LIBEVENT 0)
 	set(LWS_WITHOUT_EXTENSIONS 0)
+	set(LWS_ROLE_DBUS 1)
+	set(LWS_WITH_FTS 1)
+endif()
+
+# do you care about this?  Then send me a patch where it disables it on travis
+# but allows it on APPLE
+if (APPLE)
+	set(LWS_ROLE_DBUS 0)
 endif()
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type")
+endif()
+
+# microsoft... that's why you can't have nice things
+
+if (WIN32 OR LWS_WITH_ESP32)
+	set(LWS_UNIX_SOCK 0)
+endif()
+
+if (LWS_WITH_ESP32)
+	set(LWS_WITH_LWSAC 0)
+	set(LWS_WITH_FTS 0)
 endif()
 
 project(libwebsockets C)
@@ -216,6 +242,8 @@ if (LWS_WITH_HTTP2 AND LWS_WITHOUT_SERVER)
 endif()
 
 
+include_directories(include plugins)
+
 
 if (LWS_WITH_LWSWS)
  message(STATUS "LWS_WITH_LWSWS --> Enabling LWS_WITH_PLUGINS and LWS_WITH_LIBUV")
@@ -285,6 +313,7 @@ endif()
 
 if (WIN32)
 set(LWS_MAX_SMP 1)
+set(LWS_WITH_THREADPOOL 0)
 endif()
 
 
@@ -327,7 +356,8 @@ endif()
 
 
 if (LWS_WITH_HTTP_PROXY AND (LWS_WITHOUT_CLIENT OR LWS_WITHOUT_SERVER))
-	message(FATAL_ERROR "You have to enable both client and server for http proxy")
+	message("You have to enable both client and server for http proxy")
+	set(LWS_WITH_HTTP_PROXY 0)
 endif()
 
 # Allow the user to override installation directories.
@@ -436,6 +466,10 @@ if (LWS_WITH_SSL AND LWS_WITH_MBEDTLS)
 	set(MBEDTLS_INCLUDE_DIRS ${LWS_MBEDTLS_INCLUDE_DIRS})
 	set(MBEDTLS_FOUND 1)
 	set(USE_MBEDTLS 1)
+endif()
+
+if (LWS_WITH_HTTP_STREAM_COMPRESSION)
+	set(LWS_WITH_ZLIB 1)
 endif()
 
 if (LWS_WITH_ZLIB AND NOT LWS_WITH_BUNDLED_ZLIB)
@@ -617,7 +651,11 @@ if (HAIKU)
 	set(CMAKE_REQUIRED_LIBRARIES network)
 endif()
 
-CHECK_FUNCTION_EXISTS(bzero LWS_HAVE_BZERO)
+CHECK_C_SOURCE_COMPILES(
+	"#include <strings.h>
+	int main(int argc, char **argv) { char buf[1]; bzero(buf, 1); return 0; }
+	" LWS_HAVE_BZERO)
+
 CHECK_FUNCTION_EXISTS(fork LWS_HAVE_FORK)
 CHECK_FUNCTION_EXISTS(getenv LWS_HAVE_GETENV)
 CHECK_FUNCTION_EXISTS(malloc LWS_HAVE_MALLOC)
@@ -663,13 +701,50 @@ CHECK_INCLUDE_FILE(sys/capability.h LWS_HAVE_SYS_CAPABILITY_H)
 CHECK_INCLUDE_FILE(malloc.h LWS_HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE(pthread.h LWS_HAVE_PTHREAD_H)
 
-CHECK_LIBRARY_EXISTS(cap cap_set_flag "" LWS_HAVE_LIBCAP) 
+CHECK_LIBRARY_EXISTS(cap cap_set_flag "" LWS_HAVE_LIBCAP)
+
+if (LWS_ROLE_DBUS)
+
+	if (NOT LWS_DBUS_LIB)
+		set(LWS_DBUS_LIB "dbus-1")
+	endif()
+
+	CHECK_LIBRARY_EXISTS(${LWS_DBUS_LIB} dbus_connection_set_watch_functions "" LWS_HAVE_LIBDBUS)
+	if (NOT LWS_HAVE_LIBDBUS)
+		message(FATAL_ERROR "Install dbus-devel, or libdbus-1-dev etc")
+	endif()
+
+	if (NOT LWS_DBUS_INCLUDE1)
+		# look in fedora and debian / ubuntu place
+		if (EXISTS "/usr/include/dbus-1.0")
+			set(LWS_DBUS_INCLUDE1 "/usr/include/dbus-1.0")
+		else()
+			message(FATAL_ERROR "Set LWS_DBUS_INCLUDE1 to /usr/include/dbus-1.0 or wherever the main dbus includes are")
+		endif()
+	endif()
+
+	if (NOT LWS_DBUS_INCLUDE2)
+		# look in fedora... debian / ubuntu has the ARCH in the path...
+		if (EXISTS "/usr/lib64/dbus-1.0/include")
+			set(LWS_DBUS_INCLUDE2 "/usr/lib64/dbus-1.0/include")
+		else()
+			message(FATAL_ERROR "Set LWS_DBUS_INCLUDE2 to /usr/lib/ARCH-linux-gnu/dbus-1.0/include or wherever dbus-arch-deps.h is on your system")
+		endif()
+	endif()
+
+	set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES};${LWS_DBUS_INCLUDE1};${LWS_DBUS_INCLUDE2})
+
+	CHECK_C_SOURCE_COMPILES("#include <dbus/dbus.h>
+	int main(void) {
+		return 0;
+	}" LWS_DBUS_CHECK_OK)
+endif()
 
 if (LWS_WITH_LIBUV)
 CHECK_INCLUDE_FILE(uv-version.h LWS_HAVE_UV_VERSION_H)
   # libuv changed the location in 1.21.0. Retain both
   # checks temporarily to ensure a smooth transition.
-  if(NOT LWS_HAVE_UV_VERSION_H)
+  if (NOT LWS_HAVE_UV_VERSION_H)
     CHECK_INCLUDE_FILE(uv/version.h LWS_HAVE_NEW_UV_VERSION_H)
   endif()
 endif()
@@ -726,7 +801,7 @@ set(HDR_PRIVATE
 	lib/core/private.h)
 
 set(HDR_PUBLIC
-	"${PROJECT_SOURCE_DIR}/lib/libwebsockets.h"
+	"${PROJECT_SOURCE_DIR}/include/libwebsockets.h"
 	"${PROJECT_BINARY_DIR}/lws_config.h"
 	"${PROJECT_SOURCE_DIR}/plugins/ssh-base/include/lws-plugin-ssh.h"
 	)
@@ -734,6 +809,7 @@ set(HDR_PUBLIC
 set(SOURCES
 	lib/core/alloc.c
 	lib/core/context.c
+	lib/core/dummy-callback.c
 	lib/core/libwebsockets.c
 	lib/core/output.c
 	lib/core/pollfd.c
@@ -741,11 +817,24 @@ set(SOURCES
 	lib/misc/base64-decode.c
 	lib/misc/lws-ring.c
 	lib/roles/pipe/ops-pipe.c)
+	
+if (LWS_WITH_THREADPOOL AND UNIX AND LWS_HAVE_PTHREAD_H)
+	list(APPEND SOURCES lib/misc/threadpool/threadpool.c)
+endif()
 
 if (LWS_ROLE_H1 OR LWS_ROLE_H2)
 	list(APPEND SOURCES
 		lib/roles/http/header.c
 		lib/roles/http/server/parsers.c)
+	if (LWS_WITH_HTTP_STREAM_COMPRESSION)
+		list(APPEND SOURCES
+			lib/roles/http/compression/stream.c
+			lib/roles/http/compression/deflate/deflate.c)
+		if (LWS_WITH_HTTP_BROTLI)
+			list(APPEND SOURCES
+				lib/roles/http/compression/brotli/brotli.c)
+		endif()
+	endif()
 endif()
 
 if (LWS_ROLE_H1)
@@ -779,6 +868,11 @@ if (LWS_ROLE_CGI)
 		lib/roles/cgi/ops-cgi.c)
 endif()
 
+if (LWS_ROLE_DBUS)
+	list(APPEND SOURCES
+		lib/roles/dbus/dbus.c)
+endif()
+
 if (LWS_WITH_ACCESS_LOG)
 	list(APPEND SOURCES
 		lib/roles/http/server/access-log.c)
@@ -787,6 +881,18 @@ endif()
 if (LWS_WITH_PEER_LIMITS)
 	list(APPEND SOURCES
 		lib/misc/peer-limits.c)
+endif()
+
+if (LWS_WITH_LWSAC)
+	list(APPEND SOURCES
+		lib/misc/lwsac/lwsac.c
+		lib/misc/lwsac/cached-file.c)
+endif()
+
+if (LWS_WITH_FTS)
+	list(APPEND SOURCES
+		lib/misc/fts/trie.c
+		lib/misc/fts/trie-fd.c)
 endif()
 
 if (NOT LWS_WITHOUT_CLIENT)
@@ -1132,7 +1238,7 @@ if (LWS_WITH_STATIC)
 	endif()
 	add_custom_command(
 		      TARGET websockets
-		      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/libwebsockets.h
+		      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/include/libwebsockets.h
 		     					 ${CMAKE_CURRENT_BINARY_DIR}/include/libwebsockets.h
 	)
 	add_custom_command(
@@ -1172,7 +1278,7 @@ if (LWS_WITH_SHARED)
 
 	add_custom_command(
 		      TARGET websockets_shared
-		      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/libwebsockets.h
+		      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/include/libwebsockets.h
 		     					 ${CMAKE_CURRENT_BINARY_DIR}/include/libwebsockets.h
 	)
 	add_custom_command(
@@ -1201,7 +1307,7 @@ set(LIB_LIST)
 #
 
 #
-# ZLIB (Only needed for deflate extensions).
+# ZLIB (needed for deflate extension and if LWS_WITH_HTTP_STREAM_COMPRESSION)
 #
 if (LWS_WITH_ZLIB)
 	if (LWS_WITH_BUNDLED_ZLIB)
@@ -1240,6 +1346,10 @@ if (LWS_WITH_ZLIB)
 	message("zlib libraries: ${ZLIB_LIBRARIES}")
 	include_directories(${ZLIB_INCLUDE_DIRS})
 	list(APPEND LIB_LIST ${ZLIB_LIBRARIES})
+endif()
+
+if (LWS_WITH_HTTP_BROTLI)
+	list(APPEND LIB_LIST brotlienc brotlidec brotlidec)
 endif()
 
 #
@@ -1375,11 +1485,18 @@ if (LWS_WITH_SQLITE3)
 endif()
 
 
-if (LWS_WITH_HTTP_PROXY)
+if (LWS_WITH_HUBBUB)
 	find_library(LIBHUBBUB_LIBRARIES NAMES hubbub)
 	list(APPEND LIB_LIST ${LIBHUBBUB_LIBRARIES} )
 endif()
 
+if (LWS_ROLE_DBUS)
+	message("dbus include dir 1: ${LWS_DBUS_INCLUDE1}")
+	message("dbus include dir 2: ${LWS_DBUS_INCLUDE2}")
+	include_directories("${LWS_DBUS_INCLUDE1}")
+	include_directories("${LWS_DBUS_INCLUDE2}")
+	list(APPEND LIB_LIST ${LWS_DBUS_LIB})
+endif()
 
 #
 # Platform specific libs.
@@ -1620,6 +1737,10 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 			add_dependencies(${TEST_NAME} websockets)
 		endif()
 
+		if (LWS_WITH_HTTP_STREAM_COMPRESSION)
+			target_link_libraries(${TEST_NAME} z)
+		endif()
+
 		# Set test app specific defines.
 		set_property(TARGET ${TEST_NAME}
 					PROPERTY COMPILE_DEFINITIONS
@@ -1671,14 +1792,6 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 
 			endif()
 
-			if (UNIX)
-				create_test_app(test-fuzxy "test-apps/fuzxy.c"
-					""
-					""
-					""
-					""
-					"")
-			endif()
 		endif()
 
 		#
@@ -1726,7 +1839,9 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 			"${PROJECT_SOURCE_DIR}/test-apps/http2.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/wss-over-h2.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/lws-common.js"
-			"${PROJECT_SOURCE_DIR}/test-apps/test.html")
+			"${PROJECT_SOURCE_DIR}/test-apps/test.html"
+			"${PROJECT_SOURCE_DIR}/test-apps/test.css"
+			"${PROJECT_SOURCE_DIR}/test-apps/test.js")
 
 		add_custom_command(TARGET test-server
 						POST_BUILD 
@@ -1795,6 +1910,9 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 			     INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/plugins"
 		)
 
+		SET_TARGET_PROPERTIES(${PLUGIN_NAME}
+                               PROPERTIES COMPILE_FLAGS ${CMAKE_C_FLAGS})
+
 #		set_target_properties(${PLUGIN_NAME}
 #			PROPERTIES
 #			OUTPUT_NAME ${PLUGIN_NAME})
@@ -1831,6 +1949,12 @@ endif()
 
 		create_plugin(protocol_post_demo ""
 			      "plugins/protocol_post_demo.c" "" "")
+
+if (LWS_WITH_FTS)
+		create_plugin(protocol_fulltext_demo ""
+			      "plugins/protocol_fulltext_demo.c" "" "")
+endif()
+
 
 if (LWS_WITH_SSL)
 		create_plugin(protocol_lws_ssh_base "plugins/ssh-base/include"
@@ -2037,6 +2161,9 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/LibwebsocketsConfigVersion.cmake.in
 # Installation.
 #
 
+install(DIRECTORY include/libwebsockets
+	DESTINATION "${LWS_INSTALL_INCLUDE_DIR}" COMPONENT dev_headers)
+
 # Install libs and headers.
 install(TARGETS ${LWS_LIBRARIES}
 		EXPORT LibwebsocketsTargets
@@ -2044,6 +2171,7 @@ install(TARGETS ${LWS_LIBRARIES}
 		ARCHIVE DESTINATION "${LWS_INSTALL_LIB_DIR}${LIB_SUFFIX}" COMPONENT libraries
 		RUNTIME DESTINATION "${LWS_INSTALL_BIN_DIR}" COMPONENT libraries # Windows DLLs
 		PUBLIC_HEADER DESTINATION "${LWS_INSTALL_INCLUDE_DIR}" COMPONENT dev)
+		
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
 set(CPACK_COMPONENT_DEV_DISPLAY_NAME "Development files")
 
@@ -2094,7 +2222,7 @@ if (LWS_WITH_PLUGINS)
 		DESTINATION share/libwebsockets-test-server/plugins
 		COMPONENT plugins)
 if (LWS_WITH_SERVER_STATUS)
-	install(FILES plugins/server-status.html;plugins/lwsws-logo.png
+	install(FILES plugins/server-status.html;plugins/server-status.js;plugins/server-status.css;plugins/lwsws-logo.png
 		DESTINATION share/libwebsockets-test-server/server-status
 			COMPONENT examples)
 endif()
@@ -2104,6 +2232,7 @@ if (LWS_WITH_GENERIC_SESSIONS)
 		      plugins/generic-sessions/assets/seats.jpg
 		      plugins/generic-sessions/assets/failed-login.html
 		      plugins/generic-sessions/assets/lwsgs.js
+		      plugins/generic-sessions/assets/lwsgs.css
 		      plugins/generic-sessions/assets/post-register-fail.html
 		      plugins/generic-sessions/assets/post-register-ok.html
 		      plugins/generic-sessions/assets/post-verify-ok.html

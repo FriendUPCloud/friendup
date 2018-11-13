@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 #pragma once
@@ -50,6 +38,8 @@
  * App:     {"t":"echo"}
  */
 #include <stdbool.h>
+#include <util/friendqueue.h>
+#include <network/websocket_client.h>
 
 typedef enum {
 	//0 - undefined
@@ -63,6 +53,18 @@ typedef enum {
 	MN_last_device = 4, //show only on most recently used device that has the app suspended
 } mobile_notification_type_t;
 
+enum {
+	MOBILE_APP_TYPE_ANDROID = 0,
+	MOBILE_APP_TYPE_IOS
+};
+
+typedef struct mobile_app_notif
+{
+	FQueue					man_Queue;
+	int						man_Initialized;
+	int						man_Type;
+	WebsocketClient			*mans_Connection;
+}mobile_app_notif;
 
 /**
  * Sends notification to a user
@@ -77,7 +79,7 @@ typedef enum {
  *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
  * @return true when success
  */
-bool mobile_app_notify_user(const char *username,
+bool mobile_app_notify_user( const char *username,
 		const char *channel_id,
 		const char *title,
 		const char *message,

@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -518,6 +506,8 @@ int SocketConnectClient(const char *hostname, int port, int family __attribute__
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
+	
+	DEBUG("[SocketConnectClient] host: %s\n", hostname );
 
 	if (!hostname) 
 	{
@@ -526,7 +516,7 @@ int SocketConnectClient(const char *hostname, int port, int family __attribute__
 	}
 	else
 	{
-		if ( (phe = (struct hostent *)gethostbyname(hostname) ) != NULL ) 
+		if ( (phe = (struct hostent *)gethostbyname( hostname ) ) != NULL ) 
 		{
 			DEBUG("[SocketConnectClient] Gethostbyname used\n");
 			memcpy(&sin.sin_addr, phe->h_addr, phe->h_length);
@@ -2438,7 +2428,7 @@ FLONG SocketWrite( Socket* sock, char* data, FLONG length )
 {
 	if( sock == NULL || length < 1 )
 	{
-		FERROR("Socket is NULL or length < 1: %lu\n", length );
+		//FERROR("Socket is NULL or length < 1: %lu\n", length );
 		return -1;
 	}
 	if( sock->s_SSLEnabled == TRUE )

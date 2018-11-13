@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -97,6 +88,7 @@ function open( data )
 	//src += '&redirect=groups/55/';
 	
 	var iframe = document.getElementById( 'main' );
+	iframe.style.visibility = 'hidden';
 	iframe.src = src;
 	
 	// Save config data to Application
@@ -135,6 +127,8 @@ function sendToTreeroot()
 		
 		Application.sent = true;
 		
+		console.log( '[1] Application.sent: ' + Application.sent );
+		
 		/*var src = 'https://' + conf.host + '/home/';
 	
 		if( conf.param )
@@ -167,7 +161,14 @@ Application.receiveMessage = function( e )
 				
 				var iframe = document.getElementById( 'main' );
 				
-				iframe.src = 'https://' + conf.host;
+				iframe.src = 'https://' + conf.host + '/home/';
+				
+				iframe.onload = function() 
+				{
+					iframe.style.visibility = 'visible';
+				}
+				
+				break;
 				
 			case 'nav_newsfeed':
 			case 'nav_messages':
@@ -199,10 +200,22 @@ Application.receiveMessage = function( e )
 	
 	if( 'treeroot' === msg.type )
 	{
-		console.log( 'sendToTreeroot() ', msg.loaded );
+		var iframe = document.getElementById( 'main' );
 		
-		if( msg.loaded && !Application.sent )
+		console.log( 'iframe.src: ' + iframe.src );
+		
+		console.log( '[1] Application.sent: ' + Application.sent );
+		
+		if( msg.loaded && msg.loaded.indexOf( '/home/' ) >= 0 )
 		{
+			var iframe = document.getElementById( 'main' );
+			
+			iframe.style.visibility = 'visible';
+		}
+		else if( msg.loaded && !Application.sent )
+		{
+			console.log( '[2] sendToTreeroot() ', { loaded: msg.loaded, sent: Application.sent } );
+			
 			sendToTreeroot();
 		}
 		return;

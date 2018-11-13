@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -540,249 +528,247 @@ int HttpParseHeader( Http* http, const char* request, unsigned int length )
 						}
 						lookForFieldName = FALSE;
 						
-						if( strcmp( currentToken, "content-type" ) == 0 )
+						if( currentToken != NULL )
 						{
-							http->h_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
-							
-							char *eptr = strstr( lineStartPtr + tokenLength, ";" );
-							if( eptr == NULL )
+							if( strcmp( currentToken, "content-type" ) == 0 )
 							{
-								eptr = strstr( lineStartPtr + tokenLength, "\r" );
-							}
+								http->h_RespHeaders[ HTTP_HEADER_CONTENT_TYPE ] = lineStartPtr;
 							
-							if( eptr != NULL )
-							{
-								int toksize = eptr - (lineStartPtr + tokenLength);
-								char *app = NULL;
+								char *eptr = strstr( lineStartPtr + tokenLength, ";" );
+								if( eptr == NULL )
+								{
+									eptr = strstr( lineStartPtr + tokenLength, "\r" );
+								}
+							
+								if( eptr != NULL )
+								{
+									int toksize = eptr - (lineStartPtr + tokenLength);
+									char *app = NULL;
 								
-								if( toksize > 0 )
+									if( toksize > 0 )
+									{
+										app = StringDuplicateN( lineStartPtr + tokenLength + 2, toksize - 2 );
+									}
+
+									//
+									// getting content type
+									//
+
+									if( app != NULL )
+									{
+										if( strcmp( app, "application/x-www-form-urlencoded" ) == 0 )// ||  strcmp( app, "application/json" )  == 0 )
+										{
+											http->h_ContentType = HTTP_CONTENT_TYPE_DEFAULT;
+										}
+										else if( strcmp( app, "application/json" )  == 0 )
+										{
+											http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_JSON;
+										}
+										else if( strcmp( app, "multipart/form-data" ) == 0 )
+										{
+											http->h_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
+										}
+										else if( strcmp( app, "application/xml" ) == 0 )
+										{
+											http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_XML;
+										}
+										else if( strcmp( app, "text/xml" ) == 0 )
+										{
+											http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
+										}
+
+										FFree( app );
+									} // app != NULL
+								} //eptr != NULL
+								copyValue = TRUE;
+							} // if content-type
+							else if( strcmp( currentToken, "user-agent" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ] = lineStartPtr+12;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							
+								char *ptr = http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ];
+								while( *ptr != 0 )
 								{
-									app = StringDuplicateN( lineStartPtr + tokenLength + 2, toksize - 2 );
+									if( *ptr == '\r' )
+									{
+										break;
+									}
+									ptr++;
 								}
-
-								//
-								// getting content type
-								//
-
-								if( app != NULL )
-								{
-									if( strcmp( app, "application/x-www-form-urlencoded" ) == 0 )// ||  strcmp( app, "application/json" )  == 0 )
-									{
-										http->h_ContentType = HTTP_CONTENT_TYPE_DEFAULT;
-									}
-
-									else if( strcmp( app, "application/json" )  == 0 )
-									{
-										http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_JSON;
-									}
-									
-									else if( strcmp( app, "multipart/form-data" ) == 0 )
-									{
-										http->h_ContentType = HTTP_CONTENT_TYPE_MULTIPART;
-									}
-
-									else if( strcmp( app, "application/xml" ) == 0 )
-									{
-										http->h_ContentType = HTTP_CONTENT_TYPE_APPLICATION_XML;
-									}
-
-									else if( strcmp( app, "text/xml" ) == 0 )
-									{
-										http->h_ContentType = HTTP_CONTENT_TYPE_TEXT_XML;
-									}
-
-									FFree( app );
-								} // app != NULL
-							} //eptr != NULL
-							copyValue = TRUE;
-						} // if content-type
-						else if( strcmp( currentToken, "user-agent" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ] = lineStartPtr+12;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
 							
-							char *ptr = http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ];
-							while( *ptr != 0 )
-							{
-								if( *ptr == '\r' )
+								char ipstr[INET6_ADDRSTRLEN];
+								ipstr[ 0 ] = 0;
+								if( http != NULL && http->h_Socket != NULL )
 								{
-									break;
+									inet_ntop( AF_INET6, &( http->h_Socket->ip ), ipstr, sizeof ipstr );
 								}
-								ptr++;
-							}
-							
-							char ipstr[INET6_ADDRSTRLEN];
-							ipstr[ 0 ] = 0;
-							if( http != NULL && http->h_Socket != NULL )
-							{
-								inet_ntop( AF_INET6, &( http->h_Socket->ip ), ipstr, sizeof ipstr );
-							}
-							
-							snprintf( http->h_UserActionInfo, sizeof(http->h_UserActionInfo), "AGENT: %.*s, IP: %s", (int)(ptr - http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ]), http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ], ipstr );
-						}
-						else if( strcmp( currentToken, "content-length" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_CONTENT_LENGTH ] = lineStartPtr+16;
-							
-							char *val = StringDuplicateEOL( lineStartPtr+16 );
-							if( val != NULL )
-							{
-								char *end;
-								http->h_ContentLength = strtol( val,  &end, 0 );
-								//http->h_ContentLength = atoi( val );
-								FFree( val );
-							}
-
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "authorization" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_AUTHORIZATION ] = StringDuplicateEOL( lineStartPtr+15 );
-							http->h_HeadersAlloc[ HTTP_HEADER_AUTHORIZATION ] = TRUE;
-							DEBUG("HTTP_HEADER_AUTHORIZATION FOUND %.*s\n", 64, http->h_RespHeaders[ HTTP_HEADER_AUTHORIZATION ] );
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "www-authenticate" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_WWW_AUTHENTICATE ] = lineStartPtr+18;
-							DEBUG("HTTP_HEADER_WWW_AUTHENTICATE FOUND %.*s\n", 64, http->h_RespHeaders[ HTTP_HEADER_WWW_AUTHENTICATE ] );
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "host" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+6;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						
-						else if( strcmp( currentToken, "origin" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_ORIGIN ] = lineStartPtr+8;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "accept" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "method" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "referer" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+9;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "accept-language" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_ACCEPT_LANGUAGE ] = lineStartPtr+17;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "destination" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_DESTINATION ] = lineStartPtr+13;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "depth" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_DEPTH ] = lineStartPtr+7;
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "x-expected-entity-length" ) == 0 )
-						{
-							http->h_RespHeaders[ HTTP_HEADER_EXPECTED_CONTENT_LENGTH ] = lineStartPtr+26;
-
-							char *val = StringDuplicateEOL( http->h_RespHeaders[ HTTP_HEADER_EXPECTED_CONTENT_LENGTH ] );
-							if( val != NULL )
-							{
-								DEBUG("X-expected-entity FOUND: %s\n", val );
-
-								char *end;
-								http->h_ExpectedLength = strtol( val,  &end, 0 );
-								//http->h_ExpectedLength = atoi( val );
 								
-								DEBUG("X-expected-entity FOUND: content length set %ld\n", http->h_ContentLength );
-								FFree( val );
+								snprintf( http->h_UserActionInfo, sizeof(http->h_UserActionInfo), "AGENT: %.*s, IP: %s", (int)(ptr - http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ]), http->h_RespHeaders[ HTTP_HEADER_USER_AGENT ], ipstr );
 							}
-							
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else if( strcmp( currentToken, "range" ) == 0 )
-						{
-							//Range: bytes=8388608-12582911
-							
-							http->h_RespHeaders[ HTTP_HEADER_RANGE ] = lineStartPtr+7;
-							char *tmpc = http->h_RespHeaders[ HTTP_HEADER_RANGE ];
-							char range[ 256 ];
-							int pos = -1;
-
-							http->h_RangeMax = INT_MAX;
-							
-							while( *tmpc != 0 )
+							else if( strcmp( currentToken, "content-length" ) == 0 )
 							{
-								if( *tmpc == '=' )
+								http->h_RespHeaders[ HTTP_HEADER_CONTENT_LENGTH ] = lineStartPtr+16;
+							
+								char *val = StringDuplicateEOL( lineStartPtr+16 );
+								if( val != NULL )
 								{
-									tmpc++;
-									pos = -1;
-								}
-								else if( *tmpc == '-' )
-								{
-									tmpc++;
-									range[ pos+1 ] = 0;
 									char *end;
-									http->h_RangeMin = strtol( range,  &end, 0 );
-									//http->h_RangeMin = atoi( range );
-									
-									pos = -1;
+									http->h_ContentLength = strtol( val,  &end, 0 );
+									//http->h_ContentLength = atoi( val );
+									FFree( val );
 								}
-								else if( *tmpc == '\n' || pos >= 250 )
-								{
-									range[ pos+1 ] = 0;
-									char *end;
-									http->h_RangeMax = strtol( range,  &end, 0 );
-									//http->h_RangeMax = atoi( range );
-									break;
-								}
-								pos++;
-								range[ pos ] = *tmpc;
-								
-								tmpc++;
+
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
 							}
+							else if( strcmp( currentToken, "authorization" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_AUTHORIZATION ] = StringDuplicateEOL( lineStartPtr+15 );
+								http->h_HeadersAlloc[ HTTP_HEADER_AUTHORIZATION ] = TRUE;
+								DEBUG("HTTP_HEADER_AUTHORIZATION FOUND %.*s\n", 64, http->h_RespHeaders[ HTTP_HEADER_AUTHORIZATION ] );
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "www-authenticate" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_WWW_AUTHENTICATE ] = lineStartPtr+18;
+								DEBUG("HTTP_HEADER_WWW_AUTHENTICATE FOUND %.*s\n", 64, http->h_RespHeaders[ HTTP_HEADER_WWW_AUTHENTICATE ] );
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "host" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+6;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "origin" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_ORIGIN ] = lineStartPtr+8;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "accept" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "method" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+8;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "referer" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_HOST ] = lineStartPtr+9;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "accept-language" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_ACCEPT_LANGUAGE ] = lineStartPtr+17;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "destination" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_DESTINATION ] = lineStartPtr+13;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "depth" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_DEPTH ] = lineStartPtr+7;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "x-expected-entity-length" ) == 0 )
+							{
+								http->h_RespHeaders[ HTTP_HEADER_EXPECTED_CONTENT_LENGTH ] = lineStartPtr+26;
+
+								char *val = StringDuplicateEOL( http->h_RespHeaders[ HTTP_HEADER_EXPECTED_CONTENT_LENGTH ] );
+								if( val != NULL )
+								{
+									DEBUG("X-expected-entity FOUND: %s\n", val );
+
+									char *end;
+									http->h_ExpectedLength = strtol( val,  &end, 0 );
+									//http->h_ExpectedLength = atoi( val );
+								
+									DEBUG("X-expected-entity FOUND: content length set %ld\n", http->h_ContentLength );
+									FFree( val );
+								}
 							
-							copyValue = FALSE;
-							FFree( currentToken );
-							currentToken = NULL;
-						}
-						else
-						{
-							copyValue = TRUE;
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else if( strcmp( currentToken, "range" ) == 0 )
+							{
+								//Range: bytes=8388608-12582911
+							
+								http->h_RespHeaders[ HTTP_HEADER_RANGE ] = lineStartPtr+7;
+								char *tmpc = http->h_RespHeaders[ HTTP_HEADER_RANGE ];
+								char range[ 256 ];
+								int pos = -1;
+
+								http->h_RangeMax = INT_MAX;
+							
+								while( *tmpc != 0 )
+								{
+									if( *tmpc == '=' )
+									{
+										tmpc++;
+										pos = -1;
+									}
+									else if( *tmpc == '-' )
+									{
+										tmpc++;
+										range[ pos+1 ] = 0;
+										char *end;
+										http->h_RangeMin = strtol( range,  &end, 0 );
+										//http->h_RangeMin = atoi( range );
+									
+										pos = -1;
+									}
+									else if( *tmpc == '\n' || pos >= 250 )
+									{
+										range[ pos+1 ] = 0;
+										char *end;
+										http->h_RangeMax = strtol( range,  &end, 0 );
+										//http->h_RangeMax = atoi( range );
+										break;
+									}
+									pos++;
+									range[ pos ] = *tmpc;
+								
+									tmpc++;
+								}
+							
+								copyValue = FALSE;
+								FFree( currentToken );
+								currentToken = NULL;
+							}
+							else
+							{
+								copyValue = TRUE;
+							}
 						}
 					}
 				}

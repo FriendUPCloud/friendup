@@ -3,7 +3,7 @@
 CC			=	gcc
 OUTPUT		=	bin/mysql.library
 CFLAGS		=	$(GLOBAL_CFLAGS) -I../../$(LIBWS_INCLUDE_DIR) -I../../core/ -fPIC -I../../libs/ -I../../libs/properties/ -I../../libs/application/ -I../../core/system/ -I../../
-LFLAGS		=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lstdc++ -lz -lpthread -lrt -lcrypt
+LFLAGS		=	-shared -fPIC -L/usr/lib/x86_64-linux-gnu/ `mysql_config --libs` -lz -lpthread -lrt -lcrypt
 FPATH		=	$(shell pwd)
 
 #CFLAGS	=	--std=c99 -Wall  -W -D_FILE_OFFSET_BITS=64 -g -Ofast -funroll-loops -I. -Wno-unused-parameter -Wno-unused-variable -I../../core/ -I/usr/include/mysql/ -I../ -fPIC -I../properties/  -I../../libs-ext/libwebsockets/build/include/  

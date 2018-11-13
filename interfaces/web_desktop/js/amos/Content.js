@@ -2,11 +2,9 @@ document.title="AMOS for Friend(x)!"
 
 Application.run = function( msg )
 {
-	debugger;
 }
 function loadAscii()
 {
-	debugger;
 	// Open a load file dialog and return selected files
 	var description = {
 		triggerFunction: function( items )

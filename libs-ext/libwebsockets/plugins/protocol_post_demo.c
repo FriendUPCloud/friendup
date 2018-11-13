@@ -21,7 +21,7 @@
 #if !defined (LWS_PLUGIN_STATIC)
 #define LWS_DLL
 #define LWS_INTERNAL
-#include "../lib/libwebsockets.h"
+#include <libwebsockets.h>
 #endif
 
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 
 struct per_session_data__post_demo {
 	struct lws_spa *spa;
-	char result[LWS_PRE + 512];
+	char result[LWS_PRE + 2048];
 	char filename[64];
 	long file_length;
 #if !defined(LWS_WITH_ESP32)
@@ -126,11 +126,15 @@ format_result(struct per_session_data__post_demo *pss)
 	start = p;
 	end = p + sizeof(pss->result) - LWS_PRE - 1;
 
-	p += sprintf((char *)p,
-		"<html><body><h1>Form results (after urldecoding)</h1>"
-		"<table><tr><td>Name</td><td>Length</td><td>Value</td></tr>");
+	p += lws_snprintf((char *)p, end -p,
+			"<!DOCTYPE html><html lang=\"en\"><head>"
+			"<meta charset=utf-8 http-equiv=\"Content-Language\" "
+			"content=\"en\"/>"
+	  "<title>LWS Server Status</title>"
+	  "</head><body><h1>Form results (after urldecoding)</h1>"
+	  "<table><tr><td>Name</td><td>Length</td><td>Value</td></tr>");
 
-	for (n = 0; n < (int)ARRAY_SIZE(param_names); n++) {
+	for (n = 0; n < (int)LWS_ARRAY_SIZE(param_names); n++) {
 		if (!lws_spa_get_string(pss->spa, n))
 			p += lws_snprintf((char *)p, end - p,
 			    "<tr><td><b>%s</b></td><td>0"
@@ -169,7 +173,7 @@ callback_post_demo(struct lws *wsi, enum lws_callback_reasons reason,
 		/* create the POST argument parser if not already existing */
 		if (!pss->spa) {
 			pss->spa = lws_spa_create(wsi, param_names,
-					ARRAY_SIZE(param_names), 1024,
+					LWS_ARRAY_SIZE(param_names), 1024,
 					file_upload_cb, pss);
 			if (!pss->spa)
 				return -1;
@@ -193,7 +197,6 @@ callback_post_demo(struct lws *wsi, enum lws_callback_reasons reason,
 		break;
 
 	case LWS_CALLBACK_HTTP_WRITEABLE:
-
 		if (!pss->completed)
 			break;
 
@@ -202,7 +205,6 @@ callback_post_demo(struct lws *wsi, enum lws_callback_reasons reason,
 		end = p + sizeof(pss->result) - LWS_PRE - 1;
 
 		if (!pss->sent_headers) {
-
 			n = format_result(pss);
 
 			if (lws_add_http_header_status(wsi, HTTP_STATUS_OK,
@@ -231,7 +233,6 @@ callback_post_demo(struct lws *wsi, enum lws_callback_reasons reason,
 		}
 
 		if (!pss->sent_body) {
-
 			n = format_result(pss);
 
 			n = lws_write(wsi, (unsigned char *)start, n,
@@ -295,7 +296,7 @@ init_protocol_post_demo(struct lws_context *context,
 	}
 
 	c->protocols = protocols;
-	c->count_protocols = ARRAY_SIZE(protocols);
+	c->count_protocols = LWS_ARRAY_SIZE(protocols);
 	c->extensions = NULL;
 	c->count_extensions = 0;
 

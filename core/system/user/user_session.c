@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -102,7 +90,7 @@ void UserSessionDelete( UserSession *us )
 					break;
 				}
 			}
-			sleep( 1 );
+			//sleep( 1 );		// FRANCOIS: Really annoying when you force quit!
 		}
 		
 		DOSToken *dosToken = (DOSToken *)us->us_DOSToken;
@@ -122,7 +110,7 @@ void UserSessionDelete( UserSession *us )
 
 		FRIEND_MUTEX_LOCK( &(us->us_Mutex) );
 		
-		WebsocketClient *nwsc = us->us_WSClients;
+		WebsocketServerClient *nwsc = us->us_WSClients;
 		us->us_WSClients = NULL;
 		
 		Log( FLOG_DEBUG, "[UserSessionDelete] cl %p\n", us->us_WSClients );
@@ -131,19 +119,19 @@ void UserSessionDelete( UserSession *us )
 		{
 			Log( FLOG_DEBUG, "[UserSessionDelete] cl != NULL\n");
 
-			WebsocketClient *rws = nwsc;
+			WebsocketServerClient *rws = nwsc;
 			Log( FLOG_DEBUG, "[UserSessionDelete] nwsc %p\n", nwsc );
 			while( nwsc != NULL )
 			{
 				rws = nwsc;
 				
-				FRIEND_MUTEX_LOCK( &(rws->wc_Mutex) );
-				nwsc = (WebsocketClient *)nwsc->node.mln_Succ;
+				FRIEND_MUTEX_LOCK( &(rws->wsc_Mutex) );
+				nwsc = (WebsocketServerClient *)nwsc->node.mln_Succ;
 
 				Log( FLOG_DEBUG, "[UserSessionDelete] Remove websockets ptr %p from usersession %p\n", rws, us );
 
-				rws->wc_UserSession = NULL;
-				FRIEND_MUTEX_UNLOCK( &(rws->wc_Mutex) );
+				rws->wsc_UserSession = NULL;
+				FRIEND_MUTEX_UNLOCK( &(rws->wsc_Mutex) );
 			}
 		}
 

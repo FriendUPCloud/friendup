@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -522,11 +510,11 @@ int handleSSHCommands( SSHSession *sess, const char *buf, const int len __attrib
 			
 				if( wrk->w_State != W_STATE_COMMAND_CALLED )
 				{
-					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %x Function: \n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR );
+					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %lx Function: \n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR );
 				}
 				else
 				{
-					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %x Function: %s\n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR, wrk->w_FunctionString );
+					s = snprintf( outbuf, sizeof( outbuf ), "Nr: %d State: %d FPointer: %p TPointer: %lx Function: %s\n", wrk->w_Nr, wrk->w_State, wrk->w_Function, wrk->w_ThreadPTR, wrk->w_FunctionString );
 				}
 			
 				ssh_channel_write( sess->sshs_Chan, outbuf, s );

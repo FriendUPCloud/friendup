@@ -1,0 +1,47 @@
+<div class="Page">
+	<div class="HRow Padding PageScroll">
+		<br/>
+	
+		<div style="text-align: center" class="MarginTop MarginBottom">
+			<img style="width:160px; height:160px;" id="fnetDeviceAvatar"><br/>
+			<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeDeviceAvatar()">
+				{i18n_fnetChangeDeviceAvatar}
+			</button>
+		</div>
+		
+		<br/>
+		
+		<hr class="Divider"/>
+
+		<div class="HRow MarginBottom">
+			<p><strong>Notice:</strong>
+			<p>
+				{i18n_deviceNotice}
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetDeviceName}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetDeviceName" placeholder="{i18n_nameOfDevice}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetDeviceDescription}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetDeviceDescription" placeholder="{i18n_descriptionOfDevice}"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetShareLocalDrives}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetMountLocalCheck""/>
+			</div>
+		</div>
+	</div>
+</div>

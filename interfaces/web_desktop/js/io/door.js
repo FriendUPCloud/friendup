@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -35,6 +26,12 @@ Door = function( path )
 
 Door.prototype.getPath = function()
 {
+	if( !this.path ) 
+	{
+		if( this.deviceName )
+			return this.deviceName + ':';
+		return false;
+	}
 	if( this.path.indexOf( ':' ) > 0 )
 		return this.path;
 	return this.deviceName + ':' + this.path;
@@ -128,7 +125,10 @@ Door.prototype.get = function( path )
 			// Also set the path
 			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( vol ) : new Door( vol );
 			d.setPath( path );
-			d.Config = Workspace.icons[a].Config;
+			if ( Workspace.icons[ a ].Config )
+				d.Config = Workspace.icons[a].Config;
+			else if ( d.dormantGetConfig )
+				d.Config = d.dormantGetConfig();
 			return d;
 		}
 	}
@@ -144,7 +144,10 @@ Door.prototype.get = function( path )
 			var d = path.toLowerCase().substr( 0, 7 ) == 'system:' ? new DoorSystem( v ) : new Door( v );
 			var fixPath = v + path.substr( v.length, path.length - v.length );
 			d.setPath( fixPath );
-			d.Config = Workspace.icons[a].Config;
+			if ( Workspace.icons[ a ].Config )
+				d.Config = Workspace.icons[a].Config;
+			else if ( d.Dormant )
+				d.Config = d.dormantGetConfig();
 			return d;
 		}
 	}
@@ -213,7 +216,7 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 		var deviceName = t.fileInfo.Path.split( ':' )[0] + ':';
 
 		// If we end up here, we're not using dormant - which is OK! :)
-		if( !dirs || ( dirs && !dirs.length ) )
+		if( !t.dormantDoor && ( !dirs || ( dirs && !dirs.length ) ) )
 		{
 			var cache = DoorCache.dirListing;
 			
@@ -343,7 +346,11 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 				for( var a in dirs ) o.push( dirs[a] );
 				dirs = o;
 			}
-			var pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length );
+			var pth;
+			if ( dirs.length > 0 )
+				pth = dirs[0].Path.substr( 0, t.fileInfo.Path.length );
+			else
+				pth = t.fileInfo.Path;
 			callback( dirs, t.fileInfo.Path, pth );
 		}
 	} );
@@ -369,7 +376,8 @@ Door.prototype.checkDormantDoors = function( path, callback )
 			// Case sensitive
 			for( var a in doors )
 			{
-				if( doors[a].Title == p )
+				var t = doors[a].Title + ':';		// HOGNE I lost so much time on ':' in Title, sometimes used, sometimes not... argh.
+				if( t == p )
 				{
 					doors[a].Dormant.getDirectory( path, function( dirs )
 					{
@@ -383,7 +391,8 @@ Door.prototype.checkDormantDoors = function( path, callback )
 			// Case insensitive
 			for( var a in doors )
 			{
-				if( doors[a].Title.toLowerCase() == p.toLowerCase() )
+				var t = doors[a].Title + ':';
+				if( t.toLowerCase() == p.toLowerCase() )
 				{
 					doors[a].Dormant.getDirectory( path, function( dirs )
 					{

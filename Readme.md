@@ -150,6 +150,15 @@ Licensing
 
 FriendUP is a large system consisting of several layers. It has a kernel core that is managing the Friend resources. This one is licensed under the MIT license. Then it has modules, DOS drivers and runtime linked libraries. These are licensed under the LGPLv3 license. Finally, we have the GUI for Friend - the Friend Workspace. This is licensed under the AGPLv3 license.
 
+Contributor agreement
+=====================
+
+New developers joining the project needs to sign our contributor agreement before they are allowed to commit changes to the project. The contributor agreement can be found here:
+
+ * https://friendup.cloud/developer-platform/open-source/contributors/
+
+The contributor agreement is our vechile for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
+
 Developer Community
 ===================
 

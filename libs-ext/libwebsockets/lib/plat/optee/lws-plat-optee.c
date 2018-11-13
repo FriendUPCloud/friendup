@@ -4,8 +4,9 @@
  * included from libwebsockets.c for OPTEE builds
  */
 
-void lws_plat_apply_FD_CLOEXEC(int n)
+int lws_plat_apply_FD_CLOEXEC(int n)
 {
+	return 0;
 }
 
 int
@@ -27,7 +28,8 @@ lws_plat_pipe_close(struct lws *wsi)
 
 void TEE_GenerateRandom(void *randomBuffer, uint32_t randomBufferLen);
 
-unsigned long long time_in_microseconds(void)
+uint64_t
+lws_time_in_microseconds(void)
 {
 	return ((unsigned long long)time(NULL)) * 1000000;
 }
@@ -43,24 +45,31 @@ lws_get_random(struct lws_context *context, void *buf, int len)
 LWS_VISIBLE int
 lws_send_pipe_choked(struct lws *wsi)
 {
-	struct lws *wsi_eff = wsi;
+	struct lws *wsi_eff;
 
 #if defined(LWS_WITH_HTTP2)
 	wsi_eff = lws_get_network_wsi(wsi);
+#else
+	wsi_eff = wsi;
 #endif
 
 	/* the fact we checked implies we avoided back-to-back writes */
 	wsi_eff->could_have_pending = 0;
 
 	/* treat the fact we got a truncated send pending as if we're choked */
-	if (wsi_eff->trunc_len)
+	if (lws_has_buffered_out(wsi_eff)
+#if defined(LWS_WITH_HTTP_STREAM_COMPRESSION)
+	    || wsi->http.comp_ctx.buflist_comp ||
+	       wsi->http.comp_ctx.may_have_more
+#endif
+	)
 		return 1;
 
 #if 0
 	struct lws_pollfd fds;
 
 	/* treat the fact we got a truncated send pending as if we're choked */
-	if (wsi->trunc_len)
+	if (lws_has_buffered_out(wsi))
 		return 1;
 
 	fds.fd = wsi->desc.sockfd;
@@ -110,17 +119,15 @@ _lws_plat_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	if (timeout_ms < 0)
 		goto faked_service;
 
-	if (!context->service_tid_detected) {
+	if (!pt->service_tid_detected) {
 		struct lws _lws;
 
 		memset(&_lws, 0, sizeof(_lws));
 		_lws.context = context;
 
-		context->service_tid_detected =
-			context->vhost_list->protocols[0].callback(
+		pt->service_tid = context->vhost_list->protocols[0].callback(
 			&_lws, LWS_CALLBACK_GET_THREAD_ID, NULL, NULL, 0);
-		context->service_tid = context->service_tid_detected;
-		context->service_tid_detected = 1;
+		pt->service_tid_detected = 1;
 	}
 
 	/*
@@ -198,7 +205,7 @@ lws_plat_service(struct lws_context *context, int timeout_ms)
 }
 
 int
-lws_plat_set_socket_options(struct lws_vhost *vhost, int fd)
+lws_plat_set_socket_options(struct lws_vhost *vhost, int fd, int unix_skt)
 {
 	return 0;
 }

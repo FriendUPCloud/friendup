@@ -1,0 +1,8 @@
+
+html body > #Tasks
+{
+	visibility: hidden;
+	pointer-events: none;
+	position: absolute;
+	z-index: 1;
+}

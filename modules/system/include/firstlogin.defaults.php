@@ -8,16 +8,17 @@ if( !( $row = $SqlDatabase->FetchObject( 'SELECT * FROM FApplication WHERE Name 
 		function findInSearchPaths( $app )
 		{
 			$ar = array(
+				'repository/',
 				'resources/webclient/apps/'
-				);
-				foreach ( $ar as $apath )
+			);
+			foreach ( $ar as $apath )
+			{
+				if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
 				{
-					if( file_exists( $apath . $app ) && is_dir( $apath . $app ) )
-					{
-						return $apath . $app;
-					}
+					return $apath . $app;
 				}
-				return false;
+			}
+			return false;
 		}
 	}
 

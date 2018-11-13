@@ -104,7 +104,7 @@ lws_extension_server_handshake(struct lws *wsi, char **p, int budget)
 				continue;
 		}
 
-		while (args && *args && *args == ' ')
+		while (args && *args == ' ')
 			args++;
 
 		/* check a client's extension against our support */
@@ -252,90 +252,153 @@ int
 lws_process_ws_upgrade(struct lws *wsi)
 {
 	struct lws_context_per_thread *pt = &wsi->context->pt[(int)wsi->tsi];
-	char protocol_list[128], protocol_name[64], *p;
-	int protocol_len, hit, n = 0, non_space_char_found = 0;
+	const struct lws_protocols *pcol = NULL;
+	char buf[128], name[64];
+	struct lws_tokenize ts;
+	lws_tokenize_elem e;
 
 	if (!wsi->protocol)
 		lwsl_err("NULL protocol at lws_read\n");
 
 	/*
-	 * It's either websocket or h2->websocket
+	 * We are upgrading to ws, so http/1.1 + h2 and keepalive + pipelined
+	 * header considerations about keeping the ah around no longer apply.
 	 *
-	 * Select the first protocol we support from the list
-	 * the client sent us.
-	 *
-	 * Copy it to remove header fragmentation
+	 * However it's common for the first ws protocol data to have been
+	 * coalesced with the browser upgrade request and to already be in the
+	 * ah rx buffer.
 	 */
 
-	if (lws_hdr_copy(wsi, protocol_list, sizeof(protocol_list) - 1,
-			 WSI_TOKEN_PROTOCOL) < 0) {
-		lwsl_err("protocol list too long");
+	lws_pt_lock(pt, __func__);
+
+	if (!wsi->h2_stream_carries_ws)
+		lws_role_transition(wsi, LWSIFR_SERVER, LRS_ESTABLISHED,
+				    &role_ops_ws);
+
+	lws_pt_unlock(pt);
+
+	/*
+	 * It's either websocket or h2->websocket
+	 *
+	 * If we are on h1, confirm we got the required "connection: upgrade"
+	 * header.  h2 / ws-over-h2 does not have this.
+	 */
+
+#if defined(LWS_WITH_HTTP2)
+	if (wsi->http2_substream)
+		goto check_protocol;
+#endif
+
+	lws_tokenize_init(&ts, buf, LWS_TOKENIZE_F_COMMA_SEP_LIST |
+				    LWS_TOKENIZE_F_MINUS_NONTERM);
+	ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_CONNECTION);
+	if (ts.len <= 0)
+		goto bad_conn_format;
+
+	do {
+		e = lws_tokenize(&ts);
+		switch (e) {
+		case LWS_TOKZE_TOKEN:
+			if (!strcasecmp(ts.token, "upgrade"))
+				e = LWS_TOKZE_ENDED;
+			break;
+
+		case LWS_TOKZE_DELIMITER:
+			break;
+
+		default: /* includes ENDED */
+bad_conn_format:
+			lwsl_err("%s: malformed or absent connection hdr\n",
+				 __func__);
+
+			return 1;
+		}
+	} while (e > 0);
+
+	/* let's also confirm that Host at least exists for h1 */
+
+	if (!lws_hdr_total_length(wsi, WSI_TOKEN_HOST)) {
+		lwsl_err("%s: missing host: hdr on h1 ws upgrade\n", __func__);
+
 		return 1;
 	}
 
-	protocol_len = lws_hdr_total_length(wsi, WSI_TOKEN_PROTOCOL);
-	protocol_list[protocol_len] = '\0';
-	p = protocol_list;
-	hit = 0;
+#if defined(LWS_WITH_HTTP2)
+check_protocol:
+#endif
 
-	while (*p && !hit) {
-		n = 0;
-		non_space_char_found = 0;
-		while (n < (int)sizeof(protocol_name) - 1 &&
-		       *p && *p != ',') {
-			/* ignore leading spaces */
-			if (!non_space_char_found && *p == ' ') {
-				n++;
-				continue;
-			}
-			non_space_char_found = 1;
-			protocol_name[n++] = *p++;
-		}
-		protocol_name[n] = '\0';
-		if (*p)
-			p++;
+	/*
+	 * Select the first protocol we support from the list
+	 * the client sent us.
+	 */
 
-		lwsl_debug("checking %s\n", protocol_name);
-
-		n = 0;
-		while (wsi->vhost->protocols[n].callback) {
-			lwsl_debug("try %s\n",
-				  wsi->vhost->protocols[n].name);
-
-			if (wsi->vhost->protocols[n].name &&
-			    !strcmp(wsi->vhost->protocols[n].name,
-				    protocol_name)) {
-				wsi->protocol = &wsi->vhost->protocols[n];
-				hit = 1;
-				break;
-			}
-
-			n++;
-		}
+	lws_tokenize_init(&ts, buf, LWS_TOKENIZE_F_COMMA_SEP_LIST |
+				       LWS_TOKENIZE_F_MINUS_NONTERM |
+				       LWS_TOKENIZE_F_RFC7230_DELIMS);
+	ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_PROTOCOL);
+	if (ts.len < 0) {
+		lwsl_err("%s: protocol list too long\n", __func__);
+		return 1;
 	}
+	if (!ts.len) {
+		int n = wsi->vhost->default_protocol_index;
+		/*
+		 * some clients only have one protocol and do not send the
+		 * protocol list header... allow it and match to the vhost's
+		 * default protocol (which itself defaults to zero)
+		 */
+		lwsl_info("%s: defaulting to prot handler %d\n", __func__, n);
+
+		lws_bind_protocol(wsi, &wsi->vhost->protocols[n],
+				  "ws upgrade default pcol");
+
+		goto alloc_ws;
+	}
+
+	/* otherwise go through the user-provided protocol list */
+
+	do {
+		e = lws_tokenize(&ts);
+		switch (e) {
+		case LWS_TOKZE_TOKEN:
+
+			if (lws_tokenize_cstr(&ts, name, sizeof(name))) {
+				lwsl_err("%s: pcol name too long\n", __func__);
+
+				return 1;
+			}
+			lwsl_debug("checking %s\n", name);
+			pcol = lws_vhost_name_to_protocol(wsi->vhost, name);
+			if (pcol) {
+				/* if we know it, bind to it and stop looking */
+				lws_bind_protocol(wsi, pcol, "ws upg pcol");
+				e = LWS_TOKZE_ENDED;
+			}
+			break;
+
+		case LWS_TOKZE_DELIMITER:
+		case LWS_TOKZE_ENDED:
+			break;
+
+		default:
+			lwsl_err("%s: malformatted protocol list", __func__);
+
+			return 1;
+		}
+	} while (e > 0);
 
 	/* we didn't find a protocol he wanted? */
 
-	if (!hit) {
-		if (lws_hdr_simple_ptr(wsi, WSI_TOKEN_PROTOCOL)) {
-			lwsl_notice("No protocol from \"%s\" supported\n",
-				 protocol_list);
-			return 1;
-		}
-		/*
-		 * some clients only have one protocol and
-		 * do not send the protocol list header...
-		 * allow it and match to the vhost's default
-		 * protocol (which itself defaults to zero)
-		 */
-		lwsl_info("defaulting to prot handler %d\n",
-			wsi->vhost->default_protocol_index);
-		n = wsi->vhost->default_protocol_index;
-		wsi->protocol = &wsi->vhost->protocols[
-			      (int)wsi->vhost->default_protocol_index];
+	if (!pcol) {
+		lwsl_notice("No supported protocol \"%s\"\n", buf);
+
+		return 1;
 	}
 
+alloc_ws:
+
 	/* allocate the ws struct for the wsi */
+
 	wsi->ws = lws_zalloc(sizeof(*wsi->ws), "ws struct");
 	if (!wsi->ws) {
 		lwsl_notice("OOM\n");
@@ -383,6 +446,8 @@ lws_process_ws_upgrade(struct lws *wsi)
 				lwsl_notice("h2 ws handshake failed\n");
 				return 1;
 			}
+			lws_role_transition(wsi, LWSIFR_SERVER | LWSIFR_P_ENCAP_H2,
+					    LRS_ESTABLISHED, &role_ops_ws);
 		} else
 #endif
 		{
@@ -394,28 +459,6 @@ lws_process_ws_upgrade(struct lws *wsi)
 		}
 		break;
 	}
-
-	lws_same_vh_protocol_insert(wsi, n);
-
-	/*
-	 * We are upgrading to ws, so http/1.1 + h2 and keepalive + pipelined
-	 * header considerations about keeping the ah around no longer apply.
-	 *
-	 * However it's common for the first ws protocol data to have been
-	 * coalesced with the browser upgrade request and to already be in the
-	 * ah rx buffer.
-	 */
-
-	lws_pt_lock(pt, __func__);
-
-	if (wsi->h2_stream_carries_ws)
-		lws_role_transition(wsi, LWSIFR_SERVER | LWSIFR_P_ENCAP_H2,
-				    LRS_ESTABLISHED, &role_ops_ws);
-	else
-		lws_role_transition(wsi, LWSIFR_SERVER, LRS_ESTABLISHED,
-				    &role_ops_ws);
-
-	lws_pt_unlock(pt);
 
 	lws_server_init_wsi_for_ws(wsi);
 	lwsl_parser("accepted v%02d connection\n", wsi->ws->ietf_spec_revision);
@@ -591,7 +634,7 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 		else
 			avail = wsi->context->pt_serv_buf_size;
 	}
-	
+
 	/* do not consume more than we should */
 	if (avail > wsi->ws->rx_packet_length)
 		avail = (unsigned int)wsi->ws->rx_packet_length;
@@ -600,7 +643,7 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 	if (avail > len)
 		avail = (unsigned int)len;
 
-	if (avail <= 0)
+	if (!avail)
 		return 0;
 
 	ebuf.token = (char *)buffer;
@@ -693,7 +736,7 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 
 	if (!ebuf.len)
 		return avail;
-	
+
 	if (
 #if !defined(LWS_WITHOUT_EXTENSIONS)
 	    n &&
@@ -703,7 +746,7 @@ lws_ws_frame_rest_is_payload(struct lws *wsi, uint8_t **buf, size_t len)
 		lws_add_wsi_to_draining_ext_list(wsi);
 	else
 		lws_remove_wsi_from_draining_ext_list(wsi);
-	
+
 	if (wsi->ws->check_utf8 && !wsi->ws->defeat_check_utf8) {
 		if (lws_check_utf8(&wsi->ws->utf8,
 				   (unsigned char *)ebuf.token, ebuf.len)) {

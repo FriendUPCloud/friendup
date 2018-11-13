@@ -1,0 +1,203 @@
+<div class="Page">
+	<div class="HRow Padding PageScroll">
+		<div class="HRow MarginBottom">
+			<p><strong>Notice:</strong>
+			<p>
+				Friend Network is under heavy development and can be considered
+				as a prototype and beta feature. Please keep this in mind. It is
+				safe to test, but you will experience some UX and functional issues at this
+				time. Now have fun testing the Friend Network!
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetActivate}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetActivate" onclick="activateFriendNetwork();"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetWorkgroup}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetWorkgroup"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetPassword}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="password" value="" id="fnetPassword"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetRepeatPassword}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="password" value="" id="fnetRepeatPassword"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetDescription}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetDescription"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetMountDrive}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetMountDriveCheck" onclick="mountDriveCheck();"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetAutoMountDrive}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetMountOnWorkspaceCheck""/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetDownloadFiles}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetDownloadCheck" onclick="downloadCheck();"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetDownloadPath}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetDownloadPath"/>
+			</div>
+			<div class="FloatLeft HContent30">
+				<label>&nbsp</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<button type="button" id="fnetDownloadButton" style="vertical-align:top" class="fa-image Button IconSmall" onclick="downloadButton()">
+					{i18n_fnetDownloadButton}
+				</button>
+			</div>
+		</div>
+		<div class="HRow">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetAcceptFromAny}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetAcceptAny"/>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="Page">
+	<div class="HRow Padding PageScroll">
+		<div class="HRow MarginBottom">
+			<p><strong>Notice:</strong>
+			<p>
+				Friend Network Power Sharing is under heavy development and can be considered
+				as a prototype and pre-beta feature. Please keep this in mind. 
+				Security is the security of a prototype, not reviewed yet by security experts.
+				When you share your power, some code is ran on your machine in a secure 
+				tunnel of iFrames and browser-to-browser encryption. 
+				It has no access to any part of your Friend machine, it saves and loads 
+				its data directly on the machine of the user asking for power through 
+				Friend Network.
+				Despite of that, we suggest that you de-activate this option after 
+				having tested it with your personal devices and the ones of your friends.
+				Have fun discovering your new super-computer: the world!
+			</p>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetActivatePower}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetActivatePower" onclick="clickFriendNetworkPower();"/>
+			</div>
+		</div>
+		<h1>{i18n_fnetSharingPower}</h1>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetShareThisDevice}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetShareThisDevice" onclick="clickShareThisDevice();"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetShareOnlyWithCommunity}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetShareOnlyWithCommunity"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetShareOnlyWithFriends}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetShareOnlyWithFriends"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetMaximumPercentage}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetMaximumPercentage"/>
+			</div>
+		</div>
+		<h1>{i18n_fnetAskForPower}</h1>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetAllowPowerApplications}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetAllowPowerApplications" onclick="clickAllowPowerApplications();"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetNumberOfMachines}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetOptimalNumberOfMachines"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetMinimalNumberOfMachines}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="text" class="FullWidth" value="" id="fnetMinimalNumberOfMachines"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetAskOnlyToCommunity}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetAskOnlyToCommunity"/>
+			</div>
+		</div>
+		<div class="HRow MarginBottom">
+			<div class="FloatLeft HContent30">
+				<label>{i18n_fnetAskOnlyToFriends}:</label>
+			</div>
+			<div class="FloatLeft HContent70">
+				<input type="checkbox" id="fnetAskOnlyToFriends"/>
+			</div>
+		</div>
+	</div>
+</div>

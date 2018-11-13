@@ -6,18 +6,14 @@
 					<div class="Tab IconSmall fa-address-card-o">
 						{i18n_basic_information}
 					</div>
-					<div class="Tab IconSmall fa-laptop">
-						{i18n_device_information}
-					</div>
+					{friendNetwork3}
 					<div class="Tab IconSmall fa-address-card">
 						{i18n_storage}
 					</div>
 					<div class="Tab IconSmall fa-key">
 						{i18n_key_management}
 					</div>
-					<div class="Tab IconSmall fa-institution">
-						{i18n_friendNetwork}
-					</div>
+					{friendNetwork1}
 					<div class="Page ScrollBarSmall">
 						<div class="PageScroll">
 							<div class="HRow Padding">
@@ -139,53 +135,7 @@
 							</div>
 						</div>
 					</div>
-					<div class="Page">
-						<div class="HRow Padding PageScroll">
-							<br/>
-						
-							<div style="text-align: center" class="MarginTop MarginBottom">
-								<img style="width:160px; height:160px;" id="fnetDeviceAvatar"><br/>
-								<button type="button" style="vertical-align:top" class="fa-image Button IconSmall" onclick="changeDeviceAvatar()">
-									{i18n_fnetChangeDeviceAvatar}
-								</button>
-							</div>
-							
-							<br/>
-							
-							<hr class="Divider"/>
-
-							<div class="HRow MarginBottom">
-								<p><strong>Notice:</strong>
-								<p>
-									{i18n_deviceNotice}
-								</p>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetDeviceName}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="text" class="FullWidth" value="" id="fnetDeviceName" placeholder="{i18n_nameOfDevice}"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetDeviceDescription}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="text" class="FullWidth" value="" id="fnetDeviceDescription" placeholder="{i18n_descriptionOfDevice}"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetShareLocalDrives}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetMountLocalCheck""/>
-								</div>
-							</div>
-						</div>
-					</div>
+					{friendNetwork4}
 					<div class="Page">
 						<div class="HRow Padding PageScroll">
 							
@@ -208,107 +158,7 @@
 						<div class="HRow Padding PageScroll" id="KeysList"></div>
 						
 					</div>
-					<div class="Page">
-						<div class="HRow Padding PageScroll">
-							<div class="HRow MarginBottom">
-								<p><strong>Notice:</strong>
-								<p>
-									Friend Network is under heavy development and can be considered
-									as a prototype and beta feature. Please keep this in mind. It is
-									safe to test, but you will experience some UX and functional issues at this
-									time. Now have fun testing the Friend Network!
-								</p>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetActivate}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetActivate" onclick="activateFriendNetwork();"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetWorkgroup}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="text" class="FullWidth" value="" id="fnetWorkgroup"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetPassword}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="password" value="" id="fnetPassword"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetRepeatPassword}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="password" value="" id="fnetRepeatPassword"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetDescription}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="text" class="FullWidth" value="" id="fnetDescription"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetMountDrive}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetMountDriveCheck" onclick="mountDriveCheck();"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetAutoMountDrive}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetMountOnWorkspaceCheck""/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetDownloadFiles}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetDownloadCheck" onclick="downloadCheck();"/>
-								</div>
-							</div>
-							<div class="HRow MarginBottom">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetDownloadPath}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="text" class="FullWidth" value="" id="fnetDownloadPath"/>
-								</div>
-								<div class="FloatLeft HContent30">
-									<label>&nbsp</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<button type="button" id="fnetDownloadButton" style="vertical-align:top" class="fa-image Button IconSmall" onclick="downloadButton()">
-										{i18n_fnetDownloadButton}
-									</button>
-								</div>
-							</div>
-							<div class="HRow">
-								<div class="FloatLeft HContent30">
-									<label>{i18n_fnetAcceptFromAny}:</label>
-								</div>
-								<div class="FloatLeft HContent70">
-									<input type="checkbox" id="fnetAcceptAny"/>
-								</div>
-							</div>
-						</div>
-					</div>
+					{friendNetwork2}
 				</div>
 				<script> InitTabs( 'MTabs' ); </script>
 			</div>

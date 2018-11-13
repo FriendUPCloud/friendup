@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -45,7 +36,8 @@ FriendWebSocket = function( conf )
 		length / size check: if str.length is above maxStrLength, its turned into a blob and rechecked.
 		If the blob byte size is above maxFCBytes, the event is chunked before sending.
 	*/
-	self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
+	//self.maxFCBytes = 0xffff; // FriendCore ws packet max bytes - set to 65535 because of unknown problem!
+	self.maxFCBytes = 8192;
 	self.metaReserve = 512;
 	self.maxStrLength = ( Math.floor( self.maxFCBytes / 4 )) - self.metaReserve;
 		// worst case scenario its all 4 byte unicode
@@ -62,8 +54,8 @@ FriendWebSocket = function( conf )
 	self.reconnectAttempt = 0; // delay is multiplied with attempts to find how long the next delay is
 	self.reconnectMaxAttempts = 0; // 0 to keep hammering
 	self.reconnectScale = {
-		min : 5,
-		max : 8,
+		min: 5,
+		max: 8
 	}; // random in range, makes sure not all the sockets
 	   // in the world reconnect at the same time
 	
@@ -597,12 +589,21 @@ FriendWebSocket.prototype.chunkSend = function( str )
 	function chunkData( str )
 	{
 		var parts = [];
+		const numChunks = Math.ceil(str.length / self.chunkDataLength );
+		for (let i = 0, o = 0; i < numChunks; ++i, o += self.chunkDataLength ) 
+		{
+			var d = str.substr(o, self.chunkDataLength);
+			parts.push( d );
+		}
+		/*
+		var parts = [];
 		for( var i = 0; i * self.chunkDataLength < str.length; i++ )
 		{
 			var startIndex = self.chunkDataLength * i;
 			var part = str.substr( startIndex, self.chunkDataLength );
 			parts.push( part );
 		}
+		*/
 		
 		return parts;
 	}

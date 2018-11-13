@@ -52,11 +52,12 @@ static signed char
 cb(struct lejp_ctx *ctx, char reason)
 {
 	char buf[1024], *p = buf, *end = &buf[sizeof(buf)];
-	int n;
 
 	if (reason & LEJP_FLAG_CB_IS_VALUE) {
 		p += lws_snprintf(p, p - end, "   value '%s' ", ctx->buf);
 		if (ctx->ipos) {
+			int n;
+
 			p += lws_snprintf(p, p - end, "(array indexes: ");
 			for (n = 0; n < ctx->ipos; n++)
 				p += lws_snprintf(p, p - end, "%d ", ctx->i[n]);
@@ -65,6 +66,8 @@ cb(struct lejp_ctx *ctx, char reason)
 		lwsl_notice("%s (%s)\r\n", buf,
 		       reason_names[(unsigned int)
 			(reason) & (LEJP_FLAG_CB_IS_VALUE - 1)]);
+
+		(void)reason_names; /* NO_LOGS... */
 		return 0;
 	}
 
@@ -92,7 +95,7 @@ main(int argc, char *argv[])
 	lwsl_notice("libwebsockets-test-lejp  (C) 2017 - 2018 andy@warmcat.com\n");
 	lwsl_notice("  usage: cat my.json | libwebsockets-test-lejp\n\n");
 
-	lejp_construct(&ctx, cb, NULL, tok, ARRAY_SIZE(tok));
+	lejp_construct(&ctx, cb, NULL, tok, LWS_ARRAY_SIZE(tok));
 
 	fd = 0;
 

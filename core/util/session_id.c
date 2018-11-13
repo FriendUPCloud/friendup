@@ -75,3 +75,26 @@ char* session_id_generate(void){
 
 	return hashed_string;
 }
+
+const char hexmap[] = {'0', '1', '2', '3', '4', '5', '6', '7',
+                           '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+FBOOL generate_uuid( char **dst )
+{
+	if( *dst == NULL )
+	{
+		*dst = FCalloc( 257, sizeof(char) );
+		if( (*dst) != NULL )
+		{
+			char tmp[ 128 ];
+			int i, j=0;
+			my_getentropy( tmp, 128 );
+			for ( i = 0; i < 128; i++ )
+			{
+				(*dst)[ 2 * i ] = hexmap[ (tmp[i] & 0xF0) >> 4 ];
+				(*dst)[ 2 * i + 1 ] = hexmap[ tmp[i] & 0x0F ];
+			}
+		}
+	}
+	return TRUE;
+}

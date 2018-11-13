@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -41,7 +29,7 @@
 #include <unistd.h>
 #include <system/services/service_manager.h>
 #include <system/services/service_manager_web.h>
-#include <properties/propertieslibrary.h>
+//#include <interface/properties_interface.h>
 #include <ctype.h>
 #include <magic.h>
 #include "web_util.h"
@@ -65,6 +53,7 @@
 #include <system/connection/connection_web.h>
 #include <system/token/token_web.h>
 #include <system/dictionary/dictionary.h>
+#include <system/mobile/mobile_web.h>
 
 #define LIB_NAME "system.library"
 #define LIB_VERSION 		1
@@ -1363,6 +1352,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 						char *allArgsNew = GetArgsAndReplaceSession( *request, loggedSession );
 						if( allArgsNew != NULL )
 						{
+							Log( FLOG_INFO, "Module called: %s : %p\n", allArgsNew, pthread_self() );
+							
 							data = l->sl_PHPModule->Run( l->sl_PHPModule, runfile, allArgsNew, &dataLength );
 							phpCalled = TRUE;
 						}
@@ -1638,6 +1629,8 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 			FERROR("[System.library] ERROR returned data is NULL\n");
 			*result = 404;
 		}
+		
+		Log( FLOG_INFO, "Module call end: %p\n", pthread_self() );
 	}
 	
 	//
@@ -1789,6 +1782,16 @@ Http *SysWebRequest( SystemBase *l, char **urlpath, Http **request, UserSession 
 	{
 		DEBUG("Appcall Systemlibptr %p applibptr %p - logged user here: %s\n", l, l->alib, loggedSession->us_User->u_Name );
 		response = ApplicationWebRequest( l, &(urlpath[ 1 ]), *request, loggedSession );
+	}
+	
+	//
+	// Mobile
+	//
+	
+	else if( strcmp( urlpath[ 0 ], "mobile" ) == 0 )
+	{
+		DEBUG("Mobile function %p  libptr %p\n", l, l->ilib );
+		response = MobileWebRequest( l,  urlpath, *request, loggedSession, result );
 	}
 	
 	//

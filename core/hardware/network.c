@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -37,6 +25,15 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include<stdio.h> //printf
+#include<string.h>    //memset
+#include<errno.h> //errno
+#include<sys/socket.h>
+#include<netdb.h>
+#include<ifaddrs.h>
+#include<stdlib.h>
+#include<unistd.h>
 
 /**
  * Get mac address
@@ -160,5 +157,74 @@ int getPrimaryIp( char* buffer, size_t buflen )
 		}
 		close( sock );
 	}
+	return 0;
+}
+
+/**
+ * Get local IP address
+ *
+ * @param buffer buffer where IP will be stored
+ * @param buflen buffer size where data will be stored
+ * @return 0 when success, otherwise error number
+ */
+int getLocalIP( char* buffer, size_t buflen )
+{
+	FILE *f;
+	char line[100] , *p , *c;
+     
+	f = fopen("/proc/net/route" , "r");
+	
+    while( fgets(line , 100 , f ) )
+	{
+		p = strtok(line , " \t");
+		c = strtok(NULL , " \t");
+         
+		if(p!=NULL && c!=NULL)
+		{
+			if(strcmp(c , "00000000") == 0)
+			{
+				printf("Default interface is : %s \n" , p);
+				break;
+			}
+		}
+	}
+     
+	//which family do we require , AF_INET or AF_INET6
+	int fm = AF_INET;
+	struct ifaddrs *ifaddr, *ifa;
+	int family;
+ 
+	if( getifaddrs(&ifaddr) == -1 )
+	{
+		//perror("getifaddrs");
+		//exit(EXIT_FAILURE);
+		return 1;
+	}
+ 
+	//Walk through linked list, maintaining head pointer so we can free list later
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) 
+	{
+		if (ifa->ifa_addr == NULL)
+		{
+			continue;
+		}
+ 
+		family = ifa->ifa_addr->sa_family;
+ 
+		if(strcmp( ifa->ifa_name , p) == 0)
+		{
+			if (family == fm) 
+			{
+				int s = getnameinfo( ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6) , buffer , buflen , NULL , 0 , NI_NUMERICHOST );
+				if( s != 0 ) 
+				{
+					DEBUG("getnameinfo() failed: %s\n", gai_strerror(s));
+					return 2;
+				}
+				printf("address: %s", buffer );
+			}
+		}
+	}
+	freeifaddrs(ifaddr);
 	return 0;
 }

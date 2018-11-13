@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -50,6 +41,7 @@ function redrawApps()
 	var str = '';
 	var apps = Application.apps;
 	var sw = 1;
+	str += '<div class="List">';
 	for( var a = 0; a < apps.length; a++ )
 	{
 		var perms = '';
@@ -61,15 +53,17 @@ function redrawApps()
 		{
 			pout += perms[c][0] + ( ( perms[c][1] && perms[c][1].length ) ? ( '(' + perms[c][1] + ')' ) : '' ) + ( ( c < perms.length - 1 ) ? ', ' : '' );
 		}
-		var btn = '<button type="button" class="HContent45 NoMargins FloatLeft Button IconSmall fa-pencil" onclick="SecurityEdit( \'' + apps[a].Name + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button><div class="HContent5 FloatLeft">&nbsp;</div>';
-		btn += '<button type="button" class="HContent50 NoMargins FloatLeft Button IconSmall fa-pencil" onclick="SecurityDelete( \'' + apps[a].Name + '\' )">&nbsp;' 	+ i18n( 'i18n_delete' ) + '</button>';
+		var btn = '<div class="HContent45 FloatLeft"><button type="button" class="FullWidth NoMargins Button IconSmall fa-pencil" onclick="SecurityEdit( \'' + apps[a].Name + '\' )">&nbsp;' + i18n( 'i18n_edit' ) + '</button></div>';
+		btn += '<div class="HContent4 FloatLeft">&nbsp;</div>';
+		btn += '<div class="HContent50 FloatLeft"><button type="button" class="FullWidth NoMargins Button IconSmall fa-pencil" onclick="SecurityDelete( \'' + apps[a].Name + '\' )">&nbsp;' 	+ i18n( 'i18n_delete' ) + '</button></div>';
 		sw = sw == 2 ? 1 : 2;
-		str += '<div class="GuiContainer"><div class="HRow BackgroundDefault sw' + sw + '">';
+		str += '<div class="HRow BackgroundDefault sw' + sw + '">';
 		str += '<div class="HContent25 FloatLeft Padding LineHeight2x"><strong>' + apps[a].Name + '</strong></div>';
 		str += '<div class="HContent50 FloatLeft Padding LineHeight2x" title="' + pout + '"><em>' + pout + '</em></div>';
-		str += '<div class="HContent25 FloatLeft Padding">' + btn + '</div>';
-		str += '</div></div>';
+		str += '<div class="HContent25 FloatLeft Padding"><div class="HRow">' + btn + '</div></div>';
+		str += '</div>';
 	}
+	str += '</div>';
 	ge( 'Applications' ).innerHTML = str;
 }
 

@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -460,15 +451,15 @@ Workspace = {
 	renewAllSessionIds: function()
 	{
 		// Check if there's a queue of objects waiting to run
-		if( friend.cajax && friend.cajax.length )
+		if( Friend.cajax && Friend.cajax.length )
 		{
-			for( var a = 0; a < friend.cajax.length; a++ )
+			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
-				friend.cajax[a].open();
-				friend.cajax[a].send();
+				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
+				Friend.cajax[a].open();
+				Friend.cajax[a].send();
 			}
-			friend.cajax = [];
+			Friend.cajax = [];
 		}
 	},
 	login: function( u, p, r, callback, ev )
@@ -1918,18 +1909,18 @@ Workspace = {
 			//only act if we have something to do afterwards...
 			if( selected.length > 0 )
 			{
-				friend.workspaceClipBoardMode = 'copy';
-				friend.workspaceClipBoard = selected;
+				Friend.workspaceClipBoardMode = 'copy';
+				Friend.workspaceClipBoard = selected;
 			}
 		}
 	},
 	pasteFiles: function()
 	{
-		if( friend.workspaceClipBoard && friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		if( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
-			e.ctrlKey = ( friend.workspaceClipBoardMode == 'copy' ? true : false );
-			window.currentMovable.drop( friend.workspaceClipBoard, e );
+			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
+			window.currentMovable.drop( Friend.workspaceClipBoard, e );
 		}
 	},
 	// Use a door and execute a filesystem function, rename
@@ -2723,8 +2714,8 @@ Workspace = {
 		else if( !currentMovable && currentScreen.screen._screen.icons )
 			currentScreen.screen.contentDiv.checkSelected();
 
-		var iconsSelected = friend.iconsSelectedCount > 0;
-		var iconsInClipboard = ( friend.workspaceClipBoard && friend.workspaceClipBoard.length > 0 );
+		var iconsSelected = Friend.iconsSelectedCount > 0;
+		var iconsInClipboard = ( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 );
 
 		if( iconsSelected )
 		{

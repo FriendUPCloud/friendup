@@ -11,6 +11,8 @@ var WorkspaceInside = {
 	// Switch to workspace
 	switchWorkspace: function( num )
 	{
+		if( this.mode == 'vr' ) return;
+		
 		if( num > globalConfig.workspacecount ) return;
 		if( ge( 'InputGrabber' ) )
 			ge( 'InputGrabber' ).focus();
@@ -105,7 +107,8 @@ var WorkspaceInside = {
 
 		// Base64 string
 
-		var uniqueId = window.MD5( Math.random() * 9999 + struct.name + ( new Date() ).getTime() );
+		var md5 = deps ? deps.MD5 : window.MD5;
+		var uniqueId = md5( Math.random() * 9999 + struct.name + ( new Date() ).getTime() );
 		var ele = document.createElement( 'div' );
 		ele.className = 'TrayElement IconSmall';
 		if ( typeof struct.className == 'string' )
@@ -260,6 +263,7 @@ var WorkspaceInside = {
 	// Check workspace wallpapers
 	checkWorkspaceWallpapers: function( loaded )
 	{
+		if( this.mode == 'vr' ) return;
 		if( globalConfig.workspacecount <= 1 ) return;
 
 		if( !Workspace.wallpaperLoaded && !loaded ) return;
@@ -331,6 +335,8 @@ var WorkspaceInside = {
 	// Initialize virtual workspaces
 	initWorkspaces: function()
 	{
+		if( this.mode == 'vr' ) return;
+		
 		if( globalConfig.workspacesInitialized )
 		{
 			globalConfig.workspacesInitialized = false;
@@ -409,6 +415,8 @@ var WorkspaceInside = {
 	// Reposition and size
 	repositionWorkspaceWallpapers: function()
 	{
+		if( this.mode == 'vr' ) return;
+		
 		var bbsize = 'auto ' + window.innerHeight + 'px';
 		var eled = this.screen.div.getElementsByClassName( 'ScreenContent' );
 		if( eled.length )
@@ -449,6 +457,7 @@ var WorkspaceInside = {
 	},
 	nudgeWorkspacesWidget: function()
 	{
+		if( this.mode == 'vr' ) return;
 		// Calculate correct position
 		if( globalConfig.workspacecount > 1 && ge( 'DoorsScreen' ) )
 		{
@@ -465,13 +474,15 @@ var WorkspaceInside = {
 	},
 	initWebSocket: function()
 	{	
-		if( Workspace.reloginInProgress )
+		if( Workspace.reloginInProgress || Workspace.connectingWebsocket )
 			return;
 		
 		if( !Workspace.sessionId )
 		{
 			return Workspace.relogin();
 		}
+
+		Workspace.connectingWebsocket = true;
 
 		var conf = {
 			onstate: onState,
@@ -482,7 +493,7 @@ var WorkspaceInside = {
         if( document.location.port == '')
         {
             conf.wsPort = ( document.location.protocol == 'https:' ? 443 : 80 )
-            console.log('webproxy set to be tunneled as well.');
+            //console.log('webproxy set to be tunneled as well.');
         }
 		
 		// Clean up previous
@@ -500,7 +511,7 @@ var WorkspaceInside = {
 				}
 				catch( ez2 )
 				{
-					console.log( 'Conn is dead.' );
+					console.log( 'Conn is dead.', ez, ez2 );
 				}
 			}
 			delete this.conn;
@@ -542,6 +553,7 @@ var WorkspaceInside = {
 					Workspace.refreshDesktop( false, true );
 				}
 				Workspace.websocketsOffline = false;
+				Workspace.connectingWebsocket = false;
 
 				if( Workspace.screen ) Workspace.screen.hideOfflineMessage();
 				document.body.classList.remove( 'Offline' );
@@ -616,7 +628,7 @@ var WorkspaceInside = {
 								var found = false;
 								if( evList[a].applicationId )
 								{
-									var found = evList[a];
+									found = evList[a];
 									var app = findApplication( evList[a].applicationId );
 									if( app )
 									{
@@ -701,22 +713,24 @@ var WorkspaceInside = {
 			// Will get the information entered in Friend Network settings panel
 			window.FriendNetwork.init( host, 'workspace', Workspace.sessionId, false );
 
-			// Start Friend Network Share when Friend Network is established
-			setTimeout( function()
-			{
-				window.FriendNetworkShare.start();
-				window.FriendNetworkDoor.start();
-				window.FriendNetworkFriends.start();
-				window.FriendNetworkDrive.start();
-			}, 1000 );
+			// Start Friend Network Services when Friend Network is established
+			setTimeout( function()								// Nice! Makes a philosophical
+			{													// sentence when read vertically! :)
+				window.FriendNetworkDoor.start();				// Open the door...
+				window.FriendNetworkFriends.start();			// Start making friends...
+				window.FriendNetworkShare.start();				// Share!
+				window.FriendNetworkDrive.start();				// It drives
+				window.Friend.Network.Power.start();			// power!
+			}, 1000 );											// Friend! Empowerment for everyone! (Y)
 		}
 	},
 	closeFriendNetwork: function()
 	{
-		FriendNetworkShare.close();
-		FriendNetworkDoor.close();
-		FriendNetworkFriends.close();
+		Friend.Network.Power.close();
 		FriendNetworkDrive.close();
+		FriendNetworkShare.close();
+		FriendNetworkFriends.close();
+		FriendNetworkDoor.close();
 		FriendNetwork.close();
 	},
 	terminateSession: function( sess, dev, e )
@@ -734,6 +748,8 @@ var WorkspaceInside = {
 	},
 	refreshExtraWidgetContents: function()
 	{
+		if( this.mode == 'vr' ) return;
+		
 		var mo = new Library( 'system.library' );
 		mo.onExecuted = function( rc, sessionList )
 		{
@@ -825,6 +841,18 @@ var WorkspaceInside = {
 
 				var calendar = new Calendar( wid.dom );
 				wid.dom.id = 'CalendarWidget';
+				
+				// Mobile hider
+				if( window.isMobile )
+				{
+					var hider = document.createElement( 'div' );
+					hider.className = 'Hider';
+					hider.onclick = function()
+					{
+						Workspace.widget.slideUp();
+					}
+					wid.dom.appendChild( hider );
+				}
 				Workspace.calendarWidget = wid;
 
 				var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
@@ -928,6 +956,7 @@ var WorkspaceInside = {
 			if( wid )
 				wid.autosize();
 		}
+		// FRANCOIS: get unique device IDs...
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
 	},
 	removeCalendarEvent: function( id )
@@ -988,8 +1017,6 @@ var WorkspaceInside = {
 	// TODO: Move to a proper theme parser
 	applyThemeConfig: function()
 	{
-		// No need for mobile!
-		if( isMobile ) return;
 		if( !this.themeData )
 			return;
 		
@@ -1115,7 +1142,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			function initFriendWorkspace()
 			{
 				// Make sure we have loaded
-				if( !Workspace.screen.contentDiv )
+				if( Workspace.mode != 'vr' && !Workspace.screen.contentDiv )
 					if( Workspace.screen.contentDiv.offsetHeight < 100 )
 						return setTimeout( initFriendWorkspace, 50 );
 				if( e == 'ok' && d )
@@ -1443,15 +1470,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					}
 
 					// Add favorites
-					// TODO: Dynamic desklets!
 					if( parent.classList.contains( 'DockMenu' ) && ge( 'desklet_0' ) )
 					{
 						var eles = ge( 'desklet_0' ).getElementsByClassName( 'Launcher' );
 						var out = [];
 						for( var b = 0; b < eles.length; b++ )
 						{
+
 							if( eles[b].classList.contains( 'Startmenu' ) ) continue;
-							var nam = eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+
+							var nam = eles[b].getAttribute('data-displayname') ? eles[b].getAttribute('data-displayname') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							var exe = eles[b].getAttribute('data-exename') ? eles[b].getAttribute('data-exename') : eles[b].getElementsByTagName( 'span' )[0].innerHTML;
+							
 							var im = eles[b].style.backgroundImage ? 
 								eles[b].style.backgroundImage.match( /url\([\'|\"]{0,1}(.*?)[\'|\"]{0,1}\)/i ) : false;
 							if( im && im[1] )
@@ -1459,10 +1489,13 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								im = im[1];
 							}
 							else im = false;
+							
+							console.log('exe names???',exe,nam);							
+							
 							out.push( {
 								Title: nam,
 								Path: 'Mountlist:',
-								Filename: nam,
+								Filename: exe,
 								Type: 'Executable',
 								Icon: im ? im : null
 							} );
@@ -1488,11 +1521,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var frs = [];
 						var out = [];
 						var end = [];
-						var filter = [ 'Software', 'Settings' ];
+						var filter = [ 'Software', 'Preferences', 'Settings' ];
 						var i = 0;
 						for( var a = 0; i < filter.length && a < data.length; a++ )
 						{
-							if( data[ a ].Title == filter[ i ] )
+							var pth = data[a].Path + '';
+							if( pth.substr( pth.length - 1, 1 ) == '/' )
+								pth = pth.substr( 0, pth.length - 1 );
+							var last = pth.indexOf( '/' ) > 0 ? pth.split( '/' ).pop() : pth.split( ':' ).pop();
+							if( last == filter[ i ] )
 							{
 								out.push( data[ a ] );
 								i++;
@@ -1540,7 +1577,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var p = data[a].Path.split( ':' )[1];
 						if( p == 'Repositories/' || p == 'Modules/' || p == 'Functions/' || p == 'Libraries/' || p == 'Devices/' )
 							continue;
-						if( data[a].Title == 'Preferences' || data[a].Filename == 'Preferences' )
+						var last = p.split( '/' ).pop();
+						if( last == 'Preferences' )
 							continue;
 						
 						var s = document.createElement( 'div' );
@@ -1661,7 +1699,27 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								}
 								else
 								{
-									ExecuteApplication( this.executable );
+									//copy and paste from Dock code to parse for arguments and workspace connections...
+									var args = '';
+									var executable = this.executable + '';
+					
+									if( executable.indexOf( ' ' ) > 0 )
+									{
+										var t = executable.split( ' ' );
+										if( t[0].indexOf( ':' ) == -1)
+										{
+											args = '';
+											for( var a = 1; a < t.length; a++ )
+											{
+												args += t[a];
+												if( a < t.length - 1 )
+													args += ' ';
+											}
+											executable = t[0];	
+										}
+									}
+									
+									ExecuteApplication( executable, args );
 								}
 							}
 							// Drag fileinfo
@@ -1801,6 +1859,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	// Reload docks and readd launchers
 	reloadDocks: function()
 	{
+		if( Workspace.mode == 'vr' ) return;
 		Workspace.docksReloading = true;
 		
 		var c = new Module( 'dock' );
@@ -2390,8 +2449,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 										window.friendApp.hide_splash_screen();
 									}
 									
+									document.title = Friend.windowBaseString;
+									
 									// Remove the overlay when inside
-									Workspace.screen.hideOverlay();
+									if( Workspace.screen )
+										Workspace.screen.hideOverlay();
 								
 									// Refresh widgets
 									Workspace.refreshExtraWidgetContents();
@@ -2729,7 +2791,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		if( !window.preloader )
 			window.preloader = [];
 		var imgOffline = GetThemeInfo( 'OfflineIcon' );
-		if( !Workspace.iconsPreloaded )
+		if( !Workspace.iconsPreloaded && this.mode != 'vr' )
 		{
 			var imgs = [];
 			imgs.push( imgOffline.backgroundImage );
@@ -2835,7 +2897,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			}
 
 			// Recall wallpaper
-			if( self.wallpaperImage != 'color' )
+			if( Workspace.mode != 'vr' && self.wallpaperImage != 'color' )
 			{
 				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -2980,7 +3042,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 			}
 			// We have no wallpaper...
-			else
+			else if( Workspace.mode == 'standard' )
 			{
 				var eles = self.screen.div.getElementsByClassName( 'ScreenContent' );
 				if( eles.length )
@@ -2990,6 +3052,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				}
 				Workspace.wallpaperLoaded = true;
 				Workspace.checkWorkspaceWallpapers();
+			}
+			else if( Workspace.mode == 'vr' )
+			{
+				Workspace.wallpaperLoaded = true;
 			}
 
 		}, forceRefresh );
@@ -3677,19 +3743,19 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			//only act if we have something to do afterwards...
 			if( selected.length > 0 )
 			{
-				friend.workspaceClipBoardMode = 'copy';
-				friend.workspaceClipBoard = selected;
+				Friend.workspaceClipBoardMode = 'copy';
+				Friend.workspaceClipBoard = selected;
 			}
 		}
 	},
 	// paste from virtual clipboard
 	pasteFiles: function()
 	{
-		if( friend.workspaceClipBoard && friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
+		if( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 && typeof window.currentMovable.drop == 'function' )
 		{
 			var e = {};
-			e.ctrlKey = ( friend.workspaceClipBoardMode == 'copy' ? true : false );
-			window.currentMovable.drop( friend.workspaceClipBoard, e );
+			e.ctrlKey = ( Friend.workspaceClipBoardMode == 'copy' ? true : false );
+			window.currentMovable.drop( Friend.workspaceClipBoard, e );
 		}
 	},
 	// Use a door and execute a filesystem function, rename
@@ -4007,6 +4073,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				f.replacements = {
 					filename: icon.Filename ? icon.Filename : ( icon.Title.split( ':' )[0] ),
 					filesize: icon.Filesize + '' + fbtype + ( icon.UsedSpace ? ( ' (' + icon.UsedSpace + '' + ustype + ' ' + i18n( 'i18n_used_space' ) + ')' ) : '' ),
+					filedate: icon.DateModified,
 					path: icon.Path,
 					protection: prot,
 					Cancel: i18n( 'i18n_cancel' ),
@@ -5223,8 +5290,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		else if( !currentMovable && currentScreen.screen._screen.icons )
 			currentScreen.screen.contentDiv.checkSelected();
 
-		var iconsSelected = friend.iconsSelectedCount > 0;
-		var iconsInClipboard = ( friend.workspaceClipBoard && friend.workspaceClipBoard.length > 0 );
+		var iconsSelected = Friend.iconsSelectedCount > 0;
+		var iconsInClipboard = ( Friend.workspaceClipBoard && Friend.workspaceClipBoard.length > 0 );
 
 		var canUnmount = false;
 		var cannotWrite = false;
@@ -5255,14 +5322,16 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							// Share option only if Friend Network is on and not in the system disk
 							if ( Workspace.friendNetworkEnabled )
 							{
-								
-								if ( drive != 'System' )
+								if ( FriendNetworkShare.activated )
 								{
-									shareIcon = ics[ a ];
-									shareCount++;
-									canBeShared = true;
-									if( ics[a].Type == 'Directory' )
-										directoryIcon = true;
+									if ( drive != 'System' )
+									{
+										shareIcon = ics[ a ];
+										shareCount++;
+										canBeShared = true;
+										if( ics[a].Type == 'Directory' )
+											directoryIcon = true;
+									}
 								}
 							}
 							
@@ -5363,7 +5432,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						name:   i18n( 'menu_backdrop' ),
 						command: function(){ Workspace.backdrop(); }
 					} : false,
-					!( window.isMobile || window.isTablet || window.isSettopBox ) ? {
+					!( window.friendApp || window.isSettopBox ) ? {
 						name:	i18n( 'menu_fullscreen' ),
 						command: function(){ Workspace.fullscreen(); }
 					}: false,
@@ -5713,8 +5782,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	showContextMenu: function( menu, e, extra )
 	{
-		if( window.isMobile ) return;
-
 		var tr = e.target ? e.target : e.srcElement;
 		
 		if( tr == window )
@@ -5840,8 +5907,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			if( isTablet || isMobile )
 			{
-				e.clientX = e.touches[0].pageX;
-				e.clientY = e.touches[0].pageY;
+				if( e.touches )
+				{
+					e.clientX = e.touches[0].clientX;
+					e.clientY = e.touches[0].clientY;
+				}
 			}
 			
 			var flg = {
@@ -6621,14 +6691,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
-				else
-				{
-					console.log( js, this.jax.proxy.responseText );
-				}
 			}
 			catch( b )
 			{
-				console.log( 'I do not understand the result. Server may be down.', e, d );
+				console.log( 'I do not understand the result. Server may be down.', e, d, b );
 			}
 			
 			//console.log( 'Response from connection checker: ', e, d );
@@ -7295,8 +7361,8 @@ function DoorsKeyDown( e )
 /*// Traps pasting to clipboard
 document.addEventListener( 'paste', function( evt )
 {
-	if( typeof friend != undefined && typeof friend.pasteClipboard == 'function' ) 
-		friend.pasteClipboard( evt );
+	if( typeof friend != undefined && typeof Friend.pasteClipboard == 'function' ) 
+		Friend.pasteClipboard( evt );
 } );
 
 // paste handler. check Friend CB vs System CB.
@@ -7320,11 +7386,11 @@ function friendWorkspacePasteListener( evt )
 	{
 		cpd = evt.clipboardData.getData( mimetype );
 
-		//console.log('compare old and new',cpd,friend.prevClipboard,friend.clipboard);
-		if( friend.prevClipboard != cpd )
+		//console.log('compare old and new',cpd,Friend.prevClipboard,Friend.clipboard);
+		if( Friend.prevClipboard != cpd )
 		{
-			friend.prevClipboard = friend.clipboard;
-			friend.clipboard = cpd;
+			Friend.prevClipboard = Friend.clipboard;
+			Friend.clipboard = cpd;
 		}
 	}
 	return true;
@@ -7568,6 +7634,22 @@ function handleServerMessage( e )
 */
 function handleServerNotice( e )
 {
+	//check if the message is parsable JSON... if it is, we might have received a msg for an app
+	var tmp = false;
+	try{
+		tmp = JSON.parse( e.message );
+		if( tmp && tmp.msgtype )
+		{
+			handleNotificationMessage( tmp )
+			return;
+		}
+	}
+	catch(e)
+	{
+		//nothing to show here... continue walking
+	}
+	
+	
 	var msg = {
 		title : 'Server notice - from: ' + e.username,
 		text : e.message,
@@ -7585,15 +7667,62 @@ function handleServerNotice( e )
 	}
 }
 
+function handleNotificationMessage( msg )
+{
+	if( !msg || !msg.msgtype ) return;
+	switch( msg.msgtype )
+	{
+		case 'applicationmessage':
+			var w=false;
+			for( var a in movableWindows )
+			{
+				w = movableWindows[a].windowObject;
+				if( w && w.viewId && w.viewId == msg.targetapp )
+				{
+					w.sendMessage({'command': msg.applicationcommand});
+				}
+
+			}
+			break;
+	}
+}
+
 for( var a in WorkspaceInside )
 	Workspace[a] = WorkspaceInside[a];
 delete WorkspaceInside;
 InitDynamicClassSystem();
-
 
 document.addEventListener( 'paste', function( evt )
 {
 	console.log('paste event received',evt);
 	Workspace.handlePasteEvent( evt );
 });
+
+// Push notification integration
+if( window.friendApp )
+{
+	friendApp.pushListener = function()
+	{
+		this.get_notification( function( msg )
+		{
+			try
+			{
+				var data = JSON.parse( msg );
+				for( var a = 0; a < Workspace.applications.length; a++ )
+				{
+					if( Workspace.applications[a].applicationName == data.category )
+					{
+						var app = Workspace.applications[a];
+						app.postMessage( { command: 'push_notification', data: data }, '*' );
+					}
+				}
+			}
+			catch( e )
+			{
+				// How to handle?
+			}
+		} );
+	}
+	window.addEventListener( 'focus', friendApp.pushListener, true );
+}
 

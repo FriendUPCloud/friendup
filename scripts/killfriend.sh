@@ -8,6 +8,8 @@
 
 KILLED="0"
 
+rm -rf .friend_lock*
+
 # Kill phoenix script
 kill -9 $(ps aux | grep -e phoenix_FriendCore.sh | awk '{ print $2 }') 
 if [ $? -eq "0" ]; then

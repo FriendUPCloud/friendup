@@ -1,0 +1,148 @@
+
+
+i18n_account                         : Moje konto
+
+i18n_basic_information               : Ogólne
+i18n_full_name                       : Twoje pełne imię
+i18n_username                        : Nazwa Użytkownika
+i18n_change_password                 : Zmień hasło
+i18n_current_password                : Aktualne hasło
+i18n_new_password                    : Nowe hasło
+i18n_confirm                         : potwierdzać
+
+i18n_language                        : Język systemu
+i18n_mode_gamified                   : Gamified
+i18n_mode_normal                     : Normal
+i18n_mode_developer                  : Developer
+
+i18n_are_you_sure                    : Jesteś pewny?
+i18n_this_will_remove                : Spowoduje to usunięcie dysku z listy montowania.
+
+i18n_delete_disk                     : Usuń dysk
+
+i18n_storage                         : Urządzeniaa
+
+i18n_key_type              			 : Typ klucza
+i18n_key_name              			 : Nazwa klucza
+i18n_key_password             	     : Hasło klucza
+i18n_generate                        : Wygenerować
+i18n_generate_keypair                : Wygeneruj parę kluczy
+
+i18n_extended_information            : Rozszerzone informacje
+i18n_telephone                       : Telefon
+i18n_email_address                   : Adres e-mail
+i18n_account_image                   : Awatar konta
+i18n_save                            : Zapisz
+i18n_cancel                          : Anuluj
+i18n_back                            : Wstecz
+
+i18n_publickey                       : Klucz publiczny
+
+i18n_key_information                 : Informacje o kluczu
+i18n_your_apps                       : Twoje aplikacje
+i18n_available_storage               : Dostępne urządzenia
+i18n_unmounted_storage               : Odlaczone urzadzenie
+
+i18n_no_apps                         : Status
+i18n_no_apps_desc                    : Brak zainstalowanych.
+
+i18n_add_storage                     : Dodaj dysk
+i18n_edit_storage                    : Edytuj dysk
+
+i18n_no_storage                      : Brak miejsca na dysku
+
+i18n_get_storage                     : Uzyskaj więcej miejsca
+
+i18n_toggle_public_key_visibility    : Klucz publiczny
+
+i18n_password                        : Hasło
+i18n_edit_password                   : Zmień hasło
+
+i18n_descheading : Dodaj więcej miejsca do swojego systemu
+i18n_description : Wybierz typ dysku, który chcesz dodać do swojego systemu. Niektórzy dostawcy mogą poprosić o zarejestrowanie konta.
+
+i18n_disk                            : dysk
+i18n_add_a                           : Dodaj
+i18n_edit                            : Edytuj
+
+i18n_disk_error                      : Disk error
+i18n_failed_to_edit                  : Failed to edit disk volume.
+i18n_disk_success                    : Dysk zapisany
+i18n_disk_edited                     : Dysk został poprawnie wyedytowany.
+
+i18n_connection_details              : Szczegóły połączenia
+i18n_notes                           : Uwagi
+i18n_directory                       : Katalog zdalny
+i18n_login_info                      : Informacje logowania
+i18n_your_notes                      : Twoje notatki
+i18n_username                        : Nazwa użytkownika
+i18n_password                        : Hasło
+i18n_host_port                       : Port serwera
+i18n_host_ip                         : Adres serwera lub adres IP
+i18n_hostname                        : Adres serwera
+i18n_workgroup_name                  : Twoja grupa robocza
+i18n_workgroup                       : Grupa robocza
+i18n_device_name                     : Nazwa dysku
+i18n_placeholder_connection          : Mydisk
+
+i18n_add_storage                     : Dodaj urządzenie
+i18n_update_disk                     : Zaktualizuj dysk
+i18n_mount_disk                      : Zamontuj dysk
+i18n_unmount_disk                    : Odmontuj dysk
+i18_account2                         : Konto
+i18n_settings_saved                  : Ustawienia zapisane
+
+i18n_key_password_confirm            : Potwierdź hasło
+i18n_pass_mis_desc                   : Hasła muszą się zgadzać.
+i18n_password_mismatch               : Hasła różnią się!
+
+i18n_key_management                  : Zarządzanie kluczami
+i18n_application                     : Aplikacja
+i18n_options                         : Opcje
+
+i18n_add_key                         : Dodaj klucz
+i18n_data                            : Dane
+
+i18n_close                           : Zamknij
+i18n_encrypt                         : Szyfruj
+i18n_decrypt                         : Odszyfruj
+i18n_system_wide                     : System wide(WTF  !!!)
+
+i18n_devices                         : Urządzenia
+
+i18n_generate_key                    : Wygeneruj kluczs
+i18n_useravatar                      : Użyj awataru
+i18n_changeavatar                    : Zmień awatar
+i18n_fileselectoravatar              : Wybierz obraz PNG
+
+i18n_your_public_key                 : Twój klucz publiczny
+
+i18n_deleting_key                    : Usuwanie klucza
+
+i18n_friendNetwork					 : Friend Network
+i18n_fnetActivate					 : Aktywuj Friend Network
+i18n_fnetWorkgroup					 : Społeczność
+i18n_fnetPassword					 : Hasło społeczności
+i18n_fnetRepeatPassword				 : Powtórz hasło
+i18n_workgroupPlaceHolder			 : Wprowadź nazwę grupy roboczej lub pozostaw puste
+i18n_passwordNoMatch				 : Sieciowe hasła grup roboczych Friend nie są zgodne.
+i18n_fnetAcceptFromAny				 : Akceptuj wiadomości od osób nie oznaczonych jako znajomi
+i18n_fnetDescription                 : Opisz siebie
+i18n_fnetDownloadFiles				 : Pobierz udostępnione pliki natychmiast
+i18n_fnetDownloadPath				 : Ścieżka
+i18n_fnetDownloadButton				 : Wybierz katalog
+i18n_fnetPleaseChooseDirectory		 : Proszę wybierz katalog ...
+i18n_fnetMountDrive					 : Zamontuj dysk Friend Network podczas startu
+i18n_fnetAutoMountDrive				 : Wyświetl ikonę Friend Network w obszarze roboczym
+
+i18n_update_language_warning         : Aktualizacja języka
+i18n_update_language_desc            : Podczas aktualizacji ustawień języka Friend musi ponownie załadować obszar roboczy. Stracisz wszystko, co nie jest zapisane. Na pewno chcesz kontynuować?
+i18n_fnetShareLocalDrives			 : Podłącz lokalne dyski do Friend Network
+i18n_fnetDeviceDescription			 : Opis urządzenia
+i18n_fnetDeviceName					 : Nazwa urządzenia
+i18n_fnetChangeDeviceAvatar			 : Zmień obraz
+i18n_device_information				 : Urządzenie
+i18n_nameOfDevice					 : Wprowadź tutaj nazwę urządzenia
+i18n_descriptionOfDevice			 : Wprowadź opis
+i18n_deviceNotice					 : Ta strona informacyjna jest specyficzna dla urządzenia, z którego właśnie korzystasz. Friend Network użyje go do wyświetlania różnych urządzeń, z których korzystasz w danym momencie.
+

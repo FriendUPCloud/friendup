@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -25,7 +13,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "systembase.h"
+#include <system/systembase.h>
 #include <util/log/log.h>
 #include <sys/stat.h>
 #include <util/buffered_string.h>
@@ -1118,6 +1106,11 @@ char *Execute( struct File *s, const char *path, const char *args )
 void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 {
 	char *tmp = FCalloc( TMP_SIZE, sizeof(char) );
+	char *fname = NULL;
+	
+	SpecialData *sd = (SpecialData *)d->f_SpecialData;
+	SystemBase *sb = (SystemBase *)sd->sb;
+	
 	if( tmp == NULL )
 	{
 		return;
@@ -1129,7 +1122,13 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 			
 	BufStringAddSize( bs, "{", 1 );
 	char *tptr = GetFileName( path );
-	snprintf( tmp, TMP_SIZEM1, " \"Filename\":\"%s\",", tptr );
+	
+	if( ( fname = sb->sl_StringInterface.EscapeStringToJSON( tptr ) ) == NULL )
+	{
+		fname = tptr;
+	}
+	
+	snprintf( tmp, TMP_SIZEM1, " \"Filename\":\"%s\",", fname );
 	
 	BufStringAdd( bs, tmp );
 	
@@ -1137,18 +1136,38 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 	
 	if( rootSize != pathSize )
 	{
+		char *tmpname;
+		char *pptr = (char *)&path[ strlen( d->f_Path ) ];
+		if( ( tmpname = sb->sl_StringInterface.EscapeStringToJSON( pptr ) ) == NULL )
+		{
+			tmpname = pptr;
+		}
+		
 		if( S_ISDIR( s->st_mode ) )
 		{
-			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s/\",", &path[ strlen( d->f_Path ) ] );
+			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s/\",", tmpname );
 		}
 		else
 		{
-			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s\",", &path[ strlen( d->f_Path ) ] );
+			ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s\",", tmpname );
+		}
+		if( tmpname != pptr )
+		{
+			FFree( tmpname );
 		}
 	}
 	else
 	{
-		ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s:\",", d->f_Name );
+		char *tmpname;
+		if( ( tmpname = sb->sl_StringInterface.EscapeStringToJSON( d->f_Name ) ) == NULL )
+		{
+			tmpname = d->f_Name;
+		}
+		ls = snprintf( tmp, TMP_SIZEM1, "\"Path\":\"%s:\",", tmpname );
+		if( tmpname != d->f_Name )
+		{
+			FFree( tmpname );
+		}
 	}
 	
 	BufStringAddSize( bs, tmp, ls );
@@ -1171,6 +1190,12 @@ void FillStatLocal( BufString *bs, struct stat *s, File *d, const char *path )
 	{
 		BufStringAdd( bs, "\"MetaType\":\"File\",\"Type\":\"File\" }" );
 	}
+	
+	if( fname != tptr )
+	{
+		FFree( fname );
+	}
+	
 	FFree( tmp );
 }
 
@@ -1325,27 +1350,28 @@ BufString *Dir( File *s, const char *path )
 			
 			BufStringAddSize( bs, "ok<!--separate-->", 17 );
 			
-			//BufStringAdd( bs, "ok<!--separate-->[" );
 			BufStringAddSize( bs, "[", 1 );
+			SpecialData *sd = (SpecialData *)s->f_SpecialData;
+			SystemBase *sb = (SystemBase *)sd->sb;
+			
 			while ((dir = readdir(d)) != NULL)
 			{
-				
-				if( dir->d_name[ 0 ] == '/' )
+				if( !(strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 ) )
 				{
-					snprintf( tempString, rspath, "%s%s", comm, &(dir->d_name[1]) );
-				}
-				else
-				{
-					snprintf( tempString, rspath, "%s%s", comm, dir->d_name );
-				}
+					if( dir->d_name[ 0 ] == '/' )
+					{
+						snprintf( tempString, rspath, "%s%s", comm, &(dir->d_name[1]) );
+					}
+					else
+					{
+						snprintf( tempString, rspath, "%s%s", comm, dir->d_name );
+					}
+					
+					struct stat ls;
 				
-				struct stat ls;
-				
-				//DEBUG("---------------> %s\n", dir->d_name );
+					//DEBUG("---------------> %s\n", dir->d_name );
 		
-				if( stat( tempString, &ls ) == 0 )
-				{
-					if( !(strcmp( dir->d_name, "." ) == 0 || strcmp( dir->d_name, ".." ) == 0 ) )
+					if( stat( tempString, &ls ) == 0 )
 					{
 						if( pos != 0 )
 						{
@@ -1354,8 +1380,8 @@ BufString *Dir( File *s, const char *path )
 						FillStatLocal( bs, &ls, s, tempString );
 						pos++;
 					}
-				}
-			}
+				} // strcmp( . , ..
+			} // while all files/dirs in directory
 			BufStringAddSize( bs, "]", 1 );
 			
 			closedir( d );

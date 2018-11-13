@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -103,9 +94,20 @@ function storageForm( type, id, data )
 		}
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
-		{	
+		{
+			var scripts = [];
+			
 			if( e == 'ok' )
 			{
+				// collect scripts
+				
+				var scr;
+				while ( scr = d.match ( /\<script[^>]*?\>([\w\W]*?)\<\/script\>/i ) )
+				{
+					d = d.split( scr[0] ).join( '' );
+					scripts.push( scr[1] );
+				}
+				
 				var mch;
 				var i = 0;
 				while( ( mch = d.match( /\{([^}]*?)\}/ ) ) )
@@ -170,7 +172,7 @@ function storageForm( type, id, data )
 				
 				var fields = [
 					'Name', 'Server', 'ShortDescription', 'Port', 'Username', 
-					'Password', 'Path', 'Type', 'Workgroup', 'PublicKey'
+					'Password', 'Path', 'Type', 'Workgroup', 'PrivateKey'
 				];
 				for( var a = 0; a < fields.length; a++ )
 				{
@@ -192,6 +194,18 @@ function storageForm( type, id, data )
 			}
 			
 			verifyForm( null, 'show' );
+			
+			// Run scripts at the end ...
+			if( scripts )
+			{
+				for( var key in scripts )
+				{
+					if( scripts[key] )
+					{
+						eval( scripts[key] );
+					}
+				}
+			}
 		}
 		m.execute( 'dosdrivergui', { type: type, id: id } );
 	}
@@ -363,9 +377,9 @@ function addDisk()
 	if( ge( 'conf.Executable' ) )
 		data.Invisible = ge( 'conf.Executable' ).value;
 	
-	if( ge( 'PublicKey' ) )
+	if( ge( 'PrivateKey' ) )
 	{
-		data.PublicKey = ge( 'PublicKey' ).value;
+		data.PrivateKey = ge( 'PrivateKey' ).value;
 	}
 	if( ge( 'EncryptedKey' ) )
 	{

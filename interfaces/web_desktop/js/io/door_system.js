@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -278,15 +269,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
 	}
 	
-	var dirPrefs         = 'System:' + i18n( 'i18n_directory_Prefs') + '/';
-	var dirRepositories  = 'System:' + i18n( 'i18n_directory_Repositories') + '/';
-	var dirModules       = 'System:' + i18n( 'i18n_directory_Modules') + '/';
-	var dirLibraries     = 'System:' + i18n( 'i18n_directory_Libraries' ) + '/';
-	var dirSoftware      = 'System:' + i18n( 'i18n_directory_Software') + '/';
-	var dirDevices       = 'System:' + i18n( 'i18n_directory_Devices') + '/';
-	var dirFunctions     = 'System:' + i18n( 'i18n_directory_Functions') + '/';
-	var dirDocumentation = 'System:' + i18n( 'i18n_directory_Documentation' ) + '/';
-	var dirDocApps       = 'System:' + i18n( 'i18n_directory_DocApps' ) + '/';
+	var dirPrefs         = 'System:Preferences/';
+	var dirRepositories  = 'System:Repositories/';
+	var dirModules       = 'System:Modules/';
+	var dirLibraries     = 'System:Libraries/';
+	var dirSoftware      = 'System:Software/';
+	var dirDevices       = 'System:Devices/';
+	var dirFunctions     = 'System:Functions/';
+	var dirDocumentation = 'System:Documentation/';
+	var dirDocApps       = 'System:DocApps/';
 	
 	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
 	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
@@ -305,10 +296,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Prefs' ) + '/',
+					Path     : 'System:Preferences/',
 					Type     : 'Directory',
 					IconClass: 'System_Settings',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' )
+					Door     : new DoorSystem( 'System:Preferences/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -316,10 +307,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
+					Path     : 'System:Repositories/',
 					Type     : 'Directory',
 					IconClass: 'System_Repositories',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' )
+					Door     : new DoorSystem( 'System:Repositories/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -328,11 +319,11 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Modules' ) + '/',
+					Path     : 'System:Modules/',
 					Type     : 'Directory',
 					Module   : 'files',
 					IconClass: 'System_Modules',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Modules' ) + '/' )
+					Door     : new DoorSystem( 'System:Modules/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -341,11 +332,11 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
+					Path     : 'System:Devices/',
 					Type     : 'Directory',
 					Module   : 'files',
 					IconClass: 'System_Devices',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Devices' ) + '/' )
+					Door     : new DoorSystem( 'System:Devices/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -353,10 +344,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
+					Path     : 'System:Libraries/',
 					Type     : 'Directory',
 					IconClass: 'System_Libraries',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Libraries' ) + '/' )
+					Door     : new DoorSystem( 'System:Libraries/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -364,10 +355,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Software' ) + '/',
+					Path     : 'System:Software/',
 					Type     : 'Directory',
 					IconClass: 'System_Software',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Software' ) + '/' )
+					Door     : new DoorSystem( 'System:Software/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -375,10 +366,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
+					Path     : 'System:Documentation/',
 					Type     : 'Directory',
 					IconClass: 'System_Documentation',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' )
+					Door     : new DoorSystem( 'System:Documentation/' )
 				},
 				{
 					MetaType : 'Directory',
@@ -386,10 +377,10 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					Permissions: '-r-e-,-r-e-,-r-e-',
 					DateModified: dateh,
 					Filesize: 16,
-					Path     : 'System:' + i18n( 'i18n_directory_Functions' ) + '/',
+					Path     : 'System:Functions/',
 					Type     : 'Directory',
 					IconClass: 'System_Functions',
-					Door     : new DoorSystem( 'System:' + i18n( 'i18n_directory_Functions' ) + '/' )
+					Door     : new DoorSystem( 'System:Functions/' )
 				}
 			], 'System:' );
 		case dirDocumentation:

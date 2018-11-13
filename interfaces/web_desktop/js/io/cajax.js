@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -61,17 +52,17 @@ function AddToCajaxQueue( ele )
 	}
 	
 	// TODO: Support a nice queue.. :-)
-	if( !window.friend || !window.friend.cajax )
+	if( !window.Friend || !window.Friend.cajax )
 	{
 		console.log( 'Impossible error' );
 		return false;
 	}
-	for( var a = 0; a < friend.cajax.length; a++ )
+	for( var a = 0; a < Friend.cajax.length; a++ )
 	{
 		// Already there
-		if( friend.cajax[a] == ele ) return false;
+		if( Friend.cajax[a] == ele ) return false;
 	}
-	friend.cajax.push( ele );
+	Friend.cajax.push( ele );
 }
 
 // A simple ajax function
@@ -85,9 +76,9 @@ cAjax = function()
 	//console.log( 'cAjax: Created ' + _c_count );
 
 	// Make sure to track object in case of renewal...
-	if( typeof( friend ) != 'undefined' )
+	if( typeof( Friend ) != 'undefined' )
 	{
-		if( !friend.cajax ) friend.cajax = [];
+		if( !Friend.cajax ) Friend.cajax = [];
 	}
 	
 	// Get deepest field
@@ -254,12 +245,12 @@ cAjax = function()
 			
 			// Clean out possible queue
 			var o = [];
-			for( var a = 0; a < friend.cajax.length; a++ )
+			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				if( friend.cajax[a] != jax )
-					o.push( friend.cajax[a] );
+				if( Friend.cajax[a] != jax )
+					o.push( Friend.cajax[a] );
 			}
-			friend.cajax = o;
+			Friend.cajax = o;
 			// End clean queue
 			
 			// Register send time
@@ -282,12 +273,12 @@ cAjax = function()
 		{	
 			// Clean out possible queue
 			var o = [];
-			for( var a = 0; a < friend.cajax.length; a++ )
+			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				if( friend.cajax[a] != jax )
-					o.push( friend.cajax[a] );
+				if( Friend.cajax[a] != jax )
+					o.push( Friend.cajax[a] );
 			}
-			friend.cajax = o;
+			Friend.cajax = o;
 			// End clean queue
 
 			// tell our caller...
@@ -685,8 +676,14 @@ cAjax.prototype.send = function( data )
 			var u = this.url.split( '?' );
 			u = u[0] + '?' + ( u[1] ? ( u[1]+'&' ) : '' ) + 'cachekiller=' + this.getRandNumbers();
 			this.proxy.setRequestHeader( 'Method', 'GET ' + u + ' HTTP/1.1' );
-			try { res = this.proxy.send( null ); }
-			catch ( e ) { res = this.proxy.send( NULL ); }
+			try 
+			{ 
+				res = this.proxy.send( null ); 
+			}
+			catch ( e ) 
+			{ 
+				res = this.proxy.send( NULL ); 
+			}
 		
 			//console.log( 'Getting ' + u );
 		}

@@ -1,26 +1,17 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
 // Network class that handles Friend Core to Friend Core connections as well as
 // our encrypted WebRTC based peer-to-peer network
 
-var friend = window.friend || {};
+var Friend = window.Friend || {};
 
 FriendNetwork = {
 	// Vars
@@ -216,6 +207,22 @@ FriendNetwork = {
 				callback( false );
 		}
 
+	},
+
+	// Low level utilities
+	getHostNameFromURL: function( URL )
+	{
+		var pos = URL.indexOf( '@');
+		if ( pos > 0 )
+			return URL.substring( pos + 1 );
+		return null;
+	},
+	getAppNameFromURL: function( URL )
+	{
+		var pos = URL.indexOf( '@');
+		if ( pos > 0 )
+			return URL.substring( 0, pos );
+		return null;
 	},
 
 	// Closes the current connection

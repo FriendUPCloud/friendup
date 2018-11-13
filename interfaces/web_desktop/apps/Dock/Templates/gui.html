@@ -7,23 +7,6 @@
 			</div>
 			<div class="HContentRight HContent70" id="SettingsContainer">
 				<div class="BackgroundDefault Padding Disabled BorderBottom ScrollableY" id="Settings">
-					<div class="HRow BorderBottom MarginBottom PaddingBottom">
-						<div class="HContent100">
-							<div class="FloatRight">
-								<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value } )">
-									{i18n_save}
-								</button>
-								<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
-									{i18n_remove}
-								</button>
-							</div>
-							<div class="FloatLeft">
-								<button type="button" class="Orange FloatLeft IconSmall fa-angle-left" onclick="Application.receiveMessage( { command: 'close' } )">
-									{i18n_close}
-								</button>
-							</div>
-						</div>
-					</div>
 					<div class="HRow MarginTop">
 						<div class="HContent25 FloatLeft">
 							<strong id="ApplicationLabel">{i18n_application}:</strong>
@@ -78,6 +61,24 @@
 							</button>
 						</div>
 					</div>
+					
+					<div class="HRow BorderBottom MarginTop PaddingTop PaddingBottom">
+						<div class="HContent25 FloatLeft">&nbsp;</div>
+						<div class="HContent75 FloatLeft">
+							<button type="button" class="IconSmall fa-save" onclick="Application.sendMessage( { command: 'saveitem', application: ge('Application').value, displayname: ge('DisplayName' ).value, shortdescription: ge('ShortDescription').value, icon: ge( 'Icon' ).value, workspace: ge( 'Workspace' ).value } )">
+								{i18n_save}
+							</button>
+							<button type="button" class="IconSmall fa-remove" onclick="Application.sendMessage( { command: 'deleteitem' } )">
+								{i18n_remove}
+							</button>
+							<div class="FloatRight">
+								<button type="button" class="FloatLeft IconSmall" onclick="Application.receiveMessage( { command: 'close' } )">
+									{i18n_abort}
+								</button>
+							</div>
+						</div>
+					</div>
+										
 				</div>
 				<div class="BackgroundDefault Padding ScrollableY" id="Options">
 					<h2>
@@ -144,17 +145,19 @@
 								<input type="number" class="FullWidth InputHeight" id="DockY"/>
 							</div>
 						</div>
+						<div class="HRow MarginBottom MarginTop">
+							<button type="button" class="IconSmall fa-save" id="BtnSaveDock" onclick="SaveCurrentDock()">
+								{i18n_save_dock}
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class="VContentBottom BackgroundDefault Padding BorderTop" style="height: 50px">
-			<div class="TextRight">
+			<div class="TextLeft">
 				<button type="button" class="IconSmall fa-plus " id="BtnAddDockItem" onclick="Application.sendMessage( { command: 'newdockitem' } )">
 					{i18n_add_dock_item}
-				</button>
-				<button type="button" class="IconSmall fa-save" id="BtnSaveDock" onclick="SaveCurrentDock()">
-					{i18n_save_dock}
 				</button>
 			</div>
 			<!--<button type="button" class="IconSmall fa-table" id="BtnAddDock" onclick="NewDock()">

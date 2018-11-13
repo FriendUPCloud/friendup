@@ -1,0 +1,8 @@
+dh_makeshlibs
+dh_gencontrol
+dh_builddeb
+dh_builddeb
+dh_makeshlibs
+dh_gencontrol
+dh_builddeb
+dh_builddeb

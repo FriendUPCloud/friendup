@@ -49,7 +49,6 @@ file_upload_cb(void *data, const char *name, const char *filename,
 	       char *buf, int len, enum lws_spa_fileupload_states state)
 {
 	struct pss *pss = (struct pss *)data;
-	int n;
 
 	switch (state) {
 	case LWS_UFS_OPEN:
@@ -68,6 +67,8 @@ file_upload_cb(void *data, const char *name, const char *filename,
 	case LWS_UFS_FINAL_CONTENT:
 	case LWS_UFS_CONTENT:
 		if (len) {
+			int n;
+
 			pss->file_length += len;
 
 			n = write(pss->fd, buf, len);
@@ -125,7 +126,7 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 		if (!pss->spa) {
 			pss->spa = lws_spa_create(wsi, param_names,
-					ARRAY_SIZE(param_names), 1024,
+					LWS_ARRAY_SIZE(param_names), 1024,
 					file_upload_cb, pss);
 			if (!pss->spa)
 				return -1;
@@ -145,7 +146,7 @@ callback_http(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 
 		/* we just dump the decoded things to the log */
 
-		for (n = 0; n < (int)ARRAY_SIZE(param_names); n++) {
+		for (n = 0; n < (int)LWS_ARRAY_SIZE(param_names); n++) {
 			if (!lws_spa_get_string(pss->spa, n))
 				lwsl_user("%s: undefined\n", param_names[n]);
 			else

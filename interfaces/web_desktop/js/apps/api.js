@@ -1,41 +1,31 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
-
 // We need our namespace..
-friend = window.friend || {};
-friend.iconsSelectedCount = 0;
-friend.currentMenuItems = 0;
-friend.scope = 'API';
+Friend = window.Friend || {};
+Friend.iconsSelectedCount = 0;
+Friend.currentMenuItems = 0;
+Friend.scope = 'API';
 
-friend.lib = friend.lib || {};
+Friend.lib = Friend.lib || {};
 
 // Get some quick args from url
-friend.fastUrlArgs = document.location.href.split( '?' );
-if( friend.fastUrlArgs.length > 1 )
+Friend.fastUrlArgs = document.location.href.split( '?' );
+if( Friend.fastUrlArgs.length > 1 )
 {
-	friend.fastUrlArgs = friend.fastUrlArgs[1].split( '&' );
-	for( var a = 0; a < friend.fastUrlArgs.length; a++ )
+	Friend.fastUrlArgs = Friend.fastUrlArgs[1].split( '&' );
+	for( var a = 0; a < Friend.fastUrlArgs.length; a++ )
 	{
-		var pair = friend.fastUrlArgs[a].split( '=' );
+		var pair = Friend.fastUrlArgs[a].split( '=' );
 		if( pair[0] == 'noevents' )
-			friend.noevents = true;
+			Friend.noevents = true;
 	}
 }
 
@@ -53,11 +43,11 @@ this.apijsHasExecuted = true;
 // Some global variables
 var globalConfig = {};
 globalConfig.language = 'en-US'; // Defaults to US english
-friend.globalConfig = globalConfig;
+Friend.globalConfig = globalConfig;
 
 // Create application object with standard functions ---------------------------
 
-friend.application = {
+Friend.application = {
 	doneLoading: function()
 	{
 		document.body.classList.remove( 'Loading' );
@@ -116,6 +106,19 @@ var Application =
 				}
 			} );
 		}
+	},
+	// Initialize Friend VR
+	initFriendVR: function( callback )
+	{
+		if( this.friendVR ) return false;
+		var js = document.createElement( 'script' );
+		js.src = '/webclient/js/apps/friendvr.js';
+		js.onload = function()
+		{
+			if( callback ) callback( new Friend.VR() );
+		}
+		document.body.appendChild( js );
+		return true;
 	},
 	// Get an element retrieved by View.getWindowElement()
 	getWindowElementById: function( id )
@@ -189,7 +192,7 @@ var Application =
 	// Load locale translations
 	loadTranslations: function( path, callback )
 	{
-		if( this.language == false ) this.language = friend.globalConfig.language.split( '-' )[0];
+		if( this.language == false ) this.language = Friend.globalConfig.language.split( '-' )[0];
 		var f = new File( path + this.language + '.lang' );
 		f.onLoad = function( data )
 		{
@@ -437,11 +440,11 @@ var Application =
 }
 
 /* Magic clipboard code ----------------------------------------------------- */
-if( !friend.clipboard )
+if( !Friend.clipboard )
 {
-	friend.clipboard = '';
-	friend.prevClipboard = '';
-	friend.macCommand = false;
+	Friend.clipboard = '';
+	Friend.prevClipboard = '';
+	Friend.macCommand = false;
 }
 
 
@@ -452,24 +455,24 @@ document.addEventListener( 'keydown', function( e )
 
 	if( wh == 91 )
 	{
-		friend.macCommand = true;
+		Friend.macCommand = true;
 	}
 
-	if( e.ctrlKey || friend.macCommand )
+	if( e.ctrlKey || Friend.macCommand )
 	{
 		// CTRL V
 		/*if( wh == 86 )
 		{
 			//fire paste event instead pf doing stuff herre...
-			friend.lastKeydownTarget = t;
+			Friend.lastKeydownTarget = t;
 			return true;
 		}
 		// CTRL C or X
 		else if( wh == 67 || wh == 88 )
 		{
-			friend.sysClipBoardUpdate = Date.now();
-			friend.clipboard = ( friend.ClipboardGetSelectedIn( t ) != '' ? friend.ClipboardGetSelectedIn( t ) : friend.clipboard );
-			Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
+			Friend.sysClipBoardUpdate = Date.now();
+			Friend.clipboard = ( Friend.ClipboardGetSelectedIn( t ) != '' ? Friend.ClipboardGetSelectedIn( t ) : Friend.clipboard );
+			Application.sendMessage( { type: 'system', command: 'setclipboard', value: Friend.clipboard } );
 		}
 		// Screen swap!
 		else */
@@ -485,36 +488,13 @@ document.addEventListener( 'keydown', function( e )
 document.addEventListener( 'keyup', function( e )
 {
 	var wh = e.which ? e.which : e.keyCode;
-	friend.macCommand = false;
+	Friend.macCommand = false;
 } );
-
-/*document.addEventListener( 'paste', function(evt)
-{
-	if( friend && typeof friend.pasteClipboard == 'function' ) friend.pasteClipboard( evt );
-	return true;
-} );
-
-document.addEventListener( 'copy', function(evt)
-{
-	friend.sysClipBoardUpdate = Date.now();
-
-	var mimetype = 'text/plain';
-
-	cpd = evt.clipboardData.getData( mimetype );
-
-	if( cpd + '' != '' && friend.clipboard != cpd )
-	{
-		friend.prevClipboard = friend.clipboard;
-		friend.clipboard = cpd;
-		if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
-	}
-	//console.log('copy event fired',friend,evt);
-} );*/
 
 /**
 	paste handler. check Friend CB vs System CB.
 */
-friend.pasteClipboard = function( evt )
+Friend.pasteClipboard = function( evt )
 {
 	var mimetype = '';
 	var cpd = '';
@@ -528,23 +508,23 @@ friend.pasteClipboard = function( evt )
 	if( mimetype != '' )
 	{
 		cpd = evt.clipboardData.getData( mimetype );
-		//console.log('compare... new ',cpd,' :: prev clippy',friend.prevClipboard,':: now clippy',friend.clipboard);
-		if( friend.prevClipboard != cpd )
+		//console.log('compare... new ',cpd,' :: prev clippy',Friend.prevClipboard,':: now clippy',Friend.clipboard);
+		if( Friend.prevClipboard != cpd )
 		{
-			friend.prevClipboard = friend.clipboard;
-			friend.clipboard = cpd;
+			Friend.prevClipboard = Friend.clipboard;
+			Friend.clipboard = cpd;
 		}
 	}
 
 	if( typeof Application != 'undefined' && typeof Application.handlePaste == 'function' )
 	{
 		//wait a bit for the clipboard to be updated...
-		setTimeout( 'Application.handlePaste( friend.clipboard );',250);
+		setTimeout( 'Application.handlePaste( Friend.clipboard );',250);
 	}
-	if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
-	if( friend.lastKeydownTarget )
+	if( Application) Application.sendMessage( { type: 'system', command: 'setclipboard', value: Friend.clipboard } );
+	if( Friend.lastKeydownTarget )
 	{
-		if( friend.ClipboardPasteIn( friend.lastKeydownTarget, friend.clipboard ) )
+		if( Friend.ClipboardPasteIn( Friend.lastKeydownTarget, Friend.clipboard ) )
 		{
 			return cancelBubble( evt );
 		}
@@ -553,7 +533,7 @@ friend.pasteClipboard = function( evt )
 }
 
 // Copy from select area to clipboard
-friend.ClipboardGetSelectedIn = function( ele )
+Friend.ClipboardGetSelectedIn = function( ele )
 {
     var text = '';
     if( window.getSelection )
@@ -568,7 +548,7 @@ friend.ClipboardGetSelectedIn = function( ele )
 }
 
 // Paste to target from clipboard
-friend.ClipboardPasteIn = function( ele, text )
+Friend.ClipboardPasteIn = function( ele, text )
 {
 	if( typeof ele.value != 'undefined' )
 	{
@@ -609,27 +589,27 @@ friend.ClipboardPasteIn = function( ele, text )
 // Callbacks -------------------------------------------------------------------
 
 // Generate a unique id in a select array buffer
-friend.generateUniqueId = function( arrayBuffer, postfix )
+Friend.generateUniqueId = function( arrayBuffer, postfix )
 {
 	if( !postfix ) postfix = '';
 	var uid = false;
 	do
 	{
-		uid = friend.uniqueIdString();
+		uid = Friend.uniqueIdString();
 	}
 	while( typeof( arrayBuffer[uid + postfix ] ) != 'undefined' );
 	return uid + postfix;
-}
+};
 
-generateUniqueId = friend.generateUniqueId;
+generateUniqueId = Friend.generateUniqueId;
 
-friend.uniqueIdString = function()
+Friend.uniqueIdString = function()
 {
 	return ( Math.random() * 9999 ) + '' +
 		( ( Math.random() * 9999 ) + ( Math.random() * 9999 ) ) +
 		'' + ( new Date() ).getTime();
-}
-uniqueIdString = friend.uniqueIdString;
+};
+uniqueIdString = Friend.uniqueIdString;
 
 // Extract a callback element and return it
 function extractCallback( id, keep )
@@ -818,7 +798,7 @@ function receiveEvent( event, queued )
 		
 		// Update clipboard
 		case 'updateclipboard':
-			friend.clipboard = dataPacket.value;
+			Friend.clipboard = dataPacket.value;
 			break;
 
 		case 'dos':
@@ -910,11 +890,11 @@ function receiveEvent( event, queued )
 			// Trigger a resize event to clean up the tabs
 			setTimeout( function()
 			{
-				if( friend.resizeTabs )
+				if( Friend.resizeTabs )
 				{
-					for( var i = 0; i < friend.resizeTabs.length; i++ )
+					for( var i = 0; i < Friend.resizeTabs.length; i++ )
 					{
-						friend.resizeTabs[ i ].resize();
+						Friend.resizeTabs[ i ].resize();
 					}
 				}
 			}, 250 );
@@ -950,11 +930,11 @@ function receiveEvent( event, queued )
 		// Aha, we received an event from a sub view! Handle it
 		case 'captureevent':
 			// If we're the host, we need to execute the event on all app views
-			for( var a in friend.sasidRequests )
+			for( var a in Friend.sasidRequests )
 			{
-				if( friend.sasidRequests[a].applicationId == dataPacket.sasid )
+				if( Friend.sasidRequests[a].applicationId == dataPacket.sasid )
 				{
-					var arq = friend.sasidRequests[a];
+					var arq = Friend.sasidRequests[a];
 
 					// If we don't use eventOwner flag or we're an invitee, execute input events!
 					if( !arq.flags.eventOwner || ( arq.flags.eventOwner == 'owner' && arq.isHost ) )
@@ -973,7 +953,7 @@ function receiveEvent( event, queued )
 								msg: dataPacket.eventData
 							}
 						};
-						friend.conn.send( msg );
+						Friend.conn.send( msg );
 						//console.log( 'Sent to ' + ( owner ? owner : 'user' ) );
 					}
 				}
@@ -982,7 +962,7 @@ function receiveEvent( event, queued )
 
 		// Make sure all events gets handled by root Application object
 		case 'rerouteeventstoroot':
-			friend.rerouteAssidEventsToRoot( dataPacket.sasid );
+			Friend.rerouteAssidEventsToRoot( dataPacket.sasid );
 			break;
 
 		// Handle incoming key events
@@ -1178,7 +1158,6 @@ function receiveEvent( event, queued )
 			break;
 		// Is often called on an already opened image
 		case 'setbodycontent':
-
 			window.loaded = false;
 			document.body.classList.add( 'Loading' );
 
@@ -1195,7 +1174,7 @@ function receiveEvent( event, queued )
 			// Make sure the base href is correct.
 			if( typeof( data ) != 'string' )
 				data = '';
-			var data = friend.convertFriendPaths( dataPacket.data );
+			var data = Friend.convertFriendPaths( dataPacket.data );
 
 			// For jquery etc
 			var m = '';
@@ -1396,7 +1375,7 @@ function receiveEvent( event, queued )
 							else if( dataPacket.authId ) Application.authId = dataPacket.authId;
 
 							// Convert paths
-							f.data = friend.convertFriendPaths( f.data );
+							f.data = Friend.convertFriendPaths( f.data );
 						}
 						f.onLoad( f.data );
 					}
@@ -1690,8 +1669,8 @@ function receiveEvent( event, queued )
 			}
 			break;
 		case 'fconn':
-			if ( friend.conn )
-				friend.conn.receiveMessage( dataPacket );
+			if ( Friend.conn )
+				Friend.conn.receiveMessage( dataPacket );
 			else
 				Application.receiveMessage( dataPacket );
 			break;
@@ -1805,7 +1784,12 @@ function receiveEvent( event, queued )
 			{	
 				try
 				{
-					f( dataPacket );
+					if ( dataPacket.isFriendAPI )
+					{
+						f( dataPacket.response, dataPacket.data, dataPacket.extra );
+					}
+					else
+						f( dataPacket );
 				}
 				catch( e )
 				{
@@ -2795,6 +2779,10 @@ WebAudioLoader = function( filePath, callback )
 	{
 		volume: 0.5,
 		context: __audioContext,                                                //this is the container for your entire audio graph
+		bufferArray: [],
+		bufferArrayIndex: 0,
+		bufferArrayTimeOffset: 0,
+		useArray: false,
 		bufferCache: null,                                                      //buffer needs to be re-initialized before every play, so we'll cache what we've loaded here
 		playTime: 0,
 		paused: false,
@@ -2820,16 +2808,59 @@ WebAudioLoader = function( filePath, callback )
 		{
 			this.rate = rate;
 		},
-		//play it
-		playSound: function()
+		// Schedule (for streaming)
+		schedulePlaying: function( buf )
 		{
-			if( this.started )
+			this.useArray = true;
+			this.bufferArray.push( buf );
+			if( this.playTime > 0 )
+			{
+				if( this.bufferArrayTimeOffset < this.playTime )
+					this.bufferArrayTimeOffset += this.playTime;
+				
+				while( this.bufferArrayIndex < this.bufferArray.length )
+				{
+					var schBuf = this.context.createBufferSource();
+					schBuf.buffer = this.bufferArray[ this.bufferArrayIndex++ ];
+					
+					// Add onended to the last piece
+					if( this.bufferArrayIndex >= this.bufferArray.length )
+					{
+						if( this.onEnded ) schBuf.addEventListener( 'ended', this.onEnded );
+					}
+					
+					schBuf.playbackRate.value = this.pitch;
+					schBuf.connect( this.context.destination );
+					schBuf.connect( this.gainNode );
+					schBuf.start( this.bufferArrayTimeOffset );
+					console.log( 'Starting next at ' + ( this.bufferArrayTimeOffset ) );
+					this.bufferArrayTimeOffset += schBuf.buffer.duration;
+				}
+			}
+		},
+		//play it
+		playSound: function( info ) // cont is only for useArray
+		{
+			if( this.started && !info )
 			{
 				this.source.stop();                                             // call noteOff to stop any instance already playing before we play ours
 				this.started = false;
 			}
-			this.source = this.context.createBufferSource();                    // init the source
+			this.source = this.context.createBufferSource();
+			
+			// Normal stuff
+			if( !this.useArray )
+			{
+				if( info && info.onEnded ) this.source.addEventListener( 'ended', info.onEnded );
+			}
+			// For streaming - buffer the onEnded callback
+			else if( info && info.onEnded )
+			{
+				this.onEnded = info.onEnded;
+			}
+			
 			this.setBuffer( this.bufferCache );                                 // re-set the buffer
+			
 			this.source.playbackRate.value = this.pitch;                        // here's your playBackRate check
 			this.source.connect( this.context.destination );                    // connect to the speakers
 			this.source.connect( this.gainNode );
@@ -2857,7 +2888,14 @@ WebAudioLoader = function( filePath, callback )
 				this.source.connect( this.gainNode );
 				this.gainNode.connect( this.context.destination );
 				this.gainNode.gain.setValueAtTime( this.volume, this.context.currentTime - ( this.pausedPos / 1000 ) );
-				this.setBuffer( this.bufferCache );                             //re-set the buffer
+				if( this.useArray )
+				{
+					this.setBuffer( this.bufferArray[ this.bufferArrayIndex ] );
+				}
+				else
+				{
+					this.setBuffer( this.bufferCache );                             //re-set the buffer
+				}
 				this.source.playbackRate.value = this.pitch;                    //here's your playBackRate check
 				this.source.connect( this.context.destination );                //connect to the speakers
 				this.source.start( 0, this.pausedPos / 1000 );
@@ -2882,6 +2920,7 @@ WebAudioLoader = function( filePath, callback )
 			this.started = false;
 			this.paused = false;
 			this.source.stop();
+			this.bufferArrayIndex = 0;
 		}
 	}
 
@@ -2896,82 +2935,133 @@ WebAudioLoader = function( filePath, callback )
 	// Do the loading
 	(function()
 	{
-		var _request = new XMLHttpRequest(),
-		_handleRequest = function( url )
+		if( "streaming" == "implemented" )
 		{
-			var useDumbAudio = false;
-			if( ( url.substr( 0, 5 ) == 'http:' || url.substr( 0, 6 ) == 'https:' ) )
+			try
 			{
-				useDumbAudio = true;
-			}
-			else
-			{
-				filePath = getImageUrl( filePath );
-			}
-
-			if( !useDumbAudio )
-			{
-				_request.open( 'POST', url, true );
-				_request.responseType = 'arraybuffer';
-				_request.onload = function()
+				var url = filePath;
+				if( !( filePath.substr( 0, 5 ) == 'http:' || filePath.substr( 0, 6 ) == 'https:' ) && filePath.indexOf( '/system.library' ) != 0 )
+					url = getWebUrl( filePath );
+			
+				var bytes = 0;
+				var minBuffer = 262144;
+			
+				fetch( url ).then( function( response )
 				{
-					// Decode
-					try
+					var reader = response.body.getReader();
+				
+					function read()
 					{
-						t.audioGraph.context.decodeAudioData(
-							_request.response,
-							function( buf )
+						return reader.read().then( ( { value, done } ) => 
+						{
+							if( done )
 							{
+								console.log('done');
+								return;
+							}
+							else
+							{
+							
 								try
 								{
-									t._loadedBuffer = buf;
-									t.audioGraph.setBuffer( buf );
-									t.audioGraph.setBufferCache( buf );
-									if( callback ) callback( true );
+									t.audioGraph.context.decodeAudioData( value.buffer, function( buffer )
+									{
+										if( buffer.length )
+										{
+											scheduleBuffers( buffer );
+										}
+										else
+										{
+											console.log( 'Got a null buffer!' );
+										}
+									}, 
+									function(err) 
+									{
+										console.log("err(decodeAudioData): "+err);
+									} );
 								}
-								catch( e )
-								{
-									console.log( 'No buffer yet.', _request.response );
-									if( callback ) callback( true, { response: 0, message: 'Could not set buffer yet.' } );
-								}
-							},
-							function()
-							{
-								console.log( 'Totally failed to decode..' );
-								// error;
-								if( callback )
-									callback( false );
+								catch( e ){};
 							}
-						);
+							read();
+						} );
 					}
-					catch( e )
+					read();
+				} );
+				// Extend the buffer asyncronously
+				function scheduleBuffers( buffer )
+				{
+					var ctx = t.audioGraph.context;
+					var grp = t.audioGraph;
+				
+					bytes += buffer.length;
+				
+					console.log( 'Have loaded ' + bytes + ' bytes' );
+				
+					// Schedule the playing on time
+					grp.schedulePlaying( buffer );
+				
+					if( bytes >= minBuffer && callback )
 					{
-						if( callback )
-							callback( false );
+						callback( true );
+						callback = false;
+						console.log( 'Got enough! Playing' );
 					}
 				}
-				_request.send();
+				return;
 			}
-			// Try audio object instead..
-			// TODO: Make this work!
-			else
+			catch( e )
 			{
-				var o = document.createElement( 'audio' );
-				o.style.position = 'absolute';
-				o.style.top = '-100000px';
-				o.style.zIndex = 100;
-				o.setAttribute( 'crossOrigin', 'anonymous' );
-				o.setAttribute( 'controls', '' );
-				o.setAttribute( 'autoplay', 'autoplay' );
-				o.src = url;
-				document.body.appendChild( o );
-				t.audioObject = o;
-				var src = t.audioGraph.context.createMediaElementSource( o );
-				src.connect( t.audioGraph );
-				o.play();
 			}
 		}
-		_handleRequest( filePath );
+		// Non streaming
+		else
+		{
+			var request = new XMLHttpRequest();
+			request.responseType = 'arraybuffer';
+			request.onload = function( evt )
+			{
+				var theData = request.response;
+			
+				// Decode
+				try
+				{
+					t.audioGraph.context.decodeAudioData(
+						theData,
+						function( buf )
+						{
+							try
+							{
+								t._loadedBuffer = buf;
+								t.audioGraph.setBuffer( buf );
+								t.audioGraph.setBufferCache( buf );
+								if( callback ) callback( true );
+							}
+							catch( e )
+							{
+								console.log( 'No buffer yet.', request.response );
+								if( callback ) callback( true, { response: 0, message: 'Could not set buffer yet.' } );
+							}
+						},
+						function()
+						{
+							console.log( 'Totally failed to decode..' );
+							// error;
+							if( callback )
+								callback( false );
+						}
+					);
+				}
+				catch( e )
+				{
+					if( callback )
+						callback( false );
+				}
+			};
+			if( !( filePath.substr( 0, 5 ) == 'http:' || filePath.substr( 0, 6 ) == 'https:' ) && filePath.indexOf( '/system.library' ) != 0 )
+				filePath = getWebUrl( filePath );
+			request.open( 'POST', filePath, true );
+			request.send();
+		}
 	}());//loader
 };
 
@@ -3068,27 +3158,53 @@ function AudioObject( sample, callback )
 	// Plays notes!
 	this.play = function()
 	{
-		this.loader.audioGraph.playSound();
-
-		if( this.interval ) clearInterval( this.interval );
 		var t = this;
+		if( this.interval ) clearInterval( this.interval );
 		this.interval = setInterval( function()
 		{
-			if( !t.loader.audioGraph.paused && t.getContext().currentTime - t.loader.audioGraph.playTime >= t.loader.audioGraph.source.buffer.duration )
-			{
-				if( t.onfinished )
-				{
-					t.onfinished();
-				}
-			}
 			if( t.loader.audioGraph.started && t.onplaying && !t.loader.audioGraph.paused )
 			{
 				var ct = t.getContext().currentTime;
 				var pt = t.loader.audioGraph.playTime;
-				var dr = t.loader.audioGraph.source.buffer.duration;
-				t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
+				try
+				{
+					var dr = t.loader.audioGraph.source.buffer.duration;
+					t.onplaying( ( ct - pt ) / dr, ct, pt, dr );
+				}
+				catch( e )
+				{
+					console.log( 'Playing streaming segment. Fixme!' );
+				}
 			}
 		}, 100 );
+		
+		// Handle ending
+		var ag = t.loader.audioGraph;
+	
+		function ended()
+		{
+			// Using streaming
+			if( ag.useArray )
+			{
+				if( ag.bufferArrayIndex >= ag.bufferArray.length )
+				{
+					clearTimeout( t.interval );
+					t.interval = false;
+					if( t.onfinished )
+					{
+						t.onfinished();
+					}
+				}
+				return;
+			}
+			clearTimeout( t.interval );
+			t.interval = false;
+			if( t.onfinished )
+				t.onfinished();
+		}
+		
+		console.log( 'Playing now!' );
+		this.loader.audioGraph.playSound( { onEnded: ended } );
 	}
 
 	if( sample )
@@ -3277,6 +3393,30 @@ function Module( module )
 		this.vars[key] = value;
 	}
 }
+
+GetClass = function( source )
+{
+	// Assign the functions of the class
+	var start = 0;
+	var end = source.indexOf( '.' );
+	if ( end < 0 )
+		end = 10000;
+	var klass = window[ source.substring( start, end ) ];
+	if ( typeof klass == 'undefined' )
+		return null;
+	while( end < source.length )
+	{
+		start = end + 1;
+		end = source.indexOf( '.', start );
+		if ( end < 0 )
+			end = 10000;
+		klass = klass[ source.substring( start, end ) ];
+		if ( typeof klass == 'undefined' )
+			return null;
+	};
+	return klass;
+};
+
 
 // Abstract FriendNetwork
 // TODO: Remove keys / sessions on quit!
@@ -4062,6 +4202,33 @@ DormantMaster = {
 		mesg.type = 'dormantmaster';
 		mesg.method = 'delappevents';
 		Application.sendMessage( mesg );
+	},
+	createDrive: function( options, callback, extra )
+	{
+    	var message =
+		{
+			type:   'dormantmaster',
+			method: 'createDrive',
+			options: options,
+			extra: typeof extra != 'undefined' ? extra : false
+		};
+		if ( callback )
+			message.callbackId = addCallback( callback );
+		Application.sendMessage( message );
+	},
+	destroyDrive: function( driveId, options, callback, extra )
+	{
+    	var message =
+		{
+			type:   'dormantmaster',
+			method: 'destroyDrive',
+			driveId: driveId,
+			options: options,
+			extra: typeof extra != 'undefined' ? extra : false
+		};
+		if ( callback )
+			message.callbackId = addCallback( callback );
+		Application.sendMessage( message );
 	}
 };
 
@@ -4357,13 +4524,13 @@ Authenticate = {
 			return new window.FConn();
 
 		var self = this;
-		if ( friend.conn  ) {
-			if (friend.conn instanceof ns.FConn) {
-				return friend.conn;
+		if ( Friend.conn  ) {
+			if (Friend.conn instanceof ns.FConn) {
+				return Friend.conn;
 			}
 		}
 
-		friend.conn = self;
+		Friend.conn = self;
 		self.ready = false;
 		self.listeners = {};
 		self.sendQueue = [];
@@ -4433,7 +4600,7 @@ Authenticate = {
 		}
 		self.s( msg );
 		self.listeners = {};
-		delete friend.conn;
+		delete Friend.conn;
 	}
 
 	// Private
@@ -4549,7 +4716,7 @@ Authenticate = {
 		}
 		Application.sendMessage( wrap );
 	}
-})( friend );
+})( Friend );
 
 // Locale object ---------------------------------------------------------------
 
@@ -4727,6 +4894,7 @@ DOS =
 		Application.sendMessage( message );
 	}
 };
+Friend.DOS = DOS;
 
 // Door abstraction ------------------------------------------------------------
 
@@ -4799,6 +4967,8 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 {
 	var mainview = false;
 	var targetview = false;
+	var multiSelect = true; // Select multiple files
+	
 	// We have a view
 	if( object && object.getViewId )
 	{
@@ -4813,6 +4983,9 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 			{
 				case 'triggerFunction':
 					triggerFunction = object[a];
+					break;
+				case 'multiSelect':
+					multiSelect = object[a];
 					break;
 				case 'path':
 					path = object[a];
@@ -4855,16 +5028,16 @@ function Filedialog( object, triggerFunction, path, type, filename, title )
 	Application.sendMessage( {
 		type:        'system',
 		command:     'filedialog',
-		method:      'open',
+		method:       type,
 		callbackId:   cid,
 		dialogType:   type,
 		path:         path,
 		filename:     filename,
+		multiSelect:  multiSelect,
 		title:        title,
-		viewId:     mainview,
+		viewId:       mainview,
 		targetViewId: targetview
 	} );
-
 }
 
 // Get a path from fileinfo and return it
@@ -5123,7 +5296,7 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	if( !packet.filePath ) packet.filePath = '';
 
 	// Clippy
-	if( packet.clipboard ) friend.clipboard = packet.clipboard;
+	if( packet.clipboard ) Friend.clipboard = packet.clipboard;
 
 	// Just so we know which window we belong to
 	if( packet.viewId )
@@ -5197,9 +5370,6 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 	{
 		if( !themeData ) return;
 		
-		// No need for mobile!
-		if( isMobile ) return;
-		
 		if( themeData && typeof( themeData ) == 'string' )
 		{
 			try
@@ -5213,12 +5383,12 @@ function initApplicationFrame( packet, eventOrigin, initcallback )
 			}
 		}
 		
-		if( friend.themeStyleElement )
-			friend.themeStyleElement.innerHTML = '';
+		if( Friend.themeStyleElement )
+			Friend.themeStyleElement.innerHTML = '';
 		else
 		{
-			friend.themeStyleElement = document.createElement( 'style' );
-			document.getElementsByTagName( 'head' )[0].appendChild( friend.themeStyleElement );
+			Friend.themeStyleElement = document.createElement( 'style' );
+			document.getElementsByTagName( 'head' )[0].appendChild( Friend.themeStyleElement );
 		}
 		
 		var shades = [ 'dark', 'charcoal' ];
@@ -5322,7 +5492,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					break;
 			}
 		}
-		friend.themeStyleElement.innerHTML = str;
+		Friend.themeStyleElement.innerHTML = str;
 	};
 	Application.applyThemeConfig = ApplyThemeConfig;
 	
@@ -5387,7 +5557,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						Application.run( packet );
 						if( packet.state ) Application.sessionStateSet( packet.state );
 						window.loaded = true;
-						friend.application.doneLoading();
+						Friend.application.doneLoading();
 					}
 					for( var a = 0; a < activat.length; a++ )
 						ExecuteScript( activat[a] );
@@ -5403,7 +5573,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							window.applicationStarted = true;
 							Application.run( packet );
 							if( packet.state ) Application.sessionStateSet( packet.state );
-							friend.application.doneLoading();
+							Friend.application.doneLoading();
 						}
 						// Could be wr don't have any application, run scripts
 						for( var a = 0; a < activat.length; a++ )
@@ -5420,7 +5590,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						else
 						{
 							if( !window.applicationStarted )
-								friend.application.doneLoading();
+								Friend.application.doneLoading();
 							// Callback to parent and say we're done!
 							if( initcallback )
 								initcallback();
@@ -5544,7 +5714,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			'js/gui/treeview.js',
 			'js/io/appConnection.js',
 			'js/io/coreSocket.js',
-			'js/oo.js'
+			'js/oo.js',
+			'js/api/friendappapi.js'
 		]
 	];
 
@@ -5628,7 +5799,7 @@ function clickToActivate()
 }
 
 // Just add a slider for an input field
-friend.currentSliderElement = false;
+Friend.currentSliderElement = false;
 function CreateSlider( inputField, flags )
 {
 	var self = this;
@@ -5740,7 +5911,7 @@ function CreateSlider( inputField, flags )
 	{
 		this.offsetX = e.clientX - b.offsetLeft;
 		this.offsetY = e.clientY - b.offsetTop;
-		friend.mouseMoveFunc = function( f )
+		Friend.mouseMoveFunc = function( f )
 		{
 			if( !flags || !flags.vertical )
 			{
@@ -5884,7 +6055,7 @@ if( typeof( Say ) == 'undefined' )
 }
 
 // Handle keys in iframes too!
-if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
+if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
 {	
 	function _kmousedown( e )
 	{
@@ -5892,8 +6063,8 @@ if( !friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 	}
 	function _kmouseup( e )
 	{
-		if( friend.mouseMoveFunc )
-			friend.mouseMoveFunc = null;
+		if( Friend.mouseMoveFunc )
+			Friend.mouseMoveFunc = null;
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
 	}
 	
@@ -6031,7 +6202,7 @@ if( typeof( windowMouseX ) == 'undefined' )
 	windowMouseX = -1;
 	windowMouseY = -1;
 
-	if( !friend.noevents )
+	if( !Friend.noevents )
 	{
 		// The actual mouse event
 		function mouseEvt( e )
@@ -6046,8 +6217,8 @@ if( typeof( windowMouseX ) == 'undefined' )
 			windowMouseX = mx;
 			windowMouseY = my;
 			
-			if( friend.mouseMoveFunc )
-				friend.mouseMoveFunc( e );
+			if( Friend.mouseMoveFunc )
+				Friend.mouseMoveFunc( e );
 		}
 		if( window.addEventListener )
 			window.addEventListener( 'mousemove', mouseEvt, false );
@@ -6208,7 +6379,7 @@ function ShareElementEvents( ele, recursive )
 }
 
 /* Replace Progdir: etc with real paths ------------------------------------- */
-friend.convertFriendPaths = function( string )
+Friend.convertFriendPaths = function( string )
 {
 	if( typeof( string ) != 'string' )
 	{
@@ -6876,7 +7047,7 @@ if (typeof define == 'function' && define.amd) define([], function() { return Sh
 
 AssidRequest = function( flags )
 {
-	if( !friend.sasidRequests ) friend.sasidRequests = [];
+	if( !Friend.sasidRequests ) Friend.sasidRequests = [];
 	if( !flags ) flags = {};
 	this.flags = flags;
 
@@ -6884,14 +7055,14 @@ AssidRequest = function( flags )
 	this.applicationId = null;
 	this.isHost = false;
 
-	friend.sasidRequests.push( this );
+	Friend.sasidRequests.push( this );
 }
 // Share the application
 AssidRequest.prototype.share = function( handler, callback )
 {
 	var sas = this; // !
-	//if ( !friend.conn ) friend.conn = new FAPConn();
-	if ( !friend.conn ) friend.conn = new FConn();
+	//if ( !Friend.conn ) Friend.conn = new FAPConn();
+	if ( !Friend.conn ) Friend.conn = new FConn();
 
 	//console.log( 'doShare' );
 	if( sas.applicationState == null )
@@ -6903,7 +7074,7 @@ AssidRequest.prototype.share = function( handler, callback )
 				authid : Application.authId,
 			},
 		};
-		friend.conn.request( reg, onRegistered );
+		Friend.conn.request( reg, onRegistered );
 		function onRegistered( res )
 		{
 			//console.log( 'AssidRequest.share - onRegistered', res );
@@ -6917,7 +7088,7 @@ AssidRequest.prototype.share = function( handler, callback )
 			{
 				// Setup the handler
 				if( handler )
-					friend.conn.on( res.SASID, handler );
+					Friend.conn.on( res.SASID, handler );
 				sas.applicationId = res.SASID;
 				sas.applicationState = 'active';
 				sas.shareEvents( { sasid: res.SASID } );
@@ -6951,7 +7122,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 
 	// Add other events
 	var c = document.createElement( 'div' );
-	friend.cover = c;
+	Friend.cover = c;
 	c.style.zIndex = 999999999;
 	c.style.position = 'absolute';
 	c.style.width = '100%';
@@ -6986,10 +7157,10 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 	if( !this.isHost )
 	{
 		// Setup a communication port
-		//if ( !friend.conn ) friend.conn = new FAPConn(); // direct connection, not through postmessage
-		if ( !friend.conn ) friend.conn = new FConn();
+		//if ( !Friend.conn ) Friend.conn = new FAPConn(); // direct connection, not through postmessage
+		if ( !Friend.conn ) Friend.conn = new FConn();
 
-		friend.conn.on( args.sasid, handler );
+		Friend.conn.on( args.sasid, handler );
 		var accept = {
 			path : 'system.library/app/accept/',
 			data : {
@@ -6997,7 +7168,7 @@ AssidRequest.prototype.shareEvents = function( args, handler, callback )
 				sasid : args.sasid
 			},
 		};
-		friend.conn.request( accept, ack );
+		Friend.conn.request( accept, ack );
 		function ack( e )
 		{
 			Application.receiveMessage( { command: 'sasidaccept', data: e } );
@@ -7019,22 +7190,22 @@ AssidRequest.prototype.unshare = function( callback )
 	}
 	else
 	{
-		friend.conn.off( this.applicationId );
+		Friend.conn.off( this.applicationId );
 		var unReg = {
 			path : 'system.library/app/unregister',
 			data : {
 				sasid: this.applicationId
 			},
 		};
-		friend.conn.request( unReg, unregDone );
+		Friend.conn.request( unReg, unregDone );
 		function unregDone( res )
 		{
 			//console.log( 'unshare - result', res );
 			sas.applicationState = null;
 			sas.applicationId = null;
-			sas.input.parentNode.removeChild( friend.input );
-			sas.cover.parentNode.removeChild( friend.cover );
-			friend.conn.close();
+			sas.input.parentNode.removeChild( Friend.input );
+			sas.cover.parentNode.removeChild( Friend.cover );
+			Friend.conn.close();
 			if( callback ) callback( true );
 		}
 	}
@@ -7067,7 +7238,7 @@ AssidRequest.prototype.sendInvite = function( userlist, inviteMessage, callback 
 			users : userlist,
 		},
 	};
-	friend.conn.request( inv, invBack );
+	Friend.conn.request( inv, invBack );
 	function invBack( res )
 	{
 		//console.log( 'sendInvite - result', res );
@@ -7099,7 +7270,7 @@ AssidRequest.prototype.eventDispatcher = function( e )
 			msg: e
 		},
 	};
-	friend.conn.send( msg );
+	Friend.conn.send( msg );
 
 	return cancelBubble( e );
 }
@@ -7123,7 +7294,7 @@ AssidRequest.prototype.sendEvent = function( e )
 			msg: e
 		},
 	};
-	friend.conn.send( msg );
+	Friend.conn.send( msg );
 
 	//console.log( 'Sent this weird message: ', msg );
 
@@ -7131,8 +7302,8 @@ AssidRequest.prototype.sendEvent = function( e )
 }
 
 // Reroute events to root Application object!
-friend.orphanElementSeed = 1;
-friend.rerouteAssidEventsToRoot = function( sasid )
+Friend.orphanElementSeed = 1;
+Friend.rerouteAssidEventsToRoot = function( sasid )
 {
 	//console.log( 'rerouteAssidEventsToRoot', sasid );
 	// Filter out some event data
@@ -7209,7 +7380,7 @@ friend.rerouteAssidEventsToRoot = function( sasid )
 		{
 			function ev( e )
 			{
-				if( !this.id ) this.id = this.nodeName + friend.orphanElementSeed++;
+				if( !this.id ) this.id = this.nodeName + Friend.orphanElementSeed++;
 				// Generate a limited set of event data to send further
 				var o = {};
 
@@ -7945,5 +8116,138 @@ GuiDesklet = function()
 	
 } )( window );
 
-// End paste handler -----------------------------------------------------------
+// Friend API engine - only possible in Javascript! (Y) :)
+///////////////////////////////////////////////////////////////////
+
+// Current versions of the API
+Friend.APIVersion = '1.2';
+Friend.APIVersionMinimal = '1.2';			// We might want to change that one day when the number of versions gets too high
+											// but we should not really...
+
+// API Variables
+Friend.APIDefinition = {};
+Friend.NORETURN = 'noReturn';
+Friend.ERROR = 'error';
+
+GetClass = function( source, root )
+{
+	var start = 0;
+	var end = source.indexOf( '.' );
+	if ( end < 0 ) 
+		end = source.length;
+	var klass = window[ source.substring( start, end ) ];
+	if ( typeof klass == 'undefined' )
+		return null;
+	while( end < source.length )
+	{
+		start = end + 1;
+		end = source.indexOf( '.', start ), source.length;
+		if ( end < 0 ) 
+			end = source.length;
+		klass = klass[ source.substring( start, end ) ];
+		if ( typeof klass == 'undefined' )
+			return null;
+	};
+	return klass;
+};
+CallLowLevelAPI = function( args, functionPath, argumentNames, flags )
+{
+	var message =
+	{
+		type: 'Friend',
+		method: functionPath,
+		arguments: [],
+		flags: flags,
+		extra: typeof extra != 'undefined' ? extra : false
+	}
+
+	// Copy the arguments
+	for ( var a = 0; a < argumentNames.length; a++ )
+	{
+		if ( argumentNames[ a ] != 'callback' )
+		{
+			message.arguments.push( args[ a ] );
+		}
+		else
+		{
+			if ( args[ a ] )
+			{
+				if ( flags.permanent )
+				{
+					message.callback = addPermanentCallback( args[ a ] );		
+				}
+				else 
+				{
+					message.callback = addCallback( args[ a ] );
+				}
+			}
+			message.arguments.push( null );
+		}
+	}
+
+	// Call apiwrapper
+	Application.sendMessage( message );
+};
+
+if( Friend )
+{
+	// To be called at first pass of Javascript
+	Friend.addToAPI = function( functionPath, argumentNames, properties, parentClass )
+	{
+		var definition = {};
+
+		definition.functionName = functionPath.substring( functionPath.lastIndexOf( '.' ) + 1 );
+		definition.functionPath = functionPath;
+		definition.argumentNames = argumentNames;		// Can be ommited
+		definition.properties = properties;
+		if ( !parentClass )
+			parentClass = Friend;
+
+		// Find the position of the callback
+		definition.callbackPosition = -1;
+		for ( var n = 0; n < argumentNames.length; n++ )
+		{
+			if ( argumentNames[ n ] == 'callback' )
+			{
+				definition.callbackPosition = n;
+				break;
+			}
+		}
+		definition.numberOfArguments = argumentNames.length;
+		definition.isDirect = ( properties.tags.indexOf( '#direct' ) >= 0 );
+		definition.isCallback = ( properties.tags.indexOf( '#callback' ) >= 0 );
+
+		// Find the function
+		var functionClass;
+		if ( properties.redirection )
+		{
+			functionClass = GetClass( properties.redirection.functionPath, parentClass );
+		}
+		else
+		{
+			functionClass = GetClass( functionPath, parentClass );
+		}
+
+		// Add to API!
+		if( functionClass )
+		{
+			definition.klass = functionClass;
+			parentClass.APIDefinition[ functionPath ] = definition;
+			return true;
+		}
+		console.log( 'ERROR - API function not found: ' + functionPath );
+		return 'ERROR - API function not found: ' + functionPath;
+	};
+
+	Friend.removeFromAPI = function( functionPath )
+	{
+		if ( Friend.APIDefinition[ functionPath ] )
+		{
+			Friend.APIDefinition = Friend.Utilities.cleanArray( Friend.APIDefinition, Friend.APIDefinition[ functionPath ] );
+			return true;
+		}
+		console.log( 'ERROR - API function not found: ' + functionPath );
+		return false;
+	}
+}
 

@@ -85,7 +85,7 @@
 							return;
 						}
 						document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = '';
-						parent.Workspace.resetPassword( htmlentities( Trim( ge( 'Username' ).value ) ), function( result ){
+						parent.Workspace.resetPassword( Trim( ge( 'Username' ).value ), function( result ){
 							Application.forgotPassword();
 							if( document.getElementById('Username').value.indexOf('@') > 1 ) document.getElementById('Username').value = '';
 							document.getElementById( 'invalidLogin' ).getElementsByTagName( 'p' )[0].innerHTML = ( result == 'ok' ? 'Please check your inbox.' : 'Could not reset password.' );
@@ -103,8 +103,8 @@
 					}
 					
 					//track users login..
-					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', htmlentities( Trim( ge( 'Username' ).value ) ) );
-					parent.Workspace.login( htmlentities( Trim( ge( 'Username' ).value ) ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
+					if(typeof ga == "function" ) ga('send', 'event', 'userloginattempt', Trim( ge( 'Username' ).value ) );
+					parent.Workspace.login( Trim( ge( 'Username' ).value ), Trim( ge( 'Password' ).value ), ge( 'remember' ).checked, function( result, answer )
 					{
 						var tmp;
 						if( answer )
@@ -148,7 +148,7 @@
 							//track users login..
 							if( typeof ga == "function" )
 							{
-								ga( 'send', 'event', 'userloginsuccess', htmlentities( Trim( ge( 'Username' ).value ) ) );	
+								ga( 'send', 'event', 'userloginsuccess', Trim( ge( 'Username' ).value ) );	
 							}
 							Application.busy = false;
 						}
@@ -252,7 +252,7 @@
 				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 				ga('create', 'UA-64441212-5', 'auto');
 				ga('send', 'pageview');			  
-				ga( 'send', 'event', 'logindisplay', htmlentities( document.location.href ) );
+				ga( 'send', 'event', 'logindisplay', document.location.href );
 			}
 		</script>
 	</body>

@@ -74,10 +74,20 @@
 		<div class="HRow MarginTop" id="WorkgroupSelect">
 			<div class="HContent30 FloatLeft">&nbsp;&nbsp;&nbsp;</div>
 			<div class="HContent70 FloatLeft">
-				<select id="Workgroup" class="HContent55">{workgroup}</select>
-				<button type="button" class="IconSmall fa-plus" onclick="AddUserGroup()">
-					{i18n_add_workgroup}
-				</button>
+				<div class="HRow">
+					<div class="HContent45 FloatLeft">
+						<select id="Workgroup" class="FullWidth">{workgroup}</select>
+					</div>
+					<div class="HContent55 FloatLeft">
+						<div class="HRow">
+						<div class="HContent5 FloatLeft">&nbsp;</div>
+						<div class="HContent95 FloatLeft">
+							<button type="button" class="FullWidth NoMargins IconSmall fa-plus" onclick="AddUserGroup()">
+								{i18n_add_workgroup}
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -29,11 +20,11 @@
 window.isTablet = window.isMobile = false;
 
 // Main namespace
-if( !window.friend ) window.friend = {};
-friend = window.friend || {}
-friend.iconsSelectedCount = 0;
-friend.currentMenuItems = false;
-friend.singleInstanceApps = [];
+Friend = window.Friend || {}
+Friend.iconsSelectedCount = 0;
+Friend.currentMenuItems = false;
+Friend.singleInstanceApps = [];
+Friend.windowBaseString = 'Friend Workspace';
 
 // Some global variables
 var globalConfig = {};
@@ -123,7 +114,11 @@ function apiWrapper( event, force )
 	try
 	{
 		msg = typeof( d ) == 'object' ? d : JSON.parse( d );
-	} catch(e) { console.log('Unexpected answer: ' + d, event.data ); }
+	} 
+	catch( e )
+	{ 
+		console.log( 'Unexpected answer: ' + d, event.data ); 
+	}
 	
 	// Check attributes for special types
 	for( var prop in msg )
@@ -164,7 +159,6 @@ function apiWrapper( event, force )
 			messageInfo.view.postMessage( JSON.stringify( message ), '*' );
 		}
 	}
-
 	if( msg.type )
 	{
 		// Find application iframe
@@ -194,7 +188,7 @@ function apiWrapper( event, force )
 				messageInfo.callback = msg.callback;
 			}
 		}
-		switch( msg.type )
+		switch( msg.type ) 
 		{
 			// DOS -------------------------------------------------------------
 			case 'dos':
@@ -204,7 +198,7 @@ function apiWrapper( event, force )
 				switch ( msg.method )
 				{
 					case 'getDisks':
-						DOS.getDisks( msg.path, msg.flags, function( response, list, extra )
+						Friend.DOS.getDisks( msg.flags, function( response, list, extra )
 						{
 							var nmsg = 
 							{
@@ -221,7 +215,7 @@ function apiWrapper( event, force )
 						} );
 						break;
 					case 'getDirectory':
-						DOS.getDirectory( msg.path, msg.flags, function( response, list, extra )
+						Friend.DOS.getDirectory( msg.path, msg.flags, function( response, list, extra )
 						{
 							var nmsg = 
 							{
@@ -240,7 +234,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'executeJSX':
-						DOS.executeJSX( msg.path, msg.args, function( response, message, iframe, extra )
+						Friend.DOS.executeJSX( msg.path, msg.args, function( response, message, iframe, extra )
 						{
 							var nmsg = 
 							{
@@ -264,7 +258,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'loadHTML':
-						DOS.loadHTML( msg.applicationId, msg.path, function( response, html, extra )
+						Friend.DOS.loadHTML( msg.applicationId, msg.path, function( response, html, extra )
 						{
 							var nmsg = 
 							{
@@ -282,7 +276,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'getDriveInfo':
-						DOS.getDriveInfo( msg.path, function( response, icon, extra )
+						Friend.DOS.getDriveInfo( msg.path, function( response, icon, extra )
 						{
 							var nmsg = 
 							{
@@ -301,7 +295,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'getFileInfo':
-						DOS.getFileInfo( msg.path, function( response, icon, extra )
+						Friend.DOS.getFileInfo( msg.path, function( response, icon, extra )
 						{
 							var nmsg = 
 							{
@@ -320,7 +314,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'fileAccess':
-						DOS.getFileAccess( msg.path, function( response, permissions, extra )
+						Friend.DOS.getFileAccess( msg.path, function( response, permissions, extra )
 						{
 							// Setup the callback message
 							var nmsg = 
@@ -341,6 +335,48 @@ function apiWrapper( event, force )
 						break;
 				}
 				msg.callback = null;
+				break;
+			// Virtual Reality -------------------------------------------------
+			case 'friendvr':
+				if( Friend.VRWrapper )
+				{
+					var data = Friend.VRWrapper( msg );
+					
+					// Handle callbacks
+					if( msg.callback && app )
+					{
+						if( msg.viewId && app.windows && app.windows[ msg.viewId ] )
+						{
+							var nmsg = {
+								applicationId: msg.applicationId,
+								viewId: msg.viewId,
+								type: 'callback',
+								callback: msg.callback,
+								data: data
+							};
+							app.windows[ msg.viewId ].sendMessage( nmsg );
+						}
+						else
+						{
+							var nmsg = {
+								applicationId: msg.applicationId,
+								type: 'callback',
+								callback: msg.callback,
+								data: data
+							};
+							app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+						}
+					}
+				}
+				else
+				{
+					// First time, give an alert
+					if( !Friend.VRError )
+					{
+						Alert( 'VR mode not available', 'Please run Friend in VR mode to run this application.' );
+						Friend.VRError = 1;
+					}
+				}
 				break;
 			// Friend Network --------------------------------------------------
 			case 'friendnet':
@@ -540,7 +576,18 @@ function apiWrapper( event, force )
 				switch ( msg.method )
 				{
 					case 'start':
-						FriendNetworkDoor.runRemoteApplication( msg.hostName, msg.appName, msg.doorName, msg.path, msg.userInformation, msg.authId );
+						FriendNetworkDoor.runRemoteApplication( msg, function( response, data, extra )
+						{
+							var nmsg = 
+							{
+								command: 'runRemoteApplicationResponse',
+								response: response,
+								data: data,
+								extra: extra,
+								isFriendAPI: true
+							};
+							sendItBack( nmsg );
+						}, msg.extra );
 						break;
 				}
 				break;
@@ -573,7 +620,7 @@ function apiWrapper( event, force )
 				msg.callback = false; // terminate callback
 				break;
 
-			// Friend Network Share ---------------------------------------------
+			// Friend Network Door ---------------------------------------------
 			case 'friendNetworkDoor':
 				switch( msg.method )
 				{
@@ -646,6 +693,12 @@ function apiWrapper( event, force )
 						break;
 				}
 				msg.callback = false; // terminate callback
+				break;
+
+			// Automatic API System...
+			case 'Friend':
+				Friend.callAPIFunction( msg );
+				msg.callback = false;
 				break;
 
 			// Friend Network Friends ---------------------------------------------
@@ -1058,7 +1111,7 @@ function apiWrapper( event, force )
 								};
 								if (msg.viewId) ret.viewId = msg.viewId;
 								app.contentWindow.postMessage(
-										JSON.stringify(ret), '*'
+									JSON.stringify(ret), '*'
 								);
 							},
 							windows: []
@@ -1137,6 +1190,44 @@ function apiWrapper( event, force )
 								);
 							});
 						}
+						break;
+					case 'createDrive':
+						var id = Friend.Doors.Dormant.createDrive( msg.options, function( response, data, extra )
+						{
+							// Callback
+							var ret = 
+							{
+								applicationId: msg.applicationId,
+								callbackId: msg.callbackId,
+								command: 'dormantmaster',
+								method: 'callback',
+								response: response,
+								data: data,
+								extra: extra
+							};
+							if ( msg.viewId ) 
+								ret.viewId = msg.viewId;
+							app.contentWindow.postMessage( JSON.stringify( jsonSafeObject( ret ) ), '*' );
+						}, msg.extra );
+						break;
+					case 'destroyDrive':
+						Friend.Doors.Dormant.destroyDrive( msg.driveId, msg.options, function( response, data, extra )
+						{
+							// Callback
+							var ret = 
+							{
+								applicationId: msg.applicationId,
+								callbackId: msg.callbackId,
+								command: 'dormantmaster',
+								method: 'callback',
+								response: response,
+								data: response,
+								extra: extra
+							};
+							if ( msg.viewId ) 
+								ret.viewId = msg.viewId;
+							app.contentWindow.postMessage( JSON.stringify( jsonSafeObject( ret ) ), '*' );
+						}, msg.extra );
 						break;
 				}
 				break;
@@ -2634,20 +2725,20 @@ function apiWrapper( event, force )
 					// End task bar stuff
 					case 'setsingleinstance':
 						// Add to single instances
-						if( app && msg.value == true && !friend.singleInstanceApps[ app.applicationName ] )
+						if( app && msg.value == true && !Friend.singleInstanceApps[ app.applicationName ] )
 						{
-							friend.singleInstanceApps[ app.applicationName ] = app;
+							Friend.singleInstanceApps[ app.applicationName ] = app;
 						}
 						// Remove from single instances
 						else if( app && msg.value == false )
 						{
 							var out = [];
-							for( var a in friend.singleInstanceApps )
+							for( var a in Friend.singleInstanceApps )
 							{
 								if( a != app.applicationName )
-									out[a] = friend.singleInstanceApps[a];
+									out[a] = Friend.singleInstanceApps[a];
 							}
-							friend.singleInstanceApps = out;
+							Friend.singleInstanceApps = out;
 						}
 						break;
 					case 'setclipboard':
@@ -3222,14 +3313,23 @@ function apiWrapper( event, force )
 					case 'filedialog':
 						var win = app.windows ? app.windows[ msg.viewId ] : false;
 						var tar = win ? app.windows[msg.targetViewId] : false; // Target for postmessage
-						var d = new Filedialog( win, function( data )
-						{
-							var nmsg = msg;
-							nmsg.data = data;
-							if( tar )
-								tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-							else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
-						}, msg.path, msg.dialogType, msg.filename, msg.title );
+						var flags = {
+							mainView:    tar ? tar : win,
+							type:        msg.method,
+							path:        msg.path,
+							title:       msg.title,
+							filename:    msg.filename,
+							multiSelect: msg.multiSelect,
+							triggerFunction: function( data )
+							{
+								var nmsg = msg;
+								nmsg.data = data;
+								if( tar )
+									tar.iframe.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+								else app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+							}
+						};
+						var d = new Filedialog( flags );
 						break;
 				}
 				break;
@@ -3268,8 +3368,8 @@ function apiWrapper( event, force )
 
 /* Magic clipboard code ----------------------------------------------------- */
 
-friend.clipboard = '';
-friend.macCommand = false;
+Friend.clipboard = '';
+Friend.macCommand = false;
 
 document.addEventListener( 'keydown', function( e )
 {
@@ -3278,16 +3378,16 @@ document.addEventListener( 'keydown', function( e )
 
 	if( wh == 91 )
 	{
-		friend.macCommand = true;
+		Friend.macCommand = true;
 	}
 
-	/*if( e.ctrlKey || friend.macCommand )
+	/*if( e.ctrlKey || Friend.macCommand )
 	{
 		if( wh == 86 )
 		{
-			if( friend.clipboard.length && friend.clipboard != '' && friend.clipboard.charCodeAt( 0 ) != 1 )
+			if( Friend.clipboard.length && Friend.clipboard != '' && Friend.clipboard.charCodeAt( 0 ) != 1 )
 			{
-				if( ClipboardPasteIn( t, friend.clipboard ) )
+				if( ClipboardPasteIn( t, Friend.clipboard ) )
 				{
 					return cancelBubble( e );
 				}
@@ -3304,7 +3404,7 @@ document.addEventListener( 'keydown', function( e )
 document.addEventListener( 'keyup', function( e )
 {
 	var wh = e.which ? e.which : e.keyCode;
-	if( wh == 91 ) friend.macCommand = false;
+	if( wh == 91 ) Friend.macCommand = false;
 } );
 
 
@@ -3322,13 +3422,13 @@ document.addEventListener( 'keyup', function( e )
 	{
 		cpd = evt.clipboardData.getData( mimetype );
 
-		//console.log('compare old and new in apirwrapper. new data: ',cpd,'friend prev:',friend.prevClipboard,'friend clipboard:',friend.clipboard);
-		if( friend.prevClipboard != cpd )
+		//console.log('compare old and new in apirwrapper. new data: ',cpd,'friend prev:',Friend.prevClipboard,'friend clipboard:',Friend.clipboard);
+		if( Friend.prevClipboard != cpd )
 		{
-			friend.clipboard = cpd;
+			Friend.clipboard = cpd;
 		}
 	}
-	if( typeof Application != 'undefined' ) Application.sendMessage( { type: 'system', command: 'setclipboard', value: friend.clipboard } );
+	if( typeof Application != 'undefined' ) Application.sendMessage( { type: 'system', command: 'setclipboard', value: Friend.clipboard } );
 	return true;
 } );*/
 
@@ -3336,10 +3436,10 @@ document.addEventListener( 'keyup', function( e )
 function ClipboardSet( text, updatesystem )
 {
 	if( text == '' ) return;
-	if( friend.clipboard == text ) return;
+	if( Friend.clipboard == text ) return;
 
-	friend.prevClipboard = friend.clipboard;
-	friend.clipboard = text;
+	Friend.prevClipboard = Friend.clipboard;
+	Friend.clipboard = text;
 
 	for( var a = 0; a < Workspace.applications.length; a++ )
 	{
@@ -3347,7 +3447,7 @@ function ClipboardSet( text, updatesystem )
 		app.contentWindow.postMessage( JSON.stringify( {
 			applicationId: app.applicationId,
 			command: 'updateclipboard',
-			value: friend.clipboard
+			value: Friend.clipboard
 		} ), '*' );
 	}
 	for( var a in movableWindows )
@@ -3356,7 +3456,7 @@ function ClipboardSet( text, updatesystem )
 		if( !ifr ) continue;
 		ifr.contentWindow.postMessage( JSON.stringify( {
 			command: 'updateclipboard',
-			value: friend.clipboard
+			value: Friend.clipboard
 		} ), '*' );
 	}
 
@@ -3370,7 +3470,7 @@ function ClipboardToClientSystem()
 {
 	success = document.execCommand( 'copy' );
 /*
-	if( friend.clipboardWidget )
+	if( Friend.clipboardWidget )
 	{
 		//....
 	}
@@ -3384,12 +3484,12 @@ function ClipboardToClientSystem()
 			scrolling: false,
 			autosize: true
 		};
-		friend.clipboardWidget = new Widget( o );
+		Friend.clipboardWidget = new Widget( o );
 	}
 
-	friend.clipboardWidget.dom.innerHTML = '<div class="Padding"><h3>'+ i18n('i18n_copy_to_system_clipboard_headline') +'</h3><span>' + i18n('i18n_copy_to_system_clipboard') + '</span><textarea id="clipBoardWidgetTA" class="Rounded BackgroundNegative Padding FullWidth Negative" style="box-shadow: inset 0px 2px 10px rgba(0,0,0,0.4); border: 0; margin: 10px 0 10px 0; overflow: hidden; opacity:0.5;height: 80px;">'+ friend.clipboard +'</textarea><button class="IconSmall Button fa-check" onclick="CopyClipboardToClientSystem()"> &nbsp;'+ i18n('i18n_yes') +'</button><button class="IconSmall Button fa-remove" onclick="CancelCopyClipboardToClientSystem()"> &nbsp;'+ i18n('i18n_negative') +'</button></div>';
-	friend.clipboardWidget.raise();
-	friend.clipboardWidget.show();
+	Friend.clipboardWidget.dom.innerHTML = '<div class="Padding"><h3>'+ i18n('i18n_copy_to_system_clipboard_headline') +'</h3><span>' + i18n('i18n_copy_to_system_clipboard') + '</span><textarea id="clipBoardWidgetTA" class="Rounded BackgroundNegative Padding FullWidth Negative" style="box-shadow: inset 0px 2px 10px rgba(0,0,0,0.4); border: 0; margin: 10px 0 10px 0; overflow: hidden; opacity:0.5;height: 80px;">'+ Friend.clipboard +'</textarea><button class="IconSmall Button fa-check" onclick="CopyClipboardToClientSystem()"> &nbsp;'+ i18n('i18n_yes') +'</button><button class="IconSmall Button fa-remove" onclick="CancelCopyClipboardToClientSystem()"> &nbsp;'+ i18n('i18n_negative') +'</button></div>';
+	Friend.clipboardWidget.raise();
+	Friend.clipboardWidget.show();
 */
 }
 function CopyClipboardToClientSystem( evt )
@@ -3406,20 +3506,20 @@ function CopyClipboardToClientSystem( evt )
 		console.log( 'failed to copy to clippy', e );
 	}
 
-	if( friend.clipboardWidget )
+	if( Friend.clipboardWidget )
 	{
 		myslave.blur();
 		ge('clipBoardWidgetTA').parentNode.removeChild( ge('clipBoardWidgetTA') );
-		friend.clipboardWidget.hide();
+		Friend.clipboardWidget.hide();
 	}
 }
 
 function CancelCopyClipboardToClientSystem()
 {
-	if( friend.clipboardWidget )
+	if( Friend.clipboardWidget )
 	{
 		ge('clipBoardWidgetTA').parentNode.removeChild( ge('clipBoardWidgetTA') );
-		friend.clipboardWidget.hide();
+		Friend.clipboardWidget.hide();
 	}
 }
 
@@ -3559,16 +3659,16 @@ if( window.addEventListener )
 	});
 	
 	// Blur events - allows us to track if we're clicking on a frame outside the Friend domain
-	friend.canActivateWindowOnBlur = true;
+	Friend.canActivateWindowOnBlur = true;
 	window.addEventListener( 'blur', function( e )
 	{
 		// Canactivatewindowonblur is there to prevent loading elements from
 		// being deactivated when they emit a blur event from their iframe
 		if( !window.isMobile )
 		{
-			if( friend.currentWindowHover && friend.canActivateWindowOnBlur )
+			if( Friend.currentWindowHover && Friend.canActivateWindowOnBlur )
 			{
-				_ActivateWindow( friend.currentWindowHover );
+				_ActivateWindow( Friend.currentWindowHover );
 			}
 		}
 	} );

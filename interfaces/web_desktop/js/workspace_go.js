@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -34,6 +25,7 @@ Workspace = {
 	icons: [],
 	reloginAttempts: 0,
 	menuMode: 'pear', // 'miga', 'fensters' (alternatives)
+	mode: 'default',
 	initialized: false,
 	protocol: _protocol,
 	menu: [],
@@ -794,15 +786,15 @@ Workspace = {
 	renewAllSessionIds: function()
 	{
 		// Check if there's a queue of objects waiting to run
-		if( friend.cajax && friend.cajax.length )
+		if( Friend.cajax && Friend.cajax.length )
 		{
-			for( var a = 0; a < friend.cajax.length; a++ )
+			for( var a = 0; a < Friend.cajax.length; a++ )
 			{
-				friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
-				friend.cajax[a].open();
-				friend.cajax[a].send();
+				Friend.cajax[a].addVar( 'sessionid', Workspace.sessionId );
+				Friend.cajax[a].open();
+				Friend.cajax[a].send();
 			}
-			friend.cajax = [];
+			Friend.cajax = [];
 		}
 	},
 	loginSessionId: function( sessionid, callback, ev )
@@ -1134,6 +1126,7 @@ Workspace = {
 				'webclient/3rdparty/adapter.js;' +
 				'webclient/js/utils/speech-input.js;' +
 				'webclient/js/utils/events.js;' +
+				'webclient/js/utils/utilities.js;' +
 				'webclient/js/io/directive.js;' +
 				'webclient/js/io/door.js;' +
 				'webclient/js/io/dormant.js;' +
@@ -1146,10 +1139,12 @@ Workspace = {
 				'webclient/js/io/friendnetworkshare.js;' +
 				'webclient/js/io/friendnetworkfriends.js;' +
 				'webclient/js/io/friendnetworkdrive.js;' +
+				'webclient/js/io/friendnetworkpower.js;' +
 				'webclient/js/io/friendnetworkextension.js;' +
 				'webclient/js/io/friendnetworkdoor.js;' +
 				'webclient/js/io/friendnetworkapps.js;' +
 				'webclient/js/io/DOS.js;' +
+				'webclient/3rdparty/favico.js/favico-0.3.10.min.js;' +
 				'webclient/js/gui/widget.js;' +
 				'webclient/js/gui/listview.js;' +
 				'webclient/js/gui/directoryview.js;' +
