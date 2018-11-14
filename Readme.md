@@ -1,7 +1,7 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-**NB:** This branch is not yet stable, and is currently under development.
+**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch*. Bleeding edge users should check out the *friendup-1.2-rc2* branch.
 
 Friend is THE Internet Operating System for everyone, that runs on everything.
 
