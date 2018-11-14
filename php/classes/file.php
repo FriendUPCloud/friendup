@@ -149,6 +149,47 @@ class File
 		}
 		return false;
 	}
+
+	function Delete()
+	{
+		global $Config, $User, $Logger;
+		
+		if( $path ) $this->path = urldecode( $path );
+		
+		$ex = '/system.library/file/delete/?path=' . jsUrlEncode( $this->path );
+		$url = ( $Config->SSLEnable ? 'https://' : 'http://' ) .
+			( $Config->FCOnLocalhost ? 'localhost' : $Config->FCHost ) . ':' . $Config->FCPort . $ex;
+		if( isset( $GLOBALS[ 'args' ]->sessionid ) )
+			$url .= '&sessionid=' . $GLOBALS[ 'args' ]->sessionid;
+		else if( isset( $GLOBALS[ 'args' ]->authid ) )
+			$url .= '&authid=' . $GLOBALS[ 'args' ]->authid;
+		else if( isset( $User->SessionID ) )
+			$url .= '&sessionid=' . $User->SessionID;
+
+		$Logger->log( 'Sending DELETE ' . $url );
+
+		$c = curl_init();
+		
+		curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false               );
+		curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false               );
+		curl_setopt( $c, CURLOPT_URL,            $url                );
+		curl_setopt( $c, CURLOPT_RETURNTRANSFER, true                );
+		$r = curl_exec( $c );
+		curl_close( $c );
+		
+		
+		$Logger->log( 'Got a results... ' . $r );
+		
+		if( $r != false )
+		{
+			return true;
+		}
+		else
+		{
+			$Logger->log( 'File delete failed' . print_r( $r,1 ) );
+		}
+		return false;
+	}
 }
 
 if( !function_exists('jsUrlEncode') )
