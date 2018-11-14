@@ -20,7 +20,7 @@
 */
 
 // VR Scope
-friend.VR =
+Friend.VR =
 {
 	events: {},
 	objectIds: {},
@@ -63,11 +63,11 @@ friend.VR =
 			while( self.objectIds[ id ] );
 			return id;
 		}
-		if( friend.VR[ type ] )
+		if( Friend.VR[ type ] )
 		{
 			var id = genUniqueId( type + '_' );
 			flags.id = id;
-			var o = new friend.VR[ type ]( flags, extra );
+			var o = new Friend.VR[ type ]( flags, extra );
 			if( o )
 			{
 				this.objects[ id ] = o;
@@ -238,6 +238,38 @@ friend.VR =
 			size: this.size,
 			color: this.color,
 			intensity: this.intensity,
+			distance: flags.distance ? flags.distance : 100,
+			callback: addCallback( function( data )
+			{
+				if( flags.callback )
+					flags.callback( data );
+			} )	
+		} );
+	};
+	// A simple point light
+	v.spotLight = function( flags, extra )
+	{
+		if( !flags ) return;
+		
+		this.flags = flags;
+		this.extra = extra;
+		this.position = flags.position ? flags.position : { x: 0, y: 0, z: 0 };
+		this.rotation = flags.rotation ? flags.rotation : { x: 0, y: 0, z: 0 };
+		this.size = flags.size ? flags.size : { width: 1, height: 1 };
+		this.color = flags.color ? flags.color : 0xffffff;
+		
+		// Communicate to proxy
+		Application.sendMessage( {
+			type: 'friendvr',
+			object: 'spotLight',
+			objectid: this.flags.id,
+			command: 'create',
+			path: flags.path,
+			spotLight: flags.spotLight ? flags.spotLight : {},
+			position: this.position,
+			rotation: this.rotation,
+			color: this.color,
+			castShadow: flags.castShadow,
 			callback: addCallback( function( data )
 			{
 				if( flags.callback )
@@ -266,6 +298,7 @@ friend.VR =
 			position: this.position,
 			rotation: this.rotation,
 			size: this.size,
+			collisionObjects: flags.collisionObjects,
 			callback: addCallback( function( data )
 			{
 				if( flags.callback )
@@ -273,6 +306,22 @@ friend.VR =
 			} )	
 		} );
 	};
-} )( friend.VR );
+	v.user = function( flags, extra )
+	{
+		Application.sendMessage( {
+			type: 'friendvr',
+			object: 'user',
+			command: 'setuserinfo',
+			data: flags,
+			callback: addCallback( function( data )
+			{
+				if( flags.callback )
+				{
+					flags.callback( data );
+				}
+			} )
+		} );
+	};
+} )( Friend.VR );
 
 
