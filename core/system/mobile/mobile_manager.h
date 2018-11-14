@@ -53,5 +53,7 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 
 void MobileManagerRefreshCache( MobileManager *mmgr );
 
+int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
+
 #endif //__SYSTEM_MOBILE_MOBILE_MANAGER_H__
 

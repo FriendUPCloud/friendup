@@ -349,3 +349,45 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 }
+
+/**
+ * Add mobile app to main list
+ *
+ * @param mm pointer to MobileManager
+ * @param app pointer to UserMobileApp which will be added to list
+ * @return 0 when entry was added, 1 when entry is in list, otherwise error number
+ */
+int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
+{
+	if( app != NULL )
+	{
+		FRIEND_MUTEX_LOCK( &(mm->mm_Mutex) );
+		
+		UserMobileApp *lap = mm->mm_UMApps;
+		while( lap != NULL )
+		{
+			if( app->uma_ID == lap->uma_ID )
+			{
+				break;
+			}
+			lap = (UserMobileApp *)lap->node.mln_Succ;
+		}
+
+		// add entry only when its not on the list
+		if( lap == NULL )
+		{
+			app->node.mln_Succ = (MinNode *)mm->mm_UMApps;
+			mm->mm_UMApps = app;
+			
+			FRIEND_MUTEX_UNLOCK( &(mm->mm_Mutex) );
+			return 0;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(mm->mm_Mutex) );
+	}
+	else
+	{
+		return -1;
+	}
+	return 1;
+}

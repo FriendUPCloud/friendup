@@ -87,8 +87,8 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	* <HR><H2>system.library/mobile/createuma</H2>Create mobile user app.
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param userid - (required) use ID
-	* @param apptoken - application token
+	* @param apptoken -(required) application token
+	* @param userid - user ID
 	* @param appversion - application version
 	* @param platform - platform name
 	* @param version - platform version
@@ -125,6 +125,10 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				char *next;
 				uid = strtol( el->data, &next, 0 );
 			}
+			if( uid <= 0 )
+			{
+				uid = loggedSession->us_UserID;
+			}
 			
 			el = HttpGetPOSTParameter( request, "apptoken" );
 			if( el != NULL )
@@ -150,70 +154,99 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 				version = UrlDecodeToMem( (char *)el->data );
 			}
 			
-			if( uid > 0 )
+			if( uid > 0 && apptoken != NULL )
 			{
-				UserMobileApp *ma = UserMobileAppNew();
 				char buffer[ 256 ];
 				int err = 0;
+				FBOOL tokenFound = FALSE;
 				
-				if( ma != NULL )
+				SQLLibrary *sqllib  = l->LibrarySQLGet( l );
+				if( sqllib != NULL )
 				{
-					char ipbuffer[ 128 ];
-					ma->uma_AppToken = apptoken;
-					ma->uma_AppVersion = appversion;
-					ma->uma_Platform = platform;
-					ma->uma_PlatformVersion = version;
-					ma->uma_UserID = uid;
-					apptoken = appversion = platform = version = NULL;
+					// if entry with token already exist there is no need to create new one
 					
-					if( getLocalIP( ipbuffer, sizeof(ipbuffer) ) == 0 )
-					{
-						ma->uma_Core = StringDuplicate( ipbuffer );
-					}
-					else
-					{
-						ma->uma_Core = StringDuplicate("Error");
-					}
+					char query[ 512 ];
+					snprintf( query, sizeof(query), "SELECT AppToken FUserMobileApp where AppToken='%s'", apptoken );
 					
-					SQLLibrary *lsqllib = l->LibrarySQLGet( l );
-					if( lsqllib != NULL )
+					void *res = sqllib->Query( sqllib, query );
+				
+					if( res != NULL )
 					{
-						err = lsqllib->Save( lsqllib, UserMobileAppDesc, ma );
-		
-						l->LibrarySQLDrop( l, lsqllib );
+						char **row;
+						while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+						{
+							if( row[ 0 ] != NULL )
+							{
+								tokenFound = TRUE;
+							}
+						}
+						sqllib->FreeResult( sqllib, res );
 					}
-					else
+				
+					if( tokenFound == FALSE )
 					{
-						err = 1;
+						int addErr = 1;	// 1 entry wasnt added, must be released
+						
+						UserMobileApp *ma = UserMobileAppNew();
+						if( ma != NULL )
+						{
+							char ipbuffer[ 128 ];
+							ma->uma_AppToken = apptoken;
+							ma->uma_AppVersion = appversion;
+							ma->uma_Platform = platform;
+							ma->uma_PlatformVersion = version;
+							ma->uma_UserID = uid;
+							apptoken = appversion = platform = version = NULL;
+					
+							if( getLocalIP( ipbuffer, sizeof(ipbuffer) ) == 0 )
+							{
+								ma->uma_Core = StringDuplicate( ipbuffer );
+							}
+							else
+							{
+								ma->uma_Core = StringDuplicate("Error");
+							}
+					
+							err = sqllib->Save( sqllib, UserMobileAppDesc, ma );
+							
+							addErr = MobileManagerAddUMA( l->sl_MobileManager, ma );
+							
+							if( err == 0 )
+							{
+								snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"%lu\" }", ma->uma_ID );
+								HttpAddTextContent( response, buffer );
+							}
+						}
+						else
+						{
+							//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
+							err = 2;
+						}
+						
+						if( ma != NULL && addErr != 0 )
+						{
+							UserMobileAppDelete( ma );
+						}
 					}
-				}
-				else
-				{
-					//snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", l->sl_Dictionary->d_Msg[DICT_CANNOT_ALLOCATE_MEMORY] , DICT_CANNOT_ALLOCATE_MEMORY );
-					err = 2;
+					l->LibrarySQLDrop( l, sqllib );
 				}
 				
-				if( err == 0 )
+				if( tokenFound == TRUE )
 				{
-					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"%lu\" }", ma->uma_ID );
+					snprintf( buffer, sizeof(buffer), "ok<!--separate-->{ \"response\": \"0\", \"create\":\"0\" }" );
 					HttpAddTextContent( response, buffer );
 				}
-				else
+				else if( err != 0 )
 				{
 					snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"1\", \"code\":\"%d\" }" , err );
 					HttpAddTextContent( response, buffer );
-				}
-				
-				if( ma != NULL )
-				{
-					UserMobileAppDelete( ma );
 				}
 			} // missing parameters
 			else
 			{
 				char buffer[ 256 ];
 				char buffer1[ 256 ];
-				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid" );
+				snprintf( buffer1, sizeof(buffer1), l->sl_Dictionary->d_Msg[DICT_PARAMETERS_MISSING], "userid, apptoken" );
 				snprintf( buffer, sizeof(buffer), "fail<!--separate-->{ \"response\": \"%s\", \"code\":\"%d\" }", buffer1 , DICT_PARAMETERS_MISSING );
 				HttpAddTextContent( response, buffer );
 			}
