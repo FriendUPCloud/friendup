@@ -1,12 +1,7 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-We are happy to announce the release of FriendUP version 1.2 Release Candidate 2.
-Please check out our press release here:
-
 **NB:** This branch is not yet stable, and is currently under development.
-
-[Press release on Medium.com](https://medium.com/@hogne.titlestad/friend-software-labs-releases-friendup-v1-2-release-candidate-637d7bf800d4)
 
 Friend is THE Internet Operating System for everyone, that runs on everything.
 
