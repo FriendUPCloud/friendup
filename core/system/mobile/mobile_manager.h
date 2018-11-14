@@ -51,6 +51,8 @@ UserMobileApp *MobleManagerGetByIDDB( MobileManager *mmgr, FULONG id );
 
 MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id );
 
+MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type );
+
 void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );

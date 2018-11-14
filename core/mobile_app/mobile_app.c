@@ -775,13 +775,6 @@ bool mobile_app_notify_user( const char *username, const char *channel_id, const
 		{
 			if( user_connections->connection[i] )
 			{
-				mobile_app_notif *man = (mobile_app_notif *)user_connections->connection[i]->user_data;
-				if( user_connections->connection[i]->userMobileApp == NULL )
-				{
-					MobileListEntry *mle = MobleManagerGetByUserIDDB( mm, user_connections->userID );
-					//user_connections->connection[i]->userMobileApp = mle->mm_UMApp->
-				}
-				
 				write_message( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
 				//lws_write(
 				//		user_connections->connection[i]->websocket_ptr,
@@ -808,6 +801,14 @@ bool mobile_app_notify_user( const char *username, const char *channel_id, const
 		break;
 		default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 	}
+	
+	MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
+	while( mle != NULL )
+	{
+		WebsocketClientSendMessage( SLIB->l_APNSConnection, json_message, json_message_length );
+		mle = (MobileListEntry *) mle->node.mln_Succ;
+	}
+	
 	return true;
 }
 

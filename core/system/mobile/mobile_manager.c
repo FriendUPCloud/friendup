@@ -19,6 +19,7 @@
 
 #include "mobile_manager.h"
 #include <system/systembase.h>
+#include <mobile_app/mobile_app.h>
 
 /**
  * Create new MobileManager
@@ -319,6 +320,134 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 	}
 	return root;
 }
+
+MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type )
+{
+	char *mobileType = NULL;
+	if( type == MOBILE_APP_TYPE_ANDROID )
+	{
+		mobileType = "Android";
+	}
+	else if( type == MOBILE_APP_TYPE_IOS )
+	{
+		mobileType = "ios";
+	}
+	else if( type == MOBILE_APP_TYPE_WINDOWS )
+	{
+		mobileType = "Windows";
+	}
+	else
+	{
+		return NULL;
+	}
+	
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+	MobileListEntry *root = NULL;
+	
+	FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+	uma = mmgr->mm_UMApps;
+	while( uma != NULL )
+	{
+		if( uma->uma_UserID == user_id && strcmp( uma->uma_Platform, mobileType ) == 0 )
+		{
+			MobileListEntry *e = MobileListEntryNew( uma );
+			if( e != NULL )
+			{
+				e->node.mln_Succ = (MinNode *)root;
+				root = e;
+			}
+		}
+		uma = (UserMobileApp *)uma->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char where[ 512 ];
+		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", user_id, mobileType );
+
+		int entries;
+		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+		
+		MobileListEntry *freeEntries = NULL;
+		MobileListEntry *addEntries = NULL;
+		
+		UserMobileApp *le = uma;
+		while( le != NULL )
+		{
+			// we must check if entry exist
+			
+			MobileListEntry *existEntr = root;
+			while( existEntr != NULL )
+			{
+				if( le->uma_ID == existEntr->mm_UMApp->uma_ID )
+				{
+					
+					break;
+				}
+				existEntr = (MobileListEntry *)existEntr->node.mln_Succ;
+			}
+			
+			//
+			// we have 2 lists
+			// one will hold all entries which will be added to global lists
+			// second will hold all entries which will be deleted on the end
+			//
+			
+			// entry exist
+			if( existEntr != NULL )
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)freeEntries;
+					freeEntries = e;
+				}
+			}
+			else	// entry do not exist
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)addEntries;
+					addEntries = e;
+				}
+			}
+			
+			le = (UserMobileApp *)le->node.mln_Succ;
+		}
+		
+		// release not used entries
+		while( freeEntries != NULL )
+		{
+			MobileListEntry *rel = freeEntries;
+			freeEntries = (MobileListEntry *)freeEntries->node.mln_Succ;
+			
+			UserMobileAppDelete( rel->mm_UMApp );
+			FFree( rel );
+		}
+		
+		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+		
+		// add entries to main lists
+		while( addEntries != NULL )
+		{
+			MobileListEntry *add = addEntries;
+			addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
+			
+			add->node.mln_Succ = (MinNode *)root;
+			root = add;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return root;
+}
+
 
 /**
  * Refresh token list in memory

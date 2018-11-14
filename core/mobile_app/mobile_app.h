@@ -55,7 +55,8 @@ typedef enum {
 
 enum {
 	MOBILE_APP_TYPE_ANDROID = 0,
-	MOBILE_APP_TYPE_IOS
+	MOBILE_APP_TYPE_IOS,
+	MOBILE_APP_TYPE_WINDOWS
 };
 
 typedef struct mobile_app_notif
