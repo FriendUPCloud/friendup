@@ -19,11 +19,19 @@ switch applications, hiding their 3D objects.
 */
 
 Friend.VRAppObjects = {}; // Per App
+Friend.VRApps = {};
 
 // Handle API calls
 Friend.VRWrapper = function( msg )
 {
-	console.log( 'Here is the message for VR: ', msg );
+	// Make sure we have app!
+	if( !Friend.VRApps[ msg.applicationId ] )
+	{
+		Friend.VRApps[ msg.applicationId ] = {
+			collisionObjects: []
+		};
+		Friend.VRAppObjects[ msg.applicationId ] = [];
+	}
 	if( Friend.VRObjectAbstraction[ msg.object ] )
 	{
 		return Friend.VRObjectAbstraction[ msg.object ].dispatcher( msg );
@@ -33,6 +41,42 @@ Friend.VRWrapper = function( msg )
 
 // Handles object abstractions
 Friend.VRObjectAbstraction = {
+	// Set the user information
+	user: {
+		dispatcher: function( msg )
+		{
+			if( this[ msg.command ] )
+			{
+				return this[ msg.command ]( msg );
+			}
+		},
+		setuserinfo: function( msg )
+		{
+			if( msg.data )
+			{
+				// Just set position
+				// TODO: support rotation
+				if( FriendVR.user )
+				{
+					FriendVR.renderer.shadowMap.autoUpdate = true;
+					if( msg.data.shadows )
+					{
+						if( msg.data.shadows.autoUpdate === false )
+						{
+							FriendVR.renderer.shadowMap.autoUpdate = false;
+						}
+					}
+					FriendVR.user.position.set( msg.data.x, msg.data.y, msg.data.z );
+					
+					// Setup collisionlayers
+					if( msg.data.collisionModel )
+					{
+						FriendVR.user.collisionModel = msg.data.collisionModel;
+					}
+				}
+			}
+		}
+	},
 	// Quad primitive
 	quad: {
 		dispatcher: function( msg )
@@ -107,6 +151,7 @@ Friend.VRObjectAbstraction = {
 				q.castShadow = true;
 				q.receiveShadow = true;
 				FriendVR.scene.add( q );
+				FriendVR.renderer.shadowMap.needsUpdate = true;
 				
 				// Add a clickaction
 				// TODO: Be careful! Perhaps only for workspace
@@ -119,9 +164,7 @@ Friend.VRObjectAbstraction = {
 					q.Friend.clickAction = 'quit';
 				}
 				
-				// TODO: Move this to vrengine and make less insane
-				if( !Friend.VRAppObjects[ msg.applicationId ] )
-					Friend.VRAppObjects[ msg.applicationId ] = [];
+				// Add to app objects
 				Friend.VRAppObjects[ msg.applicationId ].push( q );
 			}
 		},
@@ -158,14 +201,75 @@ Friend.VRObjectAbstraction = {
 			console.log( 'Creating pointlight.' );
 			
 			// Load the model
-			var light = new THREE.PointLight( msg.color, msg.intensity, 100, 2 );
+			var light = new THREE.PointLight( msg.color, msg.intensity, msg.distance, 2 );
 			light.position.set( msg.position.x, msg.position.y, msg.position.z );
-			light.castShadow = true;
+			
+			light.castShadow = false;
+			
 			FriendVR.scene.add( light );
 			
-			// TODO: Move this to vrengine and make less insane
-			if( !Friend.VRAppObjects[ msg.applicationId ] )
-				Friend.VRAppObjects[ msg.applicationId ] = [];
+			/*light.shadow.shadowBias = 0.0001;
+			light.shadow.shadowDarkness = 0.2;
+			light.shadow.mapSize.width = 1024;
+			light.shadow.mapSize.height = 1024;
+			light.shadow.camera.near = 0.2;
+			light.shadow.camera.far = 500;*/
+			
+			// Add to app objects
+			Friend.VRAppObjects[ msg.applicationId ].push( light );
+		},
+		setPosition: function( msg )
+		{
+		},
+		getPosition: function( msg )
+		{
+		},
+		setRotation: function( msg )
+		{
+		},
+		getRotation: function( msg )
+		{
+		},
+		setSize: function( msg )
+		{
+		},
+		getSize: function( msg )
+		{
+		}
+	},
+	// Shadowy spotlight
+	spotLight: {
+		dispatcher: function( msg )
+		{
+			console.log( 'Spotlight, eh?' );
+			if( this[ msg.command ] )
+			{
+				return this[ msg.command ]( msg );
+			}
+		},
+		create: function( msg )
+		{
+			var light = new THREE.SpotLight( msg.color, msg.spotLight.intensity, msg.spotLight.distance, msg.spotLight.angle, msg.spotLight.penumbra, msg.spotLight.decay );
+			light.position.set( msg.position.x, msg.position.y, msg.position.z );
+			light.castShadow = msg.castShadow;
+			
+			FriendVR.scene.add( light );
+			
+			// Set up shadow properties
+			/*light.shadow.mapSize.width = 1024;
+			light.shadow.mapSize.height = 1024;
+			light.shadow.camera.near = 0.5;
+			light.shadow.camera.far = 500;*/
+			
+			/*if( msg.spotLight.shadow )
+			{
+				if( msg.spotLight.shadow.mapSize )
+					light.shadow.mapSize = msg.spotLight.shadow.mapSize;
+				if( msg.spotLight.shadow.camera )
+					light.shadow.camera = msg.spotLight.shadow.camera;
+			}*/
+			
+			// Add to app objects
 			Friend.VRAppObjects[ msg.applicationId ].push( light );
 		},
 		setPosition: function( msg )
@@ -191,7 +295,6 @@ Friend.VRObjectAbstraction = {
 	model: {
 		dispatcher: function( msg )
 		{
-			console.log( 'Model, eh?' );
 			if( this[ msg.command ] )
 			{
 				return this[ msg.command ]( msg );
@@ -199,7 +302,6 @@ Friend.VRObjectAbstraction = {
 		},
 		create: function( msg )
 		{
-			console.log( 'Creating model: ' + msg.path );
 			var filename = getImageUrl( msg.path );
 			
 			// Load the model
@@ -217,12 +319,56 @@ Friend.VRObjectAbstraction = {
 					gltf.castShadow = true;
 					gltf.receiveShadow = true;
 					
-					FriendVR.scene.add( gltf.scene );
+					// Cast and receive shadows!
+					for( var a = 0; a < gltf.scene.children.length; a++ )
+					{
+						// Find lamps!
+						var child = gltf.scene.children[a];
+						if( child.name.length >= 8 && child.name.substr( 0, 8 ) == 'Spotlamp' )
+						{
+							console.log( 'Found a spotlight!' );
+						}
+						else if( child.name.length >= 9 && child.name.substr( 0, 9 ) == 'Pointlamp' )
+						{
+							console.log( 'Found a pointlamp!' );
+						}
+						else if( child.name.indexOf( 'noShadow' ) >= 0 )
+						{
+							child.castShadow = false;
+							child.receiveShadow = false;
+						}
+						// Normal objects
+						else
+						{
+							child.castShadow = true;
+							child.receiveShadow = true;
+						}
+					}
 					
-					// TODO: Move this to vrengine and make less insane
-					if( !Friend.VRAppObjects[ msg.applicationId ] )
-						Friend.VRAppObjects[ msg.applicationId ] = [];
+					// Add to app objects
 					Friend.VRAppObjects[ msg.applicationId ].push( gltf.scene );
+					
+					// Add collision objects
+					if( msg.collisionObjects )
+					{
+						for( var a = 0; a < gltf.scene.children.length; a++ )
+						{
+							for( var b = 0; b < msg.collisionObjects.length; b++ )
+							{
+								if( gltf.scene.children[a].name == msg.collisionObjects[b] )
+								{
+									gltf.scene.children[a].visible = false;
+									gltf.scene.children[a].castShadow = false;
+									gltf.scene.children[a].receiveShadow = false;
+									Friend.VRApps[ msg.applicationId ].collisionObjects.push( gltf.scene.children[a] );
+								}
+							}
+						}
+					}
+					
+					// Add to scene
+					FriendVR.scene.add( gltf.scene );
+					FriendVR.renderer.shadowMap.needsUpdate = true;
 					
 					/*
 					gltf.animations; // Array<THREE.AnimationClip>
