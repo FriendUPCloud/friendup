@@ -28,6 +28,7 @@ var FriendVR = {
 	input: {
 		press: false
 	},
+	applications: {},
 	rooms: [],
 	currentRoom: 0,
 	zPhase: 0.0,
@@ -59,75 +60,6 @@ var FriendVR = {
 		
 		this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.1, 100 );
 		this.scene.add( this.camera );
-
-		// 3d crosshair that shows your where you are pointing
-		/*this.crosshair = new THREE.Mesh(
-			new THREE.RingGeometry( 0.01, 0.02, 32 ),
-			new THREE.MeshBasicMaterial( {
-				color: 0xffffff,
-				opacity: 0.5,
-				transparent: true
-			} ) 
-		);
-		this.crosshair.position.z = -2;
-		this.camera.add( this.crosshair );*/
-
-		// Software packages
-		/*var m = new Module( 'system' );
-		m.onExecuted = function( e, d )
-		{
-			if( e != 'ok' ) return;
-			
-			var list = JSON.parse( d );
-			
-			var start = -0.9;
-			var ypos = 0.3;
-			var margin = 0.1;
-			var count = 0;
-			var row = 0;
-			for( var a = 0; a < list.length; a++ )
-			{
-				if( list[a].Preview )
-				{
-					var ctex = document.createElement( 'canvas' );
-					ctex.setAttribute( 'width', 512 );
-					ctex.setAttribute( 'height', 512 );
-					var cn = ctex.getContext( '2d' );
-					cn.fillStyle = "rgb(80,80,80)";
-					cn.fillRect( 0, 0, 512, 512 );
-					cn.fillStyle = "rgb(40,40,40)";
-					cn.fillRect( 0, 400, 512, 512 );
-					cn.fillStyle = "rgb(255,255,255)";
-					cn.font = "40px Sans serif";
-					cn.fillText( list[a].Name, 30, 470 );
-					
-					var ct = new THREE.CanvasTexture( ctex, THREE.CubeReflectionMapping, THREE.ClampToEdgeWrapping, THREE.ClampToEdgeWrapping );
-				
-					var pln = new THREE.Mesh(
-						new THREE.PlaneGeometry( 0.5, 0.5, 1 ),
-						new THREE.MeshLambertMaterial( { side: THREE.DoubleSide, map: ct } )
-					);
-					pln.position.x = start + ( count * ( 0.5 + margin ) );
-					pln.position.y = ypos;
-					pln.position.z = -2 - ( ( count == 0 || count == 3 ) ? -0.5 : 0 );
-					pln.rotation.y = 1.0 + ( -2.0 / 3 * count );
-					pln.castShadow = true;
-					pln.receiveShadow = true;
-					self.scene.add( pln );
-					if( count++ >= 3 )
-					{
-						count = 0;
-						ypos -= 0.5 + margin;
-						row++;
-						if( row >= 2 )
-						{
-							break;
-						}
-					}
-				}
-			}
-		}
-		m.execute( 'listuserapplications' );*/
 		
 		// Setup user
 		this.user = new THREE.Group();
@@ -144,12 +76,15 @@ var FriendVR = {
 		this.renderer.setSize( window.innerWidth, window.innerHeight );
 		this.renderer.vr.enabled = true;
 		
-		this.renderer.shadowMapType = THREE.PCFSoftShadowMap;
+		// Enable nice shadows
+		this.renderer.shadowMapType = 0;
+		this.renderer.shadowMap.enabled = false;
+		/*this.renderer.shadowMapSoft = true;
+		this.renderer.shadowMapType = THREE.PCFSoftShadowMap;*/
+		
 		this.renderer.setClearColor( 0x202050 );
-		this.renderer.sortObjects = false;
+		this.renderer.sortObjects = true;
 		this.canvas.appendChild( this.renderer.domElement );
-		//this.controls = new THREE.VRControls( this.camera );
-		//this.effect = new THREE.VREffect( this.renderer );
 		
 		document.body.appendChild( WEBVR.createButton( this.renderer ) );
 
@@ -160,8 +95,6 @@ var FriendVR = {
 			document.body.appendChild( btn );
 		} )
 		
-		
-		
 		this.vrMode = document.getElementsByTagName( 'a' );
 		if( this.vrMode.length > 0 )
 		{
@@ -170,6 +103,18 @@ var FriendVR = {
 			else this.vrMode = true;
 		}
 		else this.vrMode = true;
+		
+		// 3d crosshair that shows your where you are pointing
+		this.crosshair = new THREE.Mesh(
+			new THREE.RingGeometry( 0.01, 0.02, 32 ),
+			new THREE.MeshBasicMaterial( {
+				color: 0xffffff,
+				opacity: 0.5,
+				transparent: true
+			} ) 
+		);
+		this.crosshair.position.z = -2;
+		this.camera.add( this.crosshair );
 		
 		this.controllerDirection = {
 			up: false, 
@@ -212,7 +157,15 @@ var FriendVR = {
 		this.animate();
 		
 		// No go ahead and launch workspace
-		ExecuteApplication( 'VRWorkspace' );
+		this.executeApplication( 'VRWorkspace' );
+	},
+	// Execute a VR application
+	executeApplication: function( appname )
+	{
+		this.applications[ appname ] = {
+			resident: true
+		};
+		ExecuteApplication( appname );
 	},
 	// Various events ----------------------------------------------------------
 	onKeyDown: function( e )
@@ -244,7 +197,7 @@ var FriendVR = {
 	},
 	onClick: function( e )
 	{
-		if( FriendVR.intersected && FriendVR.intersected.friend && FriendVR.intersected.Friend.clickAction )
+		if( FriendVR.intersected && FriendVR.intersected.Friend && FriendVR.intersected.Friend.clickAction )
 		{
 			if( FriendVR.intersected.Friend.clickAction == 'quit' )
 			{
@@ -252,7 +205,7 @@ var FriendVR = {
 			}
 			else
 			{
-				ExecuteApplication( FriendVR.intersected.Friend.clickAction );
+				FriendVR.executeApplication( FriendVR.intersected.Friend.clickAction );
 				FriendVR.intersected.material.emissive.setHex( FriendVR.intersected.currentHex );
 				FriendVR.intersected = null;
 			}
@@ -260,7 +213,7 @@ var FriendVR = {
 	},
 	onSelectStart: function( e )
 	{
-		if( FriendVR.intersected && FriendVR.intersected.friend && FriendVR.intersected.Friend.clickAction )
+		if( FriendVR.intersected && FriendVR.intersected.Friend && FriendVR.intersected.Friend.clickAction )
 		{
 			if( FriendVR.intersected.Friend.clickAction == 'quit' )
 			{
@@ -268,7 +221,7 @@ var FriendVR = {
 			}
 			else
 			{
-				ExecuteApplication( FriendVR.intersected.Friend.clickAction );
+				FriendVR.executeApplication( FriendVR.intersected.Friend.clickAction );
 				FriendVR.intersected.material.emissive.setHex( FriendVR.intersected.currentHex );
 				FriendVR.intersected = null;
 			}
@@ -357,16 +310,53 @@ var FriendVR = {
 	{
 		FriendVR.renderer.setAnimationLoop( function(){ FriendVR.render(); } );
 	},
+	hideObjects: function( arr )
+	{
+		for( var a = 0; a < arr.length; a++ )
+		{
+			arr[a].visible = false;		
+		}
+	},
+	showObjects: function( arr )
+	{
+		for( var a = 0; a < arr.length; a++ )
+		{
+			arr[a].visible = true;
+		}
+	},
+	getGamePads: function()
+	{
+		if( !this._gamePads )
+		{
+			if( navigator.getGamepads )
+			{
+				this._gamePads = navigator.getGamepads();
+			}
+		}
+		return this._gamePads;
+	},
 	handleUser: function()
 	{
 		if( FriendVR.loading > 0 ) return;
+		var id = Workspace.currentExecutedApplication;
+		if( !Friend.VRApps[ id ] ) return;
 		
 		// Always move the user above the floor
 		this.user.updateMatrix();
 		var under = new THREE.Vector3( this.user.position.x, this.user.position.y + 1.5, this.user.position.z );
 		this.raycaster.set( under, new THREE.Vector3( 0, - 1, 0 ) );
 		
-		var ufloor = this.raycaster.intersectObjects( this.scene.children, true );
+		// What to collide with?
+		var intersectArray = this.scene.children;
+		
+		// Show for ray caster
+		if( Friend.VRApps[ id ].collisionObjects.length )
+		{
+			this.showObjects( Friend.VRApps[ id ].collisionObjects );
+			intersectArray = Friend.VRApps[ id ].collisionObjects;
+		}
+		
+		var ufloor = this.raycaster.intersectObjects( intersectArray, true );
 		var find = false;
 		if( ufloor && ufloor.length && ufloor[0].distance <= 1.5 )
 		{
@@ -405,7 +395,7 @@ var FriendVR = {
 		this.raycaster.set( under, vector );
 	
 		// Check if objects are intersecting
-		ufloor = this.raycaster.intersectObjects( this.scene.children, true );
+		ufloor = this.raycaster.intersectObjects( intersectArray, true );
 		if( ufloor.length )
 		{
 			if( ufloor[0].distance <= 0.5 )
@@ -447,7 +437,7 @@ var FriendVR = {
 		
 		
 		// For gear VR
-		var gamepads = navigator.getGamepads && navigator.getGamepads();
+		var gamepads = this.getGamePads();
 		var usingGamepads = false;
 		if( gamepads && gamepads.length )
 		{
@@ -488,7 +478,14 @@ var FriendVR = {
 				this.user.translateZ( 0.03 );
 			}
 		}
+		
+		// Don't show in render
+		if( Friend.VRApps[ id ].collisionObjects.length )
+		{
+			this.hideObjects( Friend.VRApps[ id ].collisionObjects );
+		}
 	},
+	counter: 0,
 	// Do the actual rendering
 	render: function()
 	{
@@ -506,7 +503,7 @@ var FriendVR = {
 		}
 		
 		// If we have an active scene, use that to figure out intersections
-		if( 1 == 1 )
+		if( !( FriendVR.user && FriendVR.user.collisionModel ) )
 		{
 			var intersects = this.raycaster.intersectObjects( this.scene.children, true );
 			
@@ -515,7 +512,7 @@ var FriendVR = {
 			{
 				if( this.intersected != intersects[ 0 ].object )
 				{
-					if( intersects[ 0 ].object.friend && intersects[ 0 ].object.Friend.clickAction )
+					if( intersects[ 0 ].object.Friend && intersects[ 0 ].object.Friend.clickAction )
 					{
 						// Reset
 						if( this.intersected )
@@ -543,16 +540,54 @@ var FriendVR = {
 			}
 		}
 		
-		// Temporarily save the orbited camera position
-		var orbitPos = this.camera.position.clone();
-
-		// Apply the VR HMD camera position and rotation
-		// on top of the orbited camera.
-		//this.user.position.z = ( Math.sin( this.rot / 40 ) * 0.5 );
+		// Disable distant lights every 50 frames
+		this.counter++;
+		if( this.counter == 10 )
+		{
+			this.counter = 0;
+			for( var a = 0; a < FriendVR.scene.children.length; a++ )
+			{
+				var child = FriendVR.scene.children[a];
+				if( child.type == 'PointLight' )
+				{
+					var x = FriendVR.user.position.x;
+				    var y = FriendVR.user.position.y;
+				    var z = FriendVR.user.position.z; 
+				    var obj = child.position;
+				    var distance = Math.sqrt((obj.x - x) * (obj.x - x) + (obj.y - y) * (obj.y - y) + (obj.z - z) * (obj.z - z));
+				    
+				    if( distance > 15 )
+				    {
+				    	child.visible = false;
+				    }
+				    else
+				    {
+						var targetPosition = new THREE.Vector3();
+						targetPosition = targetPosition.setFromMatrixPosition( child.matrixWorld );
+						var lookAt = this.camera.getWorldDirection();
+						var cameraPos = new THREE.Vector3().setFromMatrixPosition( this.camera.matrixWorld );
+						var pos = targetPosition.sub( cameraPos );
+						var behind = ( pos.angleTo( lookAt ) ) > ( Math.PI / 2 );
+					
+						if( distance > 6 && behind )
+						{
+							child.visible = false;
+						}
+						else
+						{
+							child.visible = true;
+						}
+					}
+				}
+			}
+		}
 
 		// Update controls and render
 		//this.controls.update();
 		this.renderer.render( this.scene, this.camera );
+		
+		// Now we don't need this.
+		//this.renderer.shadowMap.needsUpdate = false;
 	}
 }
 
