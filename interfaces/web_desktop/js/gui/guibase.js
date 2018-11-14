@@ -650,6 +650,19 @@ html .View.SnapRight
 	}
 };
 
+//check if we run inside an app and do some magic
+function checkForFriendApp()
+{
+	if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+	{
+		//check if function fto register app exists and call it...
+		if( typeof friendApp.BLAGBLAHBLAH == 'function' )	
+		{
+			
+		}
+	}	
+}
+
 // Refresh programmatic classes
 function RefreshDynamicClasses( e )
 {
