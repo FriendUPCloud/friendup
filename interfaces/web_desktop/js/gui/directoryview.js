@@ -2531,7 +2531,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			inne.className = f.iconInner.className;
 			icon.appendChild( inne );
 			r.appendChild( icon );
-
+			
 			// Single click
 			r.onclick = function( e )
 			{
@@ -2617,6 +2617,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 				return cancelBubble( e );
 			}
+			
 			r.onmousedown = function( e )
 			{
 				// Right mouse button
@@ -2685,7 +2686,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Let's drag this bastard!
 			r.setAttribute( 'draggable', true );
 			
-			if( window.isTablet )
+			if( window.isTablet || !window.isMobile )
 			{
 				r.ondragstart = function( e )
 				{
@@ -3409,8 +3410,6 @@ FileIcon.prototype.Init = function( fileInfo )
 		else
 		{	
 			// No mime type? Ask Friend Core
-			console.log( 'Checking mimetype.' );
-			
 			var mim = new Module( 'system' );
 			mim.onExecuted = function( me, md )
 			{
