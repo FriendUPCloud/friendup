@@ -802,11 +802,26 @@ bool mobile_app_notify_user( const char *username, const char *channel_id, const
 		default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 	}
 	
-	MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
-	while( mle != NULL )
+	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
+	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
+	
+	char *json_message_ios;
+	int json_message_ios_size = required_length+512;
+	if( ( json_message_ios = FMalloc( json_message_ios_size ) ) != NULL )
 	{
-		WebsocketClientSendMessage( SLIB->l_APNSConnection, json_message, json_message_length );
-		mle = (MobileListEntry *) mle->node.mln_Succ;
+		MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
+		while( mle != NULL )
+		{
+			snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, mle->mm_UMApp->uma_AppToken );
+			
+			WebsocketClientSendMessage( SLIB->l_APNSConnection, json_message_ios, json_message_ios_size );
+			mle = (MobileListEntry *) mle->node.mln_Succ;
+		}
+		FFree( json_message_ios );
+	}
+	else
+	{
+		FERROR("Cannot allocate memory for MobileApp->user->ios message!\n");
 	}
 	
 	return true;
