@@ -26,6 +26,7 @@ installforpackage-debian:
 	make FRIEND_PATH=$(FRIEND_DEB_DEBIAN_TGT_PATH) clean setup release install
 	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/../../etc/systemd/system/
 	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/db
+	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/cfg/crt
 	cp $(PWD)/docs/cfg.ini.example $(FRIEND_DEB_DEBIAN_TGT_PATH)/cfg/cfg.ini.example
 	cp $(PWD)/docs/README.txt $(FRIEND_DEB_DEBIAN_TGT_PATH)/
 	cp $(PWD)/scripts/friendup.service $(FRIEND_DEB_DEBIAN_TGT_PATH)/../../etc/systemd/system/
@@ -38,6 +39,7 @@ installforpackage-ubuntu:
 	make FRIEND_PATH=$(FRIEND_DEB_UBUNTU_TGT_PATH) clean setup release install
 	mkdir -p $(FRIEND_DEB_UBUNTU_TGT_PATH)/../../etc/systemd/system/
 	mkdir -p $(FRIEND_DEB_UBUNTU_TGT_PATH)/db
+	mkdir -p $(FRIEND_DEB_DEBIAN_TGT_PATH)/cfg/crt
 	cp $(PWD)/scripts/friendup.service $(FRIEND_DEB_UBUNTU_TGT_PATH)/../../etc/systemd/system/
 	cp $(PWD)/docs/cfg.ini.example $(FRIEND_DEB_UBUNTU_TGT_PATH)/cfg/cfg.ini.example
 	cp $(PWD)/docs/README.txt $(FRIEND_DEB_UBUNTU_TGT_PATH)/
