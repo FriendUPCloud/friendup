@@ -501,10 +501,6 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 					HttpAddTextContent( response, buffer );
 				}
 				
-				if( ma != NULL )
-				{
-					UserMobileAppDelete( ma );
-				}
 			} // missing parameters
 			else  // umaid
 			{
