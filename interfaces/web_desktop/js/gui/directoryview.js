@@ -3195,7 +3195,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	file.fileInfo = fileInfo;
 	file.extension = extension;
 	file.Title = title.innerText;
-	file.fileInfo.downloadhref = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fileInfo.Filename + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ) + '&download=1';
+	file.fileInfo.downloadhref = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + encodeURIComponent( fileInfo.Filename ) + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ) + '&download=1';
 
 	// -------------------------------------------------------------------------
 	file.rollOver = function ( eles )
@@ -3800,7 +3800,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			memorize : true
 		} );
 
-		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '"></iframe></div>' );
+		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) + '"></iframe></div>' );
 		
 		win = null;
 	}
@@ -3856,7 +3856,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				owin.setContent( '<iframe src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + imageUrl + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+				owin.setContent( '<iframe src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 			} );
 		}
 		else

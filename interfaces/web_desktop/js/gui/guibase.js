@@ -657,7 +657,8 @@ function checkForFriendApp()
 	{
 		// if this is mobile app we must register it
 		// if its already registered FC will not do it again
-		if( window.isMobile && typeof friendApp.appToken == 'string' )
+		console.log( friendApp );
+		if( typeof friendApp.appToken == 'string' )
 		{
 			var version = null;
 			var platform = null;

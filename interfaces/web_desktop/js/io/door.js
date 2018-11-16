@@ -538,7 +538,7 @@ Door.prototype.read = function( filename, mode, extraData )
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
-	j.addVar( 'path', filename );
+	j.addVar( 'path', encodeURIComponent( filename ) );
 
 	// Check read mode
 	if( mode ) mode = mode.toLowerCase();
@@ -886,7 +886,7 @@ function GetURLFromPath( path, callback, type, toAdd )
 	{
 		if ( !toAdd )
 			toAdd = ' ';
-		var imageUrl = '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + path + toAdd;
+		var imageUrl = '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( path ) + toAdd;
 		callback( imageUrl );
 	}
 }

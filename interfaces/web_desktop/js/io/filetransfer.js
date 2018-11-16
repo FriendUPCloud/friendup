@@ -193,7 +193,7 @@ self.uploadFiles = function()
 		fd.append( 'module','files' );
 		fd.append( 'command','uploadfile' );
 		fd.append( 'path', ( self.path.slice(-1) == '/' ? self.path : self.path + '/').split( ':/' ).join( ':' ) );
-		fd.append( 'file', file, filename );
+		fd.append( 'file', file, encodeURIComponent( filename ) );
 		
 		//get the party started
 		xhrs[f].send( fd );
