@@ -657,32 +657,29 @@ function checkForFriendApp()
 	{
 		// if this is mobile app we must register it
 		// if its already registered FC will not do it again
-		console.log( friendApp );
-		if( typeof friendApp.appToken == 'string' )
+		var version = null;
+		var platform = null;
+		var appToken = friendApp.appToken ? friendApp.appToken : false;
+
+		if( typeof friendApp.get_version == 'function' )
 		{
-			var version = null;
-			var platform = null;
-
-			if( typeof friendApp.get_version == 'function' )
-			{
-				version = friendApp.get_version();
-			}
-
-			if( typeof friendApp.get_platform == 'function' )
-			{
-				platform = friendApp.get_platform();
-			}
-
-			var l = new Library( 'system.library' );
-			l.onExecuted = function( e, d )
-			{
-				if( e != 'ok' )
-				{
-
-				}
-			}
-			l.execute( 'mobile/createuma', { devname: args[ 1 ], sessionid: Workspace.sessionid, apptoken: friendApp.appToken, appversion: version, platform: platform } );
+			version = friendApp.get_version();
 		}
+
+		if( typeof friendApp.get_platform == 'function' )
+		{
+			platform = friendApp.get_platform();
+		}
+
+		var l = new Library( 'system.library' );
+		l.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+
+			}
+		}
+		l.execute( 'mobile/createuma', { devname: args[ 1 ], sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
 	}	
 }
 
