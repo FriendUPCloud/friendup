@@ -34,15 +34,15 @@ static inline char *GetMIMEByFilename( char *fname )
 	if( flen < 4 ) return StringDuplicate( "application/octet-stream" );
 	
 	// Our variables!
-	char *mime = calloc( 1, 6 );
+	char *mime = calloc( 1, 16 );
 	char *fallbackMime = NULL;
 	unsigned int i = 0, j = 0;
 	
-	for( i = flen - 4 ; i < flen ; i++ )
+	for( i = flen - 6 ; i < flen ; i++ )
 	{
 		mime[ j++ ] = toupper( fname[ i ] ); 
 	}
-	
+
 	if( strstr( mime, ".PDF" ) )
 		fallbackMime = StringDuplicate( "application/pdf" );
 	else if( strstr( mime, ".WAV" ) )
