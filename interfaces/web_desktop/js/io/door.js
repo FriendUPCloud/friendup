@@ -538,7 +538,7 @@ Door.prototype.read = function( filename, mode, extraData )
 	if( Workspace.conf && Workspace.conf.authId )
 		j.addVar( 'authid', Workspace.conf.authId );
 	else j.addVar( 'sessionid', Workspace.sessionId );
-	j.addVar( 'path', encodeURIComponent( filename ) );
+	j.addVar( 'path', filename );
 
 	// Check read mode
 	if( mode ) mode = mode.toLowerCase();

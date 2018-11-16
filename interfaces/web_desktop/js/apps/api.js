@@ -3247,7 +3247,7 @@ function getImageUrl( path, mode )
 
 	var prt = 'authid=' + ( Application.authId ? Application.authId : '' );
 	if( Application.sessionId ) prt = 'sessionid=' + Application.sessionId;
-	var u = '/system.library/file/read?' + prt + '&path=' + encodeURIComponent( path ) + '&mode=rs';
+	var u = '/system.library/file/read?' + prt + '&path=' + path + '&mode=rs';
 	return u;
 }
 // Alias
@@ -6407,7 +6407,7 @@ Friend.convertFriendPaths = function( string )
 	var base = '/system.library/file/read?' + prt + '&mode=rs&path=';
 	if( string )
 	{
-		string = string.split( /progdir\:/i ).join ( base + encodeURIComponent( apath )  );
+		string = string.split( /progdir\:/i ).join ( base + apath  );
 		string = string.split( /libs\:/i ).join ( Application.domain + '/webclient/' );
 		string = string.split( /system\:/i ).join ( Application.domain + '/webclient/' );
 	}
