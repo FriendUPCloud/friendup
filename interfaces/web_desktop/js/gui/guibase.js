@@ -659,7 +659,8 @@ function checkForFriendApp()
 		// if its already registered FC will not do it again
 		var version = null;
 		var platform = null;
-		var appToken = friendApp.appToken ? friendApp.appToken : false;
+		var appToken = null;
+		//var appToken = friendApp.appToken ? friendApp.appToken : false;
 
 		if( typeof friendApp.get_version == 'function' )
 		{
@@ -671,6 +672,11 @@ function checkForFriendApp()
 			platform = friendApp.get_platform();
 		}
 
+		if( typeof friendApp.get_app_token == 'function' )
+		{
+			appToken = friendApp.get_app_token();
+		}
+
 		var l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
@@ -679,7 +685,10 @@ function checkForFriendApp()
 
 			}
 		}
-		l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
+		if( appToken != null )	// old applications which do not have appToken will skip this part
+		{
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
+		}
 	}	
 }
 
