@@ -679,7 +679,7 @@ function checkForFriendApp()
 
 			}
 		}
-		l.execute( 'mobile/createuma', { devname: args[ 1 ], sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
+		l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
 	}	
 }
 
