@@ -825,6 +825,8 @@ Application.refreshFilesList = function ()
 	if( tabContainer.length ) tabContainer = tabContainer[0];
 	else tabContainer = false;
 	
+	var clickFunc = false; // Delayed click
+	
 	for( var t in this.files )
 	{
 		var c = document.createElement ( 'div' );
@@ -845,6 +847,7 @@ Application.refreshFilesList = function ()
 		c.className = 'Padding MousePointer sw' + ( sw = sw == 1 ? 2 : 1 );
 		if( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
+		c.uniqueId = this.files[t].uniqueId;
 		c.onclick = function( e )
 		{
 			Application.setCurrentFile( this.ind, function()
@@ -861,7 +864,7 @@ Application.refreshFilesList = function ()
 				}
 			} );
 		};
-		files.appendChild ( c );
+		files.appendChild( c );
 		
 		// Check for missing tab
 		if( tabContainer )
@@ -898,6 +901,15 @@ Application.refreshFilesList = function ()
 				
 				// Find tabs anew
 				tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+				
+				// Activate new file if this is the current file
+				if( tab.uniqueId == this.files[ this.currentFile ].uniqueId )
+				{
+					clickFunc = function()
+					{	
+						tab.click();
+					}
+				}
 			}
 		}
 	}
@@ -905,15 +917,25 @@ Application.refreshFilesList = function ()
 	// Reinitialize tabs with proper callback
 	InitTabs( ge( 'EditorTabs' ), function( self, pages )
 	{
-		ge( 'CodeTabPage' ).className = 'Page PageActive';
-		for( var a in Application.files )
+		// Delayed clickfunc
+		if( clickFunc )
 		{
-			if( Application.files[ a ].uniqueId == self.uniqueId )
+			clickFunc();
+			clickFunc = null;
+		}
+		
+		// also do the files list!
+		for( var a in files.childNodes )
+		{
+			if( files.childNodes[a].uniqueId == self.uniqueId )
 			{
-				Application.setCurrentFile( a );
-				return;
+				files.childNodes[a].click();
+				break;
 			}
 		}
+		
+		// Set class
+		ge( 'CodeTabPage' ).className = 'Page PageActive';
 		return false;
 	} );
 	
@@ -1094,6 +1116,7 @@ Application.setCurrentFile = function( curr, ocallback )
 	
 	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
 	var foundTab = false;
+	
 	for( var a = 0; a < tabs.length; a++ )
 	{
 		if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
