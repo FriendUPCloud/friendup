@@ -656,8 +656,8 @@ function checkForFriendApp()
 	//if we dont have a sessionid we will need to wait a bit here...
 	if( !Workspace.sessionId )
 	{
-		console.log('waiting for valid session...');
-		setTimeout('checkForFriendApp()', 500);
+		console.log('waiting for valid session...' + Workspace.sessionId );
+		setTimeout(checkForFriendApp, 500);
 		return;
 	}
 	
@@ -685,6 +685,8 @@ function checkForFriendApp()
 			appToken = friendApp.get_app_token();
 		}
 
+		console.log('call ' + Workspace.sessionId );
+
 		var l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
@@ -695,9 +697,9 @@ function checkForFriendApp()
 		}
 		if( appToken != null )	// old applications which do not have appToken will skip this part
 		{
-			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, appversion: version, platform: platform } );
 		}
-	}	
+	}
 }
 
 // Refresh programmatic classes
