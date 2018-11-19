@@ -410,7 +410,7 @@ Application.handleKeys = function( k, e )
 // Set correct syntax highlighting
 Application.applySyntaxHighlighting = function ()
 {
-	var cf = this.files[this.currentFile];
+	var cf = this.files[ this.currentFile ];
 	if( !cf ) return;
 	if( !cf.filetype || ( cf.filetype && cf.filetype.indexOf( ' ' ) > 0 && cf.filename ) )
 	{
@@ -419,7 +419,7 @@ Application.applySyntaxHighlighting = function ()
 	}
 	
 	var mode = '';
-	var extension = this.files[this.currentFile].filetype.toLowerCase();
+	var extension = this.files[ this.currentFile ].filetype.toLowerCase();
 
 	switch( extension )
 	{
@@ -529,7 +529,7 @@ Application.runJSX = function()
 	this.sendMessage( {
 		type: 'system',
 		command: 'executeapplication',
-		executable: this.files[this.currentFile].filename,
+		executable: this.files[ this.currentFile ].filename,
 		arguments: args
 	} );
 }
@@ -537,7 +537,7 @@ Application.runJSX = function()
 // Kill running jsx
 Application.stopJSX = function()
 {
-	var fname = this.files[this.currentFile].filename.split( ':' )[1];
+	var fname = this.files[ this.currentFile ].filename.split( ':' )[1];
 	if( fname.indexOf( '/' ) >= 0 )
 	{
 		fname = fname.split( '/' ); fname = fname[fname.length-1]
@@ -620,9 +620,9 @@ Application.updateStatusbar = function()
 	this.statusBarInsOvr.innerHTML = this.editor.getOverwrite() ? 'OVR' : 'INS';
 
 	// TODO: Allow override with temporary highlighting!
-	if( this.files && this.files[this.currentFile] )
+	if( this.files && this.files[ this.currentFile ] )
 	{
-		var mode = this.files[this.currentFile].filetype;
+		var mode = this.files[ this.currentFile ].filetype;
 		if ( typeof ( mode ) == 'undefined' || !mode || mode == 'undefined' ) mode = 'txt';
 		else if( mode == 'run' ) mode = 'c';
 		var opts = this.statusBarSyntax.getElementsByTagName ( 'option' );
@@ -666,12 +666,12 @@ Application.loadFile = function( data, path, cb )
 	
 	if( !this.files )
 	{
-		this.files = [ {} ];
-		this.currentFile = 0;
+		this.files = {};
+		this.currentFile = path;
 	}
 	
 	// Add a new file
-	for( var a = 0; a < this.files.length; a++ )
+	for( var a in this.files )
 	{
 		// It already exists..
 		if( this.files[a].filename == path )
@@ -684,8 +684,8 @@ Application.loadFile = function( data, path, cb )
 	}
 	
 	// Set it
-	this.files.push( { content: data, filename: path, touched: true } );
-	this.setCurrentFile( this.files.length - 1, function(){
+	this.files[ path ] = { content: data, filename: path, touched: true };
+	this.setCurrentFile( path, function(){
 		// Refresh so we can see it in the list
 		self.refreshFilesList();
 		if( cb ) cb();
@@ -753,9 +753,19 @@ Application.save = function( mode )
 Application.newFile = function()
 {
 	var self = this;
-	if( !this.files ) this.files = [];
-	this.files.push( { content: '', filename: i18n ( 'i18n_empty_file' ), touched: false } );
-	this.setCurrentFile( this.files.length - 1, function()
+	if( !this.files ) this.files = {};
+	var newFile;
+	var i = 0;
+	do
+	{
+		newFile = i18n( 'i18n_empty_file' );
+		if( i > 0 )
+			newFile += ' ' + i;
+	}
+	while( typeof( this.files[ newFile ] ) != 'undefined' );
+	this.files[ newFile ] = { content: '', filename: newFile, touched: false };
+	
+	this.setCurrentFile( newFile, function()
 	{
 		self.refreshFilesList();
 
@@ -781,7 +791,7 @@ Application.refreshFilesList = function ()
 	this.refreshingFiles = true;
 	
 	// Check files for unique ids
-	for( var a = 0; a < this.files.length; a++ )
+	for( var a in this.files )
 	{
 		if( !this.files[a].uniqueId )
 		{
@@ -815,7 +825,7 @@ Application.refreshFilesList = function ()
 	if( tabContainer.length ) tabContainer = tabContainer[0];
 	else tabContainer = false;
 	
-	for( var t = 0; t < this.files.length; t++ )
+	for( var t in this.files )
 	{
 		var c = document.createElement ( 'div' );
 		var fullfile = this.files[t].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
@@ -835,10 +845,10 @@ Application.refreshFilesList = function ()
 		c.className = 'Padding MousePointer sw' + ( sw = sw == 1 ? 2 : 1 );
 		if ( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
-		c.onclick = function ( e )
-		{	
+		c.onclick = function( e )
+		{
 			Application.setCurrentFile( this.ind, function()
-			{
+			{	
 				// Close when clicking on close icon
 				var t = e.target ? e.target : e.srcElement;
 				if( t.className.indexOf( 'fa-close' ) > 0 )
@@ -897,7 +907,7 @@ Application.refreshFilesList = function ()
 	InitTabs( ge( 'EditorTabs' ), function( self, pages )
 	{
 		ge( 'CodeTabPage' ).className = 'Page PageActive';
-		for( var a = 0; a < Application.files.length; a++ )
+		for( var a in Application.files )
 		{
 			if( Application.files[a].uniqueId == self.uniqueId )
 			{
@@ -1050,14 +1060,14 @@ Application.setCurrentFile = function( curr, callback )
 	var sess = this.editor.getSession();
 
 	// Make sure we copy the right content before we change curr!
-	if( sess && this.files && this.files[this.currentFile] )
+	if( sess && this.files && this.files[ this.currentFile ] )
 	{
 		this.files[ this.currentFile ].content = this.editor.getValue();
 		this.files[ this.currentFile ].session = this.getStorableSession( sess );
 	}
 	
 	// Store current scroll top and values etc
-	if( sess && ( curr || curr === 0 ) && this.files[ this.currentFile ] )
+	if( sess && curr && this.files[ this.currentFile ] )
 	{
 		var f = this.files[ this.currentFile ];
 		if( curr != this.currentFile )
@@ -1067,7 +1077,7 @@ Application.setCurrentFile = function( curr, callback )
 	}
 
 	// Set current file
-	if( curr || curr === 0 )
+	if( curr )
 	{
 		this.currentFile = curr;
 	}
@@ -1076,11 +1086,11 @@ Application.setCurrentFile = function( curr, callback )
 	var foundTab = false;
 	for( var a = 0; a < tabs.length; a++ )
 	{
-		if( tabs[a].uniqueId == this.files[ this.currentFile ].uniqueId )
+		if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
 		{
-			if( !tabs[a].classList.contains( 'TabActive' ) )
+			if( !tabs[ a ].classList.contains( 'TabActive' ) )
 			{
-				tabs[a].onclick();
+				tabs[ a ].onclick();
 			}
 			var fn = this.files[ this.currentFile ].filename;
 			if( fn.indexOf( ':' ) > 0 )
@@ -1091,25 +1101,28 @@ Application.setCurrentFile = function( curr, callback )
 					fn = fn.split( '/' ).pop();
 				}
 			}
-			tabs[a].innerHTML = fn;
+			tabs[ a ].innerHTML = fn;
 			break;
 		}
 	}
 
 	// Manage undo
-	if( this.files[this.currentFile].session )
+	if( this.currentFile )
 	{
-		Application.setStoredSession( this.files[ this.currentFile ].session );
-	}
-	else
-	{
-		// New one
-		var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
-		this.editor.setSession( session );
-		this.editor.session.setUseWorker( false );
+		if( this.files[ this.currentFile ].session )
+		{
+			Application.setStoredSession( this.files[ this.currentFile ].session );
+		}
+		else
+		{
+			// New one
+			var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
+			this.editor.setSession( session );
+			this.editor.session.setUseWorker( false );
 		
-		// Remove find dialog
-		this.editor.commands.removeCommand( 'find' );
+			// Remove find dialog
+			this.editor.commands.removeCommand( 'find' );
+		}
 	}
 	
 	// Clear the selection in the editor
@@ -1227,27 +1240,29 @@ Application.closeFile = function()
 	// Remember current file
 	var currId = this.files[ this.currentFile ].uniqueId;
 	
-	var newFiles = [];
+	var newFiles = {};
+	var fcount = 0;
 	var pick = this.currentFile;
-	for ( var a = 0; a < this.files.length; a++ )
+	for ( var a in this.files )
 	{
 		if( a != pick )
 		{
-			newFiles.push( {
+			newFiles[ a ] = {
 				content: this.files[a].content,
 				filename: this.files[a].filename,
 				touched: this.files[a].touched,
 				uniqueId: this.files[a].uniqueId
-			} );
-			this.currentFile = newFiles.length - 1;
+			};
+			fcount++;
+			this.currentFile = a;
 	    }
 	}
 
 	// Initial state
-	if ( newFiles.length <= 0 )
+	if( !fcount )
 	{
-		this.currentFile = 0;
-		this.files = false;
+		this.currentFile = false;
+		this.files = {};
 		var d = ge( 'fileslist' ).getElementsByTagName ( 'div' );
 		var files = false;
 		for ( var c = 0; c < d.length; c++ )
@@ -1271,6 +1286,9 @@ Application.closeFile = function()
 		{
 			this.collaboranewFile();
 		}
+		
+		// We need at least one file
+		this.newFile();
 	}
 	// Close existing file and rebuild files list
 	else
@@ -1278,12 +1296,6 @@ Application.closeFile = function()
 		this.files = newFiles;
 		this.editor.setValue( this.files[this.currentFile].content );
 		this.setCurrentFile( this.currentFile );
-	}
-	
-	// We need at least one file
-	if( !this.files.length )
-	{
-		this.newFile();
 	}
 	
 	// Remove the previous current file
@@ -1600,7 +1612,19 @@ Application.receiveMessage = function( msg )
 				}
 				break;
 			case 'setfile':
-				this.setCurrentFile( msg.filenum );
+				var path = msg.filenum;
+				if( parseInt( msg.filenum ) === 0 || parseInt( msg.filenum ) > 0 )
+				{
+					for( var a in Application.files )
+					{
+						if( msg.filenum == a )
+						{
+							path = a;
+							break;
+						}
+					}
+				}
+				this.setCurrentFile( path );
 				break;
 			case 'closefile':
 				this.closeFile();
