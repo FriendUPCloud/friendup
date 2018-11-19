@@ -2276,7 +2276,8 @@ DirectoryView.prototype.SelectAll = function()
 	{
 		ics[a].domNode.classList.add( 'Selected' );
 		ics[a].domNode.selected = true;
-		ics[a].fileInfo.selected = true;
+		if( ics[a].fileInfo )
+			ics[a].fileInfo.selected = true;
 	}
 }
 

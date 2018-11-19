@@ -410,7 +410,7 @@ Application.handleKeys = function( k, e )
 // Set correct syntax highlighting
 Application.applySyntaxHighlighting = function ()
 {
-	var cf = this.files[this.currentFile];
+	var cf = this.files[ this.currentFile ];
 	if( !cf ) return;
 	if( !cf.filetype || ( cf.filetype && cf.filetype.indexOf( ' ' ) > 0 && cf.filename ) )
 	{
@@ -419,7 +419,7 @@ Application.applySyntaxHighlighting = function ()
 	}
 	
 	var mode = '';
-	var extension = this.files[this.currentFile].filetype.toLowerCase();
+	var extension = this.files[ this.currentFile ].filetype.toLowerCase();
 
 	switch( extension )
 	{
@@ -529,7 +529,7 @@ Application.runJSX = function()
 	this.sendMessage( {
 		type: 'system',
 		command: 'executeapplication',
-		executable: this.files[this.currentFile].filename,
+		executable: this.files[ this.currentFile ].filename,
 		arguments: args
 	} );
 }
@@ -537,7 +537,7 @@ Application.runJSX = function()
 // Kill running jsx
 Application.stopJSX = function()
 {
-	var fname = this.files[this.currentFile].filename.split( ':' )[1];
+	var fname = this.files[ this.currentFile ].filename.split( ':' )[1];
 	if( fname.indexOf( '/' ) >= 0 )
 	{
 		fname = fname.split( '/' ); fname = fname[fname.length-1]
@@ -620,9 +620,9 @@ Application.updateStatusbar = function()
 	this.statusBarInsOvr.innerHTML = this.editor.getOverwrite() ? 'OVR' : 'INS';
 
 	// TODO: Allow override with temporary highlighting!
-	if( this.files && this.files[this.currentFile] )
+	if( this.files && this.files[ this.currentFile ] )
 	{
-		var mode = this.files[this.currentFile].filetype;
+		var mode = this.files[ this.currentFile ].filetype;
 		if ( typeof ( mode ) == 'undefined' || !mode || mode == 'undefined' ) mode = 'txt';
 		else if( mode == 'run' ) mode = 'c';
 		var opts = this.statusBarSyntax.getElementsByTagName ( 'option' );
@@ -662,33 +662,36 @@ function loadProgress()
 // Loads a file
 Application.loadFile = function( data, path, cb )
 {
+	var self = this;
+	
 	if( !this.files )
 	{
-		this.files = [ {} ];
-		this.currentFile = 0;
+		this.files = {};
+		this.currentFile = path;
 	}
 	
 	// Add a new file
-	for( var a = 0; a < this.files.length; a++ )
+	for( var a in this.files )
 	{
 		// It already exists..
 		if( this.files[a].filename == path )
 		{
 			if( cb ) cb();
 			// Activate it
-			this.setCurrentFile( a );
-			this.refreshFilesList();
+			this.setCurrentFile( a, function(){ self.refreshFilesList(); } );
 			return;
 		}
 	}
 	
 	// Set it
-	this.files.push( { content: data, filename: path, touched: true } );
-	this.setCurrentFile( this.files.length - 1 );
+	this.files[ path ] = { content: data, filename: path, touched: true };
+	this.setCurrentFile( path, function(){
+		// Refresh so we can see it in the list
+		self.refreshFilesList();
+		if( cb ) cb();
+	} );
 	
-	// Refresh so we can see it in the list
-	this.refreshFilesList();
-	if( cb ) cb();
+	
 }
 
 // Say we wanna open
@@ -749,15 +752,28 @@ Application.save = function( mode )
 // Add a new file
 Application.newFile = function()
 {
-	if ( !this.files ) this.files = [];
-	this.files.push( { content: '', filename: i18n ( 'i18n_empty_file' ), touched: false } );
-	this.setCurrentFile( this.files.length - 1 );
-	this.refreshFilesList();
+	var self = this;
+	if( !this.files ) this.files = {};
+	var newFile;
+	var i = 0;
+	do
+	{
+		newFile = i18n( 'i18n_empty_file' );
+		if( i > 0 )
+			newFile += ' ' + i;
+	}
+	while( typeof( this.files[ newFile ] ) != 'undefined' );
+	this.files[ newFile ] = { content: '', filename: newFile, touched: false };
+	
+	this.setCurrentFile( newFile, function()
+	{
+		self.refreshFilesList();
 
-	// Sync the new list to parent level
-	this.sendMessage( {
-		command: 'receivefilesync',
-		files: this.files
+		// Sync the new list to parent level
+		self.sendMessage( {
+			command: 'receivefilesync',
+			files: self.files
+		} );
 	} );
 };
 
@@ -775,7 +791,7 @@ Application.refreshFilesList = function ()
 	this.refreshingFiles = true;
 	
 	// Check files for unique ids
-	for( var a = 0; a < this.files.length; a++ )
+	for( var a in this.files )
 	{
 		if( !this.files[a].uniqueId )
 		{
@@ -809,10 +825,10 @@ Application.refreshFilesList = function ()
 	if( tabContainer.length ) tabContainer = tabContainer[0];
 	else tabContainer = false;
 	
-	for( var t = 0; t < this.files.length; t++ )
+	for( var t in this.files )
 	{
 		var c = document.createElement ( 'div' );
-		var fullfile = this.files[t].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
+		var fullfile = this.files[ t ].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
 		var onlyfile = fullfile.split( ':' )[1];
 		if( onlyfile && onlyfile.indexOf( '/' ) >= 0 )
 		{
@@ -827,27 +843,27 @@ Application.refreshFilesList = function ()
 		c.style.textOverflow = 'ellipsis';
 		c.style.overflow = 'hidden';
 		c.className = 'Padding MousePointer sw' + ( sw = sw == 1 ? 2 : 1 );
-		if ( t == this.currentFile ) c.classList.add( 'Selected' );
+		if( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
-		c.onclick = function ( e )
-		{	
-			Application.setCurrentFile( this.ind );
-
-			// Close when clicking on close icon
-			var t = e.target ? e.target : e.srcElement;
-			if( t.className.indexOf( 'fa-close' ) > 0 )
-			{
-				Application.closeFile();
-			}
-			else
-			{
-				Application.refreshFilesList();
-			}
+		c.onclick = function( e )
+		{
+			Application.setCurrentFile( this.ind, function()
+			{	
+				// Close when clicking on close icon
+				var tr = e.target ? e.target : e.srcElement;
+				if( tr.className.indexOf( 'fa-close' ) > 0 )
+				{
+					Application.closeFile();
+				}
+				else
+				{
+					Application.refreshFilesList();
+				}
+			} );
 		};
 		files.appendChild ( c );
 		
 		// Check for missing tab
-		// TODO: Add unique file id
 		if( tabContainer )
 		{
 			var tabFound = false;
@@ -890,9 +906,9 @@ Application.refreshFilesList = function ()
 	InitTabs( ge( 'EditorTabs' ), function( self, pages )
 	{
 		ge( 'CodeTabPage' ).className = 'Page PageActive';
-		for( var a = 0; a < Application.files.length; a++ )
+		for( var a in Application.files )
 		{
-			if( Application.files[a].uniqueId == self.uniqueId )
+			if( Application.files[ a ].uniqueId == self.uniqueId )
 			{
 				Application.setCurrentFile( a );
 				return;
@@ -1038,19 +1054,30 @@ Application.setStoredSession = function( data )
 
 var inc = 0;
 // Set the content from current file -------------------------------------------
-Application.setCurrentFile = function( curr )
+Application.setCurrentFile = function( curr, ocallback )
 {
+	var self = this;
+	
+	// Race condition prevention
+	if( self.settingCurrentFile ) return;
+	self.settingCurrentFile = true;
+	
+	// Reset when done
+	var callback = ocallback ? 
+		function(){ ocallback(); self.settingCurrentFile = false; } : 
+		function(){ self.settingCurrentFile = false; };
+	
 	var sess = this.editor.getSession();
 
 	// Make sure we copy the right content before we change curr!
-	if( sess && this.files && this.files[this.currentFile] )
+	if( sess && this.files && this.files[ this.currentFile ] )
 	{
 		this.files[ this.currentFile ].content = this.editor.getValue();
 		this.files[ this.currentFile ].session = this.getStorableSession( sess );
 	}
 	
 	// Store current scroll top and values etc
-	if( sess && ( curr || curr === 0 ) && this.files[ this.currentFile ] )
+	if( sess && curr && this.files[ this.currentFile ] )
 	{
 		var f = this.files[ this.currentFile ];
 		if( curr != this.currentFile )
@@ -1060,7 +1087,7 @@ Application.setCurrentFile = function( curr )
 	}
 
 	// Set current file
-	if( curr || curr === 0 )
+	if( curr )
 	{
 		this.currentFile = curr;
 	}
@@ -1069,11 +1096,11 @@ Application.setCurrentFile = function( curr )
 	var foundTab = false;
 	for( var a = 0; a < tabs.length; a++ )
 	{
-		if( tabs[a].uniqueId == this.files[ this.currentFile ].uniqueId )
+		if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
 		{
-			if( !tabs[a].classList.contains( 'TabActive' ) )
+			if( !tabs[ a ].classList.contains( 'TabActive' ) )
 			{
-				tabs[a].onclick();
+				tabs[ a ].onclick();
 			}
 			var fn = this.files[ this.currentFile ].filename;
 			if( fn.indexOf( ':' ) > 0 )
@@ -1084,25 +1111,28 @@ Application.setCurrentFile = function( curr )
 					fn = fn.split( '/' ).pop();
 				}
 			}
-			tabs[a].innerHTML = fn;
+			tabs[ a ].innerHTML = fn;
 			break;
 		}
 	}
 
 	// Manage undo
-	if( this.files[this.currentFile].session )
+	if( this.currentFile )
 	{
-		Application.setStoredSession( this.files[ this.currentFile ].session );
-	}
-	else
-	{
-		// New one
-		var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
-		this.editor.setSession( session );
-		this.editor.session.setUseWorker( false );
+		if( this.files[ this.currentFile ].session )
+		{
+			Application.setStoredSession( this.files[ this.currentFile ].session );
+		}
+		else
+		{
+			// New one
+			var session = ace.require( 'ace/ace' ).createEditSession( this.files[this.currentFile].content );
+			this.editor.setSession( session );
+			this.editor.session.setUseWorker( false );
 		
-		// Remove find dialog
-		this.editor.commands.removeCommand( 'find' );
+			// Remove find dialog
+			this.editor.commands.removeCommand( 'find' );
+		}
 	}
 	
 	// Clear the selection in the editor
@@ -1111,7 +1141,8 @@ Application.setCurrentFile = function( curr )
 	// Show stuff to user
 	this.updateStatusbar();
 
-	FileInProjectCheck( this.currentFile );
+	// Check if the file is registered in the project. Then run callback (async)
+	FileInProjectCheck( this.currentFile, callback );
 
 	// Enable word wrapping
 	this.refreshAceSettings();
@@ -1121,7 +1152,7 @@ Application.setCurrentFile = function( curr )
 };
 
 // Check if file is to be added to project
-function FileInProjectCheck( currentFile )
+function FileInProjectCheck( currentFile, callback )
 {
 	var app = Application;
 	
@@ -1129,11 +1160,16 @@ function FileInProjectCheck( currentFile )
 	if( !app.files[ currentFile ] )
 	{
 		Notify( { title: 'File check failed', text: 'Current file doesn\'t exist in files list.' } );
+		// Run callback
+		if( callback )
+			callback();
 		return false;
 	}
 	if( !app.projectFilename )
 	{
-		console.log( 'No project filename' );
+		// Run callback
+		if( callback )
+			callback();
 		return false;
 	}
 
@@ -1199,6 +1235,9 @@ function FileInProjectCheck( currentFile )
 				ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
 				ftabs.innerHTML = '';
 			}
+			// Run callback
+			if( callback )
+				callback();
 		} )
 	} );
 	
@@ -1211,27 +1250,29 @@ Application.closeFile = function()
 	// Remember current file
 	var currId = this.files[ this.currentFile ].uniqueId;
 	
-	var newFiles = [];
+	var newFiles = {};
+	var fcount = 0;
 	var pick = this.currentFile;
-	for ( var a = 0; a < this.files.length; a++ )
+	for ( var a in this.files )
 	{
 		if( a != pick )
 		{
-			newFiles.push( {
+			newFiles[ a ] = {
 				content: this.files[a].content,
 				filename: this.files[a].filename,
 				touched: this.files[a].touched,
 				uniqueId: this.files[a].uniqueId
-			} );
-			this.currentFile = newFiles.length - 1;
+			};
+			fcount++;
+			this.currentFile = a;
 	    }
 	}
 
 	// Initial state
-	if ( newFiles.length <= 0 )
+	if( !fcount )
 	{
-		this.currentFile = 0;
-		this.files = false;
+		this.currentFile = false;
+		this.files = {};
 		var d = ge( 'fileslist' ).getElementsByTagName ( 'div' );
 		var files = false;
 		for ( var c = 0; c < d.length; c++ )
@@ -1255,6 +1296,9 @@ Application.closeFile = function()
 		{
 			this.collaboranewFile();
 		}
+		
+		// We need at least one file
+		this.newFile();
 	}
 	// Close existing file and rebuild files list
 	else
@@ -1262,12 +1306,6 @@ Application.closeFile = function()
 		this.files = newFiles;
 		this.editor.setValue( this.files[this.currentFile].content );
 		this.setCurrentFile( this.currentFile );
-	}
-	
-	// We need at least one file
-	if( !this.files.length )
-	{
-		this.newFile();
 	}
 	
 	// Remove the previous current file
@@ -1584,7 +1622,19 @@ Application.receiveMessage = function( msg )
 				}
 				break;
 			case 'setfile':
-				this.setCurrentFile( msg.filenum );
+				var path = msg.filenum;
+				if( parseInt( msg.filenum ) === 0 || parseInt( msg.filenum ) > 0 )
+				{
+					for( var a in Application.files )
+					{
+						if( msg.filenum == a )
+						{
+							path = a;
+							break;
+						}
+					}
+				}
+				this.setCurrentFile( path );
 				break;
 			case 'closefile':
 				this.closeFile();

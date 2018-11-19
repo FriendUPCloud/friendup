@@ -357,7 +357,7 @@ Application.save = function( mode )
 		var files = msg.files;
 		var currentFile = msg.currentFile;
 		
-		var f = files[currentFile];
+		var f = files[ currentFile ];
 		
 		var p = f ? ( f.filename ? f.filename.indexOf ( ':' ) : 0 ) : 0;
 		
@@ -493,10 +493,10 @@ Application.saveFile = function( filename, content, mode )
 			if (this.written <= 0)
 				alert(i18n('i18n_could_not_save'));
 			
-			files[currentFile].content = content;
-			files[currentFile].filename = filename;
-			files[currentFile].filetype = files[currentFile].filename.split('.').pop().toLowerCase();
-			files[currentFile].touched = true;
+			files[ currentFile ].content = content;
+			files[ currentFile ].filename = filename;
+			files[ currentFile ].filetype = files[ currentFile ].filename.split('.').pop().toLowerCase();
+			files[ currentFile ].touched = true;
 			
 			// Make sure we have a project title
 			Application.setProjectTitle();
@@ -1491,7 +1491,7 @@ Application.addAppDoor = function()
 					var ap = Application;
 					ap.syncFilesList( function(msg)
 					{
-						var f = msg.files[msg.currentFile];
+						var f = msg.files[ msg.currentFile ];
 						var p = ap.currentPath + f.filename;
 						if (args) p = args[0];
 						Application.saveFile( p, f.content );
@@ -1506,7 +1506,7 @@ Application.addAppDoor = function()
 						var currentFile = msg.currentFile;
 						var nun = parseInt(args[0]);
 						if (isNaN(nun)) nun = 0;
-						var block = files[currentFile].content.split("\n");
+						var block = files[ currentFile ].content.split("\n");
 						pollEvent('ReadLine', block[nun]);
 					});
 					break;
