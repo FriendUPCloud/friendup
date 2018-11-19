@@ -65,6 +65,8 @@ connect_client(struct vhd_minimal_client_echo *vhd)
 	i.host = host;
 	i.origin = host;
 	i.ssl_connection = 0;
+	if ((*vhd->options) & 2)
+		i.ssl_connection |= LCCSCF_USE_SSL;
 	i.vhost = vhd->vhost;
 	//i.protocol = ;
 	i.pwsi = &vhd->client_wsi;
@@ -281,7 +283,7 @@ callback_minimal_client_echo(struct lws *wsi, enum lws_callback_reasons reason,
 /* boilerplate needed if we are built as a dynamic plugin */
 
 static const struct lws_protocols protocols[] = {
-	LWS_PLUGIN_PROTOCOL_MINIMAL_client_echo
+	LWS_PLUGIN_PROTOCOL_MINIMAL_CLIENT_ECHO
 };
 
 LWS_EXTERN LWS_VISIBLE int

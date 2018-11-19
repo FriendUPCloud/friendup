@@ -645,8 +645,13 @@ lws_http_serve(struct lws *wsi, char *uri, const char *origin,
 
 	mimetype = lws_get_mimetype(path, m);
 	if (!mimetype) {
-		lwsl_err("unknown mimetype for %s\n", path);
-               goto bail;
+		lwsl_info("unknown mimetype for %s\n", path);
+		if (lws_return_http_status(wsi,
+				HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE, NULL) ||
+		    lws_http_transaction_completed(wsi))
+			return -1;
+
+		return 0;
 	}
 	if (!mimetype[0])
 		lwsl_debug("sending no mimetype for %s\n", path);
@@ -692,6 +697,7 @@ lws_http_serve(struct lws *wsi, char *uri, const char *origin,
 		p = (unsigned char *)args.p;
 	}
 
+	*p = '\0';
 	n = lws_serve_http_file(wsi, path, mimetype, (char *)start,
 				lws_ptr_diff(p, start));
 
@@ -699,9 +705,6 @@ lws_http_serve(struct lws *wsi, char *uri, const char *origin,
 		return -1; /* error or can't reuse connection: close the socket */
 
 	return 0;
-bail:
-
-	return -1;
 
 notfound:
 
@@ -902,8 +905,8 @@ lws_http_action(struct lws *wsi)
 	struct lws_process_html_args args;
 	const struct lws_http_mount *hit = NULL;
 	unsigned int n;
-	char http_version_str[10];
-	char http_conn_str[20];
+	char http_version_str[12];
+	char http_conn_str[25];
 	int http_version_len;
 	char *uri_ptr = NULL, *s;
 	int uri_len = 0, meth, m;
@@ -944,19 +947,18 @@ lws_http_action(struct lws *wsi)
 	wsi->http.rx_content_length = 0;
 	wsi->http.content_length_explicitly_zero = 0;
 	if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI) ||
-		lws_hdr_total_length(wsi, WSI_TOKEN_PATCH_URI) ||
-		lws_hdr_total_length(wsi, WSI_TOKEN_PUT_URI))
+	    lws_hdr_total_length(wsi, WSI_TOKEN_PATCH_URI) ||
+	    lws_hdr_total_length(wsi, WSI_TOKEN_PUT_URI))
 		wsi->http.rx_content_length = 100 * 1024 * 1024;
 
-	if (lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH)) {
-		lws_hdr_copy(wsi, content_length_str,
-			     sizeof(content_length_str) - 1,
-			     WSI_TOKEN_HTTP_CONTENT_LENGTH);
+	if (lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_CONTENT_LENGTH) &&
+	    lws_hdr_copy(wsi, content_length_str,
+			 sizeof(content_length_str) - 1,
+			 WSI_TOKEN_HTTP_CONTENT_LENGTH) > 0) {
 		wsi->http.rx_content_length = atoll(content_length_str);
 		if (!wsi->http.rx_content_length) {
 			wsi->http.content_length_explicitly_zero = 1;
-			lwsl_debug("%s: explicit 0 content-length\n",
-				    __func__);
+			lwsl_debug("%s: explicit 0 content-length\n", __func__);
 		}
 	}
 
@@ -968,14 +970,13 @@ lws_http_action(struct lws *wsi)
 
 		/* Works for single digit HTTP versions. : */
 		http_version_len = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP);
-		if (http_version_len > 7) {
-			lws_hdr_copy(wsi, http_version_str,
-				     sizeof(http_version_str) - 1,
-				     WSI_TOKEN_HTTP);
-			if (http_version_str[5] == '1' &&
-			    http_version_str[7] == '1')
-				request_version = HTTP_VERSION_1_1;
-		}
+		if (http_version_len > 7 &&
+		    lws_hdr_copy(wsi, http_version_str,
+				 sizeof(http_version_str) - 1,
+				 WSI_TOKEN_HTTP) > 0 &&
+		    http_version_str[5] == '1' && http_version_str[7] == '1')
+			request_version = HTTP_VERSION_1_1;
+
 		wsi->http.request_version = request_version;
 
 		/* HTTP/1.1 defaults to "keep-alive", 1.0 to "close" */
@@ -985,10 +986,9 @@ lws_http_action(struct lws *wsi)
 			conn_type = HTTP_CONNECTION_CLOSE;
 
 		/* Override default if http "Connection:" header: */
-		if (lws_hdr_total_length(wsi, WSI_TOKEN_CONNECTION)) {
-			lws_hdr_copy(wsi, http_conn_str,
-				     sizeof(http_conn_str) - 1,
-				     WSI_TOKEN_CONNECTION);
+		if (lws_hdr_total_length(wsi, WSI_TOKEN_CONNECTION) &&
+		    lws_hdr_copy(wsi, http_conn_str, sizeof(http_conn_str) - 1,
+				 WSI_TOKEN_CONNECTION) > 0) {
 			http_conn_str[sizeof(http_conn_str) - 1] = '\0';
 			if (!strcasecmp(http_conn_str, "keep-alive"))
 				conn_type = HTTP_CONNECTION_KEEP_ALIVE;
@@ -1270,14 +1270,15 @@ lws_http_action(struct lws *wsi)
 			}
 
 			*p++ = '?';
-			lws_hdr_copy(wsi, p,
+			if (lws_hdr_copy(wsi, p,
 				     (int)(&rpath[sizeof(rpath) - 1] - p),
-				     WSI_TOKEN_HTTP_URI_ARGS);
-			while (--na) {
-				if (*p == '\0')
-					*p = '&';
-				p++;
-			}
+				     WSI_TOKEN_HTTP_URI_ARGS) > 0)
+				while (na--) {
+					if (*p == '\0')
+						*p = '&';
+					p++;
+				}
+			*p = '\0';
 		}
 
 		i.path = rpath;
@@ -1546,6 +1547,75 @@ transaction_result_n:
 }
 
 int
+lws_confirm_host_header(struct lws *wsi)
+{
+	struct lws_tokenize ts;
+	lws_tokenize_elem e;
+	char buf[128];
+	int port = 80;
+
+	/*
+	 * this vhost wants us to validate what the
+	 * client sent against our vhost name
+	 */
+
+	if (!lws_hdr_total_length(wsi, WSI_TOKEN_HOST)) {
+		lwsl_info("%s: missing host on upgrade\n", __func__);
+
+		return 1;
+	}
+
+#if defined(LWS_WITH_TLS)
+	if (wsi->tls.ssl)
+		port = 443;
+#endif
+
+	lws_tokenize_init(&ts, buf, LWS_TOKENIZE_F_DOT_NONTERM /* server.com */|
+				    LWS_TOKENIZE_F_NO_FLOATS /* 1.server.com */|
+				    LWS_TOKENIZE_F_MINUS_NONTERM /* a-b.com */);
+	ts.len = lws_hdr_copy(wsi, buf, sizeof(buf) - 1, WSI_TOKEN_HOST);
+	if (ts.len <= 0) {
+		lwsl_info("%s: missing or oversize host header\n", __func__);
+		return 1;
+	}
+
+	if (lws_tokenize(&ts) != LWS_TOKZE_TOKEN)
+		goto bad_format;
+
+	if (strncmp(ts.token, wsi->vhost->name, ts.token_len)) {
+		buf[(ts.token - buf) + ts.token_len] = '\0';
+		lwsl_info("%s: '%s' in host hdr but vhost name %s\n",
+			  __func__, ts.token, wsi->vhost->name);
+		return 1;
+	}
+
+	e = lws_tokenize(&ts);
+	if (e == LWS_TOKZE_DELIMITER && ts.token[0] == ':') {
+		if (lws_tokenize(&ts) != LWS_TOKZE_INTEGER)
+			goto bad_format;
+		else
+			port = atoi(ts.token);
+	} else
+		if (e != LWS_TOKZE_ENDED)
+			goto bad_format;
+
+	if (wsi->vhost->listen_port != port) {
+		lwsl_info("%s: host port %d mismatches vhost port %d\n",
+			  __func__, port, wsi->vhost->listen_port);
+		return 1;
+	}
+
+	lwsl_debug("%s: host header OK\n", __func__);
+
+	return 0;
+
+bad_format:
+	lwsl_info("%s: bad host header format\n", __func__);
+
+	return 1;
+}
+
+int
 lws_handshake_server(struct lws *wsi, unsigned char **buf, size_t len)
 {
 	struct lws_context *context = lws_get_context(wsi);
@@ -1696,12 +1766,49 @@ raw_transition:
 		lwsi_set_state(wsi, LRS_PRE_WS_SERVING_ACCEPT);
 		lws_set_timeout(wsi, NO_PENDING_TIMEOUT, 0);
 
-		/* is this websocket protocol or normal http 1.0? */
-
 		if (lws_hdr_total_length(wsi, WSI_TOKEN_UPGRADE)) {
-			if (!strcasecmp(lws_hdr_simple_ptr(wsi,
-							   WSI_TOKEN_UPGRADE),
-					"websocket")) {
+
+			const char *up = lws_hdr_simple_ptr(wsi,
+							    WSI_TOKEN_UPGRADE);
+
+			if (strcasecmp(up, "websocket") &&
+			    strcasecmp(up, "h2c")) {
+				lwsl_info("Unknown upgrade '%s'\n", up);
+
+				if (lws_return_http_status(wsi,
+						HTTP_STATUS_FORBIDDEN, NULL) ||
+				    lws_http_transaction_completed(wsi))
+					goto bail_nuke_ah;
+			}
+
+			n = user_callback_handle_rxflow(wsi->protocol->callback,
+					wsi, LWS_CALLBACK_HTTP_CONFIRM_UPGRADE,
+					wsi->user_space, (char *)up, 0);
+
+			/* just hang up? */
+
+			if (n < 0)
+				goto bail_nuke_ah;
+
+			/* callback returned headers already, do t_c? */
+
+			if (n > 0) {
+				if (lws_http_transaction_completed(wsi))
+					goto bail_nuke_ah;
+
+				/* continue on */
+
+				return 0;
+			}
+
+			/* callback said 0, it was allowed */
+
+			if (wsi->vhost->options &
+			    LWS_SERVER_OPTION_VHOST_UPG_STRICT_HOST_CHECK &&
+			    lws_confirm_host_header(wsi))
+				goto bail_nuke_ah;
+
+			if (!strcasecmp(up, "websocket")) {
 #if defined(LWS_ROLE_WS)
 				wsi->vhost->conn_stats.ws_upg++;
 				lwsl_info("Upgrade to ws\n");
@@ -1709,17 +1816,12 @@ raw_transition:
 #endif
 			}
 #if defined(LWS_WITH_HTTP2)
-			if (!strcasecmp(lws_hdr_simple_ptr(wsi,
-							   WSI_TOKEN_UPGRADE),
-					"h2c")) {
+			if (!strcasecmp(up, "h2c")) {
 				wsi->vhost->conn_stats.h2_upg++;
 				lwsl_info("Upgrade to h2c\n");
 				goto upgrade_h2c;
 			}
 #endif
-			lwsl_info("Unknown upgrade\n");
-			/* dunno what he wanted to upgrade to */
-			goto bail_nuke_ah;
 		}
 
 		/* no upgrade ack... he remained as HTTP */
@@ -2198,8 +2300,8 @@ lws_serve_http_file(struct lws *wsi, const char *file, const char *content_type,
 
 	/* Only add cache control if its not specified by any other_headers. */
 	if (!other_headers ||
-			(!strstr(other_headers, "cache-control") &&
-			 !strstr(other_headers, "Cache-Control"))) {
+	    (!strstr(other_headers, "cache-control") &&
+	     !strstr(other_headers, "Cache-Control"))) {
 		if (lws_add_http_header_by_token(wsi, WSI_TOKEN_HTTP_CACHE_CONTROL,
 				(unsigned char *)cc, cclen, &p, end))
 			return -1;

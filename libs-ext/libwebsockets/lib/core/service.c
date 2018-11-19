@@ -515,10 +515,6 @@ int
 lws_service_flag_pending(struct lws_context *context, int tsi)
 {
 	struct lws_context_per_thread *pt = &context->pt[tsi];
-
-#if defined(LWS_WITH_TLS)
-	struct lws *wsi, *wsi_next;
-#endif
 	int forced = 0;
 
 	lws_pt_lock(pt, __func__);
@@ -548,9 +544,10 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 	 * service to use up the buffered incoming data, even though their
 	 * network socket may have nothing
 	 */
-	wsi = pt->tls.pending_read_list;
-	while (wsi) {
-		wsi_next = wsi->tls.pending_read_list_next;
+	lws_start_foreach_dll_safe(struct lws_dll_lws *, p, p1,
+				   pt->tls.pending_tls_head.next) {
+		struct lws *wsi = lws_container_of(p, struct lws, tls.pending_tls_list);
+
 		pt->fds[wsi->position_in_fds_table].revents |=
 			pt->fds[wsi->position_in_fds_table].events & LWS_POLLIN;
 		if (pt->fds[wsi->position_in_fds_table].revents & LWS_POLLIN) {
@@ -564,8 +561,7 @@ lws_service_flag_pending(struct lws_context *context, int tsi)
 			__lws_ssl_remove_wsi_from_buffered_list(wsi);
 		}
 
-		wsi = wsi_next;
-	}
+	} lws_end_foreach_dll_safe(p, p1);
 #endif
 
 	lws_pt_unlock(pt);
@@ -662,7 +658,7 @@ lws_service_periodic_checks(struct lws_context *context,
 		our_fd = pollfd->fd;
 
 	/*
-	 * Phase 1: check every wsi on the timeout check list
+	 * Phase 1: check every wsi on our pt's timeout check list
 	 */
 
 	lws_pt_lock(pt, __func__);
@@ -732,8 +728,7 @@ lws_service_periodic_checks(struct lws_context *context,
 				continue;
 			}
 
-			if (lws_hdr_copy(wsi, buf,
-					 sizeof buf, m) > 0) {
+			if (lws_hdr_copy(wsi, buf, sizeof buf, m) > 0) {
 				buf[sizeof(buf) - 1] = '\0';
 
 				lwsl_notice("   %s = %s\n",
@@ -797,7 +792,7 @@ lws_service_periodic_checks(struct lws_context *context,
 
 			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
 					q, v->timed_vh_protocol_list, next) {
-				if (now >= q->time)
+				if (now >= q->time && q->tsi_req == tsi)
 					n++;
 			} lws_end_foreach_ll_safe(q);
 		}
@@ -844,6 +839,8 @@ lws_service_periodic_checks(struct lws_context *context,
 
 		if (v->timed_vh_protocol_list) {
 
+			lws_vhost_lock(v); /* vhost ------------------------- */
+
 			lws_start_foreach_ll_safe(struct lws_timed_vh_protocol *,
 					q, v->timed_vh_protocol_list, next) {
 
@@ -851,7 +848,7 @@ lws_service_periodic_checks(struct lws_context *context,
 				if (m == n)
 					break;
 
-				if (now >= q->time) {
+				if (now >= q->time && q->tsi_req == tsi) {
 
 					/*
 					 * tmr is an allocated array.
@@ -863,10 +860,12 @@ lws_service_periodic_checks(struct lws_context *context,
 
 					/* take the timer out now we took
 					 * responsibility */
-					lws_timed_callback_remove(v, q);
+					__lws_timed_callback_remove(v, q);
 				}
 
 			} lws_end_foreach_ll_safe(q);
+
+			lws_vhost_unlock(v); /* ----------------------- vhost */
 		}
 
 	} lws_end_foreach_ll(v, vhost_next);
@@ -941,9 +940,11 @@ lws_service_fd_tsi(struct lws_context *context, struct lws_pollfd *pollfd,
 	if (!context || context->being_destroyed1)
 		return -1;
 
-	/* the socket we came to service timed out, nothing to do */
-	if (lws_service_periodic_checks(context, pollfd, tsi) || !pollfd)
+	/* the case there's no pollfd to service, we just want to do periodic */
+	if (!pollfd) {
+		lws_service_periodic_checks(context, pollfd, tsi);
 		return -2;
+	}
 
 	/* no, here to service a socket descriptor */
 	wsi = wsi_from_fd(context, pollfd->fd);
@@ -1039,6 +1040,9 @@ handled:
 #endif
 	pollfd->revents = 0;
 
+	/* check the timeout situation if we didn't in the last second */
+	lws_service_periodic_checks(context, pollfd, tsi);
+
 	lws_pt_lock(pt, __func__);
 	__lws_hrtimer_service(pt);
 	lws_pt_unlock(pt);
@@ -1085,6 +1089,9 @@ lws_service_tsi(struct lws_context *context, int timeout_ms, int tsi)
 	int n;
 
 	pt->inside_service = 1;
+#if LWS_MAX_SMP > 1
+	pt->self = pthread_self();
+#endif
 
 	if (context->event_loop_ops->run_pt) {
 		/* we are configured for an event loop */

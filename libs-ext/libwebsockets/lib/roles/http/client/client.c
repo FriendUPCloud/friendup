@@ -352,7 +352,9 @@ start_ws_handshake:
 			 * So this is it, we are an h2 master client connection
 			 * now, not an h1 client connection.
 			 */
+#if defined (LWS_WITH_TLS)
 			lws_tls_server_conn_alpn(wsi);
+#endif
 
 			/* send the H2 preface to legitimize the connection */
 			if (lws_h2_issue_preface(wsi)) {
@@ -916,8 +918,7 @@ lws_client_interpret_server_handshake(struct lws *wsi)
 					wsi->http.rx_content_length;
 		} else /* can't do 1.1 without a content length or chunked */
 			if (!wsi->chunked)
-				wsi->http.conn_type =
-							HTTP_CONNECTION_CLOSE;
+				wsi->http.conn_type = HTTP_CONNECTION_CLOSE;
 
 		/*
 		 * we seem to be good to go, give client last chance to check
