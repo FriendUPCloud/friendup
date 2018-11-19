@@ -394,7 +394,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
 	
-	$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
+	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
@@ -414,7 +414,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	)
 	{
 		// Login success
-		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(

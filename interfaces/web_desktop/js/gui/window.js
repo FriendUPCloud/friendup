@@ -19,6 +19,8 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 Friend    = window.Friend || {};
 Friend.io = Friend.io     || {};
+Friend.GUI = Friend.GUI   || {};
+
 
 // Lets remember values
 var _windowStorage = [];
@@ -1761,6 +1763,12 @@ var View = function( args )
 		div.windowObject = this;
 		this._window = contn;
 		
+		// Set up view states
+		// TODO: More to come!
+		this.states = {
+			'input-focus': false
+		};
+		
 		contn.className = 'Content';
 		contn.innerHTML = html;
 
@@ -1796,9 +1804,13 @@ var View = function( args )
 				// Focus on desktop if we're not over a window.
 				if( Friend.previousWindowHover != div )
 				{
-					window.focus();
+					// Check first if are focused on an input field
+					// If we are, don't focus on nothing!
+					if( !Friend.GUI.checkWindowState( 'input-focus' ) )
+					{
+						window.focus();
+					}
 				}
-			
 			} );
 			div.addEventListener( 'mouseout', function()
 			{
@@ -4280,3 +4292,17 @@ function InitWindowEvents()
 
 	if( document.getElementById( 'DoorsScreen' ) ) window.currentScreen = 'DoorsWorkbench';
 }
+
+// GUI functions
+Friend.GUI.checkWindowState = function( state )
+{
+	if( !window.currentMovable ) return false;
+	var wo = window.currentMovable.windowObject;
+	if( wo.states[ state ] )
+	{
+		return true;
+	}
+	return false;
+}
+
+

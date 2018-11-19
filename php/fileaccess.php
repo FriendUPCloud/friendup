@@ -23,7 +23,7 @@ if( $argv[1] )
 
 	if( !isset( $tmp[1] ) ) { friend404(); } // dies...
 	
-	faLog('complete request: ' .  print_r( $tmp,1  ) );
+	//faLog('complete request: ' .  print_r( $tmp,1  ) );
 	
 	ob_clean();
 	switch( strtolower( $tmp[2] ) ) 
