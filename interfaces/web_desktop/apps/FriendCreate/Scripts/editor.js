@@ -1076,9 +1076,12 @@ Application.setStoredSession = function( data )
 
 var inc = 0;
 // Set the content from current file -------------------------------------------
-Application.setCurrentFile = function( curr, ocallback )
+Application.setCurrentFile = function( curr, ocallback, mode )
 {
 	var self = this;
+	
+	// Don't do it double
+	if( curr == this.currentFile ) return;
 	
 	// Race condition prevention
 	if( self.settingCurrentFile ) return;
@@ -1114,28 +1117,31 @@ Application.setCurrentFile = function( curr, ocallback )
 		this.currentFile = curr;
 	}
 	
-	var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
-	var foundTab = false;
-	
-	for( var a = 0; a < tabs.length; a++ )
+	if( !mode )
 	{
-		if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
+		var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+		var foundTab = false;
+	
+		for( var a = 0; a < tabs.length; a++ )
 		{
-			if( !tabs[ a ].classList.contains( 'TabActive' ) )
+			if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
 			{
-				tabs[ a ].onclick();
-			}
-			var fn = this.files[ this.currentFile ].filename;
-			if( fn.indexOf( ':' ) > 0 )
-			{
-				fn = fn.split( ':' )[1];
-				if( fn.indexOf( '/' ) > 0 )
+				if( !tabs[ a ].classList.contains( 'TabActive' ) )
 				{
-					fn = fn.split( '/' ).pop();
+					tabs[ a ].onclick();
 				}
+				var fn = this.files[ this.currentFile ].filename;
+				if( fn.indexOf( ':' ) > 0 )
+				{
+					fn = fn.split( ':' )[1];
+					if( fn.indexOf( '/' ) > 0 )
+					{
+						fn = fn.split( '/' ).pop();
+					}
+				}
+				tabs[ a ].innerHTML = fn;
+				break;
 			}
-			tabs[ a ].innerHTML = fn;
-			break;
 		}
 	}
 
