@@ -4340,6 +4340,55 @@ function CheckDoorsKeys( e )
 		case 46:
 			Workspace.deleteFile();
 			break;
+		case 13:
+			if( window.regionWindow && window.regionWindow.directoryview )
+			{
+				for( var a = 0; a < window.regionWindow.icons.length; a++ )
+				{
+					if( window.regionWindow.icons[a].selected )
+					{
+						window.regionWindow.icons[a].domNode.ondblclick();
+						return;
+					}
+				}
+			}
+			break;
+	}
+	// Do the thing! Keyboard navigation
+	if( window.regionWindow && window.regionWindow.directoryview )
+	{
+		var rw = window.regionWindow.icons;
+		var out = [];
+		var found = false;
+		for( var a = 0; a < rw.length; a++ )
+		{
+			var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+			if( f.toUpperCase().charCodeAt(0) == k )
+			{
+				out.push( rw[a] );
+				if( rw[a].selected )
+				{
+					found = true;
+				}
+			}
+		}
+		if( out.length )
+		{
+			if( !found )
+			{
+				out[0].domNode.click();
+				return;
+			}
+			for( var a = 0; a < out.length; a++ )
+			{
+				if( out[a].selected && a < out.length - 1 )
+				{
+					out[a+1].domNode.click();
+					return;
+				}
+			}
+			out[0].domNode.click();
+		}
 	}
 }
 
