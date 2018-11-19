@@ -456,6 +456,10 @@ if( isset( $args->command ) )
 			die( 'totalfail<!--separate-->' . $r . '<!--separate-->' . $args->args->url );
 			break;
 
+		case 'getconfiginijson':
+			require( 'modules/system/include/getconfiginijson.php' );
+			break;
+
 		// Save f.eg from photopea
 		case 'savefile':
 			require( 'modules/system/include/savefile.php' );
