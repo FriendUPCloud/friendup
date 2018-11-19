@@ -660,7 +660,7 @@ function checkForFriendApp()
 		setTimeout(checkForFriendApp, 500);
 		return;
 	}
-	
+
 	if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
 	{
 		// if this is mobile app we must register it
