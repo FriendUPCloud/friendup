@@ -597,10 +597,7 @@ File = function( filename )
 // Resolve an image on the global level
 // TODO: Use Door to resolve proper path
 function getImageUrl( path )
-{
-	console.log( 'Here is the path: ' + path );
-	
-	
+{		
 	if( path.toLowerCase().substr( 0, 7 ) == 'system:' )
 		return path.split( /system\:/i ).join( '/webclient/' );
 

@@ -828,7 +828,7 @@ Application.refreshFilesList = function ()
 	for( var t in this.files )
 	{
 		var c = document.createElement ( 'div' );
-		var fullfile = this.files[t].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
+		var fullfile = this.files[ t ].filename.split ( '%20' ).join ( ' ' ).split ( ':/' ).join ( ':' );
 		var onlyfile = fullfile.split( ':' )[1];
 		if( onlyfile && onlyfile.indexOf( '/' ) >= 0 )
 		{
@@ -843,15 +843,15 @@ Application.refreshFilesList = function ()
 		c.style.textOverflow = 'ellipsis';
 		c.style.overflow = 'hidden';
 		c.className = 'Padding MousePointer sw' + ( sw = sw == 1 ? 2 : 1 );
-		if ( t == this.currentFile ) c.classList.add( 'Selected' );
+		if( t == this.currentFile ) c.classList.add( 'Selected' );
 		c.ind = t;
 		c.onclick = function( e )
 		{
 			Application.setCurrentFile( this.ind, function()
 			{	
 				// Close when clicking on close icon
-				var t = e.target ? e.target : e.srcElement;
-				if( t.className.indexOf( 'fa-close' ) > 0 )
+				var tr = e.target ? e.target : e.srcElement;
+				if( tr.className.indexOf( 'fa-close' ) > 0 )
 				{
 					Application.closeFile();
 				}
@@ -864,7 +864,6 @@ Application.refreshFilesList = function ()
 		files.appendChild ( c );
 		
 		// Check for missing tab
-		// TODO: Add unique file id
 		if( tabContainer )
 		{
 			var tabFound = false;
@@ -909,7 +908,7 @@ Application.refreshFilesList = function ()
 		ge( 'CodeTabPage' ).className = 'Page PageActive';
 		for( var a in Application.files )
 		{
-			if( Application.files[a].uniqueId == self.uniqueId )
+			if( Application.files[ a ].uniqueId == self.uniqueId )
 			{
 				Application.setCurrentFile( a );
 				return;
@@ -1055,8 +1054,19 @@ Application.setStoredSession = function( data )
 
 var inc = 0;
 // Set the content from current file -------------------------------------------
-Application.setCurrentFile = function( curr, callback )
+Application.setCurrentFile = function( curr, ocallback )
 {
+	var self = this;
+	
+	// Race condition prevention
+	if( self.settingCurrentFile ) return;
+	self.settingCurrentFile = true;
+	
+	// Reset when done
+	var callback = ocallback ? 
+		function(){ ocallback(); self.settingCurrentFile = false; } : 
+		function(){ self.settingCurrentFile = false; };
+	
 	var sess = this.editor.getSession();
 
 	// Make sure we copy the right content before we change curr!

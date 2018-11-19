@@ -1855,17 +1855,20 @@ movableListener = function( e, data )
 	if( !window.isMobile && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
-		var scrl = window.regionWindow.directoryview.scroller;
-		if( !scrl.scrolling )
+		if( window.regionWindow.directoryview )
 		{
-			scrl.scrollTopStart  = scrl.scrollTop;
-			scrl.scrollLeftStart = scrl.scrollLeft;
-			scrl.scrolling = true;
-		}
-		// Draw
-		if( DrawRegionSelector( e ) )
-		{		
-			return cancelBubble( e );
+			var scrl = window.regionWindow.directoryview.scroller;
+			if( !scrl.scrolling )
+			{
+				scrl.scrollTopStart  = scrl.scrollTop;
+				scrl.scrollLeftStart = scrl.scrollLeft;
+				scrl.scrolling       = true;
+			}
+			// Draw
+			if( DrawRegionSelector( e ) )
+			{		
+				return cancelBubble( e );
+			}
 		}
 		return false;
 	}
