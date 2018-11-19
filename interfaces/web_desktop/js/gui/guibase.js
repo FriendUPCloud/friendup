@@ -689,7 +689,38 @@ function checkForFriendApp()
 		{
 			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
 		}
+
+                var j = new cAjax();
+                j.open( 'POST', '/system.library/mobile/createuma', true, true );
+                j.addVar( 'sessionid', Workspace.sessionid );
+                j.addVar( 'apptoken', appToken );
+                j.addVar( 'appversion', version );
+				j.addVar( 'platform', platform );
+
+                j.onload = function( r, d )
+                {
+                        var error = false;
+						console.log('Request sent');
+				}
+				console.log('Send request');
+                j.send();
 	}	
+
+var j = new cAjax();
+                j.open( 'POST', '/system.library/mobile/createuma', true, true );
+                j.addVar( 'sessionid', Workspace.sessionid );
+                j.addVar( 'apptoken', 'mrtoken' );
+                j.addVar( 'appversion', 'version super' );
+				j.addVar( 'platform', 'Androsomething' );
+
+                //j.onload = function( r, d )
+                {
+                        var error = false;
+						console.log('Request sent');
+				}
+				console.log('Send request');
+                j.send();
+				console.log('Send request DONE');
 }
 
 // Refresh programmatic classes
