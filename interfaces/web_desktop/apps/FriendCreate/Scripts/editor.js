@@ -52,35 +52,56 @@ var filebrowserCallbacks = {
 		}
 		else
 		{
+			var found = false;
+			
 			// Just switch to existing
 			for( var a in Application.files )
 			{
 				if( Application.files[a].filename == path )
 				{
-					return Application.setCurrentFile( a );
+					Application.setCurrentFile( a );
+					found = true;
+					break;
 				}
 			}
-			Application.sendMessage( {
-				command: 'loadfiles',
-				paths: [ path ]
-			} );
+			if( !found )
+			{
+				Application.sendMessage( {
+					command: 'loadfiles',
+					paths: [ path ]
+				} );
+			}
+			else
+			{
+				Application.refreshFilesList();
+			}
 		}
 	},
 	// Load a file
 	loadFile( path )
 	{
+		var found = false;
 		// Just switch to existing
 		for( var a in Application.files )
 		{
 			if( Application.files[a].filename == path )
 			{
-				return Application.setCurrentFile( a );
+				found = true;
+				Application.setCurrentFile( a );
+				break;
 			}
 		}
-		Application.sendMessage( {
-			command: 'loadfiles',
-			paths: [ path ]
-		} );
+		if( !found )
+		{
+			Application.sendMessage( {
+				command: 'loadfiles',
+				paths: [ path ]
+			} );
+		}
+		else
+		{
+			Application.refreshFilesList();
+		}
 	},
 	// Do we permit?
 	permitFiletype( path )
