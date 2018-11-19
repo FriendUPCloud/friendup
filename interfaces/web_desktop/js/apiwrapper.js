@@ -1387,6 +1387,13 @@ function apiWrapper( event, force )
 					var win = app.windows[ msg.viewId ];
 					switch( msg.method )
 					{
+						// Set a window state!
+						case 'windowstate':
+							if( win && typeof( win.states[ msg.state ] ) != 'undefined' )
+							{
+								win.states[ msg.state ] = msg.value;
+							}
+							break;
 						case 'doneloadingbody':
 							if( win && win.iframe )
 							{
