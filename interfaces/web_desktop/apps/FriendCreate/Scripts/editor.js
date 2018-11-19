@@ -662,6 +662,8 @@ function loadProgress()
 // Loads a file
 Application.loadFile = function( data, path, cb )
 {
+	var self = this;
+	
 	if( !this.files )
 	{
 		this.files = [ {} ];
@@ -676,19 +678,20 @@ Application.loadFile = function( data, path, cb )
 		{
 			if( cb ) cb();
 			// Activate it
-			this.setCurrentFile( a );
-			this.refreshFilesList();
+			this.setCurrentFile( a, function(){ self.refreshFilesList(); } );
 			return;
 		}
 	}
 	
 	// Set it
 	this.files.push( { content: data, filename: path, touched: true } );
-	this.setCurrentFile( this.files.length - 1 );
+	this.setCurrentFile( this.files.length - 1, function(){
+		// Refresh so we can see it in the list
+		self.refreshFilesList();
+		if( cb ) cb();
+	} );
 	
-	// Refresh so we can see it in the list
-	this.refreshFilesList();
-	if( cb ) cb();
+	
 }
 
 // Say we wanna open
@@ -749,15 +752,18 @@ Application.save = function( mode )
 // Add a new file
 Application.newFile = function()
 {
-	if ( !this.files ) this.files = [];
+	var self = this;
+	if( !this.files ) this.files = [];
 	this.files.push( { content: '', filename: i18n ( 'i18n_empty_file' ), touched: false } );
-	this.setCurrentFile( this.files.length - 1 );
-	this.refreshFilesList();
+	this.setCurrentFile( this.files.length - 1, function()
+	{
+		self.refreshFilesList();
 
-	// Sync the new list to parent level
-	this.sendMessage( {
-		command: 'receivefilesync',
-		files: this.files
+		// Sync the new list to parent level
+		self.sendMessage( {
+			command: 'receivefilesync',
+			files: self.files
+		} );
 	} );
 };
 
@@ -831,18 +837,19 @@ Application.refreshFilesList = function ()
 		c.ind = t;
 		c.onclick = function ( e )
 		{	
-			Application.setCurrentFile( this.ind );
-
-			// Close when clicking on close icon
-			var t = e.target ? e.target : e.srcElement;
-			if( t.className.indexOf( 'fa-close' ) > 0 )
+			Application.setCurrentFile( this.ind, function()
 			{
-				Application.closeFile();
-			}
-			else
-			{
-				Application.refreshFilesList();
-			}
+				// Close when clicking on close icon
+				var t = e.target ? e.target : e.srcElement;
+				if( t.className.indexOf( 'fa-close' ) > 0 )
+				{
+					Application.closeFile();
+				}
+				else
+				{
+					Application.refreshFilesList();
+				}
+			} );
 		};
 		files.appendChild ( c );
 		
@@ -1038,7 +1045,7 @@ Application.setStoredSession = function( data )
 
 var inc = 0;
 // Set the content from current file -------------------------------------------
-Application.setCurrentFile = function( curr )
+Application.setCurrentFile = function( curr, callback )
 {
 	var sess = this.editor.getSession();
 
@@ -1111,7 +1118,8 @@ Application.setCurrentFile = function( curr )
 	// Show stuff to user
 	this.updateStatusbar();
 
-	FileInProjectCheck( this.currentFile );
+	// Check if the file is registered in the project. Then run callback (async)
+	FileInProjectCheck( this.currentFile, callback );
 
 	// Enable word wrapping
 	this.refreshAceSettings();
@@ -1121,7 +1129,7 @@ Application.setCurrentFile = function( curr )
 };
 
 // Check if file is to be added to project
-function FileInProjectCheck( currentFile )
+function FileInProjectCheck( currentFile, callback )
 {
 	var app = Application;
 	
@@ -1129,11 +1137,16 @@ function FileInProjectCheck( currentFile )
 	if( !app.files[ currentFile ] )
 	{
 		Notify( { title: 'File check failed', text: 'Current file doesn\'t exist in files list.' } );
+		// Run callback
+		if( callback )
+			callback();
 		return false;
 	}
 	if( !app.projectFilename )
 	{
-		console.log( 'No project filename' );
+		// Run callback
+		if( callback )
+			callback();
 		return false;
 	}
 
@@ -1199,6 +1212,9 @@ function FileInProjectCheck( currentFile )
 				ftabs.parentNode.parentNode.classList.remove( 'StatusPane' );
 				ftabs.innerHTML = '';
 			}
+			// Run callback
+			if( callback )
+				callback();
 		} )
 	} );
 	
