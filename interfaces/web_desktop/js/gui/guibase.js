@@ -653,6 +653,14 @@ html .View.SnapRight
 //check if we run inside an app and do some magic
 function checkForFriendApp()
 {
+	//if we dont have a sessionid we will need to wait a bit here...
+	if( !Workspace.sessionId )
+	{
+		console.log('waiting for valid session...');
+		setTimeout('checkForFriendApp()', 500);
+		return;
+	}
+	
 	if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
 	{
 		// if this is mobile app we must register it
