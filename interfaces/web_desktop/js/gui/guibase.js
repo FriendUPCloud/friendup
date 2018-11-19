@@ -656,8 +656,8 @@ function checkForFriendApp()
 	//if we dont have a sessionid we will need to wait a bit here...
 	if( !Workspace.sessionId )
 	{
-		console.log('waiting for valid session...');
-		setTimeout('checkForFriendApp()', 500);
+		console.log('waiting for valid session...' + Workspace.sessionId );
+		setTimeout(checkForFriendApp, 500);
 		return;
 	}
 	
@@ -685,6 +685,8 @@ function checkForFriendApp()
 			appToken = friendApp.get_app_token();
 		}
 
+		console.log('call ' + Workspace.sessionId );
+
 		var l = new Library( 'system.library' );
 		l.onExecuted = function( e, d )
 		{
@@ -695,40 +697,9 @@ function checkForFriendApp()
 		}
 		if( appToken != null )	// old applications which do not have appToken will skip this part
 		{
-			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionid, apptoken: appToken, appversion: version, platform: platform } );
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, appversion: version, platform: platform } );
 		}
-
-                var j = new cAjax();
-                j.open( 'POST', '/system.library/mobile/createuma', true, true );
-                j.addVar( 'sessionid', Workspace.sessionid );
-                j.addVar( 'apptoken', appToken );
-                j.addVar( 'appversion', version );
-				j.addVar( 'platform', platform );
-
-                j.onload = function( r, d )
-                {
-                        var error = false;
-						console.log('Request sent');
-				}
-				console.log('Send request');
-                j.send();
-	}	
-
-var j = new cAjax();
-                j.open( 'POST', '/system.library/mobile/createuma', true, true );
-                j.addVar( 'sessionid', Workspace.sessionid );
-                j.addVar( 'apptoken', 'mrtoken' );
-                j.addVar( 'appversion', 'version super' );
-				j.addVar( 'platform', 'Androsomething' );
-
-                //j.onload = function( r, d )
-                {
-                        var error = false;
-						console.log('Request sent');
-				}
-				console.log('Send request');
-                j.send();
-				console.log('Send request DONE');
+	}
 }
 
 // Refresh programmatic classes
