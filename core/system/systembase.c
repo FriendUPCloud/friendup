@@ -387,7 +387,7 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			const char *notifications_auth_key = plib->ReadStringNCS( prop, "NotificationService:key", NULL );
+			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
 			if (notifications_auth_key){
 				if (strlen(notifications_auth_key) > 10){
 					websocket_notifications_set_auth_key(notifications_auth_key);
@@ -403,7 +403,7 @@ SystemBase *SystemInit( void )
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:AppleKeyAPI", NULL ) );
+			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
 			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
