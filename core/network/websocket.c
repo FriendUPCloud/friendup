@@ -134,8 +134,8 @@ static struct lws_protocols protocols[] = {
 #if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
 	{
 		"FriendApp-v1",
-		websocket_app_callback,
-		sizeof( struct mobile_app_notif ),
+		WebsocketAppCallback,
+		sizeof( struct MobileAppNotif ),
 		WS_PROTOCOL_BUFFER_SIZE,
 		3, //id - not used for anything yet
 		NULL,
@@ -145,8 +145,8 @@ static struct lws_protocols protocols[] = {
 #if ENABLE_NOTIFICATIONS_SINK == 1
 	{
 		"FriendNotifications-v1",
-		websocket_notifications_sink_callback,
-		sizeof( struct mobile_app_notif ),
+		WebsocketNotificationsSinkCallback,
+		sizeof( struct MobileAppNotif ),
 		WS_PROTOCOL_BUFFER_SIZE,
 		4, //id - not used for anything yet
 		NULL,

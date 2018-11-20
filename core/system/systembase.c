@@ -388,14 +388,20 @@ SystemBase *SystemInit( void )
 			}
 
 			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
-			if (notifications_auth_key){
-				if (strlen(notifications_auth_key) > 10){
-					websocket_notifications_set_auth_key(notifications_auth_key);
-				} else {
+			if( notifications_auth_key )
+			{
+				if( strlen( notifications_auth_key ) > 10 )
+				{
+					WebsocketNotificationsSetAuthKey(notifications_auth_key);
+				}
+				else
+				{
 					Log( FLOG_INFO, "Mobile notifications service - auth key is too short!\n");
 					return NULL;
 				}
-			} else {
+			}
+			else
+			{
 				Log( FLOG_INFO, "Mobile notifications service - no auth key, service will be disabled\n");
 			}
 			

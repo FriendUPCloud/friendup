@@ -38,6 +38,6 @@
 #include <libwebsockets.h>
 #include <stddef.h>
 
-int websocket_notifications_sink_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+int WebsocketNotificationsSinkCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-void websocket_notifications_set_auth_key(const char *key); //called only at startup from systembase.c
+void WebsocketNotificationsSetAuthKey(const char *key); //called only at startup from systembase.c

@@ -51,7 +51,7 @@ typedef enum {
 	MN_all_devices = 3, //show on all devices that have the app suspended
 
 	MN_last_device = 4, //show only on most recently used device that has the app suspended
-} mobile_notification_type_t;
+}MobileNotificationTypeT;
 
 enum {
 	MOBILE_APP_TYPE_ANDROID = 0,
@@ -59,13 +59,14 @@ enum {
 	MOBILE_APP_TYPE_WINDOWS
 };
 
-typedef struct mobile_app_notif
+typedef struct MobileAppNotif
 {
 	FQueue					man_Queue;
 	int						man_Initialized;
 	int						man_Type;
-	WebsocketClient			*mans_Connection;
-}mobile_app_notif;
+	WebsocketClient			*man_Connection;
+	pthread_mutex_t			man_Mutex;
+}MobileAppNotif;
 
 /**
  * Sends notification to a user
@@ -75,14 +76,9 @@ typedef struct mobile_app_notif
  *                   with the same channel_id are sent, then the second one replaces the first
  * @param title title of the notification
  * @param message message string to be displayed
- * @param notification_type option flag, see mobile_notification_type_t
+ * @param notification_type option flag, see MobileNotificationTypeT
  * @param extra_string additional information for workspace
  *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
  * @return true when success
  */
-bool mobile_app_notify_user( const char *username,
-		const char *channel_id,
-		const char *title,
-		const char *message,
-		mobile_notification_type_t notification_type,
-		const char *extra_string);
+bool MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);
