@@ -134,6 +134,31 @@ enum lws_context_options {
 	 * example the ACME plugin was configured to fetch a cert, this lets
 	 * you bootstrap your vhost from having no cert to start with.
 	 */
+	LWS_SERVER_OPTION_VHOST_UPG_STRICT_HOST_CHECK		= (1 << 27),
+	/**< (VH) On this vhost, if the connection is being upgraded, insist
+	 * that there's a Host: header and that the contents match the vhost
+	 * name + port (443 / 80 are assumed if no :port given based on if the
+	 * connection is using TLS).
+	 *
+	 * By default, without this flag, on upgrade lws just checks that the
+	 * Host: header was given without checking the contents... this is to
+	 * allow lax hostname mappings like localhost / 127.0.0.1, and CNAME
+	 * mappings like www.mysite.com / mysite.com
+	 */
+	LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE	= (1 << 28),
+	/**< (VH) Send lws default HTTP headers recommended by Mozilla Observatory
+	 * for security.  This is a helper option that sends canned headers on each
+	 * http response enabling a VERY strict Content Security Policy.  The policy
+	 * is so strict, for example it won't let the page run its own inline JS nor
+	 * show images or take CSS from a different server.  In many cases your JS only
+	 * comes from your server as do the image sources and CSS, so that is what you
+	 * want... attackers hoping to inject JS into your DOM are completely out of
+	 * luck since even if they succeed, it will be rejected for execution by the
+	 * browser according to the strict CSP.  In other cases you have to deviate from
+	 * the complete strictness, in which case don't use this flag: use the .headers
+	 * member in the vhost init described in struct lws_context_creation_info
+	 * instead to send the adapted headers yourself.
+	 */
 
 	/****** add new things just above ---^ ******/
 };
@@ -205,12 +230,15 @@ struct lws_context_creation_info {
 	 * filepath when setting up a vhost client SSL context,
 	 * but it is preferred to use .client_ssl_ca_filepath for that.) */
 	const char *ssl_cipher_list;
-	/**< VHOST: List of valid ciphers to use (eg,
+	/**< VHOST: List of valid ciphers to use ON TLS1.2 AND LOWER ONLY (eg,
 	 * "RC4-MD5:RC4-SHA:AES128-SHA:AES256-SHA:HIGH:!DSS:!aNULL"
 	 * or you can leave it as NULL to get "DEFAULT" (For backwards
 	 * compatibility, this can also be used to pass the client cipher
 	 * list when setting up a vhost client SSL context,
-	 * but it is preferred to use .client_ssl_cipher_list for that.)*/
+	 * but it is preferred to use .client_ssl_cipher_list for that.)
+	 * SEE .tls1_3_plus_cipher_list and .client_tls_1_3_plus_cipher_list
+	 * for the equivalent for tls1.3.
+	 */
 	const char *http_proxy_address;
 	/**< VHOST: If non-NULL, attempts to proxy via the given address.
 	 * If proxy auth is required, use format "username:password\@server:port" */
@@ -308,9 +336,9 @@ struct lws_context_creation_info {
 	 * like this for compatibility with the original short version,
 	 * this is unsigned int length. */
 	long ssl_options_set;
-	/**< VHOST: Any bits set here will be set as SSL options */
+	/**< VHOST: Any bits set here will be set as server SSL options */
 	long ssl_options_clear;
-	/**< VHOST: Any bits set here will be cleared as SSL options */
+	/**< VHOST: Any bits set here will be cleared as server SSL options */
 	unsigned short ws_ping_pong_interval;
 	/**< CONTEXT: 0 for none, else interval in seconds between sending
 	 * PINGs on idle websocket connections.  When the PING is sent,
@@ -485,6 +513,25 @@ struct lws_context_creation_info {
 	 * is nonzero, this will be used in place of the default.  It's
 	 * like this for compatibility with the original short version:
 	 * this is unsigned int length. */
+
+	long ssl_client_options_set;
+	/**< VHOST: Any bits set here will be set as CLIENT SSL options */
+	long ssl_client_options_clear;
+	/**< VHOST: Any bits set here will be cleared as CLIENT SSL options */
+
+	const char *tls1_3_plus_cipher_list;
+	/**< VHOST: List of valid ciphers to use for incoming server connections
+	 * ON TLS1.3 AND ABOVE (eg, "TLS_CHACHA20_POLY1305_SHA256" on this vhost
+	 * or you can leave it as NULL to get "DEFAULT".
+	 * SEE .client_tls_1_3_plus_cipher_list to do the same on the vhost
+	 * client SSL_CTX.
+	 */
+	const char *client_tls_1_3_plus_cipher_list;
+	/**< VHOST: List of valid ciphers to use for outgoing client connections
+	 * ON TLS1.3 AND ABOVE on this vhost (eg,
+	 * "TLS_CHACHA20_POLY1305_SHA256") or you can leave it as NULL to get
+	 * "DEFAULT".
+	 */
 
 	/* Add new things just above here ---^
 	 * This is part of the ABI, don't needlessly break compatibility

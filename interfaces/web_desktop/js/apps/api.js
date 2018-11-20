@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -24,6 +15,7 @@ Friend.currentMenuItems = 0;
 Friend.scope = 'API';
 
 Friend.lib = Friend.lib || {};
+Friend.GUI = Friend.GUI || {};
 
 // Get some quick args from url
 Friend.fastUrlArgs = document.location.href.split( '?' );
@@ -803,8 +795,7 @@ function receiveEvent( event, queued )
 	}
 	
 	switch( dataPacket.command )
-	{
-		
+	{	
 		// Update clipboard
 		case 'updateclipboard':
 			Friend.clipboard = dataPacket.value;
@@ -6075,7 +6066,7 @@ if( typeof( Say ) == 'undefined' )
 
 // Handle keys in iframes too!
 if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAdded ) )
-{	
+{
 	function _kmousedown( e )
 	{
 		Application.sendMessage( { type: 'system', command: 'registermousedown', x: e.clientX, y: e.clientY } );
@@ -6085,11 +6076,17 @@ if( !Friend.noevents && ( typeof( _kresponse ) == 'undefined' || !window._keysAd
 		if( Friend.mouseMoveFunc )
 			Friend.mouseMoveFunc = null;
 		Application.sendMessage( { type: 'system', command: 'registermouseup', x: e.clientX, y: e.clientY } );
+		
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
 	}
 	
 	// Handle keys
 	function _kresponse( e )
 	{	
+		// Check if an input element has focus
+		Friend.GUI.checkInputFocus();
+		
 		// Let's report to Workspace what we're doing - to catch global keyboard shortcuts
 		var params = [ 'shiftKey', 'ctrlKey', 'metaKey', 'altKey', 'which', 'keyCode' ];
 		if( e.shiftKey || e.ctrlKey || e.metaKey || e.altKey )
@@ -8268,5 +8265,26 @@ if( Friend )
 		console.log( 'ERROR - API function not found: ' + functionPath );
 		return false;
 	}
+}
+
+// Check if Friend has focus on input field
+Friend.GUI.checkInputFocus = function()
+{
+	var focused = document.activeElement;
+	if( !focused || focused == document.body )
+		focused = null;
+	else if( document.querySelector )
+		focused = document.querySelector( ':focus' );
+	var response = false;
+	if( focused && ( focused.tagName == 'INPUT' || focused.tagName == 'TEXTAREA' ) )
+	{
+		response = true;
+	}
+	Application.sendMessage( {
+		type: 'view',
+		method: 'windowstate',
+		state: 'input-focus',
+		value: response
+	} );
 }
 

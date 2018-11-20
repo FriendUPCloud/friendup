@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -366,7 +357,7 @@ Application.save = function( mode )
 		var files = msg.files;
 		var currentFile = msg.currentFile;
 		
-		var f = files[currentFile];
+		var f = files[ currentFile ];
 		
 		var p = f ? ( f.filename ? f.filename.indexOf ( ':' ) : 0 ) : 0;
 		
@@ -502,10 +493,10 @@ Application.saveFile = function( filename, content, mode )
 			if (this.written <= 0)
 				alert(i18n('i18n_could_not_save'));
 			
-			files[currentFile].content = content;
-			files[currentFile].filename = filename;
-			files[currentFile].filetype = files[currentFile].filename.split('.').pop().toLowerCase();
-			files[currentFile].touched = true;
+			files[ currentFile ].content = content;
+			files[ currentFile ].filename = filename;
+			files[ currentFile ].filetype = files[ currentFile ].filename.split('.').pop().toLowerCase();
+			files[ currentFile ].touched = true;
 			
 			// Make sure we have a project title
 			Application.setProjectTitle();
@@ -1500,7 +1491,7 @@ Application.addAppDoor = function()
 					var ap = Application;
 					ap.syncFilesList( function(msg)
 					{
-						var f = msg.files[msg.currentFile];
+						var f = msg.files[ msg.currentFile ];
 						var p = ap.currentPath + f.filename;
 						if (args) p = args[0];
 						Application.saveFile( p, f.content );
@@ -1515,7 +1506,7 @@ Application.addAppDoor = function()
 						var currentFile = msg.currentFile;
 						var nun = parseInt(args[0]);
 						if (isNaN(nun)) nun = 0;
-						var block = files[currentFile].content.split("\n");
+						var block = files[ currentFile ].content.split("\n");
 						pollEvent('ReadLine', block[nun]);
 					});
 					break;

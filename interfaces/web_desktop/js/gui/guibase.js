@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -658,6 +649,58 @@ html .View.SnapRight
 		}
 	}
 };
+
+//check if we run inside an app and do some magic
+function checkForFriendApp()
+{
+	//if we dont have a sessionid we will need to wait a bit here...
+	if( !Workspace.sessionId )
+	{
+		console.log('waiting for valid session...' + Workspace.sessionId );
+		setTimeout(checkForFriendApp, 500);
+		return;
+	}
+
+	if( typeof friendApp != 'undefined' && typeof friendApp.exit == 'function')
+	{
+		// if this is mobile app we must register it
+		// if its already registered FC will not do it again
+		var version = null;
+		var platform = null;
+		var appToken = null;
+		//var appToken = friendApp.appToken ? friendApp.appToken : false;
+
+		if( typeof friendApp.get_version == 'function' )
+		{
+			version = friendApp.get_version();
+		}
+
+		if( typeof friendApp.get_platform == 'function' )
+		{
+			platform = friendApp.get_platform();
+		}
+
+		if( typeof friendApp.get_app_token == 'function' )
+		{
+			appToken = friendApp.get_app_token();
+		}
+
+		console.log('call ' + Workspace.sessionId );
+
+		var l = new Library( 'system.library' );
+		l.onExecuted = function( e, d )
+		{
+			if( e != 'ok' )
+			{
+
+			}
+		}
+		if( appToken != null )	// old applications which do not have appToken will skip this part
+		{
+			l.execute( 'mobile/createuma', { sessionid: Workspace.sessionId, apptoken: appToken, appversion: version, platform: platform } );
+		}
+	}
+}
 
 // Refresh programmatic classes
 function RefreshDynamicClasses( e )
@@ -1814,17 +1857,20 @@ movableListener = function( e, data )
 	if( !window.isMobile && window.mouseDown == 4 && window.regionWindow )
 	{
 		// Prime
-		var scrl = window.regionWindow.directoryview.scroller;
-		if( !scrl.scrolling )
+		if( window.regionWindow.directoryview )
 		{
-			scrl.scrollTopStart  = scrl.scrollTop;
-			scrl.scrollLeftStart = scrl.scrollLeft;
-			scrl.scrolling = true;
-		}
-		// Draw
-		if( DrawRegionSelector( e ) )
-		{		
-			return cancelBubble( e );
+			var scrl = window.regionWindow.directoryview.scroller;
+			if( !scrl.scrolling )
+			{
+				scrl.scrollTopStart  = scrl.scrollTop;
+				scrl.scrollLeftStart = scrl.scrollLeft;
+				scrl.scrolling       = true;
+			}
+			// Draw
+			if( DrawRegionSelector( e ) )
+			{		
+				return cancelBubble( e );
+			}
 		}
 		return false;
 	}

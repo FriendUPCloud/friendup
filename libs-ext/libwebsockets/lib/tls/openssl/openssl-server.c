@@ -376,6 +376,12 @@ lws_tls_server_vhost_backend_init(const struct lws_context_creation_info *info,
 	if (info->ssl_cipher_list)
 		SSL_CTX_set_cipher_list(vhost->tls.ssl_ctx, info->ssl_cipher_list);
 
+#if defined(LWS_HAVE_SSL_CTX_set_ciphersuites)
+	if (info->tls1_3_plus_cipher_list)
+		SSL_CTX_set_ciphersuites(vhost->tls.ssl_ctx,
+					 info->tls1_3_plus_cipher_list);
+#endif
+
 #if !defined(OPENSSL_NO_TLSEXT)
 	SSL_CTX_set_tlsext_servername_callback(vhost->tls.ssl_ctx,
 					       lws_ssl_server_name_cb);
@@ -480,9 +486,18 @@ lws_tls_server_accept(struct lws *wsi)
 			lwsl_notice("%s: client cert CN '%s'\n",
 				    __func__, ir.ns.name);
 		else
-			lwsl_info("%s: couldn't get client cert CN\n", __func__);
+			lwsl_info("%s: no client cert CN\n", __func__);
 
 		lws_openssl_describe_cipher(wsi);
+
+		if (SSL_pending(wsi->tls.ssl) &&
+		    lws_dll_is_null(&wsi->tls.pending_tls_list)) {
+			struct lws_context_per_thread *pt =
+					&wsi->context->pt[(int)wsi->tsi];
+
+			lws_dll_lws_add_front(&wsi->tls.pending_tls_list,
+					      &pt->tls.pending_tls_head);
+		}
 
 		return LWS_SSL_CAPABLE_DONE;
 	}

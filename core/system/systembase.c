@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file systembase.c
@@ -399,7 +387,7 @@ SystemBase *SystemInit( void )
 				l->sl_ActiveModuleName = StringDuplicate( "fcdb.authmod" );
 			}
 
-			const char *notifications_auth_key = plib->ReadStringNCS( prop, "NotificationService:key", NULL );
+			const char *notifications_auth_key = plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL );
 			if (notifications_auth_key){
 				if (strlen(notifications_auth_key) > 10){
 					websocket_notifications_set_auth_key(notifications_auth_key);
@@ -415,7 +403,7 @@ SystemBase *SystemInit( void )
 			
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
-			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "NotificationService:AppleKeyAPI", NULL ) );
+			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
 			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )

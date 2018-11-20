@@ -1,9 +1,80 @@
 [![Travis Build Status](https://travis-ci.org/warmcat/libwebsockets.svg)](https://travis-ci.org/warmcat/libwebsockets) [![Appveyor Build status](https://ci.appveyor.com/api/projects/status/qfasji8mnfnd2r8t?svg=true)](https://ci.appveyor.com/project/lws-team/libwebsockets) [![Coverity Scan Build Status](https://scan.coverity.com/projects/3576/badge.svg)](https://scan.coverity.com/projects/3576) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2266/badge)](https://bestpractices.coreinfrastructure.org/projects/2266) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/144fb195a83046e484a75c8b4c6cfc99)](https://www.codacy.com/app/lws-team/libwebsockets?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=warmcat/libwebsockets&amp;utm_campaign=Badge_Grade)
 
+# Libwebsockets
+
+Libwebsockets is a simple-to-use, pure C library providing client and server
+for **http/1**, **http/2**, **websockets** and other protocols in a security-minded,
+lightweight, configurable, scalable and flexible way.  It's easy to build and
+cross-build via cmake and is suitable for tasks from embedded RTOS through mass
+cloud serving.
+
+[50 minimal examples](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples) for various scenarios, CC0-licensed for cut-and-paste, allow you to get started quickly.
+
 ![overview](./doc-assets/lws-overview.svg)
 
 News
 ----
+
+## New features in v3.1
+
+ - **lws threadpool** - lightweight pool of pthreads integrated to lws wsi, with all
+   synchronization to event loop handled internally, queue for excess tasks
+   [threadpool docs](https://libwebsockets.org/git/libwebsockets/tree/lib/misc/threadpool)
+   [threadpool minimal example](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/ws-server/minimal-ws-server-threadpool)
+   Cmake config: `-DLWS_WITH_THREADPOOL=1`
+
+ - **libdbus support** integrated on lws event loop
+   [lws dbus docs](https://libwebsockets.org/git/libwebsockets/tree/lib/roles/dbus)
+   [lws dbus client minimal examples](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/dbus-client)
+   [lws dbus server minimal examples](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/dbus-server)
+   Cmake config: `-DLWS_ROLE_DBUS=1`
+
+ - **lws allocated chunks (lwsac)** - helpers for optimized mass allocation of small
+   objects inside a few larger malloc chunks... if you need to allocate a lot of
+   inter-related structs for a limited time, this removes per-struct allocation
+   library overhead completely and removes the need for any destruction handling
+   [lwsac docs](https://libwebsockets.org/git/libwebsockets/tree/lib/misc/lwsac)
+   [lwsac minimal example](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/api-tests/api-test-lwsac)
+   Cmake Config: `-DLWS_WITH_LWSAC=1`
+
+ - **lws tokenizer** - helper api for robustly tokenizing your own strings without
+   allocating or adding complexity.  Configurable by flags for common delimiter
+   sets and comma-separated-lists in the tokenizer.  Detects and reports syntax
+   errors.
+   [lws_tokenize docs](https://libwebsockets.org/git/libwebsockets/tree/include/libwebsockets/lws-tokenize.h)
+   [lws_tokenize minimal example / api test](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/api-tests/api-test-lws_tokenize)
+
+ - **lws full-text search** - optimized trie generation, serialization,
+   autocomplete suggestion generation and instant global search support extensible
+   to huge corpuses of UTF-8 text while remaining super lightweight on resources.
+   [full-text search docs](https://libwebsockets.org/git/libwebsockets/tree/lib/misc/fts)
+   [full-text search minimal example / api test](https://libwebsockets.org/git/libwebsockets/tree/minimal-examples/api-tests/api-test-fts)
+   [demo](https://libwebsockets.org/ftsdemo/)
+   [demo sources](https://libwebsockets.org/git/libwebsockets/tree/plugins/protocol_fulltext_demo.c)
+   Cmake config: `-DLWS_WITH_FTS=1 -DLWS_WITH_LWSAC=1`
+
+ - **gzip + brotli http server-side compression** - h1 and h2 detection of client support
+   for server compression, and auto-application to files with mimetypes "text/*",
+   "application/javascript" and "image/svg.xml".
+   Cmake config: `-DLWS_WITH_HTTP_STREAM_COMPRESSION=1` for gzip, optionally also give
+   `-DLWS_WITH_HTTP_BROTLI=1` for preferred `br` brotli compression
+
+ - **managed disk cache** - API for managing a directory containing cached files
+   with hashed names, and automatic deletion of LRU files once the cache is
+   above a given limit.
+   [lws diskcache docs](https://libwebsockets.org/git/libwebsockets/tree/include/libwebsockets/lws-diskcache.h)
+   Cmake config: `-DLWS_WITH_DISKCACHE=1`
+
+ - **http reverse proxy** - lws mounts support proxying h1 or h2 requests to
+   a local or remote IP, or unix domain socket over h1.  This allows microservice
+   type architectures where parts of the common URL space are actually handled
+   by external processes which may be remote or on the same machine.
+   [lws gitohashi serving](https://libwebsockets.org/git/) is handled this way.
+   CMake config: `-DLWS_WITH_HTTP_PROXY=1`
+
+ - **update minimal examples for strict Content Security Policy** the minimal
+   examples now show the best practices around Content Security Policy and
+   disabling inline Javascript.
 
 ## v3.0.1 released
 
@@ -72,16 +143,6 @@ are CC0 licensed (public domain) to facilitate that.
 32- and 64-bit Windows binary builds are available via Appveyor.  Visit
 [lws on Appveyor](https://ci.appveyor.com/project/lws-team/libwebsockets),
 click on a build, the ARTIFACTS, and unzip the zip file at `C:\Program Files (x86)/libwebsockets`.
-
-## ESP32 is supported
-
-ESP32 is now supported in lws!  Download the
-
- - factory https://warmcat.com/git/lws-esp32-factory/ and
- - test server app https://warmcat.com/git/lws-esp32-test-server-demos
-
-The ESP32 stuff has my dynamic mbedtls buffer allocation patches applied,
-which reduce allocation for small payload TLS links by around 26KiB per connection.
 
 ## Support
 

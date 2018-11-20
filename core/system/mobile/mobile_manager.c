@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 /** @file
@@ -31,6 +19,7 @@
 
 #include "mobile_manager.h"
 #include <system/systembase.h>
+#include <mobile_app/mobile_app.h>
 
 /**
  * Create new MobileManager
@@ -71,9 +60,13 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 			lma->uma_WSClient = sb->l_APNSConnection;
 			
-			int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+			// ASPN connection get only IOS notification
+			if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
+			{
+				int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
 			
-			WebsocketClientSendMessage( lma->uma_WSClient, msg, msgsize );
+				WebsocketClientSendMessage( sb->l_APNSConnection, msg, msgsize );
+			}
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 			/*
 			DEBUG("[MobileManagerNew] create connection\n");
@@ -328,6 +321,134 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 	return root;
 }
 
+MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type )
+{
+	char *mobileType = NULL;
+	if( type == MOBILE_APP_TYPE_ANDROID )
+	{
+		mobileType = "Android";
+	}
+	else if( type == MOBILE_APP_TYPE_IOS )
+	{
+		mobileType = "ios";
+	}
+	else if( type == MOBILE_APP_TYPE_WINDOWS )
+	{
+		mobileType = "Windows";
+	}
+	else
+	{
+		return NULL;
+	}
+	
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+	MobileListEntry *root = NULL;
+	
+	FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+	uma = mmgr->mm_UMApps;
+	while( uma != NULL )
+	{
+		if( uma->uma_UserID == user_id && strcmp( uma->uma_Platform, mobileType ) == 0 )
+		{
+			MobileListEntry *e = MobileListEntryNew( uma );
+			if( e != NULL )
+			{
+				e->node.mln_Succ = (MinNode *)root;
+				root = e;
+			}
+		}
+		uma = (UserMobileApp *)uma->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char where[ 512 ];
+		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", user_id, mobileType );
+
+		int entries;
+		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+		
+		MobileListEntry *freeEntries = NULL;
+		MobileListEntry *addEntries = NULL;
+		
+		UserMobileApp *le = uma;
+		while( le != NULL )
+		{
+			// we must check if entry exist
+			
+			MobileListEntry *existEntr = root;
+			while( existEntr != NULL )
+			{
+				if( le->uma_ID == existEntr->mm_UMApp->uma_ID )
+				{
+					
+					break;
+				}
+				existEntr = (MobileListEntry *)existEntr->node.mln_Succ;
+			}
+			
+			//
+			// we have 2 lists
+			// one will hold all entries which will be added to global lists
+			// second will hold all entries which will be deleted on the end
+			//
+			
+			// entry exist
+			if( existEntr != NULL )
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)freeEntries;
+					freeEntries = e;
+				}
+			}
+			else	// entry do not exist
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)addEntries;
+					addEntries = e;
+				}
+			}
+			
+			le = (UserMobileApp *)le->node.mln_Succ;
+		}
+		
+		// release not used entries
+		while( freeEntries != NULL )
+		{
+			MobileListEntry *rel = freeEntries;
+			freeEntries = (MobileListEntry *)freeEntries->node.mln_Succ;
+			
+			UserMobileAppDelete( rel->mm_UMApp );
+			FFree( rel );
+		}
+		
+		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+		
+		// add entries to main lists
+		while( addEntries != NULL )
+		{
+			MobileListEntry *add = addEntries;
+			addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
+			
+			add->node.mln_Succ = (MinNode *)root;
+			root = add;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return root;
+}
+
+
 /**
  * Refresh token list in memory
  *
@@ -356,4 +477,46 @@ void MobileManagerRefreshCache( MobileManager *mmgr )
 		
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
+}
+
+/**
+ * Add mobile app to main list
+ *
+ * @param mm pointer to MobileManager
+ * @param app pointer to UserMobileApp which will be added to list
+ * @return 0 when entry was added, 1 when entry is in list, otherwise error number
+ */
+int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
+{
+	if( app != NULL )
+	{
+		FRIEND_MUTEX_LOCK( &(mm->mm_Mutex) );
+		
+		UserMobileApp *lap = mm->mm_UMApps;
+		while( lap != NULL )
+		{
+			if( app->uma_ID == lap->uma_ID )
+			{
+				break;
+			}
+			lap = (UserMobileApp *)lap->node.mln_Succ;
+		}
+
+		// add entry only when its not on the list
+		if( lap == NULL )
+		{
+			app->node.mln_Succ = (MinNode *)mm->mm_UMApps;
+			mm->mm_UMApps = app;
+			
+			FRIEND_MUTEX_UNLOCK( &(mm->mm_Mutex) );
+			return 0;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(mm->mm_Mutex) );
+	}
+	else
+	{
+		return -1;
+	}
+	return 1;
 }

@@ -1,10 +1,9 @@
-Friend Unifying Platform version 1.2-RC1
+Friend Unifying Platform version 1.2-RC2
 ========================================
 
-We are happy to announce the release of FriendUP version 1.2 Release Candidate 1.
-Please check out our press release here:
+**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch*. Bleeding edge users should check out the *friendup-1.2-rc2* branch.
 
-[Press release on Medium.com](https://medium.com/@hogne.titlestad/friend-software-labs-releases-friendup-v1-2-release-candidate-637d7bf800d4)
+---
 
 Friend is THE Internet Operating System for everyone, that runs on everything.
 
@@ -149,6 +148,15 @@ Licensing
 =========
 
 FriendUP is a large system consisting of several layers. It has a kernel core that is managing the Friend resources. This one is licensed under the MIT license. Then it has modules, DOS drivers and runtime linked libraries. These are licensed under the LGPLv3 license. Finally, we have the GUI for Friend - the Friend Workspace. This is licensed under the AGPLv3 license.
+
+Contributor agreement
+=====================
+
+New developers joining the project needs to sign our contributor agreement before they are allowed to commit changes to the project. The contributor agreement can be found here:
+
+ * https://friendup.cloud/developer-platform/open-source/contributors/
+
+The contributor agreement is our vechile for ensuring that this project can enjoy commercial support and gain essential project management, as well as an open book development cycle on Github.
 
 Developer Community
 ===================

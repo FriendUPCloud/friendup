@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -26,6 +14,7 @@
 #include <util/hashmap.h>
 #include <system/json/jsmn.h>
 #include <system/systembase.h>
+#include <system/user/user_mobile_app.h>
 
 extern SystemBase *SLIB;
 
@@ -127,9 +116,10 @@ int websocket_notifications_sink_callback( struct lws *wsi, enum lws_callback_re
 static int _process_incoming_request( struct lws *wsi, char *data, size_t len, void *udata )
 {
 	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
+	mobile_app_notif *man = (mobile_app_notif *)udata;
 
 	jsmn_parser parser;
-	jsmn_init(&parser);
+	jsmn_init( &parser );
 	jsmntok_t tokens[16]; //should be enough
 
 	int tokens_found = jsmn_parse( &parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]) );
@@ -163,12 +153,12 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 		//at this point the authentication key is verified and we can add this socket to the trusted list
 		char *websocket_hash = _get_websocket_hash( wsi ); //do not free, se HashmapPut comment
 
-		HashmapElement *e = HashmapGet(_socket_auth_map, websocket_hash);
+		HashmapElement *e = HashmapGet( _socket_auth_map, websocket_hash );
 		if( e == NULL )
 		{
 			bool *auth_flag = FCalloc(1, sizeof(bool));
 			*auth_flag = true;
-			HashmapPut(_socket_auth_map, websocket_hash, auth_flag);
+			HashmapPut( _socket_auth_map, websocket_hash, auth_flag );
 
 		}
 		else
@@ -176,13 +166,12 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 			*((bool*)e->data) = true;
 		}
 
-		char reply[128];
-		strcpy(reply + LWS_PRE, "{ \"t\" : \"auth\", \"status\" : 1}");
-		unsigned int json_message_length = strlen(reply + LWS_PRE);
+		char reply[ 128 ];
+		strcpy( reply + LWS_PRE, "{ \"t\" : \"auth\", \"status\" : 1}" );
+		unsigned int json_message_length = strlen( reply + LWS_PRE );
 
-		lws_write(wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT);
+		lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 		
-		mobile_app_notif *man = (mobile_app_notif *)udata;
 		//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, websocket_notification_conn_callback );
 		return 0;
 
@@ -196,7 +185,7 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 
 		if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
 		{
-			return _reply_error(wsi, 8);
+			return _reply_error( wsi, 8 );
 		}
 
 		int notification_type = 0;
@@ -206,17 +195,13 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 			return _reply_error( wsi, 9 );
 		}
 
-		bool status = mobile_app_notify_user( username, channel_id,
-				title,
-				message,
-				(mobile_notification_type_t)notification_type,
-				NULL/*no extras*/);
+		bool status = mobile_app_notify_user( username, channel_id, title, message, (mobile_notification_type_t)notification_type, NULL/*no extras*/);
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
-		unsigned int json_message_length = strlen(reply + LWS_PRE);
+		unsigned int json_message_length = strlen( reply + LWS_PRE );
 
-		lws_write(wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT);
+		lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 		return 0;
 
 	}

@@ -2,22 +2,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -406,7 +394,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 		( isset( $GLOBALS['args']->sessionid ) ? $GLOBALS['args']->sessionid : '' )
 	);
 	
-	$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
+	//$logger->log( 'Trying to log in: ' . $sidm . ' ' . print_r( $args, 1 ) );
 	
 	// Here we need a union because we are looking for sessionid in both the
 	// FUserSession and FUser tables..
@@ -426,7 +414,7 @@ if( file_exists( 'cfg/cfg.ini' ) )
 	)
 	{
 		// Login success
-		$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
+		//$logger->log( 'User logged in with sessionid: (' . $GLOBALS[ 'args' ]->sessionid . ') ' . ( $User ? ( $User->ID . ' ' . $User->SessionID ) : '' ) );
 		$GLOBALS[ 'User' ] =& $User;
 	}
 	else if(

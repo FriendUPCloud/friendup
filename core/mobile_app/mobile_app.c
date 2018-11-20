@@ -1,22 +1,10 @@
 /*©mit**************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
-* Copyright 2014-2017 Friend Software Labs AS                                  *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* Permission is hereby granted, free of charge, to any person obtaining a copy *
-* of this software and associated documentation files (the "Software"), to     *
-* deal in the Software without restriction, including without limitation the   *
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or  *
-* sell copies of the Software, and to permit persons to whom the Software is   *
-* furnished to do so, subject to the following conditions:                     *
-*                                                                              *
-* The above copyright notice and this permission notice shall be included in   *
-* all copies or substantial portions of the Software.                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* MIT License for more details.                                                *
+* Licensed under the Source EULA. Please refer to the copy of the MIT License, *
+* found in the file license_mit.txt.                                           *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -63,6 +51,7 @@ struct mobile_app_connection_s
 	mobile_app_status_t app_status;
 	time_t most_recent_resume_timestamp;
 	time_t most_recent_pause_timestamp;
+	UserMobileApp *userMobileApp;
 };
 
 //
@@ -72,6 +61,7 @@ struct mobile_app_connection_s
 struct user_mobile_app_connections_s
 {
 	char *username;
+	FULONG userID;
 	mobile_app_connection_t *connection[MAX_CONNECTIONS_PER_USER];
 };
 
@@ -130,7 +120,7 @@ static void _mobile_app_init( void )
 	pthread_create( &_ping_thread, NULL/*default attributes*/, _mobile_app_ping_thread, NULL/*extra args*/ );
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
-	signal(SIGUSR1, mobile_app_test_signal_handler);
+	signal( SIGUSR1, mobile_app_test_signal_handler );
 #endif
 }
 
@@ -275,7 +265,7 @@ int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, vo
 
 	//see if this websocket belongs to an existing connection
 	char *websocket_hash = _mobile_app_get_websocket_hash(wsi);
-	mobile_app_connection_t *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
+	mobile_app_connection_t *app_connection = HashmapGetData( _websocket_to_user_connections_map, websocket_hash );
 	FFree(websocket_hash);
 
 	if( msg_type_string )
@@ -414,7 +404,7 @@ static int _mobile_app_reply_error(struct lws *wsi, int error_code)
  */
 static int _mobile_app_handle_login( struct lws *wsi, json_t *json )
 {
-	char *username_string = json_get_element_string(json, "user");
+	char *username_string = json_get_element_string( json, "user" );
 
 	if( username_string == NULL )
 	{
@@ -432,9 +422,9 @@ static int _mobile_app_handle_login( struct lws *wsi, json_t *json )
 	DEBUG("Login attempt <%s> <%s>\n", username_string, password_string);
 
 	unsigned long block_time = 0;
-	User *user = UMGetUserByNameDB(SLIB->sl_UM, username_string);
+	User *user = UMGetUserByNameDB( SLIB->sl_UM, username_string);
 
-	AuthMod *a = SLIB->AuthModuleGet(SLIB);
+	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
 	if( a->CheckPassword(a, NULL/*no HTTP request*/, user, password_string, &block_time) == FALSE )
 	{
@@ -554,15 +544,44 @@ static int _mobile_app_add_new_user_connection( struct lws *wsi, const char *use
 		else
 		{
 			DEBUG("Creating new struct for user <%s>\n", username);
-			char *permanent_username = FCalloc(strlen(username)+1, 1); //TODO: error handling
-			strcpy(permanent_username, username);
+			char *permanent_username = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
+			strcpy( permanent_username, username );
 			user_connections->username = permanent_username;
+			
+			//
+			// we must also attach UserID to User. This functionality will allow FC to find user by ID
+			
+			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
+
+			user_connections->userID = -1;
+			if( sqllib != NULL )
+			{
+				char *qery = FMalloc( 1048 );
+				qery[ 1024 ] = 0;
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT UserID FROM FUser WHERE `Name`=\"%s\"", username );
+				void *res = sqllib->Query( sqllib, qery );
+				if( res != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							char *end;
+							user_connections->userID = strtoul( row[0], &end, 0 );
+						}
+					}
+					sqllib->FreeResult( sqllib, res );
+				}
+				SLIB->LibrarySQLDrop( SLIB, sqllib );
+				FFree( qery );
+			}
 
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
 			//add the new connections struct to global users' connections map
-			if ( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK )
+			if( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK )
 			{
 				DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
@@ -703,14 +722,9 @@ static void  _mobile_app_remove_app_connection( user_mobile_app_connections_t *c
  * @param extra_string additional string which will be send to user
  * @return true when message was send
  */
-bool mobile_app_notify_user( const char *username,
-		const char *channel_id,
-		const char *title,
-		const char *message,
-		mobile_notification_type_t notification_type,
-		const char *extra_string )
+bool mobile_app_notify_user( const char *username, const char *channel_id, const char *title, const char *message, mobile_notification_type_t notification_type, const char *extra_string )
 {
-	user_mobile_app_connections_t *user_connections = HashmapGetData(_user_to_app_connections_map, username);
+	user_mobile_app_connections_t *user_connections = HashmapGetData( _user_to_app_connections_map, username );
 	if( user_connections == NULL )
 	{
 		DEBUG("User <%s> does not have any app connections\n", username);
@@ -722,37 +736,28 @@ bool mobile_app_notify_user( const char *username,
 	char *escaped_message = json_escape_string(message);
 	char *escaped_extra_string = NULL;
 
-	unsigned int required_length = strlen(escaped_channel_id)
-								+ strlen(escaped_message)
-								+ strlen(escaped_message)
-								+ LWS_PRE + 128/*some slack*/;
+	unsigned int required_length = strlen( escaped_channel_id ) + strlen( escaped_message ) + strlen( escaped_message ) + LWS_PRE + 128/*some slack*/;
 
 	if( extra_string )
 	{
 		escaped_extra_string = json_escape_string( extra_string );
-		required_length += strlen(escaped_extra_string);
+		required_length += strlen( escaped_extra_string );
 	}
 
-	char json_message[required_length];
+	char json_message[ required_length ];
+	MobileManager *mm = SLIB->sl_MobileManager;
 
 	if( extra_string )
 	{ //TK-1039
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}",
-				escaped_channel_id,
-				escaped_message,
-				escaped_title,
-				escaped_extra_string );
+				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_extra_string );
 
-		FFree(escaped_extra_string);
+		FFree( escaped_extra_string );
 	}
 	else
 	{
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}",
-				escaped_channel_id,
-				escaped_message,
-				escaped_title );
+				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title );
 	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
@@ -770,10 +775,7 @@ bool mobile_app_notify_user( const char *username,
 		{
 			if( user_connections->connection[i] )
 			{
-				write_message(
-						user_connections->connection[i],
-						(unsigned char*)json_message,
-						json_message_length );
+				write_message( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
 				//lws_write(
 				//		user_connections->connection[i]->websocket_ptr,
 				//		(unsigned char*)json_message+LWS_PRE,
@@ -788,10 +790,7 @@ bool mobile_app_notify_user( const char *username,
 		{
 			if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
 			{
-				write_message(
-						user_connections->connection[i],
-						(unsigned char*)json_message,
-						json_message_length );
+				write_message( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
 				//lws_write(
 				//		user_connections->connection[i]->websocket_ptr,
 				//		(unsigned char*)json_message+LWS_PRE,
@@ -802,6 +801,29 @@ bool mobile_app_notify_user( const char *username,
 		break;
 		default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 	}
+	
+	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
+	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
+	
+	char *json_message_ios;
+	int json_message_ios_size = required_length+512;
+	if( ( json_message_ios = FMalloc( json_message_ios_size ) ) != NULL )
+	{
+		MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
+		while( mle != NULL )
+		{
+			snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, mle->mm_UMApp->uma_AppToken );
+			
+			WebsocketClientSendMessage( SLIB->l_APNSConnection, json_message_ios, json_message_ios_size );
+			mle = (MobileListEntry *) mle->node.mln_Succ;
+		}
+		FFree( json_message_ios );
+	}
+	else
+	{
+		FERROR("Cannot allocate memory for MobileApp->user->ios message!\n");
+	}
+	
 	return true;
 }
 
@@ -822,8 +844,8 @@ void mobile_app_test_signal_handler( int signum __attribute__((unused)))
 
 	char title[64];
 	char message[64];
-	sprintf(title, "Fancy title %d", counter);
-	sprintf(message, "Fancy message %d", counter);
+	sprintf( title, "Fancy title %d", counter );
+	sprintf( message, "Fancy message %d", counter );
 
 	bool status = mobile_app_notify_user( "fadmin",
 			"test_app",

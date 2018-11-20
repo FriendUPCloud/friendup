@@ -1,19 +1,10 @@
 /*©agpl*************************************************************************
 *                                                                              *
 * This file is part of FRIEND UNIFYING PLATFORM.                               *
+* Copyright (c) Friend Software Labs AS. All rights reserved.                  *
 *                                                                              *
-* This program is free software: you can redistribute it and/or modify         *
-* it under the terms of the GNU Affero General Public License as published by  *
-* the Free Software Foundation, either version 3 of the License, or            *
-* (at your option) any later version.                                          *
-*                                                                              *
-* This program is distributed in the hope that it will be useful,              *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of               *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 *
-* GNU Affero General Public License for more details.                          *
-*                                                                              *
-* You should have received a copy of the GNU Affero General Public License     *
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.        *
+* Licensed under the Source EULA. Please refer to the copy of the GNU Affero   *
+* General Public License, found in the file license_agpl.txt.                  *
 *                                                                              *
 *****************************************************************************©*/
 
@@ -2285,7 +2276,8 @@ DirectoryView.prototype.SelectAll = function()
 	{
 		ics[a].domNode.classList.add( 'Selected' );
 		ics[a].domNode.selected = true;
-		ics[a].fileInfo.selected = true;
+		if( ics[a].fileInfo )
+			ics[a].fileInfo.selected = true;
 	}
 }
 
@@ -2540,7 +2532,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			inne.className = f.iconInner.className;
 			icon.appendChild( inne );
 			r.appendChild( icon );
-
+			
 			// Single click
 			r.onclick = function( e )
 			{
@@ -2626,6 +2618,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 				return cancelBubble( e );
 			}
+			
 			r.onmousedown = function( e )
 			{
 				// Right mouse button
@@ -2694,7 +2687,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			// Let's drag this bastard!
 			r.setAttribute( 'draggable', true );
 			
-			if( window.isTablet )
+			if( window.isTablet || !window.isMobile )
 			{
 				r.ondragstart = function( e )
 				{
@@ -3203,7 +3196,7 @@ FileIcon.prototype.Init = function( fileInfo )
 	file.fileInfo = fileInfo;
 	file.extension = extension;
 	file.Title = title.innerText;
-	file.fileInfo.downloadhref = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + fileInfo.Filename + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ) + '&download=1';
+	file.fileInfo.downloadhref = document.location.protocol +'//'+ document.location.host +'/system.library/file/read/' + encodeURIComponent( fileInfo.Filename ) + '?mode=rs&sessionid=' + Workspace.sessionId + '&path='+ encodeURIComponent( fileInfo.Path ) + '&download=1';
 
 	// -------------------------------------------------------------------------
 	file.rollOver = function ( eles )
@@ -3418,8 +3411,6 @@ FileIcon.prototype.Init = function( fileInfo )
 		else
 		{	
 			// No mime type? Ask Friend Core
-			console.log( 'Checking mimetype.' );
-			
 			var mim = new Module( 'system' );
 			mim.onExecuted = function( me, md )
 			{
@@ -3723,7 +3714,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
-	console.log('OpenWindowByFileinfo fileInfo is ....... ',iconObject);
+	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
 		ExecuteApplication( fileInfo.Filename );
@@ -3810,7 +3801,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			memorize : true
 		} );
 		
-		var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path ); 
+		var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
 		
 		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="' + urlsrc + '"></iframe></div>' );
 		
@@ -3868,7 +3859,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + imageUrl ); 
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) ); 
 				
 				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 			} );
@@ -4357,6 +4348,55 @@ function CheckDoorsKeys( e )
 		case 46:
 			Workspace.deleteFile();
 			break;
+		case 13:
+			if( window.regionWindow && window.regionWindow.directoryview )
+			{
+				for( var a = 0; a < window.regionWindow.icons.length; a++ )
+				{
+					if( window.regionWindow.icons[a].selected )
+					{
+						window.regionWindow.icons[a].domNode.ondblclick();
+						return;
+					}
+				}
+			}
+			break;
+	}
+	// Do the thing! Keyboard navigation
+	if( window.regionWindow && window.regionWindow.directoryview )
+	{
+		var rw = window.regionWindow.icons;
+		var out = [];
+		var found = false;
+		for( var a = 0; a < rw.length; a++ )
+		{
+			var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+			if( f.toUpperCase().charCodeAt(0) == k )
+			{
+				out.push( rw[a] );
+				if( rw[a].selected )
+				{
+					found = true;
+				}
+			}
+		}
+		if( out.length )
+		{
+			if( !found )
+			{
+				out[0].domNode.click();
+				return;
+			}
+			for( var a = 0; a < out.length; a++ )
+			{
+				if( out[a].selected && a < out.length - 1 )
+				{
+					out[a+1].domNode.click();
+					return;
+				}
+			}
+			out[0].domNode.click();
+		}
 	}
 }
 

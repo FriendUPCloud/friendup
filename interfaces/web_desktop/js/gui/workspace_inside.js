@@ -7690,6 +7690,7 @@ function handleNotificationMessage( msg )
 for( var a in WorkspaceInside )
 	Workspace[a] = WorkspaceInside[a];
 delete WorkspaceInside;
+checkForFriendApp();
 InitDynamicClassSystem();
 
 document.addEventListener( 'paste', function( evt )

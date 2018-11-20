@@ -133,6 +133,7 @@ i18n_javascriptexe                   : JavascriptEXE
 i18n_solidity                        : Solidity
 i18n_json                            : JSON
 i18n_html                            : HTML
+i18n_conf                            : Konfigurasjon
 i18n_c_code                          : C/C++ kode
 i18n_d_code                          : D kode
 i18n_ini_script                      : INI script
