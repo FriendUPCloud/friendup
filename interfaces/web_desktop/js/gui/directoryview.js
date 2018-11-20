@@ -3709,12 +3709,12 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			Filename: fileInfo.Filename,
 			Filesize: fileInfo.Filesize,
 			Path: fileInfo.Path,
-			extension: ext,
+			extension: ( fileInfo.Extension ? fileInfo.Extension : ext ),
 			fileInfo: fileInfo,
 			window: false
 		};
 	}
-
+	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
 		ExecuteApplication( fileInfo.Filename );
@@ -3800,8 +3800,10 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			height   : 100,
 			memorize : true
 		} );
-
-		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) + '"></iframe></div>' );
+		
+		var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( fileInfo.Path ) ); 
+		
+		win.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><iframe style="border: 0; position: absolute; top: 0; left: 0; height: 100%; width: 100%" src="' + urlsrc + '"></iframe></div>' );
 		
 		win = null;
 	}
@@ -3857,14 +3859,18 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				owin.setContent( '<iframe src="/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) ); 
+				
+				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 			} );
 		}
 		else
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
+				
+				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
 			} );
 		}
 		win._window.addEventListener( 'mousedown', function( e )
@@ -3968,7 +3974,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		var newWin = win;
 		GetURLFromPath( fileInfo.Path, function( url )
 		{
-			newWin.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="' + url + '" controls="controls" autoplay="autoplay" ondblclick="Workspace.fullscreen( this )" ontouchstart="touchDoubleClick( this, function( ele ){ Workspace.fullscreen( ele ); } )"></video></div>' );
+			var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : url ); 
+			
+			newWin.setContent( '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%" class="LoadingAnimation"><video id="target_' + num + '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="' + urlsrc + '" controls="controls" autoplay="autoplay" ondblclick="Workspace.fullscreen( this )" ontouchstart="touchDoubleClick( this, function( ele ){ Workspace.fullscreen( ele ); } )"></video></div>' );
 		}, '&mode=rs' );
 		win = null;
 	}

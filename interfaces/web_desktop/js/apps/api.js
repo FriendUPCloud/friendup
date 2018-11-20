@@ -4892,6 +4892,16 @@ DOS =
 		};
 		message.callback = addCallback( callback );
 		Application.sendMessage( message );
+	},
+	openWindowByFilename: function( fileInfo, ext )
+	{
+		var message =
+		{
+			type: 'dos', 
+			method: 'openWindowByFilename', 
+			args: { fileInfo: fileInfo, ext: ext } 
+		};
+		Application.sendMessage( message );
 	}
 };
 Friend.DOS = DOS;
