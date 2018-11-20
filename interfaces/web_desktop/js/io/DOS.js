@@ -549,3 +549,49 @@ Friend.DOS.getServerURL = function( path, options, callback, extra )
 	callback( true, path, extra );
 	return path;
 };
+
+
+
+// Opens a window based on filepath (used for opening files hosted external)  
+Friend.DOS.openWindowByFilename = function( fileInfo, ext )
+{
+	if( typeof( fileInfo ) === "string" )
+	{
+		if( !ext )
+		{
+			ext = fileInfo.split( '.' );
+			ext = ext[ext.length-1];
+		}
+		
+		fileInfo = {
+			Extension : ext, 
+			Path : fileInfo 
+		};
+	}
+	else
+	{
+		if( !ext )
+		{
+			ext = fileInfo.Path ? fileInfo.Path.split( '.' ) : ( fileInfo.Filename ? fileInfo.Filename.split( '.' ) : fileInfo.Title.split( '.' ) );
+			ext = ext[ext.length-1];
+		}
+	}
+	
+	fileInfo = {
+		Title        : ( fileInfo.Title        ? fileInfo.Title        : ''     ),
+		Filename     : ( fileInfo.Filename     ? fileInfo.Filename     : ''     ),
+		DateCreated  : ( fileInfo.DateCreated  ? fileInfo.DateCreated  : 0      ),
+		DateModified : ( fileInfo.DateModified ? fileInfo.DateModified : 0      ),
+		Extension    : ( fileInfo.Extension    ? fileInfo.Extension    : ext    ),
+		Filesize     : ( fileInfo.Filesize     ? fileInfo.Filesize     : 0      ),
+		MetaType     : ( fileInfo.MetaType     ? fileInfo.MetaType     : 'File' ),
+		Path         : ( fileInfo.Path         ? fileInfo.Path         : ''     ),
+		Type         : ( fileInfo.Type         ? fileInfo.Type         : 'File' ),
+		downloadhref : ( fileInfo.downloadhref ? fileInfo.downloadhref : ''     )
+	};
+	
+	return OpenWindowByFileinfo( fileInfo );
+}
+
+
+

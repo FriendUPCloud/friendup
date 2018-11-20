@@ -342,6 +342,12 @@ function apiWrapper( event, force )
 								app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
 						}, msg.extra );
 						break;
+					case 'openWindowByFilename':
+						if( msg.args )
+						{
+							Friend.DOS.openWindowByFilename( msg.args.fileInfo, msg.args.ext );
+						}
+						break;
 				}
 				msg.callback = null;
 				break;
