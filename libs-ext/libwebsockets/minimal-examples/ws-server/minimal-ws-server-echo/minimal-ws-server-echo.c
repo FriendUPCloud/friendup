@@ -98,8 +98,7 @@ int main(int argc, const char **argv)
 	if (!lws_cmdline_option(argc, argv, "-n"))
 		info.extensions = extensions;
 	info.pt_serv_buf_size = 32 * 1024;
-	info.options = LWS_SERVER_OPTION_VALIDATE_UTF8 |
-		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
+	info.options = LWS_SERVER_OPTION_VALIDATE_UTF8;
 
 	context = lws_create_context(&info);
 	if (!context) {

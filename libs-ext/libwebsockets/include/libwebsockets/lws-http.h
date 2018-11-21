@@ -21,9 +21,6 @@
  * included from libwebsockets.h
  */
 
-/* minimal space for typical headers and CSP stuff */
-
-#define LWS_RECOMMENDED_MIN_HEADER_SPACE 2048
 
 /*! \defgroup http HTTP
 

@@ -95,8 +95,7 @@ int main(int argc, const char **argv)
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 
 	info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT |
-		       LWS_SERVER_OPTION_EXPLICIT_VHOSTS |
-		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
+		       LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 
 	context = lws_create_context(&info);
 	if (!context) {

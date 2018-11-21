@@ -44,7 +44,7 @@ lws_client_connect_2(struct lws *wsi)
 	const char *ads;
 	sockaddr46 sa46;
 	const struct sockaddr *psa;
-	int n, port = 0;
+	int n, port;
 	const char *cce = "", *iface;
 	const char *meth = NULL;
 #ifdef LWS_WITH_IPV6

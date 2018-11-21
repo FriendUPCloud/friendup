@@ -254,8 +254,6 @@ init_fail:
 		break;
 
 	case LWS_CALLBACK_EVENT_WAIT_CANCELLED:
-		if (!vhd)
-			break;
 		/*
 		 * When the "spam" threads add a message to the ringbuffer,
 		 * they create this event in the lws service thread context
