@@ -173,11 +173,11 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
  * @param len length of message
  * @return 0 when success, otherwise error number
  */
-/*
-static int _process_incoming_request( struct lws *wsi, char *data, size_t len, void *udata )
+
+static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
 {
 	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
-	mobile_app_notif *man = (mobile_app_notif *)udata;
+	MobileAppNotif *man = (MobileAppNotif *)udata;
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
@@ -187,7 +187,7 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 
 	if( tokens_found < 1 )
 	{
-		return _reply_error(wsi, 5);
+		return ReplyError(wsi, 5);
 	}
 
 	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
@@ -195,7 +195,7 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 	char *msg_type_string = json_get_element_string(&json, "t");
 	if( msg_type_string == NULL )
 	{
-		return _reply_error(wsi, 6);
+		return ReplyError(wsi, 6);
 	}
 
 	if( strcmp(msg_type_string, "auth") == 0 )
@@ -203,16 +203,16 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 		char *auth_key = json_get_element_string(&json, "key");
 		if( auth_key == NULL )
 		{
-			return _reply_error(wsi, 7);
+			return ReplyError(wsi, 7);
 		}
 		
-		if( _verify_auth_key( auth_key ) == false )
+		if( VerifyAuthKey( auth_key ) == false )
 		{
-			return _reply_error( wsi, 8 );
+			return ReplyError( wsi, 8 );
 		}
 
 		//at this point the authentication key is verified and we can add this socket to the trusted list
-		char *websocket_hash = _get_websocket_hash( wsi ); //do not free, se HashmapPut comment
+		char *websocket_hash = GetWebsocketHash( wsi ); //do not free, se HashmapPut comment
 
 		HashmapElement *e = HashmapGet( _socket_auth_map, websocket_hash );
 		if( e == NULL )
@@ -232,12 +232,11 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 		unsigned int json_message_length = strlen( reply + LWS_PRE );
 
 		lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-		
-		//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, WebsocketNotificationConnCallback );
+
 		return 0;
 
 	}
-	else if( _is_socket_authenticated( wsi ) )
+	else if( IsSocketAuthenticated( wsi ) )
 	{
 		char *username = json_get_element_string( &json, "username" );
 		char *channel_id = json_get_element_string( &json, "channel_id" );
@@ -246,17 +245,17 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 
 		if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
 		{
-			return _reply_error( wsi, 8 );
+			return ReplyError( wsi, 8 );
 		}
 
 		int notification_type = 0;
 
 		if( json_get_element_int( &json, "notification_type", &notification_type) == false )
 		{
-			return _reply_error( wsi, 9 );
+			return ReplyError( wsi, 9 );
 		}
 
-		bool status = MobileAppNotifyUser( username, channel_id, title, message, (mobile_notification_type_t)notification_type, NULL );
+		bool status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
@@ -268,11 +267,13 @@ static int _process_incoming_request( struct lws *wsi, char *data, size_t len, v
 	}
 	else
 	{
-		return _reply_error(wsi, 20);
+		return ReplyError(wsi, 20);
 	}
 	return 0;
 }
-*/
+
+
+/*
 static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
 {
 	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
@@ -289,17 +290,16 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 		return ReplyError(wsi, 5);
 	}
 	
-	/*
-	{
-    type : 'service',
-    data : {
-        type : 'notification',
-        data : {
-            <notie data>
-			}
-		}
-	}
-	 */
+	//
+	//{
+    //type : 'service',
+    //data : {
+    //    type : 'notification',
+    //    data : {
+    //        <notie data>
+	//		}
+	//	}
+	//}
 	
 	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = t };
 	
@@ -396,7 +396,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 								return ReplyError( wsi, 9 );
 							}
 
-							bool status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL/*no extras*/);
+							bool status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
 
 							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 							if( en != NULL )
@@ -432,6 +432,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 
 	return 0;
 }
+*/
 
 /**
  * Set websocket notification key
