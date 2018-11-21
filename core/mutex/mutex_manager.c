@@ -88,20 +88,20 @@ void MutexManagerDelete( MutexManager *mm )
  */
 int PthreadTimedLock( pthread_mutex_t *mut, char *file, int line )
 {
-	int times = MUTEX_TIMEOUT_NUMBER_TRIES;
+	int times = 15;//MUTEX_TIMEOUT_NUMBER_TRIES;
 	while( times > 0 )
 	{
 		if( pthread_mutex_trylock( mut ) == 0 )
 		{
 			return 0;
 		}
-		usleep( MUTEX_TIMEOUT_TIME );
+		usleep( 1000 );//MUTEX_TIMEOUT_TIME );
 		times--;
 	}
 	Log( FLOG_ERROR, "Cannot lock, filename: '%s' Line: '%d'\n", file, line );
 	// crash!
-#ifdef __DEBUG
-	//exit( EXIT_CODE_LOCK );
-#endif
+//#ifdef __DEBUG
+	exit( EXIT_CODE_LOCK );
+//#endif
 	return 1;
 }
