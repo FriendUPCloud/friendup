@@ -95,7 +95,7 @@ int PthreadTimedLock( pthread_mutex_t *mut, char *file, int line )
 		{
 			return 0;
 		}
-		usleep( 1000 );//MUTEX_TIMEOUT_TIME );
+		usleep( 10000 );//MUTEX_TIMEOUT_TIME );
 		times--;
 	}
 	Log( FLOG_ERROR, "Cannot lock, filename: '%s' Line: '%d'\n", file, line );
