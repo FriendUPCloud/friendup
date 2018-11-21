@@ -233,6 +233,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	char *data = (char*)in;
 	if( man != NULL )
 	{
+		DEBUG(" Initialized %d\n", man->man_Initialized );
 		if( man->man_Initialized == 0 )
 		{
 			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
@@ -240,6 +241,10 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			man->man_Initialized = 1;
 			DEBUG("Queue initialized\n");
 		}
+	}
+	else
+	{
+		FERROR("\n\n\n\nMAN is NULL\n\n\n\n");
 	}
 
 	if( len == 0 )
