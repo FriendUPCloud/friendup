@@ -95,6 +95,7 @@ static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char 
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
+			DEBUG("Message added to queue\n");
 			en->fq_Data = FMalloc( len+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
@@ -227,13 +228,8 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		
 		return 0;
 	}
-
-	if( len == 0 )
-	{
-		DEBUG("Empty websocket frame (reason %d)\n", reason);
-		return 0;
-	}
-
+	
+	DEBUG("Initialize queue\n");
 	char *data = (char*)in;
 	if( man != NULL )
 	{
@@ -242,7 +238,14 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
 			FQInit( &(man->man_Queue) );
 			man->man_Initialized = 1;
+			DEBUG("Queue initialized\n");
 		}
+	}
+
+	if( len == 0 )
+	{
+		DEBUG("Empty websocket frame (reason %d)\n", reason);
+		return 0;
 	}
 
 	DEBUG("Mobile app data: <%*s>\n", (unsigned int)len, data);
