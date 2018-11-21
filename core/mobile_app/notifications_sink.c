@@ -65,20 +65,23 @@ void WebsocketNotificationConnCallback( struct WebsocketClient *wc, char *msg, i
  */
 int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len )
 {
+	MobileAppNotif *man = (MobileAppNotif *)user;
 	DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
 	{
-		MobileAppNotif *man = (MobileAppNotif *)user;
 		NotificationsSinkInit();
-		if( man->man_Initialized == 0 )
-		{
-			pthread_mutex_init( &man->man_Mutex, NULL );
-			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
-			FQInit( &(man->man_Queue) );
-			man->man_Initialized = 1;
-		}
+		
 		return 0;
+	}
+	
+	if( reason == LWS_CALLBACK_ESTABLISHED 
+		 && man->man_Initialized == 0 )
+	{
+		pthread_mutex_init( &man->man_Mutex, NULL );
+		memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
+		FQInit( &(man->man_Queue) );
+		man->man_Initialized = 1;
 	}
 
 	if( reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE )
