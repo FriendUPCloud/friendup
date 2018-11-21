@@ -120,10 +120,8 @@ lws_vhost_bind_wsi(struct lws_vhost *vh, struct lws *wsi)
 {
 	if (wsi->vhost == vh)
 		return;
-	lws_context_lock(vh->context, __func__); /* ---------- context { */
 	wsi->vhost = vh;
 	vh->count_bound_wsi++;
-	lws_context_unlock(vh->context); /* } context ---------- */
 	lwsl_info("%s: vh %s: count_bound_wsi %d\n",
 		    __func__, vh->name, vh->count_bound_wsi);
 	assert(wsi->vhost->count_bound_wsi > 0);
@@ -489,10 +487,8 @@ lws_set_timeout(struct lws *wsi, enum pending_timeout reason, int secs)
 	lws_pt_unlock(pt);
 }
 
-/* requires context + vh lock */
-
 int
-__lws_timed_callback_remove(struct lws_vhost *vh, struct lws_timed_vh_protocol *p)
+lws_timed_callback_remove(struct lws_vhost *vh, struct lws_timed_vh_protocol *p)
 {
 	lws_start_foreach_llp(struct lws_timed_vh_protocol **, pt,
 			      vh->timed_vh_protocol_list) {
@@ -507,30 +503,9 @@ __lws_timed_callback_remove(struct lws_vhost *vh, struct lws_timed_vh_protocol *
 	return 1;
 }
 
-int
-lws_pthread_self_to_tsi(struct lws_context *context)
-{
-#if LWS_MAX_SMP > 1
-	pthread_t ps = pthread_self();
-	struct lws_context_per_thread *pt = &context->pt[0];
-	int n;
-
-	for (n = 0; n < context->count_threads; n++) {
-		if (pthread_equal(ps, pt->self))
-			return n;
-		pt++;
-	}
-
-	return -1;
-#else
-	return 0;
-#endif
-}
-
 LWS_VISIBLE LWS_EXTERN int
-lws_timed_callback_vh_protocol(struct lws_vhost *vh,
-			       const struct lws_protocols *prot, int reason,
-			       int secs)
+lws_timed_callback_vh_protocol(struct lws_vhost *vh, const struct lws_protocols *prot,
+			       int reason, int secs)
 {
 	struct lws_timed_vh_protocol *p = (struct lws_timed_vh_protocol *)
 			lws_malloc(sizeof(*p), "timed_vh");
@@ -538,22 +513,12 @@ lws_timed_callback_vh_protocol(struct lws_vhost *vh,
 	if (!p)
 		return 1;
 
-	p->tsi_req = lws_pthread_self_to_tsi(vh->context);
-	if (p->tsi_req < 0) /* not called from a service thread --> tsi 0 */
-		p->tsi_req = 0;
-
-	lws_context_lock(vh->context, __func__); /* context ----------------- */
-
 	p->protocol = prot;
 	p->reason = reason;
 	p->time = lws_now_secs() + secs;
-
-	lws_vhost_lock(vh); /* vhost ---------------------------------------- */
 	p->next = vh->timed_vh_protocol_list;
-	vh->timed_vh_protocol_list = p;
-	lws_vhost_unlock(vh); /* -------------------------------------- vhost */
 
-	lws_context_unlock(vh->context); /* ------------------------- context */
+	vh->timed_vh_protocol_list = p;
 
 	return 0;
 }
@@ -1417,11 +1382,7 @@ lws_get_network_wsi(struct lws *wsi)
 		return NULL;
 
 #if defined(LWS_WITH_HTTP2)
-	if (!wsi->http2_substream
-#if !defined(LWS_NO_CLIENT)
-			&& !wsi->client_h2_substream
-#endif
-	)
+	if (!wsi->http2_substream && !wsi->client_h2_substream)
 		return wsi;
 
 	while (wsi->h2.parent_wsi)
@@ -2101,12 +2062,10 @@ static const char * const colours[] = {
 	"[31m", /* LLL_THREAD */
 };
 
-static char tty;
-
-LWS_VISIBLE void
-lwsl_emit_stderr(int level, const char *line)
+LWS_VISIBLE void lwsl_emit_stderr(int level, const char *line)
 {
 	char buf[50];
+	static char tty = 3;
 	int n, m = LWS_ARRAY_SIZE(colours) - 1;
 
 	if (!tty)
@@ -2125,28 +2084,6 @@ lwsl_emit_stderr(int level, const char *line)
 	} else
 		fprintf(stderr, "%s%s", buf, line);
 }
-
-LWS_VISIBLE void
-lwsl_emit_stderr_notimestamp(int level, const char *line)
-{
-	int n, m = LWS_ARRAY_SIZE(colours) - 1;
-
-	if (!tty)
-		tty = isatty(2) | 2;
-
-	if (tty == 3) {
-		n = 1 << (LWS_ARRAY_SIZE(colours) - 1);
-		while (n) {
-			if (level & n)
-				break;
-			m--;
-			n >>= 1;
-		}
-		fprintf(stderr, "%c%s%s%c[0m", 27, colours[m], line, 27);
-	} else
-		fprintf(stderr, "%s", line);
-}
-
 #endif
 
 LWS_VISIBLE void _lws_logv(int filter, const char *format, va_list vl)
@@ -3090,21 +3027,8 @@ lws_tokenize(struct lws_tokenize *ts)
 {
 	const char *rfc7230_delims = "(),/:;<=>?@[\\]{}";
 	lws_tokenize_state state = LWS_TOKZS_LEADING_WHITESPACE;
-	char c, flo = 0, d_minus = '-', d_dot = '.', s_minus = '\0',
-	     s_dot = '\0';
-	signed char num = -1;
+	char c, num = -1, flo = 0;
 	int utf8 = 0;
-
-	/* for speed, compute the effect of the flags outside the loop */
-
-	if (ts->flags & LWS_TOKENIZE_F_MINUS_NONTERM) {
-		d_minus = '\0';
-		s_minus = '-';
-	}
-	if (ts->flags & LWS_TOKENIZE_F_DOT_NONTERM) {
-		d_dot = '\0';
-		s_dot = '.';
-	}
 
 	ts->token = NULL;
 	ts->token_len = 0;
@@ -3116,6 +3040,8 @@ lws_tokenize(struct lws_tokenize *ts)
 		utf8 = lws_check_byte_utf8((unsigned char)utf8, c);
 		if (utf8 < 0)
 			return LWS_TOKZE_ERR_BROKEN_UTF8;
+
+		lwsl_debug("%s: %c (%d) %d\n", __func__, c, state, (int)ts->len);
 
 		if (!c)
 			break;
@@ -3180,8 +3106,7 @@ lws_tokenize(struct lws_tokenize *ts)
 
 		/* aggregate . in a number as a float */
 
-		if (c == '.' && !(ts->flags & LWS_TOKENIZE_F_NO_FLOATS) &&
-		    state == LWS_TOKZS_TOKEN && num == 1) {
+		if (c == '.' && state == LWS_TOKZS_TOKEN && num == 1) {
 			if (flo)
 				return LWS_TOKZE_ERR_MALFORMED_FLOAT;
 			flo = 1;
@@ -3210,9 +3135,9 @@ lws_tokenize(struct lws_tokenize *ts)
 		     strchr(rfc7230_delims, c) && c > 32) ||
 		    ((!(ts->flags & LWS_TOKENIZE_F_RFC7230_DELIMS) &&
 		     (c < '0' || c > '9') && (c < 'A' || c > 'Z') &&
-		     (c < 'a' || c > 'z') && c != '_') &&
-		     c != s_minus && c != s_dot) ||
-		    c == d_minus || c == d_dot
+		     (c < 'a' || c > 'z') && c != '_') && !(c == '-' &&
+			(ts->flags & LWS_TOKENIZE_F_MINUS_NONTERM))) ||
+		    (c == '-' && !(ts->flags & LWS_TOKENIZE_F_MINUS_NONTERM))
 		    )) {
 			switch (state) {
 			case LWS_TOKZS_LEADING_WHITESPACE:

@@ -17,7 +17,6 @@ set(LWS_WITH_POLL 1)
 # Select features recommended for PC distro packaging
 #
 option(LWS_WITH_DISTRO_RECOMMENDED "Enable features recommended for distro packaging" OFF)
-option(LWS_FOR_GITOHASHI "Enable features recommended for use with gitohashi" OFF)
 
 #
 # Major individual features
@@ -25,13 +24,13 @@ option(LWS_FOR_GITOHASHI "Enable features recommended for use with gitohashi" OF
 option(LWS_ROLE_H1 "Compile with support for http/1 (needed for ws)" ON)
 option(LWS_ROLE_WS "Compile with support for websockets" ON)
 option(LWS_ROLE_DBUS "Compile with support for DBUS" OFF)
-option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" ON)
+option(LWS_WITH_HTTP2 "Compile with server support for HTTP/2" OFF)
 option(LWS_WITH_LWSWS "Libwebsockets Webserver" OFF)
 option(LWS_WITH_CGI "Include CGI (spawn process with network-connected stdin/out/err) APIs" OFF)
 option(LWS_IPV6 "Compile with support for ipv6" OFF)
-option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" OFF)
+option(LWS_UNIX_SOCK "Compile with support for UNIX domain socket" ON)
 option(LWS_WITH_PLUGINS "Support plugins for protocols and extensions" OFF)
-option(LWS_WITH_HTTP_PROXY "Support for HTTP proxying" OFF)
+option(LWS_WITH_HTTP_PROXY "Support for HTTP proxying" ON)
 option(LWS_WITH_ZIP_FOPS "Support serving pre-zipped files" OFF)
 option(LWS_WITH_SOCKS5 "Allow use of SOCKS5 proxy on client connections" OFF)
 option(LWS_WITH_GENERIC_SESSIONS "With the Generic Sessions plugin" OFF)
@@ -39,12 +38,12 @@ option(LWS_WITH_PEER_LIMITS "Track peers and restrict resources a single peer ca
 option(LWS_WITH_ACCESS_LOG "Support generating Apache-compatible access logs" OFF)
 option(LWS_WITH_RANGES "Support http ranges (RFC7233)" OFF)
 option(LWS_WITH_SERVER_STATUS "Support json + jscript server monitoring" OFF)
-option(LWS_WITH_THREADPOOL "Managed worker thread pool support (relies on pthreads)" OFF)
+option(LWS_WITH_THREADPOOL "Managed worker thread pool support (relies on pthreads)" ON)
 option(LWS_WITH_HTTP_STREAM_COMPRESSION "Support HTTP stream compression" OFF)
 option(LWS_WITH_HTTP_BROTLI "Also offer brotli http stream compression (requires LWS_WITH_HTTP_STREAM_COMPRESSION)" OFF)
 option(LWS_WITH_ACME "Enable support for ACME automatic cert acquisition + maintenance (letsencrypt etc)" OFF)
 option(LWS_WITH_HUBBUB "Enable libhubbub rewriting support" OFF)
-option(LWS_WITH_FTS "Full Text Search support" OFF)
+option(LWS_WITH_FTS "Full Text Search support" ON)
 #
 # TLS library options... all except mbedTLS are basically OpenSSL variants.
 #
@@ -113,22 +112,10 @@ option(LWS_WITH_EXPORT_LWSTARGETS "Export libwebsockets CMake targets.  Disable 
 option(LWS_REPRODUCIBLE "Build libwebsockets reproducible. It removes the build user and hostname from the build" ON)
 option(LWS_WITH_MINIMAL_EXAMPLES "Also build the normally standalone minimal examples, for QA" OFF)
 option(LWS_WITH_LWSAC "lwsac Chunk Allocation api" ON)
-option(LWS_WITH_DISKCACHE "Hashed cache directory with lazy LRU deletion to size limit" OFF)
-option(LWS_WITH_ASAN "Build with gcc runtime sanitizer options enabled (needs libasan)" OFF)
 #
 # End of user settings
 #
 
-if (LWS_FOR_GITOHASHI)
-	set(LWS_WITH_THREADPOOL 1)
-	set(LWS_WITH_HTTP2 1)
-	set(LWS_UNIX_SOCK 1)
-	set(LWS_WITH_HTTP_PROXY 1)
-	set(LWS_WITH_FTS 1)
-	set(LWS_WITH_DISKCACHE 1)
-	set(LWS_WITH_LWSAC 1)
-	set(LWS_WITH_LEJP_CONF 1)
-endif()
 
 if(LWS_WITH_DISTRO_RECOMMENDED)
 	set(LWS_WITH_HTTP2 1)
@@ -147,12 +134,6 @@ if(LWS_WITH_DISTRO_RECOMMENDED)
 	set(LWS_WITHOUT_EXTENSIONS 0)
 	set(LWS_ROLE_DBUS 1)
 	set(LWS_WITH_FTS 1)
-	set(LWS_WITH_THREADPOOL 1)
-	set(LWS_UNIX_SOCK 1)
-	set(LWS_WITH_HTTP_PROXY 1)
-	set(LWS_WITH_DISKCACHE 1)
-	set(LWS_WITH_LWSAC 1)
-	set(LWS_WITH_LEJP_CONF 1)	
 endif()
 
 # do you care about this?  Then send me a patch where it disables it on travis
@@ -245,11 +226,6 @@ if(GIT_EXECUTABLE)
 endif()
 
 # translate old functionality enables to set up ROLE enables so nothing changes
-if (LWS_WITH_HTTP2 AND LWS_WITHOUT_SERVER)
-	set(LWS_WITH_HTTP2 0)
-	message("HTTP2 disabled due to LWS_WITHOUT_SERVER")
-endif()
-
 if (LWS_WITH_HTTP2)
 	set(LWS_ROLE_H2 1)
 endif()
@@ -259,6 +235,10 @@ endif()
 
 if (NOT LWS_ROLE_WS)
 	set(LWS_WITHOUT_EXTENSIONS 1)
+endif()
+
+if (LWS_WITH_HTTP2 AND LWS_WITHOUT_SERVER)
+	message(FATAL_ERROR "HTTP2 can only be used with server at the moment")
 endif()
 
 
@@ -786,14 +766,10 @@ CHECK_C_SOURCE_COMPILES("#include <stdint.h>
 		return 0;
 	}" LWS_HAS_INTPTR_T)
 
-set(CMAKE_REQUIRED_FLAGS "-pthread")	
-CHECK_C_SOURCE_COMPILES("#define _GNU_SOURCE 
-	#include <pthread.h> 
-	int main(void) { 
-		pthread_t th = 0;
-		pthread_setname_np(th, NULL);
-		return 0;
-	}" LWS_HAS_PTHREAD_SETNAME_NP)
+# These don't work Cross...
+#CHECK_TYPE_SIZE(pid_t PID_T_SIZE)
+#CHECK_TYPE_SIZE(size_t SIZE_T_SIZE)
+#CHECK_TYPE_SIZE("void *" LWS_SIZEOFPTR LANGUAGE C)
 
 if (NOT PID_T_SIZE)
 	set(pid_t int)
@@ -917,11 +893,6 @@ if (LWS_WITH_FTS)
 	list(APPEND SOURCES
 		lib/misc/fts/trie.c
 		lib/misc/fts/trie-fd.c)
-endif()
-
-if (LWS_WITH_DISKCACHE)
-	list(APPEND SOURCES
-		lib/misc/diskcache.c)
 endif()
 
 if (NOT LWS_WITHOUT_CLIENT)
@@ -1212,10 +1183,6 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_C_COMPILER_ID 
 	    set (GCOV_FLAGS "-fprofile-arcs -ftest-coverage -O0")
     endif()
 
-	if (LWS_WITH_ASAN)
-		set (ASAN_FLAGS "-fsanitize=address -fsanitize=pointer-compare -fsanitize=pointer-subtract -fsanitize=leak -fsanitize=undefined -fsanitize-address-use-after-scope -fsanitize-undefined-trap-on-error")
-		message("Enabling ASAN")
-	endif()
     if (CMAKE_BUILD_TYPE MATCHES "DEBUG")
 		set(CMAKE_C_FLAGS "-O0 ${CMAKE_C_FLAGS}")
     else()
@@ -1223,7 +1190,7 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_C_COMPILER_ID 
     endif()
 
     if (UNIX AND NOT LWS_WITH_ESP32)
-	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wignored-qualifiers -Wtype-limits -Wuninitialized -Werror ${VISIBILITY_FLAG} -Wundef ${GCOV_FLAGS} ${CMAKE_C_FLAGS} ${ASAN_FLAGS}" )
+	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wignored-qualifiers -Wtype-limits -Wuninitialized -Werror ${VISIBILITY_FLAG} -Wundef ${GCOV_FLAGS} ${CMAKE_C_FLAGS}" )
     else()
 	    set(CMAKE_C_FLAGS "-Wall -Wsign-compare -Wignored-qualifiers -Wtype-limits -Wuninitialized -Werror ${VISIBILITY_FLAG} ${GCOV_FLAGS} ${CMAKE_C_FLAGS}" )
     endif()
@@ -1238,12 +1205,8 @@ if ((CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX) AND NOT LWS_WITHOUT_TE
 endif()
 
 if ((CMAKE_C_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-
 	# otherwise osx blows a bunch of openssl deprecated api errors
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations" )
-	if (UNIX AND LWS_HAVE_PTHREAD_H)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread" )
-	endif()
 endif()
 
 source_group("Headers Private"  FILES ${HDR_PRIVATE})
@@ -1587,7 +1550,6 @@ CHECK_FUNCTION_EXISTS(X509_get_key_usage LWS_HAVE_X509_get_key_usage)
 CHECK_FUNCTION_EXISTS(SSL_CTX_get0_certificate LWS_HAVE_SSL_CTX_get0_certificate)
 CHECK_FUNCTION_EXISTS(SSL_get0_alpn_selected LWS_HAVE_SSL_get0_alpn_selected)
 CHECK_FUNCTION_EXISTS(SSL_set_alpn_protos LWS_HAVE_SSL_set_alpn_protos)
-CHECK_FUNCTION_EXISTS(SSL_CTX_set_ciphersuites LWS_HAVE_SSL_CTX_set_ciphersuites)
 if (LWS_WITH_SSL AND NOT LWS_WITH_MBEDTLS)
 CHECK_SYMBOL_EXISTS(SSL_CTX_get_extra_chain_certs_only openssl/ssl.h LWS_HAVE_SSL_EXTRA_CHAIN_CERTS)
 endif()

@@ -41,7 +41,7 @@ cat << EOF >fuzzingserver.json
 {
    "url": "ws://127.0.0.1:9001",
    "outdir": "./reports/clients",
-   "cases": ["13.1.*"],
+   "cases": ["*"],
    "exclude-cases": [ "2.10", "2.11", "12.3.1", "12.3.2", "12.4.*", "12.5.*"],
    "exclude-agent-cases": {}
 }
@@ -55,7 +55,7 @@ cat << EOF >fuzzingclient.json
          "url": "ws://127.0.0.1:9001"
       }
    ],
-   "cases": ["13.1.*"],
+   "cases": ["*"],
    "exclude-cases": ["2.10", "2.11", "12.3.1", "12.3.2", "12.4.*", "12.5.*" ],
    "exclude-agent-cases": {}
 }

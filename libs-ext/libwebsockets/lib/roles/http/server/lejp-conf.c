@@ -105,11 +105,6 @@ static const char * const paths_vhosts[] = {
 	"vhosts[].ignore-missing-cert",
 	"vhosts[].error-document-404",
 	"vhosts[].alpn",
-	"vhosts[].ssl-client-option-set",
-	"vhosts[].ssl-client-option-clear",
-	"vhosts[].tls13-ciphers",
-	"vhosts[].client-tls13-ciphers",
-	"vhosts[].strict-host-check",
 };
 
 enum lejp_vhost_paths {
@@ -161,11 +156,6 @@ enum lejp_vhost_paths {
 	LEJPVP_IGNORE_MISSING_CERT,
 	LEJPVP_ERROR_DOCUMENT_404,
 	LEJPVP_ALPN,
-	LEJPVP_SSL_CLIENT_OPTION_SET,
-	LEJPVP_SSL_CLIENT_OPTION_CLEAR,
-	LEJPVP_TLS13_CIPHERS,
-	LEJPVP_CLIENT_TLS13_CIPHERS,
-	LEJPVP_FLAG_STRICT_HOST_CHECK,
 };
 
 static const char * const parser_errs[] = {
@@ -629,13 +619,6 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 	case LEJPVP_CIPHERS:
 		a->info->ssl_cipher_list = a->p;
 		break;
-	case LEJPVP_TLS13_CIPHERS:
-		a->info->tls1_3_plus_cipher_list = a->p;
-		break;
-	case LEJPVP_CLIENT_TLS13_CIPHERS:
-		a->info->client_tls_1_3_plus_cipher_list = a->p;
-		break;
-
 	case LEJPVP_ECDH_CURVE:
 		a->info->ecdh_curve = a->p;
 		break;
@@ -756,15 +739,6 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 
 		return 0;
 
-	case LEJPVP_FLAG_STRICT_HOST_CHECK:
-		if (arg_to_bool(ctx->buf))
-			a->info->options |=
-				LWS_SERVER_OPTION_VHOST_UPG_STRICT_HOST_CHECK;
-		else
-			a->info->options &=
-				~(LWS_SERVER_OPTION_VHOST_UPG_STRICT_HOST_CHECK);
-		return 0;
-
 	case LEJPVP_ERROR_DOCUMENT_404:
 		a->info->error_document_404 = a->p;
 		break;
@@ -774,13 +748,6 @@ lejp_vhosts_cb(struct lejp_ctx *ctx, char reason)
 		return 0;
 	case LEJPVP_SSL_OPTION_CLEAR:
 		a->info->ssl_options_clear |= atol(ctx->buf);
-		return 0;
-
-	case LEJPVP_SSL_CLIENT_OPTION_SET:
-		a->info->ssl_client_options_set |= atol(ctx->buf);
-		return 0;
-	case LEJPVP_SSL_CLIENT_OPTION_CLEAR:
-		a->info->ssl_client_options_clear |= atol(ctx->buf);
 		return 0;
 
 	case LEJPVP_ALPN:
