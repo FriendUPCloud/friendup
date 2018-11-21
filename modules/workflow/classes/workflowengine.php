@@ -32,7 +32,7 @@ class WorkflowEngine
 	var $user;
 	private $functions;
 	
-	public function __construct__ ( $database, $user )
+	public function WorkflowEngine ( $database, $user )
 	{
 		$this->database = $database;
 		$this->user = $user;
@@ -43,14 +43,14 @@ class WorkflowEngine
 	private function initializeHashMap()
 	{
 		$this->functions = array(
-			'listworkflows'=>'listWorkflows',
-			'checkworkflows'=>'checkWorkflows',
-			'addworkflow'=>'addWorkflow',
-			'addprocess'=>'addProcess',
-			'deleteprocess' => 'deleteProcess',
-			'updateprocess' => 'updateProcess',
-			'addpipeline' => 'addPipeline',
-			'help' => 'help'
+			'listworkflows'  => 'listWorkflows',
+			'checkworkflows' => 'checkWorkflows',
+			'addworkflow'    => 'addWorkflow',
+			'addprocess'     => 'addProcess',
+			'deleteprocess'  => 'deleteProcess',
+			'updateprocess'  => 'updateProcess',
+			'addpipeline'    => 'addPipeline',
+			'help'           => 'help'
 		);
 	}
 	
@@ -60,6 +60,7 @@ class WorkflowEngine
 		// Check help for each function
 		foreach( $this->functions as $func )
 		{
+			if( $func == 'help' ) continue;
 			if( isset( $args->$func ) )
 			{
 				return 'ok<!--separate-->{"message":"Help for ' . $func . ' not available."}';
@@ -75,7 +76,7 @@ class WorkflowEngine
 		{
 			return 'fail<!--separate-->{"response":-1,"message":"Unknown command."}';
 		}
-		return $this->functions[ $command ]( $args );
+		return $this->$command( $args );
 	}
 
 	// Just list all workflows
