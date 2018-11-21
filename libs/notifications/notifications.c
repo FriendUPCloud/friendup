@@ -89,7 +89,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		HashmapElement *session_element = GetHEReq(request, "sessionid");
 		HashmapElement *extra_element = GetHEReq(request, "extra");
 
-		DEBUG("Notify: message_element %s title_element %s session_element %s extra_element %s\n", message_element, title_element,  session_element, extra_element );
+		DEBUG("Notify: message_element %p title_element %p session_element %p extra_element %p\n", message_element, title_element,  session_element, extra_element );
 		
 		if( message_element && title_element && session_element && extra_element )
 		{
