@@ -8,7 +8,7 @@ html body.activated ::-webkit-scrollbar-track
 {
 	width: 8px;
 	height: 8px;
-	background-color: #e8e8e8;
+	background-color: rgba(255,255,255,0.5);
 }
 
 ::-webkit-scrollbar-thumb
@@ -35,7 +35,7 @@ html body div > div .View.Active.Scrolling > .Resize
 html body div .View.Active ::-webkit-scrollbar-track,
 html body div .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background-color: #c8c8c8 !important;
+	background-color: rgba(255,255,255,0.5) !important;
 	background-image: none;
 	border: 0;
 }
@@ -78,9 +78,10 @@ html body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 body.Dark::-webkit-scrollbar
 body.Dark .View.Active ::-webkit-scrollbar
 {
-	background-color: hsla(210, 29%, 20%, 1);
+	background-color: hsla(210, 29%, 20%, 0.5);
 }
 
+html body.Dark ::-webkit-scrollbar,
 html body.Dark ::-webkit-scrollbar-track,
 html body.Dark .View.Active ::-webkit-scrollbar-track,
 .Dark .View.Active.IconWindow ::-webkit-scrollbar-track,
@@ -88,7 +89,7 @@ html body.Dark .View.Active ::-webkit-scrollbar-track,
 html body.Dark.activated ::-webkit-scrollbar-track,
 html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background-color: #243342 !important;
+	background-color: rgba(36,51,66,0.5) !important;
 	border: 0;
 }
 
@@ -114,9 +115,10 @@ html body.Dark .View.Active.IconWindow ::-webkit-scrollbar-thumb
 body.Charcoal::-webkit-scrollbar
 body.Charcoal .View.Active ::-webkit-scrollbar
 {
-	background-color: #333333;
+	background-color: rgba(0,0,0,0.6);
 }
 
+html body.Charcoal ::-webkit-scrollbar,
 html body.Charcoal ::-webkit-scrollbar-track,
 html body.Charcoal .View.Active ::-webkit-scrollbar-track,
 .Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track,
@@ -124,8 +126,8 @@ html body.Charcoal .View.Active ::-webkit-scrollbar-track,
 html body.Charcoal.activated ::-webkit-scrollbar-track,
 html body.Charcoal .View.Active.IconWindow ::-webkit-scrollbar-track
 {
-	background-color: #303030 !important;
-	border-color: #303030 !important;
+	background-color: rgba(20,20,20,0.3) !important;
+	border-color: rgba(20,20,20,0.3) !important;
 }
 
 html body.Charcoal ::-webkit-scrollbar-thumb
