@@ -2469,11 +2469,12 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
 
-				FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) );
+				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+				{
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				}
 
 				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 			}
