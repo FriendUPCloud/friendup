@@ -728,9 +728,21 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 							$sp = $this->getSubFolder( $path );
 							if( $sp )
 							{
-								$sp->Name = $args->newname;
-								$sp->Save();
-								die( 'ok<!--separate-->Renamed the folder.' );
+								// Check if the folder already exists
+								$folderTest = new dbIO( 'FSFolder' );
+								$folderTest->Name = $sp->Name;
+								$folderTest->FilesystemID = $sp->FilesystemID;
+								$folderTest->FolderID = $sp->FolderID;
+								if( $folderTest->load() )
+								{
+									die( 'fail<!--separate-->{"response":-1,"message":"Folder with this name already exists."}' );
+								}
+								else
+								{
+									$sp->Name = $args->newname;
+									$sp->Save();
+									die( 'ok<!--separate-->{"response":1,"message":"Renamed the folder."}' );
+								}
 							}
 						}
 						// Ok, it's a file
@@ -759,13 +771,25 @@ if( !class_exists( 'DoorSQLWorkgroupDrive' ) )
 								$f->FilesystemID = $this->ID;
 								if( $f->Load() )
 								{
-									$f->Filename = $args->newname;
-									$f->Save();
-									die( 'ok<!--separate-->Renamed the file.' );
+									// Test!
+									$test = new dbIO( 'FSFile' );
+									$test->FilesystemID = $this->ID;
+									$test->FolderID = $f->FolderID;
+									$test->Filename = $args->newname;
+									if( $test->load() )
+									{
+										die( 'fail<!--separate-->{"response":-1,"message":"Could not rename file, another file exists with this name."}' );
+									}
+									else
+									{
+										$f->Filename = $args->newname;
+										$f->Save();
+										die( 'ok<!--separate-->{"response":1,"message":"Renamed the file."}' );
+									}
 								}
 							}
 						}
-						die( 'fail<!--separate-->Could not find file!' );
+						die( 'fail<!--separate-->{"response":-1,"message":"Could not find file!"}' );
 						break;
 					case 'makedir':
 						
