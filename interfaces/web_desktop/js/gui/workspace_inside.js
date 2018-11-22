@@ -3769,8 +3769,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					newname: nam,
 					path: icon.Path
-				}, function()
+				}, function( result, data )
 				{
+					console.log( result, data );
 					if( win && win.content.refresh )
 						win.content.refresh();
 					Workspace.renameWindow.close();
@@ -3786,8 +3787,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		icon.Door.dosAction( 'rename', {
 			newname: nam,
 			path: icon.Path
-		}, function()
+		}, function( result, data)
 			{
+				console.log( result, data );
 				if( win && win.content.refresh )
 					win.content.refresh();
 				Workspace.renameWindow.close();
