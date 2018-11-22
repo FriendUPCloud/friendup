@@ -782,6 +782,7 @@ Application.newFile = function()
 		newFile = i18n( 'i18n_empty_file' );
 		if( i > 0 )
 			newFile += ' ' + i;
+		i++;
 	}
 	while( typeof( this.files[ newFile ] ) != 'undefined' );
 	this.files[ newFile ] = { content: '', filename: newFile, touched: false };
