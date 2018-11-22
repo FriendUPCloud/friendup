@@ -95,6 +95,7 @@ static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char 
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
+			DEBUG("Message added to queue\n");
 			en->fq_Data = FMalloc( len+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
@@ -227,22 +228,29 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		
 		return 0;
 	}
-
-	if( len == 0 )
-	{
-		DEBUG("Empty websocket frame (reason %d)\n", reason);
-		return 0;
-	}
-
+	
+	DEBUG("Initialize queue\n");
 	char *data = (char*)in;
 	if( man != NULL )
 	{
+		DEBUG(" Initialized %d\n", man->man_Initialized );
 		if( man->man_Initialized == 0 )
 		{
 			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
 			FQInit( &(man->man_Queue) );
 			man->man_Initialized = 1;
+			DEBUG("Queue initialized\n");
 		}
+	}
+	else
+	{
+		FERROR("\n\n\n\nMAN is NULL\n\n\n\n");
+	}
+
+	if( len == 0 )
+	{
+		DEBUG("Empty websocket frame (reason %d)\n", reason);
+		return 0;
 	}
 
 	DEBUG("Mobile app data: <%*s>\n", (unsigned int)len, data);
@@ -298,10 +306,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					DEBUG("App is paused\n");
 					app_connection->app_status = MOBILE_APP_STATUS_PAUSED;
 					app_connection->most_recent_pause_timestamp = time(NULL);
-					//char response[LWS_PRE+64];
-					//strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
-					//DEBUG("Response: %s\n", response+LWS_PRE);
-					//lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					
+					char response[LWS_PRE+64];
+					strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
+					DEBUG("Response: %s\n", response+LWS_PRE);
+					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					/*
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -316,6 +326,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
 						lws_callback_on_writable( wsi );
 					}
+					*/
 				}
 				while (0);
 			break;
@@ -326,10 +337,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					DEBUG("App is resumed\n");
 					app_connection->app_status = MOBILE_APP_STATUS_RESUMED;
 					app_connection->most_recent_resume_timestamp = time(NULL);
-					//char response[LWS_PRE+64];
-					//strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
-					//DEBUG("Response: %s\n", response+LWS_PRE);
-					//lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					
+					char response[LWS_PRE+64];
+					strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
+					DEBUG("Response: %s\n", response+LWS_PRE);
+					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					/*
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -344,6 +357,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
 						lws_callback_on_writable( wsi );
 					}
+					*/
 				}
 				while (0);
 			break;
@@ -651,7 +665,8 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	char response[LWS_PRE+64];
 	int msgsize = snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s) + LWS_PRE;
 	DEBUG("Response: %s\n", response+LWS_PRE);
-	//lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
+	lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
+	/*
 	MobileAppNotif *man = (MobileAppNotif *) user_data;
 	if( man != NULL )
 	{
@@ -674,6 +689,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	{
 		FERROR("Cannot get access to userdata!\n");
 	}
+	*/
 	return 0;
 }
 
@@ -776,12 +792,8 @@ bool MobileAppNotifyUser( const char *username, const char *channel_id, const ch
 		{
 			if( user_connections->connection[i] )
 			{
-				WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
-				//lws_write(
-				//		user_connections->connection[i]->websocket_ptr,
-				//		(unsigned char*)json_message+LWS_PRE,
-				//		json_message_length,
-				//		LWS_WRITE_TEXT);
+				//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
+				lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
 			}
 		}
 		break;
@@ -791,12 +803,8 @@ bool MobileAppNotifyUser( const char *username, const char *channel_id, const ch
 		{
 			if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
 			{
-				WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
-				//lws_write(
-				//		user_connections->connection[i]->websocket_ptr,
-				//		(unsigned char*)json_message+LWS_PRE,
-				//		json_message_length,
-				//		LWS_WRITE_TEXT);
+				//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
+				lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
 			}
 		}
 		break;

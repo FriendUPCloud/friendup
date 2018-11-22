@@ -72,7 +72,7 @@ long GetVersion(void)
  */
 Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* func, Http *request)
 {
-	INFO("Func is <%s>", func);
+	INFO("Func is <%s>\n", func);
 
 	struct TagItem tags[] = {
 			{ HTTP_HEADER_CONTENT_TYPE, (FULONG)StringDuplicate( "text/plain" ) },
@@ -89,6 +89,8 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		HashmapElement *session_element = GetHEReq(request, "sessionid");
 		HashmapElement *extra_element = GetHEReq(request, "extra");
 
+		DEBUG("Notify: message_element %p title_element %p session_element %p extra_element %p\n", message_element, title_element,  session_element, extra_element );
+		
 		if( message_element && title_element && session_element && extra_element )
 		{
 			User *user = USMGetUserBySessionID(((SystemBase*)(_library_handle->sb))->sl_USM, session_element->data);
@@ -125,7 +127,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		else
 		{
 			HttpAddTextContent( response, "missing data" );
-			INFO("sending missing data");
+			INFO("sending missing data\n");
 		}
 		return response;
 	}
