@@ -690,7 +690,7 @@ if( !class_exists( 'DoorSQLDrive' ) )
 							{
 								// Check if the folder already exists
 								$folderTest = new dbIO( 'FSFolder' );
-								$folderTest->Name = $sp->Name;
+								$folderTest->Name = $args->newname;
 								$folderTest->FilesystemID = $sp->FilesystemID;
 								$folderTest->FolderID = $sp->FolderID;
 								if( $folderTest->load() )
