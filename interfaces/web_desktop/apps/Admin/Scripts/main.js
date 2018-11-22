@@ -190,12 +190,35 @@ var Sections = {
 		{
 			if( cmd == 'edit' )
 			{
-				var d = new File( 'Progdir:Templates/account_users_details.html' );
-				d.onLoad = function( data )
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
 				{
-					ge( 'UserDetails' ).innerHTML = data;
+					if( e != 'ok' ) return;
+					
+					var userInfo = null;
+					try
+					{
+						userInfo = JSON.parse( d );
+					}
+					catch( e )
+					{
+						return;
+					}
+					
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					d.replacements = {
+						user_name: userInfo.FullName,
+						user_username: userInfo.Name,
+						user_email: userInfo.Email
+					};
+					d.i18n();
+					d.onLoad = function( data )
+					{
+						ge( 'UserDetails' ).innerHTML = data;
+					}
+					d.load();
 				}
-				d.load();
+				u.execute( 'userinfoget', { id: extra } );
 				return;
 			}
 		}
