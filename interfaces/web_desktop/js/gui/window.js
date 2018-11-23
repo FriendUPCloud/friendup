@@ -3008,13 +3008,13 @@ var View = function( args )
 					var app = Workspace.applications[a];
 					if( app.applicationId == ifr.applicationId )
 					{
-						for( var a in app.windows )
+						for( var b in app.windows )
 						{
 							// Ah we found our parent view
-							if( self.parentViewId == a )
+							if( self.parentViewId == b )
 							{
-								var win = app.windows[a];
-								parentIframeId = 'sandbox_' + a;
+								var win = app.windows[b];
+								parentIframeId = 'sandbox_' + b;
 								break;
 							}
 						}

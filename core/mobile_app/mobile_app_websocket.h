@@ -29,4 +29,4 @@ typedef enum {
 	MOBILE_APP_STATUS_RESUMED = 2,
 } mobile_app_status_t;
 
-int websocket_app_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);

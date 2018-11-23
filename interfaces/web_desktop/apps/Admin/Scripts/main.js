@@ -183,6 +183,131 @@ var Sections = {
 			ge( 'ServerConfiguration' ).innerHTML = str;
 		}
 		m.execute( 'getconfiginijson' );
+	},
+	accounts_users( cmd, extra )
+	{
+		if( cmd )
+		{
+			if( cmd == 'edit' )
+			{
+				var u = new Module( 'system' );
+				u.onExecuted = function( e, d )
+				{
+					if( e != 'ok' ) return;
+					
+					var userInfo = null;
+					try
+					{
+						userInfo = JSON.parse( d );
+					}
+					catch( e )
+					{
+						return;
+					}
+					
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					d.replacements = {
+						user_name: userInfo.FullName,
+						user_username: userInfo.Name,
+						user_email: userInfo.Email
+					};
+					d.i18n();
+					d.onLoad = function( data )
+					{
+						ge( 'UserDetails' ).innerHTML = data;
+					}
+					d.load();
+				}
+				u.execute( 'userinfoget', { id: extra } );
+				return;
+			}
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' ) return;
+			var userList = null;
+			try
+			{
+				userList = JSON.parse( d );
+			}
+			catch( e )
+			{
+				return;
+			}
+			var o = ge( 'UserList' );
+			o.innerHTML = '';
+			
+			// Types of listed fields
+			var types = {
+				Edit: '10',
+				FullName: '30',
+				Name: '30',
+				Level: '30'
+			};
+			
+			
+			// List by level
+			var levels = [ 'Admin', 'User', 'Guest', 'API' ];
+			
+			// List headers
+			var header = document.createElement( 'div' );
+			header.className = 'List';
+			var headRow = document.createElement( 'div' );
+			headRow.className = 'HRow sw1';
+			for( var z in types )
+			{
+				var borders = '';
+				var d = document.createElement( 'div' );
+				if( z != 'Edit' )
+					borders += ' BorderRight';
+				if( a < userList.length - a )
+					borders += ' BorderBottom';
+				var d = document.createElement( 'div' );
+				d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+				d.innerHTML = '<strong>' + z + '</strong>';
+				headRow.appendChild( d );
+			}
+			header.appendChild( headRow );
+			o.appendChild( header );
+			
+			var list = document.createElement( 'div' );
+			list.className = 'List';
+			var sw = 2;
+			for( var b = 0; b < levels.length; b++ )
+			{
+				for( var a = 0; a < userList.length; a++ )
+				{
+					// Skip irrelevant level
+					if( userList[ a ].Level != levels[ b ] ) continue;
+					
+					sw = sw == 2 ? 1 : 2;
+					var r = document.createElement( 'div' );
+					r.className = 'HRow sw' + sw;
+				
+					userList[ a ][ 'Edit' ] = '<button class="IconButton IconSmall fa-edit" onclick="Sections.accounts_users(\'edit\',\'' + userList[a].ID + '\')"></button>';
+				
+					for( var z in types )
+					{
+						var borders = '';
+						var d = document.createElement( 'div' );
+						if( z != 'Edit' )
+							borders += ' BorderRight';
+						if( a < userList.length - a )
+							borders += ' BorderBottom';
+						d.className = 'HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						d.innerHTML = userList[a][ z ];
+						r.appendChild( d );
+					}
+				
+					// Add row
+					list.appendChild( r );
+				}
+			}
+			o.appendChild( list );
+		}
+		m.execute( 'listusers' );
 	}
 }
 
