@@ -48,7 +48,7 @@ static void NotificationsSinkInit( void )
  */
 
 enum {
-	WS_NOTIF_SINK_ERROR_RESPONSE = 0,
+	WS_NOTIF_SINK_SUCCESS = 0,
 	WS_NOTIF_SINK_ERROR_BAD_JSON,
 	WS_NOTIF_SINK_ERROR_WS_NOT_AUTHENTICATED,
 	WS_NOTIF_SINK_ERROR_NOTIFICATION_TYPE_NOT_FOUND,
@@ -416,7 +416,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				
 				return 0;
 			}
-			else if( !IsSocketAuthenticated( wsi ) ) 
+			else if( IsSocketAuthenticated( wsi ) ) 
 			{
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
