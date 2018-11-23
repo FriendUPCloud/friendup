@@ -3714,7 +3714,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			window: false
 		};
 	}
-	//console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
+	console.log('OpenWindowByFileinfo fileInfo is ....... [] ',iconObject);
 	if( fileInfo.MetaType == 'ExecutableShortcut' )
 	{
 		ExecuteApplication( fileInfo.Filename );
@@ -3859,7 +3859,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) ); 
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
 				
 				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 			} );
