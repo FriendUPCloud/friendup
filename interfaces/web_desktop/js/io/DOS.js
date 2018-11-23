@@ -133,20 +133,20 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 	{
 		depth++;
 		var door = ( new Door().get( path ) );
-		if ( door )
+		if( door )
 		{
 			door.getIcons( null, function( icons, path, pth )
 			{
 				depth--;
 
 				// No error?
-				if ( icons )
+				if( icons )
 				{
-					if ( !options.noDirectories )
+					if( !options.noDirectories )
 					{
 						// Look for directories
 						var icon;
-						for ( var i = 0; i < icons.length; i++ )
+						for( var i = 0; i < icons.length; i++ )
 						{
 							icon = icons[ i ];
 							if ( icon.Type == 'Directory' )
@@ -163,39 +163,39 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 						}
 
 						// Sort?
-						if ( options.sort )
+						if( options.sort )
 							listDir.sort( compare );
 					}
 
 					// Look for files
 					var listTemp = [];
-					if ( !options.noFiles )
+					if( !options.noFiles )
 					{
-						for ( var i = 0; i < icons.length; i++ )
+						for( var i = 0; i < icons.length; i++ )
 						{
 							icon = icons[ i ];
-							if ( icon.Type == 'File' )
+							if( icon.Type == 'File' )
 							{
-								if ( icon.Dormant )
+								if( icon.Dormant )
 									icon.Dormant.windows = [];
 								listTemp.push( icon );
 							}
 						}
 
 						// Sort?
-						if ( options.sort )
+						if( options.sort )
 							listTemp.sort( compare );
 					}
 					
 					// Adds to the main array
-					if ( !options.filesFirst )
+					if( !options.filesFirst )
 					{
-						for ( i = 0; i < listTemp.length; i++ )
+						for( i = 0; i < listTemp.length; i++ )
 							listDir.push( listTemp[ i ] );
 					}
 					else
 					{
-						for ( i = 0; i < listTemp.length; i++ )
+						for( i = 0; i < listTemp.length; i++ )
 							listDir.unshift( listTemp[ i ] );
 					}
 				}
@@ -214,9 +214,17 @@ Friend.DOS.getDirectory = function( path, options, callback, extra )
 	// Comparaison function
 	function compare( iconA, iconB )
 	{
-		if ( iconA.Filename < iconB.Filename )
+		if( iconA.Title && iconB.Title )
+		{
+			if( iconA.Title < iconB.Title )
+				return -1;
+			else if( iconA.Title > iconB.Title )
+				return 1;
+			return 0;
+		}
+		if( iconA.Filename < iconB.Filename )
 			return -1;
-		if ( iconA.Filename > iconB.Filename )
+		else if( iconA.Filename > iconB.Filename )
 			return 1;
 		return 0;
 	}

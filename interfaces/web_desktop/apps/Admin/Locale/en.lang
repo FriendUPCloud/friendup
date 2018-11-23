@@ -1,2 +1,25 @@
+#User account info
+
+i18n_user_profile                      : User profile
+i18n_user_fullname                     : Full name
+i18n_user_username                     : Username
+i18n_user_email                        : E-mail
+i18n_user_password                     : Password
+
+i18n_looknfeel                         : Look and feel
+i18n_theme                             : Theme
+i18n_wallpaper                         : Wallpaper
+i18n_window_style                      : Window style
+i18n_darktheme                         : Dark theme
+i18n_system_disk                       : System disk
+i18n_workspaces                        : Workspaces
+
+i18n_workgroups                        : Workgroups
+
+i18n_roles                             : Roles
+
+i18n_storage                           : Storage
+
+i18n_applications                      : Applications
 
 
