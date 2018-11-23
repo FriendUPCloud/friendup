@@ -106,6 +106,11 @@ void handle_sigchld( int sig )
 
 SystemBase *SystemInit( void )
 {
+	
+	//char *tmp = "{\"type\":\"authenticate\",\"data\":{\"serviceKey\":\"qwerty123456789\",\"serviceName\":\"presence\"}}";
+	//int size = strlen ( tmp );
+	//ProcessIncomingRequest( NULL, tmp, size, NULL );
+	
 	socket_init_once();
 
 	struct SystemBase *l = NULL;

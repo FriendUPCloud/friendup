@@ -337,18 +337,18 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				char *authName = NULL;
 				// first check if service is already authenticated maybe?
 				
-				for( p = 3; p < 7 ; p++ )
+				for( p = 5; p < 9 ; p++ )
 				{
 					int firstSize = t[p].end - t[p].start;
-					
-					if ( strncmp( data + t[p].start, "serviceKey", firstSize ) != 0 )
+
+					if ( strncmp( data + t[p].start, "serviceKey", firstSize ) == 0 )
 					{
 						p++;
 						int secondSize = t[p].end - t[p].start;
 						authKey = FCalloc( secondSize + 16, sizeof(char) );
 						strncpy( authKey, data + t[p].start, secondSize );
 					}
-					else if ( strncmp( data + t[p].start, "serviceName", firstSize ) != 0 )
+					else if ( strncmp( data + t[p].start, "serviceName", firstSize ) == 0 )
 					{
 						p++;
 						int secondSize = t[p].end - t[p].start;
