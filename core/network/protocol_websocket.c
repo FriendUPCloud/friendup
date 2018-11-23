@@ -474,10 +474,11 @@ void WSThread( void *d )
 			HttpFree( response );
 		}
 		DEBUG1("[WS] SysWebRequest return\n"  );
+		Log( FLOG_INFO, "WS messages sent LOCKTEST\n");
 	}
 	else
 	{
-		//Log( FLOG_INFO, "[WS] No response at all..\n" );
+		Log( FLOG_INFO, "[WS] No response at all..\n" );
 		char response[ 1024 ];
 		char dictmsgbuf1[ 196 ];
 		snprintf( dictmsgbuf1, sizeof(dictmsgbuf1), SLIB->sl_Dictionary->d_Msg[DICT_CANNOT_PARSE_COMMAND_OR_NE_LIB], pathParts[ 0 ] );
@@ -502,6 +503,7 @@ void WSThread( void *d )
 			}
 			FFree( buf );
 		}
+		Log( FLOG_INFO, "WS no response end LOCKTEST\n");
 	}
 	
 	if( http != NULL )
@@ -530,6 +532,8 @@ void WSThread( void *d )
 	FRIEND_MUTEX_LOCK( &(wscl->wsc_Mutex) );
 	wscl->wsc_InUseCounter--;
 	FRIEND_MUTEX_UNLOCK( &(wscl->wsc_Mutex) );
+	
+	Log( FLOG_INFO, "WS END mutexes unlocked\n");
 	
 #ifdef USE_PTHREAD
 	pthread_exit( 0 );
