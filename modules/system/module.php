@@ -232,7 +232,7 @@ if( isset( $args->command ) )
 			break;*/
 		case 'help':
 			$commands = array(
-				'ping', 'theme', 'systempath', 'software', 'proxycheck', 'proxyget',
+				'ping', 'theme', 'systempath', 'software', 'save_external_file', 'proxycheck', 'proxyget',
 				'usersessionrenew', 'usersessions', 'userlevel', 'convertfile',
 				'userlevel', 'convertfile', 'install', 'assign', 'doorsupport', 'setup',
 				'languages', 'types', 'keys', 'events', 'news', 'setdiskcover', 'getdiskcover', 'calendarmodules',
@@ -351,7 +351,8 @@ if( isset( $args->command ) )
 		case 'checkfriendnetwork':
 			die( 'ok<!--separate-->' . ( isset( $Config->friendnetwork ) ? $Config->friendnetwork  : '0' ) );
 			break;
-
+		
+		case 'save_external_file':
 		case 'proxyget':
 			if( function_exists( 'curl_init' ) )
 			{
@@ -386,7 +387,9 @@ if( isset( $args->command ) )
 					curl_setopt( $c, CURLOPT_SSL_VERIFYPEER, false );
 					curl_setopt( $c, CURLOPT_SSL_VERIFYHOST, false );
 				}
-
+				
+				$info = curl_getinfo( $c );
+				
 				if( function_exists( 'curl_exec_follow' ) )
 				{
 					$r = curl_exec_follow( $c );
@@ -397,7 +400,26 @@ if( isset( $args->command ) )
 				}
 
 				curl_close( $c );
-
+				
+				
+				
+				if( isset( $args->args->diskpath ) )
+				{
+					if( strlen( $r ) && $args->args->diskpath )
+					{
+						$f = new File( $args->args->diskpath );
+						if( $f->save( $r ) )
+						{
+							//$Logger->log( 'Saved to ' . $args->args->diskpath );
+							die( 'ok<!--separate-->{"result":"1","message":"Saved","path":"' . $args->args->diskpath . '"}' );
+						}
+					}
+					$Logger->log( 'Could not save to ' . $args->args->diskpath );
+					die( 'fail<!--separate-->{"result":"0","message":"Failed to save file"}' );
+				}
+				
+				
+				
 				if( isset( $fields['rawdata'] ) && $fields['rawdata'] )
 				{
 					die( 'ok<!--separate-->' . $r );
