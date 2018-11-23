@@ -65,9 +65,11 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	int result = 0;
 	WebsocketServerClient *cl = (WebsocketServerClient *)wsi;
 
-	FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) );
-	cl->wsc_InUseCounter++;
-	FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+	if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+	{
+		cl->wsc_InUseCounter++;
+		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+	}
 	
 	if( msglen > MAX_SIZE_WS_MESSAGE ) // message is too big, we must split data into chunks
 	{
@@ -116,16 +118,17 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 
 					DEBUG( "Determined chunk: %d\n", actChunk );
 
-					FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) );
-
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					en->fq_Data = queueMsg;
-					en->fq_Size = queueMsgLen;
+					if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+					{
+						FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+						en->fq_Data = queueMsg;
+						en->fq_Size = queueMsgLen;
 				
-					FQPushFIFO( &(cl->wsc_MsgQueue), en );
-					lws_callback_on_writable( cl->wsc_Wsi );
+						FQPushFIFO( &(cl->wsc_MsgQueue), en );
+						lws_callback_on_writable( cl->wsc_Wsi );
 
-					FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+						FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+					}
 				}
 			}
 
@@ -135,32 +138,34 @@ static inline int WebsocketWriteInline( void *wsi, unsigned char *msgptr, int ms
 	}
 	else
 	{
-		FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) );
-		
-		if( cl->wsc_Wsi != NULL && cl->wsc_UserSession != NULL )
+		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
 		{
-			int val;
-			
-			UserSession *us = ( UserSession *)cl->wsc_UserSession;
-			FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-			if( en != NULL )
+			if( cl->wsc_Wsi != NULL && cl->wsc_UserSession != NULL )
 			{
-				en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-				memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
-				en->fq_Size = msglen;
+				int val;
 			
-				FQPushFIFO( &(cl->wsc_MsgQueue), en );
+				UserSession *us = ( UserSession *)cl->wsc_UserSession;
+				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+				if( en != NULL )
+				{
+					en->fq_Data = FMalloc( msglen+10+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msgptr, msglen );
+					en->fq_Size = msglen;
+			
+					FQPushFIFO( &(cl->wsc_MsgQueue), en );
+				}
 			}
+			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
 		}
-		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
-		
 		lws_callback_on_writable( cl->wsc_Wsi );
 	}
 	if( cl->wsc_Wsi != NULL )
 	{
-		FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) );
-		cl->wsc_InUseCounter--;
-		FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+		if( FRIEND_MUTEX_LOCK( &(cl->wsc_Mutex) ) == 0 )
+		{
+			cl->wsc_InUseCounter--;
+			FRIEND_MUTEX_UNLOCK( &(cl->wsc_Mutex) );
+		}
 	}
 	return result;
 }
