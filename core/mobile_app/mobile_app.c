@@ -739,13 +739,13 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
  * @param extra_string additional string which will be send to user
  * @return true when message was send
  */
-bool MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string )
+int MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string )
 {
 	UserMobileAppConnectionsT *user_connections = HashmapGetData( _user_to_app_connections_map, username );
 	if( user_connections == NULL )
 	{
 		DEBUG("User <%s> does not have any app connections\n", username);
-		return false;
+		return 1;
 	}
 
 	char *escaped_channel_id = json_escape_string(channel_id);
@@ -833,7 +833,7 @@ bool MobileAppNotifyUser( const char *username, const char *channel_id, const ch
 		FERROR("Cannot allocate memory for MobileApp->user->ios message!\n");
 	}
 	
-	return true;
+	return 0;
 }
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
@@ -856,7 +856,7 @@ void MobileAppTestSignalHandler( int signum __attribute__((unused)))
 	sprintf( title, "Fancy title %d", counter );
 	sprintf( message, "Fancy message %d", counter );
 
-	bool status = MobileAppNotifyUser( "fadmin",
+	int status = MobileAppNotifyUser( "fadmin",
 			"test_app",
 			title,
 			message,
