@@ -415,7 +415,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 				
 				return 0;
 			}
-			else if( !IsSocketAuthenticated( wsi ) ) 
+			else if( IsSocketAuthenticated( wsi ) ) 
 			{
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
