@@ -234,7 +234,7 @@ SystemBase *SystemInit( void )
 	l->UserDeviceUnMount = UserDeviceUnMount;
 	l->GetError = GetError;
 	l->Log = Log;
-
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Reading configuration\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -410,6 +410,8 @@ SystemBase *SystemInit( void )
 			l->l_AppleServerPort = plib->ReadIntNCS( prop, "NotificationService:port", 9000 );
 
 			l->l_AppleKeyAPI = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:apns", NULL ) );
+			
+			l->l_PresenceKey = StringDuplicate( plib->ReadStringNCS( prop, "ServiceKeys:presence", NULL ) );
 			
 			tptr = plib->ReadStringNCS( prop, "Core:XFrameOption", NULL );
 			if( tptr != NULL )
@@ -1288,6 +1290,11 @@ void SystemClose( SystemBase *l )
 	if( l->l_AppleKeyAPI != NULL )
 	{
 		FFree( l->l_AppleKeyAPI );
+	}
+	
+	if( l->l_PresenceKey != NULL )
+	{
+		FFree( l->l_PresenceKey );
 	}
 	
 	xmlCleanupParser();

@@ -19,13 +19,14 @@
 extern SystemBase *SLIB;
 
 static Hashmap *_socket_auth_map; //maps websockets to boolean values that are true then the websocket is authenticated
-static char *_auth_key;
+//static char *_auth_key;
 
 
 static void NotificationsSinkInit(void);
 static void WebsocketRemove(struct lws *wsi);
 static char* GetWebsocketHash(struct lws *wsi);
-static int ProcessIncomingRequest(struct lws *wsi, char *data, size_t len, void *udata );
+//static 
+int ProcessIncomingRequest(struct lws *wsi, char *data, size_t len, void *udata );
 static int ReplyError(struct lws *wsi, int error_code);
 static bool IsSocketAuthenticated(struct lws *wsi);
 static bool VerifyAuthKey( const char *key_name, const char *key_to_verify );
@@ -288,8 +289,8 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 }
 */
 
-
-static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
+//static
+int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
 {
 	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
 	MobileAppNotif *man = (MobileAppNotif *)udata;
@@ -549,13 +550,13 @@ void WebsocketNotificationsSetAuthKey( const char *key )
 	unsigned int len = strlen(key);
 	if( len < 10 )
 	{ //effectively disable the whole module if the key is too weak or non-existent
-		_auth_key = NULL;
+		//_auth_key = NULL;
 		DEBUG("Notifications key not set, the service will be disabled\n");
 		return;
 	}
-	_auth_key = FCalloc(len+1, sizeof(char));
-	strcpy(_auth_key, key);
-	DEBUG("Notifications key is <%s>\n", _auth_key);
+	//_auth_key = FCalloc(len+1, sizeof(char));
+	//strcpy(_auth_key, key);
+	//DEBUG("Notifications key is <%s>\n", _auth_key);
 }
 
 /**
@@ -608,11 +609,14 @@ static bool VerifyAuthKey( const char *key_name, const char *key_to_verify )
 	DEBUG("VerifyAuthKey - key_name <%s>\n", key_name );
 	DEBUG("VerifyAuthKey - key_to_verify <%s>\n", key_to_verify );
 	//TODO: verify against key name 
-	if( _auth_key )
+	if( key_name != NULL && key_to_verify != NULL )
 	{
-		if( strcmp( _auth_key, key_to_verify) == 0 )
+		if( SLIB->l_PresenceKey != NULL && strcmp( key_name, "presence" ) == 0 )
 		{
-			return true;
+			if( strcmp( SLIB->l_PresenceKey, key_to_verify) == 0 )
+			{
+				return true;
+			}
 		}
 	}
 	return false;
