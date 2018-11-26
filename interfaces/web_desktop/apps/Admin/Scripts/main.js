@@ -193,15 +193,18 @@ var Sections = {
 				// Show the form
 				function initUsersDetails( info )
 				{
+					// Some shortcuts
 					var userInfo = info.userInfo;
 					var settings = info.settings;
 					var workspaceSettings = info.workspaceSettings;
 					var wgroups = info.workgroups;
+					var mountlist = info.mountlist;
 										
 					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 					if( !themeData )
 						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 					
+					// Workgroups
 					var wstr = '';
 					if( wgroups.length )
 					{
@@ -211,7 +214,19 @@ var Sections = {
 						}
 					}
 					
+					// Mountlist
+					var mlst = '';
+					if( mountlist.length )
+					{
+						for( var b = 0; b < mountlist.length; b++ )
+						{
+							mlst += '<div class="HRow"><div class="HContent100">' + mountlist[b].Name + '</div></div>';
+						}
+					}
+					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					
+					// Add all data for the template
 					d.replacements = {
 						user_name: userInfo.FullName,
 						user_fullname: userInfo.FullName,
@@ -223,8 +238,10 @@ var Sections = {
 						wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
 						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						storage: mlst,
 						workgroups: wstr
 					};
+					// Add translations
 					d.i18n();
 					d.onLoad = function( data )
 					{
@@ -322,6 +339,26 @@ var Sections = {
 							loadingList[ ++loadingSlot ]( info );
 						}
 						u.execute( 'workgroups' );
+					},
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var ul = null;
+							try
+							{
+								ul = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.mountlist = ul;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'mountlist', { userid: info.userInfo.ID } );
 					},
 					function( info )
 					{
