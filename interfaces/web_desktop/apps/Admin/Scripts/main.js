@@ -190,26 +190,19 @@ var Sections = {
 		{
 			if( cmd == 'edit' )
 			{
-				var u = new Module( 'system' );
-				u.onExecuted = function( e, d )
+				// Show the form
+				function initUsersDetails( info )
 				{
-					if( e != 'ok' ) return;
-					
-					var userInfo = null;
-					try
-					{
-						userInfo = JSON.parse( d );
-					}
-					catch( e )
-					{
-						return;
-					}
+					var userInfo = info.userinfo;
+					var settings = info.settings;
 					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					d.replacements = {
 						user_name: userInfo.FullName,
+						user_fullname: userInfo.FullName,
 						user_username: userInfo.Name,
-						user_email: userInfo.Email
+						user_email: userInfo.Email,
+						theme_name: settings.Theme
 					};
 					d.i18n();
 					d.onLoad = function( data )
@@ -218,7 +211,62 @@ var Sections = {
 					}
 					d.load();
 				}
-				u.execute( 'userinfoget', { id: extra } );
+				
+				// Go through all data gathering until stop
+				var loadingSlot = 0;
+				var loadingList = [
+					// Load userinfo
+					function()
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var userInfo = null;
+							try
+							{
+								userInfo = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( userInfo );
+				
+						}
+						u.execute( 'userinfoget', { id: extra } );
+					},
+					// Load user settings
+					function( userInfo )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var settings = null;
+							try
+							{
+								settings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
+						}
+						u.execute( 'usersettings' );
+					},
+					function( info )
+					{
+						initUsersDetails( {
+							userinfo: info.userInfo,
+							settings: info.settings
+						} );
+					}
+				];
+				loadingList[ 0 ]();
+				
+				
 				return;
 			}
 		}
