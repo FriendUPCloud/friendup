@@ -2194,7 +2194,7 @@ if( isset( $args->command ) )
 
 			// Theme information
 			$o = new dbIO( 'FSetting' );
-			$o->UserID = $User->ID;
+			$o->UserID = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
 			$o->Type = 'system';
 			$o->Key = 'theme';
 			$o->Load();
@@ -2214,7 +2214,7 @@ if( isset( $args->command ) )
 			if( $rows = $SqlDatabase->FetchObjects( '
 				SELECT * FROM FSetting s
 				WHERE
-					s.UserID = \'' . $User->ID . '\'
+					s.UserID = \'' . $o->UserID . '\'
 					AND
 					s.Type = \'mimetypes\'
 				ORDER BY s.Data ASC

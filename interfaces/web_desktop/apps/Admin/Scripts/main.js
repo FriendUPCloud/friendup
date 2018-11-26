@@ -193,8 +193,11 @@ var Sections = {
 				// Show the form
 				function initUsersDetails( info )
 				{
-					var userInfo = info.userinfo;
+					var userInfo = info.userInfo;
 					var settings = info.settings;
+					var workspaceSettings = info.workspaceSettings;
+					
+					console.log( workspaceSettings );
 					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					d.replacements = {
@@ -202,7 +205,8 @@ var Sections = {
 						user_fullname: userInfo.FullName,
 						user_username: userInfo.Name,
 						user_email: userInfo.Email,
-						theme_name: settings.Theme
+						theme_name: settings.Theme,
+						wallpaper_name: workspaceSettings.wallpaperdoors
 					};
 					d.i18n();
 					d.onLoad = function( data )
@@ -254,13 +258,40 @@ var Sections = {
 							}
 							loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
 						}
-						u.execute( 'usersettings' );
+						u.execute( 'usersettings', { userid: userInfo.ID } );
+					},
+					function( data )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var workspacesettings = null;
+							try
+							{
+								workspacesettings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							
+							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
+						}
+						u.execute( 'getsetting', { settings: [ 
+							'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+							'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+							'focusmode', 'hiddensystem', 'workspacecount', 
+							'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
+							'workspacemode'
+						], userid: data.userInfo.ID } );
 					},
 					function( info )
 					{
 						initUsersDetails( {
-							userinfo: info.userInfo,
-							settings: info.settings
+							userInfo: info.userInfo,
+							settings: info.settings,
+							workspaceSettings: info.workspaceSettings
 						} );
 					}
 				];
