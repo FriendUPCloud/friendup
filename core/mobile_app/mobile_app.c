@@ -774,7 +774,7 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 	else
 	{
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title );
+				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\"}", escaped_channel_id, escaped_message, escaped_title );
 	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
