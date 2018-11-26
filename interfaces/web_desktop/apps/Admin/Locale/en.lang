@@ -22,4 +22,6 @@ i18n_storage                           : Storage
 
 i18n_applications                      : Applications
 
-
+i18n_enabled                           : Enabled
+i18n_disabled                          : Disabled
+i18n_default                           : Default

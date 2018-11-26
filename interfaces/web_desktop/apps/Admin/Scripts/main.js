@@ -196,8 +196,10 @@ var Sections = {
 					var userInfo = info.userInfo;
 					var settings = info.settings;
 					var workspaceSettings = info.workspaceSettings;
-					
-					console.log( workspaceSettings );
+										
+					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
+					if( !themeData )
+						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					d.replacements = {
@@ -206,7 +208,11 @@ var Sections = {
 						user_username: userInfo.Name,
 						user_email: userInfo.Email,
 						theme_name: settings.Theme,
-						wallpaper_name: workspaceSettings.wallpaperdoors
+						theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+						wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' )
 					};
 					d.i18n();
 					d.onLoad = function( data )
