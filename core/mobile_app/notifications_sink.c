@@ -513,8 +513,8 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									lws_callback_on_writable( wsi );
 								}
 								*/
-								char reply[128];
-								sprintf(reply + LWS_PRE, "\"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}", status);
+								char reply[256];
+								sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
 								unsigned int json_message_length = strlen( reply + LWS_PRE );
 								
 								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
