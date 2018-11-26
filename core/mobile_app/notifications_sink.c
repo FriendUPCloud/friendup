@@ -297,10 +297,11 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 
 	jsmn_parser parser;
 	jsmn_init( &parser );
-	jsmntok_t t[16]; //should be enough
+	jsmntok_t t[32]; //should be enough
 
 	int tokens_found = jsmn_parse( &parser, data, len, t, sizeof(t)/sizeof(t[0]) );
-
+	
+	DEBUG( "Token found: %d", tokens_found );
 	if( tokens_found < 1 )
 	{
 		return ReplyError(wsi, WS_NOTIF_SINK_ERROR_TOKENS_NOT_FOUND );
@@ -438,6 +439,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 						{
 							// 6 notification, 7 data, 8 object, 9 variables
 							
+							DEBUG( "\n\nnotification \\o/\n" );
 							int p;
 							int notification_type = -1;
 							char *username = NULL;
@@ -445,7 +447,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							char *title = NULL;
 							char *message = NULL;
 							
-							for( p = 10 ; p < 21 ; p++ )
+							for( p = 8 ; p < 21 ; p++ )
 							{
 								int size = t[p].end - t[p].start;
 								if( strncmp( data + t[p].start, "notification_type", size) == 0) 
@@ -481,6 +483,11 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							{
 								if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
+									DEBUG( "username: %s \n", username );
+									DEBUG( "channel_id: %d \n", channel_id );
+									DEBUG( "title: %s \n", title );
+									DEBUG( "message: %s \n", message );
+									
 									if( username != NULL ) FFree( username );
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
