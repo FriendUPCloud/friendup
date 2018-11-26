@@ -823,7 +823,7 @@ bool MobileAppNotifyUser( const char *username, const char *channel_id, const ch
 		{
 			snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, mle->mm_UMApp->uma_AppToken );
 			
-			WebsocketClientSendMessage( SLIB->l_APNSConnection, json_message_ios, json_message_ios_size );
+			WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, json_message_ios_size );
 			mle = (MobileListEntry *) mle->node.mln_Succ;
 		}
 		FFree( json_message_ios );

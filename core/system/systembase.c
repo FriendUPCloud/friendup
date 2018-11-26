@@ -997,7 +997,7 @@ void SystemClose( SystemBase *l )
 	
 	if( l->l_APNSConnection != NULL )
 	{
-		WebsocketClientDelete( l->l_APNSConnection );
+		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
 	
@@ -1313,10 +1313,10 @@ int SystemInitExternal( SystemBase *l )
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
-	l->l_APNSConnection = WebsocketClientNew( l->l_AppleServerHost, l->l_AppleServerPort, NULL );
+	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
 	if( l->l_APNSConnection != NULL )
 	{
-		if( WebsocketClientConnect( l->l_APNSConnection ) > 0 )
+		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
 		{
 			DEBUG("APNS server connected\n");
 		}
