@@ -196,10 +196,20 @@ var Sections = {
 					var userInfo = info.userInfo;
 					var settings = info.settings;
 					var workspaceSettings = info.workspaceSettings;
+					var wgroups = info.workgroups;
 										
 					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 					if( !themeData )
 						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
+					
+					var wstr = '';
+					if( wgroups.length )
+					{
+						for( var b = 0; b < wgroups.length; b++ )
+						{
+							wstr += '<div class="HRow"><div class="HContent100">' + wgroups[b].Name + '</div></div>';
+						}
+					}
 					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					d.replacements = {
@@ -212,7 +222,8 @@ var Sections = {
 						theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
 						wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
 						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
-						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' )
+						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						workgroups: wstr
 					};
 					d.i18n();
 					d.onLoad = function( data )
@@ -294,11 +305,27 @@ var Sections = {
 					},
 					function( info )
 					{
-						initUsersDetails( {
-							userInfo: info.userInfo,
-							settings: info.settings,
-							workspaceSettings: info.workspaceSettings
-						} );
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var wgroups = null;
+							try
+							{
+								wgroups = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.workgroups = wgroups;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'workgroups' );
+					},
+					function( info )
+					{
+						initUsersDetails( info );
 					}
 				];
 				loadingList[ 0 ]();
