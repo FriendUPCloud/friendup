@@ -1916,7 +1916,7 @@ var View = function( args )
 				{
 					var d = document.createElement( 'input' );
 					d.type = 'text';
-					d.className = 'NoMargins Absolute';
+					d.className = 'BackgroundHeavier Negative NoMargins Absolute';
 					d.style.position = 'absolute';
 					d.style.outline = 'none';
 					d.style.border = '0';
