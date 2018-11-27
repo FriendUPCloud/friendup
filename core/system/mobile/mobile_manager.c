@@ -58,6 +58,7 @@ MobileManager *MobileManagerNew( void *sb )
 			{
 				lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
 			}
+			DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
 			lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
 			
 			// ASPN connection get only IOS notification
