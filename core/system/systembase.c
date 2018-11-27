@@ -1325,7 +1325,7 @@ int SystemInitExternal( SystemBase *l )
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
+	//l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
 	if( l->l_APNSConnection != NULL )
 	{
 		/*
