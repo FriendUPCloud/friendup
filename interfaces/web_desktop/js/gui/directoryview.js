@@ -2005,7 +2005,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( var a = 0; a < icons.length; a++ )
 		{
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
+			// Skip dot files
 			if( fn.substr( 0, 1 ) == '.' ) continue;
+			// Skip backup files
+			else if( fn.substr( fn.length - 4, 4 ) == '.bak' )
+				continue;
 			else if( fn.substr( fn.length - 5, 5 ) == '.info' )
 				infoIcons[ fn ] = true;
 			else if( fn.substr( fn.length - 8, 8 ) == '.dirinfo' )
@@ -2064,7 +2068,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
 		 		Type: icons[a].Type
 		 	};
+		 	// Skip dot files
 			if( fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			// Skip backup files
+			else if( fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
+				continue;
 
 			// Only show orphan .info files
 			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
