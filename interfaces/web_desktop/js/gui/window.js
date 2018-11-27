@@ -1916,7 +1916,7 @@ var View = function( args )
 				{
 					var d = document.createElement( 'input' );
 					d.type = 'text';
-					d.className = 'BackgroundHeavier Negative NoMargins Absolute';
+					d.className = 'BackgroundHeavier NoMargins Absolute';
 					d.style.position = 'absolute';
 					d.style.outline = 'none';
 					d.style.border = '0';
@@ -1925,11 +1925,44 @@ var View = function( args )
 					d.style.width = '100%';
 					d.style.height = '100%';
 					d.style.textAlign = 'center';
+					d.style.pointerEvents = 'all';
 					d.value = contn.fileInfo.Path;
+					d.onkeydown = function( e )
+					{
+						self.flags.editing = true;
+						setTimeout( function()
+						{
+							self.flags.editing = false;
+						}, 150 );
+					}
 					d.onblur = function()
 					{
 						d.parentNode.removeChild( d );
 						self.titleClickElement = null;
+					}
+					d.onchange = function( e )
+					{
+						var t = this;
+						var f = ( new Door() ).get( this.value );
+						if( f )
+						{
+							f.getIcons( this.value, function( items )
+							{
+								if( items )
+								{
+									self.content.fileInfo.Path = t.value;
+									self.content.refresh();
+								}
+								else
+								{
+									t.value = contn.fileInfo.Path;
+								}
+							} );
+						}
+						else
+						{
+							t.value = contn.fileInfo.Path;
+						}
 					}
 					this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
 					self.titleClickElement = d;
