@@ -49,25 +49,29 @@ MobileManager *MobileManagerNew( void *sb )
 			lsb->LibrarySQLDrop( lsb, lsqllib );
 		}
 		
-		UserMobileApp *lma = mm->mm_UMApps;
-		while( lma != NULL )
+		DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
+		if( lsb->l_APNSConnection != NULL )
 		{
-			char msg[ 2048 ];
-			
-			if( lma->uma_UserID > 0 )
+			UserMobileApp *lma = mm->mm_UMApps;
+			while( lma != NULL )
 			{
-				lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
-			}
-			DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
-			lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
+				char msg[ 2048 ];
 			
-			// ASPN connection get only IOS notification
-			if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
-			{
-				int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+				if( lma->uma_UserID > 0 )
+				{
+					lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
+				}
 			
-				WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
-			}
+				lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
+			
+				// ASPN connection get only IOS notification
+				if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
+				{
+					int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+			
+					WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
+				}
+			
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 			/*
 			DEBUG("[MobileManagerNew] create connection\n");
@@ -85,7 +89,8 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 			DEBUG("Going to next pointer %p\n", lma );
 			*/
-			lma = (UserMobileApp *)lma->node.mln_Succ;
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
 		}
 	}
 	DEBUG("[MobileManagerNew] end\n");
