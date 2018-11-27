@@ -276,7 +276,7 @@ int WebsocketClientConnect( WebsocketClient *cl )
 			DEBUG("[WebsocketClientConnect] Connect to: %s port %d\n", cl->wc_Host, cl->wc_Port );
 			
 			cl->ws_Ccinfo.context = cl->ws_Context;
-			cl->ws_Ccinfo.address = "127.0.0.1";// cl->wc_Host;
+			cl->ws_Ccinfo.address = cl->wc_Host; //"127.0.0.1";
 			cl->ws_Ccinfo.port = cl->wc_Port;
 			cl->ws_Ccinfo.path = "/";//NULL;//"/ws";
 			cl->ws_Ccinfo.host = lws_canonical_hostname( cl->ws_Context );
