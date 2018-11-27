@@ -108,9 +108,10 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 			break;
 		}
 
-		case LWS_CALLBACK_CLOSED:
+		case LWS_CALLBACK_CLIENT_CLOSED:
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			cd->wcd_WSClient->wc_ToRemove = TRUE;
+			INFO("WebsocketClient will be removed\n");
 			break;
 
 		default:
@@ -168,6 +169,11 @@ void WebsocketClientLoop( void *data )
 		
 		sleep( 2 );
 		//WebsocketClientSendMessage( cl, "aa", 2 );
+		// if connection is market as "to be removed" we must remove thread and connection
+		if( cl->wc_ToRemove == TRUE )
+		{
+			break;
+		}
 	}
 	th->t_Launched = FALSE;
 	DEBUG("[WebsocketClientLoop] end\n" );
@@ -226,6 +232,9 @@ void WebsocketClientDelete( WebsocketClient *cl )
 			usleep( 1000 );
 		}
 		
+		ThreadDelete( cl->wc_Thread );
+		cl->wc_Thread = NULL;
+		
  		FQDeInitFree( &(cl->wc_MsgQueue) );
 		
 		pthread_mutex_destroy( &(cl->wc_Mutex) );
@@ -282,10 +291,17 @@ int WebsocketClientConnect( WebsocketClient *cl )
 			cl->wc_WSI = lws_client_connect_via_info( &(cl->ws_Ccinfo) );
 			if( cl->wc_WSI != NULL )
 			{
+				DEBUG("Client connection set\n");
 				cl->wc_Thread = ThreadNew( WebsocketClientLoop, cl, TRUE, NULL );
 				
 				//WClientData *cd = (WClientData *)lws_get_protocol( cl->wc_WSI )->user;
 				//cd->wcd_WSClient = cl;
+			}
+			else
+			{
+				lws_context_destroy( cl->ws_Context );
+				cl->ws_Context = NULL;
+				return 3;
 			}
 		}
 		else

@@ -83,6 +83,7 @@
 #include <webdav/webdav_token_manager.h>
 #include <communication/cluster_node.h>
 #include <config/properties.h>
+#include <websockets/websocket_apns_connector.h>
 
 #define DEFAULT_SESSION_ID_SIZE 256
 
@@ -363,8 +364,9 @@ typedef struct SystemBase
 	char							*l_AppleServerHost;
 	int								l_AppleServerPort;
 	char							*l_AppleKeyAPI;
+	char							*l_PresenceKey;
 	
-	WebsocketClient					*l_APNSConnection;
+	WebsocketAPNSConnector			*l_APNSConnection;
 } SystemBase;
 
 
