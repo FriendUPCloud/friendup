@@ -38,15 +38,15 @@ MobileManager *MobileManagerNew( void *sb )
 		
 		pthread_mutex_init( &(mm->mm_Mutex), NULL );
 		
-		SystemBase *sb = (SystemBase *)mm->mm_SB;
+		SystemBase *lsb = (SystemBase *)mm->mm_SB;
 	
-		SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+		SQLLibrary *lsqllib = lsb->LibrarySQLGet( lsb );
 		if( lsqllib != NULL )
 		{
 			int entries;
 			mm->mm_UMApps = lsqllib->Load( lsqllib, UserMobileAppDesc, NULL, &entries );
 		
-			sb->LibrarySQLDrop( sb, lsqllib );
+			lsb->LibrarySQLDrop( lsb, lsqllib );
 		}
 		
 		UserMobileApp *lma = mm->mm_UMApps;
@@ -56,16 +56,16 @@ MobileManager *MobileManagerNew( void *sb )
 			
 			if( lma->uma_UserID > 0 )
 			{
-				lma->uma_User = UMGetUserByID( sb->sl_UM, lma->uma_UserID );
+				lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
 			}
-			lma->uma_WSClient = sb->l_APNSConnection->wapns_Connection;
+			lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
 			
 			// ASPN connection get only IOS notification
 			if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
 			{
 				int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
 			
-				WebsocketClientSendMessage( sb->l_APNSConnection->wapns_Connection, msg, msgsize );
+				WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
 			}
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 			/*
