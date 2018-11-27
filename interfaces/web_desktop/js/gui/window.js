@@ -1935,6 +1935,7 @@ var View = function( args )
 					self.titleClickElement = d;
 				}
 				self.titleClickElement.focus();
+				self.titleClickElement.select();
 			}
 			_WindowToFront( div );
 		}
