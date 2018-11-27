@@ -1490,8 +1490,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else im = false;
 							
-							console.log('exe names???',exe,nam);							
-							
 							out.push( {
 								Title: nam,
 								Path: 'Mountlist:',
