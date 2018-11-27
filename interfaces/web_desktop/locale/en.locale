@@ -199,6 +199,7 @@ menu_download                           : Download
 menu_close_idle_connections             : Close idle connections
 menu_hide_hidden_files                  : Hide hidden files
 menu_show_hidden_files                  : Show hidden files
+menu_new_window                         : New window
 
 menu_edit_wallpaper                     : Edit wallpaper
 i18n_edit_dock                          : Edit dock

@@ -5623,6 +5623,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.openParentDirectory(); },
 						disabled: !iconsAvailable || volumeIcon
 					},*/
+					// New directoryview
+					currentMovable && currentMovable.content.directoryview ? {
+						name: i18n( 'menu_new_window' ),
+						command: function(){ Workspace.newDirectoryView(); }
+					} : false,
 					{
 						name:	i18n( 'menu_refresh_directory' ),
 						command: function(){ Workspace.refreshDirectory(); },
@@ -6013,6 +6018,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.raise();
 			v.show();
 		}
+	},
+	newDirectoryView: function()
+	{
+		var c = window.currentMovable;
+		if( !c ) return;
+		var dv = c.content.fileInfo;
+		if( !dv ) return;
+		OpenWindowByFileinfo( dv, false, false, true );
 	},
 	toggleHiddenFiles: function()
 	{
