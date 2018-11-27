@@ -59,14 +59,17 @@ MobileManager *MobileManagerNew( void *sb )
 				lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
 			}
 			DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
-			lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
-			
-			// ASPN connection get only IOS notification
-			if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
+			if( lsb->l_APNSConnection != NULL )
 			{
-				int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+				lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
 			
-				WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
+				// ASPN connection get only IOS notification
+				if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
+				{
+					int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+			
+					WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
+				}
 			}
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 			/*
