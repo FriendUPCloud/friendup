@@ -1328,6 +1328,7 @@ int SystemInitExternal( SystemBase *l )
 	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
 	if( l->l_APNSConnection != NULL )
 	{
+		/*
 		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
 		{
 			DEBUG("APNS server connected\n");
@@ -1336,6 +1337,11 @@ int SystemInitExternal( SystemBase *l )
 		{
 			DEBUG("APNS server not connected\n");
 		}
+		*/
+	}
+	else
+	{
+		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
 	}
 	
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
