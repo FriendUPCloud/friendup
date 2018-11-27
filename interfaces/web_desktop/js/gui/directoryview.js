@@ -298,15 +298,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		},
 		{
 			element: 'button',
-			className: 'HiddenFiles FloatRight IconSmall fa-eye',
-			content: i18n( 'i18n_show_hidden_files' ),
-			onclick: function( e )
-			{
-				Workspace.toggleHiddenFiles();
-			}
-		},
-		{
-			element: 'button',
 			className: 'DriveGauge FloatRight IconSmall fa-hdd',
 			content: i18n( 'i18n_diskspace' ),
 			onclick: function( e ){}
