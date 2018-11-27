@@ -5641,6 +5641,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.hideInactiveViews(); },
 						disabled: !windowsOpened
 					},
+					currentMovable && currentMovable.content.directoryview ? {
+						name: i18n( currentMovable.content.directoryview.showHiddenFiles ? i18n( 'menu_hide_hidden_files' ) : i18n( 'menu_show_hidden_files' ) ),
+						command: function(){ Workspace.toggleHiddenFiles(); }
+					} : false,
 					/*{
 						name:	i18n( 'menu_open_directory' ),
 						command: function(){ Workspace.openDirectory(); },
@@ -6011,6 +6015,14 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.raise();
 			v.show();
 		}
+	},
+	toggleHiddenFiles: function()
+	{
+		var c = window.currentMovable;
+		if( !c ) return;
+		var dv = c.content.directoryview;
+		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
+		c.content.refresh();
 	},
 	showSearch: function()
 	{

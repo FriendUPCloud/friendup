@@ -39,6 +39,7 @@ DirectoryView = function( winobj )
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
 	this.sortOrder = 'ascending';
+	this.showHiddenFiles = false;
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
@@ -297,11 +298,11 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		},
 		{
 			element: 'button',
-			className: 'Search FloatRight IconSmall fa-search',
-			content: i18n( 'i18n_dir_btn_search' ),
+			className: 'HiddenFiles FloatRight IconSmall fa-eye',
+			content: i18n( 'i18n_show_hidden_files' ),
 			onclick: function( e )
 			{
-				Workspace.showSearch();
+				Workspace.toggleHiddenFiles();
 			}
 		},
 		{
@@ -2006,9 +2007,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		{
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
 			// Skip dot files
-			if( fn.substr( 0, 1 ) == '.' ) continue;
+			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
 			// Skip backup files
-			else if( fn.substr( fn.length - 4, 4 ) == '.bak' )
+			else if( !self.showHiddenFiles && fn.substr( fn.length - 4, 4 ) == '.bak' )
 				continue;
 			else if( fn.substr( fn.length - 5, 5 ) == '.info' )
 				infoIcons[ fn ] = true;
@@ -2069,9 +2070,9 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		 		Type: icons[a].Type
 		 	};
 		 	// Skip dot files
-			if( fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
 			// Skip backup files
-			else if( fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
+			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
 				continue;
 
 			// Only show orphan .info files
