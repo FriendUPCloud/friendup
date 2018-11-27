@@ -4050,7 +4050,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			'height'   : stored && stored.height ? stored.height : 400,
 			'memorize' : true,
 			'id'       : id,
-			'volume'   : isVolume
+			'volume'   : isVolume,
+			'clickableTitle': true
 		} );
 
 		// Ok, window probably was already opened, try to activate window

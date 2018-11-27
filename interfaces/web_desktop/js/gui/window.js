@@ -1874,9 +1874,9 @@ var View = function( args )
 
 		title.appendChild( inDiv );
 
-		title.onclick = function ( e ) { return cancelBubble ( e ); }
-		title.ondragstart = function ( e ) { return cancelBubble ( e ); }
-		title.onselectstart = function ( e ) { return cancelBubble ( e ); }
+		title.onclick = function( e ){ return cancelBubble ( e ); }
+		title.ondragstart = function( e ) { return cancelBubble ( e ); }
+		title.onselectstart = function( e ) { return cancelBubble ( e ); }
 
 		title.onmousedown = function( e, mode )
 		{
@@ -1910,6 +1910,32 @@ var View = function( args )
 		// Pawel must win!
 		title.ondblclick = function( e )
 		{
+			if( self.flags.clickableTitle )
+			{
+				if( !self.titleClickElement )
+				{
+					var d = document.createElement( 'input' );
+					d.type = 'text';
+					d.className = 'NoMargins Absolute';
+					d.style.position = 'absolute';
+					d.style.outline = 'none';
+					d.style.border = '0';
+					d.style.top = '0px';
+					d.style.left = '0px';
+					d.style.width = '100%';
+					d.style.height = '100%';
+					d.style.textAlign = 'center';
+					d.value = contn.fileInfo.Path;
+					d.onblur = function()
+					{
+						d.parentNode.removeChild( d );
+						self.titleClickElement = null;
+					}
+					this.getElementsByTagName( 'SPAN' )[0].appendChild( d );
+					self.titleClickElement = d;
+				}
+				self.titleClickElement.focus();
+			}
 			_WindowToFront( div );
 		}
 
@@ -3603,6 +3629,9 @@ var View = function( args )
 		// Set the flag
 		switch( flag )
 		{
+			case 'clickableTitle':
+				this.flags.clickableTitle = value;
+				break;
 			case 'scrollable':
 				if( content )
 				{
