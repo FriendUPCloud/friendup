@@ -183,6 +183,280 @@ var Sections = {
 			ge( 'ServerConfiguration' ).innerHTML = str;
 		}
 		m.execute( 'getconfiginijson' );
+	},
+	accounts_users( cmd, extra )
+	{
+		if( cmd )
+		{
+			if( cmd == 'edit' )
+			{
+				// Show the form
+				function initUsersDetails( info )
+				{
+					// Some shortcuts
+					var userInfo = info.userInfo;
+					var settings = info.settings;
+					var workspaceSettings = info.workspaceSettings;
+					var wgroups = info.workgroups;
+					var mountlist = info.mountlist;
+										
+					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
+					if( !themeData )
+						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
+					
+					// Workgroups
+					var wstr = '';
+					if( wgroups.length )
+					{
+						for( var b = 0; b < wgroups.length; b++ )
+						{
+							wstr += '<div class="HRow"><div class="HContent100">' + wgroups[b].Name + '</div></div>';
+						}
+					}
+					
+					// Mountlist
+					var mlst = '';
+					if( mountlist.length )
+					{
+						for( var b = 0; b < mountlist.length; b++ )
+						{
+							mlst += '<div class="HRow"><div class="HContent100">' + mountlist[b].Name + '</div></div>';
+						}
+					}
+					
+					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					
+					// Add all data for the template
+					d.replacements = {
+						user_name: userInfo.FullName,
+						user_fullname: userInfo.FullName,
+						user_username: userInfo.Name,
+						user_email: userInfo.Email,
+						theme_name: settings.Theme,
+						theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+						wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						storage: mlst,
+						workgroups: wstr
+					};
+					// Add translations
+					d.i18n();
+					d.onLoad = function( data )
+					{
+						ge( 'UserDetails' ).innerHTML = data;
+					}
+					d.load();
+				}
+				
+				// Go through all data gathering until stop
+				var loadingSlot = 0;
+				var loadingList = [
+					// Load userinfo
+					function()
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var userInfo = null;
+							try
+							{
+								userInfo = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( userInfo );
+				
+						}
+						u.execute( 'userinfoget', { id: extra } );
+					},
+					// Load user settings
+					function( userInfo )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var settings = null;
+							try
+							{
+								settings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
+						}
+						u.execute( 'usersettings', { userid: userInfo.ID } );
+					},
+					function( data )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var workspacesettings = null;
+							try
+							{
+								workspacesettings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							
+							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
+						}
+						u.execute( 'getsetting', { settings: [ 
+							'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+							'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+							'focusmode', 'hiddensystem', 'workspacecount', 
+							'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
+							'workspacemode'
+						], userid: data.userInfo.ID } );
+					},
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var wgroups = null;
+							try
+							{
+								wgroups = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.workgroups = wgroups;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'workgroups' );
+					},
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var ul = null;
+							try
+							{
+								ul = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.mountlist = ul;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'mountlist', { userid: info.userInfo.ID } );
+					},
+					function( info )
+					{
+						initUsersDetails( info );
+					}
+				];
+				loadingList[ 0 ]();
+				
+				
+				return;
+			}
+		}
+		
+		var m = new Module( 'system' );
+		m.onExecuted = function( e, d )
+		{
+			if( e != 'ok' ) return;
+			var userList = null;
+			try
+			{
+				userList = JSON.parse( d );
+			}
+			catch( e )
+			{
+				return;
+			}
+			var o = ge( 'UserList' );
+			o.innerHTML = '';
+			
+			// Types of listed fields
+			var types = {
+				Edit: '10',
+				FullName: '30',
+				Name: '30',
+				Level: '30'
+			};
+			
+			
+			// List by level
+			var levels = [ 'Admin', 'User', 'Guest', 'API' ];
+			
+			// List headers
+			var header = document.createElement( 'div' );
+			header.className = 'List';
+			var headRow = document.createElement( 'div' );
+			headRow.className = 'HRow sw1';
+			for( var z in types )
+			{
+				var borders = '';
+				var d = document.createElement( 'div' );
+				if( z != 'Edit' )
+					borders += ' BorderRight';
+				if( a < userList.length - a )
+					borders += ' BorderBottom';
+				var d = document.createElement( 'div' );
+				d.className = 'PaddingSmall HContent' + types[ z ] + ' FloatLeft Ellipsis' + borders;
+				d.innerHTML = '<strong>' + z + '</strong>';
+				headRow.appendChild( d );
+			}
+			header.appendChild( headRow );
+			o.appendChild( header );
+			
+			var list = document.createElement( 'div' );
+			list.className = 'List';
+			var sw = 2;
+			for( var b = 0; b < levels.length; b++ )
+			{
+				for( var a = 0; a < userList.length; a++ )
+				{
+					// Skip irrelevant level
+					if( userList[ a ].Level != levels[ b ] ) continue;
+					
+					sw = sw == 2 ? 1 : 2;
+					var r = document.createElement( 'div' );
+					r.className = 'HRow sw' + sw;
+				
+					userList[ a ][ 'Edit' ] = '<button class="IconButton IconSmall fa-edit" onclick="Sections.accounts_users(\'edit\',\'' + userList[a].ID + '\')"></button>';
+				
+					for( var z in types )
+					{
+						var borders = '';
+						var d = document.createElement( 'div' );
+						if( z != 'Edit' )
+							borders += ' BorderRight';
+						if( a < userList.length - a )
+							borders += ' BorderBottom';
+						d.className = 'HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+						d.innerHTML = userList[a][ z ];
+						r.appendChild( d );
+					}
+				
+					// Add row
+					list.appendChild( r );
+				}
+			}
+			o.appendChild( list );
+		}
+		m.execute( 'listusers' );
 	}
 }
 

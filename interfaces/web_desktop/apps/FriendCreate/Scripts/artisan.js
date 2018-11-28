@@ -831,6 +831,7 @@ Application.receiveMessage = function( msg )
 				// Test only real files, no backup or empty files
 				var fl = msg.file.filename;
 				if( 
+					msg.file.touched && msg.file.filename.indexOf( ':' ) > 0 &&
 					fl.length && 
 					fl != 'Empty file' &&
 					fl.substr( fl.length - 4, 4 ) != '.bak'

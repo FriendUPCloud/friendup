@@ -269,15 +269,24 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
 	}
 	
-	var dirPrefs         = 'System:Preferences/';
-	var dirRepositories  = 'System:Repositories/';
-	var dirModules       = 'System:Modules/';
-	var dirLibraries     = 'System:Libraries/';
-	var dirSoftware      = 'System:Software/';
-	var dirDevices       = 'System:Devices/';
-	var dirFunctions     = 'System:Functions/';
-	var dirDocumentation = 'System:Documentation/';
-	var dirDocApps       = 'System:DocApps/';
+	var dirPrefs            = 'System:Preferences/';
+	var dirRepositories     = 'System:Repositories/';
+	var dirModules          = 'System:Modules/';
+	var dirLibraries        = 'System:Libraries/';
+	var dirSoftware         = 'System:Software/';
+	var dirDevices          = 'System:Devices/';
+	var dirFunctions        = 'System:Functions/';
+	var dirDocumentation    = 'System:Documentation/';
+	var dirDocApps          = 'System:DocApps/';
+	var locDirPrefs         = 'System:' + i18n( 'i18n_directory_Prefs' ) + '/';
+	var locDirRepositories  = 'System:' + i18n( 'i18n_directory_Repositories' ) + '/';
+	var locDirModules       = 'System:' + i18n( 'i18n_directory_Modules' ) + '/';
+	var locDirLibraries     = 'System:' + i18n( 'i18n_directory_Libraries' ) + '/';
+	var locDirSoftware      = 'System:' + i18n( 'i18n_directory_Software' ) + '/';
+	var locDirDevices       = 'System:' + i18n( 'i18n_directory_Devices' ) + '/';
+	var locDirFunctions     = 'System:' + i18n( 'i18n_directory_Functions' ) + '/';
+	var locDirDocumentation = 'System:' + i18n( 'i18n_directory_Documentation' ) + '/';
+	var locDirDocApps       = 'System:' + i18n( 'i18n_directory_DocApps' ) + '/';
 	
 	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
 	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
@@ -285,7 +294,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
 		StrPad( dateh.getDate(), 2, '0' ) + ' ' +StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
 		':' + StrPad( dateh.getSeconds(), 2, '0' );
-
+	
 	switch( path )
 	{
 		case 'System:':
@@ -297,6 +306,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Preferences/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Prefs' ),
 					Type     : 'Directory',
 					IconClass: 'System_Settings',
 					Door     : new DoorSystem( 'System:Preferences/' )
@@ -308,6 +318,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Repositories/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Repositories' ),
 					Type     : 'Directory',
 					IconClass: 'System_Repositories',
 					Door     : new DoorSystem( 'System:Repositories/' )
@@ -320,6 +331,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Modules/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Modules' ),
 					Type     : 'Directory',
 					Module   : 'files',
 					IconClass: 'System_Modules',
@@ -333,6 +345,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Devices/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Devices' ),
 					Type     : 'Directory',
 					Module   : 'files',
 					IconClass: 'System_Devices',
@@ -345,6 +358,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Libraries/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Libraries' ),
 					Type     : 'Directory',
 					IconClass: 'System_Libraries',
 					Door     : new DoorSystem( 'System:Libraries/' )
@@ -356,6 +370,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Software/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Software' ),
 					Type     : 'Directory',
 					IconClass: 'System_Software',
 					Door     : new DoorSystem( 'System:Software/' )
@@ -367,6 +382,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Documentation/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Documentation' ),
 					Type     : 'Directory',
 					IconClass: 'System_Documentation',
 					Door     : new DoorSystem( 'System:Documentation/' )
@@ -378,11 +394,13 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 					DateModified: dateh,
 					Filesize: 16,
 					Path     : 'System:Functions/',
+					PathLocalized: 'System:' + i18n( 'i18n_directory_Functions' ),
 					Type     : 'Directory',
 					IconClass: 'System_Functions',
 					Door     : new DoorSystem( 'System:Functions/' )
 				}
 			], 'System:' );
+		case locDirDocumentation:
 		case dirDocumentation:
 			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
 				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
@@ -422,6 +440,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			return callback( eles, dirDocumentation );
+		case locDirDocApps:
 		case dirDocApps:
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, data )
@@ -439,6 +458,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			}
 			m.execute( 'listapplicationdocs' );
 			return;
+		case locDirFunctions:
 		case dirFunctions:
 			var funcs = [ 
 				'ViewOpen', 'ViewClose', 'FullScreen', 'ScreenOpen', 'ScreenActivate', 'ScreenClose', 'ScreenList', 'SetMenu', 
@@ -464,6 +484,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 				} );
 			}
 			return callback( eles, dirFunctions );
+		case locDirRepositories:
 		case dirRepositories:
 			var output = [
 				{
@@ -481,6 +502,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			if( callback )
 				return callback( output, dirRepositories );
 			return output;
+		case locDirDevices:
 		case dirDevices:
 			var devs = {
 				dosdrivers     : i18n( 'i18n_dosdrivers' ),
@@ -524,13 +546,13 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			if( callback )
 				return callback( output, dirDevices );
 			return output;
-			
+		case locDirPrefs:
 		case dirPrefs:
 			var m = new Module( 'system' );
 			m.onExecuted = function( e, d )
 			{
 				if( e != 'ok' ) return;
-				var prefs = {}, icons = {};
+				var prefs = {}, icons = {}, locales = {};
 				if( d == 'User' )
 				{
 					// Get available preferences applications
@@ -545,6 +567,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						//'Keyboard'     : i18n( 'i18n_keyboard' ),
 						//'Input'        : i18n( 'i18n_input' ),
 						//'Datetime'     : i18n( 'i18n_datetime' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
+						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
+						'Dock'         : i18n( 'i18n_docksettings' ),
+						'Account'      : i18n( 'i18n_account' )
+					};
+					locales = {
+						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
+						'Software'     : i18n( 'i18n_software' ),
+						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
 						'Startup'      : i18n( 'i18n_startup_sequence' ),
 						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
 						'Dock'         : i18n( 'i18n_docksettings' ),
@@ -593,6 +624,18 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						'Security'     : i18n( 'i18n_security' ),
 						'Account'      : i18n( 'i18n_account' )
 					};
+					locales = {
+						'Looknfeel'    : 'i18n_looknfeel',
+						'Software'     : 'i18n_software',
+						'Wallpaper'    : 'i18n_wallpaper',
+						'DiskCatalog'  : 'i18n_disk_catalog',
+						'Users'        : 'i18n_useraccounts',
+						'Dock'         : 'i18n_docksettings',
+						'Startup'      : 'i18n_startup_sequence',
+						'Mimetypes'    : 'i18n_mimetypes',
+						'Security'     : 'i18n_security',
+						'Account'      : 'i18n_account'
+					};
 					// Setup icons for all these preferences
 					icons = {
 						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
@@ -629,6 +672,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 						MetaType: 'File',
 						Title: prefs[pref],
 						Path: 'System:Settings/' + pref,
+						PathLocalized: 'System:Settings/' + i18n( 'i18n_directory_Prefs' ),
 						DateModified: dateh,
 						Filename: pref,
 						Permissions: '-r-e-,-r-e-,-r-e-',
@@ -644,6 +688,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			m.execute( 'userlevel' );
 			return;
 		// Get all modules listed out
+		case locDirModules:
 		case dirModules:
 			var m = new Module( 'system' );
 			m.onExecuted = function( r, data )
@@ -652,6 +697,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			}
 			m.execute( 'listmodules' );
 			return;
+		case locDirLibraries:
 		case dirLibraries:
 			var m = new Module( 'system' );
 			m.onExecuted = function( r, data )

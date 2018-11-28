@@ -1490,8 +1490,6 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 							}
 							else im = false;
 							
-							console.log('exe names???',exe,nam);							
-							
 							out.push( {
 								Title: nam,
 								Path: 'Mountlist:',
@@ -3769,8 +3767,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				{
 					newname: nam,
 					path: icon.Path
-				}, function()
+				}, function( result, data )
 				{
+					console.log( result, data );
 					if( win && win.content.refresh )
 						win.content.refresh();
 					Workspace.renameWindow.close();
@@ -3786,8 +3785,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		icon.Door.dosAction( 'rename', {
 			newname: nam,
 			path: icon.Path
-		}, function()
+		}, function( result, data)
 			{
+				console.log( result, data );
 				if( win && win.content.refresh )
 					win.content.refresh();
 				Workspace.renameWindow.close();
@@ -5623,6 +5623,11 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.openParentDirectory(); },
 						disabled: !iconsAvailable || volumeIcon
 					},*/
+					// New directoryview
+					currentMovable && currentMovable.content.directoryview ? {
+						name: i18n( 'menu_new_window' ),
+						command: function(){ Workspace.newDirectoryView(); }
+					} : false,
 					{
 						name:	i18n( 'menu_refresh_directory' ),
 						command: function(){ Workspace.refreshDirectory(); },
@@ -5639,6 +5644,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ Workspace.hideInactiveViews(); },
 						disabled: !windowsOpened
 					},
+					currentMovable && currentMovable.content.directoryview ? {
+						name: i18n( currentMovable.content.directoryview.showHiddenFiles ? i18n( 'menu_hide_hidden_files' ) : i18n( 'menu_show_hidden_files' ) ),
+						command: function(){ Workspace.toggleHiddenFiles(); }
+					} : false,
 					/*{
 						name:	i18n( 'menu_open_directory' ),
 						command: function(){ Workspace.openDirectory(); },
@@ -6009,6 +6018,22 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			v.raise();
 			v.show();
 		}
+	},
+	newDirectoryView: function()
+	{
+		var c = window.currentMovable;
+		if( !c ) return;
+		var dv = c.content.fileInfo;
+		if( !dv ) return;
+		OpenWindowByFileinfo( dv, false, false, true );
+	},
+	toggleHiddenFiles: function()
+	{
+		var c = window.currentMovable;
+		if( !c ) return;
+		var dv = c.content.directoryview;
+		dv.showHiddenFiles = dv.showHiddenFiles ? false : true;
+		c.content.refresh();
 	},
 	showSearch: function()
 	{
