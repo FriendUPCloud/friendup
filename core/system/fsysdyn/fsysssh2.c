@@ -554,6 +554,11 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		
 		sdat->session = libssh2_session_init();
 		
+		if( sdat->session == NULL )
+		{
+			FERROR("Cannot create ssh2 session\n");
+			goto shutdown;
+		}
 		libssh2_session_set_timeout( sdat->session, 5000 );
 		
 		if( libssh2_session_handshake( sdat->session, sdat->sock ) < 0 ) 
