@@ -1323,6 +1323,14 @@ int SystemInitExternal( SystemBase *l )
 	
 	USMRemoveOldSessionsinDB( l );
 	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
 	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
@@ -1623,14 +1631,6 @@ int SystemInitExternal( SystemBase *l )
 		}
 		
 		l->LibrarySQLDrop( l, sqllib );
-	}
-	
-	// we must launch mobile manager when all sessions and users are loaded
-	
-	l->sl_MobileManager = MobileManagerNew( l );
-	if( l->sl_MobileManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
 	// mount INRAM drive
