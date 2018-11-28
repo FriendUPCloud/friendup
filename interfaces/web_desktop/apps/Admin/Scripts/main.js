@@ -190,27 +190,58 @@ var Sections = {
 		{
 			if( cmd == 'edit' )
 			{
-				var u = new Module( 'system' );
-				u.onExecuted = function( e, d )
+				// Show the form
+				function initUsersDetails( info )
 				{
-					if( e != 'ok' ) return;
+					// Some shortcuts
+					var userInfo = info.userInfo;
+					var settings = info.settings;
+					var workspaceSettings = info.workspaceSettings;
+					var wgroups = info.workgroups;
+					var mountlist = info.mountlist;
+										
+					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
+					if( !themeData )
+						themeData = { colorSchemeText: 'light', buttonSchemeText: 'windows' };
 					
-					var userInfo = null;
-					try
+					// Workgroups
+					var wstr = '';
+					if( wgroups.length )
 					{
-						userInfo = JSON.parse( d );
+						for( var b = 0; b < wgroups.length; b++ )
+						{
+							wstr += '<div class="HRow"><div class="HContent100">' + wgroups[b].Name + '</div></div>';
+						}
 					}
-					catch( e )
+					
+					// Mountlist
+					var mlst = '';
+					if( mountlist.length )
 					{
-						return;
+						for( var b = 0; b < mountlist.length; b++ )
+						{
+							mlst += '<div class="HRow"><div class="HContent100">' + mountlist[b].Name + '</div></div>';
+						}
 					}
 					
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
+					
+					// Add all data for the template
 					d.replacements = {
 						user_name: userInfo.FullName,
+						user_fullname: userInfo.FullName,
 						user_username: userInfo.Name,
-						user_email: userInfo.Email
+						user_email: userInfo.Email,
+						theme_name: settings.Theme,
+						theme_dark: themeData.colorSchemeText == 'charcoal' || themeData.colorSchemeText == 'dark' ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						theme_style: themeData.buttonSchemeText == 'windows' ? 'Windows' : 'Mac',
+						wallpaper_name: workspaceSettings.wallpaperdoors ? workspaceSettings.wallpaperdoors : i18n( 'i18n_default' ),
+						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
+						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
+						storage: mlst,
+						workgroups: wstr
 					};
+					// Add translations
 					d.i18n();
 					d.onLoad = function( data )
 					{
@@ -218,7 +249,125 @@ var Sections = {
 					}
 					d.load();
 				}
-				u.execute( 'userinfoget', { id: extra } );
+				
+				// Go through all data gathering until stop
+				var loadingSlot = 0;
+				var loadingList = [
+					// Load userinfo
+					function()
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var userInfo = null;
+							try
+							{
+								userInfo = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( userInfo );
+				
+						}
+						u.execute( 'userinfoget', { id: extra } );
+					},
+					// Load user settings
+					function( userInfo )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var settings = null;
+							try
+							{
+								settings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
+						}
+						u.execute( 'usersettings', { userid: userInfo.ID } );
+					},
+					function( data )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var workspacesettings = null;
+							try
+							{
+								workspacesettings = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							
+							loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
+						}
+						u.execute( 'getsetting', { settings: [ 
+							'avatar', 'workspacemode', 'wallpaperdoors', 'wallpaperwindows', 'language', 
+							'menumode', 'startupsequence', 'navigationmode', 'windowlist', 
+							'focusmode', 'hiddensystem', 'workspacecount', 
+							'scrolldesktopicons', 'wizardrun', 'themedata_' + data.settings.Theme,
+							'workspacemode'
+						], userid: data.userInfo.ID } );
+					},
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var wgroups = null;
+							try
+							{
+								wgroups = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.workgroups = wgroups;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'workgroups' );
+					},
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							if( e != 'ok' ) return;
+							var ul = null;
+							try
+							{
+								ul = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.mountlist = ul;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'mountlist', { userid: info.userInfo.ID } );
+					},
+					function( info )
+					{
+						initUsersDetails( info );
+					}
+				];
+				loadingList[ 0 ]();
+				
+				
 				return;
 			}
 		}
