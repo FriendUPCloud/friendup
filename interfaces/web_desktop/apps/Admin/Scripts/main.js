@@ -14,8 +14,13 @@ Application.run = function( msg ){ initGui(); }
 // Just initialize the GUI!
 function initGui()
 {
-	refreshSidebar();
-	refreshStatistics();
+	// Let's get some charts!
+	Include( '/webclient/3rdparty/Chart.bundle.min.js', function()
+	{
+		// And then start!
+		refreshSidebar();
+		refreshStatistics();
+	} );
 }
 
 // Side bar being refreshed
