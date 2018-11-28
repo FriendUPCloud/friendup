@@ -12,6 +12,8 @@
 $settings = new stdClass();
 $settings->Date = date( 'Y-m-d H:i:s' );
 
+$userid = $level == 'Admin' && isset( $args->args->userid ) ? $args->args->userid : $User->ID;
+
 if( isset( $args->args->settings ) )
 {
 	$failed = true;
@@ -20,7 +22,7 @@ if( isset( $args->args->settings ) )
 		$s = new dbIO( 'FSetting' );
 		$s->Type = 'system';
 		$s->Key = $set;
-		$s->UserID = $User->ID;
+		$s->UserID = $userid;
 		if( $s->Load() )
 		{
 			$json = false;
@@ -48,7 +50,7 @@ else if ( isset( $args->args->setting ) )
 	$s = new dbIO( 'FSetting' );
 	$s->Type = 'system';
 	$s->Key = $args->args->setting;
-	$s->UserID = $User->ID;
+	$s->UserID = $userid;
 	if( $s->Load() )
 	{
 		$json = false;

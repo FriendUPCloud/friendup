@@ -22,4 +22,6 @@ i18n_storage                           : Lagring
 
 i18n_applications                      : Applikasjoner
 
-
+i18n_enabled                           : På
+i18n_disabled                          : Av
+i18n_default                           : Standard
