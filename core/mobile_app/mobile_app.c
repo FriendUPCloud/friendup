@@ -742,16 +742,12 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 int MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string )
 {
 	UserMobileAppConnectionsT *user_connections = HashmapGetData( _user_to_app_connections_map, username );
-	if( user_connections == NULL )
-	{
-		DEBUG("User <%s> does not have any app connections\n", username);
-		return 1;
-	}
-
+	
 	char *escaped_channel_id = json_escape_string(channel_id);
 	char *escaped_title = json_escape_string(title);
 	char *escaped_message = json_escape_string(message);
 	char *escaped_extra_string = NULL;
+	MobileManager *mm = SLIB->sl_MobileManager;
 
 	unsigned int required_length = strlen( escaped_channel_id ) + strlen( escaped_message ) + strlen( escaped_message ) + LWS_PRE + 128/*some slack*/;
 
@@ -760,65 +756,83 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 		escaped_extra_string = json_escape_string( extra_string );
 		required_length += strlen( escaped_extra_string );
 	}
-
+	
 	char json_message[ required_length ];
-	MobileManager *mm = SLIB->sl_MobileManager;
 
 	if( extra_string )
 	{ //TK-1039
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_extra_string );
+			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_extra_string );
 
 		FFree( escaped_extra_string );
 	}
 	else
 	{
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-				"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\"}", escaped_channel_id, escaped_message, escaped_title );
+			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\"}", escaped_channel_id, escaped_message, escaped_title );
 	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
-
-	FFree( escaped_channel_id );
-	FFree( escaped_title );
-	FFree( escaped_message );
-
-	DEBUG("Send: <%s>\n", json_message + LWS_PRE);
-
-	switch( notification_type )
+	
+	if( user_connections != NULL )
 	{
-		case MN_force_all_devices:
-		for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-		{
-			if( user_connections->connection[i] )
-			{
-				//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
-				lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
-			}
-		}
-		break;
+		DEBUG("Send: <%s>\n", json_message + LWS_PRE);
 
-		case MN_all_devices:
-		for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+		switch( notification_type )
 		{
-			if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+			case MN_force_all_devices:
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 			{
-				//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
-				lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
+				if( user_connections->connection[i] )
+				{
+					//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
+					lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
+				}
 			}
+			break;
+
+			case MN_all_devices:
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+			{
+				if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+				{
+					//WriteMessage( user_connections->connection[i], (unsigned char*)json_message, json_message_length );
+					lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)json_message+LWS_PRE,json_message_length,LWS_WRITE_TEXT);
+				}
+			}
+			break;
+			default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
 		}
-		break;
-		default: FERROR("**************** UNIMPLEMENTED %d\n", notification_type);
+	}
+	else
+	{
+		DEBUG("User <%s> does not have any app WS connections\n", username);
 	}
 	
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 	
+	DEBUG("NotifyUser: send message to other mobile apps\n");
+	
 	char *json_message_ios;
 	int json_message_ios_size = required_length+512;
-	if( ( json_message_ios = FMalloc( json_message_ios_size ) ) != NULL )
+	if( SLIB->l_APNSConnection != NULL && SLIB->l_APNSConnection->wapns_Connection != NULL )
 	{
-		MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
+		if( ( json_message_ios = FMalloc( json_message_ios_size ) ) != NULL )
+		{
+			UserMobileApp *lma = mm->mm_UMApps;
+			while( lma != NULL )
+			{
+				DEBUG("Send message to device %s\n", lma->uma_Platform );
+				int msgsize = snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, lma->uma_AppToken );
+			
+				WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, msgsize );
+
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
+		/*
+		MobileListEntry *mle = MobleManagerGetByUserNameDBPlatform( mm, user_connections->userID, (char *)username, MOBILE_APP_TYPE_IOS );
+		//MobileListEntry *mle = MobleManagerGetByUserIDDBPlatform( mm, user_connections->userID, MOBILE_APP_TYPE_IOS );
 		while( mle != NULL )
 		{
 			snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, mle->mm_UMApp->uma_AppToken );
@@ -826,12 +840,18 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 			WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, json_message_ios_size );
 			mle = (MobileListEntry *) mle->node.mln_Succ;
 		}
-		FFree( json_message_ios );
+		*/
+			FFree( json_message_ios );
+		}
 	}
 	else
 	{
 		FERROR("Cannot allocate memory for MobileApp->user->ios message!\n");
 	}
+	
+	FFree( escaped_channel_id );
+	FFree( escaped_title );
+	FFree( escaped_message );
 	
 	return 0;
 }

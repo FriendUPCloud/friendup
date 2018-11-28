@@ -64,6 +64,10 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 			{
 				cd->wcd_WSClient->wc_ReceiveCallback( (void *)cd, (char *)in, (int)len );
 			}
+			if( cd->wcd_WSClient->wc_MsgQueue.fq_First != NULL )
+			{
+				lws_callback_on_writable( cd->wcd_WSClient->wc_WSI );
+			}
 			break;
 
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
@@ -105,6 +109,10 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 				FRIEND_MUTEX_UNLOCK( &(cd->wcd_WSClient->wc_Mutex) );
 			}
 			
+			if( cd->wcd_WSClient->wc_MsgQueue.fq_First != NULL )
+			{
+				lws_callback_on_writable( cd->wcd_WSClient->wc_WSI );
+			}
 			break;
 		}
 
@@ -116,6 +124,11 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 
 		default:
 			break;
+	}
+	
+	//if( user != NULL && cd->wcd_WSClient != NULL && cd->wcd_WSClient->wc_MsgQueue.fq_First != NULL )
+	{
+		//lws_callback_on_writable( cd->wcd_WSClient->wc_WSI );
 	}
 	//DEBUG("[WebsocketClientCallback] end\n" );
 
@@ -167,7 +180,7 @@ void WebsocketClientLoop( void *data )
 
 		lws_service( cl->ws_Context, 250 );
 		
-		sleep( 2 );
+		sleep( 1 );
 		//WebsocketClientSendMessage( cl, "aa", 2 );
 		// if connection is market as "to be removed" we must remove thread and connection
 		if( cl->wc_ToRemove == TRUE )
