@@ -204,6 +204,7 @@ var Sections = {
 					var workspaceSettings = info.workspaceSettings;
 					var wgroups = info.workgroups;
 					var mountlist = info.mountlist;
+					var apps = info.applications;
 										
 					var themeData = workspaceSettings[ 'themedata_' + settings.Theme ];
 					if( !themeData )
@@ -299,6 +300,31 @@ var Sections = {
 						}
 					}
 					
+					var apl = '';
+					var types = [ i18n( 'i18n_name' ), i18n( 'i18n_category' ), i18n( 'i18n_dock' ) ];
+					var keyz  = [ 'Name', 'Category', 'Dock' ];
+					apl += '<div class="HRow">';
+					for( var a = 0; a < types.length; a++ )
+					{
+						apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + types[ a ] + '</div>';
+					}
+					apl += '</div>';
+					
+					apl += '<div class="List">';
+					var sw = 2;
+					for( var a = 0; a < apps.length; a++ )
+					{
+						sw == 2 ? 1 : 2;
+						apl += '<div class="HRow sw' + sw + '">';
+						for( var k = 0; k < keyz.length; k++ )
+						{
+							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + apps[ a ][ keyz[ k ] ] + '</div>';
+						}
+						apl += '</div>';
+					}
+					apl += '</div>';
+					
+					// Get the user details template
 					var d = new File( 'Progdir:Templates/account_users_details.html' );
 					
 					// Add all data for the template
@@ -314,7 +340,8 @@ var Sections = {
 						workspace_count: workspaceSettings.workspacecount > 0 ? workspaceSettings.workspacecount : '1',
 						system_disk_state: workspaceSettings.hiddensystem ? i18n( 'i18n_enabled' ) : i18n( 'i18n_disabled' ),
 						storage: mlst,
-						workgroups: wstr
+						workgroups: wstr,
+						applications: apl
 					};
 					// Add translations
 					d.i18n();
@@ -438,6 +465,27 @@ var Sections = {
 							loadingList[ ++loadingSlot ]( info );
 						}
 						u.execute( 'mountlist', { userid: info.userInfo.ID } );
+					},
+					// Get user applications
+					function( info )
+					{
+						var u = new Module( 'system' );
+						u.onExecuted = function( e, d )
+						{
+							var apps = null;
+							if( e != 'ok' ) return;
+							try
+							{
+								apps = JSON.parse( d );
+							}
+							catch( e )
+							{
+								return;
+							}
+							info.applications = apps;
+							loadingList[ ++loadingSlot ]( info );
+						}
+						u.execute( 'listuserapplications', { userid: info.userInfo.ID } );
 					},
 					function( info )
 					{

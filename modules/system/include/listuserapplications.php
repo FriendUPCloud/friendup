@@ -9,10 +9,13 @@
 *                                                                              *
 *****************************************************************************©*/
 
+$userid = $level == 'Admin' && isset( $args->args->userid ) ? 
+	$args->args->userid : $User->ID;
+
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT ua.ID, ua.ApplicationID, n.Name, ua.Permissions, ua.Data FROM FUserApplication ua, FApplication n
 	WHERE
-		n.ID = ua.ApplicationID AND ua.UserID=\'' . $User->ID . '\'
+		n.ID = ua.ApplicationID AND ua.UserID=\'' . $userid . '\'
 	ORDER BY n.Name ASC
 ' ) )
 {

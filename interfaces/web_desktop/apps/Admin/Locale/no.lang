@@ -25,3 +25,7 @@ i18n_applications                      : Applikasjoner
 i18n_enabled                           : På
 i18n_disabled                          : Av
 i18n_default                           : Standard
+
+i18n_name                              : Navn
+i18n_category                          : Kategori
+i18n_dock                              : I dock
