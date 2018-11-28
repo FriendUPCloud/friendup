@@ -215,7 +215,9 @@ var Sections = {
 					{
 						for( var b = 0; b < wgroups.length; b++ )
 						{
-							wstr += '<div class="HRow"><div class="HContent100">' + wgroups[b].Name + '</div></div>';
+							wstr += '<div class="HRow">';
+							wstr += '<div class="HContent100">' + wgroups[b].Name + '</div>';
+							wstr += '</div>';
 						}
 					}
 					
@@ -223,9 +225,76 @@ var Sections = {
 					var mlst = '';
 					if( mountlist.length )
 					{
+						mlst += '<div class="HRow">';
 						for( var b = 0; b < mountlist.length; b++ )
 						{
-							mlst += '<div class="HRow"><div class="HContent100">' + mountlist[b].Name + '</div></div>';
+							try
+							{
+								mountlist[b].Config = JSON.parse( mountlist[b].Config );
+							}
+							catch( e )
+							{
+								mountlist[b].Config = {};
+							}
+							mlst += '<div class="HContent20 FloatLeft">';
+							mlst += '<div class="PaddingSmall Ellipsis">';
+							mlst += '<div id="Storage_' + mountlist[b].ID + '">';
+								mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
+							mlst += '</div>';
+							mlst += '<div class="FloatLeft HContent100 Name Ellipsis TextCenter" title="' + mountlist[b].Name + '">' + mountlist[b].Name + '</div>';
+							mlst += '</div>';
+							mlst += '</div>';
+						}
+						mlst += '</div>';
+					}
+					function initStorageGraphs()
+					{
+						var d = document.getElementsByTagName( 'canvas' );
+						for( var a = 0; a < d.length; a++ )
+						{
+							if( !d[a].id || d[a].id.substr( 0, 4 ) != 'Stor' )
+								continue;
+							var nod = d[a];
+							nod.setAttribute( 'width', nod.parentNode.offsetWidth );
+							nod.setAttribute( 'height', 64 );
+							var size = nod.getAttribute( 'size' );
+							var mode = size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ];
+							size = parseInt( size );
+							var type = mode[0].toLowerCase();
+							if( type == 'mb' )
+							{
+								size = size * 1024;
+							}
+							else if( type == 'gb' )
+							{
+								size = size * 1024 * 1024;
+							}
+							else if( type == 'tb' )
+							{
+								size = size * 1024 * 1024 * 1024;
+							}
+							var used = parseInt( nod.getAttribute( 'used' ) );
+							if( isNaN( size ) ) size = 500 * 1024;
+							if( !used && !size ) used = 0, size = 1;
+							if( !used ) used = 0;
+							if( used > size || ( used && !size ) ) size = used;
+							
+							console.log( nod.getAttribute( 'name' ) + ' ' + used + ' / ' + size );
+							
+							var pie = new Chart( nod, 
+								{
+									type: 'doughnut',
+									data: { 
+										labels: [ 'Space', 'Data' ], 
+										datasets: [ { 
+											label: 'Disk usage', data: [ size - used, used ], 
+											backgroundColor: [ '#27BBB0', '#D75B4E' ],
+											borderWidth: 0,
+										} ]
+									},
+									options: { legend: { display: false } }
+								} 
+							);
 						}
 					}
 					
@@ -251,6 +320,7 @@ var Sections = {
 					d.onLoad = function( data )
 					{
 						ge( 'UserDetails' ).innerHTML = data;
+						initStorageGraphs();
 					}
 					d.load();
 				}
@@ -299,6 +369,7 @@ var Sections = {
 						}
 						u.execute( 'usersettings', { userid: userInfo.ID } );
 					},
+					// Get more user settings
 					function( data )
 					{
 						var u = new Module( 'system' );
@@ -325,6 +396,7 @@ var Sections = {
 							'workspacemode'
 						], userid: data.userInfo.ID } );
 					},
+					// Get user's workgroups
 					function( info )
 					{
 						var u = new Module( 'system' );
@@ -345,6 +417,7 @@ var Sections = {
 						}
 						u.execute( 'workgroups' );
 					},
+					// Get storage
 					function( info )
 					{
 						var u = new Module( 'system' );
