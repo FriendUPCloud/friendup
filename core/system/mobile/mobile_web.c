@@ -134,6 +134,15 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			if( el != NULL )
 			{
 				apptoken = UrlDecodeToMem( (char *)el->data );
+				int z;
+				for( z = 0 ; z < strlen( apptoken ) ; z++ )
+				{
+					if( apptoken[ z ] == ' ' )
+					{
+						apptoken[ z ] = 0;
+						break;
+					}
+				}
 			}
 			
 			el = HttpGetPOSTParameter( request, "appversion" );
