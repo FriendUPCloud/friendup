@@ -257,6 +257,8 @@ var Sections = {
 							var nod = d[a];
 							nod.setAttribute( 'width', nod.parentNode.offsetWidth );
 							nod.setAttribute( 'height', 64 );
+							
+							// Calculate disk usage
 							var size = nod.getAttribute( 'size' );
 							var mode = size.length && size != 'undefined' ? size.match( /[a-z]+/i ) : [ '' ];
 							size = parseInt( size );
@@ -279,8 +281,7 @@ var Sections = {
 							if( !used ) used = 0;
 							if( used > size || ( used && !size ) ) size = used;
 							
-							console.log( nod.getAttribute( 'name' ) + ' ' + used + ' / ' + size );
-							
+							// Create doghnut chart
 							var pie = new Chart( nod, 
 								{
 									type: 'doughnut',
