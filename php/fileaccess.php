@@ -12,7 +12,7 @@
 /*
 	File access interface.
 	
-	Originally created for OnlyOffice integration
+	Originally created for OnlyOffice integration - many request are specific to their REST API.
 */
 
 //faLog( 'all data we got ' . print_r( $argv, 1 ) );
@@ -192,7 +192,7 @@ function getUserFile( $username, $filePath )
 	include_once( 'classes/door.php' );
 
 	
-	$f = new File( $filePath );
+	$f = new File( getOriginalFilePath( $filePath ) );
 	
 	if( $f->Load() )
 	{
@@ -202,6 +202,24 @@ function getUserFile( $username, $filePath )
 	{
 		return false;
 	}
+}
+
+/*
+	check if we have a shadow file... make sure we access the correct one
+	
+	this function must be the same as in the onlyoffice module!
+*/
+function getOriginalFilePath( $inpath )
+{
+	//check that we dont write to a hidden version lockfile - correct the path if we do get this...
+	$filename =  strpos($inpath, '/') > 1 ? end( explode('/', $inpath) ) : end( explode(':', $inpath) );
+	if( strpos($filename, '._') == 0 )
+	{
+		//we are trying to write to a temp version copy here.... no no no no
+		$newname = preg_replace('/\._[^_]*_/', '', $filename);
+		return str_replace($filename, $newname, $inpath);
+	}
+	return $inpath;
 }
 
 /*
@@ -509,7 +527,7 @@ function faConnectDB( $username )
 		}		
 	}	
 	
-	faLog('Config set ' . print_r( $Config,1 ) );
+	//faLog('Config set ' . print_r( $Config,1 ) );
 	
 	if( $configfilesettings && isset( $configfilesettings['DatabaseUser'] ) )
 	{
