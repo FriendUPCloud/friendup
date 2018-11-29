@@ -132,15 +132,22 @@ Sections.accounts_users = function( cmd, extra )
 				
 				apl += '<div class="List">';
 				var sw = 2;
-				for( var a = 0; a < apps.length; a++ )
+				if( apps )
 				{
-					sw == 2 ? 1 : 2;
-					apl += '<div class="HRow sw' + sw + '">';
-					for( var k = 0; k < keyz.length; k++ )
+					for( var a = 0; a < apps.length; a++ )
 					{
-						apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + apps[ a ][ keyz[ k ] ] + '</div>';
+						sw == 2 ? 1 : 2;
+						apl += '<div class="HRow sw' + sw + '">';
+						for( var k = 0; k < keyz.length; k++ )
+						{
+							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + apps[ a ][ keyz[ k ] ] + '</div>';
+						}
+						apl += '</div>';
 					}
-					apl += '</div>';
+				}
+				else
+				{
+					apl += i18n( 'i18n_no_applications_available' );
 				}
 				apl += '</div>';
 				
@@ -211,7 +218,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						catch( e )
 						{
-							return;
+							settings = null;
 						}
 						loadingList[ ++loadingSlot ]( { userInfo: userInfo, settings: settings } );
 					}
@@ -231,7 +238,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						catch( e )
 						{
-							return;
+							workspacesettings = null;
 						}
 						
 						loadingList[ ++loadingSlot ]( { userInfo: data.userInfo, settings: data.settings, workspaceSettings: workspacesettings } );
@@ -258,7 +265,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						catch( e )
 						{
-							return;
+							wgroups = null;
 						}
 						info.workgroups = wgroups;
 						loadingList[ ++loadingSlot ]( info );
@@ -279,7 +286,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						catch( e )
 						{
-							return;
+							ul = null;
 						}
 						info.mountlist = ul;
 						loadingList[ ++loadingSlot ]( info );
@@ -300,7 +307,7 @@ Sections.accounts_users = function( cmd, extra )
 						}
 						catch( e )
 						{
-							return;
+							apps = null;
 						}
 						info.applications = apps;
 						loadingList[ ++loadingSlot ]( info );

@@ -29,3 +29,6 @@ i18n_default                           : Default
 i18n_name                              : Name
 i18n_category                          : Category
 i18n_dock                              : In dock
+
+i18n_no_applications_available         : No applications available.
+
