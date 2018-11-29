@@ -319,6 +319,7 @@ Sections.accounts_users = function( cmd, extra )
 		}
 	}
 	
+	// Get the user list
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
@@ -368,6 +369,14 @@ Sections.accounts_users = function( cmd, extra )
 		header.appendChild( headRow );
 		o.appendChild( header );
 		
+		function setROnclick( r, uid )
+		{
+			r.onclick = function()
+			{
+				Sections.accounts_users( 'edit', uid );
+			}
+		}
+		
 		var list = document.createElement( 'div' );
 		list.className = 'List';
 		var sw = 2;
@@ -380,19 +389,25 @@ Sections.accounts_users = function( cmd, extra )
 				
 				sw = sw == 2 ? 1 : 2;
 				var r = document.createElement( 'div' );
+				setROnclick( r, userList[ a ].ID );
 				r.className = 'HRow sw' + sw;
 			
-				userList[ a ][ 'Edit' ] = '<button class="IconButton IconSmall fa-edit" onclick="Sections.accounts_users(\'edit\',\'' + userList[a].ID + '\')"></button>';
+				var icon = '<span class="IconSmall fa-user"></span>';
+				userList[ a ][ 'Edit' ] = icon;
 			
 				for( var z in types )
 				{
 					var borders = '';
 					var d = document.createElement( 'div' );
 					if( z != 'Edit' )
+					{
+						d.className = '';
 						borders += ' BorderRight';
+					}
+					else d.className = 'TextCenter';
 					if( a < userList.length - a )
 						borders += ' BorderBottom';
-					d.className = 'HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
+					d.className += ' HContent' + types[ z ] + ' FloatLeft PaddingSmall Ellipsis' + borders;
 					d.innerHTML = userList[a][ z ];
 					r.appendChild( d );
 				}
