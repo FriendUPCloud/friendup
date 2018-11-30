@@ -140,7 +140,16 @@ Sections.accounts_users = function( cmd, extra )
 						apl += '<div class="HRow sw' + sw + '">';
 						for( var k = 0; k < keyz.length; k++ )
 						{
-							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis">' + apps[ a ][ keyz[ k ] ] + '</div>';
+							var ex = '';
+							var value = apps[ a ][ keyz[ k ] ];
+							if( keyz[ k ] == 'Category' )
+								value = apps[ a ].Config.Category;
+							if( keyz[ k ] == 'Dock' )
+							{
+								value = apps[ a ].DockStatus ? '<span class="IconSmall fa-check"></span>' : '';
+								ex = ' TextCenter';
+							}
+							apl += '<div class="PaddingSmall HContent33 FloatLeft Ellipsis' + ex + '">' + value + '</div>';
 						}
 						apl += '</div>';
 					}
