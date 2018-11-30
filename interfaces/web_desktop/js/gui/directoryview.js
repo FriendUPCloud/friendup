@@ -4367,7 +4367,10 @@ function CheckDoorsKeys( e )
 			break;
 	}
 	// Do the thing! Keyboard navigation
-	if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.content.windowObject.flags.editing )
+	if( 
+		window.regionWindow && window.regionWindow.directoryview && 
+		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
+	)
 	{
 		var rw = window.regionWindow.icons;
 		var out = [];
