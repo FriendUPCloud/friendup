@@ -1322,36 +1322,7 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
-	
-	// we must launch mobile manager when all sessions and users are loaded
-	
-	l->sl_MobileManager = MobileManagerNew( l );
-	if( l->sl_MobileManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
-	}
-	
-	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
-	if( l->l_APNSConnection != NULL )
-	{
-		/*
-		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
-		{
-			DEBUG("APNS server connected\n");
-		}
-		else
-		{
-			DEBUG("APNS server not connected\n");
-		}
-		*/
-	}
-	else
-	{
-		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
-	}
-	
+
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
@@ -1651,6 +1622,35 @@ int SystemInitExternal( SystemBase *l )
 	
 	
 	// test websocket client connection
+	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	DEBUG("[SystembaseInitExternal]APNS init\n" );
+	
+	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
+	if( l->l_APNSConnection != NULL )
+	{
+		/*
+		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
+		{
+			DEBUG("APNS server connected\n");
+		}
+		else
+		{
+			DEBUG("APNS server not connected\n");
+		}
+		*/
+	}
+	else
+	{
+		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
+	}
 	
 	return 0;
 }

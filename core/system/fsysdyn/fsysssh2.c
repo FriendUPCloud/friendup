@@ -561,6 +561,8 @@ void *Mount( struct FHandler *s, struct TagItem *ti, User *usrs __attribute__((u
 		}
 		libssh2_session_set_timeout( sdat->session, 5000 );
 		
+		DEBUG("SSH2 timeout, sessptr %p socknr %d\n", sdat->session, sdat->sock );
+		
 		if( libssh2_session_handshake( sdat->session, sdat->sock ) < 0 ) 
 		{
 			DEBUG("Failure establishing SSH session\n");
