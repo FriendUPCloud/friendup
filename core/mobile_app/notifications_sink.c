@@ -453,9 +453,16 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 								if( strncmp( data + t[p].start, "notification_type", size) == 0) 
 								{
 									p++;
-									char *tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
-									notification_type = atoi( tmp );
-									FFree( tmp );
+									if( (t[p].end - t[p].start) >= 1 )
+									{
+										char *tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+										if( tmp != NULL )
+										{
+											DEBUG("TYPE: %s\n", tmp );
+											notification_type = atoi( tmp );
+											FFree( tmp );
+										}
+									}
 								}
 								else if( strncmp( data + t[p].start, "username", size) == 0) 
 								{
