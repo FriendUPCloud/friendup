@@ -143,7 +143,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	var lmode = this.listMode;
 
 	var buttons = [
-		{
+		/*{
 			element: 'button',
 			className: 'Home IconSmall fa-home',
 			content: i18n( 'i18n_dir_btn_root' ),
@@ -163,7 +163,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 				winobj.refresh();
 			}
-		},
+		},*/
 		// Go up a level
 		{
 			element: 'button',
