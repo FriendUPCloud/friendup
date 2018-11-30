@@ -218,7 +218,11 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		}
 		
 		sd->session = libssh2_session_init();
-		
+		if( sd->session == NULL )
+		{
+			FERROR("Cannot initalize session!\n");
+			return -3;
+		}
 		libssh2_session_set_timeout( sd->session, 5000 );
 		
 		if( libssh2_session_handshake( sd->session, sd->sock ) < 0 ) 
