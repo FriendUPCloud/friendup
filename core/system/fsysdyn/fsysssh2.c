@@ -201,6 +201,7 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 	sd->sock = socket( AF_INET, SOCK_STREAM, 0 );
 	if( sd->sock != 0 )
 	{
+		char *userauthlist = NULL;
 		// Set a timeout
 		struct timeval timeout;      
 		timeout.tv_sec = 4; // 4 secs!
@@ -252,8 +253,6 @@ static int ServerReconnect( SpecialData *sd, HandlerData *hd __attribute__((unus
 		}
 
 		DEBUG( "Now going into userauthlist.\n" );
-		
-		char *userauthlist = NULL;
 		
 		userauthlist = libssh2_userauth_list( sd->session, sd->sd_LoginUser, strlen(sd->sd_LoginUser) );
 		

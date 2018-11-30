@@ -304,8 +304,13 @@ int WebsocketClientConnect( WebsocketClient *cl )
 			cl->wc_WSI = lws_client_connect_via_info( &(cl->ws_Ccinfo) );
 			if( cl->wc_WSI != NULL )
 			{
+				size_t stacksize = 16777216; //16 * 1024 * 1024;
+				pthread_attr_t attr;
+				pthread_attr_init( &attr );
+				pthread_attr_setstacksize( &attr, stacksize );
+	
 				DEBUG("Client connection set\n");
-				cl->wc_Thread = ThreadNew( WebsocketClientLoop, cl, TRUE, NULL );
+				cl->wc_Thread = ThreadNew( WebsocketClientLoop, cl, TRUE, &attr );
 				
 				//WClientData *cd = (WClientData *)lws_get_protocol( cl->wc_WSI )->user;
 				//cd->wcd_WSClient = cl;
