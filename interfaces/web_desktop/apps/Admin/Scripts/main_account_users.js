@@ -136,7 +136,7 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					for( var a = 0; a < apps.length; a++ )
 					{
-						sw == 2 ? 1 : 2;
+						sw = sw == 2 ? 1 : 2;
 						apl += '<div class="HRow sw' + sw + '">';
 						for( var k = 0; k < keyz.length; k++ )
 						{
