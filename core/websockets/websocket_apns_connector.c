@@ -167,7 +167,7 @@ void WebsocketAPNSConnectorThread( FThread *data )
 				}
 			}
 		}
-		usleep( 2000 );
+		sleep( 1 );
 		if( delayTillNextAction > -2 )
 		{
 			delayTillNextAction--;
