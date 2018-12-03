@@ -35,9 +35,10 @@ Application.run = function( msg )
 		}
 		m.execute( 'getlocale', { type: 'DOSDrivers', locale: data.locale } );
 	} );
-	
-	
-	console.log( Application );
+
+	// Set app in single mode
+	this.setSingleInstance( true );	
+
 }
 Application.receiveMessage = function( msg )
 {
