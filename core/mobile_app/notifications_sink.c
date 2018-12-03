@@ -271,7 +271,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 			return ReplyError( wsi, 9 );
 		}
 
-		int status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
+		int status = MobileAppNotifyUser( username, channel_id, "app_name", title, message, (MobileNotificationTypeT)notification_type, NULL );
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
@@ -446,8 +446,9 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							char *channel_id = NULL;
 							char *title = NULL;
 							char *message = NULL;
+							char *application = NULL;
 							
-							for( p = 8 ; p < 21 ; p++ )
+							for( p = 8 ; p < 23 ; p++ )
 							{
 								int size = t[p].end - t[p].start;
 								if( strncmp( data + t[p].start, "notification_type", size) == 0) 
@@ -484,25 +485,28 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									p++;
 									message = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "application", size) == 0) 
+								{
+									p++;
+									application = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+								}
 							}
 							
 							if( notification_type >= 0 )
 							{
 								if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
-									DEBUG( "username: %s \n", username );
-									DEBUG( "channel_id: %d \n", channel_id );
-									DEBUG( "title: %s \n", title );
-									DEBUG( "message: %s \n", message );
+									DEBUG( "username: %s channel_id: %dtitle: %s message: %s\n", username, channel_id, title , message );
 									
 									if( username != NULL ) FFree( username );
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
+									if( application != NULL ) FFree( application );
 									return ReplyError( wsi, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								int status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
+								int status = MobileAppNotifyUser( username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, NULL );
 								/*
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 								if( en != NULL )
@@ -535,6 +539,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
 							if( message != NULL ) FFree( message );
+							if( application != NULL ) FFree( application );
 						}
 					}
 				}	// is authenticated

@@ -88,6 +88,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 		HashmapElement *title_element = GetHEReq(request, "title");
 		HashmapElement *session_element = GetHEReq(request, "sessionid");
 		HashmapElement *extra_element = GetHEReq(request, "extra");
+		HashmapElement *app_element = GetHEReq(request, "application");
 
 		DEBUG("Notify: message_element %p title_element %p session_element %p extra_element %p\n", message_element, title_element,  session_element, extra_element );
 		
@@ -99,6 +100,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				char *message = UrlDecodeToMem( message_element->data );
 				char *title = UrlDecodeToMem( title_element->data );
 				char *extra = UrlDecodeToMem( extra_element->data );
+				char *app = UrlDecodeToMem( app_element->data );
 				char *username = user->u_Name;
 
 				/* Small bug: JavaScript call
@@ -109,11 +111,12 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				 */
 				title[strlen(title)-1] = '\0';
 
-				int status = MobileAppNotifyUser( username, "lib"/*channel id*/, title, message, MN_force_all_devices, extra );
+				int status = MobileAppNotifyUser( username, "lib"/*channel id*/, app, title, message, MN_force_all_devices, extra );
 
-				FFree( message );
-				FFree( title );
-				FFree( extra );
+				if( message != NULL ) FFree( message );
+				if( title != NULL ) FFree( title );
+				if( extra != NULL ) FFree( extra );
+				if( app != NULL ) FFree( app );
 
 				HttpAddTextContent( response, "OK" );
 				INFO("sending OK");

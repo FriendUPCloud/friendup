@@ -83,10 +83,11 @@ typedef struct MobileAppNotif
  * @param channel_id this is used to replace previous notifications, if two notifications
  *                   with the same channel_id are sent, then the second one replaces the first
  * @param title title of the notification
+ * @param app application name
  * @param message message string to be displayed
  * @param notification_type option flag, see MobileNotificationTypeT
  * @param extra_string additional information for workspace
  *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
  * @return 0 when success, otherwise error number
  */
-int MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);
+int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);

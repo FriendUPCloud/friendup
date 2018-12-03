@@ -733,23 +733,25 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
  *
  * @param username pointer to string with user name
  * @param channel_id number of channel
+ * @param app application name
  * @param title title of message which will be send to user
  * @param message message which will be send to user
  * @param notification_type type of notification
  * @param extra_string additional string which will be send to user
  * @return true when message was send
  */
-int MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string )
+int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string )
 {
 	UserMobileAppConnectionsT *user_connections = HashmapGetData( _user_to_app_connections_map, username );
 	
 	char *escaped_channel_id = json_escape_string(channel_id);
 	char *escaped_title = json_escape_string(title);
 	char *escaped_message = json_escape_string(message);
+	char *escaped_app = json_escape_string(app);
 	char *escaped_extra_string = NULL;
 	MobileManager *mm = SLIB->sl_MobileManager;
 
-	unsigned int required_length = strlen( escaped_channel_id ) + strlen( escaped_message ) + strlen( escaped_message ) + LWS_PRE + 128/*some slack*/;
+	unsigned int required_length = strlen( escaped_channel_id ) + strlen( escaped_message ) + strlen( escaped_title ) + strlen( escaped_app ) + LWS_PRE + 256/*some slack*/;
 
 	if( extra_string )
 	{
@@ -762,14 +764,14 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 	if( extra_string )
 	{ //TK-1039
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_extra_string );
+			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_extra_string, escaped_app );
 
 		FFree( escaped_extra_string );
 	}
 	else
 	{
 		snprintf( json_message + LWS_PRE, sizeof(json_message)-LWS_PRE,
-			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\"}", escaped_channel_id, escaped_message, escaped_title );
+			"{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\"}", escaped_channel_id, escaped_message, escaped_title, escaped_app );
 	}
 
 	unsigned int json_message_length = strlen(json_message + LWS_PRE);
@@ -824,7 +826,7 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 			while( lma != NULL )
 			{
 				DEBUG("Send message to device %s\n", lma->uma_Platform );
-				int msgsize = snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", SLIB->l_AppleKeyAPI, escaped_message, lma->uma_AppToken );
+				int msgsize = snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\"}", SLIB->l_AppleKeyAPI, escaped_message, lma->uma_AppToken, escaped_app );
 			
 				WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, msgsize );
 
@@ -852,6 +854,7 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 	FFree( escaped_channel_id );
 	FFree( escaped_title );
 	FFree( escaped_message );
+	FFree( escaped_app );
 	
 	return 0;
 }
@@ -877,6 +880,7 @@ void MobileAppTestSignalHandler( int signum __attribute__((unused)))
 	sprintf( message, "Fancy message %d", counter );
 
 	int status = MobileAppNotifyUser( "fadmin",
+			"test_app",
 			"test_app",
 			title,
 			message,
