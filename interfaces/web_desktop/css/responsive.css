@@ -712,3 +712,59 @@ html #WorkspaceMenu .Menu:hover
 	font-weight: bold;
 }
 
+
+/* Responsive page layout */
+
+@media (max-width: 480px)
+{
+	.Responsive-Page
+	{
+		position: absolute;
+		top: 0;
+		left: 100%;
+		width: 100px;
+		height: 100%;
+		transition: left 0.25s;
+		z-index: 1;
+	}
+	.Responsive-Page-Active
+	{
+		position: fixed;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+		z-index: 1000;
+	}
+	.Responsive-Page.Responsive-Page-Backwards
+	{
+		left: -100%;
+		z-index: 999;
+	}
+	.Responsive-Page.Responsive-Subpage
+	{
+		top: 32px;
+	}
+	.Responsive-Container
+	{
+		position: absolute;
+		top: 0;
+		left: 0px;
+		width: 100%;
+		height: 100%;
+	}
+	.Responsive-Button-Back
+	{
+		position: fixed;
+		z-index: 1001;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 32px;
+		box-sizing: border-box;
+		padding: 5px 10px;
+		font-weight: bold;
+		transition: height 0.25s;
+		overflow: hidden;
+	}
+}
+
