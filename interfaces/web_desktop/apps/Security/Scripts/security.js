@@ -48,6 +48,10 @@ Application.run = function( msg, iface )
 		v.setContent( data );
 	}
 	f.load();	
+	
+	// Set app in single mode
+	this.setSingleInstance( true );
+		
 }
 
 Application.receiveMessage = function( msg )
