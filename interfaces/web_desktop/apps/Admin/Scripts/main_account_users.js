@@ -185,6 +185,10 @@ Sections.accounts_users = function( cmd, extra )
 				{
 					ge( 'UserDetails' ).innerHTML = data;
 					initStorageGraphs();
+					
+					// Responsive framework
+					Friend.responsive.pageActive = ge( 'UserDetails' );
+					Friend.responsive.reinit();
 				}
 				d.load();
 			}
@@ -433,6 +437,9 @@ Sections.accounts_users = function( cmd, extra )
 			}
 		}
 		o.appendChild( list );
+		
+		Friend.responsive.pageActive = ge( 'UserList' );
+		Friend.responsive.reinit();
 	}
 	m.execute( 'listusers' );
 };

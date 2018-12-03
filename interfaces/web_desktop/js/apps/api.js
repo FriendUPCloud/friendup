@@ -8288,3 +8288,157 @@ Friend.GUI.checkInputFocus = function()
 	} );
 }
 
+// Responsive layout
+
+Friend.responsive = {
+	pages: [],
+	history: [],
+	pagesById: {},
+	pageActive: null,
+	init()
+	{
+		if( !window.isMobile ) return;
+		var self = this;
+		var initial = null;
+		var d = document.getElementsByTagName( '*' );
+		for( var a = 0; a < d.length; a++ )
+		{
+			// Page!
+			if( d[a].classList && d[a].classList.contains( 'Responsive-Page' ) )
+			{
+				if( !Friend.responsive.pageActive )
+				{
+					Friend.responsive.pageActive = d[a];
+				}
+				Friend.responsive.pages.push( d[a] );
+				if( !d[a].id )
+				{
+					var id = 'Responsive-Page-';
+					var idnum = 1;
+					while( ge( id + idnum ) )
+					{
+						idnum++;
+					}
+					d[a].id = id + idnum;
+				}
+				if( d[a].classList.contains( 'Responsive-Page-Initial' ) )
+				{
+					initial = d[a];
+				}
+				else
+				{
+					d[ a ].classList.add( 'Responsive-Subpage' );
+				}
+				Friend.responsive.pages.push( d[a] );
+				Friend.responsive.pagesById[ d[a].id ] = d[a];
+			}
+		}
+		// Set the initial active page
+		if( initial && !self.pageActive )
+			self.setPage( initial );
+		// We need an active page
+		else if( !self.pageActive )
+		{
+			self.setPage( self.pages[ 0 ] );
+		}
+		else
+		{
+			self.setPage( self.pageActive );
+		}
+		return true;
+	},
+	// Reinitialize
+	reinit()
+	{
+		if( !window.isMobile ) return;
+		var self = this;
+		return self.init();
+	},
+	previousPage()
+	{
+		if( !window.isMobile ) return;
+		var self = this;
+		var out = [];
+		for( var a = 0; a < self.history.length - 1; a++ )
+		{
+			out.push( self.history[ a ] );
+		}
+		self.history = out;
+		if( out.length )
+		{
+			var pa = self.history[ self.history.length - 1 ];
+			self.setPage( pa );
+			pa.classList.add( 'Responsive-Page-Backwards' );
+			setTimeout( function()
+			{
+				pa.classList.remove( 'Responsive-Page-Backwards' );
+			}, 250 );
+			self.reinit();
+		}
+	},
+	// Set active page by dom element or id
+	setPage( element )
+	{
+		if( !window.isMobile ) return;
+		var self = this;
+		
+		// We really do need an element to do anything
+		if( !element )
+		{
+			return;
+		}
+		
+		if( typeof( element ) == 'string' )
+		{
+			element = ge( element );
+			if( !element ) return;
+		}
+		
+		for( var a = 0; a < self.pages.length; a++ )
+		{
+			if( self.pages[ a ].backButton )
+			{
+				var b = self.pages[ a ].backButton;
+				if( b.parentNode )
+				{
+					( function( ele ){
+						setTimeout( function()
+						{
+							ele.parentNode.removeChild( ele );
+						}, 250 );
+						ele.style.height = '0px';
+					} )( b );
+				}
+				self.pages[ a ].backButton = null;
+			}
+			if( self.pages[ a ] != element )
+			{
+				self.pages[ a ].classList.remove( 'Responsive-Page-Active' );
+			}
+			self.pages[ a ].classList.add( 'BackgroundDefault' );
+		}
+		self.pageActive = element;
+		element.classList.add( 'Responsive-Page-Active' );
+		
+		// Set history!
+		if( self.history[ self.history.length - 1 ] != element )
+		{
+			self.history.push( element );
+		}
+		// If we can go back, give button
+		if( self.history.length > 1 )
+		{
+			var backButton = document.createElement( 'div' );
+			backButton.className = 'Responsive-Button-Back MousePointer BorderBottom BackgroundHeavier';
+			backButton.innerHTML = 'Back';
+			document.body.appendChild( backButton );
+			element.backButton = backButton;
+			backButton.onclick = function()
+			{
+				self.previousPage();
+			}
+		}
+	}
+};
+
+

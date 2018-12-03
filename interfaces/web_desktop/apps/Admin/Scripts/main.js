@@ -20,6 +20,9 @@ function initGui()
 		// And then start!
 		refreshSidebar();
 		refreshStatistics();
+		
+		// Init responsive layout
+		Friend.responsive.init();
 	} );
 }
 
@@ -152,6 +155,10 @@ function setGUISection( module, section )
 	{
 		ge( 'GuiContent' ).innerHTML = data;
 		Sections[ sectPart ]();
+		
+		// Reinitialize!
+		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+		Friend.responsive.reinit();
 	}
 	f.load();
 }
