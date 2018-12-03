@@ -35,6 +35,17 @@ tb_find                             : Finn/Erstatt
 i18n_help                           : Hjelp
 i18n_documentation                  : Dokumentasjon
 
+#context menus
+
+i18n_file_menu                      : Filmeny
+i18n_open_directory                 : Åpne mappe
+i18n_close_directory                : Lukk mappe
+i18n_open_file                      : Åpne fil
+i18n_create_folder                  : Ny mappe
+i18n_create_file                    : Ny tom fil
+i18n_open_volume                    : Åpne disk
+i18n_close_volume                   : Lukk disk
+
 #project menu
 i18n_project                        : Prosjekt
 i18n_project_new                    : Nytt prosjekt

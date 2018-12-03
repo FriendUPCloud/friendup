@@ -784,7 +784,7 @@ Workspace = {
 					var js = JSON.parse( d );
 					if( parseInt( d.code ) == 3 || parseInt( d.code ) == 11 )
 					{
-						Workspace.flushSession() = null;
+						Workspace.flushSession();
 					}
 				}
 				catch( n )
