@@ -712,7 +712,6 @@ html #WorkspaceMenu .Menu:hover
 	font-weight: bold;
 }
 
-
 /* Responsive page layout */
 
 @media (max-width: 480px)
@@ -721,7 +720,7 @@ html #WorkspaceMenu .Menu:hover
 	{
 		position: absolute;
 		top: 0;
-		left: 100%;
+		left: 0;
 		width: 100px;
 		height: 100%;
 		transition: left 0.25s;
@@ -738,6 +737,11 @@ html #WorkspaceMenu .Menu:hover
 	.Responsive-Page.Responsive-Page-Backwards
 	{
 		left: -100%;
+		z-index: 999;
+	}
+	.Responsive-Page.Responsive-Page-Forward
+	{
+		left: 100%;
 		z-index: 999;
 	}
 	.Responsive-Page.Responsive-Subpage

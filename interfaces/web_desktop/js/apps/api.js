@@ -8368,6 +8368,7 @@ Friend.responsive = {
 		{
 			var pa = self.history[ self.history.length - 1 ];
 			self.setPage( pa );
+			pa.classList.remove( 'Responsive-Page-Forward' );
 			pa.classList.add( 'Responsive-Page-Backwards' );
 			setTimeout( function()
 			{
@@ -8393,6 +8394,8 @@ Friend.responsive = {
 			element = ge( element );
 			if( !element ) return;
 		}
+		
+		element.classList.add( 'Responsive-Page-Forward' );
 		
 		for( var a = 0; a < self.pages.length; a++ )
 		{
