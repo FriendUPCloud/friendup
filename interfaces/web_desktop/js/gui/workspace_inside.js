@@ -4584,7 +4584,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		var v = new View( {
 			title: i18n( 'i18n_sharing_options' ),
 			width: 640,
-			height: 480
+			height: 380
 		} );
 		var uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
 		var f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
@@ -4598,54 +4598,109 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			
 			var elements = {};
 			
-			var el = ge( 'element_' + uniqueId ).getElementsByTagName( 'input' );
+			var ele = ge( 'element_' + uniqueId );
+			var el = ele.getElementsByTagName( 'input' );
 			for( var a = 0; a < el.length; a++ )
 			{
 				if( !el[ a ].getAttribute( 'name' ) ) continue;
 				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
 			}
-			el.queue = [];
-			el.sharing_with.onkeydown = function( e )
+			elements.sharing_with.onkeydown = function( e )
 			{
+				var self = this;
+				var w = e.which ? e.which : e.keyCode;
+				if( w == 38 || w == 40 || w == 13 )
+				{
+					return;
+				}
+				
 				var m = new Module( 'system' );
 				m.onExecuted = function( e, d )
 				{
 					if( e != 'ok' )
 					{
-						el.showDropdown( i18n( 'i18n_no_users_found' ) );
+						ele.showDropdown( self, i18n( 'i18n_no_users_found' ) );
 						return;
 					}
-					var userList = null;
+					var wList = null;
 					try
 					{
-						userList = JSON.parse( d );
+						wList = JSON.parse( d );
 					}
 					catch( e )
 					{
-						el.showDropdown( i18n( 'i18n_error_in_userlist' ) );
+						ele.showDropdown( self, i18n( 'i18n_error_in_userlist' ) );
 						return;
 					}
 					var str = '';
-					for( var a = 0; a < userList.length; a++ )
+					for( var a = 0; a < wList.length; a++ )
 					{
-						str += '<p class="MarginTop">' + userList[a].Fullname + '</p>';
+						if( wList[ a ].Name.indexOf( self.value ) >= 0 )
+						{
+							var wname = wList[ a ].Name.split( self.value ).join( '<em>' + self.value + '</em>' );
+							str += '<p class="MarginTop">' + wname + '</p>';
+						}
 					}
-					el.showDropdown( str, 'p' );
+					if( !str )
+					{
+						str = i18n( 'i18n_no_users_found' );
+					}
+					ele.showDropdown( self, str, 'p' );
 				}
-				m.execute( 'listusers', { query: el.value } );
+				m.execute( 'workgroups' );
 			}
-			el.showDropdown = function( content, tagSelector )
+			ele.showDropdown = function( trigger, content, tagSelector )
 			{
-				if( !el.dropdown )
+				if( !ele.dropdown )
 				{
 					var d = document.createElement( 'div' );
-					el.dropdown = d;
-					el.parentNode.appendChild( d );
+					ele.dropdown = d;
+					d.className = 'Padding Borders BackgroundHeavier Rounded';
+					ele.appendChild( d );
+					d.style.position = 'absolute';
+					d.style.top = trigger.offsetTop + trigger.offsetHeight + 'px';
+					d.style.left = trigger.offsetLeft + 'px';
+					d.style.width = trigger.offsetWidth + 'px';
+					d.style.maxHeight = '200px';
+					d.style.overflow = 'auto';
+					d.style.transition = 'opacity 0.25s';
+					d.style.opacity = 0;
+					setTimeout( function(){ d.style.opacity = 1; }, 50 );
+					d.onmouseout = function()
+					{
+						if( this.tm ) return;
+						d.style.opacity = 0;
+						this.tm = setTimeout( function()
+						{
+							ele.removeChild( d );
+							ele.dropdown = null;
+						}, 500 );
+					}
+					d.onmouseover = function()
+					{
+						d.style.opacity = 1;
+						clearTimeout( this.tm );
+						this.tm = null;
+					}
+					trigger.onblur = function()
+					{
+						d.onmouseout();
+					}
 				}
-				el.dropdown.innerHTML = content;
+				ele.dropdown.innerHTML = content;
 				if( tagSelector )
 				{
-					
+					var eles = ele.dropdown.getElementsByTagName( tagSelector );
+					for( var a = 0; a < eles.length; a++ )
+					{
+						eles[ a ].onclick = function()
+						{
+							trigger.value = this.innerText;
+							ele.dropdown.onmouseout();
+							trigger.focus();
+							trigger.select();
+						}
+					}
 				}
 			}
 		}
