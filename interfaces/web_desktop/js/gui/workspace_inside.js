@@ -4617,19 +4617,44 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var l = new Library( 'system.library' );
 				l.onExecuted = function( e, d )
 				{
+					try
+					{
+						d = JSON.parse( d );
+					}
+					catch( e ){};
 					if( e == 'ok' )
 					{
 						l = new Library( 'system.library' );
 						l.onExecuted = function( e, d )
 						{
-							v.close();
-							Workspace.refreshDesktop( false, true );
+							if( e == 'ok' )
+							{
+								v.close();
+								Workspace.refreshDesktop( false, true );
+							}
+							else
+							{
+								try
+								{
+									d = JSON.parse( d );
+								}
+								catch( e ){};
+								Notify( { title: 'Error mounting', text: d.response } );
+								Workspace.refreshDesktop( false, true );
+								// Just remount normally
+								l = new Library( 'system.library' );
+								l.onExecuted = function()
+								{
+									Workspace.refreshDesktop( false, true );
+								}
+								l.execute( 'device/mount', { devname: devName } );
+							}
 						}
-						l.execute( 'device/mount', { devname: devName, usergroupid: elements.sharing_with.value } );
+						l.execute( 'device/mount', { devname: devName, usergroupid: elements.sharing_with.getAttribute( 'wid' ) } );
 					}
 					else
 					{
-						Notify( { title: i18n( 'Error unmounting' ), text: d.message } );
+						Notify( { title: i18n( 'Error unmounting' ), text: d.response } );
 					}
 				}
 				l.execute( 'device/unmount', { devname: devName } );
