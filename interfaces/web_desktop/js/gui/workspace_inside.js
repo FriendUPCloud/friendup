@@ -4547,6 +4547,26 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 						// Initialize tab system
 						InitTabs( ge( 'IconInfo_' + Workspace.seed ) );
+						
+						// Check buttons
+						var btn = ge( 'IconInfo_' + Workspace.seed ).getElementsByTagName( 'button' );
+						var sharingOptions = null;
+						for( var aa = 0; aa < btn.length; aa++ )
+						{
+							if( aa[a].getAttribute( 'name' ) == 'sharingOptions' )
+							{
+								sharingOptions[ a ];
+							}
+						}
+						
+						// Check sharing options
+						if( sharingOptions )
+						{
+							sharingOptions.onclick = function( e )
+							{
+								Workspace.viewSharingOptions( icon.Path );
+							}
+						}
 					}
 
 				}
@@ -4557,6 +4577,21 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 		{
 			console.log( i18n( 'please_choose_an_icon' ) );
 		}
+	},
+	viewSharingOptions: function( path )
+	{
+		var v = new View( {
+			title: i18n( 'i18n_sharing_options' ),
+			width: 640,
+			height: 480
+		} );
+		var f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		f.load();
 	},
 	// Set data field on icon info select element
 	iconInfoDataField: function( selement, find )
