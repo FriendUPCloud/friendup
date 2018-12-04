@@ -23,6 +23,7 @@
 #include <db/sqllib.h>
 #include <stddef.h>
 #include <system/user/user_session.h>
+#include "notification_sent.h"
 
 /*
 
@@ -54,6 +55,7 @@ typedef struct Notification
 	time_t					n_Created;			// date created
 	int						n_Status;			// status of notification
 	int						n_NotificationType;	// type of notification
+	NotificationSent		*n_NotificationsSent;	// pointer to list of notificationssent structures 
 }Notification;
 
 

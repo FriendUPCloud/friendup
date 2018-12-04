@@ -3,6 +3,7 @@
 	   `NotificationID` bigint(20) NOT NULL,
 	   `RequestID` bigint(20) NOT NULL,
 	   `UserMobileAppID` bigint(20) NOT NULL,
+       `Target` bigint(6) NOT NULL,
 	   PRIMARY KEY (`ID`)
 	 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -18,3 +19,4 @@
 	   `Type` bigint(6) NOT NULL,
 	   PRIMARY KEY (`ID`)
 	 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
