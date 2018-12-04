@@ -56,6 +56,8 @@ i18n_your_devices                    : Dine enheter
 
 i18n_full                            : full.
 i18n_disk_icon                       : Diskikon
+i18n_disk_sharing                    : Deling
+i18n_open_sharing_options            : Åpne delingsalternativer
 i18n_choose_disk                     : Velg disk
 i18n_run_application                 : Start app
 

@@ -4045,6 +4045,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			{
 				ca();
 			}
+			
+			// Activate form functionality on icon information
 			function ca( datajson )
 			{
 				var fdt = {};

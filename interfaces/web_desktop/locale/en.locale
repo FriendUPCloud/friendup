@@ -55,6 +55,8 @@ i18n_no_other_sessions_available     : No other devices connected
 
 i18n_full                            : full.
 i18n_disk_icon                       : Disk icon
+i18n_disk_sharing                    : Sharing
+i18n_open_sharing_options            : Open sharing options
 i18n_choose_disk                     : Choose disk
 i18n_run_application                 : Run application
 
