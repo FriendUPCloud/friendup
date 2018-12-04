@@ -825,12 +825,15 @@ int MobileAppNotifyUser( const char *username, const char *channel_id, const cha
 			UserMobileApp *lma = mm->mm_UMApps;
 			while( lma != NULL )
 			{
-				DEBUG("Send message to device %s\n", lma->uma_Platform );
-				int msgsize = snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\"}", SLIB->l_AppleKeyAPI, escaped_message, lma->uma_AppToken, escaped_app );
+				if( strcmp( lma->uma_Platform, MobileAppType[ MOBILE_APP_TYPE_IOS ] ) == 0 )	// APNS connection handle only IOS 
+				{
+					DEBUG("Send message to device %s\n", lma->uma_Platform );
+					int msgsize = snprintf( json_message_ios, json_message_ios_size, "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"%s\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\",\"application\":\"%s\"}", SLIB->l_AppleKeyAPI, escaped_message, lma->uma_AppToken, escaped_app );
 			
-				WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, msgsize );
+					WebsocketClientSendMessage( SLIB->l_APNSConnection->wapns_Connection, json_message_ios, msgsize );
 
-				lma = (UserMobileApp *)lma->node.mln_Succ;
+					lma = (UserMobileApp *)lma->node.mln_Succ;
+				}
 			}
 		/*
 		MobileListEntry *mle = MobleManagerGetByUserNameDBPlatform( mm, user_connections->userID, (char *)username, MOBILE_APP_TYPE_IOS );
