@@ -1,3 +1,27 @@
-<div class="ContentFull">
-	:-D
+<div class="ContentFull" id="element_{uniqueId}">
+	<div class="VContentTop ScrollArea">
+		<div class="HRow">
+			<div class="Responsive-Page-Initial Responsive-Page HContent30 FloatLeft">
+				<!--<p class="InputHeight">
+					<strong>{i18n_sharing_name}:</strong>
+				</p>-->
+				<p class="InputHeight">
+					<strong>{i18n_shared_with}:</strong>
+				</p>
+			</div>
+			<div class="Responsive-Page HContent70 FloatLeft">
+				<!--<p>
+					<input type="text" name="sharing_name" value="{sharing_name}" placeholder="MyHomeDisk" class="InputHeight FullWidth"/>
+				</p>-->
+				<p class="InputHeight">
+					<input type="text" name="sharing_with" value="" placeholder="{i18n_find_workgroup_user}" class="InputHeight FullWidth"/>
+				</p>
+			</div>
+		</div>
+	</div>
+	<div class="VContentBottom BorderTop Padding BackgroundDefault">
+		<button type="button">
+			{i18n_apply_sharing_settings}
+		</button>
+	</div>
 </div>

@@ -4553,9 +4553,9 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						var sharingOptions = null;
 						for( var aa = 0; aa < btn.length; aa++ )
 						{
-							if( aa[a].getAttribute( 'name' ) == 'sharingOptions' )
+							if( btn[aa].getAttribute( 'name' ) == 'sharingOptions' )
 							{
-								sharingOptions[ a ];
+								sharingOptions = btn[ aa ];
 							}
 						}
 						
@@ -4578,6 +4578,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			console.log( i18n( 'please_choose_an_icon' ) );
 		}
 	},
+	// Set up sharing on a disk
 	viewSharingOptions: function( path )
 	{
 		var v = new View( {
@@ -4585,11 +4586,68 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			width: 640,
 			height: 480
 		} );
+		var uniqueId = Math.round( Math.random() * 9999 ) + ( new Date() ).getTime();
 		var f = new File( '/webclient/templates/iconinfo_sharing_options.html' );
+		f.replacements = {
+			uniqueId: uniqueId
+		};
 		f.i18n();
 		f.onLoad = function( data )
 		{
 			v.setContent( data );
+			
+			var elements = {};
+			
+			var el = ge( 'element_' + uniqueId ).getElementsByTagName( 'input' );
+			for( var a = 0; a < el.length; a++ )
+			{
+				if( !el[ a ].getAttribute( 'name' ) ) continue;
+				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
+			}
+			el.queue = [];
+			el.sharing_with.onkeydown = function( e )
+			{
+				var m = new Module( 'system' );
+				m.onExecuted = function( e, d )
+				{
+					if( e != 'ok' )
+					{
+						el.showDropdown( i18n( 'i18n_no_users_found' ) );
+						return;
+					}
+					var userList = null;
+					try
+					{
+						userList = JSON.parse( d );
+					}
+					catch( e )
+					{
+						el.showDropdown( i18n( 'i18n_error_in_userlist' ) );
+						return;
+					}
+					var str = '';
+					for( var a = 0; a < userList.length; a++ )
+					{
+						str += '<p class="MarginTop">' + userList[a].Fullname + '</p>';
+					}
+					el.showDropdown( str, 'p' );
+				}
+				m.execute( 'listusers', { query: el.value } );
+			}
+			el.showDropdown = function( content, tagSelector )
+			{
+				if( !el.dropdown )
+				{
+					var d = document.createElement( 'div' );
+					el.dropdown = d;
+					el.parentNode.appendChild( d );
+				}
+				el.dropdown.innerHTML = content;
+				if( tagSelector )
+				{
+					
+				}
+			}
 		}
 		f.load();
 	},
