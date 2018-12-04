@@ -4582,7 +4582,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	viewSharingOptions: function( path )
 	{
 		var v = new View( {
-			title: i18n( 'i18n_sharing_options' ),
+			title: i18n( 'i18n_sharing_options' ) + ' ' + path,
 			width: 640,
 			height: 380
 		} );
@@ -4605,6 +4605,35 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( !el[ a ].getAttribute( 'name' ) ) continue;
 				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
 			}
+			el = ele.getElementsByTagName( 'button' );
+			for( var a = 0; a < el.length; a++ )
+			{
+				if( !el[ a ].getAttribute( 'name' ) ) continue;
+				elements[ el[ a ].getAttribute( 'name' ) ] = el[ a ];
+			}
+			elements.apply_sharing.onclick = function( e )
+			{
+				var devName = path.split( ':' )[0];
+				var l = new Library( 'system.library' );
+				l.onExecuted = function( e, d )
+				{
+					if( e == 'ok' )
+					{
+						l = new Library( 'system.library' );
+						l.onExecuted = function( e, d )
+						{
+							v.close();
+							Workspace.refreshDesktop( false, true );
+						}
+						l.execute( 'device/mount', { devname: devName, usergroupid: elements.sharing_with.value } );
+					}
+					else
+					{
+						Notify( { title: i18n( 'Error unmounting' ), text: d.message } );
+					}
+				}
+				l.execute( 'device/unmount', { devname: devName } );
+			}
 			elements.sharing_with.onkeydown = function( e )
 			{
 				var self = this;
@@ -4612,6 +4641,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				if( w == 38 || w == 40 || w == 13 )
 				{
 					return;
+				}
+				// Typing something else? Break bond with wid
+				if( this.value != this.getAttribute( 'punch' ) )
+				{
+					this.setAttribute( 'wid', '' );
+					this.setAttribute( 'punch', '' );
 				}
 				
 				var m = new Module( 'system' );
@@ -4638,7 +4673,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( wList[ a ].Name.indexOf( self.value ) >= 0 )
 						{
 							var wname = wList[ a ].Name.split( self.value ).join( '<em>' + self.value + '</em>' );
-							str += '<p class="MarginTop">' + wname + '</p>';
+							str += '<p class="MarginTop" wid="' + wList[ a ].ID + '">' + wname + '</p>';
 						}
 					}
 					if( !str )
@@ -4696,6 +4731,8 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						eles[ a ].onclick = function()
 						{
 							trigger.value = this.innerText;
+							trigger.setAttribute( 'wid', this.getAttribute( 'wid' ) );
+							trigger.setAttribute( 'punch', this.innerText );
 							ele.dropdown.onmouseout();
 							trigger.focus();
 							trigger.select();
