@@ -447,8 +447,9 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							char *title = NULL;
 							char *message = NULL;
 							char *application = NULL;
+							char *extra = NULL;
 							
-							for( p = 8 ; p < 23 ; p++ )
+							for( p = 8 ; p < 25 ; p++ )
 							{
 								int size = t[p].end - t[p].start;
 								if( strncmp( data + t[p].start, "notification_type", size) == 0) 
@@ -490,6 +491,11 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									p++;
 									application = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "extra", size) == 0) 
+								{
+									p++;
+									extra = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+								}
 							}
 							
 							if( notification_type >= 0 )
@@ -503,10 +509,11 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
 									if( application != NULL ) FFree( application );
+									if( extra != NULL ) FFree( extra );
 									return ReplyError( wsi, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								int status = MobileAppNotifyUser( username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, NULL );
+								int status = MobileAppNotifyUser( username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
 								/*
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 								if( en != NULL )
@@ -540,6 +547,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							if( title != NULL ) FFree( title );
 							if( message != NULL ) FFree( message );
 							if( application != NULL ) FFree( application );
+							if( extra != NULL ) FFree( extra );
 						}
 					}
 				}	// is authenticated
