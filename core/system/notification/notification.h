@@ -25,6 +25,20 @@
 #include <system/user/user_session.h>
 #include "notification_sent.h"
 
+enum {
+	NOTIFY_ACTION_REGISTER = 0,
+	NOTIFY_ACTION_READED,
+	NOTIFY_ACTION_TIMEOUT,
+	NOTIFY_MAX
+};
+
+static char *NotifyActionType[] =
+{
+	"register",
+	"readed",
+	"timeout"
+};
+
 /*
 
  CREATE TABLE IF NOT EXISTS `FNotification` ( 

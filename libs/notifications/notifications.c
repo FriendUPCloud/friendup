@@ -111,7 +111,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				 */
 				title[strlen(title)-1] = '\0';
 
-				int status = MobileAppNotifyUser( username, "lib", app, title, message, MN_force_all_devices, extra );
+				int status = MobileAppNotifyUser( username, "lib", app, title, message, MN_force_all_devices, extra, 0 );
 
 				if( message != NULL ) FFree( message );
 				if( title != NULL ) FFree( title );

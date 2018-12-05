@@ -133,7 +133,13 @@ FBOOL UMUserExistByNameDB( UserManager *smgr, const char *name );
 //
 //
 
-User *UMGetUserByName( UserManager *um, char *name );
+User *UMGetUserByName( UserManager *um, const char *name );
+
+//
+//
+//
+
+FULONG UMGetUserIDByName( UserManager *um, const char *name );
 
 //
 //
