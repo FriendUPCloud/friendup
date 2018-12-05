@@ -63,6 +63,9 @@ Application.run = function( msg, iface )
 	
 	v.onClose = function(){ Application.quit(); }
 	
+	// Set app in single mode
+	this.setSingleInstance( true );	
+	
 	var f = new File( 'Progdir:Templates/main.html' );
 	f.replacements = { viewId: v.getViewId() };
 	f.i18n();

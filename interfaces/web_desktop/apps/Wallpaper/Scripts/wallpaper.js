@@ -70,6 +70,11 @@ Application.run = function( msg )
 		f.load ();
 	}
 	m.execute( 'getsetting', { settings: [ 'imagesdoors', 'imageswindows' ] } );
+
+
+	// Set app in single mode
+	this.setSingleInstance( true );
+
 }
 
 // Handle messages

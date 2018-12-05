@@ -9,11 +9,27 @@
 *                                                                              *
 *****************************************************************************©*/
 
+$userid = $level == 'Admin' && isset( $args->args->userid ) ? 
+	$args->args->userid : $User->ID;
+
 if( $rows = $SqlDatabase->FetchObjects( '
-	SELECT ua.ID, ua.ApplicationID, n.Name, ua.Permissions, ua.Data FROM FUserApplication ua, FApplication n
+	SELECT
+		ua.ID,
+		ua.ApplicationID,
+		n.Name,
+		n.Config,
+		ua.Permissions,
+		ua.Data,
+		f.ID AS "DockStatus"
+	FROM 
+		FUserApplication ua,
+		FApplication n
+		LEFT JOIN DockItem f ON ( f.Application = n.Name AND f.UserID = \'' . $userid . '\' )
 	WHERE
-		n.ID = ua.ApplicationID AND ua.UserID=\'' . $User->ID . '\'
-	ORDER BY n.Name ASC
+		n.ID = ua.ApplicationID AND
+		ua.UserID=\'' . $userid . '\'
+	ORDER BY
+		n.Name ASC
 ' ) )
 {
 	$basepaths = array(
@@ -49,6 +65,7 @@ if( $rows = $SqlDatabase->FetchObjects( '
 		{
 			$rows[ $k ]->Preview = true;
 		}
+		$rows[ $k ]->Config = json_decode( $rows[ $k ]->Config );
 	}
 	die( 'ok<!--separate-->' . json_encode( $rows ) );
 }

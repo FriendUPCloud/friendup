@@ -47,6 +47,9 @@ Application.run = function( msg, iface )
 	{
 		Application.quit();
 	}
+
+	// Set app in single mode
+	this.setSingleInstance( true );
 	
 	if( !viewFlags.frameworks )
 	{
