@@ -143,6 +143,10 @@ Application.run = function( msg, iface )
 		}
 	};
 	m.execute( 'userinfoget', { id: msg.userId } );	
+	
+	// Set app in single mode
+	this.setSingleInstance( true );
+		
 }
 
 function displayPublicKey( data )
