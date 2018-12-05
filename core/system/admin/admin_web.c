@@ -37,6 +37,7 @@
 #include <network/mime.h>
 #include <hardware/usb/usb_device_web.h>
 #include <system/fsys/door_notification.h>
+#include <mobile_app/mobile_app.h>
 
 /**
  * Network handler
@@ -619,7 +620,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						UserSession *ls = (UserSession *)usle->us;
 						if( ls != NULL )
 						{
-							DEBUG("Going through all usersessions: %lu, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
+							DEBUG("Going through all usersessions: %p, compare %s vs %s\n", ls->us_SessionID, usersession, ls->us_SessionID );
 							if( strcmp( usersession, ls->us_SessionID ) == 0 )
 							{
 								DEBUG("Found same session, sending msg\n");
@@ -636,6 +637,8 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						}
 						usle = (UserSessListEntry *)usle->node.mln_Succ;
 					}
+					
+					//int status = MobileAppNotifyUser( usr->u_Name, "test_app", "title", "test message", MN_all_devices, NULL/*no extras*/);
 				
 					if( msgsndsize > 0 )
 					{

@@ -459,10 +459,6 @@ LWS_VISIBLE int lws_hdr_total_length(struct lws *wsi, enum lws_token_indexes h)
 	do {
 		len += wsi->http.ah->frags[n].len;
 		n = wsi->http.ah->frags[n].nfrag;
-
-		if (n && h != WSI_TOKEN_HTTP_COOKIE)
-			++len;
-
 	} while (n);
 
 	return len;
@@ -504,7 +500,6 @@ LWS_VISIBLE int lws_hdr_copy(struct lws *wsi, char *dst, int len,
 {
 	int toklen = lws_hdr_total_length(wsi, h);
 	int n;
-	int comma;
 
 	*dst = '\0';
 	if (!toklen)
@@ -521,19 +516,13 @@ LWS_VISIBLE int lws_hdr_copy(struct lws *wsi, char *dst, int len,
 		return 0;
 
 	do {
-		comma = (wsi->http.ah->frags[n].nfrag && h != WSI_TOKEN_HTTP_COOKIE) ? 1 : 0;
-
-		if (wsi->http.ah->frags[n].len + comma >= len)
+		if (wsi->http.ah->frags[n].len >= len)
 			return -1;
 		strncpy(dst, &wsi->http.ah->data[wsi->http.ah->frags[n].offset],
 		        wsi->http.ah->frags[n].len);
 		dst += wsi->http.ah->frags[n].len;
 		len -= wsi->http.ah->frags[n].len;
 		n = wsi->http.ah->frags[n].nfrag;
-
-		if (comma)
-			*dst++ = ',';
-				
 	} while (n);
 	*dst = '\0';
 

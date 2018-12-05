@@ -363,6 +363,7 @@ typedef struct SystemBase
 	char							*l_AppleServerHost;
 	int								l_AppleServerPort;
 	char							*l_AppleKeyAPI;
+	char							*l_PresenceKey;
 	
 	WebsocketClient					*l_APNSConnection;
 } SystemBase;

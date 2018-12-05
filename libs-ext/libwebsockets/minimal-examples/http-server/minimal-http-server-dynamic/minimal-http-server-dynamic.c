@@ -127,13 +127,10 @@ callback_dynamic_http(struct lws *wsi, enum lws_callback_reasons reason,
 			 * valid behind the buffer we will send.
 			 */
 			p += lws_snprintf((char *)p, end - p, "<html>"
-				"<head><meta charset=utf-8 "
-				"http-equiv=\"Content-Language\" "
-				"content=\"en\"/></head><body>"
-				"<img src=\"/libwebsockets.org-logo.svg\">"
+				"<img src=\"/libwebsockets.org-logo.png\">"
 				"<br>Dynamic content for '%s' from mountpoint."
 				"<br>Time: %s<br><br>"
-				"</body></html>", pss->path, ctime(&t));
+				"</html>", pss->path, ctime(&t));
 		} else {
 			/*
 			 * after the first time, we create bulk content.
@@ -252,8 +249,7 @@ int main(int argc, const char **argv)
 
 	memset(&info, 0, sizeof info); /* otherwise uninitialized garbage */
 	info.options = LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT |
-		       LWS_SERVER_OPTION_EXPLICIT_VHOSTS |
-		LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
+		       LWS_SERVER_OPTION_EXPLICIT_VHOSTS;
 
 	/* for testing ah queue, not useful in real world */
 	if (lws_cmdline_option(argc, argv, "--ah1"))

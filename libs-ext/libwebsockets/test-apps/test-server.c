@@ -106,13 +106,10 @@ lws_callback_http(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 				continue;
 			}
 
-			if (lws_hdr_copy(wsi, buf, sizeof buf, n) < 0)
-				fprintf(stderr, "    %s (too big)\n", (char *)c);
-			else {
-				buf[sizeof(buf) - 1] = '\0';
+			lws_hdr_copy(wsi, buf, sizeof buf, n);
+			buf[sizeof(buf) - 1] = '\0';
 
-				fprintf(stderr, "    %s = %s\n", (char *)c, buf);
-			}
+			fprintf(stderr, "    %s = %s\n", (char *)c, buf);
 			n++;
 		} while (c);
 
@@ -529,7 +526,7 @@ int main(int argc, char **argv)
 			       "!AES256-SHA256";
 	info.mounts = &mount;
 	info.ip_limit_ah = 24; /* for testing */
-	info.ip_limit_wsi = 400; /* for testing */
+	info.ip_limit_wsi = 105; /* for testing */
 
 	if (use_ssl)
 		/* redirect guys coming on http */
