@@ -638,7 +638,7 @@ Http *AdminWebRequest( void *m, char **urlpath, Http **request, UserSession *log
 						usle = (UserSessListEntry *)usle->node.mln_Succ;
 					}
 					
-					//int status = MobileAppNotifyUser( usr->u_Name, "test_app", "app_name", "title", "test message", MN_all_devices, NULL/*no extras*/);
+					//int status = MobileAppNotifyUser( usr->u_Name, "test_app", "app_name", "title", "test message", MN_all_devices, NULL/*no extras*/, 0 );
 				
 					if( msgsndsize > 0 )
 					{

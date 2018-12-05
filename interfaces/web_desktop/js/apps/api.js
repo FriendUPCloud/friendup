@@ -8368,11 +8368,6 @@ Friend.responsive = {
 		{
 			var pa = self.history[ self.history.length - 1 ];
 			self.setPage( pa );
-			pa.classList.add( 'Responsive-Page-Backwards' );
-			setTimeout( function()
-			{
-				pa.classList.remove( 'Responsive-Page-Backwards' );
-			}, 250 );
 			self.reinit();
 		}
 	},
@@ -8394,8 +8389,14 @@ Friend.responsive = {
 			if( !element ) return;
 		}
 		
+		var before = true;
+		
 		for( var a = 0; a < self.pages.length; a++ )
 		{
+			if( self.pages[ a ] == self.pageActive )
+			{
+				before = false;
+			}
 			if( self.pages[ a ].backButton )
 			{
 				var b = self.pages[ a ].backButton;
@@ -8410,6 +8411,16 @@ Friend.responsive = {
 					} )( b );
 				}
 				self.pages[ a ].backButton = null;
+			}
+			if( before )
+			{
+				self.pages[ a ].classList.remove( 'Responsive-Page-Right' );
+				self.pages[ a ].classList.add( 'Responsive-Page-Left' );
+			}
+			else
+			{
+				self.pages[ a ].classList.remove( 'Responsive-Page-Left' );
+				self.pages[ a ].classList.add( 'Responsive-Page-Right' );
 			}
 			if( self.pages[ a ] != element )
 			{
@@ -8438,6 +8449,10 @@ Friend.responsive = {
 				self.previousPage();
 			}
 		}
+		
+		// Current page goes into view
+		element.classList.remove( 'Responsive-Page-Left' );
+		element.classList.remove( 'Responsive-Page-Right' );
 	}
 };
 

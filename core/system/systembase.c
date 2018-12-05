@@ -930,6 +930,13 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
+	l->sl_NotificationManager = NotificationManagerNew( l );
+	if( l->sl_NotificationManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
+	}
+	
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -1086,6 +1093,11 @@ void SystemClose( SystemBase *l )
 	}
 
 	DEBUG("Delete Managers\n");
+	
+	if( l->sl_NotificationManager != NULL )
+	{
+		NotificationManagerDelete( l->sl_NotificationManager );
+	}
 	if( l->sl_CalendarManager != NULL )
 	{
 		CalendarManagerDelete( l->sl_CalendarManager );

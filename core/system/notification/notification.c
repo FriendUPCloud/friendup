@@ -57,6 +57,8 @@ void NotificationDelete( Notification *d )
 {
 	if( d != NULL )
 	{
+		NotificationSentDeleteAll( d->n_NotificationsSent );
+		
 		if( d->n_Channel != NULL )
 		{
 			FFree( d->n_Channel );

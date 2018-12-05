@@ -28,11 +28,12 @@ if( $level == 'Admin' )
 	
 		$on = new stdClass();
 		$on->Name = $o->Name;
+		$on->ParentID = $o->ParentID;
 		$on->ID = $o->ID;
 		$on->Members = $mems ? $mems : '';
 		
 		if( $sts = $SqlDatabase->FetchObjects( '
-			SELECT g.ID, g.Name, ug.UserID 
+			SELECT g.ID, g.Name, g.ParentID, ug.UserID 
 			FROM 
 				`FUserGroup` g 
 					LEFT JOIN `FUserGroup` ug ON 

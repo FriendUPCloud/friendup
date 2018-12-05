@@ -1626,6 +1626,7 @@ if( isset( $args->command ) )
 							if( $wgs = $SqlDatabase->FetchObjects( '
 								SELECT 
 									g.ID, 
+									g.ParentID, 
 									g.Name, 
 									ug.UserID 
 								FROM 
@@ -1659,7 +1660,8 @@ if( isset( $args->command ) )
 							// TODO: Fix this sql code to work with workgroup, code under is temporary
 							if( !$userinfo->Workgroup && ( $wgs = $SqlDatabase->FetchObjects( '
 								SELECT
-									g.ID,
+									g.ID, 
+									g.ParentID, 
 									g.Name AS `Workgroup`
 								FROM
 									`FUserGroup` g,

@@ -54,7 +54,8 @@ typedef enum {
 }MobileNotificationTypeT;
 
 enum {
-	MOBILE_APP_TYPE_ANDROID = 0,
+	MOBILE_APP_TYPE_NONE = 0,
+	MOBILE_APP_TYPE_ANDROID,
 	MOBILE_APP_TYPE_IOS,
 	MOBILE_APP_TYPE_WINDOWS,
 	MOBILE_APP_TYPE_MAX
@@ -62,6 +63,7 @@ enum {
 
 static char *MobileAppType[] =
 {
+	"None",
 	"Android",
 	"iOS",
 	"Windows"
@@ -88,6 +90,11 @@ typedef struct MobileAppNotif
  * @param notification_type option flag, see MobileNotificationTypeT
  * @param extra_string additional information for workspace
  *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
+ * @param notifSentID id of notificationSent, when 0 then new notification will be created 
  * @return 0 when success, otherwise error number
  */
-int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);
+//int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string, FULONG notifSentID );
+
+int MobileAppNotifyUserRegister( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString );
+
+int MobileAppNotifyUserUpdate( const char *username, FULONG notifSentID, int action );
