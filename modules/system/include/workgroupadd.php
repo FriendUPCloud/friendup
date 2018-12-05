@@ -19,11 +19,12 @@ if( isset( $args->args->ValueNumber ) && isset( $args->args->ValueString ) )
 	{
 		// Get the fusergroup object
 		$o = new dbIO( 'FUserGroup' );
-		$o->Type = 'Workgroup';
-		$o->Name = $args->args->Name;
-		$o->UserID = $User->ID;
+		$o->Type     = 'Workgroup';
+		$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : 0 );
+		$o->Name     = $args->args->Name;
+		$o->UserID   = $User->ID;
 		$o->Save();
-	
+		
 		if( $o->ID > 0 )
 		{
 			// Add external data relation to workgroups
@@ -53,9 +54,10 @@ else if( $level == 'Admin' )
 {
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );
-	$o->Type = 'Workgroup';
-	$o->Name = $args->args->Name;
-	$o->UserID = $User->ID;
+	$o->Type     = 'Workgroup';
+	$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : 0 );
+	$o->Name     = $args->args->Name;
+	$o->UserID   = $User->ID;
 	$o->Save();
 	
 	if( $o->ID > 0 && $args->args->Setup )

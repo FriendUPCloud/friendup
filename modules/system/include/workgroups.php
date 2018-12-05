@@ -11,7 +11,7 @@
 
 if( $rows = $SqlDatabase->FetchObjects( '
 	SELECT 
-		g.ID, g.Name, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
+		g.ID, g.Name, g.ParentID, g.UserID, u.UserID AS WorkgroupUserID, m.ValueNumber, m.ValueString 
 	FROM 
 		FUserGroup g 
 			LEFT JOIN FUserToGroup u ON 
@@ -25,6 +25,9 @@ if( $rows = $SqlDatabase->FetchObjects( '
 				AND m.DataID = g.ID 
 			) 
 	WHERE `Type`=\'Workgroup\' 
+	' . ( isset( $args->args->ParentID ) ? '
+	AND `ParentID` = \'' . $args->args->ParentID . '\' 
+	' : '' ) . '
 	ORDER BY `Name` ASC 
 ' ) )
 {

@@ -42,9 +42,10 @@ if( isset( $args->args->ID ) && isset( $args->args->ValueNumber ) && isset( $arg
 			}
 			else
 			{
-				$o->Name = ( $args->args->Name && $args->args->Name != $o->Name ? $args->args->Name : $o->Name );
+				$o->ParentID = ( $args->args->ParentID && $args->args->ParentID != $o->ParentID ? $args->args->ParentID : $o->ParentID );
+				$o->Name     = ( $args->args->Name && $args->args->Name != $o->Name ? $args->args->Name : $o->Name );
 				$o->Save();
-			
+				
 				if( $o->ID > 0 )
 				{
 					// Add external data relation to workgroups
@@ -126,9 +127,10 @@ else if( $level == 'Admin' )
 		$o = new dbIO( 'FUserGroup' );
 		if( $o->Load( $args->args->ID ) )
 		{
-			$o->Name = $args->args->Name;
+			$o->ParentID = ( $args->args->ParentID && $args->args->ParentID != $o->ParentID ? $args->args->ParentID : $o->ParentID );
+			$o->Name     = ( $args->args->Name && $args->args->Name != $o->Name ? $args->args->Name : $o->Name );
 			$o->Save();
-		
+			
 			if( $o->ID > 0 && $args->args->Setup )
 			{
 				if( $setup = $SqlDatabase->FetchObject( '
