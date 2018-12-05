@@ -35,7 +35,7 @@ NotificationManager *NotificationManagerNew( void *sb )
 	if( ( nm = FCalloc( 1, sizeof(NotificationManager) ) ) != NULL )
 	{
 		nm->nm_SB = sb;
-		SystemBase *lsb = (SystemBase *)lsb;
+		SystemBase *lsb = (SystemBase *)sb;
 		char *login = NULL;
 		char *pass = NULL;
 		char *host = NULL;
