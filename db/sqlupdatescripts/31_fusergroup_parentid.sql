@@ -1,1 +1,1 @@
-ALTER TABLE `FUserGroup` ADD COLUMN `ParentID` bigint(32) NOT NULL AFTER `UserID`;
+ALTER TABLE `FUserGroup` ADD COLUMN `ParentID` bigint(20) NOT NULL AFTER `UserID`;
