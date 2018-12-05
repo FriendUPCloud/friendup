@@ -548,24 +548,7 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 	}
 	char *mobileType = NULL;
 	mobileType = MobileAppType[ type ];
-	/*
-	if( type == MOBILE_APP_TYPE_ANDROID )
-	{
-		mobileType = MobileAppType[ MOBILE_APP_TYPE_ANDROID ];
-	}
-	else if( type == MOBILE_APP_TYPE_IOS )
-	{
-		mobileType = "ios";
-	}
-	else if( type == MOBILE_APP_TYPE_WINDOWS )
-	{
-		mobileType = "Windows";
-	}
-	else
-	{
-		return NULL;
-	}
-	*/
+
 	
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
@@ -747,4 +730,38 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
 		return -1;
 	}
 	return 1;
+}
+
+/**
+ * Get User Mobile Connections from database by user name and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param username name of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @return pointer to new created list of MobileListEntry
+ */
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, const char *username, int type )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char where[ 512 ];
+		snprintf( where, sizeof(where), "UserID='%s' AND Platform='%s'", username, mobileType );
+
+		int entries;
+		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return uma;
 }

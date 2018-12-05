@@ -93,7 +93,8 @@ typedef struct MobileAppNotif
  * @param notifSentID id of notificationSent, when 0 then new notification will be created 
  * @return 0 when success, otherwise error number
  */
-int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string, FULONG notifSentID );
+//int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string, FULONG notifSentID );
 
 int MobileAppNotifyUserRegister( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString );
 
+int MobileAppNotifyUserUpdate( const char *username, FULONG notifSentID, int action );
