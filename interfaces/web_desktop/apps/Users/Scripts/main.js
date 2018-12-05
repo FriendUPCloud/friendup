@@ -1469,7 +1469,12 @@ function EditWorkgroup( id )
 						for( var i in dd )
 						{
 							if( dd[i].ID )
-							{								
+							{
+								if( dd[i].ID == ele.ID || dd[i].ParentID == ele.ID )
+								{
+									continue;
+								}
+								
 								wg += '<option value="' + dd[i].ID + '"' + ( ele.ParentID && dd[i].ID == ele.ParentID ? ' Selected="Selected"' : '' ) + '>' + dd[i].Name + '</option>';
 							}
 						}
