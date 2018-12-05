@@ -1384,20 +1384,48 @@ function AddWorkgroup()
 		height: 300
 	} );
 	
-	var f = new File( 'Progdir:Templates/workgroup.html' );
-	f.replacements = {
-		'id': '',
-		'name': '',
-		'viewId': v.getViewId(),
-		'parentViewId': ge( 'viewId' ).value,
-		'delCss': '#deleteButton{ display: none; }'
-	};
-	f.i18n();
-	f.onLoad = function( data )
+	var m = new Module( 'system' );
+	m.onExecuted = function( e, d )
 	{
-		v.setContent( data );
-	}
-	f.load();	
+		var wg = '<option value="0">none</option>';
+		
+		try
+		{
+			if( e == 'ok' && d )
+			{
+				d = JSON.parse( d );
+				
+				if( d )
+				{
+					for( var i in d )
+					{
+						if( d[i].ID )
+						{
+							wg += '<option value="' + d[i].ID + '">' + d[i].Name + '</option>';
+						}
+					}
+				}
+			}
+		}
+		catch( e ){  }
+		
+		var f = new File( 'Progdir:Templates/workgroup.html' );
+		f.replacements = {
+			'id': '',
+			'name': '',
+			'parent': wg,
+			'viewId': v.getViewId(),
+			'parentViewId': ge( 'viewId' ).value,
+			'delCss': '#deleteButton{ display: none; }'
+		};
+		f.i18n();
+		f.onLoad = function( data )
+		{
+			v.setContent( data );
+		}
+		f.load();
+	}	
+	m.execute( 'workgroups' );
 }
 
 function EditWorkgroup( id )
@@ -1406,6 +1434,7 @@ function EditWorkgroup( id )
 	m.onExecuted = function( e, d )
 	{
 		var ele;
+		
 		try{
 			ele = JSON.parse( d );
 		} catch(e) { Notify({'title':'ERROR in Users app','text':'Could not load workgroup data!'}); return; }
@@ -1424,29 +1453,57 @@ function EditWorkgroup( id )
 			}
 		}
 		
-		var f = new File( 'Progdir:Templates/workgroup.html' );
-		f.replacements = {
-			'id': ele.ID,
-			'name': ele.Name,
-			'members': ele.Members,
-			'setup': str,
-			'viewId': ge( 'viewId' ).value,
-			'parentViewId': ge( 'viewId' ).value,
-			'delCss': ''
-		};
-		f.i18n();
-		f.onLoad = function( data )
+		var mm = new Module( 'system' );
+		mm.onExecuted = function( ee, dd )
 		{
-			ge( 'WorkgroupGui' ).innerHTML = data;
+			var wg = '<option value="0">none</option>';
 			
-			if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
+			try
 			{
-				ge( 'SetupGroupContainer' ).style.display = 'none';
+				if( ee == 'ok' && dd )
+				{
+					dd = JSON.parse( dd );
+					
+					if( dd )
+					{
+						for( var i in dd )
+						{
+							if( dd[i].ID )
+							{								
+								wg += '<option value="' + dd[i].ID + '"' + ( ele.ParentID && dd[i].ID == ele.ParentID ? ' Selected="Selected"' : '' ) + '>' + dd[i].Name + '</option>';
+							}
+						}
+					}
+				}
 			}
+			catch( e ){  }
 			
-			refreshMembers( ele.ID );
-		}
-		f.load();
+			var f = new File( 'Progdir:Templates/workgroup.html' );
+			f.replacements = {
+				'id': ele.ID,
+				'name': ele.Name,
+				'parent': wg,
+				'members': ele.Members,
+				'setup': str,
+				'viewId': ge( 'viewId' ).value,
+				'parentViewId': ge( 'viewId' ).value,
+				'delCss': ''
+			};
+			f.i18n();
+			f.onLoad = function( data )
+			{
+				ge( 'WorkgroupGui' ).innerHTML = data;
+			
+				if( ge( 'SetupGroupContainer' ) && ge( 'pWorkgroupSetup' ) && !ge( 'SetupGroupContainer' ).value )
+				{
+					ge( 'SetupGroupContainer' ).style.display = 'none';
+				}
+			
+				refreshMembers( ele.ID );
+			}
+			f.load();
+		}	
+		mm.execute( 'workgroups' );
 	}	
 	m.execute( 'workgroupget', { id: id } );
 }
@@ -1456,11 +1513,12 @@ function saveWorkgroup( callback, tmp )
 {
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
 		Name: ge( 'pWorkgroupName' ).value,
 		Setup: ( ge( 'pWorkgroupSetup' ) ? ge( 'pWorkgroupSetup' ).value : '' ),
 		Members: ge( 'pMembers' ).value
 	};
-
+	
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{

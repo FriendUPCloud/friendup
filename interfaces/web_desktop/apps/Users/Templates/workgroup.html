@@ -13,13 +13,19 @@
 			<input id="pWorkgroupName" type="text" class="FullWidth" placeholder="{i18n_named_workgroup}" value="{name}"/>
 		</p>
 		
+		<p class="Layout">
+			<strong>{i18n_workgroup_parent}:</strong>
+		</p>
+		
+		<select id="pWorkgroupParent" class="FullWidth">{parent}</select>
+		
 		<div id="SetupGroupContainer">
 			
 			<p class="Layout">
 				<strong>{i18n_template}:</strong>
 			</p>
 			
-			<select id="pWorkgroupSetup">{setup}</select>
+			<select id="pWorkgroupSetup" class="FullWidth">{setup}</select>
 			<!--<button type="button" class="IconSmall fa-save" onclick="ApplyGroupSetup({id})">
 				{i18n_apply_template}
 			</button>-->
