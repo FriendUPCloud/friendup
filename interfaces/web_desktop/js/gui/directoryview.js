@@ -39,6 +39,7 @@ DirectoryView = function( winobj )
 	this.listMode = ws && ws.listMode ? ws.listMode : 'iconview';
 	this.sortColumn = 'filename';
 	this.sortOrder = 'ascending';
+	this.showHiddenFiles = false;
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
@@ -142,7 +143,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	var lmode = this.listMode;
 
 	var buttons = [
-		{
+		/*{
 			element: 'button',
 			className: 'Home IconSmall fa-home',
 			content: i18n( 'i18n_dir_btn_root' ),
@@ -162,7 +163,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 				winobj.refresh();
 			}
-		},
+		},*/
 		// Go up a level
 		{
 			element: 'button',
@@ -294,15 +295,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					}
 				}
 			]
-		},
-		{
-			element: 'button',
-			className: 'Search FloatRight IconSmall fa-search',
-			content: i18n( 'i18n_dir_btn_search' ),
-			onclick: function( e )
-			{
-				Workspace.showSearch();
-			}
 		},
 		{
 			element: 'button',
@@ -2005,7 +1997,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		for( var a = 0; a < icons.length; a++ )
 		{
 			var fn = icons[a].Filename ? icons[a].Filename : icons[a].Title;
-			if( fn.substr( 0, 1 ) == '.' ) continue;
+			// Skip dot files
+			if( !self.showHiddenFiles && fn.substr( 0, 1 ) == '.' ) continue;
+			// Skip backup files
+			else if( !self.showHiddenFiles && fn.substr( fn.length - 4, 4 ) == '.bak' )
+				continue;
 			else if( fn.substr( fn.length - 5, 5 ) == '.info' )
 				infoIcons[ fn ] = true;
 			else if( fn.substr( fn.length - 8, 8 ) == '.dirinfo' )
@@ -2064,7 +2060,11 @@ DirectoryView.prototype.RedrawIconView = function ( obj, icons, direction, optio
 		 		Filename: icons[a].Filename ? icons[a].Filename : icons[a].Title,
 		 		Type: icons[a].Type
 		 	};
-			if( fn.Filename.substr( 0, 1 ) == '.' ) continue;
+		 	// Skip dot files
+			if( !self.showHiddenFiles && fn.Filename.substr( 0, 1 ) == '.' ) continue;
+			// Skip backup files
+			else if( !self.showHiddenFiles && fn.Filename.substr( fn.Filename.length - 4, 4 ) == '.bak' )
+				continue;
 
 			// Only show orphan .info files
 			if( fn.Filename.indexOf( '.info' ) > 0 || fn.Filename.indexOf( '.dirinfo' ) > 0 )
@@ -3859,7 +3859,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		{
 			GetURLFromPath( fileInfo.Path, function( imageUrl )
 			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : '/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + encodeURIComponent( imageUrl ) ); 
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
 				
 				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
 			} );
@@ -4041,7 +4041,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			'height'   : stored && stored.height ? stored.height : 400,
 			'memorize' : true,
 			'id'       : id,
-			'volume'   : isVolume
+			'volume'   : isVolume,
+			'clickableTitle': true
 		} );
 
 		// Ok, window probably was already opened, try to activate window
@@ -4346,10 +4347,13 @@ function CheckDoorsKeys( e )
 	{
 		// TODO: Implement confirm dialog!
 		case 46:
-			Workspace.deleteFile();
+			if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
+			{
+				Workspace.deleteFile();
+			}
 			break;
 		case 13:
-			if( window.regionWindow && window.regionWindow.directoryview )
+			if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
 			{
 				for( var a = 0; a < window.regionWindow.icons.length; a++ )
 				{
@@ -4363,7 +4367,10 @@ function CheckDoorsKeys( e )
 			break;
 	}
 	// Do the thing! Keyboard navigation
-	if( window.regionWindow && window.regionWindow.directoryview )
+	if( 
+		window.regionWindow && window.regionWindow.directoryview && 
+		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
+	)
 	{
 		var rw = window.regionWindow.icons;
 		var out = [];

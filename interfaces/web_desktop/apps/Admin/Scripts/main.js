@@ -14,8 +14,16 @@ Application.run = function( msg ){ initGui(); }
 // Just initialize the GUI!
 function initGui()
 {
-	refreshSidebar();
-	refreshStatistics();
+	// Let's get some charts!
+	Include( '/webclient/3rdparty/Chart.bundle.min.js', function()
+	{
+		// And then start!
+		refreshSidebar();
+		refreshStatistics();
+		
+		// Init responsive layout
+		Friend.responsive.init();
+	} );
 }
 
 // Side bar being refreshed
@@ -147,6 +155,10 @@ function setGUISection( module, section )
 	{
 		ge( 'GuiContent' ).innerHTML = data;
 		Sections[ sectPart ]();
+		
+		// Reinitialize!
+		Friend.responsive.pageActive = ge( 'GuiContent' ).getElementsByClassName( 'Responsive-Page' )[0];
+		Friend.responsive.reinit();
 	}
 	f.load();
 }

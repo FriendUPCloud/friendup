@@ -2349,6 +2349,11 @@ html .View > .Title > div > .Zoom
 	background-image: url(/iconthemes/friendup15/expand.svg);
 }
 
+html .View[maximized=true] > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/Contract.svg);
+}
+
 html body[focusmode=clicktofront] div .View > .Title > div > .Zoom
 {
 	position: absolute;
@@ -2368,6 +2373,12 @@ html .View > .Title > div > .Zoom:after
 .View.Active > .Title > div > .Zoom
 {
 	background-image: url(/iconthemes/friendup15/expand.svg);
+}
+
+.View.Active[maximized=true] > .Title > div > .Zoom:hover,
+.View.Active[maximized=true] > .Title > div > .Zoom
+{
+	background-image: url(/iconthemes/friendup15/Contract.svg);
 }
 
 html .View > .Title > div > .Minimize,

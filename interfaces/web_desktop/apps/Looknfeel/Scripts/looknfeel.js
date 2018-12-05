@@ -25,6 +25,9 @@ Application.run = function( msg, iface )
 		w.setContent( data );
 	}
 	f.load();
+
+	// Set app in single mode
+	this.setSingleInstance( true );	
 	
 	w.onClose = function()
 	{

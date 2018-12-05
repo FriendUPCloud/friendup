@@ -1,7 +1,7 @@
 Friend Unifying Platform version 1.2-RC2
 ========================================
 
-**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch*. Bleeding edge users should check out the *friendup-1.2-rc2* branch.
+**NB:** This branch is not yet stable, and is currently under development. Out current stable branch for users is FriendUP v1.2-RC1. This current branch changes daily. Developers should commit to *the master branch* after proper testing. Check this out for more information on [commit guidelines](https://github.com/FriendUPCloud/friendup/wiki/4.-Developer-Commit-Guidelines). Bleeding edge *users* should check out the *friendup-1.2-rc2* branch. 
 
 ---
 
@@ -27,8 +27,12 @@ Getting started
 Prior to installation, check that 'bash', or a compatible shell is installed on your machine.
 
 Just clone this repository, run the install.sh script and follow the on screen instructions. This script should run on most modern linux distributions. Post to the Developer Community if you run into any problems here.
+
+The below script has been tested on Ubuntu 16. You might need to install MySQL or MariaDB first.
+
 ```
 git clone https://github.com/FriendSoftwareLabs/friendup
+apt install make cmake dialog
 cd friendup/
 ./install.sh
 ```

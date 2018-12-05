@@ -782,6 +782,7 @@ Application.newFile = function()
 		newFile = i18n( 'i18n_empty_file' );
 		if( i > 0 )
 			newFile += ' ' + i;
+		i++;
 	}
 	while( typeof( this.files[ newFile ] ) != 'undefined' );
 	this.files[ newFile ] = { content: '', filename: newFile, touched: false };
@@ -1139,10 +1140,11 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 	}
 	
 	if( !mode )
-	{
+	{	
 		var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
 		var foundTab = false;
 	
+		// Update currentfile
 		for( var a = 0; a < tabs.length; a++ )
 		{
 			if( tabs[ a ].uniqueId == this.files[ this.currentFile ].uniqueId )
@@ -1151,16 +1153,7 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 				{
 					tabs[ a ].onclick();
 				}
-				var fn = this.files[ this.currentFile ].filename;
-				if( fn.indexOf( ':' ) > 0 )
-				{
-					fn = fn.split( ':' )[1];
-					if( fn.indexOf( '/' ) > 0 )
-					{
-						fn = fn.split( '/' ).pop();
-					}
-				}
-				tabs[ a ].innerHTML = fn;
+				tabs[ a ].innerHTML = popFilename( this.files[ this.currentFile ].filename );
 				break;
 			}
 		}
@@ -1200,6 +1193,20 @@ Application.setCurrentFile = function( curr, ocallback, mode )
 	// Syntax highlighting
 	this.applySyntaxHighlighting();
 };
+
+function popFilename( path )
+{
+	var fn = path;
+	if( fn.indexOf( ':' ) > 0 )
+	{
+		fn = fn.split( ':' )[1];
+		if( fn.indexOf( '/' ) > 0 )
+		{
+			fn = fn.split( '/' ).pop();
+		}
+	}
+	return fn;
+}
 
 // Check if file is to be added to project
 function FileInProjectCheck( currentFile, callback )
@@ -1703,12 +1710,49 @@ Application.receiveMessage = function( msg )
 				break;
 			case 'receivefilesync':
 				this.files = msg.files;
+				
+				// Rename based on changes on currentfile
+				var out = {};
+				for( var a in this.files )
+				{
+					if( a == msg.currentFile )
+					{
+						if( a != msg.files[ a ].filename )
+						{
+							out[ msg.files[ a ].filename ] = msg.files[ a ];
+							msg.currentFile = msg.files[ a ].filename;
+						}
+						else
+						{
+							out[ a ] = this.files[ a ];
+						}
+					}
+					else
+					{
+						out[ a ] = this.files[ a ];
+					}
+				}
+				this.files = out;
+				// Done updating files list
+				
 				this.currentFile = msg.currentFile;
+				
+				// Fix all filesnames in tabs
+				var tabs = ge( 'EditorTabs' ).getElementsByClassName( 'Tab' );
+				for( var a = 0; a < tabs.length; a++ )
+				{
+					if( this.files[ this.currentFile ].uniqueId == tabs[ a ].uniqueId )
+					{
+						tabs[ a ].innerHTML = popFilename( this.files[ this.currentFile ].filename );
+						break;
+					}
+				}
+				
 				var meg = { command: 'filesyncnotification' };
 				if( msg.callback ) meg.callback = msg.callback;
 				this.sendMessage( meg );
-				this.refreshFilesList();
 				this.setCurrentFile( this.currentFile );
+				this.refreshFilesList();
 				this.syncing = false;
 				break;
 			// Just passes current editor content

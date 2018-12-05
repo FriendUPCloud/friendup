@@ -188,6 +188,9 @@ Application.run = function( packet )
 		} );
 	}
 	f.load();
+
+	// Set app in single mode
+	this.setSingleInstance( true );
 	
 	// Disable gui
 	this.disabled = true;
