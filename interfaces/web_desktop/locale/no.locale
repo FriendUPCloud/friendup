@@ -472,7 +472,7 @@ i18n_dir_btn_search                     : Søk
 #Sessions ----------------------------------------------------------------------
 
 i18n_session_killed                     : Din økt ble fjernet
-i18n_session_killed_desc                : Prøver å etablere en ny økt med serveren
+i18n_session_killed_desc                : Du blir nå logget ut
 i18n_session_expired                    : Din økt er foreldet
 i18n_session_expired_desc               : Etablerer en ny økt med serveren
 i18n_no_other_sessions_available        : Ingen andre økter tilgjengelige

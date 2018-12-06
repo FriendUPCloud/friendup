@@ -6924,7 +6924,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					console.log( 'The session has gone away! Relogin using login().' );
+					//console.log( 'The session has gone away! Relogin using login().' );
 					Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}
