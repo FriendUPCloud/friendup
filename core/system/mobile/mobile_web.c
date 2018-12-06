@@ -659,7 +659,7 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 	* <HR><H2>system.library/mobile/updatenotification</H2>Update Mobile Notification
 	*
 	* @param sessionid - (required) session id of logged user
-	* @param mobilereqid - (required) mobile request ID
+	* @param notifid - (required) mobile request ID
 	* @param action - (required) action ( NOTIFY_ACTION_REGISTER = 0, NOTIFY_ACTION_READED, NOTIFY_ACTION_TIMEOUT )
 	* @return { update: sucess, result: <ID> } when success, otherwise error with code
 	*/
@@ -676,14 +676,14 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 		response = HttpNewSimple( HTTP_200_OK,  tags );
 		
 		HashmapElement *el = NULL;
-		FULONG mobilereqid = 0;
+		FULONG notifid = 0;
 		int action = -1;
 		
-		el = HttpGetPOSTParameter( request, "mobilereqid" );
+		el = HttpGetPOSTParameter( request, "notifid" );
 		if( el != NULL )
 		{
 			char *next;
-			mobilereqid = strtol( el->data, &next, 0 );
+			notifid = strtol( el->data, &next, 0 );
 		}
 		el = HttpGetPOSTParameter( request, "action" );
 		if( el != NULL )
@@ -691,13 +691,25 @@ Http *MobileWebRequest( void *m, char **urlpath, Http* request, UserSession *log
 			action = atoi( (char *)el->data );
 		}
 		
-		if( action >= 0 && mobilereqid > 0 )
+		if( action > 0 && notifid > 0 )	// register is not supported
 		{
 			char tmp[ 512 ];
 			
-			int err = MobileAppNotifyUserUpdate( loggedSession->us_User->u_Name, mobilereqid, action );
+			Notification *not = NotificationManagerRemoveNotification( l->sl_NotificationManager , notifid );
+			int err = MobileAppNotifyUserUpdate( l, loggedSession->us_User->u_Name, not, notifid, action );
+			if( not != NULL )
+			{
+				NotificationDelete( not );
+			}
 			
-			snprintf( tmp, sizeof(tmp), "{ \"update\": \"sucess\", \"result\":%d }", err );
+			if( err == 0 )
+			{
+				snprintf( tmp, sizeof(tmp), "{ \"update\": \"sucess\", \"result\":%d }", err );
+			}
+			else
+			{
+				snprintf( tmp, sizeof(tmp), "{ \"update\": \"fail\", \"result\":%d }", err );
+			}
 			
 			HttpAddTextContent( response, tmp );
 		}

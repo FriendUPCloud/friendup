@@ -43,6 +43,8 @@ NotificationManager *NotificationManagerNew( void *sb )
 		int port = 3306;
 		char *options = NULL;
 		
+		pthread_mutex_init( &(nm->nm_Mutex), NULL );
+		
 		Props *prop = NULL;
 		PropertiesInterface *plib = &(lsb->sl_PropertiesInterface);
 		if( plib != NULL && plib->Open != NULL )
@@ -76,6 +78,8 @@ NotificationManager *NotificationManagerNew( void *sb )
 				}
 				plib->Close( prop );
 			}
+			
+			nm->nm_TimeoutThread = ThreadNew( NotificationManagerTimeoutThread, nm, TRUE, NULL );
 		} // plib and plib->open != NULL
 	}	// calloc
 	DEBUG("[NotificationManagerNew] end\n");
@@ -91,6 +95,30 @@ void NotificationManagerDelete( NotificationManager *nm )
 {
 	if( nm != NULL )
 	{
+		if( nm->nm_TimeoutThread != NULL )
+		{
+			nm->nm_TimeoutThread->t_Quit = TRUE;
+			while( TRUE )
+			{
+				if( nm->nm_TimeoutThread->t_Launched == FALSE )
+				{
+					break;
+				}
+				sleep( 1 );
+			}
+			DEBUG2("[NotificationManagerDelete]  close thread\n");
+		
+			ThreadDelete( nm->nm_TimeoutThread );
+		}
+		
+		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) )	// add node to database and to list
+		{
+			NotificationDeleteAll( nm->nm_Notifications );
+			FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+		}
+
+		pthread_mutex_destroy( &(nm->nm_Mutex) );
+		
 		if( nm->nm_SQLLib != NULL )
 		{
 			LibraryClose( nm->nm_SQLLib );
@@ -155,6 +183,26 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 }
 
 /**
+ * Get NotificationSent from database by notification sent ID
+ *
+ * @param nm pointer to MobileManager
+ * @param ID id of Notification
+ * @return pointer to structure UserMobileApp
+ */
+NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager *nm,  FULONG ID )
+{
+	NotificationSent *ns = NULL;
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char where[ 1024 ];
+	int entries;
+	
+	snprintf( where, sizeof(where), "ID='%lu'", ID );
+	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+	
+	return ns;
+}
+
+/**
  * Save Notification in database
  *
  * @param nm pointer to MobileManager
@@ -164,6 +212,15 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification *n )
 {
 	nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationDesc, n );
+	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
+	{
+		DEBUG("[NotificationManagerAddNotificationDB] added to list: %lu\n", n->n_ID );
+		n->node.mln_Succ = (MinNode *) nm->nm_Notifications;
+		nm->nm_Notifications = n;
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	
 	return 0;
 }
 
@@ -201,3 +258,105 @@ int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid
 	return 0;
 }
 
+/**
+ * Remove Notification by notification sent ID
+ * 
+ * @param nm pointer to NotificationManager
+ * @param nsid id of NotificationSent which will be removed from checking queue
+ * @return Notification structure when founded otherwise NULL
+ */
+Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FULONG nsid )
+{
+	Notification *ret = NULL;
+	Notification *notIt = nm->nm_Notifications;
+	Notification *notPrevIt = nm->nm_Notifications;
+	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
+	{
+		while( notIt != NULL )
+		{
+			NotificationSent *lnsIt = notIt->n_NotificationsSent;
+			while( lnsIt != NULL )
+			{
+				if( nsid == lnsIt->ns_ID )
+				{
+					break;
+				}
+				lnsIt = (NotificationSent *)lnsIt->node.mln_Succ;
+			}
+			
+			// entry was found
+			if( lnsIt != NULL )
+			{
+				if( notIt == nm->nm_Notifications )	// current notification is first, we set it as next
+				{
+					nm->nm_Notifications = (Notification *) nm->nm_Notifications->node.mln_Succ;
+				}
+				else	// set next in previous node to next of current one
+				{
+					notPrevIt->node.mln_Succ = notIt->node.mln_Succ;
+				}
+				break;	// go out from while loop
+			}
+			notPrevIt = notIt;
+			notIt = (Notification *)notIt->node.mln_Succ;
+		}
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+	
+	return ret;
+}
+
+//
+// Timeout thread
+//
+
+void NotificationManagerTimeoutThread( FThread *data )
+{
+	data->t_Launched = TRUE;
+	NotificationManager *nm = (NotificationManager *)data->t_Data;
+	int counter = 0;
+	
+	while( data->t_Quit != TRUE )
+	{
+		time_t locTime = time(NULL);
+		
+		sleep( 1 );
+		counter++;
+		if( counter > 15 )	// do checking every 15 seconds
+		{
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
+			Notification *notif = nm->nm_Notifications;
+			Notification *nroot = NULL;
+			
+			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
+			{
+				INFO( "[NotificationManagerTimeoutThread] checking\n");
+				while( notif != NULL )
+				{
+					Notification *next = (Notification *)notif->node.mln_Succ;
+					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
+					{
+						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
+						MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
+						NotificationDelete( notif );
+					}
+					else
+					{
+						DEBUG("[NotificationManagerTimeoutThread] notification will stay %lu\n", notif->n_ID );
+						notif->node.mln_Succ = (MinNode *)nroot;
+						nroot = notif;
+					}
+					
+					notif = (Notification *)next;
+				}
+				FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+			}
+			
+			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
+			counter = 0;
+		}
+	}
+	
+	data->t_Launched = FALSE;
+}

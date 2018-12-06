@@ -35,6 +35,9 @@ typedef struct NotificationManager
 {
 	void					*nm_SB;
 	SQLLibrary				*nm_SQLLib;
+	FThread					*nm_TimeoutThread;
+	Notification			*nm_Notifications;
+	pthread_mutex_t			nm_Mutex;
 }NotificationManager;
 
 
@@ -50,7 +53,13 @@ int NotificationManagerAddNotificationSentDB( NotificationManager *nm, Notificat
 
 Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm,  FULONG notifSentId );
 
+NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager *nm,  FULONG ID );
+
 int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid );
+
+Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FULONG nsid );
+
+void NotificationManagerTimeoutThread( FThread *data );
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__
 

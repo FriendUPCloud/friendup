@@ -271,7 +271,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 			return ReplyError( wsi, 9 );
 		}
 
-		int status = MobileAppNotifyUser( username, channel_id, "app_name", title, message, (MobileNotificationTypeT)notification_type, NULL, 0 );
+		int status = MobileAppNotifyUser( LSB, username, channel_id, "app_name", title, message, (MobileNotificationTypeT)notification_type, NULL, 0 );
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
@@ -513,7 +513,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									return ReplyError( wsi, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								int status = MobileAppNotifyUserRegister( username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+								int status = MobileAppNotifyUserRegister( SLIB, username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
 								/*
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 								if( en != NULL )

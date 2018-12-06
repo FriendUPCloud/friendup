@@ -51,6 +51,7 @@ static char *NotifyActionType[] =
    `UserName` varchar(255),
    `Created` bigint(20) NOT NULL,
    `Type` bigint(6) NOT NULL,
+   `Status` bigint(6) NOT NULL,
    PRIMARY KEY (`ID`)
  ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
@@ -102,7 +103,7 @@ static FULONG NotificationDesc[] = { SQLT_TABNAME, (FULONG)"FNotification", SQLT
 	SQLT_STR, (FULONG)"Extra", offsetof( Notification, n_Extra ),
 	SQLT_STR, (FULONG)"Application", offsetof( Notification, n_Application ),
 	SQLT_STR, (FULONG)"UserName", offsetof( Notification, n_UserName ),
-	SQLT_DATETIME, (FULONG)"Created", offsetof( Notification, n_Created ),
+	SQLT_INT, (FULONG)"Created", offsetof( Notification, n_Created ),
 	SQLT_INT, (FULONG)"Status", offsetof( Notification, n_Status ),
 	SQLT_INT, (FULONG)"Type", offsetof( Notification, n_NotificationType ),
 	SQLT_INIT_FUNCTION, (FULONG)"init", (FULONG)&NotificationInit,

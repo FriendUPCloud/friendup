@@ -17,6 +17,7 @@
 	   `UserName` varchar(255),
 	   `Created` bigint(20) NOT NULL,
 	   `Type` bigint(6) NOT NULL,
+       `Status` bigint(6) NOT NULL,
 	   PRIMARY KEY (`ID`)
 	 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 

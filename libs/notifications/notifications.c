@@ -100,8 +100,13 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				char *message = UrlDecodeToMem( message_element->data );
 				char *title = UrlDecodeToMem( title_element->data );
 				char *extra = UrlDecodeToMem( extra_element->data );
-				char *app = UrlDecodeToMem( app_element->data );
+				char *app = NULL;
 				char *username = user->u_Name;
+				
+				if( app_element != NULL )
+				{
+					app = UrlDecodeToMem( app_element->data );
+				}
 
 				/* Small bug: JavaScript call
 				 * new Library('notifications.library').execute("notify?message=your_message_here&extra=something&title=sometitle")
@@ -111,7 +116,7 @@ Http* WebRequestNotification(struct Library *l __attribute__((unused)), char* fu
 				 */
 				title[strlen(title)-1] = '\0';
 
-				int status = MobileAppNotifyUser( username, "lib", app, title, message, MN_force_all_devices, extra, 0 );
+				int status = MobileAppNotifyUserRegister( l->sb, username, "lib", app, title, message, MN_force_all_devices, extra );
 
 				if( message != NULL ) FFree( message );
 				if( title != NULL ) FFree( title );

@@ -40,6 +40,7 @@
 #include <stdbool.h>
 #include <util/friendqueue.h>
 #include <network/websocket_client.h>
+#include <system/notification/notification.h>
 
 typedef enum {
 	//0 - undefined
@@ -95,6 +96,6 @@ typedef struct MobileAppNotif
  */
 //int MobileAppNotifyUser( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string, FULONG notifSentID );
 
-int MobileAppNotifyUserRegister( const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString );
+int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString );
 
-int MobileAppNotifyUserUpdate( const char *username, FULONG notifSentID, int action );
+int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action );
