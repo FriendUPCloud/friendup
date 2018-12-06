@@ -79,6 +79,6 @@ typedef struct MobileAppNotif
  * @param notification_type option flag, see MobileNotificationTypeT
  * @param extra_string additional information for workspace
  *                     (eg. launch an app, start a chat etc.), WORKSPACE-SPECIFIC, can be null
- * @return true when success
+ * @return 0 when success, otherwise error number
  */
-bool MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);
+int MobileAppNotifyUser( const char *username, const char *channel_id, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extra_string);

@@ -144,7 +144,7 @@ static struct lws_protocols protocols[] = {
 #endif
 #if ENABLE_NOTIFICATIONS_SINK == 1
 	{
-		"FriendNotifications-v1",
+		"FriendService-v1",
 		WebsocketNotificationsSinkCallback,
 		sizeof( struct MobileAppNotif ),
 		WS_PROTOCOL_BUFFER_SIZE,

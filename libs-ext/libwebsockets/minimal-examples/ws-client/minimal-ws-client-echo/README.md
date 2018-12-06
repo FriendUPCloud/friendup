@@ -19,7 +19,6 @@ Commandline option|Meaning
 -p port|Port to connect to
 -u url|URL path part to connect to
 -o|Finish after one connection
---ssl|Open client connection with ssl
 
 ```
  $ ./lws-minimal-ws-client-echo
