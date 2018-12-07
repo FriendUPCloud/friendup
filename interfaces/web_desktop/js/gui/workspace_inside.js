@@ -3152,18 +3152,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 				// Add system on top (after Ram: if it exists)
 				newIcons.push( {
-					Title:	'System',
+					Title:	  'System',
 					Volume:   'System:',
-					Path:	 'System:',
-					Type:	 'Door',
-					Handler: 'built-in',
-					Driver: 'Dormant',
+					Path:	  'System:',
+					Type:	  'Door',
+					Handler:  'built-in',
+					Driver:   'Dormant',
 					MetaType: 'Directory',
-					IconClass: 'SystemDisk',
-					ID:	   'system', // TODO: fix
+					IconClass:'SystemDisk',
+					ID:	      'system', // TODO: fix
 					Mounted:  true,
-					Visible: globalConfig.hiddenSystem == true ? false : true,
-					Door:	  new DoorSystem( 'System:' )
+					Visible:  globalConfig.hiddenSystem == true ? false : true,
+					Door:	  Friend.DoorSystem
 				} );
 				
 				if( returnCode == 'ok' )

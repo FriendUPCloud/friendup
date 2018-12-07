@@ -113,7 +113,9 @@ DormantMaster =
 		for ( var a = 0; a < this.appDoors.length; a++ )
 		{
 			if( this.appDoors[a].getDoor )
+			{
 				doors.push( this.appDoors[a].getDoor() );
+			}
 		}
 		if( callback )
 			return callback( doors );

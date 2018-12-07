@@ -150,6 +150,7 @@ window.Shell = function( appObject )
 			}
 		
 			var doors = DormantMaster.getDoors();
+			
 			if( doors )
 			{
 				for( var a in doors )
@@ -1803,6 +1804,8 @@ window.Shell = function( appObject )
 			// TODO: Make uniform!
 			this.checkDormantDoors( path, function( dirs )
 			{
+				console.log( 'Result: ', dirs );
+				
 				// If we end up here, we're not using dormant - which is OK! :)
 				if( !dirs || ( !dirs && !dirs.length ) )
 				{
