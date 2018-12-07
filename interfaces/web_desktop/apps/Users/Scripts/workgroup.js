@@ -96,7 +96,7 @@ function saveWorkgroup( callback )
 {
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
-		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : null ),
 		Name: ge( 'pWorkgroupName' ).value,
 		Members: ge( 'pMembers' ).value
 	};

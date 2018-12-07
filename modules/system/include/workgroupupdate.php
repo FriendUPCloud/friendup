@@ -42,7 +42,7 @@ if( isset( $args->args->ID ) && isset( $args->args->ValueNumber ) && isset( $arg
 			}
 			else
 			{
-				$o->ParentID = ( $args->args->ParentID && $args->args->ParentID != $o->ParentID ? $args->args->ParentID : $o->ParentID );
+				$o->ParentID = ( isset( $args->args->ParentID ) ? $args->args->ParentID : $o->ParentID );
 				$o->Name     = ( $args->args->Name && $args->args->Name != $o->Name ? $args->args->Name : $o->Name );
 				$o->Save();
 				
@@ -127,7 +127,7 @@ else if( $level == 'Admin' )
 		$o = new dbIO( 'FUserGroup' );
 		if( $o->Load( $args->args->ID ) )
 		{
-			$o->ParentID = ( $args->args->ParentID && $args->args->ParentID != $o->ParentID ? $args->args->ParentID : $o->ParentID );
+			$o->ParentID = ( isset( $args->args->ParentID ) ? $args->args->ParentID : $o->ParentID );
 			$o->Name     = ( $args->args->Name && $args->args->Name != $o->Name ? $args->args->Name : $o->Name );
 			$o->Save();
 			
