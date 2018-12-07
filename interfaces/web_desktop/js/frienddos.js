@@ -1804,8 +1804,6 @@ window.Shell = function( appObject )
 			// TODO: Make uniform!
 			this.checkDormantDoors( path, function( dirs )
 			{
-				console.log( 'Result: ', dirs );
-				
 				// If we end up here, we're not using dormant - which is OK! :)
 				if( !dirs || ( !dirs && !dirs.length ) )
 				{
@@ -1963,9 +1961,20 @@ window.Shell = function( appObject )
 				}
 				else
 				{
+					// Check command
+					var command = cmd[0];
+					if( command.indexOf( '/' ) )
+					{
+						command = command.split( '/' ).pop();
+					}
+					else if( command.indexOf( ':' ) )
+					{
+						command = command.split( ':' ).pop();
+					}
+				
 					for( var a in dirs )
 					{
-						if( dirs[a].Title.toLowerCase() == cmd[0] )
+						if( dirs[a].Title.toLowerCase() == command )
 						{
 							var args = [];
 							for( var aa = 1; aa < cmd.length; aa++ )
@@ -1974,7 +1983,8 @@ window.Shell = function( appObject )
 							var cid = addWrapperCallback( function( msg )
 							{
 								var resp = msg ? msg.response : false;
-								dcallback( resp ? resp : false, { path: path } );
+								console.log( 'Response from program: ', msg );
+								dcallback( resp ? true : false, resp ? { response: resp, path: path } : { response: 'Command completed.' } );
 							} );
 
 							var msgHere = {
@@ -1982,9 +1992,9 @@ window.Shell = function( appObject )
 								applicationId: tt.app.applicationId,
 								type: 'dormantmaster',
 								method: 'execute',
-								executable: dirs[a].Path + cmd[0],
+								executable: dirs[a].Path + command,
 								doorId: dirs[a].Dormant.doorId,
-								dormantCommand: cmd[0],
+								dormantCommand: command,
 								dormantArgs: args,
 								callback: cid
 							};

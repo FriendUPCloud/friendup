@@ -424,6 +424,15 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 	
 	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
 	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
+	
+	// Strip a filename after path
+	var lastChar = path.substr( path.length - 1, 1 );
+	var orphanFilename = null;
+	if( lastChar != ':' && lastChar != '/' )
+	{
+		path += '/';
+	}
+	
 	var dateh = new Date();
 	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
 		StrPad( dateh.getDate(), 2, '0' ) + ' ' + StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
@@ -443,6 +452,7 @@ DoorSystem.prototype.getIcons = function( fileInfo, callback )
 			if( spath.toLowerCase() == a.toLowerCase() )
 			{
 				spath = a;
+				break;
 			}
 		}
 		if( typeof( dirList[ spath ] ) != 'undefined' )
