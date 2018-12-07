@@ -362,9 +362,16 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				}
 				while (0);
 			break;
-
-			case 'e': //echo
-				DEBUG("Echo from client\n");
+			// ping
+			case 'e':
+				DEBUG("Ping from client\n");
+				app_connection->app_status = MOBILE_APP_STATUS_RESUMED;
+				char *ping = json_get_element_string( &json, "time" );
+				
+				char response[LWS_PRE+128];
+				snprintf( response+LWS_PRE, 128, "{\"t\":\"pong\",\"time\":%s}", ping );
+				DEBUG("Response: %s\n", response+LWS_PRE);
+				lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
 				break;
 
 			default:
