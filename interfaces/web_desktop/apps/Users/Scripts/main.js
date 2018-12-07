@@ -1387,7 +1387,7 @@ function AddWorkgroup()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-		var wg = '<option value="0">none</option>';
+		var wg = '<option value="">none</option>';
 		
 		try
 		{
@@ -1456,7 +1456,7 @@ function EditWorkgroup( id )
 		var mm = new Module( 'system' );
 		mm.onExecuted = function( ee, dd )
 		{
-			var wg = '<option value="0">none</option>';
+			var wg = '<option value="">none</option>';
 			
 			try
 			{
@@ -1558,6 +1558,8 @@ function saveWorkgroup( callback, tmp )
 			RefreshWorkgroups();
 		}
 	}
+	
+	console.log( o );
 	
 	if( o.ID > 0 )
 	{

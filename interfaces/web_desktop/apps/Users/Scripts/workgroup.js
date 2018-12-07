@@ -112,6 +112,8 @@ function saveWorkgroup( callback )
 		Application.sendMessage( { command: 'refreshworkgroups', destinationViewId: ge( 'parentViewId' ).value } );
 	}
 	
+	console.log( o );
+	
 	if( o.ID > 0 )
 	{
 		m.execute( 'workgroupupdate', o );
