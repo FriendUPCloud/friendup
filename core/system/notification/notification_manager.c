@@ -377,6 +377,8 @@ void NotificationManagerTimeoutThread( FThread *data )
 					
 					notif = (Notification *)next;
 				}
+				nm->nm_Notifications = nroot;
+				
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 			}
 			
