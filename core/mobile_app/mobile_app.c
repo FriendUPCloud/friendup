@@ -43,9 +43,13 @@ typedef struct MobileAppConnectionS MobileAppConnectionT;
 
 struct MobileAppConnectionS
 {
-	struct lws *websocket_ptr;
-	void *user_data;
-	char *session_id;
+	struct lws *mac_WebsocketPtr;
+	void *mac_UserData;
+	char *mac_SessionID;
+	FQueue mac_Queue;
+	//struct lws *websocket_ptr;
+	//void *user_data;
+	//char *session_id;
 	time_t last_communication_timestamp;
 	UserMobileAppConnectionsT *user_connections;
 	unsigned int user_connection_index;
@@ -90,8 +94,8 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
  */
 static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char *msg, int len )
 {
-	MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
-	if( man != NULL )
+	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
+	//if( man != NULL )
 	{
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
@@ -101,8 +105,10 @@ static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char 
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
 	
-			FQPushFIFO( &(man->man_Queue), en );
-			lws_callback_on_writable( mac->websocket_ptr );
+			//FQPushFIFO( &(man->man_Queue), en );
+			//lws_callback_on_writable( mac->websocket_ptr );
+			FQPushFIFO( &(mac->mac_Queue), en );
+			lws_callback_on_writable( mac->mac_WebsocketPtr );
 		}
 	}
 	return len;
@@ -163,10 +169,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		}
 		FRIEND_MUTEX_LOCK(&_session_removal_mutex);
 		
+		/*
 		if( man != NULL && man->man_Initialized == 1 )
 		{
 			FQDeInitFree( &(man->man_Queue) );
 		}
+		*/
 		
 		//remove connection from user connnection struct
 		UserMobileAppConnectionsT *user_connections = app_connection->user_connections;
@@ -184,11 +192,15 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 
 	if (reason != LWS_CALLBACK_RECEIVE)
 	{
+		char *wsHash = MobileAppGetWebsocketHash(wsi);
+		MobileAppConnectionT *appConnection = HashmapGetData( _websocket_to_user_connections_map, wsHash );
+			
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
 			FQEntry *e = NULL;
 			FRIEND_MUTEX_LOCK(&_session_removal_mutex);
-			FQueue *q = &(man->man_Queue);
+			//FQueue *q = &(man->man_Queue);
+			FQueue *q = &(appConnection->mac_Queue);
 			
 			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
@@ -221,7 +233,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			DEBUG("Unimplemented callback, reason %d\n", reason);
 		}
 		
-		if( man != NULL && man->man_Queue.fq_First != NULL )
+		if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
 		{
 			DEBUG("We have message to send, calling writable\n");
 			lws_callback_on_writable( wsi );
@@ -230,8 +242,10 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		return 0;
 	}
 	
-	DEBUG("Initialize queue\n");
 	char *data = (char*)in;
+	/*
+	DEBUG("Initialize queue\n");
+	
 	if( man != NULL )
 	{
 		DEBUG(" Initialized %d\n", man->man_Initialized );
@@ -246,7 +260,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	else
 	{
 		FERROR("\n\n\n\nMAN is NULL\n\n\n\n");
-	}
+	}*/
 
 	if( len == 0 )
 	{
@@ -510,8 +524,9 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 						//strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
 						//DEBUG("Request: %s\n", request+LWS_PRE);
 						//lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
-						MobileAppNotif *man = (MobileAppNotif *) user_connections->connection[i]->user_data;
-						if( man != NULL )
+						
+						//MobileAppNotif *man = (MobileAppNotif *) user_connections->connection[i]->user_data;
+						//if( man != NULL )
 						{
 							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 							if( en != NULL )
@@ -519,9 +534,11 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 								en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 								memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
 								en->fq_Size = LWS_PRE+64;
-			
-								FQPushFIFO( &(man->man_Queue), en );
-								lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
+
+								FQPushFIFO( &(user_connections->connection[i]->mac_Queue), en );
+								lws_callback_on_writable( user_connections->connection[i]->mac_WebsocketPtr );
+								//FQPushFIFO( &(man->man_Queue), en );
+								//lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
 							}
 						}
 					}
@@ -615,11 +632,11 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	}
 
 	//create struct holding this connection
-	MobileAppConnectionT *new_connection = FCalloc(sizeof(MobileAppConnectionT), 1);
+	MobileAppConnectionT *newConnection = FCalloc(sizeof(MobileAppConnectionT), 1);
 
-	new_connection->session_id = session_id;
-	new_connection->last_communication_timestamp = time(NULL);
-	new_connection->websocket_ptr = wsi;
+	newConnection->mac_SessionID = session_id;
+	newConnection->last_communication_timestamp = time(NULL);
+	newConnection->mac_WebsocketPtr = wsi;
 
 	//add this struct to user connections struct
 	int connection_to_replace_index = -1;
@@ -659,24 +676,25 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	}
 
 	DEBUG("Adding connection to slot %d\n", connection_to_replace_index);
-	user_connections->connection[connection_to_replace_index] = new_connection;
+	user_connections->connection[ connection_to_replace_index ] = newConnection;
 
-	new_connection->user_data = user_data;
-	new_connection->user_connections = user_connections; //provide back reference that will map websocket to a user
-	new_connection->user_connection_index = connection_to_replace_index;
+	newConnection->mac_UserData = user_data;
+	newConnection->user_connections = user_connections; //provide back reference that will map websocket to a user
+	newConnection->user_connection_index = connection_to_replace_index;
 
 	char *websocket_hash = MobileAppGetWebsocketHash( wsi );
 
-	HashmapPut(_websocket_to_user_connections_map, websocket_hash, new_connection); //TODO: error handling here
+	HashmapPut(_websocket_to_user_connections_map, websocket_hash, newConnection ); //TODO: error handling here
 	//websocket_hash now belongs to the hashmap, don't free it here
+	FQInit( &(newConnection->mac_Queue) );
 
+	/*
 	char response[LWS_PRE+64];
 	int msgsize = snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s) + LWS_PRE;
 	DEBUG("Response: %s\n", response+LWS_PRE);
 	lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
-	/*
-	MobileAppNotif *man = (MobileAppNotif *) user_data;
-	if( man != NULL )
+	*/
+
 	{
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
@@ -686,18 +704,14 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			en->fq_Size = LWS_PRE+64;
 			DEBUG("Its time to send message: %s !\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 	
-			FQPushFIFO( &(man->man_Queue), en );
+			FQPushFIFO( &(newConnection->mac_Queue), en );
 			
-			DEBUG("Added %p\n", man->man_Queue.fq_First );
+			DEBUG("Added %p\n", newConnection->mac_Queue.fq_First );
 			
 			lws_callback_on_writable( wsi );
 		}
 	}
-	else
-	{
-		FERROR("Cannot get access to userdata!\n");
-	}
-	*/
+
 	return 0;
 }
 
@@ -727,12 +741,19 @@ static char* MobileAppGetWebsocketHash( struct lws *wsi )
  */
 static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connection_index )
 {
+	if( connections == NULL || connections->connection[connection_index] == NULL )
+	{
+		return;
+	}
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n",
 			connection_index,
 			connections->connection[connection_index]->last_communication_timestamp);
+	
 
-	FFree(connections->connection[connection_index]->session_id);
-	FFree(connections->connection[connection_index]);
+	FQDeInitFree( &(connections->connection[connection_index]->mac_Queue) );
+
+	FFree( connections->connection[connection_index]->mac_SessionID );
+	FFree( connections->connection[connection_index] );
 	connections->connection[connection_index] = NULL;
 }
 
@@ -920,8 +941,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -951,8 +972,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -1133,8 +1154,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							{
 								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+								//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1156,8 +1177,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							{
 								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+								//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1198,8 +1219,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-					//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 						
 						NotificationSentDelete( lns );
 					}
@@ -1228,8 +1249,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
+						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 						
 						NotificationSentDelete( lns );
 					}
