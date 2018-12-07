@@ -866,7 +866,6 @@ function apiWrapper( event, force )
 						}
 						if( door )
 						{
-							console.log( 'We have an executable!: ', door );
 							var path = '';
 							if( msg.executable.indexOf( '/' ) )
 							{

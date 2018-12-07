@@ -1745,7 +1745,7 @@ window.Shell = function( appObject )
 		// Catch all
 		else
 		{
-			console.log( 'This one didn\'t compute!', cmd );
+			//console.log( 'This one didn\'t compute!', cmd );
 
 			// If all else fails
 			function lastCallback()
