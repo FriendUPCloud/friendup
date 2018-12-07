@@ -1983,10 +1983,9 @@ window.Shell = function( appObject )
 							var cid = addWrapperCallback( function( msg )
 							{
 								var resp = msg ? msg.response : false;
-								console.log( 'Response from program: ', msg );
 								dcallback( resp ? true : false, resp ? { response: resp, path: path } : { response: 'Command completed.' } );
 							} );
-
+							
 							var msgHere = {
 								applicationName: tt.app.applicationName,
 								applicationId: tt.app.applicationId,

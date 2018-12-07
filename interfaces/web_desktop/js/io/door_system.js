@@ -836,6 +836,14 @@ var WorkspaceDormant = {
 			Path	 : 'System:',
 			Dormant  : Friend.DoorSystem
 		};
+	},
+	getDirectory( path, callback )
+	{
+		return Friend.DoorSystem.getIcons( path, callback );
+	},
+	getIcons( path, callback )
+	{
+		return this.getDirectory( path, callback );
 	}
 }
 

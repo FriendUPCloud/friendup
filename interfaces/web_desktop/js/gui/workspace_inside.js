@@ -6524,9 +6524,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideLauncherError: function()
 	{
-		Workspace.launcherWindow.setFlag( 'max-height', 80 );
-		Workspace.launcherWindow.setFlag( 'height', 80 );
-		ge( 'launch_error' ).innerHTML = '';
+		if( Workspace.launcherWindow.setFlag )
+		{
+			Workspace.launcherWindow.setFlag( 'max-height', 80 );
+			Workspace.launcherWindow.setFlag( 'height', 80 );
+			ge( 'launch_error' ).innerHTML = '';
+		}
 	},
 	launch: function( app, hidecallback )
 	{
