@@ -82,7 +82,7 @@ void WebsocketNotificationConnCallback( struct WebsocketClient *wc, char *msg, i
 int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len )
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
 	{
@@ -133,7 +133,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 			FRIEND_MUTEX_LOCK( &man->man_Mutex );
 			FQueue *q = &(man->man_Queue);
 			
-			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+			//DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
 			if( ( e = FQPop( q ) ) != NULL )
 			{
@@ -142,20 +142,20 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 				t[ e->fq_Size+1 ] = 0;
 
 				int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-				DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+				//DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
 
 				int v = lws_send_pipe_choked( wsi );
 				
 				if( e != NULL )
 				{
-					DEBUG("Release: %p\n", e->fq_Data );
+					//DEBUG("Release: %p\n", e->fq_Data );
 					FFree( e->fq_Data );
 					FFree( e );
 				}
 			}
 			else
 			{
-				DEBUG("[websocket_app_callback] No message in queue\n");
+				//DEBUG("[websocket_app_callback] No message in queue\n");
 				FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
 			}
 		}
@@ -163,11 +163,11 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		{
 			if( man != NULL && man->man_Queue.fq_First != NULL )
 			{
-				DEBUG("We have message to send, calling writable\n");
+				//DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
 			}
 			
-			DEBUG("Unimplemented callback, reason %d\n", reason);
+			//DEBUG("Unimplemented callback, reason %d\n", reason);
 			return 0;
 		}
 	}

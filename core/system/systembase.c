@@ -974,7 +974,7 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
 	//@BG-678 
-	EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
+	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
@@ -1645,7 +1645,7 @@ int SystemInitExternal( SystemBase *l )
 	
 	DEBUG("[SystembaseInitExternal]APNS init\n" );
 	
-	//l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
+	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
 	if( l->l_APNSConnection != NULL )
 	{
 		/*

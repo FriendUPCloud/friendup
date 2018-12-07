@@ -59,6 +59,8 @@ int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid
 
 Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FULONG nsid );
 
+int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm );
+
 void NotificationManagerTimeoutThread( FThread *data );
 
 #endif //__SYSTEM_NOTIFICATION_NOTIFICATION_MANAGER_H__

@@ -259,6 +259,30 @@ int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid
 }
 
 /**
+ * Find and delete old Notifications with NotificationsSent (old = 14 days)
+ * 
+ * @param nm pointer to NotificationManager
+ * @return 0 when success, otherwise error number
+ */
+int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm )
+{
+	char temp[ 1024 ];
+	time_t t = time( NULL );
+	time_t diff = 60 * 60 * 24 * 14; //1209600 = 14 days in seconds
+	t -= diff;		// time when entry was created < time minus diff
+	
+	snprintf( temp, sizeof(temp), "DELETE from `FNotification` WHERE Created>%lu", t );
+	
+	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+	
+	snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID` in(SELECT ID FROM `FNotification` WHERE Created>%lu)", t );
+	
+	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+	
+	return 0;
+}
+
+/**
  * Remove Notification by notification sent ID
  * 
  * @param nm pointer to NotificationManager
@@ -315,7 +339,8 @@ void NotificationManagerTimeoutThread( FThread *data )
 {
 	data->t_Launched = TRUE;
 	NotificationManager *nm = (NotificationManager *)data->t_Data;
-	int counter = 0;
+	int counter = 0;		// responsible for launching Notifcation checker
+	int cleanCoutner = 0;	// responisble for launching Notification DB cleaner
 	
 	while( data->t_Quit != TRUE )
 	{
@@ -325,6 +350,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		counter++;
 		if( counter > 15 )	// do checking every 15 seconds
 		{
+			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
 			Notification *notif = nm->nm_Notifications;
 			Notification *nroot = NULL;
@@ -355,6 +381,12 @@ void NotificationManagerTimeoutThread( FThread *data )
 			
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
+			
+			if( cleanCoutner > 2880 )	// 15 * 2880 = 43200 seconds around = 1 day
+			{
+				NotificationManagerDeleteOldNotificationDB( nm );
+				cleanCoutner = 0;
+			}
 		}
 	}
 	

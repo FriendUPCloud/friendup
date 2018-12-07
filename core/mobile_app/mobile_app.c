@@ -855,7 +855,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					}
 					
 					int msgsize = reqLengith + msgLen;
-					char *sndbuffer = FMalloc( reqLengith );
+					char *sndbuffer = FMalloc( msgsize );
 					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%s\",\"notie\":\"%s\"}}}", lns->ns_ID , jsonMessage );
 					
 					WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
