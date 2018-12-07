@@ -20,7 +20,7 @@ if( isset( $args->args->ValueNumber ) && isset( $args->args->ValueString ) )
 		// Get the fusergroup object
 		$o = new dbIO( 'FUserGroup' );
 		$o->Type     = 'Workgroup';
-		$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : 0 );
+		$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : null );
 		$o->Name     = $args->args->Name;
 		$o->UserID   = $User->ID;
 		$o->Save();
@@ -55,7 +55,7 @@ else if( $level == 'Admin' )
 	// Get the fusergroup object
 	$o = new dbIO( 'FUserGroup' );
 	$o->Type     = 'Workgroup';
-	$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : 0 );
+	$o->ParentID = ( $args->args->ParentID ? $args->args->ParentID : null );
 	$o->Name     = $args->args->Name;
 	$o->UserID   = $User->ID;
 	$o->Save();
