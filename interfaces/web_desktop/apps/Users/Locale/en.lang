@@ -68,6 +68,7 @@ i18n_see_workgroups                  : See workgroups
 i18n_setup_name                	     : Setup name
 i18n_template_name                   : Template name
 i18n_workgroup_name                  : Workgroup name
+i18n_workgroup_parent                : Workgroup parent
 i18n_named_workgroup                 : Write a name
 i18n_members                         : Workgroup members
 i18n_add_selected_members            : Add selected users

@@ -65,6 +65,7 @@ i18n_cancel                          : Avbryt
 i18n_save                            : Lagre
 i18n_add_members                     : Tilføy brukere
 i18n_workgroup_name                  : Arbeidsgruppens navn
+i18n_workgroup_parent                : Arbeidsgruppens foreldre
 i18n_see_workgroups                  : Se arbeidsgrupper
 i18n_setup_name                	     : Oppsett navn
 i18n_template_name                   : Malnavn
