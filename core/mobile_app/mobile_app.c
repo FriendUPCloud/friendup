@@ -188,7 +188,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
 		if( userConnections != NULL )
 		{
-			DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+			//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
 		}
 		MobileAppRemoveAppConnection( userConnections, connectionIndex);
 
