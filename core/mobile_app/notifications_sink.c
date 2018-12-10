@@ -149,7 +149,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 				if( e != NULL )
 				{
 					//DEBUG("Release: %p\n", e->fq_Data );
-					if( d->fq__Data != NULL )
+					if( e->fq__Data != NULL )
 					{
 						FFree( e->fq_Data );
 						e->fq_Data = NULL;
