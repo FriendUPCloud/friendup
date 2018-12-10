@@ -526,6 +526,7 @@ var WorkspaceInside = {
 		} );
 		this.conn.on( 'icon-change', handleIconChange );
 		this.conn.on( 'filesystem-change', handleFilesystemChange );
+		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
 		var selfConn = this.conn;
@@ -668,6 +669,11 @@ var WorkspaceInside = {
 				}
 				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
+		}
+		// Handle incoming push notifications and server notifications
+		function handleNotifications( msg )
+		{
+			console.log( 'Notification received, ', msg );
 		}
 	},
 	checkFriendNetwork: function()
