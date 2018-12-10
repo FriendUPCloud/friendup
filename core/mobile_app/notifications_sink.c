@@ -18,7 +18,7 @@
 
 extern SystemBase *SLIB;
 
-static Hashmap *_socket_auth_map; //maps websockets to boolean values that are true then the websocket is authenticated
+static Hashmap *globalSocketAuthMap; //maps websockets to boolean values that are true then the websocket is authenticated
 //static char *_auth_key;
 
 //#define WEBSOCKET_SEND_QUEUE
@@ -29,9 +29,19 @@ static char* GetWebsocketHash(struct lws *wsi);
 //static 
 int ProcessIncomingRequest(struct lws *wsi, char *data, size_t len, void *udata );
 static int ReplyError(struct lws *wsi, int error_code);
-static bool IsSocketAuthenticated(struct lws *wsi);
-static bool VerifyAuthKey( const char *key_name, const char *key_to_verify );
+static FBOOL IsSocketAuthenticated(struct lws *wsi);
+static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify );
 
+//
+// Data Queue WSI Mutex
+//
+
+typedef struct DataQWSIM{
+	struct lws			*d_Wsi;
+	pthread_mutex_t		d_Mutex;
+	FQueue				d_Queue;
+	FBOOL				d_Authenticated;
+}DataQWSIM;
 
 /**
  * Initialize Notification Sink
@@ -41,7 +51,7 @@ static void NotificationsSinkInit( void )
 {
 	DEBUG("Initializing mobile app module\n");
 
-	_socket_auth_map = HashmapNew();
+	globalSocketAuthMap = HashmapNew();
 }
 
 /*
@@ -92,16 +102,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		return 0;
 	}
 	
-#ifdef WEBSOCKET_SINK_SEND_QUEUE
-	if( reason == LWS_CALLBACK_ESTABLISHED 
-		 && man->man_Initialized == 0 )
-	{
-		pthread_mutex_init( &man->man_Mutex, NULL );
-		memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
-		FQInit( &(man->man_Queue) );
-		man->man_Initialized = 1;
-	}
-#endif
 	if( reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)user;
@@ -125,22 +125,24 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 #endif
 		return 0;
 	}
+	
+	char *websocketHash = GetWebsocketHash( wsi );
+	DataQWSIM *d = (DataQWSIM *)HashmapGetData( globalSocketAuthMap, websocketHash);
 
 	if( reason != LWS_CALLBACK_RECEIVE )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
-#ifdef WEBSOCKET_SINK_SEND_QUEUE
 			FQEntry *e = NULL;
-			FRIEND_MUTEX_LOCK( &man->man_Mutex );
-			FQueue *q = &(man->man_Queue);
+			FRIEND_MUTEX_LOCK( &d->d_Mutex );
+			FQueue *q = &(d->d_Queue);
 			
 			//DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
 			if( ( e = FQPop( q ) ) != NULL )
 			{
-				FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+				FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
@@ -163,19 +165,16 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 			else
 			{
 				//DEBUG("[websocket_app_callback] No message in queue\n");
-				FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+				FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 			}
-#endif
 		}
 		else
 		{
-#ifdef WEBSOCKET_SINK_SEND_QUEUE
-			if( man != NULL && man->man_Queue.fq_First != NULL )
+			if( d != NULL && d->d_Queue.fq_First != NULL )
 			{
 				//DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
-			}
-#endif			
+			}	
 			//DEBUG("Unimplemented callback, reason %d\n", reason);
 			return 0;
 		}
@@ -198,105 +197,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
  * @param len length of message
  * @return 0 when success, otherwise error number
  */
-/*
-static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
-{
-	DEBUG("Incoming notification request: <%*s>\n", (unsigned int)len, data);
-	MobileAppNotif *man = (MobileAppNotif *)udata;
-
-	jsmn_parser parser;
-	jsmn_init( &parser );
-	jsmntok_t tokens[16]; //should be enough
-
-	int tokens_found = jsmn_parse( &parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]) );
-
-	if( tokens_found < 1 )
-	{
-		return ReplyError(wsi, 5);
-	}
-
-	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
-
-	char *msg_type_string = json_get_element_string(&json, "t");
-	if( msg_type_string == NULL )
-	{
-		return ReplyError(wsi, 6);
-	}
-
-	if( strcmp(msg_type_string, "auth") == 0 )
-	{
-		char *auth_key = json_get_element_string(&json, "key");
-		if( auth_key == NULL )
-		{
-			return ReplyError(wsi, 7);
-		}
-		
-		if( VerifyAuthKey( auth_key ) == false )
-		{
-			return ReplyError( wsi, 8 );
-		}
-
-		//at this point the authentication key is verified and we can add this socket to the trusted list
-		char *websocket_hash = GetWebsocketHash( wsi ); //do not free, se HashmapPut comment
-
-		HashmapElement *e = HashmapGet( _socket_auth_map, websocket_hash );
-		if( e == NULL )
-		{
-			bool *auth_flag = FCalloc(1, sizeof(bool));
-			*auth_flag = true;
-			HashmapPut( _socket_auth_map, websocket_hash, auth_flag );
-
-		}
-		else
-		{ //this socket exists but the client somehow decided to authenticate again
-			*((bool*)e->data) = true;
-		}
-
-		char reply[ 128 ];
-		strcpy( reply + LWS_PRE, "{ \"t\" : \"auth\", \"status\" : 1}" );
-		unsigned int json_message_length = strlen( reply + LWS_PRE );
-
-		lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-
-		return 0;
-
-	}
-	else if( IsSocketAuthenticated( wsi ) )
-	{
-		char *username = json_get_element_string( &json, "username" );
-		char *channel_id = json_get_element_string( &json, "channel_id" );
-		char *title = json_get_element_string( &json, "title" );
-		char *message = json_get_element_string( &json, "message" );
-
-		if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
-		{
-			return ReplyError( wsi, 8 );
-		}
-
-		int notification_type = 0;
-
-		if( json_get_element_int( &json, "notification_type", &notification_type) == false )
-		{
-			return ReplyError( wsi, 9 );
-		}
-
-		int status = MobileAppNotifyUser( LSB, username, channel_id, "app_name", title, message, (MobileNotificationTypeT)notification_type, NULL, 0 );
-
-		char reply[128];
-		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
-		unsigned int json_message_length = strlen( reply + LWS_PRE );
-
-		lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-		return 0;
-
-	}
-	else
-	{
-		return ReplyError(wsi, 20);
-	}
-	return 0;
-}
-*/
 
 //static
 int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata )
@@ -384,43 +284,54 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				}
 				
 				//at this point the authentication key is verified and we can add this socket to the trusted list
-				char *websocket_hash = GetWebsocketHash( wsi ); //do not free, se HashmapPut comment
+				char *websocketHash = GetWebsocketHash( wsi ); //do not free, se HashmapPut comment
 				
-				HashmapElement *e = HashmapGet( _socket_auth_map, websocket_hash );
+				HashmapElement *e = HashmapGet( globalSocketAuthMap, websocketHash );
 				if( e == NULL )
 				{
-					bool *auth_flag = FCalloc(1, sizeof(bool));
-					*auth_flag = true;
-					HashmapPut( _socket_auth_map, websocket_hash, auth_flag );
+					//bool *auth_flag = FCalloc(1, sizeof(bool));
+					//*auth_flag = true;
+					
+					DataQWSIM *d = FCalloc( 1, sizeof( DataQWSIM ) );
+					if( d != NULL )
+					{
+						pthread_mutex_init( &d->d_Mutex, NULL );
+						d->d_Wsi = wsi;
+						memset( &(d->d_Queue), 0, sizeof( d->d_Queue ) );
+						FQInit( &(d->d_Queue) );
+						d->d_Authenticated = TRUE;
+						HashmapPut( globalSocketAuthMap, websocketHash, d );
+					}
 				}
 				else
 				{ //this socket exists but the client somehow decided to authenticate again
-					*((bool*)e->data) = true;
+					//*((bool*)e->data) = true;
+					DataQWSIM *d = (DataQWSIM *)e->data;
+					d->d_Authenticated = TRUE;
 				}
+				DataQWSIM *d = (DataQWSIM *)e->data;
 				
-#ifdef WEBSOCKET_SEND_QUEUE
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
 					en->fq_Data = FMalloc( 256 );
-					//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
 					strcpy( (char *)en->fq_Data, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
 					en->fq_Size = strlen( (char *)en->fq_Data );
 					
 					DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
 
-					FRIEND_MUTEX_LOCK( &man->man_Mutex );
-					FQPushFIFO( &(man->man_Queue), en );
-					FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+					FRIEND_MUTEX_LOCK( &d->d_Mutex );
+					FQPushFIFO( &(d->d_Queue), en );
+					FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 					lws_callback_on_writable( wsi );
 				}
-#else
+/*
 				char reply[ 256 ];
 				strcpy( reply + LWS_PRE, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
 				unsigned int json_message_length = strlen( reply + LWS_PRE );
 				
 				lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-#endif
+*/
 				//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, WebsocketNotificationConnCallback );
 				FFree( authKey );
 				
@@ -428,11 +339,14 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 			}
 			else if( IsSocketAuthenticated( wsi ) ) 
 			{
+				char *websocketHash = GetWebsocketHash( wsi );
+				DataQWSIM *d = (DataQWSIM *)HashmapGetData( globalSocketAuthMap, websocketHash);
+				
 				int dlen =  t[3].end - t[3].start;
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
 					DEBUG( "do Ping things\n" );
-#ifdef WEBSOCKET_SEND_QUEUE
+
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -443,18 +357,18 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 					
 						DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
 
-						FRIEND_MUTEX_LOCK( &man->man_Mutex );
-						FQPushFIFO( &(man->man_Queue), en );
-						FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+						FRIEND_MUTEX_LOCK( &d->d_Mutex );
+						FQPushFIFO( &(d->d_Queue), en );
+						FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 						lws_callback_on_writable( wsi );
 					}
-#else
+/*
 					char reply[ 128 ];
 					snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
 					
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
-#endif
+*/
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
@@ -542,7 +456,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 								}
 								
 								int status = MobileAppNotifyUserRegister( SLIB, username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
-#ifdef WEBSOCKET_SEND_QUEUE
+
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 								if( en != NULL )
 								{
@@ -553,18 +467,18 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									
 									DEBUG("[websocket_app_callback] Msg to send: %d\n", msgsize );
 									
-									FRIEND_MUTEX_LOCK( &man->man_Mutex );
-									FQPushFIFO( &(man->man_Queue), en );
-									FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+									FRIEND_MUTEX_LOCK( &d->d_Mutex );
+									FQPushFIFO( &(d->d_Queue), en );
+									FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 									lws_callback_on_writable( wsi );
 								}
-#else
+/*
 								char reply[256];
 								sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
 								unsigned int json_message_length = strlen( reply + LWS_PRE );
 								
 								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-#endif
+*/
 							}
 							else
 							{
@@ -624,7 +538,7 @@ void WebsocketNotificationsSetAuthKey( const char *key )
  */
 static int ReplyError( struct lws *wsi, int error_code )
 {
-	char response[LWS_PRE+64];
+	char response[ LWS_PRE+64 ];
 	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{\"type\":\"error\",\"data\":{\"status\":%d}}", error_code);
 	DEBUG("Error response: %s\n", response+LWS_PRE);
 
@@ -642,16 +556,16 @@ static int ReplyError( struct lws *wsi, int error_code )
  * @param wsi pointer to Websocket connection
  * @return true when socket is authenticated, otherwise false
  */
-static bool IsSocketAuthenticated( struct lws *wsi )
+static FBOOL IsSocketAuthenticated( struct lws *wsi )
 {
-	char *websocket_hash = GetWebsocketHash(wsi);
-	bool *socket_is_authenticated = (bool*)HashmapGetData(_socket_auth_map, websocket_hash);
-	FFree(websocket_hash);
-	if( socket_is_authenticated/*the pointer, not the value!*/ != NULL )
+	char *websocketHash = GetWebsocketHash( wsi );
+	DataQWSIM *d = (DataQWSIM *)HashmapGetData( globalSocketAuthMap, websocketHash);
+	FFree( websocketHash );
+	if( d/*the pointer, not the value!*/ != NULL )
 	{
-		return *socket_is_authenticated;
+		return d->d_Authenticated;
 	}
-	return false;
+	return FALSE;
 }
 
 /**
@@ -660,7 +574,7 @@ static bool IsSocketAuthenticated( struct lws *wsi )
  * @param key_to_verify pointer to string with key
  * @return true when key passed verification, otherwise false
  */
-static bool VerifyAuthKey( const char *key_name, const char *key_to_verify )
+static FBOOL VerifyAuthKey( const char *key_name, const char *key_to_verify )
 {
 	DEBUG("VerifyAuthKey - key_name <%s>\n", key_name );
 	DEBUG("VerifyAuthKey - key_to_verify <%s>\n", key_to_verify );
@@ -685,16 +599,18 @@ static bool VerifyAuthKey( const char *key_name, const char *key_to_verify )
  */
 static void WebsocketRemove( struct lws *wsi )
 {
-	char *websocket_hash = GetWebsocketHash(wsi);
-	bool *socket_is_authenticated = HashmapGetData(_socket_auth_map, websocket_hash);
+	char *websocketHash = GetWebsocketHash(wsi);
+	DataQWSIM *d = (DataQWSIM *) HashmapGetData( globalSocketAuthMap, websocketHash );
 
-	if( socket_is_authenticated/*the pointer, not the value!*/ != NULL )
+	if( d != NULL )
 	{
-		HashmapRemove(_socket_auth_map, websocket_hash);
-		FFree(socket_is_authenticated);
+		HashmapRemove( globalSocketAuthMap, websocketHash );
+		pthread_mutex_destroy( &(d->d_Mutex) );
+		FQDeInitFree( &(d->d_Queue) );
+		FFree( d );
 	}	
 
-	FFree(websocket_hash);
+	FFree(websocketHash);
 }
 
 /**

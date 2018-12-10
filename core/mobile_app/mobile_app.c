@@ -506,75 +506,6 @@ static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
 }
 
 /**
- * Mobile App Ping thread
- *
- * @param a pointer to thread data (not used)
- * @return NULL
- */
-static void* MobileAppPingThread( void *a __attribute__((unused)) )
-{
-	pthread_detach( pthread_self() );
-	DEBUG("App ping thread started\n");
-
-	while (1)
-	{
-		DEBUG("Checking app communication times\n");
-
-		int users_count = HashmapLength(globalUserToAppConnectionsMap);
-		bool check_okay = true;
-
-		unsigned int index = 0;
-
-		HashmapElement *element = NULL;
-		while( (element = HashmapIterate(globalUserToAppConnectionsMap, &index)) != NULL )
-		{
-			UserMobileAppConnectionsT *user_connections = element->data;
-			if( user_connections == NULL )
-			{
-				//the hashmap was invalidated while we were reading it? let's try another ping session....
-				check_okay = false;
-				break;
-			}
-
-			pthread_mutex_lock(&globalSessionRemovalMutex);
-			//mutex is needed because a connection can be removed at any time within websocket_app_callback,
-			//so a race condition would lead to null-pointers and stuff...
-
-			//iterate through all user connections
-			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-			{
-				if (user_connections->connection[i])
-				{ //see if a connection exists
-					if( time(NULL) - user_connections->connection[i]->mac_LastCommunicationTimestamp > KEEPALIVE_TIME_s)
-					{
-						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
-
-						//send ping
-						char request[LWS_PRE+64];
-						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
-						//DEBUG("Request: %s\n", request+LWS_PRE);
-#ifndef WEBSOCKET_SEND_QUEUE
-						lws_write(user_connections->connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
-#else
-						WriteMessage( user_connections->connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
-#endif
-					}
-				}
-			} //end of user connection loops
-			pthread_mutex_unlock(&globalSessionRemovalMutex);
-		} //end of users loop
-
-		if (check_okay)
-		{
-			sleep(KEEPALIVE_TIME_s);
-		}
-	}
-
-	pthread_exit(0);
-	return NULL; //should not exit anyway
-}
-
-/**
  * Add user connectiono to global list
  *
  * @param wsi pointer to Websocket connection
@@ -1422,8 +1353,74 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	return 0;
 }
 
+/**
+ * Mobile App Ping thread
+ *
+ * @param a pointer to thread data (not used)
+ * @return NULL
+ */
+static void* MobileAppPingThread( void *a __attribute__((unused)) )
+{
+	pthread_detach( pthread_self() );
+	DEBUG("App ping thread started\n");
 
+	while (1)
+	{
+		DEBUG("Checking app communication times\n");
 
+		int users_count = HashmapLength(globalUserToAppConnectionsMap);
+		bool check_okay = true;
+
+		unsigned int index = 0;
+
+		HashmapElement *element = NULL;
+		while( (element = HashmapIterate(globalUserToAppConnectionsMap, &index)) != NULL )
+		{
+			UserMobileAppConnectionsT *user_connections = element->data;
+			if( user_connections == NULL )
+			{
+				//the hashmap was invalidated while we were reading it? let's try another ping session....
+				check_okay = false;
+				break;
+			}
+
+			pthread_mutex_lock(&globalSessionRemovalMutex);
+			//mutex is needed because a connection can be removed at any time within websocket_app_callback,
+			//so a race condition would lead to null-pointers and stuff...
+
+			//iterate through all user connections
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+			{
+				if (user_connections->connection[i])
+				{ //see if a connection exists
+					if( time(NULL) - user_connections->connection[i]->mac_LastCommunicationTimestamp > KEEPALIVE_TIME_s)
+					{
+						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
+
+						//send ping
+						char request[LWS_PRE+64];
+						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
+						//DEBUG("Request: %s\n", request+LWS_PRE);
+#ifndef WEBSOCKET_SEND_QUEUE
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
+#else
+						WriteMessage( user_connections->connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
+#endif
+					}
+				}
+			} //end of user connection loops
+			pthread_mutex_unlock(&globalSessionRemovalMutex);
+		} //end of users loop
+
+		if (check_okay)
+		{
+			sleep(KEEPALIVE_TIME_s);
+		}
+	}
+
+	pthread_exit(0);
+	return NULL; //should not exit anyway
+}
 
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
