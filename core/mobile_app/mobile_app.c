@@ -207,7 +207,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
-//#ifdef WEBSOCKET_SEND_QUEUE
+#ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
 			FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) );
 			//FQueue *q = &(man->man_Queue);
@@ -242,7 +242,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				DEBUG("[websocket_app_callback] No message in queue\n");
 				FRIEND_MUTEX_UNLOCK(&appConnection->mac_Mutex);
 			}
-//#endif
+#endif
 		}
 		else
 		{
@@ -553,9 +553,11 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 						char request[LWS_PRE+64];
 						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
 						//DEBUG("Request: %s\n", request+LWS_PRE);
-						//lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
-						
-						WriteMessage( user_connections->connection[i], (unsigned char*)request, strlen(request) );
+#ifndef WEBSOCKET_SEND_QUEUE
+						lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
+#else
+						WriteMessage( user_connections->connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
+#endif
 					}
 				}
 			} //end of user connection loops
@@ -951,6 +953,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						int msgSendLength;
 						
+#ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
 							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -959,9 +962,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
+
 						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
-						/*
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -971,7 +974,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						*/
+#endif
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -993,6 +996,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						int msgSendLength;
 						
+#ifdef WEBSOCKET_SEND_QUEUE
 						if( extraString )
 						{ //TK-1039
 							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1004,7 +1008,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						
 						
 						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
-						/*
+#else
 						if( extraString )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1014,7 +1018,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						*/
+#endif
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
@@ -1192,13 +1196,14 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
 							{
+#ifdef WEBSOCKET_SEND_QUEUE
 								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
 								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								/*
+#else
 								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-								*/
+#endif
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1218,13 +1223,14 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
 							{
+#ifdef WEBSOCKET_SEND_QUEUE
 								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
 								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								/*
+#else
 								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-								*/
+#endif
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1255,7 +1261,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
-						
+#ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1266,7 +1272,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						}
 						
 						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						/*
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1276,7 +1282,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						*/
+#endif
 						
 						NotificationSentDelete( lns );
 					}
@@ -1295,7 +1301,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
-						
+#ifdef WEBSOCKET_SEND_QUEUE
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1306,7 +1312,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						}
 						
 						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						/*
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1316,7 +1322,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						*/
+#endif
 						
 						NotificationSentDelete( lns );
 					}
