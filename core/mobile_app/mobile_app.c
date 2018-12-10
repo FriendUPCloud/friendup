@@ -126,7 +126,7 @@ static void MobileAppInit( void )
 
 	pthread_mutex_init( &_session_removal_mutex, NULL );
 
-	pthread_create( &_ping_thread, NULL/*default attributes*/, MobileAppPingThread, NULL/*extra args*/ );
+	//pthread_create( &_ping_thread, NULL/*default attributes*/, MobileAppPingThread, NULL/*extra args*/ );
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
 	signal( SIGUSR1, MobileAppTestSignalHandler );
