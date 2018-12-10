@@ -174,7 +174,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			DEBUG("Websocket close - no user session found for this socket\n");
 			return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 		}
-		FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
+		FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
 		
 		/*
 		if( man != NULL && man->man_Initialized == 1 )
@@ -191,7 +191,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 
 		HashmapRemove(globalWebsocketToUserConnectionsMap, websocketHash);
 
-		FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 
 		FFree(websocketHash);
 		return 0;
@@ -340,7 +340,9 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					DEBUG("Response: %s\n", response+LWS_PRE);
 					
 #ifndef WEBSOCKET_SEND_QUEUE
+					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
 #else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
@@ -351,9 +353,9 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						
 						DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
-						FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+						FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 						FQPushFIFO( &(man->man_Queue), en );
-						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+						FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
 						lws_callback_on_writable( wsi );
 					}
 #endif
@@ -372,7 +374,9 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
 					DEBUG("Response: %s\n", response+LWS_PRE);
 #ifndef WEBSOCKET_SEND_QUEUE
+					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
 #else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
