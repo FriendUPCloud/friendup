@@ -449,8 +449,11 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
 		DEBUG("Cleaning up before closing socket\n");
 		UserMobileAppConnectionsT *user_connections = appConnection->mac_UserConnections;
 		unsigned int connection_index = appConnection->mac_UserConnectionIndex;
-		DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
-		MobileAppRemoveAppConnection(user_connections, connection_index);
+		if( user_connections != NULL )
+		{
+			DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
+		}
+		MobileAppRemoveAppConnection( user_connections, connection_index );
 	}
 
 	return -1;
