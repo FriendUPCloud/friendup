@@ -286,30 +286,31 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				//at this point the authentication key is verified and we can add this socket to the trusted list
 				char *websocketHash = GetWebsocketHash( wsi ); //do not free, se HashmapPut comment
 				
+				DataQWSIM *d = NULL;
 				HashmapElement *e = HashmapGet( globalSocketAuthMap, websocketHash );
 				if( e == NULL )
 				{
 					//bool *auth_flag = FCalloc(1, sizeof(bool));
 					//*auth_flag = true;
 					
-					DataQWSIM *d = FCalloc( 1, sizeof( DataQWSIM ) );
-					if( d != NULL )
+					DataQWSIM *locd = FCalloc( 1, sizeof( DataQWSIM ) );
+					if( locd != NULL )
 					{
-						pthread_mutex_init( &d->d_Mutex, NULL );
-						d->d_Wsi = wsi;
-						memset( &(d->d_Queue), 0, sizeof( d->d_Queue ) );
-						FQInit( &(d->d_Queue) );
-						d->d_Authenticated = TRUE;
-						HashmapPut( globalSocketAuthMap, websocketHash, d );
+						pthread_mutex_init( &locd->d_Mutex, NULL );
+						locd->d_Wsi = wsi;
+						memset( &(locd->d_Queue), 0, sizeof( locd->d_Queue ) );
+						FQInit( &(locd->d_Queue) );
+						locd->d_Authenticated = TRUE;
+						HashmapPut( globalSocketAuthMap, websocketHash, locd );
+						d = locd;
 					}
 				}
 				else
 				{ //this socket exists but the client somehow decided to authenticate again
 					//*((bool*)e->data) = true;
-					DataQWSIM *d = (DataQWSIM *)e->data;
+					d = (DataQWSIM *)e->data;
 					d->d_Authenticated = TRUE;
 				}
-				DataQWSIM *d = (DataQWSIM *)e->data;
 				
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
