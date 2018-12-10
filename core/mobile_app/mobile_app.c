@@ -128,8 +128,8 @@ static void MobileAppInit( void )
 {
 	DEBUG("Initializing mobile app module\n");
 
-	   globalUserToAppConnectionsMap = HashmapNew();
-	   globalWebsocketToUserConnectionsMap = HashmapNew();
+	globalUserToAppConnectionsMap = HashmapNew();
+	globalWebsocketToUserConnectionsMap = HashmapNew();
 
 	pthread_mutex_init( &globalSessionRemovalMutex, NULL );
 
@@ -169,10 +169,10 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		char *websocketHash = MobileAppGetWebsocketHash( wsi );
 		MobileAppConnectionT *appConnection = HashmapGetData(globalWebsocketToUserConnectionsMap, websocketHash);
 
-		if (appConnection == NULL)
+		if( appConnection == NULL )
 		{
 			DEBUG("Websocket close - no user session found for this socket\n");
-			return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_SESSION);
+			return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 		}
 		FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 		
@@ -419,21 +419,32 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
  */
 static int MobileAppReplyError(struct lws *wsi, int error_code)
 {
-	char response[LWS_PRE+32];
-	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"error\", \"status\":%d}", error_code);
-	DEBUG("Error response: %s\n", response+LWS_PRE);
+	if( error_code == MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION )
+	{
+		
+	}
+	else
+	{
+		char response[LWS_PRE+32];
+		snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"error\", \"status\":%d}", error_code);
+		DEBUG("Error response: %s\n", response+LWS_PRE);
 
-	DEBUG("WSI %p\n", wsi);
-	lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+#ifdef WEBSOCKET_SEND_QUEUE
+		//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+#else
+		DEBUG("WSI %p\n", wsi);
+		lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+#endif
+	}
 
-	char *websocket_hash = MobileAppGetWebsocketHash( wsi );
-	MobileAppConnectionT *app_connection = HashmapGetData(globalWebsocketToUserConnectionsMap, websocket_hash);
-	FFree(websocket_hash);
-	if( app_connection )
+	char *websocketHash = MobileAppGetWebsocketHash( wsi );
+	MobileAppConnectionT *appConnection = HashmapGetData(globalWebsocketToUserConnectionsMap, websocketHash);
+	FFree(websocketHash);
+	if( appConnection )
 	{
 		DEBUG("Cleaning up before closing socket\n");
-		UserMobileAppConnectionsT *user_connections = app_connection->mac_UserConnections;
-		unsigned int connection_index = app_connection->mac_UserConnectionIndex;
+		UserMobileAppConnectionsT *user_connections = appConnection->mac_UserConnections;
+		unsigned int connection_index = appConnection->mac_UserConnectionIndex;
 		DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
 		MobileAppRemoveAppConnection(user_connections, connection_index);
 	}
@@ -529,31 +540,12 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
 
 						//send ping
-						//char request[LWS_PRE+64];
-						//strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
+						char request[LWS_PRE+64];
+						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
 						//DEBUG("Request: %s\n", request+LWS_PRE);
 						//lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
 						
-						//MobileAppNotif *man = (MobileAppNotif *) user_connections->connection[i]->user_data;
-						//if( man != NULL )
-						{
-							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-							if( en != NULL )
-							{
-								en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-								memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
-								en->fq_Size = LWS_PRE+64;
-
-								if( FRIEND_MUTEX_LOCK( &user_connections->connection[i]->mac_Mutex ) == 0 )
-								{
-									FQPushFIFO( &(user_connections->connection[i]->mac_Queue), en );
-									FRIEND_MUTEX_UNLOCK( &user_connections->connection[i]->mac_Mutex );
-								}
-								lws_callback_on_writable( user_connections->connection[i]->mac_WebsocketPtr );
-								//FQPushFIFO( &(man->man_Queue), en );
-								//lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
-							}
-						}
+						WriteMessage( user_connections->connection[i], (unsigned char*)request, strlen(request) );
 					}
 				}
 			} //end of user connection loops
