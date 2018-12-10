@@ -96,8 +96,16 @@ function saveWorkgroup( callback )
 {
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
+<<<<<<< HEAD
 		ParentID: ( ge( 'pWorkgroupParent' ).value ? ge( 'pWorkgroupParent' ).value : null ),
 		//ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+=======
+<<<<<<< HEAD
+		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+=======
+		ParentID: ( ge( 'pWorkgroupParent' ).value ? ge( 'pWorkgroupParent' ).value : null ),
+>>>>>>> master
+>>>>>>> 5bbd43d488c0e29e1ca5f4f96fc36a7f450e4d62
 		Name: ge( 'pWorkgroupName' ).value,
 		Members: ge( 'pMembers' ).value
 	};

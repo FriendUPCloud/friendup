@@ -1387,8 +1387,16 @@ function AddWorkgroup()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
+<<<<<<< HEAD
 		//var wg = '<option value="">none</option>';
 		var wg = '<option value="0">none</option>';
+=======
+<<<<<<< HEAD
+		var wg = '<option value="0">none</option>';
+=======
+		var wg = '<option value="">none</option>';
+>>>>>>> master
+>>>>>>> 5bbd43d488c0e29e1ca5f4f96fc36a7f450e4d62
 		
 		try
 		{
@@ -1458,10 +1466,17 @@ function EditWorkgroup( id )
 		mm.onExecuted = function( ee, dd )
 		{
 <<<<<<< HEAD
+<<<<<<< HEAD
 			var wg = '<option value="">none</option>';
 =======
 			var wg = '<option value="0">none</option>';
 >>>>>>> f84f146353b4e29e574fd2023af5bcdfa1d1eb97
+=======
+			var wg = '<option value="0">none</option>';
+=======
+			var wg = '<option value="">none</option>';
+>>>>>>> master
+>>>>>>> 5bbd43d488c0e29e1ca5f4f96fc36a7f450e4d62
 			
 			try
 			{
@@ -1524,10 +1539,17 @@ function saveWorkgroup( callback, tmp )
 	var o = {
 		ID: ge( 'pWorkgroupID' ).value > 0 ? ge( 'pWorkgroupID' ).value : '0',
 <<<<<<< HEAD
+<<<<<<< HEAD
 		ParentID: ( ge( 'pWorkgroupParent' ).value ? ge( 'pWorkgroupParent' ).value : null ),
 =======
 		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
 >>>>>>> f84f146353b4e29e574fd2023af5bcdfa1d1eb97
+=======
+		ParentID: ( ge( 'pWorkgroupParent' ) ? ge( 'pWorkgroupParent' ).value : '0' ),
+=======
+		ParentID: ( ge( 'pWorkgroupParent' ).value ? ge( 'pWorkgroupParent' ).value : null ),
+>>>>>>> master
+>>>>>>> 5bbd43d488c0e29e1ca5f4f96fc36a7f450e4d62
 		Name: ge( 'pWorkgroupName' ).value,
 		Setup: ( ge( 'pWorkgroupSetup' ) ? ge( 'pWorkgroupSetup' ).value : '' ),
 		Members: ge( 'pMembers' ).value
