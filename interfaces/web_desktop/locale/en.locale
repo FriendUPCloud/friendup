@@ -494,7 +494,7 @@ i18n_dir_btn_listview                   : List
 #Sessions ----------------------------------------------------------------------
 
 i18n_session_killed                     : Your session was killed
-i18n_session_killed_desc                : Trying to fetch a new session
+i18n_session_killed_desc                : You are now being logged out
 i18n_session_expired                    : Your session expired
 i18n_session_expired_desc               : Trying to fetch a new session
 i18n_no_other_sessions_available        : No other sessions available

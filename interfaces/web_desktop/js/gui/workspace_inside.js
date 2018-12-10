@@ -526,6 +526,7 @@ var WorkspaceInside = {
 		} );
 		this.conn.on( 'icon-change', handleIconChange );
 		this.conn.on( 'filesystem-change', handleFilesystemChange );
+		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
 		var selfConn = this.conn;
@@ -668,6 +669,11 @@ var WorkspaceInside = {
 				}
 				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
 			}
+		}
+		// Handle incoming push notifications and server notifications
+		function handleNotifications( msg )
+		{
+			console.log( 'Notification received, ', msg );
 		}
 	},
 	checkFriendNetwork: function()
@@ -3152,18 +3158,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 				// Add system on top (after Ram: if it exists)
 				newIcons.push( {
-					Title:	'System',
+					Title:	  'System',
 					Volume:   'System:',
-					Path:	 'System:',
-					Type:	 'Door',
-					Handler: 'built-in',
-					Driver: 'Dormant',
+					Path:	  'System:',
+					Type:	  'Door',
+					Handler:  'built-in',
+					Driver:   'Dormant',
 					MetaType: 'Directory',
-					IconClass: 'SystemDisk',
-					ID:	   'system', // TODO: fix
+					IconClass:'SystemDisk',
+					ID:	      'system', // TODO: fix
 					Mounted:  true,
-					Visible: globalConfig.hiddenSystem == true ? false : true,
-					Door:	  new DoorSystem( 'System:' )
+					Visible:  globalConfig.hiddenSystem == true ? false : true,
+					Door:	  Friend.DoorSystem
 				} );
 				
 				if( returnCode == 'ok' )
@@ -6524,9 +6530,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideLauncherError: function()
 	{
-		Workspace.launcherWindow.setFlag( 'max-height', 80 );
-		Workspace.launcherWindow.setFlag( 'height', 80 );
-		ge( 'launch_error' ).innerHTML = '';
+		if( Workspace.launcherWindow.setFlag )
+		{
+			Workspace.launcherWindow.setFlag( 'max-height', 80 );
+			Workspace.launcherWindow.setFlag( 'height', 80 );
+			ge( 'launch_error' ).innerHTML = '';
+		}
 	},
 	launch: function( app, hidecallback )
 	{
@@ -6924,7 +6933,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					console.log( 'The session has gone away! Relogin using login().' );
+					//console.log( 'The session has gone away! Relogin using login().' );
 					Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}

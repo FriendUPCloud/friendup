@@ -855,25 +855,29 @@ function apiWrapper( event, force )
 						var door = false;
 						for (var a = 0; a < DormantMaster.appDoors.length; a++)
 						{
-							if (DormantMaster.appDoors[a].title.toLowerCase() == msg.executable.split(':')[0].toLowerCase())
+							var doorTest = DormantMaster.appDoors[ a ].getDoor();
+							if( doorTest )
 							{
-								door = DormantMaster.appDoors[a];
+								if( doorTest.Title.split( ':' )[0].toLowerCase() == msg.executable.split( ':' )[ 0 ].toLowerCase() )
+								{
+									door = DormantMaster.appDoors[ a ];
+								}
 							}
 						}
-						if (door)
+						if( door )
 						{
 							var path = '';
-							if (msg.executable.indexOf('/'))
+							if( msg.executable.indexOf( '/' ) )
 							{
-								path = msg.executable.split('/');
+								path = msg.executable.split( '/' );
 								path.pop();
-								path = path.join('/') + '/';
+								path = path.join( '/' ) + '/';
 							}
 							else
 							{
-								path = msg.executable.split(':')[0] + ':';
+								path = msg.executable.split( ':' )[ 0 ] + ':';
 							}
-							door.getDirectory(path, function (data)
+							door.getDirectory( path, function( data )
 							{
 								// Callback
 								for (var b = 0; b < data.length; b++)

@@ -150,6 +150,7 @@ window.Shell = function( appObject )
 			}
 		
 			var doors = DormantMaster.getDoors();
+			
 			if( doors )
 			{
 				for( var a in doors )
@@ -1744,7 +1745,7 @@ window.Shell = function( appObject )
 		// Catch all
 		else
 		{
-			console.log( 'This one didn\'t compute!', cmd );
+			//console.log( 'This one didn\'t compute!', cmd );
 
 			// If all else fails
 			function lastCallback()
@@ -1960,9 +1961,20 @@ window.Shell = function( appObject )
 				}
 				else
 				{
+					// Check command
+					var command = cmd[0];
+					if( command.indexOf( '/' ) )
+					{
+						command = command.split( '/' ).pop();
+					}
+					else if( command.indexOf( ':' ) )
+					{
+						command = command.split( ':' ).pop();
+					}
+				
 					for( var a in dirs )
 					{
-						if( dirs[a].Title.toLowerCase() == cmd[0] )
+						if( dirs[a].Title.toLowerCase() == command )
 						{
 							var args = [];
 							for( var aa = 1; aa < cmd.length; aa++ )
@@ -1971,17 +1983,17 @@ window.Shell = function( appObject )
 							var cid = addWrapperCallback( function( msg )
 							{
 								var resp = msg ? msg.response : false;
-								dcallback( resp ? resp : false, { path: path } );
+								dcallback( resp ? true : false, resp ? { response: resp, path: path } : { response: 'Command completed.' } );
 							} );
-
+							
 							var msgHere = {
 								applicationName: tt.app.applicationName,
 								applicationId: tt.app.applicationId,
 								type: 'dormantmaster',
 								method: 'execute',
-								executable: dirs[a].Path + cmd[0],
+								executable: dirs[a].Path + command,
 								doorId: dirs[a].Dormant.doorId,
-								dormantCommand: cmd[0],
+								dormantCommand: command,
 								dormantArgs: args,
 								callback: cid
 							};
