@@ -681,7 +681,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 
 	if( user_connections->connection[connection_to_replace_index] != NULL )
 	{
-		MobileAppRemoveAppConnection(user_connections, connection_to_replace_index);
+		MobileAppRemoveAppConnection( user_connections, connection_to_replace_index );
 	}
 
 	DEBUG("Adding connection to slot %d\n", connection_to_replace_index);
@@ -761,7 +761,6 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 			connectionIndex,
 			connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
 	
-
 	FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
 	pthread_mutex_destroy( &(connections->connection[connectionIndex]->mac_Mutex) );
 
@@ -899,7 +898,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					char *sndbuffer = FMalloc( msgsize );
 					
 					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notification_data\":\"%s\"}}}", lns->ns_ID , jsonMessage );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":\"%s\"}}}", lns->ns_ID , jsonMessage );
 					
 					DEBUG("\t\t\t\t\t\t\t sndbuffer '%s' len %d \n", sndbuffer, msgsize );
 					
