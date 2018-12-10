@@ -103,8 +103,8 @@ static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char 
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
-			DEBUG("Message added to queue\n");
-			en->fq_Data = FMalloc( len+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			DEBUG("Message added to queue: '%s'\n", msg );
+			en->fq_Data = FMalloc( len+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
 	
@@ -218,8 +218,8 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
-				int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-				DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+				int res = lws_write( wsi, t, e->fq_Size, LWS_WRITE_TEXT );
+				DEBUG("[websocket_app_callback] message sent: %s len %d\n", (char *)t, res );
 
 				int ret = lws_send_pipe_choked( wsi );
 				
