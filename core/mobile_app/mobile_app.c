@@ -153,7 +153,7 @@ static void MobileAppInit( void )
  */
 int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user __attribute__((unused)), void *in, size_t len )
 {
-	DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	MobileAppNotif *man = (MobileAppNotif *) user;
 
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
@@ -167,7 +167,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 	{
 		char *websocketHash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *appConnection = HashmapGetData(globalWebsocketToUserConnectionsMap, websocketHash);
+		MobileAppConnectionT *appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
 
 		if( appConnection == NULL )
 		{

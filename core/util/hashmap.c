@@ -301,11 +301,13 @@ int HashmapPut( Hashmap* in, char* key, void* value )
 	if( in->data[index].data )
 	{
 		FFree( in->data[index].data );
+		in->data[index].data = NULL;
 	}
 	in->data[index].data = value;
 	if( in->data[index].key )
 	{
 		FFree( in->data[index].key );
+		in->data[index].key = NULL;
 	}
 	in->data[index].key = key;
 	in->data[index].inUse = TRUE;
