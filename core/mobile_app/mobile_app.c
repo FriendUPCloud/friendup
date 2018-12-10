@@ -32,7 +32,7 @@
 void MobileAppTestSignalHandler(int signum);
 #endif
 
-//#define WEBSOCKET_SEND_QUEUE
+#define WEBSOCKET_SEND_QUEUE
 
 //There is a need for two mappings, user->mobile connections and mobile connection -> user
 
@@ -342,11 +342,11 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
 					DEBUG("Response: %s\n", response+LWS_PRE);
 					
-//#ifndef WEBSOCKET_SEND_QUEUE
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
 					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
 					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
-/*#else
+#else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -361,7 +361,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
 						lws_callback_on_writable( wsi );
 					}
-#endif*/
+#endif
 				}
 				while (0);
 			break;
@@ -376,11 +376,11 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					char response[LWS_PRE+64];
 					strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
 					DEBUG("Response: %s\n", response+LWS_PRE);
-//#ifndef WEBSOCKET_SEND_QUEUE
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
 					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
 					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
-/*#else
+#else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -395,7 +395,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
 						lws_callback_on_writable( wsi );
 					}
-#endif*/
+#endif
 				}
 				while (0);
 			break;

@@ -21,7 +21,7 @@ extern SystemBase *SLIB;
 static Hashmap *_socket_auth_map; //maps websockets to boolean values that are true then the websocket is authenticated
 //static char *_auth_key;
 
-#define WEBSOCKET_SEND_QUEUE
+//#define WEBSOCKET_SEND_QUEUE
 
 static void NotificationsSinkInit(void);
 static void WebsocketRemove(struct lws *wsi);
@@ -92,6 +92,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		return 0;
 	}
 	
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 	if( reason == LWS_CALLBACK_ESTABLISHED 
 		 && man->man_Initialized == 0 )
 	{
@@ -100,12 +101,12 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		FQInit( &(man->man_Queue) );
 		man->man_Initialized = 1;
 	}
-
+#endif
 	if( reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		WebsocketRemove( wsi );
-		
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 		if( man != NULL )
 		{
 			if( man->man_Connection != NULL )
@@ -121,7 +122,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 			man->man_Initialized = 0;
 		}
 		pthread_mutex_destroy( &man->man_Mutex );
-		
+#endif
 		return 0;
 	}
 
@@ -130,7 +131,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
-#ifdef WEBSOCKET_SEND_QUEUE
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 			FQEntry *e = NULL;
 			FRIEND_MUTEX_LOCK( &man->man_Mutex );
 			FQueue *q = &(man->man_Queue);
@@ -168,12 +169,13 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		}
 		else
 		{
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 			if( man != NULL && man->man_Queue.fq_First != NULL )
 			{
 				//DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
 			}
-			
+#endif			
 			//DEBUG("Unimplemented callback, reason %d\n", reason);
 			return 0;
 		}

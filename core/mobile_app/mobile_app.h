@@ -70,13 +70,17 @@ static char *MobileAppType[] =
 	"Windows"
 };
 
+//#define WEBSOCKET_SINK_SEND_QUEUE
+
 typedef struct MobileAppNotif
 {
+	int						man_Type;
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 	FQueue					man_Queue;
 	int						man_Initialized;
-	int						man_Type;
 	WebsocketClient			*man_Connection;
 	pthread_mutex_t			man_Mutex;
+#endif
 }MobileAppNotif;
 
 /**
