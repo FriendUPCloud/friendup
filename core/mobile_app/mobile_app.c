@@ -899,7 +899,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					char *sndbuffer = FMalloc( msgsize );
 					
 					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notie\":\"%s\"}}}", lns->ns_ID , jsonMessage );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notification_data\":\"%s\"}}}", lns->ns_ID , jsonMessage );
 					
 					DEBUG("\t\t\t\t\t\t\t sndbuffer '%s' len %d \n", sndbuffer, msgsize );
 					
