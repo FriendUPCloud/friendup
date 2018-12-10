@@ -37,7 +37,8 @@ typedef struct UserManagerInterface
 	FBOOL				(*UMUserIsAdminByAuthID)( UserManager *smgr, Http *r, char *auth );
 	User				*(*UMUserCheckExistsInMemory)( UserManager *smgr, User *u );
 	FBOOL				(*UMUserExistByNameDB)( UserManager *smgr, const char *name );
-	User				*(*UMGetUserByName)( UserManager *um, char *name );
+	User				*(*UMGetUserByName)( UserManager *um, const char *name );
+	FULONG				(*UMGetUserIDByName)( UserManager *um, const char *name );
 	User				*(*UMGetUserByID)( UserManager *um, FULONG id );
 	void				*(*UMUserGetByAuthIDDB)( UserManager *um, const char *authId );
 	User				*(*UMGetAllUsersDB)( UserManager *um );
@@ -80,6 +81,7 @@ static inline void UserManagerInterfaceInit( UserManagerInterface *si )
 	si->UMRemoveUser = UMRemoveUser;
 	si->UMWebRequest = UMWebRequest;
 	si->UMGetUserByNameDB = UMGetUserByNameDB;
+	si->UMGetUserIDByName = UMGetUserIDByName;
 	si->UMGetAllowedLoginTime = UMGetAllowedLoginTime;
 	si->UMGetLoginPossibilityLastLogins = UMGetLoginPossibilityLastLogins;
 	si->UMStoreLoginAttempt = UMStoreLoginAttempt;

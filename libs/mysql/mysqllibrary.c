@@ -578,7 +578,7 @@ int Update( struct SQLLibrary *l, FULONG *descr, void *data )
 		//strcat( tmpQuery, tmpvar );
 		BufStringAddSize( querybs, tmpvar, sprintfsize );
 	}
-	DEBUG("[MYSQLLibrary] UPDATE QUERY '%s'\n", tmpQuery );
+	DEBUG("[MYSQLLibrary] UPDATE QUERY '%s'\n", querybs->bs_Buffer );
 	
 	if( mysql_query( l->con.sql_Con, querybs->bs_Buffer ) )
 	{

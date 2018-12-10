@@ -21,6 +21,7 @@ extern SystemBase *SLIB;
 static Hashmap *_socket_auth_map; //maps websockets to boolean values that are true then the websocket is authenticated
 //static char *_auth_key;
 
+//#define WEBSOCKET_SEND_QUEUE
 
 static void NotificationsSinkInit(void);
 static void WebsocketRemove(struct lws *wsi);
@@ -82,7 +83,7 @@ void WebsocketNotificationConnCallback( struct WebsocketClient *wc, char *msg, i
 int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len )
 {
 	MobileAppNotif *man = (MobileAppNotif *)user;
-	DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("notifications websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
 	{
@@ -91,6 +92,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		return 0;
 	}
 	
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 	if( reason == LWS_CALLBACK_ESTABLISHED 
 		 && man->man_Initialized == 0 )
 	{
@@ -99,12 +101,12 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		FQInit( &(man->man_Queue) );
 		man->man_Initialized = 1;
 	}
-
+#endif
 	if( reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE )
 	{
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		WebsocketRemove( wsi );
-		
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 		if( man != NULL )
 		{
 			if( man->man_Connection != NULL )
@@ -120,7 +122,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 			man->man_Initialized = 0;
 		}
 		pthread_mutex_destroy( &man->man_Mutex );
-		
+#endif
 		return 0;
 	}
 
@@ -129,11 +131,12 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 			FQEntry *e = NULL;
 			FRIEND_MUTEX_LOCK( &man->man_Mutex );
 			FQueue *q = &(man->man_Queue);
 			
-			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+			//DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
 			
 			if( ( e = FQPop( q ) ) != NULL )
 			{
@@ -142,32 +145,38 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 				t[ e->fq_Size+1 ] = 0;
 
 				int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-				DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+				//DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
 
 				int v = lws_send_pipe_choked( wsi );
 				
 				if( e != NULL )
 				{
-					DEBUG("Release: %p\n", e->fq_Data );
-					FFree( e->fq_Data );
+					//DEBUG("Release: %p\n", e->fq_Data );
+					if( e->fq_Data != NULL )
+					{
+						FFree( e->fq_Data );
+						e->fq_Data = NULL;
+					}
 					FFree( e );
 				}
 			}
 			else
 			{
-				DEBUG("[websocket_app_callback] No message in queue\n");
+				//DEBUG("[websocket_app_callback] No message in queue\n");
 				FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
 			}
+#endif
 		}
 		else
 		{
+#ifdef WEBSOCKET_SINK_SEND_QUEUE
 			if( man != NULL && man->man_Queue.fq_First != NULL )
 			{
-				DEBUG("We have message to send, calling writable\n");
+				//DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
 			}
-			
-			DEBUG("Unimplemented callback, reason %d\n", reason);
+#endif			
+			//DEBUG("Unimplemented callback, reason %d\n", reason);
 			return 0;
 		}
 	}
@@ -271,7 +280,7 @@ static int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void
 			return ReplyError( wsi, 9 );
 		}
 
-		int status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
+		int status = MobileAppNotifyUser( LSB, username, channel_id, "app_name", title, message, (MobileNotificationTypeT)notification_type, NULL, 0 );
 
 		char reply[128];
 		sprintf(reply + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status);
@@ -389,29 +398,29 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 					*((bool*)e->data) = true;
 				}
 				
-				/*
+#ifdef WEBSOCKET_SEND_QUEUE
 				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 				if( en != NULL )
 				{
-					en->fq_Data = FMalloc( 128+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+					en->fq_Data = FMalloc( 256 );
 					//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-					strcpy( en->fq_Data + LWS_PRE, "{ \"t\" : \"auth\", \"status\" : 1}" );
-					en->fq_Size = 128+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING;
+					strcpy( (char *)en->fq_Data, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+					en->fq_Size = strlen( (char *)en->fq_Data );
 					
-					DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+					DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
 
 					FRIEND_MUTEX_LOCK( &man->man_Mutex );
 					FQPushFIFO( &(man->man_Queue), en );
 					FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
 					lws_callback_on_writable( wsi );
 				}
-				*/
+#else
 				char reply[ 256 ];
 				strcpy( reply + LWS_PRE, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
 				unsigned int json_message_length = strlen( reply + LWS_PRE );
 				
 				lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-				
+#endif
 				//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, WebsocketNotificationConnCallback );
 				FFree( authKey );
 				
@@ -423,11 +432,29 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				if( strncmp( data + t[2].start, "ping", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
 					DEBUG( "do Ping things\n" );
+#ifdef WEBSOCKET_SEND_QUEUE
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					if( en != NULL )
+					{
+						en->fq_Data = FMalloc( 256 );
+						//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
+						int size = snprintf( (char *)en->fq_Data, sizeof( 256 ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+						en->fq_Size = size;
+					
+						DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
+
+						FRIEND_MUTEX_LOCK( &man->man_Mutex );
+						FQPushFIFO( &(man->man_Queue), en );
+						FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
+						lws_callback_on_writable( wsi );
+					}
+#else
 					char reply[ 128 ];
 					snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
 					
-					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
+#endif
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
@@ -446,16 +473,26 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							char *channel_id = NULL;
 							char *title = NULL;
 							char *message = NULL;
+							char *application = NULL;
+							char *extra = NULL;
 							
-							for( p = 8 ; p < 21 ; p++ )
+							// 8 -> 25
+							for( p = 8 ; p < tokens_found ; p++ )
 							{
 								int size = t[p].end - t[p].start;
 								if( strncmp( data + t[p].start, "notification_type", size) == 0) 
 								{
 									p++;
-									char *tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
-									notification_type = atoi( tmp );
-									FFree( tmp );
+									if( (t[p].end - t[p].start) >= 1 )
+									{
+										char *tmp = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+										if( tmp != NULL )
+										{
+											DEBUG("TYPE: %s\n", tmp );
+											notification_type = atoi( tmp );
+											FFree( tmp );
+										}
+									}
 								}
 								else if( strncmp( data + t[p].start, "username", size) == 0) 
 								{
@@ -477,47 +514,57 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 									p++;
 									message = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
 								}
+								else if( strncmp( data + t[p].start, "application", size) == 0) 
+								{
+									p++;
+									application = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+								}
+								else if( strncmp( data + t[p].start, "extra", size) == 0) 
+								{
+									p++;
+									extra = StringDuplicateN( data + t[p].start, t[p].end - t[p].start );
+								}
 							}
 							
 							if( notification_type >= 0 )
 							{
 								if( username == NULL || channel_id == NULL || title == NULL || message == NULL )
 								{
-									DEBUG( "username: %s \n", username );
-									DEBUG( "channel_id: %d \n", channel_id );
-									DEBUG( "title: %s \n", title );
-									DEBUG( "message: %s \n", message );
+									DEBUG( "username: %s channel_id: %s title: %s message: %s\n", username, channel_id, title , message );
 									
 									if( username != NULL ) FFree( username );
 									if( channel_id != NULL ) FFree( channel_id );
 									if( title != NULL ) FFree( title );
 									if( message != NULL ) FFree( message );
+									if( application != NULL ) FFree( application );
+									if( extra != NULL ) FFree( extra );
 									return ReplyError( wsi, WS_NOTIF_SINK_ERROR_PARAMETERS_NOT_FOUND );
 								}
 								
-								int status = MobileAppNotifyUser( username, channel_id, title, message, (MobileNotificationTypeT)notification_type, NULL );
-								/*
+								int status = MobileAppNotifyUserRegister( SLIB, username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
+#ifdef WEBSOCKET_SEND_QUEUE
 								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 								if( en != NULL )
 								{
-									en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+									en->fq_Data = FMalloc( 256 );
 									//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-									int msgsize = sprintf( en->fq_Data + LWS_PRE, "{ \"t\" : \"notify\", \"status\" : %d}", status );
-									en->fq_Size = 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING;
+									int msgsize = sprintf( (char *)en->fq_Data, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
+									en->fq_Size = msgsize;
 									
-									DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+									DEBUG("[websocket_app_callback] Msg to send: %d\n", msgsize );
 									
 									FRIEND_MUTEX_LOCK( &man->man_Mutex );
 									FQPushFIFO( &(man->man_Queue), en );
 									FRIEND_MUTEX_UNLOCK( &man->man_Mutex );
 									lws_callback_on_writable( wsi );
 								}
-								*/
+#else
 								char reply[256];
 								sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
 								unsigned int json_message_length = strlen( reply + LWS_PRE );
 								
 								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
+#endif
 							}
 							else
 							{
@@ -528,6 +575,8 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 							if( channel_id != NULL ) FFree( channel_id );
 							if( title != NULL ) FFree( title );
 							if( message != NULL ) FFree( message );
+							if( application != NULL ) FFree( application );
+							if( extra != NULL ) FFree( extra );
 						}
 					}
 				}	// is authenticated

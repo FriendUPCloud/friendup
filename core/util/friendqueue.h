@@ -55,7 +55,7 @@ typedef struct FQueue
  *
  * @param qroot pointer to main FQueue structure
  */
-#define FQDeInitFree( qroot ) { FQEntry *q = (qroot)->fq_First; while( q != NULL ){ void *r = q; FFree( q->fq_Data ); q = (FQEntry *)q->node.mln_Succ; FFree( r ); } }
+#define FQDeInitFree( qroot ) { FQEntry *q = (qroot)->fq_First; while( q != NULL ){ void *r = q; FFree( q->fq_Data ); q = (FQEntry *)q->node.mln_Succ; FFree( r ); } (qroot)->fq_First = NULL; (qroot)->fq_Last = NULL; }
 
 /**
  * Push data into FQueue structure in FILO mode

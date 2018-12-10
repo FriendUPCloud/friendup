@@ -930,6 +930,13 @@ SystemBase *SystemInit( void )
 		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
 	}
 	
+	l->sl_NotificationManager = NotificationManagerNew( l );
+	if( l->sl_NotificationManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_NotificationManager\n");
+	}
+	
+	
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
 	Log( FLOG_INFO, "[SystemBase] Create Managers END\n");
 	Log( FLOG_INFO, "[SystemBase] ----------------------------------------\n");
@@ -967,7 +974,7 @@ SystemBase *SystemInit( void )
 	EventAdd( l->sl_EventManager, RemoveOldLogs, l, time( NULL )+HOUR12, HOUR12, -1 );
 	
 	//@BG-678 
-	EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
+	//EventAdd( l->sl_EventManager, USMCloseUnusedWebSockets, l->sl_USM, time( NULL )+MINS5, MINS5, -1 );
 	
 	if( l->l_EnableHTTPChecker == 1 )
 	{
@@ -1004,7 +1011,7 @@ void SystemClose( SystemBase *l )
 	
 	if( l->l_APNSConnection != NULL )
 	{
-		WebsocketClientDelete( l->l_APNSConnection );
+		WebsocketAPNSConnectorDelete( l->l_APNSConnection );
 		l->l_APNSConnection = NULL;
 	}
 	
@@ -1086,6 +1093,11 @@ void SystemClose( SystemBase *l )
 	}
 
 	DEBUG("Delete Managers\n");
+	
+	if( l->sl_NotificationManager != NULL )
+	{
+		NotificationManagerDelete( l->sl_NotificationManager );
+	}
 	if( l->sl_CalendarManager != NULL )
 	{
 		CalendarManagerDelete( l->sl_CalendarManager );
@@ -1322,22 +1334,7 @@ int SystemInitExternal( SystemBase *l )
 	DEBUG("[SystemBase] SystemInitExternal\n");
 	
 	USMRemoveOldSessionsinDB( l );
-	
-	DEBUG("[SystembaseInitExternal]APNS init\n" );
-	
-	l->l_APNSConnection = WebsocketClientNew( l->l_AppleServerHost, l->l_AppleServerPort, NULL );
-	if( l->l_APNSConnection != NULL )
-	{
-		if( WebsocketClientConnect( l->l_APNSConnection ) > 0 )
-		{
-			DEBUG("APNS server connected\n");
-		}
-		else
-		{
-			DEBUG("APNS server not connected\n");
-		}
-	}
-	
+
 	DEBUG("[SystemBase] init users and all stuff connected to them\n");
 	SQLLibrary *sqllib  = l->LibrarySQLGet( l );
 	if( sqllib != NULL )
@@ -1619,14 +1616,6 @@ int SystemInitExternal( SystemBase *l )
 		l->LibrarySQLDrop( l, sqllib );
 	}
 	
-	// we must launch mobile manager when all sessions and users are loaded
-	
-	l->sl_MobileManager = MobileManagerNew( l );
-	if( l->sl_MobileManager == NULL )
-	{
-		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
-	}
-	
 	// mount INRAM drive
 	/*
 	struct TagItem tags[] = {
@@ -1645,6 +1634,35 @@ int SystemInitExternal( SystemBase *l )
 	
 	
 	// test websocket client connection
+	
+	// we must launch mobile manager when all sessions and users are loaded
+	
+	l->sl_MobileManager = MobileManagerNew( l );
+	if( l->sl_MobileManager == NULL )
+	{
+		Log( FLOG_ERROR, "Cannot initialize sl_MobileManager\n");
+	}
+	
+	DEBUG("[SystembaseInitExternal]APNS init\n" );
+	
+	l->l_APNSConnection = WebsocketAPNSConnectorNew( l->l_AppleServerHost, l->l_AppleServerPort );
+	if( l->l_APNSConnection != NULL )
+	{
+		/*
+		if( WebsocketClientConnect( l->l_APNSConnection->wapns_Connection ) > 0 )
+		{
+			DEBUG("APNS server connected\n");
+		}
+		else
+		{
+			DEBUG("APNS server not connected\n");
+		}
+		*/
+	}
+	else
+	{
+		FERROR("[SystembaseInitExternal]APNS init ERROR!\n");
+	}
 	
 	return 0;
 }
@@ -2481,11 +2499,12 @@ int WebSocketSendMessage( SystemBase *l __attribute__((unused)), UserSession *us
 			{
 				DEBUG("[SystemBase] Writing to websockets, pointer to ws %p\n", wsc->wsc_Wsi );
 
-				FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) );
+				if( FRIEND_MUTEX_LOCK( &(usersession->us_Mutex) ) == 0 )
+				{
+					bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
 
-				bytes += WebsocketWrite( wsc , buf , len, LWS_WRITE_TEXT );
-
-				FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+					FRIEND_MUTEX_UNLOCK( &(usersession->us_Mutex) );
+				}
 
 				wsc = (WebsocketServerClient *)wsc->node.mln_Succ;
 			}

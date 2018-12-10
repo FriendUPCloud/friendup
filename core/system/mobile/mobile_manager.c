@@ -38,35 +38,47 @@ MobileManager *MobileManagerNew( void *sb )
 		
 		pthread_mutex_init( &(mm->mm_Mutex), NULL );
 		
-		SystemBase *sb = (SystemBase *)mm->mm_SB;
+		SystemBase *lsb = (SystemBase *)mm->mm_SB;
 	
-		SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+		SQLLibrary *lsqllib = lsb->LibrarySQLGet( lsb );
 		if( lsqllib != NULL )
 		{
 			int entries;
 			mm->mm_UMApps = lsqllib->Load( lsqllib, UserMobileAppDesc, NULL, &entries );
 		
-			sb->LibrarySQLDrop( sb, lsqllib );
+			lsb->LibrarySQLDrop( lsb, lsqllib );
+			
+			UserMobileApp *lma = mm->mm_UMApps;
+			while( lma != NULL )
+			{
+				DEBUG("Send message to device %s\n", lma->uma_Platform );
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
 		}
 		
-		UserMobileApp *lma = mm->mm_UMApps;
-		while( lma != NULL )
+		DEBUG("lsb->l_APNSConnection ptr %p\n", lsb->l_APNSConnection );
+		if( lsb->l_APNSConnection != NULL )
 		{
-			char msg[ 2048 ];
-			
-			if( lma->uma_UserID > 0 )
+			UserMobileApp *lma = mm->mm_UMApps;
+			while( lma != NULL )
 			{
-				lma->uma_User = UMGetUserByID( sb->sl_UM, lma->uma_UserID );
-			}
-			lma->uma_WSClient = sb->l_APNSConnection;
+				char msg[ 2048 ];
 			
-			// ASPN connection get only IOS notification
-			if( strcmp( lma->uma_Platform, "IOS" ) == 0 )
-			{
-				int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+				if( lma->uma_UserID > 0 )
+				{
+					lma->uma_User = UMGetUserByID( lsb->sl_UM, lma->uma_UserID );
+				}
 			
-				WebsocketClientSendMessage( sb->l_APNSConnection, msg, msgsize );
-			}
+				lma->uma_WSClient = lsb->l_APNSConnection->wapns_Connection;
+			
+				// ASPN connection get only IOS notification
+				if( strcmp( lma->uma_Platform, MobileAppType[ MOBILE_APP_TYPE_IOS ] ) == 0 )
+				{
+					int msgsize = snprintf( msg, sizeof(msg), "{\"auth\":\"%s\",\"action\":\"notify\",\"payload\":\"hellooooo\",\"sound\":\"default\",\"token\":\"%s\",\"badge\":1,\"category\":\"whatever\"}", "authid", lma->uma_AppToken );
+			
+					WebsocketClientSendMessage( lsb->l_APNSConnection->wapns_Connection, msg, msgsize );
+				}
+			
 			//'{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
 			/*
 			DEBUG("[MobileManagerNew] create connection\n");
@@ -84,7 +96,8 @@ MobileManager *MobileManagerNew( void *sb )
 			}
 			DEBUG("Going to next pointer %p\n", lma );
 			*/
-			lma = (UserMobileApp *)lma->node.mln_Succ;
+				lma = (UserMobileApp *)lma->node.mln_Succ;
+			}
 		}
 	}
 	DEBUG("[MobileManagerNew] end\n");
@@ -321,25 +334,94 @@ MobileListEntry *MobleManagerGetByUserIDDB( MobileManager *mmgr, FULONG user_id 
 	return root;
 }
 
-MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type )
+/**
+ * Get User Mobile Apps by using user name field
+ *
+ * @param mmgr pointer to MobileManager
+ * @param sqllib pointer to SQLLibrary
+ * @param userName name of user to which mobile apps belong
+ * @param mobileType type of devices
+ * @return pointer to new created list of UserMobileApp
+ */
+UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, char *userName, char *mobileType )
 {
-	char *mobileType = NULL;
-	if( type == MOBILE_APP_TYPE_ANDROID )
+	UserMobileApp *root = NULL;
+	char query[ 256 ];
+	
+	snprintf( query, sizeof(query), "SELECT fma.* FROM `FUserMobileApp` fma inner join `FUser` u on fma.UserID=u.ID WHERE u.Name = '%s'", userName );
+	// 1   3  apptoken1  appversion1   IOS   version1  215.148.12.6  1536761135   0
+	// SELECT fma.* FROM `FUserMobileApp` fma inner join `FUser` u on fma.UserID=u.ID WHERE u.Name = 'pawel';
+	
+	void *res = sqllib->Query( sqllib, query );
+	
+	if( res != NULL )
 	{
-		mobileType = "Android";
+		char **row;
+		int rownr = 0;
+		while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+		{
+			// create new structure
+			UserMobileApp *nmapp = UserMobileAppNew();
+			// fill structure with data
+			if( row[ 0 ] != NULL ){		// ID
+				char *end;
+				nmapp->uma_ID = strtoul( row[0], &end, 0 );
+			}
+			if( row[ 1 ] != NULL ){		// UserID
+				char *end;
+				nmapp->uma_UserID = strtoul( row[1], &end, 0 );
+			}
+			if( row[ 2 ] != NULL ){		// AppToken
+				nmapp->uma_AppToken = StringDuplicate( (char *)row[2] );
+			}
+			if( row[ 3 ] != NULL ){		// version
+				nmapp->uma_AppToken = StringDuplicate( (char *)row[3] );
+			}
+			if( row[ 4 ] != NULL ){		// platform
+				nmapp->uma_Platform = StringDuplicate( (char *)row[4] );
+			}
+			if( row[ 5 ] != NULL ){		// platform version
+				nmapp->uma_PlatformVersion = StringDuplicate( (char *)row[5] );
+			}
+			if( row[ 6 ] != NULL ){		// Core
+				nmapp->uma_Core = StringDuplicate( (char *)row[6] );
+			}
+			if( row[ 7 ] != NULL ){		// create TS
+				char *end;
+				nmapp->uma_CreateTS = strtoul( row[7], &end, 0 );
+			}
+			if( row[ 8 ] != NULL ){		// last start TS
+				char *end;
+				nmapp->uma_LastStartTS = strtoul( row[8], &end, 0 );
+			}
+			
+			// add entry to list
+			nmapp->node.mln_Succ = (MinNode *) root;
+			root = nmapp;
+		}
+		sqllib->FreeResult( sqllib, res );
 	}
-	else if( type == MOBILE_APP_TYPE_IOS )
-	{
-		mobileType = "ios";
-	}
-	else if( type == MOBILE_APP_TYPE_WINDOWS )
-	{
-		mobileType = "Windows";
-	}
-	else
+	
+	return root;
+}
+
+/**
+ * Get User Mobile Connections from database by user name and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param user_id id of user to which mobile apps belong
+ * @param userName name of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @return pointer to new created list of MobileListEntry
+ */
+MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULONG user_id, char *userName, int type )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
 	{
 		return NULL;
 	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
 	
 	UserMobileApp *uma = NULL;
 	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
@@ -365,6 +447,135 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
 	if( lsqllib != NULL )
 	{
+
+		//char where[ 512 ];
+		//snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", user_id, mobileType );
+		uma = GetMobileAppByUserName( mmgr, lsqllib, userName, mobileType );
+
+		//int entries;
+		//uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+		
+		MobileListEntry *freeEntries = NULL;
+		MobileListEntry *addEntries = NULL;
+		
+		UserMobileApp *le = uma;
+		while( le != NULL )
+		{
+			// we must check if entry exist
+			
+			MobileListEntry *existEntr = root;
+			while( existEntr != NULL )
+			{
+				if( le->uma_ID == existEntr->mm_UMApp->uma_ID )
+				{
+					
+					break;
+				}
+				existEntr = (MobileListEntry *)existEntr->node.mln_Succ;
+			}
+			
+			//
+			// we have 2 lists
+			// one will hold all entries which will be added to global lists
+			// second will hold all entries which will be deleted on the end
+			//
+			
+			// entry exist
+			if( existEntr != NULL )
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)freeEntries;
+					freeEntries = e;
+				}
+			}
+			else	// entry do not exist
+			{
+				MobileListEntry *e = MobileListEntryNew( le );
+				if( e != NULL )
+				{
+					e->node.mln_Succ = (MinNode *)addEntries;
+					addEntries = e;
+				}
+			}
+			
+			le = (UserMobileApp *)le->node.mln_Succ;
+		}
+		
+		// release not used entries
+		while( freeEntries != NULL )
+		{
+			MobileListEntry *rel = freeEntries;
+			freeEntries = (MobileListEntry *)freeEntries->node.mln_Succ;
+			
+			UserMobileAppDelete( rel->mm_UMApp );
+			FFree( rel );
+		}
+		
+		FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+		
+		// add entries to main lists
+		while( addEntries != NULL )
+		{
+			MobileListEntry *add = addEntries;
+			addEntries = (MobileListEntry *)addEntries->node.mln_Succ;
+			
+			add->node.mln_Succ = (MinNode *)root;
+			root = add;
+		}
+		
+		FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return root;
+}
+
+/**
+ * Get User Mobile Connections from database by user id and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param user_id id of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @return pointer to new created list of MobileListEntry
+ */
+MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG user_id, int type )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+
+	
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+	MobileListEntry *root = NULL;
+	
+	FRIEND_MUTEX_LOCK( &(mmgr->mm_Mutex) );
+	uma = mmgr->mm_UMApps;
+	while( uma != NULL )
+	{
+		if( uma->uma_UserID == user_id && strcmp( uma->uma_Platform, mobileType ) == 0 )
+		{
+			MobileListEntry *e = MobileListEntryNew( uma );
+			if( e != NULL )
+			{
+				e->node.mln_Succ = (MinNode *)root;
+				root = e;
+			}
+		}
+		uma = (UserMobileApp *)uma->node.mln_Succ;
+	}
+	FRIEND_MUTEX_UNLOCK( &(mmgr->mm_Mutex) );
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		// 1   3  apptoken1  appversion1   IOS   version1  215.148.12.6  1536761135   0
+		// SELECT fma.* FROM `FUserMobileApp` fma inner join `FUser` u on fma.UserID=u.ID WHERE u.Name = 'pawel';
 		char where[ 512 ];
 		snprintf( where, sizeof(where), "UserID='%lu' AND Platform='%s'", user_id, mobileType );
 
@@ -519,4 +730,38 @@ int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app )
 		return -1;
 	}
 	return 1;
+}
+
+/**
+ * Get User Mobile Connections from database by user name and platform
+ *
+ * @param mmgr pointer to MobileManager
+ * @param username name of user to which mobile apps belong
+ * @param type type of mobile apps
+ * @return pointer to new created list of MobileListEntry
+ */
+UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, const char *username, int type )
+{
+	if( type < 0 || type >= MOBILE_APP_TYPE_MAX )
+	{
+		return NULL;
+	}
+	char *mobileType = NULL;
+	mobileType = MobileAppType[ type ];
+
+	UserMobileApp *uma = NULL;
+	SystemBase *sb = (SystemBase *)mmgr->mm_SB;
+
+	SQLLibrary *lsqllib = sb->LibrarySQLGet( SLIB );
+	if( lsqllib != NULL )
+	{
+		char where[ 512 ];
+		snprintf( where, sizeof(where), "UserID='%s' AND Platform='%s'", username, mobileType );
+
+		int entries;
+		uma = lsqllib->Load( lsqllib, UserMobileAppDesc, where, &entries );
+
+		sb->LibrarySQLDrop( sb, lsqllib );
+	}
+	return uma;
 }
