@@ -186,8 +186,11 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		//remove connection from user connnection struct
 		UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
 		unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
-		DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
-		MobileAppRemoveAppConnection(userConnections, connectionIndex);
+		if( userConnections != NULL )
+		{
+			DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+		}
+		MobileAppRemoveAppConnection( userConnections, connectionIndex);
 
 		HashmapRemove(globalWebsocketToUserConnectionsMap, websocketHash);
 
