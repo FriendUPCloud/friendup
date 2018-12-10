@@ -32,7 +32,7 @@
 void MobileAppTestSignalHandler(int signum);
 #endif
 
-//#define WEBSOCKET_SEND_QUEUE
+#define WEBSOCKET_SEND_QUEUE
 
 //There is a need for two mappings, user->mobile connections and mobile connection -> user
 
