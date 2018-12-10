@@ -924,7 +924,19 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+						int msgSendLength;
 						
+						if( notif->n_Extra )
+						{ //TK-1039
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+						/*
 						if( notif->n_Extra )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -933,9 +945,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						*/
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -955,7 +966,20 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+						int msgSendLength;
 						
+						if( extraString )
+						{ //TK-1039
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+						
+						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+						/*
 						if( extraString )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -964,10 +988,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						
+						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						*/
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
@@ -1145,10 +1167,13 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
 							{
-								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-								//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+								/*
+								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								*/
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1168,10 +1193,13 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
 							{
-								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-								//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+								/*
+								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								*/
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1205,15 +1233,25 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						if( notif->n_Extra )
 						{ //TK-1039
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+						/*
+						if( notif->n_Extra )
+						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
 						}
 						else
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						*/
 						
 						NotificationSentDelete( lns );
 					}
@@ -1235,15 +1273,25 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						if( notif->n_Extra )
 						{ //TK-1039
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+						/*
+						if( notif->n_Extra )
+						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
 						}
 						else
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage+LWS_PRE, jsonMessageLength-LWS_PRE );
-						//lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						*/
 						
 						NotificationSentDelete( lns );
 					}
