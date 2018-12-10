@@ -673,7 +673,84 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
-			console.log( 'Notification received, ', msg );
+			// Check if we have notification data
+			if( msg.notificationData )
+			{
+				// Application notification
+				if( msg.notificationData.application )
+				{
+					// Function to set the notification as read...
+					function notificationRead()
+					{
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							t: 'notify',
+							notifid: msg.notificationData.id, 
+							action: 1
+						} );
+					}
+					
+					// Find application
+					var apps = Workspace.applications;
+					var found = false;
+					for( var a = 0; a < apps.length; a++ )
+					{
+						// Found the application
+						if( apps[a].applicationName == msg.notificationData.application )
+						{
+							// Post!
+							( function( app, data )
+							{
+								var amsg = {
+									type: 'system',
+									method: 'notification',
+									callback: addWrapperCallback( notificationRead ),
+									data: data
+								};
+								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+							} )( apps[ a ], msg.notificationData );
+							found = true;
+							break;
+						}
+					}
+					// Application not found? Start it!
+					if( !found )
+					{
+						// Send message to app once it has started...
+						function appMessage()
+						{
+							var app = false;
+							for( var a = 0; a < apps.length; a++ )
+							{
+								// Found the application
+								if( apps[ a ].applicationName == msg.notificationData.application )
+								{
+									app = apps[ a ];
+									break;
+								}
+							}
+							
+							// No application? Alert the user
+							// TODO: Localize response!
+							if( !app )
+							{
+								Notify( { title: 'Could not find application', text: 'Application notification did not work because the application did not start.' } );
+								return;
+							}
+							
+							var amsg = {
+								type: 'system',
+								method: 'notification',
+								callback: addWrapperCallback( notificationRead ),
+								data: msg.notificationData
+							};
+							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+						}
+						ExecuteApplication( msg.notificationData.application, '', appMessage )
+					}
+				}
+			}
 		}
 	},
 	checkFriendNetwork: function()

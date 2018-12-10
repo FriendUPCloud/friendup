@@ -1387,11 +1387,7 @@ function AddWorkgroup()
 	var m = new Module( 'system' );
 	m.onExecuted = function( e, d )
 	{
-<<<<<<< HEAD
 		var wg = '<option value="0">none</option>';
-=======
-		var wg = '<option value="">none</option>';
->>>>>>> master
 		
 		try
 		{
