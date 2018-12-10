@@ -47,6 +47,7 @@ struct MobileAppConnectionS
 	void *mac_UserData;
 	char *mac_SessionID;
 	FQueue mac_Queue;
+	pthread_mutex_t mac_Mutex;
 	//struct lws *websocket_ptr;
 	//void *user_data;
 	//char *session_id;
@@ -107,7 +108,11 @@ static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char 
 	
 			//FQPushFIFO( &(man->man_Queue), en );
 			//lws_callback_on_writable( mac->websocket_ptr );
-			FQPushFIFO( &(mac->mac_Queue), en );
+			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
+			{
+				FQPushFIFO( &(mac->mac_Queue), en );
+				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+			}
 			lws_callback_on_writable( mac->mac_WebsocketPtr );
 		}
 	}
@@ -198,7 +203,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
 			FQEntry *e = NULL;
-			FRIEND_MUTEX_LOCK(&_session_removal_mutex);
+			FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) );
 			//FQueue *q = &(man->man_Queue);
 			FQueue *q = &(appConnection->mac_Queue);
 			
@@ -206,7 +211,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			
 			if( ( e = FQPop( q ) ) != NULL )
 			{
-				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+				FRIEND_MUTEX_UNLOCK(&appConnection->mac_Mutex);
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
@@ -218,14 +223,18 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				if( e != NULL )
 				{
 					DEBUG("Release: %p\n", e->fq_Data );
-					FFree( e->fq_Data );
+					if( e->fq_Data != NULL )
+					{
+						FFree( e->fq_Data );
+						e->fq_Data = NULL;
+					}
 					FFree( e );
 				}
 			}
 			else
 			{
 				DEBUG("[websocket_app_callback] No message in queue\n");
-				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+				FRIEND_MUTEX_UNLOCK(&appConnection->mac_Mutex);
 			}
 		}
 		else
@@ -528,7 +537,11 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 								memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
 								en->fq_Size = LWS_PRE+64;
 
-								FQPushFIFO( &(user_connections->connection[i]->mac_Queue), en );
+								if( FRIEND_MUTEX_LOCK( &user_connections->connection[i]->mac_Mutex ) == 0 )
+								{
+									FQPushFIFO( &(user_connections->connection[i]->mac_Queue), en );
+									FRIEND_MUTEX_UNLOCK( &user_connections->connection[i]->mac_Mutex );
+								}
 								lws_callback_on_writable( user_connections->connection[i]->mac_WebsocketPtr );
 								//FQPushFIFO( &(man->man_Queue), en );
 								//lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
@@ -679,6 +692,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 
 	HashmapPut(_websocket_to_user_connections_map, websocket_hash, newConnection ); //TODO: error handling here
 	//websocket_hash now belongs to the hashmap, don't free it here
+	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
 	FQInit( &(newConnection->mac_Queue) );
 
 	/*
@@ -688,6 +702,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
 	*/
 
+	/*
 	{
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
@@ -704,6 +719,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			lws_callback_on_writable( wsi );
 		}
 	}
+	*/
 
 	return 0;
 }
@@ -744,6 +760,7 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 	
 
 	FQDeInitFree( &(connections->connection[connection_index]->mac_Queue) );
+	pthread_mutex_destroy( &(connections->connection[connection_index]->mac_Mutex) );
 
 	FFree( connections->connection[connection_index]->mac_SessionID );
 	FFree( connections->connection[connection_index] );
