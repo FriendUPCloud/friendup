@@ -336,7 +336,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 					{
 						en->fq_Data = FMalloc( 256 );
 						//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-						int size = snprintf( (char *)en->fq_Data, sizeof( 256 ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+						int size = snprintf( (char *)en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, sizeof( 256 ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 						en->fq_Size = size;
 					
 						DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
@@ -446,7 +446,7 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 								{
 									en->fq_Data = FMalloc( 256 );
 									//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-									int msgsize = sprintf( (char *)en->fq_Data, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
+									int msgsize = sprintf( (char *)en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
 									en->fq_Size = msgsize;
 									
 									DEBUG("[websocket_app_callback] Msg to send: %d\n", msgsize );
