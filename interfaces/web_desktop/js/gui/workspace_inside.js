@@ -673,6 +673,8 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
+			var messageRead = false;
+			
 			// Check if we have notification data
 			if( msg.notificationData )
 			{
@@ -682,6 +684,7 @@ var WorkspaceInside = {
 					// Function to set the notification as read...
 					function notificationRead()
 					{
+						messageRead = true;
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
@@ -709,6 +712,17 @@ var WorkspaceInside = {
 									data: data
 								};
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								// Delete wrapper callback if it isn't executed within 1 second
+								setTimeout( function()
+								{
+									if( !messageRead )
+									{
+										var trash = getWrapperCallback( amsg.callback );
+										delete trash;
+									}
+								}, 1000 );
+								
 							} )( apps[ a ], msg.notificationData );
 							found = true;
 							break;
@@ -735,7 +749,7 @@ var WorkspaceInside = {
 							// TODO: Localize response!
 							if( !app )
 							{
-								Notify( { title: 'Could not find application', text: 'Application notification did not work because the application did not start.' } );
+								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 								return;
 							}
 							
@@ -746,7 +760,18 @@ var WorkspaceInside = {
 								data: msg.notificationData
 							};
 							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+							
+							// Delete wrapper callback if it isn't executed within 1 second
+							setTimeout( function()
+							{
+								if( !messageRead )
+								{
+									var trash = getWrapperCallback( amsg.callback );
+									delete trash;
+								}
+							}, 1000 );
 						}
+						console.log( 'Executing the application: ' + msg.notificationData.application );
 						ExecuteApplication( msg.notificationData.application, '', appMessage )
 					}
 				}
