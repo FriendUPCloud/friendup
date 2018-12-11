@@ -2226,7 +2226,10 @@ movableMouseUp = function( e )
 	if( window.regionWindow && window.regionWindow.directoryview )
 	{
 		var scrl = window.regionWindow.directoryview.scroller;
-		scrl.scrolling = false;
+		if( scrl )
+		{
+			scrl.scrolling = false;
+		}
 	}
 }
 
