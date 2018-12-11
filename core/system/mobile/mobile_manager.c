@@ -406,6 +406,41 @@ UserMobileApp *GetMobileAppByUserName( MobileManager *mmgr, SQLLibrary *sqllib, 
 }
 
 /**
+ * Get User Mobile App ID by token
+ *
+ * @param mmgr pointer to MobileManager
+ * @param sqllib pointer to SQLLibrary
+ * @param token application token
+ * @return ID of UMA or 0 when function fail
+ */
+FULONG MobileManagerGetUMAIDByToken( MobileManager *mmgr, SQLLibrary *sqllib, const char *token )
+{
+	UserMobileApp *root = NULL;
+	char query[ 256 ];
+	FULONG tokID = 0;
+	
+	snprintf( query, sizeof(query), "SELECT ID FROM `FUserMobileApp` WHERE AppToken = '%s'", token );
+
+	void *res = sqllib->Query( sqllib, query );
+	
+	if( res != NULL )
+	{
+		char **row;
+
+		while( ( row = sqllib->FetchRow( sqllib, res ) ) )
+		{
+			if( row[ 0 ] != NULL ){		// ID
+				char *end;
+				tokID = strtoul( row[0], &end, 0 );
+			}
+		}
+		sqllib->FreeResult( sqllib, res );
+	}
+	
+	return tokID;
+}
+
+/**
  * Get User Mobile Connections from database by user name and platform
  *
  * @param mmgr pointer to MobileManager

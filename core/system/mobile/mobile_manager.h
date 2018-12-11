@@ -55,6 +55,8 @@ MobileListEntry *MobleManagerGetByUserIDDBPlatform( MobileManager *mmgr, FULONG 
 
 MobileListEntry *MobleManagerGetByUserNameDBPlatform( MobileManager *mmgr, FULONG user_id, char *userName, int type );
 
+FULONG MobileManagerGetUMAIDByToken( MobileManager *mmgr, SQLLibrary *sqllib, const char *token );
+
 void MobileManagerRefreshCache( MobileManager *mmgr );
 
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
