@@ -1641,17 +1641,21 @@ if( !class_exists( 'DoorWordpress' ) )
 								// Check if file is modified --->
 								
 								// Wordpress
-								$WPDateModified = strtotime( $catobj[0]->date_modified );
-								$WPDateCreated  = strtotime( $catobj[0]->date_created );
+								$WPDateModified = strtotime( $finalObject->date_modified );
+								$WPDateCreated  = strtotime( $finalObject->date_created );
+								
+								$WPFilename = ( isset( $finalObject->images[0]->name ) ? $finalObject->images[0]->name : '' );
 								
 								// Object
 								$QIDateModified = strtotime( $obj->datemodified );
 								$QIDataCreated  = strtotime( $obj->datecreated );
 								
+								$QIFilename = ( isset( $obj->images->Title ) ? $obj->images->Title : '' );
+								
 								// Check if we have changed
-								$changed = $QIDateCreated > $WPDateCreated || (
-									$QIDateModified > $WPDateCreated ||
-									$QIDateModified > $WPDateModified
+								$changed = $QIDateCreated > $WPDateCreated || $QIFilename != substr( $WPFilename, 0, strlen( $QIFilename ) ) || 
+								(
+									$QIDateModified > $WPDateCreated || $QIDateModified > $WPDateModified
 								);
 								
 								// Not changed
