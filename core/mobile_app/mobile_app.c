@@ -429,8 +429,8 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 					if( en != NULL )
 					{
 						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
-						en->fq_Size = 64;
+						int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
+						en->fq_Size = msgsize;
 						
 						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
@@ -751,7 +751,7 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 		return;
 	}
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
-			connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
+	connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
 	
 	FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
 	//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
