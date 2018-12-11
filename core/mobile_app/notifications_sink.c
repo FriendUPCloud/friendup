@@ -44,6 +44,41 @@ typedef struct DataQWSIM{
 }DataQWSIM;
 
 /**
+ * Write message to websocket
+ *
+ * @param mac pointer to mobile connection structure
+ * @param msg pointer to string where message is stored
+ * @param len length of message
+ * @return number of bytes written to websocket
+ */
+/*
+static inline int WriteMessage( DataQWSIM *d, unsigned char *msg, int len )
+{
+	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
+	//if( man != NULL )
+	{
+		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+		if( en != NULL )
+		{
+			DEBUG("Message added to queue: '%s'\n", msg );
+			en->fq_Data = FMalloc( len+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
+			en->fq_Size = LWS_PRE+len;
+	
+			//FQPushFIFO( &(man->man_Queue), en );
+			//lws_callback_on_writable( mac->websocket_ptr );
+			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
+			{
+				FQPushFIFO( &(mac->mac_Queue), en );
+				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+			}
+			lws_callback_on_writable( mac->mac_WebsocketPtr );
+		}
+	}
+	return len;
+}
+*/
+/**
  * Initialize Notification Sink
  *
  */

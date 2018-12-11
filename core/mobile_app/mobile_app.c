@@ -415,7 +415,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			 */
 			case 'e': //echo
 				{
-					char *timeString = json_get_element_string(&json, "time");
+					char *timeString = json_get_element_string( &json, "time" );
 					
 					char response[LWS_PRE+64];
 					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
