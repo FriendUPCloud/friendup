@@ -358,9 +358,9 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 					DEBUG( "do Ping things\n" );
 
 					char reply[ 128 ];
-					snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
-					WriteMessage( d, (unsigned char *)reply+LWS_PRE, msize );
+					WriteMessage( d, (unsigned char *)reply+LWS_PRE, locmsglen );
 /*
 					
 					
