@@ -299,8 +299,8 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				if( en != NULL )
 				{
 					en->fq_Data = FMalloc( 256 );
-					strcpy( (char *)en->fq_Data, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
-					en->fq_Size = strlen( (char *)en->fq_Data );
+					strcpy( (char *)en->fq_Data + LWS_SEND_BUFFER_PRE_PADDING, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+					en->fq_Size = strlen( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING) );
 					
 					DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
 
