@@ -253,6 +253,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			lws_callback_on_writable( wsi );
 		}
 		
+		if( wsHash != NULL ) FFree( wsHash );
 		return 0;
 	}
 	

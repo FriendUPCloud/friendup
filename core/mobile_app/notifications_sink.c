@@ -196,6 +196,10 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 				lws_callback_on_writable( wsi );
 			}	
 			//DEBUG("Unimplemented callback, reason %d\n", reason);
+			if( websocketHash != NULL )
+			{
+				FFree( websocketHash );
+			}
 			return 0;
 		}
 	}
@@ -203,10 +207,20 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 	if( len == 0 )
 	{
 		DEBUG("Empty websocket frame (reason %d)\n", reason);
+		if( websocketHash != NULL )
+		{
+			FFree( websocketHash );
+		}
 		return 0;
 	}
 
-	return ProcessIncomingRequest( wsi, (char*)in, len, user );
+	int ret = ProcessIncomingRequest( wsi, (char*)in, len, user );
+	
+	if( websocketHash != NULL )
+	{
+		FFree( websocketHash );
+	}
+	return ret;
 }
 
 /**
