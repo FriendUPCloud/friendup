@@ -84,7 +84,15 @@ function LoadApplications( win, currentItemId, callback )
 				img = eles[a].Image ? ( '/webclient/' + eles[a].Image ) : ( '/webclient/apps/' + eles[a].Name + '/icon.png' );
 			}
 			
-			if( eles[a].Icon )
+			if( eles[a].Image.substr( 0, 1 ) == '/' )
+			{
+				img = eles[a].Image;
+			}
+			else if( eles[a].Icon.substr( 0, 1 ) == '/' )
+			{
+				img = eles[a].Icon;
+			}
+			else if( eles[a].Icon )
 			{
 				if( eles[a].Icon.indexOf( ':' ) > 0 )
 					img = getImageUrl( eles[a].Icon );
