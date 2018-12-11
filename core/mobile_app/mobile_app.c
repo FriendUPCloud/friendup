@@ -753,7 +753,21 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
 			connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
 	
-	FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
+	FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
+	//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
+	
+	{ FQEntry *q = fq->fq_First; 
+		while( q != NULL )
+		{ 
+			void *r = q; 
+			FFree( q->fq_Data ); 
+			q = (FQEntry *)q->node.mln_Succ; 
+			FFree( r ); 
+			
+		} 
+		fq->fq_First = NULL; 
+		fq->fq_Last = NULL; }
+	
 	pthread_mutex_destroy( &(connections->connection[connectionIndex]->mac_Mutex) );
 
 	FFree( connections->connection[connectionIndex]->mac_SessionID );
