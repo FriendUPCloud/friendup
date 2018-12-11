@@ -747,6 +747,7 @@ var WorkspaceInside = {
 							};
 							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 						}
+						console.log( 'Executing the application: ' + msg.notificationData.application );
 						ExecuteApplication( msg.notificationData.application, '', appMessage )
 					}
 				}
