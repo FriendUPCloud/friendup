@@ -106,23 +106,6 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 	{
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		WebsocketRemove( wsi );
-#ifdef WEBSOCKET_SINK_SEND_QUEUE
-		if( man != NULL )
-		{
-			if( man->man_Connection != NULL )
-			{
-				WebsocketClientDelete( man->man_Connection );
-				man->man_Connection = NULL;
-			}
-		}
-		
-		if( man != NULL && man->man_Initialized == 1 )
-		{
-			FQDeInitFree( &(man->man_Queue) );
-			man->man_Initialized = 0;
-		}
-		pthread_mutex_destroy( &man->man_Mutex );
-#endif
 		return 0;
 	}
 	

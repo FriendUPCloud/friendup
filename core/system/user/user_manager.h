@@ -90,6 +90,12 @@ User * UMUserGetByName( UserManager *um, const char *name );
 //
 //
 
+User *UMGetUserByNameDBCon( UserManager *um, SQLLibrary *sqlLib, const char *name );
+
+//
+//
+//
+
 User * UMUserGetByNameDB( UserManager *smgr, const char *name );
 
 //
