@@ -398,6 +398,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				while (0);
 			break;
 			
+			// get information from mobile device about notification status
 			/*
 			JSONObject notifyReply = new JSONObject();
                 notifyReply.put("t", "notify");
@@ -405,9 +406,27 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
                 notifyReply.put("id", id);
 			 */
 			case 'n':
-				DEBUG("Notification information received\n");
+				{
+					DEBUG("Notification information received\n");
+					
+					char *statusString = json_get_element_string( &json, "status" );
+					char *idString = json_get_element_string( &json, "id" );
+					
+					if( statusString != NULL && idString != NULL )
+					{
+						FULONG id = 0;
+						int status = 0;
+						char *end;
+						
+						id = strtol( idString, &end, 0 );
+						status = atoi( statusString );
+						
+						NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, id, status );
+					}
+				}
 				break;
 
+			// get ping and response via pong
 			/*
 			JSONObject pingRequest = new JSONObject();
                 pingRequest.put("t", "echo");
@@ -691,32 +710,6 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
 	FQInit( &(newConnection->mac_Queue) );
 
-	/*
-	char response[LWS_PRE+64];
-	int msgsize = snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s) + LWS_PRE;
-	DEBUG("Response: %s\n", response+LWS_PRE);
-	lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
-	*/
-
-	/*
-	{
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-		if( en != NULL )
-		{
-			en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
-			en->fq_Size = LWS_PRE+64;
-			DEBUG("Its time to send message: %s !\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-	
-			FQPushFIFO( &(newConnection->mac_Queue), en );
-			
-			DEBUG("Added %p\n", newConnection->mac_Queue.fq_First );
-			
-			lws_callback_on_writable( wsi );
-		}
-	}
-	*/
-
 	return 0;
 }
 
@@ -881,18 +874,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = locses->us_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-					
-					/*
-					{
-    type : 'notification',
-    data : {
-        id : <unique id, string, FC generated id for tracking notification, workspace replies
-            with this id when/if the notie is clicked/'used' or times out>,
-        notie : <notification data object>
-    }
-}
-					 */
 					
 					if( notif->n_Extra )
 					{ //TK-1039
@@ -949,8 +932,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)user_connections->connection[i];
+						lns->ns_RequestID = (FULONG)user_connections->connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						int msgSendLength;
 						
@@ -992,8 +976,9 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)user_connections->connection[i];
+						lns->ns_RequestID = (FULONG)user_connections->connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						int msgSendLength;
 						
@@ -1059,6 +1044,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lns->ns_NotificationID = notif->n_ID;
 				lns->ns_RequestID = lma->uma_ID;
 				lns->ns_Target = MOBILE_APP_TYPE_IOS;
+				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
 				DEBUG("Send message to device %s\n", lma->uma_Platform );
@@ -1092,17 +1078,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		FERROR("Message was sent through websockets or APNS is not enabled!\n");
 	}
-	/*
-	FFree( escapedChannelId );
-	FFree( escapedTitle );
-	FFree( escapedMessage );
-	FFree( escapedApp );
-	*/
 	FFree( jsonMessage );
-	//if( escapedExtraString != NULL ) FFree( escapedExtraString );
-	
-	//FFree( notif ); // no need to release internal data
-	
+
 	return 0;
 }
 
@@ -1195,7 +1172,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						while( lnf != NULL )
 						{
-							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
+							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i]->mac_UserMobileAppID )
 							{
 #ifdef WEBSOCKET_SEND_QUEUE
 								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
@@ -1222,7 +1199,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						while( lnf != NULL )
 						{
-							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
+							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i]->mac_UserMobileAppID )
 							{
 #ifdef WEBSOCKET_SEND_QUEUE
 								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
@@ -1259,6 +1236,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
@@ -1299,6 +1277,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
@@ -1360,6 +1339,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = lma->uma_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_READED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );
@@ -1383,6 +1363,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = lma->uma_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );

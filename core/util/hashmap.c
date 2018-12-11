@@ -284,6 +284,10 @@ int HashmapRehash( Hashmap* in )
 
 int HashmapPut( Hashmap* in, char* key, void* value )
 {
+	if( in == NULL )
+	{
+		return MAP_OMEM;
+	}
 	// Find a place to put our value
 	int index = HashmapHash( in, key );
 	while( index == MAP_FULL )
