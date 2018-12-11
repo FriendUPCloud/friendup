@@ -760,7 +760,10 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 		while( q != NULL )
 		{ 
 			void *r = q; 
-			FFree( q->fq_Data ); 
+			if( q->fq_Data != NULL )
+			{
+				FFree( q->fq_Data ); 
+			}
 			q = (FQEntry *)q->node.mln_Succ; 
 			FFree( r ); 
 			
