@@ -51,7 +51,7 @@ typedef struct DataQWSIM{
  * @param len length of message
  * @return number of bytes written to websocket
  */
-/*
+
 static inline int WriteMessage( DataQWSIM *d, unsigned char *msg, int len )
 {
 	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
@@ -67,17 +67,17 @@ static inline int WriteMessage( DataQWSIM *d, unsigned char *msg, int len )
 	
 			//FQPushFIFO( &(man->man_Queue), en );
 			//lws_callback_on_writable( mac->websocket_ptr );
-			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
+			if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
 			{
-				FQPushFIFO( &(mac->mac_Queue), en );
-				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+				FQPushFIFO( &(d->d_Queue), en );
+				FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
 			}
-			lws_callback_on_writable( mac->mac_WebsocketPtr );
+			lws_callback_on_writable( d->d_Wsi );
 		}
 	}
 	return len;
 }
-*/
+
 /**
  * Initialize Notification Sink
  *
@@ -330,24 +330,13 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 					d->d_Authenticated = TRUE;
 				}
 				
-				FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-				if( en != NULL )
-				{
-					en->fq_Data = FMalloc( 256 );
-					strcpy( (char *)en->fq_Data + LWS_SEND_BUFFER_PRE_PADDING, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
-					en->fq_Size = strlen( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING) );
-					
-					DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
-
-					FRIEND_MUTEX_LOCK( &d->d_Mutex );
-					FQPushFIFO( &(d->d_Queue), en );
-					FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
-					lws_callback_on_writable( wsi );
-				}
-/*
 				char reply[ 256 ];
-				strcpy( reply + LWS_PRE, "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
 				unsigned int json_message_length = strlen( reply + LWS_PRE );
+				
+				WriteMessage( d, (unsigned char *)(reply)+LWS_PRE, msize );
+/*
+				
 				
 				lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 */
@@ -366,25 +355,12 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				{
 					DEBUG( "do Ping things\n" );
 
-					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-					if( en != NULL )
-					{
-						en->fq_Data = FMalloc( 256 );
-						//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-						int size = snprintf( (char *)en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, sizeof( 256 ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
-						en->fq_Size = size;
-					
-						DEBUG("[websocket_app_callback] Msg to send: %d\n", en->fq_Size );
-
-						FRIEND_MUTEX_LOCK( &d->d_Mutex );
-						FQPushFIFO( &(d->d_Queue), en );
-						FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
-						lws_callback_on_writable( wsi );
-					}
-/*
 					char reply[ 128 ];
 					snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
+					WriteMessage( d, (unsigned char *)reply+LWS_PRE, msize );
+/*
+					
 					
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
 */
@@ -476,25 +452,13 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 								
 								int status = MobileAppNotifyUserRegister( SLIB, username, channel_id, application, title, message, (MobileNotificationTypeT)notification_type, extra );
 
-								FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-								if( en != NULL )
-								{
-									en->fq_Data = FMalloc( 256 );
-									//memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"pause\",\"status\":1}", 24 );
-									int msgsize = sprintf( (char *)en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status );
-									en->fq_Size = msgsize;
-									
-									DEBUG("[websocket_app_callback] Msg to send: %d\n", msgsize );
-									
-									FRIEND_MUTEX_LOCK( &d->d_Mutex );
-									FQPushFIFO( &(d->d_Queue), en );
-									FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
-									lws_callback_on_writable( wsi );
-								}
-/*
 								char reply[256];
-								sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
+								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
 								unsigned int json_message_length = strlen( reply + LWS_PRE );
+								
+								WriteMessage( d, (unsigned char *)reply+LWS_PRE, msize );
+/*
+								
 								
 								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
 */
