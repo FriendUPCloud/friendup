@@ -101,7 +101,7 @@ int PthreadTimedLock( pthread_mutex_t *mut, char *file, int line )
 	Log( FLOG_ERROR, "Cannot lock, filename: '%s' Line: '%d'\n", file, line );
 	// crash!
 //#ifdef __DEBUG
-	//exit( EXIT_CODE_LOCK );
+	exit( EXIT_CODE_LOCK );
 //#endif
 	return 1;
 }
