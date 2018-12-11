@@ -71,8 +71,8 @@ struct UserMobileAppConnectionsS
 	MobileAppConnectionT *connection[MAX_CONNECTIONS_PER_USER];
 };
 
-static Hashmap *globalUserToAppConnectionsMap;
-static Hashmap *globalWebsocketToUserConnectionsMap;
+static Hashmap *globalUserToAppConnectionsMap = NULL;
+static Hashmap *globalWebsocketToUserConnectionsMap = NULL;
 
 static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
 static pthread_t globalPingThread;
@@ -324,7 +324,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_SESSION);
 			}
 
-			         appConnection->mac_LastCommunicationTimestamp = time(NULL);
+			appConnection->mac_LastCommunicationTimestamp = time(NULL);
 
 			switch (first_type_letter)
 			{
@@ -415,7 +415,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			 */
 			case 'e': //echo
 				{
-					char *timeString = json_get_element_string(&json, "time");
+					char *timeString = json_get_element_string( &json, "time" );
 					
 					char response[LWS_PRE+64];
 					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
@@ -686,7 +686,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 
 	char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
-	HashmapPut(globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
+	HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
 	FQInit( &(newConnection->mac_Queue) );
@@ -760,7 +760,10 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 		while( q != NULL )
 		{ 
 			void *r = q; 
-			FFree( q->fq_Data ); 
+			if( q->fq_Data != NULL )
+			{
+				FFree( q->fq_Data ); 
+			}
 			q = (FQEntry *)q->node.mln_Succ; 
 			FFree( r ); 
 			
@@ -904,7 +907,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					char *sndbuffer = FMalloc( msgsize );
 					
 					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":\"%s\"}}}", lns->ns_ID , jsonMessage );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
 					
 					DEBUG("\t\t\t\t\t\t\t sndbuffer '%s' len %d \n", sndbuffer, msgsize );
 					
