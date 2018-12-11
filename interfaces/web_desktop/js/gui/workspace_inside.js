@@ -735,7 +735,7 @@ var WorkspaceInside = {
 							// TODO: Localize response!
 							if( !app )
 							{
-								Notify( { title: 'Could not find application', text: 'Application notification did not work because the application did not start.' } );
+								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
 								return;
 							}
 							
