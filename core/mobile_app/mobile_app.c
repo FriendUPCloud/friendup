@@ -171,8 +171,13 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 	{
 		char *websocketHash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
-
+		MobileAppConnectionT *appConnection = NULL;
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
+			
 		if( appConnection == NULL )
 		{
 			DEBUG("Websocket close - no user session found for this socket\n");
@@ -181,7 +186,6 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		
 		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 		{
-		
 			//remove connection from user connnection struct
 			UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
 			unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
@@ -202,7 +206,13 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	if (reason != LWS_CALLBACK_RECEIVE)
 	{
 		char *wsHash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
+		MobileAppConnectionT *appConnection = NULL;
+		
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
 			
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
@@ -305,7 +315,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 
 	//see if this websocket belongs to an existing connection
 	char *websocketHash = MobileAppGetWebsocketHash(wsi);
-	MobileAppConnectionT *appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+	MobileAppConnectionT *appConnection = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	FFree(websocketHash);
 
 	if( msg_type_string )
@@ -511,7 +526,12 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
 	}
 
 	char *websocketHash = MobileAppGetWebsocketHash( wsi );
-	MobileAppConnectionT *appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+	MobileAppConnectionT *appConnection = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	FFree(websocketHash);
 	if( appConnection )
 	{
@@ -596,7 +616,12 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 {
 	char *session_id = session_id_generate();
 
-	UserMobileAppConnectionsT *userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+	UserMobileAppConnectionsT *userConnections = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 
 	if (userConnections == NULL)
 	{ //this user does not have any connections yet
@@ -648,13 +673,18 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
-			//add the new connections struct to global users' connections map
-			if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
-				DEBUG("Could not add new struct of user <%s> to global map\n", username);
+				//add the new connections struct to global users' connections map
+				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
+				{
+					DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
-				FFree(userConnections);
-				return MobileAppReplyError( wsi, MOBILE_APP_ERR_INTERNAL );
+					FFree(userConnections);
+					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+					return MobileAppReplyError( wsi, MOBILE_APP_ERR_INTERNAL );
+				}
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 		}
 	}
@@ -714,11 +744,16 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
 	DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
-	if( globalWebsocketToUserConnectionsMap == NULL )
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		globalWebsocketToUserConnectionsMap = HashmapNew();
+		if( globalWebsocketToUserConnectionsMap == NULL )
+		{
+			globalWebsocketToUserConnectionsMap = HashmapNew();
+		}
+		HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
+
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
-	HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
 	FQInit( &(newConnection->mac_Queue) );
@@ -800,7 +835,12 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnectionsT *user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+	UserMobileAppConnectionsT *user_connections = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	MobileManager *mm = sb->sl_MobileManager;
 	Notification *notif = NULL;
 	FBOOL wsMessageSent = FALSE;
@@ -1109,7 +1149,13 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnectionsT *user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+	UserMobileAppConnectionsT *user_connections = NULL;
+	
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	NotificationSent *notifSent = NULL;
 	
 	// get message length
