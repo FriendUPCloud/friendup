@@ -494,6 +494,10 @@ int HashmapRemove( Hashmap *in, char* key  )
 	int i;
 	int curr;
 	Hashmap* m;
+	if( in == NULL )
+	{
+		return MAP_MISSING;
+	}
 	
 	m = (Hashmap *) in;
 

@@ -46,7 +46,7 @@ typedef struct DataQWSIM{
 /**
  * Write message to websocket
  *
- * @param mac pointer to mobile connection structure
+ * @param d pointer to DataQWSIM structure
  * @param msg pointer to string where message is stored
  * @param len length of message
  * @return number of bytes written to websocket
