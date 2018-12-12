@@ -227,8 +227,9 @@ function setUrl( uri, move )
 			// Look for drives with the same name
 			var split = uri.split( ':' );
 			var hostName = split[ 0 ];
+			
 			Friend.DOS.getDriveInfo( hostName, function( response, message, extra )
-			{
+			{	
 				// Drive found! File on the current machine!
 				if ( response )
 				{
@@ -259,14 +260,6 @@ function setUrl( uri, move )
 					Application.sendMessage( { command: 'fnet_connect', url: uri } );
 				}
 			} );
-			for( var a = 0; a < Workspace.icons.length; a++ )
-			{
-				if( Workspace.icons[a].Volume == hostName )
-				{
-					return;
-				}
-			}
-
 			return;
 		}
 	}
