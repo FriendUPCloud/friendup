@@ -218,15 +218,20 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		{
 #ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
-			FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) );
-			//FQueue *q = &(man->man_Queue);
-			FQueue *q = &(appConnection->mac_Queue);
-			
-			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
-			
-			if( ( e = FQPop( q ) ) != NULL )
+			if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 			{
-				FRIEND_MUTEX_UNLOCK(&appConnection->mac_Mutex);
+				//FQueue *q = &(man->man_Queue);
+				FQueue *q = &(appConnection->mac_Queue);
+			
+				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+			
+				e = FQPop( q );
+			
+				FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
+			}
+			
+			if( e != NULL )
+			{
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
@@ -249,7 +254,6 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			else
 			{
 				DEBUG("[websocket_app_callback] No message in queue\n");
-				FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
 			}
 #endif
 		}
@@ -474,7 +478,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						
 						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
-						if( FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) ) == 0 )
+						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 						{
 							FQPushFIFO( &(appConnection->mac_Queue), en );
 							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
@@ -794,23 +798,29 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
 	connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
 	
-	FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
-	//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
+	if( FRIEND_MUTEX_LOCK( &(connections->connection[connectionIndex]->mac_Mutex) ) == 0 )
+	{
+		FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
+		//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
 	
-	{ FQEntry *q = fq->fq_First; 
-		while( q != NULL )
-		{ 
-			void *r = q; 
-			if( q->fq_Data != NULL )
-			{
-				FFree( q->fq_Data ); 
-			}
-			q = (FQEntry *)q->node.mln_Succ; 
-			FFree( r ); 
+		{
+			FQEntry *q = fq->fq_First; 
+			while( q != NULL )
+			{ 
+				void *r = q; 
+				if( q->fq_Data != NULL )
+				{
+					FFree( q->fq_Data ); 
+				}
+				q = (FQEntry *)q->node.mln_Succ; 
+				FFree( r ); 
 			
-		} 
-		fq->fq_First = NULL; 
-		fq->fq_Last = NULL; }
+			} 
+			fq->fq_First = NULL; 
+			fq->fq_Last = NULL; 
+		}
+		FRIEND_MUTEX_UNLOCK( &(connections->connection[connectionIndex]->mac_Mutex) );
+	}
 	
 	pthread_mutex_destroy( &(connections->connection[connectionIndex]->mac_Mutex) );
 
