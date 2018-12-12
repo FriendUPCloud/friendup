@@ -276,7 +276,7 @@ function apiWrapper( event, force )
 						}, msg.extra );
 						break;
 					case 'getDriveInfo':
-						Friend.DOS.getDriveInfo( msg.path, function( response, icon, extra )
+						Friend.DOS.getDriveInfo( msg.path, false, function( response, icon, extra )
 						{
 							var nmsg = 
 							{
