@@ -55,6 +55,10 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 
 NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager *nm,  FULONG ID );
 
+NotificationSent *NotificationManagerGetNotificationsSentByStatusDB( NotificationManager *nm,  FULONG ID, int status );
+
+NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( NotificationManager *nm, int status, FULONG umaID );
+
 int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid );
 
 Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FULONG nsid );

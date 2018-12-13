@@ -203,6 +203,48 @@ NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager
 }
 
 /**
+ * Get NotificationSent from database by notification sent ID and status
+ *
+ * @param nm pointer to MobileManager
+ * @param ID id of Notification
+ * @param status id of NotificationSent status
+ * @return pointer to structure UserMobileApp
+ */
+NotificationSent *NotificationManagerGetNotificationsSentByStatusDB( NotificationManager *nm,  FULONG ID, int status )
+{
+	NotificationSent *ns = NULL;
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char where[ 1024 ];
+	int entries;
+	
+	snprintf( where, sizeof(where), "ID='%lu' AND Status=%d", ID, status );
+	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+	
+	return ns;
+}
+
+/**
+ * Get NotificationSent from database by notification sent ID and status
+ *
+ * @param nm pointer to MobileManager
+ * @param status id of NotificationSent status
+ * @param umaID UserMobileApp ID
+ * @return pointer to structure UserMobileApp
+ */
+NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( NotificationManager *nm, int status, FULONG umaID )
+{
+	NotificationSent *ns = NULL;
+	SystemBase *sb = (SystemBase *)nm->nm_SB;
+	char where[ 1024 ];
+	int entries;
+	
+	snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
+	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+	
+	return ns;
+}
+
+/**
  * Save Notification in database
  *
  * @param nm pointer to MobileManager
@@ -375,7 +417,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		
 		sleep( 1 );
 		counter++;
-		if( counter > 15 )	// do checking every 15 seconds
+		if( counter > 5 )	// do checking every 15 seconds
 		{
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
