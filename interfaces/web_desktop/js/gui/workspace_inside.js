@@ -673,7 +673,7 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
-			var messageRead = false;
+			var messageRead = trash = false;
 			
 			// Check if we have notification data
 			if( msg.notificationData )
@@ -692,6 +692,7 @@ var WorkspaceInside = {
 							notifid: msg.notificationData.id, 
 							action: 1
 						} );
+						clearTimeout( trash );
 					}
 					
 					// Find application
@@ -714,7 +715,7 @@ var WorkspaceInside = {
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
 								// Delete wrapper callback if it isn't executed within 1 second
-								setTimeout( function()
+								trash = setTimeout( function()
 								{
 									if( !messageRead )
 									{
