@@ -603,7 +603,21 @@ static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
 	else
 	{
 		DEBUG("Check = true\n");
-		return MobileAppAddNewUserConnection( wsi, usernameString, user, umaID );
+		
+		int ret = MobileAppAddNewUserConnection( wsi, usernameString, user, umaID );
+		if( umaID > 0 )
+		{
+			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
+			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, umaID );
+			NotificationSent *ns = nsroot;
+			while( ns != NULL )
+			{
+				ns = (NotificationSent *)ns->node.mln_Succ;
+			}
+			NotificationSentDeleteAll( nsroot );
+		}
+		
+		return ret;
 	}
 }
 
