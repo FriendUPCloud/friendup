@@ -673,7 +673,7 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
-			var messageRead = false;
+			var messageRead = trash = false;
 			
 			// Check if we have notification data
 			if( msg.notificationData )
@@ -684,14 +684,15 @@ var WorkspaceInside = {
 					// Function to set the notification as read...
 					function notificationRead()
 					{
+						Notify( { title: 'We saw push!', text: msg.notificationData.id } );
 						messageRead = true;
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							t: 'notify',
 							notifid: msg.notificationData.id, 
 							action: 1
 						} );
+						clearTimeout( trash );
 					}
 					
 					// Find application
@@ -714,10 +715,11 @@ var WorkspaceInside = {
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
 								// Delete wrapper callback if it isn't executed within 1 second
-								setTimeout( function()
+								trash = setTimeout( function()
 								{
 									if( !messageRead )
 									{
+										Notify( { title: 'Trashing push callback (not seen)', text: msg.notificationData.id } );
 										var trash = getWrapperCallback( amsg.callback );
 										delete trash;
 									}
