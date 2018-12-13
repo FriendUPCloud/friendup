@@ -348,7 +348,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		
 		sleep( 1 );
 		counter++;
-		if( counter > 15 )	// do checking every 15 seconds
+		if( counter > 5 )	// do checking every 15 seconds
 		{
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
