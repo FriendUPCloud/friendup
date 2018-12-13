@@ -684,11 +684,12 @@ var WorkspaceInside = {
 					// Function to set the notification as read...
 					function notificationRead()
 					{
+						Notify( { title: 'We saw push!', text: msg.notificationData.id } );
+						console.log( 'Telling Friend Core that the notification was seen!' );
 						messageRead = true;
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							t: 'notify',
 							notifid: msg.notificationData.id, 
 							action: 1
 						} );
@@ -718,6 +719,8 @@ var WorkspaceInside = {
 								{
 									if( !messageRead )
 									{
+										Notify( { title: 'Trashing push callback (not seen)', text: msg.notificationData.id } );
+										console.log( 'Trashing the "is read" callback' );
 										var trash = getWrapperCallback( amsg.callback );
 										delete trash;
 									}
