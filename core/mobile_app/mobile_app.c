@@ -1249,6 +1249,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		//DEBUG("Send: <%s>\n", jsonMessage + LWS_PRE);
 		if( action == NOTIFY_ACTION_READED )
 		{
+			/*
 			switch( notif->n_NotificationType )
 			{
 				case MN_force_all_devices:
@@ -1307,6 +1308,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType);
 			}
+			*/
 		}
 		//
 		// seems noone readed message on desktop, we must inform all user channels that we have package for him
