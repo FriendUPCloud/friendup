@@ -774,6 +774,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	}
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+
 	FQInit( &(newConnection->mac_Queue) );
 
 	return 0;
@@ -1226,6 +1227,11 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		{
 			reqLengith += strlen( notif->n_Extra );
 		}
+	}
+	else
+	{
+		FERROR("Cannot find notification!\n");
+		return 1;
 	}
 	
 	// allocate memory for message
