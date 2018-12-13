@@ -494,7 +494,7 @@ i18n_dir_btn_listview                   : List
 #Sessions ----------------------------------------------------------------------
 
 i18n_session_killed                     : Your session was killed
-i18n_session_killed_desc                : Trying to fetch a new session
+i18n_session_killed_desc                : You are now being logged out
 i18n_session_expired                    : Your session expired
 i18n_session_expired_desc               : Trying to fetch a new session
 i18n_no_other_sessions_available        : No other sessions available
@@ -670,4 +670,8 @@ menu_move_view_to_workspace_10          : Move to workspace 10
 
 i18n_minimize_all_windows               : Minimize all windows
 i18n_show_all_windows                   : Show all windows
+
+
+i18n_could_not_find_application         : Could not find application
+i18n_could_not_find_app_desc            : Application notification did not work because the application did not start.
 

@@ -1,0 +1,36 @@
+
+	<div class="ContentFull">
+		<div class="VContentTop BackgroundToolbar Padding BorderBottom" style="height: 50px">
+			<table cellspacing="0" cellpadding="0" border="0" width="100%">
+				<tr>
+					<td width="50px">
+						<strong>Url:</strong>
+					</td>
+					<td>
+						<input class="FullWidth" type="text" id="uri" placeholder="friend://" value="about:blank" onchange="setUrl(this.value)"/>
+					</td>
+					<td width="32px" style="padding-left: 8px">
+						<button type="button" class="IconSmall fa-refresh" onclick="reload()"></button>
+					</td>
+					<td width="32px">
+						<button type="button" class="IconSmall fa-arrow-left" onclick="back()"></button>
+					</td>
+					<td width="32px">
+						<button type="button" class="IconSmall fa-arrow-right" onclick="forward()"></button>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="VContentTop" style="top: 50px; bottom: 0px" id="SiteContent">
+			<iframe src="" id="BrowserBox" onload="try{ Application.registerUrl(this.src) } catch( e ){ console.log('Cannot reg url.', Application, Application.registerUrl); }" class="Browser" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+		</div>
+	</div>
+
+	<style>
+		.Browser
+		{
+			position: absolute;
+			top: 0; left: 0; border: 0; width: 100%; height: 100%;
+		}
+	</style>
+	<script src="Progdir:Scripts/logic.js"></script>

@@ -13,6 +13,13 @@ var _appNum = 1;
 // Load a javascript application into a sandbox
 function ExecuteApplication( app, args, callback )
 {
+	if( isMobile )
+	{
+		Workspace.widget.slideUp();
+		Workspace.closeDrivePanel();
+		Workspace.mainDock.closeDesklet();
+	}
+	
 	if( args )
 	{ 
 		Workspace.lastLaunchedAppArgs = args; 

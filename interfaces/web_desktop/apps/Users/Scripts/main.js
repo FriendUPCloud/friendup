@@ -1559,6 +1559,8 @@ function saveWorkgroup( callback, tmp )
 		}
 	}
 	
+	console.log( o );
+	
 	if( o.ID > 0 )
 	{
 		m.execute( 'workgroupupdate', o );

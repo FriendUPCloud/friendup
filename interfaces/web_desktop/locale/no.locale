@@ -472,7 +472,7 @@ i18n_dir_btn_search                     : Søk
 #Sessions ----------------------------------------------------------------------
 
 i18n_session_killed                     : Din økt ble fjernet
-i18n_session_killed_desc                : Prøver å etablere en ny økt med serveren
+i18n_session_killed_desc                : Du blir nå logget ut
 i18n_session_expired                    : Din økt er foreldet
 i18n_session_expired_desc               : Etablerer en ny økt med serveren
 i18n_no_other_sessions_available        : Ingen andre økter tilgjengelige
@@ -614,3 +614,7 @@ menu_move_view_to_workspace_10          : Flytt til arbeidsbord 10
 
 i18n_minimize_all_windows               : Gjem alle vinduer
 i18n_show_all_windows                   : Vis alle vinduer
+
+i18n_could_not_find_application         : Kunne ikke finne programmet
+i18n_could_not_find_app_desc            : Beskjeden kunne ikke sendes til programmet fordi det ikke startet.
+

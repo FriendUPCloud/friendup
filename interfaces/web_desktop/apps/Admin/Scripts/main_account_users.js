@@ -60,7 +60,7 @@ Sections.accounts_users = function( cmd, extra )
 						mlst += '<div class="HContent20 FloatLeft">';
 						mlst += '<div class="PaddingSmall Ellipsis">';
 						mlst += '<div id="Storage_' + mountlist[b].ID + '">';
-							mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
+						mlst += '<canvas class="Rounded" name="' + mountlist[b].Name + '" id="Storage_Graph_' + mountlist[b].ID + '" size="' + mountlist[b].Config.DiskSize + '" used="' + mountlist[b].StoredBytes + '"></canvas>';
 						mlst += '</div>';
 						mlst += '<div class="FloatLeft HContent100 Name Ellipsis TextCenter" title="' + mountlist[b].Name + '">' + mountlist[b].Name + '</div>';
 						mlst += '</div>';

@@ -195,6 +195,9 @@ var Sections = {
 			ge( 'ServerConfiguration' ).innerHTML = str;
 		}
 		m.execute( 'getconfiginijson' );
+	},
+	user_edit( id )
+	{
 	}
 }
 

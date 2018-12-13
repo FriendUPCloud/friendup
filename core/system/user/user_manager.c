@@ -905,6 +905,46 @@ User *UMGetUserByNameDB( UserManager *um, const char *name )
 }
 
 /**
+ * Get user from database by his name
+ *
+ * @param um pointer to UserManager
+ * @param name name of the user
+ * @return User or NULL when error will appear
+ */
+User *UMGetUserByNameDBCon( UserManager *um, SQLLibrary *sqlLib, const char *name )
+{
+	char where[ 128 ];
+	where[ 0 ] = 0;
+	
+	DEBUG("[UMGetUserByNameDB] start\n");
+	
+	if( sqlLib == NULL )
+	{
+		FERROR("Cannot get user, mysql.library was not open\n");
+		return NULL;
+	}
+
+	sqlLib->SNPrintF( sqlLib, where, sizeof(where), " `Name` = '%s'", name );
+	
+	struct User *user = NULL;
+	int entries;
+	
+	user = ( struct User *)sqlLib->Load( sqlLib, UserDesc, where, &entries );
+	
+	User *tmp = user;
+	while( tmp != NULL )
+	{
+		UMAssignGroupToUser( um, tmp );
+		UMAssignApplicationsToUser( um, tmp );
+		
+		tmp = (User *)tmp->node.mln_Succ;
+	}
+	
+	DEBUG("[UMGetUserByNameDB] end\n");
+	return user;
+}
+
+/**
  * Get user ID database by his name
  *
  * @param um pointer to UserManager

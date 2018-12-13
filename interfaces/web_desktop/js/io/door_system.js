@@ -16,11 +16,613 @@
 		..
 	}
 */
+
+Friend = window.Friend || {};
+
 SystemEvent = function( info )
 {
 	
 }
 var SystemEvents = {};
+
+DoorSystem = function( path )
+{
+	this.icons = [];
+	var door = this;
+	this.handler = 'system';
+	this.dosdriver = 'System';
+	this.ready = false;
+	this.Volume = 'System:';
+	this.Title = 'System';
+	this.Path = 'System:';
+	
+	// Run superfunction init
+	this.init();
+	this.setPath( path );
+	this.ready = true;
+}
+
+DoorSystem.prototype = new Door();
+
+DoorSystem.prototype.get = function( path )
+{
+	var vol = path.split( ':' )[0] + ':';
+	for( var a = 0; a < Doors.icons.length; a++ )
+	{
+		if( Doors.icons[a].Volume.toLowerCase() == vol.toLowerCase() )
+		{
+			if( Doors.icons[a].Door.dosdriver != 'System' )
+				return Doors.icons[a].Door.get( path );
+		}
+	}
+	return new DoorSystem( path );
+}
+
+// Return an array of icons!
+DoorSystem.prototype.getIcons = function( fileInfo, callback )
+{
+	if( !fileInfo )
+	{
+		fileInfo = {
+			Path: this.getPath(),
+			Type: 'unknown'
+		};
+	}
+	else if( typeof( fileInfo ) == 'string' )
+	{
+		fileInfo = {
+			Path: fileInfo,
+			Type: 'unknown'
+		};
+	}
+	
+	// Fix path
+	if( fileInfo.Path.indexOf( ':' ) < 0 )
+	{
+		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
+	}
+	
+	// Translations
+	var translations = {
+		dirPrefs: 'System:' + i18n( 'i18n_directory_Prefs' ) + '/',
+		dirModules: 'System:' + i18n( 'i18n_directory_Modules' ) + '/',
+		dirDocApps: 'System:' + i18n( 'i18n_directory_DocApps' ) + '/',
+		dirLibraries: 'System:' + i18n( 'i18n_directory_Libraries' ) + '/',
+		dirDevices: 'System:' + i18n( 'i18n_directory_Devices' ) + '/',
+		dirDocumentation: 'System:' + i18n( 'i18n_directory_Documentation' ) + '/',
+		dirRepositories: 'System:' + i18n( 'i18n_directory_Repositories' ) + '/',
+		dirFunctions: 'System:' + i18n( 'i18n_directory_Functions' ) + '/'
+	};
+	
+	var dirList = {
+		'System:Preferences/': function()
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' ) return;
+				var prefs = {}, icons = {}, locales = {};
+				if( d == 'User' )
+				{
+					// Get available preferences applications
+					prefs = {
+						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
+						//'Screens'      : i18n( 'i18n_screens' ),
+						'Software'     : i18n( 'i18n_software' ),
+						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
+						//'Language'     : i18n( 'i18n_language' ),
+						//'Desklets'     : i18n( 'i18n_desklets' ),
+						//'Sound'        : i18n( 'i18n_sound' ),
+						//'Keyboard'     : i18n( 'i18n_keyboard' ),
+						//'Input'        : i18n( 'i18n_input' ),
+						//'Datetime'     : i18n( 'i18n_datetime' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
+						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
+						'Dock'         : i18n( 'i18n_docksettings' ),
+						'Account'      : i18n( 'i18n_account' )
+					};
+					locales = {
+						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
+						'Software'     : i18n( 'i18n_software' ),
+						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
+						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
+						'Dock'         : i18n( 'i18n_docksettings' ),
+						'Account'      : i18n( 'i18n_account' )
+					};
+					// Setup icons for all these preferences
+					icons = {
+						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
+						//'Screens'      : 'devices/video-display.png',
+						'Software'     : 'categories/applications-accessories.png',
+						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
+						//'Language'     : 'apps/lokalize.png',
+						//'Desklets'     : 'apps/telepathy-kde.png',
+						//'Sound'        : 'devices/audio-headphones.png',
+						//'Keyboard'     : 'devices/input-keyboard.png',
+						//'Input'        : 'devices/input-mouse.png',
+						//'Datetime'     : 'apps/clock.png',
+						'Startup'      : '',
+						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
+						'Dock'         : 'apps/picmi.png',
+						'Account'      : 'apps/preferences-desktop-user.png'
+					};
+				}
+				else if( d == 'Admin' )
+				{
+					// Get available preferences applications
+					prefs = {
+						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
+						//'Screens'      : i18n( 'i18n_screens' ),
+						'Software'     : i18n( 'i18n_software' ),
+						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
+						//'Printers'     : i18n( 'i18n_printers' ),
+						//'Network'      : i18n( 'i18n_network' ),
+						//'Language'     : i18n( 'i18n_language' ),
+						'DiskCatalog'    : i18n( 'i18n_disk_catalog' ),
+						//'Desklets'     : i18n( 'i18n_desklets' ),
+						//'Sound'        : i18n( 'i18n_sound' ),
+						//'Keyboard'     : i18n( 'i18n_keyboard' ),
+						//'Input'        : i18n( 'i18n_input' ),
+						//'Hardware'     : i18n( 'i18n_hardware' ),
+						'Users'        : i18n( 'i18n_useraccounts' ),
+						//'Datetime'     : i18n( 'i18n_datetime' ),
+						'Dock'         : i18n( 'i18n_docksettings' ),
+						'Startup'      : i18n( 'i18n_startup_sequence' ),
+						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
+						'Security'     : i18n( 'i18n_security' ),
+						'Account'      : i18n( 'i18n_account' )
+					};
+					locales = {
+						'Looknfeel'    : 'i18n_looknfeel',
+						'Software'     : 'i18n_software',
+						'Wallpaper'    : 'i18n_wallpaper',
+						'DiskCatalog'  : 'i18n_disk_catalog',
+						'Users'        : 'i18n_useraccounts',
+						'Dock'         : 'i18n_docksettings',
+						'Startup'      : 'i18n_startup_sequence',
+						'Mimetypes'    : 'i18n_mimetypes',
+						'Security'     : 'i18n_security',
+						'Account'      : 'i18n_account'
+					};
+					// Setup icons for all these preferences
+					icons = {
+						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
+						//'Screens'      : 'devices/video-display.png',
+						'Software'     : 'categories/applications-accessories.png',
+						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
+						//'Printers'     : 'devices/printer-laser.png',
+						//'Network'      : 'places/network-workgroup.png',
+						//'Language'     : 'apps/lokalize.png',
+						'DiskCatalog'    : 'mimetypes/x-office-address-book.png',
+						//'Desklets'     : 'apps/telepathy-kde.png',
+						//'Sound'        : 'devices/audio-headphones.png',
+						//'Keyboard'     : 'devices/input-keyboard.png',
+						//'Input'        : 'devices/input-mouse.png',
+						//'Hardware'     : 'devices/audio-card.png',
+						'Users'        : 'apps/system-users.png',
+						//'Datetime'     : 'apps/clock.png',
+						'Dock'         : 'apps/picmi.png',
+						'Startup'      : '',
+						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
+						'Security'     : 'devices/secure-card.png',
+						'Account'      : 'apps/preferences-desktop-user.png'
+					};
+				}
+
+				// Output array
+				var output = [];
+
+				// Loop through and make icons
+				for( var pref in prefs )
+				{
+					var icon = icons[pref];
+					output.push( {
+						MetaType: 'File',
+						Title: prefs[pref],
+						Path: 'System:Settings/' + pref,
+						PathLocalized: 'System:Settings/' + i18n( 'i18n_directory_Prefs' ),
+						DateModified: dateh,
+						Filename: pref,
+						Permissions: '-r-e-,-r-e-,-r-e-',
+						Filesize: 16,
+						IconClass: 'Prefs_' + pref,
+						IconFile: '/iconthemes/friendup15/App_' + pref + '.png',
+						Position: 'left',
+						Type: 'Executable'
+					} );
+				}
+				if( callback ) callback( output, translations.dirPrefs );
+			}
+			m.execute( 'userlevel' );
+			return;
+		},
+		'System:Modules/': function()
+		{
+			// Get all modules listed out
+			var m = new Module( 'system' );
+			m.onExecuted = function( r, data )
+			{
+				callback( JSON.parse( data ), translations.dirModules );
+			}
+			m.execute( 'listmodules' );
+			return;
+		},
+		'System:Libraries/': function()
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( r, data )
+			{
+				callback( JSON.parse( data ), translations.dirLibraries );
+			}
+			m.execute( 'listlibraries' );
+			return;
+		},
+		'System:Devices/': function()
+		{
+			var devs = {
+				dosdrivers     : i18n( 'i18n_dosdrivers' ),
+				cores        : i18n( 'i18n_cores' ),
+				sessions       : i18n( 'i18n_sessions' )/*,
+				printers       : i18n( 'i18n_printers' )*/
+			};
+			var icons = {
+				dosdrivers     : 'places/folder-grey.png',
+				cores        : 'places/folder-grey.png',
+				sessions       : 'places/folder-grey.png'/*,
+				printers       : 'places/folder-print.png'*/
+			};
+			var types = [
+				'DOSDrivers',
+				'Cores',
+				'Sessions',
+				'Printers'
+			];
+			
+			// Output array
+			var output = [];
+			var u = 0;
+
+			// Loop through and make icons
+			for( var dev in devs )
+			{
+				var icon = icons[dev];
+				output.push( {
+					MetaType: 'Directory',
+					Title: devs[dev],
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
+					Path: 'System:Devices/' + types[u] + '/',
+					IconClass: 'Devs_Drawer_' + types[u++],
+					Position: 'left',
+					Type: 'Directory'
+				} );
+			}
+			if( callback )
+				return callback( output, translations.dirDevices );
+			return output;
+		},
+		'System:Documentation/': function()
+		{
+			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
+				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
+			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
+			var eles = [];
+			for( var a = 0; a < files.length; a++ )
+			{
+				eles.push( {
+					MetaType: 'Meta',
+					Filename: files[a],
+					Title: files[a],
+					Permissions: '-r---,-r---,-r---',
+					DateModified: dateh,
+					Path: path,
+					Position: 'left',
+					Module: 'files',
+					Command: 'dormant',
+					Filesize: 16,
+					Type: 'DormantFunction',
+					//IconClass: 'System_File_Meta',
+					IconClass: 'TypePDF',
+					Dormant: WorkspaceDormant
+				} );
+			}
+			for( var a = 0; a < dirs.length; a++ )
+			{
+				eles.push( {
+					MetaType: 'Directory',
+					Title: dirs[a],
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Filesize: 16,
+					Position: 'left',
+					Type: 'Directory',
+					Path: path + dirs[a] + '/',
+					Dormant: WorkspaceDormant
+				} );
+			}
+			return callback( eles, translations.dirDocumentation );
+		},
+		'System:Repositories/': function()
+		{
+			var output = [
+				{
+					MetaType: 'Directory',
+					Title: 'FriendUP',
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: '2017-12-22 12:00:00',
+					Filesize: 16,
+					Position: 'left',
+					Type: 'Directory',
+					Path: path + 'FriendUP/',
+					Dormant: WorkspaceDormant
+				}
+			];
+			if( callback )
+				return callback( output, translations.dirRepositories );
+			return output;
+		},
+		'System:Functions/': function()
+		{
+			var funcs = [ 
+				'ViewOpen', 'ViewClose', 'FullScreen', 'ScreenOpen', 'ScreenActivate', 'ScreenClose', 'ScreenList', 'SetMenu', 
+				'GraphicsAdd', 'GraphicsRemove', 'GraphicsSet', 'GraphicsMode'
+			];
+			var eles = [];
+			for( var a = 0; a < funcs.length; a++ )
+			{
+				eles.push( {
+					MetaType: 'Meta',
+					Filename: funcs[a],
+					Title: funcs[a],
+					Permissions: '-r-e-,-r-e-,-r-e-',
+					DateModified: dateh,
+					Path: path,
+					Position: 'left',
+					Module: 'files',
+					Command: 'dormant',
+					Filesize: 16,
+					Type: 'DormantFunction',
+					IconClass: 'System_Dormant_Function',
+					Dormant: WorkspaceDormant
+				} );
+			}
+			return callback( eles, translations.dirFunctions );
+		},
+		'System:DocApps/': function()
+		{
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, data )
+			{
+				if( e == 'ok' )
+				{
+					var files = JSON.parse( data );
+					for( var a = 0; a < files.length; a++ )
+					{
+						files[a].Dormant = WorkspaceDormant;
+						files[a].Permissions = '-r-e-,-r-e-,-r-e-';
+					}
+					callback( files, translations.dirDocApps );
+				}
+			}
+			m.execute( 'listapplicationdocs' );
+			return;
+		}
+	};
+	
+	// Aliases
+	dirList[ 'System:' + i18n( 'i18n_directory_Functions' ) + '/' ]     = dirList[ 'System:Functions/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_DocApps' ) + '/' ]       = dirList[ 'System:DocApps/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Documentation' ) + '/' ] = dirList[ 'System:Documentation/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Prefs' ) + '/' ]         = dirList[ 'System:Preferences/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Repositories' ) + '/' ]  = dirList[ 'System:Repositories/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Modules' ) + '/' ]       = dirList[ 'System:Modules/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Libraries' ) + '/' ]     = dirList[ 'System:Libraries/' ];
+	dirList[ 'System:' + i18n( 'i18n_directory_Devices' ) + '/' ]       = dirList[ 'System:Devices/' ];
+	
+	
+	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
+	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
+	
+	// Strip a filename after path
+	var lastChar = path.substr( path.length - 1, 1 );
+	var orphanFilename = null;
+	if( lastChar != ':' && lastChar != '/' )
+	{
+		path += '/';
+	}
+	
+	var dateh = new Date();
+	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
+		StrPad( dateh.getDate(), 2, '0' ) + ' ' + StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
+		':' + StrPad( dateh.getSeconds(), 2, '0' );
+	
+	// Case sensitive, then case insensitive
+	var found = false;
+	var spath = path;
+	// Match sensitive
+	if( typeof( dirList[ spath ] ) != 'undefined' )
+		found = true;
+	else
+	{
+		for( var a in dirList )
+		{
+			// Match insensitive
+			if( spath.toLowerCase() == a.toLowerCase() )
+			{
+				spath = a;
+				break;
+			}
+		}
+		if( typeof( dirList[ spath ] ) != 'undefined' )
+		{
+			found = true;
+		}
+	}
+	
+	// Check if we have a dirlist function
+	if( found )
+	{
+		dirList[ spath ]();
+	}
+	// Root path
+	else if( path.toLowerCase() == 'system:' )
+	{
+		return callback( [
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Prefs' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Preferences/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Prefs' ),
+				Type     : 'Directory',
+				IconClass: 'System_Settings',
+				Door     : new DoorSystem( 'System:Preferences/' )
+			},
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Repositories' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Repositories/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Repositories' ),
+				Type     : 'Directory',
+				IconClass: 'System_Repositories',
+				Door     : new DoorSystem( 'System:Repositories/' )
+			},
+			{
+				MetaType : 'Directory',
+				Command  : 'Modules',
+				Title    : i18n( 'i18n_directory_Modules' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Modules/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Modules' ),
+				Type     : 'Directory',
+				Module   : 'files',
+				IconClass: 'System_Modules',
+				Door     : new DoorSystem( 'System:Modules/' )
+			},
+			{
+				MetaType : 'Directory',
+				Command  : 'Devices',
+				Title    : i18n( 'i18n_directory_Devices' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Devices/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Devices' ),
+				Type     : 'Directory',
+				Module   : 'files',
+				IconClass: 'System_Devices',
+				Door     : new DoorSystem( 'System:Devices/' )
+			},
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Libraries' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Libraries/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Libraries' ),
+				Type     : 'Directory',
+				IconClass: 'System_Libraries',
+				Door     : new DoorSystem( 'System:Libraries/' )
+			},
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Software' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Software/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Software' ),
+				Type     : 'Directory',
+				IconClass: 'System_Software',
+				Door     : new DoorSystem( 'System:Software/' )
+			},
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Documentation' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Documentation/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Documentation' ),
+				Type     : 'Directory',
+				IconClass: 'System_Documentation',
+				Door     : new DoorSystem( 'System:Documentation/' )
+			},
+			{
+				MetaType : 'Directory',
+				Title    : i18n( 'i18n_directory_Functions' ),
+				Permissions: '-r-e-,-r-e-,-r-e-',
+				DateModified: dateh,
+				Filesize: 16,
+				Path     : 'System:Functions/',
+				PathLocalized: 'System:' + i18n( 'i18n_directory_Functions' ),
+				Type     : 'Directory',
+				IconClass: 'System_Functions',
+				Door     : new DoorSystem( 'System:Functions/' )
+			}
+		], 'System:' );
+		return;
+	}
+	// Undefined system path
+	else if( path && path.toLowerCase().indexOf( 'system:' ) == 0 )
+	{
+		var m = new Module( 'system' );
+		m.onExecuted = function( r, data )
+		{
+			if( r == 'ok' ) 
+			{
+				var list = JSON.parse( data );
+				if( list.length )
+				{
+					var pth = list[0].Path.substr( 0, path.length );
+					return callback( JSON.parse( data ), pth );
+				}
+				else callback( false, { response: 'Empty directory.' } );
+			}
+			else callback( false );
+		}
+		m.execute( 'systempath', { path: path } );
+		return;
+	}
+	if( callback && this.icons && this.icons.length && this.icons[0].Path ) 
+	{
+		var pth = this.icons[0].Path.substr( 0, path.length );
+		callback( this.icons, pth );
+	}
+	return typeof( icons ) != 'undefined' ? icons : this.icons; 
+}
+
+DoorSystem.prototype.getDirectory = DoorSystem.prototype.getIcons;
+
+// Dos arguments
+DoorSystem.prototype.dosAction = function( cmd, args, callback ) 
+{
+	switch( cmd )
+	{
+		case 'copy':
+			break;
+	}
+};
+
+// Instantiate a new one!
+DoorSystem.prototype.instantiate = function()
+{
+	return new DoorSystem();
+};
+
+// Get an instance on Friend global
+Friend.DoorSystem = new DoorSystem( 'System:' );
+
 
 // Special one
 // TODO: We should implement the whole of System: as a dormant door...
@@ -28,11 +630,11 @@ var SystemEvents = {};
 var WorkspaceDormant = {
 	title: 'SystemDormant',
 	windows: [],
-	refresh: function( winObj )
+	refresh( winObj )
 	{
 		//winObj.innerHTML = ':)';
 	},
-	execute: function( func, args )
+	execute( func, args )
 	{
 		if( typeof( func ) == 'object' )
 		{
@@ -217,539 +819,35 @@ var WorkspaceDormant = {
 				}
 				return false;
 		}
-	}
-}
-DormantMaster.addAppDoor( WorkspaceDormant );
-
-DoorSystem = function( path )
-{
-	this.icons = [];
-	var door = this;
-	this.handler = 'system';
-	this.dosdriver = 'System';
-	this.ready = false;
-	this.Volume = 'System:';
-	
-	// Run superfunction init
-	this.init();
-	this.setPath( path );
-	this.ready = true;
-}
-
-DoorSystem.prototype = new Door();
-
-DoorSystem.prototype.get = function( path )
-{
-	var vol = path.split( ':' )[0] + ':';
-	for( var a = 0; a < Doors.icons.length; a++ )
+	},
+	getDoor()
 	{
-		if( Doors.icons[a].Volume.toLowerCase() == vol.toLowerCase() )
-		{
-			if( Doors.icons[a].Door.dosdriver != 'System' )
-				return Doors.icons[a].Door.get( path );
-		}
-	}
-	return new DoorSystem( path );
-}
-
-// Return an array of icons!
-DoorSystem.prototype.getIcons = function( fileInfo, callback )
-{
-	if( !fileInfo )
-	{
-		fileInfo = {
-			Path: this.getPath(),
-			Type: 'unknown'
+		return {
+			MetaType : 'Meta',
+			Title    : 'System:', /* remove this from all references*/
+			Filename : 'System:',
+			IconFile : 'door.png',
+			Position : 'left',
+			Module   : 'files',
+			Command  : 'dormant',
+			Filesize : 4096,
+			Flags    : '',
+			Type     : 'Dormant',
+			Path	 : 'System:',
+			Dormant  : Friend.DoorSystem
 		};
-	}
-	
-	// Fix path
-	if( fileInfo.Path.indexOf( ':' ) < 0 )
+	},
+	getDirectory( path, callback )
 	{
-		fileInfo.Path = this.deviceName + ':' + fileInfo.Path;
-	}
-	
-	var dirPrefs            = 'System:Preferences/';
-	var dirRepositories     = 'System:Repositories/';
-	var dirModules          = 'System:Modules/';
-	var dirLibraries        = 'System:Libraries/';
-	var dirSoftware         = 'System:Software/';
-	var dirDevices          = 'System:Devices/';
-	var dirFunctions        = 'System:Functions/';
-	var dirDocumentation    = 'System:Documentation/';
-	var dirDocApps          = 'System:DocApps/';
-	var locDirPrefs         = 'System:' + i18n( 'i18n_directory_Prefs' ) + '/';
-	var locDirRepositories  = 'System:' + i18n( 'i18n_directory_Repositories' ) + '/';
-	var locDirModules       = 'System:' + i18n( 'i18n_directory_Modules' ) + '/';
-	var locDirLibraries     = 'System:' + i18n( 'i18n_directory_Libraries' ) + '/';
-	var locDirSoftware      = 'System:' + i18n( 'i18n_directory_Software' ) + '/';
-	var locDirDevices       = 'System:' + i18n( 'i18n_directory_Devices' ) + '/';
-	var locDirFunctions     = 'System:' + i18n( 'i18n_directory_Functions' ) + '/';
-	var locDirDocumentation = 'System:' + i18n( 'i18n_directory_Documentation' ) + '/';
-	var locDirDocApps       = 'System:' + i18n( 'i18n_directory_DocApps' ) + '/';
-	
-	if( !this.getPath() && fileInfo.Path ) this.path = fileInfo.Path;
-	var path = fileInfo.Path ? fileInfo.Path : this.getPath();
-	var dateh = new Date();
-	dateh = dateh.getFullYear() + '-' + StrPad( dateh.getMonth()+1, 2, '0' ) + '-' + 
-		StrPad( dateh.getDate(), 2, '0' ) + ' ' +StrPad( dateh.getHours(), 2, '0' ) + ':' + StrPad( dateh.getMinutes(), 2, '0' ) + 
-		':' + StrPad( dateh.getSeconds(), 2, '0' );
-	
-	switch( path )
+		return Friend.DoorSystem.getIcons( path, callback );
+	},
+	getIcons( path, callback )
 	{
-		case 'System:':
-			return callback( [
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Prefs' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Preferences/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Prefs' ),
-					Type     : 'Directory',
-					IconClass: 'System_Settings',
-					Door     : new DoorSystem( 'System:Preferences/' )
-				},
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Repositories' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Repositories/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Repositories' ),
-					Type     : 'Directory',
-					IconClass: 'System_Repositories',
-					Door     : new DoorSystem( 'System:Repositories/' )
-				},
-				{
-					MetaType : 'Directory',
-					Command  : 'Modules',
-					Title    : i18n( 'i18n_directory_Modules' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Modules/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Modules' ),
-					Type     : 'Directory',
-					Module   : 'files',
-					IconClass: 'System_Modules',
-					Door     : new DoorSystem( 'System:Modules/' )
-				},
-				{
-					MetaType : 'Directory',
-					Command  : 'Devices',
-					Title    : i18n( 'i18n_directory_Devices' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Devices/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Devices' ),
-					Type     : 'Directory',
-					Module   : 'files',
-					IconClass: 'System_Devices',
-					Door     : new DoorSystem( 'System:Devices/' )
-				},
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Libraries' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Libraries/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Libraries' ),
-					Type     : 'Directory',
-					IconClass: 'System_Libraries',
-					Door     : new DoorSystem( 'System:Libraries/' )
-				},
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Software' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Software/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Software' ),
-					Type     : 'Directory',
-					IconClass: 'System_Software',
-					Door     : new DoorSystem( 'System:Software/' )
-				},
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Documentation' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Documentation/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Documentation' ),
-					Type     : 'Directory',
-					IconClass: 'System_Documentation',
-					Door     : new DoorSystem( 'System:Documentation/' )
-				},
-				{
-					MetaType : 'Directory',
-					Title    : i18n( 'i18n_directory_Functions' ),
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path     : 'System:Functions/',
-					PathLocalized: 'System:' + i18n( 'i18n_directory_Functions' ),
-					Type     : 'Directory',
-					IconClass: 'System_Functions',
-					Door     : new DoorSystem( 'System:Functions/' )
-				}
-			], 'System:' );
-		case locDirDocumentation:
-		case dirDocumentation:
-			var files = [ 'Developer\'s manual.pdf', 'DOS manual.pdf' ]; // not complete yet, 'User\'s guide.pdf' ]; 
-				//'Workspace', 'FriendScript', 'FriendDOS', 'Dormant', 'Programming', 'VoiceCommand' ];
-			var dirs = []; //'Applications', 'Modules', 'Libraries', 'Repositories', 'Devices' ];
-			var eles = [];
-			for( var a = 0; a < files.length; a++ )
-			{
-				eles.push( {
-					MetaType: 'Meta',
-					Filename: files[a],
-					Title: files[a],
-					Permissions: '-r---,-r---,-r---',
-					DateModified: dateh,
-					Path: path,
-					Position: 'left',
-					Module: 'files',
-					Command: 'dormant',
-					Filesize: 16,
-					Type: 'DormantFunction',
-					//IconClass: 'System_File_Meta',
-					IconClass: 'TypePDF',
-					Dormant: WorkspaceDormant
-				} );
-			}
-			for( var a = 0; a < dirs.length; a++ )
-			{
-				eles.push( {
-					MetaType: 'Directory',
-					Title: dirs[a],
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Position: 'left',
-					Type: 'Directory',
-					Path: path + dirs[a] + '/',
-					Dormant: WorkspaceDormant
-				} );
-			}
-			return callback( eles, dirDocumentation );
-		case locDirDocApps:
-		case dirDocApps:
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, data )
-			{
-				if( e == 'ok' )
-				{
-					var files = JSON.parse( data );
-					for( var a = 0; a < files.length; a++ )
-					{
-						files[a].Dormant = WorkspaceDormant;
-						files[a].Permissions = '-r-e-,-r-e-,-r-e-';
-					}
-					callback( files, dirDocApps );
-				}
-			}
-			m.execute( 'listapplicationdocs' );
-			return;
-		case locDirFunctions:
-		case dirFunctions:
-			var funcs = [ 
-				'ViewOpen', 'ViewClose', 'FullScreen', 'ScreenOpen', 'ScreenActivate', 'ScreenClose', 'ScreenList', 'SetMenu', 
-				'GraphicsAdd', 'GraphicsRemove', 'GraphicsSet', 'GraphicsMode'
-			];
-			var eles = [];
-			for( var a = 0; a < funcs.length; a++ )
-			{
-				eles.push( {
-					MetaType: 'Meta',
-					Filename: funcs[a],
-					Title: funcs[a],
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Path: path,
-					Position: 'left',
-					Module: 'files',
-					Command: 'dormant',
-					Filesize: 16,
-					Type: 'DormantFunction',
-					IconClass: 'System_Dormant_Function',
-					Dormant: WorkspaceDormant
-				} );
-			}
-			return callback( eles, dirFunctions );
-		case locDirRepositories:
-		case dirRepositories:
-			var output = [
-				{
-					MetaType: 'Directory',
-					Title: 'FriendUP',
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: '2017-12-22 12:00:00',
-					Filesize: 16,
-					Position: 'left',
-					Type: 'Directory',
-					Path: path + 'FriendUP/',
-					Dormant: WorkspaceDormant
-				}
-			];
-			if( callback )
-				return callback( output, dirRepositories );
-			return output;
-		case locDirDevices:
-		case dirDevices:
-			var devs = {
-				dosdrivers     : i18n( 'i18n_dosdrivers' ),
-				cores        : i18n( 'i18n_cores' ),
-				sessions       : i18n( 'i18n_sessions' )/*,
-				printers       : i18n( 'i18n_printers' )*/
-			};
-			var icons = {
-				dosdrivers     : 'places/folder-grey.png',
-				cores        : 'places/folder-grey.png',
-				sessions       : 'places/folder-grey.png'/*,
-				printers       : 'places/folder-print.png'*/
-			};
-			var types = [
-				'DOSDrivers',
-				'Cores',
-				'Sessions',
-				'Printers'
-			];
-			
-			// Output array
-			var output = [];
-			var u = 0;
-
-			// Loop through and make icons
-			for( var dev in devs )
-			{
-				var icon = icons[dev];
-				output.push( {
-					MetaType: 'Directory',
-					Title: devs[dev],
-					Permissions: '-r-e-,-r-e-,-r-e-',
-					DateModified: dateh,
-					Filesize: 16,
-					Path: 'System:Devices/' + types[u] + '/',
-					IconClass: 'Devs_Drawer_' + types[u++],
-					Position: 'left',
-					Type: 'Directory'
-				} );
-			}
-			if( callback )
-				return callback( output, dirDevices );
-			return output;
-		case locDirPrefs:
-		case dirPrefs:
-			var m = new Module( 'system' );
-			m.onExecuted = function( e, d )
-			{
-				if( e != 'ok' ) return;
-				var prefs = {}, icons = {}, locales = {};
-				if( d == 'User' )
-				{
-					// Get available preferences applications
-					prefs = {
-						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
-						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
-						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						//'Language'     : i18n( 'i18n_language' ),
-						//'Desklets'     : i18n( 'i18n_desklets' ),
-						//'Sound'        : i18n( 'i18n_sound' ),
-						//'Keyboard'     : i18n( 'i18n_keyboard' ),
-						//'Input'        : i18n( 'i18n_input' ),
-						//'Datetime'     : i18n( 'i18n_datetime' ),
-						'Startup'      : i18n( 'i18n_startup_sequence' ),
-						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
-						'Dock'         : i18n( 'i18n_docksettings' ),
-						'Account'      : i18n( 'i18n_account' )
-					};
-					locales = {
-						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
-						'Software'     : i18n( 'i18n_software' ),
-						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						'Startup'      : i18n( 'i18n_startup_sequence' ),
-						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
-						'Dock'         : i18n( 'i18n_docksettings' ),
-						'Account'      : i18n( 'i18n_account' )
-					};
-					// Setup icons for all these preferences
-					icons = {
-						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
-						//'Screens'      : 'devices/video-display.png',
-						'Software'     : 'categories/applications-accessories.png',
-						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
-						//'Language'     : 'apps/lokalize.png',
-						//'Desklets'     : 'apps/telepathy-kde.png',
-						//'Sound'        : 'devices/audio-headphones.png',
-						//'Keyboard'     : 'devices/input-keyboard.png',
-						//'Input'        : 'devices/input-mouse.png',
-						//'Datetime'     : 'apps/clock.png',
-						'Startup'      : '',
-						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
-						'Dock'         : 'apps/picmi.png',
-						'Account'      : 'apps/preferences-desktop-user.png'
-					};
-				}
-				else if( d == 'Admin' )
-				{
-					// Get available preferences applications
-					prefs = {
-						'Looknfeel'    : i18n( 'i18n_looknfeel' ),
-						//'Screens'      : i18n( 'i18n_screens' ),
-						'Software'     : i18n( 'i18n_software' ),
-						'Wallpaper'    : i18n( 'i18n_wallpaper' ),
-						//'Printers'     : i18n( 'i18n_printers' ),
-						//'Network'      : i18n( 'i18n_network' ),
-						//'Language'     : i18n( 'i18n_language' ),
-						'DiskCatalog'    : i18n( 'i18n_disk_catalog' ),
-						//'Desklets'     : i18n( 'i18n_desklets' ),
-						//'Sound'        : i18n( 'i18n_sound' ),
-						//'Keyboard'     : i18n( 'i18n_keyboard' ),
-						//'Input'        : i18n( 'i18n_input' ),
-						//'Hardware'     : i18n( 'i18n_hardware' ),
-						'Users'        : i18n( 'i18n_useraccounts' ),
-						//'Datetime'     : i18n( 'i18n_datetime' ),
-						'Dock'         : i18n( 'i18n_docksettings' ),
-						'Startup'      : i18n( 'i18n_startup_sequence' ),
-						'Mimetypes'    : i18n( 'i18n_mimetypes' ),
-						'Security'     : i18n( 'i18n_security' ),
-						'Account'      : i18n( 'i18n_account' )
-					};
-					locales = {
-						'Looknfeel'    : 'i18n_looknfeel',
-						'Software'     : 'i18n_software',
-						'Wallpaper'    : 'i18n_wallpaper',
-						'DiskCatalog'  : 'i18n_disk_catalog',
-						'Users'        : 'i18n_useraccounts',
-						'Dock'         : 'i18n_docksettings',
-						'Startup'      : 'i18n_startup_sequence',
-						'Mimetypes'    : 'i18n_mimetypes',
-						'Security'     : 'i18n_security',
-						'Account'      : 'i18n_account'
-					};
-					// Setup icons for all these preferences
-					icons = {
-						'Looknfeel'    : 'apps/preferences-desktop-theme.png',
-						//'Screens'      : 'devices/video-display.png',
-						'Software'     : 'categories/applications-accessories.png',
-						'Wallpaper'    : 'apps/preferences-desktop-wallpaper.png',
-						//'Printers'     : 'devices/printer-laser.png',
-						//'Network'      : 'places/network-workgroup.png',
-						//'Language'     : 'apps/lokalize.png',
-						'DiskCatalog'    : 'mimetypes/x-office-address-book.png',
-						//'Desklets'     : 'apps/telepathy-kde.png',
-						//'Sound'        : 'devices/audio-headphones.png',
-						//'Keyboard'     : 'devices/input-keyboard.png',
-						//'Input'        : 'devices/input-mouse.png',
-						//'Hardware'     : 'devices/audio-card.png',
-						'Users'        : 'apps/system-users.png',
-						//'Datetime'     : 'apps/clock.png',
-						'Dock'         : 'apps/picmi.png',
-						'Startup'      : '',
-						'Mimetypes'    : 'apps/preferences-desktop-default-applications.png',
-						'Security'     : 'devices/secure-card.png',
-						'Account'      : 'apps/preferences-desktop-user.png'
-					};
-				}
-
-				// Output array
-				var output = [];
-
-				// Loop through and make icons
-				for( var pref in prefs )
-				{
-					var icon = icons[pref];
-					output.push( {
-						MetaType: 'File',
-						Title: prefs[pref],
-						Path: 'System:Settings/' + pref,
-						PathLocalized: 'System:Settings/' + i18n( 'i18n_directory_Prefs' ),
-						DateModified: dateh,
-						Filename: pref,
-						Permissions: '-r-e-,-r-e-,-r-e-',
-						Filesize: 16,
-						IconClass: 'Prefs_' + pref,
-						IconFile: '/iconthemes/friendup15/App_' + pref + '.png',
-						Position: 'left',
-						Type: 'Executable'
-					} );
-				}
-				if( callback ) callback( output, dirPrefs );
-			}
-			m.execute( 'userlevel' );
-			return;
-		// Get all modules listed out
-		case locDirModules:
-		case dirModules:
-			var m = new Module( 'system' );
-			m.onExecuted = function( r, data )
-			{
-				callback( JSON.parse( data ), dirModules );
-			}
-			m.execute( 'listmodules' );
-			return;
-		case locDirLibraries:
-		case dirLibraries:
-			var m = new Module( 'system' );
-			m.onExecuted = function( r, data )
-			{
-				callback( JSON.parse( data ), dirLibraries );
-			}
-			m.execute( 'listlibraries' );
-			return;
-		// TODO: Replace most of the others (if possible) with this one!!
-		// Try system path
-		default:
-			var m = new Module( 'system' );
-			m.onExecuted = function( r, data )
-			{
-				if( r == 'ok' ) 
-				{
-					var list = JSON.parse( data );
-					if( list.length )
-					{
-						var pth = list[0].Path.substr( 0, path.length );
-						return callback( JSON.parse( data ), pth );
-					}
-					else callback( false, { response: 'Empty directory.' } );
-				}
-				else callback( false );
-			}
-			m.execute( 'systempath', { path: path } );
-			return;
+		return this.getDirectory( path, callback );
 	}
-	if( callback && this.icons && this.icons.length && this.icons[0].Path ) 
-	{
-		var pth = this.icons[0].Path.substr( 0, path.length );
-		callback( this.icons, pth );
-	}
-	return icons; 
 }
 
-// Dos arguments
-DoorSystem.prototype.dosAction = function( cmd, args, callback ) 
-{
-	switch( cmd )
-	{
-		case 'copy':
-			break;
-	}
-};
-
-// Instantiate a new one!
-DoorSystem.prototype.instantiate = function()
-{
-	return new DoorSystem();
-};
+DormantMaster.addAppDoor( WorkspaceDormant );
 
 /* system document viewer - TODO: move -------------------------------------- */
 

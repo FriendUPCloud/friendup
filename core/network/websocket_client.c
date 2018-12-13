@@ -50,7 +50,7 @@ static int WebsocketClientCallback( struct lws *wsi, enum lws_callback_reasons r
 {
 	WClientData *cd = (WClientData *)user;
 	
-	DEBUG("[WebsocketClientCallback] start, reason: %d msgsize: %lu\n", reason, len );
+	//DEBUG("[WebsocketClientCallback] start, reason: %d msgsize: %lu\n", reason, len );
 	
 	switch( reason )
 	{

@@ -526,6 +526,7 @@ var WorkspaceInside = {
 		} );
 		this.conn.on( 'icon-change', handleIconChange );
 		this.conn.on( 'filesystem-change', handleFilesystemChange );
+		this.conn.on( 'notification', handleNotifications );
 		
 		// Reference for handler
 		var selfConn = this.conn;
@@ -667,6 +668,113 @@ var WorkspaceInside = {
 					return;
 				}
 				console.log( '[handleFilesystemChange] Uncaught filesystem change: ', msg );
+			}
+		}
+		// Handle incoming push notifications and server notifications
+		function handleNotifications( msg )
+		{
+			var messageRead = false;
+			
+			// Check if we have notification data
+			if( msg.notificationData )
+			{
+				// Application notification
+				if( msg.notificationData.application )
+				{
+					// Function to set the notification as read...
+					function notificationRead()
+					{
+						messageRead = true;
+						var l = new Library( 'system.library' );
+						l.onExecuted = function(){};
+						l.execute( 'mobile/updatenotification', { 
+							t: 'notify',
+							notifid: msg.notificationData.id, 
+							action: 1
+						} );
+					}
+					
+					// Find application
+					var apps = Workspace.applications;
+					var found = false;
+					for( var a = 0; a < apps.length; a++ )
+					{
+						// Found the application
+						if( apps[a].applicationName == msg.notificationData.application )
+						{
+							// Post!
+							( function( app, data )
+							{
+								var amsg = {
+									type: 'system',
+									method: 'notification',
+									callback: addWrapperCallback( notificationRead ),
+									data: data
+								};
+								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+								
+								// Delete wrapper callback if it isn't executed within 1 second
+								setTimeout( function()
+								{
+									if( !messageRead )
+									{
+										var trash = getWrapperCallback( amsg.callback );
+										delete trash;
+									}
+								}, 1000 );
+								
+							} )( apps[ a ], msg.notificationData );
+							found = true;
+							break;
+						}
+					}
+					// Application not found? Start it!
+					if( !found )
+					{
+						// Send message to app once it has started...
+						function appMessage()
+						{
+							var app = false;
+							for( var a = 0; a < apps.length; a++ )
+							{
+								// Found the application
+								if( apps[ a ].applicationName == msg.notificationData.application )
+								{
+									app = apps[ a ];
+									break;
+								}
+							}
+							
+							// No application? Alert the user
+							// TODO: Localize response!
+							if( !app )
+							{
+								Notify( { title: i18n( 'i18n_could_not_find_application' ), text: i18n( 'i18n_could_not_find_app_desc' ) } );
+								return;
+							}
+							
+							var amsg = {
+								type: 'system',
+								method: 'notification',
+								callback: addWrapperCallback( notificationRead ),
+								data: msg.notificationData
+							};
+							app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
+							
+							// Delete wrapper callback if it isn't executed within 1 second
+							setTimeout( function()
+							{
+								if( !messageRead )
+								{
+									var trash = getWrapperCallback( amsg.callback );
+									delete trash;
+								}
+							}, 1000 );
+						}
+						console.log( 'Executing the application: ' + msg.notificationData.application );
+						ExecuteApplication( msg.notificationData.application, '', appMessage )
+					}
+				}
 			}
 		}
 	},
@@ -3152,18 +3260,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 
 				// Add system on top (after Ram: if it exists)
 				newIcons.push( {
-					Title:	'System',
+					Title:	  'System',
 					Volume:   'System:',
-					Path:	 'System:',
-					Type:	 'Door',
-					Handler: 'built-in',
-					Driver: 'Dormant',
+					Path:	  'System:',
+					Type:	  'Door',
+					Handler:  'built-in',
+					Driver:   'Dormant',
 					MetaType: 'Directory',
-					IconClass: 'SystemDisk',
-					ID:	   'system', // TODO: fix
+					IconClass:'SystemDisk',
+					ID:	      'system', // TODO: fix
 					Mounted:  true,
-					Visible: globalConfig.hiddenSystem == true ? false : true,
-					Door:	  new DoorSystem( 'System:' )
+					Visible:  globalConfig.hiddenSystem == true ? false : true,
+					Door:	  Friend.DoorSystem
 				} );
 				
 				if( returnCode == 'ok' )
@@ -6524,9 +6632,12 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	},
 	hideLauncherError: function()
 	{
-		Workspace.launcherWindow.setFlag( 'max-height', 80 );
-		Workspace.launcherWindow.setFlag( 'height', 80 );
-		ge( 'launch_error' ).innerHTML = '';
+		if( Workspace.launcherWindow.setFlag )
+		{
+			Workspace.launcherWindow.setFlag( 'max-height', 80 );
+			Workspace.launcherWindow.setFlag( 'height', 80 );
+			ge( 'launch_error' ).innerHTML = '';
+		}
 	},
 	launch: function( app, hidecallback )
 	{
@@ -6924,7 +7035,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				var js = JSON.parse( d );
 				if( js.code && ( parseInt( js.code ) == 11 || parseInt( js.code ) == 3 ) )
 				{
-					console.log( 'The session has gone away! Relogin using login().' );
+					//console.log( 'The session has gone away! Relogin using login().' );
 					Workspace.flushSession();
 					Workspace.relogin(); // Try login using local storage
 				}

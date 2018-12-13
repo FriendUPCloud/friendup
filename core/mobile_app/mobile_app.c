@@ -32,6 +32,8 @@
 void MobileAppTestSignalHandler(int signum);
 #endif
 
+#define WEBSOCKET_SEND_QUEUE
+
 //There is a need for two mappings, user->mobile connections and mobile connection -> user
 
 typedef struct UserMobileAppConnectionsS UserMobileAppConnectionsT;
@@ -43,16 +45,19 @@ typedef struct MobileAppConnectionS MobileAppConnectionT;
 
 struct MobileAppConnectionS
 {
-	struct lws *websocket_ptr;
-	void *user_data;
-	char *session_id;
-	time_t last_communication_timestamp;
-	UserMobileAppConnectionsT *user_connections;
-	unsigned int user_connection_index;
-	mobile_app_status_t app_status;
-	time_t most_recent_resume_timestamp;
-	time_t most_recent_pause_timestamp;
-	UserMobileApp *userMobileApp;
+	struct lws											*mac_WebsocketPtr;
+	void												*mac_UserData;
+	char												*mac_SessionID;
+	FQueue												mac_Queue;
+	pthread_mutex_t										mac_Mutex;
+	time_t												mac_LastCommunicationTimestamp;
+	UserMobileAppConnectionsT							*mac_UserConnections;
+	unsigned int										mac_UserConnectionIndex;
+	mobile_app_status_t									mac_AppStatus;
+	time_t												mac_MostRecentResumeTimestamp;
+	time_t												mac_MostRecentPauseTimestamp;
+	UserMobileApp										*mac_UserMobileApp;
+	FULONG												mac_UserMobileAppID;
 };
 
 //
@@ -66,16 +71,16 @@ struct UserMobileAppConnectionsS
 	MobileAppConnectionT *connection[MAX_CONNECTIONS_PER_USER];
 };
 
-static Hashmap *_user_to_app_connections_map;
-static Hashmap *_websocket_to_user_connections_map;
+static Hashmap *globalUserToAppConnectionsMap = NULL;
+static Hashmap *globalWebsocketToUserConnectionsMap = NULL;
 
-static pthread_mutex_t _session_removal_mutex; //used to avoid sending pings while a session is being removed
-static pthread_t _ping_thread;
+static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
+static pthread_t globalPingThread;
 
 static void  MobileAppInit(void);
 static int   MobileAppReplyError( struct lws *wsi, int error_code );
 static int   MobileAppHandleLogin( struct lws *wsi, json_t *json );
-static int   MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *udata );
+static int   MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *udata, FULONG appTokenID );
 static void* MobileAppPingThread( void *a );
 static char* MobileAppGetWebsocketHash( struct lws *wsi );
 static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connection_index );
@@ -90,19 +95,25 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
  */
 static inline int WriteMessage( struct MobileAppConnectionS *mac, unsigned char *msg, int len )
 {
-	MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
-	if( man != NULL )
+	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
+	//if( man != NULL )
 	{
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
-			DEBUG("Message added to queue\n");
-			en->fq_Data = FMalloc( len+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+			DEBUG("Message added to queue: '%s'\n", msg );
+			en->fq_Data = FMalloc( len+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
 	
-			FQPushFIFO( &(man->man_Queue), en );
-			lws_callback_on_writable( mac->websocket_ptr );
+			//FQPushFIFO( &(man->man_Queue), en );
+			//lws_callback_on_writable( mac->websocket_ptr );
+			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
+			{
+				FQPushFIFO( &(mac->mac_Queue), en );
+				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+			}
+			lws_callback_on_writable( mac->mac_WebsocketPtr );
 		}
 	}
 	return len;
@@ -115,12 +126,18 @@ static void MobileAppInit( void )
 {
 	DEBUG("Initializing mobile app module\n");
 
-	_user_to_app_connections_map = HashmapNew();
-	_websocket_to_user_connections_map = HashmapNew();
+	if( globalUserToAppConnectionsMap == NULL )
+	{
+		globalUserToAppConnectionsMap = HashmapNew();
+	}
+	if( globalWebsocketToUserConnectionsMap == NULL )
+	{
+		globalWebsocketToUserConnectionsMap = HashmapNew();
+	}
 
-	pthread_mutex_init( &_session_removal_mutex, NULL );
+	pthread_mutex_init( &globalSessionRemovalMutex, NULL );
 
-	pthread_create( &_ping_thread, NULL/*default attributes*/, MobileAppPingThread, NULL/*extra args*/ );
+	//pthread_create( &_ping_thread, NULL/*default attributes*/, MobileAppPingThread, NULL/*extra args*/ );
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
 	signal( SIGUSR1, MobileAppTestSignalHandler );
@@ -140,7 +157,7 @@ static void MobileAppInit( void )
  */
 int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user __attribute__((unused)), void *in, size_t len )
 {
-	DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
+	//DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	MobileAppNotif *man = (MobileAppNotif *) user;
 
 	if( reason == LWS_CALLBACK_PROTOCOL_INIT )
@@ -153,85 +170,112 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 
 	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 	{
-		char *websocket_hash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
-
-		if (app_connection == NULL)
+		char *websocketHash = MobileAppGetWebsocketHash( wsi );
+		MobileAppConnectionT *appConnection = NULL;
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
+			
+		if( appConnection == NULL )
 		{
 			DEBUG("Websocket close - no user session found for this socket\n");
-			return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_SESSION);
+			return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 		}
-		FRIEND_MUTEX_LOCK(&_session_removal_mutex);
 		
-		if( man != NULL && man->man_Initialized == 1 )
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 		{
-			FQDeInitFree( &(man->man_Queue) );
+			//remove connection from user connnection struct
+			UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
+			unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
+			if( userConnections != NULL )
+			{
+				//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+			}
+			MobileAppRemoveAppConnection( userConnections, connectionIndex);
+
+			HashmapRemove( globalWebsocketToUserConnectionsMap, websocketHash );
+
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 		}
-		
-		//remove connection from user connnection struct
-		UserMobileAppConnectionsT *user_connections = app_connection->user_connections;
-		unsigned int connection_index = app_connection->user_connection_index;
-		DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
-		MobileAppRemoveAppConnection(user_connections, connection_index);
-
-		HashmapRemove(_websocket_to_user_connections_map, websocket_hash);
-
-		FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
-
-		FFree(websocket_hash);
+		FFree( websocketHash );
 		return 0;
 	}
 
 	if (reason != LWS_CALLBACK_RECEIVE)
 	{
+		char *wsHash = MobileAppGetWebsocketHash( wsi );
+		MobileAppConnectionT *appConnection = NULL;
+		
+		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		{
+			appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
+			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		}
+			
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
+#ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
-			FRIEND_MUTEX_LOCK(&_session_removal_mutex);
-			FQueue *q = &(man->man_Queue);
-			
-			DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
-			
-			if( ( e = FQPop( q ) ) != NULL )
+			if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 			{
-				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+				//FQueue *q = &(man->man_Queue);
+				FQueue *q = &(appConnection->mac_Queue);
+			
+				DEBUG("[websocket_app_callback] WRITABLE CALLBACK, q %p\n", q );
+			
+				e = FQPop( q );
+			
+				FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
+			}
+			
+			if( e != NULL )
+			{
 				unsigned char *t = e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING;
 				t[ e->fq_Size+1 ] = 0;
 
-				int res = lws_write( wsi, e->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, e->fq_Size, LWS_WRITE_TEXT );
-				DEBUG("[websocket_app_callback] message sent: %s len %d\n", e->fq_Data, res );
+				int res = lws_write( wsi, t, e->fq_Size, LWS_WRITE_TEXT );
+				DEBUG("[websocket_app_callback] message sent: %s len %d\n", (char *)t, res );
 
 				int ret = lws_send_pipe_choked( wsi );
 				
 				if( e != NULL )
 				{
 					DEBUG("Release: %p\n", e->fq_Data );
-					FFree( e->fq_Data );
+					if( e->fq_Data != NULL )
+					{
+						FFree( e->fq_Data );
+						e->fq_Data = NULL;
+					}
 					FFree( e );
 				}
 			}
 			else
 			{
 				DEBUG("[websocket_app_callback] No message in queue\n");
-				FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
 			}
+#endif
 		}
 		else
 		{
 			DEBUG("Unimplemented callback, reason %d\n", reason);
 		}
 		
-		if( man != NULL && man->man_Queue.fq_First != NULL )
+		if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
 		{
 			DEBUG("We have message to send, calling writable\n");
 			lws_callback_on_writable( wsi );
 		}
 		
+		if( wsHash != NULL ) FFree( wsHash );
 		return 0;
 	}
 	
-	DEBUG("Initialize queue\n");
 	char *data = (char*)in;
+	/*
+	DEBUG("Initialize queue\n");
+	
 	if( man != NULL )
 	{
 		DEBUG(" Initialized %d\n", man->man_Initialized );
@@ -246,7 +290,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	else
 	{
 		FERROR("\n\n\n\nMAN is NULL\n\n\n\n");
-	}
+	}*/
 
 	if( len == 0 )
 	{
@@ -274,9 +318,14 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	char *msg_type_string = json_get_element_string(&json, "t");
 
 	//see if this websocket belongs to an existing connection
-	char *websocket_hash = MobileAppGetWebsocketHash(wsi);
-	MobileAppConnectionT *app_connection = HashmapGetData( _websocket_to_user_connections_map, websocket_hash );
-	FFree(websocket_hash);
+	char *websocketHash = MobileAppGetWebsocketHash(wsi);
+	MobileAppConnectionT *appConnection = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
+	FFree(websocketHash);
 
 	if( msg_type_string )
 	{
@@ -290,13 +339,13 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		}
 		else
 		{
-			if (app_connection == NULL)
+			if (appConnection == NULL)
 			{
 				DEBUG("Session not found for this connection\n");
 				return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_SESSION);
 			}
 
-			app_connection->last_communication_timestamp = time(NULL);
+			appConnection->mac_LastCommunicationTimestamp = time(NULL);
 
 			switch (first_type_letter)
 			{
@@ -305,14 +354,18 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				do
 				{ //pause
 					DEBUG("App is paused\n");
-					app_connection->app_status = MOBILE_APP_STATUS_PAUSED;
-					app_connection->most_recent_pause_timestamp = time(NULL);
+					appConnection->mac_AppStatus = MOBILE_APP_STATUS_PAUSED;
+					appConnection->mac_MostRecentPauseTimestamp = time(NULL);
 					
 					char response[LWS_PRE+64];
 					strcpy(response+LWS_PRE, "{\"t\":\"pause\",\"status\":1}");
 					DEBUG("Response: %s\n", response+LWS_PRE);
+					
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
+					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-					/*
+					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+#else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -322,12 +375,14 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						
 						DEBUG("[websocket_app_callback] Msg to send: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
-						FRIEND_MUTEX_LOCK(&_session_removal_mutex);
-						FQPushFIFO( &(man->man_Queue), en );
-						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+						{
+							FQPushFIFO( &(appConnection->mac_Queue), en );
+							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+						}
 						lws_callback_on_writable( wsi );
 					}
-					*/
+#endif
 				}
 				while (0);
 			break;
@@ -336,14 +391,17 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 				do
 				{ //resume
 					DEBUG("App is resumed\n");
-					app_connection->app_status = MOBILE_APP_STATUS_RESUMED;
-					app_connection->most_recent_resume_timestamp = time(NULL);
+					appConnection->mac_AppStatus = MOBILE_APP_STATUS_RESUMED;
+					appConnection->mac_MostRecentResumeTimestamp = time(NULL);
 					
 					char response[LWS_PRE+64];
 					strcpy(response+LWS_PRE, "{\"t\":\"resume\",\"status\":1}");
 					DEBUG("Response: %s\n", response+LWS_PRE);
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
+					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
 					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
-					/*
+					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+#else
 					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 					if( en != NULL )
 					{
@@ -353,18 +411,82 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 						
 						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
 			
-						FRIEND_MUTEX_LOCK(&_session_removal_mutex);
-						FQPushFIFO( &(man->man_Queue), en );
-						FRIEND_MUTEX_UNLOCK(&_session_removal_mutex);
+						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+						{
+							FQPushFIFO( &(appConnection->mac_Queue), en );
+							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+						}
 						lws_callback_on_writable( wsi );
 					}
-					*/
+#endif
 				}
 				while (0);
 			break;
+			
+			// get information from mobile device about notification status
+			/*
+			JSONObject notifyReply = new JSONObject();
+                notifyReply.put("t", "notify");
+                notifyReply.put("status", "received");
+                notifyReply.put("id", id);
+			 */
+			case 'n':
+				{
+					DEBUG("Notification information received\n");
+					
+					char *statusString = json_get_element_string( &json, "status" );
+					char *idString = json_get_element_string( &json, "id" );
+					
+					if( statusString != NULL && idString != NULL )
+					{
+						FULONG id = 0;
+						int status = 0;
+						char *end;
+						
+						id = strtol( idString, &end, 0 );
+						status = atoi( statusString );
+						
+						NotificationManagerNotificationSentSetStatusDB( SLIB->sl_NotificationManager, id, status );
+					}
+				}
+				break;
 
+			// get ping and response via pong
+			/*
+			JSONObject pingRequest = new JSONObject();
+                pingRequest.put("t", "echo");
+                pingRequest.put("time", System.currentTimeMillis());
+			 */
 			case 'e': //echo
-				DEBUG("Echo from client\n");
+				{
+					char *timeString = json_get_element_string( &json, "time" );
+					
+					char response[LWS_PRE+64];
+					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
+					DEBUG("Response: %s\n", response+LWS_PRE);
+#ifndef WEBSOCKET_SINK_SEND_QUEUE
+					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
+					lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+					FRIEND_MUTEX_UNLOCK(&globalSessionRemovalMutex);
+#else
+					FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
+					if( en != NULL )
+					{
+						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
+						int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
+						en->fq_Size = msgsize;
+						
+						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
+			
+						if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
+						{
+							FQPushFIFO( &(appConnection->mac_Queue), en );
+							FRIEND_MUTEX_UNLOCK( &(appConnection->mac_Mutex) );
+						}
+						lws_callback_on_writable( wsi );
+					}
+#endif
+				}
 				break;
 
 			default:
@@ -389,23 +511,42 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
  */
 static int MobileAppReplyError(struct lws *wsi, int error_code)
 {
-	char response[LWS_PRE+32];
-	snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"error\", \"status\":%d}", error_code);
-	DEBUG("Error response: %s\n", response+LWS_PRE);
+	if( error_code == MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION )
+	{
+		
+	}
+	else
+	{
+		char response[LWS_PRE+32];
+		snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"error\", \"status\":%d}", error_code);
+		DEBUG("Error response: %s\n", response+LWS_PRE);
 
-	DEBUG("WSI %p\n", wsi);
-	lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+#ifdef WEBSOCKET_SEND_QUEUE
+		//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+#else
+		DEBUG("WSI %p\n", wsi);
+		lws_write(wsi, (unsigned char*)response+LWS_PRE, strlen(response+LWS_PRE), LWS_WRITE_TEXT);
+#endif
+	}
 
-	char *websocket_hash = MobileAppGetWebsocketHash( wsi );
-	MobileAppConnectionT *app_connection = HashmapGetData(_websocket_to_user_connections_map, websocket_hash);
-	FFree(websocket_hash);
-	if( app_connection )
+	char *websocketHash = MobileAppGetWebsocketHash( wsi );
+	MobileAppConnectionT *appConnection = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
+	FFree(websocketHash);
+	if( appConnection )
 	{
 		DEBUG("Cleaning up before closing socket\n");
-		UserMobileAppConnectionsT *user_connections = app_connection->user_connections;
-		unsigned int connection_index = app_connection->user_connection_index;
-		DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
-		MobileAppRemoveAppConnection(user_connections, connection_index);
+		UserMobileAppConnectionsT *user_connections = appConnection->mac_UserConnections;
+		unsigned int connection_index = appConnection->mac_UserConnectionIndex;
+		if( user_connections != NULL )
+		{
+			DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
+		}
+		MobileAppRemoveAppConnection( user_connections, connection_index );
 	}
 
 	return -1;
@@ -420,29 +561,41 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
  */
 static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
 {
-	char *username_string = json_get_element_string( json, "user" );
+	char *usernameString = json_get_element_string( json, "user" );
 
-	if( username_string == NULL )
+	if( usernameString == NULL )
 	{
 		return MobileAppReplyError(wsi, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
 	}
 
-	char *password_string = json_get_element_string(json, "pass");
+	char *passwordString = json_get_element_string(json, "pass");
 
-	if( password_string == NULL )
+	if( passwordString == NULL )
 	{
 		return MobileAppReplyError(wsi, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
 	}
+	
+	char *tokenString = json_get_element_string(json, "apptoken");
 
 	//step 3 - check if the username and password is correct
-	DEBUG("Login attempt <%s> <%s>\n", username_string, password_string);
+	DEBUG("Login attempt <%s> <%s>\n", usernameString, passwordString );
 
 	unsigned long block_time = 0;
-	User *user = UMGetUserByNameDB( SLIB->sl_UM, username_string);
+	User *user = NULL;
+	FULONG umaID = 0;
+	
+	SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
+	if( sqlLib != NULL )
+	{
+		user = UMGetUserByNameDBCon( SLIB->sl_UM, sqlLib, usernameString );
+	
+		umaID = MobileManagerGetUMAIDByToken( SLIB->sl_MobileManager, sqlLib, tokenString );
 
+		SLIB->LibrarySQLDrop( SLIB, sqlLib );
+	}
 	AuthMod *a = SLIB->AuthModuleGet( SLIB );
 
-	if( a->CheckPassword(a, NULL/*no HTTP request*/, user, password_string, &block_time) == FALSE )
+	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
 	{
 		DEBUG("Check = false\n");
 		return MobileAppReplyError( wsi, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
@@ -450,87 +603,22 @@ static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
 	else
 	{
 		DEBUG("Check = true\n");
-		return MobileAppAddNewUserConnection( wsi, username_string, user );
-	}
-}
-
-/**
- * Mobile App Ping thread
- *
- * @param a pointer to thread data (not used)
- * @return NULL
- */
-static void* MobileAppPingThread( void *a __attribute__((unused)) )
-{
-	pthread_detach( pthread_self() );
-	DEBUG("App ping thread started\n");
-
-	while (1)
-	{
-		DEBUG("Checking app communication times\n");
-
-		int users_count = HashmapLength(_user_to_app_connections_map);
-		bool check_okay = true;
-
-		unsigned int index = 0;
-
-		HashmapElement *element = NULL;
-		while( (element = HashmapIterate(_user_to_app_connections_map, &index)) != NULL )
+		
+		int ret = MobileAppAddNewUserConnection( wsi, usernameString, user, umaID );
+		if( umaID > 0 )
 		{
-			UserMobileAppConnectionsT *user_connections = element->data;
-			if( user_connections == NULL )
+			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
+			NotificationSent *nsroot = NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( SLIB->sl_NotificationManager, NOTIFICATION_SENT_STATUS_REGISTERED, umaID );
+			NotificationSent *ns = nsroot;
+			while( ns != NULL )
 			{
-				//the hashmap was invalidated while we were reading it? let's try another ping session....
-				check_okay = false;
-				break;
+				ns = (NotificationSent *)ns->node.mln_Succ;
 			}
-
-			pthread_mutex_lock(&_session_removal_mutex);
-			//mutex is needed because a connection can be removed at any time within websocket_app_callback,
-			//so a race condition would lead to null-pointers and stuff...
-
-			//iterate through all user connections
-			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-			{
-				if (user_connections->connection[i])
-				{ //see if a connection exists
-					if( time(NULL) - user_connections->connection[i]->last_communication_timestamp > KEEPALIVE_TIME_s)
-					{
-						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
-
-						//send ping
-						//char request[LWS_PRE+64];
-						//strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
-						//DEBUG("Request: %s\n", request+LWS_PRE);
-						//lws_write(user_connections->connection[i]->websocket_ptr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
-						MobileAppNotif *man = (MobileAppNotif *) user_connections->connection[i]->user_data;
-						if( man != NULL )
-						{
-							FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-							if( en != NULL )
-							{
-								en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-								memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
-								en->fq_Size = LWS_PRE+64;
-			
-								FQPushFIFO( &(man->man_Queue), en );
-								lws_callback_on_writable( user_connections->connection[i]->websocket_ptr );
-							}
-						}
-					}
-				}
-			} //end of user connection loops
-			pthread_mutex_unlock(&_session_removal_mutex);
-		} //end of users loop
-
-		if (check_okay)
-		{
-			sleep(KEEPALIVE_TIME_s);
+			NotificationSentDeleteAll( nsroot );
 		}
+		
+		return ret;
 	}
-
-	pthread_exit(0);
-	return NULL; //should not exit anyway
 }
 
 /**
@@ -539,20 +627,26 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
  * @param wsi pointer to Websocket connection
  * @param username name of user which passed login
  * @param user_data pointer to user data
+ * @param umaID User Application Mobile ID
  * @return 0 when success, otherwise error number
  */
-static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *user_data )
+static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *user_data, FULONG umaID )
 {
 	char *session_id = session_id_generate();
 
-	UserMobileAppConnectionsT *user_connections = HashmapGetData(_user_to_app_connections_map, username);
+	UserMobileAppConnectionsT *userConnections = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 
-	if (user_connections == NULL){ //this user does not have any connections yet
-
+	if (userConnections == NULL)
+	{ //this user does not have any connections yet
 		//create a new connections struct
-		user_connections = FCalloc(sizeof(UserMobileAppConnectionsT), 1);
+		userConnections = FCalloc(sizeof(UserMobileAppConnectionsT), 1);
 
-		if( user_connections == NULL )
+		if( userConnections == NULL )
 		{
 			DEBUG("Allocation failed\n");
 			return MobileAppReplyError(wsi, MOBILE_APP_ERR_INTERNAL);
@@ -560,16 +654,17 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 		else
 		{
 			DEBUG("Creating new struct for user <%s>\n", username);
-			char *permanent_username = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
-			strcpy( permanent_username, username );
-			user_connections->username = permanent_username;
+			char *permanentUsername = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
+			strcpy( permanentUsername, username );
+			userConnections->username = permanentUsername;
 			
 			//
 			// we must also attach UserID to User. This functionality will allow FC to find user by ID
+			//
 			
 			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 
-			user_connections->userID = -1;
+			userConnections->userID = -1;
 			if( sqllib != NULL )
 			{
 				char *qery = FMalloc( 1048 );
@@ -584,7 +679,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 						if( row[ 0 ] != NULL )
 						{
 							char *end;
-							user_connections->userID = strtoul( row[0], &end, 0 );
+							userConnections->userID = strtoul( row[0], &end, 0 );
 						}
 					}
 					sqllib->FreeResult( sqllib, res );
@@ -596,101 +691,91 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
-			//add the new connections struct to global users' connections map
-			if( HashmapPut(_user_to_app_connections_map, permanent_username, user_connections) != MAP_OK )
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
-				DEBUG("Could not add new struct of user <%s> to global map\n", username);
+				//add the new connections struct to global users' connections map
+				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
+				{
+					DEBUG("Could not add new struct of user <%s> to global map\n", username);
 
-				FFree(user_connections);
-				return MobileAppReplyError(wsi, MOBILE_APP_ERR_INTERNAL);
+					FFree(userConnections);
+					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+					return MobileAppReplyError( wsi, MOBILE_APP_ERR_INTERNAL );
+				}
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 		}
 	}
 
 	//create struct holding this connection
-	MobileAppConnectionT *new_connection = FCalloc(sizeof(MobileAppConnectionT), 1);
+	MobileAppConnectionT *newConnection = FCalloc(sizeof(MobileAppConnectionT), 1);
 
-	new_connection->session_id = session_id;
-	new_connection->last_communication_timestamp = time(NULL);
-	new_connection->websocket_ptr = wsi;
+	newConnection->mac_SessionID = session_id;
+	newConnection->mac_LastCommunicationTimestamp = time(NULL);
+	newConnection->mac_WebsocketPtr = wsi;
+	newConnection->mac_UserMobileAppID = umaID;
 
 	//add this struct to user connections struct
-	int connection_to_replace_index = -1;
+	int connectionToReplaceIndex = -1;
 	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 	{
-		if( user_connections->connection[i] == NULL )
+		if( userConnections->connection[i] == NULL )
 		{ //got empty slot
-			connection_to_replace_index = i;
-			DEBUG("Will use slot %d for this connection\n", connection_to_replace_index);
+			connectionToReplaceIndex = i;
+			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
 			break;
 		}
 	}
 
-	if( connection_to_replace_index == -1 )
+	if( connectionToReplaceIndex == -1 )
 	{ //no empty slots found - drop the oldest connection
 
-		connection_to_replace_index = 0;
-		unsigned int oldest_timestamp = user_connections->connection[0]->last_communication_timestamp;
+		connectionToReplaceIndex = 0;
+		unsigned int oldest_timestamp = userConnections->connection[0]->mac_LastCommunicationTimestamp;
 
 		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
 		{
-			if( user_connections->connection[i] == NULL )
+			if( userConnections->connection[i] == NULL )
 			{
-				if( user_connections->connection[i]->last_communication_timestamp < oldest_timestamp )
+				if( userConnections->connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
 				{
-					oldest_timestamp = user_connections->connection[i]->last_communication_timestamp;
-					connection_to_replace_index = i;
-					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connection_to_replace_index, oldest_timestamp);
+					oldest_timestamp = userConnections->connection[i]->mac_LastCommunicationTimestamp;
+					connectionToReplaceIndex = i;
+					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
 				}
 			}
 		}
 	}
 
-	if( user_connections->connection[connection_to_replace_index] != NULL )
+	if( userConnections->connection[connectionToReplaceIndex] != NULL )
 	{
-		MobileAppRemoveAppConnection(user_connections, connection_to_replace_index);
+		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
 	}
 
-	DEBUG("Adding connection to slot %d\n", connection_to_replace_index);
-	user_connections->connection[connection_to_replace_index] = new_connection;
+	DEBUG("Adding connection to slot %d\n", connectionToReplaceIndex);
+	userConnections->connection[ connectionToReplaceIndex ] = newConnection;
 
-	new_connection->user_data = user_data;
-	new_connection->user_connections = user_connections; //provide back reference that will map websocket to a user
-	new_connection->user_connection_index = connection_to_replace_index;
+	newConnection->mac_UserData = user_data;
+	newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+	newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
 
-	char *websocket_hash = MobileAppGetWebsocketHash( wsi );
+	char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
-	HashmapPut(_websocket_to_user_connections_map, websocket_hash, new_connection); //TODO: error handling here
-	//websocket_hash now belongs to the hashmap, don't free it here
-
-	char response[LWS_PRE+64];
-	int msgsize = snprintf(response+LWS_PRE, sizeof(response)-LWS_PRE, "{ \"t\":\"login\", \"status\":%d, \"keepalive\":%d}", 1, KEEPALIVE_TIME_s) + LWS_PRE;
-	DEBUG("Response: %s\n", response+LWS_PRE);
-	lws_write(wsi, (unsigned char*)response+LWS_PRE, msgsize, LWS_WRITE_TEXT);
-	/*
-	MobileAppNotif *man = (MobileAppNotif *) user_data;
-	if( man != NULL )
+	DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
-		if( en != NULL )
+		if( globalWebsocketToUserConnectionsMap == NULL )
 		{
-			en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, "{\"t\":\"keepalive\",\"status\":1}", 28 );
-			en->fq_Size = LWS_PRE+64;
-			DEBUG("Its time to send message: %s !\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
-	
-			FQPushFIFO( &(man->man_Queue), en );
-			
-			DEBUG("Added %p\n", man->man_Queue.fq_First );
-			
-			lws_callback_on_writable( wsi );
+			globalWebsocketToUserConnectionsMap = HashmapNew();
 		}
+		HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
+
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
-	else
-	{
-		FERROR("Cannot get access to userdata!\n");
-	}
-	*/
+	//websocket_hash now belongs to the hashmap, don't free it here
+	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+	FQInit( &(newConnection->mac_Queue) );
+
 	return 0;
 }
 
@@ -716,17 +801,46 @@ static char* MobileAppGetWebsocketHash( struct lws *wsi )
  * Remove Connection from global list
  *
  * @param connections pointer to global list with connections
- * @param connection_index number of entry which will be removed from list
+ * @param connectionIndex number of entry which will be removed from list
  */
-static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connection_index )
+static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connectionIndex )
 {
-	DEBUG("Freeing up connection from slot %d (last comm %ld)\n",
-			connection_index,
-			connections->connection[connection_index]->last_communication_timestamp);
+	if( connections == NULL || connections->connection[connectionIndex] == NULL )
+	{
+		return;
+	}
+	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
+	connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
+	
+	if( FRIEND_MUTEX_LOCK( &(connections->connection[connectionIndex]->mac_Mutex) ) == 0 )
+	{
+		FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
+		//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
+	
+		{
+			FQEntry *q = fq->fq_First; 
+			while( q != NULL )
+			{ 
+				void *r = q; 
+				if( q->fq_Data != NULL )
+				{
+					FFree( q->fq_Data ); 
+				}
+				q = (FQEntry *)q->node.mln_Succ; 
+				FFree( r ); 
+			
+			} 
+			fq->fq_First = NULL; 
+			fq->fq_Last = NULL; 
+		}
+		FRIEND_MUTEX_UNLOCK( &(connections->connection[connectionIndex]->mac_Mutex) );
+	}
+	
+	pthread_mutex_destroy( &(connections->connection[connectionIndex]->mac_Mutex) );
 
-	FFree(connections->connection[connection_index]->session_id);
-	FFree(connections->connection[connection_index]);
-	connections->connection[connection_index] = NULL;
+	FFree( connections->connection[connectionIndex]->mac_SessionID );
+	FFree( connections->connection[connectionIndex] );
+	connections->connection[connectionIndex] = NULL;
 }
 
 /**
@@ -745,7 +859,12 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *channel_id, const char *app, const char *title, const char *message, MobileNotificationTypeT notification_type, const char *extraString )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnectionsT *user_connections = HashmapGetData( _user_to_app_connections_map, username );
+	UserMobileAppConnectionsT *user_connections = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	MobileManager *mm = sb->sl_MobileManager;
 	Notification *notif = NULL;
 	FBOOL wsMessageSent = FALSE;
@@ -832,18 +951,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = locses->us_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_NONE;	// none means WS
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
-					
-					/*
-					{
-    type : 'notification',
-    data : {
-        id : <unique id, string, FC generated id for tracking notification, workspace replies
-            with this id when/if the notie is clicked/'used' or times out>,
-        notie : <notification data object>
-    }
-}
-					 */
 					
 					if( notif->n_Extra )
 					{ //TK-1039
@@ -856,7 +965,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					
 					int msgsize = reqLengith + msgLen;
 					char *sndbuffer = FMalloc( msgsize );
-					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%s\",\"notie\":\"%s\"}}}", lns->ns_ID , jsonMessage );
+					
+					DEBUG("\t\t\t\t\t\t\t jsonMessage '%s' len %d \n", jsonMessage, reqLengith );
+					int lenmsg = snprintf( sndbuffer, msgsize-1, "{\"type\":\"msg\",\"data\":{\"type\":\"notification\",\"data\":{\"id\":\"%lu\",\"notificationData\":%s}}}", lns->ns_ID , jsonMessage );
+					
+					DEBUG("\t\t\t\t\t\t\t sndbuffer '%s' len %d \n", sndbuffer, msgsize );
 					
 					WebSocketSendMessageInt( locses, sndbuffer, lenmsg );
 					FFree( sndbuffer );
@@ -896,10 +1009,24 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)user_connections->connection[i];
+						lns->ns_RequestID = (FULONG)user_connections->connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+						int msgSendLength;
 						
+#ifdef WEBSOCKET_SEND_QUEUE
+						if( notif->n_Extra )
+						{ //TK-1039
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -908,9 +1035,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 						
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -923,14 +1049,29 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+					if( user_connections->connection[i] && user_connections->connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)user_connections->connection[i];
+						lns->ns_RequestID = (FULONG)user_connections->connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
+						int msgSendLength;
 						
+#ifdef WEBSOCKET_SEND_QUEUE
+						if( extraString )
+						{ //TK-1039
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
+						
+						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+#else
 						if( extraString )
 						{ //TK-1039
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -939,10 +1080,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
-						
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
 						lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
@@ -982,6 +1121,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				lns->ns_NotificationID = notif->n_ID;
 				lns->ns_RequestID = lma->uma_ID;
 				lns->ns_Target = MOBILE_APP_TYPE_IOS;
+				lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 				NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 				
 				DEBUG("Send message to device %s\n", lma->uma_Platform );
@@ -1015,17 +1155,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	{
 		FERROR("Message was sent through websockets or APNS is not enabled!\n");
 	}
-	/*
-	FFree( escapedChannelId );
-	FFree( escapedTitle );
-	FFree( escapedMessage );
-	FFree( escapedApp );
-	*/
 	FFree( jsonMessage );
-	//if( escapedExtraString != NULL ) FFree( escapedExtraString );
-	
-	//FFree( notif ); // no need to release internal data
-	
+
 	return 0;
 }
 
@@ -1042,7 +1173,13 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *notif, FULONG notifSentID, int action )
 {
 	SystemBase *sb = (SystemBase *)lsb;
-	UserMobileAppConnectionsT *user_connections = HashmapGetData( _user_to_app_connections_map, username );
+	UserMobileAppConnectionsT *user_connections = NULL;
+	
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
 	NotificationSent *notifSent = NULL;
 	
 	// get message length
@@ -1118,12 +1255,16 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						
 						while( lnf != NULL )
 						{
-							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
+							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i]->mac_UserMobileAppID )
 							{
-								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+#ifdef WEBSOCKET_SEND_QUEUE
+								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+#else
+								unsigned int jsonMessageLength = LWS_PRE + snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1135,18 +1276,22 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+					if( user_connections->connection[i] && user_connections->connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lnf = notif->n_NotificationsSent;
 						
 						while( lnf != NULL )
 						{
-							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i] )
+							if( lnf->ns_RequestID == (FULONG)user_connections->connection[i]->mac_UserMobileAppID )
 							{
-								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+#ifdef WEBSOCKET_SEND_QUEUE
+								unsigned int jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
 						
-								//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-								lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+								WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+#else
+								unsigned int jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"application\":\"%s\",\"action\":\"remove\",\"id\":%lu}", notif->n_Channel, notif->n_Application, lnf->ns_ID );
+								lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 								break;
 							}
 							lnf = (NotificationSent *) lnf->node.mln_Succ;
@@ -1174,10 +1319,22 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
+#ifdef WEBSOCKET_SEND_QUEUE
+						if( notif->n_Extra )
+						{ //TK-1039
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
 						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1186,9 +1343,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-					//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 						
 						NotificationSentDelete( lns );
 					}
@@ -1198,16 +1354,28 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( user_connections->connection[i] && user_connections->connection[i]->app_status != MOBILE_APP_STATUS_RESUMED )
+					if( user_connections->connection[i] && user_connections->connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)user_connections->connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
+						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 						
 						unsigned int jsonMessageLength = 0;
+#ifdef WEBSOCKET_SEND_QUEUE
+						if( notif->n_Extra )
+						{ //TK-1039
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
+						}
+						else
+						{
+							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
+						}
 						
+						WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+#else
 						if( notif->n_Extra )
 						{ //TK-1039
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"%s\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Extra, notif->n_Application, lns->ns_ID );
@@ -1216,9 +1384,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						
-						//WriteMessage( user_connections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
-						lws_write(user_connections->connection[i]->websocket_ptr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+#endif
 						
 						NotificationSentDelete( lns );
 					}
@@ -1255,6 +1422,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = lma->uma_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_READED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );
@@ -1278,6 +1446,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 					lns->ns_NotificationID = notif->n_ID;
 					lns->ns_RequestID = lma->uma_ID;
 					lns->ns_Target = MOBILE_APP_TYPE_IOS;
+					lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 					NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
 					
 					DEBUG("Send message to device %s\n", lma->uma_Platform );
@@ -1318,8 +1487,74 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	return 0;
 }
 
+/**
+ * Mobile App Ping thread
+ *
+ * @param a pointer to thread data (not used)
+ * @return NULL
+ */
+static void* MobileAppPingThread( void *a __attribute__((unused)) )
+{
+	pthread_detach( pthread_self() );
+	DEBUG("App ping thread started\n");
 
+	while (1)
+	{
+		DEBUG("Checking app communication times\n");
 
+		int users_count = HashmapLength(globalUserToAppConnectionsMap);
+		bool check_okay = true;
+
+		unsigned int index = 0;
+
+		HashmapElement *element = NULL;
+		while( (element = HashmapIterate(globalUserToAppConnectionsMap, &index)) != NULL )
+		{
+			UserMobileAppConnectionsT *user_connections = element->data;
+			if( user_connections == NULL )
+			{
+				//the hashmap was invalidated while we were reading it? let's try another ping session....
+				check_okay = false;
+				break;
+			}
+
+			pthread_mutex_lock(&globalSessionRemovalMutex);
+			//mutex is needed because a connection can be removed at any time within websocket_app_callback,
+			//so a race condition would lead to null-pointers and stuff...
+
+			//iterate through all user connections
+			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+			{
+				if (user_connections->connection[i])
+				{ //see if a connection exists
+					if( time(NULL) - user_connections->connection[i]->mac_LastCommunicationTimestamp > KEEPALIVE_TIME_s)
+					{
+						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
+
+						//send ping
+						char request[LWS_PRE+64];
+						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
+						//DEBUG("Request: %s\n", request+LWS_PRE);
+#ifndef WEBSOCKET_SEND_QUEUE
+						lws_write(user_connections->connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
+#else
+						WriteMessage( user_connections->connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
+#endif
+					}
+				}
+			} //end of user connection loops
+			pthread_mutex_unlock(&globalSessionRemovalMutex);
+		} //end of users loop
+
+		if (check_okay)
+		{
+			sleep(KEEPALIVE_TIME_s);
+		}
+	}
+
+	pthread_exit(0);
+	return NULL; //should not exit anyway
+}
 
 
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
