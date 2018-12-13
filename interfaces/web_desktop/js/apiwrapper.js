@@ -3359,6 +3359,7 @@ function apiWrapper( event, force )
 				nmsg[b] = msg[b];
 			nmsg.type = 'callback';
 			app.contentWindow.postMessage( JSON.stringify( nmsg ), '*' );
+			Notify( { title: 'Callback', text: JSON.stringify( msg ) } );
 		}
 	}
 	// TODO: Check the flow here, to prevent infinite loops

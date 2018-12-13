@@ -1567,6 +1567,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						if( this.scrollTopCached )
 							this.scrollTop = this.scrollTopCached;
 					}
+					// Done controlling scrolling
 
 					var menuHeader = document.createElement( 'div' );
 					menuHeader.className = 'DockMenuHeader';
