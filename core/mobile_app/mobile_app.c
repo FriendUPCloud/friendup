@@ -821,7 +821,8 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 		{
 			FQEntry *q = fq->fq_First; 
 			while( q != NULL )
-			{ 
+			{
+				DEBUG("RElease me!\n");
 				void *r = q; 
 				if( q->fq_Data != NULL )
 				{
@@ -829,7 +830,6 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 				}
 				q = (FQEntry *)q->node.mln_Succ; 
 				FFree( r ); 
-			
 			} 
 			fq->fq_First = NULL; 
 			fq->fq_Last = NULL; 
