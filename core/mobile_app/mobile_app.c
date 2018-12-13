@@ -774,6 +774,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	}
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+
 	FQInit( &(newConnection->mac_Queue) );
 
 	return 0;
