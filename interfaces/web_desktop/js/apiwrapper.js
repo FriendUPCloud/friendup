@@ -175,7 +175,7 @@ function apiWrapper( event, force )
 		}
 
 		// For Francois :)
-		if ( msg.type.substring( 0, 13 ) == 'friendNetwork' )
+		if( msg.type.substring( 0, 13 ) == 'friendNetwork' )
 		{
 			var messageInfo = {};
 			if ( msg.applicationId )
@@ -895,13 +895,13 @@ function apiWrapper( event, force )
 									data:          data
 								};
 
-								if (msg.callback)
+								if( msg.callback )
 									runWrapperCallback(msg.callback, data);
-							});
+							} );
 						}
 						else
 						{
-							if (msg.callback)
+							if( msg.callback )
 								runWrapperCallback(msg.callback, false);
 						}
 						break;
@@ -921,15 +921,16 @@ function apiWrapper( event, force )
 								}
 							}
 							// If we have a viable door, use it
-							if (door)
+							if( door )
 							{
 								for (var a = 0; a < msg.data.length; a++)
 								{
 									msg.data[a].Dormant = door;
 								}
-								runWrapperCallback(msg.callbackId, msg.data);
+								runWrapperCallback( msg.callbackId, msg.data );
 							}
-						} else
+						}
+						else
 						{
 							runWrapperCallback( msg.callbackId, null );
 						}
@@ -1242,8 +1243,8 @@ function apiWrapper( event, force )
 				}
 				break;
 
-				// Notify ----------------------------------------------------------
-				// Ok, the iframe was loaded!? Check data
+			// Notify ----------------------------------------------------------
+			// Ok, the iframe was loaded!? Check data
 			case 'notify':
 				if ( app.windows && app.windows[msg.viewId] )
 				{
@@ -2608,6 +2609,14 @@ function apiWrapper( event, force )
 				// permission should probably be checked per command?
 				switch( msg.command )
 				{
+					// Support generic callbacks
+					case 'callback':
+						var df = getWrapperCallback( msg.callbackId );
+						if( df )
+						{
+							return df( msg.data ? msg.data : ( msg.error ? msg.error : null ) );
+						}
+						return false;
 					case 'addfilesystemevent':
 						if( msg.event && msg.path )
 						{
