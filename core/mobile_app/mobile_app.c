@@ -1228,6 +1228,11 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 			reqLengith += strlen( notif->n_Extra );
 		}
 	}
+	else
+	{
+		FERROR("Cannot find notification!\n");
+		return 1;
+	}
 	
 	// allocate memory for message
 	
