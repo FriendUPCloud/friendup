@@ -175,7 +175,7 @@ int WebsocketThread( FThread *data )
 	WebSocket *ws = (WebSocket *)data->t_Data;
 	if( ws->ws_Context == NULL )
 	{
-		FERROR("WsContext is empty\n");
+		FERROR("[WS] WsContext is empty\n");
 		return 0;
 	}
 	
@@ -655,7 +655,7 @@ int AddWebSocketConnection( void *locsb, struct lws *wsi, const char *sessionid,
 		
 		FRIEND_MUTEX_UNLOCK( &(actUserSess->us_Mutex) );
 		
-		Log(FLOG_DEBUG, "WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
+		Log(FLOG_DEBUG, "[WS] WebsocketClient new %p pointer to new %p actuser session %p = %s\n", nwsc, nwsc->node.mln_Succ, actUserSess, actUserSess->us_SessionID );
 	}
 	else
 	{
@@ -756,7 +756,7 @@ int DeleteWebSocketConnection( void *locsb, struct lws *wsi __attribute__((unuse
 	
 	FQDeInitFree( &(wscl->wsc_MsgQueue) );
 	
-	Log(FLOG_DEBUG, "WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
+	Log(FLOG_DEBUG, "[WS] WebsocketClient Remove session %p usersession %p\n", wscl, wscl->wsc_UserSession );
 	WebsocketServerClientDelete( wscl );
 
     return 0;
