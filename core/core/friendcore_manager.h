@@ -41,6 +41,9 @@
 #ifndef WEBSOCKET_PORT
 #define WEBSOCKET_PORT	6500
 #endif
+#ifndef WEBSOCKET_MOBILE_PORT
+#define WEBSOCKET_MOBILE_PORT	6499
+#endif
 #ifndef FRIEND_COMMUNICATION_PORT
 #define FRIEND_COMMUNICATION_PORT 6503
 #endif
@@ -99,6 +102,7 @@ typedef struct FriendCoreManager
 	
 	ServiceManager				*fcm_ServiceManager;							///< Service Manager
 	WebSocket					*fcm_WebSocket;                                 ///< WebSocket Manager
+	WebSocket					*fcm_WebSocketMobile;                                 ///< WebSocket Mobile Manager
 	
 	FriendcoreInfo				*fcm_FCI;										///< Friend Core Information
 	void						*fcm_SB;  ///<Pointer to SystemBase
@@ -107,6 +111,7 @@ typedef struct FriendCoreManager
 	int							fcm_ComPort; // communication port
 	int							fcm_ComRemotePort; // remote communication port
 	int							fcm_WSPort; // websockets internet port
+	int							fcm_WSMobilePort; // websockets internet port
 	int							fcm_Maxp; // number of connections in epoll for http
 	int							fcm_Bufsize;  // FC buffer size
 	int							fcm_MaxpCom; // number of connections in epoll for communication

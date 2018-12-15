@@ -131,7 +131,25 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		WS_PROTOCOL_BUFFER_SIZE
 	},
-#if ENABLE_MOBILE_APP_NOTIFICATIONS == 1
+	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols1[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
 	{
 		"FriendApp-v1",
 		WebsocketAppCallback,
@@ -141,8 +159,6 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		0
 	},
-#endif
-#if ENABLE_NOTIFICATIONS_SINK == 1
 	{
 		"FriendService-v1",
 		WebsocketNotificationsSinkCallback,
@@ -152,11 +168,11 @@ static struct lws_protocols protocols[] = {
 		NULL,
 		0
 	},
-#endif
 	{
 		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
 	}
 };
+
 
 void hand(int s )
 {
@@ -233,9 +249,10 @@ int WebSocketStart( WebSocket *ws )
  * @param sb pointer to SystemBase
  * @param port port on which WS will work
  * @param sslOn TRUE when WS must be secured through SSL, otherwise FALSE
+ * @param proto protocols
  * @return pointer to new WebSocket structure, otherwise NULL
  */
-WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
+WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
 {
 	WebSocket *ws = NULL;
 	SystemBase *lsb = (SystemBase *)sb;
@@ -282,7 +299,14 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn )
 			break;
 			*/
 		ws->ws_Info.port = ws->ws_Port;
-		ws->ws_Info.protocols = protocols;
+		if( proto == 0 )
+		{
+			ws->ws_Info.protocols = protocols;
+		}
+		else
+		{
+			ws->ws_Info.protocols = protocols1;
+		}
 		ws->ws_Info.iface = ws->ws_Interface;
 		ws->ws_Info.gid = -1;
 		ws->ws_Info.uid = -1;

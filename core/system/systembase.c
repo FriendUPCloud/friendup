@@ -603,6 +603,12 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocket = NULL;
 		}
 		
+		if( l->fcm->fcm_WebSocketMobile != NULL )
+		{
+			WebSocketDelete( l->fcm->fcm_WebSocketMobile );
+			l->fcm->fcm_WebSocketMobile = NULL;
+		}
+		
 		FERROR("FriendCoreManagerInit fail!\n");
 		SystemClose( l );
 		return NULL;
