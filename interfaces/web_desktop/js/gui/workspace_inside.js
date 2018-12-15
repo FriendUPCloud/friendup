@@ -673,7 +673,7 @@ var WorkspaceInside = {
 		// Handle incoming push notifications and server notifications
 		function handleNotifications( msg )
 		{
-			var messageRead = false;
+			var messageRead = trash = false;
 			
 			// Check if we have notification data
 			if( msg.notificationData )
@@ -684,11 +684,11 @@ var WorkspaceInside = {
 					// Function to set the notification as read...
 					function notificationRead()
 					{
+						clearTimeout( trash );
 						messageRead = true;
 						var l = new Library( 'system.library' );
 						l.onExecuted = function(){};
 						l.execute( 'mobile/updatenotification', { 
-							t: 'notify',
 							notifid: msg.notificationData.id, 
 							action: 1
 						} );
@@ -714,10 +714,11 @@ var WorkspaceInside = {
 								app.contentWindow.postMessage( JSON.stringify( amsg ), '*' );
 								
 								// Delete wrapper callback if it isn't executed within 1 second
-								setTimeout( function()
+								trash = setTimeout( function()
 								{
 									if( !messageRead )
 									{
+										//Notify( { title: 'Trashing push callback (not seen)', text: msg.notificationData.id } );
 										var trash = getWrapperCallback( amsg.callback );
 										delete trash;
 									}
@@ -1554,6 +1555,18 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					{
 						p = p[0] + ':';
 					}
+					
+					// Control scrolling
+					dd.onscroll = function()
+					{
+						this.scrollTopCached = this.scrollTop;
+					}
+					dd.onmousemove = function()
+					{
+						if( this.scrollTopCached )
+							this.scrollTop = this.scrollTopCached;
+					}
+					// Done controlling scrolling
 
 					var menuHeader = document.createElement( 'div' );
 					menuHeader.className = 'DockMenuHeader';
@@ -1702,6 +1715,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 									eles[z].classList.remove( 'Over' );
 								}
 							}
+							
 							if( this.leaveTimeout )
 								clearTimeout( this.leaveTimeout );
 						} );
@@ -1763,6 +1777,37 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 								if( this.leaveTimeout )
 									clearTimeout( this.leaveTimeout );
 								return cancelBubble( e );
+							}
+							s.subMenu = s.getElementsByClassName( 'DockSubMenu' );
+							
+							// Watch dimensions! We need to support small screens
+							s.onmouseover = function()
+							{
+								if( this.subMenu && this.subMenu.length )
+								{
+									for( var z = 0; z < this.subMenu.length; z++ )
+									{
+										var sub = this.subMenu[z];
+										// Test top
+										var yTest = GetElementTop( sub );
+										if( yTest < 0 )
+										{
+											var top = sub.offsetTop + ( -yTest );
+											sub.style.top = top + 'px';
+										}
+										// Test height
+										if( sub.offsetHeight < sub.lastChild.offsetHeight + sub.lastChild.offsetTop )
+										{
+											sub.style.height = sub.lastChild.offsetHeight + sub.lastChild.offsetTop + 'px';
+										}
+										if( sub.offsetHeight >= Workspace.screen.contentDiv.offsetHeight )
+										{
+											sub.style.height = Workspace.screen.contentDiv.offsetHeight + 'px';
+											sub.style.overflow = 'auto';
+											sub.classList.add( 'ScrollBarSmall' );
+										}
+									}
+								}
 							}
 						}
 						else

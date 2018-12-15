@@ -164,20 +164,25 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char where[ 1024 ];
 	
+	DEBUG("NotificationManagerGetTreeByNotifSentDB id %lu start\n", notifSentId );
+	
 	snprintf( where, sizeof(where), "ID='%lu'", notifSentId );
 	
 	int entries;
 	
 	NotificationSent *notifSent = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+	DEBUG("NotificationManagerGetTreeByNotifSentDB found ptr %p\n", notifSent );
 	if( notifSent != NULL )
 	{
 		snprintf( where, sizeof(where), "ID='%lu'", notifSent->ns_NotificationID );
 		n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
+		DEBUG("NotificationManagerGetTreeByNotifSentDB found notifsent ptr %p\n", n );
 		if( n != NULL )
 		{
 			n->n_NotificationsSent = notifSent;
 		}
 	}
+	DEBUG("NotificationManagerGetTreeByNotifSentDB id start\n" );
 	
 	return n;
 }
@@ -366,6 +371,7 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 	{
+		Log( FLOG_INFO, "NotificationManagerRemoveNotification remove %lu\n", nsid );
 		while( notIt != NULL )
 		{
 			NotificationSent *lnsIt = notIt->n_NotificationsSent;
@@ -381,6 +387,7 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 			// entry was found
 			if( lnsIt != NULL )
 			{
+				Log( FLOG_INFO, "Notift will be removed\n" );
 				if( notIt == nm->nm_Notifications )	// current notification is first, we set it as next
 				{
 					nm->nm_Notifications = (Notification *) nm->nm_Notifications->node.mln_Succ;
@@ -391,10 +398,15 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 				}
 				break;	// go out from while loop
 			}
+			else
+			{
+				Log( FLOG_INFO, "Notift will not be removed (not found)\n" );
+			}
 			notPrevIt = notIt;
 			notIt = (Notification *)notIt->node.mln_Succ;
 		}
 		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+		Log( FLOG_INFO, "NotificationManagerRemoveNotification remove end %lu\n", nsid );
 	}
 	
 	return ret;
@@ -417,7 +429,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		
 		sleep( 1 );
 		counter++;
-		if( counter > 15 )	// do checking every 15 seconds
+		if( counter > 10 )	// do checking every 15 seconds
 		{
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");

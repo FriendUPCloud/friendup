@@ -774,6 +774,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	}
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+
 	FQInit( &(newConnection->mac_Queue) );
 
 	return 0;
@@ -820,7 +821,8 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 		{
 			FQEntry *q = fq->fq_First; 
 			while( q != NULL )
-			{ 
+			{
+				DEBUG("RElease me!\n");
 				void *r = q; 
 				if( q->fq_Data != NULL )
 				{
@@ -828,7 +830,6 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 				}
 				q = (FQEntry *)q->node.mln_Succ; 
 				FFree( r ); 
-			
 			} 
 			fq->fq_First = NULL; 
 			fq->fq_Last = NULL; 
@@ -1227,6 +1228,11 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 			reqLengith += strlen( notif->n_Extra );
 		}
 	}
+	else
+	{
+		FERROR("Cannot find notification!\n");
+		return 1;
+	}
 	
 	// allocate memory for message
 	
@@ -1243,6 +1249,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 		//DEBUG("Send: <%s>\n", jsonMessage + LWS_PRE);
 		if( action == NOTIFY_ACTION_READED )
 		{
+			/*
 			switch( notif->n_NotificationType )
 			{
 				case MN_force_all_devices:
@@ -1301,6 +1308,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				break;
 				default: FERROR("**************** UNIMPLEMENTED %d\n", notif->n_NotificationType);
 			}
+			*/
 		}
 		//
 		// seems noone readed message on desktop, we must inform all user channels that we have package for him
