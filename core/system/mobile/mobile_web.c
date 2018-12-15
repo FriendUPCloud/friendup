@@ -25,6 +25,7 @@
 #include <system/user/user_mobile_app.h>
 #include <hardware/network.h>
 #include <mobile_app/mobile_app.h>
+#include <system/notification/notification_manager.h>
 
 //
 //
