@@ -368,6 +368,54 @@ html body .Screen > .TitleBar.Busy:after
     -webkit-clip-path: ellipse(9px 9px at 10px 10px);
 }
 
+/* Views not activated for mobile */
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
+{
+	margin: 10px 0 0 10px;
+	height: 80px !important;
+	width: 80px;
+	float: left;
+	clear: none;
+	position: relative;
+	border-radius: 8px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
+{
+	border-radius: 8px 8px 0 0;
+	overflow: visible;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
+{
+	content: " ";
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 35px;
+	bottom: 0;
+	border-radius: 0 0 8px 8px;
+	background: rgba(100,100,100,1);
+	z-index: 2;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title > div > span
+{
+	position: absolute;
+	width: calc(100% + 10px);
+	left: 5px;
+	top: 85px;
+	z-index: 2;
+	color: white;
+	text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+	font-size: 0.9em;
+}
+
+
+
+
 /* 3D is for later ---------------------------------------------------------- */
 
 /*html .Screen > .ScreenContent > .WorkspaceWallpaper:after
