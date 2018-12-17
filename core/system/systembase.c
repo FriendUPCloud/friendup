@@ -609,6 +609,12 @@ SystemBase *SystemInit( void )
 			l->fcm->fcm_WebSocketMobile = NULL;
 		}
 		
+		if( l->fcm->fcm_WebSocketNotification != NULL )
+		{
+			WebSocketDelete( l->fcm->fcm_WebSocketNotification );
+			l->fcm->fcm_WebSocketNotification = NULL;
+		}
+		
 		FERROR("FriendCoreManagerInit fail!\n");
 		SystemClose( l );
 		return NULL;

@@ -160,6 +160,24 @@ static struct lws_protocols protocols1[] = {
 		0
 	},
 	{
+		NULL, NULL, 0, 0, 0, NULL, 0 		// End of list 
+	}
+};
+
+// list of supported protocols and callbacks 
+
+static struct lws_protocols protocols2[] = {
+	// first protocol must always be HTTP handler 
+	{
+		"http-only",		/* name */
+		callback_http,		/* callback */
+		sizeof (struct per_session_data__http),	/* per_session_data_size */
+		0,			/* max frame size / rx buffer */
+		1,
+		NULL,
+		0
+	},
+	{
 		"FriendService-v1",
 		WebsocketNotificationsSinkCallback,
 		sizeof( struct MobileAppNotif ),
@@ -303,9 +321,13 @@ WebSocket *WebSocketNew( void *sb,  int port, FBOOL sslOn, int proto )
 		{
 			ws->ws_Info.protocols = protocols;
 		}
-		else
+		else if( proto == 1 )
 		{
 			ws->ws_Info.protocols = protocols1;
+		}
+		else
+		{
+			ws->ws_Info.protocols = protocols2;
 		}
 		ws->ws_Info.iface = ws->ws_Interface;
 		ws->ws_Info.gid = -1;
