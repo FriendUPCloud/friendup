@@ -655,7 +655,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			rightpanel:          dialog.contentbox,
 			leftpanel:           dialog.sidebar,
 			nosidebarbackground: true,
-			toolbararea:         dialog.toolbararea
+			toolbararea:         dialog.toolbararea,
+			doubleclickfile:     function( element, event )
+			{
+				console.log( 'Clicked on element: ', element );
+			}
 		} );
 		dir.listMode = 'listview';
 		

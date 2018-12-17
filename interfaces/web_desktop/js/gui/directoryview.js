@@ -48,6 +48,7 @@ DirectoryView = function( winobj, extra )
 	this.bookmarks = winobj;
 	this.sidebarbackground = true;
 	this.toolbararea = false;
+	this.doubleclickfiles = false;
 	
 	// Read in extra stuff
 	if( extra )
@@ -67,6 +68,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.toolbararea )
 		{
 			this.toolbararea = extra.toolbararea;
+		}
+		if( this.extra.doubleclickfiles )
+		{
+			this.doubleclickfiles = extra.doubleclickfiles;
 		}
 	}
 
@@ -2564,10 +2569,23 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.className += ' File';
 			RemoveIconEvents( f ); // Strip events
 			r.file = f;
-			r.ondblclick = function( e )
+			
+			// Overwrite doubleclick
+			if( this.doubleclickfile )
 			{
-				//Notify( { title: 'Double clicked', text: 'dlci' } );
-				this.file.ondblclick( e );
+				var cl = this.doubleclickfile;
+				r.ondblclick = function( e )
+				{
+					cl( e, f );
+				}
+			}
+			else
+			{
+				r.ondblclick = function( e )
+				{
+					//Notify( { title: 'Double clicked', text: 'dlci' } );
+					this.file.ondblclick( e );
+				}
 			}
 
 			// Create the icon..
