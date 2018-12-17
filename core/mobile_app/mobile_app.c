@@ -267,7 +267,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 			}
 		
-			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
 				//remove connection from user connnection struct
 				UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
@@ -281,7 +281,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				//TODO
 				//HashmapRemove( globalWebsocketToUserConnectionsMap, websocketHash );
 
-				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 			MobileAppNotif *n = (MobileAppNotif *)user;
 			n->man_Data = NULL;
