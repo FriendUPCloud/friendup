@@ -1658,6 +1658,32 @@ var View = function( args )
 			var viewContainer = document.createElement( 'div' );
 			viewContainer.className = 'ViewContainer';
 			
+			// Get icon for visualizations
+			if( applicationId )
+			{
+				for( var a = 0; a < Workspace.applications.length; a++ )
+				{
+					if( Workspace.applications[a].applicationId == applicationId )
+					{
+						if( Workspace.applications[a].icon )
+						{
+							var ic = Workspace.applications[a].icon;
+							var iconSpan = document.createElement( 'span' );
+							iconSpan.classList.add( 'ViewIcon' );
+							iconSpan.style.backgroundImage = 'url(\'' + ic + '\')';
+							viewContainer.appendChild( iconSpan );
+						}
+					}
+				}
+			}
+			else
+			{
+				var iconSpan = document.createElement( 'span' );
+				iconSpan.classList.add( 'ViewIcon' );
+				iconSpan.style.backgroundImage = 'url(/iconthemes/friendup15/Folder.svg)';
+				viewContainer.appendChild( iconSpan );
+			}
+			
 			if( div == 'CREATE' )
 			{	
 				div = document.createElement( 'div' );

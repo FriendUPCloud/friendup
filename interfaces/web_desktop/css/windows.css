@@ -39,6 +39,12 @@
 	pointer-events: all;
 }
 
+/* Disabled for default theme */
+.ViewContainer > .ViewIcon
+{
+	display: none;
+}
+
 /* Snapping */
 
 html .View[viewsnap] .Title > div > div
