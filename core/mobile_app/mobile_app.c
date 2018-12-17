@@ -261,6 +261,13 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 		{
 #ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
+			
+			if( appConnection->mac_Queue.fq_First == NULL )
+			{
+				FERROR("We cannot send data on dead connection\n");
+				return 0;
+			}
+			
 			if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 			{
 				//FQueue *q = &(man->man_Queue);
