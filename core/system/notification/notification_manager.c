@@ -490,7 +490,9 @@ void NotificationManagerTimeoutThread( FThread *data )
 						}
 						
 						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
+						FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 						MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
+						FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) );
 						NotificationDelete( notif );
 					}
 					else
