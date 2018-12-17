@@ -710,6 +710,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 			{
 				fcd->fcd_WSClient->wsc_ToBeRemoved = TRUE;
 				usleep( 2000 );
+				int val = 0;
 				while( TRUE )
 				{
 					DEBUG("Check in use %d\n", fcd->fcd_WSClient->wsc_InUseCounter );
@@ -717,6 +718,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 					{
 						break;
 					}
+					if( val++ > 5 ) break;
 					sleep( 1 );
 				}
 				
