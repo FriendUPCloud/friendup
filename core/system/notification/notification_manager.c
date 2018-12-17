@@ -435,6 +435,12 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 	return ret;
 }
 
+typedef struct DelListEntry
+{
+	Notification *dle_NotificationPtr;
+	MinNode node;
+}DelListEntry;
+
 //
 // Timeout thread
 //
@@ -454,6 +460,9 @@ void NotificationManagerTimeoutThread( FThread *data )
 		counter++;
 		if( counter > 10 )	// do checking every 15 seconds
 		{
+			DelListEntry *rootList = NULL;
+			DelListEntry *lastListEntry = NULL;
+			
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
 			
@@ -490,10 +499,28 @@ void NotificationManagerTimeoutThread( FThread *data )
 						}
 						
 						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
-						FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
-						MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
-						FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) );
-						NotificationDelete( notif );
+						
+						// add entries to list, entries will be updated and deleted
+						DelListEntry *le = FCalloc( 1, sizeof(DelListEntry) );
+						le->dle_NotificationPtr = notif;
+						
+						if( rootList == NULL )
+						{
+							rootList = le;
+							lastListEntry = le;
+						}
+						else
+						{
+							lastListEntry->node.mln_Succ = (MinNode *)le;
+							lastListEntry = le;
+						}
+						//le->node.mln_Succ = (MinNode *)rootList;
+						//rootList = le;
+						
+						//FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+						//MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
+						//FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) );
+						//NotificationDelete( notif );
 					}
 					else
 					{
@@ -508,6 +535,22 @@ void NotificationManagerTimeoutThread( FThread *data )
 				//nm->nm_Notifications = nroot;
 				
 				FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+			}
+			
+			// update and remove list of entries
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries\n");
+			
+			DelListEntry *le = rootList;
+			while( le != NULL )
+			{
+				DelListEntry *ne = (DelListEntry *)le->node.mln_Succ;
+				Notification *notif = le->dle_NotificationPtr;
+				
+				MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
+				NotificationDelete( notif );
+				FFree( le );
+				
+				le = ne;
 			}
 			
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");

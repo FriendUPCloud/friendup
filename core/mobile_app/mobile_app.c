@@ -297,6 +297,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 			if( appConnection == NULL )
 			{
+				FERROR("Appconnection is NULL!\n");
 				return 1;
 			}
 			if( appConnection->mac_Queue.fq_First == NULL )
