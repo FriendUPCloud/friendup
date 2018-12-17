@@ -152,7 +152,7 @@ function SetWindowContent( win, data )
 {
 	if( !win ) return;
 	if( win.content ) win = win.content;
-	win.innerHTML = Friend.view.cleanHTMLData( data );
+	win.innerHTML = Friend.GUI.view.cleanHTMLData( data );
 }
 
 // Refresh the window and add/remove features
@@ -1491,31 +1491,29 @@ function WindowScrolling ( e )
 // The View class begins -------------------------------------------------------
 
 // Attach view class to friend
-Friend.view = {
-	create: View,
-	removeScriptsFromData: function( data )
+Friend.GUI.view.create = View;
+Friend.GUI.view.removeScriptsFromData = function( data )
+{
+	var r = false;
+	var assets = [];
+	while( r = data.match( /\<script id\=\"([^"]*?)\" type\=\"text\/html\"[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
 	{
-		var r = false;
-		var assets = [];
-		while( r = data.match( /\<script id\=\"([^"]*?)\" type\=\"text\/html\"[^>]*?\>([\w\W]*?)\<\/script[^>]*?\>/i ) )
-		{
-			var asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
-			data = data.split( r[0] ).join( '' );
-		}
-		// Remove scripts
-		data = data.split( /\<script[^>]*?\>[\w\W]*?\<\/script[^>]*?\>/i ).join ( '' );
-		// Add assets
-		if( assets.length > 0 )
-			data += assets.join( "\n" );
-		return data;
-	},
-	cleanHTMLData: function( data )
-	{
-		// Allow for "script" template assets
-		data = Friend.view.removeScriptsFromData( data );
-		data = data.split( /\<style[^>]*?\>[\w\W]*?\<\/style[^>]*?\>/i ).join ( '' );
-		return data;
+		var asset = '<script id="' + r[1] + '" type="text/html">' + r[2] + '</script>';
+		data = data.split( r[0] ).join( '' );
 	}
+	// Remove scripts
+	data = data.split( /\<script[^>]*?\>[\w\W]*?\<\/script[^>]*?\>/i ).join ( '' );
+	// Add assets
+	if( assets.length > 0 )
+		data += assets.join( "\n" );
+	return data;
+};
+Friend.GUI.view.cleanHTMLData = function( data )
+{
+	// Allow for "script" template assets
+	data = Friend.GUI.view.removeScriptsFromData( data );
+	data = data.split( /\<style[^>]*?\>[\w\W]*?\<\/style[^>]*?\>/i ).join ( '' );
+	return data;
 };
 
 // View class (the javascript way)
@@ -1572,8 +1570,8 @@ var View = function( args )
 	}
 
 	// Clean data
-	this.cleanHTMLData = Friend.view.cleanHTMLData;
-	this.removeScriptsFromData = Friend.view.removeScriptsFromData;
+	this.cleanHTMLData = Friend.GUI.view.cleanHTMLData;
+	this.removeScriptsFromData = Friend.GUI.view.removeScriptsFromData;
 
 	// Setup the dom elements
 	// div = existing DIV dom element or 'CREATE'
