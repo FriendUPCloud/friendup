@@ -86,7 +86,7 @@ typedef struct WSIToUserConnections{
 }WSIToUserConnections;
 
 UserToApp *globalUserToAppConnections = NULL;
-WSIToUserConnections *globalWebsocketToUserConnections = NULL;
+//WSIToUserConnections *globalWebsocketToUserConnections = NULL;
 
 static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
 static pthread_t globalPingThread;
@@ -133,7 +133,7 @@ int PutConnectionsByUserName( UserToApp *root, char *key, UserMobileAppConnectio
 	return 0;
 }
 
-
+/*
 MobileAppConnectionT *GetConnectionByWSI( WSIToUserConnections *root, void *key )
 {
 	WSIToUserConnections *l = root;
@@ -173,10 +173,11 @@ int PutConnectionByWSI( WSIToUserConnections *root, void *key, MobileAppConnecti
 	
 	return 0;
 }
+*/
 
 static void  MobileAppInit(void);
-static int   MobileAppReplyError( struct lws *wsi, int error_code );
-static int   MobileAppHandleLogin( struct lws *wsi, json_t *json );
+static int   MobileAppReplyError( struct lws *wsi, void *udata, int error_code );
+static int   MobileAppHandleLogin( struct lws *wsi, void *udata, json_t *json );
 static int   MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *udata, FULONG appTokenID );
 static void* MobileAppPingThread( void *a );
 static char* MobileAppGetWebsocketHash( struct lws *wsi );
@@ -272,7 +273,12 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+		//appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+		if( user != NULL )
+		{
+			MobileAppNotif *n = (MobileAppNotif *)user;
+			appConnection = n->man_Data;
+		}
 		//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
@@ -282,6 +288,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 		case LWS_CALLBACK_CLOSED: //|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 		{
 			//char *websocketHash = MobileAppGetWebsocketHash( wsi );
+			/*
 			MobileAppConnectionT *appConnection = NULL;
 			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
@@ -289,11 +296,12 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
 				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
+			*/
 			
 			if( appConnection == NULL )
 			{
 				DEBUG("Websocket close - no user session found for this socket\n");
-				return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
+				return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 			}
 		
 			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -312,6 +320,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
+			MobileAppNotif *n = (MobileAppNotif *)user;
+			n->man_Data = NULL;
 			//FFree( websocketHash );
 			//return 0;
 		}
@@ -395,9 +405,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 			DEBUG("JSON tokens found %d\n", tokens_found);
 
-			if (tokens_found < 1)
+			if( tokens_found < 1 )
 			{
-				return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_JSON);
+				return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
 			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
@@ -423,14 +433,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 		if( first_type_letter == 'l'/*login*/)
 		{
-			return MobileAppHandleLogin(wsi, &json);
+			return MobileAppHandleLogin( wsi, user, &json );
 		}
 		else
 		{
 			if (appConnection == NULL)
 			{
 				DEBUG("Session not found for this connection\n");
-				return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_SESSION);
+				return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
 			}
 
 			appConnection->mac_LastCommunicationTimestamp = time(NULL);
@@ -578,14 +588,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				break;
 
 			default:
-				return MobileAppReplyError(wsi, MOBILE_APP_ERR_WRONG_TYPE);
+				return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
 			}
 
 		}
 	}
 	else
 	{
-		return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_TYPE);
+		return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_TYPE);
 	}
 		
 	}
@@ -603,7 +613,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
  * @param wsi pointer to a Websockets struct
  * @param error_code numerical value of the error code
  */
-static int MobileAppReplyError(struct lws *wsi, int error_code)
+static int MobileAppReplyError(struct lws *wsi, void *user, int error_code)
 {
 	if( error_code == MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION )
 	{
@@ -627,7 +637,10 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
 	MobileAppConnectionT *appConnection = NULL;
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+		//appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+		MobileAppNotif *n = (MobileAppNotif *)user;
+		appConnection = n->man_Data;
+		
 		//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
@@ -654,20 +667,20 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
  * @param json to json structure with login entry
  * @return 0 when success, otherwise error number
  */
-static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
+static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 {
 	char *usernameString = json_get_element_string( json, "user" );
 
 	if( usernameString == NULL )
 	{
-		return MobileAppReplyError(wsi, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
+		return MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_USERNAME);
 	}
 
 	char *passwordString = json_get_element_string(json, "pass");
 
 	if( passwordString == NULL )
 	{
-		return MobileAppReplyError(wsi, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
+		return MobileAppReplyError(wsi, userdata, MOBILE_APP_ERR_LOGIN_NO_PASSWORD);
 	}
 	
 	char *tokenString = json_get_element_string(json, "apptoken");
@@ -693,13 +706,13 @@ static int MobileAppHandleLogin( struct lws *wsi, json_t *json )
 	if( a->CheckPassword(a, NULL, user, passwordString, &block_time) == FALSE )
 	{
 		DEBUG("Check = false\n");
-		return MobileAppReplyError( wsi, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
+		return MobileAppReplyError( wsi, userdata, MOBILE_APP_ERR_LOGIN_INVALID_CREDENTIALS );
 	}
 	else
 	{
 		DEBUG("Check = true\n");
 		
-		int ret = MobileAppAddNewUserConnection( wsi, usernameString, user, umaID );
+		int ret = MobileAppAddNewUserConnection( wsi, usernameString, userdata, umaID );
 		if( umaID > 0 )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
@@ -745,7 +758,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 		if( userConnections == NULL )
 		{
 			DEBUG("Allocation failed\n");
-			return MobileAppReplyError(wsi, MOBILE_APP_ERR_INTERNAL);
+			return MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
 		}
 		else
 		{
@@ -868,7 +881,11 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
 	//DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
-	PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
+	//PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
+	
+	MobileAppNotif *n = (MobileAppNotif *)user_data;
+	n->man_Data = newConnection;
+	
 	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
 		/*

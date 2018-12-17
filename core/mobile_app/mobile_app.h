@@ -75,6 +75,7 @@ static char *MobileAppType[] =
 typedef struct MobileAppNotif
 {
 	int						man_Type;
+	void					*man_Data;
 }MobileAppNotif;
 
 /**
