@@ -195,14 +195,22 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			w.close ();
 			return;
 		}
-		var cont = this.getContainer ();
+		var cont = this.getContainer();
 		var eles = cont.getElementsByTagName ( 'div' );
 		var out = [];
 		for( var a = 0; a < eles.length; a++ )
 		{
-			if ( eles[a].parentNode != cont ) continue;
-			if ( eles[a].isselected )
-				out.push ( eles[a].obj );
+			if( eles[a].classList.contains( 'Selected' ) )
+			{
+				var fi = eles[a].fileInfo;
+				var ele = {
+					Path: fi.Path,
+					Filename: fi.Filename,
+					MetaType: fi.MetaType,
+					Type: fi.Type
+				};
+				out.push( ele );
+			}
 		}
 		if( out.length )
 		{
@@ -400,6 +408,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				triggerfunction( '' );
 				w.close();
+			}
+		}
+		if ( open )
+		{
+			open.onclick = function()
+			{
+				w.choose();
 			}
 		}
 		// Save file
