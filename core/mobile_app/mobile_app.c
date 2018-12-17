@@ -585,13 +585,13 @@ static int MobileAppReplyError(struct lws *wsi, int error_code)
 	if( appConnection )
 	{
 		DEBUG("Cleaning up before closing socket\n");
-		UserMobileAppConnectionsT *user_connections = appConnection->mac_UserConnections;
-		unsigned int connection_index = appConnection->mac_UserConnectionIndex;
-		if( user_connections != NULL )
+		UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
+		unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
+		if( userConnections != NULL )
 		{
-			DEBUG("Removing connection %d for user <%s>\n", connection_index, user_connections->username);
+			DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->umac_Username);
 		}
-		MobileAppRemoveAppConnection( user_connections, connection_index );
+		MobileAppRemoveAppConnection( userConnections, connectionIndex );
 	}
 
 	return -1;
@@ -702,7 +702,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			DEBUG("Creating new struct for user <%s>\n", username);
 			char *permanentUsername = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
 			strcpy( permanentUsername, username );
-			userConnections->username = permanentUsername;
+			userConnections->umac_Username = permanentUsername;
 			
 			//
 			// we must also attach UserID to User. This functionality will allow FC to find user by ID
@@ -710,7 +710,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			
 			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
 
-			userConnections->userID = -1;
+			userConnections->umac_UserID = -1;
 			if( sqllib != NULL )
 			{
 				char *qery = FMalloc( 1048 );
@@ -725,7 +725,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 						if( row[ 0 ] != NULL )
 						{
 							char *end;
-							userConnections->userID = strtoul( row[0], &end, 0 );
+							userConnections->umac_UserID = strtoul( row[0], &end, 0 );
 						}
 					}
 					sqllib->FreeResult( sqllib, res );
@@ -771,7 +771,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	int connectionToReplaceIndex = -1;
 	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 	{
-		if( userConnections->connection[i] == NULL )
+		if( userConnections->umac_Connection[i] == NULL )
 		{ //got empty slot
 			connectionToReplaceIndex = i;
 			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
@@ -783,15 +783,15 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	{ //no empty slots found - drop the oldest connection
 
 		connectionToReplaceIndex = 0;
-		unsigned int oldest_timestamp = userConnections->connection[0]->mac_LastCommunicationTimestamp;
+		unsigned int oldest_timestamp = userConnections->umac_Connection[0]->mac_LastCommunicationTimestamp;
 
 		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
 		{
-			if( userConnections->connection[i] == NULL )
+			if( userConnections->umac_Connection[i] == NULL )
 			{
-				if( userConnections->connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
+				if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
 				{
-					oldest_timestamp = userConnections->connection[i]->mac_LastCommunicationTimestamp;
+					oldest_timestamp = userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp;
 					connectionToReplaceIndex = i;
 					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
 				}
@@ -799,13 +799,13 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 		}
 	}
 
-	if( userConnections->connection[connectionToReplaceIndex] != NULL )
+	if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
 	{
 		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
 	}
 
 	DEBUG("Adding connection to slot %d\n", connectionToReplaceIndex);
-	userConnections->connection[ connectionToReplaceIndex ] = newConnection;
+	userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
 
 	newConnection->mac_UserData = user_data;
 	newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
@@ -864,17 +864,17 @@ static char* MobileAppGetWebsocketHash( struct lws *wsi )
  */
 static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connectionIndex )
 {
-	if( connections == NULL || connections->connection[connectionIndex] == NULL )
+	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
 	{
 		return;
 	}
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
-	connections->connection[connectionIndex]->mac_LastCommunicationTimestamp );
+	connections->umac_Connection[connectionIndex]->mac_LastCommunicationTimestamp );
 	
-	if( FRIEND_MUTEX_LOCK( &(connections->connection[connectionIndex]->mac_Mutex) ) == 0 )
+	if( FRIEND_MUTEX_LOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) ) == 0 )
 	{
-		FQueue *fq = &(connections->connection[connectionIndex]->mac_Queue);
-		//FQDeInitFree( &(connections->connection[connectionIndex]->mac_Queue) );
+		FQueue *fq = &(connections->umac_Connection[connectionIndex]->mac_Queue);
+		//FQDeInitFree( &(connections->umac_Connection[connectionIndex]->mac_Queue) );
 	
 		{
 			FQEntry *q = fq->fq_First; 
@@ -892,14 +892,14 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 			fq->fq_First = NULL; 
 			fq->fq_Last = NULL; 
 		}
-		FRIEND_MUTEX_UNLOCK( &(connections->connection[connectionIndex]->mac_Mutex) );
+		FRIEND_MUTEX_UNLOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
 	}
 	
-	pthread_mutex_destroy( &(connections->connection[connectionIndex]->mac_Mutex) );
+	pthread_mutex_destroy( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
 
-	FFree( connections->connection[connectionIndex]->mac_SessionID );
-	FFree( connections->connection[connectionIndex] );
-	connections->connection[connectionIndex] = NULL;
+	FFree( connections->umac_Connection[connectionIndex]->mac_SessionID );
+	FFree( connections->umac_Connection[connectionIndex] );
+	connections->umac_Connection[connectionIndex] = NULL;
 }
 
 /**
@@ -1065,11 +1065,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( userConnections->connection[i] )
+					if( userConnections->umac_Connection[i] )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->connection[i]->mac_UserMobileAppID;
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1085,7 +1085,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 							msgSendLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 
-						WriteMessage( userConnections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+						WriteMessage( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 #else
 						if( notif->n_Extra )
 						{ //TK-1039
@@ -1095,7 +1095,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(userConnections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
 						
 						//NotificationSentDelete( lns );
@@ -1109,11 +1109,11 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( userConnections->connection[i] && userConnections->connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
+					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->connection[i]->mac_UserMobileAppID;
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i]->mac_UserMobileAppID;
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1130,7 +1130,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						}
 						
 						
-						WriteMessage( userConnections->connection[i], (unsigned char*)jsonMessage, msgSendLength );
+						WriteMessage( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, msgSendLength );
 #else
 						if( extraString )
 						{ //TK-1039
@@ -1140,7 +1140,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 						{
 							snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(userConnections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
 						//NotificationSentDelete( lns );
 						// add NotificationSent to Notification
@@ -1381,11 +1381,11 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
 					// connection which was sending timeout 
-					if( userConnections->connection[i] )
+					if( userConnections->umac_Connection[i] )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->connection[i];
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1401,7 +1401,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-						WriteMessage( userConnections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+						WriteMessage( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
 						{ //TK-1039
@@ -1411,7 +1411,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(user_connections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(user_connections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
 						
 						NotificationSentDelete( lns );
@@ -1422,11 +1422,11 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					if( userConnections->connection[i] && userConnections->connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
+					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
-						lns->ns_RequestID = (FULONG)userConnections->connection[i];
+						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
 						lns->ns_Target = MOBILE_APP_TYPE_ANDROID;
 						lns->ns_Status = NOTIFICATION_SENT_STATUS_REGISTERED;
 						NotificationManagerAddNotificationSentDB( sb->sl_NotificationManager, lns );
@@ -1442,7 +1442,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 							jsonMessageLength = snprintf( jsonMessage, reqLengith, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
 						
-						WriteMessage( userConnections->connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
+						WriteMessage( userConnections->umac_Connection[i], (unsigned char*)jsonMessage, jsonMessageLength );
 #else
 						if( notif->n_Extra )
 						{ //TK-1039
@@ -1452,7 +1452,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(userConnections->connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write(userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
 						
 						NotificationSentDelete( lns );
@@ -1599,11 +1599,11 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 			//iterate through all user connections
 			for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 			{
-				if (user_connections->connection[i])
+				if( user_connections->umac_Connection[i] )
 				{ //see if a connection exists
-					if( time(NULL) - user_connections->connection[i]->mac_LastCommunicationTimestamp > KEEPALIVE_TIME_s)
+					if( time(NULL) - user_connections->umac_Connection[i]->mac_LastCommunicationTimestamp > KEEPALIVE_TIME_s)
 					{
-						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->username, i);
+						DEBUG("Client <%s> connection %d requires a ping\n", user_connections->umac_Username, i);
 
 						//send ping
 						char request[LWS_PRE+64];
@@ -1612,7 +1612,7 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 #ifndef WEBSOCKET_SEND_QUEUE
 						lws_write(user_connections->connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
 #else
-						WriteMessage( user_connections->connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
+						WriteMessage( user_connections->umac_Connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
 #endif
 					}
 				}
