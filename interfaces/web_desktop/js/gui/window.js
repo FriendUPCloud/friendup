@@ -2378,6 +2378,7 @@ var View = function( args )
 			
 			function executeClose()
 			{
+				viewContainer.classList.add( 'Closing' );
 				if( div.windowObject )
 				{
 					var wo = div.windowObject;
