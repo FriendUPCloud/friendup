@@ -105,6 +105,11 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	this.dialogWindow = w;
 	w.dialog = this;
 
+	w.onClose = function()
+	{
+		if( w.md ) w.md.close();
+	}
+
 	// Default path
 	this.path = path ? path : 'Mountlist:';
 	if ( typeof ( path ) == 'object' )
@@ -165,7 +170,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			alert ( 'Please choose a path.' );
 			return false;
 		}
-		
 		// Save dialog uses current path and written filename
 		if ( dialog.type == 'save' )
 		{
@@ -226,13 +230,278 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 	// Refresh dir listing
 	w.refreshView = function()
 	{
-		this._window.redrawIcons();
+		// Check bookmarks etc
+		if( dialog.sidebar )
+		{
+			dialog.sidebar.refresh = function()
+			{
+				w.refreshView();
+			}
+			if( !dialog.sidebar.id )
+			{
+				dialog.sidebar.id = window.MD5( ( new Date() ).getTime() + '' + Math.random() );
+				dialog.sidebar.refreshView = function()
+				{
+					w.refreshView();
+				}
+				dialog.sidebar.hasPath = function()
+				{
+					var inp = this.parentNode.getElementsByTagName( 'input' );
+					var found = false;
+					for( var a = 0; a < inp.length; a++ )
+					{
+						if( inp[a].name && inp[a].name == 'Path' )
+						{
+							found = inp[a];
+							break;
+						}
+					}
+					if( !found ) return;
+					if( found.value == 'Mountlist:' || found.value == 'System:' )
+					{
+						Alert( 'Error uploading', 'Please choose a disk with write privileges.' );
+						return false;
+					}
+					ge( 'UploadDialogPath' + dialog.sidebar.id ).action = '/system.library/file/upload/?sessionid=' + Workspace.sessionId + '&path=' + found.value;
+					return true;
+				}
+			}
+			var uploads = '<div class="PaddingLeft PaddingRight"><p class="Layout" style="line-height: 50px"><strong>' + i18n( 'i18n_upload_a_file' ) + ':</strong></p></div>' +
+				'<div class="PaddingLeft PaddingRight Relative" style="overflow-x: hidden; width: 100%; height: 50px"><button class="Button IconSmall fa-cloud-upload" style="position: absolute; pointer-events: none">' + i18n( 'i18n_choose_file' ) + '</button><form id="UploadDialogPath' + dialog.sidebar.id + '" action="/system.library/file/upload/?sessionid=' + Workspace.sessionId + '&path=Home:" method="post" enctype="multipart/form-data" target="diagifr" onload="ge( \'' + dialog.sidebar.id + '\' ).refresh()"><input name="file" style="position: absolute; opacity: 0.0" type="file" onchange="if( ge( \'' + dialog.sidebar.id + '\' ).hasPath() ){ submit(); this.value = \'\'; }"/></form><iframe name="diagifr" style="opacity: 0; pointer-events; none; width: 10px; height: 10px; position: absolute"></iframe></div>';
+			
+			var m = new Module( 'system' );
+			m.onExecuted = function( e, d )
+			{
+				if( e != 'ok' )
+				{
+					var str = '<div class="VContentTop PaddingLeft PaddingRight BorderBottom" style="height: 50px"><p class="Layout" style="line-height: 50px"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p></div>';
+					str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative"><li>' + i18n( 'i18n_no_bookmarks' ) + '</li></ul>' + uploads + '</div>';
+					dialog.sidebar.innerHTML = str;
+					return;
+				}
+
+				var str = '<div class="VContentTop PaddingLeft PaddingRight BorderBottom" style="height: 50px"><p class="Layout" style="line-height: 50px"><strong>' + i18n( 'i18n_bookmarks' ) + ':</strong></p></div>';
+
+				var list = JSON.parse( d );
+				var listr = '';
+				for( var a = 0; a < list.length; a++ )
+				{
+					listr += '<li><span class="MousePointer" path="' + list[a].path + '">' + list[a].name + '</span></li>';
+				}
+
+				str +=    '<div class="VContentBottom ScrollArea" style="top: 50px"><ul class="List Negative">' + 
+					listr + '</ul>' + uploads + '</div>';
+				dialog.sidebar.innerHTML = str;
+
+				var spans = dialog.sidebar.getElementsByTagName( 'span' );
+				for( var a = 0; a < spans.length; a++ )
+				{
+					if( spans[a].getAttribute( 'path' ) )
+					{
+						spans[a].onclick = function()
+						{
+							dialog.prev = dialog.path;
+							dialog.path = this.getAttribute( 'path' );
+							w.refreshView();
+						}
+					}
+				}
+			}
+			m.execute( 'getbookmarks' );
+		}
+
+		// Get dir listing
+		var fld = new Object();
+		fld.Path = dialog.path;
+		fld.Type = 'Meta';
+		
+		// Update path
+		if( dialog.path.substr( dialog.path.length - 1, 1 ) != '/' &&
+			dialog.path.substr( dialog.path.length - 1, 1 ) != ':' )
+			dialog.path += '/';
+
+		if( !dialog.prev ) dialog.prev = dialog.path;
+
+		if( !dialog.path ) dialog.path = 'Mountlist:';
+
+		// List mountlist
+		if( dialog.path == 'Mountlist:' )
+		{
+			Workspace.getMountlist( function( data )
+			{
+				w.redrawFilelist( data )
+			} );
+		}
+		// Get the correct subfolders and files
+		else
+		{
+			var m = Workspace.getDoorByPath( dialog.path );
+
+			// Handle weird dialog paths..
+			if( !m && dialog.path != 'Mountlist:' )
+			{
+				if( dialog.prev )
+				{
+					dialog.path = dialog.prev;
+					dialog.prev = 'Mountlist:';
+				}
+				else dialog.path = 'Mountlist:';
+				return w.refreshView();
+			}
+
+			var func = function( data )
+			{	
+				w.inpu.value = dialog.path.split( '%20' ).join( ' ' ).split( ':/' ).join( ':' );
+
+				var container = w.getContainer();
+				dialog.selecter = [];
+				container.innerHTML = '';
+
+				if( data )
+				{
+					w.redrawFilelist( data );
+				}
+				else
+				{
+					// Must be the wrong filelist!
+					if( dialog.prev )
+					{
+						dialog.path = dialog.prev;
+						dialog.prev = 'Mountlist:';
+						w.refreshView();
+					}
+				}
+			}
+
+			// TODO: Merge (use global Shell)!
+			// Doors
+			if( m.getIcons )
+			{
+				m.path = dialog.path; // Set this..
+				m.getIcons( false, func, { details: true } );
+			}
+			// Dormants
+			else if( m.getDirectory )
+			{
+				m.getDirectory( dialog.path, func, { details: true } );
+			}
+		}
+
+		this.inpu.value = dialog.path;
 	}
 
 	// Do the actual redrawing of the file list
 	w.redrawFilelist = function( objs )
 	{
-		this._window.redrawIcons();
+		if( objs )
+		{
+			var container = w.getContainer();
+			container.innerHTML = '';
+
+			// By default, don't show hidden files
+			var hiddenFilesSkip = true;
+
+			// TODO: Lets try to make directories first optional
+			var dirs = [];
+			var files = [];
+			for( var a = 0; a < objs.length; a++ )
+			{
+				if( objs[a].Type == 'Directory' ) 
+					dirs.push( objs[a] );
+				else 
+					files.push( objs[a] );
+			}
+			objs = dirs.concat( files );
+			var sw = 2;
+
+			for( var a = 0; a < objs.length; a++ )
+			{
+				// Skip non-disks on mountlist level
+				if( dialog.path == 'Mountlist:' && !( objs[a].Type == 'Door' || objs[a].Type == 'Dormant' ) ) continue;
+				
+				sw = sw == 1 ? 2 : 1;
+				var d = document.createElement( 'div' );
+				if( !objs[a].Title && objs[a].Filename )
+					objs[a].Title = objs[a].Filename;
+				d.filename = objs[a].Title;
+
+				// TODO: Decide, metatype or type!!
+				if( objs[a].Title.charAt( objs[a].Title.length - 1 ) != '/' )
+					objs[a].Title += objs[a].Type.toLowerCase() == 'directory' ? '/' : '';
+
+				// Determine the correct file type and info
+				var col2 = objs[a].Type.toLowerCase() == 'directory' ? i18n( 'i18n_directory' ) :
+					( objs[a].Type == 'door' ? i18n( 'i18n_door' ) : ( objs[a].Filesize ? humanFilesize( objs[a].Filesize ) : '' ) );
+
+				var col3 = '-rwed';
+				if( objs[a].Permissions )
+				{
+					var p = objs[a].Permissions.split( ',' );
+					var perms = ['-','-','-','-','-'];
+					for( var b = 0; b < p.length; b++ )
+					{
+						for( var c = 0; c < p[b].length; c++ )
+						{
+							if( p[b].substr( c, 1 ) != '-' && perms[c] == '-' )
+							{
+								perms[c] = p[b][c];
+							}
+						}
+					}
+					col3 = perms.join( '' ).toLowerCase();
+				}
+
+				if( hiddenFilesSkip && objs[a].Title )
+				{
+					if( objs[a].Title.substr( 0, 1 ) == '.' ) continue;
+				}
+
+				var align = 'TextRight';
+				if( objs[a].Type.toLowerCase() == 'directory' )
+					align = 'TextLeft';
+
+				// Make sure we have title
+				var title = objs[a].Title;
+
+				d.className = 'FullWidth MousePointer BorderBottom sw' + sw;
+				d.innerHTML = '<div class="HRow">' +
+					'<div class="Padding BorderRight Filename HContent55 FloatLeft Ellipsis">'   + title + '</div>' +
+					'<div class="Padding BorderRight Filesize HContent25 FloatLeft ' + align + '">'  + ( col2.length ? col2 : '&nbsp;' ) + '</div>' +
+					'<div class="Padding Flags HContent20 FloatLeft TextCenter">' + ( col3.length ? col3 : '&nbsp;' ) + '</div>' +
+					'<br style="clear: both"/>' +
+					'</div>';
+				d.path = objs[a].Path ? objs[a].Path : objs[a].Title;
+				d.onmouseover = function(){ this.classList.add( 'Selected' ); };
+				d.onmouseout = function()
+				{
+					if( !this.isselected )
+						this.classList.remove( 'Selected' );
+				};
+				d.obj = objs[a];
+				if ( objs[a].Type.toLowerCase() == 'file' )
+				{
+					d.onclick = function()
+					{
+						w.select( this );
+					}
+					d.ondblclick = function()
+					{
+						w.choose( this );
+					}
+				}
+				else
+				{
+					d.onclick = function()
+					{
+						dialog.prev = dialog.path;
+						dialog.path = this.path;
+						w.refreshView();
+					}
+				}
+
+				container.appendChild( d );
+			}
+		}
 	}
 
 	w.getContainer = function()
@@ -250,8 +519,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	w.addEvent( 'close', function()
 	{
-		if( w.md ) w.md.close();
-		
 		if( mainview )
 		{
 			mainview.getWindowElement().blocker = false;
@@ -287,19 +554,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			if( eles[u].classList.contains( 'Sidebar' ) )
 			{
 				dialog.sidebar = eles[u];
-				w._window.parentNode.leftbar = dialog.sidebar;
-			}
-			else if( eles[u].classList.contains( 'Toolbarbox' ) )
-			{
-				dialog.toolbararea = eles[u];
 			}
 			else if( eles[u].classList.contains( 'List-view' ) )
 			{
 				dialog.listview = eles[u];
-			}
-			else if( eles[u].classList.contains( 'Contentbox' ) )
-			{
-				dialog.contentbox = eles[u];
 			}
 		}
 
@@ -361,7 +619,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		}
 
 		// Set default buttons . . . . . . . . . . . . . . . . . . . . . . . . .
+		var prev = false;
 		var inpu = false;
+		var up   = false;
+		var refr = false;
 		var open = false;
 		var save = false;
 		var cacl = false;
@@ -374,9 +635,14 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				switch( ds[a].getAttribute ( 'name' ) )
 				{
+					case 'prev':      prev = ds[a]; break;
+					case 'up':        up   = ds[a]; break;
+					case 'refresh':   refr = ds[a]; break;
 					case 'open':      open = ds[a]; break;
 					case 'save':      save = ds[a]; break;
 					case 'cancel':    cacl = ds[a]; break;
+					case 'bookmarks': book = ds[a]; break;
+					case 'folder':    fold = ds[a]; break;
 				}
 			}
 		}
@@ -391,6 +657,76 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 					inpu = ds[a];
 					w.inpu = inpu;
 				}
+			}
+		}
+		// Go to previous directory. . . . . . . . . . . . . . . . . . . . . . .
+		if( prev )
+		{
+			prev.onclick = function ()
+			{
+				if ( dialog.prev )
+				{
+					dialog.path = dialog.prev;
+					w.refreshView ();
+				}
+			}
+		}
+		// Parent directory. . . . . . . . . . . . . . . . . . . . . . . . . . .
+		if( up )
+		{
+			up.onclick = function ()
+			{
+				var diap = dialog.path;
+
+				var lstl = diap.substr( diap.length - 1, 1 );
+				if( lstl != ':' )
+				{
+					// Strip last forwardslash
+					if( lstl == '/' )
+						diap = diap.substr( 0, diap.length - 1 );
+				}
+				else
+				{
+					dialog.prev = dialog.path;
+					dialog.path = 'Mountlist:';
+					return w.refreshView();
+				}
+
+				// Remove a joint
+				var now = diap;
+				if( now.indexOf( '/' ) > 0 )
+				{
+					diap = diap.split ( '/' );
+					diap.pop ();
+					diap = diap.join ( '/' );
+				}
+				else
+				{
+					diap = diap.split( ':' )[0] + ':';
+				}
+
+				// Give new path and keep the old one
+				dialog.prev = dialog.path;
+				dialog.path = diap;
+
+				// Refresh
+				w.refreshView ();
+			}
+		}
+		// Refresh directory . . . . . . . . . . . . . . . . . . . . . . . . . .
+		if ( refr )
+		{
+			refr.onclick = function ()
+			{
+				w.refreshView ();
+			}
+		}
+		// Open selected file. . . . . . . . . . . . . . . . . . . . . . . . . .
+		if ( open )
+		{
+			open.onclick = function()
+			{
+				w.choose();
 			}
 		}
 		// Cancel
@@ -427,7 +763,84 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			}
 			inpu.value = dialog.path;
 		}
-		
+		// Clicking on the new folder icon
+		if( fold )
+		{
+			w.fold = fold;
+			fold.onclick = function()
+			{
+				if( self.path == 'Mountlist:' )
+				{
+					return Alert( i18n( 'i18n_illegal_path' ), i18n( 'i18n_illegal_fld_mountlist' ) );
+				}
+				else if( w.md && w.md.content )
+				{
+					_ActivateWindow( fold.md.content.parentNode );
+					return;
+				}
+				else
+				{
+					if( w.md && w.md.close ) w.md.close();
+					var f = new View( {
+						title: i18n( 'i18n_create_container' ),
+						width: 300,
+						height: 100
+					} );
+					w.md = f;
+					f.onClose = function()
+					{
+						w.md = null;
+					}
+					var ff = new File( 'System:templates/makedir.html' );
+					ff.i18n();
+					ff.onLoad = function( data )
+					{
+						f.setContent( data );
+						var makedir = null;
+						var inp = null;
+						var els = f.content.getElementsByTagName( '*' );
+						for( var a = 0; a < els.length; a++ )
+						{
+							if( !els[a].classList ) continue;
+							if( els[a].classList.contains( 'makedir' ) )
+							{
+								makedir = els[a];
+							}
+							else if( els[a].name && els[a].name == 'Dirname' )
+							{
+								inp = els[a];
+							}
+						}
+						if( makedir && inp )
+						{
+							makedir.onclick = function( e )
+							{
+								if( inp.value.length && dialog.path )
+								{
+									var door = new Door( dialog.path );
+									door.dosAction( 'makedir', { path: dialog.path + inp.value }, function()
+									{
+										w.md.close();
+										w.refreshView();
+									} );
+								}
+							}
+							inp.focus();
+							inp.onkeydown = function( e )
+							{
+								var w = e.which ? e.which : e.keyCode;
+								if( w == 13 )
+								{
+									makedir.onclick();
+									return cancelBubble( e );
+								}
+							}
+						}
+					}
+					ff.load();
+				}
+			}
+		}
 		// Clicking on the bookmarks icon
 		if( book )
 		{
@@ -624,47 +1037,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				}
 			}
 		}
-	
-		// Correct fileinfo
-		w._window.fileInfo = {
-			Path: 'Home:',
-			Volume: 'Home:',
-			MetaType: 'Directory',
-			Door: new Door( 'Home:' )
-		};
-		
-		// Set up directoryview
-		var dir = new DirectoryView( w._window, {
-			rightpanel:          dialog.contentbox,
-			leftpanel:           dialog.sidebar,
-			nosidebarbackground: true,
-			toolbararea:         dialog.toolbararea
-		} );
-		dir.listMode = 'listview';
-		
-		// Get icons and load!
-		w._window.fileInfo.Door.getIcons( 'Home:', function( items )
-		{
-			w._window.icons = items;
-			w.refreshView();
-		} );
-		
-		w._window.refresh = function()
-		{
-			var f = w._window.fileInfo;
-			var d = new Door( f.Path );
-			dialog.path = f.Path;
-			d.getIcons( f.Path, function( items )
-			{
-				w._window.icons = items;
-				w.refreshView();
-			} );
-		}
-		
-		w.addEvent( 'resize', function()
-		{
-			w.refreshView();
-		} );
+
+		// Refresh it
+		w.refreshView();
 		
 		_ActivateWindow( w._window.parentNode );
 		_WindowToFront( w._window.parentNode );

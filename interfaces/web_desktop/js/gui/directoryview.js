@@ -47,6 +47,7 @@ DirectoryView = function( winobj, extra )
 	this.filearea = winobj;
 	this.bookmarks = winobj;
 	this.sidebarbackground = true;
+	this.toolbararea = false;
 	
 	// Read in extra stuff
 	if( extra )
@@ -62,6 +63,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.nosidebarbackground )
 		{
 			this.sidebarbackground = false;
+		}
+		if( extra.toolbararea )
+		{
+			this.toolbararea = extra.toolbararea;
 		}
 	}
 
@@ -148,16 +153,24 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	var t = document.createElement( 'div' );
 	t.className = 'DirectoryToolbar';
-	t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
-	t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
-	t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
 
 	// Assign it so we remember
 	winobj.parentNode.toolbar = t;
 	this.toolbar = t;
 	
-	
-	winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+	if( this.toolbararea )
+	{
+		this.toolbararea.appendChild( t );
+		t.style.left = 0;
+		t.style.right = 0;
+	}
+	else
+	{
+		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+		t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
+		t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
+		t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
+	}
 
 	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 	if ( rpath.indexOf( ':' < 0 ) )

@@ -1404,32 +1404,32 @@ html > body.Dark > div button, html > body.Dark > div .Button
     color: #e0e0e0;
 }
 
-html body.Dark .View > .DirectoryToolbar,
-html body.Dark .View.Active > .DirectoryToolbar 
+html body.Dark .View .DirectoryToolbar,
+html body.Dark .View.Active .DirectoryToolbar 
 {
 	background-color: #34495e;
 	color: #e0e0e0;
 }
 
-html body.Dark .View > .DirectoryToolbar button,
-html body.Dark .View > .DirectoryToolbar .Button
+html body.Dark .View .DirectoryToolbar button,
+html body.Dark .View .DirectoryToolbar .Button
 {
 	color: #e0e0e0;
 	background-color: none;
 }
 
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Dark .View > .DirectoryToolbar > button:hover:before
+html body.Dark .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
+html body.Dark .View .DirectoryToolbar > button:hover:before
 {
 	color: #e0e0e0;
 }
-html > body.Dark .View > .DirectoryToolbar button:before, 
-html > body.Dark .View > .DirectoryToolbar button:after
+html > body.Dark .View .DirectoryToolbar button:before, 
+html > body.Dark .View .DirectoryToolbar button:after
 {
 	color: rgba(224,224,224,170);
 }
 
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html body.Dark .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: white;
 }
@@ -1689,32 +1689,32 @@ html > body.Charcoal > div button, html > body.Charcoal > div .Button
     color: #e0e0e0;
 }
 
-html body.Charcoal .View > .DirectoryToolbar,
-html body.Charcoal .View.Active > .DirectoryToolbar 
+html body.Charcoal .View .DirectoryToolbar,
+html body.Charcoal .View.Active .DirectoryToolbar 
 {
 	background-color: #3c3c3c;
 	color: #e0e0e0;
 }
 
-html body.Charcoal .View > .DirectoryToolbar button,
-html body.Charcoal .View > .DirectoryToolbar .Button
+html body.Charcoal .View .DirectoryToolbar button,
+html body.Charcoal .View .DirectoryToolbar .Button
 {
 	color: #e0e0e0;
 	background-color: none;
 }
 
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Charcoal .View > .DirectoryToolbar > button:hover:before
+html body.Charcoal .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
+html body.Charcoal .View .DirectoryToolbar > button:hover:before
 {
 	color: #e0e0e0;
 }
-html > body.Charcoal .View > .DirectoryToolbar button:before, 
-html > body.Charcoal .View > .DirectoryToolbar button:after
+html > body.Charcoal .View .DirectoryToolbar button:before, 
+html > body.Charcoal .View .DirectoryToolbar button:after
 {
 	color: rgba(224,224,224,170);
 }
 
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html body.Charcoal .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: white;
 }
@@ -2729,7 +2729,7 @@ a:active, a:hover
 
 /* Directory views ---------------------------------------------------------- */
 
-html .View > .DirectoryToolbar
+html .View .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 	box-shadow: none;
@@ -2740,92 +2740,92 @@ html .View > .DirectoryToolbar
 	color: #455155;
 	border-bottom: 1px solid rgba(0,0,0,0.02);
 }
-html .View > .DirectoryToolbar .DriveGauge,
-html body[mobile] .View > .DirectoryToolbar
+html .View .DirectoryToolbar .DriveGauge,
+html body[mobile] .View .DirectoryToolbar
 {
 	display: none;
 }
 
-html body[mobile=mobile] .View.Active > .DirectoryToolbar
+html body[mobile=mobile] .View.Active .DirectoryToolbar
 {
 	display: block;
 	top: 0px !important;
 	height: 32px !important;
 }
 
-html body[mobile=mobile] .View > .DirectoryToolbar button
+html body[mobile=mobile] .View .DirectoryToolbar button
 {
 	height: 30px;
 }
 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:before, 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:after
+html > body[mobile=mobile] .View .DirectoryToolbar button:before, 
+html > body[mobile=mobile] .View .DirectoryToolbar button:after
 {
 	line-height: 27px;
 }
 
-html .View.Active > .DirectoryToolbar
+html .View.Active .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 }
 
-html > body .View > .DirectoryToolbar button:before, 
-html > body .View > .DirectoryToolbar button:after
+html > body .View .DirectoryToolbar button:before, 
+html > body .View .DirectoryToolbar button:after
 {
 	position: relative;
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup
+html .View .DirectoryToolbar > .ToggleGroup
 {
 	top: 0px;
 	left: calc(50% - 54px);
 }
 
-html body .View > .DirectoryToolbar > .ToggleGroup > button:hover:before,
-html body .View > .DirectoryToolbar > button:hover:before
+html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
+html body .View .DirectoryToolbar > button:hover:before
 {
 	color: black;
 }
 
-html body .View > .DirectoryToolbar > button:before
+html body .View .DirectoryToolbar > button:before
 {
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button
+html .View .DirectoryToolbar > .ToggleGroup > button
 {
 	height: 26px;
 	top: 0;
 	line-height: 26px;
 }
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active
+html .View .DirectoryToolbar > .ToggleGroup > button.Active
 {
 	background: none;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	color: #45515599;
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:hover:before
+html .View .DirectoryToolbar > .ToggleGroup > button:hover:before
 {
 	color: #45515555;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	margin-top: 0;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:before
+html .View .DirectoryToolbar .DriveGauge:before
 {
     content: " ";
     display: block;
@@ -2839,7 +2839,7 @@ html .View > .DirectoryToolbar .DriveGauge:before
     background: transparent;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:after
+html .View .DirectoryToolbar .DriveGauge:after
 {
 	content: " ";
 	display: block;
@@ -2854,19 +2854,19 @@ html .View > .DirectoryToolbar .DriveGauge:after
 	transition: width 0.5s;
 }
 
-html .View > .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
-html .View > .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
-html .View > .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
-html .View > .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
-html .View > .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
-html .View > .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
-html .View > .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
-html .View > .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
-html .View > .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
+html .View .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
+html .View .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
+html .View .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
+html .View .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
+html .View .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
+html .View .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
+html .View .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
+html .View .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
+html .View .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
+html .View .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
+html .View .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
 
-html .View > .DirectoryToolbar button
+html .View .DirectoryToolbar button
 {
 	color: rgba(0,0,0,0);
 	height: 24px;
@@ -2878,32 +2878,32 @@ html .View > .DirectoryToolbar button
 	border-radius: 0;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	margin-top: 2px;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	z-index: 2;
 }
 
-html .View > .DirectoryToolbar button:after
+html .View .DirectoryToolbar button:after
 {
 	z-index: 1;
 }
 
-html .View > .DirectoryToolbar button:after:hover
+html .View .DirectoryToolbar button:after:hover
 {
 	background-color: rgba(90,90,90,0.1);
 }
 
-html .View > .DirectoryToolbar button.Active
+html .View .DirectoryToolbar button.Active
 {
 	background-color: rgb(175,175,175);
 }
 
-html .View > .DirectoryToolbar button.Active:before
+html .View .DirectoryToolbar button.Active:before
 {
 	color: white;
 }
