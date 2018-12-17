@@ -133,47 +133,6 @@ int PutConnectionsByUserName( UserToApp *root, char *key, UserMobileAppConnectio
 	return 0;
 }
 
-/*
-MobileAppConnectionT *GetConnectionByWSI( WSIToUserConnections *root, void *key )
-{
-	WSIToUserConnections *l = root;
-	while( l != NULL )
-	{
-		if( l->wtuc_WSI == key ) return l->wtuc_UserConnection;
-		l = (WSIToUserConnections*)l->node.mln_Succ;
-	}
-	return NULL;
-}
-
-int PutConnectionByWSI( WSIToUserConnections *root, void *key, MobileAppConnectionT *con )
-{
-	WSIToUserConnections *l = root;
-	while( l != NULL )
-	{
-		if( l->wtuc_WSI == key ) break;
-		l = (WSIToUserConnections*)l->node.mln_Succ;
-	}
-	
-	FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
-	if( l != NULL )
-	{
-		FFree( l->wtuc_UserConnection );
-		l->wtuc_UserConnection = con;
-	}
-	else
-	{
-		WSIToUserConnections *t = (WSIToUserConnections *)FCalloc( 1, sizeof( WSIToUserConnections ) );
-		t->wtuc_WSI = key;
-		t->wtuc_UserConnection = con;
-		
-		t->node.mln_Succ = (MinNode *) globalWebsocketToUserConnections;
-		globalWebsocketToUserConnections = t;
-	}
-	FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	
-	return 0;
-}
-*/
 
 static void  MobileAppInit(void);
 static int   MobileAppReplyError( struct lws *wsi, void *udata, int error_code );
@@ -210,7 +169,10 @@ static inline int WriteMessageMA( struct MobileAppConnectionS *mac, unsigned cha
 			{
 				FQPushFIFO( &(mac->mac_Queue), en );
 				
-				lws_callback_on_writable( mac->mac_WebsocketPtr );
+				if( mac->mac_WebsocketPtr != NULL )
+				{
+					lws_callback_on_writable( mac->mac_WebsocketPtr );
+				}
 				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
 			}
 		}
