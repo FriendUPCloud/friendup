@@ -307,7 +307,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				dialog.listview = eles[u];
 			}
-			else if( eles[u].classList.contains( 'Contentbox' ) )
+			else if( eles[u].classList.contains( 'ContentBox' ) )
 			{
 				dialog.contentbox = eles[u];
 			}
