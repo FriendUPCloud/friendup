@@ -466,6 +466,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 							}
 						}
 						
+						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
 						MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
 						NotificationDelete( notif );
 					}
