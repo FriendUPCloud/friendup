@@ -858,6 +858,13 @@ function SetScreenByWindowElement( div )
 // Just like _ActivateWindow, only without doing anything but activating
 function _ActivateWindowOnly( div )
 {
+	// Blocker
+	if( div.content.blocker )
+	{
+		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
+		return;
+	}
+	
 	// we use this one to calculate the max-height of the active window once its switched....
 	var newOffsetY = 0;
 	for( var a in movableWindows )
@@ -1104,6 +1111,13 @@ function CloseAllWindows()
 
 function _WindowToFront( div, flags )
 {
+	// Blocker
+	if( div.content.blocker )
+	{
+		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
+		return;
+	}
+	
 	if( !div || !div.style ) return;
 
 	if( !flags ) flags = {};
@@ -1906,13 +1920,6 @@ var View = function( args )
 		{
 			if ( !e ) e = window.event;
 
-			// Blocker
-			if ( div.content.blocker )
-			{
-				_ActivateWindow ( div.content.blocker.getWindowElement().parentNode, false, e );
-				return cancelBubble ( e );
-			}
-			
 			// Use correct button
 			if( e.button != 0 && !mode ) return cancelBubble( e );
 
