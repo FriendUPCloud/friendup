@@ -93,7 +93,7 @@ static pthread_t globalPingThread;
 
 //#define PUT_TO_LIST( ROOT, ENTRY ) { ENTRY->node.mln_Succ = ROOT; ROOT = ENTRY; }
 
-UserMobileAppConnectionsT *GetConnectionsByUserName( UserToApp *root, char *key )
+UserMobileAppConnectionsT *GetConnectionsByUserName( UserToApp *root, const char *key )
 {
 	UserToApp *l = root;
 	while( l != NULL )
@@ -255,7 +255,7 @@ static void MobileAppInit( void )
  * @param len size of 'message'
  * @return 0 when success, otherwise error number
  */
-int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void *user __attribute__((unused)), void *in, size_t len )
+int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((unused)), void *in, size_t len )
 {
 	//DEBUG("websocket callback, reason %d, len %zu, wsi %p\n", reason, len, wsi);
 	MobileAppNotif *man = (MobileAppNotif *) user;
@@ -268,56 +268,56 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	
 	DEBUG1("-------------------\nwebsocket_app_callback\n------------------\nreasond: %d\n", reason );
 
-	if (reason == LWS_CALLBACK_CLOSED )//|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
-	{
-		//char *websocketHash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *appConnection = NULL;
-		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-		{
-			appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
-			//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
-			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-		}
-			
-		if( appConnection == NULL )
-		{
-			DEBUG("Websocket close - no user session found for this socket\n");
-			return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
-		}
+	MobileAppConnectionT *appConnection = NULL;
 		
-		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-		{
-			//remove connection from user connnection struct
-			UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
-			unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
-			if( userConnections != NULL )
-			{
-				//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
-			}
-			MobileAppRemoveAppConnection( userConnections, connectionIndex);
-
-			//TODO
-			//HashmapRemove( globalWebsocketToUserConnectionsMap, websocketHash );
-
-			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-		}
-		//FFree( websocketHash );
-		return 0;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+		//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
-
-	if (reason != LWS_CALLBACK_RECEIVE)
+	
+	switch( reason )
 	{
-		//char *wsHash = MobileAppGetWebsocketHash( wsi );
-		MobileAppConnectionT *appConnection = NULL;
-		
-		if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+		case LWS_CALLBACK_CLOSED: //|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 		{
-			appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
-			//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, wsHash );
-			FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-		}
+			//char *websocketHash = MobileAppGetWebsocketHash( wsi );
+			MobileAppConnectionT *appConnection = NULL;
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			{
+				appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+				//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+			}
 			
-		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
+			if( appConnection == NULL )
+			{
+				DEBUG("Websocket close - no user session found for this socket\n");
+				return MobileAppReplyError( wsi, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
+			}
+		
+			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			{
+				//remove connection from user connnection struct
+				UserMobileAppConnectionsT *userConnections = appConnection->mac_UserConnections;
+				unsigned int connectionIndex = appConnection->mac_UserConnectionIndex;
+				if( userConnections != NULL )
+				{
+					//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
+				}
+				MobileAppRemoveAppConnection( userConnections, connectionIndex);
+
+				//TODO
+				//HashmapRemove( globalWebsocketToUserConnectionsMap, websocketHash );
+
+				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+			}
+			//FFree( websocketHash );
+			//return 0;
+		}
+		break;
+		
+		case LWS_CALLBACK_SERVER_WRITEABLE:
 		{
 #ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
@@ -373,75 +373,46 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			}
 #endif
 		}
-		else
-		{
-			DEBUG("Unimplemented callback, reason %d\n", reason);
-		}
+		break;
 		
-		//if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
+		case LWS_CALLBACK_RECEIVE:
 		{
-			//DEBUG("We have message to send, calling writable\n");
-			//lws_callback_on_writable( wsi );
-		}
-		
-		//if( wsHash != NULL ) FFree( wsHash );
-		return 0;
-	}
-	
-	char *data = (char*)in;
-	/*
-	DEBUG("Initialize queue\n");
-	
-	if( man != NULL )
-	{
-		DEBUG(" Initialized %d\n", man->man_Initialized );
-		if( man->man_Initialized == 0 )
-		{
-			memset( &(man->man_Queue), 0, sizeof( man->man_Queue ) );
-			FQInit( &(man->man_Queue) );
-			man->man_Initialized = 1;
-			DEBUG("Queue initialized\n");
-		}
-	}
-	else
-	{
-		FERROR("\n\n\n\nMAN is NULL\n\n\n\n");
-	}*/
+			char *data = (char*)in;
 
-	if( len == 0 )
-	{
-		DEBUG("Empty websocket frame (reason %d)\n", reason);
-		return 0;
-	}
+			if( len == 0 )
+			{
+				DEBUG("Empty websocket frame (reason %d)\n", reason);
+				return 0;
+			}
 
-	DEBUG("Mobile app data: <%*s>\n", (unsigned int)len, data);
+			DEBUG("Mobile app data: <%*s>\n", (unsigned int)len, data);
 
-	jsmn_parser parser;
-	jsmn_init(&parser);
-	jsmntok_t tokens[16]; //should be enough
+			jsmn_parser parser;
+			jsmn_init(&parser);
+			jsmntok_t tokens[16]; //should be enough
 
-	int tokens_found = jsmn_parse(&parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]));
+			int tokens_found = jsmn_parse(&parser, data, len, tokens, sizeof(tokens)/sizeof(tokens[0]));
 
-	DEBUG("JSON tokens found %d\n", tokens_found);
+			DEBUG("JSON tokens found %d\n", tokens_found);
 
-	if (tokens_found < 1)
-	{
-		return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_JSON);
-	}
+			if (tokens_found < 1)
+			{
+				return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_JSON);
+			}
 
-	json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
+			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
 
-	char *msg_type_string = json_get_element_string(&json, "t");
+			char *msg_type_string = json_get_element_string(&json, "t");
 
 	//see if this websocket belongs to an existing connection
 	//char *websocketHash = MobileAppGetWebsocketHash(wsi);
-	MobileAppConnectionT *appConnection = NULL;
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
-		//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
+	//MobileAppConnectionT *appConnection = NULL;
+	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	//{
+	//	appConnection = GetConnectionByWSI( globalWebsocketToUserConnections, wsi );
+	//	//appConnection = HashmapGetData( globalWebsocketToUserConnectionsMap, websocketHash );
+	//	FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	//}
 	//FFree(websocketHash);
 
 	if( msg_type_string )
@@ -616,6 +587,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	{
 		return MobileAppReplyError(wsi, MOBILE_APP_ERR_NO_TYPE);
 	}
+		
+	}
+	break;
+}
+	
+	
 
 	return 0; //should be unreachable
 }
