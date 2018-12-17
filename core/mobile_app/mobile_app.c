@@ -365,6 +365,12 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			{
 				DEBUG("[websocket_app_callback] No message in queue\n");
 			}
+			
+			if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
+			{
+				DEBUG("We have message to send, calling writable\n");
+				lws_callback_on_writable( wsi );
+			}
 #endif
 		}
 		else
@@ -372,10 +378,10 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 			DEBUG("Unimplemented callback, reason %d\n", reason);
 		}
 		
-		if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
+		//if( appConnection != NULL && appConnection->mac_Queue.fq_First != NULL )
 		{
-			DEBUG("We have message to send, calling writable\n");
-			lws_callback_on_writable( wsi );
+			//DEBUG("We have message to send, calling writable\n");
+			//lws_callback_on_writable( wsi );
 		}
 		
 		//if( wsHash != NULL ) FFree( wsHash );
