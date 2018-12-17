@@ -368,11 +368,11 @@ html body .Screen > .TitleBar.Busy:after
     -webkit-clip-path: ellipse(9px 9px at 10px 10px);
 }
 
-/* Views not activated for mobile */
+/* Views not activated for mobile ------------------------------------------- */
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
 {
-	margin: 15px 0 40px 12px;
+	margin: 15px 0 25px 12px;
 	height: 80px !important;
 	width: calc(33% - 15px);
 	float: left;
@@ -385,6 +385,8 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
 {
 	border-radius: 8px 8px 0 0;
+	height: 100% !important;
+	max-height: 100%;
 	overflow: visible;
 	background: none;
 }
@@ -400,8 +402,22 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
 	z-index: 2;
 }
 
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) .Content
+{
+	display: none;
+}
+
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active) .View > .Title > div > .Close
+{
+	top: 3px;
+	left: auto;
+	right: 0;
+}
+
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active) .View > .Title,
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
 {
+	top: 0;
 	border-radius: 8px 8px 0 0;
 	background: none;
 }
@@ -436,8 +452,10 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon
 	border-radius: 8px;
 }
 
-
-
+body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active)
+{
+	opacity: 0.5 !important;
+}
 
 /* 3D is for later ---------------------------------------------------------- */
 
