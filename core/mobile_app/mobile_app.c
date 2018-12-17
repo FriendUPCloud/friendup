@@ -66,9 +66,9 @@ struct MobileAppConnectionS
 
 struct UserMobileAppConnectionsS
 {
-	char *username;
-	FULONG userID;
-	MobileAppConnectionT *connection[MAX_CONNECTIONS_PER_USER];
+	char					*umac_Username;
+	FULONG					umac_UserID;
+	MobileAppConnectionT	*umac_Connection[MAX_CONNECTIONS_PER_USER];
 };
 
 //static Hashmap *globalUserToAppConnectionsMap = NULL;
@@ -208,7 +208,7 @@ int WebsocketAppCallback(struct lws *wsi, enum lws_callback_reasons reason, void
 	
 	DEBUG1("-------------------\nwebsocket_app_callback\n------------------\nreasond: %d\n", reason );
 
-	if (reason == LWS_CALLBACK_CLOSED || reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
+	if (reason == LWS_CALLBACK_CLOSED )//|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 	{
 		//char *websocketHash = MobileAppGetWebsocketHash( wsi );
 		MobileAppConnectionT *appConnection = NULL;
