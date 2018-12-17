@@ -295,6 +295,10 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 #ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
 			
+			if( appConnection == NULL )
+			{
+				return 1;
+			}
 			if( appConnection->mac_Queue.fq_First == NULL )
 			{
 				FERROR("We cannot send data on dead connection\n");
