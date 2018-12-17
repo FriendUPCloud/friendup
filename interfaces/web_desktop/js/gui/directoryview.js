@@ -69,7 +69,7 @@ DirectoryView = function( winobj, extra )
 		{
 			this.toolbararea = extra.toolbararea;
 		}
-		if( this.extra.doubleclickfiles )
+		if( extra.doubleclickfiles )
 		{
 			this.doubleclickfiles = extra.doubleclickfiles;
 		}
@@ -2571,12 +2571,12 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.file = f;
 			
 			// Overwrite doubleclick
-			if( this.doubleclickfile )
+			if( icons[a].Type == 'File' && this.doubleclickfiles )
 			{
-				var cl = this.doubleclickfile;
+				var cl = this.doubleclickfiles;
 				r.ondblclick = function( e )
 				{
-					cl( e, f );
+					cl( f, e );
 				}
 			}
 			else

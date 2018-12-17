@@ -656,9 +656,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			leftpanel:           dialog.sidebar,
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
-			doubleclickfile:     function( element, event )
+			doubleclickfiles:    function( element, event )
 			{
-				console.log( 'Clicked on element: ', element );
+				element.classList.add( 'Selected' );
+				w.choose( element );
 			}
 		} );
 		dir.listMode = 'listview';
