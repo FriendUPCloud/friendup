@@ -158,7 +158,7 @@ static inline int WriteMessageMA( struct MobileAppConnectionS *mac, unsigned cha
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
 		{
-			DEBUG("Message added to queue: '%s'\n", msg );
+			DEBUG("Message added to queue: '%s' WS pointer: %p\n", msg, mac->mac_WebsocketPtr );
 			en->fq_Data = FMalloc( len+32+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
@@ -901,6 +901,7 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 	{
 		return;
 	}
+	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	connections->umac_Connection[connectionIndex]->mac_WebsocketPtr = NULL;
 	
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
