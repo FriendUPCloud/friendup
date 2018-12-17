@@ -1288,12 +1288,12 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	SystemBase *sb = (SystemBase *)lsb;
 	UserMobileAppConnectionsT *userConnections = NULL;
 	
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
+	FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
+	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	//{
 		userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
 		//user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
+		
 	NotificationSent *notifSent = NULL;
 	
 	// get message length
@@ -1344,6 +1344,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	else
 	{
 		FERROR("Cannot find notification!\n");
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 		return 1;
 	}
 	
@@ -1520,6 +1521,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	{
 		DEBUG("User <%s> does not have any app WS connections\n", username);
 	}
+	
+	FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	
 	// message to user Android: "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\"}"
 	// message from example to APNS: /client.py '{"auth":"72e3e9ff5ac019cb41aed52c795d9f4c","action":"notify","payload":"hellooooo","sound":"default","token":"1f3b66d2d16e402b5235e1f6f703b7b2a7aacc265b5af526875551475a90e3fe","badge":1,"category":"whatever"}'
