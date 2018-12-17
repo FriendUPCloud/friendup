@@ -860,7 +860,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 						
 						return 0;
 						*/
-						if( fcd->fcd_Buffer->bs_Size > 0 )
+						if( fcd != NULL && fcd->fcd_Buffer != NULL && fcd->fcd_Buffer->bs_Size > 0 )
 						{
 							// if first part of request was found then its a sign that buffer must be erased
 							if( strcmp( "{\"type\":\"msg\",\"data\":{\"type\":\"request\",\"requestid\"", in ) == 0 )

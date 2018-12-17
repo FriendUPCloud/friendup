@@ -111,7 +111,7 @@ void NotificationManagerDelete( NotificationManager *nm )
 			ThreadDelete( nm->nm_TimeoutThread );
 		}
 		
-		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) )	// add node to database and to list
+		if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
 		{
 			NotificationDeleteAll( nm->nm_Notifications );
 			FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
@@ -201,9 +201,12 @@ NotificationSent *NotificationManagerGetNotificationsSentDB( NotificationManager
 	char where[ 1024 ];
 	int entries;
 	
-	snprintf( where, sizeof(where), "ID='%lu'", ID );
-	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
-	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		snprintf( where, sizeof(where), "ID='%lu'", ID );
+		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return ns;
 }
 
@@ -222,9 +225,12 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusDB( Notificatio
 	char where[ 1024 ];
 	int entries;
 	
-	snprintf( where, sizeof(where), "ID='%lu' AND Status=%d", ID, status );
-	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
-	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		snprintf( where, sizeof(where), "ID='%lu' AND Status=%d", ID, status );
+		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return ns;
 }
 
@@ -243,9 +249,13 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( Not
 	char where[ 1024 ];
 	int entries;
 	
-	snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
-	ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
-	
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		snprintf( where, sizeof(where), "Status=%d AND UserMobileAppID=%lu", status, umaID );
+		ns = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
+		
 	return ns;
 }
 
@@ -284,7 +294,11 @@ int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification 
  */
 int NotificationManagerAddNotificationSentDB( NotificationManager *nm, NotificationSent *ns )
 {
-	nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationSentDesc, ns );
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationSentDesc, ns );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return 0;
 }
 
@@ -297,15 +311,18 @@ int NotificationManagerAddNotificationSentDB( NotificationManager *nm, Notificat
  */
 int NotificationManagerDeleteNotificationDB( NotificationManager *nm, FULONG nid )
 {
-	char temp[ 1024 ];
-	snprintf( temp, sizeof(temp), "DELETE from `FNotification` where `ID`=%lu", nid );
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		char temp[ 1024 ];
+		snprintf( temp, sizeof(temp), "DELETE from `FNotification` where `ID`=%lu", nid );
 	
-	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 	
-	snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID`=%lu", nid );
+		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID`=%lu", nid );
 	
-	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
-	
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return 0;
 }
 
@@ -323,12 +340,15 @@ int NotificationManagerNotificationSentSetStatusDB( NotificationManager *nm, FUL
 	{
 		return -1;
 	}
-	char temp[ 1024 ];
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		char temp[ 1024 ];
 
-	snprintf( temp, sizeof(temp), "UPDATE `FNotificationSent` set Status=%d where `ID`=%lu", status, nid );
+		snprintf( temp, sizeof(temp), "UPDATE `FNotificationSent` set Status=%d where `ID`=%lu", status, nid );
 	
-	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
-	
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return 0;
 }
 
@@ -345,14 +365,17 @@ int NotificationManagerDeleteOldNotificationDB( NotificationManager *nm )
 	time_t diff = 60 * 60 * 24 * 14; //1209600 = 14 days in seconds
 	t -= diff;		// time when entry was created < time minus diff
 	
-	snprintf( temp, sizeof(temp), "DELETE from `FNotification` WHERE Created>%lu", t );
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		snprintf( temp, sizeof(temp), "DELETE from `FNotification` WHERE Created>%lu", t );
 	
-	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
 	
-	snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID` in(SELECT ID FROM `FNotification` WHERE Created>%lu)", t );
+		snprintf( temp, sizeof(temp), "DELETE from `FNotificationSent` where `NotificationID` in(SELECT ID FROM `FNotification` WHERE Created>%lu)", t );
 	
-	nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
-	
+		nm->nm_SQLLib->QueryWithoutResults( nm->nm_SQLLib, temp );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	return 0;
 }
 
