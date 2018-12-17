@@ -85,7 +85,14 @@ typedef struct WSIToUserConnections{
 	MinNode		node;
 }WSIToUserConnections;
 
-#define PUT_TO_LIST( ROOT, ENTRY ) { ENTRY->node.mln_Succ = ROOT; ROOT = ENTRY; }
+UserToApp *globalUserToAppConnections = NULL;
+WSIToUserConnections *globalWebsocketToUserConnections = NULL;
+
+static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
+static pthread_t globalPingThread;
+
+//#define PUT_TO_LIST( ROOT, ENTRY ) { ENTRY->node.mln_Succ = ROOT; ROOT = ENTRY; }
+
 UserMobileAppConnectionsT *GetConnectionsByUserName( UserToApp *root, char *key )
 {
 	UserToApp *l = root;
@@ -96,6 +103,36 @@ UserMobileAppConnectionsT *GetConnectionsByUserName( UserToApp *root, char *key 
 	}
 	return NULL;
 }
+
+int PutConnectionsByUserName( UserToApp *root, char *key, UserMobileAppConnectionsT *con )
+{
+	UserToApp *l = root;
+	while( l != NULL )
+	{
+		if( l->uta_UserName != NULL && ( strcmp( l->uta_UserName, key ) == 0 ) ) break;
+		l = (UserToApp*)l->node.mln_Succ;
+	}
+	
+	FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
+	if( l != NULL )
+	{
+		FFree( l->uta_Data );
+		l->uta_Data = con;
+	}
+	else
+	{
+		UserToApp *t = (UserToApp *)FCalloc( 1, sizeof( UserToApp ) );
+		t->uta_UserName = key;
+		t->uta_Data = con;
+		
+		t->node.mln_Succ = (MinNode *) globalUserToAppConnections;
+		globalUserToAppConnections = t;
+	}
+	FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	
+	return 0;
+}
+
 
 MobileAppConnectionT *GetConnectionByWSI( WSIToUserConnections *root, void *key )
 {
@@ -108,11 +145,34 @@ MobileAppConnectionT *GetConnectionByWSI( WSIToUserConnections *root, void *key 
 	return NULL;
 }
 
-UserToApp *globalUserToAppConnections = NULL;
-WSIToUserConnections *globalWebsocketToUserConnections = NULL;
-
-static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
-static pthread_t globalPingThread;
+int PutConnectionByWSI( WSIToUserConnections *root, void *key, MobileAppConnectionT *con )
+{
+	WSIToUserConnections *l = root;
+	while( l != NULL )
+	{
+		if( l->wtuc_WSI == key ) break;
+		l = (WSIToUserConnections*)l->node.mln_Succ;
+	}
+	
+	FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
+	if( l != NULL )
+	{
+		FFree( l->wtuc_UserConnection );
+		l->wtuc_UserConnection = con;
+	}
+	else
+	{
+		WSIToUserConnections *t = (WSIToUserConnections *)FCalloc( 1, sizeof( WSIToUserConnections ) );
+		t->wtuc_WSI = key;
+		t->wtuc_UserConnection = con;
+		
+		t->node.mln_Succ = (MinNode *) globalWebsocketToUserConnections;
+		globalWebsocketToUserConnections = t;
+	}
+	FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	
+	return 0;
+}
 
 static void  MobileAppInit(void);
 static int   MobileAppReplyError( struct lws *wsi, int error_code );
@@ -744,12 +804,16 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
-			if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
+			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
+				
+				/*
 				UserToApp *uto = (UserToApp *)FCalloc( 1, sizeof(UserToApp) );
 				uto->uta_UserName = permanentUsername;
 				uto->uta_Data = userConnections;
 				PUT_TO_LIST( globalUserToAppConnections, uto );
+				*/
 				/*
 				//add the new connections struct to global users' connections map
 				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
@@ -761,7 +825,7 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 					return MobileAppReplyError( wsi, MOBILE_APP_ERR_INTERNAL );
 				}
 				*/
-				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 		}
 	}
@@ -821,7 +885,8 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
 	//DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
+	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
 		/*
 		if( globalWebsocketToUserConnectionsMap == NULL )
@@ -829,13 +894,11 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			globalWebsocketToUserConnectionsMap = HashmapNew();
 		}
 		*/
-		WSIToUserConnections *t = (WSIToUserConnections *)FCalloc( 1, sizeof( WSIToUserConnections ) );
-		t->wtuc_WSI = wsi;
-		t->wtuc_UserConnection = newConnection;
-		PUT_TO_LIST( globalWebsocketToUserConnections, t );
+		
+		//PUT_TO_LIST( globalWebsocketToUserConnections, t );
 		//HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
 
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+		//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	//websocket_hash now belongs to the hashmap, don't free it here
 	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
