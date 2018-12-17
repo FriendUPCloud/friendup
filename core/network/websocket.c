@@ -218,7 +218,7 @@ int WebsocketThread( FThread *data )
 	//signal( SIGPIPE, SIG_IGN );
 	//signal( SIGPIPE, hand );
 
-	lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
+	//lws_set_log_level( LLL_ERR | LLL_WARN | LLL_NOTICE | LLL_INFO | LLL_DEBUG , NULL );
 	
 	Log( FLOG_INFO, "[WS] Service will be started now\n" );
 
