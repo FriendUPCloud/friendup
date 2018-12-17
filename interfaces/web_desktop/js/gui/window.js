@@ -17,16 +17,16 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Make movable box --------------------------------------------------------- */
 
-Friend    = window.Friend || {};
-Friend.io = Friend.io     || {};
-Friend.GUI = Friend.GUI   || {};
-
+Friend          = window.Friend || {};
+Friend.io       = Friend.io     || {};
+Friend.GUI      = Friend.GUI    || {};
+Friend.GUI.view = {};                  // View window namespace
 
 // Lets remember values
-var _windowStorage = [];
-var _viewHistory = []; // History of views that have been opened
-var _windowStorageLoaded = false;
-var movableViewIdSeed = 0;
+Friend.GUI.view.windowStorage = [];
+Friend.GUI.view.viewHistory = []; // History of views that have been opened
+Friend.GUI.view.windowStorageLoaded = false;
+Friend.GUI.view.movableViewIdSeed = 0;
 
 var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 
@@ -34,19 +34,19 @@ function GetWindowStorage( id )
 {
 	if( !id )
 	{
-		return _windowStorage;
+		return Friend.GUI.view.windowStorage;
 	}
 	else
 	{
-		if( typeof( _windowStorage[id] ) != 'undefined' )
-			return _windowStorage[id];
+		if( typeof( Friend.GUI.view.windowStorage[id] ) != 'undefined' )
+			return Friend.GUI.view.windowStorage[id];
 	}
 	return {};
 }
 
 function SetWindowStorage( id, data )
 {
-	_windowStorage[id] = data;
+	Friend.GUI.view.windowStorage[id] = data;
 }
 
 function GetWindowById( id )
@@ -62,7 +62,7 @@ function GetWindowById( id )
 function SaveWindowStorage( callback )
 {
 	var m = new Module( 'system' );
-	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( _windowStorage ) ) } );
+	m.execute( 'setsetting', { setting: 'windowstorage', data: JSON.stringify( jsonSafeObject( Friend.GUI.view.windowStorage ) ) } );
 	if( callback )
 	{
 		setTimeout( function()
@@ -74,7 +74,7 @@ function SaveWindowStorage( callback )
 
 function LoadWindowStorage()
 {
-	if( !_windowStorageLoaded )
+	if( !Friend.GUI.view.windowStorageLoaded )
 	{
 		var m = new Module( 'system' );
 		m.onExecuted = function( e, d )
@@ -84,16 +84,16 @@ function LoadWindowStorage()
 				try
 				{
 					var dob = JSON.parse( d );
-					_windowStorage = dob.windowstorage ? dob.windowstorage : [];
-					if( typeof( _windowStorage ) != 'object' )
-						_windowStorage = [];
+					Friend.GUI.view.windowStorage = dob.windowstorage ? dob.windowstorage : [];
+					if( typeof( Friend.GUI.view.windowStorage ) != 'object' )
+						Friend.GUI.view.windowStorage = [];
 					else
 					{
-						for( var a in _windowStorage )
+						for( var a in Friend.GUI.view.windowStorage )
 						{
-							if( typeof( _windowStorage[a] ) == 'string' )
+							if( typeof( Friend.GUI.view.windowStorage[a] ) == 'string' )
 							{
-								_windowStorage[a] = {};
+								Friend.GUI.view.windowStorage[a] = {};
 							}
 						}
 					}
@@ -104,7 +104,7 @@ function LoadWindowStorage()
 			}
 		}
 		m.execute( 'getsetting', { setting: 'windowstorage' } );
-		_windowStorageLoaded = true;
+		Friend.GUI.view.windowStorageLoaded = true;
 	}
 }
 
@@ -994,7 +994,7 @@ function _ActivateWindow( div, nopoll, e )
 
 	// Push active view to history
 	if( !div.windowObject.flags.viewGroup )
-		_viewHistory.push( div );
+		Friend.GUI.view.viewHistory.push( div );
 
 	// Set screen
 	SetScreenByWindowElement( div );
@@ -1070,7 +1070,7 @@ function _DeactivateWindows()
 
 	if( isMobile )
 	{
-		_viewHistory = [];
+		Friend.GUI.view.viewHistory = [];
 	}
 
 	var a = null;
@@ -1308,12 +1308,12 @@ function CloseView( win )
 
 		// Clear view that is closed from view history
 		var out = [];
-		for( var a  = 0; a < _viewHistory.length; a++ )
+		for( var a  = 0; a < Friend.GUI.view.viewHistory.length; a++ )
 		{
-			if( _viewHistory[a] != win )
-				out.push( _viewHistory[a] );
+			if( Friend.GUI.view.viewHistory[a] != win )
+				out.push( Friend.GUI.view.viewHistory[a] );
 		}
-		_viewHistory = out;
+		Friend.GUI.view.viewHistory = out;
 
 		var div = win;
 
@@ -1368,31 +1368,31 @@ function CloseView( win )
 		// Activate latest activated view (not on mobile)
 		if( div.classList.contains( 'Active' ) )
 		{
-			if( _viewHistory.length )
+			if( Friend.GUI.view.viewHistory.length )
 			{
 				// Only activate last view in the same app
 				if( appId )
 				{
-					for( var a = _viewHistory.length - 1; a >= 0; a-- )
+					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
-						if( _viewHistory[ a ].applicationId == appId )
+						if( Friend.GUI.view.viewHistory[ a ].applicationId == appId )
 						{
 							// Only activate non minimized views
-							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								_ActivateWindow( _viewHistory[ a ] );
+							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 							break;
 						}
 					}
 				}
 				else
 				{
-					for( var a = _viewHistory.length - 1; a >= 0; a-- )
+					for( var a = Friend.GUI.view.viewHistory.length - 1; a >= 0; a-- )
 					{
-						if( _viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
+						if( Friend.GUI.view.viewHistory[ a ].windowObject.workspace == globalConfig.workspaceCurrent )
 						{
 							// Only activate non minimized views
-							if( !_viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
-								_ActivateWindow( _viewHistory[ a ] );
+							if( !Friend.GUI.view.viewHistory[a].viewContainer.getAttribute( 'minimized' ) )
+								_ActivateWindow( Friend.GUI.view.viewHistory[ a ] );
 							break;
 						}
 					}
@@ -1723,7 +1723,7 @@ var View = function( args )
 			while( ge( id ) )
 				id = oid + '_' + ++num;
 
-			div.id = id ? id : ( 'window_' + movableViewIdSeed++ );
+			div.id = id ? id : ( 'window_' + Friend.GUI.view.movableViewIdSeed++ );
 			div.viewId = div.id;
 			movableWindows[ div.id ] = div;
 		}
