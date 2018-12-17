@@ -86,11 +86,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 
 	if( title ) ftitle = title;
 
+	var wantedWidth = 800;
+
 	var fl = {
 		'title' : i18n ( ftitle ),
-		'width' : document.body.offsetWidth > 600 ? 600 : 400,
-		'min-width' : 400,
-		'height' : 550,
+		'width' : wantedWidth,
+		'min-width' : 480,
+		'height' : 400,
 		'min-height' : 400,
 		'loadAnimation' : true
 	};
