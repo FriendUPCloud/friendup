@@ -2264,6 +2264,7 @@ function CheckScreenTitle( screen )
 	
 	// Set screen title
 	var csc = testObject.screenObject;
+	if( !csc ) return;
 	
 	// Set the screen title if we have a window with application name
 	var wo = window.currentMovable ? window.currentMovable.windowObject : false;

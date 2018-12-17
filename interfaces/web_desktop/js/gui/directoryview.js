@@ -32,7 +32,7 @@ function _nameFix( wt )
 	return wt;
 }
 
-DirectoryView = function( winobj )
+DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
 	// Initial values
@@ -43,6 +43,27 @@ DirectoryView = function( winobj )
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
+	
+	this.filearea = winobj;
+	this.bookmarks = winobj;
+	this.sidebarbackground = true;
+	
+	// Read in extra stuff
+	if( extra )
+	{
+		if( extra.rightpanel )
+		{
+			this.filearea = extra.rightpanel;
+		}
+		if( extra.leftpanel )
+		{
+			this.bookmarks = extra.leftpanel;
+		}
+		if( extra.nosidebarbackground )
+		{
+			this.sidebarbackground = false;
+		}
+	}
 
 	// File notification
 	if( winobj )
@@ -77,10 +98,10 @@ DirectoryView = function( winobj )
 							ff.execute( 'file/notificationremove' );
 						} );
 					}
-					console.log( 'File notification start result: ' + e, d );
+					//console.log( 'File notification start result: ' + e, d );
 				}
 				f.execute( 'file/notificationstart' );
-				console.log('notification start ' + path);
+				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
 		}
@@ -134,6 +155,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	// Assign it so we remember
 	winobj.parentNode.toolbar = t;
 	this.toolbar = t;
+	
+	
 	winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
 
 	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
@@ -384,9 +407,18 @@ DirectoryView.prototype.ShowFileBrowser = function()
 	if( !isShowing && winobj.classList.contains( 'Content' ) )
 	{
 		var d = document.createElement( 'div' );
-		d.className = 'FileBrowserContainer BackgroundHeavier';
+		if( this.sidebarbackground )
+		{
+			d.className = 'FileBrowserContainer BackgroundHeavier';
+		}
+		else 
+		{
+			d.className = 'FileBrowserContainer';
+			d.style.background = 'none';
+		}
 		
-		winobj.appendChild( d );
+		this.bookmarks.appendChild( d );
+		
 		winobj.fileBrowserDom = d;
 		winobj.fileBrowser = new Friend.FileBrowser( d, { displayFiles: false }, {
 			checkFile( filepath, fileextension )
@@ -482,7 +514,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	},
 	// -------------------------------------------------------------------------
 	winobj.redrawIcons = function( icons, direction, callback )
-	{
+	{	
 		if( winobj.classList && winobj.classList.contains( 'ScreenContent' ) )
 		{
 			this.directoryview.mode = 'Volumes';
@@ -663,7 +695,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						setTimeout( function(){ self.redrawing = false; }, 250 );
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawIconView( self, self.icons, direction, lm );
+						var res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
 						if( callback ) callback();
 						checkScrl();
 						return res;
@@ -672,7 +704,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					{
 						setTimeout( function(){ self.redrawing = false; }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawListView( self, self.icons, direction );
+						var res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
 						return res;
@@ -2521,7 +2553,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.file = f;
 			r.ondblclick = function( e )
 			{
-				Notify( { title: 'Double clicked', text: 'dlci' } );
+				//Notify( { title: 'Double clicked', text: 'dlci' } );
 				this.file.ondblclick( e );
 			}
 
@@ -2877,9 +2909,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 // -------------------------------------------------------------------------
 // Create a directoryview on a div / Window (shortcut func (deprecated?))
-function CreateDirectoryView( winobj )
+function CreateDirectoryView( winobj, extra )
 {
-	var w = new DirectoryView( winobj );
+	var w = new DirectoryView( winobj, extra );
 	return w;
 }
 
@@ -4373,36 +4405,39 @@ function CheckDoorsKeys( e )
 	)
 	{
 		var rw = window.regionWindow.icons;
-		var out = [];
-		var found = false;
-		for( var a = 0; a < rw.length; a++ )
+		if( rw )
 		{
-			var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
-			if( f.toUpperCase().charCodeAt(0) == k )
+			var out = [];
+			var found = false;
+			for( var a = 0; a < rw.length; a++ )
 			{
-				out.push( rw[a] );
-				if( rw[a].selected )
+				var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+				if( f.toUpperCase().charCodeAt(0) == k )
 				{
-					found = true;
+					out.push( rw[a] );
+					if( rw[a].selected )
+					{
+						found = true;
+					}
 				}
 			}
-		}
-		if( out.length )
-		{
-			if( !found )
+			if( out.length )
 			{
-				out[0].domNode.click();
-				return;
-			}
-			for( var a = 0; a < out.length; a++ )
-			{
-				if( out[a].selected && a < out.length - 1 )
+				if( !found )
 				{
-					out[a+1].domNode.click();
+					out[0].domNode.click();
 					return;
 				}
+				for( var a = 0; a < out.length; a++ )
+				{
+					if( out[a].selected && a < out.length - 1 )
+					{
+						out[a+1].domNode.click();
+						return;
+					}
+				}
+				out[0].domNode.click();
 			}
-			out[0].domNode.click();
 		}
 	}
 }

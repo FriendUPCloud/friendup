@@ -1852,11 +1852,15 @@ html body.Charcoal .ZebraList.Interactive > div:nth-child(odd):hover
 }
 
 html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
+html body.CharCoal #MousePointer .Row.Selected .Column
+{
+	background: #151515;
+	color: white;
+}
 html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
-html body.CharCoal #MousePointer .Row.Selected .Column,
 html body.CharCoal #MousePointer .Row.Odd.Selected .Column
 {
-	background: #282828;
+	background: #101010;
 	color: white;
 }
 
@@ -3099,7 +3103,7 @@ html .File .Icon
 
 html .File.Selected
 {
-	z-index: 3;
+	z-index: 3; 
 }
 
 html .File .Title
