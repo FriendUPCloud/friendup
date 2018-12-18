@@ -24,7 +24,6 @@ Friend.FileBrowserEntry = function()
 {
 };
 
-
 /*
 	Filebrowser class - creates a recursive file browser!
 	

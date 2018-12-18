@@ -3581,9 +3581,6 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 			dw.addToHistory( fin );
 
-			obj.fileInfo.Volume = obj.fileInfo.Path.split( ':' )[0] + ':'; // TODO: Should not be needed!
-			we.fileInfo = obj.fileInfo;
-
 			// Update on notifications
 			var ppath = obj.fileInfo.Path;
 			if( !Workspace.diskNotificationList[ ppath ] )
