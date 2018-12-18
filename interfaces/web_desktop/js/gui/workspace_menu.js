@@ -267,7 +267,7 @@ var WorkspaceMenu =
 		if( m )
 		{
 			var t = e ? ( e.target ? e.target : e.srcElement ) : false;
-			if( t && t.getAttribute ( 'onclick' ) ) t.onclick ();
+			if( t && t.getAttribute && t.getAttribute( 'onclick' ) ) t.onclick ();
 			// Remove open menus
 			var divs = m.getElementsByTagName( 'div' );
 			var lis = m.getElementsByTagName( 'li' );

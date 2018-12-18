@@ -490,6 +490,9 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		
 		_ActivateWindow( w._window.parentNode );
 		_WindowToFront( w._window.parentNode );
+		
+		// Hide the workspace menu
+		ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
 	}
 	f.load();
 }

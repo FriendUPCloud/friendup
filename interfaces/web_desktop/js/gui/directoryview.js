@@ -234,25 +234,6 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					return;
 				}
-				// Animation for going to next folder
-				if( isMobile )
-				{
-					var n = document.createElement( 'div' );
-					n.className = 'Content SlideAnimation';
-					n.style.transition = 'transform 0.4s';
-					n.innerHTML = winobj.innerHTML;
-					n.scrollTop = winobj.scrollTop;
-					n.style.zIndex = 10;
-					winobj.parentNode.appendChild( n );
-					setTimeout( function()
-					{
-						n.style.transform = 'translateX(100%)';
-						setTimeout( function()
-						{
-							n.parentNode.removeChild( n );
-						}, 400 );
-					}, 20 );
-				}
 				
 				var volu = path = '';
 				if( winobj.directoryview.filedialog && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
@@ -302,10 +283,33 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				}
 
 				// Set as current history element at end of list
-				dw.addToHistory( winobj.fileInfo );
-
-				winobj.fileInfo = fin;
-				winobj.refresh();
+				dw.addToHistory( fin );
+				
+				// Animation for going to next folder
+				if( isMobile )
+				{
+					var n = document.createElement( 'div' );
+					n.className = 'Content SlideAnimation';
+					n.style.transition = 'transform 0.4s';
+					n.innerHTML = winobj.innerHTML;
+					n.scrollTop = winobj.scrollTop;
+					n.style.zIndex = 10;
+					winobj.parentNode.appendChild( n );
+					
+					// Refresh and animate
+					winobj.refresh( function()
+					{
+						n.style.transform = 'translateX(100%)';
+						setTimeout( function()
+						{
+							n.parentNode.removeChild( n );
+						}, 400 );
+					} );
+				}
+				else
+				{
+					winobj.refresh();
+				}
 			}
 		},
 		{
@@ -3561,32 +3565,13 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Just change directory
 		else if( obj.fileInfo.Type == 'Directory' && obj.directoryView.navMode == 'toolbar' )
 		{
-			// Animation for going to next folder
-			if( isMobile )
-			{
-				var n = document.createElement( 'div' );
-				n.className = 'Content SlideAnimation';
-				n.style.transition = 'transform 0.4s';
-				n.innerHTML = obj.directoryView.windowObject.innerHTML;
-				n.scrollTop = obj.directoryView.windowObject.scrollTop;
-				n.style.zIndex = 10;
-				obj.directoryView.windowObject.parentNode.appendChild( n );
-				setTimeout( function()
-				{
-					n.style.transform = 'translateX(-100%)';
-					setTimeout( function()
-					{
-						n.parentNode.removeChild( n );
-					}, 400 );
-				}, 20 );
-			}
-		
 			// Set a new path and record the old one!
 			var we = obj.directoryView.windowObject;
 			var dw = obj.directoryView;
 
 			// Add current and set it to end of history
 			var path = obj.fileInfo.Path.split( ':' );
+			
 			var fin = {
 				Volume: path[0] + ':',
 				Path: obj.fileInfo.Path,
@@ -3601,7 +3586,6 @@ FileIcon.prototype.Init = function( fileInfo )
 
 			// Update on notifications
 			var ppath = obj.fileInfo.Path;
-
 			if( !Workspace.diskNotificationList[ ppath ] )
 			{
 				Workspace.diskNotificationList[ ppath ] = {
@@ -3644,7 +3628,32 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 
 			// Open unique window!
-			we.refresh();
+			// Animation for going to next folder
+			if( isMobile )
+			{
+				var n = document.createElement( 'div' );
+				n.className = 'Content SlideAnimation';
+				n.style.transition = 'transform 0.4s';
+				n.innerHTML = obj.directoryView.windowObject.innerHTML;
+				n.scrollTop = obj.directoryView.windowObject.scrollTop;
+				n.style.zIndex = 10;
+				obj.directoryView.windowObject.parentNode.appendChild( n );
+				
+				// Refresh and add animation
+				we.refresh( function()
+				{
+					n.style.transform = 'translateX(-100%)';
+					setTimeout( function()
+					{
+						n.parentNode.removeChild( n );
+					}, 400 );
+				} );
+			}
+			// Desktop mode, just refresh
+			else 
+			{
+				we.refresh();
+			}
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		else
@@ -3996,12 +4005,15 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
 			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
-
+			
 			this.windowObject.setFlag( 'title', _nameFix( wt ) );
 
 			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
 			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
+			
+			console.log( 'Refreshing: ' + t );
+			
 			this.refreshTimeout = setTimeout( function()
 			{
 				fileInfo.Dormant.getDirectory( t, function( icons, data )
@@ -4351,6 +4363,9 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
+					
+					console.log( 'Refreshing 22: ' + fi.Path );
+					
 					dr.getIcons( fi, function( icons )
 					{
 						if( icons )
@@ -4422,6 +4437,8 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				var updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
 				updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
+
+				console.log( 'Refreshing 2: ' + this.fileInfo.Path );
 
 				j.open( 'get', updateurl, true, true );
 
