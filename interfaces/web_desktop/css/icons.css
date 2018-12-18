@@ -11,6 +11,11 @@
 	width: calc(100% - 200px);
 }
 
+.Content.SlideAnimation
+{
+	pointer-events: none;
+}
+
 .IconWindow .Content > .FileBrowserContainer
 {
 	position: absolute;

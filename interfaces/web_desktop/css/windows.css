@@ -171,6 +171,11 @@ html .View[viewsnap] .Title > div > div
 	display: none;
 }
 
+[mobile=mobile] #Screens .ViewContainer:not(.Active)
+{
+	z-index: 0 !important;
+}
+
 [mobile=mobile] #Screens .View.Active[maximized=true].Opened
 {
 	transition: transform 0.25s !important;
