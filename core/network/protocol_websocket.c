@@ -693,7 +693,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		Log( FLOG_INFO, "WS Call, reason: %d, length: %d, message: %s\n", reason, len, c );
 	}
 
-	Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
+	//Log( FLOG_INFO, "WS Call data at %p - %d\n", in, len );
 	
 	switch( reason )
 	{
@@ -704,7 +704,7 @@ int FC_Callback( struct lws *wsi, enum lws_callback_reasons reason, void *user, 
 		break;
 		
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
-			Log( FLOG_INFO, "[WS] LWS_CALLBACK_WS_PEER_INITIATED_CLOSE\n");
+			//Log( FLOG_INFO, "[WS] LWS_CALLBACK_WS_PEER_INITIATED_CLOSE\n");
 			
 			INFO("[WS] Callback peer session closed\n");
 		break;

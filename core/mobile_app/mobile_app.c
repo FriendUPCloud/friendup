@@ -32,7 +32,7 @@
 void MobileAppTestSignalHandler(int signum);
 #endif
 
-//#define WEBSOCKET_SEND_QUEUE
+#define WEBSOCKET_SEND_QUEUE
 
 //There is a need for two mappings, user->mobile connections and mobile connection -> user
 
@@ -311,6 +311,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 			if( FRIEND_MUTEX_LOCK( &(appConnection->mac_Mutex) ) == 0 )
 			{
+				MobileAppNotif *n = (MobileAppNotif *)user;
+				appConnection = n->man_Data;
+			
 				//FQueue *q = &(man->man_Queue);
 				FQueue *q = &(appConnection->mac_Queue);
 			
@@ -318,8 +321,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			
 				e = FQPop( q );
 			
-				FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
-			}
+				//FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
+			//}
 			
 			if( e != NULL )
 			{
@@ -351,6 +354,9 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			{
 				DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
+			}
+			// test
+			FRIEND_MUTEX_UNLOCK( &appConnection->mac_Mutex );
 			}
 #endif
 		}
