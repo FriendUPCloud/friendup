@@ -32,7 +32,7 @@
 void MobileAppTestSignalHandler(int signum);
 #endif
 
-#define WEBSOCKET_SEND_QUEUE
+//#define WEBSOCKET_SEND_QUEUE
 
 //There is a need for two mappings, user->mobile connections and mobile connection -> user
 
@@ -58,6 +58,7 @@ struct MobileAppConnectionS
 	time_t												mac_MostRecentPauseTimestamp;
 	UserMobileApp										*mac_UserMobileApp;
 	FULONG												mac_UserMobileAppID;
+	int													mac_Used;
 };
 
 //
@@ -167,12 +168,14 @@ static inline int WriteMessageMA( struct MobileAppConnectionS *mac, unsigned cha
 			//lws_callback_on_writable( mac->websocket_ptr );
 			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
 			{
+				mac->mac_Used++;
 				FQPushFIFO( &(mac->mac_Queue), en );
 				
 				if( mac->mac_WebsocketPtr != NULL )
 				{
 					lws_callback_on_writable( mac->mac_WebsocketPtr );
 				}
+				mac->mac_Used--;
 				FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
 			}
 		}
@@ -908,6 +911,7 @@ static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connection
 	}
 	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
 	connections->umac_Connection[connectionIndex]->mac_WebsocketPtr = NULL;
+	connections->umac_Connection[connectionIndex]->mac_Used = 0;
 	
 	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
 	connections->umac_Connection[connectionIndex]->mac_LastCommunicationTimestamp );
@@ -1454,7 +1458,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 						{
 							jsonMessageLength = snprintf( jsonMessage + LWS_PRE, reqLengith-LWS_PRE, "{\"t\":\"notify\",\"channel\":\"%s\",\"content\":\"%s\",\"title\":\"%s\",\"extra\":\"\",\"application\":\"%s\",\"action\":\"register\",\"id\":%lu}", notif->n_Channel, notif->n_Content, notif->n_Title, notif->n_Application, lns->ns_ID );
 						}
-						lws_write(user_connections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
+						lws_write( userConnections->umac_Connection[i]->mac_WebsocketPtr,(unsigned char*)jsonMessage+LWS_PRE,jsonMessageLength,LWS_WRITE_TEXT);
 #endif
 						
 						NotificationSentDelete( lns );
@@ -1655,7 +1659,7 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 						strcpy(request+LWS_PRE, "{\"t\":\"keepalive\",\"status\":1}");
 						//DEBUG("Request: %s\n", request+LWS_PRE);
 #ifndef WEBSOCKET_SEND_QUEUE
-						lws_write(user_connections->connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
+						lws_write( user_connections->umac_Connection[i]->mac_WebsocketPtr, (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE), LWS_WRITE_TEXT);
 #else
 						WriteMessageMA( user_connections->umac_Connection[i], (unsigned char*)request+LWS_PRE, strlen(request+LWS_PRE) );
 #endif
