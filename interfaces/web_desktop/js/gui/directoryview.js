@@ -2720,6 +2720,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.fileInfo.selected = true;
 							dv.lastListItem = this;
 						}
+						if( this.classList.contains( 'Editing' ) )
+						{
+							this.classList.remove( 'Editing' );
+							if( this.input )
+							{
+								this.removeChild( this.input );
+								this.input = null;
+							}
+						}
 					}
 
 					dv.window.checkSelected();
@@ -4406,31 +4415,35 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
-	switch( k )
+	if( !Workspace.editing )
 	{
-		// TODO: Implement confirm dialog!
-		case 46:
-			if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
-			{
-				Workspace.deleteFile();
-			}
-			break;
-		case 13:
-			if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
-			{
-				for( var a = 0; a < window.regionWindow.icons.length; a++ )
+		switch( k )
+		{
+			// TODO: Implement confirm dialog!
+			case 46:
+				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
 				{
-					if( window.regionWindow.icons[a].selected )
+					Workspace.deleteFile();
+				}
+				break;
+			case 13:
+				if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+				{
+					for( var a = 0; a < window.regionWindow.icons.length; a++ )
 					{
-						window.regionWindow.icons[a].domNode.ondblclick();
-						return;
+						if( window.regionWindow.icons[a].selected )
+						{
+							window.regionWindow.icons[a].domNode.ondblclick();
+							return;
+						}
 					}
 				}
-			}
-			break;
+				break;
+		}
 	}
 	// Do the thing! Keyboard navigation
 	if( 
+		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
 		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
 	)

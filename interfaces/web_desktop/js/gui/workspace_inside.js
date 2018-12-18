@@ -3922,16 +3922,17 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					path: icon.Path
 				}, function( result, data )
 				{
-					console.log( result, data );
 					if( win && win.content.refresh )
 						win.content.refresh();
-					Workspace.renameWindow.close();
+					if( Workspace.renameWindow )
+						Workspace.renameWindow.close();
 				} );
 			}
 			else
 			{
 				Alert( i18n( 'i18n_cannotRename' ), i18n( 'i18n_noWritePermission' ) );
-				Workspace.renameWindow.close();
+				if( Workspace.renameWindow )
+					Workspace.renameWindow.close();
 			}
 			return;
 		}
@@ -3940,10 +3941,10 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 			path: icon.Path
 		}, function( result, data)
 			{
-				console.log( result, data );
 				if( win && win.content.refresh )
 					win.content.refresh();
-				Workspace.renameWindow.close();
+				if( Workspace.renameWindow )
+					Workspace.renameWindow.close();
 			}
 		);
 	},
@@ -7635,6 +7636,68 @@ function DoorsKeyDown( e )
 					if( t.classList && t.classList.contains( 'DockMenuItem' ) )
 						t.classList.add( 'Active' );
 					t = t.parentNode;
+				}
+			}
+		}
+	}
+	
+	// Check keys on directoryview ---------------------------------------------
+	if( currentMovable && currentMovable.content.directoryview )
+	{
+		if( w == 113 || w == 27 )
+		{
+			var icons = currentMovable.content.icons;
+			for( var a = 0; a < icons.length; a++ )
+			{
+				if( icons[a].domNode && icons[a].domNode.classList.contains( 'Selected' ) )
+				{
+					// Abort editing
+					if( w == 27 )
+					{
+						for( var b = 0; b < icons.length; b++ )
+						{
+							if( icons[b].domNode )
+							{
+								icons[b].domNode.classList.remove( 'Selected' );
+								icons[b].domNode.classList.remove( 'Editing' );
+								if( icons[b].editField )
+								{
+									icons[b].domNode.removeChild( icons[b].editField );
+									icons[b].editField = null;
+								}
+							}
+						}
+						return cancelBubble( e );
+					}
+					icons[a].domNode.classList.add( 'Editing' );
+					var input = document.createElement( 'textarea' );
+					input.className = 'Title';
+					icons[a].editField = input;
+					input.value = icons[a].domNode.getElementsByClassName( 'Title' )[0].innerText;
+					input.dom = icons[a].domNode;
+					icons[a].domNode.input = input;
+					input.ico = icons[a];
+					input.onkeydown = function( e )
+					{
+						clearTimeout( Workspace.editing );
+						Workspace.editing = setTimeout( function()
+						{
+							Workspace.editing = false;
+						}, 100 );
+						if( e.which == 13 )
+						{
+							Workspace.executeRename( this.value, this.ico, currentMovable );
+							this.ico.editField = null;
+							this.dom.input = null;
+							this.dom.removeChild( this );
+						}
+					}
+					setTimeout( function()
+					{
+						input.select();
+						input.focus();
+					}, 50 );
+					icons[a].domNode.appendChild( input );
 				}
 			}
 		}

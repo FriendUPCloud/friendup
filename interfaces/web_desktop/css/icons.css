@@ -132,6 +132,11 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	webkit-transition: transform,opacity 0.25s;
 }
 
+.File.Editing a.Title
+{
+	display: none;
+}
+
 .File.Selected
 {
 	background: none;
