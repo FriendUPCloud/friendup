@@ -3029,6 +3029,13 @@ FileIcon.prototype.Init = function( fileInfo )
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
 	
+	if( !Workspace.dosDrivers[ 'Dormant' ] )
+	{
+		Workspace.dosDrivers[ 'Dormant' ] = {
+			iconLabel: '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+		};
+	}
+	
 	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Workspace.dosDrivers && Workspace.dosDrivers[ fileInfo.Driver ] )
 	{
 		var driver = Workspace.dosDrivers[ fileInfo.Driver ];
