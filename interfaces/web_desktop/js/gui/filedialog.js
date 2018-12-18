@@ -273,6 +273,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			w.books.close();
 			w.books = false;
 		}
+		triggerfunction( false );
 	} );
 	
 	if( type != 'open' && type != 'save' )
