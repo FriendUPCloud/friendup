@@ -217,6 +217,26 @@ DirectoryView.prototype.initToolbar = function( winobj )
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
+				// Animation for going to next folder
+				if( isMobile )
+				{
+					var n = document.createElement( 'div' );
+					n.className = 'Content SlideAnimation';
+					n.style.transition = 'transform 0.4s';
+					n.innerHTML = winobj.innerHTML;
+					n.scrollTop = winobj.scrollTop;
+					n.style.zIndex = 10;
+					winobj.parentNode.appendChild( n );
+					setTimeout( function()
+					{
+						n.style.transform = 'translateX(100%)';
+						setTimeout( function()
+						{
+							n.parentNode.removeChild( n );
+						}, 400 );
+					}, 20 );
+				}
+				
 				// Fetch path again
 				var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 
@@ -3449,6 +3469,26 @@ FileIcon.prototype.Init = function( fileInfo )
 		// Just change directory
 		else if( obj.fileInfo.Type == 'Directory' && obj.directoryView.navMode == 'toolbar' )
 		{
+			// Animation for going to next folder
+			if( isMobile )
+			{
+				var n = document.createElement( 'div' );
+				n.className = 'Content SlideAnimation';
+				n.style.transition = 'transform 0.4s';
+				n.innerHTML = obj.directoryView.windowObject.innerHTML;
+				n.scrollTop = obj.directoryView.windowObject.scrollTop;
+				n.style.zIndex = 10;
+				obj.directoryView.windowObject.parentNode.appendChild( n );
+				setTimeout( function()
+				{
+					n.style.transform = 'translateX(-100%)';
+					setTimeout( function()
+					{
+						n.parentNode.removeChild( n );
+					}, 400 );
+				}, 20 );
+			}
+		
 			// Set a new path and record the old one!
 			var we = obj.directoryView.windowObject;
 			var dw = obj.directoryView;
@@ -4142,7 +4182,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 
 		var stored = GetWindowStorage( id );
-
+		
 		var w = new View ( {
 			'title'    : wt,
 			'width'    : stored && stored.width ? stored.width : 800,
