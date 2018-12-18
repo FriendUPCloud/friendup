@@ -342,6 +342,11 @@ html #Screens > div
 	background: #34495E;
 }
 
+html body.Charcoal #Screens > div
+{
+	background: #444444;
+}
+
 html #DoorsScreen > .ScreenContent,
 html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
@@ -3305,6 +3310,14 @@ html .File .Icon .Drive
 html body.Charcoal .File .Icon .Drive .Label
 {
 	filter: grayscale(1) brightness(0.4) drop-shadow(1px 2px 2px rgba(255,255,255,0.8));
+}
+
+html body[mobile] .File .Icon .Drive > .Label
+{
+	top: calc(50% - 10px);
+	right: calc(50% - 8px);
+	width: 16px !important;
+	height: 16px !important;
 }
 
 html .File .Icon .Directory

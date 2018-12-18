@@ -3594,32 +3594,32 @@ FileIcon.prototype.Init = function( fileInfo )
 				f.addVar( 'path', ppath );
 				f.onExecuted = function( e, d )
 				{
-					if( e == 'ok' )
+					if( e != 'ok' )
+						return;
+					
+					var j;
+					try
 					{
-						var j;
-						try
-						{
-							j = JSON.parse( d );
-						}
-						catch( e )
-						{
-							console.log( 'Error in JSON format: ', d );
-							return;
-						}
-						we.windowObject.addEvent( 'systemclose', function()
-						{
-							var ff = new Library( 'system.library' );
-							ff.addVar( 'sessionid', Workspace.sessionId );
-							ff.addVar( 'path', ppath );
-							ff.addVar( 'id', j.Result );
-							ff.onExecuted = function( es, ds )
-							{
-								// TODO: Clear it?
-								Workspace.diskNotificationList[ ppath ] = false;
-							}
-							ff.execute( 'file/notificationremove' );
-						} );
+						j = JSON.parse( d );
 					}
+					catch( e )
+					{
+						console.log( 'Error in JSON format: ', d );
+						return;
+					}
+					we.windowObject.addEvent( 'systemclose', function()
+					{
+						var ff = new Library( 'system.library' );
+						ff.addVar( 'sessionid', Workspace.sessionId );
+						ff.addVar( 'path', ppath );
+						ff.addVar( 'id', j.Result );
+						ff.onExecuted = function( es, ds )
+						{
+							// TODO: Clear it?
+							Workspace.diskNotificationList[ ppath ] = false;
+						}
+						ff.execute( 'file/notificationremove' );
+					} );
 				}
 				f.execute( 'file/notificationstart' );
 			}
@@ -3996,6 +3996,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		CreateDirectoryView( we );
 
 		we.win = win;
+		
 		we.refresh = function( callback )
 		{
 			var self = this;
@@ -4008,8 +4009,6 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
 			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
-			
-			console.log( 'Refreshing: ' + t );
 			
 			this.refreshTimeout = setTimeout( function()
 			{
@@ -4361,8 +4360,6 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
 					
-					console.log( 'Refreshing 22: ' + fi.Path );
-					
 					dr.getIcons( fi, function( icons )
 					{
 						if( icons )
@@ -4434,8 +4431,6 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				var updateurl = '/system.library/file/dir?wr=1'
 				updateurl += '&path=' + encodeURIComponent( this.fileInfo.Path );
 				updateurl += '&sessionid= ' + encodeURIComponent( Workspace.sessionId );
-
-				console.log( 'Refreshing 2: ' + this.fileInfo.Path );
 
 				j.open( 'get', updateurl, true, true );
 

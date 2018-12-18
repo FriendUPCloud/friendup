@@ -471,15 +471,26 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			w.refreshView();
 		} );
 		
-		w._window.refresh = function()
+		w._window.refresh = function( cb )
 		{
 			var f = w._window.fileInfo;
 			var d = new Door( f.Path );
 			dialog.path = f.Path;
-			d.getIcons( f.Path, function( items )
+			
+			var fin = {
+				Path: f.Path,
+				Volume: f.Volume,
+				MetaType: 'Directory',
+				Type: 'Directory'
+			};
+			
+			var dr = new Door( f.Path );
+			dr.getIcons( f.Path, function( icons )
 			{
-				w._window.icons = items;
+				w._window.directoryview.addToHistory( fin );
+				w._window.icons = icons;
 				w.refreshView();
+				if( cb ) cb();
 			} );
 		}
 		
