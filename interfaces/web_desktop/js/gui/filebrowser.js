@@ -345,14 +345,14 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
-						if( Workspace.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
+						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
 							var driver = msg.list[a].Driver;
 							
 							// Find correct image
 							var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
-							if( Workspace.dosDrivers[ driver ] && Workspace.dosDrivers[ driver ].iconLabel )
-								img = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver ].iconLabel;
+							if( Friend.dosDrivers[ driver ] && Friend.dosDrivers[ driver ].iconLabel )
+								img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver ].iconLabel;
 							if( msg.list[a].Title == 'Home' )
 								img = '/iconthemes/friendup15/DriveLabels/Home.svg';
 							else if( msg.list[a].Title == 'System' )

@@ -3029,22 +3029,22 @@ FileIcon.prototype.Init = function( fileInfo )
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
 	
-	if( !Workspace.dosDrivers[ 'Dormant' ] )
+	if( !Friend.dosDrivers[ 'Dormant' ] )
 	{
-		Workspace.dosDrivers[ 'Dormant' ] = {
+		Friend.dosDrivers[ 'Dormant' ] = {
 			iconLabel: '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
 		};
 	}
 	
-	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Workspace.dosDrivers && Workspace.dosDrivers[ fileInfo.Driver ] )
+	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Friend.dosDrivers && Friend.dosDrivers[ fileInfo.Driver ] )
 	{
-		var driver = Workspace.dosDrivers[ fileInfo.Driver ];
+		var driver = Friend.dosDrivers[ fileInfo.Driver ];
 							
 		// Find correct image
 		var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
 		
-		if( Workspace.dosDrivers[ driver.type ] && Workspace.dosDrivers[ driver.type ].iconLabel )
-			img = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver.type ].iconLabel;
+		if( Friend.dosDrivers[ driver.type ] && Friend.dosDrivers[ driver.type ].iconLabel )
+			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
 		if( fileInfo.Title == 'Home' )
 			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
 		else if( fileInfo.Title == 'System' )

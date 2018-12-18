@@ -444,6 +444,7 @@ function ExecuteApplication( app, args, callback )
 					authId: ifr.authId,
 					args: oargs,
 					workspace: workspace,
+					dosDrivers: Friend.dosDrivers,
 					locale: Workspace.locale,
 					theme: Workspace.theme,
 					themeData: Workspace.themeData,

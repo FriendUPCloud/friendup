@@ -3295,7 +3295,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this;
-		if( !Workspace.dosDrivers )
+		if( !Friend.dosDrivers )
 		{
 			var d = new Module( 'system' );
 			d.onExecuted = function( res, dat )
@@ -3309,15 +3309,15 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 				try
 				{
 					var types = JSON.parse( dat );
-					Workspace.dosDrivers = {};
+					Friend.dosDrivers = {};
 					for( var a = 0; a < types.length; a++ )
 					{
-						Workspace.dosDrivers[ types[ a ].type ] = types[a];
+						Friend.dosDrivers[ types[ a ].type ] = types[a];
 					}
 				}
 				catch( e )
 				{
-					Workspace.dosDrivers = null;
+					Friend.dosDrivers = null;
 				}
 				doGetMountlistHere();
 			}

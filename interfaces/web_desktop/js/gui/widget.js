@@ -439,6 +439,7 @@ Widget.prototype.setContentIframed = function( content, domain, packet, callback
 		var msg = {}; if( packet ) for( var a in packet ) msg[a] = packet[a];
 		msg.command = 'setbodycontent';
 		msg.parentSandboxId = parentIframeId;
+		msg.dosDrivers = Friend.dosDrivers;
 		msg.locale = Workspace.locale;
 	
 		// Override the theme
