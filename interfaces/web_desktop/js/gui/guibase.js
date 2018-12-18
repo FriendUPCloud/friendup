@@ -3512,7 +3512,16 @@ function clearRegionIcons()
 				var ic = w.icons[a].domNode;
 				if( ic && ic.className )
 				{
-					ic.className = ic.className.split ( ' Selected' ).join ( '' );
+					ic.classList.remove( 'Selected' );
+					ic.classList.remove( 'Editing' );
+					if( ic.input )
+					{
+						if( ic.input.parentNode )
+						{
+							ic.input.parentNode.removeChild( ic.input );
+						}
+						ic.input = null;
+					}
 					w.icons[a].selected = false;
 				}
 			}

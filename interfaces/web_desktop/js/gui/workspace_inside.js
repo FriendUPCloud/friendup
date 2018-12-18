@@ -7662,7 +7662,7 @@ function DoorsKeyDown( e )
 								icons[b].domNode.classList.remove( 'Editing' );
 								if( icons[b].editField )
 								{
-									icons[b].domNode.removeChild( icons[b].editField );
+									icons[b].editField.parentNode.removeChild( icons[b].editField );
 									icons[b].editField = null;
 								}
 							}
