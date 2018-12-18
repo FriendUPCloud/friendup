@@ -386,6 +386,18 @@ html .Launcher .File div *
 
 /* File icons --------------------------------------------------------------- */
 
+.File .Icon .Drive > .Label
+{
+	position: absolute;
+	right: calc(50% - 12px);
+	top: calc(50% - 17px);
+	width: 24px;
+	height: 24px;
+	background-position: center bottom;
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+
 .File .Icon .File
 {
 }

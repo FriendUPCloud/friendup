@@ -3028,7 +3028,28 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
-	if( fileInfo.Icon )
+	
+	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Workspace.dosDrivers && Workspace.dosDrivers[ fileInfo.Driver ] )
+	{
+		var driver = Workspace.dosDrivers[ fileInfo.Driver ];
+							
+		// Find correct image
+		var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+		
+		if( Workspace.dosDrivers[ driver.type ] && Workspace.dosDrivers[ driver.type ].iconLabel )
+			img = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver.type ].iconLabel;
+		if( fileInfo.Title == 'Home' )
+			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'System' )
+			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+	
+		iconInner.className = 'Drive';
+		var label = document.createElement( 'div' );
+		label.className = 'Label';
+		label.style.backgroundImage = 'url("' + img + '")';
+		iconInner.appendChild( label );
+	}
+	else if( fileInfo.Icon )
 	{
 		iconInner.className = fileInfo.Icon;
 	}

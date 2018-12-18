@@ -3261,7 +3261,7 @@ html .File .Icon .File
 html .File .Icon .Drive
 {
 	/*background-image: url(/themes/friendup/gfx/icons/disk.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk.svg);
 }
 
 html .File .Icon .Directory

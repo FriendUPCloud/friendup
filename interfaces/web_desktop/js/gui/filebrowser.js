@@ -348,21 +348,31 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						if( Workspace.dosDrivers )
 						{
 							var driver = msg.list[a].Driver;
+							
+							// Find correct image
+							var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
 							if( Workspace.dosDrivers[ driver ] && Workspace.dosDrivers[ driver ].iconLabel )
-							{
-								var i = document.createElement( 'img' );
-								i.src = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver ].iconLabel;
-								i.style.width = '16px';
-								i.style.height = 'auto';
-								i.style.filter = 'brightness(100)';
-								i.style.float = 'left';
-								i.style.verticalAlign = 'middle';
-								i.style.display = 'block';
-								i.style.margin = '0 2px 0 0';
-								nm.appendChild( i );
-								nm.classList.remove( 'IconSmall' );
-								nm.classList.remove( 'IconDisk' );
-							}
+								img = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver ].iconLabel;
+							if( msg.list[a].Title == 'Home' )
+								img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+							else if( msg.list[a].Title == 'System' )
+								img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+							
+							var i = document.createElement( 'div' );
+							i.style.backgroundImage = 'url("' + img + '")';
+							i.style.backgroundPosition = 'center';
+							i.style.backgroundRepeat = 'no-repeat';
+							i.style.backgroundSize = 'contain';
+							i.style.width = '16px';
+							i.style.height = '16px';
+							i.style.filter = 'brightness(100)';
+							i.style.float = 'left';
+							i.style.verticalAlign = 'middle';
+							i.style.display = 'block';
+							i.style.margin = '1px 4px 0 0';
+							nm.appendChild( i );
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
 						}
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
