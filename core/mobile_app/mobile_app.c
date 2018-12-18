@@ -669,8 +669,12 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		// wait till User Manager will not be equal to NULL
 		if( SLIB->sl_UM == NULL )
 		{
-			while( SLIB->sl_UM != NULL )
+			while( TRUE )
 			{
+				if( SLIB->sl_UM != NULL )
+				{
+					break;
+				}
 				sleep( 1 );
 			}
 		}
