@@ -403,6 +403,7 @@ Notification *NotificationManagerRemoveNotification( NotificationManager *nm, FU
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 	{
 		Log( FLOG_INFO, "NotificationManagerRemoveNotification remove %lu\n", nsid );
+		
 		while( notIt != NULL )
 		{
 			NotificationSent *lnsIt = notIt->n_NotificationsSent;
@@ -476,6 +477,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 			{
+				int toDel = 0;
 				Notification *notif = nm->nm_Notifications;
 				//Notification *nroot = NULL;
 			
@@ -507,6 +509,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 						}
 						
 						DEBUG("Remove notification for user: %s\n", notif->n_UserName );
+						toDel++;
 						
 						// add entries to list, entries will be updated and deleted
 						DelListEntry *le = FCalloc( 1, sizeof(DelListEntry) );
@@ -546,7 +549,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 			}
 			
 			// update and remove list of entries
-			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries\n");
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d\n", toDel );
 			
 			DelListEntry *le = rootList;
 			while( le != NULL )
@@ -562,6 +565,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				
 				le = ne;
 			}
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n", );
 			
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;

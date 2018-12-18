@@ -1352,7 +1352,7 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	}
 	else
 	{
-		FERROR("Cannot find notification!\n");
+		FERROR("\n\n\n\nCannot find notification!\n");
 		//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 		return 1;
 	}
@@ -1443,11 +1443,13 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
-					//userConnections->
+					DEBUG("Send to %d\n", i );
 					
 					// connection which was sending timeout 
 					if( userConnections->umac_Connection[i] )
 					{
+						DEBUG("Connection not null\n");
+						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
@@ -1491,8 +1493,12 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
+					DEBUG("Send1 to %d\n", i );
+					
 					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
+						DEBUG("Connection not null\n");
+						
 						NotificationSent *lns = NotificationSentNew();
 						lns->ns_NotificationID = notif->n_ID;
 						lns->ns_RequestID = (FULONG)userConnections->umac_Connection[i];
