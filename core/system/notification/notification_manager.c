@@ -546,7 +546,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				DelListEntry *ne = (DelListEntry *)le->node.mln_Succ;
 				Notification *notif = le->dle_NotificationPtr;
 				
-				DEBUG1("\n\nMsg will be sent! %s\n", le->notif->n_Content );
+				DEBUG1("\n\nMsg will be sent! %s\n", notif->n_Content );
 				
 				MobileAppNotifyUserUpdate( nm->nm_SB, notif->n_UserName, notif, 0, NOTIFY_ACTION_TIMEOUT );
 				NotificationDelete( notif );
