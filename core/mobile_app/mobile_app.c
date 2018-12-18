@@ -542,7 +542,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					if( en != NULL )
 					{
 						en->fq_Data = FMalloc( 64+LWS_SEND_BUFFER_PRE_PADDING+LWS_SEND_BUFFER_POST_PADDING );
-						int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
+						int msgsize = snprintf( (char *)(en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING), 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
 						en->fq_Size = msgsize;
 						
 						DEBUG("[websocket_app_callback] Msg to send1: %s\n", en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING );
