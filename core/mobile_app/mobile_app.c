@@ -72,8 +72,9 @@ struct UserMobileAppConnectionsS
 	MobileAppConnectionT	*umac_Connection[MAX_CONNECTIONS_PER_USER];
 };
 
-//static Hashmap *globalUserToAppConnectionsMap = NULL;
+static Hashmap *globalUserToAppConnectionsMap = NULL;
 //static Hashmap *globalWebsocketToUserConnectionsMap = NULL;
+/*
 typedef struct UserToApp{
 	char		*uta_UserName;
 	UserMobileAppConnectionsT		*uta_Data;
@@ -87,13 +88,13 @@ typedef struct WSIToUserConnections{
 }WSIToUserConnections;
 
 UserToApp *globalUserToAppConnections = NULL;
-//WSIToUserConnections *globalWebsocketToUserConnections = NULL;
+*/
 
 static pthread_mutex_t globalSessionRemovalMutex; //used to avoid sending pings while a session is being removed
 static pthread_t globalPingThread;
 
 //#define PUT_TO_LIST( ROOT, ENTRY ) { ENTRY->node.mln_Succ = ROOT; ROOT = ENTRY; }
-
+/*
 UserMobileAppConnectionsT *GetConnectionsByUserName( UserToApp *root, const char *key )
 {
 	UserToApp *l = root;
@@ -133,7 +134,7 @@ int PutConnectionsByUserName( UserToApp *root, char *key, UserMobileAppConnectio
 	
 	return 0;
 }
-
+*/
 
 static void  MobileAppInit(void);
 static int   MobileAppReplyError( struct lws *wsi, void *udata, int error_code );
@@ -263,6 +264,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 			*/
+			
+			INFO("\t\t\t\t\t\t\tREMOVE APP CONNECTION\n\n\n");
 			
 			if( appConnection == NULL )
 			{
@@ -736,8 +739,8 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 	UserMobileAppConnectionsT *userConnections = NULL;
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		//userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 
@@ -791,17 +794,9 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 			//FIXME: check the deallocation order for permanent_username as it is held both
 			//by our internal sturcts and within hashmap structs
 
-			PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
+			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
 			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 			{
-				
-				/*
-				UserToApp *uto = (UserToApp *)FCalloc( 1, sizeof(UserToApp) );
-				uto->uta_UserName = permanentUsername;
-				uto->uta_Data = userConnections;
-				PUT_TO_LIST( globalUserToAppConnections, uto );
-				*/
-				/*
 				//add the new connections struct to global users' connections map
 				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
 				{
@@ -809,9 +804,9 @@ static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username,
 
 					FFree(userConnections);
 					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-					return MobileAppReplyError( wsi, MOBILE_APP_ERR_INTERNAL );
+					return MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
 				}
-				*/
+				
 				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 			}
 		}
@@ -986,8 +981,8 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	UserMobileAppConnectionsT *userConnections = NULL;
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		//user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	MobileManager *mm = sb->sl_MobileManager;
@@ -1303,8 +1298,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 	//FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex );
 	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
 	{
-		userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
-		//user_connections = HashmapGetData( globalUserToAppConnectionsMap, username );
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username );
 		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
 	}
 	NotificationSent *notifSent = NULL;
@@ -1447,6 +1442,8 @@ int MobileAppNotifyUserUpdate( void *lsb,  const char *username, Notification *n
 				case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
+					//userConnections->
+					
 					// connection which was sending timeout 
 					if( userConnections->umac_Connection[i] )
 					{
@@ -1648,15 +1645,15 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 
 		unsigned int index = 0;
 
-		//HashmapElement *element = NULL;
-		//while( (element = HashmapIterate(globalUserToAppConnectionsMap, &index)) != NULL )
-		UserToApp *ua = globalUserToAppConnections;
+		HashmapElement *element = NULL;
+		while( (element = HashmapIterate(globalUserToAppConnectionsMap, &index)) != NULL )
+		//UserToApp *ua = globalUserToAppConnections;
 		
-		while( ua != NULL )
+		//while( ua != NULL )
 		{
-			//UserMobileAppConnectionsT *user_connections = element->data;
+			UserMobileAppConnectionsT *user_connections = element->data;
 			
-			UserMobileAppConnectionsT *user_connections = (UserMobileAppConnectionsT *)ua->uta_Data;
+			//UserMobileAppConnectionsT *user_connections = (UserMobileAppConnectionsT *)ua->uta_Data;
 			
 			if( user_connections == NULL )
 			{
@@ -1692,7 +1689,8 @@ static void* MobileAppPingThread( void *a __attribute__((unused)) )
 			} //end of user connection loops
 			pthread_mutex_unlock(&globalSessionRemovalMutex);
 			
-			ua = (UserToApp *)ua->node.mln_Succ;
+			//ua = (UserToApp *)ua->node.mln_Succ;
+			
 		} //end of users loop
 
 		if (check_okay)
