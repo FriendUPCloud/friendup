@@ -200,23 +200,26 @@ var mousePointer =
 					
 					// Don't rotate icon on listviews
 					
-					if( 
-						!mover &&
-						( isScreen || ( moveWin && w == moveWin.content ) ) &&
-						ic.offsetTop < my && ic.offsetLeft < mx &&
-						ic.offsetTop + ic.offsetHeight > my &&
-						ic.offsetLeft + ic.offsetWidth > mx
-					)
+					if( ic )
 					{
-						ic.classList.add( 'Selected' );
-						ic.selected = true;
-						ic.fileInfo.selected = true;
-					}
-					else if( !mover || mover != icon )
-					{
-						ic.classList.remove( 'Selected' );
-						ic.selected = false;
-						ic.fileInfo.selected = false;
+						if( 
+							!mover &&
+							( isScreen || ( moveWin && w == moveWin.content ) ) &&
+							ic.offsetTop < my && ic.offsetLeft < mx &&
+							ic.offsetTop + ic.offsetHeight > my &&
+							ic.offsetLeft + ic.offsetWidth > mx
+						)
+						{
+							ic.classList.add( 'Selected' );
+							ic.selected = true;
+							ic.fileInfo.selected = true;
+						}
+						else if( !mover || mover != icon )
+						{
+							ic.classList.remove( 'Selected' );
+							ic.selected = false;
+							ic.fileInfo.selected = false;
+						}
 					}
 				}
 			}
@@ -397,25 +400,28 @@ var mousePointer =
 					{
 						var ic = w.icons[a].domNode;
 				
-						// Exclude elements dragged
-						var found = false;
-						for( var b = 0; b < this.dom.childNodes.length; b++ )
+						if( ic )
 						{
-							if( ic == this.dom.childNodes[b] )
-								found = true;
-						}
-						if( found ) continue;
-						// Done exclude
+							// Exclude elements dragged
+							var found = false;
+							for( var b = 0; b < this.dom.childNodes.length; b++ )
+							{
+								if( ic == this.dom.childNodes[b] )
+									found = true;
+							}
+							if( found ) continue;
+							// Done exclude
 				
-						var icon = w.icons[a];
-						if ( 
-							ic.offsetTop < my && ic.offsetLeft < mx &&
-							ic.offsetTop + ic.offsetHeight > my &&
-							ic.offsetLeft + ic.offsetWidth > mx
-						)
-						{
-							dropper = icon;
-							break;
+							var icon = w.icons[a];
+							if ( 
+								ic.offsetTop < my && ic.offsetLeft < mx &&
+								ic.offsetTop + ic.offsetHeight > my &&
+								ic.offsetLeft + ic.offsetWidth > mx
+							)
+							{
+								dropper = icon;
+								break;
+							}
 						}
 					}
 				}
