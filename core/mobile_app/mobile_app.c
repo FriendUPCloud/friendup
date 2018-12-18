@@ -270,7 +270,8 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			if( appConnection == NULL )
 			{
 				DEBUG("Websocket close - no user session found for this socket\n");
-				return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
+				return 0;
+				//return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_SESSION_NO_CONNECTION );
 			}
 		
 			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
@@ -304,7 +305,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 			if( appConnection == NULL )
 			{
 				FERROR("Appconnection is NULL!\n");
-				return 1;
+				return 0;
 			}
 			if( appConnection->mac_Queue.fq_First == NULL )
 			{
@@ -387,7 +388,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 			if( tokens_found < 1 )
 			{
-				return MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
+				return 0;//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
 			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
@@ -413,14 +414,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 				if( first_type_letter == 'l'/*login*/)
 				{
-					return MobileAppHandleLogin( wsi, user, &json );
+					return 0;//MobileAppHandleLogin( wsi, user, &json );
 				}
 		else
 		{
 			if (appConnection == NULL)
 			{
 				DEBUG("Session not found for this connection\n");
-				return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
+				return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_SESSION);
 			}
 
 			appConnection->mac_LastCommunicationTimestamp = time(NULL);
@@ -568,14 +569,14 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 				break;
 
 			default:
-				return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
+				return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_WRONG_TYPE);
 			}
 
 		}
 	}
 	else
 	{
-		return MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_TYPE);
+		return 0;//MobileAppReplyError(wsi, user, MOBILE_APP_ERR_NO_TYPE);
 	}
 		
 	}
