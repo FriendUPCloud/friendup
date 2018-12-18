@@ -144,9 +144,13 @@ Notification *NotificationManagerGetDB( NotificationManager *nm,  FULONG id )
 	
 	snprintf( where, sizeof(where), "ID='%lu'", id );
 	
-	int entries;
-	// reading Notification
-	n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
+	{
+		int entries;
+		// reading Notification
+		n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
+	}
 	
 	return n;
 }
@@ -164,23 +168,27 @@ Notification *NotificationManagerGetTreeByNotifSentDB( NotificationManager *nm, 
 	SystemBase *sb = (SystemBase *)nm->nm_SB;
 	char where[ 1024 ];
 	
-	DEBUG("NotificationManagerGetTreeByNotifSentDB id %lu start\n", notifSentId );
-	
-	snprintf( where, sizeof(where), "ID='%lu'", notifSentId );
-	
-	int entries;
-	
-	NotificationSent *notifSent = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
-	DEBUG("NotificationManagerGetTreeByNotifSentDB found ptr %p\n", notifSent );
-	if( notifSent != NULL )
+	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	
 	{
-		snprintf( where, sizeof(where), "ID='%lu'", notifSent->ns_NotificationID );
-		n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
-		DEBUG("NotificationManagerGetTreeByNotifSentDB found notifsent ptr %p\n", n );
-		if( n != NULL )
+		DEBUG("NotificationManagerGetTreeByNotifSentDB id %lu start\n", notifSentId );
+	
+		snprintf( where, sizeof(where), "ID='%lu'", notifSentId );
+	
+		int entries;
+	
+		NotificationSent *notifSent = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationSentDesc, where, &entries );
+		DEBUG("NotificationManagerGetTreeByNotifSentDB found ptr %p\n", notifSent );
+		if( notifSent != NULL )
 		{
-			n->n_NotificationsSent = notifSent;
+			snprintf( where, sizeof(where), "ID='%lu'", notifSent->ns_NotificationID );
+			n = nm->nm_SQLLib->Load( nm->nm_SQLLib, NotificationDesc, where, &entries );
+			DEBUG("NotificationManagerGetTreeByNotifSentDB found notifsent ptr %p\n", n );
+			if( n != NULL )
+			{
+				n->n_NotificationsSent = notifSent;
+			}
 		}
+		FRIEND_MUTEX_UNLOCK( &(nm->nm_Mutex) );
 	}
 	DEBUG("NotificationManagerGetTreeByNotifSentDB id start\n" );
 	
