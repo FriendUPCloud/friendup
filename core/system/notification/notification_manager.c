@@ -467,7 +467,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 		
 		sleep( 1 );
 		counter++;
-		if( counter > 10 )	// do checking every 15 seconds
+		if( counter > 15 )	// do checking every 15 seconds
 		{
 			DelListEntry *rootList = NULL;
 			DelListEntry *lastListEntry = NULL;
@@ -490,7 +490,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 					allEntries++;
 					
 					// + 20
-					if( (notif->n_Created + 10) <= locTime )		// seems notification is timeouted
+					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
