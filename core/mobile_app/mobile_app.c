@@ -1126,6 +1126,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				case MN_force_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
+					DEBUG("force all , conptr %p\n", userConnections->umac_Connection[i]);
 					if( userConnections->umac_Connection[i] )
 					{
 						NotificationSent *lns = NotificationSentNew();
@@ -1170,6 +1171,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 				case MN_all_devices:
 				for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
 				{
+					DEBUG("force all , conptr %p status %d\n", userConnections->umac_Connection[i], userConnections->umac_Connection[i]->mac_AppStatus );
 					if( userConnections->umac_Connection[i] && userConnections->umac_Connection[i]->mac_AppStatus != MOBILE_APP_STATUS_RESUMED )
 					{
 						NotificationSent *lns = NotificationSentNew();

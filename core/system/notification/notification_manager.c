@@ -475,6 +475,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
 			int toDel = 0;
+			int allEntries = 0;
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 			{
@@ -486,8 +487,10 @@ void NotificationManagerTimeoutThread( FThread *data )
 				while( notif != NULL )
 				{
 					Notification *next = (Notification *)notif->node.mln_Succ;
+					allEntries++;
 					
-					if( (notif->n_Created + 20) <= locTime )		// seems notification is timeouted
+					// + 20
+					if( (notif->n_Created + 10) <= locTime )		// seems notification is timeouted
 					{
 						DEBUG("[NotificationManagerTimeoutThread] notification will be deleted %lu\n", notif->n_ID );
 						
@@ -550,7 +553,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 			}
 			
 			// update and remove list of entries
-			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d\n", toDel );
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries: %d all entries %d\n", toDel, allEntries );
 			
 			DelListEntry *le = rootList;
 			while( le != NULL )
