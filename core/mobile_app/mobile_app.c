@@ -415,7 +415,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 				if( first_type_letter == 'l'/*login*/)
 				{
-					return 0;//MobileAppHandleLogin( wsi, user, &json );
+					MobileAppHandleLogin( wsi, user, &json );
 				}
 		else
 		{
