@@ -342,10 +342,10 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.id = 'diskitem_' + msg.list[a].Title;
 						d.path = msg.list[a].Volume;
 						var nm = document.createElement( 'div' );
-						nm.style.paddingLeft = ( depth * 8 ) + 'px';
+						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
-						if( Workspace.dosDrivers )
+						if( Workspace.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
 						{
 							var driver = msg.list[a].Driver;
 							
@@ -359,17 +359,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 								img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
 							
 							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
 							i.style.backgroundImage = 'url("' + img + '")';
-							i.style.backgroundPosition = 'center';
-							i.style.backgroundRepeat = 'no-repeat';
-							i.style.backgroundSize = 'contain';
-							i.style.width = '16px';
-							i.style.height = '16px';
-							i.style.filter = 'brightness(100)';
-							i.style.float = 'left';
-							i.style.verticalAlign = 'middle';
-							i.style.display = 'block';
-							i.style.margin = '1px 4px 0 0';
 							nm.appendChild( i );
 							nm.classList.remove( 'IconSmall' );
 							nm.classList.remove( 'IconDisk' );
@@ -377,6 +368,15 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
+							// Set nice folder icon
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
+							var img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
+							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
+							i.style.backgroundImage = 'url("' + img + '")';
+							nm.appendChild( i );
+							
 							( function( ls ){
 								var ex = document.createElement( 'span' );
 								ex.className = 'FloatRight IconButton IconSmall fa-remove';
@@ -535,7 +535,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			delete removers;
 			
-			//
+			// Precalc
+			var d13 = depth * 13;
 			for( var a = 0; a < msg.list.length; a++ )
 			{
 				var foundItem = false;
@@ -562,7 +563,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						var icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
-						d.innerHTML = '<div style="padding-left: ' + ( depth * 13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
+						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
 						rootElement.appendChild( d );
 						var fn = msg.list[a].Filename;
 						if( msg.list[a].Type == 'Directory' )

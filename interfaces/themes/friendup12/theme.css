@@ -3140,6 +3140,11 @@ html body[mobile=mobile] .File .Icon
 	-webkit-filter: none;
 }
 
+.FileBrowser > div
+{
+	font-size: 0.95em;
+}
+
 html .File
 {
 	margin: 20px 0 0 0;
@@ -3149,7 +3154,7 @@ html .File .Title
 {
 	width: calc(100% + 26px);
 	left: -13px;
-	font-size: 1em;
+	font-size: 0.95em;
 }
 
 html .File .Icon > div
