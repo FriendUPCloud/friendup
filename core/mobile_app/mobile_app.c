@@ -192,11 +192,12 @@ static void MobileAppInit( void )
 	DEBUG("Initializing mobile app module\n");
 
 	
-	/*
+	
 	if( globalUserToAppConnectionsMap == NULL )
 	{
 		globalUserToAppConnectionsMap = HashmapNew();
 	}
+	/*
 	if( globalWebsocketToUserConnectionsMap == NULL )
 	{
 		globalWebsocketToUserConnectionsMap = HashmapNew();
