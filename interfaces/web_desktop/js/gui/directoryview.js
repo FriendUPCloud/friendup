@@ -225,7 +225,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		// Go up a level
 		{
 			element: 'button',
-			className: 'Up IconSmall fa-arrow-up',
+			className: 'Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
@@ -312,7 +312,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				}
 			}
 		},
-		{
+		!isMobile ? {
 			element: 'button',
 			className: 'Back IconSmall fa-arrow-left',
 			content: i18n( 'i18n_dir_btn_back' ),
@@ -326,8 +326,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.refresh();
 				}
 			}
-		},
-		{
+		}: false,
+		!isMobile ? {
 			element: 'button',
 			className: 'Forward IconSmall fa-arrow-right',
 			content: i18n( 'i18n_dir_btn_forward' ),
@@ -341,7 +341,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.refresh();
 				}
 			}
-		},
+		}: false,
 		{
 			element: 'button',
 			className: 'Reload IconSmall fa-refresh',
@@ -431,6 +431,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	// Process!
 	for( var a in buttons )
 	{
+		if( !buttons[a] ) continue;
 		if( buttons[a].element == 'toggle-group' )
 		{
 			var ele = document.createElement( 'div' );
