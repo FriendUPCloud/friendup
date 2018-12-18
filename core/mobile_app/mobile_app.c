@@ -1099,7 +1099,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 					lns->node.mln_Succ = (MinNode *)notif->n_NotificationsSent;
 					notif->n_NotificationsSent = lns;
 					
-					wsMessageSent = TRUE;
+					//wsMessageSent = TRUE;
 				}
 			} // locses = NULL
 			usl = (UserSessListEntry *)usl->node.mln_Succ;
