@@ -21,6 +21,11 @@
 #include <time.h>
 #include <util/friendqueue.h>
 
+#undef DEBUG
+#define DEBUG( ...)
+#undef DEBUG1
+#define DEBUG1( ...)
+
 extern SystemBase *SLIB;
 
 #define USE_WORKERS 1

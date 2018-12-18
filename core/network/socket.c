@@ -40,6 +40,11 @@
 #include <sys/resource.h>
 #include <pthread.h>
 
+#undef DEBUG
+#define DEBUG( ...)
+#undef DEBUG1
+#define DEBUG1( ...)
+
 //#define USE_SOCKET_REAPER
 
 #define SOCKET_STATE_MAX_ACCEPTED_TIME_s 5 //socket has N seconds to send the first byte

@@ -59,6 +59,11 @@
 #include <core/friendcore_manager.h>
 #include <openssl/crypto.h>
 
+#undef DEBUG
+#define DEBUG( ...)
+#undef DEBUG1
+#define DEBUG1( ...)
+
 //#define USE_PTHREAD
 #define USE_WORKERS
 //#define USE_PTHREAD_ACCEPT
