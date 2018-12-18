@@ -427,11 +427,11 @@ DirectoryView.prototype.ShowFileBrowser = function()
 		var d = document.createElement( 'div' );
 		if( this.sidebarbackground )
 		{
-			d.className = 'FileBrowserContainer BackgroundHeavier';
+			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall';
 		}
 		else 
 		{
-			d.className = 'FileBrowserContainer';
+			d.className = 'FileBrowserContainer ScrollBarSmall';
 			d.style.background = 'none';
 		}
 		

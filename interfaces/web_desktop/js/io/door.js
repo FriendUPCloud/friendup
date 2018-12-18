@@ -209,7 +209,11 @@ Door.prototype.getIcons = function( fileInfo, callback, flags )
 	this.checkDormantDoors( t.fileInfo.Path ? t.fileInfo.Path : false, function( dirs )
 	{
 		if( !t.fileInfo.Path && t.path )
-			t.fileInfo.Path = t.deviceName + ':' + t.path;
+		{
+			if( t.deviceName.indexOf( ':' ) < 0 )
+				t.deviceName += ':';
+			t.fileInfo.Path = t.path.indexOf( ':' ) > 0 ? t.path : ( t.deviceName + t.path );
+		}
 
 		var fname = t.fileInfo.Path.split( ':' )[1];
 		if( fname && fname.indexOf( '/' ) > 0 ){ fname = fname.split( '/' ); fname = fname[fname.length-1]; }

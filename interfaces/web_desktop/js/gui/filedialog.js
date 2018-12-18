@@ -267,12 +267,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			mainview.getWindowElement().blocker = false;
 			_ActivateWindow( mainview.getWindowElement ().parentNode );
 		}
-		// Close bookmarks if it's there..
-		if( w.books )
-		{
-			w.books.close();
-			w.books = false;
-		}
 		triggerfunction( false );
 	} );
 	
@@ -376,7 +370,6 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		var open = false;
 		var save = false;
 		var cacl = false;
-		var book = false;
 		var fold = false;
 		var ds = w.getElementsByTagName ( 'button' );
 		for( var a = 0; a < ds.length; a++ )
@@ -440,207 +433,10 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 				{
 					dialog.prev = this.path;
 					dialog.path = this.value.split ( ' ' ).join ( '%20' );
-					w.refreshView ();
+					w.refreshView();
 				}
 			}
 			inpu.value = dialog.path;
-		}
-		
-		// Clicking on the bookmarks icon
-		if( book )
-		{
-			w.book = book;
-			book.onclick = function()
-			{
-				var bookmarkArea = false;
-				// TODO: Make bookmarks pop to front
-				if( w.books ) return;
-				var bw = new View( {
-					title: i18n( 'i18n_bookmarks' ),
-					width: 340,
-					height: 340,
-					screen: mainview.getFlag( 'screen' )
-				} );
-				w.books = bw;
-				bw.onClose = function()
-				{
-					w.books = false;
-				}
-				var f = new File( 'System:templates/filedialog_bookmarks.html' );
-				f.replacements = {
-					'Add': i18n( 'i18n_bookmarks_add' ),
-					'Select': i18n( 'i18n_bookmarks_select' ),
-					'Close': i18n( 'i18n_bookmarks_close' ),
-					'Remove': i18n( 'i18n_bookmarks_remove' )
-				};
-				f.onLoad = function( data )
-				{
-					bw.setContent( data );
-
-					var buttons = bw.getElementsByTagName( 'button' );
-					var add, select, canc, remove;
-					for( var a = 0; a < buttons.length; a++ )
-					{
-						if( buttons[a].getAttribute( 'name' ) == 'addbookmark' )
-							add = buttons[a];
-						else if( buttons[a].getAttribute( 'name' ) == 'close' )
-							canc = buttons[a];
-						else if( buttons[a].getAttribute( 'name' ) == 'select' )
-							select = buttons[a];
-						else if( buttons[a].getAttribute( 'name' ) == 'removebookmark' )
-							remove = buttons[a];
-					}
-					var divs = bw.getElementsByTagName( 'div' );
-					for( var a = 0; a < divs.length; a++ )
-					{
-						if( divs[a].classList.contains( 'BookmarkArea' ) )
-						{
-							bookmarkArea = divs[a];
-						}
-					}
-
-					// focus on input
-					var inp = bw.getElementsByTagName( 'input' );
-					if( inp && inp[0] ) inp[0].focus();
-
-					// Add the current file dialog path as a bookmark!
-					add.onclick = function()
-					{
-						var nm = dialog.path.split( ':' )[1];
-						if( nm.indexOf( '/' ) > 0 )
-						{
-							// Trailing!
-							if( nm.substr( nm.length - 1, 1 ) == '/' )
-								nm = nm.substr( 0, nm.length - 1 );
-							nm = nm.split( '/' );
-							nm = nm[nm.length-1];
-						}
-						var rl = dialog.path;
-						var m = new Module( 'system' );
-						m.onExecuted = function( e, d )
-						{
-							if( e != 'ok' ) return;
-							bw.refresh();
-							w.refreshView();
-						}
-						m.execute( 'addbookmark', { path: rl, name: nm } );
-					}
-
-					remove.onclick = function()
-					{
-						if( !bookmarkArea ) return;
-						var eles = bookmarkArea.getElementsByTagName( 'div' );
-						for( var a = 0; a < eles.length; a++ )
-						{
-							if( eles[a].getAttribute( 'active' ) == 'active' )
-							{
-								var m = new Module( 'system' );
-								m.onExecuted = function( e, d )
-								{
-									bw.refresh();
-									w.refreshView();
-								}
-								// TODO: This can crash on the ( - find a better way
-								m.execute( 'removebookmark', { path: eles[a].getAttribute( 'name' ) } );
-								return;
-							}
-						}
-					}
-
-					select.onclick = function()
-					{
-						if( !bookmarkArea ) return;
-						var eles = bookmarkArea.getElementsByTagName( 'div' );
-						for( var a = 0; a < eles.length; a++ )
-						{
-							if( eles[a].getAttribute( 'active' ) == 'active' )
-							{
-								eles[a].ondblclick();
-								return;
-							}
-						}
-					}
-
-					canc.onclick = function()
-					{
-						bw.close();
-					}
-
-					bw.refresh();
-				}
-				f.load();
-
-				// Refresh bookmark window with bookmarks
-				bw.refresh = function()
-				{
-					var m = new Module( 'system' );
-					m.onExecuted = function( e, d )
-					{
-						if( e != 'ok' )
-						{
-							bw.setBookmarkContents( '<div class="Padding"><h2>' + i18n( 'i18n_empty_view' ) + '</h2><p>' + i18n( 'i18n_no_bookmarks' ) + '.</p></div>' );
-						}
-						else
-						{
-							// Do it!
-							var eles = JSON.parse( d );
-							var html = '<div class="List">';
-							for( var b = 0; b < eles.length; b++ )
-							{
-								var sw = b % 2 + 1;
-								html += '<div class="Ellipsis BorderBottom Padding HRow Padding sw' + sw + '" name="' + eles[b].name + '" path="' + eles[b].path + '">' + eles[b].name + ' (' + eles[b].path + ')</div>';
-							}
-							html += '</div>';
-							bw.setBookmarkContents( html );
-						}
-					}
-					m.execute( 'getbookmarks' );
-				}
-
-				// Set content on bookmark window
-				bw.setBookmarkContents = function( content )
-				{
-					if( !bookmarkArea ) return;
-					bookmarkArea.innerHTML = content;
-					var eles = bookmarkArea.getElementsByTagName( 'div' );
-					for( var a = 0; a < eles.length; a++ )
-					{
-						if( eles[a].getAttribute( 'path' ) )
-						{
-							eles[a].ondblclick = function()
-							{
-								var url = this.getAttribute( 'path' );
-								bw.close();
-								dialog.path = url;
-								w.refreshView();
-							}
-							eles[a].onclick = function()
-							{
-								var e = 0;
-								for( var c = 0; c < eles.length; c++ )
-								{
-									if( !eles[c].getAttribute( 'path' ) ) continue;
-									var sw = 'sw' + ( e++ % 2 + 1 );
-									if( eles[c] == this )
-									{
-										eles[c].classList.remove( sw );
-										eles[c].setAttribute( 'active', 'active' );
-										eles[c].classList.add( 'Selected' );
-									}
-									else
-									{
-										eles[c].classList.add( sw );
-										eles[c].setAttribute( 'active', '' );
-										eles[c].classList.remove( 'Selected' );
-									}
-									d++;
-								}
-							}
-							eles[a].style.cursor = 'pointer';
-						}
-					}
-				}
-			}
 		}
 	
 		// Correct fileinfo
