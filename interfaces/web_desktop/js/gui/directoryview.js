@@ -3685,6 +3685,24 @@ FileIcon.prototype.Init = function( fileInfo )
 	// -------------------------------------------------------------------------
 	file.onclick = function( e )
 	{
+		// Use override if possible
+		if( this.directoryView.filedialog )
+		{
+			if( this.directoryView.doubleclickfiles )
+			{
+				if( this.fileInfo.Type == 'File' )
+				{
+					this.directoryView.doubleclickfiles( this, e );
+				}
+				else if( this.fileInfo.Type == 'Directory' )
+				{
+					launchIcon( e, this );
+				}
+				return cancelBubble( e );
+			}
+			return;
+		}
+		
 		if( !e ) e = window.event;
 		if( !e ) e = {};
 		var sh = e.shiftKey || e.ctrlKey;
@@ -3784,6 +3802,9 @@ FileIcon.prototype.Init = function( fileInfo )
 	// Let's make it possible also for touch interfaces -----------------------
 	file.addEventListener( 'touchstart', function( event )
 	{
+		if( this.directoryView.filedialog )
+			return;
+			
 		window.fileMenuElement = file;
 		window.clickElement = file;
 
@@ -3852,6 +3873,9 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	file.addEventListener( 'touchend', function( event )
 	{
+		if( this.directoryView.filedialog )
+			return;
+			
 		this.touchPos = false;
 		
 		file.onclick();

@@ -460,6 +460,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 			{
 				element.classList.add( 'Selected' );
 				w.choose( element );
+				if( event ) return cancelBubble( event );
 			}
 		} );
 		dir.listMode = 'listview';
