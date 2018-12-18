@@ -3295,250 +3295,285 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 	getMountlist: function( callback, forceRefresh, addDormant )
 	{
 		var t = this;
-		var mo = new Module( 'system' );
-		mo.onExecuted = function( returnCode, shortcuts )
+		if( !Workspace.dosDrivers )
 		{
-			var m = new Library( 'system.library' )
-			m.onExecuted = function( e, dat )
+			var d = new Module( 'system' );
+			d.onExecuted = function( res, dat )
 			{
-				var newIcons = [];
-
-				// Add system on top (after Ram: if it exists)
-				newIcons.push( {
-					Title:	   'System',
-					Volume:    'System:',
-					Path:	   'System:',
-					Type:	   'Door',
-					Handler:   'built-in',
-					Driver:    'Dormant',
-					MetaType:  'Directory',
-					IconClass: 'SystemDisk',
-					ID:	       'system', // TODO: fix
-					Mounted:   true,
-					Visible:   globalConfig.hiddenSystem == true ? false : true,
-					Door:	   Friend.DoorSystem
-				} );
-				
-				if( returnCode == 'ok' )
+				if( res != 'ok' )
 				{
-					var shorts = JSON.parse( shortcuts );
-					for( var a = 0; a < shorts.length; a++ )
-					{
-						var pair = shorts[a].split( ':' );
-						// Shift camelcase
-						var literal = '';
-						for( var c = 0; c < pair[0].length; c++ )
-						{
-							if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
-							{
-								literal += ' ';
-							}
-							literal += pair[0].charAt( c );
-						}
-						
-						// Add custom icon
-						newIcons.push( {
-							Title: literal,
-							Filename: pair[0],
-							Type: 'Executable',
-							IconFile: '/' + pair[1],
-							Handler: 'built-in',
-							Driver: 'Shortcut',
-							MetaType: 'ExecutableShortcut',
-							ID: shorts[a].toLowerCase(),
-							Mounted: true,
-							Visible: true,
-							IconClass: literal.split( ' ' ).join( '_' ),
-							Door: 'executable'
-						} );
-					}
+					doGetMountlistHere();
+					return;
 				}
-
-				// Add DormantDrives to the list (automount)
-				var dormantDoors = DormantMaster.getDoors();
-				for ( var d = 0; d < dormantDoors.length; d++ )
-				{
-					var dormantDoor = dormantDoors[ d ];
-					if ( dormantDoor.AutoMount )
-					{
-						newIcons.push( 
-						{
-							Title: dormantDoor.Title,
-							Volume: dormantDoor.Volume,
-							Path: dormantDoor.Path,
-							Type: dormantDoor.Type,
-							Handler: dormantDoor.Handler,
-							Driver: dormantDoor.Drive,
-							MetaType: dormantDoor.MetaType,
-							IconClass: 'SystemDisk',
-							ID: 'local', // TODO: fix
-							Mounted:  true,
-							Visible: true,
-							Door: dormantDoor,
-							Dormant: dormantDoor.Dormant
-						} );						
-					}
-				}
-
-				// Redraw icons when tested for disk info
-				var redrawIconsT = false;
-				function testDrive( o, d )
-				{
-					if( !d ) return;
-					// Check disk info
-					d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
-					{
-						if( io.split( '<!--separate-->' )[0] == 'ok' )
-						{
-							var fl = new File( o.Volume + 'disk.info' );
-							fl.onLoad = function( data )
-							{
-								if( data.indexOf( '{' ) >= 0 )
-								{
-									var dt = JSON.parse( data );
-									if( dt && dt.DiskIcon )
-									{
-										o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
-										clearTimeout( redrawIconsT );
-										redrawIconsT = setTimeout( function()
-										{
-											t.redrawIcons();
-										}, 100 );
-									}
-								}
-							}
-							fl.load();
-						}
-						clearTimeout( redrawIconsT );
-						redrawIconsT = setTimeout( function()
-						{
-							t.redrawIcons();
-						}, 100 );
-					} );
-				}
-
-				// Network devices
-				var rows;
+				var types = null;
 				try
 				{
-					rows = JSON.parse( dat );
-				}
-				catch(e)
-				{
-					rows = false;
-					console.log( 'Could not parse network drives',e,dat );
-				}
-
-				if( rows && rows.length )
-				{
-					for ( var a = 0; a < rows.length; a++ )
+					var types = JSON.parse( dat );
+					Workspace.dosDrivers = {};
+					for( var a = 0; a < types.length; a++ )
 					{
-						var r = rows[a];
-						if( r.Config.indexOf( '{' ) >= 0 )
-							r.Config = JSON.parse( r.Config );
-
-						// Check if it was already found!
-						var found = false;
-						for( var va in t.icons )
-						{
-							if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
-							{
-								found = true;
-								if( !forceRefresh )
-									newIcons.push( t.icons[va] );
-								break;
-							}
-						}
-						if( found && !forceRefresh )
-						{
-							continue;
-						}
-
-						// Doesn't exist, go on
-						var o = false;
-
-						var d;
-
-						d = ( new Door() ).get( r.Name + ':' );
-						d.permissions[0] = 'r';
-						d.permissions[1] = 'w';
-						d.permissions[2] = 'e';
-						d.permissions[3] = 'd';
-
-						var o = {
-							Title: r.Name.split(':').join(''),
-							Volume: r.Name.split(':').join('') + ':',
-							Path: r.Name.split(':').join('') + ':',
-							Handler: r.FSys,
-							Type: 'Door',
-							MetaType: 'Directory',
-							ID: r.ID,
-							Mounted: true,
-							Driver: r.Type,
-							Door: d,
-							Visible: r.Visible != "false" ? true : false,
-							Config: r.Config
-						};
-
-						// Execute it if it has execute flag set! Only the first time..
-						if( !found && r.Execute )
-						{
-							ExecuteJSXByPath( o.Volume + r.Execute );
-						}
-
-						// Force mount
-						var f = new FriendLibrary( 'system.library' );
-						f.addVar( 'devname', r.Name.split(':').join('') );
-						f.execute( 'device/mount' );
-
-						// We need volume information
-						d.Volume = o.Volume;
-						//d.Type = typ;
-
-						testDrive( o, d );
-
-						// Add to list
-						newIcons.push( o );
+						Workspace.dosDrivers[ types[ a ].type ] = types[a];
 					}
 				}
-
-				// The new list
-				if( newIcons.length )
+				catch( e )
 				{
-					// Check change
-					if( t.icons )
+					Workspace.dosDrivers = null;
+				}
+				doGetMountlistHere();
+			}
+			d.execute( 'types' );
+		}
+		else
+		{
+			doGetMountlistHere();
+		}
+		function doGetMountlistHere()
+		{
+			var mo = new Module( 'system' );
+			mo.onExecuted = function( returnCode, shortcuts )
+			{
+				var m = new Library( 'system.library' )
+				m.onExecuted = function( e, dat )
+				{
+					var newIcons = [];
+
+					// Add system on top (after Ram: if it exists)
+					newIcons.push( {
+						Title:	   'System',
+						Volume:    'System:',
+						Path:	   'System:',
+						Type:	   'Door',
+						Handler:   'built-in',
+						Driver:    'Dormant',
+						MetaType:  'Directory',
+						IconClass: 'SystemDisk',
+						ID:	       'system', // TODO: fix
+						Mounted:   true,
+						Visible:   globalConfig.hiddenSystem == true ? false : true,
+						Door:	   Friend.DoorSystem
+					} );
+				
+					if( returnCode == 'ok' )
 					{
-						for( var a = 0; a < t.icons.length; a++ )
+						var shorts = JSON.parse( shortcuts );
+						for( var a = 0; a < shorts.length; a++ )
 						{
-							var found = false;
-							for( var b = 0; b < newIcons.length; b++ )
+							var pair = shorts[a].split( ':' );
+							// Shift camelcase
+							var literal = '';
+							for( var c = 0; c < pair[0].length; c++ )
 							{
-								if( newIcons[b].Volume == t.icons[a].Volume )
+								if( c > 0 && pair[0].charAt(c).toUpperCase() == pair[0].charAt(c) )
+								{
+									literal += ' ';
+								}
+								literal += pair[0].charAt( c );
+							}
+						
+							// Add custom icon
+							newIcons.push( {
+								Title: literal,
+								Filename: pair[0],
+								Type: 'Executable',
+								IconFile: '/' + pair[1],
+								Handler: 'built-in',
+								Driver: 'Shortcut',
+								MetaType: 'ExecutableShortcut',
+								ID: shorts[a].toLowerCase(),
+								Mounted: true,
+								Visible: true,
+								IconClass: literal.split( ' ' ).join( '_' ),
+								Door: 'executable'
+							} );
+						}
+					}
+
+					// Add DormantDrives to the list (automount)
+					var dormantDoors = DormantMaster.getDoors();
+					for ( var d = 0; d < dormantDoors.length; d++ )
+					{
+						var dormantDoor = dormantDoors[ d ];
+						if ( dormantDoor.AutoMount )
+						{
+							newIcons.push( 
+							{
+								Title: dormantDoor.Title,
+								Volume: dormantDoor.Volume,
+								Path: dormantDoor.Path,
+								Type: dormantDoor.Type,
+								Handler: dormantDoor.Handler,
+								Driver: dormantDoor.Drive,
+								MetaType: dormantDoor.MetaType,
+								IconClass: 'SystemDisk',
+								ID: 'local', // TODO: fix
+								Mounted:  true,
+								Visible: true,
+								Door: dormantDoor,
+								Dormant: dormantDoor.Dormant
+							} );						
+						}
+					}
+
+					// Redraw icons when tested for disk info
+					var redrawIconsT = false;
+					function testDrive( o, d )
+					{
+						if( !d ) return;
+						// Check disk info
+						d.dosAction( 'info', { path: o.Volume + 'disk.info' }, function( io )
+						{
+							if( io.split( '<!--separate-->' )[0] == 'ok' )
+							{
+								var fl = new File( o.Volume + 'disk.info' );
+								fl.onLoad = function( data )
+								{
+									if( data.indexOf( '{' ) >= 0 )
+									{
+										var dt = JSON.parse( data );
+										if( dt && dt.DiskIcon )
+										{
+											o.IconFile = getImageUrl( o.Volume + dt.DiskIcon );
+											clearTimeout( redrawIconsT );
+											redrawIconsT = setTimeout( function()
+											{
+												t.redrawIcons();
+											}, 100 );
+										}
+									}
+								}
+								fl.load();
+							}
+							clearTimeout( redrawIconsT );
+							redrawIconsT = setTimeout( function()
+							{
+								t.redrawIcons();
+							}, 100 );
+						} );
+					}
+
+					// Network devices
+					var rows;
+					try
+					{
+						rows = JSON.parse( dat );
+					}
+					catch(e)
+					{
+						rows = false;
+						console.log( 'Could not parse network drives',e,dat );
+					}
+
+					if( rows && rows.length )
+					{
+						for ( var a = 0; a < rows.length; a++ )
+						{
+							var r = rows[a];
+							if( r.Config.indexOf( '{' ) >= 0 )
+								r.Config = JSON.parse( r.Config );
+
+							// Check if it was already found!
+							var found = false;
+							for( var va in t.icons )
+							{
+								if( t.icons[va].Volume == r.Name.split( ':' ).join( '' ) + ':' )
 								{
 									found = true;
+									if( !forceRefresh )
+										newIcons.push( t.icons[va] );
 									break;
 								}
 							}
-							if( !found )
+							if( found && !forceRefresh )
 							{
-								testDrive( t.icons[a], t.icons[a].Door )
-								break;
+								continue;
 							}
+
+							// Doesn't exist, go on
+							var o = false;
+
+							var d;
+
+							d = ( new Door() ).get( r.Name + ':' );
+							d.permissions[0] = 'r';
+							d.permissions[1] = 'w';
+							d.permissions[2] = 'e';
+							d.permissions[3] = 'd';
+
+							var o = {
+								Title: r.Name.split(':').join(''),
+								Volume: r.Name.split(':').join('') + ':',
+								Path: r.Name.split(':').join('') + ':',
+								Handler: r.FSys,
+								Type: 'Door',
+								MetaType: 'Directory',
+								ID: r.ID,
+								Mounted: true,
+								Driver: r.Type,
+								Door: d,
+								Visible: r.Visible != "false" ? true : false,
+								Config: r.Config
+							};
+
+							// Execute it if it has execute flag set! Only the first time..
+							if( !found && r.Execute )
+							{
+								ExecuteJSXByPath( o.Volume + r.Execute );
+							}
+
+							// Force mount
+							var f = new FriendLibrary( 'system.library' );
+							f.addVar( 'devname', r.Name.split(':').join('') );
+							f.execute( 'device/mount' );
+
+							// We need volume information
+							d.Volume = o.Volume;
+							//d.Type = typ;
+
+							testDrive( o, d );
+
+							// Add to list
+							newIcons.push( o );
 						}
 					}
-					t.icons = newIcons;
-				}
-				// Do the callback thing
-				if( callback && typeof( callback ) == 'function' ) callback( t.icons );
 
-				// Check for new events
-				t.checkDesktopEvents();
+					// The new list
+					if( newIcons.length )
+					{
+						// Check change
+						if( t.icons )
+						{
+							for( var a = 0; a < t.icons.length; a++ )
+							{
+								var found = false;
+								for( var b = 0; b < newIcons.length; b++ )
+								{
+									if( newIcons[b].Volume == t.icons[a].Volume )
+									{
+										found = true;
+										break;
+									}
+								}
+								if( !found )
+								{
+									testDrive( t.icons[a], t.icons[a].Door )
+									break;
+								}
+							}
+						}
+						t.icons = newIcons;
+					}
+					// Do the callback thing
+					if( callback && typeof( callback ) == 'function' ) callback( t.icons );
+
+					// Check for new events
+					t.checkDesktopEvents();
+				}
+				m.execute( 'device/list' );
 			}
-			m.execute( 'device/list' );
+			mo.forceHTTP = true;
+			mo.forceSend = true;
+			mo.execute( 'workspaceshortcuts' );
 		}
-		mo.forceHTTP = true;
-		mo.forceSend = true;
-		mo.execute( 'workspaceshortcuts' );
 
 		return true;
 	},

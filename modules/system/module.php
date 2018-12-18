@@ -686,6 +686,12 @@ if( isset( $args->command ) )
 					if( $o->group == 'Admin' && $level != 'Admin' )
 						continue;
 
+					// Find default label
+					if( file_exists( 'devices/DOSDrivers/' . $f . '/icon.svg' ) )
+					{
+						$o->iconLabel = base64_encode( file_get_contents( 'devices/DOSDrivers/' . $f . '/icon.svg' ) );
+					}
+					
 					if( isset( $o->icon ) && file_exists( 'devices/DOSDrivers/' . $f . '/' . $o->icon ) )
 					{
 						$o->hasIcon = 'true';

@@ -345,6 +345,25 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						nm.style.paddingLeft = ( depth * 8 ) + 'px';
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
+						if( Workspace.dosDrivers )
+						{
+							var driver = msg.list[a].Driver;
+							if( Workspace.dosDrivers[ driver ] && Workspace.dosDrivers[ driver ].iconLabel )
+							{
+								var i = document.createElement( 'img' );
+								i.src = 'data:image/svg+xml;base64,' + Workspace.dosDrivers[ driver ].iconLabel;
+								i.style.width = '16px';
+								i.style.height = 'auto';
+								i.style.filter = 'brightness(100)';
+								i.style.float = 'left';
+								i.style.verticalAlign = 'middle';
+								i.style.display = 'block';
+								i.style.margin = '0 2px 0 0';
+								nm.appendChild( i );
+								nm.classList.remove( 'IconSmall' );
+								nm.classList.remove( 'IconDisk' );
+							}
+						}
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
