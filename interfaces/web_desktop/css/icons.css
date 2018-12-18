@@ -407,9 +407,9 @@ html .Launcher .File div *
 	top: calc(50% - 17px);
 	width: 24px;
 	height: 24px;
-	background-position: center bottom;
+	background-position: center;
 	background-repeat: no-repeat;
-	background-size: contain;
+	background-size: 76%;
 }
 
 .File .Icon .File

@@ -3279,6 +3279,11 @@ html .File .Icon .Drive
 	background-image: url(/iconthemes/friendup15/Disk.svg);
 }
 
+html body.Charcoal .File .Icon .Drive .Label
+{
+	filter: grayscale(1) brightness(0.4);
+}
+
 html .File .Icon .Directory
 {
 	/*background-image: url(/themes/friendup/gfx/icons/directory.png);*/
