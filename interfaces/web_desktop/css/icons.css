@@ -42,11 +42,15 @@
 	background-size: contain;
 	width: 16px;
 	height: 16px;
-	filter: brightness(100);
 	float: left;
 	vertical-align: middle;
 	display: block;
 	margin: 1px 4px 0 0;
+}
+
+.Active > .FileBrowserItemImage
+{
+	filter: brightness(100);
 }
 
 .FileBrowser div.Name.Active, 

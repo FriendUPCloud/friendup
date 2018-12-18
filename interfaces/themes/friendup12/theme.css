@@ -3155,6 +3155,27 @@ html body[mobile=mobile] .File .Icon
 	font-size: 0.95em;
 }
 
+body.Charcoal .FileBrowserItemImage,
+body.Dark .FileBrowserItemImage
+{
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 16px;
+	height: 16px;
+	float: left;
+	vertical-align: middle;
+	display: block;
+	margin: 1px 4px 0 0;
+	filter: brightness(100);
+}
+
+body.Charcoal .Active > .FileBrowserItemImage,
+body.Dark .Active > .FileBrowserItemImage
+{
+	filter: brightness(100);
+}
+
 html .File
 {
 	margin: 20px 0 0 0;
