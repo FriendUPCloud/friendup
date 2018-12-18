@@ -671,6 +671,7 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		{
 			while( TRUE )
 			{
+				DEBUG("Waiting for UserMobileManager\n");
 				if( SLIB->sl_UM != NULL )
 				{
 					break;
