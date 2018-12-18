@@ -161,6 +161,10 @@ int UMAssignGroupToUser( UserManager *smgr, User *usr )
 	DEBUG("[UMAssignGroupToUser] Assign group to user\n");
 
 	//sprintf( tmpQuery, "SELECT UserGroupID FROM FUserToGroup WHERE UserID = '%lu'", usr->u_ID );
+	if( smgr == NULL )
+	{
+		return 1;
+	}
 	
 	SystemBase *sb = (SystemBase *)smgr->um_SB;
 	SQLLibrary *sqlLib = sb->LibrarySQLGet( sb );
