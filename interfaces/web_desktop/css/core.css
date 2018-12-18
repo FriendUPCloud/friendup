@@ -2762,6 +2762,25 @@ body:not([tablet]):not([mobile]) .Desklet .Launcher.Startmenu:hover
 	overflow: hidden;
 }
 
+html .DirectoryToolbar button.Makedir:before
+{
+	content: " ";
+	width: 16px;
+	height: 26px;
+	margin-top: 0;
+	display: inline-block;
+	background-image: url(/iconthemes/friendup15/AddFolder.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	background-color: transparent;
+}
+
+html .DirectoryToolbar button.Makedir
+{
+	color: transparent;
+}
+
 .Active .DirectoryToolbar
 {
 	border-bottom-color: $WinFrameBgActive;

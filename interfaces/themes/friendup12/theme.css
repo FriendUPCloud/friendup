@@ -1411,6 +1411,11 @@ html body.Dark .View.Active .DirectoryToolbar
 	color: #e0e0e0;
 }
 
+html body.Dark .DirectoryToolbar button.Makedir:before
+{
+	filter: brightness(2) grayscale(1);
+}
+
 html body.Dark .View .DirectoryToolbar button,
 html body.Dark .View .DirectoryToolbar .Button
 {
@@ -1694,6 +1699,11 @@ html body.Charcoal .View.Active .DirectoryToolbar
 {
 	background-color: #3c3c3c;
 	color: #e0e0e0;
+}
+
+html body.Charcoal .DirectoryToolbar button.Makedir:before
+{
+	filter: brightness(2) grayscale(1);
 }
 
 html body.Charcoal .View .DirectoryToolbar button,

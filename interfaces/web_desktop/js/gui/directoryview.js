@@ -350,7 +350,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	{
 		buttons.push( {
 			element: 'button',
-			className: 'Makedir FloatRight IconSmall fa-plus',
+			className: 'Makedir FloatRight IconSmall',
 			content: i18n( 'i18n_create_container' ),
 			onclick: function( e )
 			{
