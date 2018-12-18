@@ -474,10 +474,11 @@ void NotificationManagerTimeoutThread( FThread *data )
 			
 			cleanCoutner++;
 			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t counter > 15\n");
+			int toDel = 0;
 			
 			if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )
 			{
-				int toDel = 0;
+				
 				Notification *notif = nm->nm_Notifications;
 				//Notification *nroot = NULL;
 			
@@ -565,7 +566,7 @@ void NotificationManagerTimeoutThread( FThread *data )
 				
 				le = ne;
 			}
-			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n", );
+			DEBUG("[NotificationManagerTimeoutThread]\t\t\t\t\t\t\t\t\t\t\t update and remove list of entries END\n" );
 			
 			DEBUG("[NotificationManagerTimeoutThread] Check Notification!\n");
 			counter = 0;
