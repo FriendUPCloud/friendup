@@ -49,6 +49,7 @@ DirectoryView = function( winobj, extra )
 	this.sidebarbackground = true;
 	this.toolbararea = false;
 	this.doubleclickfiles = false;
+	this.multiple = true;
 	
 	// Read in extra stuff
 	if( extra )
@@ -72,6 +73,10 @@ DirectoryView = function( winobj, extra )
 		if( extra.doubleclickfiles )
 		{
 			this.doubleclickfiles = extra.doubleclickfiles;
+		}
+		if( extra.multiple === false )
+		{
+			this.multiple = false;
 		}
 	}
 
@@ -2321,13 +2326,16 @@ DirectoryView.prototype.ResizeToFit = function( obj )
 // Select all
 DirectoryView.prototype.SelectAll = function()
 {
-	var ics = this.window.icons;
-	for( var a = 0; a < ics.length; a++ )
+	if( this.multiple )
 	{
-		ics[a].domNode.classList.add( 'Selected' );
-		ics[a].domNode.selected = true;
-		if( ics[a].fileInfo )
-			ics[a].fileInfo.selected = true;
+		var ics = this.window.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			ics[a].domNode.classList.add( 'Selected' );
+			ics[a].domNode.selected = true;
+			if( ics[a].fileInfo )
+				ics[a].fileInfo.selected = true;
+		}
 	}
 }
 
@@ -2600,9 +2608,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.onclick = function( e )
 			{
 				var p = icnt;
-
+				
 				// Range
-				if( e.shiftKey )
+				if( dv.multiple && e.shiftKey )
 				{
 					var other = self = false;
 					var top = bottom = false;
@@ -2638,7 +2646,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					dv.lastListItem = this;
 				}
 				// Toggle only
-				else if( e.ctrlKey )
+				else if( dv.multiple && e.ctrlKey )
 				{
 					if( this.classList.contains( 'Selected' ) )
 					{

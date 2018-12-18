@@ -451,6 +451,7 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		var dir = new DirectoryView( w._window, {
 			rightpanel:          dialog.contentbox,
 			leftpanel:           dialog.sidebar,
+			multiple:            multiSelect,
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
 			doubleclickfiles:    function( element, event )
