@@ -139,10 +139,8 @@ int PutConnectionsByUserName( UserToApp *root, char *key, UserMobileAppConnectio
 static void  MobileAppInit(void);
 static int   MobileAppReplyError( struct lws *wsi, void *udata, int error_code );
 static int   MobileAppHandleLogin( struct lws *wsi, void *udata, json_t *json );
-static int   MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *udata, FULONG appTokenID );
 static void* MobileAppPingThread( void *a );
 static char* MobileAppGetWebsocketHash( struct lws *wsi );
-static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connection_index );
 
 /**
  * Write message to websocket
@@ -211,6 +209,246 @@ static void MobileAppInit( void )
 #if ENABLE_MOBILE_APP_NOTIFICATION_TEST_SIGNAL == 1
 	signal( SIGUSR1, MobileAppTestSignalHandler );
 #endif
+}
+
+
+/**
+ * Remove Connection from global list
+ *
+ * @param connections pointer to global list with connections
+ * @param connectionIndex number of entry which will be removed from list
+ */
+static void MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connectionIndex )
+{
+	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
+	{
+		return;
+	}
+	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
+	connections->umac_Connection[connectionIndex]->mac_WebsocketPtr = NULL;
+	connections->umac_Connection[connectionIndex]->mac_Used = 0;
+	
+	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
+	connections->umac_Connection[connectionIndex]->mac_LastCommunicationTimestamp );
+	
+	if( FRIEND_MUTEX_LOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) ) == 0 )
+	{
+		FQueue *fq = &(connections->umac_Connection[connectionIndex]->mac_Queue);
+		//FQDeInitFree( &(connections->umac_Connection[connectionIndex]->mac_Queue) );
+	
+		{
+			FQEntry *q = fq->fq_First; 
+			while( q != NULL )
+			{
+				DEBUG("RElease me!\n");
+				void *r = q; 
+				if( q->fq_Data != NULL )
+				{
+					FFree( q->fq_Data ); 
+				}
+				q = (FQEntry *)q->node.mln_Succ; 
+				FFree( r ); 
+			} 
+			fq->fq_First = NULL; 
+			fq->fq_Last = NULL; 
+		}
+		FRIEND_MUTEX_UNLOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
+	}
+	
+	pthread_mutex_destroy( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
+	
+	FFree( connections->umac_Connection[connectionIndex]->mac_SessionID );
+	FFree( connections->umac_Connection[connectionIndex] );
+	connections->umac_Connection[connectionIndex] = NULL;
+}
+
+/**
+ * Add user connectiono to global list
+ *
+ * @param wsi pointer to Websocket connection
+ * @param username name of user which passed login
+ * @param user_data pointer to user data
+ * @param umaID User Application Mobile ID
+ * @return 0 when success, otherwise error number
+ */
+static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *user_data, FULONG umaID )
+{
+	char *session_id = session_id_generate();
+
+	UserMobileAppConnectionsT *userConnections = NULL;
+	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
+		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
+		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
+
+	if (userConnections == NULL)
+	{ //this user does not have any connections yet
+		//create a new connections struct
+		userConnections = FCalloc(sizeof(UserMobileAppConnectionsT), 1);
+
+		if( userConnections == NULL )
+		{
+			DEBUG("Allocation failed\n");
+			return MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
+		}
+		else
+		{
+			DEBUG("Creating new struct for user <%s>\n", username);
+			char *permanentUsername = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
+			strcpy( permanentUsername, username );
+			userConnections->umac_Username = permanentUsername;
+			
+			//
+			// we must also attach UserID to User. This functionality will allow FC to find user by ID
+			//
+			
+			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
+
+			userConnections->umac_UserID = -1;
+			if( sqllib != NULL )
+			{
+				char *qery = FMalloc( 1048 );
+				qery[ 1024 ] = 0;
+				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT UserID FROM FUser WHERE `Name`=\"%s\"", username );
+				void *res = sqllib->Query( sqllib, qery );
+				if( res != NULL )
+				{
+					char **row;
+					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
+					{
+						if( row[ 0 ] != NULL )
+						{
+							char *end;
+							userConnections->umac_UserID = strtoul( row[0], &end, 0 );
+						}
+					}
+					sqllib->FreeResult( sqllib, res );
+				}
+				SLIB->LibrarySQLDrop( SLIB, sqllib );
+				FFree( qery );
+			}
+
+			//FIXME: check the deallocation order for permanent_username as it is held both
+			//by our internal sturcts and within hashmap structs
+
+			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
+			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+			{
+				//add the new connections struct to global users' connections map
+				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
+				{
+					DEBUG("Could not add new struct of user <%s> to global map\n", username);
+
+					FFree(userConnections);
+					//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+					return MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
+				}
+				
+				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+			}
+		}
+	}
+
+	//create struct holding this connection
+	MobileAppConnectionT *newConnection = FCalloc(sizeof(MobileAppConnectionT), 1);
+
+	newConnection->mac_SessionID = session_id;
+	newConnection->mac_LastCommunicationTimestamp = time(NULL);
+	newConnection->mac_WebsocketPtr = wsi;
+	newConnection->mac_UserMobileAppID = umaID;
+
+	//add this struct to user connections struct
+	int connectionToReplaceIndex = -1;
+	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
+	{
+		if( userConnections->umac_Connection[i] == NULL )
+		{ //got empty slot
+			connectionToReplaceIndex = i;
+			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
+			break;
+		}
+	}
+
+	if( connectionToReplaceIndex == -1 )
+	{ //no empty slots found - drop the oldest connection
+
+		connectionToReplaceIndex = 0;
+		unsigned int oldest_timestamp = userConnections->umac_Connection[0]->mac_LastCommunicationTimestamp;
+
+		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
+		{
+			if( userConnections->umac_Connection[i] == NULL )
+			{
+				if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
+				{
+					oldest_timestamp = userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp;
+					connectionToReplaceIndex = i;
+					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
+				}
+			}
+		}
+	}
+
+	if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
+	{
+		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
+	}
+
+	DEBUG("Adding connection to slot %d\n", connectionToReplaceIndex);
+	userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
+
+	newConnection->mac_UserData = user_data;
+	newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
+	newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
+
+	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
+
+	//DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
+	//PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
+	
+	MobileAppNotif *n = (MobileAppNotif *)user_data;
+	n->man_Data = newConnection;
+	
+	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
+	{
+		/*
+		if( globalWebsocketToUserConnectionsMap == NULL )
+		{
+			globalWebsocketToUserConnectionsMap = HashmapNew();
+		}
+		*/
+		
+		//PUT_TO_LIST( globalWebsocketToUserConnections, t );
+		//HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
+
+		//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
+	}
+	//websocket_hash now belongs to the hashmap, don't free it here
+	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+
+	FQInit( &(newConnection->mac_Queue) );
+
+	return 0;
+}
+
+/**
+ * Get websocket hash
+ *
+ * @param wsi pointer to Websocket connection
+ * @return pointer to string with generated hash
+ */
+static char* MobileAppGetWebsocketHash( struct lws *wsi )
+{
+	/*FIXME: this is a dirty workaround for currently used hashmap module. It accepts
+	 * only strings as keys, so we'll use the websocket pointer printed out as
+	 * string for the key. Eventually there should be a hashmap implementation available
+	 * that can use ints (or pointers) as keys!
+	 */
+	char *hash = FCalloc( 16, 1 );
+	snprintf( hash, 16, "%p", wsi );
+	return hash;
 }
 
 /**
@@ -389,7 +627,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 
 			if( tokens_found < 1 )
 			{
-				return 0;//MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
+				MobileAppReplyError( wsi, user, MOBILE_APP_ERR_NO_JSON );
 			}
 
 			json_t json = { .string = data, .string_length = len, .token_count = tokens_found, .tokens = tokens };
@@ -723,245 +961,6 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		
 		return ret;
 	}
-}
-
-/**
- * Add user connectiono to global list
- *
- * @param wsi pointer to Websocket connection
- * @param username name of user which passed login
- * @param user_data pointer to user data
- * @param umaID User Application Mobile ID
- * @return 0 when success, otherwise error number
- */
-static int MobileAppAddNewUserConnection( struct lws *wsi, const char *username, void *user_data, FULONG umaID )
-{
-	char *session_id = session_id_generate();
-
-	UserMobileAppConnectionsT *userConnections = NULL;
-	if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		//userConnections = GetConnectionsByUserName( globalUserToAppConnections, (char *)username );
-		userConnections = HashmapGetData( globalUserToAppConnectionsMap, username);
-		FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
-
-	if (userConnections == NULL)
-	{ //this user does not have any connections yet
-		//create a new connections struct
-		userConnections = FCalloc(sizeof(UserMobileAppConnectionsT), 1);
-
-		if( userConnections == NULL )
-		{
-			DEBUG("Allocation failed\n");
-			return MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
-		}
-		else
-		{
-			DEBUG("Creating new struct for user <%s>\n", username);
-			char *permanentUsername = FCalloc( strlen(username)+1, 1 ); //TODO: error handling
-			strcpy( permanentUsername, username );
-			userConnections->umac_Username = permanentUsername;
-			
-			//
-			// we must also attach UserID to User. This functionality will allow FC to find user by ID
-			//
-			
-			SQLLibrary *sqllib  = SLIB->LibrarySQLGet( SLIB );
-
-			userConnections->umac_UserID = -1;
-			if( sqllib != NULL )
-			{
-				char *qery = FMalloc( 1048 );
-				qery[ 1024 ] = 0;
-				sqllib->SNPrintF( sqllib, qery, 1024, "SELECT UserID FROM FUser WHERE `Name`=\"%s\"", username );
-				void *res = sqllib->Query( sqllib, qery );
-				if( res != NULL )
-				{
-					char **row;
-					if( ( row = sqllib->FetchRow( sqllib, res ) ) )
-					{
-						if( row[ 0 ] != NULL )
-						{
-							char *end;
-							userConnections->umac_UserID = strtoul( row[0], &end, 0 );
-						}
-					}
-					sqllib->FreeResult( sqllib, res );
-				}
-				SLIB->LibrarySQLDrop( SLIB, sqllib );
-				FFree( qery );
-			}
-
-			//FIXME: check the deallocation order for permanent_username as it is held both
-			//by our internal sturcts and within hashmap structs
-
-			//PutConnectionsByUserName( globalUserToAppConnections, permanentUsername, userConnections );
-			//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-			{
-				//add the new connections struct to global users' connections map
-				if( HashmapPut( globalUserToAppConnectionsMap, permanentUsername, userConnections ) != MAP_OK )
-				{
-					DEBUG("Could not add new struct of user <%s> to global map\n", username);
-
-					FFree(userConnections);
-					FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-					return MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
-				}
-				
-				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-			}
-		}
-	}
-
-	//create struct holding this connection
-	MobileAppConnectionT *newConnection = FCalloc(sizeof(MobileAppConnectionT), 1);
-
-	newConnection->mac_SessionID = session_id;
-	newConnection->mac_LastCommunicationTimestamp = time(NULL);
-	newConnection->mac_WebsocketPtr = wsi;
-	newConnection->mac_UserMobileAppID = umaID;
-
-	//add this struct to user connections struct
-	int connectionToReplaceIndex = -1;
-	for( int i = 0; i < MAX_CONNECTIONS_PER_USER; i++ )
-	{
-		if( userConnections->umac_Connection[i] == NULL )
-		{ //got empty slot
-			connectionToReplaceIndex = i;
-			DEBUG("Will use slot %d for this connection\n", connectionToReplaceIndex);
-			break;
-		}
-	}
-
-	if( connectionToReplaceIndex == -1 )
-	{ //no empty slots found - drop the oldest connection
-
-		connectionToReplaceIndex = 0;
-		unsigned int oldest_timestamp = userConnections->umac_Connection[0]->mac_LastCommunicationTimestamp;
-
-		for( int i = 1; i < MAX_CONNECTIONS_PER_USER; i++ )
-		{
-			if( userConnections->umac_Connection[i] == NULL )
-			{
-				if( userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp < oldest_timestamp )
-				{
-					oldest_timestamp = userConnections->umac_Connection[i]->mac_LastCommunicationTimestamp;
-					connectionToReplaceIndex = i;
-					DEBUG("Will drop old connection from slot %d (last comm %d)\n", connectionToReplaceIndex, oldest_timestamp);
-				}
-			}
-		}
-	}
-
-	if( userConnections->umac_Connection[connectionToReplaceIndex] != NULL )
-	{
-		MobileAppRemoveAppConnection( userConnections, connectionToReplaceIndex );
-	}
-
-	DEBUG("Adding connection to slot %d\n", connectionToReplaceIndex);
-	userConnections->umac_Connection[ connectionToReplaceIndex ] = newConnection;
-
-	newConnection->mac_UserData = user_data;
-	newConnection->mac_UserConnections = userConnections; //provide back reference that will map websocket to a user
-	newConnection->mac_UserConnectionIndex = connectionToReplaceIndex;
-
-	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
-
-	//DEBUG("-------->globalWebsocketToUserConnectionsMap %p\n", globalWebsocketToUserConnectionsMap );
-	//PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
-	
-	MobileAppNotif *n = (MobileAppNotif *)user_data;
-	n->man_Data = newConnection;
-	
-	//if( FRIEND_MUTEX_LOCK( &globalSessionRemovalMutex ) == 0 )
-	{
-		/*
-		if( globalWebsocketToUserConnectionsMap == NULL )
-		{
-			globalWebsocketToUserConnectionsMap = HashmapNew();
-		}
-		*/
-		
-		//PUT_TO_LIST( globalWebsocketToUserConnections, t );
-		//HashmapPut( globalWebsocketToUserConnectionsMap, websocketHash, newConnection ); //TODO: error handling here
-
-		//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-	}
-	//websocket_hash now belongs to the hashmap, don't free it here
-	pthread_mutex_init( &newConnection->mac_Mutex, NULL );
-
-	FQInit( &(newConnection->mac_Queue) );
-
-	return 0;
-}
-
-/**
- * Get websocket hash
- *
- * @param wsi pointer to Websocket connection
- * @return pointer to string with generated hash
- */
-static char* MobileAppGetWebsocketHash( struct lws *wsi )
-{
-	/*FIXME: this is a dirty workaround for currently used hashmap module. It accepts
-	 * only strings as keys, so we'll use the websocket pointer printed out as
-	 * string for the key. Eventually there should be a hashmap implementation available
-	 * that can use ints (or pointers) as keys!
-	 */
-	char *hash = FCalloc( 16, 1 );
-	snprintf( hash, 16, "%p", wsi );
-	return hash;
-}
-
-/**
- * Remove Connection from global list
- *
- * @param connections pointer to global list with connections
- * @param connectionIndex number of entry which will be removed from list
- */
-static void  MobileAppRemoveAppConnection( UserMobileAppConnectionsT *connections, unsigned int connectionIndex )
-{
-	if( connections == NULL || connections->umac_Connection[connectionIndex] == NULL )
-	{
-		return;
-	}
-	DEBUG("\t\t\t\t\t\t\t\t\t\t\tWEBSOCKETS REMOVED FROM LIST : %p\n", connections->umac_Connection[connectionIndex]->mac_WebsocketPtr );
-	connections->umac_Connection[connectionIndex]->mac_WebsocketPtr = NULL;
-	connections->umac_Connection[connectionIndex]->mac_Used = 0;
-	
-	DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex,
-	connections->umac_Connection[connectionIndex]->mac_LastCommunicationTimestamp );
-	
-	if( FRIEND_MUTEX_LOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) ) == 0 )
-	{
-		FQueue *fq = &(connections->umac_Connection[connectionIndex]->mac_Queue);
-		//FQDeInitFree( &(connections->umac_Connection[connectionIndex]->mac_Queue) );
-	
-		{
-			FQEntry *q = fq->fq_First; 
-			while( q != NULL )
-			{
-				DEBUG("RElease me!\n");
-				void *r = q; 
-				if( q->fq_Data != NULL )
-				{
-					FFree( q->fq_Data ); 
-				}
-				q = (FQEntry *)q->node.mln_Succ; 
-				FFree( r ); 
-			} 
-			fq->fq_First = NULL; 
-			fq->fq_Last = NULL; 
-		}
-		FRIEND_MUTEX_UNLOCK( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
-	}
-	
-	pthread_mutex_destroy( &(connections->umac_Connection[connectionIndex]->mac_Mutex) );
-	
-	FFree( connections->umac_Connection[connectionIndex]->mac_SessionID );
-	FFree( connections->umac_Connection[connectionIndex] );
-	connections->umac_Connection[connectionIndex] = NULL;
 }
 
 /**
