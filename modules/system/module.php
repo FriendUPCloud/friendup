@@ -1181,13 +1181,8 @@ if( isset( $args->command ) )
 					$test = 'devices/DOSDrivers/' . $row->Type . '/door.php';
 					if( file_exists( $test ) )
 					{
-						$Logger->log( 'Found: ' . $test );
-						$Logger->log( 'Found ' . 'devices/DOSDrivers/' . $row->Type . '/door.php' );
-
 						$args->command = 'dosaction';
 						$args->action = 'mount';
-
-						$Logger->log( 'right before... ' );
 
 						include_once( $test );
 
@@ -1200,10 +1195,8 @@ if( isset( $args->command ) )
 
 						if( $result = $door->dosAction( $args ) )
 						{
-							$Logger->log( 'Result: ' . $result );
 							die( $result );
 						}
-						$Logger->log( 'Included..' );
 					}
 					else
 					{
