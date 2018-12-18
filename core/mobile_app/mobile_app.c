@@ -531,7 +531,7 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					char *timeString = json_get_element_string( &json, "time" );
 					
 					char response[LWS_PRE+64];
-					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"status\":\"%s\"}", timeString );
+					snprintf( response+LWS_PRE, 64, "{\"t\":\"pong\",\"time\":\"%s\"}", timeString );
 					DEBUG("Response: %s\n", response+LWS_PRE);
 #ifndef WEBSOCKET_SINK_SEND_QUEUE
 					FRIEND_MUTEX_LOCK(&globalSessionRemovalMutex);
