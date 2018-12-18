@@ -449,11 +449,13 @@ Filedialog = function( object, triggerfunction, path, type, filename, title )
 		
 		// Set up directoryview
 		var dir = new DirectoryView( w._window, {
+			filedialog:          true,
 			rightpanel:          dialog.contentbox,
 			leftpanel:           dialog.sidebar,
 			multiple:            multiSelect,
 			nosidebarbackground: true,
 			toolbararea:         dialog.toolbararea,
+			mountlist:           true,
 			doubleclickfiles:    function( element, event )
 			{
 				element.classList.add( 'Selected' );

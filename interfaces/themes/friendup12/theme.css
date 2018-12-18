@@ -2395,14 +2395,16 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow > .C
 	top: 32px !important;
 }
 
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.CustomToolbarArea > .Content
+{
+	top: 0 !important;
+}
+
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
 {
 	text-align: left;
 	text-shadow: none;
 }
-
-
-
 
 html body[mobile=mobile] > .MobileMenu div li .IconText
 {
