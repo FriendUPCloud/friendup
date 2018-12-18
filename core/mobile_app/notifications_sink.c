@@ -52,7 +52,7 @@ typedef struct DataQWSIM{
  * @return number of bytes written to websocket
  */
 
-static inline int WriteMessage( DataQWSIM *d, unsigned char *msg, int len )
+static inline int WriteMessageSink( DataQWSIM *d, unsigned char *msg, int len )
 {
 	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
 	//if( man != NULL )
@@ -71,9 +71,9 @@ static inline int WriteMessage( DataQWSIM *d, unsigned char *msg, int len )
 			if( FRIEND_MUTEX_LOCK( &d->d_Mutex ) == 0 )
 			{
 				FQPushFIFO( &(d->d_Queue), en );
+				lws_callback_on_writable( d->d_Wsi );
 				FRIEND_MUTEX_UNLOCK( &(d->d_Mutex) );
 			}
-			lws_callback_on_writable( d->d_Wsi );
 		}
 	}
 	return len;
@@ -153,6 +153,7 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 		MobileAppNotif *man = (MobileAppNotif *)user;
 		if( reason == LWS_CALLBACK_SERVER_WRITEABLE )
 		{
+#ifdef WEBSOCKET_SEND_QUEUE
 			FQEntry *e = NULL;
 			FRIEND_MUTEX_LOCK( &d->d_Mutex );
 			FQueue *q = &(d->d_Queue);
@@ -187,14 +188,17 @@ int WebsocketNotificationsSinkCallback( struct lws *wsi, enum lws_callback_reaso
 				//DEBUG("[websocket_app_callback] No message in queue\n");
 				FRIEND_MUTEX_UNLOCK( &d->d_Mutex );
 			}
-		}
-		else
-		{
+			
 			if( d != NULL && d->d_Queue.fq_First != NULL )
 			{
 				//DEBUG("We have message to send, calling writable\n");
 				lws_callback_on_writable( wsi );
 			}	
+#endif
+		}
+		else
+		{
+			
 			//DEBUG("Unimplemented callback, reason %d\n", reason);
 			if( websocketHash != NULL )
 			{
@@ -348,15 +352,14 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 				
 				char reply[ 256 ];
 				int msize = snprintf( reply + LWS_PRE, sizeof(reply), "{ \"type\" : \"authenticate\", \"data\" : { \"status\" : 0 }}" );
+				
+#ifdef WEBSOCKET_SEND_QUEUE
+				WriteMessageSink( d, (unsigned char *)(reply)+LWS_PRE, msize );
+#else
+				
 				unsigned int json_message_length = strlen( reply + LWS_PRE );
-				
-				WriteMessage( d, (unsigned char *)(reply)+LWS_PRE, msize );
-/*
-				
-				
 				lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-*/
-				//man->mans_Connection = WebsocketClientNew( SLIB->l_AppleServerHost, SLIB->l_AppleServerPort, WebsocketNotificationConnCallback );
+#endif
 				FFree( authKey );
 				
 				return 0;
@@ -373,13 +376,12 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 
 					char reply[ 128 ];
 					int locmsglen = snprintf( reply + LWS_PRE, sizeof( reply ) ,"{ \"type\" : \"pong\", \"data\" : \"%.*s\" }", t[4].end-t[4].start,data + t[4].start );
+#ifdef WEBSOCKET_SEND_QUEUE
+					WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, locmsglen );
+#else
 					unsigned int json_message_length = strlen( reply + LWS_PRE );
-					WriteMessage( d, (unsigned char *)reply+LWS_PRE, locmsglen );
-/*
-					
-					
 					lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );				
-*/
+#endif
 				}
 				else if( strncmp( data + t[2].start, "service", msize ) == 0 && strncmp( data + t[3].start, "data", dlen ) == 0 ) 
 				{
@@ -470,14 +472,12 @@ int ProcessIncomingRequest( struct lws *wsi, char *data, size_t len, void *udata
 
 								char reply[256];
 								int msize = sprintf(reply + LWS_PRE, "{ \"type\" : \"service\", \"data\" : { \"type\" : \"notification\", \"data\" : { \"status\" : %d }}}", status);
+#ifdef WEBSOCKET_SEND_QUEUE
+								WriteMessageSink( d, (unsigned char *)reply+LWS_PRE, msize );
+#else
 								unsigned int json_message_length = strlen( reply + LWS_PRE );
-								
-								WriteMessage( d, (unsigned char *)reply+LWS_PRE, msize );
-/*
-								
-								
 								lws_write( wsi, (unsigned char*)reply+LWS_PRE, json_message_length, LWS_WRITE_TEXT );
-*/
+#endif
 							}
 							else
 							{
