@@ -666,6 +666,15 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 	SQLLibrary *sqlLib = SLIB->LibrarySQLGet( SLIB );
 	if( sqlLib != NULL )
 	{
+		// wait till User Manager will not be equal to NULL
+		if( SLIB->sl_UM == NULL )
+		{
+			while( SLIB->sl_UM != NULL )
+			{
+				sleep( 1 );
+			}
+		}
+		
 		user = UMGetUserByNameDBCon( SLIB->sl_UM, sqlLib, usernameString );
 	
 		umaID = MobileManagerGetUMAIDByToken( SLIB->sl_MobileManager, sqlLib, tokenString );

@@ -268,10 +268,10 @@ NotificationSent *NotificationManagerGetNotificationsSentByStatusAndUMAIDDB( Not
  */
 int NotificationManagerAddNotificationDB( NotificationManager *nm, Notification *n )
 {
-	nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationDesc, n );
-	
 	if( FRIEND_MUTEX_LOCK( &(nm->nm_Mutex) ) == 0 )	// add node to database and to list
 	{
+		nm->nm_SQLLib->Save( nm->nm_SQLLib, NotificationDesc, n );
+	
 		DEBUG("[NotificationManagerAddNotificationDB] added to list: %lu\n", n->n_ID );
 		n->node.mln_Succ = (MinNode *) nm->nm_Notifications;
 		if( nm->nm_Notifications != NULL )
