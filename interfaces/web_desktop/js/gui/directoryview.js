@@ -4711,6 +4711,7 @@ Friend.startImageViewer = function( iconObject )
 			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
 		';
 		eparent.appendChild( d );
+		eparent.style.overflow = 'hidden';
 		var eles = d.getElementsByTagName( 'div' );
 		for( var a = 0; a < eles.length; a++ )
 		{
