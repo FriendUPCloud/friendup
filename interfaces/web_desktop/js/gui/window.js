@@ -17,19 +17,20 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Make movable box --------------------------------------------------------- */
 
-Friend          = window.Friend || {};
-Friend.io       = Friend.io     || {};
-Friend.GUI      = Friend.GUI    || {};
-Friend.GUI.view = {};                  // View window namespace
+Friend          = window.Friend || {};    // Friend main namespace
+Friend.io       = Friend.io     || {};    // Input/output namespace
+Friend.GUI      = Friend.GUI    || {};    // GUI namespace
+Friend.GUI.view = {};                     // View window namespace
 
 // Lets remember values
-Friend.GUI.view.windowStorage = [];
-Friend.GUI.view.viewHistory = []; // History of views that have been opened
+Friend.GUI.view.windowStorage       = [];
+Friend.GUI.view.viewHistory         = []; // History of opened views
 Friend.GUI.view.windowStorageLoaded = false;
-Friend.GUI.view.movableViewIdSeed = 0;
+Friend.GUI.view.movableViewIdSeed   = 0;
 
 var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 
+// Get stored data by window id
 function GetWindowStorage( id )
 {
 	if( !id )
@@ -44,11 +45,13 @@ function GetWindowStorage( id )
 	return {};
 }
 
+// Set window data by id
 function SetWindowStorage( id, data )
 {
 	Friend.GUI.view.windowStorage[id] = data;
 }
 
+// Get a window by id
 function GetWindowById( id )
 {
 	for( var a in movableWindows )
@@ -59,6 +62,7 @@ function GetWindowById( id )
 	return false;
 }
 
+// Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
 	var m = new Module( 'system' );
@@ -72,6 +76,7 @@ function SaveWindowStorage( callback )
 	}
 }
 
+// Load window storage from Friend Core
 function LoadWindowStorage()
 {
 	if( !Friend.GUI.view.windowStorageLoaded )
@@ -237,7 +242,7 @@ function SetWindowTitle( div, titleStr )
 	}
 }
 
-// Do it!
+// Update window content size
 function UpdateWindowContentSize( div )
 {
 	// set the content width
