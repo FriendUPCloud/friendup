@@ -14,7 +14,13 @@
 }
 
 
+body #Thanks
+{
+	opacity: 1;
+	transition: opacity 0.5s;
+}
+
 body[windowcount] #Thanks
 {
-	display: none;
+	opacity: 0;
 }
