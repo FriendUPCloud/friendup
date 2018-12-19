@@ -211,18 +211,29 @@ Workspace = {
 							
 							if( t.conf.app )
 							{
+								// Loading notice
 								var d = document.createElement( 'div' );
-								d.className = 'DialogError';
-								d.innerHTML = '<p>Loading ' + t.conf.app + '...</p>';
+								d.className = 'LoadingMessage';
+								d.style.transition = 'opacity';
+								d.style.opacity = 0;
+								d.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
 								document.body.appendChild( d );
-								document.body.classList.add( 'Error' );
+								setTimeout( function()
+								{
+									d.classList.add( 'Loaded' );
+								}, 5 );
 							
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
+									// Remove loading notice
 									if( d )
 									{
-										document.body.removeChild( d );
-										d = null;
+										d.classList.remove( 'Loaded' );
+										setTimeout( function()
+										{
+											document.body.removeChild( d );
+											d = null;
+										}, 500 );
 									}
 									function showThankyou()
 									{
