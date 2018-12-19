@@ -24,3 +24,40 @@ body[windowcount] #Thanks
 {
 	opacity: 0;
 }
+
+.LoadingMessage
+{
+	position: absolute;
+	top: calc(50% - 40px);
+	left: calc(50% - 200px);
+	width: 0px;
+	height: 80px;
+	text-align: center;
+	color: white;
+	opacity: 0;
+	transition: opacity,width 0.5s;
+}
+
+.LoadingMessage.Loaded
+{
+	opacity: 1;
+	width: 400px;
+}
+
+
+[mobile] .LoadingMessage
+{
+	left: 20px;
+}
+
+[mobile] .LoadingMessage.Loaded
+{
+	width: calc(100% - 20px);
+}
+
+.LoadingMessage *
+{
+	font-size: 24px;
+	line-height: 80px;
+}
+
