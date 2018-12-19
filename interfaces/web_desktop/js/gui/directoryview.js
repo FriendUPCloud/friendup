@@ -290,6 +290,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 				{
 					var n = document.createElement( 'div' );
 					n.className = 'Content SlideAnimation';
+					n.style.willChange = 'transform';
 					n.style.transition = 'transform 0.4s';
 					n.innerHTML = winobj.innerHTML;
 					n.scrollTop = winobj.scrollTop;
@@ -3631,6 +3632,7 @@ FileIcon.prototype.Init = function( fileInfo )
 			{
 				var n = document.createElement( 'div' );
 				n.className = 'Content SlideAnimation';
+				n.style.willChange = 'transform';
 				n.style.transition = 'transform 0.4s';
 				n.innerHTML = obj.directoryView.windowObject.innerHTML;
 				n.scrollTop = obj.directoryView.windowObject.scrollTop;

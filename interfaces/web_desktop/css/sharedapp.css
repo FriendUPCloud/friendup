@@ -7,3 +7,9 @@
 {
 	display: block;
 }
+
+#DoorsScreen > .ScreenContent
+{
+	overflow: hidden;
+}
+

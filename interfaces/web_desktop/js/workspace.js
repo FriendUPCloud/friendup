@@ -287,6 +287,8 @@ Workspace = {
 				ge( 'DoorsScreen' ).classList.remove( 'WidgetSlideDown' );
 				document.body.classList.remove( 'WidgetSlideDown' );
 				Workspace.widget.setFlag( 'height', 32 );
+				Workspace.widget.dom.style.willChange = 'transform, content';
+				setTimeout( function(){ Workspace.widget.dom.style.willChange = 'auto'; }, 250 );
 				Workspace.widget.touchDown = false;
 				clearTimeout( Workspace.widget.tdtimeout );
 				Workspace.widget.tdtimeout = false;

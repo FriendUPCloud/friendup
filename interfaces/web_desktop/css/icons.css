@@ -11,6 +11,11 @@
 	width: calc(100% - 200px);
 }
 
+.IconWindow .Content
+{
+	will-change: scroll-position, content;
+}
+
 .Content.SlideAnimation
 {
 	pointer-events: none;

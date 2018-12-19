@@ -17,19 +17,20 @@ var FUI_MOUSEDOWN_PICKOBJ = 11;
 
 /* Make movable box --------------------------------------------------------- */
 
-Friend          = window.Friend || {};
-Friend.io       = Friend.io     || {};
-Friend.GUI      = Friend.GUI    || {};
-Friend.GUI.view = {};                  // View window namespace
+Friend          = window.Friend || {};    // Friend main namespace
+Friend.io       = Friend.io     || {};    // Input/output namespace
+Friend.GUI      = Friend.GUI    || {};    // GUI namespace
+Friend.GUI.view = {};                     // View window namespace
 
 // Lets remember values
-Friend.GUI.view.windowStorage = [];
-Friend.GUI.view.viewHistory = []; // History of views that have been opened
+Friend.GUI.view.windowStorage       = [];
+Friend.GUI.view.viewHistory         = []; // History of opened views
 Friend.GUI.view.windowStorageLoaded = false;
-Friend.GUI.view.movableViewIdSeed = 0;
+Friend.GUI.view.movableViewIdSeed   = 0;
 
 var _viewType = 'iframe'; //window.friendBook ? 'webview' : 'iframe';
 
+// Get stored data by window id
 function GetWindowStorage( id )
 {
 	if( !id )
@@ -38,17 +39,19 @@ function GetWindowStorage( id )
 	}
 	else
 	{
-		if( typeof( Friend.GUI.view.windowStorage[id] ) != 'undefined' )
-			return Friend.GUI.view.windowStorage[id];
+		if( typeof( Friend.GUI.view.windowStorage[ id ] ) != 'undefined' )
+			return Friend.GUI.view.windowStorage[ id ];
 	}
 	return {};
 }
 
+// Set window data by id
 function SetWindowStorage( id, data )
 {
-	Friend.GUI.view.windowStorage[id] = data;
+	Friend.GUI.view.windowStorage[ id ] = data;
 }
 
+// Get a window by id
 function GetWindowById( id )
 {
 	for( var a in movableWindows )
@@ -59,6 +62,7 @@ function GetWindowById( id )
 	return false;
 }
 
+// Save window storage to Friend Core
 function SaveWindowStorage( callback )
 {
 	var m = new Module( 'system' );
@@ -72,6 +76,7 @@ function SaveWindowStorage( callback )
 	}
 }
 
+// Load window storage from Friend Core
 function LoadWindowStorage()
 {
 	if( !Friend.GUI.view.windowStorageLoaded )
@@ -237,7 +242,7 @@ function SetWindowTitle( div, titleStr )
 	}
 }
 
-// Do it!
+// Update window content size
 function UpdateWindowContentSize( div )
 {
 	// set the content width
@@ -1771,20 +1776,17 @@ var View = function( args )
 			movableWindows[ div.id ] = div;
 		}
 
-		// TODO: Test window animations when opening..
-		if( isMobile )
+		// Tell it's opening
+		div.classList.add( 'Opening' );
+		setTimeout( function()
 		{
-			div.classList.add( 'Opening' );
+			div.classList.add( 'Opened' );
+			div.classList.remove( 'Opening' );
 			setTimeout( function()
 			{
-				div.classList.add( 'Opened' );
-				div.classList.remove( 'Opening' );
-				setTimeout( function()
-				{
-					div.classList.remove( 'Opened' );
-				}, 250 );
+				div.classList.remove( 'Opened' );
 			}, 250 );
-		}
+		}, 250 );
 
 		if( transparent )
 		{
@@ -2125,6 +2127,13 @@ var View = function( args )
 					_ActivateWindow( this.window, false, e );
 
 					this.window.setAttribute( 'maximized', 'true' );
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = true;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.prevLeft = parseInt ( this.window.style.left );
@@ -2151,6 +2160,13 @@ var View = function( args )
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = false;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.window.style.top = this.prevTop + 'px';
@@ -2213,10 +2229,14 @@ var View = function( args )
 
 			// Update information in the window storage object
 			var d = GetWindowStorage( this.uniqueId );
-			d.top = this.offsetTop;
-			d.left = this.offsetLeft;
-			d.width = wenable && wwi ? wwi : d.width;
-			d.height = wenable && hhe ? hhe : d.width;
+			
+			if( !div.getAttribute( 'maximized' ) )
+			{
+				d.top = this.offsetTop;
+				d.left = this.offsetLeft;
+				d.width = wenable && wwi ? wwi : d.width;
+				d.height = wenable && hhe ? hhe : d.width;
+			}
 
 			SetWindowStorage( this.uniqueId, d );
 		}
@@ -2578,6 +2598,12 @@ var View = function( args )
 			else
 			{
 				var sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
+				
+				if( wp.maximized )
+				{
+					div.setAttribute( 'maximized', 'true' );
+					zoom.mode = 'maximized';
+				}
 				
 				if( wp.top >= 0 && wp.top < hh )
 				{
