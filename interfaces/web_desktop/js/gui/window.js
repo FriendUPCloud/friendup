@@ -1457,12 +1457,14 @@ function CloseView( win )
 		// Make sure we count the windows in body
 		if( movableWindowCount > 0 )
 		{
+			clearTimeout( window.windowCountTimeout );
+			delete window.windowCountTimeout;
 			document.body.setAttribute( 'windowcount', movableWindowCount );
 		}
 		else
 		{
 			// Delay this with 400ms
-			setTimeout( function()
+			window.windowCountTimeout = setTimeout( function()
 			{
 				document.body.removeAttribute( 'windowcount' );
 			}, 400 );
