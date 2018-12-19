@@ -211,8 +211,19 @@ Workspace = {
 							
 							if( t.conf.app )
 							{
+								var d = document.createElement( 'div' );
+								d.className = 'DialogError';
+								d.innerHTML = '<p>Loading ' + t.conf.app + '...</p>';
+								document.body.appendChild( d );
+								document.body.classList.add( 'Error' );
+							
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
+									if( d )
+									{
+										document.body.removeChild( d );
+										d = null;
+									}
 									function showThankyou()
 									{
 										if( !ge( 'Thanks' ) )
