@@ -1776,20 +1776,17 @@ var View = function( args )
 			movableWindows[ div.id ] = div;
 		}
 
-		// TODO: Test window animations when opening..
-		if( isMobile )
+		// Tell it's opening
+		div.classList.add( 'Opening' );
+		setTimeout( function()
 		{
-			div.classList.add( 'Opening' );
+			div.classList.add( 'Opened' );
+			div.classList.remove( 'Opening' );
 			setTimeout( function()
 			{
-				div.classList.add( 'Opened' );
-				div.classList.remove( 'Opening' );
-				setTimeout( function()
-				{
-					div.classList.remove( 'Opened' );
-				}, 250 );
+				div.classList.remove( 'Opened' );
 			}, 250 );
-		}
+		}, 250 );
 
 		if( transparent )
 		{

@@ -171,6 +171,11 @@ html .View[viewsnap] .Title > div > div
 	display: none;
 }
 
+.View.Opening
+{
+	will-transform: transform, content;
+}
+
 [mobile=mobile] #Screens .ViewContainer:not(.Active)
 {
 	z-index: 0 !important;
@@ -182,7 +187,6 @@ html .View[viewsnap] .Title > div > div
 }
 [mobile=mobile] #Screens .View.Active[maximized=true].Opening
 {
-	will-transform: transform, content;
 	transform: translate3d(100%,0,0) !important;
 }
 [mobile=mobile] #Screens .View.Active[maximized=true].Opened
@@ -299,6 +303,7 @@ html .View[viewsnap] .Title > div > div
 	transition: none;
 	-moz-transition: none;
 	-webkit-transition: none;
+	will-change: transform, content;
 }
 
 /* Don't animate but the opacity when fading in a window */
