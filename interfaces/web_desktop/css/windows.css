@@ -181,15 +181,15 @@ html .View[viewsnap] .Title > div > div
 	z-index: 0 !important;
 }
 
-[mobile=mobile] #Screens .View.Active[maximized=true].Opened
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opened
 {
 	transition: transform 0.25s !important;
 }
-[mobile=mobile] #Screens .View.Active[maximized=true].Opening
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opening
 {
 	transform: translate3d(100%,0,0) !important;
 }
-[mobile=mobile] #Screens .View.Active[maximized=true].Opened
+[mobile=mobile]:not([sharedapp]) #Screens .View.Active[maximized=true].Opened
 {
 	will-transform: auto;
 	transform: translate3d(0,0,0) !important;

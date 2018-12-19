@@ -213,25 +213,37 @@ Workspace = {
 							{
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
-									setTimeout( function()
+									function showThankyou()
 									{
-										var jo = new cAjax();
-										jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-										jo.onload = function()
+										if( !ge( 'Thanks' ) )
 										{
-											var ele = document.createElement( 'div' );
-											ele.className = 'ThankYou Padding';
-											ele.innerHTML = this.responseText();
-											var s = GeByClass( 'ScreenContent' );
-											if( s )
+											// Wait till we have windows!
+											var count = 0;
+											for( var a in window.movableWindows ){ count++; }
+											if( count <= 0 )
+												return setTimeout( showThankyou, 500 );
+											
+											// Open the thank you template
+											var jo = new cAjax();
+											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+											jo.onload = function()
 											{
-												if( s.length ) s = s[0];
-												s.appendChild( ele );
+												var ele = document.createElement( 'div' );
+												ele.id = 'Thanks';
+												ele.className = 'ThankYou Padding';
+												ele.innerHTML = this.responseText();
+												var s = GeByClass( 'ScreenContent' );
+												if( s )
+												{
+													if( s.length ) s = s[0];
+													s.appendChild( ele );
+												}
+												else document.body.appendChild( s );
 											}
-											else document.body.appendChild( s );
+											jo.send();
 										}
-										jo.send();
-									}, 2000 );
+									}
+									showThankyou();
 								} );
 							}
 						} );
