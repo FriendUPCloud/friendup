@@ -350,10 +350,10 @@ i18n_open_with                          : Åpne med
 
 #File dialogs ------------------------------------------------------------------
 
-file_load                               : Last inn
+file_load                               : Åpne
 file_abort                              : Lukk
 file_save                               : Lagre
-file_open_title                         : Last inn en fil
+file_open_title                         : Åpne fil
 file_open_path                          : Velg sti
 file_save_title                         : Lagre en fil
 file_unknown_title                      : Ukjent filoperasjon

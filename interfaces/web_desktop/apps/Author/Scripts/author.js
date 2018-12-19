@@ -224,23 +224,33 @@ Application.print = function()
 Application.load = function()
 {
 	if( this.fileDialog ) return;
-	var f = new Filedialog( this.mainView, function( arr )
-	{
-		if( arr )
+	
+	var flags = {
+		multiSelect: false,
+		triggerFunction: function( arr )
 		{
-			Application.mainView.sendMessage( {
-				command: 'loadfiles',
-				files: arr
-			} );
-			Application.wholeFilename = arr[0].Path;
-			Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
-		}
-		Application.fileDialog = false;
-	}, false, 'load' );
+			if( arr )
+			{
+				Application.mainView.sendMessage( {
+					command: 'loadfiles',
+					files: arr
+				} );
+				Application.wholeFilename = arr[0].Path;
+				Application.mainView.setFlag( 'title', 'Author - ' + Application.wholeFilename );
+			}
+			Application.fileDialog = false;
+		},
+		path: false,
+		mainView: this.mainView,
+		type: 'load'
+		
+	};
+	
+	var f = new Filedialog( flags );
 	this.fileDialog = f;
 }
 
-Application.saveAs = function(_)
+Application.saveAs = function()
 {
 	this.prevFilename = this.wholeFilename;
 	this.wholeFilename = false;
