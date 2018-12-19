@@ -8,6 +8,12 @@
 	display: block;
 }
 
+.View, .View.Active
+{
+	border-bottom: 0;
+	border-radius: 0;
+}
+
 #DoorsScreen > .ScreenContent
 {
 	overflow: hidden;
