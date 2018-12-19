@@ -1453,6 +1453,16 @@ function CloseView( win )
 
 		// Remove link to current movable
 		if( win == window.currentMovable ) window.currentMovable = null;
+		
+		// Make sure we count the windows in body
+		if( movableWindowCount > 0 )
+		{
+			document.body.setAttribute( 'windowcount', movableWindowCount );
+		}
+		else
+		{
+			document.body.removeAttribute( 'windowcount' );
+		}
 	}
 
 	// Check window
@@ -2542,6 +2552,10 @@ var View = function( args )
 		var hh = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
 
 		movableWindowCount++; // Iterate global count of view windows
+		
+		// Make sure we count the windows in body
+		if( movableWindowCount > 0 )
+			document.body.setAttribute( 'windowcount', movableWindowCount );
 
 		// Create event handler for view window
 		div.content.events = new Array ();
