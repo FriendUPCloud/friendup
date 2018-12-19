@@ -1457,8 +1457,11 @@ function CloseView( win )
 		// Make sure we count the windows in body
 		if( movableWindowCount > 0 )
 		{
-			clearTimeout( window.windowCountTimeout );
-			delete window.windowCountTimeout;
+			if( window.windowCountTimeout )
+			{
+				clearTimeout( window.windowCountTimeout );
+				delete window.windowCountTimeout;
+			}
 			document.body.setAttribute( 'windowcount', movableWindowCount );
 		}
 		else
@@ -2561,7 +2564,14 @@ var View = function( args )
 		
 		// Make sure we count the windows in body
 		if( movableWindowCount > 0 )
+		{
+			if( window.windowCountTimeout )
+			{
+				clearTimeout( window.windowCountTimeout );
+				delete window.windowCountTimeout;
+			}
 			document.body.setAttribute( 'windowcount', movableWindowCount );
+		}
 
 		// Create event handler for view window
 		div.content.events = new Array ();
