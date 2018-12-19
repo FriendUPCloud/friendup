@@ -20,6 +20,7 @@
 #include "mobile_manager.h"
 #include <system/systembase.h>
 #include <mobile_app/mobile_app.h>
+#include <util/session_id.h>
 
 /**
  * Create new MobileManager
@@ -799,4 +800,63 @@ UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, c
 		sb->LibrarySQLDrop( sb, lsqllib );
 	}
 	return uma;
+}
+
+//
+//
+//
+
+MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID )
+{
+	//create struct holding this connection
+	MobileAppConnection *newConnection = FCalloc(sizeof(MobileAppConnection), 1);
+	if( newConnection != NULL )
+	{
+		char *session_id = session_id_generate();
+		newConnection->mac_SessionID = session_id;
+		newConnection->mac_LastCommunicationTimestamp = time(NULL);
+		newConnection->mac_WebsocketPtr = wsi;
+		newConnection->mac_UserMobileAppID = umaID;
+		
+		pthread_mutex_init( &newConnection->mac_Mutex, NULL );
+
+		FQInit( &(newConnection->mac_Queue) );
+	}
+}
+
+void MobileAppConnectionDelete( MobileAppConnection *mac )
+{
+	mac->mac_WebsocketPtr = NULL;
+	mac->mac_Used = 0;
+	
+	//DEBUG("Freeing up connection from slot %d (last comm %ld)\n", connectionIndex, connections->umac_Connection[connectionIndex]->mac_LastCommunicationTimestamp );
+	
+	if( FRIEND_MUTEX_LOCK( &(mac->mac_Mutex) ) == 0 )
+	{
+		FQueue *fq = &(mac->mac_Queue);
+		//FQDeInitFree( &(mac->mac_Queue) );
+	
+		{
+			FQEntry *q = fq->fq_First; 
+			while( q != NULL )
+			{
+				DEBUG("RElease me!\n");
+				void *r = q; 
+				if( q->fq_Data != NULL )
+				{
+					FFree( q->fq_Data ); 
+				}
+				q = (FQEntry *)q->node.mln_Succ; 
+				FFree( r ); 
+			} 
+			fq->fq_First = NULL; 
+			fq->fq_Last = NULL; 
+		}
+		FRIEND_MUTEX_UNLOCK( &(mac->mac_Mutex) );
+	}
+	
+	pthread_mutex_destroy( &(mac->mac_Mutex) );
+	
+	FFree( mac->mac_SessionID );
+	FFree( mac );
 }
