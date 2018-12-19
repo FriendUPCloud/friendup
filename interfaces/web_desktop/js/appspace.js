@@ -22,6 +22,11 @@ DeepestField = {
 
 Workspace = {
 	locale: 'en',
+	theme: 'friendup12',
+	themeData: {
+		buttonSchemeText: "windows",
+		colorSchemeText: "default"
+	},
 	init: function( mode )
 	{
 		// Add locale
