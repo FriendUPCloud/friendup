@@ -39,8 +39,8 @@ function GetWindowStorage( id )
 	}
 	else
 	{
-		if( typeof( Friend.GUI.view.windowStorage[id] ) != 'undefined' )
-			return Friend.GUI.view.windowStorage[id];
+		if( typeof( Friend.GUI.view.windowStorage[ id ] ) != 'undefined' )
+			return Friend.GUI.view.windowStorage[ id ];
 	}
 	return {};
 }
@@ -48,7 +48,7 @@ function GetWindowStorage( id )
 // Set window data by id
 function SetWindowStorage( id, data )
 {
-	Friend.GUI.view.windowStorage[id] = data;
+	Friend.GUI.view.windowStorage[ id ] = data;
 }
 
 // Get a window by id
@@ -2127,6 +2127,13 @@ var View = function( args )
 					_ActivateWindow( this.window, false, e );
 
 					this.window.setAttribute( 'maximized', 'true' );
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = true;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.prevLeft = parseInt ( this.window.style.left );
@@ -2153,6 +2160,13 @@ var View = function( args )
 				{
 					this.mode = 'normal';
 					this.window.removeAttribute( 'maximized' );
+					
+					// Store it just in case
+					var d = GetWindowStorage( div.id );
+					if( !d ) d = {};
+					d.maximized = false;
+					SetWindowStorage( div.id, d );
+					
 					if( !window.isMobile )
 					{
 						this.window.style.top = this.prevTop + 'px';
@@ -2215,10 +2229,14 @@ var View = function( args )
 
 			// Update information in the window storage object
 			var d = GetWindowStorage( this.uniqueId );
-			d.top = this.offsetTop;
-			d.left = this.offsetLeft;
-			d.width = wenable && wwi ? wwi : d.width;
-			d.height = wenable && hhe ? hhe : d.width;
+			
+			if( !div.getAttribute( 'maximized' ) )
+			{
+				d.top = this.offsetTop;
+				d.left = this.offsetLeft;
+				d.width = wenable && wwi ? wwi : d.width;
+				d.height = wenable && hhe ? hhe : d.width;
+			}
 
 			SetWindowStorage( this.uniqueId, d );
 		}
@@ -2580,6 +2598,12 @@ var View = function( args )
 			else
 			{
 				var sw = self.flags.screen && self.flags.screen.div ? self.flags.screen.div.offsetWidth : document.body.offsetWidth;
+				
+				if( wp.maximized )
+				{
+					div.setAttribute( 'maximized', 'true' );
+					zoom.mode = 'maximized';
+				}
 				
 				if( wp.top >= 0 && wp.top < hh )
 				{
