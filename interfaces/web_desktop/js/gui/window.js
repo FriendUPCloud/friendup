@@ -1461,7 +1461,11 @@ function CloseView( win )
 		}
 		else
 		{
-			document.body.removeAttribute( 'windowcount' );
+			// Delay this with 400ms
+			setTimeout( function()
+			{
+				document.body.removeAttribute( 'windowcount' );
+			}, 400 );
 		}
 	}
 
