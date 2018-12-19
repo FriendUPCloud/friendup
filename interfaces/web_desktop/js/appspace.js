@@ -228,6 +228,7 @@ Workspace = {
 											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
 											jo.onload = function()
 											{
+												if( ge( 'Thanks' ) ) return;
 												var ele = document.createElement( 'div' );
 												ele.id = 'Thanks';
 												ele.className = 'ThankYou Padding';

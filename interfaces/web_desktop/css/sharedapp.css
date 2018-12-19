@@ -13,3 +13,8 @@
 	overflow: hidden;
 }
 
+
+body[windowcount] #Thanks
+{
+	display: none;
+}
