@@ -24,7 +24,6 @@ Friend.FileBrowserEntry = function()
 {
 };
 
-
 /*
 	Filebrowser class - creates a recursive file browser!
 	
@@ -49,7 +48,7 @@ Friend.FileBrowser = function( initElement, flags, callbacks )
 	this.dom.classList.add( 'FileBrowser' );
 	this.currentPath = 'Mountlist:';
 	this.callbacks = callbacks;
-	this.flags = flags ? flags : { displayFiles: false };
+	this.flags = flags ? flags : { displayFiles: false, filedialog: false };
 };
 Friend.FileBrowser.prototype.clear = function()
 {
@@ -157,6 +156,12 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			else
 			{
+				// Are we in a file dialog?
+				if( isMobile && self.flags.filedialog )
+				{
+					return self.callbacks.folderOpen( ppath );
+				}
+				// Normal operation
 				if( !this.classList.contains( 'Open' ) )
 				{
 					var subitems = ele.getElementsByClassName( 'SubItems' );
@@ -342,12 +347,41 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						d.id = 'diskitem_' + msg.list[a].Title;
 						d.path = msg.list[a].Volume;
 						var nm = document.createElement( 'div' );
-						nm.style.paddingLeft = ( depth * 8 ) + 'px';
+						nm.style.paddingLeft = ( depth << 3 ) + 'px'; // * 8
 						nm.className = 'Name IconSmall IconDisk';
 						nm.innerHTML = ' ' + msg.list[a].Title;
+						if( Friend.dosDrivers && !( msg.list[a].Type && msg.list[a].Type == 'bookmark' ) )
+						{
+							var driver = msg.list[a].Driver;
+							
+							// Find correct image
+							var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+							if( Friend.dosDrivers[ driver ] && Friend.dosDrivers[ driver ].iconLabel )
+								img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver ].iconLabel;
+							if( msg.list[a].Title == 'Home' )
+								img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+							else if( msg.list[a].Title == 'System' )
+								img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+							
+							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
+							i.style.backgroundImage = 'url("' + img + '")';
+							nm.appendChild( i );
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
+						}
 						d.appendChild( nm );
 						if( msg.list[a].Type && msg.list[a].Type == 'bookmark' )
 						{
+							// Set nice folder icon
+							nm.classList.remove( 'IconSmall' );
+							nm.classList.remove( 'IconDisk' );
+							var img = '/iconthemes/friendup15/DriveLabels/Bookmark.svg';
+							var i = document.createElement( 'div' );
+							i.className = 'FileBrowserItemImage';
+							i.style.backgroundImage = 'url("' + img + '")';
+							nm.appendChild( i );
+							
 							( function( ls ){
 								var ex = document.createElement( 'span' );
 								ex.className = 'FloatRight IconButton IconSmall fa-remove';
@@ -506,7 +540,8 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 			}
 			delete removers;
 			
-			//
+			// Precalc
+			var d13 = depth * 13;
 			for( var a = 0; a < msg.list.length; a++ )
 			{
 				var foundItem = false;
@@ -533,7 +568,7 @@ Friend.FileBrowser.prototype.refresh = function( path, rootElement, callback, de
 						var ext = msg.list[a].Filename.split( '.' ).pop().toLowerCase();
 						var icon = d.className == 'FolderItem' ? 'IconFolder' : ( 'IconFile ' + ext );
 						d.id = 'fileitem_' + msg.list[a].Filename.split( ' ' ).join( '' );
-						d.innerHTML = '<div style="padding-left: ' + ( depth * 13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
+						d.innerHTML = '<div style="padding-left: ' + ( d13 ) + 'px" class="Name IconSmall ' + icon + '"> ' + msg.list[a].Filename + '</div><div class="SubItems"></div>';
 						rootElement.appendChild( d );
 						var fn = msg.list[a].Filename;
 						if( msg.list[a].Type == 'Directory' )

@@ -1162,6 +1162,7 @@ function receiveEvent( event, queued )
 			document.body.classList.add( 'Loading' );
 
 			// We need to set these if possible
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;
 			Application.applicationId = dataPacket.applicationId;
@@ -1278,6 +1279,7 @@ function receiveEvent( event, queued )
 		case 'register':
 			window.origin = event.origin;
 			// A function to send a message
+			Friend.dosDrivers         = dataPacket.dosDrivers;
 			Application.domain        = dataPacket.domain;
 			Application.authId        = dataPacket.authId;
 			Application.filePath      = dataPacket.filePath;

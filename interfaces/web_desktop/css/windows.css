@@ -39,6 +39,12 @@
 	pointer-events: all;
 }
 
+/* Disabled for default theme */
+.ViewContainer > .ViewIcon
+{
+	display: none;
+}
+
 /* Snapping */
 
 html .View[viewsnap] .Title > div > div
@@ -163,6 +169,11 @@ html .View[viewsnap] .Title > div > div
 .View.Virtual
 {
 	display: none;
+}
+
+[mobile=mobile] #Screens .ViewContainer:not(.Active)
+{
+	z-index: 0 !important;
 }
 
 [mobile=mobile] #Screens .View.Active[maximized=true].Opened
