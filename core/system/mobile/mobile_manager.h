@@ -31,44 +31,7 @@
 #include <libwebsockets.h>
 #include <system/user/user_mobile_app.h>
 #include <mobile_app/mobile_app_websocket.h>
-
-#define MAX_CONNECTIONS_PER_USER 5
-
-//
-// Mobile Application global structure
-//
-
-typedef struct MobileAppConnection
-{
-	struct lws											*mac_WebsocketPtr;
-	void												*mac_UserData;
-	char												*mac_SessionID;
-	FQueue												mac_Queue;
-	pthread_mutex_t										mac_Mutex;
-	time_t												mac_LastCommunicationTimestamp;
-	//UserMobileAppConnectionsT							*mac_UserConnections;
-	void												*mac_UserConnections;
-	unsigned int										mac_UserConnectionIndex;
-	mobile_app_status_t									mac_AppStatus;
-	time_t												mac_MostRecentResumeTimestamp;
-	time_t												mac_MostRecentPauseTimestamp;
-	UserMobileApp										*mac_UserMobileApp;
-	FULONG												mac_UserMobileAppID;
-	int													mac_Used;
-	FBOOL												mac_CloseConnection;
-}MobileAppConnection;
-
-//
-// single user connection structure
-//
-
-typedef struct UserMobileAppConnections
-{
-	char					*umac_Username;
-	FULONG					umac_UserID;
-	MobileAppConnection		*umac_Connection[ MAX_CONNECTIONS_PER_USER ];
-	MinNode					node;
-}UserMobileAppConnections;
+#include <system/mobile/mobile_app_connection.h>
 
 //
 // Mobile Manager structure
@@ -106,14 +69,6 @@ void MobileManagerRefreshCache( MobileManager *mmgr );
 int MobileManagerAddUMA( MobileManager *mm, UserMobileApp *app );
 
 UserMobileApp *MobleManagerGetMobileAppByUserPlatformDBm( MobileManager *mmgr, const char *username, int type );
-
-//
-//
-//
-
-MobileAppConnection *MobileAppConnectionNew( void *wsi, FULONG umaID );
-
-void MobileAppConnectionDelete( MobileAppConnection *mac );
 
 #endif //__SYSTEM_MOBILE_MOBILE_MANAGER_H__
 
