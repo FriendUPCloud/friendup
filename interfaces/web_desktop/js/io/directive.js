@@ -874,7 +874,6 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	{
 		if( data )
 		{
-			console.log( 'Here\'s the response: ' + data );
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{
