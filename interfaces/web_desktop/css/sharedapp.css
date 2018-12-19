@@ -28,7 +28,7 @@ body[windowcount] #Thanks
 .LoadingMessage
 {
 	position: absolute;
-	top: calc(50% - 40px);
+	top: calc(50% - 80px);
 	left: calc(50% - 200px);
 	width: 0px;
 	height: 80px;
@@ -36,6 +36,7 @@ body[windowcount] #Thanks
 	color: white;
 	opacity: 0;
 	transition: opacity,width 0.5s;
+	white-space: nowrap;
 }
 
 .LoadingMessage.Loaded
@@ -45,12 +46,12 @@ body[windowcount] #Thanks
 }
 
 
-[mobile] .LoadingMessage
+[mobile]:not([sharedapp]) .LoadingMessage
 {
 	left: 20px;
 }
 
-[mobile] .LoadingMessage.Loaded
+[mobile]:not([sharedapp]) .LoadingMessage.Loaded
 {
 	width: calc(100% - 20px);
 }
