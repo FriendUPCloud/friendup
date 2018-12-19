@@ -206,33 +206,36 @@ Workspace = {
 								}
 							}, true );
 
-
 							document.body.style.visibility = 'visible';
+							// Loading notice
+							var loading = document.createElement( 'div' );
+							loading.className = 'LoadingMessage';
+							loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+							document.body.appendChild( loading );
+							setTimeout( function()
+							{
+								loading.classList.add( 'Loaded' );
+							}, 25 );
 							
 							if( t.conf.app )
 							{
-								// Loading notice
-								var d = document.createElement( 'div' );
-								d.className = 'LoadingMessage';
-								d.style.transition = 'opacity';
-								d.style.opacity = 0;
-								d.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
-								document.body.appendChild( d );
-								setTimeout( function()
-								{
-									d.classList.add( 'Loaded' );
-								}, 5 );
-							
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
+									// Prevent loading twice...
+									if( document.body.loaded ) return;
+									document.body.loaded = true;
+									
 									// Remove loading notice
-									if( d )
+									if( loading )
 									{
-										d.classList.remove( 'Loaded' );
+										loading.classList.remove( 'Loaded' );
 										setTimeout( function()
 										{
-											document.body.removeChild( d );
-											d = null;
+											if( loading )
+											{
+												loading.parentNode.removeChild( loading );
+												loading = null;
+											}
 										}, 500 );
 									}
 									function showThankyou()
