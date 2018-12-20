@@ -15,9 +15,7 @@ function ExecuteApplication( app, args, callback )
 {
 	if( isMobile )
 	{
-		Workspace.widget.slideUp();
-		Workspace.closeDrivePanel();
-		Workspace.mainDock.closeDesklet();
+		Workspace.goToMobileDesktop();
 	}
 	
 	if( args )
@@ -511,6 +509,11 @@ function FlushSingleApplicationLock( app )
 // Kill an app by name or PID
 KillApplication = function ( n, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	if( !level ) level = 1;
 	if( typeof( n ) == 'number' )
@@ -567,6 +570,11 @@ KillApplication = function ( n, level )
 
 function KillApplicationById( appid, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	for( var a = 0; a < Workspace.applications.length; a++ )
 	{

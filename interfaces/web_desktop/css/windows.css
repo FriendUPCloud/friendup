@@ -1032,7 +1032,7 @@ body #WorkspaceMenu .Open ul > li.CloseButton
 
 html body[mobile=mobile].ViewMaximized #WorkspaceMenu.Open
 {
-	z-index: 2147483647 !important;
+	z-index: 2147483646 !important;
 	overflow: visible !important;
 }
 

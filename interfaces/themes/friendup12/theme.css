@@ -1114,18 +1114,6 @@ body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
 	background-position: center;
 }
 
-body:not([tablet])[mobile=mobile] #WorkspaceMenu
-{
-	text-align: center;
-}
-
-body:not([tablet])[mobile=mobile] #WorkspaceMenu .Menu
-{
-	float: none;
-	font-size: 1em;
-	display: inline-block;
-}
-
 body:not([tablet])[mobile=mobile] .Calendar.MonthName
 {
 	padding: 6px 10px;
@@ -2119,21 +2107,6 @@ html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
 	background: #34495E;
 }
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
-{
-	background: none;
-	color: white;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
-}
-
-[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li,
-[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li
-{
-	color: white;
-}
 
 html #WorkspaceMenu ul
 {
@@ -2275,80 +2248,19 @@ html #WorkspaceMenu
 	transition: background,width 0.25s;
 }
 
-html [mobile=mobile].ViewMaximized #WorkspaceMenu
-{
-	z-index: 6 !important;
-	width: 34px !important;
-    height: 32px !important;
-	overflow: hidden;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open
-{
-	width: 100% !important;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open > div
-{
-	opacity: 1;
-	pointer-events: all;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu:after,
-html [mobile=mobile].HasMenu #WorkspaceMenu:after
-{
-	content: "\f0c9";
-	font-weight: bold;
-	font-family: fontawesome;
-	display: block;
-	position: absolute;
-	top: 8px;
-    left: 1px;
-    width: 32px !important;
-    height: 18px !important;
-    font-size: 1.0em;
-	color: white;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open:after,
-html [mobile=mobile]:not(.ViewMaximized).HasMenu #WorkspaceMenu:after
-{
-	content: "\f104";
-}
 
 /* Mobile popup menu fixes */
 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	font-size: 1em;
-}
-
-html > body[mobile=mobile] > .MobileMenuClose:before, 
-html > body #WorkspaceMenu .Open ul > li.CloseButton:before
+html > body[mobile=mobile] > .MobileMenuClose:before
 {
 	top: 2px;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
-html body .MobileMenuClose,
-html body #WorkspaceMenu .Open ul > li.CloseButton
+html body .MobileMenuClose
 {
 	font-size: 1em !important;
 	line-height: 46px !important;
-}
-
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	z-index: 100;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu > div
-{
-	opacity: 0;
-	transition: opacity 0.25s;
-	pointer-events: none;
 }
 
 /* Done popup menu fixes */

@@ -102,10 +102,12 @@ var WorkspaceMenu =
 				if( this.classList.contains( 'Open' ) )
 				{
 					this.classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
 				}
 				else
 				{
 					this.classList.add( 'Open' );
+					document.body.classList.add( 'WorkspaceMenuOpen' );
 				}
 			}
 		}
@@ -328,6 +330,13 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
+			if( isMobile && appid )
+			{
+				menuItems.push( {
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				} );
+			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
 			{
@@ -357,6 +366,14 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
+				if( menuItems[ i ].command )
+				{
+					n.onclick = function()
+					{
+						KillApplicationById( appid );
+					}
+					continue;
+				}
 			}
 			var ul = document.createElement ( 'ul' );
 			ul.onscroll = function( e )
