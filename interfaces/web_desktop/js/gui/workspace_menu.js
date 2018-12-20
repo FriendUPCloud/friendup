@@ -113,6 +113,15 @@ var WorkspaceMenu =
 						if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
 							eles[z].classList.remove( 'Open' );
 					}
+					
+					// Remove back
+					var eles = t.getElementsByClassName( 'MenuBack' );
+					if( eles.length )
+					{
+						for( var a = 0; a < eles.length; a++ )
+							eles[a].parentNode.removeChild( eles[a] );
+					}
+					
 					return cancelBubble( e );
 				}
 				else
@@ -244,6 +253,12 @@ var WorkspaceMenu =
 	},
 	close: function( e )
 	{
+		if( WorkspaceMenu.back )
+		{
+			WorkspaceMenu.back.parentNode.removeNode( WorkspaceMenu.back );
+			WorkspaceMenu.back = null;
+		}
+		
 		var m = ge( 'WorkspaceMenu' );
 		if( m )
 		{

@@ -384,7 +384,13 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
 	clear: none;
 	position: relative;
 	border-radius: 8px;
+	transition: box-shadow;
 	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing
+{
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.0);
 }
 
 body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
@@ -4220,10 +4226,60 @@ body:not([tablet])[mobile=mobile] .IconWindow .File > .Title
 
 /* Mobile menu */
 
-html body[mobile=mobile] > #MobileMenu.Visible
+html [mobile=mobile] > #MobileMenu.Visible
+{
+	background: #f4f4f4;
+	color: #303030;
+}
+
+html body[mobile] #WorkspaceMenu.Open ul
+{
+	background: #34495E;
+}
+
+[mobile] #WorkspaceMenu:before
+{
+	color: white;
+}
+
+html [mobile=mobile] > #MobileMenu.Visible > div
+{
+	font-size: 1em;
+}
+
+html body[mobile=mobile] > .MobileMenu div li .IconText
+{
+	line-height: 30px;
+	font-size: 1.1em;
+}
+
+html body.Charcoal[mobile=mobile] > #MobileMenu.Visible
 {
 	background: #222222;
 	color: white;
+}
+
+html body.Charcoal[mobile] #WorkspaceMenu.Open ul
+{
+	background: #303030;
+}
+
+html body.Dark[mobile=mobile] > #MobileMenu.Visible
+{
+	background: #435260;
+	color: white;
+}
+
+html body.Dark[mobile] #WorkspaceMenu.Open ul
+{
+	background: #435260;
+}
+
+html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body .MobileMenuClose, body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
+html body #WorkspaceMenu .Open ul > li.CloseButton
+{
+	border-top: 2px solid rgba(0,0,0,0.1);
 }
 
 @media (max-device-width: 768px)
