@@ -251,7 +251,8 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
-				cancelBubble( e );
+				if( e )
+					cancelBubble( e );
 			}
 			for( var a = 0; a < lis.length; a++ )
 			{
@@ -348,6 +349,14 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
+			if( !menuItems.length )
+			{
+				// Add option to quit application
+				menuItems.push( {
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				} );
+			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
 			{
