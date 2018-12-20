@@ -3131,21 +3131,19 @@ function Notify( msg, callback, clickcallback )
 			}, 250 );
 		}
 		
+		// When clicking the bubble :)
+		if( clickcallback )
+		{
+			n.addEventListener( 'touchstart', clickcallback );
+		}
+		
 		if( msg.flags && msg.flags.sticky )
 		{
-			n.onclick = function(){ n.close(); }
+			n.addEventListener( 'touchstart', function(){ n.close(); } );
 		}
 		else
 		{
 			setTimeout( function(){ n.close(); }, 3000 );
-		}
-		
-		// When clicking the bubble
-		// :)
-		if( clickcallback )
-		{
-			n.onclick = clickcallback;
-			n.ontouchdown = clickcallback;
 		}
 		
 		return;
