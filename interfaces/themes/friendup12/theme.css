@@ -2222,10 +2222,18 @@ html #WorkspaceMenu .Open ul > li[divider]:hover
 	background: none;
 }
 
-html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]):hover,
-html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]).Open
+html body:not([mobile]) #WorkspaceMenu .Open ul > li:not([divider]):hover
 {
 	background: rgba(0,0,0,0.6);
+	color: white;
+	text-shadow: none;
+}
+
+html body #WorkspaceMenu .Open ul > li:hover, 
+html body #WorkspaceMenu .Open ul > li.Open
+{
+	text-shadow: none;
+	color: inherit;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
