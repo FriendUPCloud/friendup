@@ -3688,7 +3688,8 @@ function AlertBox( title, desc, buttons, win )
 	var w = new View( {
 		title: title,
 		width: 380,
-		height: 200
+		height: 200,
+		resize: false
 	} );
 	
 	for( var a in buttons )

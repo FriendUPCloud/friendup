@@ -4328,6 +4328,7 @@ function Confirm( title, string, okcallback, oktext, canceltext )
 	var v = new View( {
 		title: title,
 		width: 400,
+		resize: false,
 		height: d.offsetHeight + 75,
 		id: 'confirm_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
@@ -4399,6 +4400,7 @@ function Alert( title, string, cancelstring, callback )
 	var v = new View( {
 		title: title,
 		width: 400,
+		resize: false,
 		height: minContentHeight + parseInt( themeTitle ) + parseInt( themeBottom ),
 		id: 'alert_' + title.split( /[\s]+/ ).join( '' ) + ( new Date() ).getTime() + Math.random()
 	} );
