@@ -460,6 +460,11 @@ body:not([tablet])[mobile=mobile] #Screens div:not(.Icon) > .File > .Title
 }
 /* Desklet */
 
+body[mobile=mobile] .Desklet.Open.Opened
+{
+	overflow: hidden;
+}
+
 .Desklet:before
 {
 	content:"\f00a";
