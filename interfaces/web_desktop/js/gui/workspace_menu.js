@@ -102,10 +102,28 @@ var WorkspaceMenu =
 				if( this.classList.contains( 'Open' ) )
 				{
 					this.classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+					
+					// Close sub menus
+					var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+					for( var z = 0; z < eles.length; z++ )
+					{
+						if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+							eles[z].classList.remove( 'Open' );
+					}
+					return cancelBubble( e );
 				}
 				else
 				{
+					var ts = this;
+					this.style.willChange = 'content transform';
+					setTimeout( function()
+					{
+						ts.style.willChange = 'auto';
+					}, 300 );
+					
 					this.classList.add( 'Open' );
+					document.body.classList.add( 'WorkspaceMenuOpen' );
 				}
 			}
 		}
@@ -233,6 +251,8 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				if( e )
+					cancelBubble( e );
 			}
 			for( var a = 0; a < lis.length; a++ )
 			{
@@ -267,7 +287,7 @@ var WorkspaceMenu =
 		if( m )
 		{
 			var t = e ? ( e.target ? e.target : e.srcElement ) : false;
-			if( t && t.getAttribute ( 'onclick' ) ) t.onclick ();
+			if( t && t.getAttribute && t.getAttribute( 'onclick' ) ) t.onclick ();
 			// Remove open menus
 			var divs = m.getElementsByTagName( 'div' );
 			var lis = m.getElementsByTagName( 'li' );
@@ -276,6 +296,7 @@ var WorkspaceMenu =
 			m.style.display = 'none';
 			m.classList.remove( 'Visible' );
 			m.isActivated = false;
+			cancelBubble( e );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 	
@@ -328,6 +349,14 @@ var WorkspaceMenu =
 		// This need to be able to stringify to validate menu items
 		if( depth == 0 )
 		{
+			if( !menuItems.length )
+			{
+				// Add option to quit application
+				menuItems.push( {
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				} );
+			}
 			var test = JSON.stringify( menuItems );
 			if( Friend.currentMenuItems == test )
 			{
@@ -337,6 +366,45 @@ var WorkspaceMenu =
 			{
 				Friend.currentMenuItems = test;
 				menudiv.innerHTML = '';
+			}
+		}
+		
+		if( isMobile && appid )
+		{
+			var found = false;
+			for( var z = 0; z < menuItems.length; z++ )
+			{
+				if( menuItems[z].command == 'quit' )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				// Clear quit for this - and add back buttons
+				function clearQuit( men )
+				{
+					var out = [];
+					for( var a = 0; a < men.length; a++ )
+					{
+						if( men[a].command && men[a].command == 'quit' )
+							continue;
+						if( men[a].items )
+						{
+							men[a].items = clearQuit( men[a].items );
+						}
+						out.push( men[a] );
+					}
+					return out;
+				}
+				menuItems = clearQuit( menuItems );
+				
+				// Add option to quit application
+				menuItems.push( {
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				} );
 			}
 		}
 		
@@ -357,6 +425,14 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
+				if( menuItems[ i ].command == 'quit' )
+				{
+					n.onclick = function()
+					{
+						KillApplicationById( appid );
+					}
+					continue;
+				}
 			}
 			var ul = document.createElement ( 'ul' );
 			ul.onscroll = function( e )
@@ -529,35 +605,7 @@ var WorkspaceMenu =
 				continue;
 			// For mobile, create a close button
 
-			// Shared apps w/o desktop or mobile
-			if( isMobile || IsSharedApp() )
-			{
-				var ul = menus[a].getElementsByTagName( 'ul' )[0];
-				if( ul && !ul.closeButton )
-				{			
-					var h = document.createElement( 'li' );
-					h.className = 'Heading';
-					h.innerHTML = menus[a].getAttribute( 'name' ) ? menus[a].getAttribute( 'name' ) : menus[a].innerText;
-					h.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( h, ul.firstChild );
-				
-					var d = document.createElement( 'li' );
-					d.className = 'CloseButton Close IconMedium fa-close';
-					d.innerHTML = i18n( 'i18n_close' );
-					d.closer = menus[a];
-					d.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( d, ul.firstChild );
-					ul.closeButton = d;
-				}
-			}
+			
 			
 			// Normal operation (tablet and desktop)
 			menus[a].menus = menus;
@@ -602,10 +650,38 @@ var WorkspaceMenu =
 					// Ah, we found the menu to open!
 					if ( this.menus[c] == this ) 
 					{
+						// Add back key
+						if( isMobile )
+						{
+							if( !WorkspaceMenu.back )
+							{
+								var b = document.createElement( 'div' );
+								b.className = 'MenuBack';
+								b.target = this;
+								b.onclick = function( e )
+								{
+									this.target.classList.remove( 'Open' );
+									if( this.parentNode )
+										this.parentNode.removeChild( this );
+									return cancelBubble( e );
+								}
+								ge( 'WorkspaceMenu' ).appendChild( b );
+							}
+						}
+						var ts = this;
+						this.style.willChange = 'content transform';
+						setTimeout( function()
+						{
+							ts.style.willChange = 'auto';
+						}, 300 );
+						
 						this.classList.add( 'Open' );
 					}
 					// This is a menu to close..
-					else this.menus[c].classList.remove( 'Open' );
+					else
+					{
+						this.menus[c].classList.remove( 'Open' );
+					}
 				}
 				return cancelBubble( e );
 			}
@@ -625,12 +701,20 @@ var WorkspaceMenu =
 		for ( var a = 0; a < lis.length; a++ )
 		{
 			lis[a].items = lis;
-			lis[a].onmouseover = function ()
+			lis[a].onmouseover = function ( e )
 			{	
 				// Activate menu
 				WorkspaceMenu.activateMenu( wm );
 				
 				// Open menu
+				
+				var ts = this;
+				this.style.willChange = 'content transform';
+				setTimeout( function()
+				{
+					ts.style.willChange = 'auto';
+				}, 300 );
+				
 				this.classList.add( 'Open' );
 				var sublis = this.getElementsByTagName( 'li' );
 				
@@ -650,6 +734,7 @@ var WorkspaceMenu =
 					if( this.items[a] != this )
 					{
 						this.items[a].classList.remove( 'Open' );
+						return cancelBubble( e );
 					}
 				}
 				

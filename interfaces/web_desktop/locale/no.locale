@@ -53,6 +53,8 @@ i18n_cancel                          : Avbryt
 i18n_accept                          : Aksepter
 i18n_understood                      : Forstått
 i18n_your_devices                    : Dine enheter
+i18n_quit                            : Avslutt
+i18n_menuback                        : <
 
 i18n_full                            : full.
 i18n_disk_icon                       : Diskikon
@@ -350,10 +352,10 @@ i18n_open_with                          : Åpne med
 
 #File dialogs ------------------------------------------------------------------
 
-file_load                               : Last inn
+file_load                               : Åpne
 file_abort                              : Lukk
 file_save                               : Lagre
-file_open_title                         : Last inn en fil
+file_open_title                         : Åpne fil
 file_open_path                          : Velg sti
 file_save_title                         : Lagre en fil
 file_unknown_title                      : Ukjent filoperasjon

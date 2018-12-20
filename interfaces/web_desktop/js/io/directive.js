@@ -15,9 +15,7 @@ function ExecuteApplication( app, args, callback )
 {
 	if( isMobile )
 	{
-		Workspace.widget.slideUp();
-		Workspace.closeDrivePanel();
-		Workspace.mainDock.closeDesklet();
+		Workspace.goToMobileDesktop();
 	}
 	
 	if( args )
@@ -444,6 +442,7 @@ function ExecuteApplication( app, args, callback )
 					authId: ifr.authId,
 					args: oargs,
 					workspace: workspace,
+					dosDrivers: Friend.dosDrivers,
 					locale: Workspace.locale,
 					theme: Workspace.theme,
 					themeData: Workspace.themeData,
@@ -510,6 +509,11 @@ function FlushSingleApplicationLock( app )
 // Kill an app by name or PID
 KillApplication = function ( n, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	if( !level ) level = 1;
 	if( typeof( n ) == 'number' )
@@ -566,6 +570,11 @@ KillApplication = function ( n, level )
 
 function KillApplicationById( appid, level )
 {
+	if( isMobile )
+	{
+		Workspace.goToMobileDesktop();
+	}
+	
 	var killed = 0;
 	for( var a = 0; a < Workspace.applications.length; a++ )
 	{
@@ -873,7 +882,6 @@ function ExecuteJSXByPath( path, args, callback, conf )
 	{
 		if( data )
 		{
-			console.log( 'Here\'s the response: ' + data );
 			// An error?
 			if ( data.indexOf( '404 - File not found!' ) < 0 )
 			{

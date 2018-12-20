@@ -32,7 +32,7 @@ function _nameFix( wt )
 	return wt;
 }
 
-DirectoryView = function( winobj )
+DirectoryView = function( winobj, extra )
 {	
 	var ws = GetWindowStorage( winobj.uniqueId );
 	// Initial values
@@ -43,6 +43,52 @@ DirectoryView = function( winobj )
 	this.navMode = globalConfig.navigationMode == 'spacial' ? globalConfig.navigationMode : 'toolbar'; // default is now using toolbar
 	this.pathHistory = [];
 	this.pathHistoryIndex = 0;
+	
+	this.filearea = winobj;
+	this.bookmarks = null;
+	this.sidebarbackground = true;
+	this.toolbararea = false;
+	this.doubleclickfiles = false;
+	this.multiple = true;
+	this.mountlist = false;
+	this.filedialog = false;
+	
+	// Read in extra stuff
+	if( extra )
+	{
+		if( extra.filedialog )
+		{
+			this.filedialog = true;
+		}
+		if( extra.rightpanel )
+		{
+			this.filearea = extra.rightpanel;
+		}
+		if( extra.leftpanel )
+		{
+			this.bookmarks = extra.leftpanel;
+		}
+		if( extra.nosidebarbackground )
+		{
+			this.sidebarbackground = false;
+		}
+		if( extra.toolbararea )
+		{
+			this.toolbararea = extra.toolbararea;
+		}
+		if( extra.doubleclickfiles )
+		{
+			this.doubleclickfiles = extra.doubleclickfiles;
+		}
+		if( extra.multiple === false )
+		{
+			this.multiple = false;
+		}
+		if( extra.mountlist )
+		{
+			this.mountlist = extra.mountlist;
+		}
+	}
 
 	// File notification
 	if( winobj )
@@ -77,16 +123,18 @@ DirectoryView = function( winobj )
 							ff.execute( 'file/notificationremove' );
 						} );
 					}
-					console.log( 'File notification start result: ' + e, d );
+					//console.log( 'File notification start result: ' + e, d );
 				}
 				f.execute( 'file/notificationstart' );
-				console.log('notification start ' + path);
+				//console.log('notification start ' + path);
 			}
 			this.addToHistory( winobj.fileInfo );
 		}
 
 		this.InitWindow( winobj );
-		winobj.parentNode.className = winobj.parentNode.className.split ( ' IconWindow' ).join ( '' ) + ' IconWindow';
+		winobj.parentNode.classList.add( 'IconWindow' );
+		if( this.toolbararea )
+			winobj.parentNode.classList.add( 'CustomToolbarArea' );
 	}
 
 	this.window = winobj;
@@ -127,14 +175,24 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 	var t = document.createElement( 'div' );
 	t.className = 'DirectoryToolbar';
-	t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
-	t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
-	t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
 
 	// Assign it so we remember
 	winobj.parentNode.toolbar = t;
 	this.toolbar = t;
-	winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+	
+	if( this.toolbararea )
+	{
+		this.toolbararea.appendChild( t );
+		t.style.left = 0;
+		t.style.right = 0;
+	}
+	else
+	{
+		winobj.parentNode.insertBefore( t, winobj.parentNode.firstChild );
+		t.style.top = winobj.parentNode.titleBar.offsetHeight + 'px';
+		t.style.left = GetElementWidth( winobj.parentNode.leftbar ) + 'px';
+		t.style.right = GetElementWidth( winobj.parentNode.rightbar ) + 'px';
+	}
 
 	var rpath = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 	if ( rpath.indexOf( ':' < 0 ) )
@@ -167,39 +225,54 @@ DirectoryView.prototype.initToolbar = function( winobj )
 		// Go up a level
 		{
 			element: 'button',
-			className: 'Up IconSmall fa-arrow-up',
+			className: 'Up IconSmall ' + ( isMobile ? 'fa-arrow-left' : 'fa-arrow-up' ),
 			content: i18n( 'i18n_dir_btn_up' ),
 			onclick: function( e )
 			{
-				// Fetch path again
-				var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
-
-				if ( rpath2.indexOf( ':' < 0 ) )
-					rpath2 += ':';
-				var path = rpath2.split( ':' );
-
-				var volu = path[0];
-				var path = path[1];
-				if( path.substr( path.length - 1, 1 ) == '/' )
-					path = path.substr( 0, path.length - 1 );
-				var fnam = '';
-
-				if( path.indexOf( '/' ) > 0 )
+				var test = winobj.fileInfo.Path;
+				if( !winobj.directoryview.filedialog && test.substr( test.length - 1, 1 ) == ':' )
 				{
-					path = path.split( '/' );
-					path.pop();
-					fnam = path[ path.length - 1 ]; // filename
-					path = path.join( '/' );
+					return;
+				}
+				
+				var volu = path = '';
+				if( winobj.directoryview.filedialog && test != 'Mountlist:' && test.substr( test.length - 1, 1 ) == ':' )
+				{
+					path = 'Mountlist:';
+					volu = 'Mountlist';
 				}
 				else
 				{
-					path = '';
-					fnam = volu;
-				}
-				path = volu + ':' + path;
+					// Fetch path again
+					var rpath2 = winobj.fileInfo.Path ? winobj.fileInfo.Path : ( winobj.fileInfo.Volume );
 
-				var lp = path.substr( path.length - 1, 1 )
-				if( lp != ':' && lp != '/' ) path += '/';
+					if ( rpath2.indexOf( ':' < 0 ) )
+						rpath2 += ':';
+					var path = rpath2.split( ':' );
+
+					volu = path[0];
+					path = path[1];
+					if( path.substr( path.length - 1, 1 ) == '/' )
+						path = path.substr( 0, path.length - 1 );
+					var fnam = '';
+
+					if( path.indexOf( '/' ) > 0 )
+					{
+						path = path.split( '/' );
+						path.pop();
+						fnam = path[ path.length - 1 ]; // filename
+						path = path.join( '/' );
+					}
+					else
+					{
+						path = '';
+						fnam = volu;
+					}
+					path = volu + ':' + path;
+
+					var lp = path.substr( path.length - 1, 1 )
+					if( lp != ':' && lp != '/' ) path += '/';
+				}
 
 				var fin = {
 					Volume: volu + ':',
@@ -211,11 +284,36 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 				// Set as current history element at end of list
 				dw.addToHistory( fin );
-
-				winobj.refresh();
+				
+				// Animation for going to next folder
+				if( isMobile )
+				{
+					var n = document.createElement( 'div' );
+					n.className = 'Content SlideAnimation';
+					n.style.willChange = 'transform';
+					n.style.transition = 'transform 0.4s';
+					n.innerHTML = winobj.innerHTML;
+					n.scrollTop = winobj.scrollTop;
+					n.style.zIndex = 10;
+					winobj.parentNode.appendChild( n );
+					
+					// Refresh and animate
+					winobj.refresh( function()
+					{
+						n.style.transform = 'translateX(100%)';
+						setTimeout( function()
+						{
+							n.parentNode.removeChild( n );
+						}, 400 );
+					} );
+				}
+				else
+				{
+					winobj.refresh();
+				}
 			}
 		},
-		{
+		!isMobile ? {
 			element: 'button',
 			className: 'Back IconSmall fa-arrow-left',
 			content: i18n( 'i18n_dir_btn_back' ),
@@ -229,8 +327,8 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.refresh();
 				}
 			}
-		},
-		{
+		}: false,
+		!isMobile ? {
 			element: 'button',
 			className: 'Forward IconSmall fa-arrow-right',
 			content: i18n( 'i18n_dir_btn_forward' ),
@@ -244,7 +342,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 					winobj.refresh();
 				}
 			}
-		},
+		}: false,
 		{
 			element: 'button',
 			className: 'Reload IconSmall fa-refresh',
@@ -309,7 +407,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	{
 		buttons.push( {
 			element: 'button',
-			className: 'Makedir FloatRight IconSmall fa-plus',
+			className: 'Makedir FloatRight IconSmall',
 			content: i18n( 'i18n_create_container' ),
 			onclick: function( e )
 			{
@@ -334,6 +432,7 @@ DirectoryView.prototype.initToolbar = function( winobj )
 	// Process!
 	for( var a in buttons )
 	{
+		if( !buttons[a] ) continue;
 		if( buttons[a].element == 'toggle-group' )
 		{
 			var ele = document.createElement( 'div' );
@@ -375,7 +474,15 @@ DirectoryView.prototype.initToolbar = function( winobj )
 
 DirectoryView.prototype.ShowFileBrowser = function()
 {
-	if( window.isMobile ) return;
+	// If we have no custom toolbar area, it means that we're using
+	// the directoryview in a custom template
+	if( !this.toolbararea && isMobile )
+	{
+		return;
+	}
+	
+	var self = this;
+	
 	// Create the file browser
 	var winobj = this.windowObject;
 	
@@ -384,11 +491,31 @@ DirectoryView.prototype.ShowFileBrowser = function()
 	if( !isShowing && winobj.classList.contains( 'Content' ) )
 	{
 		var d = document.createElement( 'div' );
-		d.className = 'FileBrowserContainer BackgroundHeavier';
+		if( this.sidebarbackground )
+		{
+			d.className = 'FileBrowserContainer BackgroundHeavier ScrollBarSmall';
+		}
+		else 
+		{
+			d.className = 'FileBrowserContainer ScrollBarSmall';
+			d.style.background = 'none';
+		}
 		
-		winobj.appendChild( d );
+		// Figure out where to place the bookmarks
+		var bm = this.bookmarks;
+		if( !bm )
+		{
+			bm = winobj;
+		}
+		bm.appendChild( d );
+		
+		// Register where the bookmarks are placed
 		winobj.fileBrowserDom = d;
-		winobj.fileBrowser = new Friend.FileBrowser( d, { displayFiles: false }, {
+		if( !self.bookmarks )
+			self.bookmarks = d;
+			
+		// Go instantiate!
+		winobj.fileBrowser = new Friend.FileBrowser( d, { displayFiles: false, filedialog: self.filedialog }, {
 			checkFile( filepath, fileextension )
 			{
 				console.log( filepath + ' on ' + fileextension );
@@ -400,7 +527,9 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			folderOpen( path )
 			{
 				var vol = path.split( ':' )[0];
+				self.addToHistory( winobj.fileInfo );
 				winobj.fileInfo.Path = path;
+				winobj.fileInfo.Volume = vol;
 				winobj.refresh();
 			},
 			folderClose( path )
@@ -481,8 +610,55 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		Friend.iconsSelectedCount = selectedCount;
 	},
 	// -------------------------------------------------------------------------
+	winobj.completeRedraw = function()
+	{
+		if( this.redrawing )
+		{
+			this.redrawing = false;
+			if( this.queuedRedraw )
+			{
+				this.queuedRedraw();
+				this.queuedRedraw = null;
+			}
+		}
+	}
 	winobj.redrawIcons = function( icons, direction, callback )
 	{
+		var dirv = this.directoryview;
+		
+		// Mobile animations
+		if( isMobile )
+		{
+			// Enforce icon view for mobile
+			dirv.listMode = 'iconview';
+			
+			if( dirv.bookmarks && !dirv.bookmarks.classList.contains( 'ScreenContent' ) )
+			{
+				// Bookmarks
+				dirv.bookmarks.style.width = '100%';
+				dirv.bookmarks.style.left = '0';
+				dirv.bookmarks.style.transition = 'transform 0.4s';
+				
+				// Filearea is always put in a container
+				dirv.filearea.parentNode.style.left = '0';
+				dirv.filearea.parentNode.style.width = '100%';
+				dirv.filearea.parentNode.style.transition = 'transform 0.4s';
+				
+				if( winobj.fileInfo.Path == 'Mountlist:' )
+				{
+					dirv.filearea.parentNode.style.transform = 'translateX(100%)';
+					dirv.bookmarks.style.transform = 'translateX(0%)';
+					return;
+				}
+				else
+				{
+					dirv.filearea.parentNode.style.transform = 'translateX(0%)';
+					dirv.bookmarks.style.transform = 'translateX(-100%)';
+				}
+			}
+		}
+		
+		// For screen icons
 		if( winobj.classList && winobj.classList.contains( 'ScreenContent' ) )
 		{
 			this.directoryview.mode = 'Volumes';
@@ -498,6 +674,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.directoryview.mode = 'Files';
 		}
 
+		// TODO: Check if this is used or remove!
 		if( this.running )
 		{
 			return;
@@ -506,22 +683,10 @@ DirectoryView.prototype.InitWindow = function( winobj )
 		// Blocking? Wait with call
 		if( this.redrawing )
 		{
-			//if we have odler stuff, stop it
-			if( this.redrawtimeouts.length > 0 )
-			{
-				for( var i = 0; i < this.redrawtimeouts.length; i++)
-				{
-					clearTimeout( this.redrawtimeouts[i] );
-				}
-				// Clear after having run
-				this.redrawtimeouts = [];
-			}
-
-			// lets us wait a bit and try redrawing then
-			this.redrawtimeouts.push( setTimeout( function()
-			{
+			// This will overwrite the queued redraw with updated data
+			this.queuedRedraw = function(){
 				winobj.redrawIcons( icons, direction );
-			}, 250 ) );
+			};
 			return;
 		}
 
@@ -543,6 +708,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			this.noRun = 0;
 			this.noRunPath = '';
 		}
+		
 		if( this.icons )
 		{
 			for( var a = 0; a < this.icons.length; a++ )
@@ -590,22 +756,29 @@ DirectoryView.prototype.InitWindow = function( winobj )
 			var self = this;
 			var handle;
 			var timeOfStart = new Date().getTime();
-			if ( loaded == 0 )
+			
+			if( loaded == 0 )
 				handle = setInterval( checkIcons, 500 );
+		 	
 		 	checkIcons();
+			
 			function checkIcons()
 			{
-				if ( loaded == 0 )
+				if( loaded == 0 )
 				{
 					if ( new Date().getTime() < timeOfStart + 1000 )
+					{
+						self.completeRedraw();
 						return;
+					}
 				}
-				if ( handle )
+				
+				if( handle )
 					clearInterval( handle );
 
-				if ( loaded <= 0 )
+				if( loaded <= 0 )
 				{
-					self.redrawing = false;
+					self.completeRedraw();
 					return;
 				}
 
@@ -661,25 +834,25 @@ DirectoryView.prototype.InitWindow = function( winobj )
 					case 'compact':
 					case 'iconview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 250 );
+						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawIconView( self, self.icons, direction, lm );
+						var res = self.directoryview.RedrawIconView( self.directoryview.filearea, self.icons, direction, lm );
 						if( callback ) callback();
 						checkScrl();
 						return res;
 					}
 					case 'listview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 25 ); // to help with column resizing, lower resize timeout
+						setTimeout( function(){ self.completeRedraw(); }, 25 ); // to help with column resizing, lower resize timeout
 						CheckScreenTitle();
-						var res = self.directoryview.RedrawListView( self, self.icons, direction );
+						var res = self.directoryview.RedrawListView( self.directoryview.filearea, self.icons, direction );
 						if( callback ) callback();
 						checkScrl();
 						return res;
 					}
 					case 'columnview':
 					{
-						setTimeout( function(){ self.redrawing = false; }, 250 );
+						setTimeout( function(){ self.completeRedraw(); }, 250 );
 						CheckScreenTitle();
 						var res = self.directoryview.RedrawColumnView( self, self.icons, direction );
 						if( callback ) callback();
@@ -687,7 +860,7 @@ DirectoryView.prototype.InitWindow = function( winobj )
 						return res;
 					}
 				}
-				self.redrawing = false;
+				self.completeRedraw();
 			}
 		}
 		return false;
@@ -697,14 +870,14 @@ DirectoryView.prototype.InitWindow = function( winobj )
 	winobj.parentNode.rollOver = function ( eles )
 	{
 		//SetOpacity ( this, 0.8 );
-		this.classList.add('DragTarget');
+		this.classList.add( 'DragTarget' );
 		window.targetMovable = this;
 	}
 
 	// -------------------------------------------------------------------------
 	winobj.parentNode.rollOut = function ( eles )
 	{
-		this.classList.remove('DragTarget');
+		this.classList.remove( 'DragTarget' );
 		//SetOpacity ( this, 1 );
 	}
 
@@ -2271,13 +2444,16 @@ DirectoryView.prototype.ResizeToFit = function( obj )
 // Select all
 DirectoryView.prototype.SelectAll = function()
 {
-	var ics = this.window.icons;
-	for( var a = 0; a < ics.length; a++ )
+	if( this.multiple )
 	{
-		ics[a].domNode.classList.add( 'Selected' );
-		ics[a].domNode.selected = true;
-		if( ics[a].fileInfo )
-			ics[a].fileInfo.selected = true;
+		var ics = this.window.icons;
+		for( var a = 0; a < ics.length; a++ )
+		{
+			ics[a].domNode.classList.add( 'Selected' );
+			ics[a].domNode.selected = true;
+			if( ics[a].fileInfo )
+				ics[a].fileInfo.selected = true;
+		}
 	}
 }
 
@@ -2519,10 +2695,23 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.className += ' File';
 			RemoveIconEvents( f ); // Strip events
 			r.file = f;
-			r.ondblclick = function( e )
+			
+			// Overwrite doubleclick
+			if( icons[a].Type == 'File' && this.doubleclickfiles )
 			{
-				Notify( { title: 'Double clicked', text: 'dlci' } );
-				this.file.ondblclick( e );
+				var cl = this.doubleclickfiles;
+				r.ondblclick = function( e )
+				{
+					cl( f, e );
+				}
+			}
+			else
+			{
+				r.ondblclick = function( e )
+				{
+					//Notify( { title: 'Double clicked', text: 'dlci' } );
+					this.file.ondblclick( e );
+				}
 			}
 
 			// Create the icon..
@@ -2537,9 +2726,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 			r.onclick = function( e )
 			{
 				var p = icnt;
-
+				
 				// Range
-				if( e.shiftKey )
+				if( dv.multiple && e.shiftKey )
 				{
 					var other = self = false;
 					var top = bottom = false;
@@ -2575,7 +2764,7 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 					dv.lastListItem = this;
 				}
 				// Toggle only
-				else if( e.ctrlKey )
+				else if( dv.multiple && e.ctrlKey )
 				{
 					if( this.classList.contains( 'Selected' ) )
 					{
@@ -2656,6 +2845,15 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 							this.selected = true;
 							this.fileInfo.selected = true;
 							dv.lastListItem = this;
+						}
+						if( this.classList.contains( 'Editing' ) )
+						{
+							this.classList.remove( 'Editing' );
+							if( this.input )
+							{
+								this.removeChild( this.input );
+								this.input = null;
+							}
 						}
 					}
 
@@ -2877,9 +3075,9 @@ DirectoryView.prototype.RedrawListView = function( obj, icons, direction )
 
 // -------------------------------------------------------------------------
 // Create a directoryview on a div / Window (shortcut func (deprecated?))
-function CreateDirectoryView( winobj )
+function CreateDirectoryView( winobj, extra )
 {
-	var w = new DirectoryView( winobj );
+	var w = new DirectoryView( winobj, extra );
 	return w;
 }
 
@@ -2956,7 +3154,35 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	iconInner = document.createElement ( 'div' );
 	file.iconInner = iconInner;
-	if( fileInfo.Icon )
+	
+	if( !Friend.dosDrivers[ 'Dormant' ] )
+	{
+		Friend.dosDrivers[ 'Dormant' ] = {
+			iconLabel: '/iconthemes/friendup15/DriveLabels/FriendDisk.svg'
+		};
+	}
+	
+	if( ( fileInfo.Type == 'Dormant' || fileInfo.Type == 'Door' ) && Friend.dosDrivers && Friend.dosDrivers[ fileInfo.Driver ] )
+	{
+		var driver = Friend.dosDrivers[ fileInfo.Driver ];
+							
+		// Find correct image
+		var img = '/iconthemes/friendup15/DriveLabels/FriendDisk.svg';
+		
+		if( Friend.dosDrivers[ driver.type ] && Friend.dosDrivers[ driver.type ].iconLabel )
+			img = 'data:image/svg+xml;base64,' + Friend.dosDrivers[ driver.type ].iconLabel;
+		if( fileInfo.Title == 'Home' )
+			img = '/iconthemes/friendup15/DriveLabels/Home.svg';
+		else if( fileInfo.Title == 'System' )
+			img = '/iconthemes/friendup15/DriveLabels/SystemDrive.svg';
+	
+		iconInner.className = 'Drive';
+		var label = document.createElement( 'div' );
+		label.className = 'Label';
+		label.style.backgroundImage = 'url("' + img + '")';
+		iconInner.appendChild( label );
+	}
+	else if( fileInfo.Icon )
 	{
 		iconInner.className = fileInfo.Icon;
 	}
@@ -3347,6 +3573,7 @@ FileIcon.prototype.Init = function( fileInfo )
 
 			// Add current and set it to end of history
 			var path = obj.fileInfo.Path.split( ':' );
+			
 			var fin = {
 				Volume: path[0] + ':',
 				Path: obj.fileInfo.Path,
@@ -3356,12 +3583,8 @@ FileIcon.prototype.Init = function( fileInfo )
 			}
 			dw.addToHistory( fin );
 
-			obj.fileInfo.Volume = obj.fileInfo.Path.split( ':' )[0] + ':'; // TODO: Should not be needed!
-			we.fileInfo = obj.fileInfo;
-
 			// Update on notifications
 			var ppath = obj.fileInfo.Path;
-
 			if( !Workspace.diskNotificationList[ ppath ] )
 			{
 				Workspace.diskNotificationList[ ppath ] = {
@@ -3373,39 +3596,64 @@ FileIcon.prototype.Init = function( fileInfo )
 				f.addVar( 'path', ppath );
 				f.onExecuted = function( e, d )
 				{
-					if( e == 'ok' )
+					if( e != 'ok' )
+						return;
+					
+					var j;
+					try
 					{
-						var j;
-						try
-						{
-							j = JSON.parse( d );
-						}
-						catch( e )
-						{
-							console.log( 'Error in JSON format: ', d );
-							return;
-						}
-						we.windowObject.addEvent( 'systemclose', function()
-						{
-							var ff = new Library( 'system.library' );
-							ff.addVar( 'sessionid', Workspace.sessionId );
-							ff.addVar( 'path', ppath );
-							ff.addVar( 'id', j.Result );
-							ff.onExecuted = function( es, ds )
-							{
-								// TODO: Clear it?
-								Workspace.diskNotificationList[ ppath ] = false;
-							}
-							ff.execute( 'file/notificationremove' );
-						} );
+						j = JSON.parse( d );
 					}
-					console.log( 'File notification start result: ' + e, d );
+					catch( e )
+					{
+						console.log( 'Error in JSON format: ', d );
+						return;
+					}
+					we.windowObject.addEvent( 'systemclose', function()
+					{
+						var ff = new Library( 'system.library' );
+						ff.addVar( 'sessionid', Workspace.sessionId );
+						ff.addVar( 'path', ppath );
+						ff.addVar( 'id', j.Result );
+						ff.onExecuted = function( es, ds )
+						{
+							// TODO: Clear it?
+							Workspace.diskNotificationList[ ppath ] = false;
+						}
+						ff.execute( 'file/notificationremove' );
+					} );
 				}
 				f.execute( 'file/notificationstart' );
 			}
 
 			// Open unique window!
-			we.refresh();
+			// Animation for going to next folder
+			if( isMobile )
+			{
+				var n = document.createElement( 'div' );
+				n.className = 'Content SlideAnimation';
+				n.style.willChange = 'transform';
+				n.style.transition = 'transform 0.4s';
+				n.innerHTML = obj.directoryView.windowObject.innerHTML;
+				n.scrollTop = obj.directoryView.windowObject.scrollTop;
+				n.style.zIndex = 10;
+				obj.directoryView.windowObject.parentNode.appendChild( n );
+				
+				// Refresh and add animation
+				we.refresh( function()
+				{
+					n.style.transform = 'translateX(-100%)';
+					setTimeout( function()
+					{
+						n.parentNode.removeChild( n );
+					}, 400 );
+				} );
+			}
+			// Desktop mode, just refresh
+			else 
+			{
+				we.refresh();
+			}
 			return window.isMobile ? Workspace.closeDrivePanel() : false;
 		}
 		else
@@ -3439,6 +3687,24 @@ FileIcon.prototype.Init = function( fileInfo )
 	// -------------------------------------------------------------------------
 	file.onclick = function( e )
 	{
+		// Use override if possible
+		if( this.directoryView.filedialog )
+		{
+			if( this.directoryView.doubleclickfiles )
+			{
+				if( this.fileInfo.Type == 'File' )
+				{
+					this.directoryView.doubleclickfiles( this, e );
+				}
+				else if( this.fileInfo.Type == 'Directory' )
+				{
+					launchIcon( e, this );
+				}
+				return cancelBubble( e );
+			}
+			return;
+		}
+		
 		if( !e ) e = window.event;
 		if( !e ) e = {};
 		var sh = e.shiftKey || e.ctrlKey;
@@ -3538,6 +3804,9 @@ FileIcon.prototype.Init = function( fileInfo )
 	// Let's make it possible also for touch interfaces -----------------------
 	file.addEventListener( 'touchstart', function( event )
 	{
+		if( this.directoryView.filedialog )
+			return;
+			
 		window.fileMenuElement = file;
 		window.clickElement = file;
 
@@ -3606,6 +3875,9 @@ FileIcon.prototype.Init = function( fileInfo )
 
 	file.addEventListener( 'touchend', function( event )
 	{
+		if( this.directoryView.filedialog )
+			return;
+			
 		this.touchPos = false;
 		
 		file.onclick();
@@ -3751,18 +4023,20 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		CreateDirectoryView( we );
 
 		we.win = win;
+		
 		we.refresh = function( callback )
 		{
 			var self = this;
 			
 			var fi = this.fileInfo ? this.fileInfo : iconObject;
 			var wt = fi.Path ? fi.Path : ( fi.Title ? fi.Title : fi.Volume );
-
+			
 			this.windowObject.setFlag( 'title', _nameFix( wt ) );
 
 			var t = fi && fi.Path ? fi.Path : ( fi.Volume ? fi.Volume : fi.Title );
 
 			if( this.refreshTimeout ) clearTimeout( this.refreshTimeout );
+			
 			this.refreshTimeout = setTimeout( function()
 			{
 				fileInfo.Dormant.getDirectory( t, function( icons, data )
@@ -3840,113 +4114,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
-		var rr = iconObject;
-
-		var win = new View ( {
-			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
-			width    : 650,
-			height   : 512,
-			memorize : true,
-			fullscreenenabled : true
-		} );
-
-		var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
-
-		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
-		/*console.log( '[7] you are here ... directoryview.js ||| ' + '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );*/
-		var owin = win;
-		if( iconObject.extension.toLowerCase() == 'pdf' )
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
-			} );
-		}
-		else
-		{
-			GetURLFromPath( fileInfo.Path, function( imageUrl )
-			{
-				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
-				
-				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-			} );
-		}
-		win._window.addEventListener( 'mousedown', function( e )
-		{
-			var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
-			var dir = 0;
-			if( factor <= 0.2 )
-			{
-				dir = -1;
-			}
-			else if( factor >= 0.8 )
-			{
-				dir = 1;
-			}
-			if( dir != 0 )
-			{
-				var d = new Door().get( fileInfo.Path );
-				if( !d || !d.getIcons )
-				{
-					return;
-				}
-				var path = fileInfo.Path.substr( 0, fileInfo.Path.length - fileInfo.Filename.length );
-				var f = {}; for( var a in fileInfo ) f[a] = fileInfo[a];
-				f.Path = path;
-				d.getIcons( f, function( data )
-				{
-					var prev = '';
-					var curr = '';
-					var prevPath = currPath = '';
-					for( var a = 0; a < data.length; a++ )
-					{
-						// Skip directories
-						if( data[ a ].Type == 'Directory' ) continue;
-						
-						// Skip non-image files
-						var last = data[a].Filename.split( '.' );
-						var ext = last[ last.length - 1 ].toLowerCase();
-						if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
-							continue;
-							
-						prev = curr;
-						prevPath = currPath;
-						curr = data[a].Filename;
-						currPath = data[a].Path;
-						
-						// Load the image if it lays on a Dormant door
-						if( prev && dir == -1 && prev != curr && curr == fileInfo.Filename )
-						{							
-							fileInfo.Filename = prev;
-							fileInfo.Path = prevPath;
-							GetURLFromPath( prevPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', prev );
-							} );
-							return;
-						}
-						if( curr && dir == 1 && curr != prev && prev == fileInfo.Filename )
-						{
-							fileInfo.Filename = curr;
-							fileInfo.Path = currPath;
-							GetURLFromPath( currPath, function( imageUrl )
-							{
-								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
-								owin.setFlag( 'title', curr );
-							} );
-							return;
-						}
-					}
-				} );
-			}
-		} );
-		function doImage( path, title )
-		{
-		}
-		win = null;
+		Friend.startImageViewer( iconObject );
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -4034,7 +4202,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		var isVolume = wt.substr( wt.length - 1, 1 ) == ':' ? true : false;
 
 		var stored = GetWindowStorage( id );
-
+		
 		var w = new View ( {
 			'title'    : wt,
 			'width'    : stored && stored.width ? stored.width : 800,
@@ -4112,6 +4280,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 					
 					w.setFlag( 'title', _nameFix( wt ) );
 					var fi = self.fileInfo;
+					
 					dr.getIcons( fi, function( icons )
 					{
 						if( icons )
@@ -4343,66 +4512,73 @@ function CheckDoorsKeys( e )
 {
 	if ( !e ) e = window.event;
 	var k = e.which | e.keyCode;
-	switch( k )
+	if( !Workspace.editing )
 	{
-		// TODO: Implement confirm dialog!
-		case 46:
-			if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
-			{
-				Workspace.deleteFile();
-			}
-			break;
-		case 13:
-			if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
-			{
-				for( var a = 0; a < window.regionWindow.icons.length; a++ )
+		switch( k )
+		{
+			// TODO: Implement confirm dialog!
+			case 46:
+				if( window.regionWindow && !window.regionWindow.windowObject.flags.editing )
 				{
-					if( window.regionWindow.icons[a].selected )
+					Workspace.deleteFile();
+				}
+				break;
+			case 13:
+				if( window.regionWindow && window.regionWindow.directoryview && !window.regionWindow.windowObject.flags.editing )
+				{
+					for( var a = 0; a < window.regionWindow.icons.length; a++ )
 					{
-						window.regionWindow.icons[a].domNode.ondblclick();
-						return;
+						if( window.regionWindow.icons[a].selected )
+						{
+							window.regionWindow.icons[a].domNode.ondblclick();
+							return;
+						}
 					}
 				}
-			}
-			break;
+				break;
+		}
 	}
 	// Do the thing! Keyboard navigation
 	if( 
+		!Workspace.editing &&
 		window.regionWindow && window.regionWindow.directoryview && 
 		( window.regionWindow.windowObject && !window.regionWindow.windowObject.flags.editing ) 
 	)
 	{
 		var rw = window.regionWindow.icons;
-		var out = [];
-		var found = false;
-		for( var a = 0; a < rw.length; a++ )
+		if( rw )
 		{
-			var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
-			if( f.toUpperCase().charCodeAt(0) == k )
+			var out = [];
+			var found = false;
+			for( var a = 0; a < rw.length; a++ )
 			{
-				out.push( rw[a] );
-				if( rw[a].selected )
+				var f = rw[a].Title ? rw[a].Title : rw[a].Filename;
+				if( f.toUpperCase().charCodeAt(0) == k )
 				{
-					found = true;
+					out.push( rw[a] );
+					if( rw[a].selected )
+					{
+						found = true;
+					}
 				}
 			}
-		}
-		if( out.length )
-		{
-			if( !found )
+			if( out.length )
 			{
-				out[0].domNode.click();
-				return;
-			}
-			for( var a = 0; a < out.length; a++ )
-			{
-				if( out[a].selected && a < out.length - 1 )
+				if( !found )
 				{
-					out[a+1].domNode.click();
+					out[0].domNode.click();
 					return;
 				}
+				for( var a = 0; a < out.length; a++ )
+				{
+					if( out[a].selected && a < out.length - 1 )
+					{
+						out[a+1].domNode.click();
+						return;
+					}
+				}
+				out[0].domNode.click();
 			}
-			out[0].domNode.click();
 		}
 	}
 }
@@ -4506,6 +4682,206 @@ if( typeof noEvent == 'undefined' )
 	}
 }
 
+// The Friend image viewer! ----------------------------------------------------
+Friend.startImageViewer = function( iconObject )
+{
+	var win = new View ( {
+		title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+		width    : 650,
+		height   : 512,
+		memorize : true,
+		fullscreenenabled : true
+	} );
+
+	var zoomLevel = 1;
+	var zoomImage = null;
+
+	var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+
+	function renderToolbar( eparent )
+	{
+		if( eparent.toolbar ) return;
+		var d = document.createElement( 'div' );
+		d.className = 'ImageViewerToolbar';
+		d.innerHTML = '\
+			<div class="ArrowLeft MousePointer"><span class="IconSmall fa-angle-left"></span></div>\
+			<div class="Fullscreen MousePointer"><span class="IconSmall fa-arrows-alt"></span></div>\
+			<div class="ZoomIn MousePointer"><span class="IconSmall fa-plus-circle"></span></div>\
+			<div class="ZoomOut MousePointer"><span class="IconSmall fa-minus-circle"></span></div>\
+			<div class="ArrowRight MousePointer"><span class="IconSmall fa-angle-right"></span></div>\
+		';
+		eparent.appendChild( d );
+		eparent.style.overflow = 'hidden';
+		var eles = d.getElementsByTagName( 'div' );
+		for( var a = 0; a < eles.length; a++ )
+		{
+			if( eles[a].classList.contains( 'Fullscreen' ) )
+			{
+				eles[a].onclick = function()
+				{
+					Workspace.fullscreen( eparent.content );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowLeft' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					goDirection( -1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ArrowRight' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					goDirection( 1, e );
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomIn' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					if( zoomImage )
+					{
+						zoomLevel += 0.25;
+						if( zoomLevel > 3 )
+							zoomLevel = 3;
+						zoomImage.style.maxWidth = 'auto';
+						zoomImage.style.maxHeight = 'auto';
+						zoomImage.style.zoom = zoomLevel;
+					}
+				}
+			}
+			else if( eles[a].classList.contains( 'ZoomOut' ) )
+			{
+				eles[a].onclick = function( e )
+				{
+					zoomLevel -= 0.25;
+					if( zoomLevel == 0 ) zoomLevel = 0.25;
+					if( zoomImage )
+					{
+						zoomImage.style.zoom = zoomLevel;
+					}
+				}
+			}
+		}
+	}
+
+	var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+	var owin = win;
+	
+	if( iconObject.extension.toLowerCase() == 'pdf' )
+	{
+		// Remove toolbar..
+		if( win._window.parentNode.toolbar )
+		{
+			win._window.parentNode.removeChild( win._window.parentNode.toolbar );
+			win._window.parentNode.toolbar = null;
+		}
+		
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			
+			owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+		} );
+	}
+	else
+	{
+		// Set the toolbar on the window
+		renderToolbar( win._window.parentNode );
+	
+		GetURLFromPath( iconObject.Path, function( imageUrl )
+		{
+			var urlsrc = ( iconObject.Path.substr(0, 4) == 'http' ? iconObject.Path : imageUrl ); 
+			
+			owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+			zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+		} );
+	}
+	win._window.addEventListener( 'mousedown', function( e )
+	{
+		var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
+		var dir = 0;
+		if( factor <= 0.2 )
+		{
+			dir = -1;
+		}
+		else if( factor >= 0.8 )
+		{
+			dir = 1;
+		}
+		goDirection( dir, e );
+	} );
+	function goDirection( dir, e )
+	{
+		if( dir != 0 )
+		{
+			var d = new Door().get( iconObject.Path );
+			if( !d || !d.getIcons )
+			{
+				return;
+			}
+			var path = iconObject.Path.substr( 0, iconObject.Path.length - iconObject.Filename.length );
+			var f = {}; for( var a in iconObject ) f[a] = iconObject[a];
+			f.Path = path;
+			d.getIcons( f, function( data )
+			{
+				var prev = '';
+				var curr = '';
+				var prevPath = currPath = '';
+				for( var a = 0; a < data.length; a++ )
+				{
+					// Skip directories
+					if( data[ a ].Type == 'Directory' ) continue;
+					
+					// Skip non-image files
+					var last = data[a].Filename.split( '.' );
+					var ext = last[ last.length - 1 ].toLowerCase();
+					if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
+						continue;
+						
+					prev = curr;
+					prevPath = currPath;
+					curr = data[a].Filename;
+					currPath = data[a].Path;
+					zoomLevel = 1;
+					
+					// Load the image if it lays on a Dormant door
+					if( prev && dir == -1 && prev != curr && curr == iconObject.Filename )
+					{							
+						iconObject.Filename = prev;
+						iconObject.Path = prevPath;
+						GetURLFromPath( prevPath, function( imageUrl )
+						{
+							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setFlag( 'title', prev );
+							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+						} );
+						return;
+					}
+					if( curr && dir == 1 && curr != prev && prev == iconObject.Filename )
+					{
+						iconObject.Filename = curr;
+						iconObject.Path = currPath;
+						GetURLFromPath( currPath, function( imageUrl )
+						{
+							owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%; zoom: 1"/></div>' + checkers );
+							owin.setFlag( 'title', curr );
+							zoomImage = owin._window.getElementsByTagName( 'img' )[0];
+						} );
+						return;
+					}
+				}
+			} );
+		}
+	};
+	function doImage( path, title )
+	{
+	}
+	win = null;
+};
+
+// End Friend Image Viewer! ----------------------------------------------------
 
 
 // -----------------------------------------------------------------------------

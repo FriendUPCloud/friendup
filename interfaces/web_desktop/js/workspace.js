@@ -252,7 +252,7 @@ Workspace = {
 			}
 		}
 		// Widget for mobile mode!
-		else if( !this.widget )
+		/*else if( !this.widget )
 		{
 			o = {
 				width: window.innerWidth,
@@ -287,6 +287,8 @@ Workspace = {
 				ge( 'DoorsScreen' ).classList.remove( 'WidgetSlideDown' );
 				document.body.classList.remove( 'WidgetSlideDown' );
 				Workspace.widget.setFlag( 'height', 32 );
+				Workspace.widget.dom.style.willChange = 'transform, content';
+				setTimeout( function(){ Workspace.widget.dom.style.willChange = 'auto'; }, 250 );
 				Workspace.widget.touchDown = false;
 				clearTimeout( Workspace.widget.tdtimeout );
 				Workspace.widget.tdtimeout = false;
@@ -321,7 +323,7 @@ Workspace = {
 					}
 				}
 			} );
-		}
+		}*/
 
 		// Setup clock
 		var ex = ge( 'DoorsScreen' ).screenObject._titleBar;
@@ -687,6 +689,20 @@ Workspace = {
 			}
 
 			return false;
+		}
+	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
 		}
 	},
 	showLoginPrompt: function()

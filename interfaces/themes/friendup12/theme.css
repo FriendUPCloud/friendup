@@ -155,7 +155,7 @@
 	$MarginVerticalRuler:    0 8px 0 0;
 	$MarginTabs:             0 5px 0 0;
 	$MarginBox:              0;
-	$MarginWindowTop:        35px;
+	$MarginWindowTop:        40px;
 	$MarginWindowTopVBars:   34px;
 	$MarginWindowLeft:       0px;
 	$MarginWindowRight:      0px;
@@ -342,6 +342,11 @@ html #Screens > div
 	background: #34495E;
 }
 
+html body.Charcoal #Screens > div
+{
+	background: #444444;
+}
+
 html #DoorsScreen > .ScreenContent,
 html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
@@ -352,8 +357,8 @@ html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
-	top: 32px !important;
-	height: calc(100% - 32px) !important;
+	top: 40px !important;
+	height: calc(100% - 40px) !important;
 }
 
 html .Screen > .ScreenContent
@@ -366,6 +371,108 @@ html body .Screen > .TitleBar.Busy:after
 {
     clip-path: ellipse(9px 9px at 10px 10px);
     -webkit-clip-path: ellipse(9px 9px at 10px 10px);
+}
+
+/* Views not activated for mobile ------------------------------------------- */
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active)
+{
+	margin: 15px 0 25px 12px;
+	height: 80px !important;
+	width: calc(33% - 15px);
+	float: left;
+	clear: none;
+	position: relative;
+	border-radius: 8px;
+	box-shadow: 0px 2px 5px rgba(0,0,0,0.4);
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View
+{
+	border-radius: 8px 8px 0 0;
+	height: 100% !important;
+	max-height: 100%;
+	overflow: visible;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
+{
+	content: " ";
+	position: absolute;
+	width: 100%;
+	left: 0;
+	top: 40px;
+	bottom: 0;
+	z-index: 2;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) .Content
+{
+	display: none;
+}
+
+html body[mobile][focusmode=clicktofront].ViewMaximized .ViewContainer:not(.Active) .View > .Title > div > .Close
+{
+	top: 3px;
+	left: auto;
+	right: 0;
+}
+
+html body[mobile=mobile].ViewMaximized #Screens .ScreenContent .ViewContainer:not(.Active) .View > .Title,
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title
+{
+	top: 0;
+	border-radius: 8px 8px 0 0;
+	background: none;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .View > .Title > div > span
+{
+	position: absolute;
+	width: 100%;
+	left: 0px;
+	text-align: center;
+	top: 80px;
+	z-index: 2;
+	color: white;
+	text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+	font-size: 0.9em;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active) > .ViewIcon
+{
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 5;
+	background-size: 45%;
+	background-color: rgba(100,100,100,0.3);
+	background-position: center;
+	background-repeat: no-repeat;
+	pointer-events: none;
+	border-radius: 8px;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer > .ViewIcon
+{
+	transition: width,height,top,left 0.25s,0.25s,0.25s,0.25s;
+}
+
+body[mobile]:not([tablet]) #Screens .ViewContainer.Closing > .ViewIcon
+{
+	width: 0%;
+	height: 0%;
+	top: 50%;
+	left: 50%;
+}
+
+body[mobile].AppsShowing:not([tablet]) #Screens .ViewContainer:not(.Active)
+{
+	opacity: 0.5 !important;
 }
 
 /* 3D is for later ---------------------------------------------------------- */
@@ -869,7 +976,7 @@ html body[mobile=mobile] .View > .Content,
 html body[mobile=mobile] .View > .LeftBar, 
 html body[mobile=mobile] .View > .RightBar
 {
-	top: 35px;
+	top: 40px;
 }
 
 html .View > .LeftBar,
@@ -1007,18 +1114,6 @@ body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
 	background-position: center;
 }
 
-body:not([tablet])[mobile=mobile] #WorkspaceMenu
-{
-	text-align: center;
-}
-
-body:not([tablet])[mobile=mobile] #WorkspaceMenu .Menu
-{
-	float: none;
-	font-size: 1em;
-	display: inline-block;
-}
-
 body:not([tablet])[mobile=mobile] .Calendar.MonthName
 {
 	padding: 6px 10px;
@@ -1027,7 +1122,7 @@ body:not([tablet])[mobile=mobile] .Calendar.MonthName
 
 body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
 {
-	height: 32px !important;
+	height: 40px !important;
 }
 
 /* Window menu */
@@ -1260,6 +1355,11 @@ html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
 	background: #455155;
 }
 
+[mobile].Charcoal #WorkspaceMenu.Open
+{
+	background: #303030;
+}
+
 body.Dark .SliderElement .SliderGroove
 {
 	background: rgba(0,0,0,0.5);
@@ -1302,32 +1402,37 @@ html > body.Dark > div button, html > body.Dark > div .Button
     color: #e0e0e0;
 }
 
-html body.Dark .View > .DirectoryToolbar,
-html body.Dark .View.Active > .DirectoryToolbar 
+html body.Dark .View .DirectoryToolbar,
+html body.Dark .View.Active .DirectoryToolbar 
 {
 	background-color: #34495e;
 	color: #e0e0e0;
 }
 
-html body.Dark .View > .DirectoryToolbar button,
-html body.Dark .View > .DirectoryToolbar .Button
+html body.Dark .DirectoryToolbar button.Makedir:before
+{
+	filter: brightness(2) grayscale(1);
+}
+
+html body.Dark .View .DirectoryToolbar button,
+html body.Dark .View .DirectoryToolbar .Button
 {
 	color: #e0e0e0;
 	background-color: none;
 }
 
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Dark .View > .DirectoryToolbar > button:hover:before
+html body.Dark .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
+html body.Dark .View .DirectoryToolbar > button:hover:before
 {
 	color: #e0e0e0;
 }
-html > body.Dark .View > .DirectoryToolbar button:before, 
-html > body.Dark .View > .DirectoryToolbar button:after
+html > body.Dark .View .DirectoryToolbar button:before, 
+html > body.Dark .View .DirectoryToolbar button:after
 {
 	color: rgba(224,224,224,170);
 }
 
-html body.Dark .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html body.Dark .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: white;
 }
@@ -1587,32 +1692,37 @@ html > body.Charcoal > div button, html > body.Charcoal > div .Button
     color: #e0e0e0;
 }
 
-html body.Charcoal .View > .DirectoryToolbar,
-html body.Charcoal .View.Active > .DirectoryToolbar 
+html body.Charcoal .View .DirectoryToolbar,
+html body.Charcoal .View.Active .DirectoryToolbar 
 {
 	background-color: #3c3c3c;
 	color: #e0e0e0;
 }
 
-html body.Charcoal .View > .DirectoryToolbar button,
-html body.Charcoal .View > .DirectoryToolbar .Button
+html body.Charcoal .DirectoryToolbar button.Makedir:before
+{
+	filter: brightness(2) grayscale(1);
+}
+
+html body.Charcoal .View .DirectoryToolbar button,
+html body.Charcoal .View .DirectoryToolbar .Button
 {
 	color: #e0e0e0;
 	background-color: none;
 }
 
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button:hover:before, 
-html body.Charcoal .View > .DirectoryToolbar > button:hover:before
+html body.Charcoal .View .DirectoryToolbar > .ToggleGroup > button:hover:before, 
+html body.Charcoal .View .DirectoryToolbar > button:hover:before
 {
 	color: #e0e0e0;
 }
-html > body.Charcoal .View > .DirectoryToolbar button:before, 
-html > body.Charcoal .View > .DirectoryToolbar button:after
+html > body.Charcoal .View .DirectoryToolbar button:before, 
+html > body.Charcoal .View .DirectoryToolbar button:after
 {
 	color: rgba(224,224,224,170);
 }
 
-html body.Charcoal .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html body.Charcoal .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: white;
 }
@@ -1750,11 +1860,15 @@ html body.Charcoal .ZebraList.Interactive > div:nth-child(odd):hover
 }
 
 html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Selected > .Column,
+html body.CharCoal #MousePointer .Row.Selected .Column
+{
+	background: #151515;
+	color: white;
+}
 html body.Charcoal div.Listview > .Icons > .Scroller > .Row.Odd.Selected > .Column,
-html body.CharCoal #MousePointer .Row.Selected .Column,
 html body.CharCoal #MousePointer .Row.Odd.Selected .Column
 {
-	background: #282828;
+	background: #101010;
 	color: white;
 }
 
@@ -1906,7 +2020,7 @@ html body[mobile] .Screen > .TitleBar .ScreenList
 
 html .Screen > .TitleBar > .Left
 {
-	padding: 0 35px 0 0;
+	padding: 0 40px 0 0;
 	line-height: 26px;
 }
 
@@ -1998,21 +2112,6 @@ html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
 	background: #34495E;
 }
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
-{
-	background: none;
-	color: white;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
-}
-
-[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li,
-[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li
-{
-	color: white;
-}
 
 html #WorkspaceMenu ul
 {
@@ -2079,13 +2178,13 @@ html #WorkspaceMenu .Menu
 
 html body[mobile=mobile] #WorkspaceMenu
 {
-	height: 32px;
+	height: 40px;
 }
 
 html body[mobile=mobile] #WorkspaceMenu .Menu
 {
-	line-height: 32px;
-	height: 32px;
+	line-height: 40px;
+	height: 40px;
 }
 
 html [mobile=mobile] #WorkspaceMenu .Menu
@@ -2154,80 +2253,19 @@ html #WorkspaceMenu
 	transition: background,width 0.25s;
 }
 
-html [mobile=mobile].ViewMaximized #WorkspaceMenu
-{
-	z-index: 6 !important;
-	width: 34px !important;
-    height: 32px !important;
-	overflow: hidden;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open
-{
-	width: 100% !important;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open > div
-{
-	opacity: 1;
-	pointer-events: all;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu:after,
-html [mobile=mobile].HasMenu #WorkspaceMenu:after
-{
-	content: "\f0c9";
-	font-weight: bold;
-	font-family: fontawesome;
-	display: block;
-	position: absolute;
-	top: 8px;
-    left: 1px;
-    width: 32px !important;
-    height: 18px !important;
-    font-size: 1.0em;
-	color: white;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open:after,
-html [mobile=mobile]:not(.ViewMaximized).HasMenu #WorkspaceMenu:after
-{
-	content: "\f104";
-}
 
 /* Mobile popup menu fixes */
 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	font-size: 1em;
-}
-
-html > body[mobile=mobile] > .MobileMenuClose:before, 
-html > body #WorkspaceMenu .Open ul > li.CloseButton:before
+html > body[mobile=mobile] > .MobileMenuClose:before
 {
 	top: 2px;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
-html body .MobileMenuClose,
-html body #WorkspaceMenu .Open ul > li.CloseButton
+html body .MobileMenuClose
 {
 	font-size: 1em !important;
 	line-height: 46px !important;
-}
-
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	z-index: 100;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu > div
-{
-	opacity: 0;
-	transition: opacity 0.25s;
-	pointer-events: none;
 }
 
 /* Done popup menu fixes */
@@ -2266,7 +2304,7 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title
 {
-	top: -35px;
+	top: -40px;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
@@ -2276,7 +2314,12 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow > .Content
 {
-	top: 32px !important;
+	top: 40px !important;
+}
+
+html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.CustomToolbarArea > .Content
+{
+	top: 0 !important;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div > span
@@ -2284,9 +2327,6 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title > div 
 	text-align: left;
 	text-shadow: none;
 }
-
-
-
 
 html body[mobile=mobile] > .MobileMenu div li .IconText
 {
@@ -2623,7 +2663,7 @@ a:active, a:hover
 
 /* Directory views ---------------------------------------------------------- */
 
-html .View > .DirectoryToolbar
+html .View .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 	box-shadow: none;
@@ -2634,92 +2674,92 @@ html .View > .DirectoryToolbar
 	color: #455155;
 	border-bottom: 1px solid rgba(0,0,0,0.02);
 }
-html .View > .DirectoryToolbar .DriveGauge,
-html body[mobile] .View > .DirectoryToolbar
+html .View .DirectoryToolbar .DriveGauge,
+html body[mobile] .View .DirectoryToolbar
 {
 	display: none;
 }
 
-html body[mobile=mobile] .View.Active > .DirectoryToolbar
+html body[mobile=mobile] .View.Active .DirectoryToolbar
 {
 	display: block;
 	top: 0px !important;
-	height: 32px !important;
+	height: 40px !important;
 }
 
-html body[mobile=mobile] .View > .DirectoryToolbar button
+html body[mobile=mobile] .View .DirectoryToolbar button
 {
-	height: 30px;
+	height: 40px;
 }
 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:before, 
-html > body[mobile=mobile] .View > .DirectoryToolbar button:after
+html > body[mobile=mobile] .View .DirectoryToolbar button:before, 
+html > body[mobile=mobile] .View .DirectoryToolbar button:after
 {
-	line-height: 27px;
+	line-height: 35px;
 }
 
-html .View.Active > .DirectoryToolbar
+html .View.Active .DirectoryToolbar
 {
 	background-color: #e0e0e0;
 }
 
-html > body .View > .DirectoryToolbar button:before, 
-html > body .View > .DirectoryToolbar button:after
+html > body .View .DirectoryToolbar button:before, 
+html > body .View .DirectoryToolbar button:after
 {
 	position: relative;
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup
+html .View .DirectoryToolbar > .ToggleGroup
 {
 	top: 0px;
 	left: calc(50% - 54px);
 }
 
-html body .View > .DirectoryToolbar > .ToggleGroup > button:hover:before,
-html body .View > .DirectoryToolbar > button:hover:before
+html body .View .DirectoryToolbar > .ToggleGroup > button:hover:before,
+html body .View .DirectoryToolbar > button:hover:before
 {
 	color: black;
 }
 
-html body .View > .DirectoryToolbar > button:before
+html body .View .DirectoryToolbar > button:before
 {
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button
+html .View .DirectoryToolbar > .ToggleGroup > button
 {
 	height: 26px;
 	top: 0;
 	line-height: 26px;
 }
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active
+html .View .DirectoryToolbar > .ToggleGroup > button.Active
 {
 	background: none;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	color: #45515599;
 	transition: color 0.25s;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:hover:before
+html .View .DirectoryToolbar > .ToggleGroup > button:hover:before
 {
 	color: #45515555;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button.Active:before
+html .View .DirectoryToolbar > .ToggleGroup > button.Active:before
 {
 	color: #455155;
 }
 
-html .View > .DirectoryToolbar > .ToggleGroup > button:before
+html .View .DirectoryToolbar > .ToggleGroup > button:before
 {
 	margin-top: 0;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:before
+html .View .DirectoryToolbar .DriveGauge:before
 {
     content: " ";
     display: block;
@@ -2733,7 +2773,7 @@ html .View > .DirectoryToolbar .DriveGauge:before
     background: transparent;
 }
 
-html .View > .DirectoryToolbar .DriveGauge:after
+html .View .DirectoryToolbar .DriveGauge:after
 {
 	content: " ";
 	display: block;
@@ -2748,23 +2788,23 @@ html .View > .DirectoryToolbar .DriveGauge:after
 	transition: width 0.5s;
 }
 
-html .View > .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
-html .View > .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
-html .View > .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
-html .View > .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
-html .View > .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
-html .View > .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
-html .View > .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
-html .View > .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
-html .View > .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
-html .View > .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
+html .View .DirectoryToolbar .DriveGauge.Size0:after { width: 2px; background: #00aa00; }
+html .View .DirectoryToolbar .DriveGauge.Size1:after { width: calc(10% + 2px); background: #119900; }
+html .View .DirectoryToolbar .DriveGauge.Size2:after { width: calc(20% + 2px); background: #228800; }
+html .View .DirectoryToolbar .DriveGauge.Size3:after { width: calc(30% + 2px); background: #337700; }
+html .View .DirectoryToolbar .DriveGauge.Size4:after { width: calc(40% + 2px); background: #448800; }
+html .View .DirectoryToolbar .DriveGauge.Size5:after { width: calc(50% + 2px); background: #666600; }
+html .View .DirectoryToolbar .DriveGauge.Size6:after { width: calc(60% + 2px); background: #884400; }
+html .View .DirectoryToolbar .DriveGauge.Size7:after { width: calc(70% + 2px); background: #992200; }
+html .View .DirectoryToolbar .DriveGauge.Size8:after { width: calc(80% + 2px); background: #bb0000; }
+html .View .DirectoryToolbar .DriveGauge.Size9:after { width: calc(90% + 2px); background: #cc0000; }
+html .View .DirectoryToolbar .DriveGauge.Size10:after { width: calc(100% + 2px); background: #ff0000; }
 
-html .View > .DirectoryToolbar button
+html .View .DirectoryToolbar button
 {
 	color: rgba(0,0,0,0);
 	height: 24px;
-	width: 32px;
+	width: 40px;
 	overflow: hidden;
 	text-shadow: none;
 	position: relative;
@@ -2772,32 +2812,32 @@ html .View > .DirectoryToolbar button
 	border-radius: 0;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	margin-top: 2px;
 }
 
-html .View > .DirectoryToolbar button:before
+html .View .DirectoryToolbar button:before
 {
 	z-index: 2;
 }
 
-html .View > .DirectoryToolbar button:after
+html .View .DirectoryToolbar button:after
 {
 	z-index: 1;
 }
 
-html .View > .DirectoryToolbar button:after:hover
+html .View .DirectoryToolbar button:after:hover
 {
 	background-color: rgba(90,90,90,0.1);
 }
 
-html .View > .DirectoryToolbar button.Active
+html .View .DirectoryToolbar button.Active
 {
 	background-color: rgb(175,175,175);
 }
 
-html .View > .DirectoryToolbar button.Active:before
+html .View .DirectoryToolbar button.Active:before
 {
 	color: white;
 }
@@ -2835,8 +2875,8 @@ html body .List tr.sw1.Selected, html body .List div.sw1.Selected
 
 .Toolbar .IconSmall
 {
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	box-sizing: border-box;
 	position: relative;
 }
@@ -2997,7 +3037,7 @@ html .File .Icon
 
 html .File.Selected
 {
-	z-index: 3;
+	z-index: 3; 
 }
 
 html .File .Title
@@ -3034,6 +3074,32 @@ html body[mobile=mobile] .File .Icon
 	-webkit-filter: none;
 }
 
+.FileBrowser > div
+{
+	font-size: 0.95em;
+}
+
+body.Charcoal .FileBrowserItemImage,
+body.Dark .FileBrowserItemImage
+{
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 16px;
+	height: 16px;
+	float: left;
+	vertical-align: middle;
+	display: block;
+	margin: 1px 4px 0 0;
+	filter: brightness(100);
+}
+
+body.Charcoal .Active > .FileBrowserItemImage,
+body.Dark .Active > .FileBrowserItemImage
+{
+	filter: brightness(100);
+}
+
 html .File
 {
 	margin: 20px 0 0 0;
@@ -3043,7 +3109,7 @@ html .File .Title
 {
 	width: calc(100% + 26px);
 	left: -13px;
-	font-size: 1em;
+	font-size: 0.95em;
 }
 
 html .File .Icon > div
@@ -3155,7 +3221,20 @@ html .File .Icon .File
 html .File .Icon .Drive
 {
 	/*background-image: url(/themes/friendup/gfx/icons/disk.png);*/
-	background-image: url(/iconthemes/friendup15/FriendDisk.svg);
+	background-image: url(/iconthemes/friendup15/Disk.svg);
+}
+
+html body.Charcoal .File .Icon .Drive .Label
+{
+	filter: grayscale(1) brightness(0.4) drop-shadow(1px 2px 2px rgba(255,255,255,0.8));
+}
+
+html body[mobile] .File .Icon .Drive > .Label
+{
+	top: calc(50% - 10px);
+	right: calc(50% - 8px);
+	width: 16px !important;
+	height: 16px !important;
 }
 
 html .File .Icon .Directory
@@ -4083,12 +4162,12 @@ body:not([tablet])[mobile=mobile] #Screens .View.Active
 body:not([tablet])[mobile=mobile] #Screens .View > .Title,
 body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
 {
-	height: 35px;
+	height: 40px;
 	border-top: 1px solid rgba(0,0,0,0.1);
 }
 body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
 {
-	line-height: 35px;
+	line-height: 40px;
 }
 body:not([tablet])[mobile=mobile] #Screens .View .BottomBar,
 body:not([tablet])[mobile=mobile] #Screens .View .Resize,

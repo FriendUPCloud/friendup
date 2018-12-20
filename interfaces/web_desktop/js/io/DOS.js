@@ -60,7 +60,8 @@ Friend.DOS.getDisks = function( options, callback, extra )
 		( 
 			{
 				Title: disk.Title,
-				Volume: disk.Volume
+				Volume: disk.Volume,
+				Driver: disk.Driver
 			} 
 		);
 	}

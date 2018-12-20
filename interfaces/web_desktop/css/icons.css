@@ -11,6 +11,16 @@
 	width: calc(100% - 200px);
 }
 
+.IconWindow .Content
+{
+	will-change: scroll-position, content;
+}
+
+.Content.SlideAnimation
+{
+	pointer-events: none;
+}
+
 .IconWindow .Content > .FileBrowserContainer
 {
 	position: absolute;
@@ -33,6 +43,24 @@
 .FileBrowser div.Name
 {
 	padding: 5px;
+}
+
+.FileBrowserItemImage
+{
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 16px;
+	height: 16px;
+	float: left;
+	vertical-align: middle;
+	display: block;
+	margin: 1px 4px 0 0;
+}
+
+.Active > .FileBrowserItemImage
+{
+	filter: brightness(100);
 }
 
 .FileBrowser div.Name.Active, 
@@ -130,6 +158,11 @@ Just so that we can keep the outputted HTML smaller by using CSS classes :)
 	margin: 20px 0 0 10px;
 	transition: transform,opacity 0.25s;
 	webkit-transition: transform,opacity 0.25s;
+}
+
+.File.Editing a.Title
+{
+	display: none;
 }
 
 .File.Selected
@@ -380,6 +413,18 @@ html .Launcher .File div *
 }
 
 /* File icons --------------------------------------------------------------- */
+
+.File .Icon .Drive > .Label
+{
+	position: absolute;
+	right: calc(50% - 12px);
+	top: calc(50% - 17px);
+	width: 24px;
+	height: 24px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 76%;
+}
 
 .File .Icon .File
 {

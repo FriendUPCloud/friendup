@@ -22,6 +22,25 @@ DeepestField = {
 
 Workspace = {
 	locale: 'en',
+	theme: 'friendup12',
+	themeData: {
+		buttonSchemeText: "windows",
+		colorSchemeText: "default"
+	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+		}
+	},
 	init: function( mode )
 	{
 		// Add locale
@@ -206,32 +225,70 @@ Workspace = {
 								}
 							}, true );
 
-
 							document.body.style.visibility = 'visible';
+							// Loading notice
+							var loading = document.createElement( 'div' );
+							loading.className = 'LoadingMessage';
+							loading.innerHTML = '<p>Entering ' + t.conf.app + '...</p>';
+							document.body.appendChild( loading );
+							setTimeout( function()
+							{
+								loading.classList.add( 'Loaded' );
+							}, 25 );
 							
 							if( t.conf.app )
 							{
 								return ExecuteApplication( t.conf.app, GetUrlVar( 'data' ), function( result )
 								{
-									setTimeout( function()
+									// Prevent loading twice...
+									if( document.body.loaded ) return;
+									document.body.loaded = true;
+									
+									// Remove loading notice
+									if( loading )
 									{
-										var jo = new cAjax();
-										jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
-										jo.onload = function()
+										loading.classList.remove( 'Loaded' );
+										setTimeout( function()
 										{
-											var ele = document.createElement( 'div' );
-											ele.className = 'ThankYou Padding';
-											ele.innerHTML = this.responseText();
-											var s = GeByClass( 'ScreenContent' );
-											if( s )
+											if( loading )
 											{
-												if( s.length ) s = s[0];
-												s.appendChild( ele );
+												loading.parentNode.removeChild( loading );
+												loading = null;
 											}
-											else document.body.appendChild( s );
+										}, 500 );
+									}
+									function showThankyou()
+									{
+										if( !ge( 'Thanks' ) )
+										{
+											// Wait till we have windows!
+											var count = 0;
+											for( var a in window.movableWindows ){ count++; }
+											if( count <= 0 )
+												return setTimeout( showThankyou, 500 );
+											
+											// Open the thank you template
+											var jo = new cAjax();
+											jo.open( 'get', '/webclient/templates/thankyou.html', true, false );
+											jo.onload = function()
+											{
+												if( ge( 'Thanks' ) ) return;
+												var ele = document.createElement( 'div' );
+												ele.id = 'Thanks';
+												ele.className = 'ThankYou Padding';
+												ele.innerHTML = this.responseText();
+												var s = GeByClass( 'ScreenContent' );
+												if( s )
+												{
+													if( s.length ) s = s[0];
+													s.appendChild( ele );
+												}
+												else document.body.appendChild( s );
+											}
+											jo.send();
 										}
-										jo.send();
-									}, 2000 );
+									}
+									showThankyou();
 								} );
 							}
 						} );
