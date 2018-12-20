@@ -92,6 +92,7 @@
 	opacity: 0.4;
 	z-index: 20;
 }
+
 #filelisttabs
 {
 	position: absolute;
@@ -104,6 +105,30 @@
 	box-sizing: border-box;
 	transition: bottom 0.25s;
 }
+
+[mobile] #filelisttabs, [mobile] #ResizeColumn, [mobile] #Toolbar
+{
+	opacity: 0;
+	pointer-events: none;
+}
+
+[mobile] #EditorContent
+{
+	top: 0;
+	height: 100%;
+}
+
+[mobile] .Statusbar > .Padding > .HRow > div
+{
+	display: none;
+}
+
+[mobile] .Statusbar > .Padding > .HRow > div + div
+{
+	width: 100%;
+	display: block;
+}
+
 .StatusPane #filelisttabs
 {
 	bottom: 240px;
