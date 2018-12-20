@@ -1102,20 +1102,6 @@ var WorkspaceInside = {
 		Workspace.mainDock.closeDesklet();
 		this.exitMobileMenu();
 	},
-	exitMobileMenu: function()
-	{
-		document.body.classList.remove( 'WorkspaceMenuOpen' );
-		if( ge( 'WorkspaceMenu' ) )
-		{
-			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
-			for( var z = 0; z < eles.length; z++ )
-			{
-				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
-					eles[z].classList.remove( 'Open' );
-			}
-			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
-		}
-	},
 	removeCalendarEvent: function( id )
 	{
 		Confirm( i18n( 'i18n_are_you_sure' ), i18n( 'i18n_evt_delete_desc' ), function( ok )
