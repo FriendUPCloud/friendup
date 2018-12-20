@@ -372,6 +372,11 @@ body:not([tablet]) .DirectoryToolbar > .ToggleGroup
 	display: none;
 }
 
+html body .View > .Title > div > span
+{
+	height: 40px;
+}
+
 body.WindowMenu #Screens .View
 {
 	width: calc(50% - 20px) !important;
