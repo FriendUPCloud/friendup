@@ -252,7 +252,7 @@ Workspace = {
 			}
 		}
 		// Widget for mobile mode!
-		else if( !this.widget )
+		/*else if( !this.widget )
 		{
 			o = {
 				width: window.innerWidth,
@@ -323,7 +323,7 @@ Workspace = {
 					}
 				}
 			} );
-		}
+		}*/
 
 		// Setup clock
 		var ex = ge( 'DoorsScreen' ).screenObject._titleBar;

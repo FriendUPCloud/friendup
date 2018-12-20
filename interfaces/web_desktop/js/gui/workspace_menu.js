@@ -102,10 +102,20 @@ var WorkspaceMenu =
 				if( this.classList.contains( 'Open' ) )
 				{
 					this.classList.remove( 'Open' );
+					document.body.classList.remove( 'WorkspaceMenuOpen' );
+					
+					// Close sub menus
+					var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+					for( var z = 0; z < eles.length; z++ )
+					{
+						if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+							eles[z].classList.remove( 'Open' );
+					}
 				}
 				else
 				{
 					this.classList.add( 'Open' );
+					document.body.classList.add( 'WorkspaceMenuOpen' );
 				}
 			}
 		}
@@ -340,6 +350,45 @@ var WorkspaceMenu =
 			}
 		}
 		
+		if( isMobile && appid )
+		{
+			var found = false;
+			for( var z = 0; z < menuItems.length; z++ )
+			{
+				if( menuItems[z].command == 'quit' )
+				{
+					found = true;
+					break;
+				}
+			}
+			if( !found )
+			{
+				// Clear quit for this - and add back buttons
+				function clearQuit( men )
+				{
+					var out = [];
+					for( var a = 0; a < men.length; a++ )
+					{
+						if( men[a].command && men[a].command == 'quit' )
+							continue;
+						if( men[a].items )
+						{
+							men[a].items = clearQuit( men[a].items );
+						}
+						out.push( men[a] );
+					}
+					return out;
+				}
+				menuItems = clearQuit( menuItems );
+				
+				// Add option to quit application
+				menuItems.push( {
+					name: i18n( 'i18n_quit' ),
+					command: 'quit'
+				} );
+			}
+		}
+		
 		for( var i in menuItems )
 		{
 			if( menuItems[i] == false ) continue;
@@ -357,6 +406,14 @@ var WorkspaceMenu =
 					n.setAttribute( 'icon', menuItems[i].icon );
 				}
 				d = n;
+				if( menuItems[ i ].command == 'quit' )
+				{
+					n.onclick = function()
+					{
+						KillApplicationById( appid );
+					}
+					continue;
+				}
 			}
 			var ul = document.createElement ( 'ul' );
 			ul.onscroll = function( e )
@@ -529,35 +586,7 @@ var WorkspaceMenu =
 				continue;
 			// For mobile, create a close button
 
-			// Shared apps w/o desktop or mobile
-			if( isMobile || IsSharedApp() )
-			{
-				var ul = menus[a].getElementsByTagName( 'ul' )[0];
-				if( ul && !ul.closeButton )
-				{			
-					var h = document.createElement( 'li' );
-					h.className = 'Heading';
-					h.innerHTML = menus[a].getAttribute( 'name' ) ? menus[a].getAttribute( 'name' ) : menus[a].innerText;
-					h.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( h, ul.firstChild );
-				
-					var d = document.createElement( 'li' );
-					d.className = 'CloseButton Close IconMedium fa-close';
-					d.innerHTML = i18n( 'i18n_close' );
-					d.closer = menus[a];
-					d.ontouchend = function( e )
-					{
-						WorkspaceMenu.close();
-						return cancelBubble( e );
-					}
-					ul.insertBefore( d, ul.firstChild );
-					ul.closeButton = d;
-				}
-			}
+			
 			
 			// Normal operation (tablet and desktop)
 			menus[a].menus = menus;
@@ -602,6 +631,24 @@ var WorkspaceMenu =
 					// Ah, we found the menu to open!
 					if ( this.menus[c] == this ) 
 					{
+						// Add back key
+						if( isMobile )
+						{
+							if( !WorkspaceMenu.back )
+							{
+								var b = document.createElement( 'div' );
+								b.className = 'MenuBack';
+								b.target = this;
+								b.onclick = function( e )
+								{
+									this.target.classList.remove( 'Open' );
+									if( this.parentNode )
+										this.parentNode.removeChild( this );
+									return cancelBubble( e );
+								}
+								ge( 'WorkspaceMenu' ).appendChild( b );
+							}
+						}
 						this.classList.add( 'Open' );
 					}
 					// This is a menu to close..
@@ -631,6 +678,7 @@ var WorkspaceMenu =
 				WorkspaceMenu.activateMenu( wm );
 				
 				// Open menu
+				
 				this.classList.add( 'Open' );
 				var sublis = this.getElementsByTagName( 'li' );
 				

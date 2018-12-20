@@ -938,135 +938,183 @@ var WorkspaceInside = {
 			</div>\
 			';
 
-			var wid = Workspace.widget ? Workspace.widget : m.widget;
-			if( wid )
+			// Mobile launches calendar in a different way, so this 
+			// functionality is only for desktops
+			if( !isMobile )
 			{
-				wid.showing = true;
-			}
+				var wid = Workspace.widget ? Workspace.widget : m.widget;
+				if( wid )
+				{
+					wid.showing = true;
+				}
 
-			if( wid && !wid.initialized )
-			{
-				wid.initialized = true;
+				if( wid && !wid.initialized )
+				{
+					wid.initialized = true;
 
-				var calendar = new Calendar( wid.dom );
-				wid.dom.id = 'CalendarWidget';
+					var calendar = new Calendar( wid.dom );
+					wid.dom.id = 'CalendarWidget';
 				
-				// Mobile hider
-				if( window.isMobile )
-				{
-					var hider = document.createElement( 'div' );
-					hider.className = 'Hider';
-					hider.onclick = function()
+					// Mobile hider
+					if( window.isMobile )
 					{
-						Workspace.widget.slideUp();
-					}
-					wid.dom.appendChild( hider );
-				}
-				Workspace.calendarWidget = wid;
-
-				var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
-				newBtn.onclick = function()
-				{
-					if( calendar.eventWin ) return;
-					
-					var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
-					var dateForm = date.split( '-' );
-					dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
-					
-					calendar.eventWin = new View( {
-						title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
-						width: 500,
-						height: 405
-					} );
-					
-					calendar.eventWin.onClose = function()
-					{
-						calendar.eventWin = false;
-					}
-
-					var f1 = new File( 'System:templates/calendar_event_add.html' );
-					f1.replacements = { date: dateForm };
-					f1.i18n();
-					f1.onLoad = function( data1 )
-					{
-						calendar.eventWin.setContent( data1 );
-					}
-					f1.load();
-
-					// Just close the widget
-					if( !window.isMobile && m && wid )
-						wid.hide();
-				}
-				calendar.addButton( newBtn );
-
-				var geBtn = calendar.createButton( 'fa-wrench' );
-				geBtn.onclick = function()
-				{
-					ExecuteApplication( 'Calendar' );
-				}
-				calendar.addButton( geBtn );
-
-				// Add events to calendar!
-				calendar.eventWin = false;
-				calendar.onSelectDay = function( date )
-				{
-					calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
-					calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
-					calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
-					calendar.render();
-				}
-
-				calendar.setDate( new Date() );
-				calendar.onRender = function( callback )
-				{
-					var md = new Module( 'system' );
-					md.onExecuted = function( e, d )
-					{
-						try
+						var hider = document.createElement( 'div' );
+						hider.className = 'Hider';
+						hider.onclick = function()
 						{
-							// Update events
-							var eles = JSON.parse( d );
-							calendar.events = [];
-							for( var a in eles )
+							Workspace.widget.slideUp();
+						}
+						wid.dom.appendChild( hider );
+					}
+					Workspace.calendarWidget = wid;
+
+					var newBtn = calendar.createButton( 'fa-calendar-plus-o' );
+					newBtn.onclick = function()
+					{
+						if( calendar.eventWin ) return;
+					
+						var date = calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) + '-' + calendar.date.getDate();
+						var dateForm = date.split( '-' );
+						dateForm = dateForm[0] + '-' + StrPad( dateForm[1], 2, '0' ) + '-' + StrPad( dateForm[2], 2, '0' );
+					
+						calendar.eventWin = new View( {
+							title: i18n( 'i18n_event_overview' ) + ' ' + dateForm,
+							width: 500,
+							height: 405
+						} );
+					
+						calendar.eventWin.onClose = function()
+						{
+							calendar.eventWin = false;
+						}
+
+						var f1 = new File( 'System:templates/calendar_event_add.html' );
+						f1.replacements = { date: dateForm };
+						f1.i18n();
+						f1.onLoad = function( data1 )
+						{
+							calendar.eventWin.setContent( data1 );
+						}
+						f1.load();
+
+						// Just close the widget
+						if( !window.isMobile && m && wid )
+							wid.hide();
+					}
+					calendar.addButton( newBtn );
+
+					var geBtn = calendar.createButton( 'fa-wrench' );
+					geBtn.onclick = function()
+					{
+						ExecuteApplication( 'Calendar' );
+					}
+					calendar.addButton( geBtn );
+
+					// Add events to calendar!
+					calendar.eventWin = false;
+					calendar.onSelectDay = function( date )
+					{
+						calendar.date.setDate( parseInt( date.split( '-' )[2] ) );
+						calendar.date.setMonth( parseInt( date.split( '-' )[1] ) - 1 );
+						calendar.date.setFullYear( parseInt( date.split( '-' )[0] ) );
+						calendar.render();
+					}
+
+					calendar.setDate( new Date() );
+					calendar.onRender = function( callback )
+					{
+						var md = new Module( 'system' );
+						md.onExecuted = function( e, d )
+						{
+							try
 							{
-								if( !calendar.events[eles[a].Date] )
-									calendar.events[eles[a].Date] = [];
-								calendar.events[eles[a].Date].push( eles[a] );
+								// Update events
+								var eles = JSON.parse( d );
+								calendar.events = [];
+								for( var a in eles )
+								{
+									if( !calendar.events[eles[a].Date] )
+										calendar.events[eles[a].Date] = [];
+									calendar.events[eles[a].Date].push( eles[a] );
+								}
 							}
+							catch( e )
+							{
+							}
+							calendar.render( true );
+							wid.autosize();
+							ge( 'DoorsScreen' ).screenObject.resize();
 						}
-						catch( e )
-						{
-						}
-						calendar.render( true );
-						wid.autosize();
-						ge( 'DoorsScreen' ).screenObject.resize();
+						md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
 					}
-					md.execute( 'getcalendarevents', { date: calendar.date.getFullYear() + '-' + ( calendar.date.getMonth() + 1 ) } );
+					calendar.render();
+					Workspace.calendar = calendar;
+
+					m.calendar = calendar;
+
+					var sess = document.createElement( 'div' );
+					sess.className = 'ActiveSessions';
+					sess.innerHTML = d;
+					wid.dom.appendChild( sess );
+					m.sessions = sess;
 				}
-				calendar.render();
-				Workspace.calendar = calendar;
-
-				m.calendar = calendar;
-
-				var sess = document.createElement( 'div' );
-				sess.className = 'ActiveSessions';
-				sess.innerHTML = d;
-				wid.dom.appendChild( sess );
-				m.sessions = sess;
-			}
-			else
-			{
-				if( m.calendar )
+				else
 				{
-					m.calendar.render();
-					m.sessions.innerHTML = d;
+					if( m.calendar )
+					{
+						m.calendar.render();
+						m.sessions.innerHTML = d;
+					}
+				}
+				if( wid )
+					wid.autosize();
+			}
+			// For mobiles, we have a Friend icon at the top of the screen
+			else if( !Workspace.topNavigation )
+			{
+				var topNavigation = document.createElement( 'div' );
+				topNavigation.className = 'MobileTopNavigation';
+				Workspace.topNavigation = topNavigation;
+				Workspace.screen.contentDiv.parentNode.appendChild( topNavigation );
+				topNavigation.onclick = function()
+				{
+					if( ge( 'WorkspaceMenu' ) )
+					{
+						ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+						document.body.classList.remove( 'WorkspaceMenuOpen' );
+					}
+					if( Workspace.widget )
+						Workspace.widget.slideUp();
+					Workspace.mainDock.closeDesklet();
+					DefaultToWorkspaceScreen();
 				}
 			}
-			if( wid )
-				wid.autosize();
 		}
 		// FRANCOIS: get unique device IDs...
 		mo.execute( 'user/sessionlist', { username: Workspace.loginUsername } );
+	},
+	// Close widgets and return to desktop..
+	goToMobileDesktop: function()
+	{
+		if( Workspace.widget )
+			Workspace.widget.slideUp();
+		Workspace.closeDrivePanel();
+		Workspace.mainDock.closeDesklet();
+		this.exitMobileMenu();
+	},
+	exitMobileMenu: function()
+	{
+		document.body.classList.remove( 'WorkspaceMenuOpen' );
+		if( ge( 'WorkspaceMenu' ) )
+		{
+			var eles = ge( 'WorkspaceMenu' ).getElementsByTagName( '*' );
+			for( var z = 0; z < eles.length; z++ )
+			{
+				if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
+					eles[z].classList.remove( 'Open' );
+			}
+			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+		}
 	},
 	removeCalendarEvent: function( id )
 	{

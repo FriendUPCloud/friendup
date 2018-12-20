@@ -155,7 +155,7 @@
 	$MarginVerticalRuler:    0 8px 0 0;
 	$MarginTabs:             0 5px 0 0;
 	$MarginBox:              0;
-	$MarginWindowTop:        35px;
+	$MarginWindowTop:        40px;
 	$MarginWindowTopVBars:   34px;
 	$MarginWindowLeft:       0px;
 	$MarginWindowRight:      0px;
@@ -357,8 +357,8 @@ html body:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 html body[mobile=mobile] #DoorsScreen > .ScreenContent,
 html body[mobile=mobile]:not(.HasMenu).ViewMaximized #Screens > div.Screen > .ScreenContent
 {
-	top: 32px !important;
-	height: calc(100% - 32px) !important;
+	top: 40px !important;
+	height: calc(100% - 40px) !important;
 }
 
 html .Screen > .ScreenContent
@@ -402,7 +402,7 @@ body[mobile]:not([tablet]) #Screens .ViewContainer:not(.Active):after
 	position: absolute;
 	width: 100%;
 	left: 0;
-	top: 35px;
+	top: 40px;
 	bottom: 0;
 	z-index: 2;
 }
@@ -976,7 +976,7 @@ html body[mobile=mobile] .View > .Content,
 html body[mobile=mobile] .View > .LeftBar, 
 html body[mobile=mobile] .View > .RightBar
 {
-	top: 35px;
+	top: 40px;
 }
 
 html .View > .LeftBar,
@@ -1114,18 +1114,6 @@ body:not([tablet])[mobile=mobile] .View.Active > .Title > div > .Close:before
 	background-position: center;
 }
 
-body:not([tablet])[mobile=mobile] #WorkspaceMenu
-{
-	text-align: center;
-}
-
-body:not([tablet])[mobile=mobile] #WorkspaceMenu .Menu
-{
-	float: none;
-	font-size: 1em;
-	display: inline-block;
-}
-
 body:not([tablet])[mobile=mobile] .Calendar.MonthName
 {
 	padding: 6px 10px;
@@ -1134,7 +1122,7 @@ body:not([tablet])[mobile=mobile] .Calendar.MonthName
 
 body:not([tablet])[mobile=mobile]:not(.WidgetSlideDown) #CalendarWidget
 {
-	height: 32px !important;
+	height: 40px !important;
 }
 
 /* Window menu */
@@ -2027,7 +2015,7 @@ html body[mobile] .Screen > .TitleBar .ScreenList
 
 html .Screen > .TitleBar > .Left
 {
-	padding: 0 35px 0 0;
+	padding: 0 40px 0 0;
 	line-height: 26px;
 }
 
@@ -2119,21 +2107,6 @@ html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu
 {
 	background: #34495E;
 }
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu > div:first-line
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Menu, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu > div:first-line
-{
-	background: none;
-	color: white;
-	text-shadow: 0px 1px 1px rgba(0,0,0,0.5);
-}
-
-[mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu .Open ul > li + li,
-[mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu .Open ul > li + li
-{
-	color: white;
-}
 
 html #WorkspaceMenu ul
 {
@@ -2200,13 +2173,13 @@ html #WorkspaceMenu .Menu
 
 html body[mobile=mobile] #WorkspaceMenu
 {
-	height: 32px;
+	height: 40px;
 }
 
 html body[mobile=mobile] #WorkspaceMenu .Menu
 {
-	line-height: 32px;
-	height: 32px;
+	line-height: 40px;
+	height: 40px;
 }
 
 html [mobile=mobile] #WorkspaceMenu .Menu
@@ -2275,80 +2248,19 @@ html #WorkspaceMenu
 	transition: background,width 0.25s;
 }
 
-html [mobile=mobile].ViewMaximized #WorkspaceMenu
-{
-	z-index: 6 !important;
-	width: 34px !important;
-    height: 32px !important;
-	overflow: hidden;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open
-{
-	width: 100% !important;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open > div
-{
-	opacity: 1;
-	pointer-events: all;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu:after,
-html [mobile=mobile].HasMenu #WorkspaceMenu:after
-{
-	content: "\f0c9";
-	font-weight: bold;
-	font-family: fontawesome;
-	display: block;
-	position: absolute;
-	top: 8px;
-    left: 1px;
-    width: 32px !important;
-    height: 18px !important;
-    font-size: 1.0em;
-	color: white;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu.Open:after,
-html [mobile=mobile]:not(.ViewMaximized).HasMenu #WorkspaceMenu:after
-{
-	content: "\f104";
-}
 
 /* Mobile popup menu fixes */
 
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	font-size: 1em;
-}
-
-html > body[mobile=mobile] > .MobileMenuClose:before, 
-html > body #WorkspaceMenu .Open ul > li.CloseButton:before
+html > body[mobile=mobile] > .MobileMenuClose:before
 {
 	top: 2px;
 }
 
 html body[mobile=mobile] > .MobileMenu.Visible > span.Close, 
-html body .MobileMenuClose,
-html body #WorkspaceMenu .Open ul > li.CloseButton
+html body .MobileMenuClose
 {
 	font-size: 1em !important;
 	line-height: 46px !important;
-}
-
-html [mobile=mobile].ViewMaximized.HasMenu #WorkspaceMenu div.Open > ul, 
-html [mobile=mobile].WidgetSlideDown.HasMenu #WorkspaceMenu div.Open > ul
-{
-	z-index: 100;
-}
-
-html [mobile=mobile].ViewMaximized #WorkspaceMenu > div
-{
-	opacity: 0;
-	transition: opacity 0.25s;
-	pointer-events: none;
 }
 
 /* Done popup menu fixes */
@@ -2387,7 +2299,7 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Title
 {
-	top: -35px;
+	top: -40px;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
@@ -2397,7 +2309,7 @@ html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View > .Content
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow > .Content
 {
-	top: 32px !important;
+	top: 40px !important;
 }
 
 html [mobile=mobile].ViewMaximized #Screens .ScreenContent .View.IconWindow.CustomToolbarArea > .Content
@@ -2767,18 +2679,18 @@ html body[mobile=mobile] .View.Active .DirectoryToolbar
 {
 	display: block;
 	top: 0px !important;
-	height: 32px !important;
+	height: 40px !important;
 }
 
 html body[mobile=mobile] .View .DirectoryToolbar button
 {
-	height: 30px;
+	height: 40px;
 }
 
 html > body[mobile=mobile] .View .DirectoryToolbar button:before, 
 html > body[mobile=mobile] .View .DirectoryToolbar button:after
 {
-	line-height: 27px;
+	line-height: 35px;
 }
 
 html .View.Active .DirectoryToolbar
@@ -2887,7 +2799,7 @@ html .View .DirectoryToolbar button
 {
 	color: rgba(0,0,0,0);
 	height: 24px;
-	width: 32px;
+	width: 40px;
 	overflow: hidden;
 	text-shadow: none;
 	position: relative;
@@ -2958,8 +2870,8 @@ html body .List tr.sw1.Selected, html body .List div.sw1.Selected
 
 .Toolbar .IconSmall
 {
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	box-sizing: border-box;
 	position: relative;
 }
@@ -4245,12 +4157,12 @@ body:not([tablet])[mobile=mobile] #Screens .View.Active
 body:not([tablet])[mobile=mobile] #Screens .View > .Title,
 body:not([tablet])[mobile=mobile] #Screens .View.Active > .Title
 {
-	height: 35px;
+	height: 40px;
 	border-top: 1px solid rgba(0,0,0,0.1);
 }
 body:not([tablet])[mobile=mobile] #Screens .View > .Title > div > span
 {
-	line-height: 35px;
+	line-height: 40px;
 }
 body:not([tablet])[mobile=mobile] #Screens .View .BottomBar,
 body:not([tablet])[mobile=mobile] #Screens .View .Resize,
