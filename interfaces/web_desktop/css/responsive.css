@@ -183,6 +183,7 @@ html .Screen .MobileTopNavigation
 
 html [mobile] #WorkspaceMenu.Open ul
 {
+	overflow: auto;
 	background: #303030;
 	display: block !important;
 	color: white;
