@@ -703,6 +703,11 @@ Workspace = {
 					eles[z].classList.remove( 'Open' );
 			}
 			ge( 'WorkspaceMenu' ).classList.remove( 'Open' );
+			if( WorkspaceMenu.back )
+			{
+				WorkspaceMenu.back.parentNode.removeChild( WorkspaceMenu.back );
+				WorkspaceMenu.back = null;
+			}
 		}
 	},
 	showLoginPrompt: function()
