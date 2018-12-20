@@ -183,6 +183,7 @@ html .Screen .MobileTopNavigation
 
 html [mobile] #WorkspaceMenu.Open ul
 {
+	overflow: auto;
 	background: #303030;
 	display: block !important;
 	color: white;
@@ -370,6 +371,11 @@ body:not([tablet]) #Screens .ViewContainer
 body:not([tablet]) .DirectoryToolbar > .ToggleGroup
 {
 	display: none;
+}
+
+html body .View > .Title > div > span
+{
+	height: 40px;
 }
 
 body.WindowMenu #Screens .View

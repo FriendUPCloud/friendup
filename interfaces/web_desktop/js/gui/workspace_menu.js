@@ -111,9 +111,17 @@ var WorkspaceMenu =
 						if( eles[z].classList && eles[z].classList.contains( 'Open' ) )
 							eles[z].classList.remove( 'Open' );
 					}
+					return cancelBubble( e );
 				}
 				else
 				{
+					var ts = this;
+					this.style.willChange = 'content transform';
+					setTimeout( function()
+					{
+						ts.style.willChange = 'auto';
+					}, 300 );
+					
 					this.classList.add( 'Open' );
 					document.body.classList.add( 'WorkspaceMenuOpen' );
 				}
@@ -243,6 +251,7 @@ var WorkspaceMenu =
 			{
 				divs[a].isActivated = null;
 				divs[a].classList.remove( 'Open' );
+				cancelBubble( e );
 			}
 			for( var a = 0; a < lis.length; a++ )
 			{
@@ -286,6 +295,7 @@ var WorkspaceMenu =
 			m.style.display = 'none';
 			m.classList.remove( 'Visible' );
 			m.isActivated = false;
+			cancelBubble( e );
 		}
 		if( ge( 'MobileMenu' ) ) ge( 'MobileMenu' ).classList.remove( 'Visible' );
 	
@@ -649,10 +659,20 @@ var WorkspaceMenu =
 								ge( 'WorkspaceMenu' ).appendChild( b );
 							}
 						}
+						var ts = this;
+						this.style.willChange = 'content transform';
+						setTimeout( function()
+						{
+							ts.style.willChange = 'auto';
+						}, 300 );
+						
 						this.classList.add( 'Open' );
 					}
 					// This is a menu to close..
-					else this.menus[c].classList.remove( 'Open' );
+					else
+					{
+						this.menus[c].classList.remove( 'Open' );
+					}
 				}
 				return cancelBubble( e );
 			}
@@ -672,12 +692,19 @@ var WorkspaceMenu =
 		for ( var a = 0; a < lis.length; a++ )
 		{
 			lis[a].items = lis;
-			lis[a].onmouseover = function ()
+			lis[a].onmouseover = function ( e )
 			{	
 				// Activate menu
 				WorkspaceMenu.activateMenu( wm );
 				
 				// Open menu
+				
+				var ts = this;
+				this.style.willChange = 'content transform';
+				setTimeout( function()
+				{
+					ts.style.willChange = 'auto';
+				}, 300 );
 				
 				this.classList.add( 'Open' );
 				var sublis = this.getElementsByTagName( 'li' );
@@ -698,6 +725,7 @@ var WorkspaceMenu =
 					if( this.items[a] != this )
 					{
 						this.items[a].classList.remove( 'Open' );
+						return cancelBubble( e );
 					}
 				}
 				
