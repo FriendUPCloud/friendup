@@ -173,9 +173,9 @@ Application.refreshAceSettings = function( reload )
 	function carryOut()
 	{
 		var sess = Application.editor.getSession();
-		if( settings.wordWrap )
+		if( settings.wordWrap && !isMobile )
 		{
-			var ww = isMobile ? Math.floor( settings.wordWrapWidth / 3 ) : settings.wordWrapWidth;
+			var ww = settings.wordWrapWidth;
 			sess.setWrapLimitRange( ww, ww );
 			sess.setUseWrapMode( true );
 		}
