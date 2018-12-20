@@ -527,9 +527,9 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			folderOpen( path )
 			{
 				var vol = path.split( ':' )[0];
-				self.addToHistory( winobj.fileInfo );
 				winobj.fileInfo.Path = path;
-				winobj.fileInfo.Volume = vol;
+				winobj.fileInfo.Volume = vol + ':';
+				self.addToHistory( winobj.fileInfo );
 				winobj.refresh();
 			},
 			folderClose( path )
@@ -4169,6 +4169,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 				var path = fileInfo.Path.substr( 0, fileInfo.Path.length - fileInfo.Filename.length );
 				var f = {}; for( var a in fileInfo ) f[a] = fileInfo[a];
 				f.Path = path;
+				
 				d.getIcons( f, function( data )
 				{
 					var prev = '';
@@ -4286,12 +4287,6 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
 	{
-		// Add the volume to the path if it isn't there
-		if( fileInfo.Path.indexOf( ':' ) < 0 && fileInfo.Volume )
-		{
-			fileInfo.Path = fileInfo.Volume + fileInfo.Path;
-		}
-
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4584,7 +4579,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	else if ( fileInfo.MetaType == 'DiskHandled' )
 	{
 		var tmp = fileInfo.Path.split(':');
-		ExecuteJSXByPath(tmp[0] + ':index.jsx',fileInfo.Path);
+		ExecuteJSXByPath( tmp[0] + ':index.jsx', fileInfo.Path );
 	}
 
 	cancelBubble( event );
