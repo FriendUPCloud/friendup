@@ -114,6 +114,13 @@ var WorkspaceMenu =
 				}
 				else
 				{
+					var ts = this;
+					this.style.willChange = 'content transform';
+					setTimeout( function()
+					{
+						ts.style.willChange = 'auto';
+					}, 300 );
+					
 					this.classList.add( 'Open' );
 					document.body.classList.add( 'WorkspaceMenuOpen' );
 				}
@@ -649,6 +656,13 @@ var WorkspaceMenu =
 								ge( 'WorkspaceMenu' ).appendChild( b );
 							}
 						}
+						var ts = this;
+						this.style.willChange = 'content transform';
+						setTimeout( function()
+						{
+							ts.style.willChange = 'auto';
+						}, 300 );
+						
 						this.classList.add( 'Open' );
 					}
 					// This is a menu to close..
@@ -678,6 +692,13 @@ var WorkspaceMenu =
 				WorkspaceMenu.activateMenu( wm );
 				
 				// Open menu
+				
+				var ts = this;
+				this.style.willChange = 'content transform';
+				setTimeout( function()
+				{
+					ts.style.willChange = 'auto';
+				}, 300 );
 				
 				this.classList.add( 'Open' );
 				var sublis = this.getElementsByTagName( 'li' );
