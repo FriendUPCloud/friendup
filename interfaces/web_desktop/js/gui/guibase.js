@@ -3140,6 +3140,14 @@ function Notify( msg, callback, clickcallback )
 			setTimeout( function(){ n.close(); }, 3000 );
 		}
 		
+		// When clicking the bubble
+		// :)
+		if( clickcallback )
+		{
+			n.onclick = clickcallback;
+			n.ontouchdown = clickcallback;
+		}
+		
 		return;
 	}
 	else
