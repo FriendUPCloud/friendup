@@ -1355,6 +1355,11 @@ html [mobile=mobile].Dark.WidgetSlideDown.HasMenu #WorkspaceMenu
 	background: #455155;
 }
 
+[mobile].Charcoal #WorkspaceMenu.Open
+{
+	background: #303030;
+}
+
 body.Dark .SliderElement .SliderGroove
 {
 	background: rgba(0,0,0,0.5);

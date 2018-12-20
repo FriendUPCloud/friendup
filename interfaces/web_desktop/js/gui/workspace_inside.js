@@ -7836,7 +7836,10 @@ function DoorsKeyDown( e )
 					mousePointer.dom.innerHTML = '';
 					mousePointer.drop();
 					if( currentMovable && currentMovable.content )
-						currentMovable.content.refresh();
+					{
+						if( currentMovable.content.refresh )
+							currentMovable.content.refresh();
+					}
 					return;
 				}
 				if( currentMovable )
