@@ -527,9 +527,9 @@ DirectoryView.prototype.ShowFileBrowser = function()
 			folderOpen( path )
 			{
 				var vol = path.split( ':' )[0];
-				self.addToHistory( winobj.fileInfo );
 				winobj.fileInfo.Path = path;
-				winobj.fileInfo.Volume = vol;
+				winobj.fileInfo.Volume = vol + ':';
+				self.addToHistory( winobj.fileInfo );
 				winobj.refresh();
 			},
 			folderClose( path )
@@ -4114,7 +4114,118 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 		iconObject.extension.toLowerCase() == 'pdf' 
 	)
 	{
+<<<<<<< HEAD
 		Friend.startImageViewer( iconObject );
+=======
+		var rr = iconObject;
+
+		var win = new View ( {
+			title    : iconObject.Title ? iconObject.Title : iconObject.Filename,
+			width    : 650,
+			height   : 512,
+			memorize : true,
+			fullscreenenabled : true
+		} );
+
+		var checkers = '<div style="filter:brightness(0.3);position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/webclient/gfx/checkers.png\'); background-position: center center;"></div>';
+
+		var num = ( Math.random() * 1000 ) + ( ( new Date() ).getTime() ) + ( Math.random() * 1000 );
+		/*console.log( '[7] you are here ... directoryview.js ||| ' + '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url(\'/system.library/file/read?mode=rs&sessionid=' + Workspace.sessionId + '&path=' + fileInfo.Path + '\'); background-position: center; background-size: contain; background-repeat: no-repeat; background-color: black"></div>' );*/
+		var owin = win;
+		if( iconObject.extension.toLowerCase() == 'pdf' )
+		{
+			GetURLFromPath( fileInfo.Path, function( imageUrl )
+			{
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
+				
+				owin.setContent( '<iframe src="' + urlsrc + '" style="position: absolute; margin: 0; border: 0; top: 0; left: 0; width: 100%; height: 100%; background-color: black"></iframe>' );
+			} );
+		}
+		else
+		{
+			GetURLFromPath( fileInfo.Path, function( imageUrl )
+			{
+				var urlsrc = ( fileInfo.Path.substr(0, 4) == 'http' ? fileInfo.Path : imageUrl ); 
+				
+				owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + urlsrc + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+			} );
+		}
+		win._window.addEventListener( 'mousedown', function( e )
+		{
+			var factor = ( e.clientX - owin._window.parentNode.offsetLeft ) / owin._window.offsetWidth;
+			var dir = 0;
+			if( factor <= 0.2 )
+			{
+				dir = -1;
+			}
+			else if( factor >= 0.8 )
+			{
+				dir = 1;
+			}
+			if( dir != 0 )
+			{
+				var d = new Door().get( fileInfo.Path );
+				if( !d || !d.getIcons )
+				{
+					return;
+				}
+				var path = fileInfo.Path.substr( 0, fileInfo.Path.length - fileInfo.Filename.length );
+				var f = {}; for( var a in fileInfo ) f[a] = fileInfo[a];
+				f.Path = path;
+				
+				d.getIcons( f, function( data )
+				{
+					var prev = '';
+					var curr = '';
+					var prevPath = currPath = '';
+					for( var a = 0; a < data.length; a++ )
+					{
+						// Skip directories
+						if( data[ a ].Type == 'Directory' ) continue;
+						
+						// Skip non-image files
+						var last = data[a].Filename.split( '.' );
+						var ext = last[ last.length - 1 ].toLowerCase();
+						if( !( ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' ) )
+							continue;
+							
+						prev = curr;
+						prevPath = currPath;
+						curr = data[a].Filename;
+						currPath = data[a].Path;
+						
+						// Load the image if it lays on a Dormant door
+						if( prev && dir == -1 && prev != curr && curr == fileInfo.Filename )
+						{							
+							fileInfo.Filename = prev;
+							fileInfo.Path = prevPath;
+							GetURLFromPath( prevPath, function( imageUrl )
+							{
+								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+								owin.setFlag( 'title', prev );
+							} );
+							return;
+						}
+						if( curr && dir == 1 && curr != prev && prev == fileInfo.Filename )
+						{
+							fileInfo.Filename = curr;
+							fileInfo.Path = currPath;
+							GetURLFromPath( currPath, function( imageUrl )
+							{
+								owin.setContent( '<div style="white-space: nowrap; position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); height: calc(100% - 20px); background-position: center; background-size: contain; text-align: center; background-repeat: no-repeat; z-index: 1;"><div style="display: inline-block; height: 100%; vertical-align: middle;"></div><img class="DefaultContextMenu" src="' + imageUrl + '" style="vertical-align: middle; max-height: 100%; max-width: 100%;"/></div>' + checkers );
+								owin.setFlag( 'title', curr );
+							} );
+							return;
+						}
+					}
+				} );
+			}
+		} );
+		function doImage( path, title )
+		{
+		}
+		win = null;
+>>>>>>> dev
 	}
 	// Run scripts in new shell
 	else if( iconObject.extension == 'run' )
@@ -4180,12 +4291,6 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	// We've clicked on a directory!
 	else if( fileInfo.MetaType == 'Directory' )
 	{
-		// Add the volume to the path if it isn't there
-		if( fileInfo.Path.indexOf( ':' ) < 0 && fileInfo.Volume )
-		{
-			fileInfo.Path = fileInfo.Volume + fileInfo.Path;
-		}
-
 		var wt = fileInfo.Path ? fileInfo.Path : ( fileInfo.Filename ? fileInfo.Filename : fileInfo.Title );
 
 		var id = fileInfo.Type + '_' + wt.split( /[^a-z0-9]+/i ).join( '_' );
@@ -4478,7 +4583,7 @@ function OpenWindowByFileinfo( fileInfo, event, iconObject, unique )
 	else if ( fileInfo.MetaType == 'DiskHandled' )
 	{
 		var tmp = fileInfo.Path.split(':');
-		ExecuteJSXByPath(tmp[0] + ':index.jsx',fileInfo.Path);
+		ExecuteJSXByPath( tmp[0] + ':index.jsx', fileInfo.Path );
 	}
 
 	cancelBubble( event );

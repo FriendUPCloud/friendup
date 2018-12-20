@@ -61,7 +61,9 @@ var WorkspaceMenu =
 				{
 					var m = ge( 'WorkspaceMenu' );
 					if( m && m.classList )
+					{
 						m.classList.remove( 'Hover' );
+					}
 				} );
 			}
 			d.onmousemove = function()
@@ -746,6 +748,10 @@ var WorkspaceMenu =
 					if ( d.nodeName == 'LI' )
 						d.classList.add( 'Open' );
 				}
+			}
+			lis[a].onmouseout = function()
+			{
+				//this.classList.remove( 'Open' );
 			}
 			if( mode == 'onmousedown' )
 			{
