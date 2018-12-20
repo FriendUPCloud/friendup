@@ -1795,6 +1795,9 @@ var View = function( args )
 			movableWindows[ div.id ] = div;
 		}
 
+		if( isMobile )
+			Workspace.exitMobileMenu();
+
 		// Tell it's opening
 		div.classList.add( 'Opening' );
 		setTimeout( function()

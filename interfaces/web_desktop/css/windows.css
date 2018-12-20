@@ -850,6 +850,43 @@ html .Screen > .TitleBar > .Left .Offline
 	box-shadow: inset 0px 0px 30px 1px rgba(0,0,0,0.9);
 }
 
+/* File dialogs ------------------------------------------------------------- */
+
+.FileDialog.Toolbarbox
+{
+	height: 26px;
+}
+
+[mobile] .FileDialog.Toolbarbox
+{
+	height: 40px;
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.Sidebar
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+.FileDialog.List-view
+{
+	top: 26px; 
+	height: calc(100% - 26px);
+}
+
+[mobile] .FileDialog.List-view
+{
+	top: 40px; 
+	height: calc(100% - 40px);
+}
+
+
 /* Friend graphics elements ------------------------------------------------- */
 
 .FriendGraphic
