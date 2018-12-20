@@ -341,7 +341,7 @@ int UMAssignGroupToUserByStringDB( UserManager *um, User *usr, char *groups )
 					{
 						isAdmin = TRUE;
 					}
-					if( strcmp( gr->ug_Name, "API" ) == 0 )
+					else if( strcmp( gr->ug_Name, "API" ) == 0 )
 					{
 						isAPI = TRUE;
 					}
