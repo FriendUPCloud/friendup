@@ -210,7 +210,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 		if( userConnections == NULL )
 		{
 			DEBUG("Allocation failed\n");
-			return 0;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
+			return 2;//MobileAppReplyError(wsi, user_data, MOBILE_APP_ERR_INTERNAL);
 		}
 		else
 		{
@@ -262,7 +262,7 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 
 					FFree(userConnections);
 					//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
-					return 0;//MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
+					return 1;//MobileAppReplyError( wsi, user_data, MOBILE_APP_ERR_INTERNAL );
 				}
 				
 				//FRIEND_MUTEX_UNLOCK( &globalSessionRemovalMutex );
@@ -317,9 +317,6 @@ static int MobileAppAddNewUserConnection( MobileAppConnection *newConnection, co
 	//char *websocketHash = MobileAppGetWebsocketHash( wsi );
 
 	//PutConnectionByWSI( globalWebsocketToUserConnections, wsi, newConnection );
-	
-	MobileAppNotif *n = (MobileAppNotif *)userData;
-	n->man_Data = newConnection;
 
 	return 0;
 }
@@ -381,6 +378,13 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 	
 	switch( reason )
 	{
+		case LWS_CALLBACK_ESTABLISHED:
+			{
+				MobileAppNotif *n = (MobileAppNotif *)user;
+				n->man_Data = NULL;
+			}
+			break;
+			
 		case LWS_CALLBACK_CLOSED: //|| reason == LWS_CALLBACK_WS_PEER_INITIATED_CLOSE)
 		{
 			INFO("\t\t\t\t\t\t\tREMOVE APP CONNECTION\n\n\n");
@@ -827,6 +831,10 @@ static int MobileAppHandleLogin( struct lws *wsi, void *userdata, json_t *json )
 		MobileAppConnection *newConnection = MobileAppConnectionNew( wsi, umaID );
 		
 		int ret = MobileAppAddNewUserConnection( newConnection, usernameString, userdata );
+		
+		MobileAppNotif *n = (MobileAppNotif *)userdata;
+		n->man_Data = newConnection;
+		
 		if( umaID > 0 )
 		{
 			// get all NotificationSent structures with register state and which belongs to this user mobile application (UserMobileAppID)
