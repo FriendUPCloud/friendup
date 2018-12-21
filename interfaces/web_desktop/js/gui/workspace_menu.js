@@ -447,7 +447,14 @@ var WorkspaceMenu =
 					n.appid = appid;
 					n.onclick = function()
 					{
-						currentMovable.windowObject.sendMessage( { command: 'quit' } );
+						if( currentMovable.windowObject.applicationId )
+						{
+							KillApplicationById( currentMovable.windowObject.applicationId );
+						}
+						else
+						{
+							currentMovable.windowObject.close();
+						}
 						Workspace.exitMobileMenu();
 					}
 					continue;
