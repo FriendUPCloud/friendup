@@ -157,8 +157,10 @@ GuiDesklet = function ( pobj, width, height, pos, px, py )
 			var px = e.changedTouches[0].clientX;
 			var py = e.changedTouches[0].clientY;
 			
+			var disty = py - this.touchY;
+			
 			var dist = Math.sqrt( Math.pow( this.touchX - px, 2 ) + Math.pow( this.touchY - py, 2 ) );
-			if( dist > 40 || !this.classList.contains( 'Open' ) )
+			if( disty > 100 || !this.classList.contains( 'Open' ) )
 			{
 				this.clickFunc( e );
 			}
