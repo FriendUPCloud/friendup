@@ -378,11 +378,11 @@ html #WorkspaceMenu .Menu
 	right: 0;
 }
 
-[mobile]:not(.ViewMaximized) #WorkspaceMenu
+/*[mobile]:not(.ViewMaximized) #WorkspaceMenu
 {
 	opacity: 0;
 	pointer-events: none;
-}
+}*/
 
 /* Calendar no events when dragging screen or showing window menu */
 #Screens > div.Screen[moved=moved] #CalendarWidget,
