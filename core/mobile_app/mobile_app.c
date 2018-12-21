@@ -993,7 +993,7 @@ int MobileAppNotifyUserRegister( void *lsb, const char *username, const char *ch
 	// this means that user got msg on Workspace
 	if( userConnections != NULL )
 	{
-		DEBUG("Send: <%s>\n", jsonMessage );
+		//DEBUG("Send: <%s>\n", jsonMessage );
 		// register only works when there was no active desktop WS connection
 		// and action is register
 		if( wsMessageSent == FALSE )
