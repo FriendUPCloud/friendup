@@ -5919,7 +5919,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 						command: function(){ 
 							if( window.friendBook )
 							{
-								// Just leavd!
+								// Just leave!
 								Workspace.leave = function(){};
 								Workspace.doLeave = function(){};
 								window.close();
@@ -6147,7 +6147,7 @@ body .View.Active.IconWindow ::-webkit-scrollbar-thumb
 					},*/
 					{
 						name:	i18n( 'menu_close_window' ),
-						command: function(){ CloseWindow( window.currentMovable ) },
+						command: function(){ CloseWindow( window.currentMovable ); if( isMobile ) Workspace.exitMobileMenu(); },
 						disabled: !windowsOpened
 					}
 				]

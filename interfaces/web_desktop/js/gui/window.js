@@ -1117,7 +1117,7 @@ function CloseAllWindows()
 function _WindowToFront( div, flags )
 {
 	// Blocker
-	if( div.content.blocker )
+	if( div.content && div.content.blocker )
 	{
 		_ActivateWindow( div.content.blocker.getWindowElement().parentNode, false );
 		return;
@@ -3655,6 +3655,9 @@ var View = function( args )
 	// Close a view window
 	this.close = function ( force )
 	{
+		if( isMobile )
+			Workspace.exitMobileMenu();
+		
 		var c = this._window;
 		if( c && c.content )
 			c = c.content;

@@ -31,7 +31,7 @@ body.ViewMaximized.AppsShowing #Screens > div.Screen > .TitleBar
 {
 	padding-left: 0;
 	height: 40px;
-	background-color: #303030;
+	background-color: #34495E;
 }
 
 #Screens > div.Screen > .TitleBar:after
@@ -170,19 +170,47 @@ body.WidgetSlideDown .Calendar .Navigation
 
 /* Top navigation for mobile */
 
+html body #DoorsScreen:after
+{
+	content: " ";
+	display: block;
+	height: 40px;
+	position: absolute;
+	bottom: 0px;
+	left: 0;
+	width: 100%;
+	background-color: #34495E;
+	z-index: 2147483646;
+}
+
 html body .Screen .MobileTopNavigation
 {
 	opacity: 1;
 	position: absolute;
 	bottom: 0;
 	left: 0;
+	color: white;
 	width: 40px;
 	height: 40px;
-	background-image: url(/webclient/gfx/system/startmenu.png);
-	background-position: center;
-	background-size: 60%;
 	z-index: 2147483647;
-	background-repeat: no-repeat;
+	background-color: rgba(255,255,255,0);
+	transition: background-color 0.25s;
+	border-radius: 10px;
+}
+
+html body .Screen .MobileTopNavigation:active
+{
+	background-color: rgba(255,255,255,0.5);
+}
+
+html body .Screen .MobileTopNavigation:after
+{
+	display: block;
+	content: "\f096";
+	font-size: 16px;
+	font-family: fontawesome;
+	text-align: center;
+	line-height: 40px;
 }
 
 html body .Screen .MobileAppMenu
@@ -205,6 +233,7 @@ html body.AppsShowing .Screen .MobileAppMenu:after
 html body .Screen .MobileAppMenu:after
 {
 	display: block;
+	color: white;
 	content: "\f00a";
 	font-size: 16px;
 	font-family: fontawesome;
@@ -221,6 +250,7 @@ html body .Screen .MobileAppMenu:after
 	right: 0;
 	top: 0;
 	left: auto;
+	background-color: #34495e;
 	width: 40px;
 	height: 40px;
 	overflow: hidden;
@@ -236,7 +266,7 @@ html body .Screen .MobileAppMenu:after
 
 [mobile] #WorkspaceMenu.Open
 {
-	height: 100%;
+	height: calc(100% + 5px);
 	width: 80%;
 	overflow: auto;
 	box-sizing: border-box;
@@ -351,11 +381,11 @@ html #WorkspaceMenu .Menu
 	right: 0;
 }
 
-[mobile]:not(.ViewMaximized) #WorkspaceMenu
+/*[mobile]:not(.ViewMaximized) #WorkspaceMenu
 {
 	opacity: 0;
 	pointer-events: none;
-}
+}*/
 
 /* Calendar no events when dragging screen or showing window menu */
 #Screens > div.Screen[moved=moved] #CalendarWidget,
