@@ -114,7 +114,7 @@ static char* MobileAppGetWebsocketHash( struct lws *wsi );
 static inline int WriteMessageMA( MobileAppConnection *mac, unsigned char *msg, int len )
 {
 	//MobileAppNotif *man = (MobileAppNotif *) mac->user_data;
-	if( mac->mac_WebsocketPtr != NULL )
+	if( mac->mac_WebsocketPtr != NULL && mac->mac_CloseConnection != TRUE )
 	{
 		FQEntry *en = FCalloc( 1, sizeof( FQEntry ) );
 		if( en != NULL )
@@ -124,8 +124,6 @@ static inline int WriteMessageMA( MobileAppConnection *mac, unsigned char *msg, 
 			memcpy( en->fq_Data+LWS_SEND_BUFFER_PRE_PADDING, msg, len );
 			en->fq_Size = LWS_PRE+len;
 	
-			//FQPushFIFO( &(man->man_Queue), en );
-			//lws_callback_on_writable( mac->websocket_ptr );
 			if( FRIEND_MUTEX_LOCK( &mac->mac_Mutex ) == 0 )
 			{
 				mac->mac_Used++;
@@ -406,6 +404,16 @@ int WebsocketAppCallback(struct lws *wsi, int reason, void *user __attribute__((
 					//DEBUG("Removing connection %d for user <%s>\n", connectionIndex, userConnections->username);
 				}
 				MobileAppRemoveAppConnection( userConnections, connectionIndex );
+				
+				// do not close connection if its used
+				while( TRUE )
+				{
+					if( appConnection->mac_Used <= 0 )
+					{
+						break;
+					}
+					sleep( 1 );
+				}
 
 				MobileAppConnectionDelete( appConnection );
 				//TODO
