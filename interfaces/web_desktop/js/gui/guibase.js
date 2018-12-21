@@ -3143,7 +3143,7 @@ function Notify( msg, callback, clickcallback )
 		}
 		else
 		{
-			setTimeout( function(){ n.close(); }, 3000 );
+			setTimeout( function(){ n.close(); }, 5000 );
 		}
 		
 		return;
